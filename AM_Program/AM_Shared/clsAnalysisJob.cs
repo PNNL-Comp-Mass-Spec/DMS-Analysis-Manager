@@ -1577,7 +1577,7 @@ namespace AnalysisManagerBase
                 // Values are another parameter name that must be present if we're going to ignore the given parameter
                 var paramNamesToIgnore = new Dictionary<string, string>
                 {
-                    {"SharedResultsFolders", ""},
+                    {clsAnalysisResources.JOB_PARAM_SHARED_RESULTS_FOLDERS, ""},
                     {"CPU_Load", ""},
                     {"Job", ""},
                     {"Step", ""},

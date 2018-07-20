@@ -981,7 +981,7 @@ namespace AnalysisManagerBase
 
             var sharedResultFolderNames = new List<string>();
 
-            var sharedResultFolders = m_jobParams.GetParam("SharedResultsFolders");
+            var sharedResultsFolders = m_jobParams.GetParam(clsAnalysisResources.JOB_PARAM_SHARED_RESULTS_FOLDERS);
 
             if (sharedResultFolders.Contains(","))
             {

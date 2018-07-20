@@ -308,6 +308,11 @@ namespace AnalysisManagerBase
         public const string JOB_PARAM_DICTIONARY_JOB_TOOL_MAP = "PackedParam_JobToolNameMap";
 
         /// <summary>
+        /// Job parameter tracking the shared results folder (or comma separated list of folders)
+        /// </summary>
+        public const string JOB_PARAM_SHARED_RESULTS_FOLDERS = "SharedResultsFolders";
+
+        /// <summary>
         /// Job parameter to track the auto-generated FASTA file name
         /// </summary>
         public const string JOB_PARAM_GENERATED_FASTA_NAME = "generatedFastaName";
