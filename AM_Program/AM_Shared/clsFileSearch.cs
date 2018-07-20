@@ -983,10 +983,10 @@ namespace AnalysisManagerBase
 
             var sharedResultsFolders = m_jobParams.GetParam(clsAnalysisResources.JOB_PARAM_SHARED_RESULTS_FOLDERS);
 
-            if (sharedResultFolders.Contains(","))
+            if (sharedResultsFolders.Contains(","))
             {
                 // Split on commas and populate sharedResultFolderNames
-                foreach (var item in sharedResultFolders.Split(','))
+                foreach (var item in sharedResultsFolders.Split(','))
                 {
                     var itemTrimmed = item.Trim();
                     if (itemTrimmed.Length > 0)
@@ -995,13 +995,13 @@ namespace AnalysisManagerBase
                     }
                 }
 
-                // Reverse the list so that the last item in sharedResultFolders is the first item in sharedResultFolderNames
+                // Reverse the list so that the last item in sharedResultsFolders is the first item in sharedResultFolderNames
                 sharedResultFolderNames.Reverse();
             }
             else
             {
-                // Just one item in sharedResultFolders
-                sharedResultFolderNames.Add(sharedResultFolders);
+                // Just one item in sharedResultsFolders
+                sharedResultFolderNames.Add(sharedResultsFolders);
             }
 
             return sharedResultFolderNames;
@@ -1199,6 +1199,7 @@ namespace AnalysisManagerBase
             errorMessage = string.Empty;
 
             DirectoryInfo disourceFolder = null;
+            var sourceFilePath = string.Empty;
 
             foreach (var toolNameVersionFolder in msXmlToolNameVersionFolders)
             {
@@ -1211,7 +1212,24 @@ namespace AnalysisManagerBase
                 disourceFolder = new DirectoryInfo(sourceFolder);
                 if (disourceFolder.Exists)
                 {
-                    break;
+                    var candidateFilePath = Path.Combine(disourceFolder.FullName, DatasetName + resultFileExtension);
+                    if (File.Exists(candidateFilePath))
+                    {
+                        sourceFilePath = candidateFilePath;
+                        break;
+                    }
+
+                    if (resultFileExtension != clsAnalysisResources.DOT_PBF_EXTENSION)
+                    {
+                        candidateFilePath += clsAnalysisResources.DOT_GZ_EXTENSION;
+                        if (File.Exists(candidateFilePath))
+                        {
+                            sourceFilePath = candidateFilePath;
+                            break;
+                        }
+                    }
+
+                    continue;
                 }
 
                 if (string.IsNullOrEmpty(errorMessage))
@@ -1232,11 +1250,16 @@ namespace AnalysisManagerBase
                 return false;
             }
 
-            var sourceFilePath = Path.Combine(disourceFolder.FullName, DatasetName + resultFileExtension);
+            if (string.IsNullOrWhiteSpace(sourceFilePath))
+            {
+                errorMessage = "msXML file not found in the source folder(s): " + string.Join(",", msXmlToolNameVersionFolders);
+                fileMissingFromCache = true;
+                return false;
+            }
+
             var expectedFileDescription = resultFileExtension;
             if (resultFileExtension != clsAnalysisResources.DOT_PBF_EXTENSION)
             {
-                sourceFilePath += clsAnalysisResources.DOT_GZ_EXTENSION;
                 expectedFileDescription += clsAnalysisResources.DOT_GZ_EXTENSION;
             }
 
