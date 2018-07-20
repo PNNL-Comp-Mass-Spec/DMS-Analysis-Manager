@@ -462,8 +462,8 @@ namespace AnalysisManagerBase
                 // Note that "SharedResultsFolders" will typically only contain one folder path,
                 //  but can contain a comma-separated list of folders
 
-                var datasetFolderName = m_jobParams.GetParam("DatasetFolderName");
-                var inputFolderName = m_jobParams.GetParam("inputFolderName");
+                var datasetFolderName = m_jobParams.GetParam(clsAnalysisResources.JOB_PARAM_DATASET_FOLDER_NAME);
+                var inputFolderName = m_jobParams.GetParam(clsAnalysisResources.JOB_PARAM_INPUT_FOLDER_NAME);
 
                 var sharedResultFolderNames = GetSharedResultFolderList().ToList();
 
@@ -795,7 +795,7 @@ namespace AnalysisManagerBase
             }
 
             // Lookup the MSXML cache path (typically \\Proto-11\MSXML_Cache)
-            var msXmlCacheFolderPath = m_mgrParams.GetParam("MSXMLCacheFolderPath", string.Empty);
+            var msXmlCacheFolderPath = m_mgrParams.GetParam(clsAnalysisResources.JOB_PARAM_MSXML_CACHE_FOLDER_PATH, string.Empty);
 
             var diCacheFolder = new DirectoryInfo(msXmlCacheFolderPath);
 
@@ -1143,45 +1143,50 @@ namespace AnalysisManagerBase
                 return false;
             }
 
-            var msXMLCacheFolderPath = m_mgrParams.GetParam("MSXMLCacheFolderPath", string.Empty);
+            var msXMLCacheFolderPath = m_mgrParams.GetParam(clsAnalysisResources.JOB_PARAM_MSXML_CACHE_FOLDER_PATH, string.Empty);
 
             if (string.IsNullOrWhiteSpace(msXMLCacheFolderPath))
             {
-                errorMessage = "Manager parameter MSXMLCacheFolderPath is not defined";
+                errorMessage = string.Format("Manager parameter {0} is not defined",
+                                             clsAnalysisResources.JOB_PARAM_MSXML_CACHE_FOLDER_PATH);
                 return false;
             }
 
-            var diMSXmlCacheFolder = new DirectoryInfo(msXMLCacheFolderPath);
+            var msXmlCacheDir = new DirectoryInfo(msXMLCacheFolderPath);
 
-            if (!diMSXmlCacheFolder.Exists)
+            if (!msXmlCacheDir.Exists)
             {
-                errorMessage = "MSXmlCache folder not found: " + msXMLCacheFolderPath;
+                errorMessage = "MSXmlCache directory not found: " + msXMLCacheFolderPath;
                 return false;
             }
 
-            var foldersToSearch = new List<string> {
-                m_jobParams.GetJobParameter("InputFolderName", string.Empty)
+            var directoriesToSearch = new List<string> {
+                m_jobParams.GetJobParameter(clsAnalysisResources.JOB_PARAM_INPUT_FOLDER_NAME, string.Empty)
             };
 
-            if (foldersToSearch[0].Length == 0)
+            if (directoriesToSearch[0].Length == 0)
             {
-                foldersToSearch.Clear();
+                directoriesToSearch.Clear();
             }
 
             foreach (var sharedResultFolder in GetSharedResultFolderList())
             {
-                if (sharedResultFolder.Trim().Length == 0)
+                if (string.IsNullOrWhiteSpace(sharedResultFolder))
                     continue;
 
-                if (!foldersToSearch.Contains(sharedResultFolder))
+                if (!directoriesToSearch.Contains(sharedResultFolder))
                 {
-                    foldersToSearch.Add(sharedResultFolder);
+                    directoriesToSearch.Add(sharedResultFolder);
                 }
             }
 
-            if (foldersToSearch.Count == 0)
+            if (directoriesToSearch.Count == 0)
             {
-                errorMessage = "Job parameters InputFolderName and SharedResultsFolders are empty; cannot retrieve the " + resultFileExtension + " file";
+                // Job parameters InputFolderName and SharedResultsFolders are empty; cannot retrieve the .mzML file
+                errorMessage = string.Format("Job parameters {0} and {1} are empty; cannot retrieve the {2} file",
+                                             clsAnalysisResources.JOB_PARAM_INPUT_FOLDER_NAME,
+                                             clsAnalysisResources.JOB_PARAM_SHARED_RESULTS_FOLDERS,
+                                             resultFileExtension);
                 return false;
             }
 
@@ -1191,13 +1196,19 @@ namespace AnalysisManagerBase
             {
                 try
                 {
-                    var msXmlToolNameVersionFolder = clsAnalysisResources.GetMSXmlToolNameVersionFolder(folderName);
+                    // Remove the DatasetID suffix on directoryName
+                    var msXmlToolNameVersionFolder = clsAnalysisResources.GetMSXmlToolNameVersionFolder(directoryName);
                     msXmlToolNameVersionFolders.Add(msXmlToolNameVersionFolder);
                 }
                 catch (Exception)
                 {
-                    errorMessage = "InputFolderName is not in the expected form of ToolName_Version_DatasetID (" + folderName + "); " +
-                        "will not try to find the " + resultFileExtension + " file in this folder";
+                    // Directory in job param InputFolderName or SharedResultsFolders is not in the expected form of ToolName_Version_DatasetID
+                    errorMessage = string.Format("Directory in job param {0} or {1} is not in the expected form of ToolName_Version_DatasetID ({2}); " +
+                                                 "will not try to find the {3} file in this directory",
+                                                 clsAnalysisResources.JOB_PARAM_INPUT_FOLDER_NAME,
+                                                 clsAnalysisResources.JOB_PARAM_SHARED_RESULTS_FOLDERS,
+                                                 directoryName,
+                                                 resultFileExtension);
 
                     OnDebugEvent(errorMessage);
                 }
@@ -1207,7 +1218,9 @@ namespace AnalysisManagerBase
             {
                 if (string.IsNullOrEmpty(errorMessage))
                 {
-                    errorMessage = "The input folder and shared results folder(s) were not in the expected form of ToolName_Version_DatasetID";
+                    errorMessage = string.Format("Directories in job params {0} and {1} were not in the expected form of ToolName_Version_DatasetID",
+                                                 clsAnalysisResources.JOB_PARAM_INPUT_FOLDER_NAME,
+                                                 clsAnalysisResources.JOB_PARAM_SHARED_RESULTS_FOLDERS);
                 }
                 return false;
             }

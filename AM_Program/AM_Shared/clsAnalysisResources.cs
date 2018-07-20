@@ -308,6 +308,11 @@ namespace AnalysisManagerBase
         public const string JOB_PARAM_DICTIONARY_JOB_TOOL_MAP = "PackedParam_JobToolNameMap";
 
         /// <summary>
+        /// Job parameter specifying the input directory name
+        /// </summary>
+        public const string JOB_PARAM_INPUT_FOLDER_NAME = "InputFolderName";
+
+        /// <summary>
         /// Job parameter tracking the shared results folder (or comma separated list of folders)
         /// </summary>
         public const string JOB_PARAM_SHARED_RESULTS_FOLDERS = "SharedResultsFolders";
@@ -316,6 +321,11 @@ namespace AnalysisManagerBase
         /// Job parameter to track the auto-generated FASTA file name
         /// </summary>
         public const string JOB_PARAM_GENERATED_FASTA_NAME = "generatedFastaName";
+
+        /// <summary>
+        /// Job parameter of the directory with cached .mzML (and .mzXML) files
+        /// </summary>
+        public const string JOB_PARAM_MSXML_CACHE_FOLDER_PATH = "MSXMLCacheFolderPath";
 
         /// <summary>
         /// Output folder name
@@ -1734,7 +1744,7 @@ namespace AnalysisManagerBase
 
             jobInfo.ServerStoragePath = m_jobParams.GetJobParameter(jobParamsSection, "DatasetStoragePath", string.Empty);
             jobInfo.ArchiveStoragePath = m_jobParams.GetJobParameter(jobParamsSection, "DatasetArchivePath", string.Empty);
-            jobInfo.ResultsFolderName = m_jobParams.GetJobParameter(jobParamsSection, "inputFolderName", string.Empty);
+            jobInfo.ResultsFolderName = m_jobParams.GetJobParameter(jobParamsSection, JOB_PARAM_INPUT_FOLDER_NAME, string.Empty);
             jobInfo.DatasetFolderName = m_jobParams.GetJobParameter(jobParamsSection, JOB_PARAM_DATASET_FOLDER_NAME, string.Empty);
 
             var sharedResultsFolders = m_jobParams.GetJobParameter(jobParamsSection, JOB_PARAM_SHARED_RESULTS_FOLDERS, string.Empty);
@@ -2742,7 +2752,7 @@ namespace AnalysisManagerBase
 
             if (useInputFolder)
             {
-                folderName = m_jobParams.GetParam("InputFolderName");
+                folderName = m_jobParams.GetParam(JOB_PARAM_INPUT_FOLDER_NAME);
             }
             else
             {
@@ -3216,7 +3226,7 @@ namespace AnalysisManagerBase
 
             m_jobParams.AddAdditionalParameter(jobParamsSection, "DatasetStoragePath", dataPkgJob.ServerStoragePath);
             m_jobParams.AddAdditionalParameter(jobParamsSection, "DatasetArchivePath", dataPkgJob.ArchiveStoragePath);
-            m_jobParams.AddAdditionalParameter(jobParamsSection, "inputFolderName", dataPkgJob.ResultsFolderName);
+            m_jobParams.AddAdditionalParameter(jobParamsSection, JOB_PARAM_INPUT_FOLDER_NAME, dataPkgJob.ResultsFolderName);
             m_jobParams.AddAdditionalParameter(jobParamsSection, JOB_PARAM_DATASET_FOLDER_NAME, dataPkgJob.DatasetFolderName);
             m_jobParams.AddAdditionalParameter(jobParamsSection, JOB_PARAM_SHARED_RESULTS_FOLDERS, string.Join(",", dataPkgJob.SharedResultsFolders));
             m_jobParams.AddAdditionalParameter(jobParamsSection, "RawDataType", dataPkgJob.RawDataType);

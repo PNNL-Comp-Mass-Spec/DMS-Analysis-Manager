@@ -753,7 +753,7 @@ namespace AnalysisManagerBase
 
             try
             {
-                var strMSXMLCacheFolderPath = m_mgrParams.GetParam("MSXMLCacheFolderPath", string.Empty);
+                var strMSXMLCacheFolderPath = m_mgrParams.GetParam(clsAnalysisResources.JOB_PARAM_MSXML_CACHE_FOLDER_PATH, string.Empty);
 
                 if (string.IsNullOrEmpty(msXmlGeneratorName))
                 {

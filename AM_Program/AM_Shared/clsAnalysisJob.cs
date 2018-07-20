@@ -1581,8 +1581,8 @@ namespace AnalysisManagerBase
                     {"CPU_Load", ""},
                     {"Job", ""},
                     {"Step", ""},
-                    {"StepInputFolderName", "InputFolderName"},
-                    {"StepOutputFolderName", "OutputFolderName"}
+                    {"StepInputFolderName", clsAnalysisResources.JOB_PARAM_INPUT_FOLDER_NAME},
+                    {"StepOutputFolderName", clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME}
                 };
 
                 var paramsToAddAsAttribute = new Dictionary<string, string>
