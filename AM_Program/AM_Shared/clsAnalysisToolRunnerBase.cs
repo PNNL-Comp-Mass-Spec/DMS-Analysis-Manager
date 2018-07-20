@@ -39,6 +39,11 @@ namespace AnalysisManagerBase
         public const string DATE_TIME_FORMAT = "yyyy-MM-dd hh:mm:ss tt";
 
         /// <summary>
+        /// Failed results directory (typically on the C: drive)
+        /// </summary>
+        public const string DMS_FAILED_RESULTS_DIRECTORY_NAME = "DMS_FailedResults";
+
+        /// <summary>
         /// Text to store in m_message when no results passed filters
         /// </summary>
         /// <remarks>
@@ -474,7 +479,7 @@ namespace AnalysisManagerBase
             if (string.IsNullOrWhiteSpace(failedResultsFolderPath))
             {
                 LogErrorToDatabase("Manager parameter FailedResultsFolderPath not defined for manager " + m_mgrParams.ManagerName);
-                failedResultsFolderPath = @"C:\DMS_FailedResults";
+                failedResultsFolderPath = @"C:\" + DMS_FAILED_RESULTS_DIRECTORY_NAME;
             }
 
             LogWarning("Processing interrupted; copying results to archive folder: " + failedResultsFolderPath);

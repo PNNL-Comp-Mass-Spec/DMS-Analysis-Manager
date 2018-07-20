@@ -524,7 +524,7 @@ namespace AnalysisManagerProg
                         if (localWorkDir.Parent == null)
                             m_mgrParams.SetParam(clsAnalysisMgrSettings.MGR_PARAM_FAILED_RESULTS_FOLDER_PATH, "");
                         else
-                            m_mgrParams.SetParam(clsAnalysisMgrSettings.MGR_PARAM_FAILED_RESULTS_FOLDER_PATH, Path.Combine(localWorkDir.Parent.FullName, "DMS_FailedResults"));
+                            m_mgrParams.SetParam(clsAnalysisMgrSettings.MGR_PARAM_FAILED_RESULTS_FOLDER_PATH, Path.Combine(localWorkDir.Parent.FullName, clsAnalysisToolRunnerBase.DMS_FAILED_RESULTS_DIRECTORY_NAME));
 
                     }
                     else
@@ -534,7 +534,7 @@ namespace AnalysisManagerProg
                 }
                 else
                 {
-                    m_mgrParams.SetParam(clsAnalysisMgrSettings.MGR_PARAM_FAILED_RESULTS_FOLDER_PATH, @"C:\DMS_FailedResults");
+                    m_mgrParams.SetParam(clsAnalysisMgrSettings.MGR_PARAM_FAILED_RESULTS_FOLDER_PATH, @"C:\" + clsAnalysisToolRunnerBase.DMS_FAILED_RESULTS_DIRECTORY_NAME);
                 }
             }
 
