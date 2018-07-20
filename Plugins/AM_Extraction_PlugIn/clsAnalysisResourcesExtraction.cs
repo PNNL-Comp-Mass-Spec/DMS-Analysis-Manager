@@ -1153,19 +1153,28 @@ namespace AnalysisManagerExtractionPlugin
             // Retrieve the _DTA.txt file
             // Note that if the file was found in MyEMSL then RetrieveDtaFiles will auto-call ProcessMyEMSLDownloadQueue to download the file
 
-            if (!FileSearch.RetrieveDtaFiles())
-            {
-                var sharedResultsFolder = m_jobParams.GetParam("SharedResultsFolders");
-                if (!string.IsNullOrEmpty(sharedResultsFolder))
-                {
-                    m_message += "; shared results folder is " + sharedResultsFolder;
-                }
+            if (FileSearch.RetrieveDtaFiles())
+                return CloseOutType.CLOSEOUT_SUCCESS;
 
-                // Errors were reported in function call, so just return
+            var sharedResultsFolders = m_jobParams.GetParam(clsAnalysisResources.JOB_PARAM_SHARED_RESULTS_FOLDERS);
+            if (string.IsNullOrEmpty(sharedResultsFolders))
+            {
+                m_message = clsGlobal.AppendToComment(m_message, "Job parameter SharedResultsFolders is empty");
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
-            return CloseOutType.CLOSEOUT_SUCCESS;
+            if (sharedResultsFolders.Contains(","))
+            {
+                m_message = clsGlobal.AppendToComment(m_message, "shared results folders: " + sharedResultsFolders);
+            }
+            else
+            {
+                m_message = clsGlobal.AppendToComment(m_message, "shared results folder " + sharedResultsFolders);
+            }
+
+            // Errors were reported in function call, so just return
+            return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+
         }
 
         // Deprecated function
