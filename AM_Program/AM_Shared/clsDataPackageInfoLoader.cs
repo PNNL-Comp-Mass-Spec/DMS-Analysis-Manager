@@ -403,7 +403,13 @@ namespace AnalysisManagerBase
 
         }
 
-        private static clsDataPackageJobInfo ParseDataPackageJobInfoRow(DataRow curRow)
+        /// <summary>
+        /// Parse results from V_DMS_Data_Package_Aggregation_Jobs
+        /// or from 
+        /// </summary>
+        /// <param name="curRow"></param>
+        /// <returns></returns>
+        public static clsDataPackageJobInfo ParseDataPackageJobInfoRow(DataRow curRow)
         {
 
             var dataPkgJob = clsGlobal.DbCInt(curRow["Job"]);

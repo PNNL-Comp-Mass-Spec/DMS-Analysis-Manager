@@ -2934,7 +2934,7 @@ namespace AnalysisManagerBase
                 return false;
             }
 
-            jobInfo = ParseDataPackageJobInfoRow(resultSet.Rows[0]);
+            jobInfo = clsDataPackageInfoLoader.ParseDataPackageJobInfoRow(resultSet.Rows[0]);
 
             return true;
 
@@ -3248,57 +3248,6 @@ namespace AnalysisManagerBase
             };
 
             return datasetInfo;
-
-        }
-
-        private static clsDataPackageJobInfo ParseDataPackageJobInfoRow(DataRow curRow)
-        {
-
-            var dataPkgJob = clsGlobal.DbCInt(curRow["Job"]);
-            var dataPkgDataset = clsGlobal.DbCStr(curRow["Dataset"]);
-
-            var jobInfo = new clsDataPackageJobInfo(dataPkgJob, dataPkgDataset)
-            {
-                DatasetID = clsGlobal.DbCInt(curRow["DatasetID"]),
-                Instrument = clsGlobal.DbCStr(curRow["Instrument"]),
-                InstrumentGroup = clsGlobal.DbCStr(curRow["InstrumentGroup"]),
-                Experiment = clsGlobal.DbCStr(curRow["Experiment"]),
-                Experiment_Reason = clsGlobal.DbCStr(curRow["Experiment_Reason"]),
-                Experiment_Comment = clsGlobal.DbCStr(curRow["Experiment_Comment"]),
-                Experiment_Organism = clsGlobal.DbCStr(curRow["Organism"]),
-                Experiment_NEWT_ID = clsGlobal.DbCInt(curRow["Experiment_NEWT_ID"]),
-                Experiment_NEWT_Name = clsGlobal.DbCStr(curRow["Experiment_NEWT_Name"]),
-                Tool = clsGlobal.DbCStr(curRow["Tool"]),
-                ResultType = clsGlobal.DbCStr(curRow["ResultType"])
-            };
-
-            jobInfo.PeptideHitResultType = clsPHRPReader.GetPeptideHitResultType(jobInfo.ResultType);
-            jobInfo.SettingsFileName = clsGlobal.DbCStr(curRow["SettingsFileName"]);
-            jobInfo.ParameterFileName = clsGlobal.DbCStr(curRow["ParameterFileName"]);
-            jobInfo.OrganismDBName = clsGlobal.DbCStr(curRow["OrganismDBName"]);
-            jobInfo.ProteinCollectionList = clsGlobal.DbCStr(curRow["ProteinCollectionList"]);
-            jobInfo.ProteinOptions = clsGlobal.DbCStr(curRow["ProteinOptions"]);
-
-            // This will be updated later for SplitFasta jobs (using function LookupJobParametersFromHistory)
-            jobInfo.NumberOfClonedSteps = 0;
-
-            if (string.IsNullOrWhiteSpace(jobInfo.ProteinCollectionList) || jobInfo.ProteinCollectionList == "na")
-            {
-                jobInfo.LegacyFastaFileName = string.Copy(jobInfo.OrganismDBName);
-            }
-            else
-            {
-                jobInfo.LegacyFastaFileName = "na";
-            }
-
-            jobInfo.ServerStoragePath = clsGlobal.DbCStr(curRow["ServerStoragePath"]);
-            jobInfo.ArchiveStoragePath = clsGlobal.DbCStr(curRow["ArchiveStoragePath"]);
-            jobInfo.ResultsFolderName = clsGlobal.DbCStr(curRow["ResultsFolder"]);
-            jobInfo.DatasetFolderName = clsGlobal.DbCStr(curRow["DatasetFolder"]);
-            jobInfo.SharedResultsFolder = clsGlobal.DbCStr(curRow["SharedResultsFolder"]);
-            jobInfo.RawDataType = clsGlobal.DbCStr(curRow["RawDataType"]);
-
-            return jobInfo;
 
         }
 
