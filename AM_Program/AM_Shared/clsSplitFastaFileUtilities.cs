@@ -237,29 +237,28 @@ namespace AnalysisManagerBase
 
             const short retryCount = 3;
 
-            var SqlStr = new System.Text.StringBuilder();
+            var sqlQuery = new System.Text.StringBuilder();
 
             organismName = string.Empty;
 
-            // Query V_Legacy_Static_File_Locations for the path to the fasta file
+            // Query V_Legacy_Static_File_Locations in the Protein_Sequences database for the path to the fasta file
+            // This queries table T_DMS_Organism_DB_Info in MT_Main
+            // That table is updated using data in DMS5
             //
-            SqlStr.Append(" SELECT TOP 1 Full_Path, Organism_Name ");
-            SqlStr.Append(" FROM V_Legacy_Static_File_Locations");
-            SqlStr.Append(" WHERE FileName = '" + legacyFASTAFileName + "'");
+            sqlQuery.Append(" SELECT TOP 1 Full_Path, Organism_Name ");
+            sqlQuery.Append(" FROM V_Legacy_Static_File_Locations");
+            sqlQuery.Append(" WHERE FileName = '" + legacyFASTAFileName + "'");
 
-
-            var success = clsGlobal.GetDataTableByQuery(SqlStr.ToString(), mProteinSeqsDBConnectionString, "GetLegacyFastaFilePath", retryCount, out var dtResults);
 
             if (!success)
             {
                 return string.Empty;
             }
 
-
-            foreach (DataRow CurRow in dtResults.Rows)
+            foreach (DataRow dataRow in dtResults.Rows)
             {
-                var legacyFASTAFilePath = clsGlobal.DbCStr(CurRow[0]);
-                organismName = clsGlobal.DbCStr(CurRow[1]);
+                var legacyFASTAFilePath = clsGlobal.DbCStr(dataRow[0]);
+                organismName = clsGlobal.DbCStr(dataRow[1]);
 
                 return legacyFASTAFilePath;
             }
@@ -465,13 +464,72 @@ namespace AnalysisManagerBase
             {
 
                 currentTask = "GetLegacyFastaFilePath for splitFastaName";
-                var fastaFilePath = GetLegacyFastaFilePath(splitFastaName, out var _);
+                var knownSplitFastaFilePath = GetLegacyFastaFilePath(splitFastaName, out _);
+                var reSplitFiles = false;
 
-                if (!string.IsNullOrWhiteSpace(fastaFilePath))
+                if (!string.IsNullOrWhiteSpace(knownSplitFastaFilePath))
                 {
                     // Split file is defined in the database
-                    mErrorMessage = string.Empty;
-                    return true;
+                    // Make sure it exists on disk (admins occasionally delete split FASTA files to reclaim disk space)
+                    try
+                    {
+                        if (!mFileCopyUtilities.FileExistsWithRetry(knownSplitFastaFilePath, BaseLogger.LogLevels.DEBUG))
+                        {
+                            // If the directory exists but no split fasta files exist, assume that we need to re-split the FASTA file
+                            var existingSplitFastaFile = new FileInfo(knownSplitFastaFilePath);
+                            if (existingSplitFastaFile.Directory == null || !existingSplitFastaFile.Directory.Exists)
+                            {
+                                ErrorMessage = "Cannot find directory with the base FASTA file: " + knownSplitFastaFilePath;
+                                OnErrorEvent(ErrorMessage);
+                                return false;
+                            }
+
+                            // Extract out the base split fasta name
+                            // For example, extract out "OrgDB_2018-07-14_25x" from "OrgDB_2018-07-14_25x_01.fasta"
+                            var reBaseName = new System.Text.RegularExpressions.Regex(@"(?<BaseName>.+\d+x)_\d+");
+                            var reMatch = reBaseName.Match(Path.GetFileNameWithoutExtension(knownSplitFastaFilePath));
+
+                            if (!reMatch.Success)
+                            {
+                                ErrorMessage = "Cannot determine the base split FASTA file name from: " + knownSplitFastaFilePath;
+                                OnErrorEvent(ErrorMessage);
+                                return false;
+                            }
+
+                            // Look for files matching the base name
+
+                            var splitFastaMatchSpec = reMatch.Groups["BaseName"].Value + "*.fasta";
+
+                            var existingSplitFastaFiles = existingSplitFastaFile.Directory.GetFiles(splitFastaMatchSpec);
+                            long totalSize = 0;
+                            foreach (var splitFastaFile in existingSplitFastaFiles)
+                            {
+                                totalSize += splitFastaFile.Length;
+                            }
+
+                            if (existingSplitFastaFiles.Length == 0 || totalSize == 0)
+                            {
+                                OnWarningEvent("Split FASTA files not found; will re-generate them to obtain " + knownSplitFastaFilePath);
+                                reSplitFiles = true;
+                            }
+                            else
+                            {
+                                ErrorMessage = "One or more split FASTA files exist, but the required one is missing: " + knownSplitFastaFilePath;
+                                OnErrorEvent(ErrorMessage);
+                                return false;
+                            }
+                        }
+                    }
+                    catch (Exception ex2)
+                    {
+                        OnErrorEvent("Exception while checking for file " + knownSplitFastaFilePath, ex2);
+                    }
+
+                    if (!reSplitFiles)
+                    {
+                        ErrorMessage = string.Empty;
+                        return true;
+                    }
                 }
 
                 // Split file not found
@@ -511,7 +569,7 @@ namespace AnalysisManagerBase
                 // It's possible another process created the .Fasta file while this process was waiting for the other process's lock file to disappear
 
                 currentTask = "GetLegacyFastaFilePath for splitFastaName (2nd time)";
-                fastaFilePath = GetLegacyFastaFilePath(splitFastaName, out _);
+                var fastaFilePath = GetLegacyFastaFilePath(splitFastaName, out _);
                 if (!string.IsNullOrWhiteSpace(fastaFilePath))
                 {
                     // The file now exists

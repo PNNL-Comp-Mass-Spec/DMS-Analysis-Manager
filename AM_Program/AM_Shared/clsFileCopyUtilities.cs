@@ -463,11 +463,9 @@ namespace AnalysisManagerBase
         /// <param name="logMsgTypeIfNotFound">Type of message to log if the file is not found</param>
         /// <returns></returns>
         /// <remarks></remarks>
-        private bool FileExistsWithRetry(string fileName, BaseLogger.LogLevels logMsgTypeIfNotFound)
+        public bool FileExistsWithRetry(string fileName, BaseLogger.LogLevels logMsgTypeIfNotFound)
         {
-
             return FileExistsWithRetry(fileName, DEFAULT_FILE_EXISTS_RETRY_HOLDOFF_SECONDS, logMsgTypeIfNotFound);
-
         }
 
         /// <summary>
