@@ -27,34 +27,26 @@ namespace AnalysisManagerBase
         private readonly string mDMSConnectionString;
         private readonly string mProteinSeqsDBConnectionString;
 
-        private string mMSGFPlusIndexFilesFolderPathLegacyDB;
         private readonly int mNumSplitParts;
 
         private readonly string mManagerName;
 
-        private string mErrorMessage;
-
-        private bool mWaitingForLockFile;
         private clsFastaFileSplitter mSplitter;
 
         /// <summary>
         /// Most recent error message
         /// </summary>
-        public string ErrorMessage => mErrorMessage;
+        public string ErrorMessage { get; private set; }
 
         /// <summary>
         /// MSGF+ index files folder path
         /// </summary>
-        public string MSGFPlusIndexFilesFolderPathLegacyDB
-        {
-            get => mMSGFPlusIndexFilesFolderPathLegacyDB;
-            set => mMSGFPlusIndexFilesFolderPathLegacyDB = value;
-        }
+        public string MSGFPlusIndexFilesFolderPathLegacyDB { get; set; }
 
         /// <summary>
         /// True if waiting for a lock file
         /// </summary>
-        public bool WaitingForLockFile => mWaitingForLockFile;
+        public bool WaitingForLockFile { get; private set; }
 
         /// <summary>
         /// Constructor
@@ -71,10 +63,10 @@ namespace AnalysisManagerBase
             mNumSplitParts = numSplitParts;
             mManagerName = managerName;
 
-            mMSGFPlusIndexFilesFolderPathLegacyDB = @"\\Proto-7\MSGFPlus_Index_Files\Other";
+            MSGFPlusIndexFilesFolderPathLegacyDB = @"\\Proto-7\MSGFPlus_Index_Files\Other";
 
-            mErrorMessage = string.Empty;
-            mWaitingForLockFile = false;
+            ErrorMessage = string.Empty;
+            WaitingForLockFile = false;
 
         }
 
@@ -106,7 +98,7 @@ namespace AnalysisManagerBase
                     lockFi.Refresh();
                     if (lockFi.Exists)
                     {
-                        mWaitingForLockFile = true;
+                        WaitingForLockFile = true;
 
                         var lockTimeoutTime = lockFi.LastWriteTimeUtc.AddMinutes(60);
                         OnStatusEvent(LOCK_FILE_PROGRESS_TEXT + " found; waiting until it is deleted or until " +
@@ -129,7 +121,7 @@ namespace AnalysisManagerBase
                             lockFi.Delete();
                         }
 
-                        mWaitingForLockFile = false;
+                        WaitingForLockFile = false;
 
                     }
 
@@ -324,15 +316,15 @@ namespace AnalysisManagerBase
                                 if (resultCode != 0)
                                 {
                                     // Error occurred
-                                    mErrorMessage = SP_NAME_UPDATE_ORGANISM_DB_FILE + " returned a non-zero error code of " + resultCode;
+                                    ErrorMessage = SP_NAME_UPDATE_ORGANISM_DB_FILE + " returned a non-zero error code of " + resultCode;
 
                                     var statusMessage = cmd.Parameters["@Message"].Value;
                                     if ((statusMessage != null))
                                     {
-                                        mErrorMessage = mErrorMessage + "; " + Convert.ToString(statusMessage);
+                                        ErrorMessage = ErrorMessage + "; " + Convert.ToString(statusMessage);
                                     }
 
-                                    OnErrorEvent(mErrorMessage);
+                                    OnErrorEvent(ErrorMessage);
                                     return false;
                                 }
 
@@ -344,8 +336,8 @@ namespace AnalysisManagerBase
                         catch (Exception ex)
                         {
                             retryCount -= 1;
-                            mErrorMessage = "Exception storing fasta file " + splitFastaName + " in T_Organism_DB_File: " + ex.Message;
-                            OnErrorEvent(mErrorMessage);
+                            ErrorMessage = "Exception storing fasta file " + splitFastaName + " in T_Organism_DB_File: " + ex.Message;
+                            OnErrorEvent(ErrorMessage);
                             // Delay for 2 seconds before trying again
                             clsGlobal.IdleLoop(2);
 
@@ -358,8 +350,8 @@ namespace AnalysisManagerBase
             }
             catch (Exception ex)
             {
-                mErrorMessage = "Exception in StoreSplitFastaFileNames for " + splitFastaName + ": " + ex.Message;
-                OnErrorEvent(mErrorMessage);
+                ErrorMessage = "Exception in StoreSplitFastaFileNames for " + splitFastaName + ": " + ex.Message;
+                OnErrorEvent(ErrorMessage);
                 return false;
             }
 
@@ -427,8 +419,8 @@ namespace AnalysisManagerBase
                     catch (Exception ex)
                     {
                         retryCount -= 1;
-                        mErrorMessage = "Exception updating the cached organism DB info on ProteinSeqs: " + ex.Message;
-                        OnErrorEvent(mErrorMessage);
+                        ErrorMessage = "Exception updating the cached organism DB info on ProteinSeqs: " + ex.Message;
+                        OnErrorEvent(ErrorMessage);
                         // Delay for 2 seconds before trying again
                         clsGlobal.IdleLoop(2);
 
@@ -439,8 +431,8 @@ namespace AnalysisManagerBase
             }
             catch (Exception ex)
             {
-                mErrorMessage = "Exception in UpdateCachedOrganismDBInfo: " + ex.Message;
-                OnErrorEvent(mErrorMessage);
+                ErrorMessage = "Exception in UpdateCachedOrganismDBInfo: " + ex.Message;
+                OnErrorEvent(ErrorMessage);
             }
 
         }
@@ -477,8 +469,8 @@ namespace AnalysisManagerBase
                 if (string.IsNullOrWhiteSpace(baseFastaFilePath))
                 {
                     // Base file not found
-                    mErrorMessage = "Cannot find base FASTA file in DMS using V_Legacy_Static_File_Locations: " + baseFastaFilePath + "; ConnectionString: " + mProteinSeqsDBConnectionString;
-                    OnErrorEvent(mErrorMessage);
+                    ErrorMessage = "Cannot find base FASTA file in DMS using V_Legacy_Static_File_Locations: " + baseFastaFilePath + "; ConnectionString: " + mProteinSeqsDBConnectionString;
+                    OnErrorEvent(ErrorMessage);
                     return false;
                 }
 
@@ -486,8 +478,8 @@ namespace AnalysisManagerBase
 
                 if (!fiBaseFastaFile.Exists)
                 {
-                    mErrorMessage = "Cannot split FASTA file; file not found: " + baseFastaFilePath;
-                    OnErrorEvent(mErrorMessage);
+                    ErrorMessage = "Cannot split FASTA file; file not found: " + baseFastaFilePath;
+                    OnErrorEvent(ErrorMessage);
                     return false;
                 }
 
@@ -511,7 +503,7 @@ namespace AnalysisManagerBase
                 if (!string.IsNullOrWhiteSpace(fastaFilePath))
                 {
                     // The file now exists
-                    mErrorMessage = string.Empty;
+                    ErrorMessage = string.Empty;
                     currentTask = "DeleteLockStream (fasta file now exists)";
                     DeleteLockStream(lockFilePath, lockStream);
                     return true;
@@ -537,10 +529,10 @@ namespace AnalysisManagerBase
 
                 if (!success)
                 {
-                    if (string.IsNullOrWhiteSpace(mErrorMessage))
+                    if (string.IsNullOrWhiteSpace(ErrorMessage))
                     {
-                        mErrorMessage = "FastaFileSplitter returned false; unknown error";
-                        OnErrorEvent(mErrorMessage);
+                        ErrorMessage = "FastaFileSplitter returned false; unknown error";
+                        OnErrorEvent(ErrorMessage);
                     }
                     DeleteLockStream(lockFilePath, lockStream);
                     return false;
@@ -553,8 +545,8 @@ namespace AnalysisManagerBase
                     var fiSplitFastaFile = new FileInfo(splitFileInfo.FilePath);
                     if (!fiSplitFastaFile.Exists)
                     {
-                        mErrorMessage = "Newly created split fasta file not found: " + splitFileInfo.FilePath;
-                        OnErrorEvent(mErrorMessage);
+                        ErrorMessage = "Newly created split fasta file not found: " + splitFileInfo.FilePath;
+                        OnErrorEvent(ErrorMessage);
                         DeleteLockStream(lockFilePath, lockStream);
                         return false;
                     }
@@ -567,10 +559,10 @@ namespace AnalysisManagerBase
                 success = StoreSplitFastaFileNames(organismNameBaseFasta, mSplitter.SplitFastaFileInfo);
                 if (!success)
                 {
-                    if (string.IsNullOrWhiteSpace(mErrorMessage))
+                    if (string.IsNullOrWhiteSpace(ErrorMessage))
                     {
-                        mErrorMessage = "StoreSplitFastaFileNames returned false; unknown error";
-                        OnErrorEvent(mErrorMessage);
+                        ErrorMessage = "StoreSplitFastaFileNames returned false; unknown error";
+                        OnErrorEvent(ErrorMessage);
                     }
                     DeleteLockStream(lockFilePath, lockStream);
                     return false;
@@ -582,9 +574,9 @@ namespace AnalysisManagerBase
 
                 // Delete any cached MSGFPlus index files corresponding to the split fasta files
 
-                if (!string.IsNullOrWhiteSpace(mMSGFPlusIndexFilesFolderPathLegacyDB))
+                if (!string.IsNullOrWhiteSpace(MSGFPlusIndexFilesFolderPathLegacyDB))
                 {
-                    var diIndexFolder = new DirectoryInfo(mMSGFPlusIndexFilesFolderPathLegacyDB);
+                    var diIndexFolder = new DirectoryInfo(MSGFPlusIndexFilesFolderPathLegacyDB);
 
 
                     if (diIndexFolder.Exists)
@@ -628,8 +620,8 @@ namespace AnalysisManagerBase
             }
             catch (Exception ex)
             {
-                mErrorMessage = "Exception in ValidateSplitFastaFile for " + splitFastaName + " at " + currentTask + ": " + ex.Message;
-                OnErrorEvent(mErrorMessage);
+                ErrorMessage = "Exception in ValidateSplitFastaFile for " + splitFastaName + " at " + currentTask + ": " + ex.Message;
+                OnErrorEvent(ErrorMessage);
                 return false;
             }
 
@@ -661,8 +653,8 @@ namespace AnalysisManagerBase
 
         private void mSplitter_ErrorEvent(string message)
         {
-            mErrorMessage = "Fasta Splitter Error: " + message;
-            OnErrorEvent(message);
+            ErrorMessage = "Fasta Splitter Error: " + message;
+            OnErrorEvent(message, ex);
         }
 
         private void mSplitter_WarningEvent(string message)
