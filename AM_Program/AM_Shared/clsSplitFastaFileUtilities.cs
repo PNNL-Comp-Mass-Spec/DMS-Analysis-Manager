@@ -25,6 +25,11 @@ namespace AnalysisManagerBase
 
         private const string SP_NAME_REFRESH_CACHED_ORG_DB_INFO = "RefreshCachedOrganismDBInfo";
         private readonly string mDMSConnectionString;
+        /// <summary>
+        /// File copy utilities
+        /// </summary>
+        private readonly clsFileCopyUtilities mFileCopyUtilities;
+
         private readonly string mProteinSeqsDBConnectionString;
 
         private readonly int mNumSplitParts;
@@ -55,8 +60,14 @@ namespace AnalysisManagerBase
         /// <param name="proteinSeqsDBConnectionString"></param>
         /// <param name="numSplitParts"></param>
         /// <param name="managerName"></param>
+        /// <param name="fileCopyUtils"></param>
         /// <remarks></remarks>
-        public clsSplitFastaFileUtilities(string dmsConnectionString, string proteinSeqsDBConnectionString, int numSplitParts, string managerName)
+        public clsSplitFastaFileUtilities(
+            string dmsConnectionString,
+            string proteinSeqsDBConnectionString,
+            int numSplitParts,
+            string managerName,
+            clsFileCopyUtilities fileCopyUtils)
         {
             mDMSConnectionString = dmsConnectionString;
             mProteinSeqsDBConnectionString = proteinSeqsDBConnectionString;
@@ -68,6 +79,7 @@ namespace AnalysisManagerBase
             ErrorMessage = string.Empty;
             WaitingForLockFile = false;
 
+            mFileCopyUtilities = fileCopyUtils;
         }
 
         /// <summary>

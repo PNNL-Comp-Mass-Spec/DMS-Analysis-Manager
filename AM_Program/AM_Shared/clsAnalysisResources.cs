@@ -1379,14 +1379,16 @@ namespace AnalysisManagerBase
                 // and that DMS knows about them
                 //
                 // Do not use RegisterEvents with m_SplitFastaFileUtility because we handle the progress with a custom handler
-                m_SplitFastaFileUtility = new clsSplitFastaFileUtilities(dmsConnectionString, proteinSeqsDBConnectionString, numberOfClonedSteps, m_MgrName);
+                m_SplitFastaFileUtility = new clsSplitFastaFileUtilities(
+                    dmsConnectionString, proteinSeqsDBConnectionString,
+                    numberOfClonedSteps, m_MgrName, m_FileCopyUtilities);
+
                 RegisterEvents(m_SplitFastaFileUtility);
 
                 m_SplitFastaFileUtility.ProgressUpdate -= ProgressUpdateHandler;
                 m_SplitFastaFileUtility.ProgressUpdate += m_SplitFastaFileUtility_ProgressUpdate;
 
                 m_SplitFastaFileUtility.SplittingBaseFastafile += m_SplitFastaFileUtility_SplittingBaseFastaFile;
-
 
                 m_SplitFastaFileUtility.MSGFPlusIndexFilesFolderPathLegacyDB = msgfPlusIndexFilesDirPathLegacyDB;
 
@@ -2584,9 +2586,7 @@ namespace AnalysisManagerBase
         /// <remarks>Returns an empty string if an error</remarks>
         public static string GetSplitFastaFileName(IJobParams jobParams, out string errorMessage)
         {
-
             return GetSplitFastaFileName(jobParams, out errorMessage, out _);
-
         }
 
         /// <summary>
