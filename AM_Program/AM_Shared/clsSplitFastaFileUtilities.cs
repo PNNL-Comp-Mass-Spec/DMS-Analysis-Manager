@@ -6,7 +6,7 @@ using System.Data.SqlClient;
 using System.IO;
 using FastaFileSplitterDLL;
 using PRISM;
-
+using PRISM.Logging;
 
 namespace AnalysisManagerBase
 {
@@ -528,13 +528,12 @@ namespace AnalysisManagerBase
 
                 mSplitter = new clsFastaFileSplitter
                 {
-                    ShowMessages = true,
                     LogMessagesToFile = false
                 };
 
                 mSplitter.ErrorEvent += mSplitter_ErrorEvent;
                 mSplitter.WarningEvent += mSplitter_WarningEvent;
-                mSplitter.ProgressChanged += mSplitter_ProgressChanged;
+                mSplitter.ProgressUpdate += mSplitter_ProgressChanged;
 
                 currentTask = "SplitFastaFile " + fiBaseFastaFile.FullName;
                 var success = mSplitter.SplitFastaFile(fiBaseFastaFile.FullName, fiBaseFastaFile.DirectoryName, mNumSplitParts);
@@ -663,7 +662,7 @@ namespace AnalysisManagerBase
             SplittingBaseFastafile?.Invoke(baseFastaFileName, numSplitParts);
         }
 
-        private void mSplitter_ErrorEvent(string message)
+        private void mSplitter_ErrorEvent(string message, Exception ex)
         {
             ErrorMessage = "Fasta Splitter Error: " + message;
             OnErrorEvent(message, ex);
