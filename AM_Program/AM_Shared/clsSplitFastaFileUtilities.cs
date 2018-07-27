@@ -24,12 +24,22 @@ namespace AnalysisManagerBase
         private const string SP_NAME_UPDATE_ORGANISM_DB_FILE = "AddUpdateOrganismDBFile";
 
         private const string SP_NAME_REFRESH_CACHED_ORG_DB_INFO = "RefreshCachedOrganismDBInfo";
+
+        /// <summary>
+        /// DMS5 database connection string
+        /// </summary>
+        /// <remarks>Gigasax.DMS5</remarks>
         private readonly string mDMSConnectionString;
+
         /// <summary>
         /// File copy utilities
         /// </summary>
         private readonly clsFileCopyUtilities mFileCopyUtilities;
 
+        /// <summary>
+        /// Protein Sequences DB connection string
+        /// </summary>
+        /// <remarks>Proteinseqs.Protein_Sequences</remarks>
         private readonly string mProteinSeqsDBConnectionString;
 
         private readonly int mNumSplitParts;
@@ -236,6 +246,7 @@ namespace AnalysisManagerBase
         {
 
             const short retryCount = 3;
+            const int timeoutSeconds = 120;
 
             var sqlQuery = new System.Text.StringBuilder();
 
@@ -249,6 +260,7 @@ namespace AnalysisManagerBase
             sqlQuery.Append(" FROM V_Legacy_Static_File_Locations");
             sqlQuery.Append(" WHERE FileName = '" + legacyFASTAFileName + "'");
 
+            var success = clsGlobal.GetDataTableByQuery(sqlQuery.ToString(), mProteinSeqsDBConnectionString, "GetLegacyFastaFilePath", retryCount, out var dtResults, timeoutSeconds);
 
             if (!success)
             {
