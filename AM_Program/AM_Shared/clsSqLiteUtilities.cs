@@ -231,7 +231,7 @@ namespace AnalysisManagerBase
                     var tableCreateSql = result.ToString();
 
                     // Look for any indices on this table
-                    var dctIndexInfo = GetDBObjects(cnSourceDB, "index", out var _, tableName);
+                    var dctIndexInfo = GetDBObjects(cnSourceDB, "index", out _, tableName);
 
                     // Connect to the target database
                     using (var cnTarget = new SQLiteConnection("Data Source = " + targetDBPath))
@@ -288,7 +288,7 @@ namespace AnalysisManagerBase
         private Dictionary<string, string> GetDBObjects(SQLiteConnection cnDatabase, string objectType)
         {
             var tableName = string.Empty;
-            return GetDBObjects(cnDatabase, objectType, out var _, tableName);
+            return GetDBObjects(cnDatabase, objectType, out _, tableName);
         }
 
         private Dictionary<string, string> GetDBObjects(SQLiteConnection cnDatabase, string objectType, out Dictionary<string, string> dctIndexToTableMap)
