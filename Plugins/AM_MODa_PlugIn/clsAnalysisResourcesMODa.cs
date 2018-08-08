@@ -61,7 +61,7 @@ namespace AnalysisManagerMODaPlugIn
 
             if (!FileSearch.RetrieveDtaFiles())
             {
-                var sharedResultsFolders = m_jobParams.GetParam(clsAnalysisResources.JOB_PARAM_SHARED_RESULTS_FOLDERS);
+                var sharedResultsFolders = m_jobParams.GetParam(JOB_PARAM_SHARED_RESULTS_FOLDERS);
                 if (string.IsNullOrEmpty(sharedResultsFolders))
                 {
                     m_message = clsGlobal.AppendToComment(m_message, "Job parameter SharedResultsFolders is empty");
