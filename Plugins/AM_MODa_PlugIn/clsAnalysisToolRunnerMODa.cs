@@ -20,29 +20,27 @@ namespace AnalysisManagerMODaPlugIn
     {
         #region "Constants and Enums"
 
-        protected const string MODa_CONSOLE_OUTPUT = "MODa_ConsoleOutput.txt";
-        protected const string MODa_JAR_NAME = "moda.jar";
+        private const string MODa_CONSOLE_OUTPUT = "MODa_ConsoleOutput.txt";
+        private const string MODa_JAR_NAME = "moda.jar";
 
-        protected const string REGEX_MODa_PROGRESS = @"MOD-A \| (\d+)/(\d+)";
+        private const float PROGRESS_PCT_STARTING = 1;
+        private const float PROGRESS_PCT_COMPLETE = 99;
 
-        protected const float PROGRESS_PCT_STARTING = 1;
-        protected const float PROGRESS_PCT_COMPLETE = 99;
-
-        protected const string MODA_RESULTS_FILE_SUFFIX = "_moda.txt";
+        private const string MODA_RESULTS_FILE_SUFFIX = "_moda.txt";
 
         #endregion
 
         #region "Module Variables"
 
-        protected bool mToolVersionWritten;
-        protected string mMODaVersion;
+        private bool mToolVersionWritten;
+        private string mMODaVersion;
 
-        protected string mMODaProgLoc;
-        protected string mConsoleOutputErrorMsg;
+        private string mMODaProgLoc;
+        private string mConsoleOutputErrorMsg;
 
-        protected string mMODaResultsFilePath;
+        private string mMODaResultsFilePath;
 
-        protected clsRunDosProgram mCmdRunner;
+        private clsRunDosProgram mCmdRunner;
 
         #endregion
 
@@ -71,9 +69,9 @@ namespace AnalysisManagerMODaPlugIn
 
                 // Verify that program files exist
 
-                // JavaProgLoc will typically be "C:\Program Files\Java\jre8\bin\java.exe"
-                var JavaProgLoc = GetJavaProgLoc();
-                if (string.IsNullOrEmpty(JavaProgLoc))
+                // javaProgLoc will typically be "C:\Program Files\Java\jre8\bin\java.exe"
+                var javaProgLoc = GetJavaProgLoc();
+                if (string.IsNullOrEmpty(javaProgLoc))
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -87,22 +85,22 @@ namespace AnalysisManagerMODaPlugIn
                 }
 
                 // Run MODa, then post process the results
-                var processingSuccess = StartMODa(JavaProgLoc);
+                var processingSuccess = StartMODa(javaProgLoc);
 
                 if (processingSuccess)
                 {
                     // Look for the MODa results file
                     // If it exists, zip it
-                    var fiResultsFile = new FileInfo(mMODaResultsFilePath);
+                    var resultsFile = new FileInfo(mMODaResultsFilePath);
 
-                    if (fiResultsFile.Exists)
+                    if (resultsFile.Exists)
                     {
                         // Zip the output file
-                        var zipSuccess = ZipOutputFile(fiResultsFile, "MODa");
+                        var zipSuccess = ZipOutputFile(resultsFile, "MODa");
 
                         if (zipSuccess)
                         {
-                            m_jobParams.AddResultFileToSkip(fiResultsFile.Name);
+                            m_jobParams.AddResultFileToSkip(resultsFile.Name);
                         }
                         else
                         {
@@ -162,7 +160,7 @@ namespace AnalysisManagerMODaPlugIn
 
         }
 
-        protected bool StartMODa(string JavaProgLoc)
+        private bool StartMODa(string javaProgLoc)
         {
             // We will store the MODa version info in the database after the header block is written to file MODa_ConsoleOutput.txt
 
@@ -189,19 +187,20 @@ namespace AnalysisManagerMODaPlugIn
             LogMessage("Running MODa");
 
             // Lookup the amount of memory to reserve for Java; default to 2 GB
-            var intJavaMemorySize = m_jobParams.GetJobParameter("MODaJavaMemorySize", 2000);
-            if (intJavaMemorySize < 512)
-                intJavaMemorySize = 512;
+            var javaMemorySize = m_jobParams.GetJobParameter("MODaJavaMemorySize", 2000);
+            if (javaMemorySize < 512)
+                javaMemorySize = 512;
 
             var paramFilePath = Path.Combine(m_WorkDir, paramFileName);
             mMODaResultsFilePath = Path.Combine(m_WorkDir, m_Dataset + MODA_RESULTS_FILE_SUFFIX);
 
             // Set up and execute a program runner to run MODa
-            var cmdStr = " -Xmx" + intJavaMemorySize + "M -jar " + mMODaProgLoc;
-            cmdStr += " -i " + paramFilePath;
-            cmdStr += " -o " + mMODaResultsFilePath;
+            var cmdStr = " -Xmx" + javaMemorySize + "M" +
+                         " -jar " + mMODaProgLoc +
+                         " -i " + paramFilePath +
+                         " -o " + mMODaResultsFilePath;
 
-            LogDebug(JavaProgLoc + " " + cmdStr);
+            LogDebug(javaProgLoc + " " + cmdStr);
 
             mCmdRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel);
             RegisterEvents(mCmdRunner);
@@ -219,7 +218,7 @@ namespace AnalysisManagerMODaPlugIn
 
             // Start the program and wait for it to finish
             // However, while it's running, LoopWaiting will get called via events
-            var blnSuccess = mCmdRunner.RunProgram(JavaProgLoc, cmdStr, "MODa", true);
+            var success = mCmdRunner.RunProgram(javaProgLoc, cmdStr, "MODa", true);
 
             if (!mToolVersionWritten)
             {
@@ -235,7 +234,7 @@ namespace AnalysisManagerMODaPlugIn
                 LogError(mConsoleOutputErrorMsg);
             }
 
-            if (!blnSuccess)
+            if (!success)
             {
                 LogError("Error running MODa");
 
@@ -297,17 +296,17 @@ namespace AnalysisManagerMODaPlugIn
         /// <summary>
         /// Parse the MODa console output file to determine the MODa version and to track the search progress
         /// </summary>
-        /// <param name="strConsoleOutputFilePath"></param>
+        /// <param name="consoleOutputFilePath"></param>
         /// <remarks></remarks>
-        private void ParseConsoleOutputFile(string strConsoleOutputFilePath)
+        private void ParseConsoleOutputFile(string consoleOutputFilePath)
         {
             try
             {
-                if (!File.Exists(strConsoleOutputFilePath))
+                if (!File.Exists(consoleOutputFilePath))
                 {
                     if (m_DebugLevel >= 4)
                     {
-                        LogDebug("Console output file not found: " + strConsoleOutputFilePath);
+                        LogDebug("Console output file not found: " + consoleOutputFilePath);
                     }
 
                     return;
@@ -315,53 +314,53 @@ namespace AnalysisManagerMODaPlugIn
 
                 if (m_DebugLevel >= 4)
                 {
-                    LogDebug("Parsing file " + strConsoleOutputFilePath);
+                    LogDebug("Parsing file " + consoleOutputFilePath);
                 }
 
-                int intLinesRead;
+                int linesRead;
 
-                var intScansProcessed = 0;
-                var intTotalScans = 0;
-                var strMODaVersionAndDate = string.Empty;
+                var scansProcessed = 0;
+                var totalScans = 0;
+                var modaVersionAndDate = string.Empty;
 
                 mConsoleOutputErrorMsg = string.Empty;
 
-                using (var srInFile = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(consoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
-                    intLinesRead = 0;
-                    while (!srInFile.EndOfStream)
+                    linesRead = 0;
+                    while (!reader.EndOfStream)
                     {
-                        var strLineIn = srInFile.ReadLine();
-                        intLinesRead += 1;
+                        var dataLine = reader.ReadLine();
+                        linesRead += 1;
 
-                        if (string.IsNullOrWhiteSpace(strLineIn))
+                        if (string.IsNullOrWhiteSpace(dataLine))
                             continue;
 
-                        var strLineInLCase = strLineIn.ToLower();
+                        var dataLineLcase = dataLine.ToLower();
 
-                        if (intLinesRead < 6 && string.IsNullOrEmpty(strMODaVersionAndDate) && strLineInLCase.StartsWith("moda"))
+                        if (linesRead < 6 && string.IsNullOrEmpty(modaVersionAndDate) && dataLineLcase.StartsWith("moda"))
                         {
-                            strMODaVersionAndDate = string.Copy(strLineIn);
+                            modaVersionAndDate = string.Copy(dataLine);
                             continue;
                         }
 
-                        if (intLinesRead < 6 && strLineInLCase.StartsWith("release date"))
+                        if (linesRead < 6 && dataLineLcase.StartsWith("release date"))
                         {
-                            strMODaVersionAndDate += ", " + strLineIn;
+                            modaVersionAndDate += ", " + dataLine;
                             continue;
                         }
 
-                        if (strLineInLCase.StartsWith("abnormal termination"))
+                        if (dataLineLcase.StartsWith("abnormal termination"))
                         {
                             if (string.IsNullOrEmpty(mConsoleOutputErrorMsg))
                             {
                                 mConsoleOutputErrorMsg = "Error running MODa:";
                             }
-                            mConsoleOutputErrorMsg += "; " + strLineIn;
+                            mConsoleOutputErrorMsg += "; " + dataLine;
                             continue;
                         }
 
-                        if (strLineInLCase.Contains("failed to read msms spectra file"))
+                        if (dataLineLcase.Contains("failed to read msms spectra file"))
                         {
                             if (string.IsNullOrEmpty(mConsoleOutputErrorMsg))
                             {
@@ -371,13 +370,13 @@ namespace AnalysisManagerMODaPlugIn
                             continue;
                         }
 
-                        if (strLineInLCase.Contains("exception") && strLineInLCase.StartsWith("java"))
+                        if (dataLineLcase.Contains("exception") && dataLineLcase.StartsWith("java"))
                         {
                             if (string.IsNullOrEmpty(mConsoleOutputErrorMsg))
                             {
                                 mConsoleOutputErrorMsg = "Error running MODa:";
                             }
-                            mConsoleOutputErrorMsg += "; " + strLineIn;
+                            mConsoleOutputErrorMsg += "; " + dataLine;
                             continue;
                         }
 
@@ -400,16 +399,16 @@ namespace AnalysisManagerMODaPlugIn
                     }
                 }
 
-                if (intLinesRead >= 5 && string.IsNullOrEmpty(mMODaVersion) && !string.IsNullOrEmpty(strMODaVersionAndDate))
+                if (linesRead >= 5 && string.IsNullOrEmpty(mMODaVersion) && !string.IsNullOrEmpty(modaVersionAndDate))
                 {
-                    mMODaVersion = strMODaVersionAndDate;
+                    mMODaVersion = modaVersionAndDate;
                 }
 
-                var sngActualProgress = ComputeIncrementalProgress(PROGRESS_PCT_STARTING, PROGRESS_PCT_COMPLETE, intScansProcessed, intTotalScans);
+                var actualProgress = ComputeIncrementalProgress(PROGRESS_PCT_STARTING, PROGRESS_PCT_COMPLETE, scansProcessed, totalScans);
 
-                if (m_progress < sngActualProgress)
+                if (m_progress < actualProgress)
                 {
-                    m_progress = sngActualProgress;
+                    m_progress = actualProgress;
                 }
             }
             catch (Exception ex)
@@ -417,7 +416,7 @@ namespace AnalysisManagerMODaPlugIn
                 // Ignore errors here
                 if (m_DebugLevel >= 2)
                 {
-                    LogError("Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
+                    LogError("Error parsing console output file (" + consoleOutputFilePath + "): " + ex.Message);
                 }
             }
         }
@@ -426,14 +425,14 @@ namespace AnalysisManagerMODaPlugIn
         /// Stores the tool version info in the database
         /// </summary>
         /// <remarks></remarks>
-        protected bool StoreToolVersionInfo()
+        private bool StoreToolVersionInfo()
         {
             if (m_DebugLevel >= 2)
             {
                 LogDebug("Determining tool version info");
             }
 
-            var strToolVersionInfo = string.Copy(mMODaVersion);
+            var toolVersionInfo = string.Copy(mMODaVersion);
 
             // Store paths to key files in ioToolFiles
             var ioToolFiles = new List<FileInfo> {
@@ -443,7 +442,7 @@ namespace AnalysisManagerMODaPlugIn
             try
             {
                 // Tool_Version_Info_MODa.txt is required by IDPicker
-                return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, saveToolVersionTextFile: true);
+                return SetStepTaskToolVersion(toolVersionInfo, ioToolFiles, saveToolVersionTextFile: true);
             }
             catch (Exception ex)
             {
@@ -455,17 +454,17 @@ namespace AnalysisManagerMODaPlugIn
         /// <summary>
         /// Reads the console output file and removes the majority of the percent finished messages
         /// </summary>
-        /// <param name="strConsoleOutputFilePath"></param>
+        /// <param name="consoleOutputFilePath"></param>
         /// <remarks></remarks>
-        private void TrimConsoleOutputFile(string strConsoleOutputFilePath)
+        private void TrimConsoleOutputFile(string consoleOutputFilePath)
         {
             try
             {
-                if (!File.Exists(strConsoleOutputFilePath))
+                if (!File.Exists(consoleOutputFilePath))
                 {
                     if (m_DebugLevel >= 4)
                     {
-                        LogDebug("Console output file not found: " + strConsoleOutputFilePath);
+                        LogDebug("Console output file not found: " + consoleOutputFilePath);
                     }
 
                     return;
@@ -473,27 +472,27 @@ namespace AnalysisManagerMODaPlugIn
 
                 if (m_DebugLevel >= 4)
                 {
-                    LogDebug("Trimming console output file at " + strConsoleOutputFilePath);
+                    LogDebug("Trimming console output file at " + consoleOutputFilePath);
                 }
 
-                var fiConsoleOutputFile = new FileInfo(strConsoleOutputFilePath);
-                var fiTrimmedFilePath = new FileInfo(strConsoleOutputFilePath + ".trimmed");
+                var consoleOutputFile = new FileInfo(consoleOutputFilePath);
+                var trimmedFilePath = new FileInfo(consoleOutputFilePath + ".trimmed");
 
-                using (var srInFile = new StreamReader(new FileStream(fiConsoleOutputFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
-                using (var swOutFile = new StreamWriter(new FileStream(fiTrimmedFilePath.FullName, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                using (var reader = new StreamReader(new FileStream(consoleOutputFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var writer = new StreamWriter(new FileStream(trimmedFilePath.FullName, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
-                    var intScanNumberOutputThreshold = 0;
-                    while (!srInFile.EndOfStream)
+                    var scanNumberOutputThreshold = 0;
+                    while (!reader.EndOfStream)
                     {
-                        var strLineIn = srInFile.ReadLine();
+                        var dataLine = reader.ReadLine();
 
-                        if (strLineIn == null)
+                        if (dataLine == null)
                         {
-                            swOutFile.WriteLine();
+                            writer.WriteLine();
                             continue;
                         }
 
-                        var blnKeepLine = true;
+                        var keepLine = true;
 
                         var oMatch = reExtractScan.Match(strLineIn);
                         if (oMatch.Success)
@@ -512,27 +511,27 @@ namespace AnalysisManagerMODaPlugIn
                             }
                         }
 
-                        if (blnKeepLine)
+                        if (keepLine)
                         {
-                            swOutFile.WriteLine(strLineIn);
+                            writer.WriteLine(dataLine);
                         }
                     }
                 }
 
                 // Replace the original file with the new one
-                ReplaceUpdatedFile(fiConsoleOutputFile, fiTrimmedFilePath);
+                ReplaceUpdatedFile(consoleOutputFile, trimmedFilePath);
             }
             catch (Exception ex)
             {
                 // Ignore errors here
                 if (m_DebugLevel >= 2)
                 {
-                    LogError("Error trimming console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
+                    LogError("Error trimming console output file (" + consoleOutputFilePath + "): " + ex.Message);
                 }
             }
         }
 
-        protected bool UpdateParameterFile(string paramFileName, string spectrumFileName, string fastaFilePath)
+        private bool UpdateParameterFile(string paramFileName, string spectrumFileName, string fastaFilePath)
         {
             const string SPEC_FILE_PATH = "spectra"; // "Spectra"
             const string FASTA_FILE_PATH = "fasta"; // "Fasta"
@@ -542,72 +541,72 @@ namespace AnalysisManagerMODaPlugIn
 
             try
             {
-                var fiSourceParamFile = new FileInfo(Path.Combine(m_WorkDir, paramFileName));
-                var fiTempParamFile = new FileInfo(Path.Combine(m_WorkDir, paramFileName + ".temp"));
+                var sourceParamFile = new FileInfo(Path.Combine(m_WorkDir, paramFileName));
+                var tempParamFile = new FileInfo(Path.Combine(m_WorkDir, paramFileName + ".temp"));
 
-                var fiSpecFile = new FileInfo(Path.Combine(m_WorkDir, spectrumFileName));
+                var specFile = new FileInfo(Path.Combine(m_WorkDir, spectrumFileName));
 
                 // Open the input file
-                using (var srInFile = new StreamReader(new FileStream(fiSourceParamFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(sourceParamFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 // Create the output file
-                using (var swOutFile = new StreamWriter(new FileStream(fiTempParamFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                using (var writer = new StreamWriter(new FileStream(tempParamFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
-                    while (!srInFile.EndOfStream)
+                    while (!reader.EndOfStream)
                     {
-                        var strLineIn = srInFile.ReadLine();
+                        var dataLine = reader.ReadLine();
 
-                        if (string.IsNullOrWhiteSpace(strLineIn) || strLineIn.TrimStart().StartsWith("#"))
+                        if (string.IsNullOrWhiteSpace(dataLine) || dataLine.TrimStart().StartsWith("#"))
                         {
                             // Comment line or blank line; write it out as-is
-                            swOutFile.WriteLine(strLineIn);
+                            writer.WriteLine(dataLine);
                             continue;
                         }
 
                         // Look for an equals sign
-                        var intEqualsIndex = strLineIn.IndexOf('=');
+                        var equalsIndex = dataLine.IndexOf('=');
 
-                        if (intEqualsIndex <= 0)
+                        if (equalsIndex <= 0)
                         {
                             // Unknown line format; skip it
                             continue;
                         }
 
                         // Split the line on the equals sign
-                        var strKeyName = strLineIn.Substring(0, intEqualsIndex).TrimEnd();
+                        var keyName = dataLine.Substring(0, equalsIndex).TrimEnd();
 
                         // Examine the key name to determine what to do
-                        switch (strKeyName.ToLower())
+                        switch (keyName.ToLower())
                         {
                             case SPEC_FILE_PATH:
-                                strLineIn = SPEC_FILE_PATH + "=" + fiSpecFile.FullName;
+                                dataLine = SPEC_FILE_PATH + "=" + specFile.FullName;
                                 specFileDefined = true;
 
                                 break;
                             case FASTA_FILE_PATH:
-                                strLineIn = FASTA_FILE_PATH + "=" + fastaFilePath;
+                                dataLine = FASTA_FILE_PATH + "=" + fastaFilePath;
                                 fastaFileDefined = true;
 
                                 break;
                         }
 
-                        swOutFile.WriteLine(strLineIn);
+                        writer.WriteLine(dataLine);
                     }
 
                     if (!specFileDefined)
                     {
-                        swOutFile.WriteLine();
-                        swOutFile.WriteLine(SPEC_FILE_PATH + "=" + fiSpecFile.FullName);
+                        writer.WriteLine();
+                        writer.WriteLine(SPEC_FILE_PATH + "=" + specFile.FullName);
                     }
 
                     if (!fastaFileDefined)
                     {
-                        swOutFile.WriteLine();
-                        swOutFile.WriteLine(FASTA_FILE_PATH + "=" + fastaFilePath);
+                        writer.WriteLine();
+                        writer.WriteLine(FASTA_FILE_PATH + "=" + fastaFilePath);
                     }
                 }
 
                 // Replace the original parameter file with the updated one
-                if (!ReplaceUpdatedFile(fiSourceParamFile, fiTempParamFile))
+                if (!ReplaceUpdatedFile(sourceParamFile, tempParamFile))
                 {
                     m_message = "Error replacing the original parameter file with the customized version";
                     return false;
@@ -627,7 +626,7 @@ namespace AnalysisManagerMODaPlugIn
 
         #region "Event Handlers"
 
-        private DateTime dtLastConsoleOutputParse = DateTime.MinValue;
+        private DateTime mLastConsoleOutputParse = DateTime.MinValue;
 
         /// <summary>
         /// Event handler for CmdRunner.LoopWaiting event
@@ -639,9 +638,9 @@ namespace AnalysisManagerMODaPlugIn
 
             UpdateStatusFile();
 
-            if (DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= SECONDS_BETWEEN_UPDATE)
+            if (DateTime.UtcNow.Subtract(mLastConsoleOutputParse).TotalSeconds >= SECONDS_BETWEEN_UPDATE)
             {
-                dtLastConsoleOutputParse = DateTime.UtcNow;
+                mLastConsoleOutputParse = DateTime.UtcNow;
 
                 ParseConsoleOutputFile(Path.Combine(m_WorkDir, MODa_CONSOLE_OUTPUT));
 

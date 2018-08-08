@@ -16,7 +16,7 @@ namespace AnalysisManagerMODaPlugIn
     /// </summary>
     public class clsAnalysisResourcesMODa : clsAnalysisResources
     {
-        protected DTAtoMGF.clsDTAtoMGF mDTAtoMGF;
+        private DTAtoMGF.clsDTAtoMGF mDTAtoMGF;
 
         /// <summary>
         /// Initialize options
@@ -114,7 +114,7 @@ namespace AnalysisManagerMODaPlugIn
         /// </summary>
         /// <returns></returns>
         /// <remarks></remarks>
-        protected bool ConvertCDTAToMGF()
+        private bool ConvertCDTAToMGF()
         {
             try
             {
@@ -128,18 +128,18 @@ namespace AnalysisManagerMODaPlugIn
                 };
 
                 // Convert the _dta.txt file for this dataset
-                var fiCDTAFile = new FileInfo(Path.Combine(m_WorkingDir, DatasetName + "_dta.txt"));
+                var cdtaFile = new FileInfo(Path.Combine(m_WorkingDir, DatasetName + "_dta.txt"));
 
-                if (!fiCDTAFile.Exists)
+                if (!cdtaFile.Exists)
                 {
                     m_message = "_dta.txt file not found; cannot convert to .mgf";
-                    LogError(m_message + ": " + fiCDTAFile.FullName);
+                    LogError(m_message + ": " + cdtaFile.FullName);
                     return false;
                 }
 
-                if (!mDTAtoMGF.ProcessFile(fiCDTAFile.FullName))
+                if (!mDTAtoMGF.ProcessFile(cdtaFile.FullName))
                 {
-                    m_message = "Error converting " + fiCDTAFile.Name + " to a .mgf file";
+                    m_message = "Error converting " + cdtaFile.Name + " to a .mgf file";
                     LogError(m_message + ": " + mDTAtoMGF.GetErrorMessage());
                     return false;
                 }
@@ -147,7 +147,7 @@ namespace AnalysisManagerMODaPlugIn
                 // Delete the _dta.txt file
                 try
                 {
-                    fiCDTAFile.Delete();
+                    cdtaFile.Delete();
                 }
                 catch (Exception)
                 {
@@ -156,9 +156,9 @@ namespace AnalysisManagerMODaPlugIn
 
                 PRISM.clsProgRunner.GarbageCollectNow();
 
-                var fiNewMGFFile = new FileInfo(Path.Combine(m_WorkingDir, DatasetName + ".mgf"));
+                var newMGFFile = new FileInfo(Path.Combine(m_WorkingDir, DatasetName + ".mgf"));
 
-                if (!fiNewMGFFile.Exists)
+                if (!newMGFFile.Exists)
                 {
                     // MGF file was not created
                     m_message = "A .mgf file was not created using the _dta.txt file; unable to run MODa";
