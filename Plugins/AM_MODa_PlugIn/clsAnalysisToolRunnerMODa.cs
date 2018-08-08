@@ -287,11 +287,23 @@ namespace AnalysisManagerMODaPlugIn
         // Reading MS/MS spectra.....  132 scans
         // Reading protein database.....  8632 proteins / 2820896 residues (1)
 
-        // MOD-A | 1/132
-        // MOD-A | 2/132
-        // MOD-A | 3/132
+        // moda | 2 at 2-thread
+        // moda | 3 at 3-thread
+        // moda | 4 at 4-thread
+        // moda | 5 at 5-thread
+        // moda | 11 at 10-thread
+
+        private readonly Regex mScanCountMatcher = new Regex(@"Reading .+spectra[. ]+(?<ScanCount>\d+) +scans",
+                                                             RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
         // Look for lines of the form MOD-A | 6947/13253
-        private readonly Regex reExtractScan = new Regex(REGEX_MODa_PROGRESS, RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        // This format was used in older versions of MODa
+        private readonly Regex mCurrentScanMatcherV1 = new Regex(@"MOD-A \| (?<ScansProcessed>\d+)/(?<ScanCount>\d+)",
+                                                                 RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+        // Look for lines of the form moda | 10926 at 15-thread
+        private readonly Regex mCurrentScanMatcherV2 = new Regex(@"moda \| (?<ScansProcessed>\d+) at (?<ThreadNum>\d+-thread)",
+                                                                 RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         /// <summary>
         /// Parse the MODa console output file to determine the MODa version and to track the search progress
@@ -380,19 +392,33 @@ namespace AnalysisManagerMODaPlugIn
                             continue;
                         }
 
-                        var oMatch = reExtractScan.Match(strLineIn);
-                        if (oMatch.Success)
+                        if (totalScans == 0)
                         {
-                            if (int.TryParse(oMatch.Groups[1].Value, out var intValue))
+                            var scanCountMatch = mScanCountMatcher.Match(dataLine);
+                            if (scanCountMatch.Success)
                             {
-                                intScansProcessed = intValue;
+                                totalScans = int.Parse(scanCountMatch.Groups["ScanCount"].Value);
                             }
+                        }
 
-                            if (intTotalScans == 0)
+                        var matchA = mCurrentScanMatcherV1.Match(dataLine);
+                        if (matchA.Success)
+                        {
+                            scansProcessed = int.Parse(matchA.Groups["ScansProcessed"].Value);
+
+                            if (totalScans == 0)
                             {
-                                if (int.TryParse(oMatch.Groups[2].Value, out intValue))
+                                totalScans = int.Parse(matchA.Groups["ScanCount"].Value);
+                            }
+                        }
+                        else
+                        {
+                            var matchB = mCurrentScanMatcherV2.Match(dataLine);
+                            if (matchB.Success)
+                            {
+                                if (true)
                                 {
-                                    intTotalScans = intValue;
+                                    scansProcessed = int.Parse(matchB.Groups["ScansProcessed"].Value);
                                 }
                             }
                         }
@@ -493,21 +519,36 @@ namespace AnalysisManagerMODaPlugIn
                         }
 
                         var keepLine = true;
+                        int scansProcessed;
 
-                        var oMatch = reExtractScan.Match(strLineIn);
-                        if (oMatch.Success)
+                        var matchA = mCurrentScanMatcherV1.Match(dataLine);
+                        if (matchA.Success)
                         {
-                            if (int.TryParse(oMatch.Groups[1].Value, out var intScanNumber))
+                            scansProcessed = int.Parse(matchA.Groups["ScansProcessed"].Value);
+                        }
+                        else
+                        {
+                            var matchB = mCurrentScanMatcherV2.Match(dataLine);
+                            if (matchB.Success)
                             {
-                                if (intScanNumber < intScanNumberOutputThreshold)
-                                {
-                                    blnKeepLine = false;
-                                }
-                                else
-                                {
-                                    // Write out this line and bump up intScanNumberOutputThreshold by 100
-                                    intScanNumberOutputThreshold += 100;
-                                }
+                                scansProcessed = int.Parse(matchB.Groups["ScansProcessed"].Value);
+                            }
+                            else
+                            {
+                                scansProcessed = 0;
+                            }
+                        }
+
+                        if (scansProcessed > 0)
+                        {
+                            if (scansProcessed < scanNumberOutputThreshold)
+                            {
+                                keepLine = false;
+                            }
+                            else
+                            {
+                                // Write out this line and bump up scanNumberOutputThreshold by 100
+                                scanNumberOutputThreshold += 100;
                             }
                         }
 
