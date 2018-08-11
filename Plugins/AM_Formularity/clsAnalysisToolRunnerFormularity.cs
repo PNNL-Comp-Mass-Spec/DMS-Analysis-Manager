@@ -27,7 +27,6 @@ namespace AnalysisManagerFormularityPlugin
         protected string mConsoleOutputErrorMsg;
 
         protected DateTime mLastConsoleOutputParse;
-        protected DateTime mLastProgressWriteTime;
 
         #endregion
 
@@ -54,7 +53,6 @@ namespace AnalysisManagerFormularityPlugin
 
                 // Initialize classwide variables
                 mLastConsoleOutputParse = DateTime.UtcNow;
-                mLastProgressWriteTime = DateTime.UtcNow;
 
                 // Determine the path to Formularity
                 var progLoc = DetermineProgramLocation("FormularityProgLoc", "CIA.exe");
