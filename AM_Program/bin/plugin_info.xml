@@ -372,6 +372,16 @@
 		Class="AnalysisManagerFormularityPlugin.clsAnalysisToolRunnerFormularity" 
 		AssemblyFile="AnalysisManagerFormularityPlugin.dll" 
 	/>
+	<ToolRunner 
+		Tool="topfd" 
+		Class="AnalysisManagerTopFDPlugIn.clsAnalysisToolRunnerTopFD" 
+		AssemblyFile="AnalysisManagerTopFDPlugIn.dll" 
+	/>
+	<ToolRunner 
+		Tool="toppic" 
+		Class="AnalysisManagerTopPICPlugIn.clsAnalysisToolRunnerTopPIC" 
+		AssemblyFile="AnalysisManagerTopPICPlugIn.dll" 
+	/>
 </ToolRunners>
 
 <Resourcers>
@@ -745,6 +755,17 @@
 		Class="AnalysisManagerFormularityPlugin.clsAnalysisResourcesFormularity" 
 		AssemblyFile="AnalysisManagerFormularityPlugin.dll" 
 	/>
+	<Resourcer 
+		Tool="topfd" 
+		Class="AnalysisManagerTopFDPlugIn.clsAnalysisResourcesTopFD" 
+		AssemblyFile="AnalysisManagerTopFDPlugIn.dll" 
+	/>
+	<Resourcer 
+		Tool="toppic" 
+		Class="AnalysisManagerTopPICPlugIn.clsAnalysisResourcesTopPIC" 
+		AssemblyFile="AnalysisManagerTopPICPlugIn.dll" 
+	/>
+
 </Resourcers>
 
 <DTAGenerators Note="This section is obsolete">

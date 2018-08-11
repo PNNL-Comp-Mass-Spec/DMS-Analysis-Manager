@@ -23,8 +23,9 @@ the processing details for each analysis tool.
 | DTA_Import | Imports manually generated DTA files | AM_DTA_Import_PlugIn | AnalysisManagerDtaImportPlugIn.dll | 
 | DTA_Refinery | Reads DTA files (typically created by DeconMSn), then refines the parent mass for each spectrum using and X!Tandem search | AM_DtaRefinery_PlugIn | AnalysisManagerDtaRefineryPlugIn.dll | 
 | DTA_Split | Splits DTA files created by DTAGen | AM_DTA_Split_PlugIn | AnalysisManagerDtaSplitPlugIn.dll | 
+| Formularity | 
 | GlyQ_IQ | Searches a dataset for signatures of glycans using GlyQ-IQ | AM_GlyQIQ_Plugin | AnalysisManagerGlyQIQPlugin.dll | 
-| ICR2LS | Uses ICR-2LS to deisotope spectra for Bruker datasets | AM_ICR2LS_PlugIn | AnalysisManagerICR2LSPlugIn.dll | 
+| ICR2LS | Uses ICR-2LS to deisotope spectra for Bruker datasets | AM_ICR2LS_PlugIn | AnalysisManagerICR2LSPlugIn.dll (obsolete) | 
 | IDM | Tool for calculating interference within isolation window | AM_IDM_Plugin | AnalysisManager_IDM_Plugin.dll | 
 | IDPicker | Runs IDPicker | AM_IDPicker_PlugIn | AnalysisManagerIDPickerPlugIn.dll | 
 | Inspect | Identify peptides by searching protein collection | AM_InSpecT_PlugIn | AnalysisManagerInSpecTPlugIn.dll | 
@@ -47,10 +48,10 @@ the processing details for each analysis tool.
 | MSPathFinder | Searches top down datasets for proteins | AM_MSPathFinder_Plugin | AnalysisManagerMSPathFinderPlugIn.dll | 
 | MSXML_Bruker | Creates mzXML or mzML files from Bruker .D folders using CompassXtract | AM_MSXML_Bruker_PlugIn | AnalysisManagerMsXmlBrukerPlugIn.dll | 
 | MSXML_Gen | Creates mzXML or mzML files from .Raw files | AM_MSXML_Gen_PlugIn | AnalysisManagerMsXmlGenPlugIn.dll | 
-| MultiAlign | Matches LCMSFeatureFinder results across datasets and/or to an AMT tag database | AM_MultiAlign_Plugin | AnalysisManagerMultiAlignPlugIn.dll | 
-| MultiAlign_Aggregator | Matches LCMSFeatureFinder results across datasets and/or to an AMT tag database | AM_MultiAlign_Aggregator_PlugIn | AnalysisManagerMultiAlign_AggregatorPlugIn.dll | 
+| MultiAlign | Matches LCMSFeatureFinder results across datasets and/or to an AMT tag database | AM_MultiAlign_Plugin | AnalysisManagerMultiAlignPlugIn.dll (obsolete) | 
+| MultiAlign_Aggregator | Matches LCMSFeatureFinder results across datasets and/or to an AMT tag database | AM_MultiAlign_Aggregator_PlugIn | AnalysisManagerMultiAlign_AggregatorPlugIn.dll (obsolete) | 
 | Mz_Refinery | Updates the m/z values in a .mzML file based on the results from a MSGF+ search | AM_Mz_Refinery_Plugin | AnalysisManagerMzRefineryPlugIn.dll | 
-| mzXML_Aggregator | Extracts mzXML results from multiple mzXML jobs and aggregates the result | AM_PRIDE_MzXML_PlugIn | AnalysisManagerPRIDEMzXMLPlugIn.dll | 
+| mzXML_Aggregator | Extracts mzXML results from multiple mzXML jobs and aggregates the result | AM_PRIDE_MzXML_PlugIn | AnalysisManagerPRIDEMzXMLPlugIn.dll (obsolete) | 
 | NOMSI | Process XML files created by Bruker_DA_Export | AM_NOMSI | AnalysisManagerNOMSIPlugin.dll | 
 | OMSSA | Runs OMSSA | AM_OMSSA_PlugIn | AnalysisManagerOMSSAPlugIn.dll | 
 | PBF_Gen | Creates PBF (PNNL Binary Format) files; if a new .Exe results in a different file format, increment PbfFormatVersion in MSPF_TopDown_Standard.xml | AM_PBFSpectraFileGen_PlugIn | AnalysisManagerPBFGenerator.dll | 
@@ -58,12 +59,15 @@ the processing details for each analysis tool.
 | PRIDE_Converter | Converts Peptide_Hit results (Sequest, X!Tandem, or MSGFDB) to the msgf-pride.xml format | AM_PRIDE_Converter_PlugIn | AnalysisManagerPRIDEConverterPlugIn.dll | 
 | ProMex | Deisotopes high resolution spectra in PBF files | AM_ProMex_Plugin | AnalysisManagerProMexPlugIn.dll | 
 | ProSight_Quant | Quantifies ProSightPC results | AM_ProSightPC_Quant_Plugin | AnalysisManagerProSightQuantPlugIn.dll | 
-| QC_ART | Runs QC-ART; requires R 3.x. | AM_QC-ART_PlugIn | AnalysisManagerQCARTPlugIn.dll | 
+| QC-ART | Runs QC-ART; requires R 3.x. | AM_QC-ART_PlugIn | AnalysisManagerQCARTPlugIn.dll | 
 | RepoPkgr | Aggregates data and results files from DMS into package that can be uploaded to a public proteomics repository | AM_RepoPkgr_PlugIn | AnalysisManager_RepoPkgr_PlugIn.dll | 
 | Results_Cleanup | Looks for Results.db3 files in MAC jobs; deletes all except the one in the final job step | AM_ResultsCleanup_PlugIn | AnalysisManagerResultsCleanupPlugin.dll | 
 | Results_Transfer | Moves results folder from Xfer to storage | AM_ResultsXfer_PlugIn | AnalysisManagerResultsXferPlugin.dll | 
 | Sequest | Identify peptides by searching protein collection | AM_Sequest_PlugIn | AnalysisManagerSequestPlugin.dll | 
 | SMAQC | Runs SMAQC | AM_SMAQC_PlugIn | AnalysisManagerSMAQCPlugIn.dll | 
+| TopFD | Runs TopFD | AM_TopFD_Plugin | AnalysisManagerTopFDPlugIn.dll |
+| TopPIC | Runs TopPIC | AM_TopPIC_Plugin | AnalysisManagerTopPICPlugIn.dll
+| UIMFtoMassHunter | Run UIMFtoMassHunter | AM_UIMFtoMassHunter_Plugin | AnalysisManagerUIMFtoMassHunterPlugin.dll (unused) |
 | XTandem | Identify peptides by searching protein collection | AM_XTandem_PlugIn | AnalysisManagerXTandemPlugIn.dll | 
 | XTandem_HPC | Runs XTandem on Chinook high-performance computer | AM_XTandemHPC_PlugIn | (obsolete) | 
 	
@@ -79,4 +83,4 @@ The DMS Analysis Manager is licensed under the 2-Clause BSD License;
 you may not use this file except in compliance with the License.  You may obtain 
 a copy of the License at https://opensource.org/licenses/BSD-2-Clause
 
-Copyright 2017 Battelle Memorial Institute
+Copyright 2018 Battelle Memorial Institute
