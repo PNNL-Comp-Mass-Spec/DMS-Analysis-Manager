@@ -102,6 +102,7 @@
     <Compile Include="clsFolderSearch.cs" />
     <Compile Include="clsFormattedXMLWriter.cs" />
     <Compile Include="clsGlobal.cs" />
+    <Compile Include="clsKeyValueParamFileReader.cs" />
     <Compile Include="clsLoggerBase.cs" />
     <Compile Include="clsMemoryUsageLogger.cs" />
     <Compile Include="clsMessageContainer.cs" />
