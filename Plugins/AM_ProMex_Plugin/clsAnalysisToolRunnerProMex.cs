@@ -442,14 +442,14 @@ namespace AnalysisManagerProMexPlugIn
             // Read the ProMex Parameter File
             // The parameter file name specifies the mass modifications to consider, plus also the analysis parameters
 
-            var eResult = ParseProMexParameterFile(out var strCmdLineOptions);
+            var eResult = ParseProMexParameterFile(out var cmdLineOptions);
 
             if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 return false;
             }
 
-            if (string.IsNullOrEmpty(strCmdLineOptions))
+            if (string.IsNullOrEmpty(cmdLineOptions))
             {
                 if (string.IsNullOrEmpty(m_message))
                 {
@@ -476,7 +476,7 @@ namespace AnalysisManagerProMexPlugIn
             // Set up and execute a program runner to run ProMex
 
             var cmdStr = " -i " + msFilePath;
-            cmdStr += " " + strCmdLineOptions;
+            cmdStr += " " + cmdLineOptions;
 
             if (m_DebugLevel >= 1)
             {

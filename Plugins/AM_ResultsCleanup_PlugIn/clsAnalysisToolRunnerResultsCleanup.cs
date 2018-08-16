@@ -230,8 +230,8 @@ namespace AnalysisManagerResultsCleanupPlugin
                 return false;
             }
 
-            // Store the path to AnalysisManagerProg.exe and AnalysisManagerResultsCleanupPlugin.dll in ioToolFiles
-            var ioToolFiles = new List<FileInfo>
+            // Store the path to AnalysisManagerProg.exe and AnalysisManagerResultsCleanupPlugin.dll in toolFiles
+            var toolFiles = new List<FileInfo>
             {
                 new FileInfo(Path.Combine(strAppFolderPath, "AnalysisManagerProg.exe")),
                 new FileInfo(Path.Combine(strAppFolderPath, "AnalysisManagerResultsCleanupPlugin.dll"))
@@ -239,7 +239,7 @@ namespace AnalysisManagerResultsCleanupPlugin
 
             try
             {
-                return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, saveToolVersionTextFile: false);
+                return SetStepTaskToolVersion(strToolVersionInfo, toolFiles, saveToolVersionTextFile: false);
             }
             catch (Exception ex)
             {

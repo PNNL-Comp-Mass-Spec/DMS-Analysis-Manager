@@ -366,7 +366,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             // Note: if the fasta file is over 50 MB in size, only use the first 50 MB
 
             // Passing in the path to the parameter file so we can look for TDA=0 when using large .Fasta files
-            var strParameterFilePath = Path.Combine(m_WorkDir, m_jobParams.GetJobParameter("MzRefParamFile", string.Empty));
+            var paramFilePath = Path.Combine(m_WorkDir, m_jobParams.GetJobParameter("MzRefParamFile", string.Empty));
             var javaExePath = string.Copy(javaProgLoc);
             var msgfplusJarFilePath = string.Copy(mMSGFPlusProgLoc);
 
@@ -376,7 +376,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             var result = mMSGFPlusUtils.InitializeFastaFile(
                 javaExePath, msgfplusJarFilePath,
                 out var fastaFileSizeKB, out var fastaFileIsDecoy, out var fastaFilePath,
-                strParameterFilePath, maxFastaFileSizeMB);
+                paramFilePath, maxFastaFileSizeMB);
 
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
@@ -400,7 +400,7 @@ namespace AnalysisManagerMzRefineryPlugIn
 
             result = mMSGFPlusUtils.ParseMSGFPlusParameterFile(
                 fastaFileSizeKB, fastaFileIsDecoy, strAssumedScanType, strScanTypeFilePath,
-                strInstrumentGroup, strParameterFilePath, overrideParams, out var strMSGFPlusCmdLineOptions);
+                strInstrumentGroup, paramFilePath, overrideParams, out var strMSGFPlusCmdLineOptions);
 
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
@@ -417,10 +417,10 @@ namespace AnalysisManagerMzRefineryPlugIn
             }
 
             // Look for extra parameters specific to MZRefinery
-            var success = ExtractMzRefinerOptionsFromParameterFile(strParameterFilePath);
+            var success = ExtractMzRefinerOptionsFromParameterFile(paramFilePath);
             if (!success)
             {
-                m_message = "Error extracting MzRefinery options from parameter file " + Path.GetFileName(strParameterFilePath);
+                m_message = "Error extracting MzRefinery options from parameter file " + Path.GetFileName(paramFilePath);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -1341,8 +1341,8 @@ namespace AnalysisManagerMzRefineryPlugIn
 
             var strToolVersionInfo = string.Copy(mMSGFPlusUtils.MSGFPlusVersion);
 
-            // Store paths to key files in ioToolFiles
-            var ioToolFiles = new List<FileInfo>
+            // Store paths to key files in toolFiles
+            var toolFiles = new List<FileInfo>
             {
                 new FileInfo(mMSGFPlusProgLoc),
                 new FileInfo(mMSConvertProgLoc),
@@ -1351,7 +1351,7 @@ namespace AnalysisManagerMzRefineryPlugIn
 
             try
             {
-                return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, saveToolVersionTextFile: false);
+                return SetStepTaskToolVersion(strToolVersionInfo, toolFiles, saveToolVersionTextFile: false);
             }
             catch (Exception ex)
             {

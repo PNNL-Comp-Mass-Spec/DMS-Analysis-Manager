@@ -460,15 +460,15 @@ namespace AnalysisManagerMODaPlugIn
 
             var toolVersionInfo = string.Copy(mMODaVersion);
 
-            // Store paths to key files in ioToolFiles
-            var ioToolFiles = new List<FileInfo> {
+            // Store paths to key files in toolFiles
+            var toolFiles = new List<FileInfo> {
                 new FileInfo(mMODaProgLoc)
             };
 
             try
             {
                 // Tool_Version_Info_MODa.txt is required by IDPicker
-                return SetStepTaskToolVersion(toolVersionInfo, ioToolFiles, saveToolVersionTextFile: true);
+                return SetStepTaskToolVersion(toolVersionInfo, toolFiles, saveToolVersionTextFile: true);
             }
             catch (Exception ex)
             {

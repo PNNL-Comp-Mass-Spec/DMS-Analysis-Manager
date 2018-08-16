@@ -2366,15 +2366,15 @@ namespace AnalysisManagerMSGFPlugin
 
             var toolVersionInfo = string.Copy(mMSGFVersion);
 
-            // Store paths to key files in ioToolFiles
-            var ioToolFiles = new List<FileInfo> {
+            // Store paths to key files in toolFiles
+            var toolFiles = new List<FileInfo> {
                 new FileInfo(mMSGFProgLoc),
                 new FileInfo(mMSXmlGeneratorAppPath)
             };
 
             try
             {
-                return SetStepTaskToolVersion(toolVersionInfo, ioToolFiles, saveToolVersionTextFile: true);
+                return SetStepTaskToolVersion(toolVersionInfo, toolFiles, saveToolVersionTextFile: true);
             }
             catch (Exception ex)
             {
@@ -2402,17 +2402,17 @@ namespace AnalysisManagerMSGFPlugin
                 return false;
             }
 
-            var ioToolFiles = new List<FileInfo>();
+            var toolFiles = new List<FileInfo>();
 
             if (eResultType == clsPHRPReader.ePeptideHitResultType.MSGFDB)
             {
                 // Store the path to MSGFDB.jar
-                ioToolFiles.Add(new FileInfo(mMSGFProgLoc));
+                toolFiles.Add(new FileInfo(mMSGFProgLoc));
             }
 
             try
             {
-                return SetStepTaskToolVersion(toolVersionInfo, ioToolFiles, saveToolVersionTextFile: false);
+                return SetStepTaskToolVersion(toolVersionInfo, toolFiles, saveToolVersionTextFile: false);
             }
             catch (Exception ex)
             {

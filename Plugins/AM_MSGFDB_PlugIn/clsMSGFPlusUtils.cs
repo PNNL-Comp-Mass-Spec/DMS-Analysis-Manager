@@ -226,15 +226,15 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Update argumentSwitch and argumentValue if using the MS-GFDB syntax yet should be using the MS-GF+ syntax
         /// </summary>
-        /// <param name="argumentSwitch"></param>
+        /// <param name="argumentName"></param>
         /// <param name="argumentValue"></param>
         /// <remarks></remarks>
-        private void AdjustSwitchesForMSGFPlus(ref string argumentSwitch, ref string argumentValue)
+        private void AdjustSwitchesForMSGFPlus(ref string argumentName, ref string argumentValue)
         {
-            if (clsGlobal.IsMatch(argumentSwitch, "nnet"))
+            if (clsGlobal.IsMatch(argumentName, "nnet"))
             {
                 // Auto-switch to ntt
-                argumentSwitch = "ntt";
+                argumentName = "ntt";
                 if (int.TryParse(argumentValue, out var value))
                 {
                     switch (value)
@@ -255,10 +255,10 @@ namespace AnalysisManagerMSGFDBPlugIn
                     }
                 }
             }
-            else if (clsGlobal.IsMatch(argumentSwitch, "c13"))
+            else if (clsGlobal.IsMatch(argumentName, "c13"))
             {
                 // Auto-switch to ti
-                argumentSwitch = "ti";
+                argumentName = "ti";
                 if (int.TryParse(argumentValue, out var value))
                 {
                     if (value == 0)
@@ -283,10 +283,10 @@ namespace AnalysisManagerMSGFDBPlugIn
                     argumentValue = "0,1";
                 }
             }
-            else if (clsGlobal.IsMatch(argumentSwitch, "showDecoy"))
+            else if (clsGlobal.IsMatch(argumentName, "showDecoy"))
             {
                 // Not valid for MS-GF+; skip it
-                argumentSwitch = string.Empty;
+                argumentName = string.Empty;
             }
         }
 

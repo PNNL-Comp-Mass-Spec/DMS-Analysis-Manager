@@ -149,13 +149,13 @@ namespace AnalysisManager_Ape_PlugIn
             StoreToolVersionInfoForLoadedAssembly(ref toolVersionInfo, "Ape");
 
             // Store paths to key DLLs
-            var ioToolFiles = new System.Collections.Generic.List<FileInfo> {
+            var toolFiles = new System.Collections.Generic.List<FileInfo> {
                 new FileInfo("Ape.dll")
             };
 
             try
             {
-                return SetStepTaskToolVersion(toolVersionInfo, ioToolFiles);
+                return SetStepTaskToolVersion(toolVersionInfo, toolFiles);
             }
             catch (Exception ex)
             {

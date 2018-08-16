@@ -280,14 +280,14 @@ namespace AnalysisManagerDataImportPlugIn
                 return false;
             }
 
-            // Store the path to AnalysisManagerDataImportPlugIn.dll in ioToolFiles
-            var ioToolFiles = new List<FileInfo> {
+            // Store the path to AnalysisManagerDataImportPlugIn.dll in toolFiles
+            var toolFiles = new List<FileInfo> {
                 new FileInfo(Path.Combine(strAppFolderPath, "AnalysisManagerDataImportPlugIn.dll"))
             };
 
             try
             {
-                return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, false);
+                return SetStepTaskToolVersion(strToolVersionInfo, toolFiles, false);
             }
             catch (Exception ex)
             {

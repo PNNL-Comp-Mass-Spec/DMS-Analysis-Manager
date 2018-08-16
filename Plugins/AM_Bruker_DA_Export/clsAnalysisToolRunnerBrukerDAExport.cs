@@ -590,20 +590,20 @@ namespace AnalysisManagerBrukerDAExportPlugin
             // Lookup the version of the DataAnalysis program
             StoreToolVersionInfoViaSystemDiagnostics(ref strToolVersionInfo, fiProgram.FullName);
 
-            // Store paths to key DLLs in ioToolFiles
-            var ioToolFiles = new List<FileInfo>
+            // Store paths to key DLLs in toolFiles
+            var toolFiles = new List<FileInfo>
             {
                 fiProgram
             };
 
             if (fiProgram.Directory != null)
             {
-                ioToolFiles.Add(new FileInfo(Path.Combine(fiProgram.Directory.FullName, "AnalysisCore.dll")));
+                toolFiles.Add(new FileInfo(Path.Combine(fiProgram.Directory.FullName, "AnalysisCore.dll")));
             }
 
             try
             {
-                return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, saveToolVersionTextFile: false);
+                return SetStepTaskToolVersion(strToolVersionInfo, toolFiles, saveToolVersionTextFile: false);
             }
             catch (Exception ex)
             {

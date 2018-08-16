@@ -78,13 +78,13 @@ namespace AnalysisManager_Mage_PlugIn
         /// <returns>List of file info for supplemental DLLs</returns>
         protected override List<FileInfo> GetToolSupplementalVersionInfo()
         {
-            var ioToolFiles = new List<FileInfo>
+            var toolFiles = new List<FileInfo>
                                   {
                                       new FileInfo("Mage.dll"),
                                       new FileInfo("MageExtContentFilters.dll"),
                                       new FileInfo("MageExtExtractionFilters.dll")
                                   };
-            return ioToolFiles;
+            return toolFiles;
         }
 
 

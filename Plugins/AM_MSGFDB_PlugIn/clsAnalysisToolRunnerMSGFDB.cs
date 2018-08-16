@@ -1241,8 +1241,8 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             var toolVersionInfo = string.Copy(mMSGFPlusUtils.MSGFPlusVersion);
 
-            // Store paths to key files in ioToolFiles
-            var ioToolFiles = new List<FileInfo> {
+            // Store paths to key files in toolFiles
+            var toolFiles = new List<FileInfo> {
                 new FileInfo(mMSGFPlusProgLoc)
             };
 
@@ -1250,7 +1250,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             {
                 // Need to pass saveToolVersionTextFile to True so that the ToolVersionInfo file gets created
                 // The PeptideListToXML program uses that file when creating .pepXML files
-                return SetStepTaskToolVersion(toolVersionInfo, ioToolFiles, saveToolVersionTextFile: true);
+                return SetStepTaskToolVersion(toolVersionInfo, toolFiles, saveToolVersionTextFile: true);
             }
             catch (Exception ex)
             {

@@ -1334,8 +1334,8 @@ namespace AnalysisManagerIDPickerPlugIn
                 LogDebug("Determining tool version info");
             }
 
-            // We will store paths to key files in ioToolFiles
-            var ioToolFiles = new List<FileInfo>();
+            // We will store paths to key files in toolFiles
+            var toolFiles = new List<FileInfo>();
 
             // Determine the path to the PeptideListToXML.exe
             mPeptideListToXMLExePath = DetermineProgramLocation("PeptideListToXMLProgLoc", PEPTIDE_LIST_TO_XML_EXE);
@@ -1344,7 +1344,7 @@ namespace AnalysisManagerIDPickerPlugIn
             {
                 // Only store the version of PeptideListToXML.exe in the database
                 blnSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, mPeptideListToXMLExePath);
-                ioToolFiles.Add(new FileInfo(mPeptideListToXMLExePath));
+                toolFiles.Add(new FileInfo(mPeptideListToXMLExePath));
             }
             else
             {
@@ -1374,25 +1374,25 @@ namespace AnalysisManagerIDPickerPlugIn
                 // Lookup the version of idpAssemble.exe (which is a .NET app; cannot use idpQonvert.exe since it is a C++ app)
                 var strExePath = Path.Combine(ioIDPicker.Directory.FullName, IDPicker_Assemble);
                 StoreToolVersionInfoViaSystemDiagnostics(ref strToolVersionInfo, strExePath);
-                ioToolFiles.Add(new FileInfo(strExePath));
+                toolFiles.Add(new FileInfo(strExePath));
 
                 // Lookup the version of idpReport.exe
                 strExePath = Path.Combine(ioIDPicker.Directory.FullName, IDPicker_Report);
                 StoreToolVersionInfoViaSystemDiagnostics(ref strToolVersionInfo, strExePath);
-                ioToolFiles.Add(new FileInfo(strExePath));
+                toolFiles.Add(new FileInfo(strExePath));
 
-                // Also include idpQonvert.exe in ioToolFiles (version determination does not work)
+                // Also include idpQonvert.exe in toolFiles (version determination does not work)
                 strExePath = Path.Combine(ioIDPicker.Directory.FullName, IDPicker_Qonvert);
-                ioToolFiles.Add(new FileInfo(strExePath));
+                toolFiles.Add(new FileInfo(strExePath));
 
                 // Lookup the version of PeptideListToXML.exe
                 StoreToolVersionInfoOneFile(ref strToolVersionInfo, mPeptideListToXMLExePath);
-                ioToolFiles.Add(new FileInfo(mPeptideListToXMLExePath));
+                toolFiles.Add(new FileInfo(mPeptideListToXMLExePath));
             }
 
             try
             {
-                return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles);
+                return SetStepTaskToolVersion(strToolVersionInfo, toolFiles);
             }
             catch (Exception ex)
             {

@@ -5,6 +5,7 @@ using System.Data.SqlClient;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 using PRISM;
 using PRISM.Logging;
@@ -3458,56 +3459,56 @@ namespace AnalysisManagerBase
         /// Communicates with database to record the tool version(s) for the current step task
         /// </summary>
         /// <param name="toolVersionInfo">Version info (maximum length is 900 characters)</param>
-        /// <param name="ioToolFiles">FileSystemInfo list of program files related to the step tool</param>
+        /// <param name="toolFiles">FileSystemInfo list of program files related to the step tool</param>
         /// <returns>True for success, False for failure</returns>
         /// <remarks>This procedure should be called once the version (or versions) of the tools associated with the current step have been determined</remarks>
-        protected bool SetStepTaskToolVersion(string toolVersionInfo, List<FileInfo> ioToolFiles)
+        protected bool SetStepTaskToolVersion(string toolVersionInfo, List<FileInfo> toolFiles)
         {
 
-            return SetStepTaskToolVersion(toolVersionInfo, ioToolFiles, true);
+            return SetStepTaskToolVersion(toolVersionInfo, toolFiles, true);
         }
 
         /// <summary>
         /// Communicates with database to record the tool version(s) for the current step task
         /// </summary>
         /// <param name="toolVersionInfo">Version info (maximum length is 900 characters)</param>
-        /// <param name="ioToolFiles">FileSystemInfo list of program files related to the step tool</param>
+        /// <param name="toolFiles">FileSystemInfo list of program files related to the step tool</param>
         /// <returns>True for success, False for failure</returns>
         /// <remarks>This procedure should be called once the version (or versions) of the tools associated with the current step have been determined</remarks>
-        protected bool SetStepTaskToolVersion(string toolVersionInfo, IEnumerable<FileInfo> ioToolFiles)
+        protected bool SetStepTaskToolVersion(string toolVersionInfo, IEnumerable<FileInfo> toolFiles)
         {
 
-            return SetStepTaskToolVersion(toolVersionInfo, ioToolFiles, true);
+            return SetStepTaskToolVersion(toolVersionInfo, toolFiles, true);
         }
 
         /// <summary>
         /// Communicates with database to record the tool version(s) for the current step task
         /// </summary>
         /// <param name="toolVersionInfo">Version info (maximum length is 900 characters)</param>
-        /// <param name="ioToolFiles">FileSystemInfo list of program files related to the step tool</param>
+        /// <param name="toolFiles">FileSystemInfo list of program files related to the step tool</param>
         /// <param name="saveToolVersionTextFile">If true, creates a text file with the tool version information</param>
         /// <returns>True for success, False for failure</returns>
         /// <remarks>This procedure should be called once the version (or versions) of the tools associated with the current step have been determined</remarks>
-        protected bool SetStepTaskToolVersion(string toolVersionInfo, IEnumerable<FileInfo> ioToolFiles, bool saveToolVersionTextFile)
+        protected bool SetStepTaskToolVersion(string toolVersionInfo, IEnumerable<FileInfo> toolFiles, bool saveToolVersionTextFile)
         {
 
             var exeInfo = string.Empty;
             string toolVersionInfoCombined;
 
-            if (ioToolFiles != null)
+            if (toolFiles != null)
             {
-                foreach (var ioFileInfo in ioToolFiles)
+                foreach (var toolFile in toolFiles)
                 {
                     try
                     {
-                        if (ioFileInfo.Exists)
+                        if (toolFile.Exists)
                         {
-                            exeInfo = clsGlobal.AppendToComment(exeInfo, ioFileInfo.Name + ": " + ioFileInfo.LastWriteTime.ToString(DATE_TIME_FORMAT));
+                            exeInfo = clsGlobal.AppendToComment(exeInfo, toolFile.Name + ": " + toolFile.LastWriteTime.ToString(DATE_TIME_FORMAT));
                             LogMessage("EXE Info: " + exeInfo, 2);
                         }
                         else
                         {
-                            LogMessage("Warning: Tool file not found: " + ioFileInfo.FullName);
+                            LogMessage("Warning: Tool file not found: " + toolFile.FullName);
                         }
 
                     }
@@ -3638,8 +3639,8 @@ namespace AnalysisManagerBase
             // Lookup the version of the .NET program
             StoreToolVersionInfoViaSystemDiagnostics(ref toolVersionInfo, fiProgram.FullName);
 
-            // Store the path to the .exe or .dll in ioToolFiles
-            var ioToolFiles = new List<FileInfo>
+            // Store the path to the .exe or .dll in toolFiles
+            var toolFiles = new List<FileInfo>
             {
                 fiProgram
             };
@@ -3652,7 +3653,7 @@ namespace AnalysisManagerBase
                     if (Path.IsPathRooted(dllNameOrPath) || dllNameOrPath.Contains(Path.DirectorySeparatorChar))
                     {
                         // Absolute or relative path; use as is
-                        ioToolFiles.Add(new FileInfo(dllNameOrPath));
+                        toolFiles.Add(new FileInfo(dllNameOrPath));
                         continue;
                     }
 
@@ -3660,19 +3661,19 @@ namespace AnalysisManagerBase
                     if (fiProgram.Directory == null)
                     {
                         // Unable to determine the directory path for fiProgram; this shouldn't happen
-                        ioToolFiles.Add(new FileInfo(dllNameOrPath));
+                        toolFiles.Add(new FileInfo(dllNameOrPath));
                     }
                     else
                     {
                         // Add it as a relative path to fiProgram
-                        ioToolFiles.Add(new FileInfo(Path.Combine(fiProgram.Directory.FullName, dllNameOrPath)));
+                        toolFiles.Add(new FileInfo(Path.Combine(fiProgram.Directory.FullName, dllNameOrPath)));
                     }
                 }
             }
 
             try
             {
-                var success = SetStepTaskToolVersion(toolVersionInfo, ioToolFiles, saveToolVersionTextFile: false);
+                var success = SetStepTaskToolVersion(toolVersionInfo, toolFiles, saveToolVersionTextFile: false);
                 return success;
             }
             catch (Exception ex)

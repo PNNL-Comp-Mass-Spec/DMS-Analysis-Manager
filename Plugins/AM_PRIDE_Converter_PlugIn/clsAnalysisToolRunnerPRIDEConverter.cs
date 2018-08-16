@@ -4292,8 +4292,8 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 LogDebug("Determining tool version info");
             }
 
-            // Store paths to key files in ioToolFiles
-            var ioToolFiles = new List<FileInfo>();
+            // Store paths to key files in toolFiles
+            var toolFiles = new List<FileInfo>();
 
             if (mCreatePrideXMLFiles)
             {
@@ -4316,7 +4316,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 // Run the PRIDE Converter using the -version switch to determine its version
                 toolVersionInfo = GetPrideConverterVersion(fiPrideConverter.FullName);
 
-                ioToolFiles.Add(fiPrideConverter);
+                toolFiles.Add(fiPrideConverter);
             }
             else
             {
@@ -4327,11 +4327,11 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 }
             }
 
-            ioToolFiles.Add(new FileInfo(mMSXmlGeneratorAppPath));
+            toolFiles.Add(new FileInfo(mMSXmlGeneratorAppPath));
 
             try
             {
-                return SetStepTaskToolVersion(toolVersionInfo, ioToolFiles, saveToolVersionTextFile: false);
+                return SetStepTaskToolVersion(toolVersionInfo, toolFiles, saveToolVersionTextFile: false);
             }
             catch (Exception ex)
             {

@@ -718,14 +718,14 @@ namespace MSMSSpectrumFilterAM
                 return false;
             }
 
-            // Store the path to MsMsDataFileReader.dll in ioToolFiles
-            var ioToolFiles = new List<FileInfo> {
+            // Store the path to MsMsDataFileReader.dll in toolFiles
+            var toolFiles = new List<FileInfo> {
                 new FileInfo(Path.Combine(strAppFolderPath, "MsMsDataFileReader.dll"))
             };
 
             try
             {
-                return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles);
+                return SetStepTaskToolVersion(strToolVersionInfo, toolFiles);
             }
             catch (Exception ex)
             {

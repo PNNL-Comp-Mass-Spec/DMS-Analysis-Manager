@@ -212,7 +212,7 @@ namespace AnalysisManagerMultiAlignPlugIn
             if (!blnSuccess)
                 return false;
 
-            var ioToolFiles = new List<FileInfo>();
+            var toolFiles = new List<FileInfo>();
 
             if (ioMultiAlignProg.DirectoryName != null)
             {
@@ -237,14 +237,14 @@ namespace AnalysisManagerMultiAlignPlugIn
                     return false;
 
 
-                // Store paths to key DLLs in ioToolFiles
-                ioToolFiles.Add(new FileInfo(Path.Combine(ioMultiAlignProg.DirectoryName, "MultiAlignEngine.dll")));
-                ioToolFiles.Add(new FileInfo(Path.Combine(ioMultiAlignProg.DirectoryName, "PNNLOmics.dll")));
+                // Store paths to key DLLs in toolFiles
+                toolFiles.Add(new FileInfo(Path.Combine(ioMultiAlignProg.DirectoryName, "MultiAlignEngine.dll")));
+                toolFiles.Add(new FileInfo(Path.Combine(ioMultiAlignProg.DirectoryName, "PNNLOmics.dll")));
             }
 
             try
             {
-                return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, saveToolVersionTextFile: false);
+                return SetStepTaskToolVersion(strToolVersionInfo, toolFiles, saveToolVersionTextFile: false);
             }
             catch (Exception ex)
             {

@@ -288,13 +288,13 @@ namespace AnalysisManagerDtaRefineryPlugIn
                 LogDebug("Determining tool version info");
             }
 
-            // Store paths to key files in ioToolFiles
-            var ioToolFiles = new List<FileInfo>();
+            // Store paths to key files in toolFiles
+            var toolFiles = new List<FileInfo>();
             var ioDtaRefineryFileInfo = new FileInfo(m_mgrParams.GetParam("DTARefineryLoc"));
 
             if (ioDtaRefineryFileInfo.Exists)
             {
-                ioToolFiles.Add(ioDtaRefineryFileInfo);
+                toolFiles.Add(ioDtaRefineryFileInfo);
 
                 if (ioDtaRefineryFileInfo.DirectoryName == null)
                 {
@@ -303,7 +303,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
                 else
                 {
                     var strXTandemModuleLoc = Path.Combine(ioDtaRefineryFileInfo.DirectoryName, @"aux_xtandem_module\tandem_5digit_precision.exe");
-                    ioToolFiles.Add(new FileInfo(strXTandemModuleLoc));
+                    toolFiles.Add(new FileInfo(strXTandemModuleLoc));
                 }
             }
             else
@@ -314,7 +314,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
 
             try
             {
-                return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, saveToolVersionTextFile: false);
+                return SetStepTaskToolVersion(strToolVersionInfo, toolFiles, saveToolVersionTextFile: false);
             }
             catch (Exception ex)
             {

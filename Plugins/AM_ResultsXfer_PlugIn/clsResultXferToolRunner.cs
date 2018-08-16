@@ -529,8 +529,8 @@ namespace AnalysisManagerResultsXferPlugin
                 return false;
             }
 
-            // Store the path to AnalysisManagerProg.exe and AnalysisManagerResultsXferPlugin.dll in ioToolFiles
-            var ioToolFiles = new List<FileInfo>
+            // Store the path to AnalysisManagerProg.exe and AnalysisManagerResultsXferPlugin.dll in toolFiles
+            var toolFiles = new List<FileInfo>
             {
                 new FileInfo(Path.Combine(appFolderPath, "AnalysisManagerProg.exe")),
                 new FileInfo(Path.Combine(appFolderPath, "AnalysisManagerResultsXferPlugin.dll"))
@@ -538,7 +538,7 @@ namespace AnalysisManagerResultsXferPlugin
 
             try
             {
-                return SetStepTaskToolVersion(toolVersionInfo, ioToolFiles, false);
+                return SetStepTaskToolVersion(toolVersionInfo, toolFiles, false);
             }
             catch (Exception ex)
             {

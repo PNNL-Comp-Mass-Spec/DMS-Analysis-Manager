@@ -1001,9 +1001,9 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             if (!blnSuccess)
                 return false;
 
-            // Store the path to important DLLs in ioToolFiles
+            // Store the path to important DLLs in toolFiles
             // Skip System.Data.SQLite.dll; we don't need to track the file date
-            var ioToolFiles = new List<FileInfo>
+            var toolFiles = new List<FileInfo>
             {
                 new FileInfo(Path.Combine(strAppFolderPath, "AnalysisManagerInspResultsAssemblyPlugIn.dll")),
                 new FileInfo(Path.Combine(strAppFolderPath, "PeptideToProteinMapEngine.dll")),
@@ -1013,7 +1013,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
             try
             {
-                return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles);
+                return SetStepTaskToolVersion(strToolVersionInfo, toolFiles);
             }
             catch (Exception ex)
             {

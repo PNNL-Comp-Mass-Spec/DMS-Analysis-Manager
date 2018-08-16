@@ -614,8 +614,8 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 LogDebug("Determining tool version info");
             }
 
-            // Store paths to key files in ioToolFiles
-            var ioToolFiles = new List<FileInfo>();
+            // Store paths to key files in toolFiles
+            var toolFiles = new List<FileInfo>();
 
             // Determine the path to the XML Generator
             // ReAdW.exe or MSConvert.exe
@@ -643,7 +643,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
             if (!string.IsNullOrEmpty(mMSXmlGeneratorAppPath))
             {
-                ioToolFiles.Add(new FileInfo(mMSXmlGeneratorAppPath));
+                toolFiles.Add(new FileInfo(mMSXmlGeneratorAppPath));
             }
             else
             {
@@ -661,13 +661,13 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
                 if (!string.IsNullOrEmpty(recalculatePrecursorsToolProgLoc))
                 {
-                    ioToolFiles.Add(new FileInfo(recalculatePrecursorsToolProgLoc));
+                    toolFiles.Add(new FileInfo(recalculatePrecursorsToolProgLoc));
                 }
             }
 
             try
             {
-                return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, saveToolVersionTextFile: true);
+                return SetStepTaskToolVersion(strToolVersionInfo, toolFiles, saveToolVersionTextFile: true);
             }
             catch (Exception ex)
             {

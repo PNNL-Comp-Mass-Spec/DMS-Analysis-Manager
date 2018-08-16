@@ -1108,17 +1108,17 @@ namespace AnalysisManagerMODPlusPlugin
 
             var strToolVersionInfo = string.Copy(mMODPlusVersion);
 
-            // Store paths to key files in ioToolFiles
-            var ioToolFiles = new List<FileInfo>();
+            // Store paths to key files in toolFiles
+            var toolFiles = new List<FileInfo>();
             var fiMODPlusProg = new FileInfo(mMODPlusProgLoc);
-            ioToolFiles.Add(fiMODPlusProg);
+            toolFiles.Add(fiMODPlusProg);
 
             if (fiMODPlusProg.Directory != null)
-                ioToolFiles.Add(new FileInfo(Path.Combine(fiMODPlusProg.Directory.FullName, "tda_plus.jar")));
+                toolFiles.Add(new FileInfo(Path.Combine(fiMODPlusProg.Directory.FullName, "tda_plus.jar")));
 
             try
             {
-                return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, saveToolVersionTextFile: true);
+                return SetStepTaskToolVersion(strToolVersionInfo, toolFiles, saveToolVersionTextFile: true);
             }
             catch (Exception ex)
             {

@@ -713,15 +713,15 @@ namespace AnalysisManagerQCARTPlugin
 
             StoreToolVersionInfoViaSystemDiagnostics(ref toolVersionInfo, fiProgram.FullName);
 
-            // Store paths to key DLLs in ioToolFiles
-            var ioToolFiles = new List<FileInfo>
+            // Store paths to key DLLs in toolFiles
+            var toolFiles = new List<FileInfo>
             {
                 fiProgram
             };
 
             try
             {
-                return SetStepTaskToolVersion(toolVersionInfo, ioToolFiles, saveToolVersionTextFile: false);
+                return SetStepTaskToolVersion(toolVersionInfo, toolFiles, saveToolVersionTextFile: false);
             }
             catch (Exception ex)
             {

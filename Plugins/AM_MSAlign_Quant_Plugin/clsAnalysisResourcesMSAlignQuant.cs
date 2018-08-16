@@ -57,14 +57,13 @@ namespace AnalysisManagerMSAlignQuantPlugIn
             }
 
             // Retrieve the MSAlign results for this job
-            string strMSAlignResultsTable = null;
-            strMSAlignResultsTable = DatasetName + MSALIGN_RESULT_TABLE_SUFFIX;
-            if (!FileSearch.FindAndRetrieveMiscFiles(strMSAlignResultsTable, false))
+            var msAlignResultsTableFile = DatasetName + MSALIGN_RESULT_TABLE_SUFFIX;
+            if (!FileSearch.FindAndRetrieveMiscFiles(msAlignResultsTableFile, false))
             {
                 // Errors were reported in function call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
-            m_jobParams.AddResultFileToSkip(strMSAlignResultsTable);
+            m_jobParams.AddResultFileToSkip(msAlignResultsTableFile);
 
             // Get the instrument data file
             var strRawDataType = m_jobParams.GetParam("RawDataType");

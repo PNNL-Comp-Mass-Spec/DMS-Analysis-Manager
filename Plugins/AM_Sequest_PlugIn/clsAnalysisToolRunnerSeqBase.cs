@@ -733,7 +733,7 @@ namespace AnalysisManagerSequestPlugin
         /// <remarks></remarks>
         protected bool StoreToolVersionInfo(string strOutFilePath)
         {
-            var ioToolFiles = new List<FileInfo>();
+            var toolFiles = new List<FileInfo>();
             var strToolVersionInfo = string.Empty;
 
             if (m_DebugLevel >= 2)
@@ -781,20 +781,20 @@ namespace AnalysisManagerSequestPlugin
                 LogError("Exception parsing .Out file in StoreToolVersionInfo: " + ex.Message);
             }
 
-            // Store the path to the Sequest .Exe in ioToolFiles
+            // Store the path to the Sequest .Exe in toolFiles
             try
             {
-                ioToolFiles.Add(new FileInfo(m_mgrParams.GetParam("seqprogloc")));
+                toolFiles.Add(new FileInfo(m_mgrParams.GetParam("seqprogloc")));
             }
             catch (Exception ex)
             {
-                LogError("Exception adding Sequest .Exe to ioToolFiles in StoreToolVersionInfo: " + ex.Message);
+                LogError("Exception adding Sequest .Exe to toolFiles in StoreToolVersionInfo: " + ex.Message);
             }
 
             try
             {
                 // Note that IDPicker uses Tool_Version_Info_Sequest.txt when creating pepXML files
-                return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, saveToolVersionTextFile: true);
+                return SetStepTaskToolVersion(strToolVersionInfo, toolFiles, saveToolVersionTextFile: true);
             }
             catch (Exception ex)
             {

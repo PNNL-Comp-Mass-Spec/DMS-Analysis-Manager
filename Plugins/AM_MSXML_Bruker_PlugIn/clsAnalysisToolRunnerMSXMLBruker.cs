@@ -311,8 +311,8 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
                 LogDebug("Determining tool version info");
             }
 
-            // Store paths to key files in ioToolFiles
-            var ioToolFiles = new List<FileInfo>();
+            // Store paths to key files in toolFiles
+            var toolFiles = new List<FileInfo>();
 
             var msXmlGenerator = m_jobParams.GetParam("MSXMLGenerator");
 
@@ -329,7 +329,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
 
                 try
                 {
-                    ioToolFiles.Add(new FileInfo(compassXportPath));
+                    toolFiles.Add(new FileInfo(compassXportPath));
                 }
                 catch (Exception ex)
                 {
@@ -355,7 +355,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
 
             try
             {
-                return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles);
+                return SetStepTaskToolVersion(strToolVersionInfo, toolFiles);
             }
             catch (Exception ex)
             {

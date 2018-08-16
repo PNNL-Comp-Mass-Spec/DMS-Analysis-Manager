@@ -110,18 +110,18 @@ namespace AnalysisManagerMSPathFinderPlugin
                 {
                     // Look for the results file
 
-                    FileInfo fiResultsFile;
+                    FileInfo resultsFile;
 
                     if (tdaEnabled)
                     {
-                        fiResultsFile = new FileInfo(Path.Combine(m_WorkDir, m_Dataset + "_IcTda.tsv"));
+                        resultsFile = new FileInfo(Path.Combine(m_WorkDir, m_Dataset + "_IcTda.tsv"));
                     }
                     else
                     {
-                        fiResultsFile = new FileInfo(Path.Combine(m_WorkDir, m_Dataset + "_IcTarget.tsv"));
+                        resultsFile = new FileInfo(Path.Combine(m_WorkDir, m_Dataset + "_IcTarget.tsv"));
                     }
 
-                    if (fiResultsFile.Exists)
+                    if (resultsFile.Exists)
                     {
                         var postProcessSuccess = PostProcessMSPathFinderResults();
                         if (!postProcessSuccess)
@@ -137,7 +137,7 @@ namespace AnalysisManagerMSPathFinderPlugin
                     {
                         if (string.IsNullOrEmpty(m_message))
                         {
-                            m_message = "MSPathFinder results file not found: " + fiResultsFile.Name;
+                            m_message = "MSPathFinder results file not found: " + resultsFile.Name;
                             processingSuccess = false;
                         }
                     }
@@ -226,19 +226,19 @@ namespace AnalysisManagerMSPathFinderPlugin
             var localOrgDbFolder = m_mgrParams.GetParam("orgdbdir");
             var fastaFilePath = Path.Combine(localOrgDbFolder, m_jobParams.GetParam("PeptideSearch", "generatedFastaName"));
 
-            var fiFastaFile = new FileInfo(fastaFilePath);
+            var fastaFile = new FileInfo(fastaFilePath);
 
-            if (!fiFastaFile.Exists)
+            if (!fastaFile.Exists)
             {
                 // Fasta file not found
-                LogError("Fasta file not found: " + fiFastaFile.Name, "Fasta file not found: " + fiFastaFile.FullName);
+                LogError("Fasta file not found: " + fastaFile.Name, "Fasta file not found: " + fastaFile.FullName);
                 return false;
             }
 
-            var strProteinOptions = m_jobParams.GetParam("ProteinOptions");
-            if (!string.IsNullOrEmpty(strProteinOptions))
+            var proteinOptions = m_jobParams.GetParam("ProteinOptions");
+            if (!string.IsNullOrEmpty(proteinOptions))
             {
-                if (strProteinOptions.ToLower().Contains("seq_direction=decoy"))
+                if (proteinOptions.ToLower().Contains("seq_direction=decoy"))
                 {
                     fastaFileIsDecoy = true;
                 }
@@ -247,9 +247,9 @@ namespace AnalysisManagerMSPathFinderPlugin
             return true;
         }
 
-        private bool LineStartsWith(string strLineIn, string matchString)
+        private bool LineStartsWith(string dataLine, string matchString)
         {
-            return strLineIn.ToLower().StartsWith(matchString.ToLower());
+            return dataLine.ToLower().StartsWith(matchString.ToLower());
         }
 
         private readonly Regex rePromexFeatureStats = new Regex(@"ProMex[^\d]+(\d+)/(\d+) features loaded", RegexOptions.Compiled | RegexOptions.IgnoreCase);
@@ -261,9 +261,9 @@ namespace AnalysisManagerMSPathFinderPlugin
         /// <summary>
         /// Parse the MSPathFinder console output file to track the search progress
         /// </summary>
-        /// <param name="strConsoleOutputFilePath"></param>
+        /// <param name="consoleOutputFilePath"></param>
         /// <remarks></remarks>
-        private void ParseConsoleOutputFile(string strConsoleOutputFilePath)
+        private void ParseConsoleOutputFile(string consoleOutputFilePath)
         {
             // Example Console output
 
@@ -364,11 +364,11 @@ namespace AnalysisManagerMSPathFinderPlugin
 
             try
             {
-                if (!File.Exists(strConsoleOutputFilePath))
+                if (!File.Exists(consoleOutputFilePath))
                 {
                     if (m_DebugLevel >= 4)
                     {
-                        LogDebug("Console output file not found: " + strConsoleOutputFilePath);
+                        LogDebug("Console output file not found: " + consoleOutputFilePath);
                     }
 
                     return;
@@ -376,7 +376,7 @@ namespace AnalysisManagerMSPathFinderPlugin
 
                 if (m_DebugLevel >= 4)
                 {
-                    LogDebug("Parsing file " + strConsoleOutputFilePath);
+                    LogDebug("Parsing file " + consoleOutputFilePath);
                 }
 
                 // progressComplete values are between 0 and 100
@@ -408,43 +408,43 @@ namespace AnalysisManagerMSPathFinderPlugin
                 var searchingDecoyDB = false;
                 mConsoleOutputErrorMsg = string.Empty;
 
-                using (var srInFile = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var srInFile = new StreamReader(new FileStream(consoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
                     while (!srInFile.EndOfStream)
                     {
-                        var strLineIn = srInFile.ReadLine();
+                        var dataLine = srInFile.ReadLine();
 
-                        if (string.IsNullOrWhiteSpace(strLineIn))
+                        if (string.IsNullOrWhiteSpace(dataLine))
                         {
                             continue;
                         }
 
-                        var strLineInLCase = strLineIn.ToLower();
+                        var dataLineLcase = dataLine.ToLower();
 
-                        if (strLineInLCase.StartsWith(EXCEPTION_FLAG.ToLower()) || strLineInLCase.Contains("unhandled exception"))
+                        if (dataLineLcase.StartsWith(EXCEPTION_FLAG.ToLower()) || dataLineLcase.Contains("unhandled exception"))
                         {
                             // Exception while processing
 
-                            var exceptionMessage = strLineIn.Substring(EXCEPTION_FLAG.Length).TrimStart();
+                            var exceptionMessage = dataLine.Substring(EXCEPTION_FLAG.Length).TrimStart();
 
                             mConsoleOutputErrorMsg = "Error running MSPathFinder: " + exceptionMessage;
                             break;
                         }
 
-                        if (strLineInLCase.StartsWith(ERROR_PROCESSING_FLAG.ToLower()))
+                        if (dataLineLcase.StartsWith(ERROR_PROCESSING_FLAG.ToLower()))
                         {
                             // Error processing FileName.msf1lt: Error details;
 
                             string errorMessage;
 
-                            var colonIndex = strLineIn.IndexOf(':');
+                            var colonIndex = dataLine.IndexOf(':');
                             if (colonIndex > 0)
                             {
-                                errorMessage = strLineIn.Substring(colonIndex + 1).Trim();
+                                errorMessage = dataLine.Substring(colonIndex + 1).Trim();
                             }
                             else
                             {
-                                errorMessage = strLineIn;
+                                errorMessage = dataLine;
                             }
 
                             if (string.IsNullOrEmpty(mConsoleOutputErrorMsg))
@@ -465,42 +465,42 @@ namespace AnalysisManagerMSPathFinderPlugin
                             continue;
                         }
 
-                        if (LineStartsWith(strLineIn, "Generating sequence tags for MS/MS spectra"))
+                        if (LineStartsWith(dataLine, "Generating sequence tags for MS/MS spectra"))
                         {
                             currentStage = MSPathFinderSearchStage.GeneratingSequenceTags;
                         }
-                        else if (LineStartsWith(strLineIn, "Reading the target database") ||
-                                 LineStartsWith(strLineIn, "tag-based searching the target database"))
+                        else if (LineStartsWith(dataLine, "Reading the target database") ||
+                                 LineStartsWith(dataLine, "tag-based searching the target database"))
                         {
                             currentStage = MSPathFinderSearchStage.TagBasedSearchingTargetDB;
                         }
-                        else if (LineStartsWith(strLineIn, "Searching the target database"))
+                        else if (LineStartsWith(dataLine, "Searching the target database"))
                         {
                             currentStage = MSPathFinderSearchStage.SearchingTargetDB;
                         }
-                        else if (LineStartsWith(strLineIn, "Calculating spectral E-values for target-spectrum matches"))
+                        else if (LineStartsWith(dataLine, "Calculating spectral E-values for target-spectrum matches"))
                         {
                             currentStage = MSPathFinderSearchStage.CalculatingEValuesForTargetSpectra;
                         }
-                        else if (LineStartsWith(strLineIn, "Reading the decoy database") ||
-                                 LineStartsWith(strLineIn, "Tag-based searching the decoy database"))
+                        else if (LineStartsWith(dataLine, "Reading the decoy database") ||
+                                 LineStartsWith(dataLine, "Tag-based searching the decoy database"))
                         {
                             currentStage = MSPathFinderSearchStage.TagBasedSearchingDecoyDB;
                             searchingDecoyDB = true;
                             continue;
                         }
-                        else if (LineStartsWith(strLineIn, "Searching the decoy database"))
+                        else if (LineStartsWith(dataLine, "Searching the decoy database"))
                         {
                             currentStage = MSPathFinderSearchStage.SearchingDecoyDB;
                             searchingDecoyDB = true;
                             continue;
                         }
-                        else if (LineStartsWith(strLineIn, "Calculating spectral E-values for decoy-spectrum matches"))
+                        else if (LineStartsWith(dataLine, "Calculating spectral E-values for decoy-spectrum matches"))
                         {
                             currentStage = MSPathFinderSearchStage.CalculatingEValuesForDecoySpectra;
                         }
 
-                        var oProgressMatch = reCheckProgress.Match(strLineIn);
+                        var oProgressMatch = reCheckProgress.Match(dataLine);
                         if (oProgressMatch.Success)
                         {
                             if (float.TryParse(oProgressMatch.Groups[1].ToString(), out var progressValue))
@@ -519,7 +519,7 @@ namespace AnalysisManagerMSPathFinderPlugin
 
                         if (unfilteredFeatures == 0)
                         {
-                            var oPromexResults = rePromexFeatureStats.Match(strLineIn);
+                            var oPromexResults = rePromexFeatureStats.Match(dataLine);
                             if (oPromexResults.Success)
                             {
                                 if (int.TryParse(oPromexResults.Groups[1].ToString(), out var filteredFeatures))
@@ -533,7 +533,7 @@ namespace AnalysisManagerMSPathFinderPlugin
                             }
                         }
 
-                        var oProteinSerchedMatch = reProcessingProteins.Match(strLineIn);
+                        var oProteinSerchedMatch = reProcessingProteins.Match(dataLine);
                         if (oProteinSerchedMatch.Success)
                         {
                             if (int.TryParse(oProteinSerchedMatch.Groups[1].ToString(), out var proteinsSearched))
@@ -579,7 +579,7 @@ namespace AnalysisManagerMSPathFinderPlugin
                 // Ignore errors here
                 if (m_DebugLevel >= 2)
                 {
-                    LogError("Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
+                    LogError("Error parsing console output file (" + consoleOutputFilePath + "): " + ex.Message);
                 }
             }
         }
@@ -587,63 +587,54 @@ namespace AnalysisManagerMSPathFinderPlugin
         /// <summary>
         /// Parses the static and dynamic modification information to create the MSPathFinder Mods file
         /// </summary>
-        /// <param name="strParameterFilePath">Full path to the MSPathFinder parameter file; will create file MSPathFinder_Mods.txt in the same folder</param>
-        /// <param name="sbOptions">String builder of command line arguments to pass to MSPathFinder</param>
-        /// <param name="intNumMods">Max Number of Modifications per peptide</param>
-        /// <param name="lstStaticMods">List of Static Mods</param>
-        /// <param name="lstDynamicMods">List of Dynamic Mods</param>
+        /// <param name="cmdLineOptions">String builder of command line arguments to pass to MSPathFinder</param>
+        /// <param name="numMods">Max Number of Modifications per peptide</param>
+        /// <param name="staticMods">List of Static Mods</param>
+        /// <param name="dynamicMods">List of Dynamic Mods</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks></remarks>
-        private bool ParseMSPathFinderModifications(string strParameterFilePath, StringBuilder sbOptions, int intNumMods, IReadOnlyCollection<string> lstStaticMods,
-            IReadOnlyCollection<string> lstDynamicMods)
+        private bool ParseMSPathFinderModifications(ref string cmdLineOptions, int numMods, IReadOnlyCollection<string> staticMods,
+            IReadOnlyCollection<string> dynamicMods)
         {
             const string MOD_FILE_NAME = "MSPathFinder_Mods.txt";
-            bool blnSuccess;
+            bool success;
 
             try
             {
-                var fiParameterFile = new FileInfo(strParameterFilePath);
+                var modFilePath = Path.Combine(m_WorkDir, MOD_FILE_NAME);
 
-                if (string.IsNullOrWhiteSpace(fiParameterFile.DirectoryName))
+                cmdLineOptions += " -mod " + modFilePath;
+
+                using (var modFileWriter = new StreamWriter(new FileStream(modFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
-                    LogError("Cannot determine the parent directory of " + fiParameterFile.FullName);
-                    return false;
-                }
+                    modFileWriter.WriteLine("# This file is used to specify modifications for MSPathFinder");
+                    modFileWriter.WriteLine("");
+                    modFileWriter.WriteLine("# Max Number of Modifications per peptide");
+                    modFileWriter.WriteLine("NumMods=" + numMods);
 
-                var strModFilePath = Path.Combine(fiParameterFile.DirectoryName, MOD_FILE_NAME);
-
-                sbOptions.Append(" -mod " + strModFilePath);
-
-                using (var swModFile = new StreamWriter(new FileStream(strModFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
-                {
-                    swModFile.WriteLine("# This file is used to specify modifications for MSPathFinder");
-                    swModFile.WriteLine("");
-                    swModFile.WriteLine("# Max Number of Modifications per peptide");
-                    swModFile.WriteLine("NumMods=" + intNumMods);
-
-                    swModFile.WriteLine("");
-                    swModFile.WriteLine("# Static mods");
-                    if (lstStaticMods.Count == 0)
+                    modFileWriter.WriteLine("");
+                    modFileWriter.WriteLine("# Static mods");
+                    if (staticMods.Count == 0)
                     {
-                        swModFile.WriteLine("# None");
+                        modFileWriter.WriteLine("# None");
                     }
                     else
                     {
-                        foreach (var strStaticMod in lstStaticMods)
+                        foreach (var staticMod in staticMods)
                         {
 
-                            if (ParseMSPathFinderValidateMod(strStaticMod, out var strModClean))
+                            if (ParseMSPathFinderValidateMod(staticMod, out var modClean))
                             {
-                                if (strModClean.Contains(",opt,"))
+                                if (modClean.Contains(",opt,"))
                                 {
                                     // Static (fixed) mod is listed as dynamic
                                     // Abort the analysis since the parameter file is misleading and needs to be fixed
                                     var errMsg =
                                         "Static mod definition contains ',opt,'; update the param file to have ',fix,' or change to 'DynamicMod='";
-                                    LogError(errMsg, errMsg + "; " + strStaticMod);
+                                    LogError(errMsg, errMsg + "; " + staticMod);
                                     return false;
                                 }
-                                swModFile.WriteLine(strModClean);
+                                modFileWriter.WriteLine(modClean);
                             }
                             else
                             {
@@ -652,29 +643,29 @@ namespace AnalysisManagerMSPathFinderPlugin
                         }
                     }
 
-                    swModFile.WriteLine("");
-                    swModFile.WriteLine("# Dynamic mods");
-                    if (lstDynamicMods.Count == 0)
+                    modFileWriter.WriteLine("");
+                    modFileWriter.WriteLine("# Dynamic mods");
+                    if (dynamicMods.Count == 0)
                     {
-                        swModFile.WriteLine("# None");
+                        modFileWriter.WriteLine("# None");
                     }
                     else
                     {
-                        foreach (var strDynamicMod in lstDynamicMods)
+                        foreach (var dynamicMod in dynamicMods)
                         {
 
-                            if (ParseMSPathFinderValidateMod(strDynamicMod, out var strModClean))
+                            if (ParseMSPathFinderValidateMod(dynamicMod, out var modClean))
                             {
-                                if (strModClean.Contains(",fix,"))
+                                if (modClean.Contains(",fix,"))
                                 {
                                     // Dynamic (optional) mod is listed as static
                                     // Abort the analysis since the parameter file is misleading and needs to be fixed
                                     var errMsg =
                                         "Dynamic mod definition contains ',fix,'; update the param file to have ',opt,' or change to 'StaticMod='";
-                                    LogError(errMsg, errMsg + "; " + strDynamicMod);
+                                    LogError(errMsg, errMsg + "; " + dynamicMod);
                                     return false;
                                 }
-                                swModFile.WriteLine(strModClean);
+                                modFileWriter.WriteLine(modClean);
                             }
                             else
                             {
@@ -684,16 +675,16 @@ namespace AnalysisManagerMSPathFinderPlugin
                     }
                 }
 
-                blnSuccess = true;
+                success = true;
 
             }
             catch (Exception ex)
             {
                 LogError("Exception creating MSPathFinder Mods file", ex);
-                blnSuccess = false;
+                success = false;
             }
 
-            return blnSuccess;
+            return success;
         }
 
         /// <summary>
@@ -812,52 +803,52 @@ namespace AnalysisManagerMSPathFinderPlugin
         /// <summary>
         /// Validates that the modification definition text
         /// </summary>
-        /// <param name="strMod">Modification definition</param>
-        /// <param name="strModClean">Cleaned-up modification definition (output param)</param>
+        /// <param name="mod">Modification definition</param>
+        /// <param name="modClean">Cleaned-up modification definition (output param)</param>
         /// <returns>True if valid; false if invalid</returns>
         /// <remarks>Valid modification definition contains 5 parts and doesn't contain any whitespace</remarks>
-        private bool ParseMSPathFinderValidateMod(string strMod, out string strModClean)
+        private bool ParseMSPathFinderValidateMod(string mod, out string modClean)
         {
-            var strComment = string.Empty;
+            var comment = string.Empty;
 
-            strModClean = string.Empty;
+            modClean = string.Empty;
 
-            var intPoundIndex = strMod.IndexOf('#');
-            if (intPoundIndex > 0)
+            var poundIndex = mod.IndexOf('#');
+            if (poundIndex > 0)
             {
-                strComment = strMod.Substring(intPoundIndex);
-                strMod = strMod.Substring(0, intPoundIndex - 1).Trim();
+                comment = mod.Substring(poundIndex);
+                mod = mod.Substring(0, poundIndex - 1).Trim();
             }
 
-            var strSplitMod = strMod.Split(',');
+            var splitMod = mod.Split(',');
 
-            if (strSplitMod.Length < 5)
+            if (splitMod.Length < 5)
             {
                 // Invalid mod definition; must have 5 sections
-                LogError("Invalid modification string; must have 5 sections: " + strMod);
+                LogError("Invalid modification string; must have 5 sections: " + mod);
                 return false;
             }
 
             // Make sure mod does not have both * and any
-            if (strSplitMod[1].Trim() == "*" && strSplitMod[3].ToLower().Trim() == "any")
+            if (splitMod[1].Trim() == "*" && splitMod[3].ToLower().Trim() == "any")
             {
-                LogError("Modification cannot contain both * and any: " + strMod);
+                LogError("Modification cannot contain both * and any: " + mod);
                 return false;
             }
 
             // Reconstruct the mod definition, making sure there is no whitespace
-            strModClean = strSplitMod[0].Trim();
-            for (var intIndex = 1; intIndex <= strSplitMod.Length - 1; intIndex++)
+            modClean = splitMod[0].Trim();
+            for (var index = 1; index <= splitMod.Length - 1; index++)
             {
-                strModClean += "," + strSplitMod[intIndex].Trim();
+                modClean += "," + splitMod[index].Trim();
             }
 
-            if (!string.IsNullOrWhiteSpace(strComment))
+            if (!string.IsNullOrWhiteSpace(comment))
             {
                 // As of August 12, 2011, the comment cannot contain a comma
                 // Sangtae Kim has promised to fix this, but for now, we'll replace commas with semicolons
-                strComment = strComment.Replace(",", ";");
-                strModClean += "     " + strComment;
+                comment = comment.Replace(",", ";");
+                modClean += "     " + comment;
             }
 
             return true;
@@ -870,39 +861,39 @@ namespace AnalysisManagerMSPathFinderPlugin
 
             try
             {
-                var diWorkDir = new DirectoryInfo(m_WorkDir);
+                var workDirInfo = new DirectoryInfo(m_WorkDir);
 
                 // Make sure MSPathFinder has released the file handles
                 clsProgRunner.GarbageCollectNow();
 
-                var diCompressDir = new DirectoryInfo(Path.Combine(m_WorkDir, "TempCompress"));
-                if (diCompressDir.Exists)
+                var compressDirInfo = new DirectoryInfo(Path.Combine(m_WorkDir, "TempCompress"));
+                if (compressDirInfo.Exists)
                 {
-                    foreach (var fiFile in diCompressDir.GetFiles())
+                    foreach (var fileToDelete in compressDirInfo.GetFiles())
                     {
-                        fiFile.Delete();
+                        fileToDelete.Delete();
                     }
                 }
                 else
                 {
-                    diCompressDir.Create();
+                    compressDirInfo.Create();
                 }
 
-                var fiResultFiles = diWorkDir.GetFiles(m_Dataset + "*_Ic*.tsv").ToList();
+                var resultFiles = workDirInfo.GetFiles(m_Dataset + "*_Ic*.tsv").ToList();
 
-                if (fiResultFiles.Count == 0)
+                if (resultFiles.Count == 0)
                 {
                     m_message = "Did not find any _Ic*.tsv files";
                     return false;
                 }
 
-                foreach (var fiFile in fiResultFiles)
+                foreach (var fileToMove in resultFiles)
                 {
-                    var targetFilePath = Path.Combine(diCompressDir.FullName, fiFile.Name);
-                    fiFile.MoveTo(targetFilePath);
+                    var targetFilePath = Path.Combine(compressDirInfo.FullName, fileToMove.Name);
+                    fileToMove.MoveTo(targetFilePath);
                 }
 
-                compressDirPath = diCompressDir.FullName;
+                compressDirPath = compressDirInfo.FullName;
             }
             catch (Exception ex)
             {
@@ -915,9 +906,9 @@ namespace AnalysisManagerMSPathFinderPlugin
                 m_DotNetZipTools.DebugLevel = m_DebugLevel;
 
                 var resultsZipFilePath = Path.Combine(m_WorkDir, m_Dataset + "_IcTsv.zip");
-                var blnSuccess = m_DotNetZipTools.ZipDirectory(compressDirPath, resultsZipFilePath);
+                var success = m_DotNetZipTools.ZipDirectory(compressDirPath, resultsZipFilePath);
 
-                if (!blnSuccess)
+                if (!success)
                 {
                     if (string.IsNullOrEmpty(m_message))
                     {
@@ -929,7 +920,7 @@ namespace AnalysisManagerMSPathFinderPlugin
                     }
                 }
 
-                return blnSuccess;
+                return success;
             }
             catch (Exception ex)
             {
@@ -944,7 +935,6 @@ namespace AnalysisManagerMSPathFinderPlugin
 
             // Read the MSPathFinder Parameter File
             // The parameter file name specifies the mass modifications to consider, plus also the analysis parameters
-
 
             var eResult = ParseMSPathFinderParameterFile(fastaFileIsDecoy, out var cmdLineOptions, out tdaEnabled);
 
@@ -973,11 +963,11 @@ namespace AnalysisManagerMSPathFinderPlugin
 
             // Set up and execute a program runner to run MSPathFinder
 
-            var cmdStr = " -s " + pbfFilePath;
-            cmdStr += " -feature " + featureFilePath;
-            cmdStr += " -d " + fastaFilePath;
-            cmdStr += " -o " + m_WorkDir;
-            cmdStr += " " + cmdLineOptions;
+            var cmdStr = " -s " + pbfFilePath +
+                         " -feature " + featureFilePath +
+                         " -d " + fastaFilePath +
+                         " -o " + m_WorkDir +
+                         " " + cmdLineOptions;
 
             if (m_DebugLevel >= 1)
             {
@@ -1064,7 +1054,7 @@ namespace AnalysisManagerMSPathFinderPlugin
         /// Stores the tool version info in the database
         /// </summary>
         /// <remarks></remarks>
-        private bool StoreToolVersionInfo(string strProgLoc)
+        private bool StoreToolVersionInfo(string progLoc)
         {
             var additionalDlls = new List<string>
             {
@@ -1072,7 +1062,7 @@ namespace AnalysisManagerMSPathFinderPlugin
                 "InformedProteomics.TopDown.dll"
             };
 
-            return StoreDotNETToolVersionInfo(strProgLoc, additionalDlls);
+            return StoreDotNETToolVersionInfo(progLoc, additionalDlls);
 
         }
 
@@ -1080,7 +1070,7 @@ namespace AnalysisManagerMSPathFinderPlugin
 
         #region "Event Handlers"
 
-        private DateTime dtLastConsoleOutputParse = DateTime.MinValue;
+        private DateTime mLastConsoleOutputParse = DateTime.MinValue;
 
         /// <summary>
         /// Event handler for CmdRunner.LoopWaiting event
@@ -1093,9 +1083,9 @@ namespace AnalysisManagerMSPathFinderPlugin
             UpdateStatusFile();
 
             // Parse the console output file every 30 seconds
-            if (DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= SECONDS_BETWEEN_UPDATE)
+            if (DateTime.UtcNow.Subtract(mLastConsoleOutputParse).TotalSeconds >= SECONDS_BETWEEN_UPDATE)
             {
-                dtLastConsoleOutputParse = DateTime.UtcNow;
+                mLastConsoleOutputParse = DateTime.UtcNow;
 
                 ParseConsoleOutputFile(Path.Combine(m_WorkDir, MSPATHFINDER_CONSOLE_OUTPUT));
 

@@ -161,8 +161,8 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
             }
 
 
-            // Store paths to key DLLs in ioToolFiles
-            var ioToolFiles = new List<FileInfo>
+            // Store paths to key DLLs in toolFiles
+            var toolFiles = new List<FileInfo>
             {
                 new FileInfo(featureFinderProgLoc)
             };
@@ -177,7 +177,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
                 // Lookup the version of the FeatureFinder Library (in the feature finder folder)
                 var strFeatureFinderDllLoc = Path.Combine(ioFeatureFinderInfo.DirectoryName, "FeatureFinder.dll");
 
-                ioToolFiles.Add(new FileInfo(strFeatureFinderDllLoc));
+                toolFiles.Add(new FileInfo(strFeatureFinderDllLoc));
 
                 blnSuccess = StoreToolVersionInfoOneFile64Bit(ref strToolVersionInfo, strFeatureFinderDllLoc);
                 if (!blnSuccess)
@@ -192,7 +192,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
 
             try
             {
-                return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, saveToolVersionTextFile: false);
+                return SetStepTaskToolVersion(strToolVersionInfo, toolFiles, saveToolVersionTextFile: false);
             }
             catch (Exception ex)
             {

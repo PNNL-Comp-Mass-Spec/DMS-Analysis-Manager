@@ -796,14 +796,14 @@ namespace AnalysisManagerICR2LSPlugIn
                 return false;
             }
 
-            // Store paths to key files in ioToolFiles
-            var ioToolFiles = new List<FileInfo> {
+            // Store paths to key files in toolFiles
+            var toolFiles = new List<FileInfo> {
                 new FileInfo(progLoc)
             };
 
             try
             {
-                return SetStepTaskToolVersion(toolVersionInfo, ioToolFiles);
+                return SetStepTaskToolVersion(toolVersionInfo, toolFiles);
             }
             catch (Exception ex)
             {

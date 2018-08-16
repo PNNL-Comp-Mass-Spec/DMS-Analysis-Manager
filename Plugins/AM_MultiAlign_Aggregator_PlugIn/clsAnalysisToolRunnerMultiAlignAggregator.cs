@@ -227,8 +227,8 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
             if (!blnSuccess)
                 return false;
 
-            // Store paths to key DLLs in ioToolFiles
-            var ioToolFiles = new List<FileInfo>
+            // Store paths to key DLLs in toolFiles
+            var toolFiles = new List<FileInfo>
             {
                 new FileInfo(strMultiAlignProgLoc)
             };
@@ -247,13 +247,13 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                 if (!blnSuccess)
                     return false;
 
-                ioToolFiles.Add(new FileInfo(strMultiAlignEngineDllLoc));
-                ioToolFiles.Add(new FileInfo(strMultiAlignCoreDllLoc));
+                toolFiles.Add(new FileInfo(strMultiAlignEngineDllLoc));
+                toolFiles.Add(new FileInfo(strMultiAlignCoreDllLoc));
             }
 
             try
             {
-                return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles);
+                return SetStepTaskToolVersion(strToolVersionInfo, toolFiles);
             }
             catch (Exception ex)
             {

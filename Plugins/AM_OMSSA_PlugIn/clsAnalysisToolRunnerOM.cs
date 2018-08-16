@@ -241,8 +241,8 @@ namespace AnalysisManagerOMSSAPlugIn
                 LogDebug("Determining tool version info");
             }
 
-            // Store paths to key files in ioToolFiles
-            var ioToolFiles = new List<FileInfo>
+            // Store paths to key files in toolFiles
+            var toolFiles = new List<FileInfo>
             {
                 new FileInfo(m_mgrParams.GetParam("OMSSAprogloc")),
                 new FileInfo(m_mgrParams.GetParam("omssa2pepprogloc"))
@@ -250,7 +250,7 @@ namespace AnalysisManagerOMSSAPlugIn
 
             try
             {
-                return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles);
+                return SetStepTaskToolVersion(strToolVersionInfo, toolFiles);
             }
             catch (Exception ex)
             {

@@ -1007,8 +1007,8 @@ namespace DTASpectraFileGen
                 }
             }
 
-            // Store strDtaGeneratorAppPath in ioToolFiles
-            var ioToolFiles = new List<FileInfo> {
+            // Store strDtaGeneratorAppPath in toolFiles
+            var toolFiles = new List<FileInfo> {
                 fiDtaGenerator
             };
 
@@ -1029,13 +1029,13 @@ namespace DTASpectraFileGen
                     {
                         // C# version of DeconMSn (released in January 2017)
                         strDllPath = Path.Combine(fiDtaGenerator.DirectoryName, "DeconEngineV2.dll");
-                        ioToolFiles.Add(new FileInfo(strDllPath));
+                        toolFiles.Add(new FileInfo(strDllPath));
                         blnSuccess = StoreToolVersionInfoOneFile(ref strToolVersionInfo, strDllPath);
                     }
                     else
                     {
                         strDllPath = Path.Combine(fiDtaGenerator.DirectoryName, "DeconMSnEngine.dll");
-                        ioToolFiles.Add(new FileInfo(strDllPath));
+                        toolFiles.Add(new FileInfo(strDllPath));
                         blnSuccess = StoreToolVersionInfoOneFile(ref strToolVersionInfo, strDllPath);
                     }
 
@@ -1047,9 +1047,9 @@ namespace DTASpectraFileGen
                     // DeconConsole re-implementation of DeconMSn (obsolete, superseded by C# version of DeconMSn that uses DeconEngineV2.dll)
 
                     // Lookup the version of the DeconTools Backend (in the DeconTools folder)
-                    // In addition, add it to ioToolFiles
+                    // In addition, add it to toolFiles
                     strDllPath = Path.Combine(fiDtaGenerator.DirectoryName, "DeconTools.Backend.dll");
-                    ioToolFiles.Add(new FileInfo(strDllPath));
+                    toolFiles.Add(new FileInfo(strDllPath));
                     blnSuccess = StoreToolVersionInfoOneFile(ref strToolVersionInfo, strDllPath);
                     if (!blnSuccess)
                         return false;
@@ -1065,12 +1065,12 @@ namespace DTASpectraFileGen
             // Possibly also store the MSConvert version
             if (m_CentroidDTAs)
             {
-                ioToolFiles.Add(new FileInfo(GetMSConvertAppPath()));
+                toolFiles.Add(new FileInfo(GetMSConvertAppPath()));
             }
 
             try
             {
-                return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, saveToolVersionTextFile: false);
+                return SetStepTaskToolVersion(strToolVersionInfo, toolFiles, saveToolVersionTextFile: false);
             }
             catch (Exception ex)
             {
@@ -1091,20 +1091,20 @@ namespace DTASpectraFileGen
             // Lookup the version of the DLL
             StoreToolVersionInfoOneFile(ref strToolVersionInfo, strDtaGeneratorDLLPath);
 
-            // Store paths to key files in ioToolFiles
-            var ioToolFiles = new List<FileInfo> {
+            // Store paths to key files in toolFiles
+            var toolFiles = new List<FileInfo> {
                 new FileInfo(strDtaGeneratorDLLPath)
             };
 
             // Possibly also store the MSConvert version
             if (m_CentroidDTAs)
             {
-                ioToolFiles.Add(new FileInfo(GetMSConvertAppPath()));
+                toolFiles.Add(new FileInfo(GetMSConvertAppPath()));
             }
 
             try
             {
-                return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, saveToolVersionTextFile: false);
+                return SetStepTaskToolVersion(strToolVersionInfo, toolFiles, saveToolVersionTextFile: false);
             }
             catch (Exception ex)
             {

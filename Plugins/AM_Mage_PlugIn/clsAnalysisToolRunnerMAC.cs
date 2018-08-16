@@ -147,11 +147,11 @@ namespace AnalysisManager_Mage_PlugIn
             }
 
             // Store paths to key DLLs
-            var ioToolFiles = GetToolSupplementalVersionInfo();
+            var toolFiles = GetToolSupplementalVersionInfo();
 
             try
             {
-                return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles);
+                return SetStepTaskToolVersion(strToolVersionInfo, toolFiles);
             }
             catch (Exception ex)
             {
