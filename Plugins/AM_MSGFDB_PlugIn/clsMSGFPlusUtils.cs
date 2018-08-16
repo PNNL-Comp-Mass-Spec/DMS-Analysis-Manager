@@ -696,32 +696,6 @@ namespace AnalysisManagerMSGFDBPlugIn
         }
 
         /// <summary>
-        /// Create the peptide to protein map file
-        /// </summary>
-        /// <param name="resultsFileName"></param>
-        /// <param name="ePeptideInputFileFormat"></param>
-        /// <returns></returns>
-        public CloseOutType CreatePeptideToProteinMapping(string resultsFileName,
-            clsPeptideToProteinMapEngine.ePeptideInputFileFormatConstants ePeptideInputFileFormat)
-        {
-            const bool resultsIncludeAutoAddedDecoyPeptides = false;
-            var localOrgDbFolder = m_mgrParams.GetParam(clsAnalysisResources.MGR_PARAM_ORG_DB_DIR);
-            return CreatePeptideToProteinMapping(resultsFileName, resultsIncludeAutoAddedDecoyPeptides, localOrgDbFolder, ePeptideInputFileFormat);
-        }
-
-        /// <summary>
-        /// Create the peptide to protein mapping file
-        /// </summary>
-        /// <param name="resultsFileName"></param>
-        /// <param name="resultsIncludeAutoAddedDecoyPeptides"></param>
-        /// <returns></returns>
-        public CloseOutType CreatePeptideToProteinMapping(string resultsFileName, bool resultsIncludeAutoAddedDecoyPeptides)
-        {
-            var localOrgDbFolder = m_mgrParams.GetParam(clsAnalysisResources.MGR_PARAM_ORG_DB_DIR);
-            return CreatePeptideToProteinMapping(resultsFileName, resultsIncludeAutoAddedDecoyPeptides, localOrgDbFolder);
-        }
-
-        /// <summary>
         /// Create the peptide to protein mapping file
         /// </summary>
         /// <param name="resultsFileName"></param>
@@ -1063,29 +1037,6 @@ namespace AnalysisManagerMSGFDBPlugIn
                 return string.Empty;
             }
         }
-
-        /// <summary>
-        /// Delete a file in the working directory
-        /// </summary>
-        /// <param name="filename"></param>
-        public void DeleteFileInWorkDir(string filename)
-        {
-            try
-            {
-                var targetFile = new FileInfo(Path.Combine(m_WorkDir, filename));
-
-                if (targetFile.Exists)
-                {
-                    targetFile.Delete();
-                }
-            }
-            catch (Exception)
-            {
-                // Ignore errors here
-            }
-        }
-
-        /// Read the original fasta file to create a decoy fasta file
 
         /// <summary>
         /// Creates a decoy version of the fasta file specified by inputFilePath
@@ -1639,16 +1590,6 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             var validClosingTag = lastLine.Trim().EndsWith("</MzIdentML>", StringComparison.OrdinalIgnoreCase);
             return validClosingTag;
-        }
-
-        /// <summary>
-        /// Parse the MSGFPlus console output file to determine the MS-GF+ version and to track the search progress
-        /// </summary>
-        /// <returns>Percent Complete (value between 0 and 100)</returns>
-        /// <remarks>MSGFPlus version is available via the MSGFPlusVersion property</remarks>
-        public float ParseMSGFPlusConsoleOutputFile()
-        {
-            return ParseMSGFPlusConsoleOutputFile(m_WorkDir);
         }
 
         // Example Console output (verbose mode used by an old version of MSGF+):
