@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 using AnalysisManagerBase;
 using MSDataFileReader;
@@ -28,7 +29,6 @@ namespace AnalysisManagerTopFDPlugIn
         /// </summary>
         private const string MSALIGN_FILE_SUFFIX = "_ms2.msalign";
 
-
         private const string TopFD_CONSOLE_OUTPUT = "TopFD_ConsoleOutput.txt";
         private const string TopFD_EXE_NAME = "topfd.exe";
 
@@ -46,6 +46,8 @@ namespace AnalysisManagerTopFDPlugIn
 
         private string mTopFDProgLoc;
         private string mConsoleOutputErrorMsg;
+
+        private readonly Regex reExtractPercentFinished = new Regex(@"(?<PercentComplete>\d+)% finished", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         private DateTime mLastConsoleOutputParse;
 
@@ -90,7 +92,7 @@ namespace AnalysisManagerTopFDPlugIn
                 mTopFDVersion = string.Empty;
                 mConsoleOutputErrorMsg = string.Empty;
 
-                var processingResult = RunTopFD(mTopFDProgLoc);
+                var processingResult = StartTopFD(mTopFDProgLoc);
 
                 m_progress = PROGRESS_PCT_COMPLETE;
 
@@ -132,41 +134,60 @@ namespace AnalysisManagerTopFDPlugIn
 
         }
 
-        // Example Console output:
-        //
-        // MS-Deconv 0.8.0.7199 2012-01-16
-        // ********* parameters begin **********
-        // output file format:    msalign
-        // data type:             centroided
-        // orignal precursor:     false
-        // maximum charge:        30
-        // maximum mass:          49000.0
-        // m/z error tolerance:   0.02
-        // sn ratio:              1.0
-        // keep unused peak:      false
-        // output multiple mass:  false
-        // ********* parameters end   **********
-        // Processing spectrum Scan_2...           0% finished.
-        // Processing spectrum Scan_3...           0% finished.
-        // Processing spectrum Scan_4...           0% finished.
-        // Deconvolution finished.
-        // Result is in Syne_LI_CID_09092011_TopFD.msalign
-        private readonly Regex reExtractPercentFinished = new Regex(@"(\d+)% finished", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        /// <summary>
+        /// Returns a dictionary mapping parameter names to argument names
+        /// </summary>
+        /// <returns></returns>
+        private Dictionary<string, string> GetTopFDParameterNames()
+        {
+            var paramToArgMapping = new Dictionary<string, string>(25, StringComparer.OrdinalIgnoreCase)
+            {
+                {"MaxCharge", "max-charge"},
+                {"MaxMass", "max-mass"},
+                {"MzError", "mz-error"},
+                {"SNRatio", "sn-ratio"},
+                {"PrecursorWindow", "precursor-window"},
+                {"MS1Missing", "missing-level-one"},
+            };
+
+            return paramToArgMapping;
+        }
 
         /// <summary>
         /// Parse the TopFD console output file to determine the TopFD version and to track the search progress
         /// </summary>
-        /// <param name="strConsoleOutputFilePath"></param>
+        /// <param name="consoleOutputFilePath"></param>
         /// <remarks></remarks>
-        private void ParseConsoleOutputFile(string strConsoleOutputFilePath)
+        private void ParseConsoleOutputFile(string consoleOutputFilePath)
         {
+
+            // Example Console output:
+            //
+            // TopFD 1.1.2
+            // Timestamp: Mon Aug 13 17:54:19 2018
+            // ********************** Parameters **********************
+            // Input file:                             QC_ShewIntact_1_2Aug18_HCD28_Aragorn_18-7-02.mzML
+            // Data type:                              centroided
+            // Maximum charge:                         30
+            // Maximum monoisotopic mass:              100000 Dalton
+            // Error tolerance:                        0.02 m/z
+            // Signal/noise ratio:                     1
+            // Precursor window size:                  3 m/z
+            // ********************** Parameters **********************
+            // Processing spectrum Scan_349...         3% finished.
+            // Processing spectrum Scan_350...         3% finished.
+            // Processing spectrum Scan_351...         3% finished.
+            // Deconvolution finished.
+            // Runing time: 51 seconds.
+            // TopFD finished.
+
             try
             {
-                if (!File.Exists(strConsoleOutputFilePath))
+                if (!File.Exists(consoleOutputFilePath))
                 {
                     if (m_DebugLevel >= 4)
                     {
-                        LogDebug("Console output file not found: " + strConsoleOutputFilePath);
+                        LogDebug("Console output file not found: " + consoleOutputFilePath);
                     }
 
                     return;
@@ -174,68 +195,66 @@ namespace AnalysisManagerTopFDPlugIn
 
                 if (m_DebugLevel >= 4)
                 {
-                    LogDebug("Parsing file " + strConsoleOutputFilePath);
+                    LogDebug("Parsing file " + consoleOutputFilePath);
                 }
 
-                short intActualProgress = 0;
+                short actualProgress = 0;
 
                 mConsoleOutputErrorMsg = string.Empty;
 
-                using (var srInFile = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(consoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
-                    var intLinesRead = 0;
-                    while (!srInFile.EndOfStream)
+                    var linesRead = 0;
+                    while (!reader.EndOfStream)
                     {
-                        var strLineIn = srInFile.ReadLine();
-                        intLinesRead += 1;
+                        var dataLine = reader.ReadLine();
+                        linesRead += 1;
 
-                        if (!string.IsNullOrWhiteSpace(strLineIn))
+                        if (!string.IsNullOrWhiteSpace(dataLine))
                         {
-                            if (intLinesRead <= 3)
+                            if (linesRead <= 3)
                             {
-                                // Originally the first line was the MS-Deconv version
-                                // Starting in November 2016, the first line is the command line and the second line is a separator (series of dashes)
-                                // The third line is the TopFD version
-                                if (string.IsNullOrEmpty(mTopFDVersion) && strLineIn.ToLower().Contains("ms-deconv"))
+                                // The first line has the TopFD version
+                                if (string.IsNullOrEmpty(mTopFDVersion) && dataLine.ToLower().Contains("topfd"))
                                 {
                                     if (m_DebugLevel >= 2 && string.IsNullOrWhiteSpace(mTopFDVersion))
                                     {
-                                        LogDebug("TopFD version: " + strLineIn);
+                                        LogDebug("TopFD version: " + dataLine);
                                     }
 
-                                    mTopFDVersion = string.Copy(strLineIn);
+                                    mTopFDVersion = string.Copy(dataLine);
                                 }
                                 else
                                 {
-                                    if (strLineIn.ToLower().Contains("error"))
+                                    if (dataLine.ToLower().Contains("error"))
                                     {
                                         if (string.IsNullOrEmpty(mConsoleOutputErrorMsg))
                                         {
                                             mConsoleOutputErrorMsg = "Error running TopFD:";
                                         }
-                                        mConsoleOutputErrorMsg += "; " + strLineIn;
+                                        mConsoleOutputErrorMsg += "; " + dataLine;
                                     }
                                 }
                             }
                             else
                             {
                                 // Update progress if the line starts with Processing spectrum
-                                if (strLineIn.StartsWith("Processing spectrum"))
+                                if (dataLine.StartsWith("Processing spectrum", StringComparison.OrdinalIgnoreCase))
                                 {
-                                    var oMatch = reExtractPercentFinished.Match(strLineIn);
-                                    if (oMatch.Success)
+                                    var match = reExtractPercentFinished.Match(dataLine);
+                                    if (match.Success)
                                     {
-                                        if (short.TryParse(oMatch.Groups[1].Value, out var intProgress))
+                                        if (short.TryParse(match.Groups["PercentComplete"].Value, out var progress))
                                         {
-                                            intActualProgress = intProgress;
+                                            actualProgress = progress;
                                         }
                                     }
                                 }
                                 else if (string.IsNullOrEmpty(mConsoleOutputErrorMsg))
                                 {
-                                    if (strLineIn.ToLower().StartsWith("error"))
+                                    if (dataLine.ToLower().StartsWith("error"))
                                     {
-                                        mConsoleOutputErrorMsg += "; " + strLineIn;
+                                        mConsoleOutputErrorMsg += "; " + dataLine;
                                     }
                                 }
                             }
@@ -243,9 +262,9 @@ namespace AnalysisManagerTopFDPlugIn
                     }
                 }
 
-                if (m_progress < intActualProgress)
+                if (m_progress < actualProgress)
                 {
-                    m_progress = intActualProgress;
+                    m_progress = actualProgress;
                 }
             }
             catch (Exception ex)
@@ -253,24 +272,83 @@ namespace AnalysisManagerTopFDPlugIn
                 // Ignore errors here
                 if (m_DebugLevel >= 2)
                 {
-                    LogError("Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
+                    LogError("Error parsing console output file (" + consoleOutputFilePath + "): " + ex.Message);
                 }
             }
         }
 
-        private CloseOutType RunTopFD(string progLoc)
+        /// <summary>
+        /// Read the TopFD options file and convert the options to command line switches
+        /// </summary>
+        /// <param name="cmdLineOptions">Output: TopFD command line arguments</param>
+        /// <returns>Options string if success; empty string if an error</returns>
+        /// <remarks></remarks>
+        public CloseOutType ParseTopFDParameterFile(out string cmdLineOptions)
+        {
+            cmdLineOptions = string.Empty;
+
+            var paramFileName = m_jobParams.GetParam("TopFD_ParamFile");
+
+            // Although ParseKeyValueParameterFile checks for paramFileName being an empty string,
+            // we check for it here since the name comes from the settings file, so we want to customize the error message
+            if (string.IsNullOrWhiteSpace(paramFileName))
+            {
+                LogError("TopFD parameter file not defined in the job settings (param name TopFD_ParamFile)");
+                return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
+            }
+
+            var paramFileReader = new clsKeyValueParamFileReader("TopFD", m_WorkDir, paramFileName);
+            RegisterEvents(paramFileReader);
+
+            var eResult = paramFileReader.ParseKeyValueParameterFile(out var paramFileEntries);
+            if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
+            {
+                m_message = paramFileReader.ErrorMessage;
+                return eResult;
+            }
+
+            // Obtain the dictionary that maps parameter names to argument names
+            var paramToArgMapping = GetTopFDParameterNames();
+            var paramNamesToSkip = new SortedSet<string>(StringComparer.OrdinalIgnoreCase)
+            {
+                "MS1Missing"
+            };
+
+            cmdLineOptions = paramFileReader.ConvertParamsToArgs(paramFileEntries, paramToArgMapping, paramNamesToSkip, "--");
+            if (string.IsNullOrWhiteSpace(cmdLineOptions))
+            {
+                m_message = paramFileReader.ErrorMessage;
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            if (paramFileReader.ParamIsEnabled(paramFileEntries, "MS1Missing"))
+            {
+                if (paramToArgMapping.TryGetValue("MS1Missing", out var argumentName))
+                    cmdLineOptions += " --" + argumentName;
+                else
+                {
+                    LogError("Parameter to argument mapping dictionary does not have MS1Missing");
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+            }
+
+            return CloseOutType.CLOSEOUT_SUCCESS;
+        }
+
+        private CloseOutType StartTopFD(string progLoc)
         {
 
             LogMessage("Running TopFD");
 
-            var missingMs1Spectra = m_jobParams.GetJobParameter("TopFDMissingMS1Spectra", false);
+            var eResult = ParseTopFDParameterFile(out var cmdLineOptions);
 
-            var cmdStr = " " + m_Dataset + clsAnalysisResources.DOT_MZML_EXTENSION;
-
-            if (missingMs1Spectra)
+            if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
             {
-                cmdStr += " --missing-level-one";
+                return eResult;
             }
+
+            var cmdStr = cmdLineOptions +
+                         Dataset + clsAnalysisResources.DOT_MZML_EXTENSION;
 
             LogDebug(progLoc + " " + cmdStr);
 
@@ -306,19 +384,17 @@ namespace AnalysisManagerTopFDPlugIn
                 LogError(mConsoleOutputErrorMsg);
             }
 
-
-            CloseOutType eResult;
             if (!processingSuccess)
             {
-                LogError("Error running TopPIC");
+                LogError("Error running TopFD");
 
                 if (mCmdRunner.ExitCode != 0)
                 {
-                    LogWarning("TopPIC returned a non-zero exit code: " + mCmdRunner.ExitCode);
+                    LogWarning("TopFD returned a non-zero exit code: " + mCmdRunner.ExitCode);
                 }
                 else
                 {
-                    LogWarning("Call to TopPIC failed (but exit code is 0)");
+                    LogWarning("Call to TopFD failed (but exit code is 0)");
                 }
 
                 eResult = CloseOutType.CLOSEOUT_FAILED;
@@ -370,40 +446,40 @@ namespace AnalysisManagerTopFDPlugIn
                 LogDebug("Determining tool version info");
             }
 
-            var strToolVersionInfo = string.Copy(mTopFDVersion);
+            var toolVersionInfo = string.Copy(mTopFDVersion);
 
-            // Store paths to key files in ioToolFiles
-            var ioToolFiles = new List<FileInfo> {
+            // Store paths to key files in toolFiles
+            var toolFiles = new List<FileInfo> {
                 new FileInfo(mTopFDProgLoc)
             };
 
             try
             {
-                return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, saveToolVersionTextFile: false);
+                return SetStepTaskToolVersion(toolVersionInfo, toolFiles, saveToolVersionTextFile: false);
             }
             catch (Exception ex)
             {
-                LogError("Exception calling SetStepTaskToolVersion: " + ex.Message);
+                LogError("Exception calling SetStepTaskToolVersion", ex);
                 return false;
             }
         }
 
-        private readonly Regex reExtractScan = new Regex(@"Processing spectrum Scan_(\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-
         /// <summary>
-        /// Reads the console output file and removes the majority of the percent finished messages
+        /// Reads the console output file and removes the majority of "Processing" messages
         /// </summary>
-        /// <param name="strConsoleOutputFilePath"></param>
+        /// <param name="consoleOutputFilePath"></param>
         /// <remarks></remarks>
-        private void TrimConsoleOutputFile(string strConsoleOutputFilePath)
+        private void TrimConsoleOutputFile(string consoleOutputFilePath)
         {
+            var reExtractScan = new Regex(@"Processing spectrum Scan_(?<Scan>\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
             try
             {
-                if (!File.Exists(strConsoleOutputFilePath))
+                if (!File.Exists(consoleOutputFilePath))
                 {
                     if (m_DebugLevel >= 4)
                     {
-                        LogDebug("Console output file not found: " + strConsoleOutputFilePath);
+                        LogDebug("Console output file not found: " + consoleOutputFilePath);
                     }
 
                     return;
@@ -411,60 +487,60 @@ namespace AnalysisManagerTopFDPlugIn
 
                 if (m_DebugLevel >= 4)
                 {
-                    LogDebug("Trimming console output file at " + strConsoleOutputFilePath);
+                    LogDebug("Trimming console output file at " + consoleOutputFilePath);
                 }
 
-                var strMostRecentProgressLine = string.Empty;
-                var strMostRecentProgressLineWritten = string.Empty;
+                var mostRecentProgressLine = string.Empty;
+                var mostRecentProgressLineWritten = string.Empty;
 
-                var strTrimmedFilePath = strConsoleOutputFilePath + ".trimmed";
+                var trimmedFilePath = consoleOutputFilePath + ".trimmed";
 
-                using (var srInFile = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
-                using (var swOutFile = new StreamWriter(new FileStream(strTrimmedFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                using (var reader = new StreamReader(new FileStream(consoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var writer = new StreamWriter(new FileStream(trimmedFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
-                    var intScanNumberOutputThreshold = 0;
-                    while (!srInFile.EndOfStream)
+                    var scanNumberOutputThreshold = 0;
+                    while (!reader.EndOfStream)
                     {
-                        var strLineIn = srInFile.ReadLine();
+                        var dataLine = reader.ReadLine();
 
-                        if (string.IsNullOrWhiteSpace(strLineIn))
+                        if (string.IsNullOrWhiteSpace(dataLine))
                         {
-                            swOutFile.WriteLine(strLineIn);
+                            writer.WriteLine(dataLine);
                             continue;
                         }
 
-                        var blnKeepLine = true;
+                        var keepLine = true;
 
-                        var oMatch = reExtractScan.Match(strLineIn);
-                        if (oMatch.Success)
+                        var match = reExtractScan.Match(dataLine);
+                        if (match.Success)
                         {
-                            if (int.TryParse(oMatch.Groups[1].Value, out var intScanNumber))
+                            if (int.TryParse(match.Groups["Scan"].Value, out var scanNumber))
                             {
-                                if (intScanNumber < intScanNumberOutputThreshold)
+                                if (scanNumber < scanNumberOutputThreshold)
                                 {
-                                    blnKeepLine = false;
+                                    keepLine = false;
                                 }
                                 else
                                 {
-                                    // Write out this line and bump up intScanNumberOutputThreshold by 100
-                                    intScanNumberOutputThreshold += 100;
-                                    strMostRecentProgressLineWritten = string.Copy(strLineIn);
+                                    // Write out this line and bump up scanNumberOutputThreshold by 100
+                                    scanNumberOutputThreshold += 100;
+                                    mostRecentProgressLineWritten = string.Copy(dataLine);
                                 }
                             }
-                            strMostRecentProgressLine = string.Copy(strLineIn);
+                            mostRecentProgressLine = string.Copy(dataLine);
                         }
-                        else if (strLineIn.StartsWith("Deconvolution finished"))
+                        else if (dataLine.StartsWith("Deconvolution finished", StringComparison.OrdinalIgnoreCase))
                         {
                             // Possibly write out the most recent progress line
-                            if (!clsGlobal.IsMatch(strMostRecentProgressLine, strMostRecentProgressLineWritten))
+                            if (!clsGlobal.IsMatch(mostRecentProgressLine, mostRecentProgressLineWritten))
                             {
-                                swOutFile.WriteLine(strMostRecentProgressLine);
+                                writer.WriteLine(mostRecentProgressLine);
                             }
                         }
 
-                        if (blnKeepLine)
+                        if (keepLine)
                         {
-                            swOutFile.WriteLine(strLineIn);
+                            writer.WriteLine(dataLine);
                         }
                     }
                 }
@@ -473,14 +549,14 @@ namespace AnalysisManagerTopFDPlugIn
 
                 try
                 {
-                    File.Delete(strConsoleOutputFilePath);
-                    File.Move(strTrimmedFilePath, strConsoleOutputFilePath);
+                    File.Delete(consoleOutputFilePath);
+                    File.Move(trimmedFilePath, consoleOutputFilePath);
                 }
                 catch (Exception ex)
                 {
                     if (m_DebugLevel >= 1)
                     {
-                        LogError("Error replacing original console output file (" + strConsoleOutputFilePath + ") with trimmed version: " + ex.Message);
+                        LogError("Error replacing original console output file (" + consoleOutputFilePath + ") with trimmed version", ex);
                     }
                 }
             }
@@ -489,7 +565,7 @@ namespace AnalysisManagerTopFDPlugIn
                 // Ignore errors here
                 if (m_DebugLevel >= 2)
                 {
-                    LogError("Error trimming console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
+                    LogError("Error trimming console output file (" + consoleOutputFilePath + ")", ex);
                 }
             }
         }

@@ -6,6 +6,7 @@
 //*********************************************************************************************************
 
 using AnalysisManagerBase;
+using System;
 
 namespace AnalysisManagerTopFDPlugIn
 {
@@ -21,32 +22,72 @@ namespace AnalysisManagerTopFDPlugIn
         /// <returns>Closeout code</returns>
         public override CloseOutType GetResources()
         {
-            // Retrieve shared resources, including the JobParameters file from the previous job step
-            var result = GetSharedResources();
-            if (result != CloseOutType.CLOSEOUT_SUCCESS)
+            var currentTask = "Initializing";
+
+            try
             {
-                return result;
+                currentTask = "Retrieve shared resources";
+
+                // Retrieve shared resources, including the JobParameters file from the previous job step
+                var result = GetSharedResources();
+                if (result != CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    return result;
+                }
+
+                var topFdParamFile = m_jobParams.GetParam("TopFD_ParmFileName");
+                if (string.IsNullOrWhiteSpace(topFdParamFile))
+                {
+                    LogError("TopFD parameter file not defined in the job settings (param name TopFD_ParmFileName)");
+                    return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
+                }
+
+
+                // Retrieve the TopFD parameter file
+                currentTask = "Retrieve the TopFD parameter file " + topFdParamFile;
+
+                const string paramFileStoragePathKeyName = clsGlobal.STEPTOOL_PARAMFILESTORAGEPATH_PREFIX + "TopFD";
+
+                var topFdParmFileStoragePath = m_mgrParams.GetParam(paramFileStoragePathKeyName);
+                if (string.IsNullOrWhiteSpace(topFdParmFileStoragePath))
+                {
+                    topFdParmFileStoragePath = @"\\gigasax\dms_parameter_Files\TopFD";
+                    LogWarning("Parameter '" + paramFileStoragePathKeyName + "' is not defined " +
+                               "(obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); " +
+                               "will assume: " + topFdParmFileStoragePath);
+                }
+
+                if (!FileSearch.RetrieveFile(topFdParamFile, topFdParmFileStoragePath))
+                {
+                    return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+                }
+
+                currentTask = "Get Input file";
+
+                var eResult = GetMzMLFile();
+                if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    m_message = "";
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                // Make sure we don't move the .mzML file into the results folder
+                m_jobParams.AddResultFileExtensionToSkip(DOT_MZML_EXTENSION);
+
+                if (!base.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+                {
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                return CloseOutType.CLOSEOUT_SUCCESS;
             }
-
-            LogMessage("Getting mzML file");
-
-            const bool unzipFile = true;
-
-            var success = FileSearch.RetrieveCachedMzMLFile(unzipFile, out var errorMessage, out var fileMissingFromCache, out _);
-            if (!success)
+            catch (Exception ex)
             {
-                return HandleMsXmlRetrieveFailure(fileMissingFromCache, errorMessage, DOT_MZML_EXTENSION);
-            }
-
-            // Make sure we don't move the .mzML file into the results folder
-            m_jobParams.AddResultFileExtensionToSkip(DOT_MZML_EXTENSION);
-
-            if (!base.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
-            {
+                m_message = "Exception in GetResources: " + ex.Message;
+                LogError(m_message + "; task = " + currentTask + "; " + clsGlobal.GetExceptionStackTrace(ex));
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            return CloseOutType.CLOSEOUT_SUCCESS;
         }
     }
 }

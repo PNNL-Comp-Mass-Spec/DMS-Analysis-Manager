@@ -8,6 +8,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using System.Text.RegularExpressions;
 using AnalysisManagerBase;
 
@@ -85,11 +86,9 @@ namespace AnalysisManagerTopPICPlugIn
                 }
 
                 // Store the TopPIC version info in the database after the first line is written to file TopPIC_ConsoleOutput.txt
-
                 mToolVersionWritten = false;
                 mTopPICVersion = string.Empty;
                 mConsoleOutputErrorMsg = string.Empty;
-
 
                 // Validate the FASTA file (to remove invalid residues)
                 // Create the static mods file
@@ -99,9 +98,13 @@ namespace AnalysisManagerTopPICPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
+                if (!InitializeFastaFile(out var fastaFileIsDecoy))
+                {
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
 
                 // Process the XML files using TopPIC
-                var processingResult = RunTopPIC(mTopPICProgLoc);
+                var processingResult = StartTopPIC(fastaFileIsDecoy, mTopPICProgLoc);
 
                 m_progress = PROGRESS_PCT_COMPLETE;
 
@@ -117,7 +120,7 @@ namespace AnalysisManagerTopPICPlugIn
                 clsGlobal.IdleLoop(0.5);
                 PRISM.clsProgRunner.GarbageCollectNow();
 
-                // Trim the console output file to remove the majority of the % finished messages
+                // Trim the console output file to remove the majority of the "processing" messages
                 TrimConsoleOutputFile(Path.Combine(m_WorkDir, TopPIC_CONSOLE_OUTPUT));
 
                 if (!clsAnalysisJob.SuccessOrNoData(processingResult))
@@ -143,111 +146,6 @@ namespace AnalysisManagerTopPICPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-        }
-
-        private CloseOutType RunTopPIC(string progLoc)
-        {
-
-            LogMessage("Running TopPIC");
-
-            // Set up and execute a program runner to run TopPIC
-            // By default uses all cores; limit the number of cores to 4 with "--thread-number 4"
-
-            var cmdStr = " --fixed-mod StaticMods.txt" +
-                         " --decoy" +
-                         " --error-tolerance 15" +
-                         " --max-shift 500" +
-                         " --num-shift 2" +
-                         " -t EVALUE" +
-                         " -v 0.01" +
-                         " -T EVALUE" +
-                         " -V 0.01" +
-                         " " + mValidatedFASTAFilePath +
-                         Dataset + clsAnalysisResourcesTopPIC.MSALIGN_FILE_SUFFIX;
-
-            LogDebug(progLoc + " " + cmdStr);
-
-            mCmdRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel);
-            RegisterEvents(mCmdRunner);
-            mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
-
-            mCmdRunner.CreateNoWindow = true;
-            mCmdRunner.CacheStandardOutput = false;
-            mCmdRunner.EchoOutputToConsole = true;
-
-            mCmdRunner.WriteConsoleOutputToFile = true;
-            mCmdRunner.ConsoleOutputFilePath = Path.Combine(m_WorkDir, TopPIC_CONSOLE_OUTPUT);
-
-            m_progress = PROGRESS_PCT_STARTING;
-            ResetProgRunnerCpuUsage();
-
-            // Start the program and wait for it to finish
-            // However, while it's running, LoopWaiting will get called via events
-            var processingSuccess = mCmdRunner.RunProgram(progLoc, cmdStr, "TopPIC", true);
-
-            if (!mToolVersionWritten)
-            {
-                if (string.IsNullOrWhiteSpace(mTopPICVersion))
-                {
-                    ParseConsoleOutputFile(Path.Combine(m_WorkDir, TopPIC_CONSOLE_OUTPUT));
-                }
-                mToolVersionWritten = StoreToolVersionInfo();
-            }
-
-            if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))
-            {
-                LogError(mConsoleOutputErrorMsg);
-            }
-
-            CloseOutType eResult;
-            if (!processingSuccess)
-            {
-                LogError("Error running TopPIC");
-
-                if (mCmdRunner.ExitCode != 0)
-                {
-                    LogWarning("TopPIC returned a non-zero exit code: " + mCmdRunner.ExitCode);
-                }
-                else
-                {
-                    LogWarning("Call to TopPIC failed (but exit code is 0)");
-                }
-
-                eResult = CloseOutType.CLOSEOUT_FAILED;
-            }
-            else
-            {
-                // Make sure the output files were created
-
-                var processingError = !ValidateAndCopyResultFiles();
-
-                var strResultTableFilePath = Path.Combine(m_WorkDir, m_Dataset + RESULT_TABLE_NAME_SUFFIX);
-
-                // Make sure the output files are not empty
-                if (processingError)
-                {
-                    eResult = CloseOutType.CLOSEOUT_FAILED;
-                }
-                else
-                {
-                    if (ValidateResultTableFile(strResultTableFilePath))
-                    {
-                        eResult = CloseOutType.CLOSEOUT_SUCCESS;
-                    }
-                    else
-                    {
-                        eResult = CloseOutType.CLOSEOUT_NO_DATA;
-                    }
-                }
-
-                m_StatusTools.UpdateAndWrite(m_progress);
-                if (m_DebugLevel >= 3)
-                {
-                    LogDebug("TopPIC Search Complete");
-                }
-            }
-
-            return eResult;
         }
 
         private bool CreateInputFiles()
@@ -327,6 +225,57 @@ namespace AnalysisManagerTopPICPlugIn
             m_jobParams.AddResultFileToSkip(Dataset + clsAnalysisResources.DOT_MZML_EXTENSION);
 
             base.CopyFailedResultsToArchiveFolder();
+        }
+
+        /// <summary>
+        /// Returns a dictionary mapping parameter names to argument names
+        /// </summary>
+        /// <returns></returns>
+        private Dictionary<string, string> GetTopPICParameterNames()
+        {
+            var paramToArgMapping = new Dictionary<string, string>(25, StringComparer.OrdinalIgnoreCase)
+            {
+                {"ErrorTolerance", "error-tolerance"},
+                {"MaxShift", "max-shift"},
+                {"NumShift", "num-shift"},
+                {"SpectrumCutoffType", "spectrum-cutoff-type"},
+                {"SpectrumCutoffValue", "spectrum-cutoff-value"},
+                {"ProteoformCutoffType", "proteoform-cutoff-type"},
+                {"ProteoformCutoffValue", "proteoform-cutoff-value"},
+                {"Decoy", "decoy"},
+                {"NTerminalProteinForms", "n-terminal-form"}
+            };
+
+            return paramToArgMapping;
+        }
+
+        private bool InitializeFastaFile(out bool fastaFileIsDecoy)
+        {
+            fastaFileIsDecoy = false;
+
+            // Define the path to the fasta file
+            var localOrgDbFolder = m_mgrParams.GetParam("orgdbdir");
+            var fastaFilePath = Path.Combine(localOrgDbFolder, m_jobParams.GetParam("PeptideSearch", "generatedFastaName"));
+
+            var fastaFile = new FileInfo(fastaFilePath);
+
+            if (!fastaFile.Exists)
+            {
+                // Fasta file not found
+                LogError("Fasta file not found: " + fastaFile.Name, "Fasta file not found: " + fastaFile.FullName);
+                return false;
+            }
+
+            var proteinOptions = m_jobParams.GetParam("ProteinOptions");
+            if (!string.IsNullOrEmpty(proteinOptions))
+            {
+                if (proteinOptions.ToLower().Contains("seq_direction=decoy"))
+                {
+                    fastaFileIsDecoy = true;
+                }
+            }
+
+            return true;
         }
 
         /// <summary>
@@ -459,7 +408,8 @@ namespace AnalysisManagerTopPICPlugIn
                         var dataLine = reader.ReadLine();
                         linesRead += 1;
 
-                        if (string.IsNullOrWhiteSpace(dataLine)) continue;
+                        if (string.IsNullOrWhiteSpace(dataLine))
+                            continue;
 
                         var dataLineLcase = dataLine.ToLower();
 
@@ -505,9 +455,388 @@ namespace AnalysisManagerTopPICPlugIn
                 // Ignore errors here
                 if (m_DebugLevel >= 2)
                 {
-                    LogError("Error parsing console output file (" + consoleOutputFilePath + ")", ex);
+                    LogError("Error parsing console output file (" + consoleOutputFilePath + "): " + ex.Message);
                 }
             }
+        }
+
+
+        /// <summary>
+        /// Create the static and dynamic modification file(s) if any static or dynamic mods are defined
+        /// Update cmdLineOptions to have --fixed-mod and/or --mod-file-name
+        /// </summary>
+        /// <param name="cmdLineOptions">Command line arguments to pass to TopPIC</param>
+        /// <param name="staticMods">List of Static Mods</param>
+        /// <param name="dynamicMods">List of Dynamic Mods</param>
+        /// <returns>True if success, false if an error</returns>
+        /// <remarks></remarks>
+        private bool ParseTopPICModifications(
+            ref string cmdLineOptions,
+            IReadOnlyCollection<string> staticMods,
+            IReadOnlyCollection<string> dynamicMods)
+        {
+            const string STATIC_MODS_FILE_NAME = "TopPIC_Static_Mods.txt";
+            const string DYNAMIC_MODS_FILE_NAME = "TopPIC_Dynamic_Mods.txt";
+
+            bool success;
+
+            try
+            {
+                var staticModsFilePath = Path.Combine(m_WorkDir, STATIC_MODS_FILE_NAME);
+                var dynamicModsFilePath = Path.Combine(m_WorkDir, DYNAMIC_MODS_FILE_NAME);
+
+                // ToDo: Code this
+                //cmdLineOptions += " -mod " + modFilePath;
+
+                //using (var modFileWriter = new StreamWriter(new FileStream(modFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                //{
+                //    modFileWriter.WriteLine("# This file is used to specify modifications for TopPIC");
+                //    modFileWriter.WriteLine("");
+
+                //    modFileWriter.WriteLine("");
+                //    modFileWriter.WriteLine("# Static mods");
+                //    if (staticMods.Count == 0)
+                //    {
+                //        modFileWriter.WriteLine("# None");
+                //    }
+                //    else
+                //    {
+                //        foreach (var staticMod in staticMods)
+                //        {
+
+                //            if (ParseTopPICValidateMod(staticMod, out var modClean))
+                //            {
+                //                if (modClean.Contains(",opt,"))
+                //                {
+                //                    // Static (fixed) mod is listed as dynamic
+                //                    // Abort the analysis since the parameter file is misleading and needs to be fixed
+                //                    var errMsg =
+                //                        "Static mod definition contains ',opt,'; update the param file to have ',fix,' or change to 'DynamicMod='";
+                //                    LogError(errMsg, errMsg + "; " + staticMod);
+                //                    return false;
+                //                }
+                //                modFileWriter.WriteLine(modClean);
+                //            }
+                //            else
+                //            {
+                //                return false;
+                //            }
+                //        }
+                //    }
+
+                //    modFileWriter.WriteLine("");
+                //    modFileWriter.WriteLine("# Dynamic mods");
+                //    if (dynamicMods.Count == 0)
+                //    {
+                //        modFileWriter.WriteLine("# None");
+                //    }
+                //    else
+                //    {
+                //        foreach (var dynamicMod in dynamicMods)
+                //        {
+
+                //            if (ParseTopPICValidateMod(dynamicMod, out var modClean))
+                //            {
+                //                if (modClean.Contains(",fix,"))
+                //                {
+                //                    // Dynamic (optional) mod is listed as static
+                //                    // Abort the analysis since the parameter file is misleading and needs to be fixed
+                //                    var errMsg =
+                //                        "Dynamic mod definition contains ',fix,'; update the param file to have ',opt,' or change to 'StaticMod='";
+                //                    LogError(errMsg, errMsg + "; " + dynamicMod);
+                //                    return false;
+                //                }
+                //                modFileWriter.WriteLine(modClean);
+                //            }
+                //            else
+                //            {
+                //                return false;
+                //            }
+                //        }
+                //    }
+                //}
+
+                success = true;
+
+            }
+            catch (Exception ex)
+            {
+                LogError("Exception creating static or dynamic mods files for TopPIC", ex);
+                success = false;
+            }
+
+            return success;
+        }
+
+        /// <summary>
+        /// Read the TopPIC options file and convert the options to command line switches
+        /// </summary>
+        /// <param name="fastaFileIsDecoy">The plugin will set this to true if hte FASTA file is a forward+reverse FASTA file</param>
+        /// <param name="cmdLineOptions">Output: TopPIC command line arguments</param>
+        /// <returns>Options string if success; empty string if an error</returns>
+        /// <remarks></remarks>
+        public CloseOutType ParseTopPICParameterFile(bool fastaFileIsDecoy, out string cmdLineOptions)
+        {
+            cmdLineOptions = string.Empty;
+
+            var paramFileName = m_jobParams.GetParam("parmFileName");
+
+            var paramFileReader = new clsKeyValueParamFileReader("TopPIC", m_WorkDir, paramFileName);
+            RegisterEvents(paramFileReader);
+
+            var eResult = paramFileReader.ParseKeyValueParameterFile(out var paramFileEntries);
+            if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
+            {
+                m_message = paramFileReader.ErrorMessage;
+                return eResult;
+            }
+
+            // Obtain the dictionary that maps parameter names to argument names
+            var paramToArgMapping = GetTopPICParameterNames();
+            var paramNamesToSkip = new SortedSet<string>(StringComparer.OrdinalIgnoreCase) {
+                "NumMods",
+                "StaticMod",
+                "DynamicMod",
+                "NTerminalProteinForms"
+            };
+
+            cmdLineOptions = paramFileReader.ConvertParamsToArgs(paramFileEntries, paramToArgMapping, paramNamesToSkip, "--");
+            if (string.IsNullOrWhiteSpace(cmdLineOptions))
+            {
+                m_message = paramFileReader.ErrorMessage;
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            // Instruct TopPIC to use the fragmentation method info tracked in the .mzML file
+            // Other options for activation are CID, HCDCID, ETDCID, or UVPDCID
+            cmdLineOptions += " --activation=FILE";
+
+            if (paramFileReader.ParamIsEnabled(paramFileEntries, "Decoy"))
+            {
+                if (paramToArgMapping.TryGetValue("Decoy", out var argumentName))
+                    cmdLineOptions += " --" + argumentName;
+                else
+                {
+                    LogError("Parameter to argument mapping dictionary does not have Decoy");
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+            }
+
+            var staticMods = new List<string>();
+            var dynamicMods = new List<string>();
+
+            try
+            {
+                foreach (var kvSetting in paramFileEntries)
+                {
+                    var paramValue = kvSetting.Value;
+
+                    if (clsGlobal.IsMatch(kvSetting.Key, "StaticMod"))
+                    {
+                        if (!string.IsNullOrWhiteSpace(paramValue) && !clsGlobal.IsMatch(paramValue, "none"))
+                        {
+                            staticMods.Add(paramValue);
+                        }
+                    }
+                    else if (clsGlobal.IsMatch(kvSetting.Key, "DynamicMod"))
+                    {
+                        if (!string.IsNullOrWhiteSpace(paramValue) && !clsGlobal.IsMatch(paramValue, "none"))
+                        {
+                            dynamicMods.Add(paramValue);
+                        }
+                    }
+                    else if (clsGlobal.IsMatch(kvSetting.Key, "NTerminalProteinForms"))
+                    {
+                        if (!string.IsNullOrWhiteSpace(paramValue))
+                        {
+                            // Assure the N-terminal protein forms list has no spaces
+                            if (paramToArgMapping.TryGetValue(kvSetting.Key, out var argumentName))
+                            {
+                                cmdLineOptions += " --" + argumentName + kvSetting.Value.Replace(" ", "");
+                            }
+                            else
+                            {
+                                LogError("Parameter to argument mapping dictionary does not have NTerminalProteinForms");
+                                return CloseOutType.CLOSEOUT_FAILED;
+                            }
+                        }
+                    }
+
+                } // for
+            }
+            catch (Exception ex)
+            {
+                m_message = "Exception extracting dynamic and static mod information from the TopPIC parameter file";
+                LogError(m_message, ex);
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            // Create the static and dynamic modification file(s) if any static or dynamic mods are defined
+            // Will also update cmdLineOptions to have --fixed-mod and/or --mod-file-name
+            if (!ParseTopPICModifications(ref cmdLineOptions, staticMods, dynamicMods))
+            {
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            // ReSharper disable once InvertIf
+            if (paramToArgMapping.ContainsKey("Decoy") && fastaFileIsDecoy)
+            {
+                // TopPIC should be run with a forward=only protein collection; allow TopPIC to add the decoy proteins
+                LogError("Parameter file / decoy protein collection conflict: do not use a decoy protein collection " +
+                         "when using a parameter file with setting Decoy=1");
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            return CloseOutType.CLOSEOUT_SUCCESS;
+        }
+
+        /// <summary>
+        /// Validates that the modification definition text
+        /// </summary>
+        /// <param name="mod">Modification definition</param>
+        /// <param name="modClean">Cleaned-up modification definition (output param)</param>
+        /// <returns>True if valid; false if invalid</returns>
+        /// <remarks>Valid modification definition contains 5 parts and doesn't contain any whitespace</remarks>
+        private bool ParseTopPICValidateMod(string mod, out string modClean)
+        {
+
+            modClean = string.Empty;
+
+            var poundIndex = mod.IndexOf('#');
+            if (poundIndex > 0)
+            {
+                // comment = mod.Substring(poundIndex);
+                mod = mod.Substring(0, poundIndex - 1).Trim();
+            }
+
+            var splitMod = mod.Split(',');
+
+            if (splitMod.Length < 5)
+            {
+                // Invalid mod definition; must have 5 sections
+                LogError("Invalid modification string; must have 5 sections: " + mod);
+                return false;
+            }
+
+            // Make sure mod does not have both * and any
+            if (splitMod[1].Trim() == "*" && splitMod[3].ToLower().Trim() == "any")
+            {
+                LogError("Modification cannot contain both * and any: " + mod);
+                return false;
+            }
+
+            // Reconstruct the mod definition, making sure there is no whitespace
+            modClean = splitMod[0].Trim();
+            for (var index = 1; index <= splitMod.Length - 1; index++)
+            {
+                modClean += "," + splitMod[index].Trim();
+            }
+
+            return true;
+        }
+
+
+        private CloseOutType StartTopPIC(bool fastaFileIsDecoy, string progLoc)
+        {
+
+            LogMessage("Running TopPIC");
+
+            // Set up and execute a program runner to run TopPIC
+            // By default uses all cores; limit the number of cores to 4 with "--thread-number 4"
+
+            var eResult = ParseTopPICParameterFile(fastaFileIsDecoy, out var cmdLineOptions);
+
+            if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
+            {
+                return eResult;
+            }
+
+            var cmdStr = cmdLineOptions + " " +
+                         mValidatedFASTAFilePath + " " +
+                         Dataset + clsAnalysisResourcesTopPIC.MSALIGN_FILE_SUFFIX;
+
+            LogDebug(progLoc + " " + cmdStr);
+
+            mCmdRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel);
+            RegisterEvents(mCmdRunner);
+            mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
+
+            mCmdRunner.CreateNoWindow = true;
+            mCmdRunner.CacheStandardOutput = false;
+            mCmdRunner.EchoOutputToConsole = true;
+
+            mCmdRunner.WriteConsoleOutputToFile = true;
+            mCmdRunner.ConsoleOutputFilePath = Path.Combine(m_WorkDir, TopPIC_CONSOLE_OUTPUT);
+
+            m_progress = PROGRESS_PCT_STARTING;
+            ResetProgRunnerCpuUsage();
+
+            // Start the program and wait for it to finish
+            // However, while it's running, LoopWaiting will get called via events
+            var processingSuccess = mCmdRunner.RunProgram(progLoc, cmdStr, "TopPIC", true);
+
+            if (!mToolVersionWritten)
+            {
+                if (string.IsNullOrWhiteSpace(mTopPICVersion))
+                {
+                    ParseConsoleOutputFile(Path.Combine(m_WorkDir, TopPIC_CONSOLE_OUTPUT));
+                }
+                mToolVersionWritten = StoreToolVersionInfo();
+            }
+
+            if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))
+            {
+                LogError(mConsoleOutputErrorMsg);
+            }
+
+            if (!processingSuccess)
+            {
+                LogError("Error running TopPIC");
+
+                if (mCmdRunner.ExitCode != 0)
+                {
+                    LogWarning("TopPIC returned a non-zero exit code: " + mCmdRunner.ExitCode);
+                }
+                else
+                {
+                    LogWarning("Call to TopPIC failed (but exit code is 0)");
+                }
+
+                eResult = CloseOutType.CLOSEOUT_FAILED;
+            }
+            else
+            {
+                // Make sure the output files were created
+
+                var processingError = !ValidateAndCopyResultFiles();
+
+                var strResultTableFilePath = Path.Combine(m_WorkDir, m_Dataset + RESULT_TABLE_NAME_SUFFIX);
+
+                // Make sure the output files are not empty
+                if (processingError)
+                {
+                    eResult = CloseOutType.CLOSEOUT_FAILED;
+                }
+                else
+                {
+                    if (ValidateResultTableFile(strResultTableFilePath))
+                    {
+                        eResult = CloseOutType.CLOSEOUT_SUCCESS;
+                    }
+                    else
+                    {
+                        eResult = CloseOutType.CLOSEOUT_NO_DATA;
+                    }
+                }
+
+                m_StatusTools.UpdateAndWrite(m_progress);
+                if (m_DebugLevel >= 3)
+                {
+                    LogDebug("TopPIC Search Complete");
+                }
+            }
+
+            return eResult;
         }
 
         /// <summary>
@@ -523,14 +852,14 @@ namespace AnalysisManagerTopPICPlugIn
 
             var strToolVersionInfo = string.Copy(mTopPICVersion);
 
-            // Store paths to key files in ioToolFiles
-            var ioToolFiles = new List<FileInfo> {
+            // Store paths to key files in toolFiles
+            var toolFiles = new List<FileInfo> {
                 new FileInfo(mTopPICProgLoc)
             };
 
             try
             {
-                return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, saveToolVersionTextFile: false);
+                return SetStepTaskToolVersion(strToolVersionInfo, toolFiles, saveToolVersionTextFile: false);
             }
             catch (Exception ex)
             {
@@ -539,15 +868,15 @@ namespace AnalysisManagerTopPICPlugIn
             }
         }
 
-        private readonly Regex reExtractScan = new Regex(@"Processing spectrum scan (\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-
         /// <summary>
-        /// Reads the console output file and removes the majority of "procesesing" messages
+        /// Reads the console output file and removes the majority of "Processing" messages
         /// </summary>
         /// <param name="consoleOutputFilePath"></param>
         /// <remarks></remarks>
         private void TrimConsoleOutputFile(string consoleOutputFilePath)
         {
+            var reExtractScan = new Regex(@"processing +(?<Scan>\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
             try
             {
                 if (!File.Exists(consoleOutputFilePath))
@@ -565,56 +894,51 @@ namespace AnalysisManagerTopPICPlugIn
                     LogDebug("Trimming console output file at " + consoleOutputFilePath);
                 }
 
-                var strMostRecentProgressLine = string.Empty;
-                var strMostRecentProgressLineWritten = string.Empty;
-
-                var strTrimmedFilePath = consoleOutputFilePath + ".trimmed";
+                var trimmedFilePath = consoleOutputFilePath + ".trimmed";
 
                 using (var reader = new StreamReader(new FileStream(consoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
-                using (var swOutFile = new StreamWriter(new FileStream(strTrimmedFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                using (var writer = new StreamWriter(new FileStream(trimmedFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
-                    var intScanNumberOutputThreshold = 0;
+                    var scanNumberOutputThreshold = 0;
+                    var lastScanNumber = 0;
+
                     while (!reader.EndOfStream)
                     {
                         var dataLine = reader.ReadLine();
                         if (string.IsNullOrWhiteSpace(dataLine))
                         {
-                            swOutFile.WriteLine(dataLine);
+                            writer.WriteLine(dataLine);
                             continue;
                         }
 
-                        var blnKeepLine = true;
+                        var keepLine = true;
 
-                        var oMatch = reExtractScan.Match(dataLine);
-                        if (oMatch.Success)
+                        var match = reExtractScan.Match(dataLine);
+                        if (match.Success)
                         {
-                            if (int.TryParse(oMatch.Groups[1].Value, out var intScanNumber))
+                            if (int.TryParse(match.Groups["Scan"].Value, out var scanNumber))
                             {
-                                if (intScanNumber < intScanNumberOutputThreshold)
+                                if (scanNumber < lastScanNumber)
                                 {
-                                    blnKeepLine = false;
+                                    // We have entered a new processing mode; reset the threshold
+                                    scanNumberOutputThreshold = 0;
+                                }
+
+                                if (scanNumber < scanNumberOutputThreshold)
+                                {
+                                    keepLine = false;
                                 }
                                 else
                                 {
-                                    // Write out this line and bump up intScanNumberOutputThreshold by 100
-                                    intScanNumberOutputThreshold += 100;
-                                    strMostRecentProgressLineWritten = string.Copy(dataLine);
+                                    // Write out this line and bump up scanNumberOutputThreshold by 250
+                                    scanNumberOutputThreshold += 250;
                                 }
-                            }
-                            strMostRecentProgressLine = string.Copy(dataLine);
-                        }
-                        else if (dataLine.StartsWith("Deconvolution finished"))
-                        {
-                            // Possibly write out the most recent progress line
-                            if (string.CompareOrdinal(strMostRecentProgressLine, strMostRecentProgressLineWritten) != 0)
-                            {
-                                swOutFile.WriteLine(strMostRecentProgressLine);
                             }
                         }
 
-                        if (blnKeepLine)
+                        if (keepLine)
                         {
-                            swOutFile.WriteLine(dataLine);
+                            writer.WriteLine(dataLine);
                         }
                     }
                 }
@@ -624,7 +948,7 @@ namespace AnalysisManagerTopPICPlugIn
                 try
                 {
                     File.Delete(consoleOutputFilePath);
-                    File.Move(strTrimmedFilePath, consoleOutputFilePath);
+                    File.Move(trimmedFilePath, consoleOutputFilePath);
                 }
                 catch (Exception ex)
                 {
@@ -727,21 +1051,20 @@ namespace AnalysisManagerTopPICPlugIn
                     {
                         var dataLine = reader.ReadLine();
 
-                        if (!string.IsNullOrEmpty(dataLine))
-                        {
-                            var strSplitLine = dataLine.Split('\t');
+                        if (string.IsNullOrEmpty(dataLine)) continue;
 
-                            if (strSplitLine.Length > 1)
+                        var strSplitLine = dataLine.Split('\t');
+
+                        if (strSplitLine.Length > 1)
+                        {
+                            // Look for an integer in the first or second column
+                            // Version 0.5 and 0.6 had Prsm_ID in the first column
+                            // Version 0.7 moved Prsm_ID to the second column
+                            if (int.TryParse(strSplitLine[1], out _) || int.TryParse(strSplitLine[0], out _))
                             {
-                                // Look for an integer in the first or second column
-                                // Version 0.5 and 0.6 had Prsm_ID in the first column
-                                // Version 0.7 moved Prsm_ID to the second column
-                                if (int.TryParse(strSplitLine[1], out _) || int.TryParse(strSplitLine[0], out _))
-                                {
-                                    // Integer found; line is valid
-                                    blnValidFile = true;
-                                    break;
-                                }
+                                // Integer found; line is valid
+                                blnValidFile = true;
+                                break;
                             }
                         }
                     }
