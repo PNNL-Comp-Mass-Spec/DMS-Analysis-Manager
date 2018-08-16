@@ -642,29 +642,19 @@ namespace AnalysisManagerMzRefineryPlugIn
 
             try
             {
-                using (var srParamFile = new StreamReader(new FileStream(strParameterFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                var paramFileReader = new clsKeyValueParamFileReader("MzRefinery", strParameterFilePath);
+                RegisterEvents(paramFileReader);
+
+                var eResult = paramFileReader.ParseKeyValueParameterFile(out var paramFileEntries);
+                if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
                 {
-                    while (!srParamFile.EndOfStream)
-                    {
-                        var strLineIn = srParamFile.ReadLine();
-
-                        var kvSetting = clsGlobal.GetKeyValueSetting(strLineIn);
-
-                        if (!string.IsNullOrWhiteSpace(kvSetting.Key))
-                        {
-                            switch (kvSetting.Key)
-                            {
-                                case "SkipMzRefinery":
-                                    var strValue = kvSetting.Value;
-                                    if (bool.TryParse(strValue, out var value))
-                                    {
-                                        mSkipMzRefinery = value;
-                                    }
-                                    break;
-                            }
-                        }
-                    }
+                    m_message = paramFileReader.ErrorMessage;
+                    return false;
                 }
+
+                mSkipMzRefinery = paramFileReader.ParamIsEnabled(paramFileEntries, "SkipMzRefinery");
+
+                return true;
             }
             catch (Exception ex)
             {
@@ -672,7 +662,6 @@ namespace AnalysisManagerMzRefineryPlugIn
                 return false;
             }
 
-            return true;
         }
 
         private DateTime dtLastConsoleOutputParse = DateTime.MinValue;

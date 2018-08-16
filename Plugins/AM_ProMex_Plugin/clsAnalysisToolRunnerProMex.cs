@@ -171,9 +171,6 @@ namespace AnalysisManagerProMexPlugIn
                 {"MaxThreads", "maxThreads"}
             };
 
-
-
-
             return dctParamNames;
         }
 
@@ -287,62 +284,43 @@ namespace AnalysisManagerProMexPlugIn
         /// <summary>
         /// Read the ProMex options file and convert the options to command line switches
         /// </summary>
-        /// <param name="strCmdLineOptions">Output: MSGFDb command line arguments</param>
+        /// <param name="cmdLineOptions">Output: MSGFDb command line arguments</param>
         /// <returns>Options string if success; empty string if an error</returns>
         /// <remarks></remarks>
-        public CloseOutType ParseProMexParameterFile(out string strCmdLineOptions)
+        public CloseOutType ParseProMexParameterFile(out string cmdLineOptions)
         {
-            strCmdLineOptions = string.Empty;
+            cmdLineOptions = string.Empty;
 
-            mProMexParamFilePath = Path.Combine(m_WorkDir, m_jobParams.GetParam("ProMexParamFile"));
+            var paramFileName = m_jobParams.GetParam("ProMexParamFile");
 
-            if (!File.Exists(mProMexParamFilePath))
+            // Although ParseKeyValueParameterFile checks for paramFileName being an empty string,
+            // we check for it here since the name comes from the settings file, so we want to customize the error message
+            if (string.IsNullOrWhiteSpace(paramFileName))
             {
-                LogError("Parameter file not found", "Parameter file not found: " + mProMexParamFilePath);
+                LogError("ProMex parameter file not defined in the job settings (param name ProMexParamFile)");
                 return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
             }
 
-            var sbOptions = new StringBuilder(500);
+            var paramFileReader = new clsKeyValueParamFileReader("ProMex", m_WorkDir, paramFileName);
+            RegisterEvents(paramFileReader);
 
-            try
+            var eResult = paramFileReader.ParseKeyValueParameterFile(out var paramFileEntries);
+            if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
             {
-                // Initialize the Param Name dictionary
-                var dctParamNames = GetProMexParameterNames();
-
-                using (var srParamFile = new StreamReader(new FileStream(mProMexParamFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
-                {
-                    while (!srParamFile.EndOfStream)
-                    {
-                        var strLineIn = srParamFile.ReadLine();
-
-                        var kvSetting = clsGlobal.GetKeyValueSetting(strLineIn);
-
-                        if (!string.IsNullOrWhiteSpace(kvSetting.Key))
-                        {
-                            var strValue = kvSetting.Value;
-
-                            // Check whether kvSetting.key is one of the standard keys defined in dctParamNames
-
-                            if (dctParamNames.TryGetValue(kvSetting.Key, out var strArgumentSwitch))
-                            {
-                                sbOptions.Append(" -" + strArgumentSwitch + " " + strValue);
-                            }
-                            else
-                            {
-                                LogWarning("Ignoring parameter '" + kvSetting.Key + "' since not recognized as a valid ProMex parameter");
-                            }
-                        }
-                    }
-                }
+                m_message = paramFileReader.ErrorMessage;
+                return eResult;
             }
-            catch (Exception)
+
+            // Obtain the dictionary that maps parameter names to argument names
+            var paramToArgMapping = GetProMexParameterNames();
+            var paramNamesToSkip = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            cmdLineOptions = paramFileReader.ConvertParamsToArgs(paramFileEntries, paramToArgMapping, paramNamesToSkip, "-");
+            if (string.IsNullOrWhiteSpace(cmdLineOptions))
             {
-                m_message = "Exception reading ProMex parameter file";
-                LogError(m_message);
+                m_message = paramFileReader.ErrorMessage;
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-
-            strCmdLineOptions = sbOptions.ToString();
 
             return CloseOutType.CLOSEOUT_SUCCESS;
         }

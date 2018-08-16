@@ -697,102 +697,100 @@ namespace AnalysisManagerMSPathFinderPlugin
         /// <remarks></remarks>
         public CloseOutType ParseMSPathFinderParameterFile(bool fastaFileIsDecoy, out string cmdLineOptions, out bool tdaEnabled)
         {
-            var intNumMods = 0;
-            var lstStaticMods = new List<string>();
-            var lstDynamicMods = new List<string>();
 
             cmdLineOptions = string.Empty;
             tdaEnabled = false;
 
-            var strParameterFilePath = Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"));
+            var paramFileName = m_jobParams.GetParam("parmFileName");
 
-            if (!File.Exists(strParameterFilePath))
+            var paramFileReader = new clsKeyValueParamFileReader("MSPathFinder", m_WorkDir, paramFileName);
+            RegisterEvents(paramFileReader);
+
+            var eResult = paramFileReader.ParseKeyValueParameterFile(out var paramFileEntries);
+            if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
             {
-                LogError("Parameter file not found", "Parameter file not found: " + strParameterFilePath);
-                return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
+                m_message = paramFileReader.ErrorMessage;
+                return eResult;
             }
 
-            var sbOptions = new StringBuilder(500);
+            // Obtain the dictionary that maps parameter names to argument names
+            var paramToArgMapping = GetMSPathFinderParameterNames();
+            var paramNamesToSkip = new SortedSet<string>(StringComparer.OrdinalIgnoreCase) {
+                "NumMods",
+                "StaticMod",
+                "DynamicMod"
+            };
+
+            cmdLineOptions = paramFileReader.ConvertParamsToArgs(paramFileEntries, paramToArgMapping, paramNamesToSkip, "-");
+            if (string.IsNullOrWhiteSpace(cmdLineOptions))
+            {
+                m_message = paramFileReader.ErrorMessage;
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            var numMods = 0;
+            var staticMods = new List<string>();
+            var dynamicMods = new List<string>();
 
             try
             {
-                // Initialize the Param Name dictionary
-                var dctParamNames = GetMSPathFinderParameterNames();
-
-                using (var srParamFile = new StreamReader(new FileStream(strParameterFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                foreach (var kvSetting in paramFileEntries)
                 {
-                    while (!srParamFile.EndOfStream)
+                    var paramValue = kvSetting.Value;
+
+                    if (clsGlobal.IsMatch(kvSetting.Key, "NumMods"))
                     {
-                        var strLineIn = srParamFile.ReadLine();
-
-                        var kvSetting = clsGlobal.GetKeyValueSetting(strLineIn);
-
-                        if (!string.IsNullOrWhiteSpace(kvSetting.Key))
+                        if (int.TryParse(paramValue, out var intValue))
                         {
-                            var strValue = kvSetting.Value;
-
-
-                            // Check whether kvSetting.key is one of the standard keys defined in dctParamNames
-                            if (dctParamNames.TryGetValue(kvSetting.Key, out var strArgumentSwitch))
-                            {
-                                sbOptions.Append(" -" + strArgumentSwitch + " " + strValue);
-
-                            }
-                            else if (clsGlobal.IsMatch(kvSetting.Key, "NumMods"))
-                            {
-                                if (int.TryParse(strValue, out var intValue))
-                                {
-                                    intNumMods = intValue;
-                                }
-                                else
-                                {
-                                    var errMsg = "Invalid value for NumMods in MSPathFinder parameter file";
-                                    LogError(errMsg, errMsg + ": " + strLineIn);
-                                    srParamFile.Close();
-                                    return CloseOutType.CLOSEOUT_FAILED;
-                                }
-                            }
-                            else if (clsGlobal.IsMatch(kvSetting.Key, "StaticMod"))
-                            {
-                                if (!string.IsNullOrWhiteSpace(strValue) && !clsGlobal.IsMatch(strValue, "none"))
-                                {
-                                    lstStaticMods.Add(strValue);
-                                }
-                            }
-                            else if (clsGlobal.IsMatch(kvSetting.Key, "DynamicMod"))
-                            {
-                                if (!string.IsNullOrWhiteSpace(strValue) && !clsGlobal.IsMatch(strValue, "none"))
-                                {
-                                    lstDynamicMods.Add(strValue);
-                                }
-                            }
+                            numMods = intValue;
+                        }
+                        else
+                        {
+                            var errMsg = "Invalid value for NumMods in the MSPathFinder parameter file";
+                            LogError(errMsg, errMsg + ": " + kvSetting.Key + "=" + kvSetting.Value);
+                            return CloseOutType.CLOSEOUT_FAILED;
                         }
                     }
+                    else if (clsGlobal.IsMatch(kvSetting.Key, "StaticMod"))
+                    {
+                        if (!string.IsNullOrWhiteSpace(paramValue) && !clsGlobal.IsMatch(paramValue, "none"))
+                        {
+                            staticMods.Add(paramValue);
+                        }
+                    }
+                    else if (clsGlobal.IsMatch(kvSetting.Key, "DynamicMod"))
+                    {
+                        if (!string.IsNullOrWhiteSpace(paramValue) && !clsGlobal.IsMatch(paramValue, "none"))
+                        {
+                            dynamicMods.Add(paramValue);
+                        }
+                    }
+
                 }
             }
             catch (Exception ex)
             {
-                m_message = "Exception reading MSPathFinder parameter file";
+                m_message = "Exception extracting dynamic and static mod information from the TopPIC parameter file";
                 LogError(m_message, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
             // Create the modification file and append the -mod switch
-            if (!ParseMSPathFinderModifications(strParameterFilePath, sbOptions, intNumMods, lstStaticMods, lstDynamicMods))
+            if (!ParseMSPathFinderModifications(ref cmdLineOptions, numMods, staticMods, dynamicMods))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            cmdLineOptions = sbOptions.ToString();
-
-            if (cmdLineOptions.Contains("-tda 1"))
+            // ReSharper disable once InvertIf
+            if (paramToArgMapping.ContainsKey("-tda 1"))
             {
                 tdaEnabled = true;
-                // Make sure the .Fasta file is not a Decoy fasta
+
+                // MSPathFinder should be run with a forward=only protein collection; allow MSPathFinder to add the decoy proteins
                 if (fastaFileIsDecoy)
                 {
                     LogError("Parameter file / decoy protein collection conflict: do not use a decoy protein collection " +
-                             "when using a target/decoy parameter file (which has setting TDA=1)");
+                             "when using a parameter file with setting TDA=1");
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
             }
