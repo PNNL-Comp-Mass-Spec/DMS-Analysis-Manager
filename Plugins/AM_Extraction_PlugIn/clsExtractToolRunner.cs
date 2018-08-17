@@ -1099,13 +1099,13 @@ namespace AnalysisManagerExtractionPlugin
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
-        private void RegisterPHRPEvents(clsPepHitResultsProcWrapper phrp)
+        private void RegisterPHRPEvents(clsEventNotifier phrp)
         {
             RegisterEvents(phrp);
 
             // Handle progress events with PHRP_ProgressChanged
             phrp.ProgressUpdate -= ProgressUpdateHandler;
-            phrp.ProgressChanged += PHRP_ProgressChanged;
+            phrp.ProgressUpdate += PHRP_ProgressChanged;
             phrp.SkipConsoleWriteIfNoProgressListener = true;
 
         }

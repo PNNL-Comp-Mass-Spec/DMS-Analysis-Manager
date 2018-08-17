@@ -62,8 +62,6 @@ namespace AnalysisManagerExtractionPlugin
 
         #region "Events"
 
-        public event ProgressChangedEventHandler ProgressChanged;
-
         public delegate void ProgressChangedEventHandler(string taskDescription, float percentComplete);
 
         #endregion
@@ -418,7 +416,7 @@ namespace AnalysisManagerExtractionPlugin
                 if (progressOverall > m_Progress)
                 {
                     m_Progress = (int)progressOverall;
-                    ProgressChanged?.Invoke("Running PHRP", m_Progress);
+                    OnProgressUpdate("Running PHRP", m_Progress);
                 }
             }
             catch (Exception ex)
