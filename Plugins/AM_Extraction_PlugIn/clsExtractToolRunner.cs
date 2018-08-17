@@ -1135,13 +1135,12 @@ namespace AnalysisManagerExtractionPlugin
 
                 mMzidMergerConsoleOutputFilePath = Path.Combine(m_WorkDir, "MzidMergerOutput.txt");
 
-                var progLoc = m_mgrParams.GetParam("MzidMergerProgLoc");
-                progLoc = Path.Combine(progLoc, "MzidMerger.exe");
+                var progLoc = DetermineProgramLocation("MzidMergerProgLoc", "MzidMerger.exe");
 
                 // Verify that program file exists
                 if (!File.Exists(progLoc))
                 {
-                    LogError("MzidMerger not found at " + progLoc);
+                    // The error has already been logged (and m_message was updated)
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
