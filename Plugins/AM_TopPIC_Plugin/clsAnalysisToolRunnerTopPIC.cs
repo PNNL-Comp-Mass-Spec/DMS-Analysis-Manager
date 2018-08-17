@@ -461,110 +461,52 @@ namespace AnalysisManagerTopPICPlugIn
 
 
         /// <summary>
-        /// Create the static and dynamic modification file(s) if any static or dynamic mods are defined
-        /// Update cmdLineOptions to have --fixed-mod and/or --mod-file-name
+        /// Validate the static or dynamic mods defined in modList
+        /// If valid mods are defined, write them to a text file and update cmdLineOptions
         /// </summary>
         /// <param name="cmdLineOptions">Command line arguments to pass to TopPIC</param>
-        /// <param name="staticMods">List of Static Mods</param>
-        /// <param name="dynamicMods">List of Dynamic Mods</param>
-        /// <returns>True if success, false if an error</returns>
-        /// <remarks></remarks>
+        /// <param name="modList">List of static or dynamic mods</param>
+        /// <param name="modDescription">Either "static" or "dynamic"</param>
+        /// <param name="modsFileName">Filename that mods are written to</param>
+        /// <param name="modArgumentSwitch">Argument name to append to cmdLineOptions along with the mod file name</param>
+        /// <returns></returns>
         private bool ParseTopPICModifications(
             ref string cmdLineOptions,
-            IReadOnlyCollection<string> staticMods,
-            IReadOnlyCollection<string> dynamicMods)
+            IReadOnlyCollection<string> modList,
+            string modDescription,
+            string modsFileName,
+            string modArgumentSwitch)
         {
-            const string STATIC_MODS_FILE_NAME = "TopPIC_Static_Mods.txt";
-            const string DYNAMIC_MODS_FILE_NAME = "TopPIC_Dynamic_Mods.txt";
-
-            bool success;
-
             try
             {
-                var staticModsFilePath = Path.Combine(m_WorkDir, STATIC_MODS_FILE_NAME);
-                var dynamicModsFilePath = Path.Combine(m_WorkDir, DYNAMIC_MODS_FILE_NAME);
+                var validatedMods = ValidateTopPICMods(modList, out var invalidMods);
 
-                // ToDo: Code this
-                //cmdLineOptions += " -mod " + modFilePath;
+                if (validatedMods.Count != modList.Count)
+                {
+                    LogError(string.Format("One or more {0} mods failed validation: {1}", modDescription, string.Join(", ", invalidMods)));
+                    return false;
+                }
 
-                //using (var modFileWriter = new StreamWriter(new FileStream(modFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
-                //{
-                //    modFileWriter.WriteLine("# This file is used to specify modifications for TopPIC");
-                //    modFileWriter.WriteLine("");
+                if (validatedMods.Count > 0)
+                {
+                    var modsFilePath = Path.Combine(m_WorkDir, modsFileName);
+                    var success = WriteModsFile(modsFilePath, validatedMods);
+                    if (!success)
+                        return false;
 
-                //    modFileWriter.WriteLine("");
-                //    modFileWriter.WriteLine("# Static mods");
-                //    if (staticMods.Count == 0)
-                //    {
-                //        modFileWriter.WriteLine("# None");
-                //    }
-                //    else
-                //    {
-                //        foreach (var staticMod in staticMods)
-                //        {
+                    // Append --fixed-mod ModsFilePath
+                    // or     --mod-file-name ModsFilePath
+                    cmdLineOptions += string.Format(" --{0} {1} ", modArgumentSwitch, modsFilePath);
+                }
 
-                //            if (ParseTopPICValidateMod(staticMod, out var modClean))
-                //            {
-                //                if (modClean.Contains(",opt,"))
-                //                {
-                //                    // Static (fixed) mod is listed as dynamic
-                //                    // Abort the analysis since the parameter file is misleading and needs to be fixed
-                //                    var errMsg =
-                //                        "Static mod definition contains ',opt,'; update the param file to have ',fix,' or change to 'DynamicMod='";
-                //                    LogError(errMsg, errMsg + "; " + staticMod);
-                //                    return false;
-                //                }
-                //                modFileWriter.WriteLine(modClean);
-                //            }
-                //            else
-                //            {
-                //                return false;
-                //            }
-                //        }
-                //    }
-
-                //    modFileWriter.WriteLine("");
-                //    modFileWriter.WriteLine("# Dynamic mods");
-                //    if (dynamicMods.Count == 0)
-                //    {
-                //        modFileWriter.WriteLine("# None");
-                //    }
-                //    else
-                //    {
-                //        foreach (var dynamicMod in dynamicMods)
-                //        {
-
-                //            if (ParseTopPICValidateMod(dynamicMod, out var modClean))
-                //            {
-                //                if (modClean.Contains(",fix,"))
-                //                {
-                //                    // Dynamic (optional) mod is listed as static
-                //                    // Abort the analysis since the parameter file is misleading and needs to be fixed
-                //                    var errMsg =
-                //                        "Dynamic mod definition contains ',fix,'; update the param file to have ',opt,' or change to 'StaticMod='";
-                //                    LogError(errMsg, errMsg + "; " + dynamicMod);
-                //                    return false;
-                //                }
-                //                modFileWriter.WriteLine(modClean);
-                //            }
-                //            else
-                //            {
-                //                return false;
-                //            }
-                //        }
-                //    }
-                //}
-
-                success = true;
+                return true;
 
             }
             catch (Exception ex)
             {
-                LogError("Exception creating static or dynamic mods files for TopPIC", ex);
-                success = false;
+                LogError(string.Format("Exception creating {0} mods file for TopPIC", modDescription), ex);
+                return false;
             }
-
-            return success;
         }
 
         /// <summary>
@@ -576,6 +518,9 @@ namespace AnalysisManagerTopPICPlugIn
         /// <remarks></remarks>
         public CloseOutType ParseTopPICParameterFile(bool fastaFileIsDecoy, out string cmdLineOptions)
         {
+            const string STATIC_MODS_FILE_NAME = "TopPIC_Static_Mods.txt";
+            const string DYNAMIC_MODS_FILE_NAME = "TopPIC_Dynamic_Mods.txt";
+
             cmdLineOptions = string.Empty;
 
             var paramFileName = m_jobParams.GetParam("parmFileName");
@@ -639,7 +584,7 @@ namespace AnalysisManagerTopPICPlugIn
                     }
                     else if (clsGlobal.IsMatch(kvSetting.Key, "DynamicMod"))
                     {
-                        if (!string.IsNullOrWhiteSpace(paramValue) && !clsGlobal.IsMatch(paramValue, "none"))
+                        if (!string.IsNullOrWhiteSpace(paramValue) && !clsGlobal.IsMatch(paramValue, "none") && !clsGlobal.IsMatch(paramValue, "defaults"))
                         {
                             dynamicMods.Add(paramValue);
                         }
@@ -665,14 +610,18 @@ namespace AnalysisManagerTopPICPlugIn
             }
             catch (Exception ex)
             {
-                m_message = "Exception extracting dynamic and static mod information from the TopPIC parameter file";
-                LogError(m_message, ex);
+                LogError("Exception extracting dynamic and static mod information from the TopPIC parameter file", ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
             // Create the static and dynamic modification file(s) if any static or dynamic mods are defined
             // Will also update cmdLineOptions to have --fixed-mod and/or --mod-file-name
-            if (!ParseTopPICModifications(ref cmdLineOptions, staticMods, dynamicMods))
+            if (!ParseTopPICModifications(ref cmdLineOptions, staticMods, "static", STATIC_MODS_FILE_NAME, "--fixed-mod"))
+            {
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            if (!ParseTopPICModifications(ref cmdLineOptions, dynamicMods, "dynamic", DYNAMIC_MODS_FILE_NAME, "--mod-file-name"))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -688,52 +637,6 @@ namespace AnalysisManagerTopPICPlugIn
 
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
-
-        /// <summary>
-        /// Validates that the modification definition text
-        /// </summary>
-        /// <param name="mod">Modification definition</param>
-        /// <param name="modClean">Cleaned-up modification definition (output param)</param>
-        /// <returns>True if valid; false if invalid</returns>
-        /// <remarks>Valid modification definition contains 5 parts and doesn't contain any whitespace</remarks>
-        private bool ParseTopPICValidateMod(string mod, out string modClean)
-        {
-
-            modClean = string.Empty;
-
-            var poundIndex = mod.IndexOf('#');
-            if (poundIndex > 0)
-            {
-                // comment = mod.Substring(poundIndex);
-                mod = mod.Substring(0, poundIndex - 1).Trim();
-            }
-
-            var splitMod = mod.Split(',');
-
-            if (splitMod.Length < 5)
-            {
-                // Invalid mod definition; must have 5 sections
-                LogError("Invalid modification string; must have 5 sections: " + mod);
-                return false;
-            }
-
-            // Make sure mod does not have both * and any
-            if (splitMod[1].Trim() == "*" && splitMod[3].ToLower().Trim() == "any")
-            {
-                LogError("Modification cannot contain both * and any: " + mod);
-                return false;
-            }
-
-            // Reconstruct the mod definition, making sure there is no whitespace
-            modClean = splitMod[0].Trim();
-            for (var index = 1; index <= splitMod.Length - 1; index++)
-            {
-                modClean += "," + splitMod[index].Trim();
-            }
-
-            return true;
-        }
-
 
         private CloseOutType StartTopPIC(bool fastaFileIsDecoy, string progLoc)
         {
@@ -1119,10 +1022,107 @@ namespace AnalysisManagerTopPICPlugIn
                 return false;
             }
 
+        }
+
+        /// <summary>
+        /// Validates the modification definition text
+        /// </summary>
+        /// <param name="mod">Modification definition</param>
+        /// <param name="modClean">Cleaned-up modification definition (output param)</param>
+        /// <returns>True if valid; false if invalid</returns>
+        /// <remarks>A valid modification definition contains 5 parts and doesn't contain any whitespace</remarks>
+        private bool ValidateMod(string mod, out string modClean)
+        {
+
+            modClean = string.Empty;
+
+            var poundIndex = mod.IndexOf('#');
+            if (poundIndex > 0)
+            {
+                // comment = mod.Substring(poundIndex);
+                mod = mod.Substring(0, poundIndex - 1).Trim();
+            }
+
+            var splitMod = mod.Split(',');
+
+            if (splitMod.Length < 5)
+            {
+                // Invalid mod definition; must have 5 sections
+                LogError("Invalid modification string; must have 5 sections: " + mod);
+                return false;
+            }
+
+            // Make sure mod does not have both * and any
+            if (splitMod[1].Trim() == "*" && splitMod[3].ToLower().Trim() == "any")
+            {
+                LogError("Modification cannot contain both * and any: " + mod);
+                return false;
+            }
+
+            // Make sure the Unimod ID is a positive integer or -1
+            if (!int.TryParse(splitMod[4], out var unimodId))
+            {
+                LogError("UnimodID must be an integer: " + splitMod[4]);
+                return false;
+            }
+
+            if (unimodId < 1 && unimodId != -1)
+            {
+                LogError(string.Format("Changing UnimodID from {0} to -1", splitMod[4]));
+                splitMod[4] = "-1";
+            }
+
+            // Reconstruct the mod definition, making sure there is no whitespace
+            modClean = splitMod[0].Trim();
+            for (var index = 1; index <= splitMod.Length - 1; index++)
+            {
+                modClean += "," + splitMod[index].Trim();
+            }
+
             return true;
         }
 
-        private bool ZipTopPICResultFolder(string strFolderName)
+        private List<string> ValidateTopPICMods(IReadOnlyCollection<string> modList, out List<string> invalidMods)
+        {
+            var validatedMods = new List<string>();
+            invalidMods = new List<string>();
+
+            foreach (var modEntry in modList)
+            {
+
+                if (ValidateMod(modEntry, out var modClean))
+                {
+                    validatedMods.Add(modClean);
+                }
+                else
+                {
+                    invalidMods.Add(modEntry);
+                }
+            }
+
+            return validatedMods;
+        }
+
+        private bool WriteModsFile(string modsFilePath, IEnumerable<string> validatedMods)
+        {
+            try
+            {
+                using (var writer = new StreamWriter(new FileStream(modsFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
+                {
+                    foreach (var modItem in validatedMods)
+                    {
+                        writer.WriteLine(modItem);
+                    }
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LogError(string.Format("Exception creating mods file {0} for TopPIC", Path.GetFileName(modsFilePath)), ex);
+                return false;
+            }
+        }
 
         private void WriteParametersToDisk(IEnumerable<string> parameterInfo)
         {
