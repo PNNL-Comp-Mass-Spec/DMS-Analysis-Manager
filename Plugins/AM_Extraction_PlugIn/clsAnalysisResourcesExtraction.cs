@@ -753,6 +753,7 @@ namespace AnalysisManagerExtractionPlugin
             var splitFastaEnabled = m_jobParams.GetJobParameter("SplitFasta", false);
 
             var numberOfClonedSteps = 1;
+            var lastProgressTime = DateTime.UtcNow;
 
             try
             {
@@ -1026,6 +1027,17 @@ namespace AnalysisManagerExtractionPlugin
                         }
 
                         m_jobParams.AddResultFileToSkip(consoleOutputFile);
+                    }
+
+                    var subTaskProgress = iteration / (float)numberOfClonedSteps * 100;
+                    var progressOverall = clsAnalysisToolRunnerBase.ComputeIncrementalProgress(0, clsExtractToolRunner.PROGRESS_EXTRACTION_START, subTaskProgress);
+
+                    if (DateTime.UtcNow.Subtract(lastProgressTime).TotalSeconds > 15)
+                    {
+                        lastProgressTime = DateTime.UtcNow;
+
+                        m_StatusTools.UpdateAndWrite(EnumMgrStatus.RUNNING, EnumTaskStatus.RUNNING, EnumTaskStatusDetail.RUNNING_TOOL,
+                                                     progressOverall, 0, "", "", "", false);
                     }
 
                 } // foreach cloned step
