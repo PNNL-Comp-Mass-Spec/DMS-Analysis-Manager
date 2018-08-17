@@ -8,11 +8,8 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
 using AnalysisManagerBase;
-using MSDataFileReader;
 
 namespace AnalysisManagerTopFDPlugIn
 {
@@ -23,6 +20,12 @@ namespace AnalysisManagerTopFDPlugIn
     {
 
         #region "Constants"
+
+        /// <summary>
+        /// .feature file created by TopFD
+        /// </summary>
+        /// <remarks>Tracks LC/MS features</remarks>
+        public const string TOPFD_FEATURE_FILE_SUFFIX = ".feature";
 
         /// <summary>
         /// _ms2.msalign file created by TopFD
@@ -397,40 +400,51 @@ namespace AnalysisManagerTopFDPlugIn
                     LogWarning("Call to TopFD failed (but exit code is 0)");
                 }
 
-                eResult = CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FAILED;
             }
-            else
+
+            // Make sure the output files were created and are not zero-bytes
+            // If the input .mzML file only has MS spectra and no MS/MS spectra, the output files will be empty
+
+            // Dictionary mapping a results file suffix to the full results file name
+            var resultsFiles = new Dictionary<string, string>
             {
-                // Make sure the output file was created and is not zero-bytes
-                // If the input .mzML file only has MS spectra and no MS/MS spectra, the output file will be empty
-                var resultsFile = new FileInfo(Path.Combine(m_WorkDir, m_Dataset, MSALIGN_FILE_SUFFIX));
+                {TOPFD_FEATURE_FILE_SUFFIX, m_Dataset + TOPFD_FEATURE_FILE_SUFFIX},
+                {MSALIGN_FILE_SUFFIX, m_Dataset + MSALIGN_FILE_SUFFIX}
+            };
+
+            var validResultFiles = 0;
+
+            foreach (var resultsFilePath in resultsFiles)
+            {
+                var resultsFile = new FileInfo(Path.Combine(m_WorkDir, resultsFilePath.Value));
                 if (!resultsFile.Exists)
                 {
-                    var msg = "TopFD results file not found";
-                    LogError(msg, msg + " (" + resultsFile + ")");
-
-                    eResult = CloseOutType.CLOSEOUT_FAILED;
+                    LogError(string.Format("{0} file was not created by TopFD", resultsFilePath.Key));
                 }
                 else if (resultsFile.Length == 0)
                 {
-                    var msg = "TopFD results file is empty; assure that the input .mzML file has MS/MS spectra";
-                    LogError(msg, msg + " (" + resultsFile + ")");
-
-                    eResult = CloseOutType.CLOSEOUT_FAILED;
+                    LogError(string.Format("{0} file created by TopFD is empty; " +
+                                           "assure that the input .mzML file has MS/MS spectra", resultsFilePath.Key));
                 }
                 else
                 {
-                    m_StatusTools.UpdateAndWrite(m_progress);
-                    if (m_DebugLevel >= 3)
-                    {
-                        LogDebug("TopFD analysis complete");
-                    }
-                    eResult = CloseOutType.CLOSEOUT_SUCCESS;
+                    validResultFiles++;
                 }
-
             }
 
-            return eResult;
+            if (validResultFiles < resultsFiles.Count)
+            {
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            m_StatusTools.UpdateAndWrite(m_progress);
+            if (m_DebugLevel >= 3)
+            {
+                LogDebug("TopFD analysis complete");
+            }
+
+            return CloseOutType.CLOSEOUT_SUCCESS;
 
         }
 
