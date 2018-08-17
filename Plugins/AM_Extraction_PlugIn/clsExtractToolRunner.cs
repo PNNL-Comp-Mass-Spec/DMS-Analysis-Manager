@@ -15,6 +15,7 @@ using AnalysisManagerBase;
 using AnalysisManagerMSGFDBPlugIn;
 using MSGFResultsSummarizer;
 using PHRPReader;
+using PRISM;
 
 namespace AnalysisManagerExtractionPlugin
 {
@@ -26,8 +27,11 @@ namespace AnalysisManagerExtractionPlugin
     {
         #region "Constants"
 
+        public const float PROGRESS_EXTRACTION_START = 3;
+
         /// <summary>
         /// SEQUEST jobs have an extract extraction step, where progress will be between 0% and 33% complete
+        /// MSGFPlus_SplitFasta jobs will call ConvertMZIDToTSV for each .mzid file, during which progress will update from 3% to 33%
         /// </summary>
         private const float PROGRESS_EXTRACTION_DONE = 33;
 
@@ -688,8 +692,6 @@ namespace AnalysisManagerExtractionPlugin
 
                 using (var swMergedFile = new StreamWriter(new FileStream(mergedFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
-                    // ReSharper disable once UseImplicitlyTypedVariableEvident
-
                     for (var iteration = 1; iteration <= numberOfClonedSteps; iteration++)
                     {
                         var sourceFilePath = Path.Combine(m_WorkDir, m_Dataset + "_msgfplus_Part" + iteration + ".tsv");
@@ -1039,6 +1041,7 @@ namespace AnalysisManagerExtractionPlugin
                 if (progressOverall > m_progress)
                 {
                     m_progress = progressOverall;
+                    UpdateStatusRunning(m_progress);
                 }
             }
             catch (Exception ex)
@@ -1624,6 +1627,9 @@ namespace AnalysisManagerExtractionPlugin
                     LogDebug("clsExtractToolRunner.RunPhrpForMSGFPlus(); Starting PHRP");
                 }
 
+                m_progress = PROGRESS_EXTRACTION_START;
+                UpdateStatusRunning(m_progress);
+
                 string synFilePath;
                 try
                 {
@@ -1695,6 +1701,9 @@ namespace AnalysisManagerExtractionPlugin
 
                             var peptoProtMapFilePath = Path.Combine(m_WorkDir, m_Dataset + toolNameTag + suffixToAdd + "_PepToProtMap.txt");
 
+                            var subTaskProgress = iteration / (float)numberOfClonedSteps * 100;
+                            m_progress = ComputeIncrementalProgress(3, PROGRESS_EXTRACTION_DONE, subTaskProgress);
+                            UpdateStatusRunning(m_progress);
 
                             if (File.Exists(peptoProtMapFilePath))
                             {
@@ -1739,6 +1748,7 @@ namespace AnalysisManagerExtractionPlugin
                                 }
                                 peptToProtMapCount++;
                             }
+
                         }
 
                         if (splitFastaEnabled)
