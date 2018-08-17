@@ -132,8 +132,7 @@ namespace AnalysisManagerTopPICPlugIn
             }
             catch (Exception ex)
             {
-                m_message = "Error in TopPICPlugin->RunTool";
-                LogError(m_message, ex);
+                LogError("Error in TopPICPlugin->RunTool", ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -348,11 +347,10 @@ namespace AnalysisManagerTopPICPlugIn
                 // Ignore errors here
                 if (m_DebugLevel >= 2)
                 {
-                    LogError("Error parsing console output file (" + consoleOutputFilePath + "): " + ex.Message);
+                    LogErrorNoMessageUpdate("Error parsing console output file (" + consoleOutputFilePath + "): " + ex.Message);
                 }
             }
         }
-
 
         /// <summary>
         /// Validate the static or dynamic mods defined in modList
