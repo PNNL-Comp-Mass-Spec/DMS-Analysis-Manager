@@ -653,9 +653,14 @@ namespace AnalysisManagerTopPICPlugIn
                 return eResult;
             }
 
-            var cmdStr = cmdLineOptions + " " +
-                         mValidatedFASTAFilePath + " " +
-                         Dataset + clsAnalysisResourcesTopPIC.MSALIGN_FILE_SUFFIX;
+            var featureFileName = m_Dataset + clsAnalysisResourcesTopPIC.TOPFD_FEATURE_FILE_SUFFIX;
+            var msalignFileName = m_Dataset + clsAnalysisResourcesTopPIC.MSALIGN_FILE_SUFFIX;
+
+            var cmdStr = string.Format("{0} --use-topfd-feature {1} {2} {3}",
+                                       cmdLineOptions,
+                                       featureFileName,
+                                       mValidatedFASTAFilePath,
+                                       msalignFileName);
 
             LogDebug(progLoc + " " + cmdStr);
 
