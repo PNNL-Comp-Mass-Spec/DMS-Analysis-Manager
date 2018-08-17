@@ -5,6 +5,7 @@
 //
 //*********************************************************************************************************
 
+using System.Collections.Generic;
 using AnalysisManagerBase;
 
 namespace AnalysisManagerTopPICPlugIn
@@ -14,6 +15,12 @@ namespace AnalysisManagerTopPICPlugIn
     /// </summary>
     public class clsAnalysisResourcesTopPIC : clsAnalysisResources
     {
+
+        /// <summary>
+        /// .feature file created by TopFD
+        /// </summary>
+        /// <remarks>Tracks LC/MS features</remarks>
+        public const string TOPFD_FEATURE_FILE_SUFFIX = ".feature";
 
         /// <summary>
         /// _ms2.msalign file created by TopFD
@@ -51,15 +58,22 @@ namespace AnalysisManagerTopPICPlugIn
             if (!RetrieveOrgDB(orgDbDirectoryPath, out var resultCode))
                 return resultCode;
 
-            // Retrieve the .msalign file
             LogMessage("Getting data files");
-            var fileToGet = DatasetName + MSALIGN_FILE_SUFFIX;
-            if (!FileSearch.FindAndRetrieveMiscFiles(fileToGet, false))
+
+            var filesToRetrieve = new List<string> {
+                DatasetName + TOPFD_FEATURE_FILE_SUFFIX,
+                DatasetName + MSALIGN_FILE_SUFFIX
+            };
+
+            foreach (var fileToRetrieve in filesToRetrieve)
             {
-                // Errors were reported in function call, so just return
-                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+                if (!FileSearch.FindAndRetrieveMiscFiles(fileToRetrieve, false))
+                {
+                    // Errors were reported in function call, so just return
+                    return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+                }
+                m_jobParams.AddResultFileToSkip(fileToRetrieve);
             }
-            m_jobParams.AddResultFileToSkip(fileToGet);
 
             if (!ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
             {
