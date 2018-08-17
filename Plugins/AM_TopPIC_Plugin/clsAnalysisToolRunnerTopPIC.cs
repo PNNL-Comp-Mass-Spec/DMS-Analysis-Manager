@@ -89,15 +89,7 @@ namespace AnalysisManagerTopPICPlugIn
                 mTopPICVersion = string.Empty;
                 mConsoleOutputErrorMsg = string.Empty;
 
-                // Validate the FASTA file (to remove invalid residues)
-                // Create the static mods file
-                // Optionally create the dynamic mods file
-                if (!CreateInputFiles())
-                {
-                    return CloseOutType.CLOSEOUT_FAILED;
-                }
-
-                if (!InitializeFastaFile(out var fastaFileIsDecoy))
+                if (!ValidateFastaFile(out var fastaFileIsDecoy))
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -246,35 +238,6 @@ namespace AnalysisManagerTopPICPlugIn
             };
 
             return paramToArgMapping;
-        }
-
-        private bool InitializeFastaFile(out bool fastaFileIsDecoy)
-        {
-            fastaFileIsDecoy = false;
-
-            // Define the path to the fasta file
-            var localOrgDbFolder = m_mgrParams.GetParam("orgdbdir");
-            var fastaFilePath = Path.Combine(localOrgDbFolder, m_jobParams.GetParam("PeptideSearch", "generatedFastaName"));
-
-            var fastaFile = new FileInfo(fastaFilePath);
-
-            if (!fastaFile.Exists)
-            {
-                // Fasta file not found
-                LogError("Fasta file not found: " + fastaFile.Name, "Fasta file not found: " + fastaFile.FullName);
-                return false;
-            }
-
-            var proteinOptions = m_jobParams.GetParam("ProteinOptions");
-            if (!string.IsNullOrEmpty(proteinOptions))
-            {
-                if (proteinOptions.ToLower().Contains("seq_direction=decoy"))
-                {
-                    fastaFileIsDecoy = true;
-                }
-            }
-
-            return true;
         }
 
         /// <summary>
@@ -911,6 +874,35 @@ namespace AnalysisManagerTopPICPlugIn
                 return false;
             }
 
+
+            return true;
+        }
+
+        private bool ValidateFastaFile(out bool fastaFileIsDecoy)
+        {
+            fastaFileIsDecoy = false;
+
+            // Define the path to the fasta file
+            var localOrgDbFolder = m_mgrParams.GetParam("orgdbdir");
+            mValidatedFASTAFilePath = Path.Combine(localOrgDbFolder, m_jobParams.GetParam("PeptideSearch", "generatedFastaName"));
+
+            var fastaFile = new FileInfo(mValidatedFASTAFilePath);
+
+            if (!fastaFile.Exists)
+            {
+                // Fasta file not found
+                LogError("Fasta file not found: " + fastaFile.Name, "Fasta file not found: " + fastaFile.FullName);
+                return false;
+            }
+
+            var proteinOptions = m_jobParams.GetParam("ProteinOptions");
+            if (!string.IsNullOrEmpty(proteinOptions))
+            {
+                if (proteinOptions.ToLower().Contains("seq_direction=decoy"))
+                {
+                    fastaFileIsDecoy = true;
+                }
+            }
 
             return true;
         }
