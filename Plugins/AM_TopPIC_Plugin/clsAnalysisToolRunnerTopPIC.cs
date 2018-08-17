@@ -8,7 +8,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using System.Text.RegularExpressions;
 using AnalysisManagerBase;
 
@@ -27,11 +26,11 @@ namespace AnalysisManagerTopPICPlugIn
         private const float PROGRESS_PCT_STARTING = 1;
         private const float PROGRESS_PCT_COMPLETE = 99;
 
-        private const string RESULT_TABLE_NAME_SUFFIX = "_TopPIC_ResultTable.txt";
-        private const string RESULT_TABLE_NAME_LEGACY = "result_table.txt";
+        private const string PRSM_RESULT_TABLE_NAME_SUFFIX_ORIGINAL = "_ms2.OUTPUT_TABLE";
+        private const string PRSM_RESULT_TABLE_NAME_SUFFIX_FINAL = "_TopPIC_PrSMs.txt";
 
-        private const string RESULT_DETAILS_NAME_SUFFIX = "_TopPIC_ResultDetails.txt";
-        private const string RESULT_DETAILS_NAME_LEGACY = "result.txt";
+        private const string PROTEOFORM_RESULT_TABLE_NAME_SUFFIX_ORIGINAL = "_ms2.FORM_OUTPUT_TABLE";
+        private const string PROTEOFORM_RESULT_TABLE_NAME_SUFFIX_FINAL = "_TopPIC_Proteoforms.txt";
 
         #endregion
 
@@ -802,41 +801,24 @@ namespace AnalysisManagerTopPICPlugIn
                     LogWarning("Call to TopPIC failed (but exit code is 0)");
                 }
 
-                eResult = CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FAILED;
             }
-            else
+
+            // Validate the results files and zip the html subdirectories
+            var processingError = !ValidateAndZipResults(out var noValidResults);
+
+            if (processingError)
             {
-                // Make sure the output files were created
-
-                var processingError = !ValidateAndCopyResultFiles();
-
-                var strResultTableFilePath = Path.Combine(m_WorkDir, m_Dataset + RESULT_TABLE_NAME_SUFFIX);
-
-                // Make sure the output files are not empty
-                if (processingError)
-                {
-                    eResult = CloseOutType.CLOSEOUT_FAILED;
-                }
-                else
-                {
-                    if (ValidateResultTableFile(strResultTableFilePath))
-                    {
-                        eResult = CloseOutType.CLOSEOUT_SUCCESS;
-                    }
-                    else
-                    {
-                        eResult = CloseOutType.CLOSEOUT_NO_DATA;
-                    }
-                }
-
-                m_StatusTools.UpdateAndWrite(m_progress);
-                if (m_DebugLevel >= 3)
-                {
-                    LogDebug("TopPIC Search Complete");
-                }
+                return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            return eResult;
+            m_StatusTools.UpdateAndWrite(m_progress);
+            if (m_DebugLevel >= 3)
+            {
+                LogDebug("TopPIC Search Complete");
+            }
+
+            return noValidResults ? CloseOutType.CLOSEOUT_NO_DATA : CloseOutType.CLOSEOUT_SUCCESS;
         }
 
         /// <summary>
@@ -968,113 +950,168 @@ namespace AnalysisManagerTopPICPlugIn
             }
         }
 
-        private bool ValidateAndCopyResultFiles()
+        /// <summary>
+        /// Validate the results files and zip the html subdirectories
+        /// </summary>
+        /// <returns></returns>
+        private bool ValidateAndZipResults(out bool noValidResults)
         {
-            var strResultsFolderPath = Path.Combine(m_WorkDir, "msoutput");
-            var lstResultsFilesToMove = new List<string>();
-            var processingError = false;
+
+            noValidResults = false;
 
             try
             {
-                // ToDo
-                //lstResultsFilesToMove.Add(Path.Combine(strResultsFolderPath, mInputPropertyValues.ResultTableFileName));
-                //lstResultsFilesToMove.Add(Path.Combine(strResultsFolderPath, mInputPropertyValues.ResultDetailsFileName));
-
-                foreach (var resultFilePath in lstResultsFilesToMove)
+                // Dictionary mapping the original results file name created by TopPIC to the final name for the file
+                var resultTableFiles = new Dictionary<string, string>
                 {
-                    var fiSearchResultFile = new FileInfo(resultFilePath);
+                    {PRSM_RESULT_TABLE_NAME_SUFFIX_ORIGINAL, PRSM_RESULT_TABLE_NAME_SUFFIX_FINAL},
+                    {PROTEOFORM_RESULT_TABLE_NAME_SUFFIX_ORIGINAL, PROTEOFORM_RESULT_TABLE_NAME_SUFFIX_FINAL}
+                };
 
-                    if (!fiSearchResultFile.Exists)
-                    {
-                        var msg = "TopPIC results file not found";
+                foreach (var resultFile in resultTableFiles)
+                {
+                    var sourceFile = Path.Combine(m_WorkDir, m_Dataset + resultFile.Key);
+                    var targetFile = Path.Combine(m_WorkDir, m_Dataset + resultFile.Value);
 
-                        if (!processingError)
-                        {
-                            // This is the first missing file; update the base-class comment
-                            LogError(msg + ": " + fiSearchResultFile.Name);
-                            processingError = true;
-                        }
+                    var saveParameterfile = string.Equals(resultFile.Key, PRSM_RESULT_TABLE_NAME_SUFFIX_ORIGINAL);
+                    var success = ValidateResultTableFile(sourceFile, targetFile, saveParameterfile, out var noValidResultsThisFile);
 
-                        LogErrorNoMessageUpdate(msg + ": " + fiSearchResultFile.FullName);
-                    }
-                    else
-                    {
-                        // Copy the results file to the work directory
-                        var strTargetFileName = string.Copy(fiSearchResultFile.Name);
+                    if (string.Equals(resultFile.Key, PRSM_RESULT_TABLE_NAME_SUFFIX_ORIGINAL) && noValidResultsThisFile)
+                        noValidResults = true;
 
-                        fiSearchResultFile.CopyTo(Path.Combine(m_WorkDir, strTargetFileName), true);
-                    }
+                    if (!success)
+                        return false;
                 }
 
-                // Zip the Html and XML folders
-                ZipTopPICResultFolder("html");
-                ZipTopPICResultFolder("XML");
+                // Zip the Html directories
+                var directoriesToCompress = new List<string> {
+                    "_ms2_proteoform_cutoff_html",
+                    "_ms2_prsm_cutoff_html" };
+
+                foreach (var directorySuffix in directoriesToCompress)
+                {
+                    var success = ZipTopPICResultsDirectory(directorySuffix);
+                    if (!success)
+                        return false;
+                }
+
+
             }
             catch (Exception ex)
             {
-                LogError("Exception in ValidateAndCopyResultFiles", ex);
+                LogError("Exception in ValidateAndZipResults", ex);
                 return false;
             }
 
-            if (processingError)
-            {
-                return false;
-            }
 
             return true;
         }
 
-        private bool ValidateResultTableFile(string strSourceFilePath)
+        private bool ValidateResultTableFile(string sourceFilePath, string targetFilePath, bool saveParameterfile, out bool noValidResults)
         {
+            var reParametersHeader = new Regex(@"\*+ Parameters \*+", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+            noValidResults = false;
+
             try
             {
-                var blnValidFile = false;
+                var validFile = false;
+                var foundParamHeaderA = false;
+                var foundParamHeaderB = false;
 
-                if (!File.Exists(strSourceFilePath))
+                var parameterInfo = new List<string>();
+
+                var sourceFile = new FileInfo(sourceFilePath);
+
+                if (!sourceFile.Exists)
                 {
                     if (m_DebugLevel >= 2)
                     {
-                        LogWarning("TopPIC_ResultTable.txt file not found: " + strSourceFilePath);
+                        LogWarning("TopPIC results file not found: " + sourceFilePath);
                     }
                     return false;
                 }
 
                 if (m_DebugLevel >= 2)
                 {
-                    LogMessage("Validating that the TopPIC_ResultTable.txt file is not empty");
+                    LogMessage("Validating that the TopPIC results file is not empty");
                 }
 
-                // Open the input file
-                using (var reader = new StreamReader(new FileStream(strSourceFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                // Open the input file and output file
+                // The output file will not include the Parameters block before the header line
+                using (var reader = new StreamReader(new FileStream(sourceFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var writer = new StreamWriter(new FileStream(targetFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
                 {
                     while (!reader.EndOfStream)
                     {
                         var dataLine = reader.ReadLine();
 
-                        if (string.IsNullOrEmpty(dataLine)) continue;
+                        if (string.IsNullOrEmpty(dataLine))
+                            continue;
 
-                        var strSplitLine = dataLine.Split('\t');
-
-                        if (strSplitLine.Length > 1)
+                        if (!foundParamHeaderB)
                         {
-                            // Look for an integer in the first or second column
-                            // Version 0.5 and 0.6 had Prsm_ID in the first column
-                            // Version 0.7 moved Prsm_ID to the second column
-                            if (int.TryParse(strSplitLine[1], out _) || int.TryParse(strSplitLine[0], out _))
+                            // Look for the parameters header: ********************** Parameters **********************
+                            var match = reParametersHeader.Match(dataLine);
+                            if (match.Success)
+                            {
+                                if (!foundParamHeaderA)
+                                {
+                                    foundParamHeaderA = true;
+                                }
+                                else
+                                {
+                                    foundParamHeaderB = true;
+
+                                    if (parameterInfo.Count > 0)
+                                    {
+                                        // This is second instance of the parameters header
+                                        // Optionally write the parameter file
+                                        if (saveParameterfile)
+                                        {
+                                            WriteParametersToDisk(parameterInfo);
+                                        }
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                parameterInfo.Add(dataLine);
+                            }
+
+                            continue;
+                        }
+
+                        writer.WriteLine(dataLine);
+
+                        var dataColumns = dataLine.Split('\t');
+
+                        if (dataColumns.Length > 1)
+                        {
+                            // Look for an integer in the second column (the first column has the data file name)
+                            if (int.TryParse(dataColumns[1], out _))
                             {
                                 // Integer found; line is valid
-                                blnValidFile = true;
-                                break;
+                                validFile = true;
                             }
                         }
                     }
                 }
 
-                if (!blnValidFile)
+                m_jobParams.AddResultFileToSkip(sourceFile.Name);
+
+                if (validFile)
+                    return true;
+
+                if (!foundParamHeaderB)
                 {
-                    LogError("TopPIC_ResultTable.txt file is empty");
+                    LogError("TopPIC results file is empty: " + sourceFile.Name);
                     return false;
                 }
+
+                noValidResults = true;
+
+                return true;
             }
             catch (Exception ex)
             {
@@ -1086,49 +1123,69 @@ namespace AnalysisManagerTopPICPlugIn
         }
 
         private bool ZipTopPICResultFolder(string strFolderName)
+
+        private void WriteParametersToDisk(IEnumerable<string> parameterInfo)
         {
-            // ToDo
-            throw new NotImplementedException();
+            try
+            {
+                var runtimeParamsPath = Path.Combine(m_WorkDir, "TopPIC_RuntimeParameters.txt");
+                using (var writer = new StreamWriter(new FileStream(runtimeParamsPath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
+                {
+                    foreach (var parameter in parameterInfo)
+                    {
+                        writer.WriteLine(parameter);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError("Exception saving the parameters file for TopPIC (after TopPIC finished running)", ex);
+            }
+        }
+
+        private bool ZipTopPICResultsDirectory(string directorySuffix)
+        {
 
             try
             {
-                var strTargetFilePath = Path.Combine(m_WorkDir, m_Dataset + "_TopPIC_Results_" + strFolderName.ToUpper() + ".zip");
+                var zipFilePath = Path.Combine(m_WorkDir, m_Dataset + directorySuffix + ".zip");
 
-                var strSourceFolderPath = Path.Combine(m_WorkDir, strFolderName);
+                var sourceDirectoryPath = Path.Combine(m_WorkDir, m_Dataset + directorySuffix);
 
-                // Confirm that the directory has one or more files or subfolders
-                var diSourceFolder = new DirectoryInfo(strSourceFolderPath);
-                if (diSourceFolder.GetFileSystemInfos().Length == 0)
+                // Confirm that the directory has one or more files or subdirectories
+                var sourceDirectory = new DirectoryInfo(sourceDirectoryPath);
+                if (sourceDirectory.GetFileSystemInfos().Length == 0)
                 {
                     if (m_DebugLevel >= 1)
                     {
-                        LogWarning("TopPIC results folder is empty; nothing to zip: " + strSourceFolderPath);
+                        LogWarning("TopPIC results directory is empty; nothing to zip: " + Path.GetFileName(sourceDirectoryPath));
                     }
                     return false;
                 }
 
                 if (m_DebugLevel >= 1)
                 {
-                    var strLogMessage = "Zipping " + strFolderName.ToUpper() + " folder at " + strSourceFolderPath;
+                    var logMessage = "Zipping directory " + sourceDirectoryPath;
 
                     if (m_DebugLevel >= 2)
                     {
-                        strLogMessage += ": " + strTargetFilePath;
+                        logMessage += ": " + zipFilePath;
                     }
-                    LogMessage(strLogMessage);
+                    LogMessage(logMessage);
                 }
 
-                var objZipper = new Ionic.Zip.ZipFile(strTargetFilePath);
-                objZipper.AddDirectory(strSourceFolderPath);
-                objZipper.Save();
+                var zipper = new Ionic.Zip.ZipFile(zipFilePath);
+                zipper.AddDirectory(sourceDirectoryPath);
+                zipper.Save();
+
+                return true;
             }
             catch (Exception ex)
             {
-                LogError("Exception in ZipTopPICResultFolder", ex);
+                LogError(string.Format("Exception compressing the {0} directory created by TopPIC", directorySuffix), ex);
                 return false;
             }
 
-            return true;
         }
 
         #endregion
