@@ -66,13 +66,13 @@ namespace AnalysisManagerProg
         {
             IToolRunner myToolRunner = null;
 
-            switch (className.ToLower())
+            switch (className)
             {
-                case "analysismanagermsgfdbplugin.clsanalysistoolrunnermsgfdb":
-                //    myToolRunner = new AnalysisManagerMSGFDBPlugIn.clsAnalysisToolRunnerMSGFDB();
+                case "AnalysisManagerTopFDPlugIn.clsAnalysisToolRunnerTopFD":
+                    myToolRunner = new AnalysisManagerTopFDPlugIn.clsAnalysisToolRunnerTopFD();
                     break;
-                case "analysismanagerqcartplugin.clsanalysistoolrunnerqcart":
-                //    myToolRunner = new AnalysisManagerQCARTPlugin.clsAnalysisToolRunnerQCART();
+                case "AnalysisManagerTopPICPlugIn.clsAnalysisToolRunnerTopPIC":
+                    myToolRunner = new AnalysisManagerTopPICPlugIn.clsAnalysisToolRunnerTopPIC();
                     break;
             }
 
@@ -86,11 +86,11 @@ namespace AnalysisManagerProg
 
             switch (className.ToLower())
             {
-                case "analysismanagermsgfdbplugin.clsanalysisresourcesmsgfdb":
-                //    myModule = new AnalysisManagerMSGFDBPlugIn.clsAnalysisResourcesMSGFDB();
+                case "AnalysisManagerTopFDPlugIn.clsAnalysisResourcesTopFD":
+                    myModule = new AnalysisManagerTopFDPlugIn.clsAnalysisResourcesTopFD();
                     break;
-                case "analysismanagerqcartplugin.clsanalysisresourcesqcart":
-                //    myModule = new AnalysisManagerQCARTPlugin.clsAnalysisResourcesQCART();
+                case "AnalysisManagerTopPICPlugIn.clsAnalysisResourcesTopPIC":
+                    myModule = new AnalysisManagerTopPICPlugIn.clsAnalysisResourcesTopPIC();
                     break;
             }
 
@@ -104,16 +104,16 @@ namespace AnalysisManagerProg
         /// </summary>
         /// <param name="xpath">XPath spec for specified plugin</param>
         /// <param name="className">Name of class for plugin (return value) </param>
-        /// <param name="assyName">Name of assembly for plugin (return value)</param>
+        /// <param name="assemblyName">Name of assembly for plugin (return value)</param>
         /// <returns>TRUE for success, FALSE for failure</returns>
         /// <remarks></remarks>
-        private bool GetPluginInfo(string xpath, out string className, out string assyName)
+        private bool GetPluginInfo(string xpath, out string className, out string assemblyName)
         {
             var doc = new XmlDocument();
             var pluginInfo = string.Empty;
 
             className = string.Empty;
-            assyName = string.Empty;
+            assemblyName = string.Empty;
 
             try
             {
@@ -122,7 +122,8 @@ namespace AnalysisManagerProg
                     throw new ArgumentException("XPath must be defined", nameof(xpath));
                 }
 
-                pluginInfo = "XPath=\"" + xpath + "\"; className=\"" + className + "\"; assyName=" + assyName + "\"";
+                // ReSharper disable once StringLiteralTypo
+                pluginInfo = "XPath=\"" + xpath + "\"; className=\"" + className + "\"; assyName=" + assemblyName + "\"";
 
                 //read the tool runner info file
                 doc.Load(GetPluginInfoFilePath(m_pluginConfigFile));
@@ -160,7 +161,7 @@ namespace AnalysisManagerProg
                 foreach (XmlElement n in nodeList)
                 {
                     className = n.GetAttribute("Class");
-                    assyName = n.GetAttribute("AssemblyFile");
+                    assemblyName = n.GetAttribute("AssemblyFile");
                 }
                 return true;
             }
@@ -172,19 +173,19 @@ namespace AnalysisManagerProg
         }
 
         /// <summary>
-        /// Loads the specifed dll
+        /// Loads the specified dll
         /// </summary>
         /// <param name="className">Name of class to load (from GetPluginInfo)</param>
-        /// <param name="assyName">Name of assembly to load (from GetPluginInfo)</param>
+        /// <param name="assemblyName">Name of assembly to load (from GetPluginInfo)</param>
         /// <returns>An object referencing the specified dll</returns>
         /// <remarks></remarks>
-        private object LoadObject(string className, string assyName)
+        private object LoadObject(string className, string assemblyName)
         {
 
             try
             {
                 // Build instance of tool runner subclass from class name and assembly file name.
-                var pluginInfoFilePath = GetPluginInfoFilePath(assyName);
+                var pluginInfoFilePath = GetPluginInfoFilePath(assemblyName);
 
                 // Make sure the file exists and is capitalized correctly
                 var pluginInfoFile = new FileInfo(pluginInfoFilePath);
@@ -226,7 +227,7 @@ namespace AnalysisManagerProg
             catch (Exception ex)
             {
                 // Cache exceptions
-                OnErrorEvent(string.Format("clsPluginLoader.LoadObject(), for class {0}, assembly {1}", className, assyName), ex);
+                OnErrorEvent(string.Format("clsPluginLoader.LoadObject(), for class {0}, assembly {1}", className, assemblyName), ex);
                 return null;
             }
 
@@ -244,7 +245,7 @@ namespace AnalysisManagerProg
 
             IToolRunner myToolRunner = null;
 
-            if (GetPluginInfo(xpath, out var className, out var assyName))
+            if (GetPluginInfo(xpath, out var className, out var assemblyName))
             {
 #if PLUGIN_DEBUG_MODE_ENABLED
                 myToolRunner = DebugModeGetToolRunner(className);
@@ -254,7 +255,7 @@ namespace AnalysisManagerProg
                 }
 #endif
 
-                var newToolRunner = LoadObject(className, assyName);
+                var newToolRunner = LoadObject(className, assemblyName);
                 if (newToolRunner != null)
                 {
                     try
@@ -263,10 +264,10 @@ namespace AnalysisManagerProg
                     }
                     catch (Exception ex)
                     {
-                        OnErrorEvent(string.Format("clsPluginLoader.GetToolRunner(), for class {0}, assembly {1}", className, assyName), ex);
+                        OnErrorEvent(string.Format("clsPluginLoader.GetToolRunner(), for class {0}, assembly {1}", className, assemblyName), ex);
                     }
                 }
-                m_SummaryFile.Add("Loaded ToolRunner: " + className + " from " + assyName);
+                m_SummaryFile.Add("Loaded ToolRunner: " + className + " from " + assemblyName);
             }
             else
             {
@@ -288,7 +289,7 @@ namespace AnalysisManagerProg
 
             IAnalysisResources myModule = null;
 
-            if (GetPluginInfo(xpath, out var className, out var assyName))
+            if (GetPluginInfo(xpath, out var className, out var assemblyName))
             {
 #if PLUGIN_DEBUG_MODE_ENABLED
                 myModule = DebugModeGetAnalysisResources(className);
@@ -298,7 +299,7 @@ namespace AnalysisManagerProg
                 }
 #endif
 
-                var newResourcer = LoadObject(className, assyName);
+                var newResourcer = LoadObject(className, assemblyName);
                 if (newResourcer != null)
                 {
                     try
@@ -307,10 +308,10 @@ namespace AnalysisManagerProg
                     }
                     catch (Exception ex)
                     {
-                        OnErrorEvent(string.Format("clsPluginLoader.GetAnalysisResources(), for class {0}, assembly {1}", className, assyName), ex);
+                        OnErrorEvent(string.Format("clsPluginLoader.GetAnalysisResources(), for class {0}, assembly {1}", className, assemblyName), ex);
                     }
                 }
-                m_SummaryFile.Add("Loaded resourcer: " + className + " from " + assyName);
+                m_SummaryFile.Add("Loaded resourcer: " + className + " from " + assemblyName);
             }
             else
             {

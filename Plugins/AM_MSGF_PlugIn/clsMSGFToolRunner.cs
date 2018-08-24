@@ -1769,8 +1769,8 @@ namespace AnalysisManagerMSGFPlugin
                 if (!mKeepMSGFInputFiles)
                 {
                     // Delete the temporary files
-                    DeleteTemporaryfile(inputFileTempPath);
-                    DeleteTemporaryfile(resultFileTempPath);
+                    DeleteTemporaryFile(inputFileTempPath);
+                    DeleteTemporaryFile(resultFileTempPath);
                 }
             }
             catch (Exception ex)
@@ -1872,13 +1872,13 @@ namespace AnalysisManagerMSGFPlugin
                     // Delete the segment files
                     foreach (var udtSegmentFile in segmentFileInfo)
                     {
-                        DeleteTemporaryfile(udtSegmentFile.FilePath);
+                        DeleteTemporaryFile(udtSegmentFile.FilePath);
                     }
 
                     // Delete the result files
                     foreach (var resultFile in resultFiles)
                     {
-                        DeleteTemporaryfile(resultFile);
+                        DeleteTemporaryFile(resultFile);
                     }
                 }
             }
@@ -2038,7 +2038,7 @@ namespace AnalysisManagerMSGFPlugin
                     if (fiConsoleOutputfile.Length == 0)
                     {
                         // File is 0-bytes; delete it
-                        DeleteTemporaryfile(fiConsoleOutputfile.FullName);
+                        DeleteTemporaryFile(fiConsoleOutputfile.FullName);
                     }
                     else
                     {

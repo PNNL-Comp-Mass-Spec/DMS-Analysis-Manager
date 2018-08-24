@@ -109,7 +109,7 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Working directory for the manager
         /// </summary>
-        /// <remarks>When running offline jobs, this path will be updted for each job task</remarks>
+        /// <remarks>When running offline jobs, this path will be updated for each job task</remarks>
         public const string MGR_PARAM_WORK_DIR = "WorkDir";
 
         #endregion
@@ -530,7 +530,7 @@ namespace AnalysisManagerProg
 
             if (GetParam(MGR_PARAM_MGR_ACTIVE_LOCAL, false))
             {
-                // MgrActive_Local is true, set mgractive to true
+                // MgrActive_Local is true, set MgrActive to true
                 SetParam(MGR_PARAM_MGR_ACTIVE, "true");
             }
 
@@ -551,7 +551,7 @@ namespace AnalysisManagerProg
         /// </summary>
         /// <param name="settingNodes">XML nodes</param>
         /// <param name="traceEnabled">If true, display trace statements</param>
-        /// <returns>Dictionary of settiongs</returns>
+        /// <returns>Dictionary of settings</returns>
         public static Dictionary<string, string> ParseXMLSettings(IEnumerable settingNodes, bool traceEnabled)
         {
 
@@ -596,8 +596,8 @@ namespace AnalysisManagerProg
             {
                 // Construct the path to the config document
                 var configFilePath = Path.Combine(mMgrFolderPath, LOCAL_MANAGER_SETTINGS_FILE);
-                var configfile = new FileInfo(configFilePath);
-                if (!configfile.Exists)
+                var configFile = new FileInfo(configFilePath);
+                if (!configFile.Exists)
                 {
                     mErrMsg = "ReadLocalSettingsFile; manager config file not found: " + configFilePath;
                     LogError(mErrMsg);
@@ -714,9 +714,9 @@ namespace AnalysisManagerProg
             short retryCount = 6;
 
             // Gigasax.DMS_Pipeline
-            var connectionString = GetParam("brokerconnectionstring");
+            var connectionString = GetParam("BrokerConnectionString");
 
-            ShowTrace("LoadBrokerDBSettings has brokerconnectionstring = " + connectionString);
+            ShowTrace("LoadBrokerDBSettings has BrokerConnectionString = " + connectionString);
 
             // Construct the Sql to obtain the information:
             //   SELECT 'StepTool_ParamFileStoragePath_' + Name AS ParameterName, [Param File Storage Path] AS ParameterValue
@@ -894,7 +894,7 @@ namespace AnalysisManagerProg
 
         private bool ValidateOfflineTaskDirectories()
         {
-            // These manaager parameters are defined in file ManagerSettingsLocal.xml
+            // These manager parameters are defined in file ManagerSettingsLocal.xml
             try
             {
                 var taskQueuePath = GetParam(MGR_PARAM_LOCAL_TASK_QUEUE_PATH);
@@ -972,7 +972,7 @@ namespace AnalysisManagerProg
         }
 
         /// <summary>
-        /// Writes specfied value to an application config file.
+        /// Writes specified value to an application config file.
         /// </summary>
         /// <param name="key">Name for parameter (case sensitive)</param>
         /// <param name="value">New value for parameter</param>

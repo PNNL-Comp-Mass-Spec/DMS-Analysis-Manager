@@ -36,7 +36,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         public string ScanTypeFilePath { get; private set; }
 
         /// <summary>
-        /// Number of valid scantype lines
+        /// Number of valid ScanType lines
         /// </summary>
         public int ValidScanTypeLineCount { get; private set; }
 

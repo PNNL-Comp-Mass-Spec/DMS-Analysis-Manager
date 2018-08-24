@@ -55,7 +55,7 @@ namespace AnalysisManagerBase
         public const string RAW_DATA_TYPE_DOT_RAW_FOLDER = "dot_raw_folder";
 
         /// <summary>
-        /// Finnigan ion trap/LTQ-FT data
+        /// Thermo IonTrap/LTQ-FT/Orbitrap data
         /// </summary>
         public const string RAW_DATA_TYPE_DOT_RAW_FILES = "dot_raw_files";
 
@@ -102,7 +102,7 @@ namespace AnalysisManagerBase
         public const string RAW_DATA_TYPE_BRUKER_MALDI_SPOT = "bruker_maldi_spot";
 
         /// <summary>
-        /// Bruker MALID imaging data
+        /// Bruker MALDI imaging data
         /// </summary>
         /// <remarks>
         /// The following is used by instruments 9T_FTICR_Imaging and BrukerTOF_Imaging_01
@@ -130,7 +130,7 @@ namespace AnalysisManagerBase
         public const string RESULT_TYPE_XTANDEM = "XT_Peptide_Hit";
 
         /// <summary>
-        /// Result type for Inpect
+        /// Result type for Inspect
         /// </summary>
         public const string RESULT_TYPE_INSPECT = "IN_Peptide_Hit";
 
@@ -351,7 +351,7 @@ namespace AnalysisManagerBase
         /// Manager parameter: local directory for caching FASTA files
         /// Also caches CIA DB files for Formularity
         /// </summary>
-        public const string MGR_PARAM_ORG_DB_DIR = "orgdbdir";
+        public const string MGR_PARAM_ORG_DB_DIR = "OrgDBDir";
 
         /// <summary>
         /// Warning message that spectra are not centroided
@@ -453,7 +453,7 @@ namespace AnalysisManagerBase
         public enum DataPackageFileRetrievalModeConstants
         {
             /// <summary>
-            /// unDefined
+            /// Undefined
             /// </summary>
             Undefined = 0,
 
@@ -492,7 +492,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <remarks>
         /// Update the dataset name using property DatasetName
-        /// because we also need to propogate that change
+        /// because we also need to propagate that change
         /// into m_FolderSearch and m_FileSearch
         /// </remarks>
         private string m_DatasetName;
@@ -608,7 +608,7 @@ namespace AnalysisManagerBase
         public clsFileSearch FileSearch => m_FileSearch;
 
         /// <summary>
-        /// True when MyEMSL search is diabled
+        /// True when MyEMSL search is disabled
         /// </summary>
         public bool MyEMSLSearchDisabled
         {
@@ -696,11 +696,11 @@ namespace AnalysisManagerBase
 
             TraceMode = mgrParams.TraceMode;
 
-            m_DebugLevel = (short)m_mgrParams.GetParam("debuglevel", 1);
-            m_FastaToolsCnStr = m_mgrParams.GetParam("fastacnstring");
+            m_DebugLevel = (short)m_mgrParams.GetParam("DebugLevel", 1);
+            m_FastaToolsCnStr = m_mgrParams.GetParam("FastaCnString");
             m_MgrName = m_mgrParams.ManagerName;
 
-            m_WorkingDir = m_mgrParams.GetParam("workdir");
+            m_WorkingDir = m_mgrParams.GetParam("WorkDir");
 
             var jobNum = m_jobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Job");
             if (!string.IsNullOrEmpty(jobNum))
@@ -763,7 +763,7 @@ namespace AnalysisManagerBase
             var orgDbFolderPath = m_mgrParams.GetParam(MGR_PARAM_ORG_DB_DIR);
             if (string.IsNullOrWhiteSpace(orgDbFolderPath))
             {
-                LogError("Cannot copy the generated FASTA remotely; manager parameter orgdbdir is empty");
+                LogError("Cannot copy the generated FASTA remotely; manager parameter OrgDBDir is empty");
                 return false;
             }
 
@@ -1344,18 +1344,18 @@ namespace AnalysisManagerBase
 
                 // Lookup connection strings
                 // Proteinseqs.Protein_Sequences
-                var proteinSeqsDBConnectionString = m_mgrParams.GetParam("fastacnstring");
+                var proteinSeqsDBConnectionString = m_mgrParams.GetParam("FastaCnString");
                 if (string.IsNullOrWhiteSpace(proteinSeqsDBConnectionString))
                 {
-                    LogError("Error in CreateFastaFile: manager parameter fastacnstring is not defined");
+                    LogError("Error in CreateFastaFile: manager parameter FastaCnString is not defined");
                     return false;
                 }
 
                 // Gigasax.DMS5
-                var dmsConnectionString = m_mgrParams.GetParam("connectionstring");
+                var dmsConnectionString = m_mgrParams.GetParam("ConnectionString");
                 if (string.IsNullOrWhiteSpace(proteinSeqsDBConnectionString))
                 {
-                    LogError("Error in CreateFastaFile: manager parameter connectionstring is not defined");
+                    LogError("Error in CreateFastaFile: manager parameter ConnectionString is not defined");
                     return false;
                 }
 
@@ -1502,7 +1502,7 @@ namespace AnalysisManagerBase
 
             }
 
-            UpdateLastUsedfile(fastaFile);
+            UpdateLastUsedFile(fastaFile);
 
             // If we got to here, everything worked OK
             return true;
@@ -2084,10 +2084,10 @@ namespace AnalysisManagerBase
                     }
 
                     // Look for a .hashcheck file
-                    var lstHashCheckfiles = fiFile.Directory.GetFiles(fiFile.Name + "*" + Protein_Exporter.clsGetFASTAFromDMS.HASHCHECK_SUFFIX).ToList();
-                    if (lstHashCheckfiles.Count > 0)
+                    var lstHashCheckFiles = fiFile.Directory.GetFiles(fiFile.Name + "*" + Protein_Exporter.clsGetFASTAFromDMS.HASHCHECK_SUFFIX).ToList();
+                    if (lstHashCheckFiles.Count > 0)
                     {
-                        dtLastUsed = DateMax(dtLastUsed, lstHashCheckfiles.First().LastWriteTimeUtc);
+                        dtLastUsed = DateMax(dtLastUsed, lstHashCheckFiles.First().LastWriteTimeUtc);
                     }
 
                     // Look for a .LastUsed file
@@ -2551,7 +2551,7 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Determine the RawDatatype name for this job
+        /// Determine the RawDataType name for this job
         /// </summary>
         /// <returns></returns>
         protected string GetRawDataTypeName()
@@ -2670,8 +2670,8 @@ namespace AnalysisManagerBase
 
             errorMessage = string.Empty;
 
-            var cloneStepRenumStart = jobParams.GetJobParameter("CloneStepRenumberStart", 0);
-            if (cloneStepRenumStart == 0)
+            var cloneStepRenumberStart = jobParams.GetJobParameter("CloneStepRenumberStart", 0);
+            if (cloneStepRenumberStart == 0)
             {
                 errorMessage = "Settings file is missing parameter CloneStepRenumberStart; cannot determine the SplitFasta iteration value for this job step";
                 LogTools.LogError(errorMessage);
@@ -2686,7 +2686,7 @@ namespace AnalysisManagerBase
                 return 0;
             }
 
-            return stepNumber - cloneStepRenumStart + 1;
+            return stepNumber - cloneStepRenumberStart + 1;
 
         }
 
@@ -2829,7 +2829,7 @@ namespace AnalysisManagerBase
         {
 
             // Gigasax.DMS_Pipeline
-            var connectionString = m_mgrParams.GetParam("brokerconnectionstring");
+            var connectionString = m_mgrParams.GetParam("BrokerConnectionString");
 
             var dataPackageID = m_jobParams.GetJobParameter("DataPackageID", -1);
 
@@ -2855,7 +2855,7 @@ namespace AnalysisManagerBase
         {
 
             // Gigasax.DMS_Pipeline
-            var connectionString = m_mgrParams.GetParam("brokerconnectionstring");
+            var connectionString = m_mgrParams.GetParam("BrokerConnectionString");
 
             var dataPackageID = m_jobParams.GetJobParameter("DataPackageID", -1);
 
@@ -2920,7 +2920,7 @@ namespace AnalysisManagerBase
             var genericJobInfo = new clsDataPackageJobInfo(0, string.Empty);
 
             // Gigasax.DMS5
-            var dmsConnectionString = m_mgrParams.GetParam("connectionstring");
+            var dmsConnectionString = m_mgrParams.GetParam("ConnectionString");
 
             // Get a table to hold the results of the query
             var success = clsGlobal.GetDataTableByQuery(sqlStr.ToString(), dmsConnectionString, "LookupJobInfo", RETRY_COUNT, out var resultSet);
@@ -2971,10 +2971,10 @@ namespace AnalysisManagerBase
 
             try
             {
-                var dmsConnectionString = m_mgrParams.GetParam("connectionstring");
+                var dmsConnectionString = m_mgrParams.GetParam("ConnectionString");
                 if (string.IsNullOrWhiteSpace(dmsConnectionString))
                 {
-                    LogError("Error in LookupLegacyDBSizeWithIndices: manager parameter connectionstring is not defined");
+                    LogError("Error in LookupLegacyDBSizeWithIndices: manager parameter ConnectionString is not defined");
                     return 0;
                 }
 
@@ -3380,7 +3380,7 @@ namespace AnalysisManagerBase
         /// <param name="requiredFreeSpaceMB">If greater than 0, the free space that we anticipate will be needed for the given fasta file</param>
         /// <param name="legacyFastaFileBaseName">
         /// Legacy fasta file name (without .fasta)
-        /// For split fasta jobs, should not include the splitcount and segment number, e.g. should not include _25x_07 or _25x_08
+        /// For split fasta jobs, should not include the split count and segment number, e.g. should not include _25x_07 or _25x_08
         /// </param>
         /// <param name="preview">When true, preview the files that would be deleted</param>
         /// <remarks>
@@ -4268,14 +4268,16 @@ namespace AnalysisManagerBase
         {
 
             // Gigasax.DMS_Pipeline
-            var connectionString = m_mgrParams.GetParam("brokerconnectionstring");
+            var connectionString = m_mgrParams.GetParam("BrokerConnectionString");
 
             var dataPackageID = m_jobParams.GetJobParameter("DataPackageID", -1);
 
-            var dataPackageFileHander = new clsDataPackageFileHandler(connectionString, dataPackageID, this);
-            RegisterEvents(dataPackageFileHander);
+            var dataPackageFileHandler = new clsDataPackageFileHandler(connectionString, dataPackageID, this);
+            RegisterEvents(dataPackageFileHandler);
 
-            var success = dataPackageFileHander.RetrieveDataPackagePeptideHitJobPHRPFiles(udtOptions, out lstDataPackagePeptideHitJobs, progressPercentAtStart, progressPercentAtFinish);
+            var success = dataPackageFileHandler.RetrieveDataPackagePeptideHitJobPHRPFiles(
+                udtOptions, out lstDataPackagePeptideHitJobs,
+                progressPercentAtStart, progressPercentAtFinish);
 
             m_jobParams.AddResultFileToSkip(clsDataPackageFileHandler.DATA_PKG_JOB_METADATA_FILE);
 
@@ -4356,7 +4358,7 @@ namespace AnalysisManagerBase
 
                     if (success)
                     {
-                        UpdateLastUsedfile(fastaFile);
+                        UpdateLastUsedFile(fastaFile);
                     }
 
                     PurgeFastaFilesIfLowFreeSpace(orgDbDirectoryPath, freeSpaceThresholdPercent, 0, legacyFastaFileBaseName);
@@ -4462,7 +4464,7 @@ namespace AnalysisManagerBase
 
                 paramFileGenerator = new clsMakeParameterFile
                 {
-                    TemplateFilePath = m_mgrParams.GetParam("paramtemplateloc")
+                    TemplateFilePath = m_mgrParams.GetParam("ParamTemplateLoc")
                 };
 
                 // Note that job parameter "generatedFastaName" gets defined by RetrieveOrgDB
@@ -4474,7 +4476,7 @@ namespace AnalysisManagerBase
                     return false;
                 }
 
-                var paramFileType = SetParamfileType(toolName);
+                var paramFileType = SetParamFileType(toolName);
                 if (paramFileType == IGenerateFile.ParamFileType.Invalid)
                 {
                     LogError("Tool " + toolName + " is not supported by the ParamFileGenerator; update clsAnalysisResources and ParamFileGenerator.dll");
@@ -4484,7 +4486,7 @@ namespace AnalysisManagerBase
                 var fastaFilePath = Path.Combine(m_mgrParams.GetParam(MGR_PARAM_ORG_DB_DIR), m_jobParams.GetParam("PeptideSearch", JOB_PARAM_GENERATED_FASTA_NAME));
 
                 // Gigasax.DMS5
-                var connectionString = m_mgrParams.GetParam("connectionstring");
+                var connectionString = m_mgrParams.GetParam("ConnectionString");
                 var datasetID = m_jobParams.GetJobParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetID", 0);
 
                 var success = paramFileGenerator.MakeFile(paramFileName, paramFileType, fastaFilePath, m_WorkingDir, connectionString, datasetID);
@@ -4621,7 +4623,7 @@ namespace AnalysisManagerBase
         /// <param name="toolName">Version specified in mgr config file</param>
         /// <returns>IGenerateFile.ParamFileType based on input version</returns>
         /// <remarks></remarks>
-        protected IGenerateFile.ParamFileType SetParamfileType(string toolName)
+        protected IGenerateFile.ParamFileType SetParamFileType(string toolName)
         {
 
             var toolNameToTypeMapping = new Dictionary<string, IGenerateFile.ParamFileType>(StringComparer.OrdinalIgnoreCase)
@@ -4729,7 +4731,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="fastaFile"></param>
         /// <remarks>The LastUsed file simply has the current date/time on the first line</remarks>
-        private void UpdateLastUsedfile(FileInfo fastaFile)
+        private void UpdateLastUsedFile(FileInfo fastaFile)
         {
             FileSyncUtils.UpdateLastUsedFile(fastaFile);
         }
@@ -4754,7 +4756,7 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Removes any spectra with 2 or fewer ions in a _DTA.txt ifle
+        /// Removes any spectra with 2 or fewer ions in a _DTA.txt file
         /// </summary>
         /// <param name="workDir">Folder with the CDTA file</param>
         /// <param name="inputFileName">CDTA filename</param>
@@ -4817,7 +4819,7 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Validate that data in a _dta.txt ifle is centroided
+        /// Validate that data in a _dta.txt file is centroided
         /// </summary>
         /// <param name="cdtaPath"></param>
         /// <returns></returns>
@@ -5138,12 +5140,12 @@ namespace AnalysisManagerBase
 
             const int MINIMUM_LOG_INTERVAL_SEC = 10;
 
-            var forcelog = m_DebugLevel >= 1 && statusMsg.Contains(Protein_Exporter.clsGetFASTAFromDMS.LOCK_FILE_PROGRESS_TEXT);
+            var forceLog = m_DebugLevel >= 1 && statusMsg.Contains(Protein_Exporter.clsGetFASTAFromDMS.LOCK_FILE_PROGRESS_TEXT);
 
-            if (m_DebugLevel >= 3 || forcelog)
+            if (m_DebugLevel >= 3 || forceLog)
             {
                 // Limit the logging to once every MINIMUM_LOG_INTERVAL_SEC seconds
-                if (forcelog || DateTime.UtcNow.Subtract(m_FastaToolsLastLogTime).TotalSeconds >= MINIMUM_LOG_INTERVAL_SEC ||
+                if (forceLog || DateTime.UtcNow.Subtract(m_FastaToolsLastLogTime).TotalSeconds >= MINIMUM_LOG_INTERVAL_SEC ||
                     fractionDone - m_FastaToolFractionDoneSaved >= 0.25)
                 {
                     m_FastaToolsLastLogTime = DateTime.UtcNow;

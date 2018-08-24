@@ -359,7 +359,7 @@ namespace AnalysisManagerBase
         /// <param name="connectionString">Connection string</param>
         /// <param name="callingFunction">Name of the calling function</param>
         /// <param name="retryCount">Number of times to retry (in case of a problem)</param>
-        /// <param name="dtResults">Datatable (Output Parameter)</param>
+        /// <param name="dtResults">DataTable (Output Parameter)</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks>Uses a timeout of 30 seconds</remarks>
         public static bool GetDataTableByQuery(string sqlStr, string connectionString, string callingFunction, short retryCount, out DataTable dtResults)
@@ -378,7 +378,7 @@ namespace AnalysisManagerBase
         /// <param name="connectionString">Connection string</param>
         /// <param name="callingFunction">Name of the calling function</param>
         /// <param name="retryCount">Number of times to retry (in case of a problem)</param>
-        /// <param name="dtResults">Datatable (Output Parameter)</param>
+        /// <param name="dtResults">DataTable (Output Parameter)</param>
         /// <param name="timeoutSeconds">Query timeout (in seconds); minimum is 5 seconds; suggested value is 30 seconds</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks></remarks>
@@ -403,7 +403,7 @@ namespace AnalysisManagerBase
         /// <param name="connectionString">Connection string</param>
         /// <param name="callingFunction">Name of the calling function</param>
         /// <param name="retryCount">Number of times to retry (in case of a problem)</param>
-        /// <param name="dtResults">Datatable (Output Parameter)</param>
+        /// <param name="dtResults">DataTable (Output Parameter)</param>
         /// <param name="timeoutSeconds">Query timeout (in seconds); minimum is 5 seconds; suggested value is 30 seconds</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks></remarks>
@@ -957,7 +957,7 @@ namespace AnalysisManagerBase
                 if (VersionCountToKeep < 0)
                     VersionCountToKeep = 0;
 
-                // Backup any existing copies of bargetFilePath
+                // Backup any existing copies of targetFilePath
                 for (var revision = VersionCountToKeep - 1; revision >= 0; revision += -1)
                 {
                     try
@@ -1202,7 +1202,7 @@ namespace AnalysisManagerBase
 
         /// <summary>
         /// Creates a .hashcheck file for the specified file, using the given hash string
-        /// The file will be created in the same folder as the data file, and will contain size, modification_date_utc, hash, and hashtype
+        /// The file will be created in the same folder as the data file, and will contain size, modification_date_utc, hash, and hash type
         /// </summary>
         /// <param name="dataFilePath"></param>
         /// <param name="md5Hash"></param>
@@ -1476,7 +1476,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="filePath1">First file</param>
         /// <param name="filePath2">Second file</param>
-        /// <param name="ignoreWhitespace">If true, removes white space from the beginning and end of each line before compaing</param>
+        /// <param name="ignoreWhitespace">If true, removes white space from the beginning and end of each line before comparing</param>
         /// <returns></returns>
         /// <remarks></remarks>
         public static bool TextFilesMatch(string filePath1, string filePath2, bool ignoreWhitespace)
@@ -1497,7 +1497,7 @@ namespace AnalysisManagerBase
         /// <param name="filePath2">Second file</param>
         /// <param name="comparisonStartLine">Line at which to start the comparison; if 0 or 1, compares all lines</param>
         /// <param name="comparisonEndLine">Line at which to end the comparison; if 0, compares all the way to the end</param>
-        /// <param name="ignoreWhitespace">If true, removes white space from the beginning and end of each line before compaing</param>
+        /// <param name="ignoreWhitespace">If true, removes white space from the beginning and end of each line before comparing</param>
         /// <returns></returns>
         /// <remarks></remarks>
         public static bool TextFilesMatch(string filePath1, string filePath2, int comparisonStartLine, int comparisonEndLine, bool ignoreWhitespace)
@@ -1514,7 +1514,7 @@ namespace AnalysisManagerBase
         /// <param name="filePath2">Second file</param>
         /// <param name="comparisonStartLine">Line at which to start the comparison; if 0 or 1, compares all lines</param>
         /// <param name="comparisonEndLine">Line at which to end the comparison; if 0, compares all the way to the end</param>
-        /// <param name="ignoreWhitespace">If true, removes white space from the beginning and end of each line before compaing</param>
+        /// <param name="ignoreWhitespace">If true, removes white space from the beginning and end of each line before comparing</param>
         /// <param name="lineIgnoreRegExSpecs">List of RegEx match specs that indicate lines to ignore</param>
         /// <returns></returns>
         /// <remarks></remarks>

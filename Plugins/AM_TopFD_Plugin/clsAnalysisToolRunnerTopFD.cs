@@ -79,7 +79,7 @@ namespace AnalysisManagerTopFDPlugIn
                     LogDebug("clsAnalysisToolRunnerTopFD.RunTool(): Enter");
                 }
 
-                // Initialize classwide variables
+                // Initialize class wide variables
                 mLastConsoleOutputParse = DateTime.UtcNow;
 
                 // Determine the path to the TopFD program
@@ -181,7 +181,7 @@ namespace AnalysisManagerTopFDPlugIn
             // Processing spectrum Scan_350...         3% finished.
             // Processing spectrum Scan_351...         3% finished.
             // Deconvolution finished.
-            // Runing time: 51 seconds.
+            // Running time: 51 seconds.
             // TopFD finished.
 
             try

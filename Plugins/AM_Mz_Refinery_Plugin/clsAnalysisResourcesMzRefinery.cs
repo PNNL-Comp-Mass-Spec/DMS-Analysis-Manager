@@ -54,7 +54,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 }
 
                 // Retrieve the Fasta file
-                var orgDbDirectoryPath = m_mgrParams.GetParam("orgdbdir");
+                var orgDbDirectoryPath = m_mgrParams.GetParam("OrgDBDir");
 
                 currentTask = "RetrieveOrgDB to " + orgDbDirectoryPath;
 
@@ -105,7 +105,7 @@ namespace AnalysisManagerMzRefineryPlugIn
         /// Check for existing MSGF+ results in the transfer directory
         /// </summary>
         /// <returns>True if no errors, false if a problem</returns>
-        /// <remarks>Will retrun True even if existing results are not found</remarks>
+        /// <remarks>Will return True even if existing results are not found</remarks>
         private bool FindExistingMSGFPlusResults(string mzRefParamFileName)
         {
             var resultsFolderName = m_jobParams.GetParam(JOB_PARAM_OUTPUT_FOLDER_NAME);
@@ -161,7 +161,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             // Compare the remote parameter file and the local one to make sure they match
             if (!clsGlobal.TextFilesMatch(fiMzRefParamFile.FullName, Path.Combine(m_WorkingDir, mzRefParamFileName), true))
             {
-                LogMessage("MzRefinery parameter file in transfer folder does not match the official MzRefinery paramter file; will re-run MSGF+");
+                LogMessage("MzRefinery parameter file in transfer folder does not match the official MzRefinery parameter file; will re-run MSGF+");
                 return true;
             }
 

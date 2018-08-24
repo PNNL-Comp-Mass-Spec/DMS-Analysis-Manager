@@ -73,7 +73,7 @@ namespace AnalysisManagerTopPICPlugIn
                     LogDebug("clsAnalysisToolRunnerTopPIC.RunTool(): Enter");
                 }
 
-                // Initialize classwide variables
+                // Initialize class wide variables
                 mLastConsoleOutputParse = DateTime.UtcNow;
 
                 // Determine the path to TopPIC
@@ -303,12 +303,12 @@ namespace AnalysisManagerTopPICPlugIn
                         if (string.IsNullOrWhiteSpace(dataLine))
                             continue;
 
-                        var dataLineLcase = dataLine.ToLower();
+                        var dataLineLCase = dataLine.ToLower();
 
                         if (linesRead <= 3)
                         {
                             // The first line has the TopPIC version
-                            if (string.IsNullOrEmpty(mTopPICVersion) && dataLineLcase.Contains("toppic"))
+                            if (string.IsNullOrEmpty(mTopPICVersion) && dataLineLCase.Contains("toppic"))
                             {
                                 if (m_DebugLevel >= 2 && string.IsNullOrWhiteSpace(mTopPICVersion))
                                 {
@@ -329,7 +329,7 @@ namespace AnalysisManagerTopPICPlugIn
                         }
 
                         if (string.IsNullOrEmpty(mConsoleOutputErrorMsg) &&
-                            dataLineLcase.Contains("error") && !dataLineLcase.StartsWith("error tolerance:"))
+                            dataLineLCase.Contains("error") && !dataLineLCase.StartsWith("error tolerance:"))
                         {
                             mConsoleOutputErrorMsg += "Error running TopPIC: " + dataLine;
                         }
@@ -415,7 +415,7 @@ namespace AnalysisManagerTopPICPlugIn
 
             cmdLineOptions = string.Empty;
 
-            var paramFileName = m_jobParams.GetParam("parmFileName");
+            var paramFileName = m_jobParams.GetParam("ParmFileName");
 
             var paramFileReader = new clsKeyValueParamFileReader("TopPIC", m_WorkDir, paramFileName);
             RegisterEvents(paramFileReader);
@@ -773,8 +773,8 @@ namespace AnalysisManagerTopPICPlugIn
                     var sourceFile = Path.Combine(m_WorkDir, m_Dataset + resultFile.Key);
                     var targetFile = Path.Combine(m_WorkDir, m_Dataset + resultFile.Value);
 
-                    var saveParameterfile = string.Equals(resultFile.Key, PRSM_RESULT_TABLE_NAME_SUFFIX_ORIGINAL);
-                    var success = ValidateResultTableFile(sourceFile, targetFile, saveParameterfile, out var noValidResultsThisFile);
+                    var saveParameterFile = string.Equals(resultFile.Key, PRSM_RESULT_TABLE_NAME_SUFFIX_ORIGINAL);
+                    var success = ValidateResultTableFile(sourceFile, targetFile, saveParameterFile, out var noValidResultsThisFile);
 
                     if (string.Equals(resultFile.Key, PRSM_RESULT_TABLE_NAME_SUFFIX_ORIGINAL) && noValidResultsThisFile)
                         noValidResults = true;
@@ -812,7 +812,7 @@ namespace AnalysisManagerTopPICPlugIn
             fastaFileIsDecoy = false;
 
             // Define the path to the fasta file
-            var localOrgDbFolder = m_mgrParams.GetParam("orgdbdir");
+            var localOrgDbFolder = m_mgrParams.GetParam("OrgDBDir");
             mValidatedFASTAFilePath = Path.Combine(localOrgDbFolder, m_jobParams.GetParam("PeptideSearch", "generatedFastaName"));
 
             var fastaFile = new FileInfo(mValidatedFASTAFilePath);
@@ -836,7 +836,7 @@ namespace AnalysisManagerTopPICPlugIn
             return true;
         }
 
-        private bool ValidateResultTableFile(string sourceFilePath, string targetFilePath, bool saveParameterfile, out bool noValidResults)
+        private bool ValidateResultTableFile(string sourceFilePath, string targetFilePath, bool saveParameterFile, out bool noValidResults)
         {
             var reParametersHeader = new Regex(@"\*+ Parameters \*+", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
@@ -896,7 +896,7 @@ namespace AnalysisManagerTopPICPlugIn
                                     {
                                         // This is second instance of the parameters header
                                         // Optionally write the parameter file
-                                        if (saveParameterfile)
+                                        if (saveParameterFile)
                                         {
                                             WriteParametersToDisk(parameterInfo);
                                         }

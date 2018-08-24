@@ -61,7 +61,7 @@ namespace AnalysisManagerBase
             m_mgrParams = mgrParams;
             m_jobParams = jobParams;
             var mgrName = m_mgrParams.ManagerName;
-            m_DebugLevel = (short)m_mgrParams.GetParam("debuglevel", 1);
+            m_DebugLevel = (short)m_mgrParams.GetParam("DebugLevel", 1);
 
             InitFileTools(mgrName, m_DebugLevel);
 
@@ -393,12 +393,12 @@ namespace AnalysisManagerBase
                 swInfoFile.WriteLine("Date" + '\t' + DateTime.Now);
                 if ((m_jobParams != null))
                 {
-                    swInfoFile.WriteLine("Tool" + '\t' + m_jobParams.GetParam("toolname"));
+                    swInfoFile.WriteLine("Tool" + '\t' + m_jobParams.GetParam("ToolName"));
                     swInfoFile.WriteLine("StepTool" + '\t' + m_jobParams.GetParam("StepTool"));
                     swInfoFile.WriteLine("Dataset" + '\t' + m_jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_DATASET_NAME));
                     swInfoFile.WriteLine("XferFolder" + '\t' + m_jobParams.GetParam(clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH));
                     swInfoFile.WriteLine("ParamFileName" + '\t' + m_jobParams.GetParam(clsAnalysisResources.JOB_PARAM_PARAMETER_FILE));
-                    swInfoFile.WriteLine("SettingsFileName" + '\t' + m_jobParams.GetParam("settingsFileName"));
+                    swInfoFile.WriteLine("SettingsFileName" + '\t' + m_jobParams.GetParam("SettingsFileName"));
                     swInfoFile.WriteLine("LegacyOrganismDBName" + '\t' + m_jobParams.GetParam("LegacyFastaFileName"));
                     swInfoFile.WriteLine("ProteinCollectionList" + '\t' + m_jobParams.GetParam("ProteinCollectionList"));
                     swInfoFile.WriteLine("ProteinOptionsList" + '\t' + m_jobParams.GetParam("ProteinOptions"));

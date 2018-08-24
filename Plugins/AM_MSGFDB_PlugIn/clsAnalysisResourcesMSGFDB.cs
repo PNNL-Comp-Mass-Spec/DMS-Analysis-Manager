@@ -216,8 +216,8 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 var result = msgfPlusUtils.InitializeFastaFile(
                     javaProgLoc, msgfPlusJarFilePath,
-                    out var fastaFileSizeKB, out var fastaFileIsDecoy,
-                    out var fastaFilePath, parameterFilePath);
+                    out var _, out var _,
+                    out var _, parameterFilePath);
 
                 if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
@@ -272,7 +272,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             if (FileSearch.RetrieveDtaFiles())
                 return CloseOutType.CLOSEOUT_SUCCESS;
 
-            var sharedResultsFolders = m_jobParams.GetParam(clsAnalysisResources.JOB_PARAM_SHARED_RESULTS_FOLDERS);
+            var sharedResultsFolders = m_jobParams.GetParam(JOB_PARAM_SHARED_RESULTS_FOLDERS);
             if (string.IsNullOrEmpty(sharedResultsFolders))
             {
                 m_message = clsGlobal.AppendToComment(m_message, "Job parameter SharedResultsFolders is empty");

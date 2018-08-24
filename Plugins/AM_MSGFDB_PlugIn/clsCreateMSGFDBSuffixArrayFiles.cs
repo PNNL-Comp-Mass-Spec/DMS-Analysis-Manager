@@ -246,12 +246,12 @@ namespace AnalysisManagerMSGFDBPlugIn
 
         }
 
-        private void CopyIndexFilesToRemote(FileInfo fiFastaFile, string remoteIndexdirPath, int debugLevel)
+        private void CopyIndexFilesToRemote(FileInfo fiFastaFile, string remoteIndexDirPath, int debugLevel)
         {
             var manager = GetPseudoManagerName();
             const bool createIndexFileForExistingFiles = false;
 
-            var success = CopyIndexFilesToRemote(fiFastaFile, remoteIndexdirPath, debugLevel, manager,
+            var success = CopyIndexFilesToRemote(fiFastaFile, remoteIndexDirPath, debugLevel, manager,
                                                  createIndexFileForExistingFiles, out var errorMessage);
             if (!success)
             {
@@ -394,9 +394,9 @@ namespace AnalysisManagerMSGFDBPlugIn
                                                    string fastaFilePath, bool fastaFileIsDecoy, string msgfPlusIndexFilesDirPathBase,
                                                    string msgfPlusIndexFilesDirPathLegacyDB)
         {
-            const float MAX_WAITTIME_HOURS = 1.0f;
+            const float MAX_WAIT_TIME_HOURS = 1.0f;
 
-            var maxWaitTimeHours = MAX_WAITTIME_HOURS;
+            var maxWaitTimeHours = MAX_WAIT_TIME_HOURS;
 
             var currentTask = "Initializing";
 
@@ -414,8 +414,8 @@ namespace AnalysisManagerMSGFDBPlugIn
                 var msgfPlus = IsMSGFPlus(msgfPlusProgLoc);
                 if (!msgfPlus)
                 {
-                    // Running legacy MS-GFDB
-                    throw new Exception("Legacy MS-GFDB is no longer supported");
+                    // Running legacy MSGFDB
+                    throw new Exception("Legacy MSGFDB is no longer supported");
                 }
 
                 // Protein collection files will start with ID_ then have at least 6 integers, then an alphanumeric hash string, for example ID_004208_295531A4.fasta
@@ -434,7 +434,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 }
 
                 var fiLockFile = new FileInfo(Path.Combine(fiFastaFile.DirectoryName, outputNameBase + "_csarr.lock"));
-                var dbSarrayFilename = Path.Combine(fiFastaFile.DirectoryName, outputNameBase + ".csarr");
+                var dbCsArrayFilename = Path.Combine(fiFastaFile.DirectoryName, outputNameBase + ".csarr");
 
                 // Check to see if another Analysis Manager is already creating the indexed DB files
                 currentTask = "Looking for lock file " + fiLockFile.FullName;
@@ -469,11 +469,11 @@ namespace AnalysisManagerMSGFDBPlugIn
                 {
                     // Open the FastaFileName.canno file and read the first two lines
                     // If there is a number on the first line but the second line starts with the letter A, this file was created with the legacy MSGFDB
-                    var fiCAnnoFile = new FileInfo(Path.Combine(fiFastaFile.DirectoryName, outputNameBase + ".canno"));
-                    if (fiCAnnoFile.Exists)
+                    var fiCannoFile = new FileInfo(Path.Combine(fiFastaFile.DirectoryName, outputNameBase + ".canno"));
+                    if (fiCannoFile.Exists)
                     {
-                        currentTask = "Examining first two lines of " + fiCAnnoFile.FullName;
-                        using (var srCannoFile = new StreamReader(new FileStream(fiCAnnoFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                        currentTask = "Examining first two lines of " + fiCannoFile.FullName;
+                        using (var srCannoFile = new StreamReader(new FileStream(fiCannoFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
                         {
                             if (!srCannoFile.EndOfStream)
                             {
@@ -487,7 +487,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                                     {
                                         if (!string.IsNullOrWhiteSpace(line2) && char.IsLetter(line2[0]))
                                         {
-                                            currentTask = "Legacy MSGFDB indexed file found (" + fiCAnnoFile.Name + "); re-indexing";
+                                            currentTask = "Legacy MSGFDB indexed file found (" + fiCannoFile.Name + "); re-indexing";
                                             if (debugLevel >= 1)
                                             {
                                                 OnStatusEvent(currentTask);
@@ -643,7 +643,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                     // Note that this method will create a local .lock file
                     eResult = CreateSuffixArrayFilesWork(logFileDir, debugLevel, fiFastaFile, fiLockFile, javaProgLoc,
-                                                         msgfPlusProgLoc, fastaFileIsDecoy, dbSarrayFilename);
+                                                         msgfPlusProgLoc, fastaFileIsDecoy, dbCsArrayFilename);
 
                     if (remoteLockFileCreated && eResult == CloseOutType.CLOSEOUT_SUCCESS && !clsGlobal.OfflineMode)
                     {
@@ -680,7 +680,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
         private CloseOutType CreateSuffixArrayFilesWork(string logFileDir, int debugLevel, FileInfo fiFastaFile,
                                                         FileSystemInfo fiLockFile, string javaProgLoc, string msgfPlusProgLoc, bool fastaFileIsDecoy,
-                                                        string dbSarrayFilename)
+                                                        string dbCsArrayFilename)
         {
             var currentTask = string.Empty;
 
@@ -787,7 +787,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 if (debugLevel >= 2)
                 {
-                    OnStatusEvent("Creating Suffix Array database file: " + dbSarrayFilename);
+                    OnStatusEvent("Creating Suffix Array database file: " + dbCsArrayFilename);
                 }
 
                 // Set up and execute a program runner to invoke BuildSA (which is in MSGFDB.jar or MSGFPlus.jar)

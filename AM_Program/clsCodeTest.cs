@@ -75,7 +75,7 @@ namespace AnalysisManagerProg
                     m_mgrParams.SetParam(clsAnalysisMgrSettings.MGR_PARAM_WORK_DIR, @"C:\DMS_WorkDir");
 
                 m_mgrParams.SetParam(clsAnalysisMgrSettings.MGR_PARAM_MGR_NAME, "Monroe_Test");
-                m_mgrParams.SetParam("debuglevel", m_DebugLevel.ToString());
+                m_mgrParams.SetParam("DebugLevel", m_DebugLevel.ToString());
             }
             catch (Exception ex)
             {
@@ -253,7 +253,7 @@ namespace AnalysisManagerProg
 
             m_mgrParams.SetParam(clsAnalysisMgrSettings.MGR_PARAM_WORK_DIR, GetWorkDirPath());
             m_mgrParams.SetParam(clsAnalysisMgrSettings.MGR_PARAM_MGR_NAME, "Monroe_Test");
-            m_mgrParams.SetParam("debuglevel", debugLevel.ToString());
+            m_mgrParams.SetParam("DebugLevel", debugLevel.ToString());
 
             jobParams.SetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "StepTool", "TestStepTool");
             jobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "ToolName", "TestTool");
@@ -313,8 +313,7 @@ namespace AnalysisManagerProg
 
             m_mgrParams.SetParam(clsAnalysisMgrSettings.MGR_PARAM_WORK_DIR, GetWorkDirPath());
             m_mgrParams.SetParam(clsAnalysisMgrSettings.MGR_PARAM_MGR_NAME, "Monroe_Test");
-            m_mgrParams.SetParam("debuglevel", debugLevel.ToString());
-            m_mgrParams.SetParam("zipprogram", @"C:\PKWARE\PKZIPC\pkzipc.exe");
+            m_mgrParams.SetParam("DebugLevel", debugLevel.ToString());
 
             jobParams.SetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "StepTool", "TestStepTool");
             jobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "ToolName", "TestTool");
@@ -345,7 +344,7 @@ namespace AnalysisManagerProg
 
             m_mgrParams.SetParam(clsAnalysisMgrSettings.MGR_PARAM_WORK_DIR, @"C:\DMS_WorkDir");
             m_mgrParams.SetParam(clsAnalysisMgrSettings.MGR_PARAM_MGR_NAME, "Monroe_Test");
-            m_mgrParams.SetParam("debuglevel", debugLevel.ToString());
+            m_mgrParams.SetParam("DebugLevel", debugLevel.ToString());
 
             jobParams.SetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "StepTool", "TestStepTool");
             jobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "ToolName", "TestTool");
@@ -573,8 +572,12 @@ namespace AnalysisManagerProg
 
             TestArchiveFile(paramFilePath, targetFolderPath);
 
+            // ReSharper disable CommentTypo
+
             // TestArchiveFile(@"\\n2.emsl.pnl.gov\dmsarch\LCQ_1\LCQ_C1\DR026_dialyzed_7june00_a\Seq200104201154_Auto1001\sequest_Tryp_4_IC.params", targetFolderPath)
             // TestArchiveFile(@"\\proto-4\C1_DMS1\DR026_dialyzed_7june00_a\Seq200104201154_Auto1001\sequest_Tryp_4_IC.params", targetFolderPath)
+
+            // ReSharper restore CommentTypo
 
             Console.WriteLine("Done syncing files");
         }
@@ -662,7 +665,7 @@ namespace AnalysisManagerProg
                 return;
             }
 
-            var host = "prismweb2";
+            var host = "PrismWeb2";
             var username = "svc-dms";
 
             var keyFile = new FileInfo(@"C:\DMS_RemoteInfo\Svc-Dms.key");
@@ -768,7 +771,7 @@ namespace AnalysisManagerProg
         /// </summary>
         /// <param name="rootFileName"></param>
         /// <param name="resultsFolder"></param>
-        public void TestUncat(string rootFileName, string resultsFolder)
+        public void TestConcatenation(string rootFileName, string resultsFolder)
         {
             Console.WriteLine("Splitting concatenated DTA file");
 
@@ -821,6 +824,8 @@ namespace AnalysisManagerProg
         public bool TestProteinDBExport(string destFolder)
         {
 
+            // ReSharper disable StringLiteralTypo
+
             // Test what the Protein_Exporter does if a protein collection name is truncated (and thus invalid)
             var proteinCollectionList = "Geobacter_bemidjiensis_Bem_T_2006-10-10,Geobacter_lovelyi_SZ_2007-06-19,Geobacter_metallireducens_GS-15_2007-10-02,Geobacter_sp_";
             var proteinOptions = "seq_direction=forward,filetype=fasta";
@@ -835,6 +840,8 @@ namespace AnalysisManagerProg
             // legacyFasta = "na"
             // proteinCollectionList = "GWB1_Rifle_2011_9_13_0_1_2013-03-27,Tryp_Pig_Bov"
 
+            // ReSharper restore StringLiteralTypo
+
             var success = TestProteinDBExport(destFolder, "na", proteinCollectionList, proteinOptions);
 
             if (success)
@@ -844,7 +851,7 @@ namespace AnalysisManagerProg
 
                 //const bool msgfPlus = true;
                 //var jobNum = "12345";
-                //var debugLevel = (short)(m_mgrParams.GetParam("debuglevel", 1));
+                //var debugLevel = (short)(m_mgrParams.GetParam("DebugLevel", 1));
 
                 //var JavaProgLoc = @"C:\Program Files\Java\jre8\bin\java.exe";
                 //var MSGFDbProgLoc = @"C:\DMS_Programs\MSGFDB\MSGFPlus.jar";
@@ -981,7 +988,7 @@ namespace AnalysisManagerProg
         }
 
         /// <summary>
-        /// Display metadata regarding all of the processees running on this system
+        /// Display metadata regarding all of the processes running on this system
         /// </summary>
         public void TestGetProcesses()
         {
@@ -1634,7 +1641,7 @@ namespace AnalysisManagerProg
 
                 if (!fiFolder.Exists)
                 {
-                    LogError("Folder no tfound: " + folderPath);
+                    LogError("Folder not found: " + folderPath);
                     return;
                 }
 

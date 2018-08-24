@@ -98,7 +98,7 @@ namespace AnalysisManagerBase
             /// <summary>
             /// True if MSGF+ searched a .mzML file; if false, likely searched a _dta.txt file
             /// </summary>
-            public bool SearchUsedmzML;
+            public bool SearchUsedMzML;
         }
 
         #endregion
@@ -218,6 +218,7 @@ namespace AnalysisManagerBase
                 string cacheInfoFileSourceType;
 
                 // datasetFolderPath will hold the full path to the actual folder with the CacheInfo.txt file
+                // ReSharper disable once CommentTypo
                 // For example: \\proto-6\QExactP02\2016_2\Biodiversity_A_cryptum_FeTSB\Mz_Refinery_1_195_501572
 
                 if (datasetFolderPath.StartsWith(clsAnalysisResources.MYEMSL_PATH_FLAG))
@@ -422,7 +423,7 @@ namespace AnalysisManagerBase
 
                 string mzidFilePathLocal;
                 bool deleteLocalFile;
-                bool searchUsedMzML;
+                bool SearchUsedMzML;
 
                 if (mzidFile.Name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
                 {
@@ -454,14 +455,14 @@ namespace AnalysisManagerBase
                     using (var srSourceFile = new StreamReader(unzippedStream, Encoding.GetEncoding("ISO-8859-1")))
                     using (var xmlReader = new XmlTextReader(srSourceFile))
                     {
-                        searchUsedMzML = MSGFPlusSearchUsedMzML(xmlReader, mzidFilePathLocal);
+                        SearchUsedMzML = MSGFPlusSearchUsedMzML(xmlReader, mzidFilePathLocal);
                     }
                 }
                 else
                 {
                     using (var xmlReader = new XmlTextReader(mzidFilePathLocal))
                     {
-                        searchUsedMzML = MSGFPlusSearchUsedMzML(xmlReader, mzidFilePathLocal);
+                        SearchUsedMzML = MSGFPlusSearchUsedMzML(xmlReader, mzidFilePathLocal);
                     }
                 }
 
@@ -470,7 +471,7 @@ namespace AnalysisManagerBase
                     File.Delete(mzidFilePathLocal);
                 }
 
-                return searchUsedMzML;
+                return SearchUsedMzML;
 
             }
             catch (Exception ex)
@@ -779,15 +780,15 @@ namespace AnalysisManagerBase
                     if (udtOptions.CreateJobPathFiles && !sourceFolderPath.StartsWith(clsAnalysisResources.MYEMSL_PATH_FLAG))
                     {
                         var sourceFilePath = Path.Combine(sourceFolderPath, sourceFilename);
-                        var alternateFileNamelternateFileName = clsPHRPReader.AutoSwitchToLegacyMSGFDBIfRequired(sourceFilePath, "Dataset_msgfdb.txt");
+                        var alternateFileName = clsPHRPReader.AutoSwitchToLegacyMSGFDBIfRequired(sourceFilePath, "Dataset_msgfdb.txt");
 
                         if (File.Exists(sourceFilePath))
                         {
                             lstFoundFiles.Add(sourceFilePath);
                         }
-                        else if (File.Exists(alternateFileNamelternateFileName))
+                        else if (File.Exists(alternateFileName))
                         {
-                            lstFoundFiles.Add(alternateFileNamelternateFileName);
+                            lstFoundFiles.Add(alternateFileName);
                         }
                         else
                         {
@@ -886,28 +887,28 @@ namespace AnalysisManagerBase
                 }
             }
 
-            var searchUsedmzML = false;
+            var SearchUsedMzML = false;
             if (!string.IsNullOrEmpty(mzIDFileToInspect))
             {
                 if (cachedJobMetadata.TryGetValue(dataPkgJob.Job, out var jobMetadata))
                 {
-                    searchUsedmzML = jobMetadata.SearchUsedmzML;
+                    SearchUsedMzML = jobMetadata.SearchUsedMzML;
                 }
                 else
                 {
                     // Examine the .mzid file to determine whether a .mzML file was used
-                    searchUsedmzML = MSGFPlusSearchUsedMzML(mzIDFileToInspect, dotNetTools);
+                    SearchUsedMzML = MSGFPlusSearchUsedMzML(mzIDFileToInspect, dotNetTools);
 
                     var newMetadata = new udtDataPackageJobMetadata
                     {
-                        SearchUsedmzML = searchUsedmzML
+                        SearchUsedMzML = SearchUsedMzML
                     };
 
                     cachedJobMetadata.Add(dataPkgJob.Job, newMetadata);
                 }
             }
 
-            if (searchUsedmzML)
+            if (SearchUsedMzML)
             {
                 var stepToolFilter = string.Empty;
                 if (dataPkgJob.Tool.StartsWith("msgfplus", StringComparison.OrdinalIgnoreCase))
@@ -1516,17 +1517,17 @@ namespace AnalysisManagerBase
 
                     while (!reader.EndOfStream)
                     {
-                        var dataline = reader.ReadLine();
-                        if (string.IsNullOrWhiteSpace(dataline))
+                        var dataLine = reader.ReadLine();
+                        if (string.IsNullOrWhiteSpace(dataLine))
                             continue;
 
-                        var dataList = dataline.Split('\t');
+                        var dataList = dataLine.Split('\t');
 
                         if (!headersParsed)
                         {
-                            var requiredColumns = new List<string> { "Job", "SearchUsedmzML" };
+                            var requiredColumns = new List<string> { "Job", "SearchUsedMzML" };
 
-                            var dctHeaderMapping = clsGlobal.ParseHeaderLine(dataline, requiredColumns);
+                            var dctHeaderMapping = clsGlobal.ParseHeaderLine(dataLine, requiredColumns);
 
                             foreach (var column in requiredColumns)
                             {
@@ -1536,7 +1537,7 @@ namespace AnalysisManagerBase
                             }
 
                             jobColIndex = dctHeaderMapping["Job"];
-                            mzMlUsedColIndex = dctHeaderMapping["SearchUsedmzML"];
+                            mzMlUsedColIndex = dctHeaderMapping["SearchUsedMzML"];
 
                             headersParsed = true;
 
@@ -1546,12 +1547,12 @@ namespace AnalysisManagerBase
                         if (!clsGlobal.TryGetValueInt(dataList, jobColIndex, out var job))
                             continue;
 
-                        if (!clsGlobal.TryGetValue(dataList, mzMlUsedColIndex, out var searchUsedmzML))
+                        if (!clsGlobal.TryGetValue(dataList, mzMlUsedColIndex, out var SearchUsedMzML))
                             continue;
 
                         var jobMetadata = new udtDataPackageJobMetadata
                         {
-                            SearchUsedmzML = bool.Parse(searchUsedmzML)
+                            SearchUsedMzML = bool.Parse(SearchUsedMzML)
                         };
 
                         cachedJobMetadata.Add(job, jobMetadata);
@@ -1580,12 +1581,12 @@ namespace AnalysisManagerBase
                 {
                     // Write the header line
                     writer.WriteLine(string.Join("\t",
-                        new List<string> { "Job", "SearchUsedmzML" }));
+                        new List<string> { "Job", "SearchUsedMzML" }));
 
                     foreach (var item in cachedJobMetadata)
                     {
                         writer.WriteLine(string.Join("\t",
-                            new List<string> { item.Key.ToString(), item.Value.SearchUsedmzML.ToString() }));
+                            new List<string> { item.Key.ToString(), item.Value.SearchUsedMzML.ToString() }));
                     }
                 }
             }
@@ -1605,7 +1606,7 @@ namespace AnalysisManagerBase
         /// <param name="dataPkgJob"></param>
         /// <param name="lstFoundFiles"></param>
         /// <param name="zipFileCandidates">Candidate mzid .zip files</param>
-        /// <param name="gzipFileCandidates">Candiadte .mzid.gz files</param>
+        /// <param name="gzipFileCandidates">Candidate .mzid.gz files</param>
         /// <param name="zippedPepXmlFile"></param>
         /// <returns></returns>
         private bool UnzipFiles(

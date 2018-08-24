@@ -60,7 +60,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         public const float PROGRESS_PCT_MSGFPLUS_MAPPING_PEPTIDES_TO_PROTEINS = 98;
 
         /// <summary>
-        /// Progress value for all processing beingcompleted
+        /// Progress value for all processing being completed
         /// </summary>
         public const float PROGRESS_PCT_COMPLETE = 99;
 
@@ -92,7 +92,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         public const string MSGFPLUS_JAR_NAME = "MSGFPlus.jar";
 
         /// <summary>
-        /// MSGF+ console output file anme
+        /// MSGF+ console output file name
         /// </summary>
         public const string MSGFPLUS_CONSOLE_OUTPUT_FILE = "MSGFPlus_ConsoleOutput.txt";
 
@@ -224,7 +224,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         }
 
         /// <summary>
-        /// Update argumentSwitch and argumentValue if using the MS-GFDB syntax yet should be using the MS-GF+ syntax
+        /// Update argumentSwitch and argumentValue if using the MSGFDB syntax yet should be using the MS-GF+ syntax
         /// </summary>
         /// <param name="argumentName"></param>
         /// <param name="argumentValue"></param>
@@ -516,7 +516,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 try
                 {
-                    // The MzIDToTsv console output file doesn't contain any log messsages we need to save, so delete it
+                    // The MzIDToTsv console output file doesn't contain any log messages we need to save, so delete it
                     File.Delete(mzidToTsvRunner.ConsoleOutputFilePath);
                 }
                 catch (Exception)
@@ -537,7 +537,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// Convert a .mzid file to a tab-delimited text file (.tsv) using MSGFPlus.jar
         /// </summary>
         /// <param name="javaProgLoc">Full path to Java</param>
-        /// <param name="msgfDbProgLoc">Folder with MSGFPlusjar</param>
+        /// <param name="msgfDbProgLoc">Folder with MSGFPlus.jar</param>
         /// <param name="datasetName">Dataset name (output file will be named DatasetName_msgfdb.tsv)</param>
         /// <param name="mzidFileName">.mzid file name (assumed to be in the work directory)</param>
         /// <returns>TSV file path, or an empty string if an error</returns>
@@ -1144,11 +1144,11 @@ namespace AnalysisManagerMSGFDBPlugIn
                 // (thus, the value in the parameter file Is typically ignored)
                 {MSGFPLUS_OPTION_INSTRUMENT_ID, "inst"},
                 {"EnzymeID", "e"},
-                // C13 was a MS-GFDB parameter name; old parameter files still have it. This class will auto-change it to "ti"
+                // C13 was a MSGFDB parameter name; old parameter files still have it. This class will auto-change it to "ti"
                 {"C13", "c13"},
                 // Used by MS-GF+
                 {"IsotopeError", "ti"},
-                // NNET was a MS-GFDB parameter name; old parameter files still have it. This class will auto-change it to "NTT"
+                // NNET was a MSGFDB parameter name; old parameter files still have it. This class will auto-change it to "NTT"
                 {"NNET", "nnet"},
                 // Used by MS-GF+
                 {"NTT", "ntt"},
@@ -1213,7 +1213,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             }
             catch (Exception ex)
             {
-                ErrorMessage = "Exception examining parameterse loaded from the MS-GF+ parameter file";
+                ErrorMessage = "Exception examining parameters loaded from the MS-GF+ parameter file";
                 OnErrorEvent(ErrorMessage, ex);
             }
 
@@ -1754,7 +1754,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                         if (string.IsNullOrWhiteSpace(dataLine))
                             continue;
 
-                        var dataLineLcase = dataLine.ToLower();
+                        var dataLineLCase = dataLine.ToLower();
 
                         if (linesRead <= 3)
                         {
@@ -1772,7 +1772,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                             }
                             else
                             {
-                                if (dataLineLcase.Contains("error"))
+                                if (dataLineLCase.Contains("error"))
                                 {
                                     if (string.IsNullOrEmpty(ConsoleOutputErrorMsg))
                                     {
@@ -1862,7 +1862,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                         }
                         else if (string.IsNullOrEmpty(ConsoleOutputErrorMsg))
                         {
-                            if (dataLineLcase.Contains("error") && !dataLineLcase.Contains("isotopeerror:"))
+                            if (dataLineLCase.Contains("error") && !dataLineLCase.Contains("IsotopeError:".ToLower()))
                             {
                                 ConsoleOutputErrorMsg += "; " + dataLine;
                             }
@@ -2154,7 +2154,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                                         valueText = "3";
                                         break;
                                     case "UVPD":
-                                        // Previously, with MS-GFDB, fragmentationType 4 meant Merge ETD and CID
+                                        // Previously, with MSGFDB, fragmentationType 4 meant Merge ETD and CID
                                         // Now with MS-GF+, fragmentationType 4 means UVPD
                                         valueText = "4";
                                         break;
@@ -2626,7 +2626,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     return false;
                 }
 
-                var connectionString = m_mgrParams.GetParam("connectionstring");
+                var connectionString = m_mgrParams.GetParam("ConnectionString");
 
                 var sqlStr = new StringBuilder();
 

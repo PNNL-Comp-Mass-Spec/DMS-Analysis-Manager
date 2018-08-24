@@ -264,7 +264,7 @@ namespace AnalysisManagerProg
 
             if (!clsGlobal.OfflineMode)
             {
-                var logCnStr = m_MgrSettings.GetParam("connectionstring");
+                var logCnStr = m_MgrSettings.GetParam("ConnectionString");
 
                 // ReSharper disable once ConditionIsAlwaysTrueOrFalse
                 LogTools.CreateDbLogger(logCnStr, "Analysis Tool Manager: " + m_MgrName, TraceMode && ENABLE_LOGGER_TRACE_MODE);
@@ -279,11 +279,11 @@ namespace AnalysisManagerProg
             var startupMsg = "=== Started Analysis Manager V" + appVersion + " ===== ";
             LogMessage(startupMsg);
 
-            var configFileName = m_MgrSettings.GetParam("configfilename");
+            var configFileName = m_MgrSettings.GetParam("ConfigFileName");
             if (string.IsNullOrEmpty(configFileName))
             {
                 // Manager parameter error; log an error and exit
-                LogError("Manager parameter 'configfilename' is undefined; this likely indicates a problem retrieving manager parameters.  Shutting down the manager");
+                LogError("Manager parameter 'ConfigFileName' is undefined; this likely indicates a problem retrieving manager parameters.  Shutting down the manager");
                 return false;
             }
 
@@ -305,11 +305,11 @@ namespace AnalysisManagerProg
             }
 
             // Get the debug level
-            m_DebugLevel = (short)m_MgrSettings.GetParam("debuglevel", 2);
+            m_DebugLevel = (short)m_MgrSettings.GetParam("DebugLevel", 2);
 
             // Make sure that the manager name matches the machine name (with a few exceptions)
-            if (!hostName.StartsWith("emslmq", StringComparison.OrdinalIgnoreCase) &&
-                !hostName.StartsWith("emslpub", StringComparison.OrdinalIgnoreCase) &&
+            if (!hostName.StartsWith("EMSLMQ", StringComparison.OrdinalIgnoreCase) &&
+                !hostName.StartsWith("EMSLPub", StringComparison.OrdinalIgnoreCase) &&
                 !hostName.StartsWith("monroe", StringComparison.OrdinalIgnoreCase) &&
                 !hostName.StartsWith("WE27676", StringComparison.OrdinalIgnoreCase))
             {
@@ -390,7 +390,7 @@ namespace AnalysisManagerProg
             {
                 ShowTrace("Entering clsMainProcess.DoAnalysis Try/Catch block");
 
-                var maxLoopCount = m_MgrSettings.GetParam("maxrepetitions", 1);
+                var maxLoopCount = m_MgrSettings.GetParam("MaxRepetitions", 1);
                 var requestJobs = true;
                 var oneTaskStarted = false;
                 var oneTaskPerformed = false;
@@ -804,8 +804,11 @@ namespace AnalysisManagerProg
             //   matching RegEx: "^([^,]+),.+Started analysis job (\d+), Dataset (.+), Tool ([^,]+)"
 
             // Example log entries
+
+            // ReSharper disable CommentTypo
             // 5/04/2015 12:34:46, Pub-88-3: Started analysis job 1193079, Dataset Lp_PDEC_N-sidG_PD1_1May15_Lynx_15-01-24, Tool Decon2LS_V2, Step 1, INFO,
             // 5/04/2015 10:54:49, Proto-6_Analysis-1: Started analysis job 1192426, Dataset LewyHNDCGlobFractestrecheck_SRM_HNDC_Frac46_smeagol_05Apr15_w6326a, Tool Results_Transfer (MASIC_Finnigan), Step 2, INFO,
+            // ReSharper restore CommentTypo
 
             LogMessage(m_MgrName + ": Started analysis job " + jobNum + ", Dataset " + datasetName + ", Tool " + jobToolDescription + ", Process ID " + processID);
 
@@ -1270,8 +1273,11 @@ namespace AnalysisManagerProg
             const string JOB_START_REGEX = @"^(?<Date>[^,]+),.+Started analysis job (?<Job>\d+), Dataset (?<Dataset>.+), Tool (?<Tool>[^,]+)";
 
             // Examples matching log entries
+
+            // ReSharper disable CommentTypo
             // 5/04/2015 12:34:46, Pub-88-3: Started analysis job 1193079, Dataset Lp_PDEC_N-sidG_PD1_1May15_Lynx_15-01-24, Tool Decon2LS_V2, Step 1, INFO,
             // 5/04/2015 10:54:49, Proto-6_Analysis-1: Started analysis job 1192426, Dataset LewyHNDCGlobFractestrecheck_SRM_HNDC_Frac46_smeagol_05Apr15_w6326a, Tool Results_Transfer (MASIC_Finnigan), Step 2, INFO,
+            // ReSharper restore CommentTypo
 
             // The following effectively defines the number of days in the past to search when finding recent errors
             const int MAX_LOG_FILES_TO_SEARCH = 5;
@@ -1594,7 +1600,7 @@ namespace AnalysisManagerProg
         /// <returns></returns>
         public static string GetBaseLogFileName(IMgrParams mgrParams)
         {
-            var logFileNameBase = mgrParams.GetParam("logfilename", DEFAULT_BASE_LOGFILE_NAME);
+            var logFileNameBase = mgrParams.GetParam("LogFileName", DEFAULT_BASE_LOGFILE_NAME);
             return clsGlobal.LinuxOS ? logFileNameBase.Replace('\\', '/') : logFileNameBase;
         }
 
@@ -1642,9 +1648,9 @@ namespace AnalysisManagerProg
             try
             {
                 var configFilePath = Path.Combine(m_MgrDirectoryPath, m_MgrExeName + ".config");
-                var configfile = new FileInfo(configFilePath);
+                var configFile = new FileInfo(configFilePath);
 
-                if (!configfile.Exists)
+                if (!configFile.Exists)
                 {
                     LogError("File not found: " + configFilePath);
                     return string.Empty;
@@ -1654,9 +1660,9 @@ namespace AnalysisManagerProg
 
                 // Open AnalysisManagerProg.exe.config using a simple text reader in case the file has malformed XML
 
-                ShowTrace(string.Format("Extracting setting {0} from {1}", settingName, configfile.FullName));
+                ShowTrace(string.Format("Extracting setting {0} from {1}", settingName, configFile.FullName));
 
-                using (var reader = new StreamReader(new FileStream(configfile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(configFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
                     while (!reader.EndOfStream)
                     {
@@ -1892,7 +1898,7 @@ namespace AnalysisManagerProg
             if (m_StatusTools != null)
                 return;
 
-            var statusFileLoc = Path.Combine(m_MgrDirectoryPath, m_MgrSettings.GetParam("statusfilelocation", "Status.xml"));
+            var statusFileLoc = Path.Combine(m_MgrDirectoryPath, m_MgrSettings.GetParam("StatusFileLocation", "Status.xml"));
 
             ShowTrace("Initialize m_StatusTools using " + statusFileLoc);
 
@@ -1935,8 +1941,8 @@ namespace AnalysisManagerProg
             {
                 // Construct the path to the config document
                 configFilePath = Path.Combine(m_MgrDirectoryPath, m_MgrExeName + ".config");
-                var configfile = new FileInfo(configFilePath);
-                if (!configfile.Exists)
+                var configFile = new FileInfo(configFilePath);
+                if (!configFile.Exists)
                 {
                     LogError("ReadMgrSettingsFile; manager config file not found: " + configFilePath);
                     return null;
@@ -2786,7 +2792,7 @@ namespace AnalysisManagerProg
 
             // Most managers have logStatusToBrokerDb=False and logStatusToMessageQueue=True
             var logStatusToBrokerDb = m_MgrSettings.GetParam("LogStatusToBrokerDB", false);
-            var brokerDbConnectionString = m_MgrSettings.GetParam("brokerconnectionstring");
+            var brokerDbConnectionString = m_MgrSettings.GetParam("BrokerConnectionString");
 
             // Gigasax.DMS_Pipeline
             float brokerDbStatusUpdateIntervalMinutes = m_MgrSettings.GetParam("BrokerDBStatusUpdateIntervalMinutes", 60);

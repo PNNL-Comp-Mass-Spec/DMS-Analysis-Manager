@@ -87,7 +87,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <remarks>
         /// Comparison checks if the end of the fileName matches any entry ResultFileExtensionsToSkip:
-        /// If (tmpFileNameLcase.EndsWith(ext, StringComparison.OrdinalIgnoreCase)) Then OkToMove = False
+        /// If (tmpFileNameLCase.EndsWith(ext, StringComparison.OrdinalIgnoreCase)) Then OkToMove = False
         /// </remarks>
         protected SortedSet<string> m_ResultFileExtensionsToSkip = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
 
@@ -347,10 +347,10 @@ namespace AnalysisManagerBase
         /// <param name="taskQueueDirectory"></param>
         /// <param name="fileSpec">Files to find, for example *.oldlock</param>
         /// <param name="thresholdHours">Threshold, in hours, for example 24</param>
-        /// <param name="ignoreIfRecentJobStatusfile">When true, do not delete the file if a recent .jobstatus file exists</param>
+        /// <param name="ignoreIfRecentJobStatusFile">When true, do not delete the file if a recent .jobstatus file exists</param>
         private void DeleteOldFiles(
             DirectoryInfo taskQueueDirectory, string fileSpec,
-            int thresholdHours, bool ignoreIfRecentJobStatusfile = false)
+            int thresholdHours, bool ignoreIfRecentJobStatusFile = false)
         {
             try
             {
@@ -379,7 +379,7 @@ namespace AnalysisManagerBase
                     return;
 
                 var jobStatusFiles = new Dictionary<string, FileInfo>();
-                if (ignoreIfRecentJobStatusfile)
+                if (ignoreIfRecentJobStatusFile)
                 {
                     foreach (var jobStatusFile in taskQueueDirectory.GetFiles("*.jobstatus"))
                     {
@@ -1091,7 +1091,7 @@ namespace AnalysisManagerBase
                         workDir.Refresh();
                         if (!workDir.Exists)
                         {
-                            // Workdir no longer exists
+                            // WorkDir no longer exists
                             continue;
                         }
 
@@ -1166,7 +1166,7 @@ namespace AnalysisManagerBase
                         oldWorkDir.Refresh();
                         if (!oldWorkDir.Exists)
                         {
-                            // Workdir no longer exists
+                            // WorkDir no longer exists
                             continue;
                         }
 
@@ -1334,7 +1334,7 @@ namespace AnalysisManagerBase
             }
             else
             {
-                managerVersion = productVersion + "; Unkown .NET Version";
+                managerVersion = productVersion + "; Unknown .NET Version";
             }
 
             // Reset various tracking variables, including TaskClosed
@@ -1809,7 +1809,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="closeOut">IJobParams enum specifying close out type</param>
         /// <param name="compMsg">Completion message to be added to database upon closeOut</param>
-        /// <param name="evalCode">Evaluation code (0 if no special evaulation message)</param>
+        /// <param name="evalCode">Evaluation code (0 if no special evaluation message)</param>
         /// <param name="evalMsg">Evaluation message ("" if no special message)</param>
         /// <param name="startTime">Time the analysis started (UTC-based)</param>
         private void CloseTask(CloseOutType closeOut, string compMsg, int evalCode, string evalMsg, DateTime startTime)

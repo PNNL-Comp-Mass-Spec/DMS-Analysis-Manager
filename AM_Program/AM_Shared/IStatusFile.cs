@@ -343,7 +343,7 @@ namespace AnalysisManagerBase
             bool forceLogToBrokerDB);
 
         /// <summary>
-        /// Sets status file to show mahager idle
+        /// Sets status file to show manager idle
         /// </summary>
         /// <remarks></remarks>
         void UpdateIdle();

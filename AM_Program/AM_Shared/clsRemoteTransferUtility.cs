@@ -238,7 +238,7 @@ namespace AnalysisManagerBase
             }
 
             // Convert to text, will look like
-            // <host>prismweb2</host><user>svc-dms</user><dmsPrograms>/opt/DMS_Programs</dmsPrograms><taskQueue>/file1/temp/DMSTasks</taskQueue> ...
+            // <host>PrismWeb2</host><user>svc-dms</user><dmsPrograms>/opt/DMS_Programs</dmsPrograms><taskQueue>/file1/temp/DMSTasks</taskQueue> ...
             return xmlText.ToString();
         }
 
@@ -408,7 +408,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Delete the working directory for the current job and step (parameter RemoteJobStepWorkDirPath)
         /// </summary>
-        /// <param name="keepEmptyDirectory">When true, delete all files/directories in the remote workdir but don't remove workdir</param>
+        /// <param name="keepEmptyDirectory">When true, delete all files/directories in the remote WorkDir but don't remove WorkDir</param>
         public void DeleteRemoteWorkDir(bool keepEmptyDirectory = false)
         {
 
@@ -882,8 +882,8 @@ namespace AnalysisManagerBase
         public void UpdateParameters(bool useDefaultManagerRemoteInfo)
         {
 
-            WorkDir = MgrParams.GetParam("workdir");
-            DebugLevel = MgrParams.GetParam("debuglevel", 2);
+            WorkDir = MgrParams.GetParam("WorkDir");
+            DebugLevel = MgrParams.GetParam("DebugLevel", 2);
 
             if (useDefaultManagerRemoteInfo)
             {

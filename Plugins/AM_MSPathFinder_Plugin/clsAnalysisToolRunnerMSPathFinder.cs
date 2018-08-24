@@ -10,7 +10,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using System.Text;
 using AnalysisManagerBase;
 using PRISM;
 
@@ -223,7 +222,7 @@ namespace AnalysisManagerMSPathFinderPlugin
             fastaFileIsDecoy = false;
 
             // Define the path to the fasta file
-            var localOrgDbFolder = m_mgrParams.GetParam("orgdbdir");
+            var localOrgDbFolder = m_mgrParams.GetParam("OrgDBDir");
             var fastaFilePath = Path.Combine(localOrgDbFolder, m_jobParams.GetParam("PeptideSearch", "generatedFastaName"));
 
             var fastaFile = new FileInfo(fastaFilePath);
@@ -419,9 +418,9 @@ namespace AnalysisManagerMSPathFinderPlugin
                             continue;
                         }
 
-                        var dataLineLcase = dataLine.ToLower();
+                        var dataLineLCase = dataLine.ToLower();
 
-                        if (dataLineLcase.StartsWith(EXCEPTION_FLAG.ToLower()) || dataLineLcase.Contains("unhandled exception"))
+                        if (dataLineLCase.StartsWith(EXCEPTION_FLAG.ToLower()) || dataLineLCase.Contains("unhandled exception"))
                         {
                             // Exception while processing
 
@@ -431,7 +430,7 @@ namespace AnalysisManagerMSPathFinderPlugin
                             break;
                         }
 
-                        if (dataLineLcase.StartsWith(ERROR_PROCESSING_FLAG.ToLower()))
+                        if (dataLineLCase.StartsWith(ERROR_PROCESSING_FLAG.ToLower()))
                         {
                             // Error processing FileName.msf1lt: Error details;
 
@@ -533,10 +532,10 @@ namespace AnalysisManagerMSPathFinderPlugin
                             }
                         }
 
-                        var oProteinSerchedMatch = reProcessingProteins.Match(dataLine);
-                        if (oProteinSerchedMatch.Success)
+                        var proteinSearchedMatch = reProcessingProteins.Match(dataLine);
+                        if (proteinSearchedMatch.Success)
                         {
-                            if (int.TryParse(oProteinSerchedMatch.Groups[1].ToString(), out var proteinsSearched))
+                            if (int.TryParse(proteinSearchedMatch.Groups[1].ToString(), out var proteinsSearched))
                             {
                                 if (searchingDecoyDB)
                                 {
@@ -701,7 +700,7 @@ namespace AnalysisManagerMSPathFinderPlugin
             cmdLineOptions = string.Empty;
             tdaEnabled = false;
 
-            var paramFileName = m_jobParams.GetParam("parmFileName");
+            var paramFileName = m_jobParams.GetParam("ParmFileName");
 
             var paramFileReader = new clsKeyValueParamFileReader("MSPathFinder", m_WorkDir, paramFileName);
             RegisterEvents(paramFileReader);
@@ -954,7 +953,7 @@ namespace AnalysisManagerMSPathFinderPlugin
             var featureFilePath = Path.Combine(m_WorkDir, m_Dataset + clsAnalysisResources.DOT_MS1FT_EXTENSION);
 
             // Define the path to the fasta file
-            var localOrgDbFolder = m_mgrParams.GetParam("orgdbdir");
+            var localOrgDbFolder = m_mgrParams.GetParam("OrgDBDir");
             var fastaFilePath = Path.Combine(localOrgDbFolder, m_jobParams.GetParam("PeptideSearch", "generatedFastaName"));
 
             LogMessage("Running MSPathFinder");
@@ -995,9 +994,9 @@ namespace AnalysisManagerMSPathFinderPlugin
                 // Write the console output to a text file
                 clsGlobal.IdleLoop(0.25);
 
-                using (var swConsoleOutputfile = new StreamWriter(new FileStream(mCmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                using (var writer = new StreamWriter(new FileStream(mCmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
-                    swConsoleOutputfile.WriteLine(mCmdRunner.CachedConsoleOutput);
+                    writer.WriteLine(mCmdRunner.CachedConsoleOutput);
                 }
             }
 
@@ -1054,13 +1053,13 @@ namespace AnalysisManagerMSPathFinderPlugin
         /// <remarks></remarks>
         private bool StoreToolVersionInfo(string progLoc)
         {
-            var additionalDlls = new List<string>
+            var additionalDLLs = new List<string>
             {
                 "InformedProteomics.Backend.dll",
                 "InformedProteomics.TopDown.dll"
             };
 
-            return StoreDotNETToolVersionInfo(progLoc, additionalDlls);
+            return StoreDotNETToolVersionInfo(progLoc, additionalDLLs);
 
         }
 

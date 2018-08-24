@@ -192,7 +192,7 @@ namespace AnalysisManagerBase
             m_ConnStr = m_MgrParams.GetParam("ConnectionString");
 
             // Gigasax.DMS_Pipeline
-            m_BrokerConnStr = m_MgrParams.GetParam("brokerconnectionstring");
+            m_BrokerConnStr = m_MgrParams.GetParam("BrokerConnectionString");
 
             m_DebugLevel = debugLvl;
 

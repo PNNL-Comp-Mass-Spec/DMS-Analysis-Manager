@@ -51,7 +51,7 @@ namespace AnalysisManagerFormularityPlugin
                     LogDebug("clsAnalysisToolRunnerFormularity.RunTool(): Enter");
                 }
 
-                // Initialize classwide variables
+                // Initialize class wide variables
                 mLastConsoleOutputParse = DateTime.UtcNow;
 
                 // Determine the path to Formularity
@@ -197,11 +197,11 @@ namespace AnalysisManagerFormularityPlugin
             // Sorting 28,487,622 DB entries
             // Skipping check for duplicate formulas; database was previously validated
             // Loaded DB.
-            // Opening F:\Documents\Projects\NikolaTolic\Formularity\Data\TestDataXML\Marco_AL1_Bot_23May18_p05_000001_scan1.xml
-            // Opening F:\Documents\Projects\NikolaTolic\Formularity\Data\TestDataXML\Marco_AL3_Bot_23May18_p05_000001_scan1.xml
+            // Opening F:\Formularity\Data\TestDataXML\Marco_AL1_Bot_23May18_p05_000001_scan1.xml
+            // Opening F:\Formularity\Data\TestDataXML\Marco_AL3_Bot_23May18_p05_000001_scan1.xml
             // Aligning
             // Formula Finding
-            // Writing results to F:\Documents\Projects\NikolaTolic\Formularity\Data\TestDataXML\Report.csv
+            // Writing results to F:\Formularity\Data\TestDataXML\Report.csv
             // Finished.
 
             fileCountNoPeaks = 0;
@@ -383,9 +383,9 @@ namespace AnalysisManagerFormularityPlugin
                 // Write the console output to a text file
                 clsGlobal.IdleLoop(0.25);
 
-                using (var swConsoleOutputfile = new StreamWriter(new FileStream(cmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                using (var writer = new StreamWriter(new FileStream(cmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
-                    swConsoleOutputfile.WriteLine(cmdRunner.CachedConsoleOutput);
+                    writer.WriteLine(cmdRunner.CachedConsoleOutput);
                 }
 
             }
@@ -550,13 +550,14 @@ namespace AnalysisManagerFormularityPlugin
         /// <remarks></remarks>
         protected bool StoreToolVersionInfo(string progLoc)
         {
-            var additionalDlls = new List<string> {
+            var additionalDLLs = new List<string> {
                 "ArrayMath.dll",
                 "FindChains.exe",
+                // ReSharper disable once StringLiteralTypo
                 "TestFSDBSearch.exe"
             };
 
-            var success = StoreDotNETToolVersionInfo(progLoc, additionalDlls);
+            var success = StoreDotNETToolVersionInfo(progLoc, additionalDLLs);
 
             return success;
         }

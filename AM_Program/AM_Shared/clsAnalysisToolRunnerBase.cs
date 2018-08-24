@@ -5,7 +5,6 @@ using System.Data.SqlClient;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
 using PRISM;
 using PRISM.Logging;
@@ -30,7 +29,7 @@ namespace AnalysisManagerBase
         #region "Constants"
 
         /// <summary>
-        /// Stored procedure name for stoing the step tool version
+        /// Stored procedure name for storing the step tool version
         /// </summary>
         protected const string SP_NAME_SET_TASK_TOOL_VERSION = "SetStepTaskToolVersion";
 
@@ -299,7 +298,7 @@ namespace AnalysisManagerBase
 
             TraceMode = mgrParams.TraceMode;
 
-            m_WorkDir = m_mgrParams.GetParam("workdir");
+            m_WorkDir = m_mgrParams.GetParam("WorkDir");
             m_MachName = m_mgrParams.ManagerName;
 
             m_JobNum = m_jobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Job", 0);
@@ -309,7 +308,7 @@ namespace AnalysisManagerBase
             m_MyEMSLUtilities = myEMSLUtilities ?? new clsMyEMSLUtilities(m_DebugLevel, m_WorkDir);
             RegisterEvents(m_MyEMSLUtilities);
 
-            m_DebugLevel = (short)m_mgrParams.GetParam("debuglevel", 1);
+            m_DebugLevel = (short)m_mgrParams.GetParam("DebugLevel", 1);
             m_StatusTools.Tool = m_jobParams.GetCurrentJobToolDescription();
 
             m_SummaryFile = summaryFile;
@@ -358,7 +357,7 @@ namespace AnalysisManagerBase
 
             if (m_DebugLevel >= 2)
             {
-                LogDebug($"CalcElapsedTime: StartTime = {startTime}; Stoptime = {stopTime}");
+                LogDebug($"CalcElapsedTime: StartTime = {startTime}; StopTime = {stopTime}");
 
                 LogDebug($"CalcElapsedTime: {dtElapsedTime.Hours} Hours, {dtElapsedTime.Minutes} Minutes, {dtElapsedTime.Seconds} Seconds");
 
@@ -618,7 +617,7 @@ namespace AnalysisManagerBase
         /// <param name="sourceFilePath">Path to the data file</param>
         /// <param name="datasetYearQuarter">
         /// Dataset year quarter text (optional)
-        /// Eexample value is 2013_2; if this this parameter is blank, will auto-determine using Job Parameter DatasetStoragePath
+        /// Example value is 2013_2; if this this parameter is blank, will auto-determine using Job Parameter DatasetStoragePath
         /// </param>
         /// <param name="purgeOldFilesIfNeeded">Set to True to automatically purge old files if the space usage is over 20 TB</param>
         /// <param name="remoteCacheFilePath">Output parameter: the target file path (determined by this function)</param>
@@ -648,18 +647,18 @@ namespace AnalysisManagerBase
                     return false;
                 }
 
-                DirectoryInfo ditargetDirectory;
+                DirectoryInfo targetDirectory;
 
                 // Define the target folder
                 if (string.IsNullOrEmpty(subDirectoryInTarget))
                 {
-                    ditargetDirectory = diCacheFolder;
+                    targetDirectory = diCacheFolder;
                 }
                 else
                 {
-                    ditargetDirectory = new DirectoryInfo(Path.Combine(diCacheFolder.FullName, subDirectoryInTarget));
-                    if (!ditargetDirectory.Exists)
-                        ditargetDirectory.Create();
+                    targetDirectory = new DirectoryInfo(Path.Combine(diCacheFolder.FullName, subDirectoryInTarget));
+                    if (!targetDirectory.Exists)
+                        targetDirectory.Create();
                 }
 
                 if (string.IsNullOrEmpty(datasetYearQuarter))
@@ -674,9 +673,9 @@ namespace AnalysisManagerBase
 
                 if (!string.IsNullOrEmpty(datasetYearQuarter))
                 {
-                    ditargetDirectory = new DirectoryInfo(Path.Combine(ditargetDirectory.FullName, datasetYearQuarter));
-                    if (!ditargetDirectory.Exists)
-                        ditargetDirectory.Create();
+                    targetDirectory = new DirectoryInfo(Path.Combine(targetDirectory.FullName, datasetYearQuarter));
+                    if (!targetDirectory.Exists)
+                        targetDirectory.Create();
                 }
 
                 m_jobParams.AddResultFileExtensionToSkip(clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX);
@@ -697,7 +696,7 @@ namespace AnalysisManagerBase
                     return false;
                 }
 
-                var fiTargetFile = new FileInfo(Path.Combine(ditargetDirectory.FullName, sourceFileName));
+                var fiTargetFile = new FileInfo(Path.Combine(targetDirectory.FullName, sourceFileName));
 
                 ResetTimestampForQueueWaitTimeLogging();
                 var startTime = DateTime.UtcNow;
@@ -790,7 +789,7 @@ namespace AnalysisManagerBase
 
             if (string.IsNullOrEmpty(transferFolderPath))
             {
-                // Error has already geen logged and m_message has been updated
+                // Error has already been logged and m_message has been updated
                 return false;
             }
 
@@ -1293,7 +1292,7 @@ namespace AnalysisManagerBase
                     // Delay 2 seconds
                     clsGlobal.IdleLoop(2);
 
-                    // Do a garbage collection in case something is hanging onto the file that has been closed, but not GC'd
+                    // Do a garbage collection to assure file handles have been released
                     clsProgRunner.GarbageCollectNow();
                     retryCount += 1;
 
@@ -1505,7 +1504,7 @@ namespace AnalysisManagerBase
         /// Delete the file if it exists; logging an error if the deletion fails
         /// </summary>
         /// <param name="filePath"></param>
-        protected void DeleteTemporaryfile(string filePath)
+        protected void DeleteTemporaryFile(string filePath)
         {
             try
             {
@@ -1733,7 +1732,7 @@ namespace AnalysisManagerBase
                 var connectionString = objMgrParams.GetParam("MgrCnfgDbConnectStr");
                 var managerName = objMgrParams.ManagerName;
 
-                var newDebugLevel = GetManagerDebugLevel(connectionString, managerName, debugLevel, 0);
+                var newDebugLevel = GetManagerDebugLevel(connectionString, managerName, debugLevel, "GetCurrentMgrSettingsFromDB", 0);
 
                 if (debugLevel > 0 && newDebugLevel != debugLevel)
                 {
@@ -1754,7 +1753,7 @@ namespace AnalysisManagerBase
 
         }
 
-        static short GetManagerDebugLevel(string connectionString, string managerName, short currentDebugLevel, int recursionLevel)
+        static short GetManagerDebugLevel(string connectionString, string managerName, short currentDebugLevel, string callingFunction, int recursionLevel)
         {
 
             if (clsGlobal.OfflineMode)
@@ -1770,9 +1769,10 @@ namespace AnalysisManagerBase
             var sqlQuery =
                 "SELECT ParameterName, ParameterValue " +
                 "FROM V_MgrParams " +
-                "WHERE ManagerName = '" + managerName + "' AND " + " ParameterName IN ('debuglevel', 'MgrSettingGroupName')";
+                "WHERE ManagerName = '" + managerName + "' AND " + " ParameterName IN ('DebugLevel', 'MgrSettingGroupName')";
 
-            var success = clsGlobal.GetQueryResults(sqlQuery, connectionString, out var lstResults, "GetCurrentMgrSettingsFromDB");
+            var callingFunctions = clsGlobal.AppendToComment(callingFunction, "GetManagerDebugLevel");
+            var success = clsGlobal.GetQueryResults(sqlQuery, connectionString, out var lstResults, callingFunctions);
 
             if (!success || lstResults.Count <= 0)
                 return currentDebugLevel;
@@ -1782,7 +1782,7 @@ namespace AnalysisManagerBase
                 var paramName = resultRow[0];
                 var paramValue = resultRow[1];
 
-                if (clsGlobal.IsMatch(paramName, "debuglevel"))
+                if (clsGlobal.IsMatch(paramName, "DebugLevel"))
                 {
                     var debugLevel = short.Parse(paramValue);
                     return debugLevel;
@@ -1792,7 +1792,7 @@ namespace AnalysisManagerBase
                 {
                     // DebugLevel is defined by a manager settings group; repeat the query to V_MgrParams
 
-                    var debugLevel = GetManagerDebugLevel(connectionString, paramValue, currentDebugLevel, recursionLevel + 1);
+                    var debugLevel = GetManagerDebugLevel(connectionString, paramValue, currentDebugLevel, callingFunction, recursionLevel + 1);
                     return debugLevel;
                 }
             }
@@ -1802,7 +1802,7 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Deterime the path to java.exe
+        /// Determine the path to java.exe
         /// </summary>
         /// <returns>The path to the java.exe, or an empty string if the manager parameter is not defined or if java.exe does not exist</returns>
         /// <remarks></remarks>
@@ -1824,7 +1824,7 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Deterime the path to java.exe
+        /// Determine the path to java.exe
         /// </summary>
         /// <returns>The path to the java.exe, or an empty string if the manager parameter is not defined or if java.exe does not exist</returns>
         /// <remarks></remarks>
@@ -2180,7 +2180,7 @@ namespace AnalysisManagerBase
         /// GZip the given file
         /// </summary>
         /// <param name="fiResultFile">File to compress</param>
-        /// <returns>Fileinfo object of the new .gz file or null if an error</returns>
+        /// <returns>FileInfo object of the new .gz file or null if an error</returns>
         /// <remarks>Deletes the original file after creating the .gz file</remarks>
         public FileInfo GZipFile(FileInfo fiResultFile)
         {
@@ -2192,7 +2192,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="fiResultFile">File to compress</param>
         /// <param name="deleteSourceAfterZip">If True, will delete the file after zipping it</param>
-        /// <returns>Fileinfo object of the new .gz file or null if an error</returns>
+        /// <returns>FileInfo object of the new .gz file or null if an error</returns>
         public FileInfo GZipFile(FileInfo fiResultFile, bool deleteSourceAfterZip)
         {
 
@@ -2304,7 +2304,7 @@ namespace AnalysisManagerBase
         {
 
             // Gigasax.DMS_Pipeline
-            var connectionString = m_mgrParams.GetParam("brokerconnectionstring");
+            var connectionString = m_mgrParams.GetParam("BrokerConnectionString");
 
             var dataPackageID = m_jobParams.GetJobParameter("DataPackageID", -1);
 
@@ -2330,7 +2330,7 @@ namespace AnalysisManagerBase
         {
 
             // Gigasax.DMS_Pipeline
-            var connectionString = m_mgrParams.GetParam("brokerconnectionstring");
+            var connectionString = m_mgrParams.GetParam("BrokerConnectionString");
 
             var dataPackageID = m_jobParams.GetJobParameter("DataPackageID", -1);
 
@@ -2352,12 +2352,12 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         protected bool LoadSettingsFile()
         {
-            var fileName = m_jobParams.GetParam("settingsFileName");
+            var fileName = m_jobParams.GetParam("SettingsFileName");
             if (fileName != "na")
             {
                 var filePath = Path.Combine(m_WorkDir, fileName);
 
-                // XML tool Loadsettings returns True even if file is not found, so separate check reqd
+                // XML tool LoadSettings returns True even if file is not found, so a separate check is required
                 if (File.Exists(filePath))
                 {
                     return m_settingsFileParams.LoadSettings(filePath);
@@ -2376,7 +2376,7 @@ namespace AnalysisManagerBase
         /// Logs current progress to the log file at a given interval (track progress with m_progress)
         /// </summary>
         /// <param name="toolName"></param>
-        /// <remarks>Longer log intervals when m_debuglevel is 0 or 1; shorter intervals for 5</remarks>
+        /// <remarks>Longer log intervals when m_DebugLevel is 0 or 1; shorter intervals for 5</remarks>
         protected void LogProgress(string toolName)
         {
             int logIntervalMinutes;
@@ -2547,11 +2547,11 @@ namespace AnalysisManagerBase
                 {
                     var okToMove = true;
                     currentFileName = tmpFileName;
-                    var tmpFileNameLcase = Path.GetFileName(tmpFileName).ToLower();
+                    var tmpFileNameLCase = Path.GetFileName(tmpFileName).ToLower();
 
                     // Check to see if the filename is defined in ResultFilesToSkip
                     // Note that entries in ResultFilesToSkip are not case sensitive since they were instantiated using SortedSet<string>(StringComparer.OrdinalIgnoreCase)
-                    if (m_jobParams.ResultFilesToSkip.Contains(tmpFileNameLcase))
+                    if (m_jobParams.ResultFilesToSkip.Contains(tmpFileNameLCase))
                     {
                         // File found in the ResultFilesToSkip list; do not move it
                         okToMove = false;
@@ -2563,7 +2563,7 @@ namespace AnalysisManagerBase
                         // Note that entries in m_ResultFileExtensionsToSkip can be extensions, or can even be partial file names, e.g. _peaks.txt
                         foreach (var ext in m_jobParams.ResultFileExtensionsToSkip)
                         {
-                            if (tmpFileNameLcase.EndsWith(ext, StringComparison.OrdinalIgnoreCase))
+                            if (tmpFileNameLCase.EndsWith(ext, StringComparison.OrdinalIgnoreCase))
                             {
                                 okToMove = false;
                                 break;
@@ -2574,7 +2574,7 @@ namespace AnalysisManagerBase
                     if (!okToMove)
                     {
                         // Check to see if the file is a result file that got captured as a non result file
-                        if (m_jobParams.ResultFilesToKeep.Contains(tmpFileNameLcase))
+                        if (m_jobParams.ResultFilesToKeep.Contains(tmpFileNameLCase))
                         {
                             okToMove = true;
                         }
@@ -3261,22 +3261,22 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Replace an updated file
         /// </summary>
-        /// <param name="fiOrginalFile"></param>
-        /// <param name="fiUpdatedFile"></param>
+        /// <param name="originalFile"></param>
+        /// <param name="updatedFile"></param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks>First deletes the target file, then renames the original file to the updated file name</remarks>
-        protected bool ReplaceUpdatedFile(FileInfo fiOrginalFile, FileInfo fiUpdatedFile)
+        protected bool ReplaceUpdatedFile(FileInfo originalFile, FileInfo updatedFile)
         {
 
             try
             {
-                var finalFilePath = fiOrginalFile.FullName;
+                var finalFilePath = originalFile.FullName;
 
                 clsGlobal.IdleLoop(0.25);
-                fiOrginalFile.Delete();
+                originalFile.Delete();
 
                 clsGlobal.IdleLoop(0.25);
-                fiUpdatedFile.MoveTo(finalFilePath);
+                updatedFile.MoveTo(finalFilePath);
 
                 return true;
             }
@@ -3297,7 +3297,7 @@ namespace AnalysisManagerBase
         /// </summary>
         protected void ResetLogFileNameToDefault()
         {
-            var logFileName = m_mgrParams.GetParam("logfilename");
+            var logFileName = m_mgrParams.GetParam("LogFileName");
             LogTools.ChangeLogFileBaseName(logFileName, appendDateToBaseName: true);
         }
 
@@ -3608,10 +3608,10 @@ namespace AnalysisManagerBase
         /// Stores the tool version info in the database
         /// </summary>
         /// <param name="progLoc">Path to the primary .exe or .DLL</param>
-        /// <param name="additionalDlls">Additional .NET DLLs to examine (either simply names or full paths)</param>
+        /// <param name="additionalDLLs">Additional .NET DLLs to examine (either simply names or full paths)</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks>This method is appropriate for plugins that call a .NET executable</remarks>
-        protected bool StoreDotNETToolVersionInfo(string progLoc, List<string> additionalDlls)
+        protected bool StoreDotNETToolVersionInfo(string progLoc, List<string> additionalDLLs)
         {
 
             var toolVersionInfo = string.Empty;
@@ -3645,10 +3645,10 @@ namespace AnalysisManagerBase
                 fiProgram
             };
 
-            if (additionalDlls != null)
+            if (additionalDLLs != null)
             {
                 // Add paths to key DLLs
-                foreach (var dllNameOrPath in additionalDlls)
+                foreach (var dllNameOrPath in additionalDLLs)
                 {
                     if (Path.IsPathRooted(dllNameOrPath) || dllNameOrPath.Contains(Path.DirectorySeparatorChar))
                     {
@@ -4135,12 +4135,12 @@ namespace AnalysisManagerBase
         {
             try
             {
-                var diSourceFolder = new DirectoryInfo(sourceFolderPath);
-                var ditargetDirectory = new DirectoryInfo(targetDirectoryPath);
+                var sourceDirectory = new DirectoryInfo(sourceFolderPath);
+                var targetDirectory = new DirectoryInfo(targetDirectoryPath);
 
-                if (!ditargetDirectory.Exists)
+                if (!targetDirectory.Exists)
                 {
-                    ditargetDirectory.Create();
+                    targetDirectory.Create();
                 }
 
                 if (lstFileNameFilterSpec == null)
@@ -4157,7 +4157,7 @@ namespace AnalysisManagerBase
                 {
                     var filterSpecToUse = string.IsNullOrWhiteSpace(filterSpec) ? "*" : filterSpec;
 
-                    foreach (var fiFile in diSourceFolder.GetFiles(filterSpecToUse))
+                    foreach (var fiFile in sourceDirectory.GetFiles(filterSpecToUse))
                     {
                         if (!lstFilesToCopy.Contains(fiFile.Name))
                         {
@@ -4175,7 +4175,7 @@ namespace AnalysisManagerBase
                         if (string.IsNullOrWhiteSpace(filterSpec))
                             continue;
 
-                        foreach (var fiFile in diSourceFolder.GetFiles(filterSpec))
+                        foreach (var fiFile in sourceDirectory.GetFiles(filterSpec))
                         {
                             if (lstFilesToCopy.Contains(fiFile.Name))
                             {
@@ -4187,8 +4187,8 @@ namespace AnalysisManagerBase
 
                 foreach (var fileName in lstFilesToCopy)
                 {
-                    var fiSourceFile = new FileInfo(Path.Combine(diSourceFolder.FullName, fileName));
-                    var fiTargetFile = new FileInfo(Path.Combine(ditargetDirectory.FullName, fileName));
+                    var fiSourceFile = new FileInfo(Path.Combine(sourceDirectory.FullName, fileName));
+                    var fiTargetFile = new FileInfo(Path.Combine(targetDirectory.FullName, fileName));
                     var copyFile = false;
 
                     if (!fiTargetFile.Exists)
@@ -4239,7 +4239,7 @@ namespace AnalysisManagerBase
 
                 if (copySubdirectories)
                 {
-                    var subDirectories = diSourceFolder.GetDirectories();
+                    var subDirectories = sourceDirectory.GetDirectories();
 
                     foreach (var subDirectory in subDirectories)
                     {
@@ -4296,7 +4296,7 @@ namespace AnalysisManagerBase
                 m_SummaryFile.Add("Dataset Name" + '\t' + Dataset);
                 m_SummaryFile.Add("Xfer Folder" + '\t' + m_jobParams.GetParam(clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH));
                 m_SummaryFile.Add("Param File Name" + '\t' + m_jobParams.GetParam(clsAnalysisResources.JOB_PARAM_PARAMETER_FILE));
-                m_SummaryFile.Add("Settings File Name" + '\t' + m_jobParams.GetParam("settingsFileName"));
+                m_SummaryFile.Add("Settings File Name" + '\t' + m_jobParams.GetParam("SettingsFileName"));
                 m_SummaryFile.Add("Legacy Organism Db Name" + '\t' + m_jobParams.GetParam("LegacyFastaFileName"));
                 m_SummaryFile.Add("Protein Collection List" + '\t' + m_jobParams.GetParam("ProteinCollectionList"));
                 m_SummaryFile.Add("Protein Options List" + '\t' + m_jobParams.GetParam("ProteinOptions"));
@@ -4368,7 +4368,7 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Reset the progrunner start time and the CPU usage queue
+        /// Reset the ProgRunner start time and the CPU usage queue
         /// </summary>
         /// <remarks>Public because used by clsDtaGenThermoRaw</remarks>
         public void ResetProgRunnerCpuUsage()

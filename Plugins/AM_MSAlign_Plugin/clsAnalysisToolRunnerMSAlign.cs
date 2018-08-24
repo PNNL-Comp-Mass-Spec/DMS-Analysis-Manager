@@ -119,23 +119,23 @@ namespace AnalysisManagerMSAlignPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                eMSAlignVersionType eMSalignVersion;
+                eMSAlignVersionType eMSAlignVersion;
                 if (mMSAlignProgLoc.Contains(Path.DirectorySeparatorChar + "v0.5" + Path.DirectorySeparatorChar))
                 {
-                    eMSalignVersion = eMSAlignVersionType.v0pt5;
+                    eMSAlignVersion = eMSAlignVersionType.v0pt5;
                 }
                 else if (mMSAlignProgLoc.Contains(Path.DirectorySeparatorChar + "v0.6."))
                 {
-                    eMSalignVersion = eMSAlignVersionType.v0pt6;
+                    eMSAlignVersion = eMSAlignVersionType.v0pt6;
                 }
                 else if (mMSAlignProgLoc.Contains(Path.DirectorySeparatorChar + "v0.7."))
                 {
-                    eMSalignVersion = eMSAlignVersionType.v0pt7;
+                    eMSAlignVersion = eMSAlignVersionType.v0pt7;
                 }
                 else
                 {
                     // Assume v0.7
-                    eMSalignVersion = eMSAlignVersionType.v0pt7;
+                    eMSAlignVersion = eMSAlignVersionType.v0pt7;
                 }
 
                 // Store the MSAlign version info in the database after the first line is written to file MSAlign_ConsoleOutput.txt
@@ -150,13 +150,13 @@ namespace AnalysisManagerMSAlignPlugIn
                 mMSAlignWorkFolderPath = string.Empty;
 
                 // Copy the MS Align program files and associated files to the work directory
-                if (!CopyMSAlignProgramFiles(mMSAlignProgLoc, eMSalignVersion))
+                if (!CopyMSAlignProgramFiles(mMSAlignProgLoc, eMSAlignVersion))
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 // Initialize the MSInput folder
-                if (!InitializeMSInputFolder(mMSAlignWorkFolderPath, eMSalignVersion))
+                if (!InitializeMSInputFolder(mMSAlignWorkFolderPath, eMSAlignVersion))
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -170,7 +170,7 @@ namespace AnalysisManagerMSAlignPlugIn
 
                 // Set up and execute a program runner to run MSAlign
                 string cmdStr;
-                if (eMSalignVersion == eMSAlignVersionType.v0pt5)
+                if (eMSAlignVersion == eMSAlignVersionType.v0pt5)
                 {
                     cmdStr = " -Xmx" + intJavaMemorySize + "M -classpath jar\\malign.jar;jar\\* edu.ucsd.msalign.spec.web.Pipeline .\\";
                 }
@@ -189,7 +189,7 @@ namespace AnalysisManagerMSAlignPlugIn
                 mCmdRunner.CacheStandardOutput = false;
                 mCmdRunner.EchoOutputToConsole = true;
 
-                if (eMSalignVersion == eMSAlignVersionType.v0pt5)
+                if (eMSAlignVersion == eMSAlignVersionType.v0pt5)
                 {
                     mCmdRunner.WriteConsoleOutputToFile = false;
                 }
@@ -240,14 +240,14 @@ namespace AnalysisManagerMSAlignPlugIn
                 else
                 {
                     // Make sure the output files were created
-                    if (!ValidateAndCopyResultFiles(eMSalignVersion))
+                    if (!ValidateAndCopyResultFiles(eMSAlignVersion))
                     {
                         processingError = true;
                     }
 
                     var strResultTableFilePath = Path.Combine(m_WorkDir, m_Dataset + RESULT_TABLE_NAME_SUFFIX);
 
-                    if (eMSalignVersion == eMSAlignVersionType.v0pt5)
+                    if (eMSAlignVersion == eMSAlignVersionType.v0pt5)
                     {
                         // Add a header to the _ResultTable.txt file
                         AddResultTableHeaderLine(strResultTableFilePath);
@@ -290,7 +290,7 @@ namespace AnalysisManagerMSAlignPlugIn
                 // Make sure objects are released
                 PRISM.clsProgRunner.GarbageCollectNow();
 
-                if (eMSalignVersion != eMSAlignVersionType.v0pt5)
+                if (eMSAlignVersion != eMSAlignVersionType.v0pt5)
                 {
                     // Trim the console output file to remove the majority of the % finished messages
                     TrimConsoleOutputFile(Path.Combine(m_WorkDir, MSAlign_CONSOLE_OUTPUT));
@@ -428,7 +428,7 @@ namespace AnalysisManagerMSAlignPlugIn
             base.CopyFailedResultsToArchiveFolder();
         }
 
-        private bool CopyMSAlignProgramFiles(string strMSAlignJarFilePath, eMSAlignVersionType eMSalignVersion)
+        private bool CopyMSAlignProgramFiles(string strMSAlignJarFilePath, eMSAlignVersionType eMSAlignVersion)
         {
             try
             {
@@ -475,7 +475,7 @@ namespace AnalysisManagerMSAlignPlugIn
                 diMSAlignWork.CreateSubdirectory("msoutput");
                 diMSAlignWork.CreateSubdirectory("xml");
                 diMSAlignWork.CreateSubdirectory("xsl");
-                if (eMSalignVersion != eMSAlignVersionType.v0pt5)
+                if (eMSAlignVersion != eMSAlignVersionType.v0pt5)
                 {
                     diMSAlignWork.CreateSubdirectory("etc");
                 }
@@ -485,7 +485,7 @@ namespace AnalysisManagerMSAlignPlugIn
                     "jar", "xsl"
                 };
 
-                if (eMSalignVersion != eMSAlignVersionType.v0pt5)
+                if (eMSAlignVersion != eMSAlignVersionType.v0pt5)
                 {
                     lstSubfolderNames.Add("etc");
                 }
@@ -517,8 +517,10 @@ namespace AnalysisManagerMSAlignPlugIn
             return true;
         }
 
-        protected bool CreateInputPropertiesFile(string strParamFilePath, string strMSInputFolderPath, eMSAlignVersionType eMSalignVersion)
+        protected bool CreateInputPropertiesFile(string strParamFilePath, string strMSInputFolderPath, eMSAlignVersionType eMSAlignVersion)
         {
+            // ReSharper disable StringLiteralTypo
+
             const string DB_FILENAME_LEGACY = "database";
             const string DB_FILENAME = "databaseFileName";
             const string SPEC_FILENAME = "spectrumFileName";
@@ -526,6 +528,7 @@ namespace AnalysisManagerMSAlignPlugIn
             const string DETAIL_OUTPUT_FILENAME = "detailOutputFileName";
 
             const string DB_FILENAME_LEGACY_LOWER = "database";
+
             const string DB_FILENAME_LOWER = "databasefilename";
             const string SPEC_FILENAME_LOWER = "spectrumfilename";
             const string TABLE_OUTPUT_FILENAME_LOWER = "tableoutputfilename";
@@ -537,6 +540,8 @@ namespace AnalysisManagerMSAlignPlugIn
             const string SEARCH_TYPE_KEY = "searchtype";
             const string CUTOFF_TYPE_KEY = "cutofftype";
             const string CUTOFF_KEY = "cutoff";
+
+            // ReSharper restore StringLiteralTypo
 
             var blnEValueCutoffType = false;
 
@@ -564,7 +569,7 @@ namespace AnalysisManagerMSAlignPlugIn
                 using (var swOutFile = new StreamWriter(new FileStream(strOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
                     // Write out the database name and input file name
-                    if (eMSalignVersion == eMSAlignVersionType.v0pt5)
+                    if (eMSAlignVersion == eMSAlignVersionType.v0pt5)
                     {
                         swOutFile.WriteLine(DB_FILENAME_LEGACY + "=" + mInputPropertyValues.FastaFileName);
                         // Input file name is assumed to be input_data
@@ -611,7 +616,7 @@ namespace AnalysisManagerMSAlignPlugIn
                         if (strKeyName.ToLower() == INSTRUMENT_ACTIVATION_TYPE_KEY || strKeyName.ToLower() == INSTRUMENT_TYPE_KEY)
                         {
                             // If this is a bruker dataset, we need to make sure that the value for this entry is not FILE
-                            // The reason is that the mzXML file created by Bruker's compass program does not include the scantype information (CID, ETD, etc.)
+                            // The reason is that the mzXML file created by Bruker's compass program does not include the ScanType information (CID, ETD, etc.)
                             var strToolName = m_jobParams.GetParam("ToolName");
 
                             if (strToolName == "MSAlign_Bruker")
@@ -662,7 +667,7 @@ namespace AnalysisManagerMSAlignPlugIn
                             // Skip this line; we'll define it later
                             default:
 
-                                if (eMSalignVersion == eMSAlignVersionType.v0pt5)
+                                if (eMSAlignVersion == eMSAlignVersionType.v0pt5)
                                 {
                                     // Running a legacy version; rename the keys
 
@@ -675,7 +680,7 @@ namespace AnalysisManagerMSAlignPlugIn
                                                 switch (strValue.ToUpper())
                                                 {
                                                     case "C57":
-                                                        strValue = "Carbamidoemetylation";
+                                                        strValue = "Carbamidomethylation";
                                                         break;
                                                     case "C58":
                                                         strValue = "Carboxymethylation";
@@ -730,20 +735,20 @@ namespace AnalysisManagerMSAlignPlugIn
                                 }
                                 else
                                 {
-                                    if (eMSalignVersion >= eMSAlignVersionType.v0pt7 && strKeyName.ToLower() == "eValueThreshold")
+                                    if (eMSAlignVersion >= eMSAlignVersionType.v0pt7 && strKeyName.ToLower() == "eValueThreshold")
                                     {
                                         // v0.7 and up use cutoffType and cutoff instead of eValueThreshold
                                         swOutFile.WriteLine("cutoffType=EVALUE");
                                         swOutFile.WriteLine("cutoff=" + strValue);
                                     }
-                                    else if (eMSalignVersion == eMSAlignVersionType.v0pt6 && strKeyName.ToLower() == CUTOFF_TYPE_KEY)
+                                    else if (eMSAlignVersion == eMSAlignVersionType.v0pt6 && strKeyName.ToLower() == CUTOFF_TYPE_KEY)
                                     {
                                         if (strValue.ToUpper() == "EVALUE")
                                         {
                                             blnEValueCutoffType = true;
                                         }
                                     }
-                                    else if (eMSalignVersion == eMSAlignVersionType.v0pt6 && strKeyName.ToLower() == CUTOFF_KEY)
+                                    else if (eMSAlignVersion == eMSAlignVersionType.v0pt6 && strKeyName.ToLower() == CUTOFF_KEY)
                                     {
                                         if (blnEValueCutoffType)
                                         {
@@ -769,7 +774,7 @@ namespace AnalysisManagerMSAlignPlugIn
                         }
                     }
 
-                    if (eMSalignVersion == eMSAlignVersionType.v0pt5)
+                    if (eMSAlignVersion == eMSAlignVersionType.v0pt5)
                     {
                         mInputPropertyValues.ResultTableFileName = RESULT_TABLE_NAME_LEGACY;
                         mInputPropertyValues.ResultDetailsFileName = RESULT_DETAILS_NAME_LEGACY;
@@ -780,7 +785,7 @@ namespace AnalysisManagerMSAlignPlugIn
                         mInputPropertyValues.ResultDetailsFileName = m_Dataset + RESULT_DETAILS_NAME_SUFFIX;
                     }
 
-                    if (eMSalignVersion != eMSAlignVersionType.v0pt5)
+                    if (eMSAlignVersion != eMSAlignVersionType.v0pt5)
                     {
                         swOutFile.WriteLine(TABLE_OUTPUT_FILENAME + "=" + mInputPropertyValues.ResultTableFileName);
                         swOutFile.WriteLine(DETAIL_OUTPUT_FILENAME + "=" + mInputPropertyValues.ResultDetailsFileName);
@@ -800,7 +805,7 @@ namespace AnalysisManagerMSAlignPlugIn
             return true;
         }
 
-        protected bool InitializeMSInputFolder(string strMSAlignWorkFolderPath, eMSAlignVersionType eMSalignVersion)
+        protected bool InitializeMSInputFolder(string strMSAlignWorkFolderPath, eMSAlignVersionType eMSAlignVersion)
         {
 
             try
@@ -813,7 +818,7 @@ namespace AnalysisManagerMSAlignPlugIn
                 // Thus, we will read the source file with a reader and create a new fasta file
 
                 // Define the path to the fasta file
-                var OrgDbDir = m_mgrParams.GetParam("orgdbdir");
+                var OrgDbDir = m_mgrParams.GetParam("OrgDBDir");
                 var strFASTAFilePath = Path.Combine(OrgDbDir, m_jobParams.GetParam("PeptideSearch", "generatedFastaName"));
 
                 var fiFastaFile = new FileInfo(strFASTAFilePath);
@@ -843,7 +848,7 @@ namespace AnalysisManagerMSAlignPlugIn
                     return false;
                 }
 
-                if (eMSalignVersion == eMSAlignVersionType.v0pt5)
+                if (eMSAlignVersion == eMSAlignVersionType.v0pt5)
                 {
                     // Rename the file to input_data when we move it
                     mInputPropertyValues.SpectrumFileName = "input_data";
@@ -854,9 +859,9 @@ namespace AnalysisManagerMSAlignPlugIn
                 }
                 fiFiles[0].MoveTo(Path.Combine(strMSInputFolderPath, mInputPropertyValues.SpectrumFileName));
 
-                var strParamFilePath = Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"));
+                var strParamFilePath = Path.Combine(m_WorkDir, m_jobParams.GetParam("ParmFileName"));
 
-                if (!CreateInputPropertiesFile(strParamFilePath, strMSInputFolderPath, eMSalignVersion))
+                if (!CreateInputPropertiesFile(strParamFilePath, strMSInputFolderPath, eMSAlignVersion))
                 {
                     return false;
                 }
@@ -1115,7 +1120,7 @@ namespace AnalysisManagerMSAlignPlugIn
             }
         }
 
-        protected bool ValidateAndCopyResultFiles(eMSAlignVersionType eMSalignVersion)
+        protected bool ValidateAndCopyResultFiles(eMSAlignVersionType eMSAlignVersion)
         {
             var strResultsFolderPath = Path.Combine(mMSAlignWorkFolderPath, "msoutput");
             var lstResultsFilesToMove = new List<string>();
@@ -1148,7 +1153,7 @@ namespace AnalysisManagerMSAlignPlugIn
                         // Copy the results file to the work directory
                         var strTargetFileName = string.Copy(fiSearchResultFile.Name);
 
-                        if (eMSalignVersion == eMSAlignVersionType.v0pt5)
+                        if (eMSAlignVersion == eMSAlignVersionType.v0pt5)
                         {
                             // Rename the file when we copy it
                             switch (fiSearchResultFile.Name)

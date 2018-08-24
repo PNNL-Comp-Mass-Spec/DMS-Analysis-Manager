@@ -129,12 +129,12 @@ namespace AnalysisManagerBase
             if (destFile.Exists)
             {
                 var fileSizeMB = clsGlobal.BytesToMB(destFile.Length);
-                var copyRateMBperSec = fileSizeMB / elapsedSeconds;
+                var copyRateMBPerSec = fileSizeMB / elapsedSeconds;
 
                 // Note that m_FileTools may have been waiting for a lock file queue to subside,
                 // in which case the copyRate doesn't represent the actual connection speed between the two computers
                 LogDebug(string.Format("  Retrieved {0:N0} MB file in {1:N0} seconds, copying at {2:N0} MB/sec: {3}",
-                    fileSizeMB, elapsedSeconds, copyRateMBperSec, destFile.Name));
+                    fileSizeMB, elapsedSeconds, copyRateMBPerSec, destFile.Name));
             }
             else
             {

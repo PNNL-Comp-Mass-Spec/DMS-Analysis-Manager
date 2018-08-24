@@ -144,8 +144,8 @@ namespace AnalysisManagerBase
 
             JobParams = jobParams;
 
-            WorkDir = mgrParams.GetParam("workdir");
-            DebugLevel = mgrParams.GetParam("debuglevel", 2);
+            WorkDir = mgrParams.GetParam("WorkDir");
+            DebugLevel = mgrParams.GetParam("DebugLevel", 2);
 
             ToolRunner = toolRunner;
             StatusTools = statusTools;
@@ -162,7 +162,7 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Delete workdir files on the remote host and archive status files
+        /// Delete WorkDir files on the remote host and archive status files
         /// </summary>
         /// <returns>True on success, otherwise failure</returns>
         /// <remarks>Will use the cached status file names if GetRemoteJobStatus was previously called</remarks>
@@ -184,13 +184,13 @@ namespace AnalysisManagerBase
 
             try
             {
-                OnDebugEvent("Deleting remote workdir files for " + TransferUtility.JobStepDescription);
+                OnDebugEvent("Deleting remote WorkDir files for " + TransferUtility.JobStepDescription);
 
                 TransferUtility.DeleteRemoteWorkDir();
             }
             catch (Exception ex)
             {
-                LogError("Error deleting workdir files for the remotely running job", ex);
+                LogError("Error deleting WorkDir files for the remotely running job", ex);
                 return false;
             }
 
@@ -238,7 +238,7 @@ namespace AnalysisManagerBase
             }
             catch (Exception ex)
             {
-                LogError("Error deleting workdir files for the remotely running job", ex);
+                LogError("Error deleting WorkDir files for the remotely running job", ex);
                 return false;
             }
         }
@@ -611,7 +611,7 @@ namespace AnalysisManagerBase
         /// Parse a .success or .fail file retrieved from the remote host
         /// </summary>
         /// <param name="statusResultFilePath">Job .success or .fail status file path</param>
-        /// <param name="eToolRunnerResult">Toolrunner result</param>
+        /// <param name="eToolRunnerResult">ToolRunner result</param>
         /// <param name="completionMessage">Completion message</param>
         /// <param name="remoteStart">Processing start time on the remote host (local time)</param>
         /// <param name="remoteFinish">Processing end time on the remote host (local time)</param>

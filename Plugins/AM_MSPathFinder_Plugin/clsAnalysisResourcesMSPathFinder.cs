@@ -94,6 +94,7 @@ namespace AnalysisManagerMSPathFinderPlugin
                 {
                     // Transfer folder parameter is empty; abort the search for result files
                     // This error will be properly dealt with elsewhere
+                    return false;
                 }
 
                 foreach (var suffix in fileSuffixes)
@@ -132,7 +133,7 @@ namespace AnalysisManagerMSPathFinderPlugin
             try
             {
                 // Retrieve the Fasta file
-                var localOrgDbFolder = m_mgrParams.GetParam("orgdbdir");
+                var localOrgDbFolder = m_mgrParams.GetParam("OrgDBDir");
 
                 currentTask = "RetrieveOrgDB to " + localOrgDbFolder;
 
@@ -184,7 +185,7 @@ namespace AnalysisManagerMSPathFinderPlugin
                     var stepNum = m_jobParams.GetJobParameter("Step", 100);
 
                     // Gigasax.DMS_Pipeline
-                    var dmsConnectionString = m_mgrParams.GetParam("brokerconnectionstring");
+                    var dmsConnectionString = m_mgrParams.GetParam("BrokerConnectionString");
 
                     var sql = " SELECT Input_Folder_Name " +
                               " FROM T_Job_Steps" +
