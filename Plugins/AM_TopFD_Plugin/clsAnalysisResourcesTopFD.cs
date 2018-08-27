@@ -35,10 +35,10 @@ namespace AnalysisManagerTopFDPlugIn
                     return result;
                 }
 
-                var topFdParamFile = m_jobParams.GetParam("TopFD_ParmFileName");
+                var topFdParamFile = m_jobParams.GetParam("TopFD_ParamFile");
                 if (string.IsNullOrWhiteSpace(topFdParamFile))
                 {
-                    LogError("TopFD parameter file not defined in the job settings (param name TopFD_ParmFileName)");
+                    LogError("TopFD parameter file not defined in the job settings (param name TopFD_ParamFile)");
                     return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
                 }
 
@@ -74,7 +74,7 @@ namespace AnalysisManagerTopFDPlugIn
                 // Make sure we don't move the .mzML file into the results folder
                 m_jobParams.AddResultFileExtensionToSkip(DOT_MZML_EXTENSION);
 
-                if (!base.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+                if (!ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
