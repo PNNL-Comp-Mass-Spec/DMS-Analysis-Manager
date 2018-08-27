@@ -340,7 +340,7 @@ namespace AnalysisManagerTopFDPlugIn
                 return eResult;
             }
 
-            var cmdStr = cmdLineOptions +
+            var cmdStr = cmdLineOptions + " " +
                          Dataset + clsAnalysisResources.DOT_MZML_EXTENSION;
 
             LogDebug(progLoc + " " + cmdStr);
@@ -397,6 +397,8 @@ namespace AnalysisManagerTopFDPlugIn
             // If the input .mzML file only has MS spectra and no MS/MS spectra, the output files will be empty
 
             // Dictionary mapping a results file suffix to the full results file name
+            // Require that the .feature and _ms2.msalign files were created
+            // TopFD likely also created a _ms1.msalign file, but it's not required for TopPIC so we don't check for it
             var resultsFiles = new Dictionary<string, string>
             {
                 {TOPFD_FEATURE_FILE_SUFFIX, m_Dataset + TOPFD_FEATURE_FILE_SUFFIX},
