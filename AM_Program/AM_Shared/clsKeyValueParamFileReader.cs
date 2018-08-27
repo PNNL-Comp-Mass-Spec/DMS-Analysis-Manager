@@ -68,7 +68,7 @@ namespace AnalysisManagerBase
         /// <param name="paramToArgMapping">Dictionary mapping parameter names to argument names</param>
         /// <param name="paramNamesToSkip">Parameter names in paramFileEntries to skip</param>
         /// <param name="argumentPrefix">Argument prefix; typically -- or -</param>
-        /// <returns>String with command line argumentsd</returns>
+        /// <returns>String with command line arguments</returns>
         /// <remarks>Returns an empty string if multiple parameters resolve to the same argument name</remarks>
         public string ConvertParamsToArgs(
             List<KeyValuePair<string, string>> paramFileEntries,

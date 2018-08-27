@@ -323,7 +323,7 @@ namespace AnalysisManagerBase
         /// Number of cores in use by the externally spawned process (0 if no external process running)
         /// </summary>
         /// <returns>Number of cores in use; -1 if an error</returns>
-        /// <remarks>Obtaining this value takes a minimum of 1000 msec as we sample the performance counters</remarks>
+        /// <remarks>Obtaining this value takes a minimum of 1 second since we sample the performance counters</remarks>
         public float GetCoreUsage()
         {
             if (m_ProgRunner == null)

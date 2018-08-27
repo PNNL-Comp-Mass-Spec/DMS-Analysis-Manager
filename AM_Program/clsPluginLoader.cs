@@ -84,7 +84,7 @@ namespace AnalysisManagerProg
         {
             IAnalysisResources myModule = null;
 
-            switch (className.ToLower())
+            switch (className)
             {
                 case "AnalysisManagerTopFDPlugIn.clsAnalysisResourcesTopFD":
                     myModule = new AnalysisManagerTopFDPlugIn.clsAnalysisResourcesTopFD();
@@ -248,6 +248,7 @@ namespace AnalysisManagerProg
             if (GetPluginInfo(xpath, out var className, out var assemblyName))
             {
 #if PLUGIN_DEBUG_MODE_ENABLED
+                // This constant is defined on the Build tab of the Analysis Manager solution
                 myToolRunner = DebugModeGetToolRunner(className);
                 if (myToolRunner != null)
                 {
@@ -292,6 +293,7 @@ namespace AnalysisManagerProg
             if (GetPluginInfo(xpath, out var className, out var assemblyName))
             {
 #if PLUGIN_DEBUG_MODE_ENABLED
+                // This constant is defined on the Build tab of the Analysis Manager solution
                 myModule = DebugModeGetAnalysisResources(className);
                 if (myModule != null)
                 {
