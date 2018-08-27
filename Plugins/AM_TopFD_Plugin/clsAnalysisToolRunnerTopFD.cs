@@ -518,19 +518,19 @@ namespace AnalysisManagerTopFDPlugIn
                         var match = reExtractScan.Match(dataLine);
                         if (match.Success)
                         {
-                            if (int.TryParse(match.Groups["Scan"].Value, out var scanNumber))
+                            var scanNumber = int.Parse(match.Groups["Scan"].Value);
+
+                            if (scanNumber < scanNumberOutputThreshold)
                             {
-                                if (scanNumber < scanNumberOutputThreshold)
-                                {
-                                    keepLine = false;
-                                }
-                                else
-                                {
-                                    // Write out this line and bump up scanNumberOutputThreshold by 100
-                                    scanNumberOutputThreshold += 100;
-                                    mostRecentProgressLineWritten = string.Copy(dataLine);
-                                }
+                                keepLine = false;
                             }
+                            else
+                            {
+                                // Write out this line and bump up scanNumberOutputThreshold by 100
+                                scanNumberOutputThreshold += 100;
+                                mostRecentProgressLineWritten = string.Copy(dataLine);
+                            }
+
                             mostRecentProgressLine = string.Copy(dataLine);
                         }
                         else if (dataLine.StartsWith("Deconvolution finished", StringComparison.OrdinalIgnoreCase))
