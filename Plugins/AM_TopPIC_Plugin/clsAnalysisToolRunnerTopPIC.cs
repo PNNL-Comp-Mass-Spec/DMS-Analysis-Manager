@@ -307,8 +307,12 @@ namespace AnalysisManagerTopPICPlugIn
 
                         if (linesRead <= 3)
                         {
-                            // The first line has the TopPIC version
-                            if (string.IsNullOrEmpty(mTopPICVersion) && dataLineLCase.Contains("toppic"))
+                            // The first line has the path to the TopPIC executable and the command line arguments
+                            // The second line is dashes
+                            // The third line has the TopPIC version
+                            if (string.IsNullOrEmpty(mTopPICVersion) &&
+                                dataLine.ToLower().StartsWith("toppic") &&
+                                !dataLine.ToLower().Contains(TOPPIC_EXE_NAME.ToLower()))
                             {
                                 if (m_DebugLevel >= 2 && string.IsNullOrWhiteSpace(mTopPICVersion))
                                 {
@@ -318,22 +322,25 @@ namespace AnalysisManagerTopPICPlugIn
                                 mTopPICVersion = string.Copy(dataLine);
                             }
                         }
-
-                        foreach (var processingStep in processingSteps)
+                        else
                         {
-                            if (!dataLine.StartsWith(processingStep.Key, StringComparison.OrdinalIgnoreCase))
-                                continue;
+                            foreach (var processingStep in processingSteps)
+                            {
+                                if (!dataLine.StartsWith(processingStep.Key, StringComparison.OrdinalIgnoreCase))
+                                    continue;
 
-                            if (actualProgress < processingStep.Value)
-                                actualProgress = processingStep.Value;
+                                if (actualProgress < processingStep.Value)
+                                    actualProgress = processingStep.Value;
+                            }
+
+                            if (linesRead > 12 &&
+                                dataLineLCase.Contains("error") &&
+                                !dataLineLCase.Contains("error tolerance:") &&
+                                string.IsNullOrEmpty(mConsoleOutputErrorMsg))
+                            {
+                                mConsoleOutputErrorMsg = "Error running TopPIC: " + dataLine;
+                            }
                         }
-
-                        if (string.IsNullOrEmpty(mConsoleOutputErrorMsg) &&
-                            dataLineLCase.Contains("error") && !dataLineLCase.StartsWith("error tolerance:"))
-                        {
-                            mConsoleOutputErrorMsg += "Error running TopPIC: " + dataLine;
-                        }
-
                     }
                 }
 
@@ -698,23 +705,22 @@ namespace AnalysisManagerTopPICPlugIn
                         var match = reExtractScan.Match(dataLine);
                         if (match.Success)
                         {
-                            if (int.TryParse(match.Groups["Scan"].Value, out var scanNumber))
-                            {
-                                if (scanNumber < lastScanNumber)
-                                {
-                                    // We have entered a new processing mode; reset the threshold
-                                    scanNumberOutputThreshold = 0;
-                                }
+                            var scanNumber = int.Parse(match.Groups["Scan"].Value);
 
-                                if (scanNumber < scanNumberOutputThreshold)
-                                {
-                                    keepLine = false;
-                                }
-                                else
-                                {
-                                    // Write out this line and bump up scanNumberOutputThreshold by 250
-                                    scanNumberOutputThreshold += 250;
-                                }
+                            if (scanNumber < lastScanNumber)
+                            {
+                                // We have entered a new processing mode; reset the threshold
+                                scanNumberOutputThreshold = 0;
+                            }
+
+                            if (scanNumber < scanNumberOutputThreshold)
+                            {
+                                keepLine = false;
+                            }
+                            else
+                            {
+                                // Write out this line and bump up scanNumberOutputThreshold by 250
+                                scanNumberOutputThreshold += 250;
                             }
                         }
 

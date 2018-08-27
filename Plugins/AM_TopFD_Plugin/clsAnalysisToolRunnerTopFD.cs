@@ -164,7 +164,7 @@ namespace AnalysisManagerTopFDPlugIn
         private void ParseConsoleOutputFile(string consoleOutputFilePath)
         {
 
-            // Example Console output:
+            // Example Console output (yes, TopFD misspells "running"):
             //
             // TopFD 1.1.2
             // Timestamp: Mon Aug 13 17:54:19 2018
@@ -181,7 +181,7 @@ namespace AnalysisManagerTopFDPlugIn
             // Processing spectrum Scan_350...         3% finished.
             // Processing spectrum Scan_351...         3% finished.
             // Deconvolution finished.
-            // Running time: 51 seconds.
+            // Runing time: 51 seconds.
             // TopFD finished.
 
             try
@@ -217,8 +217,12 @@ namespace AnalysisManagerTopFDPlugIn
                         {
                             if (linesRead <= 3)
                             {
-                                // The first line has the TopFD version
-                                if (string.IsNullOrEmpty(mTopFDVersion) && dataLine.ToLower().Contains("topfd"))
+                                // The first line has the TopFD executable name and the command line arguments
+                                // The second line is dashes
+                                // The third line has the TopFD version
+                                if (string.IsNullOrEmpty(mTopFDVersion) &&
+                                    dataLine.ToLower().StartsWith("topfd") &&
+                                    !dataLine.ToLower().Contains(TOPFD_EXE_NAME.ToLower()))
                                 {
                                     if (m_DebugLevel >= 2 && string.IsNullOrWhiteSpace(mTopFDVersion))
                                     {
@@ -226,17 +230,6 @@ namespace AnalysisManagerTopFDPlugIn
                                     }
 
                                     mTopFDVersion = string.Copy(dataLine);
-                                }
-                                else
-                                {
-                                    if (dataLine.ToLower().Contains("error"))
-                                    {
-                                        if (string.IsNullOrEmpty(mConsoleOutputErrorMsg))
-                                        {
-                                            mConsoleOutputErrorMsg = "Error running TopFD:";
-                                        }
-                                        mConsoleOutputErrorMsg += "; " + dataLine;
-                                    }
                                 }
                             }
                             else
@@ -247,18 +240,15 @@ namespace AnalysisManagerTopFDPlugIn
                                     var match = reExtractPercentFinished.Match(dataLine);
                                     if (match.Success)
                                     {
-                                        if (short.TryParse(match.Groups["PercentComplete"].Value, out var progress))
-                                        {
-                                            actualProgress = progress;
-                                        }
+                                        actualProgress = short.Parse(match.Groups["PercentComplete"].Value);
                                     }
                                 }
-                                else if (string.IsNullOrEmpty(mConsoleOutputErrorMsg))
+                                else if (linesRead > 12 &&
+                                         dataLine.ToLower().Contains("error") &&
+                                         !dataLine.Contains("Error tolerance:") &&
+                                         string.IsNullOrEmpty(mConsoleOutputErrorMsg))
                                 {
-                                    if (dataLine.ToLower().StartsWith("error"))
-                                    {
-                                        mConsoleOutputErrorMsg += "; " + dataLine;
-                                    }
+                                    mConsoleOutputErrorMsg = "Error running TopFD: " + dataLine;
                                 }
                             }
                         }
