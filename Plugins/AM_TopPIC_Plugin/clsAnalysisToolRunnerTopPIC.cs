@@ -20,8 +20,8 @@ namespace AnalysisManagerTopPICPlugIn
     {
         #region "Constants and Enums"
 
-        private const string TopPIC_CONSOLE_OUTPUT = "TopPIC_ConsoleOutput.txt";
-        private const string TopPIC_EXE_NAME = "toppic.exe";
+        private const string TOPPIC_CONSOLE_OUTPUT = "TopPIC_ConsoleOutput.txt";
+        private const string TOPPIC_EXE_NAME = "toppic.exe";
 
         private const float PROGRESS_PCT_STARTING = 1;
         private const float PROGRESS_PCT_COMPLETE = 99;
@@ -77,7 +77,7 @@ namespace AnalysisManagerTopPICPlugIn
                 mLastConsoleOutputParse = DateTime.UtcNow;
 
                 // Determine the path to TopPIC
-                mTopPICProgLoc = DetermineProgramLocation("TopPICProgLoc", TopPIC_EXE_NAME);
+                mTopPICProgLoc = DetermineProgramLocation("TopPICProgLoc", TOPPIC_EXE_NAME);
 
                 if (string.IsNullOrWhiteSpace(mTopPICProgLoc))
                 {
@@ -112,7 +112,7 @@ namespace AnalysisManagerTopPICPlugIn
                 PRISM.clsProgRunner.GarbageCollectNow();
 
                 // Trim the console output file to remove the majority of the "processing" messages
-                TrimConsoleOutputFile(Path.Combine(m_WorkDir, TopPIC_CONSOLE_OUTPUT));
+                TrimConsoleOutputFile(Path.Combine(m_WorkDir, TOPPIC_CONSOLE_OUTPUT));
 
                 if (!clsAnalysisJob.SuccessOrNoData(processingResult))
                 {
@@ -565,7 +565,7 @@ namespace AnalysisManagerTopPICPlugIn
             mCmdRunner.EchoOutputToConsole = true;
 
             mCmdRunner.WriteConsoleOutputToFile = true;
-            mCmdRunner.ConsoleOutputFilePath = Path.Combine(m_WorkDir, TopPIC_CONSOLE_OUTPUT);
+            mCmdRunner.ConsoleOutputFilePath = Path.Combine(m_WorkDir, TOPPIC_CONSOLE_OUTPUT);
 
             m_progress = PROGRESS_PCT_STARTING;
             ResetProgRunnerCpuUsage();
@@ -578,7 +578,7 @@ namespace AnalysisManagerTopPICPlugIn
             {
                 if (string.IsNullOrWhiteSpace(mTopPICVersion))
                 {
-                    ParseConsoleOutputFile(Path.Combine(m_WorkDir, TopPIC_CONSOLE_OUTPUT));
+                    ParseConsoleOutputFile(Path.Combine(m_WorkDir, TOPPIC_CONSOLE_OUTPUT));
                 }
                 mToolVersionWritten = StoreToolVersionInfo();
             }
@@ -1133,7 +1133,7 @@ namespace AnalysisManagerTopPICPlugIn
 
             mLastConsoleOutputParse = DateTime.UtcNow;
 
-            ParseConsoleOutputFile(Path.Combine(m_WorkDir, TopPIC_CONSOLE_OUTPUT));
+            ParseConsoleOutputFile(Path.Combine(m_WorkDir, TOPPIC_CONSOLE_OUTPUT));
 
             if (!mToolVersionWritten && !string.IsNullOrWhiteSpace(mTopPICVersion))
             {

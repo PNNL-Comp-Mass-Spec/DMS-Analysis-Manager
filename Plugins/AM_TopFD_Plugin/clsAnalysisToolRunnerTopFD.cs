@@ -32,8 +32,8 @@ namespace AnalysisManagerTopFDPlugIn
         /// </summary>
         private const string MSALIGN_FILE_SUFFIX = "_ms2.msalign";
 
-        private const string TopFD_CONSOLE_OUTPUT = "TopFD_ConsoleOutput.txt";
-        private const string TopFD_EXE_NAME = "topfd.exe";
+        private const string TOPFD_CONSOLE_OUTPUT = "TopFD_ConsoleOutput.txt";
+        private const string TOPFD_EXE_NAME = "topfd.exe";
 
         private const float PROGRESS_PCT_STARTING = 1;
         private const float PROGRESS_PCT_COMPLETE = 99;
@@ -83,7 +83,7 @@ namespace AnalysisManagerTopFDPlugIn
                 mLastConsoleOutputParse = DateTime.UtcNow;
 
                 // Determine the path to the TopFD program
-                mTopFDProgLoc = DetermineProgramLocation("TopFDProgLoc", TopFD_EXE_NAME);
+                mTopFDProgLoc = DetermineProgramLocation("TopFDProgLoc", TOPFD_EXE_NAME);
 
                 if (string.IsNullOrWhiteSpace(mTopFDProgLoc))
                 {
@@ -111,7 +111,7 @@ namespace AnalysisManagerTopFDPlugIn
                 PRISM.clsProgRunner.GarbageCollectNow();
 
                 // Trim the console output file to remove the majority of the % finished messages
-                TrimConsoleOutputFile(Path.Combine(m_WorkDir, TopFD_CONSOLE_OUTPUT));
+                TrimConsoleOutputFile(Path.Combine(m_WorkDir, TOPFD_CONSOLE_OUTPUT));
 
                 if (!clsAnalysisJob.SuccessOrNoData(processingResult))
                 {
@@ -364,7 +364,7 @@ namespace AnalysisManagerTopFDPlugIn
             mCmdRunner.EchoOutputToConsole = true;
 
             mCmdRunner.WriteConsoleOutputToFile = true;
-            mCmdRunner.ConsoleOutputFilePath = Path.Combine(m_WorkDir, TopFD_CONSOLE_OUTPUT);
+            mCmdRunner.ConsoleOutputFilePath = Path.Combine(m_WorkDir, TOPFD_CONSOLE_OUTPUT);
 
             m_progress = PROGRESS_PCT_STARTING;
             ResetProgRunnerCpuUsage();
@@ -377,7 +377,7 @@ namespace AnalysisManagerTopFDPlugIn
             {
                 if (string.IsNullOrWhiteSpace(mTopFDVersion))
                 {
-                    ParseConsoleOutputFile(Path.Combine(m_WorkDir, TopFD_CONSOLE_OUTPUT));
+                    ParseConsoleOutputFile(Path.Combine(m_WorkDir, TOPFD_CONSOLE_OUTPUT));
                 }
                 mToolVersionWritten = StoreToolVersionInfo();
             }
@@ -603,7 +603,7 @@ namespace AnalysisManagerTopFDPlugIn
 
             mLastConsoleOutputParse = DateTime.UtcNow;
 
-            ParseConsoleOutputFile(Path.Combine(m_WorkDir, TopFD_CONSOLE_OUTPUT));
+            ParseConsoleOutputFile(Path.Combine(m_WorkDir, TOPFD_CONSOLE_OUTPUT));
 
             if (!mToolVersionWritten && !string.IsNullOrWhiteSpace(mTopFDVersion))
             {
