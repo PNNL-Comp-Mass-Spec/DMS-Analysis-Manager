@@ -936,6 +936,9 @@ namespace AnalysisManagerBase
 
                         if (paramsToAddAsAttribute.ContainsKey(paramName.Value))
                         {
+                            // Add an attribute to the section with the value for this parameter
+                            // This is most commonly used to add attribute step="1"
+
                             var attribName = paramsToAddAsAttribute[paramName.Value];
                             if (string.IsNullOrEmpty(attribName))
                                 attribName = paramName.Value;
@@ -1561,7 +1564,10 @@ namespace AnalysisManagerBase
         /// <param name="workDir">Full path to work directory</param>
         /// <param name="jobParamsXML">Contains the xml for all the job parameters</param>
         /// <param name="jobNum">Job number</param>
-        /// <remarks></remarks>
+        /// <remarks>
+        /// While saving the job parameters, several StepParameters items are skipped to avoid storing duplicate information in the parameter file
+        /// Additionally, each StepParameters section will have attribute "step" added to it, for example step="1" or step="2"
+        /// </remarks>
         private void SaveJobParameters(string workDir, string jobParamsXML, int jobNum)
         {
             var xmlParameterFilePath = string.Empty;
@@ -1591,7 +1597,7 @@ namespace AnalysisManagerBase
                 };
 
                 // Remove extra parameters from the StepParameters section that we don't want to include in the XML
-                // Also update the section to have an attribute that is the step number
+                // Also update the section to have an attribute that is the step number, for example step="1"
                 var filteredXML = FilterXmlSection(jobParamsXML, STEP_PARAMETERS_SECTION, paramNamesToIgnore, paramsToAddAsAttribute);
 
                 var xmlWriter = new clsFormattedXMLWriter();
