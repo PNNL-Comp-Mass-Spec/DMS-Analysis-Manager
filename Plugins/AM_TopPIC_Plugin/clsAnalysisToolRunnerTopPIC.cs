@@ -440,7 +440,8 @@ namespace AnalysisManagerTopPICPlugIn
                 "NumMods",
                 "StaticMod",
                 "DynamicMod",
-                "NTerminalProteinForms"
+                "NTerminalProteinForms",
+                "Decoy"
             };
 
             cmdLineOptions = paramFileReader.ConvertParamsToArgs(paramFileEntries, paramToArgMapping, paramNamesToSkip, "--");
@@ -456,13 +457,7 @@ namespace AnalysisManagerTopPICPlugIn
 
             if (paramFileReader.ParamIsEnabled(paramFileEntries, "Decoy"))
             {
-                if (paramToArgMapping.TryGetValue("Decoy", out var argumentName))
-                    cmdLineOptions += " --" + argumentName;
-                else
-                {
-                    LogError("Parameter to argument mapping dictionary does not have Decoy");
-                    return CloseOutType.CLOSEOUT_FAILED;
-                }
+                cmdLineOptions += " --decoy";
             }
 
             var staticMods = new List<string>();
@@ -495,7 +490,7 @@ namespace AnalysisManagerTopPICPlugIn
                             // Assure the N-terminal protein forms list has no spaces
                             if (paramToArgMapping.TryGetValue(kvSetting.Key, out var argumentName))
                             {
-                                cmdLineOptions += " --" + argumentName + kvSetting.Value.Replace(" ", "");
+                                cmdLineOptions += " --" + argumentName + " " + kvSetting.Value.Replace(" ", "");
                             }
                             else
                             {
@@ -526,11 +521,11 @@ namespace AnalysisManagerTopPICPlugIn
             }
 
             // ReSharper disable once InvertIf
-            if (paramToArgMapping.ContainsKey("Decoy") && fastaFileIsDecoy)
+            if (paramFileReader.ParamIsEnabled(paramFileEntries, "Decoy") && fastaFileIsDecoy)
             {
                 // TopPIC should be run with a forward=only protein collection; allow TopPIC to add the decoy proteins
                 LogError("Parameter file / decoy protein collection conflict: do not use a decoy protein collection " +
-                         "when using a parameter file with setting Decoy=1");
+                         "when using a parameter file with setting Decoy=True");
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
