@@ -10,23 +10,26 @@ namespace AnalysisManagerFormularityPlugin
     /// <summary>
     /// Class for running Formularity
     /// </summary>
+    // ReSharper disable once UnusedMember.Global
     public class clsAnalysisToolRunnerFormularity : clsAnalysisToolRunnerBase
     {
         #region "Constants and Enums"
 
-        protected const float PROGRESS_PCT_STARTING = 5;
-        protected const float PROGRESS_PCT_COMPLETE = 99;
+        private const float PROGRESS_PCT_STARTING = 5;
+        private const float PROGRESS_PCT_COMPLETE = 99;
 
-        protected const string FORMULARITY_CONSOLE_OUTPUT_FILE = "Formularity_ConsoleOutput.txt";
+        private const string FORMULARITY_CONSOLE_OUTPUT_FILE = "Formularity_ConsoleOutput.txt";
+
+        private const string INDEX_HTML = "index.html";
 
         #endregion
 
         #region "Module Variables"
 
-        protected string mConsoleOutputFile;
-        protected string mConsoleOutputErrorMsg;
+        private string mConsoleOutputFile;
+        private string mConsoleOutputErrorMsg;
 
-        protected DateTime mLastConsoleOutputParse;
+        private DateTime mLastConsoleOutputParse;
 
         #endregion
 
@@ -57,7 +60,10 @@ namespace AnalysisManagerFormularityPlugin
                 // Determine the path to Formularity
                 var progLoc = DetermineProgramLocation("FormularityProgLoc", "CIA.exe");
 
-                if (string.IsNullOrWhiteSpace(progLoc))
+                // Determine the path to NOMSI
+                var progLocNOMSI = DetermineProgramLocation("NOMSIProgLoc", "NOMSI.exe");
+
+                if (string.IsNullOrWhiteSpace(progLoc) || string.IsNullOrWhiteSpace(progLocNOMSI))
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -97,8 +103,8 @@ namespace AnalysisManagerFormularityPlugin
                 }
                 else
                 {
-                    // Look for the result files
-                    eReturnCode = PostProcessResults(ref processingSuccess);
+                    // Look for the result files and call NOMSI to create plots
+                    eReturnCode = PostProcessResults(progLocNOMSI, ref processingSuccess);
                 }
 
                 m_progress = PROGRESS_PCT_COMPLETE;
@@ -159,6 +165,220 @@ namespace AnalysisManagerFormularityPlugin
             }
 
             base.CopyFailedResultsToArchiveFolder();
+        }
+
+
+        private CloseOutType CreatePlotViewHTML(FileSystemInfo workDir, List<FileInfo> pngFiles)
+        {
+
+            const string LITERAL_TEXT_FLAG = "text: ";
+
+            try
+            {
+                var htmlFilePath = Path.Combine(workDir.FullName, INDEX_HTML);
+
+                // PNG filename suffix
+                var suffix = "_" + m_Dataset + ".png";
+
+                var datasetDetailReportText =
+                    string.Format("DMS <a href='http://dms2.pnl.gov/dataset/show/{0}'> Dataset Detail Report </a>", m_Dataset);
+
+                // This tracks the PNG file names that will be linked to in the HTML table
+                // There are two .png images in each row of the table
+                // Use "text: " to instead include literal HTML text between <td> and </td>
+                var tableContentsByRow = new List<List<string>>
+                {
+                    new List<string> {"mErr" + suffix, "histA" + suffix},
+                    new List<string> {"KMD1_assigned" + suffix, "histM" + suffix},
+                    new List<string> {"KMD1_unassigned" + suffix, LITERAL_TEXT_FLAG + datasetDetailReportText},
+                    new List<string> {"vK" + suffix, "EC_count" + suffix},
+                    new List<string> {"Ox" + suffix, "OxN" + suffix},
+                    new List<string> {"OxS" + suffix, "OxP" + suffix}
+                };
+
+                var pngFileNames = new SortedSet<string>();
+                foreach (var item in pngFiles)
+                {
+                    pngFileNames.Add(item.Name);
+                }
+
+                using (var writer = new StreamWriter(new FileStream(htmlFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                {
+                    writer.WriteLine("<!DOCTYPE html PUBLIC \"-//W3C//DTD HTML 3.2//EN\">");
+                    writer.WriteLine("<html>");
+                    writer.WriteLine("<head>");
+                    writer.WriteLine("  <title>{0}</title>", m_Dataset);
+                    writer.WriteLine("</head>");
+                    writer.WriteLine();
+                    writer.WriteLine("<body>");
+                    writer.WriteLine("  <h2>{0}</h2>", m_Dataset);
+                    writer.WriteLine();
+                    writer.WriteLine("  <table>");
+
+                    foreach (var tableRow in tableContentsByRow)
+                    {
+                        writer.WriteLine("    <tr>");
+                        foreach (var tableCell in tableRow)
+                        {
+                            if (tableCell.StartsWith(LITERAL_TEXT_FLAG))
+                            {
+                                writer.WriteLine("      <td>{0}</td>", tableCell.Substring(LITERAL_TEXT_FLAG.Length));
+                            }
+                            else
+                            {
+                                if (pngFileNames.Contains(tableCell))
+                                {
+                                    writer.WriteLine("      <td><a href='{0}'><img src='{0}' width='500' border='0'></a></td>", tableCell);
+                                }
+                                else
+                                {
+                                    writer.WriteLine("      <td>File not found: {0}</td>", tableCell);
+                                }
+                            }
+                        }
+                        writer.WriteLine("    </tr>");
+                    }
+
+                    writer.WriteLine("  </table>");
+                    writer.WriteLine();
+                    writer.WriteLine("</body>");
+                    writer.WriteLine("</html>");
+                }
+
+                return CloseOutType.CLOSEOUT_SUCCESS;
+            }
+            catch (Exception ex)
+            {
+                m_message = "Error creating the HTML linking to the plots from NOMSI";
+                LogError(m_message, ex);
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+
+        }
+        /// <summary>
+        /// Create a PDF file using the PNG plot files
+        /// </summary>
+        private CloseOutType CreatePDFFromPlots(FileSystemInfo workDir, List<FileInfo> pngFiles)
+        {
+            try
+            {
+
+                // ToDo: var writer = new PdfSharp ...
+
+                return CloseOutType.CLOSEOUT_SUCCESS;
+            }
+            catch (Exception ex)
+            {
+                m_message = "Error creating a PDF file with the plots from NOMSI";
+                LogError(m_message, ex);
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+
+        }
+
+        private CloseOutType CreatePlotsUsingNOMSI(string progLocNOMSI, FileSystemInfo reportFile)
+        {
+            try
+            {
+
+                // Set up and execute a program runner to run NOMSI
+
+                var cmdStr = reportFile.Name;
+
+                if (m_DebugLevel >= 1)
+                {
+                    LogDebug(progLocNOMSI + " " + cmdStr);
+                }
+
+                var cmdRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel)
+                {
+                    CreateNoWindow = true,
+                    CacheStandardOutput = false,
+                    EchoOutputToConsole = true,
+                    WriteConsoleOutputToFile = false
+                };
+                RegisterEvents(cmdRunner);
+
+                cmdRunner.LoopWaiting += cmdRunner_LoopWaiting;
+
+                var success = cmdRunner.RunProgram(progLocNOMSI, cmdStr, "NOMSI", true);
+
+                if (success)
+                {
+                    return CloseOutType.CLOSEOUT_SUCCESS;
+                }
+
+                if (cmdRunner.ExitCode != 0)
+                {
+                    LogWarning("NOMSI returned a non-zero exit code: " + cmdRunner.ExitCode);
+                }
+                else
+                {
+                    LogWarning("NOMSI failed (but exit code is 0)");
+                }
+
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+            catch (Exception ex)
+            {
+                m_message = "Error creating plots with NOMSI";
+                LogError(m_message, ex);
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+
+        }
+
+        private CloseOutType CreateZipFileWithPlotsAndHTML(FileSystemInfo workDir, List<FileInfo> pngFiles)
+        {
+            var currentTask = "Initializing";
+
+            try
+            {
+                currentTask = "Calling CreatePlotViewHTML";
+
+                var htmlSuccess = CreatePlotViewHTML(workDir, pngFiles);
+                if (htmlSuccess != CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    return htmlSuccess;
+                }
+
+                var plotDirectory = new DirectoryInfo(Path.Combine(workDir.FullName, "Plots"));
+
+                currentTask = "Moving PNG files into " + plotDirectory.FullName;
+
+                if (!plotDirectory.Exists)
+                    plotDirectory.Create();
+
+                foreach (var pngFile in pngFiles)
+                {
+                    pngFile.MoveTo(Path.Combine(plotDirectory.FullName, pngFile.Name));
+                    m_jobParams.AddResultFileToSkip(pngFile.Name);
+                }
+
+                currentTask = "Moving index.html into " + plotDirectory.FullName;
+
+                var htmlFile = new FileInfo(Path.Combine(workDir.FullName, INDEX_HTML));
+                htmlFile.MoveTo(Path.Combine(plotDirectory.FullName, htmlFile.Name));
+                m_jobParams.AddResultFileToSkip(htmlFile.Name);
+
+                var zipFilePath = Path.Combine(workDir.FullName, m_Dataset + "_Plots.zip");
+
+                var zipSuccess = m_DotNetZipTools.ZipDirectory(plotDirectory.FullName, zipFilePath);
+                if (!zipSuccess)
+                {
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                return CloseOutType.CLOSEOUT_SUCCESS;
+
+            }
+            catch (Exception ex)
+            {
+                m_message = "Error creating zip file with plots from NOMSI; current task: " + currentTask;
+                LogError(m_message, ex);
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+
         }
 
         private List<FileInfo> GetXmlSpectraFiles(DirectoryInfo diWorkDir, out string wildcardMatchSpec)
@@ -294,7 +514,7 @@ namespace AnalysisManagerFormularityPlugin
 
         }
 
-        private CloseOutType PostProcessResults(ref bool processingSuccess)
+        private CloseOutType PostProcessResults(string progLocNOMSI, ref bool processingSuccess)
         {
 
             try
@@ -325,16 +545,107 @@ namespace AnalysisManagerFormularityPlugin
                     m_jobParams.AddResultFileToSkip(logFile.Name);
                 }
 
-                return CloseOutType.CLOSEOUT_SUCCESS;
+                var resultCode = CreatePlotsUsingNOMSI(progLocNOMSI, reportFile);
+
+                if (resultCode != CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    return resultCode;
+                }
+
+                // Open nomsi_summary.txt to look for "summary=success"
+                var nomsiSummaryResult = ValidateNOMSISummaryFile(workDir);
+                if (nomsiSummaryResult != CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    return resultCode;
+                }
+
+                // Rename the plot files, replacing suffix "_Report.PNG" with ".png"
+                var renameResultCode = RenamePlotFiles(workDir, out var pngFiles);
+                if (renameResultCode != CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    return renameResultCode;
+                }
+
+                // Create the index.html file then zip the PNG files and HTML file together
+                var zipResultCode = CreateZipFileWithPlotsAndHTML(workDir, pngFiles);
+                if (zipResultCode != CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    return zipResultCode;
+                }
+
+                // Create a PDF using the PNG plots
+                // Note that the PNG files will now be in the plots subdirectory, but pngFiles should be up-to-date
+                var pdfResultCode = CreatePDFFromPlots(workDir, pngFiles);
+
+                return pdfResultCode;
             }
             catch (Exception ex)
             {
-                LogError("Error post processing results: " + ex.Message);
+                m_message = "Error post processing results";
+                LogError(m_message, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
 
         }
+
+        /// <summary>
+        /// Rename the plot files, replacing suffix "_Report.PNG" with ".png"
+        /// </summary>
+        /// <param name="workDir"></param>
+        /// <param name="pngFiles"></param>
+        /// <returns></returns>
+        private CloseOutType RenamePlotFiles(DirectoryInfo workDir, out List<FileInfo> pngFiles)
+        {
+            const int MINIMUM_PNG_FILE_COUNT = 11;
+            const string REPORT_PNG_FILE_SUFFIX = "_Report.PNG";
+
+            pngFiles = new List<FileInfo>();
+
+            try
+            {
+
+                // Confirm that multiple .png files were created
+                var sourcePngFiles = workDir.GetFiles("_Report.PNG").ToList();
+                if (sourcePngFiles.Count == 0)
+                {
+                    LogError("NOMSI did not create any PNG files");
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                if (sourcePngFiles.Count < MINIMUM_PNG_FILE_COUNT)
+                {
+                    LogError(string.Format("NOMSI created {0} PNG files, but it should have created {1} files",
+                                           sourcePngFiles.Count, MINIMUM_PNG_FILE_COUNT));
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                foreach (var pngFile in sourcePngFiles)
+                {
+                    if (pngFile.Name.EndsWith(REPORT_PNG_FILE_SUFFIX, StringComparison.OrdinalIgnoreCase))
+                    {
+                        var newPath = pngFile.FullName.Substring(0, pngFile.FullName.Length - REPORT_PNG_FILE_SUFFIX.Length) + ".png";
+                        pngFile.MoveTo(newPath);
+                        pngFiles.Add(pngFile);
+                    }
+                    else
+                    {
+                        LogWarning(string.Format("PNG file did not end with {0}; this is unexpected: {1}",
+                                                 REPORT_PNG_FILE_SUFFIX, pngFile.Name));
+                        pngFiles.Add(pngFile);
+                    }
+                }
+
+                return CloseOutType.CLOSEOUT_SUCCESS;
+            }
+            catch (Exception ex)
+            {
+                m_message = "Error renaming PNG plot files";
+                LogError(m_message, ex);
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+        }
+
         private bool StartFormularity(
             string progLoc,
             string wildcardMatchSpec,
@@ -520,7 +831,7 @@ namespace AnalysisManagerFormularityPlugin
             }
             catch (Exception ex)
             {
-                m_message = "Error in FormularityPlugin->ProcessScansWithFormularity";
+                m_message = "Processing data using Formularity";
                 LogError(m_message, ex);
                 return false;
             }
@@ -548,7 +859,7 @@ namespace AnalysisManagerFormularityPlugin
         /// Stores the tool version info in the database
         /// </summary>
         /// <remarks></remarks>
-        protected bool StoreToolVersionInfo(string progLoc)
+        private bool StoreToolVersionInfo(string progLoc)
         {
             var additionalDLLs = new List<string> {
                 "ArrayMath.dll",
@@ -560,6 +871,47 @@ namespace AnalysisManagerFormularityPlugin
             var success = StoreDotNETToolVersionInfo(progLoc, additionalDLLs);
 
             return success;
+        }
+
+        private CloseOutType ValidateNOMSISummaryFile(FileSystemInfo workDir)
+        {
+            const string NOMSI_SUMMARY_FILE_NAME = "nomsi_summary.txt";
+
+            const string NOMSI_SUCCESS_MESSAGE = "summary=success";
+
+            try
+            {
+                var nomsiSummaryFile = new FileInfo(Path.Combine(workDir.FullName, NOMSI_SUMMARY_FILE_NAME));
+                if (!nomsiSummaryFile.Exists)
+                {
+                    LogError("NOMSI summary file not found: " + nomsiSummaryFile.Name);
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                using (var reader = new StreamReader(new FileStream(nomsiSummaryFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                {
+                    while (!reader.EndOfStream)
+                    {
+                        var dataLine = reader.ReadLine();
+                        if (string.IsNullOrWhiteSpace(dataLine))
+                            continue;
+
+                        if (dataLine.StartsWith(NOMSI_SUCCESS_MESSAGE))
+                        {
+                            return CloseOutType.CLOSEOUT_SUCCESS;
+                        }
+                    }
+                }
+
+                LogError("NOMSI summary file did not contain: " + NOMSI_SUCCESS_MESSAGE);
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+            catch (Exception ex)
+            {
+                m_message = string.Format("Error validating {0}", NOMSI_SUMMARY_FILE_NAME);
+                LogError(m_message, ex);
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
         }
 
         #endregion
