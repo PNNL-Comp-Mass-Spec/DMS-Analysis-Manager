@@ -8,7 +8,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using System.Text.RegularExpressions;
 using AnalysisManagerBase;
 using PRISM;
@@ -18,6 +17,7 @@ namespace AnalysisManagerProMexPlugIn
     /// <summary>
     /// Class for running ProMex to deisotope high resolution spectra
     /// </summary>
+    // ReSharper disable once UnusedMember.Global
     public class clsAnalysisToolRunnerProMex : clsAnalysisToolRunnerBase
     {
         #region "Constants and Enums"
@@ -34,8 +34,6 @@ namespace AnalysisManagerProMexPlugIn
         protected string mConsoleOutputErrorMsg;
 
         protected string mProMexParamFilePath;
-
-        protected string mProMexResultsFilePath;
 
         protected clsRunDosProgram mCmdRunner;
 
@@ -484,9 +482,9 @@ namespace AnalysisManagerProMexPlugIn
                 // Write the console output to a text file
                 clsGlobal.IdleLoop(0.25);
 
-                using (var swConsoleOutputfile = new StreamWriter(new FileStream(mCmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                using (var writer = new StreamWriter(new FileStream(mCmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
-                    swConsoleOutputfile.WriteLine(mCmdRunner.CachedConsoleOutput);
+                    writer.WriteLine(mCmdRunner.CachedConsoleOutput);
                 }
 
             }

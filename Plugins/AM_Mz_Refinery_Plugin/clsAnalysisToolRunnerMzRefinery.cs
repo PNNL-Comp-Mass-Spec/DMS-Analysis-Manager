@@ -18,11 +18,12 @@ namespace AnalysisManagerMzRefineryPlugIn
     /// <summary>
     /// Class for running Mz Refinery to recalibrate m/z values in a .mzXML or .mzML file
     /// </summary>
+    // ReSharper disable once UnusedMember.Global
     public class clsAnalysisToolRunnerMzRefinery : clsAnalysisToolRunnerBase
     {
         #region "Constants and Enums"
         private const float PROGRESS_PCT_STARTING = 1;
-        private const float PROGRESS_PCT_MZREFINERY_COMPLETE = 97;
+        private const float PROGRESS_PCT_MzREFINERY_COMPLETE = 97;
         private const float PROGRESS_PCT_PLOTS_GENERATED = 98;
 
         private const float PROGRESS_PCT_COMPLETE = 99;
@@ -101,7 +102,7 @@ namespace AnalysisManagerMzRefineryPlugIn
 
                 // Verify that program files exist
 
-                // Determine the path to MSConvert (as of March 10, 2015 the official release of Proteowizard contains MSConvert.exe that supports the MzRefiner filter)
+                // Determine the path to MSConvert (as of March 10, 2015 the official release of ProteoWizard contains MSConvert.exe that supports the MzRefiner filter)
                 mMSConvertProgLoc = DetermineProgramLocation("ProteoWizardDir", "msconvert.exe");
 
                 if (string.IsNullOrWhiteSpace(mMSConvertProgLoc))
@@ -334,12 +335,10 @@ namespace AnalysisManagerMzRefineryPlugIn
         /// <remarks></remarks>
         private CloseOutType RunMSGFPlus(string javaProgLoc, string msXmlFileExtension, out FileInfo fiMSGFPlusResults)
         {
-            const string strMSGFJarfile = MSGFPlusUtils.MSGFPLUS_JAR_NAME;
-
             fiMSGFPlusResults = null;
 
             // Determine the path to MSGF+
-            mMSGFPlusProgLoc = DetermineProgramLocation("MSGFPlusProgLoc", strMSGFJarfile);
+            mMSGFPlusProgLoc = DetermineProgramLocation("MSGFPlusProgLoc", MSGFPlusUtils.MSGFPLUS_JAR_NAME);
 
             if (string.IsNullOrWhiteSpace(mMSGFPlusProgLoc))
             {
@@ -721,7 +720,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             }
             else if (mProgRunnerMode == eMzRefinerProgRunnerMode.MzRefiner)
             {
-                ParseMSConvertConsoleOutputfile(Path.Combine(m_WorkDir, MZ_REFINERY_CONSOLE_OUTPUT));
+                ParseMSConvertConsoleOutputFile(Path.Combine(m_WorkDir, MZ_REFINERY_CONSOLE_OUTPUT));
 
                 UpdateProgRunnerCpuUsage(mCmdRunner, SECONDS_BETWEEN_UPDATE);
 
@@ -762,10 +761,12 @@ namespace AnalysisManagerMzRefineryPlugIn
         /// </summary>
         /// <param name="strConsoleOutputFilePath"></param>
         /// <remarks></remarks>
-        private void ParseMSConvertConsoleOutputfile(string strConsoleOutputFilePath)
+        private void ParseMSConvertConsoleOutputFile(string strConsoleOutputFilePath)
         {
             // Example console output
-            //
+
+            // ReSharper disable CommentTypo
+
             // format: mzML
             //     m/z: Compression-None, 32-bit
             //     intensity: Compression-None, 32-bit
@@ -838,6 +839,8 @@ namespace AnalysisManagerMzRefineryPlugIn
             //    Less than 100 (0) results after filtering.
             //    Filtered out 8 identifications because of score.
             //    Filtered out 0 identifications because of mass error.
+
+            // ReSharper restore CommentTypo
 
             var reResultsAfterFiltering = new Regex(@"Less than \d+ \(\d+\) results after filtering", RegexOptions.Compiled);
 
@@ -1116,16 +1119,16 @@ namespace AnalysisManagerMzRefineryPlugIn
                 // Write the console output to a text file
                 clsGlobal.IdleLoop(0.25);
 
-                using (var swConsoleOutputfile = new StreamWriter(new FileStream(mCmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                using (var writer = new StreamWriter(new FileStream(mCmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
-                    swConsoleOutputfile.WriteLine(mCmdRunner.CachedConsoleOutput);
+                    writer.WriteLine(mCmdRunner.CachedConsoleOutput);
                 }
             }
 
             // Parse the console output file one more time to check for errors and to make sure mMzRefineryCorrectionMode is up-to-date
             // We will also extract out the final MS-GF:SpecEValue used for filtering the data
             clsGlobal.IdleLoop(0.25);
-            ParseMSConvertConsoleOutputfile(mCmdRunner.ConsoleOutputFilePath);
+            ParseMSConvertConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath);
 
             if (!string.IsNullOrEmpty(mMzRefineryCorrectionMode))
             {
@@ -1206,7 +1209,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 return false;
             }
 
-            m_progress = PROGRESS_PCT_MZREFINERY_COMPLETE;
+            m_progress = PROGRESS_PCT_MzREFINERY_COMPLETE;
             m_StatusTools.UpdateAndWrite(m_progress);
             if (m_DebugLevel >= 3)
             {

@@ -2710,7 +2710,7 @@ namespace AnalysisManagerBase
                 if (nameAttrib == null)
                     continue;
 
-                if (!string.Equals(nameAttrib.Value, clsAnalysisJob.STEP_PARAMETERS_SECTION))
+                if (!string.Equals(nameAttrib.Value, clsAnalysisJob.STEP_PARAMETERS_SECTION, StringComparison.OrdinalIgnoreCase))
                     continue;
 
                 var stepAttrib = section.Attribute("step");

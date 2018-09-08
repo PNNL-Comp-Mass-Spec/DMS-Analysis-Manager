@@ -11,6 +11,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
     /// <summary>
     /// Class for running TargetedQuant
     /// </summary>
+    // ReSharper disable once UnusedMember.Global
     public class clsAnalysisToolRunnerMSAlignQuant : clsAnalysisToolRunnerBase
     {
         #region "Module Variables"
@@ -139,9 +140,9 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                     // Write the console output to a text file
                     clsGlobal.IdleLoop(0.25);
 
-                    using (var swConsoleOutputfile = new StreamWriter(new FileStream(mCmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                    using (var swConsoleOutputFile = new StreamWriter(new FileStream(mCmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                     {
-                        swConsoleOutputfile.WriteLine(mCmdRunner.CachedConsoleOutput);
+                        swConsoleOutputFile.WriteLine(mCmdRunner.CachedConsoleOutput);
                     }
                 }
 
@@ -199,13 +200,13 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                         LogDebug("TargetedWorkflowsConsole Quantitation Complete");
                     }
 
-                    var fiConsoleOutputfile = new FileInfo(Path.Combine(m_WorkDir, TARGETED_WORKFLOWS_CONSOLE_OUTPUT));
-                    var fiDeconWorkflowsLogFile = new FileInfo(Path.Combine(m_WorkDir, m_Dataset + "_log.txt"));
+                    var consoleOutputFile = new FileInfo(Path.Combine(m_WorkDir, TARGETED_WORKFLOWS_CONSOLE_OUTPUT));
+                    var deconWorkflowsLogFile = new FileInfo(Path.Combine(m_WorkDir, m_Dataset + "_log.txt"));
 
-                    if (fiConsoleOutputfile.Exists && fiDeconWorkflowsLogFile.Exists && fiConsoleOutputfile.Length > fiDeconWorkflowsLogFile.Length)
+                    if (consoleOutputFile.Exists && deconWorkflowsLogFile.Exists && consoleOutputFile.Length > deconWorkflowsLogFile.Length)
                     {
                         // Don't keep the _log.txt file since the Console_Output file has all of the same information
-                        m_jobParams.AddResultFileToSkip(fiDeconWorkflowsLogFile.Name);
+                        m_jobParams.AddResultFileToSkip(deconWorkflowsLogFile.Name);
                     }
 
                     // Don't keep the _peaks.txt file since it can get quite large
@@ -325,6 +326,9 @@ namespace AnalysisManagerMSAlignQuantPlugIn
         }
 
         // Example Console output:
+
+        // ReSharper disable CommentTypo
+
         //   8/13/2012 2:29:48 PM    Started Processing....
         //   8/13/2012 2:29:48 PM    Dataset = E:\DMS_WorkDir2\Proteus_Peri_intact_ETD.raw
         //   8/13/2012 2:29:48 PM    Run initialized successfully.
@@ -346,6 +350,9 @@ namespace AnalysisManagerMSAlignQuantPlugIn
         //   8/13/2012 2:33:20 PM    Percent complete = 8%   Target 300 of 3917
         //   ...
         //   8/13/2012 1:56:55 PM    ---- PROCESSING COMPLETE ---------------
+
+        // ReSharper restore CommentTypo
+
         private readonly Regex reSubProgress = new Regex(@"Percent complete = ([0-9.]+)", RegexOptions.Compiled);
 
         /// <summary>
@@ -384,17 +391,17 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                     LogDebug("Parsing file " + strConsoleOutputFilePath);
                 }
 
-                double dblSubProgressAddon = 0;
+                double subProgressAddOn = 0;
 
                 var intEffectiveProgress = PROGRESS_TARGETED_WORKFLOWS_STARTING;
 
                 mConsoleOutputErrorMsg = string.Empty;
 
-                using (var srInFile = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
-                    while (!srInFile.EndOfStream)
+                    while (!reader.EndOfStream)
                     {
-                        var strLineIn = srInFile.ReadLine();
+                        var strLineIn = reader.ReadLine();
 
                         if (!string.IsNullOrWhiteSpace(strLineIn))
                         {
@@ -417,9 +424,9 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                                 var oMatch = reSubProgress.Match(strLineIn);
                                 if (oMatch.Success)
                                 {
-                                    if (double.TryParse(oMatch.Groups[1].Value, out dblSubProgressAddon))
+                                    if (double.TryParse(oMatch.Groups[1].Value, out subProgressAddOn))
                                     {
-                                        dblSubProgressAddon /= 100;
+                                        subProgressAddOn /= 100;
                                     }
                                 }
                             }
@@ -462,7 +469,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                 // Bump up the effective progress if finding features in positive or negative data
                 if (intEffectiveProgress == PROGRESS_TARGETED_WORKFLOWS_PEAKS_LOADED)
                 {
-                    sngEffectiveProgress += (float)((PROGRESS_TARGETED_WORKFLOWS_PROCESSING_COMPLETE - PROGRESS_TARGETED_WORKFLOWS_PEAKS_LOADED) * dblSubProgressAddon);
+                    sngEffectiveProgress += (float)((PROGRESS_TARGETED_WORKFLOWS_PROCESSING_COMPLETE - PROGRESS_TARGETED_WORKFLOWS_PEAKS_LOADED) * subProgressAddOn);
                 }
 
                 if (m_progress < sngEffectiveProgress)

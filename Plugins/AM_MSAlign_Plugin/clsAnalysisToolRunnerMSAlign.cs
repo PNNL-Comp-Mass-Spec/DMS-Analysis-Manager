@@ -16,6 +16,7 @@ namespace AnalysisManagerMSAlignPlugIn
     /// <summary>
     /// Class for running MSAlign analysis
     /// </summary>
+    // ReSharper disable once UnusedMember.Global
     public class clsAnalysisToolRunnerMSAlign : clsAnalysisToolRunnerBase
     {
         #region "Constants and Enums"

@@ -14,6 +14,7 @@ namespace AnalysisManagerProg
     /// <summary>
     /// Base class for Sequest analysis
     /// </summary>
+    // ReSharper disable once UnusedMember.Global
     public class clsCodeTestAM : clsAnalysisToolRunnerBase
     {
 

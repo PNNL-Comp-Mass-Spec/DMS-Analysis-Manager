@@ -75,7 +75,7 @@ the processing details for each analysis tool.
 
 Written by Matthew Monroe and Dave Clark for the Department of Energy (PNNL, Richland, WA) \
 E-mail: matthew.monroe@pnnl.gov or proteomics@pnnl.gov \
-Website: https://panomics.pnl.gov/ or https://omics.pnl.gov
+Website: https://omics.pnl.gov/ or https://panomics.pnnl.gov/
 
 ## License
 

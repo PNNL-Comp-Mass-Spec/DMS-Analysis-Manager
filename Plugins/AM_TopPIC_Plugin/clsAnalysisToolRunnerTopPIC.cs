@@ -16,6 +16,7 @@ namespace AnalysisManagerTopPICPlugIn
     /// <summary>
     /// Class for running TopPIC analysis
     /// </summary>
+    // ReSharper disable once UnusedMember.Global
     public class clsAnalysisToolRunnerTopPIC : clsAnalysisToolRunnerBase
     {
         #region "Constants and Enums"

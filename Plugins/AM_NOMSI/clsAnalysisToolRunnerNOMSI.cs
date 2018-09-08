@@ -18,6 +18,7 @@ namespace AnalysisManagerNOMSIPlugin
     /// <summary>
     /// Class for running NOMSI
     /// </summary>
+    // ReSharper disable once UnusedMember.Global
     public class clsAnalysisToolRunnerNOMSI : clsAnalysisToolRunnerBase
     {
         #region "Constants and Enums"

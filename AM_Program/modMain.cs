@@ -259,7 +259,7 @@ namespace AnalysisManagerProg
         {
             // Returns True if no problems; otherwise, returns false
 
-            var lstValidParameters = new List<string> {
+            var validParameters = new List<string> {
                 "T",
                 "CodeTest",
                 "Test",
@@ -278,15 +278,15 @@ namespace AnalysisManagerProg
             try
             {
                 // Make sure no invalid parameters are present
-                if (commandLineParser.InvalidParametersPresent(lstValidParameters))
+                if (commandLineParser.InvalidParametersPresent(validParameters))
                 {
                     ShowErrorMessage("Invalid commmand line parameters",
-                        (from item in commandLineParser.InvalidParameters(lstValidParameters) select "/" + item).ToList());
+                        (from item in commandLineParser.InvalidParameters(validParameters) select "/" + item).ToList());
 
                     return false;
                 }
 
-                // Query objParseCommandLine to see if various parameters are present
+                // Query commandLineParser to see if various parameters are present
 
                 if (commandLineParser.IsParameterPresent("T"))
                     mCodeTestMode = true;

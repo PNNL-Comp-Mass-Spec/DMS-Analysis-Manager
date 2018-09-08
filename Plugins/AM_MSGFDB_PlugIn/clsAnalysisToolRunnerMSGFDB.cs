@@ -15,6 +15,7 @@ namespace AnalysisManagerMSGFDBPlugIn
     /// <summary>
     /// Class for running MSGF+ analysis
     /// </summary>
+    // ReSharper disable once UnusedMember.Global
     public class clsAnalysisToolRunnerMSGFDB : clsAnalysisToolRunnerBase
     {
         #region "Constants and Enums"
@@ -737,7 +738,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         }
 
         /// <summary>
-        /// Copy failed results to thelocal archive folder
+        /// Copy failed results to the local archive folder
         /// </summary>
         public override void CopyFailedResultsToArchiveFolder()
         {
@@ -1194,7 +1195,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     filesToRetrieve.Add(Dataset + "_ScanType.txt");
                 }
 
-                string addon;
+                string addOn;
                 var splitFastaEnabled = m_jobParams.GetJobParameter("SplitFasta", false);
                 if (splitFastaEnabled)
                 {
@@ -1202,21 +1203,21 @@ namespace AnalysisManagerMSGFDBPlugIn
                     if (!string.IsNullOrWhiteSpace(errorMessage))
                         m_message = errorMessage;
 
-                    addon = "_Part" + iteration;
+                    addOn = "_Part" + iteration;
                 }
                 else
                 {
-                    addon = string.Empty;
+                    addOn = string.Empty;
                 }
 
-                filesToRetrieve.Add(Dataset + "_msgfplus" + addon + ".mzid.gz");
-                filesToRetrieve.Add(Dataset + "_msgfplus" + addon + "_PepToProtMap.txt");
+                filesToRetrieve.Add(Dataset + "_msgfplus" + addOn + ".mzid.gz");
+                filesToRetrieve.Add(Dataset + "_msgfplus" + addOn + "_PepToProtMap.txt");
 
                 filesToRetrieve.Add(Dataset + Path.GetFileNameWithoutExtension(MSGFPlusUtils.MSGFPLUS_TSV_SUFFIX) +
-                                    addon + Path.GetExtension(MSGFPlusUtils.MSGFPLUS_TSV_SUFFIX));
+                                    addOn + Path.GetExtension(MSGFPlusUtils.MSGFPLUS_TSV_SUFFIX));
 
                 filesToRetrieve.Add(Path.GetFileNameWithoutExtension(MSGFPlusUtils.MSGFPLUS_CONSOLE_OUTPUT_FILE) +
-                                    addon + Path.GetExtension(MSGFPlusUtils.MSGFPLUS_CONSOLE_OUTPUT_FILE));
+                                    addOn + Path.GetExtension(MSGFPlusUtils.MSGFPLUS_CONSOLE_OUTPUT_FILE));
 
                 var success = RetrieveRemoteResults(transferUtility, filesToRetrieve, verifyCopied, out retrievedFilePaths);
 

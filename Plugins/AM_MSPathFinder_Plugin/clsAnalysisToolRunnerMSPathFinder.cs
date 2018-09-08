@@ -18,6 +18,7 @@ namespace AnalysisManagerMSPathFinderPlugin
     /// <summary>
     /// Class for running MSPathFinder analysis of top down data
     /// </summary>
+    // ReSharper disable once UnusedMember.Global
     public class clsAnalysisToolRunnerMSPathFinder : clsAnalysisToolRunnerBase
     {
 

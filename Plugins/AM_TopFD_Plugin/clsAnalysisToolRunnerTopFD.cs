@@ -16,6 +16,7 @@ namespace AnalysisManagerTopFDPlugIn
     /// <summary>
     /// Class for running TopFD analysis
     /// </summary>
+    // ReSharper disable once UnusedMember.Global
     public class clsAnalysisToolRunnerTopFD : clsAnalysisToolRunnerBase
     {
 
@@ -165,7 +166,9 @@ namespace AnalysisManagerTopFDPlugIn
         {
 
             // Example Console output (yes, TopFD misspells "running"):
-            //
+
+            // ReSharper disable CommentTypo
+
             // TopFD 1.1.2
             // Timestamp: Mon Aug 13 17:54:19 2018
             // ********************** Parameters **********************
@@ -183,6 +186,8 @@ namespace AnalysisManagerTopFDPlugIn
             // Deconvolution finished.
             // Runing time: 51 seconds.
             // TopFD finished.
+
+            // ReSharper restore CommentTypo
 
             try
             {
