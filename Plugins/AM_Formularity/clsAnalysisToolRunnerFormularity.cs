@@ -177,24 +177,12 @@ namespace AnalysisManagerFormularityPlugin
             {
                 var htmlFilePath = Path.Combine(workDir.FullName, INDEX_HTML);
 
-                // PNG filename suffix
-                var suffix = "_" + m_Dataset + ".png";
 
                 var datasetDetailReportText =
                     string.Format("DMS <a href='http://dms2.pnl.gov/dataset/show/{0}'> Dataset Detail Report </a>", m_Dataset);
 
-                // This tracks the PNG file names that will be linked to in the HTML table
-                // There are two .png images in each row of the table
-                // Use "text: " to instead include literal HTML text between <td> and </td>
-                var tableContentsByRow = new List<List<string>>
-                {
-                    new List<string> {"mErr" + suffix, "histA" + suffix},
-                    new List<string> {"KMD1_assigned" + suffix, "histM" + suffix},
-                    new List<string> {"KMD1_unassigned" + suffix, LITERAL_TEXT_FLAG + datasetDetailReportText},
-                    new List<string> {"vK" + suffix, "EC_count" + suffix},
-                    new List<string> {"Ox" + suffix, "OxN" + suffix},
-                    new List<string> {"OxS" + suffix, "OxP" + suffix}
-                };
+                var datasetDetailReportLink = LITERAL_TEXT_FLAG + datasetDetailReportText;
+                var pngFileTableLayout = PngToPdfConverter.GetPngFileTableLayout(m_Dataset, datasetDetailReportLink);
 
                 var pngFileNames = new SortedSet<string>();
                 foreach (var item in pngFiles)
@@ -215,7 +203,7 @@ namespace AnalysisManagerFormularityPlugin
                     writer.WriteLine();
                     writer.WriteLine("  <table>");
 
-                    foreach (var tableRow in tableContentsByRow)
+                    foreach (var tableRow in pngFileTableLayout)
                     {
                         writer.WriteLine("    <tr>");
                         foreach (var tableCell in tableRow)
@@ -255,6 +243,7 @@ namespace AnalysisManagerFormularityPlugin
             }
 
         }
+
         /// <summary>
         /// Create a PDF file using the PNG plot files
         /// </summary>
@@ -263,7 +252,22 @@ namespace AnalysisManagerFormularityPlugin
             try
             {
 
-                // ToDo: var writer = new PdfSharp ...
+                var converter = new PngToPdfConverter(m_Dataset);
+                RegisterEvents(converter);
+
+                var outputFilePath = Path.Combine(workDir.FullName, m_Dataset + "_NOMSI_plots.pdf");
+
+                var success = converter.CreatePdf(outputFilePath, pngFiles);
+
+                if (!success)
+                {
+                    if (string.IsNullOrEmpty(m_message))
+                    {
+                        m_message = "Error creating the PDF file with NOMSI plots";
+                    }
+
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
 
                 return CloseOutType.CLOSEOUT_SUCCESS;
             }
@@ -352,7 +356,6 @@ namespace AnalysisManagerFormularityPlugin
                 foreach (var pngFile in pngFiles)
                 {
                     pngFile.MoveTo(Path.Combine(plotDirectory.FullName, pngFile.Name));
-                    m_jobParams.AddResultFileToSkip(pngFile.Name);
                 }
 
                 currentTask = "Moving index.html into " + plotDirectory.FullName;
@@ -576,8 +579,26 @@ namespace AnalysisManagerFormularityPlugin
                 // Create a PDF using the PNG plots
                 // Note that the PNG files will now be in the plots subdirectory, but pngFiles should be up-to-date
                 var pdfResultCode = CreatePDFFromPlots(workDir, pngFiles);
+                if (pdfResultCode != CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    return pdfResultCode;
+                }
 
-                return pdfResultCode;
+                // Delete the png files (to prevent them from being copied to the transfer directory
+                // However, move the KMD1_assigned png file back to the work directory; we want it visible from the DMS website
+                foreach (var pngFile in pngFiles)
+                {
+                    if (pngFile.Name.StartsWith("KMD1_assigned_"))
+                    {
+                        pngFile.MoveTo(Path.Combine(workDir.FullName, pngFile.Name));
+                    }
+                    else
+                    {
+                        pngFile.Delete();
+                    }
+                }
+
+                return CloseOutType.CLOSEOUT_SUCCESS;
             }
             catch (Exception ex)
             {

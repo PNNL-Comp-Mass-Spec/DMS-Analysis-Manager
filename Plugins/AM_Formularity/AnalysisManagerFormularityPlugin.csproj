@@ -48,9 +48,13 @@
   <ItemGroup>
     <Compile Include="clsAnalysisResourcesFormularity.cs" />
     <Compile Include="clsAnalysisToolRunnerFormularity.cs" />
+    <Compile Include="clsPngToPdfConverter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="PdfSharp">
+      <Version>1.32.3057</Version>
+    </PackageReference>
     <PackageReference Include="PRISM-Library">
       <Version>2.4.92</Version>
     </PackageReference>
