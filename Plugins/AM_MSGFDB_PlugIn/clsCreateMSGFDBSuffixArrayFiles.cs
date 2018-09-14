@@ -467,38 +467,10 @@ namespace AnalysisManagerMSGFDBPlugIn
                 }
                 else
                 {
-                    // Open the FastaFileName.canno file and read the first two lines
-                    // If there is a number on the first line but the second line starts with the letter A, this file was created with the legacy MSGFDB
-                    var fiCannoFile = new FileInfo(Path.Combine(fiFastaFile.DirectoryName, outputNameBase + ".canno"));
-                    if (fiCannoFile.Exists)
-                    {
-                        currentTask = "Examining first two lines of " + fiCannoFile.FullName;
-                        using (var srCannoFile = new StreamReader(new FileStream(fiCannoFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
-                        {
-                            if (!srCannoFile.EndOfStream)
-                            {
-                                var line1 = srCannoFile.ReadLine();
+                    currentTask = "Validating the canno file";
+                    var fileIsValid = ValidateCannoFile(fastaFile, outputNameBase, debugLevel);
 
-                                if (!srCannoFile.EndOfStream)
-                                {
-                                    var line2 = srCannoFile.ReadLine();
-
-                                    if (int.TryParse(line1, out _))
-                                    {
-                                        if (!string.IsNullOrWhiteSpace(line2) && char.IsLetter(line2[0]))
-                                        {
-                                            currentTask = "Legacy MSGFDB indexed file found (" + fiCannoFile.Name + "); re-indexing";
-                                            if (debugLevel >= 1)
-                                            {
-                                                OnStatusEvent(currentTask);
-                                            }
-                                            reindexingRequired = true;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    reindexingRequired = !fileIsValid;
                 }
 
                 // This dictionary contains file suffixes to look for
@@ -1237,6 +1209,74 @@ namespace AnalysisManagerMSGFDBPlugIn
             {
                 OnErrorEvent("Exception in UpdateRemoteLastUsedFile", ex);
             }
+        }
+
+        /// <summary>
+        /// Open the FastaFileName.canno file and read the first two lines
+        /// If there is a number on the first line but the second line starts with the letter A, this file was created with the legacy MSGFDB
+        /// </summary>
+        /// <param name="fastaFile">FASTA file</param>
+        /// <param name="outputNameBase">Base output name</param>
+        /// <param name="debugLevel">Debug level</param>
+        /// <returns>True if the file is valid, false if it is missing, corrupt, or from the legacy MSGFDB</returns>
+        private bool ValidateCannoFile(FileInfo fastaFile, string outputNameBase, int debugLevel)
+        {
+
+            if (string.IsNullOrWhiteSpace(fastaFile.DirectoryName))
+            {
+                OnErrorEvent("Cannot determine the parent directory of the FASTA file, " + fastaFile.FullName);
+                return false;
+            }
+
+            var cannoFile = new FileInfo(Path.Combine(fastaFile.DirectoryName, outputNameBase + ".canno"));
+            if (!cannoFile.Exists)
+            {
+                if (debugLevel >= 1)
+                {
+                    OnStatusEvent("File not found in ValidateCannoFile (" + cannoFile.Name + "); re-indexing");
+                }
+                return false;
+            }
+
+            using (var reader = new StreamReader(new FileStream(cannoFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+            {
+                var corruptFile = true;
+
+                if (!reader.EndOfStream)
+                {
+                    var line1 = reader.ReadLine();
+                    if (!reader.EndOfStream)
+                    {
+                        var line2 = reader.ReadLine();
+
+                        if (int.TryParse(line1, out _))
+                        {
+                            corruptFile = false;
+                            if (!string.IsNullOrWhiteSpace(line2) && char.IsLetter(line2[0]))
+                            {
+                                if (debugLevel >= 1)
+                                {
+                                    OnStatusEvent("Legacy MSGFDB indexed file found (" + cannoFile.Name + "); re-indexing");
+                                }
+
+                                return false;
+                            }
+                        }
+                    }
+                }
+
+                if (!corruptFile)
+                {
+                    return true;
+                }
+            }
+
+            if (debugLevel >= 1)
+            {
+                OnStatusEvent("Canno file (" + cannoFile.Name + ") is not in the format expected by ValidateCannoFile; re-indexing");
+            }
+
+            return false;
         }
 
         /// <summary>
