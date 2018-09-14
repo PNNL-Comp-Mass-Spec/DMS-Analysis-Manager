@@ -17,13 +17,7 @@ namespace AnalysisManagerBase
         /// </summary>
         public const string DOTNET_ZIP_NAME = "DotNetZip";
 
-        /// <summary>
-        /// Ionic zip name (used for logging)
-        /// </summary>
-        [Obsolete("Use DOTNET_ZIP_NAME")]
-        public const string IONIC_ZIP_NAME = "IonicZip (DotNetZip)";
-
-        private readonly string m_WorkDir;
+        private readonly string mWorkDir;
 
         #region "Properties"
 
@@ -62,7 +56,7 @@ namespace AnalysisManagerBase
         public clsDotNetZipTools(int debugLevel, string workDir)
         {
             DebugLevel = debugLevel;
-            m_WorkDir = workDir;
+            mWorkDir = workDir;
         }
 
         private void DeleteFile(FileSystemInfo fiFile)
@@ -114,7 +108,7 @@ namespace AnalysisManagerBase
         /// <returns>True if success; false if an error</returns>
         public bool GUnzipFile(string gzipFilePath)
         {
-            return GUnzipFile(gzipFilePath, m_WorkDir);
+            return GUnzipFile(gzipFilePath, mWorkDir);
         }
 
         /// <summary>
@@ -134,7 +128,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="gzipFilePath">.gz file to unzip</param>
         /// <param name="targetDirectory">Folder to place the unzipped files</param>
-        /// <param name="overwriteBehavior">Defines what to do when existing files could be ovewritten</param>
+        /// <param name="overwriteBehavior">Defines what to do when existing files could be overwritten</param>
         /// <returns>True if success; false if an error</returns>
         public bool GUnzipFile(string gzipFilePath, string targetDirectory, Ionic.Zip.ExtractExistingFileAction overwriteBehavior)
         {
@@ -431,7 +425,7 @@ namespace AnalysisManagerBase
         /// <returns>True if success; false if an error</returns>
         public bool UnzipFile(string zipFilePath)
         {
-            return UnzipFile(zipFilePath, m_WorkDir);
+            return UnzipFile(zipFilePath, mWorkDir);
         }
 
         /// <summary>
@@ -456,10 +450,8 @@ namespace AnalysisManagerBase
         /// <returns>True if success; false if an error</returns>
         public bool UnzipFile(string zipFilePath, string targetDirectory, string fileFilter)
         {
-
             return UnzipFile(zipFilePath, targetDirectory, fileFilter, Ionic.Zip.ExtractExistingFileAction.OverwriteSilently);
         }
-
 
         /// <summary>
         /// Unzip zipFilePath into the specified target directory, applying the specified file filter
@@ -467,7 +459,7 @@ namespace AnalysisManagerBase
         /// <param name="zipFilePath">File to unzip</param>
         /// <param name="targetDirectory">Folder to place the unzipped files</param>
         /// <param name="fileFilter">Filter to apply when unzipping</param>
-        /// <param name="overwriteBehavior">Defines what to do when existing files could be ovewritten</param>
+        /// <param name="overwriteBehavior">Defines what to do when existing files could be overwritten</param>
         /// <returns>True if success; false if an error</returns>
         public bool UnzipFile(string zipFilePath, string targetDirectory, string fileFilter, Ionic.Zip.ExtractExistingFileAction overwriteBehavior)
         {
@@ -580,9 +572,9 @@ namespace AnalysisManagerBase
                 }
 
                 // Perform a quick check of the zip file (simply iterates over the directory entries)
-                var blnsuccess = Ionic.Zip.ZipFile.CheckZip(zipFilePath);
+                var validZip = Ionic.Zip.ZipFile.CheckZip(zipFilePath);
 
-                if (!blnsuccess)
+                if (!validZip)
                 {
                     if (string.IsNullOrEmpty(Message))
                     {
@@ -772,9 +764,7 @@ namespace AnalysisManagerBase
         /// <returns></returns>
         public bool ZipDirectory(string sourceDirectoryPath, string zipFilePath)
         {
-
             return ZipDirectory(sourceDirectoryPath, zipFilePath, true, string.Empty);
-
         }
 
         /// <summary>
@@ -786,9 +776,7 @@ namespace AnalysisManagerBase
         /// <returns></returns>
         public bool ZipDirectory(string sourceDirectoryPath, string zipFilePath, bool recurse)
         {
-
             return ZipDirectory(sourceDirectoryPath, zipFilePath, recurse, string.Empty);
-
         }
 
         /// <summary>

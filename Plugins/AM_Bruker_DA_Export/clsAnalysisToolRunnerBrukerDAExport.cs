@@ -24,7 +24,8 @@ namespace AnalysisManagerBrukerDAExportPlugin
         private const float PROGRESS_PCT_STARTING = 5;
         private const float PROGRESS_PCT_COMPLETE = 99;
 
-        private const string DATAEXPORT_CONSOLE_OUTPUT = "SpectraExport_ConsoleOutput.txt";
+        private const string DATA_EXPORT_CONSOLE_OUTPUT = "SpectraExport_ConsoleOutput.txt";
+
 
         #endregion
 
@@ -245,7 +246,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
                     CacheStandardOutput = false,
                     EchoOutputToConsole = true,
                     WriteConsoleOutputToFile = true,
-                    ConsoleOutputFilePath = Path.Combine(m_WorkDir, DATAEXPORT_CONSOLE_OUTPUT)
+                    ConsoleOutputFilePath = Path.Combine(m_WorkDir, DATA_EXPORT_CONSOLE_OUTPUT)
                 };
                 RegisterEvents(cmdRunner);
 
@@ -627,7 +628,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
                 {
                     mLastConsoleOutputParse = DateTime.UtcNow;
 
-                    ParseConsoleOutputFile(Path.Combine(m_WorkDir, DATAEXPORT_CONSOLE_OUTPUT));
+                    ParseConsoleOutputFile(Path.Combine(m_WorkDir, DATA_EXPORT_CONSOLE_OUTPUT));
 
                 }
 

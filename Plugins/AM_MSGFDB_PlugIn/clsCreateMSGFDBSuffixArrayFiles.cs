@@ -409,7 +409,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     OnDebugEvent("clsCreateMSGFDBSuffixArrayFiles.CreateIndexedDbFiles(): Enter");
                 }
 
-                var fiFastaFile = new FileInfo(fastaFilePath);
+                var fastaFile = new FileInfo(fastaFilePath);
 
                 var msgfPlus = IsMSGFPlus(msgfPlusProgLoc);
                 if (!msgfPlus)
@@ -421,35 +421,35 @@ namespace AnalysisManagerMSGFDBPlugIn
                 // Protein collection files will start with ID_ then have at least 6 integers, then an alphanumeric hash string, for example ID_004208_295531A4.fasta
                 // If the filename does not match that pattern, we're using a legacy fasta file
                 var reProtectionCollectionFasta = new Regex(@"ID_\d{6,}_[0-9a-z]+\.fasta", RegexOptions.IgnoreCase);
-                var usingLegacyFasta = !reProtectionCollectionFasta.IsMatch(fiFastaFile.Name);
+                var usingLegacyFasta = !reProtectionCollectionFasta.IsMatch(fastaFile.Name);
 
                 //  Look for existing suffix array files
-                var outputNameBase = Path.GetFileNameWithoutExtension(fiFastaFile.Name);
+                var outputNameBase = Path.GetFileNameWithoutExtension(fastaFile.Name);
 
-                if (fiFastaFile.Directory == null || fiFastaFile.DirectoryName == null)
+                if (fastaFile.Directory == null || fastaFile.DirectoryName == null)
                 {
-                    mErrorMessage = "Cannot determine the parent directory of " + fiFastaFile.FullName;
+                    mErrorMessage = "Cannot determine the parent directory of " + fastaFile.FullName;
                     OnErrorEvent(mErrorMessage);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                var fiLockFile = new FileInfo(Path.Combine(fiFastaFile.DirectoryName, outputNameBase + "_csarr.lock"));
-                var dbCsArrayFilename = Path.Combine(fiFastaFile.DirectoryName, outputNameBase + ".csarr");
+                var lockFile = new FileInfo(Path.Combine(fastaFile.DirectoryName, outputNameBase + "_csarr.lock"));
+                var dbCsArrayFilename = Path.Combine(fastaFile.DirectoryName, outputNameBase + ".csarr");
 
                 // Check to see if another Analysis Manager is already creating the indexed DB files
-                currentTask = "Looking for lock file " + fiLockFile.FullName;
-                WaitForExistingLockfile(fiLockFile, debugLevel, maxWaitTimeHours);
+                currentTask = "Looking for lock file " + lockFile.FullName;
+                WaitForExistingLockfile(lockFile, debugLevel, maxWaitTimeHours);
 
                 // Validate that all of the expected files exist
                 // If any are missing, need to repeat the call to "BuildSA"
-                var reindexingRequired = false;
+                bool reindexingRequired;
 
                 currentTask = "Validating that expected files exist";
 
                 // Check for any FastaFileName.revConcat.* files
                 // If they exist, delete them, since they are for legacy MSGFDB
 
-                var fiLegacyIndexedFiles = fiFastaFile.Directory.GetFiles(outputNameBase + ".revConcat.*");
+                var fiLegacyIndexedFiles = fastaFile.Directory.GetFiles(outputNameBase + ".revConcat.*");
 
                 if (fiLegacyIndexedFiles.Length > 0)
                 {
@@ -510,7 +510,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                     currentTask = "Validating that expected files exist";
                     var existingFiles = FindExistingSuffixArrayFiles(
-                        fastaFileIsDecoy, outputNameBase, fiFastaFile.DirectoryName,
+                        fastaFileIsDecoy, outputNameBase, fastaFile.DirectoryName,
                         filesToFind, out var existingFileList, out var missingFiles);
 
                     if (existingFiles.Count < filesToFind.Count)
@@ -522,7 +522,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                         {
                             if (debugLevel >= 1)
                             {
-                                OnWarningEvent("Indexing of " + fiFastaFile.Name + " was incomplete (found " + existingFiles.Count + " out of " +
+                                OnWarningEvent("Indexing of " + fastaFile.Name + " was incomplete (found " + existingFiles.Count + " out of " +
                                                filesToFind.Count + " index files)");
                                 OnStatusEvent(" ... existing files: " + existingFileList);
                                 OnStatusEvent(" ... missing files: " + missingFiles);
@@ -539,11 +539,11 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                         foreach (var fiIndexFile in existingFiles)
                         {
-                            if (fiIndexFile.LastWriteTimeUtc < fiFastaFile.LastWriteTimeUtc.AddSeconds(-0.1))
+                            if (fiIndexFile.LastWriteTimeUtc < fastaFile.LastWriteTimeUtc.AddSeconds(-0.1))
                             {
                                 OnStatusEvent("Index file is older than the fasta file; " + fiIndexFile.FullName + " modified " +
                                               fiIndexFile.LastWriteTimeUtc.ToLocalTime().ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT) + " vs. " +
-                                              fiFastaFile.LastWriteTimeUtc.ToLocalTime().ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT));
+                                              fastaFile.LastWriteTimeUtc.ToLocalTime().ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT));
 
                                 reindexingRequired = true;
                                 break;
@@ -553,7 +553,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 }
 
                 var remoteIndexDirPath = DetermineRemoteMSGFPlusIndexFilesDirectoryPath(
-                    fiFastaFile.Name, msgfPlusIndexFilesDirPathBase, msgfPlusIndexFilesDirPathLegacyDB);
+                    fastaFile.Name, msgfPlusIndexFilesDirPathBase, msgfPlusIndexFilesDirPathLegacyDB);
 
                 if (!reindexingRequired)
                 {
@@ -561,7 +561,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                         return CloseOutType.CLOSEOUT_SUCCESS;
 
                     // Update the .LastUsed file on the remote share
-                    UpdateRemoteLastUsedFile(remoteIndexDirPath, fiFastaFile.Name);
+                    UpdateRemoteLastUsedFile(remoteIndexDirPath, fastaFile.Name);
 
                     // Delete old index files on the remote share
                     DeleteOldIndexFiles(remoteIndexDirPath, debugLevel);
@@ -571,8 +571,8 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 // Index files are missing or out of date
                 bool remoteLockFileCreated;
-                FileInfo fiRemoteLockFile = null;
-                CloseOutType eResult;
+                FileInfo remoteLockFile = null;
+                CloseOutType resultCode;
 
                 if (clsGlobal.OfflineMode)
                 {
@@ -580,7 +580,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     // We can still re-index the files using the local FASTA file
                     OnWarningEvent("Index files are missing or out of date for " + fastaFilePath + "; will re-generate them");
                     remoteLockFileCreated = false;
-                    eResult = CloseOutType.CLOSEOUT_SUCCESS;
+                    resultCode = CloseOutType.CLOSEOUT_SUCCESS;
                 }
                 else
                 {
@@ -588,7 +588,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     // Otherwise, create new index files
 
                     const bool CHECK_FOR_LOCK_FILE_A = true;
-                    eResult = CopyExistingIndexFilesFromRemote(fiFastaFile, usingLegacyFasta, remoteIndexDirPath, CHECK_FOR_LOCK_FILE_A,
+                    resultCode = CopyExistingIndexFilesFromRemote(fastaFile, usingLegacyFasta, remoteIndexDirPath, CHECK_FOR_LOCK_FILE_A,
                                                                    debugLevel, maxWaitTimeHours, out var diskFreeSpaceBelowThreshold1);
 
                     if (diskFreeSpaceBelowThreshold1)
@@ -597,10 +597,10 @@ namespace AnalysisManagerMSGFDBPlugIn
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
 
-                    if (eResult == CloseOutType.CLOSEOUT_SUCCESS)
+                    if (resultCode == CloseOutType.CLOSEOUT_SUCCESS)
                     {
                         // Update the .LastUsed file on the remote share
-                        UpdateRemoteLastUsedFile(remoteIndexDirPath, fiFastaFile.Name);
+                        UpdateRemoteLastUsedFile(remoteIndexDirPath, fastaFile.Name);
 
                         // Delete old index files on the remote share
                         DeleteOldIndexFiles(remoteIndexDirPath, debugLevel);
@@ -611,8 +611,8 @@ namespace AnalysisManagerMSGFDBPlugIn
                     // Files did not exist or were out of date, or an error occurred while copying them
                     currentTask = "Create a remote lock file";
                     remoteLockFileCreated = CreateRemoteSuffixArrayLockFile(
-                        fiFastaFile.Name, remoteIndexDirPath,
-                        out fiRemoteLockFile, debugLevel, maxWaitTimeHours);
+                        fastaFile.Name, remoteIndexDirPath,
+                        out remoteLockFile, debugLevel, maxWaitTimeHours);
                 }
 
                 if (remoteLockFileCreated)
@@ -621,10 +621,10 @@ namespace AnalysisManagerMSGFDBPlugIn
                     // If this manager ended up waiting while another manager was indexing the files, we should once again try to copy the files locally
 
                     const bool CHECK_FOR_LOCK_FILE_B = false;
-                    eResult = CopyExistingIndexFilesFromRemote(fiFastaFile, usingLegacyFasta, remoteIndexDirPath, CHECK_FOR_LOCK_FILE_B,
+                    resultCode = CopyExistingIndexFilesFromRemote(fastaFile, usingLegacyFasta, remoteIndexDirPath, CHECK_FOR_LOCK_FILE_B,
                                                                debugLevel, maxWaitTimeHours, out var diskFreeSpaceBelowThreshold2);
 
-                    if (eResult == CloseOutType.CLOSEOUT_SUCCESS)
+                    if (resultCode == CloseOutType.CLOSEOUT_SUCCESS)
                     {
                         // Existing files were copied; this manager does not need to re-create them
                         reindexingRequired = false;
@@ -639,23 +639,23 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 if (reindexingRequired)
                 {
-                    OnStatusEvent("Running BuildSA to index " + fiFastaFile.Name);
+                    OnStatusEvent("Running BuildSA to index " + fastaFile.Name);
 
                     // Note that this method will create a local .lock file
-                    eResult = CreateSuffixArrayFilesWork(logFileDir, debugLevel, fiFastaFile, fiLockFile, javaProgLoc,
-                                                         msgfPlusProgLoc, fastaFileIsDecoy, dbCsArrayFilename);
+                    resultCode = CreateSuffixArrayFilesWork(logFileDir, debugLevel, fastaFile, lockFile, javaProgLoc,
+                                                            msgfPlusProgLoc, fastaFileIsDecoy, dbCsArrayFilename);
 
-                    if (remoteLockFileCreated && eResult == CloseOutType.CLOSEOUT_SUCCESS && !clsGlobal.OfflineMode)
+                    if (remoteLockFileCreated && resultCode == CloseOutType.CLOSEOUT_SUCCESS && !clsGlobal.OfflineMode)
                     {
                         OnStatusEvent("Copying index files to " + remoteIndexDirPath);
-                        CopyIndexFilesToRemote(fiFastaFile, remoteIndexDirPath, debugLevel);
+                        CopyIndexFilesToRemote(fastaFile, remoteIndexDirPath, debugLevel);
                     }
                 }
 
                 if (!clsGlobal.OfflineMode)
                 {
                     // Update the .LastUsed file on the remote share
-                    UpdateRemoteLastUsedFile(remoteIndexDirPath, fiFastaFile.Name);
+                    UpdateRemoteLastUsedFile(remoteIndexDirPath, fastaFile.Name);
 
                     // Delete old index files on the remote share
                     DeleteOldIndexFiles(remoteIndexDirPath, debugLevel);
@@ -663,11 +663,11 @@ namespace AnalysisManagerMSGFDBPlugIn
                     if (remoteLockFileCreated)
                     {
                         // Delete the remote lock file
-                        DeleteLockFile(fiRemoteLockFile);
+                        DeleteLockFile(remoteLockFile);
                     }
                 }
 
-                return eResult;
+                return resultCode;
             }
             catch (Exception ex)
             {
