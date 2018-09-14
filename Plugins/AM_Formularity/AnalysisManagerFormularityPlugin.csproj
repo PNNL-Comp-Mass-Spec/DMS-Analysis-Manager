@@ -48,6 +48,7 @@
   <ItemGroup>
     <Compile Include="clsAnalysisResourcesFormularity.cs" />
     <Compile Include="clsAnalysisToolRunnerFormularity.cs" />
+    <Compile Include="clsPdfPageInfo.cs" />
     <Compile Include="clsPngToPdfConverter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
