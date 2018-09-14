@@ -18,14 +18,9 @@ namespace AnalysisManagerFormularityPlugin
 
         private const double DoublePageMargin = PageMargin * 2;
 
-        private readonly PdfDocument mDocument;
-        private PdfPage mCurrentPage;
-        private XGraphics mCurrentPageGraphics;
-
         private readonly XFont mFontHeader;
-        private readonly XFont mFontDefault;
 
-        private double currentPageY;
+        private readonly XFont mFontDefault;
 
         /// <summary>
         /// Dataset name
@@ -43,59 +38,82 @@ namespace AnalysisManagerFormularityPlugin
             const string FONT_FAMILY = "Arial";
             mFontHeader = new XFont(FONT_FAMILY, 20, XFontStyle.Regular);
             mFontDefault = new XFont(FONT_FAMILY, 10, XFontStyle.Regular);
-
-            mDocument = new PdfDocument();
         }
 
-        private void AddPage()
+        /// <summary>
+        /// Add a new page with landscape orientation
+        /// </summary>
+        /// <param name="pdfDoc"></param>
+        /// <returns></returns>
+        private PdfPageInfo AddPage(PdfDocument pdfDoc)
         {
-            mCurrentPage = mDocument.AddPage();
-            //page.Size = ;
-            mCurrentPageGraphics = XGraphics.FromPdfPage(mCurrentPage);
-            currentPageY = PageMargin;
+            var currentPageInfo = new PdfPageInfo(pdfDoc, PageMargin, PageOrientation.Landscape);
+            return currentPageInfo;
         }
 
         /// <summary>
         /// Adds a plot image
         /// </summary>
+        /// <param name="currentPage">Current PDF page</param>
         /// <param name="plotImage">Plot image</param>
         /// <param name="xOffset">X offset</param>
         /// <param name="width">Plot width, in points</param>
         /// <param name="height">Plot height, in points</param>
         /// <param name="header">Header (optional)</param>
         /// <returns></returns>
-        private double AddPlot(XImage plotImage, double xOffset, double width, double height, string header = null)
+        private void AddPlot(
+            PdfPageInfo currentPage, XImage plotImage, double xOffset,
+            double width, double height, string header = null)
         {
-            var yPosition = currentPageY;
+            var y = currentPage.CurrentPageY;
             if (!string.IsNullOrWhiteSpace(header))
             {
-                yPosition += AddText(header, mFontDefault, x: xOffset) - 10;
+                // Add a header over the image
+                var yOffsetIncrement = AddText(currentPage, header, mFontDefault, xOffset: xOffset);
+                y += yOffsetIncrement - 10;
             }
 
-            mCurrentPageGraphics.DrawImage(plotImage, new XRect(xOffset, yPosition, width, height));
+            currentPage.PageGraphics.DrawImage(plotImage, new XRect(xOffset, y, width, height));
             plotImage.Dispose();
-
-            return yPosition - currentPageY + height;
         }
 
-        private double AddText(string text, XFont font, double yOffset = 0, double x = 0, double width = -1, XStringFormat position = null)
+        /// <summary>
+        /// Add text
+        /// </summary>
+        /// <param name="currentPage">Current page</param>
+        /// <param name="text">Text to add</param>
+        /// <param name="font">Text font</param>
+        /// <param name="yScalar">Y scalar; 0 or 1 means full size text</param>
+        /// <param name="xOffset">X offset; if 0, will be at the left page margin</param>
+        /// <param name="width">Textbox width; if 0 or larger than the page width, will center the text on the page</param>
+        /// <param name="position">Position of the text in the textbox</param>
+        /// <returns></returns>
+        private double AddText(
+            PdfPageInfo currentPage, string text, XFont font,
+            double yScalar = 0, double xOffset = 0,
+            double width = -1, XStringFormat position = null)
         {
-            var textHeight = GetTextHeight(text, mCurrentPageGraphics, font);
-            var y = currentPageY;
+            var textHeight = GetTextHeight(text, currentPage.PageGraphics, font);
+            var y = currentPage.CurrentPageY;
 
-            if (!yOffset.Equals(0))
+            if (Math.Abs(yScalar) > 0)
             {
-                y += textHeight * yOffset;
+                y += textHeight * yScalar;
             }
 
-            if (x < PageMargin || x > mCurrentPage.Width - PageMargin)
+            double x;
+            if (xOffset < PageMargin || xOffset > currentPage.Page.Width - PageMargin)
             {
                 x = PageMargin;
             }
-
-            if (width < x || width > mCurrentPage.Width - DoublePageMargin)
+            else
             {
-                width = mCurrentPage.Width - DoublePageMargin;
+                x = xOffset;
+            }
+
+            if (width < x || width > currentPage.Page.Width - DoublePageMargin)
+            {
+                width = currentPage.Page.Width - DoublePageMargin;
             }
 
             if (position == null)
@@ -109,9 +127,11 @@ namespace AnalysisManagerFormularityPlugin
                 height = 0;
             }
 
-            mCurrentPageGraphics.DrawString(text, font, XBrushes.Black, new XRect(x, y, width, height));
+            currentPage.PageGraphics.DrawString(text, font, XBrushes.Black, new XRect(x, y, width, height), position);
 
-            return y - currentPageY + textHeight;
+            // Return the effective text height after adjustments
+            // This value is used to increment currentPage.CurrentPageY
+            return y - currentPage.CurrentPageY + textHeight;
         }
 
         /// <summary>
@@ -131,20 +151,11 @@ namespace AnalysisManagerFormularityPlugin
             try
             {
 
-                var plotSizeMultiplier = 4d;
+                var pdfDoc = new PdfDocument();
+                pdfDoc.Options.NoCompression = true;
+                pdfDoc.PageMode = PdfPageMode.UseNone;
 
-                // Guarantee that the plots will be backed at 300+ DPI
-                var desiredResolution = 300;
-                var resolution = 96;
-
-                // Add a page (this initializes currentPageY)
-                AddPage();
-
-                // Add a header: Dataset name
-                currentPageY += AddText(DatasetName, mFontHeader, 0.75, position: XStringFormats.BottomCenter);
-
-
-                // Add each of the plots
+                // Get the plot layout
 
                 var datasetDetailReportLink = "";
                 var pngFileTableLayout = GetPngFileTableLayout(DatasetName, datasetDetailReportLink);
