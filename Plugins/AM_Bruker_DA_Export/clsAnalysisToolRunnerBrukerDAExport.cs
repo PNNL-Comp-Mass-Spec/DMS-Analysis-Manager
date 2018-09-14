@@ -26,6 +26,8 @@ namespace AnalysisManagerBrukerDAExportPlugin
 
         private const string DATA_EXPORT_CONSOLE_OUTPUT = "SpectraExport_ConsoleOutput.txt";
 
+        private const string BRUKER_SPECTRA_EXPORT_METHOD_CONTAINER_DIR = "BrukerSpectraExportMethodDir";
+        private const string BRUKER_SPECTRA_EXPORT_METHOD_PARAM = "BrukerSpectraExportMethod";
 
         #endregion
 
@@ -61,7 +63,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
                     LogDebug("clsAnalysisToolRunnerBrukerDAExport.RunTool(): Enter");
                 }
 
-                // Initialize classwide variables
+                // Initialize class wide variables
                 mLastConsoleOutputParse = DateTime.UtcNow;
                 mLastProgressWriteTime = DateTime.UtcNow;
 
@@ -203,10 +205,10 @@ namespace AnalysisManagerBrukerDAExportPlugin
 
                 mConsoleOutputErrorMsg = string.Empty;
 
-                var strRawDataType = m_jobParams.GetParam("RawDataType");
+                var rawDataType = m_jobParams.GetParam("RawDataType");
                 string dataFolderPath;
 
-                switch (strRawDataType.ToLower())
+                switch (rawDataType.ToLower())
                 {
                     case clsAnalysisResources.RAW_DATA_TYPE_DOT_D_FOLDERS:
                     case clsAnalysisResources.RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER:
@@ -214,12 +216,44 @@ namespace AnalysisManagerBrukerDAExportPlugin
                         dataFolderPath = Path.Combine(m_WorkDir, m_Dataset + clsAnalysisResources.DOT_D_EXTENSION);
                         break;
                     default:
-                        m_message = "Dataset type " + strRawDataType + " is not supported";
+                        m_message = "Dataset type " + rawDataType + " is not supported";
                         LogWarning("ExportSpectraUsingScript: " + m_message);
                         return false;
                 }
 
                 var outputPathBase = Path.Combine(m_WorkDir, m_Dataset + "_scan");
+
+                var methodName = m_jobParams.GetParam(BRUKER_SPECTRA_EXPORT_METHOD_PARAM);
+                string methodOverridePath;
+
+                if (string.IsNullOrWhiteSpace(methodName))
+                {
+                    methodOverridePath = string.Empty;
+                }
+                else
+                {
+                    // Determine the directory that contains method directories (.m directories) that we can use with the Bruker DataAnalysis program
+                    var methodsDirPath = m_mgrParams.GetParam(BRUKER_SPECTRA_EXPORT_METHOD_CONTAINER_DIR, @"C:\DMS_Programs\Bruker_DataAnalysis");
+                    var methodsDir = new DirectoryInfo(methodsDirPath);
+                    if (!methodsDir.Exists)
+                    {
+                        var msg = string.Format("Bruker spectra export methods directory not found " +
+                                                "(see manager parameter {0}): {1}",
+                                                BRUKER_SPECTRA_EXPORT_METHOD_CONTAINER_DIR, methodsDirPath);
+                        LogError(msg);
+                        return false;
+                    }
+
+                    methodOverridePath = Path.Combine(methodsDir.FullName, methodName);
+                    if (!Directory.Exists(methodOverridePath))
+                    {
+                        var msg = string.Format("Bruker spectra export method directory not found " +
+                                                "(see parameter {0} in the settings file for this job): {1}",
+                                                BRUKER_SPECTRA_EXPORT_METHOD_PARAM,  methodOverridePath);
+                        LogError(msg);
+                        return false;
+                    }
+                }
 
                 LogMessage("Exporting spectra using Bruker DataAnalysis");
 
@@ -227,17 +261,14 @@ namespace AnalysisManagerBrukerDAExportPlugin
 
                 const string progLoc = @"C:\Windows\System32\cscript.exe";
 
-                var cmdStr = string.Empty;
-                cmdStr += " " + PossiblyQuotePath(scriptPath);
-                cmdStr += " " + PossiblyQuotePath(dataFolderPath);
-                cmdStr += " " + PossiblyQuotePath(outputPathBase);
-
-                // Could override the default method using this:
-                // cmdStr += " " + PossiblyQuotePath(methodOverridePath);
+                var cmdStr = PossiblyQuotePath(scriptPath) + " " +
+                             PossiblyQuotePath(dataFolderPath) + " " +
+                             PossiblyQuotePath(outputPathBase) + " " +
+                             PossiblyQuotePath(methodOverridePath);
 
                 if (m_DebugLevel >= 1)
                 {
-                    LogDebug(progLoc + " " + cmdStr);
+                    LogDebug(progLoc + " " + cmdStr.Trim());
                 }
 
                 var cmdRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel)
@@ -257,7 +288,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
                 var maxRuntimeSeconds = EstimateMaxRuntime(dataFolderPath);
                 mMaxRuntimeReached = false;
 
-                var success = cmdRunner.RunProgram(progLoc, cmdStr, "DataExport", true, maxRuntimeSeconds);
+                var success = cmdRunner.RunProgram(progLoc, cmdStr.Trim(), "DataExport", true, maxRuntimeSeconds);
 
                 if (!cmdRunner.WriteConsoleOutputToFile)
                 {
