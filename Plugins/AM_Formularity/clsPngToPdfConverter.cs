@@ -216,15 +216,17 @@ namespace AnalysisManagerFormularityPlugin
             // PNG filename suffix
             var suffix = "_" + datasetName + ".png";
 
-            // This tracks the PNG file names that will be linked to in the HTML table
-            // There are two .png images in each row of the table
-            // Use "text: " to instead include literal HTML text between <td> and </td>
+            // This tracks the PNG file names that will be added to the PDF file
+            // There are two PNG images in each row
+            // Use "text: " to instead include literal text instead of a PNG file
             var tableLayoutByRow = new List<List<string>>
             {
-                new List<string> {"mErr" + suffix, "histA" + suffix},
-                new List<string> {"KMD1_assigned" + suffix, "histM" + suffix},
-                new List<string> {"KMD1_unassigned" + suffix, datasetDetailReportLink},
-                new List<string> {"vK" + suffix, "EC_count" + suffix},
+                new List<string> {"EC_count" + suffix, "KMD1_assigned" + suffix},
+                new List<string> {"vK" + suffix, "KMD1_unassigned" + suffix},
+
+                new List<string> {"histA" + suffix, "mErr" + suffix},
+                new List<string> {"histM" + suffix, datasetDetailReportLink},
+
                 new List<string> {"Ox" + suffix, "OxN" + suffix},
                 new List<string> {"OxS" + suffix, "OxP" + suffix}
             };
