@@ -388,6 +388,10 @@ namespace AnalysisManagerFormularityPlugin
                 currentTask = "Moving index.html into " + plotDirectory.FullName;
 
                 var htmlFile = new FileInfo(Path.Combine(workDir.FullName, INDEX_HTML));
+                var newHtmlFile = new FileInfo(Path.Combine(plotDirectory.FullName, htmlFile.Name));
+                if (newHtmlFile.Exists)
+                    newHtmlFile.Delete();
+
                 htmlFile.MoveTo(Path.Combine(plotDirectory.FullName, htmlFile.Name));
                 m_jobParams.AddResultFileToSkip(htmlFile.Name);
 
@@ -596,12 +600,15 @@ namespace AnalysisManagerFormularityPlugin
                     return renameResultCode;
                 }
 
-                // Create the index.html file then zip the PNG files and HTML file together
-                var zipResultCode = CreateZipFileWithPlotsAndHTML(workDir, pngFiles);
-                if (zipResultCode != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    return zipResultCode;
-                }
+                // Uncomment to create index.html file for viewing the PNG files on a web page
+                // Will also create a .zip file with the index.html file and the PNG files
+                //
+                // // Create the index.html file then zip the PNG files and HTML file together
+                // var zipResultCode = CreateZipFileWithPlotsAndHTML(workDir, pngFiles);
+                // if (zipResultCode != CloseOutType.CLOSEOUT_SUCCESS)
+                // {
+                //     return zipResultCode;
+                // }
 
                 // Create a PDF using the PNG plots
                 // Note that the PNG files will now be in the plots subdirectory, but pngFiles should be up-to-date
@@ -611,17 +618,22 @@ namespace AnalysisManagerFormularityPlugin
                     return pdfResultCode;
                 }
 
-                // Delete the png files (to prevent them from being copied to the transfer directory
-                // However, move the KMD1_assigned png file back to the work directory; we want it visible from the DMS website
+                // Call AddResultFileToSkip for each of the PNG files (to prevent them from being copied to the transfer directory)
+                // However, keep the EC_count PNG file; we want it visible from the DMS website
                 foreach (var pngFile in pngFiles)
                 {
-                    if (pngFile.Name.StartsWith("KMD1_assigned_"))
+                    if (pngFile.Name.StartsWith("EC_count_"))
                     {
-                        pngFile.MoveTo(Path.Combine(workDir.FullName, pngFile.Name));
+                        var newFilePath = Path.Combine(workDir.FullName, pngFile.Name);
+                        if (!string.Equals(pngFile.FullName, newFilePath))
+                        {
+                            // The file is in the plots subdirectory; move it back to the working directory
+                            pngFile.MoveTo(Path.Combine(workDir.FullName, pngFile.Name));
+                        }
                     }
                     else
                     {
-                        pngFile.Delete();
+                        m_jobParams.AddResultFileToSkip(pngFile.Name);
                     }
                 }
 
