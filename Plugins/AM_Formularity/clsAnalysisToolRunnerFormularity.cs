@@ -15,7 +15,10 @@ namespace AnalysisManagerFormularityPlugin
     {
         #region "Constants and Enums"
 
-        private const float PROGRESS_PCT_STARTING = 5;
+        private const float PROGRESS_PCT_STARTING_FORMULARITY = 5;
+        private const float PROGRESS_PCT_FINISHED_FORMULARITY = 95;
+        private const float PROGRESS_PCT_FINISHED_NOMSI = 97;
+
         private const float PROGRESS_PCT_COMPLETE = 99;
 
         private const string FORMULARITY_CONSOLE_OUTPUT_FILE = "Formularity_ConsoleOutput.txt";
@@ -214,13 +217,14 @@ namespace AnalysisManagerFormularityPlugin
                             }
                             else
                             {
-                                if (pngFileNames.Contains(tableCell))
+                                var pngFileName = tableCell;
+                                if (pngFileNames.Contains(pngFileName))
                                 {
-                                    writer.WriteLine("      <td><a href='{0}'><img src='{0}' width='500' border='0'></a></td>", tableCell);
+                                    writer.WriteLine("      <td><a href='{0}'><img src='{0}' width='500' border='0'></a></td>", pngFileName);
                                 }
                                 else
                                 {
-                                    writer.WriteLine("      <td>File not found: {0}</td>", tableCell);
+                                    writer.WriteLine("      <td>File not found: {0}</td>", pngFileName);
                                 }
                             }
                         }
@@ -251,6 +255,10 @@ namespace AnalysisManagerFormularityPlugin
         {
             try
             {
+                if (m_DebugLevel >= 3)
+                {
+                    LogDebug("Creating PDF file with plots from NOMSI");
+                }
 
                 var converter = new PngToPdfConverter(m_Dataset);
                 RegisterEvents(converter);
@@ -307,6 +315,13 @@ namespace AnalysisManagerFormularityPlugin
 
                 var success = cmdRunner.RunProgram(progLocNOMSI, cmdStr, "NOMSI", true);
 
+                m_progress = PROGRESS_PCT_FINISHED_NOMSI;
+                m_StatusTools.UpdateAndWrite(m_progress);
+                if (m_DebugLevel >= 3)
+                {
+                    LogDebug("NOMSI plot creation complete");
+                }
+
                 if (success)
                 {
                     return CloseOutType.CLOSEOUT_SUCCESS;
@@ -332,12 +347,18 @@ namespace AnalysisManagerFormularityPlugin
 
         }
 
+        [Obsolete("Unused")]
         private CloseOutType CreateZipFileWithPlotsAndHTML(FileSystemInfo workDir, List<FileInfo> pngFiles)
         {
             var currentTask = "Initializing";
 
             try
             {
+                if (m_DebugLevel >= 3)
+                {
+                    LogDebug("Creating zip file with plots and index.html");
+                }
+
                 currentTask = "Calling CreatePlotViewHTML";
 
                 var htmlSuccess = CreatePlotViewHTML(workDir, pngFiles);
@@ -355,7 +376,13 @@ namespace AnalysisManagerFormularityPlugin
 
                 foreach (var pngFile in pngFiles)
                 {
-                    pngFile.MoveTo(Path.Combine(plotDirectory.FullName, pngFile.Name));
+                    var newPath = Path.Combine(plotDirectory.FullName, pngFile.Name);
+                    if (!string.Equals(pngFile.FullName, newPath))
+                    {
+                        pngFile.MoveTo(newPath);
+                    }
+
+                    // Do not call AddResultFileToSkip here since we keep the EC_count PNG file; see PostProcessResults
                 }
 
                 currentTask = "Moving index.html into " + plotDirectory.FullName;
@@ -607,7 +634,6 @@ namespace AnalysisManagerFormularityPlugin
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-
         }
 
         /// <summary>
@@ -625,12 +651,17 @@ namespace AnalysisManagerFormularityPlugin
 
             try
             {
+                if (m_DebugLevel >= 3)
+                {
+                    LogDebug("Renaming PNG plot files created by NOMSI");
+                }
 
                 // Confirm that multiple .png files were created
-                var sourcePngFiles = workDir.GetFiles("_Report.PNG").ToList();
+                var sourcePngFiles = workDir.GetFiles("*" + REPORT_PNG_FILE_SUFFIX).ToList();
                 if (sourcePngFiles.Count == 0)
                 {
-                    LogError("NOMSI did not create any PNG files");
+                    // NOMSI did not create any PNG files (with suffix _Report.PNG
+                    LogError(string.Format("NOMSI did not create any PNG files (with suffix {0})", REPORT_PNG_FILE_SUFFIX));
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
@@ -806,7 +837,7 @@ namespace AnalysisManagerFormularityPlugin
                     calibrationPeaksFilePath = Path.Combine(m_WorkDir, calibrationPeaksFileName);
                 }
 
-                m_progress = PROGRESS_PCT_STARTING;
+                m_progress = PROGRESS_PCT_STARTING_FORMULARITY;
 
                 var success = StartFormularity(progLoc, wildcardMatchSpec, paramFilePath, ciaDbPath, calibrationPeaksFilePath,
                                                out var fileCountNoPeaks, out nothingToAlign);
@@ -814,11 +845,11 @@ namespace AnalysisManagerFormularityPlugin
                 if (!success)
                     return false;
 
-                m_progress = PROGRESS_PCT_COMPLETE;
+                m_progress = PROGRESS_PCT_FINISHED_FORMULARITY;
                 m_StatusTools.UpdateAndWrite(m_progress);
                 if (m_DebugLevel >= 3)
                 {
-                    LogDebug("Formularity processing Complete");
+                    LogDebug("Formularity processing complete");
                 }
 
                 if (fileCountNoPeaks <= 0 && nothingToAlign == false)

@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using PdfSharp;
 using PdfSharp.Drawing;
 using PdfSharp.Pdf;
 
@@ -16,6 +18,9 @@ namespace AnalysisManagerFormularityPlugin
         /// </remarks>
         private const double PageMargin = 36;
 
+        /// <summary>
+        /// Double the page margin
+        /// </summary>
         private const double DoublePageMargin = PageMargin * 2;
 
         private readonly XFont mFontHeader;
@@ -137,7 +142,7 @@ namespace AnalysisManagerFormularityPlugin
         /// <summary>
         /// Create a PDF file with the given PNG files
         /// </summary>
-        /// <param name="pdfFilePath">Path to the PDF file to be created</param>
+        /// <param name="pdfFilePath">Path to the PDF file create</param>
         /// <param name="pngFiles"></param>
         /// <param name="dataSource"></param>
         /// <returns></returns>
@@ -150,6 +155,9 @@ namespace AnalysisManagerFormularityPlugin
 
             try
             {
+                var pdfFile = new FileInfo(pdfFilePath);
+                if (pdfFile.Exists)
+                    pdfFile.Delete();
 
                 var pdfDoc = new PdfDocument();
                 pdfDoc.Options.NoCompression = true;
@@ -166,15 +174,42 @@ namespace AnalysisManagerFormularityPlugin
                     pngFileNames.Add(item.Name);
                 }
 
+                var workDir = pngFiles.First().DirectoryName;
+                if (string.IsNullOrWhiteSpace(workDir))
+                {
+                    OnErrorEvent("Cannot determine the parent directory of " + pngFiles.First());
+                    return false;
+                }
 
-                var plotHeight = (mCurrentPage.Width - DoublePageMargin - 10) / 3;
+                // Spacing between plots on the same row
+                var PLOT_SPACING_X = 10;
 
-                const int xOffsetIncrement = 300;
+                const int ROWS_PER_AGE = 2;
+                var rowsProcessed = 0;
 
+                PdfPageInfo currentPage = null;
+
+                // Add each of the plots
                 foreach (var tableRow in pngFileTableLayout)
                 {
+                    if (currentPage == null || rowsProcessed % ROWS_PER_AGE == 0)
+                    {
+                        // Create a new page
+                        currentPage = AddPage(pdfDoc);
+
+                        // Include the Dataset name as the header on every page
+                        const double yScalar = 0.75;
+                        var yOffsetIncrement = AddText(currentPage, DatasetName, mFontHeader, yScalar, position: XStringFormats.Center);
+                        currentPage.IncrementY(yOffsetIncrement);
+
+                        // Add 10 points of vertical whitespace
+                        currentPage.IncrementY(10);
+                    }
+
+                    // Scaled plot width, in points
+                    var plotWidth = (currentPage.Page.Width - DoublePageMargin - 10) / 2;
                     var xOffset = PageMargin;
-                    double yOffsetIncrement = 0;
+                    double yOffsetIncrementForRow = 0;
 
                     foreach (var tableCell in tableRow)
                     {
@@ -183,44 +218,56 @@ namespace AnalysisManagerFormularityPlugin
 
                             if (pngFileNames.Contains(tableCell))
                             {
-                                var pngFilePath = tableCell;
+                                var pngFileName = tableCell;
 
-                                // Obsolete: var textHeight = GetTextHeight("int", mCurrentPageGraphics, mFontDefault);
+                                var plotImage = XImage.FromFile(Path.Combine(workDir, pngFileName));
 
-                                var plotImage = XImage.FromFile(pngFilePath);
-
-                                var plotWidth = plotHeight;
+                                // Scaled plot height, in points
+                                var plotHeight = plotImage.PointHeight / plotImage.PointWidth * plotWidth;
 
                                 // Note that AddPlot will call plotImage.Dispose
-                                AddPlot(plotImage, xOffset, plotImage.PointHeight, plotImage.PointWidth, "");
+                                AddPlot(currentPage, plotImage, xOffset, plotWidth, plotHeight, "");
                                 xOffset += plotWidth + 5;
 
-                                yOffsetIncrement = Math.Max(yOffsetIncrement, plotHeight);
+                                yOffsetIncrementForRow = Math.Max(yOffsetIncrementForRow, plotHeight);
                             }
                             else
                             {
-                                var textHeight = AddText(string.Format("File not found: {0}", tableCell), mFontDefault, 0, xOffset);
+                                var yOffsetIncrement = AddText(currentPage, string.Format("File not found: {0}", tableCell), mFontDefault, 0, xOffset);
 
-                                yOffsetIncrement = Math.Max(yOffsetIncrement, textHeight);
+                                yOffsetIncrementForRow = Math.Max(yOffsetIncrementForRow, yOffsetIncrement);
                             }
                         }
 
-                        xOffset += xOffsetIncrement;
+                        xOffset += PLOT_SPACING_X;
                     }
 
-                    currentPageY += yOffsetIncrement;
+                    currentPage.IncrementY(yOffsetIncrementForRow);
+
+                    // Add 10 points of vertical whitespace
+                    currentPage.IncrementY(10);
+
+                    rowsProcessed++;
                 }
+
+                pdfDoc.Save(pdfFile.FullName);
 
                 return true;
             }
             catch (Exception ex)
             {
-                base.OnErrorEvent("Error creating the PDF using .png files from " + dataSource, ex);
+                OnErrorEvent("Error creating the PDF using .png files from " + dataSource, ex);
                 return false;
             }
 
         }
 
+        /// <summary>
+        /// Get a list of lists that describes how to arrange the PNG files in the PDF file
+        /// </summary>
+        /// <param name="datasetName">Dataset name</param>
+        /// <param name="datasetDetailReportLink">Text to display instead of a PNG file</param>
+        /// <returns></returns>
         public static List<List<string>> GetPngFileTableLayout(string datasetName, string datasetDetailReportLink)
         {
 
@@ -245,6 +292,13 @@ namespace AnalysisManagerFormularityPlugin
             return tableLayoutByRow;
         }
 
+        /// <summary>
+        /// Determine the height of the given text, in points
+        /// </summary>
+        /// <param name="text"></param>
+        /// <param name="gfx"></param>
+        /// <param name="font"></param>
+        /// <returns></returns>
         private static double GetTextHeight(string text, XGraphics gfx, XFont font)
         {
             var textSize = gfx.MeasureString(text, font);
