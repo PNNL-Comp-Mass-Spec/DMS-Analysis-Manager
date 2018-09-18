@@ -227,7 +227,10 @@ namespace AnalysisManagerBrukerDAExportPlugin
                 var methodName = m_jobParams.GetParam(BRUKER_SPECTRA_EXPORT_METHOD_PARAM);
                 string methodOverridePath;
 
-                if (string.IsNullOrWhiteSpace(methodName))
+                // ToDo: Remove this after we get method loading working, or we switch to MSConvert
+                const bool IGNORE_BRUKER_SPECTRA_EXPORT_METHOD = true;
+
+                if (string.IsNullOrWhiteSpace(methodName) || IGNORE_BRUKER_SPECTRA_EXPORT_METHOD)
                 {
                     methodOverridePath = string.Empty;
                 }
