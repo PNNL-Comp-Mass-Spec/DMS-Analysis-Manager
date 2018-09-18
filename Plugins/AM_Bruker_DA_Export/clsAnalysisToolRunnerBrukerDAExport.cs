@@ -17,6 +17,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
     /// <summary>
     /// Class for running DA Export
     /// </summary>
+    // ReSharper disable once UnusedMember.Global
     public class clsAnalysisToolRunnerBrukerDAExport : clsAnalysisToolRunnerBase
     {
         #region "Constants and Enums"
@@ -295,9 +296,9 @@ namespace AnalysisManagerBrukerDAExportPlugin
                     // Write the console output to a text file
                     clsGlobal.IdleLoop(0.25);
 
-                    using (var swConsoleOutputfile = new StreamWriter(new FileStream(cmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                    using (var writer = new StreamWriter(new FileStream(cmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                     {
-                        swConsoleOutputfile.WriteLine(cmdRunner.CachedConsoleOutput);
+                        writer.WriteLine(cmdRunner.CachedConsoleOutput);
                     }
 
                 }
@@ -377,23 +378,23 @@ namespace AnalysisManagerBrukerDAExportPlugin
         {
             try
             {
-                var diBrukerDaltonik = new DirectoryInfo(@"C:\Program Files (x86)\Bruker Daltonik\");
+                var brukerDaltonikDir = new DirectoryInfo(@"C:\Program Files (x86)\Bruker Daltonik\");
 
-                if (!diBrukerDaltonik.Exists)
+                if (!brukerDaltonikDir.Exists)
                 {
-                    diBrukerDaltonik = new DirectoryInfo(@"C:\Program Files\Bruker Daltonik\");
+                    brukerDaltonikDir = new DirectoryInfo(@"C:\Program Files\Bruker Daltonik\");
                 }
 
-                if (!diBrukerDaltonik.Exists)
+                if (!brukerDaltonikDir.Exists)
                 {
                     LogError(@"Bruker Daltonik folder not found in C:\Program Files (x86) or C:\Program Files");
                     return string.Empty;
                 }
 
-                var fiFiles = diBrukerDaltonik.GetFiles("DataAnalysis.exe", SearchOption.AllDirectories).ToList();
+                var fiFiles = brukerDaltonikDir.GetFiles("DataAnalysis.exe", SearchOption.AllDirectories).ToList();
                 if (fiFiles.Count == 0)
                 {
-                    LogError(@"DataAnalysis.exe not found in the Bruker Daltonik folder at " + diBrukerDaltonik.FullName);
+                    LogError(@"DataAnalysis.exe not found in the Bruker Daltonik folder at " + brukerDaltonikDir.FullName);
                     return string.Empty;
                 }
 
@@ -402,7 +403,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
             }
             catch (Exception ex)
             {
-                m_message = "Error in BrukerDAExportPlugin->FindDataAnlaysisProgram";
+                m_message = "Error in BrukerDAExportPlugin->FindDataAnalysisProgram";
                 LogError(m_message, ex);
                 return string.Empty;
             }
@@ -422,6 +423,8 @@ namespace AnalysisManagerBrukerDAExportPlugin
         /// <remarks></remarks>
         private void ParseConsoleOutputFile(string strConsoleOutputFilePath)
         {
+            // ReSharper disable CommentTypo
+
             // Example Console output
             //
             // Microsoft (R) Windows Script Host Version 5.8
@@ -434,6 +437,8 @@ namespace AnalysisManagerBrukerDAExportPlugin
             // ... create C:\Data\2014_05_09_Kaplan_Far_Neg_000001_scan1.xml
             //
             // Scan count exported = 1
+
+            // ReSharper restore CommentTypo
 
             try
             {

@@ -600,7 +600,8 @@ namespace AnalysisManagerFormularityPlugin
                     return renameResultCode;
                 }
 
-                // Uncomment to create index.html file for viewing the PNG files on a web page
+
+                // Uncomment the following to create an index.html file for viewing the PNG files on a web page
                 // Will also create a .zip file with the index.html file and the PNG files
                 //
                 // // Create the index.html file then zip the PNG files and HTML file together
