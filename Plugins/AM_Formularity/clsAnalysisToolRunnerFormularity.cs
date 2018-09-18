@@ -611,13 +611,10 @@ namespace AnalysisManagerFormularityPlugin
                 //     return zipResultCode;
                 // }
 
+
                 // Create a PDF using the PNG plots
                 // Note that the PNG files will now be in the plots subdirectory, but pngFiles should be up-to-date
                 var pdfResultCode = CreatePDFFromPlots(workDir, pngFiles);
-                if (pdfResultCode != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    return pdfResultCode;
-                }
 
                 // Call AddResultFileToSkip for each of the PNG files (to prevent them from being copied to the transfer directory)
                 // However, keep the EC_count PNG file; we want it visible from the DMS website
@@ -636,6 +633,11 @@ namespace AnalysisManagerFormularityPlugin
                     {
                         m_jobParams.AddResultFileToSkip(pngFile.Name);
                     }
+                }
+
+                if (pdfResultCode != CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    return pdfResultCode;
                 }
 
                 return CloseOutType.CLOSEOUT_SUCCESS;

@@ -5,8 +5,9 @@
 //
 //*********************************************************************************************************
 
-using AnalysisManagerBase;
 using System;
+using AnalysisManagerBase;
+
 
 namespace AnalysisManagerTopFDPlugIn
 {
