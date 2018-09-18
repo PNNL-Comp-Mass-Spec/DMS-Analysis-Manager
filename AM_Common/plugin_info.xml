@@ -382,6 +382,11 @@
 		Class="AnalysisManagerTopPICPlugIn.clsAnalysisToolRunnerTopPIC" 
 		AssemblyFile="AnalysisManagerTopPICPlugIn.dll" 
 	/>
+	<ToolRunner 
+		Tool="thermopeakdataexporter" 
+		Class="AnalysisManagerThermoPeakDataExporterPlugIn.clsAnalysisToolRunnerThermoPeakDataExporter" 
+		AssemblyFile="AnalysisManagerThermoPeakDataExporterPlugIn.dll" 
+	/>
 </ToolRunners>
 
 <Resourcers>
@@ -765,7 +770,11 @@
 		Class="AnalysisManagerTopPICPlugIn.clsAnalysisResourcesTopPIC" 
 		AssemblyFile="AnalysisManagerTopPICPlugIn.dll" 
 	/>
-
+	<Resourcer 
+		Tool="thermopeakdataexporter" 
+		Class="AnalysisManagerThermoPeakDataExporterPlugIn.clsAnalysisResourcesThermoPeakDataExporter" 
+		AssemblyFile="AnalysisManagerThermoPeakDataExporterPlugIn.dll" 
+	/>
 </Resourcers>
 
 <DTAGenerators Note="This section is obsolete">
