@@ -717,7 +717,6 @@ namespace AnalysisManagerProg
                 throw;
             }
 
-
         }
 
         /// <summary>
