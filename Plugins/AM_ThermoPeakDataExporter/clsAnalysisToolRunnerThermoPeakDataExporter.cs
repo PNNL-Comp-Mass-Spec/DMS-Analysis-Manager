@@ -74,12 +74,11 @@ namespace AnalysisManagerThermoPeakDataExporterPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-
-                // Store the ProMex version info in the database
+                // Store the ThermoPeakDataExporter version info in the database
                 if (!StoreToolVersionInfo(progLoc))
                 {
                     LogError("Aborting since StoreToolVersionInfo returned false");
-                    m_message = "Error determining ProMex version";
+                    m_message = "Error determining ThermoPeakDataExporter version";
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
@@ -216,8 +215,11 @@ namespace AnalysisManagerThermoPeakDataExporterPlugIn
 
             var resultsFile = new FileInfo(Path.Combine(m_WorkDir, Dataset + ".tsv"));
 
+            var minimumSignalToNoiseRatio = m_jobParams.GetJobParameter("MinimumSignalToNoiseRatio", 0);
+
             var cmdStr = Dataset + clsAnalysisResources.DOT_RAW_EXTENSION +
-                         " /O:" + clsGlobal.PossiblyQuotePath(resultsFile.FullName);
+                         " /O:" + clsGlobal.PossiblyQuotePath(resultsFile.FullName) +
+                         " /minSN:" + minimumSignalToNoiseRatio;
 
             LogDebug(progLoc + " " + cmdStr);
 
