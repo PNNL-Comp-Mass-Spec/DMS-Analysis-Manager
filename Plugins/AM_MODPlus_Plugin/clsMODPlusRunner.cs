@@ -38,19 +38,13 @@ namespace AnalysisManagerMODPlusPlugin
 
         public bool CommandLineArgsLogged { get; set; }
 
-        public string CommandLineArgs
-        {
-            get { return mCommandLineArgs; }
-        }
+        public string CommandLineArgs { get; private set; }
 
-        public string ConsoleOutputFilePath
-        {
-            get { return mConsoleOutputFilePath; }
-        }
+        public string ConsoleOutputFilePath { get; private set; }
 
         public int JavaMemorySizeMB
         {
-            get { return mJavaMemorySizeMB; }
+            get => mJavaMemorySizeMB;
             set
             {
                 if (value < 500)
@@ -59,49 +53,31 @@ namespace AnalysisManagerMODPlusPlugin
             }
         }
 
-        public string OutputFilePath
-        {
-            get { return mOutputFilePath; }
-        }
+        public string OutputFilePath { get; private set; }
 
-        public string ParameterFilePath
-        {
-            get { return mParameterFilePath; }
-        }
+        public string ParameterFilePath { get; }
 
-        public int ProcessID
-        {
-            get { return mProcessID; }
-        }
+        public int ProcessID { get; private set; }
 
-        public float CoreUsage
-        {
-            get { return mCoreUsageCurrent; }
-        }
+        public float CoreUsage { get; private set; }
 
         /// <summary>
         /// Value between 0 and 100
         /// </summary>
         /// <remarks></remarks>
-        public double Progress
-        {
-            get { return mProgress; }
-        }
+        public double Progress { get; private set; }
 
-        public clsRunDosProgram ProgramRunner
-        {
-            get { return mCmdRunner; }
-        }
+        public clsRunDosProgram ProgramRunner { get; private set; }
 
         public ProgRunner.States ProgRunnerStatus
         {
             get
             {
-                if (mCmdRunner == null)
+                if (ProgramRunner == null)
                 {
-                    return PRISM.ProgRunner.States.NotMonitoring;
+                    return ProgRunner.States.NotMonitoring;
                 }
-                return mCmdRunner.State;
+                return ProgramRunner.State;
             }
         }
 
@@ -111,46 +87,24 @@ namespace AnalysisManagerMODPlusPlugin
         /// <value></value>
         /// <returns></returns>
         /// <remarks></remarks>
-        public string ReleaseDate
-        {
-            get { return mReleaseDate; }
-        }
+        public string ReleaseDate { get; private set; }
 
-        public MODPlusRunnerStatusCodes Status
-        {
-            get { return mStatus; }
-        }
+        public MODPlusRunnerStatusCodes Status { get; private set; }
 
-        public int Thread
-        {
-            get { return mThread; }
-        }
+        public int Thread { get; }
 
         #endregion
-
         #region "Member Variables"
 
-        private string mConsoleOutputFilePath;
-        private string mOutputFilePath;
-        private string mCommandLineArgs;
-
-        private double mProgress;
         private int mJavaMemorySizeMB;
 
-        private MODPlusRunnerStatusCodes mStatus;
-        private string mReleaseDate;
-
         private readonly string mDataset;
-        private readonly int mThread;
+
         private readonly string mWorkingDirectory;
-        private readonly string mParameterFilePath;
+
         private readonly string mJavaProgLog;
+
         private readonly string mModPlusJarFilePath;
-
-        private int mProcessID;
-        private float mCoreUsageCurrent;
-
-        private clsRunDosProgram mCmdRunner;
 
         #endregion
 
@@ -167,18 +121,18 @@ namespace AnalysisManagerMODPlusPlugin
         public clsMODPlusRunner(string dataset, int processingThread, string workingDirectory, string paramFilePath, string javaProgLoc, string modPlusJarFilePath)
         {
             mDataset = dataset;
-            mThread = processingThread;
+            Thread = processingThread;
             mWorkingDirectory = workingDirectory;
-            mParameterFilePath = paramFilePath;
+            ParameterFilePath = paramFilePath;
             mJavaProgLog = javaProgLoc;
             mModPlusJarFilePath = modPlusJarFilePath;
 
-            mStatus = MODPlusRunnerStatusCodes.NotStarted;
-            mReleaseDate = string.Empty;
+            Status = MODPlusRunnerStatusCodes.NotStarted;
+            ReleaseDate = string.Empty;
 
-            mConsoleOutputFilePath = string.Empty;
-            mOutputFilePath = string.Empty;
-            mCommandLineArgs = string.Empty;
+            ConsoleOutputFilePath = string.Empty;
+            OutputFilePath = string.Empty;
+            CommandLineArgs = string.Empty;
 
             CommandLineArgsLogged = false;
             JavaMemorySizeMB = 3000;
@@ -190,56 +144,58 @@ namespace AnalysisManagerMODPlusPlugin
         /// <remarks></remarks>
         public void AbortProcessingNow()
         {
-            mCmdRunner?.AbortProgramNow();
+            ProgramRunner?.AbortProgramNow();
         }
 
         public void StartAnalysis()
         {
-            mCmdRunner = new clsRunDosProgram(mWorkingDirectory);
-            mCmdRunner.ErrorEvent += CmdRunner_ErrorEvent;
-            mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
+            ProgramRunner = new clsRunDosProgram(mWorkingDirectory);
+            ProgramRunner.ErrorEvent += CmdRunner_ErrorEvent;
+            ProgramRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
-            mProgress = 0;
+            Progress = 0;
 
-            mConsoleOutputFilePath = Path.Combine(mWorkingDirectory, MOD_PLUS_CONSOLE_OUTPUT_PREFIX + mThread + ".txt");
+            ConsoleOutputFilePath = Path.Combine(mWorkingDirectory, MOD_PLUS_CONSOLE_OUTPUT_PREFIX + Thread + ".txt");
 
-            mOutputFilePath = Path.Combine(mWorkingDirectory, mDataset + "_Part" + mThread + RESULTS_FILE_SUFFIX);
+            OutputFilePath = Path.Combine(mWorkingDirectory, mDataset + "_Part" + Thread + RESULTS_FILE_SUFFIX);
 
-            mCmdRunner.CreateNoWindow = true;
-            mCmdRunner.CacheStandardOutput = false;
-            mCmdRunner.EchoOutputToConsole = false;
+            ProgramRunner.CreateNoWindow = true;
+            ProgramRunner.CacheStandardOutput = false;
+            ProgramRunner.EchoOutputToConsole = false;
 
-            mCmdRunner.WriteConsoleOutputToFile = true;
-            mCmdRunner.ConsoleOutputFilePath = mConsoleOutputFilePath;
+            ProgramRunner.WriteConsoleOutputToFile = true;
+            ProgramRunner.ConsoleOutputFilePath = ConsoleOutputFilePath;
 
-            mStatus = MODPlusRunnerStatusCodes.Running;
+            Status = MODPlusRunnerStatusCodes.Running;
 
             var cmdStr = string.Empty;
 
             cmdStr += " -Xmx" + JavaMemorySizeMB + "M";
             cmdStr += " -jar " + clsGlobal.PossiblyQuotePath(mModPlusJarFilePath);
-            cmdStr += " -i " + clsGlobal.PossiblyQuotePath(mParameterFilePath);
-            cmdStr += " -o " + clsGlobal.PossiblyQuotePath(mOutputFilePath);
+            cmdStr += " -i " + clsGlobal.PossiblyQuotePath(ParameterFilePath);
+            cmdStr += " -o " + clsGlobal.PossiblyQuotePath(OutputFilePath);
 
-            mCommandLineArgs = cmdStr;
+            CommandLineArgs = cmdStr;
 
-            mProcessID = 0;
-            mCoreUsageCurrent = 1;
+            ProcessID = 0;
+            CoreUsage = 1;
 
             // Start the program and wait for it to finish
             // However, while it's running, LoopWaiting will get called via events
-            var blnSuccess = mCmdRunner.RunProgram(mJavaProgLog, cmdStr, "MODPlus", true);
+            var blnSuccess = ProgramRunner.RunProgram(mJavaProgLog, cmdStr, "MODPlus", true);
 
             if (blnSuccess)
             {
-                mStatus = MODPlusRunnerStatusCodes.Success;
-                mProgress = 100;
+                Status = MODPlusRunnerStatusCodes.Success;
+                Progress = 100;
             }
             else
             {
-                mStatus = MODPlusRunnerStatusCodes.Failure;
+                Status = MODPlusRunnerStatusCodes.Failure;
             }
         }
+
+        // ReSharper disable CommentTypo
 
         // Example Console output
         //
@@ -269,8 +225,10 @@ namespace AnalysisManagerMODPlusPlugin
         // MODPlus | 50395/50396
         // MODPlus | 50396/50396
         // [MOD-Plus] Elapsed Time : 6461 Sec
-        //
-        private Regex reCheckProgress = new Regex(@"^MODPlus[^0-9]+(\d+)/(\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+        // ReSharper restore CommentTypo
+
+        private readonly Regex reCheckProgress = new Regex(@"^MODPlus[^0-9]+(\d+)/(\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         /// <summary>
         /// Parse the MODPlus console output file to track the search progress
@@ -302,7 +260,7 @@ namespace AnalysisManagerMODPlusPlugin
 
                         if (strLineIn.ToLower().StartsWith("release date:"))
                         {
-                            mReleaseDate = strLineIn.Substring(13).TrimStart();
+                            ReleaseDate = strLineIn.Substring(13).TrimStart();
                             continue;
                         }
 
@@ -322,9 +280,9 @@ namespace AnalysisManagerMODPlusPlugin
                 // Value between 0 and 100
                 var progressComplete = Math.Round(spectraSearched / (float)totalSpectra * 100);
 
-                if (progressComplete > mProgress)
+                if (progressComplete > Progress)
                 {
-                    mProgress = progressComplete;
+                    Progress = progressComplete;
                 }
             }
             catch (Exception ex)
@@ -355,20 +313,18 @@ namespace AnalysisManagerMODPlusPlugin
             {
                 dtLastConsoleOutputParse = DateTime.UtcNow;
 
-                ParseConsoleOutputFile(mConsoleOutputFilePath);
+                ParseConsoleOutputFile(ConsoleOutputFilePath);
 
                 // Note that the call to GetCoreUsage() will take at least 1 second
-                mCoreUsageCurrent = mCmdRunner.GetCoreUsage();
-                mProcessID = mCmdRunner.ProcessID;
+                CoreUsage = ProgramRunner.GetCoreUsage();
+                ProcessID = ProgramRunner.ProcessID;
             }
 
-            var processIDs = new List<int>();
-            processIDs.Add(mProcessID);
+            var processIDs = new List<int> {
+                ProcessID
+            };
 
-            if (CmdRunnerWaiting != null)
-            {
-                CmdRunnerWaiting(processIDs, mCoreUsageCurrent, SECONDS_BETWEEN_UPDATE);
-            }
+            CmdRunnerWaiting?.Invoke(processIDs, CoreUsage, SECONDS_BETWEEN_UPDATE);
         }
     }
 }

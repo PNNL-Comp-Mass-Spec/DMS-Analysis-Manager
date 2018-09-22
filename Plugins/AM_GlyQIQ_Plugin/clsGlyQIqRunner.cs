@@ -47,7 +47,7 @@ namespace AnalysisManagerGlyQIQPlugin
         /// <remarks></remarks>
         public double Progress => mProgress;
 
-        public clsRunDosProgram ProgRunner => mCmdRunner;
+        public clsRunDosProgram ProgramRunner => mCmdRunner;
 
         public GlyQIqRunnerStatusCodes Status => mStatus;
 

@@ -804,7 +804,7 @@ namespace AnalysisManagerGlyQIQPlugin
 
                 foreach (var glyQRunner in mGlyQRunners)
                 {
-                    var progRunner = glyQRunner.Value.ProgRunner;
+                    var progRunner = glyQRunner.Value.ProgramRunner;
 
                     if (progRunner == null)
                         continue;
