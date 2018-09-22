@@ -13,7 +13,7 @@ namespace AnalysisManagerBase
     /// <summary>
     /// FASTA file utilities
     /// </summary>
-    public class clsSplitFastaFileUtilities : clsEventNotifier
+    public class clsSplitFastaFileUtilities : EventNotifier
     {
 
         /// <summary>

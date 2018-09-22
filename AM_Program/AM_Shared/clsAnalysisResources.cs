@@ -1685,7 +1685,7 @@ namespace AnalysisManagerBase
                 if (!deleteRawDataFile)
                     return true;
 
-                clsProgRunner.GarbageCollectNow();
+                ProgRunner.GarbageCollectNow();
                 try
                 {
                     File.Delete(inputFilePath);

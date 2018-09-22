@@ -175,7 +175,7 @@ namespace AnalysisManagerInSpecTPlugIn
                 UpdateSummaryFile();
 
                 // Make sure objects are released
-                clsProgRunner.GarbageCollectNow();
+                ProgRunner.GarbageCollectNow();
 
                 var success = CopyResultsToTransferDirectory();
 

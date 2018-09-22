@@ -354,7 +354,7 @@ namespace AnalysisManager_AScore_PlugIn
             try
             {
                 // Perform garage collection to force the Unzip tool to release the file handle
-                clsProgRunner.GarbageCollectNow();
+                ProgRunner.GarbageCollectNow();
 
                 clsAnalysisToolRunnerBase.DeleteFileWithRetries(dtaZipPathLocal, debugLevel: 1, maxRetryCount: 2);
             }
@@ -540,7 +540,7 @@ namespace AnalysisManager_AScore_PlugIn
 
         /// <summary>Use this method to chain events between classes</summary>
         /// <param name="sourceClass"></param>
-        protected void RegisterEvents(clsEventNotifier sourceClass)
+        protected void RegisterEvents(EventNotifier sourceClass)
         {
             sourceClass.ErrorEvent += OnErrorEvent;
             sourceClass.WarningEvent += OnWarningEvent;

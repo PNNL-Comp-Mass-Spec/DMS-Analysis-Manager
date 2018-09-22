@@ -5,7 +5,7 @@ using PRISM;
 
 namespace AnalysisManagerMsXmlGenPlugIn
 {
-    public class clsRawConverterRunner : clsEventNotifier
+    public class clsRawConverterRunner : EventNotifier
     {
         #region "Constants"
 

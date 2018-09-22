@@ -1402,12 +1402,12 @@ namespace AnalysisManagerBase
                         taskResult = RequestTaskResult.NoTaskFound;
                         break;
 
-                    case clsExecuteDatabaseSP.RET_VAL_EXCESSIVE_RETRIES:
+                    case ExecuteDatabaseSP.RET_VAL_EXCESSIVE_RETRIES:
                         // Too many retries
                         taskResult = RequestTaskResult.TooManyRetries;
                         break;
 
-                    case clsExecuteDatabaseSP.RET_VAL_DEADLOCK:
+                    case ExecuteDatabaseSP.RET_VAL_DEADLOCK:
                         // Transaction was deadlocked on lock resources with another process and has been chosen as the deadlock victim
                         taskResult = RequestTaskResult.Deadlock;
                         break;

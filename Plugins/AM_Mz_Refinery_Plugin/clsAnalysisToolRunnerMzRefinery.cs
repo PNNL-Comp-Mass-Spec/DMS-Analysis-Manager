@@ -268,7 +268,7 @@ namespace AnalysisManagerMzRefineryPlugIn
 
                 // Make sure objects are released
                 clsGlobal.IdleLoop(0.5);
-                PRISM.clsProgRunner.GarbageCollectNow();
+                PRISM.ProgRunner.GarbageCollectNow();
 
                 if (processingError)
                 {
@@ -1141,7 +1141,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             if (!string.IsNullOrWhiteSpace(mCmdRunner.CachedConsoleErrors))
             {
                 // Append the error messages to the log
-                // Note that clsProgRunner will have already included them in the ConsoleOutput.txt file
+                // Note that ProgRunner will have already included them in the ConsoleOutput.txt file
 
                 var consoleError = "Console error: " + mCmdRunner.CachedConsoleErrors.Replace(Environment.NewLine, "; ");
                 if (string.IsNullOrWhiteSpace(mConsoleOutputErrorMsg))

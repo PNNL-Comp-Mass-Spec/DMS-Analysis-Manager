@@ -1,6 +1,6 @@
 Imports PRISM.Logging
 Imports System.IO
-Imports PRISM.Files.clsFileTools
+Imports PRISM.Files.FileTools
 Imports System.Text.RegularExpressions
 Imports AnalysisManagerBase.clsGlobal
 
@@ -77,7 +77,7 @@ Public Class clsAnalysisToolRunnerDeNovoID
         m_StopTime = System.DateTime.UtcNow
 
         'Make sure all files have released locks
-        PRISM.Processes.clsProgRunner.GarbageCollectNow()
+        PRISM.Processes.ProgRunner.GarbageCollectNow()
         System.Threading.Thread.Sleep(1000)
 
         'Get rid of raw data file

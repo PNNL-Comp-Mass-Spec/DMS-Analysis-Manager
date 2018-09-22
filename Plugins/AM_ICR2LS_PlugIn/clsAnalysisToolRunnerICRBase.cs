@@ -130,7 +130,7 @@ namespace AnalysisManagerICR2LSPlugIn
                 var success = mPEKtoCSVConverter.Convert();
 
                 mPEKtoCSVConverter = null;
-                PRISM.clsProgRunner.GarbageCollectNow();
+                PRISM.ProgRunner.GarbageCollectNow();
 
                 return success;
             }

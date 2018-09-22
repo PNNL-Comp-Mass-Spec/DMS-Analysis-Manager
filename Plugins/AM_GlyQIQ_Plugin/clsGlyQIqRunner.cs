@@ -51,13 +51,13 @@ namespace AnalysisManagerGlyQIQPlugin
 
         public GlyQIqRunnerStatusCodes Status => mStatus;
 
-        public clsProgRunner.States ProgRunnerStatus
+        public ProgRunner.States ProgRunnerStatus
         {
             get
             {
                 if (mCmdRunner == null)
                 {
-                    return clsProgRunner.States.NotMonitoring;
+                    return ProgRunner.States.NotMonitoring;
                 }
                 return mCmdRunner.State;
             }

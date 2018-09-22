@@ -219,7 +219,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                 UpdateSummaryFile();
 
                 // Make sure objects are released
-                PRISM.clsProgRunner.GarbageCollectNow();
+                PRISM.ProgRunner.GarbageCollectNow();
 
                 // Zip up the text files that contain the data behind the plots
                 // In addition, rename file LipidMap_results.xlsx

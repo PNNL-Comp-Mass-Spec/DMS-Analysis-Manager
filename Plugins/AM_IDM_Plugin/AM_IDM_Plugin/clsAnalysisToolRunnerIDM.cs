@@ -122,7 +122,7 @@ namespace AnalysisManager_IDM_Plugin
                 UpdateSummaryFile();
 
                 // Make sure objects are released
-                clsProgRunner.GarbageCollectNow();
+                ProgRunner.GarbageCollectNow();
 
                 if (!processingSuccess)
                 {

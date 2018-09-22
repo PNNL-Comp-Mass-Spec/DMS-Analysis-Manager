@@ -120,7 +120,7 @@ namespace AnalysisManagerMODPlusPlugin
                 UpdateSummaryFile();
 
                 // Make sure objects are released
-                PRISM.clsProgRunner.GarbageCollectNow();
+                PRISM.ProgRunner.GarbageCollectNow();
 
                 if (!processingSuccess)
                 {
@@ -1033,7 +1033,7 @@ namespace AnalysisManagerMODPlusPlugin
                         mToolVersionWritten = StoreToolVersionInfo(mMODPlusProgLoc);
                     }
 
-                    var progRunner = modPlusRunner.Value.ProgRunner;
+                    var progRunner = modPlusRunner.Value.ProgramRunner;
 
                     if (progRunner == null)
                     {
@@ -1047,7 +1047,7 @@ namespace AnalysisManagerMODPlusPlugin
 
                     if (!string.IsNullOrWhiteSpace(progRunner.CachedConsoleErrors))
                     {
-                        // Note that clsProgRunner will have already included these errors in the ConsoleOutput.txt file
+                        // Note that ProgRunner will have already included these errors in the ConsoleOutput.txt file
                         var consoleError = "Console error for thread " + modPlusRunner.Key + ": " +
                                            progRunner.CachedConsoleErrors.Replace(Environment.NewLine, "; ");
                         LogError(consoleError);

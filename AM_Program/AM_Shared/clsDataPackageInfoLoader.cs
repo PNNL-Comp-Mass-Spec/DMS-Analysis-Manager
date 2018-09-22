@@ -278,7 +278,7 @@ namespace AnalysisManagerBase
             // Throttle the calls to this function to avoid overloading the database for data packages with hundreds of jobs
             while (DateTime.UtcNow.Subtract(mLastJobParameterFromHistoryLookup).TotalMilliseconds < 50)
             {
-                PRISM.clsProgRunner.SleepMilliseconds(25);
+                PRISM.ProgRunner.SleepMilliseconds(25);
             }
 
             mLastJobParameterFromHistoryLookup = DateTime.UtcNow;

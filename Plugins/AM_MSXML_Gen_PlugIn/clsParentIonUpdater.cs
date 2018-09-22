@@ -10,7 +10,7 @@ using PRISM;
 
 namespace AnalysisManagerMsXmlGenPlugIn
 {
-    public class clsParentIonUpdater : clsEventNotifier
+    public class clsParentIonUpdater : EventNotifier
     {
         private const string XML_ELEMENT_INDEXED_MZML = "indexedmzML";
         private const string XML_ELEMENT_MZML = "mzML";

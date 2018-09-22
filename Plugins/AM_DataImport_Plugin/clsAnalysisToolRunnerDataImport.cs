@@ -62,7 +62,7 @@ namespace AnalysisManagerDataImportPlugIn
                 m_StopTime = DateTime.UtcNow;
 
                 // Make sure objects are released
-                PRISM.clsProgRunner.GarbageCollectNow();
+                PRISM.ProgRunner.GarbageCollectNow();
 
                 // Skip two auto-generated files from the Results Folder since they're not necessary to keep
                 m_jobParams.AddResultFileToSkip("DataImport_AnalysisSummary.txt");

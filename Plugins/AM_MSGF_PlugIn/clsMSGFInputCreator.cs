@@ -21,7 +21,7 @@ using PRISM;
 
 namespace AnalysisManagerMSGFPlugin
 {
-    public abstract class clsMSGFInputCreator : clsEventNotifier
+    public abstract class clsMSGFInputCreator : EventNotifier
     {
         #region "Constants"
 
@@ -156,7 +156,7 @@ namespace AnalysisManagerMSGFPlugin
                 mLogFile.Close();
                 mLogFile = null;
 
-                clsProgRunner.GarbageCollectNow();
+                ProgRunner.GarbageCollectNow();
             }
         }
 

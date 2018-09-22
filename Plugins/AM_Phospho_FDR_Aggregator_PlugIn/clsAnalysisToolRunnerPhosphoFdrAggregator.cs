@@ -145,7 +145,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                 mCmdRunner = null;
 
                 // Make sure objects are released
-                PRISM.clsProgRunner.GarbageCollectNow();
+                PRISM.ProgRunner.GarbageCollectNow();
 
                 if (!processingSuccess)
                 {

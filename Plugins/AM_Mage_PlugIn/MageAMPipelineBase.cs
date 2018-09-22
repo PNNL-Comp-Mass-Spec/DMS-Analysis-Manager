@@ -10,7 +10,7 @@ using PRISM;
 namespace AnalysisManager_Mage_PlugIn
 {
 
-    public class MageAMPipelineBase : clsEventNotifier
+    public class MageAMPipelineBase : EventNotifier
     {
 
         #region Member Variables

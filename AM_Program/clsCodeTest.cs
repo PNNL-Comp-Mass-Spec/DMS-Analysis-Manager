@@ -728,7 +728,7 @@ namespace AnalysisManagerProg
             var remoteFilePath = @"\\gigasax\dms_parameter_Files\Formularity\PNNL_CIA_DB_1500_B.bin";
             var targetDirectoryPath = @"C:\DMS_Temp_Org";
 
-            var fileTools = new clsFileTools("AnalysisManager", 1);
+            var fileTools = new FileTools("AnalysisManager", 1);
             var fileSyncUtil = new FileSyncUtils(fileTools);
             RegisterEvents(fileSyncUtil);
 
@@ -1772,9 +1772,9 @@ namespace AnalysisManagerProg
             }
         }
 
-        #region "clsEventNotifier events"
+        #region "EventNotifier events"
 
-        private void RegisterEvents(clsEventNotifier oProcessingClass)
+        private void RegisterEvents(EventNotifier oProcessingClass)
         {
             oProcessingClass.DebugEvent += DebugEventHandler;
             oProcessingClass.StatusEvent += StatusEventHandler;

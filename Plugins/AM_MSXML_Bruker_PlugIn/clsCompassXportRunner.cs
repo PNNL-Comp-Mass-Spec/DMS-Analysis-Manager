@@ -13,7 +13,7 @@ using PRISM;
 
 namespace AnalysisManagerMsXmlBrukerPlugIn
 {
-    public class clsCompassXportRunner : clsEventNotifier
+    public class clsCompassXportRunner : EventNotifier
     {
         #region "Enums"
 

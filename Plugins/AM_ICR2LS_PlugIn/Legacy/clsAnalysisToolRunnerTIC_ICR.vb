@@ -1,6 +1,6 @@
 Imports PRISM.Logging
 Imports System.IO
-Imports PRISM.Files.clsFileTools
+Imports PRISM.Files.FileTools
 Imports AnalysisManagerBase.clsGlobal
 
 Public Class clsAnalysisToolRunnerTIC_ICR

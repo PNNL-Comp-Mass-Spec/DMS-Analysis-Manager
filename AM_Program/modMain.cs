@@ -55,7 +55,7 @@ namespace AnalysisManagerProg
             mDisplayDllPath = string.Empty;
             mShowVersionOnly = false;
 
-            var osVersionInfo = new clsOSVersionInfo();
+            var osVersionInfo = new OSVersionInfo();
 
             var osVersion = osVersionInfo.GetOSVersion();
             if (!osVersion.ToLower().Contains("windows"))
@@ -214,7 +214,7 @@ namespace AnalysisManagerProg
                 //
                 // See https://stackoverflow.com/a/36158739/1179467
 
-                var osVersionInfo = new clsOSVersionInfo();
+                var osVersionInfo = new OSVersionInfo();
                 var osDescription = osVersionInfo.GetOSVersion();
 
                 Console.WriteLine("OS Version: " + osDescription);
@@ -280,7 +280,7 @@ namespace AnalysisManagerProg
                 // Make sure no invalid parameters are present
                 if (commandLineParser.InvalidParametersPresent(validParameters))
                 {
-                    ShowErrorMessage("Invalid commmand line parameters",
+                    ShowErrorMessage("Invalid command line parameters",
                         (from item in commandLineParser.InvalidParameters(validParameters) select "/" + item).ToList());
 
                     return false;

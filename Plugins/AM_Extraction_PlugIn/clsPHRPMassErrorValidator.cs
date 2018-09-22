@@ -7,7 +7,7 @@ using PRISM;
 
 namespace AnalysisManagerExtractionPlugin
 {
-    public class clsPHRPMassErrorValidator : clsEventNotifier
+    public class clsPHRPMassErrorValidator : EventNotifier
     {
         #region "Module variables"
 

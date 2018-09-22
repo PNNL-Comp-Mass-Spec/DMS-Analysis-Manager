@@ -21,7 +21,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// File tools
         /// </summary>
-        protected clsFileTools m_FileTools;
+        protected FileTools m_FileTools;
 
         /// <summary>
         /// Status message
@@ -100,7 +100,7 @@ namespace AnalysisManagerBase
         protected void InitFileTools(string mgrName, short debugLevel)
         {
             ResetTimestampForQueueWaitTimeLogging();
-            m_FileTools = new clsFileTools(mgrName, debugLevel);
+            m_FileTools = new FileTools(mgrName, debugLevel);
             RegisterEvents(m_FileTools, false);
 
             // Use a custom event handler for status messages
@@ -306,14 +306,14 @@ namespace AnalysisManagerBase
 
         #endregion
 
-        #region "clsEventNotifier events"
+        #region "EventNotifier events"
 
         /// <summary>
         /// Register event handlers
         /// </summary>
         /// <param name="processingClass"></param>
         /// <param name="writeDebugEventsToLog"></param>
-        protected void RegisterEvents(clsEventNotifier processingClass, bool writeDebugEventsToLog = true)
+        protected void RegisterEvents(EventNotifier processingClass, bool writeDebugEventsToLog = true)
         {
             if (writeDebugEventsToLog)
             {
@@ -338,7 +338,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="processingClass"></param>
         /// <param name="messageType"></param>
-        protected void UnregisterEventHandler(clsEventNotifier processingClass, BaseLogger.LogLevels messageType)
+        protected void UnregisterEventHandler(EventNotifier processingClass, BaseLogger.LogLevels messageType)
         {
             switch (messageType)
             {

@@ -180,7 +180,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
 
             // Make sure objects are released
             clsGlobal.IdleLoop(0.5);
-            clsProgRunner.GarbageCollectNow();
+            ProgRunner.GarbageCollectNow();
 
             if (!ValidateDTARefineryLogFile())
             {

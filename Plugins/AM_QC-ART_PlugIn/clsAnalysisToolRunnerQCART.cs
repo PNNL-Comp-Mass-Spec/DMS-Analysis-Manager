@@ -127,7 +127,7 @@ namespace AnalysisManagerQCARTPlugin
                 // UpdateSummaryFile();
 
                 // Make sure objects are released
-                clsProgRunner.GarbageCollectNow();
+                ProgRunner.GarbageCollectNow();
 
                 if (!processingSuccess)
                 {
@@ -659,7 +659,7 @@ namespace AnalysisManagerQCARTPlugin
                     objCommand.Parameters["@ResultsXML"].Value = xmlData;
                 }
 
-                var executor = new clsExecuteDatabaseSP(connectionString);
+                var executor = new ExecuteDatabaseSP(connectionString);
 
                 var returnCode = executor.ExecuteSP(objCommand, 3);
 

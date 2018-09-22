@@ -242,7 +242,7 @@ namespace AnalysisManagerIDPickerPlugIn
                 UpdateSummaryFile();
 
                 // Make sure objects are released
-                PRISM.clsProgRunner.GarbageCollectNow();
+                PRISM.ProgRunner.GarbageCollectNow();
 
                 if (!processingSuccess)
                 {
@@ -1278,7 +1278,7 @@ namespace AnalysisManagerIDPickerPlugIn
             else if (mCmdRunnerErrors.Count > 0)
             {
                 // Append the error messages to the log
-                // Note that clsProgRunner will have already included them in the ConsoleOutput.txt file
+                // Note that ProgRunner will have already included them in the ConsoleOutput.txt file
                 foreach (var strError in mCmdRunnerErrors)
                 {
                     if (!strError.ToLower().StartsWith("warning"))

@@ -19,7 +19,7 @@ namespace AnalysisManagerExtractionPlugin
     /// Perform Peptide extraction from Sequest results
     /// </summary>
     /// <remarks></remarks>
-    public class clsPeptideExtractWrapper : clsEventNotifier
+    public class clsPeptideExtractWrapper : EventNotifier
     {
         #region "Event Handlers"
 
@@ -193,7 +193,7 @@ namespace AnalysisManagerExtractionPlugin
                 m_ExtractTools = null;
 
                 // Clean up processes
-                clsProgRunner.GarbageCollectNow();
+                ProgRunner.GarbageCollectNow();
             }
         }
 

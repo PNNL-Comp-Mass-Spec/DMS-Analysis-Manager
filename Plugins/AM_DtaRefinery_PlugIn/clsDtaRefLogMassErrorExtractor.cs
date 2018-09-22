@@ -14,7 +14,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
     /// It passes on the information to DMS for storage in table T_Dataset_QC
     /// </summary>
     /// <remarks></remarks>
-    public class clsDtaRefLogMassErrorExtractor : clsEventNotifier
+    public class clsDtaRefLogMassErrorExtractor : EventNotifier
     {
         private const string STORE_MASS_ERROR_STATS_SP_NAME = "StoreDTARefMassErrorStats";
 

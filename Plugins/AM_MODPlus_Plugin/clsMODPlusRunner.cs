@@ -88,18 +88,18 @@ namespace AnalysisManagerMODPlusPlugin
             get { return mProgress; }
         }
 
-        public clsRunDosProgram ProgRunner
+        public clsRunDosProgram ProgramRunner
         {
             get { return mCmdRunner; }
         }
 
-        public clsProgRunner.States ProgRunnerStatus
+        public ProgRunner.States ProgRunnerStatus
         {
             get
             {
                 if (mCmdRunner == null)
                 {
-                    return clsProgRunner.States.NotMonitoring;
+                    return PRISM.ProgRunner.States.NotMonitoring;
                 }
                 return mCmdRunner.State;
             }
@@ -358,8 +358,8 @@ namespace AnalysisManagerMODPlusPlugin
                 ParseConsoleOutputFile(mConsoleOutputFilePath);
 
                 // Note that the call to GetCoreUsage() will take at least 1 second
-                mCoreUsageCurrent = ProgRunner.GetCoreUsage();
-                mProcessID = ProgRunner.ProcessID;
+                mCoreUsageCurrent = mCmdRunner.GetCoreUsage();
+                mProcessID = mCmdRunner.ProcessID;
             }
 
             var processIDs = new List<int>();

@@ -714,7 +714,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             m_StopTime = DateTime.UtcNow;
 
             // Make sure objects are released
-            PRISM.clsProgRunner.GarbageCollectNow();
+            PRISM.ProgRunner.GarbageCollectNow();
 
             if (m_DebugLevel > 3)
             {
@@ -746,7 +746,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
                         // Sleep for 1 minute
                         LogDebug("Sleeping for 1 minute");
-                        PRISM.clsProgRunner.SleepMilliseconds(60 * 1000);
+                        PRISM.ProgRunner.SleepMilliseconds(60 * 1000);
                         break;
 
                     case DeconToolsStateType.Idle:

@@ -273,7 +273,7 @@ namespace AnalysisManagerProg
             // Make the initial log entry
             var relativeLogFilePath = LogTools.CurrentLogFilePath;
             var logFile = new FileInfo(relativeLogFilePath);
-            ShowTrace("Initializing log file " + clsPathUtils.CompactPathString(logFile.FullName, 60));
+            ShowTrace("Initializing log file " + PathUtils.CompactPathString(logFile.FullName, 60));
 
             var appVersion = Assembly.GetEntryAssembly().GetName().Version;
             var startupMsg = "=== Started Analysis Manager V" + appVersion + " ===== ";
@@ -1101,7 +1101,7 @@ namespace AnalysisManagerProg
                 {
                     // If there was a problem deleting non result files, return success and let the manager try to delete the files one more time on the next start up
                     // However, wait another 5 seconds before continuing
-                    clsProgRunner.GarbageCollectNow();
+                    ProgRunner.GarbageCollectNow();
                     clsGlobal.IdleLoop(5);
 
                     return true;
@@ -1239,7 +1239,7 @@ namespace AnalysisManagerProg
                     var dtCurrentDate = DateTime.Parse(year + "-" + month + "-" + day);
                     var dtNewDate = dtCurrentDate.AddDays(-1);
 
-                    var previousLogFilePath = match.Groups["BaseName"].Value + dtNewDate.ToString(FileLogger.LOG_FILE_DATECODE) + Path.GetExtension(logFilePath);
+                    var previousLogFilePath = match.Groups["BaseName"].Value + dtNewDate.ToString(FileLogger.LOG_FILE_DATE_CODE) + Path.GetExtension(logFilePath);
                     return previousLogFilePath;
                 }
 
@@ -2064,7 +2064,7 @@ namespace AnalysisManagerProg
 
             if (TraceMode)
             {
-                ShowTrace("Settings loaded from " + clsPathUtils.CompactPathString(configFilePath, 60));
+                ShowTrace("Settings loaded from " + PathUtils.CompactPathString(configFilePath, 60));
                 clsAnalysisMgrSettings.ShowDictionaryTrace(lstMgrSettings);
             }
 
@@ -3118,7 +3118,7 @@ namespace AnalysisManagerProg
                 }
             }
 
-            var errorCount = workDirFiles.Count(item => !clsFileTools.IsVimSwapFile(item.FullName));
+            var errorCount = workDirFiles.Count(item => !FileTools.IsVimSwapFile(item.FullName));
 
             if (errorCount == 0)
             {
@@ -3149,7 +3149,7 @@ namespace AnalysisManagerProg
         /// <returns>True if Windows updates are pending</returns>
         private bool WindowsUpdatesArePending()
         {
-            if (!clsWindowsUpdateStatus.UpdatesArePending(out var pendingWindowsUpdateMessage))
+            if (!WindowsUpdateStatus.UpdatesArePending(out var pendingWindowsUpdateMessage))
                 return false;
 
             LogMessage(pendingWindowsUpdateMessage);
@@ -3159,9 +3159,9 @@ namespace AnalysisManagerProg
 
         #endregion
 
-        #region "clsEventNotifier events"
+        #region "EventNotifier events"
 
-        private void RegisterEvents(clsEventNotifier oProcessingClass, bool writeDebugEventsToLog = true)
+        private void RegisterEvents(EventNotifier oProcessingClass, bool writeDebugEventsToLog = true)
         {
             if (writeDebugEventsToLog)
             {

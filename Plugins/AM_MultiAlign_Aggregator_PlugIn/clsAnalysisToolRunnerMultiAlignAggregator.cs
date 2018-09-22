@@ -98,7 +98,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                 UpdateSummaryFile();
 
                 // Make sure objects are released
-                PRISM.clsProgRunner.GarbageCollectNow();
+                PRISM.ProgRunner.GarbageCollectNow();
 
                 if (!processingSuccess)
                 {

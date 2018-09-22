@@ -24,7 +24,7 @@ using PRISM;
 
 namespace MSGFResultsSummarizer
 {
-    public class clsMSGFResultsSummarizer : clsEventNotifier
+    public class clsMSGFResultsSummarizer : EventNotifier
     {
         #region "Constants and Enums"
 
@@ -131,7 +131,7 @@ namespace MSGFResultsSummarizer
         private readonly string mWorkDir;
         private readonly string mConnectionString;
 
-        private readonly clsExecuteDatabaseSP mStoredProcedureExecutor;
+        private readonly ExecuteDatabaseSP mStoredProcedureExecutor;
 
         // The following is auto-determined in ProcessMSGFResults
         private string mMSGFSynopsisFileName = string.Empty;
@@ -294,7 +294,7 @@ namespace MSGFResultsSummarizer
             mConnectionString = strConnectionString;
             mDebugLevel = debugLevel;
 
-            mStoredProcedureExecutor = new clsExecuteDatabaseSP(mConnectionString);
+            mStoredProcedureExecutor = new ExecuteDatabaseSP(mConnectionString);
             RegisterEvents(mStoredProcedureExecutor);
 
             ContactDatabase = true;
@@ -451,7 +451,7 @@ namespace MSGFResultsSummarizer
                                      " FROM V_Dataset_Scans_Export DSE" + " WHERE Dataset = '" + DatasetName + "'" + " GROUP BY Scan_Count_Total";
 
 
-                var dbTools = new clsDBTools(mConnectionString);
+                var dbTools = new DBTools(mConnectionString);
                 RegisterEvents(dbTools);
 
                 var success = dbTools.GetQueryResults(queryScanStats, out var lstResults, "LookupScanStats_V_Dataset_Scans_Export");

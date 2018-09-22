@@ -12,7 +12,7 @@ namespace AnalysisManager_Mage_PlugIn
     /// <summary>
     /// Class that defines Mac Mage operations that can be selected by the "MageOperations" parameter
     /// </summary>
-    public class MageAMOperations : clsEventNotifier
+    public class MageAMOperations : EventNotifier
     {
 
         #region Member Variables
@@ -501,7 +501,7 @@ namespace AnalysisManager_Mage_PlugIn
             return paramNameList.Split(',').Select(paramName => mageObject.GetJobParam(paramName.Trim())).ToArray();
         }
 
-        private void RegisterMageEvents(clsEventNotifier sourceClass)
+        private void RegisterMageEvents(EventNotifier sourceClass)
         {
             sourceClass.DebugEvent += Mage_DebugEvent;
             sourceClass.StatusEvent += OnStatusEvent;

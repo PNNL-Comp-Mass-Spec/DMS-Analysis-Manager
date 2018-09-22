@@ -1293,7 +1293,7 @@ namespace AnalysisManagerBase
                     clsGlobal.IdleLoop(2);
 
                     // Do a garbage collection to assure file handles have been released
-                    clsProgRunner.GarbageCollectNow();
+                    ProgRunner.GarbageCollectNow();
                     retryCount += 1;
 
                 }
@@ -2580,7 +2580,7 @@ namespace AnalysisManagerBase
                         }
                     }
 
-                    if (okToMove && clsFileTools.IsVimSwapFile(tmpFileName))
+                    if (okToMove && FileTools.IsVimSwapFile(tmpFileName))
                     {
                         // VIM swap file; skip it
                         okToMove = false;

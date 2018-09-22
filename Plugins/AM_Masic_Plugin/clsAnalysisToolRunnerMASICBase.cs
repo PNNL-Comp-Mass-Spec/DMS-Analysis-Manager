@@ -180,14 +180,14 @@ namespace AnalysisManagerMasicPlugin
                 " /O:" + outputFolderPath +
                 " /P:" + parameterFilePath +
                 " /Q /SF:" + m_MASICStatusFileName +
-                " /L:" + clsPathUtils.PossiblyQuotePath(logFile.FullName);
+                " /L:" + PathUtils.PossiblyQuotePath(logFile.FullName);
 
             if (m_DebugLevel >= 1)
             {
                 LogDebug(masicExePath + cmdStr);
             }
 
-            var objMasicProgRunner = new clsProgRunner
+            var objMasicProgRunner = new ProgRunner
             {
                 CreateNoWindow = true,
                 CacheStandardOutput = false,
@@ -419,7 +419,7 @@ namespace AnalysisManagerMasicPlugin
             return true;
         }
 
-        private bool WaitForJobToFinish(clsProgRunner objMasicProgRunner)
+        private bool WaitForJobToFinish(ProgRunner objMasicProgRunner)
         {
             const int MAX_RUNTIME_HOURS = 24;
             const int SECONDS_BETWEEN_UPDATE = 30;
@@ -436,7 +436,7 @@ namespace AnalysisManagerMasicPlugin
                 // Wait for 30 seconds
                 clsGlobal.IdleLoop(SECONDS_BETWEEN_UPDATE);
 
-                if (objMasicProgRunner.State == clsProgRunner.States.NotMonitoring)
+                if (objMasicProgRunner.State == ProgRunner.States.NotMonitoring)
                 {
                     m_JobRunning = false;
                 }

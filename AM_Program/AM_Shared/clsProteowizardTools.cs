@@ -8,7 +8,7 @@ namespace AnalysisManagerBase
     /// <summary>
     /// Proteowizard tools
     /// </summary>
-    public class clsProteowizardTools : clsEventNotifier
+    public class clsProteowizardTools : EventNotifier
     {
         /// <summary>
         /// Debug level

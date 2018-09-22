@@ -15,7 +15,7 @@ namespace AnalysisManagerBase
     /// If complete, retrieves the results, then calls the appropriate plugin
     /// so it can perform any post-processing tasks that require domain accessible resources
     /// </remarks>
-    public class clsRemoteMonitor : clsEventNotifier
+    public class clsRemoteMonitor : EventNotifier
     {
         #region "Constants"
 
@@ -218,8 +218,8 @@ namespace AnalysisManagerBase
                 if (statusFiles.Count == 0)
                     return true;
 
-                var archiveDirPathBase = clsPathUtils.CombineLinuxPaths(TransferUtility.RemoteTaskQueuePath, ARCHIVED_TASK_QUEUE_DIRECTORY_NAME);
-                var archiveDirPath = clsPathUtils.CombineLinuxPaths(archiveDirPathBase, DateTime.Now.Year.ToString());
+                var archiveDirPathBase = PathUtils.CombineLinuxPaths(TransferUtility.RemoteTaskQueuePath, ARCHIVED_TASK_QUEUE_DIRECTORY_NAME);
+                var archiveDirPath = PathUtils.CombineLinuxPaths(archiveDirPathBase, DateTime.Now.Year.ToString());
 
                 TransferUtility.CreateRemoteDirectories(new List<string> { archiveDirPathBase, archiveDirPath });
 

@@ -95,7 +95,7 @@ namespace AnalysisManager_IDP_PlugIn
                 //Make sure objects are released
                 //2 second delay
                 System.Threading.Thread.Sleep(2000);
-                PRISM.Processes.clsProgRunner.GarbageCollectNow();
+                PRISM.Processes.ProgRunner.GarbageCollectNow();
 
                 if (!blnSuccess)
                 {

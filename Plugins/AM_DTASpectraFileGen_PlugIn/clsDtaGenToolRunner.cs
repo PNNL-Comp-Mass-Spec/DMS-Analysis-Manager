@@ -278,7 +278,7 @@ namespace DTASpectraFileGen
         public CloseOutType DispositionResults()
         {
             // Make sure all files have released locks
-            PRISM.clsProgRunner.GarbageCollectNow();
+            PRISM.ProgRunner.GarbageCollectNow();
 
             // Get rid of raw data file
             try
@@ -483,7 +483,7 @@ namespace DTASpectraFileGen
                     return CloseOutType.CLOSEOUT_NO_DTA_FILES;
                 }
 
-                PRISM.clsProgRunner.GarbageCollectNow();
+                PRISM.ProgRunner.GarbageCollectNow();
 
                 strCDTAFileOriginal = Path.Combine(m_WorkDir, m_Dataset + "_DTA_Original.txt");
                 fiCDTA.MoveTo(strCDTAFileOriginal);
@@ -528,7 +528,7 @@ namespace DTASpectraFileGen
                     return CloseOutType.CLOSEOUT_NO_DTA_FILES;
                 }
 
-                PRISM.clsProgRunner.GarbageCollectNow();
+                PRISM.ProgRunner.GarbageCollectNow();
 
                 strCDTAFileCentroided = Path.Combine(m_WorkDir, m_Dataset + "_DTA_Centroided.txt");
                 fiCDTA.MoveTo(strCDTAFileCentroided);

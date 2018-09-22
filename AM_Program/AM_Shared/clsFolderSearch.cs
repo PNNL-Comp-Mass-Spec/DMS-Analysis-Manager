@@ -11,7 +11,7 @@ namespace AnalysisManagerBase
     /// <summary>
     /// Methods to look for folders related to datasets
     /// </summary>
-    public class clsFolderSearch : clsEventNotifier
+    public class clsFolderSearch : EventNotifier
     {
         #region "Constants"
 

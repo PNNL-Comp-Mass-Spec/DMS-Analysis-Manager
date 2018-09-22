@@ -12,7 +12,7 @@ using PRISM.Logging;
 namespace AnalysisManager_AScore_PlugIn
 {
 
-    public class clsAScoreMagePipeline : clsEventNotifier
+    public class clsAScoreMagePipeline : EventNotifier
     {
 
         #region Member Variables

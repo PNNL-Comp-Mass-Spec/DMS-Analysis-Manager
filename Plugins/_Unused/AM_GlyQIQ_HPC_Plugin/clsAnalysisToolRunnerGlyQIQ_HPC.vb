@@ -123,7 +123,7 @@ Public Class clsAnalysisToolRunnerGlyQIQ_HPC
 
             'Make sure objects are released
             Threading.Thread.Sleep(2000)        '2 second delay
-            PRISM.Processes.clsProgRunner.GarbageCollectNow()
+            PRISM.Processes.ProgRunner.GarbageCollectNow()
 
             If Not blnSuccess Then
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED

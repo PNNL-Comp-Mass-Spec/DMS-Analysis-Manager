@@ -403,7 +403,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 UpdateSummaryFile();
 
                 // Make sure objects are released
-                PRISM.clsProgRunner.GarbageCollectNow();
+                PRISM.ProgRunner.GarbageCollectNow();
 
                 if (!success || jobFailureCount > 0)
                 {
@@ -982,7 +982,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     // Ignore errors here
                 }
 
-                PRISM.clsProgRunner.GarbageCollectNow();
+                PRISM.ProgRunner.GarbageCollectNow();
 
                 var fiNewMGFFile = new FileInfo(Path.Combine(m_WorkDir, dataPkgJob.Dataset + DOT_MGF));
 
@@ -1194,7 +1194,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 m_jobParams.AddResultFileToSkip(Path.GetFileName(fiMzXmlFilePathLocal.FullName + clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX));
 
-                PRISM.clsProgRunner.GarbageCollectNow();
+                PRISM.ProgRunner.GarbageCollectNow();
 
                 try
                 {
@@ -4977,7 +4977,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 StoreMzIdSampleInfo(mzIdFilePath, sampleMetadata);
 
-                PRISM.clsProgRunner.GarbageCollectNow();
+                PRISM.ProgRunner.GarbageCollectNow();
 
                 mzIdExistsRemotely = false;
                 if (!replaceOriginal)

@@ -127,7 +127,7 @@ namespace AnalysisManagerSequestPlugin
             UpdateSummaryFile();
 
             // Make sure objects are released
-            clsProgRunner.GarbageCollectNow();
+            ProgRunner.GarbageCollectNow();
 
             // Parse the Sequest .Log file to make sure the expected number of nodes was used in the analysis
 
@@ -437,7 +437,7 @@ namespace AnalysisManagerSequestPlugin
             }
 
             // Set up a program runner and text file for each processor
-            var RunProgs = new clsProgRunner[NumProcessors];
+            var RunProgs = new ProgRunner[NumProcessors];
             var Textfiles = new StreamWriter[NumProcessors];
             var cmdStr = "-D" + Path.Combine(m_mgrParams.GetParam("orgdbdir"), m_jobParams.GetParam("PeptideSearch", "generatedFastaName")) + " -P" +
                      m_jobParams.GetParam("parmFileName") + " -R";
@@ -447,7 +447,7 @@ namespace AnalysisManagerSequestPlugin
                 var DumStr = Path.Combine(m_WorkDir, "FileList" + ProcIndx + ".txt");
                 m_jobParams.AddResultFileToSkip(DumStr);
 
-                RunProgs[ProcIndx] = new clsProgRunner
+                RunProgs[ProcIndx] = new ProgRunner
                 {
                     Name = "Seq" + ProcIndx,
                     CreateNoWindow = Convert.ToBoolean(m_mgrParams.GetParam("createnowindow")),
@@ -563,7 +563,7 @@ namespace AnalysisManagerSequestPlugin
             }
 
             // Make sure objects are released
-            clsProgRunner.GarbageCollectNow();
+            ProgRunner.GarbageCollectNow();
 
             // Verify out file creation
             if (m_DebugLevel >= 1)
@@ -589,7 +589,7 @@ namespace AnalysisManagerSequestPlugin
             }
 
             // Try to ensure there are no open objects with file handles
-            clsProgRunner.GarbageCollectNow();
+            ProgRunner.GarbageCollectNow();
 
             // Zip concatenated .out files
             if (!ZipConcatOutFile(m_WorkDir, m_JobNum))
@@ -654,7 +654,7 @@ namespace AnalysisManagerSequestPlugin
                 }
 
                 // Make sure objects are released
-                clsProgRunner.GarbageCollectNow();
+                ProgRunner.GarbageCollectNow();
 
                 try
                 {

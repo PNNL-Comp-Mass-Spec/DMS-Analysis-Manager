@@ -15,7 +15,7 @@ namespace AnalysisManagerMSGFDBPlugIn
     /// <summary>
     /// MSGF+ Utilities
     /// </summary>
-    public class MSGFPlusUtils : clsEventNotifier
+    public class MSGFPlusUtils : EventNotifier
     {
         #region "Constants"
 

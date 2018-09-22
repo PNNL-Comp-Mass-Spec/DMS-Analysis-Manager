@@ -11,7 +11,7 @@ namespace AnalysisManagerBase
     /// <summary>
     /// MyEMSL Utilities
     /// </summary>
-    public class clsMyEMSLUtilities : clsEventNotifier
+    public class clsMyEMSLUtilities : EventNotifier
     {
 
         /// <summary>

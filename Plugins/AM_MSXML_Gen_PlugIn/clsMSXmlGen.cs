@@ -5,7 +5,7 @@ using PRISM;
 
 namespace AnalysisManagerMsXmlGenPlugIn
 {
-    public abstract class clsMSXmlGen : clsEventNotifier
+    public abstract class clsMSXmlGen : EventNotifier
     {
         #region "Constants"
 
@@ -210,7 +210,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
             if (!string.IsNullOrWhiteSpace(cmdRunner.CachedConsoleErrors))
             {
                 // Append the console errors to the log file
-                // Note that clsProgRunner will have already included them in the ConsoleOutput.txt file
+                // Note that ProgRunner will have already included them in the ConsoleOutput.txt file
 
                 var consoleError = "Console error: " + cmdRunner.CachedConsoleErrors.Replace(Environment.NewLine, "; ");
                 if (string.IsNullOrWhiteSpace(mErrorMessage))

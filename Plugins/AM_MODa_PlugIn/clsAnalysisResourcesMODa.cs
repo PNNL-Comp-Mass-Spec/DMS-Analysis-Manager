@@ -154,7 +154,7 @@ namespace AnalysisManagerMODaPlugIn
                     // Ignore errors here
                 }
 
-                PRISM.clsProgRunner.GarbageCollectNow();
+                PRISM.ProgRunner.GarbageCollectNow();
 
                 var newMGFFile = new FileInfo(Path.Combine(m_WorkingDir, DatasetName + ".mgf"));
 

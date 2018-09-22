@@ -8,7 +8,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using AnalysisManagerBase;
 
 namespace AnalysisManagerBrukerDAExportPlugin
@@ -32,7 +31,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
             try
             {
                 currentTask = "Retrieve shared resources";
-                
+
                 // Retrieve shared resources, including the JobParameters file from the previous job step
                 var result = GetSharedResources();
                 if (result != CloseOutType.CLOSEOUT_SUCCESS) {
@@ -58,7 +57,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
                 {
                     exportScriptStoragePath = @"F:\My Documents\Gigasax_Data\DMS_Parameter_Files\Bruker_Data_Analysis";
                     LogWarning("Parameter '" + paramFileStoragePathKeyName + "' is not defined " +
-                        "(obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); " + 
+                        "(obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); " +
                         "will assume: " + exportScriptStoragePath);
                 }
 
@@ -155,7 +154,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
                             LogError("Exception deleting file " + file.FullName, ex2);
                             m_message = string.Empty;
                         }
-                        
+
                     }
                 }
 

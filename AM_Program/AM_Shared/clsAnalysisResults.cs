@@ -274,7 +274,7 @@ namespace AnalysisManagerBase
                     // Wait several seconds before retrying
                     clsGlobal.IdleLoop(actualRetryHoldoffSeconds);
 
-                    PRISM.clsProgRunner.GarbageCollectNow();
+                    PRISM.ProgRunner.GarbageCollectNow();
                 }
 
                 if (increaseHoldoffOnEachRetry)
@@ -479,7 +479,7 @@ namespace AnalysisManagerBase
                     // Wait several seconds before retrying
                     clsGlobal.IdleLoop(actualRetryHoldoffSeconds);
 
-                    PRISM.clsProgRunner.GarbageCollectNow();
+                    PRISM.ProgRunner.GarbageCollectNow();
                 }
 
                 if (increaseHoldoffOnEachRetry)
@@ -609,7 +609,7 @@ namespace AnalysisManagerBase
                     // Wait several seconds before retrying
                     clsGlobal.IdleLoop(actualRetryHoldoffSeconds);
 
-                    PRISM.clsProgRunner.GarbageCollectNow();
+                    PRISM.ProgRunner.GarbageCollectNow();
                 }
 
                 if (increaseHoldoffOnEachRetry)

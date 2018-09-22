@@ -23,7 +23,7 @@ namespace AnalysisManagerExtractionPlugin
     /// Calls PeptideHitResultsProcRunner.exe
     /// </summary>
     /// <remarks></remarks>
-    public class clsPepHitResultsProcWrapper : clsEventNotifier
+    public class clsPepHitResultsProcWrapper : EventNotifier
     {
         #region "Constants"
 

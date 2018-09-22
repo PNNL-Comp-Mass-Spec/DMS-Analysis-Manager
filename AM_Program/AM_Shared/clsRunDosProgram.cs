@@ -16,7 +16,7 @@ namespace AnalysisManagerBase
     /// <summary>
     /// Provides a looping wrapper around a ProgRunner object for running command-line programs
     /// </summary>
-    public class clsRunDosProgram : clsEventNotifier
+    public class clsRunDosProgram : EventNotifier
     {
 
         #region "Module variables"
@@ -34,7 +34,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Program runner
         /// </summary>
-        private clsProgRunner m_ProgRunner;
+        private ProgRunner m_ProgRunner;
 
         private DateTime m_StopTime;
 
@@ -253,13 +253,13 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Current monitoring state
         /// </summary>
-        public clsProgRunner.States State
+        public ProgRunner.States State
         {
             get
             {
                 if (m_ProgRunner == null)
                 {
-                    return clsProgRunner.States.NotMonitoring;
+                    return ProgRunner.States.NotMonitoring;
                 }
 
                 return m_ProgRunner.State;
@@ -424,7 +424,7 @@ namespace AnalysisManagerBase
 
             // Re-instantiate m_ProgRunner each time RunProgram is called since it is disposed of later in this function
             // Also necessary to avoid problems caching the console output
-            m_ProgRunner = new clsProgRunner
+            m_ProgRunner = new ProgRunner
             {
                 Arguments = arguments,
                 CreateNoWindow = CreateNoWindow,
@@ -473,13 +473,13 @@ namespace AnalysisManagerBase
                 m_IsRunning = true;
 
                 // Loop until program is complete, or until MaxRuntimeSeconds seconds elapses
-                while (m_ProgRunner.State != clsProgRunner.States.NotMonitoring)
+                while (m_ProgRunner.State != ProgRunner.States.NotMonitoring)
                 {
                     if (cachedProcessID == 0)
                         cachedProcessID = m_ProgRunner.PID;
 
                     OnLoopWaiting();
-                    clsProgRunner.SleepMilliseconds(m_MonitorInterval);
+                    ProgRunner.SleepMilliseconds(m_MonitorInterval);
 
                     if (MaxRuntimeSeconds > 0)
                     {
@@ -612,7 +612,7 @@ namespace AnalysisManagerBase
             ConsoleOutputEvent?.Invoke(newText);
         }
 
-        private void ProgRunner_ProgChanged(clsProgRunner obj)
+        private void ProgRunner_ProgChanged(ProgRunner obj)
         {
             // This event is ignored by this class
         }

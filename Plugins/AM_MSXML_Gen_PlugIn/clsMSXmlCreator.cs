@@ -14,7 +14,7 @@ using PRISM;
 
 namespace AnalysisManagerMsXmlGenPlugIn
 {
-    public class clsMSXMLCreator : clsEventNotifier
+    public class clsMSXMLCreator : EventNotifier
     {
         #region "Classwide variables"
 

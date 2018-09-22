@@ -27,7 +27,7 @@ namespace AnalysisManagerBase
     ///  and renames the file to "AbortProcessingNow.txt.Done"
     ///  3) Posts status messages to the DMS broker DB at the specified interval
     /// </remarks>
-    public class clsStatusFile : clsEventNotifier, IStatusFile
+    public class clsStatusFile : EventNotifier, IStatusFile
     {
 
         #region "Module variables"

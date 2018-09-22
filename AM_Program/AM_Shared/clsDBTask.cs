@@ -104,12 +104,12 @@ namespace AnalysisManagerBase
         /// <summary>
         /// DMS stored procedure executor
         /// </summary>
-        public readonly PRISM.clsExecuteDatabaseSP DMSProcedureExecutor;
+        public readonly PRISM.ExecuteDatabaseSP DMSProcedureExecutor;
 
         /// <summary>
         /// Pipeline database stored procedure executor
         /// </summary>
-        public readonly PRISM.clsExecuteDatabaseSP PipelineDBProcedureExecutor;
+        public readonly PRISM.ExecuteDatabaseSP PipelineDBProcedureExecutor;
 
         #endregion
 
@@ -196,8 +196,8 @@ namespace AnalysisManagerBase
 
             m_DebugLevel = debugLvl;
 
-            DMSProcedureExecutor = new PRISM.clsExecuteDatabaseSP(m_ConnStr);
-            PipelineDBProcedureExecutor = new PRISM.clsExecuteDatabaseSP(m_BrokerConnStr);
+            DMSProcedureExecutor = new PRISM.ExecuteDatabaseSP(m_ConnStr);
+            PipelineDBProcedureExecutor = new PRISM.ExecuteDatabaseSP(m_BrokerConnStr);
 
             DMSProcedureExecutor.DebugEvent += ProcedureExecutor_DebugEvent;
             PipelineDBProcedureExecutor.DebugEvent += ProcedureExecutor_DebugEvent;

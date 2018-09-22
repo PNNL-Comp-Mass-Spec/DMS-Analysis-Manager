@@ -188,7 +188,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 // Make sure objects are released
                 clsGlobal.IdleLoop(0.5);
-                PRISM.clsProgRunner.GarbageCollectNow();
+                PRISM.ProgRunner.GarbageCollectNow();
 
                 if (processingError || !clsAnalysisJob.SuccessOrNoData(processingResult))
                 {

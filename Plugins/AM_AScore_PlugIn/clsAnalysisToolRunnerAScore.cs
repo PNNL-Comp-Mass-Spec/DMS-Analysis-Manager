@@ -110,7 +110,7 @@ namespace AnalysisManager_AScore_PlugIn
                 UpdateSummaryFile();
 
                 // Make sure objects are released
-                clsProgRunner.GarbageCollectNow();
+                ProgRunner.GarbageCollectNow();
 
                 if (!processingSuccess)
                 {

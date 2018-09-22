@@ -8,7 +8,7 @@ namespace AnalysisManagerBase
     /// <summary>
     /// Scan stats generator
     /// </summary>
-    public class clsScanStatsGenerator : clsEventNotifier
+    public class clsScanStatsGenerator : EventNotifier
     {
         /// <summary>
         /// Debug level

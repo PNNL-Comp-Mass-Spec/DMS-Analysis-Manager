@@ -248,12 +248,12 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
                 } // end using
 
                 // Replace the original .Ini file with the new one
-                clsProgRunner.GarbageCollectNow();
+                ProgRunner.GarbageCollectNow();
 
                 // Delete the input file
                 File.Delete(SrcFilePath);
 
-                clsProgRunner.GarbageCollectNow();
+                ProgRunner.GarbageCollectNow();
 
                 // Rename the newly created output file to have the name of the input file
                 File.Move(TargetFilePath, SrcFilePath);

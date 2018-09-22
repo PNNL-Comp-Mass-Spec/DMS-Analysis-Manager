@@ -245,7 +245,7 @@ namespace DTASpectraFileGen
             // Pause and garbage collect to allow release of file lock on .raw file
             // 1.5 second delay
             clsGlobal.IdleLoop(1.5);
-            PRISM.clsProgRunner.GarbageCollectNow();
+            PRISM.ProgRunner.GarbageCollectNow();
 
             return numScans;
         }
@@ -525,7 +525,7 @@ namespace DTASpectraFileGen
                         if (m_RunningExtractMSn)
                         {
                             // If running Extract_MSn, cannot cache the standard output
-                            // clsProgRunner sometimes freezes on certain datasets (e.g. QC_Shew_10_05_pt5_1_24Jun10_Earth_10-05-10)
+                            // ProgRunner sometimes freezes on certain datasets (e.g. QC_Shew_10_05_pt5_1_24Jun10_Earth_10-05-10)
                             mCmdRunner.CreateNoWindow = false;
                             mCmdRunner.CacheStandardOutput = false;
                             mCmdRunner.EchoOutputToConsole = false;

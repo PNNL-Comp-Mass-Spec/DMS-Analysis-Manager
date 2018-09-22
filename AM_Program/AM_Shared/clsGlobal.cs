@@ -510,7 +510,7 @@ namespace AnalysisManagerBase
         {
             try
             {
-                var versionChecker = new clsDotNETVersionChecker();
+                var versionChecker = new DotNETVersionChecker();
                 return versionChecker.GetLatestDotNETVersion();
             }
             catch (Exception ex)
@@ -596,7 +596,7 @@ namespace AnalysisManagerBase
             if (timeoutSeconds < 5)
                 timeoutSeconds = 5;
 
-            var dbTools = new clsDBTools(connectionString);
+            var dbTools = new DBTools(connectionString);
             RegisterEvents(dbTools);
 
             var success = dbTools.GetQueryResults(sqlQuery, out lstResults, callingFunction, retryCount, timeoutSeconds, maxRowsToReturn);
@@ -627,10 +627,10 @@ namespace AnalysisManagerBase
         {
             if (multiLineOutput)
             {
-                return clsStackTraceFormatter.GetExceptionStackTraceMultiLine(ex);
+                return StackTraceFormatter.GetExceptionStackTraceMultiLine(ex);
             }
 
-            return clsStackTraceFormatter.GetExceptionStackTrace(ex);
+            return StackTraceFormatter.GetExceptionStackTrace(ex);
 
         }
 
@@ -779,7 +779,7 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public static string PossiblyQuotePath(string filePath)
         {
-            return clsPathUtils.PossiblyQuotePath(filePath);
+            return PathUtils.PossiblyQuotePath(filePath);
         }
 
         /// <summary>
@@ -1386,7 +1386,7 @@ namespace AnalysisManagerBase
                 // Directory path is a remote share; use GetDiskFreeSpaceEx in Kernel32.dll
                 var targetFilePath = Path.Combine(diDirectory.FullName, "DummyFile.txt");
 
-                var success = clsDiskInfo.GetDiskFreeSpace(
+                var success = DiskInfo.GetDiskFreeSpace(
                     targetFilePath, out var totalNumberOfFreeBytes, out var errorMessage, reportFreeSpaceAvailableToUser: false);
 
                 if (success)
@@ -1419,7 +1419,7 @@ namespace AnalysisManagerBase
             // Use PRISM.SystemInfo to determine free memory
             // This works for both Windows and Linux
             // OS version is determined using:
-            //   clsOSVersionInfo().GetOSVersion().ToLower().Contains("windows")
+            //   OSVersionInfo().GetOSVersion().ToLower().Contains("windows")
 
             return SystemInfo.GetFreeMemoryMB();
         }
@@ -1873,9 +1873,9 @@ namespace AnalysisManagerBase
 
         #endregion
 
-        #region "clsEventNotifier events"
+        #region "EventNotifier events"
 
-        private static void RegisterEvents(clsEventNotifier oProcessingClass, bool writeDebugEventsToLog = true)
+        private static void RegisterEvents(EventNotifier oProcessingClass, bool writeDebugEventsToLog = true)
         {
             if (writeDebugEventsToLog)
             {

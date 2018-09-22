@@ -18,7 +18,7 @@ namespace AnalysisManagerProg
     /// <summary>
     /// Class for loading analysis manager plugins
     /// </summary>
-    public class clsPluginLoader : clsEventNotifier
+    public class clsPluginLoader : EventNotifier
     {
         #region "Member variables"
 
@@ -215,7 +215,7 @@ namespace AnalysisManagerProg
                 }
 
                 if (TraceMode)
-                    OnDebugEvent("Call System.Reflection.Assembly.LoadFrom for assembly " + clsPathUtils.CompactPathString(pluginInfoFile.FullName, 60));
+                    OnDebugEvent("Call System.Reflection.Assembly.LoadFrom for assembly " + PathUtils.CompactPathString(pluginInfoFile.FullName, 60));
 
                 var assembly = System.Reflection.Assembly.LoadFrom(pluginInfoFile.FullName);
 

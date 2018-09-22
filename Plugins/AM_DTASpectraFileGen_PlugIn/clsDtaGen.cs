@@ -18,7 +18,7 @@ namespace DTASpectraFileGen
     /// This is the base class that implements a specific spectra file generator.
     /// </summary>
     /// <remarks></remarks>
-    public abstract class clsDtaGen : clsEventNotifier, ISpectraFileProcessor
+    public abstract class clsDtaGen : EventNotifier, ISpectraFileProcessor
     {
         #region "Module variables"
 

@@ -9,7 +9,7 @@ namespace AnalysisManagerBase
     /// <summary>
     /// Methods to copy files to the working directory
     /// </summary>
-    public class clsFileCopyUtilities : clsEventNotifier
+    public class clsFileCopyUtilities : EventNotifier
     {
 
         #region "Constants"
@@ -31,7 +31,7 @@ namespace AnalysisManagerBase
 
         private readonly clsMyEMSLUtilities m_MyEMSLUtilities;
 
-        private readonly clsFileTools m_FileTools;
+        private readonly FileTools m_FileTools;
 
         #endregion
 
@@ -74,7 +74,7 @@ namespace AnalysisManagerBase
         /// <param name="myEmslUtilities"></param>
         /// <param name="debugLevel"></param>
         public clsFileCopyUtilities(
-            clsFileTools prismFileTools,
+            FileTools prismFileTools,
             clsMyEMSLUtilities myEmslUtilities,
             short debugLevel)
         {

@@ -289,7 +289,7 @@ namespace AnalysisManagerMSAlignPlugIn
                 mCmdRunner = null;
 
                 // Make sure objects are released
-                PRISM.clsProgRunner.GarbageCollectNow();
+                PRISM.ProgRunner.GarbageCollectNow();
 
                 if (eMSAlignVersion != eMSAlignVersionType.v0pt5)
                 {

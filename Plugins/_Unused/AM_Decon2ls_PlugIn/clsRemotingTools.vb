@@ -30,7 +30,7 @@ Public Class clsRemotingTools
 
 #Region "Module variables"
 	Protected m_ToolObj As clsDecon2LSRemoter	 'Remote class for execution of Decon2LS via .Net remoting
-	Protected m_Decon2LSRunner As clsProgRunner
+	Protected m_Decon2LSRunner As ProgRunner
 	Protected m_Channel As TcpClientChannel
     Protected m_DebugLevel As Integer
 	Protected m_ErrMsg As String = ""
@@ -78,7 +78,7 @@ Public Class clsRemotingTools
 
 		'Start the remoting service via a ProgRunner
 		Try
-			m_Decon2LSRunner = New clsProgRunner
+			m_Decon2LSRunner = New ProgRunner
 			strOutputFolderPath = clsGlobal.GetAppFolderPath()
             If strOutputFolderPath.IndexOf(" ") >= 0 Then
                 strOutputFolderPath = """" & strOutputFolderPath & """"

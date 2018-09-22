@@ -10,7 +10,7 @@ namespace AnalysisManagerBase
     /// This class splits a Mascot Generic File (mgf file) into multiple parts
     /// </summary>
     /// <remarks></remarks>
-    public class clsSplitMGFFile : clsEventNotifier
+    public class clsSplitMGFFile : EventNotifier
     {
         /// <summary>
         /// Output file info

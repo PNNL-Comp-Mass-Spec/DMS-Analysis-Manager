@@ -13,7 +13,7 @@ namespace AnalysisManagerBase
     /// <summary>
     /// File search methods
     /// </summary>
-    public class clsFileSearch : clsEventNotifier
+    public class clsFileSearch : EventNotifier
     {
         #region "Constants"
 
@@ -179,7 +179,7 @@ namespace AnalysisManagerBase
             {
                 // Call the garbage collector, then try to delete the first queued file
                 // Note, do not call WaitForPendingFinalizers since that could block this thread
-                // Thus, do not use PRISM.clsProgRunner.GarbageCollectNow
+                // Thus, do not use PRISM.ProgRunner.GarbageCollectNow
                 GC.Collect();
 
                 try
@@ -1539,7 +1539,7 @@ namespace AnalysisManagerBase
 
             try
             {
-                clsProgRunner.GarbageCollectNow();
+                ProgRunner.GarbageCollectNow();
                 File.Delete(targetZipFilePath);
             }
             catch (Exception ex)
@@ -2997,7 +2997,7 @@ namespace AnalysisManagerBase
                     }
                 }
 
-                clsProgRunner.GarbageCollectNow();
+                ProgRunner.GarbageCollectNow();
 
                 // Delete all s*.zip files in working directory
                 foreach (var zipFilePath in zipFiles)

@@ -9,7 +9,7 @@ namespace AnalysisManagerBase
     /// <summary>
     /// DTA utilities
     /// </summary>
-    public class clsCDTAUtilities : clsEventNotifier
+    public class clsCDTAUtilities : EventNotifier
     {
 
         private CondenseCDTAFile.clsCDTAFileCondenser m_CDTACondenser;
@@ -205,7 +205,7 @@ namespace AnalysisManagerBase
 
                 if (deleteSourceFileIfUpdated)
                 {
-                    clsProgRunner.GarbageCollectNow();
+                    ProgRunner.GarbageCollectNow();
                     fiOriginalFile.Delete();
                 }
             }
@@ -213,7 +213,7 @@ namespace AnalysisManagerBase
             {
                 // No changes were made; nothing to update
                 // However, delete the new file we created
-                clsProgRunner.GarbageCollectNow();
+                ProgRunner.GarbageCollectNow();
 
                 fiUpdatedFile.Delete();
 

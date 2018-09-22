@@ -132,7 +132,7 @@ namespace AnalysisManagerMODaPlugIn
                 mCmdRunner = null;
 
                 // Make sure objects are released
-                PRISM.clsProgRunner.GarbageCollectNow();
+                PRISM.ProgRunner.GarbageCollectNow();
 
                 // Trim the console output file to remove the majority of the status messages (since there is currently one per scan)
                 TrimConsoleOutputFile(Path.Combine(m_WorkDir, MODa_CONSOLE_OUTPUT));

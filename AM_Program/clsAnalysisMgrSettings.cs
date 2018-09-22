@@ -463,7 +463,7 @@ namespace AnalysisManagerProg
             if (!success)
             {
                 // Log the message to the DB if the monthly Windows updates are not pending
-                var allowLogToDB = !clsWindowsUpdateStatus.ServerUpdatesArePending();
+                var allowLogToDB = !WindowsUpdateStatus.ServerUpdatesArePending();
 
                 mErrMsg = "LoadMgrSettingsFromDBWork; Excessive failures attempting to retrieve manager settings from database " +
                           "for manager '" + managerName + "'";
@@ -538,7 +538,7 @@ namespace AnalysisManagerProg
             {
                 // Define the work directory based on the manager name
                 if (workDirPath.Contains("/"))
-                    SetParam(MGR_PARAM_WORK_DIR, clsPathUtils.CombineLinuxPaths(workDirPath, ManagerName));
+                    SetParam(MGR_PARAM_WORK_DIR, PathUtils.CombineLinuxPaths(workDirPath, ManagerName));
                 else
                     SetParam(MGR_PARAM_WORK_DIR, Path.Combine(workDirPath, ManagerName));
             }

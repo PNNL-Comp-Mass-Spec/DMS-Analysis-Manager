@@ -29,7 +29,7 @@ namespace AnalysisManagerTest
             var statusFile = new FileInfo(statusFileName);
             var debugLevel = 2;
 
-            // clsStatusTools inherits clsEventNotifier, which will show messages at the console if an event does not have a subscriber
+            // clsStatusTools inherits EventNotifier, which will show messages at the console if an event does not have a subscriber
             var statusTools = new clsStatusFile(statusFile.FullName, debugLevel) {
                 WriteToConsoleIfNoListener = true
             };

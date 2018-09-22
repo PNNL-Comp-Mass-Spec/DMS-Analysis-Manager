@@ -8,7 +8,7 @@ using PdfSharp.Pdf;
 
 namespace AnalysisManagerFormularityPlugin
 {
-    public class PngToPdfConverter : PRISM.clsEventNotifier
+    public class PngToPdfConverter : PRISM.EventNotifier
     {
         /// <summary>
         /// Page margin, in points

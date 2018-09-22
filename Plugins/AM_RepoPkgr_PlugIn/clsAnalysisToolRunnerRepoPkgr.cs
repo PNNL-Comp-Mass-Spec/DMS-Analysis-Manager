@@ -440,7 +440,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
                 m_jobParams.AddResultFileToSkip(Path.GetFileName(fiMzXmlFilePathLocal.FullName + clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX));
 
-                PRISM.clsProgRunner.GarbageCollectNow();
+                PRISM.ProgRunner.GarbageCollectNow();
 
                 return fiMzXmlFileGZipped.FullName;
             }

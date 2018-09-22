@@ -18,7 +18,7 @@ namespace AnalysisManagerMSGFDBPlugIn
     /// <summary>
     /// Create MSGF+ suffix array files
     /// </summary>
-    public class clsCreateMSGFDBSuffixArrayFiles : clsEventNotifier
+    public class clsCreateMSGFDBSuffixArrayFiles : EventNotifier
     {
         #region "Constants"
 
@@ -157,7 +157,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 var filesCopied = 0;
                 var dtLastStatusUpdate = DateTime.UtcNow;
 
-                var oFileTools = new clsFileTools(manager, debugLevel);
+                var oFileTools = new FileTools(manager, debugLevel);
                 RegisterEvents(oFileTools);
 
                 // Compute the total disk space required
@@ -265,7 +265,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <param name="fiFastaFile"></param>
         /// <param name="remoteIndexDirPath"></param>
         /// <param name="debugLevel"></param>
-        /// <param name="managerName">Manager name (only required because the constructor for PRISM.clsFileTools requires this)</param>
+        /// <param name="managerName">Manager name (only required because the constructor for PRISM.FileTools requires this)</param>
         /// <param name="createIndexFileForExistingFiles">
         /// When true, assumes that the index files were previously copied to remoteIndexDirPath,
         /// and we should simply create the .MSGFPlusIndexFileInfo file for the matching files
@@ -332,7 +332,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 if (!createIndexFileForExistingFiles)
                 {
                     // Copy up each file
-                    var oFileTools = new clsFileTools(managerName, debugLevel);
+                    var oFileTools = new FileTools(managerName, debugLevel);
 
                     foreach (var entry in filesToCopy)
                     {

@@ -260,7 +260,7 @@ namespace AnalysisManagerMSGFPlugin
 
                 // Make sure objects are released
                 clsGlobal.IdleLoop(0.5);
-                clsProgRunner.GarbageCollectNow();
+                ProgRunner.GarbageCollectNow();
 
                 if (processingError)
                 {
@@ -2624,7 +2624,7 @@ namespace AnalysisManagerMSGFPlugin
                 {
                     // Replace the original file with the new one
                     clsGlobal.IdleLoop(0.2);
-                    clsProgRunner.GarbageCollectNow();
+                    ProgRunner.GarbageCollectNow();
 
                     try
                     {

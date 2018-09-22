@@ -296,7 +296,7 @@ namespace AnalysisManagerSequestPlugin
 
             // Make sure objects are released
             clsGlobal.IdleLoop(5);
-            clsProgRunner.GarbageCollectNow();
+            ProgRunner.GarbageCollectNow();
 
             UpdateSequestNodeProcessingStats(false);
 
@@ -836,7 +836,7 @@ namespace AnalysisManagerSequestPlugin
                 }
                 else
                 {
-                    if (m_UtilityRunner.State != clsProgRunner.States.NotMonitoring)
+                    if (m_UtilityRunner.State != ProgRunner.States.NotMonitoring)
                     {
                         LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR,
                             "Cannot re-initialize the UtilityRunner to perform task " + strTaskName + " since already running task " +

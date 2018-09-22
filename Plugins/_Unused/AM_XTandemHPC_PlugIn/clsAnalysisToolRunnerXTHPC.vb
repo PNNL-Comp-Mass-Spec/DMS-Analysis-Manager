@@ -344,7 +344,7 @@ Public Class clsAnalysisToolRunnerXTHPC
 
         'Make sure objects are released
         System.Threading.Thread.Sleep(2000)        '2 second delay
-        PRISM.Processes.clsProgRunner.GarbageCollectNow()
+        PRISM.Processes.ProgRunner.GarbageCollectNow()
 
         'Zip the output file
         result = ZipMainOutputFile()

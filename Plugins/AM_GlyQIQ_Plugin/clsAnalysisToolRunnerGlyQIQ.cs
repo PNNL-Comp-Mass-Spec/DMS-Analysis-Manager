@@ -63,7 +63,7 @@ namespace AnalysisManagerGlyQIQPlugin
 
         private XRawFileIO mThermoFileReader;
 
-        private PRISM.clsExecuteDatabaseSP mStoredProcedureExecutor;
+        private PRISM.ExecuteDatabaseSP mStoredProcedureExecutor;
 
         #endregion
 
@@ -127,7 +127,7 @@ namespace AnalysisManagerGlyQIQPlugin
                 UpdateSummaryFile();
 
                 // Make sure objects are released
-                PRISM.clsProgRunner.GarbageCollectNow();
+                PRISM.ProgRunner.GarbageCollectNow();
 
                 if (!blnSuccess)
                 {
@@ -572,7 +572,7 @@ namespace AnalysisManagerGlyQIQPlugin
                         strConnectionString = dmsConnectionStringOverride;
                     }
 
-                    mStoredProcedureExecutor = new PRISM.clsExecuteDatabaseSP(strConnectionString);
+                    mStoredProcedureExecutor = new PRISM.ExecuteDatabaseSP(strConnectionString);
                     mStoredProcedureExecutor.DebugEvent += m_ExecuteSP_DebugEvent;
                     mStoredProcedureExecutor.ErrorEvent += m_ExecuteSP_DBErrorEvent;
                 }
@@ -800,7 +800,7 @@ namespace AnalysisManagerGlyQIQPlugin
                 currentTask = "Looking for console output error messages";
 
                 // Look for any console output error messages
-                // Note that clsProgRunner will have already included them in the ConsoleOutput.txt file
+                // Note that ProgRunner will have already included them in the ConsoleOutput.txt file
 
                 foreach (var glyQRunner in mGlyQRunners)
                 {

@@ -12,7 +12,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
     /// <summary>
     /// Runs the MultiAlign pipeline
     /// </summary>
-    public class clsMultiAlignMage : clsEventNotifier
+    public class clsMultiAlignMage : EventNotifier
     {
 
         #region Member Variables

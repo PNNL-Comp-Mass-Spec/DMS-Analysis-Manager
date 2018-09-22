@@ -98,7 +98,7 @@ namespace AnalysisManagerThermoPeakDataExporterPlugIn
                 mCmdRunner = null;
 
                 // Make sure objects are released
-                PRISM.clsProgRunner.GarbageCollectNow();
+                PRISM.ProgRunner.GarbageCollectNow();
 
                 if (!clsAnalysisJob.SuccessOrNoData(processingResult))
                 {

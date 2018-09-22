@@ -12,7 +12,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
     /// Values that are 0 are auto-changed to 1
     /// </summary>
     /// <remarks></remarks>
-    public class clsDeconMSnLogFileValidator : clsEventNotifier
+    public class clsDeconMSnLogFileValidator : EventNotifier
     {
         private bool mFileUpdated;
 

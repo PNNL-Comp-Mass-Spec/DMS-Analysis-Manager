@@ -18,7 +18,7 @@ namespace AnalysisManagerBase
     /// <summary>
     /// Memory usage logger
     /// </summary>
-    public class clsMemoryUsageLogger : clsEventNotifier
+    public class clsMemoryUsageLogger : EventNotifier
     {
 
         #region "Constants and Enums"

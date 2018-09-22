@@ -10,7 +10,7 @@ namespace AnalysisManagerBase
     /// <summary>
     /// DotNet Zip Tools (aka Ionic Zip Tools)
     /// </summary>
-    public class clsDotNetZipTools : clsEventNotifier
+    public class clsDotNetZipTools : EventNotifier
     {
         /// <summary>
         /// DotNetZip name (used for logging)
@@ -186,7 +186,7 @@ namespace AnalysisManagerBase
                         decompressedFile.Directory.Create();
                 }
 
-                var actualDecompressedFilePath = clsFileTools.GZipDecompressWithMetadata(fileToGUnzip, decompressedFile.DirectoryName);
+                var actualDecompressedFilePath = FileTools.GZipDecompressWithMetadata(fileToGUnzip, decompressedFile.DirectoryName);
                 var actualDecompressedFile = new FileInfo(actualDecompressedFilePath);
 
                 if (!string.Equals(decompressedFile.FullName, actualDecompressedFile.FullName))
@@ -305,7 +305,7 @@ namespace AnalysisManagerBase
 
                 var gzipFile = new FileInfo(gzipFilePath);
 
-                clsFileTools.GZipCompressWithMetadata(fileToGZip, gzipFile.DirectoryName, gzipFile.Name);
+                FileTools.GZipCompressWithMetadata(fileToGZip, gzipFile.DirectoryName, gzipFile.Name);
 
                 var dtEndTime = DateTime.UtcNow;
 

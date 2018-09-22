@@ -1102,7 +1102,7 @@ namespace AnalysisManagerExtractionPlugin
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
-        private void RegisterPHRPEvents(clsEventNotifier phrp)
+        private void RegisterPHRPEvents(EventNotifier phrp)
         {
             RegisterEvents(phrp);
 
@@ -2338,7 +2338,7 @@ namespace AnalysisManagerExtractionPlugin
         /// <remarks></remarks>
         private void DeleteTemporaryFiles(IReadOnlyCollection<string> splitFileList)
         {
-            PRISM.clsProgRunner.GarbageCollectNow();
+            PRISM.ProgRunner.GarbageCollectNow();
 
             // Delete each file in fileList
             foreach (var splitFile in splitFileList)

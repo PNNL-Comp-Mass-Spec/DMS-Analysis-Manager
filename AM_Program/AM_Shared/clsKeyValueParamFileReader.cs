@@ -9,7 +9,7 @@ namespace AnalysisManagerBase
     /// <summary>
     /// Class for reading parameter files with key=value settings (as used by MSGF+, MSPathFinder, and TopFD)
     /// </summary>
-    public class clsKeyValueParamFileReader : clsEventNotifier
+    public class clsKeyValueParamFileReader : EventNotifier
     {
 
         /// <summary>

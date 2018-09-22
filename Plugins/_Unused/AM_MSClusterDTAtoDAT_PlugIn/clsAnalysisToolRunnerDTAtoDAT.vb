@@ -149,7 +149,7 @@ Public Class clsAnalysisToolRunnerDTAtoDAT
 
         'Make sure objects are released
         System.Threading.Thread.Sleep(2000)        '2 second delay
-        PRISM.Processes.clsProgRunner.GarbageCollectNow()
+        PRISM.Processes.ProgRunner.GarbageCollectNow()
 
         result = MakeResultsFolder()
         If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then

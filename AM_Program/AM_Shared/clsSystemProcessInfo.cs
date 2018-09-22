@@ -7,11 +7,11 @@ namespace AnalysisManagerBase
     /// System process info
     /// </summary>
     /// <remarks>Supports both Linux and Windows</remarks>
-    public class SystemProcessInfo : PRISM.clsEventNotifier
+    public class SystemProcessInfo : PRISM.EventNotifier
     {
-        private readonly PRISM.clsLinuxSystemInfo mLinuxSystemInfo;
+        private readonly PRISM.LinuxSystemInfo mLinuxSystemInfo;
 
-        private readonly PRISMWin.clsProcessStats mWindowsProcessStats;
+        private readonly PRISMWin.ProcessStats mWindowsProcessStats;
 
         /// <summary>
         /// Constructor
@@ -20,12 +20,12 @@ namespace AnalysisManagerBase
         {
             const bool LIMIT_LOGGING_BY_TIME_OF_DAY = true;
 
-            mLinuxSystemInfo = new PRISM.clsLinuxSystemInfo(LIMIT_LOGGING_BY_TIME_OF_DAY);
+            mLinuxSystemInfo = new PRISM.LinuxSystemInfo(LIMIT_LOGGING_BY_TIME_OF_DAY);
 
             if (clsGlobal.LinuxOS)
                 return;
 
-            mWindowsProcessStats = new PRISMWin.clsProcessStats(LIMIT_LOGGING_BY_TIME_OF_DAY);
+            mWindowsProcessStats = new PRISMWin.ProcessStats(LIMIT_LOGGING_BY_TIME_OF_DAY);
             mWindowsProcessStats.ErrorEvent += OnWindowsProcessErrorEvent;
 
         }

@@ -17,7 +17,7 @@ namespace AnalysisManagerBase
     /// <summary>
     /// Data package file handler
     /// </summary>
-    public class clsDataPackageFileHandler : clsEventNotifier
+    public class clsDataPackageFileHandler : EventNotifier
     {
 
         #region "Constants"
@@ -167,7 +167,7 @@ namespace AnalysisManagerBase
                 var inputFolderName = string.Empty;
                 var stepToolMatch = string.Empty;
 
-                var pipelineDBProcedureExecutor = new clsExecuteDatabaseSP(mBrokerDBConnectionString);
+                var pipelineDBProcedureExecutor = new ExecuteDatabaseSP(mBrokerDBConnectionString);
                 pipelineDBProcedureExecutor.DebugEvent += OnDebugEvent;
                 pipelineDBProcedureExecutor.ErrorEvent += ProcedureExecutor_DBErrorEvent;
                 pipelineDBProcedureExecutor.WarningEvent += OnWarningEvent;

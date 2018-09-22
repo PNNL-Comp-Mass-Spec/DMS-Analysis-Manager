@@ -4,7 +4,7 @@ using PRISM;
 
 namespace AnalysisManagerDecon2lsV2PlugIn
 {
-    public class clsDeconToolsQCPlotsGenerator : clsEventNotifier
+    public class clsDeconToolsQCPlotsGenerator : EventNotifier
     {
         private const int MAX_RUNTIME_HOURS = 5;
 

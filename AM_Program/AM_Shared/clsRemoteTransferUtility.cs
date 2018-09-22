@@ -113,7 +113,7 @@ namespace AnalysisManagerBase
                 if (string.IsNullOrWhiteSpace(RemoteTaskQueuePath) || string.IsNullOrWhiteSpace(StepTool))
                     return string.Empty;
 
-                return clsPathUtils.CombineLinuxPaths(RemoteTaskQueuePath, StepTool);
+                return PathUtils.CombineLinuxPaths(RemoteTaskQueuePath, StepTool);
             }
         }
 
@@ -128,7 +128,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Remote working directory for this specific job
         /// </summary>
-        public string RemoteJobStepWorkDirPath => clsPathUtils.CombineLinuxPaths(RemoteWorkDirPath, GetJobStepFileOrFolderName());
+        public string RemoteJobStepWorkDirPath => PathUtils.CombineLinuxPaths(RemoteWorkDirPath, GetJobStepFileOrFolderName());
 
         /// <summary>
         /// Step number for the current job
@@ -366,7 +366,7 @@ namespace AnalysisManagerBase
                     return false;
                 }
 
-                infoFilePathRemote = clsPathUtils.CombineLinuxPaths(remoteDirectoryPath, infoFileName);
+                infoFilePathRemote = PathUtils.CombineLinuxPaths(remoteDirectoryPath, infoFileName);
 
                 using (var writer = new StreamWriter(new FileStream(infoFilePathLocal, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
@@ -818,7 +818,7 @@ namespace AnalysisManagerBase
                     if (string.IsNullOrWhiteSpace(analysisManagerDir))
                         continue;
 
-                    var targetDirectoryPath = clsPathUtils.CombineLinuxPaths(dmsProgramsPath, analysisManagerDir.Trim());
+                    var targetDirectoryPath = PathUtils.CombineLinuxPaths(dmsProgramsPath, analysisManagerDir.Trim());
 
                     OnDebugEvent(string.Format("Copying new/updated DMS Programs files from {0} to {1} on remote host {2}",
                                                sourceDirectoryPath, targetDirectoryPath, RemoteHostInfo.HostName));
@@ -932,8 +932,8 @@ namespace AnalysisManagerBase
                     var jobPrivateKeyFileName = clsXMLUtils.GetXmlValue(elements, "privateKey");
                     var jobPassphraseFileName = clsXMLUtils.GetXmlValue(elements, "passphrase");
 
-                    RemoteHostInfo.PrivateKeyFile = clsPathUtils.ReplaceFilenameInPath(mgrPrivateKeyFilePath, jobPrivateKeyFileName);
-                    RemoteHostInfo.PassphraseFile = clsPathUtils.ReplaceFilenameInPath(mgrPassphraseFilePath, jobPassphraseFileName);
+                    RemoteHostInfo.PrivateKeyFile = PathUtils.ReplaceFilenameInPath(mgrPrivateKeyFilePath, jobPrivateKeyFileName);
+                    RemoteHostInfo.PassphraseFile = PathUtils.ReplaceFilenameInPath(mgrPassphraseFilePath, jobPassphraseFileName);
 
                     RemoteTaskQueuePath = clsXMLUtils.GetXmlValue(elements, "taskQueue");
                     RemoteWorkDirPath = clsXMLUtils.GetXmlValue(elements, "workDir");

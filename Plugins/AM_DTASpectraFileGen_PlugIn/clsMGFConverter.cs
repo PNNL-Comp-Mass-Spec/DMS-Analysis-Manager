@@ -7,7 +7,7 @@ using PRISM;
 
 namespace DTASpectraFileGen
 {
-    public class clsMGFConverter : clsEventNotifier
+    public class clsMGFConverter : EventNotifier
     {
         #region "Structures"
 
@@ -381,7 +381,7 @@ namespace DTASpectraFileGen
                 }
 
                 // Delete the original .mgf file and replace it with strNewMGFFile
-                clsProgRunner.GarbageCollectNow();
+                ProgRunner.GarbageCollectNow();
 
                 clsAnalysisToolRunnerBase.DeleteFileWithRetries(strMGFFilePath, m_DebugLevel);
 
