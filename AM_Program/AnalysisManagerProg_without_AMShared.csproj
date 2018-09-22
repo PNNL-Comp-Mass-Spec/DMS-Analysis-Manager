@@ -44,7 +44,7 @@
     <ApplicationIcon>LITENING.ICO</ApplicationIcon>
   </PropertyGroup>
   <PropertyGroup>
-    <StartupObject>AnalysisManagerProg.modMain</StartupObject>
+    <StartupObject>AnalysisManagerProg.Program</StartupObject>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="DMSUpdateManager">

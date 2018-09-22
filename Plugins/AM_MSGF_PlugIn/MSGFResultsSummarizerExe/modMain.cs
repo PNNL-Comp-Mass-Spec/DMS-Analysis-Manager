@@ -20,7 +20,7 @@ using PRISM;
 
 namespace MSGFResultsSummarizerExe
 {
-    static class modMain
+    static class Program
     {
         private const string PROGRAM_DATE = "March 31, 2017";
         private static string mMSGFSynFilePath = string.Empty;
@@ -78,7 +78,7 @@ namespace MSGFResultsSummarizerExe
             }
             catch (Exception ex)
             {
-                ConsoleMsgUtils.ShowError("Error occurred in modMain->Main", ex);
+                ConsoleMsgUtils.ShowError("Error occurred in Program->Main", ex);
                 return -1;
             }
 

@@ -21,7 +21,7 @@ namespace AnalysisManagerProg
     /// <summary>
     /// Collection of test code
     /// </summary>
-    public class clsCodeTest : clsLoggerBase
+    public class CodeTest : clsLoggerBase
     {
         private Protein_Exporter.clsGetFASTAFromDMS m_FastaTools;
         private bool m_GenerationComplete;
@@ -44,7 +44,7 @@ namespace AnalysisManagerProg
         /// Constructor
         /// </summary>
         /// <remarks></remarks>
-        public clsCodeTest()
+        public CodeTest()
         {
             const bool TRACE_MODE_ENABLED = true;
 
@@ -294,16 +294,16 @@ namespace AnalysisManagerProg
             return toolRunner;
         }
 
-        private clsResourceTestClass GetResourcesObject(int debugLevel)
+        private ResourceTestClass GetResourcesObject(int debugLevel)
         {
             var jobParams = new clsAnalysisJob(m_mgrParams, 0);
 
             return GetResourcesObject(debugLevel, jobParams);
         }
 
-        private clsResourceTestClass GetResourcesObject(int debugLevel, IJobParams jobParams)
+        private ResourceTestClass GetResourcesObject(int debugLevel, IJobParams jobParams)
         {
-            var resourceTester = new clsResourceTestClass();
+            var resourceTester = new ResourceTestClass();
 
             var statusTools = new clsStatusFile("Status.xml", debugLevel);
             RegisterEvents(statusTools);
@@ -893,9 +893,9 @@ namespace AnalysisManagerProg
                 m_FastaTools = new Protein_Exporter.clsGetFASTAFromDMS(m_FastaToolsCnStr);
                 RegisterEvents(m_FastaTools);
 
-                m_FastaTools.FileGenerationStarted += m_FastaTools_FileGenerationStarted;
-                m_FastaTools.FileGenerationCompleted += m_FastaTools_FileGenerationCompleted;
-                m_FastaTools.FileGenerationProgress += m_FastaTools_FileGenerationProgress;
+                m_FastaTools.FileGenerationStarted += FileGenerationStarted;
+                m_FastaTools.FileGenerationCompleted += FileGenerationCompleted;
+                m_FastaTools.FileGenerationProgress += FileGenerationProgress;
 
             }
 
@@ -904,7 +904,7 @@ namespace AnalysisManagerProg
 
             // Setup a timer to prevent an infinite loop if there's a fasta generation problem
             m_FastaTimer = new System.Timers.Timer();
-            m_FastaTimer.Elapsed += m_FastaTimer_Elapsed;
+            m_FastaTimer.Elapsed += FastaTimer_Elapsed;
 
             m_FastaTimer.Interval = FASTA_GEN_TIMEOUT_INTERVAL_SEC * 1000;
             m_FastaTimer.AutoReset = false;
@@ -1335,7 +1335,7 @@ namespace AnalysisManagerProg
         {
             var debugLevel = 2;
 
-            var resourceTester = new clsResourceTestClass();
+            var resourceTester = new ResourceTestClass();
 
             var statusTools = new clsStatusFile("Status.xml", debugLevel);
             RegisterEvents(statusTools);
@@ -1483,13 +1483,13 @@ namespace AnalysisManagerProg
             return success;
         }
 
-        private void m_FastaTools_FileGenerationStarted(string taskMsg)
+        private void FileGenerationStarted(string taskMsg)
         {
             // Reset the fasta generation timer
             m_FastaTimer.Start();
         }
 
-        private void m_FastaTools_FileGenerationCompleted(string FullOutputPath)
+        private void FileGenerationCompleted(string FullOutputPath)
         {
             // Get the name of the fasta file that was generated
             m_FastaFileName = Path.GetFileName(FullOutputPath);
@@ -1502,13 +1502,13 @@ namespace AnalysisManagerProg
 
         }
 
-        private void m_FastaTools_FileGenerationProgress(string statusMsg, double fractionDone)
+        private void FileGenerationProgress(string statusMsg, double fractionDone)
         {
             // Reset the fasta generation timer
             m_FastaTimer.Start();
         }
 
-        private void m_FastaTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
+        private void FastaTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
             // If this event occurs, it means there was a hang during fasta generation and the manager will have to quit
             m_FastaTimer.Stop();
@@ -1762,7 +1762,7 @@ namespace AnalysisManagerProg
             resourcer.ValidateCDTAFileIsCentroided(@"\\proto-7\dms3_Xfer\UW_HCV_03_Run2_19Dec13_Pippin_13-07-06\DTA_Gen_1_26_350136\UW_HCV_03_Run2_19Dec13_Pippin_13-07-06_dta.txt");
         }
 
-        private class clsResourceTestClass : clsAnalysisResources
+        private class ResourceTestClass : clsAnalysisResources
         {
 
             public override CloseOutType GetResources()

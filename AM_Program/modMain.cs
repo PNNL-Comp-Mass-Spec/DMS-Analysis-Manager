@@ -23,9 +23,9 @@ using PRISM.Logging;
 
 namespace AnalysisManagerProg
 {
-    static class modMain
+    static class Program
     {
-        public const string PROGRAM_DATE = "September 12, 2018";
+        public const string PROGRAM_DATE = "September 22, 2018";
 
         private static bool mCodeTestMode;
         private static bool mTraceMode;
@@ -119,7 +119,7 @@ namespace AnalysisManagerProg
                 {
                     ShowTraceMessage("Code test mode enabled");
 
-                    var testHarness = new clsCodeTest();
+                    var testHarness = new CodeTest();
 
                     try
                     {
@@ -159,7 +159,7 @@ namespace AnalysisManagerProg
 
                 if (mDisplayDllVersions)
                 {
-                    var testHarness = new clsCodeTest();
+                    var testHarness = new CodeTest();
                     testHarness.DisplayDllVersions(mDisplayDllPath);
                     clsParseCommandLine.PauseAtConsole();
                     return 0;
@@ -183,7 +183,7 @@ namespace AnalysisManagerProg
             }
             catch (Exception ex)
             {
-                LogTools.LogError("Error occurred in modMain->Main", ex);
+                LogTools.LogError("Error occurred in Program->Main", ex);
                 clsParseCommandLine.PauseAtConsole(1500);
                 FileLogger.FlushPendingMessages();
                 return -1;

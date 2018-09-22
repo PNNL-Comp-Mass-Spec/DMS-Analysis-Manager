@@ -44,7 +44,7 @@
     <ApplicationIcon>LITENING.ICO</ApplicationIcon>
   </PropertyGroup>
   <PropertyGroup>
-    <StartupObject>AnalysisManagerProg.modMain</StartupObject>
+    <StartupObject>AnalysisManagerProg.Program</StartupObject>
   </PropertyGroup>
   <PropertyGroup>
     <ApplicationManifest>app.manifest</ApplicationManifest>
