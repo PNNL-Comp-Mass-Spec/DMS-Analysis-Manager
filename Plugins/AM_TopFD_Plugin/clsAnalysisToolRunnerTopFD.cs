@@ -51,7 +51,7 @@ namespace AnalysisManagerTopFDPlugIn
         private string mTopFDProgLoc;
         private string mConsoleOutputErrorMsg;
 
-        private readonly Regex reExtractPercentFinished = new Regex(@"(?<PercentComplete>\d+)% finished", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private readonly Regex reExtractPercentFinished = new Regex(@"(?<PercentComplete>[0-9.]+)% finished", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         private DateTime mLastConsoleOutputParse;
 

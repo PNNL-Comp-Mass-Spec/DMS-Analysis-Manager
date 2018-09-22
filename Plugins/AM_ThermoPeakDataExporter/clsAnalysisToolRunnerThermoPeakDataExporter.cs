@@ -34,7 +34,7 @@ namespace AnalysisManagerThermoPeakDataExporterPlugIn
 
         private string mConsoleOutputErrorMsg;
 
-        private readonly Regex reExtractPercentFinished = new Regex(@"(?<PercentComplete>\d+)% finished", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private readonly Regex reExtractPercentFinished = new Regex(@"(?<PercentComplete>[0-9.]+)% finished", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         private DateTime mLastConsoleOutputParse;
 
@@ -137,7 +137,15 @@ namespace AnalysisManagerThermoPeakDataExporterPlugIn
 
             // Example Console output
 
-            // Extracting data from C:\DMS_WorkDir1\DatasetName.raw
+            // Using options:
+            //  Thermo Instrument file: DatasetName.raw
+            //  Output file: C:\DMS_WorkDir\DatasetName.tsv
+            //  Minimum S/N: 2.0
+            //   11.7% finished: Processing scan 2100
+            //   31.2% finished: Processing scan 5600
+            //   62.5% finished: Processing scan 11200
+            //   82.0% finished: Processing scan 14700
+            //   97.6% finished: Processing scan 17500
             // Processing complete; created file C:\DMS_WorkDir1\DatasetName.tsv
 
             try
@@ -157,7 +165,7 @@ namespace AnalysisManagerThermoPeakDataExporterPlugIn
                     LogDebug("Parsing file " + consoleOutputFilePath);
                 }
 
-                short actualProgress = 0;
+                float actualProgress = 0;
 
                 mConsoleOutputErrorMsg = string.Empty;
 
@@ -174,7 +182,7 @@ namespace AnalysisManagerThermoPeakDataExporterPlugIn
 
                         if (match.Success)
                         {
-                            actualProgress = short.Parse(match.Groups["PercentComplete"].Value);
+                            actualProgress = float.Parse(match.Groups["PercentComplete"].Value);
                         }
                         else if (dataLine.StartsWith("error", StringComparison.OrdinalIgnoreCase) &&
                                  string.IsNullOrEmpty(mConsoleOutputErrorMsg))
