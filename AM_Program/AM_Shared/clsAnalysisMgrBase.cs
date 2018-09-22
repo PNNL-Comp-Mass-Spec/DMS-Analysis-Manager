@@ -105,11 +105,11 @@ namespace AnalysisManagerBase
 
             // Use a custom event handler for status messages
             UnregisterEventHandler(m_FileTools, BaseLogger.LogLevels.INFO);
-            m_FileTools.StatusEvent += m_FileTools_StatusEvent;
+            m_FileTools.StatusEvent += FileTools_StatusEvent;
 
-            m_FileTools.LockQueueTimedOut += m_FileTools_LockQueueTimedOut;
-            m_FileTools.LockQueueWaitComplete += m_FileTools_LockQueueWaitComplete;
-            m_FileTools.WaitingForLockQueue += m_FileTools_WaitingForLockQueue;
+            m_FileTools.LockQueueTimedOut += FileTools_LockQueueTimedOut;
+            m_FileTools.LockQueueWaitComplete += FileTools_LockQueueWaitComplete;
+            m_FileTools.WaitingForLockQueue += FileTools_WaitingForLockQueue;
         }
 
         /// <summary>
@@ -252,7 +252,7 @@ namespace AnalysisManagerBase
 
         #region "Event Handlers"
 
-        private void m_FileTools_LockQueueTimedOut(string sourceFilePath, string targetFilePath, double waitTimeMinutes)
+        private void FileTools_LockQueueTimedOut(string sourceFilePath, string targetFilePath, double waitTimeMinutes)
         {
             if (m_DebugLevel >= 1)
             {
@@ -261,16 +261,20 @@ namespace AnalysisManagerBase
             }
         }
 
-        private void m_FileTools_LockQueueWaitComplete(string sourceFilePath, string targetFilePath, double waitTimeMinutes)
+        private void FileTools_LockQueueWaitComplete(string sourceFilePath, string targetFilePath, double waitTimeMinutes)
         {
             if (m_DebugLevel >= 1 && waitTimeMinutes >= 1)
             {
-                var msg = "Exited lockfile queue after " + waitTimeMinutes.ToString("0") + " minutes (" + m_DerivedClassName + "); will now copy file";
+                // Round to the nearest minute
+                var minutesText = waitTimeMinutes.ToString("0");
+                var timeUnits = minutesText == "1" ? "minute" : "minutes";
+
+                var msg = string.Format("Exited lockfile queue after {0} {1} ({2}; will now copy file", minutesText, timeUnits, m_DerivedClassName);
                 LogDebug(msg);
             }
         }
 
-        private void m_FileTools_StatusEvent(string message)
+        private void FileTools_StatusEvent(string message)
         {
             // Do not log certain common messages
             if (message.StartsWith("Created lock file") ||
@@ -286,7 +290,7 @@ namespace AnalysisManagerBase
             LogMessage(message);
         }
 
-        private void m_FileTools_WaitingForLockQueue(string sourceFilePath, string targetFilePath, int backlogSourceMB, int backlogTargetMB)
+        private void FileTools_WaitingForLockQueue(string sourceFilePath, string targetFilePath, int backlogSourceMB, int backlogTargetMB)
         {
             if (IsLockQueueLogMessageNeeded(ref m_LockQueueWaitTimeStart, ref m_LastLockQueueWaitTimeLog))
             {
