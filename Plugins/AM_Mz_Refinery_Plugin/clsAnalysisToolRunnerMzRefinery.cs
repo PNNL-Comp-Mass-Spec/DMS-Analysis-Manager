@@ -164,7 +164,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 {
                     if (string.IsNullOrEmpty(m_message))
                     {
-                        m_message = "Unknown error running MSGF+ prior to running MzRefiner";
+                        LogError("Unknown error running MSGF+ prior to running MzRefiner");
                     }
                     return result;
                 }
@@ -224,7 +224,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                     {
                         if (string.IsNullOrEmpty(m_message))
                         {
-                            m_message = "MzRefinery results file not found: " + fixedMSXmlFile.Name;
+                            LogError("MzRefinery results file not found: " + fixedMSXmlFile.Name);
                         }
                         processingError = true;
                     }
@@ -318,8 +318,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             }
             catch (Exception ex)
             {
-                m_message = "Error in MzRefineryPlugin->RunTool";
-                LogError(m_message, ex);
+                LogError("Error in MzRefineryPlugin->RunTool", ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -410,7 +409,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             {
                 if (string.IsNullOrEmpty(m_message))
                 {
-                    m_message = "Problem parsing MzRef parameter file to extract MGSF+ options";
+                    LogError("Problem parsing MzRef parameter file to extract MGSF+ options");
                 }
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -419,7 +418,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             var success = ExtractMzRefinerOptionsFromParameterFile(paramFilePath);
             if (!success)
             {
-                m_message = "Error extracting MzRefinery options from parameter file " + Path.GetFileName(paramFilePath);
+                LogError("Error extracting MzRefinery options from parameter file " + Path.GetFileName(paramFilePath));
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -452,7 +451,7 @@ namespace AnalysisManagerMzRefineryPlugIn
 
             if (!clsAnalysisResources.ValidateFreeMemorySize(intJavaMemorySize, "MSGF+", blnLogFreeMemoryOnSuccess))
             {
-                m_message = "Not enough free memory to run MSGF+";
+                LogError("Not enough free memory to run MSGF+");
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -544,7 +543,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             {
                 if (string.IsNullOrEmpty(m_message))
                 {
-                    m_message = "MSGF+ results file not found: " + resultsFileName;
+                    LogError("MSGF+ results file not found: " + resultsFileName);
                 }
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -598,7 +597,7 @@ namespace AnalysisManagerMzRefineryPlugIn
 
                 if (!success)
                 {
-                    m_message = m_DotNetZipTools.Message;
+                    LogError(m_DotNetZipTools.Message);
                     return false;
                 }
 
@@ -607,8 +606,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             }
             catch (Exception ex)
             {
-                m_message = "Error compressing the .mzID file";
-                LogError(m_message, ex);
+                LogError("Error compressing the .mzID file", ex);
                 return false;
             }
 
@@ -647,7 +645,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 var eResult = paramFileReader.ParseKeyValueParameterFile(out var paramFileEntries);
                 if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
                 {
-                    m_message = paramFileReader.ErrorMessage;
+                    LogError(paramFileReader.ErrorMessage);
                     return false;
                 }
 
@@ -972,8 +970,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             }
             catch (Exception ex)
             {
-                m_message = "Error creating PPM Error charters";
-                LogError(m_message, ex);
+                LogError("Error creating PPM Error charters", ex);
                 return false;
             }
 
@@ -987,8 +984,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             }
             catch (Exception ex)
             {
-                m_message = "Error replacing the original .mzML file with the updated version; cannot delete original";
-                LogError(m_message, ex);
+                LogError("Error replacing the original .mzML file with the updated version; cannot delete original", ex);
                 return false;
             }
 
@@ -999,8 +995,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             }
             catch (Exception ex)
             {
-                m_message = "Error replacing the original .mzML file with the updated version; cannot rename the fixed file";
-                LogError(m_message, ex);
+                LogError("Error replacing the original .mzML file with the updated version; cannot rename the fixed file", ex);
                 return false;
             }
 
@@ -1011,14 +1006,13 @@ namespace AnalysisManagerMzRefineryPlugIn
 
                 if (!success)
                 {
-                    m_message = m_DotNetZipTools.Message;
+                    LogError(m_DotNetZipTools.Message);
                     return false;
                 }
             }
             catch (Exception ex)
             {
-                m_message = "Error compressing the fixed .mzXML/.mzML file";
-                LogError(m_message, ex);
+                LogError("Error compressing the fixed .mzXML/.mzML file", ex);
                 return false;
             }
 
@@ -1049,8 +1043,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             }
             catch (Exception ex)
             {
-                m_message = "Error copying the .mzML.gz file to the remote cache folder";
-                LogError(m_message, ex);
+                LogError("Error copying the .mzML.gz file to the remote cache folder", ex);
                 return false;
             }
 
@@ -1160,15 +1153,13 @@ namespace AnalysisManagerMzRefineryPlugIn
                 LogError(mConsoleOutputErrorMsg);
                 if (mConsoleOutputErrorMsg.Contains("No high-resolution data in input file"))
                 {
-                    m_message = "No high-resolution data in input file; cannot use MzRefinery on this dataset";
-                    LogError(m_message);
+                    LogError("No high-resolution data in input file; cannot use MzRefinery on this dataset");
                     m_UnableToUseMzRefinery = true;
                     m_ForceGeneratePPMErrorPlots = false;
                 }
                 else if (mConsoleOutputErrorMsg.Contains("No significant peak (ppm error histogram) found"))
                 {
-                    m_message = "Significant peak not found in the ppm error histogram; cannot use MzRefinery on this dataset";
-                    LogError(m_message);
+                    LogError("Significant peak not found in the ppm error histogram; cannot use MzRefinery on this dataset");
                     m_UnableToUseMzRefinery = true;
                     m_ForceGeneratePPMErrorPlots = true;
                 }
@@ -1276,8 +1267,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             {
                 if (!fiChart.Exists)
                 {
-                    m_message = "PPMError chart not found: " + fiChart.Name;
-                    LogError(m_message);
+                    LogError("PPMError chart not found: " + fiChart.Name);
                     return false;
                 }
             }
