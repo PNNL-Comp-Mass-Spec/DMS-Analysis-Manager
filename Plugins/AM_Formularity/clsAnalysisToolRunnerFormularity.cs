@@ -91,7 +91,7 @@ namespace AnalysisManagerFormularityPlugin
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                // Process the XML files using Formularity
+                // Process the data using Formularity
                 var processingSuccess = ProcessScansWithFormularity(progLoc, out var nothingToAlign);
 
                 CloseOutType eReturnCode;

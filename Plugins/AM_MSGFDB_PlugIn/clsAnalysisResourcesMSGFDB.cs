@@ -267,7 +267,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         private CloseOutType GetCDTAFile()
         {
             // Retrieve the _DTA.txt file
-            // Note that if the file was found in MyEMSL then RetrieveDtaFiles will auto-call ProcessMyEMSLDownloadQueue to download the file
+            // Note that if the file was found in MyEMSL, RetrieveDtaFiles will auto-call ProcessMyEMSLDownloadQueue to download the file
 
             if (FileSearch.RetrieveDtaFiles())
                 return CloseOutType.CLOSEOUT_SUCCESS;

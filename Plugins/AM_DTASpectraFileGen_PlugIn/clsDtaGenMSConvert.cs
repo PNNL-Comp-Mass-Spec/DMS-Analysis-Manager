@@ -57,6 +57,7 @@ namespace DTASpectraFileGen
 
             m_Progress = 10;
 
+            // Use MSConvert to create a .mgf file
             if (!ConvertRawToMGF(m_RawDataType))
             {
                 if (m_Status != ProcessStatus.SF_ABORTING)
@@ -69,6 +70,7 @@ namespace DTASpectraFileGen
 
             m_Progress = 75;
 
+            // Convert the .mgf file to _dta.txt
             if (!ConvertMGFtoDTA())
             {
                 if (m_Status != ProcessStatus.SF_ABORTING)

@@ -2105,7 +2105,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                 {
                                     if (xmlReader.NodeType != XmlNodeType.EndElement)
                                     {
-                                        // Skip this element (and any children nodes enclosed in this elemnt)
+                                        // Skip this element (and any children nodes enclosed in this element)
                                         // Likely should not do this when xmlReader.NodeType is XmlNodeType.EndElement
                                         xmlReader.Skip();
                                     }
@@ -2654,7 +2654,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                     WritePXHeader(swPXFile, "project_title", TBD + "User-friendly Article Title", templateParameters, paramsWithCVs);
 
-                    // Minimum 50 characterse, max 5000 characters
+                    // Minimum 50 characters, max 5000 characters
                     WritePXHeader(swPXFile, "project_description", TBD + "Summary sentence", templateParameters, paramsWithCVs, 50);
 
                     // We don't normally use the project_tag field, so it is commented out
@@ -2874,7 +2874,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                         }
                     }
 
-                    // Determine whether the tissue or cell_type columns will bein the SMH section
+                    // Determine whether the tissue or cell_type columns will be in the SMH section
                     var smhIncludesCellType = DictionaryHasDefinedValue(templateParameters, "cell_type");
                     var smhIncludesDisease = DictionaryHasDefinedValue(templateParameters, "disease");
 
@@ -3119,7 +3119,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         }
 
         /// <summary>
-        /// Determines the Accession and Desription for the given instrument group
+        /// Determines the Accession and Description for the given instrument group
         /// </summary>
         /// <param name="instrumentGroup"></param>
         /// <param name="accession">Output parameter</param>
@@ -3442,6 +3442,8 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// <remarks></remarks>
         private void ParseConsoleOutputFile(string consoleOutputFilePath)
         {
+            // ReSharper disable CommentTypo
+
             // Example Console output:
             //
             // 2012-11-20 16:58:47,333 INFO ReportUnmarshallerFactory - Unmarshaller Initialized
@@ -3461,6 +3463,8 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             // 2012-11-20 16:59:05,258 INFO PrideXmlWriter - Marshalled 5000 spectra
             // 2012-11-20 16:59:05,258 INFO PrideXmlWriter - Used: 21 Free: 312 Heap size: 333 Xmx: 2728
             // 2012-11-20 16:59:06,693 ERROR StandardXpathAccess - The index does not contain any entry for the requested xpath: /Report/PTMs/PTM
+
+            // ReSharper restore CommentTypo
 
             try
             {
@@ -3608,7 +3612,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             {
                 if (FileExistsInTransferFolder(remoteTransferFolder, dataset + DOT_MGF))
                 {
-                    // The .mgf file already exists on the remote server; upate .MGFFilePath
+                    // The .mgf file already exists on the remote server; update .MGFFilePath
                     // The path to the file doesn't matter; just the name
                     resultFiles.MGFFilePath = Path.Combine(m_WorkDir, dataset + DOT_MGF);
                 }
@@ -4031,7 +4035,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                         var unzipped = false;
 
-                        // Decrompress .zip files
+                        // Decompress .zip files
                         // Do not decompress .gz files since we can decompress them on-the-fly while reading them
                         if (string.Equals(fiLocalFile.Extension, ".zip", StringComparison.OrdinalIgnoreCase))
                         {
@@ -4656,7 +4660,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     // If the file already exists in the remote transfer folder, assume that it is up-to-date
                     if (FileExistsInTransferFolder(remoteTransferFolder, mzIdFilePath))
                     {
-                        LogDebug("Skip updating the .mzid.gz file since already in the tranfer folder");
+                        LogDebug("Skip updating the .mzid.gz file since already in the transfer folder");
                         mzIdExistsRemotely = true;
 
                         StoreMzIdSampleInfo(mzIdFilePath, sampleMetadata);
@@ -4672,7 +4676,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     {
                         if (FileExistsInTransferFolder(remoteTransferFolder, mzIdFilePath))
                         {
-                            LogDebug("Skip updating the .mzid.gz file since already in the tranfer folder");
+                            LogDebug("Skip updating the .mzid.gz file since already in the transfer folder");
                             mzIdExistsRemotely = true;
 
                             StoreMzIdSampleInfo(mzIdFilePath, sampleMetadata);
@@ -4697,7 +4701,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 // The ProteomeXchange import pipeline breaks if the .mzid files have the BOM at the start of the file
                 // Note that the following Using command will not work if the .mzid file has an encoding string of <?xml version="1.0" encoding="Cp1252"?>
                 // using (var xmlReader = new XmlTextReader(new FileStream(mzIdFilePath, FileMode.Open, FileAccess.Read)))
-                // Thus, we instead first instantiate a streamreader using explicit encodings
+                // Thus, we instead first instantiate a StreamReader using explicit encodings
                 // Then instantiate the XmlTextReader
 
                 using (var outFile = new FileStream(updatedMzidFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read))
@@ -4866,7 +4870,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                 {
                                     if (xmlReader.NodeType != XmlNodeType.EndElement)
                                     {
-                                        // Skip this element (and any children nodes enclosed in this elemnt)
+                                        // Skip this element (and any children nodes enclosed in this element)
                                         // Likely should not do this when xmlReader.NodeType is XmlNodeType.EndElement
                                         xmlReader.Skip();
                                     }

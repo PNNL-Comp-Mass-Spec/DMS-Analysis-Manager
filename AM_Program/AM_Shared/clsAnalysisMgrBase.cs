@@ -282,7 +282,7 @@ namespace AnalysisManagerBase
                 message.StartsWith("File to copy is") && message.Contains("will use CopyFileEx for"))
             {
                 if (TraceMode)
-                    ConsoleMsgUtils.ShowDebug(message);
+                    ConsoleMsgUtils.ShowDebug(message, "  ", 0);
 
                 return;
             }

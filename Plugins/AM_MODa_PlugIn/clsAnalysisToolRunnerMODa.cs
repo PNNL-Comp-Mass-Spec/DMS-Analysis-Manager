@@ -270,6 +270,8 @@ namespace AnalysisManagerMODaPlugIn
             base.CopyFailedResultsToArchiveFolder();
         }
 
+        // ReSharper disable CommentTypo
+
         // Example Console output
         //
         // *********************************************************
@@ -292,6 +294,8 @@ namespace AnalysisManagerMODaPlugIn
         // moda | 4 at 4-thread
         // moda | 5 at 5-thread
         // moda | 11 at 10-thread
+
+        // ReSharper restore CommentTypo
 
         private readonly Regex mScanCountMatcher = new Regex(@"Reading .+spectra[. ]+(?<ScanCount>\d+) +scans",
                                                              RegexOptions.Compiled | RegexOptions.IgnoreCase);
