@@ -827,35 +827,78 @@ namespace AnalysisManagerFormularityPlugin
                     return false;
                 }
 
-                var diWorkDir = new DirectoryInfo(m_WorkDir);
-                var spectraFiles = GetXmlSpectraFiles(diWorkDir, out var wildcardMatchSpec);
 
-                if (spectraFiles.Count == 0)
+                var rawDataType = m_jobParams.GetParam("rawDataType");
+                bool success;
+
+                int scanCount;
+                int scanCountNoPeaks;
+
+                switch (rawDataType.ToLower())
                 {
-                    m_message = "XML spectrum files not found matching " + wildcardMatchSpec;
-                    return false;
-                }
+                    case clsAnalysisResources.RAW_DATA_TYPE_DOT_RAW_FILES:
 
-                foreach (var spectrumFile in spectraFiles)
-                {
-                    m_jobParams.AddResultFileToSkip(spectrumFile.Name);
-                }
+                        // ToDo: Move this into a new method
 
-                var calibrationPeaksFileName = m_jobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "CalibrationPeaksFile", string.Empty);
-                string calibrationPeaksFilePath;
-                if (string.IsNullOrWhiteSpace(calibrationPeaksFileName))
-                {
-                    calibrationPeaksFilePath = string.Empty;
-                }
-                else
-                {
-                    calibrationPeaksFilePath = Path.Combine(m_WorkDir, calibrationPeaksFileName);
-                }
+                        // ToDo: Convert from:
+                        // Scan Number	RT	Mass	Intensity	Resolution	Baseline	Noise	Charge	SignalToNoise	RelativeIntensity
+                        // To:
+                        // Mass      Intensity              S/N        Resolution           Relative Abundance
+                        //
+                        // Create one file per scan
+                        // Call Formularity for each file
 
-                m_progress = PROGRESS_PCT_STARTING_FORMULARITY;
+                        success = false;
 
-                var success = StartFormularity(progLoc, wildcardMatchSpec, paramFilePath, ciaDbPath, calibrationPeaksFilePath,
-                                               out var fileCountNoPeaks, out nothingToAlign);
+                        scanCount = 1;
+                        scanCountNoPeaks = 0;
+
+                        break;
+                    case clsAnalysisResources.RAW_DATA_TYPE_BRUKER_FT_FOLDER:
+
+                        // ToDo: Move this into a new method
+
+                        var diWorkDir = new DirectoryInfo(m_WorkDir);
+                        var spectraFiles = GetXmlSpectraFiles(diWorkDir, out var wildcardMatchSpec);
+                        scanCount = spectraFiles.Count;
+
+                        if (scanCount == 0)
+                        {
+                            m_message = "XML spectrum files not found matching " + wildcardMatchSpec;
+                            return false;
+                        }
+
+                        foreach (var spectrumFile in spectraFiles)
+                        {
+                            m_jobParams.AddResultFileToSkip(spectrumFile.Name);
+                        }
+
+                        var calibrationPeaksFileName = m_jobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "CalibrationPeaksFile", string.Empty);
+                        string calibrationPeaksFilePath;
+                        if (string.IsNullOrWhiteSpace(calibrationPeaksFileName))
+                        {
+                            calibrationPeaksFilePath = string.Empty;
+                        }
+                        else
+                        {
+                            calibrationPeaksFilePath = Path.Combine(m_WorkDir, calibrationPeaksFileName);
+                        }
+
+                        m_progress = PROGRESS_PCT_STARTING_FORMULARITY;
+
+                        success = StartFormularity(progLoc, wildcardMatchSpec, paramFilePath, ciaDbPath, calibrationPeaksFilePath,
+                                                       out scanCountNoPeaks, out nothingToAlign);
+
+
+                        break;
+                    default:
+                        LogError("This tool is not compatible with datasets of type " + rawDataType);
+                        success = false;
+                        scanCount = 0;
+                        scanCountNoPeaks = 0;
+                        break;
+
+                }
 
                 if (!success)
                     return false;
@@ -867,16 +910,16 @@ namespace AnalysisManagerFormularityPlugin
                     LogDebug("Formularity processing complete");
                 }
 
-                if (fileCountNoPeaks <= 0 && nothingToAlign == false)
+                if (scanCountNoPeaks <= 0 && nothingToAlign == false)
                 {
                     return true;
                 }
 
-                if (nothingToAlign || fileCountNoPeaks >= spectraFiles.Count)
+                if (nothingToAlign || scanCountNoPeaks >= scanCount)
                 {
                     // None of the scans had peaks
                     m_message = "No peaks found";
-                    if (spectraFiles.Count > 1)
+                    if (scanCount > 1)
                         m_EvalMessage = "None of the scans had peaks";
                     else
                         m_EvalMessage = "Scan did not have peaks";
@@ -890,7 +933,7 @@ namespace AnalysisManagerFormularityPlugin
                 else
                 {
                     // Some of the scans had no peaks
-                    m_EvalMessage = fileCountNoPeaks + " / " + spectraFiles.Count + " scans had no peaks";
+                    m_EvalMessage = scanCountNoPeaks + " / " + scanCount + " scans had no peaks";
                 }
 
                 return true;

@@ -113,16 +113,41 @@ namespace AnalysisManagerFormularityPlugin
                     remoteNoDuplicatesFile.CopyTo(localNoDuplicatesFile.FullName, true);
                 }
 
-                // Retrieve the zip file that has the XML files from the Bruker_Data_Analysis step
-                currentTask = "Retrieve the Bruker_Data_Analysis _scans.zip file";
-                var fileToGet = DatasetName + "_scans.zip";
+                var rawDataType = m_jobParams.GetParam("rawDataType");
 
-                if (!FileSearch.FindAndRetrieveMiscFiles(fileToGet, false))
+                switch (rawDataType.ToLower())
                 {
-                    // Errors should have already been logged
-                    return CloseOutType.CLOSEOUT_FAILED;
+                    case RAW_DATA_TYPE_DOT_RAW_FILES:
+                        // Processing a Thermo .raw file
+                        // Retrieve the norm.tsv file created by the ThermoPeakDataExporter step
+                        currentTask = "Retrieve the ThermoPeakDataExporter .tsv file";
+                        var tsvFileName = DatasetName + "_norm.tsv";
+
+                        if (!FileSearch.FindAndRetrieveMiscFiles(tsvFileName, false))
+                        {
+                            // Errors should have already been logged
+                            return CloseOutType.CLOSEOUT_FAILED;
+                        }
+                        m_jobParams.AddResultFileToSkip(tsvFileName);
+                        break;
+                    case RAW_DATA_TYPE_BRUKER_FT_FOLDER:
+                        // Processing a .D directory
+                        // Retrieve the zip file that has the XML files from the Bruker_Data_Analysis step
+                        currentTask = "Retrieve the Bruker_Data_Analysis _scans.zip file";
+                        var scansFileName = DatasetName + "_scans.zip";
+
+                        if (!FileSearch.FindAndRetrieveMiscFiles(scansFileName, false))
+                        {
+                            // Errors should have already been logged
+                            return CloseOutType.CLOSEOUT_FAILED;
+                        }
+                        m_jobParams.AddResultFileToSkip(scansFileName);
+                        break;
+
+                    default:
+                        LogError("This tool is not compatible with datasets of type " + rawDataType);
+                        return CloseOutType.CLOSEOUT_FAILED;
                 }
-                m_jobParams.AddResultFileToSkip(fileToGet);
 
                 currentTask = "Process the MyEMSL download queue";
                 if (!ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
