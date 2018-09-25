@@ -293,7 +293,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
         private bool RetrieveFastaFiles(IEnumerable<clsDataPackageJobInfo> dataPackagePeptideHitJobs)
         {
-            var orgDbDirectoryPath = m_mgrParams.GetParam("orgdbdir");
+            var orgDbDirectoryPath = m_mgrParams.GetParam("OrgDBDir");
 
             try
             {

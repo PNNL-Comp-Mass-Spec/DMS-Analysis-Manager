@@ -1717,7 +1717,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         private bool CreateMSGFReportFile(int job, string dataset, udtFilterThresholdsType udtFilterThresholds,
             out string prideReportXMLFilePath)
         {
-            var localOrgDBFolder = m_mgrParams.GetParam("orgdbdir");
+            var localOrgDBFolder = m_mgrParams.GetParam("OrgDBDir");
 
             var pseudoMSGFData = new Dictionary<string, List<udtPseudoMSGFDataType>>();
 

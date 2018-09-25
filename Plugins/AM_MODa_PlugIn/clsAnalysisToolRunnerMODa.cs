@@ -175,7 +175,7 @@ namespace AnalysisManagerMODaPlugIn
 
             // Define the path to the fasta file
             // Note that job parameter "generatedFastaName" gets defined by clsAnalysisResources.RetrieveOrgDB
-            var localOrgDbFolder = m_mgrParams.GetParam("orgdbdir");
+            var localOrgDbFolder = m_mgrParams.GetParam("OrgDBDir");
             var dbFilename = m_jobParams.GetParam("PeptideSearch", "generatedFastaName");
             var fastaFilePath = Path.Combine(localOrgDbFolder, dbFilename);
 
