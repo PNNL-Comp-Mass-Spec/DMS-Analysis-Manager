@@ -90,7 +90,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                         currentTask = "Get mzXML file";
                         result = GetMzXMLFile();
                     }
-                    else if (scriptName.ToLower().Contains("mzml"))
+                    else if (scriptName.ToLower().Contains("mzml") || scriptName.ToLower().Contains("DeconMSn_MzRefinery".ToLower()))
                     {
                         currentTask = "Get mzML file";
                         result = GetMzMLFile();
