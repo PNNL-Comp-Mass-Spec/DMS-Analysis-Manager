@@ -16,8 +16,6 @@ namespace AnalysisManagerMODaPlugIn
     /// </summary>
     public class clsAnalysisResourcesMODa : clsAnalysisResources
     {
-        private DTAtoMGF.clsDTAtoMGF mDTAtoMGF;
-
         /// <summary>
         /// Initialize options
         /// </summary>
@@ -112,35 +110,29 @@ namespace AnalysisManagerMODaPlugIn
         /// <summary>
         /// Convert the _dta.txt file to a .mgf file
         /// </summary>
-        /// <returns></returns>
-        /// <remarks></remarks>
+        /// <returns>True on success, false if an error</returns>
         private bool ConvertCDTAToMGF()
         {
             try
             {
-                mDTAtoMGF = new DTAtoMGF.clsDTAtoMGF
-                {
-                    Combine2And3PlusCharges = false,
-                    FilterSpectra = false,
-                    MaximumIonsPer100MzInterval = 0,
-                    NoMerge = true,
-                    CreateIndexFile = true
-                };
+
+                var cdtaUtilities = new clsCDTAUtilities();
+                RegisterEvents(cdtaUtilities);
+
+                const bool combine2And3PlusCharges = false;
+                const int maximumIonsPer100MzInterval = 0;
+                const bool createIndexFile = true;
 
                 // Convert the _dta.txt file for this dataset
-                var cdtaFile = new FileInfo(Path.Combine(m_WorkingDir, DatasetName + "_dta.txt"));
+                var cdtaFile = new FileInfo(Path.Combine(m_WorkingDir, DatasetName + CDTA_EXTENSION));
 
-                if (!cdtaFile.Exists)
+                var success = cdtaUtilities.ConvertCDTAToMGF(cdtaFile, DatasetName, combine2And3PlusCharges, maximumIonsPer100MzInterval, createIndexFile);
+                if (!success)
                 {
-                    m_message = "_dta.txt file not found; cannot convert to .mgf";
-                    LogError(m_message + ": " + cdtaFile.FullName);
-                    return false;
-                }
-
-                if (!mDTAtoMGF.ProcessFile(cdtaFile.FullName))
-                {
-                    m_message = "Error converting " + cdtaFile.Name + " to a .mgf file";
-                    LogError(m_message + ": " + mDTAtoMGF.GetErrorMessage());
+                    if (string.IsNullOrEmpty(m_message))
+                    {
+                        LogError("ConvertCDTAToMGF reports false");
+                    }
                     return false;
                 }
 
@@ -149,24 +141,14 @@ namespace AnalysisManagerMODaPlugIn
                 {
                     cdtaFile.Delete();
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
-                    // Ignore errors here
-                }
-
-                PRISM.ProgRunner.GarbageCollectNow();
-
-                var newMGFFile = new FileInfo(Path.Combine(m_WorkingDir, DatasetName + ".mgf"));
-
-                if (!newMGFFile.Exists)
-                {
-                    // MGF file was not created
-                    m_message = "A .mgf file was not created using the _dta.txt file; unable to run MODa";
-                    LogError(m_message + ": " + mDTAtoMGF.GetErrorMessage());
-                    return false;
+                    LogWarning("Unable to delete the _dta.txt file after successfully converting it to .mgf: " + ex.Message);
                 }
 
                 m_jobParams.AddResultFileExtensionToSkip(".mgf");
+
+                return true;
             }
             catch (Exception ex)
             {
@@ -175,7 +157,6 @@ namespace AnalysisManagerMODaPlugIn
                 return false;
             }
 
-            return true;
         }
     }
 }

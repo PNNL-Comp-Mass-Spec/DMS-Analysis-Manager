@@ -15,7 +15,75 @@ namespace AnalysisManagerBase
         private CondenseCDTAFile.clsCDTAFileCondenser m_CDTACondenser;
 
         /// <summary>
-        /// Removes any spectra with 2 or fewer ions in a _DTA.txt ifle
+        /// Convert a _dta.txt file to a .mgf file
+        /// </summary>
+        /// <returns>True if success, false if an error</returns>
+        /// <remarks></remarks>
+        public bool ConvertCDTAToMGF(
+            FileInfo cdtaFile,
+            string datasetName,
+            bool combine2And3PlusCharges = false,
+            int maximumIonsPer100MzInterval = 0,
+            bool createIndexFile = true
+            )
+        {
+
+            try
+            {
+                OnStatusEvent(string.Format("Converting {0} to a .mgf file", cdtaFile.Name));
+
+                var dtaToMGF = new DTAtoMGF.clsDTAtoMGF
+                {
+                    Combine2And3PlusCharges = combine2And3PlusCharges,
+                    FilterSpectra = false,
+                    MaximumIonsPer100MzInterval = maximumIonsPer100MzInterval,
+                    NoMerge = true,
+                    CreateIndexFile = createIndexFile
+                };
+
+                if (cdtaFile.Directory == null)
+                {
+                    OnErrorEvent("Unable to determine the parent directory of " + cdtaFile.FullName);
+                    return false;
+                }
+
+                var workDir = cdtaFile.Directory.FullName;
+
+                if (!cdtaFile.Exists)
+                {
+                    OnErrorEvent("_dta.txt file not found; cannot convert to .mgf: " + cdtaFile.FullName);
+                    return false;
+                }
+
+                if (!dtaToMGF.ProcessFile(cdtaFile.FullName))
+                {
+                    OnErrorEvent("Error converting " + cdtaFile.Name + " to a .mgf file: " + dtaToMGF.GetErrorMessage());
+                    return false;
+                }
+
+                ProgRunner.GarbageCollectNow();
+
+                var newMGFFile = new FileInfo(Path.Combine(workDir, datasetName + ".mgf"));
+
+                if (!newMGFFile.Exists)
+                {
+                    // MGF file was not created
+                    OnErrorEvent("A .mgf file was not created using the _dta.txt file: " + dtaToMGF.GetErrorMessage());
+                    return false;
+                }
+
+            }
+            catch (Exception ex)
+            {
+                OnErrorEvent("Exception in ConvertCDTAToMGF: " + ex.Message, ex);
+                return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Removes any spectra with 2 or fewer ions in a _DTA.txt file
         /// </summary>
         /// <param name="workDir">Folder with the CDTA file</param>
         /// <param name="inputFileName">CDTA filename</param>
@@ -357,7 +425,6 @@ namespace AnalysisManagerBase
                 return false;
             }
 
-
         }
 
         /// <summary>
@@ -452,7 +519,6 @@ namespace AnalysisManagerBase
         }
 
         #endregion
-
 
     }
 

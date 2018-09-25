@@ -146,7 +146,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// </summary>
         /// <remarks>
         /// Keys are instrument group names
-        /// Values are the specific instrument names in the instrument gruop
+        /// Values are the specific instrument names in the instrument group
         /// </remarks>
         private Dictionary<string, SortedSet<string>> mInstrumentGroupsStored;
 
@@ -205,11 +205,6 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// MzML /  MzXML file creator
         /// </summary>
         private AnalysisManagerMsXmlGenPlugIn.clsMSXMLCreator mMSXmlCreator;
-
-        /// <summary>
-        /// DTA to MGF converter
-        /// </summary>
-        private DTAtoMGF.clsDTAtoMGF mDTAtoMGF;
 
         /// <summary>
         /// Program runner
@@ -884,31 +879,20 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// </summary>
         /// <param name="dataPkgJob"></param>
         /// <param name="mgfFilePath">Output parameter: path of the newly created .mgf file</param>
-        /// <returns></returns>
-        /// <remarks></remarks>
+        /// <returns>True if success, false if an error</returns>
         private bool ConvertCDTAToMGF(clsDataPackageJobInfo dataPkgJob, out string mgfFilePath)
         {
             mgfFilePath = string.Empty;
 
             try
             {
-                mDTAtoMGF = new DTAtoMGF.clsDTAtoMGF
-                {
-                    Combine2And3PlusCharges = false,
-                    FilterSpectra = false,
-                    MaximumIonsPer100MzInterval = 40,
-                    NoMerge = true
-                };
-                mDTAtoMGF.ErrorEvent += mDTAtoMGF_ErrorEvent;
+                var cdtaUtilities = new clsCDTAUtilities();
+                RegisterEvents(cdtaUtilities);
 
+                const bool combine2And3PlusCharges = false;
+                const int maximumIonsPer100MzInterval = 40;
+                const bool createIndexFile = true;
 
-                if (!fiCDTAFile.Exists)
-                {
-                    var msg = "_dta.txt file not found for job " + dataPkgJob.Job;
-                    LogError(msg + ": " + fiCDTAFile.FullName);
-                    m_message = msg;
-                    return false;
-                }
                 // Convert the _dta.txt file for this data package job
                 var cdtaFile = new FileInfo(Path.Combine(m_WorkDir, dataPkgJob.Dataset + clsAnalysisResources.CDTA_EXTENSION));
 
@@ -964,7 +948,8 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 mCDTAFileStats.Add(cdtaFile.Name, oFileInfo);
 
-                if (!mDTAtoMGF.ProcessFile(fiCDTAFile.FullName))
+                var success = cdtaUtilities.ConvertCDTAToMGF(cdtaFile, m_Dataset, combine2And3PlusCharges, maximumIonsPer100MzInterval, createIndexFile);
+                if (!success)
                 {
                     LogError("Error converting " + cdtaFile.Name + " to a .mgf file for job " + dataPkgJob.Job);
                     return false;
@@ -987,21 +972,21 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 if (!fiNewMGFFile.Exists)
                 {
                     // MGF file was not created
-                    var msg = "A .mgf file was not created for the _dta.txt file for job " + dataPkgJob.Job;
-                    m_message = msg;
-                    LogError(msg + ": " + mDTAtoMGF.GetErrorMessage());
+                    LogError("A .mgf file was not created for the _dta.txt file for job " + dataPkgJob.Job);
                     return false;
                 }
 
                 mgfFilePath = fiNewMGFFile.FullName;
+
+                return true;
             }
             catch (Exception ex)
             {
-                LogError("Exception in ConvertCDTAToMGF", ex);
+                m_message = "Exception in ConvertCDTAToMGF";
+                LogError(m_message, ex);
                 return false;
             }
 
-            return true;
         }
 
         /// <summary>
@@ -5408,11 +5393,6 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 LogProgress("PRIDEConverter");
             }
-        }
-
-        private void mDTAtoMGF_ErrorEvent(string message)
-        {
-            LogError("Error from DTAtoMGF converter: " + mDTAtoMGF.GetErrorMessage());
         }
 
         private void mMSXmlCreator_LoopWaiting()
