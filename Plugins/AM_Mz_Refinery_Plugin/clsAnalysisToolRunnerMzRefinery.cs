@@ -843,8 +843,9 @@ namespace AnalysisManagerMzRefineryPlugIn
 
             var reResultsAfterFiltering = new Regex(@"Less than \d+ \(\d+\) results after filtering", RegexOptions.Compiled);
 
-            var reGoodDataPoints = new Regex(@"Good data points:[^\d]+(\d+)", RegexOptions.Compiled);
-            var reSpecEValueThreshold = new Regex(@"New: MS-GF:SpecEValue;.+value <= ([^ ]+)", RegexOptions.Compiled);
+            var reGoodDataPoints = new Regex(@"Good data points:[^\d]+(?<Count>\d+)", RegexOptions.Compiled);
+
+            var reSpecEValueThreshold = new Regex(@"New: MS-GF:SpecEValue;.+value <= (?<Threshold>[^ ]+)", RegexOptions.Compiled);
 
             try
             {
@@ -865,70 +866,68 @@ namespace AnalysisManagerMzRefineryPlugIn
 
                 mConsoleOutputErrorMsg = string.Empty;
 
-                using (var srInFile = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
-                    while (!srInFile.EndOfStream)
+                    while (!reader.EndOfStream)
                     {
-                        var strDataLine = srInFile.ReadLine();
+                        var dataLine = reader.ReadLine();
 
-                        if (!string.IsNullOrWhiteSpace(strDataLine))
+                        if (string.IsNullOrWhiteSpace(dataLine))
+                            continue;
+
+                        if (dataLine.StartsWith("error:", StringComparison.OrdinalIgnoreCase) ||
+                            dataLine.IndexOf("unhandled exception", StringComparison.OrdinalIgnoreCase) >= 0)
                         {
-                            var strDataLineLCase = strDataLine.Trim().ToLower();
-
-                            if (strDataLineLCase.StartsWith("error:") || strDataLineLCase.Contains("unhandled exception"))
+                            if (string.IsNullOrEmpty(mConsoleOutputErrorMsg))
                             {
-                                if (string.IsNullOrEmpty(mConsoleOutputErrorMsg))
-                                {
-                                    mConsoleOutputErrorMsg = "Error running MzRefinery: " + strDataLine;
-                                }
-                                else
-                                {
-                                    mConsoleOutputErrorMsg += "; " + strDataLine;
-                                }
-                            }
-                            else if (strDataLine.StartsWith("Chose "))
-                            {
-                                mMzRefineryCorrectionMode = string.Copy(strDataLine);
-                            }
-                            else if (strDataLine.StartsWith("Low number of good identifications found"))
-                            {
-                                m_EvalMessage = strDataLine;
-                                LogMessage("MzRefinery warning: " + strDataLine);
-                            }
-                            else if (strDataLine.StartsWith("Excluding file") && strDataLine.EndsWith("from data set"))
-                            {
-                                m_message = "Fewer than 100 matches after filtering; cannot use MzRefinery on this dataset";
-                                LogError(m_message);
+                                mConsoleOutputErrorMsg = "Error running MzRefinery: " + dataLine;
                             }
                             else
                             {
-                                var reMatch = reResultsAfterFiltering.Match(strDataLine);
+                                mConsoleOutputErrorMsg += "; " + dataLine;
+                            }
+                        }
+                        else if (dataLine.StartsWith("Chose "))
+                        {
+                            mMzRefineryCorrectionMode = string.Copy(dataLine);
+                        }
+                        else if (dataLine.StartsWith("Low number of good identifications found"))
+                        {
+                            m_EvalMessage = dataLine;
+                            LogMessage("MzRefinery warning: " + dataLine);
+                        }
+                        else if (dataLine.StartsWith("Excluding file") && dataLine.EndsWith("from data set"))
+                        {
+                            LogError("Fewer than 100 matches after filtering; cannot use MzRefinery on this dataset");
+                        }
+                        else
+                        {
+                            var matchResultsAfterFiltering = reResultsAfterFiltering.Match(dataLine);
 
-                                if (reMatch.Success)
+                            if (matchResultsAfterFiltering.Success)
+                            {
+                                m_EvalMessage = clsGlobal.AppendToComment(m_EvalMessage, dataLine.Trim());
+                                if (dataLine.Trim().StartsWith("Less than 100 "))
                                 {
-                                    m_EvalMessage = clsGlobal.AppendToComment(m_EvalMessage, strDataLine.Trim());
-                                    if (strDataLine.Trim().StartsWith("Less than 100 "))
-                                    {
-                                        m_UnableToUseMzRefinery = true;
-                                    }
+                                    m_UnableToUseMzRefinery = true;
                                 }
+                            }
 
-                                reMatch = reGoodDataPoints.Match(strDataLine);
-                                if (reMatch.Success)
+                            var matchGoodDataPoints = reGoodDataPoints.Match(dataLine);
+                            if (matchGoodDataPoints.Success)
+                            {
+                                if (int.TryParse(matchGoodDataPoints.Groups["Count"].Value, out var dataPoints))
                                 {
-                                    if (int.TryParse(reMatch.Groups[1].Value, out var dataPoints))
-                                    {
-                                        mMzRefinerGoodDataPoints = dataPoints;
-                                    }
+                                    mMzRefinerGoodDataPoints = dataPoints;
                                 }
+                            }
 
-                                reMatch = reSpecEValueThreshold.Match(strDataLine);
-                                if (reMatch.Success)
+                            var matchSpecEValueThreshold = reSpecEValueThreshold.Match(dataLine);
+                            if (matchSpecEValueThreshold.Success)
+                            {
+                                if (double.TryParse(matchSpecEValueThreshold.Groups["Threshold"].Value, out var specEValueThreshold))
                                 {
-                                    if (double.TryParse(reMatch.Groups[1].Value, out var specEValueThreshold))
-                                    {
-                                        mMzRefinerSpecEValueThreshold = specEValueThreshold;
-                                    }
+                                    mMzRefinerSpecEValueThreshold = specEValueThreshold;
                                 }
                             }
                         }
