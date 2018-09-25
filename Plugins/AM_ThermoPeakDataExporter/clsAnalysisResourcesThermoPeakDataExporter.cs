@@ -42,7 +42,6 @@ namespace AnalysisManagerThermoPeakDataExporterPlugIn
                 // Get input data file
                 const bool createStoragePathInfoOnly = false;
                 var rawDataType = m_jobParams.GetParam("rawDataType");
-                var toolName = m_jobParams.GetParam("ToolName");
 
                 switch (rawDataType.ToLower())
                 {
@@ -65,22 +64,7 @@ namespace AnalysisManagerThermoPeakDataExporterPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                if (clsGlobal.IsMatch(rawDataType, RAW_DATA_TYPE_DOT_RAW_FILES) &&
-                    toolName.StartsWith("MASIC_Finnigan", StringComparison.OrdinalIgnoreCase))
-                {
-                    var rawFileName = DatasetName + ".raw";
-                    var inputFilePath = ResolveStoragePath(m_WorkingDir, rawFileName);
-
-                    if (string.IsNullOrWhiteSpace(inputFilePath))
-                    {
-                        // Unable to resolve the file path
-                        m_message = "Could not find " + rawFileName + " or " + rawFileName + STORAGE_PATH_INFO_FILE_SUFFIX +
-                                    " in the working folder; unable to run MASIC";
-                        LogError(m_message);
-                        return CloseOutType.CLOSEOUT_FAILED;
-                    }
-
-                }
+                m_jobParams.AddResultFileToSkip(DatasetName + DOT_RAW_EXTENSION);
 
                 return CloseOutType.CLOSEOUT_SUCCESS;
             }
