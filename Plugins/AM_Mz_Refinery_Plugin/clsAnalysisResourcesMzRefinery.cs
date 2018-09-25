@@ -44,16 +44,41 @@ namespace AnalysisManagerMzRefineryPlugIn
                     return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
                 }
 
-                currentTask = "Get Input file";
+                currentTask = "Get input file(s)";
 
-                var eResult = GetMsXmlFile();
+                // Typically only MsXMLGenerator is defined
+                // However, for MSGFPlus_DeconMSn_MzRefinery jobs, we retrieve both a _dta.txt file (from DeconMSn) and a .mzML file (from MSConvert)
 
-                if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
+                var dtaGenerator = m_jobParams.GetJobParameter("DtaGenerator", string.Empty);
+                var msXmlGenerator = m_jobParams.GetJobParameter("MSXMLGenerator", string.Empty);
+
+                if (string.IsNullOrWhiteSpace(dtaGenerator) && string.IsNullOrWhiteSpace(msXmlGenerator))
                 {
-                    return eResult;
+                    LogMessage("Job parameters must have DtaGenerator or MSXMLGenerator defined");
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                // Retrieve the Fasta file
+                if (!string.IsNullOrWhiteSpace(dtaGenerator))
+                {
+                    LogMessage("Running MzRefinery on a _dta.txt file");
+                    var result = GetCDTAFile();
+                    if (result != CloseOutType.CLOSEOUT_SUCCESS)
+                    {
+                        return result;
+                    }
+                }
+
+                if (!string.IsNullOrWhiteSpace(msXmlGenerator))
+                {
+                    // Retrieve the .mzML file
+                    var result = GetMsXmlFile();
+                    if (result != CloseOutType.CLOSEOUT_SUCCESS)
+                    {
+                        return result;
+                    }
+                }
+
+                // Retrieve the FASTA file
                 var orgDbDirectoryPath = m_mgrParams.GetParam("OrgDBDir");
 
                 currentTask = "RetrieveOrgDB to " + orgDbDirectoryPath;
@@ -98,6 +123,40 @@ namespace AnalysisManagerMzRefineryPlugIn
                 LogError(m_message + "; task = " + currentTask + "; " + clsGlobal.GetExceptionStackTrace(ex));
                 return CloseOutType.CLOSEOUT_FAILED;
             }
+
+        }
+
+        private CloseOutType GetCDTAFile()
+        {
+            // Retrieve the _DTA.txt file
+            // Note that if the file was found in MyEMSL, RetrieveDtaFiles will auto-call ProcessMyEMSLDownloadQueue to download the file
+
+            if (FileSearch.RetrieveDtaFiles())
+            {
+                m_jobParams.AddResultFileToSkip(DatasetName + CDTA_ZIPPED_EXTENSION);
+                m_jobParams.AddResultFileToSkip(DatasetName + CDTA_EXTENSION);
+
+                return CloseOutType.CLOSEOUT_SUCCESS;
+            }
+
+            var sharedResultsFolders = m_jobParams.GetParam(JOB_PARAM_SHARED_RESULTS_FOLDERS);
+            if (string.IsNullOrEmpty(sharedResultsFolders))
+            {
+                m_message = clsGlobal.AppendToComment(m_message, "Job parameter SharedResultsFolders is empty");
+                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+            }
+
+            if (sharedResultsFolders.Contains(","))
+            {
+                m_message = clsGlobal.AppendToComment(m_message, "shared results folders: " + sharedResultsFolders);
+            }
+            else
+            {
+                m_message = clsGlobal.AppendToComment(m_message, "shared results folder " + sharedResultsFolders);
+            }
+
+            // Errors were reported in function call, so just return
+            return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
 
         }
 

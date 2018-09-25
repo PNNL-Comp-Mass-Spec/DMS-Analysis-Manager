@@ -10,8 +10,11 @@ using System.Collections.Generic;
 
 using AnalysisManagerBase;
 using System.IO;
+using System.Linq;
 using AnalysisManagerMSGFDBPlugIn;
 using System.Text.RegularExpressions;
+using MsMsDataFileReader;
+using PRISM;
 
 namespace AnalysisManagerMzRefineryPlugIn
 {
@@ -136,10 +139,27 @@ namespace AnalysisManagerMzRefineryPlugIn
 
                 var msXmlFileExtension = clsAnalysisResources.DOT_MZML_EXTENSION;
 
-                var msXmlOutputType = m_jobParams.GetJobParameter("MSXMLOutputType", string.Empty);
-                if (msXmlOutputType.ToLower() == "mzxml")
+                var dtaGenerator = m_jobParams.GetJobParameter("DtaGenerator", string.Empty);
+                if (!string.IsNullOrWhiteSpace(dtaGenerator))
                 {
-                    msXmlFileExtension = clsAnalysisResources.DOT_MZXML_EXTENSION;
+                    // Update the .mzML file using parent ion details in the _dta.txt file
+                    var successToMzML = UpdateMzMLUsingCDTA();
+                    if (!successToMzML)
+                    {
+                        if (string.IsNullOrEmpty(m_message))
+                        {
+                            LogError("Unknown error updating the .mzML with the _dta.txt file");
+                        }
+                        return CloseOutType.CLOSEOUT_FAILED;
+                    }
+                }
+                else
+                {
+                    var msXmlOutputType = m_jobParams.GetJobParameter("MSXMLOutputType", string.Empty);
+                    if (msXmlOutputType.ToLower() == "mzxml")
+                    {
+                        msXmlFileExtension = clsAnalysisResources.DOT_MZXML_EXTENSION;
+                    }
                 }
 
                 // Look for existing MSGF+ results (which would have been retrieved by clsAnalysisResourcesMzRefinery)
@@ -1053,6 +1073,65 @@ namespace AnalysisManagerMzRefineryPlugIn
             return gzipSuccess;
         }
 
+        /// <summary>
+        /// Cache the parent ion m/z values and charges in a dictionary
+        /// </summary>
+        /// <param name="parentIonMZs">
+        /// Dictionary where keys are scan numbers are values are a dictionary of parent ion charge and m/z for a given scan
+        /// </param>
+        /// <returns></returns>
+        private bool ReadParentIonMZsFromCDTA(out Dictionary<int, Dictionary<int, double>> parentIonMZs)
+        {
+            parentIonMZs = new Dictionary<int, Dictionary<int, double>>();
+
+            try
+            {
+                var cdtaFile = new FileInfo(Path.Combine(m_WorkDir, m_Dataset + clsAnalysisResources.CDTA_EXTENSION));
+                if (!cdtaFile.Exists)
+                {
+                    LogError("_dta.txt file not found: " + cdtaFile.FullName);
+                    return false;
+                }
+
+                LogMessage("Caching parent ion info using " + cdtaFile.Name);
+
+                var reader = new clsDtaTextFileReader(true);
+
+                var success = reader.OpenFile(cdtaFile.FullName);
+                if (!success)
+                {
+                    LogError("Error opening the _dta.txt file: " + cdtaFile.Name);
+                    return false;
+                }
+
+                while (reader.ReadNextSpectrum(out _, out var spectrumHeaderInfo))
+                {
+                    if (!parentIonMZs.TryGetValue(spectrumHeaderInfo.ScanNumberStart, out var parentIonsForScan))
+                    {
+                        parentIonsForScan = new Dictionary<int, double>();
+                        parentIonMZs.Add(spectrumHeaderInfo.ScanNumberStart, parentIonsForScan);
+                    }
+
+                    foreach (var parentIonCharge in spectrumHeaderInfo.ParentIonCharges)
+                    {
+                        if (parentIonCharge > 0 && !parentIonsForScan.ContainsKey(parentIonCharge))
+                        {
+                            parentIonsForScan.Add(parentIonCharge, spectrumHeaderInfo.ParentIonMZ);
+                        }
+                    }
+
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error copying the .mzML.gz file to the remote cache folder", ex);
+                return false;
+            }
+
+        }
+
         private bool StartMzRefinery(FileSystemInfo fiOriginalMzMLFile, FileSystemInfo fiMSGFPlusResults)
         {
             mConsoleOutputErrorMsg = string.Empty;
@@ -1342,6 +1421,208 @@ namespace AnalysisManagerMzRefineryPlugIn
                 return false;
             }
         }
+
+
+        /// <summary>
+        /// Update .mzML file using the parent ion m/z values listed in a _dta.txt file
+        /// </summary>
+        /// <returns></returns>
+        private bool UpdateMzMLUsingCDTA()
+        {
+            try
+            {
+
+                var success = ReadParentIonMZsFromCDTA(out var parentIonMZs);
+                if (!success)
+                    return false;
+
+                var mzMLFilePath = Path.Combine(m_WorkDir, m_Dataset + clsAnalysisResources.DOT_MZML_EXTENSION);
+                var mzMLFile = new FileInfo(mzMLFilePath);
+                var updatedMzMLFile = new FileInfo(Path.Combine(m_WorkDir, mzMLFile.Name + ".new"));
+
+                // Read the .mzML file using a StreamReader
+                // Write a new .mzML file with corrected parent ion m/z values
+
+                var reScanNumber = new Regex(@"scan=(?<Scan>\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+                var reValueReplace = new Regex(@"value *= *""[0-9.-]+""", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+                var parentIonsNotMatched = 0;
+                var parentIonsUpdated = 0;
+                var parentIonsWithMultiChargeState = 0;
+
+
+                var maxScanMS2 = parentIonMZs.Keys.Max();
+                var lastProgress = DateTime.UtcNow;
+
+                using (var reader = new StreamReader(new FileStream(mzMLFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var writer = new StreamWriter(new FileStream(updatedMzMLFile.FullName, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
+                {
+                    var updatedParentIonMz = string.Empty;
+                    var updatedParentIonCharge = 0;
+
+                    while (!reader.EndOfStream)
+                    {
+                        var dataLine = reader.ReadLine();
+                        if (string.IsNullOrEmpty(dataLine))
+                        {
+                            continue;
+                        }
+
+                        var dataLineTrimmed = dataLine.Trim();
+
+                        // ReSharper disable once StringLiteralTypo
+                        if (dataLineTrimmed.StartsWith("<indexedmzML"))
+                        {
+                            // The new .mzML file will not be indexed; skip this line
+                            continue;
+                        }
+
+                        if (dataLineTrimmed.StartsWith("</mzML>"))
+                        {
+                            // Write this line, then stop reading (since the new file is not indexed)
+                            writer.WriteLine(dataLine);
+                            break;
+                        }
+
+                        if (dataLineTrimmed.StartsWith("<spectrum index"))
+                        {
+                            // Parse out the scan number
+                            var match = reScanNumber.Match(dataLine);
+                            if (!match.Success)
+                            {
+                                LogError("<spectrum> entry does not have scan=, " + dataLine);
+                                return false;
+                            }
+
+                            var scanNumber = int.Parse(match.Groups["Scan"].Value);
+
+                            updatedParentIonMz = string.Empty;
+                            updatedParentIonCharge = 0;
+
+                            if (parentIonMZs.TryGetValue(scanNumber, out var parentIons))
+                            {
+                                // Only update the parent ion info if DeconMSn chose a single charge state
+                                // Ignore scans that are "2+ or 3+"
+                                if (parentIons.Count == 0)
+                                {
+                                    parentIonsNotMatched++;
+                                }
+                                else if (parentIons.Count == 1)
+                                {
+                                    parentIonsUpdated++;
+
+                                    updatedParentIonCharge = parentIons.First().Key;
+                                    updatedParentIonMz = StringUtilities.DblToString(parentIons.First().Value, 6);
+                                }
+                                else
+                                {
+                                    parentIonsWithMultiChargeState++;
+                                }
+
+                                if (DateTime.UtcNow.Subtract(lastProgress).TotalSeconds > 5)
+                                {
+                                    lastProgress = DateTime.UtcNow;
+                                    var progress = scanNumber / (float)maxScanMS2 * 100;
+                                    LogDebug(string.Format("Updating parent ion m/z's in the mzML file, {0:F1}% complete", progress));
+                                }
+
+                            }
+                        }
+
+                        if (updatedParentIonCharge > 0)
+                        {
+                            var replaceValue = false;
+                            var replacementContext = string.Empty;
+                            var newValue = string.Empty;
+
+                            if (dataLineTrimmed.StartsWith("<userParam"))
+                            {
+                                // Look for <userParam name="[Thermo Trailer Extra]Monoisotopic M/Z:" value="1013.7643443411453"
+                                if (dataLine.IndexOf("[Thermo Trailer Extra]Monoisotopic M/Z", StringComparison.OrdinalIgnoreCase) > 0)
+                                {
+                                    replaceValue = true;
+                                    replacementContext = "<userParam> [Thermo Trailer Extra]";
+                                    newValue = updatedParentIonMz;
+                                }
+                            }
+                            else if (dataLineTrimmed.StartsWith("<cvParam"))
+                            {
+                                // Look for <cvParam cvRef="MS" accession="MS:1000827" name="isolation window target m/z" value="1013.7643443411457"
+                                if (dataLine.IndexOf("MS:1000827", StringComparison.OrdinalIgnoreCase) > 0)
+                                {
+                                    replaceValue = true;
+                                    replacementContext = "<cvParam> MS:1000827";
+                                    newValue = updatedParentIonMz;
+                                }
+
+                                // Look for <cvParam cvRef="MS" accession="MS:1000744" name="selected ion m/z" value="1013.7643443411457"
+                                if (dataLine.IndexOf("MS:1000744", StringComparison.OrdinalIgnoreCase) > 0)
+                                {
+                                    replaceValue = true;
+                                    replacementContext = "<cvParam> MS:1000744";
+                                    newValue = updatedParentIonMz;
+                                }
+
+                                // Look for <cvParam cvRef="MS" accession="MS:1000041" name="charge state" value="2"/>
+                                if (dataLine.IndexOf("MS:1000041", StringComparison.OrdinalIgnoreCase) > 0)
+                                {
+                                    replaceValue = true;
+                                    replacementContext = "<cvParam> MS:1000041";
+                                    newValue = updatedParentIonCharge.ToString();
+                                }
+                            }
+
+                            if (replaceValue)
+                            {
+                                // Replace the m/z or charge
+                                var match = reValueReplace.Match(dataLine);
+                                if (!match.Success)
+                                {
+                                    LogError(replacementContext + " does not have value=, " + dataLine);
+                                    return false;
+                                }
+
+                                var updatedLine = dataLine.Replace(match.Groups[0].Value, "value=\"" + newValue + "\"");
+
+                                writer.WriteLine(updatedLine);
+                                continue;
+                            }
+                        }
+
+                        writer.WriteLine(dataLine);
+                    }
+                }
+
+                LogMessage(string.Format("Updated parent ion values in the mzML file. " +
+                                         "{0} updated; " +
+                                         "{1} skipped due to ambiguous charge; " +
+                                         "{2} skipped since not in the _dta.txt file",
+                                         parentIonsUpdated, parentIonsWithMultiChargeState, parentIonsNotMatched));
+
+                try
+                {
+                    // Replace the original file with the updated file
+                    mzMLFile.MoveTo(mzMLFile.FullName + ".old");
+                    m_jobParams.AddResultFileToSkip(mzMLFile.Name);
+
+                    updatedMzMLFile.MoveTo(mzMLFilePath);
+                }
+                catch (Exception ex)
+                {
+                    LogError("Error replacing the original .mzML file with the updated file", ex);
+                    return false;
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error updating the .mzML using parent ion m/z values in the _dta.txt file", ex);
+                return false;
+            }
+        }
+
 
         private void UpdateProgress(float progressCompleteOverall)
         {
