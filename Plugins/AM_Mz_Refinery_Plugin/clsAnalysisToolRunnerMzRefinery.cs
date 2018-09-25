@@ -25,16 +25,19 @@ namespace AnalysisManagerMzRefineryPlugIn
     public class clsAnalysisToolRunnerMzRefinery : clsAnalysisToolRunnerBase
     {
         #region "Constants and Enums"
+
         private const float PROGRESS_PCT_STARTING = 1;
         private const float PROGRESS_PCT_MzREFINERY_COMPLETE = 97;
         private const float PROGRESS_PCT_PLOTS_GENERATED = 98;
 
         private const float PROGRESS_PCT_COMPLETE = 99;
+
         private const string MZ_REFINERY_CONSOLE_OUTPUT = "MSConvert_MzRefinery_ConsoleOutput.txt";
 
         private const string ERROR_CHARTER_CONSOLE_OUTPUT_FILE = "PPMErrorCharter_ConsoleOutput.txt";
 
         public const string MSGFPLUS_MZID_SUFFIX = "_msgfplus.mzid";
+
         private enum eMzRefinerProgRunnerMode
         {
             Unknown = 0,
@@ -71,7 +74,12 @@ namespace AnalysisManagerMzRefineryPlugIn
 
         private DirectoryInfo mMSXmlCacheFolder;
 
+        /// <summary>
+        /// Command runner for MSGF+, MzRefinery (which uses MSConvert), and PPMErrorCharter
+        /// </summary>
+        /// <remarks>eMzRefinerProgRunnerMode keeps track of the current ProgRunner and is used by MonitorProgress</remarks>
         private clsRunDosProgram mCmdRunner;
+
         #endregion
 
         #region "Methods"
@@ -759,7 +767,7 @@ namespace AnalysisManagerMzRefineryPlugIn
         {
             try
             {
-                if ((mMSGFPlusUtils != null))
+                if (mMSGFPlusUtils != null)
                 {
                     var msgfPlusProgress = mMSGFPlusUtils.ParseMSGFPlusConsoleOutputFile(workingDirectory);
                     UpdateProgress(msgfPlusProgress);
@@ -795,14 +803,28 @@ namespace AnalysisManagerMzRefineryPlugIn
             // outputPath: .
             // extension: .mzML
             // contactFilename:
-            // filters:
-            //   mzRefiner E:\DMS_WorkDir\Pcarb001_LTQFT_run1_23Sep05_Andro_0705-06_msgfplus.mzid thresholdValue=-1e-10 thresholdStep=10 maxSteps=3
+            //
+            // spectrum list filters:
+            //   mzRefiner E:\DMS_WorkDir\Dataset_msgfplus.mzid thresholdValue=-1e-10 thresholdStep=10 maxSteps=2
+            //
+            // chromatogram list filters:
             //
             // filenames:
-            //   E:\DMS_WorkDir\Pcarb001_LTQFT_run1_23Sep05_Andro_0705-06.mzML
+            //   E:\DMS_WorkDir\Dataset.mzML
             //
-            // processing file: E:\DMS_WorkDir\Pcarb001_LTQFT_run1_23Sep05_Andro_0705-06.mzML
-            // Reading file "E:\DMS_WorkDir\Pcarb001_LTQFT_run1_23Sep05_Andro_0705-06_msgfplus.mzid"...
+            // processing file: E:\DMS_WorkDir\Dataset.mzML
+            // writing output file: .\Dataset_FIXED.mzML
+
+
+            // MzRefiner also reates a tab delimited text file named Dataset_msgfplus.mzRefinement.tsv, with contents
+            //
+            // ThresholdScore  ThresholdValue  Excluded (score)        Excluded (mass error)   MS1 Included    MS1 Shift method        MS1 Final stDev MS1 Tolerance for 99%   MS1 Final MAD   MS1 MAD Tolerance for 99%   MS2 Included    MS2 Shift method        MS2 Final stDev MS2 Tolerance for 99%   MS2 Final MAD   MS2 MAD Tolerance for 99%
+            // MS-GF:SpecEValue        -1.7976931348623157e+308 <= MME <= 1e-010       33659   7       4122    scan time       6.07514 18.2254 1.03865 4.61971 115278  scan time       3.27895 9.83686     0.727381        3.23524
+
+
+            // Old console output text:
+
+            // Reading file "E:\DMS_WorkDir\Dataset_msgfplus.mzid"...
             // Adjusted filters:
             // 	Old: MS-GF:SpecEValue; -1.79769e+308 <= value && value <= 1e-010
             // 	New: MS-GF:SpecEValue; -1.79769e+308 <= value && value <= 1e-009
@@ -840,7 +862,6 @@ namespace AnalysisManagerMzRefineryPlugIn
             // Chose global shift...
             // 	Estimated final stDev:                            26.0205
             // 	Estimated tolerance for 99%: 0 +/-                78.0616
-            // writing output file: .\Pcarb001_LTQFT_run1_23Sep05_Andro_0705-06_FIXED.mzML
 
             // Example warning for sparse data file
             // Low number of good identifications found. Will not perform dependent shifts.
