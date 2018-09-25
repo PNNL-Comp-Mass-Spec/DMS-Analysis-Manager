@@ -901,8 +901,6 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 };
                 mDTAtoMGF.ErrorEvent += mDTAtoMGF_ErrorEvent;
 
-                // Convert the _dta.txt file for this dataset
-                var fiCDTAFile = new FileInfo(Path.Combine(m_WorkDir, dataPkgJob.Dataset + "_dta.txt"));
 
                 if (!fiCDTAFile.Exists)
                 {
@@ -911,15 +909,17 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     m_message = msg;
                     return false;
                 }
+                // Convert the _dta.txt file for this data package job
+                var cdtaFile = new FileInfo(Path.Combine(m_WorkDir, dataPkgJob.Dataset + clsAnalysisResources.CDTA_EXTENSION));
 
                 // Compute the MD5 hash for this _dta.txt file
-                var md5Hash = PRISM.HashUtilities.ComputeFileHashMD5(fiCDTAFile.FullName);
+                var md5Hash = PRISM.HashUtilities.ComputeFileHashMD5(cdtaFile.FullName);
 
                 // Make sure this is either a new _dta.txt file or identical to a previous one
                 // Abort processing if the job list contains multiple jobs for the same dataset but those jobs used different _dta.txt files
                 // However, if one of the jobs is Sequest and one is MSGF+, preferentially use the _dta.txt file from the MSGF+ job
 
-                if (mCDTAFileStats.TryGetValue(fiCDTAFile.Name, out var existingFileInfo))
+                if (mCDTAFileStats.TryGetValue(cdtaFile.Name, out var existingFileInfo))
                 {
                     if (existingFileInfo.JobInfo.Tool.ToLower().StartsWith("msgf"))
                     {
@@ -928,11 +928,11 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                         return true;
                     }
 
-                    if (fiCDTAFile.Length != existingFileInfo.Length)
+                    if (cdtaFile.Length != existingFileInfo.Length)
                     {
                         var msg = "Dataset " + dataPkgJob.Dataset +
                                   " has multiple jobs in this data package, and those jobs used different _dta.txt files; this is not supported";
-                        LogError(msg + ": file size mismatch of " + fiCDTAFile.Length + " for job " + dataPkgJob.Job + " vs " + existingFileInfo.Length +
+                        LogError(msg + ": file size mismatch of " + cdtaFile.Length + " for job " + dataPkgJob.Job + " vs " + existingFileInfo.Length +
                                  " for job " + existingFileInfo.JobInfo.Job);
                         m_message = msg;
                         return false;
@@ -952,34 +952,32 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     return true;
                 }
 
-                var filename = CheckFilenameCase(fiCDTAFile, dataPkgJob.Dataset);
+                var filename = CheckFilenameCase(cdtaFile, dataPkgJob.Dataset);
 
                 var oFileInfo = new clsPXFileInfoBase(filename, dataPkgJob)
                 {
                     // File ID doesn't matter; just use 0
                     FileID = 0,
-                    Length = fiCDTAFile.Length,
+                    Length = cdtaFile.Length,
                     MD5Hash = md5Hash
                 };
 
-                mCDTAFileStats.Add(fiCDTAFile.Name, oFileInfo);
+                mCDTAFileStats.Add(cdtaFile.Name, oFileInfo);
 
                 if (!mDTAtoMGF.ProcessFile(fiCDTAFile.FullName))
                 {
-                    var msg = "Error converting " + fiCDTAFile.Name + " to a .mgf file for job " + dataPkgJob.Job;
-                    LogError(msg + ": " + mDTAtoMGF.GetErrorMessage());
-                    m_message = msg;
+                    LogError("Error converting " + cdtaFile.Name + " to a .mgf file for job " + dataPkgJob.Job);
                     return false;
                 }
 
                 // Delete the _dta.txt file
                 try
                 {
-                    fiCDTAFile.Delete();
+                    cdtaFile.Delete();
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
-                    // Ignore errors here
+                    LogWarning("Unable to delete the _dta.txt file after successfully converting it to .mgf: " + ex.Message);
                 }
 
                 PRISM.ProgRunner.GarbageCollectNow();
@@ -1233,8 +1231,8 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         private string CreatePseudoMSGFFileUsingPHRPReader(int job, string dataset, udtFilterThresholdsType udtFilterThresholds,
             IDictionary<string, List<udtPseudoMSGFDataType>> pseudoMSGFData)
         {
-            const int MSGF_SPECEVALUE_NOTDEFINED = 10;
-            const int PVALUE_NOTDEFINED = 10;
+            const int MSGF_SPECEVALUE_NOT_DEFINED = 10;
+            const int PVALUE_NOT_DEFINED = 10;
 
             string pseudoMsgfFilePath;
 
@@ -1268,8 +1266,8 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 var mzXMLFilename = dataset + ".mzXML";
 
                 // Determine the correct capitalization for the mzXML file
-                var diWorkdir = new DirectoryInfo(m_WorkDir);
-                var fiFiles = diWorkdir.GetFiles(mzXMLFilename);
+                var workDir = new DirectoryInfo(m_WorkDir);
+                var fiFiles = workDir.GetFiles(mzXMLFilename);
 
                 if (fiFiles.Length > 0)
                 {
@@ -1323,19 +1321,19 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                         var fdr = -1.0;
                         var pepFDR = -1.0;
-                        var pValue = (double)PVALUE_NOTDEFINED;
+                        var pValue = (double)PVALUE_NOT_DEFINED;
                         var scoreForCurrentMatch = 100.0;
 
                         // Determine MSGFSpecEValue; store 10 if we don't find a valid number
                         if (!double.TryParse(reader.CurrentPSM.MSGFSpecEValue, out var msgfSpecEValue))
                         {
-                            msgfSpecEValue = MSGF_SPECEVALUE_NOTDEFINED;
+                            msgfSpecEValue = MSGF_SPECEVALUE_NOT_DEFINED;
                         }
 
                         switch (dataPkgJob.PeptideHitResultType)
                         {
                             case clsPHRPReader.ePeptideHitResultType.Sequest:
-                                if (msgfSpecEValue < MSGF_SPECEVALUE_NOTDEFINED)
+                                if (msgfSpecEValue < MSGF_SPECEVALUE_NOT_DEFINED)
                                 {
                                     pValue = ComputeApproximateEValue(msgfSpecEValue);
                                     scoreForCurrentMatch = msgfSpecEValue;
@@ -1359,7 +1357,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                 break;
 
                             case clsPHRPReader.ePeptideHitResultType.XTandem:
-                                if (msgfSpecEValue < MSGF_SPECEVALUE_NOTDEFINED)
+                                if (msgfSpecEValue < MSGF_SPECEVALUE_NOT_DEFINED)
                                 {
                                     pValue = ComputeApproximateEValue(msgfSpecEValue);
                                     scoreForCurrentMatch = msgfSpecEValue;
@@ -1382,9 +1380,9 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                 break;
 
                             case clsPHRPReader.ePeptideHitResultType.Inspect:
-                                pValue = reader.CurrentPSM.GetScoreDbl(clsPHRPParserInspect.DATA_COLUMN_PValue, PVALUE_NOTDEFINED);
+                                pValue = reader.CurrentPSM.GetScoreDbl(clsPHRPParserInspect.DATA_COLUMN_PValue, PVALUE_NOT_DEFINED);
 
-                                if (msgfSpecEValue < MSGF_SPECEVALUE_NOTDEFINED)
+                                if (msgfSpecEValue < MSGF_SPECEVALUE_NOT_DEFINED)
                                 {
                                     scoreForCurrentMatch = msgfSpecEValue;
                                 }
@@ -1417,7 +1415,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                     pepFDRValuesArePresent = true;
                                 }
 
-                                pValue = reader.CurrentPSM.GetScoreDbl(clsPHRPParserMSGFDB.DATA_COLUMN_PValue, PVALUE_NOTDEFINED);
+                                pValue = reader.CurrentPSM.GetScoreDbl(clsPHRPParserMSGFDB.DATA_COLUMN_PValue, PVALUE_NOT_DEFINED);
                                 scoreForCurrentMatch = msgfSpecEValue;
                                 break;
                         }
@@ -1472,7 +1470,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                         if (validPSM && !thresholdChecked)
                         {
                             // Switch to filtering on MSGFSpecEValueThreshold instead of on FDR or PepFDR
-                            if (msgfSpecEValue < MSGF_SPECEVALUE_NOTDEFINED && udtFilterThresholds.MSGFSpecEValueThreshold < 0.0001)
+                            if (msgfSpecEValue < MSGF_SPECEVALUE_NOT_DEFINED && udtFilterThresholds.MSGFSpecEValueThreshold < 0.0001)
                             {
                                 if (msgfSpecEValue > udtFilterThresholds.MSGFSpecEValueThreshold)
                                 {
@@ -1728,7 +1726,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 var templateFileName = clsAnalysisResourcesPRIDEConverter.GetMSGFReportTemplateFilename(m_jobParams, WarnIfJobParamMissing: false);
 
                 var orgDBNameGenerated = m_jobParams.GetJobParameter("PeptideSearch",
-                                                                           clsAnalysisResourcesPRIDEConverter.GetGeneratedFastaParamNameForJob(job), string.Empty);
+                                                                     clsAnalysisResourcesPRIDEConverter.GetGeneratedFastaParamNameForJob(job), string.Empty);
                 if (string.IsNullOrEmpty(orgDBNameGenerated))
                 {
                     LogError("Job parameter " + clsAnalysisResourcesPRIDEConverter.GetGeneratedFastaParamNameForJob(job) +

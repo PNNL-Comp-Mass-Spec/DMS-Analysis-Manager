@@ -144,20 +144,20 @@ namespace AnalysisManagerMzRefineryPlugIn
 
                 // Look for existing MSGF+ results (which would have been retrieved by clsAnalysisResourcesMzRefinery)
 
-                var fiMSGFPlusResults = new FileInfo(Path.Combine(m_WorkDir, m_Dataset + MSGFPLUS_MZID_SUFFIX));
+                var msgfPlusResults = new FileInfo(Path.Combine(m_WorkDir, m_Dataset + MSGFPLUS_MZID_SUFFIX));
                 var skippedMSGFPlus = false;
 
                 CloseOutType result;
-                if (fiMSGFPlusResults.Exists)
+                if (msgfPlusResults.Exists)
                 {
                     result = CloseOutType.CLOSEOUT_SUCCESS;
                     skippedMSGFPlus = true;
-                    m_jobParams.AddResultFileToSkip(fiMSGFPlusResults.Name);
+                    m_jobParams.AddResultFileToSkip(msgfPlusResults.Name);
                 }
                 else
                 {
                     // Run MSGF+ (includes indexing the fasta file)
-                    result = RunMSGFPlus(javaProgLoc, msXmlFileExtension, out fiMSGFPlusResults);
+                    result = RunMSGFPlus(javaProgLoc, msXmlFileExtension, out msgfPlusResults);
                 }
 
                 if (result != CloseOutType.CLOSEOUT_SUCCESS)
@@ -173,22 +173,22 @@ namespace AnalysisManagerMzRefineryPlugIn
 
                 var processingError = false;
 
-                var fiOriginalMSXmlFile = new FileInfo(Path.Combine(m_WorkDir, m_Dataset + msXmlFileExtension));
-                var fiFixedMSXmlFile = new FileInfo(Path.Combine(m_WorkDir, m_Dataset + "_FIXED" + msXmlFileExtension));
+                var originalMSXmlFile = new FileInfo(Path.Combine(m_WorkDir, m_Dataset + msXmlFileExtension));
+                var fixedMSXmlFile = new FileInfo(Path.Combine(m_WorkDir, m_Dataset + "_FIXED" + msXmlFileExtension));
 
-                m_jobParams.AddResultFileToSkip(fiOriginalMSXmlFile.Name);
-                m_jobParams.AddResultFileToSkip(fiFixedMSXmlFile.Name);
+                m_jobParams.AddResultFileToSkip(originalMSXmlFile.Name);
+                m_jobParams.AddResultFileToSkip(fixedMSXmlFile.Name);
 
                 if (mSkipMzRefinery)
                 {
                     // Rename the original file to have the expected name of the fixed mzML file
                     // Required for PostProcessMzRefineryResults to work properly
-                    fiOriginalMSXmlFile.MoveTo(fiFixedMSXmlFile.FullName);
+                    originalMSXmlFile.MoveTo(fixedMSXmlFile.FullName);
                 }
                 else
                 {
                     // Run MSConvert with the MzRefiner filter
-                    var mzRefinerySuccess = StartMzRefinery(fiOriginalMSXmlFile, fiMSGFPlusResults);
+                    var mzRefinerySuccess = StartMzRefinery(originalMSXmlFile, msgfPlusResults);
 
                     if (!mzRefinerySuccess)
                     {
@@ -199,12 +199,12 @@ namespace AnalysisManagerMzRefineryPlugIn
                         if (mMzRefineryCorrectionMode.StartsWith("Chose no shift"))
                         {
                             // No valid peak was found; a result file may not exist
-                            fiFixedMSXmlFile.Refresh();
-                            if (!fiFixedMSXmlFile.Exists)
+                            fixedMSXmlFile.Refresh();
+                            if (!fixedMSXmlFile.Exists)
                             {
                                 // Rename the original file to have the expected name of the fixed mzML file
                                 // Required for PostProcessMzRefineryResults to work properly
-                                fiOriginalMSXmlFile.MoveTo(fiFixedMSXmlFile.FullName);
+                                originalMSXmlFile.MoveTo(fixedMSXmlFile.FullName);
                             }
                         }
                     }
@@ -213,10 +213,10 @@ namespace AnalysisManagerMzRefineryPlugIn
                 if (!processingError)
                 {
                     // Look for the results file
-                    fiFixedMSXmlFile.Refresh();
-                    if (fiFixedMSXmlFile.Exists)
+                    fixedMSXmlFile.Refresh();
+                    if (fixedMSXmlFile.Exists)
                     {
-                        var postProcessSuccess = PostProcessMzRefineryResults(fiMSGFPlusResults, fiFixedMSXmlFile);
+                        var postProcessSuccess = PostProcessMzRefineryResults(msgfPlusResults, fixedMSXmlFile);
                         if (!postProcessSuccess)
                             processingError = true;
                     }
@@ -224,7 +224,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                     {
                         if (string.IsNullOrEmpty(m_message))
                         {
-                            m_message = "MzRefinery results file not found: " + fiFixedMSXmlFile.Name;
+                            m_message = "MzRefinery results file not found: " + fixedMSXmlFile.Name;
                         }
                         processingError = true;
                     }
@@ -232,12 +232,12 @@ namespace AnalysisManagerMzRefineryPlugIn
 
                 if (m_UnableToUseMzRefinery)
                 {
-                    fiMSGFPlusResults.Refresh();
-                    if (m_ForceGeneratePPMErrorPlots && fiMSGFPlusResults.Exists)
+                    msgfPlusResults.Refresh();
+                    if (m_ForceGeneratePPMErrorPlots && msgfPlusResults.Exists)
                     {
                         try
                         {
-                            StartPpmErrorCharter(fiMSGFPlusResults);
+                            StartPpmErrorCharter(msgfPlusResults);
                         }
                         catch (Exception ex)
                         {
@@ -246,13 +246,13 @@ namespace AnalysisManagerMzRefineryPlugIn
                         }
                     }
 
-                    using (var swMessageFile = new StreamWriter(new FileStream(
+                    using (var writer = new StreamWriter(new FileStream(
                         Path.Combine(m_WorkDir, "NOTE - Orphan folder; safe to delete.txt"),
                         FileMode.Create, FileAccess.Write, FileShare.Read)))
                     {
-                        swMessageFile.WriteLine("This folder contains MSGF+ results and the MzRefinery log file from a failed attempt at running MzRefinery for job " + m_JobNum + ".");
-                        swMessageFile.WriteLine("The files can be used to investigate the MzRefinery failure.");
-                        swMessageFile.WriteLine("the directory can be safely deleted.");
+                        writer.WriteLine("This folder contains MSGF+ results and the MzRefinery log file from a failed attempt at running MzRefinery for job " + m_JobNum + ".");
+                        writer.WriteLine("The files can be used to investigate the MzRefinery failure.");
+                        writer.WriteLine("the directory can be safely deleted.");
                     }
                 }
 
@@ -274,7 +274,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 {
                     var msgfPlusResultsExist = false;
 
-                    if (fiMSGFPlusResults != null && fiMSGFPlusResults.Exists)
+                    if (msgfPlusResults != null && msgfPlusResults.Exists)
                     {
                         // MSGF+ succeeded but MzRefinery or PostProcessing failed
                         // We will mark the job as failed, but we want to move the MSGF+ results into the transfer folder
@@ -285,7 +285,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                         }
                         else
                         {
-                            msgfPlusResultsExist = CompressMSGFPlusResults(fiMSGFPlusResults);
+                            msgfPlusResultsExist = CompressMSGFPlusResults(msgfPlusResults);
                         }
                     }
 
@@ -478,7 +478,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 LogError(mMSGFPlusUtils.ConsoleOutputErrorMsg);
             }
 
-            var blnProcessingError = false;
+            var processingError = false;
 
             if (success)
             {
@@ -505,13 +505,13 @@ namespace AnalysisManagerMzRefineryPlugIn
                 if (mMSGFPlusComplete)
                 {
                     // Don't treat this as a fatal error
-                    blnProcessingError = false;
+                    processingError = false;
                     m_EvalMessage = string.Copy(m_message);
                     m_message = string.Empty;
                 }
                 else
                 {
-                    blnProcessingError = true;
+                    processingError = true;
                 }
 
                 if (!mMSGFPlusComplete)
@@ -551,7 +551,7 @@ namespace AnalysisManagerMzRefineryPlugIn
 
             m_jobParams.AddResultFileToSkip(MSGFPlusUtils.MOD_FILE_NAME);
 
-            if (blnProcessingError)
+            if (processingError)
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -948,7 +948,7 @@ namespace AnalysisManagerMzRefineryPlugIn
 
         private bool PostProcessMzRefineryResults(FileSystemInfo fiMSGFPlusResults, FileInfo fiFixedMSXmlFile)
         {
-            var strOriginalMSXmlFilePath = Path.Combine(m_WorkDir, m_Dataset + fiFixedMSXmlFile.Extension);
+            var originalMsXmlFilePath = Path.Combine(m_WorkDir, m_Dataset + fiFixedMSXmlFile.Extension);
 
             try
             {
@@ -979,10 +979,10 @@ namespace AnalysisManagerMzRefineryPlugIn
 
             try
             {
-                if (File.Exists(strOriginalMSXmlFilePath))
+                if (File.Exists(originalMsXmlFilePath))
                 {
                     // Delete the original .mzML file
-                    DeleteFileWithRetries(strOriginalMSXmlFilePath, m_DebugLevel, 2);
+                    DeleteFileWithRetries(originalMsXmlFilePath, m_DebugLevel, 2);
                 }
             }
             catch (Exception ex)
@@ -995,7 +995,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             try
             {
                 // Rename the fixed mzML file
-                fiFixedMSXmlFile.MoveTo(strOriginalMSXmlFilePath);
+                fiFixedMSXmlFile.MoveTo(originalMsXmlFilePath);
             }
             catch (Exception ex)
             {
@@ -1040,9 +1040,9 @@ namespace AnalysisManagerMzRefineryPlugIn
 
                 // Create the _CacheInfo.txt file
                 var cacheInfoFilePath = fiMzRefFileGzipped.FullName + "_CacheInfo.txt";
-                using (var swOutFile = new StreamWriter(new FileStream(cacheInfoFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                using (var writer = new StreamWriter(new FileStream(cacheInfoFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
-                    swOutFile.WriteLine(remoteCachefilePath);
+                    writer.WriteLine(remoteCachefilePath);
                 }
 
                 m_jobParams.AddResultFileToSkip(fiMzRefFileGzipped.Name);
