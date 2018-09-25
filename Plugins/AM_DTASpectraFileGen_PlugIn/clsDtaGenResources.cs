@@ -101,7 +101,7 @@ namespace DTASpectraFileGen
 
                     var datasetID = m_jobParams.GetJobParameter("DatasetID", 0);
                     var folderNameToFind = "DTA_Gen_1_26_" + datasetID;
-                    var fileToFind = DatasetName + "_dta.zip";
+                    var fileToFind = DatasetName + CDTA_ZIPPED_EXTENSION;
 
                     var existingDtaFolder = FolderSearch.FindValidFolder(DatasetName,
                         fileToFind,

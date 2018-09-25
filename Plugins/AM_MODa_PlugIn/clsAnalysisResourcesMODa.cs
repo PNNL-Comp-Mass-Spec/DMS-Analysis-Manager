@@ -87,14 +87,14 @@ namespace AnalysisManagerMODaPlugIn
             }
 
             // If the _dta.txt file is over 2 GB in size, condense it
-            if (!ValidateCDTAFileSize(m_WorkingDir, DatasetName + "_dta.txt"))
+            if (!ValidateCDTAFileSize(m_WorkingDir, DatasetName + CDTA_EXTENSION))
             {
                 // Errors were reported in function call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
             // Remove any spectra from the _DTA.txt file with fewer than 3 ions
-            if (!ValidateCDTAFileRemoveSparseSpectra(m_WorkingDir, DatasetName + "_dta.txt"))
+            if (!ValidateCDTAFileRemoveSparseSpectra(m_WorkingDir, DatasetName + CDTA_EXTENSION))
             {
                 // Errors were reported in function call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;

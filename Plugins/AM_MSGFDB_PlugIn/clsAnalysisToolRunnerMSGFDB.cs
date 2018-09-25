@@ -342,7 +342,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             switch (eInputFileFormat)
             {
                 case eInputFileFormatTypes.CDTA:
-                    inputFileName = Dataset + "_dta.txt";
+                    inputFileName = Dataset + clsAnalysisResources.CDTA_EXTENSION;
                     inputFileDescription = "CDTA (_dta.txt) file";
                     break;
                 case eInputFileFormatTypes.MzML:
@@ -744,8 +744,8 @@ namespace AnalysisManagerMSGFDBPlugIn
         {
             // Try to save whatever files are in the work directory (however, delete any spectral data files)
 
-            m_jobParams.AddResultFileToSkip(Dataset + "_dta.zip");
-            m_jobParams.AddResultFileToSkip(Dataset + "_dta.txt");
+            m_jobParams.AddResultFileToSkip(Dataset + clsAnalysisResources.CDTA_ZIPPED_EXTENSION);
+            m_jobParams.AddResultFileToSkip(Dataset + clsAnalysisResources.CDTA_EXTENSION);
 
             m_jobParams.AddResultFileToSkip(Dataset + clsAnalysisResources.DOT_RAW_EXTENSION);
             m_jobParams.AddResultFileToSkip(Dataset + clsAnalysisResources.DOT_MZML_EXTENSION);

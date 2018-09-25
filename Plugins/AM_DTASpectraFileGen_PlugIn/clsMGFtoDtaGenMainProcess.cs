@@ -206,7 +206,7 @@ namespace DTASpectraFileGen
         private bool VerifyDtaCreation()
         {
             // Verify that the _DTA.txt file was created and is not empty
-            var fiCDTAFile = new FileInfo(Path.Combine(m_WorkDir, m_Dataset + "_DTA.txt"));
+            var fiCDTAFile = new FileInfo(Path.Combine(m_WorkDir, m_Dataset + clsAnalysisResources.CDTA_EXTENSION));
 
             if (!fiCDTAFile.Exists)
             {

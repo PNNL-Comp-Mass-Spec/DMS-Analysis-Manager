@@ -2420,6 +2420,8 @@ namespace AnalysisManagerBase
                 if (logIntervalMinutes < 1)
                     logIntervalMinutes = 1;
 
+                // Log progress; example message:
+                //    ... 14.1% complete for MSGF+, job 1635879
                 var progressMessage = " ... " + m_progress.ToString("0.0") + "% complete for " + toolName + ", job " + Job;
 
                 if (DateTime.UtcNow.Subtract(m_LastProgressConsoleTime).TotalMinutes >= CONSOLE_PROGRESS_INTERVAL_MINUTES)
@@ -4605,7 +4607,7 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         protected bool ValidateCDTAFile()
         {
-            var strDTAFilePath = Path.Combine(m_WorkDir, Dataset + "_dta.txt");
+            var strDTAFilePath = Path.Combine(m_WorkDir, Dataset + clsAnalysisResources.CDTA_EXTENSION);
 
             return ValidateCDTAFile(strDTAFilePath);
         }

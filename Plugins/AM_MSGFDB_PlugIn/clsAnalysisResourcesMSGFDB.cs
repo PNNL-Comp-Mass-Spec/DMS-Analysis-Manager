@@ -123,8 +123,8 @@ namespace AnalysisManagerMSGFDBPlugIn
                 // Add all the extensions of the files to delete after run
                 // Do not skip all .gz files because the MSGF+ results are compressed using .gz
                 m_jobParams.AddResultFileExtensionToSkip(DOT_MZXML_EXTENSION);
-                m_jobParams.AddResultFileExtensionToSkip("_dta.zip"); // Zipped DTA
-                m_jobParams.AddResultFileExtensionToSkip("_dta.txt"); // Unzipped, concatenated DTA
+                m_jobParams.AddResultFileExtensionToSkip(CDTA_ZIPPED_EXTENSION); // Zipped DTA
+                m_jobParams.AddResultFileExtensionToSkip(CDTA_EXTENSION); // Unzipped, concatenated DTA
                 m_jobParams.AddResultFileExtensionToSkip("temp.tsv"); // MSGFDB creates .txt.temp.tsv files, which we don't need
 
                 m_jobParams.AddResultFileExtensionToSkip(SCAN_STATS_FILE_SUFFIX);
@@ -405,14 +405,14 @@ namespace AnalysisManagerMSGFDBPlugIn
         private CloseOutType ValidateCDTAFile()
         {
             // If the _dta.txt file is over 2 GB in size, condense it
-            if (!ValidateCDTAFileSize(m_WorkingDir, DatasetName + "_dta.txt"))
+            if (!ValidateCDTAFileSize(m_WorkingDir, DatasetName + CDTA_EXTENSION))
             {
                 // Errors were reported in function call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
             // Remove any spectra from the _DTA.txt file with fewer than 3 ions
-            if (!ValidateCDTAFileRemoveSparseSpectra(m_WorkingDir, DatasetName + "_dta.txt"))
+            if (!ValidateCDTAFileRemoveSparseSpectra(m_WorkingDir, DatasetName + CDTA_EXTENSION))
             {
                 // Errors were reported in function call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
@@ -427,7 +427,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             }
 
             // Make sure that the spectra are centroided
-            var cdtaPath = Path.Combine(m_WorkingDir, DatasetName + "_dta.txt");
+            var cdtaPath = Path.Combine(m_WorkingDir, DatasetName + CDTA_EXTENSION);
 
             LogMessage("Validating that the _dta.txt file has centroided spectra");
 

@@ -386,7 +386,7 @@ namespace AnalysisManagerBase
             errorMessage = string.Empty;
 
             // Retrieve zipped DTA file
-            var sourceFileName = DatasetName + "_dta.zip";
+            var sourceFileName = DatasetName + clsAnalysisResources.CDTA_ZIPPED_EXTENSION;
             var sourceFolderPath = FindDataFile(sourceFileName);
 
             if (!string.IsNullOrEmpty(sourceFolderPath))
@@ -403,7 +403,7 @@ namespace AnalysisManagerBase
 
             // Couldn't find a folder with the _dta.zip file; how about the _dta.txt file?
 
-            sourceFileName = DatasetName + "_dta.txt";
+            sourceFileName = DatasetName + clsAnalysisResources.CDTA_EXTENSION;
             sourceFolderPath = FindDataFile(sourceFileName);
 
             if (string.IsNullOrEmpty(sourceFolderPath))
@@ -1451,8 +1451,8 @@ namespace AnalysisManagerBase
         public bool RetrieveDtaFiles()
         {
 
-            var targetZipFilePath = Path.Combine(m_WorkingDir, DatasetName + "_dta.zip");
-            var targetCDTAFilePath = Path.Combine(m_WorkingDir, DatasetName + "_dta.txt");
+            var targetZipFilePath = Path.Combine(m_WorkingDir, DatasetName + clsAnalysisResources.CDTA_ZIPPED_EXTENSION);
+            var targetCDTAFilePath = Path.Combine(m_WorkingDir, DatasetName + clsAnalysisResources.CDTA_EXTENSION);
 
             if (!File.Exists(targetCDTAFilePath) && !File.Exists(targetZipFilePath))
             {

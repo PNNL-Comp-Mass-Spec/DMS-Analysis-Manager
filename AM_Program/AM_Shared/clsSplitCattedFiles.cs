@@ -94,7 +94,7 @@ namespace AnalysisManagerBase
         /// <returns></returns>
         public bool SplitCattedDTAsOnly(string datasetName, string resultsFolderPath, SortedSet<string> lstFilesToSkip)
         {
-            var fullPath = Path.Combine(resultsFolderPath, datasetName + "_dta.txt");
+            var fullPath = Path.Combine(resultsFolderPath, datasetName + clsAnalysisResources.CDTA_EXTENSION);
             var fi = new FileInfo(fullPath);
             if (fi.Exists)
             {

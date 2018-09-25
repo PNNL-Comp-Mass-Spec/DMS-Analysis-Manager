@@ -977,7 +977,7 @@ namespace AnalysisManagerBase
 
                     // The retrieved file is probably named Dataset_dta.zip
                     // We'll add it to lstFoundFiles, but the exact name is not critical
-                    lstFoundFiles.Add(Path.Combine(workingDir, dataPkgJob.Dataset + "_dta.zip"));
+                    lstFoundFiles.Add(Path.Combine(workingDir, dataPkgJob.Dataset + clsAnalysisResources.CDTA_ZIPPED_EXTENSION));
                 }
             }
 

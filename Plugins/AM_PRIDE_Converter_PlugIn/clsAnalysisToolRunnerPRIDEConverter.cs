@@ -3650,7 +3650,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 }
                 else
                 {
-                    resultFiles.MGFFilePath = Path.Combine(m_WorkDir, dataset + "_dta.txt");
+                    resultFiles.MGFFilePath = Path.Combine(m_WorkDir, dataset + clsAnalysisResources.CDTA_EXTENSION);
                 }
 
                 if (!assumeInstrumentDataUnpurged && !searchedMzML && !File.Exists(resultFiles.MGFFilePath))
@@ -3942,7 +3942,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                     foreach (var sourceFilePath in filesToCopy)
                     {
-                        if (sourceFilePath.EndsWith("_dta.zip", StringComparison.OrdinalIgnoreCase))
+                        if (sourceFilePath.EndsWith(clsAnalysisResources.CDTA_ZIPPED_EXTENSION, StringComparison.OrdinalIgnoreCase))
                             cdtaFile = true;
                         else if (sourceFilePath.EndsWith(DOT_MZID_GZ, StringComparison.OrdinalIgnoreCase))
                             mzidFiles.Add(Path.GetFileName(sourceFilePath));
@@ -4783,7 +4783,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                             }
                                             else
                                             {
-                                                spectraDataFilename = dataPkgDataset + "_dta.txt";
+                                                spectraDataFilename = dataPkgDataset + clsAnalysisResources.CDTA_EXTENSION;
                                             }
 
                                             // The following statement intentionally uses a generic DMS_WorkDir path; do not use m_WorkDir

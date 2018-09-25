@@ -161,6 +161,16 @@ namespace AnalysisManagerBase
         public const string RESULT_TYPE_MSPATHFINDER = "MSP_Peptide_Hit";
 
         /// <summary>
+        /// Concatenated dta file
+        /// </summary>
+        public const string CDTA_EXTENSION = "_dta.txt";
+
+        /// <summary>
+        /// Concatenated dta file
+        /// </summary>
+        public const string CDTA_ZIPPED_EXTENSION = "_dta.zip";
+
+        /// <summary>
         /// QStar .wiff file
         /// </summary>
         public const string DOT_WIFF_EXTENSION = ".wiff";
@@ -4086,7 +4096,7 @@ namespace AnalysisManagerBase
                             if (!diTargetFolder.Exists)
                                 diTargetFolder.Create();
 
-                            if (sourceFileName.EndsWith("_dta.zip", StringComparison.OrdinalIgnoreCase) &&
+                            if (sourceFileName.EndsWith(CDTA_ZIPPED_EXTENSION, StringComparison.OrdinalIgnoreCase) &&
                                 dataPkgJob.Value.Tool.EndsWith("_mzml", StringComparison.OrdinalIgnoreCase))
                             {
                                 // This is a .mzML job; it is not going to have a _dta.zip file
@@ -4128,7 +4138,7 @@ namespace AnalysisManagerBase
 
                             if (string.IsNullOrEmpty(sourceFolderPath))
                             {
-                                if (sourceFileName.EndsWith("_dta.zip", StringComparison.OrdinalIgnoreCase))
+                                if (sourceFileName.EndsWith(CDTA_ZIPPED_EXTENSION, StringComparison.OrdinalIgnoreCase))
                                 {
                                     // Look for a mzML.gz file instead
 
@@ -4182,7 +4192,7 @@ namespace AnalysisManagerBase
                                 return false;
                             }
 
-                            if (sourceFileName.EndsWith("_dta.zip", StringComparison.OrdinalIgnoreCase))
+                            if (sourceFileName.EndsWith(CDTA_ZIPPED_EXTENSION, StringComparison.OrdinalIgnoreCase))
                             {
                                 m_jobParams.AddAdditionalParameter("DataPackageMetadata", spectraFileKey, sourceFileName);
                             }

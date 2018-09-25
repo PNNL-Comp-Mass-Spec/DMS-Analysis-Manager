@@ -23,7 +23,7 @@ namespace DTASpectraFileGen
     {
         #region "Constants and Enums"
 
-        public const string CDTA_FILE_SUFFIX = "_dta.txt";
+        public const string CDTA_FILE_SUFFIX = clsAnalysisResources.CDTA_EXTENSION;
 
         private const int CENTROID_CDTA_PROGRESS_START = 70;
 
@@ -606,8 +606,8 @@ namespace DTASpectraFileGen
         /// </summary>
         public override void CopyFailedResultsToArchiveFolder()
         {
-            m_jobParams.AddResultFileToSkip(Dataset + "_dta.zip");
-            m_jobParams.AddResultFileToSkip(Dataset + "_dta.txt");
+            m_jobParams.AddResultFileToSkip(Dataset + clsAnalysisResources.CDTA_ZIPPED_EXTENSION);
+            m_jobParams.AddResultFileToSkip(Dataset + clsAnalysisResources.CDTA_EXTENSION);
 
             // Skip any .dta files
             m_jobParams.AddResultFileExtensionToSkip(".dta");
@@ -1171,7 +1171,7 @@ namespace DTASpectraFileGen
         /// <remarks></remarks>
         private CloseOutType ZipConcDtaFile()
         {
-            var DtaFileName = m_Dataset + "_dta.txt";
+            var DtaFileName = m_Dataset + clsAnalysisResources.CDTA_EXTENSION;
             var DtaFilePath = Path.Combine(m_WorkDir, DtaFileName);
 
             LogMessage("Zipping concatenated spectra file, job " + m_JobNum + ", step " + m_StepNum);

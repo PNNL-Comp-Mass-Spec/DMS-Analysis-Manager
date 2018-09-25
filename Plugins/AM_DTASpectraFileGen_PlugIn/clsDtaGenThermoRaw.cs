@@ -713,7 +713,7 @@ namespace DTASpectraFileGen
             else
             {
                 // Verify that the _dta.txt file was created
-                var FileList = Directory.GetFiles(m_WorkDir, m_Dataset + "_dta.txt");
+                var FileList = Directory.GetFiles(m_WorkDir, m_Dataset + clsAnalysisResources.CDTA_EXTENSION);
 
                 if (FileList.GetLength(0) == 0)
                 {
