@@ -565,16 +565,17 @@ namespace AnalysisManagerMzRefineryPlugIn
                 LogDebug(javaExePath + " " + cmdStr);
             }
 
-            mCmdRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel);
+            mCmdRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel)
+            {
+                CreateNoWindow = true,
+                CacheStandardOutput = true,
+                EchoOutputToConsole = true,
+                WriteConsoleOutputToFile = true,
+                ConsoleOutputFilePath = Path.Combine(m_WorkDir, MSGFPlusUtils.MSGFPLUS_CONSOLE_OUTPUT_FILE)
+            };
+
             RegisterEvents(mCmdRunner);
             mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
-
-            mCmdRunner.CreateNoWindow = true;
-            mCmdRunner.CacheStandardOutput = true;
-            mCmdRunner.EchoOutputToConsole = true;
-
-            mCmdRunner.WriteConsoleOutputToFile = true;
-            mCmdRunner.ConsoleOutputFilePath = Path.Combine(m_WorkDir, MSGFPlusUtils.MSGFPLUS_CONSOLE_OUTPUT_FILE);
 
             m_progress = MSGFPlusUtils.PROGRESS_PCT_MSGFPLUS_STARTING;
 
@@ -1086,17 +1087,17 @@ namespace AnalysisManagerMzRefineryPlugIn
                 LogDebug(mMSConvertProgLoc + cmdStr);
             }
 
-            mCmdRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel);
+            mCmdRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel)
+            {
+                CreateNoWindow = true,
+                CacheStandardOutput = true,
+                EchoOutputToConsole = true,
+                WriteConsoleOutputToFile = true,
+                ConsoleOutputFilePath = Path.Combine(m_WorkDir, MZ_REFINERY_CONSOLE_OUTPUT)
+            };
+
             RegisterEvents(mCmdRunner);
             mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
-
-            mCmdRunner.CreateNoWindow = true;
-            mCmdRunner.CacheStandardOutput = true;
-
-            mCmdRunner.EchoOutputToConsole = true;
-
-            mCmdRunner.WriteConsoleOutputToFile = true;
-            mCmdRunner.ConsoleOutputFilePath = Path.Combine(m_WorkDir, MZ_REFINERY_CONSOLE_OUTPUT);
 
             m_progress = MSGFPlusUtils.PROGRESS_PCT_MSGFPLUS_COMPLETE;
 
@@ -1222,16 +1223,17 @@ namespace AnalysisManagerMzRefineryPlugIn
                 LogDebug(mPpmErrorCharterProgLoc + cmdStr);
             }
 
-            mCmdRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel);
+            mCmdRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel)
+            {
+                CreateNoWindow = true,
+                CacheStandardOutput = false,
+                EchoOutputToConsole = true,
+                WriteConsoleOutputToFile = true,
+                ConsoleOutputFilePath = Path.Combine(m_WorkDir, ERROR_CHARTER_CONSOLE_OUTPUT_FILE)
+            };
+
             RegisterEvents(mCmdRunner);
             mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
-
-            mCmdRunner.CreateNoWindow = true;
-            mCmdRunner.CacheStandardOutput = false;
-            mCmdRunner.EchoOutputToConsole = true;
-
-            mCmdRunner.WriteConsoleOutputToFile = true;
-            mCmdRunner.ConsoleOutputFilePath = Path.Combine(m_WorkDir, ERROR_CHARTER_CONSOLE_OUTPUT_FILE);
 
             mProgRunnerMode = eMzRefinerProgRunnerMode.PPMErrorCharter;
 
