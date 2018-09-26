@@ -201,11 +201,11 @@ namespace AnalysisManagerMzRefineryPlugIn
                 return true;
             }
 
-            var fiMSGFPlusConsoleOutput = new FileInfo(Path.Combine(diTransferFolder.FullName, "MSGFPlus_ConsoleOutput.txt"));
-            if (!fiMSGFPlusResults.Exists)
+            var msgfPlusConsoleOutput = new FileInfo(Path.Combine(transferDirectory.FullName, "MSGFPlus_ConsoleOutput.txt"));
+            if (!msgfPlusConsoleOutput.Exists)
             {
                 // This is unusual; typically if the mzid.gz file exists there should be a ConsoleOutput file
-                return true;
+                // However, this file isn't required so we'll still use the existing results
                 LogWarning("Found " + msgfPlusResults.FullName + " but did not find " + msgfPlusConsoleOutput.Name);
             }
 
@@ -231,8 +231,11 @@ namespace AnalysisManagerMzRefineryPlugIn
 
             GUnzipFile(localFilePath);
 
+            if (msgfPlusConsoleOutput.Exists)
+            {
                 localFilePath = Path.Combine(m_WorkingDir, msgfPlusConsoleOutput.Name);
                 msgfPlusConsoleOutput.CopyTo(localFilePath, true);
+            }
 
             LogMessage("Found existing MSGF+ results to use for MzRefinery");
 
