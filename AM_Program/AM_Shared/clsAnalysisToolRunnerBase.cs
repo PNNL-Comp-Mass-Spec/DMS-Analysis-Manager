@@ -59,9 +59,9 @@ namespace AnalysisManagerBase
         public const string PVM_RESET_ERROR_MESSAGE = "Error resetting PVM";
 
         /// <summary>
-        /// Purge interval for cached server files, in minutes
+        /// Purge interval for cached server files
         /// </summary>
-        private const int CACHED_SERVER_FILES_PURGE_INTERVAL = 90;
+        private const int CACHED_SERVER_FILES_PURGE_INTERVAL_HOURS = 3;
 
         #endregion
 
@@ -188,7 +188,7 @@ namespace AnalysisManagerBase
         /// </summary>
         protected DateTime mProgRunnerStartTime;
 
-        private DateTime mLastCachedServerFilesPurgeCheck = DateTime.UtcNow.AddMinutes(-CACHED_SERVER_FILES_PURGE_INTERVAL * 2);
+        private DateTime mLastCachedServerFilesPurgeCheck = DateTime.UtcNow.AddHours(-CACHED_SERVER_FILES_PURGE_INTERVAL_HOURS * 2);
 
         private static DateTime mLastManagerSettingsUpdateTime = DateTime.UtcNow;
 
@@ -2905,7 +2905,7 @@ namespace AnalysisManagerBase
 
                 try
                 {
-                    if (DateTime.UtcNow.Subtract(mLastCachedServerFilesPurgeCheck).TotalMinutes < CACHED_SERVER_FILES_PURGE_INTERVAL)
+                    if (DateTime.UtcNow.Subtract(mLastCachedServerFilesPurgeCheck).TotalHours < CACHED_SERVER_FILES_PURGE_INTERVAL_HOURS)
                     {
                         return;
                     }
@@ -2921,7 +2921,7 @@ namespace AnalysisManagerBase
                     var fiPurgeCheckFile = new FileInfo(Path.Combine(diCacheFolder.FullName, "PurgeCheckFile.txt"));
                     if (fiPurgeCheckFile.Exists)
                     {
-                        if (DateTime.UtcNow.Subtract(fiPurgeCheckFile.LastWriteTimeUtc).TotalMinutes < CACHED_SERVER_FILES_PURGE_INTERVAL)
+                        if (DateTime.UtcNow.Subtract(fiPurgeCheckFile.LastWriteTimeUtc).TotalHours < CACHED_SERVER_FILES_PURGE_INTERVAL_HOURS)
                         {
                             return;
                         }
@@ -2945,7 +2945,7 @@ namespace AnalysisManagerBase
                     mLastCachedServerFilesPurgeCheck = DateTime.UtcNow;
 
                     var dtLastProgress = DateTime.UtcNow;
-                    LogMessage("Examining hashcheck files in folder " + diCacheFolder.FullName, 1);
+                    LogMessage("Examining hashcheck files in directory " + diCacheFolder.FullName, 1);
 
                     // Make a list of all of the hashcheck files in diCacheFolder
 
