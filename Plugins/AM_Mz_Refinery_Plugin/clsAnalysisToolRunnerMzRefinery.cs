@@ -1458,23 +1458,31 @@ namespace AnalysisManagerMzRefineryPlugIn
             var consoleOutputFilePath = Path.Combine(m_WorkDir, ERROR_CHARTER_CONSOLE_OUTPUT_FILE);
             var success = massErrorExtractor.ParsePPMErrorCharterOutput(m_Dataset, datasetID, m_JobNum, consoleOutputFilePath);
 
-            if (!success)
+            if (success)
             {
-                string msg;
-                if (string.IsNullOrEmpty(oMassErrorExtractor.ErrorMessage))
-                {
-                    msg = "Error parsing PMM Error Charter output to extract mass error stats";
-                }
-                else
-                {
-                    msg = oMassErrorExtractor.ErrorMessage;
-                }
+                var msg = string.Format("Median mass error changed from {0:F2} ppm to {1:F2} ppm",
+                                        massErrorExtractor.MassErrorInfo.MassErrorPPM,
+                                        massErrorExtractor.MassErrorInfo.MassErrorPPMRefined);
 
-                LogErrorToDatabase(msg + ", job " + m_JobNum);
-                m_message = msg;
+                m_EvalMessage = clsGlobal.AppendToComment(m_EvalMessage, msg);
+
+                return true;
             }
 
-            return success;
+            string errorMsg;
+            if (string.IsNullOrEmpty(massErrorExtractor.ErrorMessage))
+            {
+                errorMsg = "Error parsing PMM Error Charter output to extract mass error stats";
+            }
+            else
+            {
+                errorMsg = massErrorExtractor.ErrorMessage;
+            }
+
+            LogErrorToDatabase(errorMsg + ", job " + m_JobNum);
+            m_message = errorMsg;
+            return false;
+
         }
 
         /// <summary>
