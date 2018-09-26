@@ -792,8 +792,6 @@ namespace AnalysisManagerMzRefineryPlugIn
         {
             // Example console output
 
-            // ReSharper disable CommentTypo
-
             // format: mzML
             //     m/z: Compression-None, 32-bit
             //     intensity: Compression-None, 32-bit
@@ -816,77 +814,28 @@ namespace AnalysisManagerMzRefineryPlugIn
             // writing output file: .\Dataset_FIXED.mzML
 
 
-            // MzRefiner also reates a tab delimited text file named Dataset_msgfplus.mzRefinement.tsv, with contents
-            //
-            // ThresholdScore  ThresholdValue  Excluded (score)        Excluded (mass error)   MS1 Included    MS1 Shift method        MS1 Final stDev MS1 Tolerance for 99%   MS1 Final MAD   MS1 MAD Tolerance for 99%   MS2 Included    MS2 Shift method        MS2 Final stDev MS2 Tolerance for 99%   MS2 Final MAD   MS2 MAD Tolerance for 99%
-            // MS-GF:SpecEValue        -1.7976931348623157e+308 <= MME <= 1e-010       33659   7       4122    scan time       6.07514 18.2254 1.03865 4.61971 115278  scan time       3.27895 9.83686     0.727381        3.23524
+            // ReSharper disable CommentTypo
 
+            // Example warnings (these may be out of date)
 
-            // Old console output text:
-
-            // Reading file "E:\DMS_WorkDir\Dataset_msgfplus.mzid"...
-            // Adjusted filters:
-            // 	Old: MS-GF:SpecEValue; -1.79769e+308 <= value && value <= 1e-010
-            // 	New: MS-GF:SpecEValue; -1.79769e+308 <= value && value <= 1e-009
-            // Adjusted filters:
-            // 	Old: MS-GF:SpecEValue; -1.79769e+308 <= value && value <= 1e-009
-            // 	New: MS-GF:SpecEValue; -1.79769e+308 <= value && value <= 1e-008
-            // Adjusted filters:
-            // 	Old: MS-GF:SpecEValue; -1.79769e+308 <= value && value <= 1e-008
-            // 	New: MS-GF:SpecEValue; -1.79769e+308 <= value && value <= 1e-007
-            // 	Filtered out 13014 identifications because of score.
-            // 	Filtered out 128 identifications because of mass error.
-            // 	Good data points:                                 839
-            // 	Average: global ppm Errors:                       0.77106
-            // 	Systematic Drift (mode):                          -11.5
-            // 	Systematic Drift (median):                        -11.5
-            // 	Measurement Precision (stdev ppm):                26.0205
-            // 	Measurement Precision (stdev(mode) ppm):          28.7674
-            // 	Measurement Precision (stdev(median) ppm):        28.7674
-            // 	Average BinWise stdev (scan):                     24.6157
-            // 	Expected % Improvement (scan):                    5.39302
-            // 	Expected % Improvement (scan)(mode):              14.4319
-            // 	Expected % Improvement (scan)(median):            5.39907
-            // 	Average BinWise stdev (smoothed scan):            25.4906
-            // 	Expected % Improvement (smoothed scan):           2.03045
-            // 	Expected % Improvement (smoothed scan)(mode):     11.3906
-            // 	Expected % Improvement (smoothed scan)(median):   2.03672
-            // 	Average BinWise stdev (mz):                       23.4562
-            // 	Expected % Improvement (mz):                      9.84931
-            // 	Expected % Improvement (mz)(mode):                18.4625
-            // 	Expected % Improvement (mz)(median):              9.85509
-            // 	Average BinWise stdev (smoothed mz):              25.5205
-            // 	Expected % Improvement (smoothed mz):             1.91564
-            // 	Expected % Improvement (smoothed mz)(mode):       11.2868
-            // 	Expected % Improvement (smoothed mz)(median):     1.92192
-            // Chose global shift...
-            // 	Estimated final stDev:                            26.0205
-            // 	Estimated tolerance for 99%: 0 +/-                78.0616
-
-            // Example warning for sparse data file
+            // Sparse data file
             // Low number of good identifications found. Will not perform dependent shifts.
             //    Less than 500 (123) results after filtering.
             //    Filtered out 6830 identifications because of score.
 
-            // Example error for really sparse data file
+            // Really sparse data file
             // Excluding file ".\mzmlRefineryData\Cyanothece_bad\Cyano_GC_07_10_25Aug09_Draco_09-05-02.mzid" from data set
             //    Less than 100 (16) results after filtering.
             //    Filtered out 4208 identifications because of score.
             //    Filtered out 0 identifications because of mass error.
 
-            // Example error for no data passing the filters
+            // No data passing the filters
             // Excluding file "C:\DMS_WorkDir1\Caulo_pY_Run5_msgfplus.mzid" from data set.
             //    Less than 100 (0) results after filtering.
             //    Filtered out 8 identifications because of score.
             //    Filtered out 0 identifications because of mass error.
 
             // ReSharper restore CommentTypo
-
-            var reResultsAfterFiltering = new Regex(@"Less than \d+ \(\d+\) results after filtering", RegexOptions.Compiled);
-
-            var reGoodDataPoints = new Regex(@"Good data points:[^\d]+(?<Count>\d+)", RegexOptions.Compiled);
-
-            var reSpecEValueThreshold = new Regex(@"New: MS-GF:SpecEValue;.+value <= (?<Threshold>[^ ]+)", RegexOptions.Compiled);
 
             try
             {
@@ -928,10 +877,6 @@ namespace AnalysisManagerMzRefineryPlugIn
                                 mConsoleOutputErrorMsg += "; " + dataLine;
                             }
                         }
-                        else if (dataLine.StartsWith("Chose "))
-                        {
-                            mMzRefineryCorrectionMode = string.Copy(dataLine);
-                        }
                         else if (dataLine.StartsWith("Low number of good identifications found"))
                         {
                             m_EvalMessage = dataLine;
@@ -941,37 +886,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                         {
                             LogError("Fewer than 100 matches after filtering; cannot use MzRefinery on this dataset");
                         }
-                        else
-                        {
-                            var matchResultsAfterFiltering = reResultsAfterFiltering.Match(dataLine);
 
-                            if (matchResultsAfterFiltering.Success)
-                            {
-                                m_EvalMessage = clsGlobal.AppendToComment(m_EvalMessage, dataLine.Trim());
-                                if (dataLine.Trim().StartsWith("Less than 100 "))
-                                {
-                                    m_UnableToUseMzRefinery = true;
-                                }
-                            }
-
-                            var matchGoodDataPoints = reGoodDataPoints.Match(dataLine);
-                            if (matchGoodDataPoints.Success)
-                            {
-                                if (int.TryParse(matchGoodDataPoints.Groups["Count"].Value, out var dataPoints))
-                                {
-                                    mMzRefinerGoodDataPoints = dataPoints;
-                                }
-                            }
-
-                            var matchSpecEValueThreshold = reSpecEValueThreshold.Match(dataLine);
-                            if (matchSpecEValueThreshold.Success)
-                            {
-                                if (double.TryParse(matchSpecEValueThreshold.Groups["Threshold"].Value, out var specEValueThreshold))
-                                {
-                                    mMzRefinerSpecEValueThreshold = specEValueThreshold;
-                                }
-                            }
-                        }
                     }
                 }
             }
@@ -980,8 +895,158 @@ namespace AnalysisManagerMzRefineryPlugIn
                 // Ignore errors here
                 if (m_DebugLevel >= 2)
                 {
-                    LogError("Error parsing MzRefinery console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
+                    LogError("Error parsing MzRefinery console output file (" + consoleOutputFilePath + "): " + ex.Message);
                 }
+            }
+        }
+
+        /// <summary>
+        /// Parse the mzRefinement.tsv created by MzRefiner
+        /// </summary>
+        /// <param name="msXmlFile">.mzML file</param>
+        /// <remarks></remarks>
+        private void ParseMzRefinementStatsFile(FileSystemInfo msXmlFile)
+        {
+            // Example results from the .tsv file (reformatted from column-based to row-based data for readability)
+
+            // ThresholdScore	MS-GF:SpecEValue
+            // ThresholdValue	-1.7976931348623157e+308 <= MME <= 1e-010
+            // Excluded (score)	33659
+            // Excluded (mass error)	7
+            // MS1 Included	4122
+            // MS1 Shift method	scan time
+            // MS1 Final stDev	6.07514
+            // MS1 Tolerance for 99%	18.2254
+            // MS1 Final MAD	1.03865
+            // MS1 MAD Tolerance for 99%	4.61971
+            // MS2 Included	115278
+            // MS2 Shift method	scan time
+            // MS2 Final stDev	3.27895
+            // MS2 Tolerance for 99%	9.83686
+            // MS2 Final MAD	0.727381
+            // MS2 MAD Tolerance for 99%	3.23524
+
+            try
+            {
+                var tsvFilePath = Path.ChangeExtension(msXmlFile.FullName, ".mzRefinement.tsv");
+
+                if (!File.Exists(tsvFilePath))
+                {
+                    LogWarning("MzRefinery stats file not found: " + tsvFilePath);
+                    return;
+                }
+
+                if (m_DebugLevel >= 4)
+                {
+                    LogDebug("Parsing file " + tsvFilePath);
+                }
+
+                // This dictionary maps column name to column index
+                Dictionary<string, int> headerMapping = null;
+
+                var requiredColumns = new List<string> {
+                    "ThresholdValue",
+                    "Excluded (score)",
+                    "Excluded (mass error)",
+                    "MS1 Included",
+                    "MS1 Shift method",
+                    "MS1 Final stDev",
+                    "MS1 Tolerance for 99%",
+                    "MS2 Included",
+                    "MS2 Shift method",
+                    "MS2 Final stDev",
+                    "MS2 Tolerance for 99%"
+                };
+
+                using (var reader = new StreamReader(new FileStream(tsvFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                {
+                    while (!reader.EndOfStream)
+                    {
+                        var dataLine = reader.ReadLine();
+
+                        if (string.IsNullOrWhiteSpace(dataLine))
+                            continue;
+
+                        if (headerMapping == null)
+                        {
+                            headerMapping = clsGlobal.ParseHeaderLine(dataLine, requiredColumns);
+                            continue;
+                        }
+
+                        var dataColumns = dataLine.Split('\t');
+
+                        clsGlobal.TryGetValue(dataColumns, headerMapping["ThresholdValue"], out var thresholdRange);
+                        clsGlobal.TryGetValueInt(dataColumns, headerMapping["Excluded (score)"], out var countExcludedByScore);
+                        clsGlobal.TryGetValueInt(dataColumns, headerMapping["Excluded (mass error)"], out var countExcludedByMassError);
+
+                        clsGlobal.TryGetValue(dataColumns, headerMapping["MS1 Shift method"], out var shiftMethodMS1);
+                        clsGlobal.TryGetValueInt(dataColumns, headerMapping["MS1 Included"], out var includedMS1);
+                        clsGlobal.TryGetValueFloat(dataColumns, headerMapping["MS1 Final stDev"], out var finalStDevMS1);
+                        clsGlobal.TryGetValueFloat(dataColumns, headerMapping["MS1 Tolerance for 99%"], out var toleranceFor99PctMS1);
+
+                        clsGlobal.TryGetValue(dataColumns, headerMapping["MS2 Shift method"], out var shiftMethodMS2);
+                        clsGlobal.TryGetValueInt(dataColumns, headerMapping["MS2 Included"], out var includedMS2);
+                        clsGlobal.TryGetValueFloat(dataColumns, headerMapping["MS2 Final stDev"], out var finalStDevMS2);
+                        clsGlobal.TryGetValueFloat(dataColumns, headerMapping["MS2 Tolerance for 99%"], out var toleranceFor99PctMS2);
+
+                        var reThresholdValue = new Regex(@"MME <= (?<Threshold>.+)");
+                        var thresholdMatch = reThresholdValue.Match(thresholdRange);
+                        if (thresholdMatch.Success)
+                        {
+                            if (double.TryParse(thresholdMatch.Groups["Threshold"].Value, out var specEValueThreshold))
+                            {
+                                mMzRefinerSpecEValueThreshold = specEValueThreshold;
+                            }
+                            else
+                            {
+                                LogWarning("MZRefinery SpecEValue threshold not numeric in the .tsv file: " +
+                                           thresholdMatch.Groups["Threshold"].Value);
+                            }
+                        }
+                        else
+                        {
+                            LogWarning("MZRefinery SpecEValue threshold not numeric in the .tsv file: " +
+                                       thresholdRange);
+                        }
+
+                        if (!string.IsNullOrWhiteSpace(shiftMethodMS1))
+                        {
+                            mMzRefineryCorrectionMode = shiftMethodMS1;
+                        }
+                        else if (!string.IsNullOrWhiteSpace(shiftMethodMS2))
+                        {
+                            mMzRefineryCorrectionMode = shiftMethodMS2;
+                        }
+
+                        mMzRefinerGoodDataPoints = includedMS1 + includedMS2;
+
+
+                        var logMessage = string.Format("MzRefinery stats: included {0:#,##0} MS1 and {1:#,##0} MS2; " +
+                                                       "excluded {2:#,##0} by score and {3:#,##0} by mass error; " +
+                                                       "tolerance for 99% of data was {4:F2} ppm for MS1 and {5:F2} pm for MS2; " +
+                                                       "StDev was {6:F2} for MS1 and {7:F2} for MS2", includedMS1, includedMS2,
+                                                       countExcludedByScore, countExcludedByMassError,
+                                                       toleranceFor99PctMS1, toleranceFor99PctMS2,
+                                                       finalStDevMS1, finalStDevMS2);
+
+                        LogMessage(logMessage);
+                        break;
+                    }
+                }
+
+                if (!string.IsNullOrEmpty(mMzRefineryCorrectionMode))
+                {
+                    var logMessage = string.Format("MzRefinery shifted data using {0}, {1:#,##0} points had SpecEValue <= {2:0.###E+00}",
+                                                   mMzRefineryCorrectionMode, mMzRefinerGoodDataPoints, mMzRefinerSpecEValueThreshold);
+                    m_EvalMessage = logMessage;
+
+                    LogMessage(logMessage);
+                }
+
+            }
+            catch (Exception ex)
+            {
+                LogError("Error parsing mzRefinement.tsv file: " + ex.Message, ex);
             }
         }
 
@@ -1224,18 +1289,13 @@ namespace AnalysisManagerMzRefineryPlugIn
                 }
             }
 
-            // Parse the console output file one more time to check for errors and to make sure mMzRefineryCorrectionMode is up-to-date
-            // We will also extract out the final MS-GF:SpecEValue used for filtering the data
+            // Parse the console output file one more time to check for errors
             clsGlobal.IdleLoop(0.25);
             ParseMSConvertConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath);
 
-            if (!string.IsNullOrEmpty(mMzRefineryCorrectionMode))
-            {
-                var logMessage = "MzRefinery " + mMzRefineryCorrectionMode.Replace("...", "").TrimEnd('.');
-                logMessage += ", " + mMzRefinerGoodDataPoints + " points had SpecEValue <= " + mMzRefinerSpecEValueThreshold.ToString("0.###E+00");
-
-                LogMessage(logMessage);
-            }
+            // Parse the .mzRefinement.tsv file to update mMzRefineryCorrectionMode, mMzRefinerGoodDataPoints, and mMzRefinerSpecEValueThreshold
+            // We will also extract out the final MS-GF:SpecEValue used for filtering the data
+            ParseMzRefinementStatsFile(msgfPlusResults);
 
             if (!string.IsNullOrWhiteSpace(mCmdRunner.CachedConsoleErrors))
             {
