@@ -26,7 +26,6 @@ namespace AnalysisManagerMzRefineryPlugIn
     {
         #region "Constants and Enums"
 
-        private const float PROGRESS_PCT_STARTING = 1;
         private const float PROGRESS_PCT_MzREFINERY_COMPLETE = 97;
         private const float PROGRESS_PCT_PLOTS_GENERATED = 98;
 
@@ -45,6 +44,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             MzRefiner = 2,
             PPMErrorCharter = 3
         }
+
         #endregion
 
         #region "Module Variables"
@@ -65,9 +65,9 @@ namespace AnalysisManagerMzRefineryPlugIn
         private bool m_UnableToUseMzRefinery;
 
         private bool m_ForceGeneratePPMErrorPlots;
+
         private string mMzRefineryCorrectionMode;
         private int mMzRefinerGoodDataPoints;
-
         private double mMzRefinerSpecEValueThreshold;
 
         private MSGFPlusUtils mMSGFPlusUtils;
@@ -1695,9 +1695,9 @@ namespace AnalysisManagerMzRefineryPlugIn
                 }
 
                 LogMessage(string.Format("Updated parent ion values in the mzML file. " +
-                                         "{0} updated; " +
-                                         "{1} skipped due to ambiguous charge; " +
-                                         "{2} skipped since not in the _dta.txt file",
+                                         "{0:#,##0} updated; " +
+                                         "{1:#,##0} skipped due to ambiguous charge; " +
+                                         "{2:#,##0} skipped since not in the _dta.txt file",
                                          parentIonsUpdated, parentIonsWithMultiChargeState, parentIonsNotMatched));
 
                 try
