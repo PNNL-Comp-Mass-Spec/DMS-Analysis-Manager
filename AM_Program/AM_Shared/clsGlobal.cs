@@ -733,14 +733,14 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Parses the headers in headerLine to look for the names specified in headerNames
         /// </summary>
-        /// <param name="headerLine"></param>
-        /// <param name="headerNames"></param>
-        /// <param name="isCaseSensitive"></param>
+        /// <param name="headerLine">Tab delimited list of headers</param>
+        /// <param name="headerNames">Expected header column names</param>
+        /// <param name="isCaseSensitive">True if the header names are case sensitive</param>
         /// <returns>Dictionary with the header names and 0-based column index</returns>
         /// <remarks>Header names not found in headerLine will have an index of -1</remarks>
         public static Dictionary<string, int> ParseHeaderLine(string headerLine, List<string> headerNames, bool isCaseSensitive = false)
         {
-            var dctHeaderMapping = new Dictionary<string, int>();
+            var headerMapping = new Dictionary<string, int>();
 
             var lstColumns = headerLine.Split('\t').ToList();
 
@@ -764,10 +764,10 @@ namespace AnalysisManagerBase
                     }
                 }
 
-                dctHeaderMapping.Add(headerName, colIndex);
+                headerMapping.Add(headerName, colIndex);
             }
 
-            return dctHeaderMapping;
+            return headerMapping;
 
         }
 
@@ -803,7 +803,6 @@ namespace AnalysisManagerBase
             value = string.Empty;
             return false;
         }
-
 
         /// <summary>
         /// Tries to convert the text at index colIndex of dataColumns to an integer

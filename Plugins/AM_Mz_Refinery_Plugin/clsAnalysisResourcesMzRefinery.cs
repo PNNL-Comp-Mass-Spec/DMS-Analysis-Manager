@@ -184,18 +184,18 @@ namespace AnalysisManagerMzRefineryPlugIn
                 return false;
             }
 
-            var diTransferFolder = new DirectoryInfo(Path.Combine(transferFolderPath, DatasetName, resultsFolderName));
-            if (!diTransferFolder.Exists)
+            var transferDirectory = new DirectoryInfo(Path.Combine(transferFolderPath, DatasetName, resultsFolderName));
+            if (!transferDirectory.Exists)
             {
                 // This is not an error -- it just means there are no existing MSGF+ results to use
                 return true;
             }
 
-            // Look for the required files in the transfer folder
+            // Look for the required files in the transfer directory
             var resultsFileName = DatasetName + clsAnalysisToolRunnerMzRefinery.MSGFPLUS_MZID_SUFFIX + ".gz";
-            var fiMSGFPlusResults = new FileInfo(Path.Combine(diTransferFolder.FullName, resultsFileName));
+            var msgfPlusResults = new FileInfo(Path.Combine(transferDirectory.FullName, resultsFileName));
 
-            if (!fiMSGFPlusResults.Exists)
+            if (!msgfPlusResults.Exists)
             {
                 // This is not an error -- it just means there are no existing MSGF+ results to use
                 return true;
@@ -205,20 +205,20 @@ namespace AnalysisManagerMzRefineryPlugIn
             if (!fiMSGFPlusResults.Exists)
             {
                 // This is unusual; typically if the mzid.gz file exists there should be a ConsoleOutput file
-                LogWarning("Found " + fiMSGFPlusResults.FullName + " but did not find " + fiMSGFPlusConsoleOutput.Name + "; will re-run MSGF+");
                 return true;
+                LogWarning("Found " + msgfPlusResults.FullName + " but did not find " + msgfPlusConsoleOutput.Name);
             }
 
-            var fiMzRefParamFile = new FileInfo(Path.Combine(diTransferFolder.FullName, mzRefParamFileName));
-            if (!fiMzRefParamFile.Exists)
+            var mzRefParamFile = new FileInfo(Path.Combine(transferDirectory.FullName, mzRefParamFileName));
+            if (!mzRefParamFile.Exists)
             {
                 // This is unusual; typically if the mzid.gz file exists there should be a MzRefinery parameter file
-                LogWarning("Found " + fiMSGFPlusResults.FullName + " but did not find " + fiMzRefParamFile.Name + "; will re-run MSGF+");
+                LogWarning("Found " + msgfPlusResults.FullName + " but did not find " + mzRefParamFile.Name + "; will re-run MSGF+");
                 return true;
             }
 
             // Compare the remote parameter file and the local one to make sure they match
-            if (!clsGlobal.TextFilesMatch(fiMzRefParamFile.FullName, Path.Combine(m_WorkingDir, mzRefParamFileName), true))
+            if (!clsGlobal.TextFilesMatch(mzRefParamFile.FullName, Path.Combine(m_WorkingDir, mzRefParamFileName), true))
             {
                 LogMessage("MzRefinery parameter file in transfer folder does not match the official MzRefinery parameter file; will re-run MSGF+");
                 return true;
@@ -226,13 +226,13 @@ namespace AnalysisManagerMzRefineryPlugIn
 
             // Existing results found
             // Copy the MSGF+ results locally
-            var localFilePath = Path.Combine(m_WorkingDir, fiMSGFPlusResults.Name);
-            fiMSGFPlusResults.CopyTo(localFilePath, true);
+            var localFilePath = Path.Combine(m_WorkingDir, msgfPlusResults.Name);
+            msgfPlusResults.CopyTo(localFilePath, true);
 
             GUnzipFile(localFilePath);
 
-            localFilePath = Path.Combine(m_WorkingDir, fiMSGFPlusConsoleOutput.Name);
-            fiMSGFPlusConsoleOutput.CopyTo(localFilePath, true);
+                localFilePath = Path.Combine(m_WorkingDir, msgfPlusConsoleOutput.Name);
+                msgfPlusConsoleOutput.CopyTo(localFilePath, true);
 
             LogMessage("Found existing MSGF+ results to use for MzRefinery");
 

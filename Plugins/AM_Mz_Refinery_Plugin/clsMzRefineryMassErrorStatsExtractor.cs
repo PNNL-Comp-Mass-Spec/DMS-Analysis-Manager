@@ -21,7 +21,7 @@ namespace AnalysisManagerMzRefineryPlugIn
 
         private readonly bool mPostResultsToDB;
 
-        private string mErrorMessage;
+        public string ErrorMessage { get; private set; }
 
         private struct udtMassErrorInfoType
         {
@@ -46,15 +46,14 @@ namespace AnalysisManagerMzRefineryPlugIn
             public double MassErrorPPMRefined;
         }
 
-        public string ErrorMessage => mErrorMessage;
 
-        public clsMzRefineryMassErrorStatsExtractor(IMgrParams mgrParams, short intDebugLevel, bool blnPostResultsToDB)
+        public clsMzRefineryMassErrorStatsExtractor(IMgrParams mgrParams, short debugLevel, bool postResultsToDB)
         {
             m_mgrParams = mgrParams;
-            m_DebugLevel = intDebugLevel;
-            mPostResultsToDB = blnPostResultsToDB;
+            m_DebugLevel = debugLevel;
+            mPostResultsToDB = postResultsToDB;
 
-            mErrorMessage = string.Empty;
+            ErrorMessage = string.Empty;
         }
 
         private string ConstructXML(udtMassErrorInfoType udtMassErrorInfo)
@@ -111,28 +110,28 @@ namespace AnalysisManagerMzRefineryPlugIn
                     MassErrorPPMRefined = double.MinValue
                 };
 
-                var fiSourceFile = new FileInfo(ppmErrorCharterConsoleOutputFilePath);
-                if (!fiSourceFile.Exists)
+                var sourceFile = new FileInfo(ppmErrorCharterConsoleOutputFilePath);
+                if (!sourceFile.Exists)
                 {
-                    mErrorMessage = "MzRefinery Log file not found";
+                    ErrorMessage = "MzRefinery Log file not found";
                     return false;
                 }
 
-                using (var srSourceFile = new StreamReader(new FileStream(fiSourceFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                using (var reader = new StreamReader(new FileStream(sourceFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
                 {
-                    while (!srSourceFile.EndOfStream)
+                    while (!reader.EndOfStream)
                     {
-                        var strLineIn = srSourceFile.ReadLine();
+                        var dataLine = reader.ReadLine();
 
-                        if (string.IsNullOrWhiteSpace(strLineIn))
+                        if (string.IsNullOrWhiteSpace(dataLine))
                             continue;
 
-                        strLineIn = strLineIn.Trim();
+                        dataLine = dataLine.Trim();
 
-                        if (!strLineIn.StartsWith(MASS_ERROR_PPM))
+                        if (!dataLine.StartsWith(MASS_ERROR_PPM))
                             continue;
 
-                        var dataString = strLineIn.Substring(MASS_ERROR_PPM.Length).Trim();
+                        var dataString = dataLine.Substring(MASS_ERROR_PPM.Length).Trim();
 
                         var dataValues = dataString.Split(' ').ToList();
 
@@ -150,27 +149,27 @@ namespace AnalysisManagerMzRefineryPlugIn
 
                 if (Math.Abs(udtMassErrorInfo.MassErrorPPM - double.MinValue) < float.Epsilon)
                 {
-                    mErrorMessage = "Did not find '" + MASS_ERROR_PPM + "' in the PPM Error Charter output";
+                    ErrorMessage = "Did not find '" + MASS_ERROR_PPM + "' in the PPM Error Charter output";
                     return false;
                 }
 
                 if (Math.Abs(udtMassErrorInfo.MassErrorPPMRefined - double.MinValue) < float.Epsilon)
                 {
-                    mErrorMessage = "Did not find '" + MASS_ERROR_PPM + "' with two values in the PPM Error Charter output";
+                    ErrorMessage = "Did not find '" + MASS_ERROR_PPM + "' with two values in the PPM Error Charter output";
                     return false;
                 }
 
-                var strXMLResults = ConstructXML(udtMassErrorInfo);
+                var xmlResults = ConstructXML();
 
                 if (mPostResultsToDB)
                 {
-                    var blnSuccess = PostMassErrorInfoToDB(intDatasetID, strXMLResults);
+                    var success = PostMassErrorInfoToDB(datasetID, xmlResults);
 
-                    if (!blnSuccess)
+                    if (!success)
                     {
-                        if (string.IsNullOrEmpty(mErrorMessage))
+                        if (string.IsNullOrEmpty(ErrorMessage))
                         {
-                            mErrorMessage = "Unknown error posting Mass Error results from MzRefinery to the database";
+                            ErrorMessage = "Unknown error posting Mass Error results from MzRefinery to the database";
                         }
                         return false;
                     }
@@ -178,55 +177,56 @@ namespace AnalysisManagerMzRefineryPlugIn
             }
             catch (Exception ex)
             {
-                mErrorMessage = "Exception in ParsePPMErrorCharterOutput: " + ex.Message;
+                ErrorMessage = "Exception in ParsePPMErrorCharterOutput: " + ex.Message;
                 return false;
             }
 
             return true;
         }
 
-        private bool PostMassErrorInfoToDB(int intDatasetID, string strXMLResults)
+        private bool PostMassErrorInfoToDB(int datasetID, string xmlResults)
         {
             const int MAX_RETRY_COUNT = 3;
 
-            bool blnSuccess;
+            bool success;
 
             try
             {
                 // Call stored procedure StoreDTARefMassErrorStats in DMS5
+                // Data is stored in table T_Dataset_QC
 
-                var objCommand = new SqlCommand
+                var sqlCmd = new SqlCommand
                 {
                     CommandType = CommandType.StoredProcedure,
                     CommandText = STORE_MASS_ERROR_STATS_SP_NAME
                 };
 
-                objCommand.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
-                objCommand.Parameters.Add(new SqlParameter("@DatasetID", SqlDbType.Int)).Value = intDatasetID;
-                objCommand.Parameters.Add(new SqlParameter("@ResultsXML", SqlDbType.Xml)).Value = strXMLResults;
+                sqlCmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
+                sqlCmd.Parameters.Add(new SqlParameter("@DatasetID", SqlDbType.Int)).Value = datasetID;
+                sqlCmd.Parameters.Add(new SqlParameter("@ResultsXML", SqlDbType.Xml)).Value = xmlResults;
 
-                var objAnalysisTask = new clsAnalysisJob(m_mgrParams, m_DebugLevel);
+                var analysisTask = new clsAnalysisJob(m_mgrParams, m_DebugLevel);
 
                 // Execute the SP (retry the call up to 4 times)
-                var resCode = objAnalysisTask.DMSProcedureExecutor.ExecuteSP(objCommand, MAX_RETRY_COUNT);
+                var resCode = analysisTask.DMSProcedureExecutor.ExecuteSP(sqlCmd, MAX_RETRY_COUNT);
 
                 if (resCode == 0)
                 {
-                    blnSuccess = true;
+                    success = true;
                 }
                 else
                 {
-                    mErrorMessage = "Error storing MzRefinery Mass Error Results in the database, " + STORE_MASS_ERROR_STATS_SP_NAME + " returned " + resCode;
-                    blnSuccess = false;
+                    ErrorMessage = "Error storing MzRefinery Mass Error Results in the database, " + STORE_MASS_ERROR_STATS_SP_NAME + " returned " + resCode;
+                    success = false;
                 }
             }
             catch (Exception ex)
             {
-                mErrorMessage = "Exception storing MzRefinery Mass Error Results in the database: " + ex.Message;
-                blnSuccess = false;
+                ErrorMessage = "Exception storing MzRefinery Mass Error Results in the database: " + ex.Message;
+                success = false;
             }
 
-            return blnSuccess;
+            return success;
         }
     }
 }

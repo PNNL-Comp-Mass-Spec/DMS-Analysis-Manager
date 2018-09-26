@@ -357,12 +357,12 @@ namespace AnalysisManagerMzRefineryPlugIn
         /// </summary>
         /// <param name="javaProgLoc">Path to Java</param>
         /// <param name="msXmlFileExtension">.mzXML or .mzML</param>
-        /// <param name="fiMSGFPlusResults">Output: MSGF+ results file</param>
+        /// <param name="msgfPlusResults">Output: MSGF+ results file</param>
         /// <returns></returns>
         /// <remarks></remarks>
-        private CloseOutType RunMSGFPlus(string javaProgLoc, string msXmlFileExtension, out FileInfo fiMSGFPlusResults)
+        private CloseOutType RunMSGFPlus(string javaProgLoc, string msXmlFileExtension, out FileInfo msgfPlusResults)
         {
-            fiMSGFPlusResults = null;
+            msgfPlusResults = null;
 
             // Determine the path to MSGF+
             mMSGFPlusProgLoc = DetermineProgramLocation("MSGFPlusProgLoc", MSGFPlusUtils.MSGFPLUS_JAR_NAME);
@@ -379,8 +379,8 @@ namespace AnalysisManagerMzRefineryPlugIn
 
             // These two variables are required for the call to ParseMSGFPlusParameterFile
             // They are blank because the source file is a mzML file, and that file includes scan type information
-            var strScanTypeFilePath = string.Empty;
-            var strAssumedScanType = string.Empty;
+            var scanTypeFilePath = string.Empty;
+            var assumedScanType = string.Empty;
 
             // Initialize mMSGFPlusUtils
             mMSGFPlusUtils = new MSGFPlusUtils(m_mgrParams, m_jobParams, m_WorkDir, m_DebugLevel);
@@ -409,7 +409,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 return result;
             }
 
-            var strInstrumentGroup = m_jobParams.GetJobParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, "InstrumentGroup", string.Empty);
+            var instrumentGroup = m_jobParams.GetJobParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, "InstrumentGroup", string.Empty);
 
             // Read the MSGF+ Parameter File
 
@@ -425,15 +425,15 @@ namespace AnalysisManagerMzRefineryPlugIn
             }
 
             result = mMSGFPlusUtils.ParseMSGFPlusParameterFile(
-                fastaFileSizeKB, fastaFileIsDecoy, strAssumedScanType, strScanTypeFilePath,
-                strInstrumentGroup, paramFilePath, overrideParams, out var strMSGFPlusCmdLineOptions);
+                fastaFileSizeKB, fastaFileIsDecoy, assumedScanType, scanTypeFilePath,
+                instrumentGroup, paramFilePath, overrideParams, out var msgfPlusCmdLineOptions);
 
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 return result;
             }
 
-            if (string.IsNullOrEmpty(strMSGFPlusCmdLineOptions))
+            if (string.IsNullOrEmpty(msgfPlusCmdLineOptions))
             {
                 if (string.IsNullOrEmpty(m_message))
                 {
@@ -451,33 +451,33 @@ namespace AnalysisManagerMzRefineryPlugIn
             }
 
             var resultsFileName = m_Dataset + MSGFPLUS_MZID_SUFFIX;
-            fiMSGFPlusResults = new FileInfo(Path.Combine(m_WorkDir, resultsFileName));
+            msgfPlusResults = new FileInfo(Path.Combine(m_WorkDir, resultsFileName));
 
             LogMessage("Running MSGF+");
 
             // If an MSGF+ analysis crashes with an "out-of-memory" error, we need to reserve more memory for Java
             // The amount of memory required depends on both the fasta file size and the size of the input .mzML file, since data from all spectra are cached in memory
             // Customize this on a per-job basis using the MSGFDBJavaMemorySize setting in the settings file
-            var intJavaMemorySize = m_jobParams.GetJobParameter("MzRefMSGFPlusJavaMemorySize", 1500);
-            if (intJavaMemorySize < 512)
-                intJavaMemorySize = 512;
+            var javaMemorySize = m_jobParams.GetJobParameter("MzRefMSGFPlusJavaMemorySize", 1500);
+            if (javaMemorySize < 512)
+                javaMemorySize = 512;
 
             // Set up and execute a program runner to run MSGF+
-            var cmdStr = " -Xmx" + intJavaMemorySize + "M -jar " + msgfplusJarFilePath;
+            var cmdStr = " -Xmx" + javaMemorySize + "M -jar " + msgfplusJarFilePath;
 
             // Define the input file, output file, and fasta file
             cmdStr += " -s " + m_Dataset + msXmlFileExtension;
 
-            cmdStr += " -o " + fiMSGFPlusResults.Name;
+            cmdStr += " -o " + msgfPlusResults.Name;
             cmdStr += " -d " + PossiblyQuotePath(fastaFilePath);
 
             // Append the remaining options loaded from the parameter file
-            cmdStr += " " + strMSGFPlusCmdLineOptions;
+            cmdStr += " " + msgfPlusCmdLineOptions;
 
             // Make sure the machine has enough free memory to run MSGF+
-            var blnLogFreeMemoryOnSuccess = !(m_DebugLevel < 1);
+            var logFreeMemoryOnSuccess = !(m_DebugLevel < 1);
 
-            if (!clsAnalysisResources.ValidateFreeMemorySize(intJavaMemorySize, "MSGF+", blnLogFreeMemoryOnSuccess))
+            if (!clsAnalysisResources.ValidateFreeMemorySize(javaMemorySize, "MSGF+", logFreeMemoryOnSuccess))
             {
                 LogError("Not enough free memory to run MSGF+");
                 return CloseOutType.CLOSEOUT_FAILED;
@@ -565,9 +565,9 @@ namespace AnalysisManagerMzRefineryPlugIn
             }
 
             // Look for the .mzid file
-            fiMSGFPlusResults.Refresh();
+            msgfPlusResults.Refresh();
 
-            if (!fiMSGFPlusResults.Exists)
+            if (!msgfPlusResults.Exists)
             {
                 if (string.IsNullOrEmpty(m_message))
                 {
@@ -586,7 +586,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
-        private bool StartMSGFPlus(string javaExePath, string strSearchEngineName, string cmdStr)
+        private bool StartMSGFPlus(string javaExePath, string searchEngineName, string cmdStr)
         {
             if (m_DebugLevel >= 1)
             {
@@ -610,19 +610,19 @@ namespace AnalysisManagerMzRefineryPlugIn
             mProgRunnerMode = eMzRefinerProgRunnerMode.MSGFPlus;
 
             // Start MSGF+ and wait for it to exit
-            var success = mCmdRunner.RunProgram(javaExePath, cmdStr, strSearchEngineName, true);
+            var success = mCmdRunner.RunProgram(javaExePath, cmdStr, searchEngineName, true);
 
             mProgRunnerMode = eMzRefinerProgRunnerMode.Unknown;
 
             return success;
         }
 
-        private bool CompressMSGFPlusResults(FileSystemInfo fiMSGFPlusResults)
+        private bool CompressMSGFPlusResults(FileSystemInfo msgfPlusResults)
         {
             try
             {
                 // Compress the MSGF+ .mzID file
-                var success = m_DotNetZipTools.GZipFile(fiMSGFPlusResults.FullName, true);
+                var success = m_DotNetZipTools.GZipFile(msgfPlusResults.FullName, true);
 
                 if (!success)
                 {
@@ -630,8 +630,8 @@ namespace AnalysisManagerMzRefineryPlugIn
                     return false;
                 }
 
-                m_jobParams.AddResultFileToSkip(fiMSGFPlusResults.Name);
-                m_jobParams.AddResultFileToKeep(fiMSGFPlusResults.Name + clsAnalysisResources.DOT_GZ_EXTENSION);
+                m_jobParams.AddResultFileToSkip(msgfPlusResults.Name);
+                m_jobParams.AddResultFileToKeep(msgfPlusResults.Name + clsAnalysisResources.DOT_GZ_EXTENSION);
             }
             catch (Exception ex)
             {
@@ -647,10 +647,10 @@ namespace AnalysisManagerMzRefineryPlugIn
 
             try
             {
-                var fiFiles = new DirectoryInfo(m_WorkDir).GetFiles("*" + msXmlFileExtension);
-                foreach (var fiFileToDelete in fiFiles)
+                var msXmlFiles = new DirectoryInfo(m_WorkDir).GetFiles("*" + msXmlFileExtension);
+                foreach (var fileToDelete in msXmlFiles)
                 {
-                    fiFileToDelete.Delete();
+                    fileToDelete.Delete();
                 }
             }
             catch (Exception)
@@ -662,13 +662,13 @@ namespace AnalysisManagerMzRefineryPlugIn
 
         }
 
-        private bool ExtractMzRefinerOptionsFromParameterFile(string strParameterFilePath)
+        private bool ExtractMzRefinerOptionsFromParameterFile(string parameterFilePath)
         {
             mSkipMzRefinery = false;
 
             try
             {
-                var paramFileReader = new clsKeyValueParamFileReader("MzRefinery", strParameterFilePath);
+                var paramFileReader = new clsKeyValueParamFileReader("MzRefinery", parameterFilePath);
                 RegisterEvents(paramFileReader);
 
                 var eResult = paramFileReader.ParseKeyValueParameterFile(out var paramFileEntries);
@@ -690,7 +690,7 @@ namespace AnalysisManagerMzRefineryPlugIn
 
         }
 
-        private DateTime dtLastConsoleOutputParse = DateTime.MinValue;
+        private DateTime mLastConsoleOutputParse = DateTime.MinValue;
 
         private void MonitorProgress()
         {
@@ -699,12 +699,12 @@ namespace AnalysisManagerMzRefineryPlugIn
             UpdateStatusFile();
 
             // Parse the console output file every 30 seconds
-            if (DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds < SECONDS_BETWEEN_UPDATE)
+            if (DateTime.UtcNow.Subtract(mLastConsoleOutputParse).TotalSeconds < SECONDS_BETWEEN_UPDATE)
             {
                 return;
             }
 
-            dtLastConsoleOutputParse = DateTime.UtcNow;
+            mLastConsoleOutputParse = DateTime.UtcNow;
 
             if (mProgRunnerMode == eMzRefinerProgRunnerMode.MSGFPlus)
             {
@@ -786,9 +786,9 @@ namespace AnalysisManagerMzRefineryPlugIn
         /// <summary>
         /// Parse the MSConvert console output file to look for errors from MzRefiner
         /// </summary>
-        /// <param name="strConsoleOutputFilePath"></param>
+        /// <param name="consoleOutputFilePath"></param>
         /// <remarks></remarks>
-        private void ParseMSConvertConsoleOutputFile(string strConsoleOutputFilePath)
+        private void ParseMSConvertConsoleOutputFile(string consoleOutputFilePath)
         {
             // Example console output
 
@@ -890,11 +890,11 @@ namespace AnalysisManagerMzRefineryPlugIn
 
             try
             {
-                if (!File.Exists(strConsoleOutputFilePath))
+                if (!File.Exists(consoleOutputFilePath))
                 {
                     if (m_DebugLevel >= 4)
                     {
-                        LogDebug("Console output file not found: " + strConsoleOutputFilePath);
+                        LogDebug("Console output file not found: " + consoleOutputFilePath);
                     }
 
                     return;
@@ -902,12 +902,12 @@ namespace AnalysisManagerMzRefineryPlugIn
 
                 if (m_DebugLevel >= 4)
                 {
-                    LogDebug("Parsing file " + strConsoleOutputFilePath);
+                    LogDebug("Parsing file " + consoleOutputFilePath);
                 }
 
                 mConsoleOutputErrorMsg = string.Empty;
 
-                using (var reader = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(consoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
                     while (!reader.EndOfStream)
                     {
@@ -987,12 +987,12 @@ namespace AnalysisManagerMzRefineryPlugIn
 
         private bool PostProcessMzRefineryResults(FileSystemInfo fiMSGFPlusResults, FileInfo fiFixedMSXmlFile)
         {
-            var originalMsXmlFilePath = Path.Combine(m_WorkDir, m_Dataset + fiFixedMSXmlFile.Extension);
+            var originalMsXmlFilePath = Path.Combine(m_WorkDir, m_Dataset + fixedMSXmlFile.Extension);
 
             try
             {
                 // Create the plots
-                var success = StartPpmErrorCharter(fiMSGFPlusResults);
+                var success = StartPpmErrorCharter(msgfPlusResults);
 
                 if (!success)
                 {
@@ -1032,7 +1032,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             try
             {
                 // Rename the fixed mzML file
-                fiFixedMSXmlFile.MoveTo(originalMsXmlFilePath);
+                fixedMSXmlFile.MoveTo(originalMsXmlFilePath);
             }
             catch (Exception ex)
             {
@@ -1043,7 +1043,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             try
             {
                 // Compress the .mzXML or .mzML file
-                var success = m_DotNetZipTools.GZipFile(fiFixedMSXmlFile.FullName, true);
+                var success = m_DotNetZipTools.GZipFile(fixedMSXmlFile.FullName, true);
 
                 if (!success)
                 {
@@ -1059,28 +1059,28 @@ namespace AnalysisManagerMzRefineryPlugIn
 
             try
             {
-                var fiMzRefFileGzipped = new FileInfo(fiFixedMSXmlFile.FullName + clsAnalysisResources.DOT_GZ_EXTENSION);
+                var mzRefFileGzipped = new FileInfo(fixedMSXmlFile.FullName + clsAnalysisResources.DOT_GZ_EXTENSION);
 
                 // Copy the .mzXML.gz or .mzML.gz file to the cache
-                var remoteCachefilePath = CopyFileToServerCache(mMSXmlCacheFolder.FullName, fiMzRefFileGzipped.FullName, purgeOldFilesIfNeeded: true);
+                var remoteCachefilePath = CopyFileToServerCache(mMSXmlCacheFolder.FullName, mzRefFileGzipped.FullName, purgeOldFilesIfNeeded: true);
 
                 if (string.IsNullOrEmpty(remoteCachefilePath))
                 {
                     if (string.IsNullOrEmpty(m_message))
                     {
-                        LogError("CopyFileToServerCache returned false for " + fiMzRefFileGzipped.Name);
+                        LogError("CopyFileToServerCache returned false for " + mzRefFileGzipped.Name);
                     }
                     return false;
                 }
 
                 // Create the _CacheInfo.txt file
-                var cacheInfoFilePath = fiMzRefFileGzipped.FullName + "_CacheInfo.txt";
+                var cacheInfoFilePath = mzRefFileGzipped.FullName + "_CacheInfo.txt";
                 using (var writer = new StreamWriter(new FileStream(cacheInfoFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
                     writer.WriteLine(remoteCachefilePath);
                 }
 
-                m_jobParams.AddResultFileToSkip(fiMzRefFileGzipped.Name);
+                m_jobParams.AddResultFileToSkip(mzRefFileGzipped.Name);
             }
             catch (Exception ex)
             {
@@ -1089,7 +1089,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             }
 
             // Compress the MSGF+ .mzID file
-            var gzipSuccess = CompressMSGFPlusResults(fiMSGFPlusResults);
+            var gzipSuccess = CompressMSGFPlusResults(msgfPlusResults);
 
             return gzipSuccess;
         }
@@ -1153,7 +1153,13 @@ namespace AnalysisManagerMzRefineryPlugIn
 
         }
 
-        private bool StartMzRefinery(FileSystemInfo fiOriginalMzMLFile, FileSystemInfo fiMSGFPlusResults)
+        /// <summary>
+        /// Start mzRefinery
+        /// </summary>
+        /// <param name="originalMSXmlFile">.mzML file</param>
+        /// <param name="msgfPlusResults">.mzid file from MSGF+</param>
+        /// <returns></returns>
+        private bool StartMzRefinery(FileSystemInfo originalMSXmlFile, FileSystemInfo msgfPlusResults)
         {
             mConsoleOutputErrorMsg = string.Empty;
 
@@ -1163,9 +1169,9 @@ namespace AnalysisManagerMzRefineryPlugIn
             // Provide the path to the .mzML file plus the --filter switch with the information required to run MzRefiner
 
             var cmdStr = " ";
-            cmdStr += fiOriginalMzMLFile.FullName;
-            cmdStr += " --outfile " + Path.GetFileNameWithoutExtension(fiOriginalMzMLFile.Name) + "_FIXED.mzML";
-            cmdStr += " --filter \"mzRefiner " + fiMSGFPlusResults.FullName;
+            cmdStr += originalMSXmlFile.FullName;
+            cmdStr += " --outfile " + Path.GetFileNameWithoutExtension(originalMSXmlFile.Name) + "_FIXED.mzML";
+            cmdStr += " --filter \"mzRefiner " + msgfPlusResults.FullName;
 
             // MzRefiner will perform a segmented correction if there are at least 500 matches; it will perform a global shift if between 100 and 500 matches
             // The data is initially filtered by MSGF SpecProb <= 1e-10
@@ -1310,12 +1316,12 @@ namespace AnalysisManagerMzRefineryPlugIn
             return true;
         }
 
-        private bool StartPpmErrorCharter(FileSystemInfo fiMSGFPlusResults)
+        private bool StartPpmErrorCharter(FileSystemInfo msgfPlusResults)
         {
             LogMessage("Running PPMErrorCharter");
 
             // Set up and execute a program runner to run the PPMErrorCharter
-            var cmdStr = " " + fiMSGFPlusResults.FullName + " " + mMzRefinerSpecEValueThreshold.ToString("0.###E+00") + " /Python";
+            var cmdStr = " " + msgfPlusResults.FullName + " " + mMzRefinerSpecEValueThreshold.ToString("0.###E+00") + " /Python";
 
             if (m_DebugLevel >= 1)
             {
@@ -1358,17 +1364,17 @@ namespace AnalysisManagerMzRefineryPlugIn
             }
 
             // Make sure the plots were created
-            var lstCharts = new List<FileInfo>
+            var plotFiles = new List<FileInfo>
             {
                 new FileInfo(Path.Combine(m_WorkDir, m_Dataset + "_MZRefinery_MassErrors.png")),
                 new FileInfo(Path.Combine(m_WorkDir, m_Dataset + "_MZRefinery_Histograms.png"))
             };
 
-            foreach (var fiChart in lstCharts)
+            foreach (var plotFile in plotFiles)
             {
-                if (!fiChart.Exists)
+                if (!plotFile.Exists)
                 {
-                    LogError("PPMError chart not found: " + fiChart.Name);
+                    LogError("PPMError plot not found: " + plotFile.Name);
                     return false;
                 }
             }
@@ -1385,12 +1391,12 @@ namespace AnalysisManagerMzRefineryPlugIn
 
         private bool StorePPMErrorStatsInDB()
         {
-            var oMassErrorExtractor = new clsMzRefineryMassErrorStatsExtractor(m_mgrParams, m_DebugLevel, blnPostResultsToDB: true);
+            var massErrorExtractor = new clsMzRefineryMassErrorStatsExtractor(m_mgrParams, m_DebugLevel, postResultsToDB: true);
 
-            var intDatasetID = m_jobParams.GetJobParameter("DatasetID", 0);
+            var datasetID = m_jobParams.GetJobParameter("DatasetID", 0);
 
             var consoleOutputFilePath = Path.Combine(m_WorkDir, ERROR_CHARTER_CONSOLE_OUTPUT_FILE);
-            var success = oMassErrorExtractor.ParsePPMErrorCharterOutput(m_Dataset, intDatasetID, m_JobNum, consoleOutputFilePath);
+            var success = massErrorExtractor.ParsePPMErrorCharterOutput(m_Dataset, datasetID, m_JobNum, consoleOutputFilePath);
 
             if (!success)
             {
@@ -1422,7 +1428,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 LogDebug("Determining tool version info");
             }
 
-            var strToolVersionInfo = string.Copy(mMSGFPlusUtils.MSGFPlusVersion);
+            var toolVersionInfo = string.Copy(mMSGFPlusUtils.MSGFPlusVersion);
 
             // Store paths to key files in toolFiles
             var toolFiles = new List<FileInfo>
@@ -1434,7 +1440,7 @@ namespace AnalysisManagerMzRefineryPlugIn
 
             try
             {
-                return SetStepTaskToolVersion(strToolVersionInfo, toolFiles, saveToolVersionTextFile: false);
+                return SetStepTaskToolVersion(toolVersionInfo, toolFiles, saveToolVersionTextFile: false);
             }
             catch (Exception ex)
             {
