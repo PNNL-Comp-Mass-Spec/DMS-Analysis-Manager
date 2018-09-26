@@ -814,16 +814,18 @@ namespace AnalysisManagerMSGFDBPlugIn
         {
             assumedScanType = string.Empty;
 
-            var scriptNameLCase = m_jobParams.GetParam("ToolName").ToLower();
+            var scriptName = m_jobParams.GetParam("ToolName");
             scanTypeFilePath = string.Empty;
 
-            if (scriptNameLCase.Contains("mzxml") || scriptNameLCase.Contains("msgfplus_bruker"))
+            if (scriptName.ToLower().Contains("mzxml") ||
+                scriptName.ToLower().Contains("msgfplus_bruker"))
             {
                 eInputFileFormat = eInputFileFormatTypes.MzXML;
                 return CloseOutType.CLOSEOUT_SUCCESS;
             }
 
-            if (scriptNameLCase.Contains("mzml"))
+            if (scriptName.ToLower().Contains("mzml") ||
+                scriptName.IndexOf("DeconMSn_MzRefinery", StringComparison.OrdinalIgnoreCase) > 0)
             {
                 eInputFileFormat = eInputFileFormatTypes.MzML;
                 return CloseOutType.CLOSEOUT_SUCCESS;
