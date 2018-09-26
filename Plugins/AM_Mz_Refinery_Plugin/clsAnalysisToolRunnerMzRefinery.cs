@@ -244,7 +244,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                     fixedMSXmlFile.Refresh();
                     if (fixedMSXmlFile.Exists)
                     {
-                        var postProcessSuccess = PostProcessMzRefineryResults(msgfPlusResults, fixedMSXmlFile);
+                        var postProcessSuccess = PostProcessMzRefineryResults(msgfPlusResults, fixedMSXmlFile, skippedMSGFPlus);
                         if (!postProcessSuccess)
                             processingError = true;
                     }
@@ -1049,8 +1049,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 LogError("Error parsing mzRefinement.tsv file: " + ex.Message, ex);
             }
         }
-
-        private bool PostProcessMzRefineryResults(FileSystemInfo fiMSGFPlusResults, FileInfo fiFixedMSXmlFile)
+        private bool PostProcessMzRefineryResults(FileSystemInfo msgfPlusResults, FileInfo fixedMSXmlFile, bool skippedMSGFPlus)
         {
             var originalMsXmlFilePath = Path.Combine(m_WorkDir, m_Dataset + fixedMSXmlFile.Extension);
 
@@ -1151,6 +1150,12 @@ namespace AnalysisManagerMzRefineryPlugIn
             {
                 LogError("Error copying the .mzML.gz file to the remote cache folder", ex);
                 return false;
+            }
+
+            if (skippedMSGFPlus)
+            {
+                msgfPlusResults.Delete();
+                return true;
             }
 
             // Compress the MSGF+ .mzID file
