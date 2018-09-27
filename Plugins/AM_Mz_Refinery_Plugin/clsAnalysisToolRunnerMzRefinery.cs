@@ -67,7 +67,8 @@ namespace AnalysisManagerMzRefineryPlugIn
         private bool m_ForceGeneratePPMErrorPlots;
 
         private string mMzRefineryCorrectionMode;
-        private int mMzRefinerGoodDataPoints;
+        private int mMzRefinerGoodMS1Spectra;
+        private int mMzRefinerGoodMS2FragmentIons;
         private double mMzRefinerSpecEValueThreshold;
 
         private MSGFPlusUtils mMSGFPlusUtils;
@@ -105,7 +106,8 @@ namespace AnalysisManagerMzRefineryPlugIn
 
                 // Initialize class-wide variables that will be updated later
                 mMzRefineryCorrectionMode = string.Empty;
-                mMzRefinerGoodDataPoints = 0;
+                mMzRefinerGoodMS1Spectra = 0;
+                mMzRefinerGoodMS2FragmentIons = 0;
                 mMzRefinerSpecEValueThreshold = 1E-10;
 
                 m_UnableToUseMzRefinery = false;
@@ -296,7 +298,7 @@ namespace AnalysisManagerMzRefineryPlugIn
 
                 // Make sure objects are released
                 clsGlobal.IdleLoop(0.5);
-                PRISM.ProgRunner.GarbageCollectNow();
+                ProgRunner.GarbageCollectNow();
 
                 if (processingError)
                 {
@@ -532,7 +534,6 @@ namespace AnalysisManagerMzRefineryPlugIn
                 if (mMSGFPlusComplete)
                 {
                     // Don't treat this as a fatal error
-                    processingError = false;
                     m_EvalMessage = string.Copy(m_message);
                     m_message = string.Empty;
                 }
@@ -1018,10 +1019,11 @@ namespace AnalysisManagerMzRefineryPlugIn
                             mMzRefineryCorrectionMode = shiftMethodMS2;
                         }
 
-                        mMzRefinerGoodDataPoints = includedMS1 + includedMS2;
+                        mMzRefinerGoodMS1Spectra = includedMS1;
+                        mMzRefinerGoodMS2FragmentIons = includedMS2;
 
 
-                        var logMessage = string.Format("MzRefinery stats: included {0:#,##0} MS1 and {1:#,##0} MS2; " +
+                        var logMessage = string.Format("MzRefinery stats: included {0:#,##0} MS1 spectra and {1:#,##0} MS2 fragment ions; " +
                                                        "excluded {2:#,##0} by score and {3:#,##0} by mass error; " +
                                                        "tolerance for 99% of data was {4:F2} ppm for MS1 and {5:F2} pm for MS2; " +
                                                        "StDev was {6:F2} for MS1 and {7:F2} for MS2", includedMS1, includedMS2,
@@ -1036,8 +1038,22 @@ namespace AnalysisManagerMzRefineryPlugIn
 
                 if (!string.IsNullOrEmpty(mMzRefineryCorrectionMode))
                 {
-                    var logMessage = string.Format("MzRefinery shifted data using {0}, {1:#,##0} points had SpecEValue <= {2:0.###E+00}",
-                                                   mMzRefineryCorrectionMode, mMzRefinerGoodDataPoints, mMzRefinerSpecEValueThreshold);
+                    string correctionMode;
+                    if (mMzRefineryCorrectionMode.Equals("global"))
+                    {
+                        correctionMode = "a global shift";
+                    }
+                    else
+                    {
+                        // Correction mode is either "scan time" or "m/z"
+                        correctionMode = mMzRefineryCorrectionMode;
+                    }
+
+                    var logMessage = string.Format(
+                        "MzRefinery shifted data using {0}, filtering on SpecEValue <= {1:0.###E+00}; used {2:#,##0} MS1 scans and {3:#,##0} MS2 fragment ions",
+                        correctionMode, mMzRefinerSpecEValueThreshold, mMzRefinerGoodMS1Spectra, mMzRefinerGoodMS2FragmentIons
+                    );
+
                     m_EvalMessage = logMessage;
 
                     LogMessage(logMessage);
