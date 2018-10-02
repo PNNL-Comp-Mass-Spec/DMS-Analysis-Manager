@@ -948,7 +948,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 mCDTAFileStats.Add(cdtaFile.Name, oFileInfo);
 
-                var success = cdtaUtilities.ConvertCDTAToMGF(cdtaFile, m_Dataset, combine2And3PlusCharges, maximumIonsPer100MzInterval, createIndexFile);
+                var success = cdtaUtilities.ConvertCDTAToMGF(cdtaFile, dataPkgJob.Dataset, combine2And3PlusCharges, maximumIonsPer100MzInterval, createIndexFile);
                 if (!success)
                 {
                     LogError("Error converting " + cdtaFile.Name + " to a .mgf file for job " + dataPkgJob.Job);
@@ -1072,8 +1072,8 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 m_jobParams.AddResultFileToSkip("MSConvert_ConsoleOutput.txt");
 
-                mMSXmlCreator = new AnalysisManagerMsXmlGenPlugIn.clsMSXMLCreator(mMSXmlGeneratorAppPath, m_WorkDir, m_Dataset, m_DebugLevel,
-                    m_jobParams);
+                mMSXmlCreator = new AnalysisManagerMsXmlGenPlugIn.clsMSXMLCreator(mMSXmlGeneratorAppPath, m_WorkDir,
+                                                                                  dataset, m_DebugLevel, m_jobParams);
                 RegisterEvents(mMSXmlCreator);
                 mMSXmlCreator.LoopWaiting += mMSXmlCreator_LoopWaiting;
 
