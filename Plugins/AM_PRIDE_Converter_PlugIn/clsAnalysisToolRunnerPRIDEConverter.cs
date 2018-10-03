@@ -891,7 +891,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 const bool combine2And3PlusCharges = false;
                 const int maximumIonsPer100MzInterval = 40;
-                const bool createIndexFile = true;
+                const bool createIndexFile = false;
 
                 // Convert the _dta.txt file for this data package job
                 var cdtaFile = new FileInfo(Path.Combine(m_WorkDir, dataPkgJob.Dataset + clsAnalysisResources.CDTA_EXTENSION));
