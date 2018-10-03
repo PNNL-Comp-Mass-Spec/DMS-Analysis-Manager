@@ -61,7 +61,7 @@ namespace AnalysisManagerNOMSIPlugin
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                if (m_DebugLevel > 4)
+                if (mDebugLevel > 4)
                 {
                     LogDebug("clsAnalysisToolRunnerNOMSI.RunTool(): Enter");
                 }
@@ -85,18 +85,18 @@ namespace AnalysisManagerNOMSIPlugin
                 if (!StoreToolVersionInfo(progLoc))
                 {
                     LogError("Aborting since StoreToolVersionInfo returned false");
-                    m_message = "Error determining NOMSI version";
+                    mMessage = "Error determining NOMSI version";
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 // Unzip the XML files
-                var compressedXMLFiles = Path.Combine(m_WorkDir, m_Dataset + "_scans.zip");
-                var unzipSuccess = UnzipFile(compressedXMLFiles, m_WorkDir);
+                var compressedXMLFiles = Path.Combine(mWorkDir, mDatasetName + "_scans.zip");
+                var unzipSuccess = UnzipFile(compressedXMLFiles, mWorkDir);
                 if (!unzipSuccess)
                 {
-                    if (string.IsNullOrEmpty(m_message))
+                    if (string.IsNullOrEmpty(mMessage))
                     {
-                        m_message = "Unknown error extracting the XML spectra files";
+                        mMessage = "Unknown error extracting the XML spectra files";
                     }
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -118,7 +118,7 @@ namespace AnalysisManagerNOMSIPlugin
                 {
                     // Look for the result files
 
-                    var diWorkDir = new DirectoryInfo(m_WorkDir);
+                    var diWorkDir = new DirectoryInfo(mWorkDir);
                     var fiResultsFiles = diWorkDir.GetFiles("Distributions.zip").ToList();
                     if (fiResultsFiles.Count == 0)
                     {
@@ -127,19 +127,19 @@ namespace AnalysisManagerNOMSIPlugin
 
                     if (fiResultsFiles.Count == 0)
                     {
-                        if (string.IsNullOrEmpty(m_message))
+                        if (string.IsNullOrEmpty(mMessage))
                         {
-                            m_message = "NOMSI results not found";
+                            mMessage = "NOMSI results not found";
                             processingSuccess = false;
                             eReturnCode = CloseOutType.CLOSEOUT_FAILED;
                         }
                     }
                 }
 
-                m_progress = PROGRESS_PCT_COMPLETE;
+                mProgress = PROGRESS_PCT_COMPLETE;
 
                 // Stop the job timer
-                m_StopTime = DateTime.UtcNow;
+                mStopTime = DateTime.UtcNow;
 
                 // Could use the following to create a summary file:
                 // Add the current job data to the summary file
@@ -158,7 +158,7 @@ namespace AnalysisManagerNOMSIPlugin
                 }
 
                 // No need to keep the JobParameters file
-                m_jobParams.AddResultFileToSkip("JobParameters_" + m_JobNum + ".xml");
+                mJobParams.AddResultFileToSkip("JobParameters_" + mJob + ".xml");
 
                 var success = CopyResultsToTransferDirectory();
 
@@ -167,8 +167,8 @@ namespace AnalysisManagerNOMSIPlugin
             }
             catch (Exception ex)
             {
-                m_message = "Error in NOMSIPlugin->RunTool";
-                LogError(m_message, ex);
+                mMessage = "Error in NOMSIPlugin->RunTool";
+                LogError(mMessage, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -182,7 +182,7 @@ namespace AnalysisManagerNOMSIPlugin
 
             try
             {
-                var diWorkDir = new DirectoryInfo(m_WorkDir);
+                var diWorkDir = new DirectoryInfo(mWorkDir);
                 var fiSpectraFiles = GetXMLSpectraFiles(diWorkDir);
 
                 foreach (var file in fiSpectraFiles)
@@ -210,13 +210,13 @@ namespace AnalysisManagerNOMSIPlugin
 
         private List<FileInfo> GetXMLSpectraFiles(DirectoryInfo diWorkDir)
         {
-            var fiSpectraFiles = diWorkDir.GetFiles(m_Dataset + "_scan*.xml").ToList();
+            var fiSpectraFiles = diWorkDir.GetFiles(mDatasetName + "_scan*.xml").ToList();
             return fiSpectraFiles;
         }
 
         private int MoveWorkDirFiles(FileSystemInfo diZipWork, string fileMask)
         {
-            var diWorkDir = new DirectoryInfo(m_WorkDir);
+            var diWorkDir = new DirectoryInfo(mWorkDir);
             var filesToMove = diWorkDir.GetFiles(fileMask).ToList();
 
             foreach (var fiFile in filesToMove)
@@ -253,7 +253,7 @@ namespace AnalysisManagerNOMSIPlugin
 
                 if (!File.Exists(strConsoleOutputFilePath))
                 {
-                    if (m_DebugLevel >= 4)
+                    if (mDebugLevel >= 4)
                     {
                         LogDebug("Console output file not found: " + strConsoleOutputFilePath);
                     }
@@ -261,7 +261,7 @@ namespace AnalysisManagerNOMSIPlugin
                     return;
                 }
 
-                if (m_DebugLevel >= 4)
+                if (mDebugLevel >= 4)
                 {
                     LogDebug("Parsing file " + strConsoleOutputFilePath);
                 }
@@ -311,7 +311,7 @@ namespace AnalysisManagerNOMSIPlugin
             catch (Exception ex)
             {
                 // Ignore errors here
-                if (m_DebugLevel >= 2)
+                if (mDebugLevel >= 2)
                 {
                     LogErrorNoMessageUpdate("Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
                 }
@@ -339,14 +339,14 @@ namespace AnalysisManagerNOMSIPlugin
             if (scanCount == 1)
             {
                 // Skip the console output file and nomsi summary file
-                m_jobParams.AddResultFileToSkip(mCurrentConsoleOutputFile);
-                m_jobParams.AddResultFileToSkip("nomsi_summary.txt");
+                mJobParams.AddResultFileToSkip(mCurrentConsoleOutputFile);
+                mJobParams.AddResultFileToSkip("nomsi_summary.txt");
 
                 // Combine the distribution files into a single .zip file
                 filesMatched += MoveWorkDirFiles(diZipWork, "distribution*.txt");
 
                 if (filesMatched > 0)
-                    m_DotNetZipTools.ZipDirectory(diZipWork.FullName, Path.Combine(m_WorkDir, "Distributions.zip"));
+                    mDotNetZipTools.ZipDirectory(diZipWork.FullName, Path.Combine(mWorkDir, "Distributions.zip"));
             }
             else
             {
@@ -359,7 +359,7 @@ namespace AnalysisManagerNOMSIPlugin
                 filesMatched += MoveWorkDirFiles(diZipWork, "NOMSI_ConsoleOutput_scan*.txt");
 
                 if (filesMatched > 0)
-                    m_DotNetZipTools.ZipDirectory(diZipWork.FullName, Path.Combine(m_WorkDir, COMPRESSED_NOMSI_RESULTS_BASE + scanNumber + ".zip"));
+                    mDotNetZipTools.ZipDirectory(diZipWork.FullName, Path.Combine(mWorkDir, COMPRESSED_NOMSI_RESULTS_BASE + scanNumber + ".zip"));
             }
         }
 
@@ -378,7 +378,7 @@ namespace AnalysisManagerNOMSIPlugin
             cmdStr += " " + PossiblyQuotePath(spectrumFile.FullName);
             cmdStr += " " + PossiblyQuotePath(paramFilePath);
 
-            if (m_DebugLevel >= 1)
+            if (mDebugLevel >= 1)
             {
                 LogDebug(progLoc + " " + cmdStr);
             }
@@ -391,9 +391,9 @@ namespace AnalysisManagerNOMSIPlugin
                 int.TryParse(reMatch.Groups[1].Value, out scanNumber);
             }
 
-            mCurrentConsoleOutputFile = Path.Combine(m_WorkDir, NOMSI_CONSOLE_OUTPUT_BASE + scanNumber + ".txt");
+            mCurrentConsoleOutputFile = Path.Combine(mWorkDir, NOMSI_CONSOLE_OUTPUT_BASE + scanNumber + ".txt");
 
-            var cmdRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel)
+            var cmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel)
             {
                 CreateNoWindow = true,
                 CacheStandardOutput = false,
@@ -407,7 +407,7 @@ namespace AnalysisManagerNOMSIPlugin
 
             var subTaskProgress = filesProcessed / (float)mTotalSpectra * 100;
 
-            m_progress = ComputeIncrementalProgress(PROGRESS_PCT_STARTING, PROGRESS_PCT_COMPLETE, subTaskProgress);
+            mProgress = ComputeIncrementalProgress(PROGRESS_PCT_STARTING, PROGRESS_PCT_COMPLETE, subTaskProgress);
 
             var success = cmdRunner.RunProgram(progLoc, cmdStr, "NOMSI", true);
 
@@ -430,7 +430,7 @@ namespace AnalysisManagerNOMSIPlugin
 
             // Parse the nomsi_summary file to look for errors
             clsGlobal.IdleLoop(0.25);
-            var fiLogSummaryFile = new FileInfo(Path.Combine(m_WorkDir, "nomsi_summary.txt"));
+            var fiLogSummaryFile = new FileInfo(Path.Combine(mWorkDir, "nomsi_summary.txt"));
             if (!fiLogSummaryFile.Exists)
             {
                 // Summary file not created
@@ -480,7 +480,7 @@ namespace AnalysisManagerNOMSIPlugin
 
                 LogMessage("Processing data using NOMSI");
 
-                var paramFilePath = Path.Combine(m_WorkDir, m_jobParams.GetParam(clsAnalysisResources.JOB_PARAM_PARAMETER_FILE));
+                var paramFilePath = Path.Combine(mWorkDir, mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_PARAMETER_FILE));
 
                 if (!File.Exists(paramFilePath))
                 {
@@ -488,27 +488,27 @@ namespace AnalysisManagerNOMSIPlugin
                     return false;
                 }
 
-                var targetsFileName = m_jobParams.GetParam("dm_target_file");
+                var targetsFileName = mJobParams.GetParam("dm_target_file");
 
                 // Update the parameter file to use the targets file specified by the settings file
                 var success = UpdateParameterFile(paramFilePath, targetsFileName);
                 if (!success)
                     return false;
 
-                var diWorkDir = new DirectoryInfo(m_WorkDir);
+                var diWorkDir = new DirectoryInfo(mWorkDir);
                 var spectraFiles = GetXMLSpectraFiles(diWorkDir);
 
                 mTotalSpectra = spectraFiles.Count;
 
                 if (mTotalSpectra == 0)
                 {
-                    m_message = "XML spectrum files not found";
+                    mMessage = "XML spectrum files not found";
                     return false;
                 }
 
-                m_progress = PROGRESS_PCT_STARTING;
+                mProgress = PROGRESS_PCT_STARTING;
 
-                var diZipWork = new DirectoryInfo(Path.Combine(m_WorkDir, "ScanResultsZipWork"));
+                var diZipWork = new DirectoryInfo(Path.Combine(mWorkDir, "ScanResultsZipWork"));
 
                 var filesProcessed = 0;
                 var fileCountNoPeaks = 0;
@@ -521,7 +521,7 @@ namespace AnalysisManagerNOMSIPlugin
                     if (!success)
                         return false;
 
-                    m_jobParams.AddResultFileToSkip(spectrumFile.Name);
+                    mJobParams.AddResultFileToSkip(spectrumFile.Name);
 
                     PostProcessResultsOneScan(diZipWork, spectraFiles.Count, scanNumber);
 
@@ -531,11 +531,11 @@ namespace AnalysisManagerNOMSIPlugin
                     filesProcessed++;
                 }
 
-                m_jobParams.AddResultFileToSkip(targetsFileName);
+                mJobParams.AddResultFileToSkip(targetsFileName);
 
-                m_progress = PROGRESS_PCT_COMPLETE;
-                m_StatusTools.UpdateAndWrite(m_progress);
-                if (m_DebugLevel >= 3)
+                mProgress = PROGRESS_PCT_COMPLETE;
+                mStatusTools.UpdateAndWrite(mProgress);
+                if (mDebugLevel >= 3)
                 {
                     LogDebug("NOMSI processing Complete");
                 }
@@ -548,21 +548,21 @@ namespace AnalysisManagerNOMSIPlugin
                 if (filesProcessed == 1 || fileCountNoPeaks >= filesProcessed)
                 {
                     // None of the scans had peaks
-                    m_message = "No peaks found";
+                    mMessage = "No peaks found";
                     if (filesProcessed > 1)
-                        m_EvalMessage = "None of the scans had peaks";
+                        mEvalMessage = "None of the scans had peaks";
                     else
-                        m_EvalMessage = "Scan did not have peaks";
+                        mEvalMessage = "Scan did not have peaks";
 
                     noPeaksFound = true;
 
                     // Do not put the parameter file in the results directory
-                    m_jobParams.AddResultFileToSkip(paramFilePath);
+                    mJobParams.AddResultFileToSkip(paramFilePath);
                 }
                 else
                 {
                     // Some of the scans had no peaks
-                    m_EvalMessage = fileCountNoPeaks + " / " + filesProcessed + " scans had no peaks";
+                    mEvalMessage = fileCountNoPeaks + " / " + filesProcessed + " scans had no peaks";
                 }
 
                 return true;
@@ -570,8 +570,8 @@ namespace AnalysisManagerNOMSIPlugin
             }
             catch (Exception ex)
             {
-                m_message = "Error in NOMSIPlugin->StartNOMSI";
-                LogError(m_message, ex);
+                mMessage = "Error in NOMSIPlugin->StartNOMSI";
+                LogError(mMessage, ex);
                 return false;
             }
 
@@ -643,7 +643,7 @@ namespace AnalysisManagerNOMSIPlugin
 
                         if (dataLine.Trim().ToLower().StartsWith("param_dm_target_file"))
                         {
-                            writer.WriteLine("param_dm_target_file=" + Path.Combine(m_WorkDir, targetsFileName));
+                            writer.WriteLine("param_dm_target_file=" + Path.Combine(mWorkDir, targetsFileName));
                         }
                         else
                         {
@@ -657,13 +657,13 @@ namespace AnalysisManagerNOMSIPlugin
                 fiParamFileNew.MoveTo(paramFilePath);
 
                 // Skip the old parameter file
-                m_jobParams.AddResultFileToSkip(fiParamFile.Name);
+                mJobParams.AddResultFileToSkip(fiParamFile.Name);
                 return true;
             }
             catch (Exception ex)
             {
-                m_message = "Error in NOMSIPlugin->UpdateParameterFile";
-                LogError(m_message, ex);
+                mMessage = "Error in NOMSIPlugin->UpdateParameterFile";
+                LogError(mMessage, ex);
                 return false;
             }
         }
@@ -685,7 +685,7 @@ namespace AnalysisManagerNOMSIPlugin
                 {
                     mLastConsoleOutputParse = DateTime.UtcNow;
 
-                    ParseConsoleOutputFile(Path.Combine(m_WorkDir, mCurrentConsoleOutputFile));
+                    ParseConsoleOutputFile(Path.Combine(mWorkDir, mCurrentConsoleOutputFile));
 
                     LogProgress("NOMSI");
                 }

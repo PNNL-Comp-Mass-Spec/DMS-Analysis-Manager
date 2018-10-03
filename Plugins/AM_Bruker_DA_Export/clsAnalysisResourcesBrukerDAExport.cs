@@ -40,7 +40,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
 
                 // Retrieve the export script
                 currentTask = "Get parameter BrukerSpectraExportScriptFile";
-                var exportScriptName = m_jobParams.GetJobParameter("BrukerSpectraExportScriptFile", string.Empty);
+                var exportScriptName = mJobParams.GetJobParameter("BrukerSpectraExportScriptFile", string.Empty);
                 if (string.IsNullOrEmpty(exportScriptName))
                 {
                     LogError("BrukerSpectraExportScriptFile parameter is empty");
@@ -52,7 +52,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
 
                 const string paramFileStoragePathKeyName = clsGlobal.STEPTOOL_PARAMFILESTORAGEPATH_PREFIX + "Bruker_DA_Export";
 
-                var exportScriptStoragePath = m_mgrParams.GetParam(paramFileStoragePathKeyName);
+                var exportScriptStoragePath = mMgrParams.GetParam(paramFileStoragePathKeyName);
                 if (string.IsNullOrWhiteSpace(exportScriptStoragePath))
                 {
                     exportScriptStoragePath = @"F:\My Documents\Gigasax_Data\DMS_Parameter_Files\Bruker_Data_Analysis";
@@ -68,7 +68,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
                 }
 
                 // Get the instrument data
-                var strRawDataType = m_jobParams.GetParam("RawDataType");
+                var strRawDataType = mJobParams.GetParam("RawDataType");
 
                 var retrievalAttempts = 0;
 
@@ -89,20 +89,20 @@ namespace AnalysisManagerBrukerDAExportPlugin
                             }
                             break;
                         default:
-                            m_message = "Dataset type " + strRawDataType + " is not supported";
+                            mMessage = "Dataset type " + strRawDataType + " is not supported";
                             LogWarning(
-                                "AnalysisManagerBrukerDAExportPlugin.GetResources: " + m_message + "; must be " +
+                                "AnalysisManagerBrukerDAExportPlugin.GetResources: " + mMessage + "; must be " +
                                 RAW_DATA_TYPE_DOT_D_FOLDERS + " or " + RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER);
                             return CloseOutType.CLOSEOUT_FAILED;
                     }
 
-                    if (m_MyEMSLUtilities.FilesToDownload.Count == 0)
+                    if (mMyEMSLUtilities.FilesToDownload.Count == 0)
                     {
                         break;
                     }
 
                     currentTask = "Process the MyEMSL download queue";
-                    if (ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+                    if (ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
                     {
                         break;
                     }
@@ -134,7 +134,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
 
                 currentTask = "Delete extra files";
 
-                var workDirFolder = new DirectoryInfo(m_WorkingDir);
+                var workDirFolder = new DirectoryInfo(mWorkDir);
                 var deleteAttemptCount = 0;
                 var deleteSuccessCount = 0;
 
@@ -152,7 +152,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
                         catch (Exception ex2)
                         {
                             LogError("Exception deleting file " + file.FullName, ex2);
-                            m_message = string.Empty;
+                            mMessage = string.Empty;
                         }
 
                     }

@@ -199,7 +199,7 @@ namespace AnalysisManagerBase
         /// Add a filename to definitely move to the results folder
         /// </summary>
         /// <param name="fileName"></param>
-        /// <remarks>FileName can be a file path; only the filename will be stored in m_ResultFilesToKeep</remarks>
+        /// <remarks>FileName can be a file path; only the filename will be stored in ResultFilesToKeep</remarks>
         void AddResultFileToKeep(string fileName);
 
         /// <summary>
@@ -213,7 +213,7 @@ namespace AnalysisManagerBase
         /// Add a filename to not move to the results folder
         /// </summary>
         /// <param name="fileName"></param>
-        /// <remarks>FileName can be a file path; only the filename will be stored in m_ResultFilesToSkip</remarks>
+        /// <remarks>FileName can be a file path; only the filename will be stored in ResultFilesToSkip</remarks>
         void AddResultFileToSkip(string fileName);
 
         /// <summary>

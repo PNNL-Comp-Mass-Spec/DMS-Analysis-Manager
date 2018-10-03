@@ -50,11 +50,11 @@ namespace AnalysisManagerTopPICPlugIn
             }
 
             // Retrieve param file
-            if (!FileSearch.RetrieveFile(m_jobParams.GetParam("ParmFileName"), m_jobParams.GetParam("ParmFileStoragePath")))
+            if (!FileSearch.RetrieveFile(mJobParams.GetParam("ParmFileName"), mJobParams.GetParam("ParmFileStoragePath")))
                 return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
 
             // Retrieve Fasta file
-            var orgDbDirectoryPath = m_mgrParams.GetParam("OrgDBDir");
+            var orgDbDirectoryPath = mMgrParams.GetParam("OrgDbDir");
             if (!RetrieveOrgDB(orgDbDirectoryPath, out var resultCode))
                 return resultCode;
 
@@ -72,10 +72,10 @@ namespace AnalysisManagerTopPICPlugIn
                     // Errors were reported in function call, so just return
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
-                m_jobParams.AddResultFileToSkip(fileToRetrieve);
+                mJobParams.AddResultFileToSkip(fileToRetrieve);
             }
 
-            if (!ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+            if (!ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
             {
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }

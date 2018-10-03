@@ -32,7 +32,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
             // For example, MSAlign_Quant_Workflow_2012-07-25
 
             var strParamFileStoragePathKeyName = clsGlobal.STEPTOOL_PARAMFILESTORAGEPATH_PREFIX + "MSAlign_Quant";
-            var strParamFileStoragePath = m_mgrParams.GetParam(strParamFileStoragePathKeyName);
+            var strParamFileStoragePath = mMgrParams.GetParam(strParamFileStoragePathKeyName);
             if (string.IsNullOrEmpty(strParamFileStoragePath))
             {
                 strParamFileStoragePath = @"\\gigasax\DMS_Parameter_Files\DeconToolsWorkflows";
@@ -41,11 +41,11 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                     "' is not defined (obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); will assume: " + strParamFileStoragePath);
             }
 
-            var strParamFileName = m_jobParams.GetJobParameter("MSAlignQuantParamFile", string.Empty);
+            var strParamFileName = mJobParams.GetJobParameter("MSAlignQuantParamFile", string.Empty);
             if (string.IsNullOrEmpty(strParamFileName))
             {
-                m_message = clsAnalysisToolRunnerBase.NotifyMissingParameter(m_jobParams, "MSAlignQuantParamFile");
-                LogError(m_message);
+                mMessage = clsAnalysisToolRunnerBase.NotifyMissingParameter(mJobParams, "MSAlignQuantParamFile");
+                LogError(mMessage);
                 return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
             }
 
@@ -63,10 +63,10 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                 // Errors were reported in function call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
-            m_jobParams.AddResultFileToSkip(msAlignResultsTableFile);
+            mJobParams.AddResultFileToSkip(msAlignResultsTableFile);
 
             // Get the instrument data file
-            var strRawDataType = m_jobParams.GetParam("RawDataType");
+            var strRawDataType = mJobParams.GetParam("RawDataType");
 
             switch (strRawDataType.ToLower())
             {
@@ -75,7 +75,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                 case RAW_DATA_TYPE_DOT_D_FOLDERS:
                     if (FileSearch.RetrieveSpectra(strRawDataType))
                     {
-                        if (!base.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+                        if (!base.ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
                         {
                             return CloseOutType.CLOSEOUT_FAILED;
                         }
@@ -83,22 +83,22 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                         // Confirm that the .Raw or .D folder was actually copied locally
                         if (strRawDataType.ToLower() == RAW_DATA_TYPE_DOT_RAW_FILES)
                         {
-                            if (!File.Exists(Path.Combine(m_WorkingDir, DatasetName + DOT_RAW_EXTENSION)))
+                            if (!File.Exists(Path.Combine(mWorkDir, DatasetName + DOT_RAW_EXTENSION)))
                             {
-                                m_message = "Thermo .Raw file not successfully copied to WorkDir; likely a timeout error";
-                                LogError("clsDtaGenResources.GetResources: " + m_message);
+                                mMessage = "Thermo .Raw file not successfully copied to WorkDir; likely a timeout error";
+                                LogError("clsDtaGenResources.GetResources: " + mMessage);
                                 return CloseOutType.CLOSEOUT_FAILED;
                             }
 
                             // Raw file
-                            m_jobParams.AddResultFileExtensionToSkip(DOT_RAW_EXTENSION);
+                            mJobParams.AddResultFileExtensionToSkip(DOT_RAW_EXTENSION);
                         }
                         else if (strRawDataType.ToLower() == RAW_DATA_TYPE_BRUKER_FT_FOLDER)
                         {
-                            if (!Directory.Exists(Path.Combine(m_WorkingDir, DatasetName + DOT_D_EXTENSION)))
+                            if (!Directory.Exists(Path.Combine(mWorkDir, DatasetName + DOT_D_EXTENSION)))
                             {
-                                m_message = "Bruker .D folder not successfully copied to WorkDir; likely a timeout error";
-                                LogError("clsDtaGenResources.GetResources: " + m_message);
+                                mMessage = "Bruker .D folder not successfully copied to WorkDir; likely a timeout error";
+                                LogError("clsDtaGenResources.GetResources: " + mMessage);
                                 return CloseOutType.CLOSEOUT_FAILED;
                             }
                         }
@@ -110,13 +110,13 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                     }
                     break;
                 default:
-                    m_message = "Dataset type " + strRawDataType + " is not supported";
-                    LogError("clsDtaGenResources.GetResources: " + m_message +
+                    mMessage = "Dataset type " + strRawDataType + " is not supported";
+                    LogError("clsDtaGenResources.GetResources: " + mMessage +
                              "; must be " + RAW_DATA_TYPE_DOT_RAW_FILES + " or " + RAW_DATA_TYPE_BRUKER_FT_FOLDER);
                     return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            if (!base.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+            if (!base.ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }

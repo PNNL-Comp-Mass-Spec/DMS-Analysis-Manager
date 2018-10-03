@@ -36,7 +36,7 @@ namespace AnalysisManagerTopFDPlugIn
                     return result;
                 }
 
-                var topFdParamFile = m_jobParams.GetParam("TopFD_ParamFile");
+                var topFdParamFile = mJobParams.GetParam("TopFD_ParamFile");
                 if (string.IsNullOrWhiteSpace(topFdParamFile))
                 {
                     LogError("TopFD parameter file not defined in the job settings (param name TopFD_ParamFile)");
@@ -49,7 +49,7 @@ namespace AnalysisManagerTopFDPlugIn
 
                 const string paramFileStoragePathKeyName = clsGlobal.STEPTOOL_PARAMFILESTORAGEPATH_PREFIX + "TopFD";
 
-                var topFdParmFileStoragePath = m_mgrParams.GetParam(paramFileStoragePathKeyName);
+                var topFdParmFileStoragePath = mMgrParams.GetParam(paramFileStoragePathKeyName);
                 if (string.IsNullOrWhiteSpace(topFdParmFileStoragePath))
                 {
                     topFdParmFileStoragePath = @"\\gigasax\dms_parameter_Files\TopFD";
@@ -68,14 +68,14 @@ namespace AnalysisManagerTopFDPlugIn
                 var eResult = GetMzMLFile();
                 if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
                 {
-                    m_message = "";
+                    mMessage = "";
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 // Make sure we don't move the .mzML file into the results folder
-                m_jobParams.AddResultFileExtensionToSkip(DOT_MZML_EXTENSION);
+                mJobParams.AddResultFileExtensionToSkip(DOT_MZML_EXTENSION);
 
-                if (!ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+                if (!ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -84,8 +84,8 @@ namespace AnalysisManagerTopFDPlugIn
             }
             catch (Exception ex)
             {
-                m_message = "Exception in GetResources: " + ex.Message;
-                LogError(m_message + "; task = " + currentTask + "; " + clsGlobal.GetExceptionStackTrace(ex));
+                mMessage = "Exception in GetResources: " + ex.Message;
+                LogError(mMessage + "; task = " + currentTask + "; " + clsGlobal.GetExceptionStackTrace(ex));
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 

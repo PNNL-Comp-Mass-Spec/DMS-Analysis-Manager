@@ -32,7 +32,7 @@ namespace AnalysisManager_AScore_PlugIn
             //
             // if (!blnSuccess) return CloseOutType.CLOSEOUT_FAILED;
 
-            if (m_DebugLevel > 2)
+            if (mDebugLevel > 2)
             {
                 LogMessage("No input files to retrieve; AScore accesses the files over the network");
             }
@@ -58,7 +58,7 @@ namespace AnalysisManager_AScore_PlugIn
             try
             {
                 // Retrieve the Fasta file
-                var orgDbDirectoryPath = m_mgrParams.GetParam("orgdbdir");
+                var orgDbDirectoryPath = mMgrParams.GetParam("OrgDbDir");
 
                 currentTask = "RetrieveOrgDB to " + orgDbDirectoryPath;
 
@@ -69,8 +69,8 @@ namespace AnalysisManager_AScore_PlugIn
             }
             catch (Exception ex)
             {
-                m_message = "Exception in RetrieveFastaAndParamFile: " + ex.Message;
-                LogError(m_message + "; task = " + currentTask, ex);
+                mMessage = "Exception in RetrieveFastaAndParamFile: " + ex.Message;
+                LogError(mMessage + "; task = " + currentTask, ex);
                 resultCode = CloseOutType.CLOSEOUT_FAILED;
                 return false;
             }
@@ -85,10 +85,10 @@ namespace AnalysisManager_AScore_PlugIn
         //{
         //    bool blnSuccess = false;
 
-        //    string ascoreOperations = m_jobParams.GetParam("AScoreOperations");
+        //    string ascoreOperations = mJobParams.GetParam("AScoreOperations");
 
         //    if (string.IsNullOrWhiteSpace(ascoreOperations)) {
-        //        m_message = "AScoreOperations parameter is not defined";
+        //        mMessage = "AScoreOperations parameter is not defined";
         //        return false;
         //    }
 
@@ -97,7 +97,7 @@ namespace AnalysisManager_AScore_PlugIn
         //        if (!string.IsNullOrWhiteSpace(ascoreOperation)) {
         //            blnSuccess = RunAScoreOperation(ascoreOperation.Trim());
         //            if (!blnSuccess) {
-        //                m_message = "Error running AScore resources operation " + ascoreOperation;
+        //                mMessage = "Error running AScore resources operation " + ascoreOperation;
         //                break;
         //            }
         //        }
@@ -126,7 +126,7 @@ namespace AnalysisManager_AScore_PlugIn
         //            throw new ArgumentException("Unrecognized value for ascoreOperation: " + ascoreOperation);
         //    }
 
-        //    if (!ProcessMyEMSLDownloadQueue(m_WorkingDir, Downloader.DownloadFolderLayout.FlatNoSubfolders))
+        //    if (!ProcessMyEMSLDownloadQueue(mWorkDir, Downloader.DownloadFolderLayout.FlatNoSubfolders))
         //        return false;
 
         //    return blnSuccess;
@@ -140,22 +140,22 @@ namespace AnalysisManager_AScore_PlugIn
         //    const bool blnSuccess = true;
 
         //    //Add list the files to delete to global list
-        //    var fileSpecList = m_jobParams.GetParam("TargetJobFileList").Split(',').ToList();
+        //    var fileSpecList = mJobParams.GetParam("TargetJobFileList").Split(',').ToList();
         //    foreach (string fileSpec in fileSpecList)
         //    {
         //        var fileSpecTerms = fileSpec.Split(':').ToList();
 
         //        if (fileSpecTerms.Count <= 2 || fileSpecTerms[2].ToLower() != "copy")
         //        {
-        //            m_jobParams.AddResultFileExtensionToSkip(fileSpecTerms[1]);
+        //            mJobParams.AddResultFileExtensionToSkip(fileSpecTerms[1]);
         //        }
         //    }
 
         //    LogMessage("Getting AScoreCIDParamFile param file");
 
-        //    if (!string.IsNullOrEmpty(m_jobParams.GetParam("AScoreCIDParamFile")))
+        //    if (!string.IsNullOrEmpty(mJobParams.GetParam("AScoreCIDParamFile")))
         //    {
-        //        if (!FileSearch.RetrieveFile(m_jobParams.GetParam("AScoreCIDParamFile"), m_jobParams.GetParam(clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH)))
+        //        if (!FileSearch.RetrieveFile(mJobParams.GetParam("AScoreCIDParamFile"), mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH)))
         //        {
         //            return false;
         //        }
@@ -163,9 +163,9 @@ namespace AnalysisManager_AScore_PlugIn
 
         //    LogMessage("Getting AScoreETDParamFile param file");
 
-        //    if (!string.IsNullOrEmpty(m_jobParams.GetParam("AScoreETDParamFile")))
+        //    if (!string.IsNullOrEmpty(mJobParams.GetParam("AScoreETDParamFile")))
         //    {
-        //        if (!FileSearch.RetrieveFile(m_jobParams.GetParam("AScoreETDParamFile"), m_jobParams.GetParam(clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH)))
+        //        if (!FileSearch.RetrieveFile(mJobParams.GetParam("AScoreETDParamFile"), mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH)))
         //        {
         //            return false;
         //        }
@@ -173,9 +173,9 @@ namespace AnalysisManager_AScore_PlugIn
 
         //    LogMessage("Getting AScoreHCDParamFile param file");
 
-        //    if (!string.IsNullOrEmpty(m_jobParams.GetParam("AScoreHCDParamFile")))
+        //    if (!string.IsNullOrEmpty(mJobParams.GetParam("AScoreHCDParamFile")))
         //    {
-        //        if (!FileSearch.RetrieveFile(m_jobParams.GetParam("AScoreHCDParamFile"), m_jobParams.GetParam(clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH)))
+        //        if (!FileSearch.RetrieveFile(mJobParams.GetParam("AScoreHCDParamFile"), mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH)))
         //        {
         //            return false;
         //        }
@@ -199,7 +199,7 @@ namespace AnalysisManager_AScore_PlugIn
         //{
         //    int DatasetID;
 
-        //    if ( m_jobParams.DatasetInfoList.TryGetValue(DatasetName, out DatasetID) )
+        //    if ( mJobParams.DatasetInfoList.TryGetValue(DatasetName, out DatasetID) )
         //        return DatasetID.ToString(CultureInfo.InvariantCulture);
 
         //    return string.Empty;

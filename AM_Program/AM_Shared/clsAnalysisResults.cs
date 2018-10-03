@@ -30,12 +30,12 @@ namespace AnalysisManagerBase
         /// <summary>
         /// access to the job parameters
         /// </summary>
-        private readonly IJobParams m_jobParams;
+        private readonly IJobParams mJobParams;
 
         /// <summary>
         /// Access to manager parameters
         /// </summary>
-        private readonly IMgrParams m_mgrParams;
+        private readonly IMgrParams mMgrParams;
 
         #endregion
 
@@ -44,7 +44,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// explanation of what happened to last operation this class performed
         /// </summary>
-        public string Message => m_message;
+        public string Message => mMessage;
 
         #endregion
 
@@ -58,12 +58,12 @@ namespace AnalysisManagerBase
         public clsAnalysisResults(IMgrParams mgrParams, IJobParams jobParams) : base("clsAnalysisResults")
         {
 
-            m_mgrParams = mgrParams;
-            m_jobParams = jobParams;
-            var mgrName = m_mgrParams.ManagerName;
-            m_DebugLevel = (short)m_mgrParams.GetParam("DebugLevel", 1);
+            mMgrParams = mgrParams;
+            mJobParams = jobParams;
+            var mgrName = mMgrParams.ManagerName;
+            mDebugLevel = (short)mMgrParams.GetParam("DebugLevel", 1);
 
-            InitFileTools(mgrName, m_DebugLevel);
+            InitFileTools(mgrName, mDebugLevel);
 
         }
 
@@ -251,7 +251,7 @@ namespace AnalysisManagerBase
                     ResetTimestampForQueueWaitTimeLogging();
                     var startTime = DateTime.UtcNow;
 
-                    if (m_FileTools.CopyFileUsingLocks(srcFilePath, destFilePath, overwrite))
+                    if (mFileTools.CopyFileUsingLocks(srcFilePath, destFilePath, overwrite))
                     {
                         LogCopyStats(startTime, destFilePath);
                         return;
@@ -300,7 +300,7 @@ namespace AnalysisManagerBase
                 return;
             }
 
-            var failedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath");
+            var failedResultsFolderPath = mMgrParams.GetParam("FailedResultsFolderPath");
 
             if (string.IsNullOrEmpty(failedResultsFolderPath))
             {
@@ -377,32 +377,32 @@ namespace AnalysisManagerBase
 
         private void CopyFailedResultsCreateInfoFile(string folderInfoFilePath, string resultsFolderName)
         {
-            using (var swInfoFile = new StreamWriter(new FileStream(folderInfoFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+            using (var writer = new StreamWriter(new FileStream(folderInfoFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
             {
-                swInfoFile.WriteLine("Date" + '\t' + DateTime.Now);
-                swInfoFile.WriteLine("ResultsFolderName" + '\t' + resultsFolderName);
-                swInfoFile.WriteLine("Manager" + '\t' + m_mgrParams.ManagerName);
+                writer.WriteLine("Date" + '\t' + DateTime.Now);
+                writer.WriteLine("ResultsFolderName" + '\t' + resultsFolderName);
+                writer.WriteLine("Manager" + '\t' + mMgrParams.ManagerName);
 
-                if ((m_jobParams != null))
+                if ((mJobParams != null))
                 {
-                    swInfoFile.WriteLine("JobToolDescription" + '\t' + m_jobParams.GetCurrentJobToolDescription());
-                    swInfoFile.WriteLine("Job" + '\t' + m_jobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Job"));
-                    swInfoFile.WriteLine("Step" + '\t' + m_jobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Step"));
+                    writer.WriteLine("JobToolDescription" + '\t' + mJobParams.GetCurrentJobToolDescription());
+                    writer.WriteLine("Job" + '\t' + mJobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Job"));
+                    writer.WriteLine("Step" + '\t' + mJobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Step"));
                 }
 
-                swInfoFile.WriteLine("Date" + '\t' + DateTime.Now);
-                if ((m_jobParams != null))
+                writer.WriteLine("Date" + '\t' + DateTime.Now);
+                if ((mJobParams != null))
                 {
-                    swInfoFile.WriteLine("Tool" + '\t' + m_jobParams.GetParam("ToolName"));
-                    swInfoFile.WriteLine("StepTool" + '\t' + m_jobParams.GetParam("StepTool"));
-                    swInfoFile.WriteLine("Dataset" + '\t' + m_jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_DATASET_NAME));
-                    swInfoFile.WriteLine("XferFolder" + '\t' + m_jobParams.GetParam(clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH));
-                    swInfoFile.WriteLine("ParamFileName" + '\t' + m_jobParams.GetParam(clsAnalysisResources.JOB_PARAM_PARAMETER_FILE));
-                    swInfoFile.WriteLine("SettingsFileName" + '\t' + m_jobParams.GetParam("SettingsFileName"));
-                    swInfoFile.WriteLine("LegacyOrganismDBName" + '\t' + m_jobParams.GetParam("LegacyFastaFileName"));
-                    swInfoFile.WriteLine("ProteinCollectionList" + '\t' + m_jobParams.GetParam("ProteinCollectionList"));
-                    swInfoFile.WriteLine("ProteinOptionsList" + '\t' + m_jobParams.GetParam("ProteinOptions"));
-                    swInfoFile.WriteLine("FastaFileName" + '\t' + m_jobParams.GetParam("PeptideSearch", clsAnalysisResources.JOB_PARAM_GENERATED_FASTA_NAME));
+                    writer.WriteLine("Tool" + '\t' + mJobParams.GetParam("ToolName"));
+                    writer.WriteLine("StepTool" + '\t' + mJobParams.GetParam("StepTool"));
+                    writer.WriteLine("Dataset" + '\t' + mJobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_DATASET_NAME));
+                    writer.WriteLine("XferFolder" + '\t' + mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH));
+                    writer.WriteLine("ParamFileName" + '\t' + mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_PARAMETER_FILE));
+                    writer.WriteLine("SettingsFileName" + '\t' + mJobParams.GetParam("SettingsFileName"));
+                    writer.WriteLine("LegacyOrganismDBName" + '\t' + mJobParams.GetParam("LegacyFastaFileName"));
+                    writer.WriteLine("ProteinCollectionList" + '\t' + mJobParams.GetParam("ProteinCollectionList"));
+                    writer.WriteLine("ProteinOptionsList" + '\t' + mJobParams.GetParam("ProteinOptions"));
+                    writer.WriteLine("FastaFileName" + '\t' + mJobParams.GetParam("PeptideSearch", clsAnalysisResources.JOB_PARAM_GENERATED_FASTA_NAME));
                 }
             }
 

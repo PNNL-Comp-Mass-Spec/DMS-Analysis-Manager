@@ -13,7 +13,7 @@ using FileConcatenator;
 namespace DTASpectraFileGen
 {
     /// <summary>
-    /// Provides a wrapper around Ken Auberry's file concatenator dll to simplify use
+    /// Provides a wrapper around FileConcatenator.dll to simplify use
     /// Requires FileConcatenator.dll to be referenced in project
     /// </summary>
     public class clsConcatToolWrapper
@@ -31,27 +31,19 @@ namespace DTASpectraFileGen
 
         #region "Module variables"
 
-        private bool m_CatInProgress;
-        private IConcatenateFiles m_CatTools;
-        private string m_ErrMsg;
-        private string m_DataPath;
+        private bool mCatInProgress;
 
-        // Percent complete, value between 0-100
-        private float m_Progress;
+        private IConcatenateFiles mCatTools;
 
         #endregion
 
         #region "Properties"
 
-        public float Progress => m_Progress;
+        public float Progress { get; private set; }
 
-        public string ErrMsg => m_ErrMsg;
+        public string ErrMsg { get; private set; }
 
-        public string DataPath
-        {
-            get => m_DataPath;
-            set => m_DataPath = value;
-        }
+        public string DataPath { get; set; }
 
         #endregion
 
@@ -59,8 +51,8 @@ namespace DTASpectraFileGen
 
         public clsConcatToolWrapper(string DataPath)
         {
-            m_DataPath = DataPath;
-            m_ErrMsg = "";
+            this.DataPath = DataPath;
+            ErrMsg = "";
         }
 
         public bool ConcatenateFiles(ConcatFileTypes FileType, string RootFileName)
@@ -73,36 +65,36 @@ namespace DTASpectraFileGen
             try
             {
                 // Perform the concatenation
-                m_CatTools = new clsConcatenateFiles(m_DataPath, RootFileName) {
+                mCatTools = new clsConcatenateFiles(DataPath, RootFileName) {
                         DeleteSourceFilesWhenConcatenating = blnDeleteSourceFilesWhenConcatenating
                     };
 
-                m_CatTools.ErrorNotification += m_CatTools_ErrorNotification;
-                m_CatTools.EndTask += m_CatTools_EndingTask;
-                m_CatTools.Progress += m_CatTools_Progress;
+                mCatTools.ErrorNotification += CatTools_ErrorNotification;
+                mCatTools.EndTask += CatTools_EndingTask;
+                mCatTools.Progress += CatTools_Progress;
 
-                m_CatInProgress = true;
+                mCatInProgress = true;
 
                 // Call the dll based on the concatenation type
                 switch (FileType)
                 {
                     case ConcatFileTypes.CONCAT_ALL:
-                        m_CatTools.MakeCattedDTAsAndOUTs();
+                        mCatTools.MakeCattedDTAsAndOUTs();
                         break;
                     case ConcatFileTypes.CONCAT_DTA:
-                        m_CatTools.MakeCattedDTAsOnly();
+                        mCatTools.MakeCattedDTAsOnly();
                         break;
                     case ConcatFileTypes.CONCAT_OUT:
-                        m_CatTools.MakeCattedOUTsOnly();
+                        mCatTools.MakeCattedOUTsOnly();
                         break;
                     default:
                         // Shouldn't ever get here
-                        m_ErrMsg = "Invalid concatenation selection: " + FileType;
+                        ErrMsg = "Invalid concatenation selection: " + FileType;
                         return false;
                 }
 
                 // Loop until the concatenation finishes
-                while (m_CatInProgress)
+                while (mCatInProgress)
                 {
                     clsGlobal.IdleLoop(1);
                 }
@@ -112,7 +104,7 @@ namespace DTASpectraFileGen
             }
             catch (Exception ex)
             {
-                m_ErrMsg = "Exception while concatenating files: " + ex.Message + "; " + clsGlobal.GetExceptionStackTrace(ex);
+                ErrMsg = "Exception while concatenating files: " + ex.Message + "; " + clsGlobal.GetExceptionStackTrace(ex);
                 return false;
             }
         }
@@ -121,20 +113,20 @@ namespace DTASpectraFileGen
 
         #region "Private methods"
 
-        private void m_CatTools_ErrorNotification(string errorMessage)
+        private void CatTools_ErrorNotification(string errorMessage)
         {
-            m_CatInProgress = false;
-            m_ErrMsg = errorMessage;
+            mCatInProgress = false;
+            ErrMsg = errorMessage;
         }
 
-        private void m_CatTools_EndingTask()
+        private void CatTools_EndingTask()
         {
-            m_CatInProgress = false;
+            mCatInProgress = false;
         }
 
-        private void m_CatTools_Progress(double fractionDone)
+        private void CatTools_Progress(double fractionDone)
         {
-            m_Progress = (float)(100.0 * fractionDone);
+            Progress = (float)(100.0 * fractionDone);
         }
 
         #endregion

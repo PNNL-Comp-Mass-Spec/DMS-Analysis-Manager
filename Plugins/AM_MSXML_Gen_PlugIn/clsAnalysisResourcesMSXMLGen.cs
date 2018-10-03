@@ -29,14 +29,14 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
                 currentTask = "Determine RawDataType";
 
-                var toolName = m_jobParams.GetParam("ToolName");
+                var toolName = mJobParams.GetParam("ToolName");
                 var proMexBruker = toolName.StartsWith("ProMex_Bruker", StringComparison.OrdinalIgnoreCase);
 
                 if (proMexBruker)
                 {
                     // Make sure the settings file has MSXMLOutputType=mzML, not mzXML
 
-                    var msXmlFormat = m_jobParams.GetParam("MSXMLOutputType");
+                    var msXmlFormat = mJobParams.GetParam("MSXMLOutputType");
                     if (string.IsNullOrWhiteSpace(msXmlFormat))
                     {
                         LogError("Job parameter MSXMLOutputType must be defined in the settings file");
@@ -51,7 +51,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 }
 
                 // Get input data file
-                var strRawDataType = m_jobParams.GetParam("RawDataType");
+                var strRawDataType = mJobParams.GetParam("RawDataType");
 
                 var retrievalAttempts = 0;
 
@@ -69,7 +69,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                             if (FileSearch.RetrieveSpectra(strRawDataType))
                             {
                                 // Raw file
-                                m_jobParams.AddResultFileExtensionToSkip(DOT_RAW_EXTENSION);
+                                mJobParams.AddResultFileExtensionToSkip(DOT_RAW_EXTENSION);
                             }
                             else
                             {
@@ -78,21 +78,21 @@ namespace AnalysisManagerMsXmlGenPlugIn
                             }
                             break;
                         default:
-                            m_message = "Dataset type " + strRawDataType + " is not supported";
+                            mMessage = "Dataset type " + strRawDataType + " is not supported";
                             LogDebug(
-                                "clsAnalysisResourcesMSXMLGen.GetResources: " + m_message + "; must be " + RAW_DATA_TYPE_DOT_RAW_FILES + ", " +
+                                "clsAnalysisResourcesMSXMLGen.GetResources: " + mMessage + "; must be " + RAW_DATA_TYPE_DOT_RAW_FILES + ", " +
                                 RAW_DATA_TYPE_DOT_D_FOLDERS + ", " + RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER + ", or " + RAW_DATA_TYPE_BRUKER_FT_FOLDER);
 
                             return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                     }
 
-                    if (m_MyEMSLUtilities.FilesToDownload.Count == 0)
+                    if (mMyEMSLUtilities.FilesToDownload.Count == 0)
                     {
                         break;
                     }
 
                     currentTask = "ProcessMyEMSLDownloadQueue";
-                    if (m_MyEMSLUtilities.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+                    if (mMyEMSLUtilities.ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
                     {
                         break;
                     }
@@ -101,12 +101,12 @@ namespace AnalysisManagerMsXmlGenPlugIn
                     base.DisableMyEMSLSearch();
                 }
 
-                var mzMLRefParamFile = m_jobParams.GetJobParameter("MzMLRefParamFile", string.Empty);
+                var mzMLRefParamFile = mJobParams.GetJobParameter("MzMLRefParamFile", string.Empty);
 
                 if (!string.IsNullOrEmpty(mzMLRefParamFile))
                 {
                     // Retrieve the Fasta file
-                    var orgDbDirectoryPath = m_mgrParams.GetParam("orgdbdir");
+                    var orgDbDirectoryPath = mMgrParams.GetParam("OrgDbDir");
 
                     currentTask = "RetrieveOrgDB to " + orgDbDirectoryPath;
 
@@ -117,7 +117,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
                     const string paramFileStoragePathKeyName = clsGlobal.STEPTOOL_PARAMFILESTORAGEPATH_PREFIX + "MzML_Refinery";
 
-                    var mzMLRefineryParmFileStoragePath = m_mgrParams.GetParam(paramFileStoragePathKeyName);
+                    var mzMLRefineryParmFileStoragePath = mMgrParams.GetParam(paramFileStoragePathKeyName);
                     if (string.IsNullOrWhiteSpace(mzMLRefineryParmFileStoragePath))
                     {
                         mzMLRefineryParmFileStoragePath = @"\\gigasax\dms_parameter_Files\MzMLRefinery";
@@ -128,7 +128,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                     }
 
                     // Retrieve param file
-                    if (!FileSearch.RetrieveFile(mzMLRefParamFile, m_jobParams.GetParam("ParmFileStoragePath")))
+                    if (!FileSearch.RetrieveFile(mzMLRefParamFile, mJobParams.GetParam("ParmFileStoragePath")))
                     {
                         return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
                     }
@@ -136,8 +136,8 @@ namespace AnalysisManagerMsXmlGenPlugIn
             }
             catch (Exception ex)
             {
-                m_message = "Exception in GetResources: " + ex.Message;
-                LogError(m_message + "; task = " + currentTask + "; " + clsGlobal.GetExceptionStackTrace(ex));
+                mMessage = "Exception in GetResources: " + ex.Message;
+                LogError(mMessage + "; task = " + currentTask + "; " + clsGlobal.GetExceptionStackTrace(ex));
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 

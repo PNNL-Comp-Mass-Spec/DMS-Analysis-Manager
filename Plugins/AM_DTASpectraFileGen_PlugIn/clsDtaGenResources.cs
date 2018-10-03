@@ -36,12 +36,12 @@ namespace DTASpectraFileGen
                 return result;
             }
 
-            var strRawDataType = m_jobParams.GetJobParameter("RawDataType", "");
-            var blnMGFInstrumentData = m_jobParams.GetJobParameter("MGFInstrumentData", false);
+            var strRawDataType = mJobParams.GetJobParameter("RawDataType", "");
+            var blnMGFInstrumentData = mJobParams.GetJobParameter("MGFInstrumentData", false);
 
             var zippedDTAFilePath = string.Empty;
 
-            var eDtaGeneratorType = clsDtaGenToolRunner.GetDTAGeneratorInfo(m_jobParams, out var strErrorMessage);
+            var eDtaGeneratorType = clsDtaGenToolRunner.GetDTAGeneratorInfo(mJobParams, out var strErrorMessage);
             if (eDtaGeneratorType == clsDtaGenToolRunner.eDTAGeneratorConstants.Unknown)
             {
                 if (string.IsNullOrEmpty(strErrorMessage))
@@ -70,14 +70,14 @@ namespace DTASpectraFileGen
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                m_jobParams.AddResultFileExtensionToSkip(DOT_MGF_EXTENSION);
+                mJobParams.AddResultFileExtensionToSkip(DOT_MGF_EXTENSION);
             }
             else
             {
                 // Get input data file
                 if (!FileSearch.RetrieveSpectra(strRawDataType))
                 {
-                    if (string.IsNullOrEmpty(m_message))
+                    if (string.IsNullOrEmpty(mMessage))
                     {
                         LogError("Error retrieving instrument data file");
                     }
@@ -91,7 +91,7 @@ namespace DTASpectraFileGen
                 }
                 else
                 {
-                    blnCentroidDTAs = m_jobParams.GetJobParameter("CentroidDTAs", false);
+                    blnCentroidDTAs = mJobParams.GetJobParameter("CentroidDTAs", false);
                 }
 
                 if (blnCentroidDTAs)
@@ -99,7 +99,7 @@ namespace DTASpectraFileGen
                     // Look for a DTA_Gen_1_26_ folder for this dataset
                     // If it exists, and if we can find a valid _dta.zip file, use that file instead of re-running DeconMSn (since DeconMSn can take some time to run)
 
-                    var datasetID = m_jobParams.GetJobParameter("DatasetID", 0);
+                    var datasetID = mJobParams.GetJobParameter("DatasetID", 0);
                     var folderNameToFind = "DTA_Gen_1_26_" + datasetID;
                     var fileToFind = DatasetName + CDTA_ZIPPED_EXTENSION;
 
@@ -117,27 +117,27 @@ namespace DTASpectraFileGen
                     {
                         // Copy the file locally (or queue it for download from MyEMSL)
 
-                        var blnFileCopiedOrQueued = CopyFileToWorkDir(fileToFind, existingDtaFolder, m_WorkingDir);
+                        var blnFileCopiedOrQueued = CopyFileToWorkDir(fileToFind, existingDtaFolder, mWorkDir);
 
                         if (blnFileCopiedOrQueued)
                         {
-                            zippedDTAFilePath = Path.Combine(m_WorkingDir, fileToFind);
+                            zippedDTAFilePath = Path.Combine(mWorkDir, fileToFind);
 
-                            m_jobParams.AddAdditionalParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, USING_EXISTING_DECONMSN_RESULTS, "True");
+                            mJobParams.AddAdditionalParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, USING_EXISTING_DECONMSN_RESULTS, "True");
 
                             LogMessage("Found pre-existing DeconMSn results; will not re-run DeconMSn if they are valid");
 
                             fileToFind = DatasetName + "_profile.txt";
-                            CopyFileToWorkDir(fileToFind, existingDtaFolder, m_WorkingDir);
+                            CopyFileToWorkDir(fileToFind, existingDtaFolder, mWorkDir);
 
                             fileToFind = DatasetName + "_DeconMSn_log.txt";
-                            CopyFileToWorkDir(fileToFind, existingDtaFolder, m_WorkingDir);
+                            CopyFileToWorkDir(fileToFind, existingDtaFolder, mWorkDir);
                         }
                     }
                 }
             }
 
-            if (!ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+            if (!ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -145,20 +145,20 @@ namespace DTASpectraFileGen
             if (!string.IsNullOrEmpty(zippedDTAFilePath))
             {
                 var fiZippedDtaFile = new FileInfo(zippedDTAFilePath);
-                var tempZipFilePath = Path.Combine(m_WorkingDir, Path.GetFileNameWithoutExtension(fiZippedDtaFile.Name) + "_PreExisting.zip");
+                var tempZipFilePath = Path.Combine(mWorkDir, Path.GetFileNameWithoutExtension(fiZippedDtaFile.Name) + "_PreExisting.zip");
 
                 fiZippedDtaFile.MoveTo(tempZipFilePath);
 
                 LogMessage("Unzipping file " + Path.GetFileName(zippedDTAFilePath));
 
-                if (UnzipFileStart(tempZipFilePath, m_WorkingDir, "clsDtaGenResources", false))
+                if (UnzipFileStart(tempZipFilePath, mWorkDir, "clsDtaGenResources", false))
                 {
-                    if (m_DebugLevel >= 1)
+                    if (mDebugLevel >= 1)
                     {
                         LogMessage("Unzipped file " + Path.GetFileName(zippedDTAFilePath));
                     }
 
-                    m_jobParams.AddResultFileToSkip(Path.GetFileName(tempZipFilePath));
+                    mJobParams.AddResultFileToSkip(Path.GetFileName(tempZipFilePath));
                 }
             }
 
@@ -171,7 +171,7 @@ namespace DTASpectraFileGen
             {
                 var strParamFileStoragePathKeyName = clsGlobal.STEPTOOL_PARAMFILESTORAGEPATH_PREFIX + "DTA_Gen";
 
-                var strParamFileStoragePath = m_mgrParams.GetParam(strParamFileStoragePathKeyName);
+                var strParamFileStoragePath = mMgrParams.GetParam(strParamFileStoragePathKeyName);
                 if (string.IsNullOrEmpty(strParamFileStoragePath))
                 {
                     strParamFileStoragePath = @"\\gigasax\DMS_Parameter_Files\DTA_Gen";
@@ -181,11 +181,11 @@ namespace DTASpectraFileGen
                         strParamFileStoragePath);
                 }
 
-                var strParamFileName = m_jobParams.GetJobParameter("DtaGenerator", "DeconMSn_ParamFile", string.Empty);
+                var strParamFileName = mJobParams.GetJobParameter("DtaGenerator", "DeconMSn_ParamFile", string.Empty);
 
                 if (string.IsNullOrEmpty(strParamFileName))
                 {
-                    LogError(clsAnalysisToolRunnerBase.NotifyMissingParameter(m_jobParams, "DeconMSn_ParamFile"));
+                    LogError(clsAnalysisToolRunnerBase.NotifyMissingParameter(mJobParams, "DeconMSn_ParamFile"));
                     return false;
                 }
 

@@ -22,9 +22,9 @@ namespace DTASpectraFileGen
 
         #region "Member variables"
 
-        private readonly int m_DebugLevel;
-        private readonly string m_WorkDir;
-        private string m_ErrMsg;
+        private readonly int mDebugLevel;
+        private readonly string mWorkDir;
+        private string mErrMsg;
 
         private MascotGenericFileToDTA.clsMGFtoDTA mMGFtoDTA;
 
@@ -36,12 +36,12 @@ namespace DTASpectraFileGen
         {
             get
             {
-                if (string.IsNullOrEmpty(m_ErrMsg))
+                if (string.IsNullOrEmpty(mErrMsg))
                 {
                     return string.Empty;
                 }
 
-                return m_ErrMsg;
+                return mErrMsg;
             }
         }
 
@@ -79,9 +79,9 @@ namespace DTASpectraFileGen
         /// <param name="strWorkDir"></param>
         public clsMGFConverter(int intDebugLevel, string strWorkDir)
         {
-            m_DebugLevel = intDebugLevel;
-            m_WorkDir = strWorkDir;
-            m_ErrMsg = string.Empty;
+            mDebugLevel = intDebugLevel;
+            mWorkDir = strWorkDir;
+            mErrMsg = string.Empty;
         }
 
         /// <summary>
@@ -94,21 +94,21 @@ namespace DTASpectraFileGen
         {
             bool blnSuccess;
 
-            m_ErrMsg = string.Empty;
+            mErrMsg = string.Empty;
 
-            if (m_DebugLevel > 0)
+            if (mDebugLevel > 0)
             {
                 OnDebugEvent("Converting .MGF file to _DTA.txt");
             }
 
-            var strMGFFilePath = Path.Combine(m_WorkDir, strDatasetName + clsAnalysisResources.DOT_MGF_EXTENSION);
+            var strMGFFilePath = Path.Combine(mWorkDir, strDatasetName + clsAnalysisResources.DOT_MGF_EXTENSION);
 
             if (eRawDataType == clsAnalysisResources.eRawDataTypeConstants.mzML)
             {
                 // Read the .mzML file to construct a mapping between "title" line and scan number
                 // If necessary, update the .mgf file to have new "title" lines that clsMGFtoDTA will recognize
 
-                var strMzMLFilePath = Path.Combine(m_WorkDir, strDatasetName + clsAnalysisResources.DOT_MZML_EXTENSION);
+                var strMzMLFilePath = Path.Combine(mWorkDir, strDatasetName + clsAnalysisResources.DOT_MZML_EXTENSION);
 
                 blnSuccess = UpdateMGFFileTitleLinesUsingMzML(strMzMLFilePath, strMGFFilePath, strDatasetName);
                 if (!blnSuccess)
@@ -128,13 +128,13 @@ namespace DTASpectraFileGen
                 MinimumIonsPerSpectrum = MinimumIonsPerSpectrum,
                 MaximumIonsPerSpectrum = 0
             };
-            mMGFtoDTA.ErrorEvent += mMGFtoDTA_ErrorEvent;
+            mMGFtoDTA.ErrorEvent += MGFtoDTA_ErrorEvent;
 
-            blnSuccess = mMGFtoDTA.ProcessFile(strMGFFilePath, m_WorkDir);
+            blnSuccess = mMGFtoDTA.ProcessFile(strMGFFilePath, mWorkDir);
 
-            if (!blnSuccess && string.IsNullOrEmpty(m_ErrMsg))
+            if (!blnSuccess && string.IsNullOrEmpty(mErrMsg))
             {
-                m_ErrMsg = mMGFtoDTA.GetErrorMessage();
+                mErrMsg = mMGFtoDTA.GetErrorMessage();
             }
 
             return blnSuccess;
@@ -309,7 +309,7 @@ namespace DTASpectraFileGen
                 // Open the mzXML file and look for "spectrum" elements with an "id" attribute
                 // Also look for the charge state
 
-                if (m_DebugLevel >= 1)
+                if (mDebugLevel >= 1)
                 {
                     OnDebugEvent(
                         "Parsing the .mzML file to create the spectrum ID to scan number mapping");
@@ -331,7 +331,7 @@ namespace DTASpectraFileGen
                     return true;
                 }
 
-                if (m_DebugLevel >= 1)
+                if (mDebugLevel >= 1)
                 {
                     OnDebugEvent("Updating the Title lines in the MGF file");
                 }
@@ -374,7 +374,7 @@ namespace DTASpectraFileGen
                     }
                 }
 
-                if (m_DebugLevel >= 1)
+                if (mDebugLevel >= 1)
                 {
                     OnDebugEvent(
                         "Update complete; replacing the original .MGF file");
@@ -383,7 +383,7 @@ namespace DTASpectraFileGen
                 // Delete the original .mgf file and replace it with strNewMGFFile
                 ProgRunner.GarbageCollectNow();
 
-                clsAnalysisToolRunnerBase.DeleteFileWithRetries(strMGFFilePath, m_DebugLevel);
+                clsAnalysisToolRunnerBase.DeleteFileWithRetries(strMGFFilePath, mDebugLevel);
 
                 var ioNewMGF = new FileInfo(strNewMGFFile);
                 ioNewMGF.MoveTo(strMGFFilePath);
@@ -392,24 +392,24 @@ namespace DTASpectraFileGen
             }
             catch (Exception ex)
             {
-                m_ErrMsg = "Error updating the MGF file title lines using the .mzML file";
-                OnErrorEvent(m_ErrMsg + ": " + ex.Message);
+                mErrMsg = "Error updating the MGF file title lines using the .mzML file";
+                OnErrorEvent(mErrMsg + ": " + ex.Message);
                 return false;
             }
 
         }
 
-        private void mMGFtoDTA_ErrorEvent(string strMessage)
+        private void MGFtoDTA_ErrorEvent(string strMessage)
         {
             OnErrorEvent(strMessage);
 
-            if (string.IsNullOrEmpty(m_ErrMsg))
+            if (string.IsNullOrEmpty(mErrMsg))
             {
-                m_ErrMsg = "MGFtoDTA_Error: " + strMessage;
+                mErrMsg = "MGFtoDTA_Error: " + strMessage;
             }
-            else if (m_ErrMsg.Length < 300)
+            else if (mErrMsg.Length < 300)
             {
-                m_ErrMsg += "; MGFtoDTA_Error: " + strMessage;
+                mErrMsg += "; MGFtoDTA_Error: " + strMessage;
             }
         }
     }

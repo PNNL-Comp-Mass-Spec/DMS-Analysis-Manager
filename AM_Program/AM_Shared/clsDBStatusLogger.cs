@@ -179,9 +179,9 @@ namespace AnalysisManagerBase
         /// <summary>
         /// The minimum interval between updating the manager status in the database
         /// </summary>
-        private float m_DBStatusUpdateIntervalMinutes;
+        private float mDBStatusUpdateIntervalMinutes;
 
-        private DateTime m_LastWriteTime;
+        private DateTime mLastWriteTime;
 
         #endregion
 
@@ -197,12 +197,12 @@ namespace AnalysisManagerBase
         /// </summary>
         public float DBStatusUpdateIntervalMinutes
         {
-            get => m_DBStatusUpdateIntervalMinutes;
+            get => mDBStatusUpdateIntervalMinutes;
             set
             {
                 if (value < 0)
                     value = 0;
-                m_DBStatusUpdateIntervalMinutes = value;
+                mDBStatusUpdateIntervalMinutes = value;
             }
         }
         #endregion
@@ -221,8 +221,8 @@ namespace AnalysisManagerBase
                 dbConnectionString = string.Empty;
 
             DBConnectionString = dbConnectionString;
-            m_DBStatusUpdateIntervalMinutes = sngDBStatusUpdateIntervalMinutes;
-            m_LastWriteTime = DateTime.MinValue;
+            mDBStatusUpdateIntervalMinutes = sngDBStatusUpdateIntervalMinutes;
+            mLastWriteTime = DateTime.MinValue;
         }
 
         /// <summary>
@@ -242,13 +242,12 @@ namespace AnalysisManagerBase
                     return;
                 }
 
-                if (!forceLogToDB && DateTime.UtcNow.Subtract(m_LastWriteTime).TotalMinutes < m_DBStatusUpdateIntervalMinutes)
+                if (!forceLogToDB && DateTime.UtcNow.Subtract(mLastWriteTime).TotalMinutes < mDBStatusUpdateIntervalMinutes)
                 {
                     // Not enough time has elapsed since the last write; exit method
                     return;
                 }
-                m_LastWriteTime = DateTime.UtcNow;
-
+                mLastWriteTime = DateTime.UtcNow;
 
                 var myConnection = new SqlConnection(DBConnectionString);
                 myConnection.Open();

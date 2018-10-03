@@ -60,7 +60,7 @@ namespace AnalysisManagerMODaPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                if (m_DebugLevel > 4)
+                if (mDebugLevel > 4)
                 {
                     LogDebug("clsAnalysisToolRunnerMODa.RunTool(): Enter");
                 }
@@ -100,31 +100,31 @@ namespace AnalysisManagerMODaPlugIn
 
                         if (zipSuccess)
                         {
-                            m_jobParams.AddResultFileToSkip(resultsFile.Name);
+                            mJobParams.AddResultFileToSkip(resultsFile.Name);
                         }
                         else
                         {
-                            if (string.IsNullOrEmpty(m_message))
+                            if (string.IsNullOrEmpty(mMessage))
                             {
-                                m_message = "Unknown error zipping the MODa results";
+                                mMessage = "Unknown error zipping the MODa results";
                             }
                             processingSuccess = false;
                         }
                     }
                     else
                     {
-                        if (string.IsNullOrEmpty(m_message))
+                        if (string.IsNullOrEmpty(mMessage))
                         {
-                            m_message = "MODa results file not found: " + Path.GetFileName(mMODaResultsFilePath);
+                            mMessage = "MODa results file not found: " + Path.GetFileName(mMODaResultsFilePath);
                         }
                         processingSuccess = false;
                     }
                 }
 
-                m_progress = PROGRESS_PCT_COMPLETE;
+                mProgress = PROGRESS_PCT_COMPLETE;
 
                 // Stop the job timer
-                m_StopTime = DateTime.UtcNow;
+                mStopTime = DateTime.UtcNow;
 
                 // Add the current job data to the summary file
                 UpdateSummaryFile();
@@ -135,7 +135,7 @@ namespace AnalysisManagerMODaPlugIn
                 PRISM.ProgRunner.GarbageCollectNow();
 
                 // Trim the console output file to remove the majority of the status messages (since there is currently one per scan)
-                TrimConsoleOutputFile(Path.Combine(m_WorkDir, MODa_CONSOLE_OUTPUT));
+                TrimConsoleOutputFile(Path.Combine(mWorkDir, MODa_CONSOLE_OUTPUT));
 
                 if (!processingSuccess)
                 {
@@ -153,8 +153,8 @@ namespace AnalysisManagerMODaPlugIn
             }
             catch (Exception ex)
             {
-                m_message = "Error in MODaPlugin->RunTool";
-                LogError(m_message, ex);
+                mMessage = "Error in MODaPlugin->RunTool";
+                LogError(mMessage, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -169,14 +169,14 @@ namespace AnalysisManagerMODaPlugIn
             mConsoleOutputErrorMsg = string.Empty;
 
             // Customize the parameter file
-            var paramFileName = m_jobParams.GetParam("ParmFileName");
+            var paramFileName = mJobParams.GetParam("ParmFileName");
 
-            var spectrumFileName = m_Dataset + ".mgf";
+            var spectrumFileName = mDatasetName + ".mgf";
 
             // Define the path to the fasta file
             // Note that job parameter "generatedFastaName" gets defined by clsAnalysisResources.RetrieveOrgDB
-            var localOrgDbFolder = m_mgrParams.GetParam("OrgDBDir");
-            var dbFilename = m_jobParams.GetParam("PeptideSearch", "generatedFastaName");
+            var localOrgDbFolder = mMgrParams.GetParam("OrgDbDir");
+            var dbFilename = mJobParams.GetParam("PeptideSearch", "generatedFastaName");
             var fastaFilePath = Path.Combine(localOrgDbFolder, dbFilename);
 
             if (!UpdateParameterFile(paramFileName, spectrumFileName, fastaFilePath))
@@ -187,12 +187,12 @@ namespace AnalysisManagerMODaPlugIn
             LogMessage("Running MODa");
 
             // Lookup the amount of memory to reserve for Java; default to 2 GB
-            var javaMemorySize = m_jobParams.GetJobParameter("MODaJavaMemorySize", 2000);
+            var javaMemorySize = mJobParams.GetJobParameter("MODaJavaMemorySize", 2000);
             if (javaMemorySize < 512)
                 javaMemorySize = 512;
 
-            var paramFilePath = Path.Combine(m_WorkDir, paramFileName);
-            mMODaResultsFilePath = Path.Combine(m_WorkDir, m_Dataset + MODA_RESULTS_FILE_SUFFIX);
+            var paramFilePath = Path.Combine(mWorkDir, paramFileName);
+            mMODaResultsFilePath = Path.Combine(mWorkDir, mDatasetName + MODA_RESULTS_FILE_SUFFIX);
 
             // Set up and execute a program runner to run MODa
             var cmdStr = " -Xmx" + javaMemorySize + "M" +
@@ -202,7 +202,7 @@ namespace AnalysisManagerMODaPlugIn
 
             LogDebug(javaProgLoc + " " + cmdStr);
 
-            mCmdRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel);
+            mCmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel);
             RegisterEvents(mCmdRunner);
             mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
@@ -211,9 +211,9 @@ namespace AnalysisManagerMODaPlugIn
             mCmdRunner.EchoOutputToConsole = true;
 
             mCmdRunner.WriteConsoleOutputToFile = true;
-            mCmdRunner.ConsoleOutputFilePath = Path.Combine(m_WorkDir, MODa_CONSOLE_OUTPUT);
+            mCmdRunner.ConsoleOutputFilePath = Path.Combine(mWorkDir, MODa_CONSOLE_OUTPUT);
 
-            m_progress = PROGRESS_PCT_STARTING;
+            mProgress = PROGRESS_PCT_STARTING;
             ResetProgRunnerCpuUsage();
 
             // Start the program and wait for it to finish
@@ -224,7 +224,7 @@ namespace AnalysisManagerMODaPlugIn
             {
                 if (string.IsNullOrWhiteSpace(mMODaVersion))
                 {
-                    ParseConsoleOutputFile(Path.Combine(m_WorkDir, MODa_CONSOLE_OUTPUT));
+                    ParseConsoleOutputFile(Path.Combine(mWorkDir, MODa_CONSOLE_OUTPUT));
                 }
                 mToolVersionWritten = StoreToolVersionInfo();
             }
@@ -250,9 +250,9 @@ namespace AnalysisManagerMODaPlugIn
                 return false;
             }
 
-            m_progress = PROGRESS_PCT_COMPLETE;
-            m_StatusTools.UpdateAndWrite(m_progress);
-            if (m_DebugLevel >= 3)
+            mProgress = PROGRESS_PCT_COMPLETE;
+            mStatusTools.UpdateAndWrite(mProgress);
+            if (mDebugLevel >= 3)
             {
                 LogDebug("MODa Search Complete");
             }
@@ -265,7 +265,7 @@ namespace AnalysisManagerMODaPlugIn
         /// </summary>
         public override void CopyFailedResultsToArchiveFolder()
         {
-            m_jobParams.AddResultFileToSkip(Dataset + ".mzXML");
+            mJobParams.AddResultFileToSkip(Dataset + ".mzXML");
 
             base.CopyFailedResultsToArchiveFolder();
         }
@@ -320,7 +320,7 @@ namespace AnalysisManagerMODaPlugIn
             {
                 if (!File.Exists(consoleOutputFilePath))
                 {
-                    if (m_DebugLevel >= 4)
+                    if (mDebugLevel >= 4)
                     {
                         LogDebug("Console output file not found: " + consoleOutputFilePath);
                     }
@@ -328,7 +328,7 @@ namespace AnalysisManagerMODaPlugIn
                     return;
                 }
 
-                if (m_DebugLevel >= 4)
+                if (mDebugLevel >= 4)
                 {
                     LogDebug("Parsing file " + consoleOutputFilePath);
                 }
@@ -436,15 +436,15 @@ namespace AnalysisManagerMODaPlugIn
 
                 var actualProgress = ComputeIncrementalProgress(PROGRESS_PCT_STARTING, PROGRESS_PCT_COMPLETE, scansProcessed, totalScans);
 
-                if (m_progress < actualProgress)
+                if (mProgress < actualProgress)
                 {
-                    m_progress = actualProgress;
+                    mProgress = actualProgress;
                 }
             }
             catch (Exception ex)
             {
                 // Ignore errors here
-                if (m_DebugLevel >= 2)
+                if (mDebugLevel >= 2)
                 {
                     LogError("Error parsing console output file (" + consoleOutputFilePath + "): " + ex.Message);
                 }
@@ -457,7 +457,7 @@ namespace AnalysisManagerMODaPlugIn
         /// <remarks></remarks>
         private bool StoreToolVersionInfo()
         {
-            if (m_DebugLevel >= 2)
+            if (mDebugLevel >= 2)
             {
                 LogDebug("Determining tool version info");
             }
@@ -492,7 +492,7 @@ namespace AnalysisManagerMODaPlugIn
             {
                 if (!File.Exists(consoleOutputFilePath))
                 {
-                    if (m_DebugLevel >= 4)
+                    if (mDebugLevel >= 4)
                     {
                         LogDebug("Console output file not found: " + consoleOutputFilePath);
                     }
@@ -500,7 +500,7 @@ namespace AnalysisManagerMODaPlugIn
                     return;
                 }
 
-                if (m_DebugLevel >= 4)
+                if (mDebugLevel >= 4)
                 {
                     LogDebug("Trimming console output file at " + consoleOutputFilePath);
                 }
@@ -569,7 +569,7 @@ namespace AnalysisManagerMODaPlugIn
             catch (Exception ex)
             {
                 // Ignore errors here
-                if (m_DebugLevel >= 2)
+                if (mDebugLevel >= 2)
                 {
                     LogError("Error trimming console output file (" + consoleOutputFilePath + "): " + ex.Message);
                 }
@@ -586,10 +586,10 @@ namespace AnalysisManagerMODaPlugIn
 
             try
             {
-                var sourceParamFile = new FileInfo(Path.Combine(m_WorkDir, paramFileName));
-                var tempParamFile = new FileInfo(Path.Combine(m_WorkDir, paramFileName + ".temp"));
+                var sourceParamFile = new FileInfo(Path.Combine(mWorkDir, paramFileName));
+                var tempParamFile = new FileInfo(Path.Combine(mWorkDir, paramFileName + ".temp"));
 
-                var specFile = new FileInfo(Path.Combine(m_WorkDir, spectrumFileName));
+                var specFile = new FileInfo(Path.Combine(mWorkDir, spectrumFileName));
 
                 // Open the input file
                 using (var reader = new StreamReader(new FileStream(sourceParamFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
@@ -653,13 +653,13 @@ namespace AnalysisManagerMODaPlugIn
                 // Replace the original parameter file with the updated one
                 if (!ReplaceUpdatedFile(sourceParamFile, tempParamFile))
                 {
-                    m_message = "Error replacing the original parameter file with the customized version";
+                    mMessage = "Error replacing the original parameter file with the customized version";
                     return false;
                 }
             }
             catch (Exception ex)
             {
-                m_message = "Exception in UpdateParameterFile";
+                mMessage = "Exception in UpdateParameterFile";
                 LogError("Exception in UpdateParameterFile: " + ex.Message);
                 return false;
             }
@@ -687,7 +687,7 @@ namespace AnalysisManagerMODaPlugIn
             {
                 mLastConsoleOutputParse = DateTime.UtcNow;
 
-                ParseConsoleOutputFile(Path.Combine(m_WorkDir, MODa_CONSOLE_OUTPUT));
+                ParseConsoleOutputFile(Path.Combine(mWorkDir, MODa_CONSOLE_OUTPUT));
 
                 if (!mToolVersionWritten && !string.IsNullOrWhiteSpace(mMODaVersion))
                 {

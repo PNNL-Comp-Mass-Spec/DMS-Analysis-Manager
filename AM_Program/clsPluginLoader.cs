@@ -22,23 +22,19 @@ namespace AnalysisManagerProg
     {
         #region "Member variables"
 
-        private readonly string m_MgrFolderPath;
-        private string m_pluginConfigFile = "plugin_info.xml";
-        private readonly clsSummaryFile m_SummaryFile;
+        private readonly string mMgrFolderPath;
+
+        private readonly clsSummaryFile mSummaryFile;
 
         #endregion
 
         #region "Properties"
 
         /// <summary>
-        /// Plugin config file
+        /// Plugin config file name
         /// </summary>
         /// <remarks>Defaults to plugin_info.xml</remarks>
-        public string FileName
-        {
-            get => m_pluginConfigFile;
-            set => m_pluginConfigFile = value;
-        }
+        public string FileName { get; set; } = "plugin_info.xml";
 
         /// <summary>
         /// When true, show additional messages at the console
@@ -56,8 +52,8 @@ namespace AnalysisManagerProg
         /// <param name="MgrFolderPath"></param>
         public clsPluginLoader(clsSummaryFile objSummaryFile, string MgrFolderPath)
         {
-            m_SummaryFile = objSummaryFile;
-            m_MgrFolderPath = MgrFolderPath;
+            mSummaryFile = objSummaryFile;
+            mMgrFolderPath = MgrFolderPath;
         }
 
 #if PLUGIN_DEBUG_MODE_ENABLED
@@ -126,12 +122,12 @@ namespace AnalysisManagerProg
                 pluginInfo = "XPath=\"" + xpath + "\"; className=\"" + className + "\"; assyName=" + assemblyName + "\"";
 
                 //read the tool runner info file
-                doc.Load(GetPluginInfoFilePath(m_pluginConfigFile));
+                doc.Load(GetPluginInfoFilePath(FileName));
                 var root = doc.DocumentElement;
 
                 if (root == null)
                 {
-                    throw new Exception("Valid XML not found in file " + m_pluginConfigFile);
+                    throw new Exception("Valid XML not found in file " + FileName);
                 }
 
                 // find the element that matches the tool name
@@ -139,7 +135,7 @@ namespace AnalysisManagerProg
 
                 if (nodeList == null)
                 {
-                    throw new Exception(string.Format("XPath did not have a match for '{0}' in {1}", pluginInfo, m_pluginConfigFile));
+                    throw new Exception(string.Format("XPath did not have a match for '{0}' in {1}", pluginInfo, FileName));
                 }
 
                 // make sure that we found exactly one element,
@@ -193,7 +189,7 @@ namespace AnalysisManagerProg
 
                 if (!pluginInfoFile.Exists)
                 {
-                    var pluginFolder = new DirectoryInfo(m_MgrFolderPath);
+                    var pluginFolder = new DirectoryInfo(mMgrFolderPath);
                     var nameUpdated = false;
                     foreach (var file in pluginFolder.GetFiles("*"))
                     {
@@ -268,11 +264,11 @@ namespace AnalysisManagerProg
                         OnErrorEvent(string.Format("clsPluginLoader.GetToolRunner(), for class {0}, assembly {1}", className, assemblyName), ex);
                     }
                 }
-                m_SummaryFile.Add("Loaded ToolRunner: " + className + " from " + assemblyName);
+                mSummaryFile.Add("Loaded ToolRunner: " + className + " from " + assemblyName);
             }
             else
             {
-                m_SummaryFile.Add("Unable to load ToolRunner for " + toolName);
+                mSummaryFile.Add("Unable to load ToolRunner for " + toolName);
             }
 
             return myToolRunner;
@@ -313,11 +309,11 @@ namespace AnalysisManagerProg
                         OnErrorEvent(string.Format("clsPluginLoader.GetAnalysisResources(), for class {0}, assembly {1}", className, assemblyName), ex);
                     }
                 }
-                m_SummaryFile.Add("Loaded resourcer: " + className + " from " + assemblyName);
+                mSummaryFile.Add("Loaded resourcer: " + className + " from " + assemblyName);
             }
             else
             {
-                m_SummaryFile.Add("Unable to load resourcer for " + toolName);
+                mSummaryFile.Add("Unable to load resourcer for " + toolName);
             }
 
             return myModule;
@@ -331,7 +327,7 @@ namespace AnalysisManagerProg
         /// <remarks></remarks>
         private string GetPluginInfoFilePath(string pluginInfoFileName)
         {
-            return Path.Combine(m_MgrFolderPath, pluginInfoFileName);
+            return Path.Combine(mMgrFolderPath, pluginInfoFileName);
         }
         #endregion
     }

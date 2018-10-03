@@ -25,20 +25,20 @@ namespace AnalysisManagerBase
         /// Monitor interval, in milliseconds
         /// </summary>
         /// <remarks>Values over 10 seconds (10000 milliseconds) will result in a 10 second monitoring interval</remarks>
-        private int m_MonitorInterval = 2000;
+        private int mMonitorInterval = 2000;
 
-        private string m_CachedConsoleErrors = string.Empty;
+        private string mCachedConsoleErrors = string.Empty;
 
-        private bool m_AbortProgramPostLogEntry;
+        private bool mAbortProgramPostLogEntry;
 
         /// <summary>
         /// Program runner
         /// </summary>
-        private ProgRunner m_ProgRunner;
+        private ProgRunner mProgRunner;
 
-        private DateTime m_StopTime;
+        private DateTime mStopTime;
 
-        private bool m_IsRunning;
+        private bool mIsRunning;
 
         #endregion
 
@@ -89,12 +89,12 @@ namespace AnalysisManagerBase
         {
             get
             {
-                if (string.IsNullOrWhiteSpace(m_CachedConsoleErrors))
+                if (string.IsNullOrWhiteSpace(mCachedConsoleErrors))
                 {
                     return string.Empty;
                 }
 
-                return m_CachedConsoleErrors;
+                return mCachedConsoleErrors;
             }
         }
 
@@ -105,12 +105,12 @@ namespace AnalysisManagerBase
         {
             get
             {
-                if (m_ProgRunner == null)
+                if (mProgRunner == null)
                 {
                     return string.Empty;
                 }
 
-                return m_ProgRunner.CachedConsoleOutput;
+                return mProgRunner.CachedConsoleOutput;
             }
         }
 
@@ -121,12 +121,12 @@ namespace AnalysisManagerBase
         {
             get
             {
-                if (m_ProgRunner == null)
+                if (mProgRunner == null)
                 {
                     return string.Empty;
                 }
 
-                return m_ProgRunner.CachedConsoleError;
+                return mProgRunner.CachedConsoleError;
             }
         }
 
@@ -188,12 +188,12 @@ namespace AnalysisManagerBase
         /// </summary>
         public int MonitorInterval
         {
-            get => m_MonitorInterval;
+            get => mMonitorInterval;
             set
             {
                 if (value < 250)
                     value = 250;
-                m_MonitorInterval = value;
+                mMonitorInterval = value;
             }
         }
 
@@ -205,12 +205,12 @@ namespace AnalysisManagerBase
         {
             get
             {
-                if (m_ProgRunner == null)
+                if (mProgRunner == null)
                 {
                     return 0;
                 }
 
-                return m_ProgRunner.PID;
+                return mProgRunner.PID;
             }
         }
 
@@ -222,10 +222,10 @@ namespace AnalysisManagerBase
         {
             get
             {
-                if (string.IsNullOrWhiteSpace(m_ProgRunner?.Program))
+                if (string.IsNullOrWhiteSpace(mProgRunner?.Program))
                     return string.Empty;
 
-                return m_ProgRunner.Program;
+                return mProgRunner.Program;
             }
         }
 
@@ -248,7 +248,7 @@ namespace AnalysisManagerBase
         /// Time the program runner finished (UTC-based)
         /// </summary>
         /// <remarks>Will be the current time-of-day if still running</remarks>
-        public DateTime StopTime => m_IsRunning ? DateTime.UtcNow : m_StopTime;
+        public DateTime StopTime => mIsRunning ? DateTime.UtcNow : mStopTime;
 
         /// <summary>
         /// Current monitoring state
@@ -257,12 +257,12 @@ namespace AnalysisManagerBase
         {
             get
             {
-                if (m_ProgRunner == null)
+                if (mProgRunner == null)
                 {
                     return ProgRunner.States.NotMonitoring;
                 }
 
-                return m_ProgRunner.State;
+                return mProgRunner.State;
             }
         }
 
@@ -315,7 +315,7 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public void AbortProgramNow(bool postLogEntry)
         {
-            m_AbortProgramPostLogEntry = postLogEntry;
+            mAbortProgramPostLogEntry = postLogEntry;
             ProgramAborted = true;
         }
 
@@ -326,20 +326,20 @@ namespace AnalysisManagerBase
         /// <remarks>Obtaining this value takes a minimum of 1 second since we sample the performance counters</remarks>
         public float GetCoreUsage()
         {
-            if (m_ProgRunner == null)
+            if (mProgRunner == null)
             {
                 return 0;
             }
 
             try
             {
-                if (m_ProgRunner.PID <= 0)
+                if (mProgRunner.PID <= 0)
                 {
                     // Unknown process ID
                     return 0;
                 }
 
-                var coreUsage = clsGlobal.ProcessInfo.GetCoreUsageByProcessID(m_ProgRunner.PID);
+                var coreUsage = clsGlobal.ProcessInfo.GetCoreUsageByProcessID(mProgRunner.PID);
 
                 if (coreUsage < 0)
                 {
@@ -407,8 +407,8 @@ namespace AnalysisManagerBase
         public bool RunProgram(string executablePath, string arguments, string progName, bool useResCode, int maxRuntimeSeconds)
         {
             // Require a minimum monitoring interval of 250 milliseconds
-            if (m_MonitorInterval < 250)
-                m_MonitorInterval = 250;
+            if (mMonitorInterval < 250)
+                mMonitorInterval = 250;
 
             if (maxRuntimeSeconds > 0 && maxRuntimeSeconds < 15)
             {
@@ -422,13 +422,13 @@ namespace AnalysisManagerBase
                 OnWarningEvent("Unix-style path on a Windows machine; program execution may fail: " + executablePath);
             }
 
-            // Re-instantiate m_ProgRunner each time RunProgram is called since it is disposed of later in this function
+            // Re-instantiate mProgRunner each time RunProgram is called since it is disposed of later in this function
             // Also necessary to avoid problems caching the console output
-            m_ProgRunner = new ProgRunner
+            mProgRunner = new ProgRunner
             {
                 Arguments = arguments,
                 CreateNoWindow = CreateNoWindow,
-                MonitoringInterval = m_MonitorInterval,
+                MonitoringInterval = mMonitorInterval,
                 Name = progName,
                 Program = executablePath,
                 Repeat = false,
@@ -441,21 +441,21 @@ namespace AnalysisManagerBase
                 ConsoleOutputFileIncludesCommandLine = ConsoleOutputFileIncludesCommandLine
             };
 
-            RegisterEvents(m_ProgRunner);
+            RegisterEvents(mProgRunner);
 
-            m_ProgRunner.ConsoleErrorEvent += ProgRunner_ConsoleErrorEvent;
-            m_ProgRunner.ConsoleOutputEvent += ProgRunner_ConsoleOutputEvent;
-            m_ProgRunner.ProgChanged += ProgRunner_ProgChanged;
+            mProgRunner.ConsoleErrorEvent += ProgRunner_ConsoleErrorEvent;
+            mProgRunner.ConsoleOutputEvent += ProgRunner_ConsoleOutputEvent;
+            mProgRunner.ProgChanged += ProgRunner_ProgChanged;
 
             if (DebugLevel >= 4)
             {
-                OnStatusEvent("  ProgRunner.Arguments = " + m_ProgRunner.Arguments);
-                OnStatusEvent("  ProgRunner.Program = " + m_ProgRunner.Program);
+                OnStatusEvent("  ProgRunner.Arguments = " + mProgRunner.Arguments);
+                OnStatusEvent("  ProgRunner.Program = " + mProgRunner.Program);
             }
 
-            m_CachedConsoleErrors = string.Empty;
+            mCachedConsoleErrors = string.Empty;
 
-            m_AbortProgramPostLogEntry = true;
+            mAbortProgramPostLogEntry = true;
             ProgramAborted = false;
 
             var runtimeExceeded = false;
@@ -466,20 +466,20 @@ namespace AnalysisManagerBase
             try
             {
                 // Start the program executing
-                m_ProgRunner.StartAndMonitorProgram();
+                mProgRunner.StartAndMonitorProgram();
 
                 StartTime = DateTime.UtcNow;
-                m_StopTime = DateTime.MinValue;
-                m_IsRunning = true;
+                mStopTime = DateTime.MinValue;
+                mIsRunning = true;
 
                 // Loop until program is complete, or until MaxRuntimeSeconds seconds elapses
-                while (m_ProgRunner.State != ProgRunner.States.NotMonitoring)
+                while (mProgRunner.State != ProgRunner.States.NotMonitoring)
                 {
                     if (cachedProcessID == 0)
-                        cachedProcessID = m_ProgRunner.PID;
+                        cachedProcessID = mProgRunner.PID;
 
                     OnLoopWaiting();
-                    ProgRunner.SleepMilliseconds(m_MonitorInterval);
+                    ProgRunner.SleepMilliseconds(mMonitorInterval);
 
                     if (MaxRuntimeSeconds > 0)
                     {
@@ -494,7 +494,7 @@ namespace AnalysisManagerBase
                     if (!ProgramAborted)
                         continue;
 
-                    if (m_AbortProgramPostLogEntry && !abortLogged)
+                    if (mAbortProgramPostLogEntry && !abortLogged)
                     {
                         abortLogged = true;
                         string msg;
@@ -510,12 +510,12 @@ namespace AnalysisManagerBase
                         OnErrorEvent(msg);
                     }
 
-                    m_ProgRunner.StopMonitoringProgram(kill: true);
+                    mProgRunner.StopMonitoringProgram(kill: true);
 
                 } // end while
 
-                m_StopTime = DateTime.UtcNow;
-                m_IsRunning = false;
+                mStopTime = DateTime.UtcNow;
+                mIsRunning = false;
 
                 clsGlobal.ProcessInfo.ClearCachedPerformanceCounterForProcessID(cachedProcessID);
 
@@ -524,21 +524,21 @@ namespace AnalysisManagerBase
             {
                 var msg = "Exception running external program " + executablePath;
                 OnErrorEvent(msg, ex);
-                m_ProgRunner = null;
+                mProgRunner = null;
 
-                m_StopTime = DateTime.UtcNow;
-                m_IsRunning = false;
+                mStopTime = DateTime.UtcNow;
+                mIsRunning = false;
 
                 return false;
             }
 
             // Cache the exit code in ExitCode
-            ExitCode = m_ProgRunner.ExitCode;
-            m_ProgRunner = null;
+            ExitCode = mProgRunner.ExitCode;
+            mProgRunner = null;
 
             if (useResCode && ExitCode != 0)
             {
-                if (ProgramAborted && m_AbortProgramPostLogEntry || !ProgramAborted)
+                if (ProgramAborted && mAbortProgramPostLogEntry || !ProgramAborted)
                 {
                     var msg = "  ProgRunner.ExitCode = " + ExitCode + " for Program = " + executablePath;
                     OnErrorEvent(msg);
@@ -596,13 +596,13 @@ namespace AnalysisManagerBase
         {
             OnErrorEvent("Console error: " + newText);
 
-            if (string.IsNullOrWhiteSpace(m_CachedConsoleErrors))
+            if (string.IsNullOrWhiteSpace(mCachedConsoleErrors))
             {
-                m_CachedConsoleErrors = newText;
+                mCachedConsoleErrors = newText;
             }
             else
             {
-                m_CachedConsoleErrors += Environment.NewLine + newText;
+                mCachedConsoleErrors += Environment.NewLine + newText;
             }
 
         }

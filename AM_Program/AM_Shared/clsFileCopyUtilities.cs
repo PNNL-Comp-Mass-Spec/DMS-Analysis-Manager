@@ -27,11 +27,11 @@ namespace AnalysisManagerBase
 
         #region "Module variables"
 
-        private readonly int m_DebugLevel;
+        private readonly int mDebugLevel;
 
-        private readonly clsMyEMSLUtilities m_MyEMSLUtilities;
+        private readonly clsMyEMSLUtilities mMyEMSLUtilities;
 
-        private readonly FileTools m_FileTools;
+        private readonly FileTools mFileTools;
 
         #endregion
 
@@ -78,9 +78,9 @@ namespace AnalysisManagerBase
             clsMyEMSLUtilities myEmslUtilities,
             short debugLevel)
         {
-            m_FileTools = prismFileTools;
-            m_MyEMSLUtilities = myEmslUtilities;
-            m_DebugLevel = debugLevel;
+            mFileTools = prismFileTools;
+            mMyEMSLUtilities = myEmslUtilities;
+            mDebugLevel = debugLevel;
         }
 
         /// <summary>
@@ -95,7 +95,7 @@ namespace AnalysisManagerBase
         public void CopyDirectory(string sourceFolderPath, string destFolderPath, List<string> fileNamesToSkip)
         {
             OnResetTimestampForQueueWaitTime();
-            m_FileTools.CopyDirectory(sourceFolderPath, destFolderPath, fileNamesToSkip);
+            mFileTools.CopyDirectory(sourceFolderPath, destFolderPath, fileNamesToSkip);
         }
 
         /// <summary>
@@ -206,7 +206,7 @@ namespace AnalysisManagerBase
 
                 if (sourceFolderPath.StartsWith(MYEMSL_PATH_FLAG))
                 {
-                    return m_MyEMSLUtilities.AddFileToDownloadQueue(sourceFilePath);
+                    return mMyEMSLUtilities.AddFileToDownloadQueue(sourceFilePath);
                 }
 
                 var destFilePath = Path.Combine(targetFolderPath, sourceFileName);
@@ -228,7 +228,7 @@ namespace AnalysisManagerBase
 
                 if (CopyFileWithRetry(sourceFilePath, destFilePath, true, maxCopyAttempts))
                 {
-                    if (m_DebugLevel > 3)
+                    if (mDebugLevel > 3)
                     {
                         OnStatusEvent("CopyFileToWorkDir, File copied: " + sourceFilePath);
                     }
@@ -320,7 +320,7 @@ namespace AnalysisManagerBase
 
                 if (CopyFileWithRetry(sourceFilePath, destFilePath, true, maxCopyAttempts))
                 {
-                    if (m_DebugLevel > 3)
+                    if (mDebugLevel > 3)
                     {
                         OnStatusEvent("CopyFileToWorkDirWithRename, File copied: " + sourceFilePath);
                     }
@@ -379,7 +379,7 @@ namespace AnalysisManagerBase
                     OnResetTimestampForQueueWaitTime();
                     var startTime = DateTime.UtcNow;
 
-                    if (m_FileTools.CopyFileUsingLocks(srcFilePath, destFilePath, overwrite))
+                    if (mFileTools.CopyFileUsingLocks(srcFilePath, destFilePath, overwrite))
                     {
                         OnCopyWithLocksComplete(startTime, destFilePath);
                         return true;

@@ -42,11 +42,11 @@ namespace AnalysisManagerMultiAlignPlugIn
 
             LogMessage("Running MultiAlign");
 
-            mCmdRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel);
+            mCmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel);
             RegisterEvents(mCmdRunner);
             mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
-            if (m_DebugLevel > 4)
+            if (mDebugLevel > 4)
             {
                 LogDebug("clsAnalysisToolRunnerMultiAlign.OperateAnalysisTool(): Enter");
             }
@@ -63,16 +63,16 @@ namespace AnalysisManagerMultiAlignPlugIn
             if (!StoreToolVersionInfo(progLoc))
             {
                 LogError("Aborting since StoreToolVersionInfo returned false");
-                m_message = "Error determining MultiAlign version";
+                mMessage = "Error determining MultiAlign version";
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
             // Note that MultiAlign will append ".db3" to this filename
-            var MultiAlignDatabaseName = string.Copy(m_Dataset);
+            var MultiAlignDatabaseName = string.Copy(mDatasetName);
 
             // Set up and execute a program runner to run MultiAlign
-            var cmdStr = " input.txt " + Path.Combine(m_WorkDir, m_jobParams.GetParam("ParmFileName")) + " " + m_WorkDir + " " + MultiAlignDatabaseName;
-            if (m_DebugLevel >= 1)
+            var cmdStr = " input.txt " + Path.Combine(mWorkDir, mJobParams.GetParam("ParmFileName")) + " " + mWorkDir + " " + MultiAlignDatabaseName;
+            if (mDebugLevel >= 1)
             {
                 LogDebug(progLoc + " " + cmdStr);
             }
@@ -86,8 +86,8 @@ namespace AnalysisManagerMultiAlignPlugIn
             bool processingSuccess;
             if (!mCmdRunner.RunProgram(progLoc, cmdStr, "MultiAlign", true))
             {
-                m_message = "Error running MultiAlign";
-                LogError(m_message + ", job " + m_JobNum);
+                mMessage = "Error running MultiAlign";
+                LogError(mMessage + ", job " + mJob);
                 processingSuccess = false;
             }
             else
@@ -96,8 +96,8 @@ namespace AnalysisManagerMultiAlignPlugIn
             }
 
             // Stop the job timer
-            m_StopTime = DateTime.UtcNow;
-            m_progress = PROGRESS_PCT_MULTI_ALIGN_DONE;
+            mStopTime = DateTime.UtcNow;
+            mProgress = PROGRESS_PCT_MULTI_ALIGN_DONE;
 
             // Add the current job data to the summary file
             UpdateSummaryFile();
@@ -125,9 +125,9 @@ namespace AnalysisManagerMultiAlignPlugIn
             }
 
             // Move the Plots folder to the result files folder
-            var diPlotsFolder = new DirectoryInfo(Path.Combine(m_WorkDir, "Plots"));
+            var diPlotsFolder = new DirectoryInfo(Path.Combine(mWorkDir, "Plots"));
 
-            var strTargetFolderPath = Path.Combine(Path.Combine(m_WorkDir, m_ResFolderName), "Plots");
+            var strTargetFolderPath = Path.Combine(Path.Combine(mWorkDir, mResultsFolderName), "Plots");
             diPlotsFolder.MoveTo(strTargetFolderPath);
 
             var success = CopyResultsToTransferDirectory();
@@ -139,14 +139,14 @@ namespace AnalysisManagerMultiAlignPlugIn
         protected CloseOutType RenameLogFile()
         {
             var LogExtension = "-log.txt";
-            var NewFilename = m_Dataset + LogExtension;
+            var NewFilename = mDatasetName + LogExtension;
 
             // This is what MultiAlign is currently naming the log file
-            var LogNameFilter = m_Dataset + ".db3-log*.txt";
+            var LogNameFilter = mDatasetName + ".db3-log*.txt";
             try
             {
                 // Get the log file name.  There should only be one log file
-                var Files = Directory.GetFiles(m_WorkDir, LogNameFilter);
+                var Files = Directory.GetFiles(mWorkDir, LogNameFilter);
 
                 // Go through each log file found.  Again, there should only be one log file
                 foreach (var TmpFile in Files)
@@ -171,8 +171,8 @@ namespace AnalysisManagerMultiAlignPlugIn
         /// </summary>
         public override void CopyFailedResultsToArchiveFolder()
         {
-            m_jobParams.AddResultFileExtensionToSkip(".UIMF");
-            m_jobParams.AddResultFileExtensionToSkip(".csv");
+            mJobParams.AddResultFileExtensionToSkip(".UIMF");
+            mJobParams.AddResultFileExtensionToSkip(".csv");
 
             base.CopyFailedResultsToArchiveFolder();
         }
@@ -185,7 +185,7 @@ namespace AnalysisManagerMultiAlignPlugIn
         {
             var strToolVersionInfo = string.Empty;
 
-            if (m_DebugLevel >= 2)
+            if (mDebugLevel >= 2)
             {
                 LogDebug("Determining tool version info");
             }

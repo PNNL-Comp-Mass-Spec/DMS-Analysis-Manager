@@ -16,7 +16,7 @@ namespace AnalysisManagerBase
         /// Debug level
         /// </summary>
         /// <remarks>Ranges from 0 (minimum output) to 5 (max detail)</remarks>
-        protected short m_DebugLevel = 1;
+        protected short mDebugLevel = 1;
 
         /// <summary>
         /// Show a status message at the console and optionally include in the log file, tagging it as a debug message
@@ -25,14 +25,14 @@ namespace AnalysisManagerBase
         /// <param name="logFileDebugLevel">
         /// Log level for whether to log to disk:
         /// 0 to always log
-        /// 1 to log if m_DebugLevel is >= 1
-        /// 2 to log if m_DebugLevel is >= 2
+        /// 1 to log if mDebugLevel is >= 1
+        /// 2 to log if mDebugLevel is >= 2
         /// 10 to not log to disk
         /// </param>
         /// <remarks>The message is shown in dark grey in the console.</remarks>
         protected void LogDebug(string statusMessage, int logFileDebugLevel = 0)
         {
-            var writeToLog = (logFileDebugLevel < 10 && (logFileDebugLevel == 0 || logFileDebugLevel <= m_DebugLevel));
+            var writeToLog = (logFileDebugLevel < 10 && (logFileDebugLevel == 0 || logFileDebugLevel <= mDebugLevel));
             LogTools.LogDebug(statusMessage, writeToLog);
         }
 
@@ -86,14 +86,14 @@ namespace AnalysisManagerBase
         /// <param name="logFileDebugLevel">
         /// Log level for whether to log to disk:
         /// 0 to always log
-        /// 1 to log if m_DebugLevel is >= 1
-        /// 2 to log if m_DebugLevel is >= 2
+        /// 1 to log if mDebugLevel is >= 1
+        /// 2 to log if mDebugLevel is >= 2
         /// 10 to not log to disk
         /// </param>
         /// <param name="isError">True if this is an error</param>
         protected void LogMessage(string statusMessage, int logFileDebugLevel = 0, bool isError = false)
         {
-            var writeToLog = (logFileDebugLevel < 10 && (logFileDebugLevel == 0 || logFileDebugLevel <= m_DebugLevel));
+            var writeToLog = (logFileDebugLevel < 10 && (logFileDebugLevel == 0 || logFileDebugLevel <= mDebugLevel));
             LogTools.LogMessage(statusMessage, isError, writeToLog);
         }
 

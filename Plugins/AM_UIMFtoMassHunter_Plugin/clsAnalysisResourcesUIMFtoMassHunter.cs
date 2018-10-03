@@ -41,8 +41,8 @@ namespace AnalysisManagerUIMFtoMassHunterPlugin
 
                 // Retrieve the parameter file
                 currentTask = "Retrieve the parameter file";
-                var paramFileName = m_jobParams.GetParam("ParmFileName");
-                var paramFileStoragePath = m_jobParams.GetParam("ParmFileStoragePath");
+                var paramFileName = mJobParams.GetParam("ParmFileName");
+                var paramFileStoragePath = mJobParams.GetParam("ParmFileStoragePath");
 
                 var success = FileSearch.RetrieveFile(paramFileName, paramFileStoragePath);
                 if (!success)
@@ -54,8 +54,8 @@ namespace AnalysisManagerUIMFtoMassHunterPlugin
                  */
 
                 // Retrieve the .UIMF file
-                var rawDataType = m_jobParams.GetParam("rawDataType");
-                var toolName = m_jobParams.GetParam("ToolName");
+                var rawDataType = mJobParams.GetParam("rawDataType");
+                var toolName = mJobParams.GetParam("ToolName");
 
                 switch (rawDataType.ToLower())
                 {
@@ -73,7 +73,7 @@ namespace AnalysisManagerUIMFtoMassHunterPlugin
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                if (!ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+                if (!ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -82,7 +82,7 @@ namespace AnalysisManagerUIMFtoMassHunterPlugin
                 {
                     // Valid dataset type
                     var uimfFileName = DatasetName + ".uimf";
-                    var inputFilePath = ResolveStoragePath(m_WorkingDir, uimfFileName);
+                    var inputFilePath = ResolveStoragePath(mWorkDir, uimfFileName);
 
                     if (string.IsNullOrWhiteSpace(inputFilePath))
                     {

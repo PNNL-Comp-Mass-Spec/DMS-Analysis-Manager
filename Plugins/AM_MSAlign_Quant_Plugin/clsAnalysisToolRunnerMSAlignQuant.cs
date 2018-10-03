@@ -54,7 +54,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                if (m_DebugLevel > 4)
+                if (mDebugLevel > 4)
                 {
                     LogDebug("clsAnalysisToolRunnerMSAlignQuant.RunTool(): Enter");
                 }
@@ -72,20 +72,20 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                 if (!StoreToolVersionInfo(mTargetedWorkflowsProgLoc))
                 {
                     LogError("Aborting since StoreToolVersionInfo returned false");
-                    m_message = "Error determining TargetedWorkflowsConsole version";
+                    mMessage = "Error determining TargetedWorkflowsConsole version";
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 // Create the TargetedWorkflowParams.xml file
-                m_progress = PROGRESS_PCT_CREATING_PARAMETERS;
+                mProgress = PROGRESS_PCT_CREATING_PARAMETERS;
 
                 var strTargetedQuantParamFilePath = CreateTargetedQuantParamFile();
                 if (string.IsNullOrEmpty(strTargetedQuantParamFilePath))
                 {
                     LogError("Aborting since CreateTargetedQuantParamFile returned false");
-                    if (string.IsNullOrEmpty(m_message))
+                    if (string.IsNullOrEmpty(mMessage))
                     {
-                        m_message = "Error creating " + TARGETED_QUANT_XML_FILE_NAME;
+                        mMessage = "Error creating " + TARGETED_QUANT_XML_FILE_NAME;
                     }
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -95,33 +95,33 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                 LogMessage("Running TargetedWorkflowsConsole");
 
                 // Set up and execute a program runner to run TargetedWorkflowsConsole
-                var strRawDataType = m_jobParams.GetParam("RawDataType");
+                var strRawDataType = mJobParams.GetParam("RawDataType");
                 string cmdStr;
 
                 switch (strRawDataType.ToLower())
                 {
                     case clsAnalysisResources.RAW_DATA_TYPE_DOT_RAW_FILES:
-                        cmdStr = " " + PossiblyQuotePath(Path.Combine(m_WorkDir, m_Dataset + clsAnalysisResources.DOT_RAW_EXTENSION));
+                        cmdStr = " " + PossiblyQuotePath(Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_RAW_EXTENSION));
                         break;
                     case clsAnalysisResources.RAW_DATA_TYPE_BRUKER_FT_FOLDER:
                     case clsAnalysisResources.RAW_DATA_TYPE_DOT_D_FOLDERS:
                         // Bruker_FT folders are actually .D folders
-                        cmdStr = " " + PossiblyQuotePath(Path.Combine(m_WorkDir, m_Dataset) + clsAnalysisResources.DOT_D_EXTENSION);
+                        cmdStr = " " + PossiblyQuotePath(Path.Combine(mWorkDir, mDatasetName) + clsAnalysisResources.DOT_D_EXTENSION);
                         break;
                     default:
-                        m_message = "Dataset type " + strRawDataType + " is not supported";
-                        LogDebug(m_message);
+                        mMessage = "Dataset type " + strRawDataType + " is not supported";
+                        LogDebug(mMessage);
                         return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 cmdStr += " " + PossiblyQuotePath(strTargetedQuantParamFilePath);
 
-                if (m_DebugLevel >= 1)
+                if (mDebugLevel >= 1)
                 {
                     LogDebug(mTargetedWorkflowsProgLoc + cmdStr);
                 }
 
-                mCmdRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel);
+                mCmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel);
                 RegisterEvents(mCmdRunner);
                 mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
@@ -129,9 +129,9 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                 mCmdRunner.CacheStandardOutput = true;
                 mCmdRunner.EchoOutputToConsole = true;
                 mCmdRunner.WriteConsoleOutputToFile = true;
-                mCmdRunner.ConsoleOutputFilePath = Path.Combine(m_WorkDir, TARGETED_WORKFLOWS_CONSOLE_OUTPUT);
+                mCmdRunner.ConsoleOutputFilePath = Path.Combine(mWorkDir, TARGETED_WORKFLOWS_CONSOLE_OUTPUT);
 
-                m_progress = PROGRESS_TARGETED_WORKFLOWS_STARTING;
+                mProgress = PROGRESS_TARGETED_WORKFLOWS_STARTING;
 
                 var processingSuccess = mCmdRunner.RunProgram(mTargetedWorkflowsProgLoc, cmdStr, "TargetedWorkflowsConsole", true);
 
@@ -158,12 +158,12 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                 if (processingSuccess)
                 {
                     // Make sure that the quantitation output file was created
-                    var strOutputFileName = m_Dataset + "_quant.txt";
+                    var strOutputFileName = mDatasetName + "_quant.txt";
 
-                    if (!File.Exists(Path.Combine(m_WorkDir, strOutputFileName)))
+                    if (!File.Exists(Path.Combine(mWorkDir, strOutputFileName)))
                     {
-                        m_message = "MSAlign_Quant result file not found (" + strOutputFileName + ")";
-                        LogError(m_message);
+                        mMessage = "MSAlign_Quant result file not found (" + strOutputFileName + ")";
+                        LogError(mMessage);
                         processingSuccess = false;
                     }
                 }
@@ -193,30 +193,30 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                 }
                 else
                 {
-                    m_progress = PROGRESS_PCT_COMPLETE;
-                    m_StatusTools.UpdateAndWrite(m_progress);
-                    if (m_DebugLevel >= 3)
+                    mProgress = PROGRESS_PCT_COMPLETE;
+                    mStatusTools.UpdateAndWrite(mProgress);
+                    if (mDebugLevel >= 3)
                     {
                         LogDebug("TargetedWorkflowsConsole Quantitation Complete");
                     }
 
-                    var consoleOutputFile = new FileInfo(Path.Combine(m_WorkDir, TARGETED_WORKFLOWS_CONSOLE_OUTPUT));
-                    var deconWorkflowsLogFile = new FileInfo(Path.Combine(m_WorkDir, m_Dataset + "_log.txt"));
+                    var consoleOutputFile = new FileInfo(Path.Combine(mWorkDir, TARGETED_WORKFLOWS_CONSOLE_OUTPUT));
+                    var deconWorkflowsLogFile = new FileInfo(Path.Combine(mWorkDir, mDatasetName + "_log.txt"));
 
                     if (consoleOutputFile.Exists && deconWorkflowsLogFile.Exists && consoleOutputFile.Length > deconWorkflowsLogFile.Length)
                     {
                         // Don't keep the _log.txt file since the Console_Output file has all of the same information
-                        m_jobParams.AddResultFileToSkip(deconWorkflowsLogFile.Name);
+                        mJobParams.AddResultFileToSkip(deconWorkflowsLogFile.Name);
                     }
 
                     // Don't keep the _peaks.txt file since it can get quite large
-                    m_jobParams.AddResultFileToSkip(m_Dataset + "_peaks.txt");
+                    mJobParams.AddResultFileToSkip(mDatasetName + "_peaks.txt");
                 }
 
-                m_progress = PROGRESS_PCT_COMPLETE;
+                mProgress = PROGRESS_PCT_COMPLETE;
 
                 // Stop the job timer
-                m_StopTime = DateTime.UtcNow;
+                mStopTime = DateTime.UtcNow;
 
                 // Add the current job data to the summary file
                 UpdateSummaryFile();
@@ -240,8 +240,8 @@ namespace AnalysisManagerMSAlignQuantPlugIn
             }
             catch (Exception ex)
             {
-                m_message = "Exception in MSAlignQuantPlugin->RunTool";
-                LogError(m_message, ex);
+                mMessage = "Exception in MSAlignQuantPlugin->RunTool";
+                LogError(mMessage, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -258,13 +258,13 @@ namespace AnalysisManagerMSAlignQuantPlugIn
 
             try
             {
-                strTargetedQuantParamFilePath = Path.Combine(m_WorkDir, TARGETED_QUANT_XML_FILE_NAME);
-                var strMSAlignResultTableName = m_Dataset + clsAnalysisResourcesMSAlignQuant.MSALIGN_RESULT_TABLE_SUFFIX;
+                strTargetedQuantParamFilePath = Path.Combine(mWorkDir, TARGETED_QUANT_XML_FILE_NAME);
+                var strMSAlignResultTableName = mDatasetName + clsAnalysisResourcesMSAlignQuant.MSALIGN_RESULT_TABLE_SUFFIX;
 
                 // Optionally make a trimmed version of the ResultTable file for testing purposes
 
-                // var strFullResultsPath = Path.Combine(m_WorkDir, strMSAlignResultTableName);
-                // var strTrimmedFilePath = Path.Combine(m_WorkDir, Dataset + "_TrimmedResults.tmp");
+                // var strFullResultsPath = Path.Combine(mWorkDir, strMSAlignResultTableName);
+                // var strTrimmedFilePath = Path.Combine(mWorkDir, Dataset + "_TrimmedResults.tmp");
                 //
                 // using (var srFullResults = new StreamReader(new FileStream(strFullResultsPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 // using (var swTrimmedResults = new StreamWriter(new FileStream(strTrimmedFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
@@ -284,10 +284,10 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                 //
                 // File.Move(strTrimmedFilePath, strFullResultsPath);
 
-                var strWorkflowParamFileName = m_jobParams.GetParam("MSAlignQuantParamFile");
+                var strWorkflowParamFileName = mJobParams.GetParam("MSAlignQuantParamFile");
                 if (string.IsNullOrEmpty(strWorkflowParamFileName))
                 {
-                    m_message = NotifyMissingParameter(m_jobParams, "MSAlignQuantParamFile");
+                    mMessage = NotifyMissingParameter(mJobParams, "MSAlignQuantParamFile");
                     return string.Empty;
                 }
 
@@ -303,11 +303,11 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                     WriteXMLSetting(swTargetedQuantXMLFile, "DeleteLocalDatasetAfterProcessing", "false");
                     WriteXMLSetting(swTargetedQuantXMLFile, "FileContainingDatasetPaths", "");
                     WriteXMLSetting(swTargetedQuantXMLFile, "FolderPathForCopiedRawDataset", "");
-                    WriteXMLSetting(swTargetedQuantXMLFile, "LoggingFolder", m_WorkDir);
-                    WriteXMLSetting(swTargetedQuantXMLFile, "TargetsFilePath", Path.Combine(m_WorkDir, strMSAlignResultTableName));
+                    WriteXMLSetting(swTargetedQuantXMLFile, "LoggingFolder", mWorkDir);
+                    WriteXMLSetting(swTargetedQuantXMLFile, "TargetsFilePath", Path.Combine(mWorkDir, strMSAlignResultTableName));
                     WriteXMLSetting(swTargetedQuantXMLFile, "TargetType", "LcmsFeature");
-                    WriteXMLSetting(swTargetedQuantXMLFile, "ResultsFolder", m_WorkDir);
-                    WriteXMLSetting(swTargetedQuantXMLFile, "WorkflowParameterFile", Path.Combine(m_WorkDir, strWorkflowParamFileName));
+                    WriteXMLSetting(swTargetedQuantXMLFile, "ResultsFolder", mWorkDir);
+                    WriteXMLSetting(swTargetedQuantXMLFile, "WorkflowParameterFile", Path.Combine(mWorkDir, strWorkflowParamFileName));
                     WriteXMLSetting(swTargetedQuantXMLFile, "WorkflowType", "TopDownTargetedWorkflowExecutor1");
 
                     swTargetedQuantXMLFile.WriteEndElement();    // WorkflowParameters
@@ -317,8 +317,8 @@ namespace AnalysisManagerMSAlignQuantPlugIn
             }
             catch (Exception ex)
             {
-                m_message = "Exception creating " + TARGETED_QUANT_XML_FILE_NAME;
-                LogError(m_message + ": " + ex.Message);
+                mMessage = "Exception creating " + TARGETED_QUANT_XML_FILE_NAME;
+                LogError(mMessage + ": " + ex.Message);
                 return string.Empty;
             }
 
@@ -378,7 +378,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
 
                 if (!File.Exists(strConsoleOutputFilePath))
                 {
-                    if (m_DebugLevel >= 4)
+                    if (mDebugLevel >= 4)
                     {
                         LogDebug("Console output file not found: " + strConsoleOutputFilePath);
                     }
@@ -386,7 +386,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                     return;
                 }
 
-                if (m_DebugLevel >= 4)
+                if (mDebugLevel >= 4)
                 {
                     LogDebug("Parsing file " + strConsoleOutputFilePath);
                 }
@@ -448,7 +448,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
 
                             if (intCharIndex >= 0)
                             {
-                                // Error message found; update m_message
+                                // Error message found; update mMessage
                                 var strNewError = strLineIn.Substring(intCharIndex);
 
                                 if (strNewError.Contains("all peptides contain unknown modifications"))
@@ -472,15 +472,15 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                     sngEffectiveProgress += (float)((PROGRESS_TARGETED_WORKFLOWS_PROCESSING_COMPLETE - PROGRESS_TARGETED_WORKFLOWS_PEAKS_LOADED) * subProgressAddOn);
                 }
 
-                if (m_progress < sngEffectiveProgress)
+                if (mProgress < sngEffectiveProgress)
                 {
-                    m_progress = sngEffectiveProgress;
+                    mProgress = sngEffectiveProgress;
                 }
             }
             catch (Exception ex)
             {
                 // Ignore errors here
-                if (m_DebugLevel >= 2)
+                if (mDebugLevel >= 2)
                 {
                     LogError("Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
                 }
@@ -515,7 +515,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
 
         #region "Event Handlers"
 
-        private DateTime dtLastConsoleOutputParse = DateTime.MinValue;
+        private DateTime mLastConsoleOutputParse = DateTime.MinValue;
 
         /// <summary>
         /// Event handler for CmdRunner.LoopWaiting event
@@ -525,11 +525,11 @@ namespace AnalysisManagerMSAlignQuantPlugIn
         {
             UpdateStatusFile();
 
-            if (DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= 15)
+            if (DateTime.UtcNow.Subtract(mLastConsoleOutputParse).TotalSeconds >= 15)
             {
-                dtLastConsoleOutputParse = DateTime.UtcNow;
+                mLastConsoleOutputParse = DateTime.UtcNow;
 
-                ParseConsoleOutputFile(Path.Combine(m_WorkDir, TARGETED_WORKFLOWS_CONSOLE_OUTPUT));
+                ParseConsoleOutputFile(Path.Combine(mWorkDir, TARGETED_WORKFLOWS_CONSOLE_OUTPUT));
 
                 LogProgress("MSAlign Quant");
             }

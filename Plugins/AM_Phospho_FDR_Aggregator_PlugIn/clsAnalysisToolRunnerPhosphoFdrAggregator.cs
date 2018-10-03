@@ -83,20 +83,20 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                if (m_DebugLevel > 4)
+                if (mDebugLevel > 4)
                 {
                     LogDebug("clsAnalysisToolRunnerPhosphoFdrAggregator.RunTool(): Enter");
                 }
 
                 // Determine the path to the Ascore program
                 // AScoreProgLoc will be something like this: "C:\DMS_Programs\AScore\AScore_Console.exe"
-                var progLocAScore = m_mgrParams.GetParam("AScoreprogloc");
+                var progLocAScore = mMgrParams.GetParam("AScoreprogloc");
                 if (!File.Exists(progLocAScore))
                 {
                     if (string.IsNullOrWhiteSpace(progLocAScore))
                         progLocAScore = "Parameter 'AScoreprogloc' not defined for this manager";
-                    m_message = "Cannot find AScore program file";
-                    LogError(m_message + ": " + progLocAScore);
+                    mMessage = "Cannot find AScore program file";
+                    LogError(mMessage + ": " + progLocAScore);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
@@ -104,7 +104,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                 if (!StoreToolVersionInfo(progLocAScore))
                 {
                     LogError("Aborting since StoreToolVersionInfo returned false");
-                    m_message = "Error determining AScore version";
+                    mMessage = "Error determining AScore version";
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
@@ -134,10 +134,10 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                 // Concatenate the log files
                 ConcatenateLogFiles(processingRuntimes);
 
-                m_progress = PROGRESS_PCT_PHOSPHO_FDR_COMPLETE;
+                mProgress = PROGRESS_PCT_PHOSPHO_FDR_COMPLETE;
 
                 // Stop the job timer
-                m_StopTime = DateTime.UtcNow;
+                mStopTime = DateTime.UtcNow;
 
                 // Add the current job data to the summary file
                 UpdateSummaryFile();
@@ -166,8 +166,8 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
             }
             catch (Exception ex)
             {
-                m_message = "Error in PhosphoFdrAggregator->RunTool";
-                LogError(m_message, ex);
+                mMessage = "Error in PhosphoFdrAggregator->RunTool";
+                LogError(mMessage, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -214,8 +214,8 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
 
                 if (lookupSink.Values.Count == 0)
                 {
-                    m_message = fiMsgfFile.Name + " was empty for job " + jobNumber;
-                    LogError(m_message);
+                    mMessage = fiMsgfFile.Name + " was empty for job " + jobNumber;
+                    LogError(mMessage);
                     return false;
                 }
 
@@ -241,15 +241,15 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                 fiUpdatedfile.Refresh();
                 if (!fiUpdatedfile.Exists)
                 {
-                    m_message = "Mage did not create " + fiUpdatedfile.Name + " for job " + jobNumber;
-                    LogError(m_message);
+                    mMessage = "Mage did not create " + fiUpdatedfile.Name + " for job " + jobNumber;
+                    LogError(mMessage);
                     return false;
                 }
 
                 if (fiUpdatedfile.Length == 0)
                 {
-                    m_message = fiUpdatedfile.Name + " is 0 bytes for job " + jobNumber;
-                    LogError(m_message);
+                    mMessage = fiUpdatedfile.Name + " is 0 bytes for job " + jobNumber;
+                    LogError(mMessage);
                     return false;
                 }
 
@@ -287,7 +287,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
         {
             try
             {
-                var targetFile = Path.Combine(m_WorkDir, ASCORE_CONSOLE_OUTPUT_PREFIX + ".txt");
+                var targetFile = Path.Combine(mWorkDir, ASCORE_CONSOLE_OUTPUT_PREFIX + ".txt");
                 using (var swConcatenatedFile = new StreamWriter(new FileStream(targetFile, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
                     var jobFolderlist = GetJobFolderList();
@@ -352,7 +352,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
 
             try
             {
-                var targetFile = Path.Combine(m_WorkDir, "Concatenated" + fileSuffix);
+                var targetFile = Path.Combine(mWorkDir, "Concatenated" + fileSuffix);
                 using (var swConcatenatedFile = new StreamWriter(new FileStream(targetFile, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
                     var jobFolderlist = GetJobFolderList();
@@ -427,15 +427,15 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
             }
             catch (Exception ex)
             {
-                m_message = "File could not be concatenated: " + currentFile;
-                LogError("ConcatenateResultFiles, " + m_message + ": " + ex.Message);
+                mMessage = "File could not be concatenated: " + currentFile;
+                LogError("ConcatenateResultFiles, " + mMessage + ": " + ex.Message);
                 return false;
             }
         }
 
         protected void CreateJobToDatasetMapFile(List<udtJobMetadataForAScore> jobsProcessed)
         {
-            var outputFilePath = Path.Combine(m_WorkDir, "Job_to_Dataset_Map.txt");
+            var outputFilePath = Path.Combine(mWorkDir, "Job_to_Dataset_Map.txt");
 
             using (var swMapFile = new StreamWriter(new FileStream(outputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
             {
@@ -502,13 +502,13 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
 
             if (string.IsNullOrWhiteSpace(bestAScoreParamFileName))
             {
-                m_message = "Programming bug, AScore parameter file not found in ProcessSynopsisFiles " +
+                mMessage = "Programming bug, AScore parameter file not found in ProcessSynopsisFiles " +
                     "(clsAnalysisResourcesPhosphoFdrAggregator.GetResources should have already flagged this as an error)";
-                LogError(m_message);
+                LogError(mMessage);
                 return string.Empty;
             }
 
-            return Path.Combine(m_WorkDir, bestAScoreParamFileName);
+            return Path.Combine(mWorkDir, bestAScoreParamFileName);
         }
 
         protected bool DetermineInputFilePaths(DirectoryInfo jobFolder, ref udtJobMetadataForAScore udtJobMetadata, List<string> fileSuffixesToCombine)
@@ -541,7 +541,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
 
             if (string.IsNullOrWhiteSpace(fhtfile))
             {
-                m_message = "Analysis tool " + udtJobMetadata.ToolName + " is not supported by the PhosphoFdrAggregator";
+                mMessage = "Analysis tool " + udtJobMetadata.ToolName + " is not supported by the PhosphoFdrAggregator";
                 return false;
             }
 
@@ -617,11 +617,11 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                 var dtaFile = dtaFiles.First();
                 if (!UnzipFile(dtaFile.FullName))
                 {
-                    m_message = "Error unzipping " + dtaFile.Name;
+                    mMessage = "Error unzipping " + dtaFile.Name;
                     return string.Empty;
                 }
 
-                return Path.Combine(m_WorkDir, Path.GetFileNameWithoutExtension(dtaFile.Name) + ".txt");
+                return Path.Combine(mWorkDir, Path.GetFileNameWithoutExtension(dtaFile.Name) + ".txt");
             }
 
             var mzMLFiles = diJobFolder.GetFiles("*.mzML.gz");
@@ -630,14 +630,14 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                 var mzMLFile = mzMLFiles.First();
                 if (!GUnzipFile(mzMLFile.FullName))
                 {
-                    m_message = "Error unzipping " + mzMLFile.Name;
+                    mMessage = "Error unzipping " + mzMLFile.Name;
                     return string.Empty;
                 }
 
-                return Path.Combine(m_WorkDir, Path.GetFileNameWithoutExtension(mzMLFile.Name));
+                return Path.Combine(mWorkDir, Path.GetFileNameWithoutExtension(mzMLFile.Name));
             }
 
-            m_message = "Folder " + diJobFolder.Name + " does not have a _dta.zip file or .mzML.gz file";
+            mMessage = "Folder " + diJobFolder.Name + " does not have a _dta.zip file or .mzML.gz file";
             return string.Empty;
         }
 
@@ -645,13 +645,13 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
         {
             foreach (var paramName in parameterNames)
             {
-                var paramFileName = m_jobParams.GetJobParameter(paramName, string.Empty);
+                var paramFileName = mJobParams.GetJobParameter(paramName, string.Empty);
                 if (string.IsNullOrWhiteSpace(paramFileName))
                 {
                     continue;
                 }
 
-                if (File.Exists(Path.Combine(m_WorkDir, paramFileName)))
+                if (File.Exists(Path.Combine(mWorkDir, paramFileName)))
                 {
                     return paramFileName;
                 }
@@ -669,7 +669,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
         {
             var jobFolderList = new Dictionary<int, DirectoryInfo>();
 
-            var diWorkingFolder = new DirectoryInfo(m_WorkDir);
+            var diWorkingFolder = new DirectoryInfo(mWorkDir);
 
             foreach (var jobFolder in diWorkingFolder.GetDirectories("Job*"))
             {
@@ -714,7 +714,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
             {
                 if (!File.Exists(strConsoleOutputFilePath))
                 {
-                    if (m_DebugLevel >= 4)
+                    if (mDebugLevel >= 4)
                     {
                         LogDebug("Console output file not found: " + strConsoleOutputFilePath);
                     }
@@ -722,7 +722,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                     return;
                 }
 
-                if (m_DebugLevel >= 4)
+                if (mDebugLevel >= 4)
                 {
                     LogDebug("Parsing file " + strConsoleOutputFilePath);
                 }
@@ -766,15 +766,15 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
 
                 var progressComplete = ComputeIncrementalProgress(PROGRESS_PCT_PHOSPHO_FDR_RUNNING, PROGRESS_PCT_PHOSPHO_FDR_COMPLETE, subtaskProgress);
 
-                if (m_progress < progressComplete)
+                if (mProgress < progressComplete)
                 {
-                    m_progress = progressComplete;
+                    mProgress = progressComplete;
                 }
             }
             catch (Exception ex)
             {
                 // Ignore errors here
-                if (m_DebugLevel >= 2)
+                if (mDebugLevel >= 2)
                 {
                     LogError("Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
                 }
@@ -810,9 +810,9 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
 
                 var jobFolderlist = GetJobFolderList();
 
-                m_progress = PROGRESS_PCT_PHOSPHO_FDR_RUNNING;
+                mProgress = PROGRESS_PCT_PHOSPHO_FDR_RUNNING;
 
-                mCmdRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel);
+                mCmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel);
                 RegisterEvents(mCmdRunner);
                 mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
@@ -836,9 +836,9 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
 
                     if (!jobToDatasetMap.TryGetValue(udtJobMetadata.Job.ToString(), out var datasetName))
                     {
-                        m_message = "Job " + udtJobMetadata.Job + " not found in packed job parameter " +
+                        mMessage = "Job " + udtJobMetadata.Job + " not found in packed job parameter " +
                                     clsAnalysisResources.JOB_PARAM_DICTIONARY_JOB_DATASET_MAP;
-                        LogError("Error in ProcessSynopsisFiles: " + m_message);
+                        LogError("Error in ProcessSynopsisFiles: " + mMessage);
                         jobCountSkippedUnknownJob++;
                         continue;
                     }
@@ -879,7 +879,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                             success = RunAscore(progLoc, udtJobMetadata, udtJobMetadata.FirstHitsFilePath, bestAScoreParamFilePath, "fht", processingRuntimes);
                             if (!success)
                             {
-                                // An error has already been logged, and m_message has been updated
+                                // An error has already been logged, and mMessage has been updated
                                 successOverall = false;
                             }
                         }
@@ -890,7 +890,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                             success = RunAscore(progLoc, udtJobMetadata, udtJobMetadata.SynopsisFilePath, bestAScoreParamFilePath, "syn", processingRuntimes);
                             if (!success)
                             {
-                                // An error has already been logged, and m_message has been updated
+                                // An error has already been logged, and mMessage has been updated
                                 successOverall = false;
                             }
                         }
@@ -911,7 +911,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                     mJobFoldersProcessed += 1;
                     var subTaskProgress = mJobFoldersProcessed / (float)mTotalJobFolders * 100f;
 
-                    m_progress = ComputeIncrementalProgress(PROGRESS_PCT_PHOSPHO_FDR_RUNNING, PROGRESS_PCT_PHOSPHO_FDR_COMPLETE, subTaskProgress);
+                    mProgress = ComputeIncrementalProgress(PROGRESS_PCT_PHOSPHO_FDR_RUNNING, PROGRESS_PCT_PHOSPHO_FDR_COMPLETE, subTaskProgress);
                 }
 
                 // see the DMS_FailedResults directory ...
@@ -949,8 +949,8 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
             }
             catch (Exception ex)
             {
-                if (string.IsNullOrEmpty(m_message))
-                    m_message = "Error in ProcessSynopsisFiles";
+                if (string.IsNullOrEmpty(mMessage))
+                    mMessage = "Error in ProcessSynopsisFiles";
                 LogError("Error in ProcessSynopsisFiles: " + ex.Message);
                 return false;
             }
@@ -1011,12 +1011,12 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
             // Create an updated version of the input file, with updated peptide sequences and appended AScore-related columns
             cmdStr += " -U:" + PossiblyQuotePath(updatedInputFileName);
 
-            if (m_DebugLevel >= 1)
+            if (mDebugLevel >= 1)
             {
                 LogDebug(progLoc + cmdStr);
             }
 
-            mCmdRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel);
+            mCmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel);
             RegisterEvents(mCmdRunner);
             mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
@@ -1081,8 +1081,8 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                 return false;
             }
 
-            m_StatusTools.UpdateAndWrite(m_progress);
-            if (m_DebugLevel >= 3)
+            mStatusTools.UpdateAndWrite(mProgress);
+            if (mDebugLevel >= 3)
             {
                 LogDebug("AScore search complete for data package job " + udtJobMetadata.Job);
             }
@@ -1106,7 +1106,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
             return success;
         }
 
-        private DateTime dtLastConsoleOutputParse = DateTime.MinValue;
+        private DateTime mLastConsoleOutputParse = DateTime.MinValue;
 
         /// <summary>
         /// Event handler for mCmdRunner.LoopWaiting event
@@ -1117,9 +1117,9 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
             UpdateStatusFile();
 
             // Parse the console output file every 15 seconds
-            if (DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= 15)
+            if (DateTime.UtcNow.Subtract(mLastConsoleOutputParse).TotalSeconds >= 15)
             {
-                dtLastConsoleOutputParse = DateTime.UtcNow;
+                mLastConsoleOutputParse = DateTime.UtcNow;
 
                 ParseConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath);
 

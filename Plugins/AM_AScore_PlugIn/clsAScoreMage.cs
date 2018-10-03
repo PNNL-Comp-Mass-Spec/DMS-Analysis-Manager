@@ -20,8 +20,8 @@ namespace AnalysisManager_AScore_PlugIn
         protected string mResultsDBFileName = string.Empty;
         protected string mWorkingDir;
 
-        protected JobParameters m_jobParams;
-        protected ManagerParameters m_mgrParams;
+        protected JobParameters mJobParams;
+        protected ManagerParameters mMgrParams;
 
         protected string mSearchType = string.Empty;
         protected string mParamFilename = string.Empty;
@@ -71,22 +71,22 @@ namespace AnalysisManager_AScore_PlugIn
         /// <param name="dotNetZipTools"></param>
         private void Initialize(IJobParams jobParms, IMgrParams mgrParms, clsDotNetZipTools dotNetZipTools)
         {
-            m_jobParams = new JobParameters(jobParms);
-            m_mgrParams = new ManagerParameters(mgrParms);
-            mResultsDBFileName = m_jobParams.RequireJobParam("ResultsBaseName") + ".db3";
-            mWorkingDir = m_mgrParams.RequireMgrParam("workdir");
+            mJobParams = new JobParameters(jobParms);
+            mMgrParams = new ManagerParameters(mgrParms);
+            mResultsDBFileName = mJobParams.RequireJobParam("ResultsBaseName") + ".db3";
+            mWorkingDir = mMgrParams.RequireMgrParam("workdir");
 
-            mSearchType = m_jobParams.RequireJobParam("AScoreSearchType");
+            mSearchType = mJobParams.RequireJobParam("AScoreSearchType");
 
             if (mSearchType == "msgfdb")
                 mSearchType = "msgfplus";
-            mParamFilename = m_jobParams.GetJobParam("AScoreParamFilename");
+            mParamFilename = mJobParams.GetJobParam("AScoreParamFilename");
 
 
             // Define the path to the fasta file
             mFastaFilePath = string.Empty;
 
-            var localOrgDbFolder = m_mgrParams.RequireMgrParam("orgdbdir");
+            var localOrgDbFolder = mMgrParams.RequireMgrParam("orgdbdir");
             var fastaFileName = jobParms.GetParam("PeptideSearch", "generatedFastaName");
             if (!string.IsNullOrEmpty(fastaFileName))
             {
@@ -113,7 +113,7 @@ namespace AnalysisManager_AScore_PlugIn
         /// </summary>
         public bool Run()
         {
-            var dataPackageID = m_jobParams.RequireJobParam("DataPackageID");
+            var dataPackageID = mJobParams.RequireJobParam("DataPackageID");
 
             if (mParamFilename == string.Empty)
                 return true;
@@ -148,7 +148,7 @@ namespace AnalysisManager_AScore_PlugIn
             }
 
             const string strParamFileStoragePathKeyName = clsGlobal.STEPTOOL_PARAMFILESTORAGEPATH_PREFIX + "AScore";
-            var strMAParameterFileStoragePath = m_mgrParams.RequireMgrParam(strParamFileStoragePathKeyName);
+            var strMAParameterFileStoragePath = mMgrParams.RequireMgrParam(strParamFileStoragePathKeyName);
             if (string.IsNullOrEmpty(strMAParameterFileStoragePath))
             {
                 strMAParameterFileStoragePath = @"\\gigasax\DMS_Parameter_Files\AScore";
@@ -199,7 +199,7 @@ namespace AnalysisManager_AScore_PlugIn
         private SimpleSink GetListOfDataPackageJobsToProcess(string dataPackageID, string tool)
         {
             const string sqlTemplate = @"SELECT * FROM V_Mage_Data_Package_Analysis_Jobs WHERE Data_Package_ID = {0} AND Tool LIKE '%{1}%'";
-            var connStr = m_mgrParams.RequireMgrParam("ConnectionString");
+            var connStr = mMgrParams.RequireMgrParam("ConnectionString");
             var sql = string.Format(sqlTemplate, new object[] { dataPackageID, tool });
             var jobList = GetListOfItemsFromDB(sql, connStr);
             return jobList;
@@ -211,7 +211,7 @@ namespace AnalysisManager_AScore_PlugIn
         /// <param name="jobsToProcess"></param>
         private void ApplyAScoreToJobs(ISinkModule jobsToProcess)
         {
-            var connStr = m_mgrParams.RequireMgrParam("ConnectionString");
+            var connStr = mMgrParams.RequireMgrParam("ConnectionString");
 
             var ascoreModule = new MageAScoreModule(connStr);
 
@@ -378,7 +378,7 @@ namespace AnalysisManager_AScore_PlugIn
 
             // extractionType should be 'Sequest First Hits' or 'MSGF+ First Hits'
             // Legacy jobs may have 'MSGFDB First Hits'
-            var extractionType = m_jobParams.RequireJobParam("ExtractionType");
+            var extractionType = mJobParams.RequireJobParam("ExtractionType");
 
             if (extractionType == "MSGFDB First Hits")
                 extractionType = "MSGF+ First Hits";
@@ -387,9 +387,9 @@ namespace AnalysisManager_AScore_PlugIn
                 throw new Exception("Invalid extractionType not supported by Mage: " + extractionType);
 
             extractionParms.RType = ResultType.TypeList[extractionType];
-            extractionParms.KeepAllResults = m_jobParams.GetJobParam("KeepAllResults", "Yes");
-            extractionParms.ResultFilterSetID = m_jobParams.GetJobParam("ResultFilterSetID", "All Pass");
-            extractionParms.MSGFCutoff = m_jobParams.GetJobParam("MSGFCutoff", "All Pass");
+            extractionParms.KeepAllResults = mJobParams.GetJobParam("KeepAllResults", "Yes");
+            extractionParms.ResultFilterSetID = mJobParams.GetJobParam("ResultFilterSetID", "All Pass");
+            extractionParms.MSGFCutoff = mJobParams.GetJobParam("MSGFCutoff", "All Pass");
 
             return extractionParms;
         }

@@ -10,11 +10,10 @@ namespace AnalysisManager_Ape_PlugIn
     /// </summary>
    public class clsAnalysisToolRunnerApe : clsAnalysisToolRunnerBase
    {
-       protected const float PROGRESS_PCT_APE_START = 1;
-       protected const float PROGRESS_PCT_APE_DONE = 99;
+       private const float PROGRESS_PCT_APE_START = 1;
+       private const float PROGRESS_PCT_APE_DONE = 99;
 
-       protected string m_CurrentApeTask = string.Empty;
-       protected DateTime m_LastStatusUpdateTime;
+       private string mCurrentApeTask = string.Empty;
 
         /// <summary>
         /// Primary entry point for running this tool
@@ -35,25 +34,24 @@ namespace AnalysisManager_Ape_PlugIn
                 if (!StoreToolVersionInfo())
                 {
                     LogError("Aborting since StoreToolVersionInfo returned false");
-                    m_message = "Error determining Ape version";
+                    mMessage = "Error determining Ape version";
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                m_CurrentApeTask = "Running Ape";
-                m_LastStatusUpdateTime = DateTime.UtcNow;
+                mCurrentApeTask = "Running Ape";
                 UpdateStatusRunning();
 
-                LogMessage(m_CurrentApeTask);
+                LogMessage(mCurrentApeTask);
 
                 // Change the name of the log file for the local log file to the plugin log filename
-                var logFileName = Path.Combine(m_WorkDir, "Ape_Log.txt");
+                var logFileName = Path.Combine(mWorkDir, "Ape_Log.txt");
                 LogTools.ChangeLogFileBaseName(logFileName, appendDateToBaseName: false);
 
                 bool processingSuccess;
 
                 try
                 {
-                    m_progress = PROGRESS_PCT_APE_START;
+                    mProgress = PROGRESS_PCT_APE_START;
 
                     processingSuccess = RunApe();
 
@@ -61,10 +59,10 @@ namespace AnalysisManager_Ape_PlugIn
                     ResetLogFileNameToDefault();
 
                     if (!processingSuccess) {
-                        if (string.IsNullOrWhiteSpace(m_message))
+                        if (string.IsNullOrWhiteSpace(mMessage))
                             LogError("Error running Ape");
                         else
-                            LogError("Error running Ape: " + m_message);
+                            LogError("Error running Ape: " + mMessage);
                     }
                 }
                 catch (Exception ex)
@@ -74,12 +72,12 @@ namespace AnalysisManager_Ape_PlugIn
 
                     LogError("Error running Ape: " + ex.Message);
                     processingSuccess = false;
-                    m_message = "Error running Ape";
+                    mMessage = "Error running Ape";
                 }
 
                 // Stop the job timer
-                m_StopTime = DateTime.UtcNow;
-                m_progress = PROGRESS_PCT_APE_DONE;
+                mStopTime = DateTime.UtcNow;
+                mProgress = PROGRESS_PCT_APE_DONE;
 
                 // Add the current job data to the summary file
                 UpdateSummaryFile();
@@ -97,9 +95,9 @@ namespace AnalysisManager_Ape_PlugIn
                 }
 
                 // Override the output folder name and the dataset name (since this is a dataset aggregation job)
-                m_ResFolderName = m_jobParams.GetParam("StepOutputFolderName");
-                m_Dataset = m_jobParams.GetParam(clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME);
-                m_jobParams.SetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME, m_ResFolderName);
+                mResultsFolderName = mJobParams.GetParam("StepOutputFolderName");
+                mDatasetName = mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME);
+                mJobParams.SetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME, mResultsFolderName);
 
                 var success = CopyResultsToTransferDirectory();
 
@@ -107,8 +105,8 @@ namespace AnalysisManager_Ape_PlugIn
 
             }
             catch (Exception ex) {
-                m_message = "Error in ApePlugin->RunTool";
-                LogError(m_message, ex);
+                mMessage = "Error in ApePlugin->RunTool";
+                LogError(mMessage, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
 
             }
@@ -119,15 +117,15 @@ namespace AnalysisManager_Ape_PlugIn
        /// <summary>
        /// Run the Ape pipeline(s) listed in "ApeOperations" parameter
        /// </summary>
-       protected bool RunApe()
+       private bool RunApe()
        {
            // run the appropriate Mage pipeline(s) according to operations list parameter
-           var apeOperations = m_jobParams.GetParam("ApeOperations");
-           var ops = new clsApeAMOperations(m_jobParams, m_mgrParams);
+           var apeOperations = mJobParams.GetParam("ApeOperations");
+           var ops = new clsApeAMOperations(mJobParams, mMgrParams);
            var bSuccess = ops.RunApeOperations(apeOperations);
 
            if (!bSuccess)
-               m_message = "Error running ApeOperations: " + ops.ErrorMessage;
+               mMessage = "Error running ApeOperations: " + ops.ErrorMessage;
 
            return bSuccess;
 
@@ -137,12 +135,12 @@ namespace AnalysisManager_Ape_PlugIn
         /// Stores the tool version info in the database
         /// </summary>
         /// <remarks></remarks>
-        protected bool StoreToolVersionInfo()
+        private bool StoreToolVersionInfo()
         {
 
             var toolVersionInfo = string.Empty;
 
-            if (m_DebugLevel >= 2) {
+            if (mDebugLevel >= 2) {
                 LogDebug("Determining tool version info");
             }
 

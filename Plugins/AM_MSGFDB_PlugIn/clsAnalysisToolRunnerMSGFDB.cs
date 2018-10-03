@@ -73,7 +73,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                if (m_DebugLevel > 4)
+                if (mDebugLevel > 4)
                 {
                     LogDebug("clsAnalysisToolRunnerMSGFDB.RunTool(): Enter");
                 }
@@ -92,9 +92,9 @@ namespace AnalysisManagerMSGFDBPlugIn
                 var processingResult = RunMSGFPlus(javaProgLoc, out var fiMSGFPlusResults, out var processingError, out var tooManySkippedSpectra);
                 if (processingResult != CloseOutType.CLOSEOUT_SUCCESS)
                 {
-                    if (string.IsNullOrEmpty(m_message))
+                    if (string.IsNullOrEmpty(mMessage))
                     {
-                        m_message = "Unknown error running MSGF+";
+                        mMessage = "Unknown error running MSGF+";
                     }
 
                     // If the MSGFPlus_ConsoleOutput.txt file or the .mzid file exist, we want to move them to the failed results folder
@@ -104,7 +104,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                     if (string.IsNullOrEmpty(mWorkingDirectoryInUse))
                     {
-                        diWorkingDirectory = new DirectoryInfo(m_WorkDir);
+                        diWorkingDirectory = new DirectoryInfo(mWorkDir);
                     }
                     else
                     {
@@ -141,7 +141,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                     if (dirtyFileExists)
                     {
-                        m_message = "MSGF+ _dirty.gz file found; this indicates a processing error";
+                        mMessage = "MSGF+ _dirty.gz file found; this indicates a processing error";
                         processingError = true;
                     }
                     else
@@ -149,9 +149,9 @@ namespace AnalysisManagerMSGFDBPlugIn
                         var postProcessingResult = PostProcessMSGFPlusResults(fiMSGFPlusResults.Name);
                         if (postProcessingResult != CloseOutType.CLOSEOUT_SUCCESS)
                         {
-                            if (string.IsNullOrEmpty(m_message))
+                            if (string.IsNullOrEmpty(mMessage))
                             {
-                                m_message = "Unknown error post-processing the MSGF+ results";
+                                mMessage = "Unknown error post-processing the MSGF+ results";
                             }
 
                             processingError = true;
@@ -162,9 +162,9 @@ namespace AnalysisManagerMSGFDBPlugIn
                 }
                 else
                 {
-                    if (string.IsNullOrEmpty(m_message))
+                    if (string.IsNullOrEmpty(mMessage))
                     {
-                        m_message = "MSGF+ results file not found: " + fiMSGFPlusResults.Name;
+                        mMessage = "MSGF+ results file not found: " + fiMSGFPlusResults.Name;
                         processingError = true;
                     }
                 }
@@ -172,16 +172,16 @@ namespace AnalysisManagerMSGFDBPlugIn
                 if (!mMSGFPlusComplete)
                 {
                     processingError = true;
-                    if (string.IsNullOrEmpty(m_message))
+                    if (string.IsNullOrEmpty(mMessage))
                     {
                         LogError("MSGF+ did not reach completion");
                     }
                 }
 
-                m_progress = MSGFPlusUtils.PROGRESS_PCT_COMPLETE;
+                mProgress = MSGFPlusUtils.PROGRESS_PCT_COMPLETE;
 
                 // Stop the job timer
-                m_StopTime = DateTime.UtcNow;
+                mStopTime = DateTime.UtcNow;
 
                 // Add the current job data to the summary file
                 UpdateSummaryFile();
@@ -232,17 +232,17 @@ namespace AnalysisManagerMSGFDBPlugIn
             out bool processingError,
             out bool tooManySkippedSpectra)
         {
-            fiMSGFPlusResults = new FileInfo(Path.Combine(m_WorkDir, Dataset + "_msgfplus.mzid"));
+            fiMSGFPlusResults = new FileInfo(Path.Combine(mWorkDir, Dataset + "_msgfplus.mzid"));
 
-            var splitFastaEnabled = m_jobParams.GetJobParameter("SplitFasta", false);
+            var splitFastaEnabled = mJobParams.GetJobParameter("SplitFasta", false);
             if (splitFastaEnabled)
             {
-                var iteration = clsAnalysisResources.GetSplitFastaIteration(m_jobParams, out var errorMessage);
+                var iteration = clsAnalysisResources.GetSplitFastaIteration(mJobParams, out var errorMessage);
                 if (!string.IsNullOrWhiteSpace(errorMessage))
-                    m_message = errorMessage;
+                    mMessage = errorMessage;
 
                 var fiMSGFPlusResultsSplitFasta = new FileInfo(
-                    Path.Combine(m_WorkDir, Dataset + "_msgfplus" + "_Part" + iteration + ".mzid"));
+                    Path.Combine(mWorkDir, Dataset + "_msgfplus" + "_Part" + iteration + ".mzid"));
 
                 if (!fiMSGFPlusResults.Exists && fiMSGFPlusResultsSplitFasta.Exists)
                 {
@@ -279,14 +279,14 @@ namespace AnalysisManagerMSGFDBPlugIn
             }
 
             // Initialize mMSGFPlusUtils
-            mMSGFPlusUtils = new MSGFPlusUtils(m_mgrParams, m_jobParams, m_WorkDir, m_DebugLevel);
+            mMSGFPlusUtils = new MSGFPlusUtils(mMgrParams, mJobParams, mWorkDir, mDebugLevel);
             RegisterEvents(mMSGFPlusUtils);
 
             mMSGFPlusUtils.IgnorePreviousErrorEvent += MSGFPlusUtils_IgnorePreviousErrorEvent;
 
             // Get the FASTA file and index it if necessary
             // Passing in the path to the parameter file so we can look for TDA=0 when using large .Fasta files
-            var parameterFilePath = Path.Combine(m_WorkDir, m_jobParams.GetParam(clsAnalysisResources.JOB_PARAM_PARAMETER_FILE));
+            var parameterFilePath = Path.Combine(mWorkDir, mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_PARAMETER_FILE));
             var javaExePath = string.Copy(javaProgLoc);
             var msgfPlusJarFilePath = string.Copy(mMSGFPlusProgLoc);
 
@@ -297,17 +297,17 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
-                if (string.IsNullOrWhiteSpace(m_message) &&
+                if (string.IsNullOrWhiteSpace(mMessage) &&
                     !string.IsNullOrWhiteSpace(mMSGFPlusUtils.ErrorMessage))
                 {
-                    m_message = mMSGFPlusUtils.ErrorMessage;
+                    mMessage = mMSGFPlusUtils.ErrorMessage;
                 }
 
                 // Immediately exit the plugin; results and console output files will not be saved
                 return result;
             }
 
-            var instrumentGroup = m_jobParams.GetJobParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, "InstrumentGroup", string.Empty);
+            var instrumentGroup = mJobParams.GetJobParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, "InstrumentGroup", string.Empty);
 
             // Read the MSGFPlus Parameter File
 
@@ -323,9 +323,9 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             if (string.IsNullOrEmpty(msgfPlusCmdLineOptions))
             {
-                if (string.IsNullOrEmpty(m_message))
+                if (string.IsNullOrEmpty(mMessage))
                 {
-                    m_message = "Problem parsing MSGF+ parameter file";
+                    mMessage = "Problem parsing MSGF+ parameter file";
                 }
                 // Immediately exit the plugin; results and console output files will not be saved
                 return CloseOutType.CLOSEOUT_FAILED;
@@ -359,7 +359,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            var inputFile = new FileInfo(Path.Combine(m_WorkDir, inputFileName));
+            var inputFile = new FileInfo(Path.Combine(mWorkDir, inputFileName));
 
             // If an MSGF+ analysis crashes with an "out-of-memory" error, we need to reserve more memory for Java.
             // The amount of memory required depends on both the fasta file size and the size of the input data file (_dta.txt or .mzML)
@@ -376,7 +376,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             // executing the tasks via a pool, meaning the memory overhead of each thread is lower vs. previous versions that
             // had large numbers of tasks on a small, finite number of threads
 
-            var javaMemorySizeMB = m_jobParams.GetJobParameter("MSGFDBJavaMemorySize", 4000);
+            var javaMemorySizeMB = mJobParams.GetJobParameter("MSGFDBJavaMemorySize", 4000);
             if (javaMemorySizeMB < 512)
                 javaMemorySizeMB = 512;
 
@@ -417,7 +417,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             var cmdStr = " -Xmx" + javaMemorySizeMB + "M -jar " + msgfPlusJarFilePath;
 
             // Define the input file, output file, and fasta file
-            // It is safe to simply use the input file name since the working directory will be m_WorkDir
+            // It is safe to simply use the input file name since the working directory will be mWorkDir
             cmdStr += " -s " + inputFile.Name;
             cmdStr += " -o " + fiMSGFPlusResults.Name;
             cmdStr += " -d " + PossiblyQuotePath(fastaFilePath);
@@ -426,16 +426,16 @@ namespace AnalysisManagerMSGFDBPlugIn
             cmdStr += " " + msgfPlusCmdLineOptions;
 
             // Make sure the machine has enough free memory to run MSGFPlus
-            var logFreeMemoryOnSuccess = (m_DebugLevel >= 1);
+            var logFreeMemoryOnSuccess = (mDebugLevel >= 1);
 
             if (!clsAnalysisResources.ValidateFreeMemorySize(javaMemorySizeMB, "MSGF+", logFreeMemoryOnSuccess))
             {
-                m_message = "Not enough free memory to run MSGF+";
+                mMessage = "Not enough free memory to run MSGF+";
                 // Immediately exit the plugin; results and console output files will not be saved
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            mWorkingDirectoryInUse = string.Copy(m_WorkDir);
+            mWorkingDirectoryInUse = string.Copy(mWorkDir);
 
             bool validExistingResults;
             if (fiMSGFPlusResults.Exists)
@@ -508,8 +508,8 @@ namespace AnalysisManagerMSGFDBPlugIn
                 if (mMSGFPlusComplete)
                 {
                     // Don't treat this as a fatal error
-                    m_EvalMessage = string.Copy(m_message);
-                    m_message = string.Empty;
+                    mEvalMessage = string.Copy(mMessage);
+                    mMessage = string.Empty;
                 }
                 else
                 {
@@ -597,7 +597,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             {
                 if (mMSGFPlusUtils.TaskCountCompleted > 0)
                 {
-                    var msg = string.Copy(m_message);
+                    var msg = string.Copy(mMessage);
                     if (string.IsNullOrWhiteSpace(msg))
                     {
                         msg = "MSGF+ processing failed";
@@ -612,8 +612,8 @@ namespace AnalysisManagerMSGFDBPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            m_progress = MSGFPlusUtils.PROGRESS_PCT_MSGFPLUS_COMPLETE;
-            m_StatusTools.UpdateAndWrite(m_progress);
+            mProgress = MSGFPlusUtils.PROGRESS_PCT_MSGFPLUS_COMPLETE;
+            mStatusTools.UpdateAndWrite(mProgress);
             LogMessage("MSGF+ Search Complete", 3);
 
             if (mMSGFPlusUtils.ContinuumSpectraSkipped > 0)
@@ -638,9 +638,9 @@ namespace AnalysisManagerMSGFDBPlugIn
                     //   then tooManySkippedSpectra will be set to True and the job step will be marked as failed
 
                     var spectraAreCentroided =
-                        m_jobParams.GetJobParameter("CentroidMSXML", false) ||
-                        m_jobParams.GetJobParameter("CentroidDTAs", false) ||
-                        m_jobParams.GetJobParameter("CentroidMGF", false);
+                        mJobParams.GetJobParameter("CentroidMSXML", false) ||
+                        mJobParams.GetJobParameter("CentroidDTAs", false) ||
+                        mJobParams.GetJobParameter("CentroidMGF", false);
 
                     var fractionSkipped = mMSGFPlusUtils.ContinuumSpectraSkipped /
                                              (double)(mMSGFPlusUtils.ContinuumSpectraSkipped + mMSGFPlusUtils.SpectraSearched);
@@ -666,23 +666,23 @@ namespace AnalysisManagerMSGFDBPlugIn
 
         private bool StartMSGFPlusLocal(string javaExePath, string cmdStr)
         {
-            if (m_DebugLevel >= 1)
+            if (mDebugLevel >= 1)
             {
                 LogMessage(javaExePath + " " + cmdStr);
             }
 
-            mCmdRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel)
+            mCmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel)
             {
                 CreateNoWindow = true,
                 CacheStandardOutput = true,
                 EchoOutputToConsole = true,
                 WriteConsoleOutputToFile = true,
-                ConsoleOutputFilePath = Path.Combine(m_WorkDir, MSGFPlusUtils.MSGFPLUS_CONSOLE_OUTPUT_FILE)
+                ConsoleOutputFilePath = Path.Combine(mWorkDir, MSGFPlusUtils.MSGFPLUS_CONSOLE_OUTPUT_FILE)
             };
             RegisterEvents(mCmdRunner);
             mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
-            m_progress = MSGFPlusUtils.PROGRESS_PCT_MSGFPLUS_STARTING;
+            mProgress = MSGFPlusUtils.PROGRESS_PCT_MSGFPLUS_STARTING;
             ResetProgRunnerCpuUsage();
 
             // Start the program and wait for it to finish
@@ -707,7 +707,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             if (string.IsNullOrEmpty(mzidToTsvConverterProgLoc))
             {
-                if (string.IsNullOrEmpty(m_message))
+                if (string.IsNullOrEmpty(mMessage))
                 {
                     LogError("Parameter 'MzidToTsvConverter' not defined for this manager");
                 }
@@ -718,14 +718,14 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             if (string.IsNullOrEmpty(tsvFilePath))
             {
-                if (string.IsNullOrEmpty(m_message))
+                if (string.IsNullOrEmpty(mMessage))
                 {
                     LogError("Error calling mMSGFPlusUtils.ConvertMZIDToTSV; path not returned");
                 }
                 return string.Empty;
             }
 
-            var splitFastaEnabled = m_jobParams.GetJobParameter("SplitFasta", false);
+            var splitFastaEnabled = mJobParams.GetJobParameter("SplitFasta", false);
 
             if (splitFastaEnabled)
             {
@@ -744,25 +744,25 @@ namespace AnalysisManagerMSGFDBPlugIn
         {
             // Try to save whatever files are in the work directory (however, delete any spectral data files)
 
-            m_jobParams.AddResultFileToSkip(Dataset + clsAnalysisResources.CDTA_ZIPPED_EXTENSION);
-            m_jobParams.AddResultFileToSkip(Dataset + clsAnalysisResources.CDTA_EXTENSION);
+            mJobParams.AddResultFileToSkip(Dataset + clsAnalysisResources.CDTA_ZIPPED_EXTENSION);
+            mJobParams.AddResultFileToSkip(Dataset + clsAnalysisResources.CDTA_EXTENSION);
 
-            m_jobParams.AddResultFileToSkip(Dataset + clsAnalysisResources.DOT_RAW_EXTENSION);
-            m_jobParams.AddResultFileToSkip(Dataset + clsAnalysisResources.DOT_MZML_EXTENSION);
-            m_jobParams.AddResultFileToSkip(Dataset + clsAnalysisResources.DOT_MGF_EXTENSION);
+            mJobParams.AddResultFileToSkip(Dataset + clsAnalysisResources.DOT_RAW_EXTENSION);
+            mJobParams.AddResultFileToSkip(Dataset + clsAnalysisResources.DOT_MZML_EXTENSION);
+            mJobParams.AddResultFileToSkip(Dataset + clsAnalysisResources.DOT_MGF_EXTENSION);
 
             base.CopyFailedResultsToArchiveFolder();
         }
 
         private bool CreateScanTypeFile(out string scanTypeFilePath)
         {
-            var scanTypeFileCreator = new clsScanTypeFileCreator(m_WorkDir, Dataset);
+            var scanTypeFileCreator = new clsScanTypeFileCreator(mWorkDir, Dataset);
 
             scanTypeFilePath = string.Empty;
 
             if (scanTypeFileCreator.CreateScanTypeFile())
             {
-                if (m_DebugLevel >= 1)
+                if (mDebugLevel >= 1)
                 {
                     LogMessage("Created ScanType file: " + Path.GetFileName(scanTypeFileCreator.ScanTypeFilePath));
                 }
@@ -814,7 +814,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         {
             assumedScanType = string.Empty;
 
-            var scriptName = m_jobParams.GetParam("ToolName");
+            var scriptName = mJobParams.GetParam("ToolName");
             scanTypeFilePath = string.Empty;
 
             if (scriptName.ToLower().Contains("mzxml") ||
@@ -832,7 +832,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             }
 
             eInputFileFormat = eInputFileFormatTypes.CDTA;
-            assumedScanType = m_jobParams.GetParam("AssumedScanType");
+            assumedScanType = mJobParams.GetParam("AssumedScanType");
 
             if (!validateCdtaAndCreateScanTypeFile)
                 return CloseOutType.CLOSEOUT_SUCCESS;
@@ -855,7 +855,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
-        private DateTime dtLastConsoleOutputParse = DateTime.MinValue;
+        private DateTime mLastConsoleOutputParse = DateTime.MinValue;
 
         private void MonitorProgress()
         {
@@ -864,12 +864,12 @@ namespace AnalysisManagerMSGFDBPlugIn
             UpdateStatusFile();
 
             // Parse the console output file every 30 seconds
-            if (DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds < SECONDS_BETWEEN_UPDATE)
+            if (DateTime.UtcNow.Subtract(mLastConsoleOutputParse).TotalSeconds < SECONDS_BETWEEN_UPDATE)
             {
                 return;
             }
 
-            dtLastConsoleOutputParse = DateTime.UtcNow;
+            mLastConsoleOutputParse = DateTime.UtcNow;
 
             ParseConsoleOutputFile(mWorkingDirectoryInUse);
             if (!mToolVersionWritten && !string.IsNullOrWhiteSpace(mMSGFPlusUtils.MSGFPlusVersion))
@@ -881,7 +881,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             LogProgress("MSGF+");
 
-            if (m_progress < MSGFPlusUtils.PROGRESS_PCT_MSGFPLUS_COMPLETE)
+            if (mProgress < MSGFPlusUtils.PROGRESS_PCT_MSGFPLUS_COMPLETE)
                 return;
 
             if (!mMSGFPlusComplete)
@@ -928,18 +928,18 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             try
             {
-                var fiFile = new FileInfo(Path.Combine(m_WorkDir, resultsFileName));
+                var fiFile = new FileInfo(Path.Combine(mWorkDir, resultsFileName));
 
-                var iteration = clsAnalysisResources.GetSplitFastaIteration(m_jobParams, out var errorMessage);
+                var iteration = clsAnalysisResources.GetSplitFastaIteration(mJobParams, out var errorMessage);
                 if (!string.IsNullOrWhiteSpace(errorMessage))
-                    m_message = errorMessage;
+                    mMessage = errorMessage;
 
                 var fileNameNew = Path.GetFileNameWithoutExtension(fiFile.Name) + "_Part" + iteration + fiFile.Extension;
 
                 if (!fiFile.Exists)
                     return resultsFileName;
 
-                filePathNew = Path.Combine(m_WorkDir, fileNameNew);
+                filePathNew = Path.Combine(mWorkDir, fileNameNew);
 
                 if (File.Exists(filePathNew))
                     File.Delete(filePathNew);
@@ -970,14 +970,14 @@ namespace AnalysisManagerMSGFDBPlugIn
                 var msgfPlusProgress = mMSGFPlusUtils.ParseMSGFPlusConsoleOutputFile(workingDirectory);
                 if (msgfPlusProgress > 0)
                 {
-                    m_progress = msgfPlusProgress;
+                    mProgress = msgfPlusProgress;
                 }
 
             }
             catch (Exception ex)
             {
                 // Ignore errors here
-                if (m_DebugLevel >= 2)
+                if (mDebugLevel >= 2)
                 {
                     LogMessage("Error parsing console output file: " + ex.Message, 2, true);
                 }
@@ -996,7 +996,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             try
             {
-                var splitFastaEnabled = m_jobParams.GetJobParameter("SplitFasta", false);
+                var splitFastaEnabled = mJobParams.GetJobParameter("SplitFasta", false);
 
                 if (splitFastaEnabled)
                 {
@@ -1035,7 +1035,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     msgfPlusResultsFileName = string.Copy(resultsFileName);
                 }
 
-                var skipPeptideToProteinMapping = m_jobParams.GetJobParameter("SkipPeptideToProteinMapping", false);
+                var skipPeptideToProteinMapping = mJobParams.GetJobParameter("SkipPeptideToProteinMapping", false);
 
                 if (skipPeptideToProteinMapping)
                 {
@@ -1044,7 +1044,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 }
 
                 // Examine the MSGF+ TSV file to see if it's empty
-                using (var reader = new StreamReader(new FileStream(Path.Combine(m_WorkDir, msgfPlusResultsFileName), FileMode.Open, FileAccess.Read,
+                using (var reader = new StreamReader(new FileStream(Path.Combine(mWorkDir, msgfPlusResultsFileName), FileMode.Open, FileAccess.Read,
                                                                     FileShare.ReadWrite)))
                 {
                     var dataLines = 0;
@@ -1072,7 +1072,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 UpdateStatusRunning(MSGFPlusUtils.PROGRESS_PCT_MSGFPLUS_MAPPING_PEPTIDES_TO_PROTEINS);
 
-                var localOrgDbFolder = m_mgrParams.GetParam(clsAnalysisResources.MGR_PARAM_ORG_DB_DIR);
+                var localOrgDbFolder = mMgrParams.GetParam(clsAnalysisResources.MGR_PARAM_ORG_DB_DIR);
                 currentTask = "Calling CreatePeptideToProteinMapping";
                 result = mMSGFPlusUtils.CreatePeptideToProteinMapping(msgfPlusResultsFileName, mResultsIncludeAutoAddedDecoyPeptides, localOrgDbFolder);
                 if (!clsAnalysisJob.SuccessOrNoData(result))
@@ -1104,11 +1104,11 @@ namespace AnalysisManagerMSGFDBPlugIn
                 if (mMSGFPlusUtils == null)
                 {
                     // Initialize mMSGFPlusUtils
-                    mMSGFPlusUtils = new MSGFPlusUtils(m_mgrParams, m_jobParams, m_WorkDir, m_DebugLevel);
+                    mMSGFPlusUtils = new MSGFPlusUtils(mMgrParams, mJobParams, mWorkDir, mDebugLevel);
                     RegisterEvents(mMSGFPlusUtils);
                 }
 
-                var msgfPlusProgress = mMSGFPlusUtils.ParseMSGFPlusConsoleOutputFile(m_WorkDir);
+                var msgfPlusProgress = mMSGFPlusUtils.ParseMSGFPlusConsoleOutputFile(mWorkDir);
                 if (msgfPlusProgress < MSGFPlusUtils.PROGRESS_PCT_MSGFPLUS_COMPLETE - 5)
                 {
                     LogWarning(string.Format(
@@ -1130,8 +1130,8 @@ namespace AnalysisManagerMSGFDBPlugIn
                     return CloseOutType.CLOSEOUT_SUCCESS;
                 }
 
-                var remoteStartText = m_jobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, clsRemoteTransferUtility.STEP_PARAM_REMOTE_START, "");
-                var remoteFinishText = m_jobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, clsRemoteTransferUtility.STEP_PARAM_REMOTE_FINISH, "");
+                var remoteStartText = mJobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, clsRemoteTransferUtility.STEP_PARAM_REMOTE_START, "");
+                var remoteFinishText = mJobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, clsRemoteTransferUtility.STEP_PARAM_REMOTE_FINISH, "");
 
                 if (string.IsNullOrWhiteSpace(remoteStartText) || string.IsNullOrWhiteSpace(remoteFinishText))
                     return CloseOutType.CLOSEOUT_SUCCESS;
@@ -1153,7 +1153,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 var newRemoteStart = remoteFinish.AddHours(-mMSGFPlusUtils.ElapsedTimeHours);
 
                 // Update the remote start time, using format code "{0:O}" to format as "2018-04-17T10:30:59.0000000"
-                m_jobParams.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION,
+                mJobParams.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION,
                                                    clsRemoteTransferUtility.STEP_PARAM_REMOTE_START,
                                                    string.Format("{0:O}", newRemoteStart));
 
@@ -1178,8 +1178,8 @@ namespace AnalysisManagerMSGFDBPlugIn
         {
             try
             {
-                var paramFileName = m_jobParams.GetParam(clsAnalysisResources.JOB_PARAM_PARAMETER_FILE);
-                var modDefsFile = new FileInfo(Path.Combine(m_WorkDir, Path.GetFileNameWithoutExtension(paramFileName) + "_ModDefs.txt"));
+                var paramFileName = mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_PARAMETER_FILE);
+                var modDefsFile = new FileInfo(Path.Combine(mWorkDir, Path.GetFileNameWithoutExtension(paramFileName) + "_ModDefs.txt"));
 
                 var filesToRetrieve = new List<string> {
                     "Mass_Correction_Tags.txt",
@@ -1198,12 +1198,12 @@ namespace AnalysisManagerMSGFDBPlugIn
                 }
 
                 string addOn;
-                var splitFastaEnabled = m_jobParams.GetJobParameter("SplitFasta", false);
+                var splitFastaEnabled = mJobParams.GetJobParameter("SplitFasta", false);
                 if (splitFastaEnabled)
                 {
-                    var iteration = clsAnalysisResources.GetSplitFastaIteration(m_jobParams, out var errorMessage);
+                    var iteration = clsAnalysisResources.GetSplitFastaIteration(mJobParams, out var errorMessage);
                     if (!string.IsNullOrWhiteSpace(errorMessage))
-                        m_message = errorMessage;
+                        mMessage = errorMessage;
 
                     addOn = "_Part" + iteration;
                 }
@@ -1277,7 +1277,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
         private void MSGFPlusUtils_IgnorePreviousErrorEvent(string messageToIgnore)
         {
-            m_message = m_message.Replace(messageToIgnore, string.Empty).Trim(';', ' ');
+            mMessage = mMessage.Replace(messageToIgnore, string.Empty).Trim(';', ' ');
         }
 
         #endregion

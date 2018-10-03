@@ -27,30 +27,30 @@ namespace AnalysisManager_IDM_Plugin
                     return result;
                 }
 
-                if (m_DebugLevel >= 1)
+                if (mDebugLevel >= 1)
                 {
                     LogMessage("Retrieving input files");
                 }
 
-                var dataPackageFolderPath = Path.Combine(m_jobParams.GetParam(JOB_PARAM_TRANSFER_FOLDER_PATH), m_jobParams.GetParam(JOB_PARAM_OUTPUT_FOLDER_NAME));
+                var dataPackageFolderPath = Path.Combine(mJobParams.GetParam(JOB_PARAM_TRANSFER_FOLDER_PATH), mJobParams.GetParam(JOB_PARAM_OUTPUT_FOLDER_NAME));
 
-                if (!CopyFileToWorkDir("Results.db3", Path.Combine(dataPackageFolderPath, m_jobParams.GetParam("StepInputFolderName")), m_WorkingDir))
+                if (!CopyFileToWorkDir("Results.db3", Path.Combine(dataPackageFolderPath, mJobParams.GetParam("StepInputFolderName")), mWorkDir))
                 {
                     // Errors were reported in function call, so just return
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                var useExistingIDMResults = m_jobParams.GetJobParameter("UseExistingIDMResults", false);
+                var useExistingIDMResults = mJobParams.GetJobParameter("UseExistingIDMResults", false);
 
                 if (useExistingIDMResults)
                 {
-                    var fiIDMResultsDB = new FileInfo(Path.Combine(dataPackageFolderPath, m_jobParams.GetParam("StepOutputFolderName"), "Results.db3"));
+                    var fiIDMResultsDB = new FileInfo(Path.Combine(dataPackageFolderPath, mJobParams.GetParam("StepOutputFolderName"), "Results.db3"));
                     if (fiIDMResultsDB.Exists)
                     {
-                        var targetFilePath = Path.Combine(m_WorkingDir, clsAnalysisToolRunnerIDM.EXISTING_IDM_RESULTS_FILE_NAME);
+                        var targetFilePath = Path.Combine(mWorkDir, clsAnalysisToolRunnerIDM.EXISTING_IDM_RESULTS_FILE_NAME);
                         fiIDMResultsDB.CopyTo(targetFilePath);
 
-                        m_jobParams.AddResultFileToSkip(clsAnalysisToolRunnerIDM.EXISTING_IDM_RESULTS_FILE_NAME);
+                        mJobParams.AddResultFileToSkip(clsAnalysisToolRunnerIDM.EXISTING_IDM_RESULTS_FILE_NAME);
                     }
                 }
 

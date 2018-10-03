@@ -56,7 +56,7 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                if (m_DebugLevel > 4)
+                if (mDebugLevel > 4)
                 {
                     LogDebug("clsAnalysisToolRunnerMetaboliteDetector.RunTool(): Enter");
                 }
@@ -72,7 +72,7 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
                 if (!StoreToolVersionInfo(mMetaboliteDetectorProgLoc))
                 {
                     LogError("Aborting since StoreToolVersionInfo returned false");
-                    m_message = "Error determining MetaboliteDetector version";
+                    mMessage = "Error determining MetaboliteDetector version";
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
@@ -96,10 +96,10 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
                         processingError = true;
                 }
 
-                m_progress = PROGRESS_PCT_COMPLETE;
+                mProgress = PROGRESS_PCT_COMPLETE;
 
                 // Stop the job timer
-                m_StopTime = DateTime.UtcNow;
+                mStopTime = DateTime.UtcNow;
 
                 // Could use the following to create a summary file:
                 // Add the current job data to the summary file
@@ -118,7 +118,7 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
                 }
 
                 // No need to keep several files; exclude them now
-                m_jobParams.AddResultFileToSkip(m_jobParams.GetParam("ParmFileName"));
+                mJobParams.AddResultFileToSkip(mJobParams.GetParam("ParmFileName"));
 
                 var success = CopyResultsToTransferDirectory();
 
@@ -127,8 +127,8 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
             }
             catch (Exception ex)
             {
-                m_message = "Error in MetaboliteDetectorPlugin->RunTool";
-                LogError(m_message, ex);
+                mMessage = "Error in MetaboliteDetectorPlugin->RunTool";
+                LogError(mMessage, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -145,7 +145,7 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
             {
                 if (!File.Exists(strConsoleOutputFilePath))
                 {
-                    if (m_DebugLevel >= 4)
+                    if (mDebugLevel >= 4)
                     {
                         LogDebug("Console output file not found: " + strConsoleOutputFilePath);
                     }
@@ -153,7 +153,7 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
                     return;
                 }
 
-                if (m_DebugLevel >= 4)
+                if (mDebugLevel >= 4)
                 {
                     LogDebug("Parsing file " + strConsoleOutputFilePath);
                 }
@@ -181,7 +181,7 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
             catch (Exception ex)
             {
                 // Ignore errors here
-                if (m_DebugLevel >= 2)
+                if (mDebugLevel >= 2)
                 {
                     LogError("Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
                 }
@@ -197,11 +197,11 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
         {
             try
             {
-                var fiResultsFile = new FileInfo(Path.Combine(m_WorkDir, METABOLITE_DETECTOR_RESULTS_FILE));
+                var fiResultsFile = new FileInfo(Path.Combine(mWorkDir, METABOLITE_DETECTOR_RESULTS_FILE));
 
                 if (!fiResultsFile.Exists)
                 {
-                    if (string.IsNullOrEmpty(m_message))
+                    if (string.IsNullOrEmpty(mMessage))
                     {
                         LogError("Metabolite Detector results not found: " + fiResultsFile.Name);
                     }
@@ -213,8 +213,8 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
             }
             catch (Exception ex)
             {
-                m_message = "Exception post processing results";
-                LogError(m_message + ": " + ex.Message);
+                mMessage = "Exception post processing results";
+                LogError(mMessage + ": " + ex.Message);
                 return false;
             }
         }
@@ -225,14 +225,14 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
 
             var cmdStr = "xyz";
 
-            if (m_DebugLevel >= 1)
+            if (mDebugLevel >= 1)
             {
                 LogDebug(cmdStr);
             }
 
-            mConsoleOutputFile = Path.Combine(m_WorkDir, METABOLITE_DETECTOR_CONSOLE_OUTPUT);
+            mConsoleOutputFile = Path.Combine(mWorkDir, METABOLITE_DETECTOR_CONSOLE_OUTPUT);
 
-            var cmdRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel)
+            var cmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel)
             {
                 CreateNoWindow = true,
                 CacheStandardOutput = false,
@@ -243,7 +243,7 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
             RegisterEvents(cmdRunner);
             cmdRunner.LoopWaiting += cmdRunner_LoopWaiting;
 
-            m_progress = PROGRESS_PCT_STARTING;
+            mProgress = PROGRESS_PCT_STARTING;
 
             var success = cmdRunner.RunProgram(mMetaboliteDetectorProgLoc, cmdStr, "MetaboliteDetector", true);
 
@@ -278,9 +278,9 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
                 return true;
             }
 
-            m_message = "Error running MetaboliteDetector";
+            mMessage = "Error running MetaboliteDetector";
 
-            LogError(m_message + ", job " + m_JobNum);
+            LogError(mMessage + ", job " + mJob);
 
             if (cmdRunner.ExitCode != 0)
             {
@@ -324,7 +324,7 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
 
             var strToolVersionInfo = string.Empty;
 
-            if (m_DebugLevel >= 2)
+            if (mDebugLevel >= 2)
             {
                 LogDebug("Determining tool version info");
             }
@@ -383,7 +383,7 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
                 {
                     mLastConsoleOutputParse = DateTime.UtcNow;
 
-                    ParseConsoleOutputFile(Path.Combine(m_WorkDir, mConsoleOutputFile));
+                    ParseConsoleOutputFile(Path.Combine(mWorkDir, mConsoleOutputFile));
 
                     LogProgress("MetaboliteDetector");
                 }

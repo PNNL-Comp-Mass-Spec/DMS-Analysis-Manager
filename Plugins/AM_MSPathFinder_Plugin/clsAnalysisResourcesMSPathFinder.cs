@@ -108,7 +108,7 @@ namespace AnalysisManagerMSPathFinderPlugin
                     }
 
                     // Copy the file
-                    if (!CopyFileToWorkDir(sourceFile.Name, transferFolderPath, m_WorkingDir, BaseLogger.LogLevels.ERROR))
+                    if (!CopyFileToWorkDir(sourceFile.Name, transferFolderPath, mWorkDir, BaseLogger.LogLevels.ERROR))
                     {
                         // Error copying; move on to the next file
                         continue;
@@ -117,8 +117,8 @@ namespace AnalysisManagerMSPathFinderPlugin
             }
             catch (Exception ex)
             {
-                m_message = "Exception in RetrieveExistingSearchResults: " + ex.Message;
-                LogError(m_message, ex);
+                mMessage = "Exception in RetrieveExistingSearchResults: " + ex.Message;
+                LogError(mMessage, ex);
                 return false;
             }
 
@@ -133,7 +133,7 @@ namespace AnalysisManagerMSPathFinderPlugin
             try
             {
                 // Retrieve the Fasta file
-                var localOrgDbFolder = m_mgrParams.GetParam("OrgDBDir");
+                var localOrgDbFolder = mMgrParams.GetParam("OrgDbDir");
 
                 currentTask = "RetrieveOrgDB to " + localOrgDbFolder;
 
@@ -148,7 +148,7 @@ namespace AnalysisManagerMSPathFinderPlugin
                 //  FROM V_Param_File_Mass_Mod_Info
                 //  WHERE Param_File_Name = 'ParamFileName'
 
-                var paramFileName = m_jobParams.GetParam("ParmFileName");
+                var paramFileName = mJobParams.GetParam("ParmFileName");
 
                 currentTask = "RetrieveGeneratedParamFile " + paramFileName;
 
@@ -161,8 +161,8 @@ namespace AnalysisManagerMSPathFinderPlugin
             }
             catch (Exception ex)
             {
-                m_message = "Exception in RetrieveFastaAndParamFile: " + ex.Message;
-                LogError(m_message + "; task = " + currentTask + "; " + clsGlobal.GetExceptionStackTrace(ex));
+                mMessage = "Exception in RetrieveFastaAndParamFile: " + ex.Message;
+                LogError(mMessage + "; task = " + currentTask + "; " + clsGlobal.GetExceptionStackTrace(ex));
                 return false;
             }
         }
@@ -176,25 +176,25 @@ namespace AnalysisManagerMSPathFinderPlugin
             try
             {
                 // Cache the input folder name
-                var inputFolderNameCached = m_jobParams.GetJobParameter("InputFolderName", string.Empty);
+                var inputFolderNameCached = mJobParams.GetJobParameter("InputFolderName", string.Empty);
                 var inputFolderNameWasUpdated = false;
 
                 if (!inputFolderNameCached.ToUpper().StartsWith(PBF_GEN_FOLDER_PREFIX))
                 {
                     // Update the input folder to be the PBF_Gen input folder for this job (should be the input_folder of the previous job step)
-                    var stepNum = m_jobParams.GetJobParameter("Step", 100);
+                    var stepNum = mJobParams.GetJobParameter("Step", 100);
 
                     // Gigasax.DMS_Pipeline
-                    var dmsConnectionString = m_mgrParams.GetParam("BrokerConnectionString");
+                    var dmsConnectionString = mMgrParams.GetParam("BrokerConnectionString");
 
                     var sql = " SELECT Input_Folder_Name " +
                               " FROM T_Job_Steps" +
-                              " WHERE Job = " + m_JobNum + " AND Step_Number < " + stepNum + " AND Input_Folder_Name LIKE '" + PBF_GEN_FOLDER_PREFIX + "%'" +
+                              " WHERE Job = " + mJob + " AND Step_Number < " + stepNum + " AND Input_Folder_Name LIKE '" + PBF_GEN_FOLDER_PREFIX + "%'" +
                               " ORDER by Step_Number DESC";
 
                     if (!clsGlobal.GetQueryResultsTopRow(sql, dmsConnectionString, out var lstResults, "RetrievePBFFile"))
                     {
-                        m_message = "Error looking up the correct PBF_Gen folder name in T_Job_Steps";
+                        mMessage = "Error looking up the correct PBF_Gen folder name in T_Job_Steps";
                         return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                     }
 
@@ -202,11 +202,11 @@ namespace AnalysisManagerMSPathFinderPlugin
 
                     if (string.IsNullOrWhiteSpace(pbfGenFolderName))
                     {
-                        m_message = "PBF_Gen folder name listed in T_Job_Steps for step " + (stepNum - 1) + " was empty";
+                        mMessage = "PBF_Gen folder name listed in T_Job_Steps for step " + (stepNum - 1) + " was empty";
                         return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                     }
 
-                    m_jobParams.SetParam("InputFolderName", pbfGenFolderName);
+                    mJobParams.SetParam("InputFolderName", pbfGenFolderName);
                     inputFolderNameWasUpdated = true;
                 }
 
@@ -218,7 +218,7 @@ namespace AnalysisManagerMSPathFinderPlugin
 
                 if (inputFolderNameWasUpdated)
                 {
-                    m_jobParams.SetParam("InputFolderName", inputFolderNameCached);
+                    mJobParams.SetParam("InputFolderName", inputFolderNameCached);
                 }
 
                 if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
@@ -226,14 +226,14 @@ namespace AnalysisManagerMSPathFinderPlugin
                     return eResult;
                 }
 
-                m_jobParams.AddResultFileExtensionToSkip(DOT_PBF_EXTENSION);
+                mJobParams.AddResultFileExtensionToSkip(DOT_PBF_EXTENSION);
 
                 return CloseOutType.CLOSEOUT_SUCCESS;
             }
             catch (Exception ex)
             {
-                m_message = "Exception in RetrievePBFFile: " + ex.Message;
-                LogError(m_message + "; task = " + currentTask, ex);
+                mMessage = "Exception in RetrievePBFFile: " + ex.Message;
+                LogError(mMessage + "; task = " + currentTask, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
         }
@@ -250,12 +250,12 @@ namespace AnalysisManagerMSPathFinderPlugin
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
 
-                m_jobParams.AddResultFileExtensionToSkip(DOT_MS1FT_EXTENSION);
+                mJobParams.AddResultFileExtensionToSkip(DOT_MS1FT_EXTENSION);
             }
             catch (Exception ex)
             {
-                m_message = "Exception in RetrieveProMexFeaturesFile: " + ex.Message;
-                LogError(m_message, ex);
+                mMessage = "Exception in RetrieveProMexFeaturesFile: " + ex.Message;
+                LogError(mMessage, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 

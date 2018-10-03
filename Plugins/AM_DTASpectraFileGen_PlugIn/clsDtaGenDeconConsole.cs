@@ -60,10 +60,10 @@ namespace DTASpectraFileGen
         /// Returns the default path to the DTA generator tool
         /// </summary>
         /// <returns></returns>
-        /// <remarks>The default path can be overridden by updating m_DtaToolNameLoc using clsDtaGen.UpdateDtaToolNameLoc</remarks>
+        /// <remarks>The default path can be overridden by updating mDtaToolNameLoc using clsDtaGen.UpdateDtaToolNameLoc</remarks>
         protected override string ConstructDTAToolPath()
         {
-            var deconToolsDir = m_MgrParams.GetParam("DeconToolsProgLoc");         // DeconConsole.exe is stored in the DeconTools folder
+            var deconToolsDir = mMgrParams.GetParam("DeconToolsProgLoc");         // DeconConsole.exe is stored in the DeconTools folder
 
             var strDTAToolPath = Path.Combine(deconToolsDir, DECON_CONSOLE_FILENAME);
 
@@ -72,50 +72,50 @@ namespace DTASpectraFileGen
 
         protected override void MakeDTAFilesThreaded()
         {
-            m_Status = ProcessStatus.SF_RUNNING;
-            m_ErrMsg = string.Empty;
+            mStatus = ProcessStatus.SF_RUNNING;
+            mErrMsg = string.Empty;
 
-            m_Progress = PROGRESS_DECON_CONSOLE_START;
+            mProgress = PROGRESS_DECON_CONSOLE_START;
 
-            if (!ConvertRawToMGF(m_RawDataType))
+            if (!ConvertRawToMGF(mRawDataType))
             {
-                if (m_Status != ProcessStatus.SF_ABORTING)
+                if (mStatus != ProcessStatus.SF_ABORTING)
                 {
-                    m_Results = ProcessResults.SF_FAILURE;
-                    m_Status = ProcessStatus.SF_ERROR;
+                    mResults = ProcessResults.SF_FAILURE;
+                    mStatus = ProcessStatus.SF_ERROR;
                 }
                 return;
             }
 
-            m_Progress = PROGRESS_MGF_TO_CDTA_START;
+            mProgress = PROGRESS_MGF_TO_CDTA_START;
 
             if (!ConvertMGFtoDTA())
             {
-                if (m_Status != ProcessStatus.SF_ABORTING)
+                if (mStatus != ProcessStatus.SF_ABORTING)
                 {
-                    m_Results = ProcessResults.SF_FAILURE;
-                    m_Status = ProcessStatus.SF_ERROR;
+                    mResults = ProcessResults.SF_FAILURE;
+                    mStatus = ProcessStatus.SF_ERROR;
                 }
                 return;
             }
 
-            m_Progress = PROGRESS_CDTA_CREATED;
+            mProgress = PROGRESS_CDTA_CREATED;
 
-            m_Results = ProcessResults.SF_SUCCESS;
-            m_Status = ProcessStatus.SF_COMPLETE;
+            mResults = ProcessResults.SF_SUCCESS;
+            mStatus = ProcessStatus.SF_COMPLETE;
         }
 
         /// <summary>
         /// Convert .mgf file to _DTA.txt using MascotGenericFileToDTA.dll
-        /// This functon is called by MakeDTAFilesThreaded
+        /// This function is called by MakeDTAFilesThreaded
         /// </summary>
         /// <returns>TRUE for success; FALSE for failure</returns>
         /// <remarks></remarks>
         private bool ConvertMGFtoDTA()
         {
-            var strRawDataType = m_JobParams.GetJobParameter("RawDataType", "");
+            var strRawDataType = mJobParams.GetJobParameter("RawDataType", "");
 
-            var oMGFConverter = new clsMGFConverter(m_DebugLevel, m_WorkDir)
+            var oMGFConverter = new clsMGFConverter(mDebugLevel, mWorkDir)
             {
                 IncludeExtraInfoOnParentIonLine = true,
                 MinimumIonsPerSpectrum = 0
@@ -124,14 +124,14 @@ namespace DTASpectraFileGen
             RegisterEvents(oMGFConverter);
 
             var eRawDataType = clsAnalysisResources.GetRawDataType(strRawDataType);
-            var blnSuccess = oMGFConverter.ConvertMGFtoDTA(eRawDataType, m_Dataset);
+            var blnSuccess = oMGFConverter.ConvertMGFtoDTA(eRawDataType, mDatasetName);
 
             if (!blnSuccess)
             {
-                m_ErrMsg = oMGFConverter.ErrorMessage;
+                mErrMsg = oMGFConverter.ErrorMessage;
             }
 
-            m_SpectraFileCount = oMGFConverter.SpectraCountWritten;
+            mSpectraFileCount = oMGFConverter.SpectraCountWritten;
 
             return blnSuccess;
         }
@@ -147,66 +147,66 @@ namespace DTASpectraFileGen
         {
             string rawFilePath;
 
-            if (m_DebugLevel > 0)
+            if (mDebugLevel > 0)
             {
                 OnStatusEvent("Creating .MGF file using DeconConsole");
             }
 
-            m_ErrMsg = string.Empty;
+            mErrMsg = string.Empty;
 
             // Construct the path to the .raw file
             switch (eRawDataType)
             {
                 case clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile:
-                    rawFilePath = Path.Combine(m_WorkDir, m_Dataset + clsAnalysisResources.DOT_RAW_EXTENSION);
+                    rawFilePath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_RAW_EXTENSION);
                     break;
                 default:
-                    m_ErrMsg = "Data file type not supported by the DeconMSn workflow in DeconConsole: " + eRawDataType;
+                    mErrMsg = "Data file type not supported by the DeconMSn workflow in DeconConsole: " + eRawDataType;
                     return false;
             }
 
-            m_InstrumentFileName = Path.GetFileName(rawFilePath);
+            mInstrumentFileName = Path.GetFileName(rawFilePath);
             mInputFilePath = rawFilePath;
-            m_JobParams.AddResultFileToSkip(m_InstrumentFileName);
+            mJobParams.AddResultFileToSkip(mInstrumentFileName);
 
             if (eRawDataType == clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile)
             {
                 // Get the maximum number of scans in the file
-                m_MaxScanInFile = GetMaxScan(rawFilePath);
+                mMaxScanInFile = GetMaxScan(rawFilePath);
             }
             else
             {
-                m_MaxScanInFile = DEFAULT_SCAN_STOP;
+                mMaxScanInFile = DEFAULT_SCAN_STOP;
             }
 
             // Determine max number of scans to be performed
-            m_NumScans = m_MaxScanInFile;
+            mNumScans = mMaxScanInFile;
 
             // Reset the state variables
             mDeconConsoleExceptionThrown = false;
             mDeconConsoleFinishedDespiteProgRunnerError = false;
             mDeconConsoleStatus.Clear();
 
-            var strParamFilePath = m_JobParams.GetJobParameter("DtaGenerator", "DeconMSn_ParamFile", string.Empty);
+            var strParamFilePath = mJobParams.GetJobParameter("DtaGenerator", "DeconMSn_ParamFile", string.Empty);
 
             if (string.IsNullOrEmpty(strParamFilePath))
             {
-                m_ErrMsg = clsAnalysisToolRunnerBase.NotifyMissingParameter(m_JobParams, "DeconMSn_ParamFile");
+                mErrMsg = clsAnalysisToolRunnerBase.NotifyMissingParameter(mJobParams, "DeconMSn_ParamFile");
                 return false;
             }
 
-            strParamFilePath = Path.Combine(m_WorkDir, strParamFilePath);
+            strParamFilePath = Path.Combine(mWorkDir, strParamFilePath);
 
             // Set up command
             var cmdStr = " " + rawFilePath + " " + strParamFilePath;
 
-            if (m_DebugLevel > 0)
+            if (mDebugLevel > 0)
             {
-                OnStatusEvent(m_DtaToolNameLoc + " " + cmdStr);
+                OnStatusEvent(mDtaToolNameLoc + " " + cmdStr);
             }
 
             // Setup a program runner tool to make the spectra files
-            mCmdRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel)
+            mCmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel)
             {
                 CreateNoWindow = true,
                 CacheStandardOutput = true,
@@ -217,7 +217,7 @@ namespace DTASpectraFileGen
             mCmdRunner.ErrorEvent += CmdRunner_ErrorEvent;
             mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
-            var blnSuccess = mCmdRunner.RunProgram(m_DtaToolNameLoc, cmdStr, "DeconConsole", true);
+            var blnSuccess = mCmdRunner.RunProgram(mDtaToolNameLoc, cmdStr, "DeconConsole", true);
 
             // Parse the DeconTools .Log file to see whether it contains message "Finished file processing"
 
@@ -235,12 +235,12 @@ namespace DTASpectraFileGen
 
             // Look for file Dataset*BAD_ERROR_log.txt
             // If it exists, an exception occurred
-            var diWorkdir = new DirectoryInfo(Path.Combine(m_WorkDir));
+            var diWorkdir = new DirectoryInfo(Path.Combine(mWorkDir));
 
-            foreach (var fiFile in diWorkdir.GetFiles(m_Dataset + "*BAD_ERROR_log.txt"))
+            foreach (var fiFile in diWorkdir.GetFiles(mDatasetName + "*BAD_ERROR_log.txt"))
             {
-                m_ErrMsg = "Error running DeconTools; Bad_Error_log file exists";
-                OnErrorEvent(m_ErrMsg + ": " + fiFile.Name);
+                mErrMsg = "Error running DeconTools; Bad_Error_log file exists";
+                OnErrorEvent(mErrMsg + ": " + fiFile.Name);
                 blnSuccess = false;
                 mDeconConsoleFinishedDespiteProgRunnerError = false;
                 break;
@@ -257,17 +257,17 @@ namespace DTASpectraFileGen
             if (!blnSuccess)
             {
                 // .RunProgram returned False
-                LogDTACreationStats("ConvertRawToMGF", Path.GetFileNameWithoutExtension(m_DtaToolNameLoc), "m_RunProgTool.RunProgram returned False");
+                LogDTACreationStats("ConvertRawToMGF", Path.GetFileNameWithoutExtension(mDtaToolNameLoc), "m_RunProgTool.RunProgram returned False");
 
-                if (!string.IsNullOrEmpty(m_ErrMsg))
+                if (!string.IsNullOrEmpty(mErrMsg))
                 {
-                    m_ErrMsg = "Error running " + Path.GetFileNameWithoutExtension(m_DtaToolNameLoc);
+                    mErrMsg = "Error running " + Path.GetFileNameWithoutExtension(mDtaToolNameLoc);
                 }
 
                 return false;
             }
 
-            if (m_DebugLevel >= 2)
+            if (mDebugLevel >= 2)
             {
                 OnStatusEvent(" ... MGF file created using DeconConsole");
             }
@@ -279,10 +279,10 @@ namespace DTASpectraFileGen
         {
             ParseDeconToolsLogFile(out var blnFinishedProcessing, out var dtFinishTime);
 
-            if (m_DebugLevel >= 2)
+            if (mDebugLevel >= 2)
             {
                 var strProgressMessage = "Scan=" + mDeconConsoleStatus.CurrentLCScan;
-                OnProgressUpdate("... " + strProgressMessage + ", " + m_Progress.ToString("0.0") + "% complete", m_Progress);
+                OnProgressUpdate("... " + strProgressMessage + ", " + mProgress.ToString("0.0") + "% complete", mProgress);
             }
 
             const int MAX_LOGFINISHED_WAITTIME_SECONDS = 120;
@@ -317,16 +317,16 @@ namespace DTASpectraFileGen
             {
                 string strLogFilePath;
 
-                switch (m_RawDataType)
+                switch (mRawDataType)
                 {
                     case clsAnalysisResources.eRawDataTypeConstants.AgilentDFolder:
                     case clsAnalysisResources.eRawDataTypeConstants.BrukerFTFolder:
                     case clsAnalysisResources.eRawDataTypeConstants.BrukerTOFBaf:
                         // As of 11/19/2010, the _Log.txt file is created inside the .D folder
-                        strLogFilePath = Path.Combine(mInputFilePath, m_Dataset) + "_log.txt";
+                        strLogFilePath = Path.Combine(mInputFilePath, mDatasetName) + "_log.txt";
                         break;
                     default:
-                        strLogFilePath = Path.Combine(m_WorkDir, Path.GetFileNameWithoutExtension(mInputFilePath) + "_log.txt");
+                        strLogFilePath = Path.Combine(mWorkDir, Path.GetFileNameWithoutExtension(mInputFilePath) + "_log.txt");
                         break;
                 }
 
@@ -371,7 +371,7 @@ namespace DTASpectraFileGen
                                 dtFinishTime = fiFileInfo.LastWriteTime;
                             }
 
-                            if (m_DebugLevel >= 3)
+                            if (mDebugLevel >= 3)
                             {
                                 OnStatusEvent("DeconConsole log file reports 'finished file processing' at " + dtFinishTime);
                             }
@@ -418,7 +418,7 @@ namespace DTASpectraFileGen
                             if (intCharIndex >= 0)
                             {
                                 // An exception was reported in the log file; treat this as a fatal error
-                                m_ErrMsg = "Error thrown by DeconConsole";
+                                mErrMsg = "Error thrown by DeconConsole";
 
                                 OnErrorEvent("DeconConsole reports " + strLineIn.Substring(intCharIndex));
                                 mDeconConsoleExceptionThrown = true;
@@ -430,7 +430,7 @@ namespace DTASpectraFileGen
             catch (Exception ex)
             {
                 // Ignore errors here
-                if (m_DebugLevel >= 4)
+                if (mDebugLevel >= 4)
                 {
                     OnWarningEvent("Exception in ParseDeconToolsLogFile: " + ex.Message);
                 }
@@ -464,7 +464,7 @@ namespace DTASpectraFileGen
                     }
                 }
 
-                m_Progress = PROGRESS_DECON_CONSOLE_START + mDeconConsoleStatus.PercentComplete * (PROGRESS_MGF_TO_CDTA_START - PROGRESS_DECON_CONSOLE_START) / 100f;
+                mProgress = PROGRESS_DECON_CONSOLE_START + mDeconConsoleStatus.PercentComplete * (PROGRESS_MGF_TO_CDTA_START - PROGRESS_DECON_CONSOLE_START) / 100f;
             }
         }
 

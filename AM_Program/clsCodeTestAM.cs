@@ -40,7 +40,7 @@ namespace AnalysisManagerProg
         {
             base.Setup(stepToolName, mgrParams, jobParams, statusTools, summaryFile, myEMSLUtilities);
 
-            if (m_DebugLevel > 3)
+            if (mDebugLevel > 3)
             {
                 LogDebug("clsAnalysisToolRunnerSeqBase.Setup()");
             }
@@ -57,10 +57,10 @@ namespace AnalysisManagerProg
 
             // Create some dummy results files
 
-            CreateTestFiles(m_WorkDir, 5, "TestResultFile");
+            CreateTestFiles(mWorkDir, 5, "TestResultFile");
 
             // Make some subdirectories with more files
-            var subDirectoryPath = Path.Combine(m_WorkDir, "Plots");
+            var subDirectoryPath = Path.Combine(mWorkDir, "Plots");
             Directory.CreateDirectory(subDirectoryPath);
             CreateTestFiles(subDirectoryPath, 4, "Plot");
 
@@ -69,7 +69,7 @@ namespace AnalysisManagerProg
             var success = CreateTestFiles(subDirectoryPath, 5, "Stuff");
 
             // Stop the job timer
-            m_StopTime = System.DateTime.UtcNow;
+            mStopTime = System.DateTime.UtcNow;
 
             if (!success)
             {
@@ -82,7 +82,7 @@ namespace AnalysisManagerProg
             // Add the current job data to the summary file
             if (!UpdateSummaryFile())
             {
-                LogWarning("Error creating summary file, job " + Job + ", step " + m_jobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Step"));
+                LogWarning("Error creating summary file, job " + Job + ", step " + mJobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Step"));
             }
 
             // Make sure objects are released
@@ -92,7 +92,7 @@ namespace AnalysisManagerProg
             if (!folderCreateSuccess)
             {
                 // MakeResultsFolder handles posting to local log, so set database error message and exit
-                m_message = "Error making results folder";
+                mMessage = "Error making results folder";
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -100,22 +100,22 @@ namespace AnalysisManagerProg
             if (!moveSucceed)
             {
                 // MoveResultFiles moves the result files to the result folder
-                m_message = "Error moving files into results folder";
+                mMessage = "Error moving files into results folder";
                 eReturnCode = CloseOutType.CLOSEOUT_FAILED;
             }
 
             // Move the Plots folder to the result files folder
-            var diPlotsFolder = new DirectoryInfo(Path.Combine(m_WorkDir, "Plots"));
+            var diPlotsFolder = new DirectoryInfo(Path.Combine(mWorkDir, "Plots"));
 
-            var targetFolderPath = Path.Combine(Path.Combine(m_WorkDir, m_ResFolderName), "Plots");
+            var targetFolderPath = Path.Combine(Path.Combine(mWorkDir, mResultsFolderName), "Plots");
             if (diPlotsFolder.Exists && !Directory.Exists(targetFolderPath))
                 diPlotsFolder.MoveTo(targetFolderPath);
 
             if (!success || eReturnCode == CloseOutType.CLOSEOUT_FAILED)
             {
                 // Try to save whatever files were moved into the results folder
-                var analysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
-                analysisResults.CopyFailedResultsToArchiveFolder(Path.Combine(m_WorkDir, m_ResFolderName));
+                var analysisResults = new clsAnalysisResults(mMgrParams, mJobParams);
+                analysisResults.CopyFailedResultsToArchiveFolder(Path.Combine(mWorkDir, mResultsFolderName));
 
                 return CloseOutType.CLOSEOUT_FAILED;
             }

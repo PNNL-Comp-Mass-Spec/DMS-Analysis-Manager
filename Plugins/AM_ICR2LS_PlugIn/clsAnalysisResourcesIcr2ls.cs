@@ -25,7 +25,7 @@ namespace AnalysisManagerICR2LSPlugIn
             }
 
             // Retrieve param file
-            if (!FileSearch.RetrieveFile(m_jobParams.GetParam("ParmFileName"), m_jobParams.GetParam("ParmFileStoragePath")))
+            if (!FileSearch.RetrieveFile(mJobParams.GetParam("ParmFileName"), mJobParams.GetParam("ParmFileStoragePath")))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -35,15 +35,15 @@ namespace AnalysisManagerICR2LSPlugIn
 
             if (eExistingPEKFileResult == CloseOutType.CLOSEOUT_FAILED)
             {
-                if (string.IsNullOrEmpty(m_message))
+                if (string.IsNullOrEmpty(mMessage))
                 {
-                    m_message = "Call to RetrieveExistingTempPEKFile failed";
+                    mMessage = "Call to RetrieveExistingTempPEKFile failed";
                 }
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
             // Get input data file
-            if (!FileSearch.RetrieveSpectra(m_jobParams.GetParam("RawDataType")))
+            if (!FileSearch.RetrieveSpectra(mJobParams.GetParam("RawDataType")))
             {
                 LogDebug("clsAnalysisResourcesIcr2ls.GetResources: Error occurred retrieving spectra.");
                 return CloseOutType.CLOSEOUT_FAILED;
@@ -62,7 +62,7 @@ namespace AnalysisManagerICR2LSPlugIn
         {
             try
             {
-                var RawDataType = m_jobParams.GetParam("RawDataType");
+                var RawDataType = mJobParams.GetParam("RawDataType");
 
                 if (RawDataType == RAW_DATA_TYPE_DOT_RAW_FILES)
                 {
@@ -70,17 +70,17 @@ namespace AnalysisManagerICR2LSPlugIn
                     return true;
                 }
 
-                var strRemoteDatasetFolderPath = Path.Combine(m_jobParams.GetParam("DatasetArchivePath"), m_jobParams.GetParam(JOB_PARAM_DATASET_FOLDER_NAME));
+                var strRemoteDatasetFolderPath = Path.Combine(mJobParams.GetParam("DatasetArchivePath"), mJobParams.GetParam(JOB_PARAM_DATASET_FOLDER_NAME));
 
                 string strLocalDatasetFolderPath;
                 if (RawDataType.ToLower() == RAW_DATA_TYPE_BRUKER_FT_FOLDER)
                 {
-                    strLocalDatasetFolderPath = Path.Combine(m_WorkingDir, DatasetName + ".d");
+                    strLocalDatasetFolderPath = Path.Combine(mWorkDir, DatasetName + ".d");
                     strRemoteDatasetFolderPath = Path.Combine(strRemoteDatasetFolderPath, DatasetName + ".d");
                 }
                 else
                 {
-                    strLocalDatasetFolderPath = string.Copy(m_WorkingDir);
+                    strLocalDatasetFolderPath = string.Copy(mWorkDir);
                 }
 
                 var serFileOrFolderPath = FindSerFileOrFolder(strLocalDatasetFolderPath, out var blnIsFolder);
@@ -104,9 +104,9 @@ namespace AnalysisManagerICR2LSPlugIn
 
                             LogMessage("Copying 0.ser folder from archive to working directory: " + serFileOrFolderPath);
                             ResetTimestampForQueueWaitTimeLogging();
-                            m_FileTools.CopyDirectory(serFileOrFolderPath, Path.Combine(strLocalDatasetFolderPath, diSourceFolder.Name));
+                            mFileTools.CopyDirectory(serFileOrFolderPath, Path.Combine(strLocalDatasetFolderPath, diSourceFolder.Name));
 
-                            if (m_DebugLevel >= 1)
+                            if (mDebugLevel >= 1)
                             {
                                 LogMessage(
                                     "Successfully copied 0.ser folder in " + DateTime.UtcNow.Subtract(dtStartTime).TotalSeconds.ToString("0") +
@@ -124,7 +124,7 @@ namespace AnalysisManagerICR2LSPlugIn
                                 return false;
                             }
 
-                            if (m_DebugLevel >= 1)
+                            if (mDebugLevel >= 1)
                             {
                                 LogMessage(
                                     "Successfully copied " + Path.GetFileName(serFileOrFolderPath) + " file in " +
@@ -138,8 +138,8 @@ namespace AnalysisManagerICR2LSPlugIn
             }
             catch (Exception ex)
             {
-                m_message = "Exception in GetBrukerSerFile";
-                LogError(m_message + ": " + ex.Message);
+                mMessage = "Exception in GetBrukerSerFile";
+                LogError(mMessage + ": " + ex.Message);
                 return false;
             }
         }
@@ -204,8 +204,8 @@ namespace AnalysisManagerICR2LSPlugIn
         {
             try
             {
-                var strJob = m_jobParams.GetParam("Job");
-                var transferFolderPath = m_jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_TRANSFER_FOLDER_PATH);
+                var strJob = mJobParams.GetParam("Job");
+                var transferFolderPath = mJobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_TRANSFER_FOLDER_PATH);
 
                 if (string.IsNullOrWhiteSpace(transferFolderPath))
                 {
@@ -214,10 +214,10 @@ namespace AnalysisManagerICR2LSPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                transferFolderPath = Path.Combine(transferFolderPath, m_jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_DATASET_FOLDER_NAME));
-                transferFolderPath = Path.Combine(transferFolderPath, m_jobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, JOB_PARAM_OUTPUT_FOLDER_NAME));
+                transferFolderPath = Path.Combine(transferFolderPath, mJobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_DATASET_FOLDER_NAME));
+                transferFolderPath = Path.Combine(transferFolderPath, mJobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, JOB_PARAM_OUTPUT_FOLDER_NAME));
 
-                if (m_DebugLevel >= 4)
+                if (mDebugLevel >= 4)
                 {
                     LogDebug("Checking for " + clsAnalysisToolRunnerICRBase.PEK_TEMP_FILE + " file at " + transferFolderPath);
                 }
@@ -227,7 +227,7 @@ namespace AnalysisManagerICR2LSPlugIn
                 if (!diSourceFolder.Exists)
                 {
                     // Transfer folder not found; return false
-                    if (m_DebugLevel >= 4)
+                    if (mDebugLevel >= 4)
                     {
                         LogDebug("  ... Transfer folder not found: " + diSourceFolder.FullName);
                     }
@@ -239,14 +239,14 @@ namespace AnalysisManagerICR2LSPlugIn
                 var fiTempPekFile = new FileInfo(pekTempFilePath);
                 if (!fiTempPekFile.Exists)
                 {
-                    if (m_DebugLevel >= 4)
+                    if (mDebugLevel >= 4)
                     {
                         LogDebug("  ... " + clsAnalysisToolRunnerICRBase.PEK_TEMP_FILE + " file not found");
                     }
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
 
-                if (m_DebugLevel >= 1)
+                if (mDebugLevel >= 1)
                 {
                     LogDebug(
                         clsAnalysisToolRunnerICRBase.PEK_TEMP_FILE + " file found for job " + strJob + " (file size = " +
@@ -256,21 +256,21 @@ namespace AnalysisManagerICR2LSPlugIn
                 // Copy fiTempPekFile locally
                 try
                 {
-                    fiTempPekFile.CopyTo(Path.Combine(m_WorkingDir, fiTempPekFile.Name), true);
+                    fiTempPekFile.CopyTo(Path.Combine(mWorkDir, fiTempPekFile.Name), true);
 
-                    if (m_DebugLevel >= 1)
+                    if (mDebugLevel >= 1)
                     {
                         LogDebug("Copied " + fiTempPekFile.Name + " locally; will resume ICR-2LS analysis");
                     }
 
                     // If the job succeeds, we should delete the .pek.tmp file from the transfer folder
-                    // Add the full path to m_ServerFilesToDelete using AddServerFileToDelete
-                    m_jobParams.AddServerFileToDelete(fiTempPekFile.FullName);
+                    // Add the full path to ServerFilesToDelete using AddServerFileToDelete
+                    mJobParams.AddServerFileToDelete(fiTempPekFile.FullName);
                 }
                 catch (Exception ex)
                 {
                     // Error copying the file; treat this as a failed job
-                    m_message = " Exception copying " + clsAnalysisToolRunnerICRBase.PEK_TEMP_FILE + " file locally";
+                    mMessage = " Exception copying " + clsAnalysisToolRunnerICRBase.PEK_TEMP_FILE + " file locally";
                     LogError("  ... Exception copying " + fiTempPekFile.FullName + " locally; unable to resume: " + ex.Message);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -279,8 +279,8 @@ namespace AnalysisManagerICR2LSPlugIn
             }
             catch (Exception ex)
             {
-                m_message = "Exception in RetrieveExistingTempPEKFile";
-                LogError(m_message + ": " + ex.Message);
+                mMessage = "Exception in RetrieveExistingTempPEKFile";
+                LogError(mMessage + ": " + ex.Message);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
         }

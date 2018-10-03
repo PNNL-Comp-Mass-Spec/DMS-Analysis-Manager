@@ -37,41 +37,35 @@ namespace AnalysisManagerBase
         /// </summary>
         public const string ABORT_PROCESSING_NOW_FILENAME = "AbortProcessingNow.txt";
 
-        /// <summary>
-        /// Flag to indicate that the ABORT_PROCESSING_NOW_FILENAME file was detected
-        /// </summary>
-        private bool m_AbortProcessingNow;
-
         const int MAX_ERROR_MESSAGE_COUNT_TO_CACHE = 10;
 
-        private int m_RecentErrorMessageCount;
-        private readonly string[] m_RecentErrorMessages = new string[MAX_ERROR_MESSAGE_COUNT_TO_CACHE];
+        private int mRecentErrorMessageCount;
 
-        private Queue<KeyValuePair<DateTime, float>> m_ProgRunnerCoreUsageHistory;
+        private readonly string[] mRecentErrorMessages = new string[MAX_ERROR_MESSAGE_COUNT_TO_CACHE];
 
-        private readonly int m_DebugLevel;
+        private readonly int mDebugLevel;
 
         /// <summary>
         /// Used to log the memory usage to a status file
         /// </summary>
-        private clsMemoryUsageLogger m_MemoryUsageLogger;
+        private clsMemoryUsageLogger mMemoryUsageLogger;
 
         /// <summary>
         /// Used to log messages to the broker DB
         /// </summary>
-        private clsDBStatusLogger m_BrokerDBLogger;
+        private clsDBStatusLogger mBrokerDBLogger;
 
-        private clsMessageSender m_MessageSender;
+        private clsMessageSender mMessageSender;
 
-        private clsMessageQueueLogger m_QueueLogger;
+        private clsMessageQueueLogger mQueueLogger;
 
-        private DateTime m_LastFileWriteTime;
+        private DateTime mLastFileWriteTime;
 
-        private int m_WritingErrorCountSaved;
+        private int mWritingErrorCountSaved;
 
-        private DateTime m_LastMessageQueueErrorTime;
+        private DateTime mLastMessageQueueErrorTime;
 
-        private DateTime m_LastMessageQueueWarningTime;
+        private DateTime mLastMessageQueueWarningTime;
 
         private readonly Dictionary<EnumMgrStatus, string> mMgrStatusMap;
 
@@ -96,10 +90,10 @@ namespace AnalysisManagerBase
         {
             get
             {
-                if (m_BrokerDBLogger == null)
+                if (mBrokerDBLogger == null)
                     return string.Empty;
 
-                return m_BrokerDBLogger.DBConnectionString;
+                return mBrokerDBLogger.DBConnectionString;
             }
 
         }
@@ -111,10 +105,10 @@ namespace AnalysisManagerBase
         {
             get
             {
-                if (m_BrokerDBLogger == null)
+                if (mBrokerDBLogger == null)
                     return 0;
 
-                return m_BrokerDBLogger.DBStatusUpdateIntervalMinutes;
+                return mBrokerDBLogger.DBStatusUpdateIntervalMinutes;
             }
 
         }
@@ -173,7 +167,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Core usage history for a process being run by the ProgRunner
         /// </summary>
-        public Queue<KeyValuePair<DateTime, float>> ProgRunnerCoreUsageHistory => m_ProgRunnerCoreUsageHistory;
+        public Queue<KeyValuePair<DateTime, float>> ProgRunnerCoreUsageHistory { get; private set; }
 
         /// <summary>
         /// ProcessID of an externally spawned process
@@ -234,13 +228,13 @@ namespace AnalysisManagerBase
         {
             get
             {
-                if (m_RecentErrorMessageCount == 0)
+                if (mRecentErrorMessageCount == 0)
                     return new List<string>();
 
                 var messages = new List<string>();
-                for (var i = 0; i < m_RecentErrorMessageCount; i++)
+                for (var i = 0; i < mRecentErrorMessageCount; i++)
                 {
-                    messages.Add(m_RecentErrorMessages[i]);
+                    messages.Add(mRecentErrorMessages[i]);
                 }
                 return messages;
             }
@@ -269,7 +263,8 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Set to true to abort processing due to a critical error
         /// </summary>
-        public bool AbortProcessingNow => m_AbortProcessingNow;
+        /// <remarks>Flag to indicate that the ABORT_PROCESSING_NOW_FILENAME file was detected</remarks>
+        public bool AbortProcessingNow { get; private set; }
 
         #endregion
 
@@ -306,9 +301,9 @@ namespace AnalysisManagerBase
             CurrentOperation = string.Empty;
             MostRecentJobInfo = string.Empty;
 
-            m_DebugLevel = debugLevel;
+            mDebugLevel = debugLevel;
 
-            m_LastFileWriteTime = DateTime.MinValue;
+            mLastFileWriteTime = DateTime.MinValue;
 
             ClearCachedInfo();
 
@@ -325,20 +320,20 @@ namespace AnalysisManagerBase
         {
             if (logMemoryUsage)
             {
-                if (m_MemoryUsageLogger == null)
+                if (mMemoryUsageLogger == null)
                 {
-                    m_MemoryUsageLogger = new clsMemoryUsageLogger(memoryUsageLogFolderPath, minimumMemoryUsageLogIntervalMinutes);
-                    RegisterEvents(m_MemoryUsageLogger);
+                    mMemoryUsageLogger = new clsMemoryUsageLogger(memoryUsageLogFolderPath, minimumMemoryUsageLogIntervalMinutes);
+                    RegisterEvents(mMemoryUsageLogger);
                 }
                 else
                 {
-                    m_MemoryUsageLogger.MinimumLogIntervalMinutes = minimumMemoryUsageLogIntervalMinutes;
+                    mMemoryUsageLogger.MinimumLogIntervalMinutes = minimumMemoryUsageLogIntervalMinutes;
                 }
             }
             else
             {
                 // Stop logging memory usage
-                m_MemoryUsageLogger = null;
+                mMemoryUsageLogger = null;
             }
         }
 
@@ -364,22 +359,22 @@ namespace AnalysisManagerBase
 
             if (logStatusToBrokerDB)
             {
-                if (m_BrokerDBLogger == null)
+                if (mBrokerDBLogger == null)
                 {
-                    m_BrokerDBLogger = new clsDBStatusLogger(brokerDBConnectionString, brokerDBStatusUpdateIntervalMinutes);
+                    mBrokerDBLogger = new clsDBStatusLogger(brokerDBConnectionString, brokerDBStatusUpdateIntervalMinutes);
                 }
                 else
                 {
-                    m_BrokerDBLogger.DBStatusUpdateIntervalMinutes = brokerDBStatusUpdateIntervalMinutes;
+                    mBrokerDBLogger.DBStatusUpdateIntervalMinutes = brokerDBStatusUpdateIntervalMinutes;
                 }
             }
             else
             {
                 // ReSharper disable once RedundantCheckBeforeAssignment
-                if (m_BrokerDBLogger != null)
+                if (mBrokerDBLogger != null)
                 {
                     // Stop logging to the broker
-                    m_BrokerDBLogger = null;
+                    mBrokerDBLogger = null;
                 }
             }
         }
@@ -418,7 +413,7 @@ namespace AnalysisManagerBase
                 if (!File.Exists(pathToCheck))
                     return;
 
-                m_AbortProcessingNow = true;
+                AbortProcessingNow = true;
 
                 var newPath = pathToCheck + ".done";
 
@@ -457,8 +452,8 @@ namespace AnalysisManagerBase
 
             MostRecentLogMessage = string.Empty;
 
-            m_RecentErrorMessageCount = 0;
-            m_RecentErrorMessages[0] = string.Empty;
+            mRecentErrorMessageCount = 0;
+            mRecentErrorMessages[0] = string.Empty;
         }
 
         /// <summary>
@@ -668,54 +663,54 @@ namespace AnalysisManagerBase
             try
             {
 
-                if (m_MessageSender == null)
+                if (mMessageSender == null)
                 {
-                    if (m_DebugLevel >= 5)
+                    if (mDebugLevel >= 5)
                     {
                         OnStatusEvent("Initializing message queue with URI '" + MessageQueueURI + "' and Topic '" + MessageQueueTopic + "'");
                     }
 
-                    m_MessageSender = new clsMessageSender(MessageQueueURI, MessageQueueTopic, MgrName);
-                    m_MessageSender.ErrorEvent += MessageSender_ErrorEvent;
+                    mMessageSender = new clsMessageSender(MessageQueueURI, MessageQueueTopic, MgrName);
+                    mMessageSender.ErrorEvent += MessageSender_ErrorEvent;
 
                     // message queue logger sets up local message buffering (so calls to log don't block)
                     // and uses message sender (as a delegate) to actually send off the messages
-                    m_QueueLogger = new clsMessageQueueLogger();
-                    RegisterEvents(m_QueueLogger);
-                    m_QueueLogger.Sender += m_MessageSender.SendMessage;
+                    mQueueLogger = new clsMessageQueueLogger();
+                    RegisterEvents(mQueueLogger);
+                    mQueueLogger.Sender += mMessageSender.SendMessage;
 
                     var timeOfDay = DateTime.Now;
 
                     // This variable is true if the local time is between 12:00 am and 12:05 am or 12:00 pm and 12:05 pm
                     var midnightOrNoon = (timeOfDay.Hour == 0 || timeOfDay.Hour == 12) && timeOfDay.Minute >= 0 && timeOfDay.Minute < 5;
 
-                    if (m_DebugLevel >= 3 || m_DebugLevel >= 1 && midnightOrNoon)
+                    if (mDebugLevel >= 3 || mDebugLevel >= 1 && midnightOrNoon)
                     {
                         OnStatusEvent("Message queue initialized with URI '" + MessageQueueURI + "'; posting to Topic '" + MessageQueueTopic + "'");
                     }
 
                     var logTimeInit = DateTime.UtcNow.AddMinutes(-MINIMUM_LOG_FAILURE_INTERVAL_MINUTES * 2);
-                    m_LastMessageQueueErrorTime = logTimeInit;
-                    m_LastMessageQueueWarningTime = logTimeInit;
+                    mLastMessageQueueErrorTime = logTimeInit;
+                    mLastMessageQueueWarningTime = logTimeInit;
                 }
 
-                if (m_QueueLogger != null)
+                if (mQueueLogger != null)
                 {
-                    m_QueueLogger?.LogStatusMessage(xmlText, managerName);
+                    mQueueLogger?.LogStatusMessage(xmlText, managerName);
                     return;
                 }
 
-                if (DateTime.UtcNow.Subtract(m_LastMessageQueueWarningTime).TotalMinutes < MINIMUM_LOG_FAILURE_INTERVAL_MINUTES)
+                if (DateTime.UtcNow.Subtract(mLastMessageQueueWarningTime).TotalMinutes < MINIMUM_LOG_FAILURE_INTERVAL_MINUTES)
                     return;
 
-                m_LastMessageQueueWarningTime = DateTime.UtcNow;
-                OnWarningEvent("Cannot send message to the queue because m_QueueLogger is null");
+                mLastMessageQueueWarningTime = DateTime.UtcNow;
+                OnWarningEvent("Cannot send message to the queue because mQueueLogger is null");
             }
             catch (Exception ex)
             {
-                if (DateTime.UtcNow.Subtract(m_LastMessageQueueErrorTime).TotalMinutes >= MINIMUM_LOG_FAILURE_INTERVAL_MINUTES)
+                if (DateTime.UtcNow.Subtract(mLastMessageQueueErrorTime).TotalMinutes >= MINIMUM_LOG_FAILURE_INTERVAL_MINUTES)
                 {
-                    m_LastMessageQueueErrorTime = DateTime.UtcNow;
+                    mLastMessageQueueErrorTime = DateTime.UtcNow;
                     var msg = "Error in LogStatusToMessageQueue: " + ex.Message;
                     OnErrorEvent(msg, ex);
                 }
@@ -727,11 +722,11 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Send status information to the database
         /// </summary>
-        /// <param name="forceLogToBrokerDB">If true, will force m_BrokerDBLogger to report the manager status directly to the database (if initialized)</param>
+        /// <param name="forceLogToBrokerDB">If true, will force mBrokerDBLogger to report the manager status directly to the database (if initialized)</param>
         /// <remarks>This function is valid, but the primary way that we track status is when WriteStatusFile calls LogStatusToMessageQueue</remarks>
         private void LogStatusToBrokerDatabase(bool forceLogToBrokerDB)
         {
-            if (m_BrokerDBLogger == null)
+            if (mBrokerDBLogger == null)
                 return;
 
             var udtStatusInfo = new clsDBStatusLogger.udtStatusInfoType
@@ -747,19 +742,19 @@ namespace AnalysisManagerBase
                 ProgRunnerCoreUsage = ProgRunnerCoreUsage
             };
 
-            if (m_RecentErrorMessageCount == 0)
+            if (mRecentErrorMessageCount == 0)
             {
                 udtStatusInfo.MostRecentErrorMessage = string.Empty;
             }
             else
             {
-                udtStatusInfo.MostRecentErrorMessage = m_RecentErrorMessages[0];
-                if (m_RecentErrorMessageCount > 1)
+                udtStatusInfo.MostRecentErrorMessage = mRecentErrorMessages[0];
+                if (mRecentErrorMessageCount > 1)
                 {
                     // Append the next two error messages
-                    for (var index = 1; index <= m_RecentErrorMessageCount - 1; index++)
+                    for (var index = 1; index <= mRecentErrorMessageCount - 1; index++)
                     {
-                        udtStatusInfo.MostRecentErrorMessage += Environment.NewLine + m_RecentErrorMessages[index];
+                        udtStatusInfo.MostRecentErrorMessage += Environment.NewLine + mRecentErrorMessages[index];
                         if (index >= 2)
                             break;
                     }
@@ -789,7 +784,7 @@ namespace AnalysisManagerBase
             udtTask.TaskDetails = udtTaskDetails;
             udtStatusInfo.Task = udtTask;
 
-            m_BrokerDBLogger.LogStatus(udtStatusInfo, forceLogToBrokerDB);
+            mBrokerDBLogger.LogStatus(udtStatusInfo, forceLogToBrokerDB);
         }
 
         /// <summary>
@@ -798,7 +793,7 @@ namespace AnalysisManagerBase
         /// <param name="coreUsageHistory"></param>
         public void StoreCoreUsageHistory(Queue<KeyValuePair<DateTime, float>> coreUsageHistory)
         {
-            m_ProgRunnerCoreUsageHistory = coreUsageHistory;
+            ProgRunnerCoreUsageHistory = coreUsageHistory;
         }
 
         private void StoreRecentJobInfo(string JobInfo)
@@ -816,38 +811,38 @@ namespace AnalysisManagerBase
             {
                 if (errorMessage == null)
                 {
-                    m_RecentErrorMessageCount = 0;
+                    mRecentErrorMessageCount = 0;
                 }
                 else
                 {
-                    m_RecentErrorMessageCount = 1;
-                    m_RecentErrorMessages[0] = errorMessage;
+                    mRecentErrorMessageCount = 1;
+                    mRecentErrorMessages[0] = errorMessage;
                 }
             }
             else
             {
                 if (!string.IsNullOrEmpty(errorMessage))
                 {
-                    if (m_RecentErrorMessageCount < MAX_ERROR_MESSAGE_COUNT_TO_CACHE)
+                    if (mRecentErrorMessageCount < MAX_ERROR_MESSAGE_COUNT_TO_CACHE)
                     {
-                        m_RecentErrorMessageCount += 1;
+                        mRecentErrorMessageCount += 1;
                     }
 
                     // Shift each of the entries by one
-                    for (var index = m_RecentErrorMessageCount; index >= 1; index += -1)
+                    for (var index = mRecentErrorMessageCount; index >= 1; index += -1)
                     {
-                        m_RecentErrorMessages[index] = m_RecentErrorMessages[index - 1];
+                        mRecentErrorMessages[index] = mRecentErrorMessages[index - 1];
                     }
 
                     // Store the new message
-                    m_RecentErrorMessages[0] = errorMessage;
+                    mRecentErrorMessages[0] = errorMessage;
                 }
             }
 
         }
 
         /// <summary>
-        /// Copies messages from recentErrorMessages to m_RecentErrorMessages; ignores messages that are Nothing or blank
+        /// Copies messages from recentErrorMessages to mRecentErrorMessages; ignores messages that are Nothing or blank
         /// </summary>
         /// <param name="recentErrorMessages"></param>
         /// <remarks></remarks>
@@ -859,22 +854,22 @@ namespace AnalysisManagerBase
             }
             else
             {
-                m_RecentErrorMessageCount = 0;
+                mRecentErrorMessageCount = 0;
 
                 foreach (var errorMsg in recentErrorMessages)
                 {
-                    if (m_RecentErrorMessageCount >= m_RecentErrorMessages.Length)
+                    if (mRecentErrorMessageCount >= mRecentErrorMessages.Length)
                         break;
 
                     if (string.IsNullOrWhiteSpace(errorMsg))
                         continue;
 
-                    m_RecentErrorMessages[m_RecentErrorMessageCount] = errorMsg;
-                    m_RecentErrorMessageCount += 1;
+                    mRecentErrorMessages[mRecentErrorMessageCount] = errorMsg;
+                    mRecentErrorMessageCount += 1;
                 }
 
 
-                if (m_RecentErrorMessageCount == 0)
+                if (mRecentErrorMessageCount == 0)
                 {
                     // No valid messages were found in recentErrorMessages
                     // Call StoreNewErrorMessage to clear the stored error messages
@@ -894,7 +889,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Updates the status in various locations, including on disk and with the message broker and/or broker DB
         /// </summary>
-        /// <param name="forceLogToBrokerDB">If true, will force m_BrokerDBLogger to report the manager status directly to the database (if initialized)</param>
+        /// <param name="forceLogToBrokerDB">If true, will force mBrokerDBLogger to report the manager status directly to the database (if initialized)</param>
         /// <remarks>The Message queue is always updated if LogToMsgQueue is true</remarks>
         public void WriteStatusFile(bool forceLogToBrokerDB)
         {
@@ -927,8 +922,8 @@ namespace AnalysisManagerBase
         /// <param name="cpuUtilization"></param>
         /// <param name="freeMemoryMB"></param>
         /// <param name="forceLogToBrokerDB">
-        /// If true, will force m_BrokerDBLogger to report the manager status directly to the database (if initialized)
-        /// Otherwise, m_BrokerDBLogger only logs the status periodically
+        /// If true, will force mBrokerDBLogger to report the manager status directly to the database (if initialized)
+        /// Otherwise, mBrokerDBLogger only logs the status periodically
         /// Typically false</param>
         /// <remarks>The Message queue is always updated if LogToMsgQueue is true</remarks>
         public void WriteStatusFile(DateTime lastUpdate, int processId, int cpuUtilization, float freeMemoryMB, bool forceLogToBrokerDB = false)
@@ -940,7 +935,7 @@ namespace AnalysisManagerBase
             CheckForAbortProcessingFile();
 
             // Log the memory usage to a local file
-            m_MemoryUsageLogger?.WriteMemoryUsageLogEntry();
+            mMemoryUsageLogger?.WriteMemoryUsageLogEntry();
 
         }
 
@@ -955,8 +950,8 @@ namespace AnalysisManagerBase
         /// <param name="runTimeHours">Runtime, in hours</param>
         /// <param name="writeToDisk">If true, write the status file to disk, otherwise, just push to the message queue and/or the Broker DB</param>
         /// <param name="forceLogToBrokerDB">
-        /// If true, will force m_BrokerDBLogger to report the manager status directly to the database (if initialized)
-        /// Otherwise, m_BrokerDBLogger only logs the status periodically
+        /// If true, will force mBrokerDBLogger to report the manager status directly to the database (if initialized)
+        /// Otherwise, mBrokerDBLogger only logs the status periodically
         /// Typically false</param>
         /// <remarks>The Message queue is always updated if LogToMsgQueue is true</remarks>
         private void WriteStatusFile(
@@ -994,10 +989,10 @@ namespace AnalysisManagerBase
                 LogStatusToMessageQueue(xmlText, status.MgrName);
             }
 
-            if (m_BrokerDBLogger != null)
+            if (mBrokerDBLogger != null)
             {
                 // Send the status info to the Broker DB
-                // Note that m_BrokerDBLogger() only logs the status every x minutes (unless forceLogToBrokerDB = True)
+                // Note that mBrokerDBLogger() only logs the status every x minutes (unless forceLogToBrokerDB = True)
 
                 LogStatusToBrokerDatabase(forceLogToBrokerDB);
             }
@@ -1114,7 +1109,7 @@ namespace AnalysisManagerBase
                     xWriter.WriteAttributeString("Count", progRunnerCoreUsageHistory.Count.ToString());
 
                     // Dumping the items from the queue to a list because another thread might
-                    // update m_ProgRunnerCoreUsageHistory while we're iterating over the items
+                    // update ProgRunnerCoreUsageHistory while we're iterating over the items
                     var coreUsageHistory = progRunnerCoreUsageHistory.ToList();
 
                     foreach (var coreUsageSample in coreUsageHistory)
@@ -1150,7 +1145,7 @@ namespace AnalysisManagerBase
         {
             const int MIN_FILE_WRITE_INTERVAL_SECONDS = 2;
 
-            if (!(DateTime.UtcNow.Subtract(m_LastFileWriteTime).TotalSeconds >= MIN_FILE_WRITE_INTERVAL_SECONDS))
+            if (!(DateTime.UtcNow.Subtract(mLastFileWriteTime).TotalSeconds >= MIN_FILE_WRITE_INTERVAL_SECONDS))
                 return;
 
             // We will write out the Status XML to a temporary file, then rename the temp file to the primary file
@@ -1160,12 +1155,12 @@ namespace AnalysisManagerBase
 
             var tempStatusFilePath = Path.Combine(GetStatusFileDirectory(), Path.GetFileNameWithoutExtension(FileNamePath) + "_Temp.xml");
 
-            m_LastFileWriteTime = DateTime.UtcNow;
+            mLastFileWriteTime = DateTime.UtcNow;
 
             var logWarning = true;
             if (Tool.ToLower().Contains("glyq") || Tool.ToLower().Contains("modplus"))
             {
-                if (m_DebugLevel < 3)
+                if (mDebugLevel < 3)
                     logWarning = false;
             }
 
@@ -1238,7 +1233,7 @@ namespace AnalysisManagerBase
                 }
 
                 // Reset the error counter
-                m_WritingErrorCountSaved = 0;
+                mWritingErrorCountSaved = 0;
 
                 success = true;
 
@@ -1246,13 +1241,13 @@ namespace AnalysisManagerBase
             catch (Exception ex)
             {
                 // Increment the error counter
-                m_WritingErrorCountSaved += 1;
+                mWritingErrorCountSaved += 1;
 
-                if (m_WritingErrorCountSaved >= WRITE_FAILURE_LOG_THRESHOLD && logWarning)
+                if (mWritingErrorCountSaved >= WRITE_FAILURE_LOG_THRESHOLD && logWarning)
                 {
                     // 5 or more errors in a row have occurred
                     // Post an entry to the log, only when writingErrorCountSaved is 5, 10, 20, 30, etc.
-                    if (m_WritingErrorCountSaved == WRITE_FAILURE_LOG_THRESHOLD || m_WritingErrorCountSaved % 10 == 0)
+                    if (mWritingErrorCountSaved == WRITE_FAILURE_LOG_THRESHOLD || mWritingErrorCountSaved % 10 == 0)
                     {
                         var msg = "Error writing status file " + Path.GetFileName(statusFilePath) + ": " + ex.Message;
                         OnWarningEvent(msg);
@@ -1271,7 +1266,7 @@ namespace AnalysisManagerBase
         /// <param name="managerIdleMessage"></param>
         /// <param name="recentErrorMessages"></param>
         /// <param name="jobInfo">Information on the job that started most recently</param>
-        /// <param name="forceLogToBrokerDB">If true, will force m_BrokerDBLogger to report the manager status directly to the database (if initialized)</param>
+        /// <param name="forceLogToBrokerDB">If true, will force mBrokerDBLogger to report the manager status directly to the database (if initialized)</param>
         /// <remarks></remarks>
         public void UpdateClose(string managerIdleMessage, IEnumerable<string> recentErrorMessages, string jobInfo, bool forceLogToBrokerDB)
         {
@@ -1345,7 +1340,7 @@ namespace AnalysisManagerBase
         /// <param name="mostRecentLogMessage">Most recent message posted to the logger (leave blank if unknown)</param>
         /// <param name="mostRecentErrorMessage">Most recent error posted to the logger (leave blank if unknown)</param>
         /// <param name="recentJobInfo">Information on the job that started most recently</param>
-        /// <param name="forceLogToBrokerDB">If true, will force m_BrokerDBLogger to report the manager status directly to the database (if initialized)</param>
+        /// <param name="forceLogToBrokerDB">If true, will force mBrokerDBLogger to report the manager status directly to the database (if initialized)</param>
         /// <remarks></remarks>
         public void UpdateAndWrite(
             EnumMgrStatus eMgrStatus,
@@ -1384,7 +1379,7 @@ namespace AnalysisManagerBase
         /// Logs to the status file that the manager is idle
         /// </summary>
         /// <param name="managerIdleMessage">Reason why the manager is idle (leave blank if unknown)</param>
-        /// <param name="forceLogToBrokerDB">If true, will force m_BrokerDBLogger to report the manager status directly to the database (if initialized)</param>
+        /// <param name="forceLogToBrokerDB">If true, will force mBrokerDBLogger to report the manager status directly to the database (if initialized)</param>
         /// <remarks></remarks>
         public void UpdateIdle(string managerIdleMessage, bool forceLogToBrokerDB)
         {
@@ -1401,7 +1396,7 @@ namespace AnalysisManagerBase
         /// <param name="managerIdleMessage">Reason why the manager is idle (leave blank if unknown)</param>
         /// <param name="idleErrorMessage">Error message explaining why the manager is idle</param>
         /// <param name="recentJobInfo">Information on the job that started most recently</param>
-        /// <param name="forceLogToBrokerDB">If true, will force m_BrokerDBLogger to report the manager status directly to the database (if initialized)</param>
+        /// <param name="forceLogToBrokerDB">If true, will force mBrokerDBLogger to report the manager status directly to the database (if initialized)</param>
         /// <remarks></remarks>
         public void UpdateIdle(string managerIdleMessage, string idleErrorMessage, string recentJobInfo, bool forceLogToBrokerDB)
         {
@@ -1415,7 +1410,7 @@ namespace AnalysisManagerBase
         /// <param name="managerIdleMessage">Reason why the manager is idle (leave blank if unknown)</param>
         /// <param name="recentErrorMessages">Recent error messages written to the log file (leave blank if unknown)</param>
         /// <param name="recentJobInfo">Information on the job that started most recently</param>
-        /// <param name="forceLogToBrokerDB">If true, will force m_BrokerDBLogger to report the manager status directly to the database (if initialized)</param>
+        /// <param name="forceLogToBrokerDB">If true, will force mBrokerDBLogger to report the manager status directly to the database (if initialized)</param>
         /// <remarks></remarks>
         public void UpdateIdle(string managerIdleMessage, IEnumerable<string> recentErrorMessages, string recentJobInfo, bool forceLogToBrokerDB)
         {
@@ -1428,7 +1423,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="managerIdleMessage">Reason why the manager is idle (leave blank if unknown)</param>
         /// <param name="recentJobInfo">Information on the job that started most recently</param>
-        /// <param name="forceLogToBrokerDB">If true, will force m_BrokerDBLogger to report the manager status directly to the database (if initialized)</param>
+        /// <param name="forceLogToBrokerDB">If true, will force mBrokerDBLogger to report the manager status directly to the database (if initialized)</param>
         private void UpdateIdleWork(string managerIdleMessage, string recentJobInfo, bool forceLogToBrokerDB)
         {
             ClearCachedInfo();
@@ -1554,8 +1549,8 @@ namespace AnalysisManagerBase
         /// </summary>
         public void DisposeMessageQueue()
         {
-            m_QueueLogger?.Dispose();
-            m_MessageSender?.Dispose();
+            mQueueLogger?.Dispose();
+            mMessageSender?.Dispose();
         }
 
         #endregion

@@ -41,12 +41,12 @@ namespace AnalysisManagerSequestPlugin
 
             try
             {
-                sourceFilePath = Path.Combine(m_WorkingDir, m_jobParams.GetParam("ParmFileName"));
-                targetFolderPath = m_jobParams.GetParam("ParmFileStoragePath");
+                sourceFilePath = Path.Combine(mWorkDir, mJobParams.GetParam("ParmFileName"));
+                targetFolderPath = mJobParams.GetParam("ParmFileStoragePath");
 
-                if (m_DebugLevel >= 3)
+                if (mDebugLevel >= 3)
                 {
-                    LogDebug("Verifying that the Sequest parameter file " + m_jobParams.GetParam("ParmFileName") + " exists in " + targetFolderPath);
+                    LogDebug("Verifying that the Sequest parameter file " + mJobParams.GetParam("ParmFileName") + " exists in " + targetFolderPath);
                 }
 
                 ArchiveSequestParamFile(sourceFilePath, targetFolderPath);
@@ -56,8 +56,8 @@ namespace AnalysisManagerSequestPlugin
                 if (targetFolderPath == null)
                     targetFolderPath = "??";
 
-                m_message = "Error archiving param file to ParmFileStoragePath";
-                LogErrorToDatabase(m_message + ": " + sourceFilePath + " --> " + targetFolderPath + ": " + ex.Message);
+                mMessage = "Error archiving param file to ParmFileStoragePath";
+                LogErrorToDatabase(mMessage + ": " + sourceFilePath + " --> " + targetFolderPath + ": " + ex.Message);
             }
         }
 
@@ -80,7 +80,7 @@ namespace AnalysisManagerSequestPlugin
 
             if (!File.Exists(targetFilePath))
             {
-                if (m_DebugLevel >= 1)
+                if (mDebugLevel >= 1)
                 {
                     LogDebug("Sequest parameter file not found in archive folder; copying to " + targetFilePath);
                 }
@@ -96,7 +96,7 @@ namespace AnalysisManagerSequestPlugin
 
                 if (!clsGlobal.TextFilesMatch(sourceFilePath, targetFilePath, 4, 0, ignoreWhitespace, lstLineIgnoreRegExSpecs))
                 {
-                    if (m_DebugLevel >= 1)
+                    if (mDebugLevel >= 1)
                     {
                         LogDebug(
                             "Sequest parameter file in archive folder doesn't match parameter file for current job; renaming old file and copying new file to " +
@@ -124,7 +124,7 @@ namespace AnalysisManagerSequestPlugin
                         newName = newNameBase + "_v" + revisionNumber + Path.GetExtension(targetFilePath);
                     } while (true);
 
-                    if (m_DebugLevel >= 2)
+                    if (mDebugLevel >= 2)
                     {
                         LogDebug("Renaming " + targetFilePath + " to " + newFilePath);
                     }
@@ -139,7 +139,7 @@ namespace AnalysisManagerSequestPlugin
             {
                 // Copy the new parameter file to the archive
 
-                if (m_DebugLevel >= 4)
+                if (mDebugLevel >= 4)
                 {
                     LogDebug("Copying " + sourceFilePath + " to " + targetFilePath);
                 }
@@ -162,8 +162,8 @@ namespace AnalysisManagerSequestPlugin
         {
             try
             {
-                var jobNum = m_jobParams.GetParam("Job");
-                var transferFolderPath = m_jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_TRANSFER_FOLDER_PATH);
+                var jobNum = mJobParams.GetParam("Job");
+                var transferFolderPath = mJobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_TRANSFER_FOLDER_PATH);
 
                 if (string.IsNullOrWhiteSpace(transferFolderPath))
                 {
@@ -172,10 +172,10 @@ namespace AnalysisManagerSequestPlugin
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                transferFolderPath = Path.Combine(transferFolderPath, m_jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_DATASET_FOLDER_NAME));
-                transferFolderPath = Path.Combine(transferFolderPath, m_jobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, JOB_PARAM_OUTPUT_FOLDER_NAME));
+                transferFolderPath = Path.Combine(transferFolderPath, mJobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_DATASET_FOLDER_NAME));
+                transferFolderPath = Path.Combine(transferFolderPath, mJobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, JOB_PARAM_OUTPUT_FOLDER_NAME));
 
-                if (m_DebugLevel >= 4)
+                if (mDebugLevel >= 4)
                 {
                     LogDebug("Checking for " + clsAnalysisToolRunnerSeqBase.CONCATENATED_OUT_TEMP_FILE + " file at " + transferFolderPath);
                 }
@@ -185,7 +185,7 @@ namespace AnalysisManagerSequestPlugin
                 if (!diSourceFolder.Exists)
                 {
                     // Transfer folder not found; return false
-                    if (m_DebugLevel >= 4)
+                    if (mDebugLevel >= 4)
                     {
                         LogDebug("  ... Transfer folder not found: " + diSourceFolder.FullName);
                     }
@@ -198,14 +198,14 @@ namespace AnalysisManagerSequestPlugin
                 var fiTempOutFile = new FileInfo(concatenatedTempFilePath);
                 if (!fiTempOutFile.Exists)
                 {
-                    if (m_DebugLevel >= 4)
+                    if (mDebugLevel >= 4)
                     {
                         LogDebug("  ... " + clsAnalysisToolRunnerSeqBase.CONCATENATED_OUT_TEMP_FILE + " file not found");
                     }
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
 
-                if (m_DebugLevel >= 1)
+                if (mDebugLevel >= 1)
                 {
                     LogDebug(
                         clsAnalysisToolRunnerSeqBase.CONCATENATED_OUT_TEMP_FILE + " file found for job " + jobNum + " (file size = " +
@@ -216,7 +216,7 @@ namespace AnalysisManagerSequestPlugin
                 // Compare the remote and local copies of the JobParameters file
                 var fileNameToCompare = "JobParameters_" + jobNum + ".xml";
                 var remoteFilePath = Path.Combine(diSourceFolder.FullName, fileNameToCompare + ".tmp");
-                var localFilePath = Path.Combine(m_WorkingDir, fileNameToCompare);
+                var localFilePath = Path.Combine(mWorkDir, fileNameToCompare);
 
                 var filesMatch = CompareRemoteAndLocalFilesForResume(remoteFilePath, localFilePath, "Job Parameters");
                 if (!filesMatch)
@@ -226,9 +226,9 @@ namespace AnalysisManagerSequestPlugin
                 }
 
                 // Compare the remote and local copies of the Sequest Parameter file
-                fileNameToCompare = m_jobParams.GetParam("ParmFileName");
+                fileNameToCompare = mJobParams.GetParam("ParmFileName");
                 remoteFilePath = Path.Combine(diSourceFolder.FullName, fileNameToCompare + ".tmp");
-                localFilePath = Path.Combine(m_WorkingDir, fileNameToCompare);
+                localFilePath = Path.Combine(mWorkDir, fileNameToCompare);
 
                 filesMatch = CompareRemoteAndLocalFilesForResume(remoteFilePath, localFilePath, "Sequest Parameter");
                 if (!filesMatch)
@@ -240,21 +240,21 @@ namespace AnalysisManagerSequestPlugin
                 // Everything matches up; copy fiTempOutFile locally
                 try
                 {
-                    fiTempOutFile.CopyTo(Path.Combine(m_WorkingDir, fiTempOutFile.Name), true);
+                    fiTempOutFile.CopyTo(Path.Combine(mWorkDir, fiTempOutFile.Name), true);
 
-                    if (m_DebugLevel >= 1)
+                    if (mDebugLevel >= 1)
                     {
                         LogDebug("Copied " + fiTempOutFile.Name + " locally; will resume Sequest analysis");
                     }
 
                     // If the job succeeds, we should delete the _out.txt.tmp file from the transfer folder
-                    // Add the full path to m_ServerFilesToDelete using AddServerFileToDelete
-                    m_jobParams.AddServerFileToDelete(fiTempOutFile.FullName);
+                    // Add the full path to ServerFilesToDelete using AddServerFileToDelete
+                    mJobParams.AddServerFileToDelete(fiTempOutFile.FullName);
                 }
                 catch (Exception ex)
                 {
                     // Error copying the file; treat this as a failed job
-                    m_message = " Exception copying " + clsAnalysisToolRunnerSeqBase.CONCATENATED_OUT_TEMP_FILE + " file locally";
+                    mMessage = " Exception copying " + clsAnalysisToolRunnerSeqBase.CONCATENATED_OUT_TEMP_FILE + " file locally";
                     LogError("  ... Exception copying " + fiTempOutFile.FullName + " locally; unable to resume: " + ex.Message);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -274,15 +274,15 @@ namespace AnalysisManagerSequestPlugin
 
                 try
                 {
-                    localFilePath = Path.Combine(m_WorkingDir, strExistingSeqLogFileRenamed);
+                    localFilePath = Path.Combine(mWorkDir, strExistingSeqLogFileRenamed);
                     fiFirstLogFile.CopyTo(localFilePath, true);
 
-                    if (m_DebugLevel >= 3)
+                    if (mDebugLevel >= 3)
                     {
                         LogDebug("Copied " + Path.GetFileName(fiFirstLogFile.Name) + " locally, renaming to " + strExistingSeqLogFileRenamed);
                     }
 
-                    m_jobParams.AddServerFileToDelete(fiFirstLogFile.FullName);
+                    mJobParams.AddServerFileToDelete(fiFirstLogFile.FullName);
 
                     // Copy the new file back to the transfer folder (necessary in case this job fails)
                     File.Copy(localFilePath, Path.Combine(transferFolderPath, strExistingSeqLogFileRenamed));
@@ -296,7 +296,7 @@ namespace AnalysisManagerSequestPlugin
             }
             catch (Exception ex)
             {
-                m_message = "Error in CheckForExistingConcatenatedOutFile";
+                mMessage = "Error in CheckForExistingConcatenatedOutFile";
                 LogError("Error in CheckForExistingConcatenatedOutFile: " + ex.Message);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -306,7 +306,7 @@ namespace AnalysisManagerSequestPlugin
         {
             if (!File.Exists(strRemoteFilePath))
             {
-                if (m_DebugLevel >= 1)
+                if (mDebugLevel >= 1)
                 {
                     LogDebug("  ... " + strFileDescription + " file not found remotely; unable to resume: " + strRemoteFilePath);
                 }
@@ -315,7 +315,7 @@ namespace AnalysisManagerSequestPlugin
 
             if (!File.Exists(strLocalFilePath))
             {
-                if (m_DebugLevel >= 1)
+                if (mDebugLevel >= 1)
                 {
                     LogDebug("  ... " + strFileDescription + " file not found locally; unable to resume: " + strLocalFilePath);
                 }
@@ -347,12 +347,12 @@ namespace AnalysisManagerSequestPlugin
             }
 
             // Retrieve Fasta file (we'll distribute it to the cluster nodes later in this function)
-            var orgDbDirectoryPath = m_mgrParams.GetParam("orgdbdir");
+            var orgDbDirectoryPath = mMgrParams.GetParam("OrgDbDir");
             if (!RetrieveOrgDB(orgDbDirectoryPath, out var resultCode))
                 return resultCode;
 
             // Retrieve param file
-            if (!RetrieveGeneratedParamFile(m_jobParams.GetParam("ParmFileName")))
+            if (!RetrieveGeneratedParamFile(mJobParams.GetParam("ParmFileName")))
             {
                 return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
             }
@@ -366,9 +366,9 @@ namespace AnalysisManagerSequestPlugin
 
             if (eExistingOutFileResult == CloseOutType.CLOSEOUT_FAILED)
             {
-                if (string.IsNullOrEmpty(m_message))
+                if (string.IsNullOrEmpty(mMessage))
                 {
-                    m_message = "Call to CheckForExistingConcatenatedOutFile failed";
+                    mMessage = "Call to CheckForExistingConcatenatedOutFile failed";
                 }
                 return resultCode;
             }
@@ -384,13 +384,13 @@ namespace AnalysisManagerSequestPlugin
 
             // If running on a cluster, distribute the database file across the nodes
             // We do this after we have successfully retrieved the DTA files and unzipped them
-            if (m_mgrParams.GetParam("cluster", true))
+            if (mMgrParams.GetParam("cluster", true))
             {
                 // Check the cluster nodes, updating local database copies as necessary
-                var fastaFileName = m_jobParams.GetParam("PeptideSearch", "generatedFastaName");
+                var fastaFileName = mJobParams.GetParam("PeptideSearch", "generatedFastaName");
                 if (string.IsNullOrEmpty(fastaFileName))
                 {
-                    m_message = "generatedFastaName parameter is empty; RetrieveOrgDB did not create a fasta file";
+                    mMessage = "generatedFastaName parameter is empty; RetrieveOrgDB did not create a fasta file";
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
 
@@ -402,10 +402,10 @@ namespace AnalysisManagerSequestPlugin
             }
 
             // Add all the extensions of the files to delete after run
-            m_jobParams.AddResultFileExtensionToSkip("_dta.zip");    // Zipped DTA
-            m_jobParams.AddResultFileExtensionToSkip("_dta.txt");    // Unzipped, concatenated DTA
-            m_jobParams.AddResultFileExtensionToSkip(".dta");        // DTA files
-            m_jobParams.AddResultFileExtensionToSkip(".tmp");        // Temp files
+            mJobParams.AddResultFileExtensionToSkip("_dta.zip");    // Zipped DTA
+            mJobParams.AddResultFileExtensionToSkip("_dta.txt");    // Unzipped, concatenated DTA
+            mJobParams.AddResultFileExtensionToSkip(".dta");        // DTA files
+            mJobParams.AddResultFileExtensionToSkip(".tmp");        // Temp files
 
             // All finished
             return CloseOutType.CLOSEOUT_SUCCESS;
@@ -420,8 +420,8 @@ namespace AnalysisManagerSequestPlugin
         /// <remarks></remarks>
         private bool VerifyDatabase(string fastaFileName, string orgDbDirectoryPath)
         {
-            var hostFilePath = m_mgrParams.GetParam("hostsfilelocation");
-            var nodeDbLoc = m_mgrParams.GetParam("nodedblocation");
+            var hostFilePath = mMgrParams.GetParam("hostsfilelocation");
+            var nodeDbLoc = mMgrParams.GetParam("nodedblocation");
 
             string logMessage;
 
@@ -431,8 +431,8 @@ namespace AnalysisManagerSequestPlugin
             var nodes = GetHostList(hostFilePath);
             if (nodes == null || nodes.Count == 0)
             {
-                m_message = "Unable to determine node names from host file";
-                LogError(m_message + ": " + hostFilePath);
+                mMessage = "Unable to determine node names from host file";
+                LogError(mMessage + ": " + hostFilePath);
                 return false;
             }
 
@@ -440,8 +440,8 @@ namespace AnalysisManagerSequestPlugin
             var fastaFilePath = Path.Combine(orgDbDirectoryPath, fastaFileName);
             if (!File.Exists(fastaFilePath))
             {
-                m_message = "Database file can't be found on master";
-                LogError(m_message + ": " + fastaFilePath);
+                mMessage = "Database file can't be found on master";
+                LogError(mMessage + ": " + fastaFilePath);
                 return false;
             }
 
@@ -473,8 +473,8 @@ namespace AnalysisManagerSequestPlugin
 
             if (nodeCountProcessed == 0)
             {
-                m_message = "The Nodes collection is empty; unable to continue";
-                LogError(m_message);
+                mMessage = "The Nodes collection is empty; unable to continue";
+                LogError(mMessage);
                 return false;
             }
 
@@ -493,14 +493,14 @@ namespace AnalysisManagerSequestPlugin
 
                 if (dblNodeCountSuccessPct < MINIMUM_NODE_SUCCESS_PCT)
                 {
-                    m_message = "Unable to copy the database file one or more nodes; ";
+                    mMessage = "Unable to copy the database file one or more nodes; ";
                     if (nodeCountNotEnoughFreeSpace > 0)
                     {
-                        m_message = "not enough space on the disk";
+                        mMessage = "not enough space on the disk";
                     }
                     else
                     {
-                        m_message = "see " + m_MgrName + " manager log for details";
+                        mMessage = "see " + mMgrName + " manager log for details";
                     }
 
                     LogError("Aborting since did not succeed on at least " + MINIMUM_NODE_SUCCESS_PCT + "% of the nodes");
@@ -513,7 +513,7 @@ namespace AnalysisManagerSequestPlugin
                 nodeCountProcessed -= nodeCountFailed;
             }
 
-            if (m_DebugLevel >= 1)
+            if (mDebugLevel >= 1)
             {
                 if (nodeCountFileAlreadyExists == 0)
                 {
@@ -594,7 +594,7 @@ namespace AnalysisManagerSequestPlugin
             var ioFileA = new FileInfo(file1);
             var ioFileB = new FileInfo(file2);
 
-            if (m_DebugLevel > DETAILED_LOG_THRESHOLD)
+            if (mDebugLevel > DETAILED_LOG_THRESHOLD)
             {
                 LogDebug("Comparing files: " + ioFileA.FullName + " vs. " + ioFileB.FullName);
                 LogDebug(" ... file sizes: " + ioFileA.Length + " vs. " + ioFileB.Length);
@@ -608,7 +608,7 @@ namespace AnalysisManagerSequestPlugin
             if (ioFileA.LastWriteTimeUtc == ioFileB.LastWriteTimeUtc)
             {
                 // Dates match
-                if (m_DebugLevel > DETAILED_LOG_THRESHOLD)
+                if (mDebugLevel > DETAILED_LOG_THRESHOLD)
                 {
                     LogDebug(" ... sizes match and dates match exactly");
                 }
@@ -623,7 +623,7 @@ namespace AnalysisManagerSequestPlugin
             {
                 // File times differ by less than 2 seconds; count this as the same
 
-                if (m_DebugLevel > DETAILED_LOG_THRESHOLD)
+                if (mDebugLevel > DETAILED_LOG_THRESHOLD)
                 {
                     LogDebug(" ... sizes match and dates match within 2 seconds (" + dblSecondDiff.ToString("0.0") + " seconds apart)");
                 }
@@ -635,7 +635,7 @@ namespace AnalysisManagerSequestPlugin
             {
                 // File times are an hour apart (give or take 2 seconds); count this as the same
 
-                if (m_DebugLevel > DETAILED_LOG_THRESHOLD)
+                if (mDebugLevel > DETAILED_LOG_THRESHOLD)
                 {
                     LogDebug(" ... sizes match and dates match within 1 hour (" + dblSecondDiff.ToString("0.0") + " seconds apart)");
                 }
@@ -643,9 +643,9 @@ namespace AnalysisManagerSequestPlugin
                 return true;
             }
 
-            if (m_DebugLevel >= DETAILED_LOG_THRESHOLD)
+            if (mDebugLevel >= DETAILED_LOG_THRESHOLD)
             {
-                if (m_DebugLevel == DETAILED_LOG_THRESHOLD)
+                if (mDebugLevel == DETAILED_LOG_THRESHOLD)
                 {
                     // This message didn't get logged above; log it now.
                     LogDebug("Comparing files: " + ioFileA.FullName + " vs. " + ioFileB.FullName);
@@ -674,7 +674,7 @@ namespace AnalysisManagerSequestPlugin
             fileAlreadyExists = false;
             notEnoughFreeSpace = false;
 
-            if (m_DebugLevel > 3)
+            if (mDebugLevel > 3)
             {
                 LogMessage("Verifying database " + destPath);
             }
@@ -713,7 +713,7 @@ namespace AnalysisManagerSequestPlugin
                 if (copyNeeded)
                 {
                     // Copy the file
-                    if (m_DebugLevel > 3)
+                    if (mDebugLevel > 3)
                     {
                         LogMessage("Copying database file " + destFilePath);
                     }
@@ -724,7 +724,7 @@ namespace AnalysisManagerSequestPlugin
                 }
 
                 // File existed and was current, so everybody's happy
-                if (m_DebugLevel >= 3)
+                if (mDebugLevel >= 3)
                 {
                     LogMessage("Database file at " + destFilePath + " matches the source file's date and time; will not re-copy");
                 }

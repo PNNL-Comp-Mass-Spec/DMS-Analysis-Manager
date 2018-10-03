@@ -69,7 +69,7 @@ namespace AnalysisManagerTopPICPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                if (m_DebugLevel > 4)
+                if (mDebugLevel > 4)
                 {
                     LogDebug("clsAnalysisToolRunnerTopPIC.RunTool(): Enter");
                 }
@@ -98,10 +98,10 @@ namespace AnalysisManagerTopPICPlugIn
                 // Process the XML files using TopPIC
                 var processingResult = StartTopPIC(fastaFileIsDecoy, mTopPICProgLoc);
 
-                m_progress = PROGRESS_PCT_COMPLETE;
+                mProgress = PROGRESS_PCT_COMPLETE;
 
                 // Stop the job timer
-                m_StopTime = DateTime.UtcNow;
+                mStopTime = DateTime.UtcNow;
 
                 // Add the current job data to the summary file
                 UpdateSummaryFile();
@@ -113,7 +113,7 @@ namespace AnalysisManagerTopPICPlugIn
                 PRISM.ProgRunner.GarbageCollectNow();
 
                 // Trim the console output file to remove the majority of the "processing" messages
-                TrimConsoleOutputFile(Path.Combine(m_WorkDir, TOPPIC_CONSOLE_OUTPUT));
+                TrimConsoleOutputFile(Path.Combine(mWorkDir, TOPPIC_CONSOLE_OUTPUT));
 
                 if (!clsAnalysisJob.SuccessOrNoData(processingResult))
                 {
@@ -144,7 +144,7 @@ namespace AnalysisManagerTopPICPlugIn
         /// </summary>
         public override void CopyFailedResultsToArchiveFolder()
         {
-            m_jobParams.AddResultFileToSkip(Dataset + clsAnalysisResources.DOT_MZML_EXTENSION);
+            mJobParams.AddResultFileToSkip(Dataset + clsAnalysisResources.DOT_MZML_EXTENSION);
 
             base.CopyFailedResultsToArchiveFolder();
         }
@@ -277,7 +277,7 @@ namespace AnalysisManagerTopPICPlugIn
             {
                 if (!File.Exists(consoleOutputFilePath))
                 {
-                    if (m_DebugLevel >= 4)
+                    if (mDebugLevel >= 4)
                     {
                         LogDebug("Console output file not found: " + consoleOutputFilePath);
                     }
@@ -285,7 +285,7 @@ namespace AnalysisManagerTopPICPlugIn
                     return;
                 }
 
-                if (m_DebugLevel >= 4)
+                if (mDebugLevel >= 4)
                 {
                     LogDebug("Parsing file " + consoleOutputFilePath);
                 }
@@ -315,7 +315,7 @@ namespace AnalysisManagerTopPICPlugIn
                                 dataLine.ToLower().StartsWith("toppic") &&
                                 !dataLine.ToLower().Contains(TOPPIC_EXE_NAME.ToLower()))
                             {
-                                if (m_DebugLevel >= 2 && string.IsNullOrWhiteSpace(mTopPICVersion))
+                                if (mDebugLevel >= 2 && string.IsNullOrWhiteSpace(mTopPICVersion))
                                 {
                                     LogDebug("TopPIC version: " + dataLine);
                                 }
@@ -345,15 +345,15 @@ namespace AnalysisManagerTopPICPlugIn
                     }
                 }
 
-                if (m_progress < actualProgress)
+                if (mProgress < actualProgress)
                 {
-                    m_progress = actualProgress;
+                    mProgress = actualProgress;
                 }
             }
             catch (Exception ex)
             {
                 // Ignore errors here
-                if (m_DebugLevel >= 2)
+                if (mDebugLevel >= 2)
                 {
                     LogErrorNoMessageUpdate("Error parsing console output file (" + consoleOutputFilePath + "): " + ex.Message);
                 }
@@ -389,7 +389,7 @@ namespace AnalysisManagerTopPICPlugIn
 
                 if (validatedMods.Count > 0)
                 {
-                    var modsFilePath = Path.Combine(m_WorkDir, modsFileName);
+                    var modsFilePath = Path.Combine(mWorkDir, modsFileName);
                     var success = WriteModsFile(modsFilePath, validatedMods);
                     if (!success)
                         return false;
@@ -423,15 +423,15 @@ namespace AnalysisManagerTopPICPlugIn
 
             cmdLineOptions = string.Empty;
 
-            var paramFileName = m_jobParams.GetParam("ParmFileName");
+            var paramFileName = mJobParams.GetParam("ParmFileName");
 
-            var paramFileReader = new clsKeyValueParamFileReader("TopPIC", m_WorkDir, paramFileName);
+            var paramFileReader = new clsKeyValueParamFileReader("TopPIC", mWorkDir, paramFileName);
             RegisterEvents(paramFileReader);
 
             var eResult = paramFileReader.ParseKeyValueParameterFile(out var paramFileEntries);
             if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
             {
-                m_message = paramFileReader.ErrorMessage;
+                mMessage = paramFileReader.ErrorMessage;
                 return eResult;
             }
 
@@ -448,7 +448,7 @@ namespace AnalysisManagerTopPICPlugIn
             cmdLineOptions = paramFileReader.ConvertParamsToArgs(paramFileEntries, paramToArgMapping, paramNamesToSkip, "--");
             if (string.IsNullOrWhiteSpace(cmdLineOptions))
             {
-                m_message = paramFileReader.ErrorMessage;
+                mMessage = paramFileReader.ErrorMessage;
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -548,8 +548,8 @@ namespace AnalysisManagerTopPICPlugIn
                 return eResult;
             }
 
-            var featureFileName = m_Dataset + clsAnalysisResourcesTopPIC.TOPFD_FEATURE_FILE_SUFFIX;
-            var msalignFileName = m_Dataset + clsAnalysisResourcesTopPIC.MSALIGN_FILE_SUFFIX;
+            var featureFileName = mDatasetName + clsAnalysisResourcesTopPIC.TOPFD_FEATURE_FILE_SUFFIX;
+            var msalignFileName = mDatasetName + clsAnalysisResourcesTopPIC.MSALIGN_FILE_SUFFIX;
 
             var cmdStr = string.Format("{0} --use-topfd-feature {1} {2} {3}",
                                        cmdLineOptions,
@@ -559,7 +559,7 @@ namespace AnalysisManagerTopPICPlugIn
 
             LogDebug(progLoc + " " + cmdStr);
 
-            mCmdRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel);
+            mCmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel);
             RegisterEvents(mCmdRunner);
             mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
@@ -568,9 +568,9 @@ namespace AnalysisManagerTopPICPlugIn
             mCmdRunner.EchoOutputToConsole = true;
 
             mCmdRunner.WriteConsoleOutputToFile = true;
-            mCmdRunner.ConsoleOutputFilePath = Path.Combine(m_WorkDir, TOPPIC_CONSOLE_OUTPUT);
+            mCmdRunner.ConsoleOutputFilePath = Path.Combine(mWorkDir, TOPPIC_CONSOLE_OUTPUT);
 
-            m_progress = PROGRESS_PCT_STARTING;
+            mProgress = PROGRESS_PCT_STARTING;
             ResetProgRunnerCpuUsage();
 
             // Start the program and wait for it to finish
@@ -581,7 +581,7 @@ namespace AnalysisManagerTopPICPlugIn
             {
                 if (string.IsNullOrWhiteSpace(mTopPICVersion))
                 {
-                    ParseConsoleOutputFile(Path.Combine(m_WorkDir, TOPPIC_CONSOLE_OUTPUT));
+                    ParseConsoleOutputFile(Path.Combine(mWorkDir, TOPPIC_CONSOLE_OUTPUT));
                 }
                 mToolVersionWritten = StoreToolVersionInfo();
             }
@@ -615,8 +615,8 @@ namespace AnalysisManagerTopPICPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            m_StatusTools.UpdateAndWrite(m_progress);
-            if (m_DebugLevel >= 3)
+            mStatusTools.UpdateAndWrite(mProgress);
+            if (mDebugLevel >= 3)
             {
                 LogDebug("TopPIC Search Complete");
             }
@@ -630,7 +630,7 @@ namespace AnalysisManagerTopPICPlugIn
         /// <remarks></remarks>
         private bool StoreToolVersionInfo()
         {
-            if (m_DebugLevel >= 2)
+            if (mDebugLevel >= 2)
             {
                 LogDebug("Determining tool version info");
             }
@@ -666,7 +666,7 @@ namespace AnalysisManagerTopPICPlugIn
             {
                 if (!File.Exists(consoleOutputFilePath))
                 {
-                    if (m_DebugLevel >= 4)
+                    if (mDebugLevel >= 4)
                     {
                         LogDebug("Console output file not found: " + consoleOutputFilePath);
                     }
@@ -674,7 +674,7 @@ namespace AnalysisManagerTopPICPlugIn
                     return;
                 }
 
-                if (m_DebugLevel >= 4)
+                if (mDebugLevel >= 4)
                 {
                     LogDebug("Trimming console output file at " + consoleOutputFilePath);
                 }
@@ -736,7 +736,7 @@ namespace AnalysisManagerTopPICPlugIn
                 }
                 catch (Exception ex)
                 {
-                    if (m_DebugLevel >= 1)
+                    if (mDebugLevel >= 1)
                     {
                         LogError("Error replacing original console output file (" + consoleOutputFilePath + ") with trimmed version", ex);
                     }
@@ -745,7 +745,7 @@ namespace AnalysisManagerTopPICPlugIn
             catch (Exception ex)
             {
                 // Ignore errors here
-                if (m_DebugLevel >= 2)
+                if (mDebugLevel >= 2)
                 {
                     LogError("Error trimming console output file (" + consoleOutputFilePath + ")", ex);
                 }
@@ -772,8 +772,8 @@ namespace AnalysisManagerTopPICPlugIn
 
                 foreach (var resultFile in resultTableFiles)
                 {
-                    var sourceFile = Path.Combine(m_WorkDir, m_Dataset + resultFile.Key);
-                    var targetFile = Path.Combine(m_WorkDir, m_Dataset + resultFile.Value);
+                    var sourceFile = Path.Combine(mWorkDir, mDatasetName + resultFile.Key);
+                    var targetFile = Path.Combine(mWorkDir, mDatasetName + resultFile.Value);
 
                     var saveParameterFile = string.Equals(resultFile.Key, PRSM_RESULT_TABLE_NAME_SUFFIX_ORIGINAL);
                     var success = ValidateResultTableFile(sourceFile, targetFile, saveParameterFile, out var noValidResultsThisFile);
@@ -814,8 +814,8 @@ namespace AnalysisManagerTopPICPlugIn
             fastaFileIsDecoy = false;
 
             // Define the path to the fasta file
-            var localOrgDbFolder = m_mgrParams.GetParam("OrgDBDir");
-            mValidatedFASTAFilePath = Path.Combine(localOrgDbFolder, m_jobParams.GetParam("PeptideSearch", "generatedFastaName"));
+            var localOrgDbFolder = mMgrParams.GetParam("OrgDbDir");
+            mValidatedFASTAFilePath = Path.Combine(localOrgDbFolder, mJobParams.GetParam("PeptideSearch", "generatedFastaName"));
 
             var fastaFile = new FileInfo(mValidatedFASTAFilePath);
 
@@ -826,7 +826,7 @@ namespace AnalysisManagerTopPICPlugIn
                 return false;
             }
 
-            var proteinOptions = m_jobParams.GetParam("ProteinOptions");
+            var proteinOptions = mJobParams.GetParam("ProteinOptions");
             if (!string.IsNullOrEmpty(proteinOptions))
             {
                 if (proteinOptions.ToLower().Contains("seq_direction=decoy"))
@@ -856,14 +856,14 @@ namespace AnalysisManagerTopPICPlugIn
 
                 if (!sourceFile.Exists)
                 {
-                    if (m_DebugLevel >= 2)
+                    if (mDebugLevel >= 2)
                     {
                         LogWarning("TopPIC results file not found: " + sourceFilePath);
                     }
                     return false;
                 }
 
-                if (m_DebugLevel >= 2)
+                if (mDebugLevel >= 2)
                 {
                     LogMessage("Validating that the TopPIC results file is not empty");
                 }
@@ -929,7 +929,7 @@ namespace AnalysisManagerTopPICPlugIn
                     }
                 }
 
-                m_jobParams.AddResultFileToSkip(sourceFile.Name);
+                mJobParams.AddResultFileToSkip(sourceFile.Name);
 
                 if (validFile)
                     return true;
@@ -1056,7 +1056,7 @@ namespace AnalysisManagerTopPICPlugIn
         {
             try
             {
-                var runtimeParamsPath = Path.Combine(m_WorkDir, "TopPIC_RuntimeParameters.txt");
+                var runtimeParamsPath = Path.Combine(mWorkDir, "TopPIC_RuntimeParameters.txt");
                 using (var writer = new StreamWriter(new FileStream(runtimeParamsPath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
                 {
                     foreach (var parameter in parameterInfo)
@@ -1076,26 +1076,26 @@ namespace AnalysisManagerTopPICPlugIn
 
             try
             {
-                var zipFilePath = Path.Combine(m_WorkDir, m_Dataset + directorySuffix + ".zip");
+                var zipFilePath = Path.Combine(mWorkDir, mDatasetName + directorySuffix + ".zip");
 
-                var sourceDirectoryPath = Path.Combine(m_WorkDir, m_Dataset + directorySuffix);
+                var sourceDirectoryPath = Path.Combine(mWorkDir, mDatasetName + directorySuffix);
 
                 // Confirm that the directory has one or more files or subdirectories
                 var sourceDirectory = new DirectoryInfo(sourceDirectoryPath);
                 if (sourceDirectory.GetFileSystemInfos().Length == 0)
                 {
-                    if (m_DebugLevel >= 1)
+                    if (mDebugLevel >= 1)
                     {
                         LogWarning("TopPIC results directory is empty; nothing to zip: " + Path.GetFileName(sourceDirectoryPath));
                     }
                     return false;
                 }
 
-                if (m_DebugLevel >= 1)
+                if (mDebugLevel >= 1)
                 {
                     var logMessage = "Zipping directory " + sourceDirectoryPath;
 
-                    if (m_DebugLevel >= 2)
+                    if (mDebugLevel >= 2)
                     {
                         logMessage += ": " + zipFilePath;
                     }
@@ -1135,7 +1135,7 @@ namespace AnalysisManagerTopPICPlugIn
 
             mLastConsoleOutputParse = DateTime.UtcNow;
 
-            ParseConsoleOutputFile(Path.Combine(m_WorkDir, TOPPIC_CONSOLE_OUTPUT));
+            ParseConsoleOutputFile(Path.Combine(mWorkDir, TOPPIC_CONSOLE_OUTPUT));
 
             if (!mToolVersionWritten && !string.IsNullOrWhiteSpace(mTopPICVersion))
             {

@@ -98,7 +98,7 @@ namespace AnalysisManagerMODPlusPlugin
 
         private int mJavaMemorySizeMB;
 
-        private readonly string mDataset;
+        private readonly string mDatasetName;
 
         private readonly string mWorkingDirectory;
 
@@ -120,7 +120,7 @@ namespace AnalysisManagerMODPlusPlugin
         /// <remarks></remarks>
         public clsMODPlusRunner(string dataset, int processingThread, string workingDirectory, string paramFilePath, string javaProgLoc, string modPlusJarFilePath)
         {
-            mDataset = dataset;
+            mDatasetName = dataset;
             Thread = processingThread;
             mWorkingDirectory = workingDirectory;
             ParameterFilePath = paramFilePath;
@@ -157,7 +157,7 @@ namespace AnalysisManagerMODPlusPlugin
 
             ConsoleOutputFilePath = Path.Combine(mWorkingDirectory, MOD_PLUS_CONSOLE_OUTPUT_PREFIX + Thread + ".txt");
 
-            OutputFilePath = Path.Combine(mWorkingDirectory, mDataset + "_Part" + Thread + RESULTS_FILE_SUFFIX);
+            OutputFilePath = Path.Combine(mWorkingDirectory, mDatasetName + "_Part" + Thread + RESULTS_FILE_SUFFIX);
 
             ProgramRunner.CreateNoWindow = true;
             ProgramRunner.CacheStandardOutput = false;
@@ -303,15 +303,15 @@ namespace AnalysisManagerMODPlusPlugin
             LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, strMessage, ex);
         }
 
-        private DateTime dtLastConsoleOutputParse = DateTime.MinValue;
+        private DateTime mLastConsoleOutputParse = DateTime.MinValue;
 
         private void CmdRunner_LoopWaiting()
         {
             const int SECONDS_BETWEEN_UPDATE = 30;
 
-            if (DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= SECONDS_BETWEEN_UPDATE)
+            if (DateTime.UtcNow.Subtract(mLastConsoleOutputParse).TotalSeconds >= SECONDS_BETWEEN_UPDATE)
             {
-                dtLastConsoleOutputParse = DateTime.UtcNow;
+                mLastConsoleOutputParse = DateTime.UtcNow;
 
                 ParseConsoleOutputFile(ConsoleOutputFilePath);
 

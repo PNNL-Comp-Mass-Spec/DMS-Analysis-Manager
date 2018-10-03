@@ -37,7 +37,7 @@ namespace AnalysisManagerOMSSAPlugIn
             }
 
             // Retrieve Fasta file
-            var orgDbDirectoryPath = m_mgrParams.GetParam("orgdbdir");
+            var orgDbDirectoryPath = mMgrParams.GetParam("OrgDbDir");
             if (!RetrieveOrgDB(orgDbDirectoryPath, out var resultCode))
                 return resultCode;
 
@@ -47,7 +47,7 @@ namespace AnalysisManagerOMSSAPlugIn
             LogMessage("Getting param file");
 
             // Retrieve param file
-            if (!FileSearch.RetrieveFile(m_jobParams.GetParam("ParmFileName"), m_jobParams.GetParam("ParmFileStoragePath")))
+            if (!FileSearch.RetrieveFile(mJobParams.GetParam("ParmFileName"), mJobParams.GetParam("ParmFileStoragePath")))
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
 
             // Convert the .fasta file to OMSSA format using formatdb.exe
@@ -60,12 +60,12 @@ namespace AnalysisManagerOMSSAPlugIn
 
             // Retrieve settings files aka default file that will have values overwritten by parameter file values
             // Stored in same location as parameter file
-            //         m_jobParams.GetParam("SettingsFileName"), _
-            if (!FileSearch.RetrieveFile(OMSSA_DEFAULT_INPUT_FILE, m_jobParams.GetParam("ParmFileStoragePath")))
+            //         mJobParams.GetParam("SettingsFileName"), _
+            if (!FileSearch.RetrieveFile(OMSSA_DEFAULT_INPUT_FILE, mJobParams.GetParam("ParmFileStoragePath")))
             {
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
-            m_jobParams.AddResultFileExtensionToSkip(OMSSA_DEFAULT_INPUT_FILE);
+            mJobParams.AddResultFileExtensionToSkip(OMSSA_DEFAULT_INPUT_FILE);
 
             // Retrieve the _DTA.txt file
             // Note that if the file was found in MyEMSL then RetrieveDtaFiles will auto-call ProcessMyEMSLDownloadQueue to download the file
@@ -83,10 +83,10 @@ namespace AnalysisManagerOMSSAPlugIn
             }
 
             // Add all the extensions of the files to delete after run
-            m_jobParams.AddResultFileExtensionToSkip("_dta.zip");   // Zipped DTA
-            m_jobParams.AddResultFileExtensionToSkip("_dta.txt");   // Unzipped, concatenated DTA
-            m_jobParams.AddResultFileExtensionToSkip(".dta");       // DTA files
-            m_jobParams.AddResultFileExtensionToSkip(DatasetName + ".xml");
+            mJobParams.AddResultFileExtensionToSkip("_dta.zip");   // Zipped DTA
+            mJobParams.AddResultFileExtensionToSkip("_dta.txt");   // Unzipped, concatenated DTA
+            mJobParams.AddResultFileExtensionToSkip(".dta");       // DTA files
+            mJobParams.AddResultFileExtensionToSkip(DatasetName + ".xml");
 
             // set up run parameter file to reference spectra file, taxonomy file, and analysis parameter file
             success = MakeInputFile(out var errorMessage);
@@ -106,21 +106,21 @@ namespace AnalysisManagerOMSSAPlugIn
             try
             {
                 // set up formatdb.exe to reference the organsim DB file (fasta)
-                var OrgDBName = m_jobParams.GetParam("PeptideSearch", "generatedFastaName");
-                var LocalOrgDBFolder = m_mgrParams.GetParam("orgdbdir");
+                var OrgDBName = mJobParams.GetParam("PeptideSearch", "generatedFastaName");
+                var LocalOrgDBFolder = mMgrParams.GetParam("OrgDbDir");
 
                 LogMessage("Running formatdb.exe");
 
-                mCmdRunner = new clsRunDosProgram(m_WorkingDir, m_DebugLevel);
+                mCmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel);
                 RegisterEvents(mCmdRunner);
 
-                if (m_DebugLevel > 4)
+                if (mDebugLevel > 4)
                 {
                     LogDebug("clsAnalysisToolRunnerOM.OperateAnalysisTool(): Enter");
                 }
 
                 // verify that program formatdb.exe file exists
-                var progLoc = m_mgrParams.GetParam("formatdbprogloc");
+                var progLoc = mMgrParams.GetParam("formatdbprogloc");
                 if (!File.Exists(progLoc))
                 {
                     if (progLoc.Length == 0)
@@ -133,7 +133,7 @@ namespace AnalysisManagerOMSSAPlugIn
                 // formatdb.exe -i C:\DMS_WorkDir\Shewanella_oneidensis_MR1_Stop-to-Start_2005-10-12.fasta -p T -o T
                 var cmdStr = "-i" + Path.Combine(LocalOrgDBFolder, OrgDBName) + " -p T -o T";
 
-                if (m_DebugLevel >= 2)
+                if (mDebugLevel >= 2)
                 {
                     LogDebug("Starting FormatDb: " + progLoc + " " + cmdStr);
                 }
@@ -159,7 +159,7 @@ namespace AnalysisManagerOMSSAPlugIn
             try
             {
                 // Convert the _DTA.txt file to a DTA .XML file
-                var sourceFilePath = Path.Combine(m_WorkingDir, DatasetName + "_dta.txt");
+                var sourceFilePath = Path.Combine(mWorkDir, DatasetName + "_dta.txt");
 
                 var objDtaConverter = new DtaTextConverter.clsDtaTextToDtaXML
                 {
@@ -171,12 +171,12 @@ namespace AnalysisManagerOMSSAPlugIn
 
 
 
-                if (m_DebugLevel >= 2)
+                if (mDebugLevel >= 2)
                 {
                     LogDebug("Converting _DTA.txt file to DTA XML file using the DtaTextConverter");
                 }
 
-                blnSuccess = objDtaConverter.ProcessFile(sourceFilePath, m_WorkingDir);
+                blnSuccess = objDtaConverter.ProcessFile(sourceFilePath, mWorkDir);
 
                 if (!blnSuccess)
                 {
@@ -184,7 +184,7 @@ namespace AnalysisManagerOMSSAPlugIn
                 }
                 else
                 {
-                    if (m_DebugLevel >= 1)
+                    if (mDebugLevel >= 1)
                     {
                         LogDebug("DTA XML file created for " + Path.GetFileName(sourceFilePath));
                     }
@@ -200,16 +200,16 @@ namespace AnalysisManagerOMSSAPlugIn
 
         protected bool MakeInputFile(out string errorMessage)
         {
-            var OmssaDefaultInput = Path.Combine(m_WorkingDir, OMSSA_DEFAULT_INPUT_FILE);
-            var OmssaInput = Path.Combine(m_WorkingDir, OMSSA_INPUT_FILE);
-            var ParamFilePath = Path.Combine(m_WorkingDir, m_jobParams.GetParam("parmFileName"));
+            var OmssaDefaultInput = Path.Combine(mWorkDir, OMSSA_DEFAULT_INPUT_FILE);
+            var OmssaInput = Path.Combine(mWorkDir, OMSSA_INPUT_FILE);
+            var ParamFilePath = Path.Combine(mWorkDir, mJobParams.GetParam("parmFileName"));
 
-            var SearchSettings = Path.Combine(m_mgrParams.GetParam("orgdbdir"), m_jobParams.GetParam("PeptideSearch", "generatedFastaName"));
-            var MSInfilename = Path.Combine(m_WorkingDir, DatasetName + ".xml");
-            var MSOmxOutFilename = Path.Combine(m_WorkingDir, DatasetName + "_om.omx");
-            var MSOmxLargeOutFilename = Path.Combine(m_WorkingDir, DatasetName + "_om_large.omx");
-            m_jobParams.AddResultFileExtensionToSkip(DatasetName + "_om_large.omx");
-            var MSCsvOutFilename = Path.Combine(m_WorkingDir, DatasetName + "_om.csv");
+            var SearchSettings = Path.Combine(mMgrParams.GetParam("OrgDbDir"), mJobParams.GetParam("PeptideSearch", "generatedFastaName"));
+            var MSInfilename = Path.Combine(mWorkDir, DatasetName + ".xml");
+            var MSOmxOutFilename = Path.Combine(mWorkDir, DatasetName + "_om.omx");
+            var MSOmxLargeOutFilename = Path.Combine(mWorkDir, DatasetName + "_om_large.omx");
+            mJobParams.AddResultFileExtensionToSkip(DatasetName + "_om_large.omx");
+            var MSCsvOutFilename = Path.Combine(mWorkDir, DatasetName + "_om.csv");
 
             XmlNode objMostRecentComment = null;
 

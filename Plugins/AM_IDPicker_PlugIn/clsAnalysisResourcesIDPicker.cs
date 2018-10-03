@@ -52,13 +52,13 @@ namespace AnalysisManagerIDPickerPlugIn
             }
 
             // Retrieve the parameter file for the associated peptide search tool (Sequest, XTandem, MSGF+, etc.)
-            var strParamFileName = m_jobParams.GetParam("ParmFileName");
+            var strParamFileName = mJobParams.GetParam("ParmFileName");
 
             if (!FileSearch.FindAndRetrieveMiscFiles(strParamFileName, false))
             {
                 return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
             }
-            m_jobParams.AddResultFileToSkip(strParamFileName);
+            mJobParams.AddResultFileToSkip(strParamFileName);
 
             // ReSharper disable once ConditionIsAlwaysTrueOrFalse
             if (!clsAnalysisToolRunnerIDPicker.ALWAYS_SKIP_IDPICKER)
@@ -72,9 +72,9 @@ namespace AnalysisManagerIDPickerPlugIn
 #pragma warning restore 162
             }
 
-            var rawDataTypeName = m_jobParams.GetParam("RawDataType");
+            var rawDataTypeName = mJobParams.GetParam("RawDataType");
             var eRawDataType = GetRawDataType(rawDataTypeName);
-            var blnMGFInstrumentData = m_jobParams.GetJobParameter("MGFInstrumentData", false);
+            var blnMGFInstrumentData = mJobParams.GetJobParameter("MGFInstrumentData", false);
 
             // Retrieve the PSM result files, PHRP files, and MSGF file
             if (!GetInputFiles(DatasetName, strParamFileName, out result))
@@ -96,7 +96,7 @@ namespace AnalysisManagerIDPickerPlugIn
 
                 if (eRawDataType == eRawDataTypeConstants.ThermoRawFile | eRawDataType == eRawDataTypeConstants.UIMF)
                 {
-                    var noScanStats = m_jobParams.GetJobParameter("PepXMLNoScanStats", false);
+                    var noScanStats = mJobParams.GetJobParameter("PepXMLNoScanStats", false);
                     if (noScanStats)
                     {
                         LogMessage("Not retrieving MASIC files since PepXMLNoScanStats is True");
@@ -116,41 +116,41 @@ namespace AnalysisManagerIDPickerPlugIn
                 }
             }
 
-            if (!m_MyEMSLUtilities.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+            if (!mMyEMSLUtilities.ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
             {
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
-            var blnSplitFasta = m_jobParams.GetJobParameter("SplitFasta", false);
+            var blnSplitFasta = mJobParams.GetJobParameter("SplitFasta", false);
 
             if (blnSplitFasta)
             {
                 // Override the SplitFasta job parameter
-                m_jobParams.SetParam("SplitFasta", "False");
+                mJobParams.SetParam("SplitFasta", "False");
             }
 
             if (blnSplitFasta && clsAnalysisToolRunnerIDPicker.ALWAYS_SKIP_IDPICKER)
             {
                 // Do not retrieve the fasta file
                 // However, do contact DMS to lookup the name of the legacy fasta file that was used for this job
-                m_FastaFileName = LookupLegacyFastaFileName();
+                mFastaFileName = LookupLegacyFastaFileName();
 
-                if (string.IsNullOrEmpty(m_FastaFileName))
+                if (string.IsNullOrEmpty(mFastaFileName))
                 {
-                    if (string.IsNullOrEmpty(m_message))
+                    if (string.IsNullOrEmpty(mMessage))
                     {
-                        m_message = "Unable to determine the legacy fasta file name";
-                        LogError(m_message);
+                        mMessage = "Unable to determine the legacy fasta file name";
+                        LogError(mMessage);
                     }
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
 
-                m_jobParams.AddAdditionalParameter("PeptideSearch", "generatedFastaName", m_FastaFileName);
+                mJobParams.AddAdditionalParameter("PeptideSearch", "generatedFastaName", mFastaFileName);
             }
             else
             {
                 // Retrieve the Fasta file
-                var orgDbDirectoryPath = m_mgrParams.GetParam("orgdbdir");
+                var orgDbDirectoryPath = mMgrParams.GetParam("OrgDbDir");
                 if (!RetrieveOrgDB(orgDbDirectoryPath, out var resultCode))
                     return resultCode;
             }
@@ -158,7 +158,7 @@ namespace AnalysisManagerIDPickerPlugIn
             if (blnSplitFasta)
             {
                 // Restore the setting for SplitFasta
-                m_jobParams.SetParam("SplitFasta", "True");
+                mJobParams.SetParam("SplitFasta", "True");
             }
 
             return CloseOutType.CLOSEOUT_SUCCESS;
@@ -166,21 +166,21 @@ namespace AnalysisManagerIDPickerPlugIn
 
         private string LookupLegacyFastaFileName()
         {
-            var dmsConnectionString = m_mgrParams.GetParam("connectionstring");
+            var dmsConnectionString = mMgrParams.GetParam("ConnectionString");
             if (string.IsNullOrWhiteSpace(dmsConnectionString))
             {
-                m_message = "Error in LookupLegacyFastaFileName: manager parameter connectionstring is not defined";
-                LogError(m_message);
+                mMessage = "Error in LookupLegacyFastaFileName: manager parameter ConnectionString is not defined";
+                LogError(mMessage);
                 return string.Empty;
             }
 
-            var sqlQuery = "SELECT OrganismDBName FROM V_Analysis_Job WHERE (Job = " + m_JobNum + ")";
+            var sqlQuery = "SELECT OrganismDBName FROM V_Analysis_Job WHERE (Job = " + mJob + ")";
 
             var success = clsGlobal.GetQueryResultsTopRow(sqlQuery, dmsConnectionString, out var lstResults, "LookupLegacyFastaFileName");
 
             if (!success || lstResults == null || lstResults.Count == 0)
             {
-                m_message = "Could not determine the legacy fasta file name (OrganismDBName in V_Analysis_Job) for job " + m_JobNum;
+                mMessage = "Could not determine the legacy fasta file name (OrganismDBName in V_Analysis_Job) for job " + mJob;
                 return string.Empty;
             }
 
@@ -201,7 +201,7 @@ namespace AnalysisManagerIDPickerPlugIn
 
             eReturnCode = CloseOutType.CLOSEOUT_SUCCESS;
 
-            var strResultType = m_jobParams.GetParam("ResultType");
+            var strResultType = mJobParams.GetParam("ResultType");
 
             // Make sure the ResultType is valid
             var eResultType = clsPHRPReader.GetPeptideHitResultType(strResultType);
@@ -210,8 +210,8 @@ namespace AnalysisManagerIDPickerPlugIn
                   eResultType == clsPHRPReader.ePeptideHitResultType.Inspect || eResultType == clsPHRPReader.ePeptideHitResultType.MSGFDB ||
                   eResultType == clsPHRPReader.ePeptideHitResultType.MODa || eResultType == clsPHRPReader.ePeptideHitResultType.MODPlus))
             {
-                m_message = "Invalid tool result type (not supported by IDPicker): " + strResultType;
-                LogError(m_message);
+                mMessage = "Invalid tool result type (not supported by IDPicker): " + strResultType;
+                LogError(mMessage);
                 eReturnCode = CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 return false;
             }
@@ -221,7 +221,7 @@ namespace AnalysisManagerIDPickerPlugIn
             var lstFileNamesToGet = GetPHRPFileNames(eResultType, strDatasetName);
             mSynopsisFileIsEmpty = false;
 
-            if (m_DebugLevel >= 2)
+            if (mDebugLevel >= 2)
             {
                 LogDebug("Retrieving the " + eResultType + " files");
             }
@@ -247,7 +247,7 @@ namespace AnalysisManagerIDPickerPlugIn
                     if (success)
                     {
                         // Rename the Tool_Version file to the expected name (Tool_Version_Info_MSGFPlus.txt)
-                        File.Move(Path.Combine(m_WorkingDir, strToolVersionFileLegacy), Path.Combine(m_WorkingDir, fileToGet));
+                        File.Move(Path.Combine(mWorkDir, strToolVersionFileLegacy), Path.Combine(mWorkDir, fileToGet));
                     }
                 }
 
@@ -262,12 +262,12 @@ namespace AnalysisManagerIDPickerPlugIn
                     }
                 }
 
-                m_jobParams.AddResultFileToSkip(fileToGet);
+                mJobParams.AddResultFileToSkip(fileToGet);
 
                 if (kvEntry.Key == synFileNameExpected)
                 {
                     // Check whether the synopsis file is empty
-                    synFilePath = Path.Combine(m_WorkingDir, Path.GetFileName(fileToGet));
+                    synFilePath = Path.Combine(mWorkDir, Path.GetFileName(fileToGet));
 
                     if (!ValidateFileHasData(synFilePath, "Synopsis file", out var strErrorMessage))
                     {
@@ -284,7 +284,7 @@ namespace AnalysisManagerIDPickerPlugIn
             if (eResultType == clsPHRPReader.ePeptideHitResultType.XTandem)
             {
                 // X!Tandem requires a few additional parameter files
-                var lstExtraFilesToGet = clsPHRPParserXTandem.GetAdditionalSearchEngineParamFileNames(Path.Combine(m_WorkingDir, strSearchEngineParamFileName));
+                var lstExtraFilesToGet = clsPHRPParserXTandem.GetAdditionalSearchEngineParamFileNames(Path.Combine(mWorkDir, strSearchEngineParamFileName));
 
                 foreach (var strFileName in lstExtraFilesToGet)
                 {
@@ -295,39 +295,39 @@ namespace AnalysisManagerIDPickerPlugIn
                         return false;
                     }
 
-                    m_jobParams.AddResultFileToSkip(strFileName);
+                    mJobParams.AddResultFileToSkip(strFileName);
                 }
             }
 
-            if (!m_MyEMSLUtilities.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+            if (!mMyEMSLUtilities.ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
             {
                 return false;
             }
 
             foreach (var item in mInputFileRenames)
             {
-                var fiFile = new FileInfo(Path.Combine(m_WorkingDir, item.Key));
+                var fiFile = new FileInfo(Path.Combine(mWorkDir, item.Key));
                 if (!fiFile.Exists)
                 {
-                    m_message = "File " + item.Key + " not found; unable to rename to " + item.Value;
-                    LogError(m_message);
+                    mMessage = "File " + item.Key + " not found; unable to rename to " + item.Value;
+                    LogError(mMessage);
                     eReturnCode = CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                     return false;
                 }
 
                 try
                 {
-                    fiFile.MoveTo(Path.Combine(m_WorkingDir, item.Value));
+                    fiFile.MoveTo(Path.Combine(mWorkDir, item.Value));
                 }
                 catch (Exception ex)
                 {
-                    m_message = "Error renaming file " + item.Key + " to " + item.Value;
-                    LogError(m_message + "; " + ex.Message);
+                    mMessage = "Error renaming file " + item.Key + " to " + item.Value;
+                    LogError(mMessage + "; " + ex.Message);
                     eReturnCode = CloseOutType.CLOSEOUT_FAILED;
                     return false;
                 }
 
-                m_jobParams.AddResultFileToSkip(item.Value);
+                mJobParams.AddResultFileToSkip(item.Value);
             }
 
             return true;
@@ -340,7 +340,7 @@ namespace AnalysisManagerIDPickerPlugIn
         /// <remarks></remarks>
         private bool RetrieveIDPickerParamFile()
         {
-            var strIDPickerParamFileName = m_jobParams.GetParam("IDPickerParamFile");
+            var strIDPickerParamFileName = mJobParams.GetParam("IDPickerParamFile");
 
             if (string.IsNullOrEmpty(strIDPickerParamFileName))
             {
@@ -348,7 +348,7 @@ namespace AnalysisManagerIDPickerPlugIn
             }
 
             var strParamFileStoragePathKeyName = clsGlobal.STEPTOOL_PARAMFILESTORAGEPATH_PREFIX + "IDPicker";
-            var strIDPickerParamFilePath = m_mgrParams.GetParam(strParamFileStoragePathKeyName);
+            var strIDPickerParamFilePath = mMgrParams.GetParam(strParamFileStoragePathKeyName);
             if (string.IsNullOrEmpty(strIDPickerParamFilePath))
             {
                 strIDPickerParamFilePath = @"\\gigasax\dms_parameter_Files\IDPicker";
@@ -357,14 +357,14 @@ namespace AnalysisManagerIDPickerPlugIn
                            strIDPickerParamFilePath);
             }
 
-            if (!CopyFileToWorkDir(strIDPickerParamFileName, strIDPickerParamFilePath, m_WorkingDir))
+            if (!CopyFileToWorkDir(strIDPickerParamFileName, strIDPickerParamFilePath, mWorkDir))
             {
                 // Errors were reported in function call, so just return
                 return false;
             }
 
             // Store the param file name so that we can load later
-            m_jobParams.AddAdditionalParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, IDPICKER_PARAM_FILENAME_LOCAL, strIDPickerParamFileName);
+            mJobParams.AddAdditionalParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, IDPICKER_PARAM_FILENAME_LOCAL, strIDPickerParamFileName);
 
             return true;
         }
@@ -381,12 +381,12 @@ namespace AnalysisManagerIDPickerPlugIn
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
 
-                if (m_MyEMSLUtilities.FilesToDownload.Count == 0)
+                if (mMyEMSLUtilities.FilesToDownload.Count == 0)
                 {
                     break;
                 }
 
-                if (m_MyEMSLUtilities.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+                if (mMyEMSLUtilities.ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
                 {
                     break;
                 }
@@ -412,20 +412,20 @@ namespace AnalysisManagerIDPickerPlugIn
                 // If processing a .Raw file or .UIMF file, we can create the file using the MSFileInfoScanner
                 if (!GenerateScanStatsFile())
                 {
-                    // Error message should already have been logged and stored in m_message
+                    // Error message should already have been logged and stored in mMessage
                     return false;
                 }
             }
             else
             {
-                if (m_DebugLevel >= 1)
+                if (mDebugLevel >= 1)
                 {
                     LogMessage("Retrieved MASIC ScanStats and ScanStatsEx files");
                 }
             }
 
-            m_jobParams.AddResultFileToSkip(strDatasetName + SCAN_STATS_FILE_SUFFIX);
-            m_jobParams.AddResultFileToSkip(strDatasetName + SCAN_STATS_EX_FILE_SUFFIX);
+            mJobParams.AddResultFileToSkip(strDatasetName + SCAN_STATS_FILE_SUFFIX);
+            mJobParams.AddResultFileToSkip(strDatasetName + SCAN_STATS_EX_FILE_SUFFIX);
             return true;
         }
 
@@ -455,7 +455,7 @@ namespace AnalysisManagerIDPickerPlugIn
             }
 
             var strToolVersionFile = clsPHRPReader.GetToolVersionInfoFilename(eResultType);
-            var strToolNameForScript = m_jobParams.GetJobParameter("ToolName", "");
+            var strToolNameForScript = mJobParams.GetJobParameter("ToolName", "");
             if (eResultType == clsPHRPReader.ePeptideHitResultType.MSGFDB && strToolNameForScript == "MSGFPlus_IMS")
             {
                 // PeptideListToXML expects the ToolVersion file to be named "Tool_Version_Info_MSGFPlus.txt"

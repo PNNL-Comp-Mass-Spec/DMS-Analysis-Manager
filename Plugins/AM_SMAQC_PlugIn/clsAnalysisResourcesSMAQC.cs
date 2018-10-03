@@ -27,8 +27,8 @@ namespace AnalysisManagerSMAQCPlugIn
             }
 
             // Retrieve the parameter file
-            var strParamFileName = m_jobParams.GetParam("ParmFileName");
-            var strParamFileStoragePath = m_jobParams.GetParam("ParmFileStoragePath");
+            var strParamFileName = mJobParams.GetParam("ParmFileName");
+            var strParamFileStoragePath = mJobParams.GetParam("ParmFileStoragePath");
 
             if (!FileSearch.RetrieveFile(strParamFileName, strParamFileStoragePath))
             {
@@ -54,7 +54,7 @@ namespace AnalysisManagerSMAQCPlugIn
             //    return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             // }
 
-            if (!ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+            if (!ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -70,7 +70,7 @@ namespace AnalysisManagerSMAQCPlugIn
 
 #pragma warning disable 162
 
-            var strLLRCRunnerProgLoc = m_mgrParams.GetParam("LLRCRunnerProgLoc", @"\\gigasax\DMS_Programs\LLRCRunner");
+            var strLLRCRunnerProgLoc = mMgrParams.GetParam("LLRCRunnerProgLoc", @"\\gigasax\DMS_Programs\LLRCRunner");
             var lstFilesToCopy = new List<string> {
                 LLRC.LLRCWrapper.RDATA_FILE_ALLDATA,
                 LLRC.LLRCWrapper.RDATA_FILE_MODELS};
@@ -82,14 +82,14 @@ namespace AnalysisManagerSMAQCPlugIn
 
                 if (!fiSourceFile.Exists)
                 {
-                    m_message = "LLRC RData file not found: " + fiSourceFile.FullName;
-                    LogError(m_message);
+                    mMessage = "LLRC RData file not found: " + fiSourceFile.FullName;
+                    LogError(mMessage);
                     return false;
                 }
                 else
                 {
-                    fiSourceFile.CopyTo(Path.Combine(m_WorkingDir, fiSourceFile.Name));
-                    m_jobParams.AddResultFileToSkip(fiSourceFile.Name);
+                    fiSourceFile.CopyTo(Path.Combine(mWorkDir, fiSourceFile.Name));
+                    mJobParams.AddResultFileToSkip(fiSourceFile.Name);
                 }
             }
 
@@ -103,12 +103,12 @@ namespace AnalysisManagerSMAQCPlugIn
         {
             const bool createStoragePathInfoFile = false;
 
-            var strMASICResultsFolderName = m_jobParams.GetParam("MASIC_Results_Folder_Name");
+            var strMASICResultsFolderName = mJobParams.GetParam("MASIC_Results_Folder_Name");
 
-            m_jobParams.AddResultFileExtensionToSkip(SCAN_STATS_FILE_SUFFIX);        // _ScanStats.txt
-            m_jobParams.AddResultFileExtensionToSkip(SCAN_STATS_EX_FILE_SUFFIX);     // _ScanStatsEx.txt
-            m_jobParams.AddResultFileExtensionToSkip("_SICstats.txt");
-            m_jobParams.AddResultFileExtensionToSkip(REPORTERIONS_FILE_SUFFIX);
+            mJobParams.AddResultFileExtensionToSkip(SCAN_STATS_FILE_SUFFIX);        // _ScanStats.txt
+            mJobParams.AddResultFileExtensionToSkip(SCAN_STATS_EX_FILE_SUFFIX);     // _ScanStatsEx.txt
+            mJobParams.AddResultFileExtensionToSkip("_SICstats.txt");
+            mJobParams.AddResultFileExtensionToSkip(REPORTERIONS_FILE_SUFFIX);
 
             var lstNonCriticalFileSuffixes = new List<string>
             {
@@ -118,7 +118,7 @@ namespace AnalysisManagerSMAQCPlugIn
 
             if (string.IsNullOrEmpty(strMASICResultsFolderName))
             {
-                if (m_DebugLevel >= 2)
+                if (mDebugLevel >= 2)
                 {
                     LogDebug("Retrieving the MASIC files by searching for any valid MASIC folder");
                 }
@@ -132,7 +132,7 @@ namespace AnalysisManagerSMAQCPlugIn
                     lstNonCriticalFileSuffixes: lstNonCriticalFileSuffixes);
             }
 
-            if (m_DebugLevel >= 2)
+            if (mDebugLevel >= 2)
             {
                 LogDebug("Retrieving the MASIC files from " + strMASICResultsFolderName);
             }
@@ -141,7 +141,7 @@ namespace AnalysisManagerSMAQCPlugIn
 
             if (string.IsNullOrEmpty(serverPath))
             {
-                m_message = "Dataset directory path not defined";
+                mMessage = "Dataset directory path not defined";
             }
             else
             {
@@ -164,7 +164,7 @@ namespace AnalysisManagerSMAQCPlugIn
 
                 if (!diFolderInfo.Exists)
                 {
-                    m_message = "Dataset directory not found: " + diFolderInfo.FullName;
+                    mMessage = "Dataset directory not found: " + diFolderInfo.FullName;
                 }
                 else
                 {
@@ -173,7 +173,7 @@ namespace AnalysisManagerSMAQCPlugIn
 
                     if (!diMASICFolderInfo.Exists)
                     {
-                        m_message = "Unable to find MASIC results folder " + strMASICResultsFolderName;
+                        mMessage = "Unable to find MASIC results folder " + strMASICResultsFolderName;
                     }
                     else
                     {
@@ -202,12 +202,12 @@ namespace AnalysisManagerSMAQCPlugIn
             //   SourceJob:Auto{Tool = "XTandem" AND Settings_File = "IonTrapDefSettings.xml" AND [Parm File] = "xtandem_Rnd1PartTryp.xml"}
             // leads to the input folder being XTM201009211859_Auto625059
 
-            var strInputFolder = m_jobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "InputFolderName");
+            var strInputFolder = mJobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "InputFolderName");
 
             if (string.IsNullOrEmpty(strInputFolder))
             {
-                m_message = "InputFolder step parameter not found; this is unexpected";
-                LogError(m_message);
+                mMessage = "InputFolder step parameter not found; this is unexpected";
+                LogError(mMessage);
                 return false;
             }
 
@@ -225,13 +225,13 @@ namespace AnalysisManagerSMAQCPlugIn
             }
             else
             {
-                m_message = "InputFolder is not an X!Tandem, Sequest, or MSGF+ folder: " + strInputFolder +
+                mMessage = "InputFolder is not an X!Tandem, Sequest, or MSGF+ folder: " + strInputFolder +
                     "; it should start with XTM, Seq, or MSG and is auto-determined by the SourceJob SpecialProcessing text";
-                LogError(m_message);
+                LogError(mMessage);
                 return false;
             }
 
-            if (m_DebugLevel >= 2)
+            if (mDebugLevel >= 2)
             {
                 LogDebug("Retrieving the PHRP files");
             }
@@ -280,7 +280,7 @@ namespace AnalysisManagerSMAQCPlugIn
                     return false;
                 }
 
-                m_jobParams.AddResultFileToSkip(fileToGet);
+                mJobParams.AddResultFileToSkip(fileToGet);
             }
 
             return true;

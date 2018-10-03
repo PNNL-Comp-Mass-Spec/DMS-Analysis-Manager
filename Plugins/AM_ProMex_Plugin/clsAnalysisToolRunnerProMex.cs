@@ -55,7 +55,7 @@ namespace AnalysisManagerProMexPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                if (m_DebugLevel > 4)
+                if (mDebugLevel > 4)
                 {
                     LogDebug("clsAnalysisToolRunnerProMex.RunTool(): Enter");
                 }
@@ -72,7 +72,7 @@ namespace AnalysisManagerProMexPlugIn
                 if (!StoreToolVersionInfo(progLoc))
                 {
                     LogError("Aborting since StoreToolVersionInfo returned false");
-                    m_message = "Error determining ProMex version";
+                    mMessage = "Error determining ProMex version";
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
@@ -83,34 +83,34 @@ namespace AnalysisManagerProMexPlugIn
                 {
                     // Look for the results file
 
-                    var fiResultsFile = new FileInfo(Path.Combine(m_WorkDir, m_Dataset + clsAnalysisResources.DOT_MS1FT_EXTENSION));
+                    var fiResultsFile = new FileInfo(Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_MS1FT_EXTENSION));
 
                     if (fiResultsFile.Exists)
                     {
                         var postProcessSuccess = PostProcessProMexResults(fiResultsFile);
                         if (!postProcessSuccess)
                         {
-                            if (string.IsNullOrEmpty(m_message))
+                            if (string.IsNullOrEmpty(mMessage))
                             {
-                                m_message = "Unknown error post-processing the ProMex results";
+                                mMessage = "Unknown error post-processing the ProMex results";
                             }
                             processingSuccess = false;
                         }
                     }
                     else
                     {
-                        if (string.IsNullOrEmpty(m_message))
+                        if (string.IsNullOrEmpty(mMessage))
                         {
-                            m_message = "ProMex results file not found: " + fiResultsFile.Name;
+                            mMessage = "ProMex results file not found: " + fiResultsFile.Name;
                         }
                         processingSuccess = false;
                     }
                 }
 
-                m_progress = PROGRESS_PCT_COMPLETE;
+                mProgress = PROGRESS_PCT_COMPLETE;
 
                 // Stop the job timer
-                m_StopTime = DateTime.UtcNow;
+                mStopTime = DateTime.UtcNow;
 
                 // Add the current job data to the summary file
                 UpdateSummaryFile();
@@ -130,7 +130,7 @@ namespace AnalysisManagerProMexPlugIn
                 }
 
                 // There is no need to keep the parameter file since it is fairly simple, and the ProMex_ConsoleOutput.txt file displays all of the parameters used
-                m_jobParams.AddResultFileToSkip(mProMexParamFilePath);
+                mJobParams.AddResultFileToSkip(mProMexParamFilePath);
 
                 var success = CopyResultsToTransferDirectory();
 
@@ -139,8 +139,8 @@ namespace AnalysisManagerProMexPlugIn
             }
             catch (Exception ex)
             {
-                m_message = "Error in ProMexPlugin->RunTool";
-                LogError(m_message, ex);
+                mMessage = "Error in ProMexPlugin->RunTool";
+                LogError(mMessage, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -151,7 +151,7 @@ namespace AnalysisManagerProMexPlugIn
         /// </summary>
         public override void CopyFailedResultsToArchiveFolder()
         {
-            m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MZXML_EXTENSION);
+            mJobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MZXML_EXTENSION);
 
             base.CopyFailedResultsToArchiveFolder();
         }
@@ -209,7 +209,7 @@ namespace AnalysisManagerProMexPlugIn
             {
                 if (!File.Exists(strConsoleOutputFilePath))
                 {
-                    if (m_DebugLevel >= 4)
+                    if (mDebugLevel >= 4)
                     {
                         LogDebug("Console output file not found: " + strConsoleOutputFilePath);
                     }
@@ -217,7 +217,7 @@ namespace AnalysisManagerProMexPlugIn
                     return;
                 }
 
-                if (m_DebugLevel >= 4)
+                if (mDebugLevel >= 4)
                 {
                     LogDebug("Parsing file " + strConsoleOutputFilePath);
                 }
@@ -264,15 +264,15 @@ namespace AnalysisManagerProMexPlugIn
                     }
                 }
 
-                if (m_progress < progressComplete)
+                if (mProgress < progressComplete)
                 {
-                    m_progress = progressComplete;
+                    mProgress = progressComplete;
                 }
             }
             catch (Exception ex)
             {
                 // Ignore errors here
-                if (m_DebugLevel >= 2)
+                if (mDebugLevel >= 2)
                 {
                     LogError("Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
                 }
@@ -289,7 +289,7 @@ namespace AnalysisManagerProMexPlugIn
         {
             cmdLineOptions = string.Empty;
 
-            var paramFileName = m_jobParams.GetParam("ProMexParamFile");
+            var paramFileName = mJobParams.GetParam("ProMexParamFile");
 
             // Although ParseKeyValueParameterFile checks for paramFileName being an empty string,
             // we check for it here since the name comes from the settings file, so we want to customize the error message
@@ -299,13 +299,13 @@ namespace AnalysisManagerProMexPlugIn
                 return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
             }
 
-            var paramFileReader = new clsKeyValueParamFileReader("ProMex", m_WorkDir, paramFileName);
+            var paramFileReader = new clsKeyValueParamFileReader("ProMex", mWorkDir, paramFileName);
             RegisterEvents(paramFileReader);
 
             var eResult = paramFileReader.ParseKeyValueParameterFile(out var paramFileEntries);
             if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
             {
-                m_message = paramFileReader.ErrorMessage;
+                mMessage = paramFileReader.ErrorMessage;
                 return eResult;
             }
 
@@ -316,7 +316,7 @@ namespace AnalysisManagerProMexPlugIn
             cmdLineOptions = paramFileReader.ConvertParamsToArgs(paramFileEntries, paramToArgMapping, paramNamesToSkip, "-");
             if (string.IsNullOrWhiteSpace(cmdLineOptions))
             {
-                m_message = paramFileReader.ErrorMessage;
+                mMessage = paramFileReader.ErrorMessage;
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -400,7 +400,7 @@ namespace AnalysisManagerProMexPlugIn
                     }
                 }
 
-                m_message = "The ProMex results file has fewer than 2 deisotoped features";
+                mMessage = "The ProMex results file has fewer than 2 deisotoped features";
 
                 return false;
             }
@@ -427,24 +427,24 @@ namespace AnalysisManagerProMexPlugIn
 
             if (string.IsNullOrEmpty(cmdLineOptions))
             {
-                if (string.IsNullOrEmpty(m_message))
+                if (string.IsNullOrEmpty(mMessage))
                 {
-                    m_message = "Problem parsing ProMex parameter file";
+                    mMessage = "Problem parsing ProMex parameter file";
                 }
                 return false;
             }
 
             string msFilePath;
 
-            var proMexBruker = clsAnalysisResourcesProMex.IsProMexBrukerJob(m_jobParams);
+            var proMexBruker = clsAnalysisResourcesProMex.IsProMexBrukerJob(mJobParams);
 
             if (proMexBruker)
             {
-                msFilePath = Path.Combine(m_WorkDir, m_Dataset + clsAnalysisResources.DOT_MZML_EXTENSION);
+                msFilePath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_MZML_EXTENSION);
             }
             else
             {
-                msFilePath = Path.Combine(m_WorkDir, m_Dataset + clsAnalysisResources.DOT_PBF_EXTENSION);
+                msFilePath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_PBF_EXTENSION);
             }
 
             LogMessage("Running ProMex");
@@ -454,12 +454,12 @@ namespace AnalysisManagerProMexPlugIn
             var cmdStr = " -i " + msFilePath;
             cmdStr += " " + cmdLineOptions;
 
-            if (m_DebugLevel >= 1)
+            if (mDebugLevel >= 1)
             {
                 LogDebug(progLoc + cmdStr);
             }
 
-            mCmdRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel);
+            mCmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel);
             RegisterEvents(mCmdRunner);
             mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
@@ -468,9 +468,9 @@ namespace AnalysisManagerProMexPlugIn
             mCmdRunner.EchoOutputToConsole = true;
 
             mCmdRunner.WriteConsoleOutputToFile = true;
-            mCmdRunner.ConsoleOutputFilePath = Path.Combine(m_WorkDir, PROMEX_CONSOLE_OUTPUT);
+            mCmdRunner.ConsoleOutputFilePath = Path.Combine(mWorkDir, PROMEX_CONSOLE_OUTPUT);
 
-            m_progress = PROGRESS_PCT_STARTING;
+            mProgress = PROGRESS_PCT_STARTING;
             ResetProgRunnerCpuUsage();
 
             // Start the program and wait for it to finish
@@ -517,7 +517,7 @@ namespace AnalysisManagerProMexPlugIn
 
             if (mConsoleOutputErrorMsg.Contains("Data file has no MS1 spectra"))
             {
-                m_message = mConsoleOutputErrorMsg;
+                mMessage = mConsoleOutputErrorMsg;
                 return false;
             }
 
@@ -530,9 +530,9 @@ namespace AnalysisManagerProMexPlugIn
                 }
             }
 
-            m_progress = PROGRESS_PCT_COMPLETE;
-            m_StatusTools.UpdateAndWrite(m_progress);
-            if (m_DebugLevel >= 3)
+            mProgress = PROGRESS_PCT_COMPLETE;
+            mStatusTools.UpdateAndWrite(mProgress);
+            if (mDebugLevel >= 3)
             {
                 LogDebug("ProMex Search Complete");
             }
@@ -542,7 +542,7 @@ namespace AnalysisManagerProMexPlugIn
 
         private bool StorePbfFileInCache()
         {
-            var fiAutoGeneratedPbfFile = new FileInfo(Path.Combine(m_WorkDir, m_Dataset + clsAnalysisResources.DOT_PBF_EXTENSION));
+            var fiAutoGeneratedPbfFile = new FileInfo(Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_PBF_EXTENSION));
 
             if (!fiAutoGeneratedPbfFile.Exists)
             {
@@ -552,7 +552,7 @@ namespace AnalysisManagerProMexPlugIn
 
             // Store the PBF file in the spectra cache folder; not in the job result folder
 
-            var msXmlCacheFolderPath = m_mgrParams.GetParam("MSXMLCacheFolderPath", string.Empty);
+            var msXmlCacheFolderPath = mMgrParams.GetParam("MSXMLCacheFolderPath", string.Empty);
             var msXmlCacheFolder = new DirectoryInfo(msXmlCacheFolderPath);
 
             if (!msXmlCacheFolder.Exists)
@@ -562,19 +562,19 @@ namespace AnalysisManagerProMexPlugIn
             }
 
             // Temporarily override the result folder name
-            var resultFolderNameSaved = string.Copy(m_ResFolderName);
+            var resultFolderNameSaved = string.Copy(mResultsFolderName);
 
-            m_ResFolderName = "PBF_Gen_1_193_000000";
+            mResultsFolderName = "PBF_Gen_1_193_000000";
 
             // Copy the .pbf file to the MSXML cache
             var remoteCachefilePath = CopyFileToServerCache(msXmlCacheFolder.FullName, fiAutoGeneratedPbfFile.FullName, purgeOldFilesIfNeeded: true);
 
             // Restore the result folder name
-            m_ResFolderName = resultFolderNameSaved;
+            mResultsFolderName = resultFolderNameSaved;
 
             if (string.IsNullOrEmpty(remoteCachefilePath))
             {
-                if (string.IsNullOrEmpty(m_message))
+                if (string.IsNullOrEmpty(mMessage))
                 {
                     LogError("CopyFileToServerCache returned false for " + fiAutoGeneratedPbfFile.Name);
                 }
@@ -588,7 +588,7 @@ namespace AnalysisManagerProMexPlugIn
                 swOutFile.WriteLine(remoteCachefilePath);
             }
 
-            m_jobParams.AddResultFileToSkip(fiAutoGeneratedPbfFile.Name);
+            mJobParams.AddResultFileToSkip(fiAutoGeneratedPbfFile.Name);
 
             return true;
         }
@@ -613,7 +613,7 @@ namespace AnalysisManagerProMexPlugIn
 
         #region "Event Handlers"
 
-        private DateTime dtLastConsoleOutputParse = DateTime.MinValue;
+        private DateTime mLastConsoleOutputParse = DateTime.MinValue;
 
         /// <summary>
         /// Event handler for CmdRunner.LoopWaiting event
@@ -626,11 +626,11 @@ namespace AnalysisManagerProMexPlugIn
             UpdateStatusFile();
 
             // Parse the console output file every 15 seconds
-            if (DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= SECONDS_BETWEEN_UPDATE)
+            if (DateTime.UtcNow.Subtract(mLastConsoleOutputParse).TotalSeconds >= SECONDS_BETWEEN_UPDATE)
             {
-                dtLastConsoleOutputParse = DateTime.UtcNow;
+                mLastConsoleOutputParse = DateTime.UtcNow;
 
-                ParseConsoleOutputFile(Path.Combine(m_WorkDir, PROMEX_CONSOLE_OUTPUT));
+                ParseConsoleOutputFile(Path.Combine(mWorkDir, PROMEX_CONSOLE_OUTPUT));
 
                 UpdateProgRunnerCpuUsage(mCmdRunner, SECONDS_BETWEEN_UPDATE);
 

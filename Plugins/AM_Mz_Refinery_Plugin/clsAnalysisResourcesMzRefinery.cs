@@ -37,7 +37,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 // Retrieve shared resources, including the JobParameters file from the previous job step
                 GetSharedResources();
 
-                var mzRefParamFile = m_jobParams.GetJobParameter("MzRefParamFile", string.Empty);
+                var mzRefParamFile = mJobParams.GetJobParameter("MzRefParamFile", string.Empty);
                 if (string.IsNullOrEmpty(mzRefParamFile))
                 {
                     LogError("MzRefParamFile parameter is empty");
@@ -49,8 +49,8 @@ namespace AnalysisManagerMzRefineryPlugIn
                 // Typically only MsXMLGenerator is defined
                 // However, for MSGFPlus_DeconMSn_MzRefinery jobs, we retrieve both a _dta.txt file (from DeconMSn) and a .mzML file (from MSConvert)
 
-                var dtaGenerator = m_jobParams.GetJobParameter("DtaGenerator", string.Empty);
-                var msXmlGenerator = m_jobParams.GetJobParameter("MSXMLGenerator", string.Empty);
+                var dtaGenerator = mJobParams.GetJobParameter("DtaGenerator", string.Empty);
+                var msXmlGenerator = mJobParams.GetJobParameter("MSXMLGenerator", string.Empty);
 
                 if (string.IsNullOrWhiteSpace(dtaGenerator) && string.IsNullOrWhiteSpace(msXmlGenerator))
                 {
@@ -79,7 +79,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 }
 
                 // Retrieve the FASTA file
-                var orgDbDirectoryPath = m_mgrParams.GetParam("OrgDBDir");
+                var orgDbDirectoryPath = mMgrParams.GetParam("OrgDbDir");
 
                 currentTask = "RetrieveOrgDB to " + orgDbDirectoryPath;
 
@@ -93,7 +93,7 @@ namespace AnalysisManagerMzRefineryPlugIn
 
                 const string paramFileStoragePathKeyName = clsGlobal.STEPTOOL_PARAMFILESTORAGEPATH_PREFIX + "Mz_Refinery";
 
-                var mzRefineryParmFileStoragePath = m_mgrParams.GetParam(paramFileStoragePathKeyName);
+                var mzRefineryParmFileStoragePath = mMgrParams.GetParam(paramFileStoragePathKeyName);
                 if (string.IsNullOrWhiteSpace(mzRefineryParmFileStoragePath))
                 {
                     mzRefineryParmFileStoragePath = @"\\gigasax\dms_parameter_Files\MzRefinery";
@@ -119,8 +119,8 @@ namespace AnalysisManagerMzRefineryPlugIn
             }
             catch (Exception ex)
             {
-                m_message = "Exception in GetResources: " + ex.Message;
-                LogError(m_message + "; task = " + currentTask + "; " + clsGlobal.GetExceptionStackTrace(ex));
+                mMessage = "Exception in GetResources: " + ex.Message;
+                LogError(mMessage + "; task = " + currentTask + "; " + clsGlobal.GetExceptionStackTrace(ex));
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -133,26 +133,26 @@ namespace AnalysisManagerMzRefineryPlugIn
 
             if (FileSearch.RetrieveDtaFiles())
             {
-                m_jobParams.AddResultFileToSkip(DatasetName + CDTA_ZIPPED_EXTENSION);
-                m_jobParams.AddResultFileToSkip(DatasetName + CDTA_EXTENSION);
+                mJobParams.AddResultFileToSkip(DatasetName + CDTA_ZIPPED_EXTENSION);
+                mJobParams.AddResultFileToSkip(DatasetName + CDTA_EXTENSION);
 
                 return CloseOutType.CLOSEOUT_SUCCESS;
             }
 
-            var sharedResultsFolders = m_jobParams.GetParam(JOB_PARAM_SHARED_RESULTS_FOLDERS);
+            var sharedResultsFolders = mJobParams.GetParam(JOB_PARAM_SHARED_RESULTS_FOLDERS);
             if (string.IsNullOrEmpty(sharedResultsFolders))
             {
-                m_message = clsGlobal.AppendToComment(m_message, "Job parameter SharedResultsFolders is empty");
+                mMessage = clsGlobal.AppendToComment(mMessage, "Job parameter SharedResultsFolders is empty");
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
             if (sharedResultsFolders.Contains(","))
             {
-                m_message = clsGlobal.AppendToComment(m_message, "shared results folders: " + sharedResultsFolders);
+                mMessage = clsGlobal.AppendToComment(mMessage, "shared results folders: " + sharedResultsFolders);
             }
             else
             {
-                m_message = clsGlobal.AppendToComment(m_message, "shared results folder " + sharedResultsFolders);
+                mMessage = clsGlobal.AppendToComment(mMessage, "shared results folder " + sharedResultsFolders);
             }
 
             // Errors were reported in function call, so just return
@@ -167,20 +167,20 @@ namespace AnalysisManagerMzRefineryPlugIn
         /// <remarks>Will return True even if existing results are not found</remarks>
         private bool FindExistingMSGFPlusResults(string mzRefParamFileName)
         {
-            var resultsFolderName = m_jobParams.GetParam(JOB_PARAM_OUTPUT_FOLDER_NAME);
-            var transferFolderPath = m_jobParams.GetParam(JOB_PARAM_TRANSFER_FOLDER_PATH);
+            var resultsFolderName = mJobParams.GetParam(JOB_PARAM_OUTPUT_FOLDER_NAME);
+            var transferFolderPath = mJobParams.GetParam(JOB_PARAM_TRANSFER_FOLDER_PATH);
 
             if (string.IsNullOrWhiteSpace(resultsFolderName))
             {
-                m_message = "Results folder not defined (job parameter OutputFolderName)";
-                LogError(m_message);
+                mMessage = "Results folder not defined (job parameter OutputFolderName)";
+                LogError(mMessage);
                 return false;
             }
 
             if (string.IsNullOrWhiteSpace(transferFolderPath))
             {
-                m_message = "Transfer folder not defined (job parameter transferFolderPath)";
-                LogError(m_message);
+                mMessage = "Transfer folder not defined (job parameter transferFolderPath)";
+                LogError(mMessage);
                 return false;
             }
 
@@ -218,7 +218,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             }
 
             // Compare the remote parameter file and the local one to make sure they match
-            if (!clsGlobal.TextFilesMatch(mzRefParamFile.FullName, Path.Combine(m_WorkingDir, mzRefParamFileName), true))
+            if (!clsGlobal.TextFilesMatch(mzRefParamFile.FullName, Path.Combine(mWorkDir, mzRefParamFileName), true))
             {
                 LogMessage("MzRefinery parameter file in transfer folder does not match the official MzRefinery parameter file; will re-run MSGF+");
                 return true;
@@ -226,14 +226,14 @@ namespace AnalysisManagerMzRefineryPlugIn
 
             // Existing results found
             // Copy the MSGF+ results locally
-            var localFilePath = Path.Combine(m_WorkingDir, msgfPlusResults.Name);
+            var localFilePath = Path.Combine(mWorkDir, msgfPlusResults.Name);
             msgfPlusResults.CopyTo(localFilePath, true);
 
             GUnzipFile(localFilePath);
 
             if (msgfPlusConsoleOutput.Exists)
             {
-                localFilePath = Path.Combine(m_WorkingDir, msgfPlusConsoleOutput.Name);
+                localFilePath = Path.Combine(mWorkDir, msgfPlusConsoleOutput.Name);
                 msgfPlusConsoleOutput.CopyTo(localFilePath, true);
             }
 

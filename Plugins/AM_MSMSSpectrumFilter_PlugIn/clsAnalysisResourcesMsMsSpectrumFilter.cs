@@ -46,13 +46,13 @@ namespace MSMSSpectrumFilterAM
 
             // Add the _dta.txt file to the list of extensions to delete after the tool finishes
             // This is the unzipped, concatenated DTA
-            m_jobParams.AddResultFileExtensionToSkip(DatasetName + "_dta.txt");
+            mJobParams.AddResultFileExtensionToSkip(DatasetName + "_dta.txt");
 
 
             // Add the _Dta.zip file to the list of files to move to the results folder
             // Note that this .Zip file will contain the filtered _Dta.txt file (not the original _Dta.txt file)
             // Zipped _dta.txt file
-            m_jobParams.AddResultFileToKeep("_dta.zip");
+            mJobParams.AddResultFileToKeep("_dta.zip");
 
             // Look at the job parameters
             // If ScanTypeFilter is defined, or MSCollisionModeFilter is defined, or MSLevelFilter is defined, we need either of the following
@@ -60,19 +60,19 @@ namespace MSMSSpectrumFilterAM
             //       This is essentially a job-depending-on a job
             //  b) The .Raw file
 
-            var strMSLevelFilter = m_jobParams.GetJobParameter("MSLevelFilter", "0");
+            var strMSLevelFilter = mJobParams.GetJobParameter("MSLevelFilter", "0");
 
-            var strScanTypeFilter = m_jobParams.GetJobParameter("ScanTypeFilter", "");
-            var strScanTypeMatchType = m_jobParams.GetJobParameter("ScanTypeMatchType", clsMsMsSpectrumFilter.TEXT_MATCH_TYPE_CONTAINS);
+            var strScanTypeFilter = mJobParams.GetJobParameter("ScanTypeFilter", "");
+            var strScanTypeMatchType = mJobParams.GetJobParameter("ScanTypeMatchType", clsMsMsSpectrumFilter.TEXT_MATCH_TYPE_CONTAINS);
 
-            var strMSCollisionModeFilter = m_jobParams.GetJobParameter("MSCollisionModeFilter", "");
-            var strMSCollisionModeMatchType = m_jobParams.GetJobParameter("MSCollisionModeMatchType", clsMsMsSpectrumFilter.TEXT_MATCH_TYPE_CONTAINS);
+            var strMSCollisionModeFilter = mJobParams.GetJobParameter("MSCollisionModeFilter", "");
+            var strMSCollisionModeMatchType = mJobParams.GetJobParameter("MSCollisionModeMatchType", clsMsMsSpectrumFilter.TEXT_MATCH_TYPE_CONTAINS);
 
             var blnNeedScanStatsFiles = false;
 
             if (!string.IsNullOrEmpty(strMSLevelFilter) && strMSLevelFilter != "0")
             {
-                if (m_DebugLevel >= 1)
+                if (mDebugLevel >= 1)
                 {
                     LogDebug("GetResources: MSLevelFilter is defined (" + strMSLevelFilter + "); will retrieve or generate the ScanStats files");
                 }
@@ -81,7 +81,7 @@ namespace MSMSSpectrumFilterAM
 
             if (!string.IsNullOrEmpty(strScanTypeFilter))
             {
-                if (m_DebugLevel >= 1)
+                if (mDebugLevel >= 1)
                 {
                     LogDebug("GetResources: ScanTypeFilter is defined (" + strScanTypeFilter + " with match type " + strScanTypeMatchType + "); will retrieve or generate the ScanStats files");
                 }
@@ -90,7 +90,7 @@ namespace MSMSSpectrumFilterAM
 
             if (!string.IsNullOrEmpty(strMSCollisionModeFilter))
             {
-                if (m_DebugLevel >= 1)
+                if (mDebugLevel >= 1)
                 {
                     LogDebug("GetResources: MSCollisionModeFilter is defined (" + strMSCollisionModeFilter +
                         " with match type " + strMSCollisionModeMatchType + "); will retrieve or generate the ScanStats files");
@@ -134,7 +134,7 @@ namespace MSMSSpectrumFilterAM
                     // Find the dataset file and either create a StoragePathInfo file or copy it locally
 
                     var CreateStoragePathInfoOnly = false;
-                    var RawDataType = m_jobParams.GetParam("RawDataType");
+                    var RawDataType = mJobParams.GetParam("RawDataType");
 
                     switch (RawDataType.ToLower())
                     {
@@ -160,20 +160,20 @@ namespace MSMSSpectrumFilterAM
                 }
 
                 // Add additional extensions to delete after the tool finishes
-                m_jobParams.AddResultFileExtensionToSkip("_ScanStats.txt");
-                m_jobParams.AddResultFileExtensionToSkip("_ScanStatsEx.txt");
-                m_jobParams.AddResultFileExtensionToSkip("_StoragePathInfo.txt");
+                mJobParams.AddResultFileExtensionToSkip("_ScanStats.txt");
+                mJobParams.AddResultFileExtensionToSkip("_ScanStatsEx.txt");
+                mJobParams.AddResultFileExtensionToSkip("_StoragePathInfo.txt");
 
-                m_jobParams.AddResultFileExtensionToSkip(DOT_WIFF_EXTENSION);
-                m_jobParams.AddResultFileExtensionToSkip(DOT_RAW_EXTENSION);
-                m_jobParams.AddResultFileExtensionToSkip(DOT_UIMF_EXTENSION);
-                m_jobParams.AddResultFileExtensionToSkip(DOT_MZXML_EXTENSION);
+                mJobParams.AddResultFileExtensionToSkip(DOT_WIFF_EXTENSION);
+                mJobParams.AddResultFileExtensionToSkip(DOT_RAW_EXTENSION);
+                mJobParams.AddResultFileExtensionToSkip(DOT_UIMF_EXTENSION);
+                mJobParams.AddResultFileExtensionToSkip(DOT_MZXML_EXTENSION);
 
-                m_jobParams.AddResultFileExtensionToSkip(DOT_MGF_EXTENSION);
-                m_jobParams.AddResultFileExtensionToSkip(DOT_CDF_EXTENSION);
+                mJobParams.AddResultFileExtensionToSkip(DOT_MGF_EXTENSION);
+                mJobParams.AddResultFileExtensionToSkip(DOT_CDF_EXTENSION);
             }
 
-            if (!base.ProcessMyEMSLDownloadQueue(m_WorkingDir, Downloader.DownloadFolderLayout.FlatNoSubfolders))
+            if (!base.ProcessMyEMSLDownloadQueue(mWorkDir, Downloader.DownloadFolderLayout.FlatNoSubfolders))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -198,7 +198,7 @@ namespace MSMSSpectrumFilterAM
 
                 if (lstFiles.Count == 0)
                 {
-                    if (m_DebugLevel >= 2)
+                    if (mDebugLevel >= 2)
                     {
                         LogWarning("No _ScanStats.txt files were found in subfolders below " + strDatasetFolderPath);
                     }
@@ -211,7 +211,7 @@ namespace MSMSSpectrumFilterAM
                 var fiNewestScanStatsFile = lstSortedFiles[0];
 
                 // Copy the ScanStats file locally
-                fiNewestScanStatsFile.CopyTo(Path.Combine(m_WorkingDir, fiNewestScanStatsFile.Name));
+                fiNewestScanStatsFile.CopyTo(Path.Combine(mWorkDir, fiNewestScanStatsFile.Name));
 
                 // Read the first line of the file and confirm that the _ScanTypeName column exists
                 using (var srScanStatsFile = new StreamReader(new FileStream(fiNewestScanStatsFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
@@ -221,7 +221,7 @@ namespace MSMSSpectrumFilterAM
 
                     if (!strLineIn.Contains(clsMsMsSpectrumFilter.SCANSTATS_COL_SCAN_TYPE_NAME))
                     {
-                        if (m_DebugLevel >= 1)
+                        if (mDebugLevel >= 1)
                         {
                             LogMessage("The newest _ScanStats.txt file for this dataset does not contain column " + clsMsMsSpectrumFilter.SCANSTATS_COL_SCAN_TYPE_NAME +
                                 "; will need to re-generate the file using the .Raw file");
@@ -236,9 +236,9 @@ namespace MSMSSpectrumFilterAM
                 if (File.Exists(strScanStatsExPath))
                 {
                     // Copy it locally
-                    File.Copy(strScanStatsExPath, Path.Combine(m_WorkingDir, Path.GetFileName(strScanStatsExPath)));
+                    File.Copy(strScanStatsExPath, Path.Combine(mWorkDir, Path.GetFileName(strScanStatsExPath)));
 
-                    if (m_DebugLevel >= 1)
+                    if (mDebugLevel >= 1)
                     {
                         LogMessage("Using existing _ScanStats.txt from " + fiNewestScanStatsFile.FullName);
                     }
@@ -247,7 +247,7 @@ namespace MSMSSpectrumFilterAM
                 }
                 else
                 {
-                    if (m_DebugLevel >= 1)
+                    if (mDebugLevel >= 1)
                     {
                         LogWarning("The _ScanStats.txt file was found at " + fiNewestScanStatsFile.FullName + " but the _ScanStatsEx.txt file was not present");
                     }

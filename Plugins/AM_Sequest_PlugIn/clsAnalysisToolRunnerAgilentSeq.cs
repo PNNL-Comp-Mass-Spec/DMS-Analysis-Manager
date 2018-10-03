@@ -13,14 +13,14 @@ namespace AnalysisManagerSequestPlugin
             try
             {
                 // Delete the .mgf file
-                var mgfFiles = Directory.GetFiles(m_WorkDir, "*.mgf");
+                var mgfFiles = Directory.GetFiles(mWorkDir, "*.mgf");
                 foreach (var file in mgfFiles)
                 {
                     DeleteFileWithRetries(file);
                 }
 
                 // Delete the .cdf file, if present
-                var cdfFiles = Directory.GetFiles(m_WorkDir, "*.cdf");
+                var cdfFiles = Directory.GetFiles(mWorkDir, "*.cdf");
                 foreach (var file in cdfFiles)
                 {
                     DeleteFileWithRetries(file);

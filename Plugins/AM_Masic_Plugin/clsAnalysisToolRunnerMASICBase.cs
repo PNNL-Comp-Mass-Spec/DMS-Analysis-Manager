@@ -24,12 +24,12 @@ namespace AnalysisManagerMasicPlugin
         private const string SICS_XML_FILE_SUFFIX = "_SICs.xml";
 
         // Job running status variable
-        private bool m_JobRunning;
+        private bool mJobRunning;
 
-        protected string m_ErrorMessage = string.Empty;
+        protected string mErrorMessage = string.Empty;
 
-        private string m_ProcessStep = string.Empty;
-        private string m_MASICStatusFileName = string.Empty;
+        private string mProcessStep = string.Empty;
+        private string mMASICStatusFileName = string.Empty;
 
         #endregion
 
@@ -88,16 +88,16 @@ namespace AnalysisManagerMasicPlugin
             if (!StoreToolVersionInfo())
             {
                 LogError("Aborting since StoreToolVersionInfo returned false");
-                m_message = "Error determining MASIC version";
+                mMessage = "Error determining MASIC version";
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
             // Start the job timer
-            m_StartTime = DateTime.UtcNow;
-            m_message = string.Empty;
+            mStartTime = DateTime.UtcNow;
+            mMessage = string.Empty;
 
             // Make the SIC's
-            LogMessage("Calling MASIC to create the SIC files, job " + m_JobNum);
+            LogMessage("Calling MASIC to create the SIC files, job " + mJob);
             try
             {
                 // Note that RunMASIC will populate the File Path variables, then will call
@@ -114,7 +114,7 @@ namespace AnalysisManagerMasicPlugin
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            m_progress = 100;
+            mProgress = 100;
             UpdateStatusFile();
 
             // Run the cleanup routine from the base class
@@ -125,7 +125,7 @@ namespace AnalysisManagerMasicPlugin
             }
 
             // Make the results folder
-            if (m_DebugLevel > 3)
+            if (mDebugLevel > 3)
             {
                 LogDebug("clsAnalysisToolRunnerMASICBase.RunTool(), Making results folder");
             }
@@ -142,22 +142,22 @@ namespace AnalysisManagerMasicPlugin
 
             var masicExePath = string.Empty;
 
-            m_ErrorMessage = string.Empty;
-            m_ProcessStep = "NewTask";
+            mErrorMessage = string.Empty;
+            mProcessStep = "NewTask";
 
             try
             {
-                m_MASICStatusFileName = "MasicStatus_" + m_MachName + ".xml";
+                mMASICStatusFileName = "MasicStatus_" + mMgrName + ".xml";
             }
             catch (Exception)
             {
-                m_MASICStatusFileName = "MasicStatus.xml";
+                mMASICStatusFileName = "MasicStatus.xml";
             }
 
             // Make sure the MASIC.Exe file exists
             try
             {
-                masicExePath = m_mgrParams.GetParam("masicprogloc");
+                masicExePath = mMgrParams.GetParam("MasicProgLoc");
                 if (!File.Exists(masicExePath))
                 {
                     LogError("clsAnalysisToolRunnerMASICBase.StartMASICAndWait(); MASIC not found at: " + masicExePath);
@@ -172,17 +172,17 @@ namespace AnalysisManagerMasicPlugin
 
             // Call MASIC using the Program Runner class
 
-            var logFile = new FileInfo(Path.Combine(m_WorkDir, "MASIC_Log_Job" + m_JobNum + ".txt"));
+            var logFile = new FileInfo(Path.Combine(mWorkDir, "MASIC_Log_Job" + mJob + ".txt"));
 
             // Define the parameters to send to Masic.exe
             var cmdStr =
                 " /I:" + inputFilePath +
                 " /O:" + outputFolderPath +
                 " /P:" + parameterFilePath +
-                " /Q /SF:" + m_MASICStatusFileName +
+                " /Q /SF:" + mMASICStatusFileName +
                 " /L:" + PathUtils.PossiblyQuotePath(logFile.FullName);
 
-            if (m_DebugLevel >= 1)
+            if (mDebugLevel >= 1)
             {
                 LogDebug(masicExePath + cmdStr);
             }
@@ -196,7 +196,7 @@ namespace AnalysisManagerMasicPlugin
                 Name = "MASIC",
                 Program = masicExePath,
                 Arguments = cmdStr,
-                WorkDir = m_WorkDir
+                WorkDir = mWorkDir
             };
 
             ResetProgRunnerCpuUsage();
@@ -215,33 +215,33 @@ namespace AnalysisManagerMasicPlugin
             // Verify MASIC exited due to job completion
             if (blnSuccess)
             {
-                m_jobParams.AddResultFileToSkip(logFile.Name);
+                mJobParams.AddResultFileToSkip(logFile.Name);
             }
             else
             {
-                if (m_DebugLevel > 1)
+                if (mDebugLevel > 1)
                 {
                     LogError("WaitForJobToFinish returned False");
                 }
 
-                if (!string.IsNullOrEmpty(m_ErrorMessage))
+                if (!string.IsNullOrEmpty(mErrorMessage))
                 {
-                    LogError("clsAnalysisToolRunnerMASICBase.StartMASICAndWait(); Masic Error message: " + m_ErrorMessage);
-                    if (string.IsNullOrEmpty(m_message))
-                        m_message = m_ErrorMessage;
+                    LogError("clsAnalysisToolRunnerMASICBase.StartMASICAndWait(); Masic Error message: " + mErrorMessage);
+                    if (string.IsNullOrEmpty(mMessage))
+                        mMessage = mErrorMessage;
                 }
                 else
                 {
                     LogError("clsAnalysisToolRunnerMASICBase.StartMASICAndWait(); Masic Error message is blank");
-                    if (string.IsNullOrEmpty(m_message))
-                        m_message = "Unknown error running MASIC";
+                    if (string.IsNullOrEmpty(mMessage))
+                        mMessage = "Unknown error running MASIC";
                 }
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            if (m_DebugLevel > 0)
+            if (mDebugLevel > 0)
             {
-                LogDebug("clsAnalysisToolRunnerMASICBase.StartMASICAndWait(); m_ProcessStep=" + m_ProcessStep);
+                LogDebug("clsAnalysisToolRunnerMASICBase.StartMASICAndWait(); mProcessStep=" + mProcessStep);
             }
 
             return CloseOutType.CLOSEOUT_SUCCESS;
@@ -265,7 +265,7 @@ namespace AnalysisManagerMasicPlugin
                 if (masicExe.DirectoryName == null)
                     return;
 
-                var statusFile = new FileInfo(Path.Combine(masicExe.DirectoryName, m_MASICStatusFileName));
+                var statusFile = new FileInfo(Path.Combine(masicExe.DirectoryName, mMASICStatusFileName));
 
                 if (!statusFile.Exists)
                     return;
@@ -287,7 +287,7 @@ namespace AnalysisManagerMasicPlugin
                                     if (!objXmlReader.IsEmptyElement)
                                     {
                                         if (objXmlReader.Read())
-                                            m_ProcessStep = objXmlReader.Value;
+                                            mProcessStep = objXmlReader.Value;
                                     }
                                     break;
                                 case "Progress":
@@ -301,7 +301,7 @@ namespace AnalysisManagerMasicPlugin
                                     if (!objXmlReader.IsEmptyElement)
                                     {
                                         if (objXmlReader.Read())
-                                            m_ErrorMessage = objXmlReader.Value;
+                                            mErrorMessage = objXmlReader.Value;
                                     }
                                     break;
                             }
@@ -315,7 +315,7 @@ namespace AnalysisManagerMasicPlugin
 
                 try
                 {
-                    m_progress = float.Parse(progress);
+                    mProgress = float.Parse(progress);
                 }
                 catch (Exception)
                 {
@@ -331,7 +331,7 @@ namespace AnalysisManagerMasicPlugin
         protected virtual CloseOutType PerfPostAnalysisTasks()
         {
             // Stop the job timer
-            m_StopTime = DateTime.UtcNow;
+            mStopTime = DateTime.UtcNow;
 
             // Get rid of raw data file
             var stepResult = DeleteDataFile();
@@ -341,24 +341,24 @@ namespace AnalysisManagerMasicPlugin
             }
 
             // Zip the _SICs.XML file (if it exists; it won't if SkipSICProcessing = True in the parameter file)
-            var FoundFiles = Directory.GetFiles(m_WorkDir, "*" + SICS_XML_FILE_SUFFIX);
+            var FoundFiles = Directory.GetFiles(mWorkDir, "*" + SICS_XML_FILE_SUFFIX);
 
             if (FoundFiles.Length > 0)
             {
                 // Setup zipper
 
-                var zipFileName = m_Dataset + "_SICs.zip";
+                var zipFileName = mDatasetName + "_SICs.zip";
 
-                if (!ZipFile(FoundFiles[0], true, Path.Combine(m_WorkDir, zipFileName)))
+                if (!ZipFile(FoundFiles[0], true, Path.Combine(mWorkDir, zipFileName)))
                 {
-                    LogErrorToDatabase("Error zipping " + Path.GetFileName(FoundFiles[0]) + ", job " + m_JobNum);
+                    LogErrorToDatabase("Error zipping " + Path.GetFileName(FoundFiles[0]) + ", job " + mJob);
                     UpdateStatusMessage("Error zipping " + SICS_XML_FILE_SUFFIX + " file");
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
             }
 
             // Add all the extensions of the files to delete after run
-            m_jobParams.AddResultFileExtensionToSkip(SICS_XML_FILE_SUFFIX); // Unzipped, concatenated DTA
+            mJobParams.AddResultFileExtensionToSkip(SICS_XML_FILE_SUFFIX); // Unzipped, concatenated DTA
 
             // Add the current job data to the summary file
             UpdateSummaryFile();
@@ -372,7 +372,7 @@ namespace AnalysisManagerMasicPlugin
         /// <remarks></remarks>
         private bool StoreToolVersionInfo()
         {
-            var masicExecutablePath = m_mgrParams.GetParam("masicprogloc");
+            var masicExecutablePath = mMgrParams.GetParam("MasicProgLoc");
             var success = StoreDotNETToolVersionInfo(masicExecutablePath);
 
             return success;
@@ -429,16 +429,16 @@ namespace AnalysisManagerMasicPlugin
             var blnAbortedProgram = false;
 
             // Wait for completion
-            m_JobRunning = true;
+            mJobRunning = true;
 
-            while (m_JobRunning)
+            while (mJobRunning)
             {
                 // Wait for 30 seconds
                 clsGlobal.IdleLoop(SECONDS_BETWEEN_UPDATE);
 
                 if (objMasicProgRunner.State == ProgRunner.States.NotMonitoring)
                 {
-                    m_JobRunning = false;
+                    mJobRunning = false;
                 }
                 else
                 {
@@ -474,15 +474,15 @@ namespace AnalysisManagerMasicPlugin
                 }
             }
 
-            if (m_DebugLevel > 0)
+            if (mDebugLevel > 0)
             {
                 LogDebug("clsAnalysisToolRunnerMASICBase.WaitForJobToFinish(); MASIC process has ended");
             }
 
             if (blnAbortedProgram)
             {
-                m_ErrorMessage = "Aborted MASIC processing since over " + MAX_RUNTIME_HOURS + " hours have elapsed";
-                LogError("clsAnalysisToolRunnerMASICBase.WaitForJobToFinish(); " + m_ErrorMessage);
+                mErrorMessage = "Aborted MASIC processing since over " + MAX_RUNTIME_HOURS + " hours have elapsed";
+                LogError("clsAnalysisToolRunnerMASICBase.WaitForJobToFinish(); " + mErrorMessage);
                 return false;
             }
 
@@ -498,7 +498,7 @@ namespace AnalysisManagerMasicPlugin
             LogError("clsAnalysisToolRunnerMASICBase.WaitForJobToFinish(); objMasicProgRunner.ExitCode is nonzero: " + objMasicProgRunner.ExitCode);
 
             // See if a _SICs.XML file was created
-            if (Directory.GetFiles(m_WorkDir, "*" + SICS_XML_FILE_SUFFIX).Length > 0)
+            if (Directory.GetFiles(mWorkDir, "*" + SICS_XML_FILE_SUFFIX).Length > 0)
             {
                 blnSICsXMLFileExists = true;
             }

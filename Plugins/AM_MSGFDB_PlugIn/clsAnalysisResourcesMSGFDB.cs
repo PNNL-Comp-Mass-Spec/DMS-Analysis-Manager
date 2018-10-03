@@ -52,12 +52,12 @@ namespace AnalysisManagerMSGFDBPlugIn
                 currentTask = "ValidateFreeMemorySize";
                 if (!ValidateFreeMemorySize("MSGFDBJavaMemorySize", false))
                 {
-                    m_message = "Not enough free memory to run MSGF+";
+                    mMessage = "Not enough free memory to run MSGF+";
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 // Retrieve the Fasta file
-                var localOrgDbFolder = m_mgrParams.GetParam(MGR_PARAM_ORG_DB_DIR);
+                var localOrgDbFolder = mMgrParams.GetParam(MGR_PARAM_ORG_DB_DIR);
 
                 currentTask = "RetrieveOrgDB to " + localOrgDbFolder;
 
@@ -74,7 +74,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 //  FROM V_Param_File_Mass_Mod_Info
                 //  WHERE Param_File_Name = 'ParamFileName'
 
-                var paramFileName = m_jobParams.GetParam(JOB_PARAM_PARAMETER_FILE);
+                var paramFileName = mJobParams.GetParam(JOB_PARAM_PARAMETER_FILE);
                 currentTask = "RetrieveGeneratedParamFile " + paramFileName;
 
                 if (!RetrieveGeneratedParamFile(paramFileName))
@@ -83,7 +83,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 }
 
                 // The ToolName job parameter holds the name of the job script we are executing
-                var scriptName = m_jobParams.GetParam("ToolName");
+                var scriptName = mJobParams.GetParam("ToolName");
 
                 if (scriptName.ToLower().Contains("mzxml") ||
                     scriptName.ToLower().Contains("msgfplus_bruker"))
@@ -124,13 +124,13 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 // Add all the extensions of the files to delete after run
                 // Do not skip all .gz files because the MSGF+ results are compressed using .gz
-                m_jobParams.AddResultFileExtensionToSkip(DOT_MZXML_EXTENSION);
-                m_jobParams.AddResultFileExtensionToSkip(CDTA_ZIPPED_EXTENSION); // Zipped DTA
-                m_jobParams.AddResultFileExtensionToSkip(CDTA_EXTENSION); // Unzipped, concatenated DTA
-                m_jobParams.AddResultFileExtensionToSkip("temp.tsv"); // MSGFDB creates .txt.temp.tsv files, which we don't need
+                mJobParams.AddResultFileExtensionToSkip(DOT_MZXML_EXTENSION);
+                mJobParams.AddResultFileExtensionToSkip(CDTA_ZIPPED_EXTENSION); // Zipped DTA
+                mJobParams.AddResultFileExtensionToSkip(CDTA_EXTENSION); // Unzipped, concatenated DTA
+                mJobParams.AddResultFileExtensionToSkip("temp.tsv"); // MSGFDB creates .txt.temp.tsv files, which we don't need
 
-                m_jobParams.AddResultFileExtensionToSkip(SCAN_STATS_FILE_SUFFIX);
-                m_jobParams.AddResultFileExtensionToSkip(SCAN_STATS_EX_FILE_SUFFIX);
+                mJobParams.AddResultFileExtensionToSkip(SCAN_STATS_FILE_SUFFIX);
+                mJobParams.AddResultFileExtensionToSkip(SCAN_STATS_EX_FILE_SUFFIX);
 
                 return CloseOutType.CLOSEOUT_SUCCESS;
             }
@@ -150,7 +150,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             // Lookup scan stats
             try
             {
-                var msgfPlusUtils = new MSGFPlusUtils(m_mgrParams, m_jobParams, m_WorkingDir, m_DebugLevel);
+                var msgfPlusUtils = new MSGFPlusUtils(mMgrParams, mJobParams, mWorkDir, mDebugLevel);
                 RegisterEvents(msgfPlusUtils);
 
                 var success = msgfPlusUtils.LookupScanTypesForDataset(DatasetName, out var countLowResMSn, out var countHighResMSn, out var countHCDMSn);
@@ -160,9 +160,9 @@ namespace AnalysisManagerMSGFDBPlugIn
                     return false;
                 }
 
-                m_jobParams.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, MSGFPlusUtils.SCANCOUNT_LOWRES_MSN, countLowResMSn);
-                m_jobParams.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, MSGFPlusUtils.SCANCOUNT_HIGHRES_MSN, countHighResMSn);
-                m_jobParams.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, MSGFPlusUtils.SCANCOUNT_HCD_MSN, countHCDMSn);
+                mJobParams.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, MSGFPlusUtils.SCANCOUNT_LOWRES_MSN, countLowResMSn);
+                mJobParams.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, MSGFPlusUtils.SCANCOUNT_HIGHRES_MSN, countHighResMSn);
+                mJobParams.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, MSGFPlusUtils.SCANCOUNT_HCD_MSN, countHCDMSn);
 
             }
             catch (Exception ex)
@@ -187,30 +187,30 @@ namespace AnalysisManagerMSGFDBPlugIn
             try
             {
                 // Index the FASTA file (either by copying from a remote share, or by re-generating the index)
-                var msgfPlusUtils = new MSGFPlusUtils(m_mgrParams, m_jobParams, m_WorkingDir, m_DebugLevel);
+                var msgfPlusUtils = new MSGFPlusUtils(mMgrParams, mJobParams, mWorkDir, mDebugLevel);
                 RegisterEvents(msgfPlusUtils);
 
                 msgfPlusUtils.IgnorePreviousErrorEvent += MSGFPlusUtils_IgnorePreviousErrorEvent;
 
                 // Get the FASTA file and index it if necessary
                 // Passing in the path to the parameter file so we can look for TDA=0 when using large .Fasta files
-                var parameterFilePath = Path.Combine(m_WorkingDir, m_jobParams.GetParam(JOB_PARAM_PARAMETER_FILE));
+                var parameterFilePath = Path.Combine(mWorkDir, mJobParams.GetParam(JOB_PARAM_PARAMETER_FILE));
 
                 // javaProgLoc will typically be "C:\Program Files\Java\jre8\bin\Java.exe"
-                var javaProgLoc = clsAnalysisToolRunnerBase.GetJavaProgLoc(m_mgrParams, out var javaLocErrorMessage);
+                var javaProgLoc = clsAnalysisToolRunnerBase.GetJavaProgLoc(mMgrParams, out var javaLocErrorMessage);
 
                 if (string.IsNullOrEmpty(javaProgLoc))
                 {
-                    m_message = clsGlobal.AppendToComment(m_message, javaLocErrorMessage);
+                    mMessage = clsGlobal.AppendToComment(mMessage, javaLocErrorMessage);
                     return false;
                 }
 
                 var msgfPlusProgLoc = clsAnalysisToolRunnerBase.DetermineProgramLocation(
-                    m_mgrParams, m_jobParams, StepToolName, "MSGFPlusProgLoc", MSGFPlusUtils.MSGFPLUS_JAR_NAME, out var msgfPlusLocErrorMessage);
+                    mMgrParams, mJobParams, StepToolName, "MSGFPlusProgLoc", MSGFPlusUtils.MSGFPLUS_JAR_NAME, out var msgfPlusLocErrorMessage);
 
                 if (string.IsNullOrEmpty(msgfPlusProgLoc))
                 {
-                    m_message = clsGlobal.AppendToComment(m_message, msgfPlusLocErrorMessage);
+                    mMessage = clsGlobal.AppendToComment(mMessage, msgfPlusLocErrorMessage);
                     return false;
                 }
 
@@ -223,10 +223,10 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
-                    if (string.IsNullOrWhiteSpace(m_message) &&
+                    if (string.IsNullOrWhiteSpace(mMessage) &&
                         !string.IsNullOrWhiteSpace(msgfPlusUtils.ErrorMessage))
                     {
-                        m_message = clsGlobal.AppendToComment(m_message, msgfPlusUtils.ErrorMessage);
+                        mMessage = clsGlobal.AppendToComment(mMessage, msgfPlusUtils.ErrorMessage);
                     }
 
                     return false;
@@ -274,20 +274,20 @@ namespace AnalysisManagerMSGFDBPlugIn
             if (FileSearch.RetrieveDtaFiles())
                 return CloseOutType.CLOSEOUT_SUCCESS;
 
-            var sharedResultsFolders = m_jobParams.GetParam(JOB_PARAM_SHARED_RESULTS_FOLDERS);
+            var sharedResultsFolders = mJobParams.GetParam(JOB_PARAM_SHARED_RESULTS_FOLDERS);
             if (string.IsNullOrEmpty(sharedResultsFolders))
             {
-                m_message = clsGlobal.AppendToComment(m_message, "Job parameter SharedResultsFolders is empty");
+                mMessage = clsGlobal.AppendToComment(mMessage, "Job parameter SharedResultsFolders is empty");
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
             if (sharedResultsFolders.Contains(","))
             {
-                m_message = clsGlobal.AppendToComment(m_message, "shared results folders: " + sharedResultsFolders);
+                mMessage = clsGlobal.AppendToComment(mMessage, "shared results folders: " + sharedResultsFolders);
             }
             else
             {
-                m_message = clsGlobal.AppendToComment(m_message, "shared results folder " + sharedResultsFolders);
+                mMessage = clsGlobal.AppendToComment(mMessage, "shared results folder " + sharedResultsFolders);
             }
 
             // Errors were reported in function call, so just return
@@ -297,7 +297,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
         private CloseOutType GetMasicFiles()
         {
-            var assumedScanType = m_jobParams.GetParam("AssumedScanType");
+            var assumedScanType = mJobParams.GetParam("AssumedScanType");
 
             if (!string.IsNullOrWhiteSpace(assumedScanType))
             {
@@ -321,7 +321,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             var success = FileSearch.RetrieveScanStatsFiles(createStoragePathInfoOnly: false, retrieveScanStatsFile: true, retrieveScanStatsExFile: false);
 
-            if (!ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+            if (!ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
             {
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
@@ -330,7 +330,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             {
                 // Open the ScanStats file and read the header line to see if column ScanTypeName is present
                 // Also confirm that there are MSn spectra labeled as HCD, CID, or ETD
-                var scanStatsOrExFilePath = Path.Combine(m_WorkingDir, DatasetName + "_ScanStats.txt");
+                var scanStatsOrExFilePath = Path.Combine(mWorkDir, DatasetName + "_ScanStats.txt");
 
                 var scanTypeColumnFound = ValidateScanStatsFileHasScanTypeNameColumn(scanStatsOrExFilePath);
 
@@ -339,14 +339,14 @@ namespace AnalysisManagerMSGFDBPlugIn
                     // We also have to retrieve the _ScanStatsEx.txt file
                     success = FileSearch.RetrieveScanStatsFiles(createStoragePathInfoOnly: false, retrieveScanStatsFile: false, retrieveScanStatsExFile: true);
 
-                    if (!ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+                    if (!ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
                     {
                         return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                     }
 
                     if (success)
                     {
-                        scanStatsOrExFilePath = Path.Combine(m_WorkingDir, DatasetName + "_ScanStatsEx.txt");
+                        scanStatsOrExFilePath = Path.Combine(mWorkDir, DatasetName + "_ScanStatsEx.txt");
                     }
                 }
 
@@ -358,14 +358,14 @@ namespace AnalysisManagerMSGFDBPlugIn
                     {
                         if (scanTypeColumnFound)
                         {
-                            m_message = "ScanTypes defined in the ScanTypeName column";
+                            mMessage = "ScanTypes defined in the ScanTypeName column";
                         }
                         else
                         {
-                            m_message = "ScanTypes defined in the \"Collision Mode\" column or \"Scan Filter Text\" column";
+                            mMessage = "ScanTypes defined in the \"Collision Mode\" column or \"Scan Filter Text\" column";
                         }
 
-                        m_message += " do not contain detailed CID, ETD, or HCD information; MSGF+ could use the wrong scoring model; fix this problem before running MSGF+";
+                        mMessage += " do not contain detailed CID, ETD, or HCD information; MSGF+ could use the wrong scoring model; fix this problem before running MSGF+";
 
                         return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                     }
@@ -382,21 +382,21 @@ namespace AnalysisManagerMSGFDBPlugIn
             // If processing a .Raw file or .UIMF file, we can create the file using the MSFileInfoScanner
             if (!GenerateScanStatsFile())
             {
-                // Error message should already have been logged and stored in m_message
+                // Error message should already have been logged and stored in mMessage
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
-            var scanStatsFilePath = Path.Combine(m_WorkingDir, DatasetName + "_ScanStats.txt");
+            var scanStatsFilePath = Path.Combine(mWorkDir, DatasetName + "_ScanStats.txt");
             var detailedScanTypesDefinedNewFile = ValidateScanStatsFileHasDetailedScanTypes(scanStatsFilePath);
 
             if (!detailedScanTypesDefinedNewFile)
             {
-                m_message = "ScanTypes defined in the ScanTypeName column do not contain detailed CID, ETD, or HCD information; " +
+                mMessage = "ScanTypes defined in the ScanTypeName column do not contain detailed CID, ETD, or HCD information; " +
                     "MSGF+ could use the wrong scoring model; fix this problem before running MSGF+";
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
-            if (!ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+            if (!ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
             {
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
@@ -407,20 +407,20 @@ namespace AnalysisManagerMSGFDBPlugIn
         private CloseOutType ValidateCDTAFile()
         {
             // If the _dta.txt file is over 2 GB in size, condense it
-            if (!ValidateCDTAFileSize(m_WorkingDir, DatasetName + CDTA_EXTENSION))
+            if (!ValidateCDTAFileSize(mWorkDir, DatasetName + CDTA_EXTENSION))
             {
                 // Errors were reported in function call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
             // Remove any spectra from the _DTA.txt file with fewer than 3 ions
-            if (!ValidateCDTAFileRemoveSparseSpectra(m_WorkingDir, DatasetName + CDTA_EXTENSION))
+            if (!ValidateCDTAFileRemoveSparseSpectra(mWorkDir, DatasetName + CDTA_EXTENSION))
             {
                 // Errors were reported in function call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
-            var cDtaValidated = m_jobParams.GetJobParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, "ValidatedCDtaIsCentroided", false);
+            var cDtaValidated = mJobParams.GetJobParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, "ValidatedCDtaIsCentroided", false);
 
             if (cDtaValidated)
             {
@@ -429,17 +429,17 @@ namespace AnalysisManagerMSGFDBPlugIn
             }
 
             // Make sure that the spectra are centroided
-            var cdtaPath = Path.Combine(m_WorkingDir, DatasetName + CDTA_EXTENSION);
+            var cdtaPath = Path.Combine(mWorkDir, DatasetName + CDTA_EXTENSION);
 
             LogMessage("Validating that the _dta.txt file has centroided spectra");
 
             if (!ValidateCDTAFileIsCentroided(cdtaPath))
             {
-                // m_message is already updated
+                // mMessage is already updated
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
-            m_jobParams.AddAdditionalParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, "ValidatedCDtaIsCentroided", true);
+            mJobParams.AddAdditionalParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, "ValidatedCDtaIsCentroided", true);
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
@@ -604,7 +604,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
         private void MSGFPlusUtils_IgnorePreviousErrorEvent(string messageToIgnore)
         {
-            m_message = m_message.Replace(messageToIgnore, string.Empty).Trim(';', ' ');
+            mMessage = mMessage.Replace(messageToIgnore, string.Empty).Trim(';', ' ');
         }
     }
 }

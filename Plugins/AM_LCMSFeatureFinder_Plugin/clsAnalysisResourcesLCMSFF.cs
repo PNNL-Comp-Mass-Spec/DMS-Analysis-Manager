@@ -59,10 +59,10 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
                 // Errors were reported in function call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
-            m_jobParams.AddResultFileToSkip(strFileToGet);
+            mJobParams.AddResultFileToSkip(strFileToGet);
 
             // Retrieve the LCMSFeatureFinder .Ini file specified for this job
-            var strLCMSFFIniFileName = m_jobParams.GetParam("LCMSFeatureFinderIniFile");
+            var strLCMSFFIniFileName = mJobParams.GetParam("LCMSFeatureFinderIniFile");
             if (string.IsNullOrEmpty(strLCMSFFIniFileName))
             {
                 LogError("LCMSFeatureFinderIniFile not defined in the settings for this job; unable to continue");
@@ -70,7 +70,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
             }
 
             var strParamFileStoragePathKeyName = clsGlobal.STEPTOOL_PARAMFILESTORAGEPATH_PREFIX + "LCMSFeatureFinder";
-            var strFFIniFileStoragePath = m_mgrParams.GetParam(strParamFileStoragePathKeyName);
+            var strFFIniFileStoragePath = mMgrParams.GetParam(strParamFileStoragePathKeyName);
             if (string.IsNullOrEmpty(strFFIniFileStoragePath))
             {
                 strFFIniFileStoragePath = @"\\gigasax\DMS_Parameter_Files\LCMSFeatureFinder";
@@ -79,17 +79,17 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
                     "' is not defined (obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); will assume: " + strFFIniFileStoragePath);
             }
 
-            if (!CopyFileToWorkDir(strLCMSFFIniFileName, strFFIniFileStoragePath, m_WorkingDir))
+            if (!CopyFileToWorkDir(strLCMSFFIniFileName, strFFIniFileStoragePath, mWorkDir))
             {
                 // Errors were reported in function call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
-            var strRawDataType = m_jobParams.GetParam("RawDataType");
+            var strRawDataType = mJobParams.GetParam("RawDataType");
 
             if (strRawDataType.ToLower() == RAW_DATA_TYPE_DOT_UIMF_FILES)
             {
-                if (m_DebugLevel >= 2)
+                if (mDebugLevel >= 2)
                 {
                     LogDebug("Retrieving .UIMF file");
                 }
@@ -101,30 +101,30 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                if (m_DebugLevel >= 1)
+                if (mDebugLevel >= 1)
                 {
                     LogDebug("Retrieved .UIMF file");
                 }
 
-                m_jobParams.AddResultFileExtensionToSkip(DOT_UIMF_EXTENSION);
+                mJobParams.AddResultFileExtensionToSkip(DOT_UIMF_EXTENSION);
             }
 
-            if (!ProcessMyEMSLDownloadQueue(m_WorkingDir, Downloader.DownloadFolderLayout.FlatNoSubfolders))
+            if (!ProcessMyEMSLDownloadQueue(mWorkDir, Downloader.DownloadFolderLayout.FlatNoSubfolders))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
             // Could add an extension of a file to delete, like this:
-            // m_JobParams.AddResultFileExtensionToSkip(".dta")  'DTA files
+            // mJobParams.AddResultFileExtensionToSkip(".dta")  'DTA files
 
             // Customize the LCMSFeatureFinder .Ini file to include the input file path and output folder path
             var success = UpdateFeatureFinderIniFile(strLCMSFFIniFileName);
             if (!success)
             {
                 var Msg = "clsAnalysisResourcesLCMSFF.GetResources(), failed customizing .Ini file " + strLCMSFFIniFileName;
-                if (string.IsNullOrEmpty(m_message))
+                if (string.IsNullOrEmpty(mMessage))
                 {
-                    m_message = Msg;
+                    mMessage = Msg;
                 }
                 LogError(Msg);
                 return CloseOutType.CLOSEOUT_FAILED;
@@ -159,9 +159,9 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
             // In addition, look for an entry for DeconToolsFilterFileName;
             //  if present, verify that the file exists and copy it locally (so that it will be included in the results folder)
 
-            var SrcFilePath = Path.Combine(m_WorkingDir, strLCMSFFIniFileName);
-            var TargetFilePath = Path.Combine(m_WorkingDir, strLCMSFFIniFileName + "_new");
-            var IsosFilePath = Path.Combine(m_WorkingDir, DatasetName + ISOS_FILE_SUFFIX);
+            var SrcFilePath = Path.Combine(mWorkDir, strLCMSFFIniFileName);
+            var TargetFilePath = Path.Combine(mWorkDir, strLCMSFFIniFileName + "_new");
+            var IsosFilePath = Path.Combine(mWorkDir, DatasetName + ISOS_FILE_SUFFIX);
 
             var blnInputFileDefined = false;
             var blnOutputDirectoryDefined = false;
@@ -197,7 +197,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
                                 if (strLineInLCase.StartsWith(OUTPUT_DIRECTORY_KEY.ToLower()))
                                 {
                                     // Customize the output directory name
-                                    strLineIn = OUTPUT_DIRECTORY_KEY + "=" + m_WorkingDir;
+                                    strLineIn = OUTPUT_DIRECTORY_KEY + "=" + mWorkDir;
                                     blnOutputDirectoryDefined = true;
                                 }
 
@@ -212,15 +212,15 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
                                         var fiFileInfo = new FileInfo(strValue);
                                         if (!fiFileInfo.Exists)
                                         {
-                                            m_message = "Entry for " + FILTER_FILE_NAME_KEY + " in " + strLCMSFFIniFileName +
+                                            mMessage = "Entry for " + FILTER_FILE_NAME_KEY + " in " + strLCMSFFIniFileName +
                                                         " points to an invalid file: " + strValue;
-                                            LogError(m_message);
+                                            LogError(mMessage);
                                             result = false;
                                             break;
                                         }
 
                                         // Copy the file locally
-                                        var strTargetFilePath = Path.Combine(m_WorkingDir, fiFileInfo.Name);
+                                        var strTargetFilePath = Path.Combine(mWorkDir, fiFileInfo.Name);
                                         fiFileInfo.CopyTo(strTargetFilePath);
                                     }
                                 }
@@ -236,7 +236,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
 
                         if (!blnOutputDirectoryDefined)
                         {
-                            swOutFile.WriteLine(OUTPUT_DIRECTORY_KEY + "=" + m_WorkingDir);
+                            swOutFile.WriteLine(OUTPUT_DIRECTORY_KEY + "=" + mWorkDir);
                         }
                     }
                     catch (Exception ex)

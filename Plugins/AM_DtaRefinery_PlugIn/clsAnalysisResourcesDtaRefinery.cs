@@ -38,7 +38,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
             }
 
             // Retrieve Fasta file
-            var orgDbDirectoryPath = m_mgrParams.GetParam("orgdbdir");
+            var orgDbDirectoryPath = mMgrParams.GetParam("OrgDbDir");
             if (!RetrieveOrgDB(orgDbDirectoryPath, out var resultCode))
                 return resultCode;
 
@@ -47,7 +47,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
             LogMessage("Getting param file");
 
             // Retrieve param file
-            var strParamFileName = m_jobParams.GetParam("ParmFileName");
+            var strParamFileName = mJobParams.GetParam("ParmFileName");
 
             if (!RetrieveGeneratedParamFile(strParamFileName))
             {
@@ -56,7 +56,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
 
             var strParamFileStoragePathKeyName = clsGlobal.STEPTOOL_PARAMFILESTORAGEPATH_PREFIX + "DTA_Refinery";
 
-            var strDtaRefineryParmFileStoragePath = m_mgrParams.GetParam(strParamFileStoragePathKeyName);
+            var strDtaRefineryParmFileStoragePath = mMgrParams.GetParam(strParamFileStoragePathKeyName);
             if (string.IsNullOrEmpty(strDtaRefineryParmFileStoragePath))
             {
                 strDtaRefineryParmFileStoragePath = @"\\gigasax\dms_parameter_Files\DTARefinery";
@@ -77,7 +77,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
-            if (!FileSearch.RetrieveFile(m_jobParams.GetParam("DTARefineryXMLFile"), strDtaRefineryParmFileStoragePath))
+            if (!FileSearch.RetrieveFile(mJobParams.GetParam("DTARefineryXMLFile"), strDtaRefineryParmFileStoragePath))
             {
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
@@ -91,18 +91,18 @@ namespace AnalysisManagerDtaRefineryPlugIn
             }
 
             // Make sure the _DTA.txt file has parent ion lines with text: scan=x and cs=y
-            var strCDTAPath = Path.Combine(m_WorkingDir, DatasetName + "_dta.txt");
+            var strCDTAPath = Path.Combine(mWorkDir, DatasetName + "_dta.txt");
             const bool blnReplaceSourceFile = true;
             const bool blnDeleteSourceFileIfUpdated = true;
 
             if (!ValidateCDTAFileScanAndCSTags(strCDTAPath, blnReplaceSourceFile, blnDeleteSourceFileIfUpdated, ""))
             {
-                m_message = "Error validating the _DTA.txt file";
+                mMessage = "Error validating the _DTA.txt file";
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
             // If the _dta.txt file is over 2 GB in size, condense it
-            if (!ValidateCDTAFileSize(m_WorkingDir, Path.GetFileName(strCDTAPath)))
+            if (!ValidateCDTAFileSize(mWorkDir, Path.GetFileName(strCDTAPath)))
             {
                 // Errors were reported in function call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
@@ -115,35 +115,35 @@ namespace AnalysisManagerDtaRefineryPlugIn
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
-            if (!ProcessMyEMSLDownloadQueue(m_WorkingDir, Downloader.DownloadFolderLayout.FlatNoSubfolders))
+            if (!ProcessMyEMSLDownloadQueue(mWorkDir, Downloader.DownloadFolderLayout.FlatNoSubfolders))
             {
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
             // If this is a MSGFPlus script, make sure that the spectra are centroided
-            var toolName = m_jobParams.GetParam("ToolName");
+            var toolName = mJobParams.GetParam("ToolName");
             if (toolName.StartsWith("MSGFPlus", StringComparison.InvariantCultureIgnoreCase))
             {
                 LogMessage(
                     "Validating that the _dta.txt file has centroided spectra (required by MSGF+)");
                 if (!ValidateCDTAFileIsCentroided(strCDTAPath))
                 {
-                    // m_message is already updated
+                    // mMessage is already updated
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
             }
 
             // Add all the extensions of the files to delete after run
-            m_jobParams.AddResultFileExtensionToSkip("_dta.zip");    // Zipped DTA
-            m_jobParams.AddResultFileExtensionToSkip("_dta.txt");    // Unzipped, concatenated DTA
-            m_jobParams.AddResultFileExtensionToSkip(".dta");        // DTA files
-            m_jobParams.AddResultFileExtensionToSkip(DatasetName + ".xml");
+            mJobParams.AddResultFileExtensionToSkip("_dta.zip");    // Zipped DTA
+            mJobParams.AddResultFileExtensionToSkip("_dta.txt");    // Unzipped, concatenated DTA
+            mJobParams.AddResultFileExtensionToSkip(".dta");        // DTA files
+            mJobParams.AddResultFileExtensionToSkip(DatasetName + ".xml");
 
-            m_jobParams.AddResultFileToSkip(strParamFileName);
-            m_jobParams.AddResultFileToSkip(Path.GetFileNameWithoutExtension(strParamFileName) + "_ModDefs.txt");
-            m_jobParams.AddResultFileToSkip("Mass_Correction_Tags.txt");
+            mJobParams.AddResultFileToSkip(strParamFileName);
+            mJobParams.AddResultFileToSkip(Path.GetFileNameWithoutExtension(strParamFileName) + "_ModDefs.txt");
+            mJobParams.AddResultFileToSkip("Mass_Correction_Tags.txt");
 
-            m_jobParams.AddResultFileToKeep(DatasetName + "_dta.zip");
+            mJobParams.AddResultFileToKeep(DatasetName + "_dta.zip");
 
             // Set up run parameter file to reference spectra file, taxonomy file, and analysis parameter file
             var success = UpdateParameterFile(out var strErrorMessage);
@@ -168,7 +168,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
                 {
                     // Could not find the file (error will have already been logged)
                     // We'll continue on, but log a warning
-                    if (m_DebugLevel >= 1)
+                    if (mDebugLevel >= 1)
                     {
                         LogWarning(
                             "Could not find the DeconMSn Log file named " + deconMSnLogFileName);
@@ -177,10 +177,10 @@ namespace AnalysisManagerDtaRefineryPlugIn
                 }
                 else
                 {
-                    if (!CopyFileToWorkDir(deconMSnLogFileName, sourceFolderPath, m_WorkingDir))
+                    if (!CopyFileToWorkDir(deconMSnLogFileName, sourceFolderPath, mWorkDir))
                     {
                         // Error copying file (error will have already been logged)
-                        if (m_DebugLevel >= 3)
+                        if (mDebugLevel >= 3)
                         {
                             LogError("CopyFileToWorkDir returned False for " + deconMSnLogFileName + " using directory " + sourceFolderPath);
                         }
@@ -195,7 +195,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
                 {
                     // Could not find the file (error will have already been logged)
                     // We'll continue on, but log a warning
-                    if (m_DebugLevel >= 1)
+                    if (mDebugLevel >= 1)
                     {
                         LogWarning(
                             "Could not find the DeconMSn Profile file named " + deconMSnProfileFileName);
@@ -204,10 +204,10 @@ namespace AnalysisManagerDtaRefineryPlugIn
                 }
                 else
                 {
-                    if (!CopyFileToWorkDir(deconMSnProfileFileName, sourceFolderPath, m_WorkingDir))
+                    if (!CopyFileToWorkDir(deconMSnProfileFileName, sourceFolderPath, mWorkDir))
                     {
                         // Error copying file (error will have already been logged)
-                        if (m_DebugLevel >= 3)
+                        if (mDebugLevel >= 3)
                         {
                             LogError("CopyFileToWorkDir returned False for " + deconMSnProfileFileName + " using directory " + sourceFolderPath);
                         }
@@ -215,14 +215,14 @@ namespace AnalysisManagerDtaRefineryPlugIn
                     }
                 }
 
-                if (!ProcessMyEMSLDownloadQueue(m_WorkingDir, Downloader.DownloadFolderLayout.FlatNoSubfolders))
+                if (!ProcessMyEMSLDownloadQueue(mWorkDir, Downloader.DownloadFolderLayout.FlatNoSubfolders))
                 {
                     return false;
                 }
 
                 if (!string.IsNullOrWhiteSpace(deconMSnLogFileName))
                 {
-                    if (!ValidateDeconMSnLogFile(Path.Combine(m_WorkingDir, deconMSnLogFileName)))
+                    if (!ValidateDeconMSnLogFile(Path.Combine(mWorkDir, deconMSnLogFileName)))
                     {
                         return false;
                     }
@@ -233,8 +233,8 @@ namespace AnalysisManagerDtaRefineryPlugIn
                 DeleteFileIfNoData(deconMSnProfileFileName, "DeconMSn Profile file");
 
                 // Make sure the DeconMSn files are not stored in the DTARefinery results folder
-                m_jobParams.AddResultFileExtensionToSkip("_DeconMSn_log.txt");
-                m_jobParams.AddResultFileExtensionToSkip("_profile.txt");
+                mJobParams.AddResultFileExtensionToSkip("_DeconMSn_log.txt");
+                mJobParams.AddResultFileExtensionToSkip("_profile.txt");
             }
             catch (Exception ex)
             {
@@ -250,11 +250,11 @@ namespace AnalysisManagerDtaRefineryPlugIn
             if (string.IsNullOrWhiteSpace(fileName))
                 return;
 
-            var strFilePathToCheck = Path.Combine(m_WorkingDir, fileName);
+            var strFilePathToCheck = Path.Combine(mWorkDir, fileName);
             string strErrorMessage;
             if (!ValidateFileHasData(strFilePathToCheck, fileDescription, out strErrorMessage))
             {
-                if (m_DebugLevel >= 1)
+                if (mDebugLevel >= 1)
                 {
                     LogWarning(
                         fileDescription +
@@ -267,10 +267,10 @@ namespace AnalysisManagerDtaRefineryPlugIn
 
         private bool UpdateParameterFile(out string strErrorMessage)
         {
-            var XtandemDefaultInput = Path.Combine(m_WorkingDir, XTANDEM_DEFAULT_INPUT_FILE);
-            var XtandemTaxonomyList = Path.Combine(m_WorkingDir, XTANDEM_TAXONOMY_LIST_FILE);
-            var ParamFilePath = Path.Combine(m_WorkingDir, m_jobParams.GetParam("DTARefineryXMLFile"));
-            var DtaRefineryDirectory = Path.GetDirectoryName(m_mgrParams.GetParam("dtarefineryloc"));
+            var XtandemDefaultInput = Path.Combine(mWorkDir, XTANDEM_DEFAULT_INPUT_FILE);
+            var XtandemTaxonomyList = Path.Combine(mWorkDir, XTANDEM_TAXONOMY_LIST_FILE);
+            var ParamFilePath = Path.Combine(mWorkDir, mJobParams.GetParam("DTARefineryXMLFile"));
+            var DtaRefineryDirectory = Path.GetDirectoryName(mMgrParams.GetParam("dtarefineryloc"));
 
             strErrorMessage = string.Empty;
 

@@ -30,7 +30,7 @@ namespace AnalysisManagerExtractionPlugin
 
         #region "Module variables"
 
-        private readonly string m_PeptideProphetRunnerLocation;
+        private readonly string mPeptideProphetRunnerLocation;
 
         protected clsRunDosProgram mCmdRunner;
 
@@ -61,7 +61,7 @@ namespace AnalysisManagerExtractionPlugin
 
         public clsPeptideProphetWrapper(string peptideProphetRunnerLocation)
         {
-            m_PeptideProphetRunnerLocation = peptideProphetRunnerLocation;
+            mPeptideProphetRunnerLocation = peptideProphetRunnerLocation;
         }
 
         public CloseOutType CallPeptideProphet()
@@ -80,9 +80,9 @@ namespace AnalysisManagerExtractionPlugin
                 var peptideProphetConsoleOutputFilePath = Path.Combine(inputFile.Directory.FullName, "PeptideProphetConsoleOutput.txt");
 
                 // verify that program file exists
-                if (!File.Exists(m_PeptideProphetRunnerLocation))
+                if (!File.Exists(mPeptideProphetRunnerLocation))
                 {
-                    ReportError("PeptideProphetRunner not found at " + m_PeptideProphetRunnerLocation);
+                    ReportError("PeptideProphetRunner not found at " + mPeptideProphetRunnerLocation);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
@@ -94,7 +94,7 @@ namespace AnalysisManagerExtractionPlugin
 
                 if (DebugLevel >= 2)
                 {
-                    OnDebugEvent(m_PeptideProphetRunnerLocation + " " + cmdStr);
+                    OnDebugEvent(mPeptideProphetRunnerLocation + " " + cmdStr);
                 }
 
                 mCmdRunner = new clsRunDosProgram(inputFile.Directory.FullName, DebugLevel)
@@ -108,7 +108,7 @@ namespace AnalysisManagerExtractionPlugin
                 mCmdRunner.ErrorEvent += CmdRunner_ErrorEvent;
                 mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
-                if (!mCmdRunner.RunProgram(m_PeptideProphetRunnerLocation, cmdStr, "PeptideProphetRunner", true))
+                if (!mCmdRunner.RunProgram(mPeptideProphetRunnerLocation, cmdStr, "PeptideProphetRunner", true))
                 {
                     ReportError("Error running PeptideProphetRunner");
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -119,7 +119,7 @@ namespace AnalysisManagerExtractionPlugin
                     ReportError("Peptide prophet runner returned a non-zero error code: " + mCmdRunner.ExitCode);
 
                     // Parse the console output file for any lines that contain "Error"
-                    // Append them to m_ErrMsg
+                    // Append them to mErrMsg
 
                     var ioConsoleOutputFile = new FileInfo(peptideProphetConsoleOutputFilePath);
                     var errorMessageFound = false;
@@ -175,7 +175,7 @@ namespace AnalysisManagerExtractionPlugin
             ReportError("PeptideProphetRunner: " + ErrMsg);
         }
 
-        private DateTime dtLastStatusUpdate = DateTime.MinValue;
+        private DateTime mLastStatusUpdate = DateTime.MinValue;
 
         /// <summary>
         /// Event handler for CmdRunner.LoopWaiting event
@@ -184,9 +184,9 @@ namespace AnalysisManagerExtractionPlugin
         private void CmdRunner_LoopWaiting()
         {
             // Update the status (limit the updates to every 5 seconds)
-            if (DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 5)
+            if (DateTime.UtcNow.Subtract(mLastStatusUpdate).TotalSeconds >= 5)
             {
-                dtLastStatusUpdate = DateTime.UtcNow;
+                mLastStatusUpdate = DateTime.UtcNow;
                 PeptideProphetRunning?.Invoke("Running", 50);
             }
         }

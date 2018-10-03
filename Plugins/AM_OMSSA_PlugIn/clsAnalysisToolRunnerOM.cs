@@ -43,7 +43,7 @@ namespace AnalysisManagerOMSSAPlugIn
             if (!StoreToolVersionInfo())
             {
                 LogError("Aborting since StoreToolVersionInfo returned false");
-                m_message = "Error determining OMSSA version";
+                mMessage = "Error determining OMSSA version";
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -55,17 +55,17 @@ namespace AnalysisManagerOMSSAPlugIn
 
             LogMessage("Running OMSSA");
 
-            var cmdRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel);
+            var cmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel);
             RegisterEvents(cmdRunner);
             cmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
-            if (m_DebugLevel > 4)
+            if (mDebugLevel > 4)
             {
                 LogDebug("clsAnalysisToolRunnerOM.OperateAnalysisTool(): Enter");
             }
 
             // verify that program file exists
-            var progLoc = m_mgrParams.GetParam("OMSSAprogloc");
+            var progLoc = mMgrParams.GetParam("OMSSAprogloc");
             if (!File.Exists(progLoc))
             {
                 if (progLoc.Length == 0)
@@ -74,12 +74,12 @@ namespace AnalysisManagerOMSSAPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            var inputFilename = Path.Combine(m_WorkDir, "OMSSA_Input.xml");
+            var inputFilename = Path.Combine(mWorkDir, "OMSSA_Input.xml");
 
             // Set up and execute a program runner to run OMSSA
             var cmdStr = " -pm " + inputFilename;
 
-            if (m_DebugLevel >= 1)
+            if (mDebugLevel >= 1)
             {
                 LogDebug("Starting OMSSA: " + progLoc + " " + cmdStr);
             }
@@ -89,7 +89,7 @@ namespace AnalysisManagerOMSSAPlugIn
             cmdRunner.EchoOutputToConsole = true;
 
             cmdRunner.WriteConsoleOutputToFile = true;
-            cmdRunner.ConsoleOutputFilePath = Path.Combine(m_WorkDir, Path.GetFileNameWithoutExtension(progLoc) + "_ConsoleOutput.txt");
+            cmdRunner.ConsoleOutputFilePath = Path.Combine(mWorkDir, Path.GetFileNameWithoutExtension(progLoc) + "_ConsoleOutput.txt");
 
             var processingSuccess = cmdRunner.RunProgram(progLoc, cmdStr, "OMSSA", true);
 
@@ -99,7 +99,7 @@ namespace AnalysisManagerOMSSAPlugIn
             }
 
             // Stop the job timer
-            m_StopTime = DateTime.UtcNow;
+            mStopTime = DateTime.UtcNow;
 
             if (processingSuccess)
             {
@@ -148,7 +148,7 @@ namespace AnalysisManagerOMSSAPlugIn
         /// <remarks></remarks>
         private bool ZipMainOutputFile()
         {
-            var strOMSSAResultsFilePath = Path.Combine(m_WorkDir, m_Dataset + "_om.omx");
+            var strOMSSAResultsFilePath = Path.Combine(mWorkDir, mDatasetName + "_om.omx");
 
             var blnSuccess = ZipFile(strOMSSAResultsFilePath, true);
             return blnSuccess;
@@ -174,17 +174,17 @@ namespace AnalysisManagerOMSSAPlugIn
 
                 LogMessage("Running OMSSA2PepXml");
 
-                var cmdRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel);
+                var cmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel);
                 RegisterEvents(cmdRunner);
                 cmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
-                if (m_DebugLevel > 4)
+                if (mDebugLevel > 4)
                 {
                     LogDebug("clsAnalysisToolRunnerOM.ConvertOMSSA2PepXmlFile(): Enter");
                 }
 
                 // verify that program formatdb.exe file exists
-                var progLoc = m_mgrParams.GetParam("omssa2pepprogloc");
+                var progLoc = mMgrParams.GetParam("omssa2pepprogloc");
                 if (!File.Exists(progLoc))
                 {
                     if (progLoc.Length == 0)
@@ -193,14 +193,14 @@ namespace AnalysisManagerOMSSAPlugIn
                     return false;
                 }
 
-                var outputFilename = Path.Combine(m_WorkDir, m_Dataset + "_pepxml.xml");
-                var inputFilename = Path.Combine(m_WorkDir, m_Dataset + "_om_large.omx");
+                var outputFilename = Path.Combine(mWorkDir, mDatasetName + "_pepxml.xml");
+                var inputFilename = Path.Combine(mWorkDir, mDatasetName + "_om_large.omx");
 
                 // Set up and execute a program runner to run Omssa2PepXml.exe
                 // omssa2pepxml.exe -xml -o C:\DMS_WorkDir\QC_Shew_09_02_pt5_a_20May09_Earth_09-04-20_pepxml.xml C:\DMS_WorkDir\QC_Shew_09_02_pt5_a_20May09_Earth_09-04-20_omx_large.omx
                 var cmdStr = "-xml -o " + outputFilename + " " + inputFilename;
 
-                if (m_DebugLevel >= 1)
+                if (mDebugLevel >= 1)
                 {
                     LogDebug("Starting OMSSA2PepXml: " + progLoc + " " + cmdStr);
                 }
@@ -210,7 +210,7 @@ namespace AnalysisManagerOMSSAPlugIn
                 cmdRunner.EchoOutputToConsole = true;
 
                 cmdRunner.WriteConsoleOutputToFile = true;
-                cmdRunner.ConsoleOutputFilePath = Path.Combine(m_WorkDir, Path.GetFileNameWithoutExtension(progLoc) + "_ConsoleOutput.txt");
+                cmdRunner.ConsoleOutputFilePath = Path.Combine(mWorkDir, Path.GetFileNameWithoutExtension(progLoc) + "_ConsoleOutput.txt");
 
                 if (!cmdRunner.RunProgram(progLoc, cmdStr, "OMSSA2PepXml", true))
                 {
@@ -236,7 +236,7 @@ namespace AnalysisManagerOMSSAPlugIn
         {
             var strToolVersionInfo = string.Empty;
 
-            if (m_DebugLevel >= 2)
+            if (mDebugLevel >= 2)
             {
                 LogDebug("Determining tool version info");
             }
@@ -244,8 +244,8 @@ namespace AnalysisManagerOMSSAPlugIn
             // Store paths to key files in toolFiles
             var toolFiles = new List<FileInfo>
             {
-                new FileInfo(m_mgrParams.GetParam("OMSSAprogloc")),
-                new FileInfo(m_mgrParams.GetParam("omssa2pepprogloc"))
+                new FileInfo(mMgrParams.GetParam("OMSSAprogloc")),
+                new FileInfo(mMgrParams.GetParam("omssa2pepprogloc"))
             };
 
             try

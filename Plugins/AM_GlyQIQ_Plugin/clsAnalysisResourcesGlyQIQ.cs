@@ -76,17 +76,17 @@ namespace AnalysisManagerGlyQIQPlugin
 
             mGlyQIQParams = new udtGlyQIQParams();
 
-            var coreCountText = m_jobParams.GetJobParameter("GlyQ-IQ", "Cores", "All");
+            var coreCountText = mJobParams.GetJobParameter("GlyQ-IQ", "Cores", "All");
 
             // Use all the cores if the system has 4 or fewer cores
             // Otherwise, use TotalCoreCount - 1
-            var maxAllowedCores = m_StatusTools.GetCoreCount();
+            var maxAllowedCores = mStatusTools.GetCoreCount();
             if (maxAllowedCores > 4)
                 maxAllowedCores -= 1;
 
             var coreCount = clsAnalysisToolRunnerBase.ParseThreadCount(coreCountText, maxAllowedCores);
 
-            m_jobParams.AddAdditionalParameter("GlyQ-IQ", JOB_PARAM_ACTUAL_CORE_COUNT, coreCount.ToString());
+            mJobParams.AddAdditionalParameter("GlyQ-IQ", JOB_PARAM_ACTUAL_CORE_COUNT, coreCount.ToString());
 
             mGlyQIQParams.WorkingParameterFolders = CreateSubFolders(coreCount);
             if (mGlyQIQParams.WorkingParameterFolders.Count == 0)
@@ -113,7 +113,7 @@ namespace AnalysisManagerGlyQIQPlugin
             {
                 if (!CopyFileToWorkDir(sourceFileName, sourceFolderPath, workingDirectory.Value.FullName))
                 {
-                    m_message += " (" + fileDesription + ")";
+                    mMessage += " (" + fileDesription + ")";
                     return false;
                 }
             }
@@ -141,8 +141,8 @@ namespace AnalysisManagerGlyQIQPlugin
             }
             catch (Exception ex)
             {
-                m_message = "Exception counting the targets in " + Path.GetFileName(targetsFilePath);
-                LogError(m_message + ": " + ex.Message);
+                mMessage = "Exception counting the targets in " + Path.GetFileName(targetsFilePath);
+                LogError(mMessage + ": " + ex.Message);
                 return 0;
             }
         }
@@ -162,8 +162,8 @@ namespace AnalysisManagerGlyQIQPlugin
 
                     using (var swOutFile = new StreamWriter(new FileStream(outputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                     {
-                        swOutFile.WriteLine("ResultsFolderPath" + "," + Path.Combine(m_WorkingDir, "Results"));
-                        swOutFile.WriteLine("LoggingFolderPath" + "," + Path.Combine(m_WorkingDir, "Results"));
+                        swOutFile.WriteLine("ResultsFolderPath" + "," + Path.Combine(mWorkDir, "Results"));
+                        swOutFile.WriteLine("LoggingFolderPath" + "," + Path.Combine(mWorkDir, "Results"));
                         swOutFile.WriteLine("FactorsFile" + "," + mGlyQIQParams.FactorsName + ".txt");
                         swOutFile.WriteLine("ExecutorParameterFile" + "," + EXECUTOR_PARAMETERS_FILE);
                         swOutFile.WriteLine("XYDataFolder" + "," + "XYDataWriter");
@@ -180,8 +180,8 @@ namespace AnalysisManagerGlyQIQPlugin
             }
             catch (Exception ex)
             {
-                m_message = "Exception in CreateConsoleOperatingParametersFile";
-                LogError(m_message + ": " + ex.Message);
+                mMessage = "Exception in CreateConsoleOperatingParametersFile";
+                LogError(mMessage + ": " + ex.Message);
                 return false;
             }
         }
@@ -194,10 +194,10 @@ namespace AnalysisManagerGlyQIQPlugin
 
                 // Determine the path to the IQGlyQ program
 
-                var progLoc = clsAnalysisToolRunnerBase.DetermineProgramLocation("GlyQIQ", "GlyQIQProgLoc", "IQGlyQ_Console.exe", "", m_mgrParams, out m_message);
+                var progLoc = clsAnalysisToolRunnerBase.DetermineProgramLocation("GlyQIQ", "GlyQIQProgLoc", "IQGlyQ_Console.exe", "", mMgrParams, out mMessage);
                 if (string.IsNullOrEmpty(progLoc))
                 {
-                    LogError("DetermineProgramLocation returned an empty string: " + m_message);
+                    LogError("DetermineProgramLocation returned an empty string: " + mMessage);
                     return false;
                 }
 
@@ -205,7 +205,7 @@ namespace AnalysisManagerGlyQIQPlugin
                 {
                     var core = workingDirectory.Key;
 
-                    var batchFilePath = Path.Combine(m_WorkingDir, START_PROGRAM_BATCH_FILE_PREFIX + workingDirectory.Key + ".bat");
+                    var batchFilePath = Path.Combine(mWorkDir, START_PROGRAM_BATCH_FILE_PREFIX + workingDirectory.Key + ".bat");
 
                     using (var swOutFile = new StreamWriter(new FileStream(batchFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                     {
@@ -218,7 +218,7 @@ namespace AnalysisManagerGlyQIQPlugin
 
                         swOutFile.Write(clsGlobal.PossiblyQuotePath(progLoc));
 
-                        swOutFile.Write(" " + "\"" + m_WorkingDir + "\"");
+                        swOutFile.Write(" " + "\"" + mWorkDir + "\"");
                         swOutFile.Write(" " + "\"" + DatasetName + "\"");
                         swOutFile.Write(" " + "\"" + "raw" + "\"");
 
@@ -236,7 +236,7 @@ namespace AnalysisManagerGlyQIQPlugin
 
                         swOutFile.Write(" " + "\"" + "Lock_" + core + "\"");
 
-                        swOutFile.Write(" " + "\"" + Path.Combine(m_WorkingDir, "Results") + "\"");
+                        swOutFile.Write(" " + "\"" + Path.Combine(mWorkDir, "Results") + "\"");
 
                         swOutFile.Write(" " + "\"" + core + "\"");
 
@@ -248,8 +248,8 @@ namespace AnalysisManagerGlyQIQPlugin
             }
             catch (Exception ex)
             {
-                m_message = "Exception in CreateLauncherBatchFiles";
-                LogError(m_message + ": " + ex.Message);
+                mMessage = "Exception in CreateLauncherBatchFiles";
+                LogError(mMessage + ": " + ex.Message);
                 return false;
             }
         }
@@ -265,7 +265,7 @@ namespace AnalysisManagerGlyQIQPlugin
                 {
                     var folderName = "WorkingParametersCore" + core;
 
-                    lstWorkingDirectories.Add(core, new DirectoryInfo(Path.Combine(m_WorkingDir, folderName)));
+                    lstWorkingDirectories.Add(core, new DirectoryInfo(Path.Combine(mWorkDir, folderName)));
                 }
 
                 foreach (var workingDirectory in lstWorkingDirectories)
@@ -284,8 +284,8 @@ namespace AnalysisManagerGlyQIQPlugin
             }
             catch (Exception ex)
             {
-                m_message = "Exception in CreateSubFolders";
-                LogError(m_message + ": " + ex.Message);
+                mMessage = "Exception in CreateSubFolders";
+                LogError(mMessage + ": " + ex.Message);
                 return new Dictionary<int, DirectoryInfo>();
             }
         }
@@ -296,9 +296,9 @@ namespace AnalysisManagerGlyQIQPlugin
             {
                 // Define the base source folder path
                 // Typically \\gigasax\DMS_Parameter_Files\GlyQ-IQ
-                var paramFileStoragePathBase = m_jobParams.GetParam("ParmFileStoragePath");
+                var paramFileStoragePathBase = mJobParams.GetParam("ParmFileStoragePath");
 
-                mGlyQIQParams.IQParamFileName = m_jobParams.GetJobParameter("ParmFileName", "");
+                mGlyQIQParams.IQParamFileName = mJobParams.GetJobParameter("ParmFileName", "");
                 if (string.IsNullOrEmpty(mGlyQIQParams.IQParamFileName))
                 {
                     LogError("Job Parameter File name is empty");
@@ -315,8 +315,8 @@ namespace AnalysisManagerGlyQIQPlugin
                     return false;
                 }
 
-                mGlyQIQParams.FactorsName = m_jobParams.GetJobParameter("Factors", string.Empty);
-                mGlyQIQParams.TargetsName = m_jobParams.GetJobParameter("Targets", string.Empty);
+                mGlyQIQParams.FactorsName = mJobParams.GetJobParameter("Factors", string.Empty);
+                mGlyQIQParams.TargetsName = mJobParams.GetJobParameter("Targets", string.Empty);
 
                 // Make sure factor name and target name do not have an extension
                 mGlyQIQParams.FactorsName = Path.GetFileNameWithoutExtension(mGlyQIQParams.FactorsName);
@@ -347,16 +347,16 @@ namespace AnalysisManagerGlyQIQPlugin
                 sourceFolderPath = Path.Combine(paramFileStoragePathBase, "Libraries");
                 sourceFileName = mGlyQIQParams.TargetsName + ".txt";
 
-                if (!CopyFileToWorkDir(sourceFileName, sourceFolderPath, m_WorkingDir))
+                if (!CopyFileToWorkDir(sourceFileName, sourceFolderPath, mWorkDir))
                 {
-                    m_message += " (Targets File)";
+                    mMessage += " (Targets File)";
                     return false;
                 }
 
                 // There is no need to store the targets file in the job result folder
-                m_jobParams.AddResultFileToSkip(sourceFileName);
+                mJobParams.AddResultFileToSkip(sourceFileName);
 
-                var fiTargetsFile = new FileInfo(Path.Combine(m_WorkingDir, sourceFileName));
+                var fiTargetsFile = new FileInfo(Path.Combine(mWorkDir, sourceFileName));
 
                 // Count the number of targets
                 mGlyQIQParams.NumTargets = CountTargets(fiTargetsFile.FullName);
@@ -375,7 +375,7 @@ namespace AnalysisManagerGlyQIQPlugin
                     }
 
                     coreCount = mGlyQIQParams.NumTargets;
-                    m_jobParams.AddAdditionalParameter("GlyQ-IQ", JOB_PARAM_ACTUAL_CORE_COUNT, coreCount.ToString());
+                    mJobParams.AddAdditionalParameter("GlyQ-IQ", JOB_PARAM_ACTUAL_CORE_COUNT, coreCount.ToString());
                 }
 
                 Dictionary<int, FileInfo> splitTargetFileInfo;
@@ -430,8 +430,8 @@ namespace AnalysisManagerGlyQIQPlugin
             }
             catch (Exception ex)
             {
-                m_message = "Exception in RetrieveGlyQIQParameters";
-                LogError(m_message + ": " + ex.Message);
+                mMessage = "Exception in RetrieveGlyQIQParameters";
+                LogError(mMessage + ": " + ex.Message);
                 return false;
             }
         }
@@ -440,12 +440,12 @@ namespace AnalysisManagerGlyQIQPlugin
         {
             try
             {
-                var rawDataType = m_jobParams.GetJobParameter("RawDataType", "");
+                var rawDataType = mJobParams.GetJobParameter("RawDataType", "");
                 var eRawDataType = GetRawDataType(rawDataType);
 
                 if (eRawDataType == eRawDataTypeConstants.ThermoRawFile)
                 {
-                    m_jobParams.AddResultFileExtensionToSkip(DOT_RAW_EXTENSION);
+                    mJobParams.AddResultFileExtensionToSkip(DOT_RAW_EXTENSION);
                 }
                 else
                 {
@@ -458,34 +458,34 @@ namespace AnalysisManagerGlyQIQPlugin
                 var fileToFind = DatasetName + "_peaks.txt";
                 if (!FileSearch.FindAndRetrieveMiscFiles(fileToFind, false, false, out var sourceFolderPath))
                 {
-                    m_message = "Could not find the _peaks.txt file; this is typically created by the DeconPeakDetector job step; rerun that job step if it has been deleted";
+                    mMessage = "Could not find the _peaks.txt file; this is typically created by the DeconPeakDetector job step; rerun that job step if it has been deleted";
                     return false;
                 }
-                m_jobParams.AddResultFileToSkip(fileToFind);
-                m_jobParams.AddResultFileExtensionToSkip("_peaks.txt");
+                mJobParams.AddResultFileToSkip(fileToFind);
+                mJobParams.AddResultFileExtensionToSkip("_peaks.txt");
 
-                var diTransferFolder = new DirectoryInfo(m_jobParams.GetParam(JOB_PARAM_TRANSFER_FOLDER_PATH));
+                var diTransferFolder = new DirectoryInfo(mJobParams.GetParam(JOB_PARAM_TRANSFER_FOLDER_PATH));
                 var diSourceFolder = new DirectoryInfo(sourceFolderPath);
                 if ((diSourceFolder.FullName.ToLower().StartsWith(diTransferFolder.FullName.ToLower())))
                 {
                     // The Peaks.txt file is in the transfer folder
                     // If the analysis finishes successfully, we can delete the file from the transfer folder
-                    m_jobParams.AddServerFileToDelete(Path.Combine(sourceFolderPath, fileToFind));
+                    mJobParams.AddServerFileToDelete(Path.Combine(sourceFolderPath, fileToFind));
                 }
 
                 // Retrieve the instrument data file
                 if (!FileSearch.RetrieveSpectra(rawDataType))
                 {
-                    if (string.IsNullOrEmpty(m_message))
+                    if (string.IsNullOrEmpty(mMessage))
                     {
-                        m_message = "Error retrieving instrument data file";
+                        mMessage = "Error retrieving instrument data file";
                     }
 
-                    LogError("clsAnalysisResourcesGlyQIQ.GetResources: " + m_message);
+                    LogError("clsAnalysisResourcesGlyQIQ.GetResources: " + mMessage);
                     return false;
                 }
 
-                if (!ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+                if (!ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
                 {
                     return false;
                 }
@@ -494,8 +494,8 @@ namespace AnalysisManagerGlyQIQPlugin
             }
             catch (Exception ex)
             {
-                m_message = "Exception in RetrievePeaksAndRawData";
-                LogError(m_message + ": " + ex.Message);
+                mMessage = "Exception in RetrievePeaksAndRawData";
+                LogError(mMessage + ": " + ex.Message);
                 return false;
             }
         }
@@ -586,8 +586,8 @@ namespace AnalysisManagerGlyQIQPlugin
             }
             catch (Exception ex)
             {
-                m_message = "Exception in SplitTargetsFile";
-                LogError(m_message + ": " + ex.Message);
+                mMessage = "Exception in SplitTargetsFile";
+                LogError(mMessage + ": " + ex.Message);
                 return new Dictionary<int, FileInfo>();
             }
         }

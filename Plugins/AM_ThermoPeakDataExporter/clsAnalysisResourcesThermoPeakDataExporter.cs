@@ -41,7 +41,7 @@ namespace AnalysisManagerThermoPeakDataExporterPlugIn
 
                 // Get input data file
                 const bool createStoragePathInfoOnly = false;
-                var rawDataType = m_jobParams.GetParam("rawDataType");
+                var rawDataType = mJobParams.GetParam("rawDataType");
 
                 switch (rawDataType.ToLower())
                 {
@@ -59,19 +59,19 @@ namespace AnalysisManagerThermoPeakDataExporterPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                if (!base.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+                if (!base.ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                m_jobParams.AddResultFileToSkip(DatasetName + DOT_RAW_EXTENSION);
+                mJobParams.AddResultFileToSkip(DatasetName + DOT_RAW_EXTENSION);
 
                 return CloseOutType.CLOSEOUT_SUCCESS;
             }
             catch (Exception ex)
             {
-                m_message = "Exception in GetResources: " + ex.Message;
-                LogError(m_message + "; task = " + currentTask + "; " + clsGlobal.GetExceptionStackTrace(ex));
+                mMessage = "Exception in GetResources: " + ex.Message;
+                LogError(mMessage + "; task = " + currentTask + "; " + clsGlobal.GetExceptionStackTrace(ex));
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 

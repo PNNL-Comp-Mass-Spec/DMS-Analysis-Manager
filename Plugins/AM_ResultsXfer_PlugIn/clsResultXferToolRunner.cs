@@ -41,7 +41,7 @@ namespace AnalysisManagerResultsXferPlugin
                 if (!StoreToolVersionInfo())
                 {
                     LogError("Aborting since StoreToolVersionInfo returned false");
-                    m_message = "Error determining AnalysisManager version";
+                    mMessage = "Error determining AnalysisManager version";
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
@@ -49,9 +49,9 @@ namespace AnalysisManagerResultsXferPlugin
                 var result = PerformResultsXfer();
                 if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
-                    if (string.IsNullOrEmpty(m_message))
+                    if (string.IsNullOrEmpty(mMessage))
                     {
-                        m_message = "Unknown error calling PerformResultsXfer";
+                        mMessage = "Unknown error calling PerformResultsXfer";
                     }
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -59,11 +59,11 @@ namespace AnalysisManagerResultsXferPlugin
                 DeleteTransferFolderIfEmpty();
 
                 // Stop the job timer
-                m_StopTime = DateTime.UtcNow;
+                mStopTime = DateTime.UtcNow;
             }
             catch (Exception ex)
             {
-                m_message = "Error in ResultsXferPlugin->RunTool: " + ex.Message;
+                mMessage = "Error in ResultsXferPlugin->RunTool: " + ex.Message;
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -73,12 +73,12 @@ namespace AnalysisManagerResultsXferPlugin
 
         private bool ChangeFolderPathsToLocal(string serverName, ref string transferFolderPath, ref string datasetStoragePath)
         {
-            var connectionString = m_mgrParams.GetParam("connectionstring");
+            var connectionString = mMgrParams.GetParam("connectionstring");
 
             var datasetStorageVolServer = LookupLocalPath(serverName, datasetStoragePath, "raw-storage", connectionString);
             if (string.IsNullOrWhiteSpace(datasetStorageVolServer))
             {
-                m_message = "Unable to determine the local drive letter for " + Path.Combine(@"\\" + serverName, datasetStoragePath);
+                mMessage = "Unable to determine the local drive letter for " + Path.Combine(@"\\" + serverName, datasetStoragePath);
                 return false;
             }
 
@@ -87,7 +87,7 @@ namespace AnalysisManagerResultsXferPlugin
             var transferVolServer = LookupLocalPath(serverName, transferFolderPath, "results_transfer", connectionString);
             if (string.IsNullOrWhiteSpace(transferVolServer))
             {
-                m_message = "Unable to determine the local drive letter for " + Path.Combine(@"\\" + serverName, transferFolderPath);
+                mMessage = "Unable to determine the local drive letter for " + Path.Combine(@"\\" + serverName, transferFolderPath);
                 return false;
             }
 
@@ -107,7 +107,7 @@ namespace AnalysisManagerResultsXferPlugin
         private void DeleteTransferFolderIfEmpty()
         {
 
-            var transferFolderPath = m_jobParams.GetParam(clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH);
+            var transferFolderPath = mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH);
             if (string.IsNullOrWhiteSpace(transferFolderPath))
             {
                 LogError("Job parameter transferFolderPath is empty or not defined");
@@ -116,14 +116,14 @@ namespace AnalysisManagerResultsXferPlugin
 
             try
             {
-                var diTransferFolder = new DirectoryInfo(Path.Combine(transferFolderPath, m_Dataset));
+                var diTransferFolder = new DirectoryInfo(Path.Combine(transferFolderPath, mDatasetName));
 
                 if (diTransferFolder.Exists && diTransferFolder.GetFileSystemInfos("*", SearchOption.AllDirectories).Length == 0)
                 {
                     // Dataset directory in the transfer folder is empty; delete it
                     try
                     {
-                        if (m_DebugLevel >= 3)
+                        if (mDebugLevel >= 3)
                         {
                             LogDebug("Deleting empty dataset directory in transfer directory: " + diTransferFolder.FullName);
                         }
@@ -133,7 +133,7 @@ namespace AnalysisManagerResultsXferPlugin
                     catch (Exception ex)
                     {
                         // Log this exception, but don't treat it is a job failure
-                        var msg = "clsResultXferToolRunner.RunTool(); Exception deleting dataset directory " + m_jobParams.GetParam(clsAnalysisResources.JOB_PARAM_DATASET_FOLDER_NAME) +
+                        var msg = "clsResultXferToolRunner.RunTool(); Exception deleting dataset directory " + mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_DATASET_FOLDER_NAME) +
                                   " in xfer folder (another results manager may have deleted it): " + ex.Message;
                         LogWarning(msg);
 
@@ -142,7 +142,7 @@ namespace AnalysisManagerResultsXferPlugin
                 }
                 else
                 {
-                    if (m_DebugLevel >= 3)
+                    if (mDebugLevel >= 3)
                     {
                         LogDebug("Dataset directory in transfer directory still has files/folders; will not delete: " + diTransferFolder.FullName);
                     }
@@ -151,7 +151,7 @@ namespace AnalysisManagerResultsXferPlugin
             catch (Exception ex)
             {
                 // Log this exception, but don't treat it is a job failure
-                var msg = "clsResultXferToolRunner.RunTool(); Exception looking for dataset directory " + m_jobParams.GetParam(clsAnalysisResources.JOB_PARAM_DATASET_FOLDER_NAME) +
+                var msg = "clsResultXferToolRunner.RunTool(); Exception looking for dataset directory " + mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_DATASET_FOLDER_NAME) +
                           " in xfer folder (another results manager may have deleted it): " + ex.Message;
                 LogWarning(msg);
 
@@ -256,13 +256,13 @@ namespace AnalysisManagerResultsXferPlugin
             {
                 if (sourceFolderpath.StartsWith(@"\\"))
                 {
-                    m_message = "MoveFilesLocally cannot be used with files on network shares; " + sourceFolderpath;
+                    mMessage = "MoveFilesLocally cannot be used with files on network shares; " + sourceFolderpath;
                     return false;
                 }
 
                 if (targetFolderPath.StartsWith(@"\\"))
                 {
-                    m_message = "MoveFilesLocally cannot be used with files on network shares; " + targetFolderPath;
+                    mMessage = "MoveFilesLocally cannot be used with files on network shares; " + targetFolderPath;
                     return false;
                 }
 
@@ -272,7 +272,7 @@ namespace AnalysisManagerResultsXferPlugin
                 if (!diTargetFolder.Exists)
                     diTargetFolder.Create();
 
-                if (m_DebugLevel >= 2)
+                if (mDebugLevel >= 2)
                 {
                     LogDebug("Moving files locally to " + diTargetFolder.FullName);
                 }
@@ -287,7 +287,7 @@ namespace AnalysisManagerResultsXferPlugin
                         {
                             if (!overwriteExisting)
                             {
-                                if (m_DebugLevel >= 2)
+                                if (mDebugLevel >= 2)
                                 {
                                     LogDebug("Skipping existing file: " + fiTargetFile.FullName);
                                 }
@@ -355,8 +355,8 @@ namespace AnalysisManagerResultsXferPlugin
         /// <remarks></remarks>
         protected virtual CloseOutType PerformResultsXfer()
         {
-            var transferFolderPath = m_jobParams.GetParam(clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH);
-            var datasetStoragePath = m_jobParams.GetParam("DatasetStoragePath");
+            var transferFolderPath = mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH);
+            var datasetStoragePath = mJobParams.GetParam("DatasetStoragePath");
 
             // Check whether the transfer folder and the dataset directory reside on the same server as this manager
             var serverName = Environment.MachineName;
@@ -369,9 +369,9 @@ namespace AnalysisManagerResultsXferPlugin
 
                 if (!ChangeFolderPathsToLocal(serverName, ref transferFolderPath, ref datasetStoragePath))
                 {
-                    if (string.IsNullOrWhiteSpace(m_message))
-                        m_message = "Unknown error calling ChangeFolderPathsToLocal";
-                    LogError(m_message);
+                    if (string.IsNullOrWhiteSpace(mMessage))
+                        mMessage = "Unknown error calling ChangeFolderPathsToLocal";
+                    LogError(mMessage);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
@@ -379,7 +379,7 @@ namespace AnalysisManagerResultsXferPlugin
             }
 
             // Verify input folder exists in storage server xfer folder
-            var folderToMove = Path.Combine(transferFolderPath, m_jobParams.GetParam(clsAnalysisResources.JOB_PARAM_DATASET_FOLDER_NAME), m_jobParams.GetParam("InputFolderName"));
+            var folderToMove = Path.Combine(transferFolderPath, mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_DATASET_FOLDER_NAME), mJobParams.GetParam("InputFolderName"));
 
             if (!Directory.Exists(folderToMove))
             {
@@ -387,14 +387,14 @@ namespace AnalysisManagerResultsXferPlugin
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            if (m_DebugLevel >= 4)
+            if (mDebugLevel >= 4)
             {
                 LogDebug("Results folder to move: " + folderToMove);
             }
 
             // Verify that the dataset directory exists on storage server
             // If it doesn't exist, we will auto-create it (this behavior was added 4/24/2009)
-            var datasetDir = Path.Combine(datasetStoragePath, m_jobParams.GetParam(clsAnalysisResources.JOB_PARAM_DATASET_FOLDER_NAME));
+            var datasetDir = Path.Combine(datasetStoragePath, mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_DATASET_FOLDER_NAME));
             var diDatasetFolder = new DirectoryInfo(datasetDir);
             if (!diDatasetFolder.Exists)
             {
@@ -455,12 +455,12 @@ namespace AnalysisManagerResultsXferPlugin
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
             }
-            else if (m_DebugLevel >= 4)
+            else if (mDebugLevel >= 4)
             {
                 LogDebug("Dataset directory path: " + datasetDir);
             }
 
-            var targetDir = Path.Combine(datasetDir, m_jobParams.GetParam("inputfoldername"));
+            var targetDir = Path.Combine(datasetDir, mJobParams.GetParam("inputfoldername"));
 
             // Determine if output folder already exists on storage server
             if (Directory.Exists(targetDir))
@@ -471,7 +471,7 @@ namespace AnalysisManagerResultsXferPlugin
             // Move the directory
             try
             {
-                if (m_DebugLevel >= 3)
+                if (mDebugLevel >= 3)
                 {
                     LogDebug("Moving '" + folderToMove + "' to '" + targetDir + "'");
                 }
@@ -485,12 +485,12 @@ namespace AnalysisManagerResultsXferPlugin
                 else
                 {
                     // Call MoveDirectory, which will copy the files using locks
-                    if (m_DebugLevel >= 2)
+                    if (mDebugLevel >= 2)
                     {
-                        LogDebug("Using m_FileTools.MoveDirectory to copy files to " + targetDir);
+                        LogDebug("Using mFileTools.MoveDirectory to copy files to " + targetDir);
                     }
                     ResetTimestampForQueueWaitTimeLogging();
-                    m_FileTools.MoveDirectory(folderToMove, targetDir, overwriteFiles: true);
+                    mFileTools.MoveDirectory(folderToMove, targetDir, overwriteFiles: true);
                 }
             }
             catch (Exception ex)
@@ -512,7 +512,7 @@ namespace AnalysisManagerResultsXferPlugin
             var toolVersionInfo = string.Empty;
             var appFolderPath = clsGlobal.GetAppFolderPath();
 
-            if (m_DebugLevel >= 2)
+            if (mDebugLevel >= 2)
             {
                 LogDebug("Determining tool version info");
             }

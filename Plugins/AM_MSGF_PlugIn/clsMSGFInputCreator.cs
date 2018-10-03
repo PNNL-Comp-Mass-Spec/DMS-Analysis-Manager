@@ -43,7 +43,7 @@ namespace AnalysisManagerMSGFPlugin
         /// MSGF cached results
         /// </summary>
         /// <remarks>
-        /// This dictionary is initially populated with a string constructed using 
+        /// This dictionary is initially populated with a string constructed using
         /// Scan, Charge, and the original peptide sequence in the PHRP file: Scan_Charge_OriginalPeptideSequence
         /// It will contain an entry for every line written to the MSGF input file
         /// It is later updated by AddUpdateMSGFResult() to store the properly formatted MSGF result line for each entry

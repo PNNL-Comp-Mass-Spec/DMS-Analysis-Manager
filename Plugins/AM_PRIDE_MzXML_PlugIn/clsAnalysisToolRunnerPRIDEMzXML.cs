@@ -42,24 +42,24 @@ namespace AnalysisManagerPRIDEMzXMLPlugIn
             if (!StoreToolVersionInfo())
             {
                 LogError("Aborting since StoreToolVersionInfo returned false");
-                m_message = "Error determining MSDataFileTrimmer version";
+                mMessage = "Error determining MSDataFileTrimmer version";
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
             LogMessage("Running MSDataFileTrimmer");
 
-            mCmdRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel);
+            mCmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel);
             RegisterEvents(mCmdRunner);
             mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
-            if (m_DebugLevel > 4)
+            if (mDebugLevel > 4)
             {
                 LogDebug("clsAnalysisToolRunnerPRIDEMzXML.RunTool(): Enter");
             }
 
             // verify that program file exists
             // progLoc will be something like this: "C:\DMS_Programs\MSDataFileTrimmer\MSDataFileTrimmer.exe"
-            var progLoc = m_mgrParams.GetParam("MSDataFileTrimmerprogloc");
+            var progLoc = mMgrParams.GetParam("MSDataFileTrimmerprogloc");
             if (!File.Exists(progLoc))
             {
                 if (progLoc.Length == 0)
@@ -69,16 +69,16 @@ namespace AnalysisManagerPRIDEMzXMLPlugIn
             }
 
             var cmdStr =
-                " /M:" + Path.Combine(m_WorkDir, m_jobParams.GetParam("PRIDEMzXMLInputFile")) +
-                " /G /O:" + m_WorkDir +
-                " /L:" + Path.Combine(m_WorkDir, "MSDataFileTrimmer_Log.txt");
+                " /M:" + Path.Combine(mWorkDir, mJobParams.GetParam("PRIDEMzXMLInputFile")) +
+                " /G /O:" + mWorkDir +
+                " /L:" + Path.Combine(mWorkDir, "MSDataFileTrimmer_Log.txt");
 
             mCmdRunner.CreateNoWindow = true;
             mCmdRunner.CacheStandardOutput = true;
             mCmdRunner.EchoOutputToConsole = true;
 
             mCmdRunner.WriteConsoleOutputToFile = true;
-            mCmdRunner.ConsoleOutputFilePath = Path.Combine(m_WorkDir, "MSDataFileTrimmer_ConsoleOutput.txt");
+            mCmdRunner.ConsoleOutputFilePath = Path.Combine(mWorkDir, "MSDataFileTrimmer_ConsoleOutput.txt");
 
             if (!mCmdRunner.RunProgram(progLoc, cmdStr, "MSDataFileTrimmer", true))
             {
@@ -92,7 +92,7 @@ namespace AnalysisManagerPRIDEMzXMLPlugIn
             }
 
             // Stop the job timer
-            m_StopTime = DateTime.UtcNow;
+            mStopTime = DateTime.UtcNow;
 
             // Add the current job data to the summary file
             UpdateSummaryFile();
@@ -104,10 +104,10 @@ namespace AnalysisManagerPRIDEMzXMLPlugIn
             RedefineAggregationJobDatasetAndTransferFolder();
 
             // Update list of files to be deleted after run
-            var groupedFiles = Directory.GetFiles(m_WorkDir, "*_grouped*");
+            var groupedFiles = Directory.GetFiles(mWorkDir, "*_grouped*");
             foreach (var fileToSave in groupedFiles)
             {
-                m_jobParams.AddResultFileToKeep(Path.GetFileName(fileToSave));
+                mJobParams.AddResultFileToKeep(Path.GetFileName(fileToSave));
             }
 
             var success = CopyResultsToTransferDirectory();
@@ -122,7 +122,7 @@ namespace AnalysisManagerPRIDEMzXMLPlugIn
         /// <remarks></remarks>
         protected bool StoreToolVersionInfo()
         {
-            var progLoc = m_mgrParams.GetParam("MSDataFileTrimmerprogloc");
+            var progLoc = mMgrParams.GetParam("MSDataFileTrimmerprogloc");
             var success = StoreDotNETToolVersionInfo(progLoc);
 
             return success;

@@ -31,7 +31,7 @@ namespace AnalysisManagerMSDeconvPlugIn
             // Make sure the machine has enough free memory to run MSDeconv
             if (!ValidateFreeMemorySize("MSDeconvJavaMemorySize"))
             {
-                m_message = "Not enough free memory to run MSDeconv";
+                mMessage = "Not enough free memory to run MSDeconv";
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -46,9 +46,9 @@ namespace AnalysisManagerMSDeconvPlugIn
             }
 
             // Make sure we don't move the .mzXML file into the results folder
-            m_jobParams.AddResultFileExtensionToSkip(DOT_MZXML_EXTENSION);
+            mJobParams.AddResultFileExtensionToSkip(DOT_MZXML_EXTENSION);
 
-            if (!base.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+            if (!base.ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }

@@ -98,7 +98,7 @@ namespace AnalysisManagerICR2LSPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
 
             // Start the job timer
-            m_StartTime = DateTime.UtcNow;
+            mStartTime = DateTime.UtcNow;
 
             ResetStatusLogTimes();
             mICR2LSStatus.Initialize();
@@ -111,9 +111,9 @@ namespace AnalysisManagerICR2LSPlugIn
         {
             try
             {
-                var scansFilePath = Path.Combine(m_WorkDir, m_Dataset + "_scans.csv");
-                var isosFilePath = Path.Combine(m_WorkDir, m_Dataset + "_isos.csv");
-                var rawFilePath = Path.Combine(m_WorkDir, m_Dataset + clsAnalysisResources.DOT_RAW_EXTENSION);
+                var scansFilePath = Path.Combine(mWorkDir, mDatasetName + "_scans.csv");
+                var isosFilePath = Path.Combine(mWorkDir, mDatasetName + "_isos.csv");
+                var rawFilePath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_RAW_EXTENSION);
 
                 if (!File.Exists(rawFilePath))
                 {
@@ -121,8 +121,8 @@ namespace AnalysisManagerICR2LSPlugIn
                 }
 
                 mPEKtoCSVConverter = new PEKtoCSVConverter.PEKtoCSVConverter(pekFilePath, scansFilePath, isosFilePath, rawFilePath);
-                mPEKtoCSVConverter.ErrorEvent += mPEKtoCSVConverter_ErrorEvent;
-                mPEKtoCSVConverter.MessageEvent += mPEKtoCSVConverter_MessageEvent;
+                mPEKtoCSVConverter.ErrorEvent += PEKtoCSVConverter_ErrorEvent;
+                mPEKtoCSVConverter.MessageEvent += PEKtoCSVConverter_MessageEvent;
 
                 LogMessage("Creating _isos.csv and _scans.csv files using the PEK file");
                 mLastPekToCsvPercentCompleteTime = DateTime.UtcNow;
@@ -136,8 +136,8 @@ namespace AnalysisManagerICR2LSPlugIn
             }
             catch (Exception ex)
             {
-                m_message = "Error converting the PEK file to DeconTools-compatible _isos.csv";
-                LogError(m_message + ": " + ex.Message);
+                mMessage = "Error converting the PEK file to DeconTools-compatible _isos.csv";
+                LogError(mMessage + ": " + ex.Message);
                 return false;
             }
         }
@@ -156,12 +156,12 @@ namespace AnalysisManagerICR2LSPlugIn
                         return;
                 }
 
-                var transferFolderPath = m_jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH);
+                var transferFolderPath = mJobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH);
                 if (string.IsNullOrEmpty(transferFolderPath))
                     return;
 
-                transferFolderPath = Path.Combine(transferFolderPath, m_jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_DATASET_FOLDER_NAME));
-                transferFolderPath = Path.Combine(transferFolderPath, m_jobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME));
+                transferFolderPath = Path.Combine(transferFolderPath, mJobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_DATASET_FOLDER_NAME));
+                transferFolderPath = Path.Combine(transferFolderPath, mJobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME));
 
                 var diTransferFolder = new DirectoryInfo(transferFolderPath);
                 if (!diTransferFolder.Exists)
@@ -181,7 +181,7 @@ namespace AnalysisManagerICR2LSPlugIn
 
                 fiTargetFileTemp.MoveTo(fiTargetFileFinal.FullName);
 
-                m_jobParams.AddServerFileToDelete(fiTargetFileFinal.FullName);
+                mJobParams.AddServerFileToDelete(fiTargetFileFinal.FullName);
             }
             catch (Exception ex)
             {
@@ -384,10 +384,10 @@ namespace AnalysisManagerICR2LSPlugIn
                         mICR2LSStatus.ProcessingStatus = strProcessingStatus;
                     }
 
-                    m_progress = mICR2LSStatus.PercentComplete;
+                    mProgress = mICR2LSStatus.PercentComplete;
 
                     // Update the local status file (and post the status to the message queue)
-                    UpdateStatusRunning(m_progress, mICR2LSStatus.ScansProcessed);
+                    UpdateStatusRunning(mProgress, mICR2LSStatus.ScansProcessed);
 
                     return true;
                 }
@@ -421,7 +421,7 @@ namespace AnalysisManagerICR2LSPlugIn
         private void InitializeStatusLogFileWatcher(string strWorkDir, string strFilenameToWatch)
         {
             mStatusFileWatcher = new FileSystemWatcher();
-            mStatusFileWatcher.Changed += mStatusFileWatcher_Changed;
+            mStatusFileWatcher.Changed += StatusFileWatcher_Changed;
             mStatusFileWatcher.BeginInit();
             mStatusFileWatcher.Path = strWorkDir;
             mStatusFileWatcher.IncludeSubdirectories = false;
@@ -434,13 +434,13 @@ namespace AnalysisManagerICR2LSPlugIn
         protected virtual CloseOutType PerfPostAnalysisTasks(bool blnCopyResultsToServer)
         {
             // Stop the job timer
-            m_StopTime = DateTime.UtcNow;
+            mStopTime = DateTime.UtcNow;
 
             UpdateSummaryFile();
 
             // Use the PEK file to create DeconTools compatible _isos.csv and _scans.csv files
             // Create this CSV file even if ICR-2LS did not successfully finish
-            var pekFilePath = Path.Combine(m_WorkDir, m_Dataset + ".pek");
+            var pekFilePath = Path.Combine(mWorkDir, mDatasetName + ".pek");
             var pekConversionSuccess = ConvertPekToCsv(pekFilePath);
 
             // Get rid of raw data file
@@ -451,7 +451,7 @@ namespace AnalysisManagerICR2LSPlugIn
                 // Since the results might still be good, we will not return an error at this point
             }
 
-            m_jobParams.AddResultFileToSkip("Status.log");
+            mJobParams.AddResultFileToSkip("Status.log");
 
             var copySuccess = CopyResultsToTransferDirectory();
 
@@ -466,9 +466,9 @@ namespace AnalysisManagerICR2LSPlugIn
                 return CloseOutType.CLOSEOUT_SUCCESS;
             }
 
-            if (string.IsNullOrEmpty(m_message))
+            if (string.IsNullOrEmpty(mMessage))
             {
-                m_message = "Unknown error converting the .PEK file to a DeconTools-compatible _isos.csv file";
+                mMessage = "Unknown error converting the .PEK file to a DeconTools-compatible _isos.csv file";
             }
             return CloseOutType.CLOSEOUT_FAILED;
         }
@@ -526,7 +526,7 @@ namespace AnalysisManagerICR2LSPlugIn
             // This file is updated after each scan is processed
             InitializeStatusLogFileWatcher(Path.GetDirectoryName(mStatusFilePath), Path.GetFileName(mStatusFilePath));
 
-            var strExeFilePath = m_mgrParams.GetParam("ICR2LSprogloc");
+            var strExeFilePath = mMgrParams.GetParam("ICR2LSprogloc");
 
             if (string.IsNullOrEmpty(strExeFilePath))
             {
@@ -662,14 +662,14 @@ namespace AnalysisManagerICR2LSPlugIn
             }
 
             // Initialize the program runner
-            mCmdRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel);
+            mCmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel);
             RegisterEvents(mCmdRunner);
             mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
             mCmdRunner.MonitorInterval = MONITOR_INTERVAL_SECONDS * 1000;
 
             // Set up and execute a program runner to run ICR2LS.exe
-            if (m_DebugLevel >= 1)
+            if (mDebugLevel >= 1)
             {
                 LogDebug(strExeFilePath + strArguments);
             }
@@ -687,7 +687,7 @@ namespace AnalysisManagerICR2LSPlugIn
 
                 strArguments = "/R:" + PossiblyQuotePath(commandLineFilePath);
 
-                if (m_DebugLevel >= 1)
+                if (mDebugLevel >= 1)
                 {
                     LogDebug("Command line is over 250 characters long; will use /R instead");
                     LogDebug("  " + strExeFilePath + " " + strArguments);
@@ -711,7 +711,7 @@ namespace AnalysisManagerICR2LSPlugIn
             }
 
             // Stop the job timer
-            m_StopTime = DateTime.UtcNow;
+            mStopTime = DateTime.UtcNow;
 
             if (!success)
             {
@@ -729,7 +729,7 @@ namespace AnalysisManagerICR2LSPlugIn
                     "Most recent ICR-2LS State: " + mICR2LSStatus.ProcessingState + " with " + mICR2LSStatus.ScansProcessed + " scans processed (" +
                     mICR2LSStatus.PercentComplete.ToString("0.0") + "% done); Status = " + mICR2LSStatus.ProcessingStatus);
 
-                LogError("Error running ICR-2LS.exe: " + m_JobNum);
+                LogError("Error running ICR-2LS.exe: " + mJob);
                 return false;
             }
 
@@ -739,7 +739,7 @@ namespace AnalysisManagerICR2LSPlugIn
             {
                 BaseLogger.LogLevels eLogLevel;
                 if (string.Equals(mICR2LSStatus.ProcessingState, ICR2LS_STATE_ERROR, StringComparison.InvariantCultureIgnoreCase) |
-                    string.Equals(mICR2LSStatus.ProcessingState, ICR2LS_STATE_KILLED, StringComparison.InvariantCultureIgnoreCase) | m_progress < 100)
+                    string.Equals(mICR2LSStatus.ProcessingState, ICR2LS_STATE_KILLED, StringComparison.InvariantCultureIgnoreCase) | mProgress < 100)
                 {
                     eLogLevel = BaseLogger.LogLevels.ERROR;
                 }
@@ -757,7 +757,7 @@ namespace AnalysisManagerICR2LSPlugIn
                 else
                     LogError(msg);
 
-                if (m_progress >= 100)
+                if (mProgress >= 100)
                 {
                     LogWarning("Progress reported by ICR-2LS is 100%, so will assume the job is complete");
                     return true;
@@ -766,7 +766,7 @@ namespace AnalysisManagerICR2LSPlugIn
                 return false;
             }
 
-            if (m_DebugLevel > 0)
+            if (mDebugLevel > 0)
             {
                 LogDebug("Processing state Finished; Processed " + mICR2LSStatus.ScansProcessed + " scans");
             }
@@ -783,16 +783,16 @@ namespace AnalysisManagerICR2LSPlugIn
 
             var toolVersionInfo = string.Empty;
 
-            if (m_DebugLevel >= 2)
+            if (mDebugLevel >= 2)
             {
                 LogDebug("Determining tool version info");
             }
 
-            var progLoc = m_mgrParams.GetParam("ICR2LSprogloc");
+            var progLoc = mMgrParams.GetParam("ICR2LSprogloc");
             if (string.IsNullOrEmpty(progLoc))
             {
-                m_message = "Manager parameter ICR2LSprogloc is not defined";
-                LogError("Error in SetStepTaskToolVersion: " + m_message);
+                mMessage = "Manager parameter ICR2LSprogloc is not defined";
+                LogError("Error in SetStepTaskToolVersion: " + mMessage);
                 return false;
             }
 
@@ -899,9 +899,9 @@ namespace AnalysisManagerICR2LSPlugIn
             var blnLogStatus = false;
 
             var dblMinutesElapsed = DateTime.UtcNow.Subtract(mLastStatusLogTime).TotalMinutes;
-            if (m_DebugLevel > 0)
+            if (mDebugLevel > 0)
             {
-                if (dblMinutesElapsed >= DEBUG_LOG_INTERVAL_MINUTES && m_DebugLevel >= 2)
+                if (dblMinutesElapsed >= DEBUG_LOG_INTERVAL_MINUTES && mDebugLevel >= 2)
                 {
                     blnLogStatus = true;
                 }
@@ -916,8 +916,8 @@ namespace AnalysisManagerICR2LSPlugIn
 
                     LogDebug(
                         "clsAnalysisToolRunnerICRBase.CmdRunner_LoopWaiting(); " + "Processing Time = " +
-                        DateTime.UtcNow.Subtract(m_StartTime).TotalMinutes.ToString("0.0") + " minutes; " + "Progress = " +
-                        m_progress.ToString("0.00") + "; " + "Scans Processed = " + mICR2LSStatus.ScansProcessed);
+                        DateTime.UtcNow.Subtract(mStartTime).TotalMinutes.ToString("0.0") + " minutes; " + "Progress = " +
+                        mProgress.ToString("0.00") + "; " + "Scans Processed = " + mICR2LSStatus.ScansProcessed);
                 }
             }
 
@@ -928,17 +928,17 @@ namespace AnalysisManagerICR2LSPlugIn
             }
         }
 
-        private void mStatusFileWatcher_Changed(object sender, FileSystemEventArgs e)
+        private void StatusFileWatcher_Changed(object sender, FileSystemEventArgs e)
         {
             ParseICR2LSStatusFile(mStatusFilePath, false);
         }
 
-        private void mPEKtoCSVConverter_ErrorEvent(object sender, PEKtoCSVConverter.PEKtoCSVConverter.MessageEventArgs e)
+        private void PEKtoCSVConverter_ErrorEvent(object sender, PEKtoCSVConverter.PEKtoCSVConverter.MessageEventArgs e)
         {
             LogError("PEKtoCSVConverter error: " + e.Message);
         }
 
-        private void mPEKtoCSVConverter_MessageEvent(object sender, PEKtoCSVConverter.PEKtoCSVConverter.MessageEventArgs e)
+        private void PEKtoCSVConverter_MessageEvent(object sender, PEKtoCSVConverter.PEKtoCSVConverter.MessageEventArgs e)
         {
             if (e.Message.Contains("% complete; scan"))
             {

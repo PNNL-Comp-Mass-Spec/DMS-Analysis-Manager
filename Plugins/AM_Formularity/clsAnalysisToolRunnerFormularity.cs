@@ -52,7 +52,7 @@ namespace AnalysisManagerFormularityPlugin
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                if (m_DebugLevel > 4)
+                if (mDebugLevel > 4)
                 {
                     LogDebug("clsAnalysisToolRunnerFormularity.RunTool(): Enter");
                 }
@@ -75,18 +75,18 @@ namespace AnalysisManagerFormularityPlugin
                 if (!StoreToolVersionInfo(progLoc))
                 {
                     LogError("Aborting since StoreToolVersionInfo returned false");
-                    m_message = "Error determining Formularity version";
+                    mMessage = "Error determining Formularity version";
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 // Unzip the XML files
-                var compressedXMLFiles = Path.Combine(m_WorkDir, m_Dataset + "_scans.zip");
-                var unzipSuccess = UnzipFile(compressedXMLFiles, m_WorkDir);
+                var compressedXMLFiles = Path.Combine(mWorkDir, mDatasetName + "_scans.zip");
+                var unzipSuccess = UnzipFile(compressedXMLFiles, mWorkDir);
                 if (!unzipSuccess)
                 {
-                    if (string.IsNullOrEmpty(m_message))
+                    if (string.IsNullOrEmpty(mMessage))
                     {
-                        m_message = "Unknown error extracting the XML spectra files";
+                        mMessage = "Unknown error extracting the XML spectra files";
                     }
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -110,10 +110,10 @@ namespace AnalysisManagerFormularityPlugin
                     eReturnCode = PostProcessResults(progLocNOMSI, ref processingSuccess);
                 }
 
-                m_progress = PROGRESS_PCT_COMPLETE;
+                mProgress = PROGRESS_PCT_COMPLETE;
 
                 // Stop the job timer
-                m_StopTime = DateTime.UtcNow;
+                mStopTime = DateTime.UtcNow;
 
                 // Could use the following to create a summary file:
                 // Add the current job data to the summary file
@@ -132,7 +132,7 @@ namespace AnalysisManagerFormularityPlugin
                 }
 
                 // No need to keep the JobParameters file
-                m_jobParams.AddResultFileToSkip("JobParameters_" + m_JobNum + ".xml");
+                mJobParams.AddResultFileToSkip("JobParameters_" + mJob + ".xml");
 
                 var success = CopyResultsToTransferDirectory();
 
@@ -141,8 +141,8 @@ namespace AnalysisManagerFormularityPlugin
             }
             catch (Exception ex)
             {
-                m_message = "Error in FormularityPlugin->RunTool";
-                LogError(m_message, ex);
+                mMessage = "Error in FormularityPlugin->RunTool";
+                LogError(mMessage, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -156,7 +156,7 @@ namespace AnalysisManagerFormularityPlugin
 
             try
             {
-                var diWorkDir = new DirectoryInfo(m_WorkDir);
+                var diWorkDir = new DirectoryInfo(mWorkDir);
 
                 foreach (var xmlFile in GetXmlSpectraFiles(diWorkDir, out _))
                     xmlFile.Delete();
@@ -182,10 +182,10 @@ namespace AnalysisManagerFormularityPlugin
 
 
                 var datasetDetailReportText =
-                    string.Format("DMS <a href='http://dms2.pnl.gov/dataset/show/{0}'> Dataset Detail Report </a>", m_Dataset);
+                    string.Format("DMS <a href='http://dms2.pnl.gov/dataset/show/{0}'> Dataset Detail Report </a>", mDatasetName);
 
                 var datasetDetailReportLink = LITERAL_TEXT_FLAG + datasetDetailReportText;
-                var pngFileTableLayout = PngToPdfConverter.GetPngFileTableLayout(m_Dataset, datasetDetailReportLink);
+                var pngFileTableLayout = PngToPdfConverter.GetPngFileTableLayout(mDatasetName, datasetDetailReportLink);
 
                 var pngFileNames = new SortedSet<string>();
                 foreach (var item in pngFiles)
@@ -198,11 +198,11 @@ namespace AnalysisManagerFormularityPlugin
                     writer.WriteLine("<!DOCTYPE html PUBLIC \"-//W3C//DTD HTML 3.2//EN\">");
                     writer.WriteLine("<html>");
                     writer.WriteLine("<head>");
-                    writer.WriteLine("  <title>{0}</title>", m_Dataset);
+                    writer.WriteLine("  <title>{0}</title>", mDatasetName);
                     writer.WriteLine("</head>");
                     writer.WriteLine();
                     writer.WriteLine("<body>");
-                    writer.WriteLine("  <h2>{0}</h2>", m_Dataset);
+                    writer.WriteLine("  <h2>{0}</h2>", mDatasetName);
                     writer.WriteLine();
                     writer.WriteLine("  <table>");
 
@@ -241,8 +241,8 @@ namespace AnalysisManagerFormularityPlugin
             }
             catch (Exception ex)
             {
-                m_message = "Error creating the HTML linking to the plots from NOMSI";
-                LogError(m_message, ex);
+                mMessage = "Error creating the HTML linking to the plots from NOMSI";
+                LogError(mMessage, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -255,23 +255,23 @@ namespace AnalysisManagerFormularityPlugin
         {
             try
             {
-                if (m_DebugLevel >= 3)
+                if (mDebugLevel >= 3)
                 {
                     LogDebug("Creating PDF file with plots from NOMSI");
                 }
 
-                var converter = new PngToPdfConverter(m_Dataset);
+                var converter = new PngToPdfConverter(mDatasetName);
                 RegisterEvents(converter);
 
-                var outputFilePath = Path.Combine(workDir.FullName, m_Dataset + "_NOMSI_plots.pdf");
+                var outputFilePath = Path.Combine(workDir.FullName, mDatasetName + "_NOMSI_plots.pdf");
 
                 var success = converter.CreatePdf(outputFilePath, pngFiles);
 
                 if (!success)
                 {
-                    if (string.IsNullOrEmpty(m_message))
+                    if (string.IsNullOrEmpty(mMessage))
                     {
-                        m_message = "Error creating the PDF file with NOMSI plots";
+                        mMessage = "Error creating the PDF file with NOMSI plots";
                     }
 
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -281,8 +281,8 @@ namespace AnalysisManagerFormularityPlugin
             }
             catch (Exception ex)
             {
-                m_message = "Error creating a PDF file with the plots from NOMSI";
-                LogError(m_message, ex);
+                mMessage = "Error creating a PDF file with the plots from NOMSI";
+                LogError(mMessage, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -297,12 +297,12 @@ namespace AnalysisManagerFormularityPlugin
 
                 var cmdStr = reportFile.Name;
 
-                if (m_DebugLevel >= 1)
+                if (mDebugLevel >= 1)
                 {
                     LogDebug(progLocNOMSI + " " + cmdStr);
                 }
 
-                var cmdRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel)
+                var cmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel)
                 {
                     CreateNoWindow = true,
                     CacheStandardOutput = false,
@@ -315,9 +315,9 @@ namespace AnalysisManagerFormularityPlugin
 
                 var success = cmdRunner.RunProgram(progLocNOMSI, cmdStr, "NOMSI", true);
 
-                m_progress = PROGRESS_PCT_FINISHED_NOMSI;
-                m_StatusTools.UpdateAndWrite(m_progress);
-                if (m_DebugLevel >= 3)
+                mProgress = PROGRESS_PCT_FINISHED_NOMSI;
+                mStatusTools.UpdateAndWrite(mProgress);
+                if (mDebugLevel >= 3)
                 {
                     LogDebug("NOMSI plot creation complete");
                 }
@@ -340,8 +340,8 @@ namespace AnalysisManagerFormularityPlugin
             }
             catch (Exception ex)
             {
-                m_message = "Error creating plots with NOMSI";
-                LogError(m_message, ex);
+                mMessage = "Error creating plots with NOMSI";
+                LogError(mMessage, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -354,7 +354,7 @@ namespace AnalysisManagerFormularityPlugin
 
             try
             {
-                if (m_DebugLevel >= 3)
+                if (mDebugLevel >= 3)
                 {
                     LogDebug("Creating zip file with plots and index.html");
                 }
@@ -393,11 +393,11 @@ namespace AnalysisManagerFormularityPlugin
                     newHtmlFile.Delete();
 
                 htmlFile.MoveTo(Path.Combine(plotDirectory.FullName, htmlFile.Name));
-                m_jobParams.AddResultFileToSkip(htmlFile.Name);
+                mJobParams.AddResultFileToSkip(htmlFile.Name);
 
-                var zipFilePath = Path.Combine(workDir.FullName, m_Dataset + "_Plots.zip");
+                var zipFilePath = Path.Combine(workDir.FullName, mDatasetName + "_Plots.zip");
 
-                var zipSuccess = m_DotNetZipTools.ZipDirectory(plotDirectory.FullName, zipFilePath);
+                var zipSuccess = mDotNetZipTools.ZipDirectory(plotDirectory.FullName, zipFilePath);
                 if (!zipSuccess)
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -408,8 +408,8 @@ namespace AnalysisManagerFormularityPlugin
             }
             catch (Exception ex)
             {
-                m_message = "Error creating zip file with plots from NOMSI; current task: " + currentTask;
-                LogError(m_message, ex);
+                mMessage = "Error creating zip file with plots from NOMSI; current task: " + currentTask;
+                LogError(mMessage, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -417,7 +417,7 @@ namespace AnalysisManagerFormularityPlugin
 
         private List<FileInfo> GetXmlSpectraFiles(DirectoryInfo diWorkDir, out string wildcardMatchSpec)
         {
-            wildcardMatchSpec = m_Dataset + "_scan*.xml";
+            wildcardMatchSpec = mDatasetName + "_scan*.xml";
             var fiSpectraFiles = diWorkDir.GetFiles(wildcardMatchSpec).ToList();
             return fiSpectraFiles;
         }
@@ -469,7 +469,7 @@ namespace AnalysisManagerFormularityPlugin
 
                 if (!File.Exists(consoleOutputFilePath))
                 {
-                    if (m_DebugLevel >= 4)
+                    if (mDebugLevel >= 4)
                     {
                         LogDebug("Console output file not found: " + consoleOutputFilePath);
                     }
@@ -477,7 +477,7 @@ namespace AnalysisManagerFormularityPlugin
                     return;
                 }
 
-                if (m_DebugLevel >= 4)
+                if (mDebugLevel >= 4)
                 {
                     LogDebug("Parsing file " + consoleOutputFilePath);
                 }
@@ -505,7 +505,7 @@ namespace AnalysisManagerFormularityPlugin
                         if (dataLine.StartsWith("Error", StringComparison.OrdinalIgnoreCase) && dataLine.ToLower().Contains("nothing to align"))
                         {
                             nothingToAlign = true;
-                            m_message = dataLine;
+                            mMessage = dataLine;
                             continue;
                         }
 
@@ -522,13 +522,13 @@ namespace AnalysisManagerFormularityPlugin
                         if (reMatch.Success)
                         {
                             // Store this error message, plus any remaining console output lines
-                            m_message = reMatch.Groups["ErrorMessage"].Value;
+                            mMessage = reMatch.Groups["ErrorMessage"].Value;
                             StoreConsoleErrorMessage(reader, dataLine);
                         }
                         else if (dataLine.ToLower().StartsWith("error "))
                         {
                             // Store this error message, plus any remaining console output lines
-                            m_message = dataLine;
+                            mMessage = dataLine;
                             StoreConsoleErrorMessage(reader, dataLine);
                         }
 
@@ -540,7 +540,7 @@ namespace AnalysisManagerFormularityPlugin
             catch (Exception ex)
             {
                 // Ignore errors here
-                if (m_DebugLevel >= 2)
+                if (mDebugLevel >= 2)
                 {
                     LogErrorNoMessageUpdate("Error parsing console output file (" + consoleOutputFilePath + "): " + ex.Message);
                 }
@@ -553,13 +553,13 @@ namespace AnalysisManagerFormularityPlugin
 
             try
             {
-                var reportFile = new FileInfo(Path.Combine(m_WorkDir, "Report.csv"));
+                var reportFile = new FileInfo(Path.Combine(mWorkDir, "Report.csv"));
 
                 if (!reportFile.Exists)
                 {
-                    if (string.IsNullOrEmpty(m_message))
+                    if (string.IsNullOrEmpty(mMessage))
                     {
-                        m_message = string.Format("Formularity results not found ({0})", reportFile.Name);
+                        mMessage = string.Format("Formularity results not found ({0})", reportFile.Name);
                         processingSuccess = false;
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
@@ -567,16 +567,16 @@ namespace AnalysisManagerFormularityPlugin
                 else
                 {
                     // Rename the report file to start with the dataset name
-                    reportFile.MoveTo(Path.Combine(m_WorkDir, m_Dataset + "_Report.csv"));
+                    reportFile.MoveTo(Path.Combine(mWorkDir, mDatasetName + "_Report.csv"));
                 }
 
                 // Ignore the Report*.log files
                 // All messages in those files were displayed at the console and are thus already in Formularity_ConsoleOutput.txt
-                var workDir = new DirectoryInfo(m_WorkDir);
+                var workDir = new DirectoryInfo(mWorkDir);
 
                 foreach (var logFile in workDir.GetFiles("Report*.log"))
                 {
-                    m_jobParams.AddResultFileToSkip(logFile.Name);
+                    mJobParams.AddResultFileToSkip(logFile.Name);
                 }
 
                 var resultCode = CreatePlotsUsingNOMSI(progLocNOMSI, reportFile);
@@ -631,7 +631,7 @@ namespace AnalysisManagerFormularityPlugin
                     }
                     else
                     {
-                        m_jobParams.AddResultFileToSkip(pngFile.Name);
+                        mJobParams.AddResultFileToSkip(pngFile.Name);
                     }
                 }
 
@@ -644,8 +644,8 @@ namespace AnalysisManagerFormularityPlugin
             }
             catch (Exception ex)
             {
-                m_message = "Error post processing results";
-                LogError(m_message, ex);
+                mMessage = "Error post processing results";
+                LogError(mMessage, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -666,7 +666,7 @@ namespace AnalysisManagerFormularityPlugin
 
             try
             {
-                if (m_DebugLevel >= 3)
+                if (mDebugLevel >= 3)
                 {
                     LogDebug("Renaming PNG plot files created by NOMSI");
                 }
@@ -707,8 +707,8 @@ namespace AnalysisManagerFormularityPlugin
             }
             catch (Exception ex)
             {
-                m_message = "Error renaming PNG plot files";
-                LogError(m_message, ex);
+                mMessage = "Error renaming PNG plot files";
+                LogError(mMessage, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
         }
@@ -735,14 +735,14 @@ namespace AnalysisManagerFormularityPlugin
                 cmdStr += " " + PossiblyQuotePath(calibrationPeaksFilePath);
             }
 
-            if (m_DebugLevel >= 1)
+            if (mDebugLevel >= 1)
             {
                 LogDebug(progLoc + " " + cmdStr);
             }
 
-            mConsoleOutputFile = Path.Combine(m_WorkDir, FORMULARITY_CONSOLE_OUTPUT_FILE);
+            mConsoleOutputFile = Path.Combine(mWorkDir, FORMULARITY_CONSOLE_OUTPUT_FILE);
 
-            var cmdRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel)
+            var cmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel)
             {
                 CreateNoWindow = true,
                 CacheStandardOutput = false,
@@ -773,7 +773,7 @@ namespace AnalysisManagerFormularityPlugin
 
             if (calibrationFailed)
             {
-                m_message = "Calibration failed; used uncalibrated masses";
+                mMessage = "Calibration failed; used uncalibrated masses";
             }
 
             if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))
@@ -810,7 +810,7 @@ namespace AnalysisManagerFormularityPlugin
 
                 LogMessage("Processing data using Formularity");
 
-                var paramFilePath = Path.Combine(m_WorkDir, m_jobParams.GetParam(clsAnalysisResources.JOB_PARAM_PARAMETER_FILE));
+                var paramFilePath = Path.Combine(mWorkDir, mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_PARAMETER_FILE));
 
                 if (!File.Exists(paramFilePath))
                 {
@@ -818,8 +818,8 @@ namespace AnalysisManagerFormularityPlugin
                     return false;
                 }
 
-                var orgDbDirectory = m_mgrParams.GetParam(clsAnalysisResources.MGR_PARAM_ORG_DB_DIR);
-                var ciaDbPath = Path.Combine(orgDbDirectory, m_jobParams.GetParam("cia_db_name"));
+                var orgDbDirectory = mMgrParams.GetParam(clsAnalysisResources.MGR_PARAM_ORG_DB_DIR);
+                var ciaDbPath = Path.Combine(orgDbDirectory, mJobParams.GetParam("cia_db_name"));
 
                 if (!File.Exists(ciaDbPath))
                 {
@@ -828,7 +828,7 @@ namespace AnalysisManagerFormularityPlugin
                 }
 
 
-                var rawDataType = m_jobParams.GetParam("rawDataType");
+                var rawDataType = mJobParams.GetParam("rawDataType");
                 bool success;
 
                 int scanCount;
@@ -858,22 +858,22 @@ namespace AnalysisManagerFormularityPlugin
 
                         // ToDo: Move this into a new method
 
-                        var diWorkDir = new DirectoryInfo(m_WorkDir);
+                        var diWorkDir = new DirectoryInfo(mWorkDir);
                         var spectraFiles = GetXmlSpectraFiles(diWorkDir, out var wildcardMatchSpec);
                         scanCount = spectraFiles.Count;
 
                         if (scanCount == 0)
                         {
-                            m_message = "XML spectrum files not found matching " + wildcardMatchSpec;
+                            mMessage = "XML spectrum files not found matching " + wildcardMatchSpec;
                             return false;
                         }
 
                         foreach (var spectrumFile in spectraFiles)
                         {
-                            m_jobParams.AddResultFileToSkip(spectrumFile.Name);
+                            mJobParams.AddResultFileToSkip(spectrumFile.Name);
                         }
 
-                        var calibrationPeaksFileName = m_jobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "CalibrationPeaksFile", string.Empty);
+                        var calibrationPeaksFileName = mJobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "CalibrationPeaksFile", string.Empty);
                         string calibrationPeaksFilePath;
                         if (string.IsNullOrWhiteSpace(calibrationPeaksFileName))
                         {
@@ -881,10 +881,10 @@ namespace AnalysisManagerFormularityPlugin
                         }
                         else
                         {
-                            calibrationPeaksFilePath = Path.Combine(m_WorkDir, calibrationPeaksFileName);
+                            calibrationPeaksFilePath = Path.Combine(mWorkDir, calibrationPeaksFileName);
                         }
 
-                        m_progress = PROGRESS_PCT_STARTING_FORMULARITY;
+                        mProgress = PROGRESS_PCT_STARTING_FORMULARITY;
 
                         success = StartFormularity(progLoc, wildcardMatchSpec, paramFilePath, ciaDbPath, calibrationPeaksFilePath,
                                                        out scanCountNoPeaks, out nothingToAlign);
@@ -903,9 +903,9 @@ namespace AnalysisManagerFormularityPlugin
                 if (!success)
                     return false;
 
-                m_progress = PROGRESS_PCT_FINISHED_FORMULARITY;
-                m_StatusTools.UpdateAndWrite(m_progress);
-                if (m_DebugLevel >= 3)
+                mProgress = PROGRESS_PCT_FINISHED_FORMULARITY;
+                mStatusTools.UpdateAndWrite(mProgress);
+                if (mDebugLevel >= 3)
                 {
                     LogDebug("Formularity processing complete");
                 }
@@ -918,22 +918,22 @@ namespace AnalysisManagerFormularityPlugin
                 if (nothingToAlign || scanCountNoPeaks >= scanCount)
                 {
                     // None of the scans had peaks
-                    m_message = "No peaks found";
+                    mMessage = "No peaks found";
                     if (scanCount > 1)
-                        m_EvalMessage = "None of the scans had peaks";
+                        mEvalMessage = "None of the scans had peaks";
                     else
-                        m_EvalMessage = "Scan did not have peaks";
+                        mEvalMessage = "Scan did not have peaks";
 
                     if (!nothingToAlign)
                         nothingToAlign = true;
 
                     // Do not put the parameter file in the results directory
-                    m_jobParams.AddResultFileToSkip(paramFilePath);
+                    mJobParams.AddResultFileToSkip(paramFilePath);
                 }
                 else
                 {
                     // Some of the scans had no peaks
-                    m_EvalMessage = scanCountNoPeaks + " / " + scanCount + " scans had no peaks";
+                    mEvalMessage = scanCountNoPeaks + " / " + scanCount + " scans had no peaks";
                 }
 
                 return true;
@@ -941,8 +941,8 @@ namespace AnalysisManagerFormularityPlugin
             }
             catch (Exception ex)
             {
-                m_message = "Processing data using Formularity";
-                LogError(m_message, ex);
+                mMessage = "Processing data using Formularity";
+                LogError(mMessage, ex);
                 return false;
             }
 
@@ -1018,8 +1018,8 @@ namespace AnalysisManagerFormularityPlugin
             }
             catch (Exception ex)
             {
-                m_message = string.Format("Error validating {0}", NOMSI_SUMMARY_FILE_NAME);
-                LogError(m_message, ex);
+                mMessage = string.Format("Error validating {0}", NOMSI_SUMMARY_FILE_NAME);
+                LogError(mMessage, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
         }
@@ -1041,7 +1041,7 @@ namespace AnalysisManagerFormularityPlugin
                 {
                     mLastConsoleOutputParse = DateTime.UtcNow;
 
-                    ParseConsoleOutputFile(Path.Combine(m_WorkDir, mConsoleOutputFile));
+                    ParseConsoleOutputFile(Path.Combine(mWorkDir, mConsoleOutputFile));
 
                     LogProgress("Formularity");
                 }

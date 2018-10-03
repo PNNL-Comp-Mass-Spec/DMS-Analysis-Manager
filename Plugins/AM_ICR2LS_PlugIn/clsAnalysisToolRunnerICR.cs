@@ -58,31 +58,31 @@ namespace AnalysisManagerICR2LSPlugIn
                 if (!StoreToolVersionInfo())
                 {
                     LogError("Aborting since StoreToolVersionInfo returned false");
-                    m_message = "Error determining ICR2LS version";
+                    mMessage = "Error determining ICR2LS version";
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 // Verify a param file has been specified
                 currentTask = "Verify param file path";
-                var paramFilePath = Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"));
+                var paramFilePath = Path.Combine(mWorkDir, mJobParams.GetParam("parmFileName"));
 
                 currentTask = "Verify param file path: " + paramFilePath;
                 if (!File.Exists(paramFilePath))
                 {
                     // Param file wasn't specified, but is required for ICR-2LS analysis
-                    m_message = "ICR-2LS Param file not found";
-                    LogError(m_message + ": " + paramFilePath);
+                    mMessage = "ICR-2LS Param file not found";
+                    LogError(mMessage + ": " + paramFilePath);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 // Add handling of settings file info here if it becomes necessary in the future
 
                 // Get scan settings from settings file
-                var MinScan = m_jobParams.GetJobParameter("scanstart", 0);
-                var MaxScan = m_jobParams.GetJobParameter("ScanStop", 0);
+                var MinScan = mJobParams.GetJobParameter("scanstart", 0);
+                var MaxScan = mJobParams.GetJobParameter("ScanStop", 0);
 
                 // Determine whether or not we should be processing MS2 spectra
-                var SkipMS2 = !m_jobParams.GetJobParameter("ProcessMS2", false);
+                var SkipMS2 = !mJobParams.GetJobParameter("ProcessMS2", false);
 
                 bool useAllScans;
                 if ((MinScan == 0 && MaxScan == 0) || MinScan > MaxScan || MaxScan > 500000)
@@ -95,11 +95,11 @@ namespace AnalysisManagerICR2LSPlugIn
                 }
 
                 // Assemble the dataset name
-                var DSNamePath = Path.Combine(m_WorkDir, m_Dataset);
-                var RawDataType = m_jobParams.GetParam("RawDataType");
+                var DSNamePath = Path.Combine(mWorkDir, mDatasetName);
+                var RawDataType = mJobParams.GetParam("RawDataType");
 
                 // Assemble the output file name and path
-                var OutFileNamePath = Path.Combine(m_WorkDir, m_Dataset + ".pek");
+                var OutFileNamePath = Path.Combine(mWorkDir, mDatasetName + ".pek");
 
                 // Determine the location of the ser file (or fid file)
                 // It could be in a "0.ser" folder, a ser file inside a .D folder, or a fid file inside a .D folder
@@ -109,12 +109,12 @@ namespace AnalysisManagerICR2LSPlugIn
 
                 if (string.Equals(RawDataType.ToLower(), clsAnalysisResources.RAW_DATA_TYPE_BRUKER_FT_FOLDER, StringComparison.InvariantCultureIgnoreCase))
                 {
-                    datasetFolderPathBase = Path.Combine(m_WorkDir, m_Dataset + ".d");
+                    datasetFolderPathBase = Path.Combine(mWorkDir, mDatasetName + ".d");
                     blnBrukerFT = true;
                 }
                 else
                 {
-                    datasetFolderPathBase = string.Copy(m_WorkDir);
+                    datasetFolderPathBase = string.Copy(mWorkDir);
                     blnBrukerFT = false;
                 }
 
@@ -129,21 +129,21 @@ namespace AnalysisManagerICR2LSPlugIn
 
                     if (blnBrukerFT)
                     {
-                        m_message = "ser file or fid file not found; unable to process with ICR-2LS";
-                        LogError(m_message);
+                        mMessage = "ser file or fid file not found; unable to process with ICR-2LS";
+                        LogError(mMessage);
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
 
                     // Assume we are processing zipped s-folders, and thus there should be a folder with the Dataset's name in the work directory
                     //  and in that folder will be unzipped contents of the s-folders (one file per spectrum)
-                    if (m_DebugLevel >= 1)
+                    if (mDebugLevel >= 1)
                     {
                         LogDebug("Did not find a ser file, fid file, or 0.ser folder; assuming we are processing zipped s-folders");
                     }
                 }
                 else
                 {
-                    if (m_DebugLevel >= 1)
+                    if (mDebugLevel >= 1)
                     {
                         if (blnIsFolder)
                         {
@@ -189,8 +189,8 @@ namespace AnalysisManagerICR2LSPlugIn
                     // Processing zipped s-folders
                     if (!Directory.Exists(DSNamePath))
                     {
-                        m_message = "Data file folder not found: " + DSNamePath;
-                        LogError(m_message);
+                        mMessage = "Data file folder not found: " + DSNamePath;
+                        LogError(mMessage);
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
 
@@ -209,20 +209,20 @@ namespace AnalysisManagerICR2LSPlugIn
                 {
                     // If a .PEK file exists, call PerfPostAnalysisTasks() to move the .Pek file into the results folder, which we'll then archive in the Failed Results folder
                     currentTask = "VerifyPEKFileExists";
-                    if (VerifyPEKFileExists(m_WorkDir, m_Dataset))
+                    if (VerifyPEKFileExists(mWorkDir, mDatasetName))
                     {
-                        m_message = "ICR-2LS returned false (see .PEK file in Failed results folder)";
+                        mMessage = "ICR-2LS returned false (see .PEK file in Failed results folder)";
                         LogDebug(".Pek file was found, so will save results to the failed results archive folder");
 
                         PerfPostAnalysisTasks(false);
 
                         // Try to save whatever files were moved into the results folder
-                        var objAnalysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
-                        objAnalysisResults.CopyFailedResultsToArchiveFolder(Path.Combine(m_WorkDir, m_ResFolderName));
+                        var objAnalysisResults = new clsAnalysisResults(mMgrParams, mJobParams);
+                        objAnalysisResults.CopyFailedResultsToArchiveFolder(Path.Combine(mWorkDir, mResultsFolderName));
                     }
                     else
                     {
-                        m_message = "Error running ICR-2LS (.Pek file not found in " + m_WorkDir + ")";
+                        mMessage = "Error running ICR-2LS (.Pek file not found in " + mWorkDir + ")";
                     }
 
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -233,9 +233,9 @@ namespace AnalysisManagerICR2LSPlugIn
 
                 if (PerfPostAnalysisTasks(true) != CloseOutType.CLOSEOUT_SUCCESS)
                 {
-                    if (string.IsNullOrEmpty(m_message))
+                    if (string.IsNullOrEmpty(mMessage))
                     {
-                        m_message = "Error performing post analysis tasks";
+                        mMessage = "Error performing post analysis tasks";
                     }
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -261,16 +261,16 @@ namespace AnalysisManagerICR2LSPlugIn
                 {
                     // Allow extra time for ICR2LS to release file locks
                     clsGlobal.IdleLoop(5);
-                    if (Directory.Exists(Path.Combine(m_WorkDir, m_Dataset)))
+                    if (Directory.Exists(Path.Combine(mWorkDir, mDatasetName)))
                     {
-                        Directory.Delete(Path.Combine(m_WorkDir, m_Dataset), true);
+                        Directory.Delete(Path.Combine(mWorkDir, mDatasetName), true);
                     }
                     return CloseOutType.CLOSEOUT_SUCCESS;
                 }
                 catch (IOException ex)
                 {
                     // If problem is locked file, retry
-                    if (m_DebugLevel > 0)
+                    if (mDebugLevel > 0)
                     {
                         LogError("Error deleting data file, attempt #" + RetryCount);
                     }
@@ -279,7 +279,7 @@ namespace AnalysisManagerICR2LSPlugIn
                 }
                 catch (Exception ex)
                 {
-                    LogError("Error deleting raw data files, job " + m_JobNum + ": " + ex.Message);
+                    LogError("Error deleting raw data files, job " + mJob + ": " + ex.Message);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
             }
@@ -325,7 +325,7 @@ namespace AnalysisManagerICR2LSPlugIn
                             {
                                 try
                                 {
-                                    if (m_DebugLevel >= 1)
+                                    if (mDebugLevel >= 1)
                                     {
                                         LogDebug("Renaming " + strExtension + " file from " + fiFile.Name + " to " + strDesiredName);
                                     }

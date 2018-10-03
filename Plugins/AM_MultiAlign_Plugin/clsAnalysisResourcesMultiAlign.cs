@@ -34,7 +34,7 @@ namespace AnalysisManagerMultiAlignPlugIn
 
             var strInputFileExtension = string.Empty;
 
-            var splitString = m_jobParams.GetParam("TargetJobFileList").Split(',');
+            var splitString = mJobParams.GetParam("TargetJobFileList").Split(',');
 
             foreach (var row in splitString)
             {
@@ -45,7 +45,7 @@ namespace AnalysisManagerMultiAlignPlugIn
                 }
                 if (fileNameExt[2] == "nocopy")
                 {
-                    m_jobParams.AddResultFileExtensionToSkip(fileNameExt[1]);
+                    mJobParams.AddResultFileExtensionToSkip(fileNameExt[1]);
                 }
                 strInputFileExtension = fileNameExt[1];
             }
@@ -59,7 +59,7 @@ namespace AnalysisManagerMultiAlignPlugIn
             }
 
             // Retrieve the MultiAlign Parameter .xml file specified for this job
-            var multialignParamFileName = m_jobParams.GetParam("ParmFileName");
+            var multialignParamFileName = mJobParams.GetParam("ParmFileName");
             if (string.IsNullOrEmpty(multialignParamFileName))
             {
                 LogError("MultiAlign ParmFileName not defined in the settings for this job; unable to continue");
@@ -67,7 +67,7 @@ namespace AnalysisManagerMultiAlignPlugIn
             }
 
             var paramFileStoragePathKeyName = clsGlobal.STEPTOOL_PARAMFILESTORAGEPATH_PREFIX + "MultiAlign";
-            var multialignParameterFileStoragePath = m_mgrParams.GetParam(paramFileStoragePathKeyName);
+            var multialignParameterFileStoragePath = mMgrParams.GetParam(paramFileStoragePathKeyName);
             if (string.IsNullOrEmpty(multialignParameterFileStoragePath))
             {
                 multialignParameterFileStoragePath = @"\\gigasax\DMS_Parameter_Files\MultiAlign";
@@ -77,13 +77,13 @@ namespace AnalysisManagerMultiAlignPlugIn
                     multialignParameterFileStoragePath);
             }
 
-            if (!CopyFileToWorkDir(multialignParamFileName, multialignParameterFileStoragePath, m_WorkingDir))
+            if (!CopyFileToWorkDir(multialignParamFileName, multialignParameterFileStoragePath, mWorkDir))
             {
                 // Errors were reported in function call, so just return
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            if (!ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+            if (!ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -104,8 +104,8 @@ namespace AnalysisManagerMultiAlignPlugIn
         {
             const string INPUT_FILENAME = "input.txt";
 
-            var TargetFilePath = Path.Combine(m_WorkingDir, INPUT_FILENAME);
-            var DatasetFilePath = Path.Combine(m_WorkingDir, DatasetName + strInputFileExtension);
+            var TargetFilePath = Path.Combine(mWorkDir, INPUT_FILENAME);
+            var DatasetFilePath = Path.Combine(mWorkDir, DatasetName + strInputFileExtension);
 
             var blnSuccess = true;
 
@@ -120,8 +120,8 @@ namespace AnalysisManagerMultiAlignPlugIn
 
                     swOutFile.WriteLine("[Database]");
 
-                    swOutFile.WriteLine("Database = " + m_jobParams.GetParam("AMTDB"));
-                    swOutFile.WriteLine("Server = " + m_jobParams.GetParam("AMTDBServer"));
+                    swOutFile.WriteLine("Database = " + mJobParams.GetParam("AMTDB"));
+                    swOutFile.WriteLine("Server = " + mJobParams.GetParam("AMTDBServer"));
                     // Database = MT_Human_Sarcopenia_MixedLC_P692
                     // Server = elmer
                 }

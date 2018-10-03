@@ -34,9 +34,9 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 return result;
             }
 
-            var rawDataType = m_jobParams.GetParam("RawDataType");
+            var rawDataType = mJobParams.GetParam("RawDataType");
 
-            var msXmlOutputType = m_jobParams.GetParam("MSXMLOutputType");
+            var msXmlOutputType = mJobParams.GetParam("MSXMLOutputType");
 
             if (!string.IsNullOrWhiteSpace(msXmlOutputType))
             {
@@ -51,7 +51,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                         eResult = GetMzMLFile();
                         break;
                     default:
-                        m_message = "Unsupported value for MSXMLOutputType: " + msXmlOutputType;
+                        mMessage = "Unsupported value for MSXMLOutputType: " + msXmlOutputType;
                         eResult = CloseOutType.CLOSEOUT_FAILED;
                         break;
                 }
@@ -71,20 +71,20 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 }
             }
 
-            m_jobParams.AddResultFileExtensionToSkip(DOT_UIMF_EXTENSION);
-            m_jobParams.AddResultFileExtensionToSkip(DOT_RAW_EXTENSION);
-            m_jobParams.AddResultFileExtensionToSkip(DOT_WIFF_EXTENSION);
-            m_jobParams.AddResultFileExtensionToSkip(DOT_MZXML_EXTENSION);
-            m_jobParams.AddResultFileExtensionToSkip(DOT_MZML_EXTENSION);
+            mJobParams.AddResultFileExtensionToSkip(DOT_UIMF_EXTENSION);
+            mJobParams.AddResultFileExtensionToSkip(DOT_RAW_EXTENSION);
+            mJobParams.AddResultFileExtensionToSkip(DOT_WIFF_EXTENSION);
+            mJobParams.AddResultFileExtensionToSkip(DOT_MZXML_EXTENSION);
+            mJobParams.AddResultFileExtensionToSkip(DOT_MZML_EXTENSION);
 
-            if (!ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+            if (!ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
             // Retrieve the parameter file
-            var paramFileName = m_jobParams.GetParam("ParmFileName");
-            var paramFileStoragePath = m_jobParams.GetParam("ParmFileStoragePath");
+            var paramFileName = mJobParams.GetParam("ParmFileName");
+            var paramFileStoragePath = mJobParams.GetParam("ParmFileStoragePath");
 
             if (!FileSearch.RetrieveFile(paramFileName, paramFileStoragePath))
             {
@@ -146,7 +146,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
         private bool ValidateDeconProcessingOptions(string paramFileName)
         {
-            var paramFile = new FileInfo(Path.Combine(m_WorkingDir, paramFileName));
+            var paramFile = new FileInfo(Path.Combine(mWorkDir, paramFileName));
 
             if (!paramFile.Exists)
             {
@@ -211,7 +211,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 // Gets the Decon2LS file type based on the input data type
                 var eRawDataType = GetRawDataType(rawDataTypeName);
 
-                var datasetFilePath = clsAnalysisToolRunnerDecon2ls.GetInputFilePath(m_WorkingDir, DatasetName, eRawDataType);
+                var datasetFilePath = clsAnalysisToolRunnerDecon2ls.GetInputFilePath(mWorkDir, DatasetName, eRawDataType);
                 bool success;
 
                 switch (eRawDataType)
@@ -291,7 +291,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
                             // Note: do not multiply by 100 since we want to call UpdateAndWrite with a number between 0 and 1 (meaning 0 to 1%)
                             var percentComplete = scanNumber / (float)scanCount;
-                            m_StatusTools.UpdateAndWrite(percentComplete);
+                            mStatusTools.UpdateAndWrite(percentComplete);
                         }
                     }
 
@@ -347,8 +347,8 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 var deconParamFilePath = string.Copy(paramFile.FullName);
 
                 // Rename the existing parameter file
-                var newParamFilePath = Path.Combine(m_WorkingDir, paramFile.Name + ".old");
-                m_jobParams.AddResultFileToSkip(newParamFilePath);
+                var newParamFilePath = Path.Combine(mWorkDir, paramFile.Name + ".old");
+                mJobParams.AddResultFileToSkip(newParamFilePath);
 
                 paramFile.MoveTo(newParamFilePath);
 
@@ -375,7 +375,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                         updatedXmlDoc.WriteContentTo(formattedXmlWriter);
                     }
 
-                    m_jobParams.AddAdditionalParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_PROCESSMSMS_AUTO_ENABLED, true);
+                    mJobParams.AddAdditionalParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_PROCESSMSMS_AUTO_ENABLED, true);
                     return true;
                 }
                 catch (Exception ex)

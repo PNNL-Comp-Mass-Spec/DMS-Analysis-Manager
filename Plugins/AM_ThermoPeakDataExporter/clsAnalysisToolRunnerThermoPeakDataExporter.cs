@@ -58,7 +58,7 @@ namespace AnalysisManagerThermoPeakDataExporterPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                if (m_DebugLevel > 4)
+                if (mDebugLevel > 4)
                 {
                     LogDebug("clsAnalysisToolRunnerThermoPeakDataExporter.RunTool(): Enter");
                 }
@@ -78,7 +78,7 @@ namespace AnalysisManagerThermoPeakDataExporterPlugIn
                 if (!StoreToolVersionInfo(progLoc))
                 {
                     LogError("Aborting since StoreToolVersionInfo returned false");
-                    m_message = "Error determining ThermoPeakDataExporter version";
+                    mMessage = "Error determining ThermoPeakDataExporter version";
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
@@ -86,10 +86,10 @@ namespace AnalysisManagerThermoPeakDataExporterPlugIn
 
                 var processingResult = StartThermoPeakDataExporter(progLoc);
 
-                m_progress = PROGRESS_PCT_COMPLETE;
+                mProgress = PROGRESS_PCT_COMPLETE;
 
                 // Stop the job timer
-                m_StopTime = DateTime.UtcNow;
+                mStopTime = DateTime.UtcNow;
 
                 // Add the current job data to the summary file
                 UpdateSummaryFile();
@@ -109,7 +109,7 @@ namespace AnalysisManagerThermoPeakDataExporterPlugIn
                 }
 
                 // Do not keep the console output file since export was successful
-                m_jobParams.AddResultFileToSkip(THERMO_DATA_EXPORTER_CONSOLE_OUTPUT);
+                mJobParams.AddResultFileToSkip(THERMO_DATA_EXPORTER_CONSOLE_OUTPUT);
 
                 var success = CopyResultsToTransferDirectory();
                 if (!success)
@@ -120,7 +120,7 @@ namespace AnalysisManagerThermoPeakDataExporterPlugIn
             }
             catch (Exception ex)
             {
-                m_message = "Error in TopFDPlugin->RunTool: " + ex.Message;
+                mMessage = "Error in TopFDPlugin->RunTool: " + ex.Message;
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -151,7 +151,7 @@ namespace AnalysisManagerThermoPeakDataExporterPlugIn
             {
                 if (!File.Exists(consoleOutputFilePath))
                 {
-                    if (m_DebugLevel >= 4)
+                    if (mDebugLevel >= 4)
                     {
                         LogDebug("Console output file not found: " + consoleOutputFilePath);
                     }
@@ -159,7 +159,7 @@ namespace AnalysisManagerThermoPeakDataExporterPlugIn
                     return;
                 }
 
-                if (m_DebugLevel >= 4)
+                if (mDebugLevel >= 4)
                 {
                     LogDebug("Parsing file " + consoleOutputFilePath);
                 }
@@ -191,15 +191,15 @@ namespace AnalysisManagerThermoPeakDataExporterPlugIn
                     }
                 }
 
-                if (m_progress < actualProgress)
+                if (mProgress < actualProgress)
                 {
-                    m_progress = actualProgress;
+                    mProgress = actualProgress;
                 }
             }
             catch (Exception ex)
             {
                 // Ignore errors here
-                if (m_DebugLevel >= 2)
+                if (mDebugLevel >= 2)
                 {
                     LogError("Error parsing console output file (" + consoleOutputFilePath + "): " + ex.Message);
                 }
@@ -213,9 +213,9 @@ namespace AnalysisManagerThermoPeakDataExporterPlugIn
 
             // Future, if needed: filter by intensity, m/z, and/or scan
 
-            var resultsFile = new FileInfo(Path.Combine(m_WorkDir, Dataset + ".tsv"));
+            var resultsFile = new FileInfo(Path.Combine(mWorkDir, Dataset + ".tsv"));
 
-            var minimumSignalToNoiseRatio = m_jobParams.GetJobParameter("MinimumSignalToNoiseRatio", 0);
+            var minimumSignalToNoiseRatio = mJobParams.GetJobParameter("MinimumSignalToNoiseRatio", 0);
 
             var cmdStr = Dataset + clsAnalysisResources.DOT_RAW_EXTENSION +
                          " /O:" + clsGlobal.PossiblyQuotePath(resultsFile.FullName) +
@@ -223,7 +223,7 @@ namespace AnalysisManagerThermoPeakDataExporterPlugIn
 
             LogDebug(progLoc + " " + cmdStr);
 
-            mCmdRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel);
+            mCmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel);
             RegisterEvents(mCmdRunner);
             mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
@@ -232,9 +232,9 @@ namespace AnalysisManagerThermoPeakDataExporterPlugIn
             mCmdRunner.EchoOutputToConsole = true;
 
             mCmdRunner.WriteConsoleOutputToFile = true;
-            mCmdRunner.ConsoleOutputFilePath = Path.Combine(m_WorkDir, THERMO_DATA_EXPORTER_CONSOLE_OUTPUT);
+            mCmdRunner.ConsoleOutputFilePath = Path.Combine(mWorkDir, THERMO_DATA_EXPORTER_CONSOLE_OUTPUT);
 
-            m_progress = PROGRESS_PCT_STARTING;
+            mProgress = PROGRESS_PCT_STARTING;
             ResetProgRunnerCpuUsage();
 
             // Start the program and wait for it to finish
@@ -242,7 +242,7 @@ namespace AnalysisManagerThermoPeakDataExporterPlugIn
             var processingSuccess = mCmdRunner.RunProgram(progLoc, cmdStr, "ThermoPeakDataExporter", true);
 
             // Parse the console output file one more time to check for errors
-            ParseConsoleOutputFile(Path.Combine(m_WorkDir, THERMO_DATA_EXPORTER_CONSOLE_OUTPUT));
+            ParseConsoleOutputFile(Path.Combine(mWorkDir, THERMO_DATA_EXPORTER_CONSOLE_OUTPUT));
 
             if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))
             {
@@ -280,8 +280,8 @@ namespace AnalysisManagerThermoPeakDataExporterPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            m_StatusTools.UpdateAndWrite(m_progress);
-            if (m_DebugLevel >= 3)
+            mStatusTools.UpdateAndWrite(mProgress);
+            if (mDebugLevel >= 3)
             {
                 LogDebug("ThermoPeakDataExporter analysis complete");
             }
@@ -325,7 +325,7 @@ namespace AnalysisManagerThermoPeakDataExporterPlugIn
 
             mLastConsoleOutputParse = DateTime.UtcNow;
 
-            ParseConsoleOutputFile(Path.Combine(m_WorkDir, THERMO_DATA_EXPORTER_CONSOLE_OUTPUT));
+            ParseConsoleOutputFile(Path.Combine(mWorkDir, THERMO_DATA_EXPORTER_CONSOLE_OUTPUT));
 
             UpdateProgRunnerCpuUsage(mCmdRunner, SECONDS_BETWEEN_UPDATE);
 

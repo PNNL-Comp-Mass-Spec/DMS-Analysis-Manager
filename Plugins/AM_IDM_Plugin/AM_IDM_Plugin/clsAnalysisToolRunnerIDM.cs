@@ -39,7 +39,7 @@ namespace AnalysisManager_IDM_Plugin
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                var fiIDMResultsDB = new FileInfo(Path.Combine(m_WorkDir, EXISTING_IDM_RESULTS_FILE_NAME));
+                var fiIDMResultsDB = new FileInfo(Path.Combine(mWorkDir, EXISTING_IDM_RESULTS_FILE_NAME));
                 if (fiIDMResultsDB.Exists)
                 {
                     // Existing results file was copied to the working directory
@@ -49,17 +49,17 @@ namespace AnalysisManager_IDM_Plugin
                     {
                         var sqLiteUtils = new clsSqLiteUtilities();
 
-                        if (m_DebugLevel >= 1)
+                        if (mDebugLevel >= 1)
                         {
                             LogMessage("Copying table t_precursor_interference from " + fiIDMResultsDB.Name + " to Results.db3");
                         }
 
-                        var cloneSuccess = sqLiteUtils.CloneDB(fiIDMResultsDB.FullName, Path.Combine(m_WorkDir, "Results.db3"), appendToExistingDB: true);
+                        var cloneSuccess = sqLiteUtils.CloneDB(fiIDMResultsDB.FullName, Path.Combine(mWorkDir, "Results.db3"), appendToExistingDB: true);
 
                         if (cloneSuccess)
                             skipIDM = true;
 
-                        // success = sqLiteUtils.CopySqliteTable(fiIDMResultsDB.FullName, "t_precursor_interference", Path.Combine(m_WorkDir, "Results.db3"));
+                        // success = sqLiteUtils.CopySqliteTable(fiIDMResultsDB.FullName, "t_precursor_interference", Path.Combine(mWorkDir, "Results.db3"));
 
                     }
                     catch (Exception ex)
@@ -77,16 +77,16 @@ namespace AnalysisManager_IDM_Plugin
                     // Store the Version info in the database
                     StoreToolVersionInfo();
 
-                    m_progress = 0;
+                    mProgress = 0;
                     UpdateStatusFile();
 
-                    if (m_DebugLevel > 4)
+                    if (mDebugLevel > 4)
                     {
                         LogDebug("clsAnalysisToolRunnerIDM.RunTool(): Enter");
                     }
 
                     // Change the name of the log file for the local log file to the plugin log filename
-                    var logFileName = Path.Combine(m_WorkDir, "IDM_Log.txt");
+                    var logFileName = Path.Combine(mWorkDir, "IDM_Log.txt");
                     LogTools.ChangeLogFileBaseName(logFileName, appendDateToBaseName: false);
 
                     try
@@ -97,9 +97,9 @@ namespace AnalysisManager_IDM_Plugin
                         // Attach the progress event
                         idm.ProgressChanged += InterfenceDetectorProgressHandler;
 
-                        idm.WorkDir = m_WorkDir;
+                        idm.WorkDir = mWorkDir;
 
-                        processingSuccess = idm.Run(m_WorkDir, "Results.db3");
+                        processingSuccess = idm.Run(mWorkDir, "Results.db3");
 
                         // Change the name of the log file back to the default
                         ResetLogFileNameToDefault();
@@ -115,8 +115,8 @@ namespace AnalysisManager_IDM_Plugin
                 }
 
                 // Stop the job timer
-                m_StopTime = DateTime.UtcNow;
-                m_progress = 100;
+                mStopTime = DateTime.UtcNow;
+                mProgress = 100;
 
                 // Add the current job data to the summary file
                 UpdateSummaryFile();
@@ -134,9 +134,9 @@ namespace AnalysisManager_IDM_Plugin
                 }
 
                 // Override the output folder name and the dataset name (since this is a dataset aggregation job)
-                m_ResFolderName = m_jobParams.GetParam("StepOutputFolderName");
-                m_Dataset = m_jobParams.GetParam(clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME);
-                m_jobParams.SetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME, m_ResFolderName);
+                mResultsFolderName = mJobParams.GetParam("StepOutputFolderName");
+                mDatasetName = mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME);
+                mJobParams.SetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME, mResultsFolderName);
 
                 var success = CopyResultsToTransferDirectory();
 
@@ -145,8 +145,8 @@ namespace AnalysisManager_IDM_Plugin
             }
             catch (Exception ex)
             {
-                m_message = "Error in IDMPlugin->RunTool";
-                LogError(m_message, ex);
+                mMessage = "Error in IDMPlugin->RunTool";
+                LogError(mMessage, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -155,9 +155,9 @@ namespace AnalysisManager_IDM_Plugin
         private void InterfenceDetectorProgressHandler(InterferenceDetector id, ProgressInfo e)
         {
 
-            m_progress = e.Value;
+            mProgress = e.Value;
 
-            UpdateStatusFile(m_progress, 60);
+            UpdateStatusFile(mProgress, 60);
 
         }
 

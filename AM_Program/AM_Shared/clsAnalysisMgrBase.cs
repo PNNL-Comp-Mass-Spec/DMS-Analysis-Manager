@@ -14,27 +14,27 @@ namespace AnalysisManagerBase
     {
         #region "Module variables"
 
-        private DateTime m_LastLockQueueWaitTimeLog = DateTime.UtcNow;
+        private DateTime mLastLockQueueWaitTimeLog = DateTime.UtcNow;
 
-        private DateTime m_LockQueueWaitTimeStart = DateTime.UtcNow;
+        private DateTime mLockQueueWaitTimeStart = DateTime.UtcNow;
 
         /// <summary>
         /// File tools
         /// </summary>
-        protected FileTools m_FileTools;
+        protected FileTools mFileTools;
 
         /// <summary>
         /// Status message
         /// </summary>
         /// <remarks>Text here will be stored in the Completion_Message column in the database when the job is closed</remarks>
-        protected string m_message;
+        protected string mMessage;
 
-        private readonly string m_DerivedClassName;
+        private readonly string mDerivedClassName;
 
         /// <summary>
         /// status tools
         /// </summary>
-        protected IStatusFile m_StatusTools;
+        protected IStatusFile mStatusTools;
 
         #endregion
 
@@ -56,7 +56,7 @@ namespace AnalysisManagerBase
         /// <param name="derivedClassName"></param>
         protected clsAnalysisMgrBase(string derivedClassName)
         {
-            m_DerivedClassName = derivedClassName;
+            mDerivedClassName = derivedClassName;
         }
 
         private bool IsLockQueueLogMessageNeeded(ref DateTime dtLockQueueWaitTimeStart, ref DateTime dtLastLockQueueWaitTimeLog)
@@ -93,23 +93,23 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Initialize m_FileTools
+        /// Initialize mFileTools
         /// </summary>
         /// <param name="mgrName"></param>
         /// <param name="debugLevel"></param>
         protected void InitFileTools(string mgrName, short debugLevel)
         {
             ResetTimestampForQueueWaitTimeLogging();
-            m_FileTools = new FileTools(mgrName, debugLevel);
-            RegisterEvents(m_FileTools, false);
+            mFileTools = new FileTools(mgrName, debugLevel);
+            RegisterEvents(mFileTools, false);
 
             // Use a custom event handler for status messages
-            UnregisterEventHandler(m_FileTools, BaseLogger.LogLevels.INFO);
-            m_FileTools.StatusEvent += FileTools_StatusEvent;
+            UnregisterEventHandler(mFileTools, BaseLogger.LogLevels.INFO);
+            mFileTools.StatusEvent += FileTools_StatusEvent;
 
-            m_FileTools.LockQueueTimedOut += FileTools_LockQueueTimedOut;
-            m_FileTools.LockQueueWaitComplete += FileTools_LockQueueWaitComplete;
-            m_FileTools.WaitingForLockQueue += FileTools_WaitingForLockQueue;
+            mFileTools.LockQueueTimedOut += FileTools_LockQueueTimedOut;
+            mFileTools.LockQueueWaitComplete += FileTools_LockQueueWaitComplete;
+            mFileTools.WaitingForLockQueue += FileTools_WaitingForLockQueue;
         }
 
         /// <summary>
@@ -131,7 +131,7 @@ namespace AnalysisManagerBase
                 var fileSizeMB = clsGlobal.BytesToMB(destFile.Length);
                 var copyRateMBPerSec = fileSizeMB / elapsedSeconds;
 
-                // Note that m_FileTools may have been waiting for a lock file queue to subside,
+                // Note that mFileTools may have been waiting for a lock file queue to subside,
                 // in which case the copyRate doesn't represent the actual connection speed between the two computers
                 LogDebug(string.Format("  Retrieved {0:N0} MB file in {1:N0} seconds, copying at {2:N0} MB/sec: {3}",
                     fileSizeMB, elapsedSeconds, copyRateMBPerSec, destFile.Name));
@@ -146,25 +146,25 @@ namespace AnalysisManagerBase
         /// Log an error to the database and the local log file
         /// </summary>
         /// <param name="errorMessage">Error message</param>
-        /// <remarks>Does not update m_message</remarks>
+        /// <remarks>Does not update mMessage</remarks>
         protected void LogErrorToDatabase(string errorMessage)
         {
             base.LogError(errorMessage, logToDb: true);
         }
 
         /// <summary>
-        /// Update m_message with an error message and record the error in the manager's log file, plus optionally in the database
+        /// Update mMessage with an error message and record the error in the manager's log file, plus optionally in the database
         /// </summary>
         /// <param name="errorMessage">Error message</param>
         /// <param name="logToDb">When true, log the message to the database and the local log file</param>
         protected override void LogError(string errorMessage, bool logToDb = false)
         {
-            m_message = clsGlobal.AppendToComment(m_message, errorMessage);
+            mMessage = clsGlobal.AppendToComment(mMessage, errorMessage);
             base.LogError(errorMessage, logToDb);
         }
 
         /// <summary>
-        /// Log an error message, but do not update m_message
+        /// Log an error message, but do not update mMessage
         /// </summary>
         /// <param name="errorMessage">Error message</param>
         /// <param name="logToDb">When true, log the message to the database and the local log file</param>
@@ -174,19 +174,19 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Update m_message with an error message and record the error in the manager's log file
+        /// Update mMessage with an error message and record the error in the manager's log file
         /// </summary>
         /// <param name="errorMessage">Error message (do not include ex.message, unless you want that message to appear in the job comment)</param>
         /// <param name="ex">Exception to log</param>
         /// <param name="logToDatabase">When true, log to the database (and to the file)</param>
         protected override void LogError(string errorMessage, Exception ex, bool logToDatabase = false)
         {
-            m_message = clsGlobal.AppendToComment(m_message, errorMessage);
+            mMessage = clsGlobal.AppendToComment(mMessage, errorMessage);
             base.LogError(errorMessage, ex, logToDatabase);
         }
 
         /// <summary>
-        /// Update m_message with an error message and record the error in the manager's log file
+        /// Update mMessage with an error message and record the error in the manager's log file
         /// Also write the detailed error message to the local log file
         /// </summary>
         /// <param name="errorMessage">Error message</param>
@@ -214,7 +214,7 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Update m_message with an error message and record the error in the manager's log file
+        /// Update mMessage with an error message and record the error in the manager's log file
         /// Also write the detailed error message to the local log file
         /// </summary>
         /// <param name="errorMessage">Error message</param>
@@ -246,30 +246,30 @@ namespace AnalysisManagerBase
         /// </summary>
         protected void ResetTimestampForQueueWaitTimeLogging()
         {
-            m_LastLockQueueWaitTimeLog = DateTime.UtcNow;
-            m_LockQueueWaitTimeStart = DateTime.UtcNow;
+            mLastLockQueueWaitTimeLog = DateTime.UtcNow;
+            mLockQueueWaitTimeStart = DateTime.UtcNow;
         }
 
         #region "Event Handlers"
 
         private void FileTools_LockQueueTimedOut(string sourceFilePath, string targetFilePath, double waitTimeMinutes)
         {
-            if (m_DebugLevel >= 1)
+            if (mDebugLevel >= 1)
             {
-                var msg = "Lockfile queue timed out after " + waitTimeMinutes.ToString("0") + " minutes " + "(" + m_DerivedClassName + "); Source=" + sourceFilePath + ", Target=" + targetFilePath;
+                var msg = "Lockfile queue timed out after " + waitTimeMinutes.ToString("0") + " minutes " + "(" + mDerivedClassName + "); Source=" + sourceFilePath + ", Target=" + targetFilePath;
                 LogWarning(msg);
             }
         }
 
         private void FileTools_LockQueueWaitComplete(string sourceFilePath, string targetFilePath, double waitTimeMinutes)
         {
-            if (m_DebugLevel >= 1 && waitTimeMinutes >= 1)
+            if (mDebugLevel >= 1 && waitTimeMinutes >= 1)
             {
                 // Round to the nearest minute
                 var minutesText = waitTimeMinutes.ToString("0");
                 var timeUnits = minutesText == "1" ? "minute" : "minutes";
 
-                var msg = string.Format("Exited lockfile queue after {0} {1} ({2}; will now copy file", minutesText, timeUnits, m_DerivedClassName);
+                var msg = string.Format("Exited lockfile queue after {0} {1} ({2}; will now copy file", minutesText, timeUnits, mDerivedClassName);
                 LogDebug(msg);
             }
         }
@@ -292,12 +292,12 @@ namespace AnalysisManagerBase
 
         private void FileTools_WaitingForLockQueue(string sourceFilePath, string targetFilePath, int backlogSourceMB, int backlogTargetMB)
         {
-            if (IsLockQueueLogMessageNeeded(ref m_LockQueueWaitTimeStart, ref m_LastLockQueueWaitTimeLog))
+            if (IsLockQueueLogMessageNeeded(ref mLockQueueWaitTimeStart, ref mLastLockQueueWaitTimeLog))
             {
-                m_LastLockQueueWaitTimeLog = DateTime.UtcNow;
-                if (m_DebugLevel >= 1)
+                mLastLockQueueWaitTimeLog = DateTime.UtcNow;
+                if (mDebugLevel >= 1)
                 {
-                    var msg = "Waiting for lockfile queue to fall below threshold (" + m_DerivedClassName + "); " +
+                    var msg = "Waiting for lockfile queue to fall below threshold (" + mDerivedClassName + "); " +
                         "SourceBacklog=" + backlogSourceMB + " MB, " +
                         "TargetBacklog=" + backlogTargetMB + " MB, " +
                         "Source=" + sourceFilePath + ", " +
@@ -333,7 +333,7 @@ namespace AnalysisManagerBase
             processingClass.WarningEvent += WarningEventHandler;
 
             // Note that ProgressUpdateHandler does not display a message at console
-            // Instead, it calls m_StatusTools.UpdateAndWrite, which updates the status file
+            // Instead, it calls mStatusTools.UpdateAndWrite, which updates the status file
             processingClass.ProgressUpdate += ProgressUpdateHandler;
         }
 
@@ -397,8 +397,8 @@ namespace AnalysisManagerBase
         /// <remarks>This does not display a message at console (intentionally)</remarks>
         protected void ProgressUpdateHandler(string progressMessage, float percentComplete)
         {
-            m_StatusTools.CurrentOperation = progressMessage;
-            m_StatusTools.UpdateAndWrite(percentComplete);
+            mStatusTools.CurrentOperation = progressMessage;
+            mStatusTools.UpdateAndWrite(percentComplete);
         }
 
         #endregion

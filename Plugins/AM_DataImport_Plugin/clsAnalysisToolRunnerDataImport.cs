@@ -43,7 +43,7 @@ namespace AnalysisManagerDataImportPlugIn
                 if (!StoreToolVersionInfo())
                 {
                     LogError("Aborting since StoreToolVersionInfo returned false");
-                    m_message = "Error determining AnalysisManagerDataImportPlugIn version";
+                    mMessage = "Error determining AnalysisManagerDataImportPlugIn version";
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
@@ -51,29 +51,29 @@ namespace AnalysisManagerDataImportPlugIn
                 var importSuccess = PerformDataImport();
                 if (!importSuccess)
                 {
-                    if (string.IsNullOrEmpty(m_message))
+                    if (string.IsNullOrEmpty(mMessage))
                     {
-                        m_message = "Unknown error calling PerformDataImport";
+                        mMessage = "Unknown error calling PerformDataImport";
                     }
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 // Stop the job timer
-                m_StopTime = DateTime.UtcNow;
+                mStopTime = DateTime.UtcNow;
 
                 // Make sure objects are released
                 PRISM.ProgRunner.GarbageCollectNow();
 
                 // Skip two auto-generated files from the Results Folder since they're not necessary to keep
-                m_jobParams.AddResultFileToSkip("DataImport_AnalysisSummary.txt");
-                m_jobParams.AddResultFileToSkip("JobParameters_" + m_JobNum + ".xml");
+                mJobParams.AddResultFileToSkip("DataImport_AnalysisSummary.txt");
+                mJobParams.AddResultFileToSkip("JobParameters_" + mJob + ".xml");
 
                 var success = CopyResultsToTransferDirectory();
 
                 if (!success)
                     return CloseOutType.CLOSEOUT_FAILED;
 
-                var moveFilesAfterImport = m_jobParams.GetJobParameter("MoveFilesAfterImport", true);
+                var moveFilesAfterImport = mJobParams.GetJobParameter("MoveFilesAfterImport", true);
                 if (moveFilesAfterImport)
                 {
                     MoveImportedFiles();
@@ -93,7 +93,7 @@ namespace AnalysisManagerDataImportPlugIn
         /// Move the files from the source folder to a new subfolder below the source folder
         /// </summary>
         /// <returns></returns>
-        /// <remarks>The name of the new subfolder comes from m_ResFolderName</remarks>
+        /// <remarks>The name of the new subfolder comes from mResultsFolderName</remarks>
         protected bool MoveImportedFiles()
         {
             var targetFolder = "??";
@@ -108,7 +108,7 @@ namespace AnalysisManagerDataImportPlugIn
                     return true;
                 }
 
-                targetFolder = Path.Combine(mSourceFiles[0].DirectoryName, m_ResFolderName);
+                targetFolder = Path.Combine(mSourceFiles[0].DirectoryName, mResultsFolderName);
                 var fiTargetFolder = new DirectoryInfo(targetFolder);
                 if (fiTargetFolder.Exists)
                 {
@@ -158,38 +158,38 @@ namespace AnalysisManagerDataImportPlugIn
             {
                 mSourceFiles = new List<FileInfo>();
 
-                var strSharePath = m_jobParams.GetJobParameter("DataImportSharePath", "");
+                var strSharePath = mJobParams.GetJobParameter("DataImportSharePath", "");
 
                 // If the user specifies a DataImportFolder using the "Special Processing" field of an analysis job, the directory name will be stored in section JobParameters
-                var dataImportFolder = m_jobParams.GetJobParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DataImportFolder", "");
+                var dataImportFolder = mJobParams.GetJobParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DataImportFolder", "");
 
                 if (string.IsNullOrEmpty(dataImportFolder))
                 {
                     // If the user specifies a DataImportFolder using the SettingsFile for an analysis job, the directory name will be stored in section JobParameters
-                    dataImportFolder = m_jobParams.GetJobParameter("DataImport", "DataImportFolder", "");
+                    dataImportFolder = mJobParams.GetJobParameter("DataImport", "DataImportFolder", "");
                 }
 
                 if (string.IsNullOrEmpty(dataImportFolder))
                 {
                     // dataImportFolder is still empty, look for a parameter named DataImportFolder in any section
-                    dataImportFolder = m_jobParams.GetJobParameter("DataImportFolder", "");
+                    dataImportFolder = mJobParams.GetJobParameter("DataImportFolder", "");
                 }
 
-                var sourceFileSpec = m_jobParams.GetJobParameter("DataImportFileMask", "");
+                var sourceFileSpec = mJobParams.GetJobParameter("DataImportFileMask", "");
                 if (string.IsNullOrEmpty(sourceFileSpec))
                     sourceFileSpec = MATCH_ALL_FILES;
 
                 if (string.IsNullOrEmpty(strSharePath))
                 {
-                    LogError(clsAnalysisToolRunnerBase.NotifyMissingParameter(m_jobParams, "DataImportSharePath"));
+                    LogError(clsAnalysisToolRunnerBase.NotifyMissingParameter(mJobParams, "DataImportSharePath"));
                     return false;
                 }
 
                 if (string.IsNullOrEmpty(dataImportFolder))
                 {
-                    m_message = "DataImportFolder not defined in the Special_Processing parameters or the settings file for this job; will assume the input folder is the dataset name";
-                    LogMessage(m_message);
-                    dataImportFolder = string.Copy(m_Dataset);
+                    mMessage = "DataImportFolder not defined in the Special_Processing parameters or the settings file for this job; will assume the input folder is the dataset name";
+                    LogMessage(mMessage);
+                    dataImportFolder = string.Copy(mDatasetName);
                 }
 
                 var fiSourceShare = new DirectoryInfo(strSharePath);
@@ -213,7 +213,7 @@ namespace AnalysisManagerDataImportPlugIn
                 {
                     try
                     {
-                        fiFile.CopyTo(Path.Combine(m_WorkDir, fiFile.Name));
+                        fiFile.CopyTo(Path.Combine(mWorkDir, fiFile.Name));
                         mSourceFiles.Add(fiFile);
                     }
                     catch (Exception ex)
@@ -245,7 +245,7 @@ namespace AnalysisManagerDataImportPlugIn
                         message += "s";
                     message += " from " + fiSourceFolder.FullName;
 
-                    if (m_DebugLevel >= 2)
+                    if (mDebugLevel >= 2)
                     {
                         LogMessage(message);
                     }
@@ -269,7 +269,7 @@ namespace AnalysisManagerDataImportPlugIn
             var strToolVersionInfo = string.Empty;
             var strAppFolderPath = clsGlobal.GetAppFolderPath();
 
-            if (m_DebugLevel >= 2)
+            if (mDebugLevel >= 2)
             {
                 LogDebug("Determining tool version info");
             }

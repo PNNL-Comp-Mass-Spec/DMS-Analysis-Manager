@@ -16,8 +16,8 @@ namespace AnalysisManagerMzRefineryPlugIn
     public class clsMzRefineryMassErrorStatsExtractor
     {
         private const string STORE_MASS_ERROR_STATS_SP_NAME = "StoreDTARefMassErrorStats";
-        private readonly IMgrParams m_mgrParams;
-        private readonly short m_DebugLevel;
+        private readonly IMgrParams mMgrParams;
+        private readonly short mDebugLevel;
 
         private readonly bool mPostResultsToDB;
 
@@ -30,8 +30,8 @@ namespace AnalysisManagerMzRefineryPlugIn
 
         public clsMzRefineryMassErrorStatsExtractor(IMgrParams mgrParams, short debugLevel, bool postResultsToDB)
         {
-            m_mgrParams = mgrParams;
-            m_DebugLevel = debugLevel;
+            mMgrParams = mgrParams;
+            mDebugLevel = debugLevel;
             mPostResultsToDB = postResultsToDB;
 
             ErrorMessage = string.Empty;
@@ -185,7 +185,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 sqlCmd.Parameters.Add(new SqlParameter("@DatasetID", SqlDbType.Int)).Value = datasetID;
                 sqlCmd.Parameters.Add(new SqlParameter("@ResultsXML", SqlDbType.Xml)).Value = xmlResults;
 
-                var analysisTask = new clsAnalysisJob(m_mgrParams, m_DebugLevel);
+                var analysisTask = new clsAnalysisJob(mMgrParams, mDebugLevel);
 
                 // Execute the SP (retry the call up to 4 times)
                 var resCode = analysisTask.DMSProcedureExecutor.ExecuteSP(sqlCmd, MAX_RETRY_COUNT);

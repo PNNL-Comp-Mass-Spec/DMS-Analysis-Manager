@@ -40,16 +40,16 @@ namespace AnalysisManagerPBFGenerator
 
             try
             {
-                var rawDataType = m_jobParams.GetJobParameter("RawDataType", "");
+                var rawDataType = mJobParams.GetJobParameter("RawDataType", "");
                 var eRawDataType = GetRawDataType(rawDataType);
 
                 if (eRawDataType == eRawDataTypeConstants.ThermoRawFile)
                 {
-                    m_jobParams.AddResultFileExtensionToSkip(DOT_RAW_EXTENSION);
+                    mJobParams.AddResultFileExtensionToSkip(DOT_RAW_EXTENSION);
                 }
                 else
                 {
-                    m_message = "PbfGen presently only supports Thermo .Raw files";
+                    mMessage = "PbfGen presently only supports Thermo .Raw files";
                     return false;
                 }
 
@@ -58,24 +58,24 @@ namespace AnalysisManagerPBFGenerator
                 // Retrieve the instrument data file
                 if (!FileSearch.RetrieveSpectra(rawDataType))
                 {
-                    if (string.IsNullOrEmpty(m_message))
+                    if (string.IsNullOrEmpty(mMessage))
                     {
-                        m_message = "Error retrieving instrument data file";
+                        mMessage = "Error retrieving instrument data file";
                     }
 
-                    LogError("clsAnalysisResourcesPBFGenerator.GetResources: " + m_message);
+                    LogError("clsAnalysisResourcesPBFGenerator.GetResources: " + mMessage);
                     return false;
                 }
 
                 currentTask = "Process MyEMSL Download Queue";
 
-                var success = ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders);
+                var success = ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders);
                 return success;
             }
             catch (Exception ex)
             {
-                m_message = "Exception in RetrieveInstrumentData: " + ex.Message;
-                LogError(m_message + "; task = " + currentTask + "; " + clsGlobal.GetExceptionStackTrace(ex));
+                mMessage = "Exception in RetrieveInstrumentData: " + ex.Message;
+                LogError(mMessage + "; task = " + currentTask + "; " + clsGlobal.GetExceptionStackTrace(ex));
                 return false;
             }
         }

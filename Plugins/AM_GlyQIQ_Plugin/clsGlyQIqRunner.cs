@@ -329,13 +329,13 @@ namespace AnalysisManagerGlyQIQPlugin
             LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, strMessage, ex);
         }
 
-        private DateTime dtLastConsoleOutputParse = DateTime.MinValue;
+        private DateTime mLastConsoleOutputParse = DateTime.MinValue;
 
         private void CmdRunner_LoopWaiting()
         {
-            if (DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= 15)
+            if (DateTime.UtcNow.Subtract(mLastConsoleOutputParse).TotalSeconds >= 15)
             {
-                dtLastConsoleOutputParse = DateTime.UtcNow;
+                mLastConsoleOutputParse = DateTime.UtcNow;
 
                 ParseConsoleOutputFile(mConsoleOutputFilePath);
             }

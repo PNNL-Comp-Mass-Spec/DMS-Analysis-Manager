@@ -40,8 +40,8 @@ namespace AnalysisManagerNOMSIPlugin
 
                 // Retrieve the parameter file
                 currentTask = "Retrieve the parameter file";
-                var paramFileName = m_jobParams.GetParam(JOB_PARAM_PARAMETER_FILE);
-                var paramFileStoragePath = m_jobParams.GetParam("ParmFileStoragePath");
+                var paramFileName = mJobParams.GetParam(JOB_PARAM_PARAMETER_FILE);
+                var paramFileStoragePath = mJobParams.GetParam("ParmFileStoragePath");
 
                 if (!FileSearch.RetrieveFile(paramFileName, paramFileStoragePath))
                 {
@@ -50,7 +50,7 @@ namespace AnalysisManagerNOMSIPlugin
 
                 // Retrieve the targets file
                 currentTask = "Retrieve the targets file";
-                var targetsFileName = m_jobParams.GetParam("dm_target_file");
+                var targetsFileName = mJobParams.GetParam("dm_target_file");
                 if (string.IsNullOrWhiteSpace(targetsFileName))
                 {
                     LogError("Parameter dm_target_file not found in the settings file");
@@ -79,10 +79,10 @@ namespace AnalysisManagerNOMSIPlugin
                     // Errors should have already been logged
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
-                m_jobParams.AddResultFileToSkip(fileToGet);
+                mJobParams.AddResultFileToSkip(fileToGet);
 
                 currentTask = "Process the MyEMSL download queue";
-                if (!ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+                if (!ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -92,8 +92,8 @@ namespace AnalysisManagerNOMSIPlugin
             }
             catch (Exception ex)
             {
-                m_message = "Exception in GetResources: " + ex.Message;
-                LogError(m_message + "; task = " + currentTask + "; " + clsGlobal.GetExceptionStackTrace(ex));
+                mMessage = "Exception in GetResources: " + ex.Message;
+                LogError(mMessage + "; task = " + currentTask + "; " + clsGlobal.GetExceptionStackTrace(ex));
 
                 return CloseOutType.CLOSEOUT_FAILED;
             }

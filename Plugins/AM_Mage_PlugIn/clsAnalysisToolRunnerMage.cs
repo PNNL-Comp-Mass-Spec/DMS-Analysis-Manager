@@ -22,13 +22,13 @@ namespace AnalysisManager_Mage_PlugIn
         protected override bool RunMACTool()
         {
             // Change the name of the log file for the local log file to the plugin log filename
-            var logFilePath = Path.Combine(m_WorkDir, MAGE_LOG_FILE_NAME);
+            var logFilePath = Path.Combine(mWorkDir, MAGE_LOG_FILE_NAME);
             const bool appendDateToBaseName = false;
             LogTools.ChangeLogFileBaseName(logFilePath, appendDateToBaseName);
 
             // run the appropriate Mage pipeline(s) according to operations list parameter
-            var mageOperations = m_jobParams.GetParam("MageOperations");
-            var ops = new MageAMOperations(m_jobParams, m_mgrParams, logFilePath, appendDateToBaseName);
+            var mageOperations = mJobParams.GetParam("MageOperations");
+            var ops = new MageAMOperations(mJobParams, mMgrParams, logFilePath, appendDateToBaseName);
             RegisterEvents(ops);
 
             var success = ops.RunMageOperations(mageOperations);
@@ -39,14 +39,14 @@ namespace AnalysisManager_Mage_PlugIn
             if (!string.IsNullOrEmpty(ops.WarningMsg))
             {
                 // Update EvalMessage (the warning has already been logged)
-                m_EvalMessage = ops.WarningMsg;
+                mEvalMessage = ops.WarningMsg;
             }
 
             if (!success)
                 return false;
 
             // Make sure the Results.db3 file was created
-            var fiResultsDB = new FileInfo(Path.Combine(m_WorkDir, "Results.db3"));
+            var fiResultsDB = new FileInfo(Path.Combine(mWorkDir, "Results.db3"));
             if (!fiResultsDB.Exists)
             {
                 LogError("Results.db3 file was not created");
@@ -233,7 +233,7 @@ namespace AnalysisManager_Mage_PlugIn
                     var lstIonColumns = new List<string>();
                     var labelingScheme = string.Empty;
 
-                    var workFlowSteps = m_jobParams.GetParam("ApeWorkflowStepList", string.Empty);
+                    var workFlowSteps = mJobParams.GetParam("ApeWorkflowStepList", string.Empty);
                     if (workFlowSteps.Contains("4plex"))
                     {
                         // 4-plex iTraq
@@ -327,7 +327,7 @@ namespace AnalysisManager_Mage_PlugIn
             }
 
             var itraqMode = false;
-            var analysisType = m_jobParams.GetJobParameter("AnalysisType", string.Empty);
+            var analysisType = mJobParams.GetJobParameter("AnalysisType", string.Empty);
             if (analysisType.Contains("iTRAQ"))
                 itraqMode = true;
 
@@ -364,7 +364,7 @@ namespace AnalysisManager_Mage_PlugIn
 
                 if (!ValidateFactors(fiResultsDB, out errorMessage, out exceptionDetail))
                 {
-                    if (!m_message.Contains(errorMessage))
+                    if (!mMessage.Contains(errorMessage))
                     {
                         LogError("Error validating factors: " + errorMessage + "; " + exceptionDetail);
                     }

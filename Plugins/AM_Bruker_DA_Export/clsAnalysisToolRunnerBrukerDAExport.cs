@@ -59,7 +59,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                if (m_DebugLevel > 4)
+                if (mDebugLevel > 4)
                 {
                     LogDebug("clsAnalysisToolRunnerBrukerDAExport.RunTool(): Enter");
                 }
@@ -80,17 +80,17 @@ namespace AnalysisManagerBrukerDAExportPlugin
                 if (!StoreToolVersionInfo(progLoc))
                 {
                     LogError("Aborting since StoreToolVersionInfo returned false");
-                    m_message = "Error determining Bruker DataAnalysis version";
+                    mMessage = "Error determining Bruker DataAnalysis version";
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                var exportScriptName = m_jobParams.GetJobParameter("BrukerSpectraExportScriptFile", string.Empty);
+                var exportScriptName = mJobParams.GetJobParameter("BrukerSpectraExportScriptFile", string.Empty);
                 if (string.IsNullOrEmpty(exportScriptName))
                 {
                     LogError("BrukerSpectraExportScriptFile parameter is empty");
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
-                var scriptPath = Path.Combine(m_WorkDir, exportScriptName);
+                var scriptPath = Path.Combine(mWorkDir, exportScriptName);
 
                 // Run the export script to create XML files of the mass spectra in the data file
                 var exportSuccess = ExportSpectraUsingScript(scriptPath);
@@ -99,16 +99,16 @@ namespace AnalysisManagerBrukerDAExportPlugin
                 {
                     // Look for the at least one exported mass spectrum
 
-                    var fiResultsFile = new FileInfo(Path.Combine(m_WorkDir, m_Dataset + "_scan1.xml"));
+                    var fiResultsFile = new FileInfo(Path.Combine(mWorkDir, mDatasetName + "_scan1.xml"));
 
                     if (fiResultsFile.Exists)
                     {
                         var postProcessSuccess = PostProcessExportedSpectra();
                         if (!postProcessSuccess)
                         {
-                            if (string.IsNullOrEmpty(m_message))
+                            if (string.IsNullOrEmpty(mMessage))
                             {
-                                m_message = "Unknown error post-processing the exported spectra";
+                                mMessage = "Unknown error post-processing the exported spectra";
                             }
                             exportSuccess = false;
                         }
@@ -116,18 +116,18 @@ namespace AnalysisManagerBrukerDAExportPlugin
                     }
                     else
                     {
-                        if (string.IsNullOrEmpty(m_message))
+                        if (string.IsNullOrEmpty(mMessage))
                         {
-                            m_message = "No spectra were exported";
+                            mMessage = "No spectra were exported";
                             exportSuccess = false;
                         }
                     }
                 }
 
-                m_progress = PROGRESS_PCT_COMPLETE;
+                mProgress = PROGRESS_PCT_COMPLETE;
 
                 // Stop the job timer
-                m_StopTime = DateTime.UtcNow;
+                mStopTime = DateTime.UtcNow;
 
                 // Could use the following to create a summary file:
                 // Add the current job data to the summary file
@@ -152,8 +152,8 @@ namespace AnalysisManagerBrukerDAExportPlugin
             }
             catch (Exception ex)
             {
-                m_message = "Error in BrukerDAExportPlugin->RunTool";
-                LogError(m_message, ex);
+                mMessage = "Error in BrukerDAExportPlugin->RunTool";
+                LogError(mMessage, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -206,7 +206,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
 
                 mConsoleOutputErrorMsg = string.Empty;
 
-                var rawDataType = m_jobParams.GetParam("RawDataType");
+                var rawDataType = mJobParams.GetParam("RawDataType");
                 string dataFolderPath;
 
                 switch (rawDataType.ToLower())
@@ -214,17 +214,17 @@ namespace AnalysisManagerBrukerDAExportPlugin
                     case clsAnalysisResources.RAW_DATA_TYPE_DOT_D_FOLDERS:
                     case clsAnalysisResources.RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER:
                     case clsAnalysisResources.RAW_DATA_TYPE_BRUKER_FT_FOLDER:
-                        dataFolderPath = Path.Combine(m_WorkDir, m_Dataset + clsAnalysisResources.DOT_D_EXTENSION);
+                        dataFolderPath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_D_EXTENSION);
                         break;
                     default:
-                        m_message = "Dataset type " + rawDataType + " is not supported";
-                        LogWarning("ExportSpectraUsingScript: " + m_message);
+                        mMessage = "Dataset type " + rawDataType + " is not supported";
+                        LogWarning("ExportSpectraUsingScript: " + mMessage);
                         return false;
                 }
 
-                var outputPathBase = Path.Combine(m_WorkDir, m_Dataset + "_scan");
+                var outputPathBase = Path.Combine(mWorkDir, mDatasetName + "_scan");
 
-                var methodName = m_jobParams.GetParam(BRUKER_SPECTRA_EXPORT_METHOD_PARAM);
+                var methodName = mJobParams.GetParam(BRUKER_SPECTRA_EXPORT_METHOD_PARAM);
                 string methodOverridePath;
 
                 // ToDo: Remove this after we get method loading working, or we switch to MSConvert
@@ -237,7 +237,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
                 else
                 {
                     // Determine the directory that contains method directories (.m directories) that we can use with the Bruker DataAnalysis program
-                    var methodsDirPath = m_mgrParams.GetParam(BRUKER_SPECTRA_EXPORT_METHOD_CONTAINER_DIR, @"C:\DMS_Programs\Bruker_DataAnalysis");
+                    var methodsDirPath = mMgrParams.GetParam(BRUKER_SPECTRA_EXPORT_METHOD_CONTAINER_DIR, @"C:\DMS_Programs\Bruker_DataAnalysis");
                     var methodsDir = new DirectoryInfo(methodsDirPath);
                     if (!methodsDir.Exists)
                     {
@@ -270,24 +270,24 @@ namespace AnalysisManagerBrukerDAExportPlugin
                              PossiblyQuotePath(outputPathBase) + " " +
                              PossiblyQuotePath(methodOverridePath);
 
-                if (m_DebugLevel >= 1)
+                if (mDebugLevel >= 1)
                 {
                     LogDebug(progLoc + " " + cmdStr.Trim());
                 }
 
-                var cmdRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel)
+                var cmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel)
                 {
                     CreateNoWindow = true,
                     CacheStandardOutput = false,
                     EchoOutputToConsole = true,
                     WriteConsoleOutputToFile = true,
-                    ConsoleOutputFilePath = Path.Combine(m_WorkDir, DATA_EXPORT_CONSOLE_OUTPUT)
+                    ConsoleOutputFilePath = Path.Combine(mWorkDir, DATA_EXPORT_CONSOLE_OUTPUT)
                 };
                 RegisterEvents(cmdRunner);
 
                 cmdRunner.LoopWaiting += cmdRunner_LoopWaiting;
                 cmdRunner.Timeout += cmdRunner_Timeout;
-                m_progress = PROGRESS_PCT_STARTING;
+                mProgress = PROGRESS_PCT_STARTING;
 
                 var maxRuntimeSeconds = EstimateMaxRuntime(dataFolderPath);
                 mMaxRuntimeReached = false;
@@ -350,13 +350,13 @@ namespace AnalysisManagerBrukerDAExportPlugin
                 }
 
                 // Add some files to skip
-                m_jobParams.AddResultFileToSkip(cmdRunner.ConsoleOutputFilePath);
-                m_jobParams.AddResultFileToSkip(scriptPath);
-                m_jobParams.AddResultFileToSkip("JobParameters_" + m_JobNum + ".xml");
+                mJobParams.AddResultFileToSkip(cmdRunner.ConsoleOutputFilePath);
+                mJobParams.AddResultFileToSkip(scriptPath);
+                mJobParams.AddResultFileToSkip("JobParameters_" + mJob + ".xml");
 
-                m_progress = PROGRESS_PCT_COMPLETE;
-                m_StatusTools.UpdateAndWrite(m_progress);
-                if (m_DebugLevel >= 3)
+                mProgress = PROGRESS_PCT_COMPLETE;
+                mStatusTools.UpdateAndWrite(mProgress);
+                if (mDebugLevel >= 3)
                 {
                     LogDebug("Bruker spectrum export Complete");
                 }
@@ -366,8 +366,8 @@ namespace AnalysisManagerBrukerDAExportPlugin
             }
             catch (Exception ex)
             {
-                m_message = "Error in BrukerDAExportPlugin->ExportSpectraUsingScript";
-                LogError(m_message, ex);
+                mMessage = "Error in BrukerDAExportPlugin->ExportSpectraUsingScript";
+                LogError(mMessage, ex);
                 return false;
             }
 
@@ -406,8 +406,8 @@ namespace AnalysisManagerBrukerDAExportPlugin
             }
             catch (Exception ex)
             {
-                m_message = "Error in BrukerDAExportPlugin->FindDataAnalysisProgram";
-                LogError(m_message, ex);
+                mMessage = "Error in BrukerDAExportPlugin->FindDataAnalysisProgram";
+                LogError(mMessage, ex);
                 return string.Empty;
             }
 
@@ -415,7 +415,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
 
         private List<FileInfo> GetXMLSpectraFiles(DirectoryInfo diWorkDir)
         {
-            var fiSpectraFiles = diWorkDir.GetFiles(m_Dataset + "_scan*.xml").ToList();
+            var fiSpectraFiles = diWorkDir.GetFiles(mDatasetName + "_scan*.xml").ToList();
             return fiSpectraFiles;
         }
 
@@ -450,7 +450,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
 
                 if (!File.Exists(strConsoleOutputFilePath))
                 {
-                    if (m_DebugLevel >= 4)
+                    if (mDebugLevel >= 4)
                     {
                         LogDebug("Console output file not found: " + strConsoleOutputFilePath);
                     }
@@ -458,13 +458,13 @@ namespace AnalysisManagerBrukerDAExportPlugin
                     return;
                 }
 
-                if (m_DebugLevel >= 4)
+                if (mDebugLevel >= 4)
                 {
                     LogDebug("Parsing file " + strConsoleOutputFilePath);
                 }
 
                 // Value between 0 and 100
-                var progressComplete = m_progress;
+                var progressComplete = mProgress;
                 var totalScans = 0;
                 var currentScan = 0;
 
@@ -508,14 +508,14 @@ namespace AnalysisManagerBrukerDAExportPlugin
                     progressComplete = currentScan / (float)totalScans * 100;
                 }
 
-                if (m_progress < progressComplete || DateTime.UtcNow.Subtract(mLastProgressWriteTime).TotalMinutes >= 60)
+                if (mProgress < progressComplete || DateTime.UtcNow.Subtract(mLastProgressWriteTime).TotalMinutes >= 60)
                 {
-                    m_progress = progressComplete;
+                    mProgress = progressComplete;
 
-                    if (m_DebugLevel >= 3 || DateTime.UtcNow.Subtract(mLastProgressWriteTime).TotalMinutes >= 20)
+                    if (mDebugLevel >= 3 || DateTime.UtcNow.Subtract(mLastProgressWriteTime).TotalMinutes >= 20)
                     {
                         mLastProgressWriteTime = DateTime.UtcNow;
-                        LogDebug(" ... " + m_progress.ToString("0") + "% complete");
+                        LogDebug(" ... " + mProgress.ToString("0") + "% complete");
                     }
                 }
 
@@ -523,7 +523,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
             catch (Exception ex)
             {
                 // Ignore errors here
-                if (m_DebugLevel >= 2)
+                if (mDebugLevel >= 2)
                 {
                     LogWarning("Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
                 }
@@ -556,7 +556,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
         {
             try
             {
-                var diWorkDir = new DirectoryInfo(m_WorkDir);
+                var diWorkDir = new DirectoryInfo(mWorkDir);
                 var fiSpectraFiles = GetXMLSpectraFiles(diWorkDir);
 
                 if (fiSpectraFiles.Count == 0)
@@ -574,10 +574,10 @@ namespace AnalysisManagerBrukerDAExportPlugin
                     file.MoveTo(Path.Combine(diSubDir.FullName, file.Name));
                 }
 
-                var success = m_DotNetZipTools.ZipDirectory(diSubDir.FullName, Path.Combine(m_WorkDir, m_Dataset + "_scans.zip"));
+                var success = mDotNetZipTools.ZipDirectory(diSubDir.FullName, Path.Combine(mWorkDir, mDatasetName + "_scans.zip"));
                 if (!success)
                 {
-                    if (string.IsNullOrWhiteSpace(m_message))
+                    if (string.IsNullOrWhiteSpace(mMessage))
                     {
                         LogError("Unknown error zipping the XML spectrum files in PostProcessExportedSpectra");
                     }
@@ -589,8 +589,8 @@ namespace AnalysisManagerBrukerDAExportPlugin
             }
             catch (Exception ex)
             {
-                m_message = "Error in BrukerDAExportPlugin->PostProcessExportedSpectra";
-                LogError(m_message, ex);
+                mMessage = "Error in BrukerDAExportPlugin->PostProcessExportedSpectra";
+                LogError(mMessage, ex);
                 return false;
             }
 
@@ -606,7 +606,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
 
             var strToolVersionInfo = string.Empty;
 
-            if (m_DebugLevel >= 2)
+            if (mDebugLevel >= 2)
             {
                 LogDebug("Determining tool version info");
             }
@@ -667,7 +667,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
                 {
                     mLastConsoleOutputParse = DateTime.UtcNow;
 
-                    ParseConsoleOutputFile(Path.Combine(m_WorkDir, DATA_EXPORT_CONSOLE_OUTPUT));
+                    ParseConsoleOutputFile(Path.Combine(mWorkDir, DATA_EXPORT_CONSOLE_OUTPUT));
 
                 }
 

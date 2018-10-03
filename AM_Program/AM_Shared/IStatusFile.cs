@@ -288,7 +288,7 @@ namespace AnalysisManagerBase
         /// <param name="managerIdleMessage"></param>
         /// <param name="recentErrorMessages"></param>
         /// <param name="jobInfo">Information on the job that started most recently</param>
-        /// <param name="forceLogToBrokerDB">If true, will force m_BrokerDBLogger to report the manager status directly to the database (if initialized)</param>
+        /// <param name="forceLogToBrokerDB">If true, will force mBrokerDBLogger to report the manager status directly to the database (if initialized)</param>
         /// <remarks></remarks>
         void UpdateClose(string managerIdleMessage, IEnumerable<string> recentErrorMessages, string jobInfo, bool forceLogToBrokerDB);
 
@@ -329,7 +329,7 @@ namespace AnalysisManagerBase
         /// <param name="mostRecentLogMessage">Most recent message posted to the logger (leave blank if unknown)</param>
         /// <param name="mostRecentErrorMessage">Most recent error posted to the logger (leave blank if unknown)</param>
         /// <param name="recentJobInfo">Information on the job that started most recently</param>
-        /// <param name="forceLogToBrokerDB">If true, will force m_BrokerDBLogger to report the manager status directly to the database (if initialized)</param>
+        /// <param name="forceLogToBrokerDB">If true, will force mBrokerDBLogger to report the manager status directly to the database (if initialized)</param>
         /// <remarks></remarks>
         void UpdateAndWrite(
             EnumMgrStatus eMgrStatus,
@@ -352,7 +352,7 @@ namespace AnalysisManagerBase
         /// Logs to the status file that the manager is idle
         /// </summary>
         /// <param name="managerIdleMessage">Reason why the manager is idle (leave blank if unknown)</param>
-        /// <param name="forceLogToBrokerDB">If true, will force m_BrokerDBLogger to report the manager status directly to the database (if initialized)</param>
+        /// <param name="forceLogToBrokerDB">If true, will force mBrokerDBLogger to report the manager status directly to the database (if initialized)</param>
         /// <remarks></remarks>
         void UpdateIdle(string managerIdleMessage, bool forceLogToBrokerDB);
 
@@ -362,7 +362,7 @@ namespace AnalysisManagerBase
         /// <param name="managerIdleMessage">Reason why the manager is idle (leave blank if unknown)</param>
         /// <param name="idleErrorMessage">Error message explaining why the manager is idle</param>
         /// <param name="recentJobInfo">Information on the job that started most recently</param>
-        /// <param name="forceLogToBrokerDB">If true, will force m_BrokerDBLogger to report the manager status directly to the database (if initialized)</param>
+        /// <param name="forceLogToBrokerDB">If true, will force mBrokerDBLogger to report the manager status directly to the database (if initialized)</param>
         /// <remarks></remarks>
         void UpdateIdle(string managerIdleMessage, string idleErrorMessage, string recentJobInfo, bool forceLogToBrokerDB);
 
@@ -372,7 +372,7 @@ namespace AnalysisManagerBase
         /// <param name="managerIdleMessage">Reason why the manager is idle (leave blank if unknown)</param>
         /// <param name="recentErrorMessages">Recent error messages written to the log file (leave blank if unknown)</param>
         /// <param name="recentJobInfo">Information on the job that started most recently</param>
-        /// <param name="forceLogToBrokerDB">If true, will force m_BrokerDBLogger to report the manager status directly to the database (if initialized)</param>
+        /// <param name="forceLogToBrokerDB">If true, will force mBrokerDBLogger to report the manager status directly to the database (if initialized)</param>
         /// <remarks></remarks>
         void UpdateIdle(string managerIdleMessage, IEnumerable<string> recentErrorMessages, string recentJobInfo, bool forceLogToBrokerDB);
 
@@ -426,7 +426,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Writes the status file
         /// </summary>
-        /// <param name="forceLogToBrokerDB">If true, will force m_BrokerDBLogger to report the manager status to the database</param>
+        /// <param name="forceLogToBrokerDB">If true, will force mBrokerDBLogger to report the manager status to the database</param>
         /// <remarks></remarks>
         void WriteStatusFile(bool forceLogToBrokerDB);
 

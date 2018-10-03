@@ -61,14 +61,14 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
             if (!StoreToolVersionInfo())
             {
                 LogError("Aborting since StoreToolVersionInfo returned false");
-                if (string.IsNullOrEmpty(m_message))
+                if (string.IsNullOrEmpty(mMessage))
                 {
-                    m_message = "Error determining CompassXport version";
+                    mMessage = "Error determining CompassXport version";
                 }
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            var msXMLCacheFolderPath = m_mgrParams.GetParam("MSXMLCacheFolderPath", string.Empty);
+            var msXMLCacheFolderPath = mMgrParams.GetParam("MSXMLCacheFolderPath", string.Empty);
             mMSXmlCacheFolder = new DirectoryInfo(msXMLCacheFolderPath);
 
             if (!mMSXmlCacheFolder.Exists)
@@ -86,11 +86,11 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
                 // Something went wrong
                 // In order to help diagnose things, we will move whatever files were created into the eResult folder,
                 //  archive it using CopyFailedResultsToArchiveFolder, then return CloseOutType.CLOSEOUT_FAILED
-                if (string.IsNullOrEmpty(m_message))
+                if (string.IsNullOrEmpty(mMessage))
                 {
-                    m_message = "Error running CompassXport";
+                    mMessage = "Error running CompassXport";
                 }
-                processingErrorMessage = string.Copy(m_message);
+                processingErrorMessage = string.Copy(mMessage);
 
                 if (eResult == CloseOutType.CLOSEOUT_NO_DATA)
                 {
@@ -103,10 +103,10 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
             }
 
             // Stop the job timer
-            m_StopTime = DateTime.UtcNow;
+            mStopTime = DateTime.UtcNow;
 
             // Delete the raw data files
-            if (m_DebugLevel > 3)
+            if (mDebugLevel > 3)
             {
                 LogDebug("clsAnalysisToolRunnerMSXMLBruker.RunTool(), Deleting raw data file");
             }
@@ -114,21 +114,21 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
             var deleteSuccess = DeleteRawDataFiles();
             if (!deleteSuccess)
             {
-                LogError("clsAnalysisToolRunnerMSXMLBruker.RunTool(), Problem deleting raw data files: " + m_message);
+                LogError("clsAnalysisToolRunnerMSXMLBruker.RunTool(), Problem deleting raw data files: " + mMessage);
 
                 if (!string.IsNullOrEmpty(processingErrorMessage))
                 {
-                    m_message = processingErrorMessage;
+                    mMessage = processingErrorMessage;
                 }
                 else
                 {
                     // Don't treat this as a critical error; leave eReturnCode unchanged
-                    m_message = "Error deleting raw data files";
+                    mMessage = "Error deleting raw data files";
                 }
             }
 
             // Update the job summary file
-            if (m_DebugLevel > 3)
+            if (mDebugLevel > 3)
             {
                 LogDebug("clsAnalysisToolRunnerMSXMLBruker.RunTool(), Updating summary file");
             }
@@ -148,45 +148,45 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
         /// <remarks></remarks>
         private CloseOutType CreateMSXmlFile(out FileInfo fiResultsFile)
         {
-            if (m_DebugLevel > 4)
+            if (mDebugLevel > 4)
             {
                 LogDebug("clsAnalysisToolRunnerMSXMLGen.CreateMSXmlFile(): Enter");
             }
 
-            var msXmlGenerator = m_jobParams.GetParam("MSXMLGenerator");
+            var msXmlGenerator = mJobParams.GetParam("MSXMLGenerator");
             // Typically CompassXport.exe
 
-            var msXmlFormat = m_jobParams.GetParam("MSXMLOutputType");
+            var msXmlFormat = mJobParams.GetParam("MSXMLOutputType");
             // Typically mzXML or mzML
-            var CentroidMSXML = Convert.ToBoolean(m_jobParams.GetParam("CentroidMSXML"));
+            var CentroidMSXML = Convert.ToBoolean(mJobParams.GetParam("CentroidMSXML"));
 
             string CompassXportProgramPath;
 
             // Initialize the Results File output parameter to a dummy name for now
-            fiResultsFile = new FileInfo(Path.Combine(m_WorkDir, "NonExistent_Placeholder_File.tmp"));
+            fiResultsFile = new FileInfo(Path.Combine(mWorkDir, "NonExistent_Placeholder_File.tmp"));
 
             if (string.Equals(msXmlGenerator, COMPASS_XPORT, StringComparison.OrdinalIgnoreCase))
             {
-                CompassXportProgramPath = m_mgrParams.GetParam("CompassXportLoc");
+                CompassXportProgramPath = mMgrParams.GetParam("CompassXportLoc");
 
                 if (string.IsNullOrEmpty(CompassXportProgramPath))
                 {
-                    m_message = "Manager parameter CompassXportLoc is not defined in the Manager Control DB";
-                    LogError(m_message);
+                    mMessage = "Manager parameter CompassXportLoc is not defined in the Manager Control DB";
+                    LogError(mMessage);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 if (!File.Exists(CompassXportProgramPath))
                 {
-                    m_message = "CompassXport program not found";
-                    LogError(m_message + " at " + CompassXportProgramPath);
+                    mMessage = "CompassXport program not found";
+                    LogError(mMessage + " at " + CompassXportProgramPath);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
             }
             else
             {
-                m_message = "Invalid value for MSXMLGenerator: " + msXmlGenerator;
-                LogError(m_message);
+                mMessage = "Invalid value for MSXMLGenerator: " + msXmlGenerator;
+                LogError(mMessage);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -197,14 +197,14 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
                 eOutputType = clsCompassXportRunner.MSXMLOutputTypeConstants.mzXML;
             }
 
-            fiResultsFile = new FileInfo(Path.Combine(m_WorkDir, m_Dataset + "." + clsCompassXportRunner.GetMsXmlOutputTypeByID(eOutputType)));
+            fiResultsFile = new FileInfo(Path.Combine(mWorkDir, mDatasetName + "." + clsCompassXportRunner.GetMsXmlOutputTypeByID(eOutputType)));
 
             // Instantiate the processing class
-            mCompassXportRunner = new clsCompassXportRunner(m_WorkDir, CompassXportProgramPath, m_Dataset, eOutputType, CentroidMSXML);
+            mCompassXportRunner = new clsCompassXportRunner(mWorkDir, CompassXportProgramPath, mDatasetName, eOutputType, CentroidMSXML);
             RegisterEvents(mCompassXportRunner);
 
             mCompassXportRunner.LoopWaiting += CompassXportRunner_LoopWaiting;
-            mCompassXportRunner.ProgRunnerStarting += mCompassXportRunner_ProgRunnerStarting;
+            mCompassXportRunner.ProgRunnerStarting += CompassXportRunner_ProgRunnerStarting;
 
             // Create the file
             var blnSuccess = mCompassXportRunner.CreateMSXMLFile();
@@ -227,15 +227,15 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
                     return CloseOutType.CLOSEOUT_SUCCESS;
                 }
 
-                m_message = "MSXml results file not found: " + fiResultsFile.FullName;
-                LogError(m_message);
+                mMessage = "MSXml results file not found: " + fiResultsFile.FullName;
+                LogError(mMessage);
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
             // CompassXport created one CSV file for each spectrum in the dataset
             // Confirm that fewer than 100 CSV files were created
 
-            var diWorkDir = new DirectoryInfo(m_WorkDir);
+            var diWorkDir = new DirectoryInfo(mWorkDir);
             var fiFiles = diWorkDir.GetFiles("*.csv").ToList();
 
             if (fiFiles.Count < MAX_CSV_FILES)
@@ -243,10 +243,10 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
                 return CloseOutType.CLOSEOUT_SUCCESS;
             }
 
-            m_message = "CompassXport created " + fiFiles.Count +
+            mMessage = "CompassXport created " + fiFiles.Count +
                         " CSV files. The CSV conversion mode is only appropriate for datasets with fewer than " + MAX_CSV_FILES +
                         " spectra; create a mzXML file instead (e.g., settings file mzXML_Bruker.xml)";
-            LogError(m_message);
+            LogError(mMessage);
 
             foreach (var fiFile in fiFiles)
             {
@@ -279,7 +279,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
 
             if (string.IsNullOrEmpty(remoteCachefilePath))
             {
-                if (string.IsNullOrEmpty(m_message))
+                if (string.IsNullOrEmpty(mMessage))
                 {
                     LogError("CopyFileToServerCache returned false for " + fiResultsFile.Name);
                 }
@@ -294,7 +294,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
                 swOutFile.WriteLine(remoteCachefilePath);
             }
 
-            m_jobParams.AddResultFileToSkip(fiResultsFile.Name);
+            mJobParams.AddResultFileToSkip(fiResultsFile.Name);
 
         }
 
@@ -306,7 +306,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
         {
             var strToolVersionInfo = string.Empty;
 
-            if (m_DebugLevel >= 2)
+            if (mDebugLevel >= 2)
             {
                 LogDebug("Determining tool version info");
             }
@@ -314,16 +314,16 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
             // Store paths to key files in toolFiles
             var toolFiles = new List<FileInfo>();
 
-            var msXmlGenerator = m_jobParams.GetParam("MSXMLGenerator");
+            var msXmlGenerator = mJobParams.GetParam("MSXMLGenerator");
 
             // Typically CompassXport.exe
             if (string.Equals(msXmlGenerator, COMPASS_XPORT, StringComparison.OrdinalIgnoreCase))
             {
-                var compassXportPath = m_mgrParams.GetParam("CompassXportLoc");
+                var compassXportPath = mMgrParams.GetParam("CompassXportLoc");
                 if (string.IsNullOrEmpty(compassXportPath))
                 {
-                    m_message = "Path defined by manager param CompassXportLoc is empty";
-                    LogError(m_message);
+                    mMessage = "Path defined by manager param CompassXportLoc is empty";
+                    LogError(mMessage);
                     return false;
                 }
 
@@ -333,8 +333,8 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
                 }
                 catch (Exception ex)
                 {
-                    m_message = "Path defined by manager param CompassXportLoc is invalid: " + compassXportPath;
-                    LogError(m_message + "; " + ex.Message);
+                    mMessage = "Path defined by manager param CompassXportLoc is invalid: " + compassXportPath;
+                    LogError(mMessage + "; " + ex.Message);
                     return false;
                 }
             }
@@ -342,14 +342,14 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
             {
                 if (string.IsNullOrEmpty(msXmlGenerator))
                 {
-                    m_message = "Job Parameter MSXMLGenerator is not defined";
+                    mMessage = "Job Parameter MSXMLGenerator is not defined";
                 }
                 else
                 {
-                    m_message = "Invalid value for MSXMLGenerator, should be " + COMPASS_XPORT + ", not " + msXmlGenerator;
+                    mMessage = "Invalid value for MSXMLGenerator, should be " + COMPASS_XPORT + ", not " + msXmlGenerator;
                 }
 
-                LogError(m_message);
+                LogError(mMessage);
                 return false;
             }
 
@@ -382,11 +382,11 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
         /// <summary>
         /// Event handler for mCompassXportRunner.ProgRunnerStarting event
         /// </summary>
-        /// <param name="CommandLine">The command being executed (program path plus command line arguments)</param>
+        /// <param name="commandLine">The command being executed (program path plus command line arguments)</param>
         /// <remarks></remarks>
-        private void mCompassXportRunner_ProgRunnerStarting(string CommandLine)
+        private void CompassXportRunner_ProgRunnerStarting(string commandLine)
         {
-            LogDebug(CommandLine);
+            LogDebug(commandLine);
         }
 
         #endregion

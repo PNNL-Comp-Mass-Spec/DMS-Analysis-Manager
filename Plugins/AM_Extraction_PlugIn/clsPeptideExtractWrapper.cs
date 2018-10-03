@@ -23,16 +23,16 @@ namespace AnalysisManagerExtractionPlugin
     {
         #region "Event Handlers"
 
-        private void m_ExtractTools_EndTask()
+        private void ExtractTools_EndTask()
         {
-            m_ExtractInProgress = false;
+            mExtractInProgress = false;
         }
 
-        private DateTime dtLastStatusUpdate = DateTime.MinValue;
-        private DateTime dtLastLogTime = DateTime.MinValue;
-        private DateTime dtLastConsoleLogTime = DateTime.UtcNow;
+        private DateTime mLastStatusUpdate = DateTime.MinValue;
+        private DateTime mLastLogTime = DateTime.MinValue;
+        private DateTime mLastConsoleLogTime = DateTime.UtcNow;
 
-        private void m_ExtractTools_CurrentProgress(double fractionDone)
+        private void ExtractTools_CurrentProgress(double fractionDone)
         {
             const int CONSOLE_LOG_INTERVAL_SECONDS = 60;
             const int MIN_STATUS_INTERVAL_SECONDS = 3;
@@ -42,40 +42,40 @@ namespace AnalysisManagerExtractionPlugin
             var updateLog = false;
 
             // We divide the progress by 3 since creation of the FHT and SYN files takes ~33% of the time, while the remainder is spent running PHRP and PeptideProphet
-            m_Progress = (float)(100 * fractionDone / 3f);
+            mProgress = (float)(100 * fractionDone / 3f);
 
-            if (DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= MIN_STATUS_INTERVAL_SECONDS)
+            if (DateTime.UtcNow.Subtract(mLastStatusUpdate).TotalSeconds >= MIN_STATUS_INTERVAL_SECONDS)
             {
-                dtLastStatusUpdate = DateTime.UtcNow;
-                m_StatusTools.UpdateAndWrite(m_Progress);
+                mLastStatusUpdate = DateTime.UtcNow;
+                mStatusTools.UpdateAndWrite(mProgress);
             }
 
-            if (m_DebugLevel > 3 && DateTime.UtcNow.Subtract(dtLastLogTime).TotalSeconds >= MIN_LOG_INTERVAL_SECONDS)
+            if (mDebugLevel > 3 && DateTime.UtcNow.Subtract(mLastLogTime).TotalSeconds >= MIN_LOG_INTERVAL_SECONDS)
             {
                 // Update the log file every 15 seconds if DebugLevel is > 3
                 updateLog = true;
             }
-            else if (m_DebugLevel >= 1 && DateTime.UtcNow.Subtract(dtLastLogTime).TotalSeconds >= MAX_LOG_INTERVAL_SECONDS)
+            else if (mDebugLevel >= 1 && DateTime.UtcNow.Subtract(mLastLogTime).TotalSeconds >= MAX_LOG_INTERVAL_SECONDS)
             {
                 // Update the log file every 10 minutes if DebugLevel is >= 1
                 updateLog = true;
             }
 
-            if (DateTime.UtcNow.Subtract(dtLastConsoleLogTime).TotalSeconds >= CONSOLE_LOG_INTERVAL_SECONDS)
+            if (DateTime.UtcNow.Subtract(mLastConsoleLogTime).TotalSeconds >= CONSOLE_LOG_INTERVAL_SECONDS)
             {
                 // Show progress at the console every 60 seconds
-                dtLastConsoleLogTime = DateTime.UtcNow;
-                OnDebugEvent(string.Format( "Extraction progress: {0:F2}% complete", m_Progress));
+                mLastConsoleLogTime = DateTime.UtcNow;
+                OnDebugEvent(string.Format( "Extraction progress: {0:F2}% complete", mProgress));
             }
 
             if (updateLog)
             {
-                dtLastLogTime = DateTime.UtcNow;
-                OnProgressUpdate("Extraction progress", m_Progress);
+                mLastLogTime = DateTime.UtcNow;
+                OnProgressUpdate("Extraction progress", mProgress);
             }
         }
 
-        private void m_ExtractTools_CurrentStatus(string taskString)
+        private void ExtractTools_CurrentStatus(string taskString)
         {
             // Future use?
         }
@@ -84,19 +84,19 @@ namespace AnalysisManagerExtractionPlugin
 
         #region "Module variables"
 
-        private readonly short m_DebugLevel;
-        private bool m_ExtractInProgress;
-        private IPeptideFileExtractor m_ExtractTools;
+        private readonly short mDebugLevel;
+        private bool mExtractInProgress;
+        private IPeptideFileExtractor mExtractTools;
 
-        private readonly string m_DatasetName;
-        private readonly string m_WorkDir;
+        private readonly string mDatasetName;
+        private readonly string mWorkDir;
 
         /// <summary>
         /// Percent complete, value between 0-100
         /// </summary>
-        private float m_Progress;
+        private float mProgress;
 
-        private readonly IStatusFile m_StatusTools;
+        private readonly IStatusFile mStatusTools;
 
         #endregion
 
@@ -111,11 +111,11 @@ namespace AnalysisManagerExtractionPlugin
         /// <remarks></remarks>
         public clsPeptideExtractWrapper(IMgrParams mgrParams, IJobParams jobParams, ref IStatusFile StatusTools)
         {
-            m_DebugLevel = (short)mgrParams.GetParam("debuglevel", 1);
-            m_StatusTools = StatusTools;
+            mDebugLevel = (short)mgrParams.GetParam("DebugLevel", 1);
+            mStatusTools = StatusTools;
 
-            m_DatasetName = jobParams.GetParam(clsAnalysisResources.JOB_PARAM_DATASET_NAME);
-            m_WorkDir = mgrParams.GetParam("workdir");
+            mDatasetName = jobParams.GetParam(clsAnalysisResources.JOB_PARAM_DATASET_NAME);
+            mWorkDir = mgrParams.GetParam("WorkDir");
         }
 
         /// <summary>
@@ -125,7 +125,7 @@ namespace AnalysisManagerExtractionPlugin
         /// <remarks></remarks>
         public CloseOutType PerformExtraction()
         {
-            var startParams = new clsPeptideFileExtractor.StartupArguments(m_WorkDir, m_DatasetName)
+            var startParams = new clsPeptideFileExtractor.StartupArguments(mWorkDir, mDatasetName)
             {
                 ExpandMultiORF = true,
                 FilterEFS = false,
@@ -145,25 +145,25 @@ namespace AnalysisManagerExtractionPlugin
             }
 
             // Setup the extractor and start extraction process
-            m_ExtractTools = new clsPeptideFileExtractor(startParams);
-            m_ExtractTools.EndTask += m_ExtractTools_EndTask;
-            m_ExtractTools.CurrentProgress += m_ExtractTools_CurrentProgress;
-            m_ExtractTools.CurrentStatus += m_ExtractTools_CurrentStatus;
+            mExtractTools = new clsPeptideFileExtractor(startParams);
+            mExtractTools.EndTask += ExtractTools_EndTask;
+            mExtractTools.CurrentProgress += ExtractTools_CurrentProgress;
+            mExtractTools.CurrentStatus += ExtractTools_CurrentStatus;
 
-            m_ExtractInProgress = true;
+            mExtractInProgress = true;
 
             try
             {
                 // Call the dll
-                if (m_DebugLevel >= 1)
+                if (mDebugLevel >= 1)
                 {
                     OnDebugEvent("Beginning peptide extraction");
                 }
 
-                m_ExtractTools.ProcessInputFile();
+                mExtractTools.ProcessInputFile();
 
                 // Loop until the extraction finishes
-                while (m_ExtractInProgress)
+                while (mExtractInProgress)
                 {
                     clsGlobal.IdleLoop(2);
                 }
@@ -176,7 +176,7 @@ namespace AnalysisManagerExtractionPlugin
                 }
 
                 // Extraction must have finished successfully, so exit
-                if (m_DebugLevel >= 2)
+                if (mDebugLevel >= 2)
                 {
                     OnDebugEvent("Extraction complete");
                 }
@@ -190,7 +190,7 @@ namespace AnalysisManagerExtractionPlugin
             finally
             {
                 // Make sure no stray objects are hanging around
-                m_ExtractTools = null;
+                mExtractTools = null;
 
                 // Clean up processes
                 ProgRunner.GarbageCollectNow();
@@ -202,7 +202,7 @@ namespace AnalysisManagerExtractionPlugin
             // Verifies an _syn.txt file was created, and that valid data was found (file size > 0 bytes)
 
             // Test for presence of _syn.txt file
-            var workFiles = Directory.GetFiles(m_WorkDir);
+            var workFiles = Directory.GetFiles(mWorkDir);
             var workFileMatch = string.Empty;
 
             var reCheckSuffix = new Regex(@"_syn.txt$", RegexOptions.Compiled | RegexOptions.IgnoreCase);

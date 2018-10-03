@@ -82,34 +82,34 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Manager parameters
         /// </summary>
-        protected IMgrParams m_MgrParams;
+        protected IMgrParams mMgrParams;
 
         /// <summary>
         /// Connection string
         /// </summary>
         /// <remarks>Typically DMS5 on Gigasax</remarks>
-        protected string m_ConnStr;
+        protected string mConnStr;
 
         /// <summary>
         /// Broker connection string
         /// </summary>
         /// <remarks>Typically DMS_Pipeline on Gigasax</remarks>
-        protected string m_BrokerConnStr;
+        protected string mBrokerConnStr;
 
         /// <summary>
         /// Job status
         /// </summary>
-        protected bool m_TaskWasAssigned = false;
+        protected bool mTaskWasAssigned = false;
 
         /// <summary>
         /// DMS stored procedure executor
         /// </summary>
-        public readonly PRISM.ExecuteDatabaseSP DMSProcedureExecutor;
+        public PRISM.ExecuteDatabaseSP DMSProcedureExecutor { get; }
 
         /// <summary>
         /// Pipeline database stored procedure executor
         /// </summary>
-        public readonly PRISM.ExecuteDatabaseSP PipelineDBProcedureExecutor;
+        public PRISM.ExecuteDatabaseSP PipelineDBProcedureExecutor { get; }
 
         #endregion
 
@@ -153,7 +153,7 @@ namespace AnalysisManagerBase
         /// <value></value>
         /// <returns>TRUE if task was assigned; otherwise false</returns>
         /// <remarks></remarks>
-        public bool TaskWasAssigned => m_TaskWasAssigned;
+        public bool TaskWasAssigned => mTaskWasAssigned;
 
         /// <summary>
         /// Debug level
@@ -163,8 +163,8 @@ namespace AnalysisManagerBase
         /// <remarks>Values from 0 (minimum output) to 5 (max detail)</remarks>
         public short DebugLevel
         {
-            get => m_DebugLevel;
-            set => m_DebugLevel = value;
+            get => mDebugLevel;
+            set => mDebugLevel = value;
         }
 
         /// <summary>
@@ -184,20 +184,20 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         protected clsDBTask(IMgrParams mgrParams, short debugLvl)
         {
-            m_MgrParams = mgrParams;
+            mMgrParams = mgrParams;
 
-            ManagerName = m_MgrParams.ManagerName;
+            ManagerName = mMgrParams.ManagerName;
 
             // Gigasax.DMS5
-            m_ConnStr = m_MgrParams.GetParam("ConnectionString");
+            mConnStr = mMgrParams.GetParam("ConnectionString");
 
             // Gigasax.DMS_Pipeline
-            m_BrokerConnStr = m_MgrParams.GetParam("BrokerConnectionString");
+            mBrokerConnStr = mMgrParams.GetParam("BrokerConnectionString");
 
-            m_DebugLevel = debugLvl;
+            mDebugLevel = debugLvl;
 
-            DMSProcedureExecutor = new PRISM.ExecuteDatabaseSP(m_ConnStr);
-            PipelineDBProcedureExecutor = new PRISM.ExecuteDatabaseSP(m_BrokerConnStr);
+            DMSProcedureExecutor = new PRISM.ExecuteDatabaseSP(mConnStr);
+            PipelineDBProcedureExecutor = new PRISM.ExecuteDatabaseSP(mBrokerConnStr);
 
             DMSProcedureExecutor.DebugEvent += ProcedureExecutor_DebugEvent;
             PipelineDBProcedureExecutor.DebugEvent += ProcedureExecutor_DebugEvent;
@@ -205,7 +205,7 @@ namespace AnalysisManagerBase
             DMSProcedureExecutor.ErrorEvent += ProcedureExecutor_DBErrorEvent;
             PipelineDBProcedureExecutor.ErrorEvent += ProcedureExecutor_DBErrorEvent;
 
-            if (m_DebugLevel > 1)
+            if (mDebugLevel > 1)
             {
                 DMSProcedureExecutor.DebugMessagesEnabled = true;
                 PipelineDBProcedureExecutor.DebugMessagesEnabled = true;

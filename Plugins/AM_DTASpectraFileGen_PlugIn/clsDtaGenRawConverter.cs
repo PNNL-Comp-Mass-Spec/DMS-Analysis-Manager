@@ -24,12 +24,12 @@ namespace DTASpectraFileGen
         /// Returns the default path to the DTA generator tool
         /// </summary>
         /// <returns></returns>
-        /// <remarks>The default path can be overridden by updating m_DtaToolNameLoc using clsDtaGen.UpdateDtaToolNameLoc</remarks>
+        /// <remarks>The default path can be overridden by updating mDtaToolNameLoc using clsDtaGen.UpdateDtaToolNameLoc</remarks>
         protected override string ConstructDTAToolPath()
         {
             string strDTAToolPath = null;
 
-            var rawConverterDir = m_MgrParams.GetParam("RawConverterProgLoc");
+            var rawConverterDir = mMgrParams.GetParam("RawConverterProgLoc");
             strDTAToolPath = Path.Combine(rawConverterDir, RAWCONVERTER_FILENAME);
 
             return strDTAToolPath;
@@ -37,35 +37,35 @@ namespace DTASpectraFileGen
 
         protected override void MakeDTAFilesThreaded()
         {
-            m_Status = ProcessStatus.SF_RUNNING;
-            m_ErrMsg = string.Empty;
+            mStatus = ProcessStatus.SF_RUNNING;
+            mErrMsg = string.Empty;
 
-            m_Progress = 10;
+            mProgress = 10;
 
-            if (!ConvertRawToMGF(m_RawDataType))
+            if (!ConvertRawToMGF(mRawDataType))
             {
-                if (m_Status != ProcessStatus.SF_ABORTING)
+                if (mStatus != ProcessStatus.SF_ABORTING)
                 {
-                    m_Results = ProcessResults.SF_FAILURE;
-                    m_Status = ProcessStatus.SF_ERROR;
+                    mResults = ProcessResults.SF_FAILURE;
+                    mStatus = ProcessStatus.SF_ERROR;
                 }
                 return;
             }
 
-            m_Progress = 75;
+            mProgress = 75;
 
             if (!ConvertMGFtoDTA())
             {
-                if (m_Status != ProcessStatus.SF_ABORTING)
+                if (mStatus != ProcessStatus.SF_ABORTING)
                 {
-                    m_Results = ProcessResults.SF_FAILURE;
-                    m_Status = ProcessStatus.SF_ERROR;
+                    mResults = ProcessResults.SF_FAILURE;
+                    mStatus = ProcessStatus.SF_ERROR;
                 }
                 return;
             }
 
-            m_Results = ProcessResults.SF_SUCCESS;
-            m_Status = ProcessStatus.SF_COMPLETE;
+            mResults = ProcessResults.SF_SUCCESS;
+            mStatus = ProcessStatus.SF_COMPLETE;
         }
 
         /// <summary>
@@ -78,26 +78,26 @@ namespace DTASpectraFileGen
         {
             try
             {
-                var strRawDataType = m_JobParams.GetJobParameter("RawDataType", "");
+                var strRawDataType = mJobParams.GetJobParameter("RawDataType", "");
 
-                var oMGFConverter = new clsMGFConverter(m_DebugLevel, m_WorkDir)
+                var oMGFConverter = new clsMGFConverter(mDebugLevel, mWorkDir)
                 {
                     IncludeExtraInfoOnParentIonLine = true,
-                    MinimumIonsPerSpectrum = m_JobParams.GetJobParameter("IonCounts", "IonCount", 0)
+                    MinimumIonsPerSpectrum = mJobParams.GetJobParameter("IonCounts", "IonCount", 0)
                 };
 
                 RegisterEvents(oMGFConverter);
 
                 var eRawDataType = clsAnalysisResources.GetRawDataType(strRawDataType);
-                var blnSuccess = oMGFConverter.ConvertMGFtoDTA(eRawDataType, m_Dataset);
+                var blnSuccess = oMGFConverter.ConvertMGFtoDTA(eRawDataType, mDatasetName);
 
                 if (!blnSuccess)
                 {
-                    m_ErrMsg = oMGFConverter.ErrorMessage;
+                    mErrMsg = oMGFConverter.ErrorMessage;
                 }
 
-                m_SpectraFileCount = oMGFConverter.SpectraCountWritten;
-                m_Progress = 95;
+                mSpectraFileCount = oMGFConverter.SpectraCountWritten;
+                mProgress = 95;
 
                 return blnSuccess;
             }
@@ -119,7 +119,7 @@ namespace DTASpectraFileGen
         {
             try
             {
-                if (m_DebugLevel > 0)
+                if (mDebugLevel > 0)
                 {
                     OnStatusEvent("Creating .MGF file using RawConverter");
                 }
@@ -130,31 +130,31 @@ namespace DTASpectraFileGen
                 switch (eRawDataType)
                 {
                     case clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile:
-                        rawFilePath = Path.Combine(m_WorkDir, m_Dataset + clsAnalysisResources.DOT_RAW_EXTENSION);
+                        rawFilePath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_RAW_EXTENSION);
                         break;
                     default:
-                        m_ErrMsg = "Raw data file type not supported: " + eRawDataType;
+                        mErrMsg = "Raw data file type not supported: " + eRawDataType;
                         return false;
                 }
 
-                m_InstrumentFileName = Path.GetFileName(rawFilePath);
-                m_JobParams.AddResultFileToSkip(m_InstrumentFileName);
+                mInstrumentFileName = Path.GetFileName(rawFilePath);
+                mJobParams.AddResultFileToSkip(mInstrumentFileName);
 
-                var fiRawConverter = new FileInfo(m_DtaToolNameLoc);
+                var fiRawConverter = new FileInfo(mDtaToolNameLoc);
 
                 // Set up command
                 var cmdStr = " " + clsGlobal.PossiblyQuotePath(rawFilePath) + " --mgf";
 
-                if (m_DebugLevel > 0)
+                if (mDebugLevel > 0)
                 {
-                    OnStatusEvent(m_DtaToolNameLoc + " " + cmdStr);
+                    OnStatusEvent(mDtaToolNameLoc + " " + cmdStr);
                 }
 
                 // Setup a program runner tool to make the spectra files
                 // The working directory must be the directory that has RawConverter.exe
                 // Otherwise, the program creates the .mgf file in C:\  (and will likely get Access Denied)
 
-                mCmdRunner = new clsRunDosProgram(fiRawConverter.Directory.FullName, m_DebugLevel)
+                mCmdRunner = new clsRunDosProgram(fiRawConverter.Directory.FullName, mDebugLevel)
                 {
                     CreateNoWindow = true,
                     CacheStandardOutput = true,
@@ -165,16 +165,16 @@ namespace DTASpectraFileGen
                 mCmdRunner.ErrorEvent += CmdRunner_ErrorEvent;
                 mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
-                if (!mCmdRunner.RunProgram(m_DtaToolNameLoc, cmdStr, "RawConverter", true))
+                if (!mCmdRunner.RunProgram(mDtaToolNameLoc, cmdStr, "RawConverter", true))
                 {
                     // .RunProgram returned False
-                    LogDTACreationStats("ConvertRawToMGF", Path.GetFileNameWithoutExtension(m_DtaToolNameLoc), "mCmdRunner.RunProgram returned False");
+                    LogDTACreationStats("ConvertRawToMGF", Path.GetFileNameWithoutExtension(mDtaToolNameLoc), "mCmdRunner.RunProgram returned False");
 
-                    m_ErrMsg = "Error running " + Path.GetFileNameWithoutExtension(m_DtaToolNameLoc);
+                    mErrMsg = "Error running " + Path.GetFileNameWithoutExtension(mDtaToolNameLoc);
                     return false;
                 }
 
-                if (m_DebugLevel >= 2)
+                if (mDebugLevel >= 2)
                 {
                     OnStatusEvent(" ... MGF file created using RawConverter");
                 }

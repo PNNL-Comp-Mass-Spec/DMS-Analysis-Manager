@@ -106,9 +106,9 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
             try
             {
-                var scansFilePath = Path.Combine(m_WorkDir, m_Dataset + DECON2LS_SCANS_FILE_SUFFIX);
-                var isosFilePath = Path.Combine(m_WorkDir, m_Dataset + DECON2LS_ISOS_FILE_SUFFIX);
-                var peaksFilePath = Path.Combine(m_WorkDir, m_Dataset + DECON2LS_PEAKS_FILE_SUFFIX);
+                var scansFilePath = Path.Combine(mWorkDir, mDatasetName + DECON2LS_SCANS_FILE_SUFFIX);
+                var isosFilePath = Path.Combine(mWorkDir, mDatasetName + DECON2LS_ISOS_FILE_SUFFIX);
+                var peaksFilePath = Path.Combine(mWorkDir, mDatasetName + DECON2LS_PEAKS_FILE_SUFFIX);
 
                 switch (mRawDataType)
                 {
@@ -133,32 +133,32 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 if (dotDFolder && !File.Exists(isosFilePath) && !File.Exists(scansFilePath))
                 {
                     // Copy the files from the .D folder to the work directory
-                    if (m_DebugLevel >= 1)
+                    if (mDebugLevel >= 1)
                     {
                         LogDebug("Copying Decon2LS result files from the .D folder to the working directory");
                     }
 
-                    var srcFilePath = new FileInfo(Path.Combine(mInputFilePath, m_Dataset + DECON2LS_SCANS_FILE_SUFFIX));
+                    var srcFilePath = new FileInfo(Path.Combine(mInputFilePath, mDatasetName + DECON2LS_SCANS_FILE_SUFFIX));
                     if (srcFilePath.Exists)
                     {
                         srcFilePath.CopyTo(scansFilePath);
                     }
 
-                    srcFilePath = new FileInfo(Path.Combine(mInputFilePath, m_Dataset + DECON2LS_ISOS_FILE_SUFFIX));
+                    srcFilePath = new FileInfo(Path.Combine(mInputFilePath, mDatasetName + DECON2LS_ISOS_FILE_SUFFIX));
                     if (srcFilePath.Exists)
                     {
                         srcFilePath.CopyTo(isosFilePath);
                     }
 
-                    srcFilePath = new FileInfo(Path.Combine(mInputFilePath, m_Dataset + DECON2LS_PEAKS_FILE_SUFFIX));
+                    srcFilePath = new FileInfo(Path.Combine(mInputFilePath, mDatasetName + DECON2LS_PEAKS_FILE_SUFFIX));
                     if (srcFilePath.Exists)
                     {
                         srcFilePath.CopyTo(peaksFilePath);
                     }
                 }
 
-                m_jobParams.AddResultFileToKeep(scansFilePath);
-                m_jobParams.AddResultFileToKeep(isosFilePath);
+                mJobParams.AddResultFileToKeep(scansFilePath);
+                mJobParams.AddResultFileToKeep(isosFilePath);
 
                 var writePeaksToTextFile = oDeconToolsParamFileReader.GetParameter("WritePeaksToTextFile", false);
 
@@ -231,7 +231,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             }
             catch (Exception ex)
             {
-                LogError("AssembleResults error", "clsAnalysisToolRunnerDecon2lsBase.AssembleResults, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step") + ": " + ex.Message);
+                LogError("AssembleResults error", "clsAnalysisToolRunnerDecon2lsBase.AssembleResults, job " + mJob + ", step " + mJobParams.GetParam("Step") + ": " + ex.Message);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -270,7 +270,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
         {
             try
             {
-                var isosFilePath = Path.Combine(m_WorkDir, m_Dataset + DECON2LS_ISOS_FILE_SUFFIX);
+                var isosFilePath = Path.Combine(mWorkDir, mDatasetName + DECON2LS_ISOS_FILE_SUFFIX);
                 if (!File.Exists(isosFilePath))
                 {
                     // Do not treat this as a fatal error
@@ -280,7 +280,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
                 var isosDataLineCount = -1;
 
-                var msFileInfoScannerDir = m_mgrParams.GetParam("MSFileInfoScannerDir");
+                var msFileInfoScannerDir = mMgrParams.GetParam("MSFileInfoScannerDir");
                 if (string.IsNullOrEmpty(msFileInfoScannerDir))
                 {
                     var msg = "Manager parameter 'MSFileInfoScannerDir' is not defined";
@@ -298,12 +298,12 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
                 mMSFileInfoScannerReportsEmptyIsosFile = false;
 
-                var qcPlotGenerator = new clsDeconToolsQCPlotsGenerator(msFileInfoScannerDLLPath, m_DebugLevel);
+                var qcPlotGenerator = new clsDeconToolsQCPlotsGenerator(msFileInfoScannerDLLPath, mDebugLevel);
                 RegisterEvents(qcPlotGenerator);
                 qcPlotGenerator.ErrorEvent += QCPlotGenerator_ErrorEvent;
 
                 // Create the QC Plot .png files and associated Index.html file
-                var success = qcPlotGenerator.CreateQCPlots(isosFilePath, m_WorkDir);
+                var success = qcPlotGenerator.CreateQCPlots(isosFilePath, mWorkDir);
 
                 if (!success)
                 {
@@ -320,9 +320,9 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 if (mMSFileInfoScannerReportsEmptyIsosFile)
                 {
                     // None of the data in the _isos.csv file passed the isotopic fit filter
-                    if (m_message.StartsWith(MS_FILE_INFO_SCANNER_NO_ISOS_DATA, StringComparison.OrdinalIgnoreCase))
+                    if (mMessage.StartsWith(MS_FILE_INFO_SCANNER_NO_ISOS_DATA, StringComparison.OrdinalIgnoreCase))
                     {
-                        m_message = "";
+                        mMessage = "";
                     }
 
                     LogError("Unable to create QC plots since no data in _isos.csv passed thresholds");
@@ -351,7 +351,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                         // Require that at least once of them exists
                         foreach (var extension in fileExtension.Split('|'))
                         {
-                            filesToFind.Add(new FileInfo(Path.Combine(m_WorkDir, m_Dataset + extension)));
+                            filesToFind.Add(new FileInfo(Path.Combine(mWorkDir, mDatasetName + extension)));
                             if (fileDescription.Length == 0)
                                 fileDescription = extension;
                             else
@@ -360,7 +360,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                     }
                     else
                     {
-                        filesToFind.Add(new FileInfo(Path.Combine(m_WorkDir, m_Dataset + fileExtension)));
+                        filesToFind.Add(new FileInfo(Path.Combine(mWorkDir, mDatasetName + fileExtension)));
                         fileDescription = fileExtension;
                     }
 
@@ -399,7 +399,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                if (m_DebugLevel >= 1)
+                if (mDebugLevel >= 1)
                 {
                     LogMessage("Generated QC Plots file using " + isosFilePath);
                 }
@@ -527,12 +527,12 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            if (m_DebugLevel > 4)
+            if (mDebugLevel > 4)
             {
                 LogDebug("clsAnalysisToolRunnerDecon2ls.RunTool(): Enter");
             }
 
-            mRawDataTypeName = clsAnalysisResources.GetRawDataTypeName(m_jobParams, out var errorMessage);
+            mRawDataTypeName = clsAnalysisResources.GetRawDataTypeName(mJobParams, out var errorMessage);
 
             if (string.IsNullOrWhiteSpace(mRawDataTypeName))
             {
@@ -560,17 +560,17 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 // Something went wrong
                 // In order to help diagnose things, we will move whatever files were created into the eResult folder,
                 //  archive it using CopyFailedResultsToArchiveFolder, then return CloseOutType.CLOSEOUT_FAILED
-                if (string.IsNullOrEmpty(m_message))
+                if (string.IsNullOrEmpty(mMessage))
                 {
-                    m_message = "Error running Decon2LS";
+                    mMessage = "Error running Decon2LS";
                 }
 
                 if (eResult == CloseOutType.CLOSEOUT_NO_DATA)
                 {
                     eReturnCode = eResult;
-                    if (string.IsNullOrWhiteSpace(m_message))
+                    if (string.IsNullOrWhiteSpace(mMessage))
                     {
-                        m_message = "No results in DeconTools Isos file";
+                        mMessage = "No results in DeconTools Isos file";
                     }
                 }
                 else
@@ -585,38 +585,38 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 eReturnCode = CreateQCPlots();
             }
 
-            if (m_jobParams.GetJobParameter(clsAnalysisResourcesDecon2ls.JOB_PARAM_PROCESSMSMS_AUTO_ENABLED, false))
+            if (mJobParams.GetJobParameter(clsAnalysisResourcesDecon2ls.JOB_PARAM_PROCESSMSMS_AUTO_ENABLED, false))
             {
-                m_EvalMessage = clsGlobal.AppendToComment(m_EvalMessage, "Note: auto-enabled ProcessMSMS in the parameter file");
-                LogMessage(m_EvalMessage);
+                mEvalMessage = clsGlobal.AppendToComment(mEvalMessage, "Note: auto-enabled ProcessMSMS in the parameter file");
+                LogMessage(mEvalMessage);
             }
 
             // Zip the _Peaks.txt file (if it exists)
             ZipPeaksFile();
 
             // Delete the raw data files
-            if (m_DebugLevel > 3)
+            if (mDebugLevel > 3)
             {
                 LogDebug("clsAnalysisToolRunnerDecon2lsBase.RunTool(), Deleting raw data file");
             }
 
-            var messageSaved = string.Copy(m_message);
+            var messageSaved = string.Copy(mMessage);
 
             var deleteSuccess = DeleteRawDataFiles(mRawDataType);
 
             if (!deleteSuccess)
             {
-                LogMessage("clsAnalysisToolRunnerDecon2lsBase.RunTool(), Problem deleting raw data files: " + m_message, 0, true);
+                LogMessage("clsAnalysisToolRunnerDecon2lsBase.RunTool(), Problem deleting raw data files: " + mMessage, 0, true);
 
-                // Don't treat this as a critical error; leave eReturnCode unchanged and restore m_message
-                if (!clsGlobal.IsMatch(m_message, messageSaved))
+                // Don't treat this as a critical error; leave eReturnCode unchanged and restore mMessage
+                if (!clsGlobal.IsMatch(mMessage, messageSaved))
                 {
-                    m_message = messageSaved;
+                    mMessage = messageSaved;
                 }
             }
 
             // Update the job summary file
-            if (m_DebugLevel > 3)
+            if (mDebugLevel > 3)
             {
                 LogDebug("clsAnalysisToolRunnerDecon2lsBase.RunTool(), Updating summary file");
             }
@@ -640,7 +640,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
         private CloseOutType RunDecon2Ls()
         {
-            var paramFilePath = Path.Combine(m_WorkDir, m_jobParams.GetParam("ParmFileName"));
+            var paramFilePath = Path.Combine(mWorkDir, mJobParams.GetParam("ParmFileName"));
             var decon2LSError = false;
 
             // Cache the parameters in the DeconTools parameter file
@@ -658,7 +658,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             if (filetype == DeconToolsFileTypeConstants.Undefined)
             {
                 LogError("clsAnalysisToolRunnerDecon2lsBase.RunDecon2Ls(), Invalid data file type specifed while getting file type: " + mRawDataType);
-                m_message = "Invalid raw data type specified";
+                mMessage = "Invalid raw data type specified";
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -667,7 +667,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             if (string.IsNullOrWhiteSpace(mInputFilePath))
             {
                 LogError("clsAnalysisToolRunnerDecon2lsBase.RunDecon2Ls(), Invalid data file type specifed while input file name: " + mRawDataType);
-                m_message = "Invalid raw data type specified";
+                mMessage = "Invalid raw data type specified";
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -680,13 +680,13 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             }
 
             // Store the DeconTools version info in the database
-            m_message = string.Empty;
+            mMessage = string.Empty;
             if (!StoreToolVersionInfo(progLoc))
             {
                 LogMessage("Aborting since StoreToolVersionInfo returned false", 0, true);
-                if (string.IsNullOrEmpty(m_message))
+                if (string.IsNullOrEmpty(mMessage))
                 {
-                    m_message = "Error determining DeconTools version";
+                    mMessage = "Error determining DeconTools version";
                 }
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -711,12 +711,12 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             var eDeconToolsStatus = StartDeconTools(progLoc, mInputFilePath, paramFilePath, filetype);
 
             // Stop the job timer
-            m_StopTime = DateTime.UtcNow;
+            mStopTime = DateTime.UtcNow;
 
             // Make sure objects are released
             PRISM.ProgRunner.GarbageCollectNow();
 
-            if (m_DebugLevel > 3)
+            if (mDebugLevel > 3)
             {
                 LogDebug("clsAnalysisToolRunnerDecon2lsBase.RunDecon2Ls(), Decon2LS finished");
             }
@@ -737,7 +737,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                         break;
 
                     case DeconToolsStateType.ErrorCode:
-                        m_message = "Decon2LS error";
+                        mMessage = "Decon2LS error";
                         decon2LSError = true;
                         break;
 
@@ -751,7 +751,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
                     case DeconToolsStateType.Idle:
                         // DeconTools never actually started
-                        m_message = "Decon2LS error";
+                        mMessage = "Decon2LS error";
                         decon2LSError = true;
                         break;
 
@@ -787,7 +787,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
         {
             DeconToolsStateType eDeconToolsStatus;
 
-            if (m_DebugLevel > 3)
+            if (mDebugLevel > 3)
             {
                 LogDebug("clsAnalysisToolRunnerDecon2lsDeIsotope.StartDeconTools(), Starting deconvolution");
             }
@@ -814,12 +814,12 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                     cmdStr = inputFilePath + " " + paramFilePath;
                 }
 
-                if (m_DebugLevel >= 1)
+                if (mDebugLevel >= 1)
                 {
                     LogDebug(progLoc + " " + cmdStr);
                 }
 
-                mCmdRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel);
+                mCmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel);
                 RegisterEvents(mCmdRunner);
                 mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
@@ -833,7 +833,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 // ReSharper disable once RedundantAssignment
                 eDeconToolsStatus = DeconToolsStateType.Running;
 
-                m_progress = 0;
+                mProgress = 0;
                 ResetProgRunnerCpuUsage();
 
                 // Start the program and wait for it to finish
@@ -842,8 +842,8 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
                 if (!success)
                 {
-                    m_message = "Error running DeconTools";
-                    LogMessage(m_message + ", job " + m_JobNum, 0, true);
+                    mMessage = "Error running DeconTools";
+                    LogMessage(mMessage + ", job " + mJob, 0, true);
                 }
 
                 // Parse the DeconTools .Log file to see whether it contains message "Finished file processing"
@@ -871,12 +871,12 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
                 // Look for file Dataset*BAD_ERROR_log.txt
                 // If it exists, an exception occurred
-                var workdir = new DirectoryInfo(Path.Combine(m_WorkDir));
+                var workdir = new DirectoryInfo(Path.Combine(mWorkDir));
 
-                foreach (var logFile in workdir.GetFiles(m_Dataset + "*BAD_ERROR_log.txt"))
+                foreach (var logFile in workdir.GetFiles(mDatasetName + "*BAD_ERROR_log.txt"))
                 {
-                    m_message = "Error running DeconTools; Bad_Error_log file exists";
-                    LogMessage(m_message + ": " + logFile.Name, 0, true);
+                    mMessage = "Error running DeconTools; Bad_Error_log file exists";
+                    LogMessage(mMessage + ": " + logFile.Name, 0, true);
                     eDeconToolsStatus = DeconToolsStateType.BadErrorLogFile;
                     break;
                 }
@@ -926,7 +926,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
         private DeconToolsFileTypeConstants GetInputFileType(clsAnalysisResources.eRawDataTypeConstants eRawDataType)
         {
-            var InstrumentClass = m_jobParams.GetParam("instClass");
+            var InstrumentClass = mJobParams.GetParam("instClass");
 
             // Gets the Decon2LS file type based on the input data type
             switch (eRawDataType)
@@ -1014,10 +1014,10 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                     case clsAnalysisResources.eRawDataTypeConstants.BrukerFTFolder:
                     case clsAnalysisResources.eRawDataTypeConstants.BrukerTOFBaf:
                         // As of 11/19/2010, the _Log.txt file is created inside the .D folder
-                        logFilePath = Path.Combine(mInputFilePath, m_Dataset) + "_log.txt";
+                        logFilePath = Path.Combine(mInputFilePath, mDatasetName) + "_log.txt";
                         break;
                     default:
-                        logFilePath = Path.Combine(m_WorkDir, Path.GetFileNameWithoutExtension(mInputFilePath) + "_log.txt");
+                        logFilePath = Path.Combine(mWorkDir, Path.GetFileNameWithoutExtension(mInputFilePath) + "_log.txt");
                         break;
                 }
 
@@ -1059,7 +1059,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                                     finishTime = fileInfo.LastWriteTime;
                                 }
 
-                                if (m_DebugLevel >= 3)
+                                if (mDebugLevel >= 3)
                                 {
                                     LogDebug("DeconTools log file reports 'finished file processing' at " +
                                         finishTime.ToString(DATE_TIME_FORMAT));
@@ -1079,7 +1079,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                             if (charIndex > 0)
                             {
                                 // An exception was reported in the log file; treat this as a fatal error
-                                m_message = "Error thrown by DeconTools";
+                                mMessage = "Error thrown by DeconTools";
 
                                 LogMessage("DeconTools reports " + dataLine.Substring(charIndex), 0, true);
                                 mDeconToolsExceptionThrown = true;
@@ -1091,7 +1091,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             catch (Exception ex)
             {
                 // Ignore errors here
-                if (m_DebugLevel >= 4)
+                if (mDebugLevel >= 4)
                 {
                     LogWarning("Exception in ParseDeconToolsLogFile: " + ex.Message);
                 }
@@ -1124,7 +1124,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                     }
                 }
 
-                m_progress = mDeconToolsStatus.PercentComplete;
+                mProgress = mDeconToolsStatus.PercentComplete;
             }
         }
 
@@ -1201,7 +1201,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
         public string GetInputFilePath(clsAnalysisResources.eRawDataTypeConstants eRawDataType)
         {
-            return GetInputFilePath(m_WorkDir, m_Dataset, eRawDataType);
+            return GetInputFilePath(mWorkDir, mDatasetName, eRawDataType);
         }
 
         /// <summary>
@@ -1280,7 +1280,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
         {
             var toolVersionInfo = string.Empty;
 
-            if (m_DebugLevel >= 2)
+            if (mDebugLevel >= 2)
             {
                 LogDebug("Determining tool version info");
             }
@@ -1316,15 +1316,15 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 if (!int.TryParse(reMatch.Groups[1].Value, out mDeconConsoleBuild))
                 {
                     // Error parsing out the version
-                    m_message = "Error determining DeconConsole version, cannot convert build to integer";
-                    LogMessage(m_message + ": " + toolVersionInfo, 0, true);
+                    mMessage = "Error determining DeconConsole version, cannot convert build to integer";
+                    LogMessage(mMessage + ": " + toolVersionInfo, 0, true);
                     return false;
                 }
             }
             else
             {
-                m_message = "Error determining DeconConsole version, RegEx did not match";
-                LogMessage(m_message + ": " + toolVersionInfo, 0, true);
+                mMessage = "Error determining DeconConsole version, RegEx did not match";
+                LogMessage(mMessage + ": " + toolVersionInfo, 0, true);
                 return false;
             }
 
@@ -1382,8 +1382,8 @@ namespace AnalysisManagerDecon2lsV2PlugIn
         {
             try
             {
-                var peaksFilePath = Path.Combine(m_WorkDir, m_Dataset + DECON2LS_PEAKS_FILE_SUFFIX);
-                var zippedPeaksFilePath = Path.Combine(m_WorkDir, m_Dataset + "_peaks.zip");
+                var peaksFilePath = Path.Combine(mWorkDir, mDatasetName + DECON2LS_PEAKS_FILE_SUFFIX);
+                var zippedPeaksFilePath = Path.Combine(mWorkDir, mDatasetName + "_peaks.zip");
 
                 if (File.Exists(peaksFilePath))
                 {
@@ -1394,7 +1394,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                     }
 
                     // Add the _peaks.txt file to .FilesToDelete since we only want to keep the Zipped version
-                    m_jobParams.AddResultFileToSkip(Path.GetFileName(peaksFilePath));
+                    mJobParams.AddResultFileToSkip(Path.GetFileName(peaksFilePath));
                 }
             }
             catch (Exception ex)
@@ -1447,19 +1447,19 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             progressMessage = "DeconTools, " + progressMessage;
 
             int logIntervalMinutes;
-            if (m_DebugLevel >= 5)
+            if (mDebugLevel >= 5)
             {
                 logIntervalMinutes = 1;
             }
-            else if (m_DebugLevel >= 4)
+            else if (mDebugLevel >= 4)
             {
                 logIntervalMinutes = 2;
             }
-            else if (m_DebugLevel >= 3)
+            else if (mDebugLevel >= 3)
             {
                 logIntervalMinutes = 5;
             }
-            else if (m_DebugLevel >= 2)
+            else if (mDebugLevel >= 2)
             {
                 logIntervalMinutes = 10;
             }

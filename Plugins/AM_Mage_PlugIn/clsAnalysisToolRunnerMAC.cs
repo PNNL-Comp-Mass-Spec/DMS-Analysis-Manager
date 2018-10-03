@@ -55,7 +55,7 @@ namespace AnalysisManager_Mage_PlugIn
 
                     if (!processingSuccess)
                     {
-                        if (string.IsNullOrWhiteSpace(m_message))
+                        if (string.IsNullOrWhiteSpace(mMessage))
                         {
                             LogError("Error running MAC: RunMACTool returned false");
                         }
@@ -70,7 +70,7 @@ namespace AnalysisManager_Mage_PlugIn
 
                     processingSuccess = false;
 
-                    var sDataPackageSourceFolderName = m_jobParams.GetJobParameter("DataPackageSourceFolderName", "ImportFiles");
+                    var sDataPackageSourceFolderName = mJobParams.GetJobParameter("DataPackageSourceFolderName", "ImportFiles");
                     if (ex.Message.Contains(sDataPackageSourceFolderName + "\\--No Files Found"))
                     {
                         LogError(sDataPackageSourceFolderName + " folder in the data package is empty or does not exist");
@@ -79,8 +79,8 @@ namespace AnalysisManager_Mage_PlugIn
                 }
 
                 // Stop the job timer
-                m_StopTime = DateTime.UtcNow;
-                m_progress = ProgressPctMacDone;
+                mStopTime = DateTime.UtcNow;
+                mProgress = ProgressPctMacDone;
 
                 // Add the current job data to the summary file
                 UpdateSummaryFile();
@@ -98,10 +98,10 @@ namespace AnalysisManager_Mage_PlugIn
                 }
 
                 // Override the output folder name and the dataset name (since this is a dataset aggregation job)
-                m_ResFolderName = m_jobParams.GetParam("StepOutputFolderName");
-                m_Dataset = m_jobParams.GetParam(clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME);
-                if (!string.IsNullOrEmpty(m_ResFolderName))
-                    m_jobParams.SetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME, m_ResFolderName);
+                mResultsFolderName = mJobParams.GetParam("StepOutputFolderName");
+                mDatasetName = mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME);
+                if (!string.IsNullOrEmpty(mResultsFolderName))
+                    mJobParams.SetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME, mResultsFolderName);
 
                 var success = CopyResultsToTransferDirectory();
 
@@ -131,7 +131,7 @@ namespace AnalysisManager_Mage_PlugIn
 
             string strToolVersionInfo;
 
-            if (m_DebugLevel >= 2)
+            if (mDebugLevel >= 2)
             {
                 LogDebug("Determining tool version info for primary tool assembly");
             }

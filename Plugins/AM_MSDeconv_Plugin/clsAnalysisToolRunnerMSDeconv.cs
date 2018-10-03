@@ -56,7 +56,7 @@ namespace AnalysisManagerMSDeconvPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                if (m_DebugLevel > 4)
+                if (mDebugLevel > 4)
                 {
                     LogDebug("clsAnalysisToolRunnerMSDeconv.RunTool(): Enter");
                 }
@@ -76,9 +76,9 @@ namespace AnalysisManagerMSDeconvPlugIn
                 var mzXmlValidated = RenumberMzXMLIfRequired();
                 if (!mzXmlValidated)
                 {
-                    if (string.IsNullOrEmpty(m_message))
+                    if (string.IsNullOrEmpty(mMessage))
                     {
-                        m_message = "RenumberMzXMLIfRequired returned false";
+                        mMessage = "RenumberMzXMLIfRequired returned false";
                     }
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -91,7 +91,7 @@ namespace AnalysisManagerMSDeconvPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                var strOutputFormat = m_jobParams.GetParam("MSDeconvOutputFormat");
+                var strOutputFormat = mJobParams.GetParam("MSDeconvOutputFormat");
                 string resultsFileName;
 
                 if (string.IsNullOrEmpty(strOutputFormat))
@@ -103,19 +103,19 @@ namespace AnalysisManagerMSDeconvPlugIn
                 {
                     case "mgf":
                         strOutputFormat = "mgf";
-                        resultsFileName = m_Dataset + "_msdeconv.mgf";
+                        resultsFileName = mDatasetName + "_msdeconv.mgf";
                         break;
                     case "text":
                         strOutputFormat = "text";
-                        resultsFileName = m_Dataset + "_msdeconv.txt";
+                        resultsFileName = mDatasetName + "_msdeconv.txt";
                         break;
                     case "msalign":
                         strOutputFormat = "msalign";
-                        resultsFileName = m_Dataset + "_msdeconv.msalign";
+                        resultsFileName = mDatasetName + "_msdeconv.msalign";
                         break;
                     default:
-                        m_message = "Invalid output format: " + strOutputFormat;
-                        LogError(m_message);
+                        mMessage = "Invalid output format: " + strOutputFormat;
+                        LogError(mMessage);
                         return CloseOutType.CLOSEOUT_FAILED;
                 }
 
@@ -139,7 +139,7 @@ namespace AnalysisManagerMSDeconvPlugIn
                 {
                     // Make sure the output file was created and is not zero-bytes
                     // If the input .mzXML file only has MS spectra and no MS/MS spectra, the output file will be empty
-                    var ioResultsFile = new FileInfo(Path.Combine(m_WorkDir, resultsFileName));
+                    var ioResultsFile = new FileInfo(Path.Combine(mWorkDir, resultsFileName));
                     if (!ioResultsFile.Exists)
                     {
                         var msg = "MSDeconv results file not found";
@@ -156,18 +156,18 @@ namespace AnalysisManagerMSDeconvPlugIn
                     }
                     else
                     {
-                        m_StatusTools.UpdateAndWrite(m_progress);
-                        if (m_DebugLevel >= 3)
+                        mStatusTools.UpdateAndWrite(mProgress);
+                        if (mDebugLevel >= 3)
                         {
                             LogDebug("MSDeconv Search Complete");
                         }
                     }
                 }
 
-                m_progress = PROGRESS_PCT_COMPLETE;
+                mProgress = PROGRESS_PCT_COMPLETE;
 
                 // Stop the job timer
-                m_StopTime = DateTime.UtcNow;
+                mStopTime = DateTime.UtcNow;
 
                 // Add the current job data to the summary file
                 UpdateSummaryFile();
@@ -178,7 +178,7 @@ namespace AnalysisManagerMSDeconvPlugIn
                 PRISM.ProgRunner.GarbageCollectNow();
 
                 // Trim the console output file to remove the majority of the % finished messages
-                TrimConsoleOutputFile(Path.Combine(m_WorkDir, MSDECONV_CONSOLE_OUTPUT));
+                TrimConsoleOutputFile(Path.Combine(mWorkDir, MSDECONV_CONSOLE_OUTPUT));
 
                 if (!processingSuccess)
                 {
@@ -196,7 +196,7 @@ namespace AnalysisManagerMSDeconvPlugIn
             }
             catch (Exception ex)
             {
-                m_message = "Error in MSDeconvPlugin->RunTool: " + ex.Message;
+                mMessage = "Error in MSDeconvPlugin->RunTool: " + ex.Message;
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -234,7 +234,7 @@ namespace AnalysisManagerMSDeconvPlugIn
             {
                 if (!File.Exists(strConsoleOutputFilePath))
                 {
-                    if (m_DebugLevel >= 4)
+                    if (mDebugLevel >= 4)
                     {
                         LogDebug("Console output file not found: " + strConsoleOutputFilePath);
                     }
@@ -242,7 +242,7 @@ namespace AnalysisManagerMSDeconvPlugIn
                     return;
                 }
 
-                if (m_DebugLevel >= 4)
+                if (mDebugLevel >= 4)
                 {
                     LogDebug("Parsing file " + strConsoleOutputFilePath);
                 }
@@ -268,7 +268,7 @@ namespace AnalysisManagerMSDeconvPlugIn
                                 // The third line is the MSDeconv version
                                 if (string.IsNullOrEmpty(mMSDeconvVersion) && strLineIn.ToLower().Contains("ms-deconv"))
                                 {
-                                    if (m_DebugLevel >= 2 && string.IsNullOrWhiteSpace(mMSDeconvVersion))
+                                    if (mDebugLevel >= 2 && string.IsNullOrWhiteSpace(mMSDeconvVersion))
                                     {
                                         LogDebug("MSDeconv version: " + strLineIn);
                                     }
@@ -313,15 +313,15 @@ namespace AnalysisManagerMSDeconvPlugIn
                     }
                 }
 
-                if (m_progress < intActualProgress)
+                if (mProgress < intActualProgress)
                 {
-                    m_progress = intActualProgress;
+                    mProgress = intActualProgress;
                 }
             }
             catch (Exception ex)
             {
                 // Ignore errors here
-                if (m_DebugLevel >= 2)
+                if (mDebugLevel >= 2)
                 {
                     LogError("Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
                 }
@@ -332,12 +332,12 @@ namespace AnalysisManagerMSDeconvPlugIn
         {
             try
             {
-                var mzXmlFileName = m_Dataset + clsAnalysisResources.DOT_MZXML_EXTENSION;
-                var fiMzXmlFile = new FileInfo(Path.Combine(m_WorkDir, mzXmlFileName));
+                var mzXmlFileName = mDatasetName + clsAnalysisResources.DOT_MZXML_EXTENSION;
+                var fiMzXmlFile = new FileInfo(Path.Combine(mWorkDir, mzXmlFileName));
 
                 if (!fiMzXmlFile.Exists)
                 {
-                    m_message = "mzXML file not found, " + fiMzXmlFile.FullName;
+                    mMessage = "mzXML file not found, " + fiMzXmlFile.FullName;
                     return false;
                 }
 
@@ -373,30 +373,30 @@ namespace AnalysisManagerMSDeconvPlugIn
                         // May need to renumber if the scan gap is every greater than one; not sure
 
                         // Rename the file
-                        fiMzXmlFile.MoveTo(Path.Combine(m_WorkDir, m_Dataset + "_old" + clsAnalysisResources.DOT_MZXML_EXTENSION));
+                        fiMzXmlFile.MoveTo(Path.Combine(mWorkDir, mDatasetName + "_old" + clsAnalysisResources.DOT_MZXML_EXTENSION));
                         fiMzXmlFile.Refresh();
-                        m_jobParams.AddResultFileToSkip(fiMzXmlFile.Name);
+                        mJobParams.AddResultFileToSkip(fiMzXmlFile.Name);
 
                         LogMessage(
                             "The mzXML file has an average scan gap of " + scanGapAverage.ToString("0.0") +
                             " scans; will update the file's scan numbers to be 1, 2, 3, etc.");
 
                         var converter = new clsRenumberMzXMLScans(fiMzXmlFile.FullName);
-                        var targetFilePath = Path.Combine(m_WorkDir, mzXmlFileName);
+                        var targetFilePath = Path.Combine(mWorkDir, mzXmlFileName);
                         var blnSuccess = converter.Process(targetFilePath);
 
                         if (!blnSuccess)
                         {
-                            m_message = converter.ErrorMessage;
-                            if (string.IsNullOrEmpty(m_message))
+                            mMessage = converter.ErrorMessage;
+                            if (string.IsNullOrEmpty(mMessage))
                             {
-                                m_message = "clsRenumberMzXMLScans returned false while renumbering the scans in the .mzXML file";
+                                mMessage = "clsRenumberMzXMLScans returned false while renumbering the scans in the .mzXML file";
                             }
 
                             return false;
                         }
 
-                        m_jobParams.AddResultFileToSkip(targetFilePath);
+                        mJobParams.AddResultFileToSkip(targetFilePath);
                     }
                 }
 
@@ -404,7 +404,7 @@ namespace AnalysisManagerMSDeconvPlugIn
             }
             catch (Exception ex)
             {
-                m_message = "Error renumbering the mzXML file: " + ex.Message;
+                mMessage = "Error renumbering the mzXML file: " + ex.Message;
                 LogError("Error in RenumberMzXMLIfRequired", ex);
                 return false;
             }
@@ -417,12 +417,12 @@ namespace AnalysisManagerMSDeconvPlugIn
             mMSDeconvVersion = string.Empty;
             mConsoleOutputErrorMsg = string.Empty;
 
-            var blnIncludeMS1Spectra = m_jobParams.GetJobParameter("MSDeconvIncludeMS1", false);
+            var blnIncludeMS1Spectra = mJobParams.GetJobParameter("MSDeconvIncludeMS1", false);
 
             LogMessage("Running MSDeconv");
 
             // Lookup the amount of memory to reserve for Java; default to 2 GB
-            var intJavaMemorySize = m_jobParams.GetJobParameter("MSDeconvJavaMemorySize", 2000);
+            var intJavaMemorySize = mJobParams.GetJobParameter("MSDeconvJavaMemorySize", 2000);
             if (intJavaMemorySize < 512)
                 intJavaMemorySize = 512;
 
@@ -431,7 +431,7 @@ namespace AnalysisManagerMSDeconvPlugIn
 
             // Define the input file and processing options
             // Note that capitalization matters for the extension; it must be .mzXML
-            cmdStr += " " + m_Dataset + clsAnalysisResources.DOT_MZXML_EXTENSION;
+            cmdStr += " " + mDatasetName + clsAnalysisResources.DOT_MZXML_EXTENSION;
             cmdStr += " -o " + strOutputFormat + " -t centroided";
 
             if (blnIncludeMS1Spectra)
@@ -441,7 +441,7 @@ namespace AnalysisManagerMSDeconvPlugIn
 
             LogDebug(JavaProgLoc + " " + cmdStr);
 
-            mCmdRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel);
+            mCmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel);
             RegisterEvents(mCmdRunner);
             mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
@@ -450,9 +450,9 @@ namespace AnalysisManagerMSDeconvPlugIn
             mCmdRunner.EchoOutputToConsole = true;
 
             mCmdRunner.WriteConsoleOutputToFile = true;
-            mCmdRunner.ConsoleOutputFilePath = Path.Combine(m_WorkDir, MSDECONV_CONSOLE_OUTPUT);
+            mCmdRunner.ConsoleOutputFilePath = Path.Combine(mWorkDir, MSDECONV_CONSOLE_OUTPUT);
 
-            m_progress = PROGRESS_PCT_STARTING;
+            mProgress = PROGRESS_PCT_STARTING;
 
             var blnSuccess = mCmdRunner.RunProgram(JavaProgLoc, cmdStr, "MSDeconv", true);
 
@@ -460,7 +460,7 @@ namespace AnalysisManagerMSDeconvPlugIn
             {
                 if (string.IsNullOrWhiteSpace(mMSDeconvVersion))
                 {
-                    ParseConsoleOutputFile(Path.Combine(m_WorkDir, MSDECONV_CONSOLE_OUTPUT));
+                    ParseConsoleOutputFile(Path.Combine(mWorkDir, MSDECONV_CONSOLE_OUTPUT));
                 }
                 mToolVersionWritten = StoreToolVersionInfo();
             }
@@ -480,7 +480,7 @@ namespace AnalysisManagerMSDeconvPlugIn
         /// <remarks></remarks>
         protected bool StoreToolVersionInfo()
         {
-            if (m_DebugLevel >= 2)
+            if (mDebugLevel >= 2)
             {
                 LogDebug("Determining tool version info");
             }
@@ -516,7 +516,7 @@ namespace AnalysisManagerMSDeconvPlugIn
             {
                 if (!File.Exists(strConsoleOutputFilePath))
                 {
-                    if (m_DebugLevel >= 4)
+                    if (mDebugLevel >= 4)
                     {
                         LogDebug("Console output file not found: " + strConsoleOutputFilePath);
                     }
@@ -524,7 +524,7 @@ namespace AnalysisManagerMSDeconvPlugIn
                     return;
                 }
 
-                if (m_DebugLevel >= 4)
+                if (mDebugLevel >= 4)
                 {
                     LogDebug("Trimming console output file at " + strConsoleOutputFilePath);
                 }
@@ -593,7 +593,7 @@ namespace AnalysisManagerMSDeconvPlugIn
                 }
                 catch (Exception ex)
                 {
-                    if (m_DebugLevel >= 1)
+                    if (mDebugLevel >= 1)
                     {
                         LogError("Error replacing original console output file (" + strConsoleOutputFilePath + ") with trimmed version: " + ex.Message);
                     }
@@ -602,7 +602,7 @@ namespace AnalysisManagerMSDeconvPlugIn
             catch (Exception ex)
             {
                 // Ignore errors here
-                if (m_DebugLevel >= 2)
+                if (mDebugLevel >= 2)
                 {
                     LogError("Error trimming console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
                 }
@@ -613,7 +613,7 @@ namespace AnalysisManagerMSDeconvPlugIn
 
         #region "Event Handlers"
 
-        private DateTime dtLastConsoleOutputParse = DateTime.MinValue;
+        private DateTime mLastConsoleOutputParse = DateTime.MinValue;
 
         /// <summary>
         /// Event handler for CmdRunner.LoopWaiting event
@@ -623,11 +623,11 @@ namespace AnalysisManagerMSDeconvPlugIn
         {
             UpdateStatusFile();
 
-            if (DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= 15)
+            if (DateTime.UtcNow.Subtract(mLastConsoleOutputParse).TotalSeconds >= 15)
             {
-                dtLastConsoleOutputParse = DateTime.UtcNow;
+                mLastConsoleOutputParse = DateTime.UtcNow;
 
-                ParseConsoleOutputFile(Path.Combine(m_WorkDir, MSDECONV_CONSOLE_OUTPUT));
+                ParseConsoleOutputFile(Path.Combine(mWorkDir, MSDECONV_CONSOLE_OUTPUT));
 
                 if (!mToolVersionWritten && !string.IsNullOrWhiteSpace(mMSDeconvVersion))
                 {

@@ -74,14 +74,14 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
         /// Constructor
         /// </summary>
         /// <remarks>Presently not used</remarks>
-        public clsCompassXportRunner(string WorkDir, string CompassXportProgramPath, string DatasetName, MSXMLOutputTypeConstants eOutputType,
-            bool CentroidMSXML)
+        public clsCompassXportRunner(string workDir, string compassXportProgramPath, string datasetName,
+                                     MSXMLOutputTypeConstants outputType, bool centroidMSXML)
         {
-            mWorkDir = WorkDir;
-            mCompassXportProgramPath = CompassXportProgramPath;
-            mDatasetName = DatasetName;
-            mOutputType = eOutputType;
-            mCentroidMSXML = CentroidMSXML;
+            mWorkDir = workDir;
+            mCompassXportProgramPath = compassXportProgramPath;
+            mDatasetName = datasetName;
+            mOutputType = outputType;
+            mCentroidMSXML = centroidMSXML;
 
             mErrorMessage = string.Empty;
         }
@@ -162,10 +162,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
                 cmdStr += " -raw 1";
             }
 
-            if (ProgRunnerStarting != null)
-            {
-                ProgRunnerStarting(mCompassXportProgramPath + cmdStr);
-            }
+            ProgRunnerStarting?.Invoke(mCompassXportProgramPath + cmdStr);
 
             cmdRunner.CreateNoWindow = true;
             cmdRunner.CacheStandardOutput = true;
@@ -250,10 +247,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
         /// <remarks></remarks>
         private void CmdRunner_LoopWaiting()
         {
-            if (LoopWaiting != null)
-            {
-                LoopWaiting();
-            }
+            LoopWaiting?.Invoke();
         }
 
         #endregion

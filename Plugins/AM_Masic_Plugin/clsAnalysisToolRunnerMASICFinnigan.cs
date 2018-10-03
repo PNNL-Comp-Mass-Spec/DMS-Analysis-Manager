@@ -28,11 +28,11 @@ namespace AnalysisManagerMasicPlugin
         {
             string parameterFilePath;
 
-            var parameterFileName = m_jobParams.GetParam("parmFileName");
+            var parameterFileName = mJobParams.GetParam("parmFileName");
 
             if (parameterFileName != null && parameterFileName.Trim().ToLower() != "na")
             {
-                parameterFilePath = Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"));
+                parameterFilePath = Path.Combine(mWorkDir, mJobParams.GetParam("parmFileName"));
             }
             else
             {
@@ -40,15 +40,15 @@ namespace AnalysisManagerMasicPlugin
             }
 
             // Determine the path to the .Raw file
-            var rawFileName = m_Dataset + ".raw";
-            var inputFilePath = clsAnalysisResources.ResolveStoragePath(m_WorkDir, rawFileName);
+            var rawFileName = mDatasetName + ".raw";
+            var inputFilePath = clsAnalysisResources.ResolveStoragePath(mWorkDir, rawFileName);
 
             if (string.IsNullOrWhiteSpace(inputFilePath))
             {
                 // Unable to resolve the file path
-                m_ErrorMessage = "Could not find " + rawFileName + " or " + rawFileName + clsAnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX +
+                mErrorMessage = "Could not find " + rawFileName + " or " + rawFileName + clsAnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX +
                                  " in the working folder; unable to run MASIC";
-                LogError(m_ErrorMessage);
+                LogError(mErrorMessage);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -57,8 +57,8 @@ namespace AnalysisManagerMasicPlugin
             if (!fiInputFile.Exists)
             {
                 // Unable to resolve the file path
-                m_ErrorMessage = "Could not find " + fiInputFile.FullName + "; unable to run MASIC";
-                LogError(m_ErrorMessage);
+                mErrorMessage = "Could not find " + fiInputFile.FullName + "; unable to run MASIC";
+                LogError(mErrorMessage);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -68,7 +68,7 @@ namespace AnalysisManagerMasicPlugin
                 ValidateParameterFile(parameterFilePath);
             }
 
-            var eCloseout = StartMASICAndWait(inputFilePath, m_WorkDir, parameterFilePath);
+            var eCloseout = StartMASICAndWait(inputFilePath, mWorkDir, parameterFilePath);
 
             return eCloseout;
         }
@@ -82,22 +82,22 @@ namespace AnalysisManagerMasicPlugin
         {
             var msXmlGeneratorAppPath = GetMSXmlGeneratorAppPath();
 
-            mMSXmlCreator = new AnalysisManagerMsXmlGenPlugIn.clsMSXMLCreator(msXmlGeneratorAppPath, m_WorkDir, m_Dataset, m_DebugLevel, m_jobParams);
+            mMSXmlCreator = new AnalysisManagerMsXmlGenPlugIn.clsMSXMLCreator(msXmlGeneratorAppPath, mWorkDir, mDatasetName, mDebugLevel, mJobParams);
             RegisterEvents(mMSXmlCreator);
-            mMSXmlCreator.LoopWaiting += mMSXmlCreator_LoopWaiting;
+            mMSXmlCreator.LoopWaiting += MSXmlCreator_LoopWaiting;
 
             var blnSuccess = mMSXmlCreator.CreateMZXMLFile();
 
-            if (!blnSuccess && string.IsNullOrEmpty(m_message))
+            if (!blnSuccess && string.IsNullOrEmpty(mMessage))
             {
-                m_message = mMSXmlCreator.ErrorMessage;
-                if (string.IsNullOrEmpty(m_message))
+                mMessage = mMSXmlCreator.ErrorMessage;
+                if (string.IsNullOrEmpty(mMessage))
                 {
-                    m_message = "Unknown error creating the mzXML file for dataset " + m_Dataset;
+                    mMessage = "Unknown error creating the mzXML file for dataset " + mDatasetName;
                 }
-                else if (!m_message.Contains(m_Dataset))
+                else if (!mMessage.Contains(mDatasetName))
                 {
-                    m_message += "; dataset " + m_Dataset;
+                    mMessage += "; dataset " + mDatasetName;
                 }
             }
 
@@ -107,7 +107,7 @@ namespace AnalysisManagerMasicPlugin
             var mzXMLFilePath = Path.ChangeExtension(fiThermoRawFile.FullName, "mzXML");
             if (!File.Exists(mzXMLFilePath))
             {
-                m_message = "MSXmlCreator did not create the .mzXML file";
+                mMessage = "MSXmlCreator did not create the .mzXML file";
                 return string.Empty;
             }
 
@@ -122,7 +122,7 @@ namespace AnalysisManagerMasicPlugin
         {
             try
             {
-                var FoundFiles = Directory.GetFiles(m_WorkDir, "*.raw");
+                var FoundFiles = Directory.GetFiles(mWorkDir, "*.raw");
                 foreach (var MyFile in FoundFiles)
                 {
                     DeleteFileWithRetries(MyFile);
@@ -138,7 +138,7 @@ namespace AnalysisManagerMasicPlugin
 
         #region "Event Handlers"
 
-        private void mMSXmlCreator_LoopWaiting()
+        private void MSXmlCreator_LoopWaiting()
         {
             UpdateStatusFile();
 

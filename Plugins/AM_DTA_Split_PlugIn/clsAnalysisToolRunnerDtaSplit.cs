@@ -59,11 +59,11 @@ namespace AnalysisManagerDtaSplitPlugIn
                 if (!StoreToolVersionInfo())
                 {
                     LogError("Aborting since StoreToolVersionInfo returned false");
-                    m_message = "Error determining DtaSplit version";
+                    mMessage = "Error determining DtaSplit version";
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                var strCDTAFile = Path.Combine(m_WorkDir, m_Dataset + "_dta.txt");
+                var strCDTAFile = Path.Combine(mWorkDir, mDatasetName + "_dta.txt");
 
                 // Make sure the _DTA.txt file is valid
                 if (!ValidateCDTAFile())
@@ -74,7 +74,7 @@ namespace AnalysisManagerDtaSplitPlugIn
                 int intSegmentCountToCreate;
                 try
                 {
-                    intSegmentCountToCreate = m_jobParams.GetJobParameter("NumberOfClonedSteps", 0);
+                    intSegmentCountToCreate = mJobParams.GetJobParameter("NumberOfClonedSteps", 0);
                     if (intSegmentCountToCreate == 0)
                     {
                         LogWarning("Setting 'NumberOfClonedSteps' not found in the job parameters; will assume NumberOfClonedSteps=4");
@@ -88,10 +88,10 @@ namespace AnalysisManagerDtaSplitPlugIn
                 }
 
                 // Note: blnSplitToEqualScanCounts is no longer used
-                // blnSplitToEqualScanCounts = m_jobParams.GetJobParameter("ClonedStepsHaveEqualNumSpectra", True)
+                // blnSplitToEqualScanCounts = mJobParams.GetJobParameter("ClonedStepsHaveEqualNumSpectra", True)
 
                 // Start the job timer
-                m_StartTime = DateTime.UtcNow;
+                mStartTime = DateTime.UtcNow;
 
                 var result = SplitCattedDtaFileIntoSegments(strCDTAFile, intSegmentCountToCreate);
 
@@ -101,7 +101,7 @@ namespace AnalysisManagerDtaSplitPlugIn
                 }
 
                 // Stop the job timer
-                m_StopTime = DateTime.UtcNow;
+                mStopTime = DateTime.UtcNow;
 
                 // Add the current job data to the summary file
                 UpdateSummaryFile();
@@ -115,7 +115,7 @@ namespace AnalysisManagerDtaSplitPlugIn
             }
             catch (Exception ex)
             {
-                m_message = "Error in DtaSplitPlugin->RunTool: " + ex.Message;
+                mMessage = "Error in DtaSplitPlugin->RunTool: " + ex.Message;
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -179,7 +179,7 @@ namespace AnalysisManagerDtaSplitPlugIn
                 if (intTargetSpectraPerSegment < 1)
                     intTargetSpectraPerSegment = 1;
 
-                if (m_DebugLevel >= 1)
+                if (mDebugLevel >= 1)
                 {
                     var strSegmentDescription = "spectra per segment = " + intTargetSpectraPerSegment;
                     LogDebug(
@@ -285,7 +285,7 @@ namespace AnalysisManagerDtaSplitPlugIn
             try
             {
 
-                if (m_DebugLevel >= 2)
+                if (mDebugLevel >= 2)
                 {
                     LogDebug("Counting the number of spectra in the source _Dta.txt file: " + Path.GetFileName(strSourceFilePath));
                 }
@@ -306,7 +306,7 @@ namespace AnalysisManagerDtaSplitPlugIn
                         }
                     }
 
-                    if (m_DebugLevel >= 1)
+                    if (mDebugLevel >= 1)
                     {
                         LogDebug("Spectrum count in source _Dta.txt file: " + intSpectraCount);
                     }
@@ -339,7 +339,7 @@ namespace AnalysisManagerDtaSplitPlugIn
                     LogWarning("Warning: Split DTA file already exists " + strFilePath);
                 }
 
-                if (m_DebugLevel >= 3)
+                if (mDebugLevel >= 3)
                 {
                     LogDebug("Creating split DTA file " + strFileName);
                 }
@@ -358,10 +358,10 @@ namespace AnalysisManagerDtaSplitPlugIn
 
         private string GetNewSplitDTAFileName(int fileNameCounter)
         {
-            var strFileName = m_Dataset + "_" + Convert.ToString(fileNameCounter) + "_dta.txt";
-            m_jobParams.AddResultFileToKeep(strFileName);
+            var strFileName = mDatasetName + "_" + Convert.ToString(fileNameCounter) + "_dta.txt";
+            mJobParams.AddResultFileToKeep(strFileName);
 
-            var strFilePath = Path.Combine(m_WorkDir, strFileName);
+            var strFilePath = Path.Combine(mWorkDir, strFileName);
 
             return strFilePath;
         }

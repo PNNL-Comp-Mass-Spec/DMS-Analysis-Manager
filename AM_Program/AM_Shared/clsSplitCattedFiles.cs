@@ -25,7 +25,7 @@ namespace AnalysisManagerBase
         private readonly Regex mFileNameParts;
         private readonly Regex mDTAFirstLine;
 
-        private int m_ResultsFileCount;
+        private int mResultsFileCount;
 
         /// <summary>
         /// Constructor
@@ -98,7 +98,7 @@ namespace AnalysisManagerBase
             var fi = new FileInfo(fullPath);
             if (fi.Exists)
             {
-                if (m_ResultsFileCount <= 0)
+                if (mResultsFileCount <= 0)
                 {
                     CountOutFiles(fullPath);
                 }
@@ -152,7 +152,7 @@ namespace AnalysisManagerBase
             var fi = new FileInfo(fullPath);
             if (fi.Exists)
             {
-                if (m_ResultsFileCount <= 0)
+                if (mResultsFileCount <= 0)
                 {
                     CountOutFiles(fullPath);
                 }
@@ -315,7 +315,7 @@ namespace AnalysisManagerBase
 
             if (!fi.Exists)
             {
-                m_ResultsFileCount = 0;
+                mResultsFileCount = 0;
                 return;
             }
 
@@ -329,7 +329,7 @@ namespace AnalysisManagerBase
                 }
             }
 
-            m_ResultsFileCount = outFileCount;
+            mResultsFileCount = outFileCount;
         }
 
     }

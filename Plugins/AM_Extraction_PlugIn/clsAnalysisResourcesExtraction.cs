@@ -47,7 +47,7 @@ namespace AnalysisManagerExtractionPlugin
         protected bool mRetrieveOrganismDB;
 
         // Keys are the original file name, values are the new name
-        protected Dictionary<string, string> m_PendingFileRenames;
+        protected Dictionary<string, string> mPendingFileRenames;
 
         /// <summary>
         /// Initialize options
@@ -79,7 +79,7 @@ namespace AnalysisManagerExtractionPlugin
                 return false;
             }
 
-            m_StatusTools.CurrentOperation = "Checking whether we should run AScore after Data Extraction";
+            mStatusTools.CurrentOperation = "Checking whether we should run AScore after Data Extraction";
 
             bool runAscore;
 
@@ -129,7 +129,7 @@ namespace AnalysisManagerExtractionPlugin
             try
             {
 
-                if (m_DebugLevel >= 2)
+                if (mDebugLevel >= 2)
                 {
                     LogDebug("Reading the MSGF+ parameter file: " + searchToolParamFilePath);
                 }
@@ -148,7 +148,7 @@ namespace AnalysisManagerExtractionPlugin
                         // Check whether this line has HO3P or mod mass 79.966 on S, T, or Y
                         // Alternatively, if the mod name is Phospho assume this is a phosphorylation search
 
-                        if (m_DebugLevel >= 3)
+                        if (mDebugLevel >= 3)
                         {
                             LogDebug("MSGF+ " + DYNAMICMOD_TAG + " line found: " + lineIn);
                         }
@@ -236,7 +236,7 @@ namespace AnalysisManagerExtractionPlugin
             try
             {
 
-                if (m_DebugLevel >= 2)
+                if (mDebugLevel >= 2)
                 {
                     LogDebug("Reading the SEQUEST parameter file: " + searchToolParamFilePath);
                 }
@@ -253,7 +253,7 @@ namespace AnalysisManagerExtractionPlugin
 
                         // Check whether the dynamic mods line has 79.9663 STY (or similar)
 
-                        if (m_DebugLevel >= 3)
+                        if (mDebugLevel >= 3)
                         {
                             LogDebug("SEQUEST " + DIFF_SEARCH_OPTIONS_TAG + " line found: " + lineIn);
                         }
@@ -331,7 +331,7 @@ namespace AnalysisManagerExtractionPlugin
             try
             {
 
-                if (m_DebugLevel >= 2)
+                if (mDebugLevel >= 2)
                 {
                     LogDebug("Reading the X!Tandem parameter file: " + searchToolParamFilePath);
                 }
@@ -452,9 +452,9 @@ namespace AnalysisManagerExtractionPlugin
             // Set this to true for now
             // It will be changed to False if processing Inspect results and the _PepToProtMap.txt file is successfully retrieved
             mRetrieveOrganismDB = true;
-            m_PendingFileRenames = new Dictionary<string, string>();
+            mPendingFileRenames = new Dictionary<string, string>();
 
-            var resultType = m_jobParams.GetParam("ResultType");
+            var resultType = mJobParams.GetParam("ResultType");
 
             // Get analysis results files
             if (GetInputFiles(resultType, out var createPepToProtMapFile) != CloseOutType.CLOSEOUT_SUCCESS)
@@ -468,24 +468,24 @@ namespace AnalysisManagerExtractionPlugin
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
-            if (!ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+            if (!ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
             {
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
-            foreach (var entry in m_PendingFileRenames)
+            foreach (var entry in mPendingFileRenames)
             {
-                var sourceFile = new FileInfo(Path.Combine(m_WorkingDir, entry.Key));
+                var sourceFile = new FileInfo(Path.Combine(mWorkDir, entry.Key));
                 if (sourceFile.Exists)
                 {
-                    sourceFile.MoveTo(Path.Combine(m_WorkingDir, entry.Value));
+                    sourceFile.MoveTo(Path.Combine(mWorkDir, entry.Value));
                 }
             }
 
             if (!mRetrieveOrganismDB)
                 return CloseOutType.CLOSEOUT_SUCCESS;
 
-            var skipProteinMods = m_jobParams.GetJobParameter("SkipProteinMods", false);
+            var skipProteinMods = mJobParams.GetJobParameter("SkipProteinMods", false);
             if (!skipProteinMods || createPepToProtMapFile)
             {
                 // Examine the FASTA file size
@@ -493,12 +493,12 @@ namespace AnalysisManagerExtractionPlugin
                 const float MAX_LEGACY_FASTA_SIZE_GB = 2;
 
                 // Retrieve the Fasta file; required to create the _ProteinMods.txt file
-                var orgDbDirectoryPath = m_mgrParams.GetParam("orgdbdir");
+                var orgDbDirectoryPath = mMgrParams.GetParam("OrgDbDir");
                 if (!RetrieveOrgDB(orgDbDirectoryPath, out var resultCode, MAX_LEGACY_FASTA_SIZE_GB, out var fastaFileSizeGB))
                 {
                     if (fastaFileSizeGB >= MAX_LEGACY_FASTA_SIZE_GB)
                     {
-                        m_jobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "SkipProteinMods", "true");
+                        mJobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "SkipProteinMods", "true");
                         return CloseOutType.CLOSEOUT_SUCCESS;
                     }
 
@@ -522,7 +522,7 @@ namespace AnalysisManagerExtractionPlugin
 
             try
             {
-                var inputFolderName = m_jobParams.GetParam("inputFolderName");
+                var inputFolderName = mJobParams.GetParam("inputFolderName");
                 if (string.IsNullOrWhiteSpace(inputFolderName))
                 {
                     LogError("Input_Folder is not defined for this job step (job parameter inputFolderName); cannot retrieve input files");
@@ -562,7 +562,7 @@ namespace AnalysisManagerExtractionPlugin
 
                     case RESULT_TYPE_MSPATHFINDER:
                         result = GetMSPathFinderFiles();
-                        m_jobParams.AddResultFileExtensionToSkip(".tsv");
+                        mJobParams.AddResultFileExtensionToSkip(".tsv");
                         break;
 
                     default:
@@ -598,12 +598,12 @@ namespace AnalysisManagerExtractionPlugin
             // Note that we'll obtain the SEQUEST parameter file in RetrieveMiscFiles
 
             // Add all the extensions of the files to delete after run
-            m_jobParams.AddResultFileExtensionToSkip("_dta.zip");    // Zipped DTA
-            m_jobParams.AddResultFileExtensionToSkip("_dta.txt");    // Unzipped, concatenated DTA
-            m_jobParams.AddResultFileExtensionToSkip("_out.zip");    // Zipped OUT
-            m_jobParams.AddResultFileExtensionToSkip("_out.txt");    // Unzipped, concatenated OUT
-            m_jobParams.AddResultFileExtensionToSkip(".dta");        // DTA files
-            m_jobParams.AddResultFileExtensionToSkip(".out");        // DTA files
+            mJobParams.AddResultFileExtensionToSkip("_dta.zip");    // Zipped DTA
+            mJobParams.AddResultFileExtensionToSkip("_dta.txt");    // Unzipped, concatenated DTA
+            mJobParams.AddResultFileExtensionToSkip("_out.zip");    // Zipped OUT
+            mJobParams.AddResultFileExtensionToSkip("_out.txt");    // Unzipped, concatenated OUT
+            mJobParams.AddResultFileExtensionToSkip(".dta");        // DTA files
+            mJobParams.AddResultFileExtensionToSkip(".out");        // DTA files
 
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
@@ -616,10 +616,10 @@ namespace AnalysisManagerExtractionPlugin
                 // Errors were reported in function call, so just return
                 return CloseOutType.CLOSEOUT_NO_XT_FILES;
             }
-            m_jobParams.AddResultFileToSkip(fileToGet);
+            mJobParams.AddResultFileToSkip(fileToGet);
 
             // Manually adding this file to FilesToDelete; we don't want the unzipped .xml file to be copied to the server
-            m_jobParams.AddResultFileToSkip(DatasetName + "_xt.xml");
+            mJobParams.AddResultFileToSkip(DatasetName + "_xt.xml");
 
             // Note that we'll obtain the X!Tandem parameter file in RetrieveMiscFiles
 
@@ -630,9 +630,9 @@ namespace AnalysisManagerExtractionPlugin
                 // Errors were reported in function call, so just return
                 return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
             }
-            m_jobParams.AddResultFileToSkip(fileToGet);
+            mJobParams.AddResultFileToSkip(fileToGet);
 
-            if (!CopyFileToWorkDir("default_input.xml", m_jobParams.GetParam("ParmFileStoragePath"), m_WorkingDir))
+            if (!CopyFileToWorkDir("default_input.xml", mJobParams.GetParam("ParmFileStoragePath"), mWorkDir))
             {
                 LogError("Failed retrieving default_input.xml file");
                 return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
@@ -652,7 +652,7 @@ namespace AnalysisManagerExtractionPlugin
                 // Errors were reported in function call, so just return
                 return CloseOutType.CLOSEOUT_NO_INSP_FILES;
             }
-            m_jobParams.AddResultFileToSkip(fileToGet);
+            mJobParams.AddResultFileToSkip(fileToGet);
 
             // This file contains top hit for each scan (no filters)
             fileToGet = DatasetName + "_inspect_fht.zip";
@@ -661,7 +661,7 @@ namespace AnalysisManagerExtractionPlugin
                 // Errors were reported in function call, so just return
                 return CloseOutType.CLOSEOUT_NO_INSP_FILES;
             }
-            m_jobParams.AddResultFileToSkip(fileToGet);
+            mJobParams.AddResultFileToSkip(fileToGet);
 
             // Get the peptide to protein mapping file
             fileToGet = DatasetName + "_inspect_PepToProtMap.txt";
@@ -670,7 +670,7 @@ namespace AnalysisManagerExtractionPlugin
                 // Errors were reported in function call
 
                 // See if IgnorePeptideToProteinMapError=True
-                if (m_jobParams.GetJobParameter("IgnorePeptideToProteinMapError", false))
+                if (mJobParams.GetJobParameter("IgnorePeptideToProteinMapError", false))
                 {
                     LogWarning(
                         "Ignoring missing _PepToProtMap.txt file since 'IgnorePeptideToProteinMapError' = True");
@@ -685,7 +685,7 @@ namespace AnalysisManagerExtractionPlugin
                 // The OrgDB (aka fasta file) is not required
                 mRetrieveOrganismDB = false;
             }
-            m_jobParams.AddResultFileToSkip(fileToGet);
+            mJobParams.AddResultFileToSkip(fileToGet);
 
             // Note that we'll obtain the Inspect parameter file in RetrieveMiscFiles
 
@@ -700,15 +700,15 @@ namespace AnalysisManagerExtractionPlugin
                 // Errors were reported in function call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
-            m_jobParams.AddResultFileToSkip(fileToGet);
-            m_jobParams.AddResultFileExtensionToSkip("_moda.txt");
+            mJobParams.AddResultFileToSkip(fileToGet);
+            mJobParams.AddResultFileExtensionToSkip("_moda.txt");
 
             fileToGet = DatasetName + "_mgf_IndexToScanMap.txt";
             if (!FileSearch.FindAndRetrieveMiscFiles(fileToGet, false))
             {
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
-            m_jobParams.AddResultFileToSkip(fileToGet);
+            mJobParams.AddResultFileToSkip(fileToGet);
 
             // Note that we'll obtain the MODa parameter file in RetrieveMiscFiles
 
@@ -723,12 +723,12 @@ namespace AnalysisManagerExtractionPlugin
                 // Errors were reported in function call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
-            m_jobParams.AddResultFileToSkip(fileToGet);
-            m_jobParams.AddResultFileExtensionToSkip("_modp.txt");
+            mJobParams.AddResultFileToSkip(fileToGet);
+            mJobParams.AddResultFileExtensionToSkip("_modp.txt");
 
             // Delete the MSConvert_ConsoleOutput.txt and MODPlus_ConsoleOutput files that were in the zip file; we don't need them
 
-            var diWorkDir = new DirectoryInfo(m_WorkingDir);
+            var diWorkDir = new DirectoryInfo(mWorkDir);
             var filesToDelete = new List<FileInfo>();
 
             filesToDelete.AddRange(diWorkDir.GetFiles("MODPlus_ConsoleOutput_Part*.txt"));
@@ -750,7 +750,7 @@ namespace AnalysisManagerExtractionPlugin
             var currentStep = "Initializing";
             createPepToProtMapFile = false;
 
-            var splitFastaEnabled = m_jobParams.GetJobParameter("SplitFasta", false);
+            var splitFastaEnabled = mJobParams.GetJobParameter("SplitFasta", false);
 
             var numberOfClonedSteps = 1;
             var lastProgressTime = DateTime.UtcNow;
@@ -760,7 +760,7 @@ namespace AnalysisManagerExtractionPlugin
                 string suffixToAdd;
                 if (splitFastaEnabled)
                 {
-                    numberOfClonedSteps = m_jobParams.GetJobParameter("NumberOfClonedSteps", 0);
+                    numberOfClonedSteps = mJobParams.GetJobParameter("NumberOfClonedSteps", 0);
                     if (numberOfClonedSteps == 0)
                     {
                         LogError("Settings file is missing parameter NumberOfClonedSteps; cannot retrieve MSGFPlus results");
@@ -889,14 +889,14 @@ namespace AnalysisManagerExtractionPlugin
                                 if (DateTime.UtcNow.Subtract(fiTSVFile.LastWriteTimeUtc).TotalHours < 4)
                                 {
                                     // File is recent; grab it
-                                    if (!CopyFileToWorkDir(tsvFile, tsvSourceDir, m_WorkingDir))
+                                    if (!CopyFileToWorkDir(tsvFile, tsvSourceDir, mWorkDir))
                                     {
                                         // File copy failed; that's OK; we'll grab the _msgfplus.mzid.gz file
                                     }
                                     else
                                     {
                                         skipMSGFResultsZipFileCopy = true;
-                                        m_jobParams.AddResultFileToSkip(tsvFile);
+                                        mJobParams.AddResultFileToSkip(tsvFile);
 
                                         if (fiTSVFile.LastWriteTimeUtc > newestMzIdOrTsvFile)
                                         {
@@ -905,7 +905,7 @@ namespace AnalysisManagerExtractionPlugin
                                     }
                                 }
 
-                                m_jobParams.AddServerFileToDelete(fiTSVFile.FullName);
+                                mJobParams.AddServerFileToDelete(fiTSVFile.FullName);
                             }
                         }
                     }
@@ -922,9 +922,9 @@ namespace AnalysisManagerExtractionPlugin
                             // Errors were reported in function call, so just return
                             return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                         }
-                        m_jobParams.AddResultFileToSkip(mzidFile);
+                        mJobParams.AddResultFileToSkip(mzidFile);
 
-                        var fiMzidFile = new FileInfo(Path.Combine(m_WorkingDir, mzidFile));
+                        var fiMzidFile = new FileInfo(Path.Combine(mWorkDir, mzidFile));
                         if (!fiMzidFile.Exists)
                         {
                             LogError(string.Format(
@@ -946,19 +946,19 @@ namespace AnalysisManagerExtractionPlugin
                     // Manually add several files to skip
                     if (splitFastaEnabled)
                     {
-                        m_jobParams.AddResultFileToSkip(DatasetName + "_msgfplus_Part" + iteration + ".txt");
-                        m_jobParams.AddResultFileToSkip(DatasetName + "_msgfplus_Part" + iteration + ".mzid");
-                        m_jobParams.AddResultFileToSkip(DatasetName + "_msgfplus_Part" + iteration + ".tsv");
-                        m_jobParams.AddResultFileToSkip(DatasetName + "_msgfdb_Part" + iteration + ".txt");
-                        m_jobParams.AddResultFileToSkip(DatasetName + "_msgfdb_Part" + iteration + ".tsv");
+                        mJobParams.AddResultFileToSkip(DatasetName + "_msgfplus_Part" + iteration + ".txt");
+                        mJobParams.AddResultFileToSkip(DatasetName + "_msgfplus_Part" + iteration + ".mzid");
+                        mJobParams.AddResultFileToSkip(DatasetName + "_msgfplus_Part" + iteration + ".tsv");
+                        mJobParams.AddResultFileToSkip(DatasetName + "_msgfdb_Part" + iteration + ".txt");
+                        mJobParams.AddResultFileToSkip(DatasetName + "_msgfdb_Part" + iteration + ".tsv");
                     }
                     else
                     {
-                        m_jobParams.AddResultFileToSkip(DatasetName + "_msgfplus.txt");
-                        m_jobParams.AddResultFileToSkip(DatasetName + "_msgfplus.mzid");
-                        m_jobParams.AddResultFileToSkip(DatasetName + "_msgfplus.tsv");
-                        m_jobParams.AddResultFileToSkip(DatasetName + "_msgfdb.txt");
-                        m_jobParams.AddResultFileToSkip(DatasetName + "_msgfdb.tsv");
+                        mJobParams.AddResultFileToSkip(DatasetName + "_msgfplus.txt");
+                        mJobParams.AddResultFileToSkip(DatasetName + "_msgfplus.mzid");
+                        mJobParams.AddResultFileToSkip(DatasetName + "_msgfplus.tsv");
+                        mJobParams.AddResultFileToSkip(DatasetName + "_msgfdb.txt");
+                        mJobParams.AddResultFileToSkip(DatasetName + "_msgfdb.tsv");
                     }
 
                     // Get the peptide to protein mapping file
@@ -983,12 +983,12 @@ namespace AnalysisManagerExtractionPlugin
                         if (!ignorePepToProtMapErrors)
                         {
                             // See if IgnorePeptideToProteinMapError=True
-                            if (m_jobParams.GetJobParameter("IgnorePeptideToProteinMapError", false))
+                            if (mJobParams.GetJobParameter("IgnorePeptideToProteinMapError", false))
                             {
                                 LogWarning(
                                     "Ignoring missing _PepToProtMap.txt file since 'IgnorePeptideToProteinMapError' = True");
                             }
-                            else if (m_jobParams.GetJobParameter("SkipProteinMods", false))
+                            else if (mJobParams.GetJobParameter("SkipProteinMods", false))
                             {
                                 LogWarning(
                                     "Ignoring missing _PepToProtMap.txt file since 'SkipProteinMods' = True");
@@ -1010,7 +1010,7 @@ namespace AnalysisManagerExtractionPlugin
                         if (splitFastaEnabled && !string.IsNullOrWhiteSpace(sourceDir))
                         {
                             var fiPepToProtMapFile = new FileInfo(Path.Combine(sourceDir, pepToProtMapFile));
-                            m_jobParams.AddServerFileToDelete(fiPepToProtMapFile.FullName);
+                            mJobParams.AddServerFileToDelete(fiPepToProtMapFile.FullName);
                         }
                     }
 
@@ -1026,7 +1026,7 @@ namespace AnalysisManagerExtractionPlugin
                             // This is not an important error; ignore it
                         }
 
-                        m_jobParams.AddResultFileToSkip(consoleOutputFile);
+                        mJobParams.AddResultFileToSkip(consoleOutputFile);
                     }
 
                     var subTaskProgress = iteration / (float)numberOfClonedSteps * 100;
@@ -1036,7 +1036,7 @@ namespace AnalysisManagerExtractionPlugin
                     {
                         lastProgressTime = DateTime.UtcNow;
 
-                        m_StatusTools.UpdateAndWrite(EnumMgrStatus.RUNNING, EnumTaskStatus.RUNNING, EnumTaskStatusDetail.RUNNING_TOOL,
+                        mStatusTools.UpdateAndWrite(EnumMgrStatus.RUNNING, EnumTaskStatus.RUNNING, EnumTaskStatusDetail.RUNNING_TOOL,
                                                      progressOverall, 0, "", "", "", false);
                     }
 
@@ -1112,7 +1112,7 @@ namespace AnalysisManagerExtractionPlugin
                                              oldestPhrpFile.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT),
                                              newestMzIdOrTsvFile.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT)));
 
-                    m_jobParams.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, JOB_PARAM_SKIP_PHRP, true);
+                    mJobParams.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, JOB_PARAM_SKIP_PHRP, true);
                 }
 
                 // Note that we'll obtain the MSGF+ parameter file in RetrieveMiscFiles
@@ -1135,7 +1135,7 @@ namespace AnalysisManagerExtractionPlugin
                 // Errors were reported in function call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
-            m_jobParams.AddResultFileToSkip(fileToGet);
+            mJobParams.AddResultFileToSkip(fileToGet);
 
             // Note that we'll obtain the MSAlign parameter file in RetrieveMiscFiles
 
@@ -1152,8 +1152,8 @@ namespace AnalysisManagerExtractionPlugin
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
-            m_jobParams.AddResultFileToSkip(fileToGet);
-            m_jobParams.AddResultFileExtensionToSkip(".tsv");
+            mJobParams.AddResultFileToSkip(fileToGet);
+            mJobParams.AddResultFileExtensionToSkip(".tsv");
 
             // Note that we'll obtain the MSPathFinder parameter file in RetrieveMiscFiles
 
@@ -1168,20 +1168,20 @@ namespace AnalysisManagerExtractionPlugin
             if (FileSearch.RetrieveDtaFiles())
                 return CloseOutType.CLOSEOUT_SUCCESS;
 
-            var sharedResultsFolders = m_jobParams.GetParam(JOB_PARAM_SHARED_RESULTS_FOLDERS);
+            var sharedResultsFolders = mJobParams.GetParam(JOB_PARAM_SHARED_RESULTS_FOLDERS);
             if (string.IsNullOrEmpty(sharedResultsFolders))
             {
-                m_message = clsGlobal.AppendToComment(m_message, "Job parameter SharedResultsFolders is empty");
+                mMessage = clsGlobal.AppendToComment(mMessage, "Job parameter SharedResultsFolders is empty");
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
             if (sharedResultsFolders.Contains(","))
             {
-                m_message = clsGlobal.AppendToComment(m_message, "shared results folders: " + sharedResultsFolders);
+                mMessage = clsGlobal.AppendToComment(mMessage, "shared results folders: " + sharedResultsFolders);
             }
             else
             {
-                m_message = clsGlobal.AppendToComment(m_message, "shared results folder " + sharedResultsFolders);
+                mMessage = clsGlobal.AppendToComment(mMessage, "shared results folder " + sharedResultsFolders);
             }
 
             // Errors were reported in function call, so just return
@@ -1200,37 +1200,37 @@ namespace AnalysisManagerExtractionPlugin
         //{
         //    try
         //    {
-        //        var paramFileStoragePath = m_jobParams.GetParam("ParmFileStoragePath");
+        //        var paramFileStoragePath = mJobParams.GetParam("ParmFileStoragePath");
         //        var ioFolderInfo = new DirectoryInfo(paramFileStoragePath).Parent;
         //
         //        var ioSubfolders = ioFolderInfo.GetDirectories("MassCorrectionTags");
         //
         //        if (ioSubfolders.Length == 0)
         //        {
-        //            m_message = "MassCorrectionTags folder not found at " + ioFolderInfo.FullName;
-        //            LogError(m_message);
+        //            mMessage = "MassCorrectionTags folder not found at " + ioFolderInfo.FullName;
+        //            LogError(mMessage);
         //            return false;
         //        }
         //
         //        var ioFiles = ioSubfolders[0].GetFiles(MASS_CORRECTION_TAGS_FILENAME);
         //        if (ioFiles.Length == 0)
         //        {
-        //            m_message = MASS_CORRECTION_TAGS_FILENAME + " file not found at " + ioSubfolders[0].FullName;
-        //            LogError(m_message);
+        //            mMessage = MASS_CORRECTION_TAGS_FILENAME + " file not found at " + ioSubfolders[0].FullName;
+        //            LogError(mMessage);
         //            return false;
         //        }
         //
-        //        if (m_DebugLevel >= 1)
+        //        if (mDebugLevel >= 1)
         //        {
         //            LogError("Retrieving default Mass Correction Tags file from " + ioFiles[0].FullName);
         //        }
         //
-        //        ioFiles[0].CopyTo(Path.Combine(m_WorkingDir, ioFiles[0].Name));
+        //        ioFiles[0].CopyTo(Path.Combine(mWorkDir, ioFiles[0].Name));
         //    }
         //    catch (Exception ex)
         //    {
-        //        m_message = "Error retrieving " + MASS_CORRECTION_TAGS_FILENAME;
-        //        LogError(m_message + ": " + ex.Message);
+        //        mMessage = "Error retrieving " + MASS_CORRECTION_TAGS_FILENAME;
+        //        LogError(mMessage + ": " + ex.Message);
         //        return false;
         //    }
         //
@@ -1262,7 +1262,7 @@ namespace AnalysisManagerExtractionPlugin
         /// <remarks></remarks>
         protected internal CloseOutType RetrieveMiscFiles(string resultType)
         {
-            var paramFileName = m_jobParams.GetParam("ParmFileName");
+            var paramFileName = mJobParams.GetParam("ParmFileName");
             var modDefsFilename = Path.GetFileNameWithoutExtension(paramFileName) + MOD_DEFS_FILE_SUFFIX;
 
             try
@@ -1287,7 +1287,7 @@ namespace AnalysisManagerExtractionPlugin
                 }
 
                 // Confirm that the file was actually created
-                var fiModDefsFile = new FileInfo(Path.Combine(m_WorkingDir, modDefsFilename));
+                var fiModDefsFile = new FileInfo(Path.Combine(mWorkDir, modDefsFilename));
 
                 if (!fiModDefsFile.Exists && resultType == RESULT_TYPE_MSPATHFINDER)
                 {
@@ -1305,14 +1305,14 @@ namespace AnalysisManagerExtractionPlugin
 
                 if (!fiModDefsFile.Exists && resultType != RESULT_TYPE_MSALIGN)
                 {
-                    m_message = "Unable to create the ModDefs.txt file; update T_Param_File_Mass_Mods";
+                    mMessage = "Unable to create the ModDefs.txt file; update T_Param_File_Mass_Mods";
                     LogWarning("Unable to create the ModDefs.txt file; " +
                                "define the modifications in table T_Param_File_Mass_Mods for parameter file " + paramFileName);
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
 
-                m_jobParams.AddResultFileToSkip(paramFileName);
-                m_jobParams.AddResultFileToSkip(MASS_CORRECTION_TAGS_FILENAME);
+                mJobParams.AddResultFileToSkip(paramFileName);
+                mJobParams.AddResultFileToSkip(MASS_CORRECTION_TAGS_FILENAME);
 
                 var logModFilesFileNotFound = (resultType == RESULT_TYPE_MSALIGN);
 
@@ -1326,35 +1326,35 @@ namespace AnalysisManagerExtractionPlugin
                     if (fiModDefsFile.Length == 0)
                     {
                         // File is empty; no point in keeping it
-                        m_jobParams.AddResultFileToSkip(modDefsFilename);
+                        mJobParams.AddResultFileToSkip(modDefsFilename);
                     }
                 }
                 else if (remoteModDefsDirectory.ToLower().StartsWith(@"\\proto"))
                 {
                     if (clsGlobal.FilesMatch(fiModDefsFile.FullName, Path.Combine(remoteModDefsDirectory, modDefsFilename)))
                     {
-                        m_jobParams.AddResultFileToSkip(modDefsFilename);
+                        mJobParams.AddResultFileToSkip(modDefsFilename);
                     }
                 }
 
                 // Examine the parameter file to check whether a phospho STY search was performed
                 // If so, retrieving the instrument data file so that we can run AScore
 
-                var runAScore = CheckAScoreRequired(resultType, Path.Combine(m_WorkingDir, paramFileName));
+                var runAScore = CheckAScoreRequired(resultType, Path.Combine(mWorkDir, paramFileName));
 
                 if (!runAScore)
                     return CloseOutType.CLOSEOUT_SUCCESS;
 
-                m_jobParams.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, JOB_PARAM_RUN_ASCORE, true);
+                mJobParams.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, JOB_PARAM_RUN_ASCORE, true);
 
                 // If existing PHRP files were found and SkipPHRP was set to true,
                 // assure that a .mzid or .mzid.gz file exists in the working directory
                 // If one is not found, change SkipPHRP back to false
-                var skipPHRPEnabled = m_jobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, JOB_PARAM_SKIP_PHRP, false);
+                var skipPHRPEnabled = mJobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, JOB_PARAM_SKIP_PHRP, false);
 
                 if (skipPHRPEnabled)
                 {
-                    var workDir = new DirectoryInfo(m_WorkingDir);
+                    var workDir = new DirectoryInfo(mWorkDir);
 
                     var mzidGzFiles = workDir.GetFiles(DatasetName + "*.mzid.gz");
                     var mzidFiles = workDir.GetFiles(DatasetName + "*.mzid");
@@ -1363,7 +1363,7 @@ namespace AnalysisManagerExtractionPlugin
                     {
                         LogWarning(string.Format("Changing job parameter {0} back to False because no .mzid files were found",
                                                  JOB_PARAM_SKIP_PHRP));
-                        m_jobParams.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, JOB_PARAM_SKIP_PHRP, false);
+                        mJobParams.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, JOB_PARAM_SKIP_PHRP, false);
                     }
                 }
 
@@ -1373,7 +1373,7 @@ namespace AnalysisManagerExtractionPlugin
                 // Retrieve the instrument data file
 
                 // The ToolName job parameter holds the name of the job script we are executing
-                var scriptName = m_jobParams.GetParam("ToolName");
+                var scriptName = mJobParams.GetParam("ToolName");
 
                 CloseOutType result;
 
@@ -1412,7 +1412,7 @@ namespace AnalysisManagerExtractionPlugin
                 var toolVersionFile = clsPHRPReader.GetToolVersionInfoFilename(resultType);
                 var toolVersionFileNewName = string.Empty;
 
-                var toolNameForScript = m_jobParams.GetJobParameter("ToolName", string.Empty);
+                var toolNameForScript = mJobParams.GetJobParameter("ToolName", string.Empty);
                 if (resultType == clsPHRPReader.ePeptideHitResultType.MSGFDB && toolNameForScript == "MSGFPlus_IMS")
                 {
                     // PeptideListToXML expects the ToolVersion file to be named "Tool_Version_Info_MSGFPlus.txt"
@@ -1426,7 +1426,7 @@ namespace AnalysisManagerExtractionPlugin
 
                 if (success && !string.IsNullOrEmpty(toolVersionFileNewName))
                 {
-                    m_PendingFileRenames.Add(toolVersionFile, toolVersionFileNewName);
+                    mPendingFileRenames.Add(toolVersionFile, toolVersionFileNewName);
 
                     toolVersionFile = toolVersionFileNewName;
                 }
@@ -1439,13 +1439,13 @@ namespace AnalysisManagerExtractionPlugin
                         if (success)
                         {
                             // Rename the Tool_Version file to the expected name (Tool_Version_Info_MSGFPlus.txt)
-                            m_PendingFileRenames.Add(toolVersionFileLegacy, toolVersionFile);
-                            m_jobParams.AddResultFileToSkip(toolVersionFileLegacy);
+                            mPendingFileRenames.Add(toolVersionFileLegacy, toolVersionFile);
+                            mJobParams.AddResultFileToSkip(toolVersionFileLegacy);
                         }
                     }
                 }
 
-                m_jobParams.AddResultFileToSkip(toolVersionFile);
+                mJobParams.AddResultFileToSkip(toolVersionFile);
             }
             catch (Exception ex)
             {

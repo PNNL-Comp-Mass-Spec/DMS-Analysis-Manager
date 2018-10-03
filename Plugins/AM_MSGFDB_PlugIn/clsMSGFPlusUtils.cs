@@ -123,11 +123,11 @@ namespace AnalysisManagerMSGFDBPlugIn
 
         #region "Module Variables"
 
-        private readonly IMgrParams m_mgrParams;
-        private readonly IJobParams m_jobParams;
+        private readonly IMgrParams mMgrParams;
+        private readonly IJobParams mJobParams;
 
-        private readonly string m_WorkDir;
-        private readonly short m_DebugLevel;
+        private readonly string mWorkDir;
+        private readonly short mDebugLevel;
 
         // Note that clsPeptideToProteinMapEngine utilizes System.Data.SQLite.dll
         private clsPeptideToProteinMapEngine mPeptideToProteinMapper;
@@ -204,12 +204,12 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <param name="debugLevel"></param>
         public MSGFPlusUtils(IMgrParams oMgrParams, IJobParams oJobParams, string workDir, short debugLevel)
         {
-            m_mgrParams = oMgrParams;
-            m_jobParams = oJobParams;
+            mMgrParams = oMgrParams;
+            mJobParams = oJobParams;
 
-            m_WorkDir = workDir;
+            mWorkDir = workDir;
 
-            m_DebugLevel = debugLevel;
+            mDebugLevel = debugLevel;
 
             MSGFPlusVersion = string.Empty;
             ConsoleOutputErrorMsg = string.Empty;
@@ -396,7 +396,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         {
             if (!string.IsNullOrEmpty(instrumentIDNew) && instrumentIDNew != instrumentIDCurrent)
             {
-                if (m_DebugLevel >= 1)
+                if (mDebugLevel >= 1)
                 {
                     string instrumentDescription;
 
@@ -441,10 +441,10 @@ namespace AnalysisManagerMSGFDBPlugIn
             {
                 // In November 2016, this file was renamed from Dataset_msgfdb.tsv to Dataset_msgfplus.tsv
                 var tsvFileName = datasetName + MSGFPLUS_TSV_SUFFIX;
-                var tsvFilePath = Path.Combine(m_WorkDir, tsvFileName);
+                var tsvFilePath = Path.Combine(mWorkDir, tsvFileName);
 
                 // Examine the size of the .mzid file
-                var fiMzidFile = new FileInfo(Path.Combine(m_WorkDir, mzidFileName));
+                var fiMzidFile = new FileInfo(Path.Combine(mWorkDir, mzidFileName));
                 if (!fiMzidFile.Exists)
                 {
                     OnErrorEvent("Error in MSGFPlusUtils->ConvertMZIDToTSV; Mzid file not found: " + fiMzidFile.FullName);
@@ -459,22 +459,22 @@ namespace AnalysisManagerMSGFDBPlugIn
                 }
 
                 // Set up and execute a program runner to run MzidToTsvConverter.exe
-                var cmdStr = GetMZIDtoTSVCommandLine(mzidFileName, tsvFileName, m_WorkDir, mzidToTsvConverterProgLoc);
+                var cmdStr = GetMZIDtoTSVCommandLine(mzidFileName, tsvFileName, mWorkDir, mzidToTsvConverterProgLoc);
 
-                var mzidToTsvRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel)
+                var mzidToTsvRunner = new clsRunDosProgram(mWorkDir, mDebugLevel)
                 {
                     CreateNoWindow = true,
                     CacheStandardOutput = true,
                     EchoOutputToConsole = true,
                     WriteConsoleOutputToFile = true,
-                    ConsoleOutputFilePath = Path.Combine(m_WorkDir, MZIDToTSV_CONSOLE_OUTPUT_FILE)
+                    ConsoleOutputFilePath = Path.Combine(mWorkDir, MZIDToTSV_CONSOLE_OUTPUT_FILE)
                 };
                 RegisterEvents(mzidToTsvRunner);
 
                 if (clsGlobal.LinuxOS)
                 {
                     // Need to run MzidToTsvConverter.exe using mono
-                    var updated = mzidToTsvRunner.UpdateToUseMono(m_mgrParams, ref mzidToTsvConverterProgLoc, ref cmdStr);
+                    var updated = mzidToTsvRunner.UpdateToUseMono(mMgrParams, ref mzidToTsvConverterProgLoc, ref cmdStr);
                     if (!updated)
                     {
                         OnWarningEvent("Unable to run MzidToTsvConverter.exe with mono");
@@ -483,7 +483,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 }
 
-                if (m_DebugLevel >= 1)
+                if (mDebugLevel >= 1)
                 {
                     OnStatusEvent(mzidToTsvConverterProgLoc + " " + cmdStr);
                 }
@@ -501,9 +501,9 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 // Update MSGFPlus_ConsoleOutput with the contents of MzIDToTsv_ConsoleOutput.txt
 
-                var targetFile = new FileInfo(Path.Combine(m_WorkDir, MSGFPLUS_CONSOLE_OUTPUT_FILE));
+                var targetFile = new FileInfo(Path.Combine(mWorkDir, MSGFPLUS_CONSOLE_OUTPUT_FILE));
 
-                if (!targetFile.Exists && m_jobParams.GetJobParameter("NumberOfClonedSteps", 0) > 1)
+                if (!targetFile.Exists && mJobParams.GetJobParameter("NumberOfClonedSteps", 0) > 1)
                 {
                     // We're likely rerunning data extraction on an old job; this step is not necessary
                     // Skip the call to AppendConsoleOutputHeader to avoid repeated warnings
@@ -511,7 +511,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 else
                 {
                     // Append the first line from the console output file to the end of the MSGFPlus console output file
-                    AppendConsoleOutputHeader(m_WorkDir, MZIDToTSV_CONSOLE_OUTPUT_FILE, MSGFPLUS_CONSOLE_OUTPUT_FILE, 1);
+                    AppendConsoleOutputHeader(mWorkDir, MZIDToTSV_CONSOLE_OUTPUT_FILE, MSGFPLUS_CONSOLE_OUTPUT_FILE, 1);
                 }
 
                 try
@@ -551,10 +551,10 @@ namespace AnalysisManagerMSGFDBPlugIn
             {
                 // In November 2016, this file was renamed from Dataset_msgfdb.tsv to Dataset_msgfplus.tsv
                 var tsvFileName = datasetName + MSGFPLUS_TSV_SUFFIX;
-                tsvFilePath = Path.Combine(m_WorkDir, tsvFileName);
+                tsvFilePath = Path.Combine(mWorkDir, tsvFileName);
 
                 // Examine the size of the .mzid file
-                var fiMzidFile = new FileInfo(Path.Combine(m_WorkDir, mzidFileName));
+                var fiMzidFile = new FileInfo(Path.Combine(mWorkDir, mzidFileName));
                 if (!fiMzidFile.Exists)
                 {
                     OnErrorEvent("Error in MSGFPlusUtils->ConvertMZIDToTSV; Mzid file not found: " + fiMzidFile.FullName);
@@ -590,7 +590,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     javaMemorySizeMB = 10000;
 
                 // Set up and execute a program runner to run the MzIDToTsv module of MSGFPlus
-                var cmdStr = GetMZIDtoTSVCommandLine(mzidFileName, tsvFileName, m_WorkDir, msgfDbProgLoc, javaMemorySizeMB);
+                var cmdStr = GetMZIDtoTSVCommandLine(mzidFileName, tsvFileName, mWorkDir, msgfDbProgLoc, javaMemorySizeMB);
 
                 // Make sure the machine has enough free memory to run MSGFPlus
                 const bool LOG_FREE_MEMORY_ON_SUCCESS = false;
@@ -601,18 +601,18 @@ namespace AnalysisManagerMSGFDBPlugIn
                     return string.Empty;
                 }
 
-                if (m_DebugLevel >= 1)
+                if (mDebugLevel >= 1)
                 {
                     OnStatusEvent(javaProgLoc + " " + cmdStr);
                 }
 
-                var mzidToTsvRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel)
+                var mzidToTsvRunner = new clsRunDosProgram(mWorkDir, mDebugLevel)
                 {
                     CreateNoWindow = true,
                     CacheStandardOutput = true,
                     EchoOutputToConsole = true,
                     WriteConsoleOutputToFile = true,
-                    ConsoleOutputFilePath = Path.Combine(m_WorkDir, MZIDToTSV_CONSOLE_OUTPUT_FILE)
+                    ConsoleOutputFilePath = Path.Combine(mWorkDir, MZIDToTSV_CONSOLE_OUTPUT_FILE)
                 };
                 RegisterEvents(mzidToTsvRunner);
 
@@ -628,7 +628,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 // The conversion succeeded
 
                 // Append the first line from the console output file to the end of the MSGFPlus console output file
-                AppendConsoleOutputHeader(m_WorkDir, MZIDToTSV_CONSOLE_OUTPUT_FILE, MSGFPLUS_CONSOLE_OUTPUT_FILE, 1);
+                AppendConsoleOutputHeader(mWorkDir, MZIDToTSV_CONSOLE_OUTPUT_FILE, MSGFPLUS_CONSOLE_OUTPUT_FILE, 1);
 
                 try
                 {
@@ -720,13 +720,13 @@ namespace AnalysisManagerMSGFDBPlugIn
             string localOrgDbFolder, clsPeptideToProteinMapEngine.ePeptideInputFileFormatConstants ePeptideInputFileFormat)
         {
             // Note that job parameter "generatedFastaName" gets defined by clsAnalysisResources.RetrieveOrgDB
-            var dbFilename = m_jobParams.GetParam("PeptideSearch", clsAnalysisResources.JOB_PARAM_GENERATED_FASTA_NAME);
+            var dbFilename = mJobParams.GetParam("PeptideSearch", clsAnalysisResources.JOB_PARAM_GENERATED_FASTA_NAME);
 
             string msg;
 
             var ignorePeptideToProteinMapperErrors = false;
 
-            var inputFilePath = Path.Combine(m_WorkDir, resultsFileName);
+            var inputFilePath = Path.Combine(mWorkDir, resultsFileName);
             var fastaFilePath = Path.Combine(localOrgDbFolder, dbFilename);
 
             try
@@ -786,7 +786,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             else
             {
                 // Read the original fasta file to create a decoy fasta file
-                var decoyFastaFilePath = GenerateDecoyFastaFile(fastaFilePath, m_WorkDir);
+                var decoyFastaFilePath = GenerateDecoyFastaFile(fastaFilePath, mWorkDir);
                 fastaFileToSearch = decoyFastaFilePath;
 
                 if (string.IsNullOrEmpty(decoyFastaFilePath))
@@ -800,17 +800,17 @@ namespace AnalysisManagerMSGFDBPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                m_jobParams.AddResultFileToSkip(Path.GetFileName(decoyFastaFilePath));
+                mJobParams.AddResultFileToSkip(Path.GetFileName(decoyFastaFilePath));
             }
 
             try
             {
-                if (m_DebugLevel >= 1)
+                if (mDebugLevel >= 1)
                 {
                     OnStatusEvent("Creating peptide to protein map file");
                 }
 
-                ignorePeptideToProteinMapperErrors = m_jobParams.GetJobParameter("IgnorePeptideToProteinMapError", false);
+                ignorePeptideToProteinMapperErrors = mJobParams.GetJobParameter("IgnorePeptideToProteinMapError", false);
 
                 mPeptideToProteinMapper = new clsPeptideToProteinMapEngine
                 {
@@ -832,10 +832,10 @@ namespace AnalysisManagerMSGFDBPlugIn
                 mPeptideToProteinMapper.ProgressUpdate -= OnProgressUpdate;
                 mPeptideToProteinMapper.ProgressUpdate += PeptideToProteinMapper_ProgressChanged;
 
-                if (m_DebugLevel > 2)
+                if (mDebugLevel > 2)
                 {
                     mPeptideToProteinMapper.LogMessagesToFile = true;
-                    mPeptideToProteinMapper.LogFolderPath = m_WorkDir;
+                    mPeptideToProteinMapper.LogFolderPath = mWorkDir;
                 }
                 else
                 {
@@ -843,14 +843,14 @@ namespace AnalysisManagerMSGFDBPlugIn
                 }
 
                 // Note that clsPeptideToProteinMapEngine utilizes System.Data.SQLite.dll
-                var success = mPeptideToProteinMapper.ProcessFile(inputFilePath, m_WorkDir, string.Empty, true);
+                var success = mPeptideToProteinMapper.ProcessFile(inputFilePath, mWorkDir, string.Empty, true);
 
                 mPeptideToProteinMapper.CloseLogFileNow();
 
                 var pepToProtMapFileName = Path.GetFileNameWithoutExtension(inputFilePath) +
                     clsPeptideToProteinMapEngine.FILENAME_SUFFIX_PEP_TO_PROTEIN_MAPPING;
 
-                var pepToProtMapFilePath = Path.Combine(m_WorkDir, pepToProtMapFileName);
+                var pepToProtMapFilePath = Path.Combine(mWorkDir, pepToProtMapFileName);
 
                 if (success)
                 {
@@ -861,7 +861,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     }
                     else
                     {
-                        if (m_DebugLevel >= 2)
+                        if (mDebugLevel >= 2)
                         {
                             OnStatusEvent("Peptide to protein mapping complete");
                         }
@@ -1063,7 +1063,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 var decoyFastaFilePath = Path.Combine(outputDirectoryPath, Path.GetFileNameWithoutExtension(sourceFile.Name) + "_decoy.fasta");
 
-                if (m_DebugLevel >= 2)
+                if (mDebugLevel >= 2)
                 {
                     OnStatusEvent("Creating decoy fasta file at " + decoyFastaFilePath);
                 }
@@ -1254,14 +1254,14 @@ namespace AnalysisManagerMSGFDBPlugIn
         {
             var oRand = new Random();
 
-            var mgrName = m_mgrParams.ManagerName;
+            var mgrName = mMgrParams.ManagerName;
 
             var indexedDBCreator = new clsCreateMSGFDBSuffixArrayFiles(mgrName);
             RegisterEvents(indexedDBCreator);
 
             // Define the path to the fasta file
-            var localOrgDbFolder = m_mgrParams.GetParam(clsAnalysisResources.MGR_PARAM_ORG_DB_DIR);
-            fastaFilePath = Path.Combine(localOrgDbFolder, m_jobParams.GetParam("PeptideSearch", clsAnalysisResources.JOB_PARAM_GENERATED_FASTA_NAME));
+            var localOrgDbFolder = mMgrParams.GetParam(clsAnalysisResources.MGR_PARAM_ORG_DB_DIR);
+            fastaFilePath = Path.Combine(localOrgDbFolder, mJobParams.GetParam("PeptideSearch", clsAnalysisResources.JOB_PARAM_GENERATED_FASTA_NAME));
 
             fastaFileSizeKB = 0;
             fastaFileIsDecoy = false;
@@ -1277,7 +1277,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             fastaFileSizeKB = (float)(fiFastaFile.Length / 1024.0);
 
-            var proteinOptions = m_jobParams.GetParam("ProteinOptions");
+            var proteinOptions = mJobParams.GetParam("ProteinOptions");
 
             if (string.IsNullOrEmpty(proteinOptions) || proteinOptions == "na")
             {
@@ -1320,7 +1320,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                         // Auto-change fastaFileIsDecoy to True to prevent the reverse indices from being created
 
                         fastaFileIsDecoy = true;
-                        if (m_DebugLevel >= 1)
+                        if (mDebugLevel >= 1)
                         {
                             OnStatusEvent("Processing large FASTA file with forward-only search; auto switching to -tda 0");
                         }
@@ -1331,7 +1331,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                         // Auto-change fastaFileIsDecoy to True to prevent the reverse indices from being created
 
                         fastaFileIsDecoy = true;
-                        if (m_DebugLevel >= 1)
+                        if (mDebugLevel >= 1)
                         {
                             OnStatusEvent("Using NoDecoy parameter file with TDA=0; auto switching to -tda 0");
                         }
@@ -1380,7 +1380,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 fastaFileSizeKB = (float)(fiFastaFile.Length / 1024.0);
             }
 
-            if (m_DebugLevel >= 3 || (m_DebugLevel >= 1 && fastaFileSizeKB > 500))
+            if (mDebugLevel >= 3 || (mDebugLevel >= 1 && fastaFileSizeKB > 500))
             {
                 OnStatusEvent("Indexing Fasta file to create Suffix Array files");
             }
@@ -1389,14 +1389,14 @@ namespace AnalysisManagerMSGFDBPlugIn
             // Either copy them from Gigasax (or Proto-7) or re-create them
             //
             var indexIteration = 0;
-            var msgfPlusIndexFilesFolderPath = m_mgrParams.GetParam("MSGFPlusIndexFilesFolderPath", @"\\gigasax\MSGFPlus_Index_Files");
-            var msgfPlusIndexFilesFolderPathLegacyDB = m_mgrParams.GetParam("MSGFPlusIndexFilesFolderPathLegacyDB", @"\\proto-7\MSGFPlus_Index_Files");
+            var msgfPlusIndexFilesFolderPath = mMgrParams.GetParam("MSGFPlusIndexFilesFolderPath", @"\\gigasax\MSGFPlus_Index_Files");
+            var msgfPlusIndexFilesFolderPathLegacyDB = mMgrParams.GetParam("MSGFPlusIndexFilesFolderPathLegacyDB", @"\\proto-7\MSGFPlus_Index_Files");
 
             while (indexIteration <= 2)
             {
                 indexIteration += 1;
 
-                var result = indexedDBCreator.CreateSuffixArrayFiles(m_WorkDir, m_DebugLevel, javaProgLoc, msgfPlusProgLoc, fastaFilePath,
+                var result = indexedDBCreator.CreateSuffixArrayFiles(mWorkDir, mDebugLevel, javaProgLoc, msgfPlusProgLoc, fastaFilePath,
                     fastaFileIsDecoy, msgfPlusIndexFilesFolderPath, msgfPlusIndexFilesFolderPathLegacyDB);
 
                 if (result == CloseOutType.CLOSEOUT_SUCCESS)
@@ -1716,7 +1716,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 consoleOutputFilePath = Path.Combine(workingDirectory, MSGFPLUS_CONSOLE_OUTPUT_FILE);
                 if (!File.Exists(consoleOutputFilePath))
                 {
-                    if (m_DebugLevel >= 4)
+                    if (mDebugLevel >= 4)
                     {
                         OnStatusEvent("Console output file not found: " + consoleOutputFilePath);
                     }
@@ -1724,7 +1724,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     return 0;
                 }
 
-                if (m_DebugLevel >= 4)
+                if (mDebugLevel >= 4)
                 {
                     OnStatusEvent("Parsing file " + consoleOutputFilePath);
                 }
@@ -1763,7 +1763,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                             // The third line is the MS-GF+ version
                             if (string.IsNullOrWhiteSpace(MSGFPlusVersion) && dataLine.StartsWith("MS-GF+ Release", StringComparison.OrdinalIgnoreCase))
                             {
-                                if (m_DebugLevel >= 2 && string.IsNullOrWhiteSpace(MSGFPlusVersion))
+                                if (mDebugLevel >= 2 && string.IsNullOrWhiteSpace(MSGFPlusVersion))
                                 {
                                     OnStatusEvent("MS-GF+ version: " + dataLine);
                                 }
@@ -1902,7 +1902,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             catch (Exception ex)
             {
                 // Ignore errors here
-                if (m_DebugLevel >= 2)
+                if (mDebugLevel >= 2)
                 {
                     OnWarningEvent("Error parsing console output file (" + consoleOutputFilePath + "): " + ex.Message);
                 }
@@ -2188,7 +2188,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                                 if (!CanDetermineInstIdFromInstGroup(instrumentGroup, out var instrumentIDNew, out var autoSwitchReason))
                                 {
-                                    var datasetName = m_jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_DATASET_NAME);
+                                    var datasetName = mJobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_DATASET_NAME);
 
                                     bool scanTypeLookupSuccess;
                                     int countLowResMSn;
@@ -2197,9 +2197,9 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                                     if (clsGlobal.OfflineMode)
                                     {
-                                        countLowResMSn = m_jobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, SCANCOUNT_LOWRES_MSN, 0);
-                                        countHighResMSn = m_jobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, SCANCOUNT_HIGHRES_MSN, 0);
-                                        countHCDMSn = m_jobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, SCANCOUNT_HCD_MSN, 0);
+                                        countLowResMSn = mJobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, SCANCOUNT_LOWRES_MSN, 0);
+                                        countHighResMSn = mJobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, SCANCOUNT_HIGHRES_MSN, 0);
+                                        countHCDMSn = mJobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, SCANCOUNT_HCD_MSN, 0);
 
                                         scanTypeLookupSuccess = (countLowResMSn + countHighResMSn + countHCDMSn) > 0;
                                     }
@@ -2233,14 +2233,14 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                         if (string.IsNullOrEmpty(argumentName))
                         {
-                            if (m_DebugLevel >= 1 && !clsGlobal.IsMatch(argumentNameOriginal, MSGFPLUS_OPTION_SHOWDECOY))
+                            if (mDebugLevel >= 1 && !clsGlobal.IsMatch(argumentNameOriginal, MSGFPLUS_OPTION_SHOWDECOY))
                             {
                                 OnWarningEvent("Skipping argument " + argumentNameOriginal + " since it is not valid for this version of MS-GF+");
                             }
                         }
                         else if (string.IsNullOrEmpty(valueText))
                         {
-                            if (m_DebugLevel >= 1)
+                            if (mDebugLevel >= 1)
                             {
                                 OnWarningEvent("Skipping argument " + argumentName + " since the value is empty");
                             }
@@ -2349,7 +2349,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             }
 
             // Define the thread count; note that MSGFDBThreads could be "all"
-            var dmsDefinedThreadCountText = m_jobParams.GetJobParameter("MSGFDBThreads", string.Empty);
+            var dmsDefinedThreadCountText = mJobParams.GetJobParameter("MSGFDBThreads", string.Empty);
             if (string.IsNullOrWhiteSpace(dmsDefinedThreadCountText) || dmsDefinedThreadCountText.ToLower() == "all" ||
                 !int.TryParse(dmsDefinedThreadCountText, out var dmsDefinedThreadCount))
             {
@@ -2626,7 +2626,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     return false;
                 }
 
-                var connectionString = m_mgrParams.GetParam("ConnectionString");
+                var connectionString = mMgrParams.GetParam("ConnectionString");
 
                 var sqlStr = new StringBuilder();
 
@@ -2951,7 +2951,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             {
                 // Validate that none of the results in pepToProtMapFilePath has protein name PROTEIN_NAME_NO_MATCH
 
-                if (m_DebugLevel >= 2)
+                if (mDebugLevel >= 2)
                 {
                     OnStatusEvent("Validating peptide to protein mapping, file " + Path.GetFileName(pepToProtMapFilePath));
                 }
@@ -2982,7 +2982,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 }
                 else if (peptideCountNoMatch == 0)
                 {
-                    if (m_DebugLevel >= 2)
+                    if (mDebugLevel >= 2)
                     {
                         OnStatusEvent("Peptide to protein mapping validation complete; processed " + peptideCount + " peptides");
                     }
@@ -3040,7 +3040,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         {
             try
             {
-                var tmpFilePath = Path.Combine(m_WorkDir, fileName);
+                var tmpFilePath = Path.Combine(mWorkDir, fileName);
                 if (!File.Exists(tmpFilePath))
                 {
                     OnErrorEvent("MS-GF+ results file not found: " + fileName);
@@ -3054,7 +3054,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 }
 
                 // Add the unzipped file to .ResultFilesToSkip since we only want to keep the zipped version
-                m_jobParams.AddResultFileToSkip(fileName);
+                mJobParams.AddResultFileToSkip(fileName);
             }
             catch (Exception ex)
             {
@@ -3069,17 +3069,17 @@ namespace AnalysisManagerMSGFDBPlugIn
 
         #region "Event Methods"
 
-        private DateTime dtLastLogTime = DateTime.MinValue;
+        private DateTime mLastLogTime = DateTime.MinValue;
 
         private void PeptideToProteinMapper_ProgressChanged(string taskDescription, float percentComplete)
         {
             const int MAPPER_PROGRESS_LOG_INTERVAL_SECONDS = 120;
 
-            if (m_DebugLevel < 1) return;
+            if (mDebugLevel < 1) return;
 
-            if (DateTime.UtcNow.Subtract(dtLastLogTime).TotalSeconds >= MAPPER_PROGRESS_LOG_INTERVAL_SECONDS)
+            if (DateTime.UtcNow.Subtract(mLastLogTime).TotalSeconds >= MAPPER_PROGRESS_LOG_INTERVAL_SECONDS)
             {
-                dtLastLogTime = DateTime.UtcNow;
+                mLastLogTime = DateTime.UtcNow;
                 OnStatusEvent("Mapping peptides to proteins: " + percentComplete.ToString("0.0") + "% complete");
             }
         }

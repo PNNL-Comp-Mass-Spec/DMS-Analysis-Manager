@@ -30,14 +30,14 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
             // sequest:_syn.txt:nocopy,sequest:_fht.txt:nocopy,sequest:_dta.zip:nocopy,masic_finnigan:_ScanStatsEx.txt:nocopy
             // MSGFPlus:_msgfplus_syn.txt,MSGFPlus:_msgfplus_fht.txt,MSGFPlus:_dta.zip,masic_finnigan:_ScanStatsEx.txt
 
-            var fileSpecList = m_jobParams.GetParam("TargetJobFileList").Split(',').ToList();
+            var fileSpecList = mJobParams.GetParam("TargetJobFileList").Split(',').ToList();
 
             foreach (var fileSpec in fileSpecList.ToList())
             {
                 var fileSpecTerms = fileSpec.Split(':').ToList();
                 if (fileSpecTerms.Count <= 2 || fileSpecTerms[2].ToLower().Trim() != "copy")
                 {
-                    m_jobParams.AddResultFileExtensionToSkip(fileSpecTerms[1]);
+                    mJobParams.AddResultFileExtensionToSkip(fileSpecTerms[1]);
                 }
             }
 
@@ -62,8 +62,8 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
 
             if (paramFilesCopied == 0)
             {
-                m_message = "One more more of these job parameters must define a valid AScore parameter file name: AScoreCIDParamFile, AScoreETDParamFile, or AScoreHCDParamFile";
-                LogError(m_message);
+                mMessage = "One more more of these job parameters must define a valid AScore parameter file name: AScoreCIDParamFile, AScoreETDParamFile, or AScoreHCDParamFile";
+                LogError(mMessage);
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
@@ -89,7 +89,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
         {
             try
             {
-                var workDir = new DirectoryInfo(m_WorkingDir);
+                var workDir = new DirectoryInfo(mWorkDir);
 
                 var jobToDatasetMap = new Dictionary<string, string>();
                 var jobToSettingsFileMap = new Dictionary<string, string>();
@@ -114,7 +114,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
             }
             catch (Exception ex)
             {
-                m_message = "Error in CacheDataPackageInfo";
+                mMessage = "Error in CacheDataPackageInfo";
                 LogError("Error in CacheDataPackageInfo: " + ex.Message);
                 return false;
             }
@@ -131,7 +131,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
         /// <remarks></remarks>
         private bool RetrieveAScoreParamfile(string parameterName, ref int paramFilesCopied)
         {
-            var paramFileName = m_jobParams.GetJobParameter(parameterName, string.Empty);
+            var paramFileName = mJobParams.GetJobParameter(parameterName, string.Empty);
             if (string.IsNullOrWhiteSpace(paramFileName))
             {
                 return true;
@@ -141,18 +141,18 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
             {
                 // Dummy parameter file; ignore it
                 // Update the job parameter to be an empty string so that this parameter is ignored in BuildInputFile
-                m_jobParams.SetParam(parameterName, string.Empty);
+                mJobParams.SetParam(parameterName, string.Empty);
                 return true;
             }
 
-            var success = FileSearch.RetrieveFile(paramFileName, m_jobParams.GetParam(JOB_PARAM_TRANSFER_FOLDER_PATH), 2, BaseLogger.LogLevels.DEBUG);
+            var success = FileSearch.RetrieveFile(paramFileName, mJobParams.GetParam(JOB_PARAM_TRANSFER_FOLDER_PATH), 2, BaseLogger.LogLevels.DEBUG);
 
             if (!success)
             {
                 // File not found in the transfer folder
                 // Look in the AScore parameter folder on Gigasax, \\gigasax\DMS_Parameter_Files\AScore
 
-                var paramFileFolder = m_jobParams.GetJobParameter("ParamFileStoragePath", @"\\gigasax\DMS_Parameter_Files\AScore");
+                var paramFileFolder = mJobParams.GetJobParameter("ParamFileStoragePath", @"\\gigasax\DMS_Parameter_Files\AScore");
                 success = FileSearch.RetrieveFile(paramFileName, paramFileFolder, 2);
             }
 

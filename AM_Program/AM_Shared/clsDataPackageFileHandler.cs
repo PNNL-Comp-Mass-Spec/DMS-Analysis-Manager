@@ -224,7 +224,7 @@ namespace AnalysisManagerBase
                 if (datasetFolderPath.StartsWith(clsAnalysisResources.MYEMSL_PATH_FLAG))
                 {
                     // File found in MyEMSL
-                    // Determine the MyEMSL FileID by searching for the expected file in m_MyEMSLUtilities.RecentlyFoundMyEMSLFiles
+                    // Determine the MyEMSL FileID by searching for the expected file in mMyEMSLUtilities.RecentlyFoundMyEMSLFiles
 
                     foreach (var udtArchivedFile in mAnalysisResources.MyEMSLUtilities.RecentlyFoundMyEMSLFiles)
                     {

@@ -45,7 +45,7 @@ namespace AnalysisManagerResultsCleanupPlugin
                 if (!StoreToolVersionInfo())
                 {
                     LogError("Aborting since StoreToolVersionInfo returned false");
-                    m_message = "Error determining AnalysisManager version";
+                    mMessage = "Error determining AnalysisManager version";
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
@@ -53,20 +53,20 @@ namespace AnalysisManagerResultsCleanupPlugin
                 var Result = PerformResultsCleanup();
                 if (Result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
-                    if (string.IsNullOrEmpty(m_message))
+                    if (string.IsNullOrEmpty(mMessage))
                     {
-                        m_message = "Unknown error calling PerformResultsCleanup";
+                        mMessage = "Unknown error calling PerformResultsCleanup";
                     }
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 // Stop the job timer
-                m_StopTime = DateTime.UtcNow;
+                mStopTime = DateTime.UtcNow;
             }
             catch (Exception ex)
             {
-                m_message = "Error in clsAnalysisToolRunnerResultsCleanup->RunTool";
-                LogError(m_message + ": " + ex.Message);
+                mMessage = "Error in clsAnalysisToolRunnerResultsCleanup->RunTool";
+                LogError(mMessage + ": " + ex.Message);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -80,20 +80,20 @@ namespace AnalysisManagerResultsCleanupPlugin
 
             try
             {
-                var strTransferDirectoryPath = m_jobParams.GetJobParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH, string.Empty);
-                var strResultsFolderName = m_jobParams.GetJobParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, "InputFolderName", string.Empty);
+                var strTransferDirectoryPath = mJobParams.GetJobParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH, string.Empty);
+                var strResultsFolderName = mJobParams.GetJobParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, "InputFolderName", string.Empty);
 
                 if (string.IsNullOrWhiteSpace(strTransferDirectoryPath))
                 {
-                    m_message = "transferFolderPath not defined";
-                    LogError(m_message);
+                    mMessage = "transferFolderPath not defined";
+                    LogError(mMessage);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 if (string.IsNullOrWhiteSpace(strResultsFolderName))
                 {
-                    m_message = "InputFolderName not defined";
-                    LogError(m_message);
+                    mMessage = "InputFolderName not defined";
+                    LogError(mMessage);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
@@ -101,8 +101,8 @@ namespace AnalysisManagerResultsCleanupPlugin
 
                 if (!diTransferFolder.Exists)
                 {
-                    m_message = "transferFolder not found at " + strTransferDirectoryPath;
-                    LogError(m_message);
+                    mMessage = "transferFolder not found at " + strTransferDirectoryPath;
+                    LogError(mMessage);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
@@ -111,8 +111,8 @@ namespace AnalysisManagerResultsCleanupPlugin
             }
             catch (Exception ex)
             {
-                m_message = "Error in PerformResultsCleanup";
-                LogError(m_message + ": " + ex.Message);
+                mMessage = "Error in PerformResultsCleanup";
+                LogError(mMessage + ": " + ex.Message);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -170,15 +170,15 @@ namespace AnalysisManagerResultsCleanupPlugin
                         }
                     }
 
-                    m_EvalMessage = "Deleted " + intFileCountDeleted + " extra " + RESULTS_DB3_FILE + " " +
+                    mEvalMessage = "Deleted " + intFileCountDeleted + " extra " + RESULTS_DB3_FILE + " " +
                                     clsGlobal.CheckPlural(intFileCountDeleted, "file", "files");
 
-                    LogMessage(m_EvalMessage + " from " + diResultsFolder.FullName);
+                    LogMessage(mEvalMessage + " from " + diResultsFolder.FullName);
                 }
                 else if (dctResultsFiles.Count == 1)
                 {
-                    m_EvalMessage = "Results folder has just one " + RESULTS_DB3_FILE + " file";
-                    LogMessage(m_EvalMessage);
+                    mEvalMessage = "Results folder has just one " + RESULTS_DB3_FILE + " file";
+                    LogMessage(mEvalMessage);
                 }
                 else
                 {
@@ -188,16 +188,16 @@ namespace AnalysisManagerResultsCleanupPlugin
                     }
                     else
                     {
-                        m_message = "Results folder does not have any Step_# folders";
-                        LogError(m_message + ": " + diResultsFolder.FullName);
+                        mMessage = "Results folder does not have any Step_# folders";
+                        LogError(mMessage + ": " + diResultsFolder.FullName);
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
                 }
             }
             catch (Exception ex)
             {
-                m_message = "Error in RemoveOldResultsDb3Files";
-                LogError(m_message + ": " + ex.Message);
+                mMessage = "Error in RemoveOldResultsDb3Files";
+                LogError(mMessage + ": " + ex.Message);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -213,7 +213,7 @@ namespace AnalysisManagerResultsCleanupPlugin
             var strToolVersionInfo = string.Empty;
             var strAppFolderPath = clsGlobal.GetAppFolderPath();
 
-            if (m_DebugLevel >= 2)
+            if (mDebugLevel >= 2)
             {
                 LogDebug("Determining tool version info");
             }

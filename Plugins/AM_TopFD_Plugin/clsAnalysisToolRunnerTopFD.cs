@@ -75,7 +75,7 @@ namespace AnalysisManagerTopFDPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                if (m_DebugLevel > 4)
+                if (mDebugLevel > 4)
                 {
                     LogDebug("clsAnalysisToolRunnerTopFD.RunTool(): Enter");
                 }
@@ -98,10 +98,10 @@ namespace AnalysisManagerTopFDPlugIn
 
                 var processingResult = StartTopFD(mTopFDProgLoc);
 
-                m_progress = PROGRESS_PCT_COMPLETE;
+                mProgress = PROGRESS_PCT_COMPLETE;
 
                 // Stop the job timer
-                m_StopTime = DateTime.UtcNow;
+                mStopTime = DateTime.UtcNow;
 
                 // Add the current job data to the summary file
                 UpdateSummaryFile();
@@ -112,7 +112,7 @@ namespace AnalysisManagerTopFDPlugIn
                 PRISM.ProgRunner.GarbageCollectNow();
 
                 // Trim the console output file to remove the majority of the % finished messages
-                TrimConsoleOutputFile(Path.Combine(m_WorkDir, TOPFD_CONSOLE_OUTPUT));
+                TrimConsoleOutputFile(Path.Combine(mWorkDir, TOPFD_CONSOLE_OUTPUT));
 
                 if (!clsAnalysisJob.SuccessOrNoData(processingResult))
                 {
@@ -132,7 +132,7 @@ namespace AnalysisManagerTopFDPlugIn
             }
             catch (Exception ex)
             {
-                m_message = "Error in TopFDPlugin->RunTool: " + ex.Message;
+                mMessage = "Error in TopFDPlugin->RunTool: " + ex.Message;
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -193,7 +193,7 @@ namespace AnalysisManagerTopFDPlugIn
             {
                 if (!File.Exists(consoleOutputFilePath))
                 {
-                    if (m_DebugLevel >= 4)
+                    if (mDebugLevel >= 4)
                     {
                         LogDebug("Console output file not found: " + consoleOutputFilePath);
                     }
@@ -201,7 +201,7 @@ namespace AnalysisManagerTopFDPlugIn
                     return;
                 }
 
-                if (m_DebugLevel >= 4)
+                if (mDebugLevel >= 4)
                 {
                     LogDebug("Parsing file " + consoleOutputFilePath);
                 }
@@ -229,7 +229,7 @@ namespace AnalysisManagerTopFDPlugIn
                                     dataLine.ToLower().StartsWith("topfd") &&
                                     !dataLine.ToLower().Contains(TOPFD_EXE_NAME.ToLower()))
                                 {
-                                    if (m_DebugLevel >= 2 && string.IsNullOrWhiteSpace(mTopFDVersion))
+                                    if (mDebugLevel >= 2 && string.IsNullOrWhiteSpace(mTopFDVersion))
                                     {
                                         LogDebug("TopFD version: " + dataLine);
                                     }
@@ -260,15 +260,15 @@ namespace AnalysisManagerTopFDPlugIn
                     }
                 }
 
-                if (m_progress < actualProgress)
+                if (mProgress < actualProgress)
                 {
-                    m_progress = actualProgress;
+                    mProgress = actualProgress;
                 }
             }
             catch (Exception ex)
             {
                 // Ignore errors here
-                if (m_DebugLevel >= 2)
+                if (mDebugLevel >= 2)
                 {
                     LogError("Error parsing console output file (" + consoleOutputFilePath + "): " + ex.Message);
                 }
@@ -285,7 +285,7 @@ namespace AnalysisManagerTopFDPlugIn
         {
             cmdLineOptions = string.Empty;
 
-            var paramFileName = m_jobParams.GetParam("TopFD_ParamFile");
+            var paramFileName = mJobParams.GetParam("TopFD_ParamFile");
 
             // Although ParseKeyValueParameterFile checks for paramFileName being an empty string,
             // we check for it here since the name comes from the settings file, so we want to customize the error message
@@ -295,13 +295,13 @@ namespace AnalysisManagerTopFDPlugIn
                 return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
             }
 
-            var paramFileReader = new clsKeyValueParamFileReader("TopFD", m_WorkDir, paramFileName);
+            var paramFileReader = new clsKeyValueParamFileReader("TopFD", mWorkDir, paramFileName);
             RegisterEvents(paramFileReader);
 
             var eResult = paramFileReader.ParseKeyValueParameterFile(out var paramFileEntries);
             if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
             {
-                m_message = paramFileReader.ErrorMessage;
+                mMessage = paramFileReader.ErrorMessage;
                 return eResult;
             }
 
@@ -315,7 +315,7 @@ namespace AnalysisManagerTopFDPlugIn
             cmdLineOptions = paramFileReader.ConvertParamsToArgs(paramFileEntries, paramToArgMapping, paramNamesToSkip, "--");
             if (string.IsNullOrWhiteSpace(cmdLineOptions))
             {
-                m_message = paramFileReader.ErrorMessage;
+                mMessage = paramFileReader.ErrorMessage;
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -350,7 +350,7 @@ namespace AnalysisManagerTopFDPlugIn
 
             LogDebug(progLoc + " " + cmdStr);
 
-            mCmdRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel);
+            mCmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel);
             RegisterEvents(mCmdRunner);
             mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
@@ -359,9 +359,9 @@ namespace AnalysisManagerTopFDPlugIn
             mCmdRunner.EchoOutputToConsole = true;
 
             mCmdRunner.WriteConsoleOutputToFile = true;
-            mCmdRunner.ConsoleOutputFilePath = Path.Combine(m_WorkDir, TOPFD_CONSOLE_OUTPUT);
+            mCmdRunner.ConsoleOutputFilePath = Path.Combine(mWorkDir, TOPFD_CONSOLE_OUTPUT);
 
-            m_progress = PROGRESS_PCT_STARTING;
+            mProgress = PROGRESS_PCT_STARTING;
             ResetProgRunnerCpuUsage();
 
             // Start the program and wait for it to finish
@@ -372,7 +372,7 @@ namespace AnalysisManagerTopFDPlugIn
             {
                 if (string.IsNullOrWhiteSpace(mTopFDVersion))
                 {
-                    ParseConsoleOutputFile(Path.Combine(m_WorkDir, TOPFD_CONSOLE_OUTPUT));
+                    ParseConsoleOutputFile(Path.Combine(mWorkDir, TOPFD_CONSOLE_OUTPUT));
                 }
                 mToolVersionWritten = StoreToolVersionInfo();
             }
@@ -406,15 +406,15 @@ namespace AnalysisManagerTopFDPlugIn
             // TopFD likely also created a _ms1.msalign file, but it's not required for TopPIC so we don't check for it
             var resultsFiles = new Dictionary<string, string>
             {
-                {TOPFD_FEATURE_FILE_SUFFIX, m_Dataset + TOPFD_FEATURE_FILE_SUFFIX},
-                {MSALIGN_FILE_SUFFIX, m_Dataset + MSALIGN_FILE_SUFFIX}
+                {TOPFD_FEATURE_FILE_SUFFIX, mDatasetName + TOPFD_FEATURE_FILE_SUFFIX},
+                {MSALIGN_FILE_SUFFIX, mDatasetName + MSALIGN_FILE_SUFFIX}
             };
 
             var validResultFiles = 0;
 
             foreach (var resultsFilePath in resultsFiles)
             {
-                var resultsFile = new FileInfo(Path.Combine(m_WorkDir, resultsFilePath.Value));
+                var resultsFile = new FileInfo(Path.Combine(mWorkDir, resultsFilePath.Value));
                 if (!resultsFile.Exists)
                 {
                     LogError(string.Format("{0} file was not created by TopFD", resultsFilePath.Key));
@@ -435,8 +435,8 @@ namespace AnalysisManagerTopFDPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            m_StatusTools.UpdateAndWrite(m_progress);
-            if (m_DebugLevel >= 3)
+            mStatusTools.UpdateAndWrite(mProgress);
+            if (mDebugLevel >= 3)
             {
                 LogDebug("TopFD analysis complete");
             }
@@ -452,7 +452,7 @@ namespace AnalysisManagerTopFDPlugIn
         /// <remarks></remarks>
         private bool StoreToolVersionInfo()
         {
-            if (m_DebugLevel >= 2)
+            if (mDebugLevel >= 2)
             {
                 LogDebug("Determining tool version info");
             }
@@ -488,7 +488,7 @@ namespace AnalysisManagerTopFDPlugIn
             {
                 if (!File.Exists(consoleOutputFilePath))
                 {
-                    if (m_DebugLevel >= 4)
+                    if (mDebugLevel >= 4)
                     {
                         LogDebug("Console output file not found: " + consoleOutputFilePath);
                     }
@@ -496,7 +496,7 @@ namespace AnalysisManagerTopFDPlugIn
                     return;
                 }
 
-                if (m_DebugLevel >= 4)
+                if (mDebugLevel >= 4)
                 {
                     LogDebug("Trimming console output file at " + consoleOutputFilePath);
                 }
@@ -565,7 +565,7 @@ namespace AnalysisManagerTopFDPlugIn
                 }
                 catch (Exception ex)
                 {
-                    if (m_DebugLevel >= 1)
+                    if (mDebugLevel >= 1)
                     {
                         LogError("Error replacing original console output file (" + consoleOutputFilePath + ") with trimmed version", ex);
                     }
@@ -574,7 +574,7 @@ namespace AnalysisManagerTopFDPlugIn
             catch (Exception ex)
             {
                 // Ignore errors here
-                if (m_DebugLevel >= 2)
+                if (mDebugLevel >= 2)
                 {
                     LogError("Error trimming console output file (" + consoleOutputFilePath + ")", ex);
                 }
@@ -600,7 +600,7 @@ namespace AnalysisManagerTopFDPlugIn
 
             mLastConsoleOutputParse = DateTime.UtcNow;
 
-            ParseConsoleOutputFile(Path.Combine(m_WorkDir, TOPFD_CONSOLE_OUTPUT));
+            ParseConsoleOutputFile(Path.Combine(mWorkDir, TOPFD_CONSOLE_OUTPUT));
 
             if (!mToolVersionWritten && !string.IsNullOrWhiteSpace(mTopFDVersion))
             {

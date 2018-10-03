@@ -21,15 +21,15 @@ namespace AnalysisManagerBase
 
         private const string DATETIME_FORMAT_NO_SECONDS = "yyyy-MM-dd hh:mm tt";
 
-        private readonly clsDotNetZipTools m_DotNetZipTools;
+        private readonly clsDotNetZipTools mDotNetZipTools;
 
-        private readonly DatasetListInfo m_MyEMSLDatasetListInfo;
+        private readonly DatasetListInfo mMyEMSLDatasetListInfo;
 
-        private readonly List<DatasetFolderOrFileInfo> m_AllFoundMyEMSLFiles;
+        private readonly List<DatasetFolderOrFileInfo> mAllFoundMyEMSLFiles;
 
-        private List<DatasetFolderOrFileInfo> m_RecentlyFoundMyEMSLFiles;
+        private List<DatasetFolderOrFileInfo> mRecentlyFoundMyEMSLFiles;
 
-        private DateTime m_LastMyEMSLProgressWriteTime = DateTime.UtcNow;
+        private DateTime mLastMyEMSLProgressWriteTime = DateTime.UtcNow;
 
         private DateTime mLastDisableNotify = DateTime.MinValue;
 
@@ -41,7 +41,7 @@ namespace AnalysisManagerBase
 
         private readonly clsMyEMSLFileIDComparer mFileIDComparer;
 
-        private readonly List<KeyValuePair<string, string>> m_MostRecentUnzippedFiles;
+        private readonly List<KeyValuePair<string, string>> mMostRecentUnzippedFiles;
 
         #region "Events"
 
@@ -60,7 +60,7 @@ namespace AnalysisManagerBase
         /// <value></value>
         /// <returns></returns>
         /// <remarks></remarks>
-        public Dictionary<string, ArchivedFileInfo> DownloadedFiles => m_MyEMSLDatasetListInfo.DownloadedFiles;
+        public Dictionary<string, ArchivedFileInfo> DownloadedFiles => mMyEMSLDatasetListInfo.DownloadedFiles;
 
         /// <summary>
         /// MyEMSL IDs of files queued to be downloaded
@@ -68,7 +68,7 @@ namespace AnalysisManagerBase
         /// <value></value>
         /// <returns></returns>
         /// <remarks></remarks>
-        public Dictionary<long, DownloadQueue.udtFileToDownload> FilesToDownload => m_MyEMSLDatasetListInfo.FilesToDownload;
+        public Dictionary<long, DownloadQueue.udtFileToDownload> FilesToDownload => mMyEMSLDatasetListInfo.FilesToDownload;
 
         /// <summary>
         /// All files found in MyEMSL via calls to FindFiles
@@ -76,16 +76,16 @@ namespace AnalysisManagerBase
         /// <value></value>
         /// <returns></returns>
         /// <remarks></remarks>
-        public List<DatasetFolderOrFileInfo> AllFoundMyEMSLFiles => m_AllFoundMyEMSLFiles;
+        public List<DatasetFolderOrFileInfo> AllFoundMyEMSLFiles => mAllFoundMyEMSLFiles;
 
         /// <summary>
         /// Returns the files most recently unzipped
-        /// Keys in the KeyValuePairs are filenames while values are relative paths (in case the .zip file has folders)
+        /// Keys in the KeyValuePairs are filenames while values are relative paths (in case the .zip file has directories)
         /// </summary>
         /// <value></value>
         /// <returns></returns>
         /// <remarks></remarks>
-        public List<KeyValuePair<string, string>> MostRecentUnzippedFiles => m_MostRecentUnzippedFiles;
+        public List<KeyValuePair<string, string>> MostRecentUnzippedFiles => mMostRecentUnzippedFiles;
 
         /// <summary>
         /// Files most recently found via a call to FindFiles
@@ -93,7 +93,7 @@ namespace AnalysisManagerBase
         /// <value></value>
         /// <returns></returns>
         /// <remarks></remarks>
-        public List<DatasetFolderOrFileInfo> RecentlyFoundMyEMSLFiles => m_RecentlyFoundMyEMSLFiles;
+        public List<DatasetFolderOrFileInfo> RecentlyFoundMyEMSLFiles => mRecentlyFoundMyEMSLFiles;
 
         #endregion
 
@@ -106,33 +106,33 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public clsMyEMSLUtilities(int debugLevel, string workingDir, bool traceMode = false)
         {
-            m_MyEMSLDatasetListInfo = new DatasetListInfo
+            mMyEMSLDatasetListInfo = new DatasetListInfo
             {
                 ReportMetadataURLs = traceMode || debugLevel >= 2,
                 ThrowErrors = true,
                 TraceMode = traceMode
             };
 
-            RegisterEvents(m_MyEMSLDatasetListInfo);
+            RegisterEvents(mMyEMSLDatasetListInfo);
 
             // Use a custom progress update handler
-            m_MyEMSLDatasetListInfo.ProgressUpdate -= OnProgressUpdate;
-            m_MyEMSLDatasetListInfo.ProgressUpdate += MyEMSLDatasetListInfo_ProgressEvent;
+            mMyEMSLDatasetListInfo.ProgressUpdate -= OnProgressUpdate;
+            mMyEMSLDatasetListInfo.ProgressUpdate += MyEMSLDatasetListInfo_ProgressEvent;
 
-            m_MyEMSLDatasetListInfo.FileDownloadedEvent += MyEMSLDatasetListInfo_FileDownloadedEvent;
+            mMyEMSLDatasetListInfo.FileDownloadedEvent += MyEMSLDatasetListInfo_FileDownloadedEvent;
 
             // Watch for error message "Unable to connect to the remote server"
-            m_MyEMSLDatasetListInfo.MyEMSLOffline += MyEMSLDatasetListInfo_MyEMSLOffline;
+            mMyEMSLDatasetListInfo.MyEMSLOffline += MyEMSLDatasetListInfo_MyEMSLOffline;
 
-            m_AllFoundMyEMSLFiles = new List<DatasetFolderOrFileInfo>();
-            m_RecentlyFoundMyEMSLFiles = new List<DatasetFolderOrFileInfo>();
+            mAllFoundMyEMSLFiles = new List<DatasetFolderOrFileInfo>();
+            mRecentlyFoundMyEMSLFiles = new List<DatasetFolderOrFileInfo>();
 
-            m_DotNetZipTools = new clsDotNetZipTools(debugLevel, workingDir);
-            RegisterEvents(m_DotNetZipTools);
+            mDotNetZipTools = new clsDotNetZipTools(debugLevel, workingDir);
+            RegisterEvents(mDotNetZipTools);
 
             mFileIDComparer = new clsMyEMSLFileIDComparer();
 
-            m_MostRecentUnzippedFiles = new List<KeyValuePair<string, string>>();
+            mMostRecentUnzippedFiles = new List<KeyValuePair<string, string>>();
 
             mMyEMSLAutoDisabled = false;
         }
@@ -166,9 +166,9 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public void AddDataset(string datasetName)
         {
-            if (!m_MyEMSLDatasetListInfo.ContainsDataset(datasetName))
+            if (!mMyEMSLDatasetListInfo.ContainsDataset(datasetName))
             {
-                m_MyEMSLDatasetListInfo.AddDataset(datasetName);
+                mMyEMSLDatasetListInfo.AddDataset(datasetName);
             }
         }
 
@@ -179,7 +179,7 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public void AddFileToDownloadQueue(ArchivedFileInfo fileInfo)
         {
-            m_MyEMSLDatasetListInfo.AddFileToDownloadQueue(fileInfo);
+            mMyEMSLDatasetListInfo.AddFileToDownloadQueue(fileInfo);
         }
 
         /// <summary>
@@ -201,10 +201,10 @@ namespace AnalysisManagerBase
 
             if (!GetCachedArchivedFileInfo(myEMSLFileID, out var matchingFileInfo))
             {
-                // File not found in m_RecentlyFoundMyEMSLFiles
-                // Instead check m_AllFoundMyEMSLFiles
+                // File not found in mRecentlyFoundMyEMSLFiles
+                // Instead check mAllFoundMyEMSLFiles
 
-                var fileInfoQuery = (from item in m_AllFoundMyEMSLFiles where item.FileID == myEMSLFileID select item.FileInfo).ToList();
+                var fileInfoQuery = (from item in mAllFoundMyEMSLFiles where item.FileID == myEMSLFileID select item.FileInfo).ToList();
 
                 if (fileInfoQuery.Count == 0)
                 {
@@ -216,7 +216,7 @@ namespace AnalysisManagerBase
             }
 
             AddDataset(matchingFileInfo.Dataset);
-            m_MyEMSLDatasetListInfo.AddFileToDownloadQueue(matchingFileInfo, unzipRequired);
+            mMyEMSLDatasetListInfo.AddFileToDownloadQueue(matchingFileInfo, unzipRequired);
             return true;
         }
 
@@ -227,16 +227,16 @@ namespace AnalysisManagerBase
         /// <returns>True if the file is found, otherwise false</returns>
         public bool CertificateFileExists(out string errorMessage)
         {
-            return m_MyEMSLDatasetListInfo.CertificateFileExists(out errorMessage);
+            return mMyEMSLDatasetListInfo.CertificateFileExists(out errorMessage);
         }
 
         /// <summary>
         /// Clear the list of MyEMSL files found via calls to FindFiles
         /// </summary>
         /// <remarks></remarks>
-        public void ClearAllFoundfiles()
+        public void ClearAllFoundFiles()
         {
-            m_AllFoundMyEMSLFiles.Clear();
+            mAllFoundMyEMSLFiles.Clear();
         }
 
         /// <summary>
@@ -245,7 +245,7 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public void ClearDownloadQueue()
         {
-            m_MyEMSLDatasetListInfo.FilesToDownload.Clear();
+            mMyEMSLDatasetListInfo.FilesToDownload.Clear();
         }
 
         /// <summary>
@@ -260,7 +260,7 @@ namespace AnalysisManagerBase
         public List<DatasetFolderOrFileInfo> FindFiles(string fileName, string subDirectoryName, string datasetName, bool recurse)
         {
 
-            // Make sure the dataset name is being tracked by m_MyEMSLDatasetListInfo
+            // Make sure the dataset name is being tracked by mMyEMSLDatasetListInfo
             AddDataset(datasetName);
 
             if (mMyEMSLAutoDisabled)
@@ -279,16 +279,16 @@ namespace AnalysisManagerBase
                                      mMyEMSLReEnableTime.ToLocalTime().ToString(DATETIME_FORMAT_NO_SECONDS));
                     }
 
-                    if (m_RecentlyFoundMyEMSLFiles == null)
-                        m_RecentlyFoundMyEMSLFiles = new List<DatasetFolderOrFileInfo>();
+                    if (mRecentlyFoundMyEMSLFiles == null)
+                        mRecentlyFoundMyEMSLFiles = new List<DatasetFolderOrFileInfo>();
                     else
-                        m_RecentlyFoundMyEMSLFiles.Clear();
+                        mRecentlyFoundMyEMSLFiles.Clear();
 
-                    return m_RecentlyFoundMyEMSLFiles;
+                    return mRecentlyFoundMyEMSLFiles;
                 }
             }
 
-            m_RecentlyFoundMyEMSLFiles = m_MyEMSLDatasetListInfo.FindFiles(fileName, subDirectoryName, datasetName, recurse);
+            mRecentlyFoundMyEMSLFiles = mMyEMSLDatasetListInfo.FindFiles(fileName, subDirectoryName, datasetName, recurse);
 
             if (!mMyEMSLAutoDisabled)
             {
@@ -296,11 +296,11 @@ namespace AnalysisManagerBase
                 mMyEMSLDisableCount = 0;
             }
 
-            var filesToAdd = m_RecentlyFoundMyEMSLFiles.Except(m_AllFoundMyEMSLFiles, mFileIDComparer);
+            var filesToAdd = mRecentlyFoundMyEMSLFiles.Except(mAllFoundMyEMSLFiles, mFileIDComparer);
 
-            m_AllFoundMyEMSLFiles.AddRange(filesToAdd);
+            mAllFoundMyEMSLFiles.AddRange(filesToAdd);
 
-            return m_RecentlyFoundMyEMSLFiles;
+            return mRecentlyFoundMyEMSLFiles;
 
         }
 
@@ -309,7 +309,7 @@ namespace AnalysisManagerBase
 
             matchingFileInfo = null;
 
-            var fileInfoQuery = (from item in m_RecentlyFoundMyEMSLFiles where item.FileID == myEMSLFileID select item.FileInfo).ToList();
+            var fileInfoQuery = (from item in mRecentlyFoundMyEMSLFiles where item.FileID == myEMSLFileID select item.FileInfo).ToList();
 
             if (fileInfoQuery.Count == 0)
             {
@@ -330,21 +330,21 @@ namespace AnalysisManagerBase
         public bool ProcessMyEMSLDownloadQueue(string downloadFolderPath, Downloader.DownloadFolderLayout folderLayout)
         {
 
-            if (m_MyEMSLDatasetListInfo.FilesToDownload.Count == 0)
+            if (mMyEMSLDatasetListInfo.FilesToDownload.Count == 0)
             {
                 // Nothing to download; that's OK
                 return true;
             }
 
-            m_MostRecentUnzippedFiles.Clear();
+            mMostRecentUnzippedFiles.Clear();
 
-            var success = m_MyEMSLDatasetListInfo.ProcessDownloadQueue(downloadFolderPath, folderLayout);
+            var success = mMyEMSLDatasetListInfo.ProcessDownloadQueue(downloadFolderPath, folderLayout);
             if (success)
                 return true;
 
-            if (m_MyEMSLDatasetListInfo.ErrorMessages.Count > 0)
+            if (mMyEMSLDatasetListInfo.ErrorMessages.Count > 0)
             {
-                OnErrorEvent("Error in ProcessMyEMSLDownloadQueue: " + m_MyEMSLDatasetListInfo.ErrorMessages.First());
+                OnErrorEvent("Error in ProcessMyEMSLDownloadQueue: " + mMyEMSLDatasetListInfo.ErrorMessages.First());
             }
             else
             {
@@ -375,9 +375,9 @@ namespace AnalysisManagerBase
 
         private void MyEMSLDatasetListInfo_ProgressEvent(string progressMessage, float percentComplete)
         {
-            if (DateTime.UtcNow.Subtract(m_LastMyEMSLProgressWriteTime).TotalMinutes > 0.2)
+            if (DateTime.UtcNow.Subtract(mLastMyEMSLProgressWriteTime).TotalMinutes > 0.2)
             {
-                m_LastMyEMSLProgressWriteTime = DateTime.UtcNow;
+                mLastMyEMSLProgressWriteTime = DateTime.UtcNow;
                 OnProgressUpdate("MyEMSL downloader: " + percentComplete + "% complete", percentComplete);
             }
         }
@@ -395,15 +395,15 @@ namespace AnalysisManagerBase
                 {
                     // Decompress the .zip file
                     OnStatusEvent("Unzipping file " + fiFileToUnzip.Name);
-                    m_DotNetZipTools.UnzipFile(fiFileToUnzip.FullName, e.DownloadFolderPath);
-                    m_MostRecentUnzippedFiles.AddRange(m_DotNetZipTools.MostRecentUnzippedFiles);
+                    mDotNetZipTools.UnzipFile(fiFileToUnzip.FullName, e.DownloadFolderPath);
+                    mMostRecentUnzippedFiles.AddRange(mDotNetZipTools.MostRecentUnzippedFiles);
                 }
                 else if (fiFileToUnzip.Extension.ToLower() == ".gz")
                 {
                     // Decompress the .gz file
                     OnStatusEvent("Unzipping file " + fiFileToUnzip.Name);
-                    m_DotNetZipTools.GUnzipFile(fiFileToUnzip.FullName, e.DownloadFolderPath);
-                    m_MostRecentUnzippedFiles.AddRange(m_DotNetZipTools.MostRecentUnzippedFiles);
+                    mDotNetZipTools.GUnzipFile(fiFileToUnzip.FullName, e.DownloadFolderPath);
+                    mMostRecentUnzippedFiles.AddRange(mDotNetZipTools.MostRecentUnzippedFiles);
                 }
 
             }

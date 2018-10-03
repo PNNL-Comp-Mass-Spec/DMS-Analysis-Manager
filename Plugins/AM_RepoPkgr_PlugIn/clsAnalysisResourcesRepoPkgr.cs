@@ -45,12 +45,12 @@ namespace AnalysisManager_RepoPkgr_Plugin
                 return result;
             }
 
-            var localOrgDBFolder = m_mgrParams.GetParam("orgdbdir");
+            var localOrgDBFolder = mMgrParams.GetParam("OrgDbDir");
 
             // Gigasax.DMS_Pipeline
-            var connectionString = m_mgrParams.GetParam("brokerconnectionstring");
+            var connectionString = mMgrParams.GetParam("brokerconnectionstring");
 
-            var dataPkgId = m_jobParams.GetJobParameter("DataPackageID", -1);
+            var dataPkgId = mJobParams.GetJobParameter("DataPackageID", -1);
 
             // lstAdditionalJobs tracks non Peptide-hit jobs (e.g. DeconTools or MASIC jobs)
 
@@ -62,7 +62,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
             if (!success)
                 return CloseOutType.CLOSEOUT_NO_FAS_FILES;
 
-            var includeMzXmlFiles = m_jobParams.GetJobParameter("IncludeMzXMLFiles", true);
+            var includeMzXmlFiles = mJobParams.GetJobParameter("IncludeMzXMLFiles", true);
 
             success = FindInstrumentDataFiles(dataPackageInfoLoader, lstDataPackagePeptideHitJobs, lstAdditionalJobs, includeMzXmlFiles);
             if (!success)
@@ -171,9 +171,9 @@ namespace AnalysisManager_RepoPkgr_Plugin
                             }
                             else
                             {
-                                m_message = "mzXML/mzML file not found for dataset " + udtJobInfo.Dataset +
+                                mMessage = "mzXML/mzML file not found for dataset " + udtJobInfo.Dataset +
                                             " and dataset file type is not a .Raw file and we thus cannot auto-create the missing mzXML file";
-                                LogError(m_message);
+                                LogError(mMessage);
                                 return false;
                             }
                         }
@@ -209,7 +209,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
                     {
                         if (strRawFilePath.StartsWith(MYEMSL_PATH_FLAG))
                         {
-                            m_MyEMSLUtilities.AddFileToDownloadQueue(m_MyEMSLUtilities.RecentlyFoundMyEMSLFiles.First().FileInfo);
+                            mMyEMSLUtilities.AddFileToDownloadQueue(mMyEMSLUtilities.RecentlyFoundMyEMSLFiles.First().FileInfo);
                         }
 
                         dctDatasetRawFilePaths.Add(udtJobInfo.Dataset, strRawFilePath);
@@ -218,7 +218,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
                 // Compute a % complete value between 0 and 2%
                 var percentComplete = jobsProcessed / (float)jobCountToProcess * 2;
-                m_StatusTools.UpdateAndWrite(percentComplete);
+                mStatusTools.UpdateAndWrite(percentComplete);
 
                 if (DateTime.UtcNow.Subtract(dtLastProgressUpdate).TotalSeconds >= 30)
                 {
@@ -238,11 +238,11 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
             if (missingInstrumentDataCount > 0)
             {
-                var jobId = m_jobParams.GetJobParameter("Job", "??");
-                var dataPackageID = m_jobParams.GetJobParameter("DataPackageID", "??");
+                var jobId = mJobParams.GetJobParameter("Job", "??");
+                var dataPackageID = mJobParams.GetJobParameter("DataPackageID", "??");
                 var msg = "Instrument data file not found for " + missingInstrumentDataCount +
                     clsGlobal.CheckPlural(missingInstrumentDataCount, " dataset", " datasets") + " in data package " + dataPackageID;
-                m_jobParams.AddAdditionalParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, clsAnalysisToolRunnerRepoPkgr.WARNING_INSTRUMENT_DATA_MISSING, msg);
+                mJobParams.AddAdditionalParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, clsAnalysisToolRunnerRepoPkgr.WARNING_INSTRUMENT_DATA_MISSING, msg);
 
                 msg += " (pipeline job " + jobId + ")";
                 LogErrorToDatabase(msg);
@@ -251,7 +251,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
             // Restore the dataset and job info for this aggregation job
             OverrideCurrentDatasetAndJobInfo(udtCurrentDatasetAndJobInfo);
 
-            if (!ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+            if (!ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
             {
                 return false;
             }
@@ -268,9 +268,9 @@ namespace AnalysisManager_RepoPkgr_Plugin
                 RetrieveMzXMLFile = true
             };
 
-            var dataPackgeFileHandler = new clsDataPackageFileHandler(dataPackageInfoLoader.ConnectionString, dataPackageInfoLoader.DataPackageID, this);
+            var dataPackageFileHandler = new clsDataPackageFileHandler(dataPackageInfoLoader.ConnectionString, dataPackageInfoLoader.DataPackageID, this);
 
-            var success = dataPackgeFileHandler.RetrieveDataPackageMzXMLFiles(dctInstrumentDataToRetrieve, udtOptions);
+            var success = dataPackageFileHandler.RetrieveDataPackageMzXMLFiles(dctInstrumentDataToRetrieve, udtOptions);
 
             return success;
 
@@ -304,7 +304,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
                     foreach (var candidateFile in candidateFileNames)
                     {
-                        var filePath = Path.Combine(m_WorkingDir, candidateFile);
+                        var filePath = Path.Combine(mWorkDir, candidateFile);
 
                         if (File.Exists(filePath))
                         {
@@ -338,8 +338,8 @@ namespace AnalysisManager_RepoPkgr_Plugin
             }
             catch (Exception ex)
             {
-                m_message = "Exception in FindMissingMzXmlFiles";
-                LogError(m_message + ": " + ex.Message);
+                mMessage = "Exception in FindMissingMzXmlFiles";
+                LogError(mMessage + ": " + ex.Message);
             }
 
         }
@@ -370,25 +370,25 @@ namespace AnalysisManager_RepoPkgr_Plugin
                     else
                     {
                         OverrideCurrentDatasetAndJobInfo(udtJob);
-                        m_jobParams.AddAdditionalParameter("PeptideSearch", "generatedFastaName", string.Empty);
+                        mJobParams.AddAdditionalParameter("PeptideSearch", "generatedFastaName", string.Empty);
                         if (!RetrieveOrgDB(orgDbDirectoryPath, out _))
                         {
-                            if (string.IsNullOrEmpty(m_message))
-                                m_message = "Call to RetrieveOrgDB returned false in clsAnalysisResourcesRepoPkgr.RetrieveFastaFiles";
+                            if (string.IsNullOrEmpty(mMessage))
+                                mMessage = "Call to RetrieveOrgDB returned false in clsAnalysisResourcesRepoPkgr.RetrieveFastaFiles";
                             return false;
                         }
-                        orgDbNameGenerated = m_jobParams.GetJobParameter("PeptideSearch", "generatedFastaName", string.Empty);
+                        orgDbNameGenerated = mJobParams.GetJobParameter("PeptideSearch", "generatedFastaName", string.Empty);
                         if (string.IsNullOrEmpty(orgDbNameGenerated))
                         {
-                            m_message = "FASTA file was not generated when RetrieveFastaFiles called RetrieveOrgDB";
-                            LogError(m_message + " (class clsAnalysisResourcesRepoPkgr)");
+                            mMessage = "FASTA file was not generated when RetrieveFastaFiles called RetrieveOrgDB";
+                            LogError(mMessage + " (class clsAnalysisResourcesRepoPkgr)");
                             return false;
                         }
                         if (orgDbNameGenerated != udtJob.OrganismDBName)
                         {
-                            m_message = "Generated FASTA file name (" + orgDbNameGenerated + ") does not match expected fasta file name (" +
+                            mMessage = "Generated FASTA file name (" + orgDbNameGenerated + ") does not match expected fasta file name (" +
                                         udtJob.OrganismDBName + "); aborting";
-                            LogError(m_message + " (class clsAnalysisResourcesRepoPkgr)");
+                            LogError(mMessage + " (class clsAnalysisResourcesRepoPkgr)");
                             return false;
                         }
                         dctOrgDBParamsToGeneratedFileNameMap.Add(strDictionaryKey, orgDbNameGenerated);
@@ -396,7 +396,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
                         lstGeneratedOrgDBNames.Add(orgDbNameGenerated);
                     }
                     // Add a new job parameter that associates orgDbNameGenerated with this job
-                    m_jobParams.AddAdditionalParameter("PeptideSearch", GetGeneratedFastaParamNameForJob(udtJob.Job),
+                    mJobParams.AddAdditionalParameter("PeptideSearch", GetGeneratedFastaParamNameForJob(udtJob.Job),
                                                        orgDbNameGenerated);
                 }
 
@@ -409,8 +409,8 @@ namespace AnalysisManager_RepoPkgr_Plugin
             }
             catch (Exception ex)
             {
-                m_message = "Exception in RetrieveFastaFiles";
-                LogError(m_message, ex);
+                mMessage = "Exception in RetrieveFastaFiles";
+                LogError(mMessage, ex);
                 return false;
             }
             return true;

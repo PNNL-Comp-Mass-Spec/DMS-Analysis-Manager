@@ -33,13 +33,13 @@ namespace AnalysisManagerExtractionPlugin
 
         #region "Module Variables"
 
-        private readonly int m_DebugLevel;
-        private readonly IMgrParams m_MgrParams;
-        private readonly IJobParams m_JobParams;
+        private readonly int mDebugLevel;
+        private readonly IMgrParams mMgrParams;
+        private readonly IJobParams mJobParams;
 
-        private int m_Progress;
-        private string m_ErrMsg = string.Empty;
-        private string m_PHRPConsoleOutputFilePath;
+        private int mProgress;
+        private string mErrMsg = string.Empty;
+        private string mPHRPConsoleOutputFilePath;
 
         #endregion
 
@@ -49,20 +49,14 @@ namespace AnalysisManagerExtractionPlugin
         {
             get
             {
-                if (m_ErrMsg == null)
+                if (mErrMsg == null)
                 {
                     return string.Empty;
                 }
 
-                return m_ErrMsg;
+                return mErrMsg;
             }
         }
-
-        #endregion
-
-        #region "Events"
-
-        public delegate void ProgressChangedEventHandler(string taskDescription, float percentComplete);
 
         #endregion
 
@@ -76,9 +70,9 @@ namespace AnalysisManagerExtractionPlugin
         /// <remarks></remarks>
         public clsPepHitResultsProcWrapper(IMgrParams mgrParams, IJobParams jobParams)
         {
-            m_MgrParams = mgrParams;
-            m_JobParams = jobParams;
-            m_DebugLevel = m_MgrParams.GetParam("debuglevel", 1);
+            mMgrParams = mgrParams;
+            mJobParams = jobParams;
+            mDebugLevel = mMgrParams.GetParam("DebugLevel", 1);
         }
 
         /// <summary>
@@ -107,7 +101,7 @@ namespace AnalysisManagerExtractionPlugin
             string fastaFilePath,
             string resultType)
         {
-            var paramFileName = m_JobParams.GetParam("ParmFileName");
+            var paramFileName = mJobParams.GetParam("ParmFileName");
 
             try
             {
@@ -117,8 +111,8 @@ namespace AnalysisManagerExtractionPlugin
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
 
-                m_Progress = 0;
-                m_ErrMsg = string.Empty;
+                mProgress = 0;
+                mErrMsg = string.Empty;
 
                 if (string.IsNullOrWhiteSpace(peptideSearchResultsFileName))
                 {
@@ -136,9 +130,9 @@ namespace AnalysisManagerExtractionPlugin
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
 
-                m_PHRPConsoleOutputFilePath = Path.Combine(psmResultsFile.Directory.FullName, "PHRPOutput.txt");
+                mPHRPConsoleOutputFilePath = Path.Combine(psmResultsFile.Directory.FullName, "PHRPOutput.txt");
 
-                var progLoc = m_MgrParams.GetParam("PHRPProgLoc");
+                var progLoc = mMgrParams.GetParam("PHRPProgLoc");
                 progLoc = Path.Combine(progLoc, "PeptideHitResultsProcRunner.exe");
 
                 // Verify that program file exists
@@ -158,7 +152,7 @@ namespace AnalysisManagerExtractionPlugin
 
                 cmdStr += " /L:" + Path.Combine(psmResultsFile.Directory.FullName, PHRP_LOG_FILE_NAME);
 
-                var skipProteinMods = m_JobParams.GetJobParameter("SkipProteinMods", false);
+                var skipProteinMods = mJobParams.GetJobParameter("SkipProteinMods", false);
                 if (!skipProteinMods)
                 {
                     cmdStr += " /ProteinMods";
@@ -180,8 +174,8 @@ namespace AnalysisManagerExtractionPlugin
 
                 // PHRP defaults to use /MSGFPlusSpecEValue:5E-7  and  /MSGFPlusEValue:0.75
                 // Adjust these if defined in the job parameters
-                var msgfPlusSpecEValue = m_JobParams.GetJobParameter("MSGFPlusSpecEValue", "");
-                var msgfPlusEValue = m_JobParams.GetJobParameter("MSGFPlusEValue", "");
+                var msgfPlusSpecEValue = mJobParams.GetJobParameter("MSGFPlusSpecEValue", "");
+                var msgfPlusEValue = mJobParams.GetJobParameter("MSGFPlusEValue", "");
 
                 if (!string.IsNullOrWhiteSpace(msgfPlusSpecEValue))
                 {
@@ -193,18 +187,18 @@ namespace AnalysisManagerExtractionPlugin
                     cmdStr += " /MSGFPlusEValue:" + msgfPlusEValue;
                 }
 
-                if (m_DebugLevel >= 1)
+                if (mDebugLevel >= 1)
                 {
                     OnDebugEvent(progLoc + " " + cmdStr);
                 }
 
-                var cmdRunner = new clsRunDosProgram(psmResultsFile.Directory.FullName, m_DebugLevel)
+                var cmdRunner = new clsRunDosProgram(psmResultsFile.Directory.FullName, mDebugLevel)
                 {
                     CreateNoWindow = true,
                     CacheStandardOutput = true,
                     EchoOutputToConsole = true,
                     WriteConsoleOutputToFile = true,
-                    ConsoleOutputFilePath = m_PHRPConsoleOutputFilePath
+                    ConsoleOutputFilePath = mPHRPConsoleOutputFilePath
                 };
                 RegisterEvents(cmdRunner);
                 cmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
@@ -224,9 +218,9 @@ namespace AnalysisManagerExtractionPlugin
                     ReportError("PHRP runner returned a non-zero error code: " + cmdRunner.ExitCode);
 
                     // Parse the console output file for any lines that contain "Error"
-                    // Append them to m_ErrMsg
+                    // Append them to mErrMsg
 
-                    var consoleOutputFile = new FileInfo(m_PHRPConsoleOutputFilePath);
+                    var consoleOutputFile = new FileInfo(mPHRPConsoleOutputFilePath);
                     var errorMessageFound = false;
 
                     if (consoleOutputFile.Exists)
@@ -243,7 +237,7 @@ namespace AnalysisManagerExtractionPlugin
                                 if (!lineIn.ToLower().Contains("error"))
                                     continue;
 
-                                m_ErrMsg += "; " + lineIn;
+                                mErrMsg += "; " + lineIn;
                                 OnWarningEvent(lineIn);
 
                                 errorMessageFound = true;
@@ -253,7 +247,7 @@ namespace AnalysisManagerExtractionPlugin
 
                     if (!errorMessageFound)
                     {
-                        m_ErrMsg += "; Unknown error message";
+                        mErrMsg += "; Unknown error message";
                         OnWarningEvent("Unknown PHRP error message");
                     }
 
@@ -321,14 +315,14 @@ namespace AnalysisManagerExtractionPlugin
                 // Delete the PHRP console output file, since we didn't encounter any errors and the file is typically not useful
                 try
                 {
-                    File.Delete(m_PHRPConsoleOutputFilePath);
+                    File.Delete(mPHRPConsoleOutputFilePath);
                 }
                 catch (Exception)
                 {
                     // Ignore errors here
                 }
 
-                if (m_DebugLevel >= 3)
+                if (mDebugLevel >= 3)
                 {
                     OnDebugEvent("Peptide hit results processor complete");
                 }
@@ -360,9 +354,9 @@ namespace AnalysisManagerExtractionPlugin
 
                 float progressSubtask = 0;
 
-                if (!File.Exists(m_PHRPConsoleOutputFilePath)) return;
+                if (!File.Exists(mPHRPConsoleOutputFilePath)) return;
 
-                using (var srInFile = new StreamReader(new FileStream(m_PHRPConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var srInFile = new StreamReader(new FileStream(mPHRPConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
                     while (!srInFile.EndOfStream)
                     {
@@ -413,10 +407,10 @@ namespace AnalysisManagerExtractionPlugin
 
                 var progressOverall = clsAnalysisToolRunnerBase.ComputeIncrementalProgress(currentTaskProgressAtStart, currentTaskProgressAtEnd, progressSubtask);
 
-                if (progressOverall > m_Progress)
+                if (progressOverall > mProgress)
                 {
-                    m_Progress = (int)progressOverall;
-                    OnProgressUpdate("Running PHRP", m_Progress);
+                    mProgress = (int)progressOverall;
+                    OnProgressUpdate("Running PHRP", mProgress);
                 }
             }
             catch (Exception ex)
@@ -427,8 +421,8 @@ namespace AnalysisManagerExtractionPlugin
 
         private void ReportError(string message)
         {
-            m_ErrMsg = message;
-            OnErrorEvent(m_ErrMsg);
+            mErrMsg = message;
+            OnErrorEvent(mErrMsg);
         }
 
         private CloseOutType ValidatePrimaryResultsFile(FileInfo psmResultsFile, string fileSuffix, string fileDescription)
@@ -449,7 +443,7 @@ namespace AnalysisManagerExtractionPlugin
             var synopsisFileHasData = clsAnalysisResources.ValidateFileHasData(files.First().FullName, "PHRP " + fileDescription + " file", out var errorMessage);
             if (!synopsisFileHasData)
             {
-                m_ErrMsg = errorMessage;
+                mErrMsg = errorMessage;
                 OnWarningEvent(errorMessage);
                 return CloseOutType.CLOSEOUT_NO_DATA;
             }
@@ -462,7 +456,7 @@ namespace AnalysisManagerExtractionPlugin
 
         #region "Event Handlers"
 
-        private DateTime dtLastStatusUpdate = DateTime.MinValue;
+        private DateTime mLastStatusUpdate = DateTime.MinValue;
 
         /// <summary>
         /// Event handler for CmdRunner.LoopWaiting event
@@ -471,9 +465,9 @@ namespace AnalysisManagerExtractionPlugin
         private void CmdRunner_LoopWaiting()
         {
             // Update the status by parsing the PHRP console output file every 20 seconds
-            if (DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 20)
+            if (DateTime.UtcNow.Subtract(mLastStatusUpdate).TotalSeconds >= 20)
             {
-                dtLastStatusUpdate = DateTime.UtcNow;
+                mLastStatusUpdate = DateTime.UtcNow;
                 ParsePHRPConsoleOutputFile();
             }
         }

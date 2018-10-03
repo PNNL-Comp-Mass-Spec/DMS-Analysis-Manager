@@ -70,17 +70,17 @@ namespace AnalysisManagerBase
         /// Job parameters
         /// The outer dictionary tracks section names, then the inner dictionary tracks key/value pairs within each section
         /// </summary>
-        protected readonly Dictionary<string, Dictionary<string, string>> m_JobParams;
+        protected readonly Dictionary<string, Dictionary<string, string>> mJobParams;
 
         /// <summary>
         /// Current job number
         /// </summary>
-        protected int m_JobId;
+        protected int mJobId;
 
         /// <summary>
         /// List of file names to NOT move to the result folder; this list is used by MoveResultFiles()
         /// </summary>
-        protected SortedSet<string> m_ResultFilesToSkip = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
+        protected SortedSet<string> mResultFilesToSkip = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
         /// List of file extensions (or even partial file names like _peaks.txt) to NOT move to the result folder
@@ -89,29 +89,29 @@ namespace AnalysisManagerBase
         /// Comparison checks if the end of the fileName matches any entry ResultFileExtensionsToSkip:
         /// If (tmpFileNameLCase.EndsWith(ext, StringComparison.OrdinalIgnoreCase)) Then OkToMove = False
         /// </remarks>
-        protected SortedSet<string> m_ResultFileExtensionsToSkip = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
+        protected SortedSet<string> mResultFileExtensionsToSkip = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
         /// List of file names that WILL be moved to the result folder, even if they are in ResultFilesToSkip or ResultFileExtensionsToSkip
         /// </summary>
-        protected SortedSet<string> m_ResultFilesToKeep = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
+        protected SortedSet<string> mResultFilesToKeep = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
         /// List of file path to delete from the storage server (must be full file paths)
         /// </summary>
-        protected SortedSet<string> m_ServerFilesToDelete = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
+        protected SortedSet<string> mServerFilesToDelete = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
         /// List of dataset names and dataset IDs
         /// </summary>
-        protected Dictionary<string, int> m_DatasetInfoList = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        protected Dictionary<string, int> mDatasetInfoList = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
         /// Offline job info file
         /// </summary>
-        protected FileInfo m_OfflineJobInfoFile;
+        protected FileInfo mOfflineJobInfoFile;
 
-        private DateTime m_StartTime;
+        private DateTime mStartTime;
 
         #endregion
 
@@ -123,7 +123,7 @@ namespace AnalysisManagerBase
         /// <value></value>
         /// <returns></returns>
         /// <remarks></remarks>
-        public Dictionary<string, int> DatasetInfoList => m_DatasetInfoList;
+        public Dictionary<string, int> DatasetInfoList => mDatasetInfoList;
 
         /// <summary>
         /// List of file names that WILL be moved to the result folder, even if they are in ResultFilesToSkip or ResultFileExtensionsToSkip
@@ -131,7 +131,7 @@ namespace AnalysisManagerBase
         /// <value></value>
         /// <returns></returns>
         /// <remarks></remarks>
-        public SortedSet<string> ResultFilesToKeep => m_ResultFilesToKeep;
+        public SortedSet<string> ResultFilesToKeep => mResultFilesToKeep;
 
         /// <summary>
         /// List of file names to NOT move to the result folder
@@ -139,7 +139,7 @@ namespace AnalysisManagerBase
         /// <value></value>
         /// <returns></returns>
         /// <remarks></remarks>
-        public SortedSet<string> ResultFilesToSkip => m_ResultFilesToSkip;
+        public SortedSet<string> ResultFilesToSkip => mResultFilesToSkip;
 
         /// <summary>
         /// List of file extensions to NOT move to the result folder; comparison checks if the end of the fileName matches any entry in ResultFileExtensionsToSkip
@@ -147,7 +147,7 @@ namespace AnalysisManagerBase
         /// <value></value>
         /// <returns></returns>
         /// <remarks></remarks>
-        public SortedSet<string> ResultFileExtensionsToSkip => m_ResultFileExtensionsToSkip;
+        public SortedSet<string> ResultFileExtensionsToSkip => mResultFileExtensionsToSkip;
 
         /// <summary>
         /// List of file paths to remove from the storage server (full file paths)
@@ -155,7 +155,7 @@ namespace AnalysisManagerBase
         /// <value></value>
         /// <returns></returns>
         /// <remarks>Used by clsAnalysisToolRunnerBase.RemoveNonResultServerFiles</remarks>
-        public SortedSet<string> ServerFilesToDelete => m_ServerFilesToDelete;
+        public SortedSet<string> ServerFilesToDelete => mServerFilesToDelete;
 
         /// <summary>
         /// Flag set to True when .CloseTask is called
@@ -179,7 +179,7 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public clsAnalysisJob(IMgrParams mgrParams, short debugLvl) : base(mgrParams, debugLvl)
         {
-            m_JobParams = new Dictionary<string, Dictionary<string, string>>(StringComparer.OrdinalIgnoreCase);
+            mJobParams = new Dictionary<string, Dictionary<string, string>>(StringComparer.OrdinalIgnoreCase);
             Reset();
         }
 
@@ -268,9 +268,9 @@ namespace AnalysisManagerBase
         {
             if (string.IsNullOrWhiteSpace(datasetName))
                 return;
-            if (!m_DatasetInfoList.ContainsKey(datasetName))
+            if (!mDatasetInfoList.ContainsKey(datasetName))
             {
-                m_DatasetInfoList.Add(datasetName, datasetID);
+                mDatasetInfoList.Add(datasetName, datasetID);
             }
         }
 
@@ -284,9 +284,9 @@ namespace AnalysisManagerBase
             if (string.IsNullOrWhiteSpace(fileExtension))
                 return;
 
-            if (!m_ResultFileExtensionsToSkip.Contains(fileExtension))
+            if (!mResultFileExtensionsToSkip.Contains(fileExtension))
             {
-                m_ResultFileExtensionsToSkip.Add(fileExtension);
+                mResultFileExtensionsToSkip.Add(fileExtension);
             }
         }
 
@@ -301,9 +301,9 @@ namespace AnalysisManagerBase
                 return;
 
             fileName = Path.GetFileName(fileName);
-            if (!m_ResultFilesToKeep.Contains(fileName))
+            if (!mResultFilesToKeep.Contains(fileName))
             {
-                m_ResultFilesToKeep.Add(fileName);
+                mResultFilesToKeep.Add(fileName);
             }
         }
 
@@ -318,9 +318,9 @@ namespace AnalysisManagerBase
                 return;
 
             fileName = Path.GetFileName(fileName);
-            if (!m_ResultFilesToSkip.Contains(fileName))
+            if (!mResultFilesToSkip.Contains(fileName))
             {
-                m_ResultFilesToSkip.Add(fileName);
+                mResultFilesToSkip.Add(fileName);
             }
         }
 
@@ -334,9 +334,9 @@ namespace AnalysisManagerBase
             if (string.IsNullOrWhiteSpace(filePath))
                 return;
 
-            if (!m_ServerFilesToDelete.Contains(filePath))
+            if (!mServerFilesToDelete.Contains(filePath))
             {
-                m_ServerFilesToDelete.Add(filePath);
+                mServerFilesToDelete.Add(filePath);
             }
         }
 
@@ -441,7 +441,7 @@ namespace AnalysisManagerBase
         /// <returns>Dictionary where keys are parameter names and values are parameter values</returns>
         public Dictionary<string, string> GetAllParametersForSection(string sectionName)
         {
-            if (m_JobParams.TryGetValue(sectionName, out var oParams))
+            if (mJobParams.TryGetValue(sectionName, out var oParams))
             {
                 return oParams;
             }
@@ -455,7 +455,7 @@ namespace AnalysisManagerBase
         /// <returns></returns>
         public List<string> GetAllSectionNames()
         {
-            return m_JobParams.Keys.ToList();
+            return mJobParams.Keys.ToList();
         }
 
         /// <summary>
@@ -710,7 +710,7 @@ namespace AnalysisManagerBase
             if (paramValue == null)
                 paramValue = string.Empty;
 
-            foreach (var section in m_JobParams)
+            foreach (var section in mJobParams)
             {
                 if (section.Value.ContainsKey(paramName))
                 {
@@ -719,10 +719,10 @@ namespace AnalysisManagerBase
                 }
             }
 
-            if (!matchFound && m_JobParams.Count > 0)
+            if (!matchFound && mJobParams.Count > 0)
             {
                 // Add the parameter to the first section
-                m_JobParams.First().Value.Add(paramName, paramValue);
+                mJobParams.First().Value.Add(paramName, paramValue);
             }
 
         }
@@ -736,11 +736,11 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public void SetParam(string section, string paramName, string paramValue)
         {
-            if (!m_JobParams.TryGetValue(section, out var oParams))
+            if (!mJobParams.TryGetValue(section, out var oParams))
             {
                 // New section; add it
                 oParams = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-                m_JobParams.Add(section, oParams);
+                mJobParams.Add(section, oParams);
             }
 
             if (paramValue == null)
@@ -782,7 +782,7 @@ namespace AnalysisManagerBase
 
             paramValue = string.Empty;
 
-            foreach (var oEntry in m_JobParams)
+            foreach (var oEntry in mJobParams)
             {
                 if (oEntry.Value.TryGetValue(paramName, out paramValue))
                 {
@@ -824,7 +824,7 @@ namespace AnalysisManagerBase
         {
             paramValue = string.Empty;
 
-            if (m_JobParams.TryGetValue(section, out var oParams))
+            if (mJobParams.TryGetValue(section, out var oParams))
             {
                 if (oParams.TryGetValue(paramName, out paramValue))
                 {
@@ -852,9 +852,9 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public void RemoveResultFileToSkip(string fileName)
         {
-            if (m_ResultFilesToSkip.Contains(fileName))
+            if (mResultFilesToSkip.Contains(fileName))
             {
-                m_ResultFilesToSkip.Remove(fileName);
+                mResultFilesToSkip.Remove(fileName);
             }
 
         }
@@ -1284,26 +1284,26 @@ namespace AnalysisManagerBase
             }
             else
             {
-                var runJobsRemotely = m_MgrParams.GetParam("RunJobsRemotely", false);
+                var runJobsRemotely = mMgrParams.GetParam("RunJobsRemotely", false);
                 result = RequestAnalysisJobFromDB(runJobsRemotely);
             }
 
             switch (result)
             {
                 case RequestTaskResult.NoTaskFound:
-                    m_TaskWasAssigned = false;
+                    mTaskWasAssigned = false;
                     break;
                 case RequestTaskResult.TaskFound:
-                    m_TaskWasAssigned = true;
+                    mTaskWasAssigned = true;
                     break;
                 case RequestTaskResult.TooManyRetries:
                 case RequestTaskResult.Deadlock:
                     // Make sure the database didn't actually assign a job to this manager
                     ReportManagerIdle();
-                    m_TaskWasAssigned = false;
+                    mTaskWasAssigned = false;
                     break;
                 default:
-                    m_TaskWasAssigned = false;
+                    mTaskWasAssigned = false;
                     break;
             }
             return result;
@@ -1356,12 +1356,12 @@ namespace AnalysisManagerBase
                 cmd.Parameters.Add(new SqlParameter("@infoOnly", SqlDbType.TinyInt)).Value = 0;
                 cmd.Parameters.Add(new SqlParameter("@analysisManagerVersion", SqlDbType.VarChar, 128)).Value = managerVersion;
 
-                var remoteInfo = runJobsRemotely ? clsRemoteTransferUtility.GetRemoteInfoXml(m_MgrParams) : string.Empty;
+                var remoteInfo = runJobsRemotely ? clsRemoteTransferUtility.GetRemoteInfoXml(mMgrParams) : string.Empty;
                 cmd.Parameters.Add(new SqlParameter("@remoteInfo", SqlDbType.VarChar, 900)).Value = remoteInfo;
 
-                if (m_DebugLevel > 4 || TraceMode)
+                if (mDebugLevel > 4 || TraceMode)
                 {
-                    LogDebug("clsAnalysisJob.RequestAnalysisJob(), connection string: " + m_BrokerConnStr, (int)BaseLogger.LogLevels.DEBUG);
+                    LogDebug("clsAnalysisJob.RequestAnalysisJob(), connection string: " + mBrokerConnStr, (int)BaseLogger.LogLevels.DEBUG);
                     LogDebug("clsAnalysisJob.RequestAnalysisJob(), printing param list", (int)BaseLogger.LogLevels.DEBUG);
                     PrintCommandParams(cmd);
                 }
@@ -1375,7 +1375,7 @@ namespace AnalysisManagerBase
                 {
                     case RET_VAL_OK:
                         // No errors found in SP call, so see if any step tasks were found
-                        m_JobId = Convert.ToInt32(cmd.Parameters["@jobNumber"].Value);
+                        mJobId = Convert.ToInt32(cmd.Parameters["@jobNumber"].Value);
                         var jobParamsXML = Convert.ToString(cmd.Parameters["@parameters"].Value);
 
                         // Step task was found; get the data for it
@@ -1393,7 +1393,7 @@ namespace AnalysisManagerBase
                             SetParam(udtParamInfo.Section, udtParamInfo.ParamName, udtParamInfo.Value);
                         }
 
-                        SaveJobParameters(m_MgrParams.GetParam("WorkDir"), jobParamsXML, m_JobId);
+                        SaveJobParameters(mMgrParams.GetParam("WorkDir"), jobParamsXML, mJobId);
                         taskResult = RequestTaskResult.TaskFound;
                         break;
 
@@ -1438,7 +1438,7 @@ namespace AnalysisManagerBase
 
                 var reJobStepTimestamp = new Regex(@"(?<JobStep>Job\d+_Step\d+)_(?<TimeStamp>.+)\.info", RegexOptions.Compiled);
 
-                var stepToolList = m_MgrParams.GetParam("StepToolsEnabled");
+                var stepToolList = mMgrParams.GetParam("StepToolsEnabled");
 
                 if (string.IsNullOrWhiteSpace(stepToolList))
                 {
@@ -1448,7 +1448,7 @@ namespace AnalysisManagerBase
 
                 var stepTools = stepToolList.Split(',');
 
-                var taskQueuePathBase = m_MgrParams.GetParam("LocalTaskQueuePath");
+                var taskQueuePathBase = mMgrParams.GetParam("LocalTaskQueuePath");
                 if (string.IsNullOrWhiteSpace(taskQueuePathBase))
                 {
                     LogError("Manager parameter LocalTaskQueuePath is empty; update ManagerSettingsLocal.xml");
@@ -1546,16 +1546,16 @@ namespace AnalysisManagerBase
         {
             TaskClosed = false;
 
-            m_ResultFilesToSkip.Clear();
-            m_ResultFileExtensionsToSkip.Clear();
-            m_ResultFilesToKeep.Clear();
-            m_ServerFilesToDelete.Clear();
+            mResultFilesToSkip.Clear();
+            mResultFileExtensionsToSkip.Clear();
+            mResultFilesToKeep.Clear();
+            mServerFilesToDelete.Clear();
 
-            m_DatasetInfoList.Clear();
+            mDatasetInfoList.Clear();
 
-            m_JobParams.Clear();
+            mJobParams.Clear();
 
-            m_StartTime = DateTime.UtcNow;
+            mStartTime = DateTime.UtcNow;
         }
 
         /// <summary>
@@ -1645,7 +1645,7 @@ namespace AnalysisManagerBase
 
                 // Parse the .info file
 
-                m_JobId = 0;
+                mJobId = 0;
                 var success = ReadOfflineJobInfoFile(infoFile, out var jobId, out var stepNum, out var workDirPath, out var staged);
 
                 if (!success || jobId == 0)
@@ -1654,7 +1654,7 @@ namespace AnalysisManagerBase
                     return false;
                 }
 
-                m_JobId = jobId;
+                mJobId = jobId;
                 if (stepNum == 0)
                 {
                     FinalizeFailedOfflineJob(infoFile, startTime, "Step missing from .info file");
@@ -1667,9 +1667,9 @@ namespace AnalysisManagerBase
                     return false;
                 }
 
-                LogMessage(string.Format("Processing offline job {0}, step {1}, WorkDir {2}, staged {3}", m_JobId, stepNum, workDirPath, staged));
+                LogMessage(string.Format("Processing offline job {0}, step {1}, WorkDir {2}, staged {3}", mJobId, stepNum, workDirPath, staged));
 
-                m_OfflineJobInfoFile = infoFile;
+                mOfflineJobInfoFile = infoFile;
 
                 // Update the working directory in the manager parameters
                 // If necessary, switch from a Linux-style path to a Windows-style path
@@ -1680,7 +1680,7 @@ namespace AnalysisManagerBase
                     workDirPath = workDir.FullName;
                 }
 
-                m_MgrParams.SetParam("WorkDir", workDirPath);
+                mMgrParams.SetParam("WorkDir", workDirPath);
 
                 // Read JobParams.xml and update the job parameters
                 var jobParamsFile = new FileInfo(Path.Combine(workDirPath, OFFLINE_JOB_PARAMS_FILE));
@@ -1796,7 +1796,7 @@ namespace AnalysisManagerBase
         /// <param name="compMsg">Completion message to be added to database upon closeOut</param>
         public override void CloseTask(CloseOutType closeOut, string compMsg)
         {
-            CloseTask(closeOut, compMsg, 0, string.Empty, m_StartTime);
+            CloseTask(closeOut, compMsg, 0, string.Empty, mStartTime);
         }
 
         /// <summary>
@@ -1828,12 +1828,12 @@ namespace AnalysisManagerBase
             if (TaskClosed && clsGlobal.OfflineMode)
             {
                 // Make sure a .lock file does not exist
-                var lockFile = new FileInfo(Path.ChangeExtension(m_OfflineJobInfoFile.FullName, clsGlobal.LOCK_FILE_EXTENSION));
+                var lockFile = new FileInfo(Path.ChangeExtension(mOfflineJobInfoFile.FullName, clsGlobal.LOCK_FILE_EXTENSION));
                 if (lockFile.Exists)
                 {
                     LogWarning(string.Format(
                                    "Job {0} has already been closed; however, a lock file still exists at {1}; re-trying the call to FinalizeJob",
-                                   m_JobId, lockFile.FullName));
+                                   mJobId, lockFile.FullName));
 
                     TaskClosed = false;
                 }
@@ -1844,27 +1844,27 @@ namespace AnalysisManagerBase
                 // Job 1234567 has already been closed; will not call SetStepTaskComplete again
                 LogWarning(string.Format(
                                "Job {0} has already been closed; will not call {1} again",
-                               m_JobId, SP_NAME_SET_COMPLETE));
+                               mJobId, SP_NAME_SET_COMPLETE));
                 return;
             }
 
             TaskClosed = true;
             if (clsGlobal.OfflineMode)
             {
-                if (m_OfflineJobInfoFile == null)
+                if (mOfflineJobInfoFile == null)
                 {
-                    LogError("Cannot finalize offline job; m_OfflineJobInfoFile is null for job" + m_JobId);
+                    LogError("Cannot finalize offline job; mOfflineJobInfoFile is null for job" + mJobId);
                     return;
                 }
 
                 var succeeded = SuccessOrNoData(closeOut);
-                clsOfflineProcessing.FinalizeJob(m_OfflineJobInfoFile.FullName, ManagerName, succeeded, startTime, compCode, compMsg, evalCode, evalMsg);
+                clsOfflineProcessing.FinalizeJob(mOfflineJobInfoFile.FullName, ManagerName, succeeded, startTime, compCode, compMsg, evalCode, evalMsg);
             }
             else
             {
                 if (!SetAnalysisJobComplete(compCode, compMsg, evalCode, evalMsg))
                 {
-                    LogError("Error setting job complete in database, job " + m_JobId);
+                    LogError("Error setting job complete in database, job " + mJobId);
                 }
             }
 
@@ -2052,7 +2052,7 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Uses the "ToolName" and "StepTool" entries in m_JobParamsTable to generate the tool name for the current analysis job
+        /// Uses the "ToolName" and "StepTool" entries in mJobParamsTable to generate the tool name for the current analysis job
         /// Example tool names are "Sequest, Step 3" or "DTA_Gen (Sequest), Step 1" or "DataExtractor (XTandem), Step 4"
         /// </summary>
         /// <returns>Tool name and step number</returns>

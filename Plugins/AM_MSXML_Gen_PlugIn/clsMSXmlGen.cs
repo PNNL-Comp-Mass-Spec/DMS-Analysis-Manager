@@ -28,7 +28,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
         protected readonly bool mCentroidMS1;
         protected readonly bool mCentroidMS2;
 
-        // When true, then return an error if the progrunner returns a non-zero exit code
+        // When true, then return an error if the ProgRunner returns a non-zero exit code
         protected bool mUseProgRunnerResultCode;
 
         private string mErrorMessage;

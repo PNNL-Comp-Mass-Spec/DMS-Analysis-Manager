@@ -15,7 +15,7 @@ namespace AnalysisManager_AScore_PlugIn
         private const float PROGRESS_PCT_ASCORE_START = 1;
         private const float PROGRESS_PCT_ASCORE_DONE = 99;
 
-        private string m_CurrentAScoreTask = string.Empty;
+        private string mCurrentAScoreTask = string.Empty;
 
         /// <summary>
         /// Primary entry point for running this tool
@@ -33,51 +33,51 @@ namespace AnalysisManager_AScore_PlugIn
                 }
 
                 // Make sure _dta.txt files are not copied to the server
-                m_jobParams.AddResultFileExtensionToSkip("_dta.txt");
-                m_jobParams.AddResultFileExtensionToSkip("extracted_results.txt");
-                m_jobParams.AddResultFileExtensionToSkip("AScoreFile.txt");
+                mJobParams.AddResultFileExtensionToSkip("_dta.txt");
+                mJobParams.AddResultFileExtensionToSkip("extracted_results.txt");
+                mJobParams.AddResultFileExtensionToSkip("AScoreFile.txt");
 
                 // Store the AScore version info in the database
                 if (!StoreToolVersionInfo())
                 {
                     LogError("Aborting since StoreToolVersionInfo returned false");
-                    m_message = "Error determining AScore version";
+                    mMessage = "Error determining AScore version";
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                var ascoreParamFile = m_jobParams.GetJobParameter("AScoreParamFilename", string.Empty);
+                var ascoreParamFile = mJobParams.GetJobParameter("AScoreParamFilename", string.Empty);
                 bool processingSuccess;
 
                 if (string.IsNullOrEmpty(ascoreParamFile))
                 {
-                    m_message = "Skipping AScore since AScoreParamFilename is not defined for this job";
+                    mMessage = "Skipping AScore since AScoreParamFilename is not defined for this job";
                     processingSuccess = true;
                 }
                 else
                 {
 
-                    m_CurrentAScoreTask = "Running AScore";
-                    m_StatusTools.UpdateAndWrite(EnumMgrStatus.RUNNING, EnumTaskStatus.RUNNING,
-                                                 EnumTaskStatusDetail.RUNNING_TOOL, m_progress);
+                    mCurrentAScoreTask = "Running AScore";
+                    mStatusTools.UpdateAndWrite(EnumMgrStatus.RUNNING, EnumTaskStatus.RUNNING,
+                                                 EnumTaskStatusDetail.RUNNING_TOOL, mProgress);
 
-                    LogMessage(m_CurrentAScoreTask);
+                    LogMessage(mCurrentAScoreTask);
 
                     // Change the name of the log file for the local log file to the plugin log filename
-                    var logFileName = Path.Combine(m_WorkDir, "Ascore_Log.txt");
+                    var logFileName = Path.Combine(mWorkDir, "Ascore_Log.txt");
                     LogTools.ChangeLogFileBaseName(logFileName, appendDateToBaseName: false);
 
                     try
                     {
-                        m_progress = PROGRESS_PCT_ASCORE_START;
+                        mProgress = PROGRESS_PCT_ASCORE_START;
 
                         processingSuccess = RunAScore();
 
                         // Change the name of the log file back to the analysis manager log file
                         ResetLogFileNameToDefault();
 
-                        if (!processingSuccess && !string.IsNullOrWhiteSpace(m_message))
+                        if (!processingSuccess && !string.IsNullOrWhiteSpace(mMessage))
                         {
-                            LogError("Error running AScore: " + m_message);
+                            LogError("Error running AScore: " + mMessage);
                         }
 
                         if (processingSuccess)
@@ -86,7 +86,7 @@ namespace AnalysisManager_AScore_PlugIn
                             var exportSuccess = ExportAScoreResults();
                             if (!exportSuccess)
                             {
-                                m_message = "Export of table t_results_ascore failed";
+                                mMessage = "Export of table t_results_ascore failed";
                                 processingSuccess = false;
                             }
                         }
@@ -98,13 +98,13 @@ namespace AnalysisManager_AScore_PlugIn
 
                         LogError("Error running AScore: " + ex.Message, ex);
                         processingSuccess = false;
-                        m_message = "Error running AScore";
+                        mMessage = "Error running AScore";
                     }
                 }
 
                 // Stop the job timer
-                m_StopTime = DateTime.UtcNow;
-                m_progress = PROGRESS_PCT_ASCORE_DONE;
+                mStopTime = DateTime.UtcNow;
+                mProgress = PROGRESS_PCT_ASCORE_DONE;
 
                 // Add the current job data to the summary file
                 UpdateSummaryFile();
@@ -122,9 +122,9 @@ namespace AnalysisManager_AScore_PlugIn
                 }
 
                 // Override the output folder name and the dataset name (since this is a dataset aggregation job)
-                m_ResFolderName = m_jobParams.GetParam("StepOutputFolderName");
-                m_Dataset = m_jobParams.GetParam(clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME);
-                m_jobParams.SetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME, m_ResFolderName);
+                mResultsFolderName = mJobParams.GetParam("StepOutputFolderName");
+                mDatasetName = mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME);
+                mJobParams.SetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME, mResultsFolderName);
 
                 var success = CopyResultsToTransferDirectory();
 
@@ -133,8 +133,8 @@ namespace AnalysisManager_AScore_PlugIn
             }
             catch (Exception ex)
             {
-                m_message = "Error in AScorePlugin->RunTool";
-                LogError(m_message, ex);
+                mMessage = "Error in AScorePlugin->RunTool";
+                LogError(mMessage, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
 
             }
@@ -146,25 +146,25 @@ namespace AnalysisManager_AScore_PlugIn
         {
             try
             {
-                var sqlLiteDB = new FileInfo(Path.Combine(m_WorkDir, "Results.db3"));
+                var sqlLiteDB = new FileInfo(Path.Combine(mWorkDir, "Results.db3"));
                 if (!sqlLiteDB.Exists)
                 {
-                    m_message = "Cannot export AScore results since Results.db3 does not exist";
-                    LogError(m_message);
+                    mMessage = "Cannot export AScore results since Results.db3 does not exist";
+                    LogError(mMessage);
                     return false;
                 }
 
-                var outputFile = new FileInfo(Path.Combine(m_WorkDir, "AScore_Results.txt"));
+                var outputFile = new FileInfo(Path.Combine(mWorkDir, "AScore_Results.txt"));
                 ExportTable(sqlLiteDB, "t_results_ascore", outputFile);
 
-                outputFile = new FileInfo(Path.Combine(m_WorkDir, "AScore_Job_Map.txt"));
+                outputFile = new FileInfo(Path.Combine(mWorkDir, "AScore_Job_Map.txt"));
                 ExportTable(sqlLiteDB, "t_results_file_list_metadata", outputFile);
 
             }
             catch (Exception ex)
             {
-                m_message = "Error in AScorePlugin->ExportAScoreResults";
-                LogError(m_message, ex);
+                mMessage = "Error in AScorePlugin->ExportAScoreResults";
+                LogError(mMessage, ex);
                 return false;
             }
 
@@ -199,14 +199,14 @@ namespace AnalysisManager_AScore_PlugIn
         /// </summary>
         private bool RunAScore()
         {
-            // run the appropriate Mage pipeline(s) according to operations list parameter
-            var ascoreMage = new clsAScoreMagePipeline(m_jobParams, m_mgrParams, m_DotNetZipTools);
+            // Run the appropriate Mage pipeline(s) according to operations list parameter
+            var ascoreMage = new clsAScoreMagePipeline(mJobParams, mMgrParams, mDotNetZipTools);
             RegisterEvents(ascoreMage);
 
             var success = ascoreMage.Run();
 
             // Delete any PeptideToProteinMapEngine_log files
-            var diWorkDir = new DirectoryInfo(m_WorkDir);
+            var diWorkDir = new DirectoryInfo(mWorkDir);
             var fiFiles = diWorkDir.GetFiles("PeptideToProteinMapEngine_log*");
             if (fiFiles.Length > 0)
             {
@@ -227,12 +227,12 @@ namespace AnalysisManager_AScore_PlugIn
 
             foreach (var filename in ascoreMage.GetTempFileNames())
             {
-                m_jobParams.AddResultFileToSkip(filename);
+                mJobParams.AddResultFileToSkip(filename);
             }
 
             if (!string.IsNullOrEmpty(ascoreMage.ErrorMessage))
             {
-                m_message = ascoreMage.ErrorMessage;
+                mMessage = ascoreMage.ErrorMessage;
                 success = false;
             }
 

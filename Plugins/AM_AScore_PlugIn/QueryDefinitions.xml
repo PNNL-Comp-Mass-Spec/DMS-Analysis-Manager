@@ -50,5 +50,5 @@
     <table name='V_Mage_Filter_Set_Criteria' cols='Filter_Criteria_Group_ID, Criterion_Name, Criterion_Comparison, Criterion_Value, Criterion_ID'/>
     <predicate rel='AND' col='Filter_Set_ID' cmp='Equals' val='' />
   </query>
-  
+
 </queries>

@@ -46,8 +46,8 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
 
                 // Retrieve the parameter file
                 currentTask = "Retrieve the parameter file";
-                var paramFileName = m_jobParams.GetParam("ParmFileName");
-                var paramFileStoragePath = m_jobParams.GetParam("ParmFileStoragePath");
+                var paramFileName = mJobParams.GetParam("ParmFileName");
+                var paramFileStoragePath = mJobParams.GetParam("ParmFileStoragePath");
 
                 var success = FileSearch.RetrieveFile(paramFileName, paramFileStoragePath);
                 if (!success)
@@ -59,7 +59,7 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
 
                 currentTask = "Process the MyEMSL download queue";
 
-                success = ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders);
+                success = ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders);
                 if (!success)
                 {
                     return CloseOutType.CLOSEOUT_FAILED;

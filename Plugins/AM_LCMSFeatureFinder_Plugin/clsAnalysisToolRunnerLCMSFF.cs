@@ -43,7 +43,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
 
             LogMessage("Running LCMSFeatureFinder");
 
-            mCmdRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel);
+            mCmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel);
             RegisterEvents(mCmdRunner);
             mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
@@ -60,13 +60,13 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
             if (!blnSuccess)
             {
                 LogError("Aborting since StoreToolVersionInfo returned false");
-                m_message = "Error determining LCMS FeatureFinder version";
+                mMessage = "Error determining LCMS FeatureFinder version";
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
             // Set up and execute a program runner to run the LCMS Feature Finder
-            var cmdStr = Path.Combine(m_WorkDir, m_jobParams.GetParam("LCMSFeatureFinderIniFile"));
-            if (m_DebugLevel >= 1)
+            var cmdStr = Path.Combine(mWorkDir, mJobParams.GetParam("LCMSFeatureFinderIniFile"));
+            if (mDebugLevel >= 1)
             {
                 LogDebug(progLoc + " " + cmdStr);
             }
@@ -79,14 +79,14 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
 
             if (!mCmdRunner.RunProgram(progLoc, cmdStr, "LCMSFeatureFinder", true))
             {
-                m_message = "Error running LCMSFeatureFinder";
-                LogError(m_message + ", job " + m_JobNum);
+                mMessage = "Error running LCMSFeatureFinder";
+                LogError(mMessage + ", job " + mJob);
                 blnSuccess = false;
             }
 
             // Stop the job timer
-            m_StopTime = DateTime.UtcNow;
-            m_progress = PROGRESS_PCT_FEATURE_FINDER_DONE;
+            mStopTime = DateTime.UtcNow;
+            mProgress = PROGRESS_PCT_FEATURE_FINDER_DONE;
 
             // Add the current job data to the summary file
             UpdateSummaryFile();
@@ -113,8 +113,8 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
         /// </summary>
         public override void CopyFailedResultsToArchiveFolder()
         {
-            m_jobParams.AddResultFileToSkip(Dataset + ".UIMF");
-            m_jobParams.AddResultFileExtensionToSkip(Dataset + ".csv");
+            mJobParams.AddResultFileToSkip(Dataset + ".UIMF");
+            mJobParams.AddResultFileExtensionToSkip(Dataset + ".csv");
 
             base.CopyFailedResultsToArchiveFolder();
         }
@@ -138,7 +138,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
         {
             var strToolVersionInfo = string.Empty;
 
-            if (m_DebugLevel >= 2)
+            if (mDebugLevel >= 2)
             {
                 LogDebug("Determining tool version info");
             }

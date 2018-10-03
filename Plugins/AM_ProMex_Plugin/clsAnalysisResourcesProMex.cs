@@ -42,7 +42,7 @@ namespace AnalysisManagerProMexPlugIn
 
             var paramFileStoragePathKeyName = clsGlobal.STEPTOOL_PARAMFILESTORAGEPATH_PREFIX + "ProMex";
 
-            var proMexParmFileStoragePath = m_mgrParams.GetParam(paramFileStoragePathKeyName);
+            var proMexParmFileStoragePath = mMgrParams.GetParam(paramFileStoragePathKeyName);
             if (string.IsNullOrEmpty(proMexParmFileStoragePath))
             {
                 proMexParmFileStoragePath = @"C:\DMS_Programs\ProMex";
@@ -56,26 +56,26 @@ namespace AnalysisManagerProMexPlugIn
             // If this is a ProMex script, the ProMex parameter file name is tracked as the job's parameter file
             // Otherwise, for MSPathFinder scripts, the ProMex parameter file is defined in the Job's settings file, and is thus accessible as job parameter ProMexParamFile
 
-            var toolName = m_jobParams.GetParam("ToolName");
+            var toolName = mJobParams.GetParam("ToolName");
             var proMexScript = toolName.StartsWith("ProMex", StringComparison.OrdinalIgnoreCase);
-            var proMexBruker = IsProMexBrukerJob(m_jobParams);
+            var proMexBruker = IsProMexBrukerJob(mJobParams);
 
             if (proMexScript)
             {
-                paramFileName = m_jobParams.GetJobParameter("ParmFileName", "");
+                paramFileName = mJobParams.GetJobParameter("ParmFileName", "");
 
                 if (string.IsNullOrEmpty(paramFileName))
                 {
-                    m_message = "Job Parameter File name is empty";
-                    LogError(m_message);
+                    mMessage = "Job Parameter File name is empty";
+                    LogError(mMessage);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                m_jobParams.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "ProMexParamFile", paramFileName);
+                mJobParams.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "ProMexParamFile", paramFileName);
             }
             else
             {
-                paramFileName = m_jobParams.GetParam("ProMexParamFile");
+                paramFileName = mJobParams.GetParam("ProMexParamFile");
 
                 if (string.IsNullOrEmpty(paramFileName))
                 {
@@ -150,14 +150,14 @@ namespace AnalysisManagerProMexPlugIn
                     return eResult;
                 }
 
-                m_jobParams.AddResultFileExtensionToSkip(DOT_MZML_EXTENSION);
+                mJobParams.AddResultFileExtensionToSkip(DOT_MZML_EXTENSION);
 
                 return CloseOutType.CLOSEOUT_SUCCESS;
             }
             catch (Exception ex)
             {
-                m_message = "Exception in RetrieveMzMLFile: " + ex.Message;
-                LogError(m_message + "; task = " + currentTask + "; " + clsGlobal.GetExceptionStackTrace(ex));
+                mMessage = "Exception in RetrieveMzMLFile: " + ex.Message;
+                LogError(mMessage + "; task = " + currentTask + "; " + clsGlobal.GetExceptionStackTrace(ex));
                 return CloseOutType.CLOSEOUT_FAILED;
             }
         }
@@ -178,14 +178,14 @@ namespace AnalysisManagerProMexPlugIn
                     return eResult;
                 }
 
-                m_jobParams.AddResultFileExtensionToSkip(DOT_PBF_EXTENSION);
+                mJobParams.AddResultFileExtensionToSkip(DOT_PBF_EXTENSION);
 
                 return CloseOutType.CLOSEOUT_SUCCESS;
             }
             catch (Exception ex)
             {
-                m_message = "Exception in RetrievePBFFile: " + ex.Message;
-                LogError(m_message + "; task = " + currentTask + "; " + clsGlobal.GetExceptionStackTrace(ex));
+                mMessage = "Exception in RetrievePBFFile: " + ex.Message;
+                LogError(mMessage + "; task = " + currentTask + "; " + clsGlobal.GetExceptionStackTrace(ex));
                 return CloseOutType.CLOSEOUT_FAILED;
             }
         }

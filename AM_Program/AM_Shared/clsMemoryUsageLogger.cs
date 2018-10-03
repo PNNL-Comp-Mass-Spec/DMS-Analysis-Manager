@@ -42,19 +42,19 @@ namespace AnalysisManagerBase
         /// <summary>
         /// The minimum interval between appending a new memory usage entry to the log
         /// </summary>
-        private float m_MinimumMemoryUsageLogIntervalMinutes = 1;
+        private float mMinimumMemoryUsageLogIntervalMinutes = 1;
 
         /// <summary>
         /// Used to determine the amount of free memory
         /// </summary>
-        private PerformanceCounter m_PerfCounterFreeMemory;
-        private PerformanceCounter m_PerfCounterPoolPagedBytes;
+        private PerformanceCounter mPerfCounterFreeMemory;
+        private PerformanceCounter mPerfCounterPoolPagedBytes;
 
-        private PerformanceCounter m_PerfCounterPoolNonpagedBytes;
+        private PerformanceCounter mPerfCounterPoolNonPagedBytes;
 
-        private bool m_PerfCountersIntitialized;
+        private bool mPerfCountersInitialized;
 
-        private DateTime m_LastWriteTime;
+        private DateTime mLastWriteTime;
 
         #endregion
 
@@ -76,12 +76,12 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public float MinimumLogIntervalMinutes
         {
-            get => m_MinimumMemoryUsageLogIntervalMinutes;
+            get => mMinimumMemoryUsageLogIntervalMinutes;
             set
             {
                 if (value < 0)
                     value = 0;
-                m_MinimumMemoryUsageLogIntervalMinutes = value;
+                mMinimumMemoryUsageLogIntervalMinutes = value;
             }
         }
         #endregion
@@ -111,7 +111,7 @@ namespace AnalysisManagerBase
 
             MinimumLogIntervalMinutes = minLogIntervalMinutes;
 
-            m_LastWriteTime = DateTime.MinValue;
+            mLastWriteTime = DateTime.MinValue;
 
         }
 
@@ -183,16 +183,16 @@ namespace AnalysisManagerBase
         {
             try
             {
-                if (m_PerfCounterFreeMemory == null)
+                if (mPerfCounterFreeMemory == null)
                 {
                     return clsGlobal.GetFreeMemoryMB();
                 }
 
-                return m_PerfCounterFreeMemory.NextValue();
+                return mPerfCounterFreeMemory.NextValue();
             }
             catch (Exception ex)
             {
-                OnErrorEvent("Exception accessing performance counter m_PerfCounterFreeMemory", ex);
+                OnErrorEvent("Exception accessing performance counter mPerfCounterFreeMemory", ex);
                 return -1;
             }
         }
@@ -209,7 +209,7 @@ namespace AnalysisManagerBase
                 "ProcessMemoryUsage_MB" + COL_SEP +
                 "FreeMemory_MB" + COL_SEP +
                 "PoolPaged_MB" + COL_SEP +
-                "PoolNonpaged_MB";
+                "PoolNonPaged_MB";
         }
 
         /// <summary>
@@ -218,7 +218,7 @@ namespace AnalysisManagerBase
         /// <returns></returns>
         private string GetMemoryUsageSummary()
         {
-            if (!m_PerfCountersIntitialized)
+            if (!mPerfCountersInitialized)
             {
                 InitializePerfCounters();
             }
@@ -226,17 +226,17 @@ namespace AnalysisManagerBase
             var processMemoryUsageMB = GetProcessMemoryUsageMB();
             var freeMemoryMB = GetFreeMemoryMB();
             float poolPagedMemory;
-            float poolNonpagedMemory;
+            float poolNonPagedMemory;
 
             if (clsGlobal.LinuxOS)
             {
                 poolPagedMemory = 0;
-                poolNonpagedMemory = 0;
+                poolNonPagedMemory = 0;
             }
             else
             {
                 poolPagedMemory = GetPoolPagedMemory();
-                poolNonpagedMemory = GetPoolNonpagedMemory();
+                poolNonPagedMemory = GetPoolNonPagedMemory();
             }
 
             var currentTime = DateTime.Now;
@@ -247,30 +247,30 @@ namespace AnalysisManagerBase
                 $"{processMemoryUsageMB:F1}{COL_SEP}" +
                 $"{freeMemoryMB:F1}{COL_SEP}" +
                 $"{poolPagedMemory:F1}{COL_SEP}" +
-                $"{poolNonpagedMemory:F1}";
+                $"{poolNonPagedMemory:F1}";
 
             return usageSummary;
         }
 
         /// <summary>
-        /// Returns the amount of pool nonpaged memory on the current machine
+        /// Returns the amount of pool NonPaged memory on the current machine
         /// </summary>
-        /// <returns>Pool Nonpaged memory, in MB</returns>
+        /// <returns>Pool NonPaged memory, in MB</returns>
         /// <remarks></remarks>
-        public float GetPoolNonpagedMemory()
+        public float GetPoolNonPagedMemory()
         {
             try
             {
-                if (m_PerfCounterPoolNonpagedBytes == null)
+                if (mPerfCounterPoolNonPagedBytes == null)
                 {
                     return 0;
                 }
 
-                return (float)(m_PerfCounterPoolNonpagedBytes.NextValue() / 1024.0 / 1024);
+                return (float)(mPerfCounterPoolNonPagedBytes.NextValue() / 1024.0 / 1024);
             }
             catch (Exception ex)
             {
-                OnErrorEvent("Exception accessing performance counter m_PerfCounterPoolNonpagedBytes", ex);
+                OnErrorEvent("Exception accessing performance counter mPerfCounterPoolNonPagedBytes", ex);
                 return -1;
             }
         }
@@ -284,16 +284,16 @@ namespace AnalysisManagerBase
         {
             try
             {
-                if (m_PerfCounterPoolPagedBytes == null)
+                if (mPerfCounterPoolPagedBytes == null)
                 {
                     return 0;
                 }
 
-                return (float)(m_PerfCounterPoolPagedBytes.NextValue() / 1024.0 / 1024);
+                return (float)(mPerfCounterPoolPagedBytes.NextValue() / 1024.0 / 1024);
             }
             catch (Exception ex)
             {
-                OnErrorEvent("Exception accessing performance counter m_PerfCounterPoolPagedBytes", ex);
+                OnErrorEvent("Exception accessing performance counter mPerfCounterPoolPagedBytes", ex);
                 return -1;
             }
         }
@@ -328,13 +328,13 @@ namespace AnalysisManagerBase
         {
             if (clsGlobal.LinuxOS)
             {
-                m_PerfCountersIntitialized = true;
+                mPerfCountersInitialized = true;
                 return;
             }
 
             try
             {
-                m_PerfCounterFreeMemory = new PerformanceCounter("Memory", "Available MBytes") { ReadOnly = true };
+                mPerfCounterFreeMemory = new PerformanceCounter("Memory", "Available MBytes") { ReadOnly = true };
             }
             catch (Exception ex)
             {
@@ -343,7 +343,7 @@ namespace AnalysisManagerBase
 
             try
             {
-                m_PerfCounterPoolPagedBytes = new PerformanceCounter("Memory", "Pool Paged Bytes") { ReadOnly = true };
+                mPerfCounterPoolPagedBytes = new PerformanceCounter("Memory", "Pool Paged Bytes") { ReadOnly = true };
             }
             catch (Exception ex)
             {
@@ -352,14 +352,14 @@ namespace AnalysisManagerBase
 
             try
             {
-                m_PerfCounterPoolNonpagedBytes = new PerformanceCounter("Memory", "Pool NonPaged Bytes") { ReadOnly = true };
+                mPerfCounterPoolNonPagedBytes = new PerformanceCounter("Memory", "Pool NonPaged Bytes") { ReadOnly = true };
             }
             catch (Exception ex)
             {
                 OnErrorEvent("Exception instantiating performance counter 'Pool NonPaged Bytes'", ex);
             }
 
-            m_PerfCountersIntitialized = true;
+            mPerfCountersInitialized = true;
 
         }
 
@@ -374,12 +374,12 @@ namespace AnalysisManagerBase
 
             try
             {
-                if (DateTime.UtcNow.Subtract(m_LastWriteTime).TotalMinutes < m_MinimumMemoryUsageLogIntervalMinutes)
+                if (DateTime.UtcNow.Subtract(mLastWriteTime).TotalMinutes < mMinimumMemoryUsageLogIntervalMinutes)
                 {
                     // Not enough time has elapsed since the last write; exit method
                     return;
                 }
-                m_LastWriteTime = DateTime.UtcNow;
+                mLastWriteTime = DateTime.UtcNow;
 
                 string logFilePath;
 

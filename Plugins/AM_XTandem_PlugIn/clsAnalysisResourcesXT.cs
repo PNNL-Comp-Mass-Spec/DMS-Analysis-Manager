@@ -37,7 +37,7 @@ namespace AnalysisManagerXTandemPlugIn
             }
 
             // Retrieve Fasta file
-            var orgDbDirectoryPath = m_mgrParams.GetParam("orgdbdir");
+            var orgDbDirectoryPath = mMgrParams.GetParam("OrgDbDir");
             if (!RetrieveOrgDB(orgDbDirectoryPath, out var resultCode))
                 return resultCode;
 
@@ -45,7 +45,7 @@ namespace AnalysisManagerXTandemPlugIn
             LogMessage("Getting param file");
 
             // Retrieve param file
-            if (!RetrieveGeneratedParamFile(m_jobParams.GetParam("ParmFileName")))
+            if (!RetrieveGeneratedParamFile(mJobParams.GetParam("ParmFileName")))
             {
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
@@ -60,51 +60,51 @@ namespace AnalysisManagerXTandemPlugIn
 
             // Make sure the _DTA.txt file has parent ion lines with text: scan=x and cs=y
             // X!Tandem uses this information to determine the scan number
-            var strCDTAPath = Path.Combine(m_WorkingDir, DatasetName + "_dta.txt");
+            var strCDTAPath = Path.Combine(mWorkDir, DatasetName + "_dta.txt");
             const bool blnReplaceSourceFile = true;
             const bool blnDeleteSourceFileIfUpdated = true;
 
             if (!ValidateCDTAFileScanAndCSTags(strCDTAPath, blnReplaceSourceFile, blnDeleteSourceFileIfUpdated, ""))
             {
-                m_message = "Error validating the _DTA.txt file";
+                mMessage = "Error validating the _DTA.txt file";
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
             // Add all the extensions of the files to delete after run
-            m_jobParams.AddResultFileExtensionToSkip("_dta.zip"); // Zipped DTA
-            m_jobParams.AddResultFileExtensionToSkip("_dta.txt"); // Unzipped, concatenated DTA
-            m_jobParams.AddResultFileExtensionToSkip(".dta");     // DTA files
+            mJobParams.AddResultFileExtensionToSkip("_dta.zip"); // Zipped DTA
+            mJobParams.AddResultFileExtensionToSkip("_dta.txt"); // Unzipped, concatenated DTA
+            mJobParams.AddResultFileExtensionToSkip(".dta");     // DTA files
 
             // If the _dta.txt file is over 2 GB in size, condense it
 
-            if (!ValidateDTATextFileSize(m_WorkingDir, DatasetName + "_dta.txt"))
+            if (!ValidateDTATextFileSize(mWorkDir, DatasetName + "_dta.txt"))
             {
                 // Errors were reported in function call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
-            var success = CopyFileToWorkDir("taxonomy_base.xml", m_jobParams.GetParam("ParmFileStoragePath"), m_WorkingDir);
+            var success = CopyFileToWorkDir("taxonomy_base.xml", mJobParams.GetParam("ParmFileStoragePath"), mWorkDir);
             if (!success)
             {
                 LogError("clsAnalysisResourcesXT.GetResources(), failed retrieving taxonomy_base.xml file");
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
-            success = CopyFileToWorkDir("input_base.txt", m_jobParams.GetParam("ParmFileStoragePath"), m_WorkingDir);
+            success = CopyFileToWorkDir("input_base.txt", mJobParams.GetParam("ParmFileStoragePath"), mWorkDir);
             if (!success)
             {
                 LogError("clsAnalysisResourcesXT.GetResources(), failed retrieving input_base.xml file");
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
-            success = CopyFileToWorkDir("default_input.xml", m_jobParams.GetParam("ParmFileStoragePath"), m_WorkingDir);
+            success = CopyFileToWorkDir("default_input.xml", mJobParams.GetParam("ParmFileStoragePath"), mWorkDir);
             if (!success)
             {
                 LogError("clsAnalysisResourcesXT.GetResources(), failed retrieving default_input.xml file");
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
-            if (!ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+            if (!ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
             {
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
@@ -132,10 +132,10 @@ namespace AnalysisManagerXTandemPlugIn
         {
             // set up taxonomy file to reference the organsim DB file (fasta)
 
-            var WorkingDir = m_mgrParams.GetParam("WorkDir");
-            var OrgDBName = m_jobParams.GetParam("PeptideSearch", "generatedFastaName");
-            var OrganismName = m_jobParams.GetParam("OrganismName");
-            var LocalOrgDBFolder = m_mgrParams.GetParam("orgdbdir");
+            var WorkingDir = mMgrParams.GetParam("WorkDir");
+            var OrgDBName = mJobParams.GetParam("PeptideSearch", "generatedFastaName");
+            var OrganismName = mJobParams.GetParam("OrganismName");
+            var LocalOrgDBFolder = mMgrParams.GetParam("OrgDbDir");
             var OrgFilePath = Path.Combine(LocalOrgDBFolder, OrgDBName);
 
             // Edit base taxonomy file into actual
@@ -179,9 +179,9 @@ namespace AnalysisManagerXTandemPlugIn
 
             // set up input to reference spectra file, taxonomy file, and parameter file
 
-            var WorkingDir = m_mgrParams.GetParam("WorkDir");
-            var OrganismName = m_jobParams.GetParam("OrganismName");
-            var ParamFilePath = Path.Combine(WorkingDir, m_jobParams.GetParam("parmFileName"));
+            var WorkingDir = mMgrParams.GetParam("WorkDir");
+            var OrganismName = mJobParams.GetParam("OrganismName");
+            var ParamFilePath = Path.Combine(WorkingDir, mJobParams.GetParam("parmFileName"));
             var SpectrumFilePath = Path.Combine(WorkingDir, DatasetName + "_dta.txt");
             var TaxonomyFilePath = Path.Combine(WorkingDir, "taxonomy.xml");
             var OutputFilePath = Path.Combine(WorkingDir, DatasetName + "_xt.xml");
@@ -256,8 +256,8 @@ namespace AnalysisManagerXTandemPlugIn
 
                 if (!ioFileInfo.Exists)
                 {
-                    m_message = "_DTA.txt file not found: " + strInputFilePath;
-                    LogError(m_message);
+                    mMessage = "_DTA.txt file not found: " + strInputFilePath;
+                    LogError(mMessage);
                     return false;
                 }
 
@@ -271,21 +271,21 @@ namespace AnalysisManagerXTandemPlugIn
                     LogMessage(strMessage);
 
                     mCDTACondenser = new CondenseCDTAFile.clsCDTAFileCondenser();
-                    mCDTACondenser.ProgressChanged += mCDTACondenser_ProgressChanged;
+                    mCDTACondenser.ProgressChanged += CDTACondenser_ProgressChanged;
 
                     var blnSuccess = mCDTACondenser.ProcessFile(ioFileInfo.FullName, ioFileInfo.DirectoryName);
 
                     if (!blnSuccess)
                     {
-                        m_message = "Error condensing _DTA.txt file: " + mCDTACondenser.GetErrorMessage();
-                        LogError(m_message);
+                        mMessage = "Error condensing _DTA.txt file: " + mCDTACondenser.GetErrorMessage();
+                        LogError(mMessage);
                         return false;
                     }
 
                     // Check the size of the new _dta.txt file
                     ioFileInfo.Refresh();
 
-                    if (m_DebugLevel >= 1)
+                    if (mDebugLevel >= 1)
                     {
                         strMessage = string.Format("Condensing complete; size of the new _dta.txt file is {0:F2} GB",
                                                    clsGlobal.BytesToGB(ioFileInfo.Length));
@@ -296,7 +296,7 @@ namespace AnalysisManagerXTandemPlugIn
                     {
                         var strFilePathOld = Path.Combine(strWorkDir, Path.GetFileNameWithoutExtension(ioFileInfo.FullName) + "_Old.txt");
 
-                        if (m_DebugLevel >= 2)
+                        if (mDebugLevel >= 2)
                         {
                             strMessage = "Now deleting file " + strFilePathOld;
                             LogMessage(strMessage);
@@ -324,23 +324,23 @@ namespace AnalysisManagerXTandemPlugIn
             }
             catch (Exception ex)
             {
-                m_message = "Exception in ValidateDTATextFileSize";
-                LogError(m_message + ": " + ex.Message);
+                mMessage = "Exception in ValidateDTATextFileSize";
+                LogError(mMessage + ": " + ex.Message);
                 return false;
             }
 
         }
 
-        private DateTime dtLastUpdateTime;
+        private DateTime mLastUpdateTime;
 
-        private void mCDTACondenser_ProgressChanged(string taskDescription, float percentComplete)
+        private void CDTACondenser_ProgressChanged(string taskDescription, float percentComplete)
         {
-            if (m_DebugLevel >= 1)
+            if (mDebugLevel >= 1)
             {
-                if (m_DebugLevel == 1 && DateTime.UtcNow.Subtract(dtLastUpdateTime).TotalSeconds >= 60 ||
-                    m_DebugLevel > 1 && DateTime.UtcNow.Subtract(dtLastUpdateTime).TotalSeconds >= 20)
+                if (mDebugLevel == 1 && DateTime.UtcNow.Subtract(mLastUpdateTime).TotalSeconds >= 60 ||
+                    mDebugLevel > 1 && DateTime.UtcNow.Subtract(mLastUpdateTime).TotalSeconds >= 20)
                 {
-                    dtLastUpdateTime = DateTime.UtcNow;
+                    mLastUpdateTime = DateTime.UtcNow;
 
                     LogDebug(" ... " + percentComplete.ToString("0.00") + "% complete");
                 }

@@ -7,9 +7,9 @@ namespace AnalysisManager_Ape_PlugIn
 
         #region Member Variables
 
-        protected IJobParams m_jobParams;
+        protected IJobParams mJobParams;
 
-        protected IMgrParams m_mgrParams;
+        protected IMgrParams mMgrParams;
 
         private string mErrorMessage = string.Empty;
 
@@ -24,8 +24,8 @@ namespace AnalysisManager_Ape_PlugIn
         #region Constructors
 
         public clsApeAMOperations(IJobParams jobParms, IMgrParams mgrParms) {
-            m_jobParams = jobParms;
-            m_mgrParams = mgrParms;
+            mJobParams = jobParms;
+            mMgrParams = mgrParms;
         }
 
         #endregion
@@ -59,7 +59,7 @@ namespace AnalysisManager_Ape_PlugIn
             switch (apeOperation.ToLower())
             {
                 case "runworkflow":
-                    var apeWfObj = new clsApeAMRunWorkflow(m_jobParams, m_mgrParams);
+                    var apeWfObj = new clsApeAMRunWorkflow(mJobParams, mMgrParams);
 
                     // Attach the progress event handler
                     apeWfObj.ProgressChanged += ApeProgressChanged;
@@ -72,12 +72,12 @@ namespace AnalysisManager_Ape_PlugIn
                     break;
 
                 case "getimprovresults":
-                    var apeImpObj = new clsApeAMGetImprovResults(m_jobParams, m_mgrParams);
+                    var apeImpObj = new clsApeAMGetImprovResults(mJobParams, mMgrParams);
 
                     // Attach the progress event handler
                     apeImpObj.ProgressChanged += ApeProgressChanged;
 
-                    blnSuccess = apeImpObj.GetImprovResults(m_jobParams.GetParam("DataPackageID"));
+                    blnSuccess = apeImpObj.GetImprovResults(mJobParams.GetParam("DataPackageID"));
 
                     if (!blnSuccess)
                         mErrorMessage = "Error getting ImprovResults: " + apeImpObj.ErrorMessage;
@@ -85,12 +85,12 @@ namespace AnalysisManager_Ape_PlugIn
                     break;
 
                 case "getqrollupresults":
-                    var apeQImpObj = new clsApeAMGetQRollupResults(m_jobParams, m_mgrParams);
+                    var apeQImpObj = new clsApeAMGetQRollupResults(mJobParams, mMgrParams);
 
                     // Attach the progress event handler
                     apeQImpObj.ProgressChanged += ApeProgressChanged;
 
-                    blnSuccess = apeQImpObj.GetQRollupResults(m_jobParams.GetParam("DataPackageID"));
+                    blnSuccess = apeQImpObj.GetQRollupResults(mJobParams.GetParam("DataPackageID"));
 
                     if (!blnSuccess)
                         mErrorMessage = "Error obtaining QRollup Results: " + apeQImpObj.ErrorMessage;
@@ -98,12 +98,12 @@ namespace AnalysisManager_Ape_PlugIn
                     break;
 
                 case "getviperresults":
-                    var apeVImpObj = new clsApeAMGetViperResults(m_jobParams, m_mgrParams);
+                    var apeVImpObj = new clsApeAMGetViperResults(mJobParams, mMgrParams);
 
                     // Attach the progress event handler
                     apeVImpObj.ProgressChanged += ApeProgressChanged;
 
-                    blnSuccess = apeVImpObj.GetQRollupResults(m_jobParams.GetParam("DataPackageID"));
+                    blnSuccess = apeVImpObj.GetQRollupResults(mJobParams.GetParam("DataPackageID"));
 
                     if (!blnSuccess)
                         mErrorMessage = "Error obtaining VIPER results: " + apeVImpObj.ErrorMessage;
@@ -124,15 +124,15 @@ namespace AnalysisManager_Ape_PlugIn
             // Update the step tool progress
             // However, Ape routinely reports progress of 0% or 100% at the start and end of certain subtasks, so ignore those values
             // if (e.percentComplete > 0 && e.percentComplete < 100)
-                // m_progress = PROGRESS_PCT_APE_START + (PROGRESS_PCT_APE_DONE - PROGRESS_PCT_APE_START) * e.percentComplete / 100.0F;
+                // mProgress = PROGRESS_PCT_APE_START + (PROGRESS_PCT_APE_DONE - PROGRESS_PCT_APE_START) * e.percentComplete / 100.0F;
 
             // if (!string.IsNullOrEmpty(e.taskDescription))
-                // m_CurrentApeTask = e.taskDescription;
+                // mCurrentApeTask = e.taskDescription;
 
-            // if (System.DateTime.UtcNow.Subtract(m_LastStatusUpdateTime).TotalSeconds >= 10)
+            // if (System.DateTime.UtcNow.Subtract(mLastStatusUpdateTime).TotalSeconds >= 10)
             // {
-            //    m_LastStatusUpdateTime = System.DateTime.UtcNow;
-            //    m_StatusTools.UpdateAndWrite(EnumMgrStatus.RUNNING, EnumTaskStatus.RUNNING, EnumTaskStatusDetail.RUNNING_TOOL, m_progress);
+            //    mLastStatusUpdateTime = System.DateTime.UtcNow;
+            //    mStatusTools.UpdateAndWrite(EnumMgrStatus.RUNNING, EnumTaskStatus.RUNNING, EnumTaskStatusDetail.RUNNING_TOOL, mProgress);
             // }
         }
 

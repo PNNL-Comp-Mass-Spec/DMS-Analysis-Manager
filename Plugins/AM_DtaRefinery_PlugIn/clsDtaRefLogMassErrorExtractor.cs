@@ -18,9 +18,9 @@ namespace AnalysisManagerDtaRefineryPlugIn
     {
         private const string STORE_MASS_ERROR_STATS_SP_NAME = "StoreDTARefMassErrorStats";
 
-        private readonly IMgrParams m_mgrParams;
-        private readonly string m_WorkDir;
-        private readonly short m_DebugLevel;
+        private readonly IMgrParams mMgrParams;
+        private readonly string mWorkDir;
+        private readonly short mDebugLevel;
         private readonly bool mPostResultsToDB;
 
         private struct udtMassErrorInfoType
@@ -40,9 +40,9 @@ namespace AnalysisManagerDtaRefineryPlugIn
         /// <param name="blnPostResultsToDB"></param>
         public clsDtaRefLogMassErrorExtractor(IMgrParams mgrParams, string strWorkDir, short intDebugLevel, bool blnPostResultsToDB)
         {
-            m_mgrParams = mgrParams;
-            m_WorkDir = strWorkDir;
-            m_DebugLevel = intDebugLevel;
+            mMgrParams = mgrParams;
+            mWorkDir = strWorkDir;
+            mDebugLevel = intDebugLevel;
             mPostResultsToDB = blnPostResultsToDB;
         }
 
@@ -83,7 +83,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
         /// <returns></returns>
         public bool ParseDTARefineryLogFile(string strDatasetName, int intDatasetID, int intPSMJob)
         {
-            return ParseDTARefineryLogFile(strDatasetName, intDatasetID, intPSMJob, m_WorkDir);
+            return ParseDTARefineryLogFile(strDatasetName, intDatasetID, intPSMJob, mWorkDir);
         }
 
         /// <summary>
@@ -215,7 +215,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
                 objCommand.Parameters.Add(new SqlParameter("@DatasetID", SqlDbType.Int)).Value = intDatasetID;
                 objCommand.Parameters.Add(new SqlParameter("@ResultsXML", SqlDbType.Xml)).Value = strXMLResults;
 
-                var objAnalysisTask = new clsAnalysisJob(m_mgrParams, m_DebugLevel);
+                var objAnalysisTask = new clsAnalysisJob(mMgrParams, mDebugLevel);
 
                 // Execute the SP (retry the call up to 4 times)
                 var ResCode = objAnalysisTask.DMSProcedureExecutor.ExecuteSP(objCommand, MAX_RETRY_COUNT);

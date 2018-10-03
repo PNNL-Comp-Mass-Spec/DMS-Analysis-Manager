@@ -72,21 +72,21 @@ namespace AnalysisManagerXTandemPlugIn
 
             LogMessage("Running XTandem");
 
-            mCmdRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel);
+            mCmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel);
             RegisterEvents(mCmdRunner);
             mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
-            if (m_DebugLevel > 4)
+            if (mDebugLevel > 4)
             {
                 LogDebug("clsAnalysisToolRunnerXT.OperateAnalysisTool(): Enter");
             }
 
             // Define the path to the X!Tandem .Exe
-            var progLoc = m_mgrParams.GetParam("xtprogloc");
+            var progLoc = mMgrParams.GetParam("xtprogloc");
             if (progLoc.Length == 0)
             {
-                m_message = "Parameter 'xtprogloc' not defined for this manager";
-                LogError(m_message);
+                mMessage = "Parameter 'xtprogloc' not defined for this manager";
+                LogError(mMessage);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -100,8 +100,8 @@ namespace AnalysisManagerXTandemPlugIn
 
             if (!File.Exists(progLoc))
             {
-                m_message = "Cannot find XTandem program file";
-                LogError(m_message + ": " + progLoc);
+                mMessage = "Cannot find XTandem program file";
+                LogError(mMessage + ": " + progLoc);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -113,14 +113,14 @@ namespace AnalysisManagerXTandemPlugIn
             mCmdRunner.EchoOutputToConsole = true;
 
             mCmdRunner.WriteConsoleOutputToFile = true;
-            mCmdRunner.ConsoleOutputFilePath = Path.Combine(m_WorkDir, XTANDEM_CONSOLE_OUTPUT);
+            mCmdRunner.ConsoleOutputFilePath = Path.Combine(mWorkDir, XTANDEM_CONSOLE_OUTPUT);
 
-            m_progress = PROGRESS_PCT_XTANDEM_STARTING;
+            mProgress = PROGRESS_PCT_XTANDEM_STARTING;
 
             var processingSuccess = mCmdRunner.RunProgram(progLoc, cmdStr, "XTandem", true);
 
             // Parse the console output file one more time to determine the number of peptides found
-            ParseConsoleOutputFile(Path.Combine(m_WorkDir, XTANDEM_CONSOLE_OUTPUT));
+            ParseConsoleOutputFile(Path.Combine(mWorkDir, XTANDEM_CONSOLE_OUTPUT));
 
             if (!mToolVersionWritten)
             {
@@ -129,7 +129,7 @@ namespace AnalysisManagerXTandemPlugIn
 
             if (!processingSuccess)
             {
-                LogError("Error running XTandem, job " + m_JobNum);
+                LogError("Error running XTandem, job " + mJob);
 
                 if (mCmdRunner.ExitCode != 0)
                 {
@@ -151,21 +151,21 @@ namespace AnalysisManagerXTandemPlugIn
 
             if (mXTandemResultsCount < 0)
             {
-                m_message = @"X!Tandem did not report a ""Valid models"" count";
-                LogError(m_message);
+                mMessage = @"X!Tandem did not report a ""Valid models"" count";
+                LogError(mMessage);
                 noResults = true;
             }
             else if (mXTandemResultsCount == 0)
             {
-                // Storing "No results above threshold" in m_message will result in the job being assigned state No Export (14) in DMS
+                // Storing "No results above threshold" in mMessage will result in the job being assigned state No Export (14) in DMS
                 // See stored procedure UpdateJobState
-                m_message = NO_RESULTS_ABOVE_THRESHOLD;
-                LogError(m_message);
+                mMessage = NO_RESULTS_ABOVE_THRESHOLD;
+                LogError(mMessage);
                 noResults = true;
             }
 
             // Stop the job timer
-            m_StopTime = DateTime.UtcNow;
+            mStopTime = DateTime.UtcNow;
 
             // Add the current job data to the summary file
             UpdateSummaryFile();
@@ -197,8 +197,8 @@ namespace AnalysisManagerXTandemPlugIn
         /// </summary>
         public override void CopyFailedResultsToArchiveFolder()
         {
-            m_jobParams.AddResultFileToSkip(Dataset + "_dta.zip");
-            m_jobParams.AddResultFileToSkip(Dataset + "_dta.txt");
+            mJobParams.AddResultFileToSkip(Dataset + "_dta.zip");
+            mJobParams.AddResultFileToSkip(Dataset + "_dta.txt");
 
             base.CopyFailedResultsToArchiveFolder();
         }
@@ -209,7 +209,7 @@ namespace AnalysisManagerXTandemPlugIn
         /// <remarks></remarks>
         protected bool StoreToolVersionInfo()
         {
-            if (m_DebugLevel >= 2)
+            if (mDebugLevel >= 2)
             {
                 LogDebug("Determining tool version info");
             }
@@ -218,7 +218,7 @@ namespace AnalysisManagerXTandemPlugIn
 
             // Store paths to key files in toolFiles
             var toolFiles = new List<FileInfo> {
-                new FileInfo(m_mgrParams.GetParam("xtprogloc"))
+                new FileInfo(mMgrParams.GetParam("xtprogloc"))
             };
 
             try
@@ -235,7 +235,7 @@ namespace AnalysisManagerXTandemPlugIn
         protected string DetermineXTandemProgramLocation(string progLoc)
         {
             // Check whether the settings file specifies that a specific version of the step tool be used
-            var strXTandemStepToolVersion = m_jobParams.GetParam("XTandem_Version");
+            var strXTandemStepToolVersion = mJobParams.GetParam("XTandem_Version");
 
             if (!string.IsNullOrWhiteSpace(strXTandemStepToolVersion))
             {
@@ -253,8 +253,8 @@ namespace AnalysisManagerXTandemPlugIn
                 }
                 else
                 {
-                    m_message = "XTandem program path does not contain \\bin\\";
-                    LogError(m_message + ": " + progLoc);
+                    mMessage = "XTandem program path does not contain \\bin\\";
+                    LogError(mMessage + ": " + progLoc);
                     progLoc = string.Empty;
                 }
             }
@@ -275,7 +275,7 @@ namespace AnalysisManagerXTandemPlugIn
             {
                 if (!File.Exists(strConsoleOutputFilePath))
                 {
-                    if (m_DebugLevel >= 4)
+                    if (mDebugLevel >= 4)
                     {
                         LogDebug("Console output file not found: " + strConsoleOutputFilePath);
                     }
@@ -283,7 +283,7 @@ namespace AnalysisManagerXTandemPlugIn
                     return;
                 }
 
-                if (m_DebugLevel >= 3)
+                if (mDebugLevel >= 3)
                 {
                     LogDebug("Parsing file " + strConsoleOutputFilePath);
                 }
@@ -305,7 +305,7 @@ namespace AnalysisManagerXTandemPlugIn
                             // Starting in November 2016, the first line is the command line and the second line is a separator (series of dashes)
                             // The third or fourth line should be the X!Tandem version
 
-                            if (m_DebugLevel >= 2)
+                            if (mDebugLevel >= 2)
                             {
                                 LogDebug("X!Tandem version: " + strLineIn);
                             }
@@ -317,39 +317,39 @@ namespace AnalysisManagerXTandemPlugIn
                             // Update progress if the line starts with one of the expected phrases
                             if (strLineIn.StartsWith("Loading spectra"))
                             {
-                                m_progress = PROGRESS_PCT_XTANDEM_LOADING_SPECTRA;
+                                mProgress = PROGRESS_PCT_XTANDEM_LOADING_SPECTRA;
                             }
                             else if (strLineIn.StartsWith("Computing models"))
                             {
-                                m_progress = PROGRESS_PCT_XTANDEM_COMPUTING_MODELS;
+                                mProgress = PROGRESS_PCT_XTANDEM_COMPUTING_MODELS;
                             }
                             else if (strLineIn.StartsWith("Model refinement"))
                             {
-                                m_progress = PROGRESS_PCT_XTANDEM_REFINEMENT;
+                                mProgress = PROGRESS_PCT_XTANDEM_REFINEMENT;
                             }
                             else if (strLineIn.StartsWith("\tpartial cleavage"))
                             {
-                                m_progress = PROGRESS_PCT_XTANDEM_REFINEMENT_PARTIAL_CLEAVAGE;
+                                mProgress = PROGRESS_PCT_XTANDEM_REFINEMENT_PARTIAL_CLEAVAGE;
                             }
                             else if (strLineIn.StartsWith("\tunanticipated cleavage"))
                             {
-                                m_progress = PROGRESS_PCT_XTANDEM_REFINEMENT_UNANTICIPATED_CLEAVAGE;
+                                mProgress = PROGRESS_PCT_XTANDEM_REFINEMENT_UNANTICIPATED_CLEAVAGE;
                             }
                             else if (strLineIn.StartsWith("\tfinishing refinement "))
                             {
-                                m_progress = PROGRESS_PCT_XTANDEM_REFINEMENT_FINISHING;
+                                mProgress = PROGRESS_PCT_XTANDEM_REFINEMENT_FINISHING;
                             }
                             else if (strLineIn.StartsWith("Merging results"))
                             {
-                                m_progress = PROGRESS_PCT_XTANDEM_MERGING_RESULTS;
+                                mProgress = PROGRESS_PCT_XTANDEM_MERGING_RESULTS;
                             }
                             else if (strLineIn.StartsWith("Creating report"))
                             {
-                                m_progress = PROGRESS_PCT_XTANDEM_CREATING_REPORT;
+                                mProgress = PROGRESS_PCT_XTANDEM_CREATING_REPORT;
                             }
                             else if (strLineIn.StartsWith("Estimated false positives"))
                             {
-                                m_progress = PROGRESS_PCT_XTANDEM_COMPLETE;
+                                mProgress = PROGRESS_PCT_XTANDEM_COMPLETE;
                             }
                             else if (strLineIn.StartsWith("Valid models"))
                             {
@@ -366,7 +366,7 @@ namespace AnalysisManagerXTandemPlugIn
             catch (Exception ex)
             {
                 // Ignore errors here
-                if (m_DebugLevel >= 2)
+                if (mDebugLevel >= 2)
                 {
                     LogError("Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
                 }
@@ -382,10 +382,10 @@ namespace AnalysisManagerXTandemPlugIn
         {
             try
             {
-                var fileList = Directory.GetFiles(m_WorkDir, "*_xt.xml");
+                var fileList = Directory.GetFiles(mWorkDir, "*_xt.xml");
                 foreach (var file in fileList)
                 {
-                    var filePath = Path.Combine(m_WorkDir, Path.GetFileName(file));
+                    var filePath = Path.Combine(mWorkDir, Path.GetFileName(file));
                     if (!ZipFile(filePath, true))
                     {
                         LogError("Error zipping output files");
@@ -402,7 +402,7 @@ namespace AnalysisManagerXTandemPlugIn
             // Make sure the XML output files have been deleted (the call to MyBase.ZipFile() above should have done this)
             try
             {
-                var fileList = Directory.GetFiles(m_WorkDir, "*_xt.xml");
+                var fileList = Directory.GetFiles(mWorkDir, "*_xt.xml");
                 foreach (var file in fileList)
                 {
                     File.SetAttributes(file, File.GetAttributes(file) & (~FileAttributes.ReadOnly));
@@ -411,14 +411,14 @@ namespace AnalysisManagerXTandemPlugIn
             }
             catch (Exception ex)
             {
-                LogError("clsAnalysisToolRunnerXT.ZipMainOutputFile, Error deleting _xt.xml file, job " + m_JobNum + ex.Message);
+                LogError("clsAnalysisToolRunnerXT.ZipMainOutputFile, Error deleting _xt.xml file, job " + mJob + ex.Message);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
-        private DateTime dtLastConsoleOutputParse = DateTime.MinValue;
+        private DateTime mLastConsoleOutputParse = DateTime.MinValue;
 
         /// <summary>
         /// Event handler for CmdRunner.LoopWaiting event
@@ -428,11 +428,11 @@ namespace AnalysisManagerXTandemPlugIn
         {
             UpdateStatusFile();
 
-            if (DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= 15)
+            if (DateTime.UtcNow.Subtract(mLastConsoleOutputParse).TotalSeconds >= 15)
             {
-                dtLastConsoleOutputParse = DateTime.UtcNow;
+                mLastConsoleOutputParse = DateTime.UtcNow;
 
-                ParseConsoleOutputFile(Path.Combine(m_WorkDir, XTANDEM_CONSOLE_OUTPUT));
+                ParseConsoleOutputFile(Path.Combine(mWorkDir, XTANDEM_CONSOLE_OUTPUT));
                 if (!mToolVersionWritten && !string.IsNullOrWhiteSpace(mXTandemVersion))
                 {
                     mToolVersionWritten = StoreToolVersionInfo();

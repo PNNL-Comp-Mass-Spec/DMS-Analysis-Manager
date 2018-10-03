@@ -67,7 +67,7 @@ namespace AnalysisManagerMODPlusPlugin
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                if (m_DebugLevel > 4)
+                if (mDebugLevel > 4)
                 {
                     LogDebug("clsAnalysisToolRunnerMODPlus.RunTool(): Enter");
                 }
@@ -103,7 +103,7 @@ namespace AnalysisManagerMODPlusPlugin
                     var postProcessSuccess = PostProcessMODPlusResults(paramFileList);
                     if (!postProcessSuccess)
                     {
-                        if (string.IsNullOrEmpty(m_message))
+                        if (string.IsNullOrEmpty(mMessage))
                         {
                             LogError("Unknown error post-processing the MODPlus results");
                         }
@@ -111,10 +111,10 @@ namespace AnalysisManagerMODPlusPlugin
                     }
                 }
 
-                m_progress = PROGRESS_PCT_MODPLUS_COMPLETE;
+                mProgress = PROGRESS_PCT_MODPLUS_COMPLETE;
 
                 // Stop the job timer
-                m_StopTime = DateTime.UtcNow;
+                mStopTime = DateTime.UtcNow;
 
                 // Add the current job data to the summary file
                 UpdateSummaryFile();
@@ -187,27 +187,27 @@ namespace AnalysisManagerMODPlusPlugin
             var msConvertProgLoc = DetermineProgramLocation("ProteoWizardDir", "msconvert.exe");
             if (string.IsNullOrWhiteSpace(msConvertProgLoc))
             {
-                if (string.IsNullOrWhiteSpace(m_message))
+                if (string.IsNullOrWhiteSpace(mMessage))
                 {
                     LogError("Manager parameter ProteoWizardDir was not found; cannot run MSConvert.exe");
                 }
                 return false;
             }
 
-            var msConvertConsoleOutput = Path.Combine(m_WorkDir, "MSConvert_ConsoleOutput.txt");
-            m_jobParams.AddResultFileToSkip(msConvertConsoleOutput);
+            var msConvertConsoleOutput = Path.Combine(mWorkDir, "MSConvert_ConsoleOutput.txt");
+            mJobParams.AddResultFileToSkip(msConvertConsoleOutput);
 
             var cmdStr = " --mgf";
             cmdStr += " --outfile " + fiMgfFile.FullName;
             cmdStr += " " + PossiblyQuotePath(fiSpectrumFile.FullName);
 
-            if (m_DebugLevel >= 1)
+            if (mDebugLevel >= 1)
             {
                 // C:\DMS_Programs\ProteoWizard\msconvert.exe --mgf --outfile Dataset.mgf Dataset.mzML
                 LogDebug(msConvertProgLoc + " " + cmdStr);
             }
 
-            var msConvertRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel);
+            var msConvertRunner = new clsRunDosProgram(mWorkDir, mDebugLevel);
             RegisterEvents(msConvertRunner);
             msConvertRunner.LoopWaiting += MSConvert_CmdRunner_LoopWaiting;
 
@@ -218,7 +218,7 @@ namespace AnalysisManagerMODPlusPlugin
             msConvertRunner.WriteConsoleOutputToFile = true;
             msConvertRunner.ConsoleOutputFilePath = msConvertConsoleOutput;
 
-            m_progress = PROGRESS_PCT_CONVERTING_MSXML_TO_MGF;
+            mProgress = PROGRESS_PCT_CONVERTING_MSXML_TO_MGF;
             ResetProgRunnerCpuUsage();
 
             // Start the program and wait for it to finish
@@ -227,7 +227,7 @@ namespace AnalysisManagerMODPlusPlugin
 
             if (success)
             {
-                if (m_DebugLevel >= 2)
+                if (mDebugLevel >= 2)
                 {
                     LogDebug("MSConvert.exe successfully created " + fiMgfFile.Name);
                 }
@@ -253,7 +253,7 @@ namespace AnalysisManagerMODPlusPlugin
         /// </summary>
         public override void CopyFailedResultsToArchiveFolder()
         {
-            m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MZXML_EXTENSION);
+            mJobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MZXML_EXTENSION);
 
             base.CopyFailedResultsToArchiveFolder();
         }
@@ -270,7 +270,7 @@ namespace AnalysisManagerMODPlusPlugin
         {
             try
             {
-                var fiParamFile = new FileInfo(Path.Combine(m_WorkDir, paramFileName));
+                var fiParamFile = new FileInfo(Path.Combine(mWorkDir, paramFileName));
                 if (!fiParamFile.Exists)
                 {
                     LogError("Parameter file not found by CreateParameterFiles");
@@ -351,7 +351,7 @@ namespace AnalysisManagerMODPlusPlugin
 
                 paramFileList.Add(threadNumber, paramFilePath);
 
-                m_jobParams.AddResultFileToSkip(paramFilePath);
+                mJobParams.AddResultFileToSkip(paramFilePath);
             }
 
             return paramFileList;
@@ -430,7 +430,7 @@ namespace AnalysisManagerMODPlusPlugin
 
             // Validate the setting for instrument_resolution and fragment_ion_tol
 
-            var strDatasetType = m_jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetType");
+            var strDatasetType = mJobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetType");
             var instrumentResolutionMsMs = LOW_RES_FLAG;
 
             if (strDatasetType.ToLower().EndsWith("hmsn"))
@@ -495,7 +495,7 @@ namespace AnalysisManagerMODPlusPlugin
 
                 if (massTolDa < MIN_FRAG_TOL_LOW_RES)
                 {
-                    m_EvalMessage = clsGlobal.AppendToComment(m_EvalMessage, "Auto-changed fragment_ion_tol to " + DEFAULT_FRAG_TOL_LOW_RES + " Da since low resolution MS/MS");
+                    mEvalMessage = clsGlobal.AppendToComment(mEvalMessage, "Auto-changed fragment_ion_tol to " + DEFAULT_FRAG_TOL_LOW_RES + " Da since low resolution MS/MS");
                     xmlAttributeCollection["value"].Value = DEFAULT_FRAG_TOL_LOW_RES;
                     xmlAttributeCollection["unit"].Value = "da";
                 }
@@ -522,8 +522,8 @@ namespace AnalysisManagerMODPlusPlugin
         private bool InitializeFastaFile()
         {
             // Define the path to the fasta file
-            var localOrgDbFolder = m_mgrParams.GetParam("orgdbdir");
-            var fastaFilePath = Path.Combine(localOrgDbFolder, m_jobParams.GetParam("PeptideSearch", "generatedFastaName"));
+            var localOrgDbFolder = mMgrParams.GetParam("OrgDbDir");
+            var fastaFilePath = Path.Combine(localOrgDbFolder, mJobParams.GetParam("PeptideSearch", "generatedFastaName"));
 
             var fiFastaFile = new FileInfo(fastaFilePath);
 
@@ -604,7 +604,7 @@ namespace AnalysisManagerMODPlusPlugin
 
                 // Combine the result files using a Merge Sort (we assume the results are sorted by scan in each result file)
 
-                if (m_DebugLevel >= 1)
+                if (mDebugLevel >= 1)
                 {
                     LogMessage("Merging the results files");
                 }
@@ -636,7 +636,7 @@ namespace AnalysisManagerMODPlusPlugin
                         continue;
                     }
 
-                    var reader = new clsMODPlusResultsReader(m_Dataset, fiResultFile);
+                    var reader = new clsMODPlusResultsReader(mDatasetName, fiResultFile);
                     if (reader.SpectrumAvailable)
                     {
                         PushReader(lstNextAvailableScan, reader);
@@ -644,7 +644,7 @@ namespace AnalysisManagerMODPlusPlugin
                 }
 
                 // The final results file is named Dataset_modp.txt
-                var combinedResultsFilePath = Path.Combine(m_WorkDir, m_Dataset + clsMODPlusRunner.RESULTS_FILE_SUFFIX);
+                var combinedResultsFilePath = Path.Combine(mWorkDir, mDatasetName + clsMODPlusRunner.RESULTS_FILE_SUFFIX);
                 var fiCombinedResults = new FileInfo(combinedResultsFilePath);
 
                 using (var swCombinedResults = new StreamWriter(new FileStream(fiCombinedResults.FullName, FileMode.Create, FileAccess.Write, FileShare.Read)))
@@ -675,11 +675,11 @@ namespace AnalysisManagerMODPlusPlugin
 
                 foreach (var modPlusRunner in mMODPlusRunners)
                 {
-                    m_jobParams.AddResultFileToSkip(modPlusRunner.Value.OutputFilePath);
+                    mJobParams.AddResultFileToSkip(modPlusRunner.Value.OutputFilePath);
                 }
 
                 // Zip the output file along with the ConsoleOutput files
-                var diZipFolder = new DirectoryInfo(Path.Combine(m_WorkDir, "Temp_ZipScratch"));
+                var diZipFolder = new DirectoryInfo(Path.Combine(mWorkDir, "Temp_ZipScratch"));
                 if (!diZipFolder.Exists)
                     diZipFolder.Create();
 
@@ -687,7 +687,7 @@ namespace AnalysisManagerMODPlusPlugin
                     fiCombinedResults
                 };
 
-                var diWorkDir = new DirectoryInfo(m_WorkDir);
+                var diWorkDir = new DirectoryInfo(mWorkDir);
                 filesToMove.AddRange(diWorkDir.GetFiles("*ConsoleOutput*.txt"));
 
                 foreach (var paramFile in paramFileList)
@@ -703,14 +703,14 @@ namespace AnalysisManagerMODPlusPlugin
                     }
                 }
 
-                var zippedResultsFilePath = Path.Combine(m_WorkDir, Path.GetFileNameWithoutExtension(fiCombinedResults.Name) + ".zip");
-                var blnSuccess = m_DotNetZipTools.ZipDirectory(diZipFolder.FullName, zippedResultsFilePath);
+                var zippedResultsFilePath = Path.Combine(mWorkDir, Path.GetFileNameWithoutExtension(fiCombinedResults.Name) + ".zip");
+                var blnSuccess = mDotNetZipTools.ZipDirectory(diZipFolder.FullName, zippedResultsFilePath);
 
                 if (blnSuccess)
                 {
-                    m_jobParams.AddResultFileToSkip(fiCombinedResults.Name);
+                    mJobParams.AddResultFileToSkip(fiCombinedResults.Name);
                 }
-                else if (string.IsNullOrEmpty(m_message))
+                else if (string.IsNullOrEmpty(mMessage))
                 {
                     LogError("Unknown error zipping the MODPlus results and console output files");
                     return false;
@@ -718,7 +718,7 @@ namespace AnalysisManagerMODPlusPlugin
 
                 if (successOverall)
                 {
-                    m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MGF_EXTENSION);
+                    mJobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MGF_EXTENSION);
                 }
 
                 return successOverall;
@@ -755,25 +755,25 @@ namespace AnalysisManagerMODPlusPlugin
         /// <remarks>Yses a round-robin splitting</remarks>
         private List<FileInfo> SplitMGFFiles(FileSystemInfo fiMgfFile, int threadCount)
         {
-            if (m_DebugLevel >= 1)
+            if (mDebugLevel >= 1)
             {
                 LogDebug("Splitting mgf file into " + threadCount + " parts: " + fiMgfFile.Name);
             }
 
-            // Cache the current state of m_message
-            var cachedStatusMessage = string.Copy(m_message);
-            m_message = string.Empty;
+            // Cache the current state of mMessage
+            var cachedStatusMessage = string.Copy(mMessage);
+            mMessage = string.Empty;
 
             var splitter = new clsSplitMGFFile();
             RegisterEvents(splitter);
 
             // Split the .mgf file
-            // If an error occurs, m_message will be updated because ErrorEventHandler calls LogError when event ErrorEvent is raised by clsSplitMGFFile
+            // If an error occurs, mMessage will be updated because ErrorEventHandler calls LogError when event ErrorEvent is raised by clsSplitMGFFile
             var mgfFiles = splitter.SplitMgfFile(fiMgfFile.FullName, threadCount, "_Part");
 
             if (mgfFiles.Count == 0)
             {
-                if (string.IsNullOrWhiteSpace(m_message))
+                if (string.IsNullOrWhiteSpace(mMessage))
                 {
                     LogError("SplitMgfFile returned an empty list of files");
                 }
@@ -781,10 +781,10 @@ namespace AnalysisManagerMODPlusPlugin
                 return new List<FileInfo>();
             }
 
-            // Restore m_message
-            m_message = cachedStatusMessage;
+            // Restore mMessage
+            mMessage = cachedStatusMessage;
 
-            m_jobParams.AddResultFileToSkip(fiMgfFile.FullName);
+            mJobParams.AddResultFileToSkip(fiMgfFile.FullName);
 
             return mgfFiles;
         }
@@ -812,17 +812,17 @@ namespace AnalysisManagerMODPlusPlugin
 
                 currentTask = "Determine thread count";
 
-                var javaMemorySizeMB = m_jobParams.GetJobParameter("MODPlusJavaMemorySize", 3000);
+                var javaMemorySizeMB = mJobParams.GetJobParameter("MODPlusJavaMemorySize", 3000);
                 var maxThreadsToAllow = ComputeMaxThreadsGivenMemoryPerThread(javaMemorySizeMB);
 
                 // Determine the number of threads
-                var threadCountText = m_jobParams.GetJobParameter("MODPlusThreads", "90%");
+                var threadCountText = mJobParams.GetJobParameter("MODPlusThreads", "90%");
                 var threadCount = ParseThreadCount(threadCountText, maxThreadsToAllow);
 
                 // Convert the .mzXML or .mzML file to the MGF format
-                var spectrumFileName = m_Dataset;
+                var spectrumFileName = mDatasetName;
 
-                var msXmlOutputType = m_jobParams.GetJobParameter("MSXMLOutputType", string.Empty);
+                var msXmlOutputType = mJobParams.GetJobParameter("MSXMLOutputType", string.Empty);
                 if (msXmlOutputType.ToLower() == "mzxml")
                 {
                     spectrumFileName += clsAnalysisResources.DOT_MZXML_EXTENSION;
@@ -834,14 +834,14 @@ namespace AnalysisManagerMODPlusPlugin
 
                 currentTask = "Convert .mzML file to MGF";
 
-                var fiSpectrumFile = new FileInfo(Path.Combine(m_WorkDir, spectrumFileName));
+                var fiSpectrumFile = new FileInfo(Path.Combine(mWorkDir, spectrumFileName));
                 if (!fiSpectrumFile.Exists)
                 {
                     LogError("Spectrum file not found: " + fiSpectrumFile.Name);
                     return false;
                 }
 
-                var fiMgfFile = new FileInfo(Path.Combine(m_WorkDir, m_Dataset + clsAnalysisResources.DOT_MGF_EXTENSION));
+                var fiMgfFile = new FileInfo(Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_MGF_EXTENSION));
 
                 if (fiMgfFile.Exists)
                 {
@@ -863,7 +863,7 @@ namespace AnalysisManagerMODPlusPlugin
                 var mgfFiles = SplitMGFFiles(fiMgfFile, threadCount);
                 if (mgfFiles.Count == 0)
                 {
-                    if (string.IsNullOrWhiteSpace(m_message))
+                    if (string.IsNullOrWhiteSpace(mMessage))
                     {
                         LogError("Unknown error calling SplitMGFFiles");
                     }
@@ -874,11 +874,11 @@ namespace AnalysisManagerMODPlusPlugin
 
                 // Define the path to the fasta file
                 // Note that job parameter "generatedFastaName" gets defined by clsAnalysisResources.RetrieveOrgDB
-                var localOrgDbFolder = m_mgrParams.GetParam("orgdbdir");
-                var dbFilename = m_jobParams.GetParam("PeptideSearch", "generatedFastaName");
+                var localOrgDbFolder = mMgrParams.GetParam("OrgDbDir");
+                var dbFilename = mJobParams.GetParam("PeptideSearch", "generatedFastaName");
                 var fastaFilePath = Path.Combine(localOrgDbFolder, dbFilename);
 
-                var paramFileName = m_jobParams.GetParam("ParmFileName");
+                var paramFileName = mJobParams.GetParam("ParmFileName");
 
                 currentTask = "Create a parameter file for each thread";
 
@@ -886,7 +886,7 @@ namespace AnalysisManagerMODPlusPlugin
 
                 if (paramFileList.Count == 0)
                 {
-                    if (string.IsNullOrWhiteSpace(m_message))
+                    if (string.IsNullOrWhiteSpace(mMessage))
                     {
                         LogError("CreateParameterFile returned an empty list in StartMODPlus");
                     }
@@ -897,7 +897,7 @@ namespace AnalysisManagerMODPlusPlugin
 
                 LogMessage("Running MODPlus using " + paramFileList.Count + " threads");
 
-                m_progress = PROGRESS_PCT_MODPLUS_STARTING;
+                mProgress = PROGRESS_PCT_MODPLUS_STARTING;
                 ResetProgRunnerCpuUsage();
 
                 mMODPlusRunners = new Dictionary<int, clsMODPlusRunner>();
@@ -911,7 +911,7 @@ namespace AnalysisManagerMODPlusPlugin
                     LogDebug(currentTask);
 
                     var modPlusRunner =
-                        new clsMODPlusRunner(m_Dataset, threadNum, m_WorkDir, paramFile.Value, javaProgLoc, mMODPlusProgLoc)
+                        new clsMODPlusRunner(mDatasetName, threadNum, mWorkDir, paramFile.Value, javaProgLoc, mMODPlusProgLoc)
                         {
                             JavaMemorySizeMB = javaMemorySizeMB
                         };
@@ -966,7 +966,7 @@ namespace AnalysisManagerMODPlusPlugin
                         progressSum += modPlusRunner.Value.Progress;
                         coreUsageOverall += modPlusRunner.Value.CoreUsage;
 
-                        if (m_DebugLevel >= 1)
+                        if (mDebugLevel >= 1)
                         {
                             if (!modPlusRunner.Value.CommandLineArgsLogged && !string.IsNullOrWhiteSpace(modPlusRunner.Value.CommandLineArgs))
                             {
@@ -988,10 +988,10 @@ namespace AnalysisManagerMODPlusPlugin
 
                     var subTaskProgress = progressSum / mMODPlusRunners.Count;
                     var updatedProgress = ComputeIncrementalProgress(PROGRESS_PCT_MODPLUS_STARTING, PROGRESS_PCT_MODPLUS_COMPLETE, (float)subTaskProgress);
-                    if (updatedProgress > m_progress)
+                    if (updatedProgress > mProgress)
                     {
                         // This progress will get written to the status file and sent to the messaging queue by UpdateStatusFile()
-                        m_progress = updatedProgress;
+                        mProgress = updatedProgress;
                     }
 
                     if (stepsComplete >= mMODPlusRunners.Count)
@@ -1038,9 +1038,9 @@ namespace AnalysisManagerMODPlusPlugin
                     if (progRunner == null)
                     {
                         blnSuccess = false;
-                        if (string.IsNullOrWhiteSpace(m_message))
+                        if (string.IsNullOrWhiteSpace(mMessage))
                         {
-                            m_message = "progRunner object is null for thread " + modPlusRunner.Key;
+                            mMessage = "progRunner object is null for thread " + modPlusRunner.Key;
                         }
                         continue;
                     }
@@ -1078,10 +1078,10 @@ namespace AnalysisManagerMODPlusPlugin
                     return false;
                 }
 
-                m_progress = PROGRESS_PCT_MODPLUS_COMPLETE;
+                mProgress = PROGRESS_PCT_MODPLUS_COMPLETE;
 
-                m_StatusTools.UpdateAndWrite(m_progress);
-                if (m_DebugLevel >= 3)
+                mStatusTools.UpdateAndWrite(mProgress);
+                if (mDebugLevel >= 3)
                 {
                     LogDebug("MODPlus Analysis Complete");
                 }
@@ -1101,7 +1101,7 @@ namespace AnalysisManagerMODPlusPlugin
         /// <remarks></remarks>
         protected bool StoreToolVersionInfo(string strProgLoc)
         {
-            if (m_DebugLevel >= 2)
+            if (mDebugLevel >= 2)
             {
                 LogDebug("Determining tool version info");
             }
@@ -1145,7 +1145,7 @@ namespace AnalysisManagerMODPlusPlugin
         /// <remarks></remarks>
         private void CmdRunner_LoopWaiting(List<int> processIDs, float coreUsageOverall, int secondsBetweenUpdates)
         {
-            UpdateStatusFile(m_progress);
+            UpdateStatusFile(mProgress);
 
             UpdateProgRunnerCpuUsage(processIDs.FirstOrDefault(), coreUsageOverall, secondsBetweenUpdates);
 

@@ -53,7 +53,7 @@ namespace AnalysisManagerUIMFtoMassHunterPlugin
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                if (m_DebugLevel > 4)
+                if (mDebugLevel > 4)
                 {
                     LogDebug("clsAnalysisToolRunnerUIMFtoMassHunter.RunTool(): Enter");
                 }
@@ -71,7 +71,7 @@ namespace AnalysisManagerUIMFtoMassHunterPlugin
                 if (!StoreToolVersionInfo(mUIMFConverterProgLoc))
                 {
                     LogError("Aborting since StoreToolVersionInfo returned false");
-                    m_message = "Error determining UIMFtoMassHunter version";
+                    mMessage = "Error determining UIMFtoMassHunter version";
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
@@ -80,10 +80,10 @@ namespace AnalysisManagerUIMFtoMassHunterPlugin
 
                 var processingSuccess = ConvertToAgilentDotD();
 
-                m_progress = PROGRESS_PCT_COMPLETE;
+                mProgress = PROGRESS_PCT_COMPLETE;
 
                 // Stop the job timer
-                m_StopTime = DateTime.UtcNow;
+                mStopTime = DateTime.UtcNow;
 
                 // Could use the following to create a summary file:
                 // Add the current job data to the summary file
@@ -102,7 +102,7 @@ namespace AnalysisManagerUIMFtoMassHunterPlugin
                 }
 
                 // No need to keep several files; exclude them now
-                m_jobParams.AddResultFileToSkip(m_jobParams.GetParam("ParmFileName"));
+                mJobParams.AddResultFileToSkip(mJobParams.GetParam("ParmFileName"));
 
                 var success = CopyResultsToTransferDirectory();
 
@@ -111,8 +111,8 @@ namespace AnalysisManagerUIMFtoMassHunterPlugin
             }
             catch (Exception ex)
             {
-                m_message = "Error in UIMFtoMassHunterPlugin->RunTool";
-                LogError(m_message, ex);
+                mMessage = "Error in UIMFtoMassHunterPlugin->RunTool";
+                LogError(mMessage, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -123,12 +123,12 @@ namespace AnalysisManagerUIMFtoMassHunterPlugin
             // Set up and execute a program runner to run the UIMF to MassHunter converter
 
             // Valid dataset type
-            var uimfFileName = m_Dataset + ".uimf";
-            var uimfFilePath = clsAnalysisResources.ResolveStoragePath(m_WorkDir, uimfFileName);
+            var uimfFileName = mDatasetName + ".uimf";
+            var uimfFilePath = clsAnalysisResources.ResolveStoragePath(mWorkDir, uimfFileName);
 
             if (string.IsNullOrWhiteSpace(uimfFilePath))
             {
-                LogError("Cannot convert; UIMF file not found in " + m_WorkDir);
+                LogError("Cannot convert; UIMF file not found in " + mWorkDir);
                 return false;
             }
 
@@ -141,14 +141,14 @@ namespace AnalysisManagerUIMFtoMassHunterPlugin
 
             var cmdStr = "UimfToMassHunter.exe " + clsGlobal.PossiblyQuotePath(uimfFile.FullName);
 
-            if (m_DebugLevel >= 1)
+            if (mDebugLevel >= 1)
             {
                 LogDebug(cmdStr);
             }
 
-            mConsoleOutputFile = Path.Combine(m_WorkDir, UIMF_CONVERTER_CONSOLE_OUTPUT);
+            mConsoleOutputFile = Path.Combine(mWorkDir, UIMF_CONVERTER_CONSOLE_OUTPUT);
 
-            var cmdRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel)
+            var cmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel)
             {
                 CreateNoWindow = true,
                 CacheStandardOutput = false,
@@ -159,7 +159,7 @@ namespace AnalysisManagerUIMFtoMassHunterPlugin
             RegisterEvents(cmdRunner);
             cmdRunner.LoopWaiting += cmdRunner_LoopWaiting;
 
-            m_progress = PROGRESS_PCT_STARTING;
+            mProgress = PROGRESS_PCT_STARTING;
 
             var success = cmdRunner.RunProgram(mUIMFConverterProgLoc, cmdStr, "UIMFtoMassHunter", true);
 
@@ -194,9 +194,9 @@ namespace AnalysisManagerUIMFtoMassHunterPlugin
                 return true;
             }
 
-            m_message = "Error running UIMFtoMassHunter";
+            mMessage = "Error running UIMFtoMassHunter";
 
-            LogError(m_message + ", job " + m_JobNum);
+            LogError(mMessage + ", job " + mJob);
 
             if (cmdRunner.ExitCode != 0)
             {
@@ -221,7 +221,7 @@ namespace AnalysisManagerUIMFtoMassHunterPlugin
             {
                 if (!File.Exists(strConsoleOutputFilePath))
                 {
-                    if (m_DebugLevel >= 4)
+                    if (mDebugLevel >= 4)
                     {
                         LogDebug("Console output file not found: " + strConsoleOutputFilePath);
                     }
@@ -229,7 +229,7 @@ namespace AnalysisManagerUIMFtoMassHunterPlugin
                     return;
                 }
 
-                if (m_DebugLevel >= 4)
+                if (mDebugLevel >= 4)
                 {
                     LogDebug("Parsing file " + strConsoleOutputFilePath);
                 }
@@ -257,7 +257,7 @@ namespace AnalysisManagerUIMFtoMassHunterPlugin
             catch (Exception ex)
             {
                 // Ignore errors here
-                if (m_DebugLevel >= 2)
+                if (mDebugLevel >= 2)
                 {
                     LogError("Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
                 }
@@ -319,7 +319,7 @@ namespace AnalysisManagerUIMFtoMassHunterPlugin
                 {
                     mLastConsoleOutputParse = DateTime.UtcNow;
 
-                    ParseConsoleOutputFile(Path.Combine(m_WorkDir, mConsoleOutputFile));
+                    ParseConsoleOutputFile(Path.Combine(mWorkDir, mConsoleOutputFile));
 
                     LogProgress("UIMFtoMassHunter");
                 }

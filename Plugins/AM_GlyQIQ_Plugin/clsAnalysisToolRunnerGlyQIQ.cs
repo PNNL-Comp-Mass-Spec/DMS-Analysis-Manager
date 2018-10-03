@@ -83,7 +83,7 @@ namespace AnalysisManagerGlyQIQPlugin
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                if (m_DebugLevel > 4)
+                if (mDebugLevel > 4)
                 {
                     LogDebug("clsAnalysisToolRunnerGlyQIQ.RunTool(): Enter");
                 }
@@ -100,9 +100,9 @@ namespace AnalysisManagerGlyQIQPlugin
                 if (!StoreToolVersionInfo(progLoc))
                 {
                     LogError("Aborting since StoreToolVersionInfo returned false");
-                    if (string.IsNullOrEmpty(m_message))
+                    if (string.IsNullOrEmpty(mMessage))
                     {
-                        m_message = "Error determining GlyQ-IQ version";
+                        mMessage = "Error determining GlyQ-IQ version";
                     }
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -118,10 +118,10 @@ namespace AnalysisManagerGlyQIQPlugin
                 // Zip up the settings files and batch files so we have a record of them
                 PackageResults();
 
-                m_progress = PROGRESS_PCT_COMPLETE;
+                mProgress = PROGRESS_PCT_COMPLETE;
 
                 // Stop the job timer
-                m_StopTime = DateTime.UtcNow;
+                mStopTime = DateTime.UtcNow;
 
                 // Add the current job data to the summary file
                 UpdateSummaryFile();
@@ -140,7 +140,7 @@ namespace AnalysisManagerGlyQIQPlugin
                     return CloseOutType.CLOSEOUT_FAILED;
 
                 // It is now safe to delete the _peaks.txt file that is in the transfer folder
-                if (m_DebugLevel >= 1)
+                if (mDebugLevel >= 1)
                 {
                     LogDebug("Deleting the _peaks.txt file from the Results Transfer folder");
                 }
@@ -152,8 +152,8 @@ namespace AnalysisManagerGlyQIQPlugin
             }
             catch (Exception ex)
             {
-                m_message = "Error in GlyQIQ->RunTool";
-                LogError(m_message, ex);
+                mMessage = "Error in GlyQIQ->RunTool";
+                LogError(mMessage, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -166,29 +166,29 @@ namespace AnalysisManagerGlyQIQPlugin
             try
             {
                 // Combine the results files
-                var diResultsFolder = new DirectoryInfo(Path.Combine(m_WorkDir, "Results_" + m_Dataset));
+                var diResultsFolder = new DirectoryInfo(Path.Combine(mWorkDir, "Results_" + mDatasetName));
                 if (!diResultsFolder.Exists)
                 {
-                    m_message = "Results folder not found: " + diResultsFolder.FullName;
-                    LogError(m_message);
+                    mMessage = "Results folder not found: " + diResultsFolder.FullName;
+                    LogError(mMessage);
                     return false;
                 }
 
-                var fiUnfilteredResults = new FileInfo(Path.Combine(m_WorkDir, m_Dataset + "_iqResults_Unfiltered.txt"));
-                var fiFilteredResults = new FileInfo(Path.Combine(m_WorkDir, m_Dataset + "_iqResults.txt"));
+                var fiUnfilteredResults = new FileInfo(Path.Combine(mWorkDir, mDatasetName + "_iqResults_Unfiltered.txt"));
+                var fiFilteredResults = new FileInfo(Path.Combine(mWorkDir, mDatasetName + "_iqResults.txt"));
 
                 using (var swUnfiltered = new StreamWriter(new FileStream(fiUnfilteredResults.FullName, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
                 using (var swFiltered = new StreamWriter(new FileStream(fiFilteredResults.FullName, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
                 {
                     for (var core = 1; core <= mCoreCount; core++)
                     {
-                        var fiResultFile = new FileInfo(Path.Combine(diResultsFolder.FullName, m_Dataset + "_iqResults_" + core + ".txt"));
+                        var fiResultFile = new FileInfo(Path.Combine(diResultsFolder.FullName, mDatasetName + "_iqResults_" + core + ".txt"));
 
                         if (!fiResultFile.Exists)
                         {
-                            if (string.IsNullOrEmpty(m_message))
+                            if (string.IsNullOrEmpty(mMessage))
                             {
-                                m_message = "Result file not found: " + fiResultFile.Name;
+                                mMessage = "Result file not found: " + fiResultFile.Name;
                             }
                             LogError("Result file not found: " + fiResultFile.FullName);
                             continue;
@@ -231,8 +231,8 @@ namespace AnalysisManagerGlyQIQPlugin
             }
             catch (Exception ex)
             {
-                m_message = "Exception in CombineResultFiles: " + ex.Message;
-                LogError(m_message);
+                mMessage = "Exception in CombineResultFiles: " + ex.Message;
+                LogError(mMessage);
                 return false;
             }
         }
@@ -241,7 +241,7 @@ namespace AnalysisManagerGlyQIQPlugin
         {
             try
             {
-                if (m_DebugLevel >= 1)
+                if (mDebugLevel >= 1)
                 {
                     LogDebug("Counting the number of MS/MS spectra in " + Path.GetFileName(rawFilePath));
                 }
@@ -251,7 +251,7 @@ namespace AnalysisManagerGlyQIQPlugin
 
                 if (!mThermoFileReader.OpenRawFile(rawFilePath))
                 {
-                    m_message = "Error opening the Thermo Raw file to count the MS/MS spectra";
+                    mMessage = "Error opening the Thermo Raw file to count the MS/MS spectra";
                     return 0;
                 }
 
@@ -278,7 +278,7 @@ namespace AnalysisManagerGlyQIQPlugin
 
                 mThermoFileReader.CloseRawFile();
 
-                if (m_DebugLevel >= 1)
+                if (mDebugLevel >= 1)
                 {
                     LogDebug(" ... MS1 spectra: " + ms1ScanCount);
                     LogDebug(" ... MS2 spectra: " + ms2ScanCount);
@@ -293,15 +293,15 @@ namespace AnalysisManagerGlyQIQPlugin
             }
             catch (Exception ex)
             {
-                m_message = "Exception in CountMsMsSpectra: " + ex.Message;
-                LogError(m_message);
+                mMessage = "Exception in CountMsMsSpectra: " + ex.Message;
+                LogError(mMessage);
                 return 0;
             }
         }
 
         protected bool ExamineFilteredResults(FileInfo fiResultsFile)
         {
-            return ExamineFilteredResults(fiResultsFile, m_JobNum, string.Empty);
+            return ExamineFilteredResults(fiResultsFile, mJob, string.Empty);
         }
 
         /// <summary>
@@ -312,7 +312,7 @@ namespace AnalysisManagerGlyQIQPlugin
         /// <param name="jobNumber"></param>
         /// <param name="dmsConnectionStringOverride">Optional: DMS5 connection string</param>
         /// <returns></returns>
-        /// <remarks>If dmsConnectionStringOverride is empty then PostJobResults will use the Manager Parameters (m_mgrParams)</remarks>
+        /// <remarks>If dmsConnectionStringOverride is empty then PostJobResults will use the Manager Parameters (mMgrParams)</remarks>
         public bool ExamineFilteredResults(FileInfo fiResultsFile, int jobNumber, string dmsConnectionStringOverride)
         {
             try
@@ -345,13 +345,13 @@ namespace AnalysisManagerGlyQIQPlugin
                         {
                             if (String.Compare(compoundCode, "Code", StringComparison.OrdinalIgnoreCase) != 0)
                             {
-                                m_message = "3rd column in the glycan result file is not Code";
+                                mMessage = "3rd column in the glycan result file is not Code";
                                 return false;
                             }
 
                             if (String.Compare(empiricalFormula, "EmpiricalFormula", StringComparison.OrdinalIgnoreCase) != 0)
                             {
-                                m_message = "3rd column in the glycan result file is not EmpiricalFormula";
+                                mMessage = "3rd column in the glycan result file is not EmpiricalFormula";
                                 return false;
                             }
 
@@ -388,15 +388,15 @@ namespace AnalysisManagerGlyQIQPlugin
             }
             catch (Exception ex)
             {
-                m_message = "Exception in ExamineFilteredResults";
-                LogError(m_message + ": " + ex.Message);
+                mMessage = "Exception in ExamineFilteredResults";
+                LogError(mMessage + ": " + ex.Message);
                 return false;
             }
         }
 
         private void PackageResults()
         {
-            var diTempZipFolder = new DirectoryInfo(Path.Combine(m_WorkDir, "FilesToZip"));
+            var diTempZipFolder = new DirectoryInfo(Path.Combine(mWorkDir, "FilesToZip"));
 
             try
             {
@@ -406,7 +406,7 @@ namespace AnalysisManagerGlyQIQPlugin
                 }
 
                 // Move the batch files and console ouput files into the FilesToZip folder
-                var diWorkDir = new DirectoryInfo(m_WorkDir);
+                var diWorkDir = new DirectoryInfo(mWorkDir);
                 var lstFilesToMove = new List<FileInfo>();
 
                 var lstFiles = diWorkDir.GetFiles("*.bat");
@@ -429,7 +429,7 @@ namespace AnalysisManagerGlyQIQPlugin
                 // Move selected files from the first WorkingParameters folder
 
                 // We just need to copy files from the first core's WorkingParameters folder
-                var diWorkingParamsSource = new DirectoryInfo(Path.Combine(m_WorkDir, "WorkingParametersCore1"));
+                var diWorkingParamsSource = new DirectoryInfo(Path.Combine(mWorkDir, "WorkingParametersCore1"));
 
                 var diWorkingParamsTarget = new DirectoryInfo(Path.Combine(diTempZipFolder.FullName, "WorkingParameters"));
                 if (!diWorkingParamsTarget.Exists)
@@ -437,7 +437,7 @@ namespace AnalysisManagerGlyQIQPlugin
                     diWorkingParamsTarget.Create();
                 }
 
-                var iqParamFileName = m_jobParams.GetJobParameter("ParmFileName", "");
+                var iqParamFileName = mJobParams.GetJobParameter("ParmFileName", "");
                 foreach (var fiFile in diWorkingParamsSource.GetFiles())
                 {
                     var blnMoveFile = false;
@@ -465,14 +465,14 @@ namespace AnalysisManagerGlyQIQPlugin
                     }
                 }
 
-                var strZipFilePath = Path.Combine(m_WorkDir, "GlyQIq_Automation_Files.zip");
+                var strZipFilePath = Path.Combine(mWorkDir, "GlyQIq_Automation_Files.zip");
 
-                m_DotNetZipTools.ZipDirectory(diTempZipFolder.FullName, strZipFilePath);
+                mDotNetZipTools.ZipDirectory(diTempZipFolder.FullName, strZipFilePath);
             }
             catch (Exception ex)
             {
-                m_message = "Exception creating GlyQIq_Automation_Files.zip";
-                LogError(m_message + ": " + ex.Message);
+                mMessage = "Exception creating GlyQIq_Automation_Files.zip";
+                LogError(mMessage + ": " + ex.Message);
                 return;
             }
 
@@ -559,13 +559,13 @@ namespace AnalysisManagerGlyQIQPlugin
 
                     if (string.IsNullOrWhiteSpace(dmsConnectionStringOverride))
                     {
-                        if (m_mgrParams == null)
+                        if (mMgrParams == null)
                         {
-                            throw new Exception("m_mgrParams object has not been initialized");
+                            throw new Exception("mMgrParams object has not been initialized");
                         }
 
                         // Gigasax.DMS5
-                        strConnectionString = m_mgrParams.GetParam("connectionstring");
+                        strConnectionString = mMgrParams.GetParam("connectionstring");
                     }
                     else
                     {
@@ -573,8 +573,8 @@ namespace AnalysisManagerGlyQIQPlugin
                     }
 
                     mStoredProcedureExecutor = new PRISM.ExecuteDatabaseSP(strConnectionString);
-                    mStoredProcedureExecutor.DebugEvent += m_ExecuteSP_DebugEvent;
-                    mStoredProcedureExecutor.ErrorEvent += m_ExecuteSP_DBErrorEvent;
+                    mStoredProcedureExecutor.DebugEvent += ExecuteSP_DebugEvent;
+                    mStoredProcedureExecutor.ErrorEvent += ExecuteSP_DBErrorEvent;
                 }
 
                 // Execute the SP (retry the call up to 3 times)
@@ -668,7 +668,7 @@ namespace AnalysisManagerGlyQIQPlugin
                 // Make sure that we don't keep the original, non-pruned file
                 // The pruned file was created in diTargetFolder and will get included in GlyQIq_Automation_Files.zip
                 //
-                m_jobParams.AddResultFileToSkip(fiConsoleOutputFile.Name);
+                mJobParams.AddResultFileToSkip(fiConsoleOutputFile.Name);
             }
             catch (Exception ex)
             {
@@ -682,45 +682,45 @@ namespace AnalysisManagerGlyQIQPlugin
 
             try
             {
-                mCoreCount = m_jobParams.GetJobParameter(clsAnalysisResourcesGlyQIQ.JOB_PARAM_ACTUAL_CORE_COUNT, 0);
+                mCoreCount = mJobParams.GetJobParameter(clsAnalysisResourcesGlyQIQ.JOB_PARAM_ACTUAL_CORE_COUNT, 0);
                 if (mCoreCount < 1)
                 {
-                    m_message = "Core count reported by " + clsAnalysisResourcesGlyQIQ.JOB_PARAM_ACTUAL_CORE_COUNT + " is 0; unable to continue";
+                    mMessage = "Core count reported by " + clsAnalysisResourcesGlyQIQ.JOB_PARAM_ACTUAL_CORE_COUNT + " is 0; unable to continue";
                     return false;
                 }
 
-                var rawDataType = m_jobParams.GetParam("RawDataType");
+                var rawDataType = mJobParams.GetParam("RawDataType");
                 var eRawDataType = clsAnalysisResources.GetRawDataType(rawDataType);
 
                 if (eRawDataType == clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile)
                 {
-                    m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_RAW_EXTENSION);
+                    mJobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_RAW_EXTENSION);
                 }
                 else
                 {
-                    m_message = "GlyQ-IQ presently only supports Thermo .Raw files";
+                    mMessage = "GlyQ-IQ presently only supports Thermo .Raw files";
                     return false;
                 }
 
                 // Determine the number of MS/MS spectra in the .Raw file (required for PostJobResults)
-                var rawFilePath = Path.Combine(m_WorkDir, m_Dataset + clsAnalysisResources.DOT_RAW_EXTENSION);
+                var rawFilePath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_RAW_EXTENSION);
                 mSpectraSearched = CountMsMsSpectra(rawFilePath);
 
                 // Set up and execute a program runner to run each batch file that launches GlyQ-IQ
 
-                m_progress = PROGRESS_PCT_STARTING;
+                mProgress = PROGRESS_PCT_STARTING;
 
                 mGlyQRunners = new Dictionary<int, clsGlyQIqRunner>();
                 // var lstThreads = new List<Thread>();
 
                 for (var core = 1; core <= mCoreCount; core++)
                 {
-                    var batchFilePath = Path.Combine(m_WorkDir, clsAnalysisResourcesGlyQIQ.START_PROGRAM_BATCH_FILE_PREFIX + core + ".bat");
+                    var batchFilePath = Path.Combine(mWorkDir, clsAnalysisResourcesGlyQIQ.START_PROGRAM_BATCH_FILE_PREFIX + core + ".bat");
 
                     currentTask = "Launching GlyQ-IQ, core " + core;
                     LogDebug(currentTask + ": " + batchFilePath);
 
-                    var glyQRunner = new clsGlyQIqRunner(m_WorkDir, core, batchFilePath);
+                    var glyQRunner = new clsGlyQIqRunner(mWorkDir, core, batchFilePath);
                     glyQRunner.CmdRunnerWaiting += CmdRunner_LoopWaiting;
                     mGlyQRunners.Add(core, glyQRunner);
 
@@ -767,10 +767,10 @@ namespace AnalysisManagerGlyQIQPlugin
 
                     var subTaskProgress = (float)(progressSum / mGlyQRunners.Count);
                     var updatedProgress = ComputeIncrementalProgress(PROGRESS_PCT_STARTING, PROGRESS_PCT_COMPLETE, subTaskProgress);
-                    if (updatedProgress > m_progress)
+                    if (updatedProgress > mProgress)
                     {
                         // This progress will get written to the status file and sent to the messaging queue by UpdateStatusFile()
-                        m_progress = updatedProgress;
+                        mProgress = updatedProgress;
                     }
 
                     if (stepsComplete >= mGlyQRunners.Count)
@@ -783,7 +783,7 @@ namespace AnalysisManagerGlyQIQPlugin
 
                     if (DateTime.UtcNow.Subtract(dtStartTime).TotalDays > 14)
                     {
-                        m_message = "GlyQ-IQ ran for over 14 days; aborting";
+                        mMessage = "GlyQ-IQ ran for over 14 days; aborting";
 
                         foreach (var glyQRunner in mGlyQRunners)
                         {
@@ -837,10 +837,10 @@ namespace AnalysisManagerGlyQIQPlugin
                     return false;
                 }
 
-                m_progress = PROGRESS_PCT_COMPLETE;
+                mProgress = PROGRESS_PCT_COMPLETE;
 
-                m_StatusTools.UpdateAndWrite(m_progress);
-                if (m_DebugLevel >= 3)
+                mStatusTools.UpdateAndWrite(mProgress);
+                if (mDebugLevel >= 3)
                 {
                     LogDebug("GlyQ-IQ Analysis Complete");
                 }
@@ -849,8 +849,8 @@ namespace AnalysisManagerGlyQIQPlugin
             }
             catch (Exception ex)
             {
-                m_message = "Error in RunGlyQIQ while " + currentTask;
-                LogError(m_message + ": " + ex.Message);
+                mMessage = "Error in RunGlyQIQ while " + currentTask;
+                LogError(mMessage + ": " + ex.Message);
                 return false;
             }
         }
@@ -878,12 +878,12 @@ namespace AnalysisManagerGlyQIQPlugin
 
         #region "Event Handlers"
 
-        private void m_ExecuteSP_DebugEvent(string errorMessage)
+        private void ExecuteSP_DebugEvent(string errorMessage)
         {
             LogDebug("StoredProcedureExecutor: " + errorMessage);
         }
 
-        private void m_ExecuteSP_DBErrorEvent(string errorMessage, Exception ex)
+        private void ExecuteSP_DBErrorEvent(string errorMessage, Exception ex)
         {
             LogError("StoredProcedureExecutor: " + errorMessage);
 
@@ -899,7 +899,7 @@ namespace AnalysisManagerGlyQIQPlugin
         /// <remarks></remarks>
         private void CmdRunner_LoopWaiting()
         {
-            UpdateStatusFile(m_progress);
+            UpdateStatusFile(mProgress);
 
             LogProgress("GlyQIQ");
         }

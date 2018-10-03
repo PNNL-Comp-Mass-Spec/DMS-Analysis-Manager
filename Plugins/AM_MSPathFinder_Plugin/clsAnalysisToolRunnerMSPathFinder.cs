@@ -53,8 +53,8 @@ namespace AnalysisManagerMSPathFinderPlugin
         #region "Module Variables"
 
         private string mConsoleOutputErrorMsg;
-        private int m_filteredPromexFeatures;
-        private int m_unfilteredPromexFeatures;
+        private int mFilteredPromexFeatures;
+        private int mUnfilteredPromexFeatures;
 
         private clsRunDosProgram mCmdRunner;
 
@@ -77,7 +77,7 @@ namespace AnalysisManagerMSPathFinderPlugin
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                if (m_DebugLevel > 4)
+                if (mDebugLevel > 4)
                 {
                     LogDebug("clsAnalysisToolRunnerMSPathFinder.RunTool(): Enter");
                 }
@@ -94,7 +94,7 @@ namespace AnalysisManagerMSPathFinderPlugin
                 if (!StoreToolVersionInfo(progLoc))
                 {
                     LogError("Aborting since StoreToolVersionInfo returned false");
-                    m_message = "Error determining MSPathFinder version";
+                    mMessage = "Error determining MSPathFinder version";
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
@@ -114,11 +114,11 @@ namespace AnalysisManagerMSPathFinderPlugin
 
                     if (tdaEnabled)
                     {
-                        resultsFile = new FileInfo(Path.Combine(m_WorkDir, m_Dataset + "_IcTda.tsv"));
+                        resultsFile = new FileInfo(Path.Combine(mWorkDir, mDatasetName + "_IcTda.tsv"));
                     }
                     else
                     {
-                        resultsFile = new FileInfo(Path.Combine(m_WorkDir, m_Dataset + "_IcTarget.tsv"));
+                        resultsFile = new FileInfo(Path.Combine(mWorkDir, mDatasetName + "_IcTarget.tsv"));
                     }
 
                     if (resultsFile.Exists)
@@ -126,27 +126,27 @@ namespace AnalysisManagerMSPathFinderPlugin
                         var postProcessSuccess = PostProcessMSPathFinderResults();
                         if (!postProcessSuccess)
                         {
-                            if (string.IsNullOrEmpty(m_message))
+                            if (string.IsNullOrEmpty(mMessage))
                             {
-                                m_message = "Unknown error post-processing the MSPathFinder results";
+                                mMessage = "Unknown error post-processing the MSPathFinder results";
                             }
                             processingSuccess = false;
                         }
                     }
                     else
                     {
-                        if (string.IsNullOrEmpty(m_message))
+                        if (string.IsNullOrEmpty(mMessage))
                         {
-                            m_message = "MSPathFinder results file not found: " + resultsFile.Name;
+                            mMessage = "MSPathFinder results file not found: " + resultsFile.Name;
                             processingSuccess = false;
                         }
                     }
                 }
 
-                m_progress = PROGRESS_PCT_COMPLETE;
+                mProgress = PROGRESS_PCT_COMPLETE;
 
                 // Stop the job timer
-                m_StopTime = DateTime.UtcNow;
+                mStopTime = DateTime.UtcNow;
 
                 // Add the current job data to the summary file
                 UpdateSummaryFile();
@@ -172,8 +172,8 @@ namespace AnalysisManagerMSPathFinderPlugin
             }
             catch (Exception ex)
             {
-                m_message = "Error in MSPathFinderPlugin->RunTool";
-                LogError(m_message, ex);
+                mMessage = "Error in MSPathFinderPlugin->RunTool";
+                LogError(mMessage, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -184,7 +184,7 @@ namespace AnalysisManagerMSPathFinderPlugin
         /// </summary>
         public override void CopyFailedResultsToArchiveFolder()
         {
-            m_jobParams.AddResultFileToSkip(Dataset + ".mzXML");
+            mJobParams.AddResultFileToSkip(Dataset + ".mzXML");
 
             base.CopyFailedResultsToArchiveFolder();
         }
@@ -223,8 +223,8 @@ namespace AnalysisManagerMSPathFinderPlugin
             fastaFileIsDecoy = false;
 
             // Define the path to the fasta file
-            var localOrgDbFolder = m_mgrParams.GetParam("OrgDBDir");
-            var fastaFilePath = Path.Combine(localOrgDbFolder, m_jobParams.GetParam("PeptideSearch", "generatedFastaName"));
+            var localOrgDbFolder = mMgrParams.GetParam("OrgDbDir");
+            var fastaFilePath = Path.Combine(localOrgDbFolder, mJobParams.GetParam("PeptideSearch", "generatedFastaName"));
 
             var fastaFile = new FileInfo(fastaFilePath);
 
@@ -235,7 +235,7 @@ namespace AnalysisManagerMSPathFinderPlugin
                 return false;
             }
 
-            var proteinOptions = m_jobParams.GetParam("ProteinOptions");
+            var proteinOptions = mJobParams.GetParam("ProteinOptions");
             if (!string.IsNullOrEmpty(proteinOptions))
             {
                 if (proteinOptions.ToLower().Contains("seq_direction=decoy"))
@@ -252,11 +252,11 @@ namespace AnalysisManagerMSPathFinderPlugin
             return dataLine.ToLower().StartsWith(matchString.ToLower());
         }
 
-        private readonly Regex rePromexFeatureStats = new Regex(@"ProMex[^\d]+(\d+)/(\d+) features loaded", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private readonly Regex mPromexFeatureStats = new Regex(@"ProMex[^\d]+(\d+)/(\d+) features loaded", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-        private readonly Regex reCheckProgress = new Regex(@"([0-9.]+)% complete", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private readonly Regex mCheckProgress = new Regex(@"([0-9.]+)% complete", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-        private readonly Regex reProcessingProteins = new Regex(@"(\d+) proteins done", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private readonly Regex mProcessingProteins = new Regex(@"(\d+) proteins done", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         /// <summary>
         /// Parse the MSPathFinder console output file to track the search progress
@@ -366,7 +366,7 @@ namespace AnalysisManagerMSPathFinderPlugin
             {
                 if (!File.Exists(consoleOutputFilePath))
                 {
-                    if (m_DebugLevel >= 4)
+                    if (mDebugLevel >= 4)
                     {
                         LogDebug("Console output file not found: " + consoleOutputFilePath);
                     }
@@ -374,7 +374,7 @@ namespace AnalysisManagerMSPathFinderPlugin
                     return;
                 }
 
-                if (m_DebugLevel >= 4)
+                if (mDebugLevel >= 4)
                 {
                     LogDebug("Parsing file " + consoleOutputFilePath);
                 }
@@ -500,10 +500,10 @@ namespace AnalysisManagerMSPathFinderPlugin
                             currentStage = MSPathFinderSearchStage.CalculatingEValuesForDecoySpectra;
                         }
 
-                        var oProgressMatch = reCheckProgress.Match(dataLine);
-                        if (oProgressMatch.Success)
+                        var progressMatch = mCheckProgress.Match(dataLine);
+                        if (progressMatch.Success)
                         {
-                            if (float.TryParse(oProgressMatch.Groups[1].ToString(), out var progressValue))
+                            if (float.TryParse(progressMatch.Groups[1].ToString(), out var progressValue))
                             {
                                 progressCompleteCurrentStage = progressValue;
                                 percentCompleteFound = true;
@@ -519,21 +519,21 @@ namespace AnalysisManagerMSPathFinderPlugin
 
                         if (unfilteredFeatures == 0)
                         {
-                            var oPromexResults = rePromexFeatureStats.Match(dataLine);
-                            if (oPromexResults.Success)
+                            var promexResultsMatch = mPromexFeatureStats.Match(dataLine);
+                            if (promexResultsMatch.Success)
                             {
-                                if (int.TryParse(oPromexResults.Groups[1].ToString(), out var filteredFeatures))
+                                if (int.TryParse(promexResultsMatch.Groups[1].ToString(), out var filteredFeatures))
                                 {
-                                    m_filteredPromexFeatures = filteredFeatures;
+                                    mFilteredPromexFeatures = filteredFeatures;
                                 }
-                                if (int.TryParse(oPromexResults.Groups[2].ToString(), out unfilteredFeatures))
+                                if (int.TryParse(promexResultsMatch.Groups[2].ToString(), out unfilteredFeatures))
                                 {
-                                    m_unfilteredPromexFeatures = unfilteredFeatures;
+                                    mUnfilteredPromexFeatures = unfilteredFeatures;
                                 }
                             }
                         }
 
-                        var proteinSearchedMatch = reProcessingProteins.Match(dataLine);
+                        var proteinSearchedMatch = mProcessingProteins.Match(dataLine);
                         if (proteinSearchedMatch.Success)
                         {
                             if (int.TryParse(proteinSearchedMatch.Groups[1].ToString(), out var proteinsSearched))
@@ -569,15 +569,15 @@ namespace AnalysisManagerMSPathFinderPlugin
                     progressComplete = ComputeIncrementalProgress(PROGRESS_PCT_SEARCHING_DECOY_DB, PROGRESS_PCT_COMPLETE, decoyProteinsSearched, targetProteinsSearched);
                 }
 
-                if (m_progress < progressComplete)
+                if (mProgress < progressComplete)
                 {
-                    m_progress = progressComplete;
+                    mProgress = progressComplete;
                 }
             }
             catch (Exception ex)
             {
                 // Ignore errors here
-                if (m_DebugLevel >= 2)
+                if (mDebugLevel >= 2)
                 {
                     LogError("Error parsing console output file (" + consoleOutputFilePath + "): " + ex.Message);
                 }
@@ -601,7 +601,7 @@ namespace AnalysisManagerMSPathFinderPlugin
 
             try
             {
-                var modFilePath = Path.Combine(m_WorkDir, MOD_FILE_NAME);
+                var modFilePath = Path.Combine(mWorkDir, MOD_FILE_NAME);
 
                 cmdLineOptions += " -mod " + modFilePath;
 
@@ -701,15 +701,15 @@ namespace AnalysisManagerMSPathFinderPlugin
             cmdLineOptions = string.Empty;
             tdaEnabled = false;
 
-            var paramFileName = m_jobParams.GetParam("ParmFileName");
+            var paramFileName = mJobParams.GetParam("ParmFileName");
 
-            var paramFileReader = new clsKeyValueParamFileReader("MSPathFinder", m_WorkDir, paramFileName);
+            var paramFileReader = new clsKeyValueParamFileReader("MSPathFinder", mWorkDir, paramFileName);
             RegisterEvents(paramFileReader);
 
             var eResult = paramFileReader.ParseKeyValueParameterFile(out var paramFileEntries);
             if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
             {
-                m_message = paramFileReader.ErrorMessage;
+                mMessage = paramFileReader.ErrorMessage;
                 return eResult;
             }
 
@@ -724,7 +724,7 @@ namespace AnalysisManagerMSPathFinderPlugin
             cmdLineOptions = paramFileReader.ConvertParamsToArgs(paramFileEntries, paramToArgMapping, paramNamesToSkip, "-");
             if (string.IsNullOrWhiteSpace(cmdLineOptions))
             {
-                m_message = paramFileReader.ErrorMessage;
+                mMessage = paramFileReader.ErrorMessage;
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -770,8 +770,8 @@ namespace AnalysisManagerMSPathFinderPlugin
             }
             catch (Exception ex)
             {
-                m_message = "Exception extracting dynamic and static mod information from the TopPIC parameter file";
-                LogError(m_message, ex);
+                mMessage = "Exception extracting dynamic and static mod information from the TopPIC parameter file";
+                LogError(mMessage, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -859,12 +859,12 @@ namespace AnalysisManagerMSPathFinderPlugin
 
             try
             {
-                var workDirInfo = new DirectoryInfo(m_WorkDir);
+                var workDirInfo = new DirectoryInfo(mWorkDir);
 
                 // Make sure MSPathFinder has released the file handles
                 ProgRunner.GarbageCollectNow();
 
-                var compressDirInfo = new DirectoryInfo(Path.Combine(m_WorkDir, "TempCompress"));
+                var compressDirInfo = new DirectoryInfo(Path.Combine(mWorkDir, "TempCompress"));
                 if (compressDirInfo.Exists)
                 {
                     foreach (var fileToDelete in compressDirInfo.GetFiles())
@@ -877,11 +877,11 @@ namespace AnalysisManagerMSPathFinderPlugin
                     compressDirInfo.Create();
                 }
 
-                var resultFiles = workDirInfo.GetFiles(m_Dataset + "*_Ic*.tsv").ToList();
+                var resultFiles = workDirInfo.GetFiles(mDatasetName + "*_Ic*.tsv").ToList();
 
                 if (resultFiles.Count == 0)
                 {
-                    m_message = "Did not find any _Ic*.tsv files";
+                    mMessage = "Did not find any _Ic*.tsv files";
                     return false;
                 }
 
@@ -901,19 +901,19 @@ namespace AnalysisManagerMSPathFinderPlugin
 
             try
             {
-                m_DotNetZipTools.DebugLevel = m_DebugLevel;
+                mDotNetZipTools.DebugLevel = mDebugLevel;
 
-                var resultsZipFilePath = Path.Combine(m_WorkDir, m_Dataset + "_IcTsv.zip");
-                var success = m_DotNetZipTools.ZipDirectory(compressDirPath, resultsZipFilePath);
+                var resultsZipFilePath = Path.Combine(mWorkDir, mDatasetName + "_IcTsv.zip");
+                var success = mDotNetZipTools.ZipDirectory(compressDirPath, resultsZipFilePath);
 
                 if (!success)
                 {
-                    if (string.IsNullOrEmpty(m_message))
+                    if (string.IsNullOrEmpty(mMessage))
                     {
-                        m_message = m_DotNetZipTools.Message;
-                        if (string.IsNullOrEmpty(m_message))
+                        mMessage = mDotNetZipTools.Message;
+                        if (string.IsNullOrEmpty(mMessage))
                         {
-                            m_message = "Unknown error zipping the MSPathFinder results";
+                            mMessage = "Unknown error zipping the MSPathFinder results";
                         }
                     }
                 }
@@ -943,19 +943,19 @@ namespace AnalysisManagerMSPathFinderPlugin
 
             if (string.IsNullOrEmpty(cmdLineOptions))
             {
-                if (string.IsNullOrEmpty(m_message))
+                if (string.IsNullOrEmpty(mMessage))
                 {
-                    m_message = "Problem parsing MSPathFinder parameter file";
+                    mMessage = "Problem parsing MSPathFinder parameter file";
                 }
                 return false;
             }
 
-            var pbfFilePath = Path.Combine(m_WorkDir, m_Dataset + clsAnalysisResources.DOT_PBF_EXTENSION);
-            var featureFilePath = Path.Combine(m_WorkDir, m_Dataset + clsAnalysisResources.DOT_MS1FT_EXTENSION);
+            var pbfFilePath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_PBF_EXTENSION);
+            var featureFilePath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_MS1FT_EXTENSION);
 
             // Define the path to the fasta file
-            var localOrgDbFolder = m_mgrParams.GetParam("OrgDBDir");
-            var fastaFilePath = Path.Combine(localOrgDbFolder, m_jobParams.GetParam("PeptideSearch", "generatedFastaName"));
+            var localOrgDbFolder = mMgrParams.GetParam("OrgDbDir");
+            var fastaFilePath = Path.Combine(localOrgDbFolder, mJobParams.GetParam("PeptideSearch", "generatedFastaName"));
 
             LogMessage("Running MSPathFinder");
 
@@ -964,15 +964,15 @@ namespace AnalysisManagerMSPathFinderPlugin
             var cmdStr = " -s " + pbfFilePath +
                          " -feature " + featureFilePath +
                          " -d " + fastaFilePath +
-                         " -o " + m_WorkDir +
+                         " -o " + mWorkDir +
                          " " + cmdLineOptions;
 
-            if (m_DebugLevel >= 1)
+            if (mDebugLevel >= 1)
             {
                 LogDebug(progLoc + " " + cmdStr);
             }
 
-            mCmdRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel);
+            mCmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel);
             RegisterEvents(mCmdRunner);
             mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
@@ -981,9 +981,9 @@ namespace AnalysisManagerMSPathFinderPlugin
             mCmdRunner.EchoOutputToConsole = true;
 
             mCmdRunner.WriteConsoleOutputToFile = true;
-            mCmdRunner.ConsoleOutputFilePath = Path.Combine(m_WorkDir, MSPATHFINDER_CONSOLE_OUTPUT);
+            mCmdRunner.ConsoleOutputFilePath = Path.Combine(mWorkDir, MSPATHFINDER_CONSOLE_OUTPUT);
 
-            m_progress = PROGRESS_PCT_STARTING;
+            mProgress = PROGRESS_PCT_STARTING;
             ResetProgRunnerCpuUsage();
 
             // Start the program and wait for it to finish
@@ -1018,9 +1018,9 @@ namespace AnalysisManagerMSPathFinderPlugin
                 {
                     msg = mConsoleOutputErrorMsg;
 
-                    if (m_unfilteredPromexFeatures > 0)
+                    if (mUnfilteredPromexFeatures > 0)
                     {
-                        msg += "; loaded " + m_filteredPromexFeatures + "/" + m_unfilteredPromexFeatures + " ProMex features";
+                        msg += "; loaded " + mFilteredPromexFeatures + "/" + mUnfilteredPromexFeatures + " ProMex features";
                     }
                 }
 
@@ -1038,9 +1038,9 @@ namespace AnalysisManagerMSPathFinderPlugin
                 return false;
             }
 
-            m_progress = PROGRESS_PCT_COMPLETE;
-            m_StatusTools.UpdateAndWrite(m_progress);
-            if (m_DebugLevel >= 3)
+            mProgress = PROGRESS_PCT_COMPLETE;
+            mStatusTools.UpdateAndWrite(mProgress);
+            if (mDebugLevel >= 3)
             {
                 LogDebug("MSPathFinder Search Complete");
             }
@@ -1085,7 +1085,7 @@ namespace AnalysisManagerMSPathFinderPlugin
             {
                 mLastConsoleOutputParse = DateTime.UtcNow;
 
-                ParseConsoleOutputFile(Path.Combine(m_WorkDir, MSPATHFINDER_CONSOLE_OUTPUT));
+                ParseConsoleOutputFile(Path.Combine(mWorkDir, MSPATHFINDER_CONSOLE_OUTPUT));
 
                 UpdateProgRunnerCpuUsage(mCmdRunner, SECONDS_BETWEEN_UPDATE);
 

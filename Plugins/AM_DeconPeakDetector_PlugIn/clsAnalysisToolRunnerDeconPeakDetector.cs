@@ -53,7 +53,7 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                if (m_DebugLevel > 4)
+                if (mDebugLevel > 4)
                 {
                     LogDebug("clsAnalysisToolRunnerDeconPeakDetector.RunTool(): Enter");
                 }
@@ -69,13 +69,13 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
                 }
 
                 // Store the PeakDetector version info in the database
-                m_message = string.Empty;
+                mMessage = string.Empty;
                 if (!StoreToolVersionInfo(progLoc))
                 {
                     LogError("Aborting since StoreToolVersionInfo returned false");
-                    if (string.IsNullOrEmpty(m_message))
+                    if (string.IsNullOrEmpty(mMessage))
                     {
-                        m_message = "Error determining DeconPeakDetector version";
+                        mMessage = "Error determining DeconPeakDetector version";
                     }
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -86,15 +86,15 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
                 if (blnSuccess)
                 {
                     // Look for the DeconPeakDetector results file
-                    var peakDetectorResultsFilePath = Path.Combine(m_WorkDir, m_Dataset + "_peaks.txt");
+                    var peakDetectorResultsFilePath = Path.Combine(mWorkDir, mDatasetName + "_peaks.txt");
 
                     var fiResultsFile = new FileInfo(peakDetectorResultsFilePath);
 
                     if (!fiResultsFile.Exists)
                     {
-                        if (string.IsNullOrEmpty(m_message))
+                        if (string.IsNullOrEmpty(mMessage))
                         {
-                            m_message = "DeconPeakDetector results file not found: " + Path.GetFileName(peakDetectorResultsFilePath);
+                            mMessage = "DeconPeakDetector results file not found: " + Path.GetFileName(peakDetectorResultsFilePath);
                         }
                         blnSuccess = false;
                     }
@@ -102,13 +102,13 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
 
                 if (blnSuccess)
                 {
-                    m_jobParams.AddResultFileExtensionToSkip("_ConsoleOutput.txt");
+                    mJobParams.AddResultFileExtensionToSkip("_ConsoleOutput.txt");
                 }
 
-                m_progress = PROGRESS_PCT_COMPLETE;
+                mProgress = PROGRESS_PCT_COMPLETE;
 
                 // Stop the job timer
-                m_StopTime = DateTime.UtcNow;
+                mStopTime = DateTime.UtcNow;
 
                 // Add the current job data to the summary file
                 UpdateSummaryFile();
@@ -159,7 +159,7 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
             {
                 if (!File.Exists(strConsoleOutputFilePath))
                 {
-                    if (m_DebugLevel >= 4)
+                    if (mDebugLevel >= 4)
                     {
                         LogDebug("Console output file not found: " + strConsoleOutputFilePath);
                     }
@@ -167,7 +167,7 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
                     return;
                 }
 
-                if (m_DebugLevel >= 4)
+                if (mDebugLevel >= 4)
                 {
                     LogDebug("Parsing file " + strConsoleOutputFilePath);
                 }
@@ -194,15 +194,15 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
 
                 var sngActualProgress = ComputeIncrementalProgress(PROGRESS_PCT_STARTING, PROGRESS_PCT_COMPLETE, peakDetectProgress, 100);
 
-                if (m_progress < sngActualProgress)
+                if (mProgress < sngActualProgress)
                 {
-                    m_progress = sngActualProgress;
+                    mProgress = sngActualProgress;
                 }
             }
             catch (Exception ex)
             {
                 // Ignore errors here
-                if (m_DebugLevel >= 2)
+                if (mDebugLevel >= 2)
                 {
                     LogWarning("Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
                 }
@@ -211,34 +211,34 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
 
         private bool RunDeconPeakDetector(string strPeakDetectorProgLoc)
         {
-            var peakDetectorParamFileName = m_jobParams.GetJobParameter("PeakDetectorParamFile", "");
-            var paramFilePath = Path.Combine(m_WorkDir, peakDetectorParamFileName);
+            var peakDetectorParamFileName = mJobParams.GetJobParameter("PeakDetectorParamFile", "");
+            var paramFilePath = Path.Combine(mWorkDir, peakDetectorParamFileName);
 
             mConsoleOutputErrorMsg = string.Empty;
 
-            var rawDataType = m_jobParams.GetParam("RawDataType");
+            var rawDataType = mJobParams.GetParam("RawDataType");
             var eRawDataType = clsAnalysisResources.GetRawDataType(rawDataType);
 
             if (eRawDataType == clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile)
             {
-                m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_RAW_EXTENSION);
+                mJobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_RAW_EXTENSION);
             }
             else
             {
-                m_message = "The DeconPeakDetector presently only supports Thermo .Raw files";
+                mMessage = "The DeconPeakDetector presently only supports Thermo .Raw files";
                 return false;
             }
 
             LogMessage("Running DeconPeakDetector");
 
             // Set up and execute a program runner to run the Peak Detector
-            var cmdStr = m_Dataset + clsAnalysisResources.DOT_RAW_EXTENSION;
+            var cmdStr = mDatasetName + clsAnalysisResources.DOT_RAW_EXTENSION;
             cmdStr += " /P:" + PossiblyQuotePath(paramFilePath);
-            cmdStr += " /O:" + PossiblyQuotePath(m_WorkDir);
+            cmdStr += " /O:" + PossiblyQuotePath(mWorkDir);
 
             LogDebug(strPeakDetectorProgLoc + " " + cmdStr);
 
-            mCmdRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel);
+            mCmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel);
             RegisterEvents(mCmdRunner);
             mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
@@ -247,9 +247,9 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
             mCmdRunner.EchoOutputToConsole = true;
 
             mCmdRunner.WriteConsoleOutputToFile = true;
-            mCmdRunner.ConsoleOutputFilePath = Path.Combine(m_WorkDir, DECON_PEAK_DETECTOR_CONSOLE_OUTPUT);
+            mCmdRunner.ConsoleOutputFilePath = Path.Combine(mWorkDir, DECON_PEAK_DETECTOR_CONSOLE_OUTPUT);
 
-            m_progress = PROGRESS_PCT_STARTING;
+            mProgress = PROGRESS_PCT_STARTING;
 
             var blnSuccess = mCmdRunner.RunProgram(strPeakDetectorProgLoc, cmdStr, "PeakDetector", true);
 
@@ -274,9 +274,9 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
                 return false;
             }
 
-            m_progress = PROGRESS_PCT_COMPLETE;
-            m_StatusTools.UpdateAndWrite(m_progress);
-            if (m_DebugLevel >= 3)
+            mProgress = PROGRESS_PCT_COMPLETE;
+            mStatusTools.UpdateAndWrite(mProgress);
+            if (mDebugLevel >= 3)
             {
                 LogDebug("DeconPeakDetector Search Complete");
             }
@@ -304,7 +304,7 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
 
         #region "Event Handlers"
 
-        private DateTime dtLastConsoleOutputParse = DateTime.MinValue;
+        private DateTime mLastConsoleOutputParse = DateTime.MinValue;
 
         /// <summary>
         /// Event handler for CmdRunner.LoopWaiting event
@@ -314,11 +314,11 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
         {
             UpdateStatusFile();
 
-            if (DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= 15)
+            if (DateTime.UtcNow.Subtract(mLastConsoleOutputParse).TotalSeconds >= 15)
             {
-                dtLastConsoleOutputParse = DateTime.UtcNow;
+                mLastConsoleOutputParse = DateTime.UtcNow;
 
-                ParseConsoleOutputFile(Path.Combine(m_WorkDir, DECON_PEAK_DETECTOR_CONSOLE_OUTPUT));
+                ParseConsoleOutputFile(Path.Combine(mWorkDir, DECON_PEAK_DETECTOR_CONSOLE_OUTPUT));
 
                 LogProgress("DeconPeakDetector");
             }

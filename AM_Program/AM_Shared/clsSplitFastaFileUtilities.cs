@@ -601,9 +601,9 @@ namespace AnalysisManagerBase
                     LogMessagesToFile = false
                 };
 
-                mSplitter.ErrorEvent += mSplitter_ErrorEvent;
-                mSplitter.WarningEvent += mSplitter_WarningEvent;
-                mSplitter.ProgressUpdate += mSplitter_ProgressChanged;
+                mSplitter.ErrorEvent += Splitter_ErrorEvent;
+                mSplitter.WarningEvent += Splitter_WarningEvent;
+                mSplitter.ProgressUpdate += Splitter_ProgressChanged;
 
                 currentTask = "SplitFastaFile " + fiBaseFastaFile.FullName;
                 var success = mSplitter.SplitFastaFile(fiBaseFastaFile.FullName, fiBaseFastaFile.DirectoryName, mNumSplitParts);
@@ -732,18 +732,18 @@ namespace AnalysisManagerBase
             SplittingBaseFastafile?.Invoke(baseFastaFileName, numSplitParts);
         }
 
-        private void mSplitter_ErrorEvent(string message, Exception ex)
+        private void Splitter_ErrorEvent(string message, Exception ex)
         {
             ErrorMessage = "Fasta Splitter Error: " + message;
             OnErrorEvent(message, ex);
         }
 
-        private void mSplitter_WarningEvent(string message)
+        private void Splitter_WarningEvent(string message)
         {
             OnWarningEvent(message);
         }
 
-        private void mSplitter_ProgressChanged(string taskDescription, float percentComplete)
+        private void Splitter_ProgressChanged(string taskDescription, float percentComplete)
         {
             OnProgressUpdate(taskDescription, (int)percentComplete);
         }

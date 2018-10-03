@@ -30,7 +30,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
             }
 
             // Get input data file
-            var strRawDataType = m_jobParams.GetParam("RawDataType");
+            var strRawDataType = mJobParams.GetParam("RawDataType");
             var eRawDataType = GetRawDataType(strRawDataType);
 
             switch (eRawDataType)
@@ -40,9 +40,9 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
                     break;
                 // This dataset type is acceptable
                 default:
-                    m_message = "Dataset type " + strRawDataType + " is not supported";
+                    mMessage = "Dataset type " + strRawDataType + " is not supported";
                     LogDebug(
-                        "clsDtaGenResources.GetResources: " + m_message + "; must be " + RAW_DATA_TYPE_BRUKER_FT_FOLDER + " or " +
+                        "clsDtaGenResources.GetResources: " + mMessage + "; must be " + RAW_DATA_TYPE_BRUKER_FT_FOLDER + " or " +
                         RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER);
 
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -54,7 +54,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            if (!base.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.SingleDataset))
+            if (!base.ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadFolderLayout.SingleDataset))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }

@@ -311,7 +311,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                if (m_DebugLevel > 4)
+                if (mDebugLevel > 4)
                 {
                     LogDebug("clsAnalysisToolRunnerPRIDEConverter.RunTool(): Enter");
                 }
@@ -326,13 +326,13 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 if (!StoreToolVersionInfo(mPrideConverterProgLoc))
                 {
                     LogError("Aborting since StoreToolVersionInfo returned false");
-                    m_message = "Error determining PRIDE Converter version";
+                    mMessage = "Error determining PRIDE Converter version";
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 mConsoleOutputErrorMsg = string.Empty;
 
-                mCacheFolderPath = m_jobParams.GetJobParameter("CacheFolderPath", clsAnalysisResourcesPRIDEConverter.DEFAULT_CACHE_FOLDER_PATH);
+                mCacheFolderPath = mJobParams.GetJobParameter("CacheFolderPath", clsAnalysisResourcesPRIDEConverter.DEFAULT_CACHE_FOLDER_PATH);
 
                 LogMessage("Running PRIDEConverter");
 
@@ -341,7 +341,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 {
                     var msg = "Error loading data package dataset info";
                     LogError(msg + ": clsAnalysisToolRunnerBase.LoadDataPackageDatasetInfo returned false");
-                    m_message = msg;
+                    mMessage = msg;
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
@@ -352,10 +352,10 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 }
 
                 // Monitor the FileDownloaded event in this class
-                m_MyEMSLUtilities.FileDownloaded += m_MyEMSLDatasetListInfo_FileDownloadedEvent;
+                mMyEMSLUtilities.FileDownloaded += MyEMSLDatasetListInfo_FileDownloadedEvent;
 
                 // The analysisResults object is used to copy files to/from this computer
-                var analysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
+                var analysisResults = new clsAnalysisResults(mMgrParams, mJobParams);
 
                 // Assure that the remote transfer folder exists
                 var remoteTransferFolder = CreateRemoteTransferFolder(analysisResults, mCacheFolderPath);
@@ -380,19 +380,19 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 // Create the PX Submission file
                 var success = CreatePXSubmissionFile(templateParameters);
 
-                m_progress = PROGRESS_PCT_COMPLETE;
-                m_StatusTools.UpdateAndWrite(m_progress);
+                mProgress = PROGRESS_PCT_COMPLETE;
+                mStatusTools.UpdateAndWrite(mProgress);
 
                 if (success)
                 {
-                    if (m_DebugLevel >= 3)
+                    if (mDebugLevel >= 3)
                     {
                         LogDebug("PRIDEConverter Complete");
                     }
                 }
 
                 // Stop the job timer
-                m_StopTime = DateTime.UtcNow;
+                mStopTime = DateTime.UtcNow;
 
                 // Add the current job data to the summary file
                 UpdateSummaryFile();
@@ -454,7 +454,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 // Sort the jobs by dataset so that we can use the same .mzXML file for datasets with multiple jobs
                 var linqJobsSortedByDataset = (from item in mDataPackagePeptideHitJobs orderby item.Value.Dataset, SortPreference(item.Value.Tool) select item);
 
-                var assumeInstrumentDataUnpurged = m_jobParams.GetJobParameter("AssumeInstrumentDataUnpurged", true);
+                var assumeInstrumentDataUnpurged = mJobParams.GetJobParameter("AssumeInstrumentDataUnpurged", true);
 
                 const bool continueOnError = true;
                 const int maxErrorCount = 10;
@@ -468,10 +468,10 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 {
                     var udtCurrentJobInfo = jobInfo.Value;
 
-                    m_StatusTools.CurrentOperation = "Processing job " + udtCurrentJobInfo.Job + ", dataset " + udtCurrentJobInfo.Dataset;
+                    mStatusTools.CurrentOperation = "Processing job " + udtCurrentJobInfo.Job + ", dataset " + udtCurrentJobInfo.Dataset;
 
                     Console.WriteLine();
-                    LogDebug(string.Format("{0}: {1}", jobsProcessed + 1, m_StatusTools.CurrentOperation), 10);
+                    LogDebug(string.Format("{0}: {1}", jobsProcessed + 1, mStatusTools.CurrentOperation), 10);
 
                     var result = ProcessJob(
                         jobInfo, udtFilterThresholds,
@@ -492,11 +492,11 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     }
 
                     jobsProcessed += 1;
-                    m_progress = ComputeIncrementalProgress(PROGRESS_PCT_TOOL_RUNNER_STARTING, PROGRESS_PCT_SAVING_RESULTS, jobsProcessed,
+                    mProgress = ComputeIncrementalProgress(PROGRESS_PCT_TOOL_RUNNER_STARTING, PROGRESS_PCT_SAVING_RESULTS, jobsProcessed,
                         mDataPackagePeptideHitJobs.Count);
-                    m_StatusTools.UpdateAndWrite(m_progress);
+                    mStatusTools.UpdateAndWrite(mProgress);
 
-                    if (DateTime.UtcNow.Subtract(dtLastLogTime).TotalMinutes >= 5 || m_DebugLevel >= 2)
+                    if (DateTime.UtcNow.Subtract(dtLastLogTime).TotalMinutes >= 5 || mDebugLevel >= 2)
                     {
                         dtLastLogTime = DateTime.UtcNow;
                         LogDebug(" ... processed " + jobsProcessed + " / " + mDataPackagePeptideHitJobs.Count + " jobs");
@@ -516,10 +516,10 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     if (datasetsProcessed.ContainsKey(datasetId))
                         continue;
 
-                    m_StatusTools.CurrentOperation = "Adding dataset " + datasetName + " (no associated PeptideHit job)";
+                    mStatusTools.CurrentOperation = "Adding dataset " + datasetName + " (no associated PeptideHit job)";
 
                     Console.WriteLine();
-                    LogDebug(m_StatusTools.CurrentOperation, 10);
+                    LogDebug(mStatusTools.CurrentOperation, 10);
 
                     AddPlaceholderDatasetEntry(datasetInfo);
                 }
@@ -527,7 +527,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 // If we were still unable to delete some files, we want to make sure that they don't end up in the results folder
                 foreach (var fileToDelete in mPreviousDatasetFilesToDelete)
                 {
-                    m_jobParams.AddResultFileToSkip(fileToDelete);
+                    mJobParams.AddResultFileToSkip(fileToDelete);
                 }
 
                 return jobFailureCount;
@@ -647,7 +647,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             {
                 var msg = "FileID mismatch for " + fiFile.Name;
                 LogError(msg + ":  mPxMasterFileList.FileID = " + oMasterPXFileInfo.FileID + " vs. FileID " + fileId + " passed into AddPxFileToMapping");
-                m_message = msg;
+                mMessage = msg;
                 return false;
             }
 
@@ -894,7 +894,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 const bool createIndexFile = false;
 
                 // Convert the _dta.txt file for this data package job
-                var cdtaFile = new FileInfo(Path.Combine(m_WorkDir, dataPkgJob.Dataset + clsAnalysisResources.CDTA_EXTENSION));
+                var cdtaFile = new FileInfo(Path.Combine(mWorkDir, dataPkgJob.Dataset + clsAnalysisResources.CDTA_EXTENSION));
 
                 // Compute the MD5 hash for this _dta.txt file
                 var md5Hash = PRISM.HashUtilities.ComputeFileHashMD5(cdtaFile.FullName);
@@ -918,7 +918,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                   " has multiple jobs in this data package, and those jobs used different _dta.txt files; this is not supported";
                         LogError(msg + ": file size mismatch of " + cdtaFile.Length + " for job " + dataPkgJob.Job + " vs " + existingFileInfo.Length +
                                  " for job " + existingFileInfo.JobInfo.Job);
-                        m_message = msg;
+                        mMessage = msg;
                         return false;
                     }
 
@@ -928,7 +928,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                   " has multiple jobs in this data package, and those jobs used different _dta.txt files; this is not supported";
                         LogError(msg + ": MD5 hash mismatch of " + md5Hash + " for job " + dataPkgJob.Job + " vs. " + existingFileInfo.MD5Hash +
                                  " for job " + existingFileInfo.JobInfo.Job);
-                        m_message = msg;
+                        mMessage = msg;
                         return false;
                     }
 
@@ -967,7 +967,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 PRISM.ProgRunner.GarbageCollectNow();
 
-                var fiNewMGFFile = new FileInfo(Path.Combine(m_WorkDir, dataPkgJob.Dataset + DOT_MGF));
+                var fiNewMGFFile = new FileInfo(Path.Combine(mWorkDir, dataPkgJob.Dataset + DOT_MGF));
 
                 if (!fiNewMGFFile.Exists)
                 {
@@ -982,8 +982,8 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             }
             catch (Exception ex)
             {
-                m_message = "Exception in ConvertCDTAToMGF";
-                LogError(m_message, ex);
+                mMessage = "Exception in ConvertCDTAToMGF";
+                LogError(mMessage, ex);
                 return false;
             }
 
@@ -996,10 +996,10 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         {
 
             // Make sure the PRIDEConverter console output file is retained
-            m_jobParams.RemoveResultFileToSkip(PRIDEConverter_CONSOLE_OUTPUT);
+            mJobParams.RemoveResultFileToSkip(PRIDEConverter_CONSOLE_OUTPUT);
 
             // Skip the .mgf files; no need to put them in the FailedResults folder
-            m_jobParams.AddResultFileExtensionToSkip(DOT_MGF);
+            mJobParams.AddResultFileExtensionToSkip(DOT_MGF);
 
             base.CopyFailedResultsToArchiveFolder();
         }
@@ -1029,8 +1029,8 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         {
             try
             {
-                // Look in m_WorkDir for the .mzXML file for this dataset
-                var fiMzXmlFilePathLocal = new FileInfo(Path.Combine(m_WorkDir, dataset + clsAnalysisResources.DOT_MZXML_EXTENSION));
+                // Look in mWorkDir for the .mzXML file for this dataset
+                var fiMzXmlFilePathLocal = new FileInfo(Path.Combine(mWorkDir, dataset + clsAnalysisResources.DOT_MZXML_EXTENSION));
 
                 if (fiMzXmlFilePathLocal.Exists)
                 {
@@ -1070,12 +1070,12 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     return false;
                 }
 
-                m_jobParams.AddResultFileToSkip("MSConvert_ConsoleOutput.txt");
+                mJobParams.AddResultFileToSkip("MSConvert_ConsoleOutput.txt");
 
-                mMSXmlCreator = new AnalysisManagerMsXmlGenPlugIn.clsMSXMLCreator(mMSXmlGeneratorAppPath, m_WorkDir,
-                                                                                  dataset, m_DebugLevel, m_jobParams);
+                mMSXmlCreator = new AnalysisManagerMsXmlGenPlugIn.clsMSXMLCreator(mMSXmlGeneratorAppPath, mWorkDir,
+                                                                                  dataset, mDebugLevel, mJobParams);
                 RegisterEvents(mMSXmlCreator);
-                mMSXmlCreator.LoopWaiting += mMSXmlCreator_LoopWaiting;
+                mMSXmlCreator.LoopWaiting += MSXmlCreator_LoopWaiting;
 
                 mMSXmlCreator.UpdateDatasetName(dataset);
 
@@ -1092,7 +1092,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 }
                 var datasetFileIsAFolder = Directory.Exists(datasetFilePathRemote);
 
-                var datasetFilePathLocal = Path.Combine(m_WorkDir, Path.GetFileName(datasetFilePathRemote));
+                var datasetFilePathLocal = Path.Combine(mWorkDir, Path.GetFileName(datasetFilePathRemote));
 
                 if (datasetFileIsAFolder)
                 {
@@ -1132,23 +1132,23 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                             AddToListIfNew(mPreviousDatasetFilesToDelete, datasetFilePathLocal);
                         }
                     }
-                    m_jobParams.AddResultFileToSkip(Path.GetFileName(datasetFilePathLocal));
+                    mJobParams.AddResultFileToSkip(Path.GetFileName(datasetFilePathLocal));
                 }
 
                 success = mMSXmlCreator.CreateMZXMLFile();
 
-                if (!success && string.IsNullOrEmpty(m_message))
+                if (!success && string.IsNullOrEmpty(mMessage))
                 {
-                    m_message = mMSXmlCreator.ErrorMessage;
-                    if (string.IsNullOrEmpty(m_message))
+                    mMessage = mMSXmlCreator.ErrorMessage;
+                    if (string.IsNullOrEmpty(mMessage))
                     {
-                        m_message = "Unknown error creating the mzXML file for dataset " + dataset;
+                        mMessage = "Unknown error creating the mzXML file for dataset " + dataset;
                     }
-                    else if (!m_message.Contains(dataset))
+                    else if (!mMessage.Contains(dataset))
                     {
-                        m_message += "; dataset " + dataset;
+                        mMessage += "; dataset " + dataset;
                     }
-                    LogError(m_message);
+                    LogError(mMessage);
                 }
 
                 if (!success)
@@ -1175,7 +1175,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 CopyMzXMLFileToServerCache(fiMzXmlFilePathLocal.FullName, datasetYearQuarter, msXmlGeneratorName, purgeOldFilesIfNeeded: true);
 
-                m_jobParams.AddResultFileToSkip(Path.GetFileName(fiMzXmlFilePathLocal.FullName + clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX));
+                mJobParams.AddResultFileToSkip(Path.GetFileName(fiMzXmlFilePathLocal.FullName + clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX));
 
                 PRISM.ProgRunner.GarbageCollectNow();
 
@@ -1251,7 +1251,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 var mzXMLFilename = dataset + ".mzXML";
 
                 // Determine the correct capitalization for the mzXML file
-                var workDir = new DirectoryInfo(m_WorkDir);
+                var workDir = new DirectoryInfo(mWorkDir);
                 var fiFiles = workDir.GetFiles(mzXMLFilename);
 
                 if (fiFiles.Length > 0)
@@ -1263,7 +1263,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 var synopsisFileName = clsPHRPReader.GetPHRPSynopsisFileName(dataPkgJob.PeptideHitResultType, dataPkgJob.Dataset);
 
-                var synopsisFilePath = Path.Combine(m_WorkDir, synopsisFileName);
+                var synopsisFilePath = Path.Combine(mWorkDir, synopsisFileName);
 
                 if (!File.Exists(synopsisFilePath))
                 {
@@ -1276,7 +1276,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 // Check whether PHRP files with a prefix of "Job12345_" exist
                 // This prefix is added by RetrieveDataPackagePeptideHitJobPHRPFiles if multiple peptide_hit jobs are included for the same dataset
-                var synopsisFilePathWithJob = Path.Combine(m_WorkDir, "Job" + dataPkgJob.Job + "_" + synopsisFileName);
+                var synopsisFilePathWithJob = Path.Combine(mWorkDir, "Job" + dataPkgJob.Job + "_" + synopsisFileName);
 
                 if (File.Exists(synopsisFilePathWithJob))
                 {
@@ -1640,11 +1640,11 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 if (JobFileRenameRequired(job))
                 {
-                    pseudoMsgfFilePath = Path.Combine(m_WorkDir, dataPkgJob.Dataset + "_Job" + dataPkgJob.Job + FILE_EXTENSION_PSEUDO_MSGF);
+                    pseudoMsgfFilePath = Path.Combine(mWorkDir, dataPkgJob.Dataset + "_Job" + dataPkgJob.Job + FILE_EXTENSION_PSEUDO_MSGF);
                 }
                 else
                 {
-                    pseudoMsgfFilePath = Path.Combine(m_WorkDir, dataPkgJob.Dataset + FILE_EXTENSION_PSEUDO_MSGF);
+                    pseudoMsgfFilePath = Path.Combine(mWorkDir, dataPkgJob.Dataset + FILE_EXTENSION_PSEUDO_MSGF);
                 }
 
                 using (var swMSGFFile = new StreamWriter(new FileStream(pseudoMsgfFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
@@ -1700,7 +1700,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         private bool CreateMSGFReportFile(int job, string dataset, udtFilterThresholdsType udtFilterThresholds,
             out string prideReportXMLFilePath)
         {
-            var localOrgDBFolder = m_mgrParams.GetParam("OrgDBDir");
+            var localOrgDBFolder = mMgrParams.GetParam("OrgDbDir");
 
             var pseudoMSGFData = new Dictionary<string, List<udtPseudoMSGFDataType>>();
 
@@ -1708,9 +1708,9 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
             try
             {
-                var templateFileName = clsAnalysisResourcesPRIDEConverter.GetMSGFReportTemplateFilename(m_jobParams, WarnIfJobParamMissing: false);
+                var templateFileName = clsAnalysisResourcesPRIDEConverter.GetMSGFReportTemplateFilename(mJobParams, WarnIfJobParamMissing: false);
 
-                var orgDBNameGenerated = m_jobParams.GetJobParameter("PeptideSearch",
+                var orgDBNameGenerated = mJobParams.GetJobParameter("PeptideSearch",
                                                                      clsAnalysisResourcesPRIDEConverter.GetGeneratedFastaParamNameForJob(job), string.Empty);
                 if (string.IsNullOrEmpty(orgDBNameGenerated))
                 {
@@ -1749,7 +1749,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     {
                         var msg = "Error opening fasta file " + orgDBNameGenerated + "; fastaFileReader.OpenFile() returned false";
                         LogError(msg + "; see " + localOrgDBFolder);
-                        m_message = msg;
+                        mMessage = msg;
                         return false;
                     }
 
@@ -1799,7 +1799,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 if (string.IsNullOrEmpty(pseudoMsgfFilePath))
                 {
-                    if (string.IsNullOrEmpty(m_message))
+                    if (string.IsNullOrEmpty(mMessage))
                     {
                         LogError("Pseudo Msgf file not created for job " + job + ", dataset " + dataset);
                     }
@@ -1815,7 +1815,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                     if (string.IsNullOrEmpty(prideReportXMLFilePath))
                     {
-                        if (string.IsNullOrEmpty(m_message))
+                        if (string.IsNullOrEmpty(mMessage))
                         {
                             LogError("Pride report XML file not created for job " + job + ", dataset " + dataset);
                         }
@@ -1870,7 +1870,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     new FileStream(prideReportXMLFilePath, FileMode.Create, FileAccess.Write, FileShare.Read),
                     new UTF8Encoding(false)))
                 using (var xmlReader = new XmlTextReader(
-                    new FileStream(Path.Combine(m_WorkDir, templateFileName), FileMode.Open, FileAccess.Read, FileShare.Read)))
+                    new FileStream(Path.Combine(mWorkDir, templateFileName), FileMode.Open, FileAccess.Read, FileShare.Read)))
                 {
                     writer.Formatting = Formatting.Indented;
                     writer.Indentation = 4;
@@ -2491,12 +2491,12 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 }
 
                 var baseFileName = xmlFileName.Replace(FILE_EXTENSION_MSGF_REPORT_XML, string.Empty);
-                var msgfResultsFilePath = Path.Combine(m_WorkDir, baseFileName + FILE_EXTENSION_PSEUDO_MSGF);
-                var mzXMLFilePath = Path.Combine(m_WorkDir, dataset + clsAnalysisResources.DOT_MZXML_EXTENSION);
-                prideReportXMLFilePath = Path.Combine(m_WorkDir, baseFileName + FILE_EXTENSION_MSGF_REPORT_XML);
+                var msgfResultsFilePath = Path.Combine(mWorkDir, baseFileName + FILE_EXTENSION_PSEUDO_MSGF);
+                var mzXMLFilePath = Path.Combine(mWorkDir, dataset + clsAnalysisResources.DOT_MZXML_EXTENSION);
+                prideReportXMLFilePath = Path.Combine(mWorkDir, baseFileName + FILE_EXTENSION_MSGF_REPORT_XML);
 
                 var currentTask = "Running PRIDE Converter for job " + job + ", " + dataset;
-                if (m_DebugLevel >= 1)
+                if (mDebugLevel >= 1)
                 {
                     LogMessage(currentTask);
                 }
@@ -2505,15 +2505,15 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 if (!success)
                 {
-                    if (string.IsNullOrEmpty(m_message))
+                    if (string.IsNullOrEmpty(mMessage))
                     {
-                        LogError("Unknown error calling RunPrideConverter", m_message);
+                        LogError("Unknown error calling RunPrideConverter", mMessage);
                     }
                 }
                 else
                 {
                     // Make sure the result file was created
-                    prideXmlFilePath = Path.Combine(m_WorkDir, baseFileName + FILE_EXTENSION_MSGF_PRIDE_XML);
+                    prideXmlFilePath = Path.Combine(mWorkDir, baseFileName + FILE_EXTENSION_MSGF_PRIDE_XML);
                     if (!File.Exists(prideXmlFilePath))
                     {
                         LogError("Pride XML file not created for job " + job + ": " + prideXmlFilePath);
@@ -2539,14 +2539,14 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
             try
             {
-                var pXFilePath = Path.Combine(m_WorkDir, "PX_Submission_" + DateTime.Now.ToString("yyyy-MM-dd_HH-mm") + ".px");
+                var pXFilePath = Path.Combine(mWorkDir, "PX_Submission_" + DateTime.Now.ToString("yyyy-MM-dd_HH-mm") + ".px");
 
                 var prideXmlFilesCreated = CountResultFilesByType(clsPXFileInfoBase.ePXFileType.Result);
                 var rawFilesStored = CountResultFilesByType(clsPXFileInfoBase.ePXFileType.Raw);
                 var peakFilesStored = CountResultFilesByType(clsPXFileInfoBase.ePXFileType.Peak);
                 var mzIDFilesStored = CountResultFilesByType(clsPXFileInfoBase.ePXFileType.ResultMzId);
 
-                if (m_DebugLevel >= 1)
+                if (mDebugLevel >= 1)
                 {
                     LogMessage("Creating PXSubmission file: " + pXFilePath);
                     LogDebug(" Result stats: " + prideXmlFilesCreated + " Result (.msgf-pride.xml) files");
@@ -2855,7 +2855,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                         fileInfoCols.Add(fileTypeName);
 
                         // file_path
-                        fileInfoCols.Add(Path.Combine(@"D:\Upload", m_ResFolderName, item.Value.Filename));
+                        fileInfoCols.Add(Path.Combine(@"D:\Upload", mResultsFolderName, item.Value.Filename));
 
                         var fileMappings = new List<string>();
                         foreach (var mapID in item.Value.FileMappings)
@@ -2989,17 +2989,17 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
         private void DefineFilesToSkipTransfer()
         {
-            m_jobParams.AddResultFileExtensionToSkip(FILE_EXTENSION_PSEUDO_MSGF);
-            m_jobParams.AddResultFileExtensionToSkip(FILE_EXTENSION_MSGF_REPORT_XML);
-            m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX);
+            mJobParams.AddResultFileExtensionToSkip(FILE_EXTENSION_PSEUDO_MSGF);
+            mJobParams.AddResultFileExtensionToSkip(FILE_EXTENSION_MSGF_REPORT_XML);
+            mJobParams.AddResultFileExtensionToSkip(clsAnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX);
 
-            m_jobParams.AddResultFileToSkip("PRIDEConverter_ConsoleOutput.txt");
-            m_jobParams.AddResultFileToSkip("PRIDEConverter_Version.txt");
+            mJobParams.AddResultFileToSkip("PRIDEConverter_ConsoleOutput.txt");
+            mJobParams.AddResultFileToSkip("PRIDEConverter_Version.txt");
 
-            var diWorkDir = new DirectoryInfo(m_WorkDir);
+            var diWorkDir = new DirectoryInfo(mWorkDir);
             foreach (var fiFile in diWorkDir.GetFiles(clsDataPackageFileHandler.JOB_INFO_FILE_PREFIX + "*.txt"))
             {
-                m_jobParams.AddResultFileToSkip(fiFile.Name);
+                mJobParams.AddResultFileToSkip(fiFile.Name);
             }
         }
 
@@ -3017,7 +3017,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
             if (string.IsNullOrEmpty(mPrideConverterProgLoc))
             {
-                if (string.IsNullOrEmpty(m_message))
+                if (string.IsNullOrEmpty(mMessage))
                 {
                     LogError("Error determining PrideConverter program location");
                 }
@@ -3218,19 +3218,19 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         {
             var prideConverterVersion = "unknown";
 
-            mCmdRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel);
+            mCmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel);
             RegisterEvents(mCmdRunner);
             mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
-            m_StatusTools.CurrentOperation = "Determining PrideConverter Version";
-            m_StatusTools.UpdateAndWrite(m_progress);
-            var versionFilePath = Path.Combine(m_WorkDir, "PRIDEConverter_Version.txt");
+            mStatusTools.CurrentOperation = "Determining PrideConverter Version";
+            mStatusTools.UpdateAndWrite(mProgress);
+            var versionFilePath = Path.Combine(mWorkDir, "PRIDEConverter_Version.txt");
 
             var cmdStr = "-jar " + PossiblyQuotePath(prideConverterProgLoc);
 
             cmdStr += " -converter -version";
 
-            if (m_DebugLevel >= 2)
+            if (mDebugLevel >= 2)
             {
                 LogDebug(mJavaProgLoc + " " + cmdStr);
             }
@@ -3241,7 +3241,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
             mCmdRunner.WriteConsoleOutputToFile = true;
             mCmdRunner.ConsoleOutputFilePath = versionFilePath;
-            mCmdRunner.WorkDir = m_WorkDir;
+            mCmdRunner.WorkDir = mWorkDir;
 
             var success = mCmdRunner.RunProgram(mJavaProgLoc, cmdStr, "PrideConverter", true);
 
@@ -3290,13 +3290,13 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         private udtFilterThresholdsType InitializeOptions()
         {
             // Update the processing options
-            mCreatePrideXMLFiles = m_jobParams.GetJobParameter("CreatePrideXMLFiles", false);
+            mCreatePrideXMLFiles = mJobParams.GetJobParameter("CreatePrideXMLFiles", false);
 
-            mCreateMSGFReportFilesOnly = m_jobParams.GetJobParameter("CreateMSGFReportFilesOnly", false);
-            mCreateMGFFiles = m_jobParams.GetJobParameter("CreateMGFFiles", true);
+            mCreateMSGFReportFilesOnly = mJobParams.GetJobParameter("CreateMSGFReportFilesOnly", false);
+            mCreateMGFFiles = mJobParams.GetJobParameter("CreateMGFFiles", true);
 
-            mIncludePepXMLFiles = m_jobParams.GetJobParameter("IncludePepXMLFiles", true);
-            mProcessMzIdFiles = m_jobParams.GetJobParameter("IncludeMzIdFiles", true);
+            mIncludePepXMLFiles = mJobParams.GetJobParameter("IncludePepXMLFiles", true);
+            mProcessMzIdFiles = mJobParams.GetJobParameter("IncludeMzIdFiles", true);
 
             if (mCreateMSGFReportFilesOnly)
             {
@@ -3338,20 +3338,20 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             // Determine the filter thresholds
             var udtFilterThresholds = new udtFilterThresholdsType();
             udtFilterThresholds.Clear();
-            udtFilterThresholds.PValueThreshold = m_jobParams.GetJobParameter("PValueThreshold", udtFilterThresholds.PValueThreshold);
-            udtFilterThresholds.FDRThreshold = m_jobParams.GetJobParameter("FDRThreshold", udtFilterThresholds.FDRThreshold);
-            udtFilterThresholds.PepFDRThreshold = m_jobParams.GetJobParameter("PepFDRThreshold", udtFilterThresholds.PepFDRThreshold);
+            udtFilterThresholds.PValueThreshold = mJobParams.GetJobParameter("PValueThreshold", udtFilterThresholds.PValueThreshold);
+            udtFilterThresholds.FDRThreshold = mJobParams.GetJobParameter("FDRThreshold", udtFilterThresholds.FDRThreshold);
+            udtFilterThresholds.PepFDRThreshold = mJobParams.GetJobParameter("PepFDRThreshold", udtFilterThresholds.PepFDRThreshold);
 
             // Support both SpecProb and SpecEValue job parameters
-            udtFilterThresholds.MSGFSpecEValueThreshold = m_jobParams.GetJobParameter("MSGFSpecProbThreshold", udtFilterThresholds.MSGFSpecEValueThreshold);
-            udtFilterThresholds.MSGFSpecEValueThreshold = m_jobParams.GetJobParameter("MSGFSpecEvalueThreshold", udtFilterThresholds.MSGFSpecEValueThreshold);
+            udtFilterThresholds.MSGFSpecEValueThreshold = mJobParams.GetJobParameter("MSGFSpecProbThreshold", udtFilterThresholds.MSGFSpecEValueThreshold);
+            udtFilterThresholds.MSGFSpecEValueThreshold = mJobParams.GetJobParameter("MSGFSpecEvalueThreshold", udtFilterThresholds.MSGFSpecEValueThreshold);
 
-            udtFilterThresholds.UseFDRThreshold = m_jobParams.GetJobParameter("UseFDRThreshold", udtFilterThresholds.UseFDRThreshold);
-            udtFilterThresholds.UsePepFDRThreshold = m_jobParams.GetJobParameter("UsePepFDRThreshold", udtFilterThresholds.UsePepFDRThreshold);
+            udtFilterThresholds.UseFDRThreshold = mJobParams.GetJobParameter("UseFDRThreshold", udtFilterThresholds.UseFDRThreshold);
+            udtFilterThresholds.UsePepFDRThreshold = mJobParams.GetJobParameter("UsePepFDRThreshold", udtFilterThresholds.UsePepFDRThreshold);
 
             // Support both SpecProb and SpecEValue job parameters
-            udtFilterThresholds.UseMSGFSpecEValue = m_jobParams.GetJobParameter("UseMSGFSpecProb", udtFilterThresholds.UseMSGFSpecEValue);
-            udtFilterThresholds.UseMSGFSpecEValue = m_jobParams.GetJobParameter("UseMSGFSpecEValue", udtFilterThresholds.UseMSGFSpecEValue);
+            udtFilterThresholds.UseMSGFSpecEValue = mJobParams.GetJobParameter("UseMSGFSpecProb", udtFilterThresholds.UseMSGFSpecEValue);
+            udtFilterThresholds.UseMSGFSpecEValue = mJobParams.GetJobParameter("UseMSGFSpecEValue", udtFilterThresholds.UseMSGFSpecEValue);
 
             return udtFilterThresholds;
         }
@@ -3470,7 +3470,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             {
                 if (!File.Exists(consoleOutputFilePath))
                 {
-                    if (m_DebugLevel >= 4)
+                    if (mDebugLevel >= 4)
                     {
                         LogDebug("Console output file not found: " + consoleOutputFilePath);
                     }
@@ -3478,7 +3478,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     return;
                 }
 
-                if (m_DebugLevel >= 4)
+                if (mDebugLevel >= 4)
                 {
                     LogDebug("Parsing file " + consoleOutputFilePath);
                 }
@@ -3510,7 +3510,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             catch (Exception ex)
             {
                 // Ignore errors here
-                if (m_DebugLevel >= 2)
+                if (mDebugLevel >= 2)
                 {
                     LogError("Error parsing console output file (" + consoleOutputFilePath + "): " + ex.Message);
                 }
@@ -3614,7 +3614,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 {
                     // The .mgf file already exists on the remote server; update .MGFFilePath
                     // The path to the file doesn't matter; just the name
-                    resultFiles.MGFFilePath = Path.Combine(m_WorkDir, dataset + DOT_MGF);
+                    resultFiles.MGFFilePath = Path.Combine(mWorkDir, dataset + DOT_MGF);
                 }
                 else
                 {
@@ -3633,11 +3633,11 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 // Store the path to the _dta.txt or .mzML.gz file
                 if (searchedMzML)
                 {
-                    resultFiles.MGFFilePath = Path.Combine(m_WorkDir, dataset + DOT_MZML_GZ);
+                    resultFiles.MGFFilePath = Path.Combine(mWorkDir, dataset + DOT_MZML_GZ);
                 }
                 else
                 {
-                    resultFiles.MGFFilePath = Path.Combine(m_WorkDir, dataset + clsAnalysisResources.CDTA_EXTENSION);
+                    resultFiles.MGFFilePath = Path.Combine(mWorkDir, dataset + clsAnalysisResources.CDTA_EXTENSION);
                 }
 
                 if (!assumeInstrumentDataUnpurged && !searchedMzML && !File.Exists(resultFiles.MGFFilePath))
@@ -3652,13 +3652,13 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
             if (mProcessMzIdFiles && jobInfo.Value.PeptideHitResultType == clsPHRPReader.ePeptideHitResultType.MSGFDB)
             {
-                m_message = string.Empty;
+                mMessage = string.Empty;
 
                 success = UpdateMzIdFiles(remoteTransferFolder, jobInfo.Value, datasetInfo, searchedMzML, out var mzIdFilePaths, out _, templateParameters);
 
                 if (!success || mzIdFilePaths == null || mzIdFilePaths.Count == 0)
                 {
-                    if (string.IsNullOrEmpty(m_message))
+                    if (string.IsNullOrEmpty(mMessage))
                     {
                         LogError("UpdateMzIdFiles returned false for job " + job + ", dataset " + dataset);
                     }
@@ -3678,7 +3678,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 jobInfo.Value.PeptideHitResultType == clsPHRPReader.ePeptideHitResultType.Sequest)
             {
                 var pepXmlFilename = jobInfo.Value.Dataset + ".pepXML";
-                var pepXMLFile = new FileInfo(Path.Combine(m_WorkDir, pepXmlFilename));
+                var pepXMLFile = new FileInfo(Path.Combine(mWorkDir, pepXmlFilename));
                 if (pepXMLFile.Exists)
                 {
                     // Make sure it is capitalized correctly, then gzip it
@@ -3686,7 +3686,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     if (!string.Equals(pepXMLFile.Name, pepXmlFilename, StringComparison.Ordinal))
                     {
                         pepXMLFile.MoveTo(pepXMLFile.FullName + ".tmp");
-                        pepXMLFile.MoveTo(Path.Combine(m_WorkDir, pepXmlFilename));
+                        pepXMLFile.MoveTo(Path.Combine(mWorkDir, pepXmlFilename));
                     }
 
                     // Note that the original file will be auto-deleted after the .gz file is created
@@ -3694,7 +3694,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                     if (gzippedPepXMLFile == null)
                     {
-                        if (string.IsNullOrEmpty(m_message))
+                        if (string.IsNullOrEmpty(mMessage))
                         {
                             LogError("GZipFile returned false for " + pepXMLFile.FullName);
                         }
@@ -3790,8 +3790,8 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
             try
             {
-                var templateFileName = clsAnalysisResourcesPRIDEConverter.GetPXSubmissionTemplateFilename(m_jobParams, WarnIfJobParamMissing: false);
-                var templateFilePath = Path.Combine(m_WorkDir, templateFileName);
+                var templateFileName = clsAnalysisResourcesPRIDEConverter.GetPXSubmissionTemplateFilename(mJobParams, WarnIfJobParamMissing: false);
+                var templateFilePath = Path.Combine(mWorkDir, templateFileName);
 
                 if (!File.Exists(templateFilePath))
                 {
@@ -3901,7 +3901,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
             try
             {
-                var jobInfoFilePath = clsDataPackageFileHandler.GetJobInfoFilePath(job, m_WorkDir);
+                var jobInfoFilePath = clsDataPackageFileHandler.GetJobInfoFilePath(job, mWorkDir);
 
                 if (!File.Exists(jobInfoFilePath))
                 {
@@ -3971,13 +3971,13 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     if (sourceFilePath.StartsWith(clsAnalysisResources.MYEMSL_PATH_FLAG))
                     {
                         // Make sure the myEMSLUtilities object knows about this dataset
-                        m_MyEMSLUtilities.AddDataset(dataset);
+                        mMyEMSLUtilities.AddDataset(dataset);
                         DatasetInfoBase.ExtractMyEMSLFileID(sourceFilePath, out var cleanFilePath);
 
                         var fiSourceFileClean = new FileInfo(cleanFilePath);
                         var unzipRequired = string.Equals(fiSourceFileClean.Extension, ".zip", StringComparison.OrdinalIgnoreCase);
 
-                        m_MyEMSLUtilities.AddFileToDownloadQueue(sourceFilePath, unzipRequired);
+                        mMyEMSLUtilities.AddFileToDownloadQueue(sourceFilePath, unzipRequired);
 
                         filesCopied.Add(fiSourceFileClean.Name);
 
@@ -3993,7 +3993,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                         continue;
                     }
 
-                    var targetFilePath = Path.Combine(m_WorkDir, fiSourceFile.Name);
+                    var targetFilePath = Path.Combine(mWorkDir, fiSourceFile.Name);
 
                     var fiLocalFile = new FileInfo(targetFilePath);
                     var alreadyCopiedToTransferDirectory = false;
@@ -4040,13 +4040,13 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                         if (string.Equals(fiLocalFile.Extension, ".zip", StringComparison.OrdinalIgnoreCase))
                         {
                             // Decompress the .zip file
-                            m_DotNetZipTools.UnzipFile(fiLocalFile.FullName, m_WorkDir);
+                            mDotNetZipTools.UnzipFile(fiLocalFile.FullName, mWorkDir);
                             unzipped = true;
                         }
 
                         if (unzipped)
                         {
-                            foreach (var unzippedFile in m_DotNetZipTools.MostRecentUnzippedFiles)
+                            foreach (var unzippedFile in mDotNetZipTools.MostRecentUnzippedFiles)
                             {
                                 filesCopied.Add(unzippedFile.Key);
                                 AddToListIfNew(mPreviousDatasetFilesToDelete, unzippedFile.Value);
@@ -4057,21 +4057,21 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     AddToListIfNew(mPreviousDatasetFilesToDelete, fiLocalFile.FullName);
                 }
 
-                if (m_MyEMSLUtilities.FilesToDownload.Count > 0)
+                if (mMyEMSLUtilities.FilesToDownload.Count > 0)
                 {
-                    if (!m_MyEMSLUtilities.ProcessMyEMSLDownloadQueue(m_WorkDir, Downloader.DownloadFolderLayout.FlatNoSubfolders))
+                    if (!mMyEMSLUtilities.ProcessMyEMSLDownloadQueue(mWorkDir, Downloader.DownloadFolderLayout.FlatNoSubfolders))
                     {
-                        if (string.IsNullOrWhiteSpace(m_message))
+                        if (string.IsNullOrWhiteSpace(mMessage))
                         {
-                            m_message = "ProcessMyEMSLDownloadQueue return false";
+                            mMessage = "ProcessMyEMSLDownloadQueue return false";
                         }
                         return false;
                     }
 
-                    if (m_MyEMSLUtilities.FilesToDownload.Count > 0)
+                    if (mMyEMSLUtilities.FilesToDownload.Count > 0)
                     {
                         // The queue should have already been cleared; checking just in case
-                        m_MyEMSLUtilities.ClearDownloadQueue();
+                        mMyEMSLUtilities.ClearDownloadQueue();
                     }
                 }
 
@@ -4106,7 +4106,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 {
                     var msg = "StoragePathInfo file not found";
                     LogError(msg + ": " + storagePathInfoFilePath);
-                    m_message = msg;
+                    mMessage = msg;
                     return false;
                 }
 
@@ -4122,11 +4122,11 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 {
                     var msg = "StoragePathInfo file was empty";
                     LogError(msg + ": " + storagePathInfoFilePath);
-                    m_message = msg;
+                    mMessage = msg;
                     return false;
                 }
 
-                destPath = Path.Combine(m_WorkDir, Path.GetFileName(sourceFilePath));
+                destPath = Path.Combine(mWorkDir, Path.GetFileName(sourceFilePath));
 
                 if (IsFolder)
                 {
@@ -4166,17 +4166,17 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 return false;
             }
 
-            mCmdRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel);
+            mCmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel);
             RegisterEvents(mCmdRunner);
             mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
-            if (m_DebugLevel >= 1)
+            if (mDebugLevel >= 1)
             {
                 LogMessage("Running PrideConverter on " + Path.GetFileName(msgfResultsFilePath));
             }
 
-            m_StatusTools.CurrentOperation = "Running PrideConverter";
-            m_StatusTools.UpdateAndWrite(m_progress);
+            mStatusTools.CurrentOperation = "Running PrideConverter";
+            mStatusTools.UpdateAndWrite(mProgress);
 
             var cmdStr = "-jar " + PossiblyQuotePath(mPrideConverterProgLoc);
 
@@ -4199,8 +4199,8 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             mCmdRunner.EchoOutputToConsole = false;
 
             mCmdRunner.WriteConsoleOutputToFile = true;
-            mCmdRunner.ConsoleOutputFilePath = Path.Combine(m_WorkDir, PRIDEConverter_CONSOLE_OUTPUT);
-            mCmdRunner.WorkDir = m_WorkDir;
+            mCmdRunner.ConsoleOutputFilePath = Path.Combine(mWorkDir, PRIDEConverter_CONSOLE_OUTPUT);
+            mCmdRunner.WorkDir = mWorkDir;
 
             var success = mCmdRunner.RunProgram(mJavaProgLoc, cmdStr, "PrideConverter", true);
 
@@ -4274,7 +4274,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         {
             var toolVersionInfo = string.Empty;
 
-            if (m_DebugLevel >= 2)
+            if (mDebugLevel >= 2)
             {
                 LogDebug("Determining tool version info");
             }
@@ -4589,7 +4589,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 if (!success)
                 {
-                    if (string.IsNullOrWhiteSpace(m_message))
+                    if (string.IsNullOrWhiteSpace(mMessage))
                     {
                         LogError("UpdateMzIdFile returned false (unknown error)");
                     }
@@ -4652,7 +4652,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 // First look for a job-specific version of the .mzid.gz file
                 var sourceFileName = "Job" + dataPkgJob + "_" + dataPkgDataset + "_msgfplus" + filePartText + DOT_MZID_GZ;
-                mzIdFilePath = Path.Combine(m_WorkDir, sourceFileName);
+                mzIdFilePath = Path.Combine(mWorkDir, sourceFileName);
 
                 if (!File.Exists(mzIdFilePath))
                 {
@@ -4670,7 +4670,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                     // Look for one that simply starts with the dataset name
                     sourceFileName = dataPkgDataset + "_msgfplus" + filePartText + DOT_MZID_GZ;
-                    mzIdFilePath = Path.Combine(m_WorkDir, sourceFileName);
+                    mzIdFilePath = Path.Combine(mWorkDir, sourceFileName);
 
                     if (!File.Exists(mzIdFilePath))
                     {
@@ -4773,7 +4773,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                                 spectraDataFilename = dataPkgDataset + clsAnalysisResources.CDTA_EXTENSION;
                                             }
 
-                                            // The following statement intentionally uses a generic DMS_WorkDir path; do not use m_WorkDir
+                                            // The following statement intentionally uses a generic DMS_WorkDir path; do not use mWorkDir
                                             attributeOverride.Add("location", @"C:\DMS_WorkDir\" + spectraDataFilename);
                                             attributeOverride.Add("name", spectraDataFilename);
                                         }
@@ -4984,11 +4984,11 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                     if (JobFileRenameRequired(dataPkgJob))
                     {
-                        mzIdFilePath = Path.Combine(m_WorkDir, dataPkgDataset + "_Job" + dataPkgJob + "_msgfplus" + filePartText + DOT_MZID_GZ);
+                        mzIdFilePath = Path.Combine(mWorkDir, dataPkgDataset + "_Job" + dataPkgJob + "_msgfplus" + filePartText + DOT_MZID_GZ);
                     }
                     else
                     {
-                        mzIdFilePath = Path.Combine(m_WorkDir, dataPkgDataset + "_msgfplus" + filePartText + DOT_MZID_GZ);
+                        mzIdFilePath = Path.Combine(mWorkDir, dataPkgDataset + "_msgfplus" + filePartText + DOT_MZID_GZ);
                     }
 
                     updatedMzidFile.MoveTo(mzIdFilePath);
@@ -5381,7 +5381,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
         #region "Event Handlers"
 
-        private DateTime dtLastConsoleOutputParse = DateTime.MinValue;
+        private DateTime mLastConsoleOutputParse = DateTime.MinValue;
 
         /// <summary>
         /// Event handler for CmdRunner.LoopWaiting event
@@ -5389,28 +5389,28 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// <remarks></remarks>
         private void CmdRunner_LoopWaiting()
         {
-            if (DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= 15)
+            if (DateTime.UtcNow.Subtract(mLastConsoleOutputParse).TotalSeconds >= 15)
             {
-                dtLastConsoleOutputParse = DateTime.UtcNow;
+                mLastConsoleOutputParse = DateTime.UtcNow;
 
-                ParseConsoleOutputFile(Path.Combine(m_WorkDir, PRIDEConverter_CONSOLE_OUTPUT));
+                ParseConsoleOutputFile(Path.Combine(mWorkDir, PRIDEConverter_CONSOLE_OUTPUT));
 
                 LogProgress("PRIDEConverter");
             }
         }
 
-        private void mMSXmlCreator_LoopWaiting()
+        private void MSXmlCreator_LoopWaiting()
         {
             UpdateStatusFile();
 
             LogProgress("MSXmlCreator (PRIDEConverter)");
         }
 
-        private void m_MyEMSLDatasetListInfo_FileDownloadedEvent(object sender, FileDownloadedEventArgs e)
+        private void MyEMSLDatasetListInfo_FileDownloadedEvent(object sender, FileDownloadedEventArgs e)
         {
             if (e.UnzipRequired)
             {
-                foreach (var unzippedFile in m_MyEMSLUtilities.MostRecentUnzippedFiles)
+                foreach (var unzippedFile in mMyEMSLUtilities.MostRecentUnzippedFiles)
                 {
                     AddToListIfNew(mPreviousDatasetFilesToDelete, unzippedFile.Value);
                 }

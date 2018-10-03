@@ -103,7 +103,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                if (m_DebugLevel > 4)
+                if (mDebugLevel > 4)
                 {
                     LogDebug("clsAnalysisToolRunnerMSAlignHistone.RunTool(): Enter");
                 }
@@ -154,23 +154,23 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                 }
 
                 // Read the MSAlign Parameter File
-                var strParamFilePath = Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"));
+                var strParamFilePath = Path.Combine(mWorkDir, mJobParams.GetParam("parmFileName"));
 
                 var cmdLineGenerated = CreateMSAlignCommandLine(strParamFilePath, out var strMSAlignCmdLineOptions);
                 if (!cmdLineGenerated)
                 {
-                    if (string.IsNullOrEmpty(m_message))
+                    if (string.IsNullOrEmpty(mMessage))
                     {
-                        m_message = "Unknown error parsing the MSAlign parameter file";
+                        mMessage = "Unknown error parsing the MSAlign parameter file";
                     }
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 if (string.IsNullOrEmpty(strMSAlignCmdLineOptions))
                 {
-                    if (string.IsNullOrEmpty(m_message))
+                    if (string.IsNullOrEmpty(mMessage))
                     {
-                        m_message = "Problem parsing MSAlign parameter file: command line switches are not present";
+                        mMessage = "Problem parsing MSAlign parameter file: command line switches are not present";
                     }
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -178,7 +178,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                 LogMessage("Running MSAlign_Histone");
 
                 // Lookup the amount of memory to reserve for Java; default to 2 GB
-                var intJavaMemorySize = m_jobParams.GetJobParameter("MSAlignJavaMemorySize", 2000);
+                var intJavaMemorySize = mJobParams.GetJobParameter("MSAlignJavaMemorySize", 2000);
                 if (intJavaMemorySize < 512)
                     intJavaMemorySize = 512;
 
@@ -188,7 +188,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
 
                 LogDebug(JavaProgLoc + " " + cmdStr);
 
-                var cmdRunner = new clsRunDosProgram(mMSAlignWorkFolderPath, m_DebugLevel);
+                var cmdRunner = new clsRunDosProgram(mMSAlignWorkFolderPath, mDebugLevel);
                 RegisterEvents(cmdRunner);
                 cmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
@@ -197,9 +197,9 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                 cmdRunner.EchoOutputToConsole = true;
 
                 cmdRunner.WriteConsoleOutputToFile = true;
-                cmdRunner.ConsoleOutputFilePath = Path.Combine(m_WorkDir, MSAlign_CONSOLE_OUTPUT);
+                cmdRunner.ConsoleOutputFilePath = Path.Combine(mWorkDir, MSAlign_CONSOLE_OUTPUT);
 
-                m_progress = PROGRESS_PCT_STARTING;
+                mProgress = PROGRESS_PCT_STARTING;
 
                 var processingSuccess = cmdRunner.RunProgram(JavaProgLoc, cmdStr, "MSAlign_Histone", true);
 
@@ -207,7 +207,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                 {
                     if (string.IsNullOrWhiteSpace(mMSAlignVersion))
                     {
-                        ParseConsoleOutputFile(Path.Combine(m_WorkDir, MSAlign_CONSOLE_OUTPUT));
+                        ParseConsoleOutputFile(Path.Combine(mWorkDir, MSAlign_CONSOLE_OUTPUT));
                     }
                     mToolVersionWritten = StoreToolVersionInfo();
                 }
@@ -215,7 +215,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                 if (!processingSuccess && string.IsNullOrEmpty(mConsoleOutputErrorMsg))
                 {
                     // Parse the console output file one more time to see if an exception was logged
-                    ParseConsoleOutputFile(Path.Combine(m_WorkDir, MSAlign_CONSOLE_OUTPUT));
+                    ParseConsoleOutputFile(Path.Combine(mWorkDir, MSAlign_CONSOLE_OUTPUT));
                 }
 
                 if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))
@@ -264,7 +264,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                             processingSuccess = false;
                         }
 
-                        var strResultTableSourcePath = Path.Combine(m_WorkDir, m_Dataset + "_" + RESULT_TABLE_FILE_EXTENSION);
+                        var strResultTableSourcePath = Path.Combine(mWorkDir, mDatasetName + "_" + RESULT_TABLE_FILE_EXTENSION);
 
                         if (processingSuccess && File.Exists(strResultTableSourcePath))
                         {
@@ -285,18 +285,18 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                             eResult = CloseOutType.CLOSEOUT_FAILED;
                         }
 
-                        m_StatusTools.UpdateAndWrite(m_progress);
-                        if (m_DebugLevel >= 3)
+                        mStatusTools.UpdateAndWrite(mProgress);
+                        if (mDebugLevel >= 3)
                         {
                             LogDebug("MSAlign Search Complete");
                         }
                     }
                 }
 
-                m_progress = PROGRESS_PCT_COMPLETE;
+                mProgress = PROGRESS_PCT_COMPLETE;
 
                 // Stop the job timer
-                m_StopTime = DateTime.UtcNow;
+                mStopTime = DateTime.UtcNow;
 
                 // Add the current job data to the summary file
                 UpdateSummaryFile();
@@ -320,8 +320,8 @@ namespace AnalysisManagerMSAlignHistonePlugIn
             }
             catch (Exception ex)
             {
-                m_message = "Error in MSAlignHistone->RunTool";
-                LogError(m_message, ex);
+                mMessage = "Error in MSAlignHistone->RunTool";
+                LogError(mMessage, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -340,7 +340,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                 var oReader = new ProteinFileReader.FastaFileReader();
                 if (!oReader.OpenFile(strSourceFilePath))
                 {
-                    m_message = "Error opening fasta file in CopyFastaCheckResidues";
+                    mMessage = "Error opening fasta file in CopyFastaCheckResidues";
                     return false;
                 }
 
@@ -372,8 +372,8 @@ namespace AnalysisManagerMSAlignHistonePlugIn
             }
             catch (Exception ex)
             {
-                m_message = "Exception in CopyFastaCheckResidues";
-                LogError(m_message, ex);
+                mMessage = "Exception in CopyFastaCheckResidues";
+                LogError(mMessage, ex);
                 return false;
             }
 
@@ -388,10 +388,10 @@ namespace AnalysisManagerMSAlignHistonePlugIn
 
             try
             {
-                m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MZXML_EXTENSION);
+                mJobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MZXML_EXTENSION);
 
                 // Copy any search result files that are not empty from the MSAlign folder to the work directory
-                var dctResultFiles = GetExpectedMSAlignResultFiles(m_Dataset);
+                var dctResultFiles = GetExpectedMSAlignResultFiles(mDatasetName);
 
                 foreach (var kvItem in dctResultFiles)
                 {
@@ -399,11 +399,11 @@ namespace AnalysisManagerMSAlignHistonePlugIn
 
                     if (fiSearchResultFile.Exists && fiSearchResultFile.Length > 0)
                     {
-                        fiSearchResultFile.CopyTo(Path.Combine(m_WorkDir, Path.GetFileName(fiSearchResultFile.Name)));
+                        fiSearchResultFile.CopyTo(Path.Combine(mWorkDir, Path.GetFileName(fiSearchResultFile.Name)));
                     }
                 }
 
-                File.Delete(Path.Combine(m_WorkDir, m_Dataset + ".mzXML"));
+                File.Delete(Path.Combine(mWorkDir, mDatasetName + ".mzXML"));
 
             }
             catch (Exception)
@@ -440,7 +440,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
 
                 // The source folder is one level up from the .Jar file
                 var diMSAlignSrc = new DirectoryInfo(fiMSAlignJarFile.Directory.Parent.FullName);
-                var diMSAlignWork = new DirectoryInfo(Path.Combine(m_WorkDir, "MSAlign"));
+                var diMSAlignWork = new DirectoryInfo(Path.Combine(mWorkDir, "MSAlign"));
 
                 LogMessage("Copying MSAlign program file to the Work Directory");
 
@@ -589,16 +589,16 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                         {
                             // If this is a bruker dataset, we need to make sure that the value for this entry is not FILE
                             // The reason is that the mzXML file created by Bruker's compass program does not include the scantype information (CID, ETD, etc.)
-                            var strToolName = m_jobParams.GetParam("ToolName");
+                            var strToolName = mJobParams.GetParam("ToolName");
 
                             if (strToolName == "MSAlign_Bruker" || strToolName == "MSAlign_Histone_Bruker")
                             {
                                 if (strValue.ToUpper() == "FILE")
                                 {
-                                    m_message = "Must specify an explicit scan type for " + strKeyName +
+                                    mMessage = "Must specify an explicit scan type for " + strKeyName +
                                                 " in the MSAlign parameter file (CID, HCD, or ETD)";
 
-                                    LogError(m_message + "; this is required because Bruker-created mzXML files " +
+                                    LogError(mMessage + "; this is required because Bruker-created mzXML files " +
                                              "do not include activationMethod information in the precursorMz tag");
 
                                     return false;
@@ -611,15 +611,15 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                             if (strValue.ToUpper() == "TARGET+DECOY")
                             {
                                 // Make sure the protein collection is not a Decoy protein collection
-                                var strProteinOptions = m_jobParams.GetParam("ProteinOptions");
+                                var strProteinOptions = mJobParams.GetParam("ProteinOptions");
 
                                 if (strProteinOptions.ToLower().Contains("seq_direction=decoy"))
                                 {
-                                    m_message =
+                                    mMessage =
                                         "MSAlign parameter file contains searchType=TARGET+DECOY; " +
                                         "protein options for this analysis job must contain seq_direction=forward, not seq_direction=decoy";
 
-                                    LogError(m_message);
+                                    LogError(mMessage);
 
                                     return false;
                                 }
@@ -640,7 +640,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
             }
             catch (Exception ex)
             {
-                m_message = "Exception in CreateMSAlignCommandLine";
+                mMessage = "Exception in CreateMSAlignCommandLine";
                 LogError("Exception in CreateMSAlignCommandLine", ex);
                 return false;
             }
@@ -670,15 +670,15 @@ namespace AnalysisManagerMSAlignHistonePlugIn
         {
             try
             {
-                var fiSourceFolder = new DirectoryInfo(m_WorkDir);
+                var fiSourceFolder = new DirectoryInfo(mWorkDir);
 
                 // Copy the .Fasta file into the MSInput folder
                 // MSAlign will crash if any non-standard residues are present (BJOUXZ)
                 // Thus, we will read the source file with a reader and create a new fasta file
 
                 // Define the path to the fasta file
-                var OrgDbDir = m_mgrParams.GetParam("orgdbdir");
-                var strFASTAFilePath = Path.Combine(OrgDbDir, m_jobParams.GetParam("PeptideSearch", "generatedFastaName"));
+                var OrgDbDir = mMgrParams.GetParam("OrgDbDir");
+                var strFASTAFilePath = Path.Combine(OrgDbDir, mJobParams.GetParam("PeptideSearch", "generatedFastaName"));
 
                 var fiFastaFile = new FileInfo(strFASTAFilePath);
 
@@ -693,9 +693,9 @@ namespace AnalysisManagerMSAlignHistonePlugIn
 
                 if (!CopyFastaCheckResidues(fiFastaFile.FullName, Path.Combine(strMSAlignWorkFolderPath, mInputPropertyValues.FastaFileName)))
                 {
-                    if (string.IsNullOrEmpty(m_message))
-                        m_message = "CopyFastaCheckResidues returned false";
-                    LogError(m_message);
+                    if (string.IsNullOrEmpty(mMessage))
+                        mMessage = "CopyFastaCheckResidues returned false";
+                    LogError(mMessage);
                     return false;
                 }
 
@@ -733,7 +733,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
 
                 LogDebug(JavaProgLoc + " " + cmdStr);
 
-                var cmdRunner = new clsRunDosProgram(mMSAlignWorkFolderPath, m_DebugLevel);
+                var cmdRunner = new clsRunDosProgram(mMSAlignWorkFolderPath, mDebugLevel);
                 RegisterEvents(cmdRunner);
                 cmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
@@ -742,7 +742,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                 cmdRunner.EchoOutputToConsole = true;
 
                 cmdRunner.WriteConsoleOutputToFile = true;
-                cmdRunner.ConsoleOutputFilePath = Path.Combine(m_WorkDir, MSAlign_Report_CONSOLE_OUTPUT);
+                cmdRunner.ConsoleOutputFilePath = Path.Combine(mWorkDir, MSAlign_Report_CONSOLE_OUTPUT);
 
                 blnSuccess = cmdRunner.RunProgram(JavaProgLoc, cmdStr, "MSAlign_Histone", true);
 
@@ -761,12 +761,12 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                 }
                 else
                 {
-                    m_jobParams.AddResultFileToSkip(MSAlign_Report_CONSOLE_OUTPUT);
+                    mJobParams.AddResultFileToSkip(MSAlign_Report_CONSOLE_OUTPUT);
                 }
             }
             catch (Exception ex)
             {
-                m_message = "Exception creating MSAlign_Histone HTML and XML files";
+                mMessage = "Exception creating MSAlign_Histone HTML and XML files";
                 LogError("Exception in MakeReportFiles", ex);
                 return false;
             }
@@ -795,7 +795,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
             {
                 if (!File.Exists(strConsoleOutputFilePath))
                 {
-                    if (m_DebugLevel >= 4)
+                    if (mDebugLevel >= 4)
                     {
                         LogDebug("Console output file not found: " + strConsoleOutputFilePath);
                     }
@@ -803,7 +803,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                     return;
                 }
 
-                if (m_DebugLevel >= 4)
+                if (mDebugLevel >= 4)
                 {
                     LogDebug("Parsing file " + strConsoleOutputFilePath);
                 }
@@ -829,7 +829,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                                 // The fourth line is the MSAlign version
                                 if (string.IsNullOrEmpty(mMSAlignVersion) && strLineIn.ToLower().Contains("ms-align"))
                                 {
-                                    if (m_DebugLevel >= 2 && string.IsNullOrWhiteSpace(mMSAlignVersion))
+                                    if (mDebugLevel >= 2 && string.IsNullOrWhiteSpace(mMSAlignVersion))
                                     {
                                         LogDebug("MSAlign version: " + strLineIn);
                                     }
@@ -873,15 +873,15 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                     }
                 }
 
-                if (m_progress < intActualProgress)
+                if (mProgress < intActualProgress)
                 {
-                    m_progress = intActualProgress;
+                    mProgress = intActualProgress;
                 }
             }
             catch (Exception ex)
             {
                 // Ignore errors here
-                if (m_DebugLevel >= 2)
+                if (mDebugLevel >= 2)
                 {
                     LogError("Error parsing console output file (" + strConsoleOutputFilePath + ")", ex);
                 }
@@ -894,7 +894,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
         /// <remarks></remarks>
         protected bool StoreToolVersionInfo()
         {
-            if (m_DebugLevel >= 2)
+            if (mDebugLevel >= 2)
             {
                 LogDebug("Determining tool version info");
             }
@@ -924,7 +924,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
 
             try
             {
-                var dctResultsFilesToMove = GetExpectedMSAlignResultFiles(m_Dataset);
+                var dctResultsFilesToMove = GetExpectedMSAlignResultFiles(mDatasetName);
 
                 foreach (var kvItem in dctResultsFilesToMove)
                 {
@@ -945,7 +945,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                         }
                         else
                         {
-                            var strTargetFilePath = Path.Combine(m_WorkDir, kvItem.Value);
+                            var strTargetFilePath = Path.Combine(mWorkDir, kvItem.Value);
 
                             fiSearchResultFile.CopyTo(strTargetFilePath, true);
 
@@ -971,7 +971,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                 {
                     if (clsGlobal.FilesMatch(strEValueResultFilePath, strFinalResultFilePath))
                     {
-                        m_jobParams.AddResultFileToSkip(Path.GetFileName(strEValueResultFilePath));
+                        mJobParams.AddResultFileToSkip(Path.GetFileName(strEValueResultFilePath));
                     }
                 }
             }
@@ -990,7 +990,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
 
             try
             {
-                var dctResultFiles = GetExpectedMSAlignResultFiles(m_Dataset);
+                var dctResultFiles = GetExpectedMSAlignResultFiles(mDatasetName);
 
                 foreach (var kvItem in dctResultFiles)
                 {
@@ -1028,22 +1028,22 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                 var blnValidDataFound = false;
                 var intLinesRead = 0;
 
-                var strOutputFilePath = Path.Combine(m_WorkDir, m_Dataset + RESULT_TABLE_NAME_SUFFIX);
+                var strOutputFilePath = Path.Combine(mWorkDir, mDatasetName + RESULT_TABLE_NAME_SUFFIX);
 
                 if (!File.Exists(strSourceFilePath))
                 {
-                    if (m_DebugLevel >= 2)
+                    if (mDebugLevel >= 2)
                     {
                         LogWarning("MSAlign OUTPUT_TABLE file not found: " + strSourceFilePath);
                     }
-                    if (string.IsNullOrEmpty(m_message))
+                    if (string.IsNullOrEmpty(mMessage))
                     {
-                        m_message = "MSAlign OUTPUT_TABLE file not found";
+                        mMessage = "MSAlign OUTPUT_TABLE file not found";
                     }
                     return false;
                 }
 
-                if (m_DebugLevel >= 2)
+                if (mDebugLevel >= 2)
                 {
                     LogMessage("Validating that the MSAlign OUTPUT_TABLE file is not empty");
                 }
@@ -1096,7 +1096,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                 }
 
                 // Don't keep the original output table; only the new file we just created
-                m_jobParams.AddResultFileToSkip(Path.GetFileName(strSourceFilePath));
+                mJobParams.AddResultFileToSkip(Path.GetFileName(strSourceFilePath));
             }
             catch (Exception ex)
             {
@@ -1111,25 +1111,25 @@ namespace AnalysisManagerMSAlignHistonePlugIn
         {
             try
             {
-                var strTargetFilePath = Path.Combine(m_WorkDir, m_Dataset + "_MSAlign_Results_" + strFolderName.ToUpper() + ".zip");
+                var strTargetFilePath = Path.Combine(mWorkDir, mDatasetName + "_MSAlign_Results_" + strFolderName.ToUpper() + ".zip");
                 var strSourceFolderPath = Path.Combine(mMSAlignWorkFolderPath, strFolderName);
 
                 // Confirm that the directory has one or more files or subfolders
                 var diSourceFolder = new DirectoryInfo(strSourceFolderPath);
                 if (diSourceFolder.GetFileSystemInfos().Length == 0)
                 {
-                    if (m_DebugLevel >= 1)
+                    if (mDebugLevel >= 1)
                     {
                         LogWarning("MSAlign results folder is empty; nothing to zip: " + strSourceFolderPath);
                     }
                     return false;
                 }
 
-                if (m_DebugLevel >= 1)
+                if (mDebugLevel >= 1)
                 {
                     var strLogMessage = "Zipping " + strFolderName.ToUpper() + " folder at " + strSourceFolderPath;
 
-                    if (m_DebugLevel >= 2)
+                    if (mDebugLevel >= 2)
                     {
                         strLogMessage += ": " + strTargetFilePath;
                     }
@@ -1153,7 +1153,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
 
         #region "Event Handlers"
 
-        private DateTime dtLastConsoleOutputParse = DateTime.MinValue;
+        private DateTime mLastConsoleOutputParse = DateTime.MinValue;
 
         /// <summary>
         /// Event handler for CmdRunner.LoopWaiting event
@@ -1163,11 +1163,11 @@ namespace AnalysisManagerMSAlignHistonePlugIn
         {
             UpdateStatusFile();
 
-            if (DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= 15)
+            if (DateTime.UtcNow.Subtract(mLastConsoleOutputParse).TotalSeconds >= 15)
             {
-                dtLastConsoleOutputParse = DateTime.UtcNow;
+                mLastConsoleOutputParse = DateTime.UtcNow;
 
-                ParseConsoleOutputFile(Path.Combine(m_WorkDir, MSAlign_CONSOLE_OUTPUT));
+                ParseConsoleOutputFile(Path.Combine(mWorkDir, MSAlign_CONSOLE_OUTPUT));
 
                 if (!mToolVersionWritten && !string.IsNullOrWhiteSpace(mMSAlignVersion))
                 {

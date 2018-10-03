@@ -12,7 +12,7 @@ namespace AnalysisManagerBase
     public class clsCDTAUtilities : EventNotifier
     {
 
-        private CondenseCDTAFile.clsCDTAFileCondenser m_CDTACondenser;
+        private CondenseCDTAFile.clsCDTAFileCondenser mCDTACondenser;
 
         /// <summary>
         /// Convert a _dta.txt file to a .mgf file
@@ -458,14 +458,14 @@ namespace AnalysisManagerBase
 
                 OnStatusEvent(message);
 
-                m_CDTACondenser = new CondenseCDTAFile.clsCDTAFileCondenser();
-                m_CDTACondenser.ProgressChanged += m_CDTACondenser_ProgressChanged;
+                mCDTACondenser = new CondenseCDTAFile.clsCDTAFileCondenser();
+                mCDTACondenser.ProgressChanged += CDTACondenser_ProgressChanged;
 
-                var success = m_CDTACondenser.ProcessFile(ioFileInfo.FullName, ioFileInfo.DirectoryName);
+                var success = mCDTACondenser.ProcessFile(ioFileInfo.FullName, ioFileInfo.DirectoryName);
 
                 if (!success)
                 {
-                    OnErrorEvent("Error condensing _DTA.txt file: " + m_CDTACondenser.GetErrorMessage());
+                    OnErrorEvent("Error condensing _DTA.txt file: " + mCDTACondenser.GetErrorMessage());
                     return false;
                 }
 
@@ -513,7 +513,7 @@ namespace AnalysisManagerBase
         #region "Event Handlers"
 
 
-        private void m_CDTACondenser_ProgressChanged(string taskDescription, float percentComplete)
+        private void CDTACondenser_ProgressChanged(string taskDescription, float percentComplete)
         {
             OnProgressUpdate(taskDescription, percentComplete);
         }

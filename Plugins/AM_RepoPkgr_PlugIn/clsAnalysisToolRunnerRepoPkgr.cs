@@ -61,21 +61,21 @@ namespace AnalysisManager_RepoPkgr_Plugin
                 if (!StoreToolVersionInfo())
                 {
                     LogError("Aborting since StoreToolVersionInfo returned false");
-                    m_message = "Error determining RepoPkgr version";
+                    mMessage = "Error determining RepoPkgr version";
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                var instrumentDataWarning = m_jobParams.GetJobParameter(WARNING_INSTRUMENT_DATA_MISSING, string.Empty);
+                var instrumentDataWarning = mJobParams.GetJobParameter(WARNING_INSTRUMENT_DATA_MISSING, string.Empty);
                 if (!string.IsNullOrEmpty(instrumentDataWarning))
-                    m_EvalMessage = instrumentDataWarning;
+                    mEvalMessage = instrumentDataWarning;
 
                 result = BuildRepoCache();
                 return result;
             }
             catch (Exception ex)
             {
-                m_message = "Error in RepoPkgr Plugin->RunTool";
-                LogError(m_message, ex);
+                mMessage = "Error in RepoPkgr Plugin->RunTool";
+                LogError(mMessage, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
         }
@@ -91,7 +91,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
             SetMagePipelineManager(_outputResultsFolderPath);
 
             // do operations for repository specified in job parameters
-            var targetRepository = m_jobParams.GetJobParameter("Repository", "");
+            var targetRepository = mJobParams.GetJobParameter("Repository", "");
             var success = false;
             switch (targetRepository)
             {
@@ -106,7 +106,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
         private void CopyFastaFiles()
         {
-            var localOrgDBFolder = m_mgrParams.GetParam("orgdbdir");
+            var localOrgDBFolder = mMgrParams.GetParam("OrgDbDir");
             var targetFolderPath = Path.Combine(_outputResultsFolderPath, "Organism_Database");
 
             var lstGeneratedOrgDBNames = ExtractPackedJobParameterList(clsAnalysisResourcesRepoPkgr.FASTA_FILES_FOR_DATA_PACKAGE);
@@ -119,7 +119,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
                 var targetFileName = UpdateOrgDBNameIfRequired(orgDbName);
 
                 var destFilePath = Path.Combine(targetFolderPath, targetFileName);
-                m_FileTools.CopyFile(sourceFilePath, destFilePath, true);
+                mFileTools.CopyFile(sourceFilePath, destFilePath, true);
             }
         }
 
@@ -132,8 +132,8 @@ namespace AnalysisManager_RepoPkgr_Plugin
             // Copy *.fasta files from organism db to appropriate cache subfolder
             // Files to copy are stored in job parameters named "Job123456_GeneratedFasta"
             CopyFastaFiles();
-            m_progress = PROGRESS_PCT_FASTA_FILES_COPIED;
-            m_StatusTools.UpdateAndWrite(m_progress);
+            mProgress = PROGRESS_PCT_FASTA_FILES_COPIED;
+            mStatusTools.UpdateAndWrite(mProgress);
 
             var dataPkgJobCountMatch = 0;
 
@@ -163,8 +163,8 @@ namespace AnalysisManager_RepoPkgr_Plugin
                         LogMessage("Copied " + dataPkgFileCountMatch + " files for " + dataPkgJobCountMatch + " MSGF+ jobs in data package " + _mgr.DataPkgId);
                 }
             }
-            m_progress = PROGRESS_PCT_MSGF_PLUS_RESULTS_COPIED;
-            m_StatusTools.UpdateAndWrite(m_progress);
+            mProgress = PROGRESS_PCT_MSGF_PLUS_RESULTS_COPIED;
+            mStatusTools.UpdateAndWrite(mProgress);
 
             if (_bIncludeSequestResults)
             {
@@ -185,20 +185,20 @@ namespace AnalysisManager_RepoPkgr_Plugin
                         LogMessage("Copied " + dataPkgFileCountMatch + " files for " + dataPkgJobCountMatch + " SEQUEST jobs in data package " + _mgr.DataPkgId);
                 }
             }
-            m_progress = PROGRESS_PCT_SEQUEST_RESULTS_COPIED;
-            m_StatusTools.UpdateAndWrite(m_progress);
+            mProgress = PROGRESS_PCT_SEQUEST_RESULTS_COPIED;
+            mStatusTools.UpdateAndWrite(mProgress);
 
             if (_bIncludeMZidFiles)
             {
                 // find any MSGFPlus jobs in data package and copy their MZID files to appropriate cache subfolder
                 _mgr.GetItemsToRepoPkg("DataPkgJobsQueryTemplate", "MSGFPlus", "*_msgfplus.zip;*_msgfplus.mzid.gz", @"MSGFPlus_Results\MZID_Files", "Job");
-                var zipFileCountConverted = FileUtils.ConvertZipsToGZips(Path.Combine(_outputResultsFolderPath, @"MSGFPlus_Results\MZID_Files"), m_WorkDir);
+                var zipFileCountConverted = FileUtils.ConvertZipsToGZips(Path.Combine(_outputResultsFolderPath, @"MSGFPlus_Results\MZID_Files"), mWorkDir);
 
                 if (zipFileCountConverted > 0)
                     LogMessage("Converted " + zipFileCountConverted + " _msgfplus.zip files to .mzid.gz files");
             }
-            m_progress = PROGRESS_PCT_MZID_RESULTS_COPIED;
-            m_StatusTools.UpdateAndWrite(m_progress);
+            mProgress = PROGRESS_PCT_MZID_RESULTS_COPIED;
+            mStatusTools.UpdateAndWrite(mProgress);
 
             var success = RetrieveInstrumentData(out var datasetsProcessed);
             if (!success)
@@ -208,9 +208,9 @@ namespace AnalysisManager_RepoPkgr_Plugin
             {
                 if (dataPkgJobCountMatch == 0)
                 {
-                    m_message = "Data package " + _mgr.DataPkgId +
+                    mMessage = "Data package " + _mgr.DataPkgId +
                                 " does not have any analysis jobs associated with it; please add some MASIC or DeconTools jobs then reset this job";
-                    LogError(m_message);
+                    LogError(mMessage);
                     return false;
                 }
 
@@ -219,8 +219,8 @@ namespace AnalysisManager_RepoPkgr_Plugin
                 LogWarning(msg);
 
             }
-            m_progress = PROGRESS_PCT_INSTRUMENT_DATA_COPIED;
-            m_StatusTools.UpdateAndWrite(m_progress);
+            mProgress = PROGRESS_PCT_INSTRUMENT_DATA_COPIED;
+            mStatusTools.UpdateAndWrite(mProgress);
 
             // todo Do some logging on the above pipeline runs using pipeline intermediate results (_mgr.DataPackageItems; _mgr.AssociatedFiles; _mgr.ManifestForCopy;)?
 
@@ -233,11 +233,11 @@ namespace AnalysisManager_RepoPkgr_Plugin
         private void SetOptions()
         {
             // New parameters:
-            _bIncludeMSGFPlusResults = m_jobParams.GetJobParameter("IncludeMSGFResults", true);
+            _bIncludeMSGFPlusResults = mJobParams.GetJobParameter("IncludeMSGFResults", true);
             _bIncludeMZidFiles = _bIncludeMSGFPlusResults;
-            _bIncludeSequestResults = m_jobParams.GetJobParameter("IncludeSequestResults", false);	// This will get auto-changed to True if no MSGF+ jobs are found in the data package
-            _bIncludeInstrumentData = m_jobParams.GetJobParameter("IncludeInstrumentData", true);
-            _bIncludeMzXMLFiles = m_jobParams.GetJobParameter("IncludeMzXMLFiles", true);
+            _bIncludeSequestResults = mJobParams.GetJobParameter("IncludeSequestResults", false);	// This will get auto-changed to True if no MSGF+ jobs are found in the data package
+            _bIncludeInstrumentData = mJobParams.GetJobParameter("IncludeInstrumentData", true);
+            _bIncludeMzXMLFiles = mJobParams.GetJobParameter("IncludeMzXMLFiles", true);
 
         }
 
@@ -246,8 +246,8 @@ namespace AnalysisManager_RepoPkgr_Plugin
         /// </summary>
         private void SetOutputFolderPath()
         {
-            var resultsFolderName = m_jobParams.GetJobParameter(clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME, "");
-            var outputRootFolderPath = m_jobParams.GetJobParameter("CacheFolderPath", "");
+            var resultsFolderName = mJobParams.GetJobParameter(clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME, "");
+            var outputRootFolderPath = mJobParams.GetJobParameter("CacheFolderPath", "");
             _outputResultsFolderPath = Path.Combine(outputRootFolderPath, resultsFolderName);
         }
 
@@ -260,12 +260,12 @@ namespace AnalysisManager_RepoPkgr_Plugin
         private void SetMagePipelineManager(string outputFolderPath = "")
         {
             var qd = new QueryDefinitions();
-            qd.SetCnStr(QueryDefinitions.TagName.Main, m_mgrParams.GetParam("connectionstring"));
-            qd.SetCnStr(QueryDefinitions.TagName.Broker, m_mgrParams.GetParam("brokerconnectionstring"));
+            qd.SetCnStr(QueryDefinitions.TagName.Main, mMgrParams.GetParam("connectionstring"));
+            qd.SetCnStr(QueryDefinitions.TagName.Broker, mMgrParams.GetParam("brokerconnectionstring"));
             _mgr = new MageRepoPkgrPipelines
             {
                 QueryDefs = qd,
-                DataPkgId = m_jobParams.GetJobParameter("DataPackageID", "")
+                DataPkgId = mJobParams.GetJobParameter("DataPackageID", "")
             };
             if (!string.IsNullOrEmpty(outputFolderPath))
             {
@@ -299,7 +299,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
             try
             {
 
-                // Look in m_WorkDir for the .mzXML or .mzML file for this dataset
+                // Look in mWorkDir for the .mzXML or .mzML file for this dataset
                 var candidateFileNames = new List<string>
                     {
                         datasetName + clsAnalysisResources.DOT_MZXML_EXTENSION,
@@ -309,7 +309,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
                 foreach (var candidateFile in candidateFileNames)
                 {
-                    var filePath = Path.Combine(m_WorkDir, candidateFile);
+                    var filePath = Path.Combine(mWorkDir, candidateFile);
 
                     if (File.Exists(filePath))
                     {
@@ -334,13 +334,13 @@ namespace AnalysisManager_RepoPkgr_Plugin
                 // Need to create the .mzXML file
                 if (!dctDatasetRawFilePaths.ContainsKey(datasetName))
                 {
-                    m_message = "Dataset " + datasetName + " not found in job parameter " +
+                    mMessage = "Dataset " + datasetName + " not found in job parameter " +
                         clsAnalysisResources.JOB_PARAM_DICTIONARY_DATASET_FILE_PATHS + "; unable to create the missing .mzXML file";
-                    LogError(m_message);
+                    LogError(mMessage);
                     return string.Empty;
                 }
 
-                m_jobParams.AddResultFileToSkip("MSConvert_ConsoleOutput.txt");
+                mJobParams.AddResultFileToSkip("MSConvert_ConsoleOutput.txt");
 
                 objMSXmlCreator.UpdateDatasetName(datasetName);
 
@@ -350,14 +350,14 @@ namespace AnalysisManager_RepoPkgr_Plugin
                 var strDatasetFilePathRemote = dctDatasetRawFilePaths[datasetName];
                 if (string.IsNullOrEmpty(strDatasetFilePathRemote))
                 {
-                    m_message = "Dataset " + datasetName + " has an empty instrument file path in dctDatasetRawFilePaths";
-                    LogError(m_message);
+                    mMessage = "Dataset " + datasetName + " has an empty instrument file path in dctDatasetRawFilePaths";
+                    LogError(mMessage);
                     return string.Empty;
                 }
 
                 var blnDatasetFileIsAFolder = Directory.Exists(strDatasetFilePathRemote);
 
-                strDatasetFilePathLocal = Path.Combine(m_WorkDir, Path.GetFileName(strDatasetFilePathRemote));
+                strDatasetFilePathLocal = Path.Combine(mWorkDir, Path.GetFileName(strDatasetFilePathRemote));
 
                 if (blnDatasetFileIsAFolder)
                 {
@@ -383,49 +383,49 @@ namespace AnalysisManager_RepoPkgr_Plugin
                 if (!dctDatasetRawDataTypes.TryGetValue(datasetName, out var rawDataType))
                     rawDataType = clsAnalysisResources.RAW_DATA_TYPE_DOT_RAW_FILES;
 
-                m_jobParams.AddAdditionalParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, "RawDataType", rawDataType);
+                mJobParams.AddAdditionalParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, "RawDataType", rawDataType);
 
                 var success = objMSXmlCreator.CreateMZXMLFile();
 
-                if (!success && string.IsNullOrEmpty(m_message))
+                if (!success && string.IsNullOrEmpty(mMessage))
                 {
-                    m_message = objMSXmlCreator.ErrorMessage;
-                    if (string.IsNullOrEmpty(m_message))
+                    mMessage = objMSXmlCreator.ErrorMessage;
+                    if (string.IsNullOrEmpty(mMessage))
                     {
-                        m_message = "Unknown error creating the mzXML file for dataset " + datasetName;
+                        mMessage = "Unknown error creating the mzXML file for dataset " + datasetName;
                     }
-                    else if (!m_message.Contains(datasetName))
+                    else if (!mMessage.Contains(datasetName))
                     {
-                        m_message += "; dataset " + datasetName;
+                        mMessage += "; dataset " + datasetName;
                     }
                 }
 
                 if (!success)
                     return string.Empty;
 
-                var fiMzXmlFilePathLocal = new FileInfo(Path.Combine(m_WorkDir, datasetName + clsAnalysisResources.DOT_MZXML_EXTENSION));
+                var fiMzXmlFilePathLocal = new FileInfo(Path.Combine(mWorkDir, datasetName + clsAnalysisResources.DOT_MZXML_EXTENSION));
 
                 if (!fiMzXmlFilePathLocal.Exists)
                 {
-                    m_message = "MSXmlCreator did not create the .mzXML file for dataset " + datasetName;
+                    mMessage = "MSXmlCreator did not create the .mzXML file for dataset " + datasetName;
                     return string.Empty;
                 }
 
                 // Copy the .mzXML file to the cache
                 // Gzip it first before copying
                 var fiMzXmlFileGZipped = new FileInfo(fiMzXmlFilePathLocal + clsAnalysisResources.DOT_GZ_EXTENSION);
-                success = m_DotNetZipTools.GZipFile(fiMzXmlFilePathLocal.FullName, true);
+                success = mDotNetZipTools.GZipFile(fiMzXmlFilePathLocal.FullName, true);
                 if (!success)
                 {
-                    m_message = "Error compressing .mzXML file " + fiMzXmlFilePathLocal.Name + " with GZip: ";
+                    mMessage = "Error compressing .mzXML file " + fiMzXmlFilePathLocal.Name + " with GZip: ";
                     return string.Empty;
                 }
 
                 fiMzXmlFileGZipped.Refresh();
                 if (!fiMzXmlFileGZipped.Exists)
                 {
-                    m_message = "Compressed .mzXML file not found: " + fiMzXmlFileGZipped.FullName;
-                    LogError(m_message);
+                    mMessage = "Compressed .mzXML file not found: " + fiMzXmlFileGZipped.FullName;
+                    LogError(mMessage);
                     return string.Empty;
                 }
 
@@ -438,7 +438,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
                 CopyMzXMLFileToServerCache(fiMzXmlFileGZipped.FullName, strDatasetYearQuarter, strMSXmlGeneratorName, purgeOldFilesIfNeeded: true);
 
-                m_jobParams.AddResultFileToSkip(Path.GetFileName(fiMzXmlFilePathLocal.FullName + clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX));
+                mJobParams.AddResultFileToSkip(Path.GetFileName(fiMzXmlFilePathLocal.FullName + clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX));
 
                 PRISM.ProgRunner.GarbageCollectNow();
 
@@ -446,8 +446,8 @@ namespace AnalysisManager_RepoPkgr_Plugin
             }
             catch (Exception ex)
             {
-                m_message = "Exception in CreateMzXMLFileIfMissing";
-                LogError(m_message, ex);
+                mMessage = "Exception in CreateMzXMLFileIfMissing";
+                LogError(mMessage, ex);
                 return string.Empty;
             }
 
@@ -508,7 +508,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
                     if (fiTargetFile.Exists && fiTargetFile.Length == fiMzXmlFileSource.Length)
                         LogDebug("Skipping .mzXML file since already present in the target folder: " + fiTargetFile.FullName);
                     else
-                        m_FileTools.CopyFileUsingLocks(mzXmlFilePathLocal, fiTargetFile.FullName, true);
+                        mFileTools.CopyFileUsingLocks(mzXmlFilePathLocal, fiTargetFile.FullName, true);
 
                     // Delete the local .mzXml file
                     DeleteFileIgnoreErrors(mzXmlFilePathLocal);
@@ -527,7 +527,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
                     if (strDatasetFilePathSource.StartsWith(clsAnalysisResources.MYEMSL_PATH_FLAG))
                     {
                         // The file was in MyEMSL and should have already been retrieved via clsAnalysisResourcesRepoPkgr
-                        strDatasetFilePathSource = Path.Combine(m_WorkDir, Path.GetFileName(strDatasetFilePathSource));
+                        strDatasetFilePathSource = Path.Combine(mWorkDir, Path.GetFileName(strDatasetFilePathSource));
                         strDatasetFilePathLocal = strDatasetFilePathSource;
                     }
 
@@ -537,7 +537,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
                     {
                         var diDatasetFolder = new DirectoryInfo(strDatasetFilePathSource);
                         var strDatasetFilePathTarget = Path.Combine(instrumentDataFolderPath, diDatasetFolder.Name);
-                        m_FileTools.CopyDirectory(strDatasetFilePathSource, strDatasetFilePathTarget);
+                        mFileTools.CopyDirectory(strDatasetFilePathSource, strDatasetFilePathTarget);
                     }
                     else
                     {
@@ -547,7 +547,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
                         if (fiTargetFile.Exists && fiTargetFile.Length == fiDatasetFile.Length)
                             LogDebug("Skipping instrument file since already present in the target folder: " + fiTargetFile.FullName);
                         else
-                            m_FileTools.CopyFileUsingLocks(strDatasetFilePathSource, fiTargetFile.FullName, true);
+                            mFileTools.CopyFileUsingLocks(strDatasetFilePathSource, fiTargetFile.FullName, true);
                     }
 
                     if (!string.IsNullOrEmpty(strDatasetFilePathLocal))
@@ -589,10 +589,10 @@ namespace AnalysisManager_RepoPkgr_Plugin
             datasetsProcessed = 0;
 
             // The objAnalysisResults object is used to copy files to/from this computer
-            var objAnalysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
+            var objAnalysisResults = new clsAnalysisResults(mMgrParams, mJobParams);
 
             _MSXmlGeneratorAppPath = GetMSXmlGeneratorAppPath();
-            var objMSXmlCreator = new clsMSXMLCreator(_MSXmlGeneratorAppPath, m_WorkDir, m_Dataset, m_DebugLevel, m_jobParams);
+            var objMSXmlCreator = new clsMSXMLCreator(_MSXmlGeneratorAppPath, mWorkDir, mDatasetName, mDebugLevel, mJobParams);
 
             RegisterEvents(objMSXmlCreator);
 
@@ -601,7 +601,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
             if (dctDatasetRawFilePaths.Keys.Count == 0)
             {
-                m_message = "Could not retrieve instrument data since dctDatasetRawFilePaths is empty";
+                mMessage = "Could not retrieve instrument data since dctDatasetRawFilePaths is empty";
                 return false;
             }
 
@@ -617,8 +617,8 @@ namespace AnalysisManager_RepoPkgr_Plugin
                     errorCount++;
 
                 datasetsProcessed += 1;
-                m_progress = ComputeIncrementalProgress(PROGRESS_PCT_MZID_RESULTS_COPIED, PROGRESS_PCT_INSTRUMENT_DATA_COPIED, datasetsProcessed, dctDatasetRawFilePaths.Count);
-                m_StatusTools.UpdateAndWrite(m_progress);
+                mProgress = ComputeIncrementalProgress(PROGRESS_PCT_MZID_RESULTS_COPIED, PROGRESS_PCT_INSTRUMENT_DATA_COPIED, datasetsProcessed, dctDatasetRawFilePaths.Count);
+                mStatusTools.UpdateAndWrite(mProgress);
 
             }
 
@@ -627,11 +627,11 @@ namespace AnalysisManager_RepoPkgr_Plugin
                 if (errorCount == 0)
                     return true;
 
-                m_message = "Could not retrieve instrument data for one or more datasets in Data package " + _mgr.DataPkgId + "; SuccessCount = " + successCount + "; FailCount = " + errorCount;
+                mMessage = "Could not retrieve instrument data for one or more datasets in Data package " + _mgr.DataPkgId + "; SuccessCount = " + successCount + "; FailCount = " + errorCount;
                 return false;
             }
 
-            m_message = "Could not retrieve instrument data for any of the datasets in Data package " + _mgr.DataPkgId + "; FailCount = " + errorCount;
+            mMessage = "Could not retrieve instrument data for any of the datasets in Data package " + _mgr.DataPkgId + "; FailCount = " + errorCount;
             return false;
 
         }
@@ -652,8 +652,8 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
                 if (!File.Exists(strStoragePathInfoFilePath))
                 {
-                    m_message = "StoragePathInfo file not found";
-                    LogError(m_message + ": " + strStoragePathInfoFilePath);
+                    mMessage = "StoragePathInfo file not found";
+                    LogError(mMessage + ": " + strStoragePathInfoFilePath);
                     return false;
                 }
 
@@ -667,12 +667,12 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
                 if (string.IsNullOrEmpty(strSourceFilePath))
                 {
-                    m_message = "StoragePathInfo file was empty";
-                    LogError(m_message + ": " + strStoragePathInfoFilePath);
+                    mMessage = "StoragePathInfo file was empty";
+                    LogError(mMessage + ": " + strStoragePathInfoFilePath);
                     return false;
                 }
 
-                strDestPath = Path.Combine(m_WorkDir, Path.GetFileName(strSourceFilePath));
+                strDestPath = Path.Combine(mWorkDir, Path.GetFileName(strSourceFilePath));
 
                 if (IsFolder)
                 {
@@ -686,8 +686,8 @@ namespace AnalysisManager_RepoPkgr_Plugin
             }
             catch (Exception ex)
             {
-                m_message = "Error in RetrieveStoragePathInfoTargetFile";
-                LogError(m_message, ex);
+                mMessage = "Error in RetrieveStoragePathInfoTargetFile";
+                LogError(mMessage, ex);
                 return false;
             }
 
@@ -737,7 +737,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
                 var sqlQuery = "SELECT FileName FROM V_Archived_Output_File_Protein_Collections WHERE Archived_File_ID = " + fileID;
                 var retryCount = 3;
-                var proteinSeqsDBConnectionString = m_mgrParams.GetParam("fastacnstring");
+                var proteinSeqsDBConnectionString = mMgrParams.GetParam("fastacnstring");
                 if (string.IsNullOrWhiteSpace(proteinSeqsDBConnectionString))
                 {
                     LogError("Error in UpdateOrgDBNameIfRequired: manager parameter fastacnstring is not defined");

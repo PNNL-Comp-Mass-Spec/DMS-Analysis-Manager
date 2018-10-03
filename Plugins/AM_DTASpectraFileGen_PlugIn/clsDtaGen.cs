@@ -22,28 +22,28 @@ namespace DTASpectraFileGen
     {
         #region "Module variables"
 
-        protected string m_ErrMsg = string.Empty;
-        protected string m_WorkDir = string.Empty;    // Working directory on analysis machine
-        protected string m_Dataset = string.Empty;
+        protected string mErrMsg = string.Empty;
+        protected string mWorkDir = string.Empty;    // Working directory on analysis machine
+        protected string mDatasetName = string.Empty;
 
-        protected clsAnalysisResources.eRawDataTypeConstants m_RawDataType = clsAnalysisResources.eRawDataTypeConstants.Unknown;
+        protected clsAnalysisResources.eRawDataTypeConstants mRawDataType = clsAnalysisResources.eRawDataTypeConstants.Unknown;
 
-        protected string m_DtaToolNameLoc = string.Empty;             // Path to the program used to create DTA files
+        protected string mDtaToolNameLoc = string.Empty;             // Path to the program used to create DTA files
 
-        protected ProcessStatus m_Status;
-        protected ProcessResults m_Results;
-        protected IMgrParams m_MgrParams;
-        protected IJobParams m_JobParams;
-        protected short m_DebugLevel;
-        protected int m_SpectraFileCount;
-        protected IStatusFile m_StatusTools;
+        protected ProcessStatus mStatus;
+        protected ProcessResults mResults;
+        protected IMgrParams mMgrParams;
+        protected IJobParams mJobParams;
+        protected short mDebugLevel;
+        protected int mSpectraFileCount;
+        protected IStatusFile mStatusTools;
 
-        protected clsAnalysisToolRunnerBase m_ToolRunner;
+        protected clsAnalysisToolRunnerBase mToolRunner;
 
-        protected bool m_AbortRequested;
+        protected bool mAbortRequested;
 
         // The following is a value between 0 and 100
-        protected float m_Progress;
+        protected float mProgress;
 
         #endregion
 
@@ -51,36 +51,36 @@ namespace DTASpectraFileGen
 
         public IStatusFile StatusTools
         {
-            set => m_StatusTools = value;
+            set => mStatusTools = value;
         }
 
-        public string DtaToolNameLoc => m_DtaToolNameLoc;
+        public string DtaToolNameLoc => mDtaToolNameLoc;
 
-        public string ErrMsg => m_ErrMsg;
+        public string ErrMsg => mErrMsg;
 
         public IMgrParams MgrParams
         {
-            set => m_MgrParams = value;
+            set => mMgrParams = value;
         }
 
         public IJobParams JobParams
         {
-            set => m_JobParams = value;
+            set => mJobParams = value;
         }
 
-        public ProcessStatus Status => m_Status;
+        public ProcessStatus Status => mStatus;
 
-        public ProcessResults Results => m_Results;
+        public ProcessResults Results => mResults;
 
         public int DebugLevel
         {
-            get => m_DebugLevel;
-            set => m_DebugLevel = (short)value;
+            get => mDebugLevel;
+            set => mDebugLevel = (short)value;
         }
 
-        public int SpectraFileCount => m_SpectraFileCount;
+        public int SpectraFileCount => mSpectraFileCount;
 
-        public float Progress => m_Progress;
+        public float Progress => mProgress;
 
         #endregion
 
@@ -93,7 +93,7 @@ namespace DTASpectraFileGen
         /// <remarks></remarks>
         public ProcessStatus Abort()
         {
-            m_AbortRequested = true;
+            mAbortRequested = true;
             return ProcessStatus.SF_ABORTING;
         }
 
@@ -102,23 +102,23 @@ namespace DTASpectraFileGen
         public virtual void Setup(SpectraFileProcessorParams initParams, clsAnalysisToolRunnerBase toolRunner)
         {
             // Copies all input data required for plugin operation to appropriate memory variables
-            m_DebugLevel = (short)initParams.DebugLevel;
-            m_JobParams = initParams.JobParams;
-            m_MgrParams = initParams.MgrParams;
-            m_StatusTools = initParams.StatusTools;
-            m_WorkDir = initParams.WorkDir;
-            m_Dataset = initParams.DatasetName;
+            mDebugLevel = (short)initParams.DebugLevel;
+            mJobParams = initParams.JobParams;
+            mMgrParams = initParams.MgrParams;
+            mStatusTools = initParams.StatusTools;
+            mWorkDir = initParams.WorkDir;
+            mDatasetName = initParams.DatasetName;
 
-            m_ToolRunner = toolRunner;
+            mToolRunner = toolRunner;
 
-            m_RawDataType = clsAnalysisResources.GetRawDataType(m_JobParams.GetJobParameter("RawDataType", ""));
+            mRawDataType = clsAnalysisResources.GetRawDataType(mJobParams.GetJobParameter("RawDataType", ""));
 
-            m_Progress = 0;
+            mProgress = 0;
         }
 
         public void UpdateDtaToolNameLoc(string progLoc)
         {
-            m_DtaToolNameLoc = progLoc;
+            mDtaToolNameLoc = progLoc;
         }
 
         protected bool VerifyDirExists(string TestDir)
@@ -126,11 +126,11 @@ namespace DTASpectraFileGen
             // Verifies that the specified directory exists
             if (Directory.Exists(TestDir))
             {
-                m_ErrMsg = "";
+                mErrMsg = "";
                 return true;
             }
 
-            m_ErrMsg = "Directory " + TestDir + " not found";
+            mErrMsg = "Directory " + TestDir + " not found";
             return false;
         }
 
@@ -139,36 +139,36 @@ namespace DTASpectraFileGen
             // Verifies specified file exists
             if (File.Exists(TestFile))
             {
-                m_ErrMsg = "";
+                mErrMsg = "";
                 return true;
             }
 
-            m_ErrMsg = "File " + TestFile + " not found";
+            mErrMsg = "File " + TestFile + " not found";
             return false;
         }
 
         protected virtual bool InitSetup()
         {
-            // Initializes module variables and verifies mandatory parameters have been propery specified
+            // Initializes module variables and verifies mandatory parameters have been properly specified
 
             // Manager parameters
-            if (m_MgrParams == null)
+            if (mMgrParams == null)
             {
-                m_ErrMsg = "Manager parameters not specified";
+                mErrMsg = "Manager parameters not specified";
                 return false;
             }
 
             // Job parameters
-            if (m_JobParams == null)
+            if (mJobParams == null)
             {
-                m_ErrMsg = "Job parameters not specified";
+                mErrMsg = "Job parameters not specified";
                 return false;
             }
 
             // Status tools
-            if (m_StatusTools == null)
+            if (mStatusTools == null)
             {
-                m_ErrMsg = "Status tools object not set";
+                mErrMsg = "Status tools object not set";
                 return false;
             }
 
@@ -181,7 +181,7 @@ namespace DTASpectraFileGen
             // extract_msn.exe and lcq_dta.exe sometimes leave files with funky filenames containing non-DOS characters.
             // This function removes those files
 
-            var workDir = new DirectoryInfo(m_WorkDir);
+            var workDir = new DirectoryInfo(mWorkDir);
 
             var reValidFiles = new Regex(@".dta$|.txt$|.csv$|.raw$|.params$|.wiff$|.xml$|.mgf$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
@@ -196,7 +196,7 @@ namespace DTASpectraFileGen
                     }
                     catch (Exception ex)
                     {
-                        m_ErrMsg = "Error removing non-DOS files: " + ex.Message;
+                        mErrMsg = "Error removing non-DOS files: " + ex.Message;
                         return false;
                     }
                 }
@@ -230,7 +230,7 @@ namespace DTASpectraFileGen
 
             try
             {
-                var objFolderInfo = new DirectoryInfo(m_WorkDir);
+                var objFolderInfo = new DirectoryInfo(mWorkDir);
                 var objFiles = objFolderInfo.GetFiles("*.dta");
                 int intDTACount;
 

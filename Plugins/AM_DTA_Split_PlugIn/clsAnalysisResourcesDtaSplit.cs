@@ -30,14 +30,14 @@ namespace AnalysisManagerDtaSplitPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            if (!ProcessMyEMSLDownloadQueue(m_WorkingDir, Downloader.DownloadFolderLayout.FlatNoSubfolders))
+            if (!ProcessMyEMSLDownloadQueue(mWorkDir, Downloader.DownloadFolderLayout.FlatNoSubfolders))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
             // Add all the extensions of the files to delete after run
-            m_jobParams.AddResultFileExtensionToSkip("_dta.zip"); // Zipped DTA
-            m_jobParams.AddResultFileExtensionToSkip("_dta.txt"); // Unzipped, concatenated DTA
+            mJobParams.AddResultFileExtensionToSkip("_dta.zip"); // Zipped DTA
+            mJobParams.AddResultFileExtensionToSkip("_dta.txt"); // Unzipped, concatenated DTA
 
             // All finished
             return CloseOutType.CLOSEOUT_SUCCESS;

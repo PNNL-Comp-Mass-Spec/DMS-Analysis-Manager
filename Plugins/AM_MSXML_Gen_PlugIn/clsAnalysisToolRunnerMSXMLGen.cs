@@ -55,10 +55,10 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            var storeInCache = m_jobParams.GetJobParameter("StoreMSXmlInCache", true);
+            var storeInCache = mJobParams.GetJobParameter("StoreMSXmlInCache", true);
             if (storeInCache)
             {
-                var msXMLCacheFolderPath = m_mgrParams.GetParam("MSXMLCacheFolderPath", string.Empty);
+                var msXMLCacheFolderPath = mMgrParams.GetParam("MSXMLCacheFolderPath", string.Empty);
                 mMSXmlCacheFolder = new DirectoryInfo(msXMLCacheFolderPath);
 
                 if (!mMSXmlCacheFolder.Exists)
@@ -84,7 +84,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
             }
 
             // Stop the job timer
-            m_StopTime = DateTime.UtcNow;
+            mStopTime = DateTime.UtcNow;
 
             // Add the current job data to the summary file
             UpdateSummaryFile();
@@ -103,13 +103,13 @@ namespace AnalysisManagerMsXmlGenPlugIn
         {
             try
             {
-                if (m_DebugLevel > 4)
+                if (mDebugLevel > 4)
                 {
                     LogDebug("clsAnalysisToolRunnerMSXMLGen.CreateMSXMLFile(): Enter");
                 }
 
-                var msXmlGenerator = m_jobParams.GetParam("MSXMLGenerator");          // ReAdW.exe or MSConvert.exe
-                var msXmlFormat = m_jobParams.GetParam("MSXMLOutputType");            // Typically mzXML or mzML
+                var msXmlGenerator = mJobParams.GetParam("MSXMLGenerator");          // ReAdW.exe or MSConvert.exe
+                var msXmlFormat = mJobParams.GetParam("MSXMLOutputType");            // Typically mzXML or mzML
 
                 // Determine the output type
                 switch (msXmlFormat.ToLower())
@@ -127,9 +127,9 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 }
 
                 // Lookup Centroid Settings
-                var centroidMSXML = m_jobParams.GetJobParameter("CentroidMSXML", false);
-                var centroidMS1 = m_jobParams.GetJobParameter("CentroidMS1", false);
-                var centroidMS2 = m_jobParams.GetJobParameter("CentroidMS2", false);
+                var centroidMSXML = mJobParams.GetJobParameter("CentroidMSXML", false);
+                var centroidMS1 = mJobParams.GetJobParameter("CentroidMS1", false);
+                var centroidMS2 = mJobParams.GetJobParameter("CentroidMS2", false);
 
                 if (centroidMSXML)
                 {
@@ -139,17 +139,17 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
                 // Look for parameter CentroidPeakCountToRetain in the MSXMLGenerator section
                 // If the value is -1, will retain all data points
-                var centroidPeakCountToRetain = m_jobParams.GetJobParameter("MSXMLGenerator", "CentroidPeakCountToRetain", 0);
+                var centroidPeakCountToRetain = mJobParams.GetJobParameter("MSXMLGenerator", "CentroidPeakCountToRetain", 0);
 
                 if (centroidPeakCountToRetain == 0)
                 {
                     // Look for parameter CentroidPeakCountToRetain in any section
-                    centroidPeakCountToRetain = m_jobParams.GetJobParameter("CentroidPeakCountToRetain",
+                    centroidPeakCountToRetain = mJobParams.GetJobParameter("CentroidPeakCountToRetain",
                         clsMSXmlGenMSConvert.DEFAULT_CENTROID_PEAK_COUNT_TO_RETAIN);
                 }
 
                 // Look for custom processing arguments
-                var customMSConvertArguments = m_jobParams.GetJobParameter("MSXMLGenerator", "CustomMSConvertArguments", "");
+                var customMSConvertArguments = mJobParams.GetJobParameter("MSXMLGenerator", "CustomMSConvertArguments", "");
 
                 if (string.IsNullOrEmpty(mMSXmlGeneratorAppPath))
                 {
@@ -157,7 +157,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                var rawDataType = m_jobParams.GetParam("RawDataType");
+                var rawDataType = mJobParams.GetParam("RawDataType");
                 var eRawDataType = clsAnalysisResources.GetRawDataType(rawDataType);
 
                 clsMSXmlGen msXmlGen;
@@ -168,7 +168,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                     // ReAdW
                     // mMSXmlGeneratorAppPath should have been populated during the call to StoreToolVersionInfo()
 
-                    msXmlGen = new clsMSXMLGenReadW(m_WorkDir, mMSXmlGeneratorAppPath, m_Dataset, eRawDataType, mMSXmlOutputFileType,
+                    msXmlGen = new clsMSXMLGenReadW(mWorkDir, mMSXmlGeneratorAppPath, mDatasetName, eRawDataType, mMSXmlOutputFileType,
                         centroidMS1 | centroidMS2);
 
                     if (rawDataType != clsAnalysisResources.RAW_DATA_TYPE_DOT_RAW_FILES)
@@ -183,12 +183,12 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
                     if (string.IsNullOrWhiteSpace(customMSConvertArguments))
                     {
-                        msXmlGen = new clsMSXmlGenMSConvert(m_WorkDir, mMSXmlGeneratorAppPath, m_Dataset, eRawDataType, mMSXmlOutputFileType,
+                        msXmlGen = new clsMSXmlGenMSConvert(mWorkDir, mMSXmlGeneratorAppPath, mDatasetName, eRawDataType, mMSXmlOutputFileType,
                             centroidMS1, centroidMS2, centroidPeakCountToRetain);
                     }
                     else
                     {
-                        msXmlGen = new clsMSXmlGenMSConvert(m_WorkDir, mMSXmlGeneratorAppPath, m_Dataset, eRawDataType, mMSXmlOutputFileType,
+                        msXmlGen = new clsMSXmlGenMSConvert(mWorkDir, mMSXmlGeneratorAppPath, mDatasetName, eRawDataType, mMSXmlOutputFileType,
                             customMSConvertArguments);
                     }
                 }
@@ -204,7 +204,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 msXmlGen.LoopWaiting += MSXmlGen_LoopWaiting;
                 msXmlGen.ProgRunnerStarting += MSXmlGen_ProgRunnerStarting;
 
-                msXmlGen.DebugLevel = m_DebugLevel;
+                msXmlGen.DebugLevel = mDebugLevel;
 
                 if (!File.Exists(mMSXmlGeneratorAppPath))
                 {
@@ -242,7 +242,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
         /// <returns>Path to the exe, or an empty string if an error</returns>
         private string GetRecalculatePrecursorsToolProgLoc(out string recalculatePrecursorsTool)
         {
-            recalculatePrecursorsTool = m_jobParams.GetJobParameter("RecalculatePrecursorsTool", string.Empty);
+            recalculatePrecursorsTool = mJobParams.GetJobParameter("RecalculatePrecursorsTool", string.Empty);
             if (string.IsNullOrWhiteSpace(recalculatePrecursorsTool))
             {
                 LogError("Job parameter RecalculatePrecursorsTool is not defined in the settings file; cannot determine tool to use");
@@ -251,7 +251,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
             if (string.Equals(recalculatePrecursorsTool, clsRawConverterRunner.RAWCONVERTER_FILENAME, StringComparison.InvariantCultureIgnoreCase))
             {
-                var rawConverterDir = m_mgrParams.GetParam("RawConverterProgLoc");
+                var rawConverterDir = mMgrParams.GetParam("RawConverterProgLoc");
                 if (string.IsNullOrWhiteSpace(rawConverterDir))
                 {
                     LogError("Manager parameter RawConverterProgLoc is not defined; cannot find the directory for " +
@@ -283,7 +283,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                         throw new Exception("Unrecognized MSXMLOutputType value");
                 }
 
-                var msXmlFilePath = Path.Combine(m_WorkDir, m_Dataset + resultFileExtension);
+                var msXmlFilePath = Path.Combine(mWorkDir, mDatasetName + resultFileExtension);
                 var fiMSXmlFile = new FileInfo(msXmlFilePath);
 
                 if (!fiMSXmlFile.Exists)
@@ -294,7 +294,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
                 // Possibly update the file using results from RawConverter
 
-                var recalculatePrecursors = m_jobParams.GetJobParameter("RecalculatePrecursors", false);
+                var recalculatePrecursors = mJobParams.GetJobParameter("RecalculatePrecursors", false);
                 if (recalculatePrecursors)
                 {
                     var success = RecalculatePrecursorIons(fiMSXmlFile);
@@ -315,8 +315,8 @@ namespace AnalysisManagerMsXmlGenPlugIn
                     return false;
                 }
 
-                var storeInDataset = m_jobParams.GetJobParameter("StoreMSXmlInDataset", false);
-                var storeInCache = m_jobParams.GetJobParameter("StoreMSXmlInCache", true);
+                var storeInDataset = mJobParams.GetJobParameter("StoreMSXmlInDataset", false);
+                var storeInCache = mJobParams.GetJobParameter("StoreMSXmlInCache", true);
 
                 if (!storeInDataset && !storeInCache)
                     storeInCache = true;
@@ -324,8 +324,8 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 if (!storeInDataset)
                 {
                     // Do not move the .mzXML or .mzML file to the result folder
-                    m_jobParams.AddResultFileExtensionToSkip(resultFileExtension);
-                    m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_GZ_EXTENSION);
+                    mJobParams.AddResultFileExtensionToSkip(resultFileExtension);
+                    mJobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_GZ_EXTENSION);
                 }
 
                 if (storeInCache)
@@ -335,7 +335,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
                     if (string.IsNullOrEmpty(remoteCachefilePath))
                     {
-                        if (string.IsNullOrEmpty(m_message))
+                        if (string.IsNullOrEmpty(mMessage))
                         {
                             LogError("CopyFileToServerCache returned false for " + fiMSXmlFile.Name);
                         }
@@ -373,13 +373,13 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 return false;
             }
 
-            var rawDataType = m_jobParams.GetParam("RawDataType");
+            var rawDataType = mJobParams.GetParam("RawDataType");
             var eRawDataType = clsAnalysisResources.GetRawDataType(rawDataType);
             string rawFilePath;
 
             if (eRawDataType == clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile)
             {
-                rawFilePath = Path.Combine(m_WorkDir, m_Dataset + clsAnalysisResources.DOT_RAW_EXTENSION);
+                rawFilePath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_RAW_EXTENSION);
             }
             else
             {
@@ -423,18 +423,18 @@ namespace AnalysisManagerMsXmlGenPlugIn
         {
             try
             {
-                if (m_message == null)
-                    m_message = string.Empty;
-                var messageAtStart = string.Copy(m_message);
+                if (mMessage == null)
+                    mMessage = string.Empty;
+                var messageAtStart = string.Copy(mMessage);
 
-                var converter = new clsRawConverterRunner(rawConverterDir, m_DebugLevel);
+                var converter = new clsRawConverterRunner(rawConverterDir, mDebugLevel);
                 RegisterEvents(converter);
 
                 var success = converter.ConvertRawToMGF(rawFilePath);
 
                 if (!success)
                 {
-                    if (string.IsNullOrWhiteSpace(m_message) || string.Equals(messageAtStart, m_message))
+                    if (string.IsNullOrWhiteSpace(mMessage) || string.Equals(messageAtStart, mMessage))
                     {
                         LogError("Unknown RawConverter error");
                     }
@@ -444,21 +444,21 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
                 // Confirm that RawConverter created a .mgf file
 
-                mgfFile = new FileInfo(Path.Combine(m_WorkDir, m_Dataset + clsAnalysisResources.DOT_MGF_EXTENSION));
+                mgfFile = new FileInfo(Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_MGF_EXTENSION));
                 if (!mgfFile.Exists)
                 {
                     LogError("RawConverter did not create file " + mgfFile.Name);
                     return false;
                 }
 
-                m_jobParams.AddResultFileToSkip(mgfFile.Name);
+                mJobParams.AddResultFileToSkip(mgfFile.Name);
 
                 return true;
             }
             catch (Exception ex)
             {
                 LogError("RawConverter error", ex);
-                m_message = "Exception running RawConverter";
+                mMessage = "Exception running RawConverter";
                 mgfFile = null;
                 return false;
             }
@@ -468,7 +468,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
         {
             try
             {
-                var messageAtStart = string.Copy(m_message);
+                var messageAtStart = string.Copy(mMessage);
 
                 var updater = new clsParentIonUpdater();
                 RegisterEvents(updater);
@@ -477,7 +477,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
                 if (string.IsNullOrEmpty(updatedMzMLPath))
                 {
-                    if (string.IsNullOrWhiteSpace(m_message) || string.Equals(messageAtStart, m_message))
+                    if (string.IsNullOrWhiteSpace(mMessage) || string.Equals(messageAtStart, mMessage))
                     {
                         LogError("Unknown ParentIonUpdater error");
                     }
@@ -510,7 +510,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
             catch (Exception ex)
             {
                 LogError("RecalculatePrecursorIonsUpdateMzML error", ex);
-                m_message = "Exception in RecalculatePrecursorIonsUpdateMzML";
+                mMessage = "Exception in RecalculatePrecursorIonsUpdateMzML";
                 return false;
             }
         }
@@ -519,12 +519,12 @@ namespace AnalysisManagerMsXmlGenPlugIn
         {
             try
             {
-                if (m_DebugLevel > 4)
+                if (mDebugLevel > 4)
                 {
                     LogDebug("Re-index the mzML file using MSConvert");
                 }
 
-                var msXmlGenerator = m_jobParams.GetParam("MSXMLGenerator");
+                var msXmlGenerator = mJobParams.GetParam("MSXMLGenerator");
                 // Must be MSConvert.exe
 
                 if (!msXmlGenerator.ToLower().Contains("msconvert"))
@@ -545,12 +545,12 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 var sourcefileBase = Path.GetFileNameWithoutExtension(mzMLFilePath);
 
                 var msConvertRunner = new clsMSXmlGenMSConvert(
-                    m_WorkDir, mMSXmlGeneratorAppPath,
+                    mWorkDir, mMSXmlGeneratorAppPath,
                     sourcefileBase, eRawDataType, outputFileType,
                     centroidMS1: false, centroidMS2: false, centroidPeakCountToRetain: 0)
                 {
                     ConsoleOutputSuffix = "_Reindex",
-                    DebugLevel = m_DebugLevel
+                    DebugLevel = mDebugLevel
                 };
 
                 RegisterEvents(msConvertRunner);
@@ -570,7 +570,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                     return false;
                 }
 
-                m_jobParams.AddResultFileToSkip(msConvertRunner.ConsoleOutputFileName);
+                mJobParams.AddResultFileToSkip(msConvertRunner.ConsoleOutputFileName);
 
                 if (msConvertRunner.ErrorMessage.Length > 0)
                 {
@@ -578,12 +578,12 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 }
 
                 // Replace the original .mzML file with the new .mzML file
-                var reindexedMzMLFile = new FileInfo(Path.Combine(m_WorkDir, msConvertRunner.OutputFileName));
+                var reindexedMzMLFile = new FileInfo(Path.Combine(mWorkDir, msConvertRunner.OutputFileName));
 
                 if (!reindexedMzMLFile.Exists)
                 {
                     LogError("Reindexed mzML file not found at " + reindexedMzMLFile.FullName);
-                    m_message = "Reindexed mzML file not found";
+                    mMessage = "Reindexed mzML file not found";
                     return false;
                 }
 
@@ -596,7 +596,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
             catch (Exception ex)
             {
                 LogError("ReindexMzML error", ex);
-                m_message = "Exception in ReindexMzML";
+                mMessage = "Exception in ReindexMzML";
                 return false;
             }
         }
@@ -609,7 +609,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
         {
             var strToolVersionInfo = string.Empty;
 
-            if (m_DebugLevel >= 2)
+            if (mDebugLevel >= 2)
             {
                 LogDebug("Determining tool version info");
             }
@@ -619,7 +619,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
             // Determine the path to the XML Generator
             // ReAdW.exe or MSConvert.exe
-            var msXmlGenerator = m_jobParams.GetParam("MSXMLGenerator");
+            var msXmlGenerator = mJobParams.GetParam("MSXMLGenerator");
 
             mMSXmlGeneratorAppPath = string.Empty;
             if (msXmlGenerator.ToLower().Contains("readw"))
@@ -632,7 +632,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
             {
                 // MSConvert
                 // MSConvert.exe is stored in the ProteoWizard folder
-                var ProteoWizardDir = m_mgrParams.GetParam("ProteoWizardDir");
+                var ProteoWizardDir = mMgrParams.GetParam("ProteoWizardDir");
                 mMSXmlGeneratorAppPath = Path.Combine(ProteoWizardDir, msXmlGenerator);
             }
             else
@@ -652,7 +652,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 return false;
             }
 
-            var recalculatePrecursors = m_jobParams.GetJobParameter("RecalculatePrecursors", false);
+            var recalculatePrecursors = mJobParams.GetJobParameter("RecalculatePrecursors", false);
 
             if (recalculatePrecursors)
             {

@@ -77,11 +77,11 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 return result;
             }
 
-            var createPrideXMLFiles = m_jobParams.GetJobParameter("CreatePrideXMLFiles", false);
+            var createPrideXMLFiles = mJobParams.GetJobParameter("CreatePrideXMLFiles", false);
 
-            var cacheFolderPath = m_jobParams.GetJobParameter("CacheFolderPath", DEFAULT_CACHE_FOLDER_PATH);
+            var cacheFolderPath = mJobParams.GetJobParameter("CacheFolderPath", DEFAULT_CACHE_FOLDER_PATH);
 
-            var resultsFolderName = m_jobParams.GetParam(JOB_PARAM_OUTPUT_FOLDER_NAME);
+            var resultsFolderName = mJobParams.GetParam(JOB_PARAM_OUTPUT_FOLDER_NAME);
             if (string.IsNullOrWhiteSpace(resultsFolderName))
             {
                 LogError("Job parameter OutputFolderName is empty");
@@ -91,7 +91,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             var remoteTransferFolderPath = Path.Combine(cacheFolderPath, resultsFolderName);
 
             // Check whether we are only creating the .msgf files
-            var createMSGFReportFilesOnly = m_jobParams.GetJobParameter("CreateMSGFReportFilesOnly", false);
+            var createMSGFReportFilesOnly = mJobParams.GetJobParameter("CreateMSGFReportFilesOnly", false);
             var udtOptions = new clsDataPackageFileHandler.udtDataPackageRetrievalOptionsType {
                 CreateJobPathFiles = true,
                 RemoteTransferFolderPath = remoteTransferFolderPath
@@ -115,17 +115,17 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 udtOptions.RetrievePHRPFiles = false;
             }
 
-            udtOptions.RetrieveDTAFiles = m_jobParams.GetJobParameter("CreateMGFFiles", true);
-            udtOptions.RetrieveMzidFiles = m_jobParams.GetJobParameter("IncludeMZidFiles", true);
-            udtOptions.RetrievePepXMLFiles = m_jobParams.GetJobParameter("IncludePepXMLFiles", false);
+            udtOptions.RetrieveDTAFiles = mJobParams.GetJobParameter("CreateMGFFiles", true);
+            udtOptions.RetrieveMzidFiles = mJobParams.GetJobParameter("IncludeMZidFiles", true);
+            udtOptions.RetrievePepXMLFiles = mJobParams.GetJobParameter("IncludePepXMLFiles", false);
 
-            var disableMyEMSL = m_jobParams.GetJobParameter("DisableMyEMSL", false);
+            var disableMyEMSL = mJobParams.GetJobParameter("DisableMyEMSL", false);
             if (disableMyEMSL)
             {
                 DisableMyEMSLSearch();
             }
 
-            udtOptions.AssumeInstrumentDataUnpurged = m_jobParams.GetJobParameter("AssumeInstrumentDataUnpurged", true);
+            udtOptions.AssumeInstrumentDataUnpurged = mJobParams.GetJobParameter("AssumeInstrumentDataUnpurged", true);
 
             if (createMSGFReportFilesOnly)
             {
@@ -179,7 +179,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 FindMissingMzXmlFiles(dataPackagePeptideHitJobs);
             }
 
-            if (!m_MyEMSLUtilities.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+            if (!mMyEMSLUtilities.ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -205,7 +205,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             {
                 foreach (var dataPkgJob in dataPackagePeptideHitJobs)
                 {
-                    var mzXmlFilePath = Path.Combine(m_WorkingDir, dataPkgJob.Dataset + DOT_MZXML_EXTENSION);
+                    var mzXmlFilePath = Path.Combine(mWorkDir, dataPkgJob.Dataset + DOT_MZXML_EXTENSION);
 
                     if (!File.Exists(mzXmlFilePath))
                     {
@@ -230,8 +230,8 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             }
             catch (Exception ex)
             {
-                m_message = "Exception in FindMissingMzXmlFiles";
-                LogError(m_message + ": " + ex.Message);
+                mMessage = "Exception in FindMissingMzXmlFiles";
+                LogError(mMessage + ": " + ex.Message);
             }
         }
 
@@ -293,7 +293,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
         private bool RetrieveFastaFiles(IEnumerable<clsDataPackageJobInfo> dataPackagePeptideHitJobs)
         {
-            var orgDbDirectoryPath = m_mgrParams.GetParam("OrgDBDir");
+            var orgDbDirectoryPath = mMgrParams.GetParam("OrgDbDir");
 
             try
             {
@@ -317,21 +317,21 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     {
                         OverrideCurrentDatasetAndJobInfo(dataPkgJob);
 
-                        m_jobParams.AddAdditionalParameter("PeptideSearch", "generatedFastaName", string.Empty);
+                        mJobParams.AddAdditionalParameter("PeptideSearch", "generatedFastaName", string.Empty);
                         if (!RetrieveOrgDB(orgDbDirectoryPath, out var resultCode))
                         {
-                            if (string.IsNullOrEmpty(m_message))
-                                m_message = "Call to RetrieveOrgDB returned false in clsAnalysisResourcesPRIDEConverter.RetrieveFastaFiles";
+                            if (string.IsNullOrEmpty(mMessage))
+                                mMessage = "Call to RetrieveOrgDB returned false in clsAnalysisResourcesPRIDEConverter.RetrieveFastaFiles";
                             OverrideCurrentDatasetAndJobInfo(currentDatasetAndJobInfo);
                             return false;
                         }
 
-                        generatedOrgDBName = m_jobParams.GetJobParameter("PeptideSearch", "generatedFastaName", string.Empty);
+                        generatedOrgDBName = mJobParams.GetJobParameter("PeptideSearch", "generatedFastaName", string.Empty);
 
                         if (string.IsNullOrEmpty(generatedOrgDBName))
                         {
-                            m_message = "FASTA file was not generated when RetrieveFastaFiles called RetrieveOrgDB";
-                            LogError(m_message + " (class clsAnalysisResourcesPRIDEConverter)");
+                            mMessage = "FASTA file was not generated when RetrieveFastaFiles called RetrieveOrgDB";
+                            LogError(mMessage + " (class clsAnalysisResourcesPRIDEConverter)");
                             OverrideCurrentDatasetAndJobInfo(currentDatasetAndJobInfo);
                             return false;
                         }
@@ -341,9 +341,9 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                             if (dataPkgJob.OrganismDBName == null)
                                 dataPkgJob.OrganismDBName = "??";
 
-                            m_message = "Generated FASTA file name (" + generatedOrgDBName + ") does not match expected fasta file name (" +
+                            mMessage = "Generated FASTA file name (" + generatedOrgDBName + ") does not match expected fasta file name (" +
                                         dataPkgJob.OrganismDBName + "); aborting";
-                            LogError(m_message + " (class clsAnalysisResourcesPRIDEConverter)");
+                            LogError(mMessage + " (class clsAnalysisResourcesPRIDEConverter)");
                             OverrideCurrentDatasetAndJobInfo(currentDatasetAndJobInfo);
                             return false;
                         }
@@ -353,7 +353,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                     // Add a new job parameter that associates generatedOrgDBName with this job
 
-                    m_jobParams.AddAdditionalParameter("PeptideSearch", GetGeneratedFastaParamNameForJob(dataPkgJob.Job), generatedOrgDBName);
+                    mJobParams.AddAdditionalParameter("PeptideSearch", GetGeneratedFastaParamNameForJob(dataPkgJob.Job), generatedOrgDBName);
                 }
 
                 // Restore the dataset and job info for this aggregation job
@@ -361,8 +361,8 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             }
             catch (Exception ex)
             {
-                m_message = "Exception in RetrieveFastaFiles";
-                LogError(m_message, ex);
+                mMessage = "Exception in RetrieveFastaFiles";
+                LogError(mMessage, ex);
                 return false;
             }
 
@@ -376,14 +376,14 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
             try
             {
-                var templateFileName = GetMSGFReportTemplateFilename(m_jobParams, WarnIfJobParamMissing: true);
+                var templateFileName = GetMSGFReportTemplateFilename(mJobParams, WarnIfJobParamMissing: true);
 
                 // First look for the template file in the data package folder
-                var dataPackagePath = m_jobParams.GetJobParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_TRANSFER_FOLDER_PATH, string.Empty);
+                var dataPackagePath = mJobParams.GetJobParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_TRANSFER_FOLDER_PATH, string.Empty);
                 if (string.IsNullOrEmpty(dataPackagePath))
                 {
-                    m_message = "Job parameter transferFolderPath is missing; unable to determine the data package folder path";
-                    LogError(m_message);
+                    mMessage = "Job parameter transferFolderPath is missing; unable to determine the data package folder path";
+                    LogError(mMessage);
                     return false;
                 }
 
@@ -413,7 +413,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 }
                 else
                 {
-                    var paramFileStoragePath = m_jobParams.GetParam("ParmFileStoragePath");
+                    var paramFileStoragePath = mJobParams.GetParam("ParmFileStoragePath");
                     templateFileName = DEFAULT_MSGF_REPORT_TEMPLATE_FILENAME;
 
                     LogWarning(
@@ -430,14 +430,14 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 }
 
                 // Assure that the MSGF Report Template file job parameter is up-to-date
-                m_jobParams.AddAdditionalParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_MSGF_REPORT_TEMPLATE_FILENAME, templateFileName);
+                mJobParams.AddAdditionalParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_MSGF_REPORT_TEMPLATE_FILENAME, templateFileName);
 
-                m_jobParams.AddResultFileToSkip(templateFileName);
+                mJobParams.AddResultFileToSkip(templateFileName);
             }
             catch (Exception ex)
             {
-                m_message = "Exception in RetrieveMSGFReportTemplateFile";
-                LogError(m_message, ex);
+                mMessage = "Exception in RetrieveMSGFReportTemplateFile";
+                LogError(mMessage, ex);
                 return false;
             }
 
@@ -451,21 +451,21 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
             try
             {
-                var templateFileName = GetPXSubmissionTemplateFilename(m_jobParams, WarnIfJobParamMissing: true);
+                var templateFileName = GetPXSubmissionTemplateFilename(mJobParams, WarnIfJobParamMissing: true);
 
                 // First look for the template file in the data package folder
                 // Note that transferFolderPath is likely \\protoapps\PeptideAtlas_Staging and not the real data package path
 
-                var transferFolderPath = m_jobParams.GetJobParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_TRANSFER_FOLDER_PATH, string.Empty);
+                var transferFolderPath = mJobParams.GetJobParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_TRANSFER_FOLDER_PATH, string.Empty);
                 if (string.IsNullOrEmpty(transferFolderPath))
                 {
-                    m_message = "Job parameter transferFolderPath is missing; unable to determine the data package folder path";
-                    LogError(m_message);
+                    mMessage = "Job parameter transferFolderPath is missing; unable to determine the data package folder path";
+                    LogError(mMessage);
                     return false;
                 }
 
-                var ConnectionString = m_mgrParams.GetParam("brokerconnectionstring");
-                var dataPackageID = m_jobParams.GetJobParameter("DataPackageID", -1);
+                var ConnectionString = mMgrParams.GetParam("brokerconnectionstring");
+                var dataPackageID = mJobParams.GetJobParameter("DataPackageID", -1);
 
                 var matchFound = false;
                 var sourceFolders = new List<string> {
@@ -502,7 +502,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 if (!matchFound)
                 {
-                    var paramFileStoragePath = m_jobParams.GetParam("ParmFileStoragePath");
+                    var paramFileStoragePath = mJobParams.GetParam("ParmFileStoragePath");
                     if (string.IsNullOrEmpty(paramFileStoragePath))
                     {
                         paramFileStoragePath = @"\\gigasax\dms_parameter_Files\PRIDE_Converter";
@@ -515,23 +515,23 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                     if (!FileSearch.RetrieveFile(templateFileName, paramFileStoragePath, 1))
                     {
-                        if (string.IsNullOrEmpty(m_message))
+                        if (string.IsNullOrEmpty(mMessage))
                         {
-                            m_message = "Template PX file " + templateFileName + " to found in the data package folder";
+                            mMessage = "Template PX file " + templateFileName + " to found in the data package folder";
                         }
                         return false;
                     }
                 }
 
                 // Assure that the PX Submission Template file job parameter is up-to-date
-                m_jobParams.AddAdditionalParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_PX_SUBMISSION_TEMPLATE_FILENAME, templateFileName);
+                mJobParams.AddAdditionalParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_PX_SUBMISSION_TEMPLATE_FILENAME, templateFileName);
 
-                m_jobParams.AddResultFileToSkip(templateFileName);
+                mJobParams.AddResultFileToSkip(templateFileName);
             }
             catch (Exception ex)
             {
-                m_message = "Exception in RetrievePXSubmissionTemplateFile";
-                LogError(m_message, ex);
+                mMessage = "Exception in RetrievePXSubmissionTemplateFile";
+                LogError(mMessage, ex);
                 return false;
             }
 

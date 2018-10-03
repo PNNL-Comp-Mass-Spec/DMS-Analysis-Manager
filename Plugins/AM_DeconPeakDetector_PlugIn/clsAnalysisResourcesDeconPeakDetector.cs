@@ -30,12 +30,12 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
                 return result;
             }
 
-            var strRawDataType = m_jobParams.GetJobParameter("RawDataType", "");
+            var strRawDataType = mJobParams.GetJobParameter("RawDataType", "");
 
             // Retrieve the peak detector parameter file
 
-            var peakDetectorParamFileName = m_jobParams.GetJobParameter("PeakDetectorParamFile", "");
-            var paramFileStoragePath = m_jobParams.GetParam("ParmFileStoragePath");
+            var peakDetectorParamFileName = mJobParams.GetJobParameter("PeakDetectorParamFile", "");
+            var paramFileStoragePath = mJobParams.GetParam("ParmFileStoragePath");
 
             paramFileStoragePath = Path.Combine(paramFileStoragePath, "PeakDetection");
 
@@ -47,16 +47,16 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
             // Retrieve the instrument data file
             if (!FileSearch.RetrieveSpectra(strRawDataType))
             {
-                if (string.IsNullOrEmpty(m_message))
+                if (string.IsNullOrEmpty(mMessage))
                 {
-                    m_message = "Error retrieving instrument data file";
+                    mMessage = "Error retrieving instrument data file";
                 }
 
-                LogDebug("clsDtaGenResources.GetResources: " + m_message);
+                LogDebug("clsDtaGenResources.GetResources: " + mMessage);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            if (!base.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+            if (!base.ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }

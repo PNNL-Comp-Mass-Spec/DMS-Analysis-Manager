@@ -96,7 +96,6 @@ namespace AnalysisManagerProg
         private readonly string mMgrConfigDBConnectionString;
         private readonly string mManagerName;
 
-        private readonly int mDebugLevel;
         private readonly string mMgrFolderPath;
 
         private readonly string mWorkingDirPath;
@@ -110,7 +109,7 @@ namespace AnalysisManagerProg
         /// <param name="debugLevel"></param>
         /// <param name="mgrFolderPath"></param>
         /// <param name="workingDirPath"></param>
-        public clsCleanupMgrErrors(string mgrConfigDBConnectionString, string managerName, int debugLevel, string mgrFolderPath, string workingDirPath)
+        public clsCleanupMgrErrors(string mgrConfigDBConnectionString, string managerName, short debugLevel, string mgrFolderPath, string workingDirPath)
         {
             if (string.IsNullOrEmpty(mgrConfigDBConnectionString) && !clsGlobal.OfflineMode)
                 throw new Exception("Manager config DB connection string is not defined");

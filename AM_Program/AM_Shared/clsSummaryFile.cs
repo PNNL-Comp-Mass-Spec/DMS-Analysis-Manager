@@ -22,7 +22,7 @@ namespace AnalysisManagerBase
 
         #region "Module Variables"
 
-        private readonly List<string> m_lines = new List<string>();
+        private readonly List<string> mLines = new List<string>();
 
         #endregion
 
@@ -34,7 +34,7 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public void Clear()
         {
-            m_lines.Clear();
+            mLines.Clear();
         }
 
         /// <summary>
@@ -50,7 +50,7 @@ namespace AnalysisManagerBase
                 using (var swSummaryFile = new StreamWriter(new FileStream(AnalysisSummaryFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
 
-                    foreach (var outLine in m_lines)
+                    foreach (var outLine in mLines)
                     {
                         swSummaryFile.WriteLine(outLine);
                     }
@@ -73,7 +73,7 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public void Add(string line)
         {
-            m_lines.Add(line);
+            mLines.Add(line);
         }
 
         #endregion

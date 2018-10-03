@@ -41,16 +41,16 @@ namespace AnalysisManagerMODaPlugIn
             // Make sure the machine has enough free memory to run MODa
             if (!ValidateFreeMemorySize("MODaJavaMemorySize"))
             {
-                m_message = "Not enough free memory to run MODa";
+                mMessage = "Not enough free memory to run MODa";
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
             // Retrieve param file
-            if (!FileSearch.RetrieveFile(m_jobParams.GetParam("ParmFileName"), m_jobParams.GetParam("ParmFileStoragePath")))
+            if (!FileSearch.RetrieveFile(mJobParams.GetParam("ParmFileName"), mJobParams.GetParam("ParmFileStoragePath")))
                 return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
 
             // Retrieve Fasta file
-            var orgDbDirectoryPath = m_mgrParams.GetParam("OrgDBDir");
+            var orgDbDirectoryPath = mMgrParams.GetParam("OrgDbDir");
             if (!RetrieveOrgDB(orgDbDirectoryPath, out var resultCode))
                 return resultCode;
 
@@ -59,40 +59,40 @@ namespace AnalysisManagerMODaPlugIn
 
             if (!FileSearch.RetrieveDtaFiles())
             {
-                var sharedResultsFolders = m_jobParams.GetParam(JOB_PARAM_SHARED_RESULTS_FOLDERS);
+                var sharedResultsFolders = mJobParams.GetParam(JOB_PARAM_SHARED_RESULTS_FOLDERS);
                 if (string.IsNullOrEmpty(sharedResultsFolders))
                 {
-                    m_message = clsGlobal.AppendToComment(m_message, "Job parameter SharedResultsFolders is empty");
+                    mMessage = clsGlobal.AppendToComment(mMessage, "Job parameter SharedResultsFolders is empty");
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
 
                 if (sharedResultsFolders.Contains(","))
                 {
-                    m_message = clsGlobal.AppendToComment(m_message, "shared results folders: " + sharedResultsFolders);
+                    mMessage = clsGlobal.AppendToComment(mMessage, "shared results folders: " + sharedResultsFolders);
                 }
                 else
                 {
-                    m_message = clsGlobal.AppendToComment(m_message, "shared results folder " + sharedResultsFolders);
+                    mMessage = clsGlobal.AppendToComment(mMessage, "shared results folder " + sharedResultsFolders);
                 }
 
                 // Errors were reported in function call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
-            if (!ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+            if (!ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
             {
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
             // If the _dta.txt file is over 2 GB in size, condense it
-            if (!ValidateCDTAFileSize(m_WorkingDir, DatasetName + CDTA_EXTENSION))
+            if (!ValidateCDTAFileSize(mWorkDir, DatasetName + CDTA_EXTENSION))
             {
                 // Errors were reported in function call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
             // Remove any spectra from the _DTA.txt file with fewer than 3 ions
-            if (!ValidateCDTAFileRemoveSparseSpectra(m_WorkingDir, DatasetName + CDTA_EXTENSION))
+            if (!ValidateCDTAFileRemoveSparseSpectra(mWorkDir, DatasetName + CDTA_EXTENSION))
             {
                 // Errors were reported in function call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
@@ -124,12 +124,12 @@ namespace AnalysisManagerMODaPlugIn
                 const bool createIndexFile = true;
 
                 // Convert the _dta.txt file for this dataset
-                var cdtaFile = new FileInfo(Path.Combine(m_WorkingDir, DatasetName + CDTA_EXTENSION));
+                var cdtaFile = new FileInfo(Path.Combine(mWorkDir, DatasetName + CDTA_EXTENSION));
 
                 var success = cdtaUtilities.ConvertCDTAToMGF(cdtaFile, DatasetName, combine2And3PlusCharges, maximumIonsPer100MzInterval, createIndexFile);
                 if (!success)
                 {
-                    if (string.IsNullOrEmpty(m_message))
+                    if (string.IsNullOrEmpty(mMessage))
                     {
                         LogError("ConvertCDTAToMGF reports false");
                     }
@@ -146,14 +146,14 @@ namespace AnalysisManagerMODaPlugIn
                     LogWarning("Unable to delete the _dta.txt file after successfully converting it to .mgf: " + ex.Message);
                 }
 
-                m_jobParams.AddResultFileExtensionToSkip(".mgf");
+                mJobParams.AddResultFileExtensionToSkip(".mgf");
 
                 return true;
             }
             catch (Exception ex)
             {
-                m_message = "Exception in ConvertCDTAToMGF";
-                LogError(m_message, ex);
+                mMessage = "Exception in ConvertCDTAToMGF";
+                LogError(mMessage, ex);
                 return false;
             }
 

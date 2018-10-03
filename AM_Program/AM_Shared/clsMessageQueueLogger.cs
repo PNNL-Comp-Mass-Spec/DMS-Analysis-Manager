@@ -38,7 +38,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// local queue that contains messages to be sent
         /// </summary>
-        private readonly Queue<clsMessageContainer> m_statusMessages = new Queue<clsMessageContainer>();
+        private readonly Queue<clsMessageContainer> mstatusMessages = new Queue<clsMessageContainer>();
 
         public clsMessageQueueLogger()
         {
@@ -57,7 +57,7 @@ namespace AnalysisManagerBase
 
             lock (locker)
             {
-                m_statusMessages.Enqueue(messageContainer);
+                mstatusMessages.Enqueue(messageContainer);
             }
 
             if (!worker.IsAlive)
@@ -73,7 +73,7 @@ namespace AnalysisManagerBase
         /// Worker that runs in the worker thread
         /// It pulls messages off the queue and posts
         /// them via the delegate.  When no more messages
-        /// it waits until signalled by new message added to queue
+        /// it waits until signaled by new message added to queue
         /// </summary>
         private void PostalWorker()
         {
@@ -82,9 +82,9 @@ namespace AnalysisManagerBase
                 clsMessageContainer messageContainer = null;
                 lock (locker)
                 {
-                    if (m_statusMessages.Count > 0)
+                    if (mstatusMessages.Count > 0)
                     {
-                        messageContainer = m_statusMessages.Dequeue();
+                        messageContainer = mstatusMessages.Dequeue();
                         if (messageContainer?.Message == null)
                         {
                             return;
@@ -99,7 +99,7 @@ namespace AnalysisManagerBase
                 }
                 else
                 {
-                    // No more m_statusMessages - wait for a signal
+                    // No more mStatusMessages - wait for a signal
                     waitHandle.WaitOne(60000);
                 }
             }

@@ -43,13 +43,13 @@ namespace AnalysisManagerDtaImportPlugIn
                 // This folder must contain subfolders whose name matches the output_folder name assigned to each job
                 // Furthermore, each subfolder must have a file named Dataset_dta.zip
 
-                var sourceFolderNamePath = Path.Combine(m_mgrParams.GetParam("DTAFolderLocation"), m_jobParams.GetParam(JOB_PARAM_OUTPUT_FOLDER_NAME));
+                var sourceFolderNamePath = Path.Combine(mMgrParams.GetParam("DTAFolderLocation"), mJobParams.GetParam(JOB_PARAM_OUTPUT_FOLDER_NAME));
 
                 // Determine if Dta folder in source directory exists
                 if (!Directory.Exists(sourceFolderNamePath))
                 {
-                    m_message = "Source Directory for Manually created Dta does not exist";
-                    LogErrorToDatabase(m_message + ": " + sourceFolderNamePath);
+                    mMessage = "Source Directory for Manually created Dta does not exist";
+                    LogErrorToDatabase(mMessage + ": " + sourceFolderNamePath);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
@@ -59,17 +59,17 @@ namespace AnalysisManagerDtaImportPlugIn
                 // Process the list of files found in the directory.
                 if (fileEntries.Length < 1)
                 {
-                    m_message = "DTA zip file was not found in source directory";
-                    LogErrorToDatabase(m_message + ": " + Path.Combine(sourceFolderNamePath, zipFileName));
+                    mMessage = "DTA zip file was not found in source directory";
+                    LogErrorToDatabase(mMessage + ": " + Path.Combine(sourceFolderNamePath, zipFileName));
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 // If valid zip file is found, uzip the contents
                 foreach (var fileName in fileEntries)
                 {
-                    if (UnzipFileStart(Path.Combine(m_WorkingDir, fileName), m_WorkingDir, "clsAnalysisResourcesDtaImport.ValidateDTA", false))
+                    if (UnzipFileStart(Path.Combine(mWorkDir, fileName), mWorkDir, "clsAnalysisResourcesDtaImport.ValidateDTA", false))
                     {
-                        if (m_DebugLevel >= 1)
+                        if (mDebugLevel >= 1)
                         {
                             LogMessage("Manual DTA file unzipped");
                         }
@@ -82,7 +82,7 @@ namespace AnalysisManagerDtaImportPlugIn
                 }
 
                 var txtFileName = DatasetName + "_dta.txt";
-                fileEntries = Directory.GetFiles(m_WorkingDir, txtFileName);
+                fileEntries = Directory.GetFiles(mWorkDir, txtFileName);
                 if (fileEntries.Length < 1)
                 {
                     LogError("DTA text file in the zip file was named incorrectly or not valid");

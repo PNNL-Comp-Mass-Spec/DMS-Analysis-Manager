@@ -37,11 +37,11 @@ namespace AnalysisManager_Cyclops_PlugIn
                 }
 
                 LogMessage("Running Cyclops");
-                m_progress = PROGRESS_PCT_CYCLOPS_START;
+                mProgress = PROGRESS_PCT_CYCLOPS_START;
                 UpdateStatusRunning();
 
 
-                if (m_DebugLevel > 4)
+                if (mDebugLevel > 4)
                 {
                     LogDebug("clsAnalysisToolRunnerApe.RunTool(): Enter");
                 }
@@ -50,7 +50,7 @@ namespace AnalysisManager_Cyclops_PlugIn
                 if (!StoreToolVersionInfo())
                 {
                     LogError("Aborting since StoreToolVersionInfo returned false");
-                    m_message = "Error determining Cyclops version";
+                    mMessage = "Error determining Cyclops version";
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
@@ -61,27 +61,27 @@ namespace AnalysisManager_Cyclops_PlugIn
 
                 if (!Directory.Exists(rProgLocFromRegistry))
                 {
-                    m_message = "R folder not found (path determined from the Windows Registry)";
-                    LogError(m_message + " at " + rProgLocFromRegistry);
+                    mMessage = "R folder not found (path determined from the Windows Registry)";
+                    LogError(mMessage + " at " + rProgLocFromRegistry);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 var d_Params = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
                 {
-                    {"Job", m_jobParams.GetParam("Job")},
+                    {"Job", mJobParams.GetParam("Job")},
                     {"RDLL", rProgLocFromRegistry},
-                    {"CyclopsWorkflowName", m_jobParams.GetParam("CyclopsWorkflowName")},
-                    {"workDir", m_WorkDir},
-                    {"Consolidation_Factor", m_jobParams.GetParam("Consolidation_Factor")},
-                    {"Fixed_Effect", m_jobParams.GetParam("Fixed_Effect")},
-                    {"RunProteinProphet", m_jobParams.GetParam("RunProteinProphet")},
-                    {"orgdbdir", m_mgrParams.GetParam("orgdbdir")}
+                    {"CyclopsWorkflowName", mJobParams.GetParam("CyclopsWorkflowName")},
+                    {"workDir", mWorkDir},
+                    {"Consolidation_Factor", mJobParams.GetParam("Consolidation_Factor")},
+                    {"Fixed_Effect", mJobParams.GetParam("Fixed_Effect")},
+                    {"RunProteinProphet", mJobParams.GetParam("RunProteinProphet")},
+                    {"orgdbdir", mMgrParams.GetParam("OrgDbDir")}
                 };
 
 
                 // Create the cyclops log file
                 // This class will write messages to the log file
-                var cyclopsLogFile = Path.Combine(m_WorkDir, "Cyclops_Log.txt");
+                var cyclopsLogFile = Path.Combine(mWorkDir, "Cyclops_Log.txt");
                 mCyclopsLogWriter = new StreamWriter(new FileStream(cyclopsLogFile, FileMode.Create, FileAccess.Write, FileShare.ReadWrite))
                 {
                     AutoFlush = true
@@ -125,8 +125,8 @@ namespace AnalysisManager_Cyclops_PlugIn
                 mCyclopsLogWriter.Dispose();
 
                 // Stop the job timer
-                m_StopTime = DateTime.UtcNow;
-                m_progress = PROGRESS_PCT_CYCLOPS_DONE;
+                mStopTime = DateTime.UtcNow;
+                mProgress = PROGRESS_PCT_CYCLOPS_DONE;
 
                 // Add the current job data to the summary file
                 UpdateSummaryFile();
@@ -147,24 +147,24 @@ namespace AnalysisManager_Cyclops_PlugIn
                 }
 
                 // Override the output folder name and the dataset name (since this is a dataset aggregation job)
-                m_ResFolderName = m_jobParams.GetParam("StepOutputFolderName");
-                m_Dataset = m_jobParams.GetParam(clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME);
-                m_jobParams.SetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME, m_ResFolderName);
+                mResultsFolderName = mJobParams.GetParam("StepOutputFolderName");
+                mDatasetName = mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME);
+                mJobParams.SetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME, mResultsFolderName);
 
                 var resultsFolderCreated = MakeResultsFolder();
                 if (!resultsFolderCreated)
                 {
                     // MakeResultsFolder handles posting to local log, so set database error message and exit
-                    m_message = "Error making results folder";
+                    mMessage = "Error making results folder";
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 // Move the Plots folder to the result files folder
-                var diPlotsFolder = new DirectoryInfo(Path.Combine(m_WorkDir, "Plots"));
+                var diPlotsFolder = new DirectoryInfo(Path.Combine(mWorkDir, "Plots"));
 
                 if (diPlotsFolder.Exists)
                 {
-                    var strTargetFolderPath = Path.Combine(Path.Combine(m_WorkDir, m_ResFolderName), "Plots");
+                    var strTargetFolderPath = Path.Combine(Path.Combine(mWorkDir, mResultsFolderName), "Plots");
                     diPlotsFolder.MoveTo(strTargetFolderPath);
                 }
 
@@ -175,8 +175,8 @@ namespace AnalysisManager_Cyclops_PlugIn
             }
             catch (Exception ex)
             {
-                m_message = "Error in CyclopsPlugin->RunTool";
-                LogError(m_message, ex);
+                mMessage = "Error in CyclopsPlugin->RunTool";
+                LogError(mMessage, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -229,7 +229,7 @@ namespace AnalysisManager_Cyclops_PlugIn
 
                 if (deleteFile)
                 {
-                    m_FileTools.DeleteFileWithRetry(fiCyclopsLogFile, out _);
+                    mFileTools.DeleteFileWithRetry(fiCyclopsLogFile, out _);
                 }
 
             }
@@ -283,7 +283,7 @@ namespace AnalysisManager_Cyclops_PlugIn
             AppendToCyclopsLog(errorMessage);
 
             // Cyclops error messages sometimes contain a carriage return followed by a stack trace
-            // We don't want that information in m_message so split on \r and \n
+            // We don't want that information in mMessage so split on \r and \n
             var messageParts = message.Split('\r', '\n');
             LogError(messageParts[0]);
         }
@@ -301,7 +301,7 @@ namespace AnalysisManager_Cyclops_PlugIn
             AppendToCyclopsLog(warningMessage);
 
             // Cyclops messages sometimes contain a carriage return followed by a stack trace
-            // We don't want that information in m_message so split on \r and \n
+            // We don't want that information in mMessage so split on \r and \n
             var messageParts = message.Split('\r', '\n');
             LogWarning(messageParts[0]);
         }

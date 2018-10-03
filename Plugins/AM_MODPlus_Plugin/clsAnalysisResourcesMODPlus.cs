@@ -67,8 +67,8 @@ namespace AnalysisManagerMODPlusPlugin
             }
             catch (Exception ex)
             {
-                m_message = "Exception in GetResources: " + ex.Message;
-                LogError(m_message + "; task = " + currentTask + "; " + clsGlobal.GetExceptionStackTrace(ex));
+                mMessage = "Exception in GetResources: " + ex.Message;
+                LogError(mMessage + "; task = " + currentTask + "; " + clsGlobal.GetExceptionStackTrace(ex));
                 return CloseOutType.CLOSEOUT_FAILED;
             }
         }
@@ -79,8 +79,8 @@ namespace AnalysisManagerMODPlusPlugin
 
             try
             {
-                var proteinCollections = m_jobParams.GetParam("ProteinCollectionList", string.Empty);
-                var proteinOptions = m_jobParams.GetParam("ProteinOptions", string.Empty);
+                var proteinCollections = mJobParams.GetParam("ProteinCollectionList", string.Empty);
+                var proteinOptions = mJobParams.GetParam("ProteinOptions", string.Empty);
 
                 if (string.IsNullOrEmpty(proteinCollections))
                 {
@@ -112,7 +112,7 @@ namespace AnalysisManagerMODPlusPlugin
                 }
 
                 // Retrieve the Fasta file
-                var orgDbDirectoryPath = m_mgrParams.GetParam("orgdbdir");
+                var orgDbDirectoryPath = mMgrParams.GetParam("OrgDbDir");
 
                 currentTask = "RetrieveOrgDB to " + orgDbDirectoryPath;
 
@@ -127,7 +127,7 @@ namespace AnalysisManagerMODPlusPlugin
                     }
                 }
 
-                m_jobParams.AddAdditionalParameter("MODPlus", MOD_PLUS_RUNTIME_PARAM_FASTA_FILE_IS_DECOY, "True");
+                mJobParams.AddAdditionalParameter("MODPlus", MOD_PLUS_RUNTIME_PARAM_FASTA_FILE_IS_DECOY, "True");
 
                 LogMessage("Getting param file");
 
@@ -137,7 +137,7 @@ namespace AnalysisManagerMODPlusPlugin
                 //  FROM V_Param_File_Mass_Mod_Info
                 //  WHERE Param_File_Name = 'ParamFileName'
 
-                var paramFileName = m_jobParams.GetParam("ParmFileName");
+                var paramFileName = mJobParams.GetParam("ParmFileName");
 
                 currentTask = "RetrieveGeneratedParamFile " + paramFileName;
 
@@ -150,16 +150,16 @@ namespace AnalysisManagerMODPlusPlugin
             }
             catch (Exception ex)
             {
-                m_message = "Exception in RetrieveFastaAndParamFile: " + ex.Message;
-                LogError(m_message + "; task = " + currentTask + "; " + clsGlobal.GetExceptionStackTrace(ex));
+                mMessage = "Exception in RetrieveFastaAndParamFile: " + ex.Message;
+                LogError(mMessage + "; task = " + currentTask + "; " + clsGlobal.GetExceptionStackTrace(ex));
                 return false;
             }
         }
 
         private bool FastaHasDecoyProteins()
         {
-            var localOrgDbFolder = m_mgrParams.GetParam("orgdbdir");
-            var fastaFilePath = Path.Combine(localOrgDbFolder, m_jobParams.GetParam("PeptideSearch", "generatedFastaName"));
+            var localOrgDbFolder = mMgrParams.GetParam("OrgDbDir");
+            var fastaFilePath = Path.Combine(localOrgDbFolder, mJobParams.GetParam("PeptideSearch", "generatedFastaName"));
 
             var fiFastaFile = new FileInfo(fastaFilePath);
 

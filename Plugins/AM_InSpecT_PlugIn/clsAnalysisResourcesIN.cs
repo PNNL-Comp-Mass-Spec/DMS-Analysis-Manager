@@ -39,12 +39,12 @@ namespace AnalysisManagerInSpecTPlugIn
             }
 
             // Retrieve Fasta file
-            var orgDbDirectoryPath = m_mgrParams.GetParam("orgdbdir");
+            var orgDbDirectoryPath = mMgrParams.GetParam("OrgDbDir");
             if (!RetrieveOrgDB(orgDbDirectoryPath, out var resultCode))
                 return resultCode;
 
             // Retrieve param file
-            if (!RetrieveGeneratedParamFile(m_jobParams.GetParam("ParmFileName")))
+            if (!RetrieveGeneratedParamFile(mJobParams.GetParam("ParmFileName")))
             {
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
@@ -57,9 +57,9 @@ namespace AnalysisManagerInSpecTPlugIn
             }
 
             // Add all the extensions of the files to delete after run
-            m_jobParams.AddResultFileExtensionToSkip("_dta.zip");  // Zipped DTA
-            m_jobParams.AddResultFileExtensionToSkip("_dta.txt");  // Unzipped, concatenated DTA
-            m_jobParams.AddResultFileExtensionToSkip(".dta");      // DTA files
+            mJobParams.AddResultFileExtensionToSkip("_dta.zip");  // Zipped DTA
+            mJobParams.AddResultFileExtensionToSkip("_dta.txt");  // Unzipped, concatenated DTA
+            mJobParams.AddResultFileExtensionToSkip(".dta");      // DTA files
 
             // All finished
             return CloseOutType.CLOSEOUT_SUCCESS;
@@ -76,8 +76,8 @@ namespace AnalysisManagerInSpecTPlugIn
             string dtaResultFileName;
             var isParallelized = false;
 
-            var cloneStepRenum = m_jobParams.GetParam("CloneStepRenumberStart");
-            var stepNum = m_jobParams.GetParam("Step");
+            var cloneStepRenum = mJobParams.GetParam("CloneStepRenumberStart");
+            var stepNum = mJobParams.GetParam("Step");
 
             // Determine if this is parallelized inspect job
             if (string.IsNullOrEmpty(cloneStepRenum))
@@ -97,7 +97,7 @@ namespace AnalysisManagerInSpecTPlugIn
             if (string.IsNullOrEmpty(DtaResultFolderName))
             {
                 // No folder found containing the zipped DTA files (error will have already been logged)
-                if (m_DebugLevel >= 3)
+                if (mDebugLevel >= 3)
                 {
                     LogError("FindDataFile returned False for " + dtaResultFileName);
                 }
@@ -106,11 +106,11 @@ namespace AnalysisManagerInSpecTPlugIn
 
             if (DtaResultFolderName.StartsWith(MYEMSL_PATH_FLAG))
             {
-                if (m_MyEMSLUtilities.ProcessMyEMSLDownloadQueue(m_WorkingDir, Downloader.DownloadFolderLayout.FlatNoSubfolders))
+                if (mMyEMSLUtilities.ProcessMyEMSLDownloadQueue(mWorkDir, Downloader.DownloadFolderLayout.FlatNoSubfolders))
                 {
-                    if (m_DebugLevel >= 1)
+                    if (mDebugLevel >= 1)
                     {
-                        LogMessage("Downloaded " + m_MyEMSLUtilities.DownloadedFiles.First().Value.Filename + " from MyEMSL");
+                        LogMessage("Downloaded " + mMyEMSLUtilities.DownloadedFiles.First().Value.Filename + " from MyEMSL");
                     }
                 }
                 else
@@ -121,10 +121,10 @@ namespace AnalysisManagerInSpecTPlugIn
             else
             {
                 // Copy the file
-                if (!CopyFileToWorkDir(dtaResultFileName, DtaResultFolderName, m_WorkingDir))
+                if (!CopyFileToWorkDir(dtaResultFileName, DtaResultFolderName, mWorkDir))
                 {
                     // Error copying file (error will have already been logged)
-                    if (m_DebugLevel >= 3)
+                    if (mDebugLevel >= 3)
                     {
                         LogError("CopyFileToWorkDir returned False for " + dtaResultFileName + " using directory " + DtaResultFolderName);
                     }
@@ -139,9 +139,9 @@ namespace AnalysisManagerInSpecTPlugIn
             {
                 // Unzip concatenated DTA file
                 LogMessage("Unzipping concatenated DTA file");
-                if (UnzipFileStart(Path.Combine(m_WorkingDir, dtaResultFileName), m_WorkingDir, "clsAnalysisResourcesIN.RetrieveDtaFiles", false))
+                if (UnzipFileStart(Path.Combine(mWorkDir, dtaResultFileName), mWorkDir, "clsAnalysisResourcesIN.RetrieveDtaFiles", false))
                 {
-                    if (m_DebugLevel >= 1)
+                    if (mDebugLevel >= 1)
                     {
                         LogDebug("Concatenated DTA file unzipped");
                     }

@@ -14,8 +14,8 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
         protected const float PROGRESS_PCT_MULTIALIGN_START = 1;
         protected const float PROGRESS_PCT_MULTIALIGN_DONE = 99;
 
-        protected string m_CurrentMultiAlignTask = string.Empty;
-        protected DateTime m_LastStatusUpdateTime;
+        protected string mCurrentMultiAlignTask = string.Empty;
+        protected DateTime mLastStatusUpdateTime;
 
         /// <summary>
         /// Primary entry point for running this tool
@@ -46,30 +46,30 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                 if (!StoreToolVersionInfo(progLoc))
                 {
                     LogError("Aborting since StoreToolVersionInfo returned false");
-                    m_message = "Error determining MultiAlign version";
+                    mMessage = "Error determining MultiAlign version";
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                m_CurrentMultiAlignTask = "Running MultiAlign";
-                m_LastStatusUpdateTime = DateTime.UtcNow;
-                UpdateStatusRunning(m_progress);
+                mCurrentMultiAlignTask = "Running MultiAlign";
+                mLastStatusUpdateTime = DateTime.UtcNow;
+                UpdateStatusRunning(mProgress);
 
-                LogMessage(m_CurrentMultiAlignTask);
+                LogMessage(mCurrentMultiAlignTask);
 
                 // Change the name of the log file for the local log file to the plugin log filename
-                var logFileName = Path.Combine(m_WorkDir, "MultiAlign_Log.txt");
+                var logFileName = Path.Combine(mWorkDir, "MultiAlign_Log.txt");
                 LogTools.ChangeLogFileBaseName(logFileName, appendDateToBaseName: false);
 
                 bool processingSuccess;
 
                 try
                 {
-                    m_progress = PROGRESS_PCT_MULTIALIGN_START;
+                    mProgress = PROGRESS_PCT_MULTIALIGN_START;
                     processingSuccess = RunMultiAlign(progLoc);
                 }
                 catch (Exception ex)
                 {
-                    m_message = "Error running MultiAlign: " + ex.Message;
+                    mMessage = "Error running MultiAlign: " + ex.Message;
                     processingSuccess = false;
                 }
 
@@ -82,17 +82,17 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                 }
                 else
                 {
-                    if (string.IsNullOrWhiteSpace(m_message))
-                        m_message = "Unknown error running MultiAlign";
+                    if (string.IsNullOrWhiteSpace(mMessage))
+                        mMessage = "Unknown error running MultiAlign";
                     else
-                        m_message = "Error running MultiAlign: " + m_message;
+                        mMessage = "Error running MultiAlign: " + mMessage;
 
-                    LogError(m_message);
+                    LogError(mMessage);
                 }
 
                 // Stop the job timer
-                m_StopTime = DateTime.UtcNow;
-                m_progress = PROGRESS_PCT_MULTIALIGN_DONE;
+                mStopTime = DateTime.UtcNow;
+                mProgress = PROGRESS_PCT_MULTIALIGN_DONE;
 
                 // Add the current job data to the summary file
                 UpdateSummaryFile();
@@ -110,9 +110,9 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                 }
 
                 // Override the output folder name and the dataset name (since this is a dataset aggregation job)
-                m_ResFolderName = m_jobParams.GetParam("StepOutputFolderName");
-                m_Dataset = m_jobParams.GetParam(clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME);
-                m_jobParams.SetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME, m_ResFolderName);
+                mResultsFolderName = mJobParams.GetParam("StepOutputFolderName");
+                mDatasetName = mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME);
+                mJobParams.SetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME, mResultsFolderName);
 
                 var resultsFolderCreated = MakeResultsFolder();
                 if (!resultsFolderCreated)
@@ -122,11 +122,11 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                 }
 
                 // Move the Plots folder to the result files folder
-                var diPlotsFolder = new DirectoryInfo(Path.Combine(m_WorkDir, "Plots"));
+                var diPlotsFolder = new DirectoryInfo(Path.Combine(mWorkDir, "Plots"));
 
                 if (diPlotsFolder.Exists)
                 {
-                    var strTargetFolderPath = Path.Combine(Path.Combine(m_WorkDir, m_ResFolderName), "Plots");
+                    var strTargetFolderPath = Path.Combine(Path.Combine(mWorkDir, mResultsFolderName), "Plots");
 
                     try
                     {
@@ -135,7 +135,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                     catch (Exception ex)
                     {
                         LogWarning("Exception moving Plot Folder " + diPlotsFolder.FullName + ": " + ex.Message);
-                        m_FileTools.CopyDirectory(diPlotsFolder.FullName, strTargetFolderPath, true);
+                        mFileTools.CopyDirectory(diPlotsFolder.FullName, strTargetFolderPath, true);
                     }
 
                     // Zip up (then delete) the PNG files in the plots folder
@@ -149,8 +149,8 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
             }
             catch (Exception ex)
             {
-                m_message = "Error in MultiAlignPlugin->RunTool";
-                LogError(m_message, ex);
+                mMessage = "Error in MultiAlignPlugin->RunTool";
+                LogError(mMessage, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
 
             }
@@ -166,7 +166,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 
             try
             {
-                var oMultiAlignMage = new clsMultiAlignMage(m_jobParams, m_mgrParams, m_StatusTools);
+                var oMultiAlignMage = new clsMultiAlignMage(mJobParams, mMgrParams, mStatusTools);
                 RegisterEvents(oMultiAlignMage);
 
                 bSuccess = oMultiAlignMage.Run(sMultiAlignConsolePath);
@@ -174,16 +174,16 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                 if (!bSuccess)
                 {
                     if (!string.IsNullOrWhiteSpace(oMultiAlignMage.Message))
-                        m_message = oMultiAlignMage.Message;
+                        mMessage = oMultiAlignMage.Message;
                     else
-                        m_message = "Unknown error running MultiAlign";
+                        mMessage = "Unknown error running MultiAlign";
                 }
 
             }
             catch (Exception ex)
             {
-                m_message = "Unknown error running MultiAlign: " + ex.Message;
-                LogError(m_message);
+                mMessage = "Unknown error running MultiAlign: " + ex.Message;
+                LogError(mMessage);
                 return false;
             }
 
@@ -200,7 +200,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 
             var strToolVersionInfo = string.Empty;
 
-            if (m_DebugLevel >= 2)
+            if (mDebugLevel >= 2)
             {
                 LogDebug("Determining tool version info");
             }
@@ -290,27 +290,27 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 
                     if (pngFileCount == 1)
                     {
-                        if (m_DebugLevel >= 2)
+                        if (mDebugLevel >= 2)
                             LogMessage("Only 1 .PNG file exists in the Plots folder; file will not be zipped");
                         return true;
                     }
 
                     if (pngFileCount < fileCountThreshold)
                     {
-                        if (m_DebugLevel >= 2)
+                        if (mDebugLevel >= 2)
                             LogMessage("Only " + pngFileCount + " .PNG files exist in the Plots folder; files will not be zipped");
                         return true;
                     }
 
                     var strZipFilePath = Path.Combine(diPlotsFolder.FullName, "PlotFiles.zip");
 
-                    var success = m_DotNetZipTools.ZipDirectory(diPlotsFolder.FullName, strZipFilePath, false, "*.png");
+                    var success = mDotNetZipTools.ZipDirectory(diPlotsFolder.FullName, strZipFilePath, false, "*.png");
 
                     if (!success)
                     {
                         var msg = "Error zipping the plot files";
-                        if (!string.IsNullOrEmpty(m_DotNetZipTools.Message))
-                            LogError(msg + ": " + m_DotNetZipTools.Message);
+                        if (!string.IsNullOrEmpty(mDotNetZipTools.Message))
+                            LogError(msg + ": " + mDotNetZipTools.Message);
                         else
                             LogError(msg);
 

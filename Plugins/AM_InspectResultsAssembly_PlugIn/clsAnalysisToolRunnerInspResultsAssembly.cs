@@ -102,7 +102,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
             try
             {
-                if (m_DebugLevel > 4)
+                if (mDebugLevel > 4)
                 {
                     LogDebug("clsAnalysisToolRunnerInspResultsAssembly.RunTool(): Enter");
                 }
@@ -114,12 +114,12 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                 if (!StoreToolVersionInfo())
                 {
                     LogError("Aborting since StoreToolVersionInfo returned false");
-                    m_message = "Error determining Inspect Results Assembly version";
+                    mMessage = "Error determining Inspect Results Assembly version";
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 // Determine if this is a parallelized job
-                var numClonedSteps = m_jobParams.GetParam("NumberOfClonedSteps");
+                var numClonedSteps = mJobParams.GetParam("NumberOfClonedSteps");
 
                 var processingSuccess = true;
                 bool isParallelized;
@@ -144,7 +144,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                     // This is a parallelized job; need to re-assemble the results
                     var numResultFiles = Convert.ToInt32(numClonedSteps);
 
-                    if (m_DebugLevel >= 1)
+                    if (mDebugLevel >= 1)
                     {
                         LogDebug("Assembling parallelized inspect files; file count = " + numResultFiles);
                     }
@@ -183,11 +183,11 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                     }
                 }
 
-                m_progress = 100;
+                mProgress = 100;
                 UpdateStatusRunning();
 
                 // Stop the job timer
-                m_StopTime = DateTime.UtcNow;
+                mStopTime = DateTime.UtcNow;
 
                 // Add the current job data to the summary file
                 UpdateSummaryFile();
@@ -214,7 +214,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                 {
                     if (!RemoveNonResultServerFiles())
                     {
-                        LogWarning("Error deleting non Result files from directory on server, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
+                        LogWarning("Error deleting non Result files from directory on server, job " + mJob + ", step " + mJobParams.GetParam("Step"));
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
                 }
@@ -243,14 +243,14 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
         {
             base.Setup(stepToolName, mgrParams, jobParams, statusTools, summaryFile, myEMSLUtilities);
 
-            mInspectResultsFileName = m_Dataset + ORIGINAL_INSPECT_FILE_SUFFIX;
+            mInspectResultsFileName = mDatasetName + ORIGINAL_INSPECT_FILE_SUFFIX;
         }
 
         private CloseOutType AssembleResults(int intNumResultFiles)
         {
             try
             {
-                if (m_DebugLevel >= 3)
+                if (mDebugLevel >= 3)
                 {
                     LogDebug("Assembling parallelized inspect result files");
                 }
@@ -264,20 +264,20 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                     return result;
                 }
 
-                if (m_DebugLevel >= 3)
+                if (mDebugLevel >= 3)
                 {
                     LogDebug("Assembling parallelized inspect error files");
                 }
 
-                var strFileName = m_Dataset + "_error.txt";
+                var strFileName = mDatasetName + "_error.txt";
                 result = AssembleFiles(strFileName, ResultFileType.INSPECT_ERROR, intNumResultFiles);
                 if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     return result;
                 }
-                m_jobParams.AddResultFileToKeep(strFileName);
+                mJobParams.AddResultFileToKeep(strFileName);
 
-                if (m_DebugLevel >= 3)
+                if (mDebugLevel >= 3)
                 {
                     LogDebug("Assembling parallelized inspect search log files");
                 }
@@ -288,9 +288,9 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                 {
                     return result;
                 }
-                m_jobParams.AddResultFileToKeep(strFileName);
+                mJobParams.AddResultFileToKeep(strFileName);
 
-                if (m_DebugLevel >= 3)
+                if (mDebugLevel >= 3)
                 {
                     LogDebug("Assembling parallelized inspect console output files");
                 }
@@ -301,7 +301,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                 {
                     return result;
                 }
-                m_jobParams.AddResultFileToKeep(strFileName);
+                mJobParams.AddResultFileToKeep(strFileName);
 
                 // FilterInspectResultsByFirstHits will create file _inspect_fht.txt
                 result = FilterInspectResultsByFirstHits();
@@ -313,8 +313,8 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             }
             catch (Exception ex)
             {
-                m_message = "Error in InspectResultsAssembly->AssembleResults";
-                LogError(m_message + ": " + ex.Message);
+                mMessage = "Error in InspectResultsAssembly->AssembleResults";
+                LogError(mMessage + ": " + ex.Message);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -336,9 +336,9 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
             try
             {
-                var DatasetName = m_Dataset;
+                var DatasetName = mDatasetName;
 
-                var tw = CreateNewExportFile(Path.Combine(m_WorkDir, strCombinedFileName));
+                var tw = CreateNewExportFile(Path.Combine(mWorkDir, strCombinedFileName));
                 if (tw == null)
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -388,12 +388,12 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                         break;
                     }
 
-                    if (!File.Exists(Path.Combine(m_WorkDir, inspectResultsFile)))
+                    if (!File.Exists(Path.Combine(mWorkDir, inspectResultsFile)))
                         continue;
 
                     var intLinesRead = 0;
 
-                    var tr = new StreamReader(new FileStream(Path.Combine(m_WorkDir, inspectResultsFile), FileMode.Open, FileAccess.Read, FileShare.Read));
+                    var tr = new StreamReader(new FileStream(Path.Combine(mWorkDir, inspectResultsFile), FileMode.Open, FileAccess.Read, FileShare.Read));
                     var s = tr.ReadLine();
 
                     while (s != null)
@@ -484,8 +484,8 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             }
             catch (Exception ex)
             {
-                m_message = "Error in InspectResultsAssembly->AssembleFiles";
-                LogError(m_message + ": " + ex.Message);
+                mMessage = "Error in InspectResultsAssembly->AssembleFiles";
+                LogError(mMessage + ": " + ex.Message);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -507,16 +507,16 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
         private CloseOutType CreatePeptideToProteinMapping()
         {
-            var OrgDbDir = m_mgrParams.GetParam("orgdbdir");
+            var OrgDbDir = mMgrParams.GetParam("OrgDbDir");
 
             // Note that job parameter "generatedFastaName" gets defined by clsAnalysisResources.RetrieveOrgDB
-            var dbFilename = Path.Combine(OrgDbDir, m_jobParams.GetParam("PeptideSearch", "generatedFastaName"));
+            var dbFilename = Path.Combine(OrgDbDir, mJobParams.GetParam("PeptideSearch", "generatedFastaName"));
 
             var blnIgnorePeptideToProteinMapperErrors = false;
 
             UpdateStatusRunning(mPercentCompleteStartLevels[(int) eInspectResultsProcessingSteps.CreatePeptideToProteinMapping]);
 
-            var strInputFilePath = Path.Combine(m_WorkDir, mInspectResultsFileName);
+            var strInputFilePath = Path.Combine(mWorkDir, mInspectResultsFileName);
 
             try
             {
@@ -539,44 +539,44 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                     // File is empty or only contains a header line
                     LogError("No results above threshold; filtered inspect results file is empty");
 
-                    // Storing "No results above threshold" in m_message will result in the job being assigned state No Export (14) in DMS
+                    // Storing "No results above threshold" in mMessage will result in the job being assigned state No Export (14) in DMS
                     // See stored procedure UpdateJobState
-                    m_message = NO_RESULTS_ABOVE_THRESHOLD;
+                    mMessage = NO_RESULTS_ABOVE_THRESHOLD;
                     return CloseOutType.CLOSEOUT_NO_DATA;
                 }
             }
             catch (Exception ex)
             {
-                m_message = "Error validating Inspect results file contents in InspectResultsAssembly->CreatePeptideToProteinMapping";
+                mMessage = "Error validating Inspect results file contents in InspectResultsAssembly->CreatePeptideToProteinMapping";
 
-                LogError(m_message + ", job " + m_JobNum, ex);
+                LogError(mMessage + ", job " + mJob, ex);
 
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
             try
             {
-                if (m_DebugLevel >= 1)
+                if (mDebugLevel >= 1)
                 {
                     LogDebug("Creating peptide to protein map file");
                 }
 
-                blnIgnorePeptideToProteinMapperErrors = m_jobParams.GetJobParameter("IgnorePeptideToProteinMapError", false);
+                blnIgnorePeptideToProteinMapperErrors = mJobParams.GetJobParameter("IgnorePeptideToProteinMapError", false);
 
                 mPeptideToProteinMapper = new clsPeptideToProteinMapEngine();
 
                 RegisterEvents(mPeptideToProteinMapper);
                 mPeptideToProteinMapper.ProgressUpdate -= ProgressUpdateHandler;
-                mPeptideToProteinMapper.ProgressUpdate += mPeptideToProteinMapper_ProgressChanged;
+                mPeptideToProteinMapper.ProgressUpdate += PeptideToProteinMapper_ProgressChanged;
 
                 mPeptideToProteinMapper.DeleteInspectTempFiles = true;
                 mPeptideToProteinMapper.IgnoreILDifferences = false;
-                mPeptideToProteinMapper.InspectParameterFilePath = Path.Combine(m_WorkDir, INSPECT_INPUT_PARAMS_FILENAME);
+                mPeptideToProteinMapper.InspectParameterFilePath = Path.Combine(mWorkDir, INSPECT_INPUT_PARAMS_FILENAME);
 
-                if (m_DebugLevel > 2)
+                if (mDebugLevel > 2)
                 {
                     mPeptideToProteinMapper.LogMessagesToFile = true;
-                    mPeptideToProteinMapper.LogFolderPath = m_WorkDir;
+                    mPeptideToProteinMapper.LogFolderPath = mWorkDir;
                 }
                 else
                 {
@@ -592,13 +592,13 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                 mPeptideToProteinMapper.SearchAllProteinsForPeptideSequence = true;
                 mPeptideToProteinMapper.SearchAllProteinsSkipCoverageComputationSteps = true;
 
-                var blnSuccess = mPeptideToProteinMapper.ProcessFile(strInputFilePath, m_WorkDir, string.Empty, true);
+                var blnSuccess = mPeptideToProteinMapper.ProcessFile(strInputFilePath, mWorkDir, string.Empty, true);
 
                 mPeptideToProteinMapper.CloseLogFileNow();
 
                 if (blnSuccess)
                 {
-                    if (m_DebugLevel >= 2)
+                    if (mDebugLevel >= 2)
                     {
                         LogDebug("Peptide to protein mapping complete");
                     }
@@ -618,10 +618,10 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             }
             catch (Exception ex)
             {
-                m_message = "Error in InspectResultsAssembly->CreatePeptideToProteinMapping";
+                mMessage = "Error in InspectResultsAssembly->CreatePeptideToProteinMapping";
 
                 LogError("clsAnalysisToolRunnerInspResultsAssembly.CreatePeptideToProteinMapping, Error running the PeptideToProteinMapEngine, job " +
-                    m_JobNum, ex);
+                    mJob, ex);
 
                 if (blnIgnorePeptideToProteinMapperErrors)
                 {
@@ -650,7 +650,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                 var intModCount = 0;
                 udtModList = new udtModInfoType[-1 + 1];
 
-                if (m_DebugLevel > 4)
+                if (mDebugLevel > 4)
                 {
                     LogDebug("clsAnalysisToolRunnerInspResultsAssembly.ExtractModInfoFromInspectParamFile(): Reading " + strInspectParameterFilePath);
                 }
@@ -710,8 +710,8 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             }
             catch (Exception ex)
             {
-                m_message = "Error in InspectResultsAssembly->ExtractModInfoFromInspectParamFile";
-                LogError(m_message + ": " + ex.Message);
+                mMessage = "Error in InspectResultsAssembly->ExtractModInfoFromInspectParamFile";
+                LogError(mMessage + ": " + ex.Message);
                 return false;
             }
 
@@ -725,8 +725,8 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
         /// <remarks></remarks>
         private CloseOutType FilterInspectResultsByFirstHits()
         {
-            var strInspectResultsFilePath = Path.Combine(m_WorkDir, mInspectResultsFileName);
-            var strFilteredFilePath = Path.Combine(m_WorkDir, m_Dataset + FIRST_HITS_INSPECT_FILE_SUFFIX);
+            var strInspectResultsFilePath = Path.Combine(mWorkDir, mInspectResultsFileName);
+            var strFilteredFilePath = Path.Combine(mWorkDir, mDatasetName + FIRST_HITS_INSPECT_FILE_SUFFIX);
 
             UpdateStatusRunning(mPercentCompleteStartLevels[(int) eInspectResultsProcessingSteps.RunpValue]);
 
@@ -743,8 +743,8 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
         /// <remarks></remarks>
         private CloseOutType FilterInspectResultsByPValue()
         {
-            var strInspectResultsFilePath = Path.Combine(m_WorkDir, mInspectResultsFileName);
-            var strFilteredFilePath = Path.Combine(m_WorkDir, m_Dataset + FILTERED_INSPECT_FILE_SUFFIX);
+            var strInspectResultsFilePath = Path.Combine(mWorkDir, mInspectResultsFileName);
+            var strFilteredFilePath = Path.Combine(mWorkDir, mDatasetName + FILTERED_INSPECT_FILE_SUFFIX);
 
             UpdateStatusRunning(mPercentCompleteStartLevels[(int) eInspectResultsProcessingSteps.RunpValue]);
 
@@ -780,8 +780,8 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                 return false;
             }
 
-            var strTargetFilePath = Path.Combine(m_WorkDir, mInspectResultsFileName);
-            if (m_DebugLevel >= 3)
+            var strTargetFilePath = Path.Combine(mWorkDir, mInspectResultsFileName);
+            if (mDebugLevel >= 3)
             {
                 LogDebug("Renaming " + fiFileInfo.FullName + " to " + strTargetFilePath);
             }
@@ -791,7 +791,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
             var blnSuccess = ZipFile(fiFileInfo.FullName, blnDeleteSourceAfterZip, strZipFilePath);
 
-            m_jobParams.AddResultFileToKeep(Path.GetFileName(strZipFilePath));
+            mJobParams.AddResultFileToKeep(Path.GetFileName(strZipFilePath));
 
             return blnSuccess;
         }
@@ -804,8 +804,8 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
         /// <remarks></remarks>
         private CloseOutType RescoreAssembledInspectResults()
         {
-            var strInspectResultsFilePath = Path.Combine(m_WorkDir, mInspectResultsFileName);
-            var strFilteredFilePath = Path.Combine(m_WorkDir, m_Dataset + FILTERED_INSPECT_FILE_SUFFIX);
+            var strInspectResultsFilePath = Path.Combine(mWorkDir, mInspectResultsFileName);
+            var strFilteredFilePath = Path.Combine(mWorkDir, mDatasetName + FILTERED_INSPECT_FILE_SUFFIX);
 
             UpdateStatusRunning(mPercentCompleteStartLevels[(int) eInspectResultsProcessingSteps.RunpValue]);
 
@@ -832,7 +832,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                if (m_DebugLevel >= 1)
+                if (mDebugLevel >= 1)
                 {
                     LogDebug(
                         "Rescored Inspect results file created; size is " +
@@ -842,8 +842,8 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             }
             catch (Exception ex)
             {
-                m_message = "Error in InspectResultsAssembly->RescoreAssembledInspectResults";
-                LogError(m_message + ": " + ex.Message);
+                mMessage = "Error in InspectResultsAssembly->RescoreAssembledInspectResults";
+                LogError(mMessage + ": " + ex.Message);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -852,26 +852,26 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
         private CloseOutType RunpValue(string strInspectResultsInputFilePath, string strOutputFilePath, bool blnCreateImageFiles, bool blnTopHitOnly)
         {
-            var InspectDir = m_mgrParams.GetParam("inspectdir");
-            var pvalDistributionFilename = Path.Combine(m_WorkDir, m_Dataset + "_PValueDistribution.txt");
+            var InspectDir = mMgrParams.GetParam("inspectdir");
+            var pvalDistributionFilename = Path.Combine(mWorkDir, mDatasetName + "_PValueDistribution.txt");
 
             // The following code is only required if you use the -a and -d switches
-            //'var orgDbDir = m_mgrParams.GetParam("orgdbdir")
-            //'var fastaFilename = Path.Combine(orgDbDir, m_jobParams.GetParam("PeptideSearch", "generatedFastaName"))
+            //'var orgDbDir = mMgrParams.GetParam("OrgDbDir")
+            //'var fastaFilename = Path.Combine(orgDbDir, mJobParams.GetParam("PeptideSearch", "generatedFastaName"))
             //'var dbFilename = fastaFilename.Replace("fasta", "trie")
 
-            var pythonProgLoc = m_mgrParams.GetParam("pythonprogloc");
+            var pythonProgLoc = mMgrParams.GetParam("pythonprogloc");
 
             // Check whether a shuffled DB was created prior to running Inspect
             var blnShuffledDBUsed = ValidateShuffledDBInUse(strInspectResultsInputFilePath);
 
             // Lookup the p-value to filter on
-            var pthresh = m_jobParams.GetJobParameter("InspectPvalueThreshold", "0.1");
+            var pthresh = mJobParams.GetJobParameter("InspectPvalueThreshold", "0.1");
 
-            var cmdRunner = new clsRunDosProgram(InspectDir, m_DebugLevel);
+            var cmdRunner = new clsRunDosProgram(InspectDir, mDebugLevel);
             RegisterEvents(cmdRunner);
 
-            if (m_DebugLevel > 4)
+            if (mDebugLevel > 4)
             {
                 LogDebug("clsAnalysisToolRunnerInspResultsAssembly.RunpValue(): Enter");
             }
@@ -893,7 +893,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             }
 
             // Possibly required: Update the PTMods.txt file in InspectDir to contain the modification details, as defined in inspect_input.txt
-            UpdatePTModsFile(InspectDir, Path.Combine(m_WorkDir, "inspect_input.txt"));
+            UpdatePTModsFile(InspectDir, Path.Combine(mWorkDir, "inspect_input.txt"));
 
             // Set up and execute a program runner to run PVALUE_MINLENGTH5_SCRIPT.py
             // Note that PVALUE_MINLENGTH5_SCRIPT.py is nearly identical to PValue.py but it retains peptides with 5 amino acids (default is 7)
@@ -938,7 +938,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             // That would require that the database file be present, and this can take quite a bit longer
             //'cmdStr += " -a -d " + dbFilename
 
-            if (m_DebugLevel >= 1)
+            if (mDebugLevel >= 1)
             {
                 LogDebug(progLoc + " " + cmdStr);
             }
@@ -948,7 +948,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             cmdRunner.EchoOutputToConsole = true;
 
             cmdRunner.WriteConsoleOutputToFile = true;
-            cmdRunner.ConsoleOutputFilePath = Path.Combine(m_WorkDir, "PValue_ConsoleOutput.txt");
+            cmdRunner.ConsoleOutputFilePath = Path.Combine(mWorkDir, "PValue_ConsoleOutput.txt");
 
             if (!cmdRunner.RunProgram(progLoc, cmdStr, "PValue", false))
             {
@@ -973,7 +973,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             var strToolVersionInfo = string.Empty;
             var strAppFolderPath = clsGlobal.GetAppFolderPath();
 
-            if (m_DebugLevel >= 2)
+            if (mDebugLevel >= 2)
             {
                 LogDebug("Determining tool version info");
             }
@@ -1037,7 +1037,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
             try
             {
-                if (m_DebugLevel > 4)
+                if (mDebugLevel > 4)
                 {
                     LogDebug("clsAnalysisToolRunnerInspResultsAssembly.UpdatePTModsFile(): Enter ");
                 }
@@ -1055,9 +1055,9 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                         // In case two managers are doing this simultaneously, we'll put a unique string in strPTModsFilePathNew
 
                         var strPTModsFilePath = Path.Combine(strInspectDir, "PTMods.txt");
-                        var strPTModsFilePathNew = strPTModsFilePath + ".Job" + m_JobNum + ".tmp";
+                        var strPTModsFilePathNew = strPTModsFilePath + ".Job" + mJob + ".tmp";
 
-                        if (m_DebugLevel > 4)
+                        if (mDebugLevel > 4)
                         {
                             LogDebug("clsAnalysisToolRunnerInspResultsAssembly.UpdatePTModsFile(): Open " + strPTModsFilePath);
                             LogDebug("clsAnalysisToolRunnerInspResultsAssembly.UpdatePTModsFile(): Create " + strPTModsFilePathNew);
@@ -1121,7 +1121,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                                                         // Mis-match; update the line
                                                         strLineIn = mod.ModName + "\t" + mod.ModMass + "\t" + mod.Residues;
 
-                                                        if (m_DebugLevel > 4)
+                                                        if (mDebugLevel > 4)
                                                         {
                                                             LogDebug(
                                                                 "clsAnalysisToolRunnerInspResultsAssembly.UpdatePTModsFile(): Mod def in PTMods.txt doesn't match required mod def; updating to: " +
@@ -1188,7 +1188,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                             catch (Exception ex)
                             {
                                 LogError("clsAnalysisToolRunnerInspResultsAssembly.UpdatePTModsFile, " +
-                                         "Error swapping in the new PTMods.txt file : " + m_JobNum + "; " + ex.Message);
+                                         "Error swapping in the new PTMods.txt file : " + mJob + "; " + ex.Message);
                                 return false;
                             }
                         }
@@ -1209,8 +1209,8 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             }
             catch (Exception ex)
             {
-                m_message = "Error in InspectResultsAssembly->UpdatePTModsFile";
-                LogError(m_message + ": " + ex.Message);
+                mMessage = "Error in InspectResultsAssembly->UpdatePTModsFile";
+                LogError(mMessage + ": " + ex.Message);
                 return false;
             }
 
@@ -1221,7 +1221,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
         {
             var chSepChars = new[] { '\t' };
 
-            var blnShuffledDBUsed = m_jobParams.GetJobParameter("InspectUsesShuffledDB", false);
+            var blnShuffledDBUsed = mJobParams.GetJobParameter("InspectUsesShuffledDB", false);
 
             if (blnShuffledDBUsed)
             {
@@ -1278,8 +1278,8 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                 }
                 catch (Exception ex)
                 {
-                    m_message = "Error in InspectResultsAssembly->strInspectResultsPath";
-                    LogError(m_message + ": " + ex.Message);
+                    mMessage = "Error in InspectResultsAssembly->strInspectResultsPath";
+                    LogError(mMessage + ": " + ex.Message);
                 }
             }
 
@@ -1302,8 +1302,8 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                 // Zip up the _inspect.txt file into _inspect_all.zip
                 // Rename to _inspect.txt before zipping
                 // Delete the _inspect.txt file after zipping
-                var blnSuccess = RenameAndZipInspectFile(Path.Combine(m_WorkDir, m_Dataset + ORIGINAL_INSPECT_FILE_SUFFIX),
-                                                         Path.Combine(m_WorkDir, m_Dataset + "_inspect_all.zip"), true);
+                var blnSuccess = RenameAndZipInspectFile(Path.Combine(mWorkDir, mDatasetName + ORIGINAL_INSPECT_FILE_SUFFIX),
+                                                         Path.Combine(mWorkDir, mDatasetName + "_inspect_all.zip"), true);
 
                 if (!blnSuccess)
                 {
@@ -1313,8 +1313,8 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                 // Zip up the _inspect_fht.txt file into _inspect_fht.zip
                 // Rename to _inspect.txt before zipping
                 // Delete the _inspect.txt file after zipping
-                blnSuccess = RenameAndZipInspectFile(Path.Combine(m_WorkDir, m_Dataset + FIRST_HITS_INSPECT_FILE_SUFFIX),
-                    Path.Combine(m_WorkDir, m_Dataset + "_inspect_fht.zip"), true);
+                blnSuccess = RenameAndZipInspectFile(Path.Combine(mWorkDir, mDatasetName + FIRST_HITS_INSPECT_FILE_SUFFIX),
+                    Path.Combine(mWorkDir, mDatasetName + "_inspect_fht.zip"), true);
 
                 if (!blnSuccess)
                 {
@@ -1324,8 +1324,8 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                 // Zip up the _inspect_filtered.txt file into _inspect.zip
                 // Rename to _inspect.txt before zipping
                 // Do not delete the _inspect.txt file after zipping since it is used in function CreatePeptideToProteinMapping
-                blnSuccess = RenameAndZipInspectFile(Path.Combine(m_WorkDir, m_Dataset + FILTERED_INSPECT_FILE_SUFFIX),
-                    Path.Combine(m_WorkDir, m_Dataset + "_inspect.zip"), false);
+                blnSuccess = RenameAndZipInspectFile(Path.Combine(mWorkDir, mDatasetName + FILTERED_INSPECT_FILE_SUFFIX),
+                    Path.Combine(mWorkDir, mDatasetName + "_inspect.zip"), false);
 
                 if (!blnSuccess)
                 {
@@ -1333,12 +1333,12 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                 }
 
                 // Add the _inspect.txt file to .FilesToDelete since we only want to keep the Zipped version
-                m_jobParams.AddResultFileToSkip(mInspectResultsFileName);
+                mJobParams.AddResultFileToSkip(mInspectResultsFileName);
             }
             catch (Exception ex)
             {
-                m_message = "Error in InspectResultsAssembly->ZipInspectResults";
-                LogError(m_message + ": " + ex.Message);
+                mMessage = "Error in InspectResultsAssembly->ZipInspectResults";
+                LogError(mMessage + ": " + ex.Message);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -1349,16 +1349,16 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
         #region "Event Handlers"
 
-        private void mPeptideToProteinMapper_ProgressChanged(string taskDescription, float percentComplete)
+        private void PeptideToProteinMapper_ProgressChanged(string taskDescription, float percentComplete)
         {
             // Note that percentComplete is a value between 0 and 100
 
-            var sngStartPercent = mPercentCompleteStartLevels[(int) eInspectResultsProcessingSteps.CreatePeptideToProteinMapping];
-            var sngEndPercent = mPercentCompleteStartLevels[(int) eInspectResultsProcessingSteps.CreatePeptideToProteinMapping + 1];
+            var startPercent = mPercentCompleteStartLevels[(int) eInspectResultsProcessingSteps.CreatePeptideToProteinMapping];
+            var endPercent = mPercentCompleteStartLevels[(int) eInspectResultsProcessingSteps.CreatePeptideToProteinMapping + 1];
 
-            var sngPercentCompleteEffective = sngStartPercent + (float)(percentComplete / 100.0 * (sngEndPercent - sngStartPercent));
+            var percentCompleteEffective = startPercent + (float)(percentComplete / 100.0 * (endPercent - startPercent));
 
-            UpdateStatusFile(sngPercentCompleteEffective);
+            UpdateStatusFile(percentCompleteEffective);
 
             LogProgress("Mapping peptides to proteins", 3);
         }

@@ -54,7 +54,7 @@ namespace AnalysisManagerPBFGenerator
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                if (m_DebugLevel > 4)
+                if (mDebugLevel > 4)
                 {
                     LogDebug("clsAnalysisToolRunnerPBFGenerator.RunTool(): Enter");
                 }
@@ -75,7 +75,7 @@ namespace AnalysisManagerPBFGenerator
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                var msXMLCacheFolderPath = m_mgrParams.GetParam("MSXMLCacheFolderPath", string.Empty);
+                var msXMLCacheFolderPath = mMgrParams.GetParam("MSXMLCacheFolderPath", string.Empty);
                 mMSXmlCacheFolder = new DirectoryInfo(msXMLCacheFolderPath);
 
                 if (!mMSXmlCacheFolder.Exists)
@@ -91,7 +91,7 @@ namespace AnalysisManagerPBFGenerator
                 {
                     // Look for the results file
 
-                    var fiResultsFile = new FileInfo(Path.Combine(m_WorkDir, m_Dataset + clsAnalysisResources.DOT_PBF_EXTENSION));
+                    var fiResultsFile = new FileInfo(Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_PBF_EXTENSION));
 
                     if (fiResultsFile.Exists)
                     {
@@ -107,7 +107,7 @@ namespace AnalysisManagerPBFGenerator
                                 // This version is created by Pbf_Gen.exe v1.0.5311
                                 // Make sure the output folder starts with PBF_Gen_1_191
                                 // (which will be the case if the settings file has <item key="PbfFormatVersion" value="110569"/>)
-                                if (!m_ResFolderName.StartsWith("PBF_Gen_1_191"))
+                                if (!mResultsFolderName.StartsWith("PBF_Gen_1_191"))
                                 {
                                     processingSuccess = false;
                                 }
@@ -116,7 +116,7 @@ namespace AnalysisManagerPBFGenerator
                                 // This version is created by Pbf_Gen.exe v1.0.5367
                                 // Make sure the output folder starts with PBF_Gen_1_193
                                 // (which will be the case if the settings file has <item key="PbfFormatVersion" value="150604"/>)
-                                if (!m_ResFolderName.StartsWith("PBF_Gen_1_193"))
+                                if (!mResultsFolderName.StartsWith("PBF_Gen_1_193"))
                                 {
                                     processingSuccess = false;
                                 }
@@ -125,7 +125,7 @@ namespace AnalysisManagerPBFGenerator
                                 // This version is created by Pbf_Gen.exe v1.0.6526
                                 // Make sure the output folder starts with PBF_Gen_1_214
                                 // (which will be the case if the settings file has <item key="PbfFormatVersion" value="150605"/>)
-                                if (!m_ResFolderName.StartsWith("PBF_Gen_1_214"))
+                                if (!mResultsFolderName.StartsWith("PBF_Gen_1_214"))
                                 {
                                     processingSuccess = false;
                                 }
@@ -135,7 +135,7 @@ namespace AnalysisManagerPBFGenerator
                                 // This version is created by Pbf_Gen.exe v1.0.5714
                                 // Make sure the output folder starts with PBF_Gen_1_243
                                 // (which will be the case if the settings file has <item key="PbfFormatVersion" value="150608"/>)
-                                if (!m_ResFolderName.StartsWith("PBF_Gen_1_243"))
+                                if (!mResultsFolderName.StartsWith("PBF_Gen_1_243"))
                                 {
                                     processingSuccess = false;
                                 }
@@ -169,7 +169,7 @@ namespace AnalysisManagerPBFGenerator
 
                             if (string.IsNullOrEmpty(remoteCachefilePath))
                             {
-                                if (string.IsNullOrEmpty(m_message))
+                                if (string.IsNullOrEmpty(mMessage))
                                 {
                                     LogError("CopyFileToServerCache returned false for " + fiResultsFile.Name);
                                 }
@@ -183,12 +183,12 @@ namespace AnalysisManagerPBFGenerator
                                 swOutFile.WriteLine(remoteCachefilePath);
                             }
 
-                            m_jobParams.AddResultFileToSkip(fiResultsFile.Name);
+                            mJobParams.AddResultFileToSkip(fiResultsFile.Name);
                         }
                     }
                     else
                     {
-                        if (string.IsNullOrEmpty(m_message))
+                        if (string.IsNullOrEmpty(mMessage))
                         {
                             LogError("PBF_Gen results file not found: " + fiResultsFile.Name);
                             processingSuccess = false;
@@ -196,10 +196,10 @@ namespace AnalysisManagerPBFGenerator
                     }
                 }
 
-                m_progress = PROGRESS_PCT_COMPLETE;
+                mProgress = PROGRESS_PCT_COMPLETE;
 
                 // Stop the job timer
-                m_StopTime = DateTime.UtcNow;
+                mStopTime = DateTime.UtcNow;
 
                 // Add the current job data to the summary file
                 UpdateSummaryFile();
@@ -216,7 +216,7 @@ namespace AnalysisManagerPBFGenerator
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                m_jobParams.AddResultFileExtensionToSkip("_ConsoleOutput.txt");
+                mJobParams.AddResultFileExtensionToSkip("_ConsoleOutput.txt");
 
                 var success = CopyResultsToTransferDirectory();
 
@@ -225,8 +225,8 @@ namespace AnalysisManagerPBFGenerator
             }
             catch (Exception ex)
             {
-                m_message = "Error in clsAnalysisToolRunnerPBFGenerator->RunTool";
-                LogError(m_message, ex);
+                mMessage = "Error in clsAnalysisToolRunnerPBFGenerator->RunTool";
+                LogError(mMessage, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -237,8 +237,8 @@ namespace AnalysisManagerPBFGenerator
         /// </summary>
         public override void CopyFailedResultsToArchiveFolder()
         {
-            m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_PBF_EXTENSION);
-            m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_RAW_EXTENSION);
+            mJobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_PBF_EXTENSION);
+            mJobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_RAW_EXTENSION);
 
             base.CopyFailedResultsToArchiveFolder();
         }
@@ -287,7 +287,7 @@ namespace AnalysisManagerPBFGenerator
             {
                 if (!File.Exists(strConsoleOutputFilePath))
                 {
-                    if (m_DebugLevel >= 4)
+                    if (mDebugLevel >= 4)
                     {
                         LogDebug("Console output file not found: " + strConsoleOutputFilePath);
                     }
@@ -295,7 +295,7 @@ namespace AnalysisManagerPBFGenerator
                     return;
                 }
 
-                if (m_DebugLevel >= 4)
+                if (mDebugLevel >= 4)
                 {
                     LogDebug("Parsing file " + strConsoleOutputFilePath);
                 }
@@ -335,15 +335,15 @@ namespace AnalysisManagerPBFGenerator
 
                 var progressComplete = EstimatePBFProgress();
 
-                if (m_progress < progressComplete)
+                if (mProgress < progressComplete)
                 {
-                    m_progress = progressComplete;
+                    mProgress = progressComplete;
                 }
             }
             catch (Exception ex)
             {
                 // Ignore errors here
-                if (m_DebugLevel >= 2)
+                if (mDebugLevel >= 2)
                 {
                     LogError("Error parsing console output file (" + strConsoleOutputFilePath + ")", ex);
                 }
@@ -354,7 +354,7 @@ namespace AnalysisManagerPBFGenerator
         {
             mConsoleOutputErrorMsg = string.Empty;
 
-            var rawDataType = m_jobParams.GetJobParameter("RawDataType", "");
+            var rawDataType = mJobParams.GetJobParameter("RawDataType", "");
             var eRawDataType = clsAnalysisResources.GetRawDataType(rawDataType);
 
             if (eRawDataType != clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile)
@@ -363,7 +363,7 @@ namespace AnalysisManagerPBFGenerator
                 return false;
             }
 
-            var rawFilePath = Path.Combine(m_WorkDir, m_Dataset + clsAnalysisResources.DOT_RAW_EXTENSION);
+            var rawFilePath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_RAW_EXTENSION);
 
             // Cache the size of the instrument data file
             var fiInstrumentFile = new FileInfo(rawFilePath);
@@ -377,21 +377,21 @@ namespace AnalysisManagerPBFGenerator
             mPbfFormatVersion = string.Empty;
 
             // Cache the full path to the expected output file
-            mResultsFilePath = Path.Combine(m_WorkDir, m_Dataset + clsAnalysisResources.DOT_PBF_EXTENSION);
+            mResultsFilePath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_PBF_EXTENSION);
 
             LogMessage("Running PBFGen to create the PBF file");
 
             // Set up and execute a program runner to run PBFGen
             var cmdStr = " -s " + rawFilePath;
 
-            // cmdStr += " -o " + m_WorkDir
+            // cmdStr += " -o " + mWorkDir
 
-            if (m_DebugLevel >= 1)
+            if (mDebugLevel >= 1)
             {
                 LogDebug(progLoc + cmdStr);
             }
 
-            var cmdRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel);
+            var cmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel);
             RegisterEvents(cmdRunner);
             cmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
@@ -400,9 +400,9 @@ namespace AnalysisManagerPBFGenerator
             cmdRunner.EchoOutputToConsole = true;
 
             cmdRunner.WriteConsoleOutputToFile = true;
-            cmdRunner.ConsoleOutputFilePath = Path.Combine(m_WorkDir, PBF_GEN_CONSOLE_OUTPUT);
+            cmdRunner.ConsoleOutputFilePath = Path.Combine(mWorkDir, PBF_GEN_CONSOLE_OUTPUT);
 
-            m_progress = PROGRESS_PCT_STARTING;
+            mProgress = PROGRESS_PCT_STARTING;
 
             var success = cmdRunner.RunProgram(progLoc, cmdStr, "PbfGen", true);
 
@@ -447,9 +447,9 @@ namespace AnalysisManagerPBFGenerator
                 return false;
             }
 
-            m_progress = PROGRESS_PCT_COMPLETE;
-            m_StatusTools.UpdateAndWrite(m_progress);
-            if (m_DebugLevel >= 3)
+            mProgress = PROGRESS_PCT_COMPLETE;
+            mStatusTools.UpdateAndWrite(mProgress);
+            if (mDebugLevel >= 3)
             {
                 LogDebug("PBF Generation Complete");
             }
@@ -477,7 +477,7 @@ namespace AnalysisManagerPBFGenerator
 
         #region "Event Handlers"
 
-        private DateTime dtLastConsoleOutputParse = DateTime.MinValue;
+        private DateTime mLastConsoleOutputParse = DateTime.MinValue;
 
         /// <summary>
         /// Event handler for CmdRunner.LoopWaiting event
@@ -488,11 +488,11 @@ namespace AnalysisManagerPBFGenerator
             UpdateStatusFile();
 
             // Parse the console output file and estimate progress every 15 seconds
-            if (DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= 15)
+            if (DateTime.UtcNow.Subtract(mLastConsoleOutputParse).TotalSeconds >= 15)
             {
-                dtLastConsoleOutputParse = DateTime.UtcNow;
+                mLastConsoleOutputParse = DateTime.UtcNow;
 
-                ParseConsoleOutputFile(Path.Combine(m_WorkDir, PBF_GEN_CONSOLE_OUTPUT));
+                ParseConsoleOutputFile(Path.Combine(mWorkDir, PBF_GEN_CONSOLE_OUTPUT));
 
                 LogProgress("PBFGenerator");
             }

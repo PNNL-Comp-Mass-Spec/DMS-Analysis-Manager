@@ -32,15 +32,15 @@ namespace AnalysisManagerBase
 
         #region "Module variables"
 
-        private readonly bool m_AuroraAvailable;
+        private readonly bool mAuroraAvailable;
 
-        private readonly int m_DebugLevel;
+        private readonly int mDebugLevel;
 
-        private readonly IJobParams m_jobParams;
+        private readonly IJobParams mJobParams;
 
-        private readonly clsMyEMSLUtilities m_MyEMSLUtilities;
+        private readonly clsMyEMSLUtilities mMyEMSLUtilities;
 
-        private readonly clsFileCopyUtilities m_FileCopyUtilities;
+        private readonly clsFileCopyUtilities mFileCopyUtilities;
 
         #endregion
 
@@ -81,12 +81,12 @@ namespace AnalysisManagerBase
             short debugLevel,
             bool auroraAvailable)
         {
-            m_FileCopyUtilities = fileCopyUtilities;
-            m_jobParams = jobParams;
-            m_MyEMSLUtilities = myEmslUtilities;
+            mFileCopyUtilities = fileCopyUtilities;
+            mJobParams = jobParams;
+            mMyEMSLUtilities = myEmslUtilities;
             DatasetName = datasetName;
-            m_DebugLevel = debugLevel;
-            m_AuroraAvailable = auroraAvailable;
+            mDebugLevel = debugLevel;
+            mAuroraAvailable = auroraAvailable;
         }
 
         /// <summary>
@@ -137,8 +137,8 @@ namespace AnalysisManagerBase
         /// to the instrument data file (or folder) on the storage server, even if the file/folder wasn't actually found</remarks>
         public string FindDatasetFileOrFolder(int maxAttempts, out bool isFolder, bool assumeUnpurged = false)
         {
-            var RawDataType = m_jobParams.GetParam("RawDataType");
-            var StoragePath = m_jobParams.GetParam("DatasetStoragePath");
+            var RawDataType = mJobParams.GetParam("RawDataType");
+            var StoragePath = mJobParams.GetParam("DatasetStoragePath");
             var fileOrFolderPath = string.Empty;
 
             isFolder = false;
@@ -554,9 +554,9 @@ namespace AnalysisManagerBase
                     logFolderNotFound = false;
                 }
 
-                var instrumentDataPurged = m_jobParams.GetJobParameter("InstrumentDataPurged", 0);
+                var instrumentDataPurged = mJobParams.GetJobParameter("InstrumentDataPurged", 0);
 
-                var datasetFolderName = m_jobParams.GetParam(clsAnalysisResources.JOB_PARAM_DATASET_FOLDER_NAME);
+                var datasetFolderName = mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_DATASET_FOLDER_NAME);
 
                 if (retrievingInstrumentDataFolder && instrumentDataPurged != 0 && !assumeUnpurged)
                 {
@@ -565,9 +565,9 @@ namespace AnalysisManagerBase
                 }
                 else
                 {
-                    AddPathToCheck(lstPathsToCheck, Path.Combine(m_jobParams.GetParam("DatasetStoragePath"), datasetFolderName), true);
+                    AddPathToCheck(lstPathsToCheck, Path.Combine(mJobParams.GetParam("DatasetStoragePath"), datasetFolderName), true);
                     if (datasetFolderName != dsName)
-                        AddPathToCheck(lstPathsToCheck, Path.Combine(m_jobParams.GetParam("DatasetStoragePath"), dsName), false);
+                        AddPathToCheck(lstPathsToCheck, Path.Combine(mJobParams.GetParam("DatasetStoragePath"), dsName), false);
                 }
 
                 if (!MyEMSLSearchDisabled && !assumeUnpurged)
@@ -578,20 +578,20 @@ namespace AnalysisManagerBase
 
                 // Optional Temp Debug: Enable compilation constant DISABLE_MYEMSL_SEARCH to disable checking MyEMSL (and thus speed things up)
 #if DISABLE_MYEMSL_SEARCH
-        if (m_mgrParams.GetParam("MgrName").ToLower().Contains("monroe")) {
+        if (mMgrParams.GetParam("MgrName").ToLower().Contains("monroe")) {
             lstPathsToCheck.Remove(MYEMSL_PATH_FLAG);
         }
 #endif
-                if ((m_AuroraAvailable || MyEMSLSearchDisabled) && !assumeUnpurged)
+                if ((mAuroraAvailable || MyEMSLSearchDisabled) && !assumeUnpurged)
                 {
-                    AddPathToCheck(lstPathsToCheck, Path.Combine(m_jobParams.GetParam("DatasetArchivePath"), datasetFolderName), true);
+                    AddPathToCheck(lstPathsToCheck, Path.Combine(mJobParams.GetParam("DatasetArchivePath"), datasetFolderName), true);
                     if (datasetFolderName != dsName)
-                        AddPathToCheck(lstPathsToCheck, Path.Combine(m_jobParams.GetParam("DatasetArchivePath"), dsName), false);
+                        AddPathToCheck(lstPathsToCheck, Path.Combine(mJobParams.GetParam("DatasetArchivePath"), dsName), false);
                 }
 
-                AddPathToCheck(lstPathsToCheck, Path.Combine(m_jobParams.GetParam(clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH), datasetFolderName), false);
+                AddPathToCheck(lstPathsToCheck, Path.Combine(mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH), datasetFolderName), false);
                 if (datasetFolderName != dsName)
-                    AddPathToCheck(lstPathsToCheck, Path.Combine(m_jobParams.GetParam(clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH), dsName), false);
+                    AddPathToCheck(lstPathsToCheck, Path.Combine(mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH), dsName), false);
 
                 var fileNotFoundEncountered = false;
 
@@ -600,7 +600,7 @@ namespace AnalysisManagerBase
                 {
                     try
                     {
-                        if (m_DebugLevel > 3)
+                        if (mDebugLevel > 3)
                         {
                             var msg = "FindValidDatasetFolder, Looking for folder " + pathToCheck.Item1;
                             OnDebugEvent(msg);
@@ -650,7 +650,7 @@ namespace AnalysisManagerBase
                 {
                     validFolderFound = true;
 
-                    if (m_DebugLevel >= 4 || m_DebugLevel >= 1 && fileNotFoundEncountered)
+                    if (mDebugLevel >= 4 || mDebugLevel >= 1 && fileNotFoundEncountered)
                     {
                         var msg = "FindValidFolder, Valid dataset directory has been found:  " + bestPath;
                         if (fileNameToFind.Length > 0)
@@ -674,7 +674,7 @@ namespace AnalysisManagerBase
                         folderNotFoundMessage += " containing file " + fileNameToFind;
                     }
 
-                    if (logFolderNotFound && m_DebugLevel >= 1)
+                    if (logFolderNotFound && mDebugLevel >= 1)
                     {
                         if (assumeUnpurged)
                         {
@@ -682,7 +682,7 @@ namespace AnalysisManagerBase
                         }
                         else
                         {
-                            var msg = folderNotFoundMessage + ", Job " + m_jobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Job") + ", Dataset " + dsName;
+                            var msg = folderNotFoundMessage + ", Job " + mJobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Job") + ", Dataset " + dsName;
                             OnWarningEvent(msg);
                         }
                     }
@@ -716,7 +716,7 @@ namespace AnalysisManagerBase
             if (string.IsNullOrEmpty(fileNameToFind))
                 fileNameToFind = "*";
 
-            if (m_DebugLevel > 3)
+            if (mDebugLevel > 3)
             {
                 OnDebugEvent("FindValidFolderMyEMSL, querying MyEMSL for this dataset's files");
             }
@@ -726,14 +726,14 @@ namespace AnalysisManagerBase
             if (string.IsNullOrEmpty(subDirectoryName))
             {
                 // Simply look for the file
-                matchingMyEMSLFiles = m_MyEMSLUtilities.FindFiles(fileNameToFind, string.Empty, dataset, recurse);
+                matchingMyEMSLFiles = mMyEMSLUtilities.FindFiles(fileNameToFind, string.Empty, dataset, recurse);
             }
             else
             {
                 // First look for the subdirectory
                 // If there are multiple matching subdirectories, choose the newest one
                 // The entries in matchingMyEMSLFiles will be folder entries where the "Filename" field is the directory name while the "SubDirPath" field is any parent folders above the found folder
-                matchingMyEMSLFiles = m_MyEMSLUtilities.FindFiles(fileNameToFind, subDirectoryName, dataset, recurse);
+                matchingMyEMSLFiles = mMyEMSLUtilities.FindFiles(fileNameToFind, subDirectoryName, dataset, recurse);
             }
 
             if (matchingMyEMSLFiles.Count > 0)
@@ -782,7 +782,7 @@ namespace AnalysisManagerBase
             // Folder was found
             var validFolder = true;
 
-            if (m_DebugLevel > 3)
+            if (mDebugLevel > 3)
             {
                 OnDebugEvent("FindValidFolderUNC, Folder found " + pathToCheck);
             }
@@ -793,7 +793,7 @@ namespace AnalysisManagerBase
             {
                 if (fileNameToFind.Contains("*"))
                 {
-                    if (m_DebugLevel > 3)
+                    if (mDebugLevel > 3)
                     {
                         OnDebugEvent("FindValidFolderUNC, Looking for files matching " + fileNameToFind);
                     }
@@ -812,14 +812,14 @@ namespace AnalysisManagerBase
                 }
                 else
                 {
-                    if (m_DebugLevel > 3)
+                    if (mDebugLevel > 3)
                     {
                         OnDebugEvent("FindValidFolderUNC, Looking for file named " + fileNameToFind);
                     }
 
                     // Look for file fileNameToFind in this folder
                     // Note: Using a 1 second holdoff between retries
-                    var fileFound = m_FileCopyUtilities.FileExistsWithRetry(
+                    var fileFound = mFileCopyUtilities.FileExistsWithRetry(
                         Path.Combine(pathToCheck, fileNameToFind), retryHoldoffSeconds: 1,
                         logMsgTypeIfNotFound: BaseLogger.LogLevels.WARN, maxAttempts: maxAttempts);
 
@@ -835,7 +835,7 @@ namespace AnalysisManagerBase
             {
                 if (folderNameToFind.Contains("*"))
                 {
-                    if (m_DebugLevel > 3)
+                    if (mDebugLevel > 3)
                     {
                         OnDebugEvent("FindValidFolderUNC, Looking for folders matching " + folderNameToFind);
                     }
@@ -851,7 +851,7 @@ namespace AnalysisManagerBase
                 }
                 else
                 {
-                    if (m_DebugLevel > 3)
+                    if (mDebugLevel > 3)
                     {
                         OnDebugEvent("FindValidFolderUNC, Looking for folder named " + folderNameToFind);
                     }
@@ -905,7 +905,7 @@ namespace AnalysisManagerBase
 
                 if (logFolderNotFound)
                 {
-                    if (m_DebugLevel >= 2 || m_DebugLevel >= 1 && retryCount == 1)
+                    if (mDebugLevel >= 2 || mDebugLevel >= 1 && retryCount == 1)
                     {
                         var errMsg = "Folder " + folderName + " not found. Retry count = " + retryCount;
                         OnWarningEvent(errMsg);

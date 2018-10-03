@@ -23,23 +23,23 @@ namespace AnalysisManagerPRIDEMzXMLPlugIn
                 return result;
             }
 
-            var fileSpecList = m_jobParams.GetParam("TargetJobFileList").Split(',').ToList();
+            var fileSpecList = mJobParams.GetParam("TargetJobFileList").Split(',').ToList();
 
             foreach (var fileSpec in fileSpecList.ToList())
             {
                 var fileSpecTerms = fileSpec.Split(':').ToList();
                 if (fileSpecTerms.Count <= 2 || !string.Equals(fileSpecTerms[2].ToLower(), "copy", StringComparison.OrdinalIgnoreCase))
                 {
-                    m_jobParams.AddResultFileExtensionToSkip(fileSpecTerms[1]);
+                    mJobParams.AddResultFileExtensionToSkip(fileSpecTerms[1]);
                 }
             }
 
             LogMessage("Getting PRIDE MzXML Input file");
 
-            if (!FileSearch.RetrieveFile(m_jobParams.GetParam("PRIDEMzXMLInputFile"), m_jobParams.GetParam(JOB_PARAM_TRANSFER_FOLDER_PATH)))
+            if (!FileSearch.RetrieveFile(mJobParams.GetParam("PRIDEMzXMLInputFile"), mJobParams.GetParam(JOB_PARAM_TRANSFER_FOLDER_PATH)))
                 return CloseOutType.CLOSEOUT_FAILED;
 
-            m_jobParams.AddResultFileToSkip(m_jobParams.GetParam("PRIDEMzXMLInputFile"));
+            mJobParams.AddResultFileToSkip(mJobParams.GetParam("PRIDEMzXMLInputFile"));
 
             LogMessage("Retrieving input files");
 

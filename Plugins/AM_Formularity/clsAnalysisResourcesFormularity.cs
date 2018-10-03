@@ -43,8 +43,8 @@ namespace AnalysisManagerFormularityPlugin
 
                 // Retrieve the parameter file
                 currentTask = "Retrieve the parameter file";
-                var paramFileName = m_jobParams.GetParam(JOB_PARAM_PARAMETER_FILE);
-                var paramFileStoragePath = m_jobParams.GetParam("ParmFileStoragePath");
+                var paramFileName = mJobParams.GetParam(JOB_PARAM_PARAMETER_FILE);
+                var paramFileStoragePath = mJobParams.GetParam("ParmFileStoragePath");
 
                 if (!FileSearch.RetrieveFile(paramFileName, paramFileStoragePath))
                 {
@@ -56,7 +56,7 @@ namespace AnalysisManagerFormularityPlugin
                 var success = RetrieveCalibrationPeaksFile(paramFileStoragePath, paramFileName);
                 if (!success)
                 {
-                    if (string.IsNullOrWhiteSpace(m_message))
+                    if (string.IsNullOrWhiteSpace(mMessage))
                     {
                         LogError("Error extracting calibration settings from the parameter file");
                     }
@@ -65,7 +65,7 @@ namespace AnalysisManagerFormularityPlugin
 
                 // Retrieve the database
                 currentTask = "Retrieve the CIA database";
-                var databaseFileName = m_jobParams.GetParam("cia_db_name");
+                var databaseFileName = mJobParams.GetParam("cia_db_name");
                 if (string.IsNullOrWhiteSpace(databaseFileName))
                 {
                     LogError("Parameter cia_db_name not found in the settings file");
@@ -79,11 +79,11 @@ namespace AnalysisManagerFormularityPlugin
                     return CloseOutType.CLOSEOUT_NO_FAS_FILES;
                 }
 
-                var fileSyncUtil = new FileSyncUtils(m_FileTools);
+                var fileSyncUtil = new FileSyncUtils(mFileTools);
                 RegisterEvents(fileSyncUtil);
 
                 var remoteCiaDbPath = Path.Combine(sourceDirectory.FullName, databaseFileName);
-                var orgDbDirectory = m_mgrParams.GetParam(MGR_PARAM_ORG_DB_DIR);
+                var orgDbDirectory = mMgrParams.GetParam(MGR_PARAM_ORG_DB_DIR);
                 if (string.IsNullOrWhiteSpace(orgDbDirectory))
                 {
                     LogError(string.Format("Manager parameter {0} is not defined", MGR_PARAM_ORG_DB_DIR));
@@ -113,7 +113,7 @@ namespace AnalysisManagerFormularityPlugin
                     remoteNoDuplicatesFile.CopyTo(localNoDuplicatesFile.FullName, true);
                 }
 
-                var rawDataType = m_jobParams.GetParam("rawDataType");
+                var rawDataType = mJobParams.GetParam("rawDataType");
 
                 switch (rawDataType.ToLower())
                 {
@@ -128,7 +128,7 @@ namespace AnalysisManagerFormularityPlugin
                             // Errors should have already been logged
                             return CloseOutType.CLOSEOUT_FAILED;
                         }
-                        m_jobParams.AddResultFileToSkip(tsvFileName);
+                        mJobParams.AddResultFileToSkip(tsvFileName);
                         break;
                     case RAW_DATA_TYPE_BRUKER_FT_FOLDER:
                         // Processing a .D directory
@@ -141,7 +141,7 @@ namespace AnalysisManagerFormularityPlugin
                             // Errors should have already been logged
                             return CloseOutType.CLOSEOUT_FAILED;
                         }
-                        m_jobParams.AddResultFileToSkip(scansFileName);
+                        mJobParams.AddResultFileToSkip(scansFileName);
                         break;
 
                     default:
@@ -150,7 +150,7 @@ namespace AnalysisManagerFormularityPlugin
                 }
 
                 currentTask = "Process the MyEMSL download queue";
-                if (!ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+                if (!ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -160,8 +160,8 @@ namespace AnalysisManagerFormularityPlugin
             }
             catch (Exception ex)
             {
-                m_message = "Exception in GetResources: " + ex.Message;
-                LogError(m_message + "; task = " + currentTask + "; " + clsGlobal.GetExceptionStackTrace(ex));
+                mMessage = "Exception in GetResources: " + ex.Message;
+                LogError(mMessage + "; task = " + currentTask + "; " + clsGlobal.GetExceptionStackTrace(ex));
 
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -254,11 +254,11 @@ namespace AnalysisManagerFormularityPlugin
                         return false;
                     }
 
-                    var localCalFilePath = Path.Combine(m_WorkingDir, calibrationPeaksFileName);
+                    var localCalFilePath = Path.Combine(mWorkDir, calibrationPeaksFileName);
                     calibrationPeaksFile.CopyTo(localCalFilePath, true);
 
-                    m_jobParams.AddResultFileToSkip(calibrationPeaksFileName);
-                    m_jobParams.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "CalibrationPeaksFile", calibrationPeaksFileName);
+                    mJobParams.AddResultFileToSkip(calibrationPeaksFileName);
+                    mJobParams.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "CalibrationPeaksFile", calibrationPeaksFileName);
                 }
 
                 return true;

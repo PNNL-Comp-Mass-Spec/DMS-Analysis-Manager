@@ -29,28 +29,28 @@ namespace AnalysisManagerICR2LSPlugIn
             {
                 LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR,
                     "Aborting since StoreToolVersionInfo returned false");
-                m_message = "Error determining ICR2LS version";
+                mMessage = "Error determining ICR2LS version";
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
             // Verify a param file has been specified
-            var paramFilePath = Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"));
+            var paramFilePath = Path.Combine(mWorkDir, mJobParams.GetParam("parmFileName"));
             if (!File.Exists(paramFilePath))
             {
                 // Param file wasn't specified, but is required for ICR-2LS analysis
-                m_message = "ICR-2LS Param file not found";
-                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, m_message + ": " + paramFilePath);
+                mMessage = "ICR-2LS Param file not found";
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, mMessage + ": " + paramFilePath);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
             // Add handling of settings file info here if it becomes necessary in the future
 
             // Get scan settings from settings file
-            var MinScan = m_jobParams.GetJobParameter("scanstart", 0);
-            var MaxScan = m_jobParams.GetJobParameter("ScanStop", 0);
+            var MinScan = mJobParams.GetJobParameter("scanstart", 0);
+            var MaxScan = mJobParams.GetJobParameter("ScanStop", 0);
 
             // Determine whether or not we should be processing MS2 spectra
-            var SkipMS2 = !m_jobParams.GetJobParameter("ProcessMS2", false);
+            var SkipMS2 = !mJobParams.GetJobParameter("ProcessMS2", false);
             bool useAllScans;
 
             if ((MinScan == 0 && MaxScan == 0) || MinScan > MaxScan || MaxScan > 500000)
@@ -63,25 +63,25 @@ namespace AnalysisManagerICR2LSPlugIn
             }
 
             // Assemble the data file name and path
-            var DSNamePath = Path.Combine(m_WorkDir, m_Dataset + ".raw");
+            var DSNamePath = Path.Combine(mWorkDir, mDatasetName + ".raw");
             if (!File.Exists(DSNamePath))
             {
-                m_message = "Raw file not found: " + DSNamePath;
-                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, m_message);
+                mMessage = "Raw file not found: " + DSNamePath;
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, mMessage);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
             // Assemble the output file name and path
-            var OutFileNamePath = Path.Combine(m_WorkDir, m_Dataset + ".pek");
+            var OutFileNamePath = Path.Combine(mWorkDir, mDatasetName + ".pek");
 
             var success = StartICR2LS(DSNamePath, paramFilePath, OutFileNamePath, ICR2LSProcessingModeConstants.LTQFTPEK, useAllScans, SkipMS2,
                 MinScan, MaxScan);
 
             if (success)
             {
-                if (!VerifyPEKFileExists(m_WorkDir, m_Dataset))
+                if (!VerifyPEKFileExists(mWorkDir, mDatasetName))
                 {
-                    m_message = "ICR-2LS successfully finished but did not make a .Pek file; if all spectra are MS/MS use settings file LTQ_FTPEK_ProcessMS2.txt";
+                    mMessage = "ICR-2LS successfully finished but did not make a .Pek file; if all spectra are MS/MS use settings file LTQ_FTPEK_ProcessMS2.txt";
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
             }
@@ -90,21 +90,21 @@ namespace AnalysisManagerICR2LSPlugIn
                 LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, "Error running ICR-2LS on file " + DSNamePath);
 
                 // If a .PEK file exists, call PerfPostAnalysisTasks() to move the .Pek file into the results folder, which we'll then archive in the Failed Results folder
-                if (VerifyPEKFileExists(m_WorkDir, m_Dataset))
+                if (VerifyPEKFileExists(mWorkDir, mDatasetName))
                 {
-                    m_message = "ICR-2LS returned false (see .PEK file in Failed results folder)";
+                    mMessage = "ICR-2LS returned false (see .PEK file in Failed results folder)";
                     LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG,
                         ".Pek file was found, so will save results to the failed results archive folder");
 
                     PerfPostAnalysisTasks(false);
 
                     // Try to save whatever files were moved into the results folder
-                    var objAnalysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
-                    objAnalysisResults.CopyFailedResultsToArchiveFolder(Path.Combine(m_WorkDir, m_ResFolderName));
+                    var objAnalysisResults = new clsAnalysisResults(mMgrParams, mJobParams);
+                    objAnalysisResults.CopyFailedResultsToArchiveFolder(Path.Combine(mWorkDir, mResultsFolderName));
                 }
                 else
                 {
-                    m_message = "Error running ICR-2LS (.Pek file not found in " + m_WorkDir + ")";
+                    mMessage = "Error running ICR-2LS (.Pek file not found in " + mWorkDir + ")";
                 }
 
                 return CloseOutType.CLOSEOUT_FAILED;
@@ -113,9 +113,9 @@ namespace AnalysisManagerICR2LSPlugIn
             // Run the cleanup routine from the base class
             if (PerfPostAnalysisTasks(true) != CloseOutType.CLOSEOUT_SUCCESS)
             {
-                if (string.IsNullOrEmpty(m_message))
+                if (string.IsNullOrEmpty(mMessage))
                 {
-                    m_message = "Error performing post analysis tasks";
+                    mMessage = "Error performing post analysis tasks";
                 }
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -132,11 +132,11 @@ namespace AnalysisManagerICR2LSPlugIn
             {
                 // Allow extra time for ICR2LS to release file locks
                 clsGlobal.IdleLoop(5);
-                var FoundFiles = Directory.GetFiles(m_WorkDir, "*.raw");
+                var FoundFiles = Directory.GetFiles(mWorkDir, "*.raw");
                 foreach (var MyFile in FoundFiles)
                 {
                     // Add the file to .FilesToDelete just in case the deletion fails
-                    m_jobParams.AddResultFileToSkip(MyFile);
+                    mJobParams.AddResultFileToSkip(MyFile);
                     DeleteFileWithRetries(MyFile);
                 }
                 return CloseOutType.CLOSEOUT_SUCCESS;
@@ -144,7 +144,7 @@ namespace AnalysisManagerICR2LSPlugIn
             catch (Exception ex)
             {
                 LogTools.WriteLog(LogTools.LoggerTypes.LogDb, BaseLogger.LogLevels.ERROR,
-                    "Error deleting .raw file, job " + m_JobNum + ex.Message);
+                    "Error deleting .raw file, job " + mJob + ex.Message);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
         }

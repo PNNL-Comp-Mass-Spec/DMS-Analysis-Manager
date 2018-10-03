@@ -24,8 +24,8 @@ namespace AnalysisManagerMasicPlugin
 
             // Get input data file
             bool createStoragePathInfoOnly;
-            var rawDataType = m_jobParams.GetParam("rawDataType");
-            var toolName = m_jobParams.GetParam("ToolName");
+            var rawDataType = mJobParams.GetParam("rawDataType");
+            var toolName = mJobParams.GetParam("ToolName");
 
             switch (rawDataType.ToLower())
             {
@@ -54,7 +54,7 @@ namespace AnalysisManagerMasicPlugin
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            if (!base.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+            if (!base.ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -63,34 +63,34 @@ namespace AnalysisManagerMasicPlugin
                 toolName.StartsWith("MASIC_Finnigan", StringComparison.OrdinalIgnoreCase))
             {
                 var rawFileName = DatasetName + ".raw";
-                var inputFilePath = ResolveStoragePath(m_WorkingDir, rawFileName);
+                var inputFilePath = ResolveStoragePath(mWorkDir, rawFileName);
 
                 if (string.IsNullOrWhiteSpace(inputFilePath))
                 {
                     // Unable to resolve the file path
-                    m_message = "Could not find " + rawFileName + " or " + rawFileName + STORAGE_PATH_INFO_FILE_SUFFIX +
+                    mMessage = "Could not find " + rawFileName + " or " + rawFileName + STORAGE_PATH_INFO_FILE_SUFFIX +
                                 " in the working folder; unable to run MASIC";
-                    LogError(m_message);
+                    LogError(mMessage);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
             }
 
             // Add additional extensions to delete after the tool finishes
-            m_jobParams.AddResultFileExtensionToSkip("_StoragePathInfo.txt");
+            mJobParams.AddResultFileExtensionToSkip("_StoragePathInfo.txt");
 
-            // We'll add the following extensions to m_FilesToDeleteExt
+            // We'll add the following extensions to FilesToDeleteExt
             // Note, though, that the DeleteDataFile function will delete the .Raw or .mgf/.cdf files
-            m_jobParams.AddResultFileExtensionToSkip(DOT_WIFF_EXTENSION);
-            m_jobParams.AddResultFileExtensionToSkip(DOT_RAW_EXTENSION);
-            m_jobParams.AddResultFileExtensionToSkip(DOT_UIMF_EXTENSION);
-            m_jobParams.AddResultFileExtensionToSkip(DOT_MZXML_EXTENSION);
+            mJobParams.AddResultFileExtensionToSkip(DOT_WIFF_EXTENSION);
+            mJobParams.AddResultFileExtensionToSkip(DOT_RAW_EXTENSION);
+            mJobParams.AddResultFileExtensionToSkip(DOT_UIMF_EXTENSION);
+            mJobParams.AddResultFileExtensionToSkip(DOT_MZXML_EXTENSION);
 
-            m_jobParams.AddResultFileExtensionToSkip(DOT_MGF_EXTENSION);
-            m_jobParams.AddResultFileExtensionToSkip(DOT_CDF_EXTENSION);
+            mJobParams.AddResultFileExtensionToSkip(DOT_MGF_EXTENSION);
+            mJobParams.AddResultFileExtensionToSkip(DOT_CDF_EXTENSION);
 
             // Retrieve param file
-            if (!FileSearch.RetrieveFile(m_jobParams.GetParam("ParmFileName"), m_jobParams.GetParam("ParmFileStoragePath")))
+            if (!FileSearch.RetrieveFile(mJobParams.GetParam("ParmFileName"), mJobParams.GetParam("ParmFileStoragePath")))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }

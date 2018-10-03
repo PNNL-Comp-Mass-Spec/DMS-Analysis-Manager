@@ -18,7 +18,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
         /// <summary>
         /// 0 means no debugging, 1 for normal, 2 for verbose
         /// </summary>
-        private readonly int m_DebugLevel;
+        private readonly int mDebugLevel;
 
         #endregion
 
@@ -39,7 +39,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 throw new FileNotFoundException(RawConverterExePath);
             }
 
-            m_DebugLevel = debugLevel;
+            mDebugLevel = debugLevel;
         }
 
         /// <summary>
@@ -54,7 +54,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
             {
                 var fiSourceFile = new FileInfo(rawFilePath);
 
-                if (m_DebugLevel > 0)
+                if (mDebugLevel > 0)
                 {
                     OnProgressUpdate("Creating .MGF file using RawConverter", 0);
                 }
@@ -64,7 +64,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 // Set up command
                 var cmdStr = " " + clsGlobal.PossiblyQuotePath(fiSourceFile.FullName) + " --mgf";
 
-                if (m_DebugLevel > 0)
+                if (mDebugLevel > 0)
                 {
                     OnProgressUpdate(fiRawConverter.FullName + " " + cmdStr, 0);
                 }
@@ -75,7 +75,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
                 var consoleOutputFilePath = Path.Combine(fiSourceFile.Directory.FullName, "RawConverter_ConsoleOutput.txt");
 
-                var progRunner = new clsRunDosProgram(fiRawConverter.Directory.FullName, m_DebugLevel)
+                var progRunner = new clsRunDosProgram(fiRawConverter.Directory.FullName, mDebugLevel)
                 {
                     CreateNoWindow = true,
                     CacheStandardOutput = true,
@@ -92,7 +92,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                     return false;
                 }
 
-                if (m_DebugLevel >= 2)
+                if (mDebugLevel >= 2)
                 {
                     OnProgressUpdate(" ... MGF file created using RawConverter", 100);
                 }

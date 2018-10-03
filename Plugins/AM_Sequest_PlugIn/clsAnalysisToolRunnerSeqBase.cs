@@ -44,10 +44,10 @@ namespace AnalysisManagerSequestPlugin
         // Out file search times (in seconds) for recently created .out files
         protected Queue<float> mRecentOutFileSearchTimes = new Queue<float>(MAX_OUT_FILE_SEARCH_TIMES_TO_TRACK);
 
-        protected Regex m_OutFileNameRegEx = new Regex(@"^(?<rootname>.+)\.(?<startscan>\d+)\.(?<endscan>\d+)\.(?<cs>\d+)\.(?<extension>\S{3})",
+        protected Regex mOutFileNameRegEx = new Regex(@"^(?<rootname>.+)\.(?<startscan>\d+)\.(?<endscan>\d+)\.(?<cs>\d+)\.(?<extension>\S{3})",
             RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
-        protected Regex m_OutFileSearchTimeRegEx = new Regex(@"\d+/\d+/\d+, \d+\:\d+ [A-Z]+, (?<time>[0-9.]+) sec",
+        protected Regex mOutFileSearchTimeRegEx = new Regex(@"\d+/\d+/\d+, \d+\:\d+ [A-Z]+, (?<time>[0-9.]+) sec",
             RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
         protected long mOutFileHandlerInUse;
@@ -70,7 +70,7 @@ namespace AnalysisManagerSequestPlugin
             }
 
             // Check whether or not we are resuming a job that stopped prematurely
-            // Look for a file named Dataset_out.txt.tmp in m_WorkDir
+            // Look for a file named Dataset_out.txt.tmp in mWorkDir
             // This procedure will also de-concatenate the _dta.txt file
             if (!CheckForExistingConcatenatedOutFile())
             {
@@ -83,14 +83,14 @@ namespace AnalysisManagerSequestPlugin
                 return CloseOutType.CLOSEOUT_NO_DTA_FILES;
             }
 
-            // Count the number of .Dta files and cache in m_DtaCount
+            // Count the number of .Dta files and cache in mDtaCount
             CalculateNewStatus(blnUpdateDTACount: true);
 
             // Run Sequest
-            UpdateStatusRunning(m_progress, m_DtaCount);
+            UpdateStatusRunning(mProgress, mDtaCount);
 
             // Make the .out files
-            LogMessage("Making OUT files, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
+            LogMessage("Making OUT files, job " + mJob + ", step " + mJobParams.GetParam("Step"));
 
             CloseOutType eResult;
             bool processingError;
@@ -108,7 +108,7 @@ namespace AnalysisManagerSequestPlugin
             }
 
             // Stop the job timer
-            m_StopTime = DateTime.UtcNow;
+            mStopTime = DateTime.UtcNow;
 
             CloseOutType eReturnCode;
             if (processingError)
@@ -131,10 +131,10 @@ namespace AnalysisManagerSequestPlugin
 
             // Parse the Sequest .Log file to make sure the expected number of nodes was used in the analysis
 
-            if (m_mgrParams.GetParam("cluster", true))
+            if (mMgrParams.GetParam("cluster", true))
             {
                 // Running on a Sequest cluster
-                var strSequestLogFilePath = Path.Combine(m_WorkDir, "sequest.log");
+                var strSequestLogFilePath = Path.Combine(mWorkDir, "sequest.log");
                 ValidateSequestNodeCount(strSequestLogFilePath);
             }
 
@@ -159,7 +159,7 @@ namespace AnalysisManagerSequestPlugin
             if (!RemoveNonResultServerFiles())
             {
                 // Do not treat this as a fatal error
-                LogWarning("Error deleting .tmp files in folder " + m_jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH));
+                LogWarning("Error deleting .tmp files in folder " + mJobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH));
             }
 
             return eReturnCode;
@@ -189,7 +189,7 @@ namespace AnalysisManagerSequestPlugin
 
                 using (var srSrcFile = new StreamReader(new FileStream(fiSourceOutFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
                 {
-                    var reMatch = m_OutFileNameRegEx.Match(fiSourceOutFile.Name);
+                    var reMatch = mOutFileNameRegEx.Match(fiSourceOutFile.Name);
 
                     string cleanedFileName;
                     if (reMatch.Success)
@@ -214,7 +214,7 @@ namespace AnalysisManagerSequestPlugin
                         if (string.IsNullOrWhiteSpace(strLineIn))
                             continue;
 
-                        reMatch = m_OutFileSearchTimeRegEx.Match(strLineIn);
+                        reMatch = mOutFileSearchTimeRegEx.Match(strLineIn);
                         if (reMatch.Success)
                         {
                             if (float.TryParse(reMatch.Groups["time"].Value, out var sngOutFileSearchTimeSeconds))
@@ -276,26 +276,26 @@ namespace AnalysisManagerSequestPlugin
         /// <summary>
         /// Calculates status information for progress file by counting the number of .out files
         /// </summary>
-        /// <param name="blnUpdateDTACount">Set to True to update m_DtaCount</param>
+        /// <param name="blnUpdateDTACount">Set to True to update mDtaCount</param>
         protected void CalculateNewStatus(bool blnUpdateDTACount)
         {
             if (blnUpdateDTACount)
             {
                 // Get DTA count
-                m_DtaCount = GetDTAFileCountRemaining() + mDtaCountAddon;
+                mDtaCount = GetDTAFileCountRemaining() + mDtaCountAddon;
             }
 
             // Get OUT file count
             var outFileCount = GetOUTFileCountRemaining() + mTotalOutFileCount;
 
             // Calculate % complete (value between 0 and 100)
-            if (m_DtaCount > 0)
+            if (mDtaCount > 0)
             {
-                m_progress = 100f * (outFileCount / (float)m_DtaCount);
+                mProgress = 100f * (outFileCount / (float)mDtaCount);
             }
             else
             {
-                m_progress = 0;
+                mProgress = 0;
             }
         }
 
@@ -309,7 +309,7 @@ namespace AnalysisManagerSequestPlugin
                 mTempConcatenatedOutFilePath = string.Empty;
                 mOutFileNamesAppended.Clear();
 
-                var strConcatenatedTempFilePath = Path.Combine(m_WorkDir, m_Dataset + CONCATENATED_OUT_TEMP_FILE);
+                var strConcatenatedTempFilePath = Path.Combine(mWorkDir, mDatasetName + CONCATENATED_OUT_TEMP_FILE);
 
                 SortedSet<string> lstDTAsToSkip;
                 if (File.Exists(strConcatenatedTempFilePath))
@@ -329,19 +329,19 @@ namespace AnalysisManagerSequestPlugin
                 // Now split the DTA file, skipping DTAs corresponding to .Out files that were copied over
                 var fileSplitter = new clsSplitCattedFiles();
 
-                var blnSuccess = fileSplitter.SplitCattedDTAsOnly(m_Dataset, m_WorkDir, lstDTAsToSkip);
+                var blnSuccess = fileSplitter.SplitCattedDTAsOnly(mDatasetName, mWorkDir, lstDTAsToSkip);
 
                 if (!blnSuccess)
                 {
-                    m_message = "SplitCattedDTAsOnly returned false";
-                    LogDebug(m_message + "; aborting");
+                    mMessage = "SplitCattedDTAsOnly returned false";
+                    LogDebug(mMessage + "; aborting");
                     return false;
                 }
 
                 mDtaCountAddon = lstDTAsToSkip.Count;
                 mTotalOutFileCount = mDtaCountAddon;
 
-                if (m_DebugLevel >= 1)
+                if (mDebugLevel >= 1)
                 {
                     LogDebug("Completed splitting concatenated DTA file, created " + GetDTAFileCountRemaining().ToString("#,##0") + " DTAs");
                 }
@@ -394,21 +394,21 @@ namespace AnalysisManagerSequestPlugin
         /// </summary>
         public override void CopyFailedResultsToArchiveFolder()
         {
-            m_jobParams.AddResultFileToSkip(m_Dataset + "_dta.zip");
-            m_jobParams.AddResultFileToSkip(m_Dataset + "_dta.txt");
+            mJobParams.AddResultFileToSkip(mDatasetName + "_dta.zip");
+            mJobParams.AddResultFileToSkip(mDatasetName + "_dta.txt");
 
             base.CopyFailedResultsToArchiveFolder();
         }
 
         protected int GetDTAFileCountRemaining()
         {
-            var diWorkDir = new DirectoryInfo(m_WorkDir);
+            var diWorkDir = new DirectoryInfo(mWorkDir);
             return diWorkDir.GetFiles("*.dta", SearchOption.TopDirectoryOnly).Length;
         }
 
         protected int GetOUTFileCountRemaining()
         {
-            var diWorkDir = new DirectoryInfo(m_WorkDir);
+            var diWorkDir = new DirectoryInfo(mWorkDir);
             return diWorkDir.GetFiles("*.out", SearchOption.TopDirectoryOnly).Length;
         }
 
@@ -424,11 +424,11 @@ namespace AnalysisManagerSequestPlugin
 
             // 12/19/2008 - The number of processors used to be configurable but now this is done with clustering.
             // This code is left here so we can still debug to make sure everything still works
-            // var NumProcessors = (int)m_mgrParams.GetParam("numberofprocessors");
+            // var NumProcessors = (int)mMgrParams.GetParam("numberofprocessors");
             var NumProcessors = 1;
 
             // Get a list of .dta file names
-            var DtaFiles = Directory.GetFiles(m_WorkDir, "*.dta");
+            var DtaFiles = Directory.GetFiles(mWorkDir, "*.dta");
             var NumFiles = DtaFiles.GetLength(0);
             if (NumFiles == 0)
             {
@@ -439,26 +439,26 @@ namespace AnalysisManagerSequestPlugin
             // Set up a program runner and text file for each processor
             var RunProgs = new ProgRunner[NumProcessors];
             var Textfiles = new StreamWriter[NumProcessors];
-            var cmdStr = "-D" + Path.Combine(m_mgrParams.GetParam("orgdbdir"), m_jobParams.GetParam("PeptideSearch", "generatedFastaName")) + " -P" +
-                     m_jobParams.GetParam("parmFileName") + " -R";
+            var cmdStr = "-D" + Path.Combine(mMgrParams.GetParam("OrgDbDir"), mJobParams.GetParam("PeptideSearch", "generatedFastaName")) + " -P" +
+                     mJobParams.GetParam("parmFileName") + " -R";
 
             for (var ProcIndx = 0; ProcIndx <= NumProcessors - 1; ProcIndx++)
             {
-                var DumStr = Path.Combine(m_WorkDir, "FileList" + ProcIndx + ".txt");
-                m_jobParams.AddResultFileToSkip(DumStr);
+                var DumStr = Path.Combine(mWorkDir, "FileList" + ProcIndx + ".txt");
+                mJobParams.AddResultFileToSkip(DumStr);
 
                 RunProgs[ProcIndx] = new ProgRunner
                 {
                     Name = "Seq" + ProcIndx,
-                    CreateNoWindow = Convert.ToBoolean(m_mgrParams.GetParam("createnowindow")),
-                    Program = m_mgrParams.GetParam("seqprogloc"),
+                    CreateNoWindow = Convert.ToBoolean(mMgrParams.GetParam("createnowindow")),
+                    Program = mMgrParams.GetParam("seqprogloc"),
                     Arguments = cmdStr + DumStr,
-                    WorkDir = m_WorkDir
+                    WorkDir = mWorkDir
                 };
 
                 Textfiles[ProcIndx] = new StreamWriter(DumStr, false);
                 LogDebug(
-                    m_mgrParams.GetParam("seqprogloc") + cmdStr + DumStr);
+                    mMgrParams.GetParam("seqprogloc") + cmdStr + DumStr);
             }
 
             // Break up file list into lists for each processor
@@ -474,7 +474,7 @@ namespace AnalysisManagerSequestPlugin
             // Close all the file lists
             for (var ProcIndx = 0; ProcIndx <= Textfiles.GetUpperBound(0); ProcIndx++)
             {
-                if (m_DebugLevel >= 1)
+                if (mDebugLevel >= 1)
                 {
                     LogDebug("clsAnalysisToolRunnerSeqBase.MakeOutFiles: Closing FileList" + ProcIndx);
                 }
@@ -506,11 +506,11 @@ namespace AnalysisManagerSequestPlugin
                 clsGlobal.IdleLoop(5);
 
                 CalculateNewStatus();
-                UpdateStatusRunning(m_progress, m_DtaCount);
+                UpdateStatusRunning(mProgress, mDtaCount);
 
                 for (var ProcIndx = 0; ProcIndx <= RunProgs.GetUpperBound(0); ProcIndx++)
                 {
-                    if (m_DebugLevel > 4)
+                    if (mDebugLevel > 4)
                     {
                         LogDebug(
                             "clsAnalysisToolRunnerSeqBase.MakeOutFiles(): RunProgs(" + ProcIndx + ").State = " +
@@ -518,7 +518,7 @@ namespace AnalysisManagerSequestPlugin
                     }
                     if ((RunProgs[ProcIndx].State != 0))
                     {
-                        if (m_DebugLevel > 4)
+                        if (mDebugLevel > 4)
                         {
                             LogDebug(
                                 "clsAnalysisToolRunnerSeqBase.MakeOutFiles()_2: RunProgs(" + ProcIndx + ").State = " +
@@ -526,7 +526,7 @@ namespace AnalysisManagerSequestPlugin
                         }
                         if (((int) RunProgs[ProcIndx].State != 10))
                         {
-                            if (m_DebugLevel > 4)
+                            if (mDebugLevel > 4)
                             {
                                 LogDebug(
                                     "clsAnalysisToolRunnerSeqBase.MakeOutFiles()_3: RunProgs(" + ProcIndx + ").State = " +
@@ -536,7 +536,7 @@ namespace AnalysisManagerSequestPlugin
                             break;
                         }
 
-                        if (m_DebugLevel >= 1)
+                        if (mDebugLevel >= 1)
                         {
                             LogDebug(
                                 "clsAnalysisToolRunnerSeqBase.MakeOutFiles()_4: RunProgs(" + ProcIndx + ").State = " +
@@ -549,14 +549,14 @@ namespace AnalysisManagerSequestPlugin
             } while (StillRunning);
 
             // Clean up our object references
-            if (m_DebugLevel >= 1)
+            if (mDebugLevel >= 1)
             {
                 LogDebug("clsAnalysisToolRunnerSeqBase.MakeOutFiles(), cleaning up runprog object references");
             }
             for (var ProcIndx = 0; ProcIndx <= RunProgs.GetUpperBound(0); ProcIndx++)
             {
                 RunProgs[ProcIndx] = null;
-                if (m_DebugLevel >= 1)
+                if (mDebugLevel >= 1)
                 {
                     LogDebug("Set RunProgs(" + ProcIndx + ") to Nothing");
                 }
@@ -566,7 +566,7 @@ namespace AnalysisManagerSequestPlugin
             ProgRunner.GarbageCollectNow();
 
             // Verify out file creation
-            if (m_DebugLevel >= 1)
+            if (mDebugLevel >= 1)
             {
                 LogDebug("clsAnalysisToolRunnerSeqBase.MakeOutFiles(), verifying out file creation");
             }
@@ -574,16 +574,16 @@ namespace AnalysisManagerSequestPlugin
             if (GetOUTFileCountRemaining() < 1)
             {
                 var msg = "No OUT files created";
-                LogErrorToDatabase(msg + ", job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
+                LogErrorToDatabase(msg + ", job " + mJob + ", step " + mJobParams.GetParam("Step"));
                 UpdateStatusMessage(msg);
                 return CloseOutType.CLOSEOUT_NO_OUT_FILES;
             }
 
             // Add .out extension to list of file extensions to delete
-            m_jobParams.AddResultFileExtensionToSkip(".out");
+            mJobParams.AddResultFileExtensionToSkip(".out");
 
             // Package out files into concatenated text files
-            if (!ConcatOutFiles(m_WorkDir, m_Dataset, m_JobNum))
+            if (!ConcatOutFiles(mWorkDir, mDatasetName, mJob))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -592,7 +592,7 @@ namespace AnalysisManagerSequestPlugin
             ProgRunner.GarbageCollectNow();
 
             // Zip concatenated .out files
-            if (!ZipConcatOutFile(m_WorkDir, m_JobNum))
+            if (!ZipConcatOutFile(mWorkDir, mJob))
             {
                 return CloseOutType.CLOSEOUT_ERROR_ZIPPING_FILE;
             }
@@ -618,7 +618,7 @@ namespace AnalysisManagerSequestPlugin
 
             var oRandom = new Random();
 
-            if (m_DebugLevel >= 2)
+            if (mDebugLevel >= 2)
             {
                 LogDebug("Concatenating .out files");
             }
@@ -636,9 +636,9 @@ namespace AnalysisManagerSequestPlugin
 
                     if (DateTime.UtcNow.Subtract(dtInterlockWaitStartTime).TotalMinutes >= MAX_INTERLOCK_WAIT_TIME_MINUTES)
                     {
-                        m_message = "Unable to verify that all .out files have been appended to the _out.txt.tmp file";
+                        mMessage = "Unable to verify that all .out files have been appended to the _out.txt.tmp file";
                         LogDebug(
-                            m_message + ": ConcatOutFiles has waited over " + MAX_INTERLOCK_WAIT_TIME_MINUTES +
+                            mMessage + ": ConcatOutFiles has waited over " + MAX_INTERLOCK_WAIT_TIME_MINUTES +
                             " minutes for mOutFileHandlerInUse to be zero; aborting");
                         return false;
                     }
@@ -646,7 +646,7 @@ namespace AnalysisManagerSequestPlugin
                     if (DateTime.UtcNow.Subtract(dtInterlockWaitStartTime).TotalSeconds >= 30)
                     {
                         dtInterlockWaitStartTime = DateTime.UtcNow;
-                        if (m_DebugLevel >= 1)
+                        if (mDebugLevel >= 1)
                         {
                             LogDebug("ConcatOutFiles is waiting for mOutFileHandlerInUse to be zero");
                         }
@@ -660,7 +660,7 @@ namespace AnalysisManagerSequestPlugin
                 {
                     if (string.IsNullOrEmpty(mTempConcatenatedOutFilePath))
                     {
-                        mTempConcatenatedOutFilePath = Path.Combine(m_WorkDir, m_Dataset + "_out.txt.tmp");
+                        mTempConcatenatedOutFilePath = Path.Combine(mWorkDir, mDatasetName + "_out.txt.tmp");
                     }
 
                     var diWorkDir = new DirectoryInfo(WorkDir);
@@ -687,8 +687,8 @@ namespace AnalysisManagerSequestPlugin
 
             if (!blnSuccess)
             {
-                m_message = "Error appending .out files to the _out.txt.tmp file";
-                LogError(m_message + "; aborting after " + MAX_RETRY_ATTEMPTS + " attempts");
+                mMessage = "Error appending .out files to the _out.txt.tmp file";
+                LogError(mMessage + "; aborting after " + MAX_RETRY_ATTEMPTS + " attempts");
                 return false;
             }
 
@@ -697,14 +697,14 @@ namespace AnalysisManagerSequestPlugin
                 if (string.IsNullOrEmpty(mTempConcatenatedOutFilePath))
                 {
                     // No .out files were created
-                    m_message = "No out files were created";
+                    mMessage = "No out files were created";
                     return false;
                 }
 
                 // Now rename the _out.txt.tmp file to _out.txt
                 var fiConcatenatedOutFile = new FileInfo(mTempConcatenatedOutFilePath);
 
-                var strOutFilePathNew = Path.Combine(m_WorkDir, m_Dataset + "_out.txt");
+                var strOutFilePathNew = Path.Combine(mWorkDir, mDatasetName + "_out.txt");
 
                 if (File.Exists(strOutFilePathNew))
                 {
@@ -716,8 +716,8 @@ namespace AnalysisManagerSequestPlugin
             }
             catch (Exception ex)
             {
-                m_message = "Error renaming _out.txt.tmp file to _out.txt file";
-                LogError(m_message + ": " + ex.Message);
+                mMessage = "Error renaming _out.txt.tmp file to _out.txt file";
+                LogError(mMessage + ": " + ex.Message);
                 return false;
             }
 
@@ -736,7 +736,7 @@ namespace AnalysisManagerSequestPlugin
             var toolFiles = new List<FileInfo>();
             var strToolVersionInfo = string.Empty;
 
-            if (m_DebugLevel >= 2)
+            if (mDebugLevel >= 2)
             {
                 LogDebug("Determining tool version info");
             }
@@ -766,7 +766,7 @@ namespace AnalysisManagerSequestPlugin
 
                             strToolVersionInfo = strLineIn;
 
-                            if (m_DebugLevel >= 2)
+                            if (mDebugLevel >= 2)
                             {
                                 LogDebug("Sequest Version: " + strToolVersionInfo);
                             }
@@ -784,7 +784,7 @@ namespace AnalysisManagerSequestPlugin
             // Store the path to the Sequest .Exe in toolFiles
             try
             {
-                toolFiles.Add(new FileInfo(m_mgrParams.GetParam("seqprogloc")));
+                toolFiles.Add(new FileInfo(mMgrParams.GetParam("seqprogloc")));
             }
             catch (Exception ex)
             {
@@ -816,14 +816,14 @@ namespace AnalysisManagerSequestPlugin
 
             try
             {
-                var diWorkDir = new DirectoryInfo(m_WorkDir);
+                var diWorkDir = new DirectoryInfo(mWorkDir);
 
                 var ioFiles = diWorkDir.GetFiles("*.dta", SearchOption.TopDirectoryOnly);
 
                 if (ioFiles.Length == 0)
                 {
-                    m_message = "No .DTA files are present";
-                    LogError(m_message);
+                    mMessage = "No .DTA files are present";
+                    LogError(mMessage);
                     return false;
                 }
 
@@ -853,20 +853,20 @@ namespace AnalysisManagerSequestPlugin
                 {
                     if (intFilesChecked == 1)
                     {
-                        m_message = "One .DTA file is present, but it is empty";
+                        mMessage = "One .DTA file is present, but it is empty";
                     }
                     else
                     {
-                        m_message = ioFiles.Length + " .DTA files are present, but each is empty";
+                        mMessage = ioFiles.Length + " .DTA files are present, but each is empty";
                     }
-                    LogError(m_message);
+                    LogError(mMessage);
                     return false;
                 }
             }
             catch (Exception ex)
             {
-                m_message = "Exception in ValidateDTAFiles";
-                LogError(m_message + ": " + ex.Message);
+                mMessage = "Exception in ValidateDTAFiles";
+                LogError(mMessage + ": " + ex.Message);
                 return false;
             }
 
@@ -920,7 +920,7 @@ namespace AnalysisManagerSequestPlugin
                 // Initialize the RegEx objects
                 var reStartingTask = new Regex(@"Starting the SEQUEST task on (\d+) node", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline);
                 var reWaitingForReadyMsg = new Regex(@"Waiting for ready messages from (\d+) node", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline);
-                var reReceivedReadyMsg = new Regex(@"received ready messsage from (.+)\(", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline);
+                var reReceivedReadyMsg = new Regex(@"received ready message from (.+)\(", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline);
                 var reSpawnedSlaveProcesses = new Regex(@"Spawned (\d+) slave processes", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline);
                 var reSearchedDTAFile = new Regex(@"Searched dta file .+ on (.+)", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline);
 
@@ -935,7 +935,7 @@ namespace AnalysisManagerSequestPlugin
                 //  FROM T_ParamValue AS PV INNER JOIN T_Mgrs AS M ON PV.MgrID = M.M_ID
                 //  WHERE (PV.TypeID = 122)
 
-                var intNodeCountExpected = m_mgrParams.GetParam("SequestNodeCountExpected", 0);
+                var intNodeCountExpected = mMgrParams.GetParam("SequestNodeCountExpected", 0);
 
                 // This dictionary tracks the number of DTAs processed by each node
                 // Initialize the dictionary that will track the number of spectra processed by each host
@@ -1045,13 +1045,13 @@ namespace AnalysisManagerSequestPlugin
                     // Validate the stats
 
                     strProcessingMsg = "HostCount=" + intHostCount + "; NodeCountActive=" + intNodeCountActive;
-                    if (m_DebugLevel >= 1)
+                    if (mDebugLevel >= 1)
                     {
                         if (blnLogToConsole)
                             Console.WriteLine(strProcessingMsg);
                         LogDebug(strProcessingMsg);
                     }
-                    m_EvalMessage = string.Copy(strProcessingMsg);
+                    mEvalMessage = string.Copy(strProcessingMsg);
 
                     if (intNodeCountActive < intNodeCountExpected || intNodeCountExpected == 0)
                     {
@@ -1067,8 +1067,8 @@ namespace AnalysisManagerSequestPlugin
                         //  V_Job_Steps_Stale_and_Failed and V_Sequest_Cluster_Warnings showing this message:
                         //  "SEQUEST node count is less than the expected value"
 
-                        m_EvalMessage += "; " + strProcessingMsg;
-                        m_EvalCode = m_EvalCode | ERROR_CODE_A;
+                        mEvalMessage += "; " + strProcessingMsg;
+                        mEvalCode = mEvalCode | ERROR_CODE_A;
                     }
                     else
                     {
@@ -1078,8 +1078,8 @@ namespace AnalysisManagerSequestPlugin
                             if (blnLogToConsole)
                                 Console.WriteLine(strProcessingMsg);
                             LogWarning(strProcessingMsg);
-                            m_EvalMessage += "; " + strProcessingMsg;
-                            m_EvalCode = m_EvalCode | ERROR_CODE_B;
+                            mEvalMessage += "; " + strProcessingMsg;
+                            mEvalCode = mEvalCode | ERROR_CODE_B;
 
                             // Update the evaluation message and evaluation code
                             // These will be used by method CloseTask in clsAnalysisJob
@@ -1097,8 +1097,8 @@ namespace AnalysisManagerSequestPlugin
                             if (blnLogToConsole)
                                 Console.WriteLine(strProcessingMsg);
                             LogError(strProcessingMsg);
-                            m_EvalMessage += "; " + strProcessingMsg;
-                            m_EvalCode = m_EvalCode | ERROR_CODE_C;
+                            mEvalMessage += "; " + strProcessingMsg;
+                            mEvalCode = mEvalCode | ERROR_CODE_C;
                         }
                     }
 
@@ -1151,8 +1151,8 @@ namespace AnalysisManagerSequestPlugin
                                 Console.WriteLine(strProcessingMsg);
                             LogWarning(strProcessingMsg);
 
-                            m_EvalMessage += "; " + strProcessingMsg;
-                            m_EvalCode = m_EvalCode | ERROR_CODE_D;
+                            mEvalMessage += "; " + strProcessingMsg;
+                            mEvalCode = mEvalCode | ERROR_CODE_D;
                             blnShowDetailedRates = true;
                         }
 
@@ -1178,13 +1178,13 @@ namespace AnalysisManagerSequestPlugin
                                 Console.WriteLine(strProcessingMsg);
                             LogWarning(strProcessingMsg);
 
-                            m_EvalMessage += "; " + strProcessingMsg;
-                            m_EvalCode = m_EvalCode | ERROR_CODE_E;
+                            mEvalMessage += "; " + strProcessingMsg;
+                            mEvalCode = mEvalCode | ERROR_CODE_E;
                             blnShowDetailedRates = true;
                         }
                     }
 
-                    if (m_DebugLevel >= 2 || blnShowDetailedRates)
+                    if (mDebugLevel >= 2 || blnShowDetailedRates)
                     {
                         // Log the number of DTAs processed by each host
 
@@ -1288,16 +1288,16 @@ namespace AnalysisManagerSequestPlugin
         /// <remarks></remarks>
         protected virtual bool ZipConcatOutFile(string WorkDir, int JobNum)
         {
-            var OutFileName = m_Dataset + "_out.txt";
+            var OutFileName = mDatasetName + "_out.txt";
             var OutFilePath = Path.Combine(WorkDir, OutFileName);
 
-            LogMessage("Zipping concatenated output file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
+            LogMessage("Zipping concatenated output file, job " + mJob + ", step " + mJobParams.GetParam("Step"));
 
             // Verify file exists
             if (!File.Exists(OutFilePath))
             {
-                m_message = "Unable to find concatenated .out file";
-                LogError(m_message);
+                mMessage = "Unable to find concatenated .out file";
+                LogError(mMessage);
                 return false;
             }
 
@@ -1306,24 +1306,24 @@ namespace AnalysisManagerSequestPlugin
                 // Zip the file
                 if (!ZipFile(OutFilePath, false))
                 {
-                    m_message = "Error zipping concat out file";
-                    var Msg = m_message + ", job " + m_JobNum + ", step " + m_jobParams.GetParam("Step");
+                    mMessage = "Error zipping concat out file";
+                    var Msg = mMessage + ", job " + mJob + ", step " + mJobParams.GetParam("Step");
                     LogError(Msg);
                     return false;
                 }
             }
             catch (Exception ex)
             {
-                m_message = "Exception zipping concat out file";
-                var Msg = m_message + ", job " + m_JobNum + ", step " + m_jobParams.GetParam("Step") + ": " + ex.Message + "; " +
+                mMessage = "Exception zipping concat out file";
+                var Msg = mMessage + ", job " + mJob + ", step " + mJobParams.GetParam("Step") + ": " + ex.Message + "; " +
                              clsGlobal.GetExceptionStackTrace(ex);
                 LogError(Msg);
                 return false;
             }
 
-            m_jobParams.AddResultFileToSkip(OutFileName);
+            mJobParams.AddResultFileToSkip(OutFileName);
 
-            if (m_DebugLevel >= 1)
+            if (mDebugLevel >= 1)
             {
                 LogDebug(" ... successfully zipped");
             }

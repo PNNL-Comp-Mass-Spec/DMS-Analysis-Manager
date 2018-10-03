@@ -24,14 +24,14 @@ namespace AnalysisManager_Mage_PlugIn
                 return result;
             }
 
-            var mageOperations = m_jobParams.GetParam("MageOperations", string.Empty);
+            var mageOperations = mJobParams.GetParam("MageOperations", string.Empty);
 
-            var jobAnalysistype = m_jobParams.GetParam("AnalysisType", string.Empty);
+            var jobAnalysistype = mJobParams.GetParam("AnalysisType", string.Empty);
             var requireDeconJobs = jobAnalysistype == "iTRAQ";
 
             var requireMasicJobs = mageOperations.Contains("ImportReporterIons");
 
-            var workFlowSteps = m_jobParams.GetParam("ApeWorkflowStepList", string.Empty);
+            var workFlowSteps = mJobParams.GetParam("ApeWorkflowStepList", string.Empty);
             if (workFlowSteps.Contains("4plex") |
                 workFlowSteps.Contains("6plex") |
                 workFlowSteps.Contains("8plex"))
@@ -51,14 +51,14 @@ namespace AnalysisManager_Mage_PlugIn
             }
 
             // Lookup the jobs associated with this data package
-            var dataPackageID = m_jobParams.GetJobParameter("DataPackageID", -1);
+            var dataPackageID = mJobParams.GetJobParameter("DataPackageID", -1);
             if (dataPackageID < 0)
             {
                 LogError("DataPackageID is not defined");
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            var connectionString = m_mgrParams.GetParam("brokerconnectionstring");
+            var connectionString = mMgrParams.GetParam("brokerconnectionstring");
 
             var peptideHitJobs = clsDataPackageInfoLoader.RetrieveDataPackagePeptideHitJobInfo(
                 connectionString, dataPackageID, out var lstAdditionalJobs, out var errorMsg);
@@ -77,7 +77,7 @@ namespace AnalysisManager_Mage_PlugIn
 
             var masicJobsAreValid = true;
             var deconJobsAreValid = true;
-            m_message = string.Empty;
+            mMessage = string.Empty;
 
             // Confirm that every Peptide_Hit job has a corresponding MASIC job (required to populate table T_Reporter_Ions)
             if (requireMasicJobs)

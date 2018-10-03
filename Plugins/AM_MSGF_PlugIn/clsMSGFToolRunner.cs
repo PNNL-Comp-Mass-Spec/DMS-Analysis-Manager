@@ -141,18 +141,18 @@ namespace AnalysisManagerMSGFPlugin
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            var mgfInstrumentData = m_jobParams.GetJobParameter("MGFInstrumentData", false);
+            var mgfInstrumentData = mJobParams.GetJobParameter("MGFInstrumentData", false);
 
             // Determine the raw data type
-            var eRawDataType = clsAnalysisResources.GetRawDataType(m_jobParams.GetParam("RawDataType"));
+            var eRawDataType = clsAnalysisResources.GetRawDataType(mJobParams.GetParam("RawDataType"));
 
             // Resolve eResultType
-            var eResultType = clsPHRPReader.GetPeptideHitResultType(m_jobParams.GetParam("ResultType"));
+            var eResultType = clsPHRPReader.GetPeptideHitResultType(mJobParams.GetParam("ResultType"));
 
             if (eResultType == clsPHRPReader.ePeptideHitResultType.Unknown)
             {
                 // Result type is not supported
-                LogError("ResultType is not supported by MSGF in MSGFToolRunner: " + m_jobParams.GetParam("ResultType"));
+                LogError("ResultType is not supported by MSGF in MSGFToolRunner: " + mJobParams.GetParam("ResultType"));
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -167,8 +167,8 @@ namespace AnalysisManagerMSGFPlugin
             mMSGFVersion = string.Empty;
             mConsoleOutputErrorMsg = string.Empty;
 
-            mKeepMSGFInputFiles = m_jobParams.GetJobParameter("KeepMSGFInputFile", false);
-            var doNotFilterPeptides = m_jobParams.GetJobParameter("MSGFIgnoreFilters", false);
+            mKeepMSGFInputFiles = mJobParams.GetJobParameter("KeepMSGFInputFile", false);
+            var doNotFilterPeptides = mJobParams.GetJobParameter("MSGFIgnoreFilters", false);
 
             mPostProcessingError = false;
 
@@ -245,15 +245,15 @@ namespace AnalysisManagerMSGFPlugin
 
                         if (!success)
                         {
-                            if (string.IsNullOrWhiteSpace(m_message))
-                                m_message = "MSGF results file post-processing error";
+                            if (string.IsNullOrWhiteSpace(mMessage))
+                                mMessage = "MSGF results file post-processing error";
                             mPostProcessingError = true;
                         }
                     }
                 }
 
                 // Stop the job timer
-                m_StopTime = DateTime.UtcNow;
+                mStopTime = DateTime.UtcNow;
 
                 // Add the current job data to the summary file
                 UpdateSummaryFile();
@@ -325,7 +325,7 @@ namespace AnalysisManagerMSGFPlugin
                 return false;
             }
 
-            m_StatusTools.CurrentOperation = "Checking whether ETD mode is enabled";
+            mStatusTools.CurrentOperation = "Checking whether ETD mode is enabled";
 
             switch (eResultType)
             {
@@ -385,7 +385,7 @@ namespace AnalysisManagerMSGFPlugin
             {
                 mETDMode = false;
 
-                if (m_DebugLevel >= 2)
+                if (mDebugLevel >= 2)
                 {
                     LogDebug("Reading the MSGF+ parameter file: " + searchToolParamFilePath);
                 }
@@ -404,7 +404,7 @@ namespace AnalysisManagerMSGFPlugin
                         // Note that FragmentationMethodID=4 means Merge spectra from the same precursor (e.g. CID/ETD pairs, CID/HCD/ETD triplets)
                         // This mode is not yet supported
 
-                        if (m_DebugLevel >= 3)
+                        if (mDebugLevel >= 3)
                         {
                             LogDebug("MSGF+ " + MSGFPLUS_FRAG_METHOD_TAG + " line found: " + lineIn);
                         }
@@ -466,7 +466,7 @@ namespace AnalysisManagerMSGFPlugin
             {
                 mETDMode = false;
 
-                if (m_DebugLevel >= 2)
+                if (mDebugLevel >= 2)
                 {
                     LogDebug("Reading the SEQUEST parameter file: " + searchToolParamFilePath);
                 }
@@ -489,7 +489,7 @@ namespace AnalysisManagerMSGFPlugin
                         // ion_series = - - -  a   b   c  --- --- ---  x   y   z
                         // ion_series = 0 1 1 0.0 0.0 1.0 0.0 0.0 0.0 0.0 0.0 1.0
 
-                        if (m_DebugLevel >= 3)
+                        if (mDebugLevel >= 3)
                         {
                             LogDebug("SEQUEST " + SEQUEST_ION_SERIES_TAG + " line found: " + lineIn);
                         }
@@ -509,7 +509,7 @@ namespace AnalysisManagerMSGFPlugin
                                 double.TryParse(ionWeights[5], out var cWeight);
                                 double.TryParse(ionWeights[11], out var zWeight);
 
-                                if (m_DebugLevel >= 3)
+                                if (mDebugLevel >= 3)
                                 {
                                     LogDebug("SEQUEST " + SEQUEST_ION_SERIES_TAG + " line" +
                                              " has c-ion weighting = " + cWeight +
@@ -560,7 +560,7 @@ namespace AnalysisManagerMSGFPlugin
             {
                 mETDMode = false;
 
-                if (m_DebugLevel >= 2)
+                if (mDebugLevel >= 2)
                 {
                     LogDebug("Reading the X!Tandem parameter file: " + searchToolParamFilePath);
                 }
@@ -642,25 +642,25 @@ namespace AnalysisManagerMSGFPlugin
 
         private bool ConvertMzMLToMzXML()
         {
-            m_StatusTools.CurrentOperation = "Creating the .mzXML file";
+            mStatusTools.CurrentOperation = "Creating the .mzXML file";
 
-            mMSXmlCreator = new clsMSXMLCreator(mMSXmlGeneratorAppPath, m_WorkDir, m_Dataset, m_DebugLevel, m_jobParams);
+            mMSXmlCreator = new clsMSXMLCreator(mMSXmlGeneratorAppPath, mWorkDir, mDatasetName, mDebugLevel, mJobParams);
             RegisterEvents(mMSXmlCreator);
-            mMSXmlCreator.LoopWaiting += mMSXmlCreator_LoopWaiting;
+            mMSXmlCreator.LoopWaiting += MSXmlCreator_LoopWaiting;
 
             var success = mMSXmlCreator.ConvertMzMLToMzXML();
 
-            if (!success && string.IsNullOrEmpty(m_message))
+            if (!success && string.IsNullOrEmpty(mMessage))
             {
-                m_message = mMSXmlCreator.ErrorMessage;
-                if (string.IsNullOrEmpty(m_message))
+                mMessage = mMSXmlCreator.ErrorMessage;
+                if (string.IsNullOrEmpty(mMessage))
                 {
-                    m_message = "Unknown error creating the mzXML file";
+                    mMessage = "Unknown error creating the mzXML file";
                 }
             }
 
-            m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MZXML_EXTENSION);
-            m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MZML_EXTENSION);
+            mJobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MZXML_EXTENSION);
+            mJobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MZML_EXTENSION);
 
             return success;
         }
@@ -690,37 +690,37 @@ namespace AnalysisManagerMSGFPlugin
                 case clsPHRPReader.ePeptideHitResultType.Sequest:
 
                     // Convert SEQUEST results to input format required for MSGF
-                    mMSGFInputCreator = new clsMSGFInputCreatorSequest(m_Dataset, m_WorkDir);
+                    mMSGFInputCreator = new clsMSGFInputCreatorSequest(mDatasetName, mWorkDir);
                     break;
 
                 case clsPHRPReader.ePeptideHitResultType.XTandem:
 
                     // Convert X!Tandem results to input format required for MSGF
-                    mMSGFInputCreator = new clsMSGFInputCreatorXTandem(m_Dataset, m_WorkDir);
+                    mMSGFInputCreator = new clsMSGFInputCreatorXTandem(mDatasetName, mWorkDir);
                     break;
 
                 case clsPHRPReader.ePeptideHitResultType.Inspect:
 
                     // Convert Inspect results to input format required for MSGF
-                    mMSGFInputCreator = new clsMSGFInputCreatorInspect(m_Dataset, m_WorkDir);
+                    mMSGFInputCreator = new clsMSGFInputCreatorInspect(mDatasetName, mWorkDir);
                     break;
 
                 case clsPHRPReader.ePeptideHitResultType.MSGFDB:
 
                     // Convert MSGF+ results to input format required for MSGF
-                    mMSGFInputCreator = new clsMSGFInputCreatorMSGFDB(m_Dataset, m_WorkDir);
+                    mMSGFInputCreator = new clsMSGFInputCreatorMSGFDB(mDatasetName, mWorkDir);
                     break;
 
                 case clsPHRPReader.ePeptideHitResultType.MODa:
 
                     // Convert MODa results to input format required for MSGF
-                    mMSGFInputCreator = new clsMSGFInputCreatorMODa(m_Dataset, m_WorkDir);
+                    mMSGFInputCreator = new clsMSGFInputCreatorMODa(mDatasetName, mWorkDir);
                     break;
 
                 case clsPHRPReader.ePeptideHitResultType.MODPlus:
 
                     // Convert MODPlus results to input format required for MSGF
-                    mMSGFInputCreator = new clsMSGFInputCreatorMODPlus(m_Dataset, m_WorkDir);
+                    mMSGFInputCreator = new clsMSGFInputCreatorMODPlus(mDatasetName, mWorkDir);
                     break;
 
                 default:
@@ -735,9 +735,9 @@ namespace AnalysisManagerMSGFPlugin
                 return false;
 
             // Register events (do not use RegisterEvents since we only log the first 10 errors/warnings, then every 1000th one after that)
-            mMSGFInputCreator.StatusEvent += mMSGFInputCreator_StatusEvent;
-            mMSGFInputCreator.ErrorEvent += mMSGFInputCreator_ErrorEvent;
-            mMSGFInputCreator.WarningEvent += mMSGFInputCreator_WarningEvent;
+            mMSGFInputCreator.StatusEvent += MSGFInputCreator_StatusEvent;
+            mMSGFInputCreator.ErrorEvent += MSGFInputCreator_ErrorEvent;
+            mMSGFInputCreator.WarningEvent += MSGFInputCreator_WarningEvent;
 
             mMSGFInputFilePath = mMSGFInputCreator.MSGFInputFilePath;
             mMSGFResultsFilePath = mMSGFInputCreator.MSGFResultsFilePath;
@@ -745,9 +745,9 @@ namespace AnalysisManagerMSGFPlugin
             mMSGFInputCreator.DoNotFilterPeptides = doNotFilterPeptides;
             mMSGFInputCreator.MgfInstrumentData = mgfInstrumentData;
 
-            m_StatusTools.CurrentOperation = "Creating the MSGF Input file";
+            mStatusTools.CurrentOperation = "Creating the MSGF Input file";
 
-            if (m_DebugLevel >= 3)
+            if (mDebugLevel >= 3)
             {
                 LogDebug("Creating the MSGF Input file");
             }
@@ -762,7 +762,7 @@ namespace AnalysisManagerMSGFPlugin
             }
             else
             {
-                if (m_DebugLevel >= 2)
+                if (mDebugLevel >= 2)
                 {
                     LogDebug("CreateMSGFInputFileUsingPHRPResultFile complete; " + msgfInputFileLineCount + " lines of data");
                 }
@@ -781,8 +781,8 @@ namespace AnalysisManagerMSGFPlugin
             if (success)
             {
                 // We didn't actually run MSGF, so these files aren't needed
-                m_jobParams.AddResultFileToSkip("MSGF_AnalysisSummary.txt");
-                m_jobParams.AddResultFileToSkip("Tool_Version_Info_MSGF.txt");
+                mJobParams.AddResultFileToSkip("MSGF_AnalysisSummary.txt");
+                mJobParams.AddResultFileToSkip("Tool_Version_Info_MSGF.txt");
             }
 
             return success;
@@ -798,8 +798,8 @@ namespace AnalysisManagerMSGFPlugin
             if (success)
             {
                 // We didn't actually run MSGF, so these files aren't needed
-                m_jobParams.AddResultFileToSkip("MSGF_AnalysisSummary.txt");
-                m_jobParams.AddResultFileToSkip("Tool_Version_Info_MSGF.txt");
+                mJobParams.AddResultFileToSkip("MSGF_AnalysisSummary.txt");
+                mJobParams.AddResultFileToSkip("Tool_Version_Info_MSGF.txt");
             }
 
             return success;
@@ -815,8 +815,8 @@ namespace AnalysisManagerMSGFPlugin
             if (success)
             {
                 // We didn't actually run MSGF, so these files aren't needed
-                m_jobParams.AddResultFileToSkip("MSGF_AnalysisSummary.txt");
-                m_jobParams.AddResultFileToSkip("Tool_Version_Info_MSGF.txt");
+                mJobParams.AddResultFileToSkip("MSGF_AnalysisSummary.txt");
+                mJobParams.AddResultFileToSkip("Tool_Version_Info_MSGF.txt");
             }
 
             return success;
@@ -824,7 +824,7 @@ namespace AnalysisManagerMSGFPlugin
 
         private bool CreateMSGFResultsFromMSGFPlusResults()
         {
-            var objMSGFInputCreator = new clsMSGFInputCreatorMSGFDB(m_Dataset, m_WorkDir);
+            var objMSGFInputCreator = new clsMSGFInputCreatorMSGFDB(mDatasetName, mWorkDir);
 
             if (!CreateMSGFResultsFromMSGFPlusResults(objMSGFInputCreator, MSGF_PHRP_DATA_SOURCE_SYN.ToLower()))
             {
@@ -845,14 +845,14 @@ namespace AnalysisManagerMSGFPlugin
 
         private bool CreateMSGFResultsFromMSGFPlusResults(clsMSGFInputCreatorMSGFDB objMSGFInputCreator, string synOrFHT)
         {
-            var sourceFilePath = Path.Combine(m_WorkDir, m_Dataset + "_msgfplus_" + synOrFHT + ".txt");
+            var sourceFilePath = Path.Combine(mWorkDir, mDatasetName + "_msgfplus_" + synOrFHT + ".txt");
 
             if (!File.Exists(sourceFilePath))
             {
-                var sourceFilePathAlternate = Path.Combine(m_WorkDir, m_Dataset + "_msgfdb_" + synOrFHT + ".txt");
+                var sourceFilePathAlternate = Path.Combine(mWorkDir, mDatasetName + "_msgfdb_" + synOrFHT + ".txt");
                 if (!File.Exists(sourceFilePathAlternate))
                 {
-                    m_message = "Input file not found: " + Path.GetFileName(sourceFilePath);
+                    mMessage = "Input file not found: " + Path.GetFileName(sourceFilePath);
                     return false;
                 }
                 sourceFilePath = sourceFilePathAlternate;
@@ -862,10 +862,10 @@ namespace AnalysisManagerMSGFPlugin
 
             if (!success)
             {
-                m_message = "Error creating MSGF file for " + Path.GetFileName(sourceFilePath);
+                mMessage = "Error creating MSGF file for " + Path.GetFileName(sourceFilePath);
                 if (!string.IsNullOrEmpty(objMSGFInputCreator.ErrorMessage))
                 {
-                    m_message += ": " + objMSGFInputCreator.ErrorMessage;
+                    mMessage += ": " + objMSGFInputCreator.ErrorMessage;
                 }
                 return false;
             }
@@ -876,9 +876,9 @@ namespace AnalysisManagerMSGFPlugin
 
         private bool CreateMzXMLFile()
         {
-            m_StatusTools.CurrentOperation = "Creating the .mzXML file";
+            mStatusTools.CurrentOperation = "Creating the .mzXML file";
 
-            var mzXmlFilePath = Path.Combine(m_WorkDir, m_Dataset + clsAnalysisResources.DOT_MZXML_EXTENSION);
+            var mzXmlFilePath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_MZXML_EXTENSION);
 
             if (File.Exists(mzXmlFilePath))
             {
@@ -886,24 +886,24 @@ namespace AnalysisManagerMSGFPlugin
                 return true;
             }
 
-            mMSXmlCreator = new clsMSXMLCreator(mMSXmlGeneratorAppPath, m_WorkDir, m_Dataset, m_DebugLevel, m_jobParams);
+            mMSXmlCreator = new clsMSXMLCreator(mMSXmlGeneratorAppPath, mWorkDir, mDatasetName, mDebugLevel, mJobParams);
             RegisterEvents(mMSXmlCreator);
-            mMSXmlCreator.LoopWaiting += mMSXmlCreator_LoopWaiting;
+            mMSXmlCreator.LoopWaiting += MSXmlCreator_LoopWaiting;
 
             var success = mMSXmlCreator.CreateMZXMLFile();
 
-            if (!success && string.IsNullOrEmpty(m_message))
+            if (!success && string.IsNullOrEmpty(mMessage))
             {
-                m_message = mMSXmlCreator.ErrorMessage;
-                if (string.IsNullOrEmpty(m_message))
+                mMessage = mMSXmlCreator.ErrorMessage;
+                if (string.IsNullOrEmpty(mMessage))
                 {
-                    m_message = "Unknown error creating the mzXML file";
+                    mMessage = "Unknown error creating the mzXML file";
                 }
             }
 
             CopyMzXMLFileToServerCache(mzXmlFilePath, string.Empty, Path.GetFileNameWithoutExtension(mMSXmlGeneratorAppPath), purgeOldFilesIfNeeded: true);
 
-            m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MZXML_EXTENSION);
+            mJobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MZXML_EXTENSION);
 
             return success;
         }
@@ -923,7 +923,7 @@ namespace AnalysisManagerMSGFPlugin
 
             if (string.IsNullOrEmpty(mMSGFProgLoc))
             {
-                if (string.IsNullOrEmpty(m_message))
+                if (string.IsNullOrEmpty(mMessage))
                 {
                     LogError("Error determining MSGF program location");
                 }
@@ -947,7 +947,7 @@ namespace AnalysisManagerMSGFPlugin
             // In order to allow the old version of MSGF to be run, we must look for parameter MSGF_Version
 
             // Check whether the settings file specifies that a specific version of the step tool be used
-            var msgfStepToolVersion = m_jobParams.GetParam("MSGF_Version");
+            var msgfStepToolVersion = mJobParams.GetParam("MSGF_Version");
 
             if (!string.IsNullOrWhiteSpace(msgfStepToolVersion))
             {
@@ -979,7 +979,7 @@ namespace AnalysisManagerMSGFPlugin
             }
 
             return DetermineProgramLocation(stepToolName, progLocManagerParamName, exeName,
-                msgfStepToolVersion, m_mgrParams, out m_message);
+                msgfStepToolVersion, mMgrParams, out mMessage);
         }
 
         public static bool IsLegacyMSGFVersion(string stepToolVersion)
@@ -1080,9 +1080,9 @@ namespace AnalysisManagerMSGFPlugin
                     return false;
                 }
 
-                m_StatusTools.CurrentOperation = "MSGF complete; post-processing the results";
+                mStatusTools.CurrentOperation = "MSGF complete; post-processing the results";
 
-                if (m_DebugLevel >= 2)
+                if (mDebugLevel >= 2)
                 {
                     LogDebug("MSGF complete; post-processing the results");
                 }
@@ -1098,8 +1098,8 @@ namespace AnalysisManagerMSGFPlugin
                 // Define the path to write the synopsis MSGF results to
                 msgfSynopsisResults = Path.Combine(fiInputFile.Directory.FullName, Path.GetFileNameWithoutExtension(fiInputFile.Name) + "_PostProcess.txt");
 
-                m_progress = PROGRESS_PCT_MSGF_POST_PROCESSING;
-                m_StatusTools.UpdateAndWrite(m_progress);
+                mProgress = PROGRESS_PCT_MSGF_POST_PROCESSING;
+                mStatusTools.UpdateAndWrite(mProgress);
 
                 success = PostProcessMSGFResultsWork(msgfResultsFilePath, msgfSynopsisResults, mgfInstrumentData, out firstHitsDataPresent, out tooManyErrors);
             }
@@ -1429,7 +1429,7 @@ namespace AnalysisManagerMSGFPlugin
         {
 
             // Parse the SEQUEST, X!Tandem, Inspect, or MODa parameter file to determine if ETD mode was used
-            var searchToolParamFilePath = Path.Combine(m_WorkDir, m_jobParams.GetParam("ParmFileName"));
+            var searchToolParamFilePath = Path.Combine(mWorkDir, mJobParams.GetParam("ParmFileName"));
 
             var success = CheckETDModeEnabled(eResultType, searchToolParamFilePath);
             if (!success)
@@ -1438,21 +1438,21 @@ namespace AnalysisManagerMSGFPlugin
                 return false;
             }
 
-            m_progress = PROGRESS_PCT_PARAM_FILE_EXAMINED_FOR_ETD;
-            m_StatusTools.UpdateAndWrite(m_progress);
+            mProgress = PROGRESS_PCT_PARAM_FILE_EXAMINED_FOR_ETD;
+            mStatusTools.UpdateAndWrite(mProgress);
 
             // Create the _MSGF_input.txt file
             success = CreateMSGFInputFile(eResultType, doNotFilterPeptides, mgfInstrumentData, out var msgfInputFileLineCount);
 
             if (!success)
             {
-                if (string.IsNullOrWhiteSpace(m_message))
-                    m_message = "Error creating MSGF input file";
+                if (string.IsNullOrWhiteSpace(mMessage))
+                    mMessage = "Error creating MSGF input file";
             }
             else
             {
-                m_progress = PROGRESS_PCT_MSGF_INPUT_FILE_GENERATED;
-                m_StatusTools.UpdateAndWrite(m_progress);
+                mProgress = PROGRESS_PCT_MSGF_INPUT_FILE_GENERATED;
+                mStatusTools.UpdateAndWrite(mProgress);
             }
 
             if (success)
@@ -1478,19 +1478,19 @@ namespace AnalysisManagerMSGFPlugin
 
                 if (!success)
                 {
-                    if (string.IsNullOrWhiteSpace(m_message))
-                        m_message = "Error creating .mzXML file";
+                    if (string.IsNullOrWhiteSpace(mMessage))
+                        mMessage = "Error creating .mzXML file";
                 }
                 else
                 {
-                    m_progress = PROGRESS_PCT_MZXML_CREATED;
-                    m_StatusTools.UpdateAndWrite(m_progress);
+                    mProgress = PROGRESS_PCT_MZXML_CREATED;
+                    mStatusTools.UpdateAndWrite(mProgress);
                 }
             }
 
             if (success)
             {
-                var useExistingMSGFResults = m_jobParams.GetJobParameter("UseExistingMSGFResults", false);
+                var useExistingMSGFResults = mJobParams.GetJobParameter("UseExistingMSGFResults", false);
 
                 if (useExistingMSGFResults)
                 {
@@ -1498,7 +1498,7 @@ namespace AnalysisManagerMSGFPlugin
                     // If that file exists, use it as the official MSGF results file
                     // The assumption is that this file will have been created by manually running MSGF on another computer
 
-                    if (m_DebugLevel >= 1)
+                    if (mDebugLevel >= 1)
                     {
                         LogDebug("UseExistingMSGFResults = True; will look for pre-generated MSGF results file in the transfer folder");
                     }
@@ -1523,8 +1523,8 @@ namespace AnalysisManagerMSGFPlugin
 
                 if (!success)
                 {
-                    if (string.IsNullOrWhiteSpace(m_message))
-                        m_message = "Error running MSGF";
+                    if (string.IsNullOrWhiteSpace(mMessage))
+                        mMessage = "Error running MSGF";
                 }
                 else
                 {
@@ -1532,11 +1532,11 @@ namespace AnalysisManagerMSGFPlugin
                     if (!mKeepMSGFInputFiles)
                     {
                         // Add the _MSGF_input.txt file to the list of files to delete (i.e., do not move it into the results folder)
-                        m_jobParams.AddResultFileToSkip(Path.GetFileName(mMSGFInputFilePath));
+                        mJobParams.AddResultFileToSkip(Path.GetFileName(mMSGFInputFilePath));
                     }
 
-                    m_progress = PROGRESS_PCT_MSGF_COMPLETE;
-                    m_StatusTools.UpdateAndWrite(m_progress);
+                    mProgress = PROGRESS_PCT_MSGF_COMPLETE;
+                    mStatusTools.UpdateAndWrite(mProgress);
                 }
             }
 
@@ -1559,12 +1559,12 @@ namespace AnalysisManagerMSGFPlugin
 
             try
             {
-                var transferFolderPath = m_jobParams.GetParam(clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH);
-                var inputFolderName = m_jobParams.GetParam("inputFolderName");
+                var transferFolderPath = mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH);
+                var inputFolderName = mJobParams.GetParam("inputFolderName");
 
-                folderToCheck = Path.Combine(Path.Combine(transferFolderPath, m_Dataset), inputFolderName);
+                folderToCheck = Path.Combine(Path.Combine(transferFolderPath, mDatasetName), inputFolderName);
 
-                if (m_DebugLevel >= 3)
+                if (mDebugLevel >= 3)
                 {
                     LogDebug("Looking for folder " + folderToCheck);
                 }
@@ -1574,14 +1574,14 @@ namespace AnalysisManagerMSGFPlugin
                 {
                     var filePathSource = Path.Combine(folderToCheck, fileNameToFind);
 
-                    if (m_DebugLevel >= 1)
+                    if (mDebugLevel >= 1)
                     {
                         LogDebug("Looking for file " + filePathSource);
                     }
 
                     if (File.Exists(filePathSource))
                     {
-                        var filePathTarget = Path.Combine(m_WorkDir, fileNameToFind);
+                        var filePathTarget = Path.Combine(mWorkDir, fileNameToFind);
                         LogDebug("Copying file " + filePathSource + " to " + filePathTarget);
 
                         File.Copy(filePathSource, filePathTarget, true);
@@ -1788,8 +1788,8 @@ namespace AnalysisManagerMSGFPlugin
             bool useSegments;
             string segmentUsageMessage;
 
-            var msgfEntriesPerSegment = m_jobParams.GetJobParameter("MSGFEntriesPerSegment", MSGF_SEGMENT_ENTRY_COUNT);
-            if (m_DebugLevel >= 2)
+            var msgfEntriesPerSegment = mJobParams.GetJobParameter("MSGFEntriesPerSegment", MSGF_SEGMENT_ENTRY_COUNT);
+            if (mDebugLevel >= 2)
             {
                 LogDebug("MSGFInputFileLineCount = " + msgfInputFileLineCount + "; MSGFEntriesPerSegment = " + msgfEntriesPerSegment);
             }
@@ -1813,11 +1813,11 @@ namespace AnalysisManagerMSGFPlugin
 
             mMSGFLineCountPreviousSegments = 0;
             mMSGFInputFileLineCount = msgfInputFileLineCount;
-            m_progress = PROGRESS_PCT_MSGF_START;
+            mProgress = PROGRESS_PCT_MSGF_START;
 
             if (!useSegments)
             {
-                if (m_DebugLevel >= 2)
+                if (mDebugLevel >= 2)
                 {
                     LogMessage(segmentUsageMessage);
                 }
@@ -1833,7 +1833,7 @@ namespace AnalysisManagerMSGFPlugin
                 // Split msgfInputFilePath into chunks with msgfEntriesPerSegment each
                 success = SplitMSGFInputFile(msgfInputFileLineCount, msgfInputFilePath, msgfEntriesPerSegment, segmentFileInfo);
 
-                if (m_DebugLevel >= 2)
+                if (mDebugLevel >= 2)
                 {
                     LogMessage(
                         segmentUsageMessage + "; segment count = " + segmentFileInfo.Count);
@@ -1864,7 +1864,7 @@ namespace AnalysisManagerMSGFPlugin
 
                 if (success)
                 {
-                    if (m_DebugLevel >= 2)
+                    if (mDebugLevel >= 2)
                     {
                         LogDebug("Deleting MSGF segment files");
                     }
@@ -1886,7 +1886,7 @@ namespace AnalysisManagerMSGFPlugin
             try
             {
                 // Delete the Console_Output.txt file if it is empty
-                var fiConsoleOutputFile = new FileInfo(Path.Combine(m_WorkDir, MSGF_CONSOLE_OUTPUT));
+                var fiConsoleOutputFile = new FileInfo(Path.Combine(mWorkDir, MSGF_CONSOLE_OUTPUT));
                 if (fiConsoleOutputFile.Exists && fiConsoleOutputFile.Length == 0)
                 {
                     fiConsoleOutputFile.Delete();
@@ -1923,19 +1923,19 @@ namespace AnalysisManagerMSGFPlugin
             // If an MSGF analysis crashes with an "out-of-memory" error, we need to reserve more memory for Java
             // Customize this on a per-job basis using the MSGFJavaMemorySize setting in the settings file
             // (job 611216 succeeded with a value of 5000)
-            var javaMemorySize = m_jobParams.GetJobParameter("MSGFJavaMemorySize", 2000);
+            var javaMemorySize = mJobParams.GetJobParameter("MSGFJavaMemorySize", 2000);
             if (javaMemorySize < 512)
                 javaMemorySize = 512;
 
-            if (m_DebugLevel >= 1)
+            if (mDebugLevel >= 1)
             {
                 LogMessage("Running MSGF on " + Path.GetFileName(inputFilePath));
             }
 
             mCurrentMSGFResultsFilePath = string.Copy(resultsFilePath);
 
-            m_StatusTools.CurrentOperation = "Running MSGF";
-            m_StatusTools.UpdateAndWrite(m_progress);
+            mStatusTools.CurrentOperation = "Running MSGF";
+            mStatusTools.UpdateAndWrite(mProgress);
 
             var cmdStr = " -Xmx" + javaMemorySize + "M ";
 
@@ -1952,7 +1952,7 @@ namespace AnalysisManagerMSGFPlugin
             cmdStr += " -i " + PossiblyQuotePath(inputFilePath);
 
             // Folder containing .mzXML, .mzML, or .mgf file
-            cmdStr += " -d " + PossiblyQuotePath(m_WorkDir);
+            cmdStr += " -d " + PossiblyQuotePath(mWorkDir);
 
             // Output file
             cmdStr += " -o " + PossiblyQuotePath(resultsFilePath);
@@ -2017,13 +2017,13 @@ namespace AnalysisManagerMSGFPlugin
 
             LogDebug(mJavaProgLoc + " " + cmdStr);
 
-            mMSGFRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel)
+            mMSGFRunner = new clsRunDosProgram(mWorkDir, mDebugLevel)
             {
                 CreateNoWindow = false,
                 CacheStandardOutput = false,
                 EchoOutputToConsole = false,
                 WriteConsoleOutputToFile = true,
-                ConsoleOutputFilePath = Path.Combine(m_WorkDir, MSGF_CONSOLE_OUTPUT)
+                ConsoleOutputFilePath = Path.Combine(mWorkDir, MSGF_CONSOLE_OUTPUT)
             };
             RegisterEvents(mMSGFRunner);
             mMSGFRunner.LoopWaiting += MSGFRunner_LoopWaiting;
@@ -2034,7 +2034,7 @@ namespace AnalysisManagerMSGFPlugin
             {
                 if (string.IsNullOrWhiteSpace(mMSGFVersion))
                 {
-                    var fiConsoleOutputfile = new FileInfo(Path.Combine(m_WorkDir, MSGF_CONSOLE_OUTPUT));
+                    var fiConsoleOutputfile = new FileInfo(Path.Combine(mWorkDir, MSGF_CONSOLE_OUTPUT));
                     if (fiConsoleOutputfile.Length == 0)
                     {
                         // File is 0-bytes; delete it
@@ -2042,7 +2042,7 @@ namespace AnalysisManagerMSGFPlugin
                     }
                     else
                     {
-                        ParseConsoleOutputFile(Path.Combine(m_WorkDir, MSGF_CONSOLE_OUTPUT));
+                        ParseConsoleOutputFile(Path.Combine(mWorkDir, MSGF_CONSOLE_OUTPUT));
                     }
                 }
                 mToolVersionWritten = StoreToolVersionInfo();
@@ -2055,7 +2055,7 @@ namespace AnalysisManagerMSGFPlugin
 
             if (!success)
             {
-                LogError("Error running MSGF, job " + m_JobNum);
+                LogError("Error running MSGF, job " + mJob);
             }
 
             return success;
@@ -2197,7 +2197,7 @@ namespace AnalysisManagerMSGFPlugin
             {
                 if (!File.Exists(consoleOutputFilePath))
                 {
-                    if (m_DebugLevel >= 4)
+                    if (mDebugLevel >= 4)
                     {
                         LogDebug("Console output file not found: " + consoleOutputFilePath);
                     }
@@ -2205,7 +2205,7 @@ namespace AnalysisManagerMSGFPlugin
                     return;
                 }
 
-                if (m_DebugLevel >= 3)
+                if (mDebugLevel >= 3)
                 {
                     LogDebug("Parsing file " + consoleOutputFilePath);
                 }
@@ -2229,7 +2229,7 @@ namespace AnalysisManagerMSGFPlugin
                             // Starting in November 2016, the first line is the command line and the second line is a separator (series of dashes)
                             // The third line is the MSGF version
 
-                            if (m_DebugLevel >= 2)
+                            if (mDebugLevel >= 2)
                             {
                                 LogDebug("MSGF version: " + lineIn);
                             }
@@ -2253,7 +2253,7 @@ namespace AnalysisManagerMSGFPlugin
             catch (Exception ex)
             {
                 // Ignore errors here
-                if (m_DebugLevel >= 2)
+                if (mDebugLevel >= 2)
                 {
                     LogError("Error parsing console output file (" + consoleOutputFilePath + ")", ex);
                 }
@@ -2359,7 +2359,7 @@ namespace AnalysisManagerMSGFPlugin
         /// <remarks></remarks>
         private bool StoreToolVersionInfo()
         {
-            if (m_DebugLevel >= 2)
+            if (mDebugLevel >= 2)
             {
                 LogDebug("Determining tool version info");
             }
@@ -2391,7 +2391,7 @@ namespace AnalysisManagerMSGFPlugin
         {
             var toolVersionInfo = string.Empty;
 
-            if (m_DebugLevel >= 2)
+            if (mDebugLevel >= 2)
             {
                 LogDebug("Determining tool version info");
             }
@@ -2428,9 +2428,9 @@ namespace AnalysisManagerMSGFPlugin
             try
             {
                 // Gigasax.DMS5
-                var connectionString = m_mgrParams.GetParam("connectionstring");
+                var connectionString = mMgrParams.GetParam("connectionstring");
 
-                var objSummarizer = new clsMSGFResultsSummarizer(eResultType, m_Dataset, m_JobNum, m_WorkDir, connectionString, m_DebugLevel);
+                var objSummarizer = new clsMSGFResultsSummarizer(eResultType, mDatasetName, mJob, mWorkDir, connectionString, mDebugLevel);
                 RegisterEvents(objSummarizer);
 
                 objSummarizer.ErrorEvent += MSGFResultsSummarizer_ErrorHandler;
@@ -2440,7 +2440,7 @@ namespace AnalysisManagerMSGFPlugin
                 objSummarizer.ContactDatabase = true;
                 objSummarizer.PostJobPSMResultsToDB = true;
                 objSummarizer.SaveResultsToTextFile = false;
-                objSummarizer.DatasetName = m_Dataset;
+                objSummarizer.DatasetName = mDatasetName;
 
                 success = objSummarizer.ProcessMSGFResults();
 
@@ -2463,7 +2463,7 @@ namespace AnalysisManagerMSGFPlugin
                 {
                     if (objSummarizer.DatasetScanStatsLookupError)
                     {
-                        if (string.IsNullOrWhiteSpace(m_message) && !string.IsNullOrWhiteSpace(objSummarizer.ErrorMessage))
+                        if (string.IsNullOrWhiteSpace(mMessage) && !string.IsNullOrWhiteSpace(objSummarizer.ErrorMessage))
                             LogError(objSummarizer.ErrorMessage);
                     }
                 }
@@ -2516,8 +2516,8 @@ namespace AnalysisManagerMSGFPlugin
                     }
                 }
 
-                m_progress = (float)(PROGRESS_PCT_MSGF_START + (PROGRESS_PCT_MSGF_COMPLETE - PROGRESS_PCT_MSGF_START) * fraction);
-                m_StatusTools.UpdateAndWrite(m_progress);
+                mProgress = (float)(PROGRESS_PCT_MSGF_START + (PROGRESS_PCT_MSGF_COMPLETE - PROGRESS_PCT_MSGF_START) * fraction);
+                mStatusTools.UpdateAndWrite(mProgress);
             }
             catch (Exception ex)
             {
@@ -2538,7 +2538,7 @@ namespace AnalysisManagerMSGFPlugin
             {
                 LogDebug("Contact clsPHRPReader.GetPHRPProteinModsFileName for eResultType " + eResultType, 3);
 
-                var fiProteinModsFile = new FileInfo(Path.Combine(m_WorkDir, clsPHRPReader.GetPHRPProteinModsFileName(eResultType, m_Dataset)));
+                var fiProteinModsFile = new FileInfo(Path.Combine(mWorkDir, clsPHRPReader.GetPHRPProteinModsFileName(eResultType, mDatasetName)));
                 var fiProteinModsFileNew = new FileInfo(fiProteinModsFile.FullName + ".tmp");
 
                 if (!fiProteinModsFile.Exists)
@@ -2635,7 +2635,7 @@ namespace AnalysisManagerMSGFPlugin
                         try
                         {
                             fiProteinModsFileNew.MoveTo(fiProteinModsFile.FullName);
-                            if (m_DebugLevel >= 2)
+                            if (mDebugLevel >= 2)
                             {
                                 LogMessage("Updated MSGF_SpecProb values in the ProteinMods.txt file");
                             }
@@ -2666,7 +2666,7 @@ namespace AnalysisManagerMSGFPlugin
 
         #region "Event Handlers"
 
-        private void mMSXmlCreator_LoopWaiting()
+        private void MSXmlCreator_LoopWaiting()
         {
             UpdateStatusFile(PROGRESS_PCT_MSXML_GEN_RUNNING);
 
@@ -2679,7 +2679,7 @@ namespace AnalysisManagerMSGFPlugin
         /// <param name="message"></param>
         /// <param name="ex"></param>
         /// <remarks></remarks>
-        private void mMSGFInputCreator_ErrorEvent(string message, Exception ex)
+        private void MSGFInputCreator_ErrorEvent(string message, Exception ex)
         {
             mMSGFInputCreatorErrorCount += 1;
             if (mMSGFInputCreatorErrorCount < 10 || mMSGFInputCreatorErrorCount % 1000 == 0)
@@ -2692,7 +2692,7 @@ namespace AnalysisManagerMSGFPlugin
         /// Event handler for status events reported by the MSGF Input Creator
         /// </summary>
         /// <param name="message"></param>
-        private void mMSGFInputCreator_StatusEvent(string message)
+        private void MSGFInputCreator_StatusEvent(string message)
         {
             LogMessage(message, 10);
         }
@@ -2702,7 +2702,7 @@ namespace AnalysisManagerMSGFPlugin
         /// </summary>
         /// <param name="warningMessage"></param>
         /// <remarks></remarks>
-        private void mMSGFInputCreator_WarningEvent(string warningMessage)
+        private void MSGFInputCreator_WarningEvent(string warningMessage)
         {
             mMSGFInputCreatorWarningCount += 1;
             if (mMSGFInputCreatorWarningCount < 10 || mMSGFInputCreatorWarningCount % 1000 == 0)
@@ -2724,8 +2724,8 @@ namespace AnalysisManagerMSGFPlugin
             }
         }
 
-        private DateTime dtLastUpdateTime = DateTime.MinValue;
-        private DateTime dtLastConsoleOutputParse = DateTime.MinValue;
+        private DateTime mLastUpdateTime = DateTime.MinValue;
+        private DateTime mLastConsoleOutputParse = DateTime.MinValue;
 
         /// <summary>
         /// Event handler that fires while MSGF is processing
@@ -2733,19 +2733,19 @@ namespace AnalysisManagerMSGFPlugin
         /// <remarks></remarks>
         private void MSGFRunner_LoopWaiting()
         {
-            if (DateTime.UtcNow.Subtract(dtLastUpdateTime).TotalSeconds >= 20)
+            if (DateTime.UtcNow.Subtract(mLastUpdateTime).TotalSeconds >= 20)
             {
                 // Update the MSGF progress by counting the number of lines in the _MSGF.txt file
                 UpdateMSGFProgress(mCurrentMSGFResultsFilePath);
 
-                dtLastUpdateTime = DateTime.UtcNow;
+                mLastUpdateTime = DateTime.UtcNow;
             }
 
-            if (DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= 15)
+            if (DateTime.UtcNow.Subtract(mLastConsoleOutputParse).TotalSeconds >= 15)
             {
-                dtLastConsoleOutputParse = DateTime.UtcNow;
+                mLastConsoleOutputParse = DateTime.UtcNow;
 
-                ParseConsoleOutputFile(Path.Combine(m_WorkDir, MSGF_CONSOLE_OUTPUT));
+                ParseConsoleOutputFile(Path.Combine(mWorkDir, MSGF_CONSOLE_OUTPUT));
                 if (!mToolVersionWritten && !string.IsNullOrWhiteSpace(mMSGFVersion))
                 {
                     mToolVersionWritten = StoreToolVersionInfo();

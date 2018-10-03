@@ -18,7 +18,7 @@ namespace DTASpectraFileGen
 
         #region "Module variables"
 
-        private System.Threading.Thread m_thThread;
+        private System.Threading.Thread mDTAFileCreationThread;
         private MascotGenericFileToDTA.clsMGFtoDTA mMGFtoDTA;
 
         // DTA generation options
@@ -32,35 +32,35 @@ namespace DTASpectraFileGen
         {
             base.Setup(initParams, toolRunner);
 
-            m_DtaToolNameLoc = Path.Combine(clsGlobal.GetAppFolderPath(), "MascotGenericFileToDTA.dll");
+            mDtaToolNameLoc = Path.Combine(clsGlobal.GetAppFolderPath(), "MascotGenericFileToDTA.dll");
         }
 
         public override ProcessStatus Start()
         {
-            m_Status = ProcessStatus.SF_STARTING;
+            mStatus = ProcessStatus.SF_STARTING;
 
             // Verify necessary files are in specified locations
             if (!InitSetup())
             {
-                m_Results = ProcessResults.SF_FAILURE;
-                m_Status = ProcessStatus.SF_ERROR;
-                return m_Status;
+                mResults = ProcessResults.SF_FAILURE;
+                mStatus = ProcessStatus.SF_ERROR;
+                return mStatus;
             }
 
             // Make the DTA files (the process runs in a separate thread)
             try
             {
-                m_thThread = new System.Threading.Thread(MakeDTAFilesThreaded);
-                m_thThread.Start();
-                m_Status = ProcessStatus.SF_RUNNING;
+                mDTAFileCreationThread = new System.Threading.Thread(MakeDTAFilesThreaded);
+                mDTAFileCreationThread.Start();
+                mStatus = ProcessStatus.SF_RUNNING;
             }
             catch (Exception ex)
             {
-                m_ErrMsg = "Error calling MakeDTAFilesFromMGF: " + ex.Message;
-                m_Status = ProcessStatus.SF_ERROR;
+                mErrMsg = "Error calling MakeDTAFilesFromMGF: " + ex.Message;
+                mStatus = ProcessStatus.SF_ERROR;
             }
 
-            return m_Status;
+            return mStatus;
         }
 
         private bool VerifyMGFFileExists(string WorkDir, string DSName)
@@ -68,11 +68,11 @@ namespace DTASpectraFileGen
             // Verifies a .mgf file exists in specfied directory
             if (File.Exists(Path.Combine(WorkDir, DSName + clsAnalysisResources.DOT_MGF_EXTENSION)))
             {
-                m_ErrMsg = "";
+                mErrMsg = "";
                 return true;
             }
 
-            m_ErrMsg = "Data file " + DSName + ".mgf not found in working directory";
+            mErrMsg = "Data file " + DSName + ".mgf not found in working directory";
             return false;
         }
 
@@ -85,7 +85,7 @@ namespace DTASpectraFileGen
                 return false;
 
             // MGF data file exists?
-            if (!VerifyMGFFileExists(m_WorkDir, m_Dataset))
+            if (!VerifyMGFFileExists(mWorkDir, mDatasetName))
                 return false;    // Error message handled by VerifyMGFFileExists
 
             // If we got to here, there was no problem
@@ -94,65 +94,65 @@ namespace DTASpectraFileGen
 
         private void MakeDTAFilesThreaded()
         {
-            m_Status = ProcessStatus.SF_RUNNING;
+            mStatus = ProcessStatus.SF_RUNNING;
             if (!MakeDTAFilesFromMGF())
             {
-                if (m_Status != ProcessStatus.SF_ABORTING)
+                if (mStatus != ProcessStatus.SF_ABORTING)
                 {
-                    m_Results = ProcessResults.SF_FAILURE;
-                    m_Status = ProcessStatus.SF_ERROR;
+                    mResults = ProcessResults.SF_FAILURE;
+                    mStatus = ProcessStatus.SF_ERROR;
                 }
             }
 
-            if (m_Status == ProcessStatus.SF_ABORTING)
+            if (mStatus == ProcessStatus.SF_ABORTING)
             {
-                m_Results = ProcessResults.SF_ABORTED;
+                mResults = ProcessResults.SF_ABORTED;
             }
-            else if (m_Status == ProcessStatus.SF_ERROR)
+            else if (mStatus == ProcessStatus.SF_ERROR)
             {
-                m_Results = ProcessResults.SF_FAILURE;
+                mResults = ProcessResults.SF_FAILURE;
             }
             else
             {
                 // Verify at least one dta file was created
                 if (!VerifyDtaCreation())
                 {
-                    m_Results = ProcessResults.SF_NO_FILES_CREATED;
+                    mResults = ProcessResults.SF_NO_FILES_CREATED;
                 }
                 else
                 {
-                    m_Results = ProcessResults.SF_SUCCESS;
+                    mResults = ProcessResults.SF_SUCCESS;
                 }
 
-                m_Status = ProcessStatus.SF_COMPLETE;
+                mStatus = ProcessStatus.SF_COMPLETE;
             }
         }
 
         private bool MakeDTAFilesFromMGF()
         {
             // Get the parameters from the various setup files
-            var mgfFilePath = Path.Combine(m_WorkDir, m_Dataset + clsAnalysisResources.DOT_MGF_EXTENSION);
-            mScanStart = m_JobParams.GetJobParameter("ScanStart", 0);
-            mScanStop = m_JobParams.GetJobParameter("ScanStop", 0);
-            mMWLower = m_JobParams.GetJobParameter("MWStart", 0);
-            // mMWUpper = m_JobParams.GetJobParameter("MWStop", 0);
+            var mgfFilePath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_MGF_EXTENSION);
+            mScanStart = mJobParams.GetJobParameter("ScanStart", 0);
+            mScanStop = mJobParams.GetJobParameter("ScanStop", 0);
+            mMWLower = mJobParams.GetJobParameter("MWStart", 0);
+            // mMWUpper = mJobParams.GetJobParameter("MWStop", 0);
 
             // Run the MGF to DTA converter
-            if (!ConvertMGFtoDTA(mgfFilePath, m_WorkDir))
+            if (!ConvertMGFtoDTA(mgfFilePath, mWorkDir))
             {
-                // Note that ConvertMGFtoDTA will have updated m_ErrMsg with the error message
-                m_Results = ProcessResults.SF_FAILURE;
-                m_Status = ProcessStatus.SF_ERROR;
+                // Note that ConvertMGFtoDTA will have updated mErrMsg with the error message
+                mResults = ProcessResults.SF_FAILURE;
+                mStatus = ProcessStatus.SF_ERROR;
                 return false;
             }
 
-            if (m_AbortRequested)
+            if (mAbortRequested)
             {
-                m_Status = ProcessStatus.SF_ABORTING;
+                mStatus = ProcessStatus.SF_ABORTING;
             }
 
             // We got this far, everything must have worked
-            return m_Status != ProcessStatus.SF_ABORTING && m_Status != ProcessStatus.SF_ERROR;
+            return mStatus != ProcessStatus.SF_ABORTING && mStatus != ProcessStatus.SF_ERROR;
         }
 
         /// <summary>
@@ -163,7 +163,7 @@ namespace DTASpectraFileGen
         /// <remarks></remarks>
         private bool ConvertMGFtoDTA(string strInputFilePathFull, string strOutputFolderPath)
         {
-            if (m_DebugLevel > 0)
+            if (mDebugLevel > 0)
             {
                 OnDebugEvent("Converting .MGF file to _DTA.txt");
             }
@@ -171,34 +171,34 @@ namespace DTASpectraFileGen
             mMGFtoDTA = new MascotGenericFileToDTA.clsMGFtoDTA
             {
                 CreateIndividualDTAFiles = false,
-                GuesstimateChargeForAllSpectra = m_JobParams.GetJobParameter("GuesstimateChargeForAllSpectra", false),
-                ForceChargeAddnForPredefined2PlusOr3Plus = m_JobParams.GetJobParameter("ForceChargeAddnForPredefined2PlusOr3Plus", false),
-                FilterSpectra = m_JobParams.GetJobParameter("FilterSpectra", false),
+                GuesstimateChargeForAllSpectra = mJobParams.GetJobParameter("GuesstimateChargeForAllSpectra", false),
+                ForceChargeAddnForPredefined2PlusOr3Plus = mJobParams.GetJobParameter("ForceChargeAddnForPredefined2PlusOr3Plus", false),
+                FilterSpectra = mJobParams.GetJobParameter("FilterSpectra", false),
                 LogMessagesToFile = false,
-                MaximumIonsPerSpectrum = m_JobParams.GetJobParameter("MaximumIonsPerSpectrum", 0),
+                MaximumIonsPerSpectrum = mJobParams.GetJobParameter("MaximumIonsPerSpectrum", 0),
                 ScanToExportMinimum = mScanStart,
                 ScanToExportMaximum = mScanStop,
                 MinimumParentIonMZ = mMWLower
             };
-            mMGFtoDTA.ErrorEvent += mMGFtoDTA_ErrorEvent;
+            mMGFtoDTA.ErrorEvent += MGFtoDTA_ErrorEvent;
 
             // Value between 0 and 100
-            mMGFtoDTA.ThresholdIonPctForSingleCharge = m_JobParams.GetJobParameter("ThresholdIonPctForSingleCharge",
+            mMGFtoDTA.ThresholdIonPctForSingleCharge = mJobParams.GetJobParameter("ThresholdIonPctForSingleCharge",
                 (int)mMGFtoDTA.ThresholdIonPctForSingleCharge);
 
             // Value between 0 and 100
-            mMGFtoDTA.ThresholdIonPctForDoubleCharge = m_JobParams.GetJobParameter("ThresholdIonPctForDoubleCharge",
+            mMGFtoDTA.ThresholdIonPctForDoubleCharge = mJobParams.GetJobParameter("ThresholdIonPctForDoubleCharge",
                 (int)mMGFtoDTA.ThresholdIonPctForDoubleCharge);
 
             var blnSuccess = mMGFtoDTA.ProcessFile(strInputFilePathFull, strOutputFolderPath);
 
-            if (!blnSuccess && string.IsNullOrEmpty(m_ErrMsg))
+            if (!blnSuccess && string.IsNullOrEmpty(mErrMsg))
             {
-                m_ErrMsg = mMGFtoDTA.GetErrorMessage();
+                mErrMsg = mMGFtoDTA.GetErrorMessage();
             }
 
-            m_SpectraFileCount = mMGFtoDTA.SpectraCountWritten;
-            m_Progress = 95;
+            mSpectraFileCount = mMGFtoDTA.SpectraCountWritten;
+            mProgress = 95;
 
             return blnSuccess;
         }
@@ -206,32 +206,32 @@ namespace DTASpectraFileGen
         private bool VerifyDtaCreation()
         {
             // Verify that the _DTA.txt file was created and is not empty
-            var fiCDTAFile = new FileInfo(Path.Combine(m_WorkDir, m_Dataset + clsAnalysisResources.CDTA_EXTENSION));
+            var fiCDTAFile = new FileInfo(Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.CDTA_EXTENSION));
 
             if (!fiCDTAFile.Exists)
             {
-                m_ErrMsg = "_DTA.txt file not created";
+                mErrMsg = "_DTA.txt file not created";
                 return false;
             }
 
             if (fiCDTAFile.Length == 0)
             {
-                m_ErrMsg = "_DTA.txt file is empty";
+                mErrMsg = "_DTA.txt file is empty";
                 return false;
             }
 
             return true;
         }
 
-        private void mMGFtoDTA_ErrorEvent(string strMessage)
+        private void MGFtoDTA_ErrorEvent(string strMessage)
         {
-            if (string.IsNullOrEmpty(m_ErrMsg))
+            if (string.IsNullOrEmpty(mErrMsg))
             {
-                m_ErrMsg = "MGFtoDTA_Error: " + strMessage;
+                mErrMsg = "MGFtoDTA_Error: " + strMessage;
             }
-            else if (m_ErrMsg.Length < 300)
+            else if (mErrMsg.Length < 300)
             {
-                m_ErrMsg += "; MGFtoDTA_Error: " + strMessage;
+                mErrMsg += "; MGFtoDTA_Error: " + strMessage;
             }
         }
     }
