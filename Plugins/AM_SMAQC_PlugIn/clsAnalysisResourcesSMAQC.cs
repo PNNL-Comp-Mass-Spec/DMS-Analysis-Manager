@@ -103,20 +103,20 @@ namespace AnalysisManagerSMAQCPlugIn
         {
             const bool createStoragePathInfoFile = false;
 
-            var strMASICResultsFolderName = mJobParams.GetParam("MASIC_Results_Folder_Name");
+            var masicResultsDirectoryName = mJobParams.GetParam("MASIC_Results_Folder_Name");
 
             mJobParams.AddResultFileExtensionToSkip(SCAN_STATS_FILE_SUFFIX);        // _ScanStats.txt
             mJobParams.AddResultFileExtensionToSkip(SCAN_STATS_EX_FILE_SUFFIX);     // _ScanStatsEx.txt
-            mJobParams.AddResultFileExtensionToSkip("_SICstats.txt");
+            mJobParams.AddResultFileExtensionToSkip("_SICStats.txt");
             mJobParams.AddResultFileExtensionToSkip(REPORTERIONS_FILE_SUFFIX);
 
-            var lstNonCriticalFileSuffixes = new List<string>
+            var nonCriticalFileSuffixes = new List<string>
             {
                 SCAN_STATS_EX_FILE_SUFFIX,
                 REPORTERIONS_FILE_SUFFIX
             };
 
-            if (string.IsNullOrEmpty(strMASICResultsFolderName))
+            if (string.IsNullOrEmpty(masicResultsDirectoryName))
             {
                 if (mDebugLevel >= 2)
                 {
@@ -129,15 +129,15 @@ namespace AnalysisManagerSMAQCPlugIn
                     retrieveScanStatsFile: true,
                     retrieveScanStatsExFile: true,
                     retrieveReporterIonsFile: true,
-                    lstNonCriticalFileSuffixes: lstNonCriticalFileSuffixes);
+                    nonCriticalFileSuffixes: nonCriticalFileSuffixes);
             }
 
             if (mDebugLevel >= 2)
             {
-                LogDebug("Retrieving the MASIC files from " + strMASICResultsFolderName);
+                LogDebug("Retrieving the MASIC files from " + masicResultsDirectoryName);
             }
 
-            var serverPath = FolderSearch.FindValidFolder(DatasetName, "", strMASICResultsFolderName, 2);
+            var serverPath = FolderSearch.FindValidFolder(DatasetName, "", masicResultsDirectoryName, 2);
 
             if (string.IsNullOrEmpty(serverPath))
             {
@@ -147,16 +147,16 @@ namespace AnalysisManagerSMAQCPlugIn
             {
                 if (serverPath.StartsWith(MYEMSL_PATH_FLAG))
                 {
-                    var bestSICFolderPath = Path.Combine(MYEMSL_PATH_FLAG, strMASICResultsFolderName);
+                    var bestMasicResultsDirectoryPath = Path.Combine(MYEMSL_PATH_FLAG, masicResultsDirectoryName);
 
                     return FileSearch.RetrieveScanAndSICStatsFiles(
-                        bestSICFolderPath,
+                        bestMasicResultsDirectoryPath,
                         retrieveSICStatsFile: true,
                         createStoragePathInfoOnly: createStoragePathInfoFile,
                         retrieveScanStatsFile: true,
                         retrieveScanStatsExFile: true,
                         retrieveReporterIonsFile: true,
-                        lstNonCriticalFileSuffixes: lstNonCriticalFileSuffixes
+                        nonCriticalFileSuffixes: nonCriticalFileSuffixes
                     );
                 }
 
@@ -169,22 +169,22 @@ namespace AnalysisManagerSMAQCPlugIn
                 else
                 {
                     // See if the ServerPath folder actually contains a subfolder named strMASICResultsFolderName
-                    var diMASICFolderInfo = new DirectoryInfo(Path.Combine(diFolderInfo.FullName, strMASICResultsFolderName));
+                    var masicResultsDirectory = new DirectoryInfo(Path.Combine(diFolderInfo.FullName, masicResultsDirectoryName));
 
-                    if (!diMASICFolderInfo.Exists)
+                    if (!masicResultsDirectory.Exists)
                     {
-                        mMessage = "Unable to find MASIC results folder " + strMASICResultsFolderName;
+                        mMessage = "Unable to find MASIC results folder " + masicResultsDirectoryName;
                     }
                     else
                     {
                         return FileSearch.RetrieveScanAndSICStatsFiles(
-                            diMASICFolderInfo.FullName,
+                            masicResultsDirectory.FullName,
                             retrieveSICStatsFile: true,
                             createStoragePathInfoOnly: createStoragePathInfoFile,
                             retrieveScanStatsFile: true,
                             retrieveScanStatsExFile: true,
                             retrieveReporterIonsFile: true,
-                            lstNonCriticalFileSuffixes: lstNonCriticalFileSuffixes);
+                            nonCriticalFileSuffixes: nonCriticalFileSuffixes);
                     }
                 }
             }

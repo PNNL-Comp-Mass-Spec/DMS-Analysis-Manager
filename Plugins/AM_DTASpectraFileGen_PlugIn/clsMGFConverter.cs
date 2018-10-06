@@ -339,38 +339,38 @@ namespace DTASpectraFileGen
                 var strNewMGFFile = Path.GetTempFileName();
 
                 // Now read the MGF file and update the title lines
-                using (var srSourceMGF = new StreamReader(new FileStream(strMGFFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
-                using (var swNewMGF = new StreamWriter(new FileStream(strNewMGFFile, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                using (var reader = new StreamReader(new FileStream(strMGFFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                using (var writer = new StreamWriter(new FileStream(strNewMGFFile, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
-                    while (!srSourceMGF.EndOfStream)
+                    while (!reader.EndOfStream)
                     {
-                        var strLineIn = srSourceMGF.ReadLine();
+                        var dataLine = reader.ReadLine();
 
-                        if (string.IsNullOrEmpty(strLineIn))
+                        if (string.IsNullOrEmpty(dataLine))
                         {
-                            strLineIn = string.Empty;
+                            dataLine = string.Empty;
                         }
                         else
                         {
-                            if (strLineIn.StartsWith("TITLE="))
+                            if (dataLine.StartsWith("TITLE="))
                             {
-                                var strTitle = strLineIn.Substring("TITLE=".Length);
+                                var strTitle = dataLine.Substring("TITLE=".Length);
 
                                 // Look for strTitle in lstSpectrumIDtoScanNumber
                                 if (lstSpectrumIDtoScanNumber.TryGetValue(strTitle, out var udtScanInfo))
                                 {
-                                    strLineIn = "TITLE=" + strDatasetName + "." + udtScanInfo.ScanStart.ToString("0000") + "." +
+                                    dataLine = "TITLE=" + strDatasetName + "." + udtScanInfo.ScanStart.ToString("0000") + "." +
                                                 udtScanInfo.ScanEnd.ToString("0000") + ".";
                                     if (udtScanInfo.Charge > 0)
                                     {
                                         // Also append charge
-                                        strLineIn += udtScanInfo.Charge;
+                                        dataLine += udtScanInfo.Charge;
                                     }
                                 }
                             }
                         }
 
-                        swNewMGF.WriteLine(strLineIn);
+                        writer.WriteLine(dataLine);
                     }
                 }
 

@@ -729,7 +729,7 @@ namespace AnalysisManagerBase
             if (mBrokerDBLogger == null)
                 return;
 
-            var udtStatusInfo = new clsDBStatusLogger.udtStatusInfoType
+            var statusInfo = new clsDBStatusLogger.udtStatusInfoType
             {
                 MgrName = MgrName,
                 MgrStatus = MgrStatus,
@@ -744,24 +744,24 @@ namespace AnalysisManagerBase
 
             if (mRecentErrorMessageCount == 0)
             {
-                udtStatusInfo.MostRecentErrorMessage = string.Empty;
+                statusInfo.MostRecentErrorMessage = string.Empty;
             }
             else
             {
-                udtStatusInfo.MostRecentErrorMessage = mRecentErrorMessages[0];
+                statusInfo.MostRecentErrorMessage = mRecentErrorMessages[0];
                 if (mRecentErrorMessageCount > 1)
                 {
                     // Append the next two error messages
                     for (var index = 1; index <= mRecentErrorMessageCount - 1; index++)
                     {
-                        udtStatusInfo.MostRecentErrorMessage += Environment.NewLine + mRecentErrorMessages[index];
+                        statusInfo.MostRecentErrorMessage += Environment.NewLine + mRecentErrorMessages[index];
                         if (index >= 2)
                             break;
                     }
                 }
             }
 
-            var udtTask = new clsDBStatusLogger.udtTaskInfoType
+            var task = new clsDBStatusLogger.udtTaskInfoType
             {
                 Tool = Tool,
                 Status = TaskStatus,
@@ -770,7 +770,7 @@ namespace AnalysisManagerBase
                 CurrentOperation = CurrentOperation
             };
 
-            var udtTaskDetails = new clsDBStatusLogger.udtTaskDetailsType
+            var taskDetails = new clsDBStatusLogger.udtTaskDetailsType
             {
                 Status = TaskStatusDetail,
                 Job = JobNumber,
@@ -781,10 +781,10 @@ namespace AnalysisManagerBase
                 SpectrumCount = SpectrumCount
             };
 
-            udtTask.TaskDetails = udtTaskDetails;
-            udtStatusInfo.Task = udtTask;
+            task.TaskDetails = taskDetails;
+            statusInfo.Task = task;
 
-            mBrokerDBLogger.LogStatus(udtStatusInfo, forceLogToBrokerDB);
+            mBrokerDBLogger.LogStatus(statusInfo, forceLogToBrokerDB);
         }
 
         /// <summary>
@@ -1130,10 +1130,10 @@ namespace AnalysisManagerBase
 
                 // Now use a StreamReader to copy the XML text to a string variable
                 memStream.Seek(0, SeekOrigin.Begin);
-                var srMemoryStreamReader = new StreamReader(memStream);
-                var xmlText = srMemoryStreamReader.ReadToEnd();
+                var memStreamRreader = new StreamReader(memStream);
+                var xmlText = memStreamRreader.ReadToEnd();
 
-                srMemoryStreamReader.Close();
+                memStreamRreader.Close();
                 memStream.Close();
 
                 return xmlText;

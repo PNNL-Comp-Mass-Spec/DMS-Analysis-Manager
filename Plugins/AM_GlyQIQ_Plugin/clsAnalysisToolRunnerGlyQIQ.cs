@@ -177,8 +177,8 @@ namespace AnalysisManagerGlyQIQPlugin
                 var fiUnfilteredResults = new FileInfo(Path.Combine(mWorkDir, mDatasetName + "_iqResults_Unfiltered.txt"));
                 var fiFilteredResults = new FileInfo(Path.Combine(mWorkDir, mDatasetName + "_iqResults.txt"));
 
-                using (var swUnfiltered = new StreamWriter(new FileStream(fiUnfilteredResults.FullName, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
-                using (var swFiltered = new StreamWriter(new FileStream(fiFilteredResults.FullName, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
+                using (var writerUnfiltered = new StreamWriter(new FileStream(fiUnfilteredResults.FullName, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
+                using (var writerFiltered = new StreamWriter(new FileStream(fiFilteredResults.FullName, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
                 {
                     for (var core = 1; core <= mCoreCount; core++)
                     {
@@ -195,11 +195,11 @@ namespace AnalysisManagerGlyQIQPlugin
                         }
 
                         var linesRead = 0;
-                        using (var srReader = new StreamReader(new FileStream(fiResultFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                        using (var reader = new StreamReader(new FileStream(fiResultFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                         {
-                            while (!srReader.EndOfStream)
+                            while (!reader.EndOfStream)
                             {
-                                var lineIn = srReader.ReadLine();
+                                var dataLine = reader.ReadLine();
                                 linesRead += 1;
 
                                 if (linesRead == 1 && core > 1)
@@ -209,12 +209,12 @@ namespace AnalysisManagerGlyQIQPlugin
                                     continue;
                                 }
 
-                                swUnfiltered.WriteLine(lineIn);
+                                writerUnfiltered.WriteLine(dataLine);
 
                                 // Write lines that do not contain "FutureTarget" to the _iqResults.txt file
-                                if (string.IsNullOrEmpty(lineIn) || !reFutureTarget.IsMatch(lineIn))
+                                if (string.IsNullOrEmpty(dataLine) || !reFutureTarget.IsMatch(dataLine))
                                 {
-                                    swFiltered.WriteLine(lineIn);
+                                    writerFiltered.WriteLine(dataLine);
                                 }
                             }
                         }
@@ -323,23 +323,23 @@ namespace AnalysisManagerGlyQIQPlugin
                 var uniqueCodeFormulaCombos = new SortedSet<string>();
                 var uniqueCodes = new SortedSet<string>();
 
-                using (var srResults = new StreamReader(new FileStream(fiResultsFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(fiResultsFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
-                    while (!srResults.EndOfStream)
+                    while (!reader.EndOfStream)
                     {
-                        var lineIn = srResults.ReadLine();
-                        if (string.IsNullOrWhiteSpace(lineIn))
+                        var dataLine = reader.ReadLine();
+                        if (string.IsNullOrWhiteSpace(dataLine))
                             continue;
 
-                        var dataColumns = lineIn.Split('\t');
+                        var dataCols = dataLine.Split('\t');
 
-                        if (dataColumns.Length < 3)
+                        if (dataCols.Length < 3)
                         {
                             continue;
                         }
 
-                        var compoundCode = dataColumns[1];
-                        var empiricalFormula = dataColumns[2];
+                        var compoundCode = dataCols[1];
+                        var empiricalFormula = dataCols[2];
 
                         if (!headerSkipped)
                         {
@@ -632,36 +632,36 @@ namespace AnalysisManagerGlyQIQPlugin
 
                 var consoleOutputFilePruned = Path.Combine(diTargetFolder.FullName, fiConsoleOutputFile.Name);
 
-                using (var srInFile = new StreamReader(new FileStream(fiConsoleOutputFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
-                using (var swOutfile = new StreamWriter(new FileStream(consoleOutputFilePruned, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                using (var reader = new StreamReader(new FileStream(fiConsoleOutputFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var writer = new StreamWriter(new FileStream(consoleOutputFilePruned, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
-                    while (!srInFile.EndOfStream)
+                    while (!reader.EndOfStream)
                     {
-                        var strLineIn = srInFile.ReadLine();
-                        if (string.IsNullOrWhiteSpace(strLineIn))
+                        var dataLine = reader.ReadLine();
+                        if (string.IsNullOrWhiteSpace(dataLine))
                         {
-                            swOutfile.WriteLine(strLineIn);
+                            writer.WriteLine(dataLine);
                             continue;
                         }
 
-                        if (strLineIn.StartsWith("start post run"))
+                        if (dataLine.StartsWith("start post run"))
                         {
                             // Ignore everything after this point
                             break;
                         }
 
-                        var skipLine = lstLinesToPrune.Any(textToFind => strLineIn.StartsWith(textToFind));
+                        var skipLine = lstLinesToPrune.Any(textToFind => dataLine.StartsWith(textToFind));
 
                         if (skipLine)
                             continue;
 
-                        if (reNumericLine.IsMatch(strLineIn))
+                        if (reNumericLine.IsMatch(dataLine))
                         {
                             // Skip this line
                             continue;
                         }
 
-                        swOutfile.WriteLine(strLineIn);
+                        writer.WriteLine(dataLine);
                     }
                 }
 

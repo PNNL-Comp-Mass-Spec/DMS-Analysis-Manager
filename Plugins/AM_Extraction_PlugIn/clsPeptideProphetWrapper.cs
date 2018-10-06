@@ -121,16 +121,16 @@ namespace AnalysisManagerExtractionPlugin
                     // Parse the console output file for any lines that contain "Error"
                     // Append them to mErrMsg
 
-                    var ioConsoleOutputFile = new FileInfo(peptideProphetConsoleOutputFilePath);
+                    var consoleOutputFile = new FileInfo(peptideProphetConsoleOutputFilePath);
                     var errorMessageFound = false;
 
-                    if (ioConsoleOutputFile.Exists)
+                    if (consoleOutputFile.Exists)
                     {
-                        var srInFile = new StreamReader(new FileStream(ioConsoleOutputFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+                        var reader = new StreamReader(new FileStream(consoleOutputFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
 
-                        while (!srInFile.EndOfStream)
+                        while (!reader.EndOfStream)
                         {
-                            var lineIn = srInFile.ReadLine();
+                            var lineIn = reader.ReadLine();
                             if (!string.IsNullOrWhiteSpace(lineIn))
                             {
                                 if (lineIn.ToLower().Contains("error"))
@@ -141,7 +141,7 @@ namespace AnalysisManagerExtractionPlugin
                                 }
                             }
                         }
-                        srInFile.Close();
+                        reader.Close();
                     }
 
                     if (!errorMessageFound)

@@ -454,11 +454,11 @@ namespace MSGFResultsSummarizer
                 var dbTools = new DBTools(mConnectionString);
                 RegisterEvents(dbTools);
 
-                var success = dbTools.GetQueryResults(queryScanStats, out var lstResults, "LookupScanStats_V_Dataset_Scans_Export");
+                var success = dbTools.GetQueryResults(queryScanStats, out var scanStatsFromDb, "LookupScanStats_V_Dataset_Scans_Export");
 
-                if (success && lstResults.Count > 0)
+                if (success && scanStatsFromDb.Count > 0)
                 {
-                    foreach (var resultRow in lstResults)
+                    foreach (var resultRow in scanStatsFromDb)
                     {
                         var scanCountTotal = resultRow[0];
                         var scanCountMSn = resultRow[1];
@@ -476,12 +476,11 @@ namespace MSGFResultsSummarizer
 
                 var queryScanTotal = "" + " SELECT [Scan Count]" + " FROM V_Dataset_Export" + " WHERE Dataset = '" + DatasetName + "'";
 
-                lstResults.Clear();
-                success = dbTools.GetQueryResults(queryScanTotal, out lstResults, "LookupScanStats_V_Dataset_Export");
+                success = dbTools.GetQueryResults(queryScanTotal, out var datasetScanCountFromDb, "LookupScanStats_V_Dataset_Export");
 
-                if (success && lstResults.Count > 0)
+                if (success && datasetScanCountFromDb.Count > 0)
                 {
-                    foreach (var resultRow in lstResults)
+                    foreach (var resultRow in datasetScanCountFromDb)
                     {
                         var scanCountTotal = resultRow[0];
 
@@ -1600,10 +1599,10 @@ namespace MSGFResultsSummarizer
                 }
                 strOutputFilePath = Path.Combine(strOutputFilePath, mDatasetName + "_PSM_Stats.txt");
 
-                using (var swOutFile = new StreamWriter(new FileStream(strOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                using (var writer = new StreamWriter(new FileStream(strOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
                     // Header line
-                    swOutFile.WriteLine(
+                    writer.WriteLine(
                         "Dataset\t" +
                         "Job\t" +
                         "MSGF_Threshold\t" +
@@ -1617,7 +1616,7 @@ namespace MSGFResultsSummarizer
                         "Unique_Proteins_FDR_Filtered");
 
                     // Stats
-                    swOutFile.WriteLine(mDatasetName + "\t" + mJob + "\t" + MSGFThreshold.ToString("0.00E+00") + "\t" +
+                    writer.WriteLine(mDatasetName + "\t" + mJob + "\t" + MSGFThreshold.ToString("0.00E+00") + "\t" +
                                         FDRThreshold.ToString("0.000") + "\t" + mSpectraSearched + "\t" + mMSGFBasedCounts.TotalPSMs + "\t" +
                                         mMSGFBasedCounts.UniquePeptideCount + "\t" + mMSGFBasedCounts.UniqueProteinCount + "\t" +
                                         mFDRBasedCounts.TotalPSMs + "\t" + mFDRBasedCounts.UniquePeptideCount + "\t" +

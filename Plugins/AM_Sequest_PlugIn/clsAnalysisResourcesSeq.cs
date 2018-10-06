@@ -63,7 +63,7 @@ namespace AnalysisManagerSequestPlugin
 
         public void ArchiveSequestParamFile(string sourceFilePath, string targetFolderPath)
         {
-            var lstLineIgnoreRegExSpecs = new List<Regex> {
+            var lineIgnoreRegExSpecs = new List<Regex> {
                 new Regex(@"mass_type_parent *=.*")
             };
 
@@ -94,7 +94,7 @@ namespace AnalysisManagerSequestPlugin
 
                 const bool ignoreWhitespace = true;
 
-                if (!clsGlobal.TextFilesMatch(sourceFilePath, targetFilePath, 4, 0, ignoreWhitespace, lstLineIgnoreRegExSpecs))
+                if (!clsGlobal.TextFilesMatch(sourceFilePath, targetFilePath, 4, 0, ignoreWhitespace, lineIgnoreRegExSpecs))
                 {
                     if (mDebugLevel >= 1)
                     {
@@ -104,9 +104,9 @@ namespace AnalysisManagerSequestPlugin
                     }
 
                     // Files don't match; rename the old file
-                    var fiArchivedFile = new FileInfo(targetFilePath);
+                    var archivedFile = new FileInfo(targetFilePath);
 
-                    var newNameBase = Path.GetFileNameWithoutExtension(targetFilePath) + "_" + fiArchivedFile.LastWriteTime.ToString("yyyy-MM-dd");
+                    var newNameBase = Path.GetFileNameWithoutExtension(targetFilePath) + "_" + archivedFile.LastWriteTime.ToString("yyyy-MM-dd");
                     var newName = newNameBase + Path.GetExtension(targetFilePath);
 
                     // See if the renamed file exists; if it does, we'll have to tweak the name
@@ -129,7 +129,7 @@ namespace AnalysisManagerSequestPlugin
                         LogDebug("Renaming " + targetFilePath + " to " + newFilePath);
                     }
 
-                    fiArchivedFile.MoveTo(newFilePath);
+                    archivedFile.MoveTo(newFilePath);
 
                     needToArchiveFile = true;
                 }
@@ -180,23 +180,23 @@ namespace AnalysisManagerSequestPlugin
                     LogDebug("Checking for " + clsAnalysisToolRunnerSeqBase.CONCATENATED_OUT_TEMP_FILE + " file at " + transferFolderPath);
                 }
 
-                var diSourceFolder = new DirectoryInfo(transferFolderPath);
+                var sourceDirectory = new DirectoryInfo(transferFolderPath);
 
-                if (!diSourceFolder.Exists)
+                if (!sourceDirectory.Exists)
                 {
                     // Transfer folder not found; return false
                     if (mDebugLevel >= 4)
                     {
-                        LogDebug("  ... Transfer folder not found: " + diSourceFolder.FullName);
+                        LogDebug("  ... Transfer folder not found: " + sourceDirectory.FullName);
                     }
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
 
-                var concatenatedTempFilePath = Path.Combine(diSourceFolder.FullName,
+                var concatenatedTempFilePath = Path.Combine(sourceDirectory.FullName,
                     DatasetName + clsAnalysisToolRunnerSeqBase.CONCATENATED_OUT_TEMP_FILE);
 
-                var fiTempOutFile = new FileInfo(concatenatedTempFilePath);
-                if (!fiTempOutFile.Exists)
+                var tempOutFile = new FileInfo(concatenatedTempFilePath);
+                if (!tempOutFile.Exists)
                 {
                     if (mDebugLevel >= 4)
                     {
@@ -209,13 +209,13 @@ namespace AnalysisManagerSequestPlugin
                 {
                     LogDebug(
                         clsAnalysisToolRunnerSeqBase.CONCATENATED_OUT_TEMP_FILE + " file found for job " + jobNum + " (file size = " +
-                        (fiTempOutFile.Length / 1024.0).ToString("#,##0") +
+                        (tempOutFile.Length / 1024.0).ToString("#,##0") +
                         " KB); comparing JobParameters.xml file and Sequest parameter file to local copies");
                 }
 
                 // Compare the remote and local copies of the JobParameters file
                 var fileNameToCompare = "JobParameters_" + jobNum + ".xml";
-                var remoteFilePath = Path.Combine(diSourceFolder.FullName, fileNameToCompare + ".tmp");
+                var remoteFilePath = Path.Combine(sourceDirectory.FullName, fileNameToCompare + ".tmp");
                 var localFilePath = Path.Combine(mWorkDir, fileNameToCompare);
 
                 var filesMatch = CompareRemoteAndLocalFilesForResume(remoteFilePath, localFilePath, "Job Parameters");
@@ -227,7 +227,7 @@ namespace AnalysisManagerSequestPlugin
 
                 // Compare the remote and local copies of the Sequest Parameter file
                 fileNameToCompare = mJobParams.GetParam("ParmFileName");
-                remoteFilePath = Path.Combine(diSourceFolder.FullName, fileNameToCompare + ".tmp");
+                remoteFilePath = Path.Combine(sourceDirectory.FullName, fileNameToCompare + ".tmp");
                 localFilePath = Path.Combine(mWorkDir, fileNameToCompare);
 
                 filesMatch = CompareRemoteAndLocalFilesForResume(remoteFilePath, localFilePath, "Sequest Parameter");
@@ -237,55 +237,55 @@ namespace AnalysisManagerSequestPlugin
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
 
-                // Everything matches up; copy fiTempOutFile locally
+                // Everything matches up; copy tempOutFile locally
                 try
                 {
-                    fiTempOutFile.CopyTo(Path.Combine(mWorkDir, fiTempOutFile.Name), true);
+                    tempOutFile.CopyTo(Path.Combine(mWorkDir, tempOutFile.Name), true);
 
                     if (mDebugLevel >= 1)
                     {
-                        LogDebug("Copied " + fiTempOutFile.Name + " locally; will resume Sequest analysis");
+                        LogDebug("Copied " + tempOutFile.Name + " locally; will resume Sequest analysis");
                     }
 
                     // If the job succeeds, we should delete the _out.txt.tmp file from the transfer folder
                     // Add the full path to ServerFilesToDelete using AddServerFileToDelete
-                    mJobParams.AddServerFileToDelete(fiTempOutFile.FullName);
+                    mJobParams.AddServerFileToDelete(tempOutFile.FullName);
                 }
                 catch (Exception ex)
                 {
                     // Error copying the file; treat this as a failed job
                     mMessage = " Exception copying " + clsAnalysisToolRunnerSeqBase.CONCATENATED_OUT_TEMP_FILE + " file locally";
-                    LogError("  ... Exception copying " + fiTempOutFile.FullName + " locally; unable to resume: " + ex.Message);
+                    LogError("  ... Exception copying " + tempOutFile.FullName + " locally; unable to resume: " + ex.Message);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 // Look for a sequest.log.tmp file
-                var lstLogFiles = diSourceFolder.GetFiles("sequest.log.tmp").ToList();
+                var logFiles = sourceDirectory.GetFiles("sequest.log.tmp").ToList();
 
-                if (lstLogFiles.Count <= 0)
+                if (logFiles.Count <= 0)
                     return CloseOutType.CLOSEOUT_SUCCESS;
 
-                var fiFirstLogFile = lstLogFiles.First();
+                var firstLogFile = logFiles.First();
 
                 // Copy the sequest.log.tmp file to the work directory, but rename it to include a time stamp
-                var strExistingSeqLogFileRenamed = Path.GetFileNameWithoutExtension(fiFirstLogFile.Name);
-                strExistingSeqLogFileRenamed = Path.GetFileNameWithoutExtension(strExistingSeqLogFileRenamed);
-                strExistingSeqLogFileRenamed += "_" + fiFirstLogFile.LastWriteTime.ToString("yyyyMMdd_HHmm") + ".log";
+                var existingSeqLogFileRenamed = Path.GetFileNameWithoutExtension(firstLogFile.Name);
+                existingSeqLogFileRenamed = Path.GetFileNameWithoutExtension(existingSeqLogFileRenamed);
+                existingSeqLogFileRenamed += "_" + firstLogFile.LastWriteTime.ToString("yyyyMMdd_HHmm") + ".log";
 
                 try
                 {
-                    localFilePath = Path.Combine(mWorkDir, strExistingSeqLogFileRenamed);
-                    fiFirstLogFile.CopyTo(localFilePath, true);
+                    localFilePath = Path.Combine(mWorkDir, existingSeqLogFileRenamed);
+                    firstLogFile.CopyTo(localFilePath, true);
 
                     if (mDebugLevel >= 3)
                     {
-                        LogDebug("Copied " + Path.GetFileName(fiFirstLogFile.Name) + " locally, renaming to " + strExistingSeqLogFileRenamed);
+                        LogDebug("Copied " + Path.GetFileName(firstLogFile.Name) + " locally, renaming to " + existingSeqLogFileRenamed);
                     }
 
-                    mJobParams.AddServerFileToDelete(fiFirstLogFile.FullName);
+                    mJobParams.AddServerFileToDelete(firstLogFile.FullName);
 
                     // Copy the new file back to the transfer folder (necessary in case this job fails)
-                    File.Copy(localFilePath, Path.Combine(transferFolderPath, strExistingSeqLogFileRenamed));
+                    File.Copy(localFilePath, Path.Combine(transferFolderPath, existingSeqLogFileRenamed));
                 }
                 catch (Exception)
                 {
@@ -302,34 +302,34 @@ namespace AnalysisManagerSequestPlugin
             }
         }
 
-        protected bool CompareRemoteAndLocalFilesForResume(string strRemoteFilePath, string strLocalFilePath, string strFileDescription)
+        protected bool CompareRemoteAndLocalFilesForResume(string remoteFilePath, string localFilePath, string fileDescription)
         {
-            if (!File.Exists(strRemoteFilePath))
+            if (!File.Exists(remoteFilePath))
             {
                 if (mDebugLevel >= 1)
                 {
-                    LogDebug("  ... " + strFileDescription + " file not found remotely; unable to resume: " + strRemoteFilePath);
+                    LogDebug("  ... " + fileDescription + " file not found remotely; unable to resume: " + remoteFilePath);
                 }
                 return false;
             }
 
-            if (!File.Exists(strLocalFilePath))
+            if (!File.Exists(localFilePath))
             {
                 if (mDebugLevel >= 1)
                 {
-                    LogDebug("  ... " + strFileDescription + " file not found locally; unable to resume: " + strLocalFilePath);
+                    LogDebug("  ... " + fileDescription + " file not found locally; unable to resume: " + localFilePath);
                 }
                 return false;
             }
 
             const bool ignoreWhitespace = true;
 
-            if (clsGlobal.TextFilesMatch(strRemoteFilePath, strLocalFilePath, 0, 0, ignoreWhitespace))
+            if (clsGlobal.TextFilesMatch(remoteFilePath, localFilePath, 0, 0, ignoreWhitespace))
             {
                 return true;
             }
 
-            LogDebug("  ... " + strFileDescription + " file at " + strRemoteFilePath + " doesn't match local file; unable to resume");
+            LogDebug("  ... " + fileDescription + " file at " + remoteFilePath + " doesn't match local file; unable to resume");
             return false;
         }
 
@@ -481,17 +481,17 @@ namespace AnalysisManagerSequestPlugin
             if (nodeCountFailed > 0)
             {
                 const int MINIMUM_NODE_SUCCESS_PCT = 75;
-                double dblNodeCountSuccessPct = (nodeCountProcessed - nodeCountFailed) / (float)nodeCountProcessed * 100;
+                double nodeCountSuccessPct = (nodeCountProcessed - nodeCountFailed) / (float)nodeCountProcessed * 100;
 
                 logMessage = "Error, unable to verify database on " + nodeCountFailed + " node";
                 if (nodeCountFailed > 1)
                     logMessage += "s";
 
-                logMessage += " (" + dblNodeCountSuccessPct.ToString("0") + "% succeeded)";
+                logMessage += " (" + nodeCountSuccessPct.ToString("0") + "% succeeded)";
 
                 LogError(logMessage);
 
-                if (dblNodeCountSuccessPct < MINIMUM_NODE_SUCCESS_PCT)
+                if (nodeCountSuccessPct < MINIMUM_NODE_SUCCESS_PCT)
                 {
                     mMessage = "Unable to copy the database file one or more nodes; ";
                     if (nodeCountNotEnoughFreeSpace > 0)
@@ -544,29 +544,29 @@ namespace AnalysisManagerSequestPlugin
         /// <remarks></remarks>
         private List<string> GetHostList(string HostFilePath)
         {
-            var lstNodes = new List<string>();
+            var nodes = new List<string>();
             string[] separators = { " " };
 
             try
             {
-                using (var srHostFile = new StreamReader(new FileStream(HostFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                using (var reader = new StreamReader(new FileStream(HostFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
                 {
-                    while (!srHostFile.EndOfStream)
+                    while (!reader.EndOfStream)
                     {
                         // Read the line from the file and check to see if it contains a node IP address.
                         // If it does, add the IP address to the collection of addresses
-                        var InpLine = srHostFile.ReadLine();
+                        var dataLine = reader.ReadLine();
 
                         // Verify the line isn't a comment line
-                        if (!string.IsNullOrWhiteSpace(InpLine) && !InpLine.Contains("#"))
+                        if (!string.IsNullOrWhiteSpace(dataLine) && !dataLine.Contains("#"))
                         {
                             // Parse the node name and add it to the collection
-                            var LineFields = InpLine.Split(separators, StringSplitOptions.RemoveEmptyEntries);
-                            if (LineFields.Length >= 1)
+                            var dataCols = dataLine.Split(separators, StringSplitOptions.RemoveEmptyEntries);
+                            if (dataCols.Length >= 1)
                             {
-                                if (!lstNodes.Contains(LineFields[0]))
+                                if (!nodes.Contains(dataCols[0]))
                                 {
-                                    lstNodes.Add(LineFields[0]);
+                                    nodes.Add(dataCols[0]);
                                 }
                             }
                         }
@@ -580,7 +580,7 @@ namespace AnalysisManagerSequestPlugin
             }
 
             // Return the list of nodes, if any
-            return lstNodes;
+            return nodes;
         }
 
         private bool VerifyFilesMatchSizeAndDate(string file1, string file2)
@@ -591,21 +591,21 @@ namespace AnalysisManagerSequestPlugin
                 return false;
 
             // Files both exist
-            var ioFileA = new FileInfo(file1);
-            var ioFileB = new FileInfo(file2);
+            var fileA = new FileInfo(file1);
+            var fileB = new FileInfo(file2);
 
             if (mDebugLevel > DETAILED_LOG_THRESHOLD)
             {
-                LogDebug("Comparing files: " + ioFileA.FullName + " vs. " + ioFileB.FullName);
-                LogDebug(" ... file sizes: " + ioFileA.Length + " vs. " + ioFileB.Length);
-                LogDebug(" ... file dates: " + ioFileA.LastWriteTimeUtc + " vs. " + ioFileB.LastWriteTimeUtc);
+                LogDebug("Comparing files: " + fileA.FullName + " vs. " + fileB.FullName);
+                LogDebug(" ... file sizes: " + fileA.Length + " vs. " + fileB.Length);
+                LogDebug(" ... file dates: " + fileA.LastWriteTimeUtc + " vs. " + fileB.LastWriteTimeUtc);
             }
 
-            if (ioFileA.Length != ioFileB.Length)
+            if (fileA.Length != fileB.Length)
                 return false;
 
             // Sizes match
-            if (ioFileA.LastWriteTimeUtc == ioFileB.LastWriteTimeUtc)
+            if (fileA.LastWriteTimeUtc == fileB.LastWriteTimeUtc)
             {
                 // Dates match
                 if (mDebugLevel > DETAILED_LOG_THRESHOLD)
@@ -617,27 +617,27 @@ namespace AnalysisManagerSequestPlugin
             }
 
             // Dates don't match, are they off by one hour?
-            var dblSecondDiff = Math.Abs(ioFileA.LastWriteTimeUtc.Subtract(ioFileB.LastWriteTimeUtc).TotalSeconds);
+            var secondDiff = Math.Abs(fileA.LastWriteTimeUtc.Subtract(fileB.LastWriteTimeUtc).TotalSeconds);
 
-            if (dblSecondDiff <= 2)
+            if (secondDiff <= 2)
             {
                 // File times differ by less than 2 seconds; count this as the same
 
                 if (mDebugLevel > DETAILED_LOG_THRESHOLD)
                 {
-                    LogDebug(" ... sizes match and dates match within 2 seconds (" + dblSecondDiff.ToString("0.0") + " seconds apart)");
+                    LogDebug(" ... sizes match and dates match within 2 seconds (" + secondDiff.ToString("0.0") + " seconds apart)");
                 }
 
                 return true;
             }
 
-            if (dblSecondDiff >= 3598 && dblSecondDiff <= 3602)
+            if (secondDiff >= 3598 && secondDiff <= 3602)
             {
                 // File times are an hour apart (give or take 2 seconds); count this as the same
 
                 if (mDebugLevel > DETAILED_LOG_THRESHOLD)
                 {
-                    LogDebug(" ... sizes match and dates match within 1 hour (" + dblSecondDiff.ToString("0.0") + " seconds apart)");
+                    LogDebug(" ... sizes match and dates match within 1 hour (" + secondDiff.ToString("0.0") + " seconds apart)");
                 }
 
                 return true;
@@ -648,11 +648,11 @@ namespace AnalysisManagerSequestPlugin
                 if (mDebugLevel == DETAILED_LOG_THRESHOLD)
                 {
                     // This message didn't get logged above; log it now.
-                    LogDebug("Comparing files: " + ioFileA.FullName + " vs. " + ioFileB.FullName);
+                    LogDebug("Comparing files: " + fileA.FullName + " vs. " + fileB.FullName);
                 }
 
                 LogDebug(
-                    " ... sizes match but times do not match within 2 seconds or 1 hour (" + dblSecondDiff.ToString("0.0") +
+                    " ... sizes match but times do not match within 2 seconds or 1 hour (" + secondDiff.ToString("0.0") +
                     " seconds apart)");
             }
 

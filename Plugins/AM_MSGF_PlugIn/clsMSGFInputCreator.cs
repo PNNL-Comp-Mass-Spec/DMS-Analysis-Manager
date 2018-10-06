@@ -281,10 +281,10 @@ namespace AnalysisManagerMSGFPlugin
                     msgfFirstHitsResults = Path.Combine(mWorkDir, msgfFirstHitsResults);
 
                     // Create the output file
-                    using (var msgfFHTFile = new StreamWriter(new FileStream(msgfFirstHitsResults, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                    using (var writer = new StreamWriter(new FileStream(msgfFirstHitsResults, FileMode.Create, FileAccess.Write, FileShare.Read)))
                     {
                         // Write out the headers to msgfFHTFile
-                        WriteMSGFResultsHeaders(msgfFHTFile);
+                        WriteMSGFResultsHeaders(writer);
 
                         var missingValueCount = 0;
 
@@ -320,7 +320,7 @@ namespace AnalysisManagerMSGFPlugin
                                 else
                                 {
                                     // Match found; write out the result
-                                    msgfFHTFile.WriteLine(objPSM.ResultID + "\t" + msgfResultData);
+                                    writer.WriteLine(objPSM.ResultID + "\t" + msgfResultData);
                                 }
                             }
                             else
@@ -406,11 +406,11 @@ namespace AnalysisManagerMSGFPlugin
                 }
 
                 // Create the MSGF Input file that we will write data to
-                using (var swMSGFInputFile = new StreamWriter(new FileStream(mMSGFInputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                using (var writer = new StreamWriter(new FileStream(mMSGFInputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
                     // Write out the headers:  #SpectrumFile  Title  Scan#  Annotation  Charge  Protein_First  Result_ID  Data_Source  Collision_Mode
                     // Note that we're storing the original peptide sequence in the "Title" column, while the marked up sequence (with mod masses) goes in the "Annotation" column
-                    swMSGFInputFile.WriteLine(
+                    writer.WriteLine(
                         clsMSGFRunner.MSGF_RESULT_COLUMN_SpectrumFile + "\t" +
                         clsMSGFRunner.MSGF_RESULT_COLUMN_Title + "\t" +
                         clsMSGFRunner.MSGF_RESULT_COLUMN_ScanNumber + "\t" +
@@ -461,7 +461,7 @@ namespace AnalysisManagerMSGFPlugin
                             return false;
                         }
 
-                        ReadAndStorePHRPData(reader, swMSGFInputFile, spectrumFileName, true);
+                        ReadAndStorePHRPData(reader, writer, spectrumFileName, true);
                         reader.Dispose();
 
                         success = true;
@@ -485,7 +485,7 @@ namespace AnalysisManagerMSGFPlugin
                             return false;
                         }
 
-                        ReadAndStorePHRPData(reader, swMSGFInputFile, spectrumFileName, false);
+                        ReadAndStorePHRPData(reader, writer, spectrumFileName, false);
                         reader.Dispose();
 
                         success = true;
@@ -778,9 +778,9 @@ namespace AnalysisManagerMSGFPlugin
                 MSGF_RESULT_FILENAME_SUFFIX);
         }
 
-        public void WriteMSGFResultsHeaders(StreamWriter swOutFile)
+        public void WriteMSGFResultsHeaders(StreamWriter writer)
         {
-            swOutFile.WriteLine("Result_ID\tScan\tCharge\tProtein\tPeptide\tSpecProb\tNotes");
+            writer.WriteLine("Result_ID\tScan\tCharge\tProtein\tPeptide\tSpecProb\tNotes");
         }
 
     }

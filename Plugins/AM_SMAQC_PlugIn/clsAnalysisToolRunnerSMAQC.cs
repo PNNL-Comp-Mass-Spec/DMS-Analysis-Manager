@@ -128,9 +128,9 @@ namespace AnalysisManagerSMAQCPlugIn
                     // Write the console output to a text file
                     clsGlobal.IdleLoop(0.25);
 
-                    using (var swConsoleOutputfile = new StreamWriter(new FileStream(mCmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                    using (var writer = new StreamWriter(new FileStream(mCmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                     {
-                        swConsoleOutputfile.WriteLine(mCmdRunner.CachedConsoleOutput);
+                        writer.WriteLine(mCmdRunner.CachedConsoleOutput);
                     }
                 }
 
@@ -474,40 +474,40 @@ namespace AnalysisManagerSMAQCPlugIn
                 LogDebug("Parsing SMAQC Results file " + ResultsFilePath);
             }
 
-            var blnMeasurementsFound = false;
-            var blnHeadersFound = false;
+            var measurementsFound = false;
+            var headersFound = false;
 
-            using (var srInFile = new StreamReader(new FileStream(ResultsFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+            using (var reader = new StreamReader(new FileStream(ResultsFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
             {
-                while (!srInFile.EndOfStream)
+                while (!reader.EndOfStream)
                 {
-                    var strLineIn = srInFile.ReadLine();
+                    var dataLine = reader.ReadLine();
 
-                    if (string.IsNullOrWhiteSpace(strLineIn))
+                    if (string.IsNullOrWhiteSpace(dataLine))
                         continue;
 
-                    if (!blnMeasurementsFound)
+                    if (!measurementsFound)
                     {
-                        if (strLineIn.StartsWith("[Data]"))
+                        if (dataLine.StartsWith("[Data]"))
                         {
-                            blnMeasurementsFound = true;
+                            measurementsFound = true;
                         }
                     }
-                    else if (!blnHeadersFound)
+                    else if (!headersFound)
                     {
-                        if (strLineIn.StartsWith("Dataset"))
+                        if (dataLine.StartsWith("Dataset"))
                         {
-                            blnHeadersFound = true;
+                            headersFound = true;
                         }
                     }
                     else
                     {
                         // This is a measurement result line
-                        var strSplitLine = strLineIn.Split(',');
+                        var dataCols = dataLine.Split(',');
 
-                        if (strSplitLine.Length >= 3)
+                        if (dataCols.Length >= 3)
                         {
-                            lstResults.Add(new KeyValuePair<string, string>(strSplitLine[1].Trim(), strSplitLine[2].Trim()));
+                            lstResults.Add(new KeyValuePair<string, string>(dataCols[1].Trim(), dataCols[2].Trim()));
                         }
                     }
                 }
@@ -569,64 +569,70 @@ namespace AnalysisManagerSMAQCPlugIn
 
                 mConsoleOutputErrorMsg = string.Empty;
 
-                using (var srInFile = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
-                    while (!srInFile.EndOfStream)
+                    while (!reader.EndOfStream)
                     {
-                        var strLineIn = srInFile.ReadLine();
+                        var dataLine = reader.ReadLine();
 
-                        if (string.IsNullOrWhiteSpace(strLineIn))
+                        if (string.IsNullOrWhiteSpace(dataLine))
                             continue;
 
+                        string dataLineNoTimestamp;
+
                         // Remove the timestamp from the start of the line (if present)
-                        var reMatch = reMatchTimeStamp.Match(strLineIn);
+                        var reMatch = reMatchTimeStamp.Match(dataLine);
                         if (reMatch.Success)
                         {
-                            strLineIn = strLineIn.Substring(reMatch.Length);
+                            dataLineNoTimestamp = dataLine.Substring(reMatch.Length);
+                        }
+                        else
+                        {
+                            dataLineNoTimestamp = dataLine;
                         }
 
                         // Update progress if the line starts with one of the expected phrases
-                        if (strLineIn.StartsWith("Searching for Text Files", StringComparison.OrdinalIgnoreCase))
+                        if (dataLineNoTimestamp.StartsWith("Searching for Text Files", StringComparison.OrdinalIgnoreCase))
                         {
                             if (sngEffectiveProgress < PROGRESS_PCT_SMAQC_SEARCHING_FOR_FILES)
                             {
                                 sngEffectiveProgress = PROGRESS_PCT_SMAQC_SEARCHING_FOR_FILES;
                             }
                         }
-                        else if (strLineIn.StartsWith("Parsing and Inserting Data", StringComparison.OrdinalIgnoreCase))
+                        else if (dataLineNoTimestamp.StartsWith("Parsing and Inserting Data", StringComparison.OrdinalIgnoreCase))
                         {
                             if (sngEffectiveProgress < PROGRESS_PCT_SMAQC_POPULATING_DB_TEMP_TABLES)
                             {
                                 sngEffectiveProgress = PROGRESS_PCT_SMAQC_POPULATING_DB_TEMP_TABLES;
                             }
                         }
-                        else if (strLineIn.StartsWith("Now running Measurements", StringComparison.OrdinalIgnoreCase))
+                        else if (dataLineNoTimestamp.StartsWith("Now running Measurements", StringComparison.OrdinalIgnoreCase))
                         {
                             if (sngEffectiveProgress < PROGRESS_PCT_SMAQC_RUNNING_MEASUREMENTS)
                             {
                                 sngEffectiveProgress = PROGRESS_PCT_SMAQC_RUNNING_MEASUREMENTS;
                             }
                         }
-                        else if (strLineIn.StartsWith("Saving Scan Results", StringComparison.OrdinalIgnoreCase))
+                        else if (dataLineNoTimestamp.StartsWith("Saving Scan Results", StringComparison.OrdinalIgnoreCase))
                         {
                             if (sngEffectiveProgress < PROGRESS_PCT_SMAQC_SAVING_RESULTS)
                             {
                                 sngEffectiveProgress = PROGRESS_PCT_SMAQC_SAVING_RESULTS;
                             }
                         }
-                        else if (strLineIn.StartsWith("Scan output has been saved", StringComparison.OrdinalIgnoreCase))
+                        else if (dataLineNoTimestamp.StartsWith("Scan output has been saved", StringComparison.OrdinalIgnoreCase))
                         {
                             // Ignore this line
                         }
-                        else if (strLineIn.StartsWith("SMAQC analysis complete", StringComparison.OrdinalIgnoreCase))
+                        else if (dataLineNoTimestamp.StartsWith("SMAQC analysis complete", StringComparison.OrdinalIgnoreCase))
                         {
                             // Ignore this line
                         }
                         else if (string.IsNullOrEmpty(mConsoleOutputErrorMsg))
                         {
-                            if (strLineIn.ToLower().Contains("error"))
+                            if (dataLineNoTimestamp.ToLower().Contains("error"))
                             {
-                                mConsoleOutputErrorMsg += "; " + strLineIn;
+                                mConsoleOutputErrorMsg += "; " + dataLineNoTimestamp;
                             }
                         }
                     }

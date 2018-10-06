@@ -306,16 +306,16 @@ namespace DTASpectraFileGen
             }
         }
 
-        private void ParseDeconToolsLogFile(out bool blnFinishedProcessing, out DateTime dtFinishTime)
+        private void ParseDeconToolsLogFile(out bool finishedProcessing, out DateTime finishTime)
         {
-            var strScanLine = string.Empty;
+            var scanLine = string.Empty;
 
-            blnFinishedProcessing = false;
-            dtFinishTime = DateTime.MinValue;
+            finishedProcessing = false;
+            finishTime = DateTime.MinValue;
 
             try
             {
-                string strLogFilePath;
+                string logFilePath;
 
                 switch (mRawDataType)
                 {
@@ -323,104 +323,104 @@ namespace DTASpectraFileGen
                     case clsAnalysisResources.eRawDataTypeConstants.BrukerFTFolder:
                     case clsAnalysisResources.eRawDataTypeConstants.BrukerTOFBaf:
                         // As of 11/19/2010, the _Log.txt file is created inside the .D folder
-                        strLogFilePath = Path.Combine(mInputFilePath, mDatasetName) + "_log.txt";
+                        logFilePath = Path.Combine(mInputFilePath, mDatasetName) + "_log.txt";
                         break;
                     default:
-                        strLogFilePath = Path.Combine(mWorkDir, Path.GetFileNameWithoutExtension(mInputFilePath) + "_log.txt");
+                        logFilePath = Path.Combine(mWorkDir, Path.GetFileNameWithoutExtension(mInputFilePath) + "_log.txt");
                         break;
                 }
 
                 //
-                if (!File.Exists(strLogFilePath))
+                if (!File.Exists(logFilePath))
                 {
                     return;
                 }
 
-                using (var srInFile = new StreamReader(new FileStream(strLogFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(logFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
-                    while (!srInFile.EndOfStream)
+                    while (!reader.EndOfStream)
                     {
-                        var strLineIn = srInFile.ReadLine();
+                        var dataLine = reader.ReadLine();
 
-                        if (string.IsNullOrWhiteSpace(strLineIn))
+                        if (string.IsNullOrWhiteSpace(dataLine))
                             continue;
 
-                        var intCharIndex = strLineIn.IndexOf("finished file processing", StringComparison.InvariantCultureIgnoreCase);
+                        var charIndex = dataLine.IndexOf("finished file processing", StringComparison.InvariantCultureIgnoreCase);
 
-                        if (intCharIndex >= 0)
+                        if (charIndex >= 0)
                         {
-                            var blnDateValid = false;
-                            if (intCharIndex > 1)
+                            var dateValid = false;
+                            if (charIndex > 1)
                             {
                                 // Parse out the date from strLineIn
-                                if (DateTime.TryParse(strLineIn.Substring(0, intCharIndex).Trim(), out dtFinishTime))
+                                if (DateTime.TryParse(dataLine.Substring(0, charIndex).Trim(), out finishTime))
                                 {
-                                    blnDateValid = true;
+                                    dateValid = true;
                                 }
                                 else
                                 {
                                     // Unable to parse out the date
-                                    OnErrorEvent("Unable to parse date from string '" + strLineIn.Substring(0, intCharIndex).Trim() +
+                                    OnErrorEvent("Unable to parse date from string '" + dataLine.Substring(0, charIndex).Trim() +
                                                  "'; will use file modification date as the processing finish time");
                                 }
                             }
 
-                            if (!blnDateValid)
+                            if (!dateValid)
                             {
-                                var fiFileInfo = new FileInfo(strLogFilePath);
-                                dtFinishTime = fiFileInfo.LastWriteTime;
+                                var logFile = new FileInfo(logFilePath);
+                                finishTime = logFile.LastWriteTime;
                             }
 
                             if (mDebugLevel >= 3)
                             {
-                                OnStatusEvent("DeconConsole log file reports 'finished file processing' at " + dtFinishTime);
+                                OnStatusEvent("DeconConsole log file reports 'finished file processing' at " + finishTime);
                             }
 
                             //'If intWorkFlowStep < TOTAL_WORKFLOW_STEPS Then
                             //'	intWorkFlowStep += 1
                             //'End If
 
-                            blnFinishedProcessing = true;
+                            finishedProcessing = true;
                         }
 
-                        if (intCharIndex < 0)
+                        if (charIndex < 0)
                         {
-                            intCharIndex = strLineIn.IndexOf("DeconTools.Backend.dll", StringComparison.Ordinal);
-                            if (intCharIndex > 0)
+                            charIndex = dataLine.IndexOf("DeconTools.Backend.dll", StringComparison.Ordinal);
+                            if (charIndex > 0)
                             {
                                 // DeconConsole reports "Finished file processing" at the end of each step in the workflow
-                                // Reset blnFinishedProcessing back to false
-                                blnFinishedProcessing = false;
+                                // Reset finishedProcessing back to false
+                                finishedProcessing = false;
                             }
                         }
 
-                        if (intCharIndex < 0)
+                        if (charIndex < 0)
                         {
-                            intCharIndex = strLineIn.ToLower().IndexOf("scan/frame", StringComparison.Ordinal);
-                            if (intCharIndex > 0)
+                            charIndex = dataLine.IndexOf("scan/frame", StringComparison.OrdinalIgnoreCase);
+                            if (charIndex > 0)
                             {
-                                strScanLine = strLineIn.Substring(intCharIndex);
+                                scanLine = dataLine.Substring(charIndex);
                             }
                         }
 
-                        if (intCharIndex < 0)
+                        if (charIndex < 0)
                         {
-                            intCharIndex = strLineIn.ToLower().IndexOf("scan=", StringComparison.Ordinal);
-                            if (intCharIndex > 0)
+                            charIndex = dataLine.IndexOf("scan=", StringComparison.OrdinalIgnoreCase);
+                            if (charIndex > 0)
                             {
-                                strScanLine = strLineIn.Substring(intCharIndex);
+                                scanLine = dataLine.Substring(charIndex);
                             }
                         }
 
-                        if (intCharIndex < 0)
+                        if (charIndex < 0)
                         {
-                            intCharIndex = strLineIn.IndexOf("ERROR THROWN", StringComparison.Ordinal);
-                            if (intCharIndex >= 0)
+                            charIndex = dataLine.IndexOf("ERROR THROWN", StringComparison.Ordinal);
+                            if (charIndex >= 0)
                             {
                                 // An exception was reported in the log file; treat this as a fatal error
                                 mErrMsg = "Error thrown by DeconConsole";
 
-                                OnErrorEvent("DeconConsole reports " + strLineIn.Substring(intCharIndex));
+                                OnErrorEvent("DeconConsole reports " + dataLine.Substring(charIndex));
                                 mDeconConsoleExceptionThrown = true;
                             }
                         }
@@ -436,17 +436,17 @@ namespace DTASpectraFileGen
                 }
             }
 
-            if (!string.IsNullOrWhiteSpace(strScanLine))
+            if (!string.IsNullOrWhiteSpace(scanLine))
             {
                 // Parse strScanFrameLine
                 // It will look like:
                 // Scan= 16500; PercentComplete= 89.2
 
-                var strProgressStats = strScanLine.Split(';');
+                var progressStats = scanLine.Split(';');
 
-                for (var i = 0; i <= strProgressStats.Length - 1; i++)
+                for (var i = 0; i <= progressStats.Length - 1; i++)
                 {
-                    var kvStat = ParseKeyValue(strProgressStats[i]);
+                    var kvStat = ParseKeyValue(progressStats[i]);
                     if (!string.IsNullOrWhiteSpace(kvStat.Key))
                     {
                         switch (kvStat.Key)

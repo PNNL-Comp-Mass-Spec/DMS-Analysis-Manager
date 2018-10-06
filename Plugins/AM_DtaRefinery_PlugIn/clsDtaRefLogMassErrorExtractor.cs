@@ -118,30 +118,30 @@ namespace AnalysisManagerDtaRefineryPlugIn
                     return false;
                 }
 
-                using (var srSourceFile = new StreamReader(new FileStream(fiSourceFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(fiSourceFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
-                    while (!srSourceFile.EndOfStream)
+                    while (!reader.EndOfStream)
                     {
-                        var strLineIn = srSourceFile.ReadLine();
-                        if (string.IsNullOrWhiteSpace(strLineIn))
+                        var dataLine = reader.ReadLine();
+                        if (string.IsNullOrWhiteSpace(dataLine))
                             continue;
 
-                        if (strLineIn.IndexOf("ORIGINAL parent ion mass error distribution", StringComparison.InvariantCultureIgnoreCase) >= 0)
+                        if (dataLine.IndexOf("ORIGINAL parent ion mass error distribution", StringComparison.OrdinalIgnoreCase) >= 0)
                         {
                             blnOriginalDistributionSection = true;
                             blnRefinedDistributionSection = false;
                         }
 
-                        if (strLineIn.IndexOf("REFINED parent ion mass error distribution", StringComparison.InvariantCultureIgnoreCase) >= 0)
+                        if (dataLine.IndexOf("REFINED parent ion mass error distribution", StringComparison.OrdinalIgnoreCase) >= 0)
                         {
                             blnOriginalDistributionSection = false;
                             blnRefinedDistributionSection = true;
                         }
 
-                        if (!strLineIn.StartsWith("Robust estimate", StringComparison.InvariantCultureIgnoreCase))
+                        if (!dataLine.StartsWith("Robust estimate", StringComparison.OrdinalIgnoreCase))
                             continue;
 
-                        var reMatch = reMassError.Match(strLineIn);
+                        var reMatch = reMassError.Match(dataLine);
 
                         if (reMatch.Success)
                         {

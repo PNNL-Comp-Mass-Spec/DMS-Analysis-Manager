@@ -480,16 +480,17 @@ namespace AnalysisManager_AScore_PlugIn
                 sqlQuery += " SELECT Input_Folder, 2 AS Preference, Saved FROM DMS_Pipeline.dbo.V_Job_Steps_History " + sqlWhere;
                 sqlQuery += " ORDER BY Preference, saved";
 
-                var success = clsGlobal.GetQueryResultsTopRow(sqlQuery, connectionString, out var lstResults, "GetSharedResultFolderName");
+                var success = clsGlobal.GetQueryResultsTopRow(sqlQuery, connectionString, out var firstSharedResultsFolder, "GetSharedResultFolderName");
 
-                if (!success || lstResults.Count == 0)
+                if (!success || firstSharedResultsFolder.Count == 0)
                 {
                     LogTools.LogError("Cannot determine shared results folder; match not found for job " + jobNumber + " and tool " + toolName + " in V_Job_Steps opr V_Job_Steps_History");
                     return string.Empty;
 
                 }
 
-                var sharedResultsFolder = lstResults.First();
+                // Return the first column (the input_folder name)
+                var sharedResultsFolder = firstSharedResultsFolder.First();
                 return sharedResultsFolder;
 
             }

@@ -228,11 +228,11 @@ namespace AnalysisManagerProg
                 ShowTrace("Reading application config file");
 
                 // Load settings from config file AnalysisManagerProg.exe.config
-                var lstMgrSettings = LoadMgrSettingsFromFile();
+                var mgrSettings = LoadMgrSettingsFromFile();
 
                 try
                 {
-                    mMgrSettings = new clsAnalysisMgrSettings(lstMgrSettings, mMgrDirectoryPath, TraceMode);
+                    mMgrSettings = new clsAnalysisMgrSettings(mgrSettings, mMgrDirectoryPath, TraceMode);
                 }
                 catch (Exception ex)
                 {
@@ -380,7 +380,7 @@ namespace AnalysisManagerProg
             var tasksStartedCount = 0;
             var errorDeletingFilesFlagFile = false;
 
-            var dtLastConfigDBUpdate = DateTime.UtcNow;
+            var lastConfigDBUpdate = DateTime.UtcNow;
 
             // Used to track critical manager errors (not necessarily failed analysis jobs when the plugin reports "no results" or similar)
             var criticalMgrErrorCount = 0;
@@ -423,7 +423,7 @@ namespace AnalysisManagerProg
                     {
                         // Reload the manager control DB settings in case they have changed
                         // However, only reload every 2 minutes
-                        if (!UpdateManagerSettings(ref dtLastConfigDBUpdate, 2))
+                        if (!UpdateManagerSettings(ref lastConfigDBUpdate, 2))
                         {
                             // Error retrieving settings from the manager control DB
                             return;
@@ -1236,10 +1236,10 @@ namespace AnalysisManagerProg
                     var day = Convert.ToInt32(match.Groups["Day"].Value);
                     var year = Convert.ToInt32(match.Groups["Year"].Value);
 
-                    var dtCurrentDate = DateTime.Parse(year + "-" + month + "-" + day);
-                    var dtNewDate = dtCurrentDate.AddDays(-1);
+                    var currentDate = DateTime.Parse(year + "-" + month + "-" + day);
+                    var newDate = currentDate.AddDays(-1);
 
-                    var previousLogFilePath = match.Groups["BaseName"].Value + dtNewDate.ToString(FileLogger.LOG_FILE_DATE_CODE) + Path.GetExtension(logFilePath);
+                    var previousLogFilePath = match.Groups["BaseName"].Value + newDate.ToString(FileLogger.LOG_FILE_DATE_CODE) + Path.GetExtension(logFilePath);
                     return previousLogFilePath;
                 }
 
@@ -1255,8 +1255,8 @@ namespace AnalysisManagerProg
 
         /// <summary>
         /// Parses the log files for this manager to determine the recent error messages, returning up to errorMessageCountToReturn of them
-        /// Will use objLogger to determine the most recent log file
-        /// Also examines the message info stored in objLogger
+        /// Will use logger to determine the most recent log file
+        /// Also examines the message info stored in logger
         /// Lastly, if mostRecentJobInfo is empty, will update it with info on the most recent job started
         /// </summary>
         /// <param name="errorMessageCountToReturn">Maximum number of error messages to return</param>
@@ -1305,10 +1305,10 @@ namespace AnalysisManagerProg
                 // Initialize the hashtable to hold the error messages, but without date stamps
                 var uniqueErrorMessages = new Dictionary<string, DateTime>(StringComparer.OrdinalIgnoreCase);
 
-                // Examine the most recent error reported by objLogger
-                var lineIn = LogTools.MostRecentErrorMessage;
+                // Examine the most recent error reported by the logger
+                var mostRecentErrorMsg = LogTools.MostRecentErrorMessage;
                 bool loggerReportsError;
-                if (!string.IsNullOrWhiteSpace(lineIn))
+                if (!string.IsNullOrWhiteSpace(mostRecentErrorMsg))
                 {
                     loggerReportsError = true;
                 }
@@ -1321,7 +1321,7 @@ namespace AnalysisManagerProg
 
                 if (errorMessageCountToReturn > 1 || !loggerReportsError)
                 {
-                    // Recent error message reported by objLogger is empty or errorMessageCountToReturn is greater than one
+                    // Recent error message reported by the logger is empty or errorMessageCountToReturn is greater than one
                     // Open log file logFilePath to find the most recent error messages
                     // If not enough error messages are found, we will look through previous log files
 
@@ -1332,41 +1332,41 @@ namespace AnalysisManagerProg
                     {
                         if (File.Exists(logFilePath))
                         {
-                            using (var srInFile = new StreamReader(new FileStream(logFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                            using (var reader = new StreamReader(new FileStream(logFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                             {
 
                                 if (errorMessageCountToReturn < 1)
                                     errorMessageCountToReturn = 1;
 
-                                while (!srInFile.EndOfStream)
+                                while (!reader.EndOfStream)
                                 {
-                                    lineIn = srInFile.ReadLine();
+                                    var dataLine = reader.ReadLine();
 
-                                    if (lineIn == null)
+                                    if (dataLine == null)
                                         continue;
 
-                                    var oMatchError = reErrorLine.Match(lineIn);
+                                    var oMatchError = reErrorLine.Match(dataLine);
 
                                     if (oMatchError.Success)
                                     {
-                                        DetermineRecentErrorCacheError(oMatchError, lineIn, uniqueErrorMessages, qErrorMsgQueue,
+                                        DetermineRecentErrorCacheError(oMatchError, dataLine, uniqueErrorMessages, qErrorMsgQueue,
                                                                        errorMessageCountToReturn);
                                     }
 
                                     if (!checkForMostRecentJob)
                                         continue;
 
-                                    var oMatchJob = reJobStartLine.Match(lineIn);
-                                    if (!oMatchJob.Success)
+                                    var jobMatch = reJobStartLine.Match(dataLine);
+                                    if (!jobMatch.Success)
                                         continue;
 
                                     try
                                     {
                                         mostRecentJobInfoFromLogs = ConstructMostRecentJobInfoText(
-                                            oMatchJob.Groups["Date"].Value,
-                                            Convert.ToInt32(oMatchJob.Groups["Job"].Value),
-                                            oMatchJob.Groups["Dataset"].Value,
-                                            oMatchJob.Groups["Tool"].Value);
+                                            jobMatch.Groups["Date"].Value,
+                                            Convert.ToInt32(jobMatch.Groups["Job"].Value),
+                                            jobMatch.Groups["Dataset"].Value,
+                                            jobMatch.Groups["Tool"].Value);
                                     }
                                     catch (Exception)
                                     {
@@ -1405,16 +1405,15 @@ namespace AnalysisManagerProg
                 if (loggerReportsError)
                 {
                     // Append the error message reported by the Logger to the error message queue (treating it as the newest error)
-                    lineIn = LogTools.MostRecentErrorMessage;
-                    var match = reErrorLine.Match(lineIn);
+                    var match = reErrorLine.Match(LogTools.MostRecentErrorMessage);
 
                     if (match.Success)
                     {
-                        DetermineRecentErrorCacheError(match, lineIn, uniqueErrorMessages, qErrorMsgQueue, errorMessageCountToReturn);
+                        DetermineRecentErrorCacheError(match, LogTools.MostRecentErrorMessage, uniqueErrorMessages, qErrorMsgQueue, errorMessageCountToReturn);
                     }
                 }
 
-                // Populate recentErrorMessages and dtRecentErrorMessageDates using the messages stored in qErrorMsgQueue
+                // Populate recentErrorMessages and recentErrorMessageDates using the messages stored in qErrorMsgQueue
                 while (qErrorMsgQueue.Count > 0)
                 {
                     var errorMessageClean = qErrorMsgQueue.Dequeue();
@@ -2014,61 +2013,61 @@ namespace AnalysisManagerProg
             // Method ReadMgrSettingsFile() works with both versions of the .exe.config file
 
             // Load initial settings into string dictionary
-            var lstMgrSettings = ReadMgrSettingsFile(out var configFilePath);
+            var mgrSettings = ReadMgrSettingsFile(out var configFilePath);
 
-            if (lstMgrSettings == null)
+            if (mgrSettings == null)
                 return null;
 
             // Manager Config DB connection string
-            if (!lstMgrSettings.ContainsKey(clsAnalysisMgrSettings.MGR_PARAM_MGR_CFG_DB_CONN_STRING))
+            if (!mgrSettings.ContainsKey(clsAnalysisMgrSettings.MGR_PARAM_MGR_CFG_DB_CONN_STRING))
             {
-                lstMgrSettings.Add(clsAnalysisMgrSettings.MGR_PARAM_MGR_CFG_DB_CONN_STRING, Properties.Settings.Default.MgrCnfgDbConnectStr);
+                mgrSettings.Add(clsAnalysisMgrSettings.MGR_PARAM_MGR_CFG_DB_CONN_STRING, Properties.Settings.Default.MgrCnfgDbConnectStr);
             }
 
             // Manager active flag
-            if (!lstMgrSettings.ContainsKey(clsAnalysisMgrSettings.MGR_PARAM_MGR_ACTIVE_LOCAL))
+            if (!mgrSettings.ContainsKey(clsAnalysisMgrSettings.MGR_PARAM_MGR_ACTIVE_LOCAL))
             {
-                lstMgrSettings.Add(clsAnalysisMgrSettings.MGR_PARAM_MGR_ACTIVE_LOCAL, "False");
+                mgrSettings.Add(clsAnalysisMgrSettings.MGR_PARAM_MGR_ACTIVE_LOCAL, "False");
             }
 
             // Manager name
-            if (!lstMgrSettings.ContainsKey(clsAnalysisMgrSettings.MGR_PARAM_MGR_NAME))
+            if (!mgrSettings.ContainsKey(clsAnalysisMgrSettings.MGR_PARAM_MGR_NAME))
             {
-                lstMgrSettings.Add(clsAnalysisMgrSettings.MGR_PARAM_MGR_NAME, "LoadMgrSettingsFromFile__Undefined_manager_name");
+                mgrSettings.Add(clsAnalysisMgrSettings.MGR_PARAM_MGR_NAME, "LoadMgrSettingsFromFile__Undefined_manager_name");
             }
 
             // If the MgrName setting in the AnalysisManagerProg.exe.config file contains the text $ComputerName$
             // that text is replaced with this computer's domain name
             // This is a case-sensitive comparison
-            var managerName = lstMgrSettings[clsAnalysisMgrSettings.MGR_PARAM_MGR_NAME];
+            var managerName = mgrSettings[clsAnalysisMgrSettings.MGR_PARAM_MGR_NAME];
             var autoDefinedName = managerName.Replace("$ComputerName$", Environment.MachineName);
 
             if (!string.Equals(managerName, autoDefinedName))
             {
                 ShowTrace("Auto-defining the manager name as " + autoDefinedName);
-                lstMgrSettings[clsAnalysisMgrSettings.MGR_PARAM_MGR_NAME] = autoDefinedName;
+                mgrSettings[clsAnalysisMgrSettings.MGR_PARAM_MGR_NAME] = autoDefinedName;
             }
 
             // Default settings in use flag
-            if (!lstMgrSettings.ContainsKey(clsAnalysisMgrSettings.MGR_PARAM_USING_DEFAULTS))
+            if (!mgrSettings.ContainsKey(clsAnalysisMgrSettings.MGR_PARAM_USING_DEFAULTS))
             {
-                lstMgrSettings.Add(clsAnalysisMgrSettings.MGR_PARAM_USING_DEFAULTS, Properties.Settings.Default.UsingDefaults.ToString());
+                mgrSettings.Add(clsAnalysisMgrSettings.MGR_PARAM_USING_DEFAULTS, Properties.Settings.Default.UsingDefaults.ToString());
             }
 
             // Default connection string for logging errors to the database
             // Will get updated later when manager settings are loaded from the manager control database
-            if (!lstMgrSettings.ContainsKey(clsAnalysisMgrSettings.MGR_PARAM_DEFAULT_DMS_CONN_STRING))
+            if (!mgrSettings.ContainsKey(clsAnalysisMgrSettings.MGR_PARAM_DEFAULT_DMS_CONN_STRING))
             {
-                lstMgrSettings.Add(clsAnalysisMgrSettings.MGR_PARAM_DEFAULT_DMS_CONN_STRING, Properties.Settings.Default.DefaultDMSConnString);
+                mgrSettings.Add(clsAnalysisMgrSettings.MGR_PARAM_DEFAULT_DMS_CONN_STRING, Properties.Settings.Default.DefaultDMSConnString);
             }
 
             if (TraceMode)
             {
                 ShowTrace("Settings loaded from " + PathUtils.CompactPathString(configFilePath, 60));
-                clsAnalysisMgrSettings.ShowDictionaryTrace(lstMgrSettings);
+                clsAnalysisMgrSettings.ShowDictionaryTrace(mgrSettings);
             }
 
-            return lstMgrSettings;
+            return mgrSettings;
         }
 
         private bool NeedToAbortProcessing()
@@ -2225,16 +2224,16 @@ namespace AnalysisManagerProg
                 ShowTrace("Reading application config file");
 
                 // Load settings from config file AnalysisManagerProg.exe.config
-                var lstMgrSettings = LoadMgrSettingsFromFile();
+                var mgrSettings = LoadMgrSettingsFromFile();
 
-                if (lstMgrSettings == null)
+                if (mgrSettings == null)
                     return false;
 
                 ShowTrace("Storing manager settings in mMgrSettings");
 
                 // Store the new settings then retrieve updated settings from the database
                 // or from ManagerSettingsLocal.xml if clsGlobal.OfflineMode is true
-                if (mMgrSettings.LoadSettings(lstMgrSettings))
+                if (mMgrSettings.LoadSettings(mgrSettings))
                     return true;
 
                 if (!string.IsNullOrWhiteSpace(mMgrSettings.ErrMsg))
@@ -2261,21 +2260,21 @@ namespace AnalysisManagerProg
 
         private void RemoveTempFiles()
         {
-            var diMgrFolder = new DirectoryInfo(mMgrDirectoryPath);
+            var mgrDirectory = new DirectoryInfo(mMgrDirectoryPath);
 
             // Files starting with the name IgnoreMe are created by log4NET when it is first instantiated
             // This name is defined in the RollingFileAppender section of the Logging.config file via this XML:
             // <file value="IgnoreMe" />
 
-            foreach (var fiFile in diMgrFolder.GetFiles("IgnoreMe*.txt"))
+            foreach (var ignoreMeFile in mgrDirectory.GetFiles("IgnoreMe*.txt"))
             {
                 try
                 {
-                    fiFile.Delete();
+                    ignoreMeFile.Delete();
                 }
                 catch (Exception ex)
                 {
-                    LogError("Error deleting IgnoreMe file: " + fiFile.Name, ex);
+                    LogError("Error deleting IgnoreMe file: " + ignoreMeFile.Name, ex);
                 }
             }
 
@@ -2283,23 +2282,23 @@ namespace AnalysisManagerProg
             // These files indicate a previous, failed Decon2LS task and can be safely deleted
             // For safety, we will not delete files less than 24 hours old
 
-            var lstFilesToDelete = diMgrFolder.GetFiles("tmp.iso.*").ToList();
+            var filesToDelete = mgrDirectory.GetFiles("tmp.iso.*").ToList();
 
-            lstFilesToDelete.AddRange(diMgrFolder.GetFiles("tmp.peak.*"));
+            filesToDelete.AddRange(mgrDirectory.GetFiles("tmp.peak.*"));
 
-            foreach (var fiFile in lstFilesToDelete)
+            foreach (var tempFile in filesToDelete)
             {
                 try
                 {
-                    if (DateTime.UtcNow.Subtract(fiFile.LastWriteTimeUtc).TotalHours > 24)
+                    if (DateTime.UtcNow.Subtract(tempFile.LastWriteTimeUtc).TotalHours > 24)
                     {
-                        ShowTrace("Deleting temp file " + fiFile.FullName);
-                        fiFile.Delete();
+                        ShowTrace("Deleting temp file " + tempFile.FullName);
+                        tempFile.Delete();
                     }
                 }
                 catch (Exception)
                 {
-                    LogError("Error deleting file: " + fiFile.Name);
+                    LogError("Error deleting file: " + tempFile.Name);
                 }
             }
         }
@@ -2726,17 +2725,17 @@ namespace AnalysisManagerProg
         /// Reloads the manager settings from the manager control database
         /// if at least MinutesBetweenUpdates minutes have elapsed since the last update
         /// </summary>
-        /// <param name="dtLastConfigDBUpdate"></param>
+        /// <param name="lastConfigDBUpdate"></param>
         /// <param name="minutesBetweenUpdates"></param>
         /// <returns></returns>
         /// <remarks></remarks>
-        private bool UpdateManagerSettings(ref DateTime dtLastConfigDBUpdate, double minutesBetweenUpdates)
+        private bool UpdateManagerSettings(ref DateTime lastConfigDBUpdate, double minutesBetweenUpdates)
         {
 
-            if (!(DateTime.UtcNow.Subtract(dtLastConfigDBUpdate).TotalMinutes >= minutesBetweenUpdates))
+            if (!(DateTime.UtcNow.Subtract(lastConfigDBUpdate).TotalMinutes >= minutesBetweenUpdates))
                 return true;
 
-            dtLastConfigDBUpdate = DateTime.UtcNow;
+            lastConfigDBUpdate = DateTime.UtcNow;
 
             ShowTrace("Loading manager settings from the manager control DB");
 
@@ -2785,7 +2784,7 @@ namespace AnalysisManagerProg
             mStatusTools.UpdateIdle(managerIdleMessage, recentErrorMessages, mMostRecentJobInfo, true);
         }
 
-        private void UpdateStatusToolLoggingSettings(clsStatusFile objStatusFile)
+        private void UpdateStatusToolLoggingSettings(clsStatusFile statusFile)
         {
             var logMemoryUsage = mMgrSettings.GetParam("LogMemoryUsage", false);
             float minimumMemoryUsageLogInterval = mMgrSettings.GetParam("MinimumMemoryUsageLogInterval", 1);
@@ -2808,9 +2807,9 @@ namespace AnalysisManagerProg
             var messageQueueUri = mMgrSettings.GetParam("MessageQueueURI");
             var messageQueueTopicMgrStatus = mMgrSettings.GetParam("MessageQueueTopicMgrStatus");
 
-            objStatusFile.ConfigureMemoryLogging(logMemoryUsage, minimumMemoryUsageLogInterval, mMgrDirectoryPath);
-            objStatusFile.ConfigureBrokerDBLogging(logStatusToBrokerDb, brokerDbConnectionString, brokerDbStatusUpdateIntervalMinutes);
-            objStatusFile.ConfigureMessageQueueLogging(logStatusToMessageQueue, messageQueueUri, messageQueueTopicMgrStatus);
+            statusFile.ConfigureMemoryLogging(logMemoryUsage, minimumMemoryUsageLogInterval, mMgrDirectoryPath);
+            statusFile.ConfigureBrokerDBLogging(logStatusToBrokerDb, brokerDbConnectionString, brokerDbStatusUpdateIntervalMinutes);
+            statusFile.ConfigureMessageQueueLogging(logStatusToMessageQueue, messageQueueUri, messageQueueTopicMgrStatus);
         }
 
         /// <summary>
@@ -2849,17 +2848,17 @@ namespace AnalysisManagerProg
                         return false;
                     }
 
-                    var diDatasetStoragePath = new DirectoryInfo(datasetStoragePath);
-                    if (!diDatasetStoragePath.Exists)
+                    var datasetStorageDirectory = new DirectoryInfo(datasetStoragePath);
+                    if (!datasetStorageDirectory.Exists)
                     {
                         // Dataset directory not found; that's OK, since the Results Transfer plugin will auto-create it
                         // Try to use the parent folder (or the parent of the parent)
-                        while (!diDatasetStoragePath.Exists && diDatasetStoragePath.Parent != null)
+                        while (!datasetStorageDirectory.Exists && datasetStorageDirectory.Parent != null)
                         {
-                            diDatasetStoragePath = diDatasetStoragePath.Parent;
+                            datasetStorageDirectory = datasetStorageDirectory.Parent;
                         }
 
-                        datasetStoragePath = diDatasetStoragePath.FullName;
+                        datasetStoragePath = datasetStorageDirectory.FullName;
                     }
 
                     if (!ValidateFreeDiskSpaceWork("Dataset directory", datasetStoragePath, datasetStorageMinFreeSpaceGB * 1024, out errorMessage))

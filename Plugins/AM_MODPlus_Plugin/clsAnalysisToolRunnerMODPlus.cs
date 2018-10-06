@@ -647,7 +647,7 @@ namespace AnalysisManagerMODPlusPlugin
                 var combinedResultsFilePath = Path.Combine(mWorkDir, mDatasetName + clsMODPlusRunner.RESULTS_FILE_SUFFIX);
                 var fiCombinedResults = new FileInfo(combinedResultsFilePath);
 
-                using (var swCombinedResults = new StreamWriter(new FileStream(fiCombinedResults.FullName, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                using (var combinedResultsWriter = new StreamWriter(new FileStream(fiCombinedResults.FullName, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
                     while (lstNextAvailableScan.Count > 0)
                     {
@@ -659,11 +659,11 @@ namespace AnalysisManagerMODPlusPlugin
                         {
                             foreach (var dataLine in reader.CurrentScanData)
                             {
-                                swCombinedResults.WriteLine(dataLine);
+                                combinedResultsWriter.WriteLine(dataLine);
                             }
 
                             // Add a blank line
-                            swCombinedResults.WriteLine();
+                            combinedResultsWriter.WriteLine();
 
                             if (reader.ReadNextSpectrum())
                             {

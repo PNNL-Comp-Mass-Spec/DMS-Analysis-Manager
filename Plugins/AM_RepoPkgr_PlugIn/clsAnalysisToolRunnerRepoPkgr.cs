@@ -657,11 +657,11 @@ namespace AnalysisManager_RepoPkgr_Plugin
                     return false;
                 }
 
-                using (var srInfoFile = new StreamReader(new FileStream(strStoragePathInfoFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(strStoragePathInfoFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
-                    if (!srInfoFile.EndOfStream)
+                    if (!reader.EndOfStream)
                     {
-                        strSourceFilePath = srInfoFile.ReadLine();
+                        strSourceFilePath = reader.ReadLine();
                     }
                 }
 

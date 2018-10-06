@@ -141,7 +141,7 @@ namespace AnalysisManagerBase
         public string ArchiveStoragePath { get; set; }
 
         /// <summary>
-        /// Results folder name
+        /// Results directory name
         /// </summary>
         public string ResultsFolderName { get; set; }
 
@@ -151,7 +151,7 @@ namespace AnalysisManagerBase
         public string DatasetFolderName { get; set; }
 
         /// <summary>
-        /// Shared results folder paths
+        /// Shared results directory paths
         /// </summary>
         public List<string> SharedResultsFolders { get; set; }
 

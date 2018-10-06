@@ -402,31 +402,31 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                     return false;
                 }
 
-                using (var swOutFile = new StreamWriter(new FileStream(TargetFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                using (var writer = new StreamWriter(new FileStream(TargetFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
-                    swOutFile.WriteLine("[Files]");
-                    var AlignmentDataset = mJobParams.GetJobParam("AlignmentDataset");
+                    writer.WriteLine("[Files]");
+                    var alignmentDataset = mJobParams.GetJobParam("AlignmentDataset");
                     foreach (var TmpFile_loopVariable in Files)
                     {
                         var TmpFile = TmpFile_loopVariable;
-                        if (!string.IsNullOrWhiteSpace(AlignmentDataset) && TmpFile.ToLower().Contains(AlignmentDataset.ToLower()))
+                        if (!string.IsNullOrWhiteSpace(alignmentDataset) && TmpFile.ToLower().Contains(alignmentDataset.ToLower()))
                         {
                             // Append an asterisk to this dataset's path to indicate that it is the base dataset to which the others will be aligned
-                            swOutFile.WriteLine(TmpFile + "*");
+                            writer.WriteLine(TmpFile + "*");
                         }
                         else
                         {
-                            swOutFile.WriteLine(TmpFile);
+                            writer.WriteLine(TmpFile);
                         }
                     }
 
                     // Check to see if a mass tag database has been defined and NO alignment dataset has been defined
-                    var AmtDb = mJobParams.GetJobParam("AMTDB");
-                    if (!string.IsNullOrEmpty(AmtDb.Trim()))
+                    var amtDb = mJobParams.GetJobParam("AMTDB");
+                    if (!string.IsNullOrEmpty(amtDb.Trim()))
                     {
-                        swOutFile.WriteLine("[Database]");
-                        swOutFile.WriteLine("Database = " + mJobParams.GetJobParam("AMTDB"));			// For example, MT_Human_Sarcopenia_MixedLC_P692
-                        swOutFile.WriteLine("Server = " + mJobParams.GetJobParam("AMTDBServer"));		// For example, Elmer
+                        writer.WriteLine("[Database]");
+                        writer.WriteLine("Database = " + mJobParams.GetJobParam("AMTDB"));			// For example, MT_Human_Sarcopenia_MixedLC_P692
+                        writer.WriteLine("Server = " + mJobParams.GetJobParam("AMTDBServer"));		// For example, Elmer
                     }
                 }
 
@@ -567,9 +567,9 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
         /// <summary>
         /// Parse the MultiAlign log file to track the search progress
         /// </summary>
-        /// <param name="strLogFilePath">Full path to the log file</param>
+        /// <param name="logFilePath">Full path to the log file</param>
         /// <remarks></remarks>
-        private void ParseMultiAlignLogFile(string strLogFilePath)
+        private void ParseMultiAlignLogFile(string logFilePath)
         {
 
             // The MultiAlign log file is quite big, but we can keep track of progress by looking for known text in the log file lines
@@ -581,11 +581,11 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 
             try
             {
-                if (!File.Exists(strLogFilePath))
+                if (!File.Exists(logFilePath))
                 {
                     if (mDebugLevel >= 4)
                     {
-                        LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, "MultiAlign log file not found: " + strLogFilePath);
+                        LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, "MultiAlign log file not found: " + logFilePath);
                     }
 
                     return;
@@ -593,61 +593,61 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 
                 if (mDebugLevel >= 4)
                 {
-                    LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, "Parsing file " + strLogFilePath);
+                    LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, "Parsing file " + logFilePath);
                 }
 
 
                 var eProgress = eProgressSteps.Starting;
 
-                var intTotalDatasets = 0;
-                var intDatasetsLoaded = 0;
-                var intDatasetsAligned = 0;
-                var intChargeStatesClustered = 0;
+                var totalDatasets = 0;
+                var datasetsLoaded = 0;
+                var datasetsAligned = 0;
+                var chargeStatesClustered = 0;
 
                 // Open the file for read; don't lock it (to thus allow MultiAlign to still write to it)
-                using (var srInFile = new StreamReader(new FileStream(strLogFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(logFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
-                    while (!srInFile.EndOfStream)
+                    while (!reader.EndOfStream)
                     {
-                        var strLineIn = srInFile.ReadLine();
+                        var dataLine = reader.ReadLine();
 
-                        if (!string.IsNullOrWhiteSpace(strLineIn))
+                        if (!string.IsNullOrWhiteSpace(dataLine))
                         {
-                            var blnMatchFound = false;
+                            var matchFound = false;
 
                             // Update progress if the line contains any of the entries in mProgressStepLogText
                             foreach (var lstItem in mProgressStepLogText)
                             {
-                                if (strLineIn.Contains(lstItem.Key))
+                                if (dataLine.Contains(lstItem.Key))
                                 {
                                     if (eProgress < lstItem.Value)
                                     {
                                         eProgress = lstItem.Value;
                                     }
-                                    blnMatchFound = true;
+                                    matchFound = true;
                                     break;
                                 }
                             }
 
-                            if (!blnMatchFound)
+                            if (!matchFound)
                             {
-                                if (strLineIn.Contains("Dataset Information: "))
+                                if (dataLine.Contains("Dataset Information: "))
                                 {
-                                    intTotalDatasets += 1;
+                                    totalDatasets += 1;
                                 }
-                                else if (strLineIn.Contains("- Adding features to cache database"))
+                                else if (dataLine.Contains("- Adding features to cache database"))
                                 {
-                                    intDatasetsLoaded += 1;
+                                    datasetsLoaded += 1;
                                 }
-                                else if (strLineIn.Contains("- Features Aligned -"))
+                                else if (dataLine.Contains("- Features Aligned -"))
                                 {
-                                    intDatasetsAligned += 1;
+                                    datasetsAligned += 1;
                                 }
-                                else if (strLineIn.Contains("- Clustering Charge State"))
+                                else if (dataLine.Contains("- Clustering Charge State"))
                                 {
-                                    intChargeStatesClustered += 1;
+                                    chargeStatesClustered += 1;
                                 }
-                                else if (strLineIn.Contains("No baseline dataset or database was selected"))
+                                else if (dataLine.Contains("No baseline dataset or database was selected"))
                                 {
                                     mMultialignErrorMessage = "No baseline dataset or database was selected";
                                 }
@@ -660,54 +660,54 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 
                 // Compute the actual progress
 
-                if (mProgressStepPercentComplete.TryGetValue(eProgress, out var intActualProgress))
+                if (mProgressStepPercentComplete.TryGetValue(eProgress, out var actualProgress))
                 {
-                    float sngActualProgress = intActualProgress;
+                    float progressOverall = actualProgress;
 
                     // Possibly bump up dblActualProgress incrementally
 
 
-                    if (intTotalDatasets > 0)
+                    if (totalDatasets > 0)
                     {
                         // This is a number between 0 and 100
-                        double dblSubProgressPercent = 0;
+                        double subProgressPercent = 0;
 
                         if (eProgress == eProgressSteps.LoadingDatasets)
                         {
-                            dblSubProgressPercent = intDatasetsLoaded * 100 / (double)intTotalDatasets;
+                            subProgressPercent = datasetsLoaded * 100 / (double)totalDatasets;
 
                         }
                         else if (eProgress == eProgressSteps.AligningDatasets)
                         {
-                            dblSubProgressPercent = intDatasetsAligned * 100 / (double)intTotalDatasets;
+                            subProgressPercent = datasetsAligned * 100 / (double)totalDatasets;
 
                         }
                         else if (eProgress == eProgressSteps.PerformingClustering)
                         {
                             // The majority of the data will be charge 1 through 7
-                            // Thus, we're dividing by 7 here, which means dblSubProgressPercent might be larger than 100; we'll account for that below
-                            dblSubProgressPercent = intChargeStatesClustered * 100 / (double)7;
+                            // Thus, we're dividing by 7 here, which means subProgressPercent might be larger than 100; we'll account for that below
+                            subProgressPercent = chargeStatesClustered * 100 / (double)7;
                         }
 
-                        if (dblSubProgressPercent > 0)
+                        if (subProgressPercent > 0)
                         {
-                            if (dblSubProgressPercent > 100)
-                                dblSubProgressPercent = 100;
+                            if (subProgressPercent > 100)
+                                subProgressPercent = 100;
 
-                            // Bump up dblActualProgress based on dblSubProgressPercent
+                            // Bump up dblActualProgress based on subProgressPercent
 
                             if (mProgressStepPercentComplete.TryGetValue(eProgress + 1, out var intProgressNext))
                             {
-                                sngActualProgress += (float)(dblSubProgressPercent * (intProgressNext - intActualProgress) / 100.0);
+                                progressOverall += (float)(subProgressPercent * (intProgressNext - actualProgress) / 100.0);
                             }
 
                         }
 
                     }
 
-                    if (mProgress < sngActualProgress)
+                    if (mProgress < progressOverall)
                     {
-                        mProgress = sngActualProgress;
+                        mProgress = progressOverall;
 
                         if (mDebugLevel >= 3 || DateTime.UtcNow.Subtract(mLastProgressWriteTime).TotalMinutes >= 10)
                         {
@@ -724,7 +724,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                 // Ignore errors here
                 if (mDebugLevel >= 2)
                 {
-                    OnErrorEvent("Error parsing MultiAlign log file (" + strLogFilePath + "): " + ex.Message);
+                    OnErrorEvent("Error parsing MultiAlign log file (" + logFilePath + "): " + ex.Message);
                 }
             }
 

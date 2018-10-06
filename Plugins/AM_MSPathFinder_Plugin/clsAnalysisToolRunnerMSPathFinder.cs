@@ -408,11 +408,11 @@ namespace AnalysisManagerMSPathFinderPlugin
                 var searchingDecoyDB = false;
                 mConsoleOutputErrorMsg = string.Empty;
 
-                using (var srInFile = new StreamReader(new FileStream(consoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(consoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
-                    while (!srInFile.EndOfStream)
+                    while (!reader.EndOfStream)
                     {
-                        var dataLine = srInFile.ReadLine();
+                        var dataLine = reader.ReadLine();
 
                         if (string.IsNullOrWhiteSpace(dataLine))
                         {

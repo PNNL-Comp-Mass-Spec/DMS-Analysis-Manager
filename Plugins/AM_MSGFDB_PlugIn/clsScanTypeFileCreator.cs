@@ -80,7 +80,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     return false;
                 }
 
-                using (var srScanStatsExFile = new StreamReader(new FileStream(scanStatsExFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(scanStatsExFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
                     // Define the default column mapping
                     var scanNumberColIndex = 1;
@@ -88,18 +88,18 @@ namespace AnalysisManagerMSGFDBPlugIn
                     var scanFilterColIndex = 8;
 
                     var linesRead = 0;
-                    while (!srScanStatsExFile.EndOfStream)
+                    while (!reader.EndOfStream)
                     {
-                        var dataLine = srScanStatsExFile.ReadLine();
+                        var dataLine = reader.ReadLine();
                         if (string.IsNullOrWhiteSpace(dataLine))
                             continue;
 
                         linesRead += 1;
-                        var dataColumns = dataLine.Split('\t');
+                        var dataCols = dataLine.Split('\t');
 
-                        var firstColumnIsNumber = FirstColumnIsInteger(dataColumns);
+                        var firstColumnIsNumber = FirstColumnIsInteger(dataCols);
 
-                        if (linesRead == 1 && dataColumns.Length > 0 && !firstColumnIsNumber)
+                        if (linesRead == 1 && dataCols.Length > 0 && !firstColumnIsNumber)
                         {
                             // This is a header line; define the column mapping
 
@@ -120,19 +120,19 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                         // Parse out the values
 
-                        if (clsGlobal.TryGetValueInt(dataColumns, scanNumberColIndex, out var scanNumber))
+                        if (clsGlobal.TryGetValueInt(dataCols, scanNumberColIndex, out var scanNumber))
                         {
                             var storeData = false;
 
-                            if (clsGlobal.TryGetValue(dataColumns, collisionModeColIndex, out var collisionMode))
+                            if (clsGlobal.TryGetValue(dataCols, collisionModeColIndex, out var collisionMode))
                             {
                                 storeData = true;
                             }
                             else
                             {
-                                if (clsGlobal.TryGetValue(dataColumns, scanFilterColIndex, out var filterText))
+                                if (clsGlobal.TryGetValue(dataCols, scanFilterColIndex, out var filterText))
                                 {
-                                    filterText = dataColumns[scanFilterColIndex];
+                                    filterText = dataCols[scanFilterColIndex];
 
                                     // Parse the filter text to determine scan type
                                     collisionMode = XRawFileIO.GetScanTypeNameFromFinniganScanFilterText(filterText);
@@ -196,14 +196,14 @@ namespace AnalysisManagerMSGFDBPlugIn
                 var detailedScanTypesDefined = clsAnalysisResourcesMSGFDB.ValidateScanStatsFileHasDetailedScanTypes(scanStatsFilePath);
 
                 // Open the input file
-                using (var srScanStatsFile = new StreamReader(new FileStream(scanStatsFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var scanStatsReader = new StreamReader(new FileStream(scanStatsFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
                     ScanTypeFilePath = Path.Combine(WorkDir, DatasetName + "_ScanType.txt");
 
                     // Create the scan type output file
-                    using (var swOutFile = new StreamWriter(new FileStream(ScanTypeFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                    using (var writer = new StreamWriter(new FileStream(ScanTypeFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                     {
-                        swOutFile.WriteLine("ScanNumber\t" + "ScanTypeName\t" + "ScanType\t" + "ScanTime");
+                        writer.WriteLine("ScanNumber\t" + "ScanTypeName\t" + "ScanType\t" + "ScanTime");
 
                         // Define the default column mapping
                         var scanNumberColIndex = 1;
@@ -213,9 +213,9 @@ namespace AnalysisManagerMSGFDBPlugIn
                         var scanStatsExLoaded = false;
 
                         var linesRead = 0;
-                        while (!srScanStatsFile.EndOfStream)
+                        while (!scanStatsReader.EndOfStream)
                         {
-                            var dataLine = srScanStatsFile.ReadLine();
+                            var dataLine = scanStatsReader.ReadLine();
                             if (string.IsNullOrWhiteSpace(dataLine))
                             {
                                 continue;
@@ -264,8 +264,8 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                                 if (!CacheScanTypeUsingScanStatsEx(scanStatsExFilePath))
                                 {
-                                    srScanStatsFile.Close();
-                                    swOutFile.Close();
+                                    scanStatsReader.Close();
+                                    writer.Close();
                                     return false;
                                 }
 
@@ -290,7 +290,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                             clsGlobal.TryGetValueFloat(dataColumns, scanTimeColIndex, out var scanTime);
 
-                            swOutFile.WriteLine(scanNumber + "\t" + scanTypeName + "\t" + scanType + "\t" + scanTime.ToString("0.0000"));
+                            writer.WriteLine(scanNumber + "\t" + scanTypeName + "\t" + scanType + "\t" + scanTime.ToString("0.0000"));
 
                             ValidScanTypeLineCount += 1;
                         }

@@ -176,15 +176,15 @@ namespace AnalysisManagerIDPickerPlugIn
 
             var sqlQuery = "SELECT OrganismDBName FROM V_Analysis_Job WHERE (Job = " + mJob + ")";
 
-            var success = clsGlobal.GetQueryResultsTopRow(sqlQuery, dmsConnectionString, out var lstResults, "LookupLegacyFastaFileName");
+            var success = clsGlobal.GetQueryResultsTopRow(sqlQuery, dmsConnectionString, out var orgDbNameForJob, "LookupLegacyFastaFileName");
 
-            if (!success || lstResults == null || lstResults.Count == 0)
+            if (!success || orgDbNameForJob == null || orgDbNameForJob.Count == 0)
             {
                 mMessage = "Could not determine the legacy fasta file name (OrganismDBName in V_Analysis_Job) for job " + mJob;
                 return string.Empty;
             }
 
-            return lstResults.First();
+            return orgDbNameForJob.First();
         }
 
         /// <summary>

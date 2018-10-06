@@ -730,7 +730,7 @@ namespace DTASpectraFileGen
                 LogMessage("Merging " + Path.GetFileName(strCDTAWithParentIonData) + " with " + Path.GetFileName(strCDTAWithFragIonData));
 
                 var intSpectrumCountSkipped = 0;
-                using (var swCDTAOut = new StreamWriter(new FileStream(strCDTAFileFinal, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                using (var writer = new StreamWriter(new FileStream(strCDTAFileFinal, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
                     while (oCDTAReaderParentIons.ReadNextSpectrum(out _, out var udtParentIonDataHeader))
                     {
@@ -785,9 +785,9 @@ namespace DTASpectraFileGen
 
                         if (blnNextSpectrumAvailable)
                         {
-                            swCDTAOut.WriteLine();
-                            swCDTAOut.WriteLine(udtParentIonDataHeader.SpectrumTitleWithCommentChars);
-                            swCDTAOut.WriteLine(udtParentIonDataHeader.ParentIonLineText);
+                            writer.WriteLine();
+                            writer.WriteLine(udtParentIonDataHeader.SpectrumTitleWithCommentChars);
+                            writer.WriteLine(udtParentIonDataHeader.ParentIonLineText);
 
                             var strDataLinesToAppend = RemoveTitleAndParentIonLines(oCDTAReaderFragIonData.GetMostRecentSpectrumFileText());
 
@@ -799,7 +799,7 @@ namespace DTASpectraFileGen
                                 return false;
                             }
 
-                            swCDTAOut.Write(strDataLinesToAppend);
+                            writer.Write(strDataLinesToAppend);
                         }
 
                         if (DateTime.UtcNow.Subtract(dtLastStatus).TotalSeconds >= 30)
@@ -1129,24 +1129,24 @@ namespace DTASpectraFileGen
 
                 var headerLineFound = false;
 
-                using (var srLogFile = new StreamReader(new FileStream(fiDeconMSnLogFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                using (var reader = new StreamReader(new FileStream(fiDeconMSnLogFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
                 {
-                    while (!srLogFile.EndOfStream)
+                    while (!reader.EndOfStream)
                     {
-                        var strLineIn = srLogFile.ReadLine();
+                        var dataLine = reader.ReadLine();
 
-                        if (!string.IsNullOrEmpty(strLineIn))
+                        if (!string.IsNullOrEmpty(dataLine))
                         {
                             if (headerLineFound)
                             {
                                 // Found a data line
-                                if (char.IsDigit(strLineIn[0]))
+                                if (char.IsDigit(dataLine[0]))
                                 {
                                     existingResultsAreValid = true;
                                     break;
                                 }
                             }
-                            else if (strLineIn.StartsWith("MSn_Scan"))
+                            else if (dataLine.StartsWith("MSn_Scan"))
                             {
                                 // Found the header line
                                 headerLineFound = true;

@@ -100,24 +100,24 @@ namespace DTASpectraFileGen
                     // If it exists, and if we can find a valid _dta.zip file, use that file instead of re-running DeconMSn (since DeconMSn can take some time to run)
 
                     var datasetID = mJobParams.GetJobParameter("DatasetID", 0);
-                    var folderNameToFind = "DTA_Gen_1_26_" + datasetID;
+                    var directoryNameToFind = "DTA_Gen_1_26_" + datasetID;
                     var fileToFind = DatasetName + CDTA_ZIPPED_EXTENSION;
 
-                    var existingDtaFolder = FolderSearch.FindValidFolder(DatasetName,
+                    var existingDtDirectory = FolderSearch.FindValidFolder(DatasetName,
                         fileToFind,
-                        folderNameToFind,
+                        directoryNameToFind,
                         maxAttempts: 1,
-                        logFolderNotFound: false,
-                        retrievingInstrumentDataFolder: false,
+                        logDirectoryNotFound: false,
+                        retrievingInstrumentDataDir: false,
                         assumeUnpurged: false,
-                        validFolderFound: out var validFolderFound,
-                        folderNotFoundMessage: out _);
+                        validDirectoryFound: out var validFolderFound,
+                        directoryNotFoundMessage: out _);
 
                     if (validFolderFound)
                     {
                         // Copy the file locally (or queue it for download from MyEMSL)
 
-                        var blnFileCopiedOrQueued = CopyFileToWorkDir(fileToFind, existingDtaFolder, mWorkDir);
+                        var blnFileCopiedOrQueued = CopyFileToWorkDir(fileToFind, existingDtDirectory, mWorkDir);
 
                         if (blnFileCopiedOrQueued)
                         {
@@ -128,10 +128,10 @@ namespace DTASpectraFileGen
                             LogMessage("Found pre-existing DeconMSn results; will not re-run DeconMSn if they are valid");
 
                             fileToFind = DatasetName + "_profile.txt";
-                            CopyFileToWorkDir(fileToFind, existingDtaFolder, mWorkDir);
+                            CopyFileToWorkDir(fileToFind, existingDtDirectory, mWorkDir);
 
                             fileToFind = DatasetName + "_DeconMSn_log.txt";
-                            CopyFileToWorkDir(fileToFind, existingDtaFolder, mWorkDir);
+                            CopyFileToWorkDir(fileToFind, existingDtDirectory, mWorkDir);
                         }
                     }
                 }

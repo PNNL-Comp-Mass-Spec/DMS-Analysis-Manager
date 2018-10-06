@@ -135,14 +135,14 @@ namespace AnalysisManagerExtractionPlugin
                 }
 
                 // Read the data from the MSGF+ Param file
-                using (var srParamFile = new StreamReader(new FileStream(searchToolParamFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                using (var reader = new StreamReader(new FileStream(searchToolParamFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
                 {
 
-                    while (!srParamFile.EndOfStream)
+                    while (!reader.EndOfStream)
                     {
-                        var lineIn = srParamFile.ReadLine();
+                        var dataLine = reader.ReadLine();
 
-                        if (string.IsNullOrWhiteSpace(lineIn) || !lineIn.StartsWith(DYNAMICMOD_TAG))
+                        if (string.IsNullOrWhiteSpace(dataLine) || !dataLine.StartsWith(DYNAMICMOD_TAG))
                             continue;
 
                         // Check whether this line has HO3P or mod mass 79.966 on S, T, or Y
@@ -150,16 +150,16 @@ namespace AnalysisManagerExtractionPlugin
 
                         if (mDebugLevel >= 3)
                         {
-                            LogDebug("MSGF+ " + DYNAMICMOD_TAG + " line found: " + lineIn);
+                            LogDebug("MSGF+ " + DYNAMICMOD_TAG + " line found: " + dataLine);
                         }
 
                         // Look for the equals sign
-                        var charIndex = lineIn.IndexOf('=');
+                        var charIndex = dataLine.IndexOf('=');
                         if (charIndex > 0)
                         {
-                            var modDef = lineIn.Substring(charIndex + 1).Trim();
+                            var modDef = dataLine.Substring(charIndex + 1).Trim();
 
-                            var commentIndex = lineIn.IndexOf('#');
+                            var commentIndex = dataLine.IndexOf('#');
                             List<string> modDefParts;
 
                             if (commentIndex > 1)
@@ -206,7 +206,7 @@ namespace AnalysisManagerExtractionPlugin
                         }
                         else
                         {
-                            LogWarning("MSGF+ " + DYNAMICMOD_TAG + " line does not have an equals sign; ignoring " + lineIn);
+                            LogWarning("MSGF+ " + DYNAMICMOD_TAG + " line does not have an equals sign; ignoring " + dataLine);
                         }
 
                     }
@@ -242,27 +242,27 @@ namespace AnalysisManagerExtractionPlugin
                 }
 
                 // Read the data from the SEQUEST Param file
-                using (var srParamFile = new StreamReader(new FileStream(searchToolParamFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                using (var reader = new StreamReader(new FileStream(searchToolParamFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
                 {
-                    while (!srParamFile.EndOfStream)
+                    while (!reader.EndOfStream)
                     {
-                        var lineIn = srParamFile.ReadLine();
+                        var dataLine = reader.ReadLine();
 
-                        if (string.IsNullOrWhiteSpace(lineIn) || !lineIn.StartsWith(DIFF_SEARCH_OPTIONS_TAG))
+                        if (string.IsNullOrWhiteSpace(dataLine) || !dataLine.StartsWith(DIFF_SEARCH_OPTIONS_TAG))
                             continue;
 
                         // Check whether the dynamic mods line has 79.9663 STY (or similar)
 
                         if (mDebugLevel >= 3)
                         {
-                            LogDebug("SEQUEST " + DIFF_SEARCH_OPTIONS_TAG + " line found: " + lineIn);
+                            LogDebug("SEQUEST " + DIFF_SEARCH_OPTIONS_TAG + " line found: " + dataLine);
                         }
 
                         // Look for the equals sign
-                        var charIndex = lineIn.IndexOf('=');
+                        var charIndex = dataLine.IndexOf('=');
                         if (charIndex > 0)
                         {
-                            var modDef = lineIn.Substring(charIndex + 1).Trim();
+                            var modDef = dataLine.Substring(charIndex + 1).Trim();
 
                             // Split modDef on spaces
                             var modDefParts = modDef.Split(' ');
@@ -296,12 +296,12 @@ namespace AnalysisManagerExtractionPlugin
                             }
                             else
                             {
-                                LogWarning("SEQUEST " + DIFF_SEARCH_OPTIONS_TAG + " line is not valid: " + lineIn);
+                                LogWarning("SEQUEST " + DIFF_SEARCH_OPTIONS_TAG + " line is not valid: " + dataLine);
                             }
                         }
                         else
                         {
-                            LogWarning("SEQUEST " + DIFF_SEARCH_OPTIONS_TAG + " line does not have an equals sign: " + lineIn);
+                            LogWarning("SEQUEST " + DIFF_SEARCH_OPTIONS_TAG + " line does not have an equals sign: " + dataLine);
                         }
 
                         // No point in checking any further since we've parsed the ion_series line
@@ -917,7 +917,8 @@ namespace AnalysisManagerExtractionPlugin
                         var mzidFile = baseName + mzidSuffix;
                         currentStep = "Retrieving " + mzidFile;
 
-                        if (!FileSearch.FindAndRetrieveMiscFiles(mzidFile, unzip: true, searchArchivedDatasetFolder: true, logFileNotFound: true))
+                        if (!FileSearch.FindAndRetrieveMiscFiles(mzidFile, unzip: true,
+                                                                 searchArchivedDatasetDir: true, logFileNotFound: true))
                         {
                             // Errors were reported in function call, so just return
                             return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
@@ -939,7 +940,7 @@ namespace AnalysisManagerExtractionPlugin
                         // Also retrieve the ConsoleOutput file; the command line used to call the MzidToTsvConverter.exe will be appended to this file
                         // This file is not critical, so pass false to logFileNotFound
                         FileSearch.FindAndRetrieveMiscFiles(MSGFPlusUtils.MSGFPLUS_CONSOLE_OUTPUT_FILE, unzip: false,
-                                                            searchArchivedDatasetFolder: true, logFileNotFound: false);
+                                                            searchArchivedDatasetDir: true, logFileNotFound: false);
 
                     }
 
@@ -1021,7 +1022,8 @@ namespace AnalysisManagerExtractionPlugin
                         var consoleOutputFile = "MSGFPlus_ConsoleOutput" + suffixToAdd + ".txt";
                         currentStep = "Retrieving " + consoleOutputFile;
 
-                        if (!FileSearch.FindAndRetrieveMiscFiles(consoleOutputFile, unzip: false, searchArchivedDatasetFolder: true, logFileNotFound: false))
+                        if (!FileSearch.FindAndRetrieveMiscFiles(consoleOutputFile, unzip: false,
+                                                                 searchArchivedDatasetDir: true, logFileNotFound: false))
                         {
                             // This is not an important error; ignore it
                         }
@@ -1319,7 +1321,9 @@ namespace AnalysisManagerExtractionPlugin
                 // Check whether the newly generated ModDefs file matches the existing one
                 // If it doesn't match, or if the existing one is missing, we need to keep the file
                 // Otherwise, we can skip it
-                var remoteModDefsDirectory = FileSearch.FindDataFile(modDefsFilename, searchArchivedDatasetFolder: false, logFileNotFound: logModFilesFileNotFound);
+                var remoteModDefsDirectory = FileSearch.FindDataFile(modDefsFilename,
+                                                                     searchArchivedDatasetDir: false,
+                                                                     logFileNotFound: logModFilesFileNotFound);
                 if (string.IsNullOrEmpty(remoteModDefsDirectory))
                 {
                     // ModDefs file not found on the server

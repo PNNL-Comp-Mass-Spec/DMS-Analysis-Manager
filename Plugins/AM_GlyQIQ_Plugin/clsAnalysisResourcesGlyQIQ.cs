@@ -128,11 +128,11 @@ namespace AnalysisManagerGlyQIQPlugin
                 // numTargets is initialized to -1 because we don't want to count the header line
                 var numTargets = -1;
 
-                using (var srInFile = new StreamReader(new FileStream(targetsFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(targetsFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
-                    while (!srInFile.EndOfStream)
+                    while (!reader.EndOfStream)
                     {
-                        srInFile.ReadLine();
+                        reader.ReadLine();
                         numTargets += 1;
                     }
                 }
@@ -160,19 +160,19 @@ namespace AnalysisManagerGlyQIQPlugin
                 {
                     var outputFilePath = Path.Combine(workingDirectory.Value.FullName, mGlyQIQParams.ConsoleOperatingParametersFileName);
 
-                    using (var swOutFile = new StreamWriter(new FileStream(outputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                    using (var writer = new StreamWriter(new FileStream(outputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                     {
-                        swOutFile.WriteLine("ResultsFolderPath" + "," + Path.Combine(mWorkDir, "Results"));
-                        swOutFile.WriteLine("LoggingFolderPath" + "," + Path.Combine(mWorkDir, "Results"));
-                        swOutFile.WriteLine("FactorsFile" + "," + mGlyQIQParams.FactorsName + ".txt");
-                        swOutFile.WriteLine("ExecutorParameterFile" + "," + EXECUTOR_PARAMETERS_FILE);
-                        swOutFile.WriteLine("XYDataFolder" + "," + "XYDataWriter");
-                        swOutFile.WriteLine("WorkflowParametersFile" + "," + mGlyQIQParams.IQParamFileName);
-                        swOutFile.WriteLine("Alignment" + "," + Path.Combine(workingDirectory.Value.FullName, ALIGNMENT_PARAMETERS_FILENAME));
+                        writer.WriteLine("ResultsFolderPath" + "," + Path.Combine(mWorkDir, "Results"));
+                        writer.WriteLine("LoggingFolderPath" + "," + Path.Combine(mWorkDir, "Results"));
+                        writer.WriteLine("FactorsFile" + "," + mGlyQIQParams.FactorsName + ".txt");
+                        writer.WriteLine("ExecutorParameterFile" + "," + EXECUTOR_PARAMETERS_FILE);
+                        writer.WriteLine("XYDataFolder" + "," + "XYDataWriter");
+                        writer.WriteLine("WorkflowParametersFile" + "," + mGlyQIQParams.IQParamFileName);
+                        writer.WriteLine("Alignment" + "," + Path.Combine(workingDirectory.Value.FullName, ALIGNMENT_PARAMETERS_FILENAME));
 
                         // The following file doesn't have to exist
-                        swOutFile.WriteLine("BasicTargetedParameters" + "," +
-                                            Path.Combine(workingDirectory.Value.FullName, "BasicTargetedWorkflowParameters.xml"));
+                        writer.WriteLine("BasicTargetedParameters" + "," +
+                                          Path.Combine(workingDirectory.Value.FullName, "BasicTargetedWorkflowParameters.xml"));
                     }
                 }
 
@@ -207,7 +207,7 @@ namespace AnalysisManagerGlyQIQPlugin
 
                     var batchFilePath = Path.Combine(mWorkDir, START_PROGRAM_BATCH_FILE_PREFIX + workingDirectory.Key + ".bat");
 
-                    using (var swOutFile = new StreamWriter(new FileStream(batchFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                    using (var writer = new StreamWriter(new FileStream(batchFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                     {
                         // Note that clsGlyQIqRunner expects this batch file to be in a specific format:
                         // GlyQIQProgramPath "WorkingDirectoryPath" "DatasetName" "DatasetSuffix" "TargetsFileName" "ParamFileName"
@@ -216,11 +216,11 @@ namespace AnalysisManagerGlyQIQPlugin
                         // It will read and parse the batch file to determine the TargetsFile name and folder path so that it can cache the target code values
                         // Thus, if you change this code, also update clsGlyQIqRunner
 
-                        swOutFile.Write(clsGlobal.PossiblyQuotePath(progLoc));
+                        writer.Write(clsGlobal.PossiblyQuotePath(progLoc));
 
-                        swOutFile.Write(" " + "\"" + mWorkDir + "\"");
-                        swOutFile.Write(" " + "\"" + DatasetName + "\"");
-                        swOutFile.Write(" " + "\"" + "raw" + "\"");
+                        writer.Write(" " + "\"" + mWorkDir + "\"");
+                        writer.Write(" " + "\"" + DatasetName + "\"");
+                        writer.Write(" " + "\"" + "raw" + "\"");
 
                         if (!splitTargetFileInfo.TryGetValue(core, out var targetsFile))
                         {
@@ -228,19 +228,19 @@ namespace AnalysisManagerGlyQIQPlugin
                             return false;
                         }
 
-                        swOutFile.Write(" " + "\"" + targetsFile.Name + "\"");
+                        writer.Write(" " + "\"" + targetsFile.Name + "\"");
 
-                        swOutFile.Write(" " + "\"" + mGlyQIQParams.ConsoleOperatingParametersFileName + "\"");
+                        writer.Write(" " + "\"" + mGlyQIQParams.ConsoleOperatingParametersFileName + "\"");
 
-                        swOutFile.Write(" " + "\"" + workingDirectory.Value.FullName + "\"");
+                        writer.Write(" " + "\"" + workingDirectory.Value.FullName + "\"");
 
-                        swOutFile.Write(" " + "\"" + "Lock_" + core + "\"");
+                        writer.Write(" " + "\"" + "Lock_" + core + "\"");
 
-                        swOutFile.Write(" " + "\"" + Path.Combine(mWorkDir, "Results") + "\"");
+                        writer.Write(" " + "\"" + Path.Combine(mWorkDir, "Results") + "\"");
 
-                        swOutFile.Write(" " + "\"" + core + "\"");
+                        writer.Write(" " + "\"" + core + "\"");
 
-                        swOutFile.WriteLine();
+                        writer.WriteLine();
                     }
                 }
 

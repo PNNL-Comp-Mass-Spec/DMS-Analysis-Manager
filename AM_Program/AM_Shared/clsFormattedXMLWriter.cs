@@ -32,21 +32,21 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Write XML to disk
         /// </summary>
-        /// <param name="strXMLText"></param>
+        /// <param name="xmlText"></param>
         /// <param name="outputFilePath"></param>
         /// <returns></returns>
-        public bool WriteXMLToFile(string strXMLText, string outputFilePath)
+        public bool WriteXMLToFile(string xmlText, string outputFilePath)
         {
 
-            XmlDocument objXMLDoc;
+            XmlDocument doc;
 
             ErrMsg = "";
 
             try
             {
-                // Instantiate objXMLDoc
-                objXMLDoc = new XmlDocument();
-                objXMLDoc.LoadXml(strXMLText);
+                // Instantiate doc
+                doc = new XmlDocument();
+                doc.LoadXml(xmlText);
 
             }
             catch (Exception ex)
@@ -66,7 +66,7 @@ namespace AnalysisManagerBase
                     xWriter.IndentChar = ' ';
 
                     // Write out the XML
-                    objXMLDoc.WriteTo(xWriter);
+                    doc.WriteTo(xWriter);
                 }
 
                 return true;

@@ -311,7 +311,7 @@ namespace AnalysisManagerFormularityPlugin
                 };
                 RegisterEvents(cmdRunner);
 
-                cmdRunner.LoopWaiting += cmdRunner_LoopWaiting;
+                cmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
                 var success = cmdRunner.RunProgram(progLocNOMSI, cmdStr, "NOMSI", true);
 
@@ -484,7 +484,6 @@ namespace AnalysisManagerFormularityPlugin
 
                 using (var reader = new StreamReader(new FileStream(consoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
-
                     while (!reader.EndOfStream)
                     {
                         var dataLine = reader.ReadLine();
@@ -752,7 +751,7 @@ namespace AnalysisManagerFormularityPlugin
             };
             RegisterEvents(cmdRunner);
 
-            cmdRunner.LoopWaiting += cmdRunner_LoopWaiting;
+            cmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
             var success = cmdRunner.RunProgram(progLoc, cmdStr, "Formularity", true);
 
@@ -1028,7 +1027,7 @@ namespace AnalysisManagerFormularityPlugin
 
         #region "Event Handlers"
 
-        void cmdRunner_LoopWaiting()
+        void CmdRunner_LoopWaiting()
         {
 
             // Synchronize the stored Debug level with the value stored in the database

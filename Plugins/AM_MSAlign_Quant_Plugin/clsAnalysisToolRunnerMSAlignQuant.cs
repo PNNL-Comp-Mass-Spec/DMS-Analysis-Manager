@@ -140,9 +140,9 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                     // Write the console output to a text file
                     clsGlobal.IdleLoop(0.25);
 
-                    using (var swConsoleOutputFile = new StreamWriter(new FileStream(mCmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                    using (var writer = new StreamWriter(new FileStream(mCmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                     {
-                        swConsoleOutputFile.WriteLine(mCmdRunner.CachedConsoleOutput);
+                        writer.WriteLine(mCmdRunner.CachedConsoleOutput);
                     }
                 }
 
@@ -266,13 +266,13 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                 // var strFullResultsPath = Path.Combine(mWorkDir, strMSAlignResultTableName);
                 // var strTrimmedFilePath = Path.Combine(mWorkDir, Dataset + "_TrimmedResults.tmp");
                 //
-                // using (var srFullResults = new StreamReader(new FileStream(strFullResultsPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
-                // using (var swTrimmedResults = new StreamWriter(new FileStream(strTrimmedFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                // using (var reader = new StreamReader(new FileStream(strFullResultsPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                // using (var writer = new StreamWriter(new FileStream(strTrimmedFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 //{
                 //    var linesRead = 0;
-                //    while (!srFullResults.EndOfStream && linesRead < 30)
+                //    while (!reader.EndOfStream && linesRead < 30)
                 //    {
-                //        swTrimmedResults.WriteLine(srFullResults.ReadLine());
+                //        writer.WriteLine(reader.ReadLine());
                 //        linesRead += 1;
                 //    }
                 //}
@@ -401,16 +401,16 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                 {
                     while (!reader.EndOfStream)
                     {
-                        var strLineIn = reader.ReadLine();
+                        var dataLine = reader.ReadLine();
 
-                        if (!string.IsNullOrWhiteSpace(strLineIn))
+                        if (!string.IsNullOrWhiteSpace(dataLine))
                         {
-                            var strLineInLCase = strLineIn.ToLower();
+                            var dataLineLCase = dataLine.ToLower();
 
                             // Update progress if the line contains any one of the expected phrases
                             foreach (var oItem in mConsoleOutputProgressMap)
                             {
-                                if (strLineIn.Contains(oItem.Key))
+                                if (dataLine.Contains(oItem.Key))
                                 {
                                     if (intEffectiveProgress < oItem.Value)
                                     {
@@ -421,7 +421,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
 
                             if (intEffectiveProgress == PROGRESS_TARGETED_WORKFLOWS_PEAKS_LOADED)
                             {
-                                var oMatch = reSubProgress.Match(strLineIn);
+                                var oMatch = reSubProgress.Match(dataLine);
                                 if (oMatch.Success)
                                 {
                                     if (double.TryParse(oMatch.Groups[1].Value, out subProgressAddOn))
@@ -431,16 +431,16 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                                 }
                             }
 
-                            var intCharIndex = strLineInLCase.IndexOf("exception of type", StringComparison.Ordinal);
+                            var intCharIndex = dataLineLCase.IndexOf("exception of type", StringComparison.Ordinal);
                             if (intCharIndex < 0)
                             {
-                                intCharIndex = strLineInLCase.IndexOf("\t" + "error", StringComparison.Ordinal);
+                                intCharIndex = dataLineLCase.IndexOf("\t" + "error", StringComparison.Ordinal);
 
                                 if (intCharIndex > 0)
                                 {
                                     intCharIndex += 1;
                                 }
-                                else if (strLineInLCase.StartsWith("error"))
+                                else if (dataLineLCase.StartsWith("error"))
                                 {
                                     intCharIndex = 0;
                                 }
@@ -449,7 +449,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                             if (intCharIndex >= 0)
                             {
                                 // Error message found; update mMessage
-                                var strNewError = strLineIn.Substring(intCharIndex);
+                                var strNewError = dataLine.Substring(intCharIndex);
 
                                 if (strNewError.Contains("all peptides contain unknown modifications"))
                                 {
@@ -504,11 +504,11 @@ namespace AnalysisManagerMSAlignQuantPlugIn
             return success;
         }
 
-        public void WriteXMLSetting(XmlTextWriter swOutFile, string strSettingName, string strSettingValue)
+        public void WriteXMLSetting(XmlTextWriter writer, string strSettingName, string strSettingValue)
         {
-            swOutFile.WriteStartElement(strSettingName);
-            swOutFile.WriteValue(strSettingValue);
-            swOutFile.WriteEndElement();
+            writer.WriteStartElement(strSettingName);
+            writer.WriteValue(strSettingValue);
+            writer.WriteEndElement();
         }
 
         #endregion

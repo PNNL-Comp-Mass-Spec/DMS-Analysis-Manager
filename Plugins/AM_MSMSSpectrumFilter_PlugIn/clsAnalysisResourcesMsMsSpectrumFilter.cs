@@ -214,12 +214,11 @@ namespace MSMSSpectrumFilterAM
                 fiNewestScanStatsFile.CopyTo(Path.Combine(mWorkDir, fiNewestScanStatsFile.Name));
 
                 // Read the first line of the file and confirm that the _ScanTypeName column exists
-                using (var srScanStatsFile = new StreamReader(new FileStream(fiNewestScanStatsFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                using (var reader = new StreamReader(new FileStream(fiNewestScanStatsFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
                 {
-                    string strLineIn = null;
-                    strLineIn = srScanStatsFile.ReadLine();
+                    var dataLine = reader.ReadLine();
 
-                    if (!strLineIn.Contains(clsMsMsSpectrumFilter.SCANSTATS_COL_SCAN_TYPE_NAME))
+                    if (!dataLine.Contains(clsMsMsSpectrumFilter.SCANSTATS_COL_SCAN_TYPE_NAME))
                     {
                         if (mDebugLevel >= 1)
                         {

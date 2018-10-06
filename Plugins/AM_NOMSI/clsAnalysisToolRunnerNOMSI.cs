@@ -266,24 +266,24 @@ namespace AnalysisManagerNOMSIPlugin
                     LogDebug("Parsing file " + strConsoleOutputFilePath);
                 }
 
-                using (var srInFile = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
 
-                    while (!srInFile.EndOfStream)
+                    while (!reader.EndOfStream)
                     {
-                        var strLineIn = srInFile.ReadLine();
+                        var dataLine = reader.ReadLine();
 
-                        if (string.IsNullOrWhiteSpace(strLineIn))
+                        if (string.IsNullOrWhiteSpace(dataLine))
                         {
                             continue;
                         }
 
-                        if (strLineIn.ToLower().StartsWith("error "))
+                        if (dataLine.ToLower().StartsWith("error "))
                         {
-                            StoreConsoleErrorMessage(srInFile, strLineIn);
+                            StoreConsoleErrorMessage(reader, dataLine);
                         }
 
-                        var reMatch = reErrorMessage.Match(strLineIn);
+                        var reMatch = reErrorMessage.Match(dataLine);
                         if (reMatch.Success)
                         {
                             var errorMessage = reMatch.Groups[1].Value;
@@ -298,8 +298,8 @@ namespace AnalysisManagerNOMSIPlugin
                                 mConsoleOutputErrorMsg = clsGlobal.AppendToComment(mConsoleOutputErrorMsg, errorMessage);
                             }
                         }
-                        else if (strLineIn.Contains("No peaks found") ||
-                            strLineIn.Contains("Only one peak found"))
+                        else if (dataLine.Contains("No peaks found") ||
+                                 dataLine.Contains("Only one peak found"))
                         {
                             mNoPeaksFound = true;
                         }
@@ -403,7 +403,7 @@ namespace AnalysisManagerNOMSIPlugin
             };
             RegisterEvents(cmdRunner);
 
-            cmdRunner.LoopWaiting += cmdRunner_LoopWaiting;
+            cmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
             var subTaskProgress = filesProcessed / (float)mTotalSpectra * 100;
 
@@ -416,9 +416,9 @@ namespace AnalysisManagerNOMSIPlugin
                 // Write the console output to a text file
                 clsGlobal.IdleLoop(0.25);
 
-                using (var swConsoleOutputfile = new StreamWriter(new FileStream(cmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                using (var writer = new StreamWriter(new FileStream(cmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
-                    swConsoleOutputfile.WriteLine(cmdRunner.CachedConsoleOutput);
+                    writer.WriteLine(cmdRunner.CachedConsoleOutput);
                 }
 
             }
@@ -577,22 +577,22 @@ namespace AnalysisManagerNOMSIPlugin
 
         }
 
-        private void StoreConsoleErrorMessage(StreamReader srInFile, string strLineIn)
+        private void StoreConsoleErrorMessage(StreamReader reader, string firstDataLine)
         {
             if (string.IsNullOrEmpty(mConsoleOutputErrorMsg))
             {
                 mConsoleOutputErrorMsg = "Error running NOMSI:";
             }
-            mConsoleOutputErrorMsg += "; " + strLineIn;
+            mConsoleOutputErrorMsg += "; " + firstDataLine;
 
-            while (!srInFile.EndOfStream)
+            while (!reader.EndOfStream)
             {
                 // Store the remaining console output lines
-                strLineIn = srInFile.ReadLine();
+                var dataLine = reader.ReadLine();
 
-                if (!string.IsNullOrWhiteSpace(strLineIn) && !strLineIn.StartsWith("========"))
+                if (!string.IsNullOrWhiteSpace(dataLine) && !dataLine.StartsWith("========"))
                 {
-                    mConsoleOutputErrorMsg += "; " + strLineIn;
+                    mConsoleOutputErrorMsg += "; " + dataLine;
                 }
 
             }
@@ -672,7 +672,7 @@ namespace AnalysisManagerNOMSIPlugin
 
         #region "Event Handlers"
 
-        void cmdRunner_LoopWaiting()
+        void CmdRunner_LoopWaiting()
         {
 
             // Synchronize the stored Debug level with the value stored in the database

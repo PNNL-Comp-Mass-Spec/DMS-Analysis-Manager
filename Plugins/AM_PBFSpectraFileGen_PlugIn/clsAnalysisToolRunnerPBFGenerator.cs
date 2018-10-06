@@ -178,9 +178,9 @@ namespace AnalysisManagerPBFGenerator
 
                             // Create the _CacheInfo.txt file
                             var cacheInfoFilePath = fiResultsFile.FullName + "_CacheInfo.txt";
-                            using (var swOutFile = new StreamWriter(new FileStream(cacheInfoFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                            using (var writer = new StreamWriter(new FileStream(cacheInfoFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                             {
-                                swOutFile.WriteLine(remoteCachefilePath);
+                                writer.WriteLine(remoteCachefilePath);
                             }
 
                             mJobParams.AddResultFileToSkip(fiResultsFile.Name);
@@ -302,30 +302,30 @@ namespace AnalysisManagerPBFGenerator
 
                 mConsoleOutputErrorMsg = string.Empty;
 
-                using (var srInFile = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
-                    while (!srInFile.EndOfStream)
+                    while (!reader.EndOfStream)
                     {
-                        var strLineIn = srInFile.ReadLine();
+                        var dataLine = reader.ReadLine();
 
-                        if (!string.IsNullOrWhiteSpace(strLineIn))
+                        if (!string.IsNullOrWhiteSpace(dataLine))
                         {
-                            var strLineInLCase = strLineIn.ToLower();
+                            var dataLineLCase = dataLine.ToLower();
 
-                            if (strLineInLCase.StartsWith("error:") || strLineInLCase.Contains("unhandled exception"))
+                            if (dataLineLCase.StartsWith("error:") || dataLineLCase.Contains("unhandled exception"))
                             {
                                 if (string.IsNullOrEmpty(mConsoleOutputErrorMsg))
                                 {
                                     mConsoleOutputErrorMsg = "Error running PBFGen:";
                                 }
-                                mConsoleOutputErrorMsg += "; " + strLineIn;
+                                mConsoleOutputErrorMsg += "; " + dataLine;
                                 continue;
                             }
 
-                            if (strLineIn.StartsWith("PbfFormatVersion:"))
+                            if (dataLineLCase.StartsWith("PbfFormatVersion:".ToLower()))
                             {
                                 // Parse out the version number
-                                var strVersion = strLineIn.Substring("PbfFormatVersion:".Length).Trim();
+                                var strVersion = dataLine.Substring("PbfFormatVersion:".Length).Trim();
 
                                 mPbfFormatVersion = strVersion;
                             }
@@ -411,9 +411,9 @@ namespace AnalysisManagerPBFGenerator
                 // Write the console output to a text file
                 clsGlobal.IdleLoop(0.25);
 
-                using (var swConsoleOutputfile = new StreamWriter(new FileStream(cmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                using (var writer = new StreamWriter(new FileStream(cmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
-                    swConsoleOutputfile.WriteLine(cmdRunner.CachedConsoleOutput);
+                    writer.WriteLine(cmdRunner.CachedConsoleOutput);
                 }
             }
 

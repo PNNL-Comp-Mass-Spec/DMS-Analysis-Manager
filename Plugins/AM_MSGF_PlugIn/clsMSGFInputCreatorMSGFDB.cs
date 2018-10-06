@@ -81,10 +81,10 @@ namespace AnalysisManagerMSGFPlugin
                     var mSGFFilePath = Path.Combine(mWorkDir, Path.GetFileNameWithoutExtension(sourceFilePath) + MSGF_RESULT_FILENAME_SUFFIX);
 
                     // Create the output file
-                    using (var msgfFile = new StreamWriter(new FileStream(mSGFFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                    using (var writer = new StreamWriter(new FileStream(mSGFFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                     {
                         // Write out the headers to swMSGFFHTFile
-                        WriteMSGFResultsHeaders(msgfFile);
+                        WriteMSGFResultsHeaders(writer);
 
                         while (reader.MoveNext())
                         {
@@ -95,8 +95,8 @@ namespace AnalysisManagerMSGFPlugin
                             var probabilityValue = (1 - probability).ToString("0.0000");
 
                             // objPSM.MSGFSpecProb comes from column Probability
-                            msgfFile.WriteLine(objPSM.ResultID + "\t" + objPSM.ScanNumber + "\t" + objPSM.Charge + "\t" + objPSM.ProteinFirst + "\t" +
-                                                 objPSM.Peptide + "\t" + probabilityValue + "\t" + string.Empty);
+                            writer.WriteLine(objPSM.ResultID + "\t" + objPSM.ScanNumber + "\t" + objPSM.Charge + "\t" + objPSM.ProteinFirst + "\t" +
+                                             objPSM.Peptide + "\t" + probabilityValue + "\t" + string.Empty);
                         }
                     }
                 }
@@ -143,10 +143,10 @@ namespace AnalysisManagerMSGFPlugin
                     var mSGFFilePath = Path.Combine(mWorkDir, Path.GetFileNameWithoutExtension(sourceFilePath) + MSGF_RESULT_FILENAME_SUFFIX);
 
                     // Create the output file
-                    using (var msgfFile = new StreamWriter(new FileStream(mSGFFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                    using (var writer = new StreamWriter(new FileStream(mSGFFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                     {
-                        // Write out the headers to swMSGFFHTFile
-                        WriteMSGFResultsHeaders(msgfFile);
+                        // Write out the headers
+                        WriteMSGFResultsHeaders(writer);
 
                         while (reader.MoveNext())
                         {
@@ -154,8 +154,8 @@ namespace AnalysisManagerMSGFPlugin
 
                             // objPSM.MSGFSpecEValue comes from column MSGFDB_SpecProb   if MS-GFDB
                             //                    it comes from column MSGFDB_SpecEValue if MS-GF+
-                            msgfFile.WriteLine(objPSM.ResultID + "\t" + objPSM.ScanNumber + "\t" + objPSM.Charge + "\t" + objPSM.ProteinFirst + "\t" +
-                                                 objPSM.Peptide + "\t" + objPSM.MSGFSpecEValue + "\t" + string.Empty);
+                            writer.WriteLine(objPSM.ResultID + "\t" + objPSM.ScanNumber + "\t" + objPSM.Charge + "\t" + objPSM.ProteinFirst + "\t" +
+                                             objPSM.Peptide + "\t" + objPSM.MSGFSpecEValue + "\t" + string.Empty);
                         }
                     }
                 }

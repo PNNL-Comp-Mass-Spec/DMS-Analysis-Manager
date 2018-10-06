@@ -82,23 +82,23 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Copies a source directory to the destination directory. Allows overwriting.
         /// </summary>
-        /// <param name="sourcePath">The source directory path.</param>
-        /// <param name="destPath">The destination directory path.</param>
+        /// <param name="sourceDirPath">The source directory path.</param>
+        /// <param name="targetDirPath">The destination directory path.</param>
         /// <param name="overwrite">True if the destination file can be overwritten; otherwise, false.</param>
         /// <param name="maxRetryCount">The number of times to retry a failed copy of a file; if 0 or 1 then only tries once</param>
         /// <param name="continueOnError">When true, then will continue copying even if an error occurs</param>
         /// <remarks></remarks>
-        public void CopyDirectory(string sourcePath, string destPath, bool overwrite, int maxRetryCount, bool continueOnError)
+        public void CopyDirectory(string sourceDirPath, string targetDirPath, bool overwrite, int maxRetryCount, bool continueOnError)
         {
-            var diSourceDir = new DirectoryInfo(sourcePath);
-            var diDestDir = new DirectoryInfo(destPath);
+            var sourceDirectory = new DirectoryInfo(sourceDirPath);
+            var targetDirectory = new DirectoryInfo(targetDirPath);
 
             string message;
 
             // The source directory must exist, otherwise throw an exception
-            if (!FolderExistsWithRetry(diSourceDir.FullName, 3, 3))
+            if (!FolderExistsWithRetry(sourceDirectory.FullName, 3, 3))
             {
-                message = "Source directory does not exist: " + diSourceDir.FullName;
+                message = "Source directory does not exist: " + sourceDirectory.FullName;
                 if (continueOnError)
                 {
                     LogError(message);
@@ -108,10 +108,10 @@ namespace AnalysisManagerBase
                 throw new DirectoryNotFoundException(message);
             }
 
-            // If destination SubDir's parent SubDir does not exist throw an exception
-            if (diDestDir.Parent == null)
+            // If destination subdirectory's parent subdirectory does not exist, throw an exception
+            if (targetDirectory.Parent == null)
             {
-                message = "Unable to determine the parent folder of " + diDestDir.FullName;
+                message = "Unable to determine the parent directory of " + targetDirectory.FullName;
                 if (continueOnError)
                 {
                     LogError(message);
@@ -121,9 +121,9 @@ namespace AnalysisManagerBase
                 throw new DirectoryNotFoundException(message);
             }
 
-            if (!FolderExistsWithRetry(diDestDir.Parent.FullName, 1, 1))
+            if (!FolderExistsWithRetry(targetDirectory.Parent.FullName, 1, 1))
             {
-                message = "Destination directory does not exist: " + diDestDir.Parent.FullName;
+                message = "Destination directory does not exist: " + targetDirectory.Parent.FullName;
                 if (continueOnError)
                 {
                     LogError(message);
@@ -133,17 +133,17 @@ namespace AnalysisManagerBase
                 throw new DirectoryNotFoundException(message);
             }
 
-            if (!FolderExistsWithRetry(diDestDir.FullName, 3, 3))
+            if (!FolderExistsWithRetry(targetDirectory.FullName, 3, 3))
             {
-                CreateFolderWithRetry(destPath, maxRetryCount, DEFAULT_RETRY_HOLDOFF_SEC);
+                CreateFolderWithRetry(targetDirectory.FullName, maxRetryCount, DEFAULT_RETRY_HOLDOFF_SEC);
             }
 
             // Copy all the files of the current directory
-            foreach (var childFile in diSourceDir.GetFiles())
+            foreach (var childFile in sourceDirectory.GetFiles())
             {
                 try
                 {
-                    var targetPath = Path.Combine(diDestDir.FullName, childFile.Name);
+                    var targetPath = Path.Combine(targetDirectory.FullName, childFile.Name);
                     if (overwrite)
                     {
                         CopyFileWithRetry(childFile.FullName, targetPath, true, maxRetryCount, DEFAULT_RETRY_HOLDOFF_SEC);
@@ -172,9 +172,9 @@ namespace AnalysisManagerBase
             }
 
             // Copy all the sub-directories by recursively calling this same routine
-            foreach (var subDir in diSourceDir.GetDirectories())
+            foreach (var subDir in sourceDirectory.GetDirectories())
             {
-                CopyDirectory(subDir.FullName, Path.Combine(diDestDir.FullName, subDir.Name), overwrite, maxRetryCount, continueOnError);
+                CopyDirectory(subDir.FullName, Path.Combine(targetDirectory.FullName, subDir.Name), overwrite, maxRetryCount, continueOnError);
             }
         }
 
@@ -288,10 +288,10 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Copy failed results from sourceFolderPath to the DMS_FailedResults directory on the local computer
+        /// Copy failed results from sourceDirectoryPath to the DMS_FailedResults directory on the local computer
         /// </summary>
-        /// <param name="sourceFolderPath">Source folder path</param>
-        public void CopyFailedResultsToArchiveFolder(string sourceFolderPath)
+        /// <param name="sourceDirectoryPath">Source directory path</param>
+        public void CopyFailedResultsToArchiveFolder(string sourceDirectoryPath)
         {
             if (clsGlobal.OfflineMode)
             {
@@ -300,24 +300,24 @@ namespace AnalysisManagerBase
                 return;
             }
 
-            var failedResultsFolderPath = mMgrParams.GetParam("FailedResultsFolderPath");
+            var failedResultsDirectoryPath = mMgrParams.GetParam("FailedResultsFolderPath");
 
-            if (string.IsNullOrEmpty(failedResultsFolderPath))
+            if (string.IsNullOrEmpty(failedResultsDirectoryPath))
             {
-                // Failed results folder path is not defined; don't try to copy the results anywhere
+                // Failed results directory path is not defined; don't try to copy the results anywhere
                 LogError("FailedResultsFolderPath is not defined for this manager; cannot copy results");
                 return;
             }
 
-            CopyFailedResultsToArchiveFolder(sourceFolderPath, failedResultsFolderPath);
+            CopyFailedResultsToArchiveFolder(sourceDirectoryPath, failedResultsDirectoryPath);
         }
 
         /// <summary>
-        /// Copy failed results from sourceFolderPath to the DMS_FailedResults directory on the local computer
+        /// Copy failed results from sourceDirectoryPath to the DMS_FailedResults directory on the local computer
         /// </summary>
-        /// <param name="sourceFolderPath">Source folder path</param>
-        /// <param name="failedResultsFolderPath">Failed results folder path, e.g. C:\DMS_FailedResults</param>
-        public void CopyFailedResultsToArchiveFolder(string sourceFolderPath, string failedResultsFolderPath)
+        /// <param name="sourceDirectoryPath">Source directory path</param>
+        /// <param name="failedResultsDirectoryPath">Failed results directory path, e.g. C:\DMS_FailedResults</param>
+        public void CopyFailedResultsToArchiveFolder(string sourceDirectoryPath, string failedResultsDirectoryPath)
         {
             if (clsGlobal.OfflineMode)
             {
@@ -329,40 +329,40 @@ namespace AnalysisManagerBase
             try
             {
 
-                // Make sure the target folder exists
-                CreateFolderWithRetry(failedResultsFolderPath, 2, 5);
+                // Make sure the target directory exists
+                CreateFolderWithRetry(failedResultsDirectoryPath, 2, 5);
 
-                var diSourceFolder = new DirectoryInfo(sourceFolderPath);
-                var diTargetFolder = new DirectoryInfo(failedResultsFolderPath);
+                var sourceDirectory = new DirectoryInfo(sourceDirectoryPath);
+                var targetDirectory = new DirectoryInfo(failedResultsDirectoryPath);
                 var folderInfoFilePath = "??";
 
                 // Create an info file that describes the saved results
                 try
                 {
-                    folderInfoFilePath = Path.Combine(diTargetFolder.FullName, FAILED_RESULTS_FOLDER_INFO_TEXT + diSourceFolder.Name + ".txt");
-                    CopyFailedResultsCreateInfoFile(folderInfoFilePath, diSourceFolder.Name);
+                    folderInfoFilePath = Path.Combine(targetDirectory.FullName, FAILED_RESULTS_FOLDER_INFO_TEXT + sourceDirectory.Name + ".txt");
+                    CopyFailedResultsCreateInfoFile(folderInfoFilePath, sourceDirectory.Name);
                 }
                 catch (Exception ex)
                 {
                     LogError("Error creating the results folder info file at " + folderInfoFilePath, ex);
                 }
 
-                // Make sure the source folder exists
-                if (!diSourceFolder.Exists)
+                // Make sure the source directory exists
+                if (!sourceDirectory.Exists)
                 {
-                    LogError("Results folder not found; cannot copy results: " + sourceFolderPath);
+                    LogError("Results directory not found; cannot copy results: " + sourceDirectoryPath);
                 }
                 else
                 {
-                    // Look for failed results folders that were archived over FAILED_RESULTS_FOLDER_RETAIN_DAYS days ago
-                    DeleteOldFailedResultsFolders(diTargetFolder);
+                    // Look for failed results directories that were archived over FAILED_RESULTS_FOLDER_RETAIN_DAYS days ago
+                    DeleteOldFailedResultsFolders(targetDirectory);
 
-                    var targetFolderPath = Path.Combine(diTargetFolder.FullName, diSourceFolder.Name);
+                    var targetDirectoryPath = Path.Combine(targetDirectory.FullName, sourceDirectory.Name);
 
-                    // Actually copy the results folder
-                    LogMessage("Copying results folder to failed results archive: " + targetFolderPath);
+                    // Actually copy the results directory
+                    LogMessage("Copying results directory to failed results archive: " + targetDirectoryPath);
 
-                    CopyDirectory(diSourceFolder.FullName, targetFolderPath, true, 2, true);
+                    CopyDirectory(sourceDirectory.FullName, targetDirectoryPath, true, 2, true);
 
                     LogMessage("Copy complete");
                 }
@@ -370,7 +370,7 @@ namespace AnalysisManagerBase
             }
             catch (Exception ex)
             {
-                LogError("Error copying results from " + sourceFolderPath + " to " + failedResultsFolderPath, ex);
+                LogError("Error copying results from " + sourceDirectoryPath + " to " + failedResultsDirectoryPath, ex);
             }
 
         }
@@ -411,34 +411,34 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Create the directory (if it does not yet exist)
         /// </summary>
-        /// <param name="folderPath">Folder to create</param>
+        /// <param name="directoryPath">Directory to create</param>
         /// <remarks>Tries up to 3 times, waiting 15 seconds between attempts</remarks>
-        public void CreateFolderWithRetry(string folderPath)
+        public void CreateFolderWithRetry(string directoryPath)
         {
             const bool increaseHoldoffOnEachRetry = false;
-            CreateFolderWithRetry(folderPath, DEFAULT_RETRY_COUNT, DEFAULT_RETRY_HOLDOFF_SEC, increaseHoldoffOnEachRetry);
+            CreateFolderWithRetry(directoryPath, DEFAULT_RETRY_COUNT, DEFAULT_RETRY_HOLDOFF_SEC, increaseHoldoffOnEachRetry);
         }
 
         /// <summary>
         /// Create the directory (if it does not yet exist)
         /// </summary>
-        /// <param name="folderPath">Folder to create</param>
+        /// <param name="directoryPath">Directory to create</param>
         /// <param name="maxRetryCount">Maximum attempts</param>
         /// <param name="retryHoldoffSeconds">Seconds between attempts</param>
-        public void CreateFolderWithRetry(string folderPath, int maxRetryCount, int retryHoldoffSeconds)
+        public void CreateFolderWithRetry(string directoryPath, int maxRetryCount, int retryHoldoffSeconds)
         {
             const bool increaseHoldoffOnEachRetry = false;
-            CreateFolderWithRetry(folderPath, maxRetryCount, retryHoldoffSeconds, increaseHoldoffOnEachRetry);
+            CreateFolderWithRetry(directoryPath, maxRetryCount, retryHoldoffSeconds, increaseHoldoffOnEachRetry);
         }
 
         /// <summary>
         /// Create the directory (if it does not yet exist)
         /// </summary>
-        /// <param name="folderPath">Folder to create</param>
+        /// <param name="directoryPath">Directory to create</param>
         /// <param name="maxRetryCount">Maximum attempts</param>
         /// <param name="retryHoldoffSeconds">Seconds between attempts</param>
         /// <param name="increaseHoldoffOnEachRetry">If true, increase the holdoff between each attempt</param>
-        public void CreateFolderWithRetry(string folderPath, int maxRetryCount, int retryHoldoffSeconds, bool increaseHoldoffOnEachRetry)
+        public void CreateFolderWithRetry(string directoryPath, int maxRetryCount, int retryHoldoffSeconds, bool increaseHoldoffOnEachRetry)
         {
             var attemptCount = 0;
             float actualRetryHoldoffSeconds = retryHoldoffSeconds;
@@ -448,9 +448,9 @@ namespace AnalysisManagerBase
             if (maxRetryCount < 1)
                 maxRetryCount = 1;
 
-            if (string.IsNullOrWhiteSpace(folderPath))
+            if (string.IsNullOrWhiteSpace(directoryPath))
             {
-                throw new DirectoryNotFoundException("Folder path cannot be empty when calling CreateFolderWithRetry");
+                throw new DirectoryNotFoundException("Directory path cannot be empty when calling CreateFolderWithRetry");
             }
 
             while (attemptCount <= maxRetryCount)
@@ -459,19 +459,19 @@ namespace AnalysisManagerBase
 
                 try
                 {
-                    if (Directory.Exists(folderPath))
+                    if (Directory.Exists(directoryPath))
                     {
                         // If the directory already exists, there is nothing to do
                         return;
                     }
 
                     // Note that .NET will automatically create any missing parent directories
-                    Directory.CreateDirectory(folderPath);
+                    Directory.CreateDirectory(directoryPath);
                     return;
                 }
                 catch (Exception ex)
                 {
-                    LogError("clsAnalysisResults: error creating folder " + folderPath, ex);
+                    LogError("clsAnalysisResults: error creating directory " + directoryPath, ex);
 
                     if (attemptCount > maxRetryCount)
                         break;
@@ -488,47 +488,47 @@ namespace AnalysisManagerBase
                 }
             }
 
-            if (!FolderExistsWithRetry(folderPath, 1, 3))
+            if (!FolderExistsWithRetry(directoryPath, 1, 3))
             {
-                throw new IOException("Excessive failures during folder creation");
+                throw new IOException("Excessive failures during directory creation");
             }
 
         }
 
-        private void DeleteOldFailedResultsFolders(DirectoryInfo diTargetFolder)
+        private void DeleteOldFailedResultsFolders(DirectoryInfo targetDirectory)
         {
             var targetFilePath = "";
 
             // Determine the directory archive time by reading the modification times on the ResultsFolderInfo_ files
-            foreach (var fiFileInfo in diTargetFolder.GetFiles(FAILED_RESULTS_FOLDER_INFO_TEXT + "*"))
+            foreach (var folderInfoFile in targetDirectory.GetFiles(FAILED_RESULTS_FOLDER_INFO_TEXT + "*"))
             {
-                if (DateTime.UtcNow.Subtract(fiFileInfo.LastWriteTimeUtc).TotalDays < FAILED_RESULTS_FOLDER_RETAIN_DAYS)
+                if (DateTime.UtcNow.Subtract(folderInfoFile.LastWriteTimeUtc).TotalDays < FAILED_RESULTS_FOLDER_RETAIN_DAYS)
                     continue;
 
-                // File was modified before the threshold; delete the results folder, then rename this file
+                // File was modified before the threshold; delete the results directory, then rename this file
 
                 try
                 {
-                    var oldResultsFolderName = Path.GetFileNameWithoutExtension(fiFileInfo.Name).Substring(FAILED_RESULTS_FOLDER_INFO_TEXT.Length);
-                    if (fiFileInfo.DirectoryName == null)
+                    var oldResultsDirectoryName = Path.GetFileNameWithoutExtension(folderInfoFile.Name).Substring(FAILED_RESULTS_FOLDER_INFO_TEXT.Length);
+                    if (folderInfoFile.DirectoryName == null)
                     {
-                        LogWarning("Unable to determine the parent directory of " + fiFileInfo.FullName);
+                        LogWarning("Unable to determine the parent directory of " + folderInfoFile.FullName);
                         continue;
                     }
 
-                    var diOldResultsFolder = new DirectoryInfo(Path.Combine(fiFileInfo.DirectoryName, oldResultsFolderName));
+                    var oldResultsDirectory = new DirectoryInfo(Path.Combine(folderInfoFile.DirectoryName, oldResultsDirectoryName));
 
-                    if (diOldResultsFolder.Exists)
+                    if (oldResultsDirectory.Exists)
                     {
-                        LogMessage("Deleting old failed results folder: " + diOldResultsFolder.FullName);
-                        diOldResultsFolder.Delete(true);
+                        LogMessage("Deleting old failed results directory: " + oldResultsDirectory.FullName);
+                        oldResultsDirectory.Delete(true);
                     }
 
                     try
                     {
-                        targetFilePath = Path.Combine(fiFileInfo.DirectoryName, "x_" + fiFileInfo.Name);
-                        fiFileInfo.CopyTo(targetFilePath, true);
-                        fiFileInfo.Delete();
+                        targetFilePath = Path.Combine(folderInfoFile.DirectoryName, "x_" + folderInfoFile.Name);
+                        folderInfoFile.CopyTo(targetFilePath, true);
+                        folderInfoFile.Delete();
                     }
                     catch (Exception ex)
                     {
@@ -538,46 +538,46 @@ namespace AnalysisManagerBase
                 }
                 catch (Exception ex)
                 {
-                    LogError("Error deleting old failed results folder", ex);
+                    LogError("Error deleting old failed results directory", ex);
                 }
             }
 
         }
 
         /// <summary>
-        /// Check for the existence of a folder, retrying if an error
+        /// Check for the existence of a directory, retrying if an error
         /// </summary>
-        /// <param name="folderPath"></param>
+        /// <param name="directoryPath">Directory to check</param>
         /// <returns>True if the directory exists, otherwise false</returns>
         /// <remarks>Checks up to 3 times, waiting 15 seconds between attempts</remarks>
-        public bool FolderExistsWithRetry(string folderPath)
+        public bool FolderExistsWithRetry(string directoryPath)
         {
             const bool increaseHoldoffOnEachRetry = false;
-            return FolderExistsWithRetry(folderPath, DEFAULT_RETRY_COUNT, DEFAULT_RETRY_HOLDOFF_SEC, increaseHoldoffOnEachRetry);
+            return FolderExistsWithRetry(directoryPath, DEFAULT_RETRY_COUNT, DEFAULT_RETRY_HOLDOFF_SEC, increaseHoldoffOnEachRetry);
         }
 
         /// <summary>
-        /// Check for the existence of a folder, retrying if an error
+        /// Check for the existence of a directory, retrying if an error
         /// </summary>
-        /// <param name="folderPath">Folder to check</param>
+        /// <param name="directoryPath">Directory to check</param>
         /// <param name="maxRetryCount">Maximum attempts</param>
         /// <param name="retryHoldoffSeconds">Seconds between attempts</param>
         /// <returns>True if the directory exists, otherwise false</returns>
-        public bool FolderExistsWithRetry(string folderPath, int maxRetryCount, int retryHoldoffSeconds)
+        public bool FolderExistsWithRetry(string directoryPath, int maxRetryCount, int retryHoldoffSeconds)
         {
             const bool increaseHoldoffOnEachRetry = false;
-            return FolderExistsWithRetry(folderPath, maxRetryCount, retryHoldoffSeconds, increaseHoldoffOnEachRetry);
+            return FolderExistsWithRetry(directoryPath, maxRetryCount, retryHoldoffSeconds, increaseHoldoffOnEachRetry);
         }
 
         /// <summary>
-        /// Check for the existence of a folder, retrying if an error
+        /// Check for the existence of a directory, retrying if an error
         /// </summary>
-        /// <param name="folderPath">Folder to check</param>
+        /// <param name="directoryPath">Directory to check</param>
         /// <param name="maxRetryCount">Maximum attempts</param>
         /// <param name="retryHoldoffSeconds">Seconds between attempts</param>
         /// <param name="increaseHoldoffOnEachRetry">If true, increase the holdoff between each attempt</param>
         /// <returns>True if the directory exists, otherwise false</returns>
-        public bool FolderExistsWithRetry(string folderPath, int maxRetryCount, int retryHoldoffSeconds, bool increaseHoldoffOnEachRetry)
+        public bool FolderExistsWithRetry(string directoryPath, int maxRetryCount, int retryHoldoffSeconds, bool increaseHoldoffOnEachRetry)
         {
 
             var attemptCount = 0;
@@ -595,13 +595,13 @@ namespace AnalysisManagerBase
 
                 try
                 {
-                    var folderExists = Directory.Exists(folderPath);
-                    return folderExists;
+                    var directoryExists = Directory.Exists(directoryPath);
+                    return directoryExists;
 
                 }
                 catch (Exception ex)
                 {
-                    LogError("clsAnalysisResults: error looking for folder " + folderPath, ex);
+                    LogError("clsAnalysisResults: error looking for directory " + directoryPath, ex);
 
                     if (attemptCount > maxRetryCount)
                         break;

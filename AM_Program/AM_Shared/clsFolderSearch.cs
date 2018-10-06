@@ -9,20 +9,20 @@ using PRISM;
 namespace AnalysisManagerBase
 {
     /// <summary>
-    /// Methods to look for folders related to datasets
+    /// Methods to look for directories related to datasets
     /// </summary>
     public class clsFolderSearch : EventNotifier
     {
         #region "Constants"
 
         /// <summary>
-        /// Maximum number of attempts to find a folder or file
+        /// Maximum number of attempts to find a directory or file
         /// </summary>
         /// <remarks></remarks>
         public const int DEFAULT_MAX_RETRY_COUNT = 3;
 
         /// <summary>
-        /// Default number of seconds to wait between trying to find a folder
+        /// Default number of seconds to wait between trying to find a directory
         /// </summary>
         protected const int DEFAULT_FOLDER_EXISTS_RETRY_HOLDOFF_SECONDS = 5;
 
@@ -90,58 +90,58 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Add a folder or file path to a list of paths to examine
+        /// Add a directory or file path to a list of paths to examine
         /// </summary>
-        /// <param name="lstPathsToCheck">List of Tuples where the string is a folder or file path, and the boolean is logIfMissing</param>
-        /// <param name="folderOrFilePath">Path to add</param>
+        /// <param name="pathsToCheck">List of Tuples where the string is a directory or file path, and the boolean is logIfMissing</param>
+        /// <param name="directoryOrFilePath">Path to add</param>
         /// <param name="logIfMissing">True to log a message if the path is not found</param>
         /// <remarks></remarks>
-        private void AddPathToCheck(ICollection<Tuple<string, bool>> lstPathsToCheck, string folderOrFilePath, bool logIfMissing)
+        private void AddPathToCheck(ICollection<Tuple<string, bool>> pathsToCheck, string directoryOrFilePath, bool logIfMissing)
         {
-            lstPathsToCheck.Add(new Tuple<string, bool>(folderOrFilePath, logIfMissing));
+            pathsToCheck.Add(new Tuple<string, bool>(directoryOrFilePath, logIfMissing));
         }
 
         /// <summary>
         /// Determines the full path to the dataset file
-        /// Returns a folder path for data that is stored in folders (e.g. .D folders)
-        /// For instruments with multiple data folders, returns the path to the first folder
+        /// Returns a directory path for data that is stored in directories (e.g. .D directories)
+        /// For instruments with multiple data directories, returns the path to the first directory
         /// For instrument with multiple zipped data files, returns the dataset directory path
         /// </summary>
-        /// <param name="isFolder">Output variable: true if the path returned is a folder path; false if a file</param>
+        /// <param name="isDirectory">Output variable: true if the path returned is a directory path; false if a file</param>
         /// <param name="assumeUnpurged">
         /// When true, assume that the instrument data exists on the storage server
         /// (and thus do not search MyEMSL or the archive for the file)
         /// </param>
-        /// <returns>The full path to the dataset file or folder</returns>
+        /// <returns>The full path to the dataset file or directory</returns>
         /// <remarks>When assumeUnpurged is true, this function returns the expected path
-        /// to the instrument data file (or folder) on the storage server, even if the file/folder wasn't actually found</remarks>
-        public string FindDatasetFileOrFolder(out bool isFolder, bool assumeUnpurged)
+        /// to the instrument data file (or directory) on the storage server, even if the file/directory wasn't actually found</remarks>
+        public string FindDatasetFileOrFolder(out bool isDirectory, bool assumeUnpurged)
         {
-            return FindDatasetFileOrFolder(DEFAULT_MAX_RETRY_COUNT, out isFolder, assumeUnpurged: assumeUnpurged);
+            return FindDatasetFileOrFolder(DEFAULT_MAX_RETRY_COUNT, out isDirectory, assumeUnpurged: assumeUnpurged);
         }
 
         /// <summary>
         /// Determines the full path to the dataset file
-        /// Returns a folder path for data that is stored in folders (e.g. .D folders)
-        /// For instruments with multiple data folders, returns the path to the first folder
+        /// Returns a directory path for data that is stored in directories (e.g. .D directories)
+        /// For instruments with multiple data directories, returns the path to the first directory
         /// For instrument with multiple zipped data files, returns the dataset directory path
         /// </summary>
         /// <param name="maxAttempts">Maximum number of attempts to look for the directory</param>
-        /// <param name="isFolder">Output variable: true if the path returned is a folder path; false if a file</param>
+        /// <param name="isDirectory">Output variable: true if the path returned is a directory path; false if a file</param>
         /// <param name="assumeUnpurged">
         /// When true, assume that the instrument data exists on the storage server
         /// (and thus do not search MyEMSL or the archive for the file)
         /// </param>
-        /// <returns>The full path to the dataset file or folder</returns>
+        /// <returns>The full path to the dataset file or directory</returns>
         /// <remarks>When assumeUnpurged is true, this function returns the expected path
-        /// to the instrument data file (or folder) on the storage server, even if the file/folder wasn't actually found</remarks>
-        public string FindDatasetFileOrFolder(int maxAttempts, out bool isFolder, bool assumeUnpurged = false)
+        /// to the instrument data file (or directory) on the storage server, even if the file/directory wasn't actually found</remarks>
+        public string FindDatasetFileOrFolder(int maxAttempts, out bool isDirectory, bool assumeUnpurged = false)
         {
             var RawDataType = mJobParams.GetParam("RawDataType");
             var StoragePath = mJobParams.GetParam("DatasetStoragePath");
-            var fileOrFolderPath = string.Empty;
+            var fileOrDirectoryPath = string.Empty;
 
-            isFolder = false;
+            isDirectory = false;
 
             var eRawDataType = clsAnalysisResources.GetRawDataType(RawDataType);
             switch (eRawDataType)
@@ -154,50 +154,50 @@ namespace AnalysisManagerBase
                         // For Agilent Ion Trap datasets acquired on Agilent_SL1 or Agilent_XCT1 in 2005,
                         //  we would pre-process the data beforehand to create MGF files
                         // The following call can be used to retrieve the files
-                        fileOrFolderPath = FindMGFFile(maxAttempts, assumeUnpurged);
+                        fileOrDirectoryPath = FindMGFFile(maxAttempts, assumeUnpurged);
                     }
                     else
                     {
                         // DeconTools_V2 now supports reading the .D files directly
                         // Call RetrieveDotDFolder() to copy the directory and all subdirectories
-                        fileOrFolderPath = FindDotDFolder(assumeUnpurged);
-                        isFolder = true;
+                        fileOrDirectoryPath = FindDotDFolder(assumeUnpurged);
+                        isDirectory = true;
                     }
 
                     break;
                 case clsAnalysisResources.eRawDataTypeConstants.AgilentQStarWiffFile:
                     // Agilent/QSTAR TOF data
-                    fileOrFolderPath = FindDatasetFile(maxAttempts, clsAnalysisResources.DOT_WIFF_EXTENSION, assumeUnpurged);
+                    fileOrDirectoryPath = FindDatasetFile(maxAttempts, clsAnalysisResources.DOT_WIFF_EXTENSION, assumeUnpurged);
 
                     break;
                 case clsAnalysisResources.eRawDataTypeConstants.ZippedSFolders:
                     // FTICR data
-                    fileOrFolderPath = FindSFolders(assumeUnpurged);
-                    isFolder = true;
+                    fileOrDirectoryPath = FindSFolders(assumeUnpurged);
+                    isDirectory = true;
 
                     break;
                 case clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile:
                     // Finnigan ion trap/LTQ-FT data
-                    fileOrFolderPath = FindDatasetFile(maxAttempts, clsAnalysisResources.DOT_RAW_EXTENSION, assumeUnpurged);
+                    fileOrDirectoryPath = FindDatasetFile(maxAttempts, clsAnalysisResources.DOT_RAW_EXTENSION, assumeUnpurged);
 
                     break;
                 case clsAnalysisResources.eRawDataTypeConstants.MicromassRawFolder:
                     // Micromass QTOF data
-                    fileOrFolderPath = FindDotRawFolder(assumeUnpurged);
-                    isFolder = true;
+                    fileOrDirectoryPath = FindDotRawFolder(assumeUnpurged);
+                    isDirectory = true;
 
                     break;
                 case clsAnalysisResources.eRawDataTypeConstants.UIMF:
                     // IMS UIMF data
-                    fileOrFolderPath = FindDatasetFile(maxAttempts, clsAnalysisResources.DOT_UIMF_EXTENSION, assumeUnpurged);
+                    fileOrDirectoryPath = FindDatasetFile(maxAttempts, clsAnalysisResources.DOT_UIMF_EXTENSION, assumeUnpurged);
 
                     break;
                 case clsAnalysisResources.eRawDataTypeConstants.mzXML:
-                    fileOrFolderPath = FindDatasetFile(maxAttempts, clsAnalysisResources.DOT_MZXML_EXTENSION, assumeUnpurged);
+                    fileOrDirectoryPath = FindDatasetFile(maxAttempts, clsAnalysisResources.DOT_MZXML_EXTENSION, assumeUnpurged);
 
                     break;
                 case clsAnalysisResources.eRawDataTypeConstants.mzML:
-                    fileOrFolderPath = FindDatasetFile(maxAttempts, clsAnalysisResources.DOT_MZML_EXTENSION, assumeUnpurged);
+                    fileOrDirectoryPath = FindDatasetFile(maxAttempts, clsAnalysisResources.DOT_MZML_EXTENSION, assumeUnpurged);
 
                     break;
                 case clsAnalysisResources.eRawDataTypeConstants.BrukerFTFolder:
@@ -207,18 +207,18 @@ namespace AnalysisManagerBase
                     // Both the MSXml step tool and DeconTools require the .Baf file
                     // We previously didn't need this file for DeconTools, but, now that DeconTools is using CompassXtract, so we need the file
 
-                    fileOrFolderPath = FindDotDFolder(assumeUnpurged);
-                    isFolder = true;
+                    fileOrDirectoryPath = FindDotDFolder(assumeUnpurged);
+                    isDirectory = true;
 
                     break;
                 case clsAnalysisResources.eRawDataTypeConstants.BrukerMALDIImaging:
-                    fileOrFolderPath = FindBrukerMALDIImagingFolders(assumeUnpurged);
-                    isFolder = true;
+                    fileOrDirectoryPath = FindBrukerMALDIImagingFolders(assumeUnpurged);
+                    isDirectory = true;
 
                     break;
             }
 
-            return fileOrFolderPath;
+            return fileOrDirectoryPath;
         }
 
 
@@ -233,15 +233,15 @@ namespace AnalysisManagerBase
             const string ZIPPED_BRUKER_IMAGING_SECTIONS_FILE_MASK = "*R*X*.zip";
 
             // Look for the dataset directory; it must contain .Zip files with names like 0_R00X442.zip
-            // If a matching folder isn't found, ServerPath will contain the directory path defined by Job Param "DatasetStoragePath"
+            // If a matching directory isn't found, ServerPath will contain the directory path defined by Job Param "DatasetStoragePath"
 
-            var DSFolderPath = FindValidFolder(DatasetName, ZIPPED_BRUKER_IMAGING_SECTIONS_FILE_MASK,
-                                                  RetrievingInstrumentDataFolder: true, assumeUnpurged: assumeUnpurged);
+            var datasetDirPath = FindValidFolder(DatasetName, ZIPPED_BRUKER_IMAGING_SECTIONS_FILE_MASK,
+                                                 retrievingInstrumentDataDir: true, assumeUnpurged: assumeUnpurged);
 
-            if (string.IsNullOrEmpty(DSFolderPath))
+            if (string.IsNullOrEmpty(datasetDirPath))
                 return string.Empty;
 
-            return DSFolderPath;
+            return datasetDirPath;
 
         }
 
@@ -274,21 +274,21 @@ namespace AnalysisManagerBase
 
             var DataFileName = DatasetName + fileExtension;
 
-            var DSFolderPath = FindValidFolder(DatasetName, DataFileName, folderNameToFind: "", maxAttempts: maxAttempts,
-                logFolderNotFound: true, retrievingInstrumentDataFolder: false,
+            var datasetDirPath = FindValidFolder(DatasetName, DataFileName, directoryNameToFind: "", maxAttempts: maxAttempts,
+                logDirectoryNotFound: true, retrievingInstrumentDataDir: false,
                 assumeUnpurged: assumeUnpurged,
-                validFolderFound: out var validFolderFound, folderNotFoundMessage: out var folderNotFoundMessage);
+                validDirectoryFound: out var validDirectoryFound, directoryNotFoundMessage: out var directoryNotFoundMessage);
 
-            if (!string.IsNullOrEmpty(DSFolderPath))
+            if (!string.IsNullOrEmpty(datasetDirPath))
             {
-                return Path.Combine(DSFolderPath, DataFileName);
+                return Path.Combine(datasetDirPath, DataFileName);
             }
 
             return string.Empty;
         }
 
         /// <summary>
-        /// Finds a .Raw folder below the dataset directory
+        /// Finds a .Raw directory below the dataset directory
         /// </summary>
         /// <param name="assumeUnpurged"></param>
         /// <returns>The full path to the directory; an empty string if no match</returns>
@@ -298,7 +298,7 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Finds a .D folder below the dataset directory
+        /// Finds a .D directory below the dataset directory
         /// </summary>
         /// <param name="assumeUnpurged"></param>
         /// <returns></returns>
@@ -310,42 +310,41 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Finds a subdirectory (typically Dataset.D or Dataset.Raw) below the dataset directory
         /// </summary>
-        /// <param name="folderExtension"></param>
+        /// <param name="directoryExtension"></param>
         /// <param name="assumeUnpurged"></param>
         /// <returns>The full path to the directory; an empty string if no match</returns>
         /// <remarks></remarks>
-        public string FindDotXFolder(string folderExtension, bool assumeUnpurged)
+        public string FindDotXFolder(string directoryExtension, bool assumeUnpurged)
         {
 
-            if (!folderExtension.StartsWith("."))
+            if (!directoryExtension.StartsWith("."))
             {
-                folderExtension = "." + folderExtension;
+                directoryExtension = "." + directoryExtension;
             }
 
-
             var fileNameToFind = string.Empty;
-            var folderExtensionWildcard = "*" + folderExtension;
+            var directoryExtensionWildcard = "*" + directoryExtension;
 
             var serverPath = FindValidFolder(
                 DatasetName,
                 fileNameToFind,
-                folderExtensionWildcard,
+                directoryExtensionWildcard,
                 DEFAULT_MAX_RETRY_COUNT,
-                logFolderNotFound: true,
-                retrievingInstrumentDataFolder: true,
+                logDirectoryNotFound: true,
+                retrievingInstrumentDataDir: true,
                 assumeUnpurged: assumeUnpurged,
-                validFolderFound: out var validFolderFound,
-                folderNotFoundMessage: out var folderNotFoundMessage);
+                validDirectoryFound: out var validDirectoryFound,
+                directoryNotFoundMessage: out var directoryNotFoundMessage);
 
             if (serverPath.StartsWith(MYEMSL_PATH_FLAG))
             {
                 return serverPath;
             }
 
-            var diDatasetFolder = new DirectoryInfo(serverPath);
+            var datasetDirectory = new DirectoryInfo(serverPath);
 
-            // Find the instrument data folder (e.g. Dataset.D or Dataset.Raw) in the dataset directory
-            foreach (var subDirectory in diDatasetFolder.GetDirectories(folderExtensionWildcard))
+            // Find the instrument data directory (e.g. Dataset.D or Dataset.Raw) in the dataset directory
+            foreach (var subDirectory in datasetDirectory.GetDirectories(directoryExtensionWildcard))
             {
                 return subDirectory.FullName;
             }
@@ -367,21 +366,21 @@ namespace AnalysisManagerBase
             // Files are renamed with dataset name because MASIC requires this. Other analysis types don't care
 
             var serverPath = FindValidFolder(DatasetName, "", "*" + clsAnalysisResources.DOT_D_EXTENSION, maxAttempts,
-                logFolderNotFound: true, retrievingInstrumentDataFolder: false,
+                logDirectoryNotFound: true, retrievingInstrumentDataDir: false,
                 assumeUnpurged: assumeUnpurged,
-                validFolderFound: out var validFolderFound, folderNotFoundMessage: out var folderNotFoundMessage);
+                validDirectoryFound: out var validDirectoryFound, directoryNotFoundMessage: out var directoryNotFoundMessage);
 
-            var diServerFolder = new DirectoryInfo(serverPath);
+            var datasetDirectory = new DirectoryInfo(serverPath);
 
             // Get a list of the subdirectories in the dataset directory
             // Go through the directories looking for a file with a ".mgf" extension
 
-            foreach (var subDirectory in diServerFolder.GetDirectories())
+            foreach (var subDirectory in datasetDirectory.GetDirectories())
             {
-                foreach (var fiFile in subDirectory.GetFiles("*" + clsAnalysisResources.DOT_MGF_EXTENSION))
+                foreach (var mgfFile in subDirectory.GetFiles("*" + clsAnalysisResources.DOT_MGF_EXTENSION))
                 {
                     // Return the first .mgf file that was found
-                    return fiFile.FullName;
+                    return mgfFile.FullName;
                 }
             }
 
@@ -398,240 +397,238 @@ namespace AnalysisManagerBase
         private string FindSFolders(bool assumeUnpurged = false)
         {
 
-            // First Check for the existence of a 0.ser Folder
-            var FileNameToFind = string.Empty;
+            // First Check for the existence of a 0.ser directory
+            var fileNameToFind = string.Empty;
 
-            var DSFolderPath = FindValidFolder(DatasetName, FileNameToFind, clsAnalysisResources.BRUKER_ZERO_SER_FOLDER, DEFAULT_MAX_RETRY_COUNT,
-                logFolderNotFound: true, retrievingInstrumentDataFolder: true,
+            var datasetDirectoryPath = FindValidFolder(DatasetName, fileNameToFind, clsAnalysisResources.BRUKER_ZERO_SER_FOLDER, DEFAULT_MAX_RETRY_COUNT,
+                logDirectoryNotFound: true, retrievingInstrumentDataDir: true,
                 assumeUnpurged: assumeUnpurged,
-                validFolderFound: out var validFolderFound, folderNotFoundMessage: out var folderNotFoundMessage);
+                validDirectoryFound: out var validDirectoryFound, directoryNotFoundMessage: out var directoryNotFoundMessage);
 
-            if (!string.IsNullOrEmpty(DSFolderPath))
+            if (!string.IsNullOrEmpty(datasetDirectoryPath))
             {
-                return Path.Combine(DSFolderPath, clsAnalysisResources.BRUKER_ZERO_SER_FOLDER);
+                return Path.Combine(datasetDirectoryPath, clsAnalysisResources.BRUKER_ZERO_SER_FOLDER);
             }
 
-            // The 0.ser folder does not exist; look for zipped s-folders
-            DSFolderPath = FindValidFolder(DatasetName, "s*.zip", RetrievingInstrumentDataFolder: true, assumeUnpurged: assumeUnpurged);
+            // The 0.ser directory does not exist; look for zipped s-folders
+            datasetDirectoryPath = FindValidFolder(DatasetName, "s*.zip", retrievingInstrumentDataDir: true, assumeUnpurged: assumeUnpurged);
 
-            return DSFolderPath;
+            return datasetDirectoryPath;
 
         }
 
         /// <summary>
-        /// Determines the most appropriate folder to use to obtain dataset files from
+        /// Determines the most appropriate directory to use to obtain dataset files from
         /// Optionally, can require that a certain file also be present in the directory for it to be deemed valid
-        /// If no folder is deemed valid, returns the path defined by "DatasetStoragePath"
+        /// If no directory is deemed valid, returns the path defined by "DatasetStoragePath"
         /// </summary>
         /// <param name="dsName">Name of the dataset</param>
         /// <param name="fileNameToFind">Name of a file that must exist in the directory; can contain a wildcard, e.g. *.zip</param>
-        /// <param name="RetrievingInstrumentDataFolder">Set to True when retrieving an instrument data folder</param>
+        /// <param name="retrievingInstrumentDataDir">Set to True when retrieving an instrument data directory</param>
         /// <returns>Path to the most appropriate dataset directory</returns>
-        /// <remarks>Although FileNameToFind could be empty, you are highly encouraged to filter by either Filename or by FolderName when using FindValidFolder</remarks>
-        public string FindValidFolder(string dsName, string fileNameToFind, bool RetrievingInstrumentDataFolder)
+        /// <remarks>Although fileNameToFind could be empty, you are highly encouraged to filter by either fileNameToFind or by directoryNameToFind when using FindValidFolder</remarks>
+        public string FindValidFolder(string dsName, string fileNameToFind, bool retrievingInstrumentDataDir)
         {
 
-            const string folderNameToFind = "";
-            return FindValidFolder(dsName, fileNameToFind, folderNameToFind, DEFAULT_MAX_RETRY_COUNT,
-                logFolderNotFound: true, retrievingInstrumentDataFolder: RetrievingInstrumentDataFolder);
+            const string directoryNameToFind = "";
+            return FindValidFolder(dsName, fileNameToFind, directoryNameToFind, DEFAULT_MAX_RETRY_COUNT,
+                logDirectoryNotFound: true, retrievingInstrumentDataDir: retrievingInstrumentDataDir);
 
         }
 
         /// <summary>
-        /// Determines the most appropriate folder to use to obtain dataset files from
+        /// Determines the most appropriate directory to use to obtain dataset files from
         /// Optionally, can require that a certain file also be present in the directory for it to be deemed valid
-        /// If no folder is deemed valid, returns the path defined by "DatasetStoragePath"
+        /// If no directory is deemed valid, returns the path defined by "DatasetStoragePath"
         /// </summary>
         /// <param name="dsName">Name of the dataset</param>
         /// <param name="fileNameToFind">Name of a file that must exist in the directory; can contain a wildcard, e.g. *.zip</param>
-        /// <param name="RetrievingInstrumentDataFolder">Set to True when retrieving an instrument data folder</param>
+        /// <param name="retrievingInstrumentDataDir">Set to True when retrieving an instrument data directory</param>
         /// <param name="assumeUnpurged"></param>
         /// <returns>Path to the most appropriate dataset directory</returns>
-        /// <remarks>Although FileNameToFind could be empty, you are highly encouraged to filter by either Filename or by FolderName when using FindValidFolder</remarks>
-        private string FindValidFolder(string dsName, string fileNameToFind, bool RetrievingInstrumentDataFolder, bool assumeUnpurged)
+        /// <remarks>Although fileNameToFind could be empty, you are highly encouraged to filter by either fileNameToFind or by directoryNameToFind when using FindValidFolder</remarks>
+        private string FindValidFolder(string dsName, string fileNameToFind, bool retrievingInstrumentDataDir, bool assumeUnpurged)
         {
 
-            const string folderNameToFind = "";
+            const string directoryNameToFind = "";
 
-            return FindValidFolder(dsName, fileNameToFind, folderNameToFind, DEFAULT_MAX_RETRY_COUNT,
-                logFolderNotFound: true, retrievingInstrumentDataFolder: RetrievingInstrumentDataFolder,
+            return FindValidFolder(dsName, fileNameToFind, directoryNameToFind, DEFAULT_MAX_RETRY_COUNT,
+                logDirectoryNotFound: true, retrievingInstrumentDataDir: retrievingInstrumentDataDir,
                 assumeUnpurged: assumeUnpurged,
-                validFolderFound: out var validFolderFound, folderNotFoundMessage: out var folderNotFoundMessage);
+                validDirectoryFound: out var validDirectoryFound, directoryNotFoundMessage: out var directoryNotFoundMessage);
 
         }
 
         /// <summary>
-        /// Determines the most appropriate folder to use to obtain dataset files from
+        /// Determines the most appropriate directory to use to obtain dataset files from
         /// Optionally, can require that a certain file also be present in the directory for it to be deemed valid
-        /// If no folder is deemed valid, returns the path defined by "DatasetStoragePath"
+        /// If no directory is deemed valid, returns the path defined by "DatasetStoragePath"
         /// </summary>
         /// <param name="dsName">Name of the dataset</param>
         /// <param name="fileNameToFind">Name of a file that must exist in the directory; can contain a wildcard, e.g. *.zip</param>
-        /// <param name="folderNameToFind">Optional: Name of a folder that must exist in the dataset directory; can contain a wildcard, e.g. SEQ*</param>
+        /// <param name="directoryNameToFind">Optional: Name of a directory that must exist in the dataset directory; can contain a wildcard, e.g. SEQ*</param>
         /// <param name="maxRetryCount">Maximum number of attempts</param>
         /// <returns>Path to the maxRetryCount appropriate dataset directory</returns>
-        /// <remarks>Although FileNameToFind and FolderNameToFind could both be empty, you are highly encouraged to filter by either Filename or by FolderName when using FindValidFolder</remarks>
-        public string FindValidFolder(string dsName, string fileNameToFind, string folderNameToFind, int maxRetryCount)
+        /// <remarks>Although fileNameToFind and directoryNameToFind could both be empty, you are highly encouraged to filter by either fileNameToFind or by directoryNameToFind when using FindValidFolder</remarks>
+        public string FindValidFolder(string dsName, string fileNameToFind, string directoryNameToFind, int maxRetryCount)
         {
 
-            return FindValidFolder(dsName, fileNameToFind, folderNameToFind, maxRetryCount,
-                logFolderNotFound: true, retrievingInstrumentDataFolder: false);
+            return FindValidFolder(dsName, fileNameToFind, directoryNameToFind, maxRetryCount,
+                logDirectoryNotFound: true, retrievingInstrumentDataDir: false);
 
         }
 
         /// <summary>
-        /// Determines the most appropriate folder to use to obtain dataset files from
+        /// Determines the most appropriate directory to use to obtain dataset files from
         /// Optionally, can require that a certain file also be present in the directory for it to be deemed valid
-        /// If no folder is deemed valid, returns the path defined by Job Param "DatasetStoragePath"
+        /// If no directory is deemed valid, returns the path defined by Job Param "DatasetStoragePath"
         /// </summary>
         /// <param name="dsName">Name of the dataset</param>
         /// <param name="fileNameToFind">Optional: Name of a file that must exist in the dataset directory; can contain a wildcard, e.g. *.zip</param>
-        /// <param name="folderNameToFind">Optional: Name of a subdirectory that must exist in the dataset directory; can contain a wildcard, e.g. SEQ*</param>
+        /// <param name="directoryNameToFind">Optional: Name of a subdirectory that must exist in the dataset directory; can contain a wildcard, e.g. SEQ*</param>
         /// <param name="maxRetryCount">Maximum number of attempts</param>
-        /// <param name="logFolderNotFound">If true, log a warning if the directory is not found</param>
-        /// <param name="retrievingInstrumentDataFolder">Set to True when retrieving an instrument data folder</param>
+        /// <param name="logDirectoryNotFound">If true, log a warning if the directory is not found</param>
+        /// <param name="retrievingInstrumentDataDir">Set to True when retrieving an instrument data directory</param>
         /// <returns>Path to the most appropriate dataset directory</returns>
-        /// <remarks>The path returned will be "\\MyEMSL" if the best folder is in MyEMSL</remarks>
+        /// <remarks>The path returned will be "\\MyEMSL" if the best directory is in MyEMSL</remarks>
         public string FindValidFolder(
-            string dsName, string fileNameToFind, string folderNameToFind,
-            int maxRetryCount, bool logFolderNotFound, bool retrievingInstrumentDataFolder)
+            string dsName, string fileNameToFind, string directoryNameToFind,
+            int maxRetryCount, bool logDirectoryNotFound, bool retrievingInstrumentDataDir)
         {
 
-
-            return FindValidFolder(dsName, fileNameToFind, folderNameToFind, maxRetryCount, logFolderNotFound, retrievingInstrumentDataFolder,
+            return FindValidFolder(dsName, fileNameToFind, directoryNameToFind, maxRetryCount, logDirectoryNotFound, retrievingInstrumentDataDir,
                 assumeUnpurged: false,
-                validFolderFound: out var validFolderFound, folderNotFoundMessage: out var folderNotFoundMessage);
-
+                validDirectoryFound: out var validDirectoryFound, directoryNotFoundMessage: out var directoryNotFoundMessage);
         }
 
         /// <summary>
-        /// Determines the most appropriate folder to use to obtain dataset files from
+        /// Determines the most appropriate directory to use to obtain dataset files from
         /// Optionally, can require that a certain file also be present in the directory for it to be deemed valid
-        /// If no folder is deemed valid, returns the path defined by Job Param "DatasetStoragePath"
+        /// If no directory is deemed valid, returns the path defined by Job Param "DatasetStoragePath"
         /// </summary>
-        /// <param name="dsName">Name of the dataset</param>
+        /// <param name="datasetName">Name of the dataset</param>
         /// <param name="fileNameToFind">Optional: Name of a file that must exist in the dataset directory; can contain a wildcard, e.g. *.zip</param>
-        /// <param name="folderNameToFind">Optional: Name of a subdirectory that must exist in the dataset directory; can contain a wildcard, e.g. SEQ*</param>
+        /// <param name="directoryNameToFind">Optional: Name of a subdirectory that must exist in the dataset directory; can contain a wildcard, e.g. SEQ*</param>
         /// <param name="maxAttempts">Maximum number of attempts</param>
-        /// <param name="logFolderNotFound">If true, log a warning if the directory is not found</param>
-        /// <param name="retrievingInstrumentDataFolder">Set to True when retrieving an instrument data folder</param>
+        /// <param name="logDirectoryNotFound">If true, log a warning if the directory is not found</param>
+        /// <param name="retrievingInstrumentDataDir">Set to True when retrieving an instrument data directory</param>
         /// <param name="assumeUnpurged">When true, this function returns the path to the dataset directory on the storage server</param>
-        /// <param name="validFolderFound">Output parameter: True if a valid directory is ultimately found, otherwise false</param>
-        /// <param name="folderNotFoundMessage">Output parameter: description to be used when validFolderFound is false</param>
+        /// <param name="validDirectoryFound">Output parameter: True if a valid directory is ultimately found, otherwise false</param>
+        /// <param name="directoryNotFoundMessage">Output parameter: description to be used when validDirectoryFound is false</param>
         /// <returns>Path to the most appropriate dataset directory</returns>
-        /// <remarks>The path returned will be "\\MyEMSL" if the best folder is in MyEMSL</remarks>
+        /// <remarks>The path returned will be "\\MyEMSL" if the best directory is in MyEMSL</remarks>
         public string FindValidFolder(
-            string dsName,
+            string datasetName,
             string fileNameToFind,
-            string folderNameToFind,
+            string directoryNameToFind,
             int maxAttempts,
-            bool logFolderNotFound,
-            bool retrievingInstrumentDataFolder,
+            bool logDirectoryNotFound,
+            bool retrievingInstrumentDataDir,
             bool assumeUnpurged,
-            out bool validFolderFound,
-            out string folderNotFoundMessage)
+            out bool validDirectoryFound,
+            out string directoryNotFoundMessage)
         {
             var bestPath = string.Empty;
 
             // The tuples in this list are the path to check, and True if we should warn that the directory was not found
-            var lstPathsToCheck = new List<Tuple<string, bool>>();
+            var pathsToCheck = new List<Tuple<string, bool>>();
 
-            var validFolder = false;
+            var validDirectory = false;
 
-            validFolderFound = false;
-            folderNotFoundMessage = string.Empty;
+            validDirectoryFound = false;
+            directoryNotFoundMessage = string.Empty;
 
             try
             {
                 if (fileNameToFind == null)
                     fileNameToFind = string.Empty;
-                if (folderNameToFind == null)
-                    folderNameToFind = string.Empty;
+                if (directoryNameToFind == null)
+                    directoryNameToFind = string.Empty;
 
                 if (assumeUnpurged)
                 {
                     maxAttempts = 1;
-                    logFolderNotFound = false;
+                    logDirectoryNotFound = false;
                 }
 
                 var instrumentDataPurged = mJobParams.GetJobParameter("InstrumentDataPurged", 0);
 
-                var datasetFolderName = mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_DATASET_FOLDER_NAME);
+                var datasetDirectoryName = mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_DATASET_FOLDER_NAME);
 
-                if (retrievingInstrumentDataFolder && instrumentDataPurged != 0 && !assumeUnpurged)
+                if (retrievingInstrumentDataDir && instrumentDataPurged != 0 && !assumeUnpurged)
                 {
                     // The instrument data is purged and we're retrieving instrument data
                     // Skip the primary dataset directory since the primary data files were most likely purged
                 }
                 else
                 {
-                    AddPathToCheck(lstPathsToCheck, Path.Combine(mJobParams.GetParam("DatasetStoragePath"), datasetFolderName), true);
-                    if (datasetFolderName != dsName)
-                        AddPathToCheck(lstPathsToCheck, Path.Combine(mJobParams.GetParam("DatasetStoragePath"), dsName), false);
+                    AddPathToCheck(pathsToCheck, Path.Combine(mJobParams.GetParam("DatasetStoragePath"), datasetDirectoryName), true);
+                    if (datasetDirectoryName != datasetName)
+                        AddPathToCheck(pathsToCheck, Path.Combine(mJobParams.GetParam("DatasetStoragePath"), datasetName), false);
                 }
 
                 if (!MyEMSLSearchDisabled && !assumeUnpurged)
                 {
                     // \\MyEMSL
-                    AddPathToCheck(lstPathsToCheck, MYEMSL_PATH_FLAG, false);
+                    AddPathToCheck(pathsToCheck, MYEMSL_PATH_FLAG, false);
                 }
 
                 // Optional Temp Debug: Enable compilation constant DISABLE_MYEMSL_SEARCH to disable checking MyEMSL (and thus speed things up)
 #if DISABLE_MYEMSL_SEARCH
         if (mMgrParams.GetParam("MgrName").ToLower().Contains("monroe")) {
-            lstPathsToCheck.Remove(MYEMSL_PATH_FLAG);
+            pathsToCheck.Remove(MYEMSL_PATH_FLAG);
         }
 #endif
                 if ((mAuroraAvailable || MyEMSLSearchDisabled) && !assumeUnpurged)
                 {
-                    AddPathToCheck(lstPathsToCheck, Path.Combine(mJobParams.GetParam("DatasetArchivePath"), datasetFolderName), true);
-                    if (datasetFolderName != dsName)
-                        AddPathToCheck(lstPathsToCheck, Path.Combine(mJobParams.GetParam("DatasetArchivePath"), dsName), false);
+                    AddPathToCheck(pathsToCheck, Path.Combine(mJobParams.GetParam("DatasetArchivePath"), datasetDirectoryName), true);
+                    if (datasetDirectoryName != datasetName)
+                        AddPathToCheck(pathsToCheck, Path.Combine(mJobParams.GetParam("DatasetArchivePath"), datasetName), false);
                 }
 
-                AddPathToCheck(lstPathsToCheck, Path.Combine(mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH), datasetFolderName), false);
-                if (datasetFolderName != dsName)
-                    AddPathToCheck(lstPathsToCheck, Path.Combine(mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH), dsName), false);
+                AddPathToCheck(pathsToCheck, Path.Combine(mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH), datasetDirectoryName), false);
+                if (datasetDirectoryName != datasetName)
+                    AddPathToCheck(pathsToCheck, Path.Combine(mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH), datasetName), false);
 
                 var fileNotFoundEncountered = false;
 
-                bestPath = lstPathsToCheck.First().Item1;
-                foreach (var pathToCheck in lstPathsToCheck)
+                bestPath = pathsToCheck.First().Item1;
+                foreach (var pathToCheck in pathsToCheck)
                 {
                     try
                     {
                         if (mDebugLevel > 3)
                         {
-                            var msg = "FindValidDatasetFolder, Looking for folder " + pathToCheck.Item1;
+                            var msg = "FindValidDatasetFolder, Looking for directory " + pathToCheck.Item1;
                             OnDebugEvent(msg);
                         }
 
                         if (pathToCheck.Item1 == MYEMSL_PATH_FLAG)
                         {
                             const bool recurseMyEMSL = false;
-                            validFolder = FindValidFolderMyEMSL(dsName, fileNameToFind, folderNameToFind, false, recurseMyEMSL);
+                            validDirectory = FindValidFolderMyEMSL(datasetName, fileNameToFind, directoryNameToFind, false, recurseMyEMSL);
                         }
                         else
                         {
-                            validFolder = FindValidFolderUNC(pathToCheck.Item1, fileNameToFind, folderNameToFind, maxAttempts, logFolderNotFound && pathToCheck.Item2);
+                            validDirectory = FindValidFolderUNC(pathToCheck.Item1, fileNameToFind, directoryNameToFind, maxAttempts, logDirectoryNotFound && pathToCheck.Item2);
 
-                            if (!validFolder && !string.IsNullOrEmpty(fileNameToFind) && !string.IsNullOrEmpty(folderNameToFind))
+                            if (!validDirectory && !string.IsNullOrEmpty(fileNameToFind) && !string.IsNullOrEmpty(directoryNameToFind))
                             {
-                                // Look for a subdirectory named folderNameToFind that contains file fileNameToFind
-                                var pathToCheckAlt = Path.Combine(pathToCheck.Item1, folderNameToFind);
-                                validFolder = FindValidFolderUNC(pathToCheckAlt, fileNameToFind, string.Empty, maxAttempts, logFolderNotFound && pathToCheck.Item2);
+                                // Look for a subdirectory named directoryNameToFind that contains file fileNameToFind
+                                var pathToCheckAlt = Path.Combine(pathToCheck.Item1, directoryNameToFind);
+                                validDirectory = FindValidFolderUNC(pathToCheckAlt, fileNameToFind, string.Empty, maxAttempts, logDirectoryNotFound && pathToCheck.Item2);
 
-                                if (validFolder)
+                                if (validDirectory)
                                 {
-                                    var pathToCheckOverride = new Tuple<string, bool>(pathToCheckAlt, pathToCheck.Item2);
-                                    bestPath = string.Copy(pathToCheck.Item1);
+                                    // Jump out of the foreach
+                                    bestPath = pathToCheckAlt;
                                     break;
                                 }
                             }
 
                         }
 
-                        if (validFolder)
+                        if (validDirectory)
                         {
                             bestPath = string.Copy(pathToCheck.Item1);
                             break;
@@ -642,13 +639,13 @@ namespace AnalysisManagerBase
                     }
                     catch (Exception ex)
                     {
-                        OnErrorEvent("Exception looking for folder: " + pathToCheck.Item1, ex);
+                        OnErrorEvent("Exception looking for directory: " + pathToCheck.Item1, ex);
                     }
-                } // for each item in lstPathsToCheck
+                } // for each item in pathsToCheck
 
-                if (validFolder)
+                if (validDirectory)
                 {
-                    validFolderFound = true;
+                    validDirectoryFound = true;
 
                     if (mDebugLevel >= 4 || mDebugLevel >= 1 && fileNotFoundEncountered)
                     {
@@ -657,9 +654,9 @@ namespace AnalysisManagerBase
                         {
                             msg += " (matched file " + fileNameToFind + ")";
                         }
-                        if (folderNameToFind.Length > 0)
+                        if (directoryNameToFind.Length > 0)
                         {
-                            msg += " (matched folder " + folderNameToFind + ")";
+                            msg += " (matched directory " + directoryNameToFind + ")";
                         }
                         OnDebugEvent(msg);
                     }
@@ -667,22 +664,25 @@ namespace AnalysisManagerBase
                 }
                 else
                 {
-                    folderNotFoundMessage = "Could not find a valid dataset directory";
+                    directoryNotFoundMessage = "Could not find a valid dataset directory";
                     if (fileNameToFind.Length > 0)
                     {
                         // Could not find a valid dataset directory containing file
-                        folderNotFoundMessage += " containing file " + fileNameToFind;
+                        directoryNotFoundMessage += " containing file " + fileNameToFind;
                     }
 
-                    if (logFolderNotFound && mDebugLevel >= 1)
+                    if (logDirectoryNotFound && mDebugLevel >= 1)
                     {
                         if (assumeUnpurged)
                         {
-                            OnStatusEvent(folderNotFoundMessage);
+                            OnStatusEvent(directoryNotFoundMessage);
                         }
                         else
                         {
-                            var msg = folderNotFoundMessage + ", Job " + mJobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Job") + ", Dataset " + dsName;
+                            var msg = string.Format("{0}, Job {1}, Dataset {2}",
+                                                    directoryNotFoundMessage,
+                                                    mJobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Job"),
+                                                    datasetName);
                             OnWarningEvent(msg);
                         }
                     }
@@ -692,8 +692,8 @@ namespace AnalysisManagerBase
             }
             catch (Exception ex)
             {
-                OnErrorEvent("Exception looking for a valid dataset directory for dataset " + dsName, ex);
-                folderNotFoundMessage = "Exception looking for a valid dataset directory";
+                OnErrorEvent("Exception looking for a valid dataset directory for dataset " + datasetName, ex);
+                directoryNotFoundMessage = "Exception looking for a valid dataset directory";
             }
 
             return bestPath;
@@ -706,11 +706,11 @@ namespace AnalysisManagerBase
         /// <param name="dataset">Dataset name</param>
         /// <param name="fileNameToFind">Optional: Name of a file that must exist in the dataset directory; can contain a wildcard, e.g. *.zip</param>
         /// <param name="subDirectoryName">Optional: Name of a subdirectory that must exist in the dataset directory; can contain a wildcard, e.g. SEQ*</param>
-        /// <param name="logFolderNotFound">If true, log a warning if the directory is not found</param>
+        /// <param name="logDirectoryNotFound">If true, log a warning if the directory is not found</param>
         /// <param name="recurse">True to look for fileNameToFind in all subdirectories of a dataset; false to only look in the primary dataset directory</param>
         /// <returns>Path to the most appropriate dataset directory</returns>
-        /// <remarks>FileNameToFind is a file in the dataset directory; it is NOT a file in FolderNameToFind</remarks>
-        private bool FindValidFolderMyEMSL(string dataset, string fileNameToFind, string subDirectoryName, bool logFolderNotFound, bool recurse)
+        /// <remarks>FileNameToFind is a file in the dataset directory; it is NOT a file in directoryNameToFind</remarks>
+        private bool FindValidFolderMyEMSL(string dataset, string fileNameToFind, string subDirectoryName, bool logDirectoryNotFound, bool recurse)
         {
 
             if (string.IsNullOrEmpty(fileNameToFind))
@@ -732,7 +732,7 @@ namespace AnalysisManagerBase
             {
                 // First look for the subdirectory
                 // If there are multiple matching subdirectories, choose the newest one
-                // The entries in matchingMyEMSLFiles will be folder entries where the "Filename" field is the directory name while the "SubDirPath" field is any parent folders above the found folder
+                // The entries in matchingMyEMSLFiles will be directory entries where the "Filename" field is the directory name while the "SubDirPath" field is any parent directories above the found directory
                 matchingMyEMSLFiles = mMyEMSLUtilities.FindFiles(fileNameToFind, subDirectoryName, dataset, recurse);
             }
 
@@ -741,7 +741,7 @@ namespace AnalysisManagerBase
                 return true;
             }
 
-            if (logFolderNotFound)
+            if (logDirectoryNotFound)
             {
                 var msg = "MyEMSL does not have any files for dataset " + dataset;
                 if (!string.IsNullOrEmpty(fileNameToFind))
@@ -764,27 +764,27 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="pathToCheck">Path to examine</param>
         /// <param name="fileNameToFind">Optional: Name of a file that must exist in the dataset directory; can contain a wildcard, e.g. *.zip</param>
-        /// <param name="folderNameToFind">Optional: Name of a subdirectory that must exist in the dataset directory; can contain a wildcard, e.g. SEQ*</param>
+        /// <param name="directoryNameToFind">Optional: Name of a subdirectory that must exist in the dataset directory; can contain a wildcard, e.g. SEQ*</param>
         /// <param name="maxAttempts">Maximum number of attempts</param>
-        /// <param name="logFolderNotFound">If true, log a warning if the directory is not found</param>
+        /// <param name="logDirectoryNotFound">If true, log a warning if the directory is not found</param>
         /// <returns>Path to the most appropriate dataset directory</returns>
-        /// <remarks>FileNameToFind is a file in the dataset directory; it is NOT a file in FolderNameToFind</remarks>
-        private bool FindValidFolderUNC(string pathToCheck, string fileNameToFind, string folderNameToFind, int maxAttempts, bool logFolderNotFound)
+        /// <remarks>FileNameToFind is a file in the dataset directory; it is NOT a file in directoryNameToFind</remarks>
+        private bool FindValidFolderUNC(string pathToCheck, string fileNameToFind, string directoryNameToFind, int maxAttempts, bool logDirectoryNotFound)
         {
 
-            // First check whether this folder exists
+            // First check whether this directory exists
             // Using a 1 second holdoff between retries
-            if (!FolderExistsWithRetry(pathToCheck, 1, maxAttempts, logFolderNotFound))
+            if (!FolderExistsWithRetry(pathToCheck, 1, maxAttempts, logDirectoryNotFound))
             {
                 return false;
             }
 
-            // Folder was found
-            var validFolder = true;
+            // Directory was found
+            var validDirectory = true;
 
             if (mDebugLevel > 3)
             {
-                OnDebugEvent("FindValidFolderUNC, Folder found " + pathToCheck);
+                OnDebugEvent("FindValidFolderUNC, Directory found " + pathToCheck);
             }
 
             // Optionally look for fileNameToFind
@@ -800,14 +800,14 @@ namespace AnalysisManagerBase
 
                     // Wildcard in the name
                     // Look for any files matching fileNameToFind
-                    var folderInfo = new DirectoryInfo(pathToCheck);
+                    var targetDirectory = new DirectoryInfo(pathToCheck);
 
                     // Do not recurse here
-                    // If the dataset directory does not contain a target file, and if folderNameToFind is defined,
-                    // FindValidFolder will append folderNameToFind to the dataset directory path and call this method again
-                    if (folderInfo.GetFiles(fileNameToFind, SearchOption.TopDirectoryOnly).Length == 0)
+                    // If the dataset directory does not contain a target file, and if directoryNameToFind is defined,
+                    // FindValidFolder will append directoryNameToFind to the dataset directory path and call this method again
+                    if (targetDirectory.GetFiles(fileNameToFind, SearchOption.TopDirectoryOnly).Length == 0)
                     {
-                        validFolder = false;
+                        validDirectory = false;
                     }
                 }
                 else
@@ -817,7 +817,7 @@ namespace AnalysisManagerBase
                         OnDebugEvent("FindValidFolderUNC, Looking for file named " + fileNameToFind);
                     }
 
-                    // Look for file fileNameToFind in this folder
+                    // Look for file fileNameToFind in this directory
                     // Note: Using a 1 second holdoff between retries
                     var fileFound = mFileCopyUtilities.FileExistsWithRetry(
                         Path.Combine(pathToCheck, fileNameToFind), retryHoldoffSeconds: 1,
@@ -825,61 +825,61 @@ namespace AnalysisManagerBase
 
                     if (!fileFound)
                     {
-                        validFolder = false;
+                        validDirectory = false;
                     }
                 }
             }
 
-            // Optionally look for folderNameToFind
-            if (validFolder && !string.IsNullOrEmpty(folderNameToFind))
+            // Optionally look for directoryNameToFind
+            if (validDirectory && !string.IsNullOrEmpty(directoryNameToFind))
             {
-                if (folderNameToFind.Contains("*"))
+                if (directoryNameToFind.Contains("*"))
                 {
                     if (mDebugLevel > 3)
                     {
-                        OnDebugEvent("FindValidFolderUNC, Looking for folders matching " + folderNameToFind);
+                        OnDebugEvent("FindValidFolderUNC, Looking for directories matching " + directoryNameToFind);
                     }
 
                     // Wildcard in the name
-                    // Look for any folders matching folderNameToFind
-                    var folderInfo = new DirectoryInfo(pathToCheck);
+                    // Look for any directories matching directoryNameToFind
+                    var targetDirectory = new DirectoryInfo(pathToCheck);
 
-                    if (folderInfo.GetDirectories(folderNameToFind).Length == 0)
+                    if (targetDirectory.GetDirectories(directoryNameToFind).Length == 0)
                     {
-                        validFolder = false;
+                        validDirectory = false;
                     }
                 }
                 else
                 {
                     if (mDebugLevel > 3)
                     {
-                        OnDebugEvent("FindValidFolderUNC, Looking for folder named " + folderNameToFind);
+                        OnDebugEvent("FindValidFolderUNC, Looking for directory named " + directoryNameToFind);
                     }
 
-                    // Look for folder folderNameToFind in this folder
+                    // Look for directory directoryNameToFind in this directory
                     // Note: Using a 1 second holdoff between retries
-                    if (!FolderExistsWithRetry(Path.Combine(pathToCheck, folderNameToFind), 1, maxAttempts, logFolderNotFound))
+                    if (!FolderExistsWithRetry(Path.Combine(pathToCheck, directoryNameToFind), 1, maxAttempts, logDirectoryNotFound))
                     {
-                        validFolder = false;
+                        validDirectory = false;
                     }
                 }
             }
 
-            return validFolder;
+            return validDirectory;
 
         }
 
 
         /// <summary>
-        /// Test for folder existence with a retry loop in case of temporary glitch
+        /// Test for validDirectory existence with a retry loop in case of temporary glitch
         /// </summary>
-        /// <param name="folderName">Folder name to look for</param>
+        /// <param name="directoryName">Directory name to look for</param>
         /// <param name="retryHoldoffSeconds">Time, in seconds, to wait between retrying; if 0, will default to 5 seconds; maximum value is 600 seconds</param>
         /// <param name="maxAttempts">Maximum number of attempts</param>
-        /// <param name="logFolderNotFound">If true, log a warning if the directory is not found</param>
+        /// <param name="logDirectoryNotFound">If true, log a warning if the directory is not found</param>
         /// <returns></returns>
         /// <remarks></remarks>
-        private bool FolderExistsWithRetry(string folderName, int retryHoldoffSeconds, int maxAttempts, bool logFolderNotFound)
+        private bool FolderExistsWithRetry(string directoryName, int retryHoldoffSeconds, int maxAttempts, bool logDirectoryNotFound)
         {
 
             if (maxAttempts < 1)
@@ -898,16 +898,16 @@ namespace AnalysisManagerBase
 
             while (retryCount > 0)
             {
-                if (Directory.Exists(folderName))
+                if (Directory.Exists(directoryName))
                 {
                     return true;
                 }
 
-                if (logFolderNotFound)
+                if (logDirectoryNotFound)
                 {
                     if (mDebugLevel >= 2 || mDebugLevel >= 1 && retryCount == 1)
                     {
-                        var errMsg = "Folder " + folderName + " not found. Retry count = " + retryCount;
+                        var errMsg = "Directory " + directoryName + " not found. Retry count = " + retryCount;
                         OnWarningEvent(errMsg);
                     }
                 }

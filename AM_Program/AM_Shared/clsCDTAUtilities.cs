@@ -118,35 +118,35 @@ namespace AnalysisManagerBase
                     return false;
                 }
 
-                var fiOriginalFile = new FileInfo(sourceFilePath);
-                if (!fiOriginalFile.Exists)
+                var originalFile = new FileInfo(sourceFilePath);
+                if (!originalFile.Exists)
                 {
                     OnErrorEvent("Error in RemoveSparseSpectra: source file not found: " + sourceFilePath);
                     return false;
                 }
 
-                var fiUpdatedFile = new FileInfo(sourceFilePath + ".tmp");
+                var updatedFile = new FileInfo(sourceFilePath + ".tmp");
 
                 // Open the input file
-                using (var srInFile = new StreamReader(new FileStream(fiOriginalFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                using (var reader = new StreamReader(new FileStream(originalFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
                 {
 
                     // Create the output file
-                    using (var swOutFile = new StreamWriter(new FileStream(fiUpdatedFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                    using (var writer = new StreamWriter(new FileStream(updatedFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read)))
                     {
 
-                        while (!srInFile.EndOfStream)
+                        while (!reader.EndOfStream)
                         {
-                            var lineIn = srInFile.ReadLine();
+                            var dataLine = reader.ReadLine();
 
-                            if (string.IsNullOrEmpty(lineIn))
+                            if (string.IsNullOrEmpty(dataLine))
                             {
                                 sbCurrentSpectrum.AppendLine();
                             }
                             else
                             {
 
-                                if (lineIn.StartsWith("="))
+                                if (dataLine.StartsWith("="))
                                 {
                                     // DTA header line, for example:
                                     // =================================== "H20120523_JQ_CPTAC2_4TP_Exp1_IMAC_01.0002.0002.3.dta" ==================================
@@ -156,7 +156,7 @@ namespace AnalysisManagerBase
                                         if (ionCount >= MINIMUM_ION_COUNT || spectraParsed == 0)
                                         {
                                             // Write the cached spectrum
-                                            swOutFile.Write(sbCurrentSpectrum.ToString());
+                                            writer.Write(sbCurrentSpectrum.ToString());
                                         }
                                         else
                                         {
@@ -183,7 +183,7 @@ namespace AnalysisManagerBase
                                     ionCount += 1;
                                 }
 
-                                sbCurrentSpectrum.AppendLine(lineIn);
+                                sbCurrentSpectrum.AppendLine(dataLine);
 
                             }
                         }
@@ -193,7 +193,7 @@ namespace AnalysisManagerBase
                             if (ionCount >= MINIMUM_ION_COUNT)
                             {
                                 // Write the cached spectrum
-                                swOutFile.Write(sbCurrentSpectrum.ToString());
+                                writer.Write(sbCurrentSpectrum.ToString());
                             }
                             else
                             {
@@ -214,7 +214,7 @@ namespace AnalysisManagerBase
                     spectraRemoved = true;
                 }
 
-                FinalizeCDTAValidation(spectraRemoved, replaceSourceFile, deleteSourceFileIfUpdated, fiOriginalFile, fiUpdatedFile);
+                FinalizeCDTAValidation(spectraRemoved, replaceSourceFile, deleteSourceFileIfUpdated, originalFile, updatedFile);
 
             }
             catch (Exception ex)
@@ -237,15 +237,15 @@ namespace AnalysisManagerBase
         /// If True, the source file is deleted if an updated version is created.
         /// If false, the source file is renamed to .old if an updated version is created.
         /// </param>
-        /// <param name="fiOriginalFile">File handle to the original CDTA file</param>
-        /// <param name="fiUpdatedFile">File handle to the new CDTA file</param>
+        /// <param name="originalFile">File handle to the original CDTA file</param>
+        /// <param name="updatedFile">File handle to the new CDTA file</param>
         /// <remarks></remarks>
         protected void FinalizeCDTAValidation(bool newCDTAFileHasUpdates, bool replaceSourceFile, bool deleteSourceFileIfUpdated,
-                                              FileInfo fiOriginalFile, FileInfo fiUpdatedFile)
+                                              FileInfo originalFile, FileInfo updatedFile)
         {
             if (newCDTAFileHasUpdates)
             {
-                var sourceFilePath = fiOriginalFile.FullName;
+                var sourceFilePath = originalFile.FullName;
 
                 if (!replaceSourceFile)
                 {
@@ -259,7 +259,7 @@ namespace AnalysisManagerBase
 
                 do
                 {
-                    oldFilePath = fiOriginalFile.FullName + ".old";
+                    oldFilePath = originalFile.FullName + ".old";
                     if (addon > 0)
                     {
                         oldFilePath += addon.ToString();
@@ -267,14 +267,14 @@ namespace AnalysisManagerBase
                     addon += 1;
                 } while (File.Exists(oldFilePath));
 
-                fiOriginalFile.MoveTo(oldFilePath);
+                originalFile.MoveTo(oldFilePath);
 
-                fiUpdatedFile.MoveTo(sourceFilePath);
+                updatedFile.MoveTo(sourceFilePath);
 
                 if (deleteSourceFileIfUpdated)
                 {
                     ProgRunner.GarbageCollectNow();
-                    fiOriginalFile.Delete();
+                    originalFile.Delete();
                 }
             }
             else
@@ -283,7 +283,7 @@ namespace AnalysisManagerBase
                 // However, delete the new file we created
                 ProgRunner.GarbageCollectNow();
 
-                fiUpdatedFile.Delete();
+                updatedFile.Delete();
 
             }
 
@@ -318,8 +318,8 @@ namespace AnalysisManagerBase
                     return false;
                 }
 
-                var fiOriginalFile = new FileInfo(sourceFilePath);
-                if (!fiOriginalFile.Exists)
+                var originalFile = new FileInfo(sourceFilePath);
+                if (!originalFile.Exists)
                 {
                     OnErrorEvent("Error in ValidateCDTAFileScanAndCSTags: source file not found: " + sourceFilePath);
                     return false;
@@ -342,41 +342,41 @@ namespace AnalysisManagerBase
                     outputFilePathTemp = outputFilePath;
                 }
 
-                var fiUpdatedFile = new FileInfo(outputFilePathTemp);
+                var updatedFile = new FileInfo(outputFilePathTemp);
 
                 // We use the DtaTextFileReader to parse out the scan and charge from the header line
                 var dtaTextReader = new MSDataFileReader.clsDtaTextFileReader(false);
 
                 // Open the input file
-                using (var srInFile = new StreamReader(new FileStream(fiOriginalFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                using (var reader = new StreamReader(new FileStream(originalFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
                 {
 
                     // Create the output file
-                    using (var swOutFile = new StreamWriter(new FileStream(fiUpdatedFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                    using (var writer = new StreamWriter(new FileStream(updatedFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read)))
                     {
 
-                        while (!srInFile.EndOfStream)
+                        while (!reader.EndOfStream)
                         {
-                            var lineIn = srInFile.ReadLine();
+                            var dataLine = reader.ReadLine();
 
-                            if (string.IsNullOrEmpty(lineIn))
+                            if (string.IsNullOrEmpty(dataLine))
                             {
-                                swOutFile.WriteLine();
+                                writer.WriteLine();
                                 continue;
                             }
 
                             var scanNumberStart = 0;
                             var charge = 0;
 
-                            if (lineIn.StartsWith("="))
+                            if (dataLine.StartsWith("="))
                             {
                                 // Parse the DTA header line, for example:
                                 // =================================== "H20120523_JQ_CPTAC2_4TP_Exp1_IMAC_01.0002.0002.3.dta" ==================================
 
                                 // Remove the leading and trailing characters, then extract the scan and charge
-                                var strDTAHeader = lineIn.Trim('=', ' ', '"');
+                                var dtaHeader = dataLine.Trim('=', ' ', '"');
 
-                                dtaTextReader.ExtractScanInfoFromDtaHeader(strDTAHeader, out scanNumberStart, out _, out _, out charge);
+                                dtaTextReader.ExtractScanInfoFromDtaHeader(dtaHeader, out scanNumberStart, out _, out _, out charge);
 
                                 parentIonLineIsNext = true;
 
@@ -390,17 +390,17 @@ namespace AnalysisManagerBase
                                 // Next contains the charge state, then scan= and cs= tags, for example:
                                 // 447.34573 1   scan=3 cs=1
 
-                                if (!lineIn.Contains("scan="))
+                                if (!dataLine.Contains("scan="))
                                 {
                                     // Append scan=x to the parent ion line
-                                    lineIn = lineIn.Trim() + "   scan=" + scanNumberStart;
+                                    dataLine = dataLine.Trim() + "   scan=" + scanNumberStart;
                                     parentIonLineUpdated = true;
                                 }
 
-                                if (!lineIn.Contains("cs="))
+                                if (!dataLine.Contains("cs="))
                                 {
                                     // Append cs=y to the parent ion line
-                                    lineIn = lineIn.Trim() + " cs=" + charge;
+                                    dataLine = dataLine.Trim() + " cs=" + charge;
                                     parentIonLineUpdated = true;
                                 }
 
@@ -408,13 +408,13 @@ namespace AnalysisManagerBase
 
                             }
 
-                            swOutFile.WriteLine(lineIn);
+                            writer.WriteLine(dataLine);
                         }
 
                     }
                 }
 
-                FinalizeCDTAValidation(parentIonLineUpdated, replaceSourceFile, deleteSourceFileIfUpdated, fiOriginalFile, fiUpdatedFile);
+                FinalizeCDTAValidation(parentIonLineUpdated, replaceSourceFile, deleteSourceFileIfUpdated, originalFile, updatedFile);
 
                 return true;
 
@@ -441,19 +441,19 @@ namespace AnalysisManagerBase
             try
             {
                 var inputFilePath = Path.Combine(workDir, inputFileName);
-                var ioFileInfo = new FileInfo(inputFilePath);
+                var cdtaFile = new FileInfo(inputFilePath);
 
-                if (!ioFileInfo.Exists)
+                if (!cdtaFile.Exists)
                 {
                     OnErrorEvent("_DTA.txt file not found: " + inputFilePath);
                     return false;
                 }
 
-                if (ioFileInfo.Length < FILE_SIZE_THRESHOLD)
+                if (cdtaFile.Length < FILE_SIZE_THRESHOLD)
                     return true;
 
                 // Need to condense the file
-                var message = ioFileInfo.Name + " is " + clsGlobal.BytesToGB(ioFileInfo.Length).ToString("0.00") + " GB in size; " +
+                var message = cdtaFile.Name + " is " + clsGlobal.BytesToGB(cdtaFile.Length).ToString("0.00") + " GB in size; " +
                                  "will now condense it by combining data points with consecutive zero-intensity values";
 
                 OnStatusEvent(message);
@@ -461,7 +461,7 @@ namespace AnalysisManagerBase
                 mCDTACondenser = new CondenseCDTAFile.clsCDTAFileCondenser();
                 mCDTACondenser.ProgressChanged += CDTACondenser_ProgressChanged;
 
-                var success = mCDTACondenser.ProcessFile(ioFileInfo.FullName, ioFileInfo.DirectoryName);
+                var success = mCDTACondenser.ProcessFile(cdtaFile.FullName, cdtaFile.DirectoryName);
 
                 if (!success)
                 {
@@ -470,26 +470,26 @@ namespace AnalysisManagerBase
                 }
 
                 // Check the size of the new _dta.txt file
-                ioFileInfo.Refresh();
+                cdtaFile.Refresh();
 
                 OnStatusEvent(
                     "Condensing complete; size of the new _dta.txt file is " +
-                    clsGlobal.BytesToGB(ioFileInfo.Length).ToString("0.00") + " GB");
+                    clsGlobal.BytesToGB(cdtaFile.Length).ToString("0.00") + " GB");
 
                 try
                 {
-                    var filePathOld = Path.Combine(workDir, Path.GetFileNameWithoutExtension(ioFileInfo.FullName) + "_Old.txt");
+                    var filePathOld = Path.Combine(workDir, Path.GetFileNameWithoutExtension(cdtaFile.FullName) + "_Old.txt");
 
                     OnStatusEvent("Now deleting file " + filePathOld);
 
-                    ioFileInfo = new FileInfo(filePathOld);
-                    if (ioFileInfo.Exists)
+                    cdtaFile = new FileInfo(filePathOld);
+                    if (cdtaFile.Exists)
                     {
-                        ioFileInfo.Delete();
+                        cdtaFile.Delete();
                     }
                     else
                     {
-                        OnErrorEvent("Old _DTA.txt file not found:" + ioFileInfo.FullName + "; cannot delete");
+                        OnErrorEvent("Old _DTA.txt file not found:" + cdtaFile.FullName + "; cannot delete");
                     }
 
                 }

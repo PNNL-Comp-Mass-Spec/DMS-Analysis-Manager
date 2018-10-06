@@ -203,13 +203,13 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Collapse a list of items to a tab-delimited list
         /// </summary>
-        /// <param name="lstFields"></param>
+        /// <param name="fieldNames"></param>
         /// <returns></returns>
         /// <remarks></remarks>
-        public static string CollapseList(List<string> lstFields)
+        public static string CollapseList(List<string> fieldNames)
         {
 
-            return FlattenList(lstFields, "\t");
+            return FlattenList(fieldNames, "\t");
 
         }
 
@@ -251,10 +251,10 @@ namespace AnalysisManagerBase
             {
                 var lockFilePath = dataFilePath + LOCK_FILE_EXTENSION;
 
-                var fiLockFile = new FileInfo(lockFilePath);
-                if (fiLockFile.Exists)
+                var lockFile = new FileInfo(lockFilePath);
+                if (lockFile.Exists)
                 {
-                    fiLockFile.Delete();
+                    lockFile.Delete();
                 }
 
             }
@@ -283,20 +283,20 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Flatten a list of items into a single string, with items separated by chDelimiter
+        /// Flatten a list of items into a single string, with items separated by delimiter
         /// </summary>
-        /// <param name="lstItems"></param>
+        /// <param name="itemList"></param>
         /// <param name="delimiter"></param>
         /// <returns></returns>
         /// <remarks></remarks>
-        public static string FlattenList(List<string> lstItems, string delimiter)
+        public static string FlattenList(List<string> itemList, string delimiter)
         {
-            if (lstItems == null || lstItems.Count == 0)
+            if (itemList == null || itemList.Count == 0)
             {
                 return string.Empty;
             }
 
-            return string.Join(delimiter, lstItems);
+            return string.Join(delimiter, itemList);
         }
 
         /// <summary>
@@ -331,15 +331,15 @@ namespace AnalysisManagerBase
         /// Returns the version string of the specified assembly
         /// </summary>
         /// <returns>Assembly version, e.g. 1.0.4482.23831</returns>
-        public static string GetAssemblyVersion(Assembly objAssembly)
+        public static string GetAssemblyVersion(Assembly assembly)
         {
-            // objAssembly.FullName typically returns something like this:
+            // assembly.FullName typically returns something like this:
             // AnalysisManagerProg, Version=2.3.4479.23831, Culture=neutral, PublicKeyToken=null
             //
             // the goal is to extract out the text after Version= but before the next comma
 
             var reGetVersion = new Regex("version=([0-9.]+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-            var version = objAssembly.FullName;
+            var version = assembly.FullName;
 
             var reMatch = reGetVersion.Match(version);
 
@@ -359,15 +359,15 @@ namespace AnalysisManagerBase
         /// <param name="connectionString">Connection string</param>
         /// <param name="callingFunction">Name of the calling function</param>
         /// <param name="retryCount">Number of times to retry (in case of a problem)</param>
-        /// <param name="dtResults">DataTable (Output Parameter)</param>
+        /// <param name="queryResults">DataTable (Output Parameter)</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks>Uses a timeout of 30 seconds</remarks>
-        public static bool GetDataTableByQuery(string sqlStr, string connectionString, string callingFunction, short retryCount, out DataTable dtResults)
+        public static bool GetDataTableByQuery(string sqlStr, string connectionString, string callingFunction, short retryCount, out DataTable queryResults)
         {
 
             const int timeoutSeconds = 30;
 
-            return GetDataTableByQuery(sqlStr, connectionString, callingFunction, retryCount, out dtResults, timeoutSeconds);
+            return GetDataTableByQuery(sqlStr, connectionString, callingFunction, retryCount, out queryResults, timeoutSeconds);
 
         }
 
@@ -378,13 +378,13 @@ namespace AnalysisManagerBase
         /// <param name="connectionString">Connection string</param>
         /// <param name="callingFunction">Name of the calling function</param>
         /// <param name="retryCount">Number of times to retry (in case of a problem)</param>
-        /// <param name="dtResults">DataTable (Output Parameter)</param>
+        /// <param name="queryResults">DataTable (Output Parameter)</param>
         /// <param name="timeoutSeconds">Query timeout (in seconds); minimum is 5 seconds; suggested value is 30 seconds</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks></remarks>
         public static bool GetDataTableByQuery(
             string sqlStr, string connectionString, string callingFunction,
-            short retryCount, out DataTable dtResults, int timeoutSeconds)
+            short retryCount, out DataTable queryResults, int timeoutSeconds)
         {
 
             var cmd = new SqlCommand(sqlStr)
@@ -392,7 +392,7 @@ namespace AnalysisManagerBase
                 CommandType = CommandType.Text
             };
 
-            return GetDataTableByCmd(cmd, connectionString, callingFunction, retryCount, out dtResults, timeoutSeconds);
+            return GetDataTableByCmd(cmd, connectionString, callingFunction, retryCount, out queryResults, timeoutSeconds);
 
         }
 
@@ -403,7 +403,7 @@ namespace AnalysisManagerBase
         /// <param name="connectionString">Connection string</param>
         /// <param name="callingFunction">Name of the calling function</param>
         /// <param name="retryCount">Number of times to retry (in case of a problem)</param>
-        /// <param name="dtResults">DataTable (Output Parameter)</param>
+        /// <param name="queryResults">DataTable (Output Parameter)</param>
         /// <param name="timeoutSeconds">Query timeout (in seconds); minimum is 5 seconds; suggested value is 30 seconds</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks></remarks>
@@ -412,7 +412,7 @@ namespace AnalysisManagerBase
             string connectionString,
             string callingFunction,
             short retryCount,
-            out DataTable dtResults,
+            out DataTable queryResults,
             int timeoutSeconds)
         {
 
@@ -450,7 +450,7 @@ namespace AnalysisManagerBase
                             using (var ds = new DataSet())
                             {
                                 da.Fill(ds);
-                                dtResults = ds.Tables[0];
+                                queryResults = ds.Tables[0];
                             }
                         }
                     }
@@ -497,7 +497,7 @@ namespace AnalysisManagerBase
                 }
             }
 
-            dtResults = null;
+            queryResults = null;
             return false;
 
         }
@@ -526,7 +526,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="sqlQuery">Query to run</param>
         /// <param name="connectionString">Connection string</param>
-        /// <param name="lstResults">Results, as a list of columns (first row only if multiple rows)</param>
+        /// <param name="firstQueryResult">Results, as a list of columns (first row only if multiple rows)</param>
         /// <param name="callingFunction">Name of the calling function (for logging purposes)</param>
         /// <param name="retryCount">Number of times to retry (in case of a problem)</param>
         /// <param name="timeoutSeconds">Query timeout (in seconds); minimum is 5 seconds; suggested value is 30 seconds</param>
@@ -539,22 +539,21 @@ namespace AnalysisManagerBase
         public static bool GetQueryResultsTopRow(
             string sqlQuery,
             string connectionString,
-            out List<string> lstResults,
+            out List<string> firstQueryResult,
             string callingFunction,
             short retryCount = 3,
             int timeoutSeconds = 5)
         {
 
-
-            var success = GetQueryResults(sqlQuery, connectionString, out var lstResultTable, callingFunction, retryCount, timeoutSeconds, maxRowsToReturn: 1);
+            var success = GetQueryResults(sqlQuery, connectionString, out var queryResults, callingFunction, retryCount, timeoutSeconds, maxRowsToReturn: 1);
 
             if (success)
             {
-                lstResults = lstResultTable.FirstOrDefault() ?? new List<string>();
+                firstQueryResult = queryResults.FirstOrDefault() ?? new List<string>();
                 return true;
             }
 
-            lstResults = new List<string>();
+            firstQueryResult = new List<string>();
             return false;
         }
 
@@ -563,11 +562,11 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="sqlQuery">Query to run</param>
         /// <param name="connectionString">Connection string</param>
-        /// <param name="lstResults">Results (list of list of strings)</param>
+        /// <param name="queryResults">Results (list of list of strings)</param>
         /// <param name="callingFunction">Name of the calling function (for logging purposes)</param>
         /// <param name="retryCount">Number of times to retry (in case of a problem)</param>
         /// <param name="timeoutSeconds">Query timeout (in seconds); minimum is 5 seconds; suggested value is 30 seconds</param>
-        ///<param name="maxRowsToReturn">Maximum rows to return; 0 to return all rows</param>
+        /// <param name="maxRowsToReturn">Maximum rows to return; 0 to return all rows</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks>
         /// Null values are converted to empty strings
@@ -577,7 +576,7 @@ namespace AnalysisManagerBase
         public static bool GetQueryResults(
             string sqlQuery,
             string connectionString,
-            out List<List<string>> lstResults,
+            out List<List<string>> queryResults,
             string callingFunction,
             short retryCount = 3,
             int timeoutSeconds = 30,
@@ -587,7 +586,7 @@ namespace AnalysisManagerBase
             if (OfflineMode)
             {
                 LogTools.LogError(string.Format("Offline mode enabled; {0} cannot execute query {1}", callingFunction, sqlQuery));
-                lstResults = new List<List<string>>();
+                queryResults = new List<List<string>>();
                 return false;
             }
 
@@ -599,7 +598,7 @@ namespace AnalysisManagerBase
             var dbTools = new DBTools(connectionString);
             RegisterEvents(dbTools);
 
-            var success = dbTools.GetQueryResults(sqlQuery, out lstResults, callingFunction, retryCount, timeoutSeconds, maxRowsToReturn);
+            var success = dbTools.GetQueryResults(sqlQuery, out queryResults, callingFunction, retryCount, timeoutSeconds, maxRowsToReturn);
 
             return success;
 
@@ -734,29 +733,29 @@ namespace AnalysisManagerBase
         /// Parses the headers in headerLine to look for the names specified in headerNames
         /// </summary>
         /// <param name="headerLine">Tab delimited list of headers</param>
-        /// <param name="headerNames">Expected header column names</param>
+        /// <param name="expectedHeaderNames">Expected header column names</param>
         /// <param name="isCaseSensitive">True if the header names are case sensitive</param>
         /// <returns>Dictionary with the header names and 0-based column index</returns>
         /// <remarks>Header names not found in headerLine will have an index of -1</remarks>
-        public static Dictionary<string, int> ParseHeaderLine(string headerLine, List<string> headerNames, bool isCaseSensitive = false)
+        public static Dictionary<string, int> ParseHeaderLine(string headerLine, List<string> expectedHeaderNames, bool isCaseSensitive = false)
         {
             var headerMapping = new Dictionary<string, int>();
 
-            var lstColumns = headerLine.Split('\t').ToList();
+            var columnNames = headerLine.Split('\t').ToList();
 
-            foreach (var headerName in headerNames)
+            foreach (var expectedName in expectedHeaderNames)
             {
                 var colIndex = -1;
 
                 if (isCaseSensitive)
                 {
-                    colIndex = lstColumns.IndexOf(headerName);
+                    colIndex = columnNames.IndexOf(expectedName);
                 }
                 else
                 {
-                    for (var i = 0; i <= lstColumns.Count - 1; i++)
+                    for (var i = 0; i <= columnNames.Count - 1; i++)
                     {
-                        if (IsMatch(lstColumns[i], headerName))
+                        if (IsMatch(columnNames[i], expectedName))
                         {
                             colIndex = i;
                             break;
@@ -764,7 +763,7 @@ namespace AnalysisManagerBase
                     }
                 }
 
-                headerMapping.Add(headerName, colIndex);
+                headerMapping.Add(expectedName, colIndex);
             }
 
             return headerMapping;
@@ -891,8 +890,8 @@ namespace AnalysisManagerBase
         public static int CIntSafe(string value, int defaultValue)
         {
 
-            if (int.TryParse(value, out var intValue))
-                return intValue;
+            if (int.TryParse(value, out var parsedValue))
+                return parsedValue;
 
             return defaultValue;
 
@@ -908,56 +907,56 @@ namespace AnalysisManagerBase
         public static float CSngSafe(string value, float defaultValue)
         {
 
-            if (float.TryParse(value, out var sngValue))
-                return sngValue;
+            if (float.TryParse(value, out var parsedValue))
+                return parsedValue;
 
             return defaultValue;
 
         }
 
         /// <summary>
-        /// Copies file SourceFilePath to folder TargetFolder, renaming it to TargetFileName.
-        /// However, if file TargetFileName already exists, that file will first be backed up
-        /// Furthermore, up to VersionCountToKeep old versions of the file will be kept
+        /// Copies file sourceFilePath to directory targetDirectoryPath, renaming it to targetFileName.
+        /// However, if file targetFileName already exists, that file will first be backed up
+        /// Furthermore, up to versionCountToKeep old versions of the file will be kept
         /// </summary>
-        /// <param name="SourceFilePath"></param>
-        /// <param name="TargetFolder"></param>
-        /// <param name="TargetFileName"></param>
-        /// <param name="VersionCountToKeep">Maximum backup copies of the file to keep; must be 9 or less</param>
+        /// <param name="sourceFilePath"></param>
+        /// <param name="targetDirectoryPath"></param>
+        /// <param name="targetFileName"></param>
+        /// <param name="versionCountToKeep">Maximum backup copies of the file to keep; must be 9 or less</param>
         /// <returns>True if Success, false if failure </returns>
         /// <remarks></remarks>
-        public static bool CopyAndRenameFileWithBackup(string SourceFilePath, string TargetFolder, string TargetFileName, int VersionCountToKeep)
+        public static bool CopyAndRenameFileWithBackup(string sourceFilePath, string targetDirectoryPath, string targetFileName, int versionCountToKeep)
         {
 
             try
             {
-                var ioSrcFile = new FileInfo(SourceFilePath);
-                if (!ioSrcFile.Exists)
+                var sourceFile = new FileInfo(sourceFilePath);
+                if (!sourceFile.Exists)
                 {
                     // Source file not found
                     return false;
                 }
 
-                var baseName = Path.GetFileNameWithoutExtension(TargetFileName);
+                var baseName = Path.GetFileNameWithoutExtension(targetFileName);
                 if (baseName == null)
                 {
                     // Cannot continue without a base filename
                     return false;
                 }
 
-                var extension = Path.GetExtension(TargetFileName);
+                var extension = Path.GetExtension(targetFileName);
                 if (string.IsNullOrEmpty(extension))
                 {
                     extension = ".bak";
                 }
 
-                if (VersionCountToKeep > 9)
-                    VersionCountToKeep = 9;
-                if (VersionCountToKeep < 0)
-                    VersionCountToKeep = 0;
+                if (versionCountToKeep > 9)
+                    versionCountToKeep = 9;
+                if (versionCountToKeep < 0)
+                    versionCountToKeep = 0;
 
                 // Backup any existing copies of targetFilePath
-                for (var revision = VersionCountToKeep - 1; revision >= 0; revision += -1)
+                for (var revision = versionCountToKeep - 1; revision >= 0; revision += -1)
                 {
                     try
                     {
@@ -968,8 +967,8 @@ namespace AnalysisManagerBase
                         }
                         baseNameCurrent += extension;
 
-                        var ioFileToRename = new FileInfo(Path.Combine(TargetFolder, baseNameCurrent));
-                        var newFilePath = Path.Combine(TargetFolder, baseName + "_" + (revision + 1) + extension);
+                        var fileToRename = new FileInfo(Path.Combine(targetDirectoryPath, baseNameCurrent));
+                        var newFilePath = Path.Combine(targetDirectoryPath, baseName + "_" + (revision + 1) + extension);
 
                         // Confirm that newFilePath doesn't exist; delete it if it does
                         if (File.Exists(newFilePath))
@@ -978,9 +977,9 @@ namespace AnalysisManagerBase
                         }
 
                         // Rename the current file to newFilePath
-                        if (ioFileToRename.Exists)
+                        if (fileToRename.Exists)
                         {
-                            ioFileToRename.MoveTo(newFilePath);
+                            fileToRename.MoveTo(newFilePath);
                         }
 
                     }
@@ -991,10 +990,10 @@ namespace AnalysisManagerBase
 
                 }
 
-                var finalFilePath = Path.Combine(TargetFolder, TargetFileName);
+                var finalFilePath = Path.Combine(targetDirectoryPath, targetFileName);
 
-                // Now copy the file from SourceFilePath to newFilePath
-                ioSrcFile.CopyTo(finalFilePath, true);
+                // Now copy the file from sourceFilePath to newFilePath
+                sourceFile.CopyTo(finalFilePath, true);
 
             }
             catch (Exception)
@@ -1169,7 +1168,7 @@ namespace AnalysisManagerBase
 
         /// <summary>
         /// Creates a .hashcheck file for the specified file
-        /// The file will be created in the same folder as the data file, and will contain size, modification_date_utc, and hash
+        /// The file will be created in the same directory as the data file, and will contain size, modification_date_utc, and hash
         /// </summary>
         /// <param name="dataFilePath"></param>
         /// <param name="computeMD5Hash">If True, computes the MD5 hash, otherwise creates a hashcheck file with an empty string for the hash</param>
@@ -1201,7 +1200,7 @@ namespace AnalysisManagerBase
 
         /// <summary>
         /// Creates a .hashcheck file for the specified file, using the given hash string
-        /// The file will be created in the same folder as the data file, and will contain size, modification_date_utc, hash, and hash type
+        /// The file will be created in the same directory as the data file, and will contain size, modification_date_utc, hash, and hash type
         /// </summary>
         /// <param name="dataFilePath"></param>
         /// <param name="md5Hash"></param>
@@ -1233,32 +1232,32 @@ namespace AnalysisManagerBase
         /// <param name="filePath1">Path to the first file</param>
         /// <param name="filePath2">Path to the second file</param>
         /// <returns>True if the files match; false if they don't match; also returns false if either file is missing</returns>
-        /// <remarks></remarks>
+        /// <remarks>See also TextFilesMatch</remarks>
         public static bool FilesMatch(string filePath1, string filePath2)
         {
 
             try
             {
-                var fiFile1 = new FileInfo(filePath1);
-                var fiFile2 = new FileInfo(filePath2);
+                var file1 = new FileInfo(filePath1);
+                var file2 = new FileInfo(filePath2);
 
-                if (!fiFile1.Exists || !fiFile2.Exists)
+                if (!file1.Exists || !file2.Exists)
                 {
                     return false;
                 }
 
-                if (fiFile1.Length != fiFile2.Length)
+                if (file1.Length != file2.Length)
                 {
                     return false;
                 }
 
-                using (var srFile1 = new BinaryReader(new FileStream(fiFile1.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                using (var reader1 = new BinaryReader(new FileStream(file1.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
                 {
-                    using (var srFile2 = new BinaryReader(new FileStream(fiFile2.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                    using (var reader2 = new BinaryReader(new FileStream(file2.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
                     {
-                        while (srFile1.BaseStream.Position < fiFile1.Length)
+                        while (reader1.BaseStream.Position < file1.Length)
                         {
-                            if (srFile1.ReadByte() != srFile2.ReadByte())
+                            if (reader1.ReadByte() != reader2.ReadByte())
                             {
                                 return false;
                             }
@@ -1358,11 +1357,11 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Determine the free disk space on the drive with the given directory
         /// </summary>
-        /// <param name="diDirectory"></param>
+        /// <param name="targetDirectory"></param>
         /// <returns></returns>
-        private static double GetFreeDiskSpaceLinux(DirectoryInfo diDirectory)
+        private static double GetFreeDiskSpaceLinux(DirectoryInfo targetDirectory)
         {
-            var driveInfo = GetLocalDriveInfo(diDirectory);
+            var driveInfo = GetLocalDriveInfo(targetDirectory);
             if (driveInfo == null)
                 return 0;
 
@@ -1373,17 +1372,17 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Determine the free disk space on the drive with the given directory
         /// </summary>
-        /// <param name="diDirectory"></param>
+        /// <param name="targetDirectory"></param>
         /// <returns>Free space, in MB</returns>
         /// <remarks>Supports local drives on Windows and Linux; supports remote shares like \\Server\Share\ on Windows</remarks>
-        private static double GetFreeDiskSpaceWindows(DirectoryInfo diDirectory)
+        private static double GetFreeDiskSpaceWindows(DirectoryInfo targetDirectory)
         {
             double freeSpaceMB;
 
-            if (diDirectory.Root.FullName.StartsWith(@"\\") || !diDirectory.Root.FullName.Contains(":"))
+            if (targetDirectory.Root.FullName.StartsWith(@"\\") || !targetDirectory.Root.FullName.Contains(":"))
             {
                 // Directory path is a remote share; use GetDiskFreeSpaceEx in Kernel32.dll
-                var targetFilePath = Path.Combine(diDirectory.FullName, "DummyFile.txt");
+                var targetFilePath = Path.Combine(targetDirectory.FullName, "DummyFile.txt");
 
                 var success = DiskInfo.GetDiskFreeSpace(
                     targetFilePath, out var totalNumberOfFreeBytes, out var errorMessage, reportFreeSpaceAvailableToUser: false);
@@ -1402,8 +1401,8 @@ namespace AnalysisManagerBase
             else
             {
                 // Directory is a local drive; can query with .NET
-                var diDrive = new DriveInfo(diDirectory.Root.FullName);
-                freeSpaceMB = BytesToMB(diDrive.TotalFreeSpace);
+                var driveInfo = new DriveInfo(targetDirectory.Root.FullName);
+                freeSpaceMB = BytesToMB(driveInfo.TotalFreeSpace);
             }
 
             return freeSpaceMB;
@@ -1507,13 +1506,13 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Compares two files line-by-line.  If comparisonStartLine is > 0, ignores differences up until the given line number.
+        /// Compares two files line-by-line.  If comparisonStartLine is greater than 1, ignores differences up until the given line number.
         /// </summary>
         /// <param name="filePath1">First file</param>
         /// <param name="filePath2">Second file</param>
         /// <param name="comparisonStartLine">Line at which to start the comparison; if 0 or 1, compares all lines</param>
         /// <param name="comparisonEndLine">Line at which to end the comparison; if 0, compares all the way to the end</param>
-        /// <param name="ignoreWhitespace">If true, removes white space from the beginning and end of each line before comparing</param>
+        /// <param name="ignoreWhitespace">If true, removes whitespace from the beginning and end of each line before comparing</param>
         /// <param name="lineIgnoreRegExSpecs">List of RegEx match specs that indicate lines to ignore</param>
         /// <returns></returns>
         /// <remarks></remarks>
@@ -1523,20 +1522,20 @@ namespace AnalysisManagerBase
             bool ignoreWhitespace, List<Regex> lineIgnoreRegExSpecs)
         {
 
-            var chWhiteSpaceChars = new List<char>() { '\t', ' ' }.ToArray();
+            var whiteSpaceChars = new List<char>() { '\t', ' ' }.ToArray();
 
             try
             {
                 var lineNumber = 0;
 
-                using (var srFile1 = new StreamReader(new FileStream(filePath1, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                using (var reader1 = new StreamReader(new FileStream(filePath1, FileMode.Open, FileAccess.Read, FileShare.Read)))
                 {
-                    using (var srFile2 = new StreamReader(new FileStream(filePath2, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                    using (var reader2 = new StreamReader(new FileStream(filePath2, FileMode.Open, FileAccess.Read, FileShare.Read)))
                     {
 
-                        while (!srFile1.EndOfStream)
+                        while (!reader1.EndOfStream)
                         {
-                            var dataLine1 = srFile1.ReadLine();
+                            var dataLine1 = reader1.ReadLine();
                             lineNumber += 1;
 
                             if (comparisonEndLine > 0 && lineNumber > comparisonEndLine)
@@ -1548,9 +1547,9 @@ namespace AnalysisManagerBase
                             if (dataLine1 == null)
                                 dataLine1 = string.Empty;
 
-                            if (!srFile2.EndOfStream)
+                            if (!reader2.EndOfStream)
                             {
-                                var dataLine2 = srFile2.ReadLine();
+                                var dataLine2 = reader2.ReadLine();
 
                                 if (lineNumber >= comparisonStartLine)
                                 {
@@ -1559,14 +1558,15 @@ namespace AnalysisManagerBase
 
                                     if (ignoreWhitespace)
                                     {
-                                        dataLine1 = dataLine1.Trim(chWhiteSpaceChars);
-                                        dataLine2 = dataLine2.Trim(chWhiteSpaceChars);
+                                        dataLine1 = dataLine1.Trim(whiteSpaceChars);
+                                        dataLine2 = dataLine2.Trim(whiteSpaceChars);
                                     }
 
                                     if (dataLine1 != dataLine2)
                                     {
                                         // Lines don't match; are we ignoring both of them?
-                                        if (TextFilesMatchIgnoreLine(dataLine1, lineIgnoreRegExSpecs) && TextFilesMatchIgnoreLine(dataLine2, lineIgnoreRegExSpecs))
+                                        if (TextFilesMatchIgnoreLine(dataLine1, lineIgnoreRegExSpecs) &&
+                                            TextFilesMatchIgnoreLine(dataLine2, lineIgnoreRegExSpecs))
                                         {
                                             // Ignoring both lines
                                         }
@@ -1602,16 +1602,16 @@ namespace AnalysisManagerBase
                                     }
                                 }
 
-                                if (srFile1.EndOfStream)
+                                if (reader1.EndOfStream)
                                 {
                                     break;
                                 }
 
-                                dataLine1 = srFile1.ReadLine();
+                                dataLine1 = reader1.ReadLine();
                                 if (dataLine1 == null)
                                     dataLine1 = string.Empty;
                                 else
-                                    dataLine1 = dataLine1.Trim(chWhiteSpaceChars);
+                                    dataLine1 = dataLine1.Trim(whiteSpaceChars);
 
                             } while (true);
 
@@ -1619,7 +1619,7 @@ namespace AnalysisManagerBase
 
                         }
 
-                        if (srFile2.EndOfStream)
+                        if (reader2.EndOfStream)
                             return true;
 
                         // File2 has more lines than file1
@@ -1634,11 +1634,11 @@ namespace AnalysisManagerBase
                         // See if the remaining lines are blank
                         do
                         {
-                            var lineExtra = srFile2.ReadLine();
+                            var lineExtra = reader2.ReadLine();
                             if (lineExtra == null)
                                 lineExtra = string.Empty;
                             else
-                                lineExtra = lineExtra.Trim(chWhiteSpaceChars);
+                                lineExtra = lineExtra.Trim(whiteSpaceChars);
 
                             if (lineExtra.Length != 0)
                             {
@@ -1648,7 +1648,7 @@ namespace AnalysisManagerBase
                                     return false;
                                 }
                             }
-                        } while (!srFile2.EndOfStream);
+                        } while (!reader2.EndOfStream);
                     }
                 }
 
@@ -1838,8 +1838,8 @@ namespace AnalysisManagerBase
 
             errorMessage = string.Empty;
 
-            var diDirectory = new DirectoryInfo(directoryPath);
-            if (!diDirectory.Exists)
+            var targetDirectory = new DirectoryInfo(directoryPath);
+            if (!targetDirectory.Exists)
             {
                 // Example error message: Organism DB directory not found: G:\DMS_Temp_Org
                 errorMessage = directoryDescription + " not found: " + directoryPath;
@@ -1851,11 +1851,11 @@ namespace AnalysisManagerBase
 
             if (LinuxOS)
             {
-                freeSpaceMB = GetFreeDiskSpaceLinux(diDirectory);
+                freeSpaceMB = GetFreeDiskSpaceLinux(targetDirectory);
             }
             else
             {
-                freeSpaceMB = GetFreeDiskSpaceWindows(diDirectory);
+                freeSpaceMB = GetFreeDiskSpaceWindows(targetDirectory);
             }
 
             if (freeSpaceMB < minFreeSpaceMB)

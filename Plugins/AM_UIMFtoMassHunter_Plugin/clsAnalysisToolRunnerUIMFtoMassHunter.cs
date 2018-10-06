@@ -8,6 +8,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.InteropServices;
 using AnalysisManagerBase;
 
 namespace AnalysisManagerUIMFtoMassHunterPlugin
@@ -157,7 +158,7 @@ namespace AnalysisManagerUIMFtoMassHunterPlugin
                 ConsoleOutputFilePath = mConsoleOutputFile
             };
             RegisterEvents(cmdRunner);
-            cmdRunner.LoopWaiting += cmdRunner_LoopWaiting;
+            cmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
             mProgress = PROGRESS_PCT_STARTING;
 
@@ -168,9 +169,9 @@ namespace AnalysisManagerUIMFtoMassHunterPlugin
                 // Write the console output to a text file
                 clsGlobal.IdleLoop(0.25);
 
-                using (var swConsoleOutputfile = new StreamWriter(new FileStream(cmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                using (var writer = new StreamWriter(new FileStream(cmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
-                    swConsoleOutputfile.WriteLine(cmdRunner.CachedConsoleOutput);
+                    writer.WriteLine(cmdRunner.CachedConsoleOutput);
                 }
             }
 
@@ -234,21 +235,21 @@ namespace AnalysisManagerUIMFtoMassHunterPlugin
                     LogDebug("Parsing file " + strConsoleOutputFilePath);
                 }
 
-                using (var srInFile = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
 
-                    while (!srInFile.EndOfStream)
+                    while (!reader.EndOfStream)
                     {
-                        var strLineIn = srInFile.ReadLine();
+                        var dataLine = reader.ReadLine();
 
-                        if (string.IsNullOrWhiteSpace(strLineIn))
+                        if (string.IsNullOrWhiteSpace(dataLine))
                         {
                             continue;
                         }
 
-                        if (strLineIn.StartsWith("error ", StringComparison.OrdinalIgnoreCase))
+                        if (dataLine.StartsWith("error ", StringComparison.OrdinalIgnoreCase))
                         {
-                            StoreConsoleErrorMessage(srInFile, strLineIn);
+                            StoreConsoleErrorMessage(reader, dataLine);
                         }
                     }
                 }
@@ -265,22 +266,22 @@ namespace AnalysisManagerUIMFtoMassHunterPlugin
 
         }
 
-        private void StoreConsoleErrorMessage(StreamReader srInFile, string strLineIn)
+        private void StoreConsoleErrorMessage(StreamReader reader, string firstDataLine)
         {
             if (string.IsNullOrEmpty(mConsoleOutputErrorMsg))
             {
                 mConsoleOutputErrorMsg = "Error running UIMFtoMassHunter:";
             }
-            mConsoleOutputErrorMsg += "; " + strLineIn;
+            mConsoleOutputErrorMsg += "; " + firstDataLine;
 
-            while (!srInFile.EndOfStream)
+            while (!reader.EndOfStream)
             {
                 // Store the remaining console output lines
-                strLineIn = srInFile.ReadLine();
+                var dataLine = reader.ReadLine();
 
-                if (!string.IsNullOrWhiteSpace(strLineIn) && !strLineIn.StartsWith("========"))
+                if (!string.IsNullOrWhiteSpace(dataLine) && !dataLine.StartsWith("========"))
                 {
-                    mConsoleOutputErrorMsg += "; " + strLineIn;
+                    mConsoleOutputErrorMsg += "; " + dataLine;
                 }
 
             }
@@ -306,7 +307,7 @@ namespace AnalysisManagerUIMFtoMassHunterPlugin
 
         #region "Event Handlers"
 
-        void cmdRunner_LoopWaiting()
+        void CmdRunner_LoopWaiting()
         {
 
             // Synchronize the stored Debug level with the value stored in the database

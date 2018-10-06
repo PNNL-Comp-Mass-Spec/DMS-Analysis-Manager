@@ -331,11 +331,11 @@ namespace AnalysisManagerMsXmlGenPlugIn
                     return false;
                 }
 
-                using (var srMsXmlfile = new StreamReader(new FileStream(outputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(outputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
-                    while (!srMsXmlfile.EndOfStream)
+                    while (!reader.EndOfStream)
                     {
-                        var dataLine = srMsXmlfile.ReadLine();
+                        var dataLine = reader.ReadLine();
                         if (!string.IsNullOrWhiteSpace(dataLine))
                         {
                             mostRecentLine = dataLine;

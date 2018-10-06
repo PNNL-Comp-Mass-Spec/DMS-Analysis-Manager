@@ -196,7 +196,7 @@ namespace AnalysisManagerBase
         void AddDatasetInfo(string datasetName, int datasetID);
 
         /// <summary>
-        /// Add a filename to definitely move to the results folder
+        /// Add a filename to definitely move to the results directory
         /// </summary>
         /// <param name="fileName"></param>
         /// <remarks>FileName can be a file path; only the filename will be stored in ResultFilesToKeep</remarks>
@@ -210,14 +210,14 @@ namespace AnalysisManagerBase
         void AddServerFileToDelete(string filePath);
 
         /// <summary>
-        /// Add a filename to not move to the results folder
+        /// Add a filename to not move to the results directory
         /// </summary>
         /// <param name="fileName"></param>
         /// <remarks>FileName can be a file path; only the filename will be stored in ResultFilesToSkip</remarks>
         void AddResultFileToSkip(string fileName);
 
         /// <summary>
-        /// Add a filename extension to not move to the results folder
+        /// Add a filename extension to not move to the results directory
         /// </summary>
         /// <param name="fileExtension"></param>
         /// <remarks>Can be a file extension (like .raw) or even a partial file name like _peaks.txt</remarks>

@@ -139,7 +139,7 @@ namespace AnalysisManagerBase
         protected DateTime mStopTime;
 
         /// <summary>
-        /// Results folder name
+        /// Results directory name
         /// </summary>
         protected string mResultsFolderName;
 
@@ -223,7 +223,7 @@ namespace AnalysisManagerBase
         public int Job => mJob;
 
         /// <summary>
-        /// Publicly accessible results folder name and path
+        /// Publicly accessible results directory name and path
         /// </summary>
         public string ResFolderName => mResultsFolderName;
 
@@ -353,18 +353,18 @@ namespace AnalysisManagerBase
                 return string.Empty;
             }
 
-            var dtElapsedTime = stopTime.Subtract(startTime);
+            var elapsedTime = stopTime.Subtract(startTime);
 
             if (mDebugLevel >= 2)
             {
                 LogDebug($"CalcElapsedTime: StartTime = {startTime}; StopTime = {stopTime}");
 
-                LogDebug($"CalcElapsedTime: {dtElapsedTime.Hours} Hours, {dtElapsedTime.Minutes} Minutes, {dtElapsedTime.Seconds} Seconds");
+                LogDebug($"CalcElapsedTime: {elapsedTime.Hours} Hours, {elapsedTime.Minutes} Minutes, {elapsedTime.Seconds} Seconds");
 
-                LogDebug($"CalcElapsedTime: TotalMinutes = {dtElapsedTime.TotalMinutes:0.00}");
+                LogDebug($"CalcElapsedTime: TotalMinutes = {elapsedTime.TotalMinutes:0.00}");
             }
 
-            return dtElapsedTime.Hours.ToString("###0") + ":" + dtElapsedTime.Minutes.ToString("00") + ":" + dtElapsedTime.Seconds.ToString("00");
+            return elapsedTime.Hours.ToString("###0") + ":" + elapsedTime.Minutes.ToString("00") + ":" + elapsedTime.Seconds.ToString("00");
 
         }
 
@@ -475,61 +475,61 @@ namespace AnalysisManagerBase
                 return;
             }
 
-            var failedResultsFolderPath = mMgrParams.GetParam("FailedResultsFolderPath");
-            if (string.IsNullOrWhiteSpace(failedResultsFolderPath))
+            var failedResultsDirectoryPath = mMgrParams.GetParam("FailedResultsFolderPath");
+            if (string.IsNullOrWhiteSpace(failedResultsDirectoryPath))
             {
                 LogErrorToDatabase("Manager parameter FailedResultsFolderPath not defined for manager " + mMgrParams.ManagerName);
-                failedResultsFolderPath = @"C:\" + DMS_FAILED_RESULTS_DIRECTORY_NAME;
+                failedResultsDirectoryPath = @"C:\" + DMS_FAILED_RESULTS_DIRECTORY_NAME;
             }
 
-            LogWarning("Processing interrupted; copying results to archive folder: " + failedResultsFolderPath);
+            LogWarning("Processing interrupted; copying results to archive directory: " + failedResultsDirectoryPath);
 
             // Bump up the debug level if less than 2
             if (mDebugLevel < 2)
                 mDebugLevel = 2;
 
             // Try to save whatever files are in the work directory (however, delete the _DTA.txt and _DTA.zip files first)
-            var folderPathToArchive = string.Copy(mWorkDir);
+            var directoryPathToArchive = string.Copy(mWorkDir);
 
-            // Make the results folder
+            // Make the results directory
             var success = MakeResultsFolder();
             if (success)
             {
-                // Move the result files into the result folder
+                // Move the result files into the results directory
                 var moveSucceed = MoveResultFiles();
                 if (moveSucceed)
                 {
                     // Move was a success; update folderPathToArchive
-                    folderPathToArchive = Path.Combine(mWorkDir, mResultsFolderName);
+                    directoryPathToArchive = Path.Combine(mWorkDir, mResultsFolderName);
                 }
             }
 
-            // Copy the results folder to the Archive folder
+            // Copy the results directory to the Archive directory
             var analysisResults = new clsAnalysisResults(mMgrParams, mJobParams);
-            analysisResults.CopyFailedResultsToArchiveFolder(folderPathToArchive, failedResultsFolderPath);
+            analysisResults.CopyFailedResultsToArchiveFolder(directoryPathToArchive, failedResultsDirectoryPath);
         }
 
         /// <summary>
-        /// Copies a file (typically a mzXML or mzML file) to a server cache folder
-        /// Will store the file in a subdirectory based on job parameter OutputFolderName, and below that, in a folder with a name like 2013_2
+        /// Copies a file (typically a mzXML or mzML file) to a server cache directory
+        /// Will store the file in a subdirectory based on job parameter OutputFolderName, and below that, in a directory with a name like 2013_2
         /// </summary>
-        /// <param name="cacheFolderPath">Cache folder base path, e.g. \\proto-6\MSXML_Cache</param>
+        /// <param name="cacheDirectoryPath">Cache directory base path, e.g. \\proto-6\MSXML_Cache</param>
         /// <param name="sourceFilePath">Path to the data file</param>
         /// <param name="purgeOldFilesIfNeeded">Set to True to automatically purge old files if the space usage is over 20 TB</param>
         /// <returns>Path to the remotely cached file; empty path if an error</returns>
-        protected string CopyFileToServerCache(string cacheFolderPath, string sourceFilePath, bool purgeOldFilesIfNeeded)
+        protected string CopyFileToServerCache(string cacheDirectoryPath, string sourceFilePath, bool purgeOldFilesIfNeeded)
         {
 
             try
             {
-                // mResultsFolderName should contain the output folder; e.g. MSXML_Gen_1_120_275966
+                // mResultsFolderName should contain the output directory; e.g. MSXML_Gen_1_120_275966
                 if (string.IsNullOrEmpty(mResultsFolderName))
                 {
                     LogError("mResultsFolderName (from job parameter OutputFolderName) is empty; cannot construct MSXmlCache path");
                     return string.Empty;
                 }
 
-                // Remove the dataset ID portion from the output folder
+                // Remove the dataset ID portion from the output directory
                 string toolNameVersionFolder;
                 try
                 {
@@ -555,14 +555,16 @@ namespace AnalysisManagerBase
 
 
                 var success = CopyFileToServerCache(
-                    cacheFolderPath, toolNameVersionFolder, sourceFilePath, datasetYearQuarter,
+                    cacheDirectoryPath, toolNameVersionFolder, sourceFilePath, datasetYearQuarter,
                     purgeOldFilesIfNeeded: purgeOldFilesIfNeeded, remoteCacheFilePath: out var remoteCacheFilePath);
 
                 if (!success)
                 {
                     if (string.IsNullOrEmpty(mMessage))
                     {
-                        LogError("CopyFileToServerCache returned false copying the " + Path.GetExtension(sourceFilePath) + " file to " + Path.Combine(cacheFolderPath, toolNameVersionFolder));
+                        LogError(string.Format("CopyFileToServerCache returned false copying the {0} file to {1}",
+                                               Path.GetExtension(sourceFilePath),
+                                               Path.Combine(cacheDirectoryPath, toolNameVersionFolder)));
                         return string.Empty;
                     }
                 }
@@ -579,11 +581,11 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Copies a file (typically a mzXML or mzML file) to a server cache folder
+        /// Copies a file (typically a mzXML or mzML file) to a server cache directory
         /// Will store the file in the subdirectory subDirectoryInTarget and, below that, in a directory with a name like 2013_2
         /// </summary>
-        /// <param name="cacheFolderPath">Cache folder base path, e.g. \\proto-6\MSXML_Cache</param>
-        /// <param name="subDirectoryInTarget">Directory name to create below cacheFolderPath (optional), e.g. MSXML_Gen_1_93 or MSConvert</param>
+        /// <param name="cacheDirectoryPath">Cache directory base path, e.g. \\proto-6\MSXML_Cache</param>
+        /// <param name="subDirectoryInTarget">Directory name to create below cacheDirectoryPath (optional), e.g. MSXML_Gen_1_93 or MSConvert</param>
         /// <param name="sourceFilePath">Path to the data file</param>
         /// <param name="datasetYearQuarter">
         /// Dataset year quarter text (optional)
@@ -592,28 +594,28 @@ namespace AnalysisManagerBase
         /// <param name="purgeOldFilesIfNeeded">Set to True to automatically purge old files if the space usage is over 20 TB</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks>
-        /// Determines the Year_Quarter folder named using the DatasetStoragePath or DatasetArchivePath job parameter
+        /// Determines the Year_Quarter directory named using the DatasetStoragePath or DatasetArchivePath job parameter
         /// If those parameters are not defined, copies the file anyway
         /// </remarks>
         protected bool CopyFileToServerCache(
-            string cacheFolderPath,
+            string cacheDirectoryPath,
             string subDirectoryInTarget,
             string sourceFilePath,
             string datasetYearQuarter,
             bool purgeOldFilesIfNeeded)
         {
             return CopyFileToServerCache(
-                cacheFolderPath, subDirectoryInTarget, sourceFilePath,
+                cacheDirectoryPath, subDirectoryInTarget, sourceFilePath,
                 datasetYearQuarter, purgeOldFilesIfNeeded, out _);
 
         }
 
         /// <summary>
-        /// Copies a file (typically a mzXML or mzML file) to a server cache folder
-        /// Will store the file in the directory subDirectoryInTarget and, below that, in a folder with a name like 2013_2
+        /// Copies a file (typically a mzXML or mzML file) to a server cache directory
+        /// Will store the file in the directory subDirectoryInTarget and, below that, in a directory with a name like 2013_2
         /// </summary>
-        /// <param name="cacheFolderPath">Cache folder base path, e.g. \\proto-11\MSXML_Cache</param>
-        /// <param name="subDirectoryInTarget">Directory name to create below cacheFolderPath (optional), e.g. MSXML_Gen_1_93 or MSConvert</param>
+        /// <param name="cacheDirectoryPath">Cache directory base path, e.g. \\proto-11\MSXML_Cache</param>
+        /// <param name="subDirectoryInTarget">Directory name to create below cacheDirectoryPath (optional), e.g. MSXML_Gen_1_93 or MSConvert</param>
         /// <param name="sourceFilePath">Path to the data file</param>
         /// <param name="datasetYearQuarter">
         /// Dataset year quarter text (optional)
@@ -623,11 +625,11 @@ namespace AnalysisManagerBase
         /// <param name="remoteCacheFilePath">Output parameter: the target file path (determined by this function)</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks>
-        /// Determines the Year_Quarter folder named using the DatasetStoragePath or DatasetArchivePath job parameter
+        /// Determines the Year_Quarter directory named using the DatasetStoragePath or DatasetArchivePath job parameter
         /// If those parameters are not defined, copies the file anyway
         /// </remarks>
         protected bool CopyFileToServerCache(
-            string cacheFolderPath,
+            string cacheDirectoryPath,
             string subDirectoryInTarget, string
             sourceFilePath,
             string datasetYearQuarter,
@@ -639,24 +641,24 @@ namespace AnalysisManagerBase
 
             try
             {
-                var diCacheFolder = new DirectoryInfo(cacheFolderPath);
+                var cacheDirectory = new DirectoryInfo(cacheDirectoryPath);
 
-                if (!diCacheFolder.Exists)
+                if (!cacheDirectory.Exists)
                 {
-                    LogWarning("Cache folder not found: " + cacheFolderPath);
+                    LogWarning("Cache directory not found: " + cacheDirectoryPath);
                     return false;
                 }
 
                 DirectoryInfo targetDirectory;
 
-                // Define the target folder
+                // Define the target directory
                 if (string.IsNullOrEmpty(subDirectoryInTarget))
                 {
-                    targetDirectory = diCacheFolder;
+                    targetDirectory = cacheDirectory;
                 }
                 else
                 {
-                    targetDirectory = new DirectoryInfo(Path.Combine(diCacheFolder.FullName, subDirectoryInTarget));
+                    targetDirectory = new DirectoryInfo(Path.Combine(cacheDirectory.FullName, subDirectoryInTarget));
                     if (!targetDirectory.Exists)
                         targetDirectory.Create();
                 }
@@ -696,34 +698,34 @@ namespace AnalysisManagerBase
                     return false;
                 }
 
-                var fiTargetFile = new FileInfo(Path.Combine(targetDirectory.FullName, sourceFileName));
+                var targetFile = new FileInfo(Path.Combine(targetDirectory.FullName, sourceFileName));
 
                 ResetTimestampForQueueWaitTimeLogging();
                 var startTime = DateTime.UtcNow;
 
-                var success = mFileTools.CopyFileUsingLocks(sourceFilePath, fiTargetFile.FullName, true);
-                LogCopyStats(startTime, fiTargetFile.FullName);
+                var success = mFileTools.CopyFileUsingLocks(sourceFilePath, targetFile.FullName, true);
+                LogCopyStats(startTime, targetFile.FullName);
 
                 if (!success)
                 {
-                    LogError("CopyFileUsingLocks returned false copying " + Path.GetFileName(sourceFilePath) + " to " + fiTargetFile.FullName);
+                    LogError("CopyFileUsingLocks returned false copying " + Path.GetFileName(sourceFilePath) + " to " + targetFile.FullName);
                     return false;
                 }
 
-                remoteCacheFilePath = fiTargetFile.FullName;
+                remoteCacheFilePath = targetFile.FullName;
 
-                if (fiTargetFile.DirectoryName == null)
+                if (targetFile.DirectoryName == null)
                 {
                     LogError("DirectoryName is null for the target directory; cannot copy the file to the remote cache");
                     return false;
                 }
 
                 // Copy over the .Hashcheck file
-                mFileTools.CopyFile(hashcheckFilePath, Path.Combine(fiTargetFile.DirectoryName, Path.GetFileName(hashcheckFilePath)), true);
+                mFileTools.CopyFile(hashcheckFilePath, Path.Combine(targetFile.DirectoryName, Path.GetFileName(hashcheckFilePath)), true);
 
                 if (purgeOldFilesIfNeeded)
                 {
-                    PurgeOldServerCacheFiles(cacheFolderPath);
+                    PurgeOldServerCacheFiles(cacheDirectoryPath);
                 }
 
                 return true;
@@ -737,7 +739,7 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Copies the .mzXML file to the generic MSXML_Cache folder, e.g. \\proto-6\MSXML_Cache\MSConvert
+        /// Copies the .mzXML file to the generic MSXML_Cache directory, e.g. \\proto-6\MSXML_Cache\MSConvert
         /// </summary>
         /// <param name="sourceFilePath"></param>
         /// <param name="datasetYearQuarter">Dataset year quarter text, e.g. 2013_2; if this this parameter is blank, will auto-determine using Job Parameter DatasetStoragePath</param>
@@ -745,7 +747,7 @@ namespace AnalysisManagerBase
         /// <param name="purgeOldFilesIfNeeded">Set to True to automatically purge old files if the space usage is over 20 TB</param>
         /// <returns>True if success; false if an error</returns>
         /// <remarks>
-        /// Contrast with CopyMSXmlToCache in clsAnalysisToolRunnerMSXMLGen, where the target folder is
+        /// Contrast with CopyMSXmlToCache in clsAnalysisToolRunnerMSXMLGen, where the target directory is
         /// of the form \\proto-6\MSXML_Cache\MSConvert\MSXML_Gen_1_93
         /// </remarks>
         protected bool CopyMzXMLFileToServerCache(string sourceFilePath, string datasetYearQuarter, string msXmlGeneratorName, bool purgeOldFilesIfNeeded)
@@ -753,7 +755,7 @@ namespace AnalysisManagerBase
 
             try
             {
-                var strMSXMLCacheFolderPath = mMgrParams.GetParam(clsAnalysisResources.JOB_PARAM_MSXML_CACHE_FOLDER_PATH, string.Empty);
+                var msXMLCacheDirectoryPath = mMgrParams.GetParam(clsAnalysisResources.JOB_PARAM_MSXML_CACHE_FOLDER_PATH, string.Empty);
 
                 if (string.IsNullOrEmpty(msXmlGeneratorName))
                 {
@@ -765,7 +767,7 @@ namespace AnalysisManagerBase
                     }
                 }
 
-                var success = CopyFileToServerCache(strMSXMLCacheFolderPath, msXmlGeneratorName, sourceFilePath, datasetYearQuarter, purgeOldFilesIfNeeded);
+                var success = CopyFileToServerCache(msXMLCacheDirectoryPath, msXmlGeneratorName, sourceFilePath, datasetYearQuarter, purgeOldFilesIfNeeded);
                 return success;
 
             }
@@ -778,36 +780,36 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Copies the files from the results folder to the transfer folder on the server
+        /// Copies the files from the results directory to the transfer directory on the server
         /// </summary>
         /// <returns>True if success, otherwise false</returns>
         /// <remarks></remarks>
         protected bool CopyResultsFolderToServer()
         {
 
-            var transferFolderPath = GetTransferFolderPath();
+            var transferDirectoryPath = GetTransferFolderPath();
 
-            if (string.IsNullOrEmpty(transferFolderPath))
+            if (string.IsNullOrEmpty(transferDirectoryPath))
             {
                 // Error has already been logged and mMessage has been updated
                 return false;
             }
 
-            return CopyResultsFolderToServer(transferFolderPath);
+            return CopyResultsFolderToServer(transferDirectoryPath);
         }
 
         /// <summary>
-        /// Copies the files from the results folder to the transfer folder on the server
+        /// Copies the files from the results directory to the transfer directory on the server
         /// </summary>
-        /// <param name="transferFolderPath">Base transfer folder path to use
+        /// <param name="transferDirectoryPath">Base transfer directory path to use
         /// e.g. \\proto-6\DMS3_Xfer\ or
         /// \\protoapps\PeptideAtlas_Staging\1000_DataPackageName</param>
         /// <returns>True if success, otherwise false</returns>
         /// <remarks></remarks>
-        protected bool CopyResultsFolderToServer(string transferFolderPath)
+        protected bool CopyResultsFolderToServer(string transferDirectoryPath)
         {
 
-            var sourceFolderPath = string.Empty;
+            var sourceDirectoryPath = string.Empty;
             string targetDirectoryPath;
 
             var analysisResults = new clsAnalysisResults(mMgrParams, mJobParams);
@@ -826,56 +828,56 @@ namespace AnalysisManagerBase
                 if (string.IsNullOrEmpty(mResultsFolderName))
                 {
                     // Log this error to the database (the logger will also update the local log file)
-                    LogErrorToDatabase("Results folder name is not defined, job " + Job);
-                    mMessage = "Results folder name is not defined";
+                    LogErrorToDatabase("Results directory name is not defined, job " + Job);
+                    mMessage = "Results directory name is not defined";
 
-                    // Without a source folder; there isn't much we can do
+                    // Without a source directory; there isn't much we can do
                     return false;
                 }
 
-                sourceFolderPath = Path.Combine(mWorkDir, mResultsFolderName);
+                sourceDirectoryPath = Path.Combine(mWorkDir, mResultsFolderName);
 
-                // Verify the source folder exists
-                if (!Directory.Exists(sourceFolderPath))
+                // Verify the source directory exists
+                if (!Directory.Exists(sourceDirectoryPath))
                 {
                     // Log this error to the database
-                    LogErrorToDatabase("Results folder not found, " + mJobParams.GetJobStepDescription() + ", folder " + sourceFolderPath);
-                    mMessage = "Results folder not found: " + sourceFolderPath;
+                    LogErrorToDatabase("Results directory not found, " + mJobParams.GetJobStepDescription() + ", directory " + sourceDirectoryPath);
+                    mMessage = "Results directory not found: " + sourceDirectoryPath;
 
-                    // Without a source folder; there isn't much we can do
+                    // Without a source directory; there isn't much we can do
                     return false;
                 }
 
-                // Determine the remote transfer folder path (create it if missing)
-                targetDirectoryPath = CreateRemoteTransferFolder(analysisResults, transferFolderPath);
+                // Determine the remote transfer directory path (create it if missing)
+                targetDirectoryPath = CreateRemoteTransferFolder(analysisResults, transferDirectoryPath);
                 if (string.IsNullOrEmpty(targetDirectoryPath))
                 {
-                    analysisResults.CopyFailedResultsToArchiveFolder(sourceFolderPath);
+                    analysisResults.CopyFailedResultsToArchiveFolder(sourceDirectoryPath);
                     return false;
                 }
 
             }
             catch (Exception ex)
             {
-                LogError("Error creating results folder in transfer directory", ex);
-                if (!string.IsNullOrEmpty(sourceFolderPath))
+                LogError("Error creating results directory in transfer directory", ex);
+                if (!string.IsNullOrEmpty(sourceDirectoryPath))
                 {
-                    analysisResults.CopyFailedResultsToArchiveFolder(sourceFolderPath);
+                    analysisResults.CopyFailedResultsToArchiveFolder(sourceDirectoryPath);
                 }
 
                 return false;
             }
 
-            // Copy results folder to xfer folder
+            // Copy results directory to transfer directory
             // Existing files will be overwritten if they exist in htFilesToOverwrite (with the assumption that the files created by this manager are newer, and thus supersede existing files)
 
             try
             {
-                // Copy all of the files and subdirectories in the local result folder to the target folder
+                // Copy all of the files and subdirectories in the local results directory to the target directory
 
                 // Copy the files and subdirectories
                 var success = CopyResultsFolderRecursive(
-                    sourceFolderPath, sourceFolderPath, targetDirectoryPath, analysisResults,
+                    sourceDirectoryPath, sourceDirectoryPath, targetDirectoryPath, analysisResults,
                     ref errorEncountered, ref failedFileCount, retryCount,
                     retryHoldoffSeconds, increaseHoldoffOnEachRetry);
 
@@ -885,22 +887,22 @@ namespace AnalysisManagerBase
             }
             catch (Exception ex)
             {
-                LogError("Error copying results folder to " + Path.GetPathRoot(targetDirectoryPath), ex);
+                LogError("Error copying results directory to " + Path.GetPathRoot(targetDirectoryPath), ex);
                 errorEncountered = true;
             }
 
             if (errorEncountered)
             {
                 // Message will be of the form
-                // Error copying 1 file to transfer folder
+                // Error copying 1 file to transfer directory
                 // or
-                // Error copying 3 files to transfer folder
+                // Error copying 3 files to transfer directory
 
                 var msg = "Error copying " + failedFileCount +
                     clsGlobal.CheckPlural(failedFileCount, " file", " files") +
-                    " to transfer folder";
+                    " to transfer directory";
                 LogError(msg);
-                analysisResults.CopyFailedResultsToArchiveFolder(sourceFolderPath);
+                analysisResults.CopyFailedResultsToArchiveFolder(sourceDirectoryPath);
                 return false;
             }
 
@@ -908,11 +910,11 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Copies each of the files in the source folder to the target folder
+        /// Copies each of the files in the source directory to the target directory
         /// Uses CopyFileWithRetry to retry the copy up to retryCount times
         /// </summary>
-        /// <param name="rootSourceFolderPath"></param>
-        /// <param name="sourceFolderPath"></param>
+        /// <param name="rootSourceDirectoryPath"></param>
+        /// <param name="sourceDirectoryPath"></param>
         /// <param name="targetDirectoryPath"></param>
         /// <param name="analysisResults"></param>
         /// <param name="errorEncountered"></param>
@@ -922,8 +924,8 @@ namespace AnalysisManagerBase
         /// <param name="increaseHoldoffOnEachRetry"></param>
         /// <returns></returns>
         private bool CopyResultsFolderRecursive(
-            string rootSourceFolderPath,
-            string sourceFolderPath,
+            string rootSourceDirectoryPath,
+            string sourceDirectoryPath,
             string targetDirectoryPath,
             clsAnalysisResults analysisResults,
             ref bool errorEncountered,
@@ -940,14 +942,14 @@ namespace AnalysisManagerBase
 
                 if (analysisResults.FolderExistsWithRetry(targetDirectoryPath))
                 {
-                    // The target folder already exists
+                    // The target directory already exists
 
-                    // Examine the files in the results folder to see if any of the files already exist in the transfer folder
+                    // Examine the files in the results directory to see if any of the files already exist in the transfer directory
                     // If they do, compare the file modification dates and post a warning if a file will be overwritten (because the file on the local computer is newer)
                     // However, if file sizes differ, replace the file
 
-                    var resultFolder = new DirectoryInfo(sourceFolderPath);
-                    foreach (var sourceFile in resultFolder.GetFiles())
+                    var resultsDirectory = new DirectoryInfo(sourceDirectoryPath);
+                    foreach (var sourceFile in resultsDirectory.GetFiles())
                     {
                         if (!File.Exists(Path.Combine(targetDirectoryPath, sourceFile.Name)))
                             continue;
@@ -957,7 +959,7 @@ namespace AnalysisManagerBase
                         if (sourceFile.Length == targetFile.Length && sourceFile.LastWriteTimeUtc <= targetFile.LastWriteTimeUtc)
                             continue;
 
-                        var message = "File in transfer folder on server will be overwritten by newer file in results folder: " + sourceFile.Name +
+                        var message = "File in transfer directory on server will be overwritten by newer file in results directory: " + sourceFile.Name +
                                       "; new file date (UTC): " + sourceFile.LastWriteTimeUtc +
                                       "; old file date (UTC): " + targetFile.LastWriteTimeUtc;
 
@@ -973,15 +975,15 @@ namespace AnalysisManagerBase
                 }
                 else
                 {
-                    // Need to create the target folder
+                    // Need to create the target directory
                     try
                     {
                         analysisResults.CreateFolderWithRetry(targetDirectoryPath);
                     }
                     catch (Exception ex)
                     {
-                        LogError("Error creating results folder in transfer directory, " + Path.GetPathRoot(targetDirectoryPath), ex);
-                        analysisResults.CopyFailedResultsToArchiveFolder(rootSourceFolderPath);
+                        LogError("Error creating results directory in transfer directory, " + Path.GetPathRoot(targetDirectoryPath), ex);
+                        analysisResults.CopyFailedResultsToArchiveFolder(rootSourceDirectoryPath);
                         return false;
                     }
                 }
@@ -989,12 +991,12 @@ namespace AnalysisManagerBase
             }
             catch (Exception ex)
             {
-                LogError("Error comparing files in source folder to " + targetDirectoryPath, ex);
-                analysisResults.CopyFailedResultsToArchiveFolder(rootSourceFolderPath);
+                LogError("Error comparing files in source directory to " + targetDirectoryPath, ex);
+                analysisResults.CopyFailedResultsToArchiveFolder(rootSourceDirectoryPath);
                 return false;
             }
 
-            var sourceDirectory = new DirectoryInfo(sourceFolderPath);
+            var sourceDirectory = new DirectoryInfo(sourceDirectoryPath);
 
             // Note: Entries in ResultFiles will have full file paths, not just file names
             var resultFiles = sourceDirectory.GetFiles("*");
@@ -1038,7 +1040,7 @@ namespace AnalysisManagerBase
             {
                 var targetDirectoryPathCurrent = Path.Combine(targetDirectoryPath, subDirectory.Name);
 
-                success = CopyResultsFolderRecursive(rootSourceFolderPath, subDirectory.FullName, targetDirectoryPathCurrent, analysisResults,
+                success = CopyResultsFolderRecursive(rootSourceDirectoryPath, subDirectory.FullName, targetDirectoryPathCurrent, analysisResults,
                     ref errorEncountered, ref failedFileCount, retryCount, retryHoldoffSeconds, increaseHoldoffOnEachRetry);
 
                 if (!success)
@@ -1058,7 +1060,7 @@ namespace AnalysisManagerBase
         /// Uses MakeResultsFolder, MoveResultFiles, and CopyResultsFolderToServer
         /// Step tools can override this method if custom steps are required prior to packaging and transferring the results
         /// </remarks>
-        public virtual bool CopyResultsToTransferDirectory(string transferFolderPathOverride = "")
+        public virtual bool CopyResultsToTransferDirectory(string transferDirectoryPathOverride = "")
         {
             if (clsGlobal.OfflineMode)
             {
@@ -1070,7 +1072,7 @@ namespace AnalysisManagerBase
             if (!success)
             {
                 // MakeResultsFolder handles posting to local log, so set database error message and exit
-                mMessage = "Error making results folder";
+                mMessage = "Error making results directory";
                 return false;
             }
 
@@ -1078,81 +1080,81 @@ namespace AnalysisManagerBase
             if (!moveSucceed)
             {
                 // Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                mMessage = "Error moving files into results folder";
+                mMessage = "Error moving files into results directory";
                 return false;
             }
 
             bool copySuccess;
 
-            if (string.IsNullOrWhiteSpace(transferFolderPathOverride))
+            if (string.IsNullOrWhiteSpace(transferDirectoryPathOverride))
             {
                 copySuccess = CopyResultsFolderToServer();
             }
             else
             {
-                copySuccess = CopyResultsFolderToServer(transferFolderPathOverride);
+                copySuccess = CopyResultsFolderToServer(transferDirectoryPathOverride);
             }
 
             return copySuccess;
         }
 
         /// <summary>
-        /// Determines the path to the remote transfer folder
+        /// Determines the path to the remote transfer directory
         /// Creates the directory if it does not exist
         /// </summary>
-        /// <returns>The full path to the remote transfer folder; an empty string if an error</returns>
+        /// <returns>The full path to the remote transfer directory; an empty string if an error</returns>
         /// <remarks></remarks>
         protected string CreateRemoteTransferFolder(clsAnalysisResults analysisResults)
         {
 
-            var transferFolderPath = mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH);
+            var transferDirectoryPath = mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH);
 
             // Verify transfer directory exists
             // First make sure TransferFolderPath is defined
-            if (string.IsNullOrEmpty(transferFolderPath))
+            if (string.IsNullOrEmpty(transferDirectoryPath))
             {
-                var msg = "Transfer folder path not defined";
+                var msg = "Transfer directory path not defined";
                 LogError(msg, msg + "; job param 'transferFolderPath' is empty");
                 return string.Empty;
             }
 
-            return CreateRemoteTransferFolder(analysisResults, transferFolderPath);
+            return CreateRemoteTransferFolder(analysisResults, transferDirectoryPath);
 
         }
 
         /// <summary>
-        /// Determines the path to the remote transfer folder
+        /// Determines the path to the remote transfer directory
         /// Creates the directory if it does not exist
         /// </summary>
         /// <param name="analysisResults">Analysis results object</param>
-        /// <param name="transferFolderPath">Base transfer folder path, e.g. \\proto-11\DMS3_Xfer\</param>
-        /// <returns>The full path to the remote transfer folder; an empty string if an error</returns>
-        protected string CreateRemoteTransferFolder(clsAnalysisResults analysisResults, string transferFolderPath)
+        /// <param name="transferDirectoryPath">Base transfer directory path, e.g. \\proto-11\DMS3_Xfer\</param>
+        /// <returns>The full path to the remote transfer directory; an empty string if an error</returns>
+        protected string CreateRemoteTransferFolder(clsAnalysisResults analysisResults, string transferDirectoryPath)
         {
 
             if (string.IsNullOrEmpty(mResultsFolderName))
             {
-                LogError("Results folder name is not defined, " + mJobParams.GetJobStepDescription());
-                mMessage = "Results folder job parameter not defined (OutputFolderName)";
+                LogError("Results directory name is not defined, " + mJobParams.GetJobStepDescription());
+                mMessage = "Results directory job parameter not defined (OutputFolderName)";
                 return string.Empty;
             }
 
             // Verify that the transfer directory exists
-            // If this is an Aggregation job, we create missing folders later in this method
+            // If this is an Aggregation job, we create missing directories later in this method
             try
             {
-                var folderExists = analysisResults.FolderExistsWithRetry(transferFolderPath);
+                var directoryExists = analysisResults.FolderExistsWithRetry(transferDirectoryPath);
 
-                if (!folderExists && !clsGlobal.IsMatch(Dataset, "Aggregation"))
+                if (!directoryExists && !clsGlobal.IsMatch(Dataset, "Aggregation"))
                 {
-                    LogError("Transfer directory not found: " + transferFolderPath);
+                    LogError("Transfer directory not found: " + transferDirectoryPath);
                     return string.Empty;
                 }
 
             }
             catch (Exception ex)
             {
-                LogError("Error verifying transfer directory, " + Path.GetPathRoot(transferFolderPath), ex);
+                LogError("Error verifying transfer directory, " + Path.GetPathRoot(transferDirectoryPath), ex);
                 return string.Empty;
             }
 
@@ -1165,35 +1167,35 @@ namespace AnalysisManagerBase
                 return string.Empty;
             }
 
-            string remoteTransferFolderPath;
+            string remoteTransferDirectoryPath;
 
             if (clsGlobal.IsMatch(Dataset, "Aggregation"))
             {
                 // Do not append "Aggregation" to the path since this is a generic dataset name applied to jobs that use Data Packages
-                remoteTransferFolderPath = string.Copy(transferFolderPath);
+                remoteTransferDirectoryPath = string.Copy(transferDirectoryPath);
             }
             else
             {
-                // Append the dataset directory name to the transfer folder path
-                var datasetFolderName = mJobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_DATASET_FOLDER_NAME);
-                if (string.IsNullOrWhiteSpace(datasetFolderName))
-                    datasetFolderName = Dataset;
-                remoteTransferFolderPath = Path.Combine(transferFolderPath, datasetFolderName);
+                // Append the dataset directory name to the transfer directory path
+                var datasetDirectoryName = mJobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_DATASET_FOLDER_NAME);
+                if (string.IsNullOrWhiteSpace(datasetDirectoryName))
+                    datasetDirectoryName = Dataset;
+                remoteTransferDirectoryPath = Path.Combine(transferDirectoryPath, datasetDirectoryName);
             }
 
-            // Create the target folder if it doesn't exist
+            // Create the target directory if it doesn't exist
             try
             {
-                analysisResults.CreateFolderWithRetry(remoteTransferFolderPath, maxRetryCount: 5, retryHoldoffSeconds: 20, increaseHoldoffOnEachRetry: true);
+                analysisResults.CreateFolderWithRetry(remoteTransferDirectoryPath, maxRetryCount: 5, retryHoldoffSeconds: 20, increaseHoldoffOnEachRetry: true);
             }
             catch (Exception ex)
             {
-                LogError("Error creating dataset directory in transfer directory, " + Path.GetPathRoot(remoteTransferFolderPath), ex);
+                LogError("Error creating dataset directory in transfer directory, " + Path.GetPathRoot(remoteTransferDirectoryPath), ex);
                 return string.Empty;
             }
 
-            // Now append the output folder name to remoteTransferFolderPath
-            return Path.Combine(remoteTransferFolderPath, mResultsFolderName);
+            // Now append the output directory name to remoteTransferDirectoryPath
+            return Path.Combine(remoteTransferDirectoryPath, mResultsFolderName);
 
         }
 
@@ -1263,7 +1265,7 @@ namespace AnalysisManagerBase
                     // File may be read-only. Clear read-only flag and try again
                     if (debugLevel > 0)
                     {
-                        LogTools.LogDebug("File " + fileNamePath + " exception ERR1: " + ex1.Message);
+                        LogTools.LogDebug("File " + fileNamePath + " exception ex1: " + ex1.Message);
                         if (ex1.InnerException != null)
                         {
                             LogTools.LogDebug("Inner exception: " + ex1.InnerException.Message);
@@ -1280,7 +1282,7 @@ namespace AnalysisManagerBase
                     // If problem is locked file, attempt to fix lock and retry
                     if (debugLevel > 0)
                     {
-                        LogTools.LogDebug("File " + fileNamePath + " exception ERR2: " + ex2.Message);
+                        LogTools.LogDebug("File " + fileNamePath + " exception ex2: " + ex2.Message);
                         if (ex2.InnerException != null)
                         {
                             LogTools.LogDebug("Inner exception: " + ex2.InnerException.Message);
@@ -1299,7 +1301,7 @@ namespace AnalysisManagerBase
                 }
                 catch (Exception ex3)
                 {
-                    var msg = "Error deleting file, exception ERR3 " + fileNamePath + ex3.Message;
+                    var msg = "Error deleting file, exception ex3 " + fileNamePath + ex3.Message;
                     LogTools.LogError(msg);
                     throw new AMFileNotDeletedException(fileNamePath, ex3.Message);
                 }
@@ -1342,56 +1344,56 @@ namespace AnalysisManagerBase
         protected bool DeleteRawDataFiles(clsAnalysisResources.eRawDataTypeConstants eRawDataType)
         {
 
-            // Deletes the raw data files/folders from the working directory
+            // Deletes the raw data files/directories from the working directory
             bool isFile;
             var isNetworkDir = false;
-            var fileOrFolderName = string.Empty;
+            var fileOrDirectoryName = string.Empty;
 
             switch (eRawDataType)
             {
                 case clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile:
-                    fileOrFolderName = Path.Combine(mWorkDir, Dataset + clsAnalysisResources.DOT_RAW_EXTENSION);
+                    fileOrDirectoryName = Path.Combine(mWorkDir, Dataset + clsAnalysisResources.DOT_RAW_EXTENSION);
                     isFile = true;
 
                     break;
                 case clsAnalysisResources.eRawDataTypeConstants.AgilentQStarWiffFile:
-                    fileOrFolderName = Path.Combine(mWorkDir, Dataset + clsAnalysisResources.DOT_WIFF_EXTENSION);
+                    fileOrDirectoryName = Path.Combine(mWorkDir, Dataset + clsAnalysisResources.DOT_WIFF_EXTENSION);
                     isFile = true;
 
                     break;
                 case clsAnalysisResources.eRawDataTypeConstants.UIMF:
-                    fileOrFolderName = Path.Combine(mWorkDir, Dataset + clsAnalysisResources.DOT_UIMF_EXTENSION);
+                    fileOrDirectoryName = Path.Combine(mWorkDir, Dataset + clsAnalysisResources.DOT_UIMF_EXTENSION);
                     isFile = true;
 
                     break;
                 case clsAnalysisResources.eRawDataTypeConstants.mzXML:
-                    fileOrFolderName = Path.Combine(mWorkDir, Dataset + clsAnalysisResources.DOT_MZXML_EXTENSION);
+                    fileOrDirectoryName = Path.Combine(mWorkDir, Dataset + clsAnalysisResources.DOT_MZXML_EXTENSION);
                     isFile = true;
 
                     break;
                 case clsAnalysisResources.eRawDataTypeConstants.mzML:
-                    fileOrFolderName = Path.Combine(mWorkDir, Dataset + clsAnalysisResources.DOT_MZML_EXTENSION);
+                    fileOrDirectoryName = Path.Combine(mWorkDir, Dataset + clsAnalysisResources.DOT_MZML_EXTENSION);
                     isFile = true;
 
                     break;
                 case clsAnalysisResources.eRawDataTypeConstants.AgilentDFolder:
-                    fileOrFolderName = Path.Combine(mWorkDir, Dataset + clsAnalysisResources.DOT_D_EXTENSION);
+                    fileOrDirectoryName = Path.Combine(mWorkDir, Dataset + clsAnalysisResources.DOT_D_EXTENSION);
                     isFile = false;
 
                     break;
                 case clsAnalysisResources.eRawDataTypeConstants.MicromassRawFolder:
-                    fileOrFolderName = Path.Combine(mWorkDir, Dataset + clsAnalysisResources.DOT_RAW_EXTENSION);
+                    fileOrDirectoryName = Path.Combine(mWorkDir, Dataset + clsAnalysisResources.DOT_RAW_EXTENSION);
                     isFile = false;
 
                     break;
                 case clsAnalysisResources.eRawDataTypeConstants.ZippedSFolders:
 
-                    var newSourceFolder = clsAnalysisResources.ResolveSerStoragePath(mWorkDir);
+                    var newSourceDirectory = clsAnalysisResources.ResolveSerStoragePath(mWorkDir);
 
                     // Check for "0.ser" folder
-                    if (string.IsNullOrEmpty(newSourceFolder))
+                    if (string.IsNullOrEmpty(newSourceDirectory))
                     {
-                        fileOrFolderName = Path.Combine(mWorkDir, Dataset);
+                        fileOrDirectoryName = Path.Combine(mWorkDir, Dataset);
                         // isNetworkDir = false;
                     }
                     else
@@ -1403,8 +1405,8 @@ namespace AnalysisManagerBase
 
                     break;
                 case clsAnalysisResources.eRawDataTypeConstants.BrukerFTFolder:
-                    // Bruker_FT folders are actually .D folders
-                    fileOrFolderName = Path.Combine(mWorkDir, Dataset + clsAnalysisResources.DOT_D_EXTENSION);
+                    // Bruker_FT directories are actually .D directories
+                    fileOrDirectoryName = Path.Combine(mWorkDir, Dataset + clsAnalysisResources.DOT_D_EXTENSION);
                     isFile = false;
 
                     break;
@@ -1412,10 +1414,10 @@ namespace AnalysisManagerBase
                     ////////////////////////////////////
                     // TODO: Finalize this code
                     //       DMS doesn't yet have a BrukerTOF dataset
-                    //        so we don't know the official folder structure
+                    //       so we don't know the official directory structure
                     ////////////////////////////////////
 
-                    fileOrFolderName = Path.Combine(mWorkDir, Dataset);
+                    fileOrDirectoryName = Path.Combine(mWorkDir, Dataset);
                     isFile = false;
 
                     break;
@@ -1424,17 +1426,17 @@ namespace AnalysisManagerBase
                     ////////////////////////////////////
                     // TODO: Finalize this code
                     //       DMS doesn't yet have a BrukerTOF dataset
-                    //        so we don't know the official folder structure
+                    //       so we don't know the official directory structure
                     ////////////////////////////////////
 
-                    fileOrFolderName = Path.Combine(mWorkDir, Dataset);
+                    fileOrDirectoryName = Path.Combine(mWorkDir, Dataset);
                     isFile = false;
 
                     break;
                 case clsAnalysisResources.eRawDataTypeConstants.BrukerTOFBaf:
 
-                    // BrukerTOFBaf folders are actually .D folders
-                    fileOrFolderName = Path.Combine(mWorkDir, Dataset + clsAnalysisResources.DOT_D_EXTENSION);
+                    // BrukerTOFBaf directories are actually .D directories
+                    fileOrDirectoryName = Path.Combine(mWorkDir, Dataset + clsAnalysisResources.DOT_D_EXTENSION);
                     isFile = false;
 
                     break;
@@ -1449,7 +1451,7 @@ namespace AnalysisManagerBase
                 // Data is a file, so use file deletion tools
                 try
                 {
-                    if (!File.Exists(fileOrFolderName))
+                    if (!File.Exists(fileOrDirectoryName))
                     {
                         // File not found; treat this as a success
                         return true;
@@ -1458,17 +1460,17 @@ namespace AnalysisManagerBase
                     // DeleteFileWithRetries will throw an exception if it cannot delete any raw data files (e.g. the .UIMF file)
                     // Thus, need to wrap it with an Exception handler
 
-                    if (DeleteFileWithRetries(fileOrFolderName))
+                    if (DeleteFileWithRetries(fileOrDirectoryName))
                     {
                         return true;
                     }
 
-                    LogError("Error deleting raw data file " + fileOrFolderName);
+                    LogError("Error deleting raw data file " + fileOrDirectoryName);
                     return false;
                 }
                 catch (Exception ex)
                 {
-                    LogError("Exception deleting raw data file " + fileOrFolderName, ex);
+                    LogError("Exception deleting raw data file " + fileOrDirectoryName, ex);
                     return false;
                 }
             }
@@ -1480,18 +1482,18 @@ namespace AnalysisManagerBase
             }
             else
             {
-                // Use folder deletion tools
+                // Use directory deletion tools
                 try
                 {
-                    if (Directory.Exists(fileOrFolderName))
+                    if (Directory.Exists(fileOrDirectoryName))
                     {
-                        Directory.Delete(fileOrFolderName, true);
+                        Directory.Delete(fileOrDirectoryName, true);
                     }
                     return true;
                 }
                 catch (Exception ex)
                 {
-                    LogError("Exception deleting raw data folder " + fileOrFolderName, ex);
+                    LogError("Exception deleting raw data directory " + fileOrDirectoryName, ex);
                     return false;
                 }
             }
@@ -1602,7 +1604,7 @@ namespace AnalysisManagerBase
 
                 if (!Directory.Exists(progLoc))
                 {
-                    errorMessage = "Version-specific folder not found for " + stepToolName;
+                    errorMessage = "Version-specific directory not found for " + stepToolName;
                     LogTools.LogError(errorMessage + ": " + progLoc);
                     return string.Empty;
                 }
@@ -1635,15 +1637,15 @@ namespace AnalysisManagerBase
 
             var dctData = new Dictionary<string, string>();
 
-            var lstData = ExtractPackedJobParameterList(packedJobParameterName);
+            var extractedParams = ExtractPackedJobParameterList(packedJobParameterName);
 
-            foreach (var item in lstData)
+            foreach (var paramEntry in extractedParams)
             {
-                var equalsIndex = item.LastIndexOf('=');
+                var equalsIndex = paramEntry.LastIndexOf('=');
                 if (equalsIndex > 0)
                 {
-                    var key = item.Substring(0, equalsIndex);
-                    var value = item.Substring(equalsIndex + 1);
+                    var key = paramEntry.Substring(0, equalsIndex);
+                    var value = paramEntry.Substring(equalsIndex + 1);
 
                     if (!dctData.ContainsKey(key))
                     {
@@ -1652,7 +1654,7 @@ namespace AnalysisManagerBase
                 }
                 else
                 {
-                    LogError("Packed dictionary item does not contain an equals sign: " + item);
+                    LogError("Packed dictionary item does not contain an equals sign: " + paramEntry);
                 }
             }
 
@@ -1669,15 +1671,15 @@ namespace AnalysisManagerBase
         protected List<string> ExtractPackedJobParameterList(string packedJobParameterName)
         {
 
-            var list = mJobParams.GetJobParameter(packedJobParameterName, string.Empty);
+            var packedJobParams = mJobParams.GetJobParameter(packedJobParameterName, string.Empty);
 
-            if (string.IsNullOrEmpty(list))
+            if (string.IsNullOrEmpty(packedJobParams))
             {
                 return new List<string>();
             }
 
             // Split the list on tab characters
-            return list.Split('\t').ToList();
+            return packedJobParams.Split('\t').ToList();
         }
 
         /// <summary>
@@ -1708,11 +1710,11 @@ namespace AnalysisManagerBase
         /// Looks up the current debug level for the manager.  If the call to the server fails, DebugLevel will be left unchanged
         /// </summary>
         /// <param name="updateIntervalSeconds">Update interval, in seconds</param>
-        /// <param name="objMgrParams">Manager params</param>
+        /// <param name="mgrParams">Manager params</param>
         /// <param name="debugLevel">Input/Output parameter: set to the current debug level, will be updated to the debug level in the manager control DB</param>
         /// <returns>True for success; False for error</returns>
         /// <remarks></remarks>
-        public static bool GetCurrentMgrSettingsFromDB(int updateIntervalSeconds, IMgrParams objMgrParams, ref short debugLevel)
+        public static bool GetCurrentMgrSettingsFromDB(int updateIntervalSeconds, IMgrParams mgrParams, ref short debugLevel)
         {
 
             try
@@ -1729,8 +1731,8 @@ namespace AnalysisManagerBase
                 }
 
                 // Data Source=proteinseqs;Initial Catalog=manager_control
-                var connectionString = objMgrParams.GetParam("MgrCnfgDbConnectStr");
-                var managerName = objMgrParams.ManagerName;
+                var connectionString = mgrParams.GetParam("MgrCnfgDbConnectStr");
+                var managerName = mgrParams.ManagerName;
 
                 var newDebugLevel = GetManagerDebugLevel(connectionString, managerName, debugLevel, "GetCurrentMgrSettingsFromDB", 0);
 
@@ -1772,12 +1774,12 @@ namespace AnalysisManagerBase
                 "WHERE ManagerName = '" + managerName + "' AND " + " ParameterName IN ('DebugLevel', 'MgrSettingGroupName')";
 
             var callingFunctions = clsGlobal.AppendToComment(callingFunction, "GetManagerDebugLevel");
-            var success = clsGlobal.GetQueryResults(sqlQuery, connectionString, out var lstResults, callingFunctions);
+            var success = clsGlobal.GetQueryResults(sqlQuery, connectionString, out var mgrParamsFromDb, callingFunctions);
 
-            if (!success || lstResults.Count <= 0)
+            if (!success || mgrParamsFromDb.Count <= 0)
                 return currentDebugLevel;
 
-            foreach (var resultRow in lstResults)
+            foreach (var resultRow in mgrParamsFromDb)
             {
                 var paramName = resultRow[0];
                 var paramValue = resultRow[1];
@@ -1871,32 +1873,33 @@ namespace AnalysisManagerBase
         protected string GetMSXmlGeneratorAppPath()
         {
 
-            var strMSXmlGeneratorExe = GetMSXmlGeneratorExeName();
+            var msXmlGeneratorExe = GetMSXmlGeneratorExeName();
 
-            string strMSXmlGeneratorAppPath;
+            string msXmlGeneratorAppPath;
 
-            if (strMSXmlGeneratorExe.ToLower().Contains("readw"))
+            if (msXmlGeneratorExe.ToLower().Contains("readw"))
             {
                 // ReadW
                 // Note that msXmlGenerator will likely be ReAdW.exe
-                strMSXmlGeneratorAppPath = DetermineProgramLocation("ReAdWProgLoc", strMSXmlGeneratorExe);
+                msXmlGeneratorAppPath = DetermineProgramLocation("ReAdWProgLoc", msXmlGeneratorExe);
 
             }
-            else if (strMSXmlGeneratorExe.ToLower().Contains("msconvert"))
+            else if (msXmlGeneratorExe.ToLower().Contains("msconvert"))
             {
                 // MSConvert
                 var proteoWizardDir = mMgrParams.GetParam("ProteoWizardDir");
-                // MSConvert.exe is stored in the ProteoWizard folder
-                strMSXmlGeneratorAppPath = Path.Combine(proteoWizardDir, strMSXmlGeneratorExe);
+
+                // MSConvert.exe is stored in the ProteoWizard directory
+                msXmlGeneratorAppPath = Path.Combine(proteoWizardDir, msXmlGeneratorExe);
 
             }
             else
             {
                 LogError("Invalid value for MSXMLGenerator; should be 'ReadW' or 'MSConvert'");
-                strMSXmlGeneratorAppPath = string.Empty;
+                msXmlGeneratorAppPath = string.Empty;
             }
 
-            return strMSXmlGeneratorAppPath;
+            return msXmlGeneratorAppPath;
 
         }
 
@@ -1908,22 +1911,22 @@ namespace AnalysisManagerBase
         protected string GetMSXmlGeneratorExeName()
         {
             // Determine the path to the XML Generator
-            var strMSXmlGeneratorExe = mJobParams.GetParam("MSXMLGenerator");
             // ReadW.exe or MSConvert.exe (code will assume ReadW.exe if an empty string)
+            var msXmlGeneratorExe = mJobParams.GetParam("MSXMLGenerator");
 
-            if (string.IsNullOrEmpty(strMSXmlGeneratorExe))
+            if (string.IsNullOrEmpty(msXmlGeneratorExe))
             {
                 // Assume we're using MSConvert
-                strMSXmlGeneratorExe = "MSConvert.exe";
+                msXmlGeneratorExe = "MSConvert.exe";
             }
 
-            return strMSXmlGeneratorExe;
+            return msXmlGeneratorExe;
         }
 
         /// <summary>
         /// Determines the directory that contains R.exe and Rcmd.exe (queries the registry)
         /// </summary>
-        /// <returns>Folder path, e.g. C:\Program Files\R\R-3.2.2\bin\x64</returns>
+        /// <returns>Directory path, e.g. C:\Program Files\R\R-3.2.2\bin\x64</returns>
         /// <remarks>This function is public because it is used by the Cyclops test harness program</remarks>
         public string GetRPathFromWindowsRegistry()
         {
@@ -2052,8 +2055,8 @@ namespace AnalysisManagerBase
                     }
 
                     // Up to 2.11.x, DLLs are installed in R_HOME\bin
-                    // From 2.12.0, DLLs are installed in either i386 or x64 (or both) below the bin folder
-                    // The bin folder has an R.exe file but it does not have Rcmd.exe or R.dll
+                    // From 2.12.0, DLLs are installed in either i386 or x64 (or both) below the bin directory
+                    // The bin directory has an R.exe file but it does not have Rcmd.exe or R.dll
                     if (currentVersion < new Version(2, 12))
                     {
                         return bin;
@@ -2076,22 +2079,22 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Lookup the base transfer folder path
+        /// Lookup the base transfer directory path
         /// </summary>
         /// <returns></returns>
         /// <remarks>For example, \\proto-7\DMS3_XFER\</remarks>
         protected string GetTransferFolderPath()
         {
 
-            var transferFolderPath = mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH);
+            var transferDirectoryPath = mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH);
 
-            if (string.IsNullOrEmpty(transferFolderPath))
+            if (string.IsNullOrEmpty(transferDirectoryPath))
             {
-                LogError("Transfer folder path not defined; job param 'transferFolderPath' is empty");
+                LogError("Transfer directory path not defined; job param 'transferFolderPath' is empty");
                 return string.Empty;
             }
 
-            return transferFolderPath;
+            return transferDirectoryPath;
 
         }
 
@@ -2107,7 +2110,7 @@ namespace AnalysisManagerBase
 
         /// <summary>
         /// Decompresses the specified gzipped file
-        /// Output folder is mWorkDir
+        /// Output directory is mWorkDir
         /// </summary>
         /// <param name="gzipFilePath">File to decompress</param>
         /// <returns></returns>
@@ -2131,7 +2134,7 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Gzip sourceFilePath, creating a new file in the same folder, but with extension .gz appended to the name (e.g. Dataset.mzid.gz)
+        /// Gzip sourceFilePath, creating a new file in the same directory, but with extension .gz appended to the name (e.g. Dataset.mzid.gz)
         /// </summary>
         /// <param name="sourceFilePath">Full path to the file to be zipped</param>
         /// <param name="deleteSourceAfterZip">If True, will delete the file after zipping it</param>
@@ -2156,7 +2159,7 @@ namespace AnalysisManagerBase
         /// Gzip sourceFilePath, creating a new file in targetDirectoryPath; the file extension will be the original extension plus .gz
         /// </summary>
         /// <param name="sourceFilePath">Full path to the file to be zipped</param>
-        /// <param name="targetDirectoryPath">Output folder for the unzipped file</param>
+        /// <param name="targetDirectoryPath">Output directory for the unzipped file</param>
         /// <param name="deleteSourceAfterZip">If True, will delete the file after zipping it</param>
         /// <returns>True if success; false if an error</returns>
         public bool GZipFile(string sourceFilePath, string targetDirectoryPath, bool deleteSourceAfterZip)
@@ -2179,49 +2182,49 @@ namespace AnalysisManagerBase
         /// <summary>
         /// GZip the given file
         /// </summary>
-        /// <param name="fiResultFile">File to compress</param>
+        /// <param name="fileToCompress">File to compress</param>
         /// <returns>FileInfo object of the new .gz file or null if an error</returns>
         /// <remarks>Deletes the original file after creating the .gz file</remarks>
-        public FileInfo GZipFile(FileInfo fiResultFile)
+        public FileInfo GZipFile(FileInfo fileToCompress)
         {
-            return GZipFile(fiResultFile, true);
+            return GZipFile(fileToCompress, true);
         }
 
         /// <summary>
         /// GZip the given file
         /// </summary>
-        /// <param name="fiResultFile">File to compress</param>
+        /// <param name="fileToCompress">File to compress</param>
         /// <param name="deleteSourceAfterZip">If True, will delete the file after zipping it</param>
         /// <returns>FileInfo object of the new .gz file or null if an error</returns>
-        public FileInfo GZipFile(FileInfo fiResultFile, bool deleteSourceAfterZip)
+        public FileInfo GZipFile(FileInfo fileToCompress, bool deleteSourceAfterZip)
         {
 
             try
             {
-                var success = GZipFile(fiResultFile.FullName, true);
+                var success = GZipFile(fileToCompress.FullName, true);
 
                 if (!success)
                 {
                     if (string.IsNullOrEmpty(mMessage))
                     {
-                        LogError("GZipFile returned false for " + fiResultFile.Name);
+                        LogError("GZipFile returned false for " + fileToCompress.Name);
                     }
                     return null;
                 }
 
-                var fiGZippedFile = new FileInfo(fiResultFile.FullName + clsAnalysisResources.DOT_GZ_EXTENSION);
-                if (!fiGZippedFile.Exists)
+                var gzippedFile = new FileInfo(fileToCompress.FullName + clsAnalysisResources.DOT_GZ_EXTENSION);
+                if (!gzippedFile.Exists)
                 {
-                    LogError("GZip file was not created: " + fiGZippedFile.Name);
+                    LogError("GZip file was not created: " + gzippedFile.Name);
                     return null;
                 }
 
-                return fiGZippedFile;
+                return gzippedFile;
 
             }
             catch (Exception ex)
             {
-                LogError("Exception in GZipFile(fiResultFile As FileInfo)", ex);
+                LogError("Exception in GZipFile", ex);
                 return null;
             }
 
@@ -2318,7 +2321,7 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Lookup the Peptide Hit jobs associated with this analysis job; non-peptide hit jobs are returned via lstAdditionalJobs
+        /// Lookup the Peptide Hit jobs associated with this analysis job; non-peptide hit jobs are returned via additionalJobs
         /// </summary>
         /// <param name="additionalJobs">Output: Non Peptide Hit jobs (e.g. DeconTools or MASIC)</param>
         /// <param name="errorMsg">Output: error message</param>
@@ -2465,7 +2468,7 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Creates a results folder after analysis complete
+        /// Creates a results directory after analysis complete
         /// </summary>
         /// <returns>True if success, otherwise false</returns>
         /// <remarks></remarks>
@@ -2474,23 +2477,23 @@ namespace AnalysisManagerBase
 
             mStatusTools.UpdateAndWrite(EnumMgrStatus.RUNNING, EnumTaskStatus.RUNNING, EnumTaskStatusDetail.PACKAGING_RESULTS, 0);
 
-            // Makes results folder and moves files into it
+            // Makes results directory and moves files into it
 
             // Log status
-            LogMessage(mMgrName + ": Creating results folder, Job " + Job);
-            var resFolderNamePath = Path.Combine(mWorkDir, mResultsFolderName);
+            LogMessage(mMgrName + ": Creating results directory, Job " + Job);
+            var resultsDirectoryNamePath = Path.Combine(mWorkDir, mResultsFolderName);
 
-            // Make the results folder
+            // Make the results directory
             try
             {
-                var resultsFolder = new DirectoryInfo(resFolderNamePath);
-                if (!resultsFolder.Exists)
-                    resultsFolder.Create();
+                var resultsDirectory = new DirectoryInfo(resultsDirectoryNamePath);
+                if (!resultsDirectory.Exists)
+                    resultsDirectory.Create();
             }
             catch (Exception ex)
             {
                 // Log this error to the database
-                LogError("Error making results folder, job " + Job, ex);
+                LogError("Error making results directory, job " + Job, ex);
                 return false;
             }
 
@@ -2499,7 +2502,7 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Makes results folder and moves files into it
+        /// Makes results directory and moves files into it
         /// </summary>
         /// <returns></returns>
         protected bool MoveResultFiles()
@@ -2509,12 +2512,12 @@ namespace AnalysisManagerBase
             const int ACCEPT_LOGGING_THRESHOLD = 50;
             const int LOG_LEVEL_REPORT_ACCEPT_OR_REJECT = 5;
 
-            var resFolderNamePath = string.Empty;
+            var resultsDirectoryNamePath = string.Empty;
             var currentFileName = string.Empty;
 
             var errorEncountered = false;
 
-            // Move files into results folder
+            // Move files into results directory
             try
             {
                 mStatusTools.UpdateAndWrite(
@@ -2522,14 +2525,14 @@ namespace AnalysisManagerBase
                     EnumTaskStatus.RUNNING,
                     EnumTaskStatusDetail.PACKAGING_RESULTS, 0);
 
-                resFolderNamePath = Path.Combine(mWorkDir, mResultsFolderName);
+                resultsDirectoryNamePath = Path.Combine(mWorkDir, mResultsFolderName);
                 var dctRejectStats = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
                 var dctAcceptStats = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
 
                 // Log status
                 if (mDebugLevel >= 2)
                 {
-                    var logMessage = "Move Result Files to " + resFolderNamePath;
+                    var logMessage = "Move Result Files to " + resultsDirectoryNamePath;
                     if (mDebugLevel >= 3)
                     {
                         logMessage += "; ResultFilesToSkip contains " + mJobParams.ResultFilesToSkip.Count + " entries" + "; " +
@@ -2593,9 +2596,9 @@ namespace AnalysisManagerBase
                     // Note: now evaluating each character in the filename
                     if (okToMove)
                     {
-                        foreach (var chChar in Path.GetFileName(tmpFileName))
+                        foreach (var character in Path.GetFileName(tmpFileName))
                         {
-                            var asciiValue = (int)chChar;
+                            var asciiValue = (int)character;
                             if (asciiValue <= 31 || asciiValue >= 128)
                             {
                                 // Invalid character found
@@ -2632,7 +2635,7 @@ namespace AnalysisManagerBase
                     if (!okToMove)
                         continue;
 
-                    // If valid file name, move file to results folder
+                    // If valid file name, move file to results directory
                     if (mDebugLevel >= LOG_LEVEL_REPORT_ACCEPT_OR_REJECT)
                     {
                         var fileExtension = Path.GetExtension(tmpFileName);
@@ -2656,7 +2659,7 @@ namespace AnalysisManagerBase
                     string targetFilePath = null;
                     try
                     {
-                        targetFilePath = Path.Combine(resFolderNamePath, Path.GetFileName(tmpFileName));
+                        targetFilePath = Path.Combine(resultsDirectoryNamePath, Path.GetFileName(tmpFileName));
                         File.Move(tmpFileName, targetFilePath);
                     }
                     catch (Exception)
@@ -2670,7 +2673,7 @@ namespace AnalysisManagerBase
                                 File.Copy(tmpFileName, targetFilePath, true);
 
                                 // If we get here, the copy succeeded;
-                                // The original file (in the work folder) will get deleted when the work folder is "cleaned" after the job finishes
+                                // The original file (in the work directory) will get deleted when the work directory is "cleaned" after the job finishes
                             }
 
                         }
@@ -2712,9 +2715,9 @@ namespace AnalysisManagerBase
             {
                 if (mDebugLevel > 0)
                 {
-                    LogMessage("clsAnalysisToolRunnerBase.MoveResultFiles(); Error moving files to results folder", 0, true);
+                    LogMessage("clsAnalysisToolRunnerBase.MoveResultFiles(); Error moving files to results directory", 0, true);
                     LogMessage("CurrentFile = " + currentFileName);
-                    LogMessage("Results folder name = " + resFolderNamePath);
+                    LogMessage("Results directory name = " + resultsDirectoryNamePath);
                 }
 
                 LogErrorToDatabase("Error moving results files, job " + Job + ex.Message);
@@ -2726,7 +2729,7 @@ namespace AnalysisManagerBase
             try
             {
                 // Make the summary file
-                OutputSummary(resFolderNamePath);
+                OutputSummary(resultsDirectoryNamePath);
             }
             catch (Exception)
             {
@@ -2735,7 +2738,7 @@ namespace AnalysisManagerBase
 
             if (errorEncountered)
             {
-                // Try to save whatever files were moved into the results folder
+                // Try to save whatever files were moved into the results directory
                 var analysisResults = new clsAnalysisResults(mMgrParams, mJobParams);
                 analysisResults.CopyFailedResultsToArchiveFolder(Path.Combine(mWorkDir, mResultsFolderName));
 
@@ -2774,7 +2777,7 @@ namespace AnalysisManagerBase
                 return;
             }
 
-            // Saves the summary file in the results folder
+            // Saves the summary file in the results directory
             var assemblyTools = new clsAssemblyTools();
 
             assemblyTools.GetComponentFileVersionInfo(mSummaryFile);
@@ -2839,60 +2842,61 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Purge old server cache files
         /// </summary>
-        /// <param name="cacheFolderPath"></param>
-        public void PurgeOldServerCacheFiles(string cacheFolderPath)
+        /// <param name="cacheDirectoryPath"></param>
+        public void PurgeOldServerCacheFiles(string cacheDirectoryPath)
         {
             // Value prior to December 2014: 3 TB
             // Value effective December 2014: 20 TB
             const int spaceUsageThresholdGB = 20000;
-            PurgeOldServerCacheFiles(cacheFolderPath, spaceUsageThresholdGB);
+            PurgeOldServerCacheFiles(cacheDirectoryPath, spaceUsageThresholdGB);
         }
 
         /// <summary>
         /// Test method for PurgeOldServerCacheFiles
         /// </summary>
-        /// <param name="cacheFolderPath"></param>
+        /// <param name="cacheDirectoryPath"></param>
         /// <param name="spaceUsageThresholdGB"></param>
-        public void PurgeOldServerCacheFilesTest(string cacheFolderPath, int spaceUsageThresholdGB)
+        public void PurgeOldServerCacheFilesTest(string cacheDirectoryPath, int spaceUsageThresholdGB)
         {
-            if (cacheFolderPath.StartsWith(@"\\proto", StringComparison.OrdinalIgnoreCase))
+            if (cacheDirectoryPath.StartsWith(@"\\proto", StringComparison.OrdinalIgnoreCase))
             {
-                if (!string.Equals(cacheFolderPath, @"\\proto-2\past\PurgeTest", StringComparison.OrdinalIgnoreCase))
+                if (!string.Equals(cacheDirectoryPath, @"\\proto-2\past\PurgeTest", StringComparison.OrdinalIgnoreCase))
                 {
                     Console.WriteLine(@"This function cannot be used with a \\Proto-x\ server");
                     return;
                 }
             }
-            PurgeOldServerCacheFiles(cacheFolderPath, spaceUsageThresholdGB);
+            PurgeOldServerCacheFiles(cacheDirectoryPath, spaceUsageThresholdGB);
         }
 
         /// <summary>
-        /// Determines the space usage of data files in the cache folder, e.g. at \\proto-11\MSXML_Cache
+        /// Determines the space usage of data files in the cache directory, e.g. at \\proto-11\MSXML_Cache
         /// If usage is over spaceUsageThresholdGB, deletes the oldest files until usage falls below spaceUsageThresholdGB
         /// </summary>
-        /// <param name="cacheFolderPath">Path to the file cache</param>
+        /// <param name="cacheDirectoryPath">Path to the file cache</param>
         /// <param name="spaceUsageThresholdGB">Maximum space usage, in GB (cannot be less than 1000 on Proto-x servers; 10 otherwise)</param>
-        private void PurgeOldServerCacheFiles(string cacheFolderPath, int spaceUsageThresholdGB)
+        private void PurgeOldServerCacheFiles(string cacheDirectoryPath, int spaceUsageThresholdGB)
         {
 
             {
 
-                var lstDataFiles = new List<KeyValuePair<DateTime, FileInfo>>();
+                var dataFiles = new List<KeyValuePair<DateTime, FileInfo>>();
 
-                double dblTotalSizeMB = 0;
+                double totalSizeMB = 0;
 
-                double dblSizeDeletedMB = 0;
+                double sizeDeletedMB = 0;
                 var fileDeleteCount = 0;
                 var fileDeleteErrorCount = 0;
 
-                var dctErrorSummary = new Dictionary<string, int>();
+                // Keys are exception names; values are number of times the exception was seen
+                var errorSummary = new Dictionary<string, int>();
 
-                if (string.IsNullOrWhiteSpace(cacheFolderPath))
+                if (string.IsNullOrWhiteSpace(cacheDirectoryPath))
                 {
-                    throw new ArgumentOutOfRangeException(nameof(cacheFolderPath), "Cache folder path cannot be empty");
+                    throw new ArgumentOutOfRangeException(nameof(cacheDirectoryPath), "Cache directory path cannot be empty");
                 }
 
-                if (cacheFolderPath.StartsWith(@"\\proto-", StringComparison.OrdinalIgnoreCase))
+                if (cacheDirectoryPath.StartsWith(@"\\proto-", StringComparison.OrdinalIgnoreCase))
                 {
                     if (spaceUsageThresholdGB < 1000)
                         spaceUsageThresholdGB = 1000;
@@ -2910,18 +2914,18 @@ namespace AnalysisManagerBase
                         return;
                     }
 
-                    var diCacheFolder = new DirectoryInfo(cacheFolderPath);
+                    var cacheDirectory = new DirectoryInfo(cacheDirectoryPath);
 
-                    if (!diCacheFolder.Exists)
+                    if (!cacheDirectory.Exists)
                     {
                         return;
                     }
 
                     // Look for a purge check file
-                    var fiPurgeCheckFile = new FileInfo(Path.Combine(diCacheFolder.FullName, "PurgeCheckFile.txt"));
-                    if (fiPurgeCheckFile.Exists)
+                    var purgeCheckFile = new FileInfo(Path.Combine(cacheDirectory.FullName, "PurgeCheckFile.txt"));
+                    if (purgeCheckFile.Exists)
                     {
-                        if (DateTime.UtcNow.Subtract(fiPurgeCheckFile.LastWriteTimeUtc).TotalHours < CACHED_SERVER_FILES_PURGE_INTERVAL_HOURS)
+                        if (DateTime.UtcNow.Subtract(purgeCheckFile.LastWriteTimeUtc).TotalHours < CACHED_SERVER_FILES_PURGE_INTERVAL_HOURS)
                         {
                             return;
                         }
@@ -2930,9 +2934,9 @@ namespace AnalysisManagerBase
                     // Create / update the purge check file
                     try
                     {
-                        using (var swPurgeCheckFile = new StreamWriter(new FileStream(fiPurgeCheckFile.FullName, FileMode.Append, FileAccess.Write, FileShare.Read)))
+                        using (var writer = new StreamWriter(new FileStream(purgeCheckFile.FullName, FileMode.Append, FileAccess.Write, FileShare.Read)))
                         {
-                            swPurgeCheckFile.WriteLine(DateTime.Now.ToString(DATE_TIME_FORMAT) + " - " + mMgrName);
+                            writer.WriteLine(DateTime.Now.ToString(DATE_TIME_FORMAT) + " - " + mMgrName);
                         }
 
                     }
@@ -2944,42 +2948,42 @@ namespace AnalysisManagerBase
 
                     mLastCachedServerFilesPurgeCheck = DateTime.UtcNow;
 
-                    var dtLastProgress = DateTime.UtcNow;
-                    LogMessage("Examining hashcheck files in directory " + diCacheFolder.FullName, 1);
+                    var lastProgress = DateTime.UtcNow;
+                    LogMessage("Examining hashcheck files in directory " + cacheDirectory.FullName, 1);
 
-                    // Make a list of all of the hashcheck files in diCacheFolder
+                    // Make a list of all of the hashcheck files in cacheDirectory
 
-                    foreach (var fiItem in diCacheFolder.GetFiles("*" + clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX, SearchOption.AllDirectories))
+                    foreach (var hashcheckFile in cacheDirectory.GetFiles("*" + clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX, SearchOption.AllDirectories))
                     {
-                        if (!fiItem.FullName.EndsWith(clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX, StringComparison.OrdinalIgnoreCase))
+                        if (!hashcheckFile.FullName.EndsWith(clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX, StringComparison.OrdinalIgnoreCase))
                             continue;
 
-                        var dataFilePath = fiItem.FullName.Substring(0, fiItem.FullName.Length - clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX.Length);
+                        var dataFilePath = hashcheckFile.FullName.Substring(0, hashcheckFile.FullName.Length - clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX.Length);
 
-                        var fiDataFile = new FileInfo(dataFilePath);
+                        var dataFile = new FileInfo(dataFilePath);
 
-                        if (!fiDataFile.Exists)
+                        if (!dataFile.Exists)
                             continue;
 
                         try
                         {
-                            lstDataFiles.Add(new KeyValuePair<DateTime, FileInfo>(fiDataFile.LastWriteTimeUtc, fiDataFile));
+                            dataFiles.Add(new KeyValuePair<DateTime, FileInfo>(dataFile.LastWriteTimeUtc, dataFile));
 
-                            dblTotalSizeMB += clsGlobal.BytesToMB(fiDataFile.Length);
+                            totalSizeMB += clsGlobal.BytesToMB(dataFile.Length);
                         }
                         catch (Exception ex)
                         {
-                            LogMessage("Exception adding to file list " + fiDataFile.Name + "; " + ex.Message, 0, true);
+                            LogMessage("Exception adding to file list " + dataFile.Name + "; " + ex.Message, 0, true);
                         }
 
-                        if (DateTime.UtcNow.Subtract(dtLastProgress).TotalSeconds >= 5)
+                        if (DateTime.UtcNow.Subtract(lastProgress).TotalSeconds >= 5)
                         {
-                            dtLastProgress = DateTime.UtcNow;
-                            LogMessage(string.Format(" ... {0:#,##0} files processed", lstDataFiles.Count));
+                            lastProgress = DateTime.UtcNow;
+                            LogMessage(string.Format(" ... {0:#,##0} files processed", dataFiles.Count));
                         }
                     }
 
-                    if (dblTotalSizeMB / 1024.0 <= spaceUsageThresholdGB)
+                    if (totalSizeMB / 1024.0 <= spaceUsageThresholdGB)
                     {
                         return;
                     }
@@ -2990,15 +2994,15 @@ namespace AnalysisManagerBase
                     // Keep track of the deleted file info using this list
                     var purgedFileLogEntries = new List<string>();
 
-                    var fiPurgeLogFile = new FileInfo(Path.Combine(diCacheFolder.FullName, "PurgeLog_" + DateTime.Now.Year + ".txt"));
-                    if (!fiPurgeLogFile.Exists)
+                    var purgeLogFile = new FileInfo(Path.Combine(cacheDirectory.FullName, "PurgeLog_" + DateTime.Now.Year + ".txt"));
+                    if (!purgeLogFile.Exists)
                     {
                         // Create the purge log file and write the header line
                         try
                         {
-                            using (var swPurgeLogFile = new StreamWriter(new FileStream(fiPurgeLogFile.FullName, FileMode.Append, FileAccess.Write, FileShare.Read)))
+                            using (var writer = new StreamWriter(new FileStream(purgeLogFile.FullName, FileMode.Append, FileAccess.Write, FileShare.Read)))
                             {
-                                swPurgeLogFile.WriteLine(string.Join("\t", "Date", "Manager", "Size (MB)", "Modification_Date", "Path"));
+                                writer.WriteLine(string.Join("\t", "Date", "Manager", "Size (MB)", "Modification_Date", "Path"));
                             }
                         }
                         catch (Exception)
@@ -3008,35 +3012,37 @@ namespace AnalysisManagerBase
                         }
                     }
 
-                    var lstSortedFiles = (from item in lstDataFiles orderby item.Key select item);
+                    var sortedDataFiles = (from item in dataFiles orderby item.Key select item);
 
-                    foreach (var kvItem in lstSortedFiles)
+                    foreach (var dataFileItem in sortedDataFiles)
                     {
                         try
                         {
-                            var fileSizeMB = clsGlobal.BytesToMB(kvItem.Value.Length);
+                            var dataFile = dataFileItem.Value;
 
-                            var hashcheckPath = kvItem.Value.FullName + clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX;
-                            var fiHashCheckFile = new FileInfo(hashcheckPath);
+                            var fileSizeMB = clsGlobal.BytesToMB(dataFile.Length);
 
-                            dblTotalSizeMB -= fileSizeMB;
+                            var hashcheckPath = dataFile.FullName + clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX;
+                            var hashCheckFile = new FileInfo(hashcheckPath);
 
-                            kvItem.Value.Delete();
+                            totalSizeMB -= fileSizeMB;
+
+                            dataFile.Delete();
 
                             // Keep track of the deleted file's details
                             purgedFileLogEntries.Add(string.Join("\t",
                                 DateTime.Now.ToString(DATE_TIME_FORMAT),
                                 mMgrName,
                                 fileSizeMB.ToString("0.00"),
-                                kvItem.Value.LastWriteTime.ToString(DATE_TIME_FORMAT),
-                                kvItem.Value.FullName));
+                                dataFile.LastWriteTime.ToString(DATE_TIME_FORMAT),
+                                dataFile.FullName));
 
-                            dblSizeDeletedMB += fileSizeMB;
+                            sizeDeletedMB += fileSizeMB;
                             fileDeleteCount += 1;
 
-                            if (fiHashCheckFile.Exists)
+                            if (hashCheckFile.Exists)
                             {
-                                fiHashCheckFile.Delete();
+                                hashCheckFile.Delete();
                             }
 
                         }
@@ -3046,31 +3052,33 @@ namespace AnalysisManagerBase
                             fileDeleteErrorCount += 1;
 
                             var exceptionName = ex.GetType().ToString();
-                            if (dctErrorSummary.TryGetValue(exceptionName, out var occurrences))
+                            if (errorSummary.TryGetValue(exceptionName, out var occurrences))
                             {
-                                dctErrorSummary[exceptionName] = occurrences + 1;
+                                errorSummary[exceptionName] = occurrences + 1;
                             }
                             else
                             {
-                                dctErrorSummary.Add(exceptionName, 1);
+                                errorSummary.Add(exceptionName, 1);
                             }
 
                         }
 
-                        if (dblTotalSizeMB / 1024.0 < spaceUsageThresholdGB * 0.95)
+                        if (totalSizeMB / 1024.0 < spaceUsageThresholdGB * 0.95)
                         {
                             break;
                         }
                     }
 
-                    LogMessage("Deleted " + fileDeleteCount + " file(s) from " + cacheFolderPath + ", recovering " + dblSizeDeletedMB.ToString("0.0") + " MB in disk space");
+                    LogMessage("Deleted " + fileDeleteCount + " file(s) from " + cacheDirectoryPath + ", recovering " + sizeDeletedMB.ToString("0.0") + " MB in disk space");
 
                     if (fileDeleteErrorCount > 0)
                     {
-                        LogMessage("Unable to delete " + fileDeleteErrorCount + " file(s) from " + cacheFolderPath, 0, true);
-                        foreach (var kvItem in dctErrorSummary)
+                        LogMessage("Unable to delete " + fileDeleteErrorCount + " file(s) from " + cacheDirectoryPath, 0, true);
+                        foreach (var kvItem in errorSummary)
                         {
-                            LogMessage("  " + kvItem.Key + ": " + kvItem.Value, 1, true);
+                            var exceptionName = kvItem.Key;
+                            var occurrenceCount = kvItem.Value;
+                            LogMessage("  " + exceptionName + ": " + occurrenceCount, 1, true);
                         }
                     }
 
@@ -3079,11 +3087,11 @@ namespace AnalysisManagerBase
                         // Log the info for each of the deleted files
                         try
                         {
-                            using (var swPurgeLogFile = new StreamWriter(new FileStream(fiPurgeLogFile.FullName, FileMode.Append, FileAccess.Write, FileShare.ReadWrite)))
+                            using (var writer = new StreamWriter(new FileStream(purgeLogFile.FullName, FileMode.Append, FileAccess.Write, FileShare.ReadWrite)))
                             {
                                 foreach (var purgedFileLogEntry in purgedFileLogEntries)
                                 {
-                                    swPurgeLogFile.WriteLine(purgedFileLogEntry);
+                                    writer.WriteLine(purgedFileLogEntry);
                                 }
                             }
                         }
@@ -3104,25 +3112,24 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Updates the dataset name to the final folder name in the transferFolderPath job parameter
-        /// Updates the transfer folder path to remove the final folder
+        /// Updates the dataset name to the final directory name in the transferFolderPath job parameter
+        /// Updates the transfer directory path to remove the final directory name
         /// </summary>
         /// <remarks></remarks>
         protected void RedefineAggregationJobDatasetAndTransferFolder()
         {
-            var transferFolderPath = mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH);
-            var diTransferFolder = new DirectoryInfo(transferFolderPath);
+            var transferDirectoryPath = mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH);
+            var transferDirectory = new DirectoryInfo(transferDirectoryPath);
 
-            mDatasetName = diTransferFolder.Name;
+            mDatasetName = transferDirectory.Name;
 
-            // ReSharper disable once JoinNullCheckWithUsage
-            if (diTransferFolder.Parent == null)
+            if (transferDirectory.Parent == null)
             {
-                throw new DirectoryNotFoundException("Unable to determine the parent folder of " + diTransferFolder.FullName);
+                throw new DirectoryNotFoundException("Unable to determine the parent directory of " + transferDirectory.FullName);
             }
 
-            transferFolderPath = diTransferFolder.Parent.FullName;
-            mJobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH, transferFolderPath);
+            transferDirectoryPath = transferDirectory.Parent.FullName;
+            mJobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH, transferDirectoryPath);
 
         }
 
@@ -3149,29 +3156,29 @@ namespace AnalysisManagerBase
                 }
 
                 // Open versionInfoFilePath and read the Version= line
-                using (var srInFile = new StreamReader(new FileStream(versionInfoFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(versionInfoFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
 
-                    while (!srInFile.EndOfStream)
+                    while (!reader.EndOfStream)
                     {
-                        var lineIn = srInFile.ReadLine();
+                        var dataLine = reader.ReadLine();
 
-                        if (string.IsNullOrWhiteSpace(lineIn))
+                        if (string.IsNullOrWhiteSpace(dataLine))
                         {
                             continue;
                         }
 
-                        var equalsLoc = lineIn.IndexOf('=');
+                        var equalsLoc = dataLine.IndexOf('=');
 
                         if (equalsLoc <= 0)
                             continue;
 
-                        var key = lineIn.Substring(0, equalsLoc);
+                        var key = dataLine.Substring(0, equalsLoc);
                         string value;
 
-                        if (equalsLoc < lineIn.Length)
+                        if (equalsLoc < dataLine.Length)
                         {
-                            value = lineIn.Substring(equalsLoc + 1);
+                            value = dataLine.Substring(equalsLoc + 1);
                         }
                         else
                         {
@@ -3219,7 +3226,7 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Deletes files in specified directory that have been previously flagged as not wanted in results folder
+        /// Deletes files in specified directory that have been previously flagged as not wanted in results directory
         /// </summary>
         /// <returns>TRUE for success; FALSE for failure</returns>
         /// <remarks>List of files to delete is tracked via mJobParams.ServerFilesToDelete; must store full file paths in ServerFilesToDelete</remarks>
@@ -3410,28 +3417,28 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Creates a Tool Version Info file
         /// </summary>
-        /// <param name="folderPath"></param>
+        /// <param name="directoryPath"></param>
         /// <param name="toolVersionInfo"></param>
         /// <returns></returns>
         /// <remarks></remarks>
-        protected bool SaveToolVersionInfoFile(string folderPath, string toolVersionInfo)
+        protected bool SaveToolVersionInfoFile(string directoryPath, string toolVersionInfo)
         {
 
             try
             {
-                var toolVersionFilePath = Path.Combine(folderPath, ToolVersionInfoFile);
+                var toolVersionFilePath = Path.Combine(directoryPath, ToolVersionInfoFile);
 
-                using (var swToolVersionFile = new StreamWriter(new FileStream(toolVersionFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
+                using (var writer = new StreamWriter(new FileStream(toolVersionFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
                 {
 
-                    swToolVersionFile.WriteLine("Date: " + DateTime.Now.ToString(DATE_TIME_FORMAT));
-                    swToolVersionFile.WriteLine("Dataset: " + Dataset);
-                    swToolVersionFile.WriteLine("Job: " + Job);
-                    swToolVersionFile.WriteLine("Step: " + mJobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Step"));
-                    swToolVersionFile.WriteLine("Tool: " + mJobParams.GetParam("StepTool"));
-                    swToolVersionFile.WriteLine("ToolVersionInfo:");
+                    writer.WriteLine("Date: " + DateTime.Now.ToString(DATE_TIME_FORMAT));
+                    writer.WriteLine("Dataset: " + Dataset);
+                    writer.WriteLine("Job: " + Job);
+                    writer.WriteLine("Step: " + mJobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Step"));
+                    writer.WriteLine("Tool: " + mJobParams.GetParam("StepTool"));
+                    writer.WriteLine("ToolVersionInfo:");
 
-                    swToolVersionFile.WriteLine(toolVersionInfo.Replace("; ", Environment.NewLine));
+                    writer.WriteLine(toolVersionInfo.Replace("; ", Environment.NewLine));
 
                 }
 
@@ -3623,8 +3630,8 @@ namespace AnalysisManagerBase
                 LogDebug("Determining tool version info");
             }
 
-            var fiProgram = new FileInfo(progLoc);
-            if (!fiProgram.Exists)
+            var programInfo = new FileInfo(progLoc);
+            if (!programInfo.Exists)
             {
                 try
                 {
@@ -3639,12 +3646,12 @@ namespace AnalysisManagerBase
             }
 
             // Lookup the version of the .NET program
-            StoreToolVersionInfoViaSystemDiagnostics(ref toolVersionInfo, fiProgram.FullName);
+            StoreToolVersionInfoViaSystemDiagnostics(ref toolVersionInfo, programInfo.FullName);
 
             // Store the path to the .exe or .dll in toolFiles
             var toolFiles = new List<FileInfo>
             {
-                fiProgram
+                programInfo
             };
 
             if (additionalDLLs != null)
@@ -3660,15 +3667,15 @@ namespace AnalysisManagerBase
                     }
 
                     // Assume simply a filename
-                    if (fiProgram.Directory == null)
+                    if (programInfo.Directory == null)
                     {
-                        // Unable to determine the directory path for fiProgram; this shouldn't happen
+                        // Unable to determine the directory path for programInfo; this shouldn't happen
                         toolFiles.Add(new FileInfo(dllNameOrPath));
                     }
                     else
                     {
-                        // Add it as a relative path to fiProgram
-                        toolFiles.Add(new FileInfo(Path.Combine(fiProgram.Directory.FullName, dllNameOrPath)));
+                        // Add it as a relative path to programInfo
+                        toolFiles.Add(new FileInfo(Path.Combine(programInfo.Directory.FullName, dllNameOrPath)));
                     }
                 }
             }
@@ -3780,16 +3787,16 @@ namespace AnalysisManagerBase
 
             try
             {
-                var ioFileInfo = new FileInfo(dllFilePath);
+                var dllFileInfo = new FileInfo(dllFilePath);
 
-                if (!ioFileInfo.Exists)
+                if (!dllFileInfo.Exists)
                 {
                     LogMessage("Warning: File not found by StoreToolVersionInfoOneFile: " + dllFilePath);
                     return false;
 
                 }
 
-                var assembly = System.Reflection.Assembly.LoadFrom(ioFileInfo.FullName);
+                var assembly = System.Reflection.Assembly.LoadFrom(dllFileInfo.FullName);
                 var assemblyName = assembly.GetName();
 
                 var nameAndVersion = assemblyName.Name + ", Version=" + assemblyName.Version;
@@ -3842,9 +3849,9 @@ namespace AnalysisManagerBase
 
             try
             {
-                var ioFileInfo = new FileInfo(dllFilePath);
+                var dllFileInfo = new FileInfo(dllFilePath);
 
-                if (!ioFileInfo.Exists)
+                if (!dllFileInfo.Exists)
                 {
                     mMessage = "File not found by StoreToolVersionInfoViaSystemDiagnostics";
                     LogMessage(mMessage + ": " + dllFilePath);
@@ -3866,7 +3873,7 @@ namespace AnalysisManagerBase
 
                 if (string.IsNullOrEmpty(name))
                 {
-                    name = ioFileInfo.Name;
+                    name = dllFileInfo.Name;
                 }
 
                 var version = oFileVersionInfo.FileVersion;
@@ -3933,9 +3940,9 @@ namespace AnalysisManagerBase
             {
                 var appPath = Path.Combine(clsGlobal.GetAppFolderPath(), versionInspectorExeName);
 
-                var ioFileInfo = new FileInfo(dllFilePath);
+                var dllFileInfo = new FileInfo(dllFilePath);
 
-                if (!ioFileInfo.Exists)
+                if (!dllFileInfo.Exists)
                 {
                     mMessage = "File not found by StoreToolVersionInfoOneFileUseExe";
                     LogMessage(mMessage + ": " + dllFilePath, 0, true);
@@ -3951,10 +3958,10 @@ namespace AnalysisManagerBase
 
                 // Call DLLVersionInspector_x86.exe or DLLVersionInspector_x64.exe to determine the tool version
 
-                var versionInfoFilePath = Path.Combine(mWorkDir, Path.GetFileNameWithoutExtension(ioFileInfo.Name) + "_VersionInfo.txt");
+                var versionInfoFilePath = Path.Combine(mWorkDir, Path.GetFileNameWithoutExtension(dllFileInfo.Name) + "_VersionInfo.txt");
 
 
-                var args = PossiblyQuotePath(ioFileInfo.FullName) + " /O:" + PossiblyQuotePath(versionInfoFilePath);
+                var args = PossiblyQuotePath(dllFileInfo.FullName) + " /O:" + PossiblyQuotePath(versionInfoFilePath);
 
                 if (mDebugLevel >= 3)
                 {
@@ -4014,130 +4021,130 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Copies new/changed files from the source folder to the target folder
+        /// Copies new/changed files from the source directory to the target directory
         /// </summary>
-        /// <param name="sourceFolderPath"></param>
+        /// <param name="sourceDirectoryPath"></param>
         /// <param name="targetDirectoryPath"></param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks></remarks>
-        protected bool SynchronizeFolders(string sourceFolderPath, string targetDirectoryPath)
+        protected bool SynchronizeFolders(string sourceDirectoryPath, string targetDirectoryPath)
         {
-            return SynchronizeFolders(sourceFolderPath, targetDirectoryPath, "*");
+            return SynchronizeFolders(sourceDirectoryPath, targetDirectoryPath, "*");
         }
 
         /// <summary>
-        /// Copies new/changed files from the source folder to the target folder
+        /// Copies new/changed files from the source directory to the target directory
         /// </summary>
-        /// <param name="sourceFolderPath"></param>
+        /// <param name="sourceDirectoryPath"></param>
         /// <param name="targetDirectoryPath"></param>
         /// <param name="copySubdirectories">If true, recursively copies subdirectories</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks></remarks>
-        protected bool SynchronizeFolders(string sourceFolderPath, string targetDirectoryPath, bool copySubdirectories)
+        protected bool SynchronizeFolders(string sourceDirectoryPath, string targetDirectoryPath, bool copySubdirectories)
         {
 
-            var lstFileNameFilterSpec = new List<string> { "*" };
-            var lstFileNameExclusionSpec = new List<string>();
+            var fileNameFilterSpecs = new List<string> { "*" };
+            var fileNameExclusionSpecs = new List<string>();
             const int maxRetryCount = 3;
 
-            return SynchronizeFolders(sourceFolderPath, targetDirectoryPath, lstFileNameFilterSpec, lstFileNameExclusionSpec, maxRetryCount, copySubdirectories);
+            return SynchronizeFolders(sourceDirectoryPath, targetDirectoryPath, fileNameFilterSpecs, fileNameExclusionSpecs, maxRetryCount, copySubdirectories);
         }
 
         /// <summary>
-        /// Copies new/changed files from the source folder to the target folder
+        /// Copies new/changed files from the source directory to the target directory
         /// </summary>
-        /// <param name="sourceFolderPath"></param>
+        /// <param name="sourceDirectoryPath"></param>
         /// <param name="targetDirectoryPath"></param>
         /// <param name="fileNameFilterSpec">Filename filters for including files; can use * as a wildcard; when blank then processes all files</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks>Will retry failed copies up to 3 times</remarks>
-        protected bool SynchronizeFolders(string sourceFolderPath, string targetDirectoryPath, string fileNameFilterSpec)
+        protected bool SynchronizeFolders(string sourceDirectoryPath, string targetDirectoryPath, string fileNameFilterSpec)
         {
 
-            var lstFileNameFilterSpec = new List<string> { fileNameFilterSpec };
-            var lstFileNameExclusionSpec = new List<string>();
+            var fileNameFilterSpecs = new List<string> { fileNameFilterSpec };
+            var fileNameExclusionSpecs = new List<string>();
             const int maxRetryCount = 3;
             const bool copySubdirectories = false;
 
-            return SynchronizeFolders(sourceFolderPath, targetDirectoryPath, lstFileNameFilterSpec, lstFileNameExclusionSpec, maxRetryCount, copySubdirectories);
+            return SynchronizeFolders(sourceDirectoryPath, targetDirectoryPath, fileNameFilterSpecs, fileNameExclusionSpecs, maxRetryCount, copySubdirectories);
         }
 
         /// <summary>
-        /// Copies new/changed files from the source folder to the target folder
+        /// Copies new/changed files from the source directory to the target directory
         /// </summary>
-        /// <param name="sourceFolderPath"></param>
+        /// <param name="sourceDirectoryPath"></param>
         /// <param name="targetDirectoryPath"></param>
-        /// <param name="lstFileNameFilterSpec">One or more filename filters for including files; can use * as a wildcard; when blank then processes all files</param>
+        /// <param name="fileNameFilterSpecs">One or more filename filters for including files; can use * as a wildcard; when blank then processes all files</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks>Will retry failed copies up to 3 times</remarks>
-        protected bool SynchronizeFolders(string sourceFolderPath, string targetDirectoryPath, List<string> lstFileNameFilterSpec)
+        protected bool SynchronizeFolders(string sourceDirectoryPath, string targetDirectoryPath, List<string> fileNameFilterSpecs)
         {
 
-            var lstFileNameExclusionSpec = new List<string>();
+            var fileNameExclusionSpecs = new List<string>();
             const int maxRetryCount = 3;
             const bool copySubdirectories = false;
 
-            return SynchronizeFolders(sourceFolderPath, targetDirectoryPath, lstFileNameFilterSpec, lstFileNameExclusionSpec, maxRetryCount, copySubdirectories);
+            return SynchronizeFolders(sourceDirectoryPath, targetDirectoryPath, fileNameFilterSpecs, fileNameExclusionSpecs, maxRetryCount, copySubdirectories);
         }
 
         /// <summary>
-        /// Copies new/changed files from the source folder to the target folder
+        /// Copies new/changed files from the source directory to the target directory
         /// </summary>
-        /// <param name="sourceFolderPath"></param>
+        /// <param name="sourceDirectoryPath"></param>
         /// <param name="targetDirectoryPath"></param>
-        /// <param name="lstFileNameFilterSpec">One or more filename filters for including files; can use * as a wildcard; when blank then processes all files</param>
-        /// <param name="lstFileNameExclusionSpec">One or more filename filters for excluding files; can use * as a wildcard</param>
+        /// <param name="fileNameFilterSpecs">One or more filename filters for including files; can use * as a wildcard; when blank then processes all files</param>
+        /// <param name="fileNameExclusionSpecs">One or more filename filters for excluding files; can use * as a wildcard</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks>Will retry failed copies up to 3 times</remarks>
-        protected bool SynchronizeFolders(string sourceFolderPath, string targetDirectoryPath, List<string> lstFileNameFilterSpec, List<string> lstFileNameExclusionSpec)
+        protected bool SynchronizeFolders(string sourceDirectoryPath, string targetDirectoryPath, List<string> fileNameFilterSpecs, List<string> fileNameExclusionSpecs)
         {
 
             const int maxRetryCount = 3;
             const bool copySubdirectories = false;
 
-            return SynchronizeFolders(sourceFolderPath, targetDirectoryPath, lstFileNameFilterSpec, lstFileNameExclusionSpec, maxRetryCount, copySubdirectories);
+            return SynchronizeFolders(sourceDirectoryPath, targetDirectoryPath, fileNameFilterSpecs, fileNameExclusionSpecs, maxRetryCount, copySubdirectories);
         }
 
         /// <summary>
-        /// Copies new/changed files from the source folder to the target folder
+        /// Copies new/changed files from the source directory to the target directory
         /// </summary>
-        /// <param name="sourceFolderPath"></param>
+        /// <param name="sourceDirectoryPath"></param>
         /// <param name="targetDirectoryPath"></param>
-        /// <param name="lstFileNameFilterSpec">One or more filename filters for including files; can use * as a wildcard; when blank then processes all files</param>
-        /// <param name="lstFileNameExclusionSpec">One or more filename filters for excluding files; can use * as a wildcard</param>
+        /// <param name="fileNameFilterSpecs">One or more filename filters for including files; can use * as a wildcard; when blank then processes all files</param>
+        /// <param name="fileNameExclusionSpecs">One or more filename filters for excluding files; can use * as a wildcard</param>
         /// <param name="maxRetryCount">Will retry failed copies up to maxRetryCount times; use 0 for no retries</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks></remarks>
-        protected bool SynchronizeFolders(string sourceFolderPath, string targetDirectoryPath, List<string> lstFileNameFilterSpec, List<string> lstFileNameExclusionSpec, int maxRetryCount)
+        protected bool SynchronizeFolders(string sourceDirectoryPath, string targetDirectoryPath, List<string> fileNameFilterSpecs, List<string> fileNameExclusionSpecs, int maxRetryCount)
         {
 
             const bool copySubdirectories = false;
-            return SynchronizeFolders(sourceFolderPath, targetDirectoryPath, lstFileNameFilterSpec, lstFileNameExclusionSpec, maxRetryCount, copySubdirectories);
+            return SynchronizeFolders(sourceDirectoryPath, targetDirectoryPath, fileNameFilterSpecs, fileNameExclusionSpecs, maxRetryCount, copySubdirectories);
 
         }
 
         /// <summary>
-        /// Copies new/changed files from the source folder to the target folder
+        /// Copies new/changed files from the source directory to the target directory
         /// </summary>
-        /// <param name="sourceFolderPath"></param>
+        /// <param name="sourceDirectoryPath"></param>
         /// <param name="targetDirectoryPath"></param>
-        /// <param name="lstFileNameFilterSpec">One or more filename filters for including files; can use * as a wildcard; when blank then processes all files</param>
-        /// <param name="lstFileNameExclusionSpec">One or more filename filters for excluding files; can use * as a wildcard</param>
+        /// <param name="fileNameFilterSpecs">One or more filename filters for including files; can use * as a wildcard; when blank then processes all files</param>
+        /// <param name="fileNameExclusionSpecs">One or more filename filters for excluding files; can use * as a wildcard</param>
         /// <param name="maxRetryCount">Will retry failed copies up to maxRetryCount times; use 0 for no retries</param>
         /// <param name="copySubdirectories">If true, recursively copies subdirectories</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks></remarks>
         protected bool SynchronizeFolders(
-            string sourceFolderPath,
+            string sourceDirectoryPath,
             string targetDirectoryPath,
-            List<string> lstFileNameFilterSpec,
-            List<string> lstFileNameExclusionSpec,
+            List<string> fileNameFilterSpecs,
+            List<string> fileNameExclusionSpecs,
             int maxRetryCount,
             bool copySubdirectories)
         {
             try
             {
-                var sourceDirectory = new DirectoryInfo(sourceFolderPath);
+                var sourceDirectory = new DirectoryInfo(sourceDirectoryPath);
                 var targetDirectory = new DirectoryInfo(targetDirectoryPath);
 
                 if (!targetDirectory.Exists)
@@ -4145,63 +4152,63 @@ namespace AnalysisManagerBase
                     targetDirectory.Create();
                 }
 
-                if (lstFileNameFilterSpec == null)
+                if (fileNameFilterSpecs == null)
                 {
-                    lstFileNameFilterSpec = new List<string>();
+                    fileNameFilterSpecs = new List<string>();
                 }
 
-                if (lstFileNameFilterSpec.Count == 0)
-                    lstFileNameFilterSpec.Add("*");
+                if (fileNameFilterSpecs.Count == 0)
+                    fileNameFilterSpecs.Add("*");
 
-                var lstFilesToCopy = new SortedSet<string>();
+                var filesToCopy = new SortedSet<string>();
 
-                foreach (var filterSpec in lstFileNameFilterSpec)
+                foreach (var filterSpec in fileNameFilterSpecs)
                 {
                     var filterSpecToUse = string.IsNullOrWhiteSpace(filterSpec) ? "*" : filterSpec;
 
-                    foreach (var fiFile in sourceDirectory.GetFiles(filterSpecToUse))
+                    foreach (var sourceFile in sourceDirectory.GetFiles(filterSpecToUse))
                     {
-                        if (!lstFilesToCopy.Contains(fiFile.Name))
+                        if (!filesToCopy.Contains(sourceFile.Name))
                         {
-                            lstFilesToCopy.Add(fiFile.Name);
+                            filesToCopy.Add(sourceFile.Name);
                         }
                     }
                 }
 
-                if ((lstFileNameExclusionSpec != null) && lstFileNameExclusionSpec.Count > 0)
+                if ((fileNameExclusionSpecs != null) && fileNameExclusionSpecs.Count > 0)
                 {
-                    // Remove any files from lstFilesToCopy that would get matched by items in lstFileNameExclusionSpec
+                    // Remove any files from filesToCopy that would get matched by items in fileNameExclusionSpecs
 
-                    foreach (var filterSpec in lstFileNameExclusionSpec)
+                    foreach (var filterSpec in fileNameExclusionSpecs)
                     {
                         if (string.IsNullOrWhiteSpace(filterSpec))
                             continue;
 
-                        foreach (var fiFile in sourceDirectory.GetFiles(filterSpec))
+                        foreach (var sourceFile in sourceDirectory.GetFiles(filterSpec))
                         {
-                            if (lstFilesToCopy.Contains(fiFile.Name))
+                            if (filesToCopy.Contains(sourceFile.Name))
                             {
-                                lstFilesToCopy.Remove(fiFile.Name);
+                                filesToCopy.Remove(sourceFile.Name);
                             }
                         }
                     }
                 }
 
-                foreach (var fileName in lstFilesToCopy)
+                foreach (var sourceFileName in filesToCopy)
                 {
-                    var fiSourceFile = new FileInfo(Path.Combine(sourceDirectory.FullName, fileName));
-                    var fiTargetFile = new FileInfo(Path.Combine(targetDirectory.FullName, fileName));
+                    var sourceFile = new FileInfo(Path.Combine(sourceDirectory.FullName, sourceFileName));
+                    var targetFile = new FileInfo(Path.Combine(targetDirectory.FullName, sourceFileName));
                     var copyFile = false;
 
-                    if (!fiTargetFile.Exists)
+                    if (!targetFile.Exists)
                     {
                         copyFile = true;
                     }
-                    else if (fiTargetFile.Length != fiSourceFile.Length)
+                    else if (targetFile.Length != sourceFile.Length)
                     {
                         copyFile = true;
                     }
-                    else if (fiTargetFile.LastWriteTimeUtc < fiSourceFile.LastWriteTimeUtc)
+                    else if (targetFile.LastWriteTimeUtc < sourceFile.LastWriteTimeUtc)
                     {
                         copyFile = true;
                     }
@@ -4215,21 +4222,21 @@ namespace AnalysisManagerBase
                         {
                             var startTime = DateTime.UtcNow;
 
-                            success = mFileTools.CopyFileUsingLocks(fiSourceFile, fiTargetFile.FullName, true);
+                            success = mFileTools.CopyFileUsingLocks(sourceFile, targetFile.FullName, true);
                             if (success)
                             {
-                                LogCopyStats(startTime, fiTargetFile.FullName);
+                                LogCopyStats(startTime, targetFile.FullName);
                             }
                             else
                             {
                                 retriesRemaining -= 1;
                                 if (retriesRemaining < 0)
                                 {
-                                    mMessage = "Error copying " + fiSourceFile.FullName + " to " + fiTargetFile.DirectoryName;
+                                    mMessage = "Error copying " + sourceFile.FullName + " to " + targetFile.DirectoryName;
                                     return false;
                                 }
 
-                                LogMessage("Error copying " + fiSourceFile.FullName + " to " + fiTargetFile.DirectoryName + "; RetriesRemaining: " + retriesRemaining, 0, true);
+                                LogMessage("Error copying " + sourceFile.FullName + " to " + targetFile.DirectoryName + "; RetriesRemaining: " + retriesRemaining, 0, true);
 
                                 // Wait 2 seconds then try again
                                 clsGlobal.IdleLoop(2);
@@ -4247,7 +4254,7 @@ namespace AnalysisManagerBase
                     {
                         var subDirectoryTargetPath = Path.Combine(targetDirectoryPath, subDirectory.Name);
                         var success = SynchronizeFolders(subDirectory.FullName, subDirectoryTargetPath,
-                            lstFileNameFilterSpec, lstFileNameExclusionSpec, maxRetryCount, copySubdirectories: true);
+                            fileNameFilterSpecs, fileNameExclusionSpecs, maxRetryCount, copySubdirectories: true);
 
                         if (!success)
                         {
@@ -4328,7 +4335,7 @@ namespace AnalysisManagerBase
 
         /// <summary>
         /// Unzips all files in the specified Zip file
-        /// Output folder is mWorkDir
+        /// Output directory is mWorkDir
         /// </summary>
         /// <param name="zipFilePath">File to unzip</param>
         /// <returns></returns>
@@ -4340,7 +4347,7 @@ namespace AnalysisManagerBase
 
         /// <summary>
         /// Unzips all files in the specified Zip file
-        /// Output folder is targetDirectory
+        /// Output directory is targetDirectory
         /// </summary>
         /// <param name="zipFilePath">File to unzip</param>
         /// <param name="targetDirectory">Target directory for the extracted files</param>
@@ -4353,7 +4360,7 @@ namespace AnalysisManagerBase
 
         /// <summary>
         /// Unzips files in the specified Zip file that match the FileFilter spec
-        /// Output folder is targetDirectory
+        /// Output directory is targetDirectory
         /// </summary>
         /// <param name="zipFilePath">File to unzip</param>
         /// <param name="targetDirectory">Target directory for the extracted files</param>
@@ -4518,23 +4525,23 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Update Status.xml every 15 seconds using sngPercentComplete
+        /// Update Status.xml every 15 seconds using percentComplete
         /// </summary>
-        /// <param name="sngPercentComplete">Percent complete</param>
+        /// <param name="percentComplete">Percent complete</param>
         /// <remarks></remarks>
-        protected void UpdateStatusFile(float sngPercentComplete)
+        protected void UpdateStatusFile(float percentComplete)
         {
             var frequencySeconds = 15;
-            UpdateStatusFile(sngPercentComplete, frequencySeconds);
+            UpdateStatusFile(percentComplete, frequencySeconds);
         }
 
         /// <summary>
-        /// Update Status.xml every frequencySeconds seconds using sngPercentComplete
+        /// Update Status.xml every frequencySeconds seconds using percentComplete
         /// </summary>
-        /// <param name="sngPercentComplete">Percent complete</param>
+        /// <param name="percentComplete">Percent complete</param>
         /// <param name="frequencySeconds">Minimum time between updates, in seconds (must be at least 5)</param>
         /// <remarks></remarks>
-        protected void UpdateStatusFile(float sngPercentComplete, int frequencySeconds)
+        protected void UpdateStatusFile(float percentComplete, int frequencySeconds)
         {
             if (frequencySeconds < 5)
                 frequencySeconds = 5;
@@ -4543,7 +4550,7 @@ namespace AnalysisManagerBase
             if (DateTime.UtcNow.Subtract(mLastStatusFileUpdate).TotalSeconds >= frequencySeconds)
             {
                 mLastStatusFileUpdate = DateTime.UtcNow;
-                UpdateStatusRunning(sngPercentComplete);
+                UpdateStatusRunning(percentComplete);
             }
 
         }
@@ -4578,26 +4585,26 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Update Status.xml now using sngPercentComplete
+        /// Update Status.xml now using percentComplete
         /// </summary>
-        /// <param name="sngPercentComplete"></param>
+        /// <param name="percentComplete"></param>
         /// <remarks></remarks>
-        protected void UpdateStatusRunning(float sngPercentComplete)
+        protected void UpdateStatusRunning(float percentComplete)
         {
-            mProgress = sngPercentComplete;
-            mStatusTools.UpdateAndWrite(EnumMgrStatus.RUNNING, EnumTaskStatus.RUNNING, EnumTaskStatusDetail.RUNNING_TOOL, sngPercentComplete, 0, "", "", "", false);
+            mProgress = percentComplete;
+            mStatusTools.UpdateAndWrite(EnumMgrStatus.RUNNING, EnumTaskStatus.RUNNING, EnumTaskStatusDetail.RUNNING_TOOL, percentComplete, 0, "", "", "", false);
         }
 
         /// <summary>
-        /// Update Status.xml now using sngPercentComplete and spectrumCountTotal
+        /// Update Status.xml now using percentComplete and spectrumCountTotal
         /// </summary>
-        /// <param name="sngPercentComplete"></param>
+        /// <param name="percentComplete"></param>
         /// <param name="spectrumCountTotal"></param>
         /// <remarks></remarks>
-        protected void UpdateStatusRunning(float sngPercentComplete, int spectrumCountTotal)
+        protected void UpdateStatusRunning(float percentComplete, int spectrumCountTotal)
         {
-            mProgress = sngPercentComplete;
-            mStatusTools.UpdateAndWrite(EnumMgrStatus.RUNNING, EnumTaskStatus.RUNNING, EnumTaskStatusDetail.RUNNING_TOOL, sngPercentComplete, spectrumCountTotal, "", "", "", false);
+            mProgress = percentComplete;
+            mStatusTools.UpdateAndWrite(EnumMgrStatus.RUNNING, EnumTaskStatus.RUNNING, EnumTaskStatusDetail.RUNNING_TOOL, percentComplete, spectrumCountTotal, "", "", "", false);
         }
 
         /// <summary>
@@ -4607,36 +4614,36 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         protected bool ValidateCDTAFile()
         {
-            var strDTAFilePath = Path.Combine(mWorkDir, Dataset + clsAnalysisResources.CDTA_EXTENSION);
+            var dtaFilePath = Path.Combine(mWorkDir, Dataset + clsAnalysisResources.CDTA_EXTENSION);
 
-            return ValidateCDTAFile(strDTAFilePath);
+            return ValidateCDTAFile(dtaFilePath);
         }
 
         /// <summary>
         /// Validate that a _dta.txt file is not empty
         /// </summary>
-        /// <param name="strDTAFilePath"></param>
+        /// <param name="dtaFilePath"></param>
         /// <returns></returns>
-        protected bool ValidateCDTAFile(string strDTAFilePath)
+        protected bool ValidateCDTAFile(string dtaFilePath)
         {
             var dataFound = false;
 
             try
             {
-                if (!File.Exists(strDTAFilePath))
+                if (!File.Exists(dtaFilePath))
                 {
-                    LogError("_DTA.txt file not found", strDTAFilePath);
+                    LogError("_DTA.txt file not found", dtaFilePath);
                     return false;
                 }
 
-                using (var srReader = new StreamReader(new FileStream(strDTAFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(dtaFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
 
-                    while (!srReader.EndOfStream)
+                    while (!reader.EndOfStream)
                     {
-                        var lineIn = srReader.ReadLine();
+                        var dataLine = reader.ReadLine();
 
-                        if (!string.IsNullOrWhiteSpace(lineIn))
+                        if (!string.IsNullOrWhiteSpace(dataLine))
                         {
                             dataFound = true;
                             break;
@@ -4712,7 +4719,7 @@ namespace AnalysisManagerBase
 
             try
             {
-                var fiSourceFile = new FileInfo(sourceFilePath);
+                var sourceFile = new FileInfo(sourceFilePath);
 
                 var zipFilePath = GetZipFilePathForFile(sourceFilePath);
 
@@ -4737,7 +4744,7 @@ namespace AnalysisManagerBase
                 }
 
                 var zipper = new ICSharpCode.SharpZipLib.Zip.FastZip();
-                zipper.CreateZip(zipFilePath, fiSourceFile.DirectoryName, false, fiSourceFile.Name);
+                zipper.CreateZip(zipFilePath, sourceFile.DirectoryName, false, sourceFile.Name);
 
                 // Verify that the zip file is not corrupt
                 // Files less than 4 GB get a full CRC check
@@ -4784,11 +4791,11 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Zip a file
         /// </summary>
-        /// <param name="fiResultsFile"></param>
+        /// <param name="fileToCompress"></param>
         /// <param name="fileDescription"></param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks>The original file is not deleted, but the name is added to ResultFilesToSkip in mJobParams</remarks>
-        protected bool ZipOutputFile(FileInfo fiResultsFile, string fileDescription)
+        protected bool ZipOutputFile(FileInfo fileToCompress, string fileDescription)
         {
 
             try
@@ -4796,14 +4803,14 @@ namespace AnalysisManagerBase
                 if (string.IsNullOrWhiteSpace(fileDescription))
                     fileDescription = "Unknown_Source";
 
-                if (!ZipFile(fiResultsFile.FullName, false))
+                if (!ZipFile(fileToCompress.FullName, false))
                 {
                     LogError("Error zipping " + fileDescription + " results file");
                     return false;
                 }
 
                 // Add the unzipped file to .ResultFilesToSkip since we only want to keep the zipped version
-                mJobParams.AddResultFileToSkip(fiResultsFile.Name);
+                mJobParams.AddResultFileToSkip(fileToCompress.Name);
 
             }
             catch (Exception ex)

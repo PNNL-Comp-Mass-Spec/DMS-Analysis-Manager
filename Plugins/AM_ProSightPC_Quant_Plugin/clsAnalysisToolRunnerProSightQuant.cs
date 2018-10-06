@@ -148,9 +148,9 @@ namespace AnalysisManagerProSightQuantPlugIn
                     // Write the console output to a text file
                     clsGlobal.IdleLoop(0.25);
 
-                    using (var swConsoleOutputfile = new StreamWriter(new FileStream(mCmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                    using (var writer = new StreamWriter(new FileStream(mCmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                     {
-                        swConsoleOutputfile.WriteLine(mCmdRunner.CachedConsoleOutput);
+                        writer.WriteLine(mCmdRunner.CachedConsoleOutput);
                     }
                 }
 
@@ -368,90 +368,83 @@ namespace AnalysisManagerProSightQuantPlugIn
                     LogDebug("Parsing file " + strConsoleOutputFilePath);
                 }
 
-                string strLineIn = null;
-                string strLineInLCase = null;
+                double subProgressAddon = 0;
 
-                var intLinesRead = 0;
-                var intCharIndex = 0;
-
-                double dblSubProgressAddon = 0;
-
-                var intEffectiveProgress = 0;
-                intEffectiveProgress = PROGRESS_TARGETED_WORKFLOWS_STARTING;
+                var effectiveProgress = PROGRESS_TARGETED_WORKFLOWS_STARTING;
 
                 mConsoleOutputErrorMsg = string.Empty;
 
-                using (var srInFile = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
-                    intLinesRead = 0;
-                    while (!srInFile.EndOfStream)
+                    var linesRead = 0;
+                    while (!reader.EndOfStream)
                     {
-                        strLineIn = srInFile.ReadLine();
-                        intLinesRead += 1;
+                        var dataLine = reader.ReadLine();
+                        linesRead += 1;
 
-                        if (!string.IsNullOrWhiteSpace(strLineIn))
+                        if (!string.IsNullOrWhiteSpace(dataLine))
                         {
-                            strLineInLCase = strLineIn.ToLower();
+                            var dataLineLCase = dataLine.ToLower();
 
                             // Update progress if the line contains any one of the expected phrases
                             foreach (var oItem in mConsoleOutputProgressMap)
                             {
-                                if (strLineIn.Contains(oItem.Key))
+                                if (dataLine.IndexOf(oItem.Key, StringComparison.OrdinalIgnoreCase) >= 0)
                                 {
-                                    if (intEffectiveProgress < oItem.Value)
+                                    if (effectiveProgress < oItem.Value)
                                     {
-                                        intEffectiveProgress = oItem.Value;
+                                        effectiveProgress = oItem.Value;
                                     }
                                 }
                             }
 
-                            if (intEffectiveProgress == PROGRESS_TARGETED_WORKFLOWS_PEAKS_LOADED)
+                            if (effectiveProgress == PROGRESS_TARGETED_WORKFLOWS_PEAKS_LOADED)
                             {
-                                var oMatch = reSubProgress.Match(strLineIn);
+                                var oMatch = reSubProgress.Match(dataLine);
                                 if (oMatch.Success)
                                 {
-                                    if (double.TryParse(oMatch.Groups[1].Value, out dblSubProgressAddon))
+                                    if (double.TryParse(oMatch.Groups[1].Value, out subProgressAddon))
                                     {
-                                        dblSubProgressAddon /= 100;
+                                        subProgressAddon /= 100;
                                     }
                                 }
                             }
 
-                            intCharIndex = strLineInLCase.IndexOf("exception of type");
-                            if (intCharIndex < 0)
+                            var charIndex = dataLineLCase.IndexOf("exception of type", StringComparison.OrdinalIgnoreCase);
+                            if (charIndex < 0)
                             {
-                                intCharIndex = strLineInLCase.IndexOf("\t" + "error");
+                                charIndex = dataLineLCase.IndexOf("\t" + "error", StringComparison.OrdinalIgnoreCase);
 
-                                if (intCharIndex > 0)
+                                if (charIndex > 0)
                                 {
-                                    intCharIndex += 1;
+                                    charIndex += 1;
                                 }
-                                else if (strLineInLCase.StartsWith("error"))
+                                else if (dataLineLCase.StartsWith("error"))
                                 {
-                                    intCharIndex = 0;
+                                    charIndex = 0;
                                 }
                             }
 
-                            if (intCharIndex >= 0)
+                            if (charIndex >= 0)
                             {
                                 // Error message found; update mMessage
-                                mConsoleOutputErrorMsg = strLineIn.Substring(intCharIndex);
+                                mConsoleOutputErrorMsg = dataLine.Substring(charIndex);
                             }
                         }
                     }
                 }
 
-                float sngEffectiveProgress = intEffectiveProgress;
+                float progressOverall = effectiveProgress;
 
                 // Bump up the effective progress if finding features in positive or negative data
-                if (intEffectiveProgress == PROGRESS_TARGETED_WORKFLOWS_PEAKS_LOADED)
+                if (effectiveProgress == PROGRESS_TARGETED_WORKFLOWS_PEAKS_LOADED)
                 {
-                    sngEffectiveProgress += (float)((PROGRESS_TARGETED_WORKFLOWS_PROCESSING_COMPLETE - PROGRESS_TARGETED_WORKFLOWS_PEAKS_LOADED) * dblSubProgressAddon);
+                    progressOverall += (float)((PROGRESS_TARGETED_WORKFLOWS_PROCESSING_COMPLETE - PROGRESS_TARGETED_WORKFLOWS_PEAKS_LOADED) * subProgressAddon);
                 }
 
-                if (mProgress < sngEffectiveProgress)
+                if (mProgress < progressOverall)
                 {
-                    mProgress = sngEffectiveProgress;
+                    mProgress = progressOverall;
                 }
             }
             catch (Exception ex)
@@ -481,11 +474,11 @@ namespace AnalysisManagerProSightQuantPlugIn
             return success;
         }
 
-        public void WriteXMLSetting(XmlTextWriter swOutFile, string strSettingName, string strSettingValue)
+        public void WriteXMLSetting(XmlTextWriter writer, string strSettingName, string strSettingValue)
         {
-            swOutFile.WriteStartElement(strSettingName);
-            swOutFile.WriteValue(strSettingValue);
-            swOutFile.WriteEndElement();
+            writer.WriteStartElement(strSettingName);
+            writer.WriteValue(strSettingValue);
+            writer.WriteEndElement();
         }
 
         #endregion

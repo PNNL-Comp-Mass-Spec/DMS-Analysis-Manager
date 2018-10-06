@@ -105,11 +105,11 @@ namespace AnalysisManagerProg
             }
 
             // Move the Plots folder to the result files folder
-            var diPlotsFolder = new DirectoryInfo(Path.Combine(mWorkDir, "Plots"));
+            var plotsFolder = new DirectoryInfo(Path.Combine(mWorkDir, "Plots"));
 
             var targetFolderPath = Path.Combine(Path.Combine(mWorkDir, mResultsFolderName), "Plots");
-            if (diPlotsFolder.Exists && !Directory.Exists(targetFolderPath))
-                diPlotsFolder.MoveTo(targetFolderPath);
+            if (plotsFolder.Exists && !Directory.Exists(targetFolderPath))
+                plotsFolder.MoveTo(targetFolderPath);
 
             if (!success || eReturnCode == CloseOutType.CLOSEOUT_FAILED)
             {
@@ -138,9 +138,9 @@ namespace AnalysisManagerProg
             {
                 var outFilePath = Path.Combine(folderPath, fileNameBase + index + "_" + randGenerator.Next(1, 99) + ".txt");
 
-                using (var swOutFile = new StreamWriter(new FileStream(outFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                using (var writer = new StreamWriter(new FileStream(outFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
-                    swOutFile.WriteLine(System.DateTime.Now.ToString(DATE_TIME_FORMAT) + " - This is a test file.");
+                    writer.WriteLine(System.DateTime.Now.ToString(DATE_TIME_FORMAT) + " - This is a test file.");
                 }
 
                 clsGlobal.IdleLoop(0.5);

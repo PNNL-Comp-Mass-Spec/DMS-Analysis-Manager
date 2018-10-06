@@ -47,14 +47,12 @@ namespace AnalysisManagerBase
         {
             try
             {
-                using (var swSummaryFile = new StreamWriter(new FileStream(AnalysisSummaryFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                using (var writer = new StreamWriter(new FileStream(AnalysisSummaryFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
-
                     foreach (var outLine in mLines)
                     {
-                        swSummaryFile.WriteLine(outLine);
+                        writer.WriteLine(outLine);
                     }
-
                 }
 
                 return true;

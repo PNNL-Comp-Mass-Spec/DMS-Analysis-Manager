@@ -460,13 +460,13 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             var detailedScanTypesDefined = false;
 
-            using (var srScanStatsFile = new StreamReader(new FileStream(scanStatsFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+            using (var reader = new StreamReader(new FileStream(scanStatsFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
             {
                 string headerLine = null;
 
-                while (!srScanStatsFile.EndOfStream)
+                while (!reader.EndOfStream)
                 {
-                    headerLine = srScanStatsFile.ReadLine();
+                    headerLine = reader.ReadLine();
                     if (!string.IsNullOrWhiteSpace(headerLine))
                         break;
                 }
@@ -531,17 +531,17 @@ namespace AnalysisManagerMSGFDBPlugIn
                 if (columnIndicesToCheck.Count <= 0)
                     return false;
 
-                while (!srScanStatsFile.EndOfStream && !detailedScanTypesDefined)
+                while (!reader.EndOfStream && !detailedScanTypesDefined)
                 {
-                    var dataLine = srScanStatsFile.ReadLine();
+                    var dataLine = reader.ReadLine();
                     if (string.IsNullOrWhiteSpace(dataLine))
                         continue;
 
-                    var columns = dataLine.Split('\t').ToList();
+                    var dataCols = dataLine.Split('\t').ToList();
 
                     foreach (var columnIndex in columnIndicesToCheck)
                     {
-                        var scanType = columns[columnIndex];
+                        var scanType = dataCols[columnIndex];
 
                         if (scanType.IndexOf("HCD", StringComparison.OrdinalIgnoreCase) >= 0)
                         {
@@ -565,12 +565,12 @@ namespace AnalysisManagerMSGFDBPlugIn
         private bool ValidateScanStatsFileHasScanTypeNameColumn(string scanStatsFilePath)
         {
 
-            using (var srScanStatsFile = new StreamReader(new FileStream(scanStatsFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+            using (var reader = new StreamReader(new FileStream(scanStatsFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
             {
-                if (srScanStatsFile.EndOfStream)
+                if (reader.EndOfStream)
                     return false;
 
-                var headerLine = srScanStatsFile.ReadLine();
+                var headerLine = reader.ReadLine();
                 if (string.IsNullOrWhiteSpace(headerLine))
                     return false;
 

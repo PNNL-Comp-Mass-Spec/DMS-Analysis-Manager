@@ -23,11 +23,11 @@ namespace AnalysisManagerBase
         #region "Methods"
 
         /// <summary>
-        /// Call objSummaryFile.Add for each loaded assembly
+        /// Call summaryFile.Add for each loaded assembly
         /// </summary>
-        /// <param name="objSummaryFile"></param>
+        /// <param name="summaryFile"></param>
         [Obsolete("Unused")]
-        private void GetLoadedAssemblyInfo(clsSummaryFile objSummaryFile)
+        private void GetLoadedAssemblyInfo(clsSummaryFile summaryFile)
         {
             var currentDomain = AppDomain.CurrentDomain;
 
@@ -38,15 +38,15 @@ namespace AnalysisManagerBase
             Console.WriteLine("List of assemblies loaded in current appdomain:");
             foreach (var item in assemblies)
             {
-                objSummaryFile.Add(item.ToString());
+                summaryFile.Add(item.ToString());
             }
         }
 
         /// <summary>
-        /// Call objSummaryFile.Add for each DLL in the application directory
+        /// Call summaryFile.Add for each DLL in the application directory
         /// </summary>
-        /// <param name="objSummaryFile"></param>
-        public void GetComponentFileVersionInfo(clsSummaryFile objSummaryFile)
+        /// <param name="summaryFile"></param>
+        public void GetComponentFileVersionInfo(clsSummaryFile summaryFile)
         {
             // Create a reference to the current directory.
             var di = new DirectoryInfo(clsGlobal.GetAppFolderPath());
@@ -88,7 +88,7 @@ namespace AnalysisManagerBase
                     fileInfo += "FileDescription:  " + versionInfo.FileDescription + Environment.NewLine;
                 }
 
-                objSummaryFile.Add(fileInfo);
+                summaryFile.Add(fileInfo);
             }
 
         }

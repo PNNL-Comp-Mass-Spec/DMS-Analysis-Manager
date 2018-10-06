@@ -95,11 +95,11 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Creates a new lock file to allow the calling process to either create the split fasta file or validate that the split fasta file exists
         /// </summary>
-        /// <param name="fiBaseFastaFile"></param>
+        /// <param name="baseFastaFile"></param>
         /// <param name="lockFilePath">Output parameter: path to the newly created lock file</param>
         /// <returns>Lock file handle</returns>
         /// <remarks></remarks>
-        private StreamWriter CreateLockStream(FileSystemInfo fiBaseFastaFile, out string lockFilePath)
+        private StreamWriter CreateLockStream(FileSystemInfo baseFastaFile, out string lockFilePath)
         {
 
             var startTime = DateTime.UtcNow;
@@ -107,7 +107,7 @@ namespace AnalysisManagerBase
 
             StreamWriter lockStream;
 
-            lockFilePath = Path.Combine(fiBaseFastaFile.FullName + clsGlobal.LOCK_FILE_EXTENSION);
+            lockFilePath = Path.Combine(baseFastaFile.FullName + clsGlobal.LOCK_FILE_EXTENSION);
             var lockFi = new FileInfo(lockFilePath);
 
             do
@@ -188,7 +188,7 @@ namespace AnalysisManagerBase
                     // Abort
 
                     // Exception: Unable to create Lockfile required to split fasta file ...
-                    throw new Exception("Unable to create " + LOCK_FILE_PROGRESS_TEXT + " required to split fasta file " + fiBaseFastaFile.FullName + "; tried 4 times without success");
+                    throw new Exception("Unable to create " + LOCK_FILE_PROGRESS_TEXT + " required to split fasta file " + baseFastaFile.FullName + "; tried 4 times without success");
                 }
             } while (true);
 
@@ -260,14 +260,14 @@ namespace AnalysisManagerBase
             sqlQuery.Append(" FROM V_Legacy_Static_File_Locations");
             sqlQuery.Append(" WHERE FileName = '" + legacyFASTAFileName + "'");
 
-            var success = clsGlobal.GetDataTableByQuery(sqlQuery.ToString(), mProteinSeqsDBConnectionString, "GetLegacyFastaFilePath", retryCount, out var dtResults, timeoutSeconds);
+            var success = clsGlobal.GetDataTableByQuery(sqlQuery.ToString(), mProteinSeqsDBConnectionString, "GetLegacyFastaFilePath", retryCount, out var legacyStaticFiles, timeoutSeconds);
 
             if (!success)
             {
                 return string.Empty;
             }
 
-            foreach (DataRow dataRow in dtResults.Rows)
+            foreach (DataRow dataRow in legacyStaticFiles.Rows)
             {
                 var legacyFASTAFilePath = clsGlobal.DbCStr(dataRow[0]);
                 organismName = clsGlobal.DbCStr(dataRow[1]);
@@ -280,7 +280,7 @@ namespace AnalysisManagerBase
 
         }
 
-        private bool StoreSplitFastaFileNames(string organismName, IEnumerable<clsFastaFileSplitter.udtFastaFileInfoType> lstSplitFastaInfo)
+        private bool StoreSplitFastaFileNames(string organismName, IEnumerable<clsFastaFileSplitter.udtFastaFileInfoType> splitFastaFiles)
         {
 
             var splitFastaName = "??";
@@ -301,12 +301,12 @@ namespace AnalysisManagerBase
 
             try
             {
-                foreach (var udtFileInfo in lstSplitFastaInfo)
+                foreach (var currentSplitFasta in splitFastaFiles)
                 {
                     // Add/update each split file
 
-                    var fiSplitFastaFile = new FileInfo(udtFileInfo.FilePath);
-                    splitFastaName = fiSplitFastaFile.Name;
+                    var splitFastaFileInfo = new FileInfo(currentSplitFasta.FilePath);
+                    splitFastaName = splitFastaFileInfo.Name;
 
                     // Setup for execution of the stored procedure
                     var cmd = new SqlCommand
@@ -318,9 +318,9 @@ namespace AnalysisManagerBase
                     cmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
                     cmd.Parameters.Add(new SqlParameter("@FastaFileName", SqlDbType.VarChar, 128)).Value = splitFastaName;
                     cmd.Parameters.Add(new SqlParameter("@OrganismName", SqlDbType.VarChar, 128)).Value = organismName;
-                    cmd.Parameters.Add(new SqlParameter("@NumProteins", SqlDbType.Int)).Value = udtFileInfo.NumProteins;
-                    cmd.Parameters.Add(new SqlParameter("@NumResidues", SqlDbType.BigInt)).Value = udtFileInfo.NumResidues;
-                    cmd.Parameters.Add(new SqlParameter("@FileSizeKB", SqlDbType.Int)).Value = (fiSplitFastaFile.Length / 1024.0).ToString("0");
+                    cmd.Parameters.Add(new SqlParameter("@NumProteins", SqlDbType.Int)).Value = currentSplitFasta.NumProteins;
+                    cmd.Parameters.Add(new SqlParameter("@NumResidues", SqlDbType.BigInt)).Value = currentSplitFasta.NumResidues;
+                    cmd.Parameters.Add(new SqlParameter("@FileSizeKB", SqlDbType.Int)).Value = (splitFastaFileInfo.Length / 1024.0).ToString("0");
                     cmd.Parameters.Add(new SqlParameter("@Message", SqlDbType.VarChar, 512)).Value = string.Empty;
 
                     var retryCount = 3;
@@ -556,9 +556,9 @@ namespace AnalysisManagerBase
                     return false;
                 }
 
-                var fiBaseFastaFile = new FileInfo(baseFastaFilePath);
+                var baseFastaFile = new FileInfo(baseFastaFilePath);
 
-                if (!fiBaseFastaFile.Exists)
+                if (!baseFastaFile.Exists)
                 {
                     ErrorMessage = "Cannot split FASTA file; file not found: " + baseFastaFilePath;
                     OnErrorEvent(ErrorMessage);
@@ -567,12 +567,12 @@ namespace AnalysisManagerBase
 
                 // Try to create a lock file
                 currentTask = "CreateLockStream";
-                var lockStream = CreateLockStream(fiBaseFastaFile, out var lockFilePath);
+                var lockStream = CreateLockStream(baseFastaFile, out var lockFilePath);
 
                 if (lockStream == null)
                 {
                     // Unable to create a lock stream; an exception has likely already been thrown
-                    throw new Exception("Unable to create lock file required to split " + fiBaseFastaFile.FullName);
+                    throw new Exception("Unable to create lock file required to split " + baseFastaFile.FullName);
                 }
 
                 lockStream.WriteLine("ValidateSplitFastaFile, started at " + DateTime.Now + " by " + mManagerName);
@@ -591,7 +591,7 @@ namespace AnalysisManagerBase
                     return true;
                 }
 
-                OnSplittingBaseFastafile(fiBaseFastaFile.FullName, mNumSplitParts);
+                OnSplittingBaseFastafile(baseFastaFile.FullName, mNumSplitParts);
 
                 // Perform the splitting
                 //    Call SplitFastaFile to create a split file, using mNumSplitParts parts
@@ -605,8 +605,8 @@ namespace AnalysisManagerBase
                 mSplitter.WarningEvent += Splitter_WarningEvent;
                 mSplitter.ProgressUpdate += Splitter_ProgressChanged;
 
-                currentTask = "SplitFastaFile " + fiBaseFastaFile.FullName;
-                var success = mSplitter.SplitFastaFile(fiBaseFastaFile.FullName, fiBaseFastaFile.DirectoryName, mNumSplitParts);
+                currentTask = "SplitFastaFile " + baseFastaFile.FullName;
+                var success = mSplitter.SplitFastaFile(baseFastaFile.FullName, baseFastaFile.DirectoryName, mNumSplitParts);
 
                 if (!success)
                 {
@@ -621,12 +621,12 @@ namespace AnalysisManagerBase
 
                 // Verify that the fasta files were created
                 currentTask = "Verify new files";
-                foreach (var splitFileInfo in mSplitter.SplitFastaFileInfo)
+                foreach (var currentSplitFile in mSplitter.SplitFastaFileInfo)
                 {
-                    var fiSplitFastaFile = new FileInfo(splitFileInfo.FilePath);
-                    if (!fiSplitFastaFile.Exists)
+                    var splitFastaFileInfo = new FileInfo(currentSplitFile.FilePath);
+                    if (!splitFastaFileInfo.Exists)
                     {
-                        ErrorMessage = "Newly created split fasta file not found: " + splitFileInfo.FilePath;
+                        ErrorMessage = "Newly created split fasta file not found: " + currentSplitFile.FilePath;
                         OnErrorEvent(ErrorMessage);
                         DeleteLockStream(lockFilePath, lockStream);
                         return false;
@@ -657,16 +657,15 @@ namespace AnalysisManagerBase
 
                 if (!string.IsNullOrWhiteSpace(MSGFPlusIndexFilesFolderPathLegacyDB))
                 {
-                    var diIndexFolder = new DirectoryInfo(MSGFPlusIndexFilesFolderPathLegacyDB);
+                    var indexFileDirectory = new DirectoryInfo(MSGFPlusIndexFilesFolderPathLegacyDB);
 
-
-                    if (diIndexFolder.Exists)
+                    if (indexFileDirectory.Exists)
                     {
-                        foreach (var splitFileInfo in mSplitter.SplitFastaFileInfo)
+                        foreach (var currentSplitFile in mSplitter.SplitFastaFileInfo)
                         {
-                            var fileSpecBase = Path.GetFileNameWithoutExtension(splitFileInfo.FilePath);
+                            var fileSpecBase = Path.GetFileNameWithoutExtension(currentSplitFile.FilePath);
 
-                            var lstFileSpecsToFind = new List<string>
+                            var fileSpecsToFind = new List<string>
                             {
                                 fileSpecBase + ".*",
                                 fileSpecBase + ".fasta.LastUsed",
@@ -674,13 +673,13 @@ namespace AnalysisManagerBase
                                 fileSpecBase + ".fasta.MSGFPlusIndexFileInfo.Lock"
                             };
 
-                            foreach (var fileSpec in lstFileSpecsToFind)
+                            foreach (var fileSpec in fileSpecsToFind)
                             {
-                                foreach (var fiFile in diIndexFolder.GetFiles(fileSpec))
+                                foreach (var fileToDelete in indexFileDirectory.GetFiles(fileSpec))
                                 {
                                     try
                                     {
-                                        fiFile.Delete();
+                                        fileToDelete.Delete();
                                     }
                                     catch (Exception)
                                     {

@@ -285,7 +285,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
                 };
                 RegisterEvents(cmdRunner);
 
-                cmdRunner.LoopWaiting += cmdRunner_LoopWaiting;
+                cmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
                 cmdRunner.Timeout += cmdRunner_Timeout;
                 mProgress = PROGRESS_PCT_STARTING;
 
@@ -468,31 +468,31 @@ namespace AnalysisManagerBrukerDAExportPlugin
                 var totalScans = 0;
                 var currentScan = 0;
 
-                using (var srInFile = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
 
-                    while (!srInFile.EndOfStream)
+                    while (!reader.EndOfStream)
                     {
-                        var strLineIn = srInFile.ReadLine();
+                        var dataLine = reader.ReadLine();
 
-                        if (string.IsNullOrWhiteSpace(strLineIn))
+                        if (string.IsNullOrWhiteSpace(dataLine))
                         {
                             continue;
                         }
 
-                        if (strLineIn.ToLower().StartsWith("error occurred"))
+                        if (dataLine.ToLower().StartsWith("error occurred"))
                         {
-                            StoreConsoleErrorMessage(srInFile, strLineIn);
+                            StoreConsoleErrorMessage(reader, dataLine);
                         }
 
-                        var reMatch = reTotalScans.Match(strLineIn);
+                        var reMatch = reTotalScans.Match(dataLine);
                         if (reMatch.Success)
                         {
                             int.TryParse(reMatch.Groups[1].Value, out totalScans);
                         }
                         else
                         {
-                            reMatch = reCurrentScan.Match(strLineIn);
+                            reMatch = reCurrentScan.Match(dataLine);
                             if (reMatch.Success)
                             {
                                 int.TryParse(reMatch.Groups[1].Value, out currentScan);
@@ -531,22 +531,22 @@ namespace AnalysisManagerBrukerDAExportPlugin
 
         }
 
-        private void StoreConsoleErrorMessage(StreamReader srInFile, string strLineIn)
+        private void StoreConsoleErrorMessage(StreamReader reader, string firstDataLine)
         {
             if (string.IsNullOrEmpty(mConsoleOutputErrorMsg))
             {
                 mConsoleOutputErrorMsg = "Error exporting spectra:";
             }
-            mConsoleOutputErrorMsg += " " + strLineIn;
+            mConsoleOutputErrorMsg += " " + firstDataLine;
 
-            while (!srInFile.EndOfStream)
+            while (!reader.EndOfStream)
             {
                 // Store the remaining console output lines
-                strLineIn = srInFile.ReadLine();
+                var dataLine = reader.ReadLine();
 
-                if (!string.IsNullOrWhiteSpace(strLineIn) && !strLineIn.StartsWith("========"))
+                if (!string.IsNullOrWhiteSpace(dataLine) && !dataLine.StartsWith("========"))
                 {
-                    mConsoleOutputErrorMsg += "; " + strLineIn;
+                    mConsoleOutputErrorMsg += "; " + dataLine;
                 }
 
             }
@@ -657,7 +657,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
 
         #region "Event Handlers"
 
-        void cmdRunner_LoopWaiting()
+        void CmdRunner_LoopWaiting()
         {
 
             {

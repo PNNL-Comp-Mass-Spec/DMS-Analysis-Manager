@@ -56,12 +56,12 @@ namespace AnalysisManagerDtaRefineryPlugIn
 
                 var tempFilePath = Path.GetTempFileName();
 
-                using (var srSourceFile = new StreamReader(new FileStream(strSourceFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
-                using (var swOutFile = new StreamWriter(new FileStream(tempFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(strSourceFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                using (var writer = new StreamWriter(new FileStream(tempFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
                 {
-                    while (!srSourceFile.EndOfStream)
+                    while (!reader.EndOfStream)
                     {
-                        var dataLine = srSourceFile.ReadLine();
+                        var dataLine = reader.ReadLine();
                         var columnCountUpdated = 0;
                         if (string.IsNullOrWhiteSpace(dataLine))
                             continue;
@@ -89,11 +89,11 @@ namespace AnalysisManagerDtaRefineryPlugIn
                             if (columnCountUpdated > 0)
                             {
                                 mFileUpdated = true;
-                                swOutFile.WriteLine(CollapseLine(dataColumns));
+                                writer.WriteLine(CollapseLine(dataColumns));
                             }
                             else
                             {
-                                swOutFile.WriteLine(dataLine);
+                                writer.WriteLine(dataLine);
                             }
                         }
                         else
@@ -107,7 +107,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
                                 ValidateHeader(dataLine, ref parentIntensityColIndex, ref monoIntensityColIndex);
                                 headerValidated = true;
                             }
-                            swOutFile.WriteLine(dataLine);
+                            writer.WriteLine(dataLine);
                         }
                     }
                 }

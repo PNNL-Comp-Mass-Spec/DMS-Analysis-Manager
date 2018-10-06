@@ -344,9 +344,9 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
                     // Create the _CacheInfo.txt file
                     var cacheInfoFilePath = msXmlFilePath + "_CacheInfo.txt";
-                    using (var swOutFile = new StreamWriter(new FileStream(cacheInfoFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                    using (var writer = new StreamWriter(new FileStream(cacheInfoFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                     {
-                        swOutFile.WriteLine(remoteCachefilePath);
+                        writer.WriteLine(remoteCachefilePath);
                     }
                 }
             }

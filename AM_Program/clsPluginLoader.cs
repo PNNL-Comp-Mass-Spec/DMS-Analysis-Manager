@@ -48,11 +48,11 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="objSummaryFile"></param>
+        /// <param name="summaryFile"></param>
         /// <param name="MgrFolderPath"></param>
-        public clsPluginLoader(clsSummaryFile objSummaryFile, string MgrFolderPath)
+        public clsPluginLoader(clsSummaryFile summaryFile, string MgrFolderPath)
         {
-            mSummaryFile = objSummaryFile;
+            mSummaryFile = summaryFile;
             mMgrFolderPath = MgrFolderPath;
         }
 

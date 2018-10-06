@@ -127,8 +127,8 @@ namespace AnalysisManagerSequestPlugin
         {
             // Creates Sequest .out files from DTA files
 
-            int intDTACountRemaining;
-            var blnProcessingError = false;
+            int dtaCountRemaining;
+            var processingError = false;
 
             mOutFileCandidates.Clear();
             mOutFileCandidateInfo.Clear();
@@ -175,9 +175,9 @@ namespace AnalysisManagerSequestPlugin
             mOutFileAppenderTimer.Elapsed += OutFileAppenderTime_Elapsed;
             mOutFileAppenderTimer.Start();
 
-            var diWorkDir = new DirectoryInfo(mWorkDir);
+            var workDir = new DirectoryInfo(mWorkDir);
 
-            if (diWorkDir.GetFiles("sequest*.log*").Length > 0)
+            if (workDir.GetFiles("sequest*.log*").Length > 0)
             {
                 // Parse any sequest.log files present in the work directory to determine the number of spectra already processed
                 UpdateSequestNodeProcessingStats(true);
@@ -215,13 +215,13 @@ namespace AnalysisManagerSequestPlugin
 
                 // Run Sequest to generate OUT files
                 mLastSequestStartTime = DateTime.UtcNow;
-                var blnSuccess = mCmdRunner.RunProgram(ProgLoc, cmdStr, "Seq", true);
+                var success = mCmdRunner.RunProgram(ProgLoc, cmdStr, "Seq", true);
 
                 mSequestSearchEndTime = DateTime.UtcNow;
 
-                if (blnSuccess && !mResetPVM && !mAbortSinceSequestIsStalled)
+                if (success && !mResetPVM && !mAbortSinceSequestIsStalled)
                 {
-                    intDTACountRemaining = 0;
+                    dtaCountRemaining = 0;
                 }
                 else
                 {
@@ -232,63 +232,63 @@ namespace AnalysisManagerSequestPlugin
                     }
 
                     // Check whether any .DTA files remain for this dataset
-                    intDTACountRemaining = GetDTAFileCountRemaining();
+                    dtaCountRemaining = GetDTAFileCountRemaining();
 
-                    if (intDTACountRemaining > 0)
+                    if (dtaCountRemaining > 0)
                     {
-                        blnSuccess = false;
+                        success = false;
                         if (mNodeCountSpawnErrorOccurrences < MAX_NODE_RESPAWN_ATTEMPTS && mNodeCountActiveErrorOccurrences < MAX_NODE_RESPAWN_ATTEMPTS)
                         {
-                            var intMaxPVMResetAttempts = 4;
+                            var maxPVMResetAttempts = 4;
 
                             LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.INFO, "Resetting PVM in MakeOUTFiles");
-                            blnSuccess = ResetPVMWithRetry(intMaxPVMResetAttempts);
+                            success = ResetPVMWithRetry(maxPVMResetAttempts);
                         }
 
-                        if (!blnSuccess)
+                        if (!success)
                         {
                             // Log message "Error resetting PVM; disabling manager locally"
                             mMessage = PVM_RESET_ERROR_MESSAGE;
                             LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR,
                                 mMessage + "; disabling manager locally");
                             mNeedToAbortProcessing = true;
-                            blnProcessingError = true;
+                            processingError = true;
                             break;
                         }
                     }
                     else
                     {
                         // No .DTAs remain; if we have as many .out files as the original source .dta files, treat this as success, otherwise as a failure
-                        var intOutFileCount = GetOUTFileCountRemaining() + mTotalOutFileCount;
+                        var outFileCount = GetOUTFileCountRemaining() + mTotalOutFileCount;
 
-                        if (intOutFileCount == mDtaCount)
+                        if (outFileCount == mDtaCount)
                         {
                             LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.WARN,
-                                " ... The number of OUT files (" + intOutFileCount + ") is equivalent to the original DTA count (" + mDtaCount +
+                                " ... The number of OUT files (" + outFileCount + ") is equivalent to the original DTA count (" + mDtaCount +
                                 "); we'll consider this a successful job despite the Sequest CmdRunner error");
                         }
-                        else if (intOutFileCount > mDtaCount)
+                        else if (outFileCount > mDtaCount)
                         {
                             LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.WARN,
-                                " ... The number of OUT files (" + intOutFileCount + ") is greater than the original DTA count (" + mDtaCount +
+                                " ... The number of OUT files (" + outFileCount + ") is greater than the original DTA count (" + mDtaCount +
                                 "); we'll consider this a successful job despite the Sequest CmdRunner error");
                         }
-                        else if (intOutFileCount >= (int)(mDtaCount * 0.999))
+                        else if (outFileCount >= (int)(mDtaCount * 0.999))
                         {
                             LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.WARN,
-                                " ... The number of OUT files (" + intOutFileCount + ") is within 0.1% of the original DTA count (" + mDtaCount +
+                                " ... The number of OUT files (" + outFileCount + ") is within 0.1% of the original DTA count (" + mDtaCount +
                                 "); we'll consider this a successful job despite the Sequest CmdRunner error");
                         }
                         else
                         {
                             LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR,
-                                "No DTA files remain and the number of OUT files (" + intOutFileCount + ") is less than the original DTA count (" +
+                                "No DTA files remain and the number of OUT files (" + outFileCount + ") is less than the original DTA count (" +
                                 mDtaCount + "); treating this as a job failure");
-                            blnProcessingError = true;
+                            processingError = true;
                         }
                     }
                 }
-            } while (intDTACountRemaining > 0);
+            } while (dtaCountRemaining > 0);
 
             // Disable the Out File Watcher and the Out File Appender timers
             mOutFileWatcher.EnableRaisingEvents = false;
@@ -301,7 +301,7 @@ namespace AnalysisManagerSequestPlugin
             UpdateSequestNodeProcessingStats(false);
 
             // Verify out file creation
-            if (mDebugLevel >= 2 && !blnProcessingError)
+            if (mDebugLevel >= 2 && !processingError)
             {
                 LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, " ... Verifying out file creation");
             }
@@ -331,10 +331,10 @@ namespace AnalysisManagerSequestPlugin
             {
                 LogErrorToDatabase("No OUT files created, job " + mJob + ", step " + mJobParams.GetParam("Step"));
                 UpdateStatusMessage("No OUT files created");
-                blnProcessingError = true;
+                processingError = true;
             }
 
-            var intIterationsRemaining = 3;
+            var iterationsRemaining = 3;
             do
             {
                 // Process the remaining .Out files in mOutFileCandidates
@@ -344,8 +344,8 @@ namespace AnalysisManagerSequestPlugin
                     clsGlobal.IdleLoop(5);
                 }
 
-                intIterationsRemaining -= 1;
-            } while (mOutFileCandidates.Count > 0 && intIterationsRemaining >= 0);
+                iterationsRemaining -= 1;
+            } while (mOutFileCandidates.Count > 0 && iterationsRemaining >= 0);
 
             // Append any remaining .out files to the _out.txt.tmp file, then rename it to _out.txt
             if (ConcatOutFiles(mWorkDir, mDatasetName, mJob))
@@ -355,10 +355,10 @@ namespace AnalysisManagerSequestPlugin
             }
             else
             {
-                blnProcessingError = true;
+                processingError = true;
             }
 
-            if (blnProcessingError)
+            if (processingError)
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -445,11 +445,11 @@ namespace AnalysisManagerSequestPlugin
         {
             try
             {
-                var diWorkDir = new DirectoryInfo(mWorkDir);
+                var workDir = new DirectoryInfo(mWorkDir);
 
-                foreach (var fiFile in diWorkDir.GetFiles("*.out", SearchOption.TopDirectoryOnly))
+                foreach (var outFile in workDir.GetFiles("*.out", SearchOption.TopDirectoryOnly))
                 {
-                    HandleOutFileChange(fiFile.Name);
+                    HandleOutFileChange(outFile.Name);
                 }
             }
             catch (Exception ex)
@@ -464,34 +464,34 @@ namespace AnalysisManagerSequestPlugin
 
             try
             {
-                var dblMinutesSinceLastOutFileStored = DateTime.UtcNow.Subtract(mLastOutFileStoreTime).TotalMinutes;
+                var minutesSinceLastOutFileStored = DateTime.UtcNow.Subtract(mLastOutFileStoreTime).TotalMinutes;
 
-                if (dblMinutesSinceLastOutFileStored > SEQUEST_STALLED_WAIT_TIME_MINUTES)
+                if (minutesSinceLastOutFileStored > SEQUEST_STALLED_WAIT_TIME_MINUTES)
                 {
-                    var blnResetPVM = false;
+                    var resetPVM = false;
 
                     if (mSequestAppearsStalled)
                     {
-                        if (dblMinutesSinceLastOutFileStored > SEQUEST_STALLED_WAIT_TIME_MINUTES * 2)
+                        if (minutesSinceLastOutFileStored > SEQUEST_STALLED_WAIT_TIME_MINUTES * 2)
                         {
                             // We already reset SEQUEST once, and another 30 minutes has elapsed
                             // Examine the number of .dta files that remain
-                            var intDTAsRemaining = GetDTAFileCountRemaining();
+                            var dtaCountRemaining = GetDTAFileCountRemaining();
 
-                            if (intDTAsRemaining <= (int)(mDtaCount * 0.999))
+                            if (dtaCountRemaining <= (int)(mDtaCount * 0.999))
                             {
                                 // Just a handful of DTA files remain; assume they're corrupt
-                                var diWorkDir = new DirectoryInfo(mWorkDir);
+                                var workDir = new DirectoryInfo(mWorkDir);
 
-                                LogWarning("Sequest is stalled, and " + intDTAsRemaining + " .DTA file" + CheckForPlurality(intDTAsRemaining) + " remain; " +
+                                LogWarning("Sequest is stalled, and " + dtaCountRemaining + " .DTA file" + CheckForPlurality(dtaCountRemaining) + " remain; " +
                                            "assuming they are corrupt and deleting them");
 
-                                mEvalMessage = "Sequest is stalled, but only " + intDTAsRemaining + " .DTA file" +
-                                                CheckForPlurality(intDTAsRemaining) + " remain";
+                                mEvalMessage = "Sequest is stalled, but only " + dtaCountRemaining + " .DTA file" +
+                                                CheckForPlurality(dtaCountRemaining) + " remain";
 
-                                foreach (var fiFile in diWorkDir.GetFiles("*.dta", SearchOption.TopDirectoryOnly).ToList())
+                                foreach (var dtaFile in workDir.GetFiles("*.dta", SearchOption.TopDirectoryOnly).ToList())
                                 {
-                                    fiFile.Delete();
+                                    dtaFile.Delete();
                                 }
                             }
                             else
@@ -500,12 +500,12 @@ namespace AnalysisManagerSequestPlugin
                                 // Abort the job
 
                                 LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR,
-                                    "Sequest is stalled, and " + intDTAsRemaining + " .DTA files remain; aborting processing");
+                                    "Sequest is stalled, and " + dtaCountRemaining + " .DTA files remain; aborting processing");
                                 mMessage = "Sequest is stalled and too many .DTA files are un-processed";
                                 mAbortSinceSequestIsStalled = true;
                             }
 
-                            blnResetPVM = true;
+                            resetPVM = true;
                         }
                     }
                     else
@@ -517,12 +517,12 @@ namespace AnalysisManagerSequestPlugin
                             "Sequest has not created a new .out file in the last " + SEQUEST_STALLED_WAIT_TIME_MINUTES +
                             " minutes; will Reset PVM then wait another " + SEQUEST_STALLED_WAIT_TIME_MINUTES + " minutes");
 
-                        blnResetPVM = true;
+                        resetPVM = true;
 
                         mSequestAppearsStalled = true;
                     }
 
-                    if (blnResetPVM)
+                    if (resetPVM)
                     {
                         LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.INFO,
                             "Setting mResetPVM to True in CheckForStalledSequest");
@@ -536,25 +536,25 @@ namespace AnalysisManagerSequestPlugin
             }
         }
 
-        private bool CopyFileToTransferFolder(string strSourceFileName, string strTargetFileName, bool blnAddToListOfServerFilesToDelete)
+        private bool CopyFileToTransferFolder(string sourceFileName, string targetFileName, bool addToListOfServerFilesToDelete)
         {
             try
             {
-                var strSourceFilePath = Path.Combine(mWorkDir, strSourceFileName);
-                var strTargetFilePath = Path.Combine(mTransferFolderPath, strTargetFileName);
+                var sourceFilePath = Path.Combine(mWorkDir, sourceFileName);
+                var targetFilePath = Path.Combine(mTransferFolderPath, targetFileName);
 
-                if (File.Exists(strSourceFilePath))
+                if (File.Exists(sourceFilePath))
                 {
                     if (!Directory.Exists(mTransferFolderPath))
                     {
                         Directory.CreateDirectory(mTransferFolderPath);
                     }
 
-                    File.Copy(strSourceFilePath, strTargetFilePath, true);
+                    File.Copy(sourceFilePath, targetFilePath, true);
 
-                    if (blnAddToListOfServerFilesToDelete)
+                    if (addToListOfServerFilesToDelete)
                     {
-                        mJobParams.AddServerFileToDelete(strTargetFilePath);
+                        mJobParams.AddServerFileToDelete(targetFilePath);
                     }
                 }
             }
@@ -563,7 +563,7 @@ namespace AnalysisManagerSequestPlugin
                 if (mDebugLevel >= 1)
                 {
                     LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.WARN,
-                        "Error copying file " + strSourceFileName + " to " + mTransferFolderPath + ": " + ex.Message);
+                        "Error copying file " + sourceFileName + " to " + mTransferFolderPath + ": " + ex.Message);
                 }
                 return false;
             }
@@ -606,13 +606,13 @@ namespace AnalysisManagerSequestPlugin
             }
         }
 
-        private bool GetNodeNamesFromSequestLog(string strLogFilePath)
+        private bool GetNodeNamesFromSequestLog(string logFilePath)
         {
-            var blnFoundSpawned = false;
+            var foundSpawned = false;
 
             try
             {
-                if (!File.Exists(strLogFilePath))
+                if (!File.Exists(logFilePath))
                 {
                     return false;
                 }
@@ -627,36 +627,36 @@ namespace AnalysisManagerSequestPlugin
                 var reSpawnedSlaveProcesses = new Regex(@"Spawned (\d+) slave processes", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline);
 
                 mSequestNodesSpawned = 0;
-                using (var srLogFile = new StreamReader(new FileStream(strLogFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(logFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
                     // Read each line from the input file
-                    while (!srLogFile.EndOfStream)
+                    while (!reader.EndOfStream)
                     {
-                        var strLineIn = srLogFile.ReadLine();
+                        var dataLine = reader.ReadLine();
 
-                        if (!string.IsNullOrWhiteSpace(strLineIn))
+                        if (!string.IsNullOrWhiteSpace(dataLine))
                         {
                             // Check whether line looks like:
                             //    9.  received ready message from p6(c0002)
 
-                            var reMatch = reReceivedReadyMsg.Match(strLineIn);
+                            var reMatch = reReceivedReadyMsg.Match(dataLine);
                             if (reMatch.Success)
                             {
                                 mSequestNodesSpawned += 1;
                             }
                             else
                             {
-                                reMatch = reSpawnedSlaveProcesses.Match(strLineIn);
+                                reMatch = reSpawnedSlaveProcesses.Match(dataLine);
                                 if (reMatch.Success)
                                 {
-                                    blnFoundSpawned = true;
+                                    foundSpawned = true;
                                 }
                             }
                         }
                     }
                 }
 
-                if (blnFoundSpawned)
+                if (foundSpawned)
                 {
                     if (mDebugLevel >= 2)
                     {
@@ -664,23 +664,23 @@ namespace AnalysisManagerSequestPlugin
                             " ... found " + mSequestNodesSpawned + " nodes in the sequest.log file");
                     }
 
-                    var intNodeCountExpected = mMgrParams.GetParam("SequestNodeCountExpected", 0);
-                    var intNodeCountMinimum = (int)Math.Floor(0.85 * intNodeCountExpected);
+                    var nodeCountExpected = mMgrParams.GetParam("SequestNodeCountExpected", 0);
+                    var nodeCountMinimum = (int)Math.Floor(0.85 * nodeCountExpected);
 
-                    if (mSequestNodesSpawned < intNodeCountMinimum)
+                    if (mSequestNodesSpawned < nodeCountMinimum)
                     {
-                        // If fewer than intNodeCountMinimum .DTA files are present in the work directory, the node count spawned will be small
+                        // If fewer than nodeCountMinimum .DTA files are present in the work directory, the node count spawned will be small
                         // Thus, need to count the number of DTAs
-                        var intDTACountRemaining = GetDTAFileCountRemaining();
+                        var dtaCountRemaining = GetDTAFileCountRemaining();
 
-                        if (intDTACountRemaining > mSequestNodesSpawned)
+                        if (dtaCountRemaining > mSequestNodesSpawned)
                         {
                             mNodeCountSpawnErrorOccurrences += 1;
 
-                            var strMessage = "Not enough nodes were spawned (Threshold = " + intNodeCountMinimum + " nodes): " + mSequestNodesSpawned +
-                                             " spawned vs. " + intNodeCountExpected + " expected; " +
+                            var message = "Not enough nodes were spawned (Threshold = " + nodeCountMinimum + " nodes): " + mSequestNodesSpawned +
+                                             " spawned vs. " + nodeCountExpected + " expected; " +
                                              "mNodeCountSpawnErrorOccurrences=" + mNodeCountSpawnErrorOccurrences;
-                            LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, strMessage);
+                            LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, message);
 
                             mResetPVM = true;
                         }
@@ -751,28 +751,28 @@ namespace AnalysisManagerSequestPlugin
 
         private float ComputeMedianProcessingTime()
         {
-            int intMidPoint;
+            int midPoint;
 
             if (mRecentOutFileSearchTimes.Count < 1)
                 return 0;
 
             // Determine the median out file processing time
             // Note that search times in mRecentOutFileSearchTimes are in seconds
-            var sngOutFileProcessingTimes = new float[mRecentOutFileSearchTimes.Count];
+            var outFileProcessingTimes = new float[mRecentOutFileSearchTimes.Count];
 
-            mRecentOutFileSearchTimes.CopyTo(sngOutFileProcessingTimes, 0);
+            mRecentOutFileSearchTimes.CopyTo(outFileProcessingTimes, 0);
 
-            Array.Sort(sngOutFileProcessingTimes);
-            if (sngOutFileProcessingTimes.Length <= 2)
+            Array.Sort(outFileProcessingTimes);
+            if (outFileProcessingTimes.Length <= 2)
             {
-                intMidPoint = 0;
+                midPoint = 0;
             }
             else
             {
-                intMidPoint = (int)Math.Floor(sngOutFileProcessingTimes.Length / 2.0);
+                midPoint = (int)Math.Floor(outFileProcessingTimes.Length / 2.0);
             }
 
-            return sngOutFileProcessingTimes[intMidPoint];
+            return outFileProcessingTimes[midPoint];
         }
 
         /// <summary>
@@ -800,11 +800,11 @@ namespace AnalysisManagerSequestPlugin
 
                     if (!mOutFileCandidateInfo.ContainsKey(OutFileName))
                     {
-                        var dtQueueTime = DateTime.UtcNow;
-                        var objEntry = new KeyValuePair<string, DateTime>(OutFileName, dtQueueTime);
+                        var queueTime = DateTime.UtcNow;
+                        var entry = new KeyValuePair<string, DateTime>(OutFileName, queueTime);
 
-                        mOutFileCandidates.Enqueue(objEntry);
-                        mOutFileCandidateInfo.Add(OutFileName, dtQueueTime);
+                        mOutFileCandidates.Enqueue(entry);
+                        mOutFileCandidateInfo.Add(OutFileName, queueTime);
                     }
                 }
             }
@@ -819,18 +819,18 @@ namespace AnalysisManagerSequestPlugin
             }
         }
 
-        private bool InitializeUtilityRunner(string strTaskName, string strWorkDir)
+        private bool InitializeUtilityRunner(string taskName, string workDir)
         {
-            return InitializeUtilityRunner(strTaskName, strWorkDir, intMonitoringIntervalMsec: 1000);
+            return InitializeUtilityRunner(taskName, workDir, monitoringIntervalMsec: 1000);
         }
 
-        private bool InitializeUtilityRunner(string strTaskName, string strWorkDir, int intMonitoringIntervalMsec)
+        private bool InitializeUtilityRunner(string taskName, string workDir, int monitoringIntervalMsec)
         {
             try
             {
                 if (mUtilityRunner == null)
                 {
-                    mUtilityRunner = new clsRunDosProgram(strWorkDir, mDebugLevel);
+                    mUtilityRunner = new clsRunDosProgram(workDir, mDebugLevel);
                     RegisterEvents(mUtilityRunner);
                     mUtilityRunner.Timeout += UtilityRunner_Timeout;
                 }
@@ -839,33 +839,33 @@ namespace AnalysisManagerSequestPlugin
                     if (mUtilityRunner.State != ProgRunner.States.NotMonitoring)
                     {
                         LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR,
-                            "Cannot re-initialize the UtilityRunner to perform task " + strTaskName + " since already running task " +
+                            "Cannot re-initialize the UtilityRunner to perform task " + taskName + " since already running task " +
                             mUtilityRunnerTaskName);
                         return false;
                     }
                 }
 
-                if (intMonitoringIntervalMsec < 250)
-                    intMonitoringIntervalMsec = 250;
-                mUtilityRunner.MonitorInterval = intMonitoringIntervalMsec;
+                if (monitoringIntervalMsec < 250)
+                    monitoringIntervalMsec = 250;
+                mUtilityRunner.MonitorInterval = monitoringIntervalMsec;
 
-                mUtilityRunnerTaskName = strTaskName;
+                mUtilityRunnerTaskName = taskName;
             }
             catch (Exception ex)
             {
                 LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR,
-                    "Exception in InitializeUtilityRunner for task " + strTaskName + ": " + ex.Message);
+                    "Exception in InitializeUtilityRunner for task " + taskName + ": " + ex.Message);
                 return false;
             }
 
             return true;
         }
 
-        private bool ProcessCandidateOutFiles(bool blnProcessAllRemainingFiles)
+        private bool ProcessCandidateOutFiles(bool processAllRemainingFiles)
         {
-            bool blnAppendSuccess;
+            bool appendSuccess;
 
-            var intItemsProcessed = 0;
+            var itemsProcessed = 0;
 
             // Examine mOutFileHandlerInUse; if greater then zero, exit the sub
             if (System.Threading.Interlocked.Read(ref mOutFileHandlerInUse) > 0)
@@ -883,16 +883,16 @@ namespace AnalysisManagerSequestPlugin
                         "Examining out file creation dates (Candidate Count = " + mOutFileCandidates.Count + ")");
                 }
 
-                blnAppendSuccess = true;
+                appendSuccess = true;
 
-                KeyValuePair<string, DateTime> objEntry;
+                KeyValuePair<string, DateTime> entry;
                 if (mOutFileCandidates.Count > 0 && !mSequestVersionInfoStored)
                 {
                     // Determine tool version
 
                     // Pass the path to the first out file created
-                    objEntry = mOutFileCandidates.Peek();
-                    if (StoreToolVersionInfo(Path.Combine(mWorkDir, objEntry.Key)))
+                    entry = mOutFileCandidates.Peek();
+                    if (StoreToolVersionInfo(Path.Combine(mWorkDir, entry.Key)))
                     {
                         mSequestVersionInfoStored = true;
                     }
@@ -906,85 +906,85 @@ namespace AnalysisManagerSequestPlugin
                 if (mOutFileCandidates.Count > 0)
                 {
                     // Examine the time associated with the next item that would be dequeued
-                    objEntry = mOutFileCandidates.Peek();
+                    entry = mOutFileCandidates.Peek();
 
-                    if (blnProcessAllRemainingFiles || DateTime.UtcNow.Subtract(objEntry.Value).TotalSeconds >= OUT_FILE_APPEND_HOLDOFF_SECONDS)
+                    if (processAllRemainingFiles || DateTime.UtcNow.Subtract(entry.Value).TotalSeconds >= OUT_FILE_APPEND_HOLDOFF_SECONDS)
                     {
                         // Open the _out.txt.tmp file
-                        using (var swTargetFile = new StreamWriter(new FileStream(mTempConcatenatedOutFilePath, FileMode.Append, FileAccess.Write, FileShare.Read)))
+                        using (var writer = new StreamWriter(new FileStream(mTempConcatenatedOutFilePath, FileMode.Append, FileAccess.Write, FileShare.Read)))
                         {
-                            intItemsProcessed = 0;
+                            itemsProcessed = 0;
 
-                            while (mOutFileCandidates.Count > 0 && blnAppendSuccess &&
-                                   (blnProcessAllRemainingFiles ||
-                                    DateTime.UtcNow.Subtract(objEntry.Value).TotalSeconds >= OUT_FILE_APPEND_HOLDOFF_SECONDS))
+                            while (mOutFileCandidates.Count > 0 && appendSuccess &&
+                                   (processAllRemainingFiles ||
+                                    DateTime.UtcNow.Subtract(entry.Value).TotalSeconds >= OUT_FILE_APPEND_HOLDOFF_SECONDS))
                             {
-                                // Entry is old enough (or blnProcessAllRemainingFiles=True); pop it off the queue
-                                objEntry = mOutFileCandidates.Dequeue();
-                                intItemsProcessed += 1;
+                                // Entry is old enough (or processAllRemainingFiles=True); pop it off the queue
+                                entry = mOutFileCandidates.Dequeue();
+                                itemsProcessed += 1;
 
                                 try
                                 {
-                                    var fiOutFile = new FileInfo(Path.Combine(mWorkDir, objEntry.Key));
-                                    AppendOutFile(fiOutFile, swTargetFile);
+                                    var outFile = new FileInfo(Path.Combine(mWorkDir, entry.Key));
+                                    AppendOutFile(outFile, writer);
                                     mLastOutFileStoreTime = DateTime.UtcNow;
                                     mSequestAppearsStalled = false;
                                 }
                                 catch (Exception ex)
                                 {
                                     Console.WriteLine("Warning, exception appending out file: " + ex.Message);
-                                    blnAppendSuccess = false;
+                                    appendSuccess = false;
                                 }
 
                                 if (mOutFileCandidates.Count > 0)
                                 {
-                                    objEntry = mOutFileCandidates.Peek();
+                                    entry = mOutFileCandidates.Peek();
                                 }
                             }
                         }
                     }
                 }
 
-                if (intItemsProcessed > 0 || blnProcessAllRemainingFiles)
+                if (itemsProcessed > 0 || processAllRemainingFiles)
                 {
                     if (mDebugLevel >= 3)
                     {
                         LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG,
-                            "Appended " + intItemsProcessed + " .out file" + CheckForPlurality(intItemsProcessed) + " to the _out.txt.tmp file; " +
+                            "Appended " + itemsProcessed + " .out file" + CheckForPlurality(itemsProcessed) + " to the _out.txt.tmp file; " +
                             mOutFileCandidates.Count + " out file" + CheckForPlurality(mOutFileCandidates.Count) + " remain in the queue");
                     }
 
-                    if (blnProcessAllRemainingFiles || DateTime.UtcNow.Subtract(mLastTempFileCopyTime).TotalSeconds >= TEMP_FILE_COPY_INTERVAL_SECONDS)
+                    if (processAllRemainingFiles || DateTime.UtcNow.Subtract(mLastTempFileCopyTime).TotalSeconds >= TEMP_FILE_COPY_INTERVAL_SECONDS)
                     {
-                        string strSourceFileName;
-                        bool blnSuccess;
+                        string sourceFileName;
+                        bool success;
                         if (!mTempJobParamsCopied)
                         {
-                            strSourceFileName = "JobParameters_" + mJob + ".xml";
-                            blnSuccess = CopyFileToTransferFolder(strSourceFileName, strSourceFileName + ".tmp", true);
+                            sourceFileName = "JobParameters_" + mJob + ".xml";
+                            success = CopyFileToTransferFolder(sourceFileName, sourceFileName + ".tmp", true);
 
-                            if (blnSuccess)
+                            if (success)
                             {
-                                strSourceFileName = mJobParams.GetParam("ParmFileName");
-                                blnSuccess = CopyFileToTransferFolder(strSourceFileName, strSourceFileName + ".tmp", true);
+                                sourceFileName = mJobParams.GetParam("ParmFileName");
+                                success = CopyFileToTransferFolder(sourceFileName, sourceFileName + ".tmp", true);
                             }
 
-                            if (blnSuccess)
+                            if (success)
                             {
                                 mTempJobParamsCopied = true;
                             }
                         }
 
-                        if (intItemsProcessed > 0)
+                        if (itemsProcessed > 0)
                         {
                             // Copy the _out.txt.tmp file
-                            strSourceFileName = Path.GetFileName(mTempConcatenatedOutFilePath);
-                            blnSuccess = CopyFileToTransferFolder(strSourceFileName, strSourceFileName, true);
+                            sourceFileName = Path.GetFileName(mTempConcatenatedOutFilePath);
+                            success = CopyFileToTransferFolder(sourceFileName, sourceFileName, true);
                         }
 
                         // Copy the sequest.log file (rename to sequest.log.tmp when copying)
-                        strSourceFileName = "sequest.log";
-                        blnSuccess = CopyFileToTransferFolder(strSourceFileName, strSourceFileName + ".tmp", true);
+                        sourceFileName = "sequest.log";
+                        success = CopyFileToTransferFolder(sourceFileName, sourceFileName + ".tmp", true);
 
                         mLastTempFileCopyTime = DateTime.UtcNow;
                     }
@@ -994,72 +994,72 @@ namespace AnalysisManagerSequestPlugin
             {
                 Console.WriteLine("Warning, error in ProcessCandidateOutFiles: " + ex.Message);
                 LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, "Error in ProcessCandidateOutFiles: " + ex.Message);
-                blnAppendSuccess = false;
+                appendSuccess = false;
             }
             finally
             {
                 // Make sure mOutFileHandlerInUse is now zero
-                long lngZero = 0;
-                System.Threading.Interlocked.Exchange(ref mOutFileHandlerInUse, lngZero);
+                long zero = 0;
+                System.Threading.Interlocked.Exchange(ref mOutFileHandlerInUse, zero);
             }
 
-            return blnAppendSuccess;
+            return appendSuccess;
         }
 
         private void RenameSequestLogFile()
         {
-            var strNewName = "??";
+            var newName = "??";
 
             try
             {
-                var fiFileInfo = new FileInfo(Path.Combine(mWorkDir, "sequest.log"));
+                var sequestLogFile = new FileInfo(Path.Combine(mWorkDir, "sequest.log"));
 
-                if (fiFileInfo.Exists)
+                if (sequestLogFile.Exists)
                 {
-                    strNewName = Path.GetFileNameWithoutExtension(fiFileInfo.Name) + "_" + fiFileInfo.LastWriteTime.ToString("yyyyMMdd_HHmm") + ".log";
-                    fiFileInfo.MoveTo(Path.Combine(mWorkDir, strNewName));
+                    newName = Path.GetFileNameWithoutExtension(sequestLogFile.Name) + "_" + sequestLogFile.LastWriteTime.ToString("yyyyMMdd_HHmm") + ".log";
+                    sequestLogFile.MoveTo(Path.Combine(mWorkDir, newName));
 
                     // Copy the renamed sequest.log file to the transfer directory
-                    CopyFileToTransferFolder(strNewName, strNewName, false);
+                    CopyFileToTransferFolder(newName, newName, false);
                 }
             }
             catch (Exception ex)
             {
                 LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR,
-                    "Error renaming sequest.log file to " + strNewName + ": " + ex.Message);
+                    "Error renaming sequest.log file to " + newName + ": " + ex.Message);
             }
         }
 
-        private bool ResetPVMWithRetry(int intMaxPVMResetAttempts)
+        private bool ResetPVMWithRetry(int maxPVMResetAttempts)
         {
-            var blnSuccess = false;
+            var success = false;
 
-            if (intMaxPVMResetAttempts < 1)
-                intMaxPVMResetAttempts = 1;
+            if (maxPVMResetAttempts < 1)
+                maxPVMResetAttempts = 1;
 
-            while (intMaxPVMResetAttempts > 0)
+            while (maxPVMResetAttempts > 0)
             {
-                blnSuccess = ResetPVM();
-                if (blnSuccess)
+                success = ResetPVM();
+                if (success)
                 {
                     break;
                 }
 
-                intMaxPVMResetAttempts -= 1;
-                if (intMaxPVMResetAttempts > 0)
+                maxPVMResetAttempts -= 1;
+                if (maxPVMResetAttempts > 0)
                 {
                     LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.WARN,
-                                         " ... Error resetting PVM; will try " + intMaxPVMResetAttempts + " more time" + CheckForPlurality(intMaxPVMResetAttempts));
+                                         " ... Error resetting PVM; will try " + maxPVMResetAttempts + " more time" + CheckForPlurality(maxPVMResetAttempts));
                 }
             }
 
-            if (blnSuccess)
+            if (success)
             {
                 UpdateSequestNodeProcessingStats(false);
                 RenameSequestLogFile();
             }
 
-            return blnSuccess;
+            return success;
         }
 
         private bool ResetPVM()
@@ -1085,26 +1085,26 @@ namespace AnalysisManagerSequestPlugin
 
                 LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.INFO, " ... Resetting PVM");
 
-                var blnSuccess = ResetPVMHalt(PVMProgFolder);
-                if (!blnSuccess)
+                var success = ResetPVMHalt(PVMProgFolder);
+                if (!success)
                 {
                     return false;
                 }
 
-                blnSuccess = ResetPVMWipeTemp(PVMProgFolder);
-                if (!blnSuccess)
+                success = ResetPVMWipeTemp(PVMProgFolder);
+                if (!success)
                 {
                     return false;
                 }
 
-                blnSuccess = ResetPVMStartPVM(PVMProgFolder);
-                if (!blnSuccess)
+                success = ResetPVMStartPVM(PVMProgFolder);
+                if (!success)
                 {
                     return false;
                 }
 
-                blnSuccess = ResetPVMAddNodes(PVMProgFolder);
-                if (!blnSuccess)
+                success = ResetPVMAddNodes(PVMProgFolder);
+                if (!success)
                 {
                     return false;
                 }
@@ -1125,32 +1125,32 @@ namespace AnalysisManagerSequestPlugin
         {
             try
             {
-                var strBatchFilePath = Path.Combine(PVMProgFolder, "HaltPVM.bat");
-                if (!File.Exists(strBatchFilePath))
+                var batchFilePath = Path.Combine(PVMProgFolder, "HaltPVM.bat");
+                if (!File.Exists(batchFilePath))
                 {
-                    LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, "Batch file not found: " + strBatchFilePath);
+                    LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, "Batch file not found: " + batchFilePath);
                     return false;
                 }
 
                 // Run the batch file
                 if (mDebugLevel >= 2)
                 {
-                    LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, "     " + strBatchFilePath);
+                    LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, "     " + batchFilePath);
                 }
 
-                var strTaskName = "HaltPVM";
-                if (!InitializeUtilityRunner(strTaskName, PVMProgFolder))
+                var taskName = "HaltPVM";
+                if (!InitializeUtilityRunner(taskName, PVMProgFolder))
                 {
                     return false;
                 }
 
-                var intMaxRuntimeSeconds = 90;
-                var blnSuccess = mUtilityRunner.RunProgram(strBatchFilePath, "", strTaskName, false, intMaxRuntimeSeconds);
+                var maxRuntimeSeconds = 90;
+                var success = mUtilityRunner.RunProgram(batchFilePath, "", taskName, false, maxRuntimeSeconds);
 
-                if (!blnSuccess)
+                if (!success)
                 {
                     LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR,
-                        "UtilityRunner returned False for " + strBatchFilePath);
+                        "UtilityRunner returned False for " + batchFilePath);
                     return false;
                 }
             }
@@ -1170,32 +1170,32 @@ namespace AnalysisManagerSequestPlugin
         {
             try
             {
-                var strBatchFilePath = Path.Combine(PVMProgFolder, "wipe_temp.bat");
-                if (!File.Exists(strBatchFilePath))
+                var batchFilePath = Path.Combine(PVMProgFolder, "wipe_temp.bat");
+                if (!File.Exists(batchFilePath))
                 {
-                    LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, "Batch file not found: " + strBatchFilePath);
+                    LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, "Batch file not found: " + batchFilePath);
                     return false;
                 }
 
                 // Run the batch file
                 if (mDebugLevel >= 2)
                 {
-                    LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, "     " + strBatchFilePath);
+                    LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, "     " + batchFilePath);
                 }
 
-                var strTaskName = "WipeTemp";
-                if (!InitializeUtilityRunner(strTaskName, PVMProgFolder))
+                var taskName = "WipeTemp";
+                if (!InitializeUtilityRunner(taskName, PVMProgFolder))
                 {
                     return false;
                 }
 
-                var intMaxRuntimeSeconds = 120;
-                var blnSuccess = mUtilityRunner.RunProgram(strBatchFilePath, "", strTaskName, true, intMaxRuntimeSeconds);
+                var maxRuntimeSeconds = 120;
+                var success = mUtilityRunner.RunProgram(batchFilePath, "", taskName, true, maxRuntimeSeconds);
 
-                if (!blnSuccess)
+                if (!success)
                 {
                     LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR,
-                        "UtilityRunner returned False for " + strBatchFilePath);
+                        "UtilityRunner returned False for " + batchFilePath);
                     return false;
                 }
             }
@@ -1223,32 +1223,32 @@ namespace AnalysisManagerSequestPlugin
                 // QuitNow.txt should have this line:
                 // quit
 
-                var strBatchFilePath = Path.Combine(PVMProgFolder, "StartPVM.bat");
-                if (!File.Exists(strBatchFilePath))
+                var batchFilePath = Path.Combine(PVMProgFolder, "StartPVM.bat");
+                if (!File.Exists(batchFilePath))
                 {
-                    LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, "Batch file not found: " + strBatchFilePath);
+                    LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, "Batch file not found: " + batchFilePath);
                     return false;
                 }
 
                 // Run the batch file
                 if (mDebugLevel >= 2)
                 {
-                    LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, "     " + strBatchFilePath);
+                    LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, "     " + batchFilePath);
                 }
 
-                var strTaskName = "StartPVM";
-                if (!InitializeUtilityRunner(strTaskName, PVMProgFolder))
+                var taskName = "StartPVM";
+                if (!InitializeUtilityRunner(taskName, PVMProgFolder))
                 {
                     return false;
                 }
 
-                var intMaxRuntimeSeconds = 120;
-                var blnSuccess = mUtilityRunner.RunProgram(strBatchFilePath, "", strTaskName, true, intMaxRuntimeSeconds);
+                var maxRuntimeSeconds = 120;
+                var success = mUtilityRunner.RunProgram(batchFilePath, "", taskName, true, maxRuntimeSeconds);
 
-                if (!blnSuccess)
+                if (!success)
                 {
                     LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR,
-                        "UtilityRunner returned False for " + strBatchFilePath);
+                        "UtilityRunner returned False for " + batchFilePath);
                     return false;
                 }
             }
@@ -1268,32 +1268,32 @@ namespace AnalysisManagerSequestPlugin
         {
             try
             {
-                var strBatchFilePath = Path.Combine(PVMProgFolder, "AddHosts.bat");
-                if (!File.Exists(strBatchFilePath))
+                var batchFilePath = Path.Combine(PVMProgFolder, "AddHosts.bat");
+                if (!File.Exists(batchFilePath))
                 {
-                    LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, "Batch file not found: " + strBatchFilePath);
+                    LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, "Batch file not found: " + batchFilePath);
                     return false;
                 }
 
                 // Run the batch file
                 if (mDebugLevel >= 2)
                 {
-                    LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, "     " + strBatchFilePath);
+                    LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, "     " + batchFilePath);
                 }
 
-                var strTaskName = "AddHosts";
-                if (!InitializeUtilityRunner(strTaskName, PVMProgFolder))
+                var taskName = "AddHosts";
+                if (!InitializeUtilityRunner(taskName, PVMProgFolder))
                 {
                     return false;
                 }
 
-                var intMaxRuntimeSeconds = 120;
-                var blnSuccess = mUtilityRunner.RunProgram(strBatchFilePath, "", strTaskName, true, intMaxRuntimeSeconds);
+                var maxRuntimeSeconds = 120;
+                var success = mUtilityRunner.RunProgram(batchFilePath, "", taskName, true, maxRuntimeSeconds);
 
-                if (!blnSuccess)
+                if (!success)
                 {
                     LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR,
-                        "UtilityRunner returned False for " + strBatchFilePath);
+                        "UtilityRunner returned False for " + batchFilePath);
                     return false;
                 }
             }
@@ -1309,15 +1309,15 @@ namespace AnalysisManagerSequestPlugin
             return true;
         }
 
-        private void UpdateSequestNodeProcessingStats(bool blnProcessAllSequestLogFiles)
+        private void UpdateSequestNodeProcessingStats(bool processAllSequestLogFiles)
         {
-            if (blnProcessAllSequestLogFiles)
+            if (processAllSequestLogFiles)
             {
-                var diWorkDir = new DirectoryInfo(mWorkDir);
+                var workDir = new DirectoryInfo(mWorkDir);
 
-                foreach (var fiFile in diWorkDir.GetFiles("sequest*.log*"))
+                foreach (var sequestLogFile in workDir.GetFiles("sequest*.log*"))
                 {
-                    UpdateSequestNodeProcessingStatsOneFile(fiFile.FullName);
+                    UpdateSequestNodeProcessingStatsOneFile(sequestLogFile.FullName);
                 }
             }
             else
@@ -1341,22 +1341,22 @@ namespace AnalysisManagerSequestPlugin
 
             // Read the sequest.log file
             var sbContents = new StringBuilder();
-            var intDTAsSearched = 0;
+            var dtaCountSearched = 0;
 
             try
             {
-                using (var srInFile = new StreamReader(new FileStream(SeqLogFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(SeqLogFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
-                    while (!srInFile.EndOfStream)
+                    while (!reader.EndOfStream)
                     {
-                        var strLineIn = srInFile.ReadLine();
+                        var dataLine = reader.ReadLine();
 
-                        if (strLineIn != null && strLineIn.StartsWith("Searched dta file"))
+                        if (dataLine != null && dataLine.StartsWith("Searched dta file"))
                         {
-                            intDTAsSearched += 1;
+                            dtaCountSearched += 1;
                         }
 
-                        sbContents.AppendLine(strLineIn);
+                        sbContents.AppendLine(dataLine);
                     }
                 }
             }
@@ -1367,10 +1367,10 @@ namespace AnalysisManagerSequestPlugin
                 return;
             }
 
-            var strFileContents = sbContents.ToString();
+            var fileContents = sbContents.ToString();
 
             // Node machine count
-            var NumNodeMachines = GetIntegerFromSeqLogFileString(strFileContents, "starting the sequest task on\\s+\\d+\\s+node");
+            var NumNodeMachines = GetIntegerFromSeqLogFileString(fileContents, "starting the sequest task on\\s+\\d+\\s+node");
             if (NumNodeMachines == 0)
             {
                 var Msg = "UpdateNodeStats: node machine count line not found";
@@ -1388,7 +1388,7 @@ namespace AnalysisManagerSequestPlugin
             }
 
             // Sequest process count
-            var NumSlaveProcesses = GetIntegerFromSeqLogFileString(strFileContents, "Spawned\\s+\\d+\\s+slave processes");
+            var NumSlaveProcesses = GetIntegerFromSeqLogFileString(fileContents, "Spawned\\s+\\d+\\s+slave processes");
             if (NumSlaveProcesses == 0)
             {
                 var Msg = "UpdateNodeStats: slave process count line not found";
@@ -1406,7 +1406,7 @@ namespace AnalysisManagerSequestPlugin
             }
 
             // Total search time
-            double TotalSearchTimeSeconds = GetIntegerFromSeqLogFileString(strFileContents, "Total search time:\\s+\\d+");
+            double TotalSearchTimeSeconds = GetIntegerFromSeqLogFileString(fileContents, "Total search time:\\s+\\d+");
             if (TotalSearchTimeSeconds <= 0)
             {
                 // Total search time line not found (or error)
@@ -1417,15 +1417,15 @@ namespace AnalysisManagerSequestPlugin
             mSequestNodeProcessingStats.TotalSearchTimeSeconds += TotalSearchTimeSeconds;
 
             // Searched file count
-            var SearchedFileCount = GetIntegerFromSeqLogFileString(strFileContents, "secs for\\s+\\d+\\s+files");
+            var SearchedFileCount = GetIntegerFromSeqLogFileString(fileContents, "secs for\\s+\\d+\\s+files");
             if (SearchedFileCount <= 0)
             {
                 // Searched file count line not found (or error)
-                // Use intDTAsSearched instead
-                SearchedFileCount = intDTAsSearched;
+                // Use dtaCountSearched instead
+                SearchedFileCount = dtaCountSearched;
             }
 
-            mSequestNodeProcessingStats.SearchedFileCount += intDTAsSearched;
+            mSequestNodeProcessingStats.SearchedFileCount += dtaCountSearched;
 
             if (mSequestNodeProcessingStats.SearchedFileCount > 0)
             {
@@ -1448,9 +1448,9 @@ namespace AnalysisManagerSequestPlugin
                 {
                     // Parse the Sequest.Log file to determine the names of the spawned nodes
 
-                    var strLogFilePath = Path.Combine(mWorkDir, "sequest.log");
+                    var logFilePath = Path.Combine(mWorkDir, "sequest.log");
 
-                    mSequestLogNodesFound = GetNodeNamesFromSequestLog(strLogFilePath);
+                    mSequestLogNodesFound = GetNodeNamesFromSequestLog(logFilePath);
 
                     if (!mSequestLogNodesFound || mResetPVM)
                     {
@@ -1467,74 +1467,74 @@ namespace AnalysisManagerSequestPlugin
                     return;
                 }
 
-                var strBatchFilePath = Path.Combine(PVMProgFolder, "CheckActiveNodes.bat");
-                if (!File.Exists(strBatchFilePath))
+                var batchFilePath = Path.Combine(PVMProgFolder, "CheckActiveNodes.bat");
+                if (!File.Exists(batchFilePath))
                 {
-                    LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, "Batch file not found: " + strBatchFilePath);
+                    LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, "Batch file not found: " + batchFilePath);
                     return;
                 }
 
-                var strActiveNodesFilePath = Path.Combine(mWorkDir, "ActiveNodesOutput.tmp");
+                var activeNodesFilePath = Path.Combine(mWorkDir, "ActiveNodesOutput.tmp");
 
                 if (mDebugLevel >= 4)
                 {
-                    LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, "     " + strBatchFilePath);
+                    LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, "     " + batchFilePath);
                 }
 
-                var strTaskName = "CheckActiveNodes";
-                if (!InitializeUtilityRunner(strTaskName, PVMProgFolder))
+                var taskName = "CheckActiveNodes";
+                if (!InitializeUtilityRunner(taskName, PVMProgFolder))
                 {
                     return;
                 }
 
-                var intMaxRuntimeSeconds = 60;
-               var  blnSuccess = mUtilityRunner.RunProgram(strBatchFilePath, "", strTaskName, true, intMaxRuntimeSeconds);
+                var maxRuntimeSeconds = 60;
+                var success = mUtilityRunner.RunProgram(batchFilePath, "", taskName, true, maxRuntimeSeconds);
 
-                if (!blnSuccess)
+                if (!success)
                 {
                     LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR,
-                        "UtilityRunner returned False for " + strBatchFilePath);
+                        "UtilityRunner returned False for " + batchFilePath);
                 }
 
-                if (!File.Exists(strActiveNodesFilePath))
+                if (!File.Exists(activeNodesFilePath))
                 {
                     if (mDebugLevel >= 1)
                     {
                         LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG,
-                            "Warning, ActiveNodes files not found: " + strActiveNodesFilePath);
+                            "Warning, ActiveNodes files not found: " + activeNodesFilePath);
                     }
 
                     return;
                 }
 
                 // Parse the ActiveNodesOutput.tmp file
-                var intNodeCountCurrent = 0;
-                using (var srInFile = new StreamReader(new FileStream(strActiveNodesFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                var nodeCountCurrent = 0;
+                using (var reader = new StreamReader(new FileStream(activeNodesFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
-                    while (!srInFile.EndOfStream)
+                    while (!reader.EndOfStream)
                     {
-                        var strLineIn = srInFile.ReadLine();
-                        if (string.IsNullOrWhiteSpace(strLineIn))
+                        var dataLine = reader.ReadLine();
+                        if (string.IsNullOrWhiteSpace(dataLine))
                             continue;
 
                         // Check whether line looks like:
                         //    p6    c0007     6/c,f sequest27_slave
 
-                        var reMatch = mActiveNodeRegEx.Match(strLineIn);
+                        var reMatch = mActiveNodeRegEx.Match(dataLine);
                         if (reMatch.Success)
                         {
-                            var strNodeName = reMatch.Groups["node"].Value;
+                            var nodeName = reMatch.Groups["node"].Value;
 
-                            if (mSequestNodes.TryGetValue(strNodeName, out _))
+                            if (mSequestNodes.TryGetValue(nodeName, out _))
                             {
-                                mSequestNodes[strNodeName] = DateTime.UtcNow;
+                                mSequestNodes[nodeName] = DateTime.UtcNow;
                             }
                             else
                             {
-                                mSequestNodes.Add(strNodeName, DateTime.UtcNow);
+                                mSequestNodes.Add(nodeName, DateTime.UtcNow);
                             }
 
-                            intNodeCountCurrent += 1;
+                            nodeCountCurrent += 1;
                         }
                     }
                 }
@@ -1543,32 +1543,32 @@ namespace AnalysisManagerSequestPlugin
                 if (mDebugLevel >= 4 || DateTime.UtcNow.Subtract(mLastActiveNodeLogTime).TotalSeconds >= 600)
                 {
                     LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG,
-                        " ... " + intNodeCountCurrent + " / " + mSequestNodesSpawned + " Sequest nodes are active; median processing time = " +
+                        " ... " + nodeCountCurrent + " / " + mSequestNodesSpawned + " Sequest nodes are active; median processing time = " +
                         ComputeMedianProcessingTime().ToString("0.0") + " seconds/spectrum; " + mProgress.ToString("0.0") + "% complete");
                     mLastActiveNodeLogTime = DateTime.UtcNow;
                 }
 
                 // Look for nodes that have been missing for at least 5 minutes
-                var intNodeCountActive = 0;
-                foreach (var objItem in mSequestNodes)
+                var nodeCountActive = 0;
+                foreach (var sequestNode in mSequestNodes)
                 {
-                    if (DateTime.UtcNow.Subtract(objItem.Value).TotalMinutes <= STALE_NODE_THRESHOLD_MINUTES)
+                    if (DateTime.UtcNow.Subtract(sequestNode.Value).TotalMinutes <= STALE_NODE_THRESHOLD_MINUTES)
                     {
-                        intNodeCountActive += 1;
+                        nodeCountActive += 1;
                     }
                 }
 
                 // Define the minimum node count as 50% of the number of nodes spawned
-                var intActiveNodeCountMinimum = (int)Math.Floor(0.5 * mSequestNodesSpawned);
+                var activeNodeCountMinimum = (int)Math.Floor(0.5 * mSequestNodesSpawned);
 
-                if (intNodeCountActive < intActiveNodeCountMinimum && !mIgnoreNodeCountActiveErrors)
+                if (nodeCountActive < activeNodeCountMinimum && !mIgnoreNodeCountActiveErrors)
                 {
                     mNodeCountActiveErrorOccurrences += 1;
-                    var strMessage = "Too many nodes are inactive (Threshold = " + intActiveNodeCountMinimum + " nodes): " + intNodeCountActive +
-                                     " active vs. " + mSequestNodesSpawned + " total nodes at start; " +
-                                     "mNodeCountActiveErrorOccurrences=" + mNodeCountActiveErrorOccurrences;
+                    var message = "Too many nodes are inactive (Threshold = " + activeNodeCountMinimum + " nodes): " + nodeCountActive +
+                                  " active vs. " + mSequestNodesSpawned + " total nodes at start; " +
+                                  "mNodeCountActiveErrorOccurrences=" + mNodeCountActiveErrorOccurrences;
 
-                    LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.WARN, strMessage);
+                    LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.WARN, message);
                     mResetPVM = true;
                 }
                 else if (mNodeCountActiveErrorOccurrences > 0)

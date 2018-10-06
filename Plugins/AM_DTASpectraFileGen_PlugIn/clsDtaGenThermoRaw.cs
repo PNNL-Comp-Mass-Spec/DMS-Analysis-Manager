@@ -635,26 +635,26 @@ namespace DTASpectraFileGen
 
             try
             {
-                using (var swProgress = new StreamReader(new FileStream(progressFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(progressFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
-                    while (!swProgress.EndOfStream)
+                    while (!reader.EndOfStream)
                     {
-                        var strLineIn = swProgress.ReadLine();
-                        if (string.IsNullOrWhiteSpace(strLineIn))
+                        var dataLine = reader.ReadLine();
+                        if (string.IsNullOrWhiteSpace(dataLine))
                             continue;
 
-                        if (strLineIn.StartsWith("Percent complete"))
+                        if (dataLine.StartsWith("Percent complete"))
                         {
-                            var reMatch = reNumber.Match(strLineIn);
+                            var reMatch = reNumber.Match(dataLine);
                             if (reMatch.Success)
                             {
                                 float.TryParse(reMatch.Groups[1].Value, out mProgress);
                             }
                         }
 
-                        if (strLineIn.StartsWith("Number of MSn scans processed"))
+                        if (dataLine.StartsWith("Number of MSn scans processed"))
                         {
-                            var reMatch = reNumber.Match(strLineIn);
+                            var reMatch = reNumber.Match(dataLine);
                             if (reMatch.Success)
                             {
                                 int.TryParse(reMatch.Groups[1].Value, out mSpectraFileCount);

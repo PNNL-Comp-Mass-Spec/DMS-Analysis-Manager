@@ -159,9 +159,9 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                     // Write the console output to a text file
                     clsGlobal.IdleLoop(0.25);
 
-                    using (var swConsoleOutputfile = new StreamWriter(new FileStream(mCmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                    using (var writer = new StreamWriter(new FileStream(mCmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                     {
-                        swConsoleOutputfile.WriteLine(mCmdRunner.CachedConsoleOutput);
+                        writer.WriteLine(mCmdRunner.CachedConsoleOutput);
                     }
                 }
 
@@ -177,10 +177,10 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                 var sha1Hash = HashUtilities.ComputeFileHashSha1(Path.Combine(mWorkDir, mLipidMapsDBFilename));
 
                 // Append a line to the console output file listing the name of the LipidMapsDB that we used
-                using (var swConsoleOutputFile = new StreamWriter(new FileStream(mCmdRunner.ConsoleOutputFilePath, FileMode.Append, FileAccess.Write, FileShare.Read)))
+                using (var writer = new StreamWriter(new FileStream(mCmdRunner.ConsoleOutputFilePath, FileMode.Append, FileAccess.Write, FileShare.Read)))
                 {
-                    swConsoleOutputFile.WriteLine("LipidMapsDB Name: " + mLipidMapsDBFilename);
-                    swConsoleOutputFile.WriteLine("LipidMapsDB Hash: " + sha1Hash);
+                    writer.WriteLine("LipidMapsDB Name: " + mLipidMapsDBFilename);
+                    writer.WriteLine("LipidMapsDB Hash: " + sha1Hash);
                 }
 
                 // Update the evaluation message to include the lipid maps DB filename
@@ -309,9 +309,9 @@ namespace AnalysisManagerLipidMapSearchPlugIn
 
                 if (File.Exists(strHashCheckFilePath))
                 {
-                    using (var srInFile = new StreamReader(new FileStream(strHashCheckFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                    using (var reader = new StreamReader(new FileStream(strHashCheckFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
                     {
-                        sha1HashNewestLipidMapsDBFile = srInFile.ReadLine();
+                        sha1HashNewestLipidMapsDBFile = reader.ReadLine();
                     }
 
                     if (string.IsNullOrEmpty(sha1HashNewestLipidMapsDBFile))
@@ -423,9 +423,9 @@ namespace AnalysisManagerLipidMapSearchPlugIn
             }
 
             // Update the hash-check file (do this regardless of whether or not the newly downloaded file matched the most recent one)
-            using (var swOutFile = new StreamWriter(new FileStream(strHashCheckFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+            using (var writer = new StreamWriter(new FileStream(strHashCheckFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
             {
-                swOutFile.WriteLine(sha1HashNew);
+                writer.WriteLine(sha1HashNew);
             }
 
             clsGlobal.DeleteLockFile(newLipidMapsDBFilePath);
@@ -601,9 +601,9 @@ namespace AnalysisManagerLipidMapSearchPlugIn
         /// <summary>
         /// Parse the LipidTools console output file to track progress
         /// </summary>
-        /// <param name="strConsoleOutputFilePath"></param>
+        /// <param name="consoleOutputFilePath"></param>
         /// <remarks></remarks>
-        private void ParseConsoleOutputFile(string strConsoleOutputFilePath)
+        private void ParseConsoleOutputFile(string consoleOutputFilePath)
         {
             try
             {
@@ -624,11 +624,11 @@ namespace AnalysisManagerLipidMapSearchPlugIn
 
                 }
 
-                if (!File.Exists(strConsoleOutputFilePath))
+                if (!File.Exists(consoleOutputFilePath))
                 {
                     if (mDebugLevel >= 4)
                     {
-                        LogDebug("Console output file not found: " + strConsoleOutputFilePath);
+                        LogDebug("Console output file not found: " + consoleOutputFilePath);
                     }
 
                     return;
@@ -636,44 +636,44 @@ namespace AnalysisManagerLipidMapSearchPlugIn
 
                 if (mDebugLevel >= 4)
                 {
-                    LogDebug("Parsing file " + strConsoleOutputFilePath);
+                    LogDebug("Parsing file " + consoleOutputFilePath);
                 }
 
-                double dblSubProgressAddon = 0;
-                var intEffectiveProgress = PROGRESS_PCT_LIPID_TOOLS_STARTING;
+                double subProgressAddon = 0;
+                var effectiveProgress = PROGRESS_PCT_LIPID_TOOLS_STARTING;
 
-                using (var srInFile = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(consoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
-                    while (!srInFile.EndOfStream)
+                    while (!reader.EndOfStream)
                     {
-                        var strLineIn = srInFile.ReadLine();
+                        var dataLine = reader.ReadLine();
 
-                        if (string.IsNullOrWhiteSpace(strLineIn))
+                        if (string.IsNullOrWhiteSpace(dataLine))
                             continue;
 
                         // Update progress if the line starts with one of the expected phrases
                         foreach (var oItem in mConsoleOutputProgressMap)
                         {
-                            if (strLineIn.StartsWith(oItem.Key))
+                            if (dataLine.StartsWith(oItem.Key))
                             {
-                                if (intEffectiveProgress < oItem.Value)
+                                if (effectiveProgress < oItem.Value)
                                 {
-                                    intEffectiveProgress = oItem.Value;
+                                    effectiveProgress = oItem.Value;
                                 }
                             }
                         }
 
-                        if (intEffectiveProgress == PROGRESS_PCT_LIPID_TOOLS_FINDING_POSITIVE_FEATURES ||
-                            intEffectiveProgress == PROGRESS_PCT_LIPID_TOOLS_FINDING_NEGATIVE_FEATURES)
+                        if (effectiveProgress == PROGRESS_PCT_LIPID_TOOLS_FINDING_POSITIVE_FEATURES ||
+                            effectiveProgress == PROGRESS_PCT_LIPID_TOOLS_FINDING_NEGATIVE_FEATURES)
                         {
-                            var oMatch = reSubProgress.Match(strLineIn);
+                            var oMatch = reSubProgress.Match(dataLine);
                             if (oMatch.Success)
                             {
                                 if (int.TryParse(oMatch.Groups[1].Value, out var intSubProgressCount))
                                 {
                                     if (int.TryParse(oMatch.Groups[2].Value, out var intSubProgressCountTotal))
                                     {
-                                        dblSubProgressAddon = intSubProgressCount / (double)intSubProgressCountTotal;
+                                        subProgressAddon = intSubProgressCount / (double)intSubProgressCountTotal;
                                     }
                                 }
                             }
@@ -681,21 +681,21 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                     }
                 }
 
-                float sngEffectiveProgress = intEffectiveProgress;
+                float progressOverall = effectiveProgress;
 
                 // Bump up the effective progress if finding features in positive or negative data
-                if (intEffectiveProgress == PROGRESS_PCT_LIPID_TOOLS_FINDING_POSITIVE_FEATURES)
+                if (effectiveProgress == PROGRESS_PCT_LIPID_TOOLS_FINDING_POSITIVE_FEATURES)
                 {
-                    sngEffectiveProgress += (float)((PROGRESS_PCT_LIPID_TOOLS_FINDING_NEGATIVE_FEATURES - PROGRESS_PCT_LIPID_TOOLS_FINDING_POSITIVE_FEATURES) * dblSubProgressAddon);
+                    progressOverall += (float)((PROGRESS_PCT_LIPID_TOOLS_FINDING_NEGATIVE_FEATURES - PROGRESS_PCT_LIPID_TOOLS_FINDING_POSITIVE_FEATURES) * subProgressAddon);
                 }
-                else if (intEffectiveProgress == PROGRESS_PCT_LIPID_TOOLS_FINDING_NEGATIVE_FEATURES)
+                else if (effectiveProgress == PROGRESS_PCT_LIPID_TOOLS_FINDING_NEGATIVE_FEATURES)
                 {
-                    sngEffectiveProgress += (float)((PROGRESS_PCT_LIPID_TOOLS_ALIGNING_FEATURES - PROGRESS_PCT_LIPID_TOOLS_FINDING_NEGATIVE_FEATURES) * dblSubProgressAddon);
+                    progressOverall += (float)((PROGRESS_PCT_LIPID_TOOLS_ALIGNING_FEATURES - PROGRESS_PCT_LIPID_TOOLS_FINDING_NEGATIVE_FEATURES) * subProgressAddon);
                 }
 
-                if (mProgress < sngEffectiveProgress)
+                if (mProgress < progressOverall)
                 {
-                    mProgress = sngEffectiveProgress;
+                    mProgress = progressOverall;
                 }
             }
             catch (Exception ex)
@@ -703,7 +703,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                 // Ignore errors here
                 if (mDebugLevel >= 2)
                 {
-                    LogError("Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
+                    LogError("Error parsing console output file (" + consoleOutputFilePath + "): " + ex.Message);
                 }
             }
         }
@@ -711,10 +711,10 @@ namespace AnalysisManagerLipidMapSearchPlugIn
         /// <summary>
         /// Read the LipidMapSearch options file and convert the options to command line switches
         /// </summary>
-        /// <param name="strParameterFilePath">Path to the LipidMapSearch Parameter File</param>
+        /// <param name="parameterFilePath">Path to the LipidMapSearch Parameter File</param>
         /// <returns>Options string if success; empty string if an error</returns>
         /// <remarks></remarks>
-        private string ParseLipidMapSearchParameterFile(string strParameterFilePath)
+        private string ParseLipidMapSearchParameterFile(string parameterFilePath)
         {
             var sbOptions = new StringBuilder(500);
 
@@ -723,53 +723,53 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                 // Initialize the Param Name dictionary
                 var dctParamNames = GetLipidMapsParameterNames();
 
-                using (var srParamFile = new StreamReader(new FileStream(strParameterFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                using (var reader = new StreamReader(new FileStream(parameterFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
                 {
-                    while (!srParamFile.EndOfStream)
+                    while (!reader.EndOfStream)
                     {
-                        var strLineIn = srParamFile.ReadLine();
-                        var strKey = string.Empty;
-                        var strValue = string.Empty;
+                        var dataLine = reader.ReadLine();
+                        var key = string.Empty;
+                        var value = string.Empty;
 
-                        if (string.IsNullOrWhiteSpace(strLineIn))
+                        if (string.IsNullOrWhiteSpace(dataLine))
                         {
                             continue;
                         }
 
-                        strLineIn = strLineIn.Trim();
+                        var dataLineTrimmed = dataLine.Trim();
 
-                        if (!strLineIn.StartsWith("#") && strLineIn.Contains("="))
+                        if (!dataLineTrimmed.StartsWith("#") && dataLineTrimmed.Contains("="))
                         {
-                            var intCharIndex = strLineIn.IndexOf('=');
+                            var intCharIndex = dataLineTrimmed.IndexOf('=');
                             if (intCharIndex > 0)
                             {
-                                strKey = strLineIn.Substring(0, intCharIndex).Trim();
-                                if (intCharIndex < strLineIn.Length - 1)
+                                key = dataLineTrimmed.Substring(0, intCharIndex).Trim();
+                                if (intCharIndex < dataLineTrimmed.Length - 1)
                                 {
-                                    strValue = strLineIn.Substring(intCharIndex + 1).Trim();
+                                    value = dataLineTrimmed.Substring(intCharIndex + 1).Trim();
                                 }
                                 else
                                 {
-                                    strValue = string.Empty;
+                                    value = string.Empty;
                                 }
                             }
                         }
 
-                        if (string.IsNullOrWhiteSpace(strKey))
+                        if (string.IsNullOrWhiteSpace(key))
                             continue;
 
-                        // Check whether strKey is one of the standard keys defined in dctParamNames
-                        if (dctParamNames.TryGetValue(strKey, out var strArgumentSwitch))
+                        // Check whether key is one of the standard keys defined in dctParamNames
+                        if (dctParamNames.TryGetValue(key, out var strArgumentSwitch))
                         {
-                            sbOptions.Append(" -" + strArgumentSwitch + " " + strValue);
+                            sbOptions.Append(" -" + strArgumentSwitch + " " + value);
                         }
-                        else if (strKey.ToLower() == "adducts")
+                        else if (key.ToLower() == "adducts")
                         {
-                            sbOptions.Append(" -adducts " + "\"" + strValue + "\"");
+                            sbOptions.Append(" -adducts " + "\"" + value + "\"");
                         }
-                        else if (strKey.ToLower() == "noscangroups")
+                        else if (key.ToLower() == "noscangroups")
                         {
-                            if (bool.TryParse(strValue, out var blnValue))
+                            if (bool.TryParse(value, out var blnValue))
                             {
                                 if (blnValue)
                                 {
@@ -780,7 +780,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                         else
                         {
                             // Ignore the option
-                            LogWarning("Unrecognized setting in the LipidMaps parameter file: " + strKey);
+                            LogWarning("Unrecognized setting in the LipidMaps parameter file: " + key);
                         }
                     }
                 }

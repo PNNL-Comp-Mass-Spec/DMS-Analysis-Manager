@@ -247,24 +247,24 @@ namespace AnalysisManagerMODPlusPlugin
                 var spectraSearched = 0;
                 var totalSpectra = 1;
 
-                using (var srInFile = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
-                    while (!srInFile.EndOfStream)
+                    while (!reader.EndOfStream)
                     {
-                        var strLineIn = srInFile.ReadLine();
+                        var dataLine = reader.ReadLine();
 
-                        if (string.IsNullOrWhiteSpace(strLineIn))
+                        if (string.IsNullOrWhiteSpace(dataLine))
                         {
                             continue;
                         }
 
-                        if (strLineIn.ToLower().StartsWith("release date:"))
+                        if (dataLine.ToLower().StartsWith("release date:"))
                         {
-                            ReleaseDate = strLineIn.Substring(13).TrimStart();
+                            ReleaseDate = dataLine.Substring(13).TrimStart();
                             continue;
                         }
 
-                        var reMatch = reCheckProgress.Match(strLineIn);
+                        var reMatch = reCheckProgress.Match(dataLine);
                         if (reMatch.Success)
                         {
                             int.TryParse(reMatch.Groups[1].ToString(), out spectraSearched);

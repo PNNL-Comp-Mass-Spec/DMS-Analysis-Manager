@@ -536,7 +536,7 @@ namespace AnalysisManagerQCARTPlugin
                 // ConsoleOutputFilePath = mCurrentConsoleOutputFile
             };
             RegisterEvents(cmdRunner);
-            cmdRunner.LoopWaiting += cmdRunner_LoopWaiting;
+            cmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
             mProgress = PROGRESS_PCT_STARTING;
 
@@ -550,9 +550,9 @@ namespace AnalysisManagerQCARTPlugin
                 // Write the console output to a text file
                 clsGlobal.IdleLoop(0.25);
 
-                using (var swConsoleOutputfile = new StreamWriter(new FileStream(cmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                using (var writer = new StreamWriter(new FileStream(cmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
-                    swConsoleOutputfile.WriteLine(cmdRunner.CachedConsoleOutput);
+                    writer.WriteLine(cmdRunner.CachedConsoleOutput);
                 }
             }
 
@@ -735,7 +735,7 @@ namespace AnalysisManagerQCARTPlugin
 
         #region "Event Handlers"
 
-        void cmdRunner_LoopWaiting()
+        void CmdRunner_LoopWaiting()
         {
 
             // Synchronize the stored Debug level with the value stored in the database

@@ -149,7 +149,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
             return strValue;
         }
 
-        private bool UpdateFeatureFinderIniFile(string strLCMSFFIniFileName)
+        private bool UpdateFeatureFinderIniFile(string lcmsFFIniFileName)
         {
             const string INPUT_FILENAME_KEY = "InputFileName";
             const string OUTPUT_DIRECTORY_KEY = "OutputDirectory";
@@ -159,60 +159,60 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
             // In addition, look for an entry for DeconToolsFilterFileName;
             //  if present, verify that the file exists and copy it locally (so that it will be included in the results folder)
 
-            var SrcFilePath = Path.Combine(mWorkDir, strLCMSFFIniFileName);
-            var TargetFilePath = Path.Combine(mWorkDir, strLCMSFFIniFileName + "_new");
-            var IsosFilePath = Path.Combine(mWorkDir, DatasetName + ISOS_FILE_SUFFIX);
+            var srcFilePath = Path.Combine(mWorkDir, lcmsFFIniFileName);
+            var targetFilePath = Path.Combine(mWorkDir, lcmsFFIniFileName + "_new");
+            var isosFilePath = Path.Combine(mWorkDir, DatasetName + ISOS_FILE_SUFFIX);
 
-            var blnInputFileDefined = false;
-            var blnOutputDirectoryDefined = false;
+            var inputFileDefined = false;
+            var outputDirectoryDefined = false;
 
             var result = true;
 
             try
             {
                 // Create the output file (temporary name ending in "_new"; we'll swap the files later)
-                using (var swOutFile = new StreamWriter(new FileStream(TargetFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                using (var writer = new StreamWriter(new FileStream(targetFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
                     try
                     {
                         // Open the input file
-                        using (var srInFile = new StreamReader(new FileStream(SrcFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                        using (var reader = new StreamReader(new FileStream(srcFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
                         {
-                            while (!srInFile.EndOfStream)
+                            while (!reader.EndOfStream)
                             {
-                                var strLineIn = srInFile.ReadLine();
+                                var dataLine = reader.ReadLine();
 
-                                if (strLineIn == null)
+                                if (dataLine == null)
                                     continue;
 
-                                var strLineInLCase = strLineIn.ToLower().Trim();
+                                var dataLineLCase = dataLine.ToLower().Trim();
 
-                                if (strLineInLCase.StartsWith(INPUT_FILENAME_KEY.ToLower()))
+                                if (dataLineLCase.StartsWith(INPUT_FILENAME_KEY.ToLower()))
                                 {
                                     // Customize the input file name
-                                    strLineIn = INPUT_FILENAME_KEY + "=" + IsosFilePath;
-                                    blnInputFileDefined = true;
+                                    dataLine = INPUT_FILENAME_KEY + "=" + isosFilePath;
+                                    inputFileDefined = true;
                                 }
 
-                                if (strLineInLCase.StartsWith(OUTPUT_DIRECTORY_KEY.ToLower()))
+                                if (dataLineLCase.StartsWith(OUTPUT_DIRECTORY_KEY.ToLower()))
                                 {
                                     // Customize the output directory name
-                                    strLineIn = OUTPUT_DIRECTORY_KEY + "=" + mWorkDir;
-                                    blnOutputDirectoryDefined = true;
+                                    dataLine = OUTPUT_DIRECTORY_KEY + "=" + mWorkDir;
+                                    outputDirectoryDefined = true;
                                 }
 
-                                if (strLineInLCase.StartsWith(FILTER_FILE_NAME_KEY.ToLower()))
+                                if (dataLineLCase.StartsWith(FILTER_FILE_NAME_KEY.ToLower()))
                                 {
                                     // Copy the file defined by DeconToolsFilterFileName= to the working directory
 
-                                    var strValue = GetValue(strLineIn);
+                                    var strValue = GetValue(dataLine);
 
                                     if (!string.IsNullOrEmpty(strValue))
                                     {
                                         var fiFileInfo = new FileInfo(strValue);
                                         if (!fiFileInfo.Exists)
                                         {
-                                            mMessage = "Entry for " + FILTER_FILE_NAME_KEY + " in " + strLCMSFFIniFileName +
+                                            mMessage = "Entry for " + FILTER_FILE_NAME_KEY + " in " + lcmsFFIniFileName +
                                                         " points to an invalid file: " + strValue;
                                             LogError(mMessage);
                                             result = false;
@@ -225,24 +225,24 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
                                     }
                                 }
 
-                                swOutFile.WriteLine(strLineIn);
+                                writer.WriteLine(dataLine);
                             }
                         }
 
-                        if (!blnInputFileDefined)
+                        if (!inputFileDefined)
                         {
-                            swOutFile.WriteLine(INPUT_FILENAME_KEY + "=" + IsosFilePath);
+                            writer.WriteLine(INPUT_FILENAME_KEY + "=" + isosFilePath);
                         }
 
-                        if (!blnOutputDirectoryDefined)
+                        if (!outputDirectoryDefined)
                         {
-                            swOutFile.WriteLine(OUTPUT_DIRECTORY_KEY + "=" + mWorkDir);
+                            writer.WriteLine(OUTPUT_DIRECTORY_KEY + "=" + mWorkDir);
                         }
                     }
                     catch (Exception ex)
                     {
                         LogError("clsAnalysisResourcesLCMSFF.UpdateFeatureFinderIniFile, Error opening the .Ini file to customize " +
-                                 "(" + strLCMSFFIniFileName + "): " + ex.Message);
+                                 "(" + lcmsFFIniFileName + "): " + ex.Message);
                         result = false;
                     }
                 } // end using
@@ -251,17 +251,17 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
                 ProgRunner.GarbageCollectNow();
 
                 // Delete the input file
-                File.Delete(SrcFilePath);
+                File.Delete(srcFilePath);
 
                 ProgRunner.GarbageCollectNow();
 
                 // Rename the newly created output file to have the name of the input file
-                File.Move(TargetFilePath, SrcFilePath);
+                File.Move(targetFilePath, srcFilePath);
             }
             catch (Exception ex)
             {
                 LogError("clsAnalysisResourcesLCMSFF.UpdateFeatureFinderIniFile, Error opening the .Ini file to customize " +
-                         "(" + strLCMSFFIniFileName + "): " + ex.Message);
+                         "(" + lcmsFFIniFileName + "): " + ex.Message);
                 result = false;
             }
 

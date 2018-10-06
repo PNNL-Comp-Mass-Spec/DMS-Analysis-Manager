@@ -120,11 +120,11 @@ namespace AnalysisManagerGlyQIQPlugin
             {
                 var fileContents = string.Empty;
 
-                using (var srBatchFile = new StreamReader(new FileStream(fiBatchFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(fiBatchFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
-                    if (!srBatchFile.EndOfStream)
+                    if (!reader.EndOfStream)
                     {
-                        fileContents = srBatchFile.ReadLine();
+                        fileContents = reader.ReadLine();
                     }
                 }
 
@@ -167,12 +167,12 @@ namespace AnalysisManagerGlyQIQPlugin
                 char[] columnDelimiters = { '\t' };
                 const int CODE_COLUMN_INDEX = 2;
 
-                using (var srTargetsFile = new StreamReader(new FileStream(fiTargetsFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(fiTargetsFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
                     // Read the header line
-                    if (!srTargetsFile.EndOfStream)
+                    if (!reader.EndOfStream)
                     {
-                        var headerLine = srTargetsFile.ReadLine();
+                        var headerLine = reader.ReadLine();
                         if (headerLine == null)
                             throw new Exception("Header line in the targets file is empty, " + fiTargetsFile.Name);
 
@@ -189,9 +189,9 @@ namespace AnalysisManagerGlyQIQPlugin
                         }
                     }
 
-                    while (!srTargetsFile.EndOfStream)
+                    while (!reader.EndOfStream)
                     {
-                        var dataLine = srTargetsFile.ReadLine();
+                        var dataLine = reader.ReadLine();
                         if (string.IsNullOrWhiteSpace(dataLine))
                             continue;
 
@@ -270,15 +270,15 @@ namespace AnalysisManagerGlyQIQPlugin
 
                 var analysisFinished = false;
 
-                using (var srInFile = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
-                    while (!srInFile.EndOfStream)
+                    while (!reader.EndOfStream)
                     {
-                        var strLineIn = srInFile.ReadLine();
+                        var dataLine = reader.ReadLine();
 
-                        if (!string.IsNullOrWhiteSpace(strLineIn))
+                        if (!string.IsNullOrWhiteSpace(dataLine))
                         {
-                            var reMatch = reStartWorkflows.Match(strLineIn);
+                            var reMatch = reStartWorkflows.Match(dataLine);
 
                             if (reMatch.Success)
                             {
@@ -289,7 +289,7 @@ namespace AnalysisManagerGlyQIQPlugin
                                     mTargets[targetName] = true;
                                 }
                             }
-                            else if (strLineIn.StartsWith("Target Analysis Finished"))
+                            else if (dataLine.StartsWith("Target Analysis Finished"))
                             {
                                 analysisFinished = true;
                             }

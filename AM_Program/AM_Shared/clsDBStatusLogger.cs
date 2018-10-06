@@ -213,25 +213,25 @@ namespace AnalysisManagerBase
         /// Constructor
         /// </summary>
         /// <param name="dbConnectionString">Database connection string</param>
-        /// <param name="sngDBStatusUpdateIntervalMinutes">Minimum interval between updating the manager status in the database</param>
+        /// <param name="dbStatusUpdateIntervalMinutes">Minimum interval between updating the manager status in the database</param>
         /// <remarks></remarks>
-        public clsDBStatusLogger(string dbConnectionString, float sngDBStatusUpdateIntervalMinutes)
+        public clsDBStatusLogger(string dbConnectionString, float dbStatusUpdateIntervalMinutes)
         {
             if (dbConnectionString == null)
                 dbConnectionString = string.Empty;
 
             DBConnectionString = dbConnectionString;
-            mDBStatusUpdateIntervalMinutes = sngDBStatusUpdateIntervalMinutes;
+            mDBStatusUpdateIntervalMinutes = dbStatusUpdateIntervalMinutes;
             mLastWriteTime = DateTime.MinValue;
         }
 
         /// <summary>
         /// Send status information to the database
         /// </summary>
-        /// <param name="udtStatusInfo"></param>
+        /// <param name="statusInfo"></param>
         /// <param name="forceLogToDB"></param>
         /// <remarks>This function is valid, but the primary way that we track status is when WriteStatusFile calls LogStatusToMessageQueue</remarks>
-        public void LogStatus(udtStatusInfoType udtStatusInfo, bool forceLogToDB)
+        public void LogStatus(udtStatusInfoType statusInfo, bool forceLogToDB)
         {
 
             try
@@ -265,34 +265,34 @@ namespace AnalysisManagerBase
 
 
                 // Manager items
-                AddSPParameter(cmd.Parameters, "@MgrName", udtStatusInfo.MgrName, 128);
-                AddSPParameter(cmd.Parameters, "@MgrStatusCode", (int)udtStatusInfo.MgrStatus);
+                AddSPParameter(cmd.Parameters, "@MgrName", statusInfo.MgrName, 128);
+                AddSPParameter(cmd.Parameters, "@MgrStatusCode", (int)statusInfo.MgrStatus);
 
-                AddSPParameter(cmd.Parameters, "@LastUpdate", udtStatusInfo.LastUpdate.ToLocalTime());
-                AddSPParameter(cmd.Parameters, "@LastStartTime", udtStatusInfo.LastStartTime.ToLocalTime());
-                AddSPParameter(cmd.Parameters, "@CPUUtilization", udtStatusInfo.CPUUtilization);
-                AddSPParameter(cmd.Parameters, "@FreeMemoryMB", udtStatusInfo.FreeMemoryMB);
-                AddSPParameter(cmd.Parameters, "@ProcessID", udtStatusInfo.ProcessID);
-                AddSPParameter(cmd.Parameters, "@ProgRunnerProcessID", udtStatusInfo.ProgRunnerProcessID);
-                AddSPParameter(cmd.Parameters, "@ProgRunnerCoreUsage", udtStatusInfo.ProgRunnerCoreUsage);
+                AddSPParameter(cmd.Parameters, "@LastUpdate", statusInfo.LastUpdate.ToLocalTime());
+                AddSPParameter(cmd.Parameters, "@LastStartTime", statusInfo.LastStartTime.ToLocalTime());
+                AddSPParameter(cmd.Parameters, "@CPUUtilization", statusInfo.CPUUtilization);
+                AddSPParameter(cmd.Parameters, "@FreeMemoryMB", statusInfo.FreeMemoryMB);
+                AddSPParameter(cmd.Parameters, "@ProcessID", statusInfo.ProcessID);
+                AddSPParameter(cmd.Parameters, "@ProgRunnerProcessID", statusInfo.ProgRunnerProcessID);
+                AddSPParameter(cmd.Parameters, "@ProgRunnerCoreUsage", statusInfo.ProgRunnerCoreUsage);
 
-                AddSPParameter(cmd.Parameters, "@MostRecentErrorMessage", udtStatusInfo.MostRecentErrorMessage, 1024);
+                AddSPParameter(cmd.Parameters, "@MostRecentErrorMessage", statusInfo.MostRecentErrorMessage, 1024);
 
                 // Task items
-                AddSPParameter(cmd.Parameters, "@StepTool", udtStatusInfo.Task.Tool, 128);
-                AddSPParameter(cmd.Parameters, "@TaskStatusCode", (int)udtStatusInfo.Task.Status);
-                AddSPParameter(cmd.Parameters, "@DurationHours", udtStatusInfo.Task.DurationHours);
-                AddSPParameter(cmd.Parameters, "@Progress", udtStatusInfo.Task.Progress);
-                AddSPParameter(cmd.Parameters, "@CurrentOperation", udtStatusInfo.Task.CurrentOperation, 256);
+                AddSPParameter(cmd.Parameters, "@StepTool", statusInfo.Task.Tool, 128);
+                AddSPParameter(cmd.Parameters, "@TaskStatusCode", (int)statusInfo.Task.Status);
+                AddSPParameter(cmd.Parameters, "@DurationHours", statusInfo.Task.DurationHours);
+                AddSPParameter(cmd.Parameters, "@Progress", statusInfo.Task.Progress);
+                AddSPParameter(cmd.Parameters, "@CurrentOperation", statusInfo.Task.CurrentOperation, 256);
 
                 // Task detail items
-                AddSPParameter(cmd.Parameters, "@TaskDetailStatusCode", (int)udtStatusInfo.Task.TaskDetails.Status);
-                AddSPParameter(cmd.Parameters, "@Job", udtStatusInfo.Task.TaskDetails.Job);
-                AddSPParameter(cmd.Parameters, "@JobStep", udtStatusInfo.Task.TaskDetails.JobStep);
-                AddSPParameter(cmd.Parameters, "@Dataset", udtStatusInfo.Task.TaskDetails.Dataset, 256);
-                AddSPParameter(cmd.Parameters, "@MostRecentLogMessage", udtStatusInfo.Task.TaskDetails.MostRecentLogMessage, 1024);
-                AddSPParameter(cmd.Parameters, "@MostRecentJobInfo", udtStatusInfo.Task.TaskDetails.MostRecentJobInfo, 256);
-                AddSPParameter(cmd.Parameters, "@SpectrumCount", udtStatusInfo.Task.TaskDetails.SpectrumCount);
+                AddSPParameter(cmd.Parameters, "@TaskDetailStatusCode", (int)statusInfo.Task.TaskDetails.Status);
+                AddSPParameter(cmd.Parameters, "@Job", statusInfo.Task.TaskDetails.Job);
+                AddSPParameter(cmd.Parameters, "@JobStep", statusInfo.Task.TaskDetails.JobStep);
+                AddSPParameter(cmd.Parameters, "@Dataset", statusInfo.Task.TaskDetails.Dataset, 256);
+                AddSPParameter(cmd.Parameters, "@MostRecentLogMessage", statusInfo.Task.TaskDetails.MostRecentLogMessage, 1024);
+                AddSPParameter(cmd.Parameters, "@MostRecentJobInfo", statusInfo.Task.TaskDetails.MostRecentJobInfo, 256);
+                AddSPParameter(cmd.Parameters, "@SpectrumCount", statusInfo.Task.TaskDetails.SpectrumCount);
 
                 AddSPParameterOutput(cmd.Parameters, "@message", string.Empty, 512);
 
@@ -308,7 +308,7 @@ namespace AnalysisManagerBase
 
         }
 
-        private void AddSPParameter(SqlParameterCollection objParameters, string paramName, string value, int varCharLength)
+        private void AddSPParameter(SqlParameterCollection parameters, string paramName, string value, int varCharLength)
         {
             // Make sure the parameter starts with an @ sign
             if (!paramName.StartsWith("@"))
@@ -316,10 +316,10 @@ namespace AnalysisManagerBase
                 paramName = "@" + paramName;
             }
 
-            objParameters.Add(new SqlParameter(paramName, SqlDbType.VarChar, varCharLength)).Value = value;
+            parameters.Add(new SqlParameter(paramName, SqlDbType.VarChar, varCharLength)).Value = value;
         }
 
-        private void AddSPParameter(SqlParameterCollection objParameters, string paramName, int value)
+        private void AddSPParameter(SqlParameterCollection parameters, string paramName, int value)
         {
             // Make sure the parameter starts with an @ sign
             if (!paramName.StartsWith("@"))
@@ -327,10 +327,10 @@ namespace AnalysisManagerBase
                 paramName = "@" + paramName;
             }
 
-            objParameters.Add(new SqlParameter(paramName, SqlDbType.Int)).Value = value;
+            parameters.Add(new SqlParameter(paramName, SqlDbType.Int)).Value = value;
         }
 
-        private void AddSPParameter(SqlParameterCollection objParameters, string paramName, DateTime dtValue)
+        private void AddSPParameter(SqlParameterCollection parameters, string paramName, DateTime value)
         {
             // Make sure the parameter starts with an @ sign
             if (!paramName.StartsWith("@"))
@@ -338,10 +338,10 @@ namespace AnalysisManagerBase
                 paramName = "@" + paramName;
             }
 
-            objParameters.Add(new SqlParameter(paramName, SqlDbType.DateTime)).Value = dtValue;
+            parameters.Add(new SqlParameter(paramName, SqlDbType.DateTime)).Value = value;
         }
 
-        private void AddSPParameter(SqlParameterCollection objParameters, string paramName, float sngValue)
+        private void AddSPParameter(SqlParameterCollection parameters, string paramName, float value)
         {
             // Make sure the parameter starts with an @ sign
             if (!paramName.StartsWith("@"))
@@ -349,10 +349,10 @@ namespace AnalysisManagerBase
                 paramName = "@" + paramName;
             }
 
-            objParameters.Add(new SqlParameter(paramName, SqlDbType.Real)).Value = sngValue;
+            parameters.Add(new SqlParameter(paramName, SqlDbType.Real)).Value = value;
         }
 
-        private void AddSPParameterOutput(SqlParameterCollection objParameters, string paramName, string value, int varCharLength)
+        private void AddSPParameterOutput(SqlParameterCollection parameters, string paramName, string value, int varCharLength)
         {
             // Make sure the parameter starts with an @ sign
             if (!paramName.StartsWith("@"))
@@ -360,11 +360,10 @@ namespace AnalysisManagerBase
                 paramName = "@" + paramName;
             }
 
-            objParameters.Add(new SqlParameter(paramName, SqlDbType.VarChar, varCharLength));
-            objParameters[paramName].Direction = ParameterDirection.Output;
-            objParameters[paramName].Value = value;
+            parameters.Add(new SqlParameter(paramName, SqlDbType.VarChar, varCharLength));
+            parameters[paramName].Direction = ParameterDirection.Output;
+            parameters[paramName].Value = value;
         }
-
 
         #endregion
 

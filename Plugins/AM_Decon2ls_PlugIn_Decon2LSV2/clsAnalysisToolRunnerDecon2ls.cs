@@ -450,11 +450,11 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                     return false;
                 }
 
-                using (var srInFile = new StreamReader(new FileStream(isosFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(isosFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
-                    while (!srInFile.EndOfStream)
+                    while (!reader.EndOfStream)
                     {
-                        var dataLine = srInFile.ReadLine();
+                        var dataLine = reader.ReadLine();
 
                         if (string.IsNullOrEmpty(dataLine))
                             continue;
@@ -1023,11 +1023,11 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
                 if (File.Exists(logFilePath))
                 {
-                    using (var srInFile = new StreamReader(new FileStream(logFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                    using (var reader = new StreamReader(new FileStream(logFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                     {
-                        while (!srInFile.EndOfStream)
+                        while (!reader.EndOfStream)
                         {
-                            var dataLine = srInFile.ReadLine();
+                            var dataLine = reader.ReadLine();
 
                             if (string.IsNullOrWhiteSpace(dataLine))
                                 continue;

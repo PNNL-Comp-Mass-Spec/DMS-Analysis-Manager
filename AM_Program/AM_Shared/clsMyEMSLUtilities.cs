@@ -386,23 +386,23 @@ namespace AnalysisManagerBase
         {
             if (e.UnzipRequired)
             {
-                var fiFileToUnzip = new FileInfo(Path.Combine(e.DownloadFolderPath, e.ArchivedFile.Filename));
+                var fileToUnzip = new FileInfo(Path.Combine(e.DownloadFolderPath, e.ArchivedFile.Filename));
 
-                if (!fiFileToUnzip.Exists)
+                if (!fileToUnzip.Exists)
                     return;
 
-                if (fiFileToUnzip.Extension.ToLower() == ".zip")
+                if (fileToUnzip.Extension.ToLower() == ".zip")
                 {
                     // Decompress the .zip file
-                    OnStatusEvent("Unzipping file " + fiFileToUnzip.Name);
-                    mDotNetZipTools.UnzipFile(fiFileToUnzip.FullName, e.DownloadFolderPath);
+                    OnStatusEvent("Unzipping file " + fileToUnzip.Name);
+                    mDotNetZipTools.UnzipFile(fileToUnzip.FullName, e.DownloadFolderPath);
                     mMostRecentUnzippedFiles.AddRange(mDotNetZipTools.MostRecentUnzippedFiles);
                 }
-                else if (fiFileToUnzip.Extension.ToLower() == ".gz")
+                else if (fileToUnzip.Extension.ToLower() == ".gz")
                 {
                     // Decompress the .gz file
-                    OnStatusEvent("Unzipping file " + fiFileToUnzip.Name);
-                    mDotNetZipTools.GUnzipFile(fiFileToUnzip.FullName, e.DownloadFolderPath);
+                    OnStatusEvent("Unzipping file " + fileToUnzip.Name);
+                    mDotNetZipTools.GUnzipFile(fileToUnzip.FullName, e.DownloadFolderPath);
                     mMostRecentUnzippedFiles.AddRange(mDotNetZipTools.MostRecentUnzippedFiles);
                 }
 

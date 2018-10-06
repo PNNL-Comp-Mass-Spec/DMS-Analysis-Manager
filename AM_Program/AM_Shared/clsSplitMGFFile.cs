@@ -82,14 +82,14 @@ namespace AnalysisManagerBase
                     fileSuffix = "_Part";
                 }
 
-                var fiMgfFile = new FileInfo(mgfFilePath);
-                if (!fiMgfFile.Exists)
+                var mgfFile = new FileInfo(mgfFilePath);
+                if (!mgfFile.Exists)
                 {
                     OnErrorEvent("File not found: " + mgfFilePath);
                     return new List<FileInfo>();
                 }
 
-                if (fiMgfFile.Length == 0)
+                if (mgfFile.Length == 0)
                 {
                     OnErrorEvent("MGF file is empty: " + mgfFilePath);
                     return new List<FileInfo>();
@@ -97,41 +97,41 @@ namespace AnalysisManagerBase
 
                 if (splitCount < 2)
                     splitCount = 2;
-                var dtLastProgress = DateTime.UtcNow;
+                var lastProgress = DateTime.UtcNow;
 
-                OnProgressUpdate("Splitting " + fiMgfFile.Name + " into " + splitCount + " parts", 0);
+                OnProgressUpdate("Splitting " + mgfFile.Name + " into " + splitCount + " parts", 0);
 
-                var scanMapFile = Path.GetFileNameWithoutExtension(fiMgfFile.Name) + "_mgfScanMap.txt";
+                var scanMapFile = Path.GetFileNameWithoutExtension(mgfFile.Name) + "_mgfScanMap.txt";
 
-                if (fiMgfFile.DirectoryName == null)
+                if (mgfFile.DirectoryName == null)
                 {
-                    throw new DirectoryNotFoundException("Cannot determine the parent directory of " + fiMgfFile.FullName);
+                    throw new DirectoryNotFoundException("Cannot determine the parent directory of " + mgfFile.FullName);
                 }
 
-                var scanMapFilePath = Path.Combine(fiMgfFile.DirectoryName, scanMapFile);
+                var scanMapFilePath = Path.Combine(mgfFile.DirectoryName, scanMapFile);
 
-                var lstSplitMgfFiles = new List<FileInfo>();
+                var splitMgfFiles = new List<FileInfo>();
 
-                using (var srMgfFile = new StreamReader(new FileStream(fiMgfFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var mgfFileReader = new StreamReader(new FileStream(mgfFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
-                    using (var swScanToPartMapFile = new StreamWriter(new FileStream(scanMapFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                    using (var scanToPartMapWriter = new StreamWriter(new FileStream(scanMapFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                     {
 
 
                         // Write the header to the map file
 
                         {
-                            swScanToPartMapFile.WriteLine("ScanNumber" + '\t' + "ScanIndexOriginal" + '\t' + "MgfFilePart" + '\t' + "ScanIndex");
+                            scanToPartMapWriter.WriteLine("ScanNumber" + '\t' + "ScanIndexOriginal" + '\t' + "MgfFilePart" + '\t' + "ScanIndex");
 
                             // Create the writers
                             // Keys are each StreamWriter, values are the number of spectra written to the file
-                            var swWriters = new Queue<udtOutputFileType>();
+                            var splitFileWriters = new Queue<udtOutputFileType>();
 
                             for (var partNum = 1; partNum <= splitCount; partNum++)
                             {
-                                var msgFileName = Path.GetFileNameWithoutExtension(fiMgfFile.Name) + fileSuffix + partNum + ".mgf";
+                                var msgFileName = Path.GetFileNameWithoutExtension(mgfFile.Name) + fileSuffix + partNum + ".mgf";
 
-                                var outputFilePath = Path.Combine(fiMgfFile.DirectoryName, msgFileName);
+                                var outputFilePath = Path.Combine(mgfFile.DirectoryName, msgFileName);
 
                                 var nextWriter = new udtOutputFileType
                                 {
@@ -140,10 +140,10 @@ namespace AnalysisManagerBase
                                     PartNumber = partNum
                                 };
 
-                                lstSplitMgfFiles.Add(nextWriter.OutputFile);
+                                splitMgfFiles.Add(nextWriter.OutputFile);
                                 nextWriter.Writer = new StreamWriter(new FileStream(nextWriter.OutputFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read));
 
-                                swWriters.Enqueue(nextWriter);
+                                splitFileWriters.Enqueue(nextWriter);
                             }
 
                             long bytesRead = 0;
@@ -152,13 +152,13 @@ namespace AnalysisManagerBase
                             var previousLine = string.Empty;
                             while (true)
                             {
-                                var spectrumData = GetNextMGFSpectrum(srMgfFile, ref previousLine, ref bytesRead, out var scanNumber);
+                                var spectrumData = GetNextMGFSpectrum(mgfFileReader, ref previousLine, ref bytesRead, out var scanNumber);
                                 if (spectrumData.Count == 0)
                                 {
                                     break;
                                 }
 
-                                var nextWriter = swWriters.Dequeue();
+                                var nextWriter = splitFileWriters.Dequeue();
                                 foreach (var dataLine in spectrumData)
                                 {
                                     nextWriter.Writer.WriteLine(dataLine);
@@ -167,14 +167,14 @@ namespace AnalysisManagerBase
                                 nextWriter.SpectraWritten += 1;
                                 totalSpectraWritten += 1;
 
-                                swScanToPartMapFile.WriteLine(scanNumber + '\t' + totalSpectraWritten + '\t' + nextWriter.PartNumber + '\t' + nextWriter.SpectraWritten);
+                                scanToPartMapWriter.WriteLine(scanNumber + '\t' + totalSpectraWritten + '\t' + nextWriter.PartNumber + '\t' + nextWriter.SpectraWritten);
 
-                                swWriters.Enqueue(nextWriter);
+                                splitFileWriters.Enqueue(nextWriter);
 
-                                if (DateTime.UtcNow.Subtract(dtLastProgress).TotalSeconds >= 5)
+                                if (DateTime.UtcNow.Subtract(lastProgress).TotalSeconds >= 5)
                                 {
-                                    dtLastProgress = DateTime.UtcNow;
-                                    var percentComplete = bytesRead / (float)srMgfFile.BaseStream.Length * 100;
+                                    lastProgress = DateTime.UtcNow;
+                                    var percentComplete = bytesRead / (float)mgfFileReader.BaseStream.Length * 100;
                                     if (percentComplete > 100)
                                         percentComplete = 100;
                                     OnProgressUpdate("Splitting MGF file", (int)percentComplete);
@@ -185,15 +185,15 @@ namespace AnalysisManagerBase
                             // In addition, delete any output files that did not have any spectra written to them
                             totalSpectraWritten = 0;
 
-                            while (swWriters.Count > 0)
+                            while (splitFileWriters.Count > 0)
                             {
-                                var nextWriter = swWriters.Dequeue();
+                                var nextWriter = splitFileWriters.Dequeue();
                                 nextWriter.Writer.Close();
 
                                 if (nextWriter.SpectraWritten == 0)
                                 {
                                     nextWriter.OutputFile.Delete();
-                                    lstSplitMgfFiles.Remove(nextWriter.OutputFile);
+                                    splitMgfFiles.Remove(nextWriter.OutputFile);
                                 }
                                 else
                                 {
@@ -213,7 +213,7 @@ namespace AnalysisManagerBase
                     }
                 }
 
-                return lstSplitMgfFiles;
+                return splitMgfFiles;
 
             }
             catch (Exception ex)
@@ -225,20 +225,20 @@ namespace AnalysisManagerBase
 
         }
 
-        private List<string> GetNextMGFSpectrum(StreamReader srMgfFile, ref string previousLine, ref long bytesRead, out int scanNumber)
+        private List<string> GetNextMGFSpectrum(StreamReader mgfFileReader, ref string previousLine, ref long bytesRead, out int scanNumber)
         {
 
             var spectrumFound = false;
             var spectrumData = new List<string>();
             scanNumber = 0;
 
-            if (srMgfFile.EndOfStream)
+            if (mgfFileReader.EndOfStream)
                 return spectrumData;
 
             string dataLine;
             if (string.IsNullOrWhiteSpace(previousLine))
             {
-                dataLine = srMgfFile.ReadLine();
+                dataLine = mgfFileReader.ReadLine();
                 bytesRead += 2;
             }
             else
@@ -288,10 +288,10 @@ namespace AnalysisManagerBase
                     }
                 }
 
-                if (srMgfFile.EndOfStream)
+                if (mgfFileReader.EndOfStream)
                     break;
 
-                dataLine = srMgfFile.ReadLine();
+                dataLine = mgfFileReader.ReadLine();
                 bytesRead += 2;
             }
 

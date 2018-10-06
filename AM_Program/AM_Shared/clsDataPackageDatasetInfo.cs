@@ -86,7 +86,7 @@ namespace AnalysisManagerBase
         public string ServerStoragePath { get; set; }
 
         /// <summary>
-        /// Archive folder path
+        /// Archive directory path
         /// </summary>
         public string ArchiveStoragePath { get; set; }
 

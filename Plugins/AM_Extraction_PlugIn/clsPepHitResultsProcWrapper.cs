@@ -356,11 +356,11 @@ namespace AnalysisManagerExtractionPlugin
 
                 if (!File.Exists(mPHRPConsoleOutputFilePath)) return;
 
-                using (var srInFile = new StreamReader(new FileStream(mPHRPConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(mPHRPConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
-                    while (!srInFile.EndOfStream)
+                    while (!reader.EndOfStream)
                     {
-                        var lineIn = srInFile.ReadLine();
+                        var lineIn = reader.ReadLine();
                         if (string.IsNullOrWhiteSpace(lineIn))
                         {
                             continue;

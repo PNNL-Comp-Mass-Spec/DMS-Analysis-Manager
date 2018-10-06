@@ -288,18 +288,18 @@ namespace AnalysisManagerXTandemPlugIn
                     LogDebug("Parsing file " + strConsoleOutputFilePath);
                 }
 
-                using (var srInFile = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
-                    var intLinesRead = 0;
-                    while (!srInFile.EndOfStream)
+                    var linesRead = 0;
+                    while (!reader.EndOfStream)
                     {
-                        var strLineIn = srInFile.ReadLine();
-                        intLinesRead += 1;
+                        var dataLine = reader.ReadLine();
+                        linesRead += 1;
 
-                        if (string.IsNullOrWhiteSpace(strLineIn))
+                        if (string.IsNullOrWhiteSpace(dataLine))
                             continue;
 
-                        if (intLinesRead <= 4 && string.IsNullOrEmpty(mXTandemVersion) && strLineIn.StartsWith("X!"))
+                        if (linesRead <= 4 && string.IsNullOrEmpty(mXTandemVersion) && dataLine.StartsWith("X!"))
                         {
                             // Originally the first line was the X!Tandem version
                             // Starting in November 2016, the first line is the command line and the second line is a separator (series of dashes)
@@ -307,53 +307,53 @@ namespace AnalysisManagerXTandemPlugIn
 
                             if (mDebugLevel >= 2)
                             {
-                                LogDebug("X!Tandem version: " + strLineIn);
+                                LogDebug("X!Tandem version: " + dataLine);
                             }
 
-                            mXTandemVersion = string.Copy(strLineIn);
+                            mXTandemVersion = string.Copy(dataLine);
                         }
                         else
                         {
                             // Update progress if the line starts with one of the expected phrases
-                            if (strLineIn.StartsWith("Loading spectra"))
+                            if (dataLine.StartsWith("Loading spectra"))
                             {
                                 mProgress = PROGRESS_PCT_XTANDEM_LOADING_SPECTRA;
                             }
-                            else if (strLineIn.StartsWith("Computing models"))
+                            else if (dataLine.StartsWith("Computing models"))
                             {
                                 mProgress = PROGRESS_PCT_XTANDEM_COMPUTING_MODELS;
                             }
-                            else if (strLineIn.StartsWith("Model refinement"))
+                            else if (dataLine.StartsWith("Model refinement"))
                             {
                                 mProgress = PROGRESS_PCT_XTANDEM_REFINEMENT;
                             }
-                            else if (strLineIn.StartsWith("\tpartial cleavage"))
+                            else if (dataLine.StartsWith("\tpartial cleavage"))
                             {
                                 mProgress = PROGRESS_PCT_XTANDEM_REFINEMENT_PARTIAL_CLEAVAGE;
                             }
-                            else if (strLineIn.StartsWith("\tunanticipated cleavage"))
+                            else if (dataLine.StartsWith("\tunanticipated cleavage"))
                             {
                                 mProgress = PROGRESS_PCT_XTANDEM_REFINEMENT_UNANTICIPATED_CLEAVAGE;
                             }
-                            else if (strLineIn.StartsWith("\tfinishing refinement "))
+                            else if (dataLine.StartsWith("\tfinishing refinement "))
                             {
                                 mProgress = PROGRESS_PCT_XTANDEM_REFINEMENT_FINISHING;
                             }
-                            else if (strLineIn.StartsWith("Merging results"))
+                            else if (dataLine.StartsWith("Merging results"))
                             {
                                 mProgress = PROGRESS_PCT_XTANDEM_MERGING_RESULTS;
                             }
-                            else if (strLineIn.StartsWith("Creating report"))
+                            else if (dataLine.StartsWith("Creating report"))
                             {
                                 mProgress = PROGRESS_PCT_XTANDEM_CREATING_REPORT;
                             }
-                            else if (strLineIn.StartsWith("Estimated false positives"))
+                            else if (dataLine.StartsWith("Estimated false positives"))
                             {
                                 mProgress = PROGRESS_PCT_XTANDEM_COMPLETE;
                             }
-                            else if (strLineIn.StartsWith("Valid models"))
+                            else if (dataLine.StartsWith("Valid models"))
                             {
-                                var reMatch = reExtraceValue.Match(strLineIn);
+                                var reMatch = reExtraceValue.Match(dataLine);
                                 if (reMatch.Success)
                                 {
                                     int.TryParse(reMatch.Groups[1].Value, out mXTandemResultsCount);

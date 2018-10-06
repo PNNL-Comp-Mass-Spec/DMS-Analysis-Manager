@@ -316,15 +316,15 @@ namespace AnalysisManagerMSGFDBPlugIn
                     return;
                 }
 
-                using (var srReader = new StreamReader(new FileStream(sourceFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
-                using (var swWriter = new StreamWriter(new FileStream(targetFilePath, FileMode.Append, FileAccess.Write, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(sourceFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var writer = new StreamWriter(new FileStream(targetFilePath, FileMode.Append, FileAccess.Write, FileShare.ReadWrite)))
                 {
                     var linesRead = 0;
                     var separatorAdded = false;
 
-                    while (linesRead < headerLinesToAppend && !srReader.EndOfStream)
+                    while (linesRead < headerLinesToAppend && !reader.EndOfStream)
                     {
-                        var dataLine = srReader.ReadLine();
+                        var dataLine = reader.ReadLine();
                         linesRead += 1;
 
                         if (string.IsNullOrEmpty(dataLine))
@@ -332,11 +332,11 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                         if (!separatorAdded)
                         {
-                            swWriter.WriteLine(new string('-', 80));
+                            writer.WriteLine(new string('-', 80));
                             separatorAdded = true;
                         }
 
-                        swWriter.WriteLine(dataLine);
+                        writer.WriteLine(dataLine);
                     }
                 }
             }
@@ -1457,11 +1457,11 @@ namespace AnalysisManagerMSGFDBPlugIn
                     return false;
                 }
 
-                using (var srScanTypeFile = new StreamReader(new FileStream(scanTypeFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                using (var reader = new StreamReader(new FileStream(scanTypeFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
                 {
-                    while (!srScanTypeFile.EndOfStream)
+                    while (!reader.EndOfStream)
                     {
-                        var dataLine = srScanTypeFile.ReadLine();
+                        var dataLine = reader.ReadLine();
 
                         if (string.IsNullOrWhiteSpace(dataLine))
                             continue;
@@ -1743,12 +1743,12 @@ namespace AnalysisManagerMSGFDBPlugIn
                 ContinuumSpectraSkipped = 0;
                 SpectraSearched = 0;
 
-                using (var srInFile = new StreamReader(new FileStream(consoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(consoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
                     var linesRead = 0;
-                    while (!srInFile.EndOfStream)
+                    while (!reader.EndOfStream)
                     {
-                        var dataLine = srInFile.ReadLine();
+                        var dataLine = reader.ReadLine();
                         linesRead += 1;
 
                         if (string.IsNullOrWhiteSpace(dataLine))
@@ -1944,19 +1944,19 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 sbOptions.Append(" -mod " + MOD_FILE_NAME);
 
-                using (var swModFile = new StreamWriter(new FileStream(modFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                using (var writer = new StreamWriter(new FileStream(modFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
-                    swModFile.WriteLine("# This file is used to specify modifications for MS-GF+");
-                    swModFile.WriteLine();
-                    swModFile.WriteLine("# Max Number of Modifications per peptide");
-                    swModFile.WriteLine("# If this value is large, the search will be slow");
-                    swModFile.WriteLine("NumMods=" + numMods);
+                    writer.WriteLine("# This file is used to specify modifications for MS-GF+");
+                    writer.WriteLine();
+                    writer.WriteLine("# Max Number of Modifications per peptide");
+                    writer.WriteLine("# If this value is large, the search will be slow");
+                    writer.WriteLine("NumMods=" + numMods);
 
                     if (customAminoAcids.Count > 0)
                     {
                         // Custom Amino Acid definitions need to be listed before static or dynamic modifications
-                        swModFile.WriteLine();
-                        swModFile.WriteLine("# Custom Amino Acids");
+                        writer.WriteLine();
+                        writer.WriteLine("# Custom Amino Acids");
 
                         foreach (var customAADef in customAminoAcids)
                         {
@@ -1967,7 +1967,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                                     return false;
                                 if (MisleadingModDef(customAADefClean, "Custom AA", "custom", "fix"))
                                     return false;
-                                swModFile.WriteLine(customAADefClean);
+                                writer.WriteLine(customAADefClean);
                             }
                             else
                             {
@@ -1976,11 +1976,11 @@ namespace AnalysisManagerMSGFDBPlugIn
                         }
                     }
 
-                    swModFile.WriteLine();
-                    swModFile.WriteLine("# Static mods");
+                    writer.WriteLine();
+                    writer.WriteLine("# Static mods");
                     if (staticMods.Count == 0)
                     {
-                        swModFile.WriteLine("# None");
+                        writer.WriteLine("# None");
                     }
                     else
                     {
@@ -1993,7 +1993,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                                     return false;
                                 if (MisleadingModDef(modClean, "Static mod", "fix", "custom"))
                                     return false;
-                                swModFile.WriteLine(modClean);
+                                writer.WriteLine(modClean);
                             }
                             else
                             {
@@ -2002,11 +2002,11 @@ namespace AnalysisManagerMSGFDBPlugIn
                         }
                     }
 
-                    swModFile.WriteLine();
-                    swModFile.WriteLine("# Dynamic mods");
+                    writer.WriteLine();
+                    writer.WriteLine("# Dynamic mods");
                     if (dynamicMods.Count == 0)
                     {
-                        swModFile.WriteLine("# None");
+                        writer.WriteLine("# None");
                     }
                     else
                     {
@@ -2019,7 +2019,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                                     return false;
                                 if (MisleadingModDef(modClean, "Dynamic mod", "opt", "custom"))
                                     return false;
-                                swModFile.WriteLine(modClean);
+                                writer.WriteLine(modClean);
                             }
                             else
                             {
@@ -2956,11 +2956,11 @@ namespace AnalysisManagerMSGFDBPlugIn
                     OnStatusEvent("Validating peptide to protein mapping, file " + Path.GetFileName(pepToProtMapFilePath));
                 }
 
-                using (var srInFile = new StreamReader(new FileStream(pepToProtMapFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                using (var reader = new StreamReader(new FileStream(pepToProtMapFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
                 {
-                    while (!srInFile.EndOfStream)
+                    while (!reader.EndOfStream)
                     {
-                        var dataLine = srInFile.ReadLine();
+                        var dataLine = reader.ReadLine();
                         linesRead += 1;
 
                         if (linesRead <= 1 || string.IsNullOrEmpty(dataLine))
@@ -3019,14 +3019,14 @@ namespace AnalysisManagerMSGFDBPlugIn
             return success;
         }
 
-        private void WriteProteinSequence(TextWriter swOutFile, string sequence)
+        private void WriteProteinSequence(TextWriter writer, string sequence)
         {
             var index = 0;
 
             while (index < sequence.Length)
             {
                 var length = Math.Min(60, sequence.Length - index);
-                swOutFile.WriteLine(sequence.Substring(index, length));
+                writer.WriteLine(sequence.Substring(index, length));
                 index += 60;
             }
         }

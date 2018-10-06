@@ -63,7 +63,7 @@ namespace AnalysisManagerDtaSplitPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                var strCDTAFile = Path.Combine(mWorkDir, mDatasetName + "_dta.txt");
+                var cdtaFile = Path.Combine(mWorkDir, mDatasetName + "_dta.txt");
 
                 // Make sure the _DTA.txt file is valid
                 if (!ValidateCDTAFile())
@@ -71,29 +71,29 @@ namespace AnalysisManagerDtaSplitPlugIn
                     return CloseOutType.CLOSEOUT_NO_DTA_FILES;
                 }
 
-                int intSegmentCountToCreate;
+                int segmentCountToCreate;
                 try
                 {
-                    intSegmentCountToCreate = mJobParams.GetJobParameter("NumberOfClonedSteps", 0);
-                    if (intSegmentCountToCreate == 0)
+                    segmentCountToCreate = mJobParams.GetJobParameter("NumberOfClonedSteps", 0);
+                    if (segmentCountToCreate == 0)
                     {
                         LogWarning("Setting 'NumberOfClonedSteps' not found in the job parameters; will assume NumberOfClonedSteps=4");
-                        intSegmentCountToCreate = 4;
+                        segmentCountToCreate = 4;
                     }
                 }
                 catch (Exception)
                 {
                     LogWarning("Setting 'NumberOfClonedSteps' is not numeric in the job parameters; will assume NumberOfClonedSteps=4");
-                    intSegmentCountToCreate = 4;
+                    segmentCountToCreate = 4;
                 }
 
-                // Note: blnSplitToEqualScanCounts is no longer used
-                // blnSplitToEqualScanCounts = mJobParams.GetJobParameter("ClonedStepsHaveEqualNumSpectra", True)
+                // Note: splitToEqualScanCounts is no longer used
+                // splitToEqualScanCounts = mJobParams.GetJobParameter("ClonedStepsHaveEqualNumSpectra", True)
 
                 // Start the job timer
                 mStartTime = DateTime.UtcNow;
 
-                var result = SplitCattedDtaFileIntoSegments(strCDTAFile, intSegmentCountToCreate);
+                var result = SplitCattedDtaFileIntoSegments(cdtaFile, segmentCountToCreate);
 
                 if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
@@ -106,7 +106,7 @@ namespace AnalysisManagerDtaSplitPlugIn
                 // Add the current job data to the summary file
                 UpdateSummaryFile();
 
-                UpdateStatusRunning(100, intSegmentCountToCreate);
+                UpdateStatusRunning(100, segmentCountToCreate);
 
                 var success = CopyResultsToTransferDirectory();
 
@@ -124,49 +124,49 @@ namespace AnalysisManagerDtaSplitPlugIn
         /// <summary>
         /// Split the dta txt file into multiple files
         /// </summary>
-        /// <param name="strSourceFilePath">Input data file path</param>
-        /// <param name="intSegmentCountToCreate">Number of segments to create</param>
+        /// <param name="sourceFilePath">Input data file path</param>
+        /// <param name="segmentCountToCreate">Number of segments to create</param>
         /// <returns>CloseOutType enum indicating success or failure</returns>
         /// <remarks></remarks>
-        private CloseOutType SplitCattedDtaFileIntoSegments(string strSourceFilePath, int intSegmentCountToCreate)
+        private CloseOutType SplitCattedDtaFileIntoSegments(string sourceFilePath, int segmentCountToCreate)
         {
             const float STATUS_UPDATE_INTERVAL_SECONDS = 15;
 
-            var intSpectraCountExpected = 0;
-            var dtLastStatusUpdate = DateTime.UtcNow;
+            var spectraCountExpected = 0;
+            var lastStatusUpdate = DateTime.UtcNow;
 
             try
             {
-                if (intSegmentCountToCreate < 1)
-                    intSegmentCountToCreate = 1;
+                if (segmentCountToCreate < 1)
+                    segmentCountToCreate = 1;
 
-                if (intSegmentCountToCreate > 1)
+                if (segmentCountToCreate > 1)
                 {
                     // Need to pre-scan the file to count the number of spectra in it
-                    intSpectraCountExpected = CountSpectraInCattedDtaFile(strSourceFilePath);
+                    spectraCountExpected = CountSpectraInCattedDtaFile(sourceFilePath);
 
-                    if (intSpectraCountExpected == 0)
+                    if (spectraCountExpected == 0)
                     {
                         LogWarning("CountSpectraInCattedDtaFile returned a spectrum count of 0; this is unexpected");
                     }
                 }
 
-                var fi = new FileInfo(strSourceFilePath);
+                var fi = new FileInfo(sourceFilePath);
 
-                if (intSegmentCountToCreate == 1)
+                if (segmentCountToCreate == 1)
                 {
                     // Nothing to do except create a file named Dataset_1_dta.txt
                     // Simply rename the input file
 
                     try
                     {
-                        var strDestFileName = GetNewSplitDTAFileName(1);
+                        var destFileName = GetNewSplitDTAFileName(1);
 
-                        fi.MoveTo(strDestFileName);
+                        fi.MoveTo(destFileName);
                     }
                     catch (Exception ex)
                     {
-                        LogError("Error in SplitCattedDtaFileIntoSegments renaming file: " + strSourceFilePath + " to _1_dta.txt; " + ex.Message, ex);
+                        LogError("Error in SplitCattedDtaFileIntoSegments renaming file: " + sourceFilePath + " to _1_dta.txt; " + ex.Message, ex);
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
 
@@ -175,97 +175,97 @@ namespace AnalysisManagerDtaSplitPlugIn
 
                 var lineEndCharCount = LineEndCharacterCount(fi);
 
-                var intTargetSpectraPerSegment = (int)Math.Ceiling(intSpectraCountExpected / (float)intSegmentCountToCreate);
-                if (intTargetSpectraPerSegment < 1)
-                    intTargetSpectraPerSegment = 1;
+                var targetSpectraPerSegment = (int)Math.Ceiling(spectraCountExpected / (float)segmentCountToCreate);
+                if (targetSpectraPerSegment < 1)
+                    targetSpectraPerSegment = 1;
 
                 if (mDebugLevel >= 1)
                 {
-                    var strSegmentDescription = "spectra per segment = " + intTargetSpectraPerSegment;
+                    var segmentDescription = "spectra per segment = " + targetSpectraPerSegment;
                     LogDebug(
-                        "Splitting " + Path.GetFileName(strSourceFilePath) + " into " + intSegmentCountToCreate + " segments; " +
-                        strSegmentDescription);
+                        "Splitting " + Path.GetFileName(sourceFilePath) + " into " + segmentCountToCreate + " segments; " +
+                        segmentDescription);
                 }
 
                 // Create all of the output files since we will write spectra to them in a round-robin fashion
-                var intSpectraCountBySegment = new int[intSegmentCountToCreate + 1];
-                var swOutFile = new StreamWriter[intSegmentCountToCreate + 1];
+                var spectraCountBySegment = new int[segmentCountToCreate + 1];
+                var writer = new StreamWriter[segmentCountToCreate + 1];
 
-                for (var intSplitFileNum = 1; intSplitFileNum <= intSegmentCountToCreate; intSplitFileNum++)
+                for (var splitFileNum = 1; splitFileNum <= segmentCountToCreate; splitFileNum++)
                 {
-                    swOutFile[intSplitFileNum] = CreateNewSplitDTAFile(intSplitFileNum);
-                    if (swOutFile[intSplitFileNum] == null)
+                    writer[splitFileNum] = CreateNewSplitDTAFile(splitFileNum);
+                    if (writer[splitFileNum] == null)
                         return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 // Open the input file
-                using (var srInFile = new StreamReader(strSourceFilePath))
+                using (var reader = new StreamReader(sourceFilePath))
                 {
-                    var intSplitFileNum = 1;
-                    var intSpectraCountRead = 0;
-                    var lngBytesRead = 0;
+                    var splitFileNum = 1;
+                    var spectraCountRead = 0;
+                    var bytesRead = 0;
 
-                    while (!srInFile.EndOfStream)
+                    while (!reader.EndOfStream)
                     {
-                        var strLineIn = srInFile.ReadLine();
+                        var dataLine = reader.ReadLine();
 
-                        if (string.IsNullOrEmpty(strLineIn))
+                        if (string.IsNullOrEmpty(dataLine))
                         {
-                            lngBytesRead += lineEndCharCount;
-                            swOutFile[intSplitFileNum].WriteLine();
+                            bytesRead += lineEndCharCount;
+                            writer[splitFileNum].WriteLine();
                             continue;
                         }
 
                         // Increment the bytes read counter
-                        lngBytesRead += strLineIn.Length + lineEndCharCount;
+                        bytesRead += dataLine.Length + lineEndCharCount;
 
                         // Look for the spectrum separator line
-                        var splitMatch = r_FileSeparator.Match(strLineIn);
+                        var splitMatch = r_FileSeparator.Match(dataLine);
                         if (splitMatch.Success)
                         {
-                            if (intSpectraCountRead > 0)
+                            if (spectraCountRead > 0)
                             {
-                                // Increment intSplitFileNum, but only after the first spectrum has been read
-                                intSplitFileNum += 1;
-                                if (intSplitFileNum > intSegmentCountToCreate)
+                                // Increment splitFileNum, but only after the first spectrum has been read
+                                splitFileNum += 1;
+                                if (splitFileNum > segmentCountToCreate)
                                 {
-                                    intSplitFileNum = 1;
+                                    splitFileNum = 1;
                                 }
 
-                                if (intSpectraCountBySegment[intSplitFileNum] == 0)
+                                if (spectraCountBySegment[splitFileNum] == 0)
                                 {
                                     // Add a blank line to the top of each file
-                                    swOutFile[intSplitFileNum].WriteLine();
+                                    writer[splitFileNum].WriteLine();
                                 }
                             }
 
-                            intSpectraCountRead += 1;
-                            intSpectraCountBySegment[intSplitFileNum] += 1;
+                            spectraCountRead += 1;
+                            spectraCountBySegment[splitFileNum] += 1;
                         }
 
-                        if (DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= STATUS_UPDATE_INTERVAL_SECONDS)
+                        if (DateTime.UtcNow.Subtract(lastStatusUpdate).TotalSeconds >= STATUS_UPDATE_INTERVAL_SECONDS)
                         {
-                            dtLastStatusUpdate = DateTime.UtcNow;
-                            var sngPercentComplete = lngBytesRead / (float)srInFile.BaseStream.Length * 100;
-                            UpdateStatusRunning(sngPercentComplete, intSpectraCountRead);
+                            lastStatusUpdate = DateTime.UtcNow;
+                            var percentComplete = bytesRead / (float)reader.BaseStream.Length * 100;
+                            UpdateStatusRunning(percentComplete, spectraCountRead);
                         }
 
-                        swOutFile[intSplitFileNum].WriteLine(strLineIn);
+                        writer[splitFileNum].WriteLine(dataLine);
                     }
 
                 }
 
-                for (var intSplitFileNum = 1; intSplitFileNum <= intSegmentCountToCreate; intSplitFileNum++)
+                for (var splitFileNum = 1; splitFileNum <= segmentCountToCreate; splitFileNum++)
                 {
-                    swOutFile[intSplitFileNum].Flush();
-                    swOutFile[intSplitFileNum].Dispose();
+                    writer[splitFileNum].Flush();
+                    writer[splitFileNum].Dispose();
                 }
             }
             catch (Exception ex)
             {
-                if (strSourceFilePath == null)
-                    strSourceFilePath = "??";
-                LogError("Error in SplitCattedDtaFileIntoSegments reading file: " + strSourceFilePath + "; " + ex.Message, ex);
+                if (sourceFilePath == null)
+                    sourceFilePath = "??";
+                LogError("Error in SplitCattedDtaFileIntoSegments reading file: " + sourceFilePath + "; " + ex.Message, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -275,95 +275,95 @@ namespace AnalysisManagerDtaSplitPlugIn
         /// <summary>
         /// Counts the number of spectra in the input concatenated DTA file (_dta.txt file)
         /// </summary>
-        /// <param name="strSourceFilePath"></param>
+        /// <param name="sourceFilePath"></param>
         /// <returns>The number of spectra found (i.e. the number of header lines found); returns 0 if any problems</returns>
         /// <remarks></remarks>
-        private int CountSpectraInCattedDtaFile(string strSourceFilePath)
+        private int CountSpectraInCattedDtaFile(string sourceFilePath)
         {
-            var intSpectraCount = 0;
+            var spectraCount = 0;
 
             try
             {
 
                 if (mDebugLevel >= 2)
                 {
-                    LogDebug("Counting the number of spectra in the source _Dta.txt file: " + Path.GetFileName(strSourceFilePath));
+                    LogDebug("Counting the number of spectra in the source _Dta.txt file: " + Path.GetFileName(sourceFilePath));
                 }
 
                 // Open the input file
-                using (var srInFile = new StreamReader(new FileStream(strSourceFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                using (var reader = new StreamReader(new FileStream(sourceFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
                 {
-                    while (!srInFile.EndOfStream)
+                    while (!reader.EndOfStream)
                     {
-                        var strLineIn = srInFile.ReadLine();
-                        if (string.IsNullOrWhiteSpace(strLineIn))
+                        var dataLine = reader.ReadLine();
+                        if (string.IsNullOrWhiteSpace(dataLine))
                             continue;
 
-                        var splitMatch = r_FileSeparator.Match(strLineIn);
+                        var splitMatch = r_FileSeparator.Match(dataLine);
                         if (splitMatch.Success)
                         {
-                            intSpectraCount += 1;
+                            spectraCount += 1;
                         }
                     }
 
                     if (mDebugLevel >= 1)
                     {
-                        LogDebug("Spectrum count in source _Dta.txt file: " + intSpectraCount);
+                        LogDebug("Spectrum count in source _Dta.txt file: " + spectraCount);
                     }
                 }
             }
             catch (Exception ex)
             {
-                if (strSourceFilePath == null)
-                    strSourceFilePath = "??";
-                LogError("Error counting the number of spectra in '" + strSourceFilePath + "'; " + ex.Message, ex);
-                intSpectraCount = 0;
+                if (sourceFilePath == null)
+                    sourceFilePath = "??";
+                LogError("Error counting the number of spectra in '" + sourceFilePath + "'; " + ex.Message, ex);
+                spectraCount = 0;
             }
 
-            return intSpectraCount;
+            return spectraCount;
         }
 
         private StreamWriter CreateNewSplitDTAFile(int fileNameCounter)
         {
-            var strFileName = string.Empty;
-            StreamWriter swOutFile = null;
+            var fileName = string.Empty;
+            StreamWriter writer = null;
 
             try
             {
-                var strFilePath = GetNewSplitDTAFileName(fileNameCounter);
+                var filePath = GetNewSplitDTAFileName(fileNameCounter);
 
-                strFileName = Path.GetFileName(strFilePath);
+                fileName = Path.GetFileName(filePath);
 
-                if (File.Exists(strFilePath))
+                if (File.Exists(filePath))
                 {
-                    LogWarning("Warning: Split DTA file already exists " + strFilePath);
+                    LogWarning("Warning: Split DTA file already exists " + filePath);
                 }
 
                 if (mDebugLevel >= 3)
                 {
-                    LogDebug("Creating split DTA file " + strFileName);
+                    LogDebug("Creating split DTA file " + fileName);
                 }
 
-                swOutFile = new StreamWriter(strFilePath, false);
+                writer = new StreamWriter(filePath, false);
             }
             catch (Exception ex)
             {
-                if (strFileName == null)
-                    strFileName = "??";
-                LogError("Error in CreateNewSplitDTAFile creating file: " + strFileName + "; " + ex.Message, ex);
+                if (fileName == null)
+                    fileName = "??";
+                LogError("Error in CreateNewSplitDTAFile creating file: " + fileName + "; " + ex.Message, ex);
             }
 
-            return swOutFile;
+            return writer;
         }
 
         private string GetNewSplitDTAFileName(int fileNameCounter)
         {
-            var strFileName = mDatasetName + "_" + Convert.ToString(fileNameCounter) + "_dta.txt";
-            mJobParams.AddResultFileToKeep(strFileName);
+            var fileName = mDatasetName + "_" + Convert.ToString(fileNameCounter) + "_dta.txt";
+            mJobParams.AddResultFileToKeep(fileName);
 
-            var strFilePath = Path.Combine(mWorkDir, strFileName);
+            var filePath = Path.Combine(mWorkDir, fileName);
 
-            return strFilePath;
+            return filePath;
         }
 
         /// <summary>

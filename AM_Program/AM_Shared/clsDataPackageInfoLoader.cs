@@ -110,11 +110,11 @@ namespace AnalysisManagerBase
 
             foreach (DataRow curRow in resultSet.Rows)
             {
-                var udtDatasetInfo = ParseDataPackageDatasetInfoRow(curRow);
+                var datasetInfo = ParseDataPackageDatasetInfoRow(curRow);
 
-                if (!dctDataPackageDatasets.ContainsKey(udtDatasetInfo.DatasetID))
+                if (!dctDataPackageDatasets.ContainsKey(datasetInfo.DatasetID))
                 {
-                    dctDataPackageDatasets.Add(udtDatasetInfo.DatasetID, udtDatasetInfo);
+                    dctDataPackageDatasets.Add(datasetInfo.DatasetID, datasetInfo);
                 }
             }
 
@@ -405,7 +405,7 @@ namespace AnalysisManagerBase
 
         /// <summary>
         /// Parse results from V_DMS_Data_Package_Aggregation_Jobs
-        /// or from 
+        /// or from
         /// </summary>
         /// <param name="curRow"></param>
         /// <returns></returns>
@@ -469,10 +469,10 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Lookup the Peptide Hit jobs associated with the current job
         /// </summary>
-        /// <param name="lstAdditionalJobs">Non Peptide Hit jobs (e.g. DeconTools or MASIC)</param>
+        /// <param name="additionalJobs">Non Peptide Hit jobs (e.g. DeconTools or MASIC)</param>
         /// <returns>Peptide Hit Jobs (e.g. MSGF+ or Sequest)</returns>
         /// <remarks></remarks>
-        public List<clsDataPackageJobInfo> RetrieveDataPackagePeptideHitJobInfo(out List<clsDataPackageJobInfo> lstAdditionalJobs)
+        public List<clsDataPackageJobInfo> RetrieveDataPackagePeptideHitJobInfo(out List<clsDataPackageJobInfo> additionalJobs)
         {
 
             // Gigasax.DMS_Pipeline
@@ -481,18 +481,18 @@ namespace AnalysisManagerBase
             if (DataPackageID < 0)
             {
                 LogError("DataPackageID is not defined for this analysis job");
-                lstAdditionalJobs = new List<clsDataPackageJobInfo>();
+                additionalJobs = new List<clsDataPackageJobInfo>();
                 return new List<clsDataPackageJobInfo>();
             }
 
-            var lstDataPackagePeptideHitJobs = RetrieveDataPackagePeptideHitJobInfo(connectionString, DataPackageID, out lstAdditionalJobs, out var errorMsg);
+            var dataPackagePeptideHitJobs = RetrieveDataPackagePeptideHitJobInfo(connectionString, DataPackageID, out additionalJobs, out var errorMsg);
 
             if (!string.IsNullOrWhiteSpace(errorMsg))
             {
                 LogError(errorMsg);
             }
 
-            return lstDataPackagePeptideHitJobs;
+            return dataPackagePeptideHitJobs;
         }
 
         /// <summary>
@@ -502,7 +502,7 @@ namespace AnalysisManagerBase
         /// <param name="dataPackageID">Data package ID</param>
         /// <param name="errorMsg">Output: error message</param>
         /// <returns>Peptide Hit Jobs (e.g. MSGF+ or Sequest)</returns>
-        /// <remarks>Alternatively use the overloaded version that includes lstAdditionalJobs</remarks>
+        /// <remarks>Alternatively use the overloaded version that includes additionalJobs</remarks>
         public static List<clsDataPackageJobInfo> RetrieveDataPackagePeptideHitJobInfo(
             string connectionString,
             int dataPackageID,
@@ -512,27 +512,27 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Lookup the Peptide Hit jobs associated with the data package; non-peptide hit jobs are returned via lstAdditionalJobs
+        /// Lookup the Peptide Hit jobs associated with the data package; non-peptide hit jobs are returned via additionalJobs
         /// </summary>
         /// <param name="connectionString">Connection string to the DMS_Pipeline database</param>
         /// <param name="dataPackageID">Data package ID</param>
-        /// <param name="lstAdditionalJobs">Output: Non Peptide Hit jobs (e.g. DeconTools or MASIC)</param>
+        /// <param name="additionalJobs">Output: Non Peptide Hit jobs (e.g. DeconTools or MASIC)</param>
         /// <param name="errorMsg">Output: error message</param>
         /// <returns>Peptide Hit Jobs (e.g. MSGF+ or Sequest)</returns>
         /// <remarks>This method updates property NumberOfClonedSteps for the analysis jobs</remarks>
         public static List<clsDataPackageJobInfo> RetrieveDataPackagePeptideHitJobInfo(
             string connectionString,
             int dataPackageID,
-            out List<clsDataPackageJobInfo> lstAdditionalJobs,
+            out List<clsDataPackageJobInfo> additionalJobs,
             out string errorMsg)
         {
 
             // This list tracks the info for the Peptide Hit jobs (e.g. MSGF+ or Sequest) associated with the data package
-            var lstDataPackagePeptideHitJobs = new List<clsDataPackageJobInfo>();
+            var dataPackagePeptideHitJobs = new List<clsDataPackageJobInfo>();
             errorMsg = string.Empty;
 
             // This list tracks the info for the non Peptide Hit jobs (e.g. DeconTools or MASIC) associated with the data package
-            lstAdditionalJobs = new List<clsDataPackageJobInfo>();
+            additionalJobs = new List<clsDataPackageJobInfo>();
 
             // This dictionary will track the jobs associated with this aggregation job's data package
             // Key is job number, value is an instance of clsDataPackageJobInfo
@@ -543,13 +543,13 @@ namespace AnalysisManagerBase
                 if (!LoadDataPackageJobInfo(connectionString, dataPackageID, out dctDataPackageJobs))
                 {
                     errorMsg = "Error looking up datasets and jobs using LoadDataPackageJobInfo";
-                    return lstDataPackagePeptideHitJobs;
+                    return dataPackagePeptideHitJobs;
                 }
             }
             catch (Exception ex)
             {
                 errorMsg = "Exception calling LoadDataPackageJobInfo: " + ex.Message;
-                return lstDataPackagePeptideHitJobs;
+                return dataPackagePeptideHitJobs;
             }
 
             try
@@ -559,12 +559,12 @@ namespace AnalysisManagerBase
                 {
                     if (kvItem.Value.PeptideHitResultType == clsPHRPReader.ePeptideHitResultType.Unknown)
                     {
-                        lstAdditionalJobs.Add(kvItem.Value);
+                        additionalJobs.Add(kvItem.Value);
                     }
                     else
                     {
-                        // Cache this job info in lstDataPackagePeptideHitJobs
-                        lstDataPackagePeptideHitJobs.Add(kvItem.Value);
+                        // Cache this job info in dataPackagePeptideHitJobs
+                        dataPackagePeptideHitJobs.Add(kvItem.Value);
                     }
 
                 }
@@ -580,7 +580,7 @@ namespace AnalysisManagerBase
                 // Look for any SplitFasta jobs
                 // If present, we need to determine the value for job parameter NumberOfClonedSteps
 
-                var splitFastaJobs = (from dataPkgJob in lstDataPackagePeptideHitJobs where dataPkgJob.Tool.ToLower().Contains("splitfasta") select dataPkgJob).ToList();
+                var splitFastaJobs = (from dataPkgJob in dataPackagePeptideHitJobs where dataPkgJob.Tool.ToLower().Contains("splitfasta") select dataPkgJob).ToList();
 
 
                 if (splitFastaJobs.Count > 0)
@@ -635,7 +635,7 @@ namespace AnalysisManagerBase
                 return new List<clsDataPackageJobInfo>();
             }
 
-            return lstDataPackagePeptideHitJobs;
+            return dataPackagePeptideHitJobs;
 
         }
 

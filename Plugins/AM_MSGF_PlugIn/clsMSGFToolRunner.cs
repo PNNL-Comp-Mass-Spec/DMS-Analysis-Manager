@@ -391,13 +391,13 @@ namespace AnalysisManagerMSGFPlugin
                 }
 
                 // Read the data from the MSGF+ Param file
-                using (var srParamFile = new StreamReader(new FileStream(searchToolParamFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                using (var reader = new StreamReader(new FileStream(searchToolParamFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
                 {
-                    while (!srParamFile.EndOfStream)
+                    while (!reader.EndOfStream)
                     {
-                        var lineIn = srParamFile.ReadLine();
+                        var dataLine = reader.ReadLine();
 
-                        if (string.IsNullOrWhiteSpace(lineIn) || !lineIn.StartsWith(MSGFPLUS_FRAG_METHOD_TAG))
+                        if (string.IsNullOrWhiteSpace(dataLine) || !dataLine.StartsWith(MSGFPLUS_FRAG_METHOD_TAG))
                             continue;
 
                         // Check whether this line is FragmentationMethodID=2
@@ -406,14 +406,14 @@ namespace AnalysisManagerMSGFPlugin
 
                         if (mDebugLevel >= 3)
                         {
-                            LogDebug("MSGF+ " + MSGFPLUS_FRAG_METHOD_TAG + " line found: " + lineIn);
+                            LogDebug("MSGF+ " + MSGFPLUS_FRAG_METHOD_TAG + " line found: " + dataLine);
                         }
 
                         // Look for the equals sign
-                        var charIndex = lineIn.IndexOf('=');
+                        var charIndex = dataLine.IndexOf('=');
                         if (charIndex > 0)
                         {
-                            var fragModeText = lineIn.Substring(charIndex + 1).Trim();
+                            var fragModeText = dataLine.Substring(charIndex + 1).Trim();
 
                             if (int.TryParse(fragModeText, out var fragMode))
                             {
@@ -435,7 +435,7 @@ namespace AnalysisManagerMSGFPlugin
                         else
                         {
                             LogWarning("MSGF+ " + MSGFPLUS_FRAG_METHOD_TAG + " line does not have an equals sign; " +
-                                       "will assume not using ETD ions: " + lineIn);
+                                       "will assume not using ETD ions: " + dataLine);
                         }
 
                         // No point in checking any further since we've parsed the FragmentationMethodID line
@@ -472,13 +472,13 @@ namespace AnalysisManagerMSGFPlugin
                 }
 
                 // Read the data from the SEQUEST Param file
-                using (var srParamFile = new StreamReader(new FileStream(searchToolParamFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                using (var reader = new StreamReader(new FileStream(searchToolParamFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
                 {
-                    while (!srParamFile.EndOfStream)
+                    while (!reader.EndOfStream)
                     {
-                        var lineIn = srParamFile.ReadLine();
+                        var dataLine = reader.ReadLine();
 
-                        if (string.IsNullOrWhiteSpace(lineIn) || !lineIn.StartsWith(SEQUEST_ION_SERIES_TAG))
+                        if (string.IsNullOrWhiteSpace(dataLine) || !dataLine.StartsWith(SEQUEST_ION_SERIES_TAG))
                             continue;
 
                         // This is the ion_series line
@@ -491,14 +491,14 @@ namespace AnalysisManagerMSGFPlugin
 
                         if (mDebugLevel >= 3)
                         {
-                            LogDebug("SEQUEST " + SEQUEST_ION_SERIES_TAG + " line found: " + lineIn);
+                            LogDebug("SEQUEST " + SEQUEST_ION_SERIES_TAG + " line found: " + dataLine);
                         }
 
                         // Look for the equals sign
-                        var charIndex = lineIn.IndexOf('=');
+                        var charIndex = dataLine.IndexOf('=');
                         if (charIndex > 0)
                         {
-                            var ionWeightText = lineIn.Substring(charIndex + 1).Trim();
+                            var ionWeightText = dataLine.Substring(charIndex + 1).Trim();
 
                             // Split ionWeightText on spaces
                             var ionWeights = ionWeightText.Split(' ');
@@ -524,13 +524,13 @@ namespace AnalysisManagerMSGFPlugin
                             else
                             {
                                 LogWarning("SEQUEST " + SEQUEST_ION_SERIES_TAG + " line does not have 11 numbers; " +
-                                           "will assume not using ETD ions: " + lineIn);
+                                           "will assume not using ETD ions: " + dataLine);
                             }
                         }
                         else
                         {
                             LogWarning("SEQUEST " + SEQUEST_ION_SERIES_TAG + " line does not have an equals sign; " +
-                                       "will assume not using ETD ions: " + lineIn);
+                                       "will assume not using ETD ions: " + dataLine);
                         }
 
                         // No point in checking any further since we've parsed the ion_series line
@@ -1220,50 +1220,50 @@ namespace AnalysisManagerMSGFPlugin
 
             // Read the data from the MSGF Result file and
             // write the Synopsis MSGF Results to a new file
-            using (var srMSGFResults = new StreamReader(new FileStream(msgfResultsFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
-            using (var swMSGFSynFile = new StreamWriter(new FileStream(msgfSynopsisResults, FileMode.Create, FileAccess.Write, FileShare.Read)))
+            using (var reader = new StreamReader(new FileStream(msgfResultsFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
+            using (var writer = new StreamWriter(new FileStream(msgfSynopsisResults, FileMode.Create, FileAccess.Write, FileShare.Read)))
             {
                 // Write out the headers to swMSGFSynFile
-                mMSGFInputCreator.WriteMSGFResultsHeaders(swMSGFSynFile);
+                mMSGFInputCreator.WriteMSGFResultsHeaders(writer);
 
                 var headerLineParsed = false;
                 firstHitsDataPresent = false;
                 tooManyErrors = false;
 
-                while (!srMSGFResults.EndOfStream)
+                while (!reader.EndOfStream)
                 {
-                    var lineIn = srMSGFResults.ReadLine();
+                    var dataLine = reader.ReadLine();
                     linesRead += 1;
                     var skipLine = false;
 
-                    if (string.IsNullOrEmpty(lineIn))
+                    if (string.IsNullOrEmpty(dataLine))
                         continue;
 
-                    var splitLine = lineIn.Split('\t');
+                    var dataCols = dataLine.Split('\t');
 
                     if (!headerLineParsed)
                     {
-                        if (splitLine[0].ToLower() == MSGF_RESULT_COLUMN_SpectrumFile.ToLower())
+                        if (dataCols[0].ToLower() == MSGF_RESULT_COLUMN_SpectrumFile.ToLower())
                         {
                             // Parse the header line to confirm the column ordering
-                            clsPHRPReader.ParseColumnHeaders(splitLine, objColumnHeaders);
+                            clsPHRPReader.ParseColumnHeaders(dataCols, objColumnHeaders);
                             skipLine = true;
                         }
 
                         headerLineParsed = true;
                     }
 
-                    if (skipLine || splitLine.Length < 4)
+                    if (skipLine || dataCols.Length < 4)
                         continue;
 
-                    var originalPeptide = clsPHRPReader.LookupColumnValue(splitLine, MSGF_RESULT_COLUMN_Title, objColumnHeaders);
-                    var scan = clsPHRPReader.LookupColumnValue(splitLine, MSGF_RESULT_COLUMN_ScanNumber, objColumnHeaders);
-                    var charge = clsPHRPReader.LookupColumnValue(splitLine, MSGF_RESULT_COLUMN_Charge, objColumnHeaders);
-                    var protein = clsPHRPReader.LookupColumnValue(splitLine, MSGF_RESULT_COLUMN_Protein_First, objColumnHeaders);
-                    var peptide = clsPHRPReader.LookupColumnValue(splitLine, MSGF_RESULT_COLUMN_Annotation, objColumnHeaders);
-                    var resultID = clsPHRPReader.LookupColumnValue(splitLine, MSGF_RESULT_COLUMN_Result_ID, objColumnHeaders);
-                    var specProb = clsPHRPReader.LookupColumnValue(splitLine, MSGF_RESULT_COLUMN_SpecProb, objColumnHeaders);
-                    var dataSource = clsPHRPReader.LookupColumnValue(splitLine, MSGF_RESULT_COLUMN_Data_Source, objColumnHeaders);
+                    var originalPeptide = clsPHRPReader.LookupColumnValue(dataCols, MSGF_RESULT_COLUMN_Title, objColumnHeaders);
+                    var scan = clsPHRPReader.LookupColumnValue(dataCols, MSGF_RESULT_COLUMN_ScanNumber, objColumnHeaders);
+                    var charge = clsPHRPReader.LookupColumnValue(dataCols, MSGF_RESULT_COLUMN_Charge, objColumnHeaders);
+                    var protein = clsPHRPReader.LookupColumnValue(dataCols, MSGF_RESULT_COLUMN_Protein_First, objColumnHeaders);
+                    var peptide = clsPHRPReader.LookupColumnValue(dataCols, MSGF_RESULT_COLUMN_Annotation, objColumnHeaders);
+                    var resultID = clsPHRPReader.LookupColumnValue(dataCols, MSGF_RESULT_COLUMN_Result_ID, objColumnHeaders);
+                    var specProb = clsPHRPReader.LookupColumnValue(dataCols, MSGF_RESULT_COLUMN_SpecProb, objColumnHeaders);
+                    var dataSource = clsPHRPReader.LookupColumnValue(dataCols, MSGF_RESULT_COLUMN_Data_Source, objColumnHeaders);
                     var notes = string.Empty;
 
                     if (mgfInstrumentData)
@@ -1356,7 +1356,7 @@ namespace AnalysisManagerMSGFPlugin
 
                         // Add this entry to the MSGF synopsis results
                         // Note that originalPeptide has the original peptide sequence
-                        swMSGFSynFile.WriteLine(resultID + "\t" + msgfResultData);
+                        writer.WriteLine(resultID + "\t" + msgfResultData);
 
                         // See if any entries were skipped when reading the synopsis file used to create the MSGF input file
                         // If they were, add them to the validated MSGF file (to aid in linking up files later)
@@ -1374,7 +1374,7 @@ namespace AnalysisManagerMSGFPlugin
 
                             var skipInfo = objSkipList[index].Split(chSepChars, 2);
 
-                            swMSGFSynFile.WriteLine(skipInfo[0] + "\t" + scan + "\t" + charge + "\t" + skipInfo[1] + "\t" +
+                            writer.WriteLine(skipInfo[0] + "\t" + scan + "\t" + charge + "\t" + skipInfo[1] + "\t" +
                                                     originalPeptide + "\t" + specProb + "\t" + notes);
                         }
                     }
@@ -1610,29 +1610,29 @@ namespace AnalysisManagerMSGFPlugin
                 var cidData = new List<string>();
                 var etdData = new List<string>();
 
-                using (var srSourceFile = new StreamReader(new FileStream(msgfInputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(msgfInputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
                     var linesRead = 0;
-                    while (!srSourceFile.EndOfStream)
+                    while (!reader.EndOfStream)
                     {
-                        var lineIn = srSourceFile.ReadLine();
+                        var dataLine = reader.ReadLine();
 
-                        if (string.IsNullOrEmpty(lineIn))
+                        if (string.IsNullOrEmpty(dataLine))
                             continue;
 
                         linesRead += 1;
-                        var splitLine = lineIn.Split('\t').ToList();
+                        var dataCols = dataLine.Split('\t').ToList();
 
                         if (linesRead == 1)
                         {
                             // Cache the header line
-                            cidData.Add(lineIn);
-                            etdData.Add(lineIn);
+                            cidData.Add(dataLine);
+                            etdData.Add(dataLine);
 
                             // Confirm the column index of the Collision_Mode column
-                            for (var index = 0; index <= splitLine.Count - 1; index++)
+                            for (var index = 0; index <= dataCols.Count - 1; index++)
                             {
-                                if (string.Equals(splitLine[index], MSGF_RESULT_COLUMN_Collision_Mode, StringComparison.OrdinalIgnoreCase))
+                                if (string.Equals(dataCols[index], MSGF_RESULT_COLUMN_Collision_Mode, StringComparison.OrdinalIgnoreCase))
                                 {
                                     collisionModeColIndex = index;
                                 }
@@ -1642,7 +1642,6 @@ namespace AnalysisManagerMSGFPlugin
                             {
                                 // Collision_Mode column not found; this is unexpected
                                 LogError("Collision_Mode column not found in the MSGF input file for MSGFDB data; unable to continue");
-                                srSourceFile.Dispose();
                                 return false;
                             }
                         }
@@ -1650,20 +1649,20 @@ namespace AnalysisManagerMSGFPlugin
                         {
                             // Read the collision mode
 
-                            if (splitLine.Count > collisionModeColIndex)
+                            if (dataCols.Count > collisionModeColIndex)
                             {
-                                if (splitLine[collisionModeColIndex].ToUpper() == "ETD")
+                                if (dataCols[collisionModeColIndex].ToUpper() == "ETD")
                                 {
-                                    etdData.Add(lineIn);
+                                    etdData.Add(dataLine);
                                 }
                                 else
                                 {
-                                    cidData.Add(lineIn);
+                                    cidData.Add(dataLine);
                                 }
                             }
                             else
                             {
-                                cidData.Add(lineIn);
+                                cidData.Add(dataLine);
                             }
                         }
                     }
@@ -1726,11 +1725,11 @@ namespace AnalysisManagerMSGFPlugin
                 var inputFileTempPath = AddFileNameSuffix(msgfInputFilePath, collisionMode);
                 var resultFileTempPath = AddFileNameSuffix(msgfResultsFilePathFinal, collisionMode);
 
-                using (var swInputFileTemp = new StreamWriter(new FileStream(inputFileTempPath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                using (var writer = new StreamWriter(new FileStream(inputFileTempPath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
                     foreach (var item in lstData)
                     {
-                        swInputFileTemp.WriteLine(item);
+                        writer.WriteLine(item);
                     }
                 }
 
@@ -1750,16 +1749,16 @@ namespace AnalysisManagerMSGFPlugin
                 }
                 else
                 {
-                    using (var srTempResults = new StreamReader(new FileStream(resultFileTempPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
-                    using (var swFinalResults = new StreamWriter(new FileStream(msgfResultsFilePathFinal, FileMode.Append, FileAccess.Write, FileShare.Read)))
+                    using (var reader = new StreamReader(new FileStream(resultFileTempPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                    using (var writer = new StreamWriter(new FileStream(msgfResultsFilePathFinal, FileMode.Append, FileAccess.Write, FileShare.Read)))
                     {
                         // Read and skip the first line of srTempResults (it's a header)
-                        srTempResults.ReadLine();
+                        reader.ReadLine();
 
                         // Append the remaining lines to swFinalResults
-                        while (!srTempResults.EndOfStream)
+                        while (!reader.EndOfStream)
                         {
-                            swFinalResults.WriteLine(srTempResults.ReadLine());
+                            writer.WriteLine(reader.ReadLine());
                         }
                     }
                 }
@@ -2034,11 +2033,11 @@ namespace AnalysisManagerMSGFPlugin
             {
                 if (string.IsNullOrWhiteSpace(mMSGFVersion))
                 {
-                    var fiConsoleOutputfile = new FileInfo(Path.Combine(mWorkDir, MSGF_CONSOLE_OUTPUT));
-                    if (fiConsoleOutputfile.Length == 0)
+                    var consoleOutputFile = new FileInfo(Path.Combine(mWorkDir, MSGF_CONSOLE_OUTPUT));
+                    if (consoleOutputFile.Length == 0)
                     {
                         // File is 0-bytes; delete it
-                        DeleteTemporaryFile(fiConsoleOutputfile.FullName);
+                        DeleteTemporaryFile(consoleOutputFile.FullName);
                     }
                     else
                     {
@@ -2061,36 +2060,36 @@ namespace AnalysisManagerMSGFPlugin
             return success;
         }
 
-        private bool CombineMSGFResultFiles(string msgfOutputFilePath, List<string> resultFiles)
+        private bool CombineMSGFResultFiles(string msgfOutputFilePath, IEnumerable<string> resultFiles)
         {
             try
             {
 
                 // Create the output file
-                using (var swOutFile = new StreamWriter(new FileStream(msgfOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                using (var writer = new StreamWriter(new FileStream(msgfOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
                     // Step through the input files and append the results
                     var headerWritten = false;
                     foreach (var resultFile in resultFiles)
                     {
-                        using (var srInFile = new StreamReader(new FileStream(resultFile, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                        using (var reader = new StreamReader(new FileStream(resultFile, FileMode.Open, FileAccess.Read, FileShare.Read)))
                         {
                             var linesRead = 0;
-                            while (!srInFile.EndOfStream)
+                            while (!reader.EndOfStream)
                             {
-                                var lineIn = srInFile.ReadLine();
+                                var dataLine = reader.ReadLine();
                                 linesRead += 1;
 
                                 if (!headerWritten)
                                 {
                                     headerWritten = true;
-                                    swOutFile.WriteLine(lineIn);
+                                    writer.WriteLine(dataLine);
                                 }
                                 else
                                 {
                                     if (linesRead > 1)
                                     {
-                                        swOutFile.WriteLine(lineIn);
+                                        writer.WriteLine(dataLine);
                                     }
                                 }
                             }
@@ -2117,26 +2116,26 @@ namespace AnalysisManagerMSGFPlugin
                 var success = true;
 
                 var msgfSpecProbColIndex = -1;
-                using (var srInFile = new StreamReader(new FileStream(msgfResultsFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                using (var reader = new StreamReader(new FileStream(msgfResultsFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
                 {
-                    while (!srInFile.EndOfStream)
+                    while (!reader.EndOfStream)
                     {
-                        var lineIn = srInFile.ReadLine();
+                        var dataLine = reader.ReadLine();
 
-                        if (string.IsNullOrEmpty(lineIn))
+                        if (string.IsNullOrEmpty(dataLine))
                             continue;
 
-                        var splitLine = lineIn.Split();
+                        var dataCols = dataLine.Split();
 
-                        if (splitLine.Length <= 0)
+                        if (dataCols.Length <= 0)
                             continue;
 
                         if (msgfSpecProbColIndex < 0)
                         {
-                            // Assume this is the headerline, look for SpecProb
-                            for (var index = 0; index <= splitLine.Length - 1; index++)
+                            // Assume this is the header line, look for SpecProb
+                            for (var index = 0; index <= dataCols.Length - 1; index++)
                             {
-                                if (string.Equals(splitLine[index], "SpecProb", StringComparison.InvariantCultureIgnoreCase))
+                                if (string.Equals(dataCols[index], "SpecProb", StringComparison.InvariantCultureIgnoreCase))
                                 {
                                     msgfSpecProbColIndex = index;
                                     break;
@@ -2154,13 +2153,13 @@ namespace AnalysisManagerMSGFPlugin
                         else
                         {
                             // Data line
-                            if (int.TryParse(splitLine[0], out var resultID))
+                            if (int.TryParse(dataCols[0], out var resultID))
                             {
-                                if (msgfSpecProbColIndex < splitLine.Length)
+                                if (msgfSpecProbColIndex < dataCols.Length)
                                 {
                                     try
                                     {
-                                        msgfResults.Add(resultID, splitLine[msgfSpecProbColIndex]);
+                                        msgfResults.Add(resultID, dataCols[msgfSpecProbColIndex]);
                                     }
                                     catch (Exception)
                                     {
@@ -2212,18 +2211,18 @@ namespace AnalysisManagerMSGFPlugin
 
                 mConsoleOutputErrorMsg = string.Empty;
 
-                using (var srInFile = new StreamReader(new FileStream(consoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(consoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
                     var linesRead = 0;
-                    while (!srInFile.EndOfStream)
+                    while (!reader.EndOfStream)
                     {
-                        var lineIn = srInFile.ReadLine();
+                        var dataLine = reader.ReadLine();
                         linesRead += 1;
 
-                        if (string.IsNullOrWhiteSpace(lineIn))
+                        if (string.IsNullOrWhiteSpace(dataLine))
                             continue;
 
-                        if (linesRead <= 3 && string.IsNullOrWhiteSpace(mMSGFVersion) && lineIn.StartsWith("MSGF v"))
+                        if (linesRead <= 3 && string.IsNullOrWhiteSpace(mMSGFVersion) && dataLine.StartsWith("MSGF v"))
                         {
                             // Originally the first line was the MSGF version
                             // Starting in November 2016, the first line is the command line and the second line is a separator (series of dashes)
@@ -2231,20 +2230,20 @@ namespace AnalysisManagerMSGFPlugin
 
                             if (mDebugLevel >= 2)
                             {
-                                LogDebug("MSGF version: " + lineIn);
+                                LogDebug("MSGF version: " + dataLine);
                             }
 
-                            mMSGFVersion = string.Copy(lineIn);
+                            mMSGFVersion = string.Copy(dataLine);
                         }
                         else
                         {
-                            if (lineIn.ToLower().Contains("error"))
+                            if (dataLine.ToLower().Contains("error"))
                             {
                                 if (string.IsNullOrEmpty(mConsoleOutputErrorMsg))
                                 {
                                     mConsoleOutputErrorMsg = "Error running MSGF:";
                                 }
-                                mConsoleOutputErrorMsg += "; " + lineIn;
+                                mConsoleOutputErrorMsg += "; " + dataLine;
                             }
                         }
                     }
@@ -2260,7 +2259,7 @@ namespace AnalysisManagerMSGFPlugin
             }
         }
 
-        private bool SplitMSGFInputFile(int msgfinputFileLineCount, string msgfInputFilePath, int msgfEntriesPerSegment,
+        private bool SplitMSGFInputFile(int msgfInputFileLineCount, string msgfInputFilePath, int msgfEntriesPerSegment,
             ICollection<udtSegmentFileInfoType> segmentFileInfo)
         {
             var linesRead = 0;
@@ -2274,19 +2273,19 @@ namespace AnalysisManagerMSGFPlugin
                 if (msgfEntriesPerSegment < 100)
                     msgfEntriesPerSegment = 100;
 
-                using (var srInFile = new StreamReader(new FileStream(msgfInputFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                using (var reader = new StreamReader(new FileStream(msgfInputFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
                 {
-                    StreamWriter swOutFile = null;
+                    StreamWriter writer = null;
 
                     udtSegmentFileInfoType udtThisSegment;
                     udtThisSegment.FilePath = string.Empty;
                     udtThisSegment.Entries = 0;
                     udtThisSegment.Segment = 0;
 
-                    while (!srInFile.EndOfStream)
+                    while (!reader.EndOfStream)
                     {
-                        var lineIn = srInFile.ReadLine();
-                        if (string.IsNullOrWhiteSpace(lineIn))
+                        var dataLine = reader.ReadLine();
+                        if (string.IsNullOrWhiteSpace(dataLine))
                             continue;
 
                         linesRead += 1;
@@ -2294,7 +2293,7 @@ namespace AnalysisManagerMSGFPlugin
                         if (linesRead == 1)
                         {
                             // This is the header line; cache it so that we can write it out to the top of each input file
-                            headerLine = string.Copy(lineIn);
+                            headerLine = string.Copy(dataLine);
                         }
 
                         if (udtThisSegment.Segment == 0 || udtThisSegment.Entries >= msgfEntriesPerSegment)
@@ -2302,15 +2301,15 @@ namespace AnalysisManagerMSGFPlugin
                             // Need to create a new segment
                             // However, if the number of lines remaining to be written is less than 5% of msgfEntriesPerSegment then keep writing to this segment
 
-                            var lineCountRemaining = msgfinputFileLineCount - lineCountAllSegments;
+                            var lineCountRemaining = msgfInputFileLineCount - lineCountAllSegments;
 
                             if (udtThisSegment.Segment == 0 || lineCountRemaining > msgfEntriesPerSegment * MSGF_SEGMENT_OVERFLOW_MARGIN)
                             {
                                 if (udtThisSegment.Segment > 0)
                                 {
                                     // Close the current segment
-                                    swOutFile?.Flush();
-                                    swOutFile?.Dispose();
+                                    writer?.Flush();
+                                    writer?.Dispose();
                                     segmentFileInfo.Add(udtThisSegment);
                                 }
 
@@ -2319,27 +2318,27 @@ namespace AnalysisManagerMSGFPlugin
                                 udtThisSegment.Entries = 0;
                                 udtThisSegment.FilePath = AddFileNameSuffix(msgfInputFilePath, udtThisSegment.Segment);
 
-                                swOutFile = new StreamWriter(new FileStream(udtThisSegment.FilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
+                                writer = new StreamWriter(new FileStream(udtThisSegment.FilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
 
                                 // Write the header line to the new segment
-                                swOutFile.WriteLine(headerLine);
+                                writer.WriteLine(headerLine);
                             }
                         }
 
                         if (linesRead > 1)
                         {
-                            if (swOutFile == null)
-                                throw new Exception("swOutFile has not been initialized; this indicates a bug in SplitMSGFInputFile");
+                            if (writer == null)
+                                throw new Exception("writer has not been initialized; this indicates a bug in SplitMSGFInputFile");
 
-                            swOutFile.WriteLine(lineIn);
+                            writer.WriteLine(dataLine);
                             udtThisSegment.Entries += 1;
                             lineCountAllSegments += 1;
                         }
                     }
 
                     // Close the the output files
-                    swOutFile?.Flush();
-                    swOutFile?.Dispose();
+                    writer?.Flush();
+                    writer?.Dispose();
 
                     segmentFileInfo.Add(udtThisSegment);
                 }
@@ -2428,7 +2427,7 @@ namespace AnalysisManagerMSGFPlugin
             try
             {
                 // Gigasax.DMS5
-                var connectionString = mMgrParams.GetParam("connectionstring");
+                var connectionString = mMgrParams.GetParam("ConnectionString");
 
                 var objSummarizer = new clsMSGFResultsSummarizer(eResultType, mDatasetName, mJob, mWorkDir, connectionString, mDebugLevel);
                 RegisterEvents(objSummarizer);
@@ -2490,13 +2489,13 @@ namespace AnalysisManagerMSGFPlugin
 
                 // Read the data from the results file
                 int lineCount;
-                using (var srMSGFResultsFile = new StreamReader(new FileStream(msgfResultsFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(msgfResultsFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
                     lineCount = 0;
 
-                    while (!srMSGFResultsFile.EndOfStream)
+                    while (!reader.EndOfStream)
                     {
-                        srMSGFResultsFile.ReadLine();
+                        reader.ReadLine();
                         lineCount += 1;
                     }
                 }
@@ -2559,24 +2558,24 @@ namespace AnalysisManagerMSGFPlugin
 
                 LogDebug("Read " + fiProteinModsFile.FullName + " and create " + fiProteinModsFileNew.FullName, 3);
 
-                using (var srSource = new StreamReader(new FileStream(fiProteinModsFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
-                using (var swTarget = new StreamWriter(new FileStream(fiProteinModsFileNew.FullName, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                using (var reader = new StreamReader(new FileStream(fiProteinModsFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                using (var writer = new StreamWriter(new FileStream(fiProteinModsFileNew.FullName, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
-                    while (!srSource.EndOfStream)
+                    while (!reader.EndOfStream)
                     {
-                        var lineIn = srSource.ReadLine();
+                        var dataLine = reader.ReadLine();
 
-                        if (string.IsNullOrEmpty(lineIn))
+                        if (string.IsNullOrEmpty(dataLine))
                         {
-                            swTarget.WriteLine();
+                            writer.WriteLine();
                             continue;
                         }
 
-                        var splitLine = lineIn.Split().ToList();
+                        var splitLine = dataLine.Split().ToList();
 
                         if (splitLine.Count <= 0)
                         {
-                            swTarget.WriteLine();
+                            writer.WriteLine();
                             continue;
                         }
 
@@ -2616,7 +2615,7 @@ namespace AnalysisManagerMSGFPlugin
                             }
                         }
 
-                        swTarget.WriteLine(clsGlobal.CollapseList(splitLine));
+                        writer.WriteLine(clsGlobal.CollapseList(splitLine));
                     }
                 }
 

@@ -289,9 +289,9 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
 
             // Create the _CacheInfo.txt file
             var cacheInfoFilePath = fiResultsFile.FullName + "_CacheInfo.txt";
-            using (var swOutFile = new StreamWriter(new FileStream(cacheInfoFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+            using (var writer = new StreamWriter(new FileStream(cacheInfoFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
             {
-                swOutFile.WriteLine(remoteCachefilePath);
+                writer.WriteLine(remoteCachefilePath);
             }
 
             mJobParams.AddResultFileToSkip(fiResultsFile.Name);

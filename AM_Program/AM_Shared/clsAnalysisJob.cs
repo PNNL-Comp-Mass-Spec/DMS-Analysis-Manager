@@ -1388,9 +1388,9 @@ namespace AnalysisManagerBase
                             break;
                         }
 
-                        foreach (var udtParamInfo in jobParameters)
+                        foreach (var paramInfo in jobParameters)
                         {
-                            SetParam(udtParamInfo.Section, udtParamInfo.ParamName, udtParamInfo.Value);
+                            SetParam(paramInfo.Section, paramInfo.ParamName, paramInfo.Value);
                         }
 
                         SaveJobParameters(mMgrParams.GetParam("WorkDir"), jobParamsXML, mJobId);
@@ -1707,9 +1707,9 @@ namespace AnalysisManagerBase
                     return false;
                 }
 
-                foreach (var udtParamInfo in jobParameters)
+                foreach (var paramInfo in jobParameters)
                 {
-                    SetParam(udtParamInfo.Section, udtParamInfo.ParamName, udtParamInfo.Value);
+                    SetParam(paramInfo.Section, paramInfo.ParamName, paramInfo.Value);
                 }
 
                 return true;

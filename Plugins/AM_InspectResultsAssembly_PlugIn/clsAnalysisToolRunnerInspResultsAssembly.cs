@@ -255,7 +255,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                     LogDebug("Assembling parallelized inspect result files");
                 }
 
-                UpdateStatusRunning(mPercentCompleteStartLevels[(int) eInspectResultsProcessingSteps.AssembleResults]);
+                UpdateStatusRunning(mPercentCompleteStartLevels[(int)eInspectResultsProcessingSteps.AssembleResults]);
 
                 // Combine the individual _xx_inspect.txt files to create the single _inspect.txt file
                 var result = AssembleFiles(mInspectResultsFileName, ResultFileType.INSPECT_RESULT, intNumResultFiles);
@@ -338,8 +338,8 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             {
                 var DatasetName = mDatasetName;
 
-                var tw = CreateNewExportFile(Path.Combine(mWorkDir, strCombinedFileName));
-                if (tw == null)
+                var writer = CreateNewExportFile(Path.Combine(mWorkDir, strCombinedFileName));
+                if (writer == null)
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -391,16 +391,16 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                     if (!File.Exists(Path.Combine(mWorkDir, inspectResultsFile)))
                         continue;
 
-                    var intLinesRead = 0;
+                    var linesRead = 0;
 
-                    var tr = new StreamReader(new FileStream(Path.Combine(mWorkDir, inspectResultsFile), FileMode.Open, FileAccess.Read, FileShare.Read));
-                    var s = tr.ReadLine();
+                    var reader = new StreamReader(new FileStream(Path.Combine(mWorkDir, inspectResultsFile), FileMode.Open, FileAccess.Read, FileShare.Read));
+                    var dataLine = reader.ReadLine();
 
-                    while (s != null)
+                    while (dataLine != null)
                     {
-                        intLinesRead += 1;
+                        linesRead += 1;
 
-                        if (intLinesRead == 1)
+                        if (linesRead == 1)
                         {
                             if (blnFilesContainHeaderLine)
                             {
@@ -409,9 +409,9 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                                 {
                                     if (blnAddSegmentNumberToEachLine)
                                     {
-                                        s = "Segment\t" + s;
+                                        dataLine = "Segment\t" + dataLine;
                                     }
-                                    tw.WriteLine(s);
+                                    writer.WriteLine(dataLine);
                                 }
                             }
                             else
@@ -420,13 +420,13 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                                 {
                                     if (!blnHeaderLineWritten)
                                     {
-                                        tw.WriteLine("Segment\t" + "Message");
+                                        writer.WriteLine("Segment\t" + "Message");
                                     }
-                                    tw.WriteLine(fileNameCounter + "\t" + s);
+                                    writer.WriteLine(fileNameCounter + "\t" + dataLine);
                                 }
                                 else
                                 {
-                                    tw.WriteLine(s);
+                                    writer.WriteLine(dataLine);
                                 }
                             }
                             blnHeaderLineWritten = true;
@@ -438,15 +438,15 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                                 // Parse each line of the Inspect Results files to remove the directory path information from the first column
                                 try
                                 {
-                                    var intTabIndex = s.IndexOf('\t');
-                                    if (intTabIndex > 0)
+                                    var tabIndex = dataLine.IndexOf('\t');
+                                    if (tabIndex > 0)
                                     {
-                                        // Note: .LastIndexOf will start at index intTabIndex and search backword until the first match is found
+                                        // Note: .LastIndexOf will start at index intTabIndex and search backwards until the first match is found
                                         // (this is a bit counter-intuitive, but that's what it does)
-                                        var intSlashIndex = s.LastIndexOf(Path.DirectorySeparatorChar, intTabIndex);
-                                        if (intSlashIndex > 0)
+                                        var slashIndex = dataLine.LastIndexOf(Path.DirectorySeparatorChar, tabIndex);
+                                        if (slashIndex > 0)
                                         {
-                                            s = s.Substring(intSlashIndex + 1);
+                                            dataLine = dataLine.Substring(slashIndex + 1);
                                         }
                                     }
                                 }
@@ -458,18 +458,18 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
                             if (blnAddSegmentNumberToEachLine)
                             {
-                                tw.WriteLine(fileNameCounter + "\t" + s);
+                                writer.WriteLine(fileNameCounter + "\t" + dataLine);
                             }
                             else
                             {
-                                tw.WriteLine(s);
+                                writer.WriteLine(dataLine);
                             }
                         }
 
                         // Read the next line
-                        s = tr.ReadLine();
+                        dataLine = reader.ReadLine();
                     }
-                    tr.Close();
+                    reader.Close();
 
                     if (blnAddBlankLineBetweenFiles)
                     {
@@ -478,7 +478,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                 }
 
                 // close the main result file
-                tw.Close();
+                writer.Close();
 
                 return CloseOutType.CLOSEOUT_SUCCESS;
             }
@@ -501,40 +501,40 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                 return null;
             }
 
-            var ef = new StreamWriter(new FileStream(exportFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
-            return ef;
+            return new StreamWriter(new FileStream(exportFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
         }
 
         private CloseOutType CreatePeptideToProteinMapping()
         {
-            var OrgDbDir = mMgrParams.GetParam("OrgDbDir");
+            var orgDbDir = mMgrParams.GetParam("OrgDbDir");
 
             // Note that job parameter "generatedFastaName" gets defined by clsAnalysisResources.RetrieveOrgDB
-            var dbFilename = Path.Combine(OrgDbDir, mJobParams.GetParam("PeptideSearch", "generatedFastaName"));
+            var dbFilename = Path.Combine(orgDbDir, mJobParams.GetParam("PeptideSearch", "generatedFastaName"));
 
-            var blnIgnorePeptideToProteinMapperErrors = false;
+            var ignorePeptideToProteinMapperErrors = false;
 
-            UpdateStatusRunning(mPercentCompleteStartLevels[(int) eInspectResultsProcessingSteps.CreatePeptideToProteinMapping]);
+            UpdateStatusRunning(mPercentCompleteStartLevels[(int)eInspectResultsProcessingSteps.CreatePeptideToProteinMapping]);
 
             var strInputFilePath = Path.Combine(mWorkDir, mInspectResultsFileName);
 
             try
             {
                 // Validate that the input file has at least one entry; if not, no point in continuing
+                var linesRead = 0;
 
-                var srInFile = new StreamReader(new FileStream(strInputFilePath, FileMode.Open, FileAccess.Read, FileShare.Read));
-
-                var intLinesRead = 0;
-                while (!srInFile.EndOfStream && intLinesRead < 10)
+                using (var reader = new StreamReader(new FileStream(strInputFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
                 {
-                    var strLineIn = srInFile.ReadLine();
-                    if (!string.IsNullOrEmpty(strLineIn))
+                    while (!reader.EndOfStream && linesRead < 10)
                     {
-                        intLinesRead += 1;
+                        var dataLine = reader.ReadLine();
+                        if (!string.IsNullOrEmpty(dataLine))
+                        {
+                            linesRead += 1;
+                        }
                     }
                 }
 
-                if (intLinesRead <= 1)
+                if (linesRead <= 1)
                 {
                     // File is empty or only contains a header line
                     LogError("No results above threshold; filtered inspect results file is empty");
@@ -561,7 +561,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                     LogDebug("Creating peptide to protein map file");
                 }
 
-                blnIgnorePeptideToProteinMapperErrors = mJobParams.GetJobParameter("IgnorePeptideToProteinMapError", false);
+                ignorePeptideToProteinMapperErrors = mJobParams.GetJobParameter("IgnorePeptideToProteinMapError", false);
 
                 mPeptideToProteinMapper = new clsPeptideToProteinMapEngine();
 
@@ -587,7 +587,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                 mPeptideToProteinMapper.OutputProteinSequence = false;
                 mPeptideToProteinMapper.PeptideInputFileFormat = clsPeptideToProteinMapEngine.ePeptideInputFileFormatConstants.InspectResultsFile;
                 mPeptideToProteinMapper.PeptideFileSkipFirstLine = false;
-                mPeptideToProteinMapper.ProteinInputFilePath = Path.Combine(OrgDbDir, dbFilename);
+                mPeptideToProteinMapper.ProteinInputFilePath = Path.Combine(orgDbDir, dbFilename);
                 mPeptideToProteinMapper.SaveProteinToPeptideMappingFile = true;
                 mPeptideToProteinMapper.SearchAllProteinsForPeptideSequence = true;
                 mPeptideToProteinMapper.SearchAllProteinsSkipCoverageComputationSteps = true;
@@ -607,7 +607,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                 {
                     LogError("Error running the PeptideToProteinMapEngine: " + mPeptideToProteinMapper.GetErrorMessage());
 
-                    if (blnIgnorePeptideToProteinMapperErrors)
+                    if (ignorePeptideToProteinMapperErrors)
                     {
                         LogWarning("Ignoring protein mapping error since 'IgnorePeptideToProteinMapError' = True");
                         return CloseOutType.CLOSEOUT_SUCCESS;
@@ -623,7 +623,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                 LogError("clsAnalysisToolRunnerInspResultsAssembly.CreatePeptideToProteinMapping, Error running the PeptideToProteinMapEngine, job " +
                     mJob, ex);
 
-                if (blnIgnorePeptideToProteinMapperErrors)
+                if (ignorePeptideToProteinMapperErrors)
                 {
                     LogWarning("Ignoring protein mapping error since 'IgnorePeptideToProteinMapError' = True");
                     return CloseOutType.CLOSEOUT_SUCCESS;
@@ -636,52 +636,52 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
         }
 
         /// <summary>
-        /// Reads the modification information defined in strInspectParameterFilePath, storing it in udtModList
+        /// Reads the modification information defined in inspectParameterFilePath, storing it in udtModList
         /// </summary>
-        /// <param name="strInspectParameterFilePath"></param>
+        /// <param name="inspectParameterFilePath"></param>
         /// <param name="udtModList"></param>
         /// <returns></returns>
         /// <remarks></remarks>
-        private bool ExtractModInfoFromInspectParamFile(string strInspectParameterFilePath, ref udtModInfoType[] udtModList)
+        private bool ExtractModInfoFromInspectParamFile(string inspectParameterFilePath, ref udtModInfoType[] udtModList)
         {
             try
             {
                 // Initialize udtModList
-                var intModCount = 0;
+                var modCount = 0;
                 udtModList = new udtModInfoType[-1 + 1];
 
                 if (mDebugLevel > 4)
                 {
-                    LogDebug("clsAnalysisToolRunnerInspResultsAssembly.ExtractModInfoFromInspectParamFile(): Reading " + strInspectParameterFilePath);
+                    LogDebug("clsAnalysisToolRunnerInspResultsAssembly.ExtractModInfoFromInspectParamFile(): Reading " + inspectParameterFilePath);
                 }
 
                 // Read the contents of strProteinToPeptideMappingFilePath
-                using (var srInFile = new StreamReader((new FileStream(strInspectParameterFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))))
+                using (var reader = new StreamReader((new FileStream(inspectParameterFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))))
                 {
-                    while (!srInFile.EndOfStream)
+                    while (!reader.EndOfStream)
                     {
-                        var strLineIn = srInFile.ReadLine();
+                        var dataLine = reader.ReadLine();
 
-                        if (string.IsNullOrWhiteSpace(strLineIn))
+                        if (string.IsNullOrWhiteSpace(dataLine))
                             continue;
 
-                        strLineIn = strLineIn.Trim();
+                        var dataLineTrimmed = dataLine.Trim();
 
-                        if (string.IsNullOrEmpty(strLineIn))
+                        if (string.IsNullOrEmpty(dataLine))
                             continue;
 
-                        if (strLineIn[0] == '#')
+                        if (dataLineTrimmed[0] == '#')
                         {
                             // Comment line; skip it
                             continue;
                         }
 
-                        if (strLineIn.ToLower().StartsWith("mod"))
+                        if (dataLineTrimmed.ToLower().StartsWith("mod"))
                         {
                             // Modification definition line
 
                             // Split the line on commas
-                            var strSplitLine = strLineIn.Split(',');
+                            var strSplitLine = dataLineTrimmed.Split(',');
 
                             if (strSplitLine.Length >= 5 && strSplitLine[0].ToLower().Trim() == "mod")
                             {
@@ -689,7 +689,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                                 {
                                     udtModList = new udtModInfoType[1];
                                 }
-                                else if (intModCount >= udtModList.Length)
+                                else if (modCount >= udtModList.Length)
                                 {
                                     Array.Resize(ref udtModList, udtModList.Length * 2);
                                 }
@@ -699,13 +699,13 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                                 // mod.ModMass = strSplitLine[1];
                                 // mod.Residues = strSplitLine[2];
 
-                                intModCount += 1;
+                                modCount += 1;
                             }
                         }
                     }
 
                     // Shrink udtModList to the appropriate length
-                    Array.Resize(ref udtModList, intModCount);
+                    Array.Resize(ref udtModList, modCount);
                 }
             }
             catch (Exception ex)
@@ -728,7 +728,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             var strInspectResultsFilePath = Path.Combine(mWorkDir, mInspectResultsFileName);
             var strFilteredFilePath = Path.Combine(mWorkDir, mDatasetName + FIRST_HITS_INSPECT_FILE_SUFFIX);
 
-            UpdateStatusRunning(mPercentCompleteStartLevels[(int) eInspectResultsProcessingSteps.RunpValue]);
+            UpdateStatusRunning(mPercentCompleteStartLevels[(int)eInspectResultsProcessingSteps.RunpValue]);
 
             // Note that RunPvalue() will log any errors that occur
             var eResult = RunpValue(strInspectResultsFilePath, strFilteredFilePath, false, true);
@@ -746,7 +746,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             var strInspectResultsFilePath = Path.Combine(mWorkDir, mInspectResultsFileName);
             var strFilteredFilePath = Path.Combine(mWorkDir, mDatasetName + FILTERED_INSPECT_FILE_SUFFIX);
 
-            UpdateStatusRunning(mPercentCompleteStartLevels[(int) eInspectResultsProcessingSteps.RunpValue]);
+            UpdateStatusRunning(mPercentCompleteStartLevels[(int)eInspectResultsProcessingSteps.RunpValue]);
 
             // Note that RunPvalue() will log any errors that occur
             var eResult = RunpValue(strInspectResultsFilePath, strFilteredFilePath, true, false);
@@ -760,11 +760,11 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
             mPercentCompleteStartLevels = new float[PERCENT_COMPLETE_LEVEL_COUNT + 1];
 
-            mPercentCompleteStartLevels[(int) eInspectResultsProcessingSteps.Starting] = 0;
-            mPercentCompleteStartLevels[(int) eInspectResultsProcessingSteps.AssembleResults] = 5;
-            mPercentCompleteStartLevels[(int) eInspectResultsProcessingSteps.RunpValue] = 10;
-            mPercentCompleteStartLevels[(int) eInspectResultsProcessingSteps.ZipInspectResults] = 65;
-            mPercentCompleteStartLevels[(int) eInspectResultsProcessingSteps.CreatePeptideToProteinMapping] = 66;
+            mPercentCompleteStartLevels[(int)eInspectResultsProcessingSteps.Starting] = 0;
+            mPercentCompleteStartLevels[(int)eInspectResultsProcessingSteps.AssembleResults] = 5;
+            mPercentCompleteStartLevels[(int)eInspectResultsProcessingSteps.RunpValue] = 10;
+            mPercentCompleteStartLevels[(int)eInspectResultsProcessingSteps.ZipInspectResults] = 65;
+            mPercentCompleteStartLevels[(int)eInspectResultsProcessingSteps.CreatePeptideToProteinMapping] = 66;
             mPercentCompleteStartLevels[PERCENT_COMPLETE_LEVEL_COUNT] = 100;
         }
 
@@ -807,7 +807,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             var strInspectResultsFilePath = Path.Combine(mWorkDir, mInspectResultsFileName);
             var strFilteredFilePath = Path.Combine(mWorkDir, mDatasetName + FILTERED_INSPECT_FILE_SUFFIX);
 
-            UpdateStatusRunning(mPercentCompleteStartLevels[(int) eInspectResultsProcessingSteps.RunpValue]);
+            UpdateStatusRunning(mPercentCompleteStartLevels[(int)eInspectResultsProcessingSteps.RunpValue]);
 
             // Note that RunPvalue() will log any errors that occur
             var eResult = RunpValue(strInspectResultsFilePath, strFilteredFilePath, true, false);
@@ -850,7 +850,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
-        private CloseOutType RunpValue(string strInspectResultsInputFilePath, string strOutputFilePath, bool blnCreateImageFiles, bool blnTopHitOnly)
+        private CloseOutType RunpValue(string inspectResultsInputFilePath, string outputFilePath, bool createImageFiles, bool topHitOnly)
         {
             var InspectDir = mMgrParams.GetParam("inspectdir");
             var pvalDistributionFilename = Path.Combine(mWorkDir, mDatasetName + "_PValueDistribution.txt");
@@ -863,7 +863,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             var pythonProgLoc = mMgrParams.GetParam("pythonprogloc");
 
             // Check whether a shuffled DB was created prior to running Inspect
-            var blnShuffledDBUsed = ValidateShuffledDBInUse(strInspectResultsInputFilePath);
+            var blnShuffledDBUsed = ValidateShuffledDBInUse(inspectResultsInputFilePath);
 
             // Lookup the p-value to filter on
             var pthresh = mJobParams.GetJobParameter("InspectPvalueThreshold", "0.1");
@@ -913,14 +913,14 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             // -a means to perform protein selection (sort of like protein prophet, but not very good, according to Sam Payne)
             // -d .trie file to use (only used if -a is enabled)
 
-            var cmdStr = " " + pvalueScriptPath + " -r " + strInspectResultsInputFilePath + " -w " + strOutputFilePath + " -s " + pvalDistributionFilename;
+            var cmdStr = " " + pvalueScriptPath + " -r " + inspectResultsInputFilePath + " -w " + outputFilePath + " -s " + pvalDistributionFilename;
 
-            if (blnCreateImageFiles)
+            if (createImageFiles)
             {
                 cmdStr += " -i";
             }
 
-            if (blnTopHitOnly)
+            if (topHitOnly)
             {
                 cmdStr += " -H -1 -p 1";
             }
@@ -1023,13 +1023,13 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
         }
 
         /// <summary>
-        /// Assures that the PTMods.txt file in strInspectDir contains the modification info defined in strInspectInputFilePath
+        /// Assures that the PTMods.txt file in inspectDirectoryPath contains the modification info defined in strInspectInputFilePath
         /// Note: We run the risk that two InspectResultsAssembly tasks will run simultaneously and will both try to update PTMods.txt
         /// </summary>
-        /// <param name="strInspectDir"></param>
-        /// <param name="strInspectParameterFilePath"></param>
+        /// <param name="inspectDirectoryPath"></param>
+        /// <param name="inspectParameterFilePath"></param>
         /// <remarks></remarks>
-        private bool UpdatePTModsFile(string strInspectDir, string strInspectParameterFilePath)
+        private bool UpdatePTModsFile(string inspectDirectoryPath, string inspectParameterFilePath)
         {
             var udtModList = new udtModInfoType[-1 + 1];
 
@@ -1043,7 +1043,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                 }
 
                 // Read the mods defined in strInspectInputFilePath
-                if (ExtractModInfoFromInspectParamFile(strInspectParameterFilePath, ref udtModList))
+                if (ExtractModInfoFromInspectParamFile(inspectParameterFilePath, ref udtModList))
                 {
                     if (udtModList.Length > 0)
                     {
@@ -1054,7 +1054,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                         // While reading, will create a new file with any required updates
                         // In case two managers are doing this simultaneously, we'll put a unique string in strPTModsFilePathNew
 
-                        var strPTModsFilePath = Path.Combine(strInspectDir, "PTMods.txt");
+                        var strPTModsFilePath = Path.Combine(inspectDirectoryPath, "PTMods.txt");
                         var strPTModsFilePathNew = strPTModsFilePath + ".Job" + mJob + ".tmp";
 
                         if (mDebugLevel > 4)
@@ -1065,28 +1065,28 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
                         var blnDifferenceFound = false;
 
-                        using (var srInFile = new StreamReader(new FileStream(strPTModsFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
-                        using (var swOutFile = new StreamWriter(new FileStream(strPTModsFilePathNew, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                        using (var reader = new StreamReader(new FileStream(strPTModsFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                        using (var writer = new StreamWriter(new FileStream(strPTModsFilePathNew, FileMode.Create, FileAccess.Write, FileShare.Read)))
                         {
 
-                            while (!srInFile.EndOfStream)
+                            while (!reader.EndOfStream)
                             {
-                                var strLineIn = srInFile.ReadLine();
-                                if (string.IsNullOrWhiteSpace(strLineIn))
+                                var dataLine = reader.ReadLine();
+                                if (string.IsNullOrWhiteSpace(dataLine))
                                     continue;
 
-                                strLineIn = strLineIn.Trim();
+                                var trimmedLine = dataLine.Trim();
 
-                                if (!string.IsNullOrEmpty(strLineIn))
+                                if (!string.IsNullOrEmpty(trimmedLine))
                                 {
-                                    if (strLineIn[0] == '#')
+                                    if (trimmedLine[0] == '#')
                                     {
                                         // Comment line; skip it
                                     }
                                     else
                                     {
                                         // Split the line on tabs
-                                        var strSplitLine = strLineIn.Split('\t');
+                                        var strSplitLine = trimmedLine.Split('\t');
 
                                         if (strSplitLine.Length >= 3)
                                         {
@@ -1110,7 +1110,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                                                 if (blnModProcessed[intIndex])
                                                 {
                                                     // This mod was already processed; don't write the line out again
-                                                    strLineIn = string.Empty;
+                                                    trimmedLine = string.Empty;
                                                 }
                                                 else
                                                 {
@@ -1119,13 +1119,13 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                                                     if (strSplitLine[1] != mod.ModMass || strSplitLine[2] != mod.Residues)
                                                     {
                                                         // Mis-match; update the line
-                                                        strLineIn = mod.ModName + "\t" + mod.ModMass + "\t" + mod.Residues;
+                                                        trimmedLine = mod.ModName + "\t" + mod.ModMass + "\t" + mod.Residues;
 
                                                         if (mDebugLevel > 4)
                                                         {
                                                             LogDebug(
                                                                 "clsAnalysisToolRunnerInspResultsAssembly.UpdatePTModsFile(): Mod def in PTMods.txt doesn't match required mod def; updating to: " +
-                                                                strLineIn);
+                                                                trimmedLine);
                                                         }
 
                                                         blnDifferenceFound = true;
@@ -1137,15 +1137,15 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                                     }
                                 }
 
-                                if (blnPrevLineWasBlank && strLineIn.Length == 0)
+                                if (blnPrevLineWasBlank && trimmedLine.Length == 0)
                                 {
                                     // Don't write out two blank lines in a row; skip this line
                                 }
                                 else
                                 {
-                                    swOutFile.WriteLine(strLineIn);
+                                    writer.WriteLine(trimmedLine);
 
-                                    if (strLineIn.Length == 0)
+                                    if (trimmedLine.Length == 0)
                                     {
                                         blnPrevLineWasBlank = true;
                                     }
@@ -1163,7 +1163,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                                 {
                                     var mod = udtModList[intIndex];
                                     var dataLine = mod.ModName + "\t" + mod.ModMass + "\t" + mod.Residues;
-                                    swOutFile.WriteLine(dataLine);
+                                    writer.WriteLine(dataLine);
 
                                     blnDifferenceFound = true;
                                 }
@@ -1217,36 +1217,39 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             return true;
         }
 
-        private bool ValidateShuffledDBInUse(string strInspectResultsPath)
+        private bool ValidateShuffledDBInUse(string inspectResultsPath)
         {
             var chSepChars = new[] { '\t' };
 
-            var blnShuffledDBUsed = mJobParams.GetJobParameter("InspectUsesShuffledDB", false);
+            var shuffledDBUsed = mJobParams.GetJobParameter("InspectUsesShuffledDB", false);
 
-            if (blnShuffledDBUsed)
+            if (!shuffledDBUsed)
+                return false;
+
+            // Open the _inspect.txt file and make sure proteins exist that start with XXX
+            // If not, change blnShuffledDBUsed back to false
+
+            try
             {
-                // Open the _inspect.txt file and make sure proteins exist that start with XXX
-                // If not, change blnShuffledDBUsed back to false
+                var decoyProteinCount = 0;
 
-                try
+                using (var reader = new StreamReader(new FileStream(inspectResultsPath, FileMode.Open, FileAccess.Read, FileShare.Read)))
                 {
-                    var srInspectResults = new StreamReader(new FileStream(strInspectResultsPath, FileMode.Open, FileAccess.Read, FileShare.Read));
 
-                    var intLinesRead = 0;
-                    var intDecoyProteinCount = 0;
+                    var linesRead = 0;
 
-                    while (!srInspectResults.EndOfStream)
+                    while (!reader.EndOfStream)
                     {
-                        var strLineIn = srInspectResults.ReadLine();
-                        intLinesRead += 1;
+                        var dataLine = reader.ReadLine();
+                        linesRead += 1;
 
-                        if (string.IsNullOrEmpty(strLineIn))
+                        if (string.IsNullOrEmpty(dataLine))
                             continue;
 
                         // Protein info should be stored in the fourth column (index=3)
-                        var strSplitLine = strLineIn.Split(chSepChars, 5);
+                        var strSplitLine = dataLine.Split(chSepChars, 5);
 
-                        if (intLinesRead == 1)
+                        if (linesRead == 1)
                         {
                             // Verify that strSplitLine[3] is "Protein"
                             if (!strSplitLine[3].ToLower().StartsWith("protein"))
@@ -1258,32 +1261,32 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                         {
                             if (strSplitLine[3].StartsWith("XXX"))
                             {
-                                intDecoyProteinCount += 1;
+                                decoyProteinCount += 1;
                             }
                         }
 
-                        if (intDecoyProteinCount > 10)
+                        if (decoyProteinCount > 10)
                             break;
                     }
 
-                    srInspectResults.Close();
-
-                    if (intDecoyProteinCount == 0)
-                    {
-                        LogWarning(
-                            "The job has 'InspectUsesShuffledDB' set to True in the Settings file, but none of the proteins in the result file starts with XXX. " +
-                            "Will assume the fasta file did NOT have shuffled proteins, and will thus NOT use '-S 0.5' when calling " + PVALUE_MINLENGTH5_SCRIPT);
-                        blnShuffledDBUsed = false;
-                    }
                 }
-                catch (Exception ex)
+
+
+                if (decoyProteinCount == 0)
                 {
-                    mMessage = "Error in InspectResultsAssembly->strInspectResultsPath";
-                    LogError(mMessage + ": " + ex.Message);
+                    LogWarning(
+                        "The job has 'InspectUsesShuffledDB' set to True in the Settings file, but none of the proteins in the result file starts with XXX. " +
+                        "Will assume the fasta file did NOT have shuffled proteins, and will thus NOT use '-S 0.5' when calling " + PVALUE_MINLENGTH5_SCRIPT);
+                    shuffledDBUsed = false;
                 }
             }
+            catch (Exception ex)
+            {
+                mMessage = "Error in InspectResultsAssembly->strInspectResultsPath";
+                LogError(mMessage + ": " + ex.Message);
+            }
 
-            return blnShuffledDBUsed;
+            return shuffledDBUsed;
         }
 
         /// <summary>
@@ -1297,7 +1300,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
         {
             try
             {
-                UpdateStatusRunning(mPercentCompleteStartLevels[(int) eInspectResultsProcessingSteps.ZipInspectResults]);
+                UpdateStatusRunning(mPercentCompleteStartLevels[(int)eInspectResultsProcessingSteps.ZipInspectResults]);
 
                 // Zip up the _inspect.txt file into _inspect_all.zip
                 // Rename to _inspect.txt before zipping
@@ -1353,8 +1356,8 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
         {
             // Note that percentComplete is a value between 0 and 100
 
-            var startPercent = mPercentCompleteStartLevels[(int) eInspectResultsProcessingSteps.CreatePeptideToProteinMapping];
-            var endPercent = mPercentCompleteStartLevels[(int) eInspectResultsProcessingSteps.CreatePeptideToProteinMapping + 1];
+            var startPercent = mPercentCompleteStartLevels[(int)eInspectResultsProcessingSteps.CreatePeptideToProteinMapping];
+            var endPercent = mPercentCompleteStartLevels[(int)eInspectResultsProcessingSteps.CreatePeptideToProteinMapping + 1];
 
             var percentCompleteEffective = startPercent + (float)(percentComplete / 100.0 * (endPercent - startPercent));
 

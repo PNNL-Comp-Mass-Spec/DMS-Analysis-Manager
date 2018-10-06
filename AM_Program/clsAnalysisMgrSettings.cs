@@ -150,12 +150,12 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="lstMgrSettings">Manager settings loaded from file AppName.exe.config</param>
+        /// <param name="mgrSettings">Manager settings loaded from file AppName.exe.config</param>
         /// <param name="mgrFolderPath"></param>
         /// <param name="traceMode"></param>
         /// <remarks></remarks>
         public clsAnalysisMgrSettings(
-            Dictionary<string, string> lstMgrSettings,
+            Dictionary<string, string> mgrSettings,
             string mgrFolderPath,
             bool traceMode)
         {
@@ -164,7 +164,7 @@ namespace AnalysisManagerProg
 
             mParamDictionary = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
-            if (!LoadSettings(lstMgrSettings))
+            if (!LoadSettings(mgrSettings))
             {
                 if (!string.IsNullOrEmpty(mErrMsg))
                 {
@@ -324,16 +324,16 @@ namespace AnalysisManagerProg
             return true;
         }
 
-        private string GetGroupNameFromSettings(DataTable dtSettings)
+        private string GetGroupNameFromSettings(DataTable mgrSettings)
         {
-            foreach (DataRow currentRow in dtSettings.Rows)
+            foreach (DataRow currentRow in mgrSettings.Rows)
             {
                 // Add the column heading and value to the dictionary
-                var paramKey = DbCStr(currentRow[dtSettings.Columns["ParameterName"]]);
+                var paramKey = DbCStr(currentRow[mgrSettings.Columns["ParameterName"]]);
 
                 if (string.Equals(paramKey, "MgrSettingGroupName", StringComparison.OrdinalIgnoreCase))
                 {
-                    var groupName = DbCStr(currentRow[dtSettings.Columns["ParameterValue"]]);
+                    var groupName = DbCStr(currentRow[mgrSettings.Columns["ParameterValue"]]);
                     if (!string.IsNullOrWhiteSpace(groupName))
                     {
                         return groupName;
@@ -389,20 +389,20 @@ namespace AnalysisManagerProg
                 return false;
             }
 
-            var success = LoadMgrSettingsFromDBWork(managerName, out var dtSettings, logConnectionErrors: true, returnErrorIfNoParameters: true);
+            var success = LoadMgrSettingsFromDBWork(managerName, out var mgrSettings, logConnectionErrors: true, returnErrorIfNoParameters: true);
             if (!success)
             {
                 return false;
             }
 
-            success = StoreParameters(dtSettings, skipExistingParameters: false, managerName: managerName);
+            success = StoreParameters(mgrSettings, skipExistingParameters: false, managerName: managerName);
 
             if (!success)
                 return false;
 
             while (success)
             {
-                var mgrSettingsGroup = GetGroupNameFromSettings(dtSettings);
+                var mgrSettingsGroup = GetGroupNameFromSettings(mgrSettings);
                 if (string.IsNullOrEmpty(mgrSettingsGroup))
                 {
                     break;
@@ -410,11 +410,11 @@ namespace AnalysisManagerProg
 
                 // This manager has group-based settings defined; load them now
 
-                success = LoadMgrSettingsFromDBWork(mgrSettingsGroup, out dtSettings, logConnectionErrors: true, returnErrorIfNoParameters: false);
+                success = LoadMgrSettingsFromDBWork(mgrSettingsGroup, out mgrSettings, logConnectionErrors: true, returnErrorIfNoParameters: false);
 
                 if (success)
                 {
-                    success = StoreParameters(dtSettings, skipExistingParameters: true, managerName: mgrSettingsGroup);
+                    success = StoreParameters(mgrSettings, skipExistingParameters: true, managerName: mgrSettingsGroup);
                 }
             }
 
@@ -423,7 +423,7 @@ namespace AnalysisManagerProg
 
         private bool LoadMgrSettingsFromDBWork(
             string managerName,
-            out DataTable dtSettings,
+            out DataTable mgrSettings,
             bool logConnectionErrors,
             bool returnErrorIfNoParameters)
         {
@@ -439,7 +439,7 @@ namespace AnalysisManagerProg
 
                 ShowTrace("LoadMgrSettingsFromDBWork: " + mErrMsg);
 
-                dtSettings = null;
+                mgrSettings = null;
                 return false;
             }
 
@@ -448,7 +448,7 @@ namespace AnalysisManagerProg
                 mErrMsg = MGR_PARAM_MGR_CFG_DB_CONN_STRING +
                            " parameter not found in mParamDictionary; it should be defined in the " + Path.GetFileName(GetConfigFilePath()) + " file";
                 WriteErrorMsg(mErrMsg);
-                dtSettings = null;
+                mgrSettings = null;
                 return false;
             }
 
@@ -457,7 +457,7 @@ namespace AnalysisManagerProg
             var sqlStr = "SELECT ParameterName, ParameterValue FROM V_MgrParams WHERE ManagerName = '" + managerName + "'";
 
             // Get a table to hold the results of the query
-            var success = clsGlobal.GetDataTableByQuery(sqlStr, connectionString, "LoadMgrSettingsFromDBWork", retryCount, out dtSettings);
+            var success = clsGlobal.GetDataTableByQuery(sqlStr, connectionString, "LoadMgrSettingsFromDBWork", retryCount, out mgrSettings);
 
             // If unable to retrieve the data, return false
             if (!success)
@@ -469,18 +469,18 @@ namespace AnalysisManagerProg
                           "for manager '" + managerName + "'";
                 if (logConnectionErrors)
                     WriteErrorMsg(mErrMsg, allowLogToDB);
-                dtSettings?.Dispose();
+                mgrSettings?.Dispose();
                 return false;
             }
 
             // Verify at least one row returned
-            if (dtSettings.Rows.Count < 1 && returnErrorIfNoParameters)
+            if (mgrSettings.Rows.Count < 1 && returnErrorIfNoParameters)
             {
                 // No data was returned
                 mErrMsg = "LoadMgrSettingsFromDBWork; Manager '" + managerName + "' not defined in the manager control database; using " + connectionString;
                 if (logConnectionErrors)
                     WriteErrorMsg(mErrMsg);
-                dtSettings?.Dispose();
+                mgrSettings?.Dispose();
                 return false;
             }
 
@@ -649,23 +649,23 @@ namespace AnalysisManagerProg
         }
 
         /// <summary>
-        /// Update mParamDictionary with settings in dtSettings, optionally skipping existing parameters
+        /// Update mParamDictionary with settings in mgrSettings, optionally skipping existing parameters
         /// </summary>
-        /// <param name="dtSettings"></param>
+        /// <param name="mgrSettings"></param>
         /// <param name="skipExistingParameters"></param>
         /// <param name="managerName"></param>
         /// <returns></returns>
-        private bool StoreParameters(DataTable dtSettings, bool skipExistingParameters, string managerName)
+        private bool StoreParameters(DataTable mgrSettings, bool skipExistingParameters, string managerName)
         {
             bool success;
 
             try
             {
-                foreach (DataRow currentRow in dtSettings.Rows)
+                foreach (DataRow currentRow in mgrSettings.Rows)
                 {
                     // Add the column heading and value to the dictionary
-                    var paramKey = DbCStr(currentRow[dtSettings.Columns["ParameterName"]]);
-                    var paramVal = DbCStr(currentRow[dtSettings.Columns["ParameterValue"]]);
+                    var paramKey = DbCStr(currentRow[mgrSettings.Columns["ParameterName"]]);
+                    var paramVal = DbCStr(currentRow[mgrSettings.Columns["ParameterValue"]]);
 
                     if (mParamDictionary.ContainsKey(paramKey))
                     {
@@ -690,7 +690,7 @@ namespace AnalysisManagerProg
             }
             finally
             {
-                dtSettings?.Dispose();
+                mgrSettings?.Dispose();
             }
 
             return success;

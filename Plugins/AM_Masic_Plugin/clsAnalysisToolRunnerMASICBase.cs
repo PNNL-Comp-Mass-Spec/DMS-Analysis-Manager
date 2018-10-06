@@ -44,27 +44,33 @@ namespace AnalysisManagerMasicPlugin
                 if (!logFile.Exists)
                     return;
 
-                using (var srInFile = new StreamReader(new FileStream(logFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(logFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
-                    var intErrorCount = 0;
-                    while (!srInFile.EndOfStream)
+                    var errorCount = 0;
+                    while (!reader.EndOfStream)
                     {
-                        var lineIn = srInFile.ReadLine();
+                        var dataLine = reader.ReadLine();
 
-                        if (string.IsNullOrEmpty(lineIn))
+                        if (string.IsNullOrEmpty(dataLine))
                             continue;
 
-                        if (lineIn.ToLower().Contains("error"))
+                        if (dataLine.ToLower().Contains("error"))
                         {
-                            if (intErrorCount == 0)
+                            if (errorCount == 0)
                             {
                                 LogError("Errors found in the MASIC Log File");
                             }
 
-                            LogWarning(" ... " + lineIn);
+                            if (errorCount <= 10)
+                                LogWarning(" ... " + dataLine);
 
-                            intErrorCount += 1;
+                            errorCount += 1;
                         }
+                    }
+
+                    if (errorCount > 10)
+                    {
+                        LogWarning(string.Format(" ... {0} total errors", errorCount));
                     }
                 }
 

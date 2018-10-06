@@ -336,18 +336,18 @@ namespace AnalysisManagerMSAlignPlugIn
 
                 // Open the input file and
                 // create the output file
-                using (var srInFile = new StreamReader(new FileStream(strSourceFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
-                using (var swOutFile = new StreamWriter(new FileStream(strTargetFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                using (var reader = new StreamReader(new FileStream(strSourceFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var writer = new StreamWriter(new FileStream(strTargetFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
-                    var strHeaderLine = "Prsm_ID\t" + "Spectrum_ID\t" + "Protein_Sequence_ID\t" + "Spectrum_ID\t" + "Scan(s)\t" + "#peaks\t" + "Charge\t" +
-                                        "Precursor_mass\t" + "Protein_name\t" + "Protein_mass\t" + "First_residue\t" + "Last_residue\t" + "Peptide\t" +
-                                        "#unexpected_modifications\t" + "#matched_peaks\t" + "#matched_fragment_ions\t" + "E-value";
+                    var headerLine = "Prsm_ID\t" + "Spectrum_ID\t" + "Protein_Sequence_ID\t" + "Spectrum_ID\t" + "Scan(s)\t" + "#peaks\t" + "Charge\t" +
+                                     "Precursor_mass\t" + "Protein_name\t" + "Protein_mass\t" + "First_residue\t" + "Last_residue\t" + "Peptide\t" +
+                                     "#unexpected_modifications\t" + "#matched_peaks\t" + "#matched_fragment_ions\t" + "E-value";
 
-                    swOutFile.WriteLine(strHeaderLine);
+                    writer.WriteLine(headerLine);
 
-                    while (!srInFile.EndOfStream)
+                    while (!reader.EndOfStream)
                     {
-                        swOutFile.WriteLine(srInFile.ReadLine());
+                        writer.WriteLine(reader.ReadLine());
                     }
                 }
 
@@ -383,11 +383,11 @@ namespace AnalysisManagerMSAlignPlugIn
                     return false;
                 }
 
-                using (var swNewFasta = new StreamWriter(new FileStream(strTargetFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                using (var writer = new StreamWriter(new FileStream(strTargetFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
                     while (oReader.ReadNextProteinEntry())
                     {
-                        swNewFasta.WriteLine(oReader.ProteinLineStartChar + oReader.HeaderLine);
+                        writer.WriteLine(oReader.ProteinLineStartChar + oReader.HeaderLine);
                         var strProteinResidues = reInvalidResidues.Replace(oReader.ProteinSequence, "-");
 
                         if (intWarningCount < 5 && strProteinResidues.GetHashCode() != oReader.ProteinSequence.GetHashCode())
@@ -401,7 +401,7 @@ namespace AnalysisManagerMSAlignPlugIn
                         while (intIndex < strProteinResidues.Length)
                         {
                             var intLength = Math.Min(RESIDUES_PER_LINE, intResidueCount - intIndex);
-                            swNewFasta.WriteLine(strProteinResidues.Substring(intIndex, intLength));
+                            writer.WriteLine(strProteinResidues.Substring(intIndex, intLength));
                             intIndex += RESIDUES_PER_LINE;
                         }
                     }
@@ -566,34 +566,34 @@ namespace AnalysisManagerMSAlignPlugIn
 
                 // Open the input file and
                 // Create the output file
-                using (var srInFile = new StreamReader(new FileStream(strParamFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
-                using (var swOutFile = new StreamWriter(new FileStream(strOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                using (var reader = new StreamReader(new FileStream(strParamFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var writer = new StreamWriter(new FileStream(strOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
                     // Write out the database name and input file name
                     if (eMSAlignVersion == eMSAlignVersionType.v0pt5)
                     {
-                        swOutFile.WriteLine(DB_FILENAME_LEGACY + "=" + mInputPropertyValues.FastaFileName);
+                        writer.WriteLine(DB_FILENAME_LEGACY + "=" + mInputPropertyValues.FastaFileName);
                         // Input file name is assumed to be input_data
                     }
                     else
                     {
-                        swOutFile.WriteLine(DB_FILENAME + "=" + mInputPropertyValues.FastaFileName);
-                        swOutFile.WriteLine(SPEC_FILENAME + "=" + mInputPropertyValues.SpectrumFileName);
+                        writer.WriteLine(DB_FILENAME + "=" + mInputPropertyValues.FastaFileName);
+                        writer.WriteLine(SPEC_FILENAME + "=" + mInputPropertyValues.SpectrumFileName);
                     }
 
-                    while (!srInFile.EndOfStream)
+                    while (!reader.EndOfStream)
                     {
-                        var strLineIn = srInFile.ReadLine();
+                        var dataLine = reader.ReadLine();
 
-                        if (string.IsNullOrWhiteSpace(strLineIn) || strLineIn.TrimStart().StartsWith("#"))
+                        if (string.IsNullOrWhiteSpace(dataLine) || dataLine.TrimStart().StartsWith("#"))
                         {
                             // Comment line or blank line; write it out as-is
-                            swOutFile.WriteLine(strLineIn);
+                            writer.WriteLine(dataLine);
                             continue;
                         }
 
                         // Look for an equals sign
-                        var intEqualsIndex = strLineIn.IndexOf('=');
+                        var intEqualsIndex = dataLine.IndexOf('=');
 
                         if (intEqualsIndex <= 0)
                         {
@@ -602,12 +602,12 @@ namespace AnalysisManagerMSAlignPlugIn
                         }
 
                         // Split the line on the equals sign
-                        var strKeyName = strLineIn.Substring(0, intEqualsIndex).TrimEnd();
+                        var strKeyName = dataLine.Substring(0, intEqualsIndex).TrimEnd();
                         string strValue;
 
-                        if (intEqualsIndex < strLineIn.Length - 1)
+                        if (intEqualsIndex < dataLine.Length - 1)
                         {
-                            strValue = strLineIn.Substring(intEqualsIndex + 1).Trim();
+                            strValue = dataLine.Substring(intEqualsIndex + 1).Trim();
                         }
                         else
                         {
@@ -731,7 +731,7 @@ namespace AnalysisManagerMSAlignPlugIn
                                                 break;
                                         }
 
-                                        swOutFile.WriteLine(strLegacyKeyName + "=" + strValue);
+                                        writer.WriteLine(strLegacyKeyName + "=" + strValue);
                                     }
                                 }
                                 else
@@ -739,8 +739,8 @@ namespace AnalysisManagerMSAlignPlugIn
                                     if (eMSAlignVersion >= eMSAlignVersionType.v0pt7 && strKeyName.ToLower() == "eValueThreshold")
                                     {
                                         // v0.7 and up use cutoffType and cutoff instead of eValueThreshold
-                                        swOutFile.WriteLine("cutoffType=EVALUE");
-                                        swOutFile.WriteLine("cutoff=" + strValue);
+                                        writer.WriteLine("cutoffType=EVALUE");
+                                        writer.WriteLine("cutoff=" + strValue);
                                     }
                                     else if (eMSAlignVersion == eMSAlignVersionType.v0pt6 && strKeyName.ToLower() == CUTOFF_TYPE_KEY)
                                     {
@@ -754,7 +754,7 @@ namespace AnalysisManagerMSAlignPlugIn
                                         if (blnEValueCutoffType)
                                         {
                                             // v0.6 doesn't support the cutoff parameter, just eValueThreshold
-                                            swOutFile.WriteLine("eValueThreshold=" + strValue);
+                                            writer.WriteLine("eValueThreshold=" + strValue);
                                         }
                                         else
                                         {
@@ -767,7 +767,7 @@ namespace AnalysisManagerMSAlignPlugIn
                                     else
                                     {
                                         // Write out as-is
-                                        swOutFile.WriteLine(strLineIn);
+                                        writer.WriteLine(dataLine);
                                     }
                                 }
 
@@ -788,8 +788,8 @@ namespace AnalysisManagerMSAlignPlugIn
 
                     if (eMSAlignVersion != eMSAlignVersionType.v0pt5)
                     {
-                        swOutFile.WriteLine(TABLE_OUTPUT_FILENAME + "=" + mInputPropertyValues.ResultTableFileName);
-                        swOutFile.WriteLine(DETAIL_OUTPUT_FILENAME + "=" + mInputPropertyValues.ResultDetailsFileName);
+                        writer.WriteLine(TABLE_OUTPUT_FILENAME + "=" + mInputPropertyValues.ResultTableFileName);
+                        writer.WriteLine(DETAIL_OUTPUT_FILENAME + "=" + mInputPropertyValues.ResultDetailsFileName);
                     }
                 }
 
@@ -908,73 +908,73 @@ namespace AnalysisManagerMSAlignPlugIn
                     LogDebug("Parsing file " + strConsoleOutputFilePath);
                 }
 
-                short intActualProgress = 0;
+                short actualProgress = 0;
 
                 mConsoleOutputErrorMsg = string.Empty;
 
-                using (var srInFile = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
-                    var intLinesRead = 0;
-                    while (!srInFile.EndOfStream)
+                    var linesRead = 0;
+                    while (!reader.EndOfStream)
                     {
-                        var strLineIn = srInFile.ReadLine();
-                        intLinesRead += 1;
+                        var dataLine = reader.ReadLine();
+                        linesRead += 1;
 
-                        if (!string.IsNullOrWhiteSpace(strLineIn))
+                        if (!string.IsNullOrWhiteSpace(dataLine))
                         {
-                            if (intLinesRead <= 3)
+                            if (linesRead <= 3)
                             {
                                 // Originally the first line was the MSAlign version
                                 // Starting in November 2016, the first line is the command line and the second line is a separator (series of dashes)
                                 // The third line is the MSAlign version
-                                if (string.IsNullOrEmpty(mMSAlignVersion) && strLineIn.ToLower().Contains("ms-align"))
+                                if (string.IsNullOrEmpty(mMSAlignVersion) && dataLine.ToLower().Contains("ms-align"))
                                 {
                                     if (mDebugLevel >= 2 && string.IsNullOrWhiteSpace(mMSAlignVersion))
                                     {
-                                        LogDebug("MSAlign version: " + strLineIn);
+                                        LogDebug("MSAlign version: " + dataLine);
                                     }
 
-                                    mMSAlignVersion = string.Copy(strLineIn);
+                                    mMSAlignVersion = string.Copy(dataLine);
                                 }
                                 else
                                 {
-                                    if (strLineIn.ToLower().Contains("error"))
+                                    if (dataLine.ToLower().Contains("error"))
                                     {
                                         if (string.IsNullOrEmpty(mConsoleOutputErrorMsg))
                                         {
                                             mConsoleOutputErrorMsg = "Error running MSAlign:";
                                         }
-                                        mConsoleOutputErrorMsg += "; " + strLineIn;
+                                        mConsoleOutputErrorMsg += "; " + dataLine;
                                     }
                                 }
                             }
 
                             // Update progress if the line starts with Processing spectrum
-                            if (strLineIn.StartsWith("Processing spectrum"))
+                            if (dataLine.StartsWith("Processing spectrum"))
                             {
-                                var oMatch = reExtractPercentFinished.Match(strLineIn);
+                                var oMatch = reExtractPercentFinished.Match(dataLine);
                                 if (oMatch.Success)
                                 {
                                     if (short.TryParse(oMatch.Groups[1].Value, out var intProgress))
                                     {
-                                        intActualProgress = intProgress;
+                                        actualProgress = intProgress;
                                     }
                                 }
                             }
                             else if (string.IsNullOrEmpty(mConsoleOutputErrorMsg))
                             {
-                                if (strLineIn.ToLower().StartsWith("error"))
+                                if (dataLine.ToLower().StartsWith("error"))
                                 {
-                                    mConsoleOutputErrorMsg += "; " + strLineIn;
+                                    mConsoleOutputErrorMsg += "; " + dataLine;
                                 }
                             }
                         }
                     }
                 }
 
-                if (mProgress < intActualProgress)
+                if (mProgress < actualProgress)
                 {
-                    mProgress = intActualProgress;
+                    mProgress = actualProgress;
                 }
             }
             catch (Exception ex)
@@ -1047,22 +1047,22 @@ namespace AnalysisManagerMSAlignPlugIn
 
                 var strTrimmedFilePath = strConsoleOutputFilePath + ".trimmed";
 
-                using (var srInFile = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
-                using (var swOutFile = new StreamWriter(new FileStream(strTrimmedFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                using (var reader = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var writer = new StreamWriter(new FileStream(strTrimmedFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
                     var intScanNumberOutputThreshold = 0;
-                    while (!srInFile.EndOfStream)
+                    while (!reader.EndOfStream)
                     {
-                        var strLineIn = srInFile.ReadLine();
-                        if (string.IsNullOrWhiteSpace(strLineIn))
+                        var dataLine = reader.ReadLine();
+                        if (string.IsNullOrWhiteSpace(dataLine))
                         {
-                            swOutFile.WriteLine(strLineIn);
+                            writer.WriteLine(dataLine);
                             continue;
                         }
 
                         var blnKeepLine = true;
 
-                        var oMatch = reExtractScan.Match(strLineIn);
+                        var oMatch = reExtractScan.Match(dataLine);
                         if (oMatch.Success)
                         {
                             if (int.TryParse(oMatch.Groups[1].Value, out var intScanNumber))
@@ -1075,23 +1075,23 @@ namespace AnalysisManagerMSAlignPlugIn
                                 {
                                     // Write out this line and bump up intScanNumberOutputThreshold by 100
                                     intScanNumberOutputThreshold += 100;
-                                    strMostRecentProgressLineWritten = string.Copy(strLineIn);
+                                    strMostRecentProgressLineWritten = string.Copy(dataLine);
                                 }
                             }
-                            strMostRecentProgressLine = string.Copy(strLineIn);
+                            strMostRecentProgressLine = string.Copy(dataLine);
                         }
-                        else if (strLineIn.StartsWith("Deconvolution finished"))
+                        else if (dataLine.StartsWith("Deconvolution finished"))
                         {
                             // Possibly write out the most recent progress line
                             if (string.CompareOrdinal(strMostRecentProgressLine, strMostRecentProgressLineWritten) != 0)
                             {
-                                swOutFile.WriteLine(strMostRecentProgressLine);
+                                writer.WriteLine(strMostRecentProgressLine);
                             }
                         }
 
                         if (blnKeepLine)
                         {
-                            swOutFile.WriteLine(strLineIn);
+                            writer.WriteLine(dataLine);
                         }
                     }
                 }
@@ -1190,17 +1190,17 @@ namespace AnalysisManagerMSAlignPlugIn
             return true;
         }
 
-        protected bool ValidateResultTableFile(string strSourceFilePath)
+        protected bool ValidateResultTableFile(string sourceFilePath)
         {
             try
             {
-                var blnValidFile = false;
+                var validFile = false;
 
-                if (!File.Exists(strSourceFilePath))
+                if (!File.Exists(sourceFilePath))
                 {
                     if (mDebugLevel >= 2)
                     {
-                        LogWarning("MSAlign_ResultTable.txt file not found: " + strSourceFilePath);
+                        LogWarning("MSAlign_ResultTable.txt file not found: " + sourceFilePath);
                     }
                     return false;
                 }
@@ -1211,25 +1211,25 @@ namespace AnalysisManagerMSAlignPlugIn
                 }
 
                 // Open the input file
-                using (var srInFile = new StreamReader(new FileStream(strSourceFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(sourceFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
-                    while (!srInFile.EndOfStream)
+                    while (!reader.EndOfStream)
                     {
-                        var strLineIn = srInFile.ReadLine();
+                        var dataLine = reader.ReadLine();
 
-                        if (!string.IsNullOrEmpty(strLineIn))
+                        if (!string.IsNullOrEmpty(dataLine))
                         {
-                            var strSplitLine = strLineIn.Split('\t');
+                            var dataCols = dataLine.Split('\t');
 
-                            if (strSplitLine.Length > 1)
+                            if (dataCols.Length > 1)
                             {
                                 // Look for an integer in the first or second column
                                 // Version 0.5 and 0.6 had Prsm_ID in the first column
                                 // Version 0.7 moved Prsm_ID to the second column
-                                if (int.TryParse(strSplitLine[1], out _) || int.TryParse(strSplitLine[0], out _))
+                                if (int.TryParse(dataCols[1], out _) || int.TryParse(dataCols[0], out _))
                                 {
                                     // Integer found; line is valid
-                                    blnValidFile = true;
+                                    validFile = true;
                                     break;
                                 }
                             }
@@ -1237,7 +1237,7 @@ namespace AnalysisManagerMSAlignPlugIn
                     }
                 }
 
-                if (!blnValidFile)
+                if (!validFile)
                 {
                     LogError("MSAlign_ResultTable.txt file is empty");
                     return false;

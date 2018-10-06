@@ -394,16 +394,15 @@ namespace AnalysisManagerBase
 
                 var writeHeader = !File.Exists(logFilePath);
 
-                using (var swOutFile = new StreamWriter(new FileStream(logFilePath, FileMode.Append, FileAccess.Write, FileShare.Read)))
+                using (var writer = new StreamWriter(new FileStream(logFilePath, FileMode.Append, FileAccess.Write, FileShare.Read)))
                 {
 
                     if (writeHeader)
                     {
-                        swOutFile.WriteLine(GetMemoryUsageHeader());
+                        writer.WriteLine(GetMemoryUsageHeader());
                     }
 
-                    swOutFile.WriteLine(GetMemoryUsageSummary());
-
+                    writer.WriteLine(GetMemoryUsageSummary());
                 }
 
                 ArchiveOldLogs(logFilePath);

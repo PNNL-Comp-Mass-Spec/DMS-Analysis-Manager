@@ -59,15 +59,15 @@ namespace AnalysisManagerBase
             mDerivedClassName = derivedClassName;
         }
 
-        private bool IsLockQueueLogMessageNeeded(ref DateTime dtLockQueueWaitTimeStart, ref DateTime dtLastLockQueueWaitTimeLog)
+        private bool IsLockQueueLogMessageNeeded(ref DateTime lockQueueWaitTimeStart, ref DateTime lastLockQueueWaitTimeLog)
         {
 
             int waitTimeLogIntervalSeconds;
 
-            if (dtLockQueueWaitTimeStart == DateTime.MinValue)
-                dtLockQueueWaitTimeStart = DateTime.UtcNow;
+            if (lockQueueWaitTimeStart == DateTime.MinValue)
+                lockQueueWaitTimeStart = DateTime.UtcNow;
 
-            var waitTimeMinutes = DateTime.UtcNow.Subtract(dtLockQueueWaitTimeStart).TotalMinutes;
+            var waitTimeMinutes = DateTime.UtcNow.Subtract(lockQueueWaitTimeStart).TotalMinutes;
 
             if (waitTimeMinutes >= 30)
             {
@@ -84,7 +84,7 @@ namespace AnalysisManagerBase
                 waitTimeLogIntervalSeconds = 30;
             }
 
-            if (DateTime.UtcNow.Subtract(dtLastLockQueueWaitTimeLog).TotalSeconds >= waitTimeLogIntervalSeconds)
+            if (DateTime.UtcNow.Subtract(lastLockQueueWaitTimeLog).TotalSeconds >= waitTimeLogIntervalSeconds)
             {
                 return true;
             }

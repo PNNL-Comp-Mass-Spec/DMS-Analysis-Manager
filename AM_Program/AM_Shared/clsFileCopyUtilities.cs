@@ -440,9 +440,9 @@ namespace AnalysisManagerBase
 
                 infoFilePath = DestFilePath + STORAGE_PATH_INFO_FILE_SUFFIX;
 
-                using (var swOutFile = new StreamWriter(new FileStream(infoFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                using (var writer = new StreamWriter(new FileStream(infoFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
-                    swOutFile.WriteLine(sourceFilePath);
+                    writer.WriteLine(sourceFilePath);
                 }
 
             }

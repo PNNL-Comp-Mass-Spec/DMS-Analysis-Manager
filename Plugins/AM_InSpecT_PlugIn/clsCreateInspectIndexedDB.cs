@@ -247,10 +247,10 @@ namespace AnalysisManagerInSpecTPlugIn
         {
             try
             {
-                using (var sw = new StreamWriter(strLockFilePath))
+                using (var writer = new StreamWriter(strLockFilePath))
                 {
                     // Add Date and time to the file.
-                    sw.WriteLine(DateTime.Now);
+                    writer.WriteLine(DateTime.Now);
                 }
             }
             catch (Exception ex)

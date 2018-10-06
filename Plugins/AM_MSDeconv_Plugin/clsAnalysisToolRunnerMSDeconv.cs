@@ -247,65 +247,65 @@ namespace AnalysisManagerMSDeconvPlugIn
                     LogDebug("Parsing file " + strConsoleOutputFilePath);
                 }
 
-                short intActualProgress = 0;
+                short actualProgress = 0;
 
                 mConsoleOutputErrorMsg = string.Empty;
 
-                using (var srInFile = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
-                    var intLinesRead = 0;
-                    while (!srInFile.EndOfStream)
+                    var linesRead = 0;
+                    while (!reader.EndOfStream)
                     {
-                        var strLineIn = srInFile.ReadLine();
-                        intLinesRead += 1;
+                        var dataLine = reader.ReadLine();
+                        linesRead += 1;
 
-                        if (!string.IsNullOrWhiteSpace(strLineIn))
+                        if (!string.IsNullOrWhiteSpace(dataLine))
                         {
-                            if (intLinesRead <= 3)
+                            if (linesRead <= 3)
                             {
                                 // Originally the first line was the MS-Deconv version
                                 // Starting in November 2016, the first line is the command line and the second line is a separator (series of dashes)
                                 // The third line is the MSDeconv version
-                                if (string.IsNullOrEmpty(mMSDeconvVersion) && strLineIn.ToLower().Contains("ms-deconv"))
+                                if (string.IsNullOrEmpty(mMSDeconvVersion) && dataLine.ToLower().Contains("ms-deconv"))
                                 {
                                     if (mDebugLevel >= 2 && string.IsNullOrWhiteSpace(mMSDeconvVersion))
                                     {
-                                        LogDebug("MSDeconv version: " + strLineIn);
+                                        LogDebug("MSDeconv version: " + dataLine);
                                     }
 
-                                    mMSDeconvVersion = string.Copy(strLineIn);
+                                    mMSDeconvVersion = string.Copy(dataLine);
                                 }
                                 else
                                 {
-                                    if (strLineIn.ToLower().Contains("error"))
+                                    if (dataLine.ToLower().Contains("error"))
                                     {
                                         if (string.IsNullOrEmpty(mConsoleOutputErrorMsg))
                                         {
                                             mConsoleOutputErrorMsg = "Error running MSDeconv:";
                                         }
-                                        mConsoleOutputErrorMsg += "; " + strLineIn;
+                                        mConsoleOutputErrorMsg += "; " + dataLine;
                                     }
                                 }
                             }
                             else
                             {
                                 // Update progress if the line starts with Processing spectrum
-                                if (strLineIn.StartsWith("Processing spectrum"))
+                                if (dataLine.StartsWith("Processing spectrum"))
                                 {
-                                    var oMatch = reExtractPercentFinished.Match(strLineIn);
+                                    var oMatch = reExtractPercentFinished.Match(dataLine);
                                     if (oMatch.Success)
                                     {
                                         if (short.TryParse(oMatch.Groups[1].Value, out var intProgress))
                                         {
-                                            intActualProgress = intProgress;
+                                            actualProgress = intProgress;
                                         }
                                     }
                                 }
                                 else if (string.IsNullOrEmpty(mConsoleOutputErrorMsg))
                                 {
-                                    if (strLineIn.ToLower().StartsWith("error"))
+                                    if (dataLine.ToLower().StartsWith("error"))
                                     {
-                                        mConsoleOutputErrorMsg += "; " + strLineIn;
+                                        mConsoleOutputErrorMsg += "; " + dataLine;
                                     }
                                 }
                             }
@@ -313,9 +313,9 @@ namespace AnalysisManagerMSDeconvPlugIn
                     }
                 }
 
-                if (mProgress < intActualProgress)
+                if (mProgress < actualProgress)
                 {
-                    mProgress = intActualProgress;
+                    mProgress = actualProgress;
                 }
             }
             catch (Exception ex)
@@ -534,23 +534,23 @@ namespace AnalysisManagerMSDeconvPlugIn
 
                 var strTrimmedFilePath = strConsoleOutputFilePath + ".trimmed";
 
-                using (var srInFile = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
-                using (var swOutFile = new StreamWriter(new FileStream(strTrimmedFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                using (var reader = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var writer = new StreamWriter(new FileStream(strTrimmedFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
                     var intScanNumberOutputThreshold = 0;
-                    while (!srInFile.EndOfStream)
+                    while (!reader.EndOfStream)
                     {
-                        var strLineIn = srInFile.ReadLine();
+                        var dataLine = reader.ReadLine();
 
-                        if (string.IsNullOrWhiteSpace(strLineIn))
+                        if (string.IsNullOrWhiteSpace(dataLine))
                         {
-                            swOutFile.WriteLine(strLineIn);
+                            writer.WriteLine(dataLine);
                             continue;
                         }
 
                         var blnKeepLine = true;
 
-                        var oMatch = reExtractScan.Match(strLineIn);
+                        var oMatch = reExtractScan.Match(dataLine);
                         if (oMatch.Success)
                         {
                             if (int.TryParse(oMatch.Groups[1].Value, out var intScanNumber))
@@ -563,23 +563,23 @@ namespace AnalysisManagerMSDeconvPlugIn
                                 {
                                     // Write out this line and bump up intScanNumberOutputThreshold by 100
                                     intScanNumberOutputThreshold += 100;
-                                    strMostRecentProgressLineWritten = string.Copy(strLineIn);
+                                    strMostRecentProgressLineWritten = string.Copy(dataLine);
                                 }
                             }
-                            strMostRecentProgressLine = string.Copy(strLineIn);
+                            strMostRecentProgressLine = string.Copy(dataLine);
                         }
-                        else if (strLineIn.StartsWith("Deconvolution finished"))
+                        else if (dataLine.StartsWith("Deconvolution finished"))
                         {
                             // Possibly write out the most recent progress line
                             if (!clsGlobal.IsMatch(strMostRecentProgressLine, strMostRecentProgressLineWritten))
                             {
-                                swOutFile.WriteLine(strMostRecentProgressLine);
+                                writer.WriteLine(strMostRecentProgressLine);
                             }
                         }
 
                         if (blnKeepLine)
                         {
-                            swOutFile.WriteLine(strLineIn);
+                            writer.WriteLine(dataLine);
                         }
                     }
                 }

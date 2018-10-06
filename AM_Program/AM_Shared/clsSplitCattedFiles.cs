@@ -41,68 +41,23 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Call SplitCattedDTAsOnly and SplitCattedOutsOnly for the given dataset
-        /// </summary>
-        /// <param name="datasetName"></param>
-        /// <param name="resultsFolderPath"></param>
-        /// <returns></returns>
-        public bool SplitCattedDTAsAndOuts(string datasetName, string resultsFolderPath)
-        {
-            var success1 = SplitCattedDTAsOnly(datasetName, resultsFolderPath);
-            var success2 = SplitCattedOutsOnly(datasetName, resultsFolderPath);
-
-            return success1 && success2;
-        }
-
-        /// <summary>
         /// Split a _dta.txt file into individual .dta files
         /// </summary>
         /// <param name="datasetName"></param>
         /// <param name="resultsFolderPath"></param>
+        /// <param name="filesToSkip">Files to skip</param>
         /// <returns></returns>
-        public bool SplitCattedDTAsOnly(string datasetName, string resultsFolderPath)
+        public bool SplitCattedDTAsOnly(string datasetName, string resultsFolderPath, SortedSet<string> filesToSkip)
         {
-            return SplitCattedDTAsOnly(datasetName, resultsFolderPath, new SortedSet<string>());
-        }
-
-        /// <summary>
-        /// Split a _dta.txt file into individual .dta files
-        /// </summary>
-        /// <param name="datasetName"></param>
-        /// <param name="resultsFolderPath"></param>
-        /// <param name="lstFilesToSkip">Files to skip</param>
-        /// <returns></returns>
-        public bool SplitCattedDTAsOnly(string datasetName, string resultsFolderPath, List<string> lstFilesToSkip)
-        {
-
-            var lstFilesToSkipSortedSet = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
-
-            foreach (var entry in lstFilesToSkip)
-            {
-                lstFilesToSkipSortedSet.Add(entry);
-            }
-
-            return SplitCattedDTAsOnly(datasetName, resultsFolderPath, lstFilesToSkipSortedSet);
-        }
-
-        /// <summary>
-        /// Split a _dta.txt file into individual .dta files
-        /// </summary>
-        /// <param name="datasetName"></param>
-        /// <param name="resultsFolderPath"></param>
-        /// <param name="lstFilesToSkip">Files to skip</param>
-        /// <returns></returns>
-        public bool SplitCattedDTAsOnly(string datasetName, string resultsFolderPath, SortedSet<string> lstFilesToSkip)
-        {
-            var fullPath = Path.Combine(resultsFolderPath, datasetName + clsAnalysisResources.CDTA_EXTENSION);
-            var fi = new FileInfo(fullPath);
-            if (fi.Exists)
+            var cdtaFilePath = Path.Combine(resultsFolderPath, datasetName + clsAnalysisResources.CDTA_EXTENSION);
+            var cdtaFile = new FileInfo(cdtaFilePath);
+            if (cdtaFile.Exists)
             {
                 if (mResultsFileCount <= 0)
                 {
-                    CountOutFiles(fullPath);
+                    CountFilesInConcatenatedTextFile(cdtaFilePath);
                 }
-                return SplitCattedFile(fullPath, lstFilesToSkip);
+                return SplitCattedFile(cdtaFilePath, filesToSkip);
             }
 
             return false;
@@ -116,47 +71,18 @@ namespace AnalysisManagerBase
         /// <returns></returns>
         public bool SplitCattedOutsOnly(string datasetName, string resultsFolderPath)
         {
-            return SplitCattedOutsOnly(datasetName, resultsFolderPath, new SortedSet<string>());
-        }
-
-        /// <summary>
-        /// Split an _out.txt file into individual .out files
-        /// </summary>
-        /// <param name="datasetName"></param>
-        /// <param name="resultsFolderPath"></param>
-        /// <param name="lstFilesToSkip">Files to skip</param>
-        /// <returns></returns>
-        public bool SplitCattedOutsOnly(string datasetName, string resultsFolderPath, List<string> lstFilesToSkip)
-        {
-
-            var lstFilesToSkipSortedSet = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
-
-            foreach (var entry in lstFilesToSkip)
-            {
-                lstFilesToSkipSortedSet.Add(entry);
-            }
-
-            return SplitCattedOutsOnly(datasetName, resultsFolderPath, lstFilesToSkipSortedSet);
-        }
-
-        /// <summary>
-        /// Split an _out.txt file into individual .out files
-        /// </summary>
-        /// <param name="datasetName"></param>
-        /// <param name="resultsFolderPath"></param>
-        /// <param name="lstFilesToSkip">Files to skip</param>
-        /// <returns></returns>
-        public bool SplitCattedOutsOnly(string datasetName, string resultsFolderPath, SortedSet<string> lstFilesToSkip)
-        {
-            var fullPath = Path.Combine(resultsFolderPath, datasetName + "_out.txt");
-            var fi = new FileInfo(fullPath);
-            if (fi.Exists)
+            var outFilePath = Path.Combine(resultsFolderPath, datasetName + "_out.txt");
+            var outFile = new FileInfo(outFilePath);
+            if (outFile.Exists)
             {
                 if (mResultsFileCount <= 0)
                 {
-                    CountOutFiles(fullPath);
+                    CountFilesInConcatenatedTextFile(outFilePath);
                 }
-                return SplitCattedFile(fullPath, lstFilesToSkip);
+
+                var filesToSkip = new SortedSet<string>();
+
+                return SplitCattedFile(outFilePath, filesToSkip);
             }
 
             return false;
@@ -166,9 +92,9 @@ namespace AnalysisManagerBase
         /// Split a concatenated _DTA.txt or _Out.txt file into individual .dta or .out files
         /// </summary>
         /// <param name="filePath">Source _DTA.txt or _Out.txt file</param>
-        /// <param name="lstFilesToSkip">Files to skip (full .dta or .out file name)</param>
+        /// <param name="filesToSkip">Files to skip (full .dta or .out file name)</param>
         /// <remarks></remarks>
-        private bool SplitCattedFile(string filePath, SortedSet<string> lstFilesToSkip)
+        private bool SplitCattedFile(string filePath, SortedSet<string> filesToSkip)
         {
             var fileText = new Queue<string>();
             var fileCounter = 0;
@@ -176,30 +102,30 @@ namespace AnalysisManagerBase
 
             var resultsFolder = Path.GetDirectoryName(filePath);
 
-            var fiSourceFile = new FileInfo(filePath);
+            var sourceFile = new FileInfo(filePath);
 
-            if (!fiSourceFile.Exists)
+            if (!sourceFile.Exists)
             {
                 throw new FileNotFoundException("Error in SplitCattedFile, File not found: " + filePath);
             }
 
-            if (fiSourceFile.Length == 0)
+            if (sourceFile.Length == 0)
             {
                 throw new FileNotFoundException("Error in SplitCattedFile, file is empty (zero-bytes): " + filePath);
             }
 
             try
             {
-                using (var srInFile = new StreamReader(new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                using (var reader = new StreamReader(new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
                 {
 
-                    while (!srInFile.EndOfStream)
+                    while (!reader.EndOfStream)
                     {
-                        var s = srInFile.ReadLine();
-                        if (s == null)
+                        var dataLine = reader.ReadLine();
+                        if (dataLine == null)
                             continue;
 
-                        var fileSepMatch = mFileSeparator.Match(s);
+                        var fileSepMatch = mFileSeparator.Match(dataLine);
 
                         if (fileSepMatch.Success)
                         {
@@ -208,7 +134,7 @@ namespace AnalysisManagerBase
                             if (fileCounter > 0)
                             {
                                 // Process the data stored in queue fileText, saving to file fileName
-                                ProcessSplitFile(ref fileText, fileName, resultsFolder, ref lstFilesToSkip);
+                                ProcessSplitFile(ref fileText, fileName, resultsFolder, ref filesToSkip);
                             }
 
                             if (fileNameParts.Success)
@@ -227,20 +153,20 @@ namespace AnalysisManagerBase
                             fileCounter += 1;
                             fileText.Clear();
 
-                            if (!srInFile.EndOfStream)
+                            if (!reader.EndOfStream)
                             {
-                                s = srInFile.ReadLine();
+                                dataLine = reader.ReadLine();
                             }
                             else
                             {
-                                s = string.Empty;
+                                dataLine = string.Empty;
                             }
 
                         }
 
                         if (fileCounter > 0)
                         {
-                            fileText.Enqueue(s);
+                            fileText.Enqueue(dataLine);
                         }
 
                     }
@@ -248,7 +174,7 @@ namespace AnalysisManagerBase
                 }
 
                 // Process the data stored in queue fileText, saving to file fileName
-                ProcessSplitFile(ref fileText, fileName, resultsFolder, ref lstFilesToSkip);
+                ProcessSplitFile(ref fileText, fileName, resultsFolder, ref filesToSkip);
 
             }
             catch (Exception ex)
@@ -264,16 +190,16 @@ namespace AnalysisManagerBase
             return false;
         }
 
-        private void ProcessSplitFile(ref Queue<string> fileText, string exportFileName, string resultsFolder, ref SortedSet<string> lstFilesToSkip)
+        private void ProcessSplitFile(ref Queue<string> fileText, string exportFileName, string resultsFolder, ref SortedSet<string> filesToSkip)
         {
-            if (lstFilesToSkip.Contains(exportFileName))
+            if (filesToSkip.Contains(exportFileName))
             {
                 // Empty the queue and skip this file
                 fileText.Clear();
                 return;
             }
 
-            using (var swOutFile = new StreamWriter(new FileStream(Path.Combine(resultsFolder, exportFileName), FileMode.Create, FileAccess.Write, FileShare.Read)))
+            using (var writer = new StreamWriter(new FileStream(Path.Combine(resultsFolder, exportFileName), FileMode.Create, FileAccess.Write, FileShare.Read)))
             {
 
                 if (fileText.Count > 0 && mDTAFirstLine.IsMatch(fileText.Peek()))
@@ -292,13 +218,13 @@ namespace AnalysisManagerBase
                     {
                         // This code should never be reached since we used Me.r_DTAFirstLine.IsMatch() to check the line in the first place
                     }
-                    swOutFile.WriteLine(outputLine);
+                    writer.WriteLine(outputLine);
                 }
 
                 while (fileText.Count > 0)
                 {
                     var outputLine = fileText.Dequeue();
-                    swOutFile.WriteLine(outputLine);
+                    writer.WriteLine(outputLine);
                 }
 
             }
@@ -306,30 +232,34 @@ namespace AnalysisManagerBase
 
         }
 
-        private void CountOutFiles(string filePath)
+        /// <summary>
+        /// Count the number of .out or .dta files in a _out.txt or _dta.txt file
+        /// </summary>
+        /// <param name="concatenatedFilePath"></param>
+        private void CountFilesInConcatenatedTextFile(string concatenatedFilePath)
         {
-            var fi = new FileInfo(filePath);
-            var outFileCount = 0;
+            var concatenatedFile = new FileInfo(concatenatedFilePath);
+            var fileCount = 0;
 
-            var r = new Regex("^===*", RegexOptions.Compiled);
+            var reOutFileSepMatcher = new Regex("^===*", RegexOptions.Compiled);
 
-            if (!fi.Exists)
+            if (!concatenatedFile.Exists)
             {
                 mResultsFileCount = 0;
                 return;
             }
 
-            using (var srInFile = new StreamReader(new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
+            using (var reader = new StreamReader(new FileStream(concatenatedFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
             {
-                while (!srInFile.EndOfStream)
+                while (!reader.EndOfStream)
                 {
-                    var s = srInFile.ReadLine();
-                    if (s != null && r.IsMatch(s))
-                        outFileCount += 1;
+                    var dataLine = reader.ReadLine();
+                    if (dataLine != null && reOutFileSepMatcher.IsMatch(dataLine))
+                        fileCount += 1;
                 }
             }
 
-            mResultsFileCount = outFileCount;
+            mResultsFileCount = fileCount;
         }
 
     }

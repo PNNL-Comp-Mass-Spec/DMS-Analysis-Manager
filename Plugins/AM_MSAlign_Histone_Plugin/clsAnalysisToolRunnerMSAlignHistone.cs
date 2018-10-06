@@ -148,7 +148,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                 }
 
                 // Initialize the files in the input folder
-                if (!InitializeInputFolder(mMSAlignWorkFolderPath, eMSalignVersion))
+                if (!InitializeInputFolder(mMSAlignWorkFolderPath))
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -344,11 +344,11 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                     return false;
                 }
 
-                using (var swNewFasta = new StreamWriter(new FileStream(strTargetFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                using (var writer = new StreamWriter(new FileStream(strTargetFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
                     while (oReader.ReadNextProteinEntry())
                     {
-                        swNewFasta.WriteLine(oReader.ProteinLineStartChar + oReader.HeaderLine);
+                        writer.WriteLine(oReader.ProteinLineStartChar + oReader.HeaderLine);
                         var strProteinResidues = reInvalidResidues.Replace(oReader.ProteinSequence, "-");
 
                         if (intWarningCount < 5 && strProteinResidues.GetHashCode() != oReader.ProteinSequence.GetHashCode())
@@ -362,7 +362,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                         while (intIndex < strProteinResidues.Length)
                         {
                             var intLength = Math.Min(RESIDUES_PER_LINE, intResidueCount - intIndex);
-                            swNewFasta.WriteLine(strProteinResidues.Substring(intIndex, intLength));
+                            writer.WriteLine(strProteinResidues.Substring(intIndex, intLength));
                             intIndex += RESIDUES_PER_LINE;
                         }
                     }
@@ -499,7 +499,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
             return true;
         }
 
-        protected bool CreateMSAlignCommandLine(string strParamFilePath, out string strCommandLine)
+        protected bool CreateMSAlignCommandLine(string paramFilePath, out string commandLine)
         {
             // MSAlign_Histone syntax
             //
@@ -530,7 +530,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
             const string INSTRUMENT_ACTIVATION_TYPE_KEY = "activation";
             const string SEARCH_TYPE_KEY = "search";
 
-            strCommandLine = string.Empty;
+            commandLine = string.Empty;
 
             try
             {
@@ -548,54 +548,54 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                 };
 
                 // Open the parameter file
-                using (var srInFile = new StreamReader(new FileStream(strParamFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(paramFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
                     // The first two parameters on the command line are Fasta File name and input file name
-                    strCommandLine += mInputPropertyValues.FastaFileName + " " + mInputPropertyValues.SpectrumFileName;
+                    commandLine += mInputPropertyValues.FastaFileName + " " + mInputPropertyValues.SpectrumFileName;
 
                     // Now append the parameters defined in the parameter file
-                    while (!srInFile.EndOfStream)
+                    while (!reader.EndOfStream)
                     {
-                        var strLineIn = srInFile.ReadLine();
+                        var dataLine = reader.ReadLine();
 
-                        if (string.IsNullOrWhiteSpace(strLineIn) || strLineIn.TrimStart().StartsWith("#"))
+                        if (string.IsNullOrWhiteSpace(dataLine) || dataLine.TrimStart().StartsWith("#"))
                         {
                             // Comment line or blank line; skip it
                             continue;
                         }
 
                         // Look for an equals sign
-                        var intEqualsIndex = strLineIn.IndexOf('=');
+                        var equalsIndex = dataLine.IndexOf('=');
 
-                        if (intEqualsIndex <= 0)
+                        if (equalsIndex <= 0)
                         {
                             // Unknown line format; skip it
                             continue;
                         }
 
                         // Split the line on the equals sign
-                        var strKeyName = strLineIn.Substring(0, intEqualsIndex).TrimEnd();
-                        string strValue;
-                        if (intEqualsIndex < strLineIn.Length - 1)
+                        var keyName = dataLine.Substring(0, equalsIndex).TrimEnd();
+                        string value;
+                        if (equalsIndex < dataLine.Length - 1)
                         {
-                            strValue = strLineIn.Substring(intEqualsIndex + 1).Trim();
+                            value = dataLine.Substring(equalsIndex + 1).Trim();
                         }
                         else
                         {
-                            strValue = string.Empty;
+                            value = string.Empty;
                         }
 
-                        if (strKeyName.ToLower() == INSTRUMENT_ACTIVATION_TYPE_KEY)
+                        if (keyName.ToLower() == INSTRUMENT_ACTIVATION_TYPE_KEY)
                         {
                             // If this is a bruker dataset, we need to make sure that the value for this entry is not FILE
                             // The reason is that the mzXML file created by Bruker's compass program does not include the scantype information (CID, ETD, etc.)
-                            var strToolName = mJobParams.GetParam("ToolName");
+                            var toolName = mJobParams.GetParam("ToolName");
 
-                            if (strToolName == "MSAlign_Bruker" || strToolName == "MSAlign_Histone_Bruker")
+                            if (toolName == "MSAlign_Bruker" || toolName == "MSAlign_Histone_Bruker")
                             {
-                                if (strValue.ToUpper() == "FILE")
+                                if (value.ToUpper() == "FILE")
                                 {
-                                    mMessage = "Must specify an explicit scan type for " + strKeyName +
+                                    mMessage = "Must specify an explicit scan type for " + keyName +
                                                 " in the MSAlign parameter file (CID, HCD, or ETD)";
 
                                     LogError(mMessage + "; this is required because Bruker-created mzXML files " +
@@ -606,14 +606,14 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                             }
                         }
 
-                        if (strKeyName.ToLower() == SEARCH_TYPE_KEY)
+                        if (keyName.ToLower() == SEARCH_TYPE_KEY)
                         {
-                            if (strValue.ToUpper() == "TARGET+DECOY")
+                            if (value.ToUpper() == "TARGET+DECOY")
                             {
                                 // Make sure the protein collection is not a Decoy protein collection
-                                var strProteinOptions = mJobParams.GetParam("ProteinOptions");
+                                var proteinOptions = mJobParams.GetParam("ProteinOptions");
 
-                                if (strProteinOptions.ToLower().Contains("seq_direction=decoy"))
+                                if (proteinOptions.ToLower().Contains("seq_direction=decoy"))
                                 {
                                     mMessage =
                                         "MSAlign parameter file contains searchType=TARGET+DECOY; " +
@@ -626,13 +626,13 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                             }
                         }
 
-                        if (dctParameterMap.TryGetValue(strKeyName, out var strSwitch))
+                        if (dctParameterMap.TryGetValue(keyName, out var switchName))
                         {
-                            strCommandLine += " -" + strSwitch + " " + strValue;
+                            commandLine += " -" + switchName + " " + value;
                         }
                         else
                         {
-                            LogWarning("Ignoring unrecognized MSAlign_Histone parameter: " + strKeyName);
+                            LogWarning("Ignoring unrecognized MSAlign_Histone parameter: " + keyName);
                         }
 
                     }
@@ -666,7 +666,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
             return dctResultFiles;
         }
 
-        protected bool InitializeInputFolder(string strMSAlignWorkFolderPath, eMSAlignVersionType eMSalignVersion)
+        protected bool InitializeInputFolder(string strMSAlignWorkFolderPath)
         {
             try
             {
@@ -677,8 +677,8 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                 // Thus, we will read the source file with a reader and create a new fasta file
 
                 // Define the path to the fasta file
-                var OrgDbDir = mMgrParams.GetParam("OrgDbDir");
-                var strFASTAFilePath = Path.Combine(OrgDbDir, mJobParams.GetParam("PeptideSearch", "generatedFastaName"));
+                var orgDbDir = mMgrParams.GetParam("OrgDbDir");
+                var strFASTAFilePath = Path.Combine(orgDbDir, mJobParams.GetParam("PeptideSearch", "generatedFastaName"));
 
                 var fiFastaFile = new FileInfo(strFASTAFilePath);
 
@@ -787,17 +787,17 @@ namespace AnalysisManagerMSAlignHistonePlugIn
         /// <summary>
         /// Parse the MSAlign console output file to determine the MSAlign version and to track the search progress
         /// </summary>
-        /// <param name="strConsoleOutputFilePath"></param>
+        /// <param name="consoleOutputFilePath"></param>
         /// <remarks></remarks>
-        private void ParseConsoleOutputFile(string strConsoleOutputFilePath)
+        private void ParseConsoleOutputFile(string consoleOutputFilePath)
         {
             try
             {
-                if (!File.Exists(strConsoleOutputFilePath))
+                if (!File.Exists(consoleOutputFilePath))
                 {
                     if (mDebugLevel >= 4)
                     {
-                        LogDebug("Console output file not found: " + strConsoleOutputFilePath);
+                        LogDebug("Console output file not found: " + consoleOutputFilePath);
                     }
 
                     return;
@@ -805,77 +805,77 @@ namespace AnalysisManagerMSAlignHistonePlugIn
 
                 if (mDebugLevel >= 4)
                 {
-                    LogDebug("Parsing file " + strConsoleOutputFilePath);
+                    LogDebug("Parsing file " + consoleOutputFilePath);
                 }
 
-                short intActualProgress = 0;
+                short actualProgress = 0;
 
                 mConsoleOutputErrorMsg = string.Empty;
 
-                using (var srInFile = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(consoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
-                    var intLinesRead = 0;
-                    while (!srInFile.EndOfStream)
+                    var linesRead = 0;
+                    while (!reader.EndOfStream)
                     {
-                        var strLineIn = srInFile.ReadLine();
-                        intLinesRead += 1;
+                        var dataLine = reader.ReadLine();
+                        linesRead += 1;
 
-                        if (!string.IsNullOrWhiteSpace(strLineIn))
+                        if (!string.IsNullOrWhiteSpace(dataLine))
                         {
-                            if (intLinesRead <= 4 && string.IsNullOrEmpty(mConsoleOutputErrorMsg))
+                            if (linesRead <= 4 && string.IsNullOrEmpty(mConsoleOutputErrorMsg))
                             {
                                 // Originally the second line was the MSAlign version
                                 // Starting in November 2016, the first line is the command line and the second line is a separator (series of dashes)
                                 // The fourth line is the MSAlign version
-                                if (string.IsNullOrEmpty(mMSAlignVersion) && strLineIn.ToLower().Contains("ms-align"))
+                                if (string.IsNullOrEmpty(mMSAlignVersion) && dataLine.ToLower().Contains("ms-align"))
                                 {
                                     if (mDebugLevel >= 2 && string.IsNullOrWhiteSpace(mMSAlignVersion))
                                     {
-                                        LogDebug("MSAlign version: " + strLineIn);
+                                        LogDebug("MSAlign version: " + dataLine);
                                     }
 
-                                    mMSAlignVersion = string.Copy(strLineIn);
+                                    mMSAlignVersion = string.Copy(dataLine);
                                 }
                                 else
                                 {
-                                    if (strLineIn.ToLower().Contains("error") || strLineIn.Contains("[ java.lang"))
+                                    if (dataLine.ToLower().Contains("error") || dataLine.Contains("[ java.lang"))
                                     {
-                                        mConsoleOutputErrorMsg = "Error running MSAlign: " + strLineIn;
+                                        mConsoleOutputErrorMsg = "Error running MSAlign: " + dataLine;
                                     }
                                 }
                             }
 
                             if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))
                             {
-                                mConsoleOutputErrorMsg += "; " + strLineIn;
+                                mConsoleOutputErrorMsg += "; " + dataLine;
                             }
                             else
                             {
                                 // Update progress if the line starts with Processing spectrum
-                                if (strLineIn.IndexOf("Processing spectrum", StringComparison.Ordinal) >= 0)
+                                if (dataLine.IndexOf("Processing spectrum", StringComparison.Ordinal) >= 0)
                                 {
-                                    var oMatch = reExtractPercentFinished.Match(strLineIn);
+                                    var oMatch = reExtractPercentFinished.Match(dataLine);
                                     if (oMatch.Success)
                                     {
                                         if (short.TryParse(oMatch.Groups[1].Value, out var intProgress))
                                         {
-                                            intActualProgress = intProgress;
+                                            actualProgress = intProgress;
                                         }
                                     }
                                 }
-                                else if (strLineIn.Contains("[ java.lang"))
+                                else if (dataLine.Contains("[ java.lang"))
                                 {
                                     // This is likely an exception
-                                    mConsoleOutputErrorMsg = "Error running MSAlign: " + strLineIn;
+                                    mConsoleOutputErrorMsg = "Error running MSAlign: " + dataLine;
                                 }
                             }
                         }
                     }
                 }
 
-                if (mProgress < intActualProgress)
+                if (mProgress < actualProgress)
                 {
-                    mProgress = intActualProgress;
+                    mProgress = actualProgress;
                 }
             }
             catch (Exception ex)
@@ -883,7 +883,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                 // Ignore errors here
                 if (mDebugLevel >= 2)
                 {
-                    LogError("Error parsing console output file (" + strConsoleOutputFilePath + ")", ex);
+                    LogError("Error parsing console output file (" + consoleOutputFilePath + ")", ex);
                 }
             }
         }
@@ -1026,7 +1026,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
             try
             {
                 var blnValidDataFound = false;
-                var intLinesRead = 0;
+                var linesRead = 0;
 
                 var strOutputFilePath = Path.Combine(mWorkDir, mDatasetName + RESULT_TABLE_NAME_SUFFIX);
 
@@ -1050,25 +1050,25 @@ namespace AnalysisManagerMSAlignHistonePlugIn
 
                 // Open the input file and
                 // create the output file
-                using (var srInFile = new StreamReader(new FileStream(strSourceFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
-                using (var swOutFile = new StreamWriter(new FileStream(strOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                using (var reader = new StreamReader(new FileStream(strSourceFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var writer = new StreamWriter(new FileStream(strOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
-                    while (!srInFile.EndOfStream)
+                    while (!reader.EndOfStream)
                     {
-                        var strLineIn = srInFile.ReadLine();
-                        intLinesRead += 1;
+                        var dataLine = reader.ReadLine();
+                        linesRead += 1;
 
-                        if (!string.IsNullOrEmpty(strLineIn))
+                        if (!string.IsNullOrEmpty(dataLine))
                         {
-                            if (intLinesRead == 1 && strLineIn.EndsWith("FDR\t"))
+                            if (linesRead == 1 && dataLine.EndsWith("FDR\t"))
                             {
                                 // The header line is missing the final column header; add it
-                                strLineIn += "FragMethod";
+                                dataLine += "FragMethod";
                             }
 
                             if (!blnValidDataFound)
                             {
-                                var strSplitLine = strLineIn.Split('\t');
+                                var strSplitLine = dataLine.Split('\t');
 
                                 if (strSplitLine.Length > 1)
                                 {
@@ -1084,7 +1084,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                                 }
                             }
 
-                            swOutFile.WriteLine(strLineIn);
+                            writer.WriteLine(dataLine);
                         }
                     }
                 }

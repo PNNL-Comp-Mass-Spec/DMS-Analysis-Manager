@@ -259,15 +259,15 @@ namespace AnalysisManagerProg
             const int DELETE_RETRY_COUNT = 3;
 
             var failedDeleteCount = 0;
-            var oFileTools = new PRISM.FileTools(mManagerName, mDebugLevel);
+            var fileTools = new PRISM.FileTools(mManagerName, mDebugLevel);
 
             // Delete the files
             try
             {
-                foreach (var fiFile in workDir.GetFiles())
+                foreach (var fileToDelete in workDir.GetFiles())
                 {
 
-                    if (!oFileTools.DeleteFileWithRetry(fiFile, DELETE_RETRY_COUNT, out var errorMessage))
+                    if (!fileTools.DeleteFileWithRetry(fileToDelete, DELETE_RETRY_COUNT, out var errorMessage))
                     {
                         LogError(errorMessage);
                         failedDeleteCount += 1;
@@ -275,18 +275,18 @@ namespace AnalysisManagerProg
                 }
 
                 // Delete the sub directories
-                foreach (var diSubDirectory in workDir.GetDirectories())
+                foreach (var subDirectory in workDir.GetDirectories())
                 {
-                    if (DeleteFilesWithRetry(diSubDirectory))
+                    if (DeleteFilesWithRetry(subDirectory))
                     {
                         // Remove the directory if it is empty
-                        diSubDirectory.Refresh();
-                        if (diSubDirectory.GetFileSystemInfos().Length != 0)
+                        subDirectory.Refresh();
+                        if (subDirectory.GetFileSystemInfos().Length != 0)
                             continue;
 
                         try
                         {
-                            diSubDirectory.Delete();
+                            subDirectory.Delete();
                         }
                         catch (IOException)
                         {
@@ -295,7 +295,7 @@ namespace AnalysisManagerProg
                             var folderAcl = new DirectorySecurity();
                             var currentUser = Environment.UserDomainName + @"\" + Environment.UserName;
 
-                            LogWarning("IOException deleting " + diSubDirectory.FullName + "; will try granting modify access to user " + currentUser);
+                            LogWarning("IOException deleting " + subDirectory.FullName + "; will try granting modify access to user " + currentUser);
                             folderAcl.AddAccessRule(new FileSystemAccessRule(currentUser, FileSystemRights.Modify,
                                                                              InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit, PropagationFlags.None, AccessControlType.Allow));
 
@@ -304,46 +304,46 @@ namespace AnalysisManagerProg
                                 // To remove existing permissions, use this: folderAcl.SetAccessRuleProtection(True, False)
 
                                 // Add the new access rule
-                                diSubDirectory.SetAccessControl(folderAcl);
+                                subDirectory.SetAccessControl(folderAcl);
 
                                 // Make sure the readonly flag is not set (it's likely not even possible for a folder to have a readonly flag set, but it doesn't hurt to check)
-                                diSubDirectory.Refresh();
-                                var attributes = diSubDirectory.Attributes;
+                                subDirectory.Refresh();
+                                var attributes = subDirectory.Attributes;
                                 if ((attributes & FileAttributes.ReadOnly) == FileAttributes.ReadOnly)
                                 {
-                                    diSubDirectory.Attributes = attributes & ~FileAttributes.ReadOnly;
+                                    subDirectory.Attributes = attributes & ~FileAttributes.ReadOnly;
                                 }
 
                                 try
                                 {
                                     // Retry the delete
-                                    diSubDirectory.Delete();
+                                    subDirectory.Delete();
                                     LogDebug("Updated permissions, then successfully deleted the directory");
                                 }
                                 catch (Exception ex3)
                                 {
-                                    var failureMessage = "Error deleting folder " + diSubDirectory.FullName + ": " + ex3.Message;
+                                    var failureMessage = "Error deleting folder " + subDirectory.FullName + ": " + ex3.Message;
                                     LogError(failureMessage);
                                     failedDeleteCount += 1;
                                 }
                             }
                             catch (Exception ex2)
                             {
-                                var failureMessage = "Error updating permissions for folder " + diSubDirectory.FullName + ": " + ex2.Message;
+                                var failureMessage = "Error updating permissions for folder " + subDirectory.FullName + ": " + ex2.Message;
                                 LogError(failureMessage);
                                 failedDeleteCount += 1;
                             }
                         }
                         catch (Exception ex)
                         {
-                            var failureMessage = "Error deleting folder " + diSubDirectory.FullName + ": " + ex.Message;
+                            var failureMessage = "Error deleting folder " + subDirectory.FullName + ": " + ex.Message;
                             LogError(failureMessage);
                             failedDeleteCount += 1;
                         }
                     }
                     else
                     {
-                        var failureMessage = "Error deleting working directory subdirectory " + diSubDirectory.FullName;
+                        var failureMessage = "Error deleting working directory subdirectory " + subDirectory.FullName;
                         LogError(failureMessage);
                         failedDeleteCount += 1;
                     }

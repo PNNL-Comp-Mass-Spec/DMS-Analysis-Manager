@@ -224,35 +224,34 @@ namespace AnalysisManagerInSpecTPlugIn
 
                 // Add extra lines to the parameter files
                 // The parameter file will become the input file for inspect
-                using (var swInspectInputFile = new StreamWriter(new FileStream(inputFilename, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                using (var writer = new StreamWriter(new FileStream(inputFilename, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
-                    swInspectInputFile.WriteLine(
-                        "#Use the following to define the name of the log file created by Inspect (default is InspectSearchLog.txt if not defined)");
-                    swInspectInputFile.WriteLine("SearchLogFileName," + mInspectSearchLogFilePath);
-                    swInspectInputFile.WriteLine();
+                    writer.WriteLine("#Use the following to define the name of the log file created by Inspect (default is InspectSearchLog.txt if not defined)");
+                    writer.WriteLine("SearchLogFileName," + mInspectSearchLogFilePath);
+                    writer.WriteLine();
 
-                    swInspectInputFile.WriteLine("#Spectrum file to search; preferred formats are .mzXML and .mgf");
+                    writer.WriteLine("#Spectrum file to search; preferred formats are .mzXML and .mgf");
 
                     if (mDebugLevel >= 3)
                     {
                         LogDebug("Inspect input spectra: " + mInspectConcatenatedDtaFilePath);
                     }
 
-                    swInspectInputFile.WriteLine("spectra," + mInspectConcatenatedDtaFilePath);
-                    swInspectInputFile.WriteLine();
+                    writer.WriteLine("spectra," + mInspectConcatenatedDtaFilePath);
+                    writer.WriteLine();
 
-                    swInspectInputFile.WriteLine("#Note: The fully qualified database (.trie file) filename");
-                    swInspectInputFile.WriteLine("DB," + dbFilePath);
+                    writer.WriteLine("#Note: The fully qualified database (.trie file) filename");
+                    writer.WriteLine("DB," + dbFilePath);
 
                     // Append the parameter file contents to the Inspect input file
-                    using (var srInputBase = new StreamReader(new FileStream(paramFilename, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                    using (var reader = new StreamReader(new FileStream(paramFilename, FileMode.Open, FileAccess.Read, FileShare.Read)))
                     {
-                        while (!srInputBase.EndOfStream)
+                        while (!reader.EndOfStream)
                         {
-                            var strParamLine = srInputBase.ReadLine();
-                            if (strParamLine != null)
+                            var paramLine = reader.ReadLine();
+                            if (paramLine != null)
                             {
-                                swInspectInputFile.WriteLine(strParamLine);
+                                writer.WriteLine(paramLine);
                             }
                         }
                     }
@@ -336,9 +335,9 @@ namespace AnalysisManagerInSpecTPlugIn
                     LogDebug("clsAnalysisToolRunnerIN.ParseInspectErrorsFile(): Reading " + errorFilename);
                 }
 
-                var strInputFilePath = Path.Combine(mWorkDir, errorFilename);
+                var errorFilePath = Path.Combine(mWorkDir, errorFilename);
 
-                if (!File.Exists(strInputFilePath))
+                if (!File.Exists(errorFilePath))
                 {
                     // File not found; that means no errors occurred
                     return true;
@@ -356,24 +355,24 @@ namespace AnalysisManagerInSpecTPlugIn
                 // Initialize htMessages
                 var htMessages = new Hashtable();
 
-                // Read the contents of strInputFilePath
-                using (var srInFile = new StreamReader(new FileStream(strInputFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                // Read the contents of errorFilePath
+                using (var reader = new StreamReader(new FileStream(errorFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
                 {
-                    while (!srInFile.EndOfStream)
+                    while (!reader.EndOfStream)
                     {
-                        var strLineIn = srInFile.ReadLine();
+                        var dataLine = reader.ReadLine();
 
-                        if (strLineIn == null)
+                        if (dataLine == null)
                             continue;
 
-                        strLineIn = strLineIn.Trim();
+                        var dataLineTrimmed = dataLine.Trim();
 
-                        if (strLineIn.Length > 0)
+                        if (dataLineTrimmed.Length > 0)
                         {
-                            if (!htMessages.Contains(strLineIn))
+                            if (!htMessages.Contains(dataLineTrimmed))
                             {
-                                htMessages.Add(strLineIn, 1);
-                                LogWarning("Inspect warning/error: " + strLineIn);
+                                htMessages.Add(dataLineTrimmed, 1);
+                                LogWarning("Inspect warning/error: " + dataLineTrimmed);
                             }
                         }
                     }
@@ -560,16 +559,16 @@ namespace AnalysisManagerInSpecTPlugIn
                     // Open the file and read the contents
                     string strLastEntry = null;
 
-                    using (var srLogFile = new StreamReader(new FileStream(strSearchLogFilePath, FileMode.Open, FileAccess.Read, FileShare.Write)))
+                    using (var reader = new StreamReader(new FileStream(strSearchLogFilePath, FileMode.Open, FileAccess.Read, FileShare.Write)))
                     {
                         // Read to the end of the file
-                        while (!srLogFile.EndOfStream)
+                        while (!reader.EndOfStream)
                         {
-                            var strLineIn = srLogFile.ReadLine();
+                            var dataLine = reader.ReadLine();
 
-                            if (!string.IsNullOrEmpty(strLineIn))
+                            if (!string.IsNullOrEmpty(dataLine))
                             {
-                                strLastEntry = string.Copy(strLineIn);
+                                strLastEntry = string.Copy(dataLine);
                             }
                         }
                     }

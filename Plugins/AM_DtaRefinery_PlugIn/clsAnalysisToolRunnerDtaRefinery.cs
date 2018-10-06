@@ -108,14 +108,14 @@ namespace AnalysisManagerDtaRefineryPlugIn
             var strBatchFileCmdLine = progLoc + " " + cmdStr + " > " + strConsoleOutputFileName + " 2>&1";
 
             // Create the batch file
-            using (var swBatchFile = new StreamWriter(new FileStream(strBatchFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+            using (var writer = new StreamWriter(new FileStream(strBatchFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
             {
                 if (mDebugLevel >= 1)
                 {
                     LogDebug(strBatchFileCmdLine);
                 }
 
-                swBatchFile.WriteLine(strBatchFileCmdLine);
+                writer.WriteLine(strBatchFileCmdLine);
             }
 
             mProgress = PROGRESS_PCT_DTA_REFINERY_RUNNING;
@@ -252,13 +252,13 @@ namespace AnalysisManagerDtaRefineryPlugIn
                 mJobParams.AddResultFileToSkip(tmpFilePath);
                 clsGlobal.IdleLoop(0.1);
 
-                using (var srSourceFile = new StreamReader(new FileStream(tmpFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                using (var reader = new StreamReader(new FileStream(tmpFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
                 {
-                    while (!srSourceFile.EndOfStream)
+                    while (!reader.EndOfStream)
                     {
-                        var strLineIn = srSourceFile.ReadLine();
+                        var dataLine = reader.ReadLine();
 
-                        if (strLineIn != null && strLineIn.Contains("finished x!tandem"))
+                        if (dataLine != null && dataLine.Contains("finished x!tandem"))
                         {
                             LogMessage("X!Tandem has finished searching and now DTA_Refinery is running (parsed " + fiSourceFile.Name + ")");
                             return true;
@@ -340,19 +340,19 @@ namespace AnalysisManagerDtaRefineryPlugIn
                     return false;
                 }
 
-                using (var srSourceFile = new StreamReader(new FileStream(fiSourceFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(fiSourceFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
-                    while (!srSourceFile.EndOfStream)
+                    while (!reader.EndOfStream)
                     {
-                        var strLineIn = srSourceFile.ReadLine();
+                        var dataLine = reader.ReadLine();
 
-                        if (strLineIn == null || !strLineIn.StartsWith("number of spectra identified less than 2", StringComparison.InvariantCultureIgnoreCase))
+                        if (dataLine == null || !dataLine.StartsWith("number of spectra identified less than 2", StringComparison.InvariantCultureIgnoreCase))
                             continue;
 
-                        if (!srSourceFile.EndOfStream)
+                        if (!reader.EndOfStream)
                         {
-                            strLineIn = srSourceFile.ReadLine();
-                            if (strLineIn != null && strLineIn.StartsWith("stop processing", StringComparison.InvariantCultureIgnoreCase))
+                            dataLine = reader.ReadLine();
+                            if (dataLine != null && dataLine.StartsWith("stop processing", StringComparison.InvariantCultureIgnoreCase))
                             {
                                 mMessage = string.Empty;
                                 LogError("X!Tandem identified fewer than 2 peptides; unable to use DTARefinery with this dataset");

@@ -56,9 +56,9 @@ namespace AnalysisManagerProg
                 // Load settings from config file AnalysisManagerProg.exe.config
                 var mainProcess = new clsMainProcess(TRACE_MODE_ENABLED);
 
-                var lstMgrSettings = mainProcess.LoadMgrSettingsFromFile();
+                var mgrSettings = mainProcess.LoadMgrSettingsFromFile();
 
-                mMgrParams = new clsAnalysisMgrSettings(lstMgrSettings, clsGlobal.GetAppFolderPath(), TRACE_MODE_ENABLED);
+                mMgrParams = new clsAnalysisMgrSettings(mgrSettings, clsGlobal.GetAppFolderPath(), TRACE_MODE_ENABLED);
 
                 mDebugLevel = 2;
 
@@ -93,39 +93,39 @@ namespace AnalysisManagerProg
         {
             try
             {
-                DirectoryInfo diSourceFolder;
+                DirectoryInfo sourceDirectory;
 
                 if (string.IsNullOrWhiteSpace(displayDllPath))
                 {
-                    diSourceFolder = new DirectoryInfo(".");
+                    sourceDirectory = new DirectoryInfo(".");
                 }
                 else
                 {
-                    diSourceFolder = new DirectoryInfo(displayDllPath);
+                    sourceDirectory = new DirectoryInfo(displayDllPath);
                 }
 
-                List<FileInfo> lstFiles;
+                List<FileInfo> filesToVersion;
                 if (string.IsNullOrWhiteSpace(fileNameFileSpec))
                 {
-                    lstFiles = diSourceFolder.GetFiles("*.dll").ToList();
+                    filesToVersion = sourceDirectory.GetFiles("*.dll").ToList();
                 }
                 else
                 {
-                    lstFiles = diSourceFolder.GetFiles(fileNameFileSpec).ToList();
+                    filesToVersion = sourceDirectory.GetFiles(fileNameFileSpec).ToList();
                 }
 
                 var dctResults = new Dictionary<string, KeyValuePair<string, string>>(StringComparer.CurrentCultureIgnoreCase);
                 var dctErrors = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
 
-                Console.WriteLine("Obtaining versions for " + lstFiles.Count + " files");
+                Console.WriteLine("Obtaining versions for " + filesToVersion.Count + " files");
 
-                foreach (var fiFile in lstFiles)
+                foreach (var currentFile in filesToVersion)
                 {
                     try
                     {
                         Console.Write(".");
 
-                        var fileAssembly = Assembly.LoadFrom(fiFile.FullName);
+                        var fileAssembly = Assembly.LoadFrom(currentFile.FullName);
                         var fileVersion = fileAssembly.ImageRuntimeVersion;
                         var frameworkVersion = "??";
 
@@ -141,13 +141,13 @@ namespace AnalysisManagerProg
                             frameworkVersion = string.Empty;
                         }
 
-                        if (dctResults.ContainsKey(fiFile.FullName))
+                        if (dctResults.ContainsKey(currentFile.FullName))
                         {
-                            Console.WriteLine("Skipping duplicate file: " + fiFile.Name + ", " + fileVersion + " and " + frameworkVersion);
+                            Console.WriteLine("Skipping duplicate file: " + currentFile.Name + ", " + fileVersion + " and " + frameworkVersion);
                         }
                         else
                         {
-                            dctResults.Add(fiFile.FullName, new KeyValuePair<string, string>(fileVersion, frameworkVersion));
+                            dctResults.Add(currentFile.FullName, new KeyValuePair<string, string>(fileVersion, frameworkVersion));
                         }
                     }
                     catch (BadImageFormatException ex)
@@ -157,39 +157,39 @@ namespace AnalysisManagerProg
 
                         try
                         {
-                            var fileAssembly2 = Assembly.ReflectionOnlyLoadFrom(fiFile.FullName);
+                            var fileAssembly2 = Assembly.ReflectionOnlyLoadFrom(currentFile.FullName);
                             var fileVersion2 = fileAssembly2.ImageRuntimeVersion;
 
-                            if (dctResults.ContainsKey(fiFile.FullName))
+                            if (dctResults.ContainsKey(currentFile.FullName))
                             {
-                                Console.WriteLine("Skipping duplicate file: " + fiFile.Name + ", " + fileVersion2 + " (missing dependencies)");
+                                Console.WriteLine("Skipping duplicate file: " + currentFile.Name + ", " + fileVersion2 + " (missing dependencies)");
                             }
                             else
                             {
-                                dctResults.Add(fiFile.FullName, new KeyValuePair<string, string>(fileVersion2, "Unknown, missing dependencies"));
+                                dctResults.Add(currentFile.FullName, new KeyValuePair<string, string>(fileVersion2, "Unknown, missing dependencies"));
                             }
                         }
                         catch (Exception ex2)
                         {
-                            if (dctErrors.ContainsKey(fiFile.FullName))
+                            if (dctErrors.ContainsKey(currentFile.FullName))
                             {
-                                Console.WriteLine("Skipping duplicate error: " + fiFile.Name + ": " + ex2.Message);
+                                Console.WriteLine("Skipping duplicate error: " + currentFile.Name + ": " + ex2.Message);
                             }
                             else
                             {
-                                dctErrors.Add(fiFile.FullName, ex.Message);
+                                dctErrors.Add(currentFile.FullName, ex.Message);
                             }
                         }
                     }
                     catch (Exception ex)
                     {
-                        if (dctErrors.ContainsKey(fiFile.FullName))
+                        if (dctErrors.ContainsKey(currentFile.FullName))
                         {
-                            Console.WriteLine("Skipping duplicate error: " + fiFile.Name + ": " + ex.Message);
+                            Console.WriteLine("Skipping duplicate error: " + currentFile.Name + ": " + ex.Message);
                         }
                         else
                         {
-                            dctErrors.Add(fiFile.FullName, ex.Message);
+                            dctErrors.Add(currentFile.FullName, ex.Message);
                         }
                     }
                 }
@@ -547,13 +547,13 @@ namespace AnalysisManagerProg
             for (var i = 0; i < 5; i++)
             {
                 var outFilePath = Path.Combine(resultsFolder.FullName, "TestOutFile" + i + ".txt");
-                using (var outFile = new StreamWriter(new FileStream(outFilePath, FileMode.Create, FileAccess.Write)))
+                using (var writer = new StreamWriter(new FileStream(outFilePath, FileMode.Create, FileAccess.Write)))
                 {
-                    outFile.WriteLine("Scan\tIntensity");
+                    writer.WriteLine("Scan\tIntensity");
 
                     for (var j = 1; j < 1000; j++)
                     {
-                        outFile.WriteLine("{0}\t{1}", j, rand.Next(0, 10000));
+                        writer.WriteLine("{0}\t{1}", j, rand.Next(0, 10000));
                     }
                 }
             }
@@ -586,7 +586,7 @@ namespace AnalysisManagerProg
         {
             try
             {
-                var lstLineIgnoreRegExSpecs = new List<Regex> {
+                var lineIgnoreRegExSpecs = new List<Regex> {
                     new Regex("mass_type_parent *=.*", RegexOptions.Compiled | RegexOptions.IgnoreCase)
                 };
 
@@ -610,13 +610,13 @@ namespace AnalysisManagerProg
                     // Read the files line-by-line and compare
                     // Since the first 2 lines of a Sequest parameter file don't matter, and since the 3rd line can vary from computer to computer, we start the comparison at the 4th line
 
-                    if (!clsGlobal.TextFilesMatch(srcFilePath, targetFilePath, 4, 0, true, lstLineIgnoreRegExSpecs))
+                    if (!clsGlobal.TextFilesMatch(srcFilePath, targetFilePath, 4, 0, true, lineIgnoreRegExSpecs))
                     {
                         // Files don't match; rename the old file
 
-                        var fiArchivedFile = new FileInfo(targetFilePath);
+                        var archivedFile = new FileInfo(targetFilePath);
 
-                        var newNameBase = Path.GetFileNameWithoutExtension(targetFilePath) + "_" + fiArchivedFile.LastWriteTime.ToString("yyyy-MM-dd");
+                        var newNameBase = Path.GetFileNameWithoutExtension(targetFilePath) + "_" + archivedFile.LastWriteTime.ToString("yyyy-MM-dd");
                         var newName = newNameBase + Path.GetExtension(targetFilePath);
 
                         // See if the renamed file exists; if it does, we'll have to tweak the name
@@ -634,7 +634,7 @@ namespace AnalysisManagerProg
                             newName = newNameBase + "_v" + revisionNumber + Path.GetExtension(targetFilePath);
                         } while (true);
 
-                        fiArchivedFile.MoveTo(newPath);
+                        archivedFile.MoveTo(newPath);
 
                         needToArchiveFile = true;
                     }
@@ -774,8 +774,10 @@ namespace AnalysisManagerProg
         {
             Console.WriteLine("Splitting concatenated DTA file");
 
-            var FileSplitter = new clsSplitCattedFiles();
-            FileSplitter.SplitCattedDTAsOnly(rootFileName, resultsFolder);
+            var fileSplitter = new clsSplitCattedFiles();
+            var filesToSkip = new SortedSet<string>();
+
+            fileSplitter.SplitCattedDTAsOnly(rootFileName, resultsFolder, filesToSkip);
 
             Console.WriteLine("Completed splitting concatenated DTA file");
         }
@@ -800,8 +802,8 @@ namespace AnalysisManagerProg
             jobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "NumberOfClonedSteps", "25");
             jobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "ClonedStepsHaveEqualNumSpectra", "True");
 
-            var fiMgr = new FileInfo(PRISM.FileProcessor.ProcessFilesOrFoldersBase.GetAppPath());
-            var mgrFolderPath = fiMgr.DirectoryName;
+            var mgr = new FileInfo(PRISM.FileProcessor.ProcessFilesOrFoldersBase.GetAppPath());
+            var mgrFolderPath = mgr.DirectoryName;
 
             var summaryFile = new clsSummaryFile();
             summaryFile.Clear();
@@ -1171,9 +1173,9 @@ namespace AnalysisManagerProg
             const short retryCount = 2;
             const int timeoutSeconds = 30;
 
-            clsGlobal.GetDataTableByQuery(sqlStr, connectionString, callingFunction, retryCount, out var dtResults, timeoutSeconds);
+            clsGlobal.GetDataTableByQuery(sqlStr, connectionString, callingFunction, retryCount, out var results, timeoutSeconds);
 
-            foreach (DataRow row in dtResults.Rows)
+            foreach (DataRow row in results.Rows)
             {
                 Console.WriteLine(row[0] + ": " + row[1]);
             }
@@ -1199,9 +1201,9 @@ namespace AnalysisManagerProg
             const short retryCount = 2;
             const int timeoutSeconds = 30;
 
-            clsGlobal.GetDataTableByCmd(cmd, connectionString, callingFunction, retryCount, out var dtResults, timeoutSeconds);
+            clsGlobal.GetDataTableByCmd(cmd, connectionString, callingFunction, retryCount, out var results, timeoutSeconds);
 
-            foreach (DataRow row in dtResults.Rows)
+            foreach (DataRow row in results.Rows)
             {
                 Console.WriteLine(row[0] + ": " + row[1]);
             }
@@ -1214,17 +1216,17 @@ namespace AnalysisManagerProg
         public void ConvertZipToGZip(string zipFilePath)
         {
             const int debugLevel = 2;
-            const string workDir = @"C:\DMS_WorkDir";
+            const string workDirPath = @"C:\DMS_WorkDir";
 
-            var dotNetZipTools = new clsDotNetZipTools(debugLevel, workDir);
+            var dotNetZipTools = new clsDotNetZipTools(debugLevel, workDirPath);
             RegisterEvents(dotNetZipTools);
 
             dotNetZipTools.UnzipFile(zipFilePath);
 
-            var diWorkDir = new DirectoryInfo(workDir);
-            foreach (var fiFile in diWorkDir.GetFiles("*.mzid"))
+            var workDir = new DirectoryInfo(workDirPath);
+            foreach (var mzidFile in workDir.GetFiles("*.mzid"))
             {
-                dotNetZipTools.GZipFile(fiFile.FullName, true);
+                dotNetZipTools.GZipFile(mzidFile.FullName, true);
             }
         }
 
@@ -1460,16 +1462,16 @@ namespace AnalysisManagerProg
         /// </summary>
         public bool GenerateScanStatsFile(string inputFilePath, string workingDir)
         {
-            var strMSFileInfoScannerDir = @"C:\DMS_Programs\MSFileInfoScanner";
+            var msFileInfoScannerDir = @"C:\DMS_Programs\MSFileInfoScanner";
 
-            var strMSFileInfoScannerDLLPath = Path.Combine(strMSFileInfoScannerDir, "MSFileInfoScanner.dll");
-            if (!File.Exists(strMSFileInfoScannerDLLPath))
+            var msFileInfoScannerDLLPath = Path.Combine(msFileInfoScannerDir, "MSFileInfoScanner.dll");
+            if (!File.Exists(msFileInfoScannerDLLPath))
             {
-                Console.WriteLine("File Not Found: " + strMSFileInfoScannerDLLPath);
+                Console.WriteLine("File Not Found: " + msFileInfoScannerDLLPath);
                 return false;
             }
 
-            var scanStatsGenerator = new clsScanStatsGenerator(strMSFileInfoScannerDLLPath, mDebugLevel);
+            var scanStatsGenerator = new clsScanStatsGenerator(msFileInfoScannerDLLPath, mDebugLevel);
             RegisterEvents(scanStatsGenerator);
 
             const int datasetID = 0;
@@ -1636,28 +1638,28 @@ namespace AnalysisManagerProg
                 extensionsToCheck.Add("PAR");
                 extensionsToCheck.Add("Pek");
 
-                var fiFolder = new DirectoryInfo(folderPath);
+                var targetDirectory = new DirectoryInfo(folderPath);
 
-                if (!fiFolder.Exists)
+                if (!targetDirectory.Exists)
                 {
-                    LogError("Folder not found: " + folderPath);
+                    LogError("Directory not found: " + folderPath);
                     return;
                 }
 
                 foreach (var extension in extensionsToCheck)
                 {
-                    foreach (var fiFile in fiFolder.GetFiles("*." + extension))
+                    foreach (var currentFile in targetDirectory.GetFiles("*." + extension))
                     {
-                        if (!fiFile.Name.StartsWith(datasetName, StringComparison.OrdinalIgnoreCase))
+                        if (!currentFile.Name.StartsWith(datasetName, StringComparison.OrdinalIgnoreCase))
                             continue;
 
                         var desiredName = datasetName + "_" + DateTime.Now.ToString("M_d_yyyy") + "." + extension;
 
-                        if (!string.Equals(fiFile.Name, desiredName, StringComparison.OrdinalIgnoreCase))
+                        if (!string.Equals(currentFile.Name, desiredName, StringComparison.OrdinalIgnoreCase))
                         {
                             try
                             {
-                                fiFile.MoveTo(Path.Combine(fiFolder.FullName, desiredName));
+                                currentFile.MoveTo(Path.Combine(targetDirectory.FullName, desiredName));
                             }
                             catch (Exception)
                             {
@@ -1701,18 +1703,18 @@ namespace AnalysisManagerProg
 
         private string GetFileContents(string filePath)
         {
-            var fi = new FileInfo(filePath);
+            var dataFile = new FileInfo(filePath);
 
-            var tr = new StreamReader(new FileStream(fi.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+            var reader = new StreamReader(new FileStream(dataFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
 
-            var s = tr.ReadToEnd();
+            var fileContents = reader.ReadToEnd();
 
-            if (string.IsNullOrEmpty(s))
+            if (string.IsNullOrEmpty(fileContents))
             {
                 return string.Empty;
             }
 
-            return s;
+            return fileContents;
         }
 
         /// <summary>
