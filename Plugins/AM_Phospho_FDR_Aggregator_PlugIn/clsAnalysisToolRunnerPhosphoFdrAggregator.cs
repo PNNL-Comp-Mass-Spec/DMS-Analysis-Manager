@@ -109,7 +109,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                 }
 
                 // Run AScore for each of the jobs in the data package
-                var processingSuccess = ProcessSynopsisFiles(progLocAScore, out var fileSuffixesToCombine, out var processingRuntimes);
+                var processingSuccess = ProcessSynopsisFiles(progLocAScore, out var fileSuffixesToCombine, out var processingRunTimes);
 
                 if (fileSuffixesToCombine != null)
                 {
@@ -132,7 +132,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                 }
 
                 // Concatenate the log files
-                ConcatenateLogFiles(processingRuntimes);
+                ConcatenateLogFiles(processingRunTimes);
 
                 mProgress = PROGRESS_PCT_PHOSPHO_FDR_COMPLETE;
 
@@ -283,16 +283,16 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
             }
         }
 
-        protected bool ConcatenateLogFiles(Dictionary<string, double> processingRuntimes)
+        protected bool ConcatenateLogFiles(Dictionary<string, double> processingRunTimes)
         {
             try
             {
                 var targetFile = Path.Combine(mWorkDir, ASCORE_CONSOLE_OUTPUT_PREFIX + ".txt");
                 using (var writer = new StreamWriter(new FileStream(targetFile, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
-                    var jobFolderlist = GetJobFolderList();
+                    var jobFolderList = GetJobFolderList();
 
-                    foreach (var jobFolder in jobFolderlist)
+                    foreach (var jobFolder in jobFolderList)
                     {
                         var jobNumber = jobFolder.Key;
 
@@ -311,7 +311,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                             // Parse out the tag from it -- in this case "syn"
                             var fileTypeTag = Path.GetFileNameWithoutExtension(logFile.Name).Substring(ASCORE_CONSOLE_OUTPUT_PREFIX.Length + 1);
 
-                            processingRuntimes.TryGetValue(jobNumber + fileTypeTag, out var runtimeMinutes);
+                            processingRunTimes.TryGetValue(jobNumber + fileTypeTag, out var runtimeMinutes);
 
                             using (var reader = new StreamReader(new FileStream(logFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
                             {
@@ -513,39 +513,39 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
 
         protected bool DetermineInputFilePaths(DirectoryInfo jobFolder, ref udtJobMetadataForAScore udtJobMetadata, List<string> fileSuffixesToCombine)
         {
-            var fhtfile = string.Empty;
+            var fhtFile = string.Empty;
             var synFile = string.Empty;
             var runningSequest = false;
 
             if (udtJobMetadata.ToolName.ToLower().StartsWith("sequest"))
             {
                 runningSequest = true;
-                fhtfile = udtJobMetadata.Dataset + "_fht.txt";
+                fhtFile = udtJobMetadata.Dataset + "_fht.txt";
                 synFile = udtJobMetadata.Dataset + "_syn.txt";
                 udtJobMetadata.ToolNameForAScore = "sequest";
             }
 
             if (udtJobMetadata.ToolName.ToLower().StartsWith("xtandem"))
             {
-                fhtfile = udtJobMetadata.Dataset + "_xt_fht.txt";
+                fhtFile = udtJobMetadata.Dataset + "_xt_fht.txt";
                 synFile = udtJobMetadata.Dataset + "_xt_syn.txt";
                 udtJobMetadata.ToolNameForAScore = "xtandem";
             }
 
             if (udtJobMetadata.ToolName.ToLower().StartsWith("msgfplus"))
             {
-                fhtfile = udtJobMetadata.Dataset + "_msgfplus_fht.txt";
+                fhtFile = udtJobMetadata.Dataset + "_msgfplus_fht.txt";
                 synFile = udtJobMetadata.Dataset + "_msgfplus_syn.txt";
                 udtJobMetadata.ToolNameForAScore = "msgfplus";
             }
 
-            if (string.IsNullOrWhiteSpace(fhtfile))
+            if (string.IsNullOrWhiteSpace(fhtFile))
             {
                 mMessage = "Analysis tool " + udtJobMetadata.ToolName + " is not supported by the PhosphoFdrAggregator";
                 return false;
             }
 
-            udtJobMetadata.FirstHitsFilePath = Path.Combine(jobFolder.FullName, fhtfile);
+            udtJobMetadata.FirstHitsFilePath = Path.Combine(jobFolder.FullName, fhtFile);
             udtJobMetadata.SynopsisFilePath = Path.Combine(jobFolder.FullName, synFile);
 
             bool success;
@@ -556,7 +556,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                 if (File.Exists(fhtFileAlternate))
                 {
                     udtJobMetadata.FirstHitsFilePath = fhtFileAlternate;
-                    fhtfile = Path.GetFileName(fhtFileAlternate);
+                    fhtFile = Path.GetFileName(fhtFileAlternate);
                 }
             }
 
@@ -572,7 +572,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
 
             if (File.Exists(udtJobMetadata.FirstHitsFilePath))
             {
-                CacheFileSuffix(fileSuffixesToCombine, udtJobMetadata.Dataset, fhtfile);
+                CacheFileSuffix(fileSuffixesToCombine, udtJobMetadata.Dataset, fhtFile);
                 if (runningSequest)
                 {
                     success = AddMSGFSpecProbValues(udtJobMetadata.Job, udtJobMetadata.FirstHitsFilePath, "fht");
@@ -786,15 +786,15 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
         /// </summary>
         /// <param name="progLoc">AScore exe path</param>
         /// <param name="fileSuffixesToCombine">Output parameter: File suffixes that were processed</param>
-        /// <param name="processingRuntimes">Output parameter: AScore Runtime (in minutes) for each job/tag combo</param>
+        /// <param name="processingRunTimes">Output parameter: AScore Runtime (in minutes) for each job/tag combo</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks></remarks>
-        protected bool ProcessSynopsisFiles(string progLoc, out List<string> fileSuffixesToCombine, out Dictionary<string, double> processingRuntimes)
+        protected bool ProcessSynopsisFiles(string progLoc, out List<string> fileSuffixesToCombine, out Dictionary<string, double> processingRunTimes)
         {
             var successOverall = true;
 
             fileSuffixesToCombine = new List<string>();
-            processingRuntimes = new Dictionary<string, double>();
+            processingRunTimes = new Dictionary<string, double>();
 
             try
             {
@@ -808,7 +808,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                 var jobCountSkippedNoSpectrumFile = 0;
                 var jobCountSkippedNoSynFile = 0;
 
-                var jobFolderlist = GetJobFolderList();
+                var jobFolderList = GetJobFolderList();
 
                 mProgress = PROGRESS_PCT_PHOSPHO_FDR_RUNNING;
 
@@ -817,10 +817,10 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                 mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
                 mJobFoldersProcessed = 0;
-                mTotalJobFolders = jobFolderlist.Count;
+                mTotalJobFolders = jobFolderList.Count;
 
                 // Process each Job folder
-                foreach (var jobFolder in jobFolderlist)
+                foreach (var jobFolder in jobFolderList)
                 {
                     var synopsisFiles = jobFolder.Value.GetFiles("*syn*.txt");
 
@@ -876,7 +876,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                         if (!string.IsNullOrWhiteSpace(udtJobMetadata.FirstHitsFilePath))
                         {
                             // Analyze the first hits file with AScore
-                            success = RunAscore(progLoc, udtJobMetadata, udtJobMetadata.FirstHitsFilePath, bestAScoreParamFilePath, "fht", processingRuntimes);
+                            success = RunAscore(progLoc, udtJobMetadata, udtJobMetadata.FirstHitsFilePath, bestAScoreParamFilePath, "fht", processingRunTimes);
                             if (!success)
                             {
                                 // An error has already been logged, and mMessage has been updated
@@ -887,7 +887,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                         if (!string.IsNullOrWhiteSpace(udtJobMetadata.SynopsisFilePath))
                         {
                             // Analyze the synopsis file with AScore
-                            success = RunAscore(progLoc, udtJobMetadata, udtJobMetadata.SynopsisFilePath, bestAScoreParamFilePath, "syn", processingRuntimes);
+                            success = RunAscore(progLoc, udtJobMetadata, udtJobMetadata.SynopsisFilePath, bestAScoreParamFilePath, "syn", processingRunTimes);
                             if (!success)
                             {
                                 // An error has already been logged, and mMessage has been updated
@@ -965,8 +965,8 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
         /// <param name="udtJobMetadata"></param>
         /// <param name="inputFilePath"></param>
         /// <param name="ascoreParamFilePath"></param>
-        /// <param name="fileTypeTag">Should be syn or fht; appened to the AScore_ConsoleOutput file</param>
-        /// <param name="processingRuntimes">Output parameter: AScore Runtime (in minutes) for each job/tag combo</param>
+        /// <param name="fileTypeTag">Should be syn or fht; append to the AScore_ConsoleOutput file</param>
+        /// <param name="processingRunTimes">Output parameter: AScore Runtime (in minutes) for each job/tag combo</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks></remarks>
         protected bool RunAscore(
@@ -975,7 +975,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
             string inputFilePath,
             string ascoreParamFilePath,
             string fileTypeTag,
-            Dictionary<string, double> processingRuntimes)
+            Dictionary<string, double> processingRunTimes)
         {
             // Set up and execute a program runner to run AScore
 
@@ -1037,7 +1037,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
             var blnSuccess = mCmdRunner.RunProgram(progLoc, cmdStr, "AScore", true);
 
             var runtimeMinutes = DateTime.UtcNow.Subtract(dtStartTime).TotalMinutes;
-            processingRuntimes.Add(udtJobMetadata.Job + fileTypeTag, runtimeMinutes);
+            processingRunTimes.Add(udtJobMetadata.Job + fileTypeTag, runtimeMinutes);
 
             if (!mCmdRunner.WriteConsoleOutputToFile)
             {
