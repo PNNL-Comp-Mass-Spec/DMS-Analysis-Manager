@@ -1050,7 +1050,7 @@ namespace AnalysisManagerProg
         /// <returns>String containing full name and path</returns>
         private string GetConfigFilePath()
         {
-            var configFilePath = PRISM.FileProcessor.ProcessFilesOrFoldersBase.GetAppPath() + ".config";
+            var configFilePath = PRISM.FileProcessor.ProcessFilesOrDirectoriesBase.GetAppPath() + ".config";
             return configFilePath;
         }
 

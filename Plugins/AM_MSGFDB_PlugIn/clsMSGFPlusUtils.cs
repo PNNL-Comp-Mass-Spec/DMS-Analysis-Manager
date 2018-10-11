@@ -835,7 +835,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 if (mDebugLevel > 2)
                 {
                     mPeptideToProteinMapper.LogMessagesToFile = true;
-                    mPeptideToProteinMapper.LogFolderPath = mWorkDir;
+                    mPeptideToProteinMapper.LogDirectoryPath = mWorkDir;
                 }
                 else
                 {

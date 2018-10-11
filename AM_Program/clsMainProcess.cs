@@ -173,7 +173,7 @@ namespace AnalysisManagerProg
             mNeedToAbortProcessing = false;
             mMostRecentJobInfo = string.Empty;
 
-            var exeInfo = new FileInfo(PRISM.FileProcessor.ProcessFilesOrFoldersBase.GetAppPath());
+            var exeInfo = new FileInfo(PRISM.FileProcessor.ProcessFilesOrDirectoriesBase.GetAppPath());
             mMgrExeName = exeInfo.Name;
             mMgrDirectoryPath = exeInfo.DirectoryName;
         }

@@ -25,7 +25,7 @@ namespace AnalysisManagerProg
 {
     static class Program
     {
-        public const string PROGRAM_DATE = "October 5, 2018";
+        public const string PROGRAM_DATE = "October 10, 2018";
 
         private static bool mCodeTestMode;
         private static bool mTraceMode;
@@ -252,7 +252,7 @@ namespace AnalysisManagerProg
         /// <remarks></remarks>
         private static string GetAppVersion(string programDate)
         {
-            return PRISM.FileProcessor.ProcessFilesOrFoldersBase.GetAppVersion(programDate);
+            return PRISM.FileProcessor.ProcessFilesOrDirectoriesBase.GetAppVersion(programDate);
         }
 
         private static bool SetOptionsUsingCommandLineParameters(clsParseCommandLine commandLineParser)
@@ -357,7 +357,7 @@ namespace AnalysisManagerProg
         {
             try
             {
-                var exeName = Path.GetFileName(PRISM.FileProcessor.ProcessFilesOrFoldersBase.GetAppPath());
+                var exeName = Path.GetFileName(PRISM.FileProcessor.ProcessFilesOrDirectoriesBase.GetAppPath());
 
                 Console.WriteLine("This program processes DMS analysis jobs for PRISM. Normal operation is to run the program without any command line switches.");
                 Console.WriteLine();
