@@ -189,8 +189,8 @@ namespace AnalysisManager_AScore_PlugIn
                     }
                 }
 
-                var paramManager = new ParameterFileManager(paramFileToUse);
-                RegisterEvents(paramManager);
+                var ascoreParameters = new ParameterFileManager(paramFileToUse);
+                RegisterEvents(ascoreParameters);
 
                 var peptideMassCalculator = new PHRPReader.clsPeptideMassCalculator();
 
@@ -222,11 +222,11 @@ namespace AnalysisManager_AScore_PlugIn
                 }
 
                 // Make the call to AScore
-                var ascoreEngine = new Algorithm();
+                var ascoreEngine = new AScoreProcessor();
 
                 RegisterEvents(ascoreEngine);
 
-                ascoreEngine.AlgorithmRun(spectraCache, datasetManager, paramManager, ascoreOutputFilePath, FastaFilePath);
+                ascoreEngine.RunAScoreOnSingleFile(spectraCache, datasetManager, ascoreParameters, ascoreOutputFilePath, FastaFilePath);
 
                 Console.WriteLine();
 
