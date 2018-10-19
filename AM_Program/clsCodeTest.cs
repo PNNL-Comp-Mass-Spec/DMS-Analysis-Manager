@@ -13,6 +13,7 @@ using System.Text.RegularExpressions;
 using AnalysisManagerBase;
 using PRISM.Logging;
 using PRISM;
+using PRISM.AppSettings;
 using Renci.SshNet;
 using FileInfo = System.IO.FileInfo;
 
@@ -31,7 +32,7 @@ namespace AnalysisManagerProg
 
         private bool mFastaGenTimeOut;
 
-        private readonly IMgrParams mMgrParams;
+        private readonly IMgrParams mMgrSettings;
 
         private DateTime mLastStatusTime;
 
@@ -56,26 +57,36 @@ namespace AnalysisManagerProg
                 // Load settings from config file AnalysisManagerProg.exe.config
                 var mainProcess = new clsMainProcess(TRACE_MODE_ENABLED);
 
-                var mgrSettings = mainProcess.LoadMgrSettingsFromFile();
+                var configFileSettings = mainProcess.LoadMgrSettingsFromFile();
 
-                mMgrParams = new clsAnalysisMgrSettings(mgrSettings, clsGlobal.GetAppFolderPath(), TRACE_MODE_ENABLED);
+                mMgrSettings = new clsAnalysisMgrSettings(clsGlobal.GetAppFolderPath(), TRACE_MODE_ENABLED);
+                var settingsClass = (clsAnalysisMgrSettings)mMgrSettings;
+                if (settingsClass != null)
+                {
+                    RegisterEvents(settingsClass);
+                    settingsClass.CriticalErrorEvent += CriticalErrorEvent;
+                }
+
+                var success = mMgrSettings.LoadSettings(configFileSettings);
+                if (!success)
+                    return;
 
                 mDebugLevel = 2;
 
                 // Initialize the log file
-                var logFileNameBase = clsMainProcess.GetBaseLogFileName(mMgrParams);
+                var logFileNameBase = clsMainProcess.GetBaseLogFileName(mMgrSettings);
 
                 // The analysis manager determines when to log or not log based on internal logic
                 // Set the LogLevel tracked by FileLogger to DEBUG so that all messages sent to the class are logged
                 LogTools.CreateFileLogger(logFileNameBase, BaseLogger.LogLevels.DEBUG);
 
                 if (clsGlobal.LinuxOS)
-                    mMgrParams.SetParam(clsAnalysisMgrSettings.MGR_PARAM_WORK_DIR, mMgrParams.GetParam(clsAnalysisMgrSettings.MGR_PARAM_LOCAL_WORK_DIR_PATH));
+                    mMgrSettings.SetParam(clsAnalysisMgrSettings.MGR_PARAM_WORK_DIR, mMgrSettings.GetParam(clsAnalysisMgrSettings.MGR_PARAM_LOCAL_WORK_DIR_PATH));
                 else
-                    mMgrParams.SetParam(clsAnalysisMgrSettings.MGR_PARAM_WORK_DIR, @"C:\DMS_WorkDir");
+                    mMgrSettings.SetParam(clsAnalysisMgrSettings.MGR_PARAM_WORK_DIR, @"C:\DMS_WorkDir");
 
-                mMgrParams.SetParam(clsAnalysisMgrSettings.MGR_PARAM_MGR_NAME, "Monroe_Test");
-                mMgrParams.SetParam("DebugLevel", mDebugLevel.ToString());
+                mMgrSettings.SetParam(MgrSettings.MGR_PARAM_MGR_NAME, "Monroe_Test");
+                mMgrSettings.SetParam("DebugLevel", mDebugLevel.ToString());
             }
             catch (Exception ex)
             {
@@ -249,11 +260,11 @@ namespace AnalysisManagerProg
 
         private clsAnalysisJob InitializeMgrAndJobParams(short debugLevel)
         {
-            var jobParams = new clsAnalysisJob(mMgrParams, debugLevel);
+            var jobParams = new clsAnalysisJob(mMgrSettings, debugLevel);
 
-            mMgrParams.SetParam(clsAnalysisMgrSettings.MGR_PARAM_WORK_DIR, GetWorkDirPath());
-            mMgrParams.SetParam(clsAnalysisMgrSettings.MGR_PARAM_MGR_NAME, "Monroe_Test");
-            mMgrParams.SetParam("DebugLevel", debugLevel.ToString());
+            mMgrSettings.SetParam(clsAnalysisMgrSettings.MGR_PARAM_WORK_DIR, GetWorkDirPath());
+            mMgrSettings.SetParam(MgrSettings.MGR_PARAM_MGR_NAME, "Monroe_Test");
+            mMgrSettings.SetParam("DebugLevel", debugLevel.ToString());
 
             jobParams.SetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "StepTool", "TestStepTool");
             jobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "ToolName", "TestTool");
@@ -289,14 +300,14 @@ namespace AnalysisManagerProg
             RegisterEvents(myEMSLUtilities);
 
             var toolRunner = new clsCodeTestAM();
-            toolRunner.Setup("CodeTest", mMgrParams, jobParams, statusTools, summaryFile, myEMSLUtilities);
+            toolRunner.Setup("CodeTest", mMgrSettings, jobParams, statusTools, summaryFile, myEMSLUtilities);
 
             return toolRunner;
         }
 
         private ResourceTestClass GetResourcesObject(int debugLevel)
         {
-            var jobParams = new clsAnalysisJob(mMgrParams, 0);
+            var jobParams = new clsAnalysisJob(mMgrSettings, 0);
 
             return GetResourcesObject(debugLevel, jobParams);
         }
@@ -311,9 +322,9 @@ namespace AnalysisManagerProg
             var myEMSLUtilities = new clsMyEMSLUtilities(debugLevel, GetWorkDirPath(), true);
             RegisterEvents(myEMSLUtilities);
 
-            mMgrParams.SetParam(clsAnalysisMgrSettings.MGR_PARAM_WORK_DIR, GetWorkDirPath());
-            mMgrParams.SetParam(clsAnalysisMgrSettings.MGR_PARAM_MGR_NAME, "Monroe_Test");
-            mMgrParams.SetParam("DebugLevel", debugLevel.ToString());
+            mMgrSettings.SetParam(clsAnalysisMgrSettings.MGR_PARAM_WORK_DIR, GetWorkDirPath());
+            mMgrSettings.SetParam(MgrSettings.MGR_PARAM_MGR_NAME, "Monroe_Test");
+            mMgrSettings.SetParam("DebugLevel", debugLevel.ToString());
 
             jobParams.SetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "StepTool", "TestStepTool");
             jobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "ToolName", "TestTool");
@@ -321,18 +332,18 @@ namespace AnalysisManagerProg
             jobParams.SetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Job", "12345");
             jobParams.SetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME, "Test_Results");
 
-            resourceTester.Setup("CodeTest", mMgrParams, jobParams, statusTools, myEMSLUtilities);
+            resourceTester.Setup("CodeTest", mMgrSettings, jobParams, statusTools, myEMSLUtilities);
 
             return resourceTester;
         }
 
         private string GetWorkDirPath()
         {
-            return mMgrParams.GetParam(clsAnalysisMgrSettings.MGR_PARAM_WORK_DIR);
+            return mMgrSettings.GetParam(clsAnalysisMgrSettings.MGR_PARAM_WORK_DIR);
         }
 
         /// <summary>
-        /// Initializes mMgrParams and returns example job params
+        /// Initializes mMgrSettings and returns example job params
         /// </summary>
         /// <returns></returns>
         /// <remarks></remarks>
@@ -340,11 +351,11 @@ namespace AnalysisManagerProg
         {
             var debugLevel = 1;
 
-            var jobParams = new clsAnalysisJob(mMgrParams, 0);
+            var jobParams = new clsAnalysisJob(mMgrSettings, 0);
 
-            mMgrParams.SetParam(clsAnalysisMgrSettings.MGR_PARAM_WORK_DIR, @"C:\DMS_WorkDir");
-            mMgrParams.SetParam(clsAnalysisMgrSettings.MGR_PARAM_MGR_NAME, "Monroe_Test");
-            mMgrParams.SetParam("DebugLevel", debugLevel.ToString());
+            mMgrSettings.SetParam(clsAnalysisMgrSettings.MGR_PARAM_WORK_DIR, @"C:\DMS_WorkDir");
+            mMgrSettings.SetParam(MgrSettings.MGR_PARAM_MGR_NAME, "Monroe_Test");
+            mMgrSettings.SetParam("DebugLevel", debugLevel.ToString());
 
             jobParams.SetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "StepTool", "TestStepTool");
             jobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "ToolName", "TestTool");
@@ -438,11 +449,11 @@ namespace AnalysisManagerProg
                 return false;
             }
 
-            // var workDir = mMgrParams.GetParam(clsAnalysisMgrSettings.MGR_PARAM_WORK_DIR);
+            // var workDir = mMgrSettings.GetParam(clsAnalysisMgrSettings.MGR_PARAM_WORK_DIR);
             // var postResultsToDB = true;
 
             // Note: add file clsDtaRefLogMassErrorExtractor to this project to use this functionality
-            // var oMassErrorExtractor = new clsDtaRefLogMassErrorExtractor(mMgrParams, workDir, mDebugLevel, postResultsToDB);
+            // var oMassErrorExtractor = new clsDtaRefLogMassErrorExtractor(mMgrSettings, workDir, mDebugLevel, postResultsToDB);
 
             foreach (DataRow curRow in Dt.Rows)
             {
@@ -511,29 +522,29 @@ namespace AnalysisManagerProg
 
             GetCodeTestToolRunner(out var jobParams);
 
-            if (string.IsNullOrWhiteSpace(mMgrParams.GetParam(clsAnalysisMgrSettings.MGR_PARAM_FAILED_RESULTS_FOLDER_PATH)))
+            if (string.IsNullOrWhiteSpace(mMgrSettings.GetParam(clsAnalysisMgrSettings.MGR_PARAM_FAILED_RESULTS_FOLDER_PATH)))
             {
                 if (clsGlobal.LinuxOS)
                 {
-                    var localWorkDirPath = mMgrParams.GetParam(clsAnalysisMgrSettings.MGR_PARAM_LOCAL_WORK_DIR_PATH);
+                    var localWorkDirPath = mMgrSettings.GetParam(clsAnalysisMgrSettings.MGR_PARAM_LOCAL_WORK_DIR_PATH);
                     if (!string.IsNullOrWhiteSpace(localWorkDirPath))
                     {
                         var localWorkDir = new DirectoryInfo(localWorkDirPath);
 
                         if (localWorkDir.Parent == null)
-                            mMgrParams.SetParam(clsAnalysisMgrSettings.MGR_PARAM_FAILED_RESULTS_FOLDER_PATH, "");
+                            mMgrSettings.SetParam(clsAnalysisMgrSettings.MGR_PARAM_FAILED_RESULTS_FOLDER_PATH, "");
                         else
-                            mMgrParams.SetParam(clsAnalysisMgrSettings.MGR_PARAM_FAILED_RESULTS_FOLDER_PATH, Path.Combine(localWorkDir.Parent.FullName, clsAnalysisToolRunnerBase.DMS_FAILED_RESULTS_DIRECTORY_NAME));
+                            mMgrSettings.SetParam(clsAnalysisMgrSettings.MGR_PARAM_FAILED_RESULTS_FOLDER_PATH, Path.Combine(localWorkDir.Parent.FullName, clsAnalysisToolRunnerBase.DMS_FAILED_RESULTS_DIRECTORY_NAME));
 
                     }
                     else
                     {
-                        mMgrParams.SetParam(clsAnalysisMgrSettings.MGR_PARAM_FAILED_RESULTS_FOLDER_PATH, "");
+                        mMgrSettings.SetParam(clsAnalysisMgrSettings.MGR_PARAM_FAILED_RESULTS_FOLDER_PATH, "");
                     }
                 }
                 else
                 {
-                    mMgrParams.SetParam(clsAnalysisMgrSettings.MGR_PARAM_FAILED_RESULTS_FOLDER_PATH, @"C:\" + clsAnalysisToolRunnerBase.DMS_FAILED_RESULTS_DIRECTORY_NAME);
+                    mMgrSettings.SetParam(clsAnalysisMgrSettings.MGR_PARAM_FAILED_RESULTS_FOLDER_PATH, @"C:\" + clsAnalysisToolRunnerBase.DMS_FAILED_RESULTS_DIRECTORY_NAME);
                 }
             }
 
@@ -558,7 +569,7 @@ namespace AnalysisManagerProg
                 }
             }
 
-            var analysisResults = new clsAnalysisResults(mMgrParams, jobParams);
+            var analysisResults = new clsAnalysisResults(mMgrSettings, jobParams);
             analysisResults.CopyFailedResultsToArchiveFolder(Path.Combine(GetWorkDirPath(), resFolderName));
         }
 
@@ -754,7 +765,7 @@ namespace AnalysisManagerProg
             jobParams.SetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "StepTool", "MSGFPlus");
             jobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_DATASET_NAME, "TestDataset");
 
-            var transferUtility = new clsRemoteTransferUtility(mMgrParams, jobParams);
+            var transferUtility = new clsRemoteTransferUtility(mMgrSettings, jobParams);
             RegisterEvents(transferUtility);
 
             var sourceFilePath = @"C:\DMS_Temp_Org\uniref50_2013-02-14.fasta";
@@ -811,7 +822,7 @@ namespace AnalysisManagerProg
             var pluginLoader = new clsPluginLoader(summaryFile, mgrFolderPath);
 
             var toolRunner = pluginLoader.GetToolRunner("dta_split".ToLower());
-            toolRunner.Setup("CodeTest", mMgrParams, jobParams, statusTools, summaryFile, myEMSLUtilities);
+            toolRunner.Setup("CodeTest", mMgrSettings, jobParams, statusTools, summaryFile, myEMSLUtilities);
             toolRunner.RunTool();
 
         }
@@ -852,7 +863,7 @@ namespace AnalysisManagerProg
 
                 //const bool msgfPlus = true;
                 //var jobNum = "12345";
-                //var debugLevel = (short)(mMgrParams.GetParam("DebugLevel", 1));
+                //var debugLevel = (short)(mMgrSettings.GetParam("DebugLevel", 1));
 
                 //var JavaProgLoc = @"C:\Program Files\Java\jre8\bin\java.exe";
                 //var MSGFDbProgLoc = @"C:\DMS_Programs\MSGFDB\MSGFPlus.jar";
@@ -861,7 +872,7 @@ namespace AnalysisManagerProg
 
                 // Uncomment the following if the MSGFDB plugin is associated with the solution
                 //var oTool = new AnalysisManagerMSGFDBPlugIn.clsMSGFDBUtils(
-                //    mMgrParams, oJobParams, jobNum, mMgrParams.GetParam(clsAnalysisMgrSettings.MGR_PARAM_WORK_DIR), debugLevel, msgfPlus);
+                //    mMgrSettings, oJobParams, jobNum, mMgrSettings.GetParam(clsAnalysisMgrSettings.MGR_PARAM_WORK_DIR), debugLevel, msgfPlus);
 
                 //RegisterEvents(oTool);
 
@@ -1135,7 +1146,7 @@ namespace AnalysisManagerProg
         /// </summary>
         public void GetLegacyFastaFileSize()
         {
-            var jobParams = new clsAnalysisJob(mMgrParams, 0);
+            var jobParams = new clsAnalysisJob(mMgrSettings, 0);
 
             jobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "ToolName", "MSGFPlus_SplitFasta");
 
@@ -1350,7 +1361,7 @@ namespace AnalysisManagerProg
 
             GetCodeTestToolRunner(out var jobParams, out var myEMSLUtilities);
 
-            mMgrParams.SetParam("ChameleonCachedDataFolder", @"H:\9T_Imaging");
+            mMgrSettings.SetParam("ChameleonCachedDataFolder", @"H:\9T_Imaging");
 
             jobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_DATASET_NAME, "ratjoint071110_INCAS_MS");
 
@@ -1358,7 +1369,7 @@ namespace AnalysisManagerProg
             jobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetArchivePath", @"\\adms.emsl.pnl.gov\dmsarch\9T_FTICR_Imaging_1");
             jobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH, @"\\proto-10\DMS3_Xfer");
 
-            resourceTester.Setup("CodeTest", mMgrParams, jobParams, statusTools, myEMSLUtilities);
+            resourceTester.Setup("CodeTest", mMgrSettings, jobParams, statusTools, myEMSLUtilities);
 
             var success = resourceTester.FileSearch.RetrieveBrukerMALDIImagingFolders(true);
 
@@ -1376,7 +1387,7 @@ namespace AnalysisManagerProg
             var statusTools = new clsStatusFile("Status.xml", 2);
             RegisterEvents(statusTools);
 
-            statusTools.MgrName = mMgrParams.ManagerName;
+            statusTools.MgrName = mMgrSettings.ManagerName;
 
             var exePath = Assembly.GetExecutingAssembly().Location;
             if (exePath == null)
@@ -1792,6 +1803,11 @@ namespace AnalysisManagerProg
         private void StatusEventHandler(string statusMessage)
         {
             LogMessage(statusMessage);
+        }
+
+        private void CriticalErrorEvent(string message, Exception ex)
+        {
+            LogError(message, true);
         }
 
         private void ErrorEventHandler(string errorMessage, Exception ex)

@@ -14,10 +14,10 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Xml;
 using AnalysisManagerBase;
 using PRISM.Logging;
 using PRISM;
+using PRISM.AppSettings;
 
 namespace AnalysisManagerProg
 {
@@ -227,12 +227,36 @@ namespace AnalysisManagerProg
             {
                 ShowTrace("Reading application config file");
 
-                // Load settings from config file AnalysisManagerProg.exe.config
-                var mgrSettings = LoadMgrSettingsFromFile();
-
                 try
                 {
-                    mMgrSettings = new clsAnalysisMgrSettings(mgrSettings, mMgrDirectoryPath, TraceMode);
+                    mMgrSettings = new clsAnalysisMgrSettings(mMgrDirectoryPath, TraceMode);
+
+                    // Load settings from config file AnalysisManagerProg.exe.config
+                    var configFileSettings = LoadMgrSettingsFromFile();
+
+                    var settingsClass = (clsAnalysisMgrSettings)mMgrSettings;
+                    if (settingsClass != null)
+                    {
+                        RegisterEvents(settingsClass);
+                        settingsClass.CriticalErrorEvent += CriticalErrorEvent;
+                    }
+
+                    var success = mMgrSettings.LoadSettings(configFileSettings);
+                    if (!success)
+                    {
+                        if (!string.IsNullOrEmpty(mMgrSettings.ErrMsg))
+                        {
+                            throw new ApplicationException("Unable to initialize manager settings class: " + mMgrSettings.ErrMsg);
+                        }
+
+                        throw new ApplicationException("Unable to initialize manager settings class: unknown error");
+                    }
+
+                    if (TraceMode)
+                    {
+                        ShowTraceMessage("Initialized MgrParams");
+                    }
+
                 }
                 catch (Exception ex)
                 {
@@ -342,7 +366,7 @@ namespace AnalysisManagerProg
             else
             {
                 // Data Source=proteinseqs;Initial Catalog=manager_control
-                mgrConfigDBConnectionString = mMgrSettings.GetParam(clsAnalysisMgrSettings.MGR_PARAM_MGR_CFG_DB_CONN_STRING);
+                mgrConfigDBConnectionString = mMgrSettings.GetParam(MgrSettings.MGR_PARAM_MGR_CFG_DB_CONN_STRING);
             }
 
             mMgrErrorCleanup = new clsCleanupMgrErrors(mgrConfigDBConnectionString, mMgrName, mDebugLevel, mMgrDirectoryPath, mWorkDirPath);
@@ -402,7 +426,7 @@ namespace AnalysisManagerProg
                     UpdateStatusIdle("No analysis jobs found");
 
                     // Check for configuration change
-                    // This variable will be true if the CaptureTaskManager.exe.config file has been updated
+                    // This variable will be true if the AnalysisManagerProg.exe.config file has been updated
                     if (mConfigChanged)
                     {
                         // Local config file has changed
@@ -432,7 +456,7 @@ namespace AnalysisManagerProg
 
                     // Check to see if manager is still active
                     var mgrActive = mMgrSettings.GetParam(clsAnalysisMgrSettings.MGR_PARAM_MGR_ACTIVE, false);
-                    var mgrActiveLocal = mMgrSettings.GetParam(clsAnalysisMgrSettings.MGR_PARAM_MGR_ACTIVE_LOCAL, false);
+                    var mgrActiveLocal = mMgrSettings.GetParam(MgrSettings.MGR_PARAM_MGR_ACTIVE_LOCAL, false);
 
                     if (!(mgrActive && mgrActiveLocal))
                     {
@@ -1926,67 +1950,6 @@ namespace AnalysisManagerProg
         }
 
         /// <summary>
-        /// Read settings from file AnalysisManagerProg.exe.config
-        /// </summary>
-        /// <returns>String dictionary of settings as key/value pairs; null on error</returns>
-        /// <remarks>Uses an XML reader instead of Properties.Settings.Default (see the comments in LoadMgrSettingsFromFile)</remarks>
-        private Dictionary<string, string> ReadMgrSettingsFile(out string configFilePath)
-        {
-
-            XmlDocument configDoc;
-            configFilePath = string.Empty;
-
-            try
-            {
-                // Construct the path to the config document
-                configFilePath = Path.Combine(mMgrDirectoryPath, mMgrExeName + ".config");
-                var configFile = new FileInfo(configFilePath);
-                if (!configFile.Exists)
-                {
-                    LogError("ReadMgrSettingsFile; manager config file not found: " + configFilePath);
-                    return null;
-                }
-
-                // Load the config document
-                configDoc = new XmlDocument();
-                configDoc.Load(configFilePath);
-            }
-            catch (Exception ex)
-            {
-                LogError("ReadMgrSettingsFile; exception loading settings file", ex);
-                return null;
-            }
-
-            try
-            {
-                // Retrieve the settings node
-                var appSettingsNode = configDoc.SelectSingleNode("//applicationSettings");
-
-                if (appSettingsNode == null)
-                {
-                    LogError("ReadMgrSettingsFile; applicationSettings node not found");
-                    return null;
-                }
-
-                // Read each of the settings
-                var settingNodes = appSettingsNode.SelectNodes("//setting[@name]");
-                if (settingNodes == null)
-                {
-                    LogError("ReadMgrSettingsFile; applicationSettings/*/setting nodes not found");
-                    return null;
-                }
-
-                return clsAnalysisMgrSettings.ParseXMLSettings(settingNodes, TraceMode);
-
-            }
-            catch (Exception ex)
-            {
-                LogError("ReadMgrSettingsFile; Exception reading settings file", ex);
-                return null;
-            }
-        }
-
-        /// <summary>
         /// Loads the initial settings from application config file AnalysisManagerProg.exe.config
         /// </summary>
         /// <returns>String dictionary containing initial settings if successful; null on error</returns>
@@ -2012,46 +1975,38 @@ namespace AnalysisManagerProg
 
             // Method ReadMgrSettingsFile() works with both versions of the .exe.config file
 
-            // Load initial settings into string dictionary
-            var mgrSettings = ReadMgrSettingsFile(out var configFilePath);
+            // Construct the path to the config document
+            var configFilePath = Path.Combine(mMgrDirectoryPath, mMgrExeName + ".config");
+
+            var mgrSettings = mMgrSettings.LoadMgrSettingsFromFile(configFilePath);
 
             if (mgrSettings == null)
                 return null;
 
             // Manager Config DB connection string
-            if (!mgrSettings.ContainsKey(clsAnalysisMgrSettings.MGR_PARAM_MGR_CFG_DB_CONN_STRING))
+            if (!mgrSettings.ContainsKey(MgrSettings.MGR_PARAM_MGR_CFG_DB_CONN_STRING))
             {
-                mgrSettings.Add(clsAnalysisMgrSettings.MGR_PARAM_MGR_CFG_DB_CONN_STRING, Properties.Settings.Default.MgrCnfgDbConnectStr);
+                mgrSettings.Add(MgrSettings.MGR_PARAM_MGR_CFG_DB_CONN_STRING, Properties.Settings.Default.MgrCnfgDbConnectStr);
             }
 
             // Manager active flag
-            if (!mgrSettings.ContainsKey(clsAnalysisMgrSettings.MGR_PARAM_MGR_ACTIVE_LOCAL))
+            if (!mgrSettings.ContainsKey(MgrSettings.MGR_PARAM_MGR_ACTIVE_LOCAL))
             {
-                mgrSettings.Add(clsAnalysisMgrSettings.MGR_PARAM_MGR_ACTIVE_LOCAL, "False");
+                mgrSettings.Add(MgrSettings.MGR_PARAM_MGR_ACTIVE_LOCAL, "False");
             }
 
             // Manager name
-            if (!mgrSettings.ContainsKey(clsAnalysisMgrSettings.MGR_PARAM_MGR_NAME))
+            // The manager name may contain $ComputerName$
+            // If it does, InitializeMgrSettings in MgrSettings will replace "$ComputerName$ with the local host name
+            if (!mgrSettings.ContainsKey(MgrSettings.MGR_PARAM_MGR_NAME))
             {
-                mgrSettings.Add(clsAnalysisMgrSettings.MGR_PARAM_MGR_NAME, "LoadMgrSettingsFromFile__Undefined_manager_name");
-            }
-
-            // If the MgrName setting in the AnalysisManagerProg.exe.config file contains the text $ComputerName$
-            // that text is replaced with this computer's domain name
-            // This is a case-sensitive comparison
-            var managerName = mgrSettings[clsAnalysisMgrSettings.MGR_PARAM_MGR_NAME];
-            var autoDefinedName = managerName.Replace("$ComputerName$", Environment.MachineName);
-
-            if (!string.Equals(managerName, autoDefinedName))
-            {
-                ShowTrace("Auto-defining the manager name as " + autoDefinedName);
-                mgrSettings[clsAnalysisMgrSettings.MGR_PARAM_MGR_NAME] = autoDefinedName;
+                mgrSettings.Add(MgrSettings.MGR_PARAM_MGR_NAME, "LoadMgrSettingsFromFile__Undefined_manager_name");
             }
 
             // Default settings in use flag
-            if (!mgrSettings.ContainsKey(clsAnalysisMgrSettings.MGR_PARAM_USING_DEFAULTS))
+            if (!mgrSettings.ContainsKey(MgrSettings.MGR_PARAM_USING_DEFAULTS))
             {
-                mgrSettings.Add(clsAnalysisMgrSettings.MGR_PARAM_USING_DEFAULTS, Properties.Settings.Default.UsingDefaults.ToString());
+                mgrSettings.Add(MgrSettings.MGR_PARAM_USING_DEFAULTS, Properties.Settings.Default.UsingDefaults.ToString());
             }
 
             // Default connection string for logging errors to the database
@@ -2064,7 +2019,7 @@ namespace AnalysisManagerProg
             if (TraceMode)
             {
                 ShowTrace("Settings loaded from " + PathUtils.CompactPathString(configFilePath, 60));
-                clsAnalysisMgrSettings.ShowDictionaryTrace(mgrSettings);
+                MgrSettings.ShowDictionaryTrace(mgrSettings);
             }
 
             return mgrSettings;
@@ -2224,21 +2179,21 @@ namespace AnalysisManagerProg
                 ShowTrace("Reading application config file");
 
                 // Load settings from config file AnalysisManagerProg.exe.config
-                var mgrSettings = LoadMgrSettingsFromFile();
+                var configFileSettings = LoadMgrSettingsFromFile();
 
-                if (mgrSettings == null)
+                if (configFileSettings == null)
                     return false;
 
                 ShowTrace("Storing manager settings in mMgrSettings");
 
                 // Store the new settings then retrieve updated settings from the database
                 // or from ManagerSettingsLocal.xml if clsGlobal.OfflineMode is true
-                if (mMgrSettings.LoadSettings(mgrSettings))
+                if (mMgrSettings.LoadSettings(configFileSettings))
                     return true;
 
                 if (!string.IsNullOrWhiteSpace(mMgrSettings.ErrMsg))
                 {
-                    // Manager has been deactivated, so report this
+                    // Log the error
                     LogMessage(mMgrSettings.ErrMsg);
                     UpdateStatusDisabled(EnumMgrStatus.DISABLED_LOCAL, "Disabled Locally");
                 }
@@ -3190,6 +3145,11 @@ namespace AnalysisManagerProg
         private void StatusEventHandler(string statusMessage)
         {
             LogMessage(statusMessage);
+        }
+
+        private void CriticalErrorEvent(string message, Exception ex)
+        {
+            LogError(message, true);
         }
 
         private void ErrorEventHandler(string errorMessage, Exception ex)
