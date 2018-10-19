@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using PRISM;
 
 //*********************************************************************************************************
 // Written by Dave Clark and Matthew Monroe for the US Department of Energy
@@ -25,6 +26,11 @@ namespace AnalysisManagerBase
         /// Manager name
         /// </summary>
         string ManagerName { get; }
+
+        /// <summary>
+        /// Dictionary of manager parameters
+        /// </summary>
+        Dictionary<string, string> MgrParams { get; }
 
         /// <summary>
         /// True when TraceMode has been enabled at the command line via /trace
@@ -94,6 +100,12 @@ namespace AnalysisManagerBase
         bool LoadDBSettings();
 
         /// <summary>
+        /// Read settings from file AppName.exe.config
+        /// </summary>
+        /// <returns>Dictionary of settings as key/value pairs; null on error</returns>
+        Dictionary<string, string> LoadMgrSettingsFromFile(string configFilePath);
+
+        /// <summary>
         /// Updates manager settings, then loads settings from the database or from ManagerSettingsLocal.xml if clsGlobal.OfflineMode is true
         /// </summary>
         /// <param name="configFileSettings">Manager settings loaded from file AnalysisManagerProg.exe.config</param>
@@ -102,8 +114,6 @@ namespace AnalysisManagerBase
         bool LoadSettings(Dictionary<string, string> configFileSettings);
 
         #endregion
-
-
     }
 
 }
