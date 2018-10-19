@@ -12,6 +12,7 @@ using System;
 using System.IO;
 using System.Text.RegularExpressions;
 using AnalysisManagerBase;
+using ThermoRawFileReader;
 
 namespace DTASpectraFileGen
 {
@@ -232,22 +233,31 @@ namespace DTASpectraFileGen
         /// <returns>Number of scans found</returns>
         protected int GetMaxScan(string rawFilePath)
         {
-            var numScans = 0;
+            try
+            {
+                if (mDebugLevel >= 3)
+                {
+                    OnDebugEvent("Opening .raw file with ThermoRawFileReader.XRawFileIO: " + rawFilePath);
+                }
 
-            var XRawFile = new MSFileReaderLib.MSFileReader_XRawfile();
-            XRawFile.Open(rawFilePath);
-            XRawFile.SetCurrentController(0, 1);
-            XRawFile.GetNumSpectra(numScans);
-            // XRawFile.GetFirstSpectrumNumber(StartScan)
-            // XRawFile.GetLastSpectrumNumber(StopScan)
-            XRawFile.Close();
+                using (var reader = new XRawFileIO(rawFilePath))
+                {
+                    var numScans = reader.FileInfo.ScanEnd;
 
-            // Pause and garbage collect to allow release of file lock on .raw file
-            // 1.5 second delay
-            clsGlobal.IdleLoop(1.5);
-            PRISM.ProgRunner.GarbageCollectNow();
+                    if (mDebugLevel >= 2)
+                    {
+                        OnDebugEvent(string.Format("Max scan for {0} is {1:N0}", Path.GetFileName(rawFilePath), numScans));
+                    }
+                    return numScans;
+                }
 
-            return numScans;
+            }
+            catch (Exception ex)
+            {
+                OnErrorEvent("Error determining the max scan number in the .raw file", ex);
+                return 0;
+            }
+
         }
 
         /// <summary>
@@ -375,11 +385,11 @@ namespace DTASpectraFileGen
             {
                 case -1:
                     // Generic error getting number of scans
-                    LogError("Unknown error getting number of scans; Maxscan = " + mMaxScanInFile);
+                    LogError("Unknown error getting number of scans; MaxScan = " + mMaxScanInFile);
                     return false;
                 case 0:
                     // Unable to read file; treat this is a warning
-                    LogError("Warning: unable to get maxscan; Maxscan = 0");
+                    LogError("Warning: unable to get MaxScan; MaxScan is 0");
                     break;
                 default:
                     if (mMaxScanInFile > 0)
@@ -388,7 +398,7 @@ namespace DTASpectraFileGen
                         break;
                     }
                     // This should never happen
-                    LogError("Critical error getting number of scans; Maxscan = " + mMaxScanInFile);
+                    LogError("Critical error getting number of scans; MaxScan = " + mMaxScanInFile);
                     return false;
             }
 
