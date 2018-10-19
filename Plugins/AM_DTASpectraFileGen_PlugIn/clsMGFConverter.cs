@@ -393,7 +393,7 @@ namespace DTASpectraFileGen
             catch (Exception ex)
             {
                 mErrMsg = "Error updating the MGF file title lines using the .mzML file";
-                OnErrorEvent(mErrMsg + ": " + ex.Message);
+                OnErrorEvent(mErrMsg, ex);
                 return false;
             }
 
