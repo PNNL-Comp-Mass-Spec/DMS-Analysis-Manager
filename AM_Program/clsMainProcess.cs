@@ -68,6 +68,7 @@ namespace AnalysisManagerProg
         private clsStatusFile mStatusTools;
 
         private clsMyEMSLUtilities mMyEMSLUtilities;
+
         private bool mNeedToAbortProcessing;
 
         private string mMostRecentJobInfo;
@@ -2596,21 +2597,23 @@ namespace AnalysisManagerProg
         /// Show a trace message only if TraceMode is true
         /// </summary>
         /// <param name="message"></param>
-        private void ShowTrace(string message)
+        /// <param name="emptyLinesBeforeMessage"></param>
+        private void ShowTrace(string message, int emptyLinesBeforeMessage = 1)
         {
             if (!TraceMode)
                 return;
 
-            ShowTraceMessage(message);
+            ShowTraceMessage(message, emptyLinesBeforeMessage);
         }
 
         /// <summary>
         /// Show a message at the console, preceded by a time stamp
         /// </summary>
         /// <param name="message"></param>
-        public static void ShowTraceMessage(string message)
+        /// <param name="emptyLinesBeforeMessage"></param>
+        public static void ShowTraceMessage(string message, int emptyLinesBeforeMessage = 1)
         {
-            ConsoleMsgUtils.ShowDebug(DateTime.Now.ToString("hh:mm:ss.fff tt") + ": " + message);
+            BaseLogger.ShowTraceMessage(message, false, "  ", emptyLinesBeforeMessage);
         }
 
         /// <summary>

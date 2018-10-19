@@ -105,7 +105,7 @@ namespace AnalysisManagerProg
                     return -1;
                 }
 
-                ShowTraceMessage("Command line arguments parsed");
+                ShowTrace("Command line arguments parsed");
 
                 if (mShowVersionOnly)
                 {
@@ -117,7 +117,7 @@ namespace AnalysisManagerProg
                 // Note: CodeTestMode is enabled using command line switch /T
                 if (mCodeTestMode)
                 {
-                    ShowTraceMessage("Code test mode enabled");
+                    ShowTrace("Code test mode enabled");
 
                     var testHarness = new CodeTest();
 
@@ -151,7 +151,7 @@ namespace AnalysisManagerProg
                         LogTools.LogError("Exception calling clsCodeTest", ex);
                     }
 
-                    ShowTraceMessage("Exiting the application");
+                    ShowTrace("Exiting the application");
 
                     clsParseCommandLine.PauseAtConsole(500);
                     return 0;
@@ -166,7 +166,7 @@ namespace AnalysisManagerProg
                 }
 
                 // Initiate automated analysis
-                ShowTraceMessage("Instantiating clsMainProcess");
+                ShowTrace("Instantiating clsMainProcess");
 
                 var mainProcess = new clsMainProcess(mTraceMode)
                 {
@@ -177,7 +177,7 @@ namespace AnalysisManagerProg
 
                 var returnCode = mainProcess.Main();
 
-                ShowTraceMessage("Exiting the application");
+                ShowTrace("Exiting the application");
                 FileLogger.FlushPendingMessages();
                 return returnCode;
             }
@@ -422,10 +422,12 @@ namespace AnalysisManagerProg
             }
         }
 
-        private static void ShowTraceMessage(string message)
+        private static void ShowTrace(string message)
         {
             if (mTraceMode)
+            {
                 clsMainProcess.ShowTraceMessage(message);
+            }
         }
     }
 }
