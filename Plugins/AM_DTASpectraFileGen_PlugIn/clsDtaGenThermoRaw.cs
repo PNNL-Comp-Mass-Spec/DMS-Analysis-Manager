@@ -405,7 +405,7 @@ namespace DTASpectraFileGen
             // Verify max scan specified is in file
             if (mMaxScanInFile > 0)
             {
-                if (scanStart == 1 && scanStop == 999999 && scanStop < mMaxScanInFile)
+                if (scanStop == 999999 && scanStop < mMaxScanInFile)
                 {
                     // The default scan range for processing all scans has traditionally been 1 to 999999
                     // This scan range is defined for this job's settings file, but this dataset has over 1 million spectra
