@@ -1013,7 +1013,7 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public static string DbCStr(object dbValue)
         {
-            // If input var is DbNull, returns "", otherwise returns String representation of var
+            // If input var is DbNull, returns "", otherwise returns String representation of dbValue
             if (ReferenceEquals(dbValue, DBNull.Value))
             {
                 return string.Empty;

@@ -8,7 +8,6 @@
 using System;
 using AnalysisManagerBase;
 
-
 namespace AnalysisManagerTopFDPlugIn
 {
     /// <summary>
