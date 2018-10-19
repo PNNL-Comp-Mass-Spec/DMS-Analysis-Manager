@@ -2039,6 +2039,9 @@ namespace AnalysisManagerBase
 
             cmd.Parameters.Add(new SqlParameter("@processorName", SqlDbType.VarChar, 128)).Value = ManagerName;
 
+            var messageParam = cmd.Parameters.Add(new SqlParameter("@message", SqlDbType.VarChar, 512));
+            messageParam.Direction = ParameterDirection.Output;
+
             // Call Stored Procedure SetStepTaskComplete (retry the call up to 20 times)
             var returnCode = PipelineDBProcedureExecutor.ExecuteSP(cmd, 20);
 
@@ -2047,7 +2050,18 @@ namespace AnalysisManagerBase
                 return true;
             }
 
-            LogError("Error " + returnCode + " setting analysis job complete");
+            var errorMessage = "Error " + returnCode + " setting analysis job complete";
+
+            var messageDetails = clsGlobal.DbCStr(messageParam.Value);
+            if (!string.IsNullOrWhiteSpace(messageDetails))
+            {
+                LogError(errorMessage + ": " + messageDetails);
+            }
+            else
+            {
+                LogError(errorMessage);
+            }
+
             return false;
         }
 
