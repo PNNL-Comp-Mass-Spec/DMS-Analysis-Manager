@@ -591,7 +591,7 @@ namespace AnalysisManagerBase
                     return true;
                 }
 
-                OnSplittingBaseFastafile(baseFastaFile.FullName, mNumSplitParts);
+                OnSplittingBaseFastaFile(baseFastaFile.FullName, mNumSplitParts);
 
                 // Perform the splitting
                 //    Call SplitFastaFile to create a split file, using mNumSplitParts parts
@@ -701,7 +701,7 @@ namespace AnalysisManagerBase
             catch (Exception ex)
             {
                 ErrorMessage = "Exception in ValidateSplitFastaFile for " + splitFastaName + " at " + currentTask + ": " + ex.Message;
-                OnErrorEvent(ErrorMessage);
+                OnErrorEvent(ErrorMessage, ex);
                 return false;
             }
 
@@ -714,21 +714,21 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Event raised when splitting starts
         /// </summary>
-        public event SplittingBaseFastafileEventHandler SplittingBaseFastafile;
+        public event SplittingBaseFastaFileEventHandler SplittingBaseFastaFile;
 
         /// <summary>
-        /// Delegate for SplittingBaseFastafile
+        /// Delegate for SplittingBaseFastaFile
         /// </summary>
         /// <param name="baseFastaFileName"></param>
         /// <param name="numSplitParts"></param>
-        public delegate void SplittingBaseFastafileEventHandler(string baseFastaFileName, int numSplitParts);
+        public delegate void SplittingBaseFastaFileEventHandler(string baseFastaFileName, int numSplitParts);
 
         /// <summary>
-        /// Raise event SplittingBaseFastafile
+        /// Raise event SplittingBaseFastaFile
         /// </summary>
-        private void OnSplittingBaseFastafile(string baseFastaFileName, int numSplitParts)
+        private void OnSplittingBaseFastaFile(string baseFastaFileName, int numSplitParts)
         {
-            SplittingBaseFastafile?.Invoke(baseFastaFileName, numSplitParts);
+            SplittingBaseFastaFile?.Invoke(baseFastaFileName, numSplitParts);
         }
 
         private void Splitter_ErrorEvent(string message, Exception ex)

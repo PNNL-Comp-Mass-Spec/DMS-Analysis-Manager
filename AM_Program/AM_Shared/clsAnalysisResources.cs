@@ -2,17 +2,17 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
-using PHRPReader;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml;
 using System.Xml.Linq;
-using PRISM.Logging;
 using MyEMSLReader;
 using ParamFileGenerator.MakeParams;
+using PHRPReader;
 using PRISM;
+using PRISM.Logging;
 using Renci.SshNet.Sftp;
 
 //*********************************************************************************************************
@@ -1395,7 +1395,7 @@ namespace AnalysisManagerBase
                 mSplitFastaFileUtility.ProgressUpdate -= ProgressUpdateHandler;
                 mSplitFastaFileUtility.ProgressUpdate += SplitFastaFileUtility_ProgressUpdate;
 
-                mSplitFastaFileUtility.SplittingBaseFastafile += SplitFastaFileUtility_SplittingBaseFastaFile;
+                mSplitFastaFileUtility.SplittingBaseFastaFile += SplitFastaFileUtility_SplittingBaseFastaFile;
 
                 mSplitFastaFileUtility.MSGFPlusIndexFilesFolderPathLegacyDB = msgfPlusIndexFilesDirPathLegacyDB;
 
