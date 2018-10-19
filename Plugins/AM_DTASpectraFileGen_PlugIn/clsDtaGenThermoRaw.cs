@@ -264,7 +264,7 @@ namespace DTASpectraFileGen
         /// Update mErrMsg and raise event OnErrorEvent
         /// </summary>
         /// <param name="errorMessage"></param>
-        private void LogError(string errorMessage)
+        protected void LogError(string errorMessage)
         {
             mErrMsg = errorMessage;
             OnErrorEvent(mErrMsg);
