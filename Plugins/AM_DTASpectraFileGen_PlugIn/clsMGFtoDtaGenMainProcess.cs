@@ -157,7 +157,7 @@ namespace DTASpectraFileGen
 
         /// <summary>
         /// Convert .mgf file to _DTA.txt using MascotGenericFileToDTA.dll
-        /// This functon is called by MakeDTAFilesThreaded
+        /// This method is called by MakeDTAFilesThreaded
         /// </summary>
         /// <returns>TRUE for success; FALSE for failure</returns>
         /// <remarks></remarks>

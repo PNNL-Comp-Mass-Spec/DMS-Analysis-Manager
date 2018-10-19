@@ -97,23 +97,24 @@ namespace DTASpectraFileGen
             {
                 var strRawDataType = mJobParams.GetJobParameter("RawDataType", string.Empty);
 
-                var oMGFConverter = new clsMGFConverter(mDebugLevel, mWorkDir)
+                var mgfConverter = new clsMGFConverter(mDebugLevel, mWorkDir)
                 {
                     IncludeExtraInfoOnParentIonLine = true,
                     MinimumIonsPerSpectrum = 0
                 };
 
-                RegisterEvents(oMGFConverter);
+                RegisterEvents(mgfConverter);
 
                 var eRawDataType = clsAnalysisResources.GetRawDataType(strRawDataType);
-                var blnSuccess = oMGFConverter.ConvertMGFtoDTA(eRawDataType, mDatasetName);
+                var blnSuccess = mgfConverter.ConvertMGFtoDTA(eRawDataType, mDatasetName);
 
                 if (!blnSuccess)
                 {
-                    mErrMsg = oMGFConverter.ErrorMessage;
+                    // The error has already been logged
+                    mErrMsg = mgfConverter.ErrorMessage;
                 }
 
-                mSpectraFileCount = oMGFConverter.SpectraCountWritten;
+                mSpectraFileCount = mgfConverter.SpectraCountWritten;
                 mProgress = 95;
 
                 return blnSuccess;
@@ -141,7 +142,7 @@ namespace DTASpectraFileGen
                     OnStatusEvent("Creating .MGF file using MSConvert");
                 }
 
-                string rawFilePath = null;
+                string rawFilePath;
 
                 // Construct the path to the .raw file
                 switch (eRawDataType)
@@ -204,7 +205,7 @@ namespace DTASpectraFileGen
                 {
                     if (scanStop == 999999 && scanStop < mMaxScanInFile)
                     {
-                        // The default scan range for processing all scans has traditionally be 1 to 999999
+                        // The default scan range for processing all scans has traditionally been 1 to 999999
                         // This scan range is defined for this job's settings file, but this dataset has over 1 million spectra
                         // Assume that the user actually wants to analyze all of the spectra
                         scanStop = mMaxScanInFile;
