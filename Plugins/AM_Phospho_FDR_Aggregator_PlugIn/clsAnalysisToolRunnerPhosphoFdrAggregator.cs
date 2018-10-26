@@ -90,11 +90,11 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
 
                 // Determine the path to the Ascore program
                 // AScoreProgLoc will be something like this: "C:\DMS_Programs\AScore\AScore_Console.exe"
-                var progLocAScore = mMgrParams.GetParam("AScoreprogloc");
+                var progLocAScore = mMgrParams.GetParam("AScoreProgLoc");
                 if (!File.Exists(progLocAScore))
                 {
                     if (string.IsNullOrWhiteSpace(progLocAScore))
-                        progLocAScore = "Parameter 'AScoreprogloc' not defined for this manager";
+                        progLocAScore = "Parameter 'AScoreProgLoc' not defined for this manager";
                     mMessage = "Cannot find AScore program file";
                     LogError(mMessage + ": " + progLocAScore);
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -177,21 +177,21 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
         {
             try
             {
-                var fiSynFile = new FileInfo(synFilePath);
-                if (fiSynFile.Directory == null)
+                var synFile = new FileInfo(synFilePath);
+                if (synFile.Directory == null)
                 {
-                    LogError("Cannot determine the parent directory of " + fiSynFile.FullName);
+                    LogError("Cannot determine the parent directory of " + synFile.FullName);
                     return false;
                 }
 
-                var msgfFileName = Path.GetFileNameWithoutExtension(fiSynFile.Name) + "_MSGF.txt";
+                var msgfFileName = Path.GetFileNameWithoutExtension(synFile.Name) + "_MSGF.txt";
 
-                var fiMsgfFile = new FileInfo(Path.Combine(fiSynFile.Directory.FullName, msgfFileName));
+                var msgfFile = new FileInfo(Path.Combine(synFile.Directory.FullName, msgfFileName));
 
-                if (!fiMsgfFile.Exists)
+                if (!msgfFile.Exists)
                 {
                     LogWarning("MSGF file not found for job " + jobNumber, true);
-                    LogWarning("Cannot add MSGF_SpecProb values to the " + fileTypeTag + " file; " + fiMsgfFile.FullName);
+                    LogWarning("Cannot add MSGF_SpecProb values to the " + fileTypeTag + " file; " + msgfFile.FullName);
                     return true;
                 }
 
@@ -200,7 +200,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                 // First cache the MSGFSpecProb values using a delimited file reader
 
                 var msgfReader = new DelimitedFileReader {
-                    FilePath = fiMsgfFile.FullName
+                    FilePath = msgfFile.FullName
                 };
 
                 var lookupSink = new KVSink
@@ -214,18 +214,18 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
 
                 if (lookupSink.Values.Count == 0)
                 {
-                    mMessage = fiMsgfFile.Name + " was empty for job " + jobNumber;
+                    mMessage = msgfFile.Name + " was empty for job " + jobNumber;
                     LogError(mMessage);
                     return false;
                 }
 
                 // Next create the updated synopsis / first hits file using the values cached in lookupSink
 
-                var fiUpdatedfile = new FileInfo(fiMsgfFile.FullName + ".msgf");
+                var updatedFile = new FileInfo(msgfFile.FullName + ".msgf");
 
-                var synReader = new DelimitedFileReader { FilePath = fiSynFile.FullName };
+                var synReader = new DelimitedFileReader { FilePath = synFile.FullName };
 
-                var synWriter = new DelimitedFileWriter { FilePath = fiUpdatedfile.FullName };
+                var synWriter = new DelimitedFileWriter { FilePath = updatedFile.FullName };
 
                 var mergeFilter = new MergeFromLookup
                 {
@@ -238,27 +238,27 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                 var mergePipeline = ProcessingPipeline.Assemble("Main pipeline", synReader, mergeFilter, synWriter);
                 mergePipeline.RunRoot(null);
 
-                fiUpdatedfile.Refresh();
-                if (!fiUpdatedfile.Exists)
+                updatedFile.Refresh();
+                if (!updatedFile.Exists)
                 {
-                    mMessage = "Mage did not create " + fiUpdatedfile.Name + " for job " + jobNumber;
+                    mMessage = "Mage did not create " + updatedFile.Name + " for job " + jobNumber;
                     LogError(mMessage);
                     return false;
                 }
 
-                if (fiUpdatedfile.Length == 0)
+                if (updatedFile.Length == 0)
                 {
-                    mMessage = fiUpdatedfile.Name + " is 0 bytes for job " + jobNumber;
+                    mMessage = updatedFile.Name + " is 0 bytes for job " + jobNumber;
                     LogError(mMessage);
                     return false;
                 }
 
                 // Replace the original file with the new one
-                var originalFilePath = fiSynFile.FullName;
+                var originalFilePath = synFile.FullName;
 
-                fiSynFile.MoveTo(fiSynFile.FullName + ".old");
+                synFile.MoveTo(synFile.FullName + ".old");
 
-                fiUpdatedfile.MoveTo(originalFilePath);
+                updatedFile.MoveTo(originalFilePath);
 
                 return true;
             }

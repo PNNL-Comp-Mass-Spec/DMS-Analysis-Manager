@@ -299,7 +299,7 @@ namespace AnalysisManagerMSGFPlugin
                                 if (string.IsNullOrEmpty(msgfResultData))
                                 {
                                     // Match text is empty
-                                    // We should not write thie out to disk since it would result in empty columns
+                                    // We should not write this out to disk since it would result in empty columns
 
                                     var warningMessage = "MSGF Results are empty for result code '" + peptideResultCode +
                                                             "'; this is unexpected";
@@ -400,8 +400,12 @@ namespace AnalysisManagerMSGFPlugin
                 }
                 else
                 {
+                    // ReSharper disable CommentTypo
+
                     // mzXML filename is dataset plus .mzXML
                     // Note that the jrap reader used by MSGF may fail if the .mzXML filename is capitalized differently than this (i.e., it cannot be .mzxml)
+
+                    // ReSharper restore CommentTypo
                     spectrumFileName = mDatasetName + ".mzXML";
                 }
 

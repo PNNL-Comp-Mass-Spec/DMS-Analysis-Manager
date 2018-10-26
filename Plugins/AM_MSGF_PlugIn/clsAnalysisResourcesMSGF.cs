@@ -273,7 +273,7 @@ namespace AnalysisManagerMSGFPlugin
                 }
             }
 
-            success = ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders);
+            success = ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadLayout.FlatNoSubdirectories);
             if (!success)
             {
                 return CloseOutType.CLOSEOUT_FAILED;
@@ -444,7 +444,7 @@ namespace AnalysisManagerMSGFPlugin
                 }
             }
 
-            success = ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders);
+            success = ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadLayout.FlatNoSubdirectories);
             if (!success)
             {
                 return CloseOutType.CLOSEOUT_FAILED;

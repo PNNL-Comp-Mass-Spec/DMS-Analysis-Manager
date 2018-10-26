@@ -66,7 +66,7 @@ namespace AnalysisManager_Cyclops_PlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                var d_Params = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+                var paramDictionary = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
                 {
                     {"Job", mJobParams.GetParam("Job")},
                     {"RDLL", rProgLocFromRegistry},
@@ -93,7 +93,7 @@ namespace AnalysisManager_Cyclops_PlugIn
                 {
                     AppendToCyclopsLog(INITIALIZING_LOG_FILE);
 
-                    var cyclops = new CyclopsController(d_Params);
+                    var cyclops = new CyclopsController(paramDictionary);
                     RegisterEvents(cyclops);
 
                     cyclops.ErrorEvent += Cyclops_ErrorEvent;
@@ -102,7 +102,6 @@ namespace AnalysisManager_Cyclops_PlugIn
 
                     // Don't log these:
                     // cyclops.OperationsDatabasePath (always blank)
-                    // cyclops.WorkFlowFileName       (always blank)
                     // cyclops.WorkingDirectory       (different for each manager)
 
                     AppendToCyclopsLog("Parameters:");

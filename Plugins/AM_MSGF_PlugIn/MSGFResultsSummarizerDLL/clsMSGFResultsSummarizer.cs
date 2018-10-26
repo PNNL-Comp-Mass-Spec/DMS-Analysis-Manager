@@ -22,6 +22,8 @@ using System.Text;
 using System.Text.RegularExpressions;
 using PRISM;
 
+// ReSharper disable UnusedMember.Global
+
 namespace MSGFResultsSummarizer
 {
     public class clsMSGFResultsSummarizer : EventNotifier
@@ -1048,6 +1050,7 @@ namespace MSGFResultsSummarizer
                 var usingMSGFOrEValueFilter = true;
                 ReportDebugMessage("Call FilterAndComputeStats with blnUsingMSGFOrEValueFilter = true", 3);
 
+                // ReSharper disable once ConditionIsAlwaysTrueOrFalse
                 var success = FilterAndComputeStats(usingMSGFOrEValueFilter, lstNormalizedPSMs, lstSeqToProteinMap, lstSeqInfo);
 
                 ReportDebugMessage("FilterAndComputeStats returned " + success, 3);
@@ -1058,6 +1061,7 @@ namespace MSGFResultsSummarizer
                 usingMSGFOrEValueFilter = false;
                 ReportDebugMessage("Call FilterAndComputeStats with blnUsingMSGFOrEValueFilter = false", 3);
 
+                // ReSharper disable once ConditionIsAlwaysTrueOrFalse
                 var successViaFDR = FilterAndComputeStats(usingMSGFOrEValueFilter, lstNormalizedPSMs, lstSeqToProteinMap, lstSeqInfo);
 
                 ReportDebugMessage("FilterAndComputeStats returned " + success, 3);
@@ -1148,27 +1152,27 @@ namespace MSGFResultsSummarizer
 
                 // Load the result to sequence mapping, sequence IDs, and protein information
                 // This also loads the mod description, which we use to determine if a peptide is a phosphopeptide
-                var objSeqMapReader = new clsPHRPSeqMapReader(mDatasetName, mWorkDir, ResultType);
+                var seqMapReader = new clsPHRPSeqMapReader(mDatasetName, mWorkDir, ResultType);
 
                 var sequenceInfoAvailable = false;
 
-                if (!string.IsNullOrEmpty(objSeqMapReader.ResultToSeqMapFilename))
+                if (!string.IsNullOrEmpty(seqMapReader.ResultToSeqMapFilename))
                 {
-                    var fiResultToSeqMapFile = new FileInfo(Path.Combine(objSeqMapReader.InputFolderPath, objSeqMapReader.ResultToSeqMapFilename));
+                    var fiResultToSeqMapFile = new FileInfo(Path.Combine(seqMapReader.InputDirectoryPath, seqMapReader.ResultToSeqMapFilename));
 
                     if (fiResultToSeqMapFile.Exists)
                     {
-                        blnSuccess = objSeqMapReader.GetProteinMapping(out lstResultToSeqMap, out lstSeqToProteinMap, out lstSeqInfo);
+                        blnSuccess = seqMapReader.GetProteinMapping(out lstResultToSeqMap, out lstSeqToProteinMap, out lstSeqInfo);
 
                         if (!blnSuccess)
                         {
-                            if (string.IsNullOrEmpty(objSeqMapReader.ErrorMessage))
+                            if (string.IsNullOrEmpty(seqMapReader.ErrorMessage))
                             {
                                 SetErrorMessage("GetProteinMapping returned false: unknown error");
                             }
                             else
                             {
-                                SetErrorMessage("GetProteinMapping returned false: " + objSeqMapReader.ErrorMessage);
+                                SetErrorMessage("GetProteinMapping returned false: " + seqMapReader.ErrorMessage);
                             }
 
                             return false;

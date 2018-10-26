@@ -126,7 +126,7 @@ namespace AnalysisManager_AScore_PlugIn
         //            throw new ArgumentException("Unrecognized value for ascoreOperation: " + ascoreOperation);
         //    }
 
-        //    if (!ProcessMyEMSLDownloadQueue(mWorkDir, Downloader.DownloadFolderLayout.FlatNoSubfolders))
+        //    if (!ProcessMyEMSLDownloadQueue(mWorkDir, Downloader.DownloadLayout.FlatNoSubdirectories))
         //        return false;
 
         //    return blnSuccess;

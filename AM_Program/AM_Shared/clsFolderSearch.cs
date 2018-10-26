@@ -705,12 +705,12 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="dataset">Dataset name</param>
         /// <param name="fileNameToFind">Optional: Name of a file that must exist in the dataset directory; can contain a wildcard, e.g. *.zip</param>
-        /// <param name="subDirectoryName">Optional: Name of a subdirectory that must exist in the dataset directory; can contain a wildcard, e.g. SEQ*</param>
+        /// <param name="subdirectoryName">Optional: Name of a subdirectory that must exist in the dataset directory; can contain a wildcard, e.g. SEQ*</param>
         /// <param name="logDirectoryNotFound">If true, log a warning if the directory is not found</param>
         /// <param name="recurse">True to look for fileNameToFind in all subdirectories of a dataset; false to only look in the primary dataset directory</param>
         /// <returns>Path to the most appropriate dataset directory</returns>
         /// <remarks>FileNameToFind is a file in the dataset directory; it is NOT a file in directoryNameToFind</remarks>
-        private bool FindValidFolderMyEMSL(string dataset, string fileNameToFind, string subDirectoryName, bool logDirectoryNotFound, bool recurse)
+        private bool FindValidFolderMyEMSL(string dataset, string fileNameToFind, string subdirectoryName, bool logDirectoryNotFound, bool recurse)
         {
 
             if (string.IsNullOrEmpty(fileNameToFind))
@@ -721,9 +721,9 @@ namespace AnalysisManagerBase
                 OnDebugEvent("FindValidFolderMyEMSL, querying MyEMSL for this dataset's files");
             }
 
-            List<DatasetFolderOrFileInfo> matchingMyEMSLFiles;
+            List<DatasetDirectoryOrFileInfo> matchingMyEMSLFiles;
 
-            if (string.IsNullOrEmpty(subDirectoryName))
+            if (string.IsNullOrEmpty(subdirectoryName))
             {
                 // Simply look for the file
                 matchingMyEMSLFiles = mMyEMSLUtilities.FindFiles(fileNameToFind, string.Empty, dataset, recurse);
@@ -733,7 +733,7 @@ namespace AnalysisManagerBase
                 // First look for the subdirectory
                 // If there are multiple matching subdirectories, choose the newest one
                 // The entries in matchingMyEMSLFiles will be directory entries where the "Filename" field is the directory name while the "SubDirPath" field is any parent directories above the found directory
-                matchingMyEMSLFiles = mMyEMSLUtilities.FindFiles(fileNameToFind, subDirectoryName, dataset, recurse);
+                matchingMyEMSLFiles = mMyEMSLUtilities.FindFiles(fileNameToFind, subdirectoryName, dataset, recurse);
             }
 
             if (matchingMyEMSLFiles.Count > 0)
@@ -749,9 +749,9 @@ namespace AnalysisManagerBase
                     msg += " and file " + fileNameToFind;
                 }
 
-                if (!string.IsNullOrEmpty(subDirectoryName))
+                if (!string.IsNullOrEmpty(subdirectoryName))
                 {
-                    msg += " and subdirectory " + subDirectoryName;
+                    msg += " and subdirectory " + subdirectoryName;
                 }
 
                 OnWarningEvent(msg);

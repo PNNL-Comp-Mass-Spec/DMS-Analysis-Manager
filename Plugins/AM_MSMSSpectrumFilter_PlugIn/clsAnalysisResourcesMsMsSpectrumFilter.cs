@@ -173,7 +173,7 @@ namespace MSMSSpectrumFilterAM
                 mJobParams.AddResultFileExtensionToSkip(DOT_CDF_EXTENSION);
             }
 
-            if (!base.ProcessMyEMSLDownloadQueue(mWorkDir, Downloader.DownloadFolderLayout.FlatNoSubfolders))
+            if (!base.ProcessMyEMSLDownloadQueue(mWorkDir, Downloader.DownloadLayout.FlatNoSubdirectories))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }

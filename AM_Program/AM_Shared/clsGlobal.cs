@@ -36,7 +36,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Step tool param file storage path file prefix
         /// </summary>
-        public const string STEPTOOL_PARAMFILESTORAGEPATH_PREFIX = "StepTool_ParamFileStoragePath_";
+        public const string STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX = "StepTool_ParamFileStoragePath_";
 
         /// <summary>
         /// Server cache hashcheck file suffix

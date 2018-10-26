@@ -40,7 +40,7 @@ namespace AnalysisManagerProMexPlugIn
 
             // Get the ProMex parameter file
 
-            var paramFileStoragePathKeyName = clsGlobal.STEPTOOL_PARAMFILESTORAGEPATH_PREFIX + "ProMex";
+            var paramFileStoragePathKeyName = clsGlobal.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "ProMex";
 
             var proMexParmFileStoragePath = mMgrParams.GetParam(paramFileStoragePathKeyName);
             if (string.IsNullOrEmpty(proMexParmFileStoragePath))

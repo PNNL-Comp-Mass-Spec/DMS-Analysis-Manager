@@ -1671,7 +1671,7 @@ namespace AnalysisManagerBase
                 }
 
                 // ReSharper disable once RedundantNameQualifier
-                if (!mMyEMSLUtilities.ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+                if (!mMyEMSLUtilities.ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadLayout.FlatNoSubdirectories))
                 {
                     return false;
                 }
@@ -2357,7 +2357,7 @@ namespace AnalysisManagerBase
             mJobParams.AddResultFileToSkip(fileToGet);
 
             // ReSharper disable once RedundantNameQualifier
-            if (!mMyEMSLUtilities.ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+            if (!mMyEMSLUtilities.ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadLayout.FlatNoSubdirectories))
             {
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
@@ -3283,7 +3283,7 @@ namespace AnalysisManagerBase
             if (mMyEMSLUtilities.FilesToDownload.Count > 0)
             {
                 // ReSharper disable once RedundantNameQualifier
-                if (!mMyEMSLUtilities.ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+                if (!mMyEMSLUtilities.ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadLayout.FlatNoSubdirectories))
                 {
                     return false;
                 }
@@ -3296,15 +3296,15 @@ namespace AnalysisManagerBase
         /// Download any queued files from MyEMSL
         /// </summary>
         /// <param name="targetDirectoryPath"></param>
-        /// <param name="folderLayout"></param>
+        /// <param name="directoryLayout"></param>
         /// <returns></returns>
         /// <remarks></remarks>
-        protected bool ProcessMyEMSLDownloadQueue(string targetDirectoryPath, Downloader.DownloadFolderLayout folderLayout)
+        protected bool ProcessMyEMSLDownloadQueue(string targetDirectoryPath, Downloader.DownloadLayout directoryLayout)
         {
             if (clsGlobal.OfflineMode)
                 return true;
 
-            var success = mMyEMSLUtilities.ProcessMyEMSLDownloadQueue(targetDirectoryPath, folderLayout);
+            var success = mMyEMSLUtilities.ProcessMyEMSLDownloadQueue(targetDirectoryPath, directoryLayout);
             return success;
         }
 
@@ -4226,7 +4226,7 @@ namespace AnalysisManagerBase
                 }
 
                 // ReSharper disable once RedundantNameQualifier
-                if (!mMyEMSLUtilities.ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+                if (!mMyEMSLUtilities.ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadLayout.FlatNoSubdirectories))
                 {
                     return false;
                 }

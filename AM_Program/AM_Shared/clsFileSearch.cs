@@ -395,7 +395,7 @@ namespace AnalysisManagerBase
                 if (sourceDirPath.StartsWith(MYEMSL_PATH_FLAG))
                 {
                     // add the _dta.zip file name to the directory path found by FindDataFile
-                    return clsMyEMSLUtilities.AddFileToMyEMSLFolderPath(sourceDirPath, sourceFileName);
+                    return clsMyEMSLUtilities.AddFileToMyEMSLDirectoryPath(sourceDirPath, sourceFileName);
                 }
 
                 // Return the path to the _dta.zip file
@@ -1473,7 +1473,7 @@ namespace AnalysisManagerBase
                     mMyEMSLUtilities.AddFileToDownloadQueue(sourceFilePath);
 
                     // ReSharper disable once RedundantNameQualifier
-                    if (mMyEMSLUtilities.ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+                    if (mMyEMSLUtilities.ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadLayout.FlatNoSubdirectories))
                     {
                         if (mDebugLevel >= 1)
                         {
@@ -1995,7 +1995,7 @@ namespace AnalysisManagerBase
 
                 foreach (var myEmslFile in mMyEMSLUtilities.RecentlyFoundMyEMSLFiles)
                 {
-                    if (myEmslFile.IsFolder)
+                    if (myEmslFile.IsDirectory)
                     {
                         continue;
                     }

@@ -48,7 +48,7 @@ namespace AnalysisManagerMSDeconvPlugIn
             // Make sure we don't move the .mzXML file into the results folder
             mJobParams.AddResultFileExtensionToSkip(DOT_MZXML_EXTENSION);
 
-            if (!base.ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+            if (!base.ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadLayout.FlatNoSubdirectories))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }

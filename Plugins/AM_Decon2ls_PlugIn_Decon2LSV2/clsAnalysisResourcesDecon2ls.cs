@@ -77,7 +77,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             mJobParams.AddResultFileExtensionToSkip(DOT_MZXML_EXTENSION);
             mJobParams.AddResultFileExtensionToSkip(DOT_MZML_EXTENSION);
 
-            if (!ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+            if (!ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadLayout.FlatNoSubdirectories))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }

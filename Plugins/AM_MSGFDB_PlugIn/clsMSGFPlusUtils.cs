@@ -76,7 +76,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         }
 
         private const string MSGFPLUS_OPTION_TDA = "TDA";
-        private const string MSGFPLUS_OPTION_SHOWDECOY = "showDecoy";
+        private const string MSGFPLUS_OPTION_SHOW_DECOY = "showDecoy";
         private const string MSGFPLUS_OPTION_FRAGMENTATION_METHOD = "FragmentationMethodID";
         private const string MSGFPLUS_OPTION_INSTRUMENT_ID = "InstrumentID";
 
@@ -101,9 +101,9 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// </summary>
         public const string MOD_FILE_NAME = "MSGFPlus_Mods.txt";
 
-        public const string SCANCOUNT_LOWRES_MSN = "ScanCountLowResMSn";
-        public const string SCANCOUNT_HIGHRES_MSN = "ScanCountHighResMSn";
-        public const string SCANCOUNT_HCD_MSN = "ScanCountHCDMSn";
+        public const string SCAN_COUNT_LOW_RES_MSN = "ScanCountLowResMSn";
+        public const string SCAN_COUNT_HIGH_RES_MSN = "ScanCountHighResMSn";
+        public const string SCAN_COUNT_HCD_MSN = "ScanCountHCDMSn";
 
         #endregion
 
@@ -1135,7 +1135,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 {"PMTolerance", "t"},
                 {"FragTolerance", "f"},
                 {MSGFPLUS_OPTION_TDA, "tda"},
-                {MSGFPLUS_OPTION_SHOWDECOY, "showDecoy"},
+                {MSGFPLUS_OPTION_SHOW_DECOY, "showDecoy"},
                 // This setting is nearly always set to 0 since we create a _ScanType.txt file that specifies the type of each scan
                 // (thus, the value in the parameter file is ignored); the exception, when it is UVPD (mode 4)
                 {MSGFPLUS_OPTION_FRAGMENTATION_METHOD, "m"},
@@ -2197,9 +2197,9 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                                     if (clsGlobal.OfflineMode)
                                     {
-                                        countLowResMSn = mJobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, SCANCOUNT_LOWRES_MSN, 0);
-                                        countHighResMSn = mJobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, SCANCOUNT_HIGHRES_MSN, 0);
-                                        countHCDMSn = mJobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, SCANCOUNT_HCD_MSN, 0);
+                                        countLowResMSn = mJobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, SCAN_COUNT_LOW_RES_MSN, 0);
+                                        countHighResMSn = mJobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, SCAN_COUNT_HIGH_RES_MSN, 0);
+                                        countHCDMSn = mJobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, SCAN_COUNT_HCD_MSN, 0);
 
                                         scanTypeLookupSuccess = (countLowResMSn + countHighResMSn + countHCDMSn) > 0;
                                     }
@@ -2233,7 +2233,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                         if (string.IsNullOrEmpty(argumentName))
                         {
-                            if (mDebugLevel >= 1 && !clsGlobal.IsMatch(argumentNameOriginal, MSGFPLUS_OPTION_SHOWDECOY))
+                            if (mDebugLevel >= 1 && !clsGlobal.IsMatch(argumentNameOriginal, MSGFPLUS_OPTION_SHOW_DECOY))
                             {
                                 OnWarningEvent("Skipping argument " + argumentNameOriginal + " since it is not valid for this version of MS-GF+");
                             }
@@ -2810,7 +2810,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 return true;
 
             // Check whether this is a phosphorylation mod
-            if (modParts[(int)ModDefinitionParts.Name].StartsWith("PHOSPH", StringComparison.OrdinalIgnoreCase) ||
+            if (modParts[(int)ModDefinitionParts.Name].StartsWith("Phosph", StringComparison.OrdinalIgnoreCase) ||
                 modParts[(int)ModDefinitionParts.EmpiricalFormulaOrMass].StartsWith("HO3P", StringComparison.OrdinalIgnoreCase))
             {
                 if (modParts[(int)ModDefinitionParts.Residues].ToUpper().IndexOfAny(new[]

@@ -306,9 +306,9 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                 // FilterInspectResultsByFirstHits will create file _inspect_fht.txt
                 result = FilterInspectResultsByFirstHits();
 
-                // Rescore the assembled inspect results using PValue_MinLength5.py (which is similar to PValue.py but retains peptides of length 5 or greater)
+                // Re-score the assembled inspect results using PValue_MinLength5.py (which is similar to PValue.py but retains peptides of length 5 or greater)
                 // This will create files _inspect_fht.txt and _inspect_filtered.txt
-                result = RescoreAssembledInspectResults();
+                result = ReScoreAssembledInspectResults();
                 return result;
             }
             catch (Exception ex)
@@ -730,8 +730,8 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
             UpdateStatusRunning(mPercentCompleteStartLevels[(int)eInspectResultsProcessingSteps.RunpValue]);
 
-            // Note that RunPvalue() will log any errors that occur
-            var eResult = RunpValue(strInspectResultsFilePath, strFilteredFilePath, false, true);
+            // Note that RunPValue() will log any errors that occur
+            var eResult = RunPValue(strInspectResultsFilePath, strFilteredFilePath, false, true);
 
             return eResult;
         }
@@ -748,8 +748,8 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
             UpdateStatusRunning(mPercentCompleteStartLevels[(int)eInspectResultsProcessingSteps.RunpValue]);
 
-            // Note that RunPvalue() will log any errors that occur
-            var eResult = RunpValue(strInspectResultsFilePath, strFilteredFilePath, true, false);
+            // Note that RunPValue() will log any errors that occur
+            var eResult = RunPValue(strInspectResultsFilePath, strFilteredFilePath, true, false);
 
             return eResult;
         }
@@ -802,26 +802,26 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
         /// </summary>
         /// <returns>CloseOutType enum indicating success or failure</returns>
         /// <remarks></remarks>
-        private CloseOutType RescoreAssembledInspectResults()
+        private CloseOutType ReScoreAssembledInspectResults()
         {
             var strInspectResultsFilePath = Path.Combine(mWorkDir, mInspectResultsFileName);
             var strFilteredFilePath = Path.Combine(mWorkDir, mDatasetName + FILTERED_INSPECT_FILE_SUFFIX);
 
             UpdateStatusRunning(mPercentCompleteStartLevels[(int)eInspectResultsProcessingSteps.RunpValue]);
 
-            // Note that RunPvalue() will log any errors that occur
-            var eResult = RunpValue(strInspectResultsFilePath, strFilteredFilePath, true, false);
+            // Note that RunPValue() will log any errors that occur
+            var eResult = RunPValue(strInspectResultsFilePath, strFilteredFilePath, true, false);
 
             try
             {
                 // Make sure the filtered inspect results file is not zero-length
                 // Also, log some stats on the size of the filtered file vs. the original one
-                var fiRescoredFile = new FileInfo(strFilteredFilePath);
+                var fiReScoredFile = new FileInfo(strFilteredFilePath);
                 var fiOriginalFile = new FileInfo(strInspectResultsFilePath);
 
-                if (!fiRescoredFile.Exists)
+                if (!fiReScoredFile.Exists)
                 {
-                    LogError("Rescored Inspect Results file not found: " + fiRescoredFile.FullName);
+                    LogError("Re-scored Inspect Results file not found: " + fiReScoredFile.FullName);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
@@ -835,14 +835,14 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                 if (mDebugLevel >= 1)
                 {
                     LogDebug(
-                        "Rescored Inspect results file created; size is " +
-                        (fiRescoredFile.Length / (float)fiOriginalFile.Length * 100).ToString("0.0") + "% of the original (" +
-                        fiRescoredFile.Length + " bytes vs. " + fiOriginalFile.Length + " bytes in original)");
+                        "Re-scored Inspect results file created; size is " +
+                        (fiReScoredFile.Length / (float)fiOriginalFile.Length * 100).ToString("0.0") + "% of the original (" +
+                        fiReScoredFile.Length + " bytes vs. " + fiOriginalFile.Length + " bytes in original)");
                 }
             }
             catch (Exception ex)
             {
-                mMessage = "Error in InspectResultsAssembly->RescoreAssembledInspectResults";
+                mMessage = "Error in InspectResultsAssembly->ReScoreAssembledInspectResults";
                 LogError(mMessage + ": " + ex.Message);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -850,30 +850,30 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
-        private CloseOutType RunpValue(string inspectResultsInputFilePath, string outputFilePath, bool createImageFiles, bool topHitOnly)
+        private CloseOutType RunPValue(string inspectResultsInputFilePath, string outputFilePath, bool createImageFiles, bool topHitOnly)
         {
-            var InspectDir = mMgrParams.GetParam("inspectdir");
-            var pvalDistributionFilename = Path.Combine(mWorkDir, mDatasetName + "_PValueDistribution.txt");
+            var inspectDir = mMgrParams.GetParam("InspectDir");
+            var pValueDistributionFilename = Path.Combine(mWorkDir, mDatasetName + "_PValueDistribution.txt");
 
             // The following code is only required if you use the -a and -d switches
             //'var orgDbDir = mMgrParams.GetParam("OrgDbDir")
             //'var fastaFilename = Path.Combine(orgDbDir, mJobParams.GetParam("PeptideSearch", "generatedFastaName"))
             //'var dbFilename = fastaFilename.Replace("fasta", "trie")
 
-            var pythonProgLoc = mMgrParams.GetParam("pythonprogloc");
+            var pythonProgLoc = mMgrParams.GetParam("PythonProgLoc");
 
             // Check whether a shuffled DB was created prior to running Inspect
             var blnShuffledDBUsed = ValidateShuffledDBInUse(inspectResultsInputFilePath);
 
             // Lookup the p-value to filter on
-            var pthresh = mJobParams.GetJobParameter("InspectPvalueThreshold", "0.1");
+            var pThresh = mJobParams.GetJobParameter("InspectPvalueThreshold", "0.1");
 
-            var cmdRunner = new clsRunDosProgram(InspectDir, mDebugLevel);
+            var cmdRunner = new clsRunDosProgram(inspectDir, mDebugLevel);
             RegisterEvents(cmdRunner);
 
             if (mDebugLevel > 4)
             {
-                LogDebug("clsAnalysisToolRunnerInspResultsAssembly.RunpValue(): Enter");
+                LogDebug("clsAnalysisToolRunnerInspResultsAssembly.RunPValue(): Enter");
             }
 
             // verify that python program file exists
@@ -885,7 +885,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             }
 
             // verify that PValue python script exists
-            var pvalueScriptPath = Path.Combine(InspectDir, PVALUE_MINLENGTH5_SCRIPT);
+            var pvalueScriptPath = Path.Combine(inspectDir, PVALUE_MINLENGTH5_SCRIPT);
             if (!File.Exists(pvalueScriptPath))
             {
                 LogError("Cannot find PValue script: " + pvalueScriptPath);
@@ -893,7 +893,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             }
 
             // Possibly required: Update the PTMods.txt file in InspectDir to contain the modification details, as defined in inspect_input.txt
-            UpdatePTModsFile(InspectDir, Path.Combine(mWorkDir, "inspect_input.txt"));
+            UpdatePTModsFile(inspectDir, Path.Combine(mWorkDir, "inspect_input.txt"));
 
             // Set up and execute a program runner to run PVALUE_MINLENGTH5_SCRIPT.py
             // Note that PVALUE_MINLENGTH5_SCRIPT.py is nearly identical to PValue.py but it retains peptides with 5 amino acids (default is 7)
@@ -913,7 +913,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             // -a means to perform protein selection (sort of like protein prophet, but not very good, according to Sam Payne)
             // -d .trie file to use (only used if -a is enabled)
 
-            var cmdStr = " " + pvalueScriptPath + " -r " + inspectResultsInputFilePath + " -w " + outputFilePath + " -s " + pvalDistributionFilename;
+            var cmdStr = " " + pvalueScriptPath + " -r " + inspectResultsInputFilePath + " -w " + outputFilePath + " -s " + pValueDistributionFilename;
 
             if (createImageFiles)
             {
@@ -926,7 +926,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             }
             else
             {
-                cmdStr += " -p " + pthresh;
+                cmdStr += " -p " + pThresh;
             }
 
             if (blnShuffledDBUsed)

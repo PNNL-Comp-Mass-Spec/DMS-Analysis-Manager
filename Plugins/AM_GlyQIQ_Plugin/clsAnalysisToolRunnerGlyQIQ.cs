@@ -405,7 +405,7 @@ namespace AnalysisManagerGlyQIQPlugin
                     diTempZipFolder.Create();
                 }
 
-                // Move the batch files and console ouput files into the FilesToZip folder
+                // Move the batch files and console output files into the FilesToZip folder
                 var diWorkDir = new DirectoryInfo(mWorkDir);
                 var lstFilesToMove = new List<FileInfo>();
 
@@ -565,7 +565,7 @@ namespace AnalysisManagerGlyQIQPlugin
                         }
 
                         // Gigasax.DMS5
-                        strConnectionString = mMgrParams.GetParam("connectionstring");
+                        strConnectionString = mMgrParams.GetParam("ConnectionString");
                     }
                     else
                     {
@@ -616,9 +616,11 @@ namespace AnalysisManagerGlyQIQPlugin
                     "Best:",
                     "Next Lc peak",
                     "Next Peak Quality, we have",
+                    // ReSharper disable StringLiteralTypo
                     "No isotpe profile was found using the IterativelyFindMSFeature",
                     "Peak Finished Procssing",
                     "PostProccessing info adding",
+                    // ReSharper restore StringLiteralTypo
                     "Pre MS Processor... Press Key",
                     "the old scan Range is",
                     "The time is ",

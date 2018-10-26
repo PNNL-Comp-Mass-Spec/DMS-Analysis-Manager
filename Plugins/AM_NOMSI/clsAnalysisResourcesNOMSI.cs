@@ -82,7 +82,7 @@ namespace AnalysisManagerNOMSIPlugin
                 mJobParams.AddResultFileToSkip(fileToGet);
 
                 currentTask = "Process the MyEMSL download queue";
-                if (!ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+                if (!ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadLayout.FlatNoSubdirectories))
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
                 }

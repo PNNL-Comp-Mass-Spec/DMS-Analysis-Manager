@@ -50,7 +50,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
                 // Retrieve the script file
                 currentTask = "Retrieve the export script file: " + exportScriptName;
 
-                const string paramFileStoragePathKeyName = clsGlobal.STEPTOOL_PARAMFILESTORAGEPATH_PREFIX + "Bruker_DA_Export";
+                const string paramFileStoragePathKeyName = clsGlobal.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "Bruker_DA_Export";
 
                 var exportScriptStoragePath = mMgrParams.GetParam(paramFileStoragePathKeyName);
                 if (string.IsNullOrWhiteSpace(exportScriptStoragePath))
@@ -102,7 +102,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
                     }
 
                     currentTask = "Process the MyEMSL download queue";
-                    if (ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+                    if (ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadLayout.FlatNoSubdirectories))
                     {
                         break;
                     }

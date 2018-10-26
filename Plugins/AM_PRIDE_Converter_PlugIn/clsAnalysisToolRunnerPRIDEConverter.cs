@@ -280,7 +280,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             ConfigurationOptions = 11
         }
 
-        private enum eMzIDXMLFileLocation
+        private enum eMzidXMLFileLocation
         {
             Header = 0,
             SequenceCollection = 1,
@@ -1216,7 +1216,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         private string CreatePseudoMSGFFileUsingPHRPReader(int job, string dataset, udtFilterThresholdsType udtFilterThresholds,
             IDictionary<string, List<udtPseudoMSGFDataType>> pseudoMSGFData)
         {
-            const int MSGF_SPECEVALUE_NOT_DEFINED = 10;
+            const int MSGF_SPEC_EVALUE_NOT_DEFINED = 10;
             const int PVALUE_NOT_DEFINED = 10;
 
             string pseudoMsgfFilePath;
@@ -1312,13 +1312,13 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                         // Determine MSGFSpecEValue; store 10 if we don't find a valid number
                         if (!double.TryParse(reader.CurrentPSM.MSGFSpecEValue, out var msgfSpecEValue))
                         {
-                            msgfSpecEValue = MSGF_SPECEVALUE_NOT_DEFINED;
+                            msgfSpecEValue = MSGF_SPEC_EVALUE_NOT_DEFINED;
                         }
 
                         switch (dataPkgJob.PeptideHitResultType)
                         {
                             case clsPHRPReader.ePeptideHitResultType.Sequest:
-                                if (msgfSpecEValue < MSGF_SPECEVALUE_NOT_DEFINED)
+                                if (msgfSpecEValue < MSGF_SPEC_EVALUE_NOT_DEFINED)
                                 {
                                     pValue = ComputeApproximateEValue(msgfSpecEValue);
                                     scoreForCurrentMatch = msgfSpecEValue;
@@ -1342,7 +1342,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                 break;
 
                             case clsPHRPReader.ePeptideHitResultType.XTandem:
-                                if (msgfSpecEValue < MSGF_SPECEVALUE_NOT_DEFINED)
+                                if (msgfSpecEValue < MSGF_SPEC_EVALUE_NOT_DEFINED)
                                 {
                                     pValue = ComputeApproximateEValue(msgfSpecEValue);
                                     scoreForCurrentMatch = msgfSpecEValue;
@@ -1367,7 +1367,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                             case clsPHRPReader.ePeptideHitResultType.Inspect:
                                 pValue = reader.CurrentPSM.GetScoreDbl(clsPHRPParserInspect.DATA_COLUMN_PValue, PVALUE_NOT_DEFINED);
 
-                                if (msgfSpecEValue < MSGF_SPECEVALUE_NOT_DEFINED)
+                                if (msgfSpecEValue < MSGF_SPEC_EVALUE_NOT_DEFINED)
                                 {
                                     scoreForCurrentMatch = msgfSpecEValue;
                                 }
@@ -1455,7 +1455,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                         if (validPSM && !thresholdChecked)
                         {
                             // Switch to filtering on MSGFSpecEValueThreshold instead of on FDR or PepFDR
-                            if (msgfSpecEValue < MSGF_SPECEVALUE_NOT_DEFINED && udtFilterThresholds.MSGFSpecEValueThreshold < 0.0001)
+                            if (msgfSpecEValue < MSGF_SPEC_EVALUE_NOT_DEFINED && udtFilterThresholds.MSGFSpecEValueThreshold < 0.0001)
                             {
                                 if (msgfSpecEValue > udtFilterThresholds.MSGFSpecEValueThreshold)
                                 {
@@ -4059,7 +4059,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 if (mMyEMSLUtilities.FilesToDownload.Count > 0)
                 {
-                    if (!mMyEMSLUtilities.ProcessMyEMSLDownloadQueue(mWorkDir, Downloader.DownloadFolderLayout.FlatNoSubfolders))
+                    if (!mMyEMSLUtilities.ProcessMyEMSLDownloadQueue(mWorkDir, Downloader.DownloadLayout.FlatNoSubdirectories))
                     {
                         if (string.IsNullOrWhiteSpace(mMessage))
                         {
@@ -4638,7 +4638,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
             var elementCloseDepths = new Stack<int>();
 
-            var eFileLocation = eMzIDXMLFileLocation.Header;
+            var eFileLocation = eMzidXMLFileLocation.Header;
             var recentElements = new Queue<string>();
 
             try
@@ -4791,7 +4791,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                                     case "FileFormat":
 
-                                        if (eFileLocation == eMzIDXMLFileLocation.InputSpectraData && !searchedMzML)
+                                        if (eFileLocation == eMzidXMLFileLocation.InputSpectraData && !searchedMzML)
                                         {
                                             // Override the accession and name attributes for this node
 
@@ -4829,7 +4829,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                         break;
 
                                     case "SearchModification":
-                                        if (eFileLocation == eMzIDXMLFileLocation.AnalysisProtocolCollection)
+                                        if (eFileLocation == eMzidXMLFileLocation.AnalysisProtocolCollection)
                                         {
                                             // The next cvParam entry that we read should have the Unimod accession
                                             readModAccession = true;
@@ -5027,33 +5027,33 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             }
         }
 
-        private eMzIDXMLFileLocation UpdateMZidXMLFileLocation(eMzIDXMLFileLocation eFileLocation, string elementName)
+        private eMzidXMLFileLocation UpdateMZidXMLFileLocation(eMzidXMLFileLocation eFileLocation, string elementName)
         {
             switch (elementName)
             {
                 case "SequenceCollection":
-                    eFileLocation = eMzIDXMLFileLocation.SequenceCollection;
+                    eFileLocation = eMzidXMLFileLocation.SequenceCollection;
                     break;
                 case "AnalysisCollection":
-                    eFileLocation = eMzIDXMLFileLocation.AnalysisCollection;
+                    eFileLocation = eMzidXMLFileLocation.AnalysisCollection;
                     break;
                 case "AnalysisProtocolCollection":
-                    eFileLocation = eMzIDXMLFileLocation.AnalysisProtocolCollection;
+                    eFileLocation = eMzidXMLFileLocation.AnalysisProtocolCollection;
                     break;
                 case "DataCollection":
-                    eFileLocation = eMzIDXMLFileLocation.DataCollection;
+                    eFileLocation = eMzidXMLFileLocation.DataCollection;
                     break;
                 case "Inputs":
-                    eFileLocation = eMzIDXMLFileLocation.Inputs;
+                    eFileLocation = eMzidXMLFileLocation.Inputs;
                     break;
                 case "SearchDatabase":
-                    eFileLocation = eMzIDXMLFileLocation.InputSearchDatabase;
+                    eFileLocation = eMzidXMLFileLocation.InputSearchDatabase;
                     break;
                 case "SpectraData":
-                    eFileLocation = eMzIDXMLFileLocation.InputSpectraData;
+                    eFileLocation = eMzidXMLFileLocation.InputSpectraData;
                     break;
                 case "AnalysisData":
-                    eFileLocation = eMzIDXMLFileLocation.AnalysisData;
+                    eFileLocation = eMzidXMLFileLocation.AnalysisData;
                     break;
             }
 
@@ -5416,7 +5416,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 }
             }
 
-            AddToListIfNew(mPreviousDatasetFilesToDelete, Path.Combine(e.DownloadFolderPath, e.ArchivedFile.Filename));
+            AddToListIfNew(mPreviousDatasetFilesToDelete, Path.Combine(e.DownloadDirectoryPath, e.ArchivedFile.Filename));
         }
 
         #endregion

@@ -106,7 +106,7 @@ namespace AnalysisManagerInSpecTPlugIn
 
             if (DtaResultFolderName.StartsWith(MYEMSL_PATH_FLAG))
             {
-                if (mMyEMSLUtilities.ProcessMyEMSLDownloadQueue(mWorkDir, Downloader.DownloadFolderLayout.FlatNoSubfolders))
+                if (mMyEMSLUtilities.ProcessMyEMSLDownloadQueue(mWorkDir, Downloader.DownloadLayout.FlatNoSubdirectories))
                 {
                     if (mDebugLevel >= 1)
                     {

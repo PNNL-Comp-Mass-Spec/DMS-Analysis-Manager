@@ -420,8 +420,8 @@ namespace AnalysisManagerSequestPlugin
         /// <remarks></remarks>
         private bool VerifyDatabase(string fastaFileName, string orgDbDirectoryPath)
         {
-            var hostFilePath = mMgrParams.GetParam("hostsfilelocation");
-            var nodeDbLoc = mMgrParams.GetParam("nodedblocation");
+            var hostFilePath = mMgrParams.GetParam("HostsFileLocation");
+            var nodeDbLoc = mMgrParams.GetParam("NodeDbLocation");
 
             string logMessage;
 

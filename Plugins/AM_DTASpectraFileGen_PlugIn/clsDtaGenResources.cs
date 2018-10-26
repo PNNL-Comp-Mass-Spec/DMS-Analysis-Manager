@@ -137,7 +137,7 @@ namespace DTASpectraFileGen
                 }
             }
 
-            if (!ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+            if (!ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadLayout.FlatNoSubdirectories))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -169,7 +169,7 @@ namespace DTASpectraFileGen
         {
             if (eDtaGeneratorType == clsDtaGenToolRunner.eDTAGeneratorConstants.DeconConsole)
             {
-                var strParamFileStoragePathKeyName = clsGlobal.STEPTOOL_PARAMFILESTORAGEPATH_PREFIX + "DTA_Gen";
+                var strParamFileStoragePathKeyName = clsGlobal.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "DTA_Gen";
 
                 var strParamFileStoragePath = mMgrParams.GetParam(strParamFileStoragePathKeyName);
                 if (string.IsNullOrEmpty(strParamFileStoragePath))

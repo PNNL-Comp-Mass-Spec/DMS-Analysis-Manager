@@ -39,7 +39,7 @@ namespace AnalysisManager_AScore_PlugIn
         private int jobIdx;
         private int toolIdx;
         private int paramFileIdx;
-        private int resultsFldrIdx;
+        private int resultsDirectoryIdx;
         private int datasetNameIdx;
         private int datasetTypeIdx;
         private int settingsFileIdx;
@@ -50,7 +50,7 @@ namespace AnalysisManager_AScore_PlugIn
 
         #region Properties
 
-        public ExtractionType ExtractionParms { get; set; }
+        public ExtractionType ExtractionParams { get; set; }
         public string ExtractedResultsFileName { get; set; }
         public string WorkingDir { get; set; }
         public string ResultsDBFileName { get; set; }
@@ -91,28 +91,35 @@ namespace AnalysisManager_AScore_PlugIn
             jobIdx = InputColumnPos["Job"];
             toolIdx = InputColumnPos["Tool"];
             paramFileIdx = InputColumnPos["Parameter_File"];
-            resultsFldrIdx = InputColumnPos["Folder"];
+
+            if (InputColumnPos.ContainsKey("Folder"))
+                resultsDirectoryIdx = InputColumnPos["Folder"];
+            else if (InputColumnPos.ContainsKey("Directory"))
+                resultsDirectoryIdx = InputColumnPos["Directory"];
+            else
+                throw new Exception("Dictionary InputColumnPos does not have Directory or Folder; cannot continue in MageAScoreModule");
+
             datasetNameIdx = InputColumnPos["Dataset"];
             datasetTypeIdx = InputColumnPos["Dataset_Type"];
             settingsFileIdx = InputColumnPos["Settings_File"];
         }
 
         /// <summary>
-        /// Process the job described by the fields in the input vals object
+        /// Process the job described by the fields in the input values object
         /// </summary>
-        /// <param name="vals"></param>
+        /// <param name="values"></param>
         /// <returns></returns>
-        protected override bool CheckFilter(ref string[] vals)
+        protected override bool CheckFilter(ref string[] values)
         {
 
             try
             {
                 // extract contents of results file for current job to local file in working directory
-                var currentJob = MakeJobSourceModule(jobFieldNames, vals);
-                ExtractResultsForJob(currentJob, ExtractionParms, ExtractedResultsFileName);
+                var currentJob = MakeJobSourceModule(jobFieldNames, values);
+                ExtractResultsForJob(currentJob, ExtractionParams, ExtractedResultsFileName);
 
                 // copy DTA file for current job to working directory
-                var jobText = vals[jobIdx];
+                var jobText = values[jobIdx];
 
                 if (!int.TryParse(jobText, out var jobNumber))
                 {
@@ -120,11 +127,11 @@ namespace AnalysisManager_AScore_PlugIn
                     return false;
                 }
 
-                var resultsFolderPath = vals[resultsFldrIdx];
-                var paramFileNameForPSMTool = vals[paramFileIdx];
-                var datasetName = vals[datasetNameIdx];
-                var datasetType = vals[datasetTypeIdx];
-                var analysisTool = vals[toolIdx];
+                var resultsFolderPath = values[resultsDirectoryIdx];
+                var paramFileNameForPSMTool = values[paramFileIdx];
+                var datasetName = values[datasetNameIdx];
+                var datasetType = values[datasetTypeIdx];
+                var analysisTool = values[toolIdx];
 
                 var dtaFilePath = CopyDTAResults(datasetName, resultsFolderPath, jobNumber, analysisTool, mConnectionString);
                 if (string.IsNullOrEmpty(dtaFilePath))
@@ -132,28 +139,28 @@ namespace AnalysisManager_AScore_PlugIn
                     return false;
                 }
 
-                string fragtype;
+                string fragType;
                 if (datasetType.IndexOf("HCD", StringComparison.OrdinalIgnoreCase) > 0)
-                    fragtype = "hcd";
+                    fragType = "hcd";
                 else if (datasetType.IndexOf("ETD", StringComparison.OrdinalIgnoreCase) > 0)
                 {
-                    fragtype = "etd";
+                    fragType = "etd";
                 }
                 else
                 {
-                    var settingsFileName = vals[settingsFileIdx];
+                    var settingsFileName = values[settingsFileIdx];
                     var findFragmentation = (paramFileNameForPSMTool + "_" + settingsFileName).ToLower();
                     if (findFragmentation.Contains("hcd"))
                     {
-                        fragtype = "hcd";
+                        fragType = "hcd";
                     }
                     else if (findFragmentation.Contains("etd"))
                     {
-                        fragtype = "etd";
+                        fragType = "etd";
                     }
                     else
                     {
-                        fragtype = "cid";
+                        fragType = "cid";
                     }
                 }
 
@@ -164,7 +171,7 @@ namespace AnalysisManager_AScore_PlugIn
 
                 var fhtFile = Path.Combine(WorkingDir, ExtractedResultsFileName);
                 var dtaFile = Path.Combine(WorkingDir, dtaFilePath);
-                var paramFileToUse = Path.Combine(WorkingDir, Path.GetFileNameWithoutExtension(ascoreParamFileName) + "_" + fragtype + ".xml");
+                var paramFileToUse = Path.Combine(WorkingDir, Path.GetFileNameWithoutExtension(ascoreParamFileName) + "_" + fragType + ".xml");
 
                 if (!File.Exists(paramFileToUse))
                 {
@@ -287,11 +294,11 @@ namespace AnalysisManager_AScore_PlugIn
         #region MageAScore Mage Pipelines
 
         // Build and run Mage pipeline to to extract contents of job
-        private void ExtractResultsForJob(BaseModule currentJob, ExtractionType extractionParms, string extractedResultsFileName)
+        private void ExtractResultsForJob(BaseModule currentJob, ExtractionType extractionParams, string extractedResultsFileName)
         {
             // search job results folders for list of results files to process and accumulate into buffer module
             var fileList = new SimpleSink();
-            var pgFileList = ExtractionPipelines.MakePipelineToGetListOfFiles(currentJob, fileList, extractionParms);
+            var pgFileList = ExtractionPipelines.MakePipelineToGetListOfFiles(currentJob, fileList, extractionParams);
             pgFileList.RunRoot(null);
 
             // add job metadata to results database via a Mage pipeline
@@ -307,7 +314,7 @@ namespace AnalysisManager_AScore_PlugIn
 
             // Extract contents of files
             var destination = new DestinationType("File_Output", WorkingDir, extractedResultsFileName);
-            var peFileContents = ExtractionPipelines.MakePipelineToExtractFileContents(new SinkWrapper(fileList), extractionParms, destination);
+            var peFileContents = ExtractionPipelines.MakePipelineToExtractFileContents(new SinkWrapper(fileList), extractionParams, destination);
             peFileContents.RunRoot(null);
         }
 
@@ -394,7 +401,7 @@ namespace AnalysisManager_AScore_PlugIn
 
             clsAScoreMagePipeline.mMyEMSLDatasetInfo.AddFileToDownloadQueue(lstArchiveFiles.First().FileInfo);
 
-            if (!clsAScoreMagePipeline.mMyEMSLDatasetInfo.ProcessDownloadQueue(WorkingDir, Downloader.DownloadFolderLayout.FlatNoSubfolders))
+            if (!clsAScoreMagePipeline.mMyEMSLDatasetInfo.ProcessDownloadQueue(WorkingDir, Downloader.DownloadLayout.FlatNoSubdirectories))
             {
                 LogTools.LogError("Error downloading the _DTA.zip file from MyEMSL");
                 return null;

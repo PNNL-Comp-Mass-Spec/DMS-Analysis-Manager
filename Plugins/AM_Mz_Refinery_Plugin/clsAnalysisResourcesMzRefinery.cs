@@ -91,7 +91,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 // Retrieve the Mz Refinery parameter file
                 currentTask = "Retrieve the Mz Refinery parameter file " + mzRefParamFile;
 
-                const string paramFileStoragePathKeyName = clsGlobal.STEPTOOL_PARAMFILESTORAGEPATH_PREFIX + "Mz_Refinery";
+                const string paramFileStoragePathKeyName = clsGlobal.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "Mz_Refinery";
 
                 var mzRefineryParmFileStoragePath = mMgrParams.GetParam(paramFileStoragePathKeyName);
                 if (string.IsNullOrWhiteSpace(mzRefineryParmFileStoragePath))

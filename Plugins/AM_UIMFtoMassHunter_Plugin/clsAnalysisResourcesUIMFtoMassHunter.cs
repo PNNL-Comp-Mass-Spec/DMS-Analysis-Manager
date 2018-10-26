@@ -73,7 +73,7 @@ namespace AnalysisManagerUIMFtoMassHunterPlugin
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                if (!ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+                if (!ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadLayout.FlatNoSubdirectories))
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
                 }

@@ -46,7 +46,7 @@ namespace AnalysisManagerTopFDPlugIn
                 // Retrieve the TopFD parameter file
                 currentTask = "Retrieve the TopFD parameter file " + topFdParamFile;
 
-                const string paramFileStoragePathKeyName = clsGlobal.STEPTOOL_PARAMFILESTORAGEPATH_PREFIX + "TopFD";
+                const string paramFileStoragePathKeyName = clsGlobal.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "TopFD";
 
                 var topFdParmFileStoragePath = mMgrParams.GetParam(paramFileStoragePathKeyName);
                 if (string.IsNullOrWhiteSpace(topFdParmFileStoragePath))
@@ -74,7 +74,7 @@ namespace AnalysisManagerTopFDPlugIn
                 // Make sure we don't move the .mzML file into the results folder
                 mJobParams.AddResultFileExtensionToSkip(DOT_MZML_EXTENSION);
 
-                if (!ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+                if (!ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadLayout.FlatNoSubdirectories))
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
                 }

@@ -83,7 +83,7 @@ namespace AnalysisManagerMSGFPlugin
                     // Create the output file
                     using (var writer = new StreamWriter(new FileStream(mSGFFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                     {
-                        // Write out the headers to swMSGFFHTFile
+                        // Write out the headers to the writer
                         WriteMSGFResultsHeaders(writer);
 
                         while (reader.MoveNext())

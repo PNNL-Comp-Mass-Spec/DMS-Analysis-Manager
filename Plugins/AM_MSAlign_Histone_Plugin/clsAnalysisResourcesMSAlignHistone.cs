@@ -69,7 +69,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
             }
             mJobParams.AddResultFileToSkip(fileToGet);
 
-            if (!base.ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+            if (!base.ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadLayout.FlatNoSubdirectories))
             {
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }

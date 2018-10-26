@@ -251,7 +251,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
             // Restore the dataset and job info for this aggregation job
             OverrideCurrentDatasetAndJobInfo(udtCurrentDatasetAndJobInfo);
 
-            if (!ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+            if (!ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadLayout.FlatNoSubdirectories))
             {
                 return false;
             }

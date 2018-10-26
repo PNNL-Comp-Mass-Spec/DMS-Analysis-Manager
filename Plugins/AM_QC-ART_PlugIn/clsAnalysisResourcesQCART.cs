@@ -216,7 +216,7 @@ namespace AnalysisManagerQCARTPlugin
 
                 currentTask = "Process the MyEMSL download queue";
 
-                success = ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders);
+                success = ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadLayout.FlatNoSubdirectories);
                 if (!success)
                 {
                     return CloseOutType.CLOSEOUT_FAILED;

@@ -122,7 +122,7 @@ namespace AnalysisManagerExtractionPlugin
         /// <returns>True if we should run AScore, otherwise false</returns>
         private bool CheckAScoreRequiredMSGFPlus(string searchToolParamFilePath)
         {
-            const string DYNAMICMOD_TAG = "DynamicMod";
+            const string DYNAMIC_MOD_TAG = "DynamicMod";
 
             var runAscore = false;
 
@@ -142,7 +142,7 @@ namespace AnalysisManagerExtractionPlugin
                     {
                         var dataLine = reader.ReadLine();
 
-                        if (string.IsNullOrWhiteSpace(dataLine) || !dataLine.StartsWith(DYNAMICMOD_TAG))
+                        if (string.IsNullOrWhiteSpace(dataLine) || !dataLine.StartsWith(DYNAMIC_MOD_TAG))
                             continue;
 
                         // Check whether this line has HO3P or mod mass 79.966 on S, T, or Y
@@ -150,7 +150,7 @@ namespace AnalysisManagerExtractionPlugin
 
                         if (mDebugLevel >= 3)
                         {
-                            LogDebug("MSGF+ " + DYNAMICMOD_TAG + " line found: " + dataLine);
+                            LogDebug("MSGF+ " + DYNAMIC_MOD_TAG + " line found: " + dataLine);
                         }
 
                         // Look for the equals sign
@@ -206,7 +206,7 @@ namespace AnalysisManagerExtractionPlugin
                         }
                         else
                         {
-                            LogWarning("MSGF+ " + DYNAMICMOD_TAG + " line does not have an equals sign; ignoring " + dataLine);
+                            LogWarning("MSGF+ " + DYNAMIC_MOD_TAG + " line does not have an equals sign; ignoring " + dataLine);
                         }
 
                     }
@@ -468,7 +468,7 @@ namespace AnalysisManagerExtractionPlugin
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
-            if (!ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+            if (!ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadLayout.FlatNoSubdirectories))
             {
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
@@ -972,10 +972,10 @@ namespace AnalysisManagerExtractionPlugin
 
                         if (splitFastaEnabled && !ignorePepToProtMapErrors)
                         {
-                            // If PHRP has already finished, separate PepToProtMap.txt files will not exist for each jobstep
+                            // If PHRP has already finished, separate PepToProtMap.txt files will not exist for each job step
 
-                            var peptToProtMapSourceDir = FileSearch.FindDataFile(DatasetName + "_msgfplus_PepToProtMap.txt", false, false);
-                            if (!string.IsNullOrEmpty(peptToProtMapSourceDir))
+                            var pepToProtMapSourceDir = FileSearch.FindDataFile(DatasetName + "_msgfplus_PepToProtMap.txt", false, false);
+                            if (!string.IsNullOrEmpty(pepToProtMapSourceDir))
                             {
                                 ignorePepToProtMapErrors = true;
                             }

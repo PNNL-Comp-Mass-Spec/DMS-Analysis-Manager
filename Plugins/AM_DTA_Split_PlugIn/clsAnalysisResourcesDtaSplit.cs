@@ -30,7 +30,7 @@ namespace AnalysisManagerDtaSplitPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            if (!ProcessMyEMSLDownloadQueue(mWorkDir, Downloader.DownloadFolderLayout.FlatNoSubfolders))
+            if (!ProcessMyEMSLDownloadQueue(mWorkDir, Downloader.DownloadLayout.FlatNoSubdirectories))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }

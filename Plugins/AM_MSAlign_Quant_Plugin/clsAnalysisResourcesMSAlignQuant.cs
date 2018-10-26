@@ -31,7 +31,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
             // Retrieve the MSAlign_Quant parameter file
             // For example, MSAlign_Quant_Workflow_2012-07-25
 
-            var strParamFileStoragePathKeyName = clsGlobal.STEPTOOL_PARAMFILESTORAGEPATH_PREFIX + "MSAlign_Quant";
+            var strParamFileStoragePathKeyName = clsGlobal.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "MSAlign_Quant";
             var strParamFileStoragePath = mMgrParams.GetParam(strParamFileStoragePathKeyName);
             if (string.IsNullOrEmpty(strParamFileStoragePath))
             {
@@ -75,7 +75,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                 case RAW_DATA_TYPE_DOT_D_FOLDERS:
                     if (FileSearch.RetrieveSpectra(strRawDataType))
                     {
-                        if (!base.ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+                        if (!base.ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadLayout.FlatNoSubdirectories))
                         {
                             return CloseOutType.CLOSEOUT_FAILED;
                         }
@@ -116,7 +116,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            if (!base.ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+            if (!base.ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadLayout.FlatNoSubdirectories))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }

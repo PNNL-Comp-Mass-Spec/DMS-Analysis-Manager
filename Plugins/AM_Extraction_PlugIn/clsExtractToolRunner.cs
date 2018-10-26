@@ -1934,11 +1934,11 @@ namespace AnalysisManagerExtractionPlugin
             var consoleOutputFilesDir = new DirectoryInfo(Path.Combine(workingDirectory.FullName, "ConsoleOutputFiles"));
             consoleOutputFilesDir.Create();
 
-            foreach (var consoleOutputfile in workingDirectory.GetFiles("MSGFPlus_ConsoleOutput_Part*.txt"))
+            foreach (var consoleOutputFile in workingDirectory.GetFiles("MSGFPlus_ConsoleOutput_Part*.txt"))
             {
-                var targetPath = Path.Combine(consoleOutputFilesDir.FullName, consoleOutputfile.Name);
-                consoleOutputfile.MoveTo(targetPath);
-                consoleOutputFiles.Add(consoleOutputfile.Name);
+                var targetPath = Path.Combine(consoleOutputFilesDir.FullName, consoleOutputFile.Name);
+                consoleOutputFile.MoveTo(targetPath);
+                consoleOutputFiles.Add(consoleOutputFile.Name);
             }
 
             if (consoleOutputFiles.Count == 0)

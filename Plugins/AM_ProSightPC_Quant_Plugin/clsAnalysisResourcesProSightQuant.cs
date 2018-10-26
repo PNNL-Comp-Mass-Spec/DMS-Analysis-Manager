@@ -47,7 +47,7 @@ namespace AnalysisManagerProSightQuantPlugIn
 
             string strParamFileStoragePathKeyName = null;
             string strParamFileStoragePath = null;
-            strParamFileStoragePathKeyName = clsGlobal.STEPTOOL_PARAMFILESTORAGEPATH_PREFIX + "MSAlign_Quant";
+            strParamFileStoragePathKeyName = clsGlobal.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "MSAlign_Quant";
 
             strParamFileStoragePath = mMgrParams.GetParam(strParamFileStoragePathKeyName);
             if (string.IsNullOrEmpty(strParamFileStoragePath))
@@ -93,7 +93,7 @@ namespace AnalysisManagerProSightQuantPlugIn
 
                     if (FileSearch.RetrieveSpectra(strRawDataType))
                     {
-                        if (!ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+                        if (!ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadLayout.FlatNoSubdirectories))
                         {
                             return CloseOutType.CLOSEOUT_FAILED;
                         }
@@ -134,7 +134,7 @@ namespace AnalysisManagerProSightQuantPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            if (!ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+            if (!ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadLayout.FlatNoSubdirectories))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }

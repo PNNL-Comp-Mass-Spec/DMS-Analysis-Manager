@@ -451,15 +451,15 @@ namespace AnalysisManagerSequestPlugin
                 progRunners[processorIndex] = new ProgRunner
                 {
                     Name = "Seq" + processorIndex,
-                    CreateNoWindow = Convert.ToBoolean(mMgrParams.GetParam("createnowindow")),
-                    Program = mMgrParams.GetParam("seqprogloc"),
+                    CreateNoWindow = Convert.ToBoolean(mMgrParams.GetParam("CreateNoWindow")),
+                    Program = mMgrParams.GetParam("SeqProgLoc"),
                     Arguments = cmdStr + DumStr,
                     WorkDir = mWorkDir
                 };
 
                 dtaWriters[processorIndex] = new StreamWriter(DumStr, false);
                 LogDebug(
-                    mMgrParams.GetParam("seqprogloc") + cmdStr + DumStr);
+                    mMgrParams.GetParam("SeqProgLoc") + cmdStr + DumStr);
             }
 
             // Break up file list into lists for each processor
@@ -709,7 +709,7 @@ namespace AnalysisManagerSequestPlugin
 
                 if (File.Exists(outFilePathNew))
                 {
-                    LogWarning("Existing _out.txt file found; overrwriting");
+                    LogWarning("Existing _out.txt file found; overwriting");
                     File.Delete(outFilePathNew);
                 }
 
@@ -785,7 +785,7 @@ namespace AnalysisManagerSequestPlugin
             // Store the path to the Sequest .Exe in toolFiles
             try
             {
-                toolFiles.Add(new FileInfo(mMgrParams.GetParam("seqprogloc")));
+                toolFiles.Add(new FileInfo(mMgrParams.GetParam("SeqProgLoc")));
             }
             catch (Exception ex)
             {

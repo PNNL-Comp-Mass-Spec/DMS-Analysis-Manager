@@ -25,9 +25,9 @@ namespace AnalysisManagerBase
 
         private readonly DatasetListInfo mMyEMSLDatasetListInfo;
 
-        private readonly List<DatasetFolderOrFileInfo> mAllFoundMyEMSLFiles;
+        private readonly List<DatasetDirectoryOrFileInfo> mAllFoundMyEMSLFiles;
 
-        private List<DatasetFolderOrFileInfo> mRecentlyFoundMyEMSLFiles;
+        private List<DatasetDirectoryOrFileInfo> mRecentlyFoundMyEMSLFiles;
 
         private DateTime mLastMyEMSLProgressWriteTime = DateTime.UtcNow;
 
@@ -76,7 +76,7 @@ namespace AnalysisManagerBase
         /// <value></value>
         /// <returns></returns>
         /// <remarks></remarks>
-        public List<DatasetFolderOrFileInfo> AllFoundMyEMSLFiles => mAllFoundMyEMSLFiles;
+        public List<DatasetDirectoryOrFileInfo> AllFoundMyEMSLFiles => mAllFoundMyEMSLFiles;
 
         /// <summary>
         /// Returns the files most recently unzipped
@@ -93,7 +93,7 @@ namespace AnalysisManagerBase
         /// <value></value>
         /// <returns></returns>
         /// <remarks></remarks>
-        public List<DatasetFolderOrFileInfo> RecentlyFoundMyEMSLFiles => mRecentlyFoundMyEMSLFiles;
+        public List<DatasetDirectoryOrFileInfo> RecentlyFoundMyEMSLFiles => mRecentlyFoundMyEMSLFiles;
 
         #endregion
 
@@ -124,8 +124,8 @@ namespace AnalysisManagerBase
             // Watch for error message "Unable to connect to the remote server"
             mMyEMSLDatasetListInfo.MyEMSLOffline += MyEMSLDatasetListInfo_MyEMSLOffline;
 
-            mAllFoundMyEMSLFiles = new List<DatasetFolderOrFileInfo>();
-            mRecentlyFoundMyEMSLFiles = new List<DatasetFolderOrFileInfo>();
+            mAllFoundMyEMSLFiles = new List<DatasetDirectoryOrFileInfo>();
+            mRecentlyFoundMyEMSLFiles = new List<DatasetDirectoryOrFileInfo>();
 
             mDotNetZipTools = new clsDotNetZipTools(debugLevel, workingDir);
             RegisterEvents(mDotNetZipTools);
@@ -138,18 +138,18 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Append a file to a folder path that ends with @MyEMSLID_12345
+        /// Append a file to a directory path that ends with @MyEMSLID_12345
         /// </summary>
-        /// <param name="myEmslFolderPath">Folder path to which fileName will be appended</param>
+        /// <param name="myEmslDirectoryPath">Directory path to which fileName will be appended</param>
         /// <param name="fileName">Filename to append</param>
         /// <returns></returns>
         /// <remarks></remarks>
-        public static string AddFileToMyEMSLFolderPath(string myEmslFolderPath, string fileName)
+        public static string AddFileToMyEMSLDirectoryPath(string myEmslDirectoryPath, string fileName)
         {
 
-            var myEMSLFileID = DatasetInfoBase.ExtractMyEMSLFileID(myEmslFolderPath, out var folderPathClean);
+            var myEMSLFileID = DatasetInfoBase.ExtractMyEMSLFileID(myEmslDirectoryPath, out var directoryPathClean);
 
-            var filePath = Path.Combine(folderPathClean, fileName);
+            var filePath = Path.Combine(directoryPathClean, fileName);
 
             if (myEMSLFileID == 0)
             {
@@ -221,7 +221,7 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Verify that svc-dms.pfx exists either in the same folder as Pacifica.core.dll or at C:\client_certs\
+        /// Verify that svc-dms.pfx exists either in the same directory as Pacifica.core.dll or at C:\client_certs\
         /// </summary>
         /// <param name="errorMessage">Output: error message, indicating the paths that were checked</param>
         /// <returns>True if the file is found, otherwise false</returns>
@@ -252,12 +252,12 @@ namespace AnalysisManagerBase
         /// Look for the given file (optionally in a given subdirectory) for the given dataset
         /// </summary>
         /// <param name="fileName">File name to find; can contain a wildcard, e.g. *.zip</param>
-        /// <param name="subDirectoryName">Directory in which the file must reside; can contain a wildcard, e.g. SIC*</param>
+        /// <param name="subdirectoryName">Directory in which the file must reside; can contain a wildcard, e.g. SIC*</param>
         /// <param name="datasetName">Dataset name filter</param>
-        /// <param name="recurse">True to search all directories; false to only search the root folder (or only subDirectoryName)</param>
+        /// <param name="recurse">True to search all directories; false to only search the root directory (or only subsirectoryName)</param>
         /// <returns>List of matching files</returns>
-        /// <remarks>subDirectoryName can contain a partial path, for example 2013_09_10_DPB_Unwashed_Media_25um.d\2013_09_10_In_1sec_1MW.m</remarks>
-        public List<DatasetFolderOrFileInfo> FindFiles(string fileName, string subDirectoryName, string datasetName, bool recurse)
+        /// <remarks>subdirectoryName can contain a partial path, for example 2013_09_10_DPB_Unwashed_Media_25um.d\2013_09_10_In_1sec_1MW.m</remarks>
+        public List<DatasetDirectoryOrFileInfo> FindFiles(string fileName, string subdirectoryName, string datasetName, bool recurse)
         {
 
             // Make sure the dataset name is being tracked by mMyEMSLDatasetListInfo
@@ -280,7 +280,7 @@ namespace AnalysisManagerBase
                     }
 
                     if (mRecentlyFoundMyEMSLFiles == null)
-                        mRecentlyFoundMyEMSLFiles = new List<DatasetFolderOrFileInfo>();
+                        mRecentlyFoundMyEMSLFiles = new List<DatasetDirectoryOrFileInfo>();
                     else
                         mRecentlyFoundMyEMSLFiles.Clear();
 
@@ -288,7 +288,7 @@ namespace AnalysisManagerBase
                 }
             }
 
-            mRecentlyFoundMyEMSLFiles = mMyEMSLDatasetListInfo.FindFiles(fileName, subDirectoryName, datasetName, recurse);
+            mRecentlyFoundMyEMSLFiles = mMyEMSLDatasetListInfo.FindFiles(fileName, subdirectoryName, datasetName, recurse);
 
             if (!mMyEMSLAutoDisabled)
             {
@@ -323,11 +323,11 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Retrieve queued files from MyEMSL
         /// </summary>
-        /// <param name="downloadFolderPath">Target folder path (ignored for files defined in dctDestFilePathOverride)</param>
-        /// <param name="folderLayout">Folder Layout (ignored for files defined in dctDestFilePathOverride)</param>
+        /// <param name="downloadDirectoryPath">Target directory path (ignored for files defined in dctDestFilePathOverride)</param>
+        /// <param name="directoryLayout">Directory Layout (ignored for files defined in dctDestFilePathOverride)</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks>Returns True if the download queue is empty</remarks>
-        public bool ProcessMyEMSLDownloadQueue(string downloadFolderPath, Downloader.DownloadFolderLayout folderLayout)
+        public bool ProcessMyEMSLDownloadQueue(string downloadDirectoryPath, Downloader.DownloadLayout directoryLayout)
         {
 
             if (mMyEMSLDatasetListInfo.FilesToDownload.Count == 0)
@@ -338,7 +338,7 @@ namespace AnalysisManagerBase
 
             mMostRecentUnzippedFiles.Clear();
 
-            var success = mMyEMSLDatasetListInfo.ProcessDownloadQueue(downloadFolderPath, folderLayout);
+            var success = mMyEMSLDatasetListInfo.ProcessDownloadQueue(downloadDirectoryPath, directoryLayout);
             if (success)
                 return true;
 
@@ -386,7 +386,7 @@ namespace AnalysisManagerBase
         {
             if (e.UnzipRequired)
             {
-                var fileToUnzip = new FileInfo(Path.Combine(e.DownloadFolderPath, e.ArchivedFile.Filename));
+                var fileToUnzip = new FileInfo(Path.Combine(e.DownloadDirectoryPath, e.ArchivedFile.Filename));
 
                 if (!fileToUnzip.Exists)
                     return;
@@ -395,14 +395,14 @@ namespace AnalysisManagerBase
                 {
                     // Decompress the .zip file
                     OnStatusEvent("Unzipping file " + fileToUnzip.Name);
-                    mDotNetZipTools.UnzipFile(fileToUnzip.FullName, e.DownloadFolderPath);
+                    mDotNetZipTools.UnzipFile(fileToUnzip.FullName, e.DownloadDirectoryPath);
                     mMostRecentUnzippedFiles.AddRange(mDotNetZipTools.MostRecentUnzippedFiles);
                 }
                 else if (fileToUnzip.Extension.ToLower() == ".gz")
                 {
                     // Decompress the .gz file
                     OnStatusEvent("Unzipping file " + fileToUnzip.Name);
-                    mDotNetZipTools.GUnzipFile(fileToUnzip.FullName, e.DownloadFolderPath);
+                    mDotNetZipTools.GUnzipFile(fileToUnzip.FullName, e.DownloadDirectoryPath);
                     mMostRecentUnzippedFiles.AddRange(mDotNetZipTools.MostRecentUnzippedFiles);
                 }
 
@@ -413,26 +413,26 @@ namespace AnalysisManagerBase
         #endregion
 
         /// <summary>
-        /// Determines whether two DatasetFolderOrFileInfo instances refer to the same file in MyEMSL
+        /// Determines whether two DatasetDirectoryOrFileInfo instances refer to the same file in MyEMSL
         /// </summary>
         /// <remarks>Compares the value of FileID in the two instances</remarks>
-        private class clsMyEMSLFileIDComparer : IEqualityComparer<DatasetFolderOrFileInfo>
+        private class clsMyEMSLFileIDComparer : IEqualityComparer<DatasetDirectoryOrFileInfo>
         {
-            private bool ItemsAreEqual(DatasetFolderOrFileInfo x, DatasetFolderOrFileInfo y)
+            private bool ItemsAreEqual(DatasetDirectoryOrFileInfo x, DatasetDirectoryOrFileInfo y)
             {
                 return x.FileID == y.FileID;
             }
 
-            bool IEqualityComparer<DatasetFolderOrFileInfo>.Equals(DatasetFolderOrFileInfo x, DatasetFolderOrFileInfo y)
+            bool IEqualityComparer<DatasetDirectoryOrFileInfo>.Equals(DatasetDirectoryOrFileInfo x, DatasetDirectoryOrFileInfo y)
             {
                 return ItemsAreEqual(x, y);
             }
 
-            private int GetHashCodeForItem(DatasetFolderOrFileInfo obj)
+            private int GetHashCodeForItem(DatasetDirectoryOrFileInfo obj)
             {
                 return obj.FileID.GetHashCode();
             }
-            int IEqualityComparer<DatasetFolderOrFileInfo>.GetHashCode(DatasetFolderOrFileInfo obj)
+            int IEqualityComparer<DatasetDirectoryOrFileInfo>.GetHashCode(DatasetDirectoryOrFileInfo obj)
             {
                 return GetHashCodeForItem(obj);
             }

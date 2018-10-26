@@ -179,7 +179,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 FindMissingMzXmlFiles(dataPackagePeptideHitJobs);
             }
 
-            if (!mMyEMSLUtilities.ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+            if (!mMyEMSLUtilities.ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadLayout.FlatNoSubdirectories))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }

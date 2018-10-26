@@ -68,12 +68,12 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             Bruker = 4,
             Bruker_Ascii = 5,
             Finnigan = 6,
-            ICR2LS_Rawdata = 7,
-            Micromass_Rawdata = 8,
-            MZXML_Rawdata = 9,
+            ICR2LS_RawData = 7,
+            Micromass_RawData = 8,
+            MZXML_RawData = 9,
             PNNL_IMS = 10,
             PNNL_UIMF = 11,
-            SUNEXTREL = 12
+            SUN_EXTREL = 12
         }
 
         private struct udtDeconToolsStatusType
@@ -653,11 +653,11 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             }
 
             // Get file type of the raw data file
-            var filetype = GetInputFileType(mRawDataType);
+            var fileType = GetInputFileType(mRawDataType);
 
-            if (filetype == DeconToolsFileTypeConstants.Undefined)
+            if (fileType == DeconToolsFileTypeConstants.Undefined)
             {
-                LogError("clsAnalysisToolRunnerDecon2lsBase.RunDecon2Ls(), Invalid data file type specifed while getting file type: " + mRawDataType);
+                LogError("clsAnalysisToolRunnerDecon2lsBase.RunDecon2Ls(), Invalid data file type specified while getting file type: " + mRawDataType);
                 mMessage = "Invalid raw data type specified";
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -666,7 +666,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             mInputFilePath = GetInputFilePath(mRawDataType);
             if (string.IsNullOrWhiteSpace(mInputFilePath))
             {
-                LogError("clsAnalysisToolRunnerDecon2lsBase.RunDecon2Ls(), Invalid data file type specifed while input file name: " + mRawDataType);
+                LogError("clsAnalysisToolRunnerDecon2lsBase.RunDecon2Ls(), Invalid data file type specified while input file name: " + mRawDataType);
                 mMessage = "Invalid raw data type specified";
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -698,7 +698,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             // Reset the state variables
             mDeconToolsStatus.Clear();
 
-            if (filetype == DeconToolsFileTypeConstants.PNNL_UIMF)
+            if (fileType == DeconToolsFileTypeConstants.PNNL_UIMF)
             {
                 mDeconToolsStatus.IsUIMF = true;
             }
@@ -708,7 +708,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             }
 
             // Start Decon2LS and wait for it to finish
-            var eDeconToolsStatus = StartDeconTools(progLoc, mInputFilePath, paramFilePath, filetype);
+            var eDeconToolsStatus = StartDeconTools(progLoc, mInputFilePath, paramFilePath, fileType);
 
             // Stop the job timer
             mStopTime = DateTime.UtcNow;
@@ -871,9 +871,9 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
                 // Look for file Dataset*BAD_ERROR_log.txt
                 // If it exists, an exception occurred
-                var workdir = new DirectoryInfo(Path.Combine(mWorkDir));
+                var workDir = new DirectoryInfo(Path.Combine(mWorkDir));
 
-                foreach (var logFile in workdir.GetFiles(mDatasetName + "*BAD_ERROR_log.txt"))
+                foreach (var logFile in workDir.GetFiles(mDatasetName + "*BAD_ERROR_log.txt"))
                 {
                     mMessage = "Error running DeconTools; Bad_Error_log file exists";
                     LogMessage(mMessage + ": " + logFile.Name, 0, true);
@@ -906,18 +906,19 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                     return "Bruker_Ascii";
                 case DeconToolsFileTypeConstants.Finnigan:
                     return "Finnigan";
-                case DeconToolsFileTypeConstants.ICR2LS_Rawdata:
-                    return "ICR2LS_Rawdata";
-                case DeconToolsFileTypeConstants.Micromass_Rawdata:
-                    return "Micromass_Rawdata";
-                case DeconToolsFileTypeConstants.MZXML_Rawdata:
-                    return "MZXML_Rawdata";
-                // Future: Case DeconToolsFileTypeConstants.MZML_Rawdata : Return "MZML_Rawdata"
+                case DeconToolsFileTypeConstants.ICR2LS_RawData:
+                    return "ICR2LS_RawData";
+                case DeconToolsFileTypeConstants.Micromass_RawData:
+                    return "Micromass_RawData";
+                case DeconToolsFileTypeConstants.MZXML_RawData:
+                    return "MZXML_RawData";
+                // Future: Case DeconToolsFileTypeConstants.MZML_RawData : Return "MZML_RawData"
                 case DeconToolsFileTypeConstants.PNNL_IMS:
                     return "PNNL_IMS";
                 case DeconToolsFileTypeConstants.PNNL_UIMF:
                     return "PNNL_UIMF";
-                case DeconToolsFileTypeConstants.SUNEXTREL:
+                case DeconToolsFileTypeConstants.SUN_EXTREL:
+                    // ReSharper disable once StringLiteralTypo
                     return "SUNEXTREL";
                 default:
                     return "Undefined";
@@ -945,9 +946,9 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                     return DeconToolsFileTypeConstants.Agilent_D;
                 case clsAnalysisResources.eRawDataTypeConstants.MicromassRawFolder:
 
-                    return DeconToolsFileTypeConstants.Micromass_Rawdata;
+                    return DeconToolsFileTypeConstants.Micromass_RawData;
                 case clsAnalysisResources.eRawDataTypeConstants.ZippedSFolders:
-                    if (InstrumentClass.ToLower() == "brukerftms")
+                    if (string.Equals(InstrumentClass, "BrukerFTMS", StringComparison.OrdinalIgnoreCase))
                     {
                         // Data from Bruker FTICR
                         return DeconToolsFileTypeConstants.Bruker;
@@ -956,7 +957,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                     if (InstrumentClass.ToLower() == "finnigan_fticr")
                     {
                         // Data from old Finnigan FTICR
-                        return DeconToolsFileTypeConstants.SUNEXTREL;
+                        return DeconToolsFileTypeConstants.SUN_EXTREL;
                     }
 
                     // Should never get here
@@ -983,11 +984,11 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                     return DeconToolsFileTypeConstants.Undefined;
 
                 case clsAnalysisResources.eRawDataTypeConstants.mzXML:
-                    return DeconToolsFileTypeConstants.MZXML_Rawdata;
+                    return DeconToolsFileTypeConstants.MZXML_RawData;
 
                 case clsAnalysisResources.eRawDataTypeConstants.mzML:
                     // Future: Add support for this after Decon2LS is updated
-                    // Return DeconToolsFileTypeConstants.MZML_Rawdata
+                    // Return DeconToolsFileTypeConstants.MZML_RawData
 
                     LogError("Decon2LS_V2 does not yet support mzML data");
                     return DeconToolsFileTypeConstants.Undefined;
@@ -1118,6 +1119,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                         case "PercentComplete":
                             float.TryParse(kvStat.Value, out mDeconToolsStatus.PercentComplete);
                             break;
+                        // ReSharper disable once StringLiteralTypo
                         case "AccumlatedFeatures":
                         case "AccumulatedFeatures":
                             break;
@@ -1354,10 +1356,14 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             // success = MyBase.StoreToolVersionInfoOneFile(ref toolVersionInfo, dllPath)
             // If Not success Then Return False
 
+            // ReSharper disable CommentTypo
+
             // Old: Lookup the version of DeconEngineV2 (in the DeconTools folder)
             // Disabled May 20, 2016 because the C++ code that was in DeconEngineV2.dll has been ported to C# and is now part of DeconTools.Backend
             // See DeconTools.Backend\ProcessingTasks\Deconvoluters\HornDeconvolutor\ThrashV1\ThrashV1_Readme.txt
-            //
+
+            // ReSharper restore CommentTypo
+
             // dllPath = Path.Combine(ioDeconToolsInfo.DirectoryName, "DeconEngineV2.dll")
             // success = MyBase.StoreToolVersionInfoViaSystemDiagnostics(ref toolVersionInfo, dllPath)
             // If Not success Then Return False
@@ -1470,16 +1476,16 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
             LogProgress(progressMessage, logIntervalMinutes);
 
-            const int MAX_LOGFINISHED_WAITTIME_SECONDS = 120;
+            const int MAX_LOG_FINISHED_WAIT_TIME_SECONDS = 120;
             if (!finishedProcessing)
                 return;
 
             // The Decon2LS Log File reports that the task is complete
-            // If it finished over MAX_LOGFINISHED_WAITTIME_SECONDS seconds ago, send an abort to the CmdRunner
+            // If it finished over MAX_LOG_FINISHED_WAIT_TIME_SECONDS seconds ago, send an abort to the CmdRunner
 
-            if (DateTime.Now.Subtract(finishTime).TotalSeconds >= MAX_LOGFINISHED_WAITTIME_SECONDS)
+            if (DateTime.Now.Subtract(finishTime).TotalSeconds >= MAX_LOG_FINISHED_WAIT_TIME_SECONDS)
             {
-                LogDebug("Note: Log file reports finished over " + MAX_LOGFINISHED_WAITTIME_SECONDS +
+                LogDebug("Note: Log file reports finished over " + MAX_LOG_FINISHED_WAIT_TIME_SECONDS +
                          " seconds ago, but the DeconTools CmdRunner is still active");
 
                 mDeconToolsFinishedDespiteProgRunnerError = true;

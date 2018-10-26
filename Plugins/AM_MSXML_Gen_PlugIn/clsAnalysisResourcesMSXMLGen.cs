@@ -92,13 +92,13 @@ namespace AnalysisManagerMsXmlGenPlugIn
                     }
 
                     currentTask = "ProcessMyEMSLDownloadQueue";
-                    if (mMyEMSLUtilities.ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+                    if (mMyEMSLUtilities.ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadLayout.FlatNoSubdirectories))
                     {
                         break;
                     }
 
                     // Look for this file on the Samba share
-                    base.DisableMyEMSLSearch();
+                    DisableMyEMSLSearch();
                 }
 
                 var mzMLRefParamFile = mJobParams.GetJobParameter("MzMLRefParamFile", string.Empty);
@@ -115,7 +115,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
                     currentTask = "Retrieve the MzML Refinery parameter file " + mzMLRefParamFile;
 
-                    const string paramFileStoragePathKeyName = clsGlobal.STEPTOOL_PARAMFILESTORAGEPATH_PREFIX + "MzML_Refinery";
+                    const string paramFileStoragePathKeyName = clsGlobal.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "MzML_Refinery";
 
                     var mzMLRefineryParmFileStoragePath = mMgrParams.GetParam(paramFileStoragePathKeyName);
                     if (string.IsNullOrWhiteSpace(mzMLRefineryParmFileStoragePath))

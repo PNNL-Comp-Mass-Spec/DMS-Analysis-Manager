@@ -116,7 +116,7 @@ namespace AnalysisManagerIDPickerPlugIn
                 }
             }
 
-            if (!mMyEMSLUtilities.ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+            if (!mMyEMSLUtilities.ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadLayout.FlatNoSubdirectories))
             {
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
@@ -299,7 +299,7 @@ namespace AnalysisManagerIDPickerPlugIn
                 }
             }
 
-            if (!mMyEMSLUtilities.ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+            if (!mMyEMSLUtilities.ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadLayout.FlatNoSubdirectories))
             {
                 return false;
             }
@@ -347,7 +347,7 @@ namespace AnalysisManagerIDPickerPlugIn
                 strIDPickerParamFileName = DEFAULT_IDPICKER_PARAM_FILE_NAME;
             }
 
-            var strParamFileStoragePathKeyName = clsGlobal.STEPTOOL_PARAMFILESTORAGEPATH_PREFIX + "IDPicker";
+            var strParamFileStoragePathKeyName = clsGlobal.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "IDPicker";
             var strIDPickerParamFilePath = mMgrParams.GetParam(strParamFileStoragePathKeyName);
             if (string.IsNullOrEmpty(strIDPickerParamFilePath))
             {
@@ -386,7 +386,7 @@ namespace AnalysisManagerIDPickerPlugIn
                     break;
                 }
 
-                if (mMyEMSLUtilities.ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+                if (mMyEMSLUtilities.ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadLayout.FlatNoSubdirectories))
                 {
                     break;
                 }
@@ -432,7 +432,7 @@ namespace AnalysisManagerIDPickerPlugIn
         /// <summary>
         /// Determines the files that need to be copied to the work directory, based on the result type
         /// </summary>
-        /// <param name="eResultType">PHRP result type (Seqest, X!Tandem, etc.)</param>
+        /// <param name="eResultType">PHRP result type (Sequest, X!Tandem, etc.)</param>
         /// <param name="strDatasetName">Dataset name</param>
         /// <returns>A generic list with the filenames to find.  The Boolean value is True if the file is Required, false if not required</returns>
         /// <remarks></remarks>
