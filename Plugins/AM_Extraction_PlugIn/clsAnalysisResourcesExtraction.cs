@@ -1374,6 +1374,8 @@ namespace AnalysisManagerExtractionPlugin
                 LogMessage("TODO: Retrieve the instrument data file so that we can run AScore");
                 return CloseOutType.CLOSEOUT_SUCCESS;
 
+#pragma warning disable CS0162 // Unreachable code detected
+
                 // Retrieve the instrument data file
 
                 // The ToolName job parameter holds the name of the job script we are executing
@@ -1395,6 +1397,8 @@ namespace AnalysisManagerExtractionPlugin
                 }
 
                 return result;
+
+#pragma warning restore CS0162 // Unreachable code detected
             }
             catch (Exception ex)
             {
