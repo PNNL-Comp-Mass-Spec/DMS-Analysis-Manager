@@ -337,9 +337,9 @@ namespace AnalysisManager_Mage_PlugIn
             {
                 if (!TableExists(fiResultsDB, T_ALIAS_TABLE))
                 {
-                    // Results.db3 file does not have table t_alias.txt; place a valid t_alias.txt file in the the data package's ImportFiles folder
+                    // Results.db3 file does not have table t_alias.txt; place a valid t_alias.txt file in the the data package's ImportFiles directory
                     LogError("Results.db3 file does not have table " + T_ALIAS_TABLE + "; " +
-                        "place a valid " + T_ALIAS_FILE + " file in the the data package's ImportFiles folder");
+                        "place a valid " + T_ALIAS_FILE + " file in the the data package's ImportFiles directory");
                     return false;
                 }
 
@@ -358,7 +358,7 @@ namespace AnalysisManager_Mage_PlugIn
                     // Table T_alias in Results.db3 is empty
                     // Table T_alias in Results.db3 is missing column Tissue
                     LogError("Table " + T_ALIAS_TABLE + " in Results.db3 " + errorMessage +
-                                "; place a valid " + T_ALIAS_FILE + " file in the the data package's ImportFiles folder; " + exceptionDetail);
+                                "; place a valid " + T_ALIAS_FILE + " file in the the data package's ImportFiles directory; " + exceptionDetail);
                     return false;
                 }
 

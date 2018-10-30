@@ -268,7 +268,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
         }
 
         /// <summary>
-        /// Copy MultiAlign input files into working folder from given list of jobs
+        /// Copy MultiAlign input files into working directory from given list of jobs
         /// Looks for DeconTools _LCMSFeatures.txt or _isos.csv files for the given jobs
         /// </summary>
         /// <param name="multialignJobsToProcess"></param>
@@ -280,7 +280,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
             {
 
                 var columnsToIncludeInOutput = "Job, Dataset, Dataset_ID, Tool, Settings_File, Parameter_File, Instrument";
-                var fileList = GetListOfFilesFromFolderList(multialignJobsToProcess, fileSpec, columnsToIncludeInOutput);
+                var fileList = GetListOfFilesFromDirectoryList(multialignJobsToProcess, fileSpec, columnsToIncludeInOutput);
 
                 // Check for "--No Files Found--" for any of the jobs
                 foreach (var row in fileList.Rows)
@@ -299,7 +299,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                 // make module to copy file(s) from server to working directory
                 var copier = new FileCopy
                 {
-                    OutputFolderPath = mWorkingDir,
+                    OutputDirectoryPath = mWorkingDir,
                     SourceFileColumnName = "Name"
                 };
 
@@ -348,13 +348,13 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
         }
 
         /// <summary>
-        /// Get list of selected files from list of folders
+        /// Get list of selected files from list of directories
         /// </summary>
-        /// <param name="folderListSource">Mage object that contains list of folders</param>
+        /// <param name="directoryListSource">Mage object that contains list of directories</param>
         /// <param name="fileNameSelector">File name selector to select files to be included in output list</param>
         /// <param name="passThroughColumns">List of columns from source object to pass through to output list object</param>
         /// <returns>Mage object containing list of files</returns>
-        public SimpleSink GetListOfFilesFromFolderList(IBaseModule folderListSource, string fileNameSelector, string passThroughColumns)
+        public SimpleSink GetListOfFilesFromDirectoryList(IBaseModule directoryListSource, string fileNameSelector, string passThroughColumns)
         {
             var sinkObject = new SimpleSink();
 
@@ -362,17 +362,17 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
             var fileFilter = new FileListFilter
             {
                 FileNameSelector = fileNameSelector,
-                SourceFolderColumnName = "Folder",
+                SourceDirectoryColumnName = "Directory",
                 FileColumnName = "Name",
-                OutputColumnList = "Item|+|text, Name|+|text, File_Size_KB|+|text, Folder, " + passThroughColumns,
+                OutputColumnList = "Item|+|text, Name|+|text, File_Size_KB|+|text, Directory, " + passThroughColumns,
                 FileSelectorMode = "RegEx",
-                IncludeFilesOrFolders = "File",
+                IncludeFilesOrDirectories = "File",
                 RecursiveSearch = "No",
-                SubfolderSearchName = "*"
+                SubdirectorySearchName = "*"
             };
 
             // build, wire, and run pipeline
-            ProcessingPipeline.Assemble("FileListPipeline", folderListSource, fileFilter, sinkObject).RunRoot(null);
+            ProcessingPipeline.Assemble("FileListPipeline", directoryListSource, fileFilter, sinkObject).RunRoot(null);
             return sinkObject;
         }
 
@@ -397,7 +397,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 
                 if (Files.Length == 0)
                 {
-                    mMessage = "Did not find any files of type " + strInputFileExtension + " in folder " + mWorkingDir;
+                    mMessage = "Did not find any files of type " + strInputFileExtension + " in directory " + mWorkingDir;
                     OnErrorEvent(mMessage);
                     return false;
                 }
@@ -739,17 +739,18 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
         /// This is a Mage module that does MultiAlign processing
         /// of results for jobs that are supplied to it via standard tabular input
         /// </summary>
+        [Obsolete("Unused")]
         public class MageMultiAlign : ContentFilter
         {
 
             #region Member Variables
 
-            private string[] jobFieldNames;
+            private string[] mJobFieldNames;
 
             // indexes to look up values for some key job fields
-            private int toolIdx;
-            private int paramFileIdx;
-            private int resultsFldrIdx;
+            private int mToolIndex;
+            private int mParamFileIndex;
+            private int mResultsDirectoryIndex;
 
             #endregion
 
@@ -774,12 +775,18 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                 {
                     cols.Add(colDef.Name);
                 }
-                jobFieldNames = cols.ToArray();
+                mJobFieldNames = cols.ToArray();
 
                 // set up column indexes
-                toolIdx = InputColumnPos["Tool"];
-                paramFileIdx = InputColumnPos["Parameter_File"];
-                resultsFldrIdx = InputColumnPos["Folder"];
+                mToolIndex = InputColumnPos["Tool"];
+                mParamFileIndex = InputColumnPos["Parameter_File"];
+
+                if (InputColumnPos.TryGetValue("Directory", out var directoryColIndex))
+                    mResultsDirectoryIndex = directoryColIndex;
+                else if (InputColumnPos.TryGetValue("Folder", out var folderColIndex))
+                    mResultsDirectoryIndex = folderColIndex;
+                else
+                    throw new Exception("ColumnDefsFinished could not find column Directory or Folder");
 
             }
 
@@ -790,15 +797,15 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
             // Build and run Mage pipeline to to extract contents of job
             private void ExtractResultsForJob(BaseModule currentJob, ExtractionType extractionParams, string extractedResultsFileName)
             {
-                // search job results folders for list of results files to process and accumulate into buffer module
+                // search job results directories for list of results files to process and accumulate into buffer module
                 var fileList = new SimpleSink();
-                var plof = ExtractionPipelines.MakePipelineToGetListOfFiles(currentJob, fileList, extractionParams);
-                plof.RunRoot(null);
+                var getFilesPipeline = ExtractionPipelines.MakePipelineToGetListOfFiles(currentJob, fileList, extractionParams);
+                getFilesPipeline.RunRoot(null);
 
                 // extract contents of files
                 var destination = new DestinationType("File_Output", WorkingDir, extractedResultsFileName);
-                var pefc = ExtractionPipelines.MakePipelineToExtractFileContents(new SinkWrapper(fileList), extractionParams, destination);
-                pefc.RunRoot(null);
+                var extractContentsPipeline = ExtractionPipelines.MakePipelineToExtractFileContents(new SinkWrapper(fileList), extractionParams, destination);
+                extractContentsPipeline.RunRoot(null);
             }
 
             #endregion
@@ -864,9 +871,9 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
             /// </summary>
             public MageFileImport()
             {
-                base.SourceFolderColumnName = "Folder";
+                base.SourceDirectoryColumnName = "Directory";
                 base.SourceFileColumnName = "Name";
-                base.OutputFolderPath = "ignore";
+                base.OutputDirectoryPath = "ignore";
                 base.OutputFileName = "ignore";
             }
 

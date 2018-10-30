@@ -93,7 +93,7 @@ namespace AnalysisManagerDataImportPlugIn
         /// Move the files from the source folder to a new subfolder below the source folder
         /// </summary>
         /// <returns></returns>
-        /// <remarks>The name of the new subfolder comes from mResultsFolderName</remarks>
+        /// <remarks>The name of the new subfolder comes from mResultsDirectoryName</remarks>
         protected bool MoveImportedFiles()
         {
             var targetFolder = "??";
@@ -108,7 +108,7 @@ namespace AnalysisManagerDataImportPlugIn
                     return true;
                 }
 
-                targetFolder = Path.Combine(mSourceFiles[0].DirectoryName, mResultsFolderName);
+                targetFolder = Path.Combine(mSourceFiles[0].DirectoryName, mResultsDirectoryName);
                 var fiTargetFolder = new DirectoryInfo(targetFolder);
                 if (fiTargetFolder.Exists)
                 {

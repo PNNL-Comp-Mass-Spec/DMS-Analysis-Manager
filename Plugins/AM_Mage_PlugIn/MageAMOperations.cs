@@ -38,11 +38,11 @@ namespace AnalysisManager_Mage_PlugIn
 
         #region Constructors
 
-        public MageAMOperations(IJobParams jobParms, IMgrParams mgrParms, string logFilePath, bool appendDateToLogFileName)
+        public MageAMOperations(IJobParams jobParams, IMgrParams mgrParams, string logFilePath, bool appendDateToLogFileName)
         {
             _previousStepResultsImported = false;
-            _jobParams = jobParms;
-            _mgrParams = mgrParms;
+            _jobParams = jobParams;
+            _mgrParams = mgrParams;
 
             LogTools.ChangeLogFileBaseName(logFilePath, appendDateToLogFileName);
         }
@@ -177,13 +177,13 @@ namespace AnalysisManager_Mage_PlugIn
             var mageObj = new MageAMFileProcessingPipelines(_jobParams, _mgrParams);
             RegisterMageEvents(mageObj);
 
-            const string inputFolderPath = @"\\gigasax\DMS_Workflows\Mage\SpectralCounting\FDR";
-            var inputfileList = mageObj.GetJobParam("MageFDRFiles");
+            const string inputDirectoryPath = @"\\gigasax\DMS_Workflows\Mage\SpectralCounting\FDR";
+            var inputFileList = mageObj.GetJobParam("MageFDRFiles");
 
-            OnDebugEvent("Importing FDR tables from " + inputFolderPath + ", files: "  + inputfileList);
+            OnDebugEvent("Importing FDR tables from " + inputDirectoryPath + ", files: " + inputFileList);
 
             GetPriorStepResults();
-            mageObj.ImportFilesInFolderToSQLite(inputFolderPath, inputfileList, "CopyAndImport");
+            mageObj.ImportFilesInDirectoryToSQLite(inputDirectoryPath, inputFileList, "CopyAndImport");
             return true;
         }
 
@@ -209,20 +209,20 @@ namespace AnalysisManager_Mage_PlugIn
             var mageObj = new MageAMFileProcessingPipelines(_jobParams, _mgrParams);
             RegisterMageEvents(mageObj);
 
-            var dataPackageStorageFolderRoot = mageObj.RequireJobParam(clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH);
-            var inputFolderPath = Path.Combine(dataPackageStorageFolderRoot, mageObj.RequireJobParam("DataPackageSourceFolderName"));
+            var dataPackageStoragePathRoot = mageObj.RequireJobParam(clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH);
+            var inputDirectoryPath = Path.Combine(dataPackageStoragePathRoot, mageObj.RequireJobParam("DataPackageSourceFolderName"));
 
-            var diInputFolder = new DirectoryInfo(inputFolderPath);
-            if (!diInputFolder.Exists)
-                throw new DirectoryNotFoundException("Folder specified by job parameter DataPackageSourceFolderName does not exist: " + inputFolderPath);
+            var inputDirectory = new DirectoryInfo(inputDirectoryPath);
+            if (!inputDirectory.Exists)
+                throw new DirectoryNotFoundException("Directory specified by job parameter DataPackageSourceFolderName does not exist: " + inputDirectoryPath);
 
-            var lstInputFolderFiles = diInputFolder.GetFiles().ToList();
+            var filesInDirectory = inputDirectory.GetFiles().ToList();
 
-            if (lstInputFolderFiles.Count == 0)
-                throw new DirectoryNotFoundException("DataPackageSourceFolderName is empty (should typically be ImportFiles " +
-                                                     "and it should have a file named " + clsAnalysisToolRunnerMage.T_ALIAS_FILE + "): " + inputFolderPath);
+            if (filesInDirectory.Count == 0)
+                throw new DirectoryNotFoundException("DataPackageSourceFolderName has no files (should typically be named ImportFiles " +
+                                                     "and it should have a file named " + clsAnalysisToolRunnerMage.T_ALIAS_FILE + "): " + inputDirectoryPath);
 
-            var lstMatchingFiles = (from item in lstInputFolderFiles
+            var lstMatchingFiles = (from item in filesInDirectory
                                     where string.Equals(item.Name, clsAnalysisToolRunnerMage.T_ALIAS_FILE, StringComparison.OrdinalIgnoreCase)
                                     select item).ToList();
 
@@ -233,14 +233,14 @@ namespace AnalysisManager_Mage_PlugIn
                 {
                     // File T_alias.txt was not found in ...
                     throw new Exception(string.Format("File {0} was not found in {1}; this file is required because this is an iTRAQ analysis",
-                        clsAnalysisToolRunnerMage.T_ALIAS_FILE, inputFolderPath));
+                        clsAnalysisToolRunnerMage.T_ALIAS_FILE, inputDirectoryPath));
                 }
 
                 var msg = string.Format(
-                    "File {0} was not found in the DataPackageSourceFolderName folder; this may result in a failure during Ape processing",
+                    "File {0} was not found in the DataPackageSourceFolderName directory; this may result in a failure during Ape processing",
                     clsAnalysisToolRunnerMage.T_ALIAS_FILE);
 
-                var msgVerbose = msg + ": " + inputFolderPath;
+                var msgVerbose = msg + ": " + inputDirectoryPath;
                 AppendToWarningMessage(msg, msgVerbose);
                 OnWarningEvent(msgVerbose);
             }
@@ -250,16 +250,16 @@ namespace AnalysisManager_Mage_PlugIn
                 ValidateAliasFile(lstMatchingFiles.First());
             }
 
-            OnDebugEvent("Importing data package files into SQLite, source folder " + inputFolderPath + ", import mode " + importMode);
+            OnDebugEvent("Importing data package files into SQLite, source directory " + inputDirectoryPath + ", import mode " + importMode);
 
             GetPriorStepResults();
-            mageObj.ImportFilesInFolderToSQLite(inputFolderPath, "", importMode);
+            mageObj.ImportFilesInDirectoryToSQLite(inputDirectoryPath, "", importMode);
             return true;
         }
 
         /// <summary>
-        /// Copy files in data package folder named by "DataPackageSourceFolderName" job parameter
-        /// to the step results folder and import contents to tables in the SQLite step results database,
+        /// Copy files in data package directory named by "DataPackageSourceFolderName" job parameter
+        /// to the step results directory and import contents to tables in the SQLite step results database,
         /// process import through filter that fills in missing cluster ID values
         /// </summary>
         /// <returns></returns>

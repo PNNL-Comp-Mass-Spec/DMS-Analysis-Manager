@@ -107,7 +107,7 @@ namespace MSMSSpectrumFilterAM
                 string strDatasetFileOrFolderPath = null;
                 var blnScanStatsFilesRetrieved = false;
 
-                strDatasetFileOrFolderPath = FolderSearch.FindDatasetFileOrFolder(out blnIsFolder, assumeUnpurged: false);
+                strDatasetFileOrFolderPath = FolderSearch.FindDatasetFileOrDirectory(out blnIsFolder, assumeUnpurged: false);
 
                 if (!string.IsNullOrEmpty(strDatasetFileOrFolderPath) && !strDatasetFileOrFolderPath.StartsWith(MYEMSL_PATH_FLAG))
                 {

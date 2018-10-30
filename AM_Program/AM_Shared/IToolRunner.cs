@@ -90,7 +90,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Copy failed results from the working directory to the DMS_FailedResults directory on the local computer
         /// </summary>
-        void CopyFailedResultsToArchiveFolder();
+        void CopyFailedResultsToArchiveDirectory();
 
         /// <summary>
         /// Perform any required post processing after retrieving remote results
@@ -107,7 +107,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="transferFolderPathOverride">Optional: specific transfer folder path to use; if empty, uses job param transferFolderPath</param>
         /// <returns>True if success, otherwise false</returns>
-        /// <remarks>Uses MakeResultsFolder, MoveResultFiles, and CopyResultsFolderToServer</remarks>
+        /// <remarks>Uses MakeResultsDirectory, MoveResultFiles, and CopyResultsFolderToServer</remarks>
         bool CopyResultsToTransferDirectory(string transferFolderPathOverride = "");
 
         /// <summary>

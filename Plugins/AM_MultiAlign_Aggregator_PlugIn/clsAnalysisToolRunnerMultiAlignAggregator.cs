@@ -34,7 +34,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 
                 LogMessage("Running MultiAlign Aggregator");
 
-                // Determine the path to the LCMSFeatureFinder folder
+                // Determine the path to the MultiAlign directory
                 var progLoc = DetermineProgramLocation("MultiAlignProgLoc", "MultiAlignConsole.exe");
 
                 if (string.IsNullOrWhiteSpace(progLoc))
@@ -103,43 +103,43 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                 if (!processingSuccess)
                 {
                     // Something went wrong
-                    // In order to help diagnose things, we will move whatever files were created into the result folder,
-                    //  archive it using CopyFailedResultsToArchiveFolder, then return CloseOutType.CLOSEOUT_FAILED
-                    CopyFailedResultsToArchiveFolder();
+                    // In order to help diagnose things, we will move whatever files were created into the result directory,
+                    //  archive it using CopyFailedResultsToArchiveDirectory, then return CloseOutType.CLOSEOUT_FAILED
+                    CopyFailedResultsToArchiveDirectory();
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                // Override the output folder name and the dataset name (since this is a dataset aggregation job)
-                mResultsFolderName = mJobParams.GetParam("StepOutputFolderName");
+                // Override the output directory name and the dataset name (since this is a dataset aggregation job)
+                mResultsDirectoryName = mJobParams.GetParam("StepOutputFolderName");
                 mDatasetName = mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME);
-                mJobParams.SetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME, mResultsFolderName);
+                mJobParams.SetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME, mResultsDirectoryName);
 
-                var resultsFolderCreated = MakeResultsFolder();
-                if (!resultsFolderCreated)
+                var resultsDirectoryCreated = MakeResultsDirectory();
+                if (!resultsDirectoryCreated)
                 {
-                    CopyFailedResultsToArchiveFolder();
+                    CopyFailedResultsToArchiveDirectory();
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                // Move the Plots folder to the result files folder
-                var diPlotsFolder = new DirectoryInfo(Path.Combine(mWorkDir, "Plots"));
+                // Move the Plots directory to the result files directory
+                var plotsDirectory = new DirectoryInfo(Path.Combine(mWorkDir, "Plots"));
 
-                if (diPlotsFolder.Exists)
+                if (plotsDirectory.Exists)
                 {
-                    var strTargetFolderPath = Path.Combine(Path.Combine(mWorkDir, mResultsFolderName), "Plots");
+                    var targetDirectoryPath = Path.Combine(Path.Combine(mWorkDir, mResultsDirectoryName), "Plots");
 
                     try
                     {
-                        diPlotsFolder.MoveTo(strTargetFolderPath);
+                        plotsDirectory.MoveTo(targetDirectoryPath);
                     }
                     catch (Exception ex)
                     {
-                        LogWarning("Exception moving Plot Folder " + diPlotsFolder.FullName + ": " + ex.Message);
-                        mFileTools.CopyDirectory(diPlotsFolder.FullName, strTargetFolderPath, true);
+                        LogWarning("Exception moving Plots directory " + plotsDirectory.FullName + ": " + ex.Message);
+                        mFileTools.CopyDirectory(plotsDirectory.FullName, targetDirectoryPath, true);
                     }
 
-                    // Zip up (then delete) the PNG files in the plots folder
-                    ZipPlotsFolder(diPlotsFolder);
+                    // Zip up (then delete) the PNG files in the plots directory
+                    ZipPlotsDirectory(plotsDirectory);
                 }
 
                 var success = CopyResultsToTransferDirectory();
@@ -235,13 +235,13 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 
             if (ioMultiAlignInfo.DirectoryName != null)
             {
-                // Lookup the version of MultiAlignEngine (in the MultiAlign folder)
+                // Lookup the version of MultiAlignEngine (in the MultiAlign directory)
                 var strMultiAlignEngineDllLoc = Path.Combine(ioMultiAlignInfo.DirectoryName, "MultiAlignEngine.dll");
                 blnSuccess = StoreToolVersionInfoOneFile64Bit(ref strToolVersionInfo, strMultiAlignEngineDllLoc);
                 if (!blnSuccess)
                     return false;
 
-                // Lookup the version of MultiAlignCore (in the MultiAlign folder)
+                // Lookup the version of MultiAlignCore (in the MultiAlign directory)
                 var strMultiAlignCoreDllLoc = Path.Combine(ioMultiAlignInfo.DirectoryName, "MultiAlignCore.dll");
                 blnSuccess = StoreToolVersionInfoOneFile64Bit(ref strToolVersionInfo, strMultiAlignCoreDllLoc);
                 if (!blnSuccess)
@@ -264,12 +264,12 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
         }
 
         /// <summary>
-        /// Zip the files in the plots folder if there are over fileCountThreshold files (default 50, minimum 10)
+        /// Zip the files in the Plots directory if there are over fileCountThreshold files (default 50, minimum 10)
         /// </summary>
-        /// <param name="diPlotsFolder"></param>
+        /// <param name="plotsDirectory"></param>
         /// <param name="fileCountThreshold"></param>
         /// <returns></returns>
-        private bool ZipPlotsFolder(DirectoryInfo diPlotsFolder, int fileCountThreshold = 50)
+        private bool ZipPlotsDirectory(DirectoryInfo plotsDirectory, int fileCountThreshold = 50)
         {
 
             try
@@ -277,34 +277,34 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                 if (fileCountThreshold < 10)
                     fileCountThreshold = 10;
 
-                diPlotsFolder.Refresh();
-                if (diPlotsFolder.Exists)
+                plotsDirectory.Refresh();
+                if (plotsDirectory.Exists)
                 {
-                    var pngFileCount = diPlotsFolder.GetFiles("*.png").Length;
+                    var pngFileCount = plotsDirectory.GetFiles("*.png").Length;
 
                     if (pngFileCount == 0)
                     {
-                        LogWarning("No .PNG files were found in the Plots folder");
+                        LogWarning("No .PNG files were found in the Plots directory");
                         return true;
                     }
 
                     if (pngFileCount == 1)
                     {
                         if (mDebugLevel >= 2)
-                            LogMessage("Only 1 .PNG file exists in the Plots folder; file will not be zipped");
+                            LogMessage("Only 1 .PNG file exists in the Plots directory; file will not be zipped");
                         return true;
                     }
 
                     if (pngFileCount < fileCountThreshold)
                     {
                         if (mDebugLevel >= 2)
-                            LogMessage("Only " + pngFileCount + " .PNG files exist in the Plots folder; files will not be zipped");
+                            LogMessage("Only " + pngFileCount + " .PNG files exist in the Plots directory; files will not be zipped");
                         return true;
                     }
 
-                    var strZipFilePath = Path.Combine(diPlotsFolder.FullName, "PlotFiles.zip");
+                    var strZipFilePath = Path.Combine(plotsDirectory.FullName, "PlotFiles.zip");
 
-                    var success = mDotNetZipTools.ZipDirectory(diPlotsFolder.FullName, strZipFilePath, false, "*.png");
+                    var success = mDotNetZipTools.ZipDirectory(plotsDirectory.FullName, strZipFilePath, false, "*.png");
 
                     if (!success)
                     {
@@ -317,9 +317,9 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                         return false;
                     }
 
-                    // Delete the PNG files in the plots folder
+                    // Delete the PNG files in the Plots directory
                     var errorCount = 0;
-                    foreach (var fiFile in diPlotsFolder.GetFiles("*.png"))
+                    foreach (var fiFile in plotsDirectory.GetFiles("*.png"))
                     {
                         try
                         {

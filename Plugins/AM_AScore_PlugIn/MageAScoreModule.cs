@@ -127,13 +127,13 @@ namespace AnalysisManager_AScore_PlugIn
                     return false;
                 }
 
-                var resultsFolderPath = values[resultsDirectoryIdx];
+                var resultsDirectoryPath = values[resultsDirectoryIdx];
                 var paramFileNameForPSMTool = values[paramFileIdx];
                 var datasetName = values[datasetNameIdx];
                 var datasetType = values[datasetTypeIdx];
                 var analysisTool = values[toolIdx];
 
-                var dtaFilePath = CopyDTAResults(datasetName, resultsFolderPath, jobNumber, analysisTool, mConnectionString);
+                var dtaFilePath = CopyDTAResults(datasetName, resultsDirectoryPath, jobNumber, analysisTool, mConnectionString);
                 if (string.IsNullOrEmpty(dtaFilePath))
                 {
                     return false;
@@ -296,7 +296,7 @@ namespace AnalysisManager_AScore_PlugIn
         // Build and run Mage pipeline to to extract contents of job
         private void ExtractResultsForJob(BaseModule currentJob, ExtractionType extractionParams, string extractedResultsFileName)
         {
-            // search job results folders for list of results files to process and accumulate into buffer module
+            // search job result directories for list of results files to process and accumulate into buffer module
             var fileList = new SimpleSink();
             var pgFileList = ExtractionPipelines.MakePipelineToGetListOfFiles(currentJob, fileList, extractionParams);
             pgFileList.RunRoot(null);
@@ -322,22 +322,21 @@ namespace AnalysisManager_AScore_PlugIn
 
         #region MageAScore Utility Methods
 
-        // look for "_dta.zip" file in job results folder and copy it to working directory and unzip it
-        private string CopyDTAResults(string datasetName, string resultsFolderPath, int jobNumber, string toolName, string connectionString)
+        // look for "_dta.zip" file in job results directory and copy it to working directory and unzip it
+        private string CopyDTAResults(string datasetName, string resultsDirectoryPath, int jobNumber, string toolName, string connectionString)
         {
             string dtaZipPathLocal;
 
-            var diResultsFolder = new DirectoryInfo(resultsFolderPath);
+            var resultsDirectory = new DirectoryInfo(resultsDirectoryPath);
 
-            if (resultsFolderPath.StartsWith(clsAnalysisResources.MYEMSL_PATH_FLAG))
+            if (resultsDirectoryPath.StartsWith(clsAnalysisResources.MYEMSL_PATH_FLAG))
             {
                 // Need to retrieve the _DTA.zip file from MyEMSL
-
-                dtaZipPathLocal = CopyDtaResultsFromMyEMSL(datasetName, diResultsFolder, jobNumber, toolName, connectionString);
+                dtaZipPathLocal = CopyDtaResultsFromMyEMSL(datasetName, resultsDirectory, jobNumber, toolName, connectionString);
             }
             else
             {
-                dtaZipPathLocal = CopyDTAResultsFromServer(diResultsFolder, jobNumber, toolName, connectionString);
+                dtaZipPathLocal = CopyDTAResultsFromServer(resultsDirectory, jobNumber, toolName, connectionString);
             }
 
             // If we have changed the string from empty we have found the correct _dta.zip file
@@ -374,27 +373,27 @@ namespace AnalysisManager_AScore_PlugIn
             return unzippedDtaResultsFilePath;
         }
 
-        private string CopyDtaResultsFromMyEMSL(string datasetName, FileSystemInfo diResultsFolder, int jobNumber, string toolName, string connectionString)
+        private string CopyDtaResultsFromMyEMSL(string datasetName, FileSystemInfo resultsDirectory, int jobNumber, string toolName, string connectionString)
         {
             clsAScoreMagePipeline.mMyEMSLDatasetInfo.AddDataset(datasetName);
-            var lstArchiveFiles = clsAScoreMagePipeline.mMyEMSLDatasetInfo.FindFiles("*_dta.zip", diResultsFolder.Name, datasetName);
+            var lstArchiveFiles = clsAScoreMagePipeline.mMyEMSLDatasetInfo.FindFiles("*_dta.zip", resultsDirectory.Name, datasetName);
 
             if (lstArchiveFiles.Count == 0)
             {
-                // Lookup the shared results folder name
-                var dtaFolderName = GetSharedResultFolderName(jobNumber, toolName, connectionString);
+                // Lookup the shared results directory name
+                var dtaDirectoryName = GetSharedResultsDirectoryName(jobNumber, toolName, connectionString);
 
-                if (string.IsNullOrEmpty(dtaFolderName))
+                if (string.IsNullOrEmpty(dtaDirectoryName))
                 {
                     // Error has already been logged
                     return null;
                 }
 
-                lstArchiveFiles = clsAScoreMagePipeline.mMyEMSLDatasetInfo.FindFiles("*_dta.zip", dtaFolderName, datasetName);
+                lstArchiveFiles = clsAScoreMagePipeline.mMyEMSLDatasetInfo.FindFiles("*_dta.zip", dtaDirectoryName, datasetName);
 
                 if (lstArchiveFiles.Count == 0)
                 {
-                    LogTools.LogError("DTA file not found in folder " + dtaFolderName + " in MyEMSL");
+                    LogTools.LogError("DTA file not found in directory " + dtaDirectoryName + " in MyEMSL");
                     return null;
                 }
             }
@@ -412,12 +411,12 @@ namespace AnalysisManager_AScore_PlugIn
             return dtaZipPathLocal;
         }
 
-        private string CopyDTAResultsFromServer(DirectoryInfo diResultsFolder, int jobNumber, string toolName, string connectionString)
+        private string CopyDTAResultsFromServer(DirectoryInfo resultsDirectory, int jobNumber, string toolName, string connectionString)
         {
             // Check if the dta is in the search tool's directory
             string dtaZipSourceFilePath;
 
-            var lstFiles = diResultsFolder.GetFiles("*_dta.zip").ToList();
+            var lstFiles = resultsDirectory.GetFiles("*_dta.zip").ToList();
             if (lstFiles.Count > 0)
             {
                 dtaZipSourceFilePath = lstFiles.First().FullName;
@@ -428,31 +427,31 @@ namespace AnalysisManager_AScore_PlugIn
                 // Prior to January 2015 we would examine the JobParameters file to determine the appropriate dta directory (by looking for parameter SharedResultsFolders)
                 // That method is not reliable, so we instead now query V_Job_Steps and V_Job_Steps_History
 
-                var dtaFolderName = GetSharedResultFolderName(jobNumber, toolName, connectionString);
+                var dtaDirectoryName = GetSharedResultsDirectoryName(jobNumber, toolName, connectionString);
 
-                if (string.IsNullOrEmpty(dtaFolderName))
+                if (string.IsNullOrEmpty(dtaDirectoryName))
                 {
                     // Error has already been logged
                     return null;
                 }
 
-                if (diResultsFolder.Parent == null || !diResultsFolder.Parent.Exists)
+                if (resultsDirectory.Parent == null || !resultsDirectory.Parent.Exists)
                 {
-                    LogTools.LogError("DTA directory not found; " + diResultsFolder.FullName + " does not have a parent folder");
+                    LogTools.LogError("DTA directory not found; " + resultsDirectory.FullName + " does not have a parent directory");
                     return null;
                 }
 
-                var diAlternateDtaFolder = new DirectoryInfo(Path.Combine(diResultsFolder.Parent.FullName, dtaFolderName));
-                if (!diAlternateDtaFolder.Exists)
+                var alternateDtaDirectory = new DirectoryInfo(Path.Combine(resultsDirectory.Parent.FullName, dtaDirectoryName));
+                if (!alternateDtaDirectory.Exists)
                 {
-                    LogTools.LogError("DTA directory not found: " + diAlternateDtaFolder.FullName);
+                    LogTools.LogError("DTA directory not found: " + alternateDtaDirectory.FullName);
                     return null;
                 }
 
-                lstFiles = diAlternateDtaFolder.GetFiles("*_dta.zip").ToList();
+                lstFiles = alternateDtaDirectory.GetFiles("*_dta.zip").ToList();
                 if (lstFiles.Count == 0)
                 {
-                    LogTools.LogError("DTA file not found in folder " + diAlternateDtaFolder.FullName);
+                    LogTools.LogError("DTA file not found in directory " + alternateDtaDirectory.FullName);
                     return null;
                 }
 
@@ -469,13 +468,13 @@ namespace AnalysisManager_AScore_PlugIn
         }
 
         /// <summary>
-        /// Lookup the shared result folder name for the given job
+        /// Lookup the shared results directory name for the given job
         /// </summary>
         /// <param name="jobNumber"></param>
         /// <param name="toolName"></param>
         /// <param name="connectionString"></param>
         /// <returns></returns>
-        private string GetSharedResultFolderName(int jobNumber, string toolName, string connectionString)
+        private string GetSharedResultsDirectoryName(int jobNumber, string toolName, string connectionString)
         {
             try
             {
@@ -487,24 +486,24 @@ namespace AnalysisManager_AScore_PlugIn
                 sqlQuery += " SELECT Input_Folder, 2 AS Preference, Saved FROM DMS_Pipeline.dbo.V_Job_Steps_History " + sqlWhere;
                 sqlQuery += " ORDER BY Preference, saved";
 
-                var success = clsGlobal.GetQueryResultsTopRow(sqlQuery, connectionString, out var firstSharedResultsFolder, "GetSharedResultFolderName");
+                var success = clsGlobal.GetQueryResultsTopRow(sqlQuery, connectionString, out var firstSharedResultsDirectory, "GetSharedResultsDirectoryName");
 
-                if (!success || firstSharedResultsFolder.Count == 0)
+                if (!success || firstSharedResultsDirectory.Count == 0)
                 {
-                    LogTools.LogError("Cannot determine shared results folder; match not found for job " + jobNumber + " and tool " + toolName + " in V_Job_Steps opr V_Job_Steps_History");
+                    LogTools.LogError("Cannot determine shared results directory; match not found for job " + jobNumber + " and tool " + toolName + " in V_Job_Steps or V_Job_Steps_History");
                     return string.Empty;
 
                 }
 
-                // Return the first column (the input_folder name)
-                var sharedResultsFolder = firstSharedResultsFolder.First();
-                return sharedResultsFolder;
+                // Return the first column (the Input_Folder name)
+                var sharedResultsDirectory = firstSharedResultsDirectory.First();
+                return sharedResultsDirectory;
 
             }
             catch (Exception ex)
             {
-                LogTools.LogError("Error looking up the input folder for job " + jobNumber + " and tool " + toolName +
-                         " in GetSharedResultFolderName: " + ex.Message, ex);
+                LogTools.LogError("Error looking up the input directory for job " + jobNumber + " and tool " + toolName +
+                         " in GetSharedResultsDirectoryName: " + ex.Message, ex);
                 return string.Empty;
             }
 

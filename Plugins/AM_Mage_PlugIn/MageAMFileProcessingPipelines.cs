@@ -18,10 +18,10 @@ namespace AnalysisManager_Mage_PlugIn
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="jobParms"></param>
-        /// <param name="mgrParms"></param>
-        public MageAMFileProcessingPipelines(IJobParams jobParms, IMgrParams mgrParms)
-            : base(jobParms, mgrParms)
+        /// <param name="jobParams"></param>
+        /// <param name="mgrParams"></param>
+        public MageAMFileProcessingPipelines(IJobParams jobParams, IMgrParams mgrParams)
+            : base(jobParams, mgrParams)
         {
         }
 
@@ -43,7 +43,7 @@ namespace AnalysisManager_Mage_PlugIn
 
             // get selected list reporter ion files from list of jobs
             const string columnsToIncludeInOutput = "Job, Dataset, Dataset_ID, Tool, Settings_File, Parameter_File, Instrument";
-            var fileList = GetListOfFilesFromFolderList(jobList, fileNameSelector, columnsToIncludeInOutput);
+            var fileList = GetListOfFilesFromDirectoryList(jobList, fileNameSelector, columnsToIncludeInOutput);
 
             NotifyImportStarting("Importing job result data", tableName, fileList, "files");
 
@@ -69,7 +69,7 @@ namespace AnalysisManager_Mage_PlugIn
 
             // get selected list files from list of datasets
             const string columnsToIncludeInOutput = "Dataset_ID, Dataset, Experiment, Campaign, State, Instrument, Created, Type";
-            var fileList = GetListOfFilesFromFolderList(jobList, fileNameSelector, columnsToIncludeInOutput);
+            var fileList = GetListOfFilesFromDirectoryList(jobList, fileNameSelector, columnsToIncludeInOutput);
 
             NotifyImportStarting("Importing result file metadata", tableName, fileList, "files");
 
@@ -80,20 +80,23 @@ namespace AnalysisManager_Mage_PlugIn
         }
 
         /// <summary>
-        /// Import the contents of files in the given source folder that pass the given name filter
+        /// Import the contents of files in the given source directory that pass the given name filter
         /// into the results SQLite database.
         /// /// </summary>
-        /// <param name="inputFolderPath">Path to folder containing files to be imported</param>
+        /// <param name="inputDirectoryPath">Path to directory containing files to be imported</param>
         /// <param name="fileNameList">List of specific file names that will be imported (ignored if blank)</param>
         /// <param name="importMode">Valid modes: CopyAndImport, SimpleImport, AddDatasetIDToImport, IMPROVClusterImport</param>
-        public void ImportFilesInFolderToSQLite(string inputFolderPath, string fileNameList, string importMode)
+        public void ImportFilesInDirectoryToSQLite(string inputDirectoryPath, string fileNameList, string importMode)
         {
 
             var reader = new FileListFilter();
-            reader.AddFolderPath(inputFolderPath);
+            reader.AddDirectoryPath(inputDirectoryPath);
             reader.FileNameSelector = GetJobParam("FileNameSelector");
             reader.FileSelectorMode = GetJobParam("FileSelectorMode", "RegEx");
-            reader.IncludeFilesOrFolders = GetJobParam("IncludeFilesOrFolders", "File");
+
+            var filesOrDirectories = GetJobParam("IncludeFilesOrFolders", "File");
+            reader.IncludeFilesOrDirectories = GetJobParam("IncludeFilesOrDirectories", filesOrDirectories);
+
             reader.RecursiveSearch = GetJobParam("RecursiveSearch", "No");
 
             var fileList = new SimpleSink();
@@ -104,14 +107,14 @@ namespace AnalysisManager_Mage_PlugIn
 
             var contentProc = new MageAMFileContentProcessor(this)
             {
-                SourceFolderColumnName = reader.SourceFolderColumnName,
+                SourceDirectoryColumnName = reader.SourceDirectoryColumnName,
                 SourceFileColumnName = reader.FileColumnName,
                 Operation = importMode,
                 DBTableName = "",
                 FileNameList = fileNameList
             };
 
-            NotifyImportStarting("Importing files in folder", "auto-defined", fileList, "files");
+            NotifyImportStarting("Importing files in directory", "auto-defined", fileList, "files");
 
             var fileImportPipeline = ProcessingPipeline.Assemble("Proc", fileList, contentProc);
             ConnectPipelineToStatusHandlers(fileImportPipeline);
@@ -188,13 +191,13 @@ namespace AnalysisManager_Mage_PlugIn
         }
 
         /// <summary>
-        /// Get list of selected files from list of folders
+        /// Get list of selected files from list of directories
         /// </summary>
-        /// <param name="folderListSource">Mage object that contains list of folders</param>
+        /// <param name="directoryListSource">Mage object that contains list of directories</param>
         /// <param name="fileNameSelector">File name selector to select files to be included in output list</param>
         /// <param name="passThroughColumns">List of columns from source object to pass through to output list object</param>
         /// <returns>Mage object containing list of files</returns>
-        public SimpleSink GetListOfFilesFromFolderList(IBaseModule folderListSource, string fileNameSelector, string passThroughColumns)
+        public SimpleSink GetListOfFilesFromDirectoryList(IBaseModule directoryListSource, string fileNameSelector, string passThroughColumns)
         {
             var sinkObject = new SimpleSink();
 
@@ -202,24 +205,23 @@ namespace AnalysisManager_Mage_PlugIn
             var fileFilter = new FileListFilter
             {
                 FileNameSelector = fileNameSelector,
-                SourceFolderColumnName = "Folder",
+                SourceDirectoryColumnName = "Directory",
                 FileColumnName = "Name",
-                OutputColumnList =
-                    "Item|+|text, Name|+|text, File_Size_KB|+|text, Folder, " + passThroughColumns,
+                OutputColumnList = "Item|+|text, Name|+|text, File_Size_KB|+|text, Directory, " + passThroughColumns,
                 FileSelectorMode = "RegEx",
-                IncludeFilesOrFolders = "File",
+                IncludeFilesOrDirectories = "File",
                 RecursiveSearch = "No",
-                SubfolderSearchName = "*"
+                SubdirectorySearchName = "*"
             };
 
             // build, wire, and run pipeline
-            ProcessingPipeline.Assemble("FileListPipeline", folderListSource, fileFilter, sinkObject).RunRoot(null);
+            ProcessingPipeline.Assemble("FileListPipeline", directoryListSource, fileFilter, sinkObject).RunRoot(null);
             return sinkObject;
         }
 
         /// <summary>
         /// Make Mage pipeline using given sql as source of factors and use it
-        /// to create and populate a factors table in a SQLite database (in crosstab format)
+        /// to create and populate a factors table in a SQLite database (in CrossTab format)
         /// </summary>
         /// <param name="sql">Query to use a source of factors</param>
         public void GetDatasetFactors(string sql)

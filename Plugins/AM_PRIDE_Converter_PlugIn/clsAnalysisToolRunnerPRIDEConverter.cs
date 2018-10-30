@@ -404,8 +404,8 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 {
                     // Something went wrong
                     // In order to help diagnose things, we will move whatever files were created into the result folder,
-                    //  archive it using CopyFailedResultsToArchiveFolder, then return CloseOutType.CLOSEOUT_FAILED
-                    CopyFailedResultsToArchiveFolder();
+                    //  archive it using CopyFailedResultsToArchiveDirectory, then return CloseOutType.CLOSEOUT_FAILED
+                    CopyFailedResultsToArchiveDirectory();
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
@@ -992,7 +992,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// <summary>
         /// Copy failed results to the archive folder
         /// </summary>
-        public override void CopyFailedResultsToArchiveFolder()
+        public override void CopyFailedResultsToArchiveDirectory()
         {
 
             // Make sure the PRIDEConverter console output file is retained
@@ -1001,7 +1001,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             // Skip the .mgf files; no need to put them in the FailedResults folder
             mJobParams.AddResultFileExtensionToSkip(DOT_MGF);
 
-            base.CopyFailedResultsToArchiveFolder();
+            base.CopyFailedResultsToArchiveDirectory();
         }
 
         /// <summary>
@@ -2855,7 +2855,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                         fileInfoCols.Add(fileTypeName);
 
                         // file_path
-                        fileInfoCols.Add(Path.Combine(@"D:\Upload", mResultsFolderName, item.Value.Filename));
+                        fileInfoCols.Add(Path.Combine(@"D:\Upload", mResultsDirectoryName, item.Value.Filename));
 
                         var fileMappings = new List<string>();
                         foreach (var mapID in item.Value.FileMappings)

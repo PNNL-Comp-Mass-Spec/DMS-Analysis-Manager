@@ -291,7 +291,7 @@ namespace AnalysisManagerBase
         /// Copy failed results from sourceDirectoryPath to the DMS_FailedResults directory on the local computer
         /// </summary>
         /// <param name="sourceDirectoryPath">Source directory path</param>
-        public void CopyFailedResultsToArchiveFolder(string sourceDirectoryPath)
+        public void CopyFailedResultsToArchiveDirectory(string sourceDirectoryPath)
         {
             if (clsGlobal.OfflineMode)
             {
@@ -309,7 +309,7 @@ namespace AnalysisManagerBase
                 return;
             }
 
-            CopyFailedResultsToArchiveFolder(sourceDirectoryPath, failedResultsDirectoryPath);
+            CopyFailedResultsToArchiveDirectory(sourceDirectoryPath, failedResultsDirectoryPath);
         }
 
         /// <summary>
@@ -317,7 +317,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="sourceDirectoryPath">Source directory path</param>
         /// <param name="failedResultsDirectoryPath">Failed results directory path, e.g. C:\DMS_FailedResults</param>
-        public void CopyFailedResultsToArchiveFolder(string sourceDirectoryPath, string failedResultsDirectoryPath)
+        public void CopyFailedResultsToArchiveDirectory(string sourceDirectoryPath, string failedResultsDirectoryPath)
         {
             if (clsGlobal.OfflineMode)
             {

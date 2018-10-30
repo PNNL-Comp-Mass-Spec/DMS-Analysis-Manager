@@ -29,7 +29,7 @@ namespace AnalysisManager_Mage_PlugIn
 
         protected string WorkingDirPath { get; }
 
-        protected IJobParams JobParms { get; }
+        protected IJobParams JobParams { get; }
 
         protected IMgrParams MgrParams { get; }
 
@@ -65,12 +65,12 @@ namespace AnalysisManager_Mage_PlugIn
 
         #region Constructors
 
-        public MageAMPipelineBase(IJobParams jobParms, IMgrParams mgrParms)
+        public MageAMPipelineBase(IJobParams jobParams, IMgrParams mgrParams)
         {
-            JobParms = jobParms;
-            MgrParams = mgrParms;
+            JobParams = jobParams;
+            MgrParams = mgrParams;
             ResultsDBFileName = RequireJobParam("ResultsBaseName") + ".db3";
-            WorkingDirPath = RequireMgrParam("workdir");
+            WorkingDirPath = RequireMgrParam("WorkDir");
 
             JobsProcessed = new SortedSet<int>();
         }
@@ -97,7 +97,7 @@ namespace AnalysisManager_Mage_PlugIn
 
         public string RequireJobParam(string paramName)
         {
-            var val = JobParms.GetParam(paramName);
+            var val = JobParams.GetParam(paramName);
             if (string.IsNullOrWhiteSpace(val))
             {
                 throw new MageException(string.Format("Required job parameter '{0}' was missing.", paramName));
@@ -107,15 +107,12 @@ namespace AnalysisManager_Mage_PlugIn
 
         public string GetJobParam(string paramName)
         {
-            return JobParms.GetParam(paramName);
+            return JobParams.GetParam(paramName);
         }
 
         public string GetJobParam(string paramName, string defaultValue)
         {
-            var val = JobParms.GetParam(paramName);
-            if (string.IsNullOrWhiteSpace(val))
-                val = defaultValue;
-            return val;
+            return JobParams.GetJobParameter(paramName, defaultValue);
         }
 
         /// <summary>
@@ -157,12 +154,12 @@ namespace AnalysisManager_Mage_PlugIn
         /// </summary>
         public void GetPriorResultsToWorkDir()
         {
-            var dataPackageFolderPath = Path.Combine(RequireJobParam(clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH), RequireJobParam(clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME));
+            var dataPackagePath = Path.Combine(RequireJobParam(clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH), RequireJobParam(clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME));
 
             var stepInputFolderName = GetJobParam("StepInputFolderName");
             if (stepInputFolderName != "")
             {
-                var priorResultsDBFilePath = Path.Combine(dataPackageFolderPath, stepInputFolderName, ResultsDBFileName);
+                var priorResultsDBFilePath = Path.Combine(dataPackagePath, stepInputFolderName, ResultsDBFileName);
                 if (File.Exists(priorResultsDBFilePath))
                 {
                     var workingFilePath = Path.Combine(WorkingDirPath, ResultsDBFileName);

@@ -659,7 +659,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 // Ignore errors here
             }
 
-            base.CopyFailedResultsToArchiveFolder();
+            base.CopyFailedResultsToArchiveDirectory();
 
         }
 

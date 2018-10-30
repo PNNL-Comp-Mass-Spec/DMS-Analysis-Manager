@@ -109,7 +109,7 @@ namespace AnalysisManager_Ape_PlugIn
 
                 var fiDatabase = new FileInfo(apeDatabase);
                 if (fiDatabase.Directory == null)
-                    throw new IOException("Error determining the parent folder path for the Ape database");
+                    throw new IOException("Error determining the parent directory path for the Ape database");
 
                 // Add the protein parsimony tables
                 success = parsimonyRunner.ProcessSQLite(fiDatabase.Directory.FullName, fiDatabase.Name, SOURCE_TABLE);

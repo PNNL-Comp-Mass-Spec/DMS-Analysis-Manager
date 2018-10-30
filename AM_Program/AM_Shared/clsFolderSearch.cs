@@ -115,9 +115,9 @@ namespace AnalysisManagerBase
         /// <returns>The full path to the dataset file or directory</returns>
         /// <remarks>When assumeUnpurged is true, this function returns the expected path
         /// to the instrument data file (or directory) on the storage server, even if the file/directory wasn't actually found</remarks>
-        public string FindDatasetFileOrFolder(out bool isDirectory, bool assumeUnpurged)
+        public string FindDatasetFileOrDirectory(out bool isDirectory, bool assumeUnpurged)
         {
-            return FindDatasetFileOrFolder(DEFAULT_MAX_RETRY_COUNT, out isDirectory, assumeUnpurged: assumeUnpurged);
+            return FindDatasetFileOrDirectory(DEFAULT_MAX_RETRY_COUNT, out isDirectory, assumeUnpurged: assumeUnpurged);
         }
 
         /// <summary>
@@ -135,7 +135,7 @@ namespace AnalysisManagerBase
         /// <returns>The full path to the dataset file or directory</returns>
         /// <remarks>When assumeUnpurged is true, this function returns the expected path
         /// to the instrument data file (or directory) on the storage server, even if the file/directory wasn't actually found</remarks>
-        public string FindDatasetFileOrFolder(int maxAttempts, out bool isDirectory, bool assumeUnpurged = false)
+        public string FindDatasetFileOrDirectory(int maxAttempts, out bool isDirectory, bool assumeUnpurged = false)
         {
             var RawDataType = mJobParams.GetParam("RawDataType");
             var StoragePath = mJobParams.GetParam("DatasetStoragePath");
@@ -220,7 +220,6 @@ namespace AnalysisManagerBase
 
             return fileOrDirectoryPath;
         }
-
 
         /// <summary>
         /// Finds the dataset directory containing Bruker Maldi imaging .zip files

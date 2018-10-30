@@ -140,20 +140,20 @@ namespace AnalysisManager_Cyclops_PlugIn
                 {
                     // Something went wrong
                     // In order to help diagnose things, we will move whatever files were created into the result folder,
-                    //  archive it using CopyFailedResultsToArchiveFolder, then return CloseOutType.CLOSEOUT_FAILED
-                    CopyFailedResultsToArchiveFolder();
+                    //  archive it using CopyFailedResultsToArchiveDirectory, then return CloseOutType.CLOSEOUT_FAILED
+                    CopyFailedResultsToArchiveDirectory();
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 // Override the output folder name and the dataset name (since this is a dataset aggregation job)
-                mResultsFolderName = mJobParams.GetParam("StepOutputFolderName");
+                mResultsDirectoryName = mJobParams.GetParam("StepOutputFolderName");
                 mDatasetName = mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME);
-                mJobParams.SetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME, mResultsFolderName);
+                mJobParams.SetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME, mResultsDirectoryName);
 
-                var resultsFolderCreated = MakeResultsFolder();
+                var resultsFolderCreated = MakeResultsDirectory();
                 if (!resultsFolderCreated)
                 {
-                    // MakeResultsFolder handles posting to local log, so set database error message and exit
+                    // MakeResultsDirectory handles posting to local log, so set database error message and exit
                     mMessage = "Error making results folder";
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -163,7 +163,7 @@ namespace AnalysisManager_Cyclops_PlugIn
 
                 if (diPlotsFolder.Exists)
                 {
-                    var strTargetFolderPath = Path.Combine(Path.Combine(mWorkDir, mResultsFolderName), "Plots");
+                    var strTargetFolderPath = Path.Combine(Path.Combine(mWorkDir, mResultsDirectoryName), "Plots");
                     diPlotsFolder.MoveTo(strTargetFolderPath);
                 }
 

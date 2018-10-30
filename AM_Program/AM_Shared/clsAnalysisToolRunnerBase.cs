@@ -141,7 +141,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Results directory name
         /// </summary>
-        protected string mResultsFolderName;
+        protected string mResultsDirectoryName;
 
         /// <summary>
         /// DLL file info
@@ -225,7 +225,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Publicly accessible results directory name and path
         /// </summary>
-        public string ResFolderName => mResultsFolderName;
+        public string ResFolderName => mResultsDirectoryName;
 
         /// <summary>
         /// Status message related to processing tasks performed by this class
@@ -313,7 +313,7 @@ namespace AnalysisManagerBase
 
             mSummaryFile = summaryFile;
 
-            mResultsFolderName = mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME);
+            mResultsDirectoryName = mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME);
 
             if (mDebugLevel > 3)
             {
@@ -465,7 +465,7 @@ namespace AnalysisManagerBase
         /// Step tools may override this method if additional steps are required
         /// The override method should then call base.CopyFailedResultsToArchiveFolder as the last step
         /// </remarks>
-        public virtual void CopyFailedResultsToArchiveFolder()
+        public virtual void CopyFailedResultsToArchiveDirectory()
         {
             if (clsGlobal.OfflineMode)
             {
@@ -492,7 +492,7 @@ namespace AnalysisManagerBase
             var directoryPathToArchive = string.Copy(mWorkDir);
 
             // Make the results directory
-            var success = MakeResultsFolder();
+            var success = MakeResultsDirectory();
             if (success)
             {
                 // Move the result files into the results directory
@@ -500,13 +500,13 @@ namespace AnalysisManagerBase
                 if (moveSucceed)
                 {
                     // Move was a success; update folderPathToArchive
-                    directoryPathToArchive = Path.Combine(mWorkDir, mResultsFolderName);
+                    directoryPathToArchive = Path.Combine(mWorkDir, mResultsDirectoryName);
                 }
             }
 
             // Copy the results directory to the Archive directory
             var analysisResults = new clsAnalysisResults(mMgrParams, mJobParams);
-            analysisResults.CopyFailedResultsToArchiveFolder(directoryPathToArchive, failedResultsDirectoryPath);
+            analysisResults.CopyFailedResultsToArchiveDirectory(directoryPathToArchive, failedResultsDirectoryPath);
         }
 
         /// <summary>
@@ -522,10 +522,10 @@ namespace AnalysisManagerBase
 
             try
             {
-                // mResultsFolderName should contain the output directory; e.g. MSXML_Gen_1_120_275966
-                if (string.IsNullOrEmpty(mResultsFolderName))
+                // mResultsDirectoryName should contain the output directory; e.g. MSXML_Gen_1_120_275966
+                if (string.IsNullOrEmpty(mResultsDirectoryName))
                 {
-                    LogError("mResultsFolderName (from job parameter OutputFolderName) is empty; cannot construct MSXmlCache path");
+                    LogError("mResultsDirectoryName (from job parameter OutputFolderName) is empty; cannot construct MSXmlCache path");
                     return string.Empty;
                 }
 
@@ -533,11 +533,11 @@ namespace AnalysisManagerBase
                 string toolNameVersionFolder;
                 try
                 {
-                    toolNameVersionFolder = clsAnalysisResources.GetMSXmlToolNameVersionFolder(mResultsFolderName);
+                    toolNameVersionFolder = clsAnalysisResources.GetMSXmlToolNameVersionFolder(mResultsDirectoryName);
                 }
                 catch (Exception)
                 {
-                    LogError("OutputFolderName is not in the expected form of ToolName_Version_DatasetID (" + mResultsFolderName + "); cannot construct MSXmlCache path");
+                    LogError("OutputFolderName is not in the expected form of ToolName_Version_DatasetID (" + mResultsDirectoryName + "); cannot construct MSXmlCache path");
                     return string.Empty;
                 }
 
@@ -825,7 +825,7 @@ namespace AnalysisManagerBase
             {
                 mStatusTools.UpdateAndWrite(EnumMgrStatus.RUNNING, EnumTaskStatus.RUNNING, EnumTaskStatusDetail.DELIVERING_RESULTS, 0);
 
-                if (string.IsNullOrEmpty(mResultsFolderName))
+                if (string.IsNullOrEmpty(mResultsDirectoryName))
                 {
                     // Log this error to the database (the logger will also update the local log file)
                     LogErrorToDatabase("Results directory name is not defined, job " + Job);
@@ -835,7 +835,7 @@ namespace AnalysisManagerBase
                     return false;
                 }
 
-                sourceDirectoryPath = Path.Combine(mWorkDir, mResultsFolderName);
+                sourceDirectoryPath = Path.Combine(mWorkDir, mResultsDirectoryName);
 
                 // Verify the source directory exists
                 if (!Directory.Exists(sourceDirectoryPath))
@@ -852,7 +852,7 @@ namespace AnalysisManagerBase
                 targetDirectoryPath = CreateRemoteTransferFolder(analysisResults, transferDirectoryPath);
                 if (string.IsNullOrEmpty(targetDirectoryPath))
                 {
-                    analysisResults.CopyFailedResultsToArchiveFolder(sourceDirectoryPath);
+                    analysisResults.CopyFailedResultsToArchiveDirectory(sourceDirectoryPath);
                     return false;
                 }
 
@@ -862,7 +862,7 @@ namespace AnalysisManagerBase
                 LogError("Error creating results directory in transfer directory", ex);
                 if (!string.IsNullOrEmpty(sourceDirectoryPath))
                 {
-                    analysisResults.CopyFailedResultsToArchiveFolder(sourceDirectoryPath);
+                    analysisResults.CopyFailedResultsToArchiveDirectory(sourceDirectoryPath);
                 }
 
                 return false;
@@ -902,7 +902,7 @@ namespace AnalysisManagerBase
                     clsGlobal.CheckPlural(failedFileCount, " file", " files") +
                     " to transfer directory";
                 LogError(msg);
-                analysisResults.CopyFailedResultsToArchiveFolder(sourceDirectoryPath);
+                analysisResults.CopyFailedResultsToArchiveDirectory(sourceDirectoryPath);
                 return false;
             }
 
@@ -983,7 +983,7 @@ namespace AnalysisManagerBase
                     catch (Exception ex)
                     {
                         LogError("Error creating results directory in transfer directory, " + Path.GetPathRoot(targetDirectoryPath), ex);
-                        analysisResults.CopyFailedResultsToArchiveFolder(rootSourceDirectoryPath);
+                        analysisResults.CopyFailedResultsToArchiveDirectory(rootSourceDirectoryPath);
                         return false;
                     }
                 }
@@ -992,7 +992,7 @@ namespace AnalysisManagerBase
             catch (Exception ex)
             {
                 LogError("Error comparing files in source directory to " + targetDirectoryPath, ex);
-                analysisResults.CopyFailedResultsToArchiveFolder(rootSourceDirectoryPath);
+                analysisResults.CopyFailedResultsToArchiveDirectory(rootSourceDirectoryPath);
                 return false;
             }
 
@@ -1057,7 +1057,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <returns>True if success, otherwise false</returns>
         /// <remarks>
-        /// Uses MakeResultsFolder, MoveResultFiles, and CopyResultsFolderToServer
+        /// Uses MakeResultsDirectory, MoveResultFiles, and CopyResultsFolderToServer
         /// Step tools can override this method if custom steps are required prior to packaging and transferring the results
         /// </remarks>
         public virtual bool CopyResultsToTransferDirectory(string transferDirectoryPathOverride = "")
@@ -1068,10 +1068,10 @@ namespace AnalysisManagerBase
                 return true;
             }
 
-            var success = MakeResultsFolder();
+            var success = MakeResultsDirectory();
             if (!success)
             {
-                // MakeResultsFolder handles posting to local log, so set database error message and exit
+                // MakeResultsDirectory handles posting to local log, so set database error message and exit
                 mMessage = "Error making results directory";
                 return false;
             }
@@ -1132,7 +1132,7 @@ namespace AnalysisManagerBase
         protected string CreateRemoteTransferFolder(clsAnalysisResults analysisResults, string transferDirectoryPath)
         {
 
-            if (string.IsNullOrEmpty(mResultsFolderName))
+            if (string.IsNullOrEmpty(mResultsDirectoryName))
             {
                 LogError("Results directory name is not defined, " + mJobParams.GetJobStepDescription());
                 mMessage = "Results directory job parameter not defined (OutputFolderName)";
@@ -1195,7 +1195,7 @@ namespace AnalysisManagerBase
             }
 
             // Now append the output directory name to remoteTransferDirectoryPath
-            return Path.Combine(remoteTransferDirectoryPath, mResultsFolderName);
+            return Path.Combine(remoteTransferDirectoryPath, mResultsDirectoryName);
 
         }
 
@@ -2472,7 +2472,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <returns>True if success, otherwise false</returns>
         /// <remarks></remarks>
-        protected bool MakeResultsFolder()
+        protected bool MakeResultsDirectory()
         {
 
             mStatusTools.UpdateAndWrite(EnumMgrStatus.RUNNING, EnumTaskStatus.RUNNING, EnumTaskStatusDetail.PACKAGING_RESULTS, 0);
@@ -2481,7 +2481,7 @@ namespace AnalysisManagerBase
 
             // Log status
             LogMessage(mMgrName + ": Creating results directory, Job " + Job);
-            var resultsDirectoryNamePath = Path.Combine(mWorkDir, mResultsFolderName);
+            var resultsDirectoryNamePath = Path.Combine(mWorkDir, mResultsDirectoryName);
 
             // Make the results directory
             try
@@ -2525,7 +2525,7 @@ namespace AnalysisManagerBase
                     EnumTaskStatus.RUNNING,
                     EnumTaskStatusDetail.PACKAGING_RESULTS, 0);
 
-                resultsDirectoryNamePath = Path.Combine(mWorkDir, mResultsFolderName);
+                resultsDirectoryNamePath = Path.Combine(mWorkDir, mResultsDirectoryName);
                 var dctRejectStats = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
                 var dctAcceptStats = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
 
@@ -2740,7 +2740,7 @@ namespace AnalysisManagerBase
             {
                 // Try to save whatever files were moved into the results directory
                 var analysisResults = new clsAnalysisResults(mMgrParams, mJobParams);
-                analysisResults.CopyFailedResultsToArchiveFolder(Path.Combine(mWorkDir, mResultsFolderName));
+                analysisResults.CopyFailedResultsToArchiveDirectory(Path.Combine(mWorkDir, mResultsDirectoryName));
 
                 return false;
             }

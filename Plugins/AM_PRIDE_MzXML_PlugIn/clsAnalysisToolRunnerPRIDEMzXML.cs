@@ -86,7 +86,7 @@ namespace AnalysisManagerPRIDEMzXMLPlugIn
 
                 // Move the source files and any results to the Failed Job folder
                 // Useful for debugging XTandem problems
-                CopyFailedResultsToArchiveFolder();
+                CopyFailedResultsToArchiveDirectory();
 
                 return CloseOutType.CLOSEOUT_FAILED;
             }

@@ -96,12 +96,12 @@ namespace AnalysisManager_Ape_PlugIn
 
         private bool GetWorkflowFiles()
         {
-            var dataPackageFolderPath = Path.Combine(mJobParams.GetParam(JOB_PARAM_TRANSFER_FOLDER_PATH), mJobParams.GetParam(JOB_PARAM_OUTPUT_FOLDER_NAME));
+            var dataPackagePath = Path.Combine(mJobParams.GetParam(JOB_PARAM_TRANSFER_FOLDER_PATH), mJobParams.GetParam(JOB_PARAM_OUTPUT_FOLDER_NAME));
             var analysisType = mJobParams.GetParam("AnalysisType");
 
-            var strStepInputFolderPath = Path.Combine(dataPackageFolderPath, mJobParams.GetParam("StepInputFolderName"));
-            LogMessage("Retrieving SQlite database: " + Path.Combine(strStepInputFolderPath, "Results.db3"));
-            if (!CopyFileToWorkDir("Results.db3", strStepInputFolderPath, mWorkDir))
+            var stepInputDirectoryPath = Path.Combine(dataPackagePath, mJobParams.GetParam("StepInputFolderName"));
+            LogMessage("Retrieving SQLite database: " + Path.Combine(stepInputDirectoryPath, "Results.db3"));
+            if (!CopyFileToWorkDir("Results.db3", stepInputDirectoryPath, mWorkDir))
             {
                 // Errors were reported in function call, so just return
                 return false;
@@ -116,13 +116,13 @@ namespace AnalysisManager_Ape_PlugIn
                 return false;
             }
 
-            var strDMSWorkflowsFolderPath = mMgrParams.GetParam("DMSWorkflowsFolderPath", @"\\gigasax\DMS_Workflows");
-            var strApeWorkflowDirectory = Path.Combine(strDMSWorkflowsFolderPath, "Ape", analysisType);
+            var dmsWorkflowsDirectoryPath = mMgrParams.GetParam("DMSWorkflowsFolderPath", @"\\gigasax\DMS_Workflows");
+            var apeWorkflowDirectory = Path.Combine(dmsWorkflowsDirectoryPath, "Ape", analysisType);
 
-            LogMessage("Retrieving workflow file: " + Path.Combine(strApeWorkflowDirectory, strApeWorkflowFileName));
+            LogMessage("Retrieving workflow file: " + Path.Combine(apeWorkflowDirectory, strApeWorkflowFileName));
 
             // Now copy the Ape workflow file to the working directory
-            if (!CopyFileToWorkDir(strApeWorkflowFileName, strApeWorkflowDirectory, mWorkDir))
+            if (!CopyFileToWorkDir(strApeWorkflowFileName, apeWorkflowDirectory, mWorkDir))
             {
                 // Errors were reported in function call, so just return
                 return false;
@@ -134,9 +134,9 @@ namespace AnalysisManager_Ape_PlugIn
         private bool GetQRollupFiles()
         {
 
-            var dataPackageFolderPath = Path.Combine(mJobParams.GetParam(JOB_PARAM_TRANSFER_FOLDER_PATH), mJobParams.GetParam(JOB_PARAM_OUTPUT_FOLDER_NAME));
+            var dataPackagePath = Path.Combine(mJobParams.GetParam(JOB_PARAM_TRANSFER_FOLDER_PATH), mJobParams.GetParam(JOB_PARAM_OUTPUT_FOLDER_NAME));
 
-            if (!CopyFileToWorkDir("Results.db3", Path.Combine(dataPackageFolderPath, mJobParams.GetParam("StepInputFolderName")), mWorkDir))
+            if (!CopyFileToWorkDir("Results.db3", Path.Combine(dataPackagePath, mJobParams.GetParam("StepInputFolderName")), mWorkDir))
             {
                 // Errors were reported in function call, so just return
                 return false;

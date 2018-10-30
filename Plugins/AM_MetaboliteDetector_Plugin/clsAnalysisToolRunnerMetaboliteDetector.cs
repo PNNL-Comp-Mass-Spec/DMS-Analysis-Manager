@@ -112,8 +112,8 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
                 {
                     // Something went wrong
                     // In order to help diagnose things, we will move whatever files were created into the result folder,
-                    //  archive it using CopyFailedResultsToArchiveFolder, then return CloseOutType.CLOSEOUT_FAILED
-                    CopyFailedResultsToArchiveFolder();
+                    //  archive it using CopyFailedResultsToArchiveDirectory, then return CloseOutType.CLOSEOUT_FAILED
+                    CopyFailedResultsToArchiveDirectory();
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 

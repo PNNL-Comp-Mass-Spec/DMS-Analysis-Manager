@@ -88,7 +88,7 @@ namespace AnalysisManagerGlyQIQPlugin
 
             mJobParams.AddAdditionalParameter("GlyQ-IQ", JOB_PARAM_ACTUAL_CORE_COUNT, coreCount.ToString());
 
-            mGlyQIQParams.WorkingParameterFolders = CreateSubFolders(coreCount);
+            mGlyQIQParams.WorkingParameterFolders = CreateSubdirectories(coreCount);
             if (mGlyQIQParams.WorkingParameterFolders.Count == 0)
             {
                 return CloseOutType.CLOSEOUT_FAILED;
@@ -254,37 +254,37 @@ namespace AnalysisManagerGlyQIQPlugin
             }
         }
 
-        private Dictionary<int, DirectoryInfo> CreateSubFolders(int coreCount)
+        private Dictionary<int, DirectoryInfo> CreateSubdirectories(int coreCount)
         {
             try
             {
-                // Make sure that required subfolders exist in the working directory
-                var lstWorkingDirectories = new Dictionary<int, DirectoryInfo>();
+                // Make sure that required subdirectories exist in the working directory
+                var workingDirectories = new Dictionary<int, DirectoryInfo>();
 
                 for (var core = 1; core <= coreCount; core++)
                 {
-                    var folderName = "WorkingParametersCore" + core;
+                    var directoryName = "WorkingParametersCore" + core;
 
-                    lstWorkingDirectories.Add(core, new DirectoryInfo(Path.Combine(mWorkDir, folderName)));
+                    workingDirectories.Add(core, new DirectoryInfo(Path.Combine(mWorkDir, directoryName)));
                 }
 
-                foreach (var workingDirectory in lstWorkingDirectories)
+                foreach (var workingDirectory in workingDirectories)
                 {
                     if (!workingDirectory.Value.Exists)
                     {
                         workingDirectory.Value.Create();
                     }
 
-                    var diLocksFolder = new DirectoryInfo(Path.Combine(workingDirectory.Value.FullName, LOCKS_FOLDER_NAME));
-                    if (!diLocksFolder.Exists)
-                        diLocksFolder.Create();
+                    var locksDirectory = new DirectoryInfo(Path.Combine(workingDirectory.Value.FullName, LOCKS_FOLDER_NAME));
+                    if (!locksDirectory.Exists)
+                        locksDirectory.Create();
                 }
 
-                return lstWorkingDirectories;
+                return workingDirectories;
             }
             catch (Exception ex)
             {
-                mMessage = "Exception in CreateSubFolders";
+                mMessage = "Exception in CreateSubdirectories";
                 LogError(mMessage + ": " + ex.Message);
                 return new Dictionary<int, DirectoryInfo>();
             }

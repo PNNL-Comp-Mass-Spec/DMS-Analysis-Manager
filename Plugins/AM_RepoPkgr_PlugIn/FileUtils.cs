@@ -7,7 +7,7 @@ namespace AnalysisManager_RepoPkgr_PlugIn
     public static class FileUtils
     {
         /// <summary>
-        /// Utility method to clear files and folders from given directory
+        /// Utility method to clear files and directories from given directory
         /// </summary>
         /// <param name="path"></param>
         private static void ClearDir(string path)
@@ -17,24 +17,24 @@ namespace AnalysisManager_RepoPkgr_PlugIn
             directory.GetDirectories().ToList().ForEach(d => d.Delete(true));
         }
 
-        public static void CopyFiles(string sourceFolder, string searchPattern, string destinationFolder)
+        public static void CopyFiles(string sourceDirectory, string searchPattern, string destinationDirectory)
         {
-            if (!Directory.Exists(destinationFolder))
+            if (!Directory.Exists(destinationDirectory))
             {
-                Directory.CreateDirectory(destinationFolder);
+                Directory.CreateDirectory(destinationDirectory);
             }
-            var dir = new DirectoryInfo(sourceFolder);
-            foreach (var fi in dir.GetFiles(searchPattern))
+            var dir = new DirectoryInfo(sourceDirectory);
+            foreach (var sourceFile in dir.GetFiles(searchPattern))
             {
-                fi.CopyTo(Path.Combine(destinationFolder, fi.Name), true);
+                sourceFile.CopyTo(Path.Combine(destinationDirectory, sourceFile.Name), true);
             }
         }
 
         /// <summary>
-        /// Delete files accorting to given filter pattern
+        /// Delete files according to given filter pattern
         /// from given directory
         /// </summary>
-        /// <param name="path">Full path to folder from which files will be deleted</param>
+        /// <param name="path">Full path to directory from which files will be deleted</param>
         /// <param name="filter">File matching pattern to select files to delete</param>
         public static void DeleteFiles(string path, string filter)
         {
@@ -44,10 +44,10 @@ namespace AnalysisManager_RepoPkgr_PlugIn
 
         // 
         /// <summary>
-        /// Look for zipped files in given folder and convert them to gzip.
+        /// Look for zipped files in given directory and convert them to gzip.
         /// (conversions are performed in the working directory)
         /// </summary>
-        /// <param name="targetDir">Full path to folder that contains zipped files to convert</param>
+        /// <param name="targetDir">Full path to directory that contains zipped files to convert</param>
         /// <param name="workDir">Local working directory</param>
         /// <returns>The number of .zip files that were converted to .gz files</returns>
         public static int ConvertZipsToGZips(string targetDir, string workDir)
@@ -68,7 +68,7 @@ namespace AnalysisManager_RepoPkgr_PlugIn
 
             var filesUpdated = 0;
 
-            // for each zip file in target folder
+            // for each zip file in target directory
             foreach (var tarFi in diTargetDir.GetFiles("*.zip"))
             {
 

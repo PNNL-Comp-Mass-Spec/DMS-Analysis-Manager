@@ -1825,7 +1825,7 @@ namespace AnalysisManagerProg
 
             if (retrievedFilePaths.Count > 0)
             {
-                toolRunner.CopyFailedResultsToArchiveFolder();
+                toolRunner.CopyFailedResultsToArchiveDirectory();
             }
 
             resultCode = CloseOutType.CLOSEOUT_FAILED_REMOTE;
@@ -1872,7 +1872,7 @@ namespace AnalysisManagerProg
 
             if (!clsAnalysisJob.SuccessOrNoData(resultCode))
             {
-                toolRunner.CopyFailedResultsToArchiveFolder();
+                toolRunner.CopyFailedResultsToArchiveDirectory();
                 return false;
             }
 

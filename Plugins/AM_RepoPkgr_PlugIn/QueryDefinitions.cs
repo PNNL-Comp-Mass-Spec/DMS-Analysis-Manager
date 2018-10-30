@@ -1,5 +1,7 @@
 ﻿
+using System;
 using System.Collections.Generic;
+using PRISM;
 
 namespace AnalysisManager_RepoPkgr_PlugIn
 {
@@ -9,14 +11,17 @@ namespace AnalysisManager_RepoPkgr_PlugIn
     /// Clients obtain a template object using its name tag
     /// and use it to generate SQL for actual database query
     /// </summary>
-    public class QueryDefinitions
+    public class QueryDefinitions : EventNotifier
     {
-        // set of tags for accessing connection strings
-        public enum TagName { Main, Broker };
+        /// <summary>
+        /// Data source enums
+        /// </summary>
+        public enum TagName { Undefined, Main, Broker };
 
-        // inernal list of connection strings
-        private readonly Dictionary<TagName, string> _dbConnectionStrings =
-          new Dictionary<TagName, string>();
+        /// <summary>
+        /// Internal list of connection strings
+        /// </summary>
+        private readonly Dictionary<TagName, string> mDbConnectionStrings = new Dictionary<TagName, string>();
 
         /// <summary>
         /// Set connection string for given database tag name
@@ -25,7 +30,10 @@ namespace AnalysisManager_RepoPkgr_PlugIn
         /// <param name="connectionString"></param>
         public void SetCnStr(TagName dbTag, string connectionString)
         {
-            _dbConnectionStrings[dbTag] = connectionString;
+            if (mDbConnectionStrings.ContainsKey(dbTag))
+                mDbConnectionStrings[dbTag] = connectionString;
+            else
+                mDbConnectionStrings.Add(dbTag, connectionString);
         }
 
         /// <summary>
@@ -35,22 +43,29 @@ namespace AnalysisManager_RepoPkgr_PlugIn
         /// <returns></returns>
         public string GetCnStr(TagName dbTag)
         {
-            return _dbConnectionStrings[dbTag];
+            if (mDbConnectionStrings.TryGetValue(dbTag, out var connectionString))
+                return connectionString;
+
+            OnErrorEvent(String.Format("{0} not found in the Connection Strings dictionary", dbTag));
+            return string.Empty;
         }
 
         /// <summary>
-        /// Get connection string for given
+        /// Get connection string for given query template
         /// </summary>
-        /// <param name="queryTmpltName"></param>
+        /// <param name="queryTemplateName"></param>
         /// <returns></returns>
-        public string GetCnStr(string queryTmpltName)
+        public string GetCnStr(string queryTemplateName)
         {
-            var queryDef = GetQueryTmplt(queryTmpltName);
+            var queryDef = GetQueryTemplate(queryTemplateName);
+            if (queryDef.DatabaseTagName == TagName.Undefined)
+                return string.Empty;
+
             return GetCnStr(queryDef.DatabaseTagName);
         }
 
         // SQL templates
-        private readonly Dictionary<string, QueryDefinition> _queryTmplt = new Dictionary<string, QueryDefinition>
+        private readonly Dictionary<string, QueryDefinition> mQueryTemplates = new Dictionary<string, QueryDefinition>
                                                                          {
                 {"DataPkgJobsQueryTemplate",  new QueryDefinition {
                   BaseSQL = "SELECT * FROM V_Mage_Data_Package_Analysis_Jobs WHERE {0} = {1}",
@@ -68,11 +83,19 @@ namespace AnalysisManager_RepoPkgr_PlugIn
         /// <summary>
         /// Get query definition template for given query name
         /// </summary>
-        /// <param name="queryName">Name of query to use</param>
+        /// <param name="templateName">Name of query to use</param>
         /// <returns>Query template</returns>
-        public QueryDefinition GetQueryTmplt(string queryName)
+        public QueryDefinition GetQueryTemplate(string templateName)
         {
-            return _queryTmplt[queryName];
+            if (mQueryTemplates.TryGetValue(templateName, out var queryDef))
+                return queryDef;
+
+            OnErrorEvent(string.Format("{0} not found in the Query Templates dictionary", templateName));
+
+            var undefinedQueryDef = new QueryDefinition {
+                DatabaseTagName = TagName.Broker
+            };
+            return undefinedQueryDef;
         }
 
         /// <summary>
@@ -81,8 +104,11 @@ namespace AnalysisManager_RepoPkgr_PlugIn
         public class QueryDefinition
         {
             public string BaseSQL { get; set; }
+
             private string IdColName { get; }
+
             public TagName DatabaseTagName { get; set; }
+
             public string FilterSQL { get; set; }
 
             /// <summary>
@@ -93,22 +119,26 @@ namespace AnalysisManager_RepoPkgr_PlugIn
                 // default values
                 DatabaseTagName = TagName.Main;
                 IdColName = "Data_Package_ID";
+                BaseSQL = string.Empty;
             }
 
             /// <summary>
             /// build query from its parts and return it
             /// </summary>
             /// <param name="id">Value to use for primary identifier for query (typically data package ID)</param>
-            /// <param name="filter">Valsue to use for supplemental filter (if one is defined in query template definition)</param>
+            /// <param name="filter">Value to use for supplemental filter (if one is defined in query template definition)</param>
             /// <returns>SQL</returns>
             public string Sql(string id, string filter = "")
             {
+                if (string.IsNullOrWhiteSpace(BaseSQL))
+                    return string.Empty;
+
                 var sql = string.Format(BaseSQL, IdColName, id);
-                if (!string.IsNullOrEmpty(filter) && !string.IsNullOrEmpty(FilterSQL))
-                {
-                    sql += " AND " + string.Format(FilterSQL, filter);
-                }
-                return sql;
+                if (string.IsNullOrEmpty(filter) || string.IsNullOrEmpty(FilterSQL))
+                    return sql;
+
+                var sqlWithSecondFilter = sql + " AND " + string.Format(FilterSQL, filter);
+                return sqlWithSecondFilter;
             }
 
         } // end class QueryDefinition

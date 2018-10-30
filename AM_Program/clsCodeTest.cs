@@ -570,7 +570,7 @@ namespace AnalysisManagerProg
             }
 
             var analysisResults = new clsAnalysisResults(mMgrSettings, jobParams);
-            analysisResults.CopyFailedResultsToArchiveFolder(Path.Combine(GetWorkDirPath(), resFolderName));
+            analysisResults.CopyFailedResultsToArchiveDirectory(Path.Combine(GetWorkDirPath(), resFolderName));
         }
 
         /// <summary>

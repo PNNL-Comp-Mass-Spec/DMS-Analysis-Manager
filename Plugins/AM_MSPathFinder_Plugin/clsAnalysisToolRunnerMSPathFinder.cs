@@ -160,8 +160,8 @@ namespace AnalysisManagerMSPathFinderPlugin
                 {
                     // Something went wrong
                     // In order to help diagnose things, we will move whatever files were created into the result folder,
-                    //  archive it using CopyFailedResultsToArchiveFolder, then return CloseOutType.CLOSEOUT_FAILED
-                    CopyFailedResultsToArchiveFolder();
+                    //  archive it using CopyFailedResultsToArchiveDirectory, then return CloseOutType.CLOSEOUT_FAILED
+                    CopyFailedResultsToArchiveDirectory();
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
@@ -182,11 +182,11 @@ namespace AnalysisManagerMSPathFinderPlugin
         /// <summary>
         /// Copy failed results from the working directory to the DMS_FailedResults directory on the local computer
         /// </summary>
-        public override void CopyFailedResultsToArchiveFolder()
+        public override void CopyFailedResultsToArchiveDirectory()
         {
             mJobParams.AddResultFileToSkip(Dataset + ".mzXML");
 
-            base.CopyFailedResultsToArchiveFolder();
+            base.CopyFailedResultsToArchiveDirectory();
         }
 
         private Dictionary<string, string> GetMSPathFinderParameterNames()

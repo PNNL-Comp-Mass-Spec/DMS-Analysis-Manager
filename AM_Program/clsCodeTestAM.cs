@@ -75,7 +75,7 @@ namespace AnalysisManagerProg
             {
                 // Something went wrong
                 // In order to help diagnose things, we will move whatever files were created into the result folder,
-                //  archive it using CopyFailedResultsToArchiveFolder, then return CloseOutType.CLOSEOUT_FAILED
+                //  archive it using CopyFailedResultsToArchiveDirectory, then return CloseOutType.CLOSEOUT_FAILED
                 eReturnCode = CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -88,10 +88,10 @@ namespace AnalysisManagerProg
             // Make sure objects are released
             PRISM.ProgRunner.GarbageCollectNow();
 
-            var folderCreateSuccess = MakeResultsFolder();
+            var folderCreateSuccess = MakeResultsDirectory();
             if (!folderCreateSuccess)
             {
-                // MakeResultsFolder handles posting to local log, so set database error message and exit
+                // MakeResultsDirectory handles posting to local log, so set database error message and exit
                 mMessage = "Error making results folder";
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -107,15 +107,15 @@ namespace AnalysisManagerProg
             // Move the Plots folder to the result files folder
             var plotsFolder = new DirectoryInfo(Path.Combine(mWorkDir, "Plots"));
 
-            var targetFolderPath = Path.Combine(Path.Combine(mWorkDir, mResultsFolderName), "Plots");
+            var targetFolderPath = Path.Combine(Path.Combine(mWorkDir, mResultsDirectoryName), "Plots");
             if (plotsFolder.Exists && !Directory.Exists(targetFolderPath))
                 plotsFolder.MoveTo(targetFolderPath);
 
             if (!success || eReturnCode == CloseOutType.CLOSEOUT_FAILED)
             {
-                // Try to save whatever files were moved into the results folder
+                // Try to save whatever files were moved into the results directory
                 var analysisResults = new clsAnalysisResults(mMgrParams, mJobParams);
-                analysisResults.CopyFailedResultsToArchiveFolder(Path.Combine(mWorkDir, mResultsFolderName));
+                analysisResults.CopyFailedResultsToArchiveDirectory(Path.Combine(mWorkDir, mResultsDirectoryName));
 
                 return CloseOutType.CLOSEOUT_FAILED;
             }

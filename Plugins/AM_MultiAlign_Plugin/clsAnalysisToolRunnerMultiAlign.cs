@@ -109,25 +109,25 @@ namespace AnalysisManagerMultiAlignPlugIn
             {
                 // Something went wrong
                 // In order to help diagnose things, we will move whatever files were created into the result folder,
-                //  archive it using CopyFailedResultsToArchiveFolder, then return CloseOutType.CLOSEOUT_FAILED
-                CopyFailedResultsToArchiveFolder();
+                //  archive it using CopyFailedResultsToArchiveDirectory, then return CloseOutType.CLOSEOUT_FAILED
+                CopyFailedResultsToArchiveDirectory();
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
             // Rename the log file so it is consistent with other log files. MultiAlign will add ability to specify log file name
             RenameLogFile();
 
-            var resultsFolderCreated = MakeResultsFolder();
+            var resultsFolderCreated = MakeResultsDirectory();
             if (!resultsFolderCreated)
             {
-                CopyFailedResultsToArchiveFolder();
+                CopyFailedResultsToArchiveDirectory();
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
             // Move the Plots folder to the result files folder
             var diPlotsFolder = new DirectoryInfo(Path.Combine(mWorkDir, "Plots"));
 
-            var strTargetFolderPath = Path.Combine(Path.Combine(mWorkDir, mResultsFolderName), "Plots");
+            var strTargetFolderPath = Path.Combine(Path.Combine(mWorkDir, mResultsDirectoryName), "Plots");
             diPlotsFolder.MoveTo(strTargetFolderPath);
 
             var success = CopyResultsToTransferDirectory();
@@ -169,12 +169,12 @@ namespace AnalysisManagerMultiAlignPlugIn
         /// <summary>
         /// Copy failed results from the working directory to the DMS_FailedResults directory on the local computer
         /// </summary>
-        public override void CopyFailedResultsToArchiveFolder()
+        public override void CopyFailedResultsToArchiveDirectory()
         {
             mJobParams.AddResultFileExtensionToSkip(".UIMF");
             mJobParams.AddResultFileExtensionToSkip(".csv");
 
-            base.CopyFailedResultsToArchiveFolder();
+            base.CopyFailedResultsToArchiveDirectory();
         }
 
         /// <summary>

@@ -68,8 +68,8 @@ namespace DTASpectraFileGen
             {
                 // Something went wrong
                 // In order to help diagnose things, we will move key files into the result folder,
-                //  archive it using CopyFailedResultsToArchiveFolder, then return CloseOutType.CLOSEOUT_FAILED
-                CopyFailedResultsToArchiveFolder();
+                //  archive it using CopyFailedResultsToArchiveDirectory, then return CloseOutType.CLOSEOUT_FAILED
+                CopyFailedResultsToArchiveDirectory();
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -604,7 +604,7 @@ namespace DTASpectraFileGen
         /// <summary>
         /// Copy failed results from the working directory to the DMS_FailedResults directory on the local computer
         /// </summary>
-        public override void CopyFailedResultsToArchiveFolder()
+        public override void CopyFailedResultsToArchiveDirectory()
         {
             mJobParams.AddResultFileToSkip(Dataset + clsAnalysisResources.CDTA_ZIPPED_EXTENSION);
             mJobParams.AddResultFileToSkip(Dataset + clsAnalysisResources.CDTA_EXTENSION);
@@ -612,7 +612,7 @@ namespace DTASpectraFileGen
             // Skip any .dta files
             mJobParams.AddResultFileExtensionToSkip(".dta");
 
-            base.CopyFailedResultsToArchiveFolder();
+            base.CopyFailedResultsToArchiveDirectory();
         }
 
         private string GetMSConvertAppPath()

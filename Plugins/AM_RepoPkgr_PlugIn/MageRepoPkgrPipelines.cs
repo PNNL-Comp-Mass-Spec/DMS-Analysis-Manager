@@ -8,7 +8,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
 {
     /// Handler that provides pre-packaged Mage pipelines
     /// that do the heavy lifting tasks that get data package items,
-    /// find associated files, and copy them to repo cache folders
+    /// find associated files, and copy them to repo cache directories
     public class MageRepoPkgrPipelines
     {
         #region Properties
@@ -18,9 +18,9 @@ namespace AnalysisManager_RepoPkgr_Plugin
         public string DataPkgId { get; set; }
 
         /// <summary>
-        /// Path to root folder of repo cache (must be set by client before use)
+        /// Path to root directory of repo cache (must be set by client before use)
         /// </summary>
-        public string OutputResultsFolderPath { get; set; }
+        public string OutputResultsDirectoryPath { get; set; }
 
         /// <summary>
         /// object containing definitions of database queries to use (must be set by client before use)
@@ -64,57 +64,57 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
         /// <summary>
         /// Copy given set of files for given set of items from data package
-        /// to the given subfolder in the repo cache folder.
-        /// Query the database (using the given query templage and (optional) secondary filter value) to get items from data package,
+        /// to the given subdirectory in the repo cache directory.
+        /// Query the database (using the given query template and (optional) secondary filter value) to get items from data package,
         /// then search for files associated with those items using the given file name filter,
-        /// and then copy the files to the given subfolder in the repo cache
+        /// and then copy the files to the given subdirectory in the repo cache
         /// (include metadata file (based on data package items) as well)
         /// </summary>
-        /// <param name="queryTmpltName">Name of query template to use to get items from data package</param>
+        /// <param name="queryTemplateName">Name of query template to use to get items from data package</param>
         /// <param name="filter">value to filter query on (ignore if blank)</param>
         /// <param name="fileNameSelector">Mage file filter to select specific files to copy (semi-colon delimited list of file matching patterns)</param>
-        /// <param name="outputSubfolderName">Subfolder in repo package cache folder to copy files into</param>
+        /// <param name="outputSubdirectoryName">Subdirectory in repo package cache directory to copy files into</param>
         /// <param name="prefixCol">Name of column to use as prefix for output file name (ignore if blank)</param>
-        public void GetItemsToRepoPkg(string queryTmpltName, string filter, string fileNameSelector, string outputSubfolderName, string prefixCol)
+        public void GetItemsToRepoPkg(string queryTemplateName, string filter, string fileNameSelector, string outputSubdirectoryName, string prefixCol)
         {
             DataPackageItems = null;
             AssociatedFiles = null;
             ManifestForCopy = null;
-            DataPackageItems = GetDataPackageItemList(queryTmpltName, filter);
-            GetFilesToRepoPkg(fileNameSelector, outputSubfolderName, prefixCol);
+            DataPackageItems = GetDataPackageItemList(queryTemplateName, filter);
+            GetFilesToRepoPkg(fileNameSelector, outputSubdirectoryName, prefixCol);
         }
 
         /// <summary>
         /// Copy given set of files for given set of items from data package
         /// using existing list of data package items.
         /// Search for files associated with those items using the given file name filter,
-        /// and then copy the files to the given subfolder in the repo cache
+        /// and then copy the files to the given subdirectory in the repo cache
         /// (include metadata file (based on data package items) as well)
         /// </summary>
         /// <param name="fileNameSelector">Mage file filter to select specific files to copy (semi-colon delimited list of file matching patterns)</param>
-        /// <param name="outputSubfolderName">Subfolder in repo package cache folder to copy files into</param>
+        /// <param name="outputSubdirectoryName">Subdirectory in repo package cache directory to copy files into</param>
         /// <param name="prefixCol">Name of column to use as prefix for output file name (ignore if blank)</param>
-        public void GetFilesToRepoPkg(string fileNameSelector, string outputSubfolderName, string prefixCol)
+        public void GetFilesToRepoPkg(string fileNameSelector, string outputSubdirectoryName, string prefixCol)
         {
             AssociatedFiles = null;
             ManifestForCopy = null;
             AssociatedFiles = GetFileSearchResults(DataPackageItems, fileNameSelector);
-            CopyFilesToRepoPkg(outputSubfolderName, prefixCol);
+            CopyFilesToRepoPkg(outputSubdirectoryName, prefixCol);
         }
 
         /// <summary>
         /// Copy given set of files for given set of items from data package
         /// using existing list of files and existing list of data package items.
-        /// Copy the files to the given subfolder in the repo cache
+        /// Copy the files to the given subdirectory in the repo cache
         /// (include metadata file (based on data package items) as well)
         /// </summary>
-        /// <param name="outputSubfolderName">Subfolder in repo package cache folder to copy files into</param>
+        /// <param name="outputSubdirectoryName">Subdirectory in repo package cache directory to copy files into</param>
         /// <param name="prefixCol">Name of column to use as prefix for output file name (ignore if blank)</param>
-        public void CopyFilesToRepoPkg(string outputSubfolderName, string prefixCol)
+        public void CopyFilesToRepoPkg(string outputSubdirectoryName, string prefixCol)
         {
             ManifestForCopy = null;
-            ManifestForCopy = CopyFiles(AssociatedFiles, Path.Combine(OutputResultsFolderPath, outputSubfolderName), prefixCol);
-            WriteMetadata(DataPackageItems, outputSubfolderName);
+            ManifestForCopy = CopyFiles(AssociatedFiles, Path.Combine(OutputResultsDirectoryPath, outputSubdirectoryName), prefixCol);
+            WriteMetadata(DataPackageItems, outputSubdirectoryName);
         }
 
         /// <summary>
@@ -133,13 +133,13 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
         /// <summary>
         /// Write the contents of the given metadata to a file in
-        /// the appropriate target folder.  Metadata file name is based
-        /// on the outputSubFolder name. If outputSubfolderName is
+        /// the appropriate target directory.  Metadata file name is based
+        /// on the outputSubdirectory name. If outputSubdirectoryName is
         /// a nested partial path, name will be based on last segment.
         /// </summary>
         /// <param name="metadata"></param>
-        /// <param name="outputSubfolderName"></param>
-        private void WriteMetadata(SimpleSink metadata, string outputSubfolderName)
+        /// <param name="outputSubdirectoryName"></param>
+        private void WriteMetadata(SimpleSink metadata, string outputSubdirectoryName)
         {
             if (!EnableMetadataFile)
                 return;
@@ -147,11 +147,11 @@ namespace AnalysisManager_RepoPkgr_Plugin
             if (metadata.Rows.Count == 0)
                 return;
 
-            var subfolders = outputSubfolderName.Split(new[] { Path.DirectorySeparatorChar });
-            var metadataFolderPath = Path.Combine(OutputResultsFolderPath, outputSubfolderName);
-            var metadataFileName = string.Format("{0}_metadata.txt", subfolders.Last());
+            var subdirectories = outputSubdirectoryName.Split(new[] { Path.DirectorySeparatorChar });
+            var metadataDirectoryPath = Path.Combine(OutputResultsDirectoryPath, outputSubdirectoryName);
+            var metadataFileName = string.Format("{0}_metadata.txt", subdirectories.Last());
 
-            var fileWriter = new DelimitedFileWriter { FilePath = Path.Combine(metadataFolderPath, metadataFileName) };
+            var fileWriter = new DelimitedFileWriter { FilePath = Path.Combine(metadataDirectoryPath, metadataFileName) };
             var pl = ProcessingPipeline.Assemble("WriteMetadataFile", new SinkWrapper(metadata), fileWriter);
             pl.RunRoot(null);
         }
@@ -160,14 +160,26 @@ namespace AnalysisManager_RepoPkgr_Plugin
         /// Mage pipeline that get results of query built from given template
         /// and returns them in SimpleSink object
         /// </summary>
-        /// <param name="queryTmpltName">Name of the query template to use</param>
+        /// <param name="queryTemplateName">Name of the query template to use</param>
         /// <param name="filter">(optional) Value to use for supplemental filter (only effective if one is defined for query template)</param>
         /// <returns>SimpleSink object containing results of query</returns>
-        private SimpleSink GetDataPackageItemList(string queryTmpltName, string filter = "")
+        private SimpleSink GetDataPackageItemList(string queryTemplateName, string filter = "")
         {
             var result = new SimpleSink();
-            var cnStr = QueryDefs.GetCnStr(queryTmpltName);
-            var sqlText = QueryDefs.GetQueryTmplt(queryTmpltName).Sql(DataPkgId, filter);
+            var cnStr = QueryDefs.GetCnStr(queryTemplateName);
+            var sqlText = QueryDefs.GetQueryTemplate(queryTemplateName).Sql(DataPkgId, filter);
+
+            if (string.IsNullOrWhiteSpace(cnStr))
+            {
+                throw new Exception("Query template not found in GetDataPackageItemList: " + queryTemplateName);
+            }
+
+            if (string.IsNullOrWhiteSpace(sqlText))
+            {
+                throw new Exception(string.Format(
+                                        "Could not determine the SQL for template {0} in GetDataPackageItemList",
+                                        queryTemplateName));
+            }
 
             var sqlReader = new MSSQLReader(cnStr)
             {
@@ -181,49 +193,49 @@ namespace AnalysisManager_RepoPkgr_Plugin
         }
 
         /// <summary>
-        /// Simple Mage pipeline that returns results of seaching
-        /// the given set of input folders for files matching the given selector pattern
+        /// Simple Mage pipeline that returns results of searching the given set of input directories
+        /// for files matching the given selector pattern
         /// </summary>
-        /// <param name="searchList">SimpleSink object holding list of folders to search (plus optional metadata)</param>
+        /// <param name="searchList">SimpleSink object holding list of directories to search (plus optional metadata)</param>
         /// <param name="fileNameSelector">Pattern to use to select files (semi-colon delimited list of file matching patterns)</param>
         /// <returns></returns>
         private SimpleSink GetFileSearchResults(SimpleSink searchList, string fileNameSelector)
         {
-            var sourceFolders = new SinkWrapper(searchList);
+            var sourceDirectories = new SinkWrapper(searchList);
             var fileSearcher = new FileListFilter
             {
                 FileNameSelector = fileNameSelector,
                 FileSelectorMode = "FileSearch",
-                OutputColumnList = "Item|+|text, File|+|text, File_Size_KB|+|text, File_Date|+|text, Folder, *"
+                OutputColumnList = "Item|+|text, File|+|text, File_Size_KB|+|text, File_Date|+|text, Directory, *"
             };
             var results = new SimpleSink();
-            var pl = ProcessingPipeline.Assemble("FileSearchPipeline", sourceFolders, fileSearcher, results);
+            var pl = ProcessingPipeline.Assemble("FileSearchPipeline", sourceDirectories, fileSearcher, results);
             ConnectEventHandlersToPipeline(pl);
             pl.RunRoot(null);
             return results;
         }
 
         /// <summary>
-        /// Mage pipeline that copies files in the given source list to the given output folder
+        /// Mage pipeline that copies files in the given source list to the given output directory
         /// A disambiguating prefix will be applied to file names if one is supplied and there are any duplicate file names.
         /// </summary>
         /// <param name="sourceObject">SimpleSink object containing list of files to copy</param>
-        /// <param name="outputFolder">Full path the output folder</param>
+        /// <param name="outputDirectory">Full path the output directory</param>
         /// <param name="prefixCol">Name of column in sourceObject to apply to output files as prefix (optional)</param>
         /// <returns></returns>
-        private SimpleSink CopyFiles(SimpleSink sourceObject, string outputFolder, string prefixCol = "")
+        private SimpleSink CopyFiles(SimpleSink sourceObject, string outputDirectory, string prefixCol = "")
         {
             var result = new SimpleSink();
             if (sourceObject.Rows.Count == 0)
                 return result;
 
-            if (!Directory.Exists(outputFolder))
+            if (!Directory.Exists(outputDirectory))
             {
-                Directory.CreateDirectory(outputFolder);
+                Directory.CreateDirectory(outputDirectory);
             }
 
             var source = new SinkWrapper(sourceObject);
-            var copier = new FileCopy { OutputFolderPath = outputFolder, OverwriteExistingFiles = true };
+            var copier = new FileCopy { OutputDirectoryPath = outputDirectory, OverwriteExistingFiles = true };
             if (!string.IsNullOrEmpty(prefixCol) && CheckForDuplicateFileNames(copier.OutputFileColumnName))
             {
                 copier.ColumnToUseForPrefix = prefixCol;

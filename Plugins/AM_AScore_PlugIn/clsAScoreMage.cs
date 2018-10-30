@@ -86,11 +86,11 @@ namespace AnalysisManager_AScore_PlugIn
             // Define the path to the fasta file
             mFastaFilePath = string.Empty;
 
-            var localOrgDbFolder = mMgrParams.RequireMgrParam("OrgDbDir");
+            var localOrgDbDirectory = mMgrParams.RequireMgrParam("OrgDbDir");
             var fastaFileName = jobParams.GetParam("PeptideSearch", "generatedFastaName");
             if (!string.IsNullOrEmpty(fastaFileName))
             {
-                var FastaFilePath = Path.Combine(localOrgDbFolder, fastaFileName);
+                var FastaFilePath = Path.Combine(localOrgDbDirectory, fastaFileName);
 
                 var fiFastaFile = new FileInfo(FastaFilePath);
 
@@ -159,16 +159,16 @@ namespace AnalysisManager_AScore_PlugIn
             }
 
             // Find all parameter files that match the base name and copy to working directory
-            var diParamFileFolder = new DirectoryInfo(strMAParameterFileStoragePath);
+            var paramFileDirectory = new DirectoryInfo(strMAParameterFileStoragePath);
 
             // Define the file mask to search for
             var fileMask = Path.GetFileNameWithoutExtension(mParamFilename) + "*.xml";
 
-            var fiParamFiles = diParamFileFolder.GetFiles(fileMask).ToList();
+            var fiParamFiles = paramFileDirectory.GetFiles(fileMask).ToList();
 
             if (fiParamFiles.Count == 0)
             {
-                mErrorMessage = "No parameter files matching " + fileMask + " were found at " + diParamFileFolder.FullName;
+                mErrorMessage = "No parameter files matching " + fileMask + " were found at " + paramFileDirectory.FullName;
                 LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, mErrorMessage);
                 return false;
             }
@@ -242,7 +242,7 @@ namespace AnalysisManager_AScore_PlugIn
         // {
         //    // get selected list of reporter ion files from list of jobs
         //    const string columnsToIncludeInOutput = "Job, Dataset, Dataset_ID, Tool, Settings_File, Parameter_File, Instrument";
-        //    SimpleSink fileList = GetListOfFilesFromFolderList(reporterIonJobsToProcess, "_ReporterIons.txt", columnsToIncludeInOutput);
+        //    SimpleSink fileList = GetListOfFilesFromDirectoryList(reporterIonJobsToProcess, "_ReporterIons.txt", columnsToIncludeInOutput);
 
         //    // make module to import contents of each file in list
         //    var importer = new MageFileImport
@@ -287,13 +287,13 @@ namespace AnalysisManager_AScore_PlugIn
         }
 
         /// <summary>
-        /// Get list of selected files from list of folders
+        /// Get list of selected files from list of directories
         /// </summary>
-        /// <param name="folderListSource">Mage object that contains list of folders</param>
+        /// <param name="directoryListSource">Mage object that contains list of directories</param>
         /// <param name="fileNameSelector">File name selector to select files to be included in output list</param>
         /// <param name="passThroughColumns">List of columns from source object to pass through to output list object</param>
         /// <returns>Mage object containing list of files</returns>
-        public SimpleSink GetListOfFilesFromFolderList(IBaseModule folderListSource, string fileNameSelector, string passThroughColumns)
+        public SimpleSink GetListOfFilesFromDirectoryList(IBaseModule directoryListSource, string fileNameSelector, string passThroughColumns)
         {
             var sinkObject = new SimpleSink();
 
@@ -301,17 +301,17 @@ namespace AnalysisManager_AScore_PlugIn
             var fileFilter = new FileListFilter
             {
                 FileNameSelector = fileNameSelector,
-                SourceFolderColumnName = "Folder",
+                SourceDirectoryColumnName = "Directory",
                 FileColumnName = "Name",
-                OutputColumnList = "Item|+|text, Name|+|text, File_Size_KB|+|text, Folder, " + passThroughColumns,
+                OutputColumnList = "Item|+|text, Name|+|text, File_Size_KB|+|text, Directory, " + passThroughColumns,
                 FileSelectorMode = "RegEx",
-                IncludeFilesOrFolders = "File",
+                IncludeFilesOrDirectories = "File",
                 RecursiveSearch = "No",
-                SubfolderSearchName = "*"
+                SubdirectorySearchName = "*"
             };
 
             // build, wire, and run pipeline
-            var pipeline = ProcessingPipeline.Assemble("FileListPipeline", folderListSource, fileFilter, sinkObject);
+            var pipeline = ProcessingPipeline.Assemble("FileListPipeline", directoryListSource, fileFilter, sinkObject);
             pipeline.RunRoot(null);
 
             return sinkObject;

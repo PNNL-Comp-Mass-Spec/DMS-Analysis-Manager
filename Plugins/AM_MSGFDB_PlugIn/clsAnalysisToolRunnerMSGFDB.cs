@@ -194,8 +194,8 @@ namespace AnalysisManagerMSGFDBPlugIn
                 {
                     // Something went wrong
                     // In order to help diagnose things, we will move whatever files were created into the result folder,
-                    //  archive it using CopyFailedResultsToArchiveFolder, then return CloseOutType.CLOSEOUT_FAILED
-                    CopyFailedResultsToArchiveFolder();
+                    //  archive it using CopyFailedResultsToArchiveDirectory, then return CloseOutType.CLOSEOUT_FAILED
+                    CopyFailedResultsToArchiveDirectory();
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
@@ -740,7 +740,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Copy failed results to the local archive folder
         /// </summary>
-        public override void CopyFailedResultsToArchiveFolder()
+        public override void CopyFailedResultsToArchiveDirectory()
         {
             // Try to save whatever files are in the work directory (however, delete any spectral data files)
 
@@ -751,7 +751,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             mJobParams.AddResultFileToSkip(Dataset + clsAnalysisResources.DOT_MZML_EXTENSION);
             mJobParams.AddResultFileToSkip(Dataset + clsAnalysisResources.DOT_MGF_EXTENSION);
 
-            base.CopyFailedResultsToArchiveFolder();
+            base.CopyFailedResultsToArchiveDirectory();
         }
 
         private bool CreateScanTypeFile(out string scanTypeFilePath)

@@ -6,7 +6,7 @@ namespace AnalysisManager_Mage_PlugIn
 {
 
     /// <summary>
-    /// Subclass of the Mage FileConentProcessor class 
+    /// Subclass of the Mage FileContentProcessor class 
     /// that performs processes specific to the MAC Mage plug-in
     /// </summary>
     public class MageAMFileContentProcessor : FileContentProcessor
@@ -42,18 +42,18 @@ namespace AnalysisManager_Mage_PlugIn
 
         public MageAMFileContentProcessor()
         {
-            SourceFolderColumnName = "Folder";
+            SourceDirectoryColumnName = "Directory";
             SourceFileColumnName = "Name";
-            OutputFolderPath = "ignore";
+            OutputDirectoryPath = "ignore";
             OutputFileName = "ignore";
             Operation = "SimpleImport";
         }
 
         public MageAMFileContentProcessor(MageAMFileProcessingPipelines filePipeline)
         {
-            SourceFolderColumnName = "Folder";
+            SourceDirectoryColumnName = "Directory";
             SourceFileColumnName = "Name";
-            OutputFolderPath = "ignore";
+            OutputDirectoryPath = "ignore";
             OutputFileName = "ignore";
             FilePipeline = filePipeline;
             Operation = "SimpleImport";
@@ -77,7 +77,7 @@ namespace AnalysisManager_Mage_PlugIn
         /// Override of base class stub that performs one of the predefined processes on the contents of the given file
         /// </summary>
         /// <param name="sourceFile">Name of the file to be processed</param>
-        /// <param name="sourcePath">Full path to folder that contains the file to be processed</param>
+        /// <param name="sourcePath">Full path to directory that contains the file to be processed</param>
         /// <param name="destPath"></param>
         /// <param name="context">Additional metadata about file to be processed</param>
         protected override void ProcessFile(string sourceFile, string sourcePath, string destPath, Dictionary<string, string> context)

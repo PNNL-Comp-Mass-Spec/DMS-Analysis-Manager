@@ -248,19 +248,19 @@ namespace AnalysisManagerIDPickerPlugIn
                 {
                     // Something went wrong
                     // In order to help diagnose things, we will move whatever files were created into the result folder,
-                    //  archive it using CopyFailedResultsToArchiveFolder, return CloseOutType.CLOSEOUT_FAILED
+                    //  archive it using CopyFailedResultsToArchiveDirectory, return CloseOutType.CLOSEOUT_FAILED
 
                     mJobParams.RemoveResultFileToSkip(ASSEMBLE_GROUPING_FILENAME);
                     mJobParams.RemoveResultFileToSkip(ASSEMBLE_OUTPUT_FILENAME);
 
-                    CopyFailedResultsToArchiveFolder();
+                    CopyFailedResultsToArchiveDirectory();
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                var folderCreated = MakeResultsFolder();
+                var folderCreated = MakeResultsDirectory();
                 if (!folderCreated)
                 {
-                    // MakeResultsFolder handles posting to local log, so set database error message and exit
+                    // MakeResultsDirectory handles posting to local log, so set database error message and exit
                     mMessage = "Error making results folder";
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -816,7 +816,7 @@ namespace AnalysisManagerIDPickerPlugIn
 
             try
             {
-                var resFolderNamePath = Path.Combine(mWorkDir, mResultsFolderName);
+                var resFolderNamePath = Path.Combine(mWorkDir, mResultsDirectoryName);
 
                 var sourceFolder = new DirectoryInfo(resFolderNamePath);
                 var targetFolder = sourceFolder.CreateSubdirectory("IDPicker");
@@ -877,9 +877,9 @@ namespace AnalysisManagerIDPickerPlugIn
 
             if (errorEncountered)
             {
-                // Try to save whatever files were moved into the results folder
+                // Try to save whatever files were moved into the results directory
                 var analysisResults = new clsAnalysisResults(mMgrParams, mJobParams);
-                analysisResults.CopyFailedResultsToArchiveFolder(Path.Combine(mWorkDir, mResultsFolderName));
+                analysisResults.CopyFailedResultsToArchiveDirectory(Path.Combine(mWorkDir, mResultsDirectoryName));
 
                 return CloseOutType.CLOSEOUT_FAILED;
             }

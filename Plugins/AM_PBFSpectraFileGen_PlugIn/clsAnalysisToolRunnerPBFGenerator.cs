@@ -107,7 +107,7 @@ namespace AnalysisManagerPBFGenerator
                                 // This version is created by Pbf_Gen.exe v1.0.5311
                                 // Make sure the output folder starts with PBF_Gen_1_191
                                 // (which will be the case if the settings file has <item key="PbfFormatVersion" value="110569"/>)
-                                if (!mResultsFolderName.StartsWith("PBF_Gen_1_191"))
+                                if (!mResultsDirectoryName.StartsWith("PBF_Gen_1_191"))
                                 {
                                     processingSuccess = false;
                                 }
@@ -116,7 +116,7 @@ namespace AnalysisManagerPBFGenerator
                                 // This version is created by Pbf_Gen.exe v1.0.5367
                                 // Make sure the output folder starts with PBF_Gen_1_193
                                 // (which will be the case if the settings file has <item key="PbfFormatVersion" value="150604"/>)
-                                if (!mResultsFolderName.StartsWith("PBF_Gen_1_193"))
+                                if (!mResultsDirectoryName.StartsWith("PBF_Gen_1_193"))
                                 {
                                     processingSuccess = false;
                                 }
@@ -125,7 +125,7 @@ namespace AnalysisManagerPBFGenerator
                                 // This version is created by Pbf_Gen.exe v1.0.6526
                                 // Make sure the output folder starts with PBF_Gen_1_214
                                 // (which will be the case if the settings file has <item key="PbfFormatVersion" value="150605"/>)
-                                if (!mResultsFolderName.StartsWith("PBF_Gen_1_214"))
+                                if (!mResultsDirectoryName.StartsWith("PBF_Gen_1_214"))
                                 {
                                     processingSuccess = false;
                                 }
@@ -135,7 +135,7 @@ namespace AnalysisManagerPBFGenerator
                                 // This version is created by Pbf_Gen.exe v1.0.5714
                                 // Make sure the output folder starts with PBF_Gen_1_243
                                 // (which will be the case if the settings file has <item key="PbfFormatVersion" value="150608"/>)
-                                if (!mResultsFolderName.StartsWith("PBF_Gen_1_243"))
+                                if (!mResultsDirectoryName.StartsWith("PBF_Gen_1_243"))
                                 {
                                     processingSuccess = false;
                                 }
@@ -211,8 +211,8 @@ namespace AnalysisManagerPBFGenerator
                 {
                     // Something went wrong
                     // In order to help diagnose things, we will move whatever files were created into the result folder,
-                    //  archive it using CopyFailedResultsToArchiveFolder, then return CloseOutType.CLOSEOUT_FAILED
-                    CopyFailedResultsToArchiveFolder();
+                    //  archive it using CopyFailedResultsToArchiveDirectory, then return CloseOutType.CLOSEOUT_FAILED
+                    CopyFailedResultsToArchiveDirectory();
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
@@ -235,12 +235,12 @@ namespace AnalysisManagerPBFGenerator
         /// <summary>
         /// Copy failed results from the working directory to the DMS_FailedResults directory on the local computer
         /// </summary>
-        public override void CopyFailedResultsToArchiveFolder()
+        public override void CopyFailedResultsToArchiveDirectory()
         {
             mJobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_PBF_EXTENSION);
             mJobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_RAW_EXTENSION);
 
-            base.CopyFailedResultsToArchiveFolder();
+            base.CopyFailedResultsToArchiveDirectory();
         }
 
         /// <summary>

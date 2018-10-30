@@ -12,7 +12,7 @@ namespace AnalysisManager_Mage_PlugIn
     /// that Mac Mage plug-in can execute.
     ///
     /// These extraction operations are essentially identical to the operations
-    /// permormed by the MageFileExtractor tool.
+    /// performed by the MageFileExtractor tool.
     /// </summary>
     public class MageAMExtractionPipelines : MageAMPipelineBase
     {
@@ -22,7 +22,7 @@ namespace AnalysisManager_Mage_PlugIn
         /// <summary>
         /// The parameters for the slated extraction
         /// </summary>
-        protected ExtractionType ExtractionParms;
+        protected ExtractionType ExtractionParams;
 
         #endregion
 
@@ -31,16 +31,16 @@ namespace AnalysisManager_Mage_PlugIn
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="jobParms"></param>
-        /// <param name="mgrParms"></param>
-        public MageAMExtractionPipelines(IJobParams jobParms, IMgrParams mgrParms) : base(jobParms, mgrParms)
+        /// <param name="jobParams"></param>
+        /// <param name="mgrParams"></param>
+        public MageAMExtractionPipelines(IJobParams jobParams, IMgrParams mgrParams) : base(jobParams, mgrParams)
         {
         }
 
         #endregion
 
         /// <summary>
-        /// Setup and run Mage Extractor pipleline according to job parameters
+        /// Setup and run Mage Extractor pipeline according to job parameters
         /// </summary>
         public void ExtractFromJobs(string sql)
         {
@@ -54,7 +54,7 @@ namespace AnalysisManager_Mage_PlugIn
         /// </summary>
         protected void GetExtractionParametersFromJobParameters()
         {
-            ExtractionParms = new ExtractionType();
+            ExtractionParams = new ExtractionType();
 
             var containerPath = System.IO.Path.Combine(WorkingDirPath, ResultsDBFileName);
             ResultsDestination = new DestinationType(DestinationType.Types.SQLite_Output.ToString(), containerPath, "t_results");
@@ -64,16 +64,16 @@ namespace AnalysisManager_Mage_PlugIn
 
             try
             {
-                ExtractionParms.RType = ResultType.TypeList[extractionType];
+                ExtractionParams.RType = ResultType.TypeList[extractionType];
             }
             catch
             {
                 throw new Exception("Unrecognized value for ExtractionType: " + extractionType);
             }
 
-            ExtractionParms.KeepAllResults = GetJobParam("KeepAllResults", "Yes");
-            ExtractionParms.ResultFilterSetID = GetJobParam("ResultFilterSetID", "All Pass");
-            ExtractionParms.MSGFCutoff = GetJobParam("MSGFCutoff", "All Pass");
+            ExtractionParams.KeepAllResults = GetJobParam("KeepAllResults", "Yes");
+            ExtractionParams.ResultFilterSetID = GetJobParam("ResultFilterSetID", "All Pass");
+            ExtractionParams.MSGFCutoff = GetJobParam("MSGFCutoff", "All Pass");
 
         }
 
@@ -87,7 +87,7 @@ namespace AnalysisManager_Mage_PlugIn
                 JobCount = jobsToProcess.Rows.Count;
             }
 
-            BasePipelineQueue = ExtractionPipelines.MakePipelineQueueToExtractFromJobList(jobList, ExtractionParms, ResultsDestination);
+            BasePipelineQueue = ExtractionPipelines.MakePipelineQueueToExtractFromJobList(jobList, ExtractionParams, ResultsDestination);
             foreach (var p in BasePipelineQueue.Pipelines.ToArray())
             {
                 ConnectPipelineToStatusHandlers(p);

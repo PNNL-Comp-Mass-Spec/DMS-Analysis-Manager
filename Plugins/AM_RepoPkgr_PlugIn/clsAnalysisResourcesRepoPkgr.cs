@@ -45,38 +45,38 @@ namespace AnalysisManager_RepoPkgr_Plugin
                 return result;
             }
 
-            var localOrgDBFolder = mMgrParams.GetParam("OrgDbDir");
+            var localOrgDBDirectory = mMgrParams.GetParam("OrgDbDir");
 
             // Gigasax.DMS_Pipeline
-            var connectionString = mMgrParams.GetParam("brokerconnectionstring");
+            var connectionString = mMgrParams.GetParam("BrokerConnectionString");
 
             var dataPkgId = mJobParams.GetJobParameter("DataPackageID", -1);
 
-            // lstAdditionalJobs tracks non Peptide-hit jobs (e.g. DeconTools or MASIC jobs)
+            // additionalJobs tracks non Peptide-hit jobs (e.g. DeconTools or MASIC jobs)
 
             var dataPackageInfoLoader = new clsDataPackageInfoLoader(connectionString, dataPkgId);
 
-            var lstDataPackagePeptideHitJobs = dataPackageInfoLoader.RetrieveDataPackagePeptideHitJobInfo(out var lstAdditionalJobs);
-            var success = RetrieveFastaFiles(localOrgDBFolder, lstDataPackagePeptideHitJobs);
+            var dataPackagePeptideHitJobs = dataPackageInfoLoader.RetrieveDataPackagePeptideHitJobInfo(out var additionalJobs);
+            var success = RetrieveFastaFiles(localOrgDBDirectory, dataPackagePeptideHitJobs);
 
             if (!success)
                 return CloseOutType.CLOSEOUT_NO_FAS_FILES;
 
             var includeMzXmlFiles = mJobParams.GetJobParameter("IncludeMzXMLFiles", true);
 
-            success = FindInstrumentDataFiles(dataPackageInfoLoader, lstDataPackagePeptideHitJobs, lstAdditionalJobs, includeMzXmlFiles);
+            success = FindInstrumentDataFiles(dataPackageInfoLoader, dataPackagePeptideHitJobs, additionalJobs, includeMzXmlFiles);
             if (!success)
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
 
             if (includeMzXmlFiles)
             {
-                var lstAllJobs = new List<clsDataPackageJobInfo>();
-                lstAllJobs.AddRange(lstDataPackagePeptideHitJobs);
+                var allJobs = new List<clsDataPackageJobInfo>();
+                allJobs.AddRange(dataPackagePeptideHitJobs);
 
-                if (lstAdditionalJobs != null)
-                    lstAllJobs.AddRange(lstAdditionalJobs);
+                if (additionalJobs != null)
+                    allJobs.AddRange(additionalJobs);
 
-                FindMissingMzXmlFiles(lstAllJobs);
+                FindMissingMzXmlFiles(allJobs);
             }
 
 
@@ -90,8 +90,8 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
         private bool FindInstrumentDataFiles(
             clsDataPackageInfoLoader dataPackageInfoLoader,
-            IEnumerable<clsDataPackageJobInfo> lstDataPackagePeptideHitJobs,
-            IEnumerable<clsDataPackageJobInfo> lstAdditionalJobs,
+            IEnumerable<clsDataPackageJobInfo> dataPackagePeptideHitJobs,
+            IEnumerable<clsDataPackageJobInfo> additionalJobs,
             bool includeMzXmlFiles)
         {
 
@@ -111,13 +111,13 @@ namespace AnalysisManager_RepoPkgr_Plugin
             var missingInstrumentDataCount = 0;
 
             // Combine the two job lists provided to this function to determine the master list of jobs to process
-            var jobsToProcess = lstDataPackagePeptideHitJobs.ToList();
-            jobsToProcess.AddRange(lstAdditionalJobs.ToList());
+            var jobsToProcess = dataPackagePeptideHitJobs.ToList();
+            jobsToProcess.AddRange(additionalJobs.ToList());
 
             var jobCountToProcess = jobsToProcess.Count;
             var jobsProcessed = 0;
 
-            var dtLastProgressUpdate = DateTime.UtcNow;
+            var lastProgressUpdate = DateTime.UtcNow;
 
             foreach (var udtJobInfo in jobsToProcess)
             {
@@ -143,23 +143,22 @@ namespace AnalysisManager_RepoPkgr_Plugin
                     else
                     {
                         // See if a .mzXML or .mzML file already exists for this dataset
-                        string strHashcheckFilePath;
 
-                        var mzXMLFilePath = FileSearch.FindMZXmlFile(out strHashcheckFilePath);
+                        var mzXMLFilePath = FileSearch.FindMZXmlFile(out var hashcheckFilePath);
                         var mzMLFilePath = string.Empty;
 
                         if (string.IsNullOrEmpty(mzXMLFilePath))
                         {
-                            mzMLFilePath = FileSearch.FindMsXmlFileInCache(MSXMLOutputTypeConstants.mzML, out strHashcheckFilePath);
+                            mzMLFilePath = FileSearch.FindMsXmlFileInCache(MSXMLOutputTypeConstants.mzML, out hashcheckFilePath);
                         }
 
                         if (!string.IsNullOrEmpty(mzXMLFilePath))
                         {
-                            dctInstrumentDataToRetrieve.Add(udtJobInfo, new KeyValuePair<string, string>(mzXMLFilePath, strHashcheckFilePath));
+                            dctInstrumentDataToRetrieve.Add(udtJobInfo, new KeyValuePair<string, string>(mzXMLFilePath, hashcheckFilePath));
                         }
                         else if (!string.IsNullOrEmpty(mzMLFilePath))
                         {
-                            dctInstrumentDataToRetrieve.Add(udtJobInfo, new KeyValuePair<string, string>(mzMLFilePath, strHashcheckFilePath));
+                            dctInstrumentDataToRetrieve.Add(udtJobInfo, new KeyValuePair<string, string>(mzMLFilePath, hashcheckFilePath));
                         }
                         else
                         {
@@ -182,17 +181,15 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
                 }
 
-                bool blnIsFolder;
+                // Note that FindDatasetFileOrDirectory will return the default dataset directory path, even if the data file is not found
+                // Therefore, we need to check that rawFilePath actually exists
+                var rawFilePath = FolderSearch.FindDatasetFileOrDirectory(1, out var isDirectory);
 
-                // Note that FindDatasetFileOrFolder will return the default dataset directory path, even if the data file is not found
-                // Therefore, we need to check that strRawFilePath actually exists
-                var strRawFilePath = FolderSearch.FindDatasetFileOrFolder(1, out blnIsFolder);
-
-                if (!strRawFilePath.StartsWith(MYEMSL_PATH_FLAG))
+                if (!rawFilePath.StartsWith(MYEMSL_PATH_FLAG))
                 {
-                    if (!File.Exists(strRawFilePath))
+                    if (!File.Exists(rawFilePath))
                     {
-                        strRawFilePath = string.Empty;
+                        rawFilePath = string.Empty;
                         missingInstrumentDataCount++;
 
                         if (!dctDatasetRawFilePaths.ContainsKey(udtJobInfo.Dataset))
@@ -203,16 +200,16 @@ namespace AnalysisManager_RepoPkgr_Plugin
                     }
                 }
 
-                if (!string.IsNullOrEmpty(strRawFilePath))
+                if (!string.IsNullOrEmpty(rawFilePath))
                 {
                     if (!dctDatasetRawFilePaths.ContainsKey(udtJobInfo.Dataset))
                     {
-                        if (strRawFilePath.StartsWith(MYEMSL_PATH_FLAG))
+                        if (rawFilePath.StartsWith(MYEMSL_PATH_FLAG))
                         {
                             mMyEMSLUtilities.AddFileToDownloadQueue(mMyEMSLUtilities.RecentlyFoundMyEMSLFiles.First().FileInfo);
                         }
 
-                        dctDatasetRawFilePaths.Add(udtJobInfo.Dataset, strRawFilePath);
+                        dctDatasetRawFilePaths.Add(udtJobInfo.Dataset, rawFilePath);
                     }
                 }
 
@@ -220,9 +217,9 @@ namespace AnalysisManager_RepoPkgr_Plugin
                 var percentComplete = jobsProcessed / (float)jobCountToProcess * 2;
                 mStatusTools.UpdateAndWrite(percentComplete);
 
-                if (DateTime.UtcNow.Subtract(dtLastProgressUpdate).TotalSeconds >= 30)
+                if (DateTime.UtcNow.Subtract(lastProgressUpdate).TotalSeconds >= 30)
                 {
-                    dtLastProgressUpdate = DateTime.UtcNow;
+                    lastProgressUpdate = DateTime.UtcNow;
 
                     var progressMsg = "Finding instrument data";
                     if (includeMzXmlFiles)
@@ -282,16 +279,16 @@ namespace AnalysisManager_RepoPkgr_Plugin
         /// Datasets that need to have .mzXML files created will be added to the packed job parameters, storing the dataset names in "PackedParam_DatasetsMissingMzXMLFiles"
         /// and the dataset Year_Quarter values in "PackedParam_DatasetStorage_YearQuarter"
         /// </summary>
-        /// <param name="lstDataPackagePeptideHitJobs"></param>
+        /// <param name="dataPackagePeptideHitJobs"></param>
         /// <remarks></remarks>
-        protected void FindMissingMzXmlFiles(IEnumerable<clsDataPackageJobInfo> lstDataPackagePeptideHitJobs)
+        protected void FindMissingMzXmlFiles(IEnumerable<clsDataPackageJobInfo> dataPackagePeptideHitJobs)
         {
-            var lstDatasets = new SortedSet<string>();
-            var lstDatasetYearQuarter = new SortedSet<string>();
+            var datasetNames = new SortedSet<string>();
+            var datasetYearQuarter = new SortedSet<string>();
 
             try
             {
-                foreach (var udtJob in lstDataPackagePeptideHitJobs)
+                foreach (var udtJob in dataPackagePeptideHitJobs)
                 {
                     var candidateFileNames = new List<string>
                     {
@@ -322,17 +319,17 @@ namespace AnalysisManager_RepoPkgr_Plugin
                         }
                     }
 
-                    if (!matchFound && !lstDatasets.Contains(udtJob.Dataset))
+                    if (!matchFound && !datasetNames.Contains(udtJob.Dataset))
                     {
-                        lstDatasets.Add(udtJob.Dataset);
-                        lstDatasetYearQuarter.Add(udtJob.Dataset + "=" + GetDatasetYearQuarter(udtJob.ServerStoragePath));
+                        datasetNames.Add(udtJob.Dataset);
+                        datasetYearQuarter.Add(udtJob.Dataset + "=" + GetDatasetYearQuarter(udtJob.ServerStoragePath));
                     }
                 }
 
-                if (lstDatasets.Count > 0)
+                if (datasetNames.Count > 0)
                 {
-                    StorePackedJobParameterList(lstDatasets.ToList(), JOB_PARAM_DATASETS_MISSING_MZXML_FILES);
-                    StorePackedJobParameterList(lstDatasetYearQuarter.ToList(), JOB_PARAM_DICTIONARY_DATASET_STORAGE_YEAR_QUARTER);
+                    StorePackedJobParameterList(datasetNames.ToList(), JOB_PARAM_DATASETS_MISSING_MZXML_FILES);
+                    StorePackedJobParameterList(datasetYearQuarter.ToList(), JOB_PARAM_DICTIONARY_DATASET_STORAGE_YEAR_QUARTER);
                 }
 
             }
@@ -344,7 +341,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
         }
 
-        private bool RetrieveFastaFiles(string orgDbDirectoryPath, IEnumerable<clsDataPackageJobInfo> lstDataPackagePeptideHitJobs)
+        private bool RetrieveFastaFiles(string orgDbDirectoryPath, IEnumerable<clsDataPackageJobInfo> dataPackagePeptideHitJobs)
         {
             try
             {
@@ -354,16 +351,16 @@ namespace AnalysisManager_RepoPkgr_Plugin
                 var dctOrgDBParamsToGeneratedFileNameMap = new Dictionary<string, string>();
 
                 // This list tracks the generated fasta file name
-                var lstGeneratedOrgDBNames = new List<string>();
+                var generatedOrgDBNames = new List<string>();
 
                 // Cache the current dataset and job info
                 var udtCurrentDatasetAndJobInfo = GetCurrentDatasetAndJobInfo();
 
-                foreach (var udtJob in lstDataPackagePeptideHitJobs)
+                foreach (var udtJob in dataPackagePeptideHitJobs)
                 {
-                    var strDictionaryKey = string.Format("{0}_{1}_{2}", udtJob.LegacyFastaFileName, udtJob.ProteinCollectionList,
-                                                            udtJob.ProteinOptions);
-                    if (dctOrgDBParamsToGeneratedFileNameMap.TryGetValue(strDictionaryKey, out var orgDbNameGenerated))
+                    var dictionaryKey = string.Format("{0}_{1}_{2}", udtJob.LegacyFastaFileName, udtJob.ProteinCollectionList,
+                                                      udtJob.ProteinOptions);
+                    if (dctOrgDBParamsToGeneratedFileNameMap.TryGetValue(dictionaryKey, out var orgDbNameGenerated))
                     {
                         // Organism DB was already generated
                     }
@@ -391,9 +388,9 @@ namespace AnalysisManager_RepoPkgr_Plugin
                             LogError(mMessage + " (class clsAnalysisResourcesRepoPkgr)");
                             return false;
                         }
-                        dctOrgDBParamsToGeneratedFileNameMap.Add(strDictionaryKey, orgDbNameGenerated);
+                        dctOrgDBParamsToGeneratedFileNameMap.Add(dictionaryKey, orgDbNameGenerated);
 
-                        lstGeneratedOrgDBNames.Add(orgDbNameGenerated);
+                        generatedOrgDBNames.Add(orgDbNameGenerated);
                     }
                     // Add a new job parameter that associates orgDbNameGenerated with this job
                     mJobParams.AddAdditionalParameter("PeptideSearch", GetGeneratedFastaParamNameForJob(udtJob.Job),
@@ -402,7 +399,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
                 // Store the names of the generated fasta files
                 // This is a tab separated list of filenames
-                StorePackedJobParameterList(lstGeneratedOrgDBNames, FASTA_FILES_FOR_DATA_PACKAGE);
+                StorePackedJobParameterList(generatedOrgDBNames, FASTA_FILES_FOR_DATA_PACKAGE);
 
                 // Restore the dataset and job info for this aggregation job
                 OverrideCurrentDatasetAndJobInfo(udtCurrentDatasetAndJobInfo);

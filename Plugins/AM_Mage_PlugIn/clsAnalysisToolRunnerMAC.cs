@@ -70,10 +70,10 @@ namespace AnalysisManager_Mage_PlugIn
 
                     processingSuccess = false;
 
-                    var sDataPackageSourceFolderName = mJobParams.GetJobParameter("DataPackageSourceFolderName", "ImportFiles");
-                    if (ex.Message.Contains(sDataPackageSourceFolderName + "\\--No Files Found"))
+                    var dataPackageSourceDirectoryName = mJobParams.GetJobParameter("DataPackageSourceFolderName", "ImportFiles");
+                    if (ex.Message.Contains(dataPackageSourceDirectoryName + "\\--No Files Found"))
                     {
-                        LogError(sDataPackageSourceFolderName + " folder in the data package is empty or does not exist");
+                        LogError(dataPackageSourceDirectoryName + " directory in the data package is empty or does not exist");
                     }
 
                 }
@@ -91,17 +91,17 @@ namespace AnalysisManager_Mage_PlugIn
                 if (!processingSuccess)
                 {
                     // Something went wrong
-                    // In order to help diagnose things, we will move whatever files were created into the result folder,
-                    //  archive it using CopyFailedResultsToArchiveFolder, then return CloseOutType.CLOSEOUT_FAILED
-                    CopyFailedResultsToArchiveFolder();
+                    // In order to help diagnose things, we will move whatever files were created into the result directory,
+                    //  archive it using CopyFailedResultsToArchiveDirectory, then return CloseOutType.CLOSEOUT_FAILED
+                    CopyFailedResultsToArchiveDirectory();
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                // Override the output folder name and the dataset name (since this is a dataset aggregation job)
-                mResultsFolderName = mJobParams.GetParam("StepOutputFolderName");
+                // Override the output directory name and the dataset name (since this is a dataset aggregation job)
+                mResultsDirectoryName = mJobParams.GetParam("StepOutputFolderName");
                 mDatasetName = mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME);
-                if (!string.IsNullOrEmpty(mResultsFolderName))
-                    mJobParams.SetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME, mResultsFolderName);
+                if (!string.IsNullOrEmpty(mResultsDirectoryName))
+                    mJobParams.SetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME, mResultsDirectoryName);
 
                 var success = CopyResultsToTransferDirectory();
 

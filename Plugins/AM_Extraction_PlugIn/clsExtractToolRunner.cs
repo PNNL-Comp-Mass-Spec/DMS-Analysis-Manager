@@ -283,8 +283,8 @@ namespace AnalysisManagerExtractionPlugin
                 {
                     // Something went wrong
                     // In order to help diagnose things, we will move whatever files were created into the results directory,
-                    //  archive it using CopyFailedResultsToArchiveFolder, then return CloseOutType.CLOSEOUT_FAILED
-                    CopyFailedResultsToArchiveFolder();
+                    //  archive it using CopyFailedResultsToArchiveDirectory, then return CloseOutType.CLOSEOUT_FAILED
+                    CopyFailedResultsToArchiveDirectory();
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
@@ -1972,7 +1972,7 @@ namespace AnalysisManagerExtractionPlugin
                 return;
             }
 
-            if (string.IsNullOrWhiteSpace(mResultsFolderName))
+            if (string.IsNullOrWhiteSpace(mResultsDirectoryName))
             {
                 // Ignore error; will be logged in function
                 return;
@@ -1980,7 +1980,7 @@ namespace AnalysisManagerExtractionPlugin
 
             foreach (var consoleOutputFile in consoleOutputFiles)
             {
-                var targetPath = Path.Combine(transferDirPath, mDatasetName, mResultsFolderName, consoleOutputFile);
+                var targetPath = Path.Combine(transferDirPath, mDatasetName, mResultsDirectoryName, consoleOutputFile);
                 mJobParams.AddServerFileToDelete(targetPath);
             }
         }

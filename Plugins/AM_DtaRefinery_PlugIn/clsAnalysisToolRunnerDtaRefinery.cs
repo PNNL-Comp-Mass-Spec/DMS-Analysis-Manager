@@ -167,7 +167,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
 
                 // Move the source files and any results to the Failed Job folder
                 // Useful for debugging DTA_Refinery problems
-                CopyFailedResultsToArchiveFolder();
+                CopyFailedResultsToArchiveDirectory();
 
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -209,7 +209,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
             {
                 // Move the source files and any results to the Failed Job folder
                 // Useful for debugging DTA_Refinery problems
-                CopyFailedResultsToArchiveFolder();
+                CopyFailedResultsToArchiveDirectory();
                 return result;
             }
 
@@ -223,12 +223,12 @@ namespace AnalysisManagerDtaRefineryPlugIn
         /// <summary>
         /// Copy failed results from the working directory to the DMS_FailedResults directory on the local computer
         /// </summary>
-        public override void CopyFailedResultsToArchiveFolder()
+        public override void CopyFailedResultsToArchiveDirectory()
         {
             mJobParams.AddResultFileToSkip(Dataset + "_dta.zip");
             mJobParams.AddResultFileToSkip(Dataset + "_dta.txt");
 
-            base.CopyFailedResultsToArchiveFolder();
+            base.CopyFailedResultsToArchiveDirectory();
         }
 
         /// <summary>
