@@ -113,8 +113,8 @@ namespace AnalysisManagerBase
         private bool CopySFoldersToWorkDir(bool createStoragePathInfoOnly)
         {
 
-            var datasetDirectoryPath = mDirectorySearch.FindValidFolder(DatasetName, "s*.zip",
-                                                                     retrievingInstrumentDataDir: true);
+            var datasetDirectoryPath = mDirectorySearch.FindValidDirectory(DatasetName, "s*.zip",
+                                                                           retrievingInstrumentDataDir: true);
 
             // Verify dataset directory exists
             if (!Directory.Exists(datasetDirectoryPath))
@@ -703,10 +703,10 @@ namespace AnalysisManagerBase
                 var msXmlDirectoryName = MSXmlDirectoryNameBase + version + "_" + datasetID;
 
                 // Look for the MSXml directory
-                // If the directory cannot be found, mDirectorySearch.FindValidFolder will return the directory defined by "DatasetStoragePath"
-                var msXmlServerPath = mDirectorySearch.FindValidFolder(DatasetName, "", msXmlDirectoryName, MAX_ATTEMPTS,
-                                                                    logDirectoryNotFound: false,
-                                                                    retrievingInstrumentDataDir: false);
+                // If the directory cannot be found, mDirectorySearch.FindValidDirectory will return the directory defined by "DatasetStoragePath"
+                var msXmlServerPath = mDirectorySearch.FindValidDirectory(DatasetName, "", msXmlDirectoryName, MAX_ATTEMPTS,
+                                                                          logDirectoryNotFound: false,
+                                                                          retrievingInstrumentDataDir: false);
 
                 if (string.IsNullOrEmpty(msXmlServerPath))
                 {
@@ -738,7 +738,7 @@ namespace AnalysisManagerBase
                 }
                 else
                 {
-                    // Due to quirks with how mDirectorySearch.FindValidFolder behaves, we need to confirm that the mzXML file actually exists
+                    // Due to quirks with how mDirectorySearch.FindValidDirectory behaves, we need to confirm that the mzXML file actually exists
                     var msXmlServerDirectory = new DirectoryInfo(msXmlServerPath);
 
                     if (msXmlServerDirectory.Exists)
@@ -1976,11 +1976,11 @@ namespace AnalysisManagerBase
             }
 
             // Look for the MASIC Results directory
-            // If the directory cannot be found, DirectorySearch.FindValidFolder will return the directory defined by "DatasetStoragePath"
+            // If the directory cannot be found, DirectorySearch.FindValidDirectory will return the directory defined by "DatasetStoragePath"
             var scanStatsFilename = DatasetName + clsAnalysisResources.SCAN_STATS_FILE_SUFFIX;
-            var serverPath = mDirectorySearch.FindValidFolder(DatasetName, "", "SIC*", MAX_ATTEMPTS,
-                                                           logDirectoryNotFound: false,
-                                                           retrievingInstrumentDataDir: false);
+            var serverPath = mDirectorySearch.FindValidDirectory(DatasetName, "", "SIC*", MAX_ATTEMPTS,
+                                                                 logDirectoryNotFound: false,
+                                                                 retrievingInstrumentDataDir: false);
 
             if (string.IsNullOrEmpty(serverPath))
             {
@@ -2663,8 +2663,8 @@ namespace AnalysisManagerBase
 
             // Look for the dataset directory; it must contain .Zip files with names like 0_R00X442.zip
             // If a matching directory isn't found, ServerPath will contain the directory path defined by Job Param "DatasetStoragePath"
-            var serverPath = mDirectorySearch.FindValidFolder(DatasetName, ZIPPED_BRUKER_IMAGING_SECTIONS_FILE_MASK,
-                                                           retrievingInstrumentDataDir: true);
+            var serverPath = mDirectorySearch.FindValidDirectory(DatasetName, ZIPPED_BRUKER_IMAGING_SECTIONS_FILE_MASK,
+                                                                 retrievingInstrumentDataDir: true);
 
             try
             {
@@ -2903,7 +2903,7 @@ namespace AnalysisManagerBase
             {
                 // First Check for the existence of a 0.ser directory
                 // If 0.ser directory exists, either store the path to the 0.ser directory in a StoragePathInfo file, or copy the 0.ser directory to the working directory
-                var datasetDirectoryPath = mDirectorySearch.FindValidFolder(
+                var datasetDirectoryPath = mDirectorySearch.FindValidDirectory(
                     DatasetName,
                     fileNameToFind: "",
                     directoryNameToFind: clsAnalysisResources.BRUKER_ZERO_SER_FOLDER,

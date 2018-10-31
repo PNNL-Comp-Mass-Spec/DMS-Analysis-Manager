@@ -1583,11 +1583,11 @@ namespace AnalysisManagerBase
         /// <param name="directoryNotFoundMessage"></param>
         /// <returns>Path to the most appropriate dataset directory</returns>
         /// <remarks>The path returned will be "\\MyEMSL" if the best directory is in MyEMSL</remarks>
-        public string FindValidFolder(string datasetName, string fileNameToFind, string directoryNameToFind, int maxAttempts, bool logDirectoryNotFound,
-                                      bool retrievingInstrumentDataDir, out bool validDirectoryFound, bool assumeUnpurged,
-                                      out string directoryNotFoundMessage)
+        public string FindValidDirectory(string datasetName, string fileNameToFind, string directoryNameToFind, int maxAttempts, bool logDirectoryNotFound,
+                                         bool retrievingInstrumentDataDir, out bool validDirectoryFound, bool assumeUnpurged,
+                                         out string directoryNotFoundMessage)
         {
-            var directoryPath = DirectorySearch.FindValidFolder(
+            var directoryPath = DirectorySearch.FindValidDirectory(
                 datasetName, fileNameToFind, directoryNameToFind, maxAttempts, logDirectoryNotFound,
                 retrievingInstrumentDataDir, assumeUnpurged, out validDirectoryFound, out directoryNotFoundMessage);
 

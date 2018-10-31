@@ -202,9 +202,9 @@ namespace AnalysisManagerBase
                 OnStatusEvent(string.Format("Determined the input directory for job {0} is {1}, step tool {2}", job, inputDirectoryName, stepToolMatch));
 
                 // Look for a CacheInfo.txt file in the matched input directory
-                // Note that FindValidFolder will search both the dataset directory and in inputDirectoryName below the dataset directory
+                // Note that FindValidDirectory will search both the dataset directory and in inputDirectoryName below the dataset directory
 
-                var datasetDirectoryPath = mAnalysisResources.FindValidFolder(
+                var datasetDirectoryPath = mAnalysisResources.FindValidDirectory(
                     datasetName, "*_CacheInfo.txt", directoryNameToFind: inputDirectoryName, maxAttempts: 1,
                     logDirectoryNotFound: false, retrievingInstrumentDataDir: false, assumeUnpurged: false,
                     validDirectoryFound: out var validFolderFound, directoryNotFoundMessage: out _);
@@ -239,7 +239,7 @@ namespace AnalysisManagerBase
 
                     if (string.IsNullOrEmpty(cacheInfoFileName))
                     {
-                        OnErrorEvent("FindValidFolder reported a match to a file in MyEMSL (" + datasetDirectoryPath + ") " + "but MyEMSLUtilities.RecentlyFoundMyEMSLFiles is empty");
+                        OnErrorEvent("FindValidDirectory reported a match to a file in MyEMSL (" + datasetDirectoryPath + ") " + "but MyEMSLUtilities.RecentlyFoundMyEMSLFiles is empty");
                         return string.Empty;
                     }
 
@@ -253,7 +253,7 @@ namespace AnalysisManagerBase
 
                     if (!sourceDirectory.Exists)
                     {
-                        OnErrorEvent("FindValidFolder reported a match to directory " + cacheInfoFileSourceType + " but the directory was not found");
+                        OnErrorEvent("FindValidDirectory reported a match to directory " + cacheInfoFileSourceType + " but the directory was not found");
                         return string.Empty;
                     }
 
@@ -272,7 +272,7 @@ namespace AnalysisManagerBase
                         }
                         else
                         {
-                            OnErrorEvent("FindValidFolder reported that directory " + cacheInfoFileSourceType +
+                            OnErrorEvent("FindValidDirectory reported that directory " + cacheInfoFileSourceType +
                                          " has a _CacheInfo.txt file, but none was found");
                             return string.Empty;
                         }
