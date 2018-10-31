@@ -137,7 +137,7 @@ namespace AnalysisManagerSMAQCPlugIn
                 LogDebug("Retrieving the MASIC files from " + masicResultsDirectoryName);
             }
 
-            var serverPath = FolderSearch.FindValidFolder(DatasetName, "", masicResultsDirectoryName, 2);
+            var serverPath = DirectorySearch.FindValidFolder(DatasetName, "", masicResultsDirectoryName, 2);
 
             if (string.IsNullOrEmpty(serverPath))
             {

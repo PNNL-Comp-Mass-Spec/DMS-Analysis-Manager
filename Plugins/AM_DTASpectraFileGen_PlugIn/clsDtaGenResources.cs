@@ -103,7 +103,7 @@ namespace DTASpectraFileGen
                     var directoryNameToFind = "DTA_Gen_1_26_" + datasetID;
                     var fileToFind = DatasetName + CDTA_ZIPPED_EXTENSION;
 
-                    var existingDtDirectory = FolderSearch.FindValidFolder(DatasetName,
+                    var existingDtDirectory = DirectorySearch.FindValidFolder(DatasetName,
                         fileToFind,
                         directoryNameToFind,
                         maxAttempts: 1,

@@ -238,7 +238,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                 {
                     // Raw file still not found; try MyEMSL
 
-                    var DSFolderPath = FolderSearch.FindValidFolder(strDatasetName, strFileToFind, retrievingInstrumentDataDir: false);
+                    var DSFolderPath = DirectorySearch.FindValidFolder(strDatasetName, strFileToFind, retrievingInstrumentDataDir: false);
                     if (DSFolderPath.StartsWith(MYEMSL_PATH_FLAG))
                     {
                         // Queue this file for download

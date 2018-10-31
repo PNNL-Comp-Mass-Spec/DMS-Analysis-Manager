@@ -11,7 +11,7 @@ namespace AnalysisManagerBase
     /// <summary>
     /// Methods to look for directories related to datasets
     /// </summary>
-    public class clsFolderSearch : EventNotifier
+    public class clsDirectorySearch : EventNotifier
     {
         #region "Constants"
 
@@ -73,7 +73,7 @@ namespace AnalysisManagerBase
         /// <param name="datasetName"></param>
         /// <param name="debugLevel"></param>
         /// <param name="auroraAvailable"></param>
-        public clsFolderSearch(
+        public clsDirectorySearch(
             clsFileCopyUtilities fileCopyUtilities,
             IJobParams jobParams,
             clsMyEMSLUtilities myEmslUtilities,

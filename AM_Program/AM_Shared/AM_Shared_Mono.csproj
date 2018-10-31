@@ -98,7 +98,7 @@
     <Compile Include="clsDBTask.cs" />
     <Compile Include="clsDotNetZipTools.cs" />
     <Compile Include="clsFileCopyUtilities.cs" />
-    <Compile Include="clsFolderSearch.cs" />
+    <Compile Include="clsDirectorySearch.cs" />
     <Compile Include="clsFormattedXMLWriter.cs" />
     <Compile Include="clsGlobal.cs" />
     <Compile Include="clsLoggerBase.cs" />

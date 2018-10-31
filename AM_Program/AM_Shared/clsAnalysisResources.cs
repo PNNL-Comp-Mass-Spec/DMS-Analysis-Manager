@@ -505,7 +505,7 @@ namespace AnalysisManagerBase
         /// <remarks>
         /// Update the dataset name using property DatasetName
         /// because we also need to propagate that change
-        /// into FolderSearch and FileSearch
+        /// into DirectorySearch and FileSearch
         /// </remarks>
         private string mDatasetName;
 
@@ -583,7 +583,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Dataset name
         /// </summary>
-        /// <remarks>Also updates FolderSearch and FileSearch</remarks>
+        /// <remarks>Also updates DirectorySearch and FileSearch</remarks>
         public string DatasetName
         {
             get => mDatasetName;
@@ -591,8 +591,8 @@ namespace AnalysisManagerBase
             {
                 mDatasetName = value;
 
-                if (FolderSearch != null)
-                    FolderSearch.DatasetName = mDatasetName;
+                if (DirectorySearch != null)
+                    DirectorySearch.DatasetName = mDatasetName;
 
                 if (FileSearch != null)
                     FileSearch.DatasetName = mDatasetName;
@@ -608,7 +608,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Directory search utility
         /// </summary>
-        public clsFolderSearch FolderSearch { get; private set; }
+        public clsDirectorySearch DirectorySearch { get; private set; }
 
         /// <summary>
         /// File search utility
@@ -624,10 +624,10 @@ namespace AnalysisManagerBase
             set
             {
                 mMyEMSLSearchDisabled = value;
-                if (FolderSearch != null)
+                if (DirectorySearch != null)
                 {
-                    if (mMyEMSLSearchDisabled && !FolderSearch.MyEMSLSearchDisabled)
-                        FolderSearch.MyEMSLSearchDisabled = true;
+                    if (mMyEMSLSearchDisabled && !DirectorySearch.MyEMSLSearchDisabled)
+                        DirectorySearch.MyEMSLSearchDisabled = true;
                 }
 
                 if (FileSearch != null)
@@ -738,15 +738,15 @@ namespace AnalysisManagerBase
 
             var myEmslAvailable = mMgrParams.GetParam("MyEmslAvailable", true);
 
-            FolderSearch = new clsFolderSearch(
+            DirectorySearch = new clsDirectorySearch(
                 mFileCopyUtilities, mJobParams, mMyEMSLUtilities,
                 mDatasetName, mDebugLevel, mAuroraAvailable);
-            RegisterEvents(FolderSearch);
+            RegisterEvents(DirectorySearch);
 
-            FolderSearch.MyEMSLSearchDisabled = mMyEMSLSearchDisabled || !myEmslAvailable;
+            DirectorySearch.MyEMSLSearchDisabled = mMyEMSLSearchDisabled || !myEmslAvailable;
 
             FileSearch = new clsFileSearch(
-                mFileCopyUtilities, FolderSearch, mMyEMSLUtilities,
+                mFileCopyUtilities, DirectorySearch, mMyEMSLUtilities,
                 mMgrParams, mJobParams, mDatasetName, mDebugLevel, mWorkDir, mAuroraAvailable);
 
             RegisterEvents(FileSearch);
@@ -1587,7 +1587,7 @@ namespace AnalysisManagerBase
                                       bool retrievingInstrumentDataDir, out bool validDirectoryFound, bool assumeUnpurged,
                                       out string directoryNotFoundMessage)
         {
-            var directoryPath = FolderSearch.FindValidFolder(
+            var directoryPath = DirectorySearch.FindValidFolder(
                 datasetName, fileNameToFind, directoryNameToFind, maxAttempts, logDirectoryNotFound,
                 retrievingInstrumentDataDir, assumeUnpurged, out validDirectoryFound, out directoryNotFoundMessage);
 

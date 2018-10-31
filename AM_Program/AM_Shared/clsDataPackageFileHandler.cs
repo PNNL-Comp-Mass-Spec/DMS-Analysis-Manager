@@ -1318,7 +1318,7 @@ namespace AnalysisManagerBase
                 }
             }
 
-            var rawFilePath = mAnalysisResources.FolderSearch.FindDatasetFileOrDirectory(out var isDirectory, retrievalOptions.AssumeInstrumentDataUnpurged);
+            var rawFilePath = mAnalysisResources.DirectorySearch.FindDatasetFileOrDirectory(out var isDirectory, retrievalOptions.AssumeInstrumentDataUnpurged);
 
 
             if (!string.IsNullOrEmpty(rawFilePath))
