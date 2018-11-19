@@ -378,8 +378,22 @@ namespace AnalysisManagerResultsXferPlugin
                 movingLocalFiles = true;
             }
 
+            var inputDirectory = mJobParams.GetParam("InputFolderName");
+            if (string.IsNullOrWhiteSpace(inputDirectory))
+            {
+                LogError("Results transfer failed, job parameter InputFolderName is empty; reset the transfer step to state 1 in T_Job_Steps");
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            var datasetDirectoryName = mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_DATASET_FOLDER_NAME);
+            if (string.IsNullOrWhiteSpace(datasetDirectoryName))
+            {
+                LogError("Results transfer failed, job parameter DatasetFolderName is empty; cannot continue");
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+
             // Verify input folder exists in storage server xfer folder
-            var folderToMove = Path.Combine(transferFolderPath, mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_DATASET_FOLDER_NAME), mJobParams.GetParam("InputFolderName"));
+            var folderToMove = Path.Combine(transferFolderPath, datasetDirectoryName, inputDirectory);
 
             if (!Directory.Exists(folderToMove))
             {
@@ -460,7 +474,7 @@ namespace AnalysisManagerResultsXferPlugin
                 LogDebug("Dataset directory path: " + datasetDir);
             }
 
-            var targetDir = Path.Combine(datasetDir, mJobParams.GetParam("inputfoldername"));
+            var targetDir = Path.Combine(datasetDir, inputDirectory);
 
             // Determine if output folder already exists on storage server
             if (Directory.Exists(targetDir))
