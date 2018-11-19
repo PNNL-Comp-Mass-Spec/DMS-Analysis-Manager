@@ -1340,15 +1340,32 @@ namespace AnalysisManagerMzRefineryPlugIn
                 LogError(mConsoleOutputErrorMsg);
                 if (mConsoleOutputErrorMsg.Contains("No high-resolution data in input file"))
                 {
+                    mMessage = string.Empty;
                     LogError("No high-resolution data in input file; cannot use MzRefinery on this dataset");
                     mUnableToUseMzRefinery = true;
                     mForceGeneratePPMErrorPlots = false;
                 }
                 else if (mConsoleOutputErrorMsg.Contains("No significant peak (ppm error histogram) found"))
                 {
+                    mMessage = string.Empty;
                     LogError("Significant peak not found in the ppm error histogram; cannot use MzRefinery on this dataset");
                     mUnableToUseMzRefinery = true;
                     mForceGeneratePPMErrorPlots = true;
+                }
+                else
+                {
+                    // ReSharper disable once CommentTypo
+                    // Look for a match to Less than 100 (0) values in identfile that pass the threshold
+
+                    var thresholdWarning = new Regex("Less than 100 .+ values in identfile .+ pass the threshold");
+
+                    if (thresholdWarning.IsMatch(mConsoleOutputErrorMsg))
+                    {
+                        mMessage = string.Empty;
+                        LogError("Not enough confidently identified PSMs; cannot use MzRefinery on this dataset");
+                        mUnableToUseMzRefinery = true;
+                        mForceGeneratePPMErrorPlots = false;
+                    }
                 }
             }
 
