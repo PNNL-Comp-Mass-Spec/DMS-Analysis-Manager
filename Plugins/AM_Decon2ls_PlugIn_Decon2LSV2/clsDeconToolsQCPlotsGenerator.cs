@@ -166,7 +166,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
         private void ProcessMSFileOrFolderThread()
         {
-            mSuccess = mMSFileInfoScanner.ProcessMSFileOrFolder(mInputFilePath, mOutputFolderPath);
+            mSuccess = mMSFileInfoScanner.ProcessMSFileOrDirectory(mInputFilePath, mOutputFolderPath);
         }
 
     }
