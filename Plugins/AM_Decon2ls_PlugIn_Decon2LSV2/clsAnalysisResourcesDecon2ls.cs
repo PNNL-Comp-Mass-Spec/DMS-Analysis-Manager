@@ -116,6 +116,8 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 paramFileName = paramFileNameOverride;
             }
 
+            // ParmFileStoragePath has the parameter file storage path for the primary step tool of this job script
+            // ParamFileStoragePath has the parameter file storage path for the current step tool
             var paramFileStoragePath = mJobParams.GetParam("ParamFileStoragePath");
 
             if (!FileSearch.RetrieveFile(paramFileName, paramFileStoragePath))

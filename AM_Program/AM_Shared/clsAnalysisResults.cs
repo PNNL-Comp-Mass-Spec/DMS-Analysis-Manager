@@ -1,4 +1,3 @@
-
 using System;
 using System.IO;
 
@@ -74,6 +73,7 @@ namespace AnalysisManagerBase
         /// <param name="destPath">The destination directory path.</param>
         /// <param name="overwrite">True if the destination file can be overwritten; otherwise, false.</param>
         /// <remarks></remarks>
+        // ReSharper disable once UnusedMember.Global
         public void CopyDirectory(string sourcePath, string destPath, bool overwrite)
         {
             CopyDirectory(sourcePath, destPath, overwrite, maxRetryCount: DEFAULT_RETRY_COUNT, continueOnError: true);
@@ -108,7 +108,7 @@ namespace AnalysisManagerBase
                 throw new DirectoryNotFoundException(message);
             }
 
-            // If destination subdirectory's parent subdirectory does not exist, throw an exception
+            // If the parent subdirectory of the destination subdirectory does not exist, throw an exception
             if (targetDirectory.Parent == null)
             {
                 message = "Unable to determine the parent directory of " + targetDirectory.FullName;
@@ -185,6 +185,7 @@ namespace AnalysisManagerBase
         /// <param name="destFilePath">Destination file path</param>
         /// <param name="overwrite">True to overwrite if it exists</param>
         /// <remarks>Tries up to 3 times, waiting 15 seconds between attempts</remarks>
+        // ReSharper disable once UnusedMember.Global
         public void CopyFileWithRetry(string srcFilePath, string destFilePath, bool overwrite)
         {
             const bool increaseHoldoffOnEachRetry = false;
@@ -198,6 +199,7 @@ namespace AnalysisManagerBase
         /// <param name="destFilePath">Destination file path</param>
         /// <param name="overwrite">True to overwrite if it exists</param>
         /// <param name="increaseHoldoffOnEachRetry"></param>
+        // ReSharper disable once UnusedMember.Global
         public void CopyFileWithRetry(string srcFilePath, string destFilePath, bool overwrite, bool increaseHoldoffOnEachRetry)
         {
             CopyFileWithRetry(srcFilePath, destFilePath, overwrite, DEFAULT_RETRY_COUNT, DEFAULT_RETRY_HOLDOFF_SEC, increaseHoldoffOnEachRetry);
