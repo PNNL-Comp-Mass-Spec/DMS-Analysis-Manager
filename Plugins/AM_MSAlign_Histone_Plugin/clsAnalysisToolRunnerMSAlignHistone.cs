@@ -589,9 +589,12 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                         {
                             // If this is a bruker dataset, we need to make sure that the value for this entry is not FILE
                             // The reason is that the mzXML file created by Bruker's compass program does not include the scantype information (CID, ETD, etc.)
-                            var toolName = mJobParams.GetParam("ToolName");
 
-                            if (toolName == "MSAlign_Bruker" || toolName == "MSAlign_Histone_Bruker")
+                            // The ToolName job parameter holds the name of the job script we are executing
+                            var scriptName = mJobParams.GetParam("ToolName");
+
+                            if (scriptName.StartsWith("MSAlign_Bruker", StringComparison.OrdinalIgnoreCase) ||
+                                scriptName.StartsWith("MSAlign_Histone", StringComparison.OrdinalIgnoreCase))
                             {
                                 if (value.ToUpper() == "FILE")
                                 {

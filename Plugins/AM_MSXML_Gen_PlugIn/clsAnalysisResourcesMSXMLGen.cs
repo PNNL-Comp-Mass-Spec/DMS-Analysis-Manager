@@ -29,8 +29,10 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
                 currentTask = "Determine RawDataType";
 
-                var toolName = mJobParams.GetParam("ToolName");
-                var proMexBruker = toolName.StartsWith("ProMex_Bruker", StringComparison.OrdinalIgnoreCase);
+                // The ToolName job parameter holds the name of the job script we are executing
+                var scriptName = mJobParams.GetParam("ToolName");
+
+                var proMexBruker = scriptName.StartsWith("ProMex_Bruker", StringComparison.OrdinalIgnoreCase);
 
                 if (proMexBruker)
                 {

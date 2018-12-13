@@ -25,7 +25,9 @@ namespace AnalysisManagerMasicPlugin
             // Get input data file
             bool createStoragePathInfoOnly;
             var rawDataType = mJobParams.GetParam("rawDataType");
-            var toolName = mJobParams.GetParam("ToolName");
+
+            // The ToolName job parameter holds the name of the job script we are executing
+            var scriptName = mJobParams.GetParam("ToolName");
 
             switch (rawDataType.ToLower())
             {
@@ -60,7 +62,7 @@ namespace AnalysisManagerMasicPlugin
             }
 
             if (clsGlobal.IsMatch(rawDataType, RAW_DATA_TYPE_DOT_RAW_FILES) &&
-                toolName.StartsWith("MASIC_Finnigan", StringComparison.OrdinalIgnoreCase))
+                scriptName.StartsWith("MASIC_Finnigan", StringComparison.OrdinalIgnoreCase))
             {
                 var rawFileName = DatasetName + ".raw";
                 var inputFilePath = ResolveStoragePath(mWorkDir, rawFileName);

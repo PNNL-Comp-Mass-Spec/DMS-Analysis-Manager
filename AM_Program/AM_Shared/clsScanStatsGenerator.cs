@@ -65,23 +65,23 @@ namespace AnalysisManagerBase
         /// Create the ScanStats file for the given dataset file
         /// </summary>
         /// <param name="inputFilePath">Dataset file</param>
-        /// <param name="outputFolderPath">Output folder</param>
+        /// <param name="outputDirectoryPath">Output directory</param>
         /// <returns></returns>
         /// <remarks>Will list DatasetID as 0 in the output file</remarks>
-        public bool GenerateScanStatsFile(string inputFilePath, string outputFolderPath)
+        public bool GenerateScanStatsFile(string inputFilePath, string outputDirectoryPath)
         {
-            return GenerateScanStatsFile(inputFilePath, outputFolderPath, 0);
+            return GenerateScanStatsFile(inputFilePath, outputDirectoryPath, 0);
         }
 
         /// <summary>
         /// Create the ScanStats file for the given dataset file
         /// </summary>
         /// <param name="inputFilePath">Dataset file</param>
-        /// <param name="outputFolderPath">Output folder</param>
+        /// <param name="outputDirectoryPath">Output directory</param>
         /// <param name="datasetID">Dataset ID</param>
         /// <returns></returns>
         /// <remarks></remarks>
-        public bool GenerateScanStatsFile(string inputFilePath, string outputFolderPath, int datasetID)
+        public bool GenerateScanStatsFile(string inputFilePath, string outputDirectoryPath, int datasetID)
         {
 
             try
@@ -110,7 +110,7 @@ namespace AnalysisManagerBase
                     mMSFileInfoScanner.ScanEnd = ScanEnd;
                 }
 
-                var success = mMSFileInfoScanner.ProcessMSFileOrFolder(inputFilePath, outputFolderPath);
+                var success = mMSFileInfoScanner.ProcessMSFileOrDirectory(inputFilePath, outputDirectoryPath);
 
                 if (success)
                     return true;

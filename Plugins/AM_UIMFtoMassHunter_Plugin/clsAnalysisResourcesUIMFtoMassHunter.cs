@@ -55,7 +55,9 @@ namespace AnalysisManagerUIMFtoMassHunterPlugin
 
                 // Retrieve the .UIMF file
                 var rawDataType = mJobParams.GetParam("rawDataType");
-                var toolName = mJobParams.GetParam("ToolName");
+
+                // The ToolName job parameter holds the name of the job script we are executing
+                // var scriptName = mJobParams.GetParam("ToolName");
 
                 switch (rawDataType.ToLower())
                 {

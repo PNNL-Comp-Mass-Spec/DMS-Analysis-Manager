@@ -4290,11 +4290,12 @@ namespace AnalysisManagerBase
                 mSummaryFile.Add("=====================================================================================");
                 mSummaryFile.Add(Environment.NewLine);
 
-                // Construct the Tool description (combination of Tool name and Step Tool name)
-                var toolName = mJobParams.GetParam("ToolName");
+                // The ToolName job parameter holds the name of the job script we are executing
+                var scriptName = mJobParams.GetParam("ToolName");
                 var stepTool = mJobParams.GetParam("StepTool");
 
-                var toolAndStepTool = clsAnalysisJob.GetJobToolDescription(toolName, stepTool, string.Empty);
+                // Construct the Tool description (combination of the script name and Step Tool name)
+                var toolAndStepTool = clsAnalysisJob.GetJobToolDescription(scriptName, stepTool, string.Empty);
 
                 // Add the data
                 mSummaryFile.Add("Job Number" + '\t' + Job);

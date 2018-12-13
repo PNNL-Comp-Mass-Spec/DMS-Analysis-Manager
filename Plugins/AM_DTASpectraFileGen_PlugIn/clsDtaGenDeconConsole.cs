@@ -32,7 +32,7 @@ namespace DTASpectraFileGen
 
         #region "Structures"
 
-        private struct udtDeconToolsStatusType
+        private struct DeconToolsStatusType
         {
             public int CurrentLCScan;       // LC Scan number or IMS Frame Number
             public float PercentComplete;
@@ -54,7 +54,7 @@ namespace DTASpectraFileGen
 
         #endregion
 
-        private udtDeconToolsStatusType mDeconConsoleStatus;
+        private DeconToolsStatusType mDeconConsoleStatus;
 
         /// <summary>
         /// Returns the default path to the DTA generator tool
@@ -235,12 +235,12 @@ namespace DTASpectraFileGen
 
             // Look for file Dataset*BAD_ERROR_log.txt
             // If it exists, an exception occurred
-            var diWorkdir = new DirectoryInfo(Path.Combine(mWorkDir));
+            var workDirInfo = new DirectoryInfo(Path.Combine(mWorkDir));
 
-            foreach (var fiFile in diWorkdir.GetFiles(mDatasetName + "*BAD_ERROR_log.txt"))
+            foreach (var badErrorLogFile in workDirInfo.GetFiles(mDatasetName + "*BAD_ERROR_log.txt"))
             {
                 mErrMsg = "Error running DeconTools; Bad_Error_log file exists";
-                OnErrorEvent(mErrMsg + ": " + fiFile.Name);
+                OnErrorEvent(mErrMsg + ": " + badErrorLogFile.Name);
                 blnSuccess = false;
                 mDeconConsoleFinishedDespiteProgRunnerError = false;
                 break;
@@ -285,15 +285,15 @@ namespace DTASpectraFileGen
                 OnProgressUpdate("... " + strProgressMessage + ", " + mProgress.ToString("0.0") + "% complete", mProgress);
             }
 
-            const int MAX_LOGFINISHED_WAITTIME_SECONDS = 120;
+            const int MAX_LOG_FINISHED_WAIT_TIME_SECONDS = 120;
             if (blnFinishedProcessing)
             {
                 // The DeconConsole Log File reports that the task is complete
-                // If it finished over MAX_LOGFINISHED_WAITTIME_SECONDS seconds ago, send an abort to the CmdRunner
+                // If it finished over MAX_LOG_FINISHED_WAIT_TIME_SECONDS seconds ago, send an abort to the CmdRunner
 
-                if (DateTime.Now.Subtract(dtFinishTime).TotalSeconds >= MAX_LOGFINISHED_WAITTIME_SECONDS)
+                if (DateTime.Now.Subtract(dtFinishTime).TotalSeconds >= MAX_LOG_FINISHED_WAIT_TIME_SECONDS)
                 {
-                    OnWarningEvent("Note: Log file reports finished over " + MAX_LOGFINISHED_WAITTIME_SECONDS + " seconds ago, " +
+                    OnWarningEvent("Note: Log file reports finished over " + MAX_LOG_FINISHED_WAIT_TIME_SECONDS + " seconds ago, " +
                                    "but the DeconConsole CmdRunner is still active");
 
                     mDeconConsoleFinishedDespiteProgRunnerError = true;

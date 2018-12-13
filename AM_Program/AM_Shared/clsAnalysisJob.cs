@@ -2074,18 +2074,19 @@ namespace AnalysisManagerBase
         public string GetCurrentJobToolDescription()
         {
 
-            var toolName = GetParam("ToolName");
+            // The ToolName job parameter holds the name of the job script we are executing
+            var scriptName = GetParam("ToolName");
 
             var stepTool = GetParam("StepTool");
 
             var stepNumber = GetParam(STEP_PARAMETERS_SECTION, "Step");
 
-            return GetJobToolDescription(toolName, stepTool, stepNumber);
+            return GetJobToolDescription(scriptName, stepTool, stepNumber);
 
         }
 
         /// <summary>
-        /// Generate a description of the tool, step tool, and optionally the step number for the current analysis job
+        /// Generate a description of the tool (aks Pipeline Script), step tool, and optionally the step number for the current analysis job
         /// Example tool names are "Sequest, Step 3" or "DTA_Gen (Sequest), Step 1" or "DataExtractor (XTandem), Step 4"
         /// </summary>
         /// <param name="toolName">Tool name</param>

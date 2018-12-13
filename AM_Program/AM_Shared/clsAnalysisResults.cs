@@ -383,7 +383,7 @@ namespace AnalysisManagerBase
                 writer.WriteLine("ResultsFolderName" + '\t' + resultsFolderName);
                 writer.WriteLine("Manager" + '\t' + mMgrParams.ManagerName);
 
-                if ((mJobParams != null))
+                if (mJobParams != null)
                 {
                     writer.WriteLine("JobToolDescription" + '\t' + mJobParams.GetCurrentJobToolDescription());
                     writer.WriteLine("Job" + '\t' + mJobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Job"));
@@ -391,8 +391,9 @@ namespace AnalysisManagerBase
                 }
 
                 writer.WriteLine("Date" + '\t' + DateTime.Now);
-                if ((mJobParams != null))
+                if (mJobParams != null)
                 {
+                    // The ToolName job parameter holds the name of the job script we are executing
                     writer.WriteLine("Tool" + '\t' + mJobParams.GetParam("ToolName"));
                     writer.WriteLine("StepTool" + '\t' + mJobParams.GetParam("StepTool"));
                     writer.WriteLine("Dataset" + '\t' + mJobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_DATASET_NAME));

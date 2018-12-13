@@ -152,8 +152,8 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             try
             {
                 // Dynamically load the specified class from dllFilePath
-                var assem = System.Reflection.Assembly.LoadFrom(dllFilePath);
-                var dllType = assem.GetType(className, false, true);
+                var assembly = System.Reflection.Assembly.LoadFrom(dllFilePath);
+                var dllType = assembly.GetType(className, false, true);
                 obj = Activator.CreateInstance(dllType);
             }
             catch (Exception ex)

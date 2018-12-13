@@ -20,7 +20,7 @@ namespace AnalysisManagerMSGFDBPlugIn
     {
         #region "Constants and Enums"
 
-        private enum eInputFileFormatTypes
+        private enum InputFileFormatTypes
         {
             Unknown = 0,
             CDTA = 1,
@@ -341,15 +341,15 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             switch (eInputFileFormat)
             {
-                case eInputFileFormatTypes.CDTA:
+                case InputFileFormatTypes.CDTA:
                     inputFileName = Dataset + clsAnalysisResources.CDTA_EXTENSION;
                     inputFileDescription = "CDTA (_dta.txt) file";
                     break;
-                case eInputFileFormatTypes.MzML:
+                case InputFileFormatTypes.MzML:
                     inputFileName = Dataset + clsAnalysisResources.DOT_MZML_EXTENSION;
                     inputFileDescription = ".mzML file";
                     break;
-                case eInputFileFormatTypes.MzXML:
+                case InputFileFormatTypes.MzXML:
                     inputFileName = Dataset + clsAnalysisResources.DOT_MZXML_EXTENSION;
                     inputFileDescription = ".mzXML file";
                     break;
@@ -788,7 +788,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// </summary>
         /// <param name="eInputFileFormat">Input file format enum</param>
         /// <param name="assumedScanType">Assumed scan type (only applicable for CDTA files)</param>
-        private void DetermineInputFileFormat(out eInputFileFormatTypes eInputFileFormat, out string assumedScanType)
+        private void DetermineInputFileFormat(out InputFileFormatTypes eInputFileFormat, out string assumedScanType)
         {
             DetermineInputFileFormat(false, out eInputFileFormat, out assumedScanType, out _);
         }
@@ -808,30 +808,31 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <returns></returns>
         private CloseOutType DetermineInputFileFormat(
             bool validateCdtaAndCreateScanTypeFile,
-            out eInputFileFormatTypes eInputFileFormat,
+            out InputFileFormatTypes eInputFileFormat,
             out string assumedScanType,
             out string scanTypeFilePath)
         {
             assumedScanType = string.Empty;
 
+            // The ToolName job parameter holds the name of the job script we are executing
             var scriptName = mJobParams.GetParam("ToolName");
             scanTypeFilePath = string.Empty;
 
             if (scriptName.ToLower().Contains("mzxml") ||
                 scriptName.ToLower().Contains("msgfplus_bruker"))
             {
-                eInputFileFormat = eInputFileFormatTypes.MzXML;
+                eInputFileFormat = InputFileFormatTypes.MzXML;
                 return CloseOutType.CLOSEOUT_SUCCESS;
             }
 
             if (scriptName.ToLower().Contains("mzml") ||
                 scriptName.IndexOf("DeconMSn_MzRefinery", StringComparison.OrdinalIgnoreCase) > 0)
             {
-                eInputFileFormat = eInputFileFormatTypes.MzML;
+                eInputFileFormat = InputFileFormatTypes.MzML;
                 return CloseOutType.CLOSEOUT_SUCCESS;
             }
 
-            eInputFileFormat = eInputFileFormatTypes.CDTA;
+            eInputFileFormat = InputFileFormatTypes.CDTA;
             assumedScanType = mJobParams.GetParam("AssumedScanType");
 
             if (!validateCdtaAndCreateScanTypeFile)
@@ -1191,7 +1192,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 DetermineInputFileFormat(out var eInputFileFormat, out var assumedScanType);
 
-                if (eInputFileFormat == eInputFileFormatTypes.CDTA && string.IsNullOrWhiteSpace(assumedScanType))
+                if (eInputFileFormat == InputFileFormatTypes.CDTA && string.IsNullOrWhiteSpace(assumedScanType))
                 {
                     // The ScanType.txt file was created; retrieve it
                     filesToRetrieve.Add(Dataset + "_ScanType.txt");

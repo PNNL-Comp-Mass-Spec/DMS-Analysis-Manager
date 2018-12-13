@@ -618,9 +618,11 @@ namespace AnalysisManagerMSAlignPlugIn
                         {
                             // If this is a bruker dataset, we need to make sure that the value for this entry is not FILE
                             // The reason is that the mzXML file created by Bruker's compass program does not include the ScanType information (CID, ETD, etc.)
-                            var strToolName = mJobParams.GetParam("ToolName");
 
-                            if (strToolName == "MSAlign_Bruker")
+                            // The ToolName job parameter holds the name of the job script we are executing
+                            var scriptName = mJobParams.GetParam("ToolName");
+
+                            if (scriptName == "MSAlign_Bruker")
                             {
                                 if (strValue.ToUpper() == "FILE")
                                 {
