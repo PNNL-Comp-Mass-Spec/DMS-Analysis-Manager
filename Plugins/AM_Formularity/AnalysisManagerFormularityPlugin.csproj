@@ -50,6 +50,7 @@
     <Compile Include="clsAnalysisToolRunnerFormularity.cs" />
     <Compile Include="clsPdfPageInfo.cs" />
     <Compile Include="clsPngToPdfConverter.cs" />
+    <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

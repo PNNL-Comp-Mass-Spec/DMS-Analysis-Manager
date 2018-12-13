@@ -50,6 +50,7 @@
   <ItemGroup>
     <Compile Include="clsAnalysisResourcesProMex.cs" />
     <Compile Include="clsAnalysisToolRunnerProMex.cs" />
+    <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

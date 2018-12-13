@@ -61,6 +61,7 @@
     <Compile Include="clsAnalysisToolRunnerDecon2ls.cs" />
     <Compile Include="clsDeconToolsQCPlotsGenerator.cs" />
     <Compile Include="clsXMLParamFileReader.cs" />
+    <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

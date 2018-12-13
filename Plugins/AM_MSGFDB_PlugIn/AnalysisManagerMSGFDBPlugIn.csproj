@@ -69,6 +69,7 @@
     <Compile Include="clsCreateMSGFDBSuffixArrayFiles.cs" />
     <Compile Include="clsMSGFPlusUtils.cs" />
     <Compile Include="clsScanTypeFileCreator.cs" />
+    <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
