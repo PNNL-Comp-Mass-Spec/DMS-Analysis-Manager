@@ -19,6 +19,11 @@ namespace AnalysisManagerDecon2lsV2PlugIn
         /// </summary>
         public const string JOB_PARAM_PROCESSMSMS_AUTO_ENABLED = "DeconTools_ProcessMsMs_Auto_Enabled";
 
+        /// <summary>
+        /// Job parameter to track the DeconTools parameter file name when DeconTools is not the primary tool for the pipeline script
+        /// </summary>
+        public const string JOB_PARAM_DECON_TOOLS_PARAMETER_FILE_NAME = "DeconTools_ParameterFileName";
+
         #region "Methods"
 
         /// <summary>
@@ -82,9 +87,36 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            // Retrieve the parameter file
-            var paramFileName = mJobParams.GetParam("ParmFileName");
-            var paramFileStoragePath = mJobParams.GetParam("ParmFileStoragePath");
+            // The ToolName job parameter holds the name of the job script we are executing
+            var scriptName = mJobParams.GetParam("ToolName");
+
+            string paramFileNameOverride;
+            if (scriptName.StartsWith("Formularity", StringComparison.OrdinalIgnoreCase))
+            {
+                paramFileNameOverride = mJobParams.GetParam("DeconToolsParameterFile");
+                if (!string.IsNullOrWhiteSpace(paramFileNameOverride))
+                {
+                    mJobParams.AddAdditionalParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION,
+                                                      JOB_PARAM_DECON_TOOLS_PARAMETER_FILE_NAME,
+                                                      paramFileNameOverride);
+                }
+            }
+            else
+            {
+                paramFileNameOverride = "";
+            }
+
+            string paramFileName;
+            if (string.IsNullOrWhiteSpace(paramFileNameOverride))
+            {
+                paramFileName = mJobParams.GetParam("ParmFileName");
+            }
+            else
+            {
+                paramFileName = paramFileNameOverride;
+            }
+
+            var paramFileStoragePath = mJobParams.GetParam("ParamFileStoragePath");
 
             if (!FileSearch.RetrieveFile(paramFileName, paramFileStoragePath))
             {

@@ -274,7 +274,8 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 if (!File.Exists(isosFilePath))
                 {
                     // Do not treat this as a fatal error
-                    // It's possible that this analysis job used a parameter file that only picks peaks but doesn't deisotope, e.g. PeakPicking_NonThresholded_PeakBR2_SN7.xml
+                    // It's possible that this analysis job used a parameter file that only picks peaks but doesn't deisotope,
+                    //   e.g. PeakPicking_NonThresholded_PeakBR2_SN7.xml
                     return CloseOutType.CLOSEOUT_SUCCESS;
                 }
 
@@ -640,7 +641,23 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
         private CloseOutType RunDecon2Ls()
         {
-            var paramFilePath = Path.Combine(mWorkDir, mJobParams.GetParam("ParmFileName"));
+            var paramFileNameOverride = mJobParams.GetJobParameter(
+                clsAnalysisJob.JOB_PARAMETERS_SECTION,
+                clsAnalysisResourcesDecon2ls.JOB_PARAM_DECON_TOOLS_PARAMETER_FILE_NAME,
+                string.Empty);
+
+            string paramFileName;
+            if (string.IsNullOrWhiteSpace(paramFileNameOverride))
+            {
+                paramFileName = mJobParams.GetParam("ParmFileName");
+            }
+            else
+            {
+                paramFileName = paramFileNameOverride;
+            }
+
+            var paramFilePath = Path.Combine(mWorkDir, paramFileName);
+
             var decon2LSError = false;
 
             // Cache the parameters in the DeconTools parameter file
