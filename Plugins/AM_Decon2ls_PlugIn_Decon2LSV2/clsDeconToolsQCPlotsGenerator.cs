@@ -9,26 +9,23 @@ namespace AnalysisManagerDecon2lsV2PlugIn
         private const int MAX_RUNTIME_HOURS = 5;
 
         private readonly int mDebugLevel;
-        private string mErrorMessage;
         private readonly string mMSFileInfoScannerDLLPath;
 
         private MSFileInfoScannerInterfaces.iMSFileInfoScanner mMSFileInfoScanner;
-        private int mMSFileInfoScannerErrorCount;
-
         private string mInputFilePath;
         private string mOutputFolderPath;
         private bool mSuccess;
 
-        public string ErrorMessage => mErrorMessage;
+        public string ErrorMessage { get; private set; }
 
-        public int MSFileInfoScannerErrorCount => mMSFileInfoScannerErrorCount;
+        public int MSFileInfoScannerErrorCount { get; private set; }
 
         public clsDeconToolsQCPlotsGenerator(string msFileInfoScannerDLLPath, int debugLevel)
         {
             mMSFileInfoScannerDLLPath = msFileInfoScannerDLLPath;
             mDebugLevel = debugLevel;
 
-            mErrorMessage = string.Empty;
+            ErrorMessage = string.Empty;
         }
 
         public bool CreateQCPlots(string inputFilePath, string outputFolderPath)
@@ -36,7 +33,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
             try
             {
-                mMSFileInfoScannerErrorCount = 0;
+                MSFileInfoScannerErrorCount = 0;
 
                 // Initialize the MSFileScanner class
                 mMSFileInfoScanner = LoadMSFileInfoScanner(mMSFileInfoScannerDLLPath);
@@ -91,18 +88,18 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
                 if (!mSuccess)
                 {
-                    mErrorMessage = "Error generating QC Plots using " + inputFilePath;
+                    ErrorMessage = "Error generating QC Plots using " + inputFilePath;
                     var msgAddnl = mMSFileInfoScanner.GetErrorMessage();
 
                     if (!string.IsNullOrEmpty(msgAddnl))
                     {
-                        mErrorMessage = mErrorMessage + ": " + msgAddnl;
+                        ErrorMessage = ErrorMessage + ": " + msgAddnl;
                     }
                 }
             }
             catch (Exception ex)
             {
-                mErrorMessage = "Exception in CreateQCPlots: " + ex.Message;
+                ErrorMessage = "Exception in CreateQCPlots: " + ex.Message;
                 return false;
             }
 
