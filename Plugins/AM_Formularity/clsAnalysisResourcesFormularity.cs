@@ -18,8 +18,15 @@ namespace AnalysisManagerFormularityPlugin
     /// <summary>
     /// Retrieve resources for the Formularity plugin
     /// </summary>
-    class clsAnalysisResourcesFormularity : clsAnalysisResources
+    public class clsAnalysisResourcesFormularity : clsAnalysisResources
     {
+
+        public const string JOB_PARAM_FORMULARITY_CALIBRATION_PEAKS_FILE = "CalibrationPeaksFile";
+
+        /// <summary>
+        /// Job parameter used to track the input file for formularity
+        /// </summary>
+        public const string JOB_PARAM_FORMULARITY_DATASET_SCANS_FILE = "Formularity_DatasetScansFile";
 
         /// <summary>
         /// Retrieve required files
@@ -103,6 +110,11 @@ namespace AnalysisManagerFormularityPlugin
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
+                // The June 2018 version of Formularity created a _VerifiedNoDuplicates file after it validated data loaded from the CIA database
+                // The December 2018 version skips this validation
+
+                /*
+
                 // Also copy the _VerifiedNoDuplicates.txt file if it exists
                 var noDuplicatesFile = Path.GetFileNameWithoutExtension(databaseFileName) + "_VerifiedNoDuplicates.txt";
                 var remoteNoDuplicatesFile = new FileInfo(Path.Combine(sourceDirectory.FullName, noDuplicatesFile));
@@ -113,15 +125,20 @@ namespace AnalysisManagerFormularityPlugin
                     remoteNoDuplicatesFile.CopyTo(localNoDuplicatesFile.FullName, true);
                 }
 
+                */
+
                 var rawDataType = mJobParams.GetParam("rawDataType");
+
+                // The ToolName job parameter holds the name of the job script we are executing
+                var scriptName = mJobParams.GetParam("ToolName");
 
                 switch (rawDataType.ToLower())
                 {
                     case RAW_DATA_TYPE_DOT_RAW_FILES:
                         // Processing a Thermo .raw file
-                        // Retrieve the norm.tsv file created by the ThermoPeakDataExporter step
+                        // Retrieve the .tsv file created by the ThermoPeakDataExporter step
                         currentTask = "Retrieve the ThermoPeakDataExporter .tsv file";
-                        var tsvFileName = DatasetName + "_norm.tsv";
+                        var tsvFileName = DatasetName + ".tsv";
 
                         if (!FileSearch.FindAndRetrieveMiscFiles(tsvFileName, false))
                         {
@@ -129,20 +146,63 @@ namespace AnalysisManagerFormularityPlugin
                             return CloseOutType.CLOSEOUT_FAILED;
                         }
                         mJobParams.AddResultFileToSkip(tsvFileName);
+                        mJobParams.AddAdditionalParameter(
+                            clsAnalysisJob.STEP_PARAMETERS_SECTION,
+                            JOB_PARAM_FORMULARITY_DATASET_SCANS_FILE,
+                            tsvFileName);
+
                         break;
+
                     case RAW_DATA_TYPE_BRUKER_FT_FOLDER:
                         // Processing a .D directory
-                        // Retrieve the zip file that has the XML files from the Bruker_Data_Analysis step
-                        currentTask = "Retrieve the Bruker_Data_Analysis _scans.zip file";
-                        var scansFileName = DatasetName + "_scans.zip";
 
-                        if (!FileSearch.FindAndRetrieveMiscFiles(scansFileName, false))
+                        if (scriptName.EndsWith("_Decon", StringComparison.OrdinalIgnoreCase))
                         {
-                            // Errors should have already been logged
+                            // Formularity_Bruker_Decon
+                            // The .D directory was processed by DeconTools to create a _peaks.txt file
+                            // Retrieve the _peaks.zip file
+
+                            currentTask = "Retrieve the DeconTools _peaks.zip file";
+                            var peaksFileName = DatasetName + "_peaks.zip";
+
+                            if (!FileSearch.FindAndRetrieveMiscFiles(peaksFileName, false))
+                            {
+                                // Errors should have already been logged
+                                return CloseOutType.CLOSEOUT_FAILED;
+                            }
+                            mJobParams.AddResultFileToSkip(peaksFileName);
+                            mJobParams.AddAdditionalParameter(
+                                clsAnalysisJob.STEP_PARAMETERS_SECTION,
+                                JOB_PARAM_FORMULARITY_DATASET_SCANS_FILE,
+                                peaksFileName);
+
+                            break;
+
+                        }
+                        else if (scriptName.Equals("Formularity_Bruker", StringComparison.OrdinalIgnoreCase))
+                        {
+                            // Retrieve the zip file that has the XML files from the Bruker_Data_Analysis step
+                            currentTask = "Retrieve the Bruker_Data_Analysis _scans.zip file";
+                            var scansFileName = DatasetName + "_scans.zip";
+
+                            if (!FileSearch.FindAndRetrieveMiscFiles(scansFileName, false))
+                            {
+                                // Errors should have already been logged
+                                return CloseOutType.CLOSEOUT_FAILED;
+                            }
+                            mJobParams.AddResultFileToSkip(scansFileName);
+                            mJobParams.AddAdditionalParameter(
+                                clsAnalysisJob.STEP_PARAMETERS_SECTION,
+                                JOB_PARAM_FORMULARITY_DATASET_SCANS_FILE,
+                                scansFileName);
+
+                            break;
+                        }
+                        else
+                        {
+                            LogError("Unsupported pipeline script for Formularity: " + scriptName);
                             return CloseOutType.CLOSEOUT_FAILED;
                         }
-                        mJobParams.AddResultFileToSkip(scansFileName);
-                        break;
 
                     default:
                         LogError("This tool is not compatible with datasets of type " + rawDataType);
@@ -231,10 +291,10 @@ namespace AnalysisManagerFormularityPlugin
                         return true;
                     }
 
-                    var calibrationPeaksFileName = clsXMLUtils.GetXmlValue(calibrationSection, "CalibrationPeaksFile");
+                    var calibrationPeaksFileName = clsXMLUtils.GetXmlValue(calibrationSection, "RefPeakFileName");
                     if (string.IsNullOrWhiteSpace(calibrationPeaksFileName))
                     {
-                        LogError("Calibration is enabled in the Formularity parameter file, but CalibrationPeaksFile is missing or empty");
+                        LogError("Calibration is enabled in the Formularity parameter file, but RefPeakFileName is missing or empty");
                         return false;
                     }
 
@@ -258,7 +318,11 @@ namespace AnalysisManagerFormularityPlugin
                     calibrationPeaksFile.CopyTo(localCalFilePath, true);
 
                     mJobParams.AddResultFileToSkip(calibrationPeaksFileName);
-                    mJobParams.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "CalibrationPeaksFile", calibrationPeaksFileName);
+                    mJobParams.AddAdditionalParameter(
+                        clsAnalysisJob.STEP_PARAMETERS_SECTION,
+                        JOB_PARAM_FORMULARITY_CALIBRATION_PEAKS_FILE,
+                        calibrationPeaksFileName);
+
                 }
 
                 return true;

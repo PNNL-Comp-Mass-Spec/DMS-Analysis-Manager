@@ -79,20 +79,52 @@ namespace AnalysisManagerFormularityPlugin
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                // Unzip the XML files
-                var compressedXMLFiles = Path.Combine(mWorkDir, mDatasetName + "_scans.zip");
-                var unzipSuccess = UnzipFile(compressedXMLFiles, mWorkDir);
-                if (!unzipSuccess)
+                // Unzip the input files (if required)
+                var datasetScansFile = mJobParams.GetJobParameter(
+                    clsAnalysisJob.STEP_PARAMETERS_SECTION,
+                    clsAnalysisResourcesFormularity.JOB_PARAM_FORMULARITY_DATASET_SCANS_FILE,
+                    string.Empty);
+
+                string datasetScansFilePath;
+                if (datasetScansFile.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
                 {
-                    if (string.IsNullOrEmpty(mMessage))
+                    var zipFilePath = Path.Combine(mWorkDir, datasetScansFile);
+                    var unzipSuccess = UnzipFile(zipFilePath, mWorkDir);
+                    if (!unzipSuccess)
                     {
-                        mMessage = "Unknown error extracting the XML spectra files";
+                        if (string.IsNullOrEmpty(mMessage))
+                        {
+                            mMessage = "Unknown error unzipping " + Path.GetFileName(datasetScansFile);
+                        }
+                        return CloseOutType.CLOSEOUT_FAILED;
                     }
-                    return CloseOutType.CLOSEOUT_FAILED;
+
+                    if (datasetScansFile.EndsWith("_scans.zip", StringComparison.OrdinalIgnoreCase))
+                    {
+                        // The .zip file had a series of .xml files; leave datasetScansFilePath blank
+                        datasetScansFilePath = string.Empty;
+                    }
+                    else
+                    {
+                        // datasetScansFile should have been named Dataset_peaks.zip
+                        // Thus, we want to process Dataset_peaks.txt
+                        datasetScansFilePath = Path.ChangeExtension(zipFilePath, ".txt");
+
+                        if (!File.Exists(datasetScansFilePath))
+                        {
+                            mMessage = "Dataset scans file not found in the working directory: " + Path.GetFileName(datasetScansFilePath);
+                            return CloseOutType.CLOSEOUT_FAILED;
+                        }
+                    }
+
+                }
+                else
+                {
+                    datasetScansFilePath = Path.Combine(mWorkDir, datasetScansFile);
                 }
 
                 // Process the data using Formularity
-                var processingSuccess = ProcessScansWithFormularity(progLoc, out var nothingToAlign);
+                var processingSuccess = ProcessScansWithFormularity(progLoc, datasetScansFilePath, out var nothingToAlign);
 
                 CloseOutType eReturnCode;
 
@@ -158,8 +190,8 @@ namespace AnalysisManagerFormularityPlugin
             {
                 var diWorkDir = new DirectoryInfo(mWorkDir);
 
-                foreach (var xmlFile in GetXmlSpectraFiles(diWorkDir, out _))
-                    xmlFile.Delete();
+                foreach (var spectrumFile in GetXmlSpectraFiles(diWorkDir, out _))
+                    spectrumFile.Delete();
 
             }
             catch (Exception)
@@ -418,8 +450,8 @@ namespace AnalysisManagerFormularityPlugin
         private List<FileInfo> GetXmlSpectraFiles(DirectoryInfo diWorkDir, out string wildcardMatchSpec)
         {
             wildcardMatchSpec = mDatasetName + "_scan*.xml";
-            var fiSpectraFiles = diWorkDir.GetFiles(wildcardMatchSpec).ToList();
-            return fiSpectraFiles;
+            var spectraFiles = diWorkDir.GetFiles(wildcardMatchSpec).ToList();
+            return spectraFiles;
         }
 
         /// <summary>
@@ -445,17 +477,30 @@ namespace AnalysisManagerFormularityPlugin
             // Example Console output
             //
             // Started.
-            // Checked arguments.
             // Loaded parameters.
-            // Reading database ..\..\..\..\Data\CIA_DB\PNNL_CIA_DB_1500_B.bin
-            // Sorting 28,487,622 DB entries
-            // Skipping check for duplicate formulas; database was previously validated
+            // Reading database C:\DMS_Temp_Org\WHOI_CIA_DB_2016_11_21.bin
             // Loaded DB.
-            // Opening F:\Formularity\Data\TestDataXML\Marco_AL1_Bot_23May18_p05_000001_scan1.xml
-            // Opening F:\Formularity\Data\TestDataXML\Marco_AL3_Bot_23May18_p05_000001_scan1.xml
-            // Aligning
+            // Loaded calibration.
+            // Checked arguments.
+            // Opening C:\DMS_WorkDir\DatasetName_peaks.txt
+            //
+            // Dataset: DatasetName_peaks.txt
+            //
+            // Pre-alignment:
+            //
+            // no
+            //
+            // Calibration: calibrant peaks total 76 matched 30(30 distinct)
+            //
             // Formula Finding
-            // Writing results to F:\Formularity\Data\TestDataXML\Report.csv
+            // Processed files:
+            //
+            // DatasetName_peaks.txt
+            //
+            // Parameters:
+            //
+            // <DefaultParameters><InputFilesTab><Adduct></Adduct><Ionization>proton_detachment</Ionization>...
+            //
             // Finished.
 
             fileCountNoPeaks = 0;
@@ -500,13 +545,13 @@ namespace AnalysisManagerFormularityPlugin
                             continue;
                         }
 
-                        // Check for "Error: Nothing to align; aborting"
-                        if (dataLine.StartsWith("Error", StringComparison.OrdinalIgnoreCase) && dataLine.ToLower().Contains("nothing to align"))
-                        {
-                            nothingToAlign = true;
-                            mMessage = dataLine;
-                            continue;
-                        }
+                        //// Check for "Error: Nothing to align; aborting"
+                        //if (dataLine.StartsWith("Error", StringComparison.OrdinalIgnoreCase) && dataLine.ToLower().Contains("nothing to align"))
+                        //{
+                        //    nothingToAlign = true;
+                        //    mMessage = dataLine;
+                        //    continue;
+                        //}
 
                         // Check for Calibration failed; using uncalibrated masses"
                         if (dataLine.StartsWith("Calibration failed", StringComparison.OrdinalIgnoreCase))
@@ -552,28 +597,42 @@ namespace AnalysisManagerFormularityPlugin
 
             try
             {
-                var reportFile = new FileInfo(Path.Combine(mWorkDir, "Report.csv"));
+                // The results files will be in a subdirectory with today's date
+                // Example filename: DatasetName_peaksResult.csv
 
-                if (!reportFile.Exists)
+                // Search for the CSV file
+
+                var workDir = new DirectoryInfo(mWorkDir);
+                var filenameMatchSpec = mDatasetName + "*Result.csv";
+                var csvFiles = workDir.GetFiles(filenameMatchSpec, SearchOption.AllDirectories);
+
+                if (csvFiles.Length == 0)
                 {
-                    if (string.IsNullOrEmpty(mMessage))
-                    {
-                        mMessage = string.Format("Formularity results not found ({0})", reportFile.Name);
-                        processingSuccess = false;
-                        return CloseOutType.CLOSEOUT_FAILED;
-                    }
+                    LogError("Formularity Result.csv file not found");
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
-                else
+
+                if (csvFiles.Length > 1)
                 {
-                    // Rename the report file to start with the dataset name
-                    reportFile.MoveTo(Path.Combine(mWorkDir, mDatasetName + "_Report.csv"));
+                    LogError("Multiple Formularity Result.csv files were found matching " + filenameMatchSpec);
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
+
+                var reportFile = csvFiles.First();
+
+                // Rename the report file to be DatasetName_Report.csv (and move it to the work dir)
+                reportFile.MoveTo(Path.Combine(mWorkDir, mDatasetName + "_Report.csv"));
 
                 // Ignore the Report*.log files
                 // All messages in those files were displayed at the console and are thus already in Formularity_ConsoleOutput.txt
-                var workDir = new DirectoryInfo(mWorkDir);
 
-                foreach (var logFile in workDir.GetFiles("Report*.log"))
+                foreach (var logFile in workDir.GetFiles("Report*.log", SearchOption.AllDirectories))
+                {
+                    mJobParams.AddResultFileToSkip(logFile.Name);
+                }
+
+                // Ignore log.csv files
+                foreach (var logFile in workDir.GetFiles("log.csv", SearchOption.AllDirectories))
                 {
                     mJobParams.AddResultFileToSkip(logFile.Name);
                 }
@@ -714,7 +773,7 @@ namespace AnalysisManagerFormularityPlugin
 
         private bool StartFormularity(
             string progLoc,
-            string wildcardMatchSpec,
+            string inputFilePathOrWildcardMatchSpec,
             string paramFilePath,
             string ciaDbPath,
             string calibrationPeaksFilePath,
@@ -724,8 +783,8 @@ namespace AnalysisManagerFormularityPlugin
 
             // Set up and execute a program runner to run Formularity
 
-            var cmdStr = " cia " +
-                         PossiblyQuotePath(wildcardMatchSpec) + " " +
+            var cmdStr = " CIA " +
+                         PossiblyQuotePath(inputFilePathOrWildcardMatchSpec) + " " +
                          PossiblyQuotePath(paramFilePath) + " " +
                          PossiblyQuotePath(ciaDbPath);
 
@@ -797,7 +856,7 @@ namespace AnalysisManagerFormularityPlugin
             return false;
         }
 
-        private bool ProcessScansWithFormularity(string progLoc, out bool nothingToAlign)
+        private bool ProcessScansWithFormularity(string progLoc, string datasetScansFilePath, out bool nothingToAlign)
         {
 
             nothingToAlign = false;
@@ -826,77 +885,68 @@ namespace AnalysisManagerFormularityPlugin
                     return false;
                 }
 
+                var calibrationPeaksFileName = mJobParams.GetJobParameter(
+                    clsAnalysisJob.STEP_PARAMETERS_SECTION,
+                    clsAnalysisResourcesFormularity.JOB_PARAM_FORMULARITY_CALIBRATION_PEAKS_FILE,
+                    string.Empty);
 
-                var rawDataType = mJobParams.GetParam("rawDataType");
+                string calibrationPeaksFilePath;
+                if (string.IsNullOrWhiteSpace(calibrationPeaksFileName))
+                {
+                    calibrationPeaksFilePath = string.Empty;
+                }
+                else
+                {
+                    calibrationPeaksFilePath = Path.Combine(mWorkDir, calibrationPeaksFileName);
+                }
+
+                if (!File.Exists(calibrationPeaksFilePath))
+                {
+                    LogError("Calibration file not not found", "Calibration file not found: " + calibrationPeaksFilePath);
+                    return false;
+                }
+
                 bool success;
 
                 int scanCount;
                 int scanCountNoPeaks;
 
-                switch (rawDataType.ToLower())
+                if (string.IsNullOrWhiteSpace(datasetScansFilePath))
                 {
-                    case clsAnalysisResources.RAW_DATA_TYPE_DOT_RAW_FILES:
+                    // Processing all of the .xml scans files in the working directory
 
-                        // ToDo: Move this into a new method
+                    var diWorkDir = new DirectoryInfo(mWorkDir);
+                    var spectraFiles = GetXmlSpectraFiles(diWorkDir, out var wildcardMatchSpec);
+                    scanCount = spectraFiles.Count;
 
-                        // ToDo: Convert from:
-                        // Scan Number	RT	Mass	Intensity	Resolution	Baseline	Noise	Charge	SignalToNoise	RelativeIntensity
-                        // To:
-                        // Mass      Intensity              S/N        Resolution           Relative Abundance
-                        //
-                        // Create one file per scan
-                        // Call Formularity for each file
+                    if (scanCount == 0)
+                    {
+                        mMessage = "XML spectrum files not found matching " + wildcardMatchSpec;
+                        return false;
+                    }
 
-                        success = false;
+                    foreach (var spectrumFile in spectraFiles)
+                    {
+                        mJobParams.AddResultFileToSkip(spectrumFile.Name);
+                    }
 
-                        scanCount = 1;
-                        scanCountNoPeaks = 0;
+                    mProgress = PROGRESS_PCT_STARTING_FORMULARITY;
 
-                        break;
-                    case clsAnalysisResources.RAW_DATA_TYPE_BRUKER_FT_FOLDER:
+                    success = StartFormularity(progLoc, wildcardMatchSpec, paramFilePath, ciaDbPath, calibrationPeaksFilePath,
+                                               out scanCountNoPeaks, out nothingToAlign);
+                }
+                else
+                {
+                    // Either processing a ThermoPeakDataExporter .tsv file or a DeconTools _peaks.txt file
+                    // Call Formularity for the file
 
-                        // ToDo: Move this into a new method
+                    scanCount = 1;
 
-                        var diWorkDir = new DirectoryInfo(mWorkDir);
-                        var spectraFiles = GetXmlSpectraFiles(diWorkDir, out var wildcardMatchSpec);
-                        scanCount = spectraFiles.Count;
+                    mJobParams.AddResultFileToSkip(datasetScansFilePath);
+                    mProgress = PROGRESS_PCT_STARTING_FORMULARITY;
 
-                        if (scanCount == 0)
-                        {
-                            mMessage = "XML spectrum files not found matching " + wildcardMatchSpec;
-                            return false;
-                        }
-
-                        foreach (var spectrumFile in spectraFiles)
-                        {
-                            mJobParams.AddResultFileToSkip(spectrumFile.Name);
-                        }
-
-                        var calibrationPeaksFileName = mJobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "CalibrationPeaksFile", string.Empty);
-                        string calibrationPeaksFilePath;
-                        if (string.IsNullOrWhiteSpace(calibrationPeaksFileName))
-                        {
-                            calibrationPeaksFilePath = string.Empty;
-                        }
-                        else
-                        {
-                            calibrationPeaksFilePath = Path.Combine(mWorkDir, calibrationPeaksFileName);
-                        }
-
-                        mProgress = PROGRESS_PCT_STARTING_FORMULARITY;
-
-                        success = StartFormularity(progLoc, wildcardMatchSpec, paramFilePath, ciaDbPath, calibrationPeaksFilePath,
-                                                       out scanCountNoPeaks, out nothingToAlign);
-
-
-                        break;
-                    default:
-                        LogError("This tool is not compatible with datasets of type " + rawDataType);
-                        success = false;
-                        scanCount = 0;
-                        scanCountNoPeaks = 0;
-                        break;
-
+                    success = StartFormularity(progLoc, datasetScansFilePath, paramFilePath, ciaDbPath, calibrationPeaksFilePath,
+                                               out scanCountNoPeaks, out nothingToAlign);
                 }
 
                 if (!success)
