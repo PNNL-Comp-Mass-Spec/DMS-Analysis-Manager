@@ -40,11 +40,6 @@ namespace AnalysisManagerDecon2lsV2PlugIn
         }
 
         /// <summary>
-        /// Number of sections
-        /// </summary>
-        public int SectionCount => mSections.Count;
-
-        /// <summary>
         /// Constructor
         /// </summary>
         /// <param name="paramFilePath"></param>
@@ -152,7 +147,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
         }
 
         /// <summary>
-        /// Retrieve a parameter
+        /// Retrieve a parameter (from any section)
         /// </summary>
         /// <param name="parameterName"></param>
         /// <param name="valueIfMissing"></param>
@@ -174,27 +169,5 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
         }
 
-        /// <summary>
-        /// Retrieve a parameter from the specified section
-        /// </summary>
-        /// <param name="sectionName"></param>
-        /// <param name="parameterName"></param>
-        /// <param name="valueIfMissing"></param>
-        /// <returns></returns>
-        public string GetParameterBySection(string sectionName, string parameterName, string valueIfMissing)
-        {
-
-            if (mSections.TryGetValue(sectionName, out var dctParameters))
-            {
-
-                if (dctParameters.TryGetValue(parameterName, out var value))
-                {
-                    return value;
-                }
-            }
-
-            return valueIfMissing;
-
-        }
     }
 }
