@@ -175,7 +175,6 @@ xcopy "$(TargetDir)AM_Shared.pdb" "$(ProjectDir)..\..\AM_Common" /y /d
 
 xcopy "$(TargetDir)PRISM.dll" "$(ProjectDir)..\..\AM_Common" /y /d
 xcopy "$(TargetDir)PrismWin.dll" "$(ProjectDir)..\..\AM_Common" /y /d
-xcopy "$(TargetDir)System.Threading.Tasks.Dataflow.dll" "$(ProjectDir)..\..\AM_Common" /y /d
 
 xcopy "$(ProjectDir)..\..\AM_Common\FileConcatenator.dll" "$(TargetDir)" /y /d  /F
 xcopy "$(ProjectDir)..\..\AM_Common\PeptideFileExtractor.dll" "$(TargetDir)" /y /d /F</PostBuildEvent>

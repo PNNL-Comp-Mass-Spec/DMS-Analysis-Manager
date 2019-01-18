@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
@@ -112,6 +112,7 @@
     <Compile Include="clsCodeTestAM.cs" />
     <Compile Include="clsMainProcess.cs" />
     <Compile Include="clsPluginLoader.cs" />
+    <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Properties\Settings.Designer.cs">
@@ -148,6 +149,9 @@
     <PackageReference Include="jayrock-json">
       <Version>0.9.16530.1</Version>
     </PackageReference>
+    <PackageReference Include="PdfSharp">
+      <Version>1.32.3057</Version>
+    </PackageReference>
     <PackageReference Include="PRISM-Library">
       <Version>2.5.10</Version>
     </PackageReference>
@@ -177,7 +181,6 @@ xcopy "$(ProjectDir)..\AM_Common\AScore_DLL.dll" "$(TargetDir)" /D /Y
 xcopy "$(ProjectDir)..\AM_Common\Cyclops.dll" "$(TargetDir)" /D /Y
 xcopy "$(ProjectDir)..\AM_Common\DLLVersionInspector*.exe" "$(TargetDir)" /D /Y
 xcopy "$(ProjectDir)..\AM_Common\DTAtoMGF.dll" "$(TargetDir)" /D /Y
-xcopy "$(ProjectDir)..\AM_Common\DynamicInterop.dll" "$(TargetDir)" /D /Y
 xcopy "$(ProjectDir)..\AM_Common\FileConcatenator.dll" "$(TargetDir)" /D /Y  /F
 xcopy "$(ProjectDir)..\AM_Common\gzip.exe" "$(TargetDir)" /D /Y
 xcopy "$(ProjectDir)..\AM_Common\InterDetect.dll" "$(TargetDir)" /D /Y
@@ -190,7 +193,6 @@ xcopy "$(ProjectDir)..\AM_Common\PeptideToProteinMapEngine.dll" "$(TargetDir)" /
 xcopy "$(ProjectDir)..\AM_Common\PHRPReader.dll" "$(TargetDir)" /D /Y
 xcopy "$(ProjectDir)..\AM_Common\PNNLOmics.dll" "$(TargetDir)" /D /Y
 xcopy "$(ProjectDir)..\AM_Common\ProteinCoverageSummarizer.dll" "$(TargetDir)" /D /Y
-xcopy "$(ProjectDir)..\AM_Common\ProteinFileReader.dll" "$(TargetDir)" /D /Y
 xcopy "$(ProjectDir)..\AM_Common\RangerLib.dll" "$(TargetDir)" /D /Y
 xcopy "$(ProjectDir)..\AM_Common\SetCover.dll" "$(TargetDir)" /D /Y
 xcopy "$(ProjectDir)..\AM_Common\TableFunctions.dll" "$(TargetDir)" /D /Y
@@ -203,9 +205,6 @@ xcopy "$(ProjectDir)..\AM_Common\ThermoRawFileReader.dll" "$(TargetDir)" /D /Y
 
 xcopy "$(TargetDir)AnalysisManagerProg.exe" "$(ProjectDir)..\AM_Common\" /D /Y
 xcopy "$(TargetDir)AnalysisManagerProg.pdb" "$(ProjectDir)..\AM_Common\" /D /Y
-xcopy "$(TargetDir)Jayrock.Json.dll" "$(ProjectDir)..\AM_Common\" /D /Y
-xcopy "$(TargetDir)Apache.NMS.ActiveMQ.dll" "$(ProjectDir)..\AM_Common\" /D /Y
-xcopy "$(TargetDir)Apache.NMS.dll" "$(ProjectDir)..\AM_Common\" /D /Y
 
 rem if exist "$(TargetDir)SQLite.Interop.dll" (del "$(TargetDir)SQLite.Interop.dll")
 rem if not exist "$(TargetDir)x86" mkdir "$(TargetDir)x86"
@@ -220,14 +219,22 @@ xcopy "$(TargetDir)System.Data.SQLite.dll" "$(ProjectDir)..\AM_Common\" /D /Y
 xcopy "$(TargetDir)x86\SQLite.Interop.dll" "$(ProjectDir)..\AM_Common\x86" /D /Y
 xcopy "$(TargetDir)x64\SQLite.Interop.dll" "$(ProjectDir)..\AM_Common\x64" /D /Y
 
+xcopy "$(TargetDir)Apache.NMS.ActiveMQ.dll" "$(ProjectDir)..\AM_Common\" /D /Y
+xcopy "$(TargetDir)Apache.NMS.dll" "$(ProjectDir)..\AM_Common\" /D /Y
 xcopy "$(TargetDir)DotNetZip.dll" "$(ProjectDir)..\AM_Common\" /D /Y
 xcopy "$(TargetDir)DynamicInterop.dll" "$(ProjectDir)..\AM_Common\" /D /Y
+xcopy "$(TargetDir)Jayrock.Json.dll" "$(ProjectDir)..\AM_Common\" /D /Y
+xcopy "$(TargetDir)PdfSharp.Charting.dll" "$(ProjectDir)..\AM_Common\" /D /Y
+xcopy "$(TargetDir)PdfSharp.dll" "$(ProjectDir)..\AM_Common\" /D /Y
 xcopy "$(TargetDir)PRISM.dll" "$(ProjectDir)..\AM_Common\" /D /Y
 xcopy "$(TargetDir)PRISMWin.dll" "$(ProjectDir)..\AM_Common\" /D /Y
+xcopy "$(TargetDir)ProteinFileReader.dll" "$(ProjectDir)..\AM_Common\" /D /Y
 xcopy "$(TargetDir)RDotNet.dll" "$(ProjectDir)..\AM_Common\" /D /Y
 xcopy "$(TargetDir)RDotNet.NativeLibrary.dll" "$(ProjectDir)..\AM_Common\" /D /Y
 xcopy "$(TargetDir)Renci.SshNet.dll" "$(ProjectDir)..\AM_Common\" /D /Y
+xcopy "$(TargetDir)System.IO.Compression.dll" "$(ProjectDir)..\AM_Common\" /D /Y
 xcopy "$(TargetDir)UIMFLibrary.dll" "$(ProjectDir)..\AM_Common\" /D /Y
+
 </PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
