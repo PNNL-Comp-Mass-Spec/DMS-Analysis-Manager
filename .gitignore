@@ -44,3 +44,8 @@ CachedLibs/
 /AM_Common/Apache.NMS.ActiveMQ.dll
 /AM_Common/Apache.NMS.dll
 /AM_Common/System.Threading.Tasks.Dataflow.dll
+/AM_Common/MSFileReader.XRawfile2.dll
+/AM_Common/PdfSharp.Charting.dll
+/AM_Common/PdfSharp.dll
+/AM_Common/ProteinFileReader.dll
+/AM_Common/System.IO.Compression.dll
