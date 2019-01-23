@@ -1276,7 +1276,7 @@ namespace AnalysisManagerExtractionPlugin
                 // Furthermore, we need the search engine parameter file for the PHRPReader
 
                 // Note that the _ModDefs.txt file is obtained using this query:
-                //  SELECT Local_Symbol, Monoisotopic_Mass_Correction, Residue_Symbol, Mod_Type_Symbol, Mass_Correction_Tag
+                //  SELECT Local_Symbol, Monoisotopic_Mass, Residue_Symbol, Mod_Type_Symbol, Mass_Correction_Tag
                 //  FROM V_Param_File_Mass_Mod_Info
                 //  WHERE Param_File_Name = 'ParamFileName'
 

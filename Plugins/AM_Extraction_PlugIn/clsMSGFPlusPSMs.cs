@@ -13,7 +13,7 @@ namespace AnalysisManagerExtractionPlugin
             public string DataLine;
         }
 
-        // Keys are the protein and peptide (separated by an undercore)
+        // Keys are the protein and peptide (separated by an underscore)
         // Values are the PSM details, including the original data line from the .TSV file
         private readonly Dictionary<string, udtPSMType> mPSMs;
 

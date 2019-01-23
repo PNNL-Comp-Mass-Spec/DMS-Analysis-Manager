@@ -144,7 +144,7 @@ namespace AnalysisManagerMSPathFinderPlugin
 
                 // Retrieve the parameter file
                 // This will also obtain the _ModDefs.txt file using query
-                //  SELECT Local_Symbol, Monoisotopic_Mass_Correction, Residue_Symbol, Mod_Type_Symbol, Mass_Correction_Tag
+                //  SELECT Local_Symbol, Monoisotopic_Mass, Residue_Symbol, Mod_Type_Symbol, Mass_Correction_Tag
                 //  FROM V_Param_File_Mass_Mod_Info
                 //  WHERE Param_File_Name = 'ParamFileName'
 
