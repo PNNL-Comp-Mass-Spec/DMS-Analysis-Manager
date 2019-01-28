@@ -246,7 +246,6 @@ xcopy "$(TargetDir)ProteinFileReader.dll" "$(ProjectDir)..\AM_Common\" /D /Y
 xcopy "$(TargetDir)RDotNet.dll" "$(ProjectDir)..\AM_Common\" /D /Y
 xcopy "$(TargetDir)RDotNet.NativeLibrary.dll" "$(ProjectDir)..\AM_Common\" /D /Y
 xcopy "$(TargetDir)Renci.SshNet.dll" "$(ProjectDir)..\AM_Common\" /D /Y
-xcopy "$(TargetDir)System.IO.Compression.dll" "$(ProjectDir)..\AM_Common\" /D /Y
 xcopy "$(TargetDir)UIMFLibrary.dll" "$(ProjectDir)..\AM_Common\" /D /Y
 
 </PostBuildEvent>
