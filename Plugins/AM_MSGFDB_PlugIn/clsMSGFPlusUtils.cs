@@ -2055,19 +2055,18 @@ namespace AnalysisManagerMSGFDBPlugIn
         private bool ParseMSGFDBModifications(string parameterFilePath, StringBuilder sbOptions, int numMods,
             IReadOnlyCollection<string> staticMods, IReadOnlyCollection<string> dynamicMods, IReadOnlyCollection<string> customAminoAcids)
         {
-            bool success;
 
             try
             {
-                var fiParameterFile = new FileInfo(parameterFilePath);
+                var parameterFile = new FileInfo(parameterFilePath);
 
-                if (string.IsNullOrWhiteSpace(fiParameterFile.DirectoryName))
+                if (string.IsNullOrWhiteSpace(parameterFile.DirectoryName))
                 {
-                    OnErrorEvent("Unable to determine the parent directory of " + fiParameterFile.FullName);
+                    OnErrorEvent("Unable to determine the parent directory of " + parameterFile.FullName);
                     return false;
                 }
 
-                var modFilePath = Path.Combine(fiParameterFile.DirectoryName, MOD_FILE_NAME);
+                var modFilePath = Path.Combine(parameterFile.DirectoryName, MOD_FILE_NAME);
 
                 // Note that ParseMSGFDbValidateMod will set this to True if a dynamic or static mod is STY phosphorylation
                 PhosphorylationSearch = false;
@@ -2159,16 +2158,15 @@ namespace AnalysisManagerMSGFDBPlugIn
                     }
                 }
 
-                success = true;
+                return true;
             }
             catch (Exception ex)
             {
                 ErrorMessage = "Exception creating MS-GF+ Mods file";
                 OnErrorEvent(ErrorMessage, ex);
-                success = false;
+                return false;
             }
 
-            return success;
         }
 
         /// <summary>
@@ -2864,11 +2862,11 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Validates that the modification definition text
         /// </summary>
-        /// <param name="modDef">Modification definition</param>
+        /// <param name="modDefLine">Modification definition</param>
         /// <param name="modClean">Cleaned-up modification definition (output param)</param>
         /// <returns>True if valid; false if invalid</returns>
         /// <remarks>Valid modification definition contains 5 parts and doesn't contain any whitespace</remarks>
-        private bool ParseMSGFDbValidateMod(string modDef, out string modClean)
+        private bool ParseMSGFDbValidateMod(string modDefLine, out string modClean)
         {
             modClean = string.Empty;
 
@@ -2876,7 +2874,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             // Split on commas, change tabs to spaces, and remove whitespace
             var modParts = modDef.Split(',');
-            for (var i = 0; i <= modParts.Length - 1; i++)
+            for (var i = 0; i < modParts.Length; i++)
             {
                 modParts[i] = modParts[i].Replace("\t", " ").Trim();
             }
@@ -2962,7 +2960,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 }
             }
 
-            for (var index = 1; index <= modParts.Length - 1; index++)
+            for (var index = 1; index < modParts.Length; index++)
             {
                 modClean += "," + modParts[index];
             }
@@ -3108,8 +3106,6 @@ namespace AnalysisManagerMSGFDBPlugIn
         {
             const string PROTEIN_NAME_NO_MATCH = "__NoMatch__";
 
-            bool success;
-
             var peptideCount = 0;
             var peptideCountNoMatch = 0;
             var linesRead = 0;
@@ -3145,45 +3141,41 @@ namespace AnalysisManagerMSGFDBPlugIn
                 {
                     ErrorMessage = "Peptide to protein mapping file is empty";
                     OnErrorEvent(ErrorMessage + ", file " + Path.GetFileName(pepToProtMapFilePath));
-                    success = false;
+                    return false;
                 }
-                else if (peptideCountNoMatch == 0)
+
+                if (peptideCountNoMatch == 0)
                 {
                     if (mDebugLevel >= 2)
                     {
                         OnStatusEvent("Peptide to protein mapping validation complete; processed " + peptideCount + " peptides");
                     }
 
-                    success = true;
+                    return true;
                 }
-                else
+
+                // Value between 0 and 100
+                var errorPercent = peptideCountNoMatch / (double)peptideCount * 100.0;
+
+                ErrorMessage = errorPercent.ToString("0.0") + "% of the entries in the peptide to protein map file did not match to a protein in the FASTA file";
+                OnErrorEvent(ErrorMessage);
+
+                if (ignorePeptideToProteinMapperErrors)
                 {
-                    // Value between 0 and 100
-                    var errorPercent = peptideCountNoMatch / (double)peptideCount * 100.0;
-
-                    ErrorMessage = errorPercent.ToString("0.0") + "% of the entries in the peptide to protein map file did not match to a protein in the FASTA file";
-                    OnErrorEvent(ErrorMessage);
-
-                    if (ignorePeptideToProteinMapperErrors)
-                    {
-                        OnWarningEvent("Ignoring protein mapping error since 'IgnorePeptideToProteinMapError' = True");
-                        success = true;
-                    }
-                    else
-                    {
-                        IgnorePreviousErrorEvent?.Invoke(ErrorMessage);
-                        success = false;
-                    }
+                    OnWarningEvent("Ignoring protein mapping error since 'IgnorePeptideToProteinMapError' = True");
+                    return true;
                 }
+
+                IgnorePreviousErrorEvent?.Invoke(ErrorMessage);
+                return false;
             }
             catch (Exception ex)
             {
                 ErrorMessage = "Error validating peptide to protein map file";
                 OnErrorEvent(ErrorMessage, ex);
-                success = false;
+                return false;
             }
 
-            return success;
         }
 
         private void WriteProteinSequence(TextWriter writer, string sequence)
