@@ -638,7 +638,10 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="settingText"></param>
         /// <returns>Key/Value pair</returns>
-        /// <remarks>If the line starts with # it is treated as a comment line and an empty key/value pair will be returned</remarks>
+        /// <remarks>
+        /// If the line starts with # it is treated as a comment line and an empty key/value pair will be returned
+        /// If the line contains a # sign in the middle, the comment is left intact
+        /// </remarks>
         public static KeyValuePair<string, string> GetKeyValueSetting(string settingText)
         {
 
