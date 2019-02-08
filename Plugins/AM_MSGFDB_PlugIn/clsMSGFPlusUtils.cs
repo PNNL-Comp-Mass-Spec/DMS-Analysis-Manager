@@ -97,6 +97,11 @@ namespace AnalysisManagerMSGFDBPlugIn
         public const string MSGFPLUS_CONSOLE_OUTPUT_FILE = "MSGFPlus_ConsoleOutput.txt";
 
         /// <summary>
+        /// Custom enzyme definition file
+        /// </summary>
+        private const string ENZYMES_FILE_NAME = "enzymes.txt";
+
+        /// <summary>
         /// MSGF+ mods file name
         /// </summary>
         public const string MOD_FILE_NAME = "MSGFPlus_Mods.txt";
@@ -150,6 +155,11 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// Total search time, in hours
         /// </summary>
         public float ElapsedTimeHours { get; private set; }
+
+        /// <summary>
+        /// Path to the enzymes.txt file (if created)
+        /// </summary>
+        public string EnzymeDefinitionFilePath { get; private set; } = string.Empty;
 
         /// <summary>
         /// Error message
@@ -696,6 +706,125 @@ namespace AnalysisManagerMSGFDBPlugIn
         }
 
         /// <summary>
+        /// Create file params\enzymes.txt using enzymeDefs
+        /// </summary>
+        /// <param name="parameterFilePath"></param>
+        /// <param name="enzymeDefs"></param>
+        /// <returns>True if successful, or if enzymeDefs is empty</returns>
+        private bool CreateEnzymeDefinitionsFile(string parameterFilePath, IEnumerable<string> enzymeDefs)
+        {
+            EnzymeDefinitionFilePath = string.Empty;
+
+            try
+            {
+                var parameterFile = new FileInfo(parameterFilePath);
+
+                if (string.IsNullOrWhiteSpace(parameterFile.DirectoryName))
+                {
+                    OnErrorEvent("Unable to determine the parent directory of " + parameterFile.FullName);
+                    return false;
+                }
+
+                var createFile = false;
+
+                var enzymeBuilder = new StringBuilder();
+                enzymeBuilder.AppendLine("# This file specifies additional enzymes considered for MS-GF+");
+                enzymeBuilder.AppendLine("#");
+                enzymeBuilder.AppendLine("# To be loaded, this file must reside in a directory named params below the working directory");
+                enzymeBuilder.AppendLine("# For example, create file C:\\Work\\params\\enzymes.txt when the working directory is C:\\Work");
+                enzymeBuilder.AppendLine("# Or, on Linux, create file /home/user/work/params/enzymes.txt when the working directory is /home/user/work/");
+                enzymeBuilder.AppendLine("#");
+                enzymeBuilder.AppendLine("# Format: ShortName,CleaveAt,Terminus,Description");
+                enzymeBuilder.AppendLine("# - ShortName: A unique short name of the enzyme (e.g. Tryp). No space is allowed.");
+                enzymeBuilder.AppendLine("# - CleaveAt: The residues cleaved by the enzyme (e.g. KR). Put \"null\" in case of no specificity.");
+                enzymeBuilder.AppendLine("# - Terminus: Whether the enzyme cleaves C-terminal (C) or N-terminal (N)");
+                enzymeBuilder.AppendLine("# - Description: Description of the enzyme");
+                enzymeBuilder.AppendLine("#");
+
+                // ReSharper disable StringLiteralTypo
+                enzymeBuilder.AppendLine("# The following enzymes are pre-configured, numbered 1 through 9 when using the -e argument at the command line");
+                enzymeBuilder.AppendLine("# Tryp,KR,C,Trypsin                         # 1");
+                enzymeBuilder.AppendLine("# Chymotrypsin,FYWL,C,Chymotrypsin          # 2");
+                enzymeBuilder.AppendLine("# LysC,K,C,Lys-C                            # 3");
+                enzymeBuilder.AppendLine("# LysN,K,N,Lys-N                            # 4");
+                enzymeBuilder.AppendLine("# GluC,E,C,Glu-C                            # 5: glutamyl endopeptidase");
+                enzymeBuilder.AppendLine("# ArgC,R,C,Arg-C                            # 6");
+                enzymeBuilder.AppendLine("# AspN,D,N,Asp-N                            # 7");
+                enzymeBuilder.AppendLine("# aLP,null,C,alphaLP                        # 8");
+                enzymeBuilder.AppendLine("# NoCleavage,null,C,no cleavage             # 9: Endogenous peptides");
+                // ReSharper restore StringLiteralTypo
+
+                enzymeBuilder.AppendLine("#");
+                enzymeBuilder.AppendLine("# If you want to redefine a pre-configured enzyme (e.g. change CleaveAt of Asp-N to \"DE\"), specify the enzyme again.");
+                enzymeBuilder.AppendLine("# Specify one enzyme per line.");
+                enzymeBuilder.AppendLine("# New enzymes will continue the numbering at 10");
+                enzymeBuilder.AppendLine("#");
+                enzymeBuilder.AppendLine("# Examples:");
+                enzymeBuilder.AppendLine("# CNBr,M,C,CNBr");
+                enzymeBuilder.AppendLine("# AspN,DE,N,Asp-N");
+                enzymeBuilder.AppendLine();
+
+                foreach (var enzymeDef in enzymeDefs)
+                {
+                    // At least one definition is defined; create the file
+                    createFile = true;
+
+                    // Split on commas, change tabs to spaces, and remove whitespace
+                    var enzymeDefParts = enzymeDef.Split(',');
+
+                    if (enzymeDefParts.Length < 4)
+                    {
+                        ErrorMessage = "Invalid enzyme definition in the MSGF+ parameter file: " + enzymeDef;
+                        OnErrorEvent(ErrorMessage);
+                        return false;
+                    }
+
+                    var enzymeDefClean = enzymeDefParts[0];
+                    for (var i = 0; i < 4; i++)
+                    {
+                        enzymeDefParts[i] = enzymeDefParts[i].Replace("\t", " ").Trim();
+
+                        if (i > 0)
+                            enzymeDefClean += "," + enzymeDefParts[i];
+                    }
+
+                    enzymeBuilder.AppendLine(enzymeDefClean);
+                }
+
+                if (!createFile)
+                    return true;
+
+                var enzymesFile = new FileInfo(Path.Combine(parameterFile.DirectoryName, "params", ENZYMES_FILE_NAME));
+
+                if (enzymesFile.Directory == null)
+                {
+                    ErrorMessage = "Unable to determine the parent directory of " + enzymesFile.FullName;
+                    OnErrorEvent(ErrorMessage);
+                    return false;
+                }
+
+                if (!enzymesFile.Directory.Exists)
+                    enzymesFile.Directory.Create();
+
+                using (var writer = new StreamWriter(new FileStream(enzymesFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                {
+                    writer.Write(enzymeBuilder.ToString());
+                }
+
+                EnzymeDefinitionFilePath = enzymesFile.FullName;
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage = "Exception creating MS-GF+ enzymes.txt file";
+                OnErrorEvent(ErrorMessage, ex);
+                return false;
+            }
+
+        }
+
+        /// <summary>
         /// Create the peptide to protein mapping file
         /// </summary>
         /// <param name="resultsFileName"></param>
@@ -1174,6 +1303,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             //   StaticMod
             //   DynamicMod
             //   CustomAA
+            //   EnzymeDef
 
             return dctParamNames;
         }
@@ -2086,6 +2216,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             var staticMods = new List<string>();
             var dynamicMods = new List<string>();
             var customAminoAcids = new List<string>();
+            var enzymeDefs = new List<string>();
 
             var isTDA = false;
 
@@ -2323,6 +2454,13 @@ namespace AnalysisManagerMSGFDBPlugIn
                             customAminoAcids.Add(valueText);
                         }
                     }
+                    else if (clsGlobal.IsMatch(kvSetting.Key, "EnzymeDef"))
+                    {
+                        if (!string.IsNullOrWhiteSpace(valueText) && !clsGlobal.IsMatch(valueText, "none"))
+                        {
+                            enzymeDefs.Add(valueText);
+                        }
+                    }
 
                     // if (clsGlobal.IsMatch(kvSetting.Key, MSGFPLUS_OPTION_FRAGMENTATION_METHOD)) {
                     //	 if (int.TryParse(valueText, out value)) {
@@ -2440,6 +2578,13 @@ namespace AnalysisManagerMSGFDBPlugIn
             // Create the modification file and append the -mod switch
             // We'll also set mPhosphorylationSearch to True if a dynamic or static mod is STY phosphorylation
             if (!ParseMSGFDBModifications(parameterFilePath, sbOptions, numMods, staticMods, dynamicMods, customAminoAcids))
+            {
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            // Look for a custom enzyme definition in the parameter file
+            // If defined, create file enzymes.txt in the params directory below the working directory
+            if(enzymeDefs.Count > 0 && !CreateEnzymeDefinitionsFile(parameterFilePath, enzymeDefs))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -2603,6 +2748,34 @@ namespace AnalysisManagerMSGFDBPlugIn
                     }
                 }
             }
+        }
+
+        /// <summary>
+        /// Look for the # comment character in paramLine
+        /// If found, extract the comment
+        /// </summary>
+        /// <param name="paramLine">Parameter file line</param>
+        /// <param name="comment">Comment if present, or empty string</param>
+        /// <returns>Parameter line, without the comment</returns>
+        private string ExtractComment(string paramLine, out string comment)
+        {
+            var poundIndex = paramLine.IndexOf('#');
+            if (poundIndex <= 0)
+            {
+                comment = string.Empty;
+                return paramLine;
+            }
+
+            if (poundIndex < paramLine.Length - 1)
+            {
+                comment = paramLine.Substring(poundIndex + 1).Trim();
+            }
+            else
+            {
+                comment = string.Empty;
+            }
+
+            return paramLine.Substring(0, poundIndex - 1).Trim();
         }
 
         /// <summary>

@@ -178,6 +178,21 @@ namespace AnalysisManagerMSGFDBPlugIn
                     }
                 }
 
+                if (!string.IsNullOrWhiteSpace(mMSGFPlusUtils.EnzymeDefinitionFilePath))
+                {
+                    // Move the enzymes.txt file into the working directory
+                    var enzymesFile = new FileInfo(mMSGFPlusUtils.EnzymeDefinitionFilePath);
+                    var newEnzymesFile = new FileInfo(Path.Combine(mWorkingDirectoryInUse, enzymesFile.Name));
+                    if (!string.Equals(enzymesFile.FullName, newEnzymesFile.FullName))
+                    {
+                        if (newEnzymesFile.Exists && enzymesFile.Exists)
+                            newEnzymesFile.Delete();
+
+                        if (enzymesFile.Exists)
+                            enzymesFile.MoveTo(newEnzymesFile.FullName);
+                    }
+                }
+
                 mProgress = MSGFPlusUtils.PROGRESS_PCT_COMPLETE;
 
                 // Stop the job timer
