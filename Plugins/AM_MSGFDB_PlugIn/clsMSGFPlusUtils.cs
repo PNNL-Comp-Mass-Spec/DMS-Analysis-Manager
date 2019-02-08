@@ -2252,7 +2252,8 @@ namespace AnalysisManagerMSGFDBPlugIn
                 foreach (var kvSetting in paramFileEntries)
                 {
 
-                    var valueText = kvSetting.Value;
+                    // Remove the comment, if present
+                    var valueText = ExtractComment(kvSetting.Value, out _);
 
                     // Check whether kvSetting.key is one of the standard keys defined in paramToArgMapping
                     int value;
@@ -2869,16 +2870,9 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <remarks>Valid modification definition contains 5 parts and doesn't contain any whitespace</remarks>
         private bool ParseMSGFDbValidateMod(string modDef, out string modClean)
         {
-            var comment = string.Empty;
-
             modClean = string.Empty;
 
-            var poundIndex = modDef.IndexOf('#');
-            if (poundIndex > 0)
-            {
-                comment = modDef.Substring(poundIndex);
-                modDef = modDef.Substring(0, poundIndex - 1).Trim();
-            }
+            var modDef = ExtractComment(modDefLine, out var comment);
 
             // Split on commas, change tabs to spaces, and remove whitespace
             var modParts = modDef.Split(',');
