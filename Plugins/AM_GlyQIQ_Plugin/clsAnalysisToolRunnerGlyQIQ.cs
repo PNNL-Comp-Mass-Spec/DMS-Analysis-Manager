@@ -343,13 +343,13 @@ namespace AnalysisManagerGlyQIQPlugin
 
                         if (!headerSkipped)
                         {
-                            if (String.Compare(compoundCode, "Code", StringComparison.OrdinalIgnoreCase) != 0)
+                            if (!string.Equals(compoundCode, "Code", StringComparison.OrdinalIgnoreCase))
                             {
-                                mMessage = "3rd column in the glycan result file is not Code";
+                                mMessage = "2nd column in the glycan result file is not Code";
                                 return false;
                             }
 
-                            if (String.Compare(empiricalFormula, "EmpiricalFormula", StringComparison.OrdinalIgnoreCase) != 0)
+                            if (!string.Equals(empiricalFormula, "EmpiricalFormula", StringComparison.OrdinalIgnoreCase))
                             {
                                 mMessage = "3rd column in the glycan result file is not EmpiricalFormula";
                                 return false;
@@ -440,26 +440,26 @@ namespace AnalysisManagerGlyQIQPlugin
                 var iqParamFileName = mJobParams.GetJobParameter("ParmFileName", "");
                 foreach (var fiFile in diWorkingParamsSource.GetFiles())
                 {
-                    var blnMoveFile = false;
+                    var moveFile = false;
 
-                    if (String.Compare(fiFile.Name, iqParamFileName, StringComparison.OrdinalIgnoreCase) == 0)
+                    if (string.Equals(fiFile.Name, iqParamFileName, StringComparison.OrdinalIgnoreCase))
                     {
-                        blnMoveFile = true;
+                        moveFile = true;
                     }
                     else if (fiFile.Name.StartsWith(clsAnalysisResourcesGlyQIQ.GLYQIQ_PARAMS_FILE_PREFIX))
                     {
-                        blnMoveFile = true;
+                        moveFile = true;
                     }
                     else if (fiFile.Name.StartsWith(clsAnalysisResourcesGlyQIQ.ALIGNMENT_PARAMETERS_FILENAME))
                     {
-                        blnMoveFile = true;
+                        moveFile = true;
                     }
                     else if (fiFile.Name.StartsWith(clsAnalysisResourcesGlyQIQ.EXECUTOR_PARAMETERS_FILE))
                     {
-                        blnMoveFile = true;
+                        moveFile = true;
                     }
 
-                    if (blnMoveFile)
+                    if (moveFile)
                     {
                         fiFile.MoveTo(Path.Combine(diWorkingParamsTarget.FullName, fiFile.Name));
                     }

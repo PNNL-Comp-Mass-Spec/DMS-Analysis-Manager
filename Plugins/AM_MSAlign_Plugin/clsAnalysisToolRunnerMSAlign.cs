@@ -1085,7 +1085,7 @@ namespace AnalysisManagerMSAlignPlugIn
                         else if (dataLine.StartsWith("Deconvolution finished"))
                         {
                             // Possibly write out the most recent progress line
-                            if (string.CompareOrdinal(strMostRecentProgressLine, strMostRecentProgressLineWritten) != 0)
+                            if (!string.Equals(strMostRecentProgressLine, strMostRecentProgressLineWritten))
                             {
                                 writer.WriteLine(strMostRecentProgressLine);
                             }

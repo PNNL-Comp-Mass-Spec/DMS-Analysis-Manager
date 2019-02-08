@@ -1120,7 +1120,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             var fiJarFile = new FileInfo(jarFilePath);
 
-            if (string.Compare(fiJarFile.Name, MSGFDB_JAR_NAME, StringComparison.OrdinalIgnoreCase) == 0)
+            if (string.Equals(fiJarFile.Name, MSGFDB_JAR_NAME, StringComparison.OrdinalIgnoreCase))
             {
                 // Not MSGF+
                 return false;

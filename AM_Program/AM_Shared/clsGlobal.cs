@@ -709,7 +709,7 @@ namespace AnalysisManagerBase
                 return true;
             }
 
-            return string.Compare(text1, text2, StringComparison.OrdinalIgnoreCase) == 0;
+            return string.Equals(text1, text2, StringComparison.OrdinalIgnoreCase);
         }
 
         /// <summary>
