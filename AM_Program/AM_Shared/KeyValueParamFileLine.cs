@@ -49,6 +49,16 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="paramFileLine"></param>
+        public KeyValueParamFileLine(KeyValueParamFileLine paramFileLine) : this(paramFileLine.LineNumber, paramFileLine.Text)
+        {
+            ParamName = paramFileLine.ParamName;
+            ParamValue = paramFileLine.ParamValue;
+        }
+
+        /// <summary>
         /// Associate a parameter with this data line
         /// </summary>
         /// <param name="paramName"></param>
@@ -69,5 +79,13 @@ namespace AnalysisManagerBase
             ParamValue = paramInfo.Value;
         }
 
+        /// <summary>
+        /// Update the value for this parameter
+        /// </summary>
+        /// <param name="value"></param>
+        protected void UpdateValue(string value)
+        {
+            ParamValue = value ?? string.Empty;
+        }
     }
 }

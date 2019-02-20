@@ -28,11 +28,16 @@ namespace AnalysisManagerMSGFDBPlugIn
         private string PrefixToAdd { get; set; } = string.Empty;
 
         /// <summary>
-        /// Constructor
+        /// Constructor for appending a new line to the parameter file
         /// </summary>
         /// <param name="paramFileLine"></param>
-        public MSGFPlusKeyValueParamFileLine(KeyValueParamFileLine paramFileLine) : base(paramFileLine.LineNumber, paramFileLine.Text)
+        /// <param name="isAdditionalLine">Set this to True if this is an additional parameter line (or blank line or comment line) that needs to be appended</param>
+        /// <remarks>If the line has a parameter, use the constructor that takes a MSGFPlusParameter object instead</remarks>
+        public MSGFPlusKeyValueParamFileLine(
+            KeyValueParamFileLine paramFileLine,
+            bool isAdditionalLine = false) : base(paramFileLine)
         {
+            LineUpdated = isAdditionalLine;
         }
 
         /// <summary>
@@ -87,9 +92,21 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// Update the value for this line's parameter
         /// </summary>
         /// <param name="valueOverride"></param>
-        public void UpdateParamValue(string valueOverride)
+        /// <param name="includeOriginalAsComment"></param>
+        public void UpdateParamValue(string valueOverride, bool includeOriginalAsComment = false)
         {
+            var originalValue = string.Copy(ParamInfo.GetKeyValueParamNoComment());
             ParamInfo.UpdateValue(valueOverride);
+
+            // Also update the value tracked by base.ParamValue
+            UpdateValue(valueOverride);
+
+            if (includeOriginalAsComment)
+            {
+                var whitespaceBeforeComment = "        # ";
+                ParamInfo.UpdateComment(originalValue, whitespaceBeforeComment);
+            }
+
             UpdateTextLine();
         }
 
@@ -98,15 +115,22 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// </summary>
         private void UpdateTextLine()
         {
+            LineUpdated = true;
+
             var prefix = PrefixToAdd ?? string.Empty;
 
-            var keyValueParam = string.Format("{0}={1}", ParamInfo.ParameterName, ParamInfo.Value);
+            if (ParamInfo == null || string.IsNullOrWhiteSpace(ParamInfo.ParameterName))
+            {
+                Text = prefix + Text;
+                return;
+            }
+
+            var keyValueParam = ParamInfo.GetKeyValueParamNoComment();
 
             var comment = ParamInfo.CommentWithPrefix ?? string.Empty;
 
             Text = prefix + keyValueParam + comment;
-
-            LineUpdated = true;
         }
+
     }
 }

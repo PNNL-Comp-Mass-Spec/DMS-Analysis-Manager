@@ -75,10 +75,76 @@ namespace AnalysisManagerMSGFDBPlugIn
             Name = 4
         }
 
-        private const string MSGFPLUS_OPTION_TDA = "TDA";
-        private const string MSGFPLUS_OPTION_SHOW_DECOY = "showDecoy";
+        /// <summary>
+        /// AddFeatures parameter
+        /// </summary>
+        private const string MSGFPLUS_OPTION_ADD_FEATURES = "AddFeatures";
+
+        /// <summary>
+        /// Legacy MSGFDB parameter
+        /// </summary>
+        private const string MSGFPLUS_OPTION_C13 = "c13";
+
+
+        /// <summary>
+        /// Custom amino acid definition
+        /// </summary>
+        private const string MSGFPLUS_OPTION_CUSTOM_AA = "CustomAA";
+
+        /// <summary>
+        /// Dynamic modification definition
+        /// </summary>
+        private const string MSGFPLUS_OPTION_DYNAMIC_MOD = "DynamicMod";
+
+        /// <summary>
+        /// Isotope error range parameter
+        /// </summary>
+        private const string MSGFPLUS_OPTION_ISOTOPE_ERROR_RANGE = "IsotopeErrorRange";
+
+        /// <summary>
+        /// Fragmentation Method ID parameter
+        /// </summary>
         private const string MSGFPLUS_OPTION_FRAGMENTATION_METHOD = "FragmentationMethodID";
+
+        /// <summary>
+        /// Instrument ID parameter
+        /// </summary>
         private const string MSGFPLUS_OPTION_INSTRUMENT_ID = "InstrumentID";
+
+        /// <summary>
+        /// Parameter name changed to MinNumPeaksPerSpectrum in 2019
+        /// </summary>
+        private const string MSGFPLUS_OPTION_MIN_NUM_PEAKS_LEGACY = "MinNumPeaks";
+
+        /// <summary>
+        /// Legacy MSGFDB parameter
+        /// </summary>
+        private const string MSGFPLUS_OPTION_MIN_NUM_PEAKS = "MinNumPeaksPerSpectrum";
+
+        /// <summary>
+        /// Legacy MSGFDB parameter
+        /// </summary>
+        private const string MSGFPLUS_OPTION_NNET = "nnet";
+
+        /// <summary>
+        /// Number of tolerable termini parameter (used by MSGF+)
+        /// </summary>
+        private const string MSGFPLUS_OPTION_NTT = "NTT";
+
+        /// <summary>
+        /// Number of threads to use
+        /// </summary>
+        private const string MSGFPLUS_OPTION_NUM_THREADS = "NumThreads";
+
+        /// <summary>
+        /// Static modification definition
+        /// </summary>
+        private const string MSGFPLUS_OPTION_STATIC_MOD = "StaticMod";
+
+        /// <summary>
+        /// TDA parameter
+        /// </summary>
+        public const string MSGFPLUS_OPTION_TDA = "TDA";
 
         /// <summary>
         /// MSGF+ TSV file suffix
@@ -127,6 +193,8 @@ namespace AnalysisManagerMSGFDBPlugIn
         #endregion
 
         #region "Module Variables"
+
+        private readonly Regex mCommentExtractor;
 
         private readonly IMgrParams mMgrParams;
         private readonly IJobParams mJobParams;
@@ -231,73 +299,114 @@ namespace AnalysisManagerMSGFDBPlugIn
             ThreadCountActual = 0;
             TaskCountTotal = 0;
             TaskCountCompleted = 0;
+
+            // This RegEx is used to extract comments in lines of the form
+            // DynamicMod=O1,          M,  opt, any,       Oxidation             # Oxidized methionine
+            mCommentExtractor = new Regex(@"^(?<ParamInfo>[^#]+?)(?<WhiteSpace>\s*#\s*)(?<Comment>.*)");
         }
 
         /// <summary>
-        /// Update argumentSwitch and argumentValue if using the MSGFDB syntax yet should be using the MS-GF+ syntax
+        /// Update the parameter if using the MSGFDB syntax yet should be using the MS-GF+ syntax
+        /// Also make updates from older parameter names to newer names (e.g. MinNumPeaksPerSpectrum instead of MinNumPeaks)
         /// </summary>
-        /// <param name="argumentName"></param>
-        /// <param name="argumentValue"></param>
-        /// <remarks></remarks>
-        private void AdjustSwitchesForMSGFPlus(ref string argumentName, ref string argumentValue)
+        /// <param name="msgfPlusParameters">Standard MSGF+ parameters</param>
+        /// <param name="paramFileLine">MSGF+ parameter file line</param>
+        /// <param name="replacementParameter">New MSGF+ parameter</param>
+        /// <returns>True if a replacement parameter is defined, otherwise false</returns>
+        /// <remarks>
+        /// If the parameter does need to be replaced, the value in paramInfo will be changed to an empty string
+        /// and the new parameter will be returned via replacementParameter
+        /// </remarks>
+        private bool AdjustParametersForMSGFPlus(
+            IEnumerable<MSGFPlusParameter> msgfPlusParameters,
+            MSGFPlusKeyValueParamFileLine paramFileLine,
+            out MSGFPlusParameter replacementParameter)
         {
-            if (clsGlobal.IsMatch(argumentName, "nnet"))
+            if (clsGlobal.IsMatch(paramFileLine.ParamInfo.ParameterName, MSGFPLUS_OPTION_NNET))
             {
-                // Auto-switch to ntt
-                argumentName = "ntt";
-                if (int.TryParse(argumentValue, out var value))
+                // Auto-switch to NTT
+                replacementParameter = GetMSGFPlusParameter(msgfPlusParameters, MSGFPLUS_OPTION_NTT, "0");
+
+                if (!int.TryParse(paramFileLine.ParamInfo.Value, out var value))
                 {
-                    switch (value)
-                    {
-                        case 0:
-                            argumentValue = "2";         // Fully-tryptic
-                            break;
-                        case 1:
-                            argumentValue = "1";         // Partially tryptic
-                            break;
-                        case 2:
-                            argumentValue = "0";         // No-enzyme search
-                            break;
-                        default:
-                            // Assume partially tryptic
-                            argumentValue = "1";
-                            break;
-                    }
+                    throw new Exception(string.Format("Parameter {0} does not contain an integer in the MSGF+ parameter file: {1}",
+                                                      MSGFPLUS_OPTION_NNET, paramFileLine.ParamInfo.Value));
                 }
+
+                switch (value)
+                {
+                    case 0:
+                        replacementParameter.UpdateValue("2");         // Fully-tryptic
+                        break;
+                    case 1:
+                        replacementParameter.UpdateValue("1");         // Partially tryptic
+                        break;
+                    case 2:
+                        replacementParameter.UpdateValue("0");         // No-enzyme search
+                        break;
+                    default:
+                        // Assume partially tryptic
+                        replacementParameter.UpdateValue("1");
+                        OnWarningEvent(string.Format("Unrecognized value for {0} ({1}); assuming {2}={3}",
+                                                     MSGFPLUS_OPTION_NNET, paramFileLine.ParamInfo.Value,
+                                                     MSGFPLUS_OPTION_NTT, replacementParameter.Value));
+                        break;
+                }
+
+                return true;
             }
-            else if (clsGlobal.IsMatch(argumentName, "c13"))
+
+            if (clsGlobal.IsMatch(paramFileLine.ParamInfo.ParameterName, MSGFPLUS_OPTION_C13))
             {
                 // Auto-switch to ti
-                argumentName = "ti";
-                if (int.TryParse(argumentValue, out var value))
+                replacementParameter = GetMSGFPlusParameter(msgfPlusParameters, MSGFPLUS_OPTION_ISOTOPE_ERROR_RANGE, "0");
+
+                if (int.TryParse(paramFileLine.ParamInfo.Value, out var value))
                 {
                     if (value == 0)
                     {
-                        argumentValue = "0,0";
+                        replacementParameter.UpdateValue("0,0");
                     }
                     else if (value == 1)
                     {
-                        argumentValue = "-1,1";
+                        replacementParameter.UpdateValue("-1,1");
                     }
                     else if (value == 2)
                     {
-                        argumentValue = "-1,2";
+                        replacementParameter.UpdateValue("-1,2");
                     }
                     else
                     {
-                        argumentValue = "0,1";
+                        replacementParameter.UpdateValue("0,1");
                     }
                 }
                 else
                 {
-                    argumentValue = "0,1";
+                    replacementParameter.UpdateValue("0,1");
+                    OnWarningEvent(string.Format("Unrecognized value for {0} ({1}); assuming {2}={3}",
+                                                 MSGFPLUS_OPTION_C13, paramFileLine.ParamInfo.Value,
+                                                 MSGFPLUS_OPTION_NTT, replacementParameter.Value));
                 }
+
+                return true;
             }
-            else if (clsGlobal.IsMatch(argumentName, "showDecoy"))
+
+            if (clsGlobal.IsMatch(paramFileLine.ParamInfo.ParameterName, MSGFPLUS_OPTION_MIN_NUM_PEAKS_LEGACY))
+            {
+                // Auto-switch to MinNumPeaksPerSpectrum
+                replacementParameter = GetReplacementParameter(msgfPlusParameters, paramFileLine.ParamInfo, MSGFPLUS_OPTION_MIN_NUM_PEAKS);
+                return true;
+            }
+
+
+            if (clsGlobal.IsMatch(paramFileLine.ParamInfo.ParameterName, "showDecoy"))
             {
                 // Not valid for MS-GF+; skip it
-                argumentName = string.Empty;
+                paramFileLine.ChangeLineToComment("Obsolete");
             }
+
+            replacementParameter = null;
+            return false;
         }
 
         /// <summary>
@@ -356,6 +465,20 @@ namespace AnalysisManagerMSGFDBPlugIn
             }
         }
 
+        private void AppendParameter(
+            ICollection<MSGFPlusKeyValueParamFileLine> msgfPlusParamFileLines,
+            IDictionary<string, MSGFPlusKeyValueParamFileLine> paramFileParamToLineMapping,
+            MSGFPlusParameter newParam)
+        {
+            var newBlankLine = new KeyValueParamFileLine(0, string.Empty);
+            msgfPlusParamFileLines.Add(new MSGFPlusKeyValueParamFileLine(newBlankLine, true));
+
+            var newParamLine = new MSGFPlusKeyValueParamFileLine(newParam);
+            msgfPlusParamFileLines.Add(newParamLine);
+
+            paramFileParamToLineMapping.Add(newParam.ParameterName, newParamLine);
+        }
+
         private bool CanDetermineInstIdFromInstGroup(string instrumentGroup, out string instrumentIDNew, out string autoSwitchReason)
         {
             if (clsGlobal.IsMatch(instrumentGroup, "QExactive"))
@@ -396,46 +519,49 @@ namespace AnalysisManagerMSGFDBPlugIn
         }
 
         /// <summary>
-        ///
+        /// Update the instrument ID if needed
         /// </summary>
-        /// <param name="instrumentIDCurrent">Current instrument ID; may get updated by this method</param>
+        /// <param name="paramFileLine">MSGF+ parameter file line tracking instrument ID; its value may get updated by this method</param>
         /// <param name="instrumentIDNew"></param>
         /// <param name="autoSwitchReason"></param>
         /// <remarks></remarks>
-        private void AutoUpdateInstrumentIDIfChanged(ref string instrumentIDCurrent, string instrumentIDNew, string autoSwitchReason)
+        private void AutoUpdateInstrumentIDIfChanged(MSGFPlusKeyValueParamFileLine paramFileLine, string instrumentIDNew, string autoSwitchReason)
         {
-            if (!string.IsNullOrEmpty(instrumentIDNew) && instrumentIDNew != instrumentIDCurrent)
+            if (string.IsNullOrEmpty(instrumentIDNew) || string.Equals(instrumentIDNew, paramFileLine.ParamInfo.Value))
             {
-                if (mDebugLevel >= 1)
+                // Nothing to do
+                return;
+            }
+
+            if (mDebugLevel >= 1)
+            {
+                string instrumentDescription;
+
+                switch (instrumentIDNew)
                 {
-                    string instrumentDescription;
-
-                    switch (instrumentIDNew)
-                    {
-                        case "0":
-                            instrumentDescription = "Low-res MSn";
-                            break;
-                        case "1":
-                            instrumentDescription = "High-res MSn";
-                            break;
-                        case "2":
-                            instrumentDescription = "TOF";
-                            break;
-                        case "3":
-                            instrumentDescription = "Q-Exactive";
-                            break;
-                        default:
-                            instrumentDescription = "??";
-                            break;
-                    }
-
-                    OnStatusEvent("Auto-updating instrument ID " +
-                                  "from " + instrumentIDCurrent + " to " + instrumentIDNew +
-                                  " (" + instrumentDescription + ") " + autoSwitchReason);
+                    case "0":
+                        instrumentDescription = "Low-res MSn";
+                        break;
+                    case "1":
+                        instrumentDescription = "High-res MSn";
+                        break;
+                    case "2":
+                        instrumentDescription = "TOF";
+                        break;
+                    case "3":
+                        instrumentDescription = "Q-Exactive";
+                        break;
+                    default:
+                        instrumentDescription = "??";
+                        break;
                 }
 
-                instrumentIDCurrent = instrumentIDNew;
+                OnStatusEvent("Auto-updating instrument ID " +
+                              "from " + paramFileLine.ParamInfo.Value + " to " + instrumentIDNew +
+                              " (" + instrumentDescription + ") " + autoSwitchReason);
             }
+
+            paramFileLine.UpdateParamValue(instrumentIDNew);
         }
 
         /// <summary>
@@ -708,22 +834,15 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Create file params\enzymes.txt using enzymeDefs
         /// </summary>
-        /// <param name="parameterFilePath"></param>
+        /// <param name="outputDirectory"></param>
         /// <param name="enzymeDefs"></param>
         /// <returns>True if successful, or if enzymeDefs is empty</returns>
-        private bool CreateEnzymeDefinitionsFile(string parameterFilePath, IEnumerable<string> enzymeDefs)
+        private bool CreateEnzymeDefinitionsFile(FileSystemInfo outputDirectory, IEnumerable<string> enzymeDefs)
         {
             EnzymeDefinitionFilePath = string.Empty;
 
             try
             {
-                var parameterFile = new FileInfo(parameterFilePath);
-
-                if (string.IsNullOrWhiteSpace(parameterFile.DirectoryName))
-                {
-                    OnErrorEvent("Unable to determine the parent directory of " + parameterFile.FullName);
-                    return false;
-                }
 
                 var createFile = false;
 
@@ -794,7 +913,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 if (!createFile)
                     return true;
 
-                var enzymesFile = new FileInfo(Path.Combine(parameterFile.DirectoryName, "params", ENZYMES_FILE_NAME));
+                var enzymesFile = new FileInfo(Path.Combine(outputDirectory.FullName, "params", ENZYMES_FILE_NAME));
 
                 if (enzymesFile.Directory == null)
                 {
@@ -1255,77 +1374,132 @@ namespace AnalysisManagerMSGFDBPlugIn
             return clsGlobal.GetCoreCount();
         }
 
-        private Dictionary<string, string> GetMSFGDBParameterNames()
+        /// <summary>
+        /// Get the given MSGF+ parameter by name
+        /// Throws an exception if an invalid name
+        /// </summary>
+        /// <param name="msgfPlusParameters"></param>
+        /// <param name="parameterName"></param>
+        /// <param name="parameterValue"></param>
+        /// <returns>Parameter, if found</returns>
+        private MSGFPlusParameter GetMSGFPlusParameter(IEnumerable<MSGFPlusParameter> msgfPlusParameters, string parameterName, string parameterValue)
         {
-            // Keys are the parameter name in the MS-GF+ parameter file
-            // Values are the MS-GF+ command line switch name
-            var dctParamNames = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            if (TryGetParameter(msgfPlusParameters, parameterName, parameterValue, out var paramInfo))
             {
-                {"PMTolerance", "t"},
-                {"FragTolerance", "f"},
-                {MSGFPLUS_OPTION_TDA, "tda"},
-                {MSGFPLUS_OPTION_SHOW_DECOY, "showDecoy"},
-                // This setting is nearly always set to 0 since we create a _ScanType.txt file that specifies the type of each scan
-                // (thus, the value in the parameter file is ignored); the exception, when it is UVPD (mode 4)
-                {MSGFPLUS_OPTION_FRAGMENTATION_METHOD, "m"},
+                return paramInfo;
+            }
+
+            throw new Exception("Required parameter not found in msgfPlusParameters: " + parameterName);
+        }
+
+        private List<MSGFPlusParameter> GetMSGFPlusParameters()
+        {
+
+            var msgfPlusParameters = new List<MSGFPlusParameter>
+            {
+                new MSGFPlusParameter("SpectrumFile", "s"),
+                new MSGFPlusParameter("DatabaseFile", "d"),
+                new MSGFPlusParameter("DecoyPrefix", "decoy"),
+                new MSGFPlusParameter("PrecursorMassTolerance", "t", "PMTolerance"),
+                new MSGFPlusParameter("PrecursorMassToleranceUnits", "u"),
+
+                // When using a _dta.txt file, this setting is set to 0 since we create a _ScanType.txt file that specifies the type of each scan
+                // (thus, the value in the parameter file is ignored)
+                // One exception: when it is UVPD (mode 4), we use -m 4
+                new MSGFPlusParameter(MSGFPLUS_OPTION_FRAGMENTATION_METHOD, "m"),
+
                 // This setting is auto-updated based on the instrument class for this dataset,
                 // plus also the scan types listed In the _ScanType.txt file
                 // (thus, the value in the parameter file Is typically ignored)
-                {MSGFPLUS_OPTION_INSTRUMENT_ID, "inst"},
-                {"EnzymeID", "e"},
-                // C13 was a MSGFDB parameter name; old parameter files still have it. This class will auto-change it to "ti"
-                {"C13", "c13"},
-                // Used by MS-GF+
-                {"IsotopeError", "ti"},
-                // NNET was a MSGFDB parameter name; old parameter files still have it. This class will auto-change it to "NTT"
-                {"NNET", "nnet"},
-                // Used by MS-GF+
-                {"NTT", "ntt"},
-                {"minLength", "minLength"},
-                {"maxLength", "maxLength"},
-                // Only used if the spectrum file doesn't have charge information
-                {"minCharge", "minCharge"},
-                // Only used if the spectrum file doesn't have charge information
-                {"maxCharge", "maxCharge"},
-                {"NumMatchesPerSpec", "n"},
+                new MSGFPlusParameter(MSGFPLUS_OPTION_INSTRUMENT_ID, "inst"),
+
+                new MSGFPlusParameter("EnzymeID", "e"),
+                new MSGFPlusParameter("ProtocolID", "protocol", "Protocol"),
+                new MSGFPlusParameter(MSGFPLUS_OPTION_NUM_THREADS, "thread"),
+                new MSGFPlusParameter("NumTasks", "tasks"),
+                new MSGFPlusParameter(MSGFPLUS_OPTION_ISOTOPE_ERROR_RANGE, "ti", "IsotopeError"),
+                new MSGFPlusParameter("NTT", "ntt"),
+
+                // C13 was a MSGFDB parameter name; old parameter files may still have it. This class will auto-change it to IsotopeError
+                new MSGFPlusParameter(MSGFPLUS_OPTION_C13, ""),
+
+                // NNET was a MSGFDB parameter name; old parameter files may still have it. This class will auto-change it to "NTT"
+                new MSGFPlusParameter(MSGFPLUS_OPTION_NNET, ""),
+
+                new MSGFPlusParameter("MinPepLength", "minLength", "minLength"),
+                new MSGFPlusParameter("MaxPepLength", "maxLength", "maxLength"),
+
+                // MinCharge and MaxCharge are only used if the spectrum file doesn't have charge information
+                new MSGFPlusParameter("MinCharge", "minCharge"),
+                new MSGFPlusParameter("MaxCharge", "maxCharge"),
+
+                new MSGFPlusParameter("NumMatchesPerSpec", "n"),
+                new MSGFPlusParameter("ChargeCarrierMass", "ccm"),
+
                 // Auto-added by this code if not defined
-                {"minNumPeaks", "minNumPeaks"},
-                {"Protocol", "protocol"},
-                {"ChargeCarrierMass", "ccm"},
-                {"MaxMissedCleavages", "maxMissedCleavages"}
+                new MSGFPlusParameter("MinNumPeaksPerSpectrum", "minNumPeaks", "minNumPeaks"),
+                new MSGFPlusParameter("NumIsoforms", "iso"),
+                new MSGFPlusParameter("IgnoreMetCleavage", "ignoreMetCleavage"),
+                new MSGFPlusParameter("MinDeNovoScore", "minDeNovoScore"),
+
+                // Spec index range
+                new MSGFPlusParameter("SpecIndex", "index"),
+
+                new MSGFPlusParameter("MaxMissedCleavages", "maxMissedCleavages"),
+                new MSGFPlusParameter(MSGFPLUS_OPTION_TDA, "tda"),
+                new MSGFPlusParameter(MSGFPLUS_OPTION_ADD_FEATURES, "addFeatures"),
+
+                // Future parameter; unused in February 2019
+                new MSGFPlusParameter("FragTolerance", "f"),
+
+                // These settings were previously used to create a Mods.txt file
+                // Starting in February 2019, the settings are read by MS-GF+ from the parameter file
+                new MSGFPlusParameter("NumMods", ""),
+                new MSGFPlusParameter(MSGFPLUS_OPTION_STATIC_MOD, ""),
+                new MSGFPlusParameter(MSGFPLUS_OPTION_DYNAMIC_MOD, ""),
+                new MSGFPlusParameter(MSGFPLUS_OPTION_CUSTOM_AA, "")
             };
 
-            // The following are special cases;
-            // Do not add them to dctParamNames
-            //   uniformAAProb
-            //   NumThreads
-            //   NumMods
-            //   StaticMod
-            //   DynamicMod
-            //   CustomAA
-            //   EnzymeDef
+            // The following is a special case; do not add it
+            //   "EnzymeDef"
 
-            return dctParamNames;
+            return msgfPlusParameters;
         }
 
-        private string GetSettingFromMSGFPlusParamFile(string parameterFilePath, string settingToFind)
+        /// <summary>
+        /// Get an MSGF+ parameter to replace the given parameter
+        /// </summary>
+        /// <param name="msgfPlusParameters"></param>
+        /// <param name="paramInfo"></param>
+        /// <param name="replacementParameterName"></param>
+        /// <returns></returns>
+        private MSGFPlusParameter GetReplacementParameter(
+            IEnumerable<MSGFPlusParameter> msgfPlusParameters,
+            MSGFPlusParameter paramInfo,
+            string replacementParameterName)
         {
-            return GetSettingFromMSGFPlusParamFile(parameterFilePath, settingToFind, string.Empty);
+            var replacementParameter = GetMSGFPlusParameter(msgfPlusParameters, replacementParameterName, paramInfo.Value);
+            return replacementParameter;
         }
 
-        private string GetSettingFromMSGFPlusParamFile(string parameterFilePath, string settingToFind, string valueIfNotFound)
+        private string GetSettingFromMSGFPlusParamFile(string sourceParameterFilePath, string settingToFind)
         {
-            if (!File.Exists(parameterFilePath))
+            return GetSettingFromMSGFPlusParamFile(sourceParameterFilePath, settingToFind, string.Empty);
+        }
+
+        private string GetSettingFromMSGFPlusParamFile(string sourceParameterFilePath, string settingToFind, string valueIfNotFound)
+        {
+            if (!File.Exists(sourceParameterFilePath))
             {
-                OnErrorEvent("Parameter file not found: " + parameterFilePath);
+                OnErrorEvent("Parameter file not found: " + sourceParameterFilePath);
                 return valueIfNotFound;
             }
 
-            var paramFileReader = new clsKeyValueParamFileReader("MS-GF+", parameterFilePath);
+            var paramFileReader = new clsKeyValueParamFileReader("MS-GF+", sourceParameterFilePath);
             RegisterEvents(paramFileReader);
 
-            var eResult = paramFileReader.ParseKeyValueParameterFile(out var paramFileEntries);
-            if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
+            var result = paramFileReader.ParseKeyValueParameterFile(out var paramFileEntries);
+            if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 ErrorMessage = "Error reading MS-GF+ parameter file in GetSettingFromMSGFPlusParamFile";
                 return valueIfNotFound;
@@ -1433,7 +1607,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             if (!string.IsNullOrEmpty(msgfPlusParameterFilePath))
             {
-                var tdaSetting = GetSettingFromMSGFPlusParamFile(msgfPlusParameterFilePath, "TDA");
+                var tdaSetting = GetSettingFromMSGFPlusParamFile(msgfPlusParameterFilePath, MSGFPLUS_OPTION_TDA);
 
                 if (!int.TryParse(tdaSetting, out var tdaValue))
                 {
@@ -1670,13 +1844,13 @@ namespace AnalysisManagerMSGFDBPlugIn
                 switch (invalidTag)
                 {
                     case "opt":
-                        verboseTag = "DynamicMod";
+                        verboseTag = MSGFPLUS_OPTION_DYNAMIC_MOD;
                         break;
                     case "fix":
-                        verboseTag = "StaticMod";
+                        verboseTag = MSGFPLUS_OPTION_STATIC_MOD;
                         break;
                     case "custom":
-                        verboseTag = "CustomAA";
+                        verboseTag = MSGFPLUS_OPTION_CUSTOM_AA;
                         break;
                 }
 
@@ -1684,8 +1858,8 @@ namespace AnalysisManagerMSGFDBPlugIn
                 // Example messages:
                 //  Dynamic mod definition contains ,fix, -- update the param file to have ,opt, or change to StaticMod="
                 //  Static mod definition contains ,opt, -- update the param file to have ,fix, or change to DynamicMod="
-                ErrorMessage = definitionType + " definition contains ," + invalidTag + ", -- update the param file to have ," + expectedTag +
-                                ", or change to " + verboseTag + "=";
+                ErrorMessage = string.Format("{0} definition contains ,{1}, -- update the param file to have ,{2}, or change to {3}=",
+                                             definitionType, invalidTag, expectedTag, verboseTag);
                 OnErrorEvent(ErrorMessage);
 
                 return true;
@@ -2044,7 +2218,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Parses the static modifications, dynamic modifications, and custom amino acid information to create the MS-GF+ Mods file
         /// </summary>
-        /// <param name="parameterFilePath">Full path to the MSGF parameter file; will create file MSGFPlus_Mods.txt in the same folder</param>
+        /// <param name="sourceParameterFilePath">Full path to the MSGF parameter file; will create file MSGFPlus_Mods.txt in the same folder</param>
         /// <param name="sbOptions">String builder of command line arguments to pass to MS-GF+</param>
         /// <param name="numMods">Max Number of Modifications per peptide</param>
         /// <param name="staticMods">List of Static Mods</param>
@@ -2052,13 +2226,14 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <param name="customAminoAcids">List of Custom Amino Acids</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks></remarks>
-        private bool ParseMSGFDBModifications(string parameterFilePath, StringBuilder sbOptions, int numMods,
+        [Obsolete("Deprecated in February 2019")]
+        private bool ParseMSGFDBModifications(string sourceParameterFilePath, StringBuilder sbOptions, int numMods,
             IReadOnlyCollection<string> staticMods, IReadOnlyCollection<string> dynamicMods, IReadOnlyCollection<string> customAminoAcids)
         {
 
             try
             {
-                var parameterFile = new FileInfo(parameterFilePath);
+                var parameterFile = new FileInfo(sourceParameterFilePath);
 
                 if (string.IsNullOrWhiteSpace(parameterFile.DirectoryName))
                 {
@@ -2068,7 +2243,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 var modFilePath = Path.Combine(parameterFile.DirectoryName, MOD_FILE_NAME);
 
-                // Note that ParseMSGFDbValidateMod will set this to True if a dynamic or static mod is STY phosphorylation
+                // Note that ParseMSGFPlusValidateMod will set this to True if a dynamic or static mod is STY phosphorylation
                 PhosphorylationSearch = false;
 
                 sbOptions.Append(" -mod " + MOD_FILE_NAME);
@@ -2090,7 +2265,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                         foreach (var customAADef in customAminoAcids)
                         {
 
-                            if (ParseMSGFDbValidateMod(customAADef, out var customAADefClean))
+                            if (ParseMSGFPlusValidateMod(customAADef, out var customAADefClean))
                             {
                                 if (MisleadingModDef(customAADefClean, "Custom AA", "custom", "opt"))
                                     return false;
@@ -2116,7 +2291,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                         foreach (var staticMod in staticMods)
                         {
 
-                            if (ParseMSGFDbValidateMod(staticMod, out var modClean))
+                            if (ParseMSGFPlusValidateMod(staticMod, out var modClean))
                             {
                                 if (MisleadingModDef(modClean, "Static mod", "fix", "opt"))
                                     return false;
@@ -2142,7 +2317,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                         foreach (var dynamicMod in dynamicMods)
                         {
 
-                            if (ParseMSGFDbValidateMod(dynamicMod, out var modClean))
+                            if (ParseMSGFPlusValidateMod(dynamicMod, out var modClean))
                             {
                                 if (MisleadingModDef(modClean, "Dynamic mod", "opt", "fix"))
                                     return false;
@@ -2170,47 +2345,53 @@ namespace AnalysisManagerMSGFDBPlugIn
         }
 
         /// <summary>
-        /// Read the MS-GF+ options file and convert the options to command line switches
+        /// Read the MS-GF+ options file and optionally create a new, customized version
         /// </summary>
         /// <param name="fastaFileSizeKB">Size of the .Fasta file, in KB</param>
         /// <param name="fastaFileIsDecoy">True if the fasta file has had forward and reverse index files created</param>
         /// <param name="assumedScanType">Empty string if no assumed scan type; otherwise CID, ETD, or HCD</param>
         /// <param name="scanTypeFilePath">The path to the ScanType file (which lists the scan type for each scan); should be empty string if no ScanType file</param>
         /// <param name="instrumentGroup">DMS Instrument Group name</param>
-        /// <param name="parameterFilePath">Full path to the MS-GF+ parameter file to use</param>
-        /// <param name="msgfPlusCmdLineOptions">Output: MS-GF+ command line arguments</param>
+        /// <param name="sourceParameterFilePath">Full path to the MS-GF+ parameter file to use</param>
+        /// <param name="sourceParamFile">FileInfo object to the source parameter file. If a new parameter file was created, this will now have extension .original</param>
+        /// <param name="finalParamFile">FileInfo object to the parameter file to use; will have path sourceParameterFilePath</param>
         /// <returns>Options string if success; empty string if an error</returns>
         /// <remarks></remarks>
-        public CloseOutType ParseMSGFPlusParameterFile(float fastaFileSizeKB, bool fastaFileIsDecoy, string assumedScanType,
-            string scanTypeFilePath, string instrumentGroup, string parameterFilePath,
-            out string msgfPlusCmdLineOptions)
+        public CloseOutType ParseMSGFPlusParameterFile(
+            float fastaFileSizeKB, bool fastaFileIsDecoy, string assumedScanType,
+            string scanTypeFilePath, string instrumentGroup, string sourceParameterFilePath,
+            out FileInfo sourceParamFile, out FileInfo finalParamFile)
         {
             var overrideParams = new Dictionary<string, string>();
 
-            return ParseMSGFPlusParameterFile(fastaFileSizeKB, fastaFileIsDecoy, assumedScanType, scanTypeFilePath, instrumentGroup,
-                parameterFilePath, overrideParams, out msgfPlusCmdLineOptions);
+            return ParseMSGFPlusParameterFile(
+                fastaFileSizeKB, fastaFileIsDecoy, assumedScanType,
+                scanTypeFilePath, instrumentGroup, sourceParameterFilePath,
+                overrideParams, out sourceParamFile, out finalParamFile);
         }
 
         /// <summary>
-        /// Read the MS-GF+ options file and convert the options to command line switches
+        /// Read the MS-GF+ options file and create a new, customized version
         /// </summary>
         /// <param name="fastaFileSizeKB">Size of the .Fasta file, in KB</param>
         /// <param name="fastaFileIsDecoy">True if the fasta file has had forward and reverse index files created</param>
         /// <param name="assumedScanType">Empty string if no assumed scan type; otherwise CID, ETD, or HCD</param>
         /// <param name="scanTypeFilePath">The path to the ScanType file (which lists the scan type for each scan); should be empty string if no ScanType file</param>
         /// <param name="instrumentGroup">DMS Instrument Group name</param>
-        /// <param name="parameterFilePath">Full path to the MS-GF+ parameter file to use</param>
-        /// <param name="overrideParams">Parameters to override settings in the MS-GF+ parameter file</param>
-        /// <param name="msgfPlusCmdLineOptions">Output: MS-GF+ command line arguments</param>
-        /// <returns>Options string if success; empty string if an error</returns>
+        /// <param name="sourceParameterFilePath">Full path to the MS-GF+ parameter file to read</param>
+        /// <param name="overrideParams">Parameters to override settings in the MS-GF+ parameter file (Keys are parameter name, value is the override value)</param>
+        /// <param name="sourceParamFile">FileInfo object to the source parameter file. If a new parameter file was created, this will now have extension .original</param>
+        /// <param name="finalParamFile">FileInfo object to the parameter file to use; will have path sourceParameterFilePath</param>
+        /// <returns>CloseOutType.CLOSEOUT_SUCCESS, otherwise an error code</returns>
         /// <remarks></remarks>
-        public CloseOutType ParseMSGFPlusParameterFile(float fastaFileSizeKB, bool fastaFileIsDecoy, string assumedScanType,
-            string scanTypeFilePath, string instrumentGroup, string parameterFilePath,
-            Dictionary<string, string> overrideParams, out string msgfPlusCmdLineOptions)
+        public CloseOutType ParseMSGFPlusParameterFile(
+            float fastaFileSizeKB, bool fastaFileIsDecoy, string assumedScanType,
+            string scanTypeFilePath, string instrumentGroup, string sourceParameterFilePath,
+            Dictionary<string, string> overrideParams,
+            out FileInfo sourceParamFile, out FileInfo finalParamFile)
         {
             var paramFileThreadCount = 0;
 
-            var numMods = 0;
             var staticMods = new List<string>();
             var dynamicMods = new List<string>();
             var customAminoAcids = new List<string>();
@@ -2218,54 +2399,89 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             var isTDA = false;
 
-            msgfPlusCmdLineOptions = string.Empty;
+            sourceParamFile = new FileInfo(sourceParameterFilePath);
+            finalParamFile = new FileInfo(sourceParameterFilePath);
 
-            if (!File.Exists(parameterFilePath))
+            if (!sourceParamFile.Exists)
             {
-                OnErrorEvent("Parameter file Not found:  " + parameterFilePath);
+                OnErrorEvent("Parameter file Not found:  " + sourceParameterFilePath);
                 return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
             }
 
-            var paramFileReader = new clsKeyValueParamFileReader("MS-GF+", parameterFilePath);
-            RegisterEvents(paramFileReader);
-
-            var eResult = paramFileReader.ParseKeyValueParameterFile(out var paramFileEntries);
-            if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
+            var outputDirectory = sourceParamFile.Directory;
+            if (outputDirectory == null)
             {
-                ErrorMessage = paramFileReader.ErrorMessage;
-                return eResult;
+                OnErrorEvent("Unable to determine the parent directory of " + sourceParamFile.FullName);
+                return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
             }
 
-            var sbOptions = new StringBuilder(500);
+            var paramFileReader = new clsKeyValueParamFileReader("MS-GF+", sourceParamFile.FullName);
+            RegisterEvents(paramFileReader);
+
+            var result = paramFileReader.ParseKeyValueParameterFileGetAllLines(out var sourceParamFileLines);
+            if (result != CloseOutType.CLOSEOUT_SUCCESS)
+            {
+                ErrorMessage = paramFileReader.ErrorMessage;
+                return result;
+            }
+
+            // Keys are the parameter name, values are the parameter line text and associated MSGFPlusParameter
+            var paramFileParamToLineMapping = new Dictionary<string, MSGFPlusKeyValueParamFileLine>(StringComparer.OrdinalIgnoreCase);
 
             // This will be set to True if the parameter file has TDA=1, meaning MSGF+ will auto-added decoy proteins to its list of candidate proteins
             // When TDA is 1, the FASTA must only contain normal (forward) protein sequences
             ResultsIncludeAutoAddedDecoyPeptides = false;
 
+            // Initialize the list of MS-GF+ parameters
+            var msgfPlusParameters = GetMSGFPlusParameters();
+
+            if (msgfPlusParameters.Count == 0)
+            {
+                if (string.IsNullOrWhiteSpace(ErrorMessage))
+                {
+                    ErrorMessage = "GetMSGFPlusParameters returned an empty dictionary";
+                    OnErrorEvent(ErrorMessage);
+                }
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            var msgfPlusParamFileLines = new List<MSGFPlusKeyValueParamFileLine>();
+
             try
             {
-                // Initialize the Param Name dictionary
-                var paramToArgMapping = GetMSFGDBParameterNames();
-
-                foreach (var kvSetting in paramFileEntries)
+                foreach (var sourceParamFileLine in sourceParamFileLines)
                 {
+                    var paramFileLine = new MSGFPlusKeyValueParamFileLine(sourceParamFileLine);
+                    msgfPlusParamFileLines.Add(paramFileLine);
+
+                    if (!paramFileLine.HasParameter)
+                    {
+                        continue;
+                    }
 
                     // Remove the comment, if present
-                    var valueText = ExtractComment(kvSetting.Value, out _);
+                    var valueText = ExtractComment(paramFileLine.ParamValue, out var comment, out var whiteSpaceBeforeComment);
 
-                    // Check whether kvSetting.key is one of the standard keys defined in paramToArgMapping
-                    int value;
-                    if (paramToArgMapping.TryGetValue(kvSetting.Key, out var argumentName))
+                    // Check whether paramFileLine.ParamName is one of the standard parameter names defined in msgfPlusParameters
+                    if (TryGetParameter(msgfPlusParameters, paramFileLine.ParamName, valueText, out var paramInfo))
                     {
-                        if (clsGlobal.IsMatch(kvSetting.Key, MSGFPLUS_OPTION_FRAGMENTATION_METHOD))
+
+                        if (!string.IsNullOrWhiteSpace(comment))
                         {
-                            if (string.IsNullOrWhiteSpace(valueText) && !string.IsNullOrWhiteSpace(scanTypeFilePath))
+                            paramInfo.UpdateComment(comment, whiteSpaceBeforeComment);
+                        }
+
+                        paramFileLine.StoreParameter(paramInfo);
+
+                        if (clsGlobal.IsMatch(paramFileLine.ParamInfo.ParameterName, MSGFPLUS_OPTION_FRAGMENTATION_METHOD))
+                        {
+                            if (string.IsNullOrWhiteSpace(paramFileLine.ParamInfo.Value) && !string.IsNullOrWhiteSpace(scanTypeFilePath))
                             {
                                 // No setting for FragmentationMethodID, and a ScanType file was created
                                 // Use FragmentationMethodID 0 (as written in the spectrum, or CID)
-                                valueText = "0";
+                                paramFileLine.UpdateParamValue("0");
 
-                                OnStatusEvent("Using Fragmentation method -m " + valueText + " because a ScanType file was created");
+                                OnStatusEvent("Using Fragmentation method ID " + paramFileLine.ParamInfo.Value + " because a ScanType file was created");
                             }
                             else if (!string.IsNullOrWhiteSpace(assumedScanType))
                             {
@@ -2275,41 +2491,45 @@ namespace AnalysisManagerMSGFDBPlugIn
                                 switch (assumedScanType.ToUpper())
                                 {
                                     case "CID":
-                                        valueText = "1";
+                                        paramFileLine.UpdateParamValue("1");
                                         break;
                                     case "ETD":
-                                        valueText = "2";
+                                        paramFileLine.UpdateParamValue("2");
                                         break;
                                     case "HCD":
-                                        valueText = "3";
+                                        paramFileLine.UpdateParamValue("3");
                                         break;
                                     case "UVPD":
                                         // Previously, with MSGFDB, fragmentationType 4 meant Merge ETD and CID
                                         // Now with MS-GF+, fragmentationType 4 means UVPD
-                                        valueText = "4";
+                                        paramFileLine.UpdateParamValue("4");
                                         break;
                                     default:
                                         // Invalid string
-                                        ErrorMessage = "Invalid assumed scan type '" + assumedScanType +
-                                                        "'; must be CID, ETD, HCD, or UVPD";
+                                        ErrorMessage = string.Format("Invalid assumed scan type '{0}'; must be CID, ETD, HCD, or UVPD",
+                                                                     assumedScanType);
+
                                         OnErrorEvent(ErrorMessage);
+                                        WriteMSGFPlusParameterFile(sourceParamFile, msgfPlusParamFileLines, true, out finalParamFile);
                                         return CloseOutType.CLOSEOUT_FAILED;
                                 }
 
-                                OnStatusEvent("Using Fragmentation method -m " + valueText + " because of Assumed scan type " + assumedScanType);
+                                OnStatusEvent(string.Format("Using Fragmentation method ID {0} because of Assumed scan type {1}",
+                                              paramFileLine.ParamInfo.Value, assumedScanType));
                             }
                             else
                             {
-                                OnStatusEvent("Using Fragmentation method -m " + valueText);
+                                OnStatusEvent("Using Fragmentation method ID " + paramFileLine.ParamInfo.Value);
                             }
                         }
-                        else if (clsGlobal.IsMatch(kvSetting.Key, MSGFPLUS_OPTION_INSTRUMENT_ID))
+                        else if (clsGlobal.IsMatch(paramFileLine.ParamInfo.ParameterName, MSGFPLUS_OPTION_INSTRUMENT_ID))
                         {
                             if (!string.IsNullOrWhiteSpace(scanTypeFilePath))
                             {
-                                var instrumentLookupResult = DetermineInstrumentID(ref valueText, scanTypeFilePath, instrumentGroup);
+                                var instrumentLookupResult = DetermineInstrumentID(paramFileLine, scanTypeFilePath, instrumentGroup);
                                 if (instrumentLookupResult != CloseOutType.CLOSEOUT_SUCCESS)
                                 {
+                                    WriteMSGFPlusParameterFile(sourceParamFile, msgfPlusParamFileLines, true, out finalParamFile);
                                     return instrumentLookupResult;
                                 }
                             }
@@ -2335,9 +2555,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                                     }
                                     else
                                     {
-                                        scanTypeLookupSuccess =
-                                            LookupScanTypesForDataset(datasetName,
-                                                                      out countLowResMSn, out countHighResMSn, out countHCDMSn);
+                                        scanTypeLookupSuccess = LookupScanTypesForDataset(datasetName, out countLowResMSn, out countHighResMSn, out countHCDMSn);
                                     }
 
                                     if (scanTypeLookupSuccess)
@@ -2346,47 +2564,90 @@ namespace AnalysisManagerMSGFDBPlugIn
                                     }
                                 }
 
-                                AutoUpdateInstrumentIDIfChanged(ref valueText, instrumentIDNew, autoSwitchReason);
+                                AutoUpdateInstrumentIDIfChanged(paramFileLine, instrumentIDNew, autoSwitchReason);
                             }
                         }
-
-                        var argumentNameOriginal = string.Copy(argumentName);
-
-                        AdjustSwitchesForMSGFPlus(ref argumentName, ref valueText);
-
-                        if (overrideParams.TryGetValue(argumentName, out var valueOverride))
+                        else if (clsGlobal.IsMatch(paramFileLine.ParamInfo.ParameterName, MSGFPLUS_OPTION_STATIC_MOD))
                         {
-                            OnStatusEvent("Overriding argument " + argumentNameOriginal + " to use -" + argumentName + " " + valueOverride +
-                                          " instead of -" + argumentNameOriginal + " " + valueText);
-                            valueText = string.Copy(valueOverride);
-                        }
-
-                        if (string.IsNullOrEmpty(argumentName))
-                        {
-                            if (mDebugLevel >= 1 && !clsGlobal.IsMatch(argumentNameOriginal, MSGFPLUS_OPTION_SHOW_DECOY))
+                            if (!EmptyOrNone(paramFileLine.ParamInfo.Value))
                             {
-                                OnWarningEvent("Skipping argument " + argumentNameOriginal + " since it is not valid for this version of MS-GF+");
+                                staticMods.Add(paramFileLine.ParamInfo.Value);
                             }
                         }
-                        else if (string.IsNullOrEmpty(valueText))
+                        else if (clsGlobal.IsMatch(paramFileLine.ParamInfo.ParameterName, MSGFPLUS_OPTION_DYNAMIC_MOD))
+                        {
+                            if (!EmptyOrNone(paramFileLine.ParamInfo.Value))
+                            {
+                                dynamicMods.Add(paramFileLine.ParamInfo.Value);
+                            }
+                        }
+                        else if (clsGlobal.IsMatch(paramFileLine.ParamInfo.ParameterName, MSGFPLUS_OPTION_CUSTOM_AA))
+                        {
+                            customAminoAcids.Add(paramFileLine.ParamInfo.Value);
+                        }
+
+                        if (AdjustParametersForMSGFPlus(msgfPlusParameters, paramFileLine, out var replacementParameter))
+                        {
+                            OnStatusEvent(string.Format("Replacing parameter {0} with {1}={2}",
+                                                        paramFileLine.ParamInfo.ParameterName,
+                                                        replacementParameter.ParameterName,
+                                                        replacementParameter.Value));
+
+                            paramFileLine.ReplaceParameter(replacementParameter);
+                        }
+
+                        PossiblyOverrideParameter(overrideParams, paramFileLine);
+
+                        if (clsGlobal.IsMatch(paramFileLine.ParamInfo.ParameterName, MSGFPLUS_OPTION_NUM_THREADS))
+                        {
+                            if (string.IsNullOrWhiteSpace(paramFileLine.ParamInfo.Value))
+                            {
+                                // NumThreads parameter is specified but does not have a value; change it to "all"
+                                paramFileLine.UpdateParamValue("All");
+                            }
+                            else if (clsGlobal.IsMatch(paramFileLine.ParamInfo.Value, "All"))
+                            {
+                                // As of February 2019, MS-GF+ supports NumThreads=All
+                            }
+                            else
+                            {
+                                if (int.TryParse(paramFileLine.ParamInfo.Value, out paramFileThreadCount))
+                                {
+                                    // paramFileThreadCount now has the thread count
+                                }
+                                else
+                                {
+                                    OnWarningEvent(string.Format("Invalid value for NumThreads in MS-GF+ parameter file: {0}={1}",
+                                                                 paramFileLine.ParamInfo.ParameterName, paramFileLine.ParamInfo.Value));
+                                    OnStatusEvent(string.Format("Changing to: {0}={1}",
+                                                                paramFileLine.ParamInfo.ParameterName, "All"));
+                                }
+                            }
+                        }
+                        else if (clsGlobal.IsMatch(paramFileLine.ParamInfo.ParameterName, "NumMods"))
+                        {
+                            if (!int.TryParse(paramFileLine.ParamInfo.Value, out _))
+                            {
+                                ErrorMessage = string.Format("Invalid value for NumMods in MS-GF+ parameter file: {0}={1}",
+                                                             paramFileLine.ParamInfo.ParameterName, paramFileLine.ParamInfo.Value);
+                                OnErrorEvent(ErrorMessage);
+                                WriteMSGFPlusParameterFile(sourceParamFile, msgfPlusParamFileLines, true, out finalParamFile);
+                                return CloseOutType.CLOSEOUT_FAILED;
+                            }
+                        }
+                        else if (string.IsNullOrEmpty(paramFileLine.ParamInfo.Value))
                         {
                             if (mDebugLevel >= 1)
                             {
-                                OnWarningEvent("Skipping argument " + argumentName + " since the value is empty");
+                                OnWarningEvent(string.Format("Commenting out parameter {0} since the value is empty",
+                                                             paramFileLine.ParamInfo.ParameterName));
+                                paramFileLine.ChangeLineToComment();
                             }
                         }
-                        else
-                        {
-                            sbOptions.Append(" -" + argumentName + " " + valueText);
-                        }
 
-                        if (clsGlobal.IsMatch(argumentName, "showDecoy"))
+                        if (clsGlobal.IsMatch(paramFileLine.ParamInfo.ParameterName, MSGFPLUS_OPTION_TDA))
                         {
-                            // Not valid for MS-GF+; skip it
-                        }
-                        else if (clsGlobal.IsMatch(argumentName, "tda"))
-                        {
-                            if (int.TryParse(valueText, out value))
+                            if (int.TryParse(paramFileLine.ParamInfo.Value, out var value))
                             {
                                 if (value > 0)
                                 {
@@ -2394,80 +2655,33 @@ namespace AnalysisManagerMSGFDBPlugIn
                                 }
                             }
                         }
+
+                        paramFileParamToLineMapping.Add(paramFileLine.ParamInfo.ParameterName, paramFileLine);
+
                     }
-                    else if (clsGlobal.IsMatch(kvSetting.Key, "uniformAAProb"))
+                    else if (clsGlobal.IsMatch(paramFileLine.ParamName, "UniformAAProb") ||
+                             clsGlobal.IsMatch(paramFileLine.ParamName, "ShowDecoy"))
                     {
-                        // Not valid for MS-GF+; skip it
-                    }
-                    else if (clsGlobal.IsMatch(kvSetting.Key, "NumThreads"))
-                    {
-                        if (string.IsNullOrWhiteSpace(valueText) || clsGlobal.IsMatch(valueText, "all"))
+                        // Not valid for MS-GF+; comment out this line
+                        paramFileLine.ChangeLineToComment("Obsolete");
+                        if (mDebugLevel >= 1)
                         {
-                            // Do not append -thread to the command line; MS-GF+ will use all available cores by default
-                        }
-                        else
-                        {
-                            if (int.TryParse(valueText, out paramFileThreadCount))
-                            {
-                                // paramFileThreadCount now has the thread count
-                            }
-                            else
-                            {
-                                OnWarningEvent(string.Format("Invalid value for NumThreads in MS-GF+ parameter file: {0}={1}",
-                                                             kvSetting.Key, kvSetting.Value));
-                            }
+                            OnWarningEvent(string.Format("Commenting out parameter {0} since it is not valid for this version of MS-GF+",
+                                                         paramFileLine.ParamName));
                         }
                     }
-                    else if (clsGlobal.IsMatch(kvSetting.Key, "NumMods"))
+                    else if (clsGlobal.IsMatch(paramFileLine.ParamName, "SkipMzRefinery"))
                     {
-                        if (int.TryParse(valueText, out value))
-                        {
-                            numMods = value;
-                        }
-                        else
-                        {
-                            ErrorMessage = string.Format("Invalid value for NumMods in MS-GF+ parameter file: {0}={1}",
-                                                         kvSetting.Key, kvSetting.Value);
-                            OnErrorEvent(ErrorMessage);
-                            return CloseOutType.CLOSEOUT_FAILED;
-                        }
+                        // Used by MZRefinery; comment out this line so that MS-GF+ does not complain
+                        paramFileLine.ChangeLineToComment();
                     }
-                    else if (clsGlobal.IsMatch(kvSetting.Key, "StaticMod"))
+                    else if (clsGlobal.IsMatch(paramFileLine.ParamName, "EnzymeDef"))
                     {
-                        if (!string.IsNullOrWhiteSpace(valueText) && !clsGlobal.IsMatch(valueText, "none"))
-                        {
-                            staticMods.Add(valueText);
-                        }
-                    }
-                    else if (clsGlobal.IsMatch(kvSetting.Key, "DynamicMod"))
-                    {
-                        if (!string.IsNullOrWhiteSpace(valueText) && !clsGlobal.IsMatch(valueText, "none"))
-                        {
-                            dynamicMods.Add(valueText);
-                        }
-                    }
-                    else if (clsGlobal.IsMatch(kvSetting.Key, "CustomAA"))
-                    {
-                        if (!string.IsNullOrWhiteSpace(valueText) && !clsGlobal.IsMatch(valueText, "none"))
-                        {
-                            customAminoAcids.Add(valueText);
-                        }
-                    }
-                    else if (clsGlobal.IsMatch(kvSetting.Key, "EnzymeDef"))
-                    {
-                        if (!string.IsNullOrWhiteSpace(valueText) && !clsGlobal.IsMatch(valueText, "none"))
+                        if (!EmptyOrNone(valueText))
                         {
                             enzymeDefs.Add(valueText);
                         }
                     }
-
-                    // if (clsGlobal.IsMatch(kvSetting.Key, MSGFPLUS_OPTION_FRAGMENTATION_METHOD)) {
-                    //	 if (int.TryParse(valueText, out value)) {
-                    //		if (value == 3) {
-                    //			isHCD = True;
-                    //      }
-                    //	 }
-                    // }
 
                 }
 
@@ -2480,8 +2694,9 @@ namespace AnalysisManagerMSGFDBPlugIn
             }
             catch (Exception ex)
             {
-                ErrorMessage = "Exception converting parameters loaded from the MS-GF+ parameter file into command line arguments";
+                ErrorMessage = "Exception examining parameters defined in the MS-GF+ parameter file";
                 OnErrorEvent(ErrorMessage, ex);
+                WriteMSGFPlusParameterFile(sourceParamFile, msgfPlusParamFileLines, true, out finalParamFile);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -2571,20 +2786,30 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             if (paramFileThreadCount > 0)
             {
-                sbOptions.Append(" -thread " + paramFileThreadCount);
+                if (paramFileParamToLineMapping.TryGetValue(MSGFPLUS_OPTION_NUM_THREADS, out var threadParam))
+                {
+                    threadParam.UpdateParamValue(paramFileThreadCount.ToString(), true);
+                }
+                else
+                {
+                    var newThreadParam = GetMSGFPlusParameter(msgfPlusParameters, MSGFPLUS_OPTION_NUM_THREADS, paramFileThreadCount.ToString());
+                    AppendParameter(msgfPlusParamFileLines, paramFileParamToLineMapping, newThreadParam);
+                }
             }
 
-            // Create the modification file and append the -mod switch
-            // We'll also set mPhosphorylationSearch to True if a dynamic or static mod is STY phosphorylation
-            if (!ParseMSGFDBModifications(parameterFilePath, sbOptions, numMods, staticMods, dynamicMods, customAminoAcids))
+            // Validate the modifications
+            // Also set PhosphorylationSearch to True if a dynamic or static mod is STY phosphorylation
+            if (!ValidateMSGFPlusModifications(staticMods, dynamicMods, customAminoAcids))
             {
+                WriteMSGFPlusParameterFile(sourceParamFile, msgfPlusParamFileLines, true, out finalParamFile);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
             // Look for a custom enzyme definition in the parameter file
             // If defined, create file enzymes.txt in the params directory below the working directory
-            if(enzymeDefs.Count > 0 && !CreateEnzymeDefinitionsFile(parameterFilePath, enzymeDefs))
+            if (enzymeDefs.Count > 0 && !CreateEnzymeDefinitionsFile(outputDirectory, enzymeDefs))
             {
+                WriteMSGFPlusParameterFile(sourceParamFile, msgfPlusParamFileLines, true, out finalParamFile);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -2593,48 +2818,61 @@ namespace AnalysisManagerMSGFDBPlugIn
             // Options for -protocol are 0=NoProtocol (Default), 1=Phosphorylation, 2=iTRAQ, 3=iTRAQPhospho
             //
             // As of March 23, 2015, if the user is searching for Phospho mods with TMT labeling enabled,
-            // then MS-GF+ will use a model trained for TMT peptides (without phospho)
+            // MS-GF+ will use a model trained for TMT peptides (without phospho)
             // In this case, the user should probably use a parameter file with Protocol=1 defined (which leads to sbOptions having "-protocol 1")
 
-            msgfPlusCmdLineOptions = sbOptions.ToString();
-
-            // By default, MS-GF+ filters out spectra with fewer than 20 data points
-            // Override this threshold to 5 data points
-            if (msgfPlusCmdLineOptions.IndexOf("-minNumPeaks", StringComparison.OrdinalIgnoreCase) < 0)
+            // By default, MS-GF+ filters out spectra with fewer than 10 data points
+            // Override this threshold to 5 data points (if not yet defined)
+            if (!paramFileParamToLineMapping.TryGetValue(MSGFPLUS_OPTION_MIN_NUM_PEAKS, out _))
             {
-                msgfPlusCmdLineOptions += " -minNumPeaks 5";
+                var newParam = GetMSGFPlusParameter(msgfPlusParameters, MSGFPLUS_OPTION_MIN_NUM_PEAKS, "5");
+                AppendParameter(msgfPlusParamFileLines, paramFileParamToLineMapping, newParam);
             }
 
-            // Auto-add the "addFeatures" switch if not present
+            // Auto-add the "AddFeatures" parameter if not present
             // This is required to post-process the results with Percolator
-            if (msgfPlusCmdLineOptions.IndexOf("-addFeatures", StringComparison.OrdinalIgnoreCase) < 0)
+            if (!paramFileParamToLineMapping.TryGetValue(MSGFPLUS_OPTION_ADD_FEATURES, out _))
             {
-                msgfPlusCmdLineOptions += " -addFeatures 1";
+                var newParam = GetMSGFPlusParameter(msgfPlusParameters, MSGFPLUS_OPTION_ADD_FEATURES, "1");
+                AppendParameter(msgfPlusParamFileLines, paramFileParamToLineMapping, newParam);
             }
 
-            if (msgfPlusCmdLineOptions.Contains("-tda 1"))
+            if (paramFileParamToLineMapping.TryGetValue(MSGFPLUS_OPTION_TDA, out var tdaParam))
             {
-                // Make sure the .Fasta file is not a Decoy fasta
-                if (fastaFileIsDecoy)
+                if (!int.TryParse(tdaParam.ParamInfo.Value, out var tdaSetting))
                 {
-                    OnErrorEvent("Parameter file / decoy protein collection conflict: " +
-                                 "do not use a decoy protein collection when using a target/decoy parameter file (which has setting TDA=1)");
+                    OnErrorEvent("TDA parameter is not numeric in the parameter file; it should be 0 or 1, see " + tdaParam.Text);
+                    WriteMSGFPlusParameterFile(sourceParamFile, msgfPlusParamFileLines, true, out finalParamFile);
                     return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                if (tdaSetting > 0)
+                {
+                    // Make sure the .Fasta file is not a Decoy fasta
+                    if (fastaFileIsDecoy)
+                    {
+                        OnErrorEvent("Parameter file / decoy protein collection conflict: " +
+                                     "do not use a decoy protein collection when using a target/decoy parameter file (which has setting TDA=1)");
+                        WriteMSGFPlusParameterFile(sourceParamFile, msgfPlusParamFileLines, true, out finalParamFile);
+                        return CloseOutType.CLOSEOUT_FAILED;
+                    }
                 }
             }
 
-            return CloseOutType.CLOSEOUT_SUCCESS;
+            var success = WriteMSGFPlusParameterFile(sourceParamFile, msgfPlusParamFileLines, false, out finalParamFile);
+
+            return success;
         }
 
         /// <summary>
         /// Override Instrument ID based on the instrument class and scan types in the _ScanType file
         /// </summary>
-        /// <param name="instrumentIDCurrent">Current instrument ID; may get updated by this method</param>
+        /// <param name="paramFileLine">MSGF+ parameter file line tracking instrument ID; its value may get updated by this method</param>
         /// <param name="scanTypeFilePath"></param>
         /// <param name="instrumentGroup"></param>
         /// <returns></returns>
         /// <remarks></remarks>
-        private CloseOutType DetermineInstrumentID(ref string instrumentIDCurrent, string scanTypeFilePath, string instrumentGroup)
+        private CloseOutType DetermineInstrumentID(MSGFPlusKeyValueParamFileLine paramFileLine, string scanTypeFilePath, string instrumentGroup)
         {
             // InstrumentID values:
             // #  0 means Low-res LCQ/LTQ (Default for CID and ETD); use InstrumentID=0 if analyzing a dataset with low-res CID and high-res HCD spectra
@@ -2685,9 +2923,19 @@ namespace AnalysisManagerMSGFDBPlugIn
                 ExamineScanTypes(lowResMSn.Count, highResMSn.Count, hcdMSn.Count, out instrumentIDNew, out autoSwitchReason);
             }
 
-            AutoUpdateInstrumentIDIfChanged(ref instrumentIDCurrent, instrumentIDNew, autoSwitchReason);
+            AutoUpdateInstrumentIDIfChanged(paramFileLine, instrumentIDNew, autoSwitchReason);
 
             return CloseOutType.CLOSEOUT_SUCCESS;
+        }
+
+        /// <summary>
+        /// Return true if paramValue is an empty string or "None"
+        /// </summary>
+        /// <param name="paramValue"></param>
+        /// <returns></returns>
+        private bool EmptyOrNone(string paramValue)
+        {
+            return string.IsNullOrWhiteSpace(paramValue) || clsGlobal.IsMatch(paramValue, "None");
         }
 
         /// <summary>
@@ -2754,14 +3002,16 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// If found, extract the comment
         /// </summary>
         /// <param name="paramLine">Parameter file line</param>
-        /// <param name="comment">Comment if present, or empty string</param>
+        /// <param name="comment">Comment if present, or empty string (does not include the # sign)</param>
+        /// <param name="whiteSpaceBeforeComment">Whitespace before the comment, including the # sign</param>
         /// <returns>Parameter line, without the comment</returns>
-        private string ExtractComment(string paramLine, out string comment)
+        private string ExtractComment(string paramLine, out string comment, out string whiteSpaceBeforeComment)
         {
-            var poundIndex = paramLine.IndexOf('#');
+            var poundIndex = paramLine.IndexOf(MSGFPlusKeyValueParamFileLine.COMMENT_CHAR);
             if (poundIndex <= 0)
             {
                 comment = string.Empty;
+                whiteSpaceBeforeComment = string.Empty;
                 return paramLine;
             }
 
@@ -2771,7 +3021,24 @@ namespace AnalysisManagerMSGFDBPlugIn
             }
             else
             {
+                // Empty comment
                 comment = string.Empty;
+            }
+
+            var match = mCommentExtractor.Match(paramLine);
+            if (!match.Success)
+            {
+                whiteSpaceBeforeComment = string.Empty;
+            }
+            else
+            {
+                whiteSpaceBeforeComment = match.Groups["WhiteSpace"].Value;
+
+                var commentFromRegEx = match.Groups["Comment"].Value;
+                if (!string.IsNullOrWhiteSpace(commentFromRegEx) && !string.Equals(comment, commentFromRegEx))
+                {
+                    comment = commentFromRegEx;
+                }
             }
 
             return paramLine.Substring(0, poundIndex - 1).Trim();
@@ -2866,11 +3133,11 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <param name="modClean">Cleaned-up modification definition (output param)</param>
         /// <returns>True if valid; false if invalid</returns>
         /// <remarks>Valid modification definition contains 5 parts and doesn't contain any whitespace</remarks>
-        private bool ParseMSGFDbValidateMod(string modDefLine, out string modClean)
+        private bool ParseMSGFPlusValidateMod(string modDefLine, out string modClean)
         {
             modClean = string.Empty;
 
-            var modDef = ExtractComment(modDefLine, out var comment);
+            var modDef = ExtractComment(modDefLine, out var comment, out _);
 
             // Split on commas, change tabs to spaces, and remove whitespace
             var modParts = modDef.Split(',');
@@ -2975,7 +3242,8 @@ namespace AnalysisManagerMSGFDBPlugIn
                 return true;
 
             // Check whether this is a phosphorylation mod
-            if (modParts[(int)ModDefinitionParts.Name].StartsWith("Phosph", StringComparison.OrdinalIgnoreCase) ||
+            // Note that MS-GF+ recognizes phosphorylated, phosphorylation, or Phospho for STY phosphorylation
+            if (modParts[(int)ModDefinitionParts.Name].StartsWith("Phospho", StringComparison.OrdinalIgnoreCase) ||
                 modParts[(int)ModDefinitionParts.EmpiricalFormulaOrMass].StartsWith("HO3P", StringComparison.OrdinalIgnoreCase))
             {
                 if (modParts[(int)ModDefinitionParts.Residues].ToUpper().IndexOfAny(new[]
@@ -2992,11 +3260,46 @@ namespace AnalysisManagerMSGFDBPlugIn
             return true;
         }
 
+        /// <summary>
+        /// Override the parameter value if defined in overrideParams
+        /// </summary>
+        /// <param name="overrideParams"></param>
+        /// <param name="paramFileLine">MSGF+ parameter file line</param>
+        private void PossiblyOverrideParameter(IReadOnlyDictionary<string, string> overrideParams, MSGFPlusKeyValueParamFileLine paramFileLine)
+        {
+            if (overrideParams.TryGetValue(paramFileLine.ParamInfo.ParameterName, out var valueOverride))
+            {
+                OnStatusEvent(string.Format("Overriding parameter {0} to be {1} instead of {2}",
+                                            paramFileLine.ParamInfo.ParameterName, valueOverride, paramFileLine.ParamInfo.Value));
+
+                paramFileLine.UpdateParamValue(valueOverride);
+            }
+        }
+
         private string ReverseString(string text)
         {
             var chReversed = text.ToCharArray();
             Array.Reverse(chReversed);
             return new string(chReversed);
+        }
+
+        private static bool TryGetParameter(IEnumerable<MSGFPlusParameter> msgfPlusParameters,
+                                            string parameterName, string parameterValue,
+                                            out MSGFPlusParameter msgfPlusParameter)
+        {
+            foreach (var parameter in msgfPlusParameters)
+            {
+                // ReSharper disable once InvertIf
+                if (string.Equals(parameter.ParameterName, parameterName, StringComparison.OrdinalIgnoreCase) ||
+                    parameter.HasSynonym(parameterName))
+                {
+                    msgfPlusParameter = parameter.Clone(parameterValue);
+                    return true;
+                }
+            }
+
+            msgfPlusParameter = null;
+            return false;
         }
 
         /// <summary>
@@ -3102,6 +3405,78 @@ namespace AnalysisManagerMSGFDBPlugIn
             return false;
         }
 
+        /// <summary>
+        /// Verify that the static mods, dynamic mods, and/or custom amino acid definitions are valid
+        /// </summary>
+        /// <param name="staticMods"></param>
+        /// <param name="dynamicMods"></param>
+        /// <param name="customAminoAcids"></param>
+        /// <returns></returns>
+        private bool ValidateMSGFPlusModifications(
+            IEnumerable<string> staticMods,
+            IEnumerable<string> dynamicMods,
+            IEnumerable<string> customAminoAcids)
+        {
+
+            try
+            {
+                // Note that ParseMSGFPlusValidateMod will set this to True if a dynamic or static mod is STY phosphorylation
+                PhosphorylationSearch = false;
+
+                // Examine custom amino acid definitions
+                foreach (var customAADef in customAminoAcids)
+                {
+                    if (!ParseMSGFPlusValidateMod(customAADef, out var customAADefClean))
+                    {
+                        return false;
+                    }
+
+                    if (MisleadingModDef(customAADefClean, "Custom AA", "custom", "opt"))
+                        return false;
+                    if (MisleadingModDef(customAADefClean, "Custom AA", "custom", "fix"))
+                        return false;
+                }
+
+                // Examine static mods
+                foreach (var staticMod in staticMods)
+                {
+                    // Examine the definition to update it to a standard form (minimal whitespace)
+                    // modClean will still include the comment, if any
+                    if (!ParseMSGFPlusValidateMod(staticMod, out var modClean))
+                    {
+                        return false;
+                    }
+
+                    if (MisleadingModDef(modClean, "Static mod", "fix", "opt"))
+                        return false;
+                    if (MisleadingModDef(modClean, "Static mod", "fix", "custom"))
+                        return false;
+                }
+
+                // Examine dynamic mods
+                foreach (var dynamicMod in dynamicMods)
+                {
+                    if (!ParseMSGFPlusValidateMod(dynamicMod, out var modClean))
+                    {
+                        return false;
+                    }
+
+                    if (MisleadingModDef(modClean, "Dynamic mod", "opt", "fix"))
+                        return false;
+                    if (MisleadingModDef(modClean, "Dynamic mod", "opt", "custom"))
+                        return false;
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage = "Exception in ValidateMSGFPlusModifications";
+                OnErrorEvent(ErrorMessage, ex);
+                return false;
+            }
+        }
+
         private bool ValidatePeptideToProteinMapResults(string pepToProtMapFilePath, bool ignorePeptideToProteinMapperErrors)
         {
             const string PROTEIN_NAME_NO_MATCH = "__NoMatch__";
@@ -3176,6 +3551,75 @@ namespace AnalysisManagerMSGFDBPlugIn
                 return false;
             }
 
+        }
+
+        /// <summary>
+        /// Optionally replace the source parameter file with a new one based on the data in msgfPlusParamFileLines
+        /// If a new file is created, the source file will be renamed to have extension .original
+        /// </summary>
+        /// <param name="sourceParamFile">FileInfo object to the source parameter file. If a new parameter file was created, this will now have extension .original</param>
+        /// <param name="msgfPlusParamFileLines"></param>
+        /// <param name="alwaysCreate">If false, only replace the original file file if at least one parameter has been updated; if true, always replace it</param>
+        /// <param name="finalParamFile">FileInfo object to the parameter file to use; will have path sourceParameterFilePath</param>
+        /// <returns></returns>
+        private CloseOutType WriteMSGFPlusParameterFile(
+            FileInfo sourceParamFile,
+            IReadOnlyCollection<MSGFPlusKeyValueParamFileLine> msgfPlusParamFileLines,
+            bool alwaysCreate,
+            out FileInfo finalParamFile)
+        {
+            try
+            {
+                // Count the number of new or updated lines
+                var updatedLineCount = 0;
+
+                foreach (var paramFileLine in msgfPlusParamFileLines)
+                {
+                    if (paramFileLine.LineUpdated)
+                        updatedLineCount++;
+                }
+
+                if (updatedLineCount == 0 && !alwaysCreate)
+                {
+                    OnDebugEvent("No parameters were customized in " + sourceParamFile.FullName + "; not creating a new file");
+                    finalParamFile = sourceParamFile;
+                    return CloseOutType.CLOSEOUT_SUCCESS;
+                }
+
+                if (sourceParamFile.Directory == null)
+                {
+                    OnErrorEvent("Unable to determine the parent directory of " + sourceParamFile.FullName);
+                    finalParamFile = sourceParamFile;
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                var renamedSourceParamFilePath = Path.Combine(sourceParamFile.Directory.FullName,
+                                                              Path.ChangeExtension(sourceParamFile.Name, ".original"));
+
+                finalParamFile = new FileInfo(sourceParamFile.FullName);
+
+                if (File.Exists(renamedSourceParamFilePath))
+                    File.Delete(renamedSourceParamFilePath);
+
+                sourceParamFile.MoveTo(renamedSourceParamFilePath);
+
+                using (var writer = new StreamWriter(new FileStream(finalParamFile.FullName, FileMode.Create, FileAccess.Write)))
+                {
+                    foreach (var paramFileLine in msgfPlusParamFileLines)
+                    {
+                        writer.WriteLine(paramFileLine.Text);
+                    }
+                }
+
+                return CloseOutType.CLOSEOUT_SUCCESS;
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage = "Exception creating the customized MS-GF+ parameter file";
+                OnErrorEvent(ErrorMessage, ex);
+                finalParamFile = sourceParamFile;
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
         }
 
         private void WriteProteinSequence(TextWriter writer, string sequence)

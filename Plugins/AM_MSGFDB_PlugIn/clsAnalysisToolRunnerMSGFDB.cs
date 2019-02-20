@@ -312,8 +312,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
-                if (string.IsNullOrWhiteSpace(mMessage) &&
-                    !string.IsNullOrWhiteSpace(mMSGFPlusUtils.ErrorMessage))
+                if (string.IsNullOrWhiteSpace(mMessage) && !string.IsNullOrWhiteSpace(mMSGFPlusUtils.ErrorMessage))
                 {
                     mMessage = mMSGFPlusUtils.ErrorMessage;
                 }
@@ -324,19 +323,25 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             var instrumentGroup = mJobParams.GetJobParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, "InstrumentGroup", string.Empty);
 
-            // Read the MSGFPlus Parameter File
-
+            // Read the MSGFPlus Parameter File and optionally create a new one with customized parameters
+            // paramFile will contain the path to either the original parameter file or the customized one
             result = mMSGFPlusUtils.ParseMSGFPlusParameterFile(
                 fastaFileSizeKB, fastaFileIsDecoy, assumedScanType, scanTypeFilePath,
-                instrumentGroup, parameterFilePath, out var msgfPlusCmdLineOptions);
+                instrumentGroup, parameterFilePath,
+                out var sourceParamFile, out var finalParamFile);
 
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
+                if (string.IsNullOrWhiteSpace(mMessage) && !string.IsNullOrWhiteSpace(mMSGFPlusUtils.ErrorMessage))
+                {
+                    mMessage = mMSGFPlusUtils.ErrorMessage;
+                }
+
                 // Immediately exit the plugin; results and console output files will not be saved
                 return result;
             }
 
-            if (string.IsNullOrEmpty(msgfPlusCmdLineOptions))
+            if (finalParamFile == null)
             {
                 if (string.IsNullOrEmpty(mMessage))
                 {
@@ -437,8 +442,8 @@ namespace AnalysisManagerMSGFDBPlugIn
             cmdStr += " -o " + fiMSGFPlusResults.Name;
             cmdStr += " -d " + PossiblyQuotePath(fastaFilePath);
 
-            // Append the remaining options loaded from the parameter file
-            cmdStr += " " + msgfPlusCmdLineOptions;
+            // Append the MS-GF+ parameter file name
+            cmdStr += " -conf " + finalParamFile.Name;
 
             // Make sure the machine has enough free memory to run MSGFPlus
             var logFreeMemoryOnSuccess = (mDebugLevel >= 1);

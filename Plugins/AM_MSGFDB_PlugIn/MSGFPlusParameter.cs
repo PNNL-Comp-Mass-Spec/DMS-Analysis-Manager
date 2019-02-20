@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
 
 namespace AnalysisManagerMSGFDBPlugIn
 {
@@ -115,7 +114,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             if (string.IsNullOrWhiteSpace(ParameterName))
                 return string.Empty;
 
-            return string.Format("{0}={1}", ParameterName, Value);
+            return string.Format("{0}={1}", ParameterName, Value ?? string.Empty);
         }
 
         /// <summary>

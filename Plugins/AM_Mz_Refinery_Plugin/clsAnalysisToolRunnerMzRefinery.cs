@@ -49,6 +49,8 @@ namespace AnalysisManagerMzRefineryPlugIn
 
         #region "Module Variables"
 
+        private readonly List<string> mResultFilesToSkipIfNoError = new List<string>();
+
         private bool mToolVersionWritten;
 
         private string mConsoleOutputErrorMsg;
@@ -379,6 +381,8 @@ namespace AnalysisManagerMzRefineryPlugIn
 
             mMSGFPlusComplete = false;
 
+            mResultFilesToSkipIfNoError.Clear();
+
             // These two variables are required for the call to ParseMSGFPlusParameterFile
             // They are blank because the source file is a mzML file, and that file includes scan type information
             var scanTypeFilePath = string.Empty;
@@ -422,26 +426,35 @@ namespace AnalysisManagerMzRefineryPlugIn
             {
                 if (fastaFileIsDecoy)
                 {
-                    overrideParams.Add("TDA", "0");
+                    overrideParams.Add(MSGFPlusUtils.MSGFPLUS_OPTION_TDA, "0");
                 }
             }
 
+            // Read the MSGFPlus Parameter File and optionally create a new one with customized parameters
+            // paramFile will contain the path to either the original parameter file or the customized one
+
             result = mMSGFPlusUtils.ParseMSGFPlusParameterFile(
                 fastaFileSizeKB, fastaFileIsDecoy, assumedScanType, scanTypeFilePath,
-                instrumentGroup, paramFilePath, overrideParams, out var msgfPlusCmdLineOptions);
+                instrumentGroup, paramFilePath, overrideParams,
+                out var sourceParamFile, out var finalParamFile);
 
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 return result;
             }
 
-            if (string.IsNullOrEmpty(msgfPlusCmdLineOptions))
+            if (finalParamFile == null)
             {
                 if (string.IsNullOrEmpty(mMessage))
                 {
                     LogError("Problem parsing MzRef parameter file to extract MGSF+ options");
                 }
                 return CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            if (!string.Equals(sourceParamFile.FullName, finalParamFile.FullName))
+            {
+                AddResultFileToSkipIfNoError(sourceParamFile.Name);
             }
 
             // Look for extra parameters specific to MZRefinery
@@ -473,8 +486,8 @@ namespace AnalysisManagerMzRefineryPlugIn
             cmdStr += " -o " + msgfPlusResults.Name;
             cmdStr += " -d " + PossiblyQuotePath(fastaFilePath);
 
-            // Append the remaining options loaded from the parameter file
-            cmdStr += " " + msgfPlusCmdLineOptions;
+            // Append the MS-GF+ parameter file name
+            cmdStr += " -conf " + finalParamFile.Name;
 
             // Make sure the machine has enough free memory to run MSGF+
             var logFreeMemoryOnSuccess = !(mDebugLevel < 1);
@@ -618,6 +631,11 @@ namespace AnalysisManagerMzRefineryPlugIn
             return success;
         }
 
+        private void AddResultFileToSkipIfNoError(string fileName)
+        {
+            mResultFilesToSkipIfNoError.Add(fileName);
+        }
+
         private bool CompressMSGFPlusResults(FileSystemInfo msgfPlusResults)
         {
             try
@@ -663,6 +681,20 @@ namespace AnalysisManagerMzRefineryPlugIn
 
         }
 
+        /// <summary>
+        /// Make the local results directory, move files into that directory, then copy the files to the transfer directory on the Proto-x server
+        /// </summary>
+        /// <returns>True if success, otherwise false</returns>
+        public override bool CopyResultsToTransferDirectory(string transferDirectoryPathOverride = "")
+        {
+            foreach (var fileName in mResultFilesToSkipIfNoError)
+            {
+                mJobParams.AddResultFileToSkip(fileName);
+            }
+
+            return base.CopyResultsToTransferDirectory(transferDirectoryPathOverride);
+        }
+
         private bool ExtractMzRefinerOptionsFromParameterFile(string parameterFilePath)
         {
             mSkipMzRefinery = false;
@@ -672,8 +704,8 @@ namespace AnalysisManagerMzRefineryPlugIn
                 var paramFileReader = new clsKeyValueParamFileReader("MzRefinery", parameterFilePath);
                 RegisterEvents(paramFileReader);
 
-                var eResult = paramFileReader.ParseKeyValueParameterFile(out var paramFileEntries);
-                if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
+                var result = paramFileReader.ParseKeyValueParameterFile(out var paramFileEntries);
+                if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     LogError(paramFileReader.ErrorMessage);
                     return false;
