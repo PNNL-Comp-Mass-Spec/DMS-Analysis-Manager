@@ -82,6 +82,8 @@
     <Compile Include="clsMSGFPlusUtils.cs" />
     <Compile Include="clsScanTypeFileCreator.cs" />
     <Compile Include="GlobalSuppressions.cs" />
+    <Compile Include="MSGFPlusKeyValueParamLine.cs" />
+    <Compile Include="MSGFPlusParameter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
