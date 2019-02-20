@@ -1,13 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using PRISM;
 
 namespace AnalysisManagerBase
 {
     /// <summary>
-    /// Class for reading parameter files with key=value settings (as used by MSGF+, MSPathFinder, and TopFD)
+    /// Class for reading parameter files with Key=Value settings (as used by MSGF+, MSPathFinder, and TopFD)
     /// </summary>
     public class clsKeyValueParamFileReader : EventNotifier
     {
@@ -114,12 +115,21 @@ namespace AnalysisManagerBase
             }
             catch (Exception ex)
             {
-                var errMsg = string.Format("Exception converting parameters loaded from the {0} parameter file into command line arguments", ToolName);
+                var errMsg = string.Format("Exception converting parameters loaded from the {0} parameter file into command line arguments",
+                                           ToolName);
                 LogError(errMsg, ex);
                 return string.Empty;
             }
 
             return sbOptions.ToString();
+        }
+
+        private static IEnumerable<KeyValuePair<string, string>> GetKeyValueParameters(IEnumerable<KeyValueParamFileLine> paramFileLines)
+        {
+            var paramFileEntries = from paramFileLine in paramFileLines
+                                   where !string.IsNullOrWhiteSpace(paramFileLine.ParamName)
+                                   select new KeyValuePair<string, string>(paramFileLine.ParamName, paramFileLine.ParamValue);
+            return paramFileEntries;
         }
 
         private void LogError(string errorMessage)
@@ -166,15 +176,51 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Read a parameter file with key=value settings (as used by MSGF+, MSPathFinder, and TopFD)
+        /// Read a parameter file with Key=Value settings (as used by MSGF+, MSPathFinder, and TopFD)
         /// </summary>
         /// <param name="paramFileEntries">Output: Dictionary of setting names and values read from the parameter file</param>
         /// <returns>CloseOutType.CLOSEOUT_SUCCESS if success; error code if an error</returns>
-        /// <remarks></remarks>
+        /// <remarks>Values in paramFileEntries will include any comment text</remarks>
         public CloseOutType ParseKeyValueParameterFile(out List<KeyValuePair<string, string>> paramFileEntries)
         {
 
-            paramFileEntries = new List<KeyValuePair<string, string>>();
+            var result = ParseKeyValueParameterFileWork(out var paramFileLines);
+            if (result != CloseOutType.CLOSEOUT_SUCCESS)
+            {
+                paramFileEntries = new List<KeyValuePair<string, string>>();
+                return result;
+            }
+
+            paramFileEntries = GetKeyValueParameters(paramFileLines).ToList();
+
+            if (paramFileEntries.Count > 0)
+                return CloseOutType.CLOSEOUT_SUCCESS;
+
+            LogError(string.Format("{0} parameter file has no valid Key=Value settings", ToolName));
+            return CloseOutType.CLOSEOUT_FAILED;
+        }
+
+        /// <summary>
+        /// Read a parameter file with Key=Value settings (as used by MSGF+, MSPathFinder, and TopFD)
+        /// </summary>
+        /// <param name="paramFileLines">Output: contents of the parameter file</param>
+        /// <returns>CloseOutType.CLOSEOUT_SUCCESS if success; error code if an error</returns>
+        /// <remarks>Values in paramFileLines will include any comment text</remarks>
+        public CloseOutType ParseKeyValueParameterFileGetAllLines(out List<KeyValueParamFileLine> paramFileLines)
+        {
+            var result = ParseKeyValueParameterFileWork(out paramFileLines);
+
+            if (GetKeyValueParameters(paramFileLines).Any())
+                return result;
+
+            LogError(string.Format("{0} parameter file has no valid Key=Value settings", ToolName));
+            return CloseOutType.CLOSEOUT_FAILED;
+        }
+
+        private CloseOutType ParseKeyValueParameterFileWork(out List<KeyValueParamFileLine> paramFileLines)
+        {
+
+            paramFileLines = new List<KeyValueParamFileLine>();
 
             if (string.IsNullOrWhiteSpace(ParamFileName))
             {
@@ -192,28 +238,31 @@ namespace AnalysisManagerBase
             {
                 using (var paramFileReader = new StreamReader(new FileStream(ParamFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
                 {
+                    var lineNumber = 0;
                     while (!paramFileReader.EndOfStream)
                     {
                         var dataLine = paramFileReader.ReadLine();
+                        lineNumber++;
+
+                        var paramFileLine = new KeyValueParamFileLine(lineNumber, dataLine);
 
                         var kvSetting = clsGlobal.GetKeyValueSetting(dataLine);
 
-                        if (string.IsNullOrWhiteSpace(kvSetting.Key))
-                            continue;
+                        if (!string.IsNullOrWhiteSpace(kvSetting.Key))
+                        {
+                            paramFileLine.StoreParameter(kvSetting);
+                        }
 
-                        paramFileEntries.Add(kvSetting);
+                        paramFileLines.Add(paramFileLine);
                     }
                 }
 
-                if (paramFileEntries.Count != 0)
-                    return CloseOutType.CLOSEOUT_SUCCESS;
-
-                LogError(string.Format("{0} parameter file has no valid key=value settings", ToolName));
-                return CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_SUCCESS;
             }
             catch (Exception ex)
             {
-                var errMsg = string.Format("Exception reading {0} parameter file {1}", ToolName, Path.GetFileName(ParamFilePath));
+                var errMsg = string.Format("Exception reading {0} parameter file {1} in ParseKeyValueParameterFileWork",
+                                           ToolName, Path.GetFileName(ParamFilePath));
                 LogError(errMsg, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
