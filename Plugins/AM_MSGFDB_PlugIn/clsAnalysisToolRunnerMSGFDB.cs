@@ -32,6 +32,8 @@ namespace AnalysisManagerMSGFDBPlugIn
 
         #region "Module Variables"
 
+        private readonly List<string> mResultFilesToSkipIfNoError = new List<string>();
+
         private bool mToolVersionWritten;
 
         /// <summary>
@@ -286,6 +288,8 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             mMSGFPlusComplete = false;
 
+            mResultFilesToSkipIfNoError.Clear();
+
             var result = DetermineInputFileFormat(true, out var eInputFileFormat, out var assumedScanType, out var scanTypeFilePath);
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
@@ -349,6 +353,11 @@ namespace AnalysisManagerMSGFDBPlugIn
                 }
                 // Immediately exit the plugin; results and console output files will not be saved
                 return CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            if (!string.Equals(sourceParamFile.FullName, finalParamFile.FullName))
+            {
+                AddResultFileToSkipIfNoError(sourceParamFile.Name);
             }
 
             // This will be set to True if the parameter file contains both TDA=1 and showDecoy=1
@@ -712,6 +721,11 @@ namespace AnalysisManagerMSGFDBPlugIn
             return success;
         }
 
+        private void AddResultFileToSkipIfNoError(string fileName)
+        {
+            mResultFilesToSkipIfNoError.Add(fileName);
+        }
+
         /// <summary>
         /// Convert the .mzid file created by MSGF+ to a .tsv file
         /// </summary>
@@ -772,6 +786,20 @@ namespace AnalysisManagerMSGFDBPlugIn
             mJobParams.AddResultFileToSkip(Dataset + clsAnalysisResources.DOT_MGF_EXTENSION);
 
             base.CopyFailedResultsToArchiveDirectory();
+        }
+
+        /// <summary>
+        /// Make the local results directory, move files into that directory, then copy the files to the transfer directory on the Proto-x server
+        /// </summary>
+        /// <returns>True if success, otherwise false</returns>
+        public override bool CopyResultsToTransferDirectory(string transferDirectoryPathOverride = "")
+        {
+            foreach (var fileName in mResultFilesToSkipIfNoError)
+            {
+                mJobParams.AddResultFileToSkip(fileName);
+            }
+
+            return base.CopyResultsToTransferDirectory(transferDirectoryPathOverride);
         }
 
         private bool CreateScanTypeFile(out string scanTypeFilePath)
