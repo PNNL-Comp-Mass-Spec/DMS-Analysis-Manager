@@ -200,5 +200,15 @@ namespace AnalysisManagerMSGFDBPlugIn
             return parameterCopy;
         }
 
+
+        /// <summary>
+        /// Return the text of the line from the parameter file (including the comment, if any)
+        /// </summary>
+        /// <returns></returns>
+        public override string ToString()
+        {
+            return ParameterName + ": " + Value;
+        }
+
     }
 }
