@@ -2552,6 +2552,8 @@ namespace AnalysisManagerBase
                 {
                     var okToMove = true;
                     currentFileName = tmpFileName;
+
+                    // Assure that this is a file name and not a file path
                     var tmpFileNameLCase = Path.GetFileName(tmpFileName).ToLower();
 
                     // Check to see if the filename is defined in ResultFilesToSkip
