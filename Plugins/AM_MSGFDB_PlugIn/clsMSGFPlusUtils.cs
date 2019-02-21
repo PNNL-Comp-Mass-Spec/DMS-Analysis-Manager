@@ -305,6 +305,21 @@ namespace AnalysisManagerMSGFDBPlugIn
             mCommentExtractor = new Regex(@"^(?<ParamInfo>[^#]+?)(?<WhiteSpace>\s*#\s*)(?<Comment>.*)");
         }
 
+        private void AddUpdateParamFileLineMapping(
+            IDictionary<string, List<MSGFPlusKeyValueParamFileLine>> paramFileParamToLineMapping,
+            string paramName,
+            MSGFPlusKeyValueParamFileLine newParamLine)
+        {
+            if (paramFileParamToLineMapping.TryGetValue(paramName, out var linesForParamName))
+            {
+                linesForParamName.Add(newParamLine);
+            }
+            else
+            {
+                paramFileParamToLineMapping.Add(paramName, new List<MSGFPlusKeyValueParamFileLine> { newParamLine });
+            }
+        }
+
         /// <summary>
         /// Update the parameter if using the MSGFDB syntax yet should be using the MS-GF+ syntax
         /// Also make updates from older parameter names to newer names (e.g. MinNumPeaksPerSpectrum instead of MinNumPeaks)
@@ -467,7 +482,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
         private void AppendParameter(
             ICollection<MSGFPlusKeyValueParamFileLine> msgfPlusParamFileLines,
-            IDictionary<string, MSGFPlusKeyValueParamFileLine> paramFileParamToLineMapping,
+            IDictionary<string, List<MSGFPlusKeyValueParamFileLine>> paramFileParamToLineMapping,
             MSGFPlusParameter newParam)
         {
             var newBlankLine = new KeyValueParamFileLine(0, string.Empty);
@@ -476,7 +491,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             var newParamLine = new MSGFPlusKeyValueParamFileLine(newParam);
             msgfPlusParamFileLines.Add(newParamLine);
 
-            paramFileParamToLineMapping.Add(newParam.ParameterName, newParamLine);
+            AddUpdateParamFileLineMapping(paramFileParamToLineMapping, newParam.ParameterName, newParamLine);
         }
 
         private bool CanDetermineInstIdFromInstGroup(string instrumentGroup, out string instrumentIDNew, out string autoSwitchReason)
@@ -2425,8 +2440,8 @@ namespace AnalysisManagerMSGFDBPlugIn
                 return result;
             }
 
-            // Keys are the parameter name, values are the parameter line text and associated MSGFPlusParameter
-            var paramFileParamToLineMapping = new Dictionary<string, MSGFPlusKeyValueParamFileLine>(StringComparer.OrdinalIgnoreCase);
+            // Keys are the parameter name, values are the parameter line(s) and associated MSGFPlusParameter(s)
+            var paramFileParamToLineMapping = new Dictionary<string, List<MSGFPlusKeyValueParamFileLine>>(StringComparer.OrdinalIgnoreCase);
 
             // This will be set to True if the parameter file has TDA=1, meaning MSGF+ will auto-added decoy proteins to its list of candidate proteins
             // When TDA is 1, the FASTA must only contain normal (forward) protein sequences
@@ -2656,8 +2671,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                             }
                         }
 
-                        paramFileParamToLineMapping.Add(paramFileLine.ParamInfo.ParameterName, paramFileLine);
-
+                        AddUpdateParamFileLineMapping(paramFileParamToLineMapping, paramFileLine.ParamInfo.ParameterName, paramFileLine);
                     }
                     else if (clsGlobal.IsMatch(paramFileLine.ParamName, "UniformAAProb") ||
                              clsGlobal.IsMatch(paramFileLine.ParamName, "ShowDecoy"))
@@ -2786,9 +2800,9 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             if (paramFileThreadCount > 0)
             {
-                if (paramFileParamToLineMapping.TryGetValue(MSGFPLUS_OPTION_NUM_THREADS, out var threadParam))
+                if (paramFileParamToLineMapping.TryGetValue(MSGFPLUS_OPTION_NUM_THREADS, out var threadParams) && threadParams.Count > 0)
                 {
-                    threadParam.UpdateParamValue(paramFileThreadCount.ToString(), true);
+                    threadParams.First().UpdateParamValue(paramFileThreadCount.ToString(), true);
                 }
                 else
                 {
@@ -2837,8 +2851,10 @@ namespace AnalysisManagerMSGFDBPlugIn
                 AppendParameter(msgfPlusParamFileLines, paramFileParamToLineMapping, newParam);
             }
 
-            if (paramFileParamToLineMapping.TryGetValue(MSGFPLUS_OPTION_TDA, out var tdaParam))
+            if (paramFileParamToLineMapping.TryGetValue(MSGFPLUS_OPTION_TDA, out var tdaParams) && tdaParams.Count > 0)
             {
+                var tdaParam = tdaParams.First();
+
                 if (!int.TryParse(tdaParam.ParamInfo.Value, out var tdaSetting))
                 {
                     OnErrorEvent("TDA parameter is not numeric in the parameter file; it should be 0 or 1, see " + tdaParam.Text);
