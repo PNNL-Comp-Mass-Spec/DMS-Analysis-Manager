@@ -3611,6 +3611,10 @@ namespace AnalysisManagerMSGFDBPlugIn
                     }
                 }
 
+                // Set the date of the new file to the date of the old file, plus 5 minutes added on for each updated parameter
+                var newFileDate = sourceParamFile.LastWriteTimeUtc.AddMinutes(5 * updatedLineCount);
+                finalParamFile.LastWriteTimeUtc = newFileDate;
+
                 return CloseOutType.CLOSEOUT_SUCCESS;
             }
             catch (Exception ex)
