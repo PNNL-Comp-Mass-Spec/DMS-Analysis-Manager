@@ -3328,7 +3328,7 @@ namespace AnalysisManagerBase
             bool verifyCopied,
             out List<string> retrievedFilePaths)
         {
-            throw new NotImplementedException("Plugin " + StepToolName + " must implement RetrieveRemoteResults to allow for remote processing");
+            throw new NotImplementedException("Plugin " + StepToolName + " must implement RetrieveRemoteResults to allow for remote processing; that method must call RetrieveRemoteResultFiles");
         }
 
         /// <summary>
@@ -3339,7 +3339,7 @@ namespace AnalysisManagerBase
         /// <param name="verifyCopied">Log warnings if any files are missing.  When false, logs debug messages instead</param>
         /// <param name="retrievedFilePaths">Local paths of retrieved files</param>
         /// <returns>True on success, otherwise false</returns>
-        protected bool RetrieveRemoteResults(
+        protected bool RetrieveRemoteResultFiles(
             clsRemoteTransferUtility transferUtility,
             List<string> filesToRetrieve,
             bool verifyCopied,
@@ -3387,7 +3387,7 @@ namespace AnalysisManagerBase
             }
             catch (Exception ex)
             {
-                LogError("Error in RetrieveRemoteResults", ex);
+                LogError("Error in RetrieveRemoteResultFiles", ex);
                 return false;
             }
         }

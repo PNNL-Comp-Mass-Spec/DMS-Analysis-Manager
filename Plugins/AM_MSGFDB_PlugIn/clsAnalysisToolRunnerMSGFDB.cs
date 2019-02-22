@@ -1270,7 +1270,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 filesToRetrieve.Add(Path.GetFileNameWithoutExtension(MSGFPlusUtils.MSGFPLUS_CONSOLE_OUTPUT_FILE) +
                                     addOn + Path.GetExtension(MSGFPlusUtils.MSGFPLUS_CONSOLE_OUTPUT_FILE));
 
-                var success = RetrieveRemoteResults(transferUtility, filesToRetrieve, verifyCopied, out retrievedFilePaths);
+                var success = RetrieveRemoteResultFiles(transferUtility, filesToRetrieve, verifyCopied, out retrievedFilePaths);
 
                 return success;
 
