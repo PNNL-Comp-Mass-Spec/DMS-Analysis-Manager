@@ -1,5 +1,62 @@
 Analysis Tool Manager History
 
+February 22, 2019
+	- When retrieving MS-GF+ results from a remote host, MSGFPlus_Mods.txt is now optional
+
+February 20, 2019
+	- ParseMSGFPlusParameterFile now creates a new MS-GF+ parameter file with updated parameters
+		- Previously it parsed the parameter file and converted the parameters to MS-GF+ command line arguments
+
+February 8, 2019
+	- Add support for EnzymeDef in MSGF+ parameter files
+		- If defined, creates enzymes.txt in the params directory below the working directory
+
+January 17, 2019
+	- New ThermoRawFileReader that uses ThermoFisher.CommonCore
+
+December 13, 2018
+	- Add support for Formularity processing _peaks.txt files from DeconTools or .csv files from ThermoPeakDataExporter
+
+October 18, 2018
+	- Use ThermoRawFileReader to determine the maximum scan number
+
+September 25, 2018
+	- Add support for updating parent ion info in a .mzML file using a _dta.txt file from DeconMSn
+
+September 17, 2018
+	- Add ThermoPeakDataExporter plugin
+
+September 7, 2018
+	- Call NOMSI to create plot files from Formularity results
+
+August 16, 2018
+	- Add TopPIC and TopFD plugins
+
+July 27, 2018
+	- Add logic to check whether a FASTA file needs to be split again because previously created split FASTA files were deleted from the central share
+
+July 19, 2018
+	- Keep track of multiple shared results folders for data package jobs
+	- In the FDR_Aggregator plugin, skip invalid jobs but continue processing valid jobs
+
+June 28, 2018
+	- Add support for MS-GF+ option MaxMissedCleavages
+
+June 26, 2018
+	- Keep track of Tissue ID and Tissue Name for each experiment in a data package
+
+June 5, 2018
+	- Add AnalysisManagerFormularityPlugin
+
+May 25, 2018
+	- Update to use FileSyncUtils and HashUtilities in PRISM.dll
+
+May 15, 2018
+	- Switch from BRENDA to BTO when writing out tissue type in the sample metadata section of a ProteomeXchange .px file
+
+May 1, 2018
+	- Always retrieve .mzid.gz files during data extraction of MSGF+ split fasta results
+
 April 26, 2018
 	- During data extraction, skip finding protein mods if the FASTA file is over 2 GB
 
