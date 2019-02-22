@@ -3335,13 +3335,13 @@ namespace AnalysisManagerBase
         /// Retrieve the specified files, verifying that each one was actually retrieved if verifyCopied is true
         /// </summary>
         /// <param name="transferUtility">Remote transfer utility</param>
-        /// <param name="filesToRetrieve">Files to retrieve</param>
+        /// <param name="filesToRetrieve">Dictionary where keys are source file names (no wildcards), and values are true if the file is required, false if optional</param>
         /// <param name="verifyCopied">Log warnings if any files are missing.  When false, logs debug messages instead</param>
         /// <param name="retrievedFilePaths">Local paths of retrieved files</param>
         /// <returns>True on success, otherwise false</returns>
         protected bool RetrieveRemoteResultFiles(
             clsRemoteTransferUtility transferUtility,
-            List<string> filesToRetrieve,
+            Dictionary<string, bool> filesToRetrieve,
             bool verifyCopied,
             out List<string> retrievedFilePaths)
         {
@@ -3355,18 +3355,24 @@ namespace AnalysisManagerBase
 
                 transferUtility.CopyFilesFromRemote(remoteSourceDirectory, filesToRetrieve, mWorkDir, false, warnIfMissing);
 
+                var requiredFileCount = 0;
+
                 // Verify that all files were retrieved
-                foreach (var fileName in filesToRetrieve)
+                foreach (var sourceFile in filesToRetrieve)
                 {
-                    var localFile = new FileInfo(Path.Combine(mWorkDir, fileName));
+                    var fileRequired = sourceFile.Value;
+                    if (fileRequired)
+                        requiredFileCount++;
+
+                    var localFile = new FileInfo(Path.Combine(mWorkDir, sourceFile.Key));
                     if (localFile.Exists)
                     {
                         retrievedFilePaths.Add(localFile.FullName);
                         continue;
                     }
 
-                    if (verifyCopied)
-                        LogError("Required result file not found: " + fileName);
+                    if (verifyCopied && fileRequired)
+                        LogError("Required result file not found: " + sourceFile.Key);
                 }
 
                 var paramFileName = mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_PARAMETER_FILE);
@@ -3376,7 +3382,7 @@ namespace AnalysisManagerBase
                     mJobParams.AddResultFileToSkip(modDefsFile.Name);
                 }
 
-                if (filesToRetrieve.Count == retrievedFilePaths.Count || !verifyCopied)
+                if (retrievedFilePaths.Count >= requiredFileCount || !verifyCopied)
                     return true;
 
                 if (string.IsNullOrWhiteSpace(mMessage))

@@ -904,6 +904,19 @@ namespace AnalysisManagerMSGFDBPlugIn
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
+        /// <summary>
+        /// Generate an MS-GF+ results file name using the dataset name, the given suffix, and optionally some addon text
+        /// </summary>
+        /// <param name="datasetName"></param>
+        /// <param name="fileNameSuffix"></param>
+        /// <param name="fileNameAddon"></param>
+        /// <returns></returns>
+        private string GenerateResultFileName(string datasetName, string fileNameSuffix, string fileNameAddon)
+        {
+            return datasetName + Path.GetFileNameWithoutExtension(fileNameSuffix) +
+                   fileNameAddon + Path.GetExtension(fileNameSuffix);
+        }
+
         private DateTime mLastConsoleOutputParse = DateTime.MinValue;
 
         private void MonitorProgress()
@@ -1230,12 +1243,13 @@ namespace AnalysisManagerMSGFDBPlugIn
                 var paramFileName = mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_PARAMETER_FILE);
                 var modDefsFile = new FileInfo(Path.Combine(mWorkDir, Path.GetFileNameWithoutExtension(paramFileName) + "_ModDefs.txt"));
 
-                var filesToRetrieve = new List<string> {
                     "Mass_Correction_Tags.txt",
                     modDefsFile.Name,
                     "MSGFPlus_Mods.txt",
                     paramFileName,
                     ToolVersionInfoFile,
+                // Keys in this dictionary are file names, values are true if the file is required, or false if it's optional
+                var filesToRetrieve = new Dictionary<string, bool>
                 };
 
                 DetermineInputFileFormat(out var eInputFileFormat, out var assumedScanType);
@@ -1243,7 +1257,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 if (eInputFileFormat == InputFileFormatTypes.CDTA && string.IsNullOrWhiteSpace(assumedScanType))
                 {
                     // The ScanType.txt file was created; retrieve it
-                    filesToRetrieve.Add(Dataset + "_ScanType.txt");
+                    filesToRetrieve.Add(Dataset + "_ScanType.txt", true);
                 }
 
                 string addOn;
@@ -1261,14 +1275,14 @@ namespace AnalysisManagerMSGFDBPlugIn
                     addOn = string.Empty;
                 }
 
-                filesToRetrieve.Add(Dataset + "_msgfplus" + addOn + ".mzid.gz");
-                filesToRetrieve.Add(Dataset + "_msgfplus" + addOn + "_PepToProtMap.txt");
+                filesToRetrieve.Add(Dataset + "_msgfplus" + addOn + ".mzid.gz", true);
+                filesToRetrieve.Add(Dataset + "_msgfplus" + addOn + "_PepToProtMap.txt", true);
 
-                filesToRetrieve.Add(Dataset + Path.GetFileNameWithoutExtension(MSGFPlusUtils.MSGFPLUS_TSV_SUFFIX) +
-                                    addOn + Path.GetExtension(MSGFPlusUtils.MSGFPLUS_TSV_SUFFIX));
+                var tsvResultsFile = GenerateResultFileName(Dataset, MSGFPlusUtils.MSGFPLUS_TSV_SUFFIX, addOn);
+                var consoleOutputFile = GenerateResultFileName(Dataset, MSGFPlusUtils.MSGFPLUS_CONSOLE_OUTPUT_FILE, addOn);
 
-                filesToRetrieve.Add(Path.GetFileNameWithoutExtension(MSGFPlusUtils.MSGFPLUS_CONSOLE_OUTPUT_FILE) +
-                                    addOn + Path.GetExtension(MSGFPlusUtils.MSGFPLUS_CONSOLE_OUTPUT_FILE));
+                filesToRetrieve.Add(tsvResultsFile, true);
+                filesToRetrieve.Add(consoleOutputFile, true);
 
                 var success = RetrieveRemoteResultFiles(transferUtility, filesToRetrieve, verifyCopied, out retrievedFilePaths);
 

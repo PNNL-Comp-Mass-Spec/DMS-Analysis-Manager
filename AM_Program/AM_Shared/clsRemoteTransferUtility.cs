@@ -246,7 +246,7 @@ namespace AnalysisManagerBase
         /// Copy files from the remote host to a local directory
         /// </summary>
         /// <param name="sourceDirectoryPath">Source directory</param>
-        /// <param name="sourceFileNames">Source file names; wildcards are not allowed</param>
+        /// <param name="sourceFiles">Dictionary where keys are source file names (no wildcards), and values are true if the file is required, false if optional</param>
         /// <param name="localDirectoryPath">Local target directory</param>
         /// <param name="useDefaultManagerRemoteInfo">True to use RemoteInfo defined for the manager; False to use RemoteInfo associated with the job (useful if checking on a running job)</param>
         /// <param name="warnIfMissing">Log warnings if any files are missing.  When false, logs debug messages instead</param>
@@ -257,7 +257,7 @@ namespace AnalysisManagerBase
         /// <remarks>Calls UpdateParameters if necessary; that method will throw an exception if there are missing parameters or configuration issues</remarks>
         public bool CopyFilesFromRemote(
             string sourceDirectoryPath,
-            IReadOnlyCollection<string> sourceFileNames,
+            IReadOnlyDictionary<string, bool> sourceFiles,
             string localDirectoryPath,
             bool useDefaultManagerRemoteInfo,
             bool warnIfMissing)
@@ -269,7 +269,7 @@ namespace AnalysisManagerBase
                 UpdateParameters(useDefaultManagerRemoteInfo);
             }
 
-            return CopyFilesFromRemote(sourceDirectoryPath, sourceFileNames, localDirectoryPath, warnIfMissing);
+            return CopyFilesFromRemote(sourceDirectoryPath, sourceFiles, localDirectoryPath, warnIfMissing);
         }
 
         /// <summary>
@@ -698,9 +698,9 @@ namespace AnalysisManagerBase
 
             try
             {
-                var sourceFileNames = new List<string> { statusFileName };
+                var sourceFiles = new Dictionary<string, bool> { { statusFileName, true } };
 
-                var success = CopyFilesFromRemote(RemoteTaskQueuePathForTool, sourceFileNames, WorkDir);
+                var success = CopyFilesFromRemote(RemoteTaskQueuePathForTool, sourceFiles, WorkDir);
 
                 if (!success)
                 {
