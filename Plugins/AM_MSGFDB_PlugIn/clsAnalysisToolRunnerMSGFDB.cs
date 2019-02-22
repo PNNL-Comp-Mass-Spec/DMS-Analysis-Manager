@@ -1243,13 +1243,14 @@ namespace AnalysisManagerMSGFDBPlugIn
                 var paramFileName = mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_PARAMETER_FILE);
                 var modDefsFile = new FileInfo(Path.Combine(mWorkDir, Path.GetFileNameWithoutExtension(paramFileName) + "_ModDefs.txt"));
 
-                    "Mass_Correction_Tags.txt",
-                    modDefsFile.Name,
-                    "MSGFPlus_Mods.txt",
-                    paramFileName,
-                    ToolVersionInfoFile,
                 // Keys in this dictionary are file names, values are true if the file is required, or false if it's optional
                 var filesToRetrieve = new Dictionary<string, bool>
+                {
+                    {"Mass_Correction_Tags.txt", true},
+                    {modDefsFile.Name, true},
+                    {MSGFPlusUtils.MOD_FILE_NAME, false},     // MSGFPlus_Mods.txt likely will not exist since we switched to using -conf in February 2019
+                    {paramFileName, true},
+                    {ToolVersionInfoFile, true}
                 };
 
                 DetermineInputFileFormat(out var eInputFileFormat, out var assumedScanType);
