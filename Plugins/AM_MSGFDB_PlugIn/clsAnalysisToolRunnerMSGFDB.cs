@@ -907,14 +907,14 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Generate an MS-GF+ results file name using the dataset name, the given suffix, and optionally some addon text
         /// </summary>
-        /// <param name="datasetName"></param>
-        /// <param name="fileNameSuffix"></param>
-        /// <param name="fileNameAddon"></param>
+        /// <param name="fileNamePrefix">Prefix text (may be an empty string)</param>
+        /// <param name="fileName"></param>
+        /// <param name="fileNameSuffix">Suffix text (may be an empty string)</param>
         /// <returns></returns>
-        private string GenerateResultFileName(string datasetName, string fileNameSuffix, string fileNameAddon)
+        private string GenerateResultFileName(string fileNamePrefix, string fileName, string fileNameSuffix)
         {
-            return datasetName + Path.GetFileNameWithoutExtension(fileNameSuffix) +
-                   fileNameAddon + Path.GetExtension(fileNameSuffix);
+            return fileNamePrefix + Path.GetFileNameWithoutExtension(fileName) +
+                   fileNameSuffix + Path.GetExtension(fileName);
         }
 
         private DateTime mLastConsoleOutputParse = DateTime.MinValue;
@@ -1280,7 +1280,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 filesToRetrieve.Add(Dataset + "_msgfplus" + addOn + "_PepToProtMap.txt", true);
 
                 var tsvResultsFile = GenerateResultFileName(Dataset, MSGFPlusUtils.MSGFPLUS_TSV_SUFFIX, addOn);
-                var consoleOutputFile = GenerateResultFileName(Dataset, MSGFPlusUtils.MSGFPLUS_CONSOLE_OUTPUT_FILE, addOn);
+                var consoleOutputFile = GenerateResultFileName(string.Empty, MSGFPlusUtils.MSGFPLUS_CONSOLE_OUTPUT_FILE, addOn);
 
                 filesToRetrieve.Add(tsvResultsFile, true);
                 filesToRetrieve.Add(consoleOutputFile, true);
