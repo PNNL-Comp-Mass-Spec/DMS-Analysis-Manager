@@ -115,6 +115,10 @@ namespace AnalysisManagerBase
 
         }
 
+        /// <summary>
+        /// Assure that old log files are zipped by year
+        /// </summary>
+        /// <param name="currentLogFilePath"></param>
         private void ArchiveOldLogs(string currentLogFilePath)
         {
             try
@@ -366,7 +370,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Writes a status file tracking memory usage
         /// </summary>
-        /// <remarks></remarks>
+        /// <remarks>Also calls ArchiveOldLogs to assure that old MemoryUsageLog files are zipped by year</remarks>
         public void WriteMemoryUsageLogEntry()
         {
             // Create a new log file each month
