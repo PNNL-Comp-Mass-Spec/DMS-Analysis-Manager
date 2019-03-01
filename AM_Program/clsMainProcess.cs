@@ -194,6 +194,9 @@ namespace AnalysisManagerProg
             var baseLogFileName = clsGlobal.LinuxOS ? DEFAULT_BASE_LOGFILE_NAME.Replace('\\', '/') : DEFAULT_BASE_LOGFILE_NAME;
             LogTools.CreateFileLogger(baseLogFileName, BaseLogger.LogLevels.DEBUG);
 
+            // Give the file logger a chance to zip old log files by year
+            FileLogger.ArchiveOldLogFilesNow();
+
             if (!clsGlobal.OfflineMode)
             {
                 // Create a database logger connected to DMS5
