@@ -883,18 +883,18 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Split apart coordinates that look like "R00X438Y093" into R, X, and Y
         /// </summary>
-        /// <param name="coord"></param>
-        /// <param name="reRegExRXY"></param>
-        /// <param name="reRegExRX"></param>
+        /// <param name="coordinate"></param>
+        /// <param name="rxyMatcher"></param>
+        /// <param name="rxMatcher"></param>
         /// <param name="R"></param>
         /// <param name="X"></param>
         /// <param name="Y"></param>
         /// <returns>True if success, false otherwise</returns>
         /// <remarks></remarks>
-        private bool GetBrukerImagingFileCoords(string coord, Regex reRegExRXY, Regex reRegExRX, out int R, out int X, out int Y)
+        private bool GetBrukerImagingFileCoords(string coordinate, Regex rxyMatcher, Regex rxMatcher, out int R, out int X, out int Y)
         {
             // Try to match names like R00X438Y093
-            var reMatch = reRegExRXY.Match(coord);
+            var reMatch = rxyMatcher.Match(coordinate);
 
             var success = false;
 
@@ -911,7 +911,7 @@ namespace AnalysisManagerBase
             else
             {
                 // Try to match names like R00X438
-                reMatch = reRegExRX.Match(coord);
+                reMatch = rxMatcher.Match(coordinate);
 
                 if (reMatch.Success)
                 {
@@ -2716,12 +2716,12 @@ namespace AnalysisManagerBase
                 // However, consider limits defined by job params BrukerMALDI_Imaging_startSectionX and BrukerMALDI_Imaging_endSectionX
                 // when processing the files
 
-                var ZipFiles = Directory.GetFiles(serverPath, ZIPPED_BRUKER_IMAGING_SECTIONS_FILE_MASK);
+                var zipFiles = Directory.GetFiles(serverPath, ZIPPED_BRUKER_IMAGING_SECTIONS_FILE_MASK);
 
-                var reRegExRXY = new Regex(@"R(?<R>\d+)X(?<X>\d+)Y(?<Y>\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-                var reRegExRX = new Regex(@"R(?<R>\d+)X(?<X>\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+                var rxyMatcher = new Regex(@"R(?<R>\d+)X(?<X>\d+)Y(?<Y>\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+                var rxMatcher = new Regex(@"R(?<R>\d+)X(?<X>\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-                foreach (var zipFilePath in ZipFiles)
+                foreach (var zipFilePath in zipFiles)
                 {
                     zipFilePathRemote = zipFilePath;
 
@@ -2732,10 +2732,10 @@ namespace AnalysisManagerBase
 
                         // Determine the R, X, and Y coordinates for this .Zip file
 
-                        if (GetBrukerImagingFileCoords(zipFilePathRemote, reRegExRXY, reRegExRX, out _, out var coordX, out _))
+                        if (GetBrukerImagingFileCoords(zipFilePathRemote, rxyMatcher, rxMatcher, out _, out var xCoordinate, out _))
                         {
                             // Compare to startSectionX and endSectionX
-                            if (coordX >= startSectionX && coordX <= endSectionX)
+                            if (xCoordinate >= startSectionX && xCoordinate <= endSectionX)
                             {
                                 unzipFile = true;
                             }
@@ -2972,7 +2972,7 @@ namespace AnalysisManagerBase
                 var datasetWorkDir = Path.Combine(mWorkDir, DatasetName);
                 Directory.CreateDirectory(datasetWorkDir);
 
-                // Set up the unzipper
+                // Set up the unzip tool
                 var dotNetZipTools = new clsDotNetZipTools(mDebugLevel, datasetWorkDir);
                 RegisterEvents(dotNetZipTools);
 
@@ -3087,7 +3087,7 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public bool UnzipFileStart(string zipFilePath, string outputDirectoryPath, string callingFunctionName, bool forceExternalZipProgramUse)
         {
-            var unzipperName = "??";
+            var unzipToolName = "??";
 
             try
             {
@@ -3117,13 +3117,13 @@ namespace AnalysisManagerBase
                 {
                     // This is a gzipped file
                     // Use DotNetZip
-                    unzipperName = clsDotNetZipTools.DOTNET_ZIP_NAME;
+                    unzipToolName = clsDotNetZipTools.DOTNET_ZIP_NAME;
                     mDotNetZipTools.DebugLevel = mDebugLevel;
                     return mDotNetZipTools.GUnzipFile(zipFilePath, outputDirectoryPath);
                 }
 
                 // Use DotNetZip
-                unzipperName = clsDotNetZipTools.DOTNET_ZIP_NAME;
+                unzipToolName = clsDotNetZipTools.DOTNET_ZIP_NAME;
                 mDotNetZipTools.DebugLevel = mDebugLevel;
                 var success = mDotNetZipTools.UnzipFile(zipFilePath, outputDirectoryPath);
 
@@ -3133,8 +3133,8 @@ namespace AnalysisManagerBase
             catch (Exception ex)
             {
                 var errMsg = "Exception while unzipping '" + zipFilePath + "'";
-                if (!string.IsNullOrEmpty(unzipperName))
-                    errMsg += " using " + unzipperName;
+                if (!string.IsNullOrEmpty(unzipToolName))
+                    errMsg += " using " + unzipToolName;
 
                 OnErrorEvent(errMsg, ex);
                 OnStatusEvent("CallingFunction: " + callingFunctionName);

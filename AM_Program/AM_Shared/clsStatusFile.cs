@@ -1130,10 +1130,10 @@ namespace AnalysisManagerBase
 
                 // Now use a StreamReader to copy the XML text to a string variable
                 memStream.Seek(0, SeekOrigin.Begin);
-                var memStreamRreader = new StreamReader(memStream);
-                var xmlText = memStreamRreader.ReadToEnd();
+                var memStreamReader = new StreamReader(memStream);
+                var xmlText = memStreamReader.ReadToEnd();
 
-                memStreamRreader.Close();
+                memStreamReader.Close();
                 memStream.Close();
 
                 return xmlText;

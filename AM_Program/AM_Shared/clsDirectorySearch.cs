@@ -247,12 +247,12 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Finds a file named DatasetName.FileExtension
         /// </summary>
-        /// <param name="FileExtension"></param>
+        /// <param name="fileExtension"></param>
         /// <returns>The full path to the directory; an empty string if no match</returns>
         /// <remarks></remarks>
-        public string FindDatasetFile(string FileExtension)
+        public string FindDatasetFile(string fileExtension)
         {
-            return FindDatasetFile(DEFAULT_MAX_RETRY_COUNT, FileExtension);
+            return FindDatasetFile(DEFAULT_MAX_RETRY_COUNT, fileExtension);
         }
 
         /// <summary>

@@ -174,8 +174,8 @@ namespace AnalysisManagerBase
             try
             {
                 // Dynamically load the specified class from dllFilePath
-                var assem = System.Reflection.Assembly.LoadFrom(dllFilePath);
-                var dllType = assem.GetType(className, false, true);
+                var assembly = System.Reflection.Assembly.LoadFrom(dllFilePath);
+                var dllType = assembly.GetType(className, false, true);
                 var newInstance = Activator.CreateInstance(dllType);
                 return newInstance;
             }
