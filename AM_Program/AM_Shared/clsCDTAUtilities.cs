@@ -19,6 +19,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <returns>True if success, false if an error</returns>
         /// <remarks></remarks>
+        // ReSharper disable once UnusedMember.Global
         public bool ConvertCDTAToMGF(
             FileInfo cdtaFile,
             string datasetName,

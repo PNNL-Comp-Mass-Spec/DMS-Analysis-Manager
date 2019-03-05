@@ -68,6 +68,7 @@ namespace AnalysisManagerBase
         /// <param name="outputDirectoryPath">Output directory</param>
         /// <returns></returns>
         /// <remarks>Will list DatasetID as 0 in the output file</remarks>
+        // ReSharper disable once UnusedMember.Global
         public bool GenerateScanStatsFile(string inputFilePath, string outputDirectoryPath)
         {
             return GenerateScanStatsFile(inputFilePath, outputDirectoryPath, 0);

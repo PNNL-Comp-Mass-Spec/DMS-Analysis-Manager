@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Text.RegularExpressions;
 using PRISM;
@@ -10,6 +11,7 @@ namespace AnalysisManagerBase
     /// This class splits a Mascot Generic File (mgf file) into multiple parts
     /// </summary>
     /// <remarks></remarks>
+    [SuppressMessage("ReSharper", "UnusedMember.Global")]
     public class clsSplitMGFFile : EventNotifier
     {
         /// <summary>

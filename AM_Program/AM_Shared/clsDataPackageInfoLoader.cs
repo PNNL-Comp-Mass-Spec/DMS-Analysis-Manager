@@ -503,6 +503,7 @@ namespace AnalysisManagerBase
         /// <param name="errorMsg">Output: error message</param>
         /// <returns>Peptide Hit Jobs (e.g. MSGF+ or Sequest)</returns>
         /// <remarks>Alternatively use the overloaded version that includes additionalJobs</remarks>
+        // ReSharper disable once UnusedMember.Global
         public static List<clsDataPackageJobInfo> RetrieveDataPackagePeptideHitJobInfo(
             string connectionString,
             int dataPackageID,

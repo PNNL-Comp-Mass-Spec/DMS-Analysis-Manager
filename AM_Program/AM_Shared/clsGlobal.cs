@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -23,6 +24,7 @@ namespace AnalysisManagerBase
     /// <summary>
     /// Globally useful methods
     /// </summary>
+    [SuppressMessage("ReSharper", "UnusedMember.Global")]
     public static class clsGlobal
     {
 

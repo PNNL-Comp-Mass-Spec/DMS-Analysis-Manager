@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data.SQLite;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 
 namespace AnalysisManagerBase
@@ -8,6 +9,7 @@ namespace AnalysisManagerBase
     /// <summary>
     /// SQLite utilities
     /// </summary>
+    [SuppressMessage("ReSharper", "UnusedMember.Global")]
     public class clsSqLiteUtilities
     {
 

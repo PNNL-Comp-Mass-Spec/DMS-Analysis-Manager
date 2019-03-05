@@ -1158,6 +1158,8 @@ namespace AnalysisManagerBase
             mLastFileWriteTime = DateTime.UtcNow;
 
             var logWarning = true;
+
+            // ReSharper disable once StringLiteralTypo
             if (Tool.ToLower().Contains("glyq") || Tool.ToLower().Contains("modplus"))
             {
                 if (mDebugLevel < 3)

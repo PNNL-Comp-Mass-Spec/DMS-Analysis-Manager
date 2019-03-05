@@ -8,6 +8,7 @@ using MyEMSLReader;
 using PHRPReader;
 using PRISM;
 
+// ReSharper disable UnusedMember.Global
 namespace AnalysisManagerBase
 {
     /// <summary>

@@ -6,6 +6,7 @@ using PRISM.Logging;
 using MyEMSLReader;
 using PRISM;
 
+// ReSharper disable UnusedMember.Global
 namespace AnalysisManagerBase
 {
     /// <summary>
