@@ -256,7 +256,7 @@ namespace AnalysisManagerBase
         /// The analysis job must have completed successfully, since the parameters
         /// are retrieved from tables T_Jobs_History, T_Job_Steps_History, and T_Job_Parameters_History
         /// </summary>
-        /// <param name="brokerConnection">DMS_Pipline database connection (must already be open)</param>
+        /// <param name="brokerConnection">DMS_Pipeline database connection (must already be open)</param>
         /// <param name="jobNumber">Job number</param>
         /// <param name="jobParameters">Output parameter: Dictionary of job parameters where keys are parameter names (section names are ignored)</param>
         /// <param name="errorMsg"></param>
@@ -580,7 +580,9 @@ namespace AnalysisManagerBase
                 // Look for any SplitFasta jobs
                 // If present, we need to determine the value for job parameter NumberOfClonedSteps
 
-                var splitFastaJobs = (from dataPkgJob in dataPackagePeptideHitJobs where dataPkgJob.Tool.ToLower().Contains("splitfasta") select dataPkgJob).ToList();
+                var splitFastaJobs = (from dataPkgJob in dataPackagePeptideHitJobs
+                                      where dataPkgJob.Tool.ToLower().Contains("SplitFasta".ToLower())
+                                      select dataPkgJob).ToList();
 
 
                 if (splitFastaJobs.Count > 0)

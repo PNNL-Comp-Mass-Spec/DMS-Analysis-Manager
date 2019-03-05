@@ -250,7 +250,7 @@ namespace AnalysisManagerBase
         /// <param name="fileName">File name to find; can contain a wildcard, e.g. *.zip</param>
         /// <param name="subdirectoryName">Directory in which the file must reside; can contain a wildcard, e.g. SIC*</param>
         /// <param name="datasetName">Dataset name filter</param>
-        /// <param name="recurse">True to search all directories; false to only search the root directory (or only subsirectoryName)</param>
+        /// <param name="recurse">True to search all directories; false to only search the root directory (or only subdirectoryName)</param>
         /// <returns>List of matching files</returns>
         /// <remarks>subdirectoryName can contain a partial path, for example 2013_09_10_DPB_Unwashed_Media_25um.d\2013_09_10_In_1sec_1MW.m</remarks>
         public List<DatasetDirectoryOrFileInfo> FindFiles(string fileName, string subdirectoryName, string datasetName, bool recurse)

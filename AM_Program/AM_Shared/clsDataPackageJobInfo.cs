@@ -83,7 +83,7 @@ namespace AnalysisManagerBase
         public int NumberOfClonedSteps { get; set; }
 
         /// <summary>
-        /// Resutl type
+        /// Result type
         /// </summary>
         public string ResultType { get; set; }
 

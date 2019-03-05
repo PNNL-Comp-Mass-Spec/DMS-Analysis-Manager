@@ -6,7 +6,7 @@ using PRISM.Logging;
 namespace AnalysisManagerBase
 {
     /// <summary>
-    /// Utilitize for offline job processing
+    /// Utilize for offline job processing
     /// </summary>
     public class clsOfflineProcessing
     {
@@ -21,7 +21,7 @@ namespace AnalysisManagerBase
         /// <param name="compCode">Integer version of enum CloseOutType specifying the completion code</param>
         /// <param name="compMsg">Completion message</param>
         /// <param name="evalCode">Evaluation code</param>
-        /// <param name="evalMsg">Evaluation messge</param>
+        /// <param name="evalMsg">Evaluation message</param>
         public static void FinalizeJob(
             string infoFilePath, string managerName,
             bool succeeded, DateTime startTime,
