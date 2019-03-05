@@ -1,4 +1,3 @@
-
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
@@ -69,11 +68,6 @@ namespace AnalysisManagerBase
         /// Return value when a task is not available
         /// </summary>
         public const int RET_VAL_TASK_NOT_AVAILABLE = 53000;
-
-        /// <summary>
-        /// Default times to retry calling the stored procedure
-        /// </summary>
-        public const int DEFAULT_SP_RETRY_COUNT = 3;
 
         #endregion
 

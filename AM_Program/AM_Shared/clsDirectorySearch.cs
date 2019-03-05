@@ -276,7 +276,7 @@ namespace AnalysisManagerBase
             var datasetDirPath = FindValidDirectory(DatasetName, DataFileName, directoryNameToFind: "", maxAttempts: maxAttempts,
                 logDirectoryNotFound: true, retrievingInstrumentDataDir: false,
                 assumeUnpurged: assumeUnpurged,
-                validDirectoryFound: out var validDirectoryFound, directoryNotFoundMessage: out var directoryNotFoundMessage);
+                validDirectoryFound: out _, directoryNotFoundMessage: out _);
 
             if (!string.IsNullOrEmpty(datasetDirPath))
             {
@@ -332,8 +332,8 @@ namespace AnalysisManagerBase
                 logDirectoryNotFound: true,
                 retrievingInstrumentDataDir: true,
                 assumeUnpurged: assumeUnpurged,
-                validDirectoryFound: out var validDirectoryFound,
-                directoryNotFoundMessage: out var directoryNotFoundMessage);
+                validDirectoryFound: out _,
+                directoryNotFoundMessage: out _);
 
             if (serverPath.StartsWith(MYEMSL_PATH_FLAG))
             {
@@ -367,7 +367,7 @@ namespace AnalysisManagerBase
             var serverPath = FindValidDirectory(DatasetName, "", "*" + clsAnalysisResources.DOT_D_EXTENSION, maxAttempts,
                 logDirectoryNotFound: true, retrievingInstrumentDataDir: false,
                 assumeUnpurged: assumeUnpurged,
-                validDirectoryFound: out var validDirectoryFound, directoryNotFoundMessage: out var directoryNotFoundMessage);
+                validDirectoryFound: out _, directoryNotFoundMessage: out _);
 
             var datasetDirectory = new DirectoryInfo(serverPath);
 
@@ -402,7 +402,7 @@ namespace AnalysisManagerBase
             var datasetDirectoryPath = FindValidDirectory(DatasetName, fileNameToFind, clsAnalysisResources.BRUKER_ZERO_SER_FOLDER, DEFAULT_MAX_RETRY_COUNT,
                 logDirectoryNotFound: true, retrievingInstrumentDataDir: true,
                 assumeUnpurged: assumeUnpurged,
-                validDirectoryFound: out var validDirectoryFound, directoryNotFoundMessage: out var directoryNotFoundMessage);
+                validDirectoryFound: out _, directoryNotFoundMessage: out _);
 
             if (!string.IsNullOrEmpty(datasetDirectoryPath))
             {
@@ -454,7 +454,7 @@ namespace AnalysisManagerBase
             return FindValidDirectory(dsName, fileNameToFind, directoryNameToFind, DEFAULT_MAX_RETRY_COUNT,
                 logDirectoryNotFound: true, retrievingInstrumentDataDir: retrievingInstrumentDataDir,
                 assumeUnpurged: assumeUnpurged,
-                validDirectoryFound: out var validDirectoryFound, directoryNotFoundMessage: out var directoryNotFoundMessage);
+                validDirectoryFound: out _, directoryNotFoundMessage: out _);
 
         }
 
@@ -497,7 +497,7 @@ namespace AnalysisManagerBase
 
             return FindValidDirectory(dsName, fileNameToFind, directoryNameToFind, maxRetryCount, logDirectoryNotFound, retrievingInstrumentDataDir,
                 assumeUnpurged: false,
-                validDirectoryFound: out var validDirectoryFound, directoryNotFoundMessage: out var directoryNotFoundMessage);
+                validDirectoryFound: out _, directoryNotFoundMessage: out _);
         }
 
         /// <summary>
