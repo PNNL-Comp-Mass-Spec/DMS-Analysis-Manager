@@ -1290,19 +1290,19 @@ namespace AnalysisManagerBase
             switch (result)
             {
                 case RequestTaskResult.NoTaskFound:
-                    mTaskWasAssigned = false;
+                    TaskWasAssigned = false;
                     break;
                 case RequestTaskResult.TaskFound:
-                    mTaskWasAssigned = true;
+                    TaskWasAssigned = true;
                     break;
                 case RequestTaskResult.TooManyRetries:
                 case RequestTaskResult.Deadlock:
                     // Make sure the database didn't actually assign a job to this manager
                     ReportManagerIdle();
-                    mTaskWasAssigned = false;
+                    TaskWasAssigned = false;
                     break;
                 default:
-                    mTaskWasAssigned = false;
+                    TaskWasAssigned = false;
                     break;
             }
             return result;

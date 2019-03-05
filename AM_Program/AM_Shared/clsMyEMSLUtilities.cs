@@ -25,8 +25,6 @@ namespace AnalysisManagerBase
 
         private readonly DatasetListInfo mMyEMSLDatasetListInfo;
 
-        private readonly List<DatasetDirectoryOrFileInfo> mAllFoundMyEMSLFiles;
-
         private List<DatasetDirectoryOrFileInfo> mRecentlyFoundMyEMSLFiles;
 
         private DateTime mLastMyEMSLProgressWriteTime = DateTime.UtcNow;
@@ -40,8 +38,6 @@ namespace AnalysisManagerBase
         private int mMyEMSLDisableCount;
 
         private readonly clsMyEMSLFileIDComparer mFileIDComparer;
-
-        private readonly List<KeyValuePair<string, string>> mMostRecentUnzippedFiles;
 
         #region "Events"
 
@@ -76,7 +72,7 @@ namespace AnalysisManagerBase
         /// <value></value>
         /// <returns></returns>
         /// <remarks></remarks>
-        public List<DatasetDirectoryOrFileInfo> AllFoundMyEMSLFiles => mAllFoundMyEMSLFiles;
+        public List<DatasetDirectoryOrFileInfo> AllFoundMyEMSLFiles { get; }
 
         /// <summary>
         /// Returns the files most recently unzipped
@@ -85,7 +81,7 @@ namespace AnalysisManagerBase
         /// <value></value>
         /// <returns></returns>
         /// <remarks></remarks>
-        public List<KeyValuePair<string, string>> MostRecentUnzippedFiles => mMostRecentUnzippedFiles;
+        public List<KeyValuePair<string, string>> MostRecentUnzippedFiles { get; }
 
         /// <summary>
         /// Files most recently found via a call to FindFiles
@@ -124,7 +120,7 @@ namespace AnalysisManagerBase
             // Watch for error message "Unable to connect to the remote server"
             mMyEMSLDatasetListInfo.MyEMSLOffline += MyEMSLDatasetListInfo_MyEMSLOffline;
 
-            mAllFoundMyEMSLFiles = new List<DatasetDirectoryOrFileInfo>();
+            AllFoundMyEMSLFiles = new List<DatasetDirectoryOrFileInfo>();
             mRecentlyFoundMyEMSLFiles = new List<DatasetDirectoryOrFileInfo>();
 
             mDotNetZipTools = new clsDotNetZipTools(debugLevel, workingDir);
@@ -132,7 +128,7 @@ namespace AnalysisManagerBase
 
             mFileIDComparer = new clsMyEMSLFileIDComparer();
 
-            mMostRecentUnzippedFiles = new List<KeyValuePair<string, string>>();
+            MostRecentUnzippedFiles = new List<KeyValuePair<string, string>>();
 
             mMyEMSLAutoDisabled = false;
         }
@@ -204,7 +200,7 @@ namespace AnalysisManagerBase
                 // File not found in mRecentlyFoundMyEMSLFiles
                 // Instead check mAllFoundMyEMSLFiles
 
-                var fileInfoQuery = (from item in mAllFoundMyEMSLFiles where item.FileID == myEMSLFileID select item.FileInfo).ToList();
+                var fileInfoQuery = (from item in AllFoundMyEMSLFiles where item.FileID == myEMSLFileID select item.FileInfo).ToList();
 
                 if (fileInfoQuery.Count == 0)
                 {
@@ -236,7 +232,7 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public void ClearAllFoundFiles()
         {
-            mAllFoundMyEMSLFiles.Clear();
+            AllFoundMyEMSLFiles.Clear();
         }
 
         /// <summary>
@@ -296,9 +292,9 @@ namespace AnalysisManagerBase
                 mMyEMSLDisableCount = 0;
             }
 
-            var filesToAdd = mRecentlyFoundMyEMSLFiles.Except(mAllFoundMyEMSLFiles, mFileIDComparer);
+            var filesToAdd = mRecentlyFoundMyEMSLFiles.Except(AllFoundMyEMSLFiles, mFileIDComparer);
 
-            mAllFoundMyEMSLFiles.AddRange(filesToAdd);
+            AllFoundMyEMSLFiles.AddRange(filesToAdd);
 
             return mRecentlyFoundMyEMSLFiles;
 
@@ -336,7 +332,7 @@ namespace AnalysisManagerBase
                 return true;
             }
 
-            mMostRecentUnzippedFiles.Clear();
+            MostRecentUnzippedFiles.Clear();
 
             var success = mMyEMSLDatasetListInfo.ProcessDownloadQueue(downloadDirectoryPath, directoryLayout);
             if (success)
@@ -396,14 +392,14 @@ namespace AnalysisManagerBase
                     // Decompress the .zip file
                     OnStatusEvent("Unzipping file " + fileToUnzip.Name);
                     mDotNetZipTools.UnzipFile(fileToUnzip.FullName, e.DownloadDirectoryPath);
-                    mMostRecentUnzippedFiles.AddRange(mDotNetZipTools.MostRecentUnzippedFiles);
+                    MostRecentUnzippedFiles.AddRange(mDotNetZipTools.MostRecentUnzippedFiles);
                 }
                 else if (fileToUnzip.Extension.ToLower() == ".gz")
                 {
                     // Decompress the .gz file
                     OnStatusEvent("Unzipping file " + fileToUnzip.Name);
                     mDotNetZipTools.GUnzipFile(fileToUnzip.FullName, e.DownloadDirectoryPath);
-                    mMostRecentUnzippedFiles.AddRange(mDotNetZipTools.MostRecentUnzippedFiles);
+                    MostRecentUnzippedFiles.AddRange(mDotNetZipTools.MostRecentUnzippedFiles);
                 }
 
             }

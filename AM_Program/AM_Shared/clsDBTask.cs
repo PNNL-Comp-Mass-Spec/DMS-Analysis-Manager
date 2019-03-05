@@ -97,11 +97,6 @@ namespace AnalysisManagerBase
         protected string mBrokerConnStr;
 
         /// <summary>
-        /// Job status
-        /// </summary>
-        protected bool mTaskWasAssigned = false;
-
-        /// <summary>
         /// DMS stored procedure executor
         /// </summary>
         public PRISM.ExecuteDatabaseSP DMSProcedureExecutor { get; }
@@ -153,7 +148,7 @@ namespace AnalysisManagerBase
         /// <value></value>
         /// <returns>TRUE if task was assigned; otherwise false</returns>
         /// <remarks></remarks>
-        public bool TaskWasAssigned => mTaskWasAssigned;
+        public bool TaskWasAssigned { get; protected set; } = false;
 
         /// <summary>
         /// Debug level
