@@ -214,29 +214,6 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Requests a task
-        /// </summary>
-        /// <returns></returns>
-        /// <remarks></remarks>
-        public abstract RequestTaskResult RequestTask();
-
-        /// <summary>
-        /// Closes out a task
-        /// </summary>
-        /// <param name="closeOut">Closeout code</param>
-        /// <param name="compMsg">Closeout message</param>
-        /// <remarks></remarks>
-        public abstract void CloseTask(CloseOutType closeOut, string compMsg);
-
-        /// <summary>
-        /// Contact the Pipeline database to close the analysis job
-        /// </summary>
-        /// <param name="closeOut">Closeout code</param>
-        /// <param name="compMsg">Closeout message</param>
-        /// <param name="toolRunner">ToolRunner instance</param>
-        public abstract void CloseTask(CloseOutType closeOut, string compMsg, IToolRunner toolRunner);
-
-        /// <summary>
         /// Populate the job parameters list using XML-based job parameters
         /// </summary>
         /// <param name="jobParamsXML"></param>

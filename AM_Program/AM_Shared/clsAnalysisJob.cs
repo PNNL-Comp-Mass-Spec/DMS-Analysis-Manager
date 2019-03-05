@@ -1273,7 +1273,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <returns>Enum indicating if task was found</returns>
         /// <remarks></remarks>
-        public override RequestTaskResult RequestTask()
+        public RequestTaskResult RequestTask()
         {
             RequestTaskResult result;
 
@@ -1793,7 +1793,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="closeOut">IJobParams enum specifying close out type</param>
         /// <param name="compMsg">Completion message to be added to database upon closeOut</param>
-        public override void CloseTask(CloseOutType closeOut, string compMsg)
+        public void CloseTask(CloseOutType closeOut, string compMsg)
         {
             CloseTask(closeOut, compMsg, 0, string.Empty, mStartTime);
         }
@@ -1804,7 +1804,7 @@ namespace AnalysisManagerBase
         /// <param name="closeOut">IJobParams enum specifying close out type</param>
         /// <param name="compMsg">Completion message to be added to database upon closeOut</param>
         /// <param name="toolRunner">ToolRunner instance (clsAnalysisToolRunnerBase)</param>
-        public override void CloseTask(CloseOutType closeOut, string compMsg, IToolRunner toolRunner)
+        public void CloseTask(CloseOutType closeOut, string compMsg, IToolRunner toolRunner)
         {
             CloseTask(closeOut, compMsg, toolRunner.EvalCode, toolRunner.EvalMessage, toolRunner.StartTime);
         }
