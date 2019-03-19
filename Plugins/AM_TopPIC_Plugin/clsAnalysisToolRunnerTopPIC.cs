@@ -731,8 +731,10 @@ namespace AnalysisManagerTopPICPlugIn
 
                 try
                 {
-                    File.Delete(consoleOutputFilePath);
+                    var oldConsoleOutputFilePath = consoleOutputFilePath + ".old";
+                    File.Move(consoleOutputFilePath, oldConsoleOutputFilePath);
                     File.Move(trimmedFilePath, consoleOutputFilePath);
+                    File.Delete(oldConsoleOutputFilePath);
                 }
                 catch (Exception ex)
                 {
