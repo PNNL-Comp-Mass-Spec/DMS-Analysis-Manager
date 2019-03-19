@@ -660,7 +660,17 @@ namespace AnalysisManagerTopPICPlugIn
         /// <remarks></remarks>
         private void TrimConsoleOutputFile(string consoleOutputFilePath)
         {
-            var reExtractScan = new Regex(@"processing +(?<Scan>\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            // This RegEx matches lines of the form:
+            //
+            // Zero PTM filtering - processing 100 of 4404 spectra.
+            // One PTM search - processing 100 of 4404 spectra.
+            // E-value computation - processing 100 of 4404 spectra.
+            // Generating xml files - processing 100 PrSMs.
+            // Generating xml files - processing 100 Proteoforms.
+            // Generating xml files - processing 100 Proteins.
+            // Converting xml files to html files - processing 100 of 2833 files.
+
+            var reExtractItem = new Regex(@"processing +(?<Item>\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
             try
             {
@@ -684,46 +694,57 @@ namespace AnalysisManagerTopPICPlugIn
                 using (var reader = new StreamReader(new FileStream(consoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 using (var writer = new StreamWriter(new FileStream(trimmedFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
-                    var scanNumberOutputThreshold = 0;
-                    var lastScanNumber = 0;
+                    var itemNumberOutputThreshold = 0;
+                    var lastItemNumber = 0;
+                    var lastProcessingLine = string.Empty;
 
                     while (!reader.EndOfStream)
                     {
                         var dataLine = reader.ReadLine();
                         if (string.IsNullOrWhiteSpace(dataLine))
                         {
-                            writer.WriteLine(dataLine);
+                            // Skip blank lines
                             continue;
                         }
 
                         var keepLine = true;
 
-                        var match = reExtractScan.Match(dataLine);
+                        var match = reExtractItem.Match(dataLine);
                         if (match.Success)
                         {
-                            var scanNumber = int.Parse(match.Groups["Scan"].Value);
+                            var itemNumber = int.Parse(match.Groups["Item"].Value);
 
-                            if (scanNumber < lastScanNumber)
+                            if (itemNumber < lastItemNumber)
                             {
                                 // We have entered a new processing mode; reset the threshold
-                                scanNumberOutputThreshold = 0;
+                                itemNumberOutputThreshold = 0;
                             }
 
-                            if (scanNumber < scanNumberOutputThreshold)
+                            lastItemNumber = itemNumber;
+
+                            if (itemNumber < itemNumberOutputThreshold)
                             {
                                 keepLine = false;
+                                lastProcessingLine = dataLine;
                             }
                             else
                             {
-                                // Write out this line and bump up scanNumberOutputThreshold by 250
-                                scanNumberOutputThreshold += 250;
+                                // Write out this line and bump up itemNumberOutputThreshold by 250
+                                itemNumberOutputThreshold += 250;
+                                lastProcessingLine = string.Empty;
                             }
+                        }
+                        else if (!string.IsNullOrWhiteSpace(lastProcessingLine))
+                        {
+                            writer.WriteLine(lastProcessingLine);
+                            lastProcessingLine = string.Empty;
                         }
 
                         if (keepLine)
                         {
                             writer.WriteLine(dataLine);
                         }
+
                     }
                 }
 
