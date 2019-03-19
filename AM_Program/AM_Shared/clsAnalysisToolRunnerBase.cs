@@ -1262,7 +1262,7 @@ namespace AnalysisManagerBase
                 }
                 catch (UnauthorizedAccessException ex1)
                 {
-                    // File may be read-only. Clear read-only flag and try again
+                    // File may be read-only. Clear read-only and system attributes and try again
                     if (debugLevel > 0)
                     {
                         LogTools.LogDebug("File " + fileNamePath + " exception ex1: " + ex1.Message);
@@ -1272,7 +1272,7 @@ namespace AnalysisManagerBase
                         }
                         LogTools.LogDebug("File " + fileNamePath + " may be read-only, attribute reset attempt #" + retryCount);
                     }
-                    File.SetAttributes(fileNamePath, File.GetAttributes(fileNamePath) & ~FileAttributes.ReadOnly);
+                    File.SetAttributes(fileNamePath, File.GetAttributes(fileNamePath) & ~FileAttributes.ReadOnly & ~FileAttributes.System);
                     errType = AMFileNotDeletedAfterRetryException.RetryExceptionType.Unauthorized_Access_Exception;
                     retryCount += 1;
 
@@ -3252,8 +3252,8 @@ namespace AnalysisManagerBase
 
                     if (File.Exists(fileToDelete))
                     {
-                        // Verify file is not set to readonly, then delete it
-                        File.SetAttributes(fileToDelete, File.GetAttributes(fileToDelete) & ~FileAttributes.ReadOnly);
+                        // Assure that the file is not set to readonly or system, then delete it
+                        File.SetAttributes(fileToDelete, File.GetAttributes(fileToDelete) & ~FileAttributes.ReadOnly & ~FileAttributes.System);
                         File.Delete(fileToDelete);
                     }
                 }

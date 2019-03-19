@@ -296,8 +296,12 @@ namespace AnalysisManagerProg
                             var currentUser = Environment.UserDomainName + @"\" + Environment.UserName;
 
                             LogWarning("IOException deleting " + subDirectory.FullName + "; will try granting modify access to user " + currentUser);
-                            folderAcl.AddAccessRule(new FileSystemAccessRule(currentUser, FileSystemRights.Modify,
-                                                                             InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit, PropagationFlags.None, AccessControlType.Allow));
+                            directoryAcl.AddAccessRule(new FileSystemAccessRule(
+                                                           currentUser,
+                                                           FileSystemRights.Modify,
+                                                           InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit,
+                                                           PropagationFlags.None,
+                                                           AccessControlType.Allow));
 
                             try
                             {
@@ -306,12 +310,14 @@ namespace AnalysisManagerProg
                                 // Add the new access rule
                                 subDirectory.SetAccessControl(directoryAcl);
 
-                                // Make sure the readonly flag is not set (it's likely not even possible for a folder to have a readonly flag set, but it doesn't hurt to check)
+                                // Make sure the readonly flag and system flags are not set
+                                // It's likely not even possible for a directory to have a readonly flag set, but it doesn't hurt to check
                                 subDirectory.Refresh();
                                 var attributes = subDirectory.Attributes;
-                                if ((attributes & FileAttributes.ReadOnly) == FileAttributes.ReadOnly)
+                                if ((attributes & FileAttributes.ReadOnly) == FileAttributes.ReadOnly ||
+                                    (attributes & FileAttributes.System) == FileAttributes.System)
                                 {
-                                    subDirectory.Attributes = attributes & ~FileAttributes.ReadOnly;
+                                    subDirectory.Attributes = attributes & ~FileAttributes.ReadOnly & ~FileAttributes.System;
                                 }
 
                                 try
