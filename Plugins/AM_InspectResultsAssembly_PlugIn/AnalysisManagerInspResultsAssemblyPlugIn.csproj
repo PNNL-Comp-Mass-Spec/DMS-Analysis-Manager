@@ -60,7 +60,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="PRISM-Library">
-      <Version>2.5.11</Version>
+      <Version>2.5.12</Version>
     </PackageReference>
     <PackageReference Include="SharpZipLib">
       <Version>1.1.0</Version>
