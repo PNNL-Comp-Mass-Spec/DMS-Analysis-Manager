@@ -233,7 +233,7 @@ namespace AnalysisManagerProg
 
                 try
                 {
-                    mMgrSettings = new clsAnalysisMgrSettings(mMgrDirectoryPath, TraceMode);
+                    InitMgSettings(true);
 
                     // Load settings from config file AnalysisManagerProg.exe.config
                     var configFileSettings = LoadMgrSettingsFromFile();
@@ -394,6 +394,30 @@ namespace AnalysisManagerProg
 
             // Everything worked
             return true;
+        }
+
+        /// <summary>
+        /// Initialize mMgrSettings using the manager directory path and the TraceMode flag
+        /// </summary>
+        /// <param name="throwExceptions">
+        /// When true, if an exception is encountered, immediately throws
+        /// the exception so that the calling method can handle it
+        /// </param>
+        public void InitMgSettings(bool throwExceptions)
+        {
+            try
+            {
+                mMgrSettings = new clsAnalysisMgrSettings(mMgrDirectoryPath, TraceMode);
+            }
+            catch (Exception ex)
+            {
+                if (throwExceptions)
+                    throw;
+
+                ConsoleMsgUtils.ShowError("Exception instantiating clsAnalysisMgrSettings: " + ex.Message);
+                clsGlobal.IdleLoop(0.5);
+            }
+
         }
 
         /// <summary>
