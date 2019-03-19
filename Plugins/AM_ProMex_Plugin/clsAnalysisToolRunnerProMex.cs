@@ -451,12 +451,12 @@ namespace AnalysisManagerProMexPlugIn
 
             // Set up and execute a program runner to run ProMex
 
-            var cmdStr = " -i " + msFilePath;
-            cmdStr += " " + cmdLineOptions;
+            var arguments = " -i " + msFilePath +
+                            " " + cmdLineOptions;
 
             if (mDebugLevel >= 1)
             {
-                LogDebug(progLoc + cmdStr);
+                LogDebug(progLoc + arguments);
             }
 
             mCmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel);
@@ -475,7 +475,7 @@ namespace AnalysisManagerProMexPlugIn
 
             // Start the program and wait for it to finish
             // However, while it's running, LoopWaiting will get called via events
-            var blnSuccess = mCmdRunner.RunProgram(progLoc, cmdStr, "ProMex", true);
+            var blnSuccess = mCmdRunner.RunProgram(progLoc, arguments, "ProMex", true);
 
             if (!mCmdRunner.WriteConsoleOutputToFile)
             {

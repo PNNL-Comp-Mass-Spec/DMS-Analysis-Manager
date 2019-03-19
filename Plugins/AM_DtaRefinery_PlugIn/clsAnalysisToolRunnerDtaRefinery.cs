@@ -92,20 +92,20 @@ namespace AnalysisManagerDtaRefineryPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            var cmdStr =
+            var arguments =
                 Path.Combine(mWorkDir, mJobParams.GetParam("DTARefineryXMLFile")) + " " +
                 Path.Combine(mWorkDir, mDatasetName + "_dta.txt") + " " +
                 Path.Combine(localOrgDBFolder, orgDBName);
 
             // Create a batch file to run the command
             // Capture the console output (including output to the error stream) via redirection symbols:
-            //    strExePath cmdStr > ConsoleOutputFile.txt 2>&1
+            //    exePath arguments > ConsoleOutputFile.txt 2>&1
 
             var strBatchFilePath = Path.Combine(mWorkDir, "Run_DTARefinery.bat");
             var strConsoleOutputFileName = "DTARefinery_Console_Output.txt";
             mJobParams.AddResultFileToSkip(Path.GetFileName(strBatchFilePath));
 
-            var strBatchFileCmdLine = progLoc + " " + cmdStr + " > " + strConsoleOutputFileName + " 2>&1";
+            var strBatchFileCmdLine = progLoc + " " + arguments + " > " + strConsoleOutputFileName + " 2>&1";
 
             // Create the batch file
             using (var writer = new StreamWriter(new FileStream(strBatchFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))

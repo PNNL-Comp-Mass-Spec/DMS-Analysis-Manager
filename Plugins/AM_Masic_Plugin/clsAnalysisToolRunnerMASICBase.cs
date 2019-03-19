@@ -181,7 +181,7 @@ namespace AnalysisManagerMasicPlugin
             var logFile = new FileInfo(Path.Combine(mWorkDir, "MASIC_Log_Job" + mJob + ".txt"));
 
             // Define the parameters to send to Masic.exe
-            var cmdStr =
+            var arguments =
                 " /I:" + inputFilePath +
                 " /O:" + outputFolderPath +
                 " /P:" + parameterFilePath +
@@ -190,7 +190,7 @@ namespace AnalysisManagerMasicPlugin
 
             if (mDebugLevel >= 1)
             {
-                LogDebug(masicExePath + cmdStr);
+                LogDebug(masicExePath + arguments);
             }
 
             var objMasicProgRunner = new ProgRunner
@@ -201,7 +201,7 @@ namespace AnalysisManagerMasicPlugin
                 WriteConsoleOutputToFile = false,
                 Name = "MASIC",
                 Program = masicExePath,
-                Arguments = cmdStr,
+                Arguments = arguments,
                 WorkDir = mWorkDir
             };
 

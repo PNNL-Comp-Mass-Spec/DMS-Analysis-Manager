@@ -610,7 +610,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 }
 
                 // Set up and execute a program runner to run MzidToTsvConverter.exe
-                var cmdStr = GetMZIDtoTSVCommandLine(mzidFileName, tsvFileName, mWorkDir, mzidToTsvConverterProgLoc);
+                var arguments = GetMZIDtoTSVCommandLine(mzidFileName, tsvFileName, mWorkDir, mzidToTsvConverterProgLoc);
 
                 var mzidToTsvRunner = new clsRunDosProgram(mWorkDir, mDebugLevel)
                 {
@@ -625,7 +625,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 if (clsGlobal.LinuxOS)
                 {
                     // Need to run MzidToTsvConverter.exe using mono
-                    var updated = mzidToTsvRunner.UpdateToUseMono(mMgrParams, ref mzidToTsvConverterProgLoc, ref cmdStr);
+                    var updated = mzidToTsvRunner.UpdateToUseMono(mMgrParams, ref mzidToTsvConverterProgLoc, ref arguments);
                     if (!updated)
                     {
                         OnWarningEvent("Unable to run MzidToTsvConverter.exe with mono");
@@ -636,11 +636,11 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 if (mDebugLevel >= 1)
                 {
-                    OnStatusEvent(mzidToTsvConverterProgLoc + " " + cmdStr);
+                    OnStatusEvent(mzidToTsvConverterProgLoc + " " + arguments);
                 }
 
                 // This process is typically quite fast, so we do not track CPU usage
-                var success = mzidToTsvRunner.RunProgram(mzidToTsvConverterProgLoc, cmdStr, "MzIDToTsv", true);
+                var success = mzidToTsvRunner.RunProgram(mzidToTsvConverterProgLoc, arguments, "MzIDToTsv", true);
 
                 if (!success)
                 {
@@ -741,7 +741,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     javaMemorySizeMB = 10000;
 
                 // Set up and execute a program runner to run the MzIDToTsv module of MSGFPlus
-                var cmdStr = GetMZIDtoTSVCommandLine(mzidFileName, tsvFileName, mWorkDir, msgfDbProgLoc, javaMemorySizeMB);
+                var arguments = GetMZIDtoTSVCommandLine(mzidFileName, tsvFileName, mWorkDir, msgfDbProgLoc, javaMemorySizeMB);
 
                 // Make sure the machine has enough free memory to run MSGFPlus
                 const bool LOG_FREE_MEMORY_ON_SUCCESS = false;
@@ -754,7 +754,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 if (mDebugLevel >= 1)
                 {
-                    OnStatusEvent(javaProgLoc + " " + cmdStr);
+                    OnStatusEvent(javaProgLoc + " " + arguments);
                 }
 
                 var mzidToTsvRunner = new clsRunDosProgram(mWorkDir, mDebugLevel)
@@ -768,7 +768,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 RegisterEvents(mzidToTsvRunner);
 
                 // This process is typically quite fast, so we do not track CPU usage
-                var success = mzidToTsvRunner.RunProgram(javaProgLoc, cmdStr, "MzIDToTsv", true);
+                var success = mzidToTsvRunner.RunProgram(javaProgLoc, arguments, "MzIDToTsv", true);
 
                 if (!success)
                 {
@@ -810,13 +810,13 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <returns></returns>
         public static string GetMZIDtoTSVCommandLine(string mzidFileName, string tsvFileName, string workingDirectory, string mzidToTsvConverterProgLoc)
         {
-            var cmdStr =
+            var arguments =
                 " -mzid:" + clsAnalysisToolRunnerBase.PossiblyQuotePath(Path.Combine(workingDirectory, mzidFileName)) +
                 " -tsv:" + clsAnalysisToolRunnerBase.PossiblyQuotePath(Path.Combine(workingDirectory, tsvFileName)) +
                 " -unroll" +
                 " -showDecoy";
 
-            return cmdStr;
+            return arguments;
         }
 
         /// <summary>
@@ -834,16 +834,16 @@ namespace AnalysisManagerMSGFDBPlugIn
             // We're using "-XX:+UseConcMarkSweepGC" as directed at https://stackoverflow.com/questions/5839359/java-lang-outofmemoryerror-gc-overhead-limit-exceeded
             // due to seeing error "java.lang.OutOfMemoryError: GC overhead limit exceeded" with a 353 MB .mzid file
 
-            var cmdStr = " -Xmx" + javaMemorySizeMB + "M -XX:+UseConcMarkSweepGC -cp " + msgfDbProgLoc;
-            cmdStr += " edu.ucsd.msjava.ui.MzIDToTsv";
+            var arguments =
+                " -Xmx" + javaMemorySizeMB + "M -XX:+UseConcMarkSweepGC -cp " + msgfDbProgLoc +
+                " edu.ucsd.msjava.ui.MzIDToTsv" +
+                " -i " + clsAnalysisToolRunnerBase.PossiblyQuotePath(Path.Combine(workingDirectory, mzidFileName)) +
+                " -o " + clsAnalysisToolRunnerBase.PossiblyQuotePath(Path.Combine(workingDirectory, tsvFileName)) +
+                " -showQValue 1" +
+                " -showDecoy 1" +
+                " -unroll 1";
 
-            cmdStr += " -i " + clsAnalysisToolRunnerBase.PossiblyQuotePath(Path.Combine(workingDirectory, mzidFileName));
-            cmdStr += " -o " + clsAnalysisToolRunnerBase.PossiblyQuotePath(Path.Combine(workingDirectory, tsvFileName));
-            cmdStr += " -showQValue 1";
-            cmdStr += " -showDecoy 1";
-            cmdStr += " -unroll 1";
-
-            return cmdStr;
+            return arguments;
         }
 
         /// <summary>

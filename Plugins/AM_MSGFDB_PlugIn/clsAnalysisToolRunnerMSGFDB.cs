@@ -443,16 +443,16 @@ namespace AnalysisManagerMSGFDBPlugIn
             }
 
             // Set up and execute a program runner to run MSGF+
-            var cmdStr = " -Xmx" + javaMemorySizeMB + "M -jar " + msgfPlusJarFilePath;
+            var arguments = " -Xmx" + javaMemorySizeMB + "M -jar " + msgfPlusJarFilePath;
 
             // Define the input file, output file, and fasta file
             // It is safe to simply use the input file name since the working directory will be mWorkDir
-            cmdStr += " -s " + inputFile.Name;
-            cmdStr += " -o " + fiMSGFPlusResults.Name;
-            cmdStr += " -d " + PossiblyQuotePath(fastaFilePath);
+            arguments += " -s " + inputFile.Name;
+            arguments += " -o " + fiMSGFPlusResults.Name;
+            arguments += " -d " + PossiblyQuotePath(fastaFilePath);
 
             // Append the MS-GF+ parameter file name
-            cmdStr += " -conf " + finalParamFile.Name;
+            arguments += " -conf " + finalParamFile.Name;
 
             // Make sure the machine has enough free memory to run MSGFPlus
             var logFreeMemoryOnSuccess = (mDebugLevel >= 1);
@@ -489,7 +489,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 validExistingResults = false;
             }
 
-            var success = validExistingResults || StartMSGFPlusLocal(javaExePath, cmdStr);
+            var success = validExistingResults || StartMSGFPlusLocal(javaExePath, arguments);
 
             if (!success && string.IsNullOrEmpty(mMSGFPlusUtils.ConsoleOutputErrorMsg))
             {
@@ -693,11 +693,11 @@ namespace AnalysisManagerMSGFDBPlugIn
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
-        private bool StartMSGFPlusLocal(string javaExePath, string cmdStr)
+        private bool StartMSGFPlusLocal(string javaExePath, string arguments)
         {
             if (mDebugLevel >= 1)
             {
-                LogMessage(javaExePath + " " + cmdStr);
+                LogMessage(javaExePath + " " + arguments);
             }
 
             mCmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel)
@@ -716,7 +716,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             // Start the program and wait for it to finish
             // However, while it's running, LoopWaiting will get called via events
-            var success = mCmdRunner.RunProgram(javaExePath, cmdStr, "MSGF+", true);
+            var success = mCmdRunner.RunProgram(javaExePath, arguments, "MSGF+", true);
 
             return success;
         }

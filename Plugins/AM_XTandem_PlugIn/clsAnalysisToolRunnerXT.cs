@@ -106,7 +106,7 @@ namespace AnalysisManagerXTandemPlugIn
             }
 
             // Set up and execute a program runner to run X!Tandem
-            var cmdStr = "input.xml";
+            var arguments = "input.xml";
 
             mCmdRunner.CreateNoWindow = true;
             mCmdRunner.CacheStandardOutput = true;
@@ -117,7 +117,7 @@ namespace AnalysisManagerXTandemPlugIn
 
             mProgress = PROGRESS_PCT_XTANDEM_STARTING;
 
-            var processingSuccess = mCmdRunner.RunProgram(progLoc, cmdStr, "XTandem", true);
+            var processingSuccess = mCmdRunner.RunProgram(progLoc, arguments, "XTandem", true);
 
             // Parse the console output file one more time to determine the number of peptides found
             ParseConsoleOutputFile(Path.Combine(mWorkDir, XTANDEM_CONSOLE_OUTPUT));

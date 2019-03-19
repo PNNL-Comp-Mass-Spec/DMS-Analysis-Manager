@@ -502,34 +502,39 @@ namespace DTASpectraFileGen
                         }
 
                         // Set up command
-                        var cmdStr = "-I" + ionCount + " -G1";
+                        var arguments = " -I" + ionCount +
+                                        " -G1";
+
                         if (locCharge > 0)
                         {
-                            cmdStr += " -C" + locCharge;
+                            arguments += " -C" + locCharge;
                         }
 
-                        cmdStr += " -F" + LocScanStart + " -L" + LocScanStop;
+                        arguments += " -F" + LocScanStart +
+                                     " -L" + LocScanStop;
 
                         // For ExtractMSn, -S means the number of allowed different intermediate scans for grouping (default=1), for example -S1
                         // For DeconMSn, -S means the type of spectra to process, for example -SALL or -SCID
 
                         if (mRunningExtractMSn)
                         {
-                            cmdStr += " -S" + maxIntermediateScansWhenGrouping;
+                            arguments += " -S" + maxIntermediateScansWhenGrouping;
                         }
 
-                        cmdStr += " -B" + mwLower + " -T" + mwUpper + " -M" + massTol;
-                        cmdStr += " -D" + mWorkDir;
+                        arguments += " -B" + mwLower +
+                                     " -T" + mwUpper +
+                                     " -M" + massTol +
+                                     " -D" + mWorkDir;
 
                         if (!mRunningExtractMSn)
                         {
-                            cmdStr += " -XCDTA -Progress";
+                            arguments += " -XCDTA -Progress";
                         }
-                        cmdStr += " " + clsAnalysisToolRunnerBase.PossiblyQuotePath(Path.Combine(mWorkDir, mInstrumentFileName));
+                        arguments += " " + clsAnalysisToolRunnerBase.PossiblyQuotePath(Path.Combine(mWorkDir, mInstrumentFileName));
 
                         if (mDebugLevel >= 1)
                         {
-                            OnStatusEvent(mDtaToolNameLoc + " " + cmdStr);
+                            OnStatusEvent(mDtaToolNameLoc + " " + arguments);
                         }
 
                         if (mRunningExtractMSn)
@@ -554,7 +559,7 @@ namespace DTASpectraFileGen
 
                         mToolRunner.ResetProgRunnerCpuUsage();
 
-                        if (!mCmdRunner.RunProgram(mDtaToolNameLoc, cmdStr, "DTA_LCQ", true))
+                        if (!mCmdRunner.RunProgram(mDtaToolNameLoc, arguments, "DTA_LCQ", true))
                         {
                             // .RunProgram returned False
                             LogDTACreationStats("clsDtaGenThermoRaw.MakeDTAFiles", Path.GetFileNameWithoutExtension(mDtaToolNameLoc),

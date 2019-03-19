@@ -223,11 +223,11 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
         {
             // Set up and execute a program runner to run the Metabolite Detector
 
-            var cmdStr = "xyz";
+            var arguments = "xyz";
 
             if (mDebugLevel >= 1)
             {
-                LogDebug(cmdStr);
+                LogDebug(arguments);
             }
 
             mConsoleOutputFile = Path.Combine(mWorkDir, METABOLITE_DETECTOR_CONSOLE_OUTPUT);
@@ -245,7 +245,7 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
 
             mProgress = PROGRESS_PCT_STARTING;
 
-            var success = cmdRunner.RunProgram(mMetaboliteDetectorProgLoc, cmdStr, "MetaboliteDetector", true);
+            var success = cmdRunner.RunProgram(mMetaboliteDetectorProgLoc, arguments, "MetaboliteDetector", true);
 
             if (!cmdRunner.WriteConsoleOutputToFile && cmdRunner.CachedConsoleOutput.Length > 0)
             {

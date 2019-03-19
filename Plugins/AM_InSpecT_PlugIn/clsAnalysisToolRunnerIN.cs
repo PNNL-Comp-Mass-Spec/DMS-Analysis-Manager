@@ -432,10 +432,13 @@ namespace AnalysisManagerInSpecTPlugIn
             LogMessage("Starting Inspect");
 
             // Set up and execute a program runner to run Inspect.exe
-            var cmdStr = " -i " + mInspectCustomParamFileName + " -o " + mInspectResultsFilePath + " -e " + mInspectErrorFilePath;
+            var arguments = " -i " + mInspectCustomParamFileName +
+                            " -o " + mInspectResultsFilePath +
+                            " -e " + mInspectErrorFilePath;
+
             if (mDebugLevel >= 1)
             {
-                LogDebug(progLoc + " " + cmdStr);
+                LogDebug(progLoc + " " + arguments);
             }
 
             mCmdRunner.CreateNoWindow = true;
@@ -445,7 +448,7 @@ namespace AnalysisManagerInSpecTPlugIn
             mCmdRunner.WriteConsoleOutputToFile = true;
             mCmdRunner.ConsoleOutputFilePath = mInspectConsoleOutputFilePath;
 
-            if (!mCmdRunner.RunProgram(progLoc, cmdStr, "Inspect", true))
+            if (!mCmdRunner.RunProgram(progLoc, arguments, "Inspect", true))
             {
                 if (mCmdRunner.ExitCode != 0)
                 {

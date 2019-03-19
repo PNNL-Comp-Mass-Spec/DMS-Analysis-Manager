@@ -143,11 +143,12 @@ namespace DTASpectraFileGen
                 var fiRawConverter = new FileInfo(mDtaToolNameLoc);
 
                 // Set up command
-                var cmdStr = " " + clsGlobal.PossiblyQuotePath(rawFilePath) + " --mgf";
+                var arguments = " " + clsGlobal.PossiblyQuotePath(rawFilePath) +
+                                " --mgf";
 
                 if (mDebugLevel > 0)
                 {
-                    OnStatusEvent(mDtaToolNameLoc + " " + cmdStr);
+                    OnStatusEvent(mDtaToolNameLoc + " " + arguments);
                 }
 
                 // Setup a program runner tool to make the spectra files
@@ -165,7 +166,7 @@ namespace DTASpectraFileGen
                 mCmdRunner.ErrorEvent += CmdRunner_ErrorEvent;
                 mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
-                if (!mCmdRunner.RunProgram(mDtaToolNameLoc, cmdStr, "RawConverter", true))
+                if (!mCmdRunner.RunProgram(mDtaToolNameLoc, arguments, "RawConverter", true))
                 {
                     // .RunProgram returned False
                     LogDTACreationStats("ConvertRawToMGF", Path.GetFileNameWithoutExtension(mDtaToolNameLoc), "mCmdRunner.RunProgram returned False");

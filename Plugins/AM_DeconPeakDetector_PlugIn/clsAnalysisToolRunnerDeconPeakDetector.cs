@@ -232,11 +232,11 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
             LogMessage("Running DeconPeakDetector");
 
             // Set up and execute a program runner to run the Peak Detector
-            var cmdStr = mDatasetName + clsAnalysisResources.DOT_RAW_EXTENSION;
-            cmdStr += " /P:" + PossiblyQuotePath(paramFilePath);
-            cmdStr += " /O:" + PossiblyQuotePath(mWorkDir);
+            var arguments = mDatasetName + clsAnalysisResources.DOT_RAW_EXTENSION +
+                            " /P:" + PossiblyQuotePath(paramFilePath) +
+                            " /O:" + PossiblyQuotePath(mWorkDir);
 
-            LogDebug(strPeakDetectorProgLoc + " " + cmdStr);
+            LogDebug(strPeakDetectorProgLoc + " " + arguments);
 
             mCmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel);
             RegisterEvents(mCmdRunner);
@@ -251,7 +251,7 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
 
             mProgress = PROGRESS_PCT_STARTING;
 
-            var blnSuccess = mCmdRunner.RunProgram(strPeakDetectorProgLoc, cmdStr, "PeakDetector", true);
+            var blnSuccess = mCmdRunner.RunProgram(strPeakDetectorProgLoc, arguments, "PeakDetector", true);
 
             if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))
             {

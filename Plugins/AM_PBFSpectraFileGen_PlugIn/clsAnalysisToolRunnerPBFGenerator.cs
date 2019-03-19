@@ -382,13 +382,13 @@ namespace AnalysisManagerPBFGenerator
             LogMessage("Running PBFGen to create the PBF file");
 
             // Set up and execute a program runner to run PBFGen
-            var cmdStr = " -s " + rawFilePath;
+            var arguments = " -s " + rawFilePath;
 
-            // cmdStr += " -o " + mWorkDir
+            // arguments += " -o " + mWorkDir
 
             if (mDebugLevel >= 1)
             {
-                LogDebug(progLoc + cmdStr);
+                LogDebug(progLoc + arguments);
             }
 
             var cmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel);
@@ -404,7 +404,7 @@ namespace AnalysisManagerPBFGenerator
 
             mProgress = PROGRESS_PCT_STARTING;
 
-            var success = cmdRunner.RunProgram(progLoc, cmdStr, "PbfGen", true);
+            var success = cmdRunner.RunProgram(progLoc, arguments, "PbfGen", true);
 
             if (!cmdRunner.WriteConsoleOutputToFile)
             {

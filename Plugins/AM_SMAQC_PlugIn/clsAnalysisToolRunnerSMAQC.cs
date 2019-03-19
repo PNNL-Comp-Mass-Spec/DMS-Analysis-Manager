@@ -92,17 +92,17 @@ namespace AnalysisManagerSMAQCPlugIn
                 LogMessage("Running SMAQC");
 
                 // Set up and execute a program runner to run SMAQC
-                var cmdStr = PossiblyQuotePath(mWorkDir);                       // Path to folder containing input files
-                cmdStr += " /O:" + PossiblyQuotePath(resultsFilePath);           // Text file to write the results to
-                cmdStr += " /DB:" + PossiblyQuotePath(mWorkDir);                // Folder where SQLite DB will be created
-                cmdStr += " /I:" + InstrumentID;                      // Instrument ID
-                cmdStr += " /M:" + PossiblyQuotePath(strParameterFilePath);      // Path to XML file specifying measurements to run
+                var arguments = PossiblyQuotePath(mWorkDir) +                       // Path to folder containing input files
+                                " /O:" + PossiblyQuotePath(resultsFilePath) +       // Text file to write the results to
+                                " /DB:" + PossiblyQuotePath(mWorkDir) +             // Folder where SQLite DB will be created
+                                " /I:" + InstrumentID +                             // Instrument ID
+                                " /M:" + PossiblyQuotePath(strParameterFilePath);   // Path to XML file specifying measurements to run
 
-                mJobParams.AddResultFileToSkip("SMAQC.s3db");                   // Don't keep the SQLite DB
+                mJobParams.AddResultFileToSkip("SMAQC.s3db");                       // Don't keep the SQLite DB
 
                 if (mDebugLevel >= 1)
                 {
-                    LogDebug(progLoc + " " + cmdStr);
+                    LogDebug(progLoc + " " + arguments);
                 }
 
                 mCmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel)
@@ -121,7 +121,7 @@ namespace AnalysisManagerSMAQCPlugIn
 
                 mProgress = PROGRESS_PCT_SMAQC_STARTING;
 
-                var processingSuccess = mCmdRunner.RunProgram(progLoc, cmdStr, "SMAQC", true);
+                var processingSuccess = mCmdRunner.RunProgram(progLoc, arguments, "SMAQC", true);
 
                 if (!mCmdRunner.WriteConsoleOutputToFile)
                 {

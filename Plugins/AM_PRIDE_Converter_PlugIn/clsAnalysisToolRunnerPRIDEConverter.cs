@@ -3226,13 +3226,13 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             mStatusTools.UpdateAndWrite(mProgress);
             var versionFilePath = Path.Combine(mWorkDir, "PRIDEConverter_Version.txt");
 
-            var cmdStr = "-jar " + PossiblyQuotePath(prideConverterProgLoc);
-
-            cmdStr += " -converter -version";
+            var arguments = "-jar " + PossiblyQuotePath(prideConverterProgLoc) +
+                            " -converter" +
+                            " -version";
 
             if (mDebugLevel >= 2)
             {
-                LogDebug(mJavaProgLoc + " " + cmdStr);
+                LogDebug(mJavaProgLoc + " " + arguments);
             }
 
             mCmdRunner.CreateNoWindow = false;
@@ -3243,7 +3243,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             mCmdRunner.ConsoleOutputFilePath = versionFilePath;
             mCmdRunner.WorkDir = mWorkDir;
 
-            var success = mCmdRunner.RunProgram(mJavaProgLoc, cmdStr, "PrideConverter", true);
+            var success = mCmdRunner.RunProgram(mJavaProgLoc, arguments, "PrideConverter", true);
 
             // Assure that the console output file has been parsed
             ParseConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath);
@@ -4178,21 +4178,17 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             mStatusTools.CurrentOperation = "Running PrideConverter";
             mStatusTools.UpdateAndWrite(mProgress);
 
-            var cmdStr = "-jar " + PossiblyQuotePath(mPrideConverterProgLoc);
+            var arguments = "-jar " + PossiblyQuotePath(mPrideConverterProgLoc) +
+                            " -converter" +
+                            " -mode convert" +
+                            " -engine msgf" +
+                            " -sourcefile " + PossiblyQuotePath(msgfResultsFilePath) +     // QC_Shew_12_02_Run-03_18Jul12_Roc_12-04-08.msgf
+                            " -spectrafile " + PossiblyQuotePath(mzXMLFilePath) +          // QC_Shew_12_02_Run-03_18Jul12_Roc_12-04-08.mzXML
+                            " -reportfile " + PossiblyQuotePath(prideReportFilePath) +     // QC_Shew_12_02_Run-03_18Jul12_Roc_12-04-08.msgf-report.xml
+                            " -reportOnlyIdentifiedSpectra" +
+                            " -debug";
 
-            // QC_Shew_12_02_Run-03_18Jul12_Roc_12-04-08.msgf
-            cmdStr += " -converter -mode convert -engine msgf -sourcefile " + PossiblyQuotePath(msgfResultsFilePath);
-
-            // QC_Shew_12_02_Run-03_18Jul12_Roc_12-04-08.mzXML
-            cmdStr += " -spectrafile " + PossiblyQuotePath(mzXMLFilePath);
-
-            // QC_Shew_12_02_Run-03_18Jul12_Roc_12-04-08.msgf-report.xml
-            cmdStr += " -reportfile " + PossiblyQuotePath(prideReportFilePath);
-
-            cmdStr += " -reportOnlyIdentifiedSpectra";
-            cmdStr += " -debug";
-
-            LogDebug(mJavaProgLoc + " " + cmdStr);
+            LogDebug(mJavaProgLoc + " " + arguments);
 
             mCmdRunner.CreateNoWindow = false;
             mCmdRunner.CacheStandardOutput = false;
@@ -4202,7 +4198,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             mCmdRunner.ConsoleOutputFilePath = Path.Combine(mWorkDir, PRIDEConverter_CONSOLE_OUTPUT);
             mCmdRunner.WorkDir = mWorkDir;
 
-            var success = mCmdRunner.RunProgram(mJavaProgLoc, cmdStr, "PrideConverter", true);
+            var success = mCmdRunner.RunProgram(mJavaProgLoc, arguments, "PrideConverter", true);
 
             // Assure that the console output file has been parsed
             ParseConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath);

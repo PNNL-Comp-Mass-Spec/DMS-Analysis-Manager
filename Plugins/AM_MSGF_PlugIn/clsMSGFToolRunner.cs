@@ -1936,25 +1936,25 @@ namespace AnalysisManagerMSGFPlugin
             mStatusTools.CurrentOperation = "Running MSGF";
             mStatusTools.UpdateAndWrite(mProgress);
 
-            var cmdStr = " -Xmx" + javaMemorySize + "M ";
+            var arguments = " -Xmx" + javaMemorySize + "M ";
 
             if (mUsingMSGFDB)
             {
-                cmdStr += "-cp " + PossiblyQuotePath(mMSGFProgLoc) + " ui.MSGF";
+                arguments += "-cp " + PossiblyQuotePath(mMSGFProgLoc) + " ui.MSGF";
             }
             else
             {
-                cmdStr += "-jar " + PossiblyQuotePath(mMSGFProgLoc);
+                arguments += "-jar " + PossiblyQuotePath(mMSGFProgLoc);
             }
 
             // Input file
-            cmdStr += " -i " + PossiblyQuotePath(inputFilePath);
+            arguments += " -i " + PossiblyQuotePath(inputFilePath);
 
             // Folder containing .mzXML, .mzML, or .mgf file
-            cmdStr += " -d " + PossiblyQuotePath(mWorkDir);
+            arguments += " -d " + PossiblyQuotePath(mWorkDir);
 
             // Output file
-            cmdStr += " -o " + PossiblyQuotePath(resultsFilePath);
+            arguments += " -o " + PossiblyQuotePath(resultsFilePath);
 
             // MSGF v6432 and earlier use -m 0 for CID and -m 1 for ETD
             // MSGFDB v7097 and later use:
@@ -1986,35 +1986,35 @@ namespace AnalysisManagerMSGFPlugin
             {
                 // Always use -m 0 (assuming we're sending an mzXML file to MSGFDB)
                 // -m 0 means as-written in the input file
-                cmdStr += " -m 0";
+                arguments += " -m 0";
             }
             else
             {
                 if (mETDMode)
                 {
                     // ETD fragmentation
-                    cmdStr += " -m 1";
+                    arguments += " -m 1";
                 }
                 else
                 {
                     // CID fragmentation
-                    cmdStr += " -m 0";
+                    arguments += " -m 0";
                 }
             }
 
             // Enzyme is Trypsin; other supported enzymes are 2: Chymotrypsin, 3: Lys-C, 4: Lys-N, 5: Glu-C, 6: Arg-C, 7: Asp-N, and 8: aLP
-            cmdStr += " -e 1";
+            arguments += " -e 1";
 
             // No fixed mods on cysteine
-            cmdStr += " -fixMod 0";
+            arguments += " -fixMod 0";
 
             // Write out all matches for each spectrum
-            cmdStr += " -x 0";
+            arguments += " -x 0";
 
             // SpecProbThreshold threshold of 1, i.e., do not filter results by the computed SpecProb value
-            cmdStr += " -p 1";
+            arguments += " -p 1";
 
-            LogDebug(mJavaProgLoc + " " + cmdStr);
+            LogDebug(mJavaProgLoc + " " + arguments);
 
             mMSGFRunner = new clsRunDosProgram(mWorkDir, mDebugLevel)
             {
@@ -2027,7 +2027,7 @@ namespace AnalysisManagerMSGFPlugin
             RegisterEvents(mMSGFRunner);
             mMSGFRunner.LoopWaiting += MSGFRunner_LoopWaiting;
 
-            var success = mMSGFRunner.RunProgram(mJavaProgLoc, cmdStr, "MSGF", true);
+            var success = mMSGFRunner.RunProgram(mJavaProgLoc, arguments, "MSGF", true);
 
             if (!mToolVersionWritten)
             {

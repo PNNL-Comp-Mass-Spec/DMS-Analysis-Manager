@@ -30,8 +30,8 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
             }
 
             // Get input data file
-            var strRawDataType = mJobParams.GetParam("RawDataType");
-            var eRawDataType = GetRawDataType(strRawDataType);
+            var rawDataType = mJobParams.GetParam("RawDataType");
+            var eRawDataType = GetRawDataType(rawDataType);
 
             switch (eRawDataType)
             {
@@ -40,7 +40,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
                     break;
                 // This dataset type is acceptable
                 default:
-                    mMessage = "Dataset type " + strRawDataType + " is not supported";
+                    mMessage = "Dataset type " + rawDataType + " is not supported";
                     LogDebug(
                         "clsDtaGenResources.GetResources: " + mMessage + "; must be " + RAW_DATA_TYPE_BRUKER_FT_FOLDER + " or " +
                         RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER);
@@ -48,7 +48,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            if (!FileSearch.RetrieveSpectra(strRawDataType))
+            if (!FileSearch.RetrieveSpectra(rawDataType))
             {
                 LogDebug("clsDtaGenResources.GetResources: Error occurred retrieving spectra.");
                 return CloseOutType.CLOSEOUT_FAILED;

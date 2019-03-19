@@ -175,7 +175,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
             // Set up and execute a program runner to run MS XML executable
 
-            var cmdStr = CreateArguments(msXmlFormat, mSourceFilePath);
+            var arguments = CreateArguments(msXmlFormat, mSourceFilePath);
 
             var blnSuccess = SetupTool();
             if (!blnSuccess)
@@ -187,7 +187,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 return false;
             }
 
-            ProgRunnerStarting?.Invoke(mProgramPath + cmdStr);
+            ProgRunnerStarting?.Invoke(mProgramPath + arguments);
 
             if (ConsoleOutputSuffix == null)
                 ConsoleOutputSuffix = string.Empty;
@@ -204,7 +204,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
             cmdRunner.WorkDir = mWorkDir;
 
             var dtStartTime = DateTime.UtcNow;
-            blnSuccess = cmdRunner.RunProgram(mProgramPath, cmdStr, Path.GetFileNameWithoutExtension(mProgramPath), mUseProgRunnerResultCode,
+            blnSuccess = cmdRunner.RunProgram(mProgramPath, arguments, Path.GetFileNameWithoutExtension(mProgramPath), mUseProgRunnerResultCode,
                 MAX_RUNTIME_SECONDS);
 
             if (!string.IsNullOrWhiteSpace(cmdRunner.CachedConsoleErrors))

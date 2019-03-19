@@ -551,13 +551,13 @@ namespace AnalysisManagerTopPICPlugIn
             var featureFileName = mDatasetName + clsAnalysisResourcesTopPIC.TOPFD_FEATURE_FILE_SUFFIX;
             var msalignFileName = mDatasetName + clsAnalysisResourcesTopPIC.MSALIGN_FILE_SUFFIX;
 
-            var cmdStr = string.Format("{0} --use-topfd-feature {1} {2} {3}",
-                                       cmdLineOptions,
-                                       featureFileName,
-                                       mValidatedFASTAFilePath,
-                                       msalignFileName);
+            var arguments = string.Format("{0} --use-topfd-feature {1} {2} {3}",
+                                          cmdLineOptions,
+                                          featureFileName,
+                                          mValidatedFASTAFilePath,
+                                          msalignFileName);
 
-            LogDebug(progLoc + " " + cmdStr);
+            LogDebug(progLoc + " " + arguments);
 
             mCmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel);
             RegisterEvents(mCmdRunner);
@@ -575,7 +575,7 @@ namespace AnalysisManagerTopPICPlugIn
 
             // Start the program and wait for it to finish
             // However, while it's running, LoopWaiting will get called via events
-            var processingSuccess = mCmdRunner.RunProgram(progLoc, cmdStr, "TopPIC", true);
+            var processingSuccess = mCmdRunner.RunProgram(progLoc, arguments, "TopPIC", true);
 
             if (!mToolVersionWritten)
             {

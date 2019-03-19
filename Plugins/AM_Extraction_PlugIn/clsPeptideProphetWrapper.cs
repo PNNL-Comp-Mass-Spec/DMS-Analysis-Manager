@@ -87,14 +87,14 @@ namespace AnalysisManagerExtractionPlugin
                 }
 
                 // Set up and execute a program runner to run the Peptide Prophet Runner
-                var cmdStr =
+                var arguments =
                     clsGlobal.PossiblyQuotePath(inputFile.FullName) + " " +
                     clsGlobal.PossiblyQuotePath(inputFile.Directory.FullName) +
                     " /T:" + MAX_PEPTIDE_PROPHET_RUNTIME_MINUTES;
 
                 if (DebugLevel >= 2)
                 {
-                    OnDebugEvent(mPeptideProphetRunnerLocation + " " + cmdStr);
+                    OnDebugEvent(mPeptideProphetRunnerLocation + " " + arguments);
                 }
 
                 mCmdRunner = new clsRunDosProgram(inputFile.Directory.FullName, DebugLevel)
@@ -108,7 +108,7 @@ namespace AnalysisManagerExtractionPlugin
                 mCmdRunner.ErrorEvent += CmdRunner_ErrorEvent;
                 mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
-                if (!mCmdRunner.RunProgram(mPeptideProphetRunnerLocation, cmdStr, "PeptideProphetRunner", true))
+                if (!mCmdRunner.RunProgram(mPeptideProphetRunnerLocation, arguments, "PeptideProphetRunner", true))
                 {
                     ReportError("Error running PeptideProphetRunner");
                     return CloseOutType.CLOSEOUT_FAILED;

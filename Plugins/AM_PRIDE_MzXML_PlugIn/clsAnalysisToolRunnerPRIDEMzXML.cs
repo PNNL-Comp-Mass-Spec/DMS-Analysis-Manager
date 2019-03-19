@@ -68,7 +68,7 @@ namespace AnalysisManagerPRIDEMzXMLPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            var cmdStr =
+            var arguments =
                 " /M:" + Path.Combine(mWorkDir, mJobParams.GetParam("PRIDEMzXMLInputFile")) +
                 " /G /O:" + mWorkDir +
                 " /L:" + Path.Combine(mWorkDir, "MSDataFileTrimmer_Log.txt");
@@ -80,7 +80,7 @@ namespace AnalysisManagerPRIDEMzXMLPlugIn
             mCmdRunner.WriteConsoleOutputToFile = true;
             mCmdRunner.ConsoleOutputFilePath = Path.Combine(mWorkDir, "MSDataFileTrimmer_ConsoleOutput.txt");
 
-            if (!mCmdRunner.RunProgram(progLoc, cmdStr, "MSDataFileTrimmer", true))
+            if (!mCmdRunner.RunProgram(progLoc, arguments, "MSDataFileTrimmer", true))
             {
                 LogError("Error running MSDataFileTrimmer");
 

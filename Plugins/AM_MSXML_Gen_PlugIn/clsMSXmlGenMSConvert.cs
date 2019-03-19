@@ -63,7 +63,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
         protected override string CreateArguments(string msXmlFormat, string rawFilePath)
         {
-            var cmdStr = " " + clsGlobal.PossiblyQuotePath(rawFilePath);
+            var arguments = " " + clsGlobal.PossiblyQuotePath(rawFilePath);
 
             if (string.IsNullOrWhiteSpace(mCustomMSConvertArguments))
             {
@@ -79,15 +79,15 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
                     if (mCentroidMS1 && !mCentroidMS2)
                     {
-                        cmdStr += " --filter \"peakPicking true 1\"";
+                        arguments += " --filter \"peakPicking true 1\"";
                     }
                     else if (!mCentroidMS1 && mCentroidMS2)
                     {
-                        cmdStr += " --filter \"peakPicking true 2-\"";
+                        arguments += " --filter \"peakPicking true 2-\"";
                     }
                     else
                     {
-                        cmdStr += " --filter \"peakPicking true 1-\"";
+                        arguments += " --filter \"peakPicking true 1-\"";
                     }
 
                     if (mCentroidPeakCountToRetain < 0)
@@ -105,11 +105,11 @@ namespace AnalysisManagerMsXmlGenPlugIn
                             mCentroidPeakCountToRetain = 25;
                         }
 
-                        cmdStr += " --filter \"threshold count " + mCentroidPeakCountToRetain + " most-intense\"";
+                        arguments += " --filter \"threshold count " + mCentroidPeakCountToRetain + " most-intense\"";
                     }
                 }
 
-                cmdStr += " --" + msXmlFormat + " --32";
+                arguments += " --" + msXmlFormat + " --32";
             }
             else
             {
@@ -119,15 +119,15 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 // to:
                 // --filter "peakPicking true 1-" --filter "scanNumber [0,24427] [24441,49450]" --mzML --32
 
-                cmdStr += " " + mCustomMSConvertArguments.Replace("'", "\"");
+                arguments += " " + mCustomMSConvertArguments.Replace("'", "\"");
             }
 
             mOutputFileName = GetOutputFileName(msXmlFormat, rawFilePath, mRawDataType);
 
             // Specify the output directory and the output file name
-            cmdStr += "  -o " + mWorkDir + " --outfile " + mOutputFileName;
+            arguments += "  -o " + mWorkDir + " --outfile " + mOutputFileName;
 
-            return cmdStr;
+            return arguments;
         }
 
         protected override string GetOutputFileName(string msXmlFormat, string rawFilePath, clsAnalysisResources.eRawDataTypeConstants rawDataType)

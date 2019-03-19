@@ -245,7 +245,7 @@ namespace DTASpectraFileGen
                 }
 
                 // Set up command
-                var cmdStr = " " + rawFilePath;
+                var arguments = " " + rawFilePath;
 
                 if (centroidMGF)
                 {
@@ -266,19 +266,19 @@ namespace DTASpectraFileGen
                         centroidPeakCountToRetain = 25;
                     }
 
-                    cmdStr += " --filter \"peakPicking true 1-\" --filter \"threshold count " + centroidPeakCountToRetain + " most-intense\"";
+                    arguments += " --filter \"peakPicking true 1-\" --filter \"threshold count " + centroidPeakCountToRetain + " most-intense\"";
                 }
 
                 if (blnLimitingScanRange)
                 {
-                    cmdStr += " --filter \"scanNumber [" + SCAN_START + "," + scanStop + "]\"";
+                    arguments += " --filter \"scanNumber [" + SCAN_START + "," + scanStop + "]\"";
                 }
 
-                cmdStr += " --mgf -o " + mWorkDir;
+                arguments += " --mgf -o " + mWorkDir;
 
                 if (mDebugLevel > 0)
                 {
-                    OnStatusEvent(mDtaToolNameLoc + " " + cmdStr);
+                    OnStatusEvent(mDtaToolNameLoc + " " + arguments);
                 }
 
                 // Setup a program runner tool to make the spectra files
@@ -293,7 +293,7 @@ namespace DTASpectraFileGen
                 mCmdRunner.ErrorEvent += CmdRunner_ErrorEvent;
                 mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
-                if (!mCmdRunner.RunProgram(mDtaToolNameLoc, cmdStr, "MSConvert", true))
+                if (!mCmdRunner.RunProgram(mDtaToolNameLoc, arguments, "MSConvert", true))
                 {
                     // .RunProgram returned False
                     LogDTACreationStats("ConvertRawToMGF", Path.GetFileNameWithoutExtension(mDtaToolNameLoc), "mCmdRunner.RunProgram returned False");

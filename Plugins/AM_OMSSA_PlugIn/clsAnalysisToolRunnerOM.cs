@@ -77,11 +77,11 @@ namespace AnalysisManagerOMSSAPlugIn
             var inputFilename = Path.Combine(mWorkDir, "OMSSA_Input.xml");
 
             // Set up and execute a program runner to run OMSSA
-            var cmdStr = " -pm " + inputFilename;
+            var arguments = " -pm " + inputFilename;
 
             if (mDebugLevel >= 1)
             {
-                LogDebug("Starting OMSSA: " + progLoc + " " + cmdStr);
+                LogDebug("Starting OMSSA: " + progLoc + " " + arguments);
             }
 
             cmdRunner.CreateNoWindow = true;
@@ -91,7 +91,7 @@ namespace AnalysisManagerOMSSAPlugIn
             cmdRunner.WriteConsoleOutputToFile = true;
             cmdRunner.ConsoleOutputFilePath = Path.Combine(mWorkDir, Path.GetFileNameWithoutExtension(progLoc) + "_ConsoleOutput.txt");
 
-            var processingSuccess = cmdRunner.RunProgram(progLoc, cmdStr, "OMSSA", true);
+            var processingSuccess = cmdRunner.RunProgram(progLoc, arguments, "OMSSA", true);
 
             if (!processingSuccess)
             {
@@ -198,11 +198,13 @@ namespace AnalysisManagerOMSSAPlugIn
 
                 // Set up and execute a program runner to run Omssa2PepXml.exe
                 // omssa2pepxml.exe -xml -o C:\DMS_WorkDir\QC_Shew_09_02_pt5_a_20May09_Earth_09-04-20_pepxml.xml C:\DMS_WorkDir\QC_Shew_09_02_pt5_a_20May09_Earth_09-04-20_omx_large.omx
-                var cmdStr = "-xml -o " + outputFilename + " " + inputFilename;
+                var arguments = "-xml" +
+                                " -o " + outputFilename +
+                                " " + inputFilename;
 
                 if (mDebugLevel >= 1)
                 {
-                    LogDebug("Starting OMSSA2PepXml: " + progLoc + " " + cmdStr);
+                    LogDebug("Starting OMSSA2PepXml: " + progLoc + " " + arguments);
                 }
 
                 cmdRunner.CreateNoWindow = true;
@@ -212,7 +214,7 @@ namespace AnalysisManagerOMSSAPlugIn
                 cmdRunner.WriteConsoleOutputToFile = true;
                 cmdRunner.ConsoleOutputFilePath = Path.Combine(mWorkDir, Path.GetFileNameWithoutExtension(progLoc) + "_ConsoleOutput.txt");
 
-                if (!cmdRunner.RunProgram(progLoc, cmdStr, "OMSSA2PepXml", true))
+                if (!cmdRunner.RunProgram(progLoc, arguments, "OMSSA2PepXml", true))
                 {
                     LogError("Error running OMSSA2PepXml");
                     return false;

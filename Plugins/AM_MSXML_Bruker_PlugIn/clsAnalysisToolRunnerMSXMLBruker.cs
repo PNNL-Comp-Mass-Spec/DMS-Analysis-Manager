@@ -79,7 +79,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
 
             var processingErrorMessage = string.Empty;
 
-            var eResult = CreateMSXmlFile(out var fiResultsFile);
+            var eResult = CreateMSXmlFile(out var resultsFile);
 
             if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
             {
@@ -91,15 +91,11 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
                     mMessage = "Error running CompassXport";
                 }
                 processingErrorMessage = string.Copy(mMessage);
-
-                if (eResult == CloseOutType.CLOSEOUT_NO_DATA)
-                {
-                }
             }
             else
             {
                 // Gzip the .mzML or .mzXML file then copy to the server cache
-                PostProcessMsXmlFile(fiResultsFile);
+                PostProcessMsXmlFile(resultsFile);
             }
 
             // Stop the job timer
@@ -137,7 +133,10 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
 
             var success = CopyResultsToTransferDirectory();
 
-            return success ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
+            if (success && eResult == CloseOutType.CLOSEOUT_SUCCESS)
+                return CloseOutType.CLOSEOUT_SUCCESS;
+
+            return CloseOutType.CLOSEOUT_FAILED;
 
         }
 
@@ -146,7 +145,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
         /// </summary>
         /// <returns>CloseOutType enum indicating success or failure</returns>
         /// <remarks></remarks>
-        private CloseOutType CreateMSXmlFile(out FileInfo fiResultsFile)
+        private CloseOutType CreateMSXmlFile(out FileInfo resultsFile)
         {
             if (mDebugLevel > 4)
             {
@@ -163,7 +162,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
             string CompassXportProgramPath;
 
             // Initialize the Results File output parameter to a dummy name for now
-            fiResultsFile = new FileInfo(Path.Combine(mWorkDir, "NonExistent_Placeholder_File.tmp"));
+            resultsFile = new FileInfo(Path.Combine(mWorkDir, "NonExistent_Placeholder_File.tmp"));
 
             if (string.Equals(msXmlGenerator, COMPASS_XPORT, StringComparison.OrdinalIgnoreCase))
             {
@@ -197,7 +196,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
                 eOutputType = clsCompassXportRunner.MSXMLOutputTypeConstants.mzXML;
             }
 
-            fiResultsFile = new FileInfo(Path.Combine(mWorkDir, mDatasetName + "." + clsCompassXportRunner.GetMsXmlOutputTypeByID(eOutputType)));
+            resultsFile = new FileInfo(Path.Combine(mWorkDir, mDatasetName + "." + clsCompassXportRunner.GetMsXmlOutputTypeByID(eOutputType)));
 
             // Instantiate the processing class
             mCompassXportRunner = new clsCompassXportRunner(mWorkDir, CompassXportProgramPath, mDatasetName, eOutputType, CentroidMSXML);
@@ -207,9 +206,9 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
             mCompassXportRunner.ProgRunnerStarting += CompassXportRunner_ProgRunnerStarting;
 
             // Create the file
-            var blnSuccess = mCompassXportRunner.CreateMSXMLFile();
+            var success = mCompassXportRunner.CreateMSXMLFile();
 
-            if (!blnSuccess)
+            if (!success)
             {
                 LogWarning(mCompassXportRunner.ErrorMessage);
                 return CloseOutType.CLOSEOUT_FAILED;
@@ -222,12 +221,12 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
 
             if (eOutputType != clsCompassXportRunner.MSXMLOutputTypeConstants.CSV)
             {
-                if (fiResultsFile.Exists)
+                if (resultsFile.Exists)
                 {
                     return CloseOutType.CLOSEOUT_SUCCESS;
                 }
 
-                mMessage = "MSXml results file not found: " + fiResultsFile.FullName;
+                mMessage = "MSXml results file not found: " + resultsFile.FullName;
                 LogError(mMessage);
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
@@ -235,24 +234,24 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
             // CompassXport created one CSV file for each spectrum in the dataset
             // Confirm that fewer than 100 CSV files were created
 
-            var diWorkDir = new DirectoryInfo(mWorkDir);
-            var fiFiles = diWorkDir.GetFiles("*.csv").ToList();
+            var workDir = new DirectoryInfo(mWorkDir);
+            var csvFiles = workDir.GetFiles("*.csv").ToList();
 
-            if (fiFiles.Count < MAX_CSV_FILES)
+            if (csvFiles.Count < MAX_CSV_FILES)
             {
                 return CloseOutType.CLOSEOUT_SUCCESS;
             }
 
-            mMessage = "CompassXport created " + fiFiles.Count +
+            mMessage = "CompassXport created " + csvFiles.Count +
                         " CSV files. The CSV conversion mode is only appropriate for datasets with fewer than " + MAX_CSV_FILES +
                         " spectra; create a mzXML file instead (e.g., settings file mzXML_Bruker.xml)";
             LogError(mMessage);
 
-            foreach (var fiFile in fiFiles)
+            foreach (var csvFile in csvFiles)
             {
                 try
                 {
-                    fiFile.Delete();
+                    csvFile.Delete();
                 }
                 catch (Exception)
                 {
@@ -263,38 +262,38 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
             return CloseOutType.CLOSEOUT_FAILED;
         }
 
-        private void PostProcessMsXmlFile(FileInfo fiResultsFile)
+        private void PostProcessMsXmlFile(FileInfo resultsFile)
         {
             // Compress the file using GZip
-            LogMessage("GZipping " + fiResultsFile.Name);
-            fiResultsFile = GZipFile(fiResultsFile);
+            LogMessage("GZipping " + resultsFile.Name);
+            resultsFile = GZipFile(resultsFile);
 
-            if (fiResultsFile == null)
+            if (resultsFile == null)
             {
                 return;
             }
 
             // Copy the .mzXML.gz or .mzML.gz file to the MSXML cache
-            var remoteCachefilePath = CopyFileToServerCache(mMSXmlCacheFolder.FullName, fiResultsFile.FullName, purgeOldFilesIfNeeded: true);
+            var remoteCachefilePath = CopyFileToServerCache(mMSXmlCacheFolder.FullName, resultsFile.FullName, purgeOldFilesIfNeeded: true);
 
             if (string.IsNullOrEmpty(remoteCachefilePath))
             {
                 if (string.IsNullOrEmpty(mMessage))
                 {
-                    LogError("CopyFileToServerCache returned false for " + fiResultsFile.Name);
+                    LogError("CopyFileToServerCache returned false for " + resultsFile.Name);
                 }
 
                 return;
             }
 
             // Create the _CacheInfo.txt file
-            var cacheInfoFilePath = fiResultsFile.FullName + "_CacheInfo.txt";
+            var cacheInfoFilePath = resultsFile.FullName + "_CacheInfo.txt";
             using (var writer = new StreamWriter(new FileStream(cacheInfoFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
             {
                 writer.WriteLine(remoteCachefilePath);
             }
 
-            mJobParams.AddResultFileToSkip(fiResultsFile.Name);
+            mJobParams.AddResultFileToSkip(resultsFile.Name);
 
         }
 
@@ -304,7 +303,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
         /// <remarks></remarks>
         protected bool StoreToolVersionInfo()
         {
-            var strToolVersionInfo = string.Empty;
+            var toolVersionInfo = string.Empty;
 
             if (mDebugLevel >= 2)
             {
@@ -355,7 +354,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
 
             try
             {
-                return SetStepTaskToolVersion(strToolVersionInfo, toolFiles);
+                return SetStepTaskToolVersion(toolVersionInfo, toolFiles);
             }
             catch (Exception ex)
             {

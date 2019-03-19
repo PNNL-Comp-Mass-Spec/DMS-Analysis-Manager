@@ -517,11 +517,13 @@ namespace AnalysisManagerQCARTPlugin
             // R will create a text file with the same name as the rScriptPath but with extension .Rout
             var rScriptPath = Path.Combine(mWorkDir, clsAnalysisResourcesQCART.QCART_PROCESSING_SCRIPT_NAME);
 
-            var cmdStr = "CMD BATCH --vanilla --slave " + PossiblyQuotePath(rScriptPath);
+            var arguments = "CMD BATCH" +
+                            " --vanilla" +
+                            " --slave " + PossiblyQuotePath(rScriptPath);
 
             if (mDebugLevel >= 1)
             {
-                LogDebug(rProgLoc + " " + cmdStr);
+                LogDebug(rProgLoc + " " + arguments);
             }
 
             // Not used by this plugin
@@ -540,7 +542,7 @@ namespace AnalysisManagerQCARTPlugin
 
             mProgress = PROGRESS_PCT_STARTING;
 
-            var success = cmdRunner.RunProgram(rProgLoc, cmdStr, "QCART", true);
+            var success = cmdRunner.RunProgram(rProgLoc, arguments, "QCART", true);
 
             /*
              * This plugin does not use ConsoleOutput files

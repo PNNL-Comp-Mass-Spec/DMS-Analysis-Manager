@@ -65,10 +65,10 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
             }
 
             // Set up and execute a program runner to run the LCMS Feature Finder
-            var cmdStr = Path.Combine(mWorkDir, mJobParams.GetParam("LCMSFeatureFinderIniFile"));
+            var arguments = Path.Combine(mWorkDir, mJobParams.GetParam("LCMSFeatureFinderIniFile"));
             if (mDebugLevel >= 1)
             {
-                LogDebug(progLoc + " " + cmdStr);
+                LogDebug(progLoc + " " + arguments);
             }
 
             mCmdRunner.CreateNoWindow = true;
@@ -77,7 +77,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
 
             mCmdRunner.WriteConsoleOutputToFile = false;
 
-            if (!mCmdRunner.RunProgram(progLoc, cmdStr, "LCMSFeatureFinder", true))
+            if (!mCmdRunner.RunProgram(progLoc, arguments, "LCMSFeatureFinder", true))
             {
                 mMessage = "Error running LCMSFeatureFinder";
                 LogError(mMessage + ", job " + mJob);

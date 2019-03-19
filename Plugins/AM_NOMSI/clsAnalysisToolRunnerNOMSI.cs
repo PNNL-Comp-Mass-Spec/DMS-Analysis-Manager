@@ -374,13 +374,12 @@ namespace AnalysisManagerNOMSIPlugin
 
             var reGetScanNumber = new Regex(@"scan(\d+).xml", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
-            var cmdStr = string.Empty;
-            cmdStr += " " + PossiblyQuotePath(spectrumFile.FullName);
-            cmdStr += " " + PossiblyQuotePath(paramFilePath);
+            var arguments = PossiblyQuotePath(spectrumFile.FullName) + " " + 
+                            PossiblyQuotePath(paramFilePath);
 
             if (mDebugLevel >= 1)
             {
-                LogDebug(progLoc + " " + cmdStr);
+                LogDebug(progLoc + " " + arguments);
             }
 
             scanNumber = filesProcessed;
@@ -409,7 +408,7 @@ namespace AnalysisManagerNOMSIPlugin
 
             mProgress = ComputeIncrementalProgress(PROGRESS_PCT_STARTING, PROGRESS_PCT_COMPLETE, subTaskProgress);
 
-            var success = cmdRunner.RunProgram(progLoc, cmdStr, "NOMSI", true);
+            var success = cmdRunner.RunProgram(progLoc, arguments, "NOMSI", true);
 
             if (!cmdRunner.WriteConsoleOutputToFile && cmdRunner.CachedConsoleOutput.Length > 0)
             {

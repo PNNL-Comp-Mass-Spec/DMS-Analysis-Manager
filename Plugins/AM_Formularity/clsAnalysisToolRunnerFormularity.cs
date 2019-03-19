@@ -327,11 +327,11 @@ namespace AnalysisManagerFormularityPlugin
 
                 // Set up and execute a program runner to run NOMSI
 
-                var cmdStr = reportFile.Name;
+                var arguments = reportFile.Name;
 
                 if (mDebugLevel >= 1)
                 {
-                    LogDebug(progLocNOMSI + " " + cmdStr);
+                    LogDebug(progLocNOMSI + " " + arguments);
                 }
 
                 var cmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel)
@@ -345,7 +345,7 @@ namespace AnalysisManagerFormularityPlugin
 
                 cmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
-                var success = cmdRunner.RunProgram(progLocNOMSI, cmdStr, "NOMSI", true);
+                var success = cmdRunner.RunProgram(progLocNOMSI, arguments, "NOMSI", true);
 
                 mProgress = PROGRESS_PCT_FINISHED_NOMSI;
                 mStatusTools.UpdateAndWrite(mProgress);
@@ -783,19 +783,19 @@ namespace AnalysisManagerFormularityPlugin
 
             // Set up and execute a program runner to run Formularity
 
-            var cmdStr = " CIA " +
-                         PossiblyQuotePath(inputFilePathOrWildcardMatchSpec) + " " +
-                         PossiblyQuotePath(paramFilePath) + " " +
-                         PossiblyQuotePath(ciaDbPath);
+            var arguments = " CIA " +
+                            PossiblyQuotePath(inputFilePathOrWildcardMatchSpec) + " " +
+                            PossiblyQuotePath(paramFilePath) + " " +
+                            PossiblyQuotePath(ciaDbPath);
 
             if (!string.IsNullOrWhiteSpace(calibrationPeaksFilePath))
             {
-                cmdStr += " " + PossiblyQuotePath(calibrationPeaksFilePath);
+                arguments += " " + PossiblyQuotePath(calibrationPeaksFilePath);
             }
 
             if (mDebugLevel >= 1)
             {
-                LogDebug(progLoc + " " + cmdStr);
+                LogDebug(progLoc + " " + arguments);
             }
 
             mConsoleOutputFile = Path.Combine(mWorkDir, FORMULARITY_CONSOLE_OUTPUT_FILE);
@@ -812,7 +812,7 @@ namespace AnalysisManagerFormularityPlugin
 
             cmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
-            var success = cmdRunner.RunProgram(progLoc, cmdStr, "Formularity", true);
+            var success = cmdRunner.RunProgram(progLoc, arguments, "Formularity", true);
 
             if (!cmdRunner.WriteConsoleOutputToFile && cmdRunner.CachedConsoleOutput.Length > 0)
             {

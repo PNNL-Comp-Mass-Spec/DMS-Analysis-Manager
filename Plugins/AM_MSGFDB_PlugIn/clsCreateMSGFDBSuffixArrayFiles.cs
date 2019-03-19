@@ -765,22 +765,22 @@ namespace AnalysisManagerMSGFDBPlugIn
                 // Set up and execute a program runner to invoke BuildSA (which is in MSGFDB.jar or MSGFPlus.jar)
                 currentTask = "Construct BuildSA command line";
 
-                var cmdStr = " -Xmx" + javaMemorySizeMB + "M -cp " + msgfPlusProgLoc;
+                var arguments = " -Xmx" + javaMemorySizeMB + "M -cp " + msgfPlusProgLoc;
 
-                cmdStr += " edu.ucsd.msjava.msdbsearch.BuildSA -d " + fiFastaFile.FullName;
+                arguments += " edu.ucsd.msjava.msdbsearch.BuildSA -d " + fiFastaFile.FullName;
 
                 if (fastaFileIsDecoy)
                 {
-                    cmdStr += " -tda 0";
+                    arguments += " -tda 0";
                 }
                 else
                 {
-                    cmdStr += " -tda 2";
+                    arguments += " -tda 2";
                 }
 
                 if (debugLevel >= 1)
                 {
-                    OnStatusEvent(javaProgLoc + " " + cmdStr);
+                    OnStatusEvent(javaProgLoc + " " + arguments);
                 }
 
                 var consoleOutputFilePath = Path.Combine(logFileDir, "MSGFPlus_BuildSA_ConsoleOutput.txt");
@@ -794,11 +794,11 @@ namespace AnalysisManagerMSGFDBPlugIn
                 };
                 RegisterEvents(buildSA);
 
-                currentTask = "Run BuildSA using " + cmdStr;
+                currentTask = "Run BuildSA using " + arguments;
 
                 // Run BuildSA and wait for it to exit
                 // This process generally doesn't take that long so we do not track CPU usage
-                success = buildSA.RunProgram(javaProgLoc, cmdStr, "BuildSA", true);
+                success = buildSA.RunProgram(javaProgLoc, arguments, "BuildSA", true);
 
                 if (!success)
                 {

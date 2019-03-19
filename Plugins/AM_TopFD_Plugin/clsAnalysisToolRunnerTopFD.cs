@@ -345,10 +345,10 @@ namespace AnalysisManagerTopFDPlugIn
                 return eResult;
             }
 
-            var cmdStr = cmdLineOptions + " " +
-                         Dataset + clsAnalysisResources.DOT_MZML_EXTENSION;
+            var arguments = cmdLineOptions + " " + 
+                            Dataset + clsAnalysisResources.DOT_MZML_EXTENSION;
 
-            LogDebug(progLoc + " " + cmdStr);
+            LogDebug(progLoc + " " + arguments);
 
             mCmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel);
             RegisterEvents(mCmdRunner);
@@ -366,7 +366,7 @@ namespace AnalysisManagerTopFDPlugIn
 
             // Start the program and wait for it to finish
             // However, while it's running, LoopWaiting will get called via events
-            var processingSuccess = mCmdRunner.RunProgram(progLoc, cmdStr, "TopFD", true);
+            var processingSuccess = mCmdRunner.RunProgram(progLoc, arguments, "TopFD", true);
 
             if (!mToolVersionWritten)
             {
@@ -412,17 +412,17 @@ namespace AnalysisManagerTopFDPlugIn
 
             var validResultFiles = 0;
 
-            foreach (var resultsFilePath in resultsFiles)
+            foreach (var resultFile in resultsFiles)
             {
-                var resultsFile = new FileInfo(Path.Combine(mWorkDir, resultsFilePath.Value));
+                var resultsFile = new FileInfo(Path.Combine(mWorkDir, resultFile.Value));
                 if (!resultsFile.Exists)
                 {
-                    LogError(string.Format("{0} file was not created by TopFD", resultsFilePath.Key));
+                    LogError(string.Format("{0} file was not created by TopFD", resultFile.Key));
                 }
                 else if (resultsFile.Length == 0)
                 {
                     LogError(string.Format("{0} file created by TopFD is empty; " +
-                                           "assure that the input .mzML file has MS/MS spectra", resultsFilePath.Key));
+                                           "assure that the input .mzML file has MS/MS spectra", resultFile.Key));
                 }
                 else
                 {

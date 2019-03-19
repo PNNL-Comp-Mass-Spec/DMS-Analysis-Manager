@@ -811,7 +811,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
             try
             {
-                string cmdStr;
+                string arguments;
 
                 if (eFileType == DeconToolsFileTypeConstants.Undefined)
                 {
@@ -824,16 +824,16 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 // Set up and execute a program runner to run DeconTools
                 if (mDeconConsoleBuild < 4400)
                 {
-                    cmdStr = inputFilePath + " " + fileTypeText + " " + paramFilePath;
+                    arguments = inputFilePath + " " + fileTypeText + " " + paramFilePath;
                 }
                 else
                 {
-                    cmdStr = inputFilePath + " " + paramFilePath;
+                    arguments = inputFilePath + " " + paramFilePath;
                 }
 
                 if (mDebugLevel >= 1)
                 {
-                    LogDebug(progLoc + " " + cmdStr);
+                    LogDebug(progLoc + " " + arguments);
                 }
 
                 mCmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel);
@@ -855,7 +855,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
                 // Start the program and wait for it to finish
                 // However, while it's running, LoopWaiting will get called via events
-                var success = mCmdRunner.RunProgram(progLoc, cmdStr, "DeconConsole", true);
+                var success = mCmdRunner.RunProgram(progLoc, arguments, "DeconConsole", true);
 
                 if (!success)
                 {

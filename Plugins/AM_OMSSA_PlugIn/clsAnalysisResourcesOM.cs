@@ -131,14 +131,16 @@ namespace AnalysisManagerOMSSAPlugIn
 
                 // Set up and execute a program runner to run FormatDb.exe
                 // formatdb.exe -i C:\DMS_WorkDir\Shewanella_oneidensis_MR1_Stop-to-Start_2005-10-12.fasta -p T -o T
-                var cmdStr = "-i" + Path.Combine(LocalOrgDBFolder, OrgDBName) + " -p T -o T";
+                var arguments = " -i" + Path.Combine(LocalOrgDBFolder, OrgDBName) +
+                                " -p T" +
+                                " -o T";
 
                 if (mDebugLevel >= 2)
                 {
-                    LogDebug("Starting FormatDb: " + progLoc + " " + cmdStr);
+                    LogDebug("Starting FormatDb: " + progLoc + " " + arguments);
                 }
 
-                if (!mCmdRunner.RunProgram(progLoc, cmdStr, "FormatDb", true))
+                if (!mCmdRunner.RunProgram(progLoc, arguments, "FormatDb", true))
                 {
                     LogError("Error running FormatDb for fasta file " + OrgDBName);
                     return false;

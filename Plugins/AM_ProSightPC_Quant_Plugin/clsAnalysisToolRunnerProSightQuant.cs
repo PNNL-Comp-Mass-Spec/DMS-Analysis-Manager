@@ -105,16 +105,16 @@ namespace AnalysisManagerProSightQuantPlugIn
 
                 // Set up and execute a program runner to run TargetedWorkflowsConsole
                 var strRawDataType = mJobParams.GetParam("RawDataType");
-                string cmdStr;
+                string arguments;
 
                 switch (strRawDataType.ToLower())
                 {
                     case clsAnalysisResources.RAW_DATA_TYPE_DOT_RAW_FILES:
-                        cmdStr = " " + PossiblyQuotePath(Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_RAW_EXTENSION));
+                        arguments = " " + PossiblyQuotePath(Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_RAW_EXTENSION));
                         break;
                     case clsAnalysisResources.RAW_DATA_TYPE_BRUKER_FT_FOLDER:
                         // Bruker_FT folders are actually .D folders
-                        cmdStr = " " + PossiblyQuotePath(Path.Combine(mWorkDir, mDatasetName) + clsAnalysisResources.DOT_D_EXTENSION);
+                        arguments = " " + PossiblyQuotePath(Path.Combine(mWorkDir, mDatasetName) + clsAnalysisResources.DOT_D_EXTENSION);
                         break;
                     default:
                         mMessage = "Dataset type " + strRawDataType + " is not supported";
@@ -122,11 +122,11 @@ namespace AnalysisManagerProSightQuantPlugIn
                         return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                cmdStr += " " + PossiblyQuotePath(strTargetedQuantParamFilePath);
+                arguments += " " + PossiblyQuotePath(strTargetedQuantParamFilePath);
 
                 if (mDebugLevel >= 1)
                 {
-                    LogDebug(mTargetedWorkflowsProgLoc + cmdStr);
+                    LogDebug(mTargetedWorkflowsProgLoc + arguments);
                 }
 
                 mCmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel);
@@ -141,7 +141,7 @@ namespace AnalysisManagerProSightQuantPlugIn
 
                 mProgress = PROGRESS_TARGETED_WORKFLOWS_STARTING;
 
-                var processingSuccess = mCmdRunner.RunProgram(mTargetedWorkflowsProgLoc, cmdStr, "TargetedWorkflowsConsole", true);
+                var processingSuccess = mCmdRunner.RunProgram(mTargetedWorkflowsProgLoc, arguments, "TargetedWorkflowsConsole", true);
 
                 if (!mCmdRunner.WriteConsoleOutputToFile)
                 {

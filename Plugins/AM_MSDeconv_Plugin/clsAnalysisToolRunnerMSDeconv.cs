@@ -427,19 +427,20 @@ namespace AnalysisManagerMSDeconvPlugIn
                 intJavaMemorySize = 512;
 
             // Set up and execute a program runner to run MSDeconv
-            var cmdStr = " -Xmx" + intJavaMemorySize + "M -jar " + mMSDeconvProgLoc;
+            var arguments = " -Xmx" + intJavaMemorySize + "M"+
+                            " -jar " + mMSDeconvProgLoc;
 
             // Define the input file and processing options
             // Note that capitalization matters for the extension; it must be .mzXML
-            cmdStr += " " + mDatasetName + clsAnalysisResources.DOT_MZXML_EXTENSION;
-            cmdStr += " -o " + strOutputFormat + " -t centroided";
+            arguments += " " + mDatasetName + clsAnalysisResources.DOT_MZXML_EXTENSION;
+            arguments += " -o " + strOutputFormat + " -t centroided";
 
             if (blnIncludeMS1Spectra)
             {
-                cmdStr += " -l";
+                arguments += " -l";
             }
 
-            LogDebug(JavaProgLoc + " " + cmdStr);
+            LogDebug(JavaProgLoc + " " + arguments);
 
             mCmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel);
             RegisterEvents(mCmdRunner);
@@ -454,7 +455,7 @@ namespace AnalysisManagerMSDeconvPlugIn
 
             mProgress = PROGRESS_PCT_STARTING;
 
-            var blnSuccess = mCmdRunner.RunProgram(JavaProgLoc, cmdStr, "MSDeconv", true);
+            var blnSuccess = mCmdRunner.RunProgram(JavaProgLoc, arguments, "MSDeconv", true);
 
             if (!mToolVersionWritten)
             {

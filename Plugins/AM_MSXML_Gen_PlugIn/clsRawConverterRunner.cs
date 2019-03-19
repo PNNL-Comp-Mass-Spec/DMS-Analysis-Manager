@@ -62,11 +62,12 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 var fiRawConverter = new FileInfo(RawConverterExePath);
 
                 // Set up command
-                var cmdStr = " " + clsGlobal.PossiblyQuotePath(fiSourceFile.FullName) + " --mgf";
+                var arguments = " " + clsGlobal.PossiblyQuotePath(fiSourceFile.FullName) + 
+                                " --mgf";
 
                 if (mDebugLevel > 0)
                 {
-                    OnProgressUpdate(fiRawConverter.FullName + " " + cmdStr, 0);
+                    OnProgressUpdate(fiRawConverter.FullName + " " + arguments, 0);
                 }
 
                 // Setup a program runner tool to make the spectra files
@@ -85,7 +86,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 };
                 progRunner.ErrorEvent += ProgRunner_ErrorEvent;
 
-                if (!progRunner.RunProgram(fiRawConverter.FullName, cmdStr, "RawConverter", true))
+                if (!progRunner.RunProgram(fiRawConverter.FullName, arguments, "RawConverter", true))
                 {
                     // .RunProgram returned False
                     OnErrorEvent("Error running " + Path.GetFileNameWithoutExtension(fiRawConverter.Name));

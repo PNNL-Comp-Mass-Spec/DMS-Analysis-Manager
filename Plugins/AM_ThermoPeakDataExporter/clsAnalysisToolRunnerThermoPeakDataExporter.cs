@@ -217,11 +217,11 @@ namespace AnalysisManagerThermoPeakDataExporterPlugIn
 
             var minimumSignalToNoiseRatio = mJobParams.GetJobParameter("MinimumSignalToNoiseRatio", 0);
 
-            var cmdStr = Dataset + clsAnalysisResources.DOT_RAW_EXTENSION +
-                         " /O:" + clsGlobal.PossiblyQuotePath(resultsFile.FullName) +
-                         " /minSN:" + minimumSignalToNoiseRatio;
+            var arguments = Dataset + clsAnalysisResources.DOT_RAW_EXTENSION +
+                            " /O:" + clsGlobal.PossiblyQuotePath(resultsFile.FullName) +
+                            " /minSN:" + minimumSignalToNoiseRatio;
 
-            LogDebug(progLoc + " " + cmdStr);
+            LogDebug(progLoc + " " + arguments);
 
             mCmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel);
             RegisterEvents(mCmdRunner);
@@ -239,7 +239,7 @@ namespace AnalysisManagerThermoPeakDataExporterPlugIn
 
             // Start the program and wait for it to finish
             // However, while it's running, LoopWaiting will get called via events
-            var processingSuccess = mCmdRunner.RunProgram(progLoc, cmdStr, "ThermoPeakDataExporter", true);
+            var processingSuccess = mCmdRunner.RunProgram(progLoc, arguments, "ThermoPeakDataExporter", true);
 
             // Parse the console output file one more time to check for errors
             ParseConsoleOutputFile(Path.Combine(mWorkDir, THERMO_DATA_EXPORTER_CONSOLE_OUTPUT));

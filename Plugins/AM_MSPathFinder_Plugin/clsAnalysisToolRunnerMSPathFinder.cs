@@ -961,15 +961,15 @@ namespace AnalysisManagerMSPathFinderPlugin
 
             // Set up and execute a program runner to run MSPathFinder
 
-            var cmdStr = " -s " + pbfFilePath +
-                         " -feature " + featureFilePath +
-                         " -d " + fastaFilePath +
-                         " -o " + mWorkDir +
-                         " " + cmdLineOptions;
+            var arguments = " -s " + pbfFilePath +
+                            " -feature " + featureFilePath +
+                            " -d " + fastaFilePath +
+                            " -o " + mWorkDir +
+                            " " + cmdLineOptions;
 
             if (mDebugLevel >= 1)
             {
-                LogDebug(progLoc + " " + cmdStr);
+                LogDebug(progLoc + " " + arguments);
             }
 
             mCmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel);
@@ -988,7 +988,7 @@ namespace AnalysisManagerMSPathFinderPlugin
 
             // Start the program and wait for it to finish
             // However, while it's running, LoopWaiting will get called via events
-            var success = mCmdRunner.RunProgram(progLoc, cmdStr, "MSPathFinder", true);
+            var success = mCmdRunner.RunProgram(progLoc, arguments, "MSPathFinder", true);
 
             if (!mCmdRunner.WriteConsoleOutputToFile)
             {

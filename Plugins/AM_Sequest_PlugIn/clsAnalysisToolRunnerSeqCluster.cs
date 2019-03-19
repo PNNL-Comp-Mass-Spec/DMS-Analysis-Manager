@@ -207,15 +207,15 @@ namespace AnalysisManagerSequestPlugin
                 mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
                 // Define the arguments to pass to the Sequest .Exe
-                var cmdStr = " -P" + mJobParams.GetParam("parmFileName") + " *.dta";
+                var arguments = " -P" + mJobParams.GetParam("parmFileName") + " *.dta";
                 if (mDebugLevel >= 1)
                 {
-                    LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, "  " + ProgLoc + " " + cmdStr);
+                    LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, "  " + ProgLoc + " " + arguments);
                 }
 
                 // Run Sequest to generate OUT files
                 mLastSequestStartTime = DateTime.UtcNow;
-                var success = mCmdRunner.RunProgram(ProgLoc, cmdStr, "Seq", true);
+                var success = mCmdRunner.RunProgram(ProgLoc, arguments, "Seq", true);
 
                 mSequestSearchEndTime = DateTime.UtcNow;
 

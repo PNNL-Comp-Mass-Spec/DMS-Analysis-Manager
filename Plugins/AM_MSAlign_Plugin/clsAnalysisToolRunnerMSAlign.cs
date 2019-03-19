@@ -170,17 +170,17 @@ namespace AnalysisManagerMSAlignPlugIn
                     intJavaMemorySize = 512;
 
                 // Set up and execute a program runner to run MSAlign
-                string cmdStr;
+                string arguments;
                 if (eMSAlignVersion == eMSAlignVersionType.v0pt5)
                 {
-                    cmdStr = " -Xmx" + intJavaMemorySize + "M -classpath jar\\malign.jar;jar\\* edu.ucsd.msalign.spec.web.Pipeline .\\";
+                    arguments = " -Xmx" + intJavaMemorySize + "M -classpath jar\\malign.jar;jar\\* edu.ucsd.msalign.spec.web.Pipeline .\\";
                 }
                 else
                 {
-                    cmdStr = " -Xmx" + intJavaMemorySize + "M -classpath jar\\*; edu.ucsd.msalign.align.console.MsAlignPipeline .\\";
+                    arguments = " -Xmx" + intJavaMemorySize + "M -classpath jar\\*; edu.ucsd.msalign.align.console.MsAlignPipeline .\\";
                 }
 
-                LogDebug(JavaProgLoc + " " + cmdStr);
+                LogDebug(JavaProgLoc + " " + arguments);
 
                 mCmdRunner = new clsRunDosProgram(mMSAlignWorkFolderPath, mDebugLevel);
                 RegisterEvents(mCmdRunner);
@@ -205,7 +205,7 @@ namespace AnalysisManagerMSAlignPlugIn
 
                 // Start the program and wait for it to finish
                 // However, while it's running, LoopWaiting will get called via events
-                var processingSuccess = mCmdRunner.RunProgram(JavaProgLoc, cmdStr, "MSAlign", true);
+                var processingSuccess = mCmdRunner.RunProgram(JavaProgLoc, arguments, "MSAlign", true);
 
                 if (!mToolVersionWritten)
                 {

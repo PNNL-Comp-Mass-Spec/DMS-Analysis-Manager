@@ -71,10 +71,14 @@ namespace AnalysisManagerMultiAlignPlugIn
             var MultiAlignDatabaseName = string.Copy(mDatasetName);
 
             // Set up and execute a program runner to run MultiAlign
-            var cmdStr = " input.txt " + Path.Combine(mWorkDir, mJobParams.GetParam("ParmFileName")) + " " + mWorkDir + " " + MultiAlignDatabaseName;
+            var arguments = " input.txt" +
+                            " " + Path.Combine(mWorkDir, mJobParams.GetParam("ParmFileName")) +
+                            " " + mWorkDir +
+                            " " + MultiAlignDatabaseName;
+
             if (mDebugLevel >= 1)
             {
-                LogDebug(progLoc + " " + cmdStr);
+                LogDebug(progLoc + " " + arguments);
             }
 
             mCmdRunner.CreateNoWindow = true;
@@ -84,7 +88,7 @@ namespace AnalysisManagerMultiAlignPlugIn
             mCmdRunner.WriteConsoleOutputToFile = false;
 
             bool processingSuccess;
-            if (!mCmdRunner.RunProgram(progLoc, cmdStr, "MultiAlign", true))
+            if (!mCmdRunner.RunProgram(progLoc, arguments, "MultiAlign", true))
             {
                 mMessage = "Error running MultiAlign";
                 LogError(mMessage + ", job " + mJob);

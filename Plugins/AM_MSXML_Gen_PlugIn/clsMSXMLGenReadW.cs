@@ -35,7 +35,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
         protected override string CreateArguments(string msXmlFormat, string RawFilePath)
         {
-            string cmdStr = null;
+            string arguments = null;
 
             if (mProgramPath.ToLower().Contains("\\v2."))
             {
@@ -45,11 +45,11 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 if (mCentroidMS1 || mCentroidMS2)
                 {
                     // Centroiding is enabled
-                    cmdStr = " " + RawFilePath + " c";
+                    arguments = " " + RawFilePath + " c";
                 }
                 else
                 {
-                    cmdStr = " " + RawFilePath + " p";
+                    arguments = " " + RawFilePath + " p";
                 }
             }
             else
@@ -61,18 +61,18 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 if (mCentroidMS1 || mCentroidMS2)
                 {
                     // Centroiding is enabled
-                    cmdStr = " --" + msXmlFormat + " " + " -c " + RawFilePath;
+                    arguments = " --" + msXmlFormat + " " + " -c " + RawFilePath;
                 }
                 else
                 {
                     // Not centroiding
-                    cmdStr = " --" + msXmlFormat + " " + RawFilePath;
+                    arguments = " --" + msXmlFormat + " " + RawFilePath;
                 }
             }
 
             mOutputFileName = GetOutputFileName(msXmlFormat, RawFilePath, mRawDataType);
 
-            return cmdStr;
+            return arguments;
         }
 
         protected override string GetOutputFileName(string msXmlFormat, string rawFilePath, clsAnalysisResources.eRawDataTypeConstants rawDataType)

@@ -233,8 +233,8 @@ namespace AnalysisManagerGlyQIQPlugin
 
             mStatus = GlyQIqRunnerStatusCodes.Running;
 
-            var cmdStr = string.Empty;
-            var blnSuccess = mCmdRunner.RunProgram(BatchFilePath, cmdStr, "GlyQ-IQ", true);
+            var arguments = string.Empty;
+            var blnSuccess = mCmdRunner.RunProgram(BatchFilePath, arguments, "GlyQ-IQ", true);
 
             if (blnSuccess)
             {

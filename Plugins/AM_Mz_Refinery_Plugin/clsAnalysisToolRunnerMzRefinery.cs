@@ -478,16 +478,12 @@ namespace AnalysisManagerMzRefineryPlugIn
                 javaMemorySize = 512;
 
             // Set up and execute a program runner to run MSGF+
-            var cmdStr = " -Xmx" + javaMemorySize + "M -jar " + msgfplusJarFilePath;
-
-            // Define the input file, output file, and fasta file
-            cmdStr += " -s " + mDatasetName + msXmlFileExtension;
-
-            cmdStr += " -o " + msgfPlusResults.Name;
-            cmdStr += " -d " + PossiblyQuotePath(fastaFilePath);
-
-            // Append the MS-GF+ parameter file name
-            cmdStr += " -conf " + finalParamFile.Name;
+            var arguments = " -Xmx" + javaMemorySize + "M" +
+                            " -jar " + msgfplusJarFilePath +
+                            " -s " + mDatasetName + msXmlFileExtension +
+                            " -o " + msgfPlusResults.Name +
+                            " -d " + PossiblyQuotePath(fastaFilePath) +
+                            " -conf " + finalParamFile.Name;
 
             // Make sure the machine has enough free memory to run MSGF+
             var logFreeMemoryOnSuccess = !(mDebugLevel < 1);
@@ -498,7 +494,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            success = StartMSGFPlus(javaExePath, "MSGF+", cmdStr);
+            success = StartMSGFPlus(javaExePath, "MSGF+", arguments);
 
             if (!success && string.IsNullOrEmpty(mMSGFPlusUtils.ConsoleOutputErrorMsg))
             {
@@ -600,11 +596,11 @@ namespace AnalysisManagerMzRefineryPlugIn
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
-        private bool StartMSGFPlus(string javaExePath, string searchEngineName, string cmdStr)
+        private bool StartMSGFPlus(string javaExePath, string searchEngineName, string arguments)
         {
             if (mDebugLevel >= 1)
             {
-                LogDebug(javaExePath + " " + cmdStr);
+                LogDebug(javaExePath + " " + arguments);
             }
 
             mCmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel)
@@ -624,7 +620,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             mProgRunnerMode = eMzRefinerProgRunnerMode.MSGFPlus;
 
             // Start MSGF+ and wait for it to exit
-            var success = mCmdRunner.RunProgram(javaExePath, cmdStr, searchEngineName, true);
+            var success = mCmdRunner.RunProgram(javaExePath, arguments, searchEngineName, true);
 
             mProgRunnerMode = eMzRefinerProgRunnerMode.Unknown;
 
@@ -1286,28 +1282,27 @@ namespace AnalysisManagerMzRefineryPlugIn
             // Set up and execute a program runner to run MSConvert
             // Provide the path to the .mzML file plus the --filter switch with the information required to run MzRefiner
 
-            var cmdStr = " ";
-            cmdStr += originalMSXmlFile.FullName;
-            cmdStr += " --outfile " + Path.GetFileNameWithoutExtension(originalMSXmlFile.Name) + "_FIXED.mzML";
-            cmdStr += " --filter \"mzRefiner " + msgfPlusResults.FullName;
+            var arguments = originalMSXmlFile.FullName +
+                            " --outfile " + Path.GetFileNameWithoutExtension(originalMSXmlFile.Name) + "_FIXED.mzML" +
+                            " --filter \"mzRefiner " + msgfPlusResults.FullName;
 
             // MzRefiner will perform a segmented correction if there are at least 500 matches; it will perform a global shift if between 100 and 500 matches
             // The data is initially filtered by MSGF SpecProb <= 1e-10
             // The reason that we prepend "1e-10" with a dash is to indicate a range of "-infinity to 1e-10"
-            cmdStr += " thresholdValue=-1e-10";
+            arguments += " thresholdValue=-1e-10";
 
             // If there are not 500 matches with 1e-10, the threshold value is multiplied by the thresholdStep value
             // This process is continued at most maxSteps times
             // Thus, using 10 and 2 means the thresholds that will be considered are 1e-10, 1e-9, and 1e-8
-            cmdStr += " thresholdStep=10";
-            cmdStr += " maxSteps=2\"";
+            arguments += " thresholdStep=10";
+            arguments += " maxSteps=2\"";
 
             // These switches assure that the output file is a 32-bit mzML file
-            cmdStr += " --32 --mzML";
+            arguments += " --32 --mzML";
 
             if (mDebugLevel >= 1)
             {
-                LogDebug(mMSConvertProgLoc + cmdStr);
+                LogDebug(mMSConvertProgLoc + " " + arguments);
             }
 
             mCmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel)
@@ -1327,7 +1322,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             mProgRunnerMode = eMzRefinerProgRunnerMode.MzRefiner;
 
             // Start MSConvert and wait for it to exit
-            var success = mCmdRunner.RunProgram(mMSConvertProgLoc, cmdStr, "MSConvert_MzRefinery", true);
+            var success = mCmdRunner.RunProgram(mMSConvertProgLoc, arguments, "MSConvert_MzRefinery", true);
 
             mProgRunnerMode = eMzRefinerProgRunnerMode.Unknown;
 
@@ -1451,11 +1446,13 @@ namespace AnalysisManagerMzRefineryPlugIn
             LogMessage("Running PPMErrorCharter");
 
             // Set up and execute a program runner to run the PPMErrorCharter
-            var cmdStr = " " + msgfPlusResults.FullName + " " + mMzRefinerSpecEValueThreshold.ToString("0.###E+00") + " /Python";
+            var arguments = " " + msgfPlusResults.FullName +
+                            " " + mMzRefinerSpecEValueThreshold.ToString("0.###E+00") +
+                            " /Python";
 
             if (mDebugLevel >= 1)
             {
-                LogDebug(mPpmErrorCharterProgLoc + cmdStr);
+                LogDebug(mPpmErrorCharterProgLoc + arguments);
             }
 
             mCmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel)
@@ -1473,7 +1470,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             mProgRunnerMode = eMzRefinerProgRunnerMode.PPMErrorCharter;
 
             // Start the PPM Error Charter and wait for it to exit
-            var success = mCmdRunner.RunProgram(mPpmErrorCharterProgLoc, cmdStr, "PPMErrorCharter", true);
+            var success = mCmdRunner.RunProgram(mPpmErrorCharterProgLoc, arguments, "PPMErrorCharter", true);
 
             mProgRunnerMode = eMzRefinerProgRunnerMode.Unknown;
 

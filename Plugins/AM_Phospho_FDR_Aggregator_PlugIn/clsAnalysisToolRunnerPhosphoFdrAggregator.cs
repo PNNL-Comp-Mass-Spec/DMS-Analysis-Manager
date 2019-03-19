@@ -991,29 +991,18 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
             var currentWorkingDir = fiSourceFile.Directory.FullName;
             var updatedInputFileName = Path.GetFileNameWithoutExtension(fiSourceFile.Name) + FILE_SUFFIX_SYN_PLUS_ASCORE;
 
-            var cmdStr = "";
-
-            // Search engine name
-            cmdStr += " -T:" + udtJobMetadata.ToolNameForAScore;
-
-            // Input file path
-            cmdStr += " -F:" + PossiblyQuotePath(inputFilePath);
-
-            // DTA or mzML file path
-            cmdStr += " -D:" + PossiblyQuotePath(udtJobMetadata.SpectrumFilePath);
-
-            // AScore parameter file
-            cmdStr += " -P:" + PossiblyQuotePath(ascoreParamFilePath);
-
-            // Output folder
-            cmdStr += " -O:" + PossiblyQuotePath(currentWorkingDir);
-
-            // Create an updated version of the input file, with updated peptide sequences and appended AScore-related columns
-            cmdStr += " -U:" + PossiblyQuotePath(updatedInputFileName);
+            var arguments = " -T:" + udtJobMetadata.ToolNameForAScore +                     // Search engine name
+                            " -F:" + PossiblyQuotePath(inputFilePath) +                     // Input file path
+                            " -D:" + PossiblyQuotePath(udtJobMetadata.SpectrumFilePath) +   // DTA or mzML file path
+                            " -P:" + PossiblyQuotePath(ascoreParamFilePath) +               // AScore parameter file
+                            " -O:" + PossiblyQuotePath(currentWorkingDir) +                 // Output directory
+                            " -U:" + PossiblyQuotePath(updatedInputFileName);               // Create an updated version of the input file,
+                                                                                            // with updated peptide sequences and
+                                                                                            // appended AScore-related columns
 
             if (mDebugLevel >= 1)
             {
-                LogDebug(progLoc + cmdStr);
+                LogDebug(progLoc + arguments);
             }
 
             mCmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel);
@@ -1034,7 +1023,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
 
             var dtStartTime = DateTime.UtcNow;
 
-            var blnSuccess = mCmdRunner.RunProgram(progLoc, cmdStr, "AScore", true);
+            var blnSuccess = mCmdRunner.RunProgram(progLoc, arguments, "AScore", true);
 
             var runtimeMinutes = DateTime.UtcNow.Subtract(dtStartTime).TotalMinutes;
             processingRunTimes.Add(udtJobMetadata.Job + fileTypeTag, runtimeMinutes);

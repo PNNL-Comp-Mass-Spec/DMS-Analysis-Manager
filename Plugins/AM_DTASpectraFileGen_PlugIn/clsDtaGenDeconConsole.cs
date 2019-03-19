@@ -198,11 +198,12 @@ namespace DTASpectraFileGen
             strParamFilePath = Path.Combine(mWorkDir, strParamFilePath);
 
             // Set up command
-            var cmdStr = " " + rawFilePath + " " + strParamFilePath;
+            var arguments = " " + rawFilePath +
+                            " " + strParamFilePath;
 
             if (mDebugLevel > 0)
             {
-                OnStatusEvent(mDtaToolNameLoc + " " + cmdStr);
+                OnStatusEvent(mDtaToolNameLoc + " " + arguments);
             }
 
             // Setup a program runner tool to make the spectra files
@@ -217,7 +218,7 @@ namespace DTASpectraFileGen
             mCmdRunner.ErrorEvent += CmdRunner_ErrorEvent;
             mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
-            var blnSuccess = mCmdRunner.RunProgram(mDtaToolNameLoc, cmdStr, "DeconConsole", true);
+            var blnSuccess = mCmdRunner.RunProgram(mDtaToolNameLoc, arguments, "DeconConsole", true);
 
             // Parse the DeconTools .Log file to see whether it contains message "Finished file processing"
 

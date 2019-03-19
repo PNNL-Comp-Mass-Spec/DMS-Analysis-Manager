@@ -453,17 +453,18 @@ namespace AnalysisManagerExtractionPlugin
                 }
 
                 // Set up and execute a program runner to run anal_moda.jar or tda_plus.jar
-                var cmdStr = " -Xmx" + javaMemorySize + "M -jar " + Path.Combine(modXProgram.DirectoryName, modxFilterJarName);
-                cmdStr += " -i " + resultsFilePath;
+                var arguments = " -Xmx" + javaMemorySize + "M" +
+                                " -jar " + Path.Combine(modXProgram.DirectoryName, modxFilterJarName) +
+                                " -i " + resultsFilePath;
 
                 if (!isModPlus)
                 {
                     // Processing MODa data; include the parameter file
-                    cmdStr += " -p " + paramFilePath;
+                    arguments += " -p " + paramFilePath;
                 }
 
-                cmdStr += " -fdr " + fdrThreshold;
-                cmdStr += " -d " + decoyPrefixJobParam;
+                arguments += " -fdr " + fdrThreshold;
+                arguments += " -d " + decoyPrefixJobParam;
 
                 // Example command line:
                 // "C:\Program Files\Java\jre8\bin\java.exe" -Xmx1000M -jar C:\DMS_Programs\MODa\anal_moda.jar
@@ -473,7 +474,7 @@ namespace AnalysisManagerExtractionPlugin
                 //   -i "E:\DMS_WorkDir3\QC_Shew_13_04_pt1_1_2_45min_14Nov13_Leopard_13-05-21_modp.txt"
                 //   -fdr 0.05 -d Reversed_
 
-                LogDebug(javaProgLoc + " " + cmdStr);
+                LogDebug(javaProgLoc + " " + arguments);
 
                 var progRunner = new clsRunDosProgram(mWorkDir, mDebugLevel)
                 {
@@ -485,7 +486,7 @@ namespace AnalysisManagerExtractionPlugin
                 };
                 RegisterEvents(progRunner);
 
-                var success = progRunner.RunProgram(javaProgLoc, cmdStr, toolName + "_Filter", true);
+                var success = progRunner.RunProgram(javaProgLoc, arguments, toolName + "_Filter", true);
 
                 if (!success)
                 {
@@ -1149,14 +1150,14 @@ namespace AnalysisManagerExtractionPlugin
 
                 // Set up and execute a program runner to run the MzidMerger
 
-                var cmdStr = " -inDir " + PossiblyQuotePath(mWorkDir) +
-                             " -filter " + PossiblyQuotePath(mzidFilenameMatchSpec) +
-                             " -keepOnlyBestResults" +
-                             " -out " + PossiblyQuotePath(combinedMzidFileName);
+                var arguments = " -inDir " + PossiblyQuotePath(mWorkDir) +
+                                " -filter " + PossiblyQuotePath(mzidFilenameMatchSpec) +
+                                " -keepOnlyBestResults" +
+                                " -out " + PossiblyQuotePath(combinedMzidFileName);
 
                 if (mDebugLevel >= 1)
                 {
-                    LogDebug(progLoc + " " + cmdStr);
+                    LogDebug(progLoc + " " + arguments);
                 }
 
                 var cmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel)
@@ -1172,7 +1173,7 @@ namespace AnalysisManagerExtractionPlugin
 
                 // Abort MzidMerger if it runs for over 720 minutes (this generally indicates that it's stuck)
                 const int maxRuntimeSeconds = 720 * 60;
-                var success = cmdRunner.RunProgram(progLoc, cmdStr, "MzidMerger", true, maxRuntimeSeconds);
+                var success = cmdRunner.RunProgram(progLoc, arguments, "MzidMerger", true, maxRuntimeSeconds);
 
                 if (!success)
                 {

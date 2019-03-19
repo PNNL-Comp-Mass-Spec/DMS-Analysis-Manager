@@ -440,8 +440,9 @@ namespace AnalysisManagerSequestPlugin
             var progRunners = new ProgRunner[processorsToUse];
             var dtaWriters = new StreamWriter[processorsToUse];
 
-            var cmdStr = "-D" + Path.Combine(mMgrParams.GetParam("OrgDbDir"), mJobParams.GetParam("PeptideSearch", "generatedFastaName")) + " -P" +
-                     mJobParams.GetParam("parmFileName") + " -R";
+            var arguments = " -D" + Path.Combine(mMgrParams.GetParam("OrgDbDir"), mJobParams.GetParam("PeptideSearch", "generatedFastaName")) +
+                            " -P" + mJobParams.GetParam("parmFileName") +
+                            " -R";
 
             for (var processorIndex = 0; processorIndex <= processorsToUse - 1; processorIndex++)
             {
@@ -453,13 +454,13 @@ namespace AnalysisManagerSequestPlugin
                     Name = "Seq" + processorIndex,
                     CreateNoWindow = Convert.ToBoolean(mMgrParams.GetParam("CreateNoWindow")),
                     Program = mMgrParams.GetParam("SeqProgLoc"),
-                    Arguments = cmdStr + DumStr,
+                    Arguments = arguments + DumStr,
                     WorkDir = mWorkDir
                 };
 
                 dtaWriters[processorIndex] = new StreamWriter(DumStr, false);
                 LogDebug(
-                    mMgrParams.GetParam("SeqProgLoc") + cmdStr + DumStr);
+                    mMgrParams.GetParam("SeqProgLoc") + arguments + DumStr);
             }
 
             // Break up file list into lists for each processor

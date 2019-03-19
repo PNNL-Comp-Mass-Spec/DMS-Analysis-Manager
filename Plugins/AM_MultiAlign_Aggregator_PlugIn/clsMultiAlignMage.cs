@@ -168,10 +168,15 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
             }
 
             // Set up and execute a program runner to run MultiAlign
-            var cmdStr = " -files " + MULTIALIGN_INPUT_FILE + " -params " + Path.Combine(mWorkingDir, mParamFilename) + " -path " + mWorkingDir + " -name " + mResultsDBFileName + " -plots";
+            var arguments = " -files " + MULTIALIGN_INPUT_FILE +
+                            " -params " + Path.Combine(mWorkingDir, mParamFilename) +
+                            " -path " + mWorkingDir +
+                            " -name " + mResultsDBFileName +
+                            " -plots";
+
             if (mDebugLevel >= 1)
             {
-                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, sMultiAlignConsolePath + " " + cmdStr);
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, sMultiAlignConsolePath + " " + arguments);
             }
 
             cmdRunner.CreateNoWindow = true;
@@ -179,7 +184,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
             cmdRunner.EchoOutputToConsole = true;
             cmdRunner.WriteConsoleOutputToFile = false;
 
-            if (!cmdRunner.RunProgram(sMultiAlignConsolePath, cmdStr, "MultiAlign", true))
+            if (!cmdRunner.RunProgram(sMultiAlignConsolePath, arguments, "MultiAlign", true))
             {
                 if (string.IsNullOrEmpty(mMessage))
                     mMessage = "Error running MultiAlign";

@@ -37,8 +37,6 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
         private MSXMLOutputTypeConstants mOutputType;
         private readonly bool mCentroidMSXML;
 
-        private string mErrorMessage = string.Empty;
-
         public event ProgRunnerStartingEventHandler ProgRunnerStarting;
 
         public delegate void ProgRunnerStartingEventHandler(string CommandLine);
@@ -51,20 +49,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
 
         #region "Properties"
 
-        public string ErrorMessage
-        {
-            get
-            {
-                if (mErrorMessage == null)
-                {
-                    return string.Empty;
-                }
-                else
-                {
-                    return mErrorMessage;
-                }
-            }
-        }
+        public string ErrorMessage { get; private set; }
 
         #endregion
 
@@ -73,7 +58,6 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <remarks>Presently not used</remarks>
         public clsCompassXportRunner(string workDir, string compassXportProgramPath, string datasetName,
                                      MSXMLOutputTypeConstants outputType, bool centroidMSXML)
         {
@@ -83,7 +67,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
             mOutputType = outputType;
             mCentroidMSXML = centroidMSXML;
 
-            mErrorMessage = string.Empty;
+            ErrorMessage = string.Empty;
         }
 
         /// <summary>
@@ -93,54 +77,46 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
         /// <remarks></remarks>
         public bool CreateMSXMLFile()
         {
-            string cmdStr = null;
+            int formatMode;
 
-            var intFormatMode = 0;
-
-            string strSourceFolderPath = null;
-            string strInputFilePath = null;
-            string strOutputFilePath = null;
-
-            var blnSuccess = false;
-
-            mErrorMessage = string.Empty;
+            ErrorMessage = string.Empty;
 
             // Resolve the output file format
             if (mOutputType == MSXMLOutputTypeConstants.Invalid)
             {
                 mOutputType = MSXMLOutputTypeConstants.mzXML;
-                intFormatMode = 0;
+                formatMode = 0;
             }
             else
             {
-                intFormatMode = (int)mOutputType;
+                formatMode = (int)mOutputType;
             }
 
-            var strMSXmlFormatName = GetMsXmlOutputTypeByID(mOutputType);
+            var msXmlFormatName = GetMsXmlOutputTypeByID(mOutputType);
 
             // Define the input file path
-            strSourceFolderPath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_D_EXTENSION);
-            strInputFilePath = Path.Combine(strSourceFolderPath, "analysis.baf");
+            var sourceFolderPath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_D_EXTENSION);
+            var inputFilePath = Path.Combine(sourceFolderPath, "analysis.baf");
 
-            if (!File.Exists(strInputFilePath))
+            if (!File.Exists(inputFilePath))
             {
                 // Analysis.baf not found; look for analysis.yep instead
-                strInputFilePath = Path.Combine(strSourceFolderPath, "analysis.yep");
+                inputFilePath = Path.Combine(sourceFolderPath, "analysis.yep");
 
-                if (!File.Exists(strInputFilePath))
+                if (!File.Exists(inputFilePath))
                 {
-                    mErrorMessage = "Could not find analysis.baf or analysis.yep in " + mDatasetName + clsAnalysisResources.DOT_D_EXTENSION;
+                    ErrorMessage = "Could not find analysis.baf or analysis.yep in " + mDatasetName + clsAnalysisResources.DOT_D_EXTENSION;
                     return false;
                 }
             }
 
             // Define the output file path
-            strOutputFilePath = Path.Combine(mWorkDir, mDatasetName + "." + strMSXmlFormatName);
+            var outputFilePath = Path.Combine(mWorkDir, mDatasetName + "." + msXmlFormatName);
 
             // Verify that program file exists
             if (!File.Exists(mCompassXportProgramPath))
             {
-                mErrorMessage = "Cannot find CompassXport exe program file: " + mCompassXportProgramPath;
+                ErrorMessage = "Cannot find CompassXport exe program file: " + mCompassXportProgramPath;
                 return false;
             }
 
@@ -150,19 +126,21 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
 
             // Set up and execute a program runner to run CompassXport executable
 
-            cmdStr = " -mode " + intFormatMode + " -a " + strInputFilePath + " -o " + strOutputFilePath;
+            var arguments = " -mode " + formatMode +
+                            " -a " + inputFilePath +
+                            " -o " + outputFilePath;
 
             if (mCentroidMSXML)
             {
                 // Centroiding is enabled
-                cmdStr += " -raw 0";
+                arguments += " -raw 0";
             }
             else
             {
-                cmdStr += " -raw 1";
+                arguments += " -raw 1";
             }
 
-            ProgRunnerStarting?.Invoke(mCompassXportProgramPath + cmdStr);
+            ProgRunnerStarting?.Invoke(mCompassXportProgramPath + arguments);
 
             cmdRunner.CreateNoWindow = true;
             cmdRunner.CacheStandardOutput = true;
@@ -171,24 +149,24 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
             cmdRunner.WriteConsoleOutputToFile = true;
             cmdRunner.ConsoleOutputFilePath = Path.Combine(mWorkDir, Path.GetFileNameWithoutExtension(mCompassXportProgramPath) + "_ConsoleOutput.txt");
 
-            blnSuccess = cmdRunner.RunProgram(mCompassXportProgramPath, cmdStr, Path.GetFileNameWithoutExtension(mCompassXportProgramPath), true);
+            var success = cmdRunner.RunProgram(mCompassXportProgramPath, arguments, Path.GetFileNameWithoutExtension(mCompassXportProgramPath), true);
 
-            if (!blnSuccess)
+            if (!success)
             {
                 if (cmdRunner.ExitCode != 0)
                 {
-                    mErrorMessage = Path.GetFileNameWithoutExtension(mCompassXportProgramPath) + " returned a non-zero exit code: " +
+                    ErrorMessage = Path.GetFileNameWithoutExtension(mCompassXportProgramPath) + " returned a non-zero exit code: " +
                                     cmdRunner.ExitCode;
-                    blnSuccess = false;
+                    success = false;
                 }
                 else
                 {
-                    mErrorMessage = "Call to " + Path.GetFileNameWithoutExtension(mCompassXportProgramPath) + " failed (but exit code is 0)";
-                    blnSuccess = true;
+                    ErrorMessage = "Call to " + Path.GetFileNameWithoutExtension(mCompassXportProgramPath) + " failed (but exit code is 0)";
+                    success = true;
                 }
             }
 
-            return blnSuccess;
+            return success;
         }
 
         public static string GetMsXmlOutputTypeByID(MSXMLOutputTypeConstants eType)
@@ -211,9 +189,9 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
             }
         }
 
-        public static MSXMLOutputTypeConstants GetMsXmlOutputTypeByName(string strName)
+        public static MSXMLOutputTypeConstants GetMsXmlOutputTypeByName(string typeName)
         {
-            switch (strName.ToLower())
+            switch (typeName.ToLower())
             {
                 case "mzxml":
                     return MSXMLOutputTypeConstants.mzXML;
@@ -233,12 +211,12 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
         /// <summary>
         /// Event handler for event CmdRunner.ErrorEvent
         /// </summary>
-        /// <param name="strMessage"></param>
+        /// <param name="message"></param>
         /// <param name="ex"></param>
-        private void CmdRunner_ErrorEvent(string strMessage, Exception ex)
+        private void CmdRunner_ErrorEvent(string message, Exception ex)
         {
-            mErrorMessage = strMessage;
-            OnErrorEvent(strMessage, ex);
+            ErrorMessage = message ?? string.Empty;
+            OnErrorEvent(message, ex);
         }
 
         /// <summary>

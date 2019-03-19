@@ -197,14 +197,14 @@ namespace AnalysisManagerMODPlusPlugin
             var msConvertConsoleOutput = Path.Combine(mWorkDir, "MSConvert_ConsoleOutput.txt");
             mJobParams.AddResultFileToSkip(msConvertConsoleOutput);
 
-            var cmdStr = " --mgf";
-            cmdStr += " --outfile " + fiMgfFile.FullName;
-            cmdStr += " " + PossiblyQuotePath(fiSpectrumFile.FullName);
+            var arguments = " --mgf" +
+                            " --outfile " + fiMgfFile.FullName +
+                            " " + PossiblyQuotePath(fiSpectrumFile.FullName);
 
             if (mDebugLevel >= 1)
             {
                 // C:\DMS_Programs\ProteoWizard\msconvert.exe --mgf --outfile Dataset.mgf Dataset.mzML
-                LogDebug(msConvertProgLoc + " " + cmdStr);
+                LogDebug(msConvertProgLoc + " " + arguments);
             }
 
             var msConvertRunner = new clsRunDosProgram(mWorkDir, mDebugLevel);
@@ -223,7 +223,7 @@ namespace AnalysisManagerMODPlusPlugin
 
             // Start the program and wait for it to finish
             // However, while it's running, LoopWaiting will get called via events
-            var success = msConvertRunner.RunProgram(msConvertProgLoc, cmdStr, "MSConvert", true);
+            var success = msConvertRunner.RunProgram(msConvertProgLoc, arguments, "MSConvert", true);
 
             if (success)
             {

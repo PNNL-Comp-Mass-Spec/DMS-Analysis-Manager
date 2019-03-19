@@ -265,14 +265,14 @@ namespace AnalysisManagerBrukerDAExportPlugin
 
                 const string progLoc = @"C:\Windows\System32\cscript.exe";
 
-                var cmdStr = PossiblyQuotePath(scriptPath) + " " +
-                             PossiblyQuotePath(dataFolderPath) + " " +
-                             PossiblyQuotePath(outputPathBase) + " " +
-                             PossiblyQuotePath(methodOverridePath);
+                var arguments = PossiblyQuotePath(scriptPath) + " " +
+                                PossiblyQuotePath(dataFolderPath) + " " +
+                                PossiblyQuotePath(outputPathBase) + " " +
+                                PossiblyQuotePath(methodOverridePath);
 
                 if (mDebugLevel >= 1)
                 {
-                    LogDebug(progLoc + " " + cmdStr.Trim());
+                    LogDebug(progLoc + " " + arguments.Trim());
                 }
 
                 var cmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel)
@@ -292,7 +292,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
                 var maxRuntimeSeconds = EstimateMaxRuntime(dataFolderPath);
                 mMaxRuntimeReached = false;
 
-                var success = cmdRunner.RunProgram(progLoc, cmdStr.Trim(), "DataExport", true, maxRuntimeSeconds);
+                var success = cmdRunner.RunProgram(progLoc, arguments.Trim(), "DataExport", true, maxRuntimeSeconds);
 
                 if (!cmdRunner.WriteConsoleOutputToFile)
                 {

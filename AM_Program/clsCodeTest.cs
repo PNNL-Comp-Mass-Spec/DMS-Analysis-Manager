@@ -491,7 +491,10 @@ namespace AnalysisManagerProg
 
             var exePath = @"C:\DMS_Programs\ProteoWizard\msconvert.exe";
             var dataFilePath = @"C:\DMS_WorkDir\QC_ShewPartialInj_15_02-100ng_Run-1_20Jan16_Pippin_15-08-53.raw";
-            var cmdStr = dataFilePath + @" --filter ""peakPicking true 1-"" --filter ""threshold count 500 most-intense"" --mgf -o C:\DMS_WorkDir";
+            var arguments = dataFilePath +
+                            @" --filter ""peakPicking true 1-"" " +
+                            @" --filter ""threshold count 500 most-intense"" " +
+                            @" --mgf -o C:\DMS_WorkDir";
 
             mProgRunner = new clsRunDosProgram(workDir, mDebugLevel)
             {
@@ -504,7 +507,7 @@ namespace AnalysisManagerProg
             };
             RegisterEvents(mProgRunner);
 
-            if (!mProgRunner.RunProgram(exePath, cmdStr, "MSConvert", true))
+            if (!mProgRunner.RunProgram(exePath, arguments, "MSConvert", true))
             {
                 Console.WriteLine("Error running MSConvert");
             }
@@ -1581,7 +1584,7 @@ namespace AnalysisManagerProg
             var writeConsoleOutputFileRealtime = false;
 
             var exePath = @"C:\DMS_Programs\IDPicker\idpQonvert.exe";
-            var cmdStr =
+            var arguments =
                 @"-MaxFDR 0.1 -ProteinDatabase C:\DMS_Temp_Org\ID_003521_89E56851.fasta " +
                 @"-SearchScoreWeights ""msgfspecprob -1"" " +
                 @"-OptimizeScoreWeights 1 -NormalizedSearchScores msgfspecprob -DecoyPrefix Reversed_ " +
@@ -1608,7 +1611,7 @@ namespace AnalysisManagerProg
                 progRunner.ConsoleOutputFilePath = Path.Combine(mWorkDir, consoleOutputFileName);
             }
 
-            var success = progRunner.RunProgram(exePath, cmdStr, programDescription, true);
+            var success = progRunner.RunProgram(exePath, arguments, programDescription, true);
 
             Console.WriteLine(success);
         }

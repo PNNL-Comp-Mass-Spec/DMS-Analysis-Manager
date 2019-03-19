@@ -168,21 +168,19 @@ namespace AnalysisManagerMODPlusPlugin
 
             Status = MODPlusRunnerStatusCodes.Running;
 
-            var cmdStr = string.Empty;
+            var arguments = " -Xmx" + JavaMemorySizeMB + "M" +
+                            " -jar " + clsGlobal.PossiblyQuotePath(mModPlusJarFilePath) +
+                            " -i " + clsGlobal.PossiblyQuotePath(ParameterFilePath) +
+                            " -o " + clsGlobal.PossiblyQuotePath(OutputFilePath);
 
-            cmdStr += " -Xmx" + JavaMemorySizeMB + "M";
-            cmdStr += " -jar " + clsGlobal.PossiblyQuotePath(mModPlusJarFilePath);
-            cmdStr += " -i " + clsGlobal.PossiblyQuotePath(ParameterFilePath);
-            cmdStr += " -o " + clsGlobal.PossiblyQuotePath(OutputFilePath);
-
-            CommandLineArgs = cmdStr;
+            CommandLineArgs = arguments;
 
             ProcessID = 0;
             CoreUsage = 1;
 
             // Start the program and wait for it to finish
             // However, while it's running, LoopWaiting will get called via events
-            var blnSuccess = ProgramRunner.RunProgram(mJavaProgLog, cmdStr, "MODPlus", true);
+            var blnSuccess = ProgramRunner.RunProgram(mJavaProgLog, arguments, "MODPlus", true);
 
             if (blnSuccess)
             {

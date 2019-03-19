@@ -146,30 +146,33 @@ namespace AnalysisManagerExtractionPlugin
                 // Note:
                 //   /SynPvalue is only used when processing Inspect files
                 //   /SynProb is only used for MODa and MODPlus results
-                var cmdStr = psmResultsFile.FullName + " /O:" + psmResultsFile.DirectoryName + " /M:" + modDefsFileName + " /T:" +
-                                clsAnalysisResourcesExtraction.MASS_CORRECTION_TAGS_FILENAME + " /N:" + paramFileName + " /SynPvalue:0.2 " +
-                                " /SynProb:0.05 ";
-
-                cmdStr += " /L:" + Path.Combine(psmResultsFile.Directory.FullName, PHRP_LOG_FILE_NAME);
+                var arguments = psmResultsFile.FullName +
+                                " /O:" + psmResultsFile.DirectoryName +
+                                " /M:" + modDefsFileName +
+                                " /T:" + clsAnalysisResourcesExtraction.MASS_CORRECTION_TAGS_FILENAME +
+                                " /N:" + paramFileName +
+                                " /SynPvalue:0.2" +
+                                " /SynProb:0.05" +
+                                " /L:" + Path.Combine(psmResultsFile.Directory.FullName, PHRP_LOG_FILE_NAME);
 
                 var skipProteinMods = mJobParams.GetJobParameter("SkipProteinMods", false);
                 if (!skipProteinMods)
                 {
-                    cmdStr += " /ProteinMods";
+                    arguments += " /ProteinMods";
                 }
 
                 if (!string.IsNullOrWhiteSpace(fastaFilePath))
                 {
                     // Note that FastaFilePath will likely be empty if job parameter SkipProteinMods is true
-                    cmdStr += " /F:" + clsAnalysisToolRunnerBase.PossiblyQuotePath(fastaFilePath);
+                    arguments += " /F:" + clsAnalysisToolRunnerBase.PossiblyQuotePath(fastaFilePath);
                 }
 
                 // Note that PHRP assumes /InsFHT=True and /InsSyn=True by default
                 // Thus, we only need to use these switches if either of these should be false
                 if (!createFirstHitsFile || !createSynopsisFile)
                 {
-                    cmdStr += " /InsFHT:" + createFirstHitsFile;
-                    cmdStr += " /InsSyn:" + createSynopsisFile;
+                    arguments += " /InsFHT:" + createFirstHitsFile;
+                    arguments += " /InsSyn:" + createSynopsisFile;
                 }
 
                 // PHRP defaults to use /MSGFPlusSpecEValue:5E-7  and  /MSGFPlusEValue:0.75
@@ -179,17 +182,17 @@ namespace AnalysisManagerExtractionPlugin
 
                 if (!string.IsNullOrWhiteSpace(msgfPlusSpecEValue))
                 {
-                    cmdStr += " /MSGFPlusSpecEValue:" + msgfPlusSpecEValue;
+                    arguments += " /MSGFPlusSpecEValue:" + msgfPlusSpecEValue;
                 }
 
                 if (!string.IsNullOrWhiteSpace(msgfPlusEValue))
                 {
-                    cmdStr += " /MSGFPlusEValue:" + msgfPlusEValue;
+                    arguments += " /MSGFPlusEValue:" + msgfPlusEValue;
                 }
 
                 if (mDebugLevel >= 1)
                 {
-                    OnDebugEvent(progLoc + " " + cmdStr);
+                    OnDebugEvent(progLoc + " " + arguments);
                 }
 
                 var cmdRunner = new clsRunDosProgram(psmResultsFile.Directory.FullName, mDebugLevel)
@@ -205,7 +208,7 @@ namespace AnalysisManagerExtractionPlugin
 
                 // Abort PHRP if it runs for over 720 minutes (this generally indicates that it's stuck)
                 const int maxRuntimeSeconds = 720 * 60;
-                var success = cmdRunner.RunProgram(progLoc, cmdStr, "PHRP", true, maxRuntimeSeconds);
+                var success = cmdRunner.RunProgram(progLoc, arguments, "PHRP", true, maxRuntimeSeconds);
 
                 if (!success)
                 {

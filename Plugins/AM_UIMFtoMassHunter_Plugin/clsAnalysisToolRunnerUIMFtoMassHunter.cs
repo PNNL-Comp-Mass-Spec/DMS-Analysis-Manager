@@ -140,11 +140,11 @@ namespace AnalysisManagerUIMFtoMassHunterPlugin
                 return false;
             }
 
-            var cmdStr = "UimfToMassHunter.exe " + clsGlobal.PossiblyQuotePath(uimfFile.FullName);
+            var arguments = "UimfToMassHunter.exe " + clsGlobal.PossiblyQuotePath(uimfFile.FullName);
 
             if (mDebugLevel >= 1)
             {
-                LogDebug(cmdStr);
+                LogDebug(arguments);
             }
 
             mConsoleOutputFile = Path.Combine(mWorkDir, UIMF_CONVERTER_CONSOLE_OUTPUT);
@@ -162,7 +162,7 @@ namespace AnalysisManagerUIMFtoMassHunterPlugin
 
             mProgress = PROGRESS_PCT_STARTING;
 
-            var success = cmdRunner.RunProgram(mUIMFConverterProgLoc, cmdStr, "UIMFtoMassHunter", true);
+            var success = cmdRunner.RunProgram(mUIMFConverterProgLoc, arguments, "UIMFtoMassHunter", true);
 
             if (!cmdRunner.WriteConsoleOutputToFile && cmdRunner.CachedConsoleOutput.Length > 0)
             {

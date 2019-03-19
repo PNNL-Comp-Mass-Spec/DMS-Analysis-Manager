@@ -391,29 +391,29 @@ namespace AnalysisManagerIDPickerPlugIn
         /// <summary>
         /// Append a new command line argument (appends using valueIfMissing if not defined in mIDPickerOptions)
         /// </summary>
-        /// <param name="cmdArgs">Current arguments</param>
+        /// <param name="arguments">Current arguments</param>
         /// <param name="optionName">Key name to lookup in mIDPickerOptions</param>
         /// <param name="argumentName">Argument Name</param>
         /// <param name="valueIfMissing">Value to append if not defined in mIDPickerOptions</param>
         /// <returns>The new argument list</returns>
         /// <remarks></remarks>
-        private string AppendArgument(string cmdArgs, string optionName, string argumentName, string valueIfMissing)
+        private string AppendArgument(string arguments, string optionName, string argumentName, string valueIfMissing)
         {
             const bool appendIfMissing = true;
-            return AppendArgument(cmdArgs, optionName, argumentName, valueIfMissing, appendIfMissing);
+            return AppendArgument(arguments, optionName, argumentName, valueIfMissing, appendIfMissing);
         }
 
         /// <summary>
         /// Append a new command line argument
         /// </summary>
-        /// <param name="cmdArgs">Current arguments</param>
+        /// <param name="arguments">Current arguments</param>
         /// <param name="optionName">Key name to lookup in mIDPickerOptions</param>
         /// <param name="argumentName">Argument Name</param>
         /// <param name="valueIfMissing">Value to append if not defined in mIDPickerOptions</param>
         /// <param name="appendIfMissing">If True, append the argument using valueIfMissing if not found in mIDPickerOptions; if false, and not found, does not append the argument</param>
         /// <returns>The new argument list</returns>
         /// <remarks></remarks>
-        private string AppendArgument(string cmdArgs, string optionName, string argumentName, string valueIfMissing, bool appendIfMissing)
+        private string AppendArgument(string arguments, string optionName, string argumentName, string valueIfMissing, bool appendIfMissing)
         {
             bool isMissing;
             bool appendParam;
@@ -437,17 +437,17 @@ namespace AnalysisManagerIDPickerPlugIn
                 appendParam = true;
             }
 
-            if (string.IsNullOrEmpty(cmdArgs))
+            if (string.IsNullOrEmpty(arguments))
             {
-                cmdArgs = string.Empty;
+                arguments = string.Empty;
             }
 
             if (appendParam)
             {
-                return cmdArgs + " -" + argumentName + " " + PossiblyQuotePath(value);
+                return arguments + " -" + argumentName + " " + PossiblyQuotePath(value);
             }
 
-            return cmdArgs;
+            return arguments;
         }
 
         private bool CreateAssembleFile(string assembleFilePath)
@@ -522,27 +522,29 @@ namespace AnalysisManagerIDPickerPlugIn
                 mPepXMLFilePath = Path.Combine(mWorkDir, mDatasetName + ".pepXML");
                 var iHitsPerSpectrum = mJobParams.GetJobParameter("PepXMLHitsPerSpectrum", 3);
 
-                var cmdStr = PossiblyQuotePath(synFilePath) + " /E:" + PossiblyQuotePath(paramFileName) + " /F:" +
-                             PossiblyQuotePath(fastaFilePath) + " /H:" + iHitsPerSpectrum;
+                var arguments = PossiblyQuotePath(synFilePath) +
+                                " /E:" + PossiblyQuotePath(paramFileName) +
+                                " /F:" + PossiblyQuotePath(fastaFilePath) +
+                                " /H:" + iHitsPerSpectrum;
 
                 if (ePHRPResultType == clsPHRPReader.ePeptideHitResultType.MODa | ePHRPResultType == clsPHRPReader.ePeptideHitResultType.MODPlus)
                 {
                     // The SpecProb values listed in the _syn_MSGF.txt file are not true spectral probabilities
                     // Instead, they're just 1 - Probability  (where Probability is a value between 0 and 1 assigned by MODa)
                     // Therefore, don't include them in the PepXML file
-                    cmdStr += " /NoMSGF";
+                    arguments += " /NoMSGF";
                 }
 
                 if (mJobParams.GetJobParameter("PepXMLNoScanStats", false))
                 {
-                    cmdStr += " /NoScanStats";
+                    arguments += " /NoScanStats";
                 }
 
                 ClearConcurrentBag(ref mCmdRunnerErrorsToIgnore);
 
                 mProgress = PROGRESS_PCT_IDPicker_CREATING_PEPXML_FILE;
 
-                success = RunProgramWork("PeptideListToXML", mPeptideListToXMLExePath, cmdStr, PEPXML_CONSOLE_OUTPUT, false, maxRuntimeMinutes);
+                success = RunProgramWork("PeptideListToXML", mPeptideListToXMLExePath, arguments, PEPXML_CONSOLE_OUTPUT, false, maxRuntimeMinutes);
 
                 if (success)
                 {
@@ -977,13 +979,13 @@ namespace AnalysisManagerIDPickerPlugIn
             // Build the command string, for example:
             //  Assemble.xml -MaxFDR 0.1 -b Assemble.txt
 
-            var cmdStr = ASSEMBLE_OUTPUT_FILENAME;
-            cmdStr = AppendArgument(cmdStr, "AssemblyMaxFDR", "MaxFDR", "0.1");
-            cmdStr += " -b Assemble.txt -dump";
+            var arguments = ASSEMBLE_OUTPUT_FILENAME;
+            arguments = AppendArgument(arguments, "AssemblyMaxFDR", "MaxFDR", "0.1");
+            arguments += " -b Assemble.txt -dump";
 
             mProgress = PROGRESS_PCT_IDPicker_RUNNING_IDPAssemble;
 
-            success = RunProgramWork("IDPAssemble", progLoc, cmdStr, IPD_Assemble_CONSOLE_OUTPUT, true, maxRuntimeMinutes);
+            success = RunProgramWork("IDPAssemble", progLoc, arguments, IPD_Assemble_CONSOLE_OUTPUT, true, maxRuntimeMinutes);
 
             mIdpAssembleFilePath = Path.Combine(mWorkDir, ASSEMBLE_OUTPUT_FILENAME);
 
@@ -1040,21 +1042,21 @@ namespace AnalysisManagerIDPickerPlugIn
             //   -SearchScoreWeights "msgfspecprob -1" -OptimizeScoreWeights 1
             //   -NormalizedSearchScores msgfspecprob -DecoyPrefix Reversed_
             //   -dump QC_Shew_11_06_pt5_3_13Feb12_Doc_11-12-07.pepXML
-            var cmdStr = string.Empty;
+            var arguments = string.Empty;
 
-            cmdStr = AppendArgument(cmdStr, "QonvertMaxFDR", "MaxFDR", "0.1");
-            cmdStr += " -ProteinDatabase " + PossiblyQuotePath(fastaFilePath);
-            cmdStr = AppendArgument(cmdStr, "SearchScoreWeights", "msgfspecprob -1");
-            cmdStr = AppendArgument(cmdStr, "OptimizeScoreWeights", "1");
-            cmdStr = AppendArgument(cmdStr, "NormalizedSearchScores", "msgfspecprob");
+            arguments = AppendArgument(arguments, "QonvertMaxFDR", "MaxFDR", "0.1");
+            arguments += " -ProteinDatabase " + PossiblyQuotePath(fastaFilePath);
+            arguments = AppendArgument(arguments, "SearchScoreWeights", "msgfspecprob -1");
+            arguments = AppendArgument(arguments, "OptimizeScoreWeights", "1");
+            arguments = AppendArgument(arguments, "NormalizedSearchScores", "msgfspecprob");
 
-            cmdStr += " -DecoyPrefix " + PossiblyQuotePath(decoyPrefix);
-            cmdStr += " -dump";              // This tells IDPQonvert to display the processing options that the program is using
-            cmdStr += " " + mPepXMLFilePath;
+            arguments += " -DecoyPrefix " + PossiblyQuotePath(decoyPrefix);
+            arguments += " -dump";              // This tells IDPQonvert to display the processing options that the program is using
+            arguments += " " + mPepXMLFilePath;
 
             mProgress = PROGRESS_PCT_IDPicker_RUNNING_IDPQonvert;
 
-            var success = RunProgramWork("IDPQonvert", progLoc, cmdStr, IPD_Qonvert_CONSOLE_OUTPUT, true, maxRuntimeMinutes);
+            var success = RunProgramWork("IDPQonvert", progLoc, arguments, IPD_Qonvert_CONSOLE_OUTPUT, true, maxRuntimeMinutes);
 
             mIdpXMLFilePath = Path.Combine(mWorkDir, mDatasetName + ".idpXML");
 
@@ -1094,19 +1096,19 @@ namespace AnalysisManagerIDPickerPlugIn
             // Build the command string, for example:
             //  report Assemble.xml -MaxFDR 0.05 -MinDistinctPeptides 2 -MinAdditionalPeptides 2 -ModsAreDistinctByDefault true -MaxAmbiguousIds 2 -MinSpectraPerProtein 2 -OutputTextReport true
 
-            var cmdStr = outputFolderName + " " + mIdpAssembleFilePath;
-            cmdStr = AppendArgument(cmdStr, "ReportMaxFDR", "MaxFDR", "0.05");
-            cmdStr = AppendArgument(cmdStr, "MinDistinctPeptides", "2");
-            cmdStr = AppendArgument(cmdStr, "MinAdditionalPeptides", "2");
-            cmdStr = AppendArgument(cmdStr, "ModsAreDistinctByDefault", "true");
-            cmdStr = AppendArgument(cmdStr, "MaxAmbiguousIds", "2");
-            cmdStr = AppendArgument(cmdStr, "MinSpectraPerProtein", "2");
+            var arguments = outputFolderName + " " + mIdpAssembleFilePath;
+            arguments = AppendArgument(arguments, "ReportMaxFDR", "MaxFDR", "0.05");
+            arguments = AppendArgument(arguments, "MinDistinctPeptides", "2");
+            arguments = AppendArgument(arguments, "MinAdditionalPeptides", "2");
+            arguments = AppendArgument(arguments, "ModsAreDistinctByDefault", "true");
+            arguments = AppendArgument(arguments, "MaxAmbiguousIds", "2");
+            arguments = AppendArgument(arguments, "MinSpectraPerProtein", "2");
 
-            cmdStr += " -OutputTextReport true -dump";
+            arguments += " -OutputTextReport true -dump";
 
             mProgress = PROGRESS_PCT_IDPicker_RUNNING_IDPReport;
 
-            var success = RunProgramWork("IDPReport", progLoc, cmdStr, IPD_Report_CONSOLE_OUTPUT, true, maxRuntimeMinutes);
+            var success = RunProgramWork("IDPReport", progLoc, arguments, IPD_Report_CONSOLE_OUTPUT, true, maxRuntimeMinutes);
 
             if (success)
             {
@@ -1191,18 +1193,18 @@ namespace AnalysisManagerIDPickerPlugIn
         /// </summary>
         /// <param name="programDescription"></param>
         /// <param name="exePath"></param>
-        /// <param name="cmdStr"></param>
+        /// <param name="arguments"></param>
         /// <param name="consoleOutputFileName">If empty, does not create a console output file</param>
         /// <param name="captureConsoleOutputViaDosRedirection"></param>
         /// <param name="maxRuntimeMinutes"></param>
         /// <returns></returns>
         ///  <remarks></remarks>
-        private bool RunProgramWork(string programDescription, string exePath, string cmdStr, string consoleOutputFileName,
+        private bool RunProgramWork(string programDescription, string exePath, string arguments, string consoleOutputFileName,
             bool captureConsoleOutputViaDosRedirection, int maxRuntimeMinutes)
         {
             if (mDebugLevel >= 1)
             {
-                LogMessage(exePath + " " + cmdStr.TrimStart(' '));
+                LogMessage(exePath + " " + arguments.TrimStart(' '));
             }
 
             mCmdRunnerDescription = string.Copy(programDescription);
@@ -1218,19 +1220,19 @@ namespace AnalysisManagerIDPickerPlugIn
             {
                 // Create a batch file to run the command
                 // Capture the console output (including output to the error stream) via redirection symbols:
-                //    exePath cmdStr > ConsoleOutputFile.txt 2>&1
+                //    exePath arguments > ConsoleOutputFile.txt 2>&1
 
                 var exePathOriginal = string.Copy(exePath);
-                var cmdStrOriginal = string.Copy(cmdStr);
+                var argumentsOriginal = string.Copy(arguments);
 
                 programDescription = programDescription.Replace(" ", "_");
 
                 var batchFileName = "Run_" + programDescription + ".bat";
                 mFilenamesToAddToReportFolder.Add(batchFileName);
 
-                // Update the Exe path to point to the RunProgram batch file; update cmdStr to be empty
+                // Update the Exe path to point to the RunProgram batch file; update arguments to be empty
                 exePath = Path.Combine(mWorkDir, batchFileName);
-                cmdStr = string.Empty;
+                arguments = string.Empty;
 
                 if (string.IsNullOrEmpty(consoleOutputFileName))
                 {
@@ -1240,7 +1242,7 @@ namespace AnalysisManagerIDPickerPlugIn
                 // Create the batch file
                 using (var writer = new StreamWriter(new FileStream(exePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
-                    writer.WriteLine(exePathOriginal + " " + cmdStrOriginal + " > " + consoleOutputFileName + " 2>&1");
+                    writer.WriteLine(exePathOriginal + " " + argumentsOriginal + " > " + consoleOutputFileName + " 2>&1");
                 }
 
             }
@@ -1263,7 +1265,7 @@ namespace AnalysisManagerIDPickerPlugIn
 
             var maxRuntimeSeconds = maxRuntimeMinutes * 60;
 
-            var success = cmdRunner.RunProgram(exePath, cmdStr, programDescription, true, maxRuntimeSeconds);
+            var success = cmdRunner.RunProgram(exePath, arguments, programDescription, true, maxRuntimeSeconds);
 
             if (mCmdRunnerErrors.Count == 0 && !string.IsNullOrEmpty(cmdRunner.CachedConsoleError))
             {

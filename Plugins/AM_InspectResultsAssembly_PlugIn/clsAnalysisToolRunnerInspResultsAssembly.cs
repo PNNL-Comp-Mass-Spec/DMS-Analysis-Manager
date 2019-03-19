@@ -913,34 +913,37 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             // -a means to perform protein selection (sort of like protein prophet, but not very good, according to Sam Payne)
             // -d .trie file to use (only used if -a is enabled)
 
-            var cmdStr = " " + pvalueScriptPath + " -r " + inspectResultsInputFilePath + " -w " + outputFilePath + " -s " + pValueDistributionFilename;
+            var arguments = " " + pvalueScriptPath +
+                            " -r " + inspectResultsInputFilePath +
+                            " -w " + outputFilePath +
+                            " -s " + pValueDistributionFilename;
 
             if (createImageFiles)
             {
-                cmdStr += " -i";
+                arguments += " -i";
             }
 
             if (topHitOnly)
             {
-                cmdStr += " -H -1 -p 1";
+                arguments += " -H -1 -p 1";
             }
             else
             {
-                cmdStr += " -p " + pThresh;
+                arguments += " -p " + pThresh;
             }
 
             if (blnShuffledDBUsed)
             {
-                cmdStr += " -S 0.5";
+                arguments += " -S 0.5";
             }
 
             // The following could be used to enable protein selection
             // That would require that the database file be present, and this can take quite a bit longer
-            //'cmdStr += " -a -d " + dbFilename
+            //'arguments += " -a -d " + dbFilename
 
             if (mDebugLevel >= 1)
             {
-                LogDebug(progLoc + " " + cmdStr);
+                LogDebug(progLoc + " " + arguments);
             }
 
             cmdRunner.CreateNoWindow = true;
@@ -950,7 +953,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             cmdRunner.WriteConsoleOutputToFile = true;
             cmdRunner.ConsoleOutputFilePath = Path.Combine(mWorkDir, "PValue_ConsoleOutput.txt");
 
-            if (!cmdRunner.RunProgram(progLoc, cmdStr, "PValue", false))
+            if (!cmdRunner.RunProgram(progLoc, arguments, "PValue", false))
             {
                 // Error running program; the error should have already been logged
             }

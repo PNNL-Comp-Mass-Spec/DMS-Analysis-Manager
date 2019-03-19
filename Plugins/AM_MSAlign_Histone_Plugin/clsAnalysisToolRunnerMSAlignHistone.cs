@@ -183,10 +183,11 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                     intJavaMemorySize = 512;
 
                 // Set up and execute a program runner to run MSAlign_Histone
-                var cmdStr = " -Xmx" + intJavaMemorySize +
-                         "M -classpath jar\\*; edu.iupui.msalign.align.histone.pipeline.MsAlignHistonePipelineConsole " + strMSAlignCmdLineOptions;
+                var arguments = " -Xmx" + intJavaMemorySize + "M" +
+                                " -classpath jar\\*; edu.iupui.msalign.align.histone.pipeline.MsAlignHistonePipelineConsole " +
+                                strMSAlignCmdLineOptions;
 
-                LogDebug(JavaProgLoc + " " + cmdStr);
+                LogDebug(JavaProgLoc + " " + arguments);
 
                 var cmdRunner = new clsRunDosProgram(mMSAlignWorkFolderPath, mDebugLevel);
                 RegisterEvents(cmdRunner);
@@ -201,7 +202,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
 
                 mProgress = PROGRESS_PCT_STARTING;
 
-                var processingSuccess = cmdRunner.RunProgram(JavaProgLoc, cmdStr, "MSAlign_Histone", true);
+                var processingSuccess = cmdRunner.RunProgram(JavaProgLoc, arguments, "MSAlign_Histone", true);
 
                 if (!mToolVersionWritten)
                 {
@@ -731,10 +732,11 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                 LogMessage("Creating MSAlign_Histone Report Files");
 
                 // Set up and execute a program runner to run MSAlign_Histone
-                var cmdStr = " -Xmx" + intJavaMemorySize + "M -classpath jar\\*; edu.iupui.msalign.align.histone.view.HistoneHtmlConsole " +
+                var arguments = " -Xmx" + intJavaMemorySize + "M" +
+                                " -classpath jar\\*; edu.iupui.msalign.align.histone.view.HistoneHtmlConsole " +
                                 strMSAlignCmdLineOptions;
 
-                LogDebug(JavaProgLoc + " " + cmdStr);
+                LogDebug(JavaProgLoc + " " + arguments);
 
                 var cmdRunner = new clsRunDosProgram(mMSAlignWorkFolderPath, mDebugLevel);
                 RegisterEvents(cmdRunner);
@@ -747,7 +749,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                 cmdRunner.WriteConsoleOutputToFile = true;
                 cmdRunner.ConsoleOutputFilePath = Path.Combine(mWorkDir, MSAlign_Report_CONSOLE_OUTPUT);
 
-                blnSuccess = cmdRunner.RunProgram(JavaProgLoc, cmdStr, "MSAlign_Histone", true);
+                blnSuccess = cmdRunner.RunProgram(JavaProgLoc, arguments, "MSAlign_Histone", true);
 
                 if (!blnSuccess)
                 {

@@ -195,12 +195,12 @@ namespace AnalysisManagerMODaPlugIn
             mMODaResultsFilePath = Path.Combine(mWorkDir, mDatasetName + MODA_RESULTS_FILE_SUFFIX);
 
             // Set up and execute a program runner to run MODa
-            var cmdStr = " -Xmx" + javaMemorySize + "M" +
-                         " -jar " + mMODaProgLoc +
-                         " -i " + paramFilePath +
-                         " -o " + mMODaResultsFilePath;
+            var arguments = " -Xmx" + javaMemorySize + "M" +
+                            " -jar " + mMODaProgLoc +
+                            " -i " + paramFilePath +
+                            " -o " + mMODaResultsFilePath;
 
-            LogDebug(javaProgLoc + " " + cmdStr);
+            LogDebug(javaProgLoc + " " + arguments);
 
             mCmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel);
             RegisterEvents(mCmdRunner);
@@ -218,7 +218,7 @@ namespace AnalysisManagerMODaPlugIn
 
             // Start the program and wait for it to finish
             // However, while it's running, LoopWaiting will get called via events
-            var success = mCmdRunner.RunProgram(javaProgLoc, cmdStr, "MODa", true);
+            var success = mCmdRunner.RunProgram(javaProgLoc, arguments, "MODa", true);
 
             if (!mToolVersionWritten)
             {

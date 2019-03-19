@@ -24,7 +24,7 @@ Public Class clsCreateInspectIndexedDB
         Const PREPDB_SCRIPT As String = "PrepDB.py"
 
         Dim CmdRunner As clsRunDosProgram
-        Dim CmdStr As String
+        Dim arguments As String
 
         Dim WorkingDir As String = mgrParams.GetParam("WorkDir")
         Dim InspectDir As String = mgrParams.GetParam("inspectdir")
@@ -111,12 +111,12 @@ Public Class clsCreateInspectIndexedDB
                 End If
 
                 'Set up and execute a program runner to run PrepDB.py
-                CmdStr = " " & PrebDBScriptPath & " FASTA " & dbFilename
+                arguments = " " & PrebDBScriptPath & " FASTA " & dbFilename
                 If DebugLevel >= 1 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, progLoc & " " & CmdStr)
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, progLoc & " " & arguments)
                 End If
 
-                If Not CmdRunner.RunProgram(progLoc, CmdStr, "PrepDB", True) Then
+                If Not CmdRunner.RunProgram(progLoc, arguments, "PrepDB", True) Then
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running " & PREPDB_SCRIPT & " for " & dbFilename & " : " & JobNum)
                     Return IJobParams.CloseOutType.CLOSEOUT_FAILED
                 End If
