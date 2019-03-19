@@ -412,7 +412,7 @@ namespace AnalysisManagerTopPICPlugIn
         /// <summary>
         /// Read the TopPIC options file and convert the options to command line switches
         /// </summary>
-        /// <param name="fastaFileIsDecoy">The plugin will set this to true if hte FASTA file is a forward+reverse FASTA file</param>
+        /// <param name="fastaFileIsDecoy">The plugin will set this to true if the FASTA file is a forward+reverse FASTA file</param>
         /// <param name="cmdLineOptions">Output: TopPIC command line arguments</param>
         /// <returns>Options string if success; empty string if an error</returns>
         /// <remarks></remarks>
@@ -654,7 +654,7 @@ namespace AnalysisManagerTopPICPlugIn
         }
 
         /// <summary>
-        /// Reads the console output file and removes the majority of "Processing" messages
+        /// Reads the console output file and removes the majority of the "Processing" messages
         /// </summary>
         /// <param name="consoleOutputFilePath"></param>
         /// <remarks></remarks>

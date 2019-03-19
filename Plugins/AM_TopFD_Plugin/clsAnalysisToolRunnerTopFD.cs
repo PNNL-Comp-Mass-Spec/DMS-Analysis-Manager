@@ -476,7 +476,7 @@ namespace AnalysisManagerTopFDPlugIn
         }
 
         /// <summary>
-        /// Reads the console output file and removes the majority of "Processing" messages
+        /// Reads the console output file and removes the majority of the "Processing" messages
         /// </summary>
         /// <param name="consoleOutputFilePath"></param>
         /// <remarks></remarks>
