@@ -3946,7 +3946,7 @@ namespace AnalysisManagerBase
 
             try
             {
-                var appPath = Path.Combine(clsGlobal.GetAppFolderPath(), versionInspectorExeName);
+                var appPath = Path.Combine(clsGlobal.GetAppDirectoryPath(), versionInspectorExeName);
 
                 var dllFileInfo = new FileInfo(dllFilePath);
 
@@ -3976,7 +3976,7 @@ namespace AnalysisManagerBase
                     LogDebug(appPath + " " + args);
                 }
 
-                var progRunner = new clsRunDosProgram(clsGlobal.GetAppFolderPath(), mDebugLevel)
+                var progRunner = new clsRunDosProgram(clsGlobal.GetAppDirectoryPath(), mDebugLevel)
                 {
                     CacheStandardOutput = false,
                     CreateNoWindow = true,

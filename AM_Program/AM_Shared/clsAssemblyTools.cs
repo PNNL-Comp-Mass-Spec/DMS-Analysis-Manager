@@ -49,7 +49,7 @@ namespace AnalysisManagerBase
         public void GetComponentFileVersionInfo(clsSummaryFile summaryFile)
         {
             // Create a reference to the current directory.
-            var di = new DirectoryInfo(clsGlobal.GetAppFolderPath());
+            var di = new DirectoryInfo(clsGlobal.GetAppDirectoryPath());
 
             // Create an array representing the files in the current directory.
             var dllFiles = di.GetFiles("*.dll");

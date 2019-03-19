@@ -379,10 +379,10 @@ namespace AnalysisManagerProg
                                       "Use /Trace or /Verbose to enable trace mode, where debug messages are written to the command prompt"));
                 Console.WriteLine();
                 Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
-                                      "Use /DLL to display the version of all DLLs in the same folder as this .exe"));
+                                      "Use /DLL to display the version of all DLLs in the same directory as this .exe"));
                 Console.WriteLine();
                 Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
-                                      "Use /DLL:Path to display the version of all DLLs in the specified folder (surround path with double quotes if spaces)"));
+                                      "Use /DLL:Path to display the version of all DLLs in the specified directory (surround path with double quotes if spaces)"));
                 Console.WriteLine();
                 Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
                                       "Use /PushRemote to use the DMSUpdateManager to push new/updated files to the remote host associated with this manager. " +

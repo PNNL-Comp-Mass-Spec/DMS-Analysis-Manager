@@ -77,12 +77,12 @@ namespace AnalysisManagerBase
         protected int mJobId;
 
         /// <summary>
-        /// List of file names to NOT move to the result folder; this list is used by MoveResultFiles()
+        /// List of file names to NOT move to the results directory; this list is used by MoveResultFiles()
         /// </summary>
         protected SortedSet<string> mResultFilesToSkip = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
-        /// List of file extensions (or even partial file names like _peaks.txt) to NOT move to the result folder
+        /// List of file extensions (or even partial file names like _peaks.txt) to NOT move to the results directory
         /// </summary>
         /// <remarks>
         /// Comparison checks if the end of the fileName matches any entry ResultFileExtensionsToSkip:
@@ -91,7 +91,7 @@ namespace AnalysisManagerBase
         protected SortedSet<string> mResultFileExtensionsToSkip = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
-        /// List of file names that WILL be moved to the result folder, even if they are in ResultFilesToSkip or ResultFileExtensionsToSkip
+        /// List of file names that WILL be moved to the results directory, even if they are in ResultFilesToSkip or ResultFileExtensionsToSkip
         /// </summary>
         protected SortedSet<string> mResultFilesToKeep = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
 
@@ -125,7 +125,7 @@ namespace AnalysisManagerBase
         public Dictionary<string, int> DatasetInfoList => mDatasetInfoList;
 
         /// <summary>
-        /// List of file names that WILL be moved to the result folder, even if they are in ResultFilesToSkip or ResultFileExtensionsToSkip
+        /// List of file names that WILL be moved to the results directory, even if they are in ResultFilesToSkip or ResultFileExtensionsToSkip
         /// </summary>
         /// <value></value>
         /// <returns></returns>
@@ -133,7 +133,7 @@ namespace AnalysisManagerBase
         public SortedSet<string> ResultFilesToKeep => mResultFilesToKeep;
 
         /// <summary>
-        /// List of file names to NOT move to the result folder
+        /// List of file names to NOT move to the results directory
         /// </summary>
         /// <value></value>
         /// <returns></returns>
@@ -141,7 +141,7 @@ namespace AnalysisManagerBase
         public SortedSet<string> ResultFilesToSkip => mResultFilesToSkip;
 
         /// <summary>
-        /// List of file extensions to NOT move to the result folder; comparison checks if the end of the fileName matches any entry in ResultFileExtensionsToSkip
+        /// List of file extensions to NOT move to the results directory; comparison checks if the end of the fileName matches any entry in ResultFileExtensionsToSkip
         /// </summary>
         /// <value></value>
         /// <returns></returns>
@@ -274,7 +274,7 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Add a fileName extension to not move to the results folder
+        /// Add a fileName extension to not move to the results directory
         /// </summary>
         /// <param name="fileExtension"></param>
         /// <remarks>Can be a file extension (like .raw) or even a partial file name like _peaks.txt</remarks>
@@ -290,7 +290,7 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Add a fileName to definitely move to the results folder
+        /// Add a fileName to definitely move to the results directory
         /// </summary>
         /// <param name="fileName"></param>
         /// <remarks></remarks>
@@ -307,7 +307,7 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Add a fileName to not move to the results folder
+        /// Add a fileName to not move to the results directory
         /// </summary>
         /// <param name="fileName"></param>
         /// <remarks></remarks>
@@ -1606,8 +1606,8 @@ namespace AnalysisManagerBase
 
                 var msg = "Job Parameters successfully saved to file: " + xmlParameterFile.FullName;
 
-                // Copy the Job Parameter file to the Analysis Manager folder so that we can inspect it if the job fails
-                clsGlobal.CopyAndRenameFileWithBackup(xmlParameterFile.FullName, clsGlobal.GetAppFolderPath(), "RecentJobParameters.xml", 5);
+                // Copy the Job Parameter file to the Analysis Manager directory so that we can inspect it if the job fails
+                clsGlobal.CopyAndRenameFileWithBackup(xmlParameterFile.FullName, clsGlobal.GetAppDirectoryPath(), "RecentJobParameters.xml", 5);
 
                 LogDebug(msg, (int)BaseLogger.LogLevels.DEBUG);
 

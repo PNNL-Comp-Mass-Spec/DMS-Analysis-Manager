@@ -59,7 +59,7 @@ namespace AnalysisManagerProg
 
                 var configFileSettings = mainProcess.LoadMgrSettingsFromFile();
 
-                mMgrSettings = new clsAnalysisMgrSettings(clsGlobal.GetAppFolderPath(), TRACE_MODE_ENABLED);
+                mMgrSettings = new clsAnalysisMgrSettings(clsGlobal.GetAppDirectoryPath(), TRACE_MODE_ENABLED);
                 var settingsClass = (clsAnalysisMgrSettings)mMgrSettings;
                 if (settingsClass != null)
                 {

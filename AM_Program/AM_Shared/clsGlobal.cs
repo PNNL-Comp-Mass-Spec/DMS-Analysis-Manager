@@ -106,7 +106,7 @@ namespace AnalysisManagerBase
 
         #region "Module variables"
 
-        private static string mAppFolderPath;
+        private static string mAppDirectoryPath;
 
         private static SystemProcessInfo mSystemProcessInfo;
 
@@ -305,14 +305,24 @@ namespace AnalysisManagerBase
         /// Returns the directory in which the entry assembly (typically the Program .exe file) resides
         /// </summary>
         /// <returns>Full directory path</returns>
+        [Obsolete("Use GetAppDirectoryPath")]
         public static string GetAppFolderPath()
         {
-            if (mAppFolderPath != null)
-                return mAppFolderPath;
+            return GetAppDirectoryPath();
+        }
 
-            mAppFolderPath = PRISM.FileProcessor.ProcessFilesOrDirectoriesBase.GetAppDirectoryPath();
+        /// <summary>
+        /// Returns the directory in which the entry assembly (typically the Program .exe file) resides
+        /// </summary>
+        /// <returns>Full directory path</returns>
+        public static string GetAppDirectoryPath()
+        {
+            if (mAppDirectoryPath != null)
+                return mAppDirectoryPath;
 
-            return mAppFolderPath;
+            mAppDirectoryPath = PRISM.FileProcessor.ProcessFilesOrDirectoriesBase.GetAppDirectoryPath();
+
+            return mAppDirectoryPath;
         }
 
         /// <summary>

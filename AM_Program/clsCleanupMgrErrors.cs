@@ -85,8 +85,8 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Full path to the flag file
         /// </summary>
-        /// <remarks>Will be in the same folder as the manager executable</remarks>
-        public string FlagFilePath => Path.Combine(mMgrFolderPath, FLAG_FILE_NAME);
+        /// <remarks>Will be in the same directory as the manager executable</remarks>
+        public string FlagFilePath => Path.Combine(mMgrDirectoryPath, FLAG_FILE_NAME);
 
         #endregion
 
@@ -96,7 +96,7 @@ namespace AnalysisManagerProg
         private readonly string mMgrConfigDBConnectionString;
         private readonly string mManagerName;
 
-        private readonly string mMgrFolderPath;
+        private readonly string mMgrDirectoryPath;
 
         private readonly string mWorkingDirPath;
         #endregion
@@ -107,9 +107,9 @@ namespace AnalysisManagerProg
         /// <param name="mgrConfigDBConnectionString">Connection string to the manager_control database; if empty, database access is disabled</param>
         /// <param name="managerName"></param>
         /// <param name="debugLevel"></param>
-        /// <param name="mgrFolderPath"></param>
+        /// <param name="mgrDirectoryPath"></param>
         /// <param name="workingDirPath"></param>
-        public clsCleanupMgrErrors(string mgrConfigDBConnectionString, string managerName, short debugLevel, string mgrFolderPath, string workingDirPath)
+        public clsCleanupMgrErrors(string mgrConfigDBConnectionString, string managerName, short debugLevel, string mgrDirectoryPath, string workingDirPath)
         {
             if (string.IsNullOrEmpty(mgrConfigDBConnectionString) && !clsGlobal.OfflineMode)
                 throw new Exception("Manager config DB connection string is not defined");
@@ -121,7 +121,7 @@ namespace AnalysisManagerProg
             mManagerName = string.Copy(managerName);
             mDebugLevel = debugLevel;
 
-            mMgrFolderPath = mgrFolderPath;
+            mMgrDirectoryPath = mgrDirectoryPath;
             mWorkingDirPath = workingDirPath;
 
             mInitialized = true;
@@ -156,7 +156,7 @@ namespace AnalysisManagerProg
             }
             else
             {
-                // If successful, deletes flag files: flagfile.txt and flagFile_Svr.txt
+                // If successful, deletes flag files: flagFile.txt and flagFile_Svr.txt
                 success = DeleteDeconServerFlagFile(debugLevel);
 
                 if (!success)
@@ -244,7 +244,7 @@ namespace AnalysisManagerProg
             PRISM.ProgRunner.GarbageCollectNow();
             clsGlobal.IdleLoop(actualHoldoffSeconds);
 
-            // Delete all of the files and folders in the work directory
+            // Delete all of the files and directories in the work directory
             var workDir = new DirectoryInfo(workDirPath);
             if (!DeleteFilesWithRetry(workDir))
             {
@@ -292,7 +292,7 @@ namespace AnalysisManagerProg
                         {
                             // Try re-applying the permissions
 
-                            var folderAcl = new DirectorySecurity();
+                            var directoryAcl = new DirectorySecurity();
                             var currentUser = Environment.UserDomainName + @"\" + Environment.UserName;
 
                             LogWarning("IOException deleting " + subDirectory.FullName + "; will try granting modify access to user " + currentUser);
@@ -301,10 +301,10 @@ namespace AnalysisManagerProg
 
                             try
                             {
-                                // To remove existing permissions, use this: folderAcl.SetAccessRuleProtection(True, False)
+                                // To remove existing permissions, use this: directoryAcl.SetAccessRuleProtection(True, False)
 
                                 // Add the new access rule
-                                subDirectory.SetAccessControl(folderAcl);
+                                subDirectory.SetAccessControl(directoryAcl);
 
                                 // Make sure the readonly flag is not set (it's likely not even possible for a folder to have a readonly flag set, but it doesn't hurt to check)
                                 subDirectory.Refresh();
@@ -322,21 +322,21 @@ namespace AnalysisManagerProg
                                 }
                                 catch (Exception ex3)
                                 {
-                                    var failureMessage = "Error deleting folder " + subDirectory.FullName + ": " + ex3.Message;
+                                    var failureMessage = "Error deleting directory " + subDirectory.FullName + ": " + ex3.Message;
                                     LogError(failureMessage);
                                     failedDeleteCount += 1;
                                 }
                             }
                             catch (Exception ex2)
                             {
-                                var failureMessage = "Error updating permissions for folder " + subDirectory.FullName + ": " + ex2.Message;
+                                var failureMessage = "Error updating permissions for directory " + subDirectory.FullName + ": " + ex2.Message;
                                 LogError(failureMessage);
                                 failedDeleteCount += 1;
                             }
                         }
                         catch (Exception ex)
                         {
-                            var failureMessage = "Error deleting folder " + subDirectory.FullName + ": " + ex.Message;
+                            var failureMessage = "Error deleting directory " + subDirectory.FullName + ": " + ex.Message;
                             LogError(failureMessage);
                             failedDeleteCount += 1;
                         }
@@ -351,7 +351,7 @@ namespace AnalysisManagerProg
             }
             catch (Exception ex)
             {
-                var failureMessage = "Error deleting files/folders in " + workDir.FullName;
+                var failureMessage = "Error deleting files/directories in " + workDir.FullName;
                 LogError(failureMessage, ex);
                 return false;
             }
@@ -372,7 +372,7 @@ namespace AnalysisManagerProg
         {
             try
             {
-                var path = Path.Combine(mMgrFolderPath, ERROR_DELETING_FILES_FILENAME);
+                var path = Path.Combine(mMgrDirectoryPath, ERROR_DELETING_FILES_FILENAME);
                 using (var writer = new StreamWriter(new FileStream(path, FileMode.Append, FileAccess.Write, FileShare.Read)))
                 {
                     writer.WriteLine(DateTime.Now.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT));
@@ -413,7 +413,7 @@ namespace AnalysisManagerProg
         /// <remarks></remarks>
         public bool DeleteDeconServerFlagFile(int DebugLevel)
         {
-            var flagFilePath = Path.Combine(mMgrFolderPath, DECON_SERVER_FLAG_FILE_NAME);
+            var flagFilePath = Path.Combine(mMgrDirectoryPath, DECON_SERVER_FLAG_FILE_NAME);
 
             return DeleteFlagFile(flagFilePath, DebugLevel);
         }
@@ -479,7 +479,7 @@ namespace AnalysisManagerProg
         /// <remarks></remarks>
         public bool DetectErrorDeletingFilesFlagFile()
         {
-            var testFile = Path.Combine(mMgrFolderPath, ERROR_DELETING_FILES_FILENAME);
+            var testFile = Path.Combine(mMgrDirectoryPath, ERROR_DELETING_FILES_FILENAME);
 
             return File.Exists(testFile);
         }
@@ -502,7 +502,7 @@ namespace AnalysisManagerProg
         /// <remarks></remarks>
         public void DeleteErrorDeletingFilesFlagFile()
         {
-            var deletionFlagFile = new FileInfo(Path.Combine(mMgrFolderPath, ERROR_DELETING_FILES_FILENAME));
+            var deletionFlagFile = new FileInfo(Path.Combine(mMgrDirectoryPath, ERROR_DELETING_FILES_FILENAME));
 
             try
             {

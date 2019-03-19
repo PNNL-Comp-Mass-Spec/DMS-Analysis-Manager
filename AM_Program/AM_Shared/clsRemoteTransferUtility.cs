@@ -765,7 +765,7 @@ namespace AnalysisManagerBase
                         @"C:\DMS_Programs"
                     };
 
-                    var appFolder = new DirectoryInfo(clsGlobal.GetAppFolderPath());
+                    var appFolder = new DirectoryInfo(clsGlobal.GetAppDirectoryPath());
                     var appFolderParent = appFolder.Parent;
                     if (appFolderParent != null)
                     {

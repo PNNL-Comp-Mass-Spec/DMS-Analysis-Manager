@@ -501,12 +501,12 @@ namespace AnalysisManagerProg
                         {
                             if (oneTaskStarted)
                             {
-                                LogError("Error cleaning working directory, job " + mAnalysisTask.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Job") + "; see folder " + mWorkDirPath);
+                                LogError("Error cleaning working directory, job " + mAnalysisTask.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Job") + "; see directory " + mWorkDirPath);
                                 mAnalysisTask.CloseTask(CloseOutType.CLOSEOUT_FAILED, "Error cleaning working directory");
                             }
                             else
                             {
-                                LogError("Error cleaning working directory; see folder " + mWorkDirPath);
+                                LogError("Error cleaning working directory; see directory " + mWorkDirPath);
                             }
                             mMgrErrorCleanup.CreateStatusFlagFile();
                             UpdateStatusFlagFileExists();
@@ -547,14 +547,14 @@ namespace AnalysisManagerProg
                         {
                             // Working directory problem due to the most recently processed job
                             // Create ErrorDeletingFiles file and exit the program
-                            LogError("Working directory problem, creating " + clsCleanupMgrErrors.ERROR_DELETING_FILES_FILENAME + "; see folder " + mWorkDirPath);
+                            LogError("Working directory problem, creating " + clsCleanupMgrErrors.ERROR_DELETING_FILES_FILENAME + "; see directory " + mWorkDirPath);
                             mMgrErrorCleanup.CreateErrorDeletingFilesFlagFile();
                             UpdateStatusIdle("Working directory not empty");
                         }
                         else
                         {
                             // Working directory problem, so create flag file and exit
-                            LogError("Working directory problem, disabling manager via flag file; see folder " + mWorkDirPath);
+                            LogError("Working directory problem, disabling manager via flag file; see directory " + mWorkDirPath);
                             mMgrErrorCleanup.CreateStatusFlagFile();
                             UpdateStatusFlagFileExists();
                         }
@@ -875,7 +875,7 @@ namespace AnalysisManagerProg
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            // Make sure we have enough free space on the drive with the working directory and on the drive with the transfer folder
+            // Make sure we have enough free space on the drive with the working directory and on the drive with the transfer directory
             if (!ValidateFreeDiskSpace(toolResourcer, out mMostRecentErrorMessage))
             {
                 ShowTrace("Insufficient free space; closing job step task");
@@ -1822,7 +1822,7 @@ namespace AnalysisManagerProg
 
             LogError(clsGlobal.AppendToComment(mMostRecentErrorMessage, remoteMonitor.Message));
 
-            // Retrieve result files then store in the DMS_FailedResults folder
+            // Retrieve result files then store in the DMS_FailedResults directory
 
             toolRunner.RetrieveRemoteResults(remoteMonitor.TransferUtility, false, out var retrievedFilePaths);
 
@@ -2102,7 +2102,7 @@ namespace AnalysisManagerProg
             {
                 Dictionary<string, DateTime> cachedMessages;
 
-                var messageCacheFile = new FileInfo(Path.Combine(clsGlobal.GetAppFolderPath(), PERIODIC_LOG_FILE));
+                var messageCacheFile = new FileInfo(Path.Combine(clsGlobal.GetAppDirectoryPath(), PERIODIC_LOG_FILE));
 
                 if (messageCacheFile.Exists)
                 {
@@ -2289,8 +2289,10 @@ namespace AnalysisManagerProg
                 mMostRecentErrorMessage = "GetResources returned result: " + resultCode;
                 ShowTrace(mMostRecentErrorMessage + "; closing job step task");
 
+                var compMsg = string.IsNullOrWhiteSpace(toolResourcer.Message) ? resultCode.ToString() : toolResourcer.Message;
+
                 LogError(mMgrName + ": " + clsGlobal.AppendToComment(mMostRecentErrorMessage, toolResourcer.Message) + ", Job " + jobNum + ", Dataset " + datasetName);
-                mAnalysisTask.CloseTask(resultCode, toolResourcer.Message);
+                mAnalysisTask.CloseTask(resultCode, compMsg);
 
                 mMgrErrorCleanup.CleanWorkDir();
                 UpdateStatusIdle("Error encountered: " + mMostRecentErrorMessage);
@@ -2620,7 +2622,7 @@ namespace AnalysisManagerProg
         }
 
         /// <summary>
-        /// Look for flagFile.txt in the .exe folder
+        /// Look for flagFile.txt in the .exe directory
         /// Auto clean errors if AutoCleanupManagerErrors is enabled
         /// </summary>
         /// <returns>True if a flag file exists, false if safe to proceed</returns>
@@ -2661,11 +2663,11 @@ namespace AnalysisManagerProg
             string errorMessage;
             if (flagFile.Directory == null)
             {
-                errorMessage = "Flag file exists in the manager folder";
+                errorMessage = "Flag file exists in the manager directory";
             }
             else
             {
-                errorMessage = "Flag file exists in folder " + flagFile.Directory.Name;
+                errorMessage = "Flag file exists in directory " + flagFile.Directory.Name;
             }
 
             // Post a log entry to the database every 4 hours
@@ -2797,7 +2799,7 @@ namespace AnalysisManagerProg
 
                 if (stepToolNameLCase == "results_transfer")
                 {
-                    // We only need to evaluate the dataset storage folder for free space
+                    // We only need to evaluate the dataset storage directory for free space
 
                     var datasetStoragePath = mAnalysisTask.GetParam("DatasetStoragePath");
                     var datasetStorageMinFreeSpaceGB = mMgrSettings.GetParam("DatasetStorageMinFreeSpaceGB", DEFAULT_DATASET_STORAGE_MIN_FREE_SPACE_GB);
@@ -2813,7 +2815,7 @@ namespace AnalysisManagerProg
                     if (!datasetStorageDirectory.Exists)
                     {
                         // Dataset directory not found; that's OK, since the Results Transfer plugin will auto-create it
-                        // Try to use the parent folder (or the parent of the parent)
+                        // Try to use the parent directory (or the parent of the parent)
                         while (!datasetStorageDirectory.Exists && datasetStorageDirectory.Parent != null)
                         {
                             datasetStorageDirectory = datasetStorageDirectory.Parent;
@@ -3043,9 +3045,9 @@ namespace AnalysisManagerProg
             // Verify the working directory is empty
             var workDir = new DirectoryInfo(mWorkDirPath);
             var workDirFiles = workDir.GetFiles();
-            var workDirFolders = workDir.GetDirectories();
+            var workDirDirectories = workDir.GetDirectories();
 
-            if (workDirFolders.Length == 0 && workDirFiles.Length == 1)
+            if (workDirDirectories.Length == 0 && workDirFiles.Length == 1)
             {
                 // If the only file in the working directory is a JobParameters xml file, try to delete it.
                 // It is likely left over from a previous job that never actually started
