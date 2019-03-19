@@ -1821,6 +1821,9 @@ namespace AnalysisManagerBase
         {
             var compCode = (int)closeOut;
 
+            if (compMsg == null)
+                compMsg = string.Empty;
+
             if (evalMsg == null)
                 evalMsg = string.Empty;
 
@@ -1966,6 +1969,12 @@ namespace AnalysisManagerBase
             {
                 throw new Exception("SetAnalysisJobComplete should not be called when offline mode is enabled");
             }
+
+            if (compMsg == null)
+                compMsg = string.Empty;
+
+            if (evalMsg == null)
+                evalMsg = string.Empty;
 
             // Setup for execution of stored procedure SetStepTaskComplete
             var cmd = new SqlCommand(SP_NAME_SET_COMPLETE)
