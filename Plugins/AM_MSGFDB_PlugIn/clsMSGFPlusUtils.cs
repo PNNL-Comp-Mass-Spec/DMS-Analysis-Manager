@@ -3556,7 +3556,11 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 ErrorMessage = string.Format("{0:F1}% of the entries in the peptide to protein map file did not match to a protein in the FASTA file ({1:N0} / {2:N0})",
                                              errorPercent, peptideCountNoMatch, peptideCount);
-                OnErrorEvent(ErrorMessage);
+
+                if (ignorePeptideToProteinMapperErrors)
+                    OnWarningEvent(ErrorMessage);
+                else
+                    OnErrorEvent(ErrorMessage);
 
                 Console.WriteLine();
                 OnDebugEvent(string.Format("First {0} unmatched peptides", unmatchedPeptides.Count));
