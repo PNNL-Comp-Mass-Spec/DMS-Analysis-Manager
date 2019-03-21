@@ -76,10 +76,12 @@ namespace AnalysisManagerExtractionPlugin
         }
 
         /// <summary>
-        /// Converts Sequest, X!Tandem, Inspect, MSGDB, or MSAlign output file to a flat file
+        /// Converts SEQUEST, X!Tandem, Inspect, MS-GF+, MSAlign, MODa, or MODPlus output file to a flat file
         /// </summary>
-        /// <returns>CloseOutType enum indicating success or failure</returns>
-        /// <remarks></remarks>
+        /// <param name="peptideSearchResultsFileName"></param>
+        /// <param name="fastaFilePath"></param>
+        /// <param name="resultType"></param>
+        /// <returns>Enum indicating success or failure</returns>
         public CloseOutType ExtractDataFromResults(
             string peptideSearchResultsFileName,
             string fastaFilePath,
@@ -90,10 +92,14 @@ namespace AnalysisManagerExtractionPlugin
         }
 
         /// <summary>
-        /// Converts Sequest, X!Tandem, Inspect, MSGF+, MSAlign, MODa, or MODPlus output file to a flat file
+        /// Converts SEQUEST, X!Tandem, Inspect, MS-GF+, MSAlign, MODa, or MODPlus output file to a flat file
         /// </summary>
-        /// <returns>CloseOutType enum indicating success or failure</returns>
-        /// <remarks></remarks>
+        /// <param name="peptideSearchResultsFileName"></param>
+        /// <param name="createFirstHitsFile"></param>
+        /// <param name="createSynopsisFile"></param>
+        /// <param name="fastaFilePath"></param>
+        /// <param name="resultType"></param>
+        /// <returns>Enum indicating success or failure</returns>
         public CloseOutType ExtractDataFromResults(
             string peptideSearchResultsFileName,
             bool createFirstHitsFile,
