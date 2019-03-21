@@ -138,14 +138,6 @@
     <Content Include="LITENING.ICO" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Plugins\AM_TopFD_Plugin\AnalysisManagerTopFDPlugIn.csproj">
-      <Project>{c41ef735-13a0-4b9d-b4e1-4867c1f9450f}</Project>
-      <Name>AnalysisManagerTopFDPlugIn</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Plugins\AM_TopPIC_Plugin\AnalysisManagerTopPICPlugIn.csproj">
-      <Project>{0e0afb73-3bac-4093-8f25-b411e8416623}</Project>
-      <Name>AnalysisManagerTopPICPlugIn</Name>
-    </ProjectReference>
     <ProjectReference Include="AM_Shared\AM_Shared.csproj">
       <Project>{35B6B79E-C3B0-4E3A-B3ED-64167A470D7E}</Project>
       <Name>AM_Shared</Name>

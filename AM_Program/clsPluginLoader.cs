@@ -64,12 +64,12 @@ namespace AnalysisManagerProg
 
             switch (className)
             {
-                case "AnalysisManagerTopFDPlugIn.clsAnalysisToolRunnerTopFD":
-                    myToolRunner = new AnalysisManagerTopFDPlugIn.clsAnalysisToolRunnerTopFD();
-                    break;
-                case "AnalysisManagerTopPICPlugIn.clsAnalysisToolRunnerTopPIC":
-                    myToolRunner = new AnalysisManagerTopPICPlugIn.clsAnalysisToolRunnerTopPIC();
-                    break;
+                //case "AnalysisManagerTopFDPlugIn.clsAnalysisToolRunnerTopFD":
+                //    myToolRunner = new AnalysisManagerTopFDPlugIn.clsAnalysisToolRunnerTopFD();
+                //    break;
+                //case "AnalysisManagerTopPICPlugIn.clsAnalysisToolRunnerTopPIC":
+                //    myToolRunner = new AnalysisManagerTopPICPlugIn.clsAnalysisToolRunnerTopPIC();
+                //    break;
             }
 
             // ReSharper disable once ExpressionIsAlwaysNull
@@ -82,12 +82,12 @@ namespace AnalysisManagerProg
 
             switch (className)
             {
-                case "AnalysisManagerTopFDPlugIn.clsAnalysisResourcesTopFD":
-                    myModule = new AnalysisManagerTopFDPlugIn.clsAnalysisResourcesTopFD();
-                    break;
-                case "AnalysisManagerTopPICPlugIn.clsAnalysisResourcesTopPIC":
-                    myModule = new AnalysisManagerTopPICPlugIn.clsAnalysisResourcesTopPIC();
-                    break;
+                //case "AnalysisManagerTopFDPlugIn.clsAnalysisResourcesTopFD":
+                //    myModule = new AnalysisManagerTopFDPlugIn.clsAnalysisResourcesTopFD();
+                //    break;
+                //case "AnalysisManagerTopPICPlugIn.clsAnalysisResourcesTopPIC":
+                //    myModule = new AnalysisManagerTopPICPlugIn.clsAnalysisResourcesTopPIC();
+                //    break;
             }
 
             // ReSharper disable once ExpressionIsAlwaysNull
