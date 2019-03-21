@@ -3501,6 +3501,8 @@ namespace AnalysisManagerMSGFDBPlugIn
             var peptideCountNoMatch = 0;
             var linesRead = 0;
 
+            var unmatchedPeptides = new List<string>();
+
             try
             {
                 // Validate that none of the results in pepToProtMapFilePath has protein name PROTEIN_NAME_NO_MATCH
@@ -3524,6 +3526,10 @@ namespace AnalysisManagerMSGFDBPlugIn
                         if (dataLine.Contains(PROTEIN_NAME_NO_MATCH))
                         {
                             peptideCountNoMatch += 1;
+                            if (unmatchedPeptides.Count < 5)
+                            {
+                                unmatchedPeptides.Add(dataLine);
+                            }
                         }
                     }
                 }
@@ -3548,14 +3554,26 @@ namespace AnalysisManagerMSGFDBPlugIn
                 // Value between 0 and 100
                 var errorPercent = peptideCountNoMatch / (double)peptideCount * 100.0;
 
-                ErrorMessage = errorPercent.ToString("0.0") + "% of the entries in the peptide to protein map file did not match to a protein in the FASTA file";
+                ErrorMessage = string.Format("{0:F1}% of the entries in the peptide to protein map file did not match to a protein in the FASTA file ({1:N0} / {2:N0})",
+                                             errorPercent, peptideCountNoMatch, peptideCount);
                 OnErrorEvent(ErrorMessage);
+
+                Console.WriteLine();
+                OnDebugEvent(string.Format("First {0} unmatched peptides", unmatchedPeptides.Count));
+
+                foreach (var unmatchedPeptide in unmatchedPeptides)
+                {
+                   Console.WriteLine(unmatchedPeptide);
+                }
+                Console.WriteLine();
 
                 if (ignorePeptideToProteinMapperErrors)
                 {
                     OnWarningEvent("Ignoring protein mapping error since 'IgnorePeptideToProteinMapError' = True");
                     return true;
                 }
+
+                OnWarningEvent("To ignore this error, create job parameter 'IgnorePeptideToProteinMapError' with value 'True'");
 
                 IgnorePreviousErrorEvent?.Invoke(ErrorMessage);
                 return false;
