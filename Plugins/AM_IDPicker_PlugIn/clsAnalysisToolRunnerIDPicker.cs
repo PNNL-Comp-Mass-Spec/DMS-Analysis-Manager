@@ -1375,12 +1375,12 @@ namespace AnalysisManagerIDPickerPlugIn
 
                 // Lookup the version of idpAssemble.exe (which is a .NET app; cannot use idpQonvert.exe since it is a C++ app)
                 var idpAssembleExePath = Path.Combine(mIDPickerProgramFolder, IDPicker_Assemble);
-                StoreToolVersionInfoViaSystemDiagnostics(ref toolVersionInfo, idpAssembleExePath);
+                mToolVersionUtilities.StoreToolVersionInfoViaSystemDiagnostics(ref toolVersionInfo, idpAssembleExePath);
                 toolFiles.Add(new FileInfo(idpAssembleExePath));
 
                 // Lookup the version of idpReport.exe
                 var idpReportExePath = Path.Combine(mIDPickerProgramFolder, IDPicker_Report);
-                StoreToolVersionInfoViaSystemDiagnostics(ref toolVersionInfo, idpReportExePath);
+                mToolVersionUtilities.StoreToolVersionInfoViaSystemDiagnostics(ref toolVersionInfo, idpReportExePath);
                 toolFiles.Add(new FileInfo(idpReportExePath));
 
                 // Also include idpQonvert.exe in toolFiles (version determination does not work)

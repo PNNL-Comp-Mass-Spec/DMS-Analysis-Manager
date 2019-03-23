@@ -123,6 +123,7 @@
     <Compile Include="clsStatusFile.cs" />
     <Compile Include="clsSummaryFile.cs" />
     <Compile Include="clsSystemProcessInfo.cs" />
+    <Compile Include="clsToolVersionUtilities.cs" />
     <Compile Include="clsXMLUtils.cs" />
     <Compile Include="ExceptionClasses.cs" />
     <Compile Include="GlobalSuppressions.cs" />

@@ -2619,7 +2619,7 @@ namespace AnalysisManagerExtractionPlugin
                 // verify that program file exists
                 if (phrpProgDir.Exists)
                 {
-                    StoreToolVersionInfoOneFile64Bit(ref toolVersionInfo, Path.Combine(phrpProgDir.FullName, "PeptideHitResultsProcessor.dll"));
+                    mToolVersionUtilities.StoreToolVersionInfoOneFile64Bit(ref toolVersionInfo, Path.Combine(phrpProgDir.FullName, "PeptideHitResultsProcessor.dll"));
                 }
                 else
                 {
@@ -2646,7 +2646,7 @@ namespace AnalysisManagerExtractionPlugin
                     // verify that program file exists
                     if (mzidMergerDir.Exists)
                     {
-                        StoreToolVersionInfoOneFile64Bit(ref toolVersionInfo, Path.Combine(mzidMergerDir.FullName, "MzidMerger.exe"));
+                        mToolVersionUtilities.StoreToolVersionInfoOneFile64Bit(ref toolVersionInfo, Path.Combine(mzidMergerDir.FullName, "MzidMerger.exe"));
                     }
                     else
                     {
@@ -2687,7 +2687,7 @@ namespace AnalysisManagerExtractionPlugin
                     {
                         // Lookup the version of the PeptideProphetLibrary
                         var dllPath = Path.Combine(ioPeptideProphetRunner.DirectoryName, "PeptideProphetLibrary.dll");
-                        success = StoreToolVersionInfoOneFile32Bit(ref toolVersionInfo, dllPath);
+                        success = mToolVersionUtilities.StoreToolVersionInfoOneFile32Bit(ref toolVersionInfo, dllPath);
                     }
 
                     if (!success)

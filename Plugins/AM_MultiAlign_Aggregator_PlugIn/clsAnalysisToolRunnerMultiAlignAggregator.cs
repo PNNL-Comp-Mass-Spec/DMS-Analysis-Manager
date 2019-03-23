@@ -223,7 +223,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
             }
 
             // Lookup the version of the Feature Finder
-            var blnSuccess = StoreToolVersionInfoOneFile64Bit(ref strToolVersionInfo, ioMultiAlignInfo.FullName);
+            var blnSuccess = mToolVersionUtilities.StoreToolVersionInfoOneFile64Bit(ref strToolVersionInfo, ioMultiAlignInfo.FullName);
             if (!blnSuccess)
                 return false;
 
@@ -237,13 +237,13 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
             {
                 // Lookup the version of MultiAlignEngine (in the MultiAlign directory)
                 var strMultiAlignEngineDllLoc = Path.Combine(ioMultiAlignInfo.DirectoryName, "MultiAlignEngine.dll");
-                blnSuccess = StoreToolVersionInfoOneFile64Bit(ref strToolVersionInfo, strMultiAlignEngineDllLoc);
+                blnSuccess = mToolVersionUtilities.StoreToolVersionInfoOneFile64Bit(ref strToolVersionInfo, strMultiAlignEngineDllLoc);
                 if (!blnSuccess)
                     return false;
 
                 // Lookup the version of MultiAlignCore (in the MultiAlign directory)
                 var strMultiAlignCoreDllLoc = Path.Combine(ioMultiAlignInfo.DirectoryName, "MultiAlignCore.dll");
-                blnSuccess = StoreToolVersionInfoOneFile64Bit(ref strToolVersionInfo, strMultiAlignCoreDllLoc);
+                blnSuccess = mToolVersionUtilities.StoreToolVersionInfoOneFile64Bit(ref strToolVersionInfo, strMultiAlignCoreDllLoc);
                 if (!blnSuccess)
                     return false;
 

@@ -607,7 +607,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
         /// <remarks></remarks>
         private bool StoreToolVersionInfo()
         {
-            var strToolVersionInfo = string.Empty;
+            var toolVersionInfo = string.Empty;
 
             if (mDebugLevel >= 2)
             {
@@ -667,7 +667,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
             try
             {
-                return SetStepTaskToolVersion(strToolVersionInfo, toolFiles, saveToolVersionTextFile: true);
+                return SetStepTaskToolVersion(toolVersionInfo, toolFiles, saveToolVersionTextFile: true);
             }
             catch (Exception ex)
             {

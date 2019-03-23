@@ -713,7 +713,7 @@ namespace AnalysisManagerQCARTPlugin
 
             }
 
-            StoreToolVersionInfoViaSystemDiagnostics(ref toolVersionInfo, fiProgram.FullName);
+            mToolVersionUtilities.StoreToolVersionInfoViaSystemDiagnostics(ref toolVersionInfo, fiProgram.FullName);
 
             // Store paths to key DLLs in toolFiles
             var toolFiles = new List<FileInfo>

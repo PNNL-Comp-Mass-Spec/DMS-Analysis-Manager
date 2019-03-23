@@ -1,8 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Data;
-using System.Data.SqlClient;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -27,11 +24,6 @@ namespace AnalysisManagerBase
     {
 
         #region "Constants"
-
-        /// <summary>
-        /// Stored procedure name for storing the step tool version
-        /// </summary>
-        protected const string SP_NAME_SET_TASK_TOOL_VERSION = "SetStepTaskToolVersion";
 
         /// <summary>
         /// Default date/time format
@@ -181,6 +173,11 @@ namespace AnalysisManagerBase
 
         private DateTime mLastSortUtilityProgress;
 
+        /// <summary>
+        /// Tool Version Utilities
+        /// </summary>
+        protected clsToolVersionUtilities mToolVersionUtilities;
+
         private string mSortUtilityErrorMessage;
 
         /// <summary>
@@ -253,11 +250,6 @@ namespace AnalysisManagerBase
         /// </summary>
         public string StepToolName { get; private set; }
 
-        /// <summary>
-        /// Tool version info file
-        /// </summary>
-        public string ToolVersionInfoFile => "Tool_Version_Info_" + StepToolName + ".txt";
-
         #endregion
 
         #region "Methods"
@@ -324,6 +316,9 @@ namespace AnalysisManagerBase
             RegisterEvents(mDotNetZipTools);
 
             InitFileTools(mMgrName, mDebugLevel);
+
+            mToolVersionUtilities = new clsToolVersionUtilities(mgrParams, jobParams, mJob, mDatasetName, StepToolName, mDebugLevel, mWorkDir);
+            RegisterEvents(mToolVersionUtilities);
 
             mNeedToAbortProcessing = false;
 
@@ -1865,6 +1860,7 @@ namespace AnalysisManagerBase
             errorMessage = "Cannot find Java: " + javaProgLoc;
             return string.Empty;
         }
+
         /// <summary>
         /// Returns the full path to the program to use for converting a dataset to a .mzXML file
         /// </summary>
@@ -2817,7 +2813,7 @@ namespace AnalysisManagerBase
         {
             var toolJobDescription = string.Format("remote tool {0}, job {1}", StepToolName, Job);
 
-            var toolVersionInfoFile = new FileInfo(Path.Combine(mWorkDir, ToolVersionInfoFile));
+            var toolVersionInfoFile = new FileInfo(Path.Combine(mWorkDir, mToolVersionUtilities.ToolVersionInfoFile));
             if (!toolVersionInfoFile.Exists)
             {
                 LogErrorNoMessageUpdate(
@@ -2833,7 +2829,7 @@ namespace AnalysisManagerBase
                         LogDebug("Storing tool version info in DB for " + toolJobDescription);
 
                         var toolVersionInfo = reader.ReadLine();
-                        StoreToolVersionInDatabase(toolVersionInfo);
+                        mToolVersionUtilities.StoreToolVersionInDatabase(toolVersionInfo);
                     }
                 }
             }
@@ -3136,98 +3132,6 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Extracts the contents of the Version= line in a Tool Version Info file
-        /// </summary>
-        /// <param name="dllFilePath"></param>
-        /// <param name="versionInfoFilePath"></param>
-        /// <param name="version"></param>
-        /// <returns></returns>
-        /// <remarks></remarks>
-        protected bool ReadVersionInfoFile(string dllFilePath, string versionInfoFilePath, out string version)
-        {
-
-            version = string.Empty;
-            var success = false;
-
-            try
-            {
-                if (!File.Exists(versionInfoFilePath))
-                {
-                    LogMessage("Version Info File not found: " + versionInfoFilePath, 0, true);
-                    return false;
-                }
-
-                // Open versionInfoFilePath and read the Version= line
-                using (var reader = new StreamReader(new FileStream(versionInfoFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
-                {
-
-                    while (!reader.EndOfStream)
-                    {
-                        var dataLine = reader.ReadLine();
-
-                        if (string.IsNullOrWhiteSpace(dataLine))
-                        {
-                            continue;
-                        }
-
-                        var equalsLoc = dataLine.IndexOf('=');
-
-                        if (equalsLoc <= 0)
-                            continue;
-
-                        var key = dataLine.Substring(0, equalsLoc);
-                        string value;
-
-                        if (equalsLoc < dataLine.Length)
-                        {
-                            value = dataLine.Substring(equalsLoc + 1);
-                        }
-                        else
-                        {
-                            value = string.Empty;
-                        }
-
-                        switch (key.ToLower())
-                        {
-                            case "filename":
-                                break;
-                            case "path":
-                                break;
-                            case "version":
-                                version = string.Copy(value);
-                                if (string.IsNullOrWhiteSpace(version))
-                                {
-                                    LogMessage("Empty version line in Version Info file for " + Path.GetFileName(dllFilePath), 0, true);
-                                    success = false;
-                                }
-                                else
-                                {
-                                    success = true;
-                                }
-                                break;
-                            case "error":
-                                LogMessage("Error reported by DLLVersionInspector for " + Path.GetFileName(dllFilePath) + ": " + value, 0, true);
-                                success = false;
-                                break;
-                                // default:
-                                // Ignore the line
-
-                        }
-                    }
-
-                }
-
-            }
-            catch (Exception ex)
-            {
-                LogError("Error reading Version Info File for " + Path.GetFileName(dllFilePath), ex);
-            }
-
-            return success;
-
-        }
-
-        /// <summary>
         /// Deletes files in specified directory that have been previously flagged as not wanted in results directory
         /// </summary>
         /// <returns>TRUE for success; FALSE for failure</returns>
@@ -3423,142 +3327,6 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Creates a Tool Version Info file
-        /// </summary>
-        /// <param name="directoryPath"></param>
-        /// <param name="toolVersionInfo"></param>
-        /// <returns></returns>
-        /// <remarks></remarks>
-        protected bool SaveToolVersionInfoFile(string directoryPath, string toolVersionInfo)
-        {
-
-            try
-            {
-                var toolVersionFilePath = Path.Combine(directoryPath, ToolVersionInfoFile);
-
-                using (var writer = new StreamWriter(new FileStream(toolVersionFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
-                {
-
-                    writer.WriteLine("Date: " + DateTime.Now.ToString(DATE_TIME_FORMAT));
-                    writer.WriteLine("Dataset: " + Dataset);
-                    writer.WriteLine("Job: " + Job);
-                    writer.WriteLine("Step: " + mJobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Step"));
-                    writer.WriteLine("Tool: " + mJobParams.GetParam("StepTool"));
-                    writer.WriteLine("ToolVersionInfo:");
-
-                    writer.WriteLine(toolVersionInfo.Replace("; ", Environment.NewLine));
-
-                }
-
-            }
-            catch (Exception ex)
-            {
-                LogError("Exception saving tool version info", ex);
-                return false;
-            }
-
-            return true;
-
-        }
-
-        /// <summary>
-        /// Communicates with database to record the tool version(s) for the current step task
-        /// </summary>
-        /// <param name="toolVersionInfo">Version info (maximum length is 900 characters)</param>
-        /// <returns>True for success, False for failure</returns>
-        /// <remarks>This procedure should be called once the version (or versions) of the tools associated with the current step have been determined</remarks>
-        protected bool SetStepTaskToolVersion(string toolVersionInfo)
-        {
-            return SetStepTaskToolVersion(toolVersionInfo, new List<FileInfo>());
-        }
-
-        /// <summary>
-        /// Communicates with database to record the tool version(s) for the current step task
-        /// </summary>
-        /// <param name="toolVersionInfo">Version info (maximum length is 900 characters)</param>
-        /// <param name="toolFiles">FileSystemInfo list of program files related to the step tool</param>
-        /// <returns>True for success, False for failure</returns>
-        /// <remarks>This procedure should be called once the version (or versions) of the tools associated with the current step have been determined</remarks>
-        protected bool SetStepTaskToolVersion(string toolVersionInfo, List<FileInfo> toolFiles)
-        {
-
-            return SetStepTaskToolVersion(toolVersionInfo, toolFiles, true);
-        }
-
-        /// <summary>
-        /// Communicates with database to record the tool version(s) for the current step task
-        /// </summary>
-        /// <param name="toolVersionInfo">Version info (maximum length is 900 characters)</param>
-        /// <param name="toolFiles">FileSystemInfo list of program files related to the step tool</param>
-        /// <returns>True for success, False for failure</returns>
-        /// <remarks>This procedure should be called once the version (or versions) of the tools associated with the current step have been determined</remarks>
-        protected bool SetStepTaskToolVersion(string toolVersionInfo, IEnumerable<FileInfo> toolFiles)
-        {
-
-            return SetStepTaskToolVersion(toolVersionInfo, toolFiles, true);
-        }
-
-        /// <summary>
-        /// Communicates with database to record the tool version(s) for the current step task
-        /// </summary>
-        /// <param name="toolVersionInfo">Version info (maximum length is 900 characters)</param>
-        /// <param name="toolFiles">FileSystemInfo list of program files related to the step tool</param>
-        /// <param name="saveToolVersionTextFile">If true, creates a text file with the tool version information</param>
-        /// <returns>True for success, False for failure</returns>
-        /// <remarks>This procedure should be called once the version (or versions) of the tools associated with the current step have been determined</remarks>
-        protected bool SetStepTaskToolVersion(string toolVersionInfo, IEnumerable<FileInfo> toolFiles, bool saveToolVersionTextFile)
-        {
-
-            var exeInfo = string.Empty;
-            string toolVersionInfoCombined;
-
-            if (toolFiles != null)
-            {
-                foreach (var toolFile in toolFiles)
-                {
-                    try
-                    {
-                        if (toolFile.Exists)
-                        {
-                            exeInfo = clsGlobal.AppendToComment(exeInfo, toolFile.Name + ": " + toolFile.LastWriteTime.ToString(DATE_TIME_FORMAT));
-                            LogMessage("EXE Info: " + exeInfo, 2);
-                        }
-                        else
-                        {
-                            LogMessage("Warning: Tool file not found: " + toolFile.FullName);
-                        }
-
-                    }
-                    catch (Exception ex)
-                    {
-                        LogError("Exception looking up tool version file info", ex);
-                    }
-                }
-            }
-
-            // Append the .Exe info to toolVersionInfo
-            if (string.IsNullOrEmpty(exeInfo))
-            {
-                toolVersionInfoCombined = string.Copy(toolVersionInfo);
-            }
-            else
-            {
-                toolVersionInfoCombined = clsGlobal.AppendToComment(toolVersionInfo, exeInfo);
-            }
-
-            if (saveToolVersionTextFile)
-            {
-                SaveToolVersionInfoFile(mWorkDir, toolVersionInfoCombined);
-            }
-
-            if (clsGlobal.OfflineMode)
-                return true;
-
-            var success = StoreToolVersionInDatabase(toolVersionInfoCombined);
-            return success;
-        }
-
-        /// <summary>
         /// Sort a text file
         /// </summary>
         /// <param name="textFilePath">File to sort</param>
@@ -3611,14 +3379,26 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
+        /// Communicates with database to record the tool version(s) for the current step task
+        /// </summary>
+        /// <param name="toolVersionInfo">Version info (maximum length is 900 characters)</param>
+        /// <param name="toolFiles">FileSystemInfo list of program files related to the step tool</param>
+        /// <param name="saveToolVersionTextFile">If true, creates a text file with the tool version information</param>
+        /// <returns>True for success, False for failure</returns>
+        /// <remarks>This procedure should be called once the version (or versions) of the tools associated with the current step have been determined</remarks>
+        public bool SetStepTaskToolVersion(string toolVersionInfo, IEnumerable<FileInfo> toolFiles, bool saveToolVersionTextFile = true)
+        {
+            return mToolVersionUtilities.SetStepTaskToolVersion(toolVersionInfo, toolFiles, saveToolVersionTextFile);
+        }
+        /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
         /// <param name="progLoc">Path to the primary .exe or .DLL</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks>This method is appropriate for plugins that call a .NET executable</remarks>
-        public bool StoreDotNETToolVersionInfo(string progLoc)
+        protected bool StoreDotNETToolVersionInfo(string progLoc)
         {
-            return StoreDotNETToolVersionInfo(progLoc, new List<string>());
+            return mToolVersionUtilities.StoreDotNETToolVersionInfo(progLoc);
         }
 
         /// <summary>
@@ -3628,118 +3408,9 @@ namespace AnalysisManagerBase
         /// <param name="additionalDLLs">Additional .NET DLLs to examine (either simply names or full paths)</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks>This method is appropriate for plugins that call a .NET executable</remarks>
-        protected bool StoreDotNETToolVersionInfo(string progLoc, List<string> additionalDLLs)
+        protected bool StoreDotNETToolVersionInfo(string progLoc, IReadOnlyCollection<string> additionalDLLs)
         {
-
-            var toolVersionInfo = string.Empty;
-
-            if (mDebugLevel >= 2)
-            {
-                LogDebug("Determining tool version info");
-            }
-
-            var programInfo = new FileInfo(progLoc);
-            if (!programInfo.Exists)
-            {
-                try
-                {
-                    return SetStepTaskToolVersion("Unknown", new List<FileInfo>(), saveToolVersionTextFile: false);
-                }
-                catch (Exception ex)
-                {
-                    LogError("Exception calling SetStepTaskToolVersion", ex);
-                    return false;
-                }
-
-            }
-
-            // Lookup the version of the .NET program
-            StoreToolVersionInfoViaSystemDiagnostics(ref toolVersionInfo, programInfo.FullName);
-
-            // Store the path to the .exe or .dll in toolFiles
-            var toolFiles = new List<FileInfo>
-            {
-                programInfo
-            };
-
-            if (additionalDLLs != null)
-            {
-                // Add paths to key DLLs
-                foreach (var dllNameOrPath in additionalDLLs)
-                {
-                    if (Path.IsPathRooted(dllNameOrPath) || dllNameOrPath.Contains(Path.DirectorySeparatorChar))
-                    {
-                        // Absolute or relative path; use as is
-                        toolFiles.Add(new FileInfo(dllNameOrPath));
-                        continue;
-                    }
-
-                    // Assume simply a filename
-                    if (programInfo.Directory == null)
-                    {
-                        // Unable to determine the directory path for programInfo; this shouldn't happen
-                        toolFiles.Add(new FileInfo(dllNameOrPath));
-                    }
-                    else
-                    {
-                        // Add it as a relative path to programInfo
-                        toolFiles.Add(new FileInfo(Path.Combine(programInfo.Directory.FullName, dllNameOrPath)));
-                    }
-                }
-            }
-
-            try
-            {
-                var success = SetStepTaskToolVersion(toolVersionInfo, toolFiles, saveToolVersionTextFile: false);
-                return success;
-            }
-            catch (Exception ex)
-            {
-                LogError("Exception calling SetStepTaskToolVersion", ex);
-                return false;
-            }
-
-        }
-
-        private bool StoreToolVersionInDatabase(string toolVersionInfo)
-        {
-
-            // Setup for execution of the stored procedure
-            var cmd = new SqlCommand
-            {
-                CommandType = CommandType.StoredProcedure,
-                CommandText = SP_NAME_SET_TASK_TOOL_VERSION
-            };
-
-            cmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
-            cmd.Parameters.Add(new SqlParameter("@job", SqlDbType.Int)).Value = mJobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Job", 0);
-            cmd.Parameters.Add(new SqlParameter("@step", SqlDbType.Int)).Value = mJobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Step", 0);
-            cmd.Parameters.Add(new SqlParameter("@ToolVersionInfo", SqlDbType.VarChar, 900)).Value = toolVersionInfo;
-
-            var analysisTask = new clsAnalysisJob(mMgrParams, mDebugLevel);
-
-            // Execute the stored procedure (retry the call up to 4 times)
-            var resCode = analysisTask.PipelineDBProcedureExecutor.ExecuteSP(cmd, 4);
-
-            if (resCode == 0)
-            {
-                return true;
-            }
-
-            LogMessage("Error " + resCode + " storing tool version in database for current processing step", 0, true);
-            return false;
-        }
-
-        /// <summary>
-        /// Uses Reflection to determine the version info for an assembly already loaded in memory
-        /// </summary>
-        /// <param name="toolVersionInfo">Version info string to append the version info to</param>
-        /// <param name="assemblyName">Assembly Name</param>
-        /// <returns>True if success; false if an error</returns>
-        /// <remarks>Use StoreToolVersionInfoOneFile for DLLs not loaded in memory</remarks>
-        protected bool StoreToolVersionInfoForLoadedAssembly(ref string toolVersionInfo, string assemblyName)
-        {
-            return StoreToolVersionInfoForLoadedAssembly(ref toolVersionInfo, assemblyName, includeRevision: true);
+            return mToolVersionUtilities.StoreDotNETToolVersionInfo(progLoc, additionalDLLs);
         }
 
         /// <summary>
@@ -3750,34 +3421,9 @@ namespace AnalysisManagerBase
         /// <param name="includeRevision">Set to True to include a version of the form 1.5.4821.24755; set to omit the revision, giving a version of the form 1.5.4821</param>
         /// <returns>True if success; false if an error</returns>
         /// <remarks>Use StoreToolVersionInfoOneFile for DLLs not loaded in memory</remarks>
-        protected bool StoreToolVersionInfoForLoadedAssembly(ref string toolVersionInfo, string assemblyName, bool includeRevision)
+        protected bool StoreToolVersionInfoForLoadedAssembly(ref string toolVersionInfo, string assemblyName, bool includeRevision = true)
         {
-
-            try
-            {
-                var assembly = System.Reflection.Assembly.Load(assemblyName).GetName();
-
-                string nameAndVersion;
-                if (includeRevision)
-                {
-                    nameAndVersion = assembly.Name + ", Version=" + assembly.Version;
-                }
-                else
-                {
-                    nameAndVersion = assembly.Name + ", Version=" + assembly.Version.Major + "." + assembly.Version.Minor + "." + assembly.Version.Build;
-                }
-
-                toolVersionInfo = clsGlobal.AppendToComment(toolVersionInfo, nameAndVersion);
-
-            }
-            catch (Exception ex)
-            {
-                LogError("Exception determining Assembly info for " + assemblyName, ex);
-                return false;
-            }
-
-            return true;
-
+            return mToolVersionUtilities.StoreToolVersionInfoForLoadedAssembly(ref toolVersionInfo, assemblyName, includeRevision);
         }
 
         /// <summary>
@@ -3790,242 +3436,7 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public bool StoreToolVersionInfoOneFile(ref string toolVersionInfo, string dllFilePath)
         {
-
-            bool success;
-
-            try
-            {
-                var dllFileInfo = new FileInfo(dllFilePath);
-
-                if (!dllFileInfo.Exists)
-                {
-                    LogMessage("Warning: File not found by StoreToolVersionInfoOneFile: " + dllFilePath);
-                    return false;
-
-                }
-
-                var assembly = System.Reflection.Assembly.LoadFrom(dllFileInfo.FullName);
-                var assemblyName = assembly.GetName();
-
-                var nameAndVersion = assemblyName.Name + ", Version=" + assemblyName.Version;
-                toolVersionInfo = clsGlobal.AppendToComment(toolVersionInfo, nameAndVersion);
-
-                success = true;
-            }
-            catch (BadImageFormatException)
-            {
-                // Most likely trying to read a 64-bit DLL (if this program is running as 32-bit)
-                // Or, if this program is AnyCPU and running as 64-bit, the target DLL or Exe must be 32-bit
-
-                // Instead try StoreToolVersionInfoOneFile32Bit or StoreToolVersionInfoOneFile64Bit
-
-                // Use this when compiled as AnyCPU
-                success = StoreToolVersionInfoOneFile32Bit(ref toolVersionInfo, dllFilePath);
-
-                // Use this when compiled as 32-bit
-                // success = StoreToolVersionInfoOneFile64Bit(toolVersionInfo, dllFilePath)
-
-            }
-            catch (Exception ex)
-            {
-                // If you get an exception regarding .NET 4.0 not being able to read a .NET 1.0 runtime, add these lines to the end of file AnalysisManagerProg.exe.config
-                //  <startup useLegacyV2RuntimeActivationPolicy="true">
-                //    <supportedRuntime version="v4.0" />
-                //  </startup>
-                LogError("Exception determining Assembly info for " + Path.GetFileName(dllFilePath), ex);
-                success = false;
-            }
-
-            if (!success)
-            {
-                success = StoreToolVersionInfoViaSystemDiagnostics(ref toolVersionInfo, dllFilePath);
-            }
-
-            return success;
-
-        }
-
-        /// <summary>
-        /// Determines the version info for a .NET DLL using System.Diagnostics.FileVersionInfo
-        /// </summary>
-        /// <param name="toolVersionInfo">Version info string to append the version info to</param>
-        /// <param name="dllFilePath">Path to the DLL</param>
-        /// <returns>True if success; false if an error</returns>
-        /// <remarks></remarks>
-        protected bool StoreToolVersionInfoViaSystemDiagnostics(ref string toolVersionInfo, string dllFilePath)
-        {
-
-            try
-            {
-                var dllFileInfo = new FileInfo(dllFilePath);
-
-                if (!dllFileInfo.Exists)
-                {
-                    mMessage = "File not found by StoreToolVersionInfoViaSystemDiagnostics";
-                    LogMessage(mMessage + ": " + dllFilePath);
-                    return false;
-                }
-
-                var oFileVersionInfo = FileVersionInfo.GetVersionInfo(dllFilePath);
-
-                var name = oFileVersionInfo.FileDescription;
-                if (string.IsNullOrEmpty(name))
-                {
-                    name = oFileVersionInfo.InternalName;
-                }
-
-                if (string.IsNullOrEmpty(name))
-                {
-                    name = oFileVersionInfo.FileName;
-                }
-
-                if (string.IsNullOrEmpty(name))
-                {
-                    name = dllFileInfo.Name;
-                }
-
-                var version = oFileVersionInfo.FileVersion;
-                if (string.IsNullOrEmpty(version))
-                {
-                    version = oFileVersionInfo.ProductVersion;
-                }
-
-                if (string.IsNullOrEmpty(version))
-                {
-                    version = "??";
-                }
-
-                var nameAndVersion = name + ", Version=" + version;
-                toolVersionInfo = clsGlobal.AppendToComment(toolVersionInfo, nameAndVersion);
-
-                return true;
-
-            }
-            catch (Exception ex)
-            {
-                LogError("Exception determining File Version for " + Path.GetFileName(dllFilePath), ex);
-                return false;
-            }
-
-        }
-
-        /// <summary>
-        /// Uses the DLLVersionInspector to determine the version of a 32-bit .NET DLL or .Exe
-        /// </summary>
-        /// <param name="toolVersionInfo"></param>
-        /// <param name="dllFilePath"></param>
-        /// <returns>True if success; false if an error</returns>
-        /// <remarks></remarks>
-        protected bool StoreToolVersionInfoOneFile32Bit(ref string toolVersionInfo, string dllFilePath)
-        {
-            return StoreToolVersionInfoOneFileUseExe(ref toolVersionInfo, dllFilePath, "DLLVersionInspector_x86.exe");
-        }
-
-        /// <summary>
-        /// Uses the DLLVersionInspector to determine the version of a 64-bit .NET DLL or .Exe
-        /// </summary>
-        /// <param name="toolVersionInfo"></param>
-        /// <param name="dllFilePath"></param>
-        /// <returns>True if success; false if an error</returns>
-        /// <remarks></remarks>
-        protected bool StoreToolVersionInfoOneFile64Bit(ref string toolVersionInfo, string dllFilePath)
-        {
-            return StoreToolVersionInfoOneFileUseExe(ref toolVersionInfo, dllFilePath, "DLLVersionInspector_x64.exe");
-        }
-
-        /// <summary>
-        /// Uses the specified DLLVersionInspector to determine the version of a .NET DLL or .Exe
-        /// </summary>
-        /// <param name="toolVersionInfo"></param>
-        /// <param name="dllFilePath"></param>
-        /// <param name="versionInspectorExeName">DLLVersionInspector_x86.exe or DLLVersionInspector_x64.exe</param>
-        /// <returns>True if success; false if an error</returns>
-        /// <remarks></remarks>
-        protected bool StoreToolVersionInfoOneFileUseExe(ref string toolVersionInfo, string dllFilePath, string versionInspectorExeName)
-        {
-
-            try
-            {
-                var appPath = Path.Combine(clsGlobal.GetAppDirectoryPath(), versionInspectorExeName);
-
-                var dllFileInfo = new FileInfo(dllFilePath);
-
-                if (!dllFileInfo.Exists)
-                {
-                    mMessage = "File not found by StoreToolVersionInfoOneFileUseExe";
-                    LogMessage(mMessage + ": " + dllFilePath, 0, true);
-                    return false;
-                }
-
-                if (!File.Exists(appPath))
-                {
-                    mMessage = "DLLVersionInspector not found by StoreToolVersionInfoOneFileUseExe";
-                    LogMessage(mMessage + ": " + appPath, 0, true);
-                    return false;
-                }
-
-                // Call DLLVersionInspector_x86.exe or DLLVersionInspector_x64.exe to determine the tool version
-
-                var versionInfoFilePath = Path.Combine(mWorkDir, Path.GetFileNameWithoutExtension(dllFileInfo.Name) + "_VersionInfo.txt");
-
-
-                var args = PossiblyQuotePath(dllFileInfo.FullName) + " /O:" + PossiblyQuotePath(versionInfoFilePath);
-
-                if (mDebugLevel >= 3)
-                {
-                    LogDebug(appPath + " " + args);
-                }
-
-                var progRunner = new clsRunDosProgram(clsGlobal.GetAppDirectoryPath(), mDebugLevel)
-                {
-                    CacheStandardOutput = false,
-                    CreateNoWindow = true,
-                    EchoOutputToConsole = true,
-                    WriteConsoleOutputToFile = false,
-                    MonitorInterval = 250
-                };
-                RegisterEvents(progRunner);
-
-                var success = progRunner.RunProgram(appPath, args, "DLLVersionInspector", false);
-
-                if (!success)
-                {
-                    return false;
-                }
-
-                success = ReadVersionInfoFile(dllFilePath, versionInfoFilePath, out var version);
-
-                // Delete the version info file
-                try
-                {
-                    if (File.Exists(versionInfoFilePath))
-                    {
-                        File.Delete(versionInfoFilePath);
-                    }
-                }
-                catch (Exception)
-                {
-                    // Ignore errors here
-                }
-
-                if (!success || string.IsNullOrWhiteSpace(version))
-                {
-                    return false;
-                }
-
-                toolVersionInfo = clsGlobal.AppendToComment(toolVersionInfo, version);
-
-                return true;
-
-            }
-            catch (Exception ex)
-            {
-                var msg = "Exception determining Version info for " + Path.GetFileName(dllFilePath);
-                LogError(msg, msg + " using " + versionInspectorExeName, ex);
-            }
-
-            return false;
-
+            return mToolVersionUtilities.StoreToolVersionInfoOneFile(ref toolVersionInfo, dllFilePath);
         }
 
         /// <summary>

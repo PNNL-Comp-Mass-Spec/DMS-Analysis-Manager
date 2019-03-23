@@ -212,7 +212,7 @@ namespace AnalysisManagerMultiAlignPlugIn
             }
 
             // Lookup the version of MultiAlign
-            var blnSuccess = StoreToolVersionInfoOneFile64Bit(ref strToolVersionInfo, ioMultiAlignProg.FullName);
+            var blnSuccess = mToolVersionUtilities.StoreToolVersionInfoOneFile64Bit(ref strToolVersionInfo, ioMultiAlignProg.FullName);
             if (!blnSuccess)
                 return false;
 
@@ -221,21 +221,21 @@ namespace AnalysisManagerMultiAlignPlugIn
             if (ioMultiAlignProg.DirectoryName != null)
             {
                 // Lookup the version of additional DLLs
-                blnSuccess = StoreToolVersionInfoOneFile64Bit(ref strToolVersionInfo, Path.Combine(ioMultiAlignProg.DirectoryName, "PNNLOmics.dll"));
+                blnSuccess = mToolVersionUtilities.StoreToolVersionInfoOneFile64Bit(ref strToolVersionInfo, Path.Combine(ioMultiAlignProg.DirectoryName, "PNNLOmics.dll"));
                 if (!blnSuccess)
                     return false;
 
-                blnSuccess = StoreToolVersionInfoOneFile64Bit(ref strToolVersionInfo,
+                blnSuccess = mToolVersionUtilities.StoreToolVersionInfoOneFile64Bit(ref strToolVersionInfo,
                                                               Path.Combine(ioMultiAlignProg.DirectoryName, "MultiAlignEngine.dll"));
                 if (!blnSuccess)
                     return false;
 
-                blnSuccess = StoreToolVersionInfoOneFile64Bit(ref strToolVersionInfo,
+                blnSuccess = mToolVersionUtilities.StoreToolVersionInfoOneFile64Bit(ref strToolVersionInfo,
                                                               Path.Combine(ioMultiAlignProg.DirectoryName, "MultiAlignCore.dll"));
                 if (!blnSuccess)
                     return false;
 
-                blnSuccess = StoreToolVersionInfoOneFile64Bit(ref strToolVersionInfo,
+                blnSuccess = mToolVersionUtilities.StoreToolVersionInfoOneFile64Bit(ref strToolVersionInfo,
                                                               Path.Combine(ioMultiAlignProg.DirectoryName, "PNNLControls.dll"));
                 if (!blnSuccess)
                     return false;

@@ -1017,7 +1017,7 @@ namespace DTASpectraFileGen
                 // Lookup the version of the DeconConsole or DeconMSn application
                 string strDllPath;
 
-                var blnSuccess = StoreToolVersionInfoViaSystemDiagnostics(ref strToolVersionInfo, fiDtaGenerator.FullName);
+                var blnSuccess = mToolVersionUtilities.StoreToolVersionInfoViaSystemDiagnostics(ref strToolVersionInfo, fiDtaGenerator.FullName);
                 if (!blnSuccess)
                     return false;
 

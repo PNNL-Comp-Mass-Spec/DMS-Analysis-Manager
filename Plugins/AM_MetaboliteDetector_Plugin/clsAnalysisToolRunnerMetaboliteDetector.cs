@@ -346,7 +346,7 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
             }
 
             // Lookup the version of the .NET program
-            StoreToolVersionInfoViaSystemDiagnostics(ref strToolVersionInfo, fiProgram.FullName);
+            mToolVersionUtilities.StoreToolVersionInfoViaSystemDiagnostics(ref strToolVersionInfo, fiProgram.FullName);
 
             // Store paths to key DLLs in toolFiles
             var toolFiles = new List<FileInfo>

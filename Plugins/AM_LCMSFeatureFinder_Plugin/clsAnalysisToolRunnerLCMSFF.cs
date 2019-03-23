@@ -168,7 +168,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
             };
 
             // Lookup the version of the Feature Finder
-            var blnSuccess = StoreToolVersionInfoOneFile64Bit(ref strToolVersionInfo, ioFeatureFinderInfo.FullName);
+            var blnSuccess = mToolVersionUtilities.StoreToolVersionInfoOneFile64Bit(ref strToolVersionInfo, ioFeatureFinderInfo.FullName);
             if (!blnSuccess)
                 return false;
 
@@ -179,12 +179,12 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
 
                 toolFiles.Add(new FileInfo(strFeatureFinderDllLoc));
 
-                blnSuccess = StoreToolVersionInfoOneFile64Bit(ref strToolVersionInfo, strFeatureFinderDllLoc);
+                blnSuccess = mToolVersionUtilities.StoreToolVersionInfoOneFile64Bit(ref strToolVersionInfo, strFeatureFinderDllLoc);
                 if (!blnSuccess)
                     return false;
 
                 // Lookup the version of the UIMF Library (in the feature finder folder)
-                blnSuccess = StoreToolVersionInfoOneFile64Bit(ref strToolVersionInfo, Path.Combine(ioFeatureFinderInfo.DirectoryName, "UIMFLibrary.dll"));
+                blnSuccess = mToolVersionUtilities.StoreToolVersionInfoOneFile64Bit(ref strToolVersionInfo, Path.Combine(ioFeatureFinderInfo.DirectoryName, "UIMFLibrary.dll"));
                 if (!blnSuccess)
                     return false;
 

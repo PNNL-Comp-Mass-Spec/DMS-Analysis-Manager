@@ -1320,7 +1320,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             }
 
             // Lookup the version of the DeconConsole application
-            var success = StoreToolVersionInfoViaSystemDiagnostics(ref toolVersionInfo, ioDeconToolsInfo.FullName);
+            var success = mToolVersionUtilities.StoreToolVersionInfoViaSystemDiagnostics(ref toolVersionInfo, ioDeconToolsInfo.FullName);
             if (!success)
                 return false;
 
@@ -1356,13 +1356,13 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             {
                 // Lookup the version of the DeconTools Backend (in the DeconTools folder)
                 deconToolsBackendPath = Path.Combine(ioDeconToolsInfo.DirectoryName, "DeconTools.Backend.dll");
-                success = StoreToolVersionInfoViaSystemDiagnostics(ref toolVersionInfo, deconToolsBackendPath);
+                success = mToolVersionUtilities.StoreToolVersionInfoViaSystemDiagnostics(ref toolVersionInfo, deconToolsBackendPath);
                 if (!success)
                     return false;
 
                 // Lookup the version of the UIMFLibrary (in the DeconTools folder)
                 var dllPath = Path.Combine(ioDeconToolsInfo.DirectoryName, "UIMFLibrary.dll");
-                success = StoreToolVersionInfoViaSystemDiagnostics(ref toolVersionInfo, dllPath);
+                success = mToolVersionUtilities.StoreToolVersionInfoViaSystemDiagnostics(ref toolVersionInfo, dllPath);
                 if (!success)
                     return false;
             }
@@ -1382,7 +1382,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             // ReSharper restore CommentTypo
 
             // dllPath = Path.Combine(ioDeconToolsInfo.DirectoryName, "DeconEngineV2.dll")
-            // success = MyBase.StoreToolVersionInfoViaSystemDiagnostics(ref toolVersionInfo, dllPath)
+            // success = mToolVersionUtilities.StoreToolVersionInfoViaSystemDiagnostics(ref toolVersionInfo, dllPath)
             // If Not success Then Return False
 
             // Store paths to key DLLs in toolFiles

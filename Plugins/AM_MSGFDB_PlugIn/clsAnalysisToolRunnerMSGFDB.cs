@@ -1250,7 +1250,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     {modDefsFile.Name, true},
                     {MSGFPlusUtils.MOD_FILE_NAME, false},     // MSGFPlus_Mods.txt likely will not exist since we switched to using -conf in February 2019
                     {paramFileName, true},
-                    {ToolVersionInfoFile, true}
+                    {mToolVersionUtilities.ToolVersionInfoFile, true}
                 };
 
                 DetermineInputFileFormat(out var eInputFileFormat, out var assumedScanType);
