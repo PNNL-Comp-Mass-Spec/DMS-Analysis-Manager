@@ -667,8 +667,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
             if (recalculatePrecursors)
             {
-                string recalculatePrecursorsTool;
-                var recalculatePrecursorsToolProgLoc = GetRecalculatePrecursorsToolProgLoc(out recalculatePrecursorsTool);
+                var recalculatePrecursorsToolProgLoc = GetRecalculatePrecursorsToolProgLoc(out _);
 
                 if (!string.IsNullOrEmpty(recalculatePrecursorsToolProgLoc))
                 {
