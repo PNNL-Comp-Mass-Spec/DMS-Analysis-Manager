@@ -7,8 +7,8 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
-using PRISM.Logging;
 using PRISM;
+using PRISM.Logging;
 using PRISMWin;
 
 //*********************************************************************************************************
@@ -607,10 +607,10 @@ namespace AnalysisManagerBase
             if (timeoutSeconds < 5)
                 timeoutSeconds = 5;
 
-            var dbTools = new DBTools(connectionString);
-            RegisterEvents(dbTools);
+            var DBTools = new DBTools(connectionString);
+            RegisterEvents(DBTools);
 
-            var success = dbTools.GetQueryResults(sqlQuery, out queryResults, callingFunction, retryCount, timeoutSeconds, maxRowsToReturn);
+            var success = DBTools.GetQueryResults(sqlQuery, out queryResults, callingFunction, retryCount, timeoutSeconds, maxRowsToReturn);
 
             return success;
 
@@ -806,16 +806,7 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public static bool TryGetValue(string[] dataColumns, int colIndex, out string value)
         {
-            if (colIndex >= 0 && colIndex < dataColumns.Length)
-            {
-                value = dataColumns[colIndex];
-                if (string.IsNullOrEmpty(value))
-                    value = string.Empty;
-                return true;
-            }
-
-            value = string.Empty;
-            return false;
+            return PRISM.DataUtils.StringToValueUtils.TryGetValue(dataColumns, colIndex, out value);
         }
 
         /// <summary>
@@ -828,16 +819,7 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public static bool TryGetValueInt(string[] dataColumns, int colIndex, out int value)
         {
-            if (colIndex >= 0 && colIndex < dataColumns.Length)
-            {
-                if (int.TryParse(dataColumns[colIndex], out value))
-                {
-                    return true;
-                }
-            }
-
-            value = 0;
-            return false;
+            return PRISM.DataUtils.StringToValueUtils.TryGetValueInt(dataColumns, colIndex, out value);
         }
 
         /// <summary>
@@ -850,16 +832,7 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public static bool TryGetValueFloat(string[] dataColumns, int colIndex, out float value)
         {
-            if (colIndex >= 0 && colIndex < dataColumns.Length)
-            {
-                if (float.TryParse(dataColumns[colIndex], out value))
-                {
-                    return true;
-                }
-            }
-
-            value = 0;
-            return false;
+            return PRISM.DataUtils.StringToValueUtils.TryGetValueFloat(dataColumns, colIndex, out value);
         }
 
         /// <summary>
@@ -870,12 +843,7 @@ namespace AnalysisManagerBase
         /// <remarks>Returns false if an exception</remarks>
         public static bool CBoolSafe(string value)
         {
-
-            if (bool.TryParse(value, out var boolValue))
-                return boolValue;
-
-            return false;
-
+            return PRISM.DataUtils.StringToValueUtils.CBoolSafe(value);
         }
 
         /// <summary>
@@ -887,12 +855,7 @@ namespace AnalysisManagerBase
         /// <remarks>Returns false if an exception</remarks>
         public static bool CBoolSafe(string value, bool defaultValue)
         {
-
-            if (bool.TryParse(value, out var boolValue))
-                return boolValue;
-
-            return defaultValue;
-
+            return PRISM.DataUtils.StringToValueUtils.CBoolSafe(value, defaultValue);
         }
 
         /// <summary>
@@ -904,12 +867,7 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public static int CIntSafe(string value, int defaultValue)
         {
-
-            if (int.TryParse(value, out var parsedValue))
-                return parsedValue;
-
-            return defaultValue;
-
+            return PRISM.DataUtils.StringToValueUtils.CIntSafe(value, defaultValue);
         }
 
         /// <summary>
@@ -921,12 +879,7 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public static float CSngSafe(string value, float defaultValue)
         {
-
-            if (float.TryParse(value, out var parsedValue))
-                return parsedValue;
-
-            return defaultValue;
-
+            return PRISM.DataUtils.StringToValueUtils.CFloatSafe(value, defaultValue);
         }
 
         /// <summary>
@@ -1028,13 +981,7 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public static string DbCStr(object dbValue)
         {
-            // If input var is DbNull, returns "", otherwise returns String representation of dbValue
-            if (ReferenceEquals(dbValue, DBNull.Value))
-            {
-                return string.Empty;
-            }
-
-            return Convert.ToString(dbValue);
+            return DBTools.GetString(dbValue);
         }
 
         /// <summary>
@@ -1045,15 +992,7 @@ namespace AnalysisManagerBase
         /// <remarks>An exception will be thrown if the value is not numeric</remarks>
         public static float DbCSng(object dbValue)
         {
-
-            // If input var is DbNull, returns "", otherwise returns String representation of var
-            if (ReferenceEquals(dbValue, DBNull.Value))
-            {
-                return (float)0.0;
-            }
-
-            return Convert.ToSingle(dbValue);
-
+            return DBTools.GetFloat(dbValue);
         }
 
         /// <summary>
@@ -1064,15 +1003,7 @@ namespace AnalysisManagerBase
         /// <remarks>An exception will be thrown if the value is not numeric</remarks>
         public static double DbCDbl(object dbValue)
         {
-
-            // If input var is DbNull, returns "", otherwise returns String representation of var
-            if (ReferenceEquals(dbValue, DBNull.Value))
-            {
-                return 0.0;
-            }
-
-            return Convert.ToDouble(dbValue);
-
+            return DBTools.GetDouble(dbValue);
         }
 
         /// <summary>
@@ -1083,15 +1014,7 @@ namespace AnalysisManagerBase
         /// <remarks>An exception will be thrown if the value is not numeric</remarks>
         public static int DbCInt(object dbValue)
         {
-
-            // If input var is DbNull, returns "", otherwise returns String representation of var
-            if (ReferenceEquals(dbValue, DBNull.Value))
-            {
-                return 0;
-            }
-
-            return Convert.ToInt32(dbValue);
-
+            return DBTools.GetInteger(dbValue);
         }
 
         /// <summary>
@@ -1102,35 +1025,7 @@ namespace AnalysisManagerBase
         /// <remarks>An exception will be thrown if the value is not numeric</remarks>
         public static long DbCLng(object dbValue)
         {
-
-            // If input var is DbNull, returns "", otherwise returns String representation of var
-            if (ReferenceEquals(dbValue, DBNull.Value))
-            {
-                return 0;
-            }
-
-            return Convert.ToInt64(dbValue);
-
-        }
-
-        /// <summary>
-        /// Converts an database field value to a decimal, checking for null values
-        /// </summary>
-        /// <param name="dbValue">Value from database</param>
-        /// <returns></returns>
-        /// <remarks>An exception will be thrown if the value is not numeric</remarks>
-        [Obsolete("Decimal data types should be avoided")]
-        public static decimal DbCDec(object dbValue)
-        {
-
-            // If input var is DbNull, returns "", otherwise returns String representation of var
-            if (ReferenceEquals(dbValue, DBNull.Value))
-            {
-                return 0;
-            }
-
-            return Convert.ToDecimal(dbValue);
-
+            return DBTools.GetLong(dbValue);
         }
 
         /// <summary>
