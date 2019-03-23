@@ -1565,6 +1565,19 @@ namespace AnalysisManagerMzRefineryPlugIn
 
             var toolVersionInfo = string.Copy(mMSGFPlusUtils.MSGFPlusVersion);
 
+            // MSConvert
+            var success = mToolVersionUtilities.GetMSConvertToolVersion(mMSConvertProgLoc, out var msConvertVersion);
+            if (!success)
+            {
+                LogError(string.Format("Unable to determine the version of {0}", Path.GetFileName(mMSConvertProgLoc)), true);
+            }
+            else
+            {
+                toolVersionInfo = clsGlobal.AppendToComment(toolVersionInfo, msConvertVersion);
+            }
+
+            mToolVersionUtilities.SaveToolVersionInfoFile(mWorkDir, msConvertVersion, "MSConvert");
+
             // Store paths to key files in toolFiles
             var toolFiles = new List<FileInfo>
             {

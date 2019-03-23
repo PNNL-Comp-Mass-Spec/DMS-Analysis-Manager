@@ -632,8 +632,19 @@ namespace AnalysisManagerMsXmlGenPlugIn
             {
                 // MSConvert
                 // MSConvert.exe is stored in the ProteoWizard folder
-                var ProteoWizardDir = mMgrParams.GetParam("ProteoWizardDir");
-                mMSXmlGeneratorAppPath = Path.Combine(ProteoWizardDir, msXmlGenerator);
+                var proteoWizardDir = mMgrParams.GetParam("ProteoWizardDir");
+                mMSXmlGeneratorAppPath = Path.Combine(proteoWizardDir, msXmlGenerator);
+
+                var success = mToolVersionUtilities.GetMSConvertToolVersion(mMSXmlGeneratorAppPath, out var msConvertVersion);
+                if (!success)
+                {
+                    LogError(string.Format("Unable to determine the version of {0}", msXmlGenerator), true);
+                }else
+                {
+                    toolVersionInfo = clsGlobal.AppendToComment(toolVersionInfo, msConvertVersion);
+                }
+
+                mToolVersionUtilities.SaveToolVersionInfoFile(mWorkDir, msConvertVersion, "MSConvert");
             }
             else
             {
