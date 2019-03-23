@@ -5,7 +5,6 @@ using System.Data.SqlClient;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Windows.Forms;
 using PRISM;
 
 namespace AnalysisManagerBase
@@ -18,10 +17,18 @@ namespace AnalysisManagerBase
         #region "Constants"
 
         /// <summary>
+        /// MSConvert executable name, capitalized
+        /// </summary>
+        public const string MSCONVERT_EXE_NAME = "MSConvert.exe";
+
+        /// <summary>
         /// Stored procedure name for storing the step tool version
         /// </summary>
         private const string SP_NAME_SET_TASK_TOOL_VERSION = "SetStepTaskToolVersion";
 
+        /// <summary>
+        /// Used for tool version info files
+        /// </summary>
         public const string TOOL_VERSION_INFO_PREFIX = "Tool_Version_Info_";
 
         #endregion
@@ -167,7 +174,10 @@ namespace AnalysisManagerBase
                         {
                             // Add the executable name to the build date text, giving, for example:
                             // MSConvert.exe Build date: May 24 2018 22:22:11
-                            versionInfo = clsGlobal.AppendToComment(versionInfo, msConvertInfo.Name + " " + dataLine);
+                            var exeNameAndBuildDate = msConvertInfo.Name.ToLower().Replace(MSCONVERT_EXE_NAME.ToLower(), MSCONVERT_EXE_NAME) + 
+                                                      " " + dataLine;
+
+                            versionInfo = clsGlobal.AppendToComment(versionInfo, exeNameAndBuildDate);
                         }
                     }
                 }

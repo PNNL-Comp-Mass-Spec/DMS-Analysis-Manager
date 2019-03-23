@@ -1913,7 +1913,7 @@ namespace AnalysisManagerBase
             if (string.IsNullOrEmpty(msXmlGeneratorExe))
             {
                 // Assume we're using MSConvert
-                msXmlGeneratorExe = "MSConvert.exe";
+                msXmlGeneratorExe = clsToolVersionUtilities.MSCONVERT_EXE_NAME;
             }
 
             return msXmlGeneratorExe;
@@ -3390,6 +3390,7 @@ namespace AnalysisManagerBase
         {
             return mToolVersionUtilities.SetStepTaskToolVersion(toolVersionInfo, toolFiles, saveToolVersionTextFile);
         }
+
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
