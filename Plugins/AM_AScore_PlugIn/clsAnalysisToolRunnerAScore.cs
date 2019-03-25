@@ -246,7 +246,7 @@ namespace AnalysisManager_AScore_PlugIn
         /// <remarks></remarks>
         private bool StoreToolVersionInfo()
         {
-            var ascoreDll = Path.Combine(clsGlobal.GetAppFolderPath(), "AScore_DLL.dll");
+            var ascoreDll = Path.Combine(clsGlobal.GetAppDirectoryPath(), "AScore_DLL.dll");
             var success = StoreDotNETToolVersionInfo(ascoreDll);
 
             return success;

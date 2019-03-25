@@ -410,7 +410,7 @@ namespace AnalysisManagerDtaSplitPlugIn
         /// <remarks></remarks>
         protected bool StoreToolVersionInfo()
         {
-            var cyclopsDll = Path.Combine(clsGlobal.GetAppFolderPath(), "AnalysisManagerDtaSplitPlugIn.dll");
+            var cyclopsDll = Path.Combine(clsGlobal.GetAppDirectoryPath(), "AnalysisManagerDtaSplitPlugIn.dll");
             var success = StoreDotNETToolVersionInfo(cyclopsDll);
 
             return success;

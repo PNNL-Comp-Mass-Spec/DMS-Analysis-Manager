@@ -167,7 +167,7 @@ namespace AnalysisManager_IDM_Plugin
         /// <remarks></remarks>
         private void StoreToolVersionInfo()
         {
-            var fiIDMdll = Path.Combine(clsGlobal.GetAppFolderPath(), "InterDetect.dll");
+            var fiIDMdll = Path.Combine(clsGlobal.GetAppDirectoryPath(), "InterDetect.dll");
 
             StoreDotNETToolVersionInfo(fiIDMdll);
 

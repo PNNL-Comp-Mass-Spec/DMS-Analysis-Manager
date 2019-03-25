@@ -524,7 +524,7 @@ namespace AnalysisManagerResultsXferPlugin
         protected bool StoreToolVersionInfo()
         {
             var toolVersionInfo = string.Empty;
-            var appFolderPath = clsGlobal.GetAppFolderPath();
+            var appFolderPath = clsGlobal.GetAppDirectoryPath();
 
             if (mDebugLevel >= 2)
             {

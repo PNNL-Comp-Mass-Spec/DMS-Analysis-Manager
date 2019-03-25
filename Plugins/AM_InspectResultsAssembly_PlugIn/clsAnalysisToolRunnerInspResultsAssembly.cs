@@ -974,7 +974,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
         protected bool StoreToolVersionInfo()
         {
             var strToolVersionInfo = string.Empty;
-            var strAppFolderPath = clsGlobal.GetAppFolderPath();
+            var strAppFolderPath = clsGlobal.GetAppDirectoryPath();
 
             if (mDebugLevel >= 2)
             {

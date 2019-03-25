@@ -263,7 +263,7 @@ namespace AnalysisManager_Cyclops_PlugIn
         /// <remarks></remarks>
         private bool StoreToolVersionInfo()
         {
-            var cyclopsDll = Path.Combine(clsGlobal.GetAppFolderPath(), "Cyclops.dll");
+            var cyclopsDll = Path.Combine(clsGlobal.GetAppDirectoryPath(), "Cyclops.dll");
             var success = StoreDotNETToolVersionInfo(cyclopsDll);
 
             return success;

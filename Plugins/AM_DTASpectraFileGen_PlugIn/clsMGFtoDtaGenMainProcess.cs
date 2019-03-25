@@ -32,7 +32,7 @@ namespace DTASpectraFileGen
         {
             base.Setup(initParams, toolRunner);
 
-            mDtaToolNameLoc = Path.Combine(clsGlobal.GetAppFolderPath(), "MascotGenericFileToDTA.dll");
+            mDtaToolNameLoc = Path.Combine(clsGlobal.GetAppDirectoryPath(), "MascotGenericFileToDTA.dll");
         }
 
         public override ProcessStatus Start()
