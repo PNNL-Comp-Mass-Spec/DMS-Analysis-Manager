@@ -115,6 +115,8 @@ namespace AnalysisManagerBase
         /// <param name="versionInfo">Output: version info</param>
         /// <returns>True if success; false if an error</returns>
         /// <remarks></remarks>
+        // ReSharper disable once InconsistentNaming
+        // ReSharper disable once UnusedMember.Global
         public bool GetMSConvertToolVersion(string msConvertPath, out string versionInfo)
         {
             versionInfo = string.Empty;
@@ -713,6 +715,7 @@ namespace AnalysisManagerBase
         /// <param name="dllFilePath"></param>
         /// <returns>True if success; false if an error</returns>
         /// <remarks></remarks>
+        // ReSharper disable once UnusedMember.Global
         public bool StoreToolVersionInfoOneFile64Bit(ref string toolVersionInfo, string dllFilePath)
         {
             return StoreToolVersionInfoOneFileUseExe(ref toolVersionInfo, dllFilePath, "DLLVersionInspector_x64.exe");

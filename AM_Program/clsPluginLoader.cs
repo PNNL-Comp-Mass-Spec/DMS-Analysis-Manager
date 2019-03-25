@@ -63,7 +63,9 @@ namespace AnalysisManagerProg
             IToolRunner myToolRunner = null;
 
             switch (className)
+#pragma warning disable 1522
             {
+#pragma warning restore 1522
                 //case "AnalysisManagerTopFDPlugIn.clsAnalysisToolRunnerTopFD":
                 //    myToolRunner = new AnalysisManagerTopFDPlugIn.clsAnalysisToolRunnerTopFD();
                 //    break;
@@ -81,7 +83,9 @@ namespace AnalysisManagerProg
             IAnalysisResources myModule = null;
 
             switch (className)
+#pragma warning disable 1522
             {
+#pragma warning restore 1522
                 //case "AnalysisManagerTopFDPlugIn.clsAnalysisResourcesTopFD":
                 //    myModule = new AnalysisManagerTopFDPlugIn.clsAnalysisResourcesTopFD();
                 //    break;
