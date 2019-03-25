@@ -140,9 +140,9 @@ namespace AnalysisManagerBase
                     MonitorInterval = 250,
                 };
 
-                progRunner.DebugEvent += this.OnDebugEvent;
-                progRunner.StatusEvent += this.OnStatusEvent;
-                progRunner.WarningEvent += this.OnWarningEvent;
+                progRunner.DebugEvent += OnDebugEvent;
+                progRunner.StatusEvent += OnStatusEvent;
+                progRunner.WarningEvent += OnWarningEvent;
 
                 progRunner.SkipConsoleWriteIfNoErrorListener = true;
 
@@ -175,9 +175,8 @@ namespace AnalysisManagerBase
                         } else if (dataLine.StartsWith("Build date", StringComparison.OrdinalIgnoreCase))
                         {
                             // Add the executable name to the build date text, giving, for example:
-                            // MSConvert.exe Build date: May 24 2018 22:22:11
-                            var exeNameAndBuildDate = msConvertInfo.Name.ToLower().Replace(MSCONVERT_EXE_NAME.ToLower(), MSCONVERT_EXE_NAME) + 
-                                                      " " + dataLine;
+                            // MSConvert Build date: May 24 2018 22:22:11
+                            var exeNameAndBuildDate = Path.GetFileNameWithoutExtension(MSCONVERT_EXE_NAME) + " " + dataLine;
 
                             versionInfo = clsGlobal.AppendToComment(versionInfo, exeNameAndBuildDate);
                         }
