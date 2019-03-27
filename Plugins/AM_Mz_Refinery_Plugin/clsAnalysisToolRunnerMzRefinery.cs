@@ -1577,6 +1577,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 toolVersionInfo = clsGlobal.AppendToComment(toolVersionInfo, msConvertVersion);
             }
 
+            // Create file Tool_Version_Info_MSConvert.txt
             mToolVersionUtilities.SaveToolVersionInfoFile(mWorkDir, msConvertVersion, "MSConvert");
 
             // Store paths to key files in toolFiles

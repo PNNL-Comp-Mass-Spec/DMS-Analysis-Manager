@@ -639,12 +639,15 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 if (!success)
                 {
                     LogError(string.Format("Unable to determine the version of {0}", msXmlGenerator), true);
-                }else
+                }
+                else
                 {
                     toolVersionInfo = clsGlobal.AppendToComment(toolVersionInfo, msConvertVersion);
                 }
 
-                mToolVersionUtilities.SaveToolVersionInfoFile(mWorkDir, msConvertVersion, "MSConvert");
+                // File Tool_Version_Info_MSXML_Gen.txt will contain the MSConvert version,
+                // so the following statement is commented out to prevent the creation of Tool_Version_Info_MSConvert.txt
+                // mToolVersionUtilities.SaveToolVersionInfoFile(mWorkDir, msConvertVersion, "MSConvert");
             }
             else
             {
