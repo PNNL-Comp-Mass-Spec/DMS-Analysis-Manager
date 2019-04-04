@@ -102,6 +102,7 @@ namespace AnalysisManagerExtractionPlugin
                 case RESULT_TYPE_MODA:
                 case RESULT_TYPE_MODPLUS:
                 case RESULT_TYPE_MSPATHFINDER:
+                case RESULT_TYPE_TOPPIC:
                     LogDebug(string.Format("{0} does not support running AScore as part of data extraction", RESULT_TYPE_INSPECT));
                     runAscore = false;
                     break;
@@ -562,6 +563,11 @@ namespace AnalysisManagerExtractionPlugin
 
                     case RESULT_TYPE_MSPATHFINDER:
                         result = GetMSPathFinderFiles();
+                        mJobParams.AddResultFileExtensionToSkip(".tsv");
+                        break;
+
+                    case RESULT_TYPE_TOPPIC:
+                        result = GetTopPICFiles();
                         mJobParams.AddResultFileExtensionToSkip(".tsv");
                         break;
 
@@ -1158,7 +1164,22 @@ namespace AnalysisManagerExtractionPlugin
             mJobParams.AddResultFileExtensionToSkip(".tsv");
 
             // Note that we'll obtain the MSPathFinder parameter file in RetrieveMiscFiles
+            return CloseOutType.CLOSEOUT_SUCCESS;
+        }
 
+        private CloseOutType GetTopPICFiles()
+        {
+            var fileToGet = DatasetName + "_TopPIC_PrSMs.txt";
+
+            if (!FileSearch.FindAndRetrieveMiscFiles(fileToGet, false))
+            {
+                // Errors were reported in function call, so just return
+                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+            }
+
+            mJobParams.AddResultFileToSkip(fileToGet);
+
+            // Note that we'll obtain the TopPIC parameter file in RetrieveMiscFiles
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
@@ -1305,7 +1326,7 @@ namespace AnalysisManagerExtractionPlugin
                     FileSearch.FindAndRetrieveMiscFiles("taxonomy.xml", false);
                 }
 
-                if (!fiModDefsFile.Exists && resultType != RESULT_TYPE_MSALIGN)
+                if (!fiModDefsFile.Exists && resultType != RESULT_TYPE_MSALIGN && resultType != RESULT_TYPE_TOPPIC)
                 {
                     mMessage = "Unable to create the ModDefs.txt file; update T_Param_File_Mass_Mods";
                     LogWarning("Unable to create the ModDefs.txt file; " +

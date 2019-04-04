@@ -236,6 +236,12 @@ namespace AnalysisManagerExtractionPlugin
                         result = RunPHRPForMSPathFinder();
                         break;
 
+                    case clsAnalysisResources.RESULT_TYPE_TOPPIC:
+                        // Run PHRP
+                        currentAction = "running peptide hits result processor for TopPIC";
+                        result = RunPHRPForTopPIC();
+                        break;
+
                     default:
                         // Should never get here - invalid result type specified
                         LogError("Invalid ResultType specified: " + mJobParams.GetParam("ResultType"));
@@ -1862,7 +1868,7 @@ namespace AnalysisManagerExtractionPlugin
                 // Run the processor
                 if (mDebugLevel > 3)
                 {
-                    LogDebug("clsExtractToolRunner.RunPhrpForMODa(); Starting PHRP");
+                    LogDebug("clsExtractToolRunner.RunPhrpForMSPathFinder(); Starting PHRP");
                 }
 
                 var synFilePath = Path.Combine(mWorkDir, mDatasetName + "_mspath_syn.txt");
@@ -1922,7 +1928,84 @@ namespace AnalysisManagerExtractionPlugin
             }
             catch (Exception ex)
             {
-                LogError("Error in RunPhrpForMODa at step " + currentStep, ex);
+                LogError("Error in RunPhrpForMSPathFinder at step " + currentStep, ex);
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+        }
+
+        private CloseOutType RunPHRPForTopPIC()
+        {
+            var currentStep = "Initializing";
+
+            try
+            {
+                var phrp = new clsPepHitResultsProcWrapper(mMgrParams, mJobParams);
+                RegisterPHRPEvents(phrp);
+
+                // Run the processor
+                if (mDebugLevel > 3)
+                {
+                    LogDebug("clsExtractToolRunner.RunPHRPForTopPIC(); Starting PHRP");
+                }
+
+                var synFilePath = Path.Combine(mWorkDir, mDatasetName + "_toppic_syn.txt");
+
+                try
+                {
+                    // The goal:
+                    //   Create the _syn.txt files from the _TopPIC_PrSMs.txt file
+
+                    currentStep = "Looking for the results file";
+
+                    var topPICResultsFilePath = Path.Combine(mWorkDir, mDatasetName + "_TopPIC_PrSMs.txt");
+                    if (!File.Exists(topPICResultsFilePath))
+                    {
+                        LogError("TopPIC results file not found: " + Path.GetFileName(topPICResultsFilePath));
+                        return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+                    }
+
+                    currentStep = "Running PHRP";
+
+                    // Create the Synopsis file using the _TopPIC_PrSMs.txt file
+                    const bool CreateFirstHitsFile = false;
+                    const bool CreateSynopsisFile = true;
+
+                    var result = phrp.ExtractDataFromResults(topPICResultsFilePath, CreateFirstHitsFile, CreateSynopsisFile,
+                        mGeneratedFastaFilePath, clsAnalysisResources.RESULT_TYPE_TOPPIC);
+
+                    if (result == CloseOutType.CLOSEOUT_NO_DATA)
+                    {
+                        // Message has already been logged
+                        return result;
+                    }
+
+                    if (result != CloseOutType.CLOSEOUT_SUCCESS)
+                    {
+                        var msg = "Error running PHRP";
+                        if (!string.IsNullOrWhiteSpace(phrp.ErrMsg))
+                            msg += "; " + phrp.ErrMsg;
+                        LogWarning(msg);
+                        return CloseOutType.CLOSEOUT_FAILED;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    LogError("Exception running PHRP", ex);
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                // Validate that the mass errors are within tolerance
+                var paramFileName = mJobParams.GetParam("ParmFileName");
+                if (!ValidatePHRPResultMassErrors(synFilePath, clsPHRPReader.ePeptideHitResultType.TopPIC, paramFileName))
+                {
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                return CloseOutType.CLOSEOUT_SUCCESS;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error in RunPHRPForTopPIC at step " + currentStep, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
         }
