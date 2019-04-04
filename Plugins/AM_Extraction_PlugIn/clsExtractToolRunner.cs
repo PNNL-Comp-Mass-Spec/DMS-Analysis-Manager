@@ -1842,7 +1842,7 @@ namespace AnalysisManagerExtractionPlugin
 
                 // Validate that the mass errors are within tolerance
                 var paramFileName = mJobParams.GetParam("ParmFileName");
-                if (!ValidatePHRPResultMassErrors(synFilePath, clsPHRPReader.ePeptideHitResultType.MSGFDB, paramFileName))
+                if (!ValidatePHRPResultMassErrors(synFilePath, clsPHRPReader.ePeptideHitResultType.MSGFPlus, paramFileName))
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
                 }

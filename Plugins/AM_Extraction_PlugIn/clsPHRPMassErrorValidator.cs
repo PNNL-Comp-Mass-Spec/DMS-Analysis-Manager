@@ -204,7 +204,7 @@ namespace AnalysisManagerExtractionPlugin
                         var massError = currentPSM.PrecursorNeutralMass - currentPSM.PeptideMonoisotopicMass;
                         double toleranceCurrent;
 
-                        if (eResultType == clsPHRPReader.ePeptideHitResultType.MSGFDB &&
+                        if (eResultType == clsPHRPReader.ePeptideHitResultType.MSGFPlus &&
                             highResMS1 &&
                             currentPSM.TryGetScore("IsotopeError", out var psmIsotopeError))
                         {

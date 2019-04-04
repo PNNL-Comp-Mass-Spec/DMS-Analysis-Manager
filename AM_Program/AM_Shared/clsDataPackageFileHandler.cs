@@ -574,7 +574,7 @@ namespace AnalysisManagerBase
 
                 var datasetName = dataPkgJob.Dataset;
 
-                if (retrievalOptions.RetrieveMzidFiles && dataPkgJob.PeptideHitResultType == clsPHRPReader.ePeptideHitResultType.MSGFDB)
+                if (retrievalOptions.RetrieveMzidFiles && dataPkgJob.PeptideHitResultType == clsPHRPReader.ePeptideHitResultType.MSGFPlus)
                 {
                     // Retrieve MSGF+ .mzid files
                     // They will either be stored as .zip files or as .gz files
