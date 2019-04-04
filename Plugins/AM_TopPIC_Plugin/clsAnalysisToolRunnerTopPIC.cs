@@ -511,12 +511,12 @@ namespace AnalysisManagerTopPICPlugIn
 
             // Create the static and dynamic modification file(s) if any static or dynamic mods are defined
             // Will also update cmdLineOptions to have --fixed-mod and/or --mod-file-name
-            if (!ParseTopPICModifications(ref cmdLineOptions, staticMods, "static", STATIC_MODS_FILE_NAME, "--fixed-mod"))
+            if (!ParseTopPICModifications(ref cmdLineOptions, staticMods, "static", STATIC_MODS_FILE_NAME, "fixed-mod"))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            if (!ParseTopPICModifications(ref cmdLineOptions, dynamicMods, "dynamic", DYNAMIC_MODS_FILE_NAME, "--mod-file-name"))
+            if (!ParseTopPICModifications(ref cmdLineOptions, dynamicMods, "dynamic", DYNAMIC_MODS_FILE_NAME, "mod-file-name"))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
