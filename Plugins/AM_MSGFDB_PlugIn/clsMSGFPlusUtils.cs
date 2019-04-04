@@ -85,7 +85,6 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// </summary>
         private const string MSGFPLUS_OPTION_C13 = "c13";
 
-
         /// <summary>
         /// Custom amino acid definition
         /// </summary>
@@ -3078,6 +3077,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             {
                 if (string.IsNullOrEmpty(datasetName))
                 {
+                    OnWarningEvent("LookupScanTypesForDataset called with empty dataset name");
                     return false;
                 }
 
@@ -3085,9 +3085,9 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 var sqlStr = new StringBuilder();
 
-                sqlStr.Append(" SELECT HMS, MS, [CID-HMSn], [CID-MSn], ");
-                sqlStr.Append("   [HCD-HMSn], [ETD-HMSn], [ETD-MSn], ");
-                sqlStr.Append("   [SA_ETD-HMSn], [SA_ETD-MSn], ");
+                sqlStr.Append(" SELECT HMS, MS, [CID-HMSn], [CID-MSn],");
+                sqlStr.Append("   [HCD-HMSn], [ETD-HMSn], [ETD-MSn],");
+                sqlStr.Append("   [SA_ETD-HMSn], [SA_ETD-MSn],");
                 sqlStr.Append("   HMSn, MSn, ");
                 sqlStr.Append("   [PQD-HMSn], [PQD-MSn]");
                 sqlStr.Append(" FROM V_Dataset_ScanType_CrossTab");
@@ -3567,7 +3567,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 foreach (var unmatchedPeptide in unmatchedPeptides)
                 {
-                   Console.WriteLine(unmatchedPeptide);
+                    Console.WriteLine(unmatchedPeptide);
                 }
                 Console.WriteLine();
 
