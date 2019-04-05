@@ -1,9 +1,9 @@
+using PRISM.Logging;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.IO;
 using System.Xml.Linq;
-using PRISM.Logging;
 
 //*********************************************************************************************************
 // Written by Dave Clark and Matthew Monroe for the US Department of Energy

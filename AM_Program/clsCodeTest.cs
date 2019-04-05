@@ -1,4 +1,9 @@
-﻿using System;
+﻿using AnalysisManagerBase;
+using PRISM;
+using PRISM.AppSettings;
+using PRISM.Logging;
+using Renci.SshNet;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
@@ -10,11 +15,6 @@ using System.Reflection;
 using System.Runtime.Versioning;
 using System.Text;
 using System.Text.RegularExpressions;
-using AnalysisManagerBase;
-using PRISM.Logging;
-using PRISM;
-using PRISM.AppSettings;
-using Renci.SshNet;
 using FileInfo = System.IO.FileInfo;
 
 namespace AnalysisManagerProg

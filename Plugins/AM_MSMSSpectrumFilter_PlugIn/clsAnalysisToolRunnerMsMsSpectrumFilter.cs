@@ -10,13 +10,13 @@
 // Updated July 2009 by MEM to process a _Dta.txt file instead of a folder of .Dta files
 // Updated August 2009 by MEM to generate _ScanStats.txt files, if required
 
+using AnalysisManagerBase;
+using MsMsDataFileReader;
+using MSMSSpectrumFilter;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
-using AnalysisManagerBase;
-using MsMsDataFileReader;
-using MSMSSpectrumFilter;
 
 namespace MSMSSpectrumFilterAM
 {

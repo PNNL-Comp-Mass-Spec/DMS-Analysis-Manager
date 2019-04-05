@@ -1,6 +1,6 @@
+using AnalysisManagerBase;
 using System;
 using System.Linq;
-using AnalysisManagerBase;
 
 namespace AnalysisManagerPRIDEMzXMLPlugIn
 {

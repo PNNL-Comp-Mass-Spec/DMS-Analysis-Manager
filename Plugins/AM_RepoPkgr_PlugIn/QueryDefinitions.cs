@@ -1,7 +1,7 @@
 ﻿
+using PRISM;
 using System;
 using System.Collections.Generic;
-using PRISM;
 
 namespace AnalysisManager_RepoPkgr_PlugIn
 {

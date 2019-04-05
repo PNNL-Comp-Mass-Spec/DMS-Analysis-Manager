@@ -1,10 +1,10 @@
+using PRISM;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Xml;
-using PRISM;
 
 //*********************************************************************************************************
 // Written by Dave Clark and Matthew Monroe for the US Department of Energy

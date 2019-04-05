@@ -6,9 +6,9 @@
 //
 //*********************************************************************************************************
 
+using AnalysisManagerBase;
 using System;
 using System.IO;
-using AnalysisManagerBase;
 
 namespace AnalysisManagerMasicPlugin
 {

@@ -6,11 +6,10 @@
 //
 //*********************************************************************************************************
 
-using System;
-using System.Collections.Generic;
-
 using AnalysisManagerBase;
 using PHRPReader;
+using System;
+using System.Collections.Generic;
 using System.IO;
 
 namespace AnalysisManagerMSGFPlugin

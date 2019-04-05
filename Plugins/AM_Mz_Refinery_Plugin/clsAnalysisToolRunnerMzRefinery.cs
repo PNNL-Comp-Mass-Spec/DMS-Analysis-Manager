@@ -5,16 +5,15 @@
 //
 //*********************************************************************************************************
 
-using System;
-using System.Collections.Generic;
-
 using AnalysisManagerBase;
-using System.IO;
-using System.Linq;
 using AnalysisManagerMSGFDBPlugIn;
-using System.Text.RegularExpressions;
 using MsMsDataFileReader;
 using PRISM;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace AnalysisManagerMzRefineryPlugIn
 {

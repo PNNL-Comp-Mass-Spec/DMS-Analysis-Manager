@@ -5,9 +5,9 @@
 //
 //*********************************************************************************************************
 
+using AnalysisManagerBase;
 using System;
 using System.Collections.Generic;
-using AnalysisManagerBase;
 using System.IO;
 
 namespace AnalysisManagerPBFGenerator

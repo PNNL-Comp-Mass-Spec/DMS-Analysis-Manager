@@ -1,6 +1,6 @@
+using PRISM;
 using System;
 using System.IO;
-using PRISM;
 
 //*********************************************************************************************************
 // Written by Dave Clark and Matthew Monroe for the US Department of Energy

@@ -1,13 +1,13 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.IO;
 using AnalysisManagerBase;
 using Mage;
 using MageExtExtractionFilters;
 using MyEMSLReader;
 using PRISM;
 using PRISM.Logging;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 
 namespace AnalysisManager_AScore_PlugIn
 {

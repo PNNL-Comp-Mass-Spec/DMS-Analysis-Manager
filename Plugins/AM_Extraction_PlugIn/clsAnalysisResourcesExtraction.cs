@@ -6,14 +6,14 @@
 //
 //*********************************************************************************************************
 
+using AnalysisManagerBase;
+using AnalysisManagerMSGFDBPlugIn;
+using PHRPReader;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Xml;
-using AnalysisManagerBase;
-using AnalysisManagerMSGFDBPlugIn;
-using PHRPReader;
 
 namespace AnalysisManagerExtractionPlugin
 {

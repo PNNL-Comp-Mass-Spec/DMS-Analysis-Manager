@@ -7,9 +7,9 @@
 // Next, converts the .MGF file to a _DTA.txt file
 //*********************************************************************************************************
 
+using AnalysisManagerBase;
 using System;
 using System.IO;
-using AnalysisManagerBase;
 
 namespace DTASpectraFileGen
 {

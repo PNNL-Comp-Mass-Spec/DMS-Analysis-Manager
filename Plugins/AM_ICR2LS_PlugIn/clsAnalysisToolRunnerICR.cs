@@ -1,7 +1,7 @@
+using AnalysisManagerBase;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using AnalysisManagerBase;
 
 namespace AnalysisManagerICR2LSPlugIn
 {

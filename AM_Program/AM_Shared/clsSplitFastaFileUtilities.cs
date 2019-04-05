@@ -1,12 +1,12 @@
 ﻿
+using FastaFileSplitterDLL;
+using PRISM;
+using PRISM.Logging;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.IO;
-using FastaFileSplitterDLL;
-using PRISM;
-using PRISM.Logging;
 
 namespace AnalysisManagerBase
 {

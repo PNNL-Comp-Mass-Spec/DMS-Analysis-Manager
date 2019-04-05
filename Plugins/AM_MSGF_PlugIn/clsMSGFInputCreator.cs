@@ -11,13 +11,12 @@
 //
 //*********************************************************************************************************
 
-using System;
-using System.Collections.Generic;
-
-using System.IO;
 using MsMsDataFileReader;
 using PHRPReader;
 using PRISM;
+using System;
+using System.Collections.Generic;
+using System.IO;
 
 namespace AnalysisManagerMSGFPlugin
 {

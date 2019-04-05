@@ -1,8 +1,8 @@
+using AnalysisManagerBase;
+using PHRPReader;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using AnalysisManagerBase;
-using PHRPReader;
 
 namespace AnalysisManagerSMAQCPlugIn
 {

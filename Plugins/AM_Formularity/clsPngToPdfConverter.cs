@@ -1,10 +1,10 @@
-﻿using System;
+﻿using PdfSharp;
+using PdfSharp.Drawing;
+using PdfSharp.Pdf;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using PdfSharp;
-using PdfSharp.Drawing;
-using PdfSharp.Pdf;
 
 namespace AnalysisManagerFormularityPlugin
 {

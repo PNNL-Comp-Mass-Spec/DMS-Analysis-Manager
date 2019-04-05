@@ -1,12 +1,12 @@
-﻿using System;
+﻿using DMSUpdateManager;
+using PRISM;
+using Renci.SshNet.Sftp;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Xml.Linq;
-using DMSUpdateManager;
-using PRISM;
-using Renci.SshNet.Sftp;
 
 namespace AnalysisManagerBase
 {

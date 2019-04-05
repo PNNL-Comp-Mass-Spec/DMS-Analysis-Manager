@@ -1,10 +1,10 @@
-﻿using System;
+﻿using AnalysisManagerBase;
+using PRISM;
+using PRISM.Logging;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
-using AnalysisManagerBase;
-using PRISM;
-using PRISM.Logging;
 
 namespace AnalysisManagerMODPlusPlugin
 {

@@ -1,6 +1,6 @@
-﻿using System;
+﻿using Mage;
+using System;
 using System.Collections.Generic;
-using Mage;
 
 namespace AnalysisManager_AScore_PlugIn
 {

@@ -1,11 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using AnalysisManagerBase;
 using Mage;
 using MageExtExtractionFilters;
-using AnalysisManagerBase;
+using PRISM;
+using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
-using PRISM;
 
 namespace AnalysisManager_Mage_PlugIn
 {

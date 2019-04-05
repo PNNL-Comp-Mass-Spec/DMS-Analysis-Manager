@@ -1,9 +1,9 @@
-﻿using System;
+﻿using AnalysisManagerBase;
+using PHRPReader;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using AnalysisManagerBase;
-using PHRPReader;
 
 namespace AnalysisManagerIDPickerPlugIn
 {

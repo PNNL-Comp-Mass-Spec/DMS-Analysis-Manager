@@ -6,11 +6,10 @@
 //
 //*********************************************************************************************************
 
+using AnalysisManagerBase;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
-using AnalysisManagerBase;
 
 namespace AnalysisManagerDtaSplitPlugIn
 {

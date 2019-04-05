@@ -5,11 +5,11 @@
 //
 //*********************************************************************************************************
 
+using AnalysisManagerBase;
+using PRISM;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using AnalysisManagerBase;
-using PRISM;
 
 namespace AnalysisManagerDtaRefineryPlugIn
 {

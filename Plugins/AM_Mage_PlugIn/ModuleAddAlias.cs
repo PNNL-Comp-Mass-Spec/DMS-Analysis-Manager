@@ -1,6 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using Mage;
+using System.Collections.Generic;
 using System.Linq;
-using Mage;
 
 namespace AnalysisManager_Mage_PlugIn
 {

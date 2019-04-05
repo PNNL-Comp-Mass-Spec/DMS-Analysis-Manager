@@ -1,5 +1,5 @@
-﻿using System;
-using AnalysisManagerBase;
+﻿using AnalysisManagerBase;
+using System;
 
 namespace AnalysisManagerMsXmlGenPlugIn
 {

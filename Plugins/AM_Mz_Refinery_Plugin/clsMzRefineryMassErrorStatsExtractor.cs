@@ -1,7 +1,7 @@
-﻿using System;
+﻿using AnalysisManagerBase;
+using System;
 using System.Data;
 using System.Data.SqlClient;
-using AnalysisManagerBase;
 using System.IO;
 using System.Linq;
 using System.Text;

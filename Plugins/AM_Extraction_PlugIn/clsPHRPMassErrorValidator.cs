@@ -1,9 +1,9 @@
-﻿using System;
+﻿using PHRPReader;
+using PRISM;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using PHRPReader;
-using PRISM;
 
 namespace AnalysisManagerExtractionPlugin
 {

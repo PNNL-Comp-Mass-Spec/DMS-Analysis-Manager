@@ -1,10 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using AnalysisManagerBase;
-using System.IO;
+﻿using AnalysisManagerBase;
 using PRISM;
 using PRISM.Logging;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 
 namespace AnalysisManager_Mage_PlugIn
 {

@@ -1,7 +1,7 @@
 ﻿
+using PRISM;
 using System.Collections.Generic;
 using System.Threading;
-using PRISM;
 
 namespace AnalysisManagerBase
 {

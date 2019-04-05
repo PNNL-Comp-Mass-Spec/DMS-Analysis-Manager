@@ -1,5 +1,5 @@
-﻿using System.Collections.Generic;
-using Mage;
+﻿using Mage;
+using System.Collections.Generic;
 using System.IO;
 
 namespace AnalysisManager_Mage_PlugIn

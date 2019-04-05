@@ -1,9 +1,9 @@
-using System;
-using System.IO;
 using AnalysisManagerBase;
 using InterDetect;
 using PRISM;
 using PRISM.Logging;
+using System;
+using System.IO;
 
 namespace AnalysisManager_IDM_Plugin
 {

@@ -1,3 +1,9 @@
+using MyEMSLReader;
+using ParamFileGenerator.MakeParams;
+using PHRPReader;
+using PRISM;
+using PRISM.Logging;
+using Renci.SshNet.Sftp;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -7,12 +13,6 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml;
 using System.Xml.Linq;
-using MyEMSLReader;
-using ParamFileGenerator.MakeParams;
-using PHRPReader;
-using PRISM;
-using PRISM.Logging;
-using Renci.SshNet.Sftp;
 
 //*********************************************************************************************************
 // Written by Dave Clark and Matthew Monroe for the US Department of Energy

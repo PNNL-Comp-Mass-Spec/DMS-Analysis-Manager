@@ -6,15 +6,15 @@
 //
 //*********************************************************************************************************
 
+using AnalysisManagerBase;
+using PRISM;
+using PRISM.AppSettings;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.IO;
 using System.Xml;
-using AnalysisManagerBase;
-using PRISM;
-using PRISM.AppSettings;
 
 namespace AnalysisManagerProg
 {

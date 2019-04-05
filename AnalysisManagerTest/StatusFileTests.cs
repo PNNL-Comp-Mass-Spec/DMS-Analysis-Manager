@@ -1,7 +1,7 @@
-﻿using System;
-using System.IO;
-using AnalysisManagerBase;
+﻿using AnalysisManagerBase;
 using NUnit.Framework;
+using System;
+using System.IO;
 
 namespace AnalysisManagerTest
 {

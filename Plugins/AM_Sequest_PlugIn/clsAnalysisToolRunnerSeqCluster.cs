@@ -6,6 +6,9 @@
 //
 //*********************************************************************************************************
 
+using AnalysisManagerBase;
+using PRISM;
+using PRISM.Logging;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -13,9 +16,6 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Timers;
-using AnalysisManagerBase;
-using PRISM;
-using PRISM.Logging;
 
 namespace AnalysisManagerSequestPlugin
 {

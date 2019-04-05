@@ -1,10 +1,10 @@
-﻿using System;
+﻿using MyEMSLReader;
+using PRISM;
+using PRISM.Logging;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using PRISM.Logging;
-using MyEMSLReader;
-using PRISM;
 
 // ReSharper disable UnusedMember.Global
 namespace AnalysisManagerBase

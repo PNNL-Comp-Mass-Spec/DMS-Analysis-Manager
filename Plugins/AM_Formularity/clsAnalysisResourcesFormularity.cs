@@ -5,13 +5,13 @@
 **                                                              **
 *****************************************************************/
 
+using AnalysisManagerBase;
+using PRISM;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
-using AnalysisManagerBase;
-using PRISM;
 
 namespace AnalysisManagerFormularityPlugin
 {

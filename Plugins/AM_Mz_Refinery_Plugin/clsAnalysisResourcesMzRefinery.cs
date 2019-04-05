@@ -1,6 +1,5 @@
-﻿using System;
-
-using AnalysisManagerBase;
+﻿using AnalysisManagerBase;
+using System;
 using System.IO;
 
 namespace AnalysisManagerMzRefineryPlugIn

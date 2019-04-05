@@ -1,8 +1,8 @@
 using AnalysisManagerBase;
+using PRISM.Logging;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using PRISM.Logging;
 
 namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 {

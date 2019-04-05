@@ -1,7 +1,7 @@
+using AnalysisManagerBase;
+using Mage;
 using System.Collections.Generic;
 using System.IO;
-using Mage;
-using AnalysisManagerBase;
 
 namespace AnalysisManager_Mage_PlugIn
 {

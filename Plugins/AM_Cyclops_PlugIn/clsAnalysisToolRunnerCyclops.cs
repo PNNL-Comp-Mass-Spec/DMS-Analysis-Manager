@@ -1,9 +1,8 @@
-using System.IO;
-using System.Collections.Generic;
-using System;
 using AnalysisManagerBase;
-
 using Cyclops;
+using System;
+using System.Collections.Generic;
+using System.IO;
 
 namespace AnalysisManager_Cyclops_PlugIn
 {

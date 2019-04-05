@@ -8,10 +8,10 @@
 
 //*********************************************************************************************************
 
+using AnalysisManagerBase;
 using System;
 using System.IO;
 using System.Text.RegularExpressions;
-using AnalysisManagerBase;
 using ThermoRawFileReader;
 
 namespace DTASpectraFileGen

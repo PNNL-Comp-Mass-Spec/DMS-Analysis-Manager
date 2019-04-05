@@ -1,4 +1,7 @@
-﻿using System;
+﻿using AnalysisManagerBase;
+using MyEMSLReader;
+using PHRPReader;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
@@ -6,9 +9,6 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml;
-using AnalysisManagerBase;
-using MyEMSLReader;
-using PHRPReader;
 
 namespace AnalysisManagerPRIDEConverterPlugIn
 {

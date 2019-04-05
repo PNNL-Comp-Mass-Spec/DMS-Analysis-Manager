@@ -1,9 +1,9 @@
-﻿using System;
+﻿using AnalysisManagerBase;
+using System;
 using System.Data;
 using System.Data.SqlClient;
 using System.IO;
 using System.Security.AccessControl;
-using AnalysisManagerBase;
 
 namespace AnalysisManagerProg
 {

@@ -4,8 +4,8 @@ using Mage;
 namespace AnalysisManager_AScore_PlugIn
 {
 
-	// class for managing IMgrParams object
-	public class ManagerParameters
+    // class for managing IMgrParams object
+    public class ManagerParameters
 	{
 		private readonly IMgrParams mMgrParms;
 

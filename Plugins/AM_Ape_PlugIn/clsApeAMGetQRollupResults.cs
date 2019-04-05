@@ -1,9 +1,9 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Data.SqlClient;
 using AnalysisManagerBase;
 using PRISM.Logging;
+using System;
+using System.Collections.Generic;
+using System.Data.SqlClient;
+using System.IO;
 
 namespace AnalysisManager_Ape_PlugIn
 {

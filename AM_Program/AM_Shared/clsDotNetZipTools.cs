@@ -1,9 +1,9 @@
 ﻿
+using Ionic.Zip;
+using PRISM;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using Ionic.Zip;
-using PRISM;
 
 namespace AnalysisManagerBase
 {

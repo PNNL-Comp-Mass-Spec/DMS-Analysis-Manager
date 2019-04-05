@@ -1,11 +1,11 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
 using AnalysisManagerBase;
 using Mage;
 using MageExtExtractionFilters;
 using PRISM;
 using PRISM.Logging;
+using System;
+using System.Collections.Generic;
+using System.IO;
 
 namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 {

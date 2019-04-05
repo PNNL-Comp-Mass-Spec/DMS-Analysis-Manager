@@ -1,10 +1,10 @@
 ﻿
+using MyEMSLReader;
+using PRISM;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using MyEMSLReader;
-using PRISM;
 
 namespace AnalysisManagerBase
 {

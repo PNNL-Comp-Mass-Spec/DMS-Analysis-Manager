@@ -1,14 +1,14 @@
-﻿using System.IO;
-using AnalysisManagerBase;
-using System;
+﻿using AnalysisManagerBase;
 using PRISM.Logging;
+using System;
+using System.IO;
 
 namespace AnalysisManager_Ape_PlugIn
 {
     /// <summary>
     /// Class for running Ape
     /// </summary>
-   public class clsAnalysisToolRunnerApe : clsAnalysisToolRunnerBase
+    public class clsAnalysisToolRunnerApe : clsAnalysisToolRunnerBase
    {
        private const float PROGRESS_PCT_APE_START = 1;
        private const float PROGRESS_PCT_APE_DONE = 99;

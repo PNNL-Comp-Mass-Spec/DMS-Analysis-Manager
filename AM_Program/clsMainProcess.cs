@@ -6,6 +6,10 @@
 //
 //*********************************************************************************************************
 
+using AnalysisManagerBase;
+using PRISM;
+using PRISM.AppSettings;
+using PRISM.Logging;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -14,10 +18,6 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
-using AnalysisManagerBase;
-using PRISM.Logging;
-using PRISM;
-using PRISM.AppSettings;
 
 namespace AnalysisManagerProg
 {

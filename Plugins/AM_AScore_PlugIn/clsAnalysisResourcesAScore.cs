@@ -1,5 +1,5 @@
-using System;
 using AnalysisManagerBase;
+using System;
 
 namespace AnalysisManager_AScore_PlugIn
 {

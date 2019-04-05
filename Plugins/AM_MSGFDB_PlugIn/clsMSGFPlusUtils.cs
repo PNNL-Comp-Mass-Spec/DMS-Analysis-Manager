@@ -1,4 +1,7 @@
-﻿using System;
+﻿using AnalysisManagerBase;
+using PeptideToProteinMapEngine;
+using PRISM;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
@@ -6,9 +9,6 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
-using AnalysisManagerBase;
-using PeptideToProteinMapEngine;
-using PRISM;
 
 namespace AnalysisManagerMSGFDBPlugIn
 {

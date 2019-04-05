@@ -6,12 +6,12 @@
 //
 //*********************************************************************************************************
 
-using System;
-using System.Collections.Generic;
-using System.IO;
 using AnalysisManagerBase;
 using PeptideToProteinMapEngine;
 using PRISM;
+using System;
+using System.Collections.Generic;
+using System.IO;
 
 namespace AnalysisManagerInspResultsAssemblyPlugIn
 {

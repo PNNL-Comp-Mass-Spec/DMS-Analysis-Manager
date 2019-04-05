@@ -1,5 +1,5 @@
-﻿using System.Collections.Generic;
-using PHRPReader;
+﻿using PHRPReader;
+using System.Collections.Generic;
 
 namespace AnalysisManagerBase
 {

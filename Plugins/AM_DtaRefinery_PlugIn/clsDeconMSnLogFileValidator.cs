@@ -1,8 +1,8 @@
-﻿using System;
+﻿using PRISM;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using PRISM;
 
 namespace AnalysisManagerDtaRefineryPlugIn
 {

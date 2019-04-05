@@ -1,6 +1,3 @@
-using System;
-using System.IO;
-using System.Linq;
 using AnalysisManagerBase;
 using AScore_DLL;
 using AScore_DLL.Managers;
@@ -11,6 +8,9 @@ using MageExtExtractionFilters;
 using MyEMSLReader;
 using PRISM;
 using PRISM.Logging;
+using System;
+using System.IO;
+using System.Linq;
 
 namespace AnalysisManager_AScore_PlugIn
 {

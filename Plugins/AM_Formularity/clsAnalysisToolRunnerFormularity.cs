@@ -1,9 +1,9 @@
-﻿using System;
+﻿using AnalysisManagerBase;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using AnalysisManagerBase;
 
 namespace AnalysisManagerFormularityPlugin
 {

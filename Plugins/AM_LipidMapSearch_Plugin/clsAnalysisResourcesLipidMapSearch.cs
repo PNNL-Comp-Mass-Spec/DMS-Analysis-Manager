@@ -1,8 +1,8 @@
-using System.IO;
-using System.Linq;
 using AnalysisManagerBase;
 using MyEMSLReader;
 using PRISM.Logging;
+using System.IO;
+using System.Linq;
 
 namespace AnalysisManagerLipidMapSearchPlugIn
 {

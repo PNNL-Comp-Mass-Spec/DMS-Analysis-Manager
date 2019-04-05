@@ -6,10 +6,10 @@
 // Uses CompassXport to create a .mzXML or .mzML file
 //*********************************************************************************************************
 
-using System;
-using System.IO;
 using AnalysisManagerBase;
 using PRISM;
+using System;
+using System.IO;
 
 namespace AnalysisManagerMsXmlBrukerPlugIn
 {

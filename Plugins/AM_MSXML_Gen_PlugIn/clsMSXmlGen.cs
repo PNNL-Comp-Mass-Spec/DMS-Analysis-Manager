@@ -1,7 +1,7 @@
-﻿using System;
-using System.IO;
-using AnalysisManagerBase;
+﻿using AnalysisManagerBase;
 using PRISM;
+using System;
+using System.IO;
 
 namespace AnalysisManagerMsXmlGenPlugIn
 {

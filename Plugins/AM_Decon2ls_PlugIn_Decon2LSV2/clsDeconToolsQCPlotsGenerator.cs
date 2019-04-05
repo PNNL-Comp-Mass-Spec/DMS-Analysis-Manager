@@ -1,6 +1,6 @@
-﻿using System;
+﻿using PRISM;
+using System;
 using System.IO;
-using PRISM;
 
 namespace AnalysisManagerDecon2lsV2PlugIn
 {

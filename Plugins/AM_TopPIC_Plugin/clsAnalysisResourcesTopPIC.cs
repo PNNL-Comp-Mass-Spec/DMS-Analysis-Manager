@@ -5,8 +5,8 @@
 //
 //*********************************************************************************************************
 
-using System.Collections.Generic;
 using AnalysisManagerBase;
+using System.Collections.Generic;
 
 namespace AnalysisManagerTopPICPlugIn
 {

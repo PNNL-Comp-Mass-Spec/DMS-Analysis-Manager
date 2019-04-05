@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using PRISM;
 
 //*********************************************************************************************************
 // Written by Dave Clark and Matthew Monroe for the US Department of Energy

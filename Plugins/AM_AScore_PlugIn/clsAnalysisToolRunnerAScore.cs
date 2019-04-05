@@ -1,9 +1,9 @@
-using System.IO;
 using AnalysisManagerBase;
-using System;
 using Mage;
 using PRISM;
 using PRISM.Logging;
+using System;
+using System.IO;
 
 namespace AnalysisManager_AScore_PlugIn
 {

@@ -1,7 +1,7 @@
-﻿using System;
-using System.IO;
-using AnalysisManagerBase;
+﻿using AnalysisManagerBase;
 using PRISM.Logging;
+using System;
+using System.IO;
 
 namespace AnalysisManagerICR2LSPlugIn
 {

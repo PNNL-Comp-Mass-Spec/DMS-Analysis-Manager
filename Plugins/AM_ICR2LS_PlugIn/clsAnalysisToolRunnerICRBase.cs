@@ -1,9 +1,9 @@
+using AnalysisManagerBase;
+using PRISM.Logging;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
-using AnalysisManagerBase;
-using PRISM.Logging;
 
 namespace AnalysisManagerICR2LSPlugIn
 {

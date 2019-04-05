@@ -1,4 +1,7 @@
-﻿using System;
+﻿using PHRPReader;
+using PRISM;
+using PRISM.Logging;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
@@ -7,9 +10,6 @@ using System.IO.Compression;
 using System.Linq;
 using System.Text;
 using System.Xml;
-using PRISM.Logging;
-using PHRPReader;
-using PRISM;
 
 namespace AnalysisManagerBase
 {

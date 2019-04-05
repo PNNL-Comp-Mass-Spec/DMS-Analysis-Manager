@@ -6,17 +6,16 @@
 //
 //*********************************************************************************************************
 
-using System;
-using System.Collections.Generic;
-
 using AnalysisManagerBase;
 using AnalysisManagerMsXmlGenPlugIn;
+using MSGFResultsSummarizer;
 using PHRPReader;
+using PRISM;
+using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Xml;
-using MSGFResultsSummarizer;
-using PRISM;
 
 namespace AnalysisManagerMSGFPlugin
 {

@@ -1,10 +1,10 @@
-﻿using System;
+﻿using PRISM;
+using Renci.SshNet.Sftp;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
-using PRISM;
-using Renci.SshNet.Sftp;
 
 namespace AnalysisManagerBase
 {

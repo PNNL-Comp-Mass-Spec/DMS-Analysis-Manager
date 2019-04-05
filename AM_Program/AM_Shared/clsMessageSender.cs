@@ -1,7 +1,7 @@
 ﻿
+using Apache.NMS;
 using System;
 using System.Collections.Generic;
-using Apache.NMS;
 
 namespace AnalysisManagerBase
 {

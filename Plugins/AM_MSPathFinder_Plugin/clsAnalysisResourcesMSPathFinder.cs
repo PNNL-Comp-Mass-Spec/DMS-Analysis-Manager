@@ -5,12 +5,12 @@
 //
 //*********************************************************************************************************
 
+using AnalysisManagerBase;
+using PRISM.Logging;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using AnalysisManagerBase;
-using PRISM.Logging;
 
 namespace AnalysisManagerMSPathFinderPlugin
 {

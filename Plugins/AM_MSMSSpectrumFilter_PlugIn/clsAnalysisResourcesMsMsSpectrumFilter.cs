@@ -7,12 +7,12 @@
 // Copyright 2009, Battelle Memorial Institute
 // Started January 20, 2009
 
-using System;
-using System.IO;
-using System.Linq;
 using AnalysisManagerBase;
 using MSMSSpectrumFilter;
 using MyEMSLReader;
+using System;
+using System.IO;
+using System.Linq;
 
 namespace MSMSSpectrumFilterAM
 {

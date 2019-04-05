@@ -8,9 +8,9 @@
 //
 //*********************************************************************************************************
 
+using PHRPReader;
 using System;
 using System.IO;
-using PHRPReader;
 
 namespace AnalysisManagerMSGFPlugin
 {

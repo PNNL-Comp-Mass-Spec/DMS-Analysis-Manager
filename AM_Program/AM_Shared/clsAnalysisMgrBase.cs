@@ -1,7 +1,7 @@
-﻿using System;
-using System.IO;
+﻿using PRISM;
 using PRISM.Logging;
-using PRISM;
+using System;
+using System.IO;
 
 namespace AnalysisManagerBase
 {

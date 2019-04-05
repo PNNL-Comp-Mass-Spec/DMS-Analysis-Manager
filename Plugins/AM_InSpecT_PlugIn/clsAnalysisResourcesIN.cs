@@ -1,8 +1,8 @@
+using AnalysisManagerBase;
+using MyEMSLReader;
 using System;
 using System.IO;
 using System.Linq;
-using AnalysisManagerBase;
-using MyEMSLReader;
 
 namespace AnalysisManagerInSpecTPlugIn
 {

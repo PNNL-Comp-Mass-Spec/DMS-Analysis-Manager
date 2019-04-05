@@ -6,11 +6,11 @@
 //
 //*********************************************************************************************************
 
+using AnalysisManagerBase;
+using PRISM;
 using System;
 using System.IO;
 using System.Xml;
-using AnalysisManagerBase;
-using PRISM;
 
 namespace AnalysisManagerMasicPlugin
 {

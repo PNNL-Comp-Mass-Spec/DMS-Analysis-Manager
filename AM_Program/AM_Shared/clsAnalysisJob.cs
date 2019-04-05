@@ -1,3 +1,5 @@
+using PRISM;
+using PRISM.Logging;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -8,8 +10,6 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml;
 using System.Xml.Linq;
-using PRISM.Logging;
-using PRISM;
 
 //*********************************************************************************************************
 // Written by Dave Clark and Matthew Monroe for the US Department of Energy

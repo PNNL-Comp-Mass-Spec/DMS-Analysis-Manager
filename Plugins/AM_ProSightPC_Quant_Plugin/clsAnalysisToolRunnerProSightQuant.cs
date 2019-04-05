@@ -1,9 +1,9 @@
+using AnalysisManagerBase;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
 using System.Xml;
-using AnalysisManagerBase;
 
 namespace AnalysisManagerProSightQuantPlugIn
 {

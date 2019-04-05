@@ -1,7 +1,7 @@
-﻿using System;
+﻿using AnalysisManagerBase;
 using Mage;
 using MageExtExtractionFilters;
-using AnalysisManagerBase;
+using System;
 
 namespace AnalysisManager_Mage_PlugIn
 {

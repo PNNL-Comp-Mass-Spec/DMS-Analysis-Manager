@@ -1,10 +1,10 @@
+using PRISM;
+using PRISM.Logging;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using PRISM;
-using PRISM.Logging;
 
 //*********************************************************************************************************
 // Written by Dave Clark and Matthew Monroe for the US Department of Energy

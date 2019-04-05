@@ -1,7 +1,7 @@
-﻿using System;
+﻿using AnalysisManagerBase;
+using System;
 using System.Collections.Generic;
 using System.IO;
-using AnalysisManagerBase;
 using ThermoRawFileReader;
 
 namespace AnalysisManagerMSGFDBPlugIn

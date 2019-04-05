@@ -6,12 +6,12 @@
 //
 //*********************************************************************************************************
 
+using AnalysisManagerBase;
+using MsMsDataFileReader;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using AnalysisManagerBase;
-using MsMsDataFileReader;
 
 namespace DTASpectraFileGen
 {

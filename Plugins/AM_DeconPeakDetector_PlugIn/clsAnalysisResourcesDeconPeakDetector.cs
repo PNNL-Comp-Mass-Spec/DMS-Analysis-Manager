@@ -5,8 +5,8 @@
 //
 //*********************************************************************************************************
 
-using System.IO;
 using AnalysisManagerBase;
+using System.IO;
 
 namespace AnalysisManagerDeconPeakDetectorPlugIn
 {

@@ -1,6 +1,6 @@
-using System;
 using AnalysisManagerBase;
 using PRISM.Logging;
+using System;
 
 namespace AnalysisManager_Ape_PlugIn
 {

@@ -1,9 +1,9 @@
-﻿using System;
+﻿using PRISM;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using PRISM;
 
 //*********************************************************************************************************
 // Written by Matthew Monroe for the US Department of Energy

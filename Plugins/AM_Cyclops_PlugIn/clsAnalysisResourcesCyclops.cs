@@ -1,5 +1,5 @@
-using System;
 using AnalysisManagerBase;
+using System;
 using System.IO;
 
 namespace AnalysisManager_Cyclops_PlugIn

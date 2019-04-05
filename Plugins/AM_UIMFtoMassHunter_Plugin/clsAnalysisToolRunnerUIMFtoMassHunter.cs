@@ -5,11 +5,10 @@
 **                                                              **
 *****************************************************************/
 
+using AnalysisManagerBase;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Runtime.InteropServices;
-using AnalysisManagerBase;
 
 namespace AnalysisManagerUIMFtoMassHunterPlugin
 {
