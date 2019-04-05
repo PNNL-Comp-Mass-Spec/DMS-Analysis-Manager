@@ -2810,6 +2810,8 @@ namespace AnalysisManagerExtractionPlugin
                     {
                         // Ignore this error for inspect if running an unrestricted search
                         var paramFileName = mJobParams.GetJobParameter("ParmFileName", "");
+
+                        // ReSharper disable once StringLiteralTypo
                         if (paramFileName.IndexOf("Unrestrictive", StringComparison.OrdinalIgnoreCase) >= 0)
                         {
                             success = true;
