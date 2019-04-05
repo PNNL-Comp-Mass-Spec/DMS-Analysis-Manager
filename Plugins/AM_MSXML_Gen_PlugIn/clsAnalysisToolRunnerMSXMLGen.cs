@@ -387,8 +387,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 return false;
             }
 
-            string recalculatePrecursorsTool;
-            var recalculatePrecursorsToolProgLoc = GetRecalculatePrecursorsToolProgLoc(out recalculatePrecursorsTool);
+            var recalculatePrecursorsToolProgLoc = GetRecalculatePrecursorsToolProgLoc(out var recalculatePrecursorsTool);
             if (string.IsNullOrWhiteSpace(recalculatePrecursorsToolProgLoc))
             {
                 return false;
@@ -397,10 +396,9 @@ namespace AnalysisManagerMsXmlGenPlugIn
             if (string.Equals(recalculatePrecursorsTool, clsRawConverterRunner.RAWCONVERTER_FILENAME, StringComparison.InvariantCultureIgnoreCase))
             {
                 // Using RawConverter.exe
-                FileInfo mgfFile;
                 var rawConverterExe = new FileInfo(recalculatePrecursorsToolProgLoc);
 
-                var rawConverterSuccess = RecalculatePrecursorIonsCreateMGF(rawConverterExe.Directory.FullName, rawFilePath, out mgfFile);
+                var rawConverterSuccess = RecalculatePrecursorIonsCreateMGF(rawConverterExe.Directory.FullName, rawFilePath, out var mgfFile);
                 if (!rawConverterSuccess)
                     return false;
 
