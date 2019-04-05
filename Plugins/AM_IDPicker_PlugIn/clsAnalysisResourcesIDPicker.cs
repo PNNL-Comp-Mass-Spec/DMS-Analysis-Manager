@@ -207,7 +207,7 @@ namespace AnalysisManagerIDPickerPlugIn
             var eResultType = clsPHRPReader.GetPeptideHitResultType(strResultType);
 
             if (!(eResultType == clsPHRPReader.ePeptideHitResultType.Sequest || eResultType == clsPHRPReader.ePeptideHitResultType.XTandem ||
-                  eResultType == clsPHRPReader.ePeptideHitResultType.Inspect || eResultType == clsPHRPReader.ePeptideHitResultType.MSGFDB ||
+                  eResultType == clsPHRPReader.ePeptideHitResultType.Inspect || eResultType == clsPHRPReader.ePeptideHitResultType.MSGFPlus ||
                   eResultType == clsPHRPReader.ePeptideHitResultType.MODa || eResultType == clsPHRPReader.ePeptideHitResultType.MODPlus))
             {
                 mMessage = "Invalid tool result type (not supported by IDPicker): " + strResultType;
@@ -239,7 +239,7 @@ namespace AnalysisManagerIDPickerPlugIn
 
                 var toolVersionInfoFile = clsPHRPReader.GetToolVersionInfoFilename(eResultType);
 
-                if (!success && eResultType == clsPHRPReader.ePeptideHitResultType.MSGFDB &&
+                if (!success && eResultType == clsPHRPReader.ePeptideHitResultType.MSGFPlus &&
                     toolVersionInfoFile != null && fileToGet.Contains(Path.GetFileName(toolVersionInfoFile)))
                 {
                     var strToolVersionFileLegacy = "Tool_Version_Info_MSGFDB.txt";
@@ -456,7 +456,7 @@ namespace AnalysisManagerIDPickerPlugIn
 
             var strToolVersionFile = clsPHRPReader.GetToolVersionInfoFilename(eResultType);
             var strToolNameForScript = mJobParams.GetJobParameter("ToolName", "");
-            if (eResultType == clsPHRPReader.ePeptideHitResultType.MSGFDB && strToolNameForScript == "MSGFPlus_IMS")
+            if (eResultType == clsPHRPReader.ePeptideHitResultType.MSGFPlus && strToolNameForScript == "MSGFPlus_IMS")
             {
                 // PeptideListToXML expects the ToolVersion file to be named "Tool_Version_Info_MSGFPlus.txt"
                 // However, this is the MSGFPlus_IMS script, so the file is currently "Tool_Version_Info_MSGFPlus_IMS.txt"

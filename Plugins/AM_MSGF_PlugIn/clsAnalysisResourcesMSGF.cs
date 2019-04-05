@@ -95,7 +95,7 @@ namespace AnalysisManagerMSGFPlugin
             if (eResultType == clsPHRPReader.ePeptideHitResultType.Sequest ||
                 eResultType == clsPHRPReader.ePeptideHitResultType.XTandem ||
                 eResultType == clsPHRPReader.ePeptideHitResultType.Inspect ||
-                eResultType == clsPHRPReader.ePeptideHitResultType.MSGFDB || // MSGF+
+                eResultType == clsPHRPReader.ePeptideHitResultType.MSGFPlus || // MSGF+
                 eResultType == clsPHRPReader.ePeptideHitResultType.MODa ||
                 eResultType == clsPHRPReader.ePeptideHitResultType.MODPlus ||
                 eResultType == clsPHRPReader.ePeptideHitResultType.MSPathFinder)
@@ -118,7 +118,7 @@ namespace AnalysisManagerMSGFPlugin
             var eRawDataType = GetRawDataType(rawDataType);
             var mgfInstrumentData = mJobParams.GetJobParameter("MGFInstrumentData", false);
 
-            if (eResultType == clsPHRPReader.ePeptideHitResultType.MSGFDB)
+            if (eResultType == clsPHRPReader.ePeptideHitResultType.MSGFPlus)
             {
                 // We do not need the mzXML file, the parameter file, or various other files if we are running MSGF+ and running MSGF v6432 or later
                 // Determine this by looking for job parameter MSGF_Version

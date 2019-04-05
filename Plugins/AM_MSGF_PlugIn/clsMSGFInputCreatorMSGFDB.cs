@@ -23,7 +23,7 @@ namespace AnalysisManagerMSGFPlugin
         /// <param name="workDir">Working directory</param>
         /// <remarks></remarks>
         public clsMSGFInputCreatorMSGFDB(string datasetName, string workDir)
-            : base(datasetName, workDir, clsPHRPReader.ePeptideHitResultType.MSGFDB)
+            : base(datasetName, workDir, clsPHRPReader.ePeptideHitResultType.MSGFPlus)
         {
             // Initialize the file paths
             // This updates mPHRPFirstHitsFilePath and mPHRPSynopsisFilePath
@@ -133,7 +133,7 @@ namespace AnalysisManagerMSGFPlugin
                 var startupOptions = GetMinimalMemoryPHRPStartupOptions();
 
                 // Open the file (no need to read the Mods and Seq Info since we're not actually running MSGF)
-                using (var reader = new clsPHRPReader(sourceFilePath, clsPHRPReader.ePeptideHitResultType.MSGFDB, startupOptions))
+                using (var reader = new clsPHRPReader(sourceFilePath, clsPHRPReader.ePeptideHitResultType.MSGFPlus, startupOptions))
                 {
                     RegisterEvents(reader);
 

@@ -1387,7 +1387,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                 }
                                 break;
 
-                            case clsPHRPReader.ePeptideHitResultType.MSGFDB:
+                            case clsPHRPReader.ePeptideHitResultType.MSGFPlus:
                                 fdr = reader.CurrentPSM.GetScoreDbl(clsPHRPParserMSGFDB.DATA_COLUMN_FDR, -1);
                                 if (fdr > -1)
                                 {
@@ -1492,7 +1492,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                                 var proteinUCase = reader.CurrentPSM.ProteinFirst.ToUpper();
 
-                                if (dataPkgJob.PeptideHitResultType == clsPHRPReader.ePeptideHitResultType.MSGFDB)
+                                if (dataPkgJob.PeptideHitResultType == clsPHRPReader.ePeptideHitResultType.MSGFPlus)
                                 {
                                     if (proteinUCase.StartsWith("REV_") || proteinUCase.StartsWith("XXX_"))
                                     {
@@ -1548,7 +1548,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                 deltaScoreOther = reader.CurrentPSM.GetScore(clsPHRPParserInspect.DATA_COLUMN_DeltaScoreOther);
                                 break;
 
-                            case clsPHRPReader.ePeptideHitResultType.MSGFDB:
+                            case clsPHRPReader.ePeptideHitResultType.MSGFPlus:
                                 totalPRMScore = reader.CurrentPSM.GetScore(clsPHRPParserMSGFDB.DATA_COLUMN_DeNovoScore);
                                 pValueFormatted = reader.CurrentPSM.GetScore(clsPHRPParserMSGFDB.DATA_COLUMN_PValue);
                                 break;
@@ -2437,7 +2437,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             }
             else
             {
-                if (PeptideHitResultType == clsPHRPReader.ePeptideHitResultType.MSGFDB && toolName.ToUpper().StartsWith("MSGF"))
+                if (PeptideHitResultType == clsPHRPReader.ePeptideHitResultType.MSGFPlus && toolName.ToUpper().StartsWith("MSGF"))
                 {
                     // Tool Version in the template file is likely correct; use it
                 }
@@ -3650,7 +3650,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
             // Update the .mzid.gz file(s) for this job
 
-            if (mProcessMzIdFiles && jobInfo.Value.PeptideHitResultType == clsPHRPReader.ePeptideHitResultType.MSGFDB)
+            if (mProcessMzIdFiles && jobInfo.Value.PeptideHitResultType == clsPHRPReader.ePeptideHitResultType.MSGFPlus)
             {
                 mMessage = string.Empty;
 

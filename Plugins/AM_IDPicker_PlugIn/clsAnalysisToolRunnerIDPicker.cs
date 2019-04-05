@@ -302,7 +302,7 @@ namespace AnalysisManagerIDPickerPlugIn
             // Determine the prefix used by decoy proteins
             var decoyPrefix = string.Empty;
 
-            if (ePHRPResultType == clsPHRPReader.ePeptideHitResultType.MSGFDB)
+            if (ePHRPResultType == clsPHRPReader.ePeptideHitResultType.MSGFPlus)
             {
                 // If we run MSGF+ with target/decoy mode and showDecoy=1, the _syn.txt file will have decoy proteins that start with REV_ or XXX_
                 // Check for this

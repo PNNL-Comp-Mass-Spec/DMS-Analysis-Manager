@@ -176,7 +176,7 @@ namespace AnalysisManagerMSGFPlugin
             {
                 var processingError = false;
 
-                if (mUsingMSGFDB && eResultType == clsPHRPReader.ePeptideHitResultType.MSGFDB)
+                if (mUsingMSGFDB && eResultType == clsPHRPReader.ePeptideHitResultType.MSGFPlus)
                 {
                     // Analysis tool is MSGF+ so we don't actually need to run the MSGF re-scorer
                     // Simply copy the values from the MSGFDB result file
@@ -342,7 +342,7 @@ namespace AnalysisManagerMSGFPlugin
                     success = true;
                     break;
 
-                case clsPHRPReader.ePeptideHitResultType.MSGFDB:
+                case clsPHRPReader.ePeptideHitResultType.MSGFPlus:
                     success = CheckETDModeEnabledMSGFPlus(searchToolParamFilePath);
                     break;
 
@@ -705,7 +705,7 @@ namespace AnalysisManagerMSGFPlugin
                     mMSGFInputCreator = new clsMSGFInputCreatorInspect(mDatasetName, mWorkDir);
                     break;
 
-                case clsPHRPReader.ePeptideHitResultType.MSGFDB:
+                case clsPHRPReader.ePeptideHitResultType.MSGFPlus:
 
                     // Convert MSGF+ results to input format required for MSGF
                     mMSGFInputCreator = new clsMSGFInputCreatorMSGFDB(mDatasetName, mWorkDir);
@@ -838,7 +838,7 @@ namespace AnalysisManagerMSGFPlugin
 
             // Summarize the results in the _syn_MSGF.txt file
             // Post the results to the database
-            var success = SummarizeMSGFResults(clsPHRPReader.ePeptideHitResultType.MSGFDB);
+            var success = SummarizeMSGFResults(clsPHRPReader.ePeptideHitResultType.MSGFPlus);
 
             return success;
         }
@@ -1155,7 +1155,7 @@ namespace AnalysisManagerMSGFPlugin
                 LogDebug("CreateMSGFFirstHitsFile returned " + success, 3);
             }
 
-            if (success && eResultType != clsPHRPReader.ePeptideHitResultType.MSGFDB)
+            if (success && eResultType != clsPHRPReader.ePeptideHitResultType.MSGFPlus)
             {
                 LogDebug("Call UpdateProteinModsFile for eResultType " + eResultType, 3);
 
@@ -1409,7 +1409,7 @@ namespace AnalysisManagerMSGFPlugin
         {
             bool success;
 
-            if (eResultType == clsPHRPReader.ePeptideHitResultType.MSGFDB)
+            if (eResultType == clsPHRPReader.ePeptideHitResultType.MSGFPlus)
             {
                 // Input file may contain a mix of scan types (CID, ETD, and/or HCD)
                 // If this is the case, call MSGF twice: first for the CID and HCD spectra, then again for the ETD spectra
@@ -2403,7 +2403,7 @@ namespace AnalysisManagerMSGFPlugin
 
             var toolFiles = new List<FileInfo>();
 
-            if (eResultType == clsPHRPReader.ePeptideHitResultType.MSGFDB)
+            if (eResultType == clsPHRPReader.ePeptideHitResultType.MSGFPlus)
             {
                 // Store the path to MSGFDB.jar
                 toolFiles.Add(new FileInfo(mMSGFProgLoc));

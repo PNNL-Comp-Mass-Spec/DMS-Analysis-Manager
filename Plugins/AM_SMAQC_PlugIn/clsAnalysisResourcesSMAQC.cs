@@ -221,7 +221,7 @@ namespace AnalysisManagerSMAQCPlugIn
             }
             else if (strInputFolder.StartsWith("MSG", StringComparison.InvariantCultureIgnoreCase))
             {
-                ePeptideHitResultType = clsPHRPReader.ePeptideHitResultType.MSGFDB;
+                ePeptideHitResultType = clsPHRPReader.ePeptideHitResultType.MSGFPlus;
             }
             else
             {

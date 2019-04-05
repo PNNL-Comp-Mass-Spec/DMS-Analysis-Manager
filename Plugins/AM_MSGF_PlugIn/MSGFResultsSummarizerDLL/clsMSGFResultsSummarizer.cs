@@ -1269,7 +1269,7 @@ namespace MSGFResultsSummarizer
                         var psmEValue = eValue;
                         double psmFDR;
 
-                        if (ResultType == clsPHRPReader.ePeptideHitResultType.MSGFDB | ResultType == clsPHRPReader.ePeptideHitResultType.MSAlign)
+                        if (ResultType == clsPHRPReader.ePeptideHitResultType.MSGFPlus | ResultType == clsPHRPReader.ePeptideHitResultType.MSAlign)
                         {
                             psmFDR = objPSM.GetScoreDbl(clsPHRPParserMSGFDB.DATA_COLUMN_FDR, clsPSMInfo.UNKNOWN_FDR);
                             if (psmFDR < 0)
