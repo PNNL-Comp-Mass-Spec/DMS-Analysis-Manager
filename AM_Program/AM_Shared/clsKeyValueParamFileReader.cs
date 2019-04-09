@@ -8,7 +8,7 @@ using System.Text;
 namespace AnalysisManagerBase
 {
     /// <summary>
-    /// Class for reading parameter files with Key=Value settings (as used by MSGF+, MSPathFinder, and TopFD)
+    /// Class for reading parameter files with Key=Value settings (as used by MSGF+, MSPathFinder, and TopPIC)
     /// </summary>
     public class clsKeyValueParamFileReader : EventNotifier
     {
@@ -176,7 +176,7 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Read a parameter file with Key=Value settings (as used by MSGF+, MSPathFinder, and TopFD)
+        /// Read a parameter file with Key=Value settings (as used by MSGF+, MSPathFinder, and TopPIC)
         /// </summary>
         /// <param name="paramFileEntries">Output: Dictionary of setting names and values read from the parameter file</param>
         /// <returns>CloseOutType.CLOSEOUT_SUCCESS if success; error code if an error</returns>
@@ -201,7 +201,7 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Read a parameter file with Key=Value settings (as used by MSGF+, MSPathFinder, and TopFD)
+        /// Read a parameter file with Key=Value settings (as used by MSGF+, MSPathFinder, and TopPIC)
         /// </summary>
         /// <param name="paramFileLines">Output: contents of the parameter file</param>
         /// <returns>CloseOutType.CLOSEOUT_SUCCESS if success; error code if an error</returns>

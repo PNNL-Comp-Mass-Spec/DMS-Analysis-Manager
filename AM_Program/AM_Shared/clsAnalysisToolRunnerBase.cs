@@ -1,11 +1,3 @@
-using PRISM;
-using PRISM.Logging;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text.RegularExpressions;
-
 //*********************************************************************************************************
 // Written by Dave Clark and Matthew Monroe for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
@@ -13,6 +5,14 @@ using System.Text.RegularExpressions;
 // Created 12/19/2007
 //
 //*********************************************************************************************************
+
+using PRISM;
+using PRISM.Logging;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text.RegularExpressions;
 
 // ReSharper disable UnusedMember.Global
 namespace AnalysisManagerBase
