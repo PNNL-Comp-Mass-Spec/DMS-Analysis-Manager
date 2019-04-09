@@ -129,7 +129,7 @@ namespace AnalysisManager_Mage_PlugIn
         protected bool StoreToolVersionInfo()
         {
 
-            string strToolVersionInfo;
+            string toolVersionInfo;
 
             if (mDebugLevel >= 2)
             {
@@ -138,7 +138,7 @@ namespace AnalysisManager_Mage_PlugIn
 
             try
             {
-                strToolVersionInfo = GetToolNameAndVersion();
+                toolVersionInfo = GetToolNameAndVersion();
             }
             catch (Exception ex)
             {
@@ -151,7 +151,7 @@ namespace AnalysisManager_Mage_PlugIn
 
             try
             {
-                return SetStepTaskToolVersion(strToolVersionInfo, toolFiles);
+                return SetStepTaskToolVersion(toolVersionInfo, toolFiles);
             }
             catch (Exception ex)
             {

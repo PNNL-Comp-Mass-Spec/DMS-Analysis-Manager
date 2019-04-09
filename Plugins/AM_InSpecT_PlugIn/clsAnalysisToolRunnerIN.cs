@@ -617,7 +617,7 @@ namespace AnalysisManagerInSpecTPlugIn
         /// <remarks></remarks>
         protected bool StoreToolVersionInfo(string strInspectFolder)
         {
-            var strToolVersionInfo = string.Empty;
+            var toolVersionInfo = string.Empty;
 
             if (mDebugLevel >= 2)
             {
@@ -631,7 +631,7 @@ namespace AnalysisManagerInSpecTPlugIn
 
             try
             {
-                return SetStepTaskToolVersion(strToolVersionInfo, toolFiles);
+                return SetStepTaskToolVersion(toolVersionInfo, toolFiles);
             }
             catch (Exception ex)
             {

@@ -242,12 +242,12 @@ namespace AnalysisManagerIDPickerPlugIn
                 if (!success && eResultType == clsPHRPReader.ePeptideHitResultType.MSGFPlus &&
                     toolVersionInfoFile != null && fileToGet.Contains(Path.GetFileName(toolVersionInfoFile)))
                 {
-                    var strToolVersionFileLegacy = "Tool_Version_Info_MSGFDB.txt";
-                    success = FileSearch.FindAndRetrieveMiscFiles(strToolVersionFileLegacy, false, false);
+                    var toolVersionFileLegacy = "Tool_Version_Info_MSGFDB.txt";
+                    success = FileSearch.FindAndRetrieveMiscFiles(toolVersionFileLegacy, false, false);
                     if (success)
                     {
                         // Rename the Tool_Version file to the expected name (Tool_Version_Info_MSGFPlus.txt)
-                        File.Move(Path.Combine(mWorkDir, strToolVersionFileLegacy), Path.Combine(mWorkDir, fileToGet));
+                        File.Move(Path.Combine(mWorkDir, toolVersionFileLegacy), Path.Combine(mWorkDir, fileToGet));
                     }
                 }
 
@@ -454,19 +454,19 @@ namespace AnalysisManagerIDPickerPlugIn
                 lstFileNamesToGet.Add(clsPHRPReader.GetMSGFFileName(synFileName), true);
             }
 
-            var strToolVersionFile = clsPHRPReader.GetToolVersionInfoFilename(eResultType);
-            var strToolNameForScript = mJobParams.GetJobParameter("ToolName", "");
-            if (eResultType == clsPHRPReader.ePeptideHitResultType.MSGFPlus && strToolNameForScript == "MSGFPlus_IMS")
+            var toolVersionFile = clsPHRPReader.GetToolVersionInfoFilename(eResultType);
+            var toolNameForScript = mJobParams.GetJobParameter("ToolName", "");
+            if (eResultType == clsPHRPReader.ePeptideHitResultType.MSGFPlus && toolNameForScript == "MSGFPlus_IMS")
             {
                 // PeptideListToXML expects the ToolVersion file to be named "Tool_Version_Info_MSGFPlus.txt"
                 // However, this is the MSGFPlus_IMS script, so the file is currently "Tool_Version_Info_MSGFPlus_IMS.txt"
                 // We'll copy the current file locally, then rename it to the expected name
                 const string strOriginalName = "Tool_Version_Info_MSGFPlus_IMS.txt";
-                mInputFileRenames.Add(strOriginalName, strToolVersionFile);
-                strToolVersionFile = string.Copy(strOriginalName);
+                mInputFileRenames.Add(strOriginalName, toolVersionFile);
+                toolVersionFile = string.Copy(strOriginalName);
             }
 
-            lstFileNamesToGet.Add(strToolVersionFile, true);
+            lstFileNamesToGet.Add(toolVersionFile, true);
 
             return lstFileNamesToGet;
         }

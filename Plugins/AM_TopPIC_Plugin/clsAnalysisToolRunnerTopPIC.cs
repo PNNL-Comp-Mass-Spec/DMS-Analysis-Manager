@@ -635,7 +635,7 @@ namespace AnalysisManagerTopPICPlugIn
                 LogDebug("Determining tool version info");
             }
 
-            var strToolVersionInfo = string.Copy(mTopPICVersion);
+            var toolVersionInfo = string.Copy(mTopPICVersion);
 
             // Store paths to key files in toolFiles
             var toolFiles = new List<FileInfo> {
@@ -644,7 +644,7 @@ namespace AnalysisManagerTopPICPlugIn
 
             try
             {
-                return SetStepTaskToolVersion(strToolVersionInfo, toolFiles, saveToolVersionTextFile: false);
+                return SetStepTaskToolVersion(toolVersionInfo, toolFiles);
             }
             catch (Exception ex)
             {
