@@ -4655,7 +4655,8 @@ namespace AnalysisManagerBase
                 {"msalign", IGenerateFile.ParamFileType.MSAlign},
                 {"moda", IGenerateFile.ParamFileType.MODa},
                 {"mspathfinder", IGenerateFile.ParamFileType.MSPathFinder},
-                {"modplus", IGenerateFile.ParamFileType.MODPlus}
+                {"modplus", IGenerateFile.ParamFileType.MODPlus},
+                {"toppic", IGenerateFile.ParamFileType.TopPIC}
             };
 
 
