@@ -63,7 +63,6 @@ namespace AnalysisManagerExtractionPlugin
             SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, true);
         }
 
-
         /// <summary>
         /// Examines the SEQUEST, X!Tandem, Inspect, or MSGF+ param file to determine if ETD mode is enabled
         /// </summary>
@@ -568,7 +567,6 @@ namespace AnalysisManagerExtractionPlugin
 
                     case RESULT_TYPE_TOPPIC:
                         result = GetTopPICFiles();
-                        mJobParams.AddResultFileExtensionToSkip(".tsv");
                         break;
 
                     default:
