@@ -27,9 +27,9 @@ namespace DTASpectraFileGen
             //  registry entry at HKEY_CURRENT_USER\Software\ProteoWizard
             //  to indicate that we agree to the Thermo license
 
-            var objProteowizardTools = new clsProteowizardTools(mDebugLevel);
+            var proteoWizardTools = new clsProteowizardTools(mDebugLevel);
 
-            if (!objProteowizardTools.RegisterProteoWizard())
+            if (!proteoWizardTools.RegisterProteoWizard())
             {
                 throw new Exception("Unable to register ProteoWizard");
             }
@@ -42,12 +42,10 @@ namespace DTASpectraFileGen
         /// <remarks>The default path can be overridden by updating mDtaToolNameLoc using clsDtaGen.UpdateDtaToolNameLoc</remarks>
         protected override string ConstructDTAToolPath()
         {
-            string strDTAToolPath = null;
+            var proteoWizardDir = mMgrParams.GetParam("ProteoWizardDir");         // MSConvert.exe is stored in the ProteoWizard folder
+            var dtaToolPath = Path.Combine(proteoWizardDir, MSCONVERT_FILENAME);
 
-            var ProteoWizardDir = mMgrParams.GetParam("ProteoWizardDir");         // MSConvert.exe is stored in the ProteoWizard folder
-            strDTAToolPath = Path.Combine(ProteoWizardDir, MSCONVERT_FILENAME);
-
-            return strDTAToolPath;
+            return dtaToolPath;
         }
 
         protected override void MakeDTAFilesThreaded()
@@ -95,7 +93,7 @@ namespace DTASpectraFileGen
         {
             try
             {
-                var strRawDataType = mJobParams.GetJobParameter("RawDataType", string.Empty);
+                var rawDataType = mJobParams.GetJobParameter("RawDataType", string.Empty);
 
                 var mgfConverter = new clsMGFConverter(mDebugLevel, mWorkDir)
                 {
@@ -105,10 +103,10 @@ namespace DTASpectraFileGen
 
                 RegisterEvents(mgfConverter);
 
-                var eRawDataType = clsAnalysisResources.GetRawDataType(strRawDataType);
-                var blnSuccess = mgfConverter.ConvertMGFtoDTA(eRawDataType, mDatasetName);
+                var eRawDataType = clsAnalysisResources.GetRawDataType(rawDataType);
+                var success = mgfConverter.ConvertMGFtoDTA(eRawDataType, mDatasetName);
 
-                if (!blnSuccess)
+                if (!success)
                 {
                     // The error has already been logged
                     mErrMsg = mgfConverter.ErrorMessage;
@@ -117,7 +115,7 @@ namespace DTASpectraFileGen
                 mSpectraFileCount = mgfConverter.SpectraCountWritten;
                 mProgress = 95;
 
-                return blnSuccess;
+                return success;
             }
             catch (Exception ex)
             {
@@ -198,7 +196,7 @@ namespace DTASpectraFileGen
                         return false;
                 }
 
-                var blnLimitingScanRange = false;
+                var limitingScanRange = false;
 
                 // Verify max scan specified is in file
                 if (mMaxScanInFile > 0)
@@ -215,13 +213,13 @@ namespace DTASpectraFileGen
                         scanStop = mMaxScanInFile;
 
                     if (scanStop < mMaxScanInFile)
-                        blnLimitingScanRange = true;
+                        limitingScanRange = true;
 
                 }
                 else
                 {
                     if (scanStop < DEFAULT_SCAN_STOP)
-                        blnLimitingScanRange = true;
+                        limitingScanRange = true;
                 }
 
                 // Determine max number of scans to be used
@@ -269,7 +267,7 @@ namespace DTASpectraFileGen
                     arguments += " --filter \"peakPicking true 1-\" --filter \"threshold count " + centroidPeakCountToRetain + " most-intense\"";
                 }
 
-                if (blnLimitingScanRange)
+                if (limitingScanRange)
                 {
                     arguments += " --filter \"scanNumber [" + SCAN_START + "," + scanStop + "]\"";
                 }

@@ -105,7 +105,7 @@ namespace MSMSSpectrumFilterAM
             }
             else
             {
-                result = ZipConcDtaFile();
+                result = ZipConcatenatedDtaFile();
             }
 
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
@@ -131,23 +131,23 @@ namespace MSMSSpectrumFilterAM
             return success ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
         }
 
-        private bool CDTAFilesMatch(string originalCDTA, string filteredCDTA)
+        private bool CDTAFilesMatch(string originalCDTAPath, string filteredCDTAPath)
         {
-            clsMsMsDataFileReaderBaseClass objOriginalCDTA = null;
-            clsMsMsDataFileReaderBaseClass objFilteredCDTA = null;
+            clsMsMsDataFileReaderBaseClass cdtaReaderOriginal = null;
+            clsMsMsDataFileReaderBaseClass cdtaReaderFiltered = null;
 
             try
             {
-                var fiFilteredCDTA = new FileInfo(filteredCDTA);
-                var fiOriginalCDTA = new FileInfo(originalCDTA);
+                var filteredCDTA = new FileInfo(filteredCDTAPath);
+                var originalCDTA = new FileInfo(originalCDTAPath);
 
                 // If the file sizes do not agree within 10 bytes, the files likely do not match (unless we have a unicode; non-unicode issue, which shouldn't be the case)
-                if (Math.Abs(fiFilteredCDTA.Length - fiOriginalCDTA.Length) > 10)
+                if (Math.Abs(filteredCDTA.Length - originalCDTA.Length) > 10)
                 {
                     if (mDebugLevel >= 2)
                     {
                         LogMessage("Filtered CDTA file's size differs by more than 10 bytes vs. the original CDTA file " +
-                            "(" + fiFilteredCDTA.Length + " vs. " + fiOriginalCDTA.Length + "); assuming the files do not match");
+                            "(" + filteredCDTA.Length + " vs. " + originalCDTA.Length + "); assuming the files do not match");
                     }
                     return false;
                 }
@@ -161,62 +161,61 @@ namespace MSMSSpectrumFilterAM
 
                 // Files are very similar in size; read the spectra data
 
-                objFilteredCDTA = new clsDtaTextFileReader(false);
-                objOriginalCDTA = new clsDtaTextFileReader(false);
+                cdtaReaderFiltered = new clsDtaTextFileReader(false);
+                cdtaReaderOriginal = new clsDtaTextFileReader(false);
 
-                if (!objFilteredCDTA.OpenFile(filteredCDTA))
+                if (!cdtaReaderFiltered.OpenFile(filteredCDTAPath))
                 {
-                    LogError("Error in CDTAFilesMatch opening " + filteredCDTA);
+                    LogError("Error in CDTAFilesMatch opening " + filteredCDTAPath);
                     return false;
                 }
 
-                if (!objOriginalCDTA.OpenFile(originalCDTA))
+                if (!cdtaReaderOriginal.OpenFile(originalCDTAPath))
                 {
-                    LogError("Error in CDTAFilesMatch opening " + originalCDTA);
+                    LogError("Error in CDTAFilesMatch opening " + originalCDTAPath);
                     return false;
                 }
 
-                List<string> msmsDataListFilt;
-                var intOriginalCDTASpectra = 0;
-                var intFilteredCDTASpectra = 0;
+                var originalCDTASpectra = 0;
+                var filteredCDTASpectra = 0;
 
-                while (objOriginalCDTA.ReadNextSpectrum(out msmsDataListFilt, out var udtSpectrumHeaderInfoOrig))
+                while (cdtaReaderOriginal.ReadNextSpectrum(out var msmsDataListFilter, out var spectrumHeaderInfoOrig))
                 {
-                    intOriginalCDTASpectra += 1;
+                    originalCDTASpectra += 1;
 
-                    if (objFilteredCDTA.ReadNextSpectrum(out var msmsDataListOrig, out var udtSpectrumHeaderInfoFilt))
+                    if (cdtaReaderFiltered.ReadNextSpectrum(out var msmsDataListOrig, out var spectrumHeaderInfoFilter))
                     {
-                        intFilteredCDTASpectra += 1;
+                        filteredCDTASpectra += 1;
 
                         // If the parent ions differ or the MS/MS spectral data differs, the files do not match
 
-                        if (udtSpectrumHeaderInfoOrig.SpectrumTitle != udtSpectrumHeaderInfoFilt.SpectrumTitle)
+                        if (spectrumHeaderInfoOrig.SpectrumTitle != spectrumHeaderInfoFilter.SpectrumTitle)
                         {
                             if (mDebugLevel >= 2)
                             {
-                                LogMessage("Spectrum " + intOriginalCDTASpectra + " in the original CDTA file has a different spectrum header " +
-                                    "vs. spectrum " + intFilteredCDTASpectra + " in the filtered CDTA file; files do not match");
+                                LogMessage("Spectrum " + originalCDTASpectra + " in the original CDTA file has a different spectrum header " +
+                                    "vs. spectrum " + filteredCDTASpectra + " in the filtered CDTA file; files do not match");
                             }
                             return false;
                         }
 
-                        if (msmsDataListOrig.Count != msmsDataListFilt.Count)
+                        if (msmsDataListOrig.Count != msmsDataListFilter.Count)
                         {
                             if (mDebugLevel >= 2)
                             {
-                                LogMessage("Spectrum " + intOriginalCDTASpectra + " in the original CDTA file has a different number of ions " +
-                                    "(" + msmsDataListOrig.Count + " vs. " + msmsDataListFilt.Count + "); files do not match");
+                                LogMessage("Spectrum " + originalCDTASpectra + " in the original CDTA file has a different number of ions " +
+                                    "(" + msmsDataListOrig.Count + " vs. " + msmsDataListFilter.Count + "); files do not match");
                             }
                             return false;
                         }
 
-                        for (var intIndex = 0; intIndex <= msmsDataListOrig.Count - 1; intIndex++)
+                        for (var index = 0; index <= msmsDataListOrig.Count - 1; index++)
                         {
-                            if (msmsDataListOrig[intIndex].Trim() != msmsDataListFilt[intIndex].Trim())
+                            if (msmsDataListOrig[index].Trim() != msmsDataListFilter[index].Trim())
                             {
                                 if (mDebugLevel >= 2)
                                 {
-                                    LogMessage("Spectrum " + intOriginalCDTASpectra + " in the original CDTA file has different ion mass or abundance values; files do not match");
+                                    LogMessage("Spectrum " + originalCDTASpectra + " in the original CDTA file has different ion mass or abundance values; files do not match");
                                 }
                                 return false;
                             }
@@ -227,13 +226,13 @@ namespace MSMSSpectrumFilterAM
                         // Original CDTA file has more spectra than the filtered one
                         if (mDebugLevel >= 2)
                         {
-                            LogMessage("Original CDTA file has more spectra than the filtered one (" + intOriginalCDTASpectra + " vs. " + intFilteredCDTASpectra + "); files do not match");
+                            LogMessage("Original CDTA file has more spectra than the filtered one (" + originalCDTASpectra + " vs. " + filteredCDTASpectra + "); files do not match");
                         }
                         return false;
                     }
                 }
 
-                if (objFilteredCDTA.ReadNextSpectrum(out msmsDataListFilt, out _))
+                if (cdtaReaderFiltered.ReadNextSpectrum(out _, out _))
                 {
                     // Filtered CDTA file has more spectra than the original one
                     return false;
@@ -251,8 +250,8 @@ namespace MSMSSpectrumFilterAM
             {
                 try
                 {
-                    objOriginalCDTA?.CloseFile();
-                    objFilteredCDTA?.CloseFile();
+                    cdtaReaderOriginal?.CloseFile();
+                    cdtaReaderFiltered?.CloseFile();
                 }
                 catch (Exception)
                 {
@@ -261,7 +260,7 @@ namespace MSMSSpectrumFilterAM
             }
         }
 
-        protected virtual int CountDtaFiles(string strDTATextFilePath)
+        protected virtual int CountDtaFiles(string dtaTextFilePath)
         {
             // Returns the number of dta files in the _dta.txt file
 
@@ -276,15 +275,15 @@ namespace MSMSSpectrumFilterAM
             // =================================== "vxl_VP2P74_B_4_F12_rn1_14May08_Falcon_080403-F4.1001.1001.2_1_2.dta" ==================================
             const string DTA_FILENAME_REGEX = @"^\s*[=]{5,}\s+\""([^.]+)\.\d+\.\d+\..+dta";
 
-            var intDTACount = 0;
+            var dtaCount = 0;
 
             try
             {
                 var reFind = new Regex(DTA_FILENAME_REGEX, RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-                using (var reader = new StreamReader(new FileStream(strDTATextFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(dtaTextFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
-                    intDTACount = 0;
+                    dtaCount = 0;
 
                     while (!reader.EndOfStream)
                     {
@@ -294,7 +293,7 @@ namespace MSMSSpectrumFilterAM
                         {
                             if (reFind.Match(dataLine).Success)
                             {
-                                intDTACount += 1;
+                                dtaCount += 1;
                             }
                         }
                     }
@@ -302,11 +301,11 @@ namespace MSMSSpectrumFilterAM
             }
             catch (Exception ex)
             {
-                LogErrors("CountDtaFiles", "Error counting .Dta files in strDTATextFilePath", ex);
+                LogErrors("CountDtaFiles", "Error counting .Dta files in dtaTextFilePath", ex);
                 mFilterStatus = ProcessStatus.SF_ERROR;
             }
 
-            return intDTACount;
+            return dtaCount;
         }
 
         protected virtual ProcessStatus FilterDTATextFile()
@@ -317,19 +316,19 @@ namespace MSMSSpectrumFilterAM
             try
             {
                 // Pre-read the parameter file now, so that we can override some of the settings
-                var strParameterFilePath = Path.Combine(mWorkDir, mSettingsFileName);
+                var parameterFilePath = Path.Combine(mWorkDir, mSettingsFileName);
 
                 if (mDebugLevel >= 3)
                 {
-                    LogDebug("Loading parameter file: " + strParameterFilePath);
+                    LogDebug("Loading parameter file: " + parameterFilePath);
                 }
 
-                if (!mMsMsSpectrumFilter.LoadParameterFileSettings(strParameterFilePath))
+                if (!mMsMsSpectrumFilter.LoadParameterFileSettings(parameterFilePath))
                 {
                     mErrMsg = mMsMsSpectrumFilter.GetErrorMessage();
                     if (string.IsNullOrEmpty(mErrMsg))
                     {
-                        mErrMsg = "Parameter file load error: " + strParameterFilePath;
+                        mErrMsg = "Parameter file load error: " + parameterFilePath;
                     }
                     LogErrors("FilterDTATextFile", mErrMsg);
                     return ProcessStatus.SF_ERROR;
@@ -440,18 +439,18 @@ namespace MSMSSpectrumFilterAM
                 }
 
                 // Define the input file name
-                var strInputFilePath = Path.Combine(mWorkDir, mDtaTextFileName);
+                var inputFilePath = Path.Combine(mWorkDir, mDtaTextFileName);
 
                 if (mDebugLevel >= 3)
                 {
-                    LogDebug("Call ProcessFilesWildcard for: " + strInputFilePath);
+                    LogDebug("Call ProcessFilesWildcard for: " + inputFilePath);
                 }
 
-                var blnSuccess = mMsMsSpectrumFilter.ProcessFilesWildcard(strInputFilePath, mWorkDir, "");
+                var success = mMsMsSpectrumFilter.ProcessFilesWildcard(inputFilePath, mWorkDir, "");
 
                 try
                 {
-                    if (blnSuccess)
+                    if (success)
                     {
                         if (mDebugLevel >= 3)
                         {
@@ -461,9 +460,9 @@ namespace MSMSSpectrumFilterAM
                         // Sort the report file (this also closes the file)
                         mMsMsSpectrumFilter.SortSpectrumQualityTextFile();
 
-                        var strBakFilePath = strInputFilePath + ".bak";
+                        var bakFilePath = inputFilePath + ".bak";
 
-                        if (!File.Exists(strBakFilePath))
+                        if (!File.Exists(bakFilePath))
                         {
                             LogErrors("FilterDTATextFileWork", "CDTA .Bak file not found");
                             mResults = ProcessResults.SF_NO_FILES_CREATED;
@@ -472,25 +471,25 @@ namespace MSMSSpectrumFilterAM
                         // Compare the new _dta.txt file to the _dta.txt.bak file
                         // If they have the same data, do not keep the new _dta.txt file
 
-                        var blnFilesMatch = CDTAFilesMatch(strBakFilePath, strInputFilePath);
+                        var filesMatch = CDTAFilesMatch(bakFilePath, inputFilePath);
 
                         PRISM.ProgRunner.GarbageCollectNow();
 
                         // Delete the _dta.txt.bak file
-                        File.Delete(strBakFilePath);
+                        File.Delete(bakFilePath);
 
-                        if (blnFilesMatch)
+                        if (filesMatch)
                         {
                             LogMessage("The filtered CDTA file matches the original CDTA file (same number of spectra and same spectral data); the filtered CDTA file will not be retained");
 
-                            File.Delete(strInputFilePath);
+                            File.Delete(inputFilePath);
 
                             mResults = ProcessResults.SF_NO_SPECTRA_ALTERED;
                         }
                         else
                         {
                             // Count the number of .Dta files remaining in the _dta.txt file
-                            if (!VerifyDtaCreation(strInputFilePath))
+                            if (!VerifyDtaCreation(inputFilePath))
                             {
                                 mResults = ProcessResults.SF_NO_FILES_CREATED;
                             }
@@ -543,8 +542,8 @@ namespace MSMSSpectrumFilterAM
                     LogDebug("Looking for the _ScanStats.txt files for dataset " + mDatasetName);
                 }
 
-                var blnScanStatsFilesExist = clsMsMsSpectrumFilter.CheckForExistingScanStatsFiles(mWorkDir, mDatasetName);
-                if (blnScanStatsFilesExist)
+                var scanStatsFilesExist = clsMsMsSpectrumFilter.CheckForExistingScanStatsFiles(mWorkDir, mDatasetName);
+                if (scanStatsFilesExist)
                 {
                     if (mDebugLevel >= 1)
                     {
@@ -556,36 +555,36 @@ namespace MSMSSpectrumFilterAM
                 LogMessage("Creating the _ScanStats.txt files for dataset " + mDatasetName);
 
                 // Determine the path to the .Raw file
-                var strRawFileName = mDatasetName + ".raw";
-                var strFinniganRawFilePath = clsAnalysisResources.ResolveStoragePath(mWorkDir, strRawFileName);
+                var rawFileName = mDatasetName + ".raw";
+                var finniganRawFilePath = clsAnalysisResources.ResolveStoragePath(mWorkDir, rawFileName);
 
-                if (string.IsNullOrEmpty(strFinniganRawFilePath))
+                if (string.IsNullOrEmpty(finniganRawFilePath))
                 {
                     // Unable to resolve the file path
-                    mErrMsg = "Could not find " + strRawFileName + " or " +
-                        strRawFileName + clsAnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX +
+                    mErrMsg = "Could not find " + rawFileName + " or " +
+                        rawFileName + clsAnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX +
                         " in the dataset directory; unable to generate the ScanStats files";
                     LogErrors("GenerateFinniganScanStatsFiles", mErrMsg);
                     return false;
                 }
 
                 // Look for an existing _ScanStats.txt file in a SIC folder below folder with the .Raw file
-                var fiRawFile = new FileInfo(strFinniganRawFilePath);
+                var rawFile = new FileInfo(finniganRawFilePath);
 
-                if (!fiRawFile.Exists)
+                if (!rawFile.Exists)
                 {
                     // File not found at the specified path
-                    mErrMsg = "File not found: " + strFinniganRawFilePath + " -- unable to generate the ScanStats files";
+                    mErrMsg = "File not found: " + finniganRawFilePath + " -- unable to generate the ScanStats files";
                     LogErrors("GenerateFinniganScanStatsFiles", mErrMsg);
                     return false;
                 }
 
                 if (mDebugLevel >= 1)
                 {
-                    LogMessage("Generating _ScanStats.txt file using " + strFinniganRawFilePath);
+                    LogMessage("Generating _ScanStats.txt file using " + finniganRawFilePath);
                 }
 
-                if (!mMsMsSpectrumFilter.GenerateFinniganScanStatsFiles(strFinniganRawFilePath, mWorkDir))
+                if (!mMsMsSpectrumFilter.GenerateFinniganScanStatsFiles(finniganRawFilePath, mWorkDir))
                 {
                     if (mDebugLevel >= 3)
                     {
@@ -634,7 +633,7 @@ namespace MSMSSpectrumFilterAM
 
         protected virtual bool InitSetup()
         {
-            // Initializes module variables and verifies mandatory parameters have been propery specified
+            // Initializes module variables and verifies that mandatory parameters have been properly specified
 
             // Manager parameters
             if (mMgrParams == null)
@@ -698,8 +697,8 @@ namespace MSMSSpectrumFilterAM
         /// <remarks></remarks>
         private bool StoreToolVersionInfo()
         {
-            var strToolVersionInfo = string.Empty;
-            var strAppFolderPath = clsGlobal.GetAppDirectoryPath();
+            var toolVersionInfo = string.Empty;
+            var appFolderPath = clsGlobal.GetAppDirectoryPath();
 
             if (mDebugLevel >= 2)
             {
@@ -707,25 +706,25 @@ namespace MSMSSpectrumFilterAM
             }
 
             // Lookup the version of the MSMSSpectrumFilterAM
-            if (!StoreToolVersionInfoForLoadedAssembly(ref strToolVersionInfo, "MSMSSpectrumFilterAM"))
+            if (!StoreToolVersionInfoForLoadedAssembly(ref toolVersionInfo, "MSMSSpectrumFilterAM"))
             {
                 return false;
             }
 
             // Lookup the version of the MsMsDataFileReader
-            if (!StoreToolVersionInfoForLoadedAssembly(ref strToolVersionInfo, "MsMsDataFileReader"))
+            if (!StoreToolVersionInfoForLoadedAssembly(ref toolVersionInfo, "MsMsDataFileReader"))
             {
                 return false;
             }
 
             // Store the path to MsMsDataFileReader.dll in toolFiles
             var toolFiles = new List<FileInfo> {
-                new FileInfo(Path.Combine(strAppFolderPath, "MsMsDataFileReader.dll"))
+                new FileInfo(Path.Combine(appFolderPath, "MsMsDataFileReader.dll"))
             };
 
             try
             {
-                return SetStepTaskToolVersion(strToolVersionInfo, toolFiles);
+                return SetStepTaskToolVersion(toolVersionInfo, toolFiles);
             }
             catch (Exception ex)
             {
@@ -747,10 +746,10 @@ namespace MSMSSpectrumFilterAM
             return false;
         }
 
-        private bool VerifyDtaCreation(string strDTATextFilePath)
+        private bool VerifyDtaCreation(string dtaTextFilePath)
         {
             // Verify at least one .dta file has been created
-            if (CountDtaFiles(strDTATextFilePath) < 1)
+            if (CountDtaFiles(dtaTextFilePath) < 1)
             {
                 mErrMsg = "No dta files remain after filtering";
                 return false;
@@ -777,7 +776,7 @@ namespace MSMSSpectrumFilterAM
         /// </summary>
         /// <returns>CloseOutType enum indicating success or failure</returns>
         /// <remarks></remarks>
-        protected virtual CloseOutType ZipConcDtaFile()
+        protected virtual CloseOutType ZipConcatenatedDtaFile()
         {
             // Zips the concatenated dta file
             var dtaFileName = mDatasetName + "_dta.txt";

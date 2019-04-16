@@ -132,21 +132,21 @@ namespace DTASpectraFileGen
         /// <remarks>The default path can be overridden by updating mDtaToolNameLoc using clsDtaGen.UpdateDtaToolNameLoc</remarks>
         protected virtual string ConstructDTAToolPath()
         {
-            var strDTAGenProgram = mJobParams.GetJobParameter("DtaGenerator", "");
-            string strDTAToolPath;
+            var dtaGenProgram = mJobParams.GetJobParameter("DtaGenerator", "");
+            string dtaToolPath;
 
-            if (strDTAGenProgram.ToLower() == EXTRACT_MSN_FILENAME.ToLower())
+            if (string.Equals(dtaGenProgram, EXTRACT_MSN_FILENAME, StringComparison.OrdinalIgnoreCase))
             {
                 // Extract_MSn uses the lcqdtaloc folder path
-                strDTAToolPath = Path.Combine(mMgrParams.GetParam("lcqdtaloc", ""), strDTAGenProgram);
+                dtaToolPath = Path.Combine(mMgrParams.GetParam("lcqdtaloc", ""), dtaGenProgram);
             }
             else
             {
                 // DeconMSn uses the XcalDLLPath
-                strDTAToolPath = Path.Combine(mMgrParams.GetParam("XcalDLLPath", ""), strDTAGenProgram);
+                dtaToolPath = Path.Combine(mMgrParams.GetParam("XcalDLLPath", ""), dtaGenProgram);
             }
 
-            return strDTAToolPath;
+            return dtaToolPath;
         }
 
         /// <summary>
@@ -160,7 +160,7 @@ namespace DTASpectraFileGen
         {
             string dataFileExtension;
 
-            // Verifies a the data file exists in specfied directory
+            // Verifies a the data file exists in specified directory
             switch (mRawDataType)
             {
                 case clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile:
@@ -210,7 +210,7 @@ namespace DTASpectraFileGen
                 OnStatusEvent("clsDtaGenThermoRaw.InitSetup: Initializing DTA generator setup");
             }
 
-            // Do tests specfied in base class
+            // Do tests specified in base class
             if (!base.InitSetup())
                 return false;
 
@@ -345,7 +345,7 @@ namespace DTASpectraFileGen
 
             // Get the parameters from the various parameter dictionaries
 
-            var strInstrumentDataFilePath = Path.Combine(mWorkDir, mInstrumentFileName);
+            var instrumentDataFilePath = Path.Combine(mWorkDir, mInstrumentFileName);
 
             // Note: Defaults are used if certain parameters are not present in mJobParams
 
@@ -366,8 +366,8 @@ namespace DTASpectraFileGen
             var explicitChargeEnd = (short)mJobParams.GetJobParameter("Charges", "ExplicitChargeEnd", 0);
 
             // Get the maximum number of scans in the file
-            var rawFilePath = string.Copy(strInstrumentDataFilePath);
-            if (Path.GetExtension(strInstrumentDataFilePath).ToLower() != clsAnalysisResources.DOT_RAW_EXTENSION)
+            var rawFilePath = string.Copy(instrumentDataFilePath);
+            if (!string.Equals(Path.GetExtension(instrumentDataFilePath), clsAnalysisResources.DOT_RAW_EXTENSION, StringComparison.OrdinalIgnoreCase))
             {
                 rawFilePath = Path.ChangeExtension(rawFilePath, clsAnalysisResources.DOT_RAW_EXTENSION);
             }
@@ -437,7 +437,7 @@ namespace DTASpectraFileGen
                 locCharge = explicitChargeStart;
             }
 
-            mRunningExtractMSn = mDtaToolNameLoc.ToLower().Contains(EXTRACT_MSN_FILENAME.ToLower());
+            mRunningExtractMSn = mDtaToolNameLoc.IndexOf(EXTRACT_MSN_FILENAME, StringComparison.OrdinalIgnoreCase) >= 0;
 
             if (mRunningExtractMSn)
             {
@@ -747,12 +747,12 @@ namespace DTASpectraFileGen
         /// <summary>
         /// Event handler for event CmdRunner.ErrorEvent
         /// </summary>
-        /// <param name="strMessage"></param>
+        /// <param name="message"></param>
         /// <param name="ex"></param>
-        protected void CmdRunner_ErrorEvent(string strMessage, Exception ex)
+        protected void CmdRunner_ErrorEvent(string message, Exception ex)
         {
-            mErrMsg = strMessage;
-            OnErrorEvent(strMessage, ex);
+            mErrMsg = message;
+            OnErrorEvent(message, ex);
         }
 
         private DateTime mLastDtaCountTime = DateTime.MinValue;

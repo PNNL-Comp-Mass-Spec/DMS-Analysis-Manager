@@ -65,7 +65,7 @@ namespace DTASpectraFileGen
 
         private bool VerifyMGFFileExists(string WorkDir, string DSName)
         {
-            // Verifies a .mgf file exists in specfied directory
+            // Verifies a .mgf file exists in specified directory
             if (File.Exists(Path.Combine(WorkDir, DSName + clsAnalysisResources.DOT_MGF_EXTENSION)))
             {
                 mErrMsg = "";
@@ -80,7 +80,7 @@ namespace DTASpectraFileGen
         {
             // Verifies all necessary files exist in the specified locations
 
-            // Do tests specfied in base class
+            // Do tests specified in base class
             if (!base.InitSetup())
                 return false;
 
@@ -161,7 +161,7 @@ namespace DTASpectraFileGen
         /// </summary>
         /// <returns>TRUE for success; FALSE for failure</returns>
         /// <remarks></remarks>
-        private bool ConvertMGFtoDTA(string strInputFilePathFull, string strOutputFolderPath)
+        private bool ConvertMGFtoDTA(string inputFilePathFull, string outputFolderPath)
         {
             if (mDebugLevel > 0)
             {
@@ -190,9 +190,9 @@ namespace DTASpectraFileGen
             mMGFtoDTA.ThresholdIonPctForDoubleCharge = mJobParams.GetJobParameter("ThresholdIonPctForDoubleCharge",
                 (int)mMGFtoDTA.ThresholdIonPctForDoubleCharge);
 
-            var blnSuccess = mMGFtoDTA.ProcessFile(strInputFilePathFull, strOutputFolderPath);
+            var success = mMGFtoDTA.ProcessFile(inputFilePathFull, outputFolderPath);
 
-            if (!blnSuccess && string.IsNullOrEmpty(mErrMsg))
+            if (!success && string.IsNullOrEmpty(mErrMsg))
             {
                 mErrMsg = mMGFtoDTA.GetErrorMessage();
             }
@@ -200,21 +200,21 @@ namespace DTASpectraFileGen
             mSpectraFileCount = mMGFtoDTA.SpectraCountWritten;
             mProgress = 95;
 
-            return blnSuccess;
+            return success;
         }
 
         private bool VerifyDtaCreation()
         {
             // Verify that the _DTA.txt file was created and is not empty
-            var fiCDTAFile = new FileInfo(Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.CDTA_EXTENSION));
+            var cdtaFile = new FileInfo(Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.CDTA_EXTENSION));
 
-            if (!fiCDTAFile.Exists)
+            if (!cdtaFile.Exists)
             {
                 mErrMsg = "_DTA.txt file not created";
                 return false;
             }
 
-            if (fiCDTAFile.Length == 0)
+            if (cdtaFile.Length == 0)
             {
                 mErrMsg = "_DTA.txt file is empty";
                 return false;
@@ -223,15 +223,15 @@ namespace DTASpectraFileGen
             return true;
         }
 
-        private void MGFtoDTA_ErrorEvent(string strMessage)
+        private void MGFtoDTA_ErrorEvent(string message)
         {
             if (string.IsNullOrEmpty(mErrMsg))
             {
-                mErrMsg = "MGFtoDTA_Error: " + strMessage;
+                mErrMsg = "MGFtoDTA_Error: " + message;
             }
             else if (mErrMsg.Length < 300)
             {
-                mErrMsg += "; MGFtoDTA_Error: " + strMessage;
+                mErrMsg += "; MGFtoDTA_Error: " + message;
             }
         }
     }

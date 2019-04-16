@@ -79,8 +79,8 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                 // Create the TargetedWorkflowParams.xml file
                 mProgress = PROGRESS_PCT_CREATING_PARAMETERS;
 
-                var strTargetedQuantParamFilePath = CreateTargetedQuantParamFile();
-                if (string.IsNullOrEmpty(strTargetedQuantParamFilePath))
+                var targetedQuantParamFilePath = CreateTargetedQuantParamFile();
+                if (string.IsNullOrEmpty(targetedQuantParamFilePath))
                 {
                     LogError("Aborting since CreateTargetedQuantParamFile returned false");
                     if (string.IsNullOrEmpty(mMessage))
@@ -95,10 +95,10 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                 LogMessage("Running TargetedWorkflowsConsole");
 
                 // Set up and execute a program runner to run TargetedWorkflowsConsole
-                var strRawDataType = mJobParams.GetParam("RawDataType");
+                var rawDataType = mJobParams.GetParam("RawDataType");
                 string arguments;
 
-                switch (strRawDataType.ToLower())
+                switch (rawDataType.ToLower())
                 {
                     case clsAnalysisResources.RAW_DATA_TYPE_DOT_RAW_FILES:
                         arguments = " " + PossiblyQuotePath(Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_RAW_EXTENSION));
@@ -109,12 +109,12 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                         arguments = " " + PossiblyQuotePath(Path.Combine(mWorkDir, mDatasetName) + clsAnalysisResources.DOT_D_EXTENSION);
                         break;
                     default:
-                        mMessage = "Dataset type " + strRawDataType + " is not supported";
+                        mMessage = "Dataset type " + rawDataType + " is not supported";
                         LogDebug(mMessage);
                         return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                arguments += " " + PossiblyQuotePath(strTargetedQuantParamFilePath);
+                arguments += " " + PossiblyQuotePath(targetedQuantParamFilePath);
 
                 if (mDebugLevel >= 1)
                 {
@@ -158,11 +158,11 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                 if (processingSuccess)
                 {
                     // Make sure that the quantitation output file was created
-                    var strOutputFileName = mDatasetName + "_quant.txt";
+                    var outputFileName = mDatasetName + "_quant.txt";
 
-                    if (!File.Exists(Path.Combine(mWorkDir, strOutputFileName)))
+                    if (!File.Exists(Path.Combine(mWorkDir, outputFileName)))
                     {
-                        mMessage = "MSAlign_Quant result file not found (" + strOutputFileName + ")";
+                        mMessage = "MSAlign_Quant result file not found (" + outputFileName + ")";
                         LogError(mMessage);
                         processingSuccess = false;
                     }
@@ -250,11 +250,11 @@ namespace AnalysisManagerMSAlignQuantPlugIn
         /// <summary>
         /// Creates the targeted quant params XML file
         /// </summary>
-        /// <returns>The full path to the file, if successful.  Otherwise, and empty string</returns>
+        /// <returns>The full path to the file, if successful. Otherwise, an empty string</returns>
         /// <remarks></remarks>
         protected string CreateTargetedQuantParamFile()
         {
-            string strTargetedQuantParamFilePath;
+            string targetedQuantParamFilePath;
 
             try
             {
@@ -322,7 +322,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                 return string.Empty;
             }
 
-            return strTargetedQuantParamFilePath;
+            return targetedQuantParamFilePath;
         }
 
         // Example Console output:
@@ -358,9 +358,9 @@ namespace AnalysisManagerMSAlignQuantPlugIn
         /// <summary>
         /// Parse the TargetedWorkflowsConsole console output file to track progress
         /// </summary>
-        /// <param name="strConsoleOutputFilePath"></param>
+        /// <param name="consoleOutputFilePath"></param>
         /// <remarks></remarks>
-        protected void ParseConsoleOutputFile(string strConsoleOutputFilePath)
+        protected void ParseConsoleOutputFile(string consoleOutputFilePath)
         {
             try
             {
@@ -376,11 +376,11 @@ namespace AnalysisManagerMSAlignQuantPlugIn
 
                 }
 
-                if (!File.Exists(strConsoleOutputFilePath))
+                if (!File.Exists(consoleOutputFilePath))
                 {
                     if (mDebugLevel >= 4)
                     {
-                        LogDebug("Console output file not found: " + strConsoleOutputFilePath);
+                        LogDebug("Console output file not found: " + consoleOutputFilePath);
                     }
 
                     return;
@@ -388,16 +388,16 @@ namespace AnalysisManagerMSAlignQuantPlugIn
 
                 if (mDebugLevel >= 4)
                 {
-                    LogDebug("Parsing file " + strConsoleOutputFilePath);
+                    LogDebug("Parsing file " + consoleOutputFilePath);
                 }
 
                 double subProgressAddOn = 0;
 
-                var intEffectiveProgress = PROGRESS_TARGETED_WORKFLOWS_STARTING;
+                var effectiveProgress = PROGRESS_TARGETED_WORKFLOWS_STARTING;
 
                 mConsoleOutputErrorMsg = string.Empty;
 
-                using (var reader = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(consoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
                     while (!reader.EndOfStream)
                     {
@@ -412,14 +412,14 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                             {
                                 if (dataLine.Contains(oItem.Key))
                                 {
-                                    if (intEffectiveProgress < oItem.Value)
+                                    if (effectiveProgress < oItem.Value)
                                     {
-                                        intEffectiveProgress = oItem.Value;
+                                        effectiveProgress = oItem.Value;
                                     }
                                 }
                             }
 
-                            if (intEffectiveProgress == PROGRESS_TARGETED_WORKFLOWS_PEAKS_LOADED)
+                            if (effectiveProgress == PROGRESS_TARGETED_WORKFLOWS_PEAKS_LOADED)
                             {
                                 var oMatch = reSubProgress.Match(dataLine);
                                 if (oMatch.Success)
@@ -431,50 +431,50 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                                 }
                             }
 
-                            var intCharIndex = dataLineLCase.IndexOf("exception of type", StringComparison.Ordinal);
-                            if (intCharIndex < 0)
+                            var charIndex = dataLineLCase.IndexOf("exception of type", StringComparison.Ordinal);
+                            if (charIndex < 0)
                             {
-                                intCharIndex = dataLineLCase.IndexOf("\t" + "error", StringComparison.Ordinal);
+                                charIndex = dataLineLCase.IndexOf("\t" + "error", StringComparison.Ordinal);
 
-                                if (intCharIndex > 0)
+                                if (charIndex > 0)
                                 {
-                                    intCharIndex += 1;
+                                    charIndex += 1;
                                 }
                                 else if (dataLineLCase.StartsWith("error"))
                                 {
-                                    intCharIndex = 0;
+                                    charIndex = 0;
                                 }
                             }
 
-                            if (intCharIndex >= 0)
+                            if (charIndex >= 0)
                             {
                                 // Error message found; update mMessage
-                                var strNewError = dataLine.Substring(intCharIndex);
+                                var newError = dataLine.Substring(charIndex);
 
-                                if (strNewError.Contains("all peptides contain unknown modifications"))
+                                if (newError.Contains("all peptides contain unknown modifications"))
                                 {
-                                    strNewError = "Error: every peptide in the mass tags file had an unknown modification; " +
+                                    newError = "Error: every peptide in the mass tags file had an unknown modification; " +
                                         "known mods are Acetylation (C2H2O, 42.01 Da), Phosphorylation (HPO3, 79.97 Da), " +
                                         "or Pyroglutomate (H3N1, 17.03 Da)";
                                 }
 
-                                mConsoleOutputErrorMsg = clsGlobal.AppendToComment(mConsoleOutputErrorMsg, strNewError);
+                                mConsoleOutputErrorMsg = clsGlobal.AppendToComment(mConsoleOutputErrorMsg, newError);
                             }
                         }
                     }
                 }
 
-                float sngEffectiveProgress = intEffectiveProgress;
+                float effectiveProgressOverall = effectiveProgress;
 
                 // Bump up the effective progress if finding features in positive or negative data
-                if (intEffectiveProgress == PROGRESS_TARGETED_WORKFLOWS_PEAKS_LOADED)
+                if (effectiveProgress == PROGRESS_TARGETED_WORKFLOWS_PEAKS_LOADED)
                 {
-                    sngEffectiveProgress += (float)((PROGRESS_TARGETED_WORKFLOWS_PROCESSING_COMPLETE - PROGRESS_TARGETED_WORKFLOWS_PEAKS_LOADED) * subProgressAddOn);
+                    effectiveProgressOverall += (float)((PROGRESS_TARGETED_WORKFLOWS_PROCESSING_COMPLETE - PROGRESS_TARGETED_WORKFLOWS_PEAKS_LOADED) * subProgressAddOn);
                 }
 
-                if (mProgress < sngEffectiveProgress)
+                if (mProgress < effectiveProgressOverall)
                 {
-                    mProgress = sngEffectiveProgress;
+                    mProgress = effectiveProgressOverall;
                 }
             }
             catch (Exception ex)
@@ -482,7 +482,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                 // Ignore errors here
                 if (mDebugLevel >= 2)
                 {
-                    LogError("Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
+                    LogError("Error parsing console output file (" + consoleOutputFilePath + "): " + ex.Message);
                 }
             }
         }
@@ -491,7 +491,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
         /// Stores the tool version info in the database
         /// </summary>
         /// <remarks></remarks>
-        protected bool StoreToolVersionInfo(string strTargetedWorkflowsConsoleProgLoc)
+        protected bool StoreToolVersionInfo(string targetedWorkflowsConsoleProgLoc)
         {
             var additionalDLLs = new List<string>
             {
@@ -499,15 +499,15 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                 "DeconTools.Workflows.dll"
             };
 
-            var success = StoreDotNETToolVersionInfo(strTargetedWorkflowsConsoleProgLoc, additionalDLLs);
+            var success = StoreDotNETToolVersionInfo(targetedWorkflowsConsoleProgLoc, additionalDLLs);
 
             return success;
         }
 
-        public void WriteXMLSetting(XmlTextWriter writer, string strSettingName, string strSettingValue)
+        public void WriteXMLSetting(XmlTextWriter writer, string settingName, string settingValue)
         {
-            writer.WriteStartElement(strSettingName);
-            writer.WriteValue(strSettingValue);
+            writer.WriteStartElement(settingName);
+            writer.WriteValue(settingValue);
             writer.WriteEndElement();
         }
 

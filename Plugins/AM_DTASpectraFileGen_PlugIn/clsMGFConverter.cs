@@ -75,12 +75,12 @@ namespace DTASpectraFileGen
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="intDebugLevel"></param>
-        /// <param name="strWorkDir"></param>
-        public clsMGFConverter(int intDebugLevel, string strWorkDir)
+        /// <param name="debugLevel"></param>
+        /// <param name="workDir"></param>
+        public clsMGFConverter(int debugLevel, string workDir)
         {
-            mDebugLevel = intDebugLevel;
-            mWorkDir = strWorkDir;
+            mDebugLevel = debugLevel;
+            mWorkDir = workDir;
             mErrMsg = string.Empty;
         }
 
@@ -90,9 +90,9 @@ namespace DTASpectraFileGen
         /// </summary>
         /// <returns>TRUE for success; FALSE for failure</returns>
         /// <remarks></remarks>
-        public bool ConvertMGFtoDTA(clsAnalysisResources.eRawDataTypeConstants eRawDataType, string strDatasetName)
+        public bool ConvertMGFtoDTA(clsAnalysisResources.eRawDataTypeConstants eRawDataType, string datasetName)
         {
-            bool blnSuccess;
+            bool success;
 
             mErrMsg = string.Empty;
 
@@ -101,17 +101,17 @@ namespace DTASpectraFileGen
                 OnDebugEvent("Converting .MGF file to _DTA.txt");
             }
 
-            var strMGFFilePath = Path.Combine(mWorkDir, strDatasetName + clsAnalysisResources.DOT_MGF_EXTENSION);
+            var mgfFilePath = Path.Combine(mWorkDir, datasetName + clsAnalysisResources.DOT_MGF_EXTENSION);
 
             if (eRawDataType == clsAnalysisResources.eRawDataTypeConstants.mzML)
             {
                 // Read the .mzML file to construct a mapping between "title" line and scan number
                 // If necessary, update the .mgf file to have new "title" lines that clsMGFtoDTA will recognize
 
-                var strMzMLFilePath = Path.Combine(mWorkDir, strDatasetName + clsAnalysisResources.DOT_MZML_EXTENSION);
+                var mzMLFilePath = Path.Combine(mWorkDir, datasetName + clsAnalysisResources.DOT_MZML_EXTENSION);
 
-                blnSuccess = UpdateMGFFileTitleLinesUsingMzML(strMzMLFilePath, strMGFFilePath, strDatasetName);
-                if (!blnSuccess)
+                success = UpdateMGFFileTitleLinesUsingMzML(mzMLFilePath, mgfFilePath, datasetName);
+                if (!success)
                 {
                     return false;
                 }
@@ -130,99 +130,99 @@ namespace DTASpectraFileGen
             };
             mMGFtoDTA.ErrorEvent += MGFtoDTA_ErrorEvent;
 
-            blnSuccess = mMGFtoDTA.ProcessFile(strMGFFilePath, mWorkDir);
+            success = mMGFtoDTA.ProcessFile(mgfFilePath, mWorkDir);
 
-            if (!blnSuccess && string.IsNullOrEmpty(mErrMsg))
+            if (!success && string.IsNullOrEmpty(mErrMsg))
             {
                 mErrMsg = mMGFtoDTA.GetErrorMessage();
             }
 
-            return blnSuccess;
+            return success;
         }
 
-        private Dictionary<string, string> GetCVParams(XmlReader objXMLReader, string strCurrentElementName)
+        private Dictionary<string, string> GetCVParams(XmlReader reader, string currentElementName)
         {
-            var lstCVParams = new Dictionary<string, string>();
+            var cvParams = new Dictionary<string, string>();
 
-            while (objXMLReader.Read())
+            while (reader.Read())
             {
-                XMLTextReaderSkipWhitespace(objXMLReader);
+                XMLTextReaderSkipWhitespace(reader);
 
-                if (objXMLReader.NodeType == XmlNodeType.EndElement && objXMLReader.Name == strCurrentElementName)
+                if (reader.NodeType == XmlNodeType.EndElement && reader.Name == currentElementName)
                 {
                     break;
                 }
 
-                if (objXMLReader.NodeType == XmlNodeType.Element && objXMLReader.Name == "cvParam")
+                if (reader.NodeType == XmlNodeType.Element && reader.Name == "cvParam")
                 {
-                    var strAccession = XMLTextReaderGetAttributeValue(objXMLReader, "accession", string.Empty);
-                    var strValue = XMLTextReaderGetAttributeValue(objXMLReader, "value", string.Empty);
+                    var accession = XMLTextReaderGetAttributeValue(reader, "accession", string.Empty);
+                    var value = XMLTextReaderGetAttributeValue(reader, "value", string.Empty);
 
-                    if (!lstCVParams.ContainsKey(strAccession))
+                    if (!cvParams.ContainsKey(accession))
                     {
-                        lstCVParams.Add(strAccession, strValue);
+                        cvParams.Add(accession, value);
                     }
                 }
             }
-            return lstCVParams;
+            return cvParams;
         }
 
-        private bool ParseMzMLFile(string strMzMLFilePath, out bool blnAutoNumberScans, Dictionary<string, udtScanInfoType> lstSpectrumIDToScanNumber)
+        private bool ParseMzMLFile(string mzMLFilePath, out bool autoNumberScans, Dictionary<string, udtScanInfoType> spectrumIDToScanNumber)
         {
-            var strSpectrumID = string.Empty;
+            var spectrumID = string.Empty;
 
-            var intScanNumberCurrent = 0;
+            var scanNumberCurrent = 0;
 
-            blnAutoNumberScans = false;
+            autoNumberScans = false;
 
-            if (lstSpectrumIDToScanNumber == null)
+            if (spectrumIDToScanNumber == null)
             {
-                lstSpectrumIDToScanNumber = new Dictionary<string, udtScanInfoType>();
+                spectrumIDToScanNumber = new Dictionary<string, udtScanInfoType>();
             }
 
-            using (var objXMLReader = new XmlTextReader(strMzMLFilePath))
+            using (var reader = new XmlTextReader(mzMLFilePath))
             {
-                while (objXMLReader.Read())
+                while (reader.Read())
                 {
-                    XMLTextReaderSkipWhitespace(objXMLReader);
-                    if (objXMLReader.ReadState != ReadState.Interactive)
+                    XMLTextReaderSkipWhitespace(reader);
+                    if (reader.ReadState != ReadState.Interactive)
                         break;
 
-                    var udtScanInfo = new udtScanInfoType();
-                    if (objXMLReader.NodeType == XmlNodeType.Element)
+                    var scanInfo = new udtScanInfoType();
+                    if (reader.NodeType == XmlNodeType.Element)
                     {
-                        switch (objXMLReader.Name)
+                        switch (reader.Name)
                         {
                             case "spectrum":
 
-                                strSpectrumID = XMLTextReaderGetAttributeValue(objXMLReader, "id", string.Empty);
+                                spectrumID = XMLTextReaderGetAttributeValue(reader, "id", string.Empty);
 
-                                if (!string.IsNullOrEmpty(strSpectrumID))
+                                if (!string.IsNullOrEmpty(spectrumID))
                                 {
-                                    if (MsMsDataFileReader.clsMsMsDataFileReaderBaseClass.ExtractScanInfoFromDtaHeader(strSpectrumID,
-                                        out var intScanNumberStart, out var intScanNumberEnd, out var intCharge))
+                                    if (MsMsDataFileReader.clsMsMsDataFileReaderBaseClass.ExtractScanInfoFromDtaHeader(spectrumID,
+                                        out var scanNumberStart, out var scanNumberEnd, out var charge))
                                     {
                                         // This title is in a standard format
-                                        udtScanInfo.ScanStart = intScanNumberStart;
-                                        udtScanInfo.ScanEnd = intScanNumberEnd;
-                                        udtScanInfo.Charge = intCharge;
+                                        scanInfo.ScanStart = scanNumberStart;
+                                        scanInfo.ScanEnd = scanNumberEnd;
+                                        scanInfo.Charge = charge;
                                     }
                                     else
                                     {
-                                        blnAutoNumberScans = true;
+                                        autoNumberScans = true;
                                     }
 
-                                    if (blnAutoNumberScans)
+                                    if (autoNumberScans)
                                     {
-                                        intScanNumberCurrent += 1;
-                                        udtScanInfo.ScanStart = intScanNumberCurrent;
-                                        udtScanInfo.ScanEnd = intScanNumberCurrent;
+                                        scanNumberCurrent += 1;
+                                        scanInfo.ScanStart = scanNumberCurrent;
+                                        scanInfo.ScanEnd = scanNumberCurrent;
                                         // Store a charge of 0 for now; we'll update it later if the selectedIon element has a MS:1000041 attribute
-                                        udtScanInfo.Charge = 0;
+                                        scanInfo.Charge = 0;
                                     }
                                     else
                                     {
-                                        intScanNumberCurrent = intScanNumberStart;
+                                        scanNumberCurrent = scanNumberStart;
                                     }
                                 }
 
@@ -230,24 +230,24 @@ namespace DTASpectraFileGen
 
                             case "selectedIon":
                                 // Read the cvParams for this selected ion
-                                var lstCVParams = GetCVParams(objXMLReader, "selectedIon");
+                                var cvParams = GetCVParams(reader, "selectedIon");
 
-                                if (lstCVParams.TryGetValue("MS:1000041", out var strValue))
+                                if (cvParams.TryGetValue("MS:1000041", out var valueText))
                                 {
-                                    if (int.TryParse(strValue, out var intValue))
+                                    if (int.TryParse(valueText, out var value))
                                     {
-                                        udtScanInfo.Charge = intValue;
+                                        scanInfo.Charge = value;
                                     }
                                 }
                                 break;
                         }
                     }
-                    else if (objXMLReader.NodeType == XmlNodeType.EndElement && objXMLReader.Name == "spectrum")
+                    else if (reader.NodeType == XmlNodeType.EndElement && reader.Name == "spectrum")
                     {
                         // Store this spectrum
-                        if (!string.IsNullOrEmpty(strSpectrumID))
+                        if (!string.IsNullOrEmpty(spectrumID))
                         {
-                            lstSpectrumIDToScanNumber.Add(strSpectrumID, udtScanInfo);
+                            spectrumIDToScanNumber.Add(spectrumID, scanInfo);
                         }
                     }
                 }
@@ -256,53 +256,53 @@ namespace DTASpectraFileGen
             return true;
         }
 
-        private string XMLTextReaderGetAttributeValue(XmlReader objXMLReader, string strAttributeName, string strValueIfMissing)
+        private string XMLTextReaderGetAttributeValue(XmlReader reader, string attributeName, string valueIfMissing)
         {
-            objXMLReader.MoveToAttribute(strAttributeName);
-            if (objXMLReader.ReadAttributeValue())
+            reader.MoveToAttribute(attributeName);
+            if (reader.ReadAttributeValue())
             {
-                return objXMLReader.Value;
+                return reader.Value;
             }
 
-            return string.Copy(strValueIfMissing);
+            return string.Copy(valueIfMissing);
         }
 
         [Obsolete("Unused")]
-        private string XMLTextReaderGetInnerText(XmlReader objXMLReader)
+        private string XMLTextReaderGetInnerText(XmlReader reader)
         {
-            var strValue = string.Empty;
-            bool blnSuccess;
+            var value = string.Empty;
+            bool success;
 
-            if (objXMLReader.NodeType == XmlNodeType.Element)
+            if (reader.NodeType == XmlNodeType.Element)
             {
                 // Advance the reader so that we can read the value
-                blnSuccess = objXMLReader.Read();
+                success = reader.Read();
             }
             else
             {
-                blnSuccess = true;
+                success = true;
             }
 
-            if (blnSuccess && objXMLReader.NodeType != XmlNodeType.Whitespace && objXMLReader.HasValue)
+            if (success && reader.NodeType != XmlNodeType.Whitespace && reader.HasValue)
             {
-                strValue = objXMLReader.Value;
+                value = reader.Value;
             }
 
-            return strValue;
+            return value;
         }
 
-        private void XMLTextReaderSkipWhitespace(XmlReader objXMLReader)
+        private void XMLTextReaderSkipWhitespace(XmlReader reader)
         {
-            if (objXMLReader.NodeType == XmlNodeType.Whitespace)
+            if (reader.NodeType == XmlNodeType.Whitespace)
             {
-                // Whitspace; read the next node
-                objXMLReader.Read();
+                // Whitespace; read the next node
+                reader.Read();
             }
         }
 
-        private bool UpdateMGFFileTitleLinesUsingMzML(string strMzMLFilePath, string strMGFFilePath, string strDatasetName)
+        private bool UpdateMGFFileTitleLinesUsingMzML(string mzMLFilePath, string mgfFilePath, string datasetName)
         {
-            var lstSpectrumIDtoScanNumber = new Dictionary<string, udtScanInfoType>();
+            var spectrumIDtoScanNumber = new Dictionary<string, udtScanInfoType>();
 
             try
             {
@@ -315,7 +315,7 @@ namespace DTASpectraFileGen
                         "Parsing the .mzML file to create the spectrum ID to scan number mapping");
                 }
 
-                var success = ParseMzMLFile(strMzMLFilePath, out var blnAutoNumberScans, lstSpectrumIDtoScanNumber);
+                var success = ParseMzMLFile(mzMLFilePath, out var autoNumberScans, spectrumIDtoScanNumber);
 
                 if (!success)
                 {
@@ -323,7 +323,7 @@ namespace DTASpectraFileGen
                     return false;
                 }
 
-                if (!blnAutoNumberScans)
+                if (!autoNumberScans)
                 {
                     // Nothing to update; exit this function
                     OnStatusEvent(
@@ -336,11 +336,11 @@ namespace DTASpectraFileGen
                     OnDebugEvent("Updating the Title lines in the MGF file");
                 }
 
-                var strNewMGFFile = Path.GetTempFileName();
+                var newMGFFilePath = Path.GetTempFileName();
 
                 // Now read the MGF file and update the title lines
-                using (var reader = new StreamReader(new FileStream(strMGFFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
-                using (var writer = new StreamWriter(new FileStream(strNewMGFFile, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                using (var reader = new StreamReader(new FileStream(mgfFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                using (var writer = new StreamWriter(new FileStream(newMGFFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
                     while (!reader.EndOfStream)
                     {
@@ -354,17 +354,17 @@ namespace DTASpectraFileGen
                         {
                             if (dataLine.StartsWith("TITLE="))
                             {
-                                var strTitle = dataLine.Substring("TITLE=".Length);
+                                var title = dataLine.Substring("TITLE=".Length);
 
-                                // Look for strTitle in lstSpectrumIDtoScanNumber
-                                if (lstSpectrumIDtoScanNumber.TryGetValue(strTitle, out var udtScanInfo))
+                                // Look for title in spectrumIDtoScanNumber
+                                if (spectrumIDtoScanNumber.TryGetValue(title, out var scanInfo))
                                 {
-                                    dataLine = "TITLE=" + strDatasetName + "." + udtScanInfo.ScanStart.ToString("0000") + "." +
-                                                udtScanInfo.ScanEnd.ToString("0000") + ".";
-                                    if (udtScanInfo.Charge > 0)
+                                    dataLine = "TITLE=" + datasetName + "." + scanInfo.ScanStart.ToString("0000") + "." +
+                                                scanInfo.ScanEnd.ToString("0000") + ".";
+                                    if (scanInfo.Charge > 0)
                                     {
                                         // Also append charge
-                                        dataLine += udtScanInfo.Charge;
+                                        dataLine += scanInfo.Charge;
                                     }
                                 }
                             }
@@ -380,13 +380,13 @@ namespace DTASpectraFileGen
                         "Update complete; replacing the original .MGF file");
                 }
 
-                // Delete the original .mgf file and replace it with strNewMGFFile
+                // Delete the original .mgf file and replace it with newMGFFilePath
                 ProgRunner.GarbageCollectNow();
 
-                clsAnalysisToolRunnerBase.DeleteFileWithRetries(strMGFFilePath, mDebugLevel);
+                clsAnalysisToolRunnerBase.DeleteFileWithRetries(mgfFilePath, mDebugLevel);
 
-                var ioNewMGF = new FileInfo(strNewMGFFile);
-                ioNewMGF.MoveTo(strMGFFilePath);
+                var newMGFFile = new FileInfo(newMGFFilePath);
+                newMGFFile.MoveTo(mgfFilePath);
 
                 return true;
             }
@@ -399,17 +399,17 @@ namespace DTASpectraFileGen
 
         }
 
-        private void MGFtoDTA_ErrorEvent(string strMessage)
+        private void MGFtoDTA_ErrorEvent(string message)
         {
-            OnErrorEvent(strMessage);
+            OnErrorEvent(message);
 
             if (string.IsNullOrEmpty(mErrMsg))
             {
-                mErrMsg = "MGFtoDTA_Error: " + strMessage;
+                mErrMsg = "MGFtoDTA_Error: " + message;
             }
             else if (mErrMsg.Length < 300)
             {
-                mErrMsg += "; MGFtoDTA_Error: " + strMessage;
+                mErrMsg += "; MGFtoDTA_Error: " + message;
             }
         }
     }

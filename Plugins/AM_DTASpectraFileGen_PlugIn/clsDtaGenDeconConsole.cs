@@ -65,9 +65,9 @@ namespace DTASpectraFileGen
         {
             var deconToolsDir = mMgrParams.GetParam("DeconToolsProgLoc");         // DeconConsole.exe is stored in the DeconTools folder
 
-            var strDTAToolPath = Path.Combine(deconToolsDir, DECON_CONSOLE_FILENAME);
+            var dtaToolPath = Path.Combine(deconToolsDir, DECON_CONSOLE_FILENAME);
 
-            return strDTAToolPath;
+            return dtaToolPath;
         }
 
         protected override void MakeDTAFilesThreaded()
@@ -113,7 +113,7 @@ namespace DTASpectraFileGen
         /// <remarks></remarks>
         private bool ConvertMGFtoDTA()
         {
-            var strRawDataType = mJobParams.GetJobParameter("RawDataType", "");
+            var rawDataType = mJobParams.GetJobParameter("RawDataType", "");
 
             var oMGFConverter = new clsMGFConverter(mDebugLevel, mWorkDir)
             {
@@ -123,17 +123,17 @@ namespace DTASpectraFileGen
 
             RegisterEvents(oMGFConverter);
 
-            var eRawDataType = clsAnalysisResources.GetRawDataType(strRawDataType);
-            var blnSuccess = oMGFConverter.ConvertMGFtoDTA(eRawDataType, mDatasetName);
+            var eRawDataType = clsAnalysisResources.GetRawDataType(rawDataType);
+            var success = oMGFConverter.ConvertMGFtoDTA(eRawDataType, mDatasetName);
 
-            if (!blnSuccess)
+            if (!success)
             {
                 mErrMsg = oMGFConverter.ErrorMessage;
             }
 
             mSpectraFileCount = oMGFConverter.SpectraCountWritten;
 
-            return blnSuccess;
+            return success;
         }
 
         /// <summary>
@@ -187,19 +187,19 @@ namespace DTASpectraFileGen
             mDeconConsoleFinishedDespiteProgRunnerError = false;
             mDeconConsoleStatus.Clear();
 
-            var strParamFilePath = mJobParams.GetJobParameter("DtaGenerator", "DeconMSn_ParamFile", string.Empty);
+            var paramFilePath = mJobParams.GetJobParameter("DtaGenerator", "DeconMSn_ParamFile", string.Empty);
 
-            if (string.IsNullOrEmpty(strParamFilePath))
+            if (string.IsNullOrEmpty(paramFilePath))
             {
                 mErrMsg = clsAnalysisToolRunnerBase.NotifyMissingParameter(mJobParams, "DeconMSn_ParamFile");
                 return false;
             }
 
-            strParamFilePath = Path.Combine(mWorkDir, strParamFilePath);
+            paramFilePath = Path.Combine(mWorkDir, paramFilePath);
 
             // Set up command
             var arguments = " " + rawFilePath +
-                            " " + strParamFilePath;
+                            " " + paramFilePath;
 
             if (mDebugLevel > 0)
             {
@@ -218,18 +218,18 @@ namespace DTASpectraFileGen
             mCmdRunner.ErrorEvent += CmdRunner_ErrorEvent;
             mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
-            var blnSuccess = mCmdRunner.RunProgram(mDtaToolNameLoc, arguments, "DeconConsole", true);
+            var success = mCmdRunner.RunProgram(mDtaToolNameLoc, arguments, "DeconConsole", true);
 
             // Parse the DeconTools .Log file to see whether it contains message "Finished file processing"
 
-            ParseDeconToolsLogFile(out var blnFinishedProcessing, out _);
+            ParseDeconToolsLogFile(out var finishedProcessing, out _);
 
             if (mDeconConsoleExceptionThrown)
             {
-                blnSuccess = false;
+                success = false;
             }
 
-            if (blnFinishedProcessing && !blnSuccess)
+            if (finishedProcessing && !success)
             {
                 mDeconConsoleFinishedDespiteProgRunnerError = true;
             }
@@ -242,7 +242,7 @@ namespace DTASpectraFileGen
             {
                 mErrMsg = "Error running DeconTools; Bad_Error_log file exists";
                 OnErrorEvent(mErrMsg + ": " + badErrorLogFile.Name);
-                blnSuccess = false;
+                success = false;
                 mDeconConsoleFinishedDespiteProgRunnerError = false;
                 break;
             }
@@ -252,10 +252,10 @@ namespace DTASpectraFileGen
                 // ProgRunner reported an error code
                 // However, the log file says things completed successfully
                 // We'll trust the log file
-                blnSuccess = true;
+                success = true;
             }
 
-            if (!blnSuccess)
+            if (!success)
             {
                 // .RunProgram returned False
                 LogDTACreationStats("ConvertRawToMGF", Path.GetFileNameWithoutExtension(mDtaToolNameLoc), "m_RunProgTool.RunProgram returned False");
@@ -278,21 +278,21 @@ namespace DTASpectraFileGen
 
         protected override void MonitorProgress()
         {
-            ParseDeconToolsLogFile(out var blnFinishedProcessing, out var dtFinishTime);
+            ParseDeconToolsLogFile(out var finishedProcessing, out var finishTime);
 
             if (mDebugLevel >= 2)
             {
-                var strProgressMessage = "Scan=" + mDeconConsoleStatus.CurrentLCScan;
-                OnProgressUpdate("... " + strProgressMessage + ", " + mProgress.ToString("0.0") + "% complete", mProgress);
+                var progressMessage = "Scan=" + mDeconConsoleStatus.CurrentLCScan;
+                OnProgressUpdate("... " + progressMessage + ", " + mProgress.ToString("0.0") + "% complete", mProgress);
             }
 
             const int MAX_LOG_FINISHED_WAIT_TIME_SECONDS = 120;
-            if (blnFinishedProcessing)
+            if (finishedProcessing)
             {
                 // The DeconConsole Log File reports that the task is complete
                 // If it finished over MAX_LOG_FINISHED_WAIT_TIME_SECONDS seconds ago, send an abort to the CmdRunner
 
-                if (DateTime.Now.Subtract(dtFinishTime).TotalSeconds >= MAX_LOG_FINISHED_WAIT_TIME_SECONDS)
+                if (DateTime.Now.Subtract(finishTime).TotalSeconds >= MAX_LOG_FINISHED_WAIT_TIME_SECONDS)
                 {
                     OnWarningEvent("Note: Log file reports finished over " + MAX_LOG_FINISHED_WAIT_TIME_SECONDS + " seconds ago, " +
                                    "but the DeconConsole CmdRunner is still active");
@@ -353,7 +353,7 @@ namespace DTASpectraFileGen
                             var dateValid = false;
                             if (charIndex > 1)
                             {
-                                // Parse out the date from strLineIn
+                                // Parse out the date from lineIn
                                 if (DateTime.TryParse(dataLine.Substring(0, charIndex).Trim(), out finishTime))
                                 {
                                     dateValid = true;
@@ -377,8 +377,8 @@ namespace DTASpectraFileGen
                                 OnStatusEvent("DeconConsole log file reports 'finished file processing' at " + finishTime);
                             }
 
-                            //'If intWorkFlowStep < TOTAL_WORKFLOW_STEPS Then
-                            //'	intWorkFlowStep += 1
+                            //'If workFlowStep < TOTAL_WORKFLOW_STEPS Then
+                            //'	workFlowStep += 1
                             //'End If
 
                             finishedProcessing = true;
@@ -439,7 +439,7 @@ namespace DTASpectraFileGen
 
             if (!string.IsNullOrWhiteSpace(scanLine))
             {
-                // Parse strScanFrameLine
+                // Parse scanFrameLine
                 // It will look like:
                 // Scan= 16500; PercentComplete= 89.2
 
@@ -470,21 +470,21 @@ namespace DTASpectraFileGen
         }
 
         /// <summary>
-        /// Looks for an equals sign in strData
+        /// Looks for an equals sign in data
         /// Returns a KeyValuePair object with the text before the equals sign and the text after the equals sign
         /// </summary>
-        /// <param name="strData"></param>
+        /// <param name="data"></param>
         /// <returns></returns>
         /// <remarks></remarks>
-        private KeyValuePair<string, string> ParseKeyValue(string strData)
+        private KeyValuePair<string, string> ParseKeyValue(string data)
         {
-            var intCharIndex = strData.IndexOf('=');
+            var charIndex = data.IndexOf('=');
 
-            if (intCharIndex > 0)
+            if (charIndex > 0)
             {
                 try
                 {
-                    return new KeyValuePair<string, string>(strData.Substring(0, intCharIndex).Trim(), strData.Substring(intCharIndex + 1).Trim());
+                    return new KeyValuePair<string, string>(data.Substring(0, charIndex).Trim(), data.Substring(charIndex + 1).Trim());
                 }
                 catch (Exception)
                 {

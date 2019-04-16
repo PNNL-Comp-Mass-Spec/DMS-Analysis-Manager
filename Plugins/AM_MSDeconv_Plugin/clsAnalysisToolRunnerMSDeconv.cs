@@ -91,35 +91,35 @@ namespace AnalysisManagerMSDeconvPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                var strOutputFormat = mJobParams.GetParam("MSDeconvOutputFormat");
+                var outputFormat = mJobParams.GetParam("MSDeconvOutputFormat");
                 string resultsFileName;
 
-                if (string.IsNullOrEmpty(strOutputFormat))
+                if (string.IsNullOrEmpty(outputFormat))
                 {
-                    strOutputFormat = "msalign";
+                    outputFormat = "msalign";
                 }
 
-                switch (strOutputFormat.ToLower())
+                switch (outputFormat.ToLower())
                 {
                     case "mgf":
-                        strOutputFormat = "mgf";
+                        outputFormat = "mgf";
                         resultsFileName = mDatasetName + "_msdeconv.mgf";
                         break;
                     case "text":
-                        strOutputFormat = "text";
+                        outputFormat = "text";
                         resultsFileName = mDatasetName + "_msdeconv.txt";
                         break;
                     case "msalign":
-                        strOutputFormat = "msalign";
+                        outputFormat = "msalign";
                         resultsFileName = mDatasetName + "_msdeconv.msalign";
                         break;
                     default:
-                        mMessage = "Invalid output format: " + strOutputFormat;
+                        mMessage = "Invalid output format: " + outputFormat;
                         LogError(mMessage);
                         return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                var processingSuccess = StartMSDeconv(JavaProgLoc, strOutputFormat);
+                var processingSuccess = StartMSDeconv(JavaProgLoc, outputFormat);
 
                 if (!processingSuccess)
                 {
@@ -139,15 +139,15 @@ namespace AnalysisManagerMSDeconvPlugIn
                 {
                     // Make sure the output file was created and is not zero-bytes
                     // If the input .mzXML file only has MS spectra and no MS/MS spectra, the output file will be empty
-                    var ioResultsFile = new FileInfo(Path.Combine(mWorkDir, resultsFileName));
-                    if (!ioResultsFile.Exists)
+                    var resultsFile = new FileInfo(Path.Combine(mWorkDir, resultsFileName));
+                    if (!resultsFile.Exists)
                     {
                         var msg = "MSDeconv results file not found";
                         LogError(msg, msg + " (" + resultsFileName + ")");
 
                         processingSuccess = false;
                     }
-                    else if (ioResultsFile.Length == 0)
+                    else if (resultsFile.Length == 0)
                     {
                         var msg = "MSDeconv results file is empty; assure that the input .mzXML file has MS/MS spectra";
                         LogError(msg, msg + " (" + resultsFileName + ")");
@@ -226,17 +226,17 @@ namespace AnalysisManagerMSDeconvPlugIn
         /// <summary>
         /// Parse the MSDeconv console output file to determine the MSDeconv version and to track the search progress
         /// </summary>
-        /// <param name="strConsoleOutputFilePath"></param>
+        /// <param name="consoleOutputFilePath"></param>
         /// <remarks></remarks>
-        private void ParseConsoleOutputFile(string strConsoleOutputFilePath)
+        private void ParseConsoleOutputFile(string consoleOutputFilePath)
         {
             try
             {
-                if (!File.Exists(strConsoleOutputFilePath))
+                if (!File.Exists(consoleOutputFilePath))
                 {
                     if (mDebugLevel >= 4)
                     {
-                        LogDebug("Console output file not found: " + strConsoleOutputFilePath);
+                        LogDebug("Console output file not found: " + consoleOutputFilePath);
                     }
 
                     return;
@@ -244,14 +244,14 @@ namespace AnalysisManagerMSDeconvPlugIn
 
                 if (mDebugLevel >= 4)
                 {
-                    LogDebug("Parsing file " + strConsoleOutputFilePath);
+                    LogDebug("Parsing file " + consoleOutputFilePath);
                 }
 
                 short actualProgress = 0;
 
                 mConsoleOutputErrorMsg = string.Empty;
 
-                using (var reader = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(consoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
                     var linesRead = 0;
                     while (!reader.EndOfStream)
@@ -292,12 +292,12 @@ namespace AnalysisManagerMSDeconvPlugIn
                                 // Update progress if the line starts with Processing spectrum
                                 if (dataLine.StartsWith("Processing spectrum"))
                                 {
-                                    var oMatch = reExtractPercentFinished.Match(dataLine);
-                                    if (oMatch.Success)
+                                    var match = reExtractPercentFinished.Match(dataLine);
+                                    if (match.Success)
                                     {
-                                        if (short.TryParse(oMatch.Groups[1].Value, out var intProgress))
+                                        if (short.TryParse(match.Groups[1].Value, out var progress))
                                         {
-                                            actualProgress = intProgress;
+                                            actualProgress = progress;
                                         }
                                     }
                                 }
@@ -323,7 +323,7 @@ namespace AnalysisManagerMSDeconvPlugIn
                 // Ignore errors here
                 if (mDebugLevel >= 2)
                 {
-                    LogError("Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
+                    LogError("Error parsing console output file (" + consoleOutputFilePath + "): " + ex.Message);
                 }
             }
         }
@@ -333,39 +333,39 @@ namespace AnalysisManagerMSDeconvPlugIn
             try
             {
                 var mzXmlFileName = mDatasetName + clsAnalysisResources.DOT_MZXML_EXTENSION;
-                var fiMzXmlFile = new FileInfo(Path.Combine(mWorkDir, mzXmlFileName));
+                var mzXmlFile = new FileInfo(Path.Combine(mWorkDir, mzXmlFileName));
 
-                if (!fiMzXmlFile.Exists)
+                if (!mzXmlFile.Exists)
                 {
-                    mMessage = "mzXML file not found, " + fiMzXmlFile.FullName;
+                    mMessage = "mzXML file not found, " + mzXmlFile.FullName;
                     return false;
                 }
 
                 var reader = new clsMzXMLFileReader();
-                reader.OpenFile(fiMzXmlFile.FullName);
+                reader.OpenFile(mzXmlFile.FullName);
 
                 // Read the spectra and examine the scan gaps
 
-                var lstScanGaps = new List<int>();
+                var scanGaps = new List<int>();
                 var lastScanNumber = 0;
 
-                while (reader.ReadNextSpectrum(out var objSpectrumInfo))
+                while (reader.ReadNextSpectrum(out var spectrumInfo))
                 {
                     if (lastScanNumber > 0)
                     {
-                        lstScanGaps.Add(objSpectrumInfo.ScanNumber - lastScanNumber);
+                        scanGaps.Add(spectrumInfo.ScanNumber - lastScanNumber);
                     }
 
-                    lastScanNumber = objSpectrumInfo.ScanNumber;
+                    lastScanNumber = spectrumInfo.ScanNumber;
                 }
 
                 reader.CloseFile();
 
-                if (lstScanGaps.Count > 0)
+                if (scanGaps.Count > 0)
                 {
                     // Compute the average scan gap
-                    var scanGapSum = lstScanGaps.Sum();
-                    var scanGapAverage = scanGapSum / (float)lstScanGaps.Count;
+                    var scanGapSum = scanGaps.Sum();
+                    var scanGapAverage = scanGapSum / (float)scanGaps.Count;
 
                     if (scanGapAverage >= 2)
                     {
@@ -373,19 +373,19 @@ namespace AnalysisManagerMSDeconvPlugIn
                         // May need to renumber if the scan gap is every greater than one; not sure
 
                         // Rename the file
-                        fiMzXmlFile.MoveTo(Path.Combine(mWorkDir, mDatasetName + "_old" + clsAnalysisResources.DOT_MZXML_EXTENSION));
-                        fiMzXmlFile.Refresh();
-                        mJobParams.AddResultFileToSkip(fiMzXmlFile.Name);
+                        mzXmlFile.MoveTo(Path.Combine(mWorkDir, mDatasetName + "_old" + clsAnalysisResources.DOT_MZXML_EXTENSION));
+                        mzXmlFile.Refresh();
+                        mJobParams.AddResultFileToSkip(mzXmlFile.Name);
 
                         LogMessage(
                             "The mzXML file has an average scan gap of " + scanGapAverage.ToString("0.0") +
                             " scans; will update the file's scan numbers to be 1, 2, 3, etc.");
 
-                        var converter = new clsRenumberMzXMLScans(fiMzXmlFile.FullName);
+                        var converter = new clsRenumberMzXMLScans(mzXmlFile.FullName);
                         var targetFilePath = Path.Combine(mWorkDir, mzXmlFileName);
-                        var blnSuccess = converter.Process(targetFilePath);
+                        var success = converter.Process(targetFilePath);
 
-                        if (!blnSuccess)
+                        if (!success)
                         {
                             mMessage = converter.ErrorMessage;
                             if (string.IsNullOrEmpty(mMessage))
@@ -410,32 +410,32 @@ namespace AnalysisManagerMSDeconvPlugIn
             }
         }
 
-        private bool StartMSDeconv(string JavaProgLoc, string strOutputFormat)
+        private bool StartMSDeconv(string JavaProgLoc, string outputFormat)
         {
             // Store the MSDeconv version info in the database after the first line is written to file MSDeconv_ConsoleOutput.txt
             mToolVersionWritten = false;
             mMSDeconvVersion = string.Empty;
             mConsoleOutputErrorMsg = string.Empty;
 
-            var blnIncludeMS1Spectra = mJobParams.GetJobParameter("MSDeconvIncludeMS1", false);
+            var includeMS1Spectra = mJobParams.GetJobParameter("MSDeconvIncludeMS1", false);
 
             LogMessage("Running MSDeconv");
 
             // Lookup the amount of memory to reserve for Java; default to 2 GB
-            var intJavaMemorySize = mJobParams.GetJobParameter("MSDeconvJavaMemorySize", 2000);
-            if (intJavaMemorySize < 512)
-                intJavaMemorySize = 512;
+            var javaMemorySize = mJobParams.GetJobParameter("MSDeconvJavaMemorySize", 2000);
+            if (javaMemorySize < 512)
+                javaMemorySize = 512;
 
             // Set up and execute a program runner to run MSDeconv
-            var arguments = " -Xmx" + intJavaMemorySize + "M"+
+            var arguments = " -Xmx" + javaMemorySize + "M"+
                             " -jar " + mMSDeconvProgLoc;
 
             // Define the input file and processing options
             // Note that capitalization matters for the extension; it must be .mzXML
             arguments += " " + mDatasetName + clsAnalysisResources.DOT_MZXML_EXTENSION;
-            arguments += " -o " + strOutputFormat + " -t centroided";
+            arguments += " -o " + outputFormat + " -t centroided";
 
-            if (blnIncludeMS1Spectra)
+            if (includeMS1Spectra)
             {
                 arguments += " -l";
             }
@@ -455,7 +455,7 @@ namespace AnalysisManagerMSDeconvPlugIn
 
             mProgress = PROGRESS_PCT_STARTING;
 
-            var blnSuccess = mCmdRunner.RunProgram(JavaProgLoc, arguments, "MSDeconv", true);
+            var success = mCmdRunner.RunProgram(JavaProgLoc, arguments, "MSDeconv", true);
 
             if (!mToolVersionWritten)
             {
@@ -471,7 +471,7 @@ namespace AnalysisManagerMSDeconvPlugIn
                 LogError(mConsoleOutputErrorMsg);
             }
 
-            return blnSuccess;
+            return success;
         }
 
         /// <summary>
@@ -486,7 +486,7 @@ namespace AnalysisManagerMSDeconvPlugIn
                 LogDebug("Determining tool version info");
             }
 
-            var strToolVersionInfo = string.Copy(mMSDeconvVersion);
+            var toolVersionInfo = string.Copy(mMSDeconvVersion);
 
             // Store paths to key files in toolFiles
             var toolFiles = new List<FileInfo> {
@@ -495,7 +495,7 @@ namespace AnalysisManagerMSDeconvPlugIn
 
             try
             {
-                return SetStepTaskToolVersion(strToolVersionInfo, toolFiles, saveToolVersionTextFile: false);
+                return SetStepTaskToolVersion(toolVersionInfo, toolFiles, saveToolVersionTextFile: false);
             }
             catch (Exception ex)
             {
@@ -509,17 +509,17 @@ namespace AnalysisManagerMSDeconvPlugIn
         /// <summary>
         /// Reads the console output file and removes the majority of the percent finished messages
         /// </summary>
-        /// <param name="strConsoleOutputFilePath"></param>
+        /// <param name="consoleOutputFilePath"></param>
         /// <remarks></remarks>
-        private void TrimConsoleOutputFile(string strConsoleOutputFilePath)
+        private void TrimConsoleOutputFile(string consoleOutputFilePath)
         {
             try
             {
-                if (!File.Exists(strConsoleOutputFilePath))
+                if (!File.Exists(consoleOutputFilePath))
                 {
                     if (mDebugLevel >= 4)
                     {
-                        LogDebug("Console output file not found: " + strConsoleOutputFilePath);
+                        LogDebug("Console output file not found: " + consoleOutputFilePath);
                     }
 
                     return;
@@ -527,18 +527,18 @@ namespace AnalysisManagerMSDeconvPlugIn
 
                 if (mDebugLevel >= 4)
                 {
-                    LogDebug("Trimming console output file at " + strConsoleOutputFilePath);
+                    LogDebug("Trimming console output file at " + consoleOutputFilePath);
                 }
 
-                var strMostRecentProgressLine = string.Empty;
-                var strMostRecentProgressLineWritten = string.Empty;
+                var mostRecentProgressLine = string.Empty;
+                var mostRecentProgressLineWritten = string.Empty;
 
-                var strTrimmedFilePath = strConsoleOutputFilePath + ".trimmed";
+                var trimmedFilePath = consoleOutputFilePath + ".trimmed";
 
-                using (var reader = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
-                using (var writer = new StreamWriter(new FileStream(strTrimmedFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                using (var reader = new StreamReader(new FileStream(consoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var writer = new StreamWriter(new FileStream(trimmedFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
-                    var intScanNumberOutputThreshold = 0;
+                    var scanNumberOutputThreshold = 0;
                     while (!reader.EndOfStream)
                     {
                         var dataLine = reader.ReadLine();
@@ -549,36 +549,36 @@ namespace AnalysisManagerMSDeconvPlugIn
                             continue;
                         }
 
-                        var blnKeepLine = true;
+                        var keepLine = true;
 
-                        var oMatch = reExtractScan.Match(dataLine);
-                        if (oMatch.Success)
+                        var match = reExtractScan.Match(dataLine);
+                        if (match.Success)
                         {
-                            if (int.TryParse(oMatch.Groups[1].Value, out var intScanNumber))
+                            if (int.TryParse(match.Groups[1].Value, out var scanNumber))
                             {
-                                if (intScanNumber < intScanNumberOutputThreshold)
+                                if (scanNumber < scanNumberOutputThreshold)
                                 {
-                                    blnKeepLine = false;
+                                    keepLine = false;
                                 }
                                 else
                                 {
-                                    // Write out this line and bump up intScanNumberOutputThreshold by 100
-                                    intScanNumberOutputThreshold += 100;
-                                    strMostRecentProgressLineWritten = string.Copy(dataLine);
+                                    // Write out this line and bump up scanNumberOutputThreshold by 100
+                                    scanNumberOutputThreshold += 100;
+                                    mostRecentProgressLineWritten = string.Copy(dataLine);
                                 }
                             }
-                            strMostRecentProgressLine = string.Copy(dataLine);
+                            mostRecentProgressLine = string.Copy(dataLine);
                         }
                         else if (dataLine.StartsWith("Deconvolution finished"))
                         {
                             // Possibly write out the most recent progress line
-                            if (!clsGlobal.IsMatch(strMostRecentProgressLine, strMostRecentProgressLineWritten))
+                            if (!clsGlobal.IsMatch(mostRecentProgressLine, mostRecentProgressLineWritten))
                             {
-                                writer.WriteLine(strMostRecentProgressLine);
+                                writer.WriteLine(mostRecentProgressLine);
                             }
                         }
 
-                        if (blnKeepLine)
+                        if (keepLine)
                         {
                             writer.WriteLine(dataLine);
                         }
@@ -589,14 +589,14 @@ namespace AnalysisManagerMSDeconvPlugIn
 
                 try
                 {
-                    File.Delete(strConsoleOutputFilePath);
-                    File.Move(strTrimmedFilePath, strConsoleOutputFilePath);
+                    File.Delete(consoleOutputFilePath);
+                    File.Move(trimmedFilePath, consoleOutputFilePath);
                 }
                 catch (Exception ex)
                 {
                     if (mDebugLevel >= 1)
                     {
-                        LogError("Error replacing original console output file (" + strConsoleOutputFilePath + ") with trimmed version: " + ex.Message);
+                        LogError("Error replacing original console output file (" + consoleOutputFilePath + ") with trimmed version: " + ex.Message);
                     }
                 }
             }
@@ -605,7 +605,7 @@ namespace AnalysisManagerMSDeconvPlugIn
                 // Ignore errors here
                 if (mDebugLevel >= 2)
                 {
-                    LogError("Error trimming console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
+                    LogError("Error trimming console output file (" + consoleOutputFilePath + "): " + ex.Message);
                 }
             }
         }

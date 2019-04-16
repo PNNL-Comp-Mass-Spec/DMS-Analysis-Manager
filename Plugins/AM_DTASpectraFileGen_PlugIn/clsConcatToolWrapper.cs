@@ -60,13 +60,13 @@ namespace DTASpectraFileGen
             return ConcatenateFiles(FileType, RootFileName, false);
         }
 
-        public bool ConcatenateFiles(ConcatFileTypes FileType, string RootFileName, bool blnDeleteSourceFilesWhenConcatenating)
+        public bool ConcatenateFiles(ConcatFileTypes FileType, string RootFileName, bool deleteSourceFilesWhenConcatenating)
         {
             try
             {
                 // Perform the concatenation
                 mCatTools = new clsConcatenateFiles(DataPath, RootFileName) {
-                        DeleteSourceFilesWhenConcatenating = blnDeleteSourceFilesWhenConcatenating
+                        DeleteSourceFilesWhenConcatenating = deleteSourceFilesWhenConcatenating
                     };
 
                 mCatTools.ErrorNotification += CatTools_ErrorNotification;

@@ -52,13 +52,13 @@ namespace AnalysisManagerIDPickerPlugIn
             }
 
             // Retrieve the parameter file for the associated peptide search tool (Sequest, XTandem, MSGF+, etc.)
-            var strParamFileName = mJobParams.GetParam("ParmFileName");
+            var paramFileName = mJobParams.GetParam("ParmFileName");
 
-            if (!FileSearch.FindAndRetrieveMiscFiles(strParamFileName, false))
+            if (!FileSearch.FindAndRetrieveMiscFiles(paramFileName, false))
             {
                 return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
             }
-            mJobParams.AddResultFileToSkip(strParamFileName);
+            mJobParams.AddResultFileToSkip(paramFileName);
 
             // ReSharper disable once ConditionIsAlwaysTrueOrFalse
             if (!clsAnalysisToolRunnerIDPicker.ALWAYS_SKIP_IDPICKER)
@@ -74,10 +74,10 @@ namespace AnalysisManagerIDPickerPlugIn
 
             var rawDataTypeName = mJobParams.GetParam("RawDataType");
             var eRawDataType = GetRawDataType(rawDataTypeName);
-            var blnMGFInstrumentData = mJobParams.GetJobParameter("MGFInstrumentData", false);
+            var mgfInstrumentData = mJobParams.GetJobParameter("MGFInstrumentData", false);
 
             // Retrieve the PSM result files, PHRP files, and MSGF file
-            if (!GetInputFiles(DatasetName, strParamFileName, out result))
+            if (!GetInputFiles(DatasetName, paramFileName, out result))
             {
                 if (result == CloseOutType.CLOSEOUT_SUCCESS)
                     result = CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
@@ -90,7 +90,7 @@ namespace AnalysisManagerIDPickerPlugIn
                 return CloseOutType.CLOSEOUT_SUCCESS;
             }
 
-            if (!blnMGFInstrumentData)
+            if (!mgfInstrumentData)
             {
                 // Retrieve the MASIC ScanStats.txt and ScanStatsEx.txt files
 
@@ -121,15 +121,15 @@ namespace AnalysisManagerIDPickerPlugIn
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
-            var blnSplitFasta = mJobParams.GetJobParameter("SplitFasta", false);
+            var splitFasta = mJobParams.GetJobParameter("SplitFasta", false);
 
-            if (blnSplitFasta)
+            if (splitFasta)
             {
                 // Override the SplitFasta job parameter
                 mJobParams.SetParam("SplitFasta", "False");
             }
 
-            if (blnSplitFasta && clsAnalysisToolRunnerIDPicker.ALWAYS_SKIP_IDPICKER)
+            if (splitFasta && clsAnalysisToolRunnerIDPicker.ALWAYS_SKIP_IDPICKER)
             {
                 // Do not retrieve the fasta file
                 // However, do contact DMS to lookup the name of the legacy fasta file that was used for this job
@@ -155,7 +155,7 @@ namespace AnalysisManagerIDPickerPlugIn
                     return resultCode;
             }
 
-            if (blnSplitFasta)
+            if (splitFasta)
             {
                 // Restore the setting for SplitFasta
                 mJobParams.SetParam("SplitFasta", "True");
@@ -190,27 +190,27 @@ namespace AnalysisManagerIDPickerPlugIn
         /// <summary>
         /// Copies the required input files to the working directory
         /// </summary>
-        /// <param name="strDatasetName">Dataset name</param>
-        /// <param name="strSearchEngineParamFileName">Search engine parameter file name</param>
+        /// <param name="datasetName">Dataset name</param>
+        /// <param name="searchEngineParamFileName">Search engine parameter file name</param>
         /// <param name="eReturnCode">Return code</param>
         /// <returns>True if success, otherwise false</returns>
         /// <remarks></remarks>
-        private bool GetInputFiles(string strDatasetName, string strSearchEngineParamFileName, out CloseOutType eReturnCode)
+        private bool GetInputFiles(string datasetName, string searchEngineParamFileName, out CloseOutType eReturnCode)
         {
             // This tracks the filenames to find.  The Boolean value is True if the file is Required, false if not required
 
             eReturnCode = CloseOutType.CLOSEOUT_SUCCESS;
 
-            var strResultType = mJobParams.GetParam("ResultType");
+            var resultType = mJobParams.GetParam("ResultType");
 
             // Make sure the ResultType is valid
-            var eResultType = clsPHRPReader.GetPeptideHitResultType(strResultType);
+            var eResultType = clsPHRPReader.GetPeptideHitResultType(resultType);
 
             if (!(eResultType == clsPHRPReader.ePeptideHitResultType.Sequest || eResultType == clsPHRPReader.ePeptideHitResultType.XTandem ||
                   eResultType == clsPHRPReader.ePeptideHitResultType.Inspect || eResultType == clsPHRPReader.ePeptideHitResultType.MSGFPlus ||
                   eResultType == clsPHRPReader.ePeptideHitResultType.MODa || eResultType == clsPHRPReader.ePeptideHitResultType.MODPlus))
             {
-                mMessage = "Invalid tool result type (not supported by IDPicker): " + strResultType;
+                mMessage = "Invalid tool result type (not supported by IDPicker): " + resultType;
                 LogError(mMessage);
                 eReturnCode = CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 return false;
@@ -218,7 +218,7 @@ namespace AnalysisManagerIDPickerPlugIn
 
             mInputFileRenames = new Dictionary<string, string>();
 
-            var lstFileNamesToGet = GetPHRPFileNames(eResultType, strDatasetName);
+            var fileNamesToGet = GetPHRPFileNames(eResultType, datasetName);
             mSynopsisFileIsEmpty = false;
 
             if (mDebugLevel >= 2)
@@ -226,10 +226,10 @@ namespace AnalysisManagerIDPickerPlugIn
                 LogDebug("Retrieving the " + eResultType + " files");
             }
 
-            var synFileNameExpected = clsPHRPReader.GetPHRPSynopsisFileName(eResultType, strDatasetName);
+            var synFileNameExpected = clsPHRPReader.GetPHRPSynopsisFileName(eResultType, datasetName);
             var synFilePath = string.Empty;
 
-            foreach (var kvEntry in lstFileNamesToGet)
+            foreach (var kvEntry in fileNamesToGet)
             {
                 var fileToGet = string.Copy(kvEntry.Key);
                 var fileRequired = kvEntry.Value;
@@ -269,10 +269,10 @@ namespace AnalysisManagerIDPickerPlugIn
                     // Check whether the synopsis file is empty
                     synFilePath = Path.Combine(mWorkDir, Path.GetFileName(fileToGet));
 
-                    if (!ValidateFileHasData(synFilePath, "Synopsis file", out var strErrorMessage))
+                    if (!ValidateFileHasData(synFilePath, "Synopsis file", out var errorMessage))
                     {
                         // The synopsis file is empty
-                        LogWarning(strErrorMessage);
+                        LogWarning(errorMessage);
 
                         // We don't want to fail the job out yet; instead, we'll exit now, then let the ToolRunner exit with a Completion message of "Synopsis file is empty"
                         mSynopsisFileIsEmpty = true;
@@ -284,18 +284,18 @@ namespace AnalysisManagerIDPickerPlugIn
             if (eResultType == clsPHRPReader.ePeptideHitResultType.XTandem)
             {
                 // X!Tandem requires a few additional parameter files
-                var lstExtraFilesToGet = clsPHRPParserXTandem.GetAdditionalSearchEngineParamFileNames(Path.Combine(mWorkDir, strSearchEngineParamFileName));
+                var extraFilesToGet = clsPHRPParserXTandem.GetAdditionalSearchEngineParamFileNames(Path.Combine(mWorkDir, searchEngineParamFileName));
 
-                foreach (var strFileName in lstExtraFilesToGet)
+                foreach (var fileName in extraFilesToGet)
                 {
-                    if (!FileSearch.FindAndRetrieveMiscFiles(strFileName, false))
+                    if (!FileSearch.FindAndRetrieveMiscFiles(fileName, false))
                     {
                         // File not found
                         eReturnCode = CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                         return false;
                     }
 
-                    mJobParams.AddResultFileToSkip(strFileName);
+                    mJobParams.AddResultFileToSkip(fileName);
                 }
             }
 
@@ -306,8 +306,8 @@ namespace AnalysisManagerIDPickerPlugIn
 
             foreach (var item in mInputFileRenames)
             {
-                var fiFile = new FileInfo(Path.Combine(mWorkDir, item.Key));
-                if (!fiFile.Exists)
+                var file = new FileInfo(Path.Combine(mWorkDir, item.Key));
+                if (!file.Exists)
                 {
                     mMessage = "File " + item.Key + " not found; unable to rename to " + item.Value;
                     LogError(mMessage);
@@ -317,7 +317,7 @@ namespace AnalysisManagerIDPickerPlugIn
 
                 try
                 {
-                    fiFile.MoveTo(Path.Combine(mWorkDir, item.Value));
+                    file.MoveTo(Path.Combine(mWorkDir, item.Value));
                 }
                 catch (Exception ex)
                 {
@@ -340,31 +340,31 @@ namespace AnalysisManagerIDPickerPlugIn
         /// <remarks></remarks>
         private bool RetrieveIDPickerParamFile()
         {
-            var strIDPickerParamFileName = mJobParams.GetParam("IDPickerParamFile");
+            var idPickerParamFileName = mJobParams.GetParam("IDPickerParamFile");
 
-            if (string.IsNullOrEmpty(strIDPickerParamFileName))
+            if (string.IsNullOrEmpty(idPickerParamFileName))
             {
-                strIDPickerParamFileName = DEFAULT_IDPICKER_PARAM_FILE_NAME;
+                idPickerParamFileName = DEFAULT_IDPICKER_PARAM_FILE_NAME;
             }
 
-            var strParamFileStoragePathKeyName = clsGlobal.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "IDPicker";
-            var strIDPickerParamFilePath = mMgrParams.GetParam(strParamFileStoragePathKeyName);
-            if (string.IsNullOrEmpty(strIDPickerParamFilePath))
+            var paramFileStoragePathKeyName = clsGlobal.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "IDPicker";
+            var idPickerParamFilePath = mMgrParams.GetParam(paramFileStoragePathKeyName);
+            if (string.IsNullOrEmpty(idPickerParamFilePath))
             {
-                strIDPickerParamFilePath = @"\\gigasax\dms_parameter_Files\IDPicker";
-                LogWarning("Parameter '" + strParamFileStoragePathKeyName +
+                idPickerParamFilePath = @"\\gigasax\dms_parameter_Files\IDPicker";
+                LogWarning("Parameter '" + paramFileStoragePathKeyName +
                            "' is not defined (obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); will assume: " +
-                           strIDPickerParamFilePath);
+                           idPickerParamFilePath);
             }
 
-            if (!CopyFileToWorkDir(strIDPickerParamFileName, strIDPickerParamFilePath, mWorkDir))
+            if (!CopyFileToWorkDir(idPickerParamFileName, idPickerParamFilePath, mWorkDir))
             {
                 // Errors were reported in function call, so just return
                 return false;
             }
 
             // Store the param file name so that we can load later
-            mJobParams.AddAdditionalParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, IDPICKER_PARAM_FILENAME_LOCAL, strIDPickerParamFileName);
+            mJobParams.AddAdditionalParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, IDPICKER_PARAM_FILENAME_LOCAL, idPickerParamFileName);
 
             return true;
         }
@@ -401,10 +401,10 @@ namespace AnalysisManagerIDPickerPlugIn
         /// <summary>
         /// Retrieve the MASIC ScanStats.txt and ScanStatsEx.txt files
         /// </summary>
-        /// <param name="strDatasetName"></param>
+        /// <param name="datasetName"></param>
         /// <returns></returns>
         /// <remarks></remarks>
-        private bool RetrieveMASICFiles(string strDatasetName)
+        private bool RetrieveMASICFiles(string datasetName)
         {
             if (!FileSearch.RetrieveScanStatsFiles(false))
             {
@@ -424,8 +424,8 @@ namespace AnalysisManagerIDPickerPlugIn
                 }
             }
 
-            mJobParams.AddResultFileToSkip(strDatasetName + SCAN_STATS_FILE_SUFFIX);
-            mJobParams.AddResultFileToSkip(strDatasetName + SCAN_STATS_EX_FILE_SUFFIX);
+            mJobParams.AddResultFileToSkip(datasetName + SCAN_STATS_FILE_SUFFIX);
+            mJobParams.AddResultFileToSkip(datasetName + SCAN_STATS_EX_FILE_SUFFIX);
             return true;
         }
 
@@ -433,25 +433,25 @@ namespace AnalysisManagerIDPickerPlugIn
         /// Determines the files that need to be copied to the work directory, based on the result type
         /// </summary>
         /// <param name="eResultType">PHRP result type (Sequest, X!Tandem, etc.)</param>
-        /// <param name="strDatasetName">Dataset name</param>
+        /// <param name="datasetName">Dataset name</param>
         /// <returns>A generic list with the filenames to find.  The Boolean value is True if the file is Required, false if not required</returns>
         /// <remarks></remarks>
-        private SortedList<string, bool> GetPHRPFileNames(clsPHRPReader.ePeptideHitResultType eResultType, string strDatasetName)
+        private SortedList<string, bool> GetPHRPFileNames(clsPHRPReader.ePeptideHitResultType eResultType, string datasetName)
         {
-            var lstFileNamesToGet = new SortedList<string, bool>();
+            var fileNamesToGet = new SortedList<string, bool>();
 
-            var synFileName = clsPHRPReader.GetPHRPSynopsisFileName(eResultType, strDatasetName);
+            var synFileName = clsPHRPReader.GetPHRPSynopsisFileName(eResultType, datasetName);
 
-            lstFileNamesToGet.Add(synFileName, true);
-            lstFileNamesToGet.Add(clsPHRPReader.GetPHRPModSummaryFileName(eResultType, strDatasetName), false);
-            lstFileNamesToGet.Add(clsPHRPReader.GetPHRPResultToSeqMapFileName(eResultType, strDatasetName), true);
-            lstFileNamesToGet.Add(clsPHRPReader.GetPHRPSeqInfoFileName(eResultType, strDatasetName), true);
-            lstFileNamesToGet.Add(clsPHRPReader.GetPHRPSeqToProteinMapFileName(eResultType, strDatasetName), true);
-            lstFileNamesToGet.Add(clsPHRPReader.GetPHRPPepToProteinMapFileName(eResultType, strDatasetName), false);
+            fileNamesToGet.Add(synFileName, true);
+            fileNamesToGet.Add(clsPHRPReader.GetPHRPModSummaryFileName(eResultType, datasetName), false);
+            fileNamesToGet.Add(clsPHRPReader.GetPHRPResultToSeqMapFileName(eResultType, datasetName), true);
+            fileNamesToGet.Add(clsPHRPReader.GetPHRPSeqInfoFileName(eResultType, datasetName), true);
+            fileNamesToGet.Add(clsPHRPReader.GetPHRPSeqToProteinMapFileName(eResultType, datasetName), true);
+            fileNamesToGet.Add(clsPHRPReader.GetPHRPPepToProteinMapFileName(eResultType, datasetName), false);
 
             if (eResultType != clsPHRPReader.ePeptideHitResultType.MODa && eResultType != clsPHRPReader.ePeptideHitResultType.MODPlus)
             {
-                lstFileNamesToGet.Add(clsPHRPReader.GetMSGFFileName(synFileName), true);
+                fileNamesToGet.Add(clsPHRPReader.GetMSGFFileName(synFileName), true);
             }
 
             var toolVersionFile = clsPHRPReader.GetToolVersionInfoFilename(eResultType);
@@ -461,14 +461,14 @@ namespace AnalysisManagerIDPickerPlugIn
                 // PeptideListToXML expects the ToolVersion file to be named "Tool_Version_Info_MSGFPlus.txt"
                 // However, this is the MSGFPlus_IMS script, so the file is currently "Tool_Version_Info_MSGFPlus_IMS.txt"
                 // We'll copy the current file locally, then rename it to the expected name
-                const string strOriginalName = "Tool_Version_Info_MSGFPlus_IMS.txt";
-                mInputFileRenames.Add(strOriginalName, toolVersionFile);
-                toolVersionFile = string.Copy(strOriginalName);
+                const string originalName = "Tool_Version_Info_MSGFPlus_IMS.txt";
+                mInputFileRenames.Add(originalName, toolVersionFile);
+                toolVersionFile = string.Copy(originalName);
             }
 
-            lstFileNamesToGet.Add(toolVersionFile, true);
+            fileNamesToGet.Add(toolVersionFile, true);
 
-            return lstFileNamesToGet;
+            return fileNamesToGet;
         }
     }
 }

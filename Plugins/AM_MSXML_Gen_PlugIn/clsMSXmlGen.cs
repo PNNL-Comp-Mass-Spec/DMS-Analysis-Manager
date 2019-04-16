@@ -177,8 +177,8 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
             var arguments = CreateArguments(msXmlFormat, mSourceFilePath);
 
-            var blnSuccess = SetupTool();
-            if (!blnSuccess)
+            var success = SetupTool();
+            if (!success)
             {
                 if (string.IsNullOrEmpty(mErrorMessage))
                 {
@@ -203,8 +203,8 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
             cmdRunner.WorkDir = mWorkDir;
 
-            var dtStartTime = DateTime.UtcNow;
-            blnSuccess = cmdRunner.RunProgram(mProgramPath, arguments, Path.GetFileNameWithoutExtension(mProgramPath), mUseProgRunnerResultCode,
+            var startTime = DateTime.UtcNow;
+            success = cmdRunner.RunProgram(mProgramPath, arguments, Path.GetFileNameWithoutExtension(mProgramPath), mUseProgRunnerResultCode,
                 MAX_RUNTIME_SECONDS);
 
             if (!string.IsNullOrWhiteSpace(cmdRunner.CachedConsoleErrors))
@@ -221,14 +221,14 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 {
                     OnErrorEvent(consoleError);
                 }
-                blnSuccess = false;
+                success = false;
             }
 
-            if (!blnSuccess)
+            if (!success)
             {
-                if (DateTime.UtcNow.Subtract(dtStartTime).TotalSeconds >= MAX_RUNTIME_SECONDS)
+                if (DateTime.UtcNow.Subtract(startTime).TotalSeconds >= MAX_RUNTIME_SECONDS)
                 {
-                    mErrorMessage = ProgramName + " has run for over " + DateTime.UtcNow.Subtract(dtStartTime).TotalHours.ToString("0") +
+                    mErrorMessage = ProgramName + " has run for over " + DateTime.UtcNow.Subtract(startTime).TotalHours.ToString("0") +
                                     " hours and has thus been aborted";
                     return false;
                 }
@@ -265,47 +265,47 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
         protected abstract string GetOutputFileName(string msXmlFormat, string rawFilePath, clsAnalysisResources.eRawDataTypeConstants rawDataType);
 
-        public void LogCreationStatsSourceToMsXml(DateTime dtStartTimeUTC, string strSourceFilePath, string strMsXmlFilePath)
+        public void LogCreationStatsSourceToMsXml(DateTime startTimeUTC, string sourceFilePath, string msXmlFilePath)
         {
             try
             {
                 // Save some stats to the log
-                double dblSourceFileSizeMB = 0;
-                double dblMsXmlSizeMB = 0;
+                double sourceFileSizeMB = 0;
+                double msXmlSizeMB = 0;
 
-                var strSourceFileExtension = Path.GetExtension(strSourceFilePath);
-                var strTargetFileExtension = Path.GetExtension(strMsXmlFilePath);
+                var sourceFileExtension = Path.GetExtension(sourceFilePath);
+                var targetFileExtension = Path.GetExtension(msXmlFilePath);
 
-                var dblTotalMinutes = DateTime.UtcNow.Subtract(dtStartTimeUTC).TotalMinutes;
+                var totalMinutes = DateTime.UtcNow.Subtract(startTimeUTC).TotalMinutes;
 
-                var sourceFile = new FileInfo(strSourceFilePath);
+                var sourceFile = new FileInfo(sourceFilePath);
                 if (sourceFile.Exists)
                 {
-                    dblSourceFileSizeMB = clsGlobal.BytesToMB(sourceFile.Length);
+                    sourceFileSizeMB = clsGlobal.BytesToMB(sourceFile.Length);
                 }
 
-                var msXmlFile = new FileInfo(strMsXmlFilePath);
+                var msXmlFile = new FileInfo(msXmlFilePath);
                 if (msXmlFile.Exists)
                 {
-                    dblMsXmlSizeMB = clsGlobal.BytesToMB(msXmlFile.Length);
+                    msXmlSizeMB = clsGlobal.BytesToMB(msXmlFile.Length);
                 }
 
-                var strMessage = "MsXml creation time = " + dblTotalMinutes.ToString("0.00") + " minutes";
+                var message = "MsXml creation time = " + totalMinutes.ToString("0.00") + " minutes";
 
-                if (dblTotalMinutes > 0)
+                if (totalMinutes > 0)
                 {
-                    strMessage += "; Processing rate = " + (dblSourceFileSizeMB / dblTotalMinutes / 60).ToString("0.0") + " MB/second";
+                    message += "; Processing rate = " + (sourceFileSizeMB / totalMinutes / 60).ToString("0.0") + " MB/second";
                 }
 
-                strMessage += "; " + strSourceFileExtension + " file size = " + dblSourceFileSizeMB.ToString("0.0") + " MB";
-                strMessage += "; " + strTargetFileExtension + " file size = " + dblMsXmlSizeMB.ToString("0.0") + " MB";
+                message += "; " + sourceFileExtension + " file size = " + sourceFileSizeMB.ToString("0.0") + " MB";
+                message += "; " + targetFileExtension + " file size = " + msXmlSizeMB.ToString("0.0") + " MB";
 
-                if (dblMsXmlSizeMB > 0)
+                if (msXmlSizeMB > 0)
                 {
-                    strMessage += "; Filesize Ratio = " + (dblMsXmlSizeMB / dblSourceFileSizeMB).ToString("0.00");
+                    message += "; FileSize Ratio = " + (msXmlSizeMB / sourceFileSizeMB).ToString("0.00");
                 }
 
-                OnStatusEvent(strMessage);
+                OnStatusEvent(message);
             }
             catch (Exception ex)
             {
@@ -323,11 +323,11 @@ namespace AnalysisManagerMsXmlGenPlugIn
             {
                 var mostRecentLine = string.Empty;
 
-                var fiOutputFile = new FileInfo(outputFilePath);
+                var outputFile = new FileInfo(outputFilePath);
 
-                if (!fiOutputFile.Exists)
+                if (!outputFile.Exists)
                 {
-                    mErrorMessage = "Output file not found: " + fiOutputFile.FullName;
+                    mErrorMessage = "Output file not found: " + outputFile.FullName;
                     return false;
                 }
 
@@ -354,7 +354,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                     case clsAnalysisResources.MSXMLOutputTypeConstants.mzXML:
                         if (mostRecentLine != "</mzXML>")
                         {
-                            mErrorMessage = "File " + fiOutputFile.Name + " is corrupt; it does not end in </mzXML>";
+                            mErrorMessage = "File " + outputFile.Name + " is corrupt; it does not end in </mzXML>";
                             if (string.IsNullOrWhiteSpace(mostRecentLine))
                             {
                                 OnErrorEvent("mzXML file is corrupt; file is empty or only contains whitespace");
@@ -370,7 +370,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                     case clsAnalysisResources.MSXMLOutputTypeConstants.mzML:
                         if (mostRecentLine != "</indexedmzML>")
                         {
-                            mErrorMessage = "File " + fiOutputFile.Name + " is corrupt; it does not end in </indexedmzML>";
+                            mErrorMessage = "File " + outputFile.Name + " is corrupt; it does not end in </indexedmzML>";
                             if (string.IsNullOrWhiteSpace(mostRecentLine))
                             {
                                 OnErrorEvent("mzML file is corrupt; file is empty or only contains whitespace");
@@ -402,12 +402,12 @@ namespace AnalysisManagerMsXmlGenPlugIn
         /// <summary>
         /// Event handler for event CmdRunner.ErrorEvent
         /// </summary>
-        /// <param name="strMessage"></param>
+        /// <param name="message"></param>
         /// <param name="ex"></param>
-        private void CmdRunner_ErrorEvent(string strMessage, Exception ex)
+        private void CmdRunner_ErrorEvent(string message, Exception ex)
         {
-            mErrorMessage = strMessage;
-            OnErrorEvent(strMessage, ex);
+            mErrorMessage = message;
+            OnErrorEvent(message, ex);
         }
 
         /// <summary>

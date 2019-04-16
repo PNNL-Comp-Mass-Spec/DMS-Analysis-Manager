@@ -46,14 +46,14 @@ namespace AnalysisManager_Mage_PlugIn
                 return false;
 
             // Make sure the Results.db3 file was created
-            var fiResultsDB = new FileInfo(Path.Combine(mWorkDir, "Results.db3"));
-            if (!fiResultsDB.Exists)
+            var resultsDB = new FileInfo(Path.Combine(mWorkDir, "Results.db3"));
+            if (!resultsDB.Exists)
             {
                 LogError("Results.db3 file was not created");
                 return false;
             }
 
-            success = ValidateSqliteDB(mageOperations, fiResultsDB);
+            success = ValidateSqliteDB(mageOperations, resultsDB);
 
             return success;
         }
@@ -65,11 +65,11 @@ namespace AnalysisManager_Mage_PlugIn
         /// <returns></returns>
         protected override string GetToolNameAndVersion()
         {
-            var strToolVersionInfo = string.Empty;
-            var oAssemblyName = System.Reflection.Assembly.Load("Mage").GetName();
-            var strNameAndVersion = oAssemblyName.Name + ", Version=" + oAssemblyName.Version;
-            strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion);
-            return strToolVersionInfo;
+            var toolVersionInfo = string.Empty;
+            var assemblyName = System.Reflection.Assembly.Load("Mage").GetName();
+            var nameAndVersion = assemblyName.Name + ", Version=" + assemblyName.Version;
+            toolVersionInfo = clsGlobal.AppendToComment(toolVersionInfo, nameAndVersion);
+            return toolVersionInfo;
         }
 
         /// <summary>
@@ -88,20 +88,20 @@ namespace AnalysisManager_Mage_PlugIn
         }
 
 
-        protected bool ValidateFactors(FileInfo fiResultsDB, out string errorMessage, out string exceptionDetail)
+        protected bool ValidateFactors(FileInfo resultsDB, out string errorMessage, out string exceptionDetail)
         {
             const string FACTOR_URL = "http://dms2.pnl.gov/requested_run_factors/param";
 
             try
             {
                 // Verify that table t_factors exists and has columns Dataset_ID and Sample
-                var lstColumns = new List<string>()
+                var columns = new List<string>()
                 {
                     "Dataset_ID",
                     "Sample"
                 };
 
-                if (!TableContainsDataAndColumns(fiResultsDB, "t_factors", lstColumns, out errorMessage, out exceptionDetail))
+                if (!TableContainsDataAndColumns(resultsDB, "t_factors", columns, out errorMessage, out exceptionDetail))
                 {
                     errorMessage = "table t_factors in Results.db3 " + errorMessage +
                                 "; use " + FACTOR_URL + " to define factors named Sample for the datasets in this data package";
@@ -111,7 +111,7 @@ namespace AnalysisManager_Mage_PlugIn
                 // Lookup the Dataset_ID values defined in t_results
                 var datasetIDs = new List<int>();
 
-                var connectionString = "Data Source = " + fiResultsDB.FullName + "; Version=3;";
+                var connectionString = "Data Source = " + resultsDB.FullName + "; Version=3;";
                 using (var conn = new SQLiteConnection(connectionString))
                 {
                     conn.Open();
@@ -203,7 +203,7 @@ namespace AnalysisManager_Mage_PlugIn
                         }
                     }
 
-                    var lstIonCounts = new List<byte>();
+                    var ionCounts = new List<byte>();
 
                     foreach (var sampleName in sampleNames)
                     {
@@ -214,12 +214,12 @@ namespace AnalysisManager_Mage_PlugIn
                             return false;
                         }
 
-                        lstIonCounts.Add(ionCount);
+                        ionCounts.Add(ionCount);
                     }
 
                     // Make sure all of the ion counts are the same
-                    var ionCountFirst = lstIonCounts.First();
-                    var lookupQ = (from item in lstIonCounts where item != ionCountFirst select item).ToList();
+                    var ionCountFirst = ionCounts.First();
+                    var lookupQ = (from item in ionCounts where item != ionCountFirst select item).ToList();
                     if (lookupQ.Count > 0)
                     {
                         // Example message:
@@ -230,7 +230,7 @@ namespace AnalysisManager_Mage_PlugIn
                         return false;
                     }
 
-                    var lstIonColumns = new List<string>();
+                    var ionColumns = new List<string>();
                     var labelingScheme = string.Empty;
 
                     var workFlowSteps = mJobParams.GetParam("ApeWorkflowStepList", string.Empty);
@@ -238,22 +238,22 @@ namespace AnalysisManager_Mage_PlugIn
                     {
                         // 4-plex iTraq
                         labelingScheme = "4plex";
-                        lstIonColumns.Add("Ion_114");
-                        lstIonColumns.Add("Ion_115");
-                        lstIonColumns.Add("Ion_116");
-                        lstIonColumns.Add("Ion_117");
+                        ionColumns.Add("Ion_114");
+                        ionColumns.Add("Ion_115");
+                        ionColumns.Add("Ion_116");
+                        ionColumns.Add("Ion_117");
                     }
 
                     if (workFlowSteps.Contains("6plex"))
                     {
                         // 6-plex TMT
                         labelingScheme = "6plex";
-                        lstIonColumns.Add("Ion_126");
-                        lstIonColumns.Add("Ion_127");
-                        lstIonColumns.Add("Ion_128");
-                        lstIonColumns.Add("Ion_129");
-                        lstIonColumns.Add("Ion_130");
-                        lstIonColumns.Add("Ion_131");
+                        ionColumns.Add("Ion_126");
+                        ionColumns.Add("Ion_127");
+                        ionColumns.Add("Ion_128");
+                        ionColumns.Add("Ion_129");
+                        ionColumns.Add("Ion_130");
+                        ionColumns.Add("Ion_131");
 
                     }
 
@@ -261,34 +261,34 @@ namespace AnalysisManager_Mage_PlugIn
                     {
                         // 8-plex iTraq
                         labelingScheme = "8plex";
-                        lstIonColumns.Add("Ion_113");
-                        lstIonColumns.Add("Ion_114");
-                        lstIonColumns.Add("Ion_115");
-                        lstIonColumns.Add("Ion_116");
-                        lstIonColumns.Add("Ion_117");
-                        lstIonColumns.Add("Ion_118");
-                        lstIonColumns.Add("Ion_119");
-                        lstIonColumns.Add("Ion_121");
+                        ionColumns.Add("Ion_113");
+                        ionColumns.Add("Ion_114");
+                        ionColumns.Add("Ion_115");
+                        ionColumns.Add("Ion_116");
+                        ionColumns.Add("Ion_117");
+                        ionColumns.Add("Ion_118");
+                        ionColumns.Add("Ion_119");
+                        ionColumns.Add("Ion_121");
                     }
 
                     if (workFlowSteps.Contains("TMT10Plex"))
                     {
                         // 10-plex TMT
                         labelingScheme = "TMT10Plex";
-                        lstIonColumns.Add("Ion_126.128");
-                        lstIonColumns.Add("Ion_127.125");
-                        lstIonColumns.Add("Ion_127.131");
-                        lstIonColumns.Add("Ion_128.128");
-                        lstIonColumns.Add("Ion_128.134");
-                        lstIonColumns.Add("Ion_129.131");
-                        lstIonColumns.Add("Ion_129.138");
-                        lstIonColumns.Add("Ion_130.135");
-                        lstIonColumns.Add("Ion_130.141");
+                        ionColumns.Add("Ion_126.128");
+                        ionColumns.Add("Ion_127.125");
+                        ionColumns.Add("Ion_127.131");
+                        ionColumns.Add("Ion_128.128");
+                        ionColumns.Add("Ion_128.134");
+                        ionColumns.Add("Ion_129.131");
+                        ionColumns.Add("Ion_129.138");
+                        ionColumns.Add("Ion_130.135");
+                        ionColumns.Add("Ion_130.141");
                     }
 
-                    if (lstIonColumns.Count > 0)
+                    if (ionColumns.Count > 0)
                     {
-                        if (!TableContainsDataAndColumns(fiResultsDB, "T_Reporter_Ions", lstIonColumns, out errorMessage, out exceptionDetail))
+                        if (!TableContainsDataAndColumns(resultsDB, "T_Reporter_Ions", ionColumns, out errorMessage, out exceptionDetail))
                         {
                             errorMessage = "table T_Reporter_Ions in Results.db3 " + errorMessage +
                                         "; you need to specify " + labelingScheme + " in the ApeWorkflowStepList parameter of the Ape step";
@@ -312,14 +312,14 @@ namespace AnalysisManager_Mage_PlugIn
         }
 
 
-        protected bool ValidateSqliteDB(string mageOperations, FileInfo fiResultsDB)
+        protected bool ValidateSqliteDB(string mageOperations, FileInfo resultsDB)
         {
 
             // If the Mage Operations list contains "ExtractFromJobs", make sure that table "t_results" was created
             // If it wasn't, no matching jobs were found and we should fail out this job step
             if (mageOperations.Contains("ExtractFromJobs"))
             {
-                if (!TableExists(fiResultsDB, "t_results"))
+                if (!TableExists(resultsDB, "t_results"))
                 {
                     LogError("Results.db3 file does not have table T_Results; Mage did not extract results from any jobs");
                     return false;
@@ -335,7 +335,7 @@ namespace AnalysisManager_Mage_PlugIn
             // If it wasn't, we should fail out this job step
             if (itraqMode || mageOperations.Contains("ImportDataPackageFiles"))
             {
-                if (!TableExists(fiResultsDB, T_ALIAS_TABLE))
+                if (!TableExists(resultsDB, T_ALIAS_TABLE))
                 {
                     // Results.db3 file does not have table t_alias.txt; place a valid t_alias.txt file in the the data package's ImportFiles directory
                     LogError("Results.db3 file does not have table " + T_ALIAS_TABLE + "; " +
@@ -345,14 +345,14 @@ namespace AnalysisManager_Mage_PlugIn
 
                 // Confirm that the T_alias table contains columns Sample and Ion and that it contains data
 
-                var lstColumns = new List<string>
+                var columns = new List<string>
                 {
                     "Sample",
                     "Ion"
                 };
 
                 // Look for the T_alias table
-                if (!TableContainsDataAndColumns(fiResultsDB, T_ALIAS_TABLE, lstColumns, out var errorMessage, out var exceptionDetail))
+                if (!TableContainsDataAndColumns(resultsDB, T_ALIAS_TABLE, columns, out var errorMessage, out var exceptionDetail))
                 {
                     // Example messages
                     // Table T_alias in Results.db3 is empty
@@ -362,7 +362,7 @@ namespace AnalysisManager_Mage_PlugIn
                     return false;
                 }
 
-                if (!ValidateFactors(fiResultsDB, out errorMessage, out exceptionDetail))
+                if (!ValidateFactors(resultsDB, out errorMessage, out exceptionDetail))
                 {
                     if (!mMessage.Contains(errorMessage))
                     {

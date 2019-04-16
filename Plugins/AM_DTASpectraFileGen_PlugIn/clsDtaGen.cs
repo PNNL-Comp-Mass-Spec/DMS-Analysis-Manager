@@ -205,114 +205,114 @@ namespace DTASpectraFileGen
             return true;
         }
 
-        protected void LogDTACreationStats(string strProcedureName, string strDTAToolName, string strErrorMessage)
+        protected void LogDTACreationStats(string procedureName, string dtaToolName, string errorMessage)
         {
-            var strMostRecentBlankDTA = string.Empty;
-            var strMostRecentValidDTA = string.Empty;
+            var mostRecentBlankDTA = string.Empty;
+            var mostRecentValidDTA = string.Empty;
 
-            if (strProcedureName == null)
+            if (procedureName == null)
             {
-                strProcedureName = "clsDtaGen.??";
+                procedureName = "clsDtaGen.??";
             }
-            if (strDTAToolName == null)
+            if (dtaToolName == null)
             {
-                strDTAToolName = "Unknown DTA Tool";
-            }
-
-            if (strErrorMessage == null)
-            {
-                strErrorMessage = "Unknown error";
+                dtaToolName = "Unknown DTA Tool";
             }
 
-            OnErrorEvent(strProcedureName + ", Error running " + strDTAToolName + "; " + strErrorMessage);
+            if (errorMessage == null)
+            {
+                errorMessage = "Unknown error";
+            }
+
+            OnErrorEvent(procedureName + ", Error running " + dtaToolName + "; " + errorMessage);
 
             // Now count the number of .Dta files in the working folder
 
             try
             {
-                var objFolderInfo = new DirectoryInfo(mWorkDir);
-                var objFiles = objFolderInfo.GetFiles("*.dta");
-                int intDTACount;
+                var workDir = new DirectoryInfo(mWorkDir);
+                var dtaFiles = workDir.GetFiles("*.dta");
+                int dtaCount;
 
-                if (objFiles.Length <= 0)
+                if (dtaFiles.Length <= 0)
                 {
-                    intDTACount = 0;
+                    dtaCount = 0;
                 }
                 else
                 {
-                    intDTACount = objFiles.Length;
+                    dtaCount = dtaFiles.Length;
 
-                    var intMostRecentValidDTAIndex = -1;
-                    var intMostRecentBlankDTAIndex = -1;
-                    long lngDTAFileSize = 0;
+                    var mostRecentValidDTAIndex = -1;
+                    var mostRecentBlankDTAIndex = -1;
+                    long dtaFileSize = 0;
 
                     // Find the most recently created .Dta file
                     // However, track blank (zero-length) .Dta files separate from those with data
-                    for (var intIndex = 1; intIndex <= objFiles.Length - 1; intIndex++)
+                    for (var index = 1; index <= dtaFiles.Length - 1; index++)
                     {
-                        if (objFiles[intIndex].Length == 0)
+                        if (dtaFiles[index].Length == 0)
                         {
-                            if (intMostRecentBlankDTAIndex < 0)
+                            if (mostRecentBlankDTAIndex < 0)
                             {
-                                intMostRecentBlankDTAIndex = intIndex;
+                                mostRecentBlankDTAIndex = index;
                             }
                             else
                             {
-                                if (objFiles[intIndex].LastWriteTime > objFiles[intMostRecentBlankDTAIndex].LastWriteTime)
+                                if (dtaFiles[index].LastWriteTime > dtaFiles[mostRecentBlankDTAIndex].LastWriteTime)
                                 {
-                                    intMostRecentBlankDTAIndex = intIndex;
+                                    mostRecentBlankDTAIndex = index;
                                 }
                             }
                         }
                         else
                         {
-                            if (intMostRecentValidDTAIndex < 0)
+                            if (mostRecentValidDTAIndex < 0)
                             {
-                                intMostRecentValidDTAIndex = intIndex;
+                                mostRecentValidDTAIndex = index;
                             }
                             else
                             {
-                                if (objFiles[intIndex].LastWriteTime > objFiles[intMostRecentValidDTAIndex].LastWriteTime)
+                                if (dtaFiles[index].LastWriteTime > dtaFiles[mostRecentValidDTAIndex].LastWriteTime)
                                 {
-                                    intMostRecentValidDTAIndex = intIndex;
+                                    mostRecentValidDTAIndex = index;
                                 }
                             }
                         }
                     }
 
-                    if (intMostRecentBlankDTAIndex >= 0)
+                    if (mostRecentBlankDTAIndex >= 0)
                     {
-                        strMostRecentBlankDTA = objFiles[intMostRecentBlankDTAIndex].Name;
+                        mostRecentBlankDTA = dtaFiles[mostRecentBlankDTAIndex].Name;
                     }
 
-                    if (intMostRecentValidDTAIndex >= 0)
+                    if (mostRecentValidDTAIndex >= 0)
                     {
-                        strMostRecentValidDTA = objFiles[intMostRecentValidDTAIndex].Name;
-                        lngDTAFileSize = objFiles[intMostRecentValidDTAIndex].Length;
+                        mostRecentValidDTA = dtaFiles[mostRecentValidDTAIndex].Name;
+                        dtaFileSize = dtaFiles[mostRecentValidDTAIndex].Length;
                     }
 
-                    if (intDTACount > 0)
+                    if (dtaCount > 0)
                     {
                         // Log the name of the most recently created .Dta file
-                        if (intMostRecentValidDTAIndex >= 0)
+                        if (mostRecentValidDTAIndex >= 0)
                         {
-                            OnStatusEvent(strProcedureName + ", The most recent .Dta file created is " + strMostRecentValidDTA + " with size " +
-                                          lngDTAFileSize + " bytes");
+                            OnStatusEvent(procedureName + ", The most recent .Dta file created is " + mostRecentValidDTA + " with size " +
+                                          dtaFileSize + " bytes");
                         }
                         else
                         {
-                            OnWarningEvent(strProcedureName + ", No valid (non zero length) .Dta files were created");
+                            OnWarningEvent(procedureName + ", No valid (non zero length) .Dta files were created");
                         }
 
-                        if (intMostRecentBlankDTAIndex >= 0)
+                        if (mostRecentBlankDTAIndex >= 0)
                         {
-                            OnStatusEvent(strProcedureName + ", The most recent blank (zero-length) .Dta file created is " + strMostRecentBlankDTA);
+                            OnStatusEvent(procedureName + ", The most recent blank (zero-length) .Dta file created is " + mostRecentBlankDTA);
                         }
                     }
                 }
 
                 // Log the number of .Dta files that were found
-                OnStatusEvent(strProcedureName + ", " + strDTAToolName + " created " + intDTACount + " .dta files");
+                OnStatusEvent(procedureName + ", " + dtaToolName + " created " + dtaCount + " .dta files");
             }
             catch (Exception ex)
             {

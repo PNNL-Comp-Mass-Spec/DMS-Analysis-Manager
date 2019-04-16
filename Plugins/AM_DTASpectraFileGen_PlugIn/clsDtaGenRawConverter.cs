@@ -27,12 +27,10 @@ namespace DTASpectraFileGen
         /// <remarks>The default path can be overridden by updating mDtaToolNameLoc using clsDtaGen.UpdateDtaToolNameLoc</remarks>
         protected override string ConstructDTAToolPath()
         {
-            string strDTAToolPath = null;
-
             var rawConverterDir = mMgrParams.GetParam("RawConverterProgLoc");
-            strDTAToolPath = Path.Combine(rawConverterDir, RAWCONVERTER_FILENAME);
+            var dtaToolPath = Path.Combine(rawConverterDir, RAWCONVERTER_FILENAME);
 
-            return strDTAToolPath;
+            return dtaToolPath;
         }
 
         protected override void MakeDTAFilesThreaded()
@@ -78,7 +76,7 @@ namespace DTASpectraFileGen
         {
             try
             {
-                var strRawDataType = mJobParams.GetJobParameter("RawDataType", "");
+                var rawDataType = mJobParams.GetJobParameter("RawDataType", "");
 
                 var oMGFConverter = new clsMGFConverter(mDebugLevel, mWorkDir)
                 {
@@ -88,10 +86,10 @@ namespace DTASpectraFileGen
 
                 RegisterEvents(oMGFConverter);
 
-                var eRawDataType = clsAnalysisResources.GetRawDataType(strRawDataType);
-                var blnSuccess = oMGFConverter.ConvertMGFtoDTA(eRawDataType, mDatasetName);
+                var eRawDataType = clsAnalysisResources.GetRawDataType(rawDataType);
+                var success = oMGFConverter.ConvertMGFtoDTA(eRawDataType, mDatasetName);
 
-                if (!blnSuccess)
+                if (!success)
                 {
                     mErrMsg = oMGFConverter.ErrorMessage;
                 }
@@ -99,7 +97,7 @@ namespace DTASpectraFileGen
                 mSpectraFileCount = oMGFConverter.SpectraCountWritten;
                 mProgress = 95;
 
-                return blnSuccess;
+                return success;
             }
             catch (Exception ex)
             {
@@ -124,7 +122,7 @@ namespace DTASpectraFileGen
                     OnStatusEvent("Creating .MGF file using RawConverter");
                 }
 
-                string rawFilePath = null;
+                string rawFilePath;
 
                 // Construct the path to the .raw file
                 switch (eRawDataType)
@@ -140,7 +138,12 @@ namespace DTASpectraFileGen
                 mInstrumentFileName = Path.GetFileName(rawFilePath);
                 mJobParams.AddResultFileToSkip(mInstrumentFileName);
 
-                var fiRawConverter = new FileInfo(mDtaToolNameLoc);
+                var rawConverter = new FileInfo(mDtaToolNameLoc);
+                if (rawConverter.Directory == null)
+                {
+                    mErrMsg = "Unable to determine the parent directory of " + rawConverter.FullName;
+                    return false;
+                }
 
                 // Set up command
                 var arguments = " " + clsGlobal.PossiblyQuotePath(rawFilePath) +
@@ -155,7 +158,7 @@ namespace DTASpectraFileGen
                 // The working directory must be the directory that has RawConverter.exe
                 // Otherwise, the program creates the .mgf file in C:\  (and will likely get Access Denied)
 
-                mCmdRunner = new clsRunDosProgram(fiRawConverter.Directory.FullName, mDebugLevel)
+                mCmdRunner = new clsRunDosProgram(rawConverter.Directory.FullName, mDebugLevel)
                 {
                     CreateNoWindow = true,
                     CacheStandardOutput = true,
