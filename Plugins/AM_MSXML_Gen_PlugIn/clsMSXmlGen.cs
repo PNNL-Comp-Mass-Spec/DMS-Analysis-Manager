@@ -81,7 +81,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
         /// <param name="rawDataType"></param>
         /// <param name="eOutputType"></param>
         /// <param name="centroidMSXML"></param>
-        public clsMSXmlGen(string workDir, string programPath, string datasetName, clsAnalysisResources.eRawDataTypeConstants rawDataType,
+        protected clsMSXmlGen(string workDir, string programPath, string datasetName, clsAnalysisResources.eRawDataTypeConstants rawDataType,
             clsAnalysisResources.MSXMLOutputTypeConstants eOutputType, bool centroidMSXML)
         {
             mWorkDir = workDir;
@@ -105,7 +105,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
         /// <param name="eOutputType"></param>
         /// <param name="centroidMS1"></param>
         /// <param name="centroidMS2"></param>
-        public clsMSXmlGen(string workDir, string programPath, string datasetName, clsAnalysisResources.eRawDataTypeConstants rawDataType,
+        protected clsMSXmlGen(string workDir, string programPath, string datasetName, clsAnalysisResources.eRawDataTypeConstants rawDataType,
             clsAnalysisResources.MSXMLOutputTypeConstants eOutputType, bool centroidMS1, bool centroidMS2)
         {
             mWorkDir = workDir;
