@@ -258,16 +258,22 @@ namespace AnalysisManagerMSAlignQuantPlugIn
 
             try
             {
-                strTargetedQuantParamFilePath = Path.Combine(mWorkDir, TARGETED_QUANT_XML_FILE_NAME);
-                var strMSAlignResultTableName = mDatasetName + clsAnalysisResourcesMSAlignQuant.MSALIGN_RESULT_TABLE_SUFFIX;
+                targetedQuantParamFilePath = Path.Combine(mWorkDir, TARGETED_QUANT_XML_FILE_NAME);
 
-                // Optionally make a trimmed version of the ResultTable file for testing purposes
+                var psmResultsFileName  = mJobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, clsAnalysisResourcesMSAlignQuant.MSALIGN_QUANT_INPUT_FILE_NAME_PARAM, "");
+                if (string.IsNullOrWhiteSpace(psmResultsFileName))
+                {
+                    mMessage = NotifyMissingParameter(mJobParams, clsAnalysisJob.STEP_PARAMETERS_SECTION);
+                    return string.Empty;
+                }
 
-                // var strFullResultsPath = Path.Combine(mWorkDir, strMSAlignResultTableName);
-                // var strTrimmedFilePath = Path.Combine(mWorkDir, Dataset + "_TrimmedResults.tmp");
+                // Optionally make a trimmed version of the PSM Results file file for testing purposes
+
+                // var fullResultsPath = Path.Combine(mWorkDir, mSAlignResultTableName);
+                // var trimmedFilePath = Path.Combine(mWorkDir, Dataset + "_TrimmedResults.tmp");
                 //
-                // using (var reader = new StreamReader(new FileStream(strFullResultsPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
-                // using (var writer = new StreamWriter(new FileStream(strTrimmedFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                // using (var reader = new StreamReader(new FileStream(fullResultsPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                // using (var writer = new StreamWriter(new FileStream(trimmedFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 //{
                 //    var linesRead = 0;
                 //    while (!reader.EndOfStream && linesRead < 30)
@@ -279,40 +285,40 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                 //
                 // // Replace the original file with the trimmed one
                 // Thread.Sleep(100);
-                // File.Delete(strFullResultsPath);
+                // File.Delete(fullResultsPath);
                 // Thread.Sleep(100);
                 //
-                // File.Move(strTrimmedFilePath, strFullResultsPath);
+                // File.Move(trimmedFilePath, fullResultsPath);
 
-                var strWorkflowParamFileName = mJobParams.GetParam("MSAlignQuantParamFile");
-                if (string.IsNullOrEmpty(strWorkflowParamFileName))
+                var workflowParamFileName = mJobParams.GetParam("MSAlignQuantParamFile");
+                if (string.IsNullOrEmpty(workflowParamFileName))
                 {
                     mMessage = NotifyMissingParameter(mJobParams, "MSAlignQuantParamFile");
                     return string.Empty;
                 }
 
-                using (var swTargetedQuantXMLFile = new XmlTextWriter(strTargetedQuantParamFilePath, Encoding.UTF8))
+                using (var targetedQuantXmlWriter = new XmlTextWriter(targetedQuantParamFilePath, Encoding.UTF8))
                 {
-                    swTargetedQuantXMLFile.Formatting = Formatting.Indented;
-                    swTargetedQuantXMLFile.Indentation = 4;
+                    targetedQuantXmlWriter.Formatting = Formatting.Indented;
+                    targetedQuantXmlWriter.Indentation = 4;
 
-                    swTargetedQuantXMLFile.WriteStartDocument();
-                    swTargetedQuantXMLFile.WriteStartElement("WorkflowParameters");
+                    targetedQuantXmlWriter.WriteStartDocument();
+                    targetedQuantXmlWriter.WriteStartElement("WorkflowParameters");
 
-                    WriteXMLSetting(swTargetedQuantXMLFile, "CopyRawFileLocal", "false");
-                    WriteXMLSetting(swTargetedQuantXMLFile, "DeleteLocalDatasetAfterProcessing", "false");
-                    WriteXMLSetting(swTargetedQuantXMLFile, "FileContainingDatasetPaths", "");
-                    WriteXMLSetting(swTargetedQuantXMLFile, "FolderPathForCopiedRawDataset", "");
-                    WriteXMLSetting(swTargetedQuantXMLFile, "LoggingFolder", mWorkDir);
-                    WriteXMLSetting(swTargetedQuantXMLFile, "TargetsFilePath", Path.Combine(mWorkDir, strMSAlignResultTableName));
-                    WriteXMLSetting(swTargetedQuantXMLFile, "TargetType", "LcmsFeature");
-                    WriteXMLSetting(swTargetedQuantXMLFile, "ResultsFolder", mWorkDir);
-                    WriteXMLSetting(swTargetedQuantXMLFile, "WorkflowParameterFile", Path.Combine(mWorkDir, strWorkflowParamFileName));
-                    WriteXMLSetting(swTargetedQuantXMLFile, "WorkflowType", "TopDownTargetedWorkflowExecutor1");
+                    WriteXMLSetting(targetedQuantXmlWriter, "CopyRawFileLocal", "false");
+                    WriteXMLSetting(targetedQuantXmlWriter, "DeleteLocalDatasetAfterProcessing", "false");
+                    WriteXMLSetting(targetedQuantXmlWriter, "FileContainingDatasetPaths", "");
+                    WriteXMLSetting(targetedQuantXmlWriter, "FolderPathForCopiedRawDataset", "");
+                    WriteXMLSetting(targetedQuantXmlWriter, "LoggingFolder", mWorkDir);
+                    WriteXMLSetting(targetedQuantXmlWriter, "TargetsFilePath", Path.Combine(mWorkDir, psmResultsFileName));
+                    WriteXMLSetting(targetedQuantXmlWriter, "TargetType", "LcmsFeature");
+                    WriteXMLSetting(targetedQuantXmlWriter, "ResultsFolder", mWorkDir);
+                    WriteXMLSetting(targetedQuantXmlWriter, "WorkflowParameterFile", Path.Combine(mWorkDir, workflowParamFileName));
+                    WriteXMLSetting(targetedQuantXmlWriter, "WorkflowType", "TopDownTargetedWorkflowExecutor1");
 
-                    swTargetedQuantXMLFile.WriteEndElement();    // WorkflowParameters
+                    targetedQuantXmlWriter.WriteEndElement();    // WorkflowParameters
 
-                    swTargetedQuantXMLFile.WriteEndDocument();
+                    targetedQuantXmlWriter.WriteEndDocument();
                 }
             }
             catch (Exception ex)
