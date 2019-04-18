@@ -549,12 +549,10 @@ namespace AnalysisManagerTopPICPlugIn
                 return eResult;
             }
 
-            var featureFileName = mDatasetName + clsAnalysisResourcesTopPIC.TOPFD_FEATURE_FILE_SUFFIX;
             var msalignFileName = mDatasetName + clsAnalysisResourcesTopPIC.MSALIGN_FILE_SUFFIX;
 
-            var arguments = string.Format("{0} --use-topfd-feature {1} {2} {3}",
+            var arguments = string.Format("{0} {1} {2}",
                                           cmdLineOptions,
-                                          featureFileName,
                                           mValidatedFASTAFilePath,
                                           msalignFileName);
 

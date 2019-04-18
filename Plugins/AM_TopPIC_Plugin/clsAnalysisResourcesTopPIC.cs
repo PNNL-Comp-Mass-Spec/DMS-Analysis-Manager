@@ -20,7 +20,7 @@ namespace AnalysisManagerTopPICPlugIn
         /// .feature file created by TopFD
         /// </summary>
         /// <remarks>Tracks LC/MS features</remarks>
-        public const string TOPFD_FEATURE_FILE_SUFFIX = ".feature";
+        private const string TOPFD_FEATURE_FILE_SUFFIX = ".feature";
 
         /// <summary>
         /// _ms2.msalign file created by TopFD
