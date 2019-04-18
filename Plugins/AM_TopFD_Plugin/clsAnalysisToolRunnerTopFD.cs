@@ -144,12 +144,14 @@ namespace AnalysisManagerTopFDPlugIn
         /// <returns></returns>
         private Dictionary<string, string> GetTopFDParameterNames()
         {
-            var paramToArgMapping = new Dictionary<string, string>(25, StringComparer.OrdinalIgnoreCase)
+            var paramToArgMapping = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
                 {"MaxCharge", "max-charge"},
                 {"MaxMass", "max-mass"},
                 {"MzError", "mz-error"},
-                {"SNRatio", "sn-ratio"},
+                {"SNRatio", "ms-two-sn-ratio"},
+                {"SNRatioMS1", "ms-one-sn-ratio"},
+                {"SNRatioMS2", "ms-two-sn-ratio"},
                 {"PrecursorWindow", "precursor-window"},
                 {"MS1Missing", "missing-level-one"},
             };
@@ -345,7 +347,7 @@ namespace AnalysisManagerTopFDPlugIn
                 return eResult;
             }
 
-            var arguments = cmdLineOptions + " " + 
+            var arguments = cmdLineOptions + " " +
                             Dataset + clsAnalysisResources.DOT_MZML_EXTENSION;
 
             LogDebug(progLoc + " " + arguments);
