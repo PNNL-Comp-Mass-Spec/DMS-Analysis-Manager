@@ -155,10 +155,11 @@ namespace AnalysisManagerTopPICPlugIn
         /// <returns></returns>
         private Dictionary<string, string> GetTopPICParameterNames()
         {
-            var paramToArgMapping = new Dictionary<string, string>(25, StringComparer.OrdinalIgnoreCase)
+            var paramToArgMapping = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
                 {"ErrorTolerance", "error-tolerance"},
                 {"MaxShift", "max-shift"},
+                {"MinShift", "min-shift"},
                 {"NumShift", "num-shift"},
                 {"SpectrumCutoffType", "spectrum-cutoff-type"},
                 {"SpectrumCutoffValue", "spectrum-cutoff-value"},
