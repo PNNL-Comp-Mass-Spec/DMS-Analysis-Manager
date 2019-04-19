@@ -231,7 +231,7 @@ namespace AnalysisManagerTopFDPlugIn
                                     dataLine.ToLower().StartsWith("topfd") &&
                                     !dataLine.ToLower().Contains(TOPFD_EXE_NAME.ToLower()))
                                 {
-                                    if (mDebugLevel >= 2 && string.IsNullOrWhiteSpace(mTopFDVersion))
+                                    if (mDebugLevel >= 2)
                                     {
                                         LogDebug("TopFD version: " + dataLine);
                                     }
@@ -352,16 +352,16 @@ namespace AnalysisManagerTopFDPlugIn
 
             LogDebug(progLoc + " " + arguments);
 
-            mCmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel);
+            mCmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel)
+            {
+                CreateNoWindow = true,
+                CacheStandardOutput = false,
+                EchoOutputToConsole = true,
+                WriteConsoleOutputToFile = true,
+                ConsoleOutputFilePath = Path.Combine(mWorkDir, TOPFD_CONSOLE_OUTPUT)
+            };
             RegisterEvents(mCmdRunner);
             mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
-
-            mCmdRunner.CreateNoWindow = true;
-            mCmdRunner.CacheStandardOutput = false;
-            mCmdRunner.EchoOutputToConsole = true;
-
-            mCmdRunner.WriteConsoleOutputToFile = true;
-            mCmdRunner.ConsoleOutputFilePath = Path.Combine(mWorkDir, TOPFD_CONSOLE_OUTPUT);
 
             mProgress = PROGRESS_PCT_STARTING;
             ResetProgRunnerCpuUsage();

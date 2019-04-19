@@ -98,7 +98,7 @@ namespace AnalysisManagerTopPICPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                // Process the XML files using TopPIC
+                // Process the _ms2.msalign file using TopPIC
                 var processingResult = StartTopPIC(fastaFileIsDecoy, mTopPICProgLoc);
 
                 mProgress = PROGRESS_PCT_COMPLETE;
@@ -335,7 +335,7 @@ namespace AnalysisManagerTopPICPlugIn
                                 dataLine.ToLower().StartsWith("toppic") &&
                                 !dataLine.ToLower().Contains(TOPPIC_EXE_NAME.ToLower()))
                             {
-                                if (mDebugLevel >= 2 && string.IsNullOrWhiteSpace(mTopPICVersion))
+                                if (mDebugLevel >= 2)
                                 {
                                     LogDebug("TopPIC version: " + dataLine);
                                 }
@@ -478,8 +478,7 @@ namespace AnalysisManagerTopPICPlugIn
 
             cmdLineOptions = string.Empty;
 
-            var paramFileName = mJobParams.GetParam("ParmFileName");
-
+            var paramFileName = mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_PARAMETER_FILE);
             var paramFileReader = new clsKeyValueParamFileReader("TopPIC", mWorkDir, paramFileName);
             RegisterEvents(paramFileReader);
 
@@ -612,16 +611,16 @@ namespace AnalysisManagerTopPICPlugIn
 
             LogDebug(progLoc + " " + arguments);
 
-            mCmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel);
+            mCmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel)
+            {
+                CreateNoWindow = true,
+                CacheStandardOutput = false,
+                EchoOutputToConsole = true,
+                WriteConsoleOutputToFile = true,
+                ConsoleOutputFilePath = Path.Combine(mWorkDir, TOPPIC_CONSOLE_OUTPUT)
+            };
             RegisterEvents(mCmdRunner);
             mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
-
-            mCmdRunner.CreateNoWindow = true;
-            mCmdRunner.CacheStandardOutput = false;
-            mCmdRunner.EchoOutputToConsole = true;
-
-            mCmdRunner.WriteConsoleOutputToFile = true;
-            mCmdRunner.ConsoleOutputFilePath = Path.Combine(mWorkDir, TOPPIC_CONSOLE_OUTPUT);
 
             mProgress = PROGRESS_PCT_STARTING;
             ResetProgRunnerCpuUsage();
@@ -956,8 +955,10 @@ namespace AnalysisManagerTopPICPlugIn
             fastaFileIsDecoy = false;
 
             // Define the path to the fasta file
-            var localOrgDbFolder = mMgrParams.GetParam("OrgDbDir");
-            mValidatedFASTAFilePath = Path.Combine(localOrgDbFolder, mJobParams.GetParam("PeptideSearch", "generatedFastaName"));
+            var localOrgDbFolder = mMgrParams.GetParam(clsAnalysisResources.MGR_PARAM_ORG_DB_DIR);
+
+            // Note that job parameter "generatedFastaName" gets defined by clsAnalysisResources.RetrieveOrgDB
+            mValidatedFASTAFilePath = Path.Combine(localOrgDbFolder, mJobParams.GetParam("PeptideSearch", clsAnalysisResources.JOB_PARAM_GENERATED_FASTA_NAME));
 
             var fastaFile = new FileInfo(mValidatedFASTAFilePath);
 
@@ -979,6 +980,7 @@ namespace AnalysisManagerTopPICPlugIn
 
             return true;
         }
+
         private bool ValidateResultTableFile(FileSystemInfo sourceFile, FileSystemInfo targetFile, bool saveParameterFile, bool useCsvReader)
         {
             var reParametersHeader = new Regex(@"\*+ Parameters \*+", RegexOptions.Compiled | RegexOptions.IgnoreCase);

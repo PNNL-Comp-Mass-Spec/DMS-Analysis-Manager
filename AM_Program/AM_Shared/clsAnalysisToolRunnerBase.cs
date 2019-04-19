@@ -4233,15 +4233,13 @@ namespace AnalysisManagerBase
                 // Add the unzipped file to .ResultFilesToSkip since we only want to keep the zipped version
                 mJobParams.AddResultFileToSkip(fileToCompress.Name);
 
+                return true;
             }
             catch (Exception ex)
             {
                 LogError("Exception zipping " + fileDescription + " results file", ex);
                 return false;
             }
-
-            return true;
-
         }
 
         #endregion

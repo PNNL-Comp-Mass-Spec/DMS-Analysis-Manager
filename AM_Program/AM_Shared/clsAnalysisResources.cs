@@ -5022,7 +5022,6 @@ namespace AnalysisManagerBase
                 logFreeMemoryOnSuccess = false;
 
             return ValidateFreeMemorySize(freeMemoryRequiredMB, StepToolName, logFreeMemoryOnSuccess);
-
         }
 
         /// <summary>

@@ -50,11 +50,13 @@ namespace AnalysisManagerTopPICPlugIn
             }
 
             // Retrieve param file
-            if (!FileSearch.RetrieveFile(mJobParams.GetParam("ParmFileName"), mJobParams.GetParam("ParmFileStoragePath")))
+            var paramFileName = mJobParams.GetParam(JOB_PARAM_PARAMETER_FILE);
+
+            if (!FileSearch.RetrieveFile(paramFileName, mJobParams.GetParam("ParmFileStoragePath")))
                 return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
 
             // Retrieve Fasta file
-            var orgDbDirectoryPath = mMgrParams.GetParam("OrgDbDir");
+            var orgDbDirectoryPath = mMgrParams.GetParam(MGR_PARAM_ORG_DB_DIR);
             if (!RetrieveOrgDB(orgDbDirectoryPath, out var resultCode))
                 return resultCode;
 
