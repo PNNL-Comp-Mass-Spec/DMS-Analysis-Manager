@@ -57,11 +57,11 @@ namespace AnalysisManagerMSGFDBPlugIn
                 }
 
                 // Retrieve the Fasta file
-                var localOrgDbFolder = mMgrParams.GetParam(MGR_PARAM_ORG_DB_DIR);
+                var orgDbDirectoryPath = mMgrParams.GetParam(MGR_PARAM_ORG_DB_DIR);
 
-                currentTask = "RetrieveOrgDB to " + localOrgDbFolder;
+                currentTask = "RetrieveOrgDB to " + orgDbDirectoryPath;
 
-                if (!RetrieveOrgDB(localOrgDbFolder, out result))
+                if (!RetrieveOrgDB(orgDbDirectoryPath, out result))
                 {
                     return result;
                 }
@@ -85,14 +85,14 @@ namespace AnalysisManagerMSGFDBPlugIn
                 // The ToolName job parameter holds the name of the job script we are executing
                 var scriptName = mJobParams.GetParam("ToolName");
 
-                if (scriptName.ToLower().Contains("mzxml") ||
-                    scriptName.ToLower().Contains("msgfplus_bruker"))
+                if (scriptName.IndexOf("mzXML", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                    scriptName.IndexOf("MSGFPlus_Bruker", StringComparison.OrdinalIgnoreCase) >= 0)
                 {
                     currentTask = "Get mzXML file";
                     result = GetMzXMLFile();
                 }
-                else if (scriptName.ToLower().Contains("mzml") ||
-                         scriptName.IndexOf("DeconMSn_MzRefinery", StringComparison.OrdinalIgnoreCase) > 0)
+                else if (scriptName.IndexOf("mzML", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                         scriptName.IndexOf("DeconMSn_MzRefinery", StringComparison.OrdinalIgnoreCase) >= 0)
                 {
                     currentTask = "Get mzML file";
                     result = GetMzMLFile();

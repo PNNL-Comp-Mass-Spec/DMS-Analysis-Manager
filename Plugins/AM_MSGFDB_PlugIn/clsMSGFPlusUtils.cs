@@ -1570,7 +1570,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             string javaProgLoc, string msgfPlusProgLoc, out float fastaFileSizeKB, out bool fastaFileIsDecoy,
             out string fastaFilePath, string msgfPlusParameterFilePath, int maxFastaFileSizeMB)
         {
-            var oRand = new Random();
+            var randomGenerator = new Random();
 
             var mgrName = mMgrParams.ManagerName;
 
@@ -1679,7 +1679,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                     if (trimIteration <= 2)
                     {
-                        var sleepTimeSec = oRand.Next(10, 19);
+                        var sleepTimeSec = randomGenerator.Next(10, 19);
 
                         OnStatusEvent("Fasta file trimming failed; waiting " + sleepTimeSec + " seconds then trying again");
                         clsGlobal.IdleLoop(sleepTimeSec);
@@ -1737,7 +1737,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     return result;
                 }
 
-                var sleepTimeSec = oRand.Next(10, 19);
+                var sleepTimeSec = randomGenerator.Next(10, 19);
 
                 OnStatusEvent("Fasta file indexing failed; waiting " + sleepTimeSec + " seconds then trying again");
                 clsGlobal.IdleLoop(sleepTimeSec);
@@ -2131,11 +2131,11 @@ namespace AnalysisManagerMSGFDBPlugIn
                         else if (dataLine.StartsWith("Using", StringComparison.OrdinalIgnoreCase))
                         {
                             // Extract out the thread or task count
-                            var oThreadMatch = reExtractThreadCount.Match(dataLine);
+                            var threadMatch = reExtractThreadCount.Match(dataLine);
 
-                            if (oThreadMatch.Success)
+                            if (threadMatch.Success)
                             {
-                                short.TryParse(oThreadMatch.Groups["ThreadCount"].Value, out totalThreadCount);
+                                short.TryParse(threadMatch.Groups["ThreadCount"].Value, out totalThreadCount);
 
                                 if (effectiveProgress < PROGRESS_PCT_MSGFPLUS_THREADS_SPAWNED)
                                 {
@@ -2145,19 +2145,19 @@ namespace AnalysisManagerMSGFDBPlugIn
                         }
                         else if (dataLine.StartsWith("Splitting", StringComparison.OrdinalIgnoreCase))
                         {
-                            var oTaskMatch = reExtractTaskCount.Match(dataLine);
+                            var taskMatch = reExtractTaskCount.Match(dataLine);
 
-                            if (oTaskMatch.Success)
+                            if (taskMatch.Success)
                             {
-                                int.TryParse(oTaskMatch.Groups["TaskCount"].Value, out totalTasks);
+                                int.TryParse(taskMatch.Groups["TaskCount"].Value, out totalTasks);
                             }
                         }
                         else if (dataLine.StartsWith("Spectrum", StringComparison.OrdinalIgnoreCase))
                         {
                             // Extract out the number of spectra that MS-GF+ will actually search
-                            var oMatch = reSpectraSearched.Match(dataLine);
+                            var spectraSearchedMatch = reSpectraSearched.Match(dataLine);
 
-                            if (oMatch.Success && int.TryParse(oMatch.Groups["SpectrumCount"].Value, out var spectraSearched))
+                            if (spectraSearchedMatch.Success && int.TryParse(spectraSearchedMatch.Groups["SpectrumCount"].Value, out var spectraSearched))
                             {
                                 SpectraSearched = spectraSearched;
                             }
