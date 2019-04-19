@@ -142,6 +142,9 @@
     <PackageReference Include="Apache.NMS.ActiveMQ">
       <Version>1.7.2</Version>
     </PackageReference>
+    <PackageReference Include="CsvHelper">
+      <Version>12.1.2</Version>
+    </PackageReference>
     <PackageReference Include="DotNetZip">
       <Version>1.13.0</Version>
     </PackageReference>
