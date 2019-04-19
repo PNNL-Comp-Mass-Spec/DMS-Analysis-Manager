@@ -10,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
+using CsvHelper;
 
 namespace AnalysisManagerTopPICPlugIn
 {
@@ -27,10 +28,12 @@ namespace AnalysisManagerTopPICPlugIn
         private const float PROGRESS_PCT_STARTING = 1;
         private const float PROGRESS_PCT_COMPLETE = 99;
 
-        private const string PRSM_RESULT_TABLE_NAME_SUFFIX_ORIGINAL = "_ms2.OUTPUT_TABLE";
+        private const string PRSM_TSV_RESULT_TABLE_NAME_SUFFIX_ORIGINAL = "_ms2.OUTPUT_TABLE";
+        private const string PRSM_CSV_RESULT_TABLE_NAME_SUFFIX_ORIGINAL = "_ms2_toppic_prsm.csv";
         private const string PRSM_RESULT_TABLE_NAME_SUFFIX_FINAL = "_TopPIC_PrSMs.txt";
 
-        private const string PROTEOFORM_RESULT_TABLE_NAME_SUFFIX_ORIGINAL = "_ms2.FORM_OUTPUT_TABLE";
+        private const string PROTEOFORM_TSV_RESULT_TABLE_NAME_SUFFIX_ORIGINAL = "_ms2.FORM_OUTPUT_TABLE";
+        private const string PROTEOFORM_CSV_RESULT_TABLE_NAME_SUFFIX_ORIGINAL = "_ms2_toppic_proteoform.csv";
         private const string PROTEOFORM_RESULT_TABLE_NAME_SUFFIX_FINAL = "_TopPIC_Proteoforms.txt";
 
         #endregion
@@ -181,22 +184,22 @@ namespace AnalysisManagerTopPICPlugIn
         {
             // Example Console output
             //
-            // Zero PTM filtering - started.
-            // Zero PTM filtering - block 1 out of 3 started.
-            // Zero PTM filtering - processing 1504 of 1504 spectra.
-            // Zero PTM filtering - block 1 finished.
-            // Zero PTM filtering - block 2 out of 3 started.
-            // Zero PTM filtering - processing 1504 of 1504 spectra.
-            // Zero PTM filtering - block 2 finished.
-            // Zero PTM filtering - block 3 out of 3 started.
-            // Zero PTM filtering - processing 1504 of 1504 spectra.
-            // Zero PTM filtering - block 3 finished.
-            // Zero PTM filtering - combining blocks started.
-            // Zero PTM filtering - combining blocks finished.
-            // Zero PTM filtering - finished.
-            // Zero PTM search - started.
-            // Zero PTM search - processing 1504 of 1504 spectra.
-            // Zero PTM search - finished.
+            // Non PTM filtering - started.
+            // Non PTM filtering - block 1 out of 3 started.
+            // Non PTM filtering - processing 1504 of 1504 spectra.
+            // Non PTM filtering - block 1 finished.
+            // Non PTM filtering - block 2 out of 3 started.
+            // Non PTM filtering - processing 1504 of 1504 spectra.
+            // Non PTM filtering - block 2 finished.
+            // Non PTM filtering - block 3 out of 3 started.
+            // Non PTM filtering - processing 1504 of 1504 spectra.
+            // Non PTM filtering - block 3 finished.
+            // Non PTM filtering - combining blocks started.
+            // Non PTM filtering - combining blocks finished.
+            // Non PTM filtering - finished.
+            // Non PTM search - started.
+            // Non PTM search - processing 1504 of 1504 spectra.
+            // Non PTM search - finished.
             // One PTM filtering - started.
             // One PTM filtering - block 1 out of 3 started.
             // One PTM filtering - processing 1504 of 1504 spectra.
@@ -218,61 +221,74 @@ namespace AnalysisManagerTopPICPlugIn
             // E-value computation - started.
             // E-value computation - processing 1504 of 1504 spectra.
             // E-value computation - finished.
-            // Finding protein species - started.
-            // Finding protein species - finished.
+            // Finding PrSM clusters - started.
+            // Finding PrSM clusters - finished.
             // Top PRSM selecting - started
             // Top PRSM selecting - finished.
             // FDR computation - started.
             // FDR computation - finished.
-            // PRSM selecting by cutoff - started.
-            // PRSM selecting by cutoff - finished.
-            // Outputting the PRSM result table - started.
-            // Outputting the PRSM result table - finished.
-            // Generating the PRSM xml files - started.
+            // PrSM filtering by EVALUE - started.
+            // PrSM filtering by EVALUE - finished.
+            // Outputting PrSM table - started.
+            // Outputting PrSM table - finished.
+            // Generating PRSM xml files - started.
             // Generating xml files - processing 676 PrSMs.
             // Generating xml files - preprocessing 466 Proteoforms.
             // Generating xml files - processing 466 Proteoforms.
             // Generating xml files - preprocessing 110 Proteins.
             // Generating xml files - processing 110 Proteins.
-            // Generating the PRSM xml files - finished.
-            // Converting the PRSM xml files to html files - started.
+            // Generating PRSM xml files - finished.
+            // Converting PRSM xml files to html files - started.
             // Converting xml files to html files - processing 1253 of 1253 files.
-            // Converting the PRSM xml files to html files - finished.
-            // Proteoform selecting by cutoff - started.
-            // Proteoform selecting by cutoff - finished.
-            // Proteoform filtering - started.
-            // Proteoform filtering - finished.
-            // Outputting the proteoform result table - started.
-            // Outputting the proteoform result table - finished.
-            // Generating the proteoform xml files - started.
+            // Converting PRSM xml files to html files - finished.
+            // PrSM filtering by EVALUE - started.
+            // PrSM filtering by EVALUE - finished.
+            // Selecting top PrSMs for proteoforms - started.
+            // Selecting top PrSMs for proteoforms - finished.
+            // Outputting proteoform table - started.
+            // Outputting proteoform table - finished.
+            // Generating proteoform xml files - started.
             // Generating xml files - processing 676 PrSMs.
             // ...
-            // Generating the proteoform xml files - finished.
-            // Converting the proteoform xml files to html files - started.
+            // Generating proteoform xml files - finished.
+            // Converting proteoform xml files to html files - started.
             // Converting xml files to html files - processing 1253 of 1253 files.
-            // Converting the proteoform xml files to html files - finished.
+            // Converting proteoform xml files to html files - finished.
             // Deleting temporary files - started.
             // Deleting temporary files - finished.
             // TopPIC finished.
 
             var processingSteps = new SortedList<string, int>
             {
-                {"Zero PTM filtering", 0},
-                {"Zero PTM search", 10},
+                // {"Zero PTM filtering", 0},
+                // {"Zero PTM search", 10},
+                {"Non PTM filtering", 0},
+                {"Non PTM search", 10},
                 {"One PTM filtering", 15},
                 {"One PTM search", 20},
                 {"Diagonal filtering", 25},
                 {"Two PTM search", 45},
-                {"Combining PRSMs", 80},
-                {"E-value computation", 88},
-                {"Finding protein species", 89},
-                {"Generating the PRSM xml files", 90},
-                {"Converting the PRSM xml files to html files", 93},
-                {"Generating the proteoform xml files", 95},
-                {"Converting the proteoform xml files to html files", 98},
+                {"Combining PRSMs", 65},
+                // The space after "computation" in "E-value computation " is important to avoid matching "E-value computation:" in the parameters block
+                {"E-value computation ", 70},
+                {"Finding PrSM clusters", 89},
+                {"Generating PrSM xml files", 90},
+                {"Converting PrSM xml files to html files", 93},
+                {"Generating proteoform xml files", 95},
+                {"Converting proteoform xml files to html files", 98},
                 {"Deleting temporary files", 99},
                 {"TopPIC finished", 100}
             };
+
+            // RegEx to match lines like:
+            // E-value computation - processing 560 of 2782 spectra.
+            var incrementalProgressMatcher = new Regex(@"processing (?<Item>\d+) of (?<Total>\d+) [a-z]+",
+                                                       RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+            // Regex to match lines like:
+            // Generating xml files - processing 398 PrSMs.
+            var undefinedProgressMatcher = new Regex(@"processing (?<Item>\d+) [a-z]+\.",
+                                                       RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
             try
             {
@@ -292,7 +308,10 @@ namespace AnalysisManagerTopPICPlugIn
                 }
 
                 mConsoleOutputErrorMsg = string.Empty;
-                var actualProgress = 0;
+                var currentProgress = 0;
+                var currentTaskItemsProcessed = 0;
+                var currentTaskTotalItems = 0;
+                var undefinedProgress = false;
 
                 using (var reader = new StreamReader(new FileStream(consoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
@@ -331,8 +350,7 @@ namespace AnalysisManagerTopPICPlugIn
                                 if (!dataLine.StartsWith(processingStep.Key, StringComparison.OrdinalIgnoreCase))
                                     continue;
 
-                                if (actualProgress < processingStep.Value)
-                                    actualProgress = processingStep.Value;
+                                currentProgress = processingStep.Value;
                             }
 
                             if (linesRead > 12 &&
@@ -342,14 +360,50 @@ namespace AnalysisManagerTopPICPlugIn
                             {
                                 mConsoleOutputErrorMsg = "Error running TopPIC: " + dataLine;
                             }
+
+                            var progressMatch = incrementalProgressMatcher.Match(dataLine);
+                            if (progressMatch.Success)
+                            {
+                                if (int.TryParse(progressMatch.Groups["Item"].Value, out var itemValue))
+                                    currentTaskItemsProcessed = itemValue;
+
+                                if (int.TryParse(progressMatch.Groups["Total"].Value, out var totalValue))
+                                    currentTaskTotalItems = totalValue;
+
+                                undefinedProgress = false;
+                            }
+
+                            var undefinedProgressMatch = undefinedProgressMatcher.Match(dataLine);
+                            if (undefinedProgressMatch.Success)
+                            {
+                                undefinedProgress = true;
+                            }
                         }
                     }
                 }
 
-                if (mProgress < actualProgress)
+                float effectiveProgress;
+                if (!undefinedProgress && currentTaskItemsProcessed > 0 && currentTaskTotalItems > 0)
                 {
-                    mProgress = actualProgress;
+                    var nextProgress = 100;
+
+                    // Find the % progress value for step following the current step
+                    foreach (var item in processingSteps)
+                    {
+                        if (item.Value > currentProgress && item.Value < nextProgress)
+                            nextProgress = item.Value;
+                    }
+
+                    effectiveProgress = ComputeIncrementalProgress(currentProgress, nextProgress,
+                                                                   currentTaskItemsProcessed, currentTaskTotalItems);
+
                 }
+                else
+                {
+                    effectiveProgress = currentProgress;
+                }
+
+                mProgress = effectiveProgress;
             }
             catch (Exception ex)
             {
@@ -777,7 +831,11 @@ namespace AnalysisManagerTopPICPlugIn
         /// <summary>
         /// Validate the results files and zip the html subdirectories
         /// </summary>
-        /// <returns></returns>
+        /// <returns>True if success, false if an error</returns>
+        /// <remarks>
+        /// TopPIC 1.1 created tab-delimited text files ending with "_ms2.OUTPUT_TABLE" and "_ms2.FORM_OUTPUT_TABLE"
+        /// TopPIC 1.2 creates .csv files ending with "_ms2_toppic_prsm.csv" and "_ms2_toppic_proteoform.csv"
+        /// </remarks>
         private bool ValidateAndZipResults(out bool noValidResults)
         {
 
@@ -786,40 +844,104 @@ namespace AnalysisManagerTopPICPlugIn
             try
             {
                 // Dictionary mapping the original results file name created by TopPIC to the final name for the file
-                var resultTableFiles = new Dictionary<string, string>
+                // This dictionary applied to TopPIC prior to the November 2018 release of TopPIC
+                var tsvResultTableFiles = new Dictionary<string, string>
                 {
-                    {PRSM_RESULT_TABLE_NAME_SUFFIX_ORIGINAL, PRSM_RESULT_TABLE_NAME_SUFFIX_FINAL},
-                    {PROTEOFORM_RESULT_TABLE_NAME_SUFFIX_ORIGINAL, PROTEOFORM_RESULT_TABLE_NAME_SUFFIX_FINAL}
+                    {PRSM_TSV_RESULT_TABLE_NAME_SUFFIX_ORIGINAL, PRSM_RESULT_TABLE_NAME_SUFFIX_FINAL},
+                    {PROTEOFORM_TSV_RESULT_TABLE_NAME_SUFFIX_ORIGINAL, PROTEOFORM_RESULT_TABLE_NAME_SUFFIX_FINAL}
                 };
 
-                foreach (var resultFile in resultTableFiles)
+                // Dictionary mapping the original results file name created by TopPIC to the final name for the file
+                // This dictionary applies to the November 2018 release of TopPIC and newer
+                var csvResultTableFiles = new Dictionary<string, string>
                 {
-                    var sourceFile = Path.Combine(mWorkDir, mDatasetName + resultFile.Key);
-                    var targetFile = Path.Combine(mWorkDir, mDatasetName + resultFile.Value);
+                    {PRSM_CSV_RESULT_TABLE_NAME_SUFFIX_ORIGINAL, PRSM_RESULT_TABLE_NAME_SUFFIX_FINAL},
+                    {PROTEOFORM_CSV_RESULT_TABLE_NAME_SUFFIX_ORIGINAL, PROTEOFORM_RESULT_TABLE_NAME_SUFFIX_FINAL}
+                };
 
-                    var saveParameterFile = string.Equals(resultFile.Key, PRSM_RESULT_TABLE_NAME_SUFFIX_ORIGINAL);
-                    var success = ValidateResultTableFile(sourceFile, targetFile, saveParameterFile, out var noValidResultsThisFile);
+                var validPrsmResults = false;
+                var validProteoformResults = false;
 
-                    if (string.Equals(resultFile.Key, PRSM_RESULT_TABLE_NAME_SUFFIX_ORIGINAL) && noValidResultsThisFile)
-                        noValidResults = true;
+                foreach (var resultFile in tsvResultTableFiles)
+                {
+                    var sourceFile = new FileInfo(Path.Combine(mWorkDir, mDatasetName + resultFile.Key));
+                    var targetFile = new FileInfo(Path.Combine(mWorkDir, mDatasetName + resultFile.Value));
 
-                    if (!success)
-                        return false;
+                    if (!sourceFile.Exists)
+                        continue;
+
+                    var prsmFile = string.Equals(resultFile.Key, PRSM_TSV_RESULT_TABLE_NAME_SUFFIX_ORIGINAL);
+
+                    // When parsing the _prsm results file, extract the **** Parameters **** block from the start of the file and save to TopPIC_RuntimeParameters.txt
+                    var saveParameterFile = prsmFile;
+                    var success = ValidateResultTableFile(sourceFile, targetFile, saveParameterFile, false);
+
+                    if (prsmFile && success)
+                        validPrsmResults = true;
+
+                    if (!prsmFile && success)
+                        validProteoformResults = true;
                 }
 
-                // Zip the Html directories
+                foreach (var resultFile in csvResultTableFiles)
+                {
+                    var sourceFile = new FileInfo(Path.Combine(mWorkDir, mDatasetName + resultFile.Key));
+                    var targetFile = new FileInfo(Path.Combine(mWorkDir, mDatasetName + resultFile.Value));
+
+                    if (!sourceFile.Exists)
+                        continue;
+
+                    var prsmFile = string.Equals(resultFile.Key, PRSM_CSV_RESULT_TABLE_NAME_SUFFIX_ORIGINAL);
+
+                    // When parsing the _prsm results file, extract the **** Parameters **** block from the start of the file and save to TopPIC_RuntimeParameters.txt
+                    var saveParameterFile = prsmFile;
+                    var success = ValidateResultTableFile(sourceFile, targetFile, saveParameterFile, true);
+
+                    if (prsmFile && success)
+                        validPrsmResults = true;
+
+                    if (!prsmFile && success)
+                        validProteoformResults = true;
+                }
+
+                if (!validPrsmResults)
+                {
+                    LogError("Valid TopPIC Prsm results file not found");
+                    return false;
+                }
+
+                if (!validProteoformResults)
+                {
+                    LogError("Valid TopPIC Proteoform results file not found");
+                    return false;
+                }
+
+                // Zip the two Html directories
+                // The November 2018 and later releases of TopPIC have Html directories that start with the text _ms2_toppic
+                // Earlier versions do not start with _ms2_toppic
                 var directoriesToCompress = new List<string> {
-                    "_ms2_proteoform_cutoff_html",
-                    "_ms2_prsm_cutoff_html" };
+                    "_ms2_toppic_prsm_cutoff_html",
+                    "_ms2_toppic_proteoform_cutoff_html",
+                    "_ms2_prsm_cutoff_html",
+                    "_ms2_proteoform_cutoff_html"};
+
+                var directoriesZipped = 0;
 
                 foreach (var directorySuffix in directoriesToCompress)
                 {
                     var success = ZipTopPICResultsDirectory(directorySuffix);
-                    if (!success)
-                        return false;
+                    if (success)
+                        directoriesZipped++;
+
+                    if (directoriesZipped >= 2)
+                        break;
                 }
 
+                if (directoriesZipped >= 2)
+                    return true;
 
+                LogError("Expected TopPIC html directories were not found");
+                return false;
             }
             catch (Exception ex)
             {
@@ -827,8 +949,6 @@ namespace AnalysisManagerTopPICPlugIn
                 return false;
             }
 
-
-            return true;
         }
 
         private bool ValidateFastaFile(out bool fastaFileIsDecoy)
@@ -859,12 +979,9 @@ namespace AnalysisManagerTopPICPlugIn
 
             return true;
         }
-
-        private bool ValidateResultTableFile(string sourceFilePath, string targetFilePath, bool saveParameterFile, out bool noValidResults)
+        private bool ValidateResultTableFile(FileSystemInfo sourceFile, FileSystemInfo targetFile, bool saveParameterFile, bool useCsvReader)
         {
             var reParametersHeader = new Regex(@"\*+ Parameters \*+", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-
-            noValidResults = false;
 
             try
             {
@@ -874,13 +991,11 @@ namespace AnalysisManagerTopPICPlugIn
 
                 var parameterInfo = new List<string>();
 
-                var sourceFile = new FileInfo(sourceFilePath);
-
                 if (!sourceFile.Exists)
                 {
                     if (mDebugLevel >= 2)
                     {
-                        LogWarning("TopPIC results file not found: " + sourceFilePath);
+                        LogWarning("TopPIC results file not found: " + sourceFile.FullName);
                     }
                     return false;
                 }
@@ -890,22 +1005,24 @@ namespace AnalysisManagerTopPICPlugIn
                     LogMessage("Validating that the TopPIC results file is not empty");
                 }
 
+                CsvParser csvParser = null;
+
                 // Open the input file and output file
-                // The output file will not include the Parameters block before the header line
+                // The output file will not include the Parameters block before the header line of the data block
                 using (var reader = new StreamReader(new FileStream(sourceFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
-                using (var writer = new StreamWriter(new FileStream(targetFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
+                using (var writer = new StreamWriter(new FileStream(targetFile.FullName, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
                 {
                     while (!reader.EndOfStream)
                     {
-                        var dataLine = reader.ReadLine();
-
-                        if (string.IsNullOrEmpty(dataLine))
-                            continue;
-
                         if (!foundParamHeaderB)
                         {
+                            var paramBlockLine = reader.ReadLine();
+
+                            if (string.IsNullOrEmpty(paramBlockLine))
+                                continue;
+
                             // Look for the parameters header: ********************** Parameters **********************
-                            var match = reParametersHeader.Match(dataLine);
+                            var match = reParametersHeader.Match(paramBlockLine);
                             if (match.Success)
                             {
                                 if (!foundParamHeaderA)
@@ -922,18 +1039,39 @@ namespace AnalysisManagerTopPICPlugIn
                                         // Optionally write the parameter file
                                         if (saveParameterFile)
                                         {
-                                            WriteParametersToDisk(parameterInfo);
+                                            WriteParametersToDisk(parameterInfo, useCsvReader);
                                         }
+                                    }
+
+                                    if (useCsvReader)
+                                    {
+                                        // Instantiate the CSV Reader
+                                        // Using CsvParser instead of CsvReader since we don't need to read specific columns
+                                        csvParser = new CsvParser(reader);
                                     }
                                 }
                             }
                             else
                             {
-                                parameterInfo.Add(dataLine);
+                                parameterInfo.Add(paramBlockLine);
                             }
 
                             continue;
                         }
+
+                        string dataLine;
+                        if (useCsvReader)
+                        {
+                            var csvCols = csvParser.Read();
+                            dataLine = string.Join("\t", csvCols);
+                        }
+                        else
+                        {
+                            dataLine = reader.ReadLine();
+                        }
+
+                        if (string.IsNullOrWhiteSpace(dataLine))
+                            continue;
 
                         writer.WriteLine(dataLine);
 
@@ -941,7 +1079,7 @@ namespace AnalysisManagerTopPICPlugIn
 
                         if (dataColumns.Length > 1)
                         {
-                            // Look for an integer in the second column (the first column has the data file name)
+                            // Look for an integer in the second column representing "Prsm ID" (the first column has the data file name)
                             if (int.TryParse(dataColumns[1], out _))
                             {
                                 // Integer found; line is valid
@@ -961,8 +1099,6 @@ namespace AnalysisManagerTopPICPlugIn
                     LogError("TopPIC results file is empty: " + sourceFile.Name);
                     return false;
                 }
-
-                noValidResults = true;
 
                 return true;
             }
@@ -1074,7 +1210,7 @@ namespace AnalysisManagerTopPICPlugIn
             }
         }
 
-        private void WriteParametersToDisk(IEnumerable<string> parameterInfo)
+        private void WriteParametersToDisk(IEnumerable<string> parameterInfo, bool csvBasedParams)
         {
             try
             {
@@ -1083,7 +1219,22 @@ namespace AnalysisManagerTopPICPlugIn
                 {
                     foreach (var parameter in parameterInfo)
                     {
-                        writer.WriteLine(parameter);
+                        if (!csvBasedParams)
+                        {
+                            writer.WriteLine(parameter);
+                            continue;
+                        }
+
+                        // Parameter lines are of the form "Error tolerance:,15 ppm"
+                        // Replace the comma with spaces
+                        var paramParts = parameter.Split(new char[] {','}, 2);
+                        if (paramParts.Length <= 1)
+                        {
+                            writer.WriteLine(parameter);
+                            continue;
+                        }
+
+                        writer.WriteLine("{0,-46}\t{1}", paramParts[0], paramParts[1]);
                     }
                 }
             }
@@ -1100,22 +1251,23 @@ namespace AnalysisManagerTopPICPlugIn
             {
                 var zipFilePath = Path.Combine(mWorkDir, mDatasetName + directorySuffix + ".zip");
 
-                var sourceDirectoryPath = Path.Combine(mWorkDir, mDatasetName + directorySuffix);
+                var sourceDirectory = new DirectoryInfo(Path.Combine(mWorkDir, mDatasetName + directorySuffix));
+                if (!sourceDirectory.Exists)
+                    return false;
 
                 // Confirm that the directory has one or more files or subdirectories
-                var sourceDirectory = new DirectoryInfo(sourceDirectoryPath);
                 if (sourceDirectory.GetFileSystemInfos().Length == 0)
                 {
                     if (mDebugLevel >= 1)
                     {
-                        LogWarning("TopPIC results directory is empty; nothing to zip: " + Path.GetFileName(sourceDirectoryPath));
+                        LogWarning("TopPIC results directory is empty; nothing to zip: " + sourceDirectory.Name);
                     }
                     return false;
                 }
 
                 if (mDebugLevel >= 1)
                 {
-                    var logMessage = "Zipping directory " + sourceDirectoryPath;
+                    var logMessage = "Zipping directory " + sourceDirectory.FullName;
 
                     if (mDebugLevel >= 2)
                     {
@@ -1125,7 +1277,7 @@ namespace AnalysisManagerTopPICPlugIn
                 }
 
                 var zipper = new Ionic.Zip.ZipFile(zipFilePath);
-                zipper.AddDirectory(sourceDirectoryPath);
+                zipper.AddDirectory(sourceDirectory.FullName);
                 zipper.Save();
 
                 return true;
