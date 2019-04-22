@@ -51,10 +51,5 @@
     <Compile Include="clsAnalysisToolRunnerMSFragger.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="PRISM-Library">
-      <Version>2.5.17</Version>
-    </PackageReference>
-  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

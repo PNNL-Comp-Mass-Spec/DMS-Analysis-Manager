@@ -737,8 +737,8 @@ namespace AnalysisManagerBase
         /// <returns>True if the contents match, otherwise false</returns>
         public static bool LockFilesMatch(
             string lockFilePath,
-            IReadOnlyList<string> lockFileContents,
-            IReadOnlyList<string> lockFileContentsNew,
+            IList<string> lockFileContents,
+            IList<string> lockFileContentsNew,
             out string errorMessage)
         {
             return DMSUpdateManager.RemoteUpdateUtility.LockFilesMatch(lockFilePath, lockFileContents, lockFileContentsNew, out errorMessage);
@@ -1573,7 +1573,7 @@ namespace AnalysisManagerBase
 
         }
 
-        private static bool TextFilesMatchIgnoreLine(string dataLine, IReadOnlyCollection<Regex> lineIgnoreRegExSpecs)
+        private static bool TextFilesMatchIgnoreLine(string dataLine, ICollection<Regex> lineIgnoreRegExSpecs)
         {
             if (lineIgnoreRegExSpecs == null)
                 return false;

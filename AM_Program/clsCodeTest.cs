@@ -141,7 +141,7 @@ namespace AnalysisManagerProg
                         var fileVersion = fileAssembly.ImageRuntimeVersion;
                         var frameworkVersion = "??";
 
-                        var customAttributes = fileAssembly.GetCustomAttributes(typeof(TargetFrameworkAttribute)).ToList();
+                        var customAttributes = fileAssembly.GetCustomAttributes(typeof(TargetFrameworkAttribute), true).ToList();
                         if (customAttributes != null && customAttributes.Count > 0)
                         {
                             var frameworkAttribute = (TargetFrameworkAttribute)customAttributes.First();

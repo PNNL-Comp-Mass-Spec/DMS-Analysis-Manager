@@ -49,7 +49,7 @@
     </Reference>
     <Reference Include="Mage">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\AM_Common\Mage.dll</HintPath>
+      <HintPath>..\..\AM_Common\NET_4\Mage.dll</HintPath>
     </Reference>
     <Reference Include="MageExtExtractionFilters">
       <SpecificVersion>False</SpecificVersion>
@@ -60,7 +60,7 @@
     </Reference>
     <Reference Include="PHRPReader, Version=1.1.6500.35707, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\AM_Common\PHRPReader.dll</HintPath>
+      <HintPath>..\..\AM_Common\NET_4\PHRPReader.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />

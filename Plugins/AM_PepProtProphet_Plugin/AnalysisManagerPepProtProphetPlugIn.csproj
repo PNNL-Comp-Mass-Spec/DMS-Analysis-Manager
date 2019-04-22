@@ -35,7 +35,7 @@
       <HintPath>..\..\AM_Common\AM_Shared.dll</HintPath>
     </Reference>
     <Reference Include="MyEMSLReader">
-      <HintPath>..\..\AM_Common\MyEMSLReader.dll</HintPath>
+      <HintPath>..\..\AM_Common\NET_4\MyEMSLReader.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -50,11 +50,6 @@
     <Compile Include="clsAnalysisResourcesPepProtProphet.cs" />
     <Compile Include="clsAnalysisToolRunnerPepProtProphet.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="PRISM-Library">
-      <Version>2.5.17</Version>
-    </PackageReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

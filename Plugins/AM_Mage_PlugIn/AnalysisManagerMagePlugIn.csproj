@@ -43,23 +43,23 @@
     </Reference>
     <Reference Include="Mage">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\AM_Common\Mage.dll</HintPath>
+      <HintPath>..\..\AM_Common\NET_4\Mage.dll</HintPath>
     </Reference>
     <Reference Include="MageDisplayLib">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\AM_Common\MageDisplayLib.dll</HintPath>
+      <HintPath>..\..\AM_Common\NET_4\MageDisplayLib.dll</HintPath>
     </Reference>
     <Reference Include="MageExtContentFilters">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\AM_Common\MageExtContentFilters.dll</HintPath>
+      <HintPath>..\..\AM_Common\NET_4\MageExtContentFilters.dll</HintPath>
     </Reference>
     <Reference Include="MageExtExtractionFilters">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\AM_Common\MageExtExtractionFilters.dll</HintPath>
+      <HintPath>..\..\AM_Common\NET_4\MageExtExtractionFilters.dll</HintPath>
     </Reference>
     <Reference Include="PHRPReader">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\AM_Common\PHRPReader.dll</HintPath>
+      <HintPath>..\..\AM_Common\NET_4\PHRPReader.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />

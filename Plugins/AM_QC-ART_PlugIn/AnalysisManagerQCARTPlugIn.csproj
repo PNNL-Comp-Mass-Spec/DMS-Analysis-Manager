@@ -42,10 +42,10 @@
     </Reference>
     <Reference Include="MyEMSLReader, Version=1.0.5576.19327, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\AM_Common\MyEMSLReader.dll</HintPath>
+      <HintPath>..\..\AM_Common\NET_4\MyEMSLReader.dll</HintPath>
     </Reference>
     <Reference Include="PHRPReader">
-      <HintPath>..\..\AM_Common\PHRPReader.dll</HintPath>
+      <HintPath>..\..\AM_Common\NET_4\PHRPReader.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />

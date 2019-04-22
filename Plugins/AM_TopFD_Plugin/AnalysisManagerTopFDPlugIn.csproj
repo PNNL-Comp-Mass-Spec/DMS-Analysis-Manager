@@ -4,7 +4,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>c41ef735-13a0-4b9d-b4e1-4867c1f9450f</ProjectGuid>
+    <ProjectGuid>{C41EF735-13A0-4B9D-B4E1-4867C1F9450F}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>AnalysisManagerTopFDPlugIn</RootNamespace>
@@ -56,11 +56,6 @@
     <Compile Include="clsAnalysisResourcesTopFD.cs" />
     <Compile Include="clsAnalysisToolRunnerTopFD.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="PRISM-Library">
-      <Version>2.5.17</Version>
-    </PackageReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

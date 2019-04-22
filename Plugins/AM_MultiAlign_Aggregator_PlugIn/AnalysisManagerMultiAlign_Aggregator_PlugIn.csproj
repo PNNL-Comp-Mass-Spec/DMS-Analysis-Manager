@@ -43,10 +43,10 @@
       <HintPath>..\..\AM_Common\AM_Shared.dll</HintPath>
     </Reference>
     <Reference Include="Mage">
-      <HintPath>..\..\AM_Common\Mage.dll</HintPath>
+      <HintPath>..\..\AM_Common\NET_4\Mage.dll</HintPath>
     </Reference>
     <Reference Include="MageExtExtractionFilters">
-      <HintPath>..\..\AM_Common\MageExtExtractionFilters.dll</HintPath>
+      <HintPath>..\..\AM_Common\NET_4\MageExtExtractionFilters.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />

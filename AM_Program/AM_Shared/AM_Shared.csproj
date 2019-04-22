@@ -9,7 +9,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>AnalysisManagerBase</RootNamespace>
     <AssemblyName>AM_Shared</AssemblyName>
-    <TargetFrameworkVersion>v4.6.2</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
   </PropertyGroup>
@@ -37,42 +37,58 @@
       <HintPath>..\..\AM_Common\CondenseCDTAFile.dll</HintPath>
     </Reference>
     <Reference Include="DMSUpdateManager">
-      <HintPath>..\..\AM_Common\DMSUpdateManager.dll</HintPath>
+      <HintPath>..\..\AM_Common\NET_4\DMSUpdateManager.dll</HintPath>
     </Reference>
     <Reference Include="DTAtoMGF">
       <HintPath>..\..\AM_Common\DTAtoMGF.dll</HintPath>
     </Reference>
     <Reference Include="FastaFileSplitterDLL, Version=1.0.6778.32388, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\AM_Common\FastaFileSplitterDLL.dll</HintPath>
+      <HintPath>..\..\AM_Common\NET_4\FastaFileSplitterDLL.dll</HintPath>
+    </Reference>
+    <Reference Include="FileConcatenator, Version=1.0.2.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\AM_Common\NET_4\FileConcatenator.dll</HintPath>
     </Reference>
     <Reference Include="FlexibleFileSortUtility">
-      <HintPath>..\..\AM_Common\FlexibleFileSortUtility.dll</HintPath>
+      <HintPath>..\..\AM_Common\NET_4\FlexibleFileSortUtility.dll</HintPath>
     </Reference>
     <Reference Include="MSDataFileReader">
       <HintPath>..\..\AM_Common\MSDataFileReader.dll</HintPath>
     </Reference>
     <Reference Include="MSFileInfoScannerInterfaces">
-      <HintPath>..\..\AM_Common\MSFileInfoScannerInterfaces.dll</HintPath>
+      <HintPath>..\..\AM_Common\NET_4\MSFileInfoScannerInterfaces.dll</HintPath>
     </Reference>
     <Reference Include="MyEMSLReader">
-      <HintPath>..\..\AM_Common\MyEMSLReader.dll</HintPath>
+      <HintPath>..\..\AM_Common\NET_4\MyEMSLReader.dll</HintPath>
     </Reference>
     <Reference Include="Pacifica.Core">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\AM_Common\Pacifica.Core.dll</HintPath>
+      <HintPath>..\..\AM_Common\NET_4\Pacifica.Core.dll</HintPath>
     </Reference>
     <Reference Include="ParamFileGenerator">
-      <HintPath>..\..\AM_Common\ParamFileGenerator.dll</HintPath>
+      <HintPath>..\..\AM_Common\NET_4\ParamFileGenerator.dll</HintPath>
+    </Reference>
+    <Reference Include="PeptideFileExtractor, Version=1.7.7050.35648, Culture=neutral, processorArchitecture=x86">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\AM_Common\NET_4\PeptideFileExtractor.dll</HintPath>
     </Reference>
     <Reference Include="PHRPReader">
-      <HintPath>..\..\AM_Common\PHRPReader.dll</HintPath>
+      <HintPath>..\..\AM_Common\NET_4\PHRPReader.dll</HintPath>
+    </Reference>
+    <Reference Include="PRISM">
+      <HintPath>..\..\AM_Common\NET_4\PRISM.dll</HintPath>
+    </Reference>
+    <Reference Include="PRISMWin">
+      <HintPath>..\..\AM_Common\NET_4\PRISMWin.dll</HintPath>
     </Reference>
     <Reference Include="Protein_Exporter">
-      <HintPath>..\..\AM_Common\Protein_Exporter.dll</HintPath>
+      <HintPath>..\..\AM_Common\NET_4\Protein_Exporter.dll</HintPath>
+    </Reference>
+    <Reference Include="Protein_Storage">
+      <HintPath>..\..\AM_Common\NET_4\Protein_Storage.dll</HintPath>
     </Reference>
     <Reference Include="SpectraTypeClassifier">
-      <HintPath>..\..\AM_Common\SpectraTypeClassifier.dll</HintPath>
+      <HintPath>..\..\AM_Common\NET_4\SpectraTypeClassifier.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -80,8 +96,10 @@
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
-    <Reference Include="System.Net.Http" />
     <Reference Include="System.Xml" />
+    <Reference Include="TableManipulationBase">
+      <HintPath>..\..\AM_Common\NET_4\TableManipulationBase.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="clsAnalysisJob.cs" />
@@ -142,26 +160,14 @@
     <PackageReference Include="Apache.NMS.ActiveMQ">
       <Version>1.7.2</Version>
     </PackageReference>
-    <PackageReference Include="CsvHelper">
-      <Version>12.1.2</Version>
-    </PackageReference>
     <PackageReference Include="DotNetZip">
       <Version>1.13.0</Version>
-    </PackageReference>
-    <PackageReference Include="jayrock-json">
-      <Version>0.9.16530.1</Version>
-    </PackageReference>
-    <PackageReference Include="PRISM-Library">
-      <Version>2.5.17</Version>
-    </PackageReference>
-    <PackageReference Include="PRISMWin-Library">
-      <Version>1.0.10</Version>
     </PackageReference>
     <PackageReference Include="ProteinFileReader">
       <Version>1.3.1</Version>
     </PackageReference>
     <PackageReference Include="SharpZipLib">
-      <Version>1.1.0</Version>
+      <Version>0.86.0</Version>
     </PackageReference>
     <PackageReference Include="SSH.NET">
       <Version>2016.1.0</Version>
@@ -169,22 +175,17 @@
     <PackageReference Include="System.Data.SQLite.Core">
       <Version>1.0.97</Version>
     </PackageReference>
-    <PackageReference Include="UIMFLibrary">
-      <Version>3.6.7</Version>
-    </PackageReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>xcopy "$(TargetPath)" "$(ProjectDir)..\..\AM_Common" /y /d
-xcopy "$(TargetDir)AM_Shared.pdb" "$(ProjectDir)..\..\AM_Common" /y /d
+    <PostBuildEvent>xcopy "$(TargetPath)" "$(ProjectDir)..\..\AM_Common\NET_4" /y /d
+xcopy "$(TargetDir)AM_Shared.pdb" "$(ProjectDir)..\..\AM_Common\NET_4" /y /d
 
-xcopy "$(TargetDir)PRISM.dll" "$(ProjectDir)..\..\AM_Common" /y /d
-xcopy "$(TargetDir)PrismWin.dll" "$(ProjectDir)..\..\AM_Common" /y /d
+rem xcopy "$(TargetDir)PRISM.dll" "$(ProjectDir)..\..\AM_Common" /y /d
+rem xcopy "$(TargetDir)PrismWin.dll" "$(ProjectDir)..\..\AM_Common" /y /d
 
-xcopy "$(TargetDir)CsvHelper.dll" "$(ProjectDir)..\..\AM_Common" /y /d
-
-xcopy "$(ProjectDir)..\..\AM_Common\FileConcatenator.dll" "$(TargetDir)" /y /d  /F
-xcopy "$(ProjectDir)..\..\AM_Common\PeptideFileExtractor.dll" "$(TargetDir)" /y /d /F
+xcopy "$(ProjectDir)..\..\AM_Common\NET_4\FileConcatenator.dll" "$(TargetDir)" /y /d  /F
+xcopy "$(ProjectDir)..\..\AM_Common\NET_4\PeptideFileExtractor.dll" "$(TargetDir)" /y /d /F
 </PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

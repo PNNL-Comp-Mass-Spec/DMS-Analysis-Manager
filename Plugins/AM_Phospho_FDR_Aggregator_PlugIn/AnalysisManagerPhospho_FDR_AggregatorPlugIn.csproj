@@ -39,13 +39,13 @@
       <HintPath>..\..\AM_Common\AM_Shared.dll</HintPath>
     </Reference>
     <Reference Include="Mage">
-      <HintPath>..\..\AM_Common\Mage.dll</HintPath>
+      <HintPath>..\..\AM_Common\NET_4\Mage.dll</HintPath>
     </Reference>
     <Reference Include="MyEMSLReader">
-      <HintPath>..\..\AM_Common\MyEMSLReader.dll</HintPath>
+      <HintPath>..\..\AM_Common\NET_4\MyEMSLReader.dll</HintPath>
     </Reference>
     <Reference Include="PHRPReader">
-      <HintPath>..\..\AM_Common\PHRPReader.dll</HintPath>
+      <HintPath>..\..\AM_Common\NET_4\PHRPReader.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />

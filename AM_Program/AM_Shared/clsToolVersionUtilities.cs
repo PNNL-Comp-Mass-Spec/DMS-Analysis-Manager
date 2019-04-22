@@ -422,7 +422,7 @@ namespace AnalysisManagerBase
         /// <param name="additionalDLLs">Additional .NET DLLs to examine (either simply names or full paths)</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks>This method is appropriate for plugins that call a .NET executable</remarks>
-        public bool StoreDotNETToolVersionInfo(string progLoc, IReadOnlyCollection<string> additionalDLLs)
+        public bool StoreDotNETToolVersionInfo(string progLoc, ICollection<string> additionalDLLs)
         {
 
             var toolVersionInfo = string.Empty;

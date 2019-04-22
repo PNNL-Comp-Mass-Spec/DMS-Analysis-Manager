@@ -875,8 +875,8 @@ namespace AnalysisManagerBase
         private string FilterXmlSection(
             string paramXml,
             string sectionName,
-            IReadOnlyDictionary<string, string> paramNamesToIgnore,
-            IReadOnlyDictionary<string, string> paramsToAddAsAttribute)
+            IDictionary<string, string> paramNamesToIgnore,
+            IDictionary<string, string> paramsToAddAsAttribute)
         {
 
             try

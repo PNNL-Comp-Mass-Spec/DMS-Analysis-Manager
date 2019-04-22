@@ -3409,7 +3409,7 @@ namespace AnalysisManagerBase
         /// <param name="additionalDLLs">Additional .NET DLLs to examine (either simply names or full paths)</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks>This method is appropriate for plugins that call a .NET executable</remarks>
-        protected bool StoreDotNETToolVersionInfo(string progLoc, IReadOnlyCollection<string> additionalDLLs)
+        protected bool StoreDotNETToolVersionInfo(string progLoc, ICollection<string> additionalDLLs)
         {
             return mToolVersionUtilities.StoreDotNETToolVersionInfo(progLoc, additionalDLLs);
         }

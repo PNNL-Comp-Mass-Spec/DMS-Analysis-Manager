@@ -2235,7 +2235,7 @@ namespace AnalysisManagerBase
 
         }
 
-        private bool RetrieveSICFileMyEMSL(string fileToFind, string sicDirectoryName, IReadOnlyCollection<string> nonCriticalFileSuffixes)
+        private bool RetrieveSICFileMyEMSL(string fileToFind, string sicDirectoryName, ICollection<string> nonCriticalFileSuffixes)
         {
 
             var matchingMyEMSLFiles = mMyEMSLUtilities.FindFiles(fileToFind, sicDirectoryName, DatasetName, recurse: false);
@@ -2270,7 +2270,7 @@ namespace AnalysisManagerBase
             string masicResultsDirectoryPath,
             bool createStoragePathInfoOnly,
             int maxCopyAttempts,
-            IReadOnlyCollection<string> nonCriticalFileSuffixes)
+            ICollection<string> nonCriticalFileSuffixes)
         {
 
             var sourceFile = new FileInfo(Path.Combine(masicResultsDirectoryPath, fileToFind));
@@ -3057,7 +3057,7 @@ namespace AnalysisManagerBase
         /// <param name="nonCriticalFileSuffixes"></param>
         /// <returns></returns>
         /// <remarks></remarks>
-        private bool SafeToIgnore(string fileName, IReadOnlyCollection<string> nonCriticalFileSuffixes)
+        private bool SafeToIgnore(string fileName, ICollection<string> nonCriticalFileSuffixes)
         {
 
             if (nonCriticalFileSuffixes != null)

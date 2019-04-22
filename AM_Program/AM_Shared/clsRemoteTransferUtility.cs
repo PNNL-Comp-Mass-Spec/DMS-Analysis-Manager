@@ -257,7 +257,7 @@ namespace AnalysisManagerBase
         /// <remarks>Calls UpdateParameters if necessary; that method will throw an exception if there are missing parameters or configuration issues</remarks>
         public bool CopyFilesFromRemote(
             string sourceDirectoryPath,
-            IReadOnlyDictionary<string, bool> sourceFiles,
+            IDictionary<string, bool> sourceFiles,
             string localDirectoryPath,
             bool useDefaultManagerRemoteInfo,
             bool warnIfMissing)
