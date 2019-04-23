@@ -2686,6 +2686,7 @@ namespace AnalysisManagerExtractionPlugin
         private bool StoreToolVersionInfo()
         {
             var toolVersionInfo = string.Empty;
+            var toolFiles = new List<FileInfo>();
 
             if (mDebugLevel >= 2)
             {
@@ -2700,15 +2701,21 @@ namespace AnalysisManagerExtractionPlugin
                 var phrpProgDir = new DirectoryInfo(progLoc);
 
                 // verify that program file exists
-                if (phrpProgDir.Exists)
-                {
-                    mToolVersionUtilities.StoreToolVersionInfoOneFile64Bit(ref toolVersionInfo, Path.Combine(phrpProgDir.FullName, "PeptideHitResultsProcessor.dll"));
-                }
-                else
+                if (!phrpProgDir.Exists)
                 {
                     LogError("PHRP directory not found at " + progLoc);
                     return false;
                 }
+
+                var phrpDLL = new FileInfo(Path.Combine(phrpProgDir.FullName, "PeptideHitResultsProcessor.dll"));
+                if (!phrpDLL.Exists)
+                {
+                    LogError("PHRP DLL not found: " + phrpDLL.FullName);
+                    return false;
+                }
+
+                toolFiles.Add(phrpDLL);
+                mToolVersionUtilities.StoreToolVersionInfoOneFile64Bit(ref toolVersionInfo, phrpDLL.FullName);
             }
             catch (Exception ex)
             {
@@ -2727,15 +2734,21 @@ namespace AnalysisManagerExtractionPlugin
                     var mzidMergerDir = new DirectoryInfo(progLoc);
 
                     // verify that program file exists
-                    if (mzidMergerDir.Exists)
-                    {
-                        mToolVersionUtilities.StoreToolVersionInfoOneFile64Bit(ref toolVersionInfo, Path.Combine(mzidMergerDir.FullName, "MzidMerger.exe"));
-                    }
-                    else
+                    if (!mzidMergerDir.Exists)
                     {
                         LogError("MzidMerger directory not found at " + progLoc);
                         return false;
                     }
+
+                    var mzidMerger = new FileInfo(Path.Combine(mzidMergerDir.FullName, "MzidMerger.exe"));
+                    if (!mzidMerger.Exists)
+                    {
+                        LogError("MzidMerger not found: " + mzidMerger.FullName);
+                        return false;
+                    }
+
+                    toolFiles.Add(mzidMerger);
+                    mToolVersionUtilities.StoreToolVersionInfoOneFile64Bit(ref toolVersionInfo, mzidMerger.FullName);
                 }
                 catch (Exception ex)
                 {
@@ -2757,30 +2770,29 @@ namespace AnalysisManagerExtractionPlugin
                 // Lookup the version of the PeptideProphetRunner
 
                 var peptideProphetRunnerLoc = mMgrParams.GetParam("PeptideProphetRunnerProgLoc");
-                var ioPeptideProphetRunner = new FileInfo(peptideProphetRunnerLoc);
+                var peptideProphetRunner = new FileInfo(peptideProphetRunnerLoc);
 
-                if (ioPeptideProphetRunner.Exists)
+                if (peptideProphetRunner.Exists)
                 {
+                    toolFiles.Add(peptideProphetRunner);
+
                     // Lookup the version of the PeptideProphetRunner
-                    var success = StoreToolVersionInfoOneFile(ref toolVersionInfo, ioPeptideProphetRunner.FullName);
+                    var success = mToolVersionUtilities.StoreToolVersionInfoOneFile32Bit(ref toolVersionInfo, peptideProphetRunner.FullName);
                     if (!success)
                         return false;
 
-                    if (!string.IsNullOrWhiteSpace(ioPeptideProphetRunner.DirectoryName))
+                    if (!string.IsNullOrWhiteSpace(peptideProphetRunner.DirectoryName))
                     {
                         // Lookup the version of the PeptideProphetLibrary
-                        var dllPath = Path.Combine(ioPeptideProphetRunner.DirectoryName, "PeptideProphetLibrary.dll");
-                        success = mToolVersionUtilities.StoreToolVersionInfoOneFile32Bit(ref toolVersionInfo, dllPath);
+                        var pepProphetDLL = new FileInfo(Path.Combine(peptideProphetRunner.DirectoryName, "PeptideProphetLibrary.dll"));
+                        toolFiles.Add(pepProphetDLL);
                     }
-
-                    if (!success)
-                        return false;
                 }
             }
 
             try
             {
-                return SetStepTaskToolVersion(toolVersionInfo, new List<FileInfo>(), saveToolVersionTextFile: false);
+                return SetStepTaskToolVersion(toolVersionInfo, toolFiles, saveToolVersionTextFile: false);
             }
             catch (Exception ex)
             {
