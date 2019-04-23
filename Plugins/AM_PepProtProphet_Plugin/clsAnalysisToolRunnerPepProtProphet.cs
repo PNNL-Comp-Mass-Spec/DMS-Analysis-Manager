@@ -7,6 +7,7 @@
 
 using AnalysisManagerBase;
 using System;
+using System.Collections.Generic;
 using System.IO;
 
 namespace AnalysisManagerPepProtProphetPlugIn
@@ -37,8 +38,6 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
         private string mPhilosopherProgLoc;
         private string mConsoleOutputErrorMsg;
-
-        private string mValidatedFASTAFilePath;
 
         private DateTime mLastConsoleOutputParse;
 
@@ -83,13 +82,13 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 mPhilosopherVersion = string.Empty;
                 mConsoleOutputErrorMsg = string.Empty;
 
-                if (!ValidateFastaFile(out var fastaFileIsDecoy))
+                if (!ValidateFastaFile())
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 // Process the XML files using Philosopher
-                var processingResult = StartPepProtProphet(fastaFileIsDecoy, mPhilosopherProgLoc);
+                var processingResult = StartPepProtProphet();
 
                 mProgress = PROGRESS_PCT_COMPLETE;
 
@@ -139,6 +138,227 @@ namespace AnalysisManagerPepProtProphetPlugIn
             base.CopyFailedResultsToArchiveDirectory();
         }
 
+        private void ParseConsoleOutputFile(string consoleOutputFilePath)
+        {
+
+            // Example Console output
+            //
+            // Running Philosopher
+
+            var processingSteps = new SortedList<string, int>
+            {
+                {"???????", 0},
+                {"???????", 2},
+                {"???????", 5},
+                {"Done", 98}
+            };
+
+            try
+            {
+                if (!File.Exists(consoleOutputFilePath))
+                {
+                    if (mDebugLevel >= 4)
+                    {
+                        LogDebug("Console output file not found: " + consoleOutputFilePath);
+                    }
+
+                    return;
+                }
+
+                if (mDebugLevel >= 4)
+                {
+                    LogDebug("Parsing file " + consoleOutputFilePath);
+                }
+
+                mConsoleOutputErrorMsg = string.Empty;
+                var currentProgress = 0;
+
+                using (var reader = new StreamReader(new FileStream(consoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                {
+                    var linesRead = 0;
+                    while (!reader.EndOfStream)
+                    {
+                        var dataLine = reader.ReadLine();
+                        linesRead += 1;
+
+                        if (string.IsNullOrWhiteSpace(dataLine))
+                            continue;
+
+                        var dataLineLCase = dataLine.ToLower();
+
+                        if (linesRead <= 5)
+                        {
+                            // The first line has the path to the Philosopher .exe file and the command line arguments
+                            // The second line is dashes
+                            // The third line should be: ????????????????
+                            // The fourth line should have ????????????????
+
+                            if (string.IsNullOrEmpty(mPhilosopherVersion) &&
+                                dataLine.StartsWith("Philosopher version", StringComparison.OrdinalIgnoreCase))
+                            {
+                                if (mDebugLevel >= 2)
+                                {
+                                    LogDebug(dataLine);
+                                }
+
+                                mPhilosopherVersion = string.Copy(dataLine);
+                            }
+                        }
+                        else
+                        {
+                            foreach (var processingStep in processingSteps)
+                            {
+                                if (!dataLine.StartsWith(processingStep.Key, StringComparison.OrdinalIgnoreCase))
+                                    continue;
+
+                                currentProgress = processingStep.Value;
+                            }
+
+                            if (linesRead > 12 &&
+                                dataLineLCase.Contains("error") &&
+                                string.IsNullOrEmpty(mConsoleOutputErrorMsg))
+                            {
+                                mConsoleOutputErrorMsg = "Error running Philosopher: " + dataLine;
+                            }
+                        }
+                    }
+                }
+
+                if (currentProgress > mProgress)
+                {
+                    mProgress = currentProgress;
+                }
+            }
+            catch (Exception ex)
+            {
+                // Ignore errors here
+                if (mDebugLevel >= 2)
+                {
+                    LogErrorNoMessageUpdate("Error parsing console output file (" + consoleOutputFilePath + "): " + ex.Message);
+                }
+            }
+        }
+
+        private CloseOutType StartPepProtProphet()
+        {
+            LogMessage("Running Philosopher");
+
+            // Set up and execute a program runner to run Philosopher
+
+            var mzMLFile = mDatasetName + clsAnalysisResources.DOT_MZML_EXTENSION;
+
+            // Set up and execute a program runner to run Philosopher
+            var arguments = Path.Combine(mWorkDir, mzMLFile);
+
+            LogDebug(mPhilosopherProgLoc + " " + arguments);
+
+            mCmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel)
+            {
+                CreateNoWindow = true,
+                CacheStandardOutput = true,
+                EchoOutputToConsole = true,
+                WriteConsoleOutputToFile = true,
+                ConsoleOutputFilePath = Path.Combine(mWorkDir, Philosopher_CONSOLE_OUTPUT)
+            };
+            RegisterEvents(mCmdRunner);
+            mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
+
+            mProgress = PROGRESS_PCT_STARTING;
+            ResetProgRunnerCpuUsage();
+
+            // Start the program and wait for it to finish
+            // However, while it's running, LoopWaiting will get called via events
+            var processingSuccess = mCmdRunner.RunProgram(mPhilosopherProgLoc, arguments, "Philosopher", true);
+
+            if (!mToolVersionWritten)
+            {
+                if (string.IsNullOrWhiteSpace(mPhilosopherVersion))
+                {
+                    ParseConsoleOutputFile(Path.Combine(mWorkDir, Philosopher_CONSOLE_OUTPUT));
+                }
+                mToolVersionWritten = StoreToolVersionInfo();
+            }
+
+            if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))
+            {
+                LogError(mConsoleOutputErrorMsg);
+            }
+
+            if (!processingSuccess)
+            {
+                LogError("Error running Philosopher");
+
+                if (mCmdRunner.ExitCode != 0)
+                {
+                    LogWarning("Philosopher returned a non-zero exit code: " + mCmdRunner.ExitCode);
+                }
+                else
+                {
+                    LogWarning("Call to Philosopher failed (but exit code is 0)");
+                }
+
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            // Validate that Philosopher created a .pep.XML file
+            var pepXmlFile = new FileInfo(Path.Combine(mWorkDir, mDatasetName + ".pep.XML"));
+            if (!pepXmlFile.Exists)
+            {
+                LogError("Philosopher did not create a .pep.XML file");
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            if (pepXmlFile.Length == 0)
+            {
+                LogError(".pep.XML file created by Philosopher is empty");
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            // Zip the .pep.XML file
+            var zipSuccess = ZipOutputFile(pepXmlFile, ".pep.XML file");
+            if (!zipSuccess)
+            {
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            mStatusTools.UpdateAndWrite(mProgress);
+            if (mDebugLevel >= 3)
+            {
+                LogDebug("Philosopher Search Complete");
+            }
+
+            return CloseOutType.CLOSEOUT_SUCCESS;
+        }
+
+        private bool StoreToolVersionInfo()
+        {
+            if (mDebugLevel >= 2)
+            {
+                LogDebug("Determining tool version info");
+            }
+
+            var toolVersionInfo = string.Copy(mPhilosopherVersion);
+
+            // Store paths to key files in toolFiles
+            var toolFiles = new List<FileInfo> {
+                new FileInfo(mPhilosopherProgLoc)
+            };
+
+            try
+            {
+                return SetStepTaskToolVersion(toolVersionInfo, toolFiles);
+            }
+            catch (Exception ex)
+            {
+                LogError("Exception calling SetStepTaskToolVersion", ex);
+                return false;
+            }
+        }
+
+        private bool ValidateFastaFile()
+        {
+            throw new NotImplementedException();
+        }
 
         #endregion
 
