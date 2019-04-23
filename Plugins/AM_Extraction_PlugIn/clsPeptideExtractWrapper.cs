@@ -86,7 +86,7 @@ namespace AnalysisManagerExtractionPlugin
 
         private readonly short mDebugLevel;
         private bool mExtractInProgress;
-        private IPeptideFileExtractor mExtractTools;
+        private clsPeptideFileExtractor mExtractTools;
 
         private readonly string mDatasetName;
         private readonly string mWorkDir;
@@ -147,8 +147,6 @@ namespace AnalysisManagerExtractionPlugin
             // Setup the extractor and start extraction process
             mExtractTools = new clsPeptideFileExtractor(startParams);
             mExtractTools.EndTask += ExtractTools_EndTask;
-            mExtractTools.CurrentProgress += ExtractTools_CurrentProgress;
-            mExtractTools.CurrentStatus += ExtractTools_CurrentStatus;
 
             mExtractInProgress = true;
 
