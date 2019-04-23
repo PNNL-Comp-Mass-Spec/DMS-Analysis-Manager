@@ -50,6 +50,10 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\AM_Common\NET_4\FileConcatenator.dll</HintPath>
     </Reference>
+    <Reference Include="FileConcatenator, Version=1.0.2.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\AM_Common\FileConcatenator.dll</HintPath>
+    </Reference>
     <Reference Include="FlexibleFileSortUtility">
       <HintPath>..\..\AM_Common\NET_4\FlexibleFileSortUtility.dll</HintPath>
     </Reference>
@@ -71,6 +75,10 @@
     <Reference Include="PeptideFileExtractor, Version=1.7.7050.35648, Culture=neutral, processorArchitecture=x86">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\AM_Common\NET_4\PeptideFileExtractor.dll</HintPath>
+    </Reference>
+    <Reference Include="PeptideFileExtractor, Version=1.7.6375.23234, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\AM_Common\PeptideFileExtractor.dll</HintPath>
     </Reference>
     <Reference Include="PHRPReader">
       <HintPath>..\..\AM_Common\NET_4\PHRPReader.dll</HintPath>
