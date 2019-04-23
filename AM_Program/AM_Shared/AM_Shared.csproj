@@ -46,6 +46,10 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\AM_Common\FastaFileSplitterDLL.dll</HintPath>
     </Reference>
+    <Reference Include="FileConcatenator, Version=1.0.2.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\AM_Common\FileConcatenator.dll</HintPath>
+    </Reference>
     <Reference Include="FlexibleFileSortUtility">
       <HintPath>..\..\AM_Common\FlexibleFileSortUtility.dll</HintPath>
     </Reference>
@@ -64,6 +68,10 @@
     </Reference>
     <Reference Include="ParamFileGenerator">
       <HintPath>..\..\AM_Common\ParamFileGenerator.dll</HintPath>
+    </Reference>
+    <Reference Include="PeptideFileExtractor, Version=1.7.6375.23234, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\AM_Common\PeptideFileExtractor.dll</HintPath>
     </Reference>
     <Reference Include="PHRPReader">
       <HintPath>..\..\AM_Common\PHRPReader.dll</HintPath>
