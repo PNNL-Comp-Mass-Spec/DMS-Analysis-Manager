@@ -396,11 +396,9 @@ namespace AnalysisManagerMSFraggerPlugIn
             var mzMLFile = mDatasetName + clsAnalysisResources.DOT_MZML_EXTENSION;
 
 
-            // Set up and execute a program runner to run MSGF+
+            // Set up and execute a program runner to run MSFragger
             var arguments = " -Xmx" + javaMemorySizeMB + "M -jar " + mMSFraggerProgLoc;
 
-            // Define the input file, output file, and fasta file
-            // It is safe to simply use the input file name since the working directory will be mWorkDir
             arguments += " " + paramFilePath;
             arguments += " " + Path.Combine(mWorkDir, mzMLFile);
 
