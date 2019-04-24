@@ -4,7 +4,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>c41ef735-13a0-4b9d-b4e1-4867c1f9450f</ProjectGuid>
+    <ProjectGuid>{C41EF735-13A0-4B9D-B4E1-4867C1F9450F}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>AnalysisManagerTopFDPlugIn</RootNamespace>
@@ -65,7 +65,8 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>copy "$(TargetPath)" "$(ProjectDir)..\..\AM_Common"
-copy "$(TargetName).dll" "$(ProjectDir)..\..\AM_Program\bin"
-copy "$(TargetName).pdb" "$(ProjectDir)..\..\AM_Program\bin"</PostBuildEvent>
+copy "$(TargetPath)" "$(ProjectDir)..\..\AM_Program\bin"
+copy "$(TargetDir)$(TargetName).pdb" "$(ProjectDir)..\..\AM_Program\bin"
+</PostBuildEvent>
   </PropertyGroup>
 </Project>
