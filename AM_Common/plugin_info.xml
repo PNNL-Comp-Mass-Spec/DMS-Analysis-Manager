@@ -387,6 +387,16 @@
 		Class="AnalysisManagerThermoPeakDataExporterPlugIn.clsAnalysisToolRunnerThermoPeakDataExporter" 
 		AssemblyFile="AnalysisManagerThermoPeakDataExporterPlugIn.dll" 
 	/>
+	<ToolRunner 
+		Tool="msfragger" 
+		Class="AnalysisManagerMSFraggerPlugIn.clsAnalysisToolRunnerMSFragger" 
+		AssemblyFile="AnalysisManagerMSFraggerPlugIn.dll" 
+	/>
+	<ToolRunner 
+		Tool="pepprotprophet" 
+		Class="AnalysisManagerPepProtProphetPlugIn.clsAnalysisToolRunnerPepProtProphet" 
+		AssemblyFile="AnalysisManagerPepProtProphetPlugIn.dll" 
+	/>
 </ToolRunners>
 
 <Resourcers>
@@ -774,6 +784,16 @@
 		Tool="thermopeakdataexporter" 
 		Class="AnalysisManagerThermoPeakDataExporterPlugIn.clsAnalysisResourcesThermoPeakDataExporter" 
 		AssemblyFile="AnalysisManagerThermoPeakDataExporterPlugIn.dll" 
+	/>
+	<Resourcer 
+		Tool="msfragger" 
+		Class="AnalysisManagerMSFraggerPlugIn.clsAnalysisResourcesMSFragger" 
+		AssemblyFile="AnalysisManagerMSFraggerPlugIn.dll" 
+	/>
+	<Resourcer 
+		Tool="pepprotprophet" 
+		Class="AnalysisManagerPepProtProphetPlugIn.clsAnalysisResourcesPepProtProphet" 
+		AssemblyFile="AnalysisManagerPepProtProphetPlugIn.dll" 
 	/>
 </Resourcers>
 
