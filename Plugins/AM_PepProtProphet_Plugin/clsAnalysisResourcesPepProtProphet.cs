@@ -46,6 +46,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 // Retrieve Fasta file
                 var orgDbDirectoryPath = mMgrParams.GetParam(MGR_PARAM_ORG_DB_DIR);
+
                 currentTask = "RetrieveOrgDB to " + orgDbDirectoryPath;
                 if (!RetrieveOrgDB(orgDbDirectoryPath, out var resultCode))
                     return resultCode;
