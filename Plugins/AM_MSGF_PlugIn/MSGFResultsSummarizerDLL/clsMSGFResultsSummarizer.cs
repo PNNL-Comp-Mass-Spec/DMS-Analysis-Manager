@@ -680,10 +680,11 @@ namespace MSGFResultsSummarizer
                     // MTS scrambled proteins                'scrambled[_]%'
                     // X!Tandem decoy proteins               '%[:]reversed'
                     // Inspect reversed/scrambled proteins   'xxx.%'
-                    // MSGF+ reversed proteins  'rev[_]%'
+                    // MSGFDB reversed proteins  'rev[_]%'
+                    // MSGF+ reversed proteins   'xxx[_]%'
 
                     if (strProtein.StartsWith("reversed_") || strProtein.StartsWith("scrambled_") || strProtein.EndsWith(":reversed") ||
-                        strProtein.StartsWith("xxx.") || strProtein.StartsWith("rev_"))
+                        strProtein.StartsWith("xxx_") || strProtein.StartsWith("xxx.") || strProtein.StartsWith("rev_"))
                     {
                         intDecoyResults += 1;
                     }

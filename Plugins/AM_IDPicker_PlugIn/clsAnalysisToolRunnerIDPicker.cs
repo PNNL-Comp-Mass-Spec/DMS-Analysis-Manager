@@ -598,7 +598,6 @@ namespace AnalysisManagerIDPickerPlugIn
                     MSGFPLUS_DECOY_PROTEIN_PREFIX.ToLower()        // MSGF+ reversed proteins               // xxx[_]%'
                 };
 
-
                 // Note that X!Tandem decoy proteins end with ":reversed"
                 // IDPicker doesn't support decoy protein name suffixes, only prefixes
 
