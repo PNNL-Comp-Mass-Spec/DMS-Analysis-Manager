@@ -31,7 +31,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
         #region "Module Variables"
 
-        private bool mToolVersionWritten;
+        private string mConsoleOutputFilePath;
 
         // Populate this with a tool version reported to the console
         private string mPhilosopherVersion;
@@ -78,16 +78,10 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 }
 
                 // Store the Philosopher version info in the database after the first line is written to file Philosopher_ConsoleOutput.txt
-                mToolVersionWritten = false;
                 mPhilosopherVersion = string.Empty;
                 mConsoleOutputErrorMsg = string.Empty;
 
-                if (!ValidateFastaFile())
-                {
-                    return CloseOutType.CLOSEOUT_FAILED;
-                }
-
-                // Process the XML files using Philosopher
+                // Process the pepXML file using Philosopher
                 var processingResult = StartPepProtProphet();
 
                 mProgress = PROGRESS_PCT_COMPLETE;
@@ -138,28 +132,48 @@ namespace AnalysisManagerPepProtProphetPlugIn
             base.CopyFailedResultsToArchiveDirectory();
         }
 
-        private void ParseConsoleOutputFile(string consoleOutputFilePath)
+        private void ParseConsoleOutputFile()
         {
+            const string BUILD_AND_VERSION = "Current Philosopher build and version";
+
+            if (string.IsNullOrWhiteSpace(mConsoleOutputFilePath))
+                return;
 
             // Example Console output
             //
-            // Running Philosopher
+            // INFO[18:17:06] Current Philosopher build and version         build=201904051529 version=20190405
+            // WARN[18:17:08] There is a new version of Philosopher available for download: https://github.com/prvst/philosopher/releases
+
+            // INFO[18:25:51] Executing Workspace 20190405
+            // INFO[18:25:52] Creating workspace
+            // INFO[18:25:52] Done
 
             var processingSteps = new SortedList<string, int>
             {
-                {"???????", 0},
-                {"???????", 2},
-                {"???????", 5},
-                {"Done", 98}
+                {"Starting", 0},
+                {"Current Philosopher build", 1},
+                {"Executing Workspace", 2},
+                {"Executing Database", 3},
+                {"Executing PeptideProphet", 10},
+                {"Executing ProteinProphet", 50},
+                {"Computing degenerate peptides", 60},
+                {"Computing probabilities", 70},
+                {"Calculating sensitivity", 80},
+                {"Executing Filter", 90},
+                {"Executing Report", 95},
+                {"Plotting mass distribution", 98},
             };
+
+            // Peptide prophet iterations status:
+            // Iterations: .........10.........20.....
 
             try
             {
-                if (!File.Exists(consoleOutputFilePath))
+                if (!File.Exists(mConsoleOutputFilePath))
                 {
                     if (mDebugLevel >= 4)
                     {
-                        LogDebug("Console output file not found: " + consoleOutputFilePath);
+                        LogDebug("Console output file not found: " + mConsoleOutputFilePath);
                     }
 
                     return;
@@ -167,13 +181,13 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 if (mDebugLevel >= 4)
                 {
-                    LogDebug("Parsing file " + consoleOutputFilePath);
+                    LogDebug("Parsing file " + mConsoleOutputFilePath);
                 }
 
                 mConsoleOutputErrorMsg = string.Empty;
                 var currentProgress = 0;
 
-                using (var reader = new StreamReader(new FileStream(consoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(mConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
                     var linesRead = 0;
                     while (!reader.EndOfStream)
@@ -184,42 +198,44 @@ namespace AnalysisManagerPepProtProphetPlugIn
                         if (string.IsNullOrWhiteSpace(dataLine))
                             continue;
 
-                        var dataLineLCase = dataLine.ToLower();
-
                         if (linesRead <= 5)
                         {
                             // The first line has the path to the Philosopher .exe file and the command line arguments
                             // The second line is dashes
-                            // The third line should be: ????????????????
-                            // The fourth line should have ????????????????
+                            // The third line will have the version when philosopher is run with the "version" switch
+
+                            var versionTextStartIndex = dataLine.IndexOf(BUILD_AND_VERSION, StringComparison.OrdinalIgnoreCase);
 
                             if (string.IsNullOrEmpty(mPhilosopherVersion) &&
-                                dataLine.StartsWith("Philosopher version", StringComparison.OrdinalIgnoreCase))
+                                versionTextStartIndex >= 0)
                             {
                                 if (mDebugLevel >= 2)
                                 {
                                     LogDebug(dataLine);
                                 }
 
-                                mPhilosopherVersion = string.Copy(dataLine);
+                                mPhilosopherVersion = dataLine.Substring(versionTextStartIndex + BUILD_AND_VERSION.Length).Trim();
                             }
                         }
                         else
                         {
                             foreach (var processingStep in processingSteps)
                             {
-                                if (!dataLine.StartsWith(processingStep.Key, StringComparison.OrdinalIgnoreCase))
+                                if (dataLine.IndexOf(processingStep.Key, StringComparison.OrdinalIgnoreCase) < 0)
                                     continue;
 
                                 currentProgress = processingStep.Value;
                             }
 
+                            // Future:
+                            /*
                             if (linesRead > 12 &&
                                 dataLineLCase.Contains("error") &&
                                 string.IsNullOrEmpty(mConsoleOutputErrorMsg))
                             {
                                 mConsoleOutputErrorMsg = "Error running Philosopher: " + dataLine;
                             }
+                            */
                         }
                     }
                 }
@@ -234,7 +250,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 // Ignore errors here
                 if (mDebugLevel >= 2)
                 {
-                    LogErrorNoMessageUpdate("Error parsing console output file (" + consoleOutputFilePath + "): " + ex.Message);
+                    LogErrorNoMessageUpdate("Error parsing console output file (" + mConsoleOutputFilePath + "): " + ex.Message);
                 }
             }
         }
@@ -245,12 +261,17 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
             // Set up and execute a program runner to run Philosopher
 
-            var mzMLFile = mDatasetName + clsAnalysisResources.DOT_MZML_EXTENSION;
+            // We will call Philosopher several times
+            // 1. Determine the Philosopher version
+            // 2. Initialize the workspace
+            // 3. Annotate the database (creates db.bin in the .meta subdirectory)
+            // 4. Run Peptide Prophet
+            // 5. Run Protein Prophet
+            // 6. Filter results
+            // 7. Generate the final report
 
-            // Set up and execute a program runner to run Philosopher
-            var arguments = Path.Combine(mWorkDir, mzMLFile);
-
-            LogDebug(mPhilosopherProgLoc + " " + arguments);
+            mProgress = PROGRESS_PCT_STARTING;
+            ResetProgRunnerCpuUsage();
 
             mCmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel)
             {
@@ -263,71 +284,315 @@ namespace AnalysisManagerPepProtProphetPlugIn
             RegisterEvents(mCmdRunner);
             mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
-            mProgress = PROGRESS_PCT_STARTING;
-            ResetProgRunnerCpuUsage();
+            mConsoleOutputFilePath = mCmdRunner.ConsoleOutputFilePath;
 
-            // Start the program and wait for it to finish
-            // However, while it's running, LoopWaiting will get called via events
-            var processingSuccess = mCmdRunner.RunProgram(mPhilosopherProgLoc, arguments, "Philosopher", true);
+            var versionResult = GetPhilosopherVersion();
+            if (versionResult != CloseOutType.CLOSEOUT_SUCCESS)
+                return versionResult;
 
-            if (!mToolVersionWritten)
+            var workspaceInitResult = InitializeWorkspace();
+            if (workspaceInitResult != CloseOutType.CLOSEOUT_SUCCESS)
+                return workspaceInitResult;
+
+            var dbAnnotationResult = AnnotateDatabase(out var fastaFile);
+            if (dbAnnotationResult != CloseOutType.CLOSEOUT_SUCCESS)
+                return dbAnnotationResult;
+
+            var peptideProphetResult = RunPeptideProphet(fastaFile, out var peptideProphetResults);
+            if (peptideProphetResult != CloseOutType.CLOSEOUT_SUCCESS)
+                return peptideProphetResult;
+
+            var proteinProphetResult = RunProteinProphet(peptideProphetResults, out var proteinProphetResults);
+            if (proteinProphetResult != CloseOutType.CLOSEOUT_SUCCESS)
+                return proteinProphetResult;
+
+            var filterResult = FilterResults(proteinProphetResults);
+            if (filterResult != CloseOutType.CLOSEOUT_SUCCESS)
+                return filterResult;
+
+            var reportResult = GenerateFinalReport();
+            if (reportResult != CloseOutType.CLOSEOUT_SUCCESS)
+                return reportResult;
+
+            return CloseOutType.CLOSEOUT_SUCCESS;
+        }
+
+        private CloseOutType GetPhilosopherVersion()
+        {
+            try
             {
+                var arguments = "version";
+
+                LogDebug(mPhilosopherProgLoc + " " + arguments);
+
+                var processingSuccess = mCmdRunner.RunProgram(mPhilosopherProgLoc, arguments, "Philosopher", true);
+
+                HandlePhilosopherError(processingSuccess, mCmdRunner.ExitCode);
+                if (!processingSuccess)
+                {
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                ParseConsoleOutputFile();
+
                 if (string.IsNullOrWhiteSpace(mPhilosopherVersion))
                 {
-                    ParseConsoleOutputFile(Path.Combine(mWorkDir, Philosopher_CONSOLE_OUTPUT));
+                    LogError("Unable to determine the Philosopher version");
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
-                mToolVersionWritten = StoreToolVersionInfo();
+
+                var toolVersionWritten = StoreToolVersionInfo();
+
+                return toolVersionWritten ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
             }
+            catch (Exception ex)
+            {
+                LogError("Error in PepProtProphetPlugIn->GetPhilosopherVersion", ex);
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+        }
+
+        private CloseOutType InitializeWorkspace()
+        {
+            try
+            {
+                var arguments = "workspace --init";
+
+                LogDebug(mPhilosopherProgLoc + " " + arguments);
+
+                var processingSuccess = mCmdRunner.RunProgram(mPhilosopherProgLoc, arguments, "Philosopher", true);
+
+                HandlePhilosopherError(processingSuccess, mCmdRunner.ExitCode);
+                if (!processingSuccess)
+                {
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                ParseConsoleOutputFile();
+                return CloseOutType.CLOSEOUT_SUCCESS;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error in PepProtProphetPlugIn->InitializeWorkspace", ex);
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+        }
+
+        private CloseOutType AnnotateDatabase(out FileInfo fastaFile)
+        {
+            try
+            {
+                // Define the path to the fasta file
+                var localOrgDbFolder = mMgrParams.GetParam(clsAnalysisResources.MGR_PARAM_ORG_DB_DIR);
+
+                // Note that job parameter "generatedFastaName" gets defined by clsAnalysisResources.RetrieveOrgDB
+                var fastaFilePath = Path.Combine(localOrgDbFolder, mJobParams.GetParam("PeptideSearch", clsAnalysisResources.JOB_PARAM_GENERATED_FASTA_NAME));
+
+                fastaFile = new FileInfo(fastaFilePath);
+
+                var arguments = "database" +
+                                " --annotate " + fastaFile.FullName +
+                                " --prefix XXX_";
+
+                LogDebug(mPhilosopherProgLoc + " " + arguments);
+
+                var processingSuccess = mCmdRunner.RunProgram(mPhilosopherProgLoc, arguments, "Philosopher", true);
+
+                HandlePhilosopherError(processingSuccess, mCmdRunner.ExitCode);
+                if (!processingSuccess)
+                {
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                ParseConsoleOutputFile();
+                return CloseOutType.CLOSEOUT_SUCCESS;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error in PepProtProphetPlugIn->AnnotateDatabase", ex);
+                fastaFile = null;
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+        }
+
+
+        private CloseOutType RunPeptideProphet(FileSystemInfo fastaFile, out FileInfo peptideProphetResults)
+        {
+            peptideProphetResults = null;
+
+            try
+            {
+                var pepXmlFile = new FileInfo(Path.Combine(mWorkDir, Dataset + ".pepXML"));
+                if (!pepXmlFile.Exists)
+                {
+                    LogError("PepXML file not found: " + pepXmlFile.Name);
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                // ReSharper disable StringLiteralTypo
+                var arguments = "peptideprophet " +
+                                "--ppm " +
+                                "--accmass " +
+                                "--nonparam " +
+                                "--expectscore " +
+                                "--decoyprobs " +
+                                "--decoy XXX_ " +
+                                "--database " + fastaFile.FullName +
+                                " " + pepXmlFile.FullName;
+                // ReSharper restore StringLiteralTypo
+
+                LogDebug(mPhilosopherProgLoc + " " + arguments);
+
+                // Start the program and wait for it to finish
+                // However, while it's running, LoopWaiting will get called via events
+                var processingSuccess = mCmdRunner.RunProgram(mPhilosopherProgLoc, arguments, "Philosopher", true);
+
+                HandlePhilosopherError(processingSuccess, mCmdRunner.ExitCode);
+                if (!processingSuccess)
+                {
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                ParseConsoleOutputFile();
+
+                peptideProphetResults = new FileInfo(Path.Combine(mWorkDir, "interact-" + Dataset + ".pep.xml"));
+                if (!peptideProphetResults.Exists)
+                {
+                    LogError("Peptide prophet results file not found: " + pepXmlFile.Name);
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                return CloseOutType.CLOSEOUT_SUCCESS;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error in PepProtProphetPlugIn->RunPeptideProphet", ex);
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+        }
+
+        private CloseOutType RunProteinProphet(FileSystemInfo peptideProphetResults, out FileInfo proteinProphetResults)
+        {
+            proteinProphetResults = null;
+
+            try
+            {
+                // ReSharper disable StringLiteralTypo
+                var arguments = "proteinprophet" +
+                                " --maxppmdiff 2000000" +
+                                " " + peptideProphetResults.FullName;
+                // ReSharper restore StringLiteralTypo
+
+                LogDebug(mPhilosopherProgLoc + " " + arguments);
+
+                var processingSuccess = mCmdRunner.RunProgram(mPhilosopherProgLoc, arguments, "Philosopher", true);
+
+                HandlePhilosopherError(processingSuccess, mCmdRunner.ExitCode);
+                if (!processingSuccess)
+                {
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                ParseConsoleOutputFile();
+
+                proteinProphetResults = new FileInfo(Path.Combine(mWorkDir, "interact.prot.xml"));
+                if (!proteinProphetResults.Exists)
+                {
+                    LogError("Protein prophet results file not found: " + proteinProphetResults.Name);
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                return CloseOutType.CLOSEOUT_SUCCESS;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error in PepProtProphetPlugIn->RunProteinProphet", ex);
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+        }
+
+        private CloseOutType FilterResults(FileSystemInfo proteinProphetResults)
+        {
+            try
+            {
+                // ReSharper disable StringLiteralTypo
+                var arguments = "filter" +
+                                " --sequential" +
+                                " --razor" +
+                                " --mapmods" +
+                                " --prot 0.01" +
+                                " --tag XXX_" +
+                                " --pepxml " + mWorkDir + "" +
+                                " --protxml " + proteinProphetResults.FullName;
+                // ReSharper restore StringLiteralTypo
+
+                LogDebug(mPhilosopherProgLoc + " " + arguments);
+
+                var processingSuccess = mCmdRunner.RunProgram(mPhilosopherProgLoc, arguments, "Philosopher", true);
+
+                HandlePhilosopherError(processingSuccess, mCmdRunner.ExitCode);
+                if (!processingSuccess)
+                {
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                ParseConsoleOutputFile();
+                return CloseOutType.CLOSEOUT_SUCCESS;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error in PepProtProphetPlugIn->FilterResults", ex);
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+        }
+
+        private CloseOutType GenerateFinalReport()
+        {
+            try
+            {
+                var arguments = "report";
+
+                LogDebug(mPhilosopherProgLoc + " " + arguments);
+
+                var processingSuccess = mCmdRunner.RunProgram(mPhilosopherProgLoc, arguments, "Philosopher", true);
+
+                HandlePhilosopherError(processingSuccess, mCmdRunner.ExitCode);
+                if (!processingSuccess)
+                {
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                ParseConsoleOutputFile();
+                return CloseOutType.CLOSEOUT_SUCCESS;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error in PepProtProphetPlugIn->GenerateFinalReport", ex);
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+        }
+
+        private void HandlePhilosopherError(bool processingSuccess, int exitCode)
+        {
 
             if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))
             {
                 LogError(mConsoleOutputErrorMsg);
             }
 
-            if (!processingSuccess)
+            if (processingSuccess)
+                return;
+
+            LogError("Error running Philosopher");
+
+            if (exitCode != 0)
             {
-                LogError("Error running Philosopher");
-
-                if (mCmdRunner.ExitCode != 0)
-                {
-                    LogWarning("Philosopher returned a non-zero exit code: " + mCmdRunner.ExitCode);
-                }
-                else
-                {
-                    LogWarning("Call to Philosopher failed (but exit code is 0)");
-                }
-
-                return CloseOutType.CLOSEOUT_FAILED;
+                LogWarning("Philosopher returned a non-zero exit code: " + exitCode);
             }
-
-            // Validate that Philosopher created a .pep.XML file
-            var pepXmlFile = new FileInfo(Path.Combine(mWorkDir, mDatasetName + ".pep.XML"));
-            if (!pepXmlFile.Exists)
+            else
             {
-                LogError("Philosopher did not create a .pep.XML file");
-                return CloseOutType.CLOSEOUT_FAILED;
+                LogWarning("Call to Philosopher failed (but exit code is 0)");
             }
-
-            if (pepXmlFile.Length == 0)
-            {
-                LogError(".pep.XML file created by Philosopher is empty");
-                return CloseOutType.CLOSEOUT_FAILED;
-            }
-
-            // Zip the .pep.XML file
-            var zipSuccess = ZipOutputFile(pepXmlFile, ".pep.XML file");
-            if (!zipSuccess)
-            {
-                return CloseOutType.CLOSEOUT_FAILED;
-            }
-
-            mStatusTools.UpdateAndWrite(mProgress);
-            if (mDebugLevel >= 3)
-            {
-                LogDebug("Philosopher Search Complete");
-            }
-
-            return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
         private bool StoreToolVersionInfo()
@@ -355,11 +620,6 @@ namespace AnalysisManagerPepProtProphetPlugIn
             }
         }
 
-        private bool ValidateFastaFile()
-        {
-            throw new NotImplementedException();
-        }
-
         #endregion
 
         #region "Event Handlers"
@@ -379,12 +639,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
             mLastConsoleOutputParse = DateTime.UtcNow;
 
-            ParseConsoleOutputFile(Path.Combine(mWorkDir, Philosopher_CONSOLE_OUTPUT));
-
-            if (!mToolVersionWritten && !string.IsNullOrWhiteSpace(mPhilosopherVersion))
-            {
-                mToolVersionWritten = StoreToolVersionInfo();
-            }
+            ParseConsoleOutputFile();
 
             UpdateProgRunnerCpuUsage(mCmdRunner, SECONDS_BETWEEN_UPDATE);
 
