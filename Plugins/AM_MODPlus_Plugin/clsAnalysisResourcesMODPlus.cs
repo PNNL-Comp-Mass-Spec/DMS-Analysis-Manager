@@ -99,7 +99,7 @@ namespace AnalysisManagerMODPlusPlugin
                 if (clsGlobal.IsMatch(proteinCollections, "na"))
                 {
                     // Legacy fasta file
-                    // Need to open it with a reader and look for entries that start with XXX.
+                    // Need to open it with a reader and look for entries that start with Reversed_ or XXX_ or XXX.
                     checkLegacyFastaForDecoy = true;
                 }
                 else

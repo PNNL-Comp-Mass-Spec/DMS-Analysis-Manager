@@ -1487,7 +1487,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                             if (!mCachedProteins.TryGetValue(reader.CurrentPSM.ProteinFirst, out var indexAndSequence))
                             {
                                 // Protein not found in mCachedProteins
-                                // If the search engine is MSGFDB and the protein name starts with REV_ or XXX_ then skip this protein since it's a decoy result
+                                // If the search engine is MSGFDB and the protein name starts with REV_ or XXX_, skip this protein since it's a decoy result
                                 // Otherwise, add the protein to mCachedProteins and mCachedProteinPSMCounts, though we won't know its sequence
 
                                 var proteinUCase = reader.CurrentPSM.ProteinFirst.ToUpper();
@@ -1502,7 +1502,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                 else
                                 {
                                     if (proteinUCase.StartsWith("REVERSED_") || proteinUCase.StartsWith("SCRAMBLED_") ||
-                                        proteinUCase.StartsWith("XXX."))
+                                        proteinUCase.StartsWith("XXX_") || proteinUCase.StartsWith("XXX."))
                                     {
                                         validPSM = false;
                                     }
