@@ -85,7 +85,7 @@ namespace AnalysisManagerMSFraggerPlugIn
                 mMSFraggerVersion = string.Empty;
                 mConsoleOutputErrorMsg = string.Empty;
 
-                if (!ValidateFastaFile(out var fastaFileIsDecoy))
+                if (!ValidateFastaFile())
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -263,8 +263,6 @@ namespace AnalysisManagerMSFraggerPlugIn
                         if (string.IsNullOrWhiteSpace(dataLine))
                             continue;
 
-                        var dataLineLCase = dataLine.ToLower();
-
                         if (linesRead <= 5)
                         {
                             // The first line has the path to the MSFragger .jar file and the command line arguments
@@ -300,7 +298,7 @@ namespace AnalysisManagerMSFraggerPlugIn
                             }
 
                             if (linesRead > 12 &&
-                                dataLineLCase.Contains("error") &&
+                                dataLine.IndexOf("error", StringComparison.OrdinalIgnoreCase) >= 0 &&
                                 string.IsNullOrEmpty(mConsoleOutputErrorMsg))
                             {
                                 mConsoleOutputErrorMsg = "Error running MSFragger: " + dataLine;
@@ -347,7 +345,7 @@ namespace AnalysisManagerMSFraggerPlugIn
                                                                    currentSlice - 1, totalSlices);
 
                     // Now bump up the effective progress based on subtaskProgress
-                    var addonProgress = (nextProgress - currentProgress) / (float)totalSlices * subtaskProgress;
+                    var addonProgress = (nextProgress - currentProgress) / (float)totalSlices * subtaskProgress / 100;
                     effectiveProgress = sliceProgress + addonProgress;
                 }
                 else
@@ -380,6 +378,12 @@ namespace AnalysisManagerMSFraggerPlugIn
                 return resultCode;
             }
 
+            if (string.IsNullOrWhiteSpace(paramFilePath))
+            {
+                LogError("MSFragger parameter file name returned by UpdateMSFraggerParameterFile is empty");
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+
             // javaProgLoc will typically be "C:\Program Files\Java\jre8\bin\Java.exe"
             var javaProgLoc = GetJavaProgLoc();
             if (string.IsNullOrEmpty(javaProgLoc))
@@ -394,7 +398,6 @@ namespace AnalysisManagerMSFraggerPlugIn
             // Set up and execute a program runner to run MSFragger
 
             var mzMLFile = mDatasetName + clsAnalysisResources.DOT_MZML_EXTENSION;
-
 
             // Set up and execute a program runner to run MSFragger
             var arguments = " -Xmx" + javaMemorySizeMB + "M -jar " + mMSFraggerProgLoc;
@@ -453,7 +456,7 @@ namespace AnalysisManagerMSFraggerPlugIn
             }
 
             // Validate that MSFragger created a .pepXML file
-            var pepXmlFile = new FileInfo(Path.Combine(mWorkDir, mDatasetName + ".pepXML"));
+            var pepXmlFile = new FileInfo(Path.Combine(mWorkDir, Dataset + ".pepXML"));
             if (!pepXmlFile.Exists)
             {
                 LogError("MSFragger did not create a .pepXML file");
@@ -472,6 +475,17 @@ namespace AnalysisManagerMSFraggerPlugIn
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
+
+            // Rename the zipped file
+            var zipFile = new FileInfo(Path.ChangeExtension(pepXmlFile.FullName, ".zip"));
+            if (!zipFile.Exists)
+            {
+                LogError("Zipped pepXML file not found");
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            var newZipFilePath = Path.Combine(mWorkDir, Dataset + "_pepXML.zip");
+            zipFile.MoveTo(newZipFilePath);
 
             mStatusTools.UpdateAndWrite(mProgress);
             if (mDebugLevel >= 3)
@@ -542,6 +556,8 @@ namespace AnalysisManagerMSFraggerPlugIn
                 sourceFile.Delete();
                 updatedFile.MoveTo(Path.Combine(mWorkDir, paramFileName));
 
+                paramFilePath = updatedFile.FullName;
+
                 return CloseOutType.CLOSEOUT_SUCCESS;
             }
             catch (Exception ex)
@@ -580,9 +596,8 @@ namespace AnalysisManagerMSFraggerPlugIn
             }
         }
 
-        private bool ValidateFastaFile(out bool fastaFileIsDecoy)
+        private bool ValidateFastaFile()
         {
-            fastaFileIsDecoy = false;
 
             // Define the path to the fasta file
             var localOrgDbFolder = mMgrParams.GetParam(clsAnalysisResources.MGR_PARAM_ORG_DB_DIR);
@@ -604,12 +619,14 @@ namespace AnalysisManagerMSFraggerPlugIn
             {
                 if (proteinOptions.ToLower().Contains("seq_direction=decoy"))
                 {
-                    fastaFileIsDecoy = true;
+                    // fastaFileIsDecoy = true;
                 }
             }
 
             // Copy the FASTA file to the working directory
-            // This done because MSFragger indexes the file based on the dynamic and static mods, and we want that index file (suffix pepindex) to be in the working directory
+            // This is done because MSFragger indexes the file based on the dynamic and static mods,
+            // and we want that index file to be in the working directory
+            // Example filename: ID_007564_FEA6EC69.fasta.1.pepindex
             mLocalFASTAFilePath = Path.Combine(mWorkDir, fastaFile.Name);
 
             fastaFile.CopyTo(mLocalFASTAFilePath, true);
