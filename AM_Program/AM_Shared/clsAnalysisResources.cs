@@ -1232,9 +1232,10 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="proteinCollectionInfo"></param>
         /// <param name="targetDirectory">Directory where file will be created</param>
+        /// <param name="decoyProteinsUseXXX">When true, decoy protein names start with XXX_</param>
         /// <returns>TRUE for success; FALSE for failure</returns>
         /// <remarks></remarks>
-        protected bool CreateFastaFile(clsProteinCollectionInfo proteinCollectionInfo, string targetDirectory)
+        protected bool CreateFastaFile(clsProteinCollectionInfo proteinCollectionInfo, string targetDirectory, bool decoyProteinsUseXXX)
         {
 
             if (mDebugLevel >= 1)
@@ -1265,7 +1266,9 @@ namespace AnalysisManagerBase
             {
                 try
                 {
-                    mFastaTools = new Protein_Exporter.clsGetFASTAFromDMS(mFastaToolsCnStr);
+                    mFastaTools = new Protein_Exporter.clsGetFASTAFromDMS(mFastaToolsCnStr) {
+                        DecoyProteinsUseXXX = decoyProteinsUseXXX
+                    };
                     RegisterEvents(mFastaTools);
 
                     mFastaTools.FileGenerationProgress += FastaTools_FileGenerationProgress;
@@ -1942,10 +1945,11 @@ namespace AnalysisManagerBase
         {
 
             // Decoy proteins created by MSGF+ start with XXX_
-            // Decoy proteins created by DMS start with Reversed_
+            // Decoy proteins created by DMS start with Reversed_ or XXX_
             var decoyPrefixes = new List<string> {
                 "Reversed_",
                 "XXX_",
+                "XXX.",
                 "XXX:"
             };
 
@@ -4326,9 +4330,15 @@ namespace AnalysisManagerBase
         /// Maximum FASTA file size to retrieve when retrieving a legacy (standalone) FASTA file
         /// Returns False if the file was not copied because it is too large</param>
         /// <param name="fastaFileSizeGB">Output: FASTA file size, in GB</param>
+        /// <param name="decoyProteinsUseXXX">When true, decoy protein names start with XXX_ (defaults to True as of April 2019)</param>
         /// <returns>TRUE for success; FALSE for failure</returns>
         /// <remarks>Stores the name of the FASTA file as a new job parameter named "generatedFastaName" in section "PeptideSearch"</remarks>
-        protected bool RetrieveOrgDB(string orgDbDirectoryPath, out CloseOutType resultCode, float maxLegacyFASTASizeGB, out double fastaFileSizeGB)
+        protected bool RetrieveOrgDB(
+            string orgDbDirectoryPath,
+            out CloseOutType resultCode,
+            float maxLegacyFASTASizeGB,
+            out double fastaFileSizeGB,
+            bool decoyProteinsUseXXX = true)
         {
             const int freeSpaceThresholdPercent = 20;
 
@@ -4414,7 +4424,7 @@ namespace AnalysisManagerBase
                 PurgeFastaFilesIfLowFreeSpace(orgDbDirectoryPath, freeSpaceThresholdPercent, requiredFreeSpaceMB, legacyFastaFileBaseName);
 
                 // Make a new fasta file from scratch
-                if (!CreateFastaFile(proteinCollectionInfo, orgDbDirectoryPath))
+                if (!CreateFastaFile(proteinCollectionInfo, orgDbDirectoryPath, decoyProteinsUseXXX))
                 {
                     // There was a problem. Log entries in lower-level routines provide documentation
                     resultCode = CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
@@ -5006,7 +5016,8 @@ namespace AnalysisManagerBase
         /// <param name="memorySizeJobParamName">Name of the job parameter that defines the amount of memory (in MB) that must be available on the system</param>
         /// <param name="logFreeMemoryOnSuccess">If True, post a log entry if sufficient memory is, in fact, available</param>
         /// <returns>True if sufficient free memory; false if not enough free memory</returns>
-        /// <remarks>Typical names for javaMemorySizeJobParamName are MSGFJavaMemorySize, MSGFDBJavaMemorySize, and MSDeconvJavaMemorySize.
+        /// <remarks>
+        /// Typical names for javaMemorySizeJobParamName are MSGFJavaMemorySize, MSGFDBJavaMemorySize, and MSDeconvJavaMemorySize.
         /// These parameters are loaded from DMS Settings Files (table T_Settings_Files in DMS5, copied to table T_Job_Parameters in DMS_Pipeline)
         /// </remarks>
         protected bool ValidateFreeMemorySize(string memorySizeJobParamName, bool logFreeMemoryOnSuccess = true)
