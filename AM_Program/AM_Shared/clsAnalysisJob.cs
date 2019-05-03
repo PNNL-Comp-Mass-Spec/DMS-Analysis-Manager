@@ -1110,9 +1110,8 @@ namespace AnalysisManagerBase
                         if (lastModifiedUtc >= orphanedDateThresholdUtc)
                         {
                             if (TraceMode)
-                                ConsoleMsgUtils.ShowDebug(string.Format(
-                                                              "  Ignoring {0} since last modified {1}",
-                                                              workDir.Name, lastModifiedUtc.ToLocalTime()));
+                                ConsoleMsgUtils.ShowDebug("  Ignoring {0} since last modified {1}",
+                                                          workDir.Name, lastModifiedUtc.ToLocalTime());
 
                             // Files in the WorkDir are less than 5 days old; leave it unchanged
                             continue;
@@ -1185,9 +1184,8 @@ namespace AnalysisManagerBase
                         if (lastModifiedUtc >= purgeThresholdUtc)
                         {
                             if (TraceMode)
-                                ConsoleMsgUtils.ShowDebug(string.Format(
-                                                              "  Ignoring {0} since last modified {1}",
-                                                              oldWorkDir.Name, lastModifiedUtc.ToLocalTime()));
+                                ConsoleMsgUtils.ShowDebug("  Ignoring {0} since last modified {1}",
+                                                          oldWorkDir.Name, lastModifiedUtc.ToLocalTime());
 
                             // Files in the old WorkDir are less than 14 days old; leave it unchanged
                             continue;

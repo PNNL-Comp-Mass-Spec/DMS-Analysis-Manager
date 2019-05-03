@@ -1236,7 +1236,7 @@ namespace AnalysisManagerBase
                         }
                         catch (Exception ex)
                         {
-                            ConsoleMsgUtils.ShowDebug(string.Format("Unable to create a DriveInfo object for {0}: {1}", candidatePath, ex.Message));
+                            ConsoleMsgUtils.ShowDebug("Unable to create a DriveInfo object for {0}: {1}", candidatePath, ex.Message);
                         }
                     }
                 }
@@ -1376,7 +1376,7 @@ namespace AnalysisManagerBase
         /// <param name="message"></param>
         public static void ShowTimestampTrace(string message)
         {
-            ConsoleMsgUtils.ShowDebug(string.Format("{0:yyyy-MM-dd hh:mm:ss.fff tt}: {1}", DateTime.Now, message));
+            ConsoleMsgUtils.ShowDebug("{0:yyyy-MM-dd hh:mm:ss.fff tt}: {1}", DateTime.Now, message);
         }
 
         /// <summary>
