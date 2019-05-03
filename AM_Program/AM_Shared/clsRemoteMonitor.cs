@@ -599,6 +599,8 @@ namespace AnalysisManagerBase
             }
             catch (Exception ex)
             {
+                // Error parsing the file
+                // This can happen if an incomplete XML file was retrieved (since the remote manager was in the middle of writing to it)
                 OnErrorEvent("Error reading the .jobstatus file for the remotely running job", ex);
                 jobStatus = EnumRemoteJobStatus.Undefined;
             }
