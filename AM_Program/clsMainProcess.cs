@@ -1088,11 +1088,10 @@ namespace AnalysisManagerProg
                 switch (eJobStatus)
                 {
                     case clsRemoteMonitor.EnumRemoteJobStatus.Undefined:
-                        mMostRecentErrorMessage = "Undefined remote job status; check the logs";
-                        LogError(clsGlobal.AppendToComment(mMostRecentErrorMessage, remoteMonitor.Message));
+                        LogError(clsGlobal.AppendToComment("Undefined remote job status; check the logs", remoteMonitor.Message));
 
-                        resultCode = CloseOutType.CLOSEOUT_FAILED_REMOTE;
-                        return false;
+                        resultCode = CloseOutType.CLOSEOUT_RUNNING_REMOTE;
+                        return true;
 
                     case clsRemoteMonitor.EnumRemoteJobStatus.Unstarted:
                         LogDebug("Remote job has not yet started", 2);
