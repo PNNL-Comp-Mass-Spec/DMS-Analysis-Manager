@@ -1082,9 +1082,8 @@ namespace AnalysisManagerBase
                         if (activeWorkDirs.ContainsKey(workDir.FullName))
                         {
                             if (TraceMode)
-                                ConsoleMsgUtils.ShowDebug(string.Format(
-                                                              "  Ignore {0} since referred to by a recent task info file",
-                                                              workDir.Name));
+                                ConsoleMsgUtils.ShowDebug("  Ignore {0} since referred to by a recent task info file", 
+                                                          workDir.Name);
 
                             // This work dir is active; ignore it
                             continue;

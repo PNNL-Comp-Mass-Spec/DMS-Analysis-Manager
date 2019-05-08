@@ -264,14 +264,14 @@ namespace AnalysisManagerProg
                 }
                 catch (Exception ex)
                 {
-                    ConsoleMsgUtils.ShowError("Exception instantiating clsAnalysisMgrSettings: " + ex.Message);
+                    ConsoleMsgUtils.ShowError("Exception instantiating clsAnalysisMgrSettings", ex);
                     clsGlobal.IdleLoop(0.5);
                     return false;
                 }
             }
             catch (Exception ex)
             {
-                ConsoleMsgUtils.ShowError("Exception loading settings from AnalysisManagerProg.exe.config: " + ex.Message);
+                ConsoleMsgUtils.ShowError("Exception loading settings from AnalysisManagerProg.exe.config", ex);
                 clsGlobal.IdleLoop(0.5);
                 return false;
             }
@@ -414,7 +414,7 @@ namespace AnalysisManagerProg
                 if (throwExceptions)
                     throw;
 
-                ConsoleMsgUtils.ShowError("Exception instantiating clsAnalysisMgrSettings: " + ex.Message);
+                ConsoleMsgUtils.ShowError("Exception instantiating clsAnalysisMgrSettings", ex);
                 clsGlobal.IdleLoop(0.5);
             }
 

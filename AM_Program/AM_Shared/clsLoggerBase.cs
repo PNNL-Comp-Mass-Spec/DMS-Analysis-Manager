@@ -43,7 +43,7 @@ namespace AnalysisManagerBase
         /// <remarks>The error is shown in red in the console</remarks>
         protected virtual void LogError(string errorMessage, bool logToDb = false)
         {
-            ConsoleMsgUtils.ShowError(errorMessage, false);
+            ConsoleMsgUtils.ShowErrorCustom(errorMessage, false);
 
             LogTools.LoggerTypes loggerType;
             if (logToDb && !clsGlobal.OfflineMode)
