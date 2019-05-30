@@ -362,6 +362,7 @@ namespace AnalysisManagerBase
                 if (mBrokerDBLogger == null)
                 {
                     mBrokerDBLogger = new clsDBStatusLogger(brokerDBConnectionString, brokerDBStatusUpdateIntervalMinutes);
+                    RegisterEvents(mBrokerDBLogger);
                 }
                 else
                 {

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Data;
 using System.Data.SqlClient;
+using PRISM;
 
 //*********************************************************************************************************
 // Written by Matthew Monroe for the US Department of Energy
@@ -17,7 +18,7 @@ namespace AnalysisManagerBase
     /// <summary>
     /// Status logger
     /// </summary>
-    public class clsDBStatusLogger
+    public class clsDBStatusLogger : EventNotifier
     {
 
         #region "Structures"
@@ -205,6 +206,12 @@ namespace AnalysisManagerBase
                 mDBStatusUpdateIntervalMinutes = value;
             }
         }
+
+        /// <summary>
+        /// Pipeline database stored procedure executor
+        /// </summary>
+        private ExecuteDatabaseSP PipelineDBProcedureExecutor { get; }
+
         #endregion
 
         #region "Methods"
@@ -219,6 +226,9 @@ namespace AnalysisManagerBase
         {
             if (dbConnectionString == null)
                 dbConnectionString = string.Empty;
+
+            PipelineDBProcedureExecutor = new ExecuteDatabaseSP(dbConnectionString);
+            RegisterEvents(PipelineDBProcedureExecutor);
 
             DBConnectionString = dbConnectionString;
             mDBStatusUpdateIntervalMinutes = dbStatusUpdateIntervalMinutes;
@@ -249,20 +259,14 @@ namespace AnalysisManagerBase
                 }
                 mLastWriteTime = DateTime.UtcNow;
 
-                var myConnection = new SqlConnection(DBConnectionString);
-                myConnection.Open();
-
                 // Set up the command object prior to SP execution
-                var cmd = new SqlCommand
+                var cmd = new SqlCommand(SP_NAME_UPDATE_MANAGER_STATUS)
                 {
                     CommandType = CommandType.StoredProcedure,
-                    CommandText = SP_NAME_UPDATE_MANAGER_STATUS,
-                    Connection = myConnection
                 };
 
                 cmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int));
                 cmd.Parameters["@Return"].Direction = ParameterDirection.ReturnValue;
-
 
                 // Manager items
                 AddSPParameter(cmd.Parameters, "@MgrName", statusInfo.MgrName, 128);
@@ -297,7 +301,7 @@ namespace AnalysisManagerBase
                 AddSPParameterOutput(cmd.Parameters, "@message", string.Empty, 512);
 
                 // Execute the SP
-                cmd.ExecuteNonQuery();
+                PipelineDBProcedureExecutor.ExecuteSP(cmd);
 
             }
             catch (Exception ex)
