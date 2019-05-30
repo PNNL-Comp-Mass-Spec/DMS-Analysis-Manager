@@ -152,7 +152,10 @@ namespace AnalysisManagerBase
             try
             {
                 // Set up the command object prior to SP execution
-                var cmd = new SqlCommand(SP_NAME_GET_JOB_STEP_INPUT_FOLDER) { CommandType = CommandType.StoredProcedure };
+                var cmd = new SqlCommand(SP_NAME_GET_JOB_STEP_INPUT_FOLDER)
+                {
+                    CommandType = CommandType.StoredProcedure
+                };
 
                 cmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
                 cmd.Parameters.Add(new SqlParameter("@job", SqlDbType.Int)).Value = job;
