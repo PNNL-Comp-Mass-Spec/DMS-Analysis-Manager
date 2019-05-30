@@ -106,5 +106,81 @@ namespace AnalysisManagerBase
             LogTools.LogWarning(warningMessage);
         }
 
+        /// <summary>
+        /// Register event handlers
+        /// </summary>
+        /// <param name="processingClass"></param>
+        /// <param name="writeDebugEventsToLog"></param>
+        protected virtual void RegisterEvents(EventNotifier processingClass, bool writeDebugEventsToLog = true)
+        {
+            if (writeDebugEventsToLog)
+            {
+                processingClass.DebugEvent += DebugEventHandler;
+            }
+            else
+            {
+                processingClass.DebugEvent += DebugEventHandlerConsoleOnly;
+            }
+
+            processingClass.StatusEvent += StatusEventHandler;
+            processingClass.ErrorEvent += ErrorEventHandler;
+            processingClass.WarningEvent += WarningEventHandler;
+
+            // Do not watch the ProgressUpdate event
+            // clsAnalysisMgrBase does monitor ProgressUpdate
+        }
+
+        /// <summary>
+        /// Unregister the event handler for the given LogLevel
+        /// </summary>
+        /// <param name="processingClass"></param>
+        /// <param name="messageType"></param>
+        protected void UnregisterEventHandler(EventNotifier processingClass, BaseLogger.LogLevels messageType)
+        {
+            switch (messageType)
+            {
+                case BaseLogger.LogLevels.DEBUG:
+                    processingClass.DebugEvent -= DebugEventHandler;
+                    processingClass.DebugEvent -= DebugEventHandlerConsoleOnly;
+                    break;
+                case BaseLogger.LogLevels.ERROR:
+                    processingClass.ErrorEvent -= ErrorEventHandler;
+                    break;
+                case BaseLogger.LogLevels.WARN:
+                    processingClass.WarningEvent -= WarningEventHandler;
+                    break;
+                case BaseLogger.LogLevels.INFO:
+                    processingClass.StatusEvent -= StatusEventHandler;
+                    break;
+                default:
+                    throw new Exception("Log level not supported for unregistering");
+            }
+        }
+
+        private void DebugEventHandlerConsoleOnly(string statusMessage)
+        {
+            LogTools.LogDebug(statusMessage, writeToLog: false);
+        }
+
+        private void DebugEventHandler(string statusMessage)
+        {
+            LogDebug(statusMessage);
+        }
+
+        private void StatusEventHandler(string statusMessage)
+        {
+            LogMessage(statusMessage);
+        }
+
+        private void ErrorEventHandler(string errorMessage, Exception ex)
+        {
+            LogError(errorMessage, ex);
+        }
+
+        private void WarningEventHandler(string warningMessage)
+        {
+            LogWarning(warningMessage);
+        }
+
     }
 }

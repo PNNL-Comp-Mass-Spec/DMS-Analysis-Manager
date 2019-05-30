@@ -316,76 +316,13 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="processingClass"></param>
         /// <param name="writeDebugEventsToLog"></param>
-        protected void RegisterEvents(EventNotifier processingClass, bool writeDebugEventsToLog = true)
+        protected override void RegisterEvents(EventNotifier processingClass, bool writeDebugEventsToLog = true)
         {
-            if (writeDebugEventsToLog)
-            {
-                processingClass.DebugEvent += DebugEventHandler;
-            }
-            else
-            {
-                processingClass.DebugEvent += DebugEventHandlerConsoleOnly;
-            }
-
-            processingClass.StatusEvent += StatusEventHandler;
-            processingClass.ErrorEvent += ErrorEventHandler;
-            processingClass.WarningEvent += WarningEventHandler;
+            base.RegisterEvents(processingClass, writeDebugEventsToLog);
 
             // Note that ProgressUpdateHandler does not display a message at console
             // Instead, it calls mStatusTools.UpdateAndWrite, which updates the status file
             processingClass.ProgressUpdate += ProgressUpdateHandler;
-        }
-
-        /// <summary>
-        /// Unregister the event handler for the given LogLevel
-        /// </summary>
-        /// <param name="processingClass"></param>
-        /// <param name="messageType"></param>
-        protected void UnregisterEventHandler(EventNotifier processingClass, BaseLogger.LogLevels messageType)
-        {
-            switch (messageType)
-            {
-                case BaseLogger.LogLevels.DEBUG:
-                    processingClass.DebugEvent -= DebugEventHandler;
-                    processingClass.DebugEvent -= DebugEventHandlerConsoleOnly;
-                    break;
-                case BaseLogger.LogLevels.ERROR:
-                    processingClass.ErrorEvent -= ErrorEventHandler;
-                    break;
-                case BaseLogger.LogLevels.WARN:
-                    processingClass.WarningEvent -= WarningEventHandler;
-                    break;
-                case BaseLogger.LogLevels.INFO:
-                    processingClass.StatusEvent -= StatusEventHandler;
-                    break;
-                default:
-                    throw new Exception("Log level not supported for unregistering");
-            }
-        }
-
-        private void DebugEventHandlerConsoleOnly(string statusMessage)
-        {
-            LogTools.LogDebug(statusMessage, writeToLog: false);
-        }
-
-        private void DebugEventHandler(string statusMessage)
-        {
-            LogDebug(statusMessage);
-        }
-
-        private void StatusEventHandler(string statusMessage)
-        {
-            LogMessage(statusMessage);
-        }
-
-        private void ErrorEventHandler(string errorMessage, Exception ex)
-        {
-            LogError(errorMessage, ex);
-        }
-
-        private void WarningEventHandler(string warningMessage)
-        {
-            LogWarning(warningMessage);
         }
 
         /// <summary>
