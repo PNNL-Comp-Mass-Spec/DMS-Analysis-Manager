@@ -341,11 +341,11 @@ namespace AnalysisManagerBase
         /// Configure the Broker DB logging settings
         /// </summary>
         /// <param name="logStatusToBrokerDB"></param>
-        /// <param name="brokerDBConnectionString"></param>
+        /// <param name="brokerDBConnectionString">Connection string to DMS_Pipeline</param>
         /// <param name="brokerDBStatusUpdateIntervalMinutes"></param>
         /// <remarks>
-        /// When logStatusToBrokerDB is true, status messages are sent directly to the broker database
-        /// using stored procedure UpdateManagerAndTaskStatus
+        /// When logStatusToBrokerDB is true, status messages are sent directly to the broker database using stored procedure UpdateManagerAndTaskStatus
+        /// Analysis managers typically have logStatusToBrokerDB=False and logStatusToMessageQueue=True
         /// </remarks>
         public void ConfigureBrokerDBLogging(bool logStatusToBrokerDB, string brokerDBConnectionString, float brokerDBStatusUpdateIntervalMinutes)
         {
@@ -386,7 +386,9 @@ namespace AnalysisManagerBase
         /// <param name="logStatusToMessageQueue"></param>
         /// <param name="msgQueueURI"></param>
         /// <param name="messageQueueTopicMgrStatus"></param>
-        /// <remarks></remarks>
+        /// <remarks>
+        /// Analysis managers typically have logStatusToBrokerDB=False and logStatusToMessageQueue=True
+        /// </remarks>
         public void ConfigureMessageQueueLogging(bool logStatusToMessageQueue, string msgQueueURI, string messageQueueTopicMgrStatus)
         {
             if (clsGlobal.OfflineMode)
