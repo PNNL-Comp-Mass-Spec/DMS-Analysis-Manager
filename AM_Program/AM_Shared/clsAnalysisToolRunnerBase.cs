@@ -1680,25 +1680,15 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Looks up the current debug level for the manager.  If the call to the server fails, mDebugLevel will be left unchanged
         /// </summary>
-        /// <returns></returns>
-        /// <remarks></remarks>
-        protected bool GetCurrentMgrSettingsFromDB()
-        {
-            return GetCurrentMgrSettingsFromDB(0);
-        }
-
-        /// <summary>
-        /// Looks up the current debug level for the manager.  If the call to the server fails, mDebugLevel will be left unchanged
-        /// </summary>
         /// <param name="updateIntervalSeconds">
         /// The minimum number of seconds between updates
         /// If fewer than updateIntervalSeconds seconds have elapsed since the last call to this function, no update will occur
         /// </param>
         /// <returns></returns>
         /// <remarks></remarks>
-        protected bool GetCurrentMgrSettingsFromDB(int updateIntervalSeconds)
+        protected bool GetCurrentMgrDebugLevelFromDB(int updateIntervalSeconds)
         {
-            return GetCurrentMgrSettingsFromDB(updateIntervalSeconds, mMgrParams, ref mDebugLevel);
+            return GetCurrentMgrDebugLevelFromDB(updateIntervalSeconds, mMgrParams, ref mDebugLevel);
         }
 
         /// <summary>
@@ -1709,7 +1699,7 @@ namespace AnalysisManagerBase
         /// <param name="debugLevel">Input/Output parameter: set to the current debug level, will be updated to the debug level in the manager control DB</param>
         /// <returns>True for success; False for error</returns>
         /// <remarks></remarks>
-        public static bool GetCurrentMgrSettingsFromDB(int updateIntervalSeconds, IMgrParams mgrParams, ref short debugLevel)
+        public static bool GetCurrentMgrDebugLevelFromDB(int updateIntervalSeconds, IMgrParams mgrParams, ref short debugLevel)
         {
 
             try
@@ -2437,7 +2427,7 @@ namespace AnalysisManagerBase
 
                 // Synchronize the stored Debug level with the value stored in the database
                 const int MGR_SETTINGS_UPDATE_INTERVAL_SECONDS = 300;
-                GetCurrentMgrSettingsFromDB(MGR_SETTINGS_UPDATE_INTERVAL_SECONDS);
+                GetCurrentMgrDebugLevelFromDB(MGR_SETTINGS_UPDATE_INTERVAL_SECONDS);
 
             }
             catch (Exception)
@@ -3310,9 +3300,6 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public virtual CloseOutType RunTool()
         {
-
-            // Synchronize the stored Debug level with the value stored in the database
-            GetCurrentMgrSettingsFromDB();
 
             // Make log entry
             LogMessage(mMgrName + ": Starting analysis, job " + Job);
