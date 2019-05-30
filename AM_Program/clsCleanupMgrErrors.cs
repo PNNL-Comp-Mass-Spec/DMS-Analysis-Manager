@@ -4,6 +4,7 @@ using System.Data;
 using System.Data.SqlClient;
 using System.IO;
 using System.Security.AccessControl;
+using PRISM;
 
 namespace AnalysisManagerProg
 {
@@ -545,14 +546,13 @@ namespace AnalysisManagerProg
                 if (failureMessage == null)
                     failureMessage = string.Empty;
 
-                var myConnection = new SqlConnection(mMgrConfigDBConnectionString);
-                myConnection.Open();
+                var procedureExecutor = new ExecuteDatabaseSP(mMgrConfigDBConnectionString);
+                RegisterEvents(procedureExecutor);
 
-                var cmd = new SqlCommand
+                // Set up the command object prior to SP execution
+                var cmd = new SqlCommand(SP_NAME_REPORT_MGR_ERROR_CLEANUP)
                 {
-                    CommandType = CommandType.StoredProcedure,
-                    CommandText = SP_NAME_REPORT_MGR_ERROR_CLEANUP,
-                    Connection = myConnection
+                    CommandType = CommandType.StoredProcedure
                 };
 
                 cmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
@@ -562,7 +562,8 @@ namespace AnalysisManagerProg
                 cmd.Parameters.Add(new SqlParameter("@message", SqlDbType.VarChar, 512)).Direction = ParameterDirection.Output;
 
                 // Execute the SP
-                cmd.ExecuteNonQuery();
+                procedureExecutor.ExecuteSP(cmd);
+
             }
             catch (Exception ex)
             {

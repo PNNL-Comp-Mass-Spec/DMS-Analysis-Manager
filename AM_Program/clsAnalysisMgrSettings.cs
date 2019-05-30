@@ -130,11 +130,11 @@ namespace AnalysisManagerProg
 
                 ShowTrace("AckManagerUpdateRequired using " + connectionString);
 
-                var conn = new SqlConnection(connectionString);
-                conn.Open();
+                var procedureExecutor = new ExecuteDatabaseSP(connectionString);
+                RegisterEvents(procedureExecutor);
 
                 // Set up the command object prior to SP execution
-                var cmd = new SqlCommand(SP_NAME_ACK_MANAGER_UPDATE, conn)
+                var cmd = new SqlCommand(SP_NAME_ACK_MANAGER_UPDATE)
                 {
                     CommandType = CommandType.StoredProcedure
                 };
@@ -144,7 +144,7 @@ namespace AnalysisManagerProg
                 cmd.Parameters.Add(new SqlParameter("@message", SqlDbType.VarChar, 512)).Direction = ParameterDirection.Output;
 
                 // Execute the SP
-                cmd.ExecuteNonQuery();
+                procedureExecutor.ExecuteSP(cmd);
             }
             catch (Exception ex)
             {

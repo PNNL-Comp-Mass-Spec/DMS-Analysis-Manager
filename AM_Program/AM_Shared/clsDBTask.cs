@@ -1,3 +1,4 @@
+using PRISM;
 using PRISM.Logging;
 using System;
 using System.Collections.Generic;
@@ -93,12 +94,12 @@ namespace AnalysisManagerBase
         /// <summary>
         /// DMS stored procedure executor
         /// </summary>
-        public PRISM.ExecuteDatabaseSP DMSProcedureExecutor { get; }
+        public ExecuteDatabaseSP DMSProcedureExecutor { get; }
 
         /// <summary>
         /// Pipeline database stored procedure executor
         /// </summary>
-        public PRISM.ExecuteDatabaseSP PipelineDBProcedureExecutor { get; }
+        public ExecuteDatabaseSP PipelineDBProcedureExecutor { get; }
 
         #endregion
 
@@ -185,8 +186,8 @@ namespace AnalysisManagerBase
 
             mDebugLevel = debugLvl;
 
-            DMSProcedureExecutor = new PRISM.ExecuteDatabaseSP(mConnStr);
-            PipelineDBProcedureExecutor = new PRISM.ExecuteDatabaseSP(mBrokerConnStr);
+            DMSProcedureExecutor = new ExecuteDatabaseSP(mConnStr);
+            PipelineDBProcedureExecutor = new ExecuteDatabaseSP(mBrokerConnStr);
 
             DMSProcedureExecutor.DebugEvent += ProcedureExecutor_DebugEvent;
             PipelineDBProcedureExecutor.DebugEvent += ProcedureExecutor_DebugEvent;
