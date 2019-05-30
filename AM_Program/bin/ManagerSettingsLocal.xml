@@ -3,8 +3,8 @@
     <setting name="AuroraAvailable"><value>False</value></setting>
     <setting name="ConfigFileName"><value>AnalysisManagerProg.exe.config</value></setting>
     <setting name="DebugLevel"><value>1</value></setting>
-    <setting name="LocalTaskQueuePath"><value>/file1/temp/DMSTasks</value></setting>
-    <setting name="LocalWorkDirPath"><value>/file1/temp/DMSWorkDir</value></setting>
+    <setting name="LocalTaskQueuePath"><value>/files1/temp/DMSTasks</value></setting>
+    <setting name="LocalWorkDirPath"><value>/files1/temp/DMSWorkDir</value></setting>
     <setting name="LogFileName"><value>Logs/AnalysisMgr</value></setting>
     <setting name="LogMemoryUsage"><value>True</value></setting>
     <setting name="ManagerErrorCleanupMode"><value>2</value></setting>
@@ -13,7 +13,7 @@
     <setting name="MinimumMemoryUsageLogInterval"><value>1</value></setting>
     <setting name="MSGFPlusProgLoc"><value>/opt/DMS_Programs/MSGFDB</value></setting>
     <setting name="MyEmslAvailable"><value>False</value></setting>
-    <setting name="OrgDbDir"><value>/file1/temp/DMSOrgDBs</value></setting>
+    <setting name="OrgDbDir"><value>/files1/temp/DMSOrgDBs</value></setting>
     <setting name="StatusFileLocation"><value>Status.xml</value></setting>
     <setting name="StepToolsEnabled"><value>Test_MSGFPlus, MSGFPlus</value></setting>
     <setting name="JavaLocLinux"><value>/usr/bin/java</value></setting>    
