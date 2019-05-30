@@ -764,10 +764,6 @@ namespace DTASpectraFileGen
         /// <remarks></remarks>
         protected void CmdRunner_LoopWaiting()
         {
-            // Synchronize the stored Debug level with the value stored in the database
-            const int MGR_SETTINGS_UPDATE_INTERVAL_SECONDS = 300;
-            clsAnalysisToolRunnerBase.GetCurrentMgrSettingsFromDB(MGR_SETTINGS_UPDATE_INTERVAL_SECONDS, mMgrParams, ref mDebugLevel);
-
             const int SECONDS_BETWEEN_UPDATE = 15;
 
             // Count the number of .Dta files or monitor the log file to determine the percent complete
