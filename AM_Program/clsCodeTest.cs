@@ -907,6 +907,7 @@ namespace AnalysisManagerProg
                     Console.WriteLine("Protein database connection string not specified");
                     return false;
                 }
+
                 mFastaTools = new Protein_Exporter.clsGetFASTAFromDMS(mFastaToolsCnStr);
                 RegisterEvents(mFastaTools);
 

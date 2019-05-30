@@ -306,12 +306,12 @@ namespace AnalysisManagerBase
                 {
                     try
                     {
-                        using (var Da = new SqlDataAdapter(cmd))
+                        using (var da = new SqlDataAdapter(cmd))
                         {
-                            using (var Ds = new DataSet())
+                            using (var ds = new DataSet())
                             {
-                                Da.Fill(Ds);
-                                resultSet = Ds.Tables[0];
+                                da.Fill(ds);
+                                resultSet = ds.Tables[0];
                             }
                         }
 
@@ -595,7 +595,6 @@ namespace AnalysisManagerBase
                     using (var brokerConnection = new SqlConnection(connectionString))
                     {
                         brokerConnection.Open();
-
 
                         foreach (var dataPkgJob in splitFastaJobs)
                         {

@@ -1082,7 +1082,7 @@ namespace AnalysisManagerBase
                         if (activeWorkDirs.ContainsKey(workDir.FullName))
                         {
                             if (TraceMode)
-                                ConsoleMsgUtils.ShowDebug("  Ignore {0} since referred to by a recent task info file", 
+                                ConsoleMsgUtils.ShowDebug("  Ignore {0} since referred to by a recent task info file",
                                                           workDir.Name);
 
                             // This work dir is active; ignore it
@@ -1342,7 +1342,10 @@ namespace AnalysisManagerBase
             try
             {
                 // Set up the command object prior to SP execution
-                var cmd = new SqlCommand(SP_NAME_REQUEST_TASK) { CommandType = CommandType.StoredProcedure };
+                var cmd = new SqlCommand(SP_NAME_REQUEST_TASK)
+                {
+                    CommandType = CommandType.StoredProcedure
+                };
 
                 cmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
                 cmd.Parameters.Add(new SqlParameter("@processorName", SqlDbType.VarChar, 128)).Value = ManagerName;
