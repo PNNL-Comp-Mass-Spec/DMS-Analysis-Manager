@@ -506,6 +506,7 @@ namespace AnalysisManagerProg
                     }
 
                     var mgrUpdateRequired = mMgrSettings.GetParam("ManagerUpdateRequired", false);
+
                     if (mgrUpdateRequired)
                     {
                         var msg = "Manager update is required";
@@ -2775,11 +2776,12 @@ namespace AnalysisManagerProg
             var logMemoryUsage = mMgrSettings.GetParam("LogMemoryUsage", false);
             float minimumMemoryUsageLogInterval = mMgrSettings.GetParam("MinimumMemoryUsageLogInterval", 1);
 
-            // Most managers have logStatusToBrokerDb=False and logStatusToMessageQueue=True
+            // Analysis managers typically have logStatusToBrokerDb=False and logStatusToMessageQueue=True
             var logStatusToBrokerDb = mMgrSettings.GetParam("LogStatusToBrokerDB", false);
-            var brokerDbConnectionString = mMgrSettings.GetParam("BrokerConnectionString");
 
             // Gigasax.DMS_Pipeline
+            var brokerDbConnectionString = mMgrSettings.GetParam("BrokerConnectionString");
+
             float brokerDbStatusUpdateIntervalMinutes = mMgrSettings.GetParam("BrokerDBStatusUpdateIntervalMinutes", 60);
 
             var logStatusToMessageQueue = mMgrSettings.GetParam("LogStatusToMessageQueue", false);
