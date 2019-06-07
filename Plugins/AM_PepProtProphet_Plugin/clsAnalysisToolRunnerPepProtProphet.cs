@@ -22,7 +22,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         #region "Constants and Enums"
 
         private const string Philosopher_CONSOLE_OUTPUT = "Philosopher_ConsoleOutput.txt";
-        private const string Philosopher_EXE_NAME = "philosopheexer_windows_amd64.jar";
+        private const string Philosopher_EXE_NAME = "philosopher_windows_amd64.exe";
 
         private const float PROGRESS_PCT_STARTING = 1;
         private const float PROGRESS_PCT_COMPLETE = 99;
