@@ -1118,7 +1118,7 @@ namespace AnalysisManagerBase
                 var localMsXmlFile = new FileInfo(Path.Combine(mWorkDir, DatasetName + resultFileExtension));
                 if (localMsXmlFile.Exists)
                 {
-                    OnStatusEvent(string.Format("Using {0} file {1}", resultFileExtension, localMsXmlFile.Name));
+                    OnStatusEvent(string.Format("Using {0} file {1} in {2}", resultFileExtension, localMsXmlFile.Name, mWorkDir));
                     sourceDirectoryPath = mWorkDir;
                     return true;
                 }
@@ -1332,10 +1332,11 @@ namespace AnalysisManagerBase
 
             if (!mFileCopyUtilities.CopyFileToWorkDir(sourceFile.Name, sourceFile.Directory.FullName, mWorkDir, BaseLogger.LogLevels.ERROR))
             {
-                errorMessage = "Error copying " + sourceFile.Name;
+                errorMessage = "Error copying " + sourceFile.FullName;
                 return false;
             }
 
+            OnStatusEvent(string.Format("Copied {0} to {1}", sourceFile.FullName, mWorkDir));
 
             // If this is not a .gz file, return true
             if (!string.Equals(sourceFile.Extension, clsAnalysisResources.DOT_GZ_EXTENSION, StringComparison.OrdinalIgnoreCase))
