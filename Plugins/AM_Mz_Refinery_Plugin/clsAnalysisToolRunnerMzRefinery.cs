@@ -458,7 +458,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             }
 
             // Look for extra parameters specific to MZRefinery
-            var success = ExtractMzRefinerOptionsFromParameterFile(paramFilePath);
+            var success = ExtractMzRefinerOptionsFromParameterFile(sourceParamFile.FullName);
             if (!success)
             {
                 LogError("Error extracting MzRefinery options from parameter file " + Path.GetFileName(paramFilePath));
