@@ -1251,7 +1251,7 @@ namespace AnalysisManagerBase
                         break;
                     }
 
-                    if (resultFileExtension != clsAnalysisResources.DOT_PBF_EXTENSION)
+                    if (!string.Equals(resultFileExtension, clsAnalysisResources.DOT_PBF_EXTENSION, StringComparison.OrdinalIgnoreCase))
                     {
                         var candidateGzFilePath = candidateFilePath + clsAnalysisResources.DOT_GZ_EXTENSION;
                         if (File.Exists(candidateGzFilePath))
@@ -1290,7 +1290,7 @@ namespace AnalysisManagerBase
             }
 
             var expectedFileDescription = resultFileExtension;
-            if (resultFileExtension != clsAnalysisResources.DOT_PBF_EXTENSION)
+            if (!string.Equals(resultFileExtension, clsAnalysisResources.DOT_PBF_EXTENSION, StringComparison.OrdinalIgnoreCase))
             {
                 expectedFileDescription += clsAnalysisResources.DOT_GZ_EXTENSION;
             }
@@ -1336,27 +1336,26 @@ namespace AnalysisManagerBase
                 return false;
             }
 
-            if (sourceFile.Extension.ToLower() == clsAnalysisResources.DOT_GZ_EXTENSION)
-            {
-                // Do not skip all .gz files because we compress MSGF+ results using .gz and we want to keep those
 
-                mJobParams.AddResultFileToSkip(sourceFile.Name);
-                mJobParams.AddResultFileToSkip(sourceFile.Name.Substring(0, sourceFile.Name.Length - clsAnalysisResources.DOT_GZ_EXTENSION.Length));
+            // If this is not a .gz file, return true
+            if (!string.Equals(sourceFile.Extension, clsAnalysisResources.DOT_GZ_EXTENSION, StringComparison.OrdinalIgnoreCase))
+                return true;
 
-                if (unzip)
-                {
-                    var localZippedFile = Path.Combine(mWorkDir, sourceFile.Name);
+            // Do not skip all .gz files because we compress MSGF+ results using .gz and we want to keep those
 
-                    if (!GUnzipFile(localZippedFile))
-                    {
-                        errorMessage = mDotNetZipTools.Message;
-                        return false;
-                    }
-                }
+            mJobParams.AddResultFileToSkip(sourceFile.Name);
+            mJobParams.AddResultFileToSkip(sourceFile.Name.Substring(0, sourceFile.Name.Length - clsAnalysisResources.DOT_GZ_EXTENSION.Length));
 
-            }
+            if (!unzip)
+                return true;
 
-            return true;
+            var localZippedFile = Path.Combine(mWorkDir, sourceFile.Name);
+
+            if (GUnzipFile(localZippedFile))
+                return true;
+
+            errorMessage = mDotNetZipTools.Message;
+            return false;
 
         }
 
@@ -2434,7 +2433,7 @@ namespace AnalysisManagerBase
 
                     var stepTool = mJobParams.GetJobParameter("StepTool", "Unknown");
 
-                    if (stepTool == "ICR2LS")
+                    if (string.Equals(stepTool, "ICR2LS", StringComparison.OrdinalIgnoreCase))
                     {
                         skipBAFFiles = true;
                     }
