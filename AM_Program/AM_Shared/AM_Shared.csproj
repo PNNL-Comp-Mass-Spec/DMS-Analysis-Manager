@@ -192,6 +192,7 @@ xcopy "$(TargetDir)AM_Shared.pdb" "$(ProjectDir)..\..\AM_Common\NET_4" /y /d
 rem xcopy "$(TargetDir)PRISM.dll" "$(ProjectDir)..\..\AM_Common" /y /d
 rem xcopy "$(TargetDir)PrismWin.dll" "$(ProjectDir)..\..\AM_Common" /y /d
 
+xcopy "$(TargetDir)MathNet.Numerics.dll" "$(ProjectDir)..\..\AM_Common" /y /d
 xcopy "$(ProjectDir)..\..\AM_Common\NET_4\FileConcatenator.dll" "$(TargetDir)" /y /d  /F
 xcopy "$(ProjectDir)..\..\AM_Common\NET_4\PeptideFileExtractor.dll" "$(TargetDir)" /y /d /F
 </PostBuildEvent>
