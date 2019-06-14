@@ -9,18 +9,18 @@ namespace AnalysisManager_Ape_PlugIn
     /// Class for running Ape
     /// </summary>
     public class clsAnalysisToolRunnerApe : clsAnalysisToolRunnerBase
-   {
-       private const float PROGRESS_PCT_APE_START = 1;
-       private const float PROGRESS_PCT_APE_DONE = 99;
+    {
+        private const float PROGRESS_PCT_APE_START = 1;
+        private const float PROGRESS_PCT_APE_DONE = 99;
 
-       private string mCurrentApeTask = string.Empty;
+        private string mCurrentApeTask = string.Empty;
 
         /// <summary>
         /// Primary entry point for running this tool
         /// </summary>
         /// <returns>CloseOutType enum representing completion status</returns>
-       public override CloseOutType RunTool()
-       {
+        public override CloseOutType RunTool()
+        {
             try
             {
 
@@ -58,7 +58,8 @@ namespace AnalysisManager_Ape_PlugIn
                     // Change the name of the log file back to the analysis manager log file
                     ResetLogFileNameToDefault();
 
-                    if (!processingSuccess) {
+                    if (!processingSuccess)
+                    {
                         if (string.IsNullOrWhiteSpace(mMessage))
                             LogError("Error running Ape");
                         else
@@ -85,7 +86,7 @@ namespace AnalysisManager_Ape_PlugIn
                 // Make sure objects are released
                 PRISM.ProgRunner.GarbageCollectNow();
 
-                if(!processingSuccess)
+                if (!processingSuccess)
                 {
                     // Something went wrong
                     // In order to help diagnose things, we will move whatever files were created into the result folder,
@@ -102,34 +103,32 @@ namespace AnalysisManager_Ape_PlugIn
                 var success = CopyResultsToTransferDirectory();
 
                 return success ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
-
             }
-            catch (Exception ex) {
+            catch (Exception ex)
+            {
                 mMessage = "Error in ApePlugin->RunTool";
                 LogError(mMessage, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
-
             }
-
 
         }
 
-       /// <summary>
-       /// Run the Ape pipeline(s) listed in "ApeOperations" parameter
-       /// </summary>
-       private bool RunApe()
-       {
-           // run the appropriate Mage pipeline(s) according to operations list parameter
-           var apeOperations = mJobParams.GetParam("ApeOperations");
-           var ops = new clsApeAMOperations(mJobParams, mMgrParams);
-           var bSuccess = ops.RunApeOperations(apeOperations);
+        /// <summary>
+        /// Run the Ape pipeline(s) listed in "ApeOperations" parameter
+        /// </summary>
+        private bool RunApe()
+        {
+            // run the appropriate Mage pipeline(s) according to operations list parameter
+            var apeOperations = mJobParams.GetParam("ApeOperations");
+            var ops = new clsApeAMOperations(mJobParams, mMgrParams);
+            var bSuccess = ops.RunApeOperations(apeOperations);
 
-           if (!bSuccess)
-               mMessage = "Error running ApeOperations: " + ops.ErrorMessage;
+            if (!bSuccess)
+                mMessage = "Error running ApeOperations: " + ops.ErrorMessage;
 
-           return bSuccess;
+            return bSuccess;
 
-       }
+        }
 
         /// <summary>
         /// Stores the tool version info in the database
@@ -140,7 +139,8 @@ namespace AnalysisManager_Ape_PlugIn
 
             var toolVersionInfo = string.Empty;
 
-            if (mDebugLevel >= 2) {
+            if (mDebugLevel >= 2)
+            {
                 LogDebug("Determining tool version info");
             }
 

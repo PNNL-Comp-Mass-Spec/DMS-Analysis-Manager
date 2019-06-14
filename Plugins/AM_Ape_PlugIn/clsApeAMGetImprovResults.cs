@@ -14,7 +14,7 @@ namespace AnalysisManager_Ape_PlugIn
 
         #endregion
 
-            #region Constructors
+        #region Constructors
 
         /// <summary>
         /// Constructor
@@ -88,7 +88,7 @@ namespace AnalysisManager_Ape_PlugIn
                 "1;@ReturnPeptideTable;1;True;sqldbtype.tinyint;T_Peptides;sqldbtype.tinyint"
             };
 
-            var dotnetConnString = "Server=" + apeMTSServerName + ";database=" + apeMTSDatabaseName+ ";uid=mtuser;Password=mt4fun";
+            var dotnetConnString = "Server=" + apeMTSServerName + ";database=" + apeMTSDatabaseName + ";uid=mtuser;Password=mt4fun";
             // mCurrentDBConnectionString = "Provider=sqloledb;Data Source=Albert;Initial Catalog=MT_Sea_Sediments_SBI_P590;User ID=mtuser;Password=mt4fun"
             Ape.SqlServerToSQLite.ProgressChanged += OnProgressChanged;
             var jobList = GetJobIDList();
@@ -140,7 +140,7 @@ namespace AnalysisManager_Ape_PlugIn
             }
 
             var sqlText = "SELECT Job FROM V_Mage_Data_Package_Analysis_Jobs " +
-                             "WHERE Data_Package_ID = " + dataPackageID + " and Tool Like 'Sequest%'";
+                          "WHERE Data_Package_ID = " + dataPackageID + " and Tool Like 'Sequest%'";
 
             var jobList = string.Empty;
             var intJobCount = 0;
