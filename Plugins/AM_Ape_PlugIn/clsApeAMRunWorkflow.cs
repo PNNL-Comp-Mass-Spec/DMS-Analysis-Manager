@@ -2,6 +2,7 @@
 using PRISM.Logging;
 using System;
 using System.IO;
+using PRISM;
 
 namespace AnalysisManager_Ape_PlugIn
 {
@@ -30,7 +31,10 @@ namespace AnalysisManager_Ape_PlugIn
             var success = true;
             var progressHandler = new Ape.SqlConversionHandler(delegate (bool done, bool conversionSuccess, int percent, string msg)
             {
-                Console.WriteLine(msg);
+                if (conversionSuccess)
+                    Console.WriteLine(msg);
+                else
+                    ConsoleMsgUtils.ShowWarning(msg);
 
                 if (done)
                 {
@@ -42,6 +46,8 @@ namespace AnalysisManager_Ape_PlugIn
                     else
                     {
                         mErrorMessage = "Error running Ape in clsApeAMRunWorkflow";
+                        ConsoleMsgUtils.ShowWarning(mErrorMessage);
+
                         LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, mErrorMessage);
                         success = false;
                     }
