@@ -303,7 +303,7 @@ namespace AnalysisManagerProg
             var logFile = new FileInfo(relativeLogFilePath);
             ShowTrace("Initializing log file " + PathUtils.CompactPathString(logFile.FullName, 60));
 
-            var appVersion = Assembly.GetEntryAssembly().GetName().Version;
+            var appVersion = Assembly.GetEntryAssembly()?.GetName().Version;
             var startupMsg = "=== Started Analysis Manager V" + appVersion + " ===== ";
             LogMessage(startupMsg);
 
