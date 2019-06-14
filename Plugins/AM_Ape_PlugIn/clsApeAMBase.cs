@@ -50,7 +50,7 @@ namespace AnalysisManager_Ape_PlugIn
             mJobParams = jobParams;
             mMgrParams = mgrParams;
             mResultsDBFileName = RequireJobParam("ResultsBaseName") + ".db3";
-            mWorkingDir = RequireMgrParam("workdir");
+            mWorkingDir = RequireMgrParam("WorkDir");
         }
 
         #endregion
