@@ -19,9 +19,9 @@ namespace AnalysisManager_Ape_PlugIn
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="jobParms"></param>
-        /// <param name="mgrParms"></param>
-        public clsApeAMGetImprovResults(IJobParams jobParms, IMgrParams mgrParms) : base(jobParms, mgrParms)
+        /// <param name="jobParams"></param>
+        /// <param name="mgrParams"></param>
+        public clsApeAMGetImprovResults(IJobParams jobParams, IMgrParams mgrParams) : base(jobParams, mgrParams)
         {
         }
 
@@ -32,29 +32,29 @@ namespace AnalysisManager_Ape_PlugIn
         /// </summary>
         public bool GetImprovResults(string dataPackageID)
         {
-            var blnSuccess = GetImprovResultsAll();
-            return blnSuccess;
+            var success = GetImprovResultsAll();
+            return success;
         }
 
         private bool GetImprovResultsAll()
         {
-            var blnSuccess = true;
-            var mHandle = new Ape.SqlConversionHandler(delegate(bool done, bool success, int percent, string msg)
+            var success = true;
+            var mHandle = new Ape.SqlConversionHandler(delegate (bool done, bool conversionSuccess, int percent, string msg)
             {
                 Console.WriteLine(msg);
 
                 if (done)
                 {
-                    if (success)
+                    if (conversionSuccess)
                     {
-                        LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.INFO, "Ape successfully created Improv datbase." + GetJobParam("ApeWorkflowName"));
-                        blnSuccess = true;
+                        LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.INFO, "Ape successfully created Improv database." + GetJobParam("ApeWorkflowName"));
+                        success = true;
                     }
                     else
                     {
                         mErrorMessage = "Error running Ape in GetImprovResultsAll";
                         LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, mErrorMessage);
-                        blnSuccess = false;
+                        success = false;
                     }
                 }
 
@@ -99,16 +99,16 @@ namespace AnalysisManager_Ape_PlugIn
 
             Ape.SqlServerToSQLite.ConvertDatasetToSQLiteFile(paramList, (int)eSqlServerToSqlLiteConversionMode.AMTTagDbJobs, dotnetConnString, jobList, apeDatabase, mHandle);
 
-            return blnSuccess;
+            return success;
         }
 
         // Unused function
         // private string GetExperimentList()
         // {
-        //    string constr = RequireMgrParam("connectionstring");
+        //    string connectionString = RequireMgrParam("ConnectionString");
         //    string sqlText = "Select Experiment From dbo.V_MAC_Data_Package_Experiments Where Data_Package_ID = " + GetJobParam("DataPackageID");
         //    string expList = string.Empty;
-        //    using (SqlConnection conn = new SqlConnection(constr))
+        //    using (SqlConnection conn = new SqlConnection(connectionString))
         //    {
         //        conn.Open();
         //        // Get the experiments from the Data Package
@@ -130,7 +130,7 @@ namespace AnalysisManager_Ape_PlugIn
 
         private string GetJobIDList()
         {
-            var constr = RequireMgrParam("connectionstring");
+            var connectionString = RequireMgrParam("ConnectionString");
             var dataPackageID = GetJobParam("DataPackageID");
 
             if (string.IsNullOrEmpty(dataPackageID))
@@ -144,7 +144,7 @@ namespace AnalysisManager_Ape_PlugIn
 
             var jobList = string.Empty;
             var intJobCount = 0;
-            using (var conn = new SqlConnection(constr))
+            using (var conn = new SqlConnection(connectionString))
             {
                 conn.Open();
                 // Get the matching jobs from the Data Package

@@ -23,9 +23,10 @@ namespace AnalysisManager_Ape_PlugIn
 
         #region Constructors
 
-        public clsApeAMOperations(IJobParams jobParms, IMgrParams mgrParms) {
-            mJobParams = jobParms;
-            mMgrParams = mgrParms;
+        public clsApeAMOperations(IJobParams jobParams, IMgrParams mgrParams)
+        {
+            mJobParams = jobParams;
+            mMgrParams = mgrParams;
         }
 
         #endregion

@@ -43,11 +43,11 @@ namespace AnalysisManager_IDM_Plugin
 
                 if (useExistingIDMResults)
                 {
-                    var fiIDMResultsDB = new FileInfo(Path.Combine(dataPackageFolderPath, mJobParams.GetParam("StepOutputFolderName"), "Results.db3"));
-                    if (fiIDMResultsDB.Exists)
+                    var idmResultsDB = new FileInfo(Path.Combine(dataPackageFolderPath, mJobParams.GetParam("StepOutputFolderName"), "Results.db3"));
+                    if (idmResultsDB.Exists)
                     {
                         var targetFilePath = Path.Combine(mWorkDir, clsAnalysisToolRunnerIDM.EXISTING_IDM_RESULTS_FILE_NAME);
-                        fiIDMResultsDB.CopyTo(targetFilePath);
+                        idmResultsDB.CopyTo(targetFilePath);
 
                         mJobParams.AddResultFileToSkip(clsAnalysisToolRunnerIDM.EXISTING_IDM_RESULTS_FILE_NAME);
                     }

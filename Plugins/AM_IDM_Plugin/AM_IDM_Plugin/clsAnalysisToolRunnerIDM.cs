@@ -39,8 +39,8 @@ namespace AnalysisManager_IDM_Plugin
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                var fiIDMResultsDB = new FileInfo(Path.Combine(mWorkDir, EXISTING_IDM_RESULTS_FILE_NAME));
-                if (fiIDMResultsDB.Exists)
+                var idmResultsDB = new FileInfo(Path.Combine(mWorkDir, EXISTING_IDM_RESULTS_FILE_NAME));
+                if (idmResultsDB.Exists)
                 {
                     // Existing results file was copied to the working directory
                     // Copy the t_precursor_interference table into Results.db3
@@ -51,15 +51,15 @@ namespace AnalysisManager_IDM_Plugin
 
                         if (mDebugLevel >= 1)
                         {
-                            LogMessage("Copying table t_precursor_interference from " + fiIDMResultsDB.Name + " to Results.db3");
+                            LogMessage("Copying table t_precursor_interference from " + idmResultsDB.Name + " to Results.db3");
                         }
 
-                        var cloneSuccess = sqLiteUtils.CloneDB(fiIDMResultsDB.FullName, Path.Combine(mWorkDir, "Results.db3"), appendToExistingDB: true);
+                        var cloneSuccess = sqLiteUtils.CloneDB(idmResultsDB.FullName, Path.Combine(mWorkDir, "Results.db3"), appendToExistingDB: true);
 
                         if (cloneSuccess)
                             skipIDM = true;
 
-                        // success = sqLiteUtils.CopySqliteTable(fiIDMResultsDB.FullName, "t_precursor_interference", Path.Combine(mWorkDir, "Results.db3"));
+                        // success = sqLiteUtils.CopySqliteTable(idmResultsDB.FullName, "t_precursor_interference", Path.Combine(mWorkDir, "Results.db3"));
 
                     }
                     catch (Exception ex)
@@ -167,9 +167,9 @@ namespace AnalysisManager_IDM_Plugin
         /// <remarks></remarks>
         private void StoreToolVersionInfo()
         {
-            var fiIDMdll = Path.Combine(clsGlobal.GetAppDirectoryPath(), "InterDetect.dll");
+            var idmDLL = Path.Combine(clsGlobal.GetAppDirectoryPath(), "InterDetect.dll");
 
-            StoreDotNETToolVersionInfo(fiIDMdll);
+            StoreDotNETToolVersionInfo(idmDLL);
 
         }
 

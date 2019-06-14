@@ -22,11 +22,11 @@ namespace MSGFResultsSummarizerExe
 {
     static class Program
     {
-        private const string PROGRAM_DATE = "March 31, 2017";
+        private const string PROGRAM_DATE = "June 14, 2019";
         private static string mMSGFSynFilePath = string.Empty;
-        private static string mInputFolderPath = string.Empty;
+        private static string mInputDirectoryPath = string.Empty;
 
-        private static string mOutputFolderPath = string.Empty;
+        private static string mOutputDirectoryPath = string.Empty;
         private static string mDatasetName = string.Empty;
 
         private static bool mContactDatabase = true;
@@ -39,39 +39,39 @@ namespace MSGFResultsSummarizerExe
         {
             // Returns 0 if no error, error code if an error
 
-            var objParseCommandLine = new clsParseCommandLine();
+            var commandLineParser = new clsParseCommandLine();
 
             try
             {
-                var blnProceed = false;
-                if (objParseCommandLine.ParseCommandLine())
+                var proceed = false;
+                if (commandLineParser.ParseCommandLine())
                 {
-                    if (SetOptionsUsingCommandLineParameters(objParseCommandLine))
-                        blnProceed = true;
+                    if (SetOptionsUsingCommandLineParameters(commandLineParser))
+                        proceed = true;
                 }
 
-                if (!blnProceed || objParseCommandLine.NeedToShowHelp)
-                {
-                    ShowProgramHelp();
-                    return -1;
-                }
-
-                if ((objParseCommandLine.ParameterCount + objParseCommandLine.NonSwitchParameterCount == 0))
+                if (!proceed || commandLineParser.NeedToShowHelp)
                 {
                     ShowProgramHelp();
                     return -1;
                 }
 
-                if (string.IsNullOrEmpty(mMSGFSynFilePath) && string.IsNullOrEmpty(mInputFolderPath))
+                if ((commandLineParser.ParameterCount + commandLineParser.NonSwitchParameterCount == 0))
                 {
-                    ShowErrorMessage("Must define either the MSGFSynFilePath or InputFolderPath");
                     ShowProgramHelp();
                     return -1;
                 }
 
-                var blnSuccess = SummarizeMSGFResults();
+                if (string.IsNullOrEmpty(mMSGFSynFilePath) && string.IsNullOrEmpty(mInputDirectoryPath))
+                {
+                    ShowErrorMessage("Must define either the MSGFSynFilePath or InputDirectoryPath");
+                    ShowProgramHelp();
+                    return -1;
+                }
 
-                if (!blnSuccess)
+                var success = SummarizeMSGFResults();
+
+                if (!success)
                 {
                     return -1;
                 }
@@ -92,12 +92,11 @@ namespace MSGFResultsSummarizerExe
 
         private static bool SummarizeMSGFResults()
         {
-            var blnSuccess = false;
 
             try
             {
                 // Initialize a dictionary object that will be used to either find the appropriate input file, or determine the file type of the specified input file
-                var dctFileSuffixes = new Dictionary<string, clsPHRPReader.ePeptideHitResultType>
+                var fileSuffixes = new Dictionary<string, clsPHRPReader.ePeptideHitResultType>
                 {
                     {"_xt_MSGF.txt", clsPHRPReader.ePeptideHitResultType.XTandem},
                     {"_msgfdb_syn_MSGF.txt", clsPHRPReader.ePeptideHitResultType.MSGFDB},
@@ -112,41 +111,41 @@ namespace MSGFResultsSummarizerExe
 
                 if (string.IsNullOrWhiteSpace(mMSGFSynFilePath))
                 {
-                    if (string.IsNullOrWhiteSpace(mInputFolderPath))
+                    if (string.IsNullOrWhiteSpace(mInputDirectoryPath))
                     {
-                        ShowErrorMessage("Must define either the MSGFSynFilePath or InputFolderPath; unable to continue");
+                        ShowErrorMessage("Must define either the MSGFSynFilePath or InputDirectoryPath; unable to continue");
                         return false;
                     }
 
-                    var diFolder = new DirectoryInfo(mInputFolderPath);
-                    if (!diFolder.Exists)
+                    var inputDirectory = new DirectoryInfo(mInputDirectoryPath);
+                    if (!inputDirectory.Exists)
                     {
-                        ShowErrorMessage("Input folder not found: " + diFolder.FullName);
+                        ShowErrorMessage("Input directory not found: " + inputDirectory.FullName);
                         return false;
                     }
 
-                    // Determine the input file path by looking for the expected files in mInputFolderPath
-                    foreach (var suffixEntry in dctFileSuffixes)
+                    // Determine the input file path by looking for the expected files in mInputDirectoryPath
+                    foreach (var suffixEntry in fileSuffixes)
                     {
-                        var fiFiles = diFolder.GetFiles("*" + suffixEntry.Key);
+                        var matchingFiles = inputDirectory.GetFiles("*" + suffixEntry.Key);
 
-                        if (fiFiles.Length > 0)
+                        if (matchingFiles.Length > 0)
                         {
                             // Match found
-                            mMSGFSynFilePath = fiFiles[0].FullName;
+                            mMSGFSynFilePath = matchingFiles[0].FullName;
                             eResultType = suffixEntry.Value;
                             break;
                         }
                     }
 
-                    var strSuffixesSearched = string.Join(", ", dctFileSuffixes.Keys.ToList());
+                    var suffixesSearched = string.Join(", ", fileSuffixes.Keys.ToList());
 
                     if (eResultType == clsPHRPReader.ePeptideHitResultType.Unknown)
                     {
-                        var strMsg = "Did not find any files in the source folder with the expected file name suffixes\n" +
-                            "Looked for " + strSuffixesSearched + " in \n" + diFolder.FullName;
+                        var warningMessage = "Did not find any files in the source directory with the expected file name suffixes\n" +
+                            "Looked for " + suffixesSearched + " in \n" + inputDirectory.FullName;
 
-                        ShowErrorMessage(strMsg);
+                        ShowErrorMessage(warningMessage);
                         return false;
                     }
                 }
@@ -158,7 +157,7 @@ namespace MSGFResultsSummarizerExe
 
                     if (eResultType == clsPHRPReader.ePeptideHitResultType.Unknown)
                     {
-                        foreach (var suffixEntry in dctFileSuffixes)
+                        foreach (var suffixEntry in fileSuffixes)
                         {
                             if (mMSGFSynFilePath.ToLower().EndsWith(suffixEntry.Key.ToLower()))
                             {
@@ -176,17 +175,17 @@ namespace MSGFResultsSummarizerExe
                     }
                 }
 
-                var fiSourceFile = new FileInfo(mMSGFSynFilePath);
-                if (!fiSourceFile.Exists)
+                var sourceFile = new FileInfo(mMSGFSynFilePath);
+                if (!sourceFile.Exists)
                 {
-                    ShowErrorMessage("Input file not found: " + fiSourceFile.FullName);
+                    ShowErrorMessage("Input file not found: " + sourceFile.FullName);
                     return false;
                 }
 
                 if (string.IsNullOrWhiteSpace(mDatasetName))
                 {
                     // Auto-determine the dataset name
-                    mDatasetName = clsPHRPReader.AutoDetermineDatasetName(fiSourceFile.Name, eResultType);
+                    mDatasetName = clsPHRPReader.AutoDetermineDatasetName(sourceFile.Name, eResultType);
 
                     if (string.IsNullOrEmpty(mDatasetName))
                     {
@@ -197,48 +196,49 @@ namespace MSGFResultsSummarizerExe
 
                 if (mJob == 0)
                 {
-                    // Auto-determine the job number by looking for _Auto000000 in the parent folder name
+                    // Auto-determine the job number by looking for _Auto000000 in the parent directory name
 
-                    var intUnderscoreIndex = fiSourceFile.DirectoryName.LastIndexOf("_", StringComparison.Ordinal);
+                    var underscoreIndex = sourceFile.DirectoryName.LastIndexOf("_", StringComparison.Ordinal);
 
-                    if (intUnderscoreIndex > 0)
+                    if (underscoreIndex > 0)
                     {
-                        var strNamePart = fiSourceFile.DirectoryName.Substring(intUnderscoreIndex + 1);
-                        if (strNamePart.ToLower().StartsWith("auto"))
+                        var namePart = sourceFile.DirectoryName.Substring(underscoreIndex + 1);
+                        if (namePart.ToLower().StartsWith("auto"))
                         {
-                            strNamePart = strNamePart.Substring(4);
-                            int.TryParse(strNamePart, out mJob);
+                            namePart = namePart.Substring(4);
+                            int.TryParse(namePart, out mJob);
                         }
                     }
 
                     if (mJob == 0)
                     {
                         Console.WriteLine();
-                        Console.WriteLine("Warning: unable to parse out the job number from " + fiSourceFile.DirectoryName);
+                        Console.WriteLine("Warning: unable to parse out the job number from " + sourceFile.DirectoryName);
                         Console.WriteLine();
                     }
                 }
 
-                var objSummarizer = new clsMSGFResultsSummarizer(eResultType, mDatasetName, mJob, fiSourceFile.Directory.FullName);
-                objSummarizer.ErrorEvent += MSGFResultsSummarizer_ErrorHandler;
-
-                objSummarizer.MSGFThreshold = clsMSGFResultsSummarizer.DEFAULT_MSGF_THRESHOLD;
-                objSummarizer.EValueThreshold = clsMSGFResultsSummarizer.DEFAULT_EVALUE_THRESHOLD;
-                objSummarizer.FDRThreshold = clsMSGFResultsSummarizer.DEFAULT_FDR_THRESHOLD;
-
-                objSummarizer.OutputFolderPath = mOutputFolderPath;
-                objSummarizer.PostJobPSMResultsToDB = mPostResultsToDb;
-                objSummarizer.SaveResultsToTextFile = mSaveResultsAsText;
-                objSummarizer.DatasetName = mDatasetName;
-                objSummarizer.ContactDatabase = mContactDatabase;
-
-                blnSuccess = objSummarizer.ProcessMSGFResults();
-
-                if (!blnSuccess)
+                var summarizer = new clsMSGFResultsSummarizer(eResultType, mDatasetName, mJob, sourceFile.Directory.FullName)
                 {
-                    if (!string.IsNullOrWhiteSpace(objSummarizer.ErrorMessage))
+                    MSGFThreshold = clsMSGFResultsSummarizer.DEFAULT_MSGF_THRESHOLD,
+                    EValueThreshold = clsMSGFResultsSummarizer.DEFAULT_EVALUE_THRESHOLD,
+                    FDRThreshold = clsMSGFResultsSummarizer.DEFAULT_FDR_THRESHOLD,
+                    OutputDirectoryPath = mOutputDirectoryPath,
+                    PostJobPSMResultsToDB = mPostResultsToDb,
+                    SaveResultsToTextFile = mSaveResultsAsText,
+                    DatasetName = mDatasetName,
+                    ContactDatabase = mContactDatabase
+                };
+
+                summarizer.ErrorEvent += MSGFResultsSummarizer_ErrorHandler;
+
+                var success = summarizer.ProcessMSGFResults();
+
+                if (!success)
+                {
+                    if (!string.IsNullOrWhiteSpace(summarizer.ErrorMessage))
                     {
-                        ShowErrorMessage("Processing failed: " + objSummarizer.ErrorMessage);
+                        ShowErrorMessage("Processing failed: " + summarizer.ErrorMessage);
                     }
                     else
                     {
@@ -246,69 +246,71 @@ namespace MSGFResultsSummarizerExe
                     }
                 }
 
-                Console.WriteLine("Result Type: ".PadRight(25) + objSummarizer.ResultTypeName);
+                Console.WriteLine("Result Type: ".PadRight(25) + summarizer.ResultTypeName);
 
-                string strFilterText;
+                string filterText;
 
-                if (objSummarizer.ResultType == clsPHRPReader.ePeptideHitResultType.MSAlign)
+                if (summarizer.ResultType == clsPHRPReader.ePeptideHitResultType.MSAlign)
                 {
-                    Console.WriteLine("EValue Threshold: ".PadRight(25) + objSummarizer.EValueThreshold.ToString("0.00E+00"));
-                    strFilterText = "EValue";
+                    Console.WriteLine("EValue Threshold: ".PadRight(25) + summarizer.EValueThreshold.ToString("0.00E+00"));
+                    filterText = "EValue";
                 }
                 else
                 {
-                    Console.WriteLine("MSGF Threshold: ".PadRight(25) + objSummarizer.MSGFThreshold.ToString("0.00E+00"));
-                    strFilterText = "MSGF";
+                    Console.WriteLine("MSGF Threshold: ".PadRight(25) + summarizer.MSGFThreshold.ToString("0.00E+00"));
+                    filterText = "MSGF";
                 }
 
-                Console.WriteLine("FDR Threshold: ".PadRight(25) + (objSummarizer.FDRThreshold * 100).ToString("0.0") + "%");
-                Console.WriteLine("Spectra Searched: ".PadRight(25) + objSummarizer.SpectraSearched.ToString("#,##0"));
+                Console.WriteLine("FDR Threshold: ".PadRight(25) + (summarizer.FDRThreshold * 100).ToString("0.0") + "%");
+                Console.WriteLine("Spectra Searched: ".PadRight(25) + summarizer.SpectraSearched.ToString("#,##0"));
                 Console.WriteLine();
-                Console.WriteLine(("Total PSMs (" + strFilterText + " Filter): ").PadRight(35) + objSummarizer.TotalPSMsMSGF);
-                Console.WriteLine(("Unique Peptides (" + strFilterText + " Filter): ").PadRight(35) + objSummarizer.UniquePeptideCountMSGF);
-                Console.WriteLine(("Unique Proteins (" + strFilterText + " Filter): ").PadRight(35) + objSummarizer.UniqueProteinCountMSGF);
+                Console.WriteLine(("Total PSMs (" + filterText + " Filter): ").PadRight(35) + summarizer.TotalPSMsMSGF);
+                Console.WriteLine(("Unique Peptides (" + filterText + " Filter): ").PadRight(35) + summarizer.UniquePeptideCountMSGF);
+                Console.WriteLine(("Unique Proteins (" + filterText + " Filter): ").PadRight(35) + summarizer.UniqueProteinCountMSGF);
 
                 Console.WriteLine();
-                Console.WriteLine("Total PSMs (FDR Filter): ".PadRight(35) + objSummarizer.TotalPSMsFDR);
-                Console.WriteLine("Unique Peptides (FDR Filter): ".PadRight(35) + objSummarizer.UniquePeptideCountFDR);
-                Console.WriteLine("Tryptic Peptides (FDR Filter): ".PadRight(35) + objSummarizer.TrypticPeptidesFDR);
-                Console.WriteLine("Unique Proteins (FDR Filter): ".PadRight(35) + objSummarizer.UniqueProteinCountFDR);
+                Console.WriteLine("Total PSMs (FDR Filter): ".PadRight(35) + summarizer.TotalPSMsFDR);
+                Console.WriteLine("Unique Peptides (FDR Filter): ".PadRight(35) + summarizer.UniquePeptideCountFDR);
+                Console.WriteLine("Tryptic Peptides (FDR Filter): ".PadRight(35) + summarizer.TrypticPeptidesFDR);
+                Console.WriteLine("Unique Proteins (FDR Filter): ".PadRight(35) + summarizer.UniqueProteinCountFDR);
 
                 Console.WriteLine();
-                Console.WriteLine("Unique Phosphopeptides (FDR Filter): ".PadRight(35) + objSummarizer.UniquePhosphopeptideCountFDR);
-                Console.WriteLine("Phosphopeptides with C-term K: ".PadRight(35) + objSummarizer.UniquePhosphopeptidesCTermK_FDR);
-                Console.WriteLine("Phosphopeptides with C-term R: ".PadRight(35) + objSummarizer.UniquePhosphopeptidesCTermR_FDR);
+                Console.WriteLine("Unique Phosphopeptides (FDR Filter): ".PadRight(35) + summarizer.UniquePhosphopeptideCountFDR);
+                Console.WriteLine("Phosphopeptides with C-term K: ".PadRight(35) + summarizer.UniquePhosphopeptidesCTermK_FDR);
+                Console.WriteLine("Phosphopeptides with C-term R: ".PadRight(35) + summarizer.UniquePhosphopeptidesCTermR_FDR);
 
                 Console.WriteLine();
-                Console.WriteLine("Missed Cleavage Ratio (FDR Filter): ".PadRight(35) + objSummarizer.MissedCleavageRatioFDR);
-                Console.WriteLine("Missed Cleavage Ratio for Phosphopeptides: ".PadRight(35) + objSummarizer.MissedCleavageRatioPhosphoFDR);
+                Console.WriteLine("Missed Cleavage Ratio (FDR Filter): ".PadRight(35) + summarizer.MissedCleavageRatioFDR);
+                Console.WriteLine("Missed Cleavage Ratio for Phosphopeptides: ".PadRight(35) + summarizer.MissedCleavageRatioPhosphoFDR);
 
                 Console.WriteLine();
-                Console.WriteLine("Keratin Peptides (FDR Filter): ".PadRight(35) + objSummarizer.KeratinPeptidesFDR);
-                Console.WriteLine("Trypsin Peptides (FDR Filter): ".PadRight(35) + objSummarizer.TrypsinPeptidesFDR);
+                Console.WriteLine("Keratin Peptides (FDR Filter): ".PadRight(35) + summarizer.KeratinPeptidesFDR);
+                Console.WriteLine("Trypsin Peptides (FDR Filter): ".PadRight(35) + summarizer.TrypsinPeptidesFDR);
 
                 Console.WriteLine();
-                Console.WriteLine("Percent MSn Scans No PSM: ".PadRight(38) + objSummarizer.PercentMSnScansNoPSM.ToString("0.0") + "%");
-                Console.WriteLine("Maximum Scan Gap Adjacent MSn Scans: ".PadRight(38) + objSummarizer.MaximumScanGapAdjacentMSn);
+                Console.WriteLine("Percent MSn Scans No PSM: ".PadRight(38) + summarizer.PercentMSnScansNoPSM.ToString("0.0") + "%");
+                Console.WriteLine("Maximum Scan Gap Adjacent MSn Scans: ".PadRight(38) + summarizer.MaximumScanGapAdjacentMSn);
 
                 Console.WriteLine();
+
+                return success;
             }
             catch (Exception ex)
             {
                 ConsoleMsgUtils.ShowError("Exception in SummarizeMSGFResults", ex);
+                return false;
             }
 
-            return blnSuccess;
         }
 
-        private static bool SetOptionsUsingCommandLineParameters(clsParseCommandLine objParseCommandLine)
+        private static bool SetOptionsUsingCommandLineParameters(clsParseCommandLine commandLineParser)
         {
             // Returns True if no problems; otherwise, returns false
 
-            var strValidParameters = new List<string>
+            var validParameters = new List<string>
             {
                 "I",
-                "Folder",
+                "Directory",
                 "Dataset",
                 "Job",
                 "O",
@@ -320,61 +322,58 @@ namespace MSGFResultsSummarizerExe
             try
             {
                 // Make sure no invalid parameters are present
-                if (objParseCommandLine.InvalidParametersPresent(strValidParameters))
+                if (commandLineParser.InvalidParametersPresent(validParameters))
                 {
                     return false;
                 }
-                else
+
+                // Query commandLineParser to see if various parameters are present
+                if (commandLineParser.RetrieveValueForParameter("I", out var synFilePath))
                 {
-                    // Query objParseCommandLine to see if various parameters are present
-                    string strValue;
-                    if (objParseCommandLine.RetrieveValueForParameter("I", out strValue))
-                    {
-                        mMSGFSynFilePath = strValue;
-                    }
-                    else if (objParseCommandLine.NonSwitchParameterCount > 0)
-                    {
-                        mMSGFSynFilePath = objParseCommandLine.RetrieveNonSwitchParameter(0);
-                    }
-
-                    if (objParseCommandLine.RetrieveValueForParameter("Folder", out strValue))
-                    {
-                        mInputFolderPath = strValue;
-                    }
-
-                    if (objParseCommandLine.RetrieveValueForParameter("Dataset", out strValue))
-                    {
-                        mDatasetName = strValue;
-                    }
-
-                    if (objParseCommandLine.RetrieveValueForParameter("Job", out strValue))
-                    {
-                        if (!int.TryParse(strValue, out mJob))
-                        {
-                            ShowErrorMessage("Job number not numeric: " + strValue);
-                            return false;
-                        }
-                    }
-
-                    objParseCommandLine.RetrieveValueForParameter("O", out mOutputFolderPath);
-
-                    if (objParseCommandLine.IsParameterPresent("NoDatabase"))
-                    {
-                        mContactDatabase = false;
-                    }
-
-                    if (objParseCommandLine.IsParameterPresent("NoText"))
-                    {
-                        mSaveResultsAsText = false;
-                    }
-
-                    if (objParseCommandLine.IsParameterPresent("DB"))
-                    {
-                        mPostResultsToDb = true;
-                    }
-
-                    return true;
+                    mMSGFSynFilePath = synFilePath;
                 }
+                else if (commandLineParser.NonSwitchParameterCount > 0)
+                {
+                    mMSGFSynFilePath = commandLineParser.RetrieveNonSwitchParameter(0);
+                }
+
+                if (commandLineParser.RetrieveValueForParameter("Directory", out var inputDirectoryPath))
+                {
+                    mInputDirectoryPath = inputDirectoryPath;
+                }
+
+                if (commandLineParser.RetrieveValueForParameter("Dataset", out var datasetName))
+                {
+                    mDatasetName = datasetName;
+                }
+
+                if (commandLineParser.RetrieveValueForParameter("Job", out var jobText))
+                {
+                    if (!int.TryParse(jobText, out mJob))
+                    {
+                        ShowErrorMessage("Job number not numeric: " + jobText);
+                        return false;
+                    }
+                }
+
+                commandLineParser.RetrieveValueForParameter("O", out mOutputDirectoryPath);
+
+                if (commandLineParser.IsParameterPresent("NoDatabase"))
+                {
+                    mContactDatabase = false;
+                }
+
+                if (commandLineParser.IsParameterPresent("NoText"))
+                {
+                    mSaveResultsAsText = false;
+                }
+
+                if (commandLineParser.IsParameterPresent("DB"))
+                {
+                    mPostResultsToDb = true;
+                }
+
+                return true;
             }
             catch (Exception ex)
             {

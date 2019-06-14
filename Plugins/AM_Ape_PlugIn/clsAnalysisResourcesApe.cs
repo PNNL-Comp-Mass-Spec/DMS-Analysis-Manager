@@ -20,9 +20,9 @@ namespace AnalysisManager_Ape_PlugIn
                 return result;
             }
 
-            var blnSuccess = RunApeGetResources();
+            var success = RunApeGetResources();
 
-            if (!blnSuccess) return CloseOutType.CLOSEOUT_FAILED;
+            if (!success) return CloseOutType.CLOSEOUT_FAILED;
 
             if (mDebugLevel >= 1)
             {
@@ -37,7 +37,7 @@ namespace AnalysisManager_Ape_PlugIn
         /// </summary>
         protected bool RunApeGetResources()
         {
-            var blnSuccess = false;
+            var success = false;
 
             var apeOperations = mJobParams.GetParam("ApeOperations");
 
@@ -48,9 +48,11 @@ namespace AnalysisManager_Ape_PlugIn
 
             foreach (var apeOperation in apeOperations.Split(','))
             {
-                if (!string.IsNullOrWhiteSpace(apeOperation)) {
-                    blnSuccess = RunApeOperation(apeOperation.Trim());
-                    if (!blnSuccess) {
+                if (!string.IsNullOrWhiteSpace(apeOperation))
+                {
+                    success = RunApeOperation(apeOperation.Trim());
+                    if (!success)
+                    {
                         if (string.IsNullOrEmpty(mMessage))
                             mMessage = "Error running Ape resources operation " + apeOperation;
                         break;
@@ -58,8 +60,7 @@ namespace AnalysisManager_Ape_PlugIn
                 }
             }
 
-            return blnSuccess;
-
+            return success;
         }
 
         /// <summary>
