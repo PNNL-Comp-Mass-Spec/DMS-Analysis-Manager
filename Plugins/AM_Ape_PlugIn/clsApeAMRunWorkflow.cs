@@ -61,6 +61,8 @@ namespace AnalysisManager_Ape_PlugIn
             // Lookup which workflow step groups should be run via APE
             // The names in apeWorkflowStepList apply to the <WorkflowGroup></WorkflowGroup> tag for workflow steps
 
+            // ReSharper disable CommentTypo
+
             // Example values for job parameter ApeWorkflowStepList
             // iTRAQ:
             //   msgfplus, 4plex, 1pctFDR, default, no_ascore, no_precursor_filter, keep_nonquant
@@ -70,11 +72,14 @@ namespace AnalysisManager_Ape_PlugIn
             //   msgfplus, 6plex, 1pctFDR, default, no_ascore, no_precursor_filter, keep_nonquant
             //   msgfplus, TMT10Plex, 1pctFDR, default, no_ascore, no_precursor_filter, keep_nonquant
 
+            // ReSharper restore CommentTypo
+
             var apeWorkflowStepList = Convert.ToString(GetJobParam("ApeWorkflowStepList"));
 
             if (string.IsNullOrEmpty(apeWorkflowStepList))
             {
                 // The job parameter originally was missing the "k" in workflow; try that version instead
+                // ReSharper disable once StringLiteralTypo
                 apeWorkflowStepList = Convert.ToString(GetJobParam("ApeWorflowStepList"));
             }
 
