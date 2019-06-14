@@ -1,3 +1,4 @@
+using System;
 using AnalysisManagerBase;
 using System.IO;
 
@@ -72,28 +73,27 @@ namespace AnalysisManager_Ape_PlugIn
         /// <returns></returns>
         private bool RunApeOperation(string apeOperation)
         {
-            var blnSuccess =  true;
 
-            // Note: case statements must be lowercase
-            switch (apeOperation.ToLower())
+            if (apeOperation.Equals("RunWorkFlow", StringComparison.OrdinalIgnoreCase))
             {
-                case "runworkflow":
-                    blnSuccess = GetWorkflowFiles();
-                    break;
-                case "getimprovresults":
-                    break;
-                case "getviperresults":
-                    break;
-                case "getqrollupresults":
-                    blnSuccess = GetQRollupFiles();
-                    break;
-                default:
-                    // Future: throw an error
-                    break;
+                var success = GetWorkflowFiles();
+                return success;
             }
-            return blnSuccess;
-        }
 
+            if (apeOperation.Equals("GetQRollupResults", StringComparison.OrdinalIgnoreCase))
+            {
+                var success = GetQRollupFiles();
+                return success;
+            }
+
+            // For other modes, simply return true
+            //   GetImprovResults
+            //   GetViperResults
+            //   GetQRollupResults
+
+            return true;
+
+        }
 
         #region Ape Operations
 
