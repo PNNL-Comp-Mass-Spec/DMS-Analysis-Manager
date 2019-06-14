@@ -392,27 +392,29 @@ namespace MSGFResultsSummarizerExe
         {
             try
             {
-                Console.WriteLine("This program parses MSGF synopsis file results to summarize the number of identified peptides and proteins");
-                Console.WriteLine("It creates a text result file and optionally posts the results to the DMS database");
-                Console.WriteLine("Peptides are first filtered on MSGF_SpecProb < 1E-10");
-                Console.WriteLine("They are next filtered on FDR < 1%");
+                Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
+                                  "This program parses MSGF synopsis file results to summarize the number of identified peptides and proteins. " +
+                                  "It creates a text result file and optionally posts the results to the DMS database. " +
+                                  "Peptides are first filtered on MSGF_SpecProb < 1E-10. " +
+                                  "They are next filtered on FDR < 1%"));
                 Console.WriteLine();
                 Console.WriteLine("Program syntax:\n" + Path.GetFileName(System.Reflection.Assembly.GetExecutingAssembly().Location));
-                Console.WriteLine(" [MSGFSynFilePath] [/Folder:InputFolderPath] [/Dataset:DatasetName]");
-                Console.WriteLine(" [/Job:JobNumber] [/O:OutputFolderPath] [/NoText] [/DB]");
+                Console.WriteLine(" [MSGFSynFilePath] [/Directory:InputDirectoryPath] [/Dataset:DatasetName]");
+                Console.WriteLine(" [/Job:JobNumber] [/O:OutputDirectoryPath] [/NoText] [/DB]");
                 Console.WriteLine();
-                Console.WriteLine("MSGFSynFilePath defines the data file to process, for example QC_Shew_11_06_pt5_c_21Feb12_Sphinx_11-08-09_syn_MSGF.txt");
-                Console.WriteLine("The name of the source file will be auto-determined if the input folder is defined via /Folder");
+                Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
+                                      "MSGFSynFilePath defines the data file to process, for example QC_Shew_11_06_pt5_c_21Feb12_Sphinx_11-08-09_syn_MSGF.txt. " +
+                                      "The name of the source file will be auto-determined if the input directory is defined via /Directory"));
                 Console.WriteLine();
-                Console.WriteLine("/Folder defines the input folder to process (and also to create the text result file in if /O is not used)");
+                Console.WriteLine(ConsoleMsgUtils.WrapParagraph("/Directory defines the input directory to process (and also to create the text result file in if /O is not used)"));
                 Console.WriteLine();
-                Console.WriteLine("/Dataset defines the dataset name; if /Dataset is not used, then the name will be auto-determined");
+                Console.WriteLine(ConsoleMsgUtils.WrapParagraph("/Dataset defines the dataset name; if /Dataset is not used, then the name will be auto-determined"));
                 Console.WriteLine();
-                Console.WriteLine("/Job defines the analysis job; if /Job is not provided, then will auto-determine the job number using the input folder name");
+                Console.WriteLine(ConsoleMsgUtils.WrapParagraph("/Job defines the analysis job; if /Job is not provided, then will auto-determine the job number using the input directory name"));
                 Console.WriteLine();
-                Console.WriteLine("Use /O to define a custom output folder path");
+                Console.WriteLine("Use /O to define a custom output directory path");
                 Console.WriteLine();
-                Console.WriteLine("Use /NoDatabase to indicate that DMS should not be contacted to lookup scan stats for the dataset");
+                Console.WriteLine(ConsoleMsgUtils.WrapParagraph("Use /NoDatabase to indicate that DMS should not be contacted to lookup scan stats for the dataset"));
                 Console.WriteLine();
                 Console.WriteLine("Use /NoText to specify that a text file not be created");
                 Console.WriteLine("Use /DB to post results to DMS");
