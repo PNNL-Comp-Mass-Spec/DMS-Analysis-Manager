@@ -159,6 +159,9 @@
     <PackageReference Include="jayrock-json">
       <Version>0.9.16530.1</Version>
     </PackageReference>
+    <PackageReference Include="MathNet.Numerics">
+      <Version>4.8.1</Version>
+    </PackageReference>
     <PackageReference Include="PRISM-Library">
       <Version>2.5.21</Version>
     </PackageReference>
@@ -190,6 +193,7 @@ xcopy "$(TargetDir)PRISM.dll" "$(ProjectDir)..\..\AM_Common" /y /d
 xcopy "$(TargetDir)PrismWin.dll" "$(ProjectDir)..\..\AM_Common" /y /d
 
 xcopy "$(TargetDir)CsvHelper.dll" "$(ProjectDir)..\..\AM_Common" /y /d
+xcopy "$(TargetDir)MathNet.Numerics.dll" "$(ProjectDir)..\..\AM_Common" /y /d
 
 xcopy "$(ProjectDir)..\..\AM_Common\FileConcatenator.dll" "$(TargetDir)" /y /d  /F
 xcopy "$(ProjectDir)..\..\AM_Common\PeptideFileExtractor.dll" "$(TargetDir)" /y /d /F
