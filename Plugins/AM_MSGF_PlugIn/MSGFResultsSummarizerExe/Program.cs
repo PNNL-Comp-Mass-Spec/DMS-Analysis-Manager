@@ -99,7 +99,7 @@ namespace MSGFResultsSummarizerExe
                 var fileSuffixes = new Dictionary<string, clsPHRPReader.ePeptideHitResultType>
                 {
                     {"_xt_MSGF.txt", clsPHRPReader.ePeptideHitResultType.XTandem},
-                    {"_msgfdb_syn_MSGF.txt", clsPHRPReader.ePeptideHitResultType.MSGFDB},
+                    {"_msgfdb_syn_MSGF.txt", clsPHRPReader.ePeptideHitResultType.MSGFPlus},
                     {"_inspect_syn_MSGF.txt", clsPHRPReader.ePeptideHitResultType.Inspect},
                     {"_syn_MSGF.txt", clsPHRPReader.ePeptideHitResultType.Sequest},
                     {"_msalign_syn.txt", clsPHRPReader.ePeptideHitResultType.MSAlign},
