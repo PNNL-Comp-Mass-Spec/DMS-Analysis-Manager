@@ -29,9 +29,9 @@ namespace AnalysisManager_Ape_PlugIn
 
         protected string mWorkingDir;
 
-        protected IJobParams mJobParms;
+        protected IJobParams mJobParams;
 
-        protected IMgrParams mMgrParms;
+        protected IMgrParams mMgrParams;
 
         protected string mErrorMessage = string.Empty;
 
@@ -45,9 +45,10 @@ namespace AnalysisManager_Ape_PlugIn
 
         #region Constructors
 
-        public clsApeAMBase(IJobParams jobParms, IMgrParams mgrParms) {
-            mJobParms = jobParms;
-            mMgrParms = mgrParms;
+        public clsApeAMBase(IJobParams jobParams, IMgrParams mgrParams)
+        {
+            mJobParams = jobParams;
+            mMgrParams = mgrParams;
             mResultsDBFileName = RequireJobParam("ResultsBaseName") + ".db3";
             mWorkingDir = RequireMgrParam("workdir");
         }
@@ -59,7 +60,7 @@ namespace AnalysisManager_Ape_PlugIn
 
         public string RequireMgrParam(string paramName)
         {
-            var val = mMgrParms.GetParam(paramName);
+            var val = mMgrParams.GetParam(paramName);
             if (string.IsNullOrEmpty(val))
             {
                 LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.WARN, string.Format("Required job parameter '{0}' was missing.", paramName));
@@ -69,8 +70,9 @@ namespace AnalysisManager_Ape_PlugIn
 
         public string RequireJobParam(string paramName)
         {
-            var val = mJobParms.GetParam(paramName);
-            if (string.IsNullOrEmpty(val)) {
+            var val = mJobParams.GetParam(paramName);
+            if (string.IsNullOrEmpty(val))
+            {
                 LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.WARN, string.Format("Required job parameter '{0}' was missing.", paramName));
             }
             return val;
@@ -78,12 +80,12 @@ namespace AnalysisManager_Ape_PlugIn
 
         public string GetJobParam(string paramName)
         {
-            return mJobParms.GetParam(paramName);
+            return mJobParams.GetParam(paramName);
         }
 
         public string GetJobParam(string paramName, string defaultValue)
         {
-            return mJobParms.GetJobParameter(paramName, defaultValue);
+            return mJobParams.GetJobParameter(paramName, defaultValue);
         }
 
 

@@ -19,9 +19,9 @@ namespace AnalysisManager_Ape_PlugIn
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="jobParms"></param>
-        /// <param name="mgrParms"></param>
-        public clsApeAMGetQRollupResults(IJobParams jobParms, IMgrParams mgrParms) : base(jobParms, mgrParms)
+        /// <param name="jobParams"></param>
+        /// <param name="mgrParams"></param>
+        public clsApeAMGetQRollupResults(IJobParams jobParams, IMgrParams mgrParams) : base(jobParams, mgrParams)
         {
         }
 
@@ -32,29 +32,29 @@ namespace AnalysisManager_Ape_PlugIn
         /// </summary>
         public bool GetQRollupResults(string dataPackageID)
         {
-            var blnSuccess = GetQRollupResultsAll();
-            return blnSuccess;
+            var success = GetQRollupResultsAll();
+            return success;
         }
 
         private bool GetQRollupResultsAll()
         {
-            var blnSuccess = true;
-            var mHandle = new Ape.SqlConversionHandler(delegate(bool done, bool success, int percent, string msg)
+            var success = true;
+            var mHandle = new Ape.SqlConversionHandler(delegate (bool done, bool conversionSuccess, int percent, string msg)
             {
                 Console.WriteLine(msg);
 
                 if (done)
                 {
-                    if (success)
+                    if (conversionSuccess)
                     {
                         LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.INFO, "Ape successfully created QRollup database." + GetJobParam("ApeWorkflowName"));
-                        blnSuccess = true;
+                        success = true;
                     }
                     else
                     {
                         mErrorMessage = "Error running Ape in GetQRollupResultsAll";
                         LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, mErrorMessage);
-                        blnSuccess = false;
+                        success = false;
                     }
                 }
 
@@ -93,12 +93,12 @@ namespace AnalysisManager_Ape_PlugIn
 
             Ape.SqlServerToSQLite.ConvertDatasetToSQLiteFile(paramList, (int)eSqlServerToSqlLiteConversionMode.QRollupResults, dotnetConnString, QIDList, apeDatabase, mHandle);
 
-            return blnSuccess;
+            return success;
         }
 
         private string GetQIDList()
         {
-            var constr = RequireMgrParam("connectionstring");
+            var connectionString = RequireMgrParam("ConnectionString");
             var apeMTSDatabaseName = GetJobParam("ApeMTSDatabase");
             var dataPackageID = GetJobParam("DataPackageID");
 
@@ -132,7 +132,7 @@ namespace AnalysisManager_Ape_PlugIn
 
             var QIDList = string.Empty;
             var intQIDCount = 0;
-            using (var conn = new SqlConnection(constr))
+            using (var conn = new SqlConnection(connectionString))
             {
                 conn.Open();
                 // Get the matching QIDs for this data package

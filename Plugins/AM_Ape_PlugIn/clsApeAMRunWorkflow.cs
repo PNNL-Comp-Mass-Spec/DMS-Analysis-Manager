@@ -16,10 +16,10 @@ namespace AnalysisManager_Ape_PlugIn
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="jobParms"></param>
-        /// <param name="mgrParms"></param>
-        public clsApeAMRunWorkflow(IJobParams jobParms, IMgrParams mgrParms)
-            : base(jobParms, mgrParms)
+        /// <param name="jobParams"></param>
+        /// <param name="mgrParams"></param>
+        public clsApeAMRunWorkflow(IJobParams jobParams, IMgrParams mgrParams)
+            : base(jobParams, mgrParams)
         {
         }
 
@@ -27,23 +27,23 @@ namespace AnalysisManager_Ape_PlugIn
 
         public bool RunWorkflow()
         {
-            var blnSuccess = true;
-            var progressHandler = new Ape.SqlConversionHandler(delegate(bool done, bool success, int percent, string msg)
+            var success = true;
+            var progressHandler = new Ape.SqlConversionHandler(delegate (bool done, bool conversionSuccess, int percent, string msg)
             {
                 Console.WriteLine(msg);
 
                 if (done)
                 {
-                    if (success)
+                    if (conversionSuccess)
                     {
                         LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.INFO, "Ape successfully ran workflow " + GetJobParam("ApeWorkflowName"));
-                        blnSuccess = true;
+                        success = true;
                     }
                     else
                     {
                         mErrorMessage = "Error running Ape in clsApeAMRunWorkflow";
                         LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, mErrorMessage);
-                        blnSuccess = false;
+                        success = false;
                     }
                 }
 
@@ -78,7 +78,7 @@ namespace AnalysisManager_Ape_PlugIn
             Ape.SqlServerToSQLite.ProgressChanged += OnProgressChanged;
             Ape.SqlServerToSQLite.StartWorkflow(apeWorkflowStepList, apeWorkflow, apeDatabase, apeDatabase, false, apeCompactDatabase, progressHandler);
 
-            if (!blnSuccess)
+            if (!success)
             {
                 if (string.IsNullOrEmpty(mErrorMessage))
                     mErrorMessage = "Ape.SqlServerToSQLite.StartWorkflow returned false";
@@ -89,13 +89,11 @@ namespace AnalysisManager_Ape_PlugIn
                 if (!string.Equals(analysisType, "improv", StringComparison.OrdinalIgnoreCase))
                 {
                     // Add the protein parsimony tables
-                    blnSuccess = StartProteinParsimony(apeDatabase);
+                    success = StartProteinParsimony(apeDatabase);
                 }
-
             }
 
-            return blnSuccess;
-
+            return success;
         }
 
         private bool StartProteinParsimony(string apeDatabase)
