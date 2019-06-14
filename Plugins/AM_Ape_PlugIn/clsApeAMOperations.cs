@@ -1,3 +1,4 @@
+using System;
 using AnalysisManagerBase;
 
 namespace AnalysisManager_Ape_PlugIn
@@ -56,69 +57,70 @@ namespace AnalysisManager_Ape_PlugIn
         /// <returns></returns>
         private bool RunApeOperation(string apeOperation)
         {
-            bool blnSuccess;
 
-            // Note: case statements must be lowercase
-            switch (apeOperation.ToLower())
+            if (apeOperation.Equals("RunWorkflow", StringComparison.OrdinalIgnoreCase))
             {
-                case "runworkflow":
-                    var apeWfObj = new clsApeAMRunWorkflow(mJobParams, mMgrParams);
+                var apeWfObj = new clsApeAMRunWorkflow(mJobParams, mMgrParams);
 
-                    // Attach the progress event handler
-                    apeWfObj.ProgressChanged += ApeProgressChanged;
+                // Attach the progress event handler
+                apeWfObj.ProgressChanged += ApeProgressChanged;
 
-                    blnSuccess = apeWfObj.RunWorkflow();
+                var success = apeWfObj.RunWorkflow();
 
-                    if (!blnSuccess)
-                        mErrorMessage = "Error running apeWorkflow: " + apeWfObj.ErrorMessage;
+                if (!success)
+                    mErrorMessage = "Error running apeWorkflow: " + apeWfObj.ErrorMessage;
 
-                    break;
-
-                case "getimprovresults":
-                    var apeImpObj = new clsApeAMGetImprovResults(mJobParams, mMgrParams);
-
-                    // Attach the progress event handler
-                    apeImpObj.ProgressChanged += ApeProgressChanged;
-
-                    blnSuccess = apeImpObj.GetImprovResults(mJobParams.GetParam("DataPackageID"));
-
-                    if (!blnSuccess)
-                        mErrorMessage = "Error getting ImprovResults: " + apeImpObj.ErrorMessage;
-
-                    break;
-
-                case "getqrollupresults":
-                    var apeQImpObj = new clsApeAMGetQRollupResults(mJobParams, mMgrParams);
-
-                    // Attach the progress event handler
-                    apeQImpObj.ProgressChanged += ApeProgressChanged;
-
-                    blnSuccess = apeQImpObj.GetQRollupResults(mJobParams.GetParam("DataPackageID"));
-
-                    if (!blnSuccess)
-                        mErrorMessage = "Error obtaining QRollup Results: " + apeQImpObj.ErrorMessage;
-
-                    break;
-
-                case "getviperresults":
-                    var apeVImpObj = new clsApeAMGetViperResults(mJobParams, mMgrParams);
-
-                    // Attach the progress event handler
-                    apeVImpObj.ProgressChanged += ApeProgressChanged;
-
-                    blnSuccess = apeVImpObj.GetQRollupResults(mJobParams.GetParam("DataPackageID"));
-
-                    if (!blnSuccess)
-                        mErrorMessage = "Error obtaining VIPER results: " + apeVImpObj.ErrorMessage;
-
-                    break;
-
-                default:
-                    blnSuccess = false;
-                    mErrorMessage = "Ape Operation: " + apeOperation + "not recognized";
-                    break;
+                return success;
             }
-            return blnSuccess;
+
+            if (apeOperation.Equals("GetImprovResults", StringComparison.OrdinalIgnoreCase))
+            {
+                var apeImpObj = new clsApeAMGetImprovResults(mJobParams, mMgrParams);
+
+                // Attach the progress event handler
+                apeImpObj.ProgressChanged += ApeProgressChanged;
+
+                var success = apeImpObj.GetImprovResults(mJobParams.GetParam("DataPackageID"));
+
+                if (!success)
+                    mErrorMessage = "Error getting ImprovResults: " + apeImpObj.ErrorMessage;
+
+                return success;
+            }
+
+            if (apeOperation.Equals("GetQRollupResults", StringComparison.OrdinalIgnoreCase))
+            {
+                var apeQImpObj = new clsApeAMGetQRollupResults(mJobParams, mMgrParams);
+
+                // Attach the progress event handler
+                apeQImpObj.ProgressChanged += ApeProgressChanged;
+
+                var success = apeQImpObj.GetQRollupResults(mJobParams.GetParam("DataPackageID"));
+
+                if (!success)
+                    mErrorMessage = "Error obtaining QRollup Results: " + apeQImpObj.ErrorMessage;
+
+                return success;
+            }
+
+            if (apeOperation.Equals("GetViperResults", StringComparison.OrdinalIgnoreCase))
+            {
+                var apeVImpObj = new clsApeAMGetViperResults(mJobParams, mMgrParams);
+
+                // Attach the progress event handler
+                apeVImpObj.ProgressChanged += ApeProgressChanged;
+
+                var success = apeVImpObj.GetQRollupResults(mJobParams.GetParam("DataPackageID"));
+
+                if (!success)
+                    mErrorMessage = "Error obtaining VIPER results: " + apeVImpObj.ErrorMessage;
+
+                return success;
+            }
+
+            mErrorMessage = "Ape Operation: " + apeOperation + "not recognized";
+            return false;
+
         }
 
         void ApeProgressChanged(object sender, clsApeAMBase.ProgressChangedEventArgs e)
