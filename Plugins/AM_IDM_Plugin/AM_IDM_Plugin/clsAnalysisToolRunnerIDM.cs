@@ -95,7 +95,7 @@ namespace AnalysisManager_IDM_Plugin
                         var idm = new InterferenceDetector();
 
                         // Attach the progress event
-                        idm.ProgressChanged += InterfenceDetectorProgressHandler;
+                        idm.ProgressChanged += InterferenceDetectorProgressHandler;
 
                         idm.WorkDir = mWorkDir;
 
@@ -152,7 +152,7 @@ namespace AnalysisManager_IDM_Plugin
 
         }
 
-        private void InterfenceDetectorProgressHandler(InterferenceDetector id, ProgressInfo e)
+        private void InterferenceDetectorProgressHandler(InterferenceDetector id, ProgressInfo e)
         {
 
             mProgress = e.Value;
