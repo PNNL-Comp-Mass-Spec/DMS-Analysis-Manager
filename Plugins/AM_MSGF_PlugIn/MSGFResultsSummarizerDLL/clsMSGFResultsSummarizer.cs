@@ -1606,25 +1606,40 @@ namespace MSGFResultsSummarizer
                 using (var writer = new StreamWriter(new FileStream(outputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
                     // Header line
-                    writer.WriteLine(
-                        "Dataset\t" +
-                        "Job\t" +
-                        "MSGF_Threshold\t" +
-                        "FDR_Threshold\t" +
-                        "Spectra_Searched\t" +
-                        "Total_PSMs_MSGF_Filtered\t" +
-                        "Unique_Peptides_MSGF_Filtered\t" +
-                        "Unique_Proteins_MSGF_Filtered\t" +
-                        "Total_PSMs_FDR_Filtered\t" +
-                        "Unique_Peptides_FDR_Filtered\t" +
-                        "Unique_Proteins_FDR_Filtered");
+                    var headers = new List<string>
+                    {
+                        "Dataset",
+                        "Job",
+                        "MSGF_Threshold",
+                        "FDR_Threshold",
+                        "Spectra_Searched",
+                        "Total_PSMs_MSGF_Filtered",
+                        "Unique_Peptides_MSGF_Filtered",
+                        "Unique_Proteins_MSGF_Filtered",
+                        "Total_PSMs_FDR_Filtered",
+                        "Unique_Peptides_FDR_Filtered",
+                        "Unique_Proteins_FDR_Filtered"
+                    };
+
+                    writer.WriteLine(string.Join("\t", headers));
 
                     // Stats
-                    writer.WriteLine(mDatasetName + "\t" + mJob + "\t" + MSGFThreshold.ToString("0.00E+00") + "\t" +
-                                        FDRThreshold.ToString("0.000") + "\t" + mSpectraSearched + "\t" + mMSGFBasedCounts.TotalPSMs + "\t" +
-                                        mMSGFBasedCounts.UniquePeptideCount + "\t" + mMSGFBasedCounts.UniqueProteinCount + "\t" +
-                                        mFDRBasedCounts.TotalPSMs + "\t" + mFDRBasedCounts.UniquePeptideCount + "\t" +
-                                        mFDRBasedCounts.UniqueProteinCount);
+                    var stats = new List<string>
+                    {
+                        mDatasetName,
+                        mJob.ToString(),
+                        MSGFThreshold.ToString("0.00E+00"),
+                        FDRThreshold.ToString("0.000"),
+                        mSpectraSearched.ToString(),
+                        mMSGFBasedCounts.TotalPSMs.ToString(),
+                        mMSGFBasedCounts.UniquePeptideCount.ToString(),
+                        mMSGFBasedCounts.UniqueProteinCount.ToString(),
+                        mFDRBasedCounts.TotalPSMs.ToString(),
+                        mFDRBasedCounts.UniquePeptideCount.ToString(),
+                        mFDRBasedCounts.UniqueProteinCount.ToString()
+                    };
+
+                    writer.WriteLine(string.Join("\t", stats));
                 }
             }
             catch (Exception ex)
