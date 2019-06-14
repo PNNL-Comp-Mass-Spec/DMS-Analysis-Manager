@@ -389,7 +389,7 @@ namespace AnalysisManagerProg
                 mPluginLoader.TraceMode = true;
 
             // Use a custom error event handler
-            mPluginLoader.ErrorEvent -= ErrorEventHandler;
+            UnregisterEventHandler(mPluginLoader, BaseLogger.LogLevels.ERROR);
             mPluginLoader.ErrorEvent += PluginLoader_ErrorEventHandler;
 
             // Everything worked
@@ -3148,51 +3148,9 @@ namespace AnalysisManagerProg
 
         #region "EventNotifier events"
 
-        private void RegisterEvents(EventNotifier oProcessingClass, bool writeDebugEventsToLog = true)
-        {
-            if (writeDebugEventsToLog)
-            {
-                oProcessingClass.DebugEvent += DebugEventHandler;
-            }
-            else
-            {
-                oProcessingClass.DebugEvent += DebugEventHandlerConsoleOnly;
-            }
-
-            oProcessingClass.StatusEvent += StatusEventHandler;
-            oProcessingClass.ErrorEvent += ErrorEventHandler;
-            oProcessingClass.WarningEvent += WarningEventHandler;
-            oProcessingClass.ProgressUpdate += ProgressUpdateHandler;
-        }
-
-        private void DebugEventHandlerConsoleOnly(string statusMessage)
-        {
-            LogTools.LogDebug(statusMessage, writeToLog: false);
-        }
-
-        private void DebugEventHandler(string statusMessage)
-        {
-            LogDebug(statusMessage);
-        }
-
-        private void StatusEventHandler(string statusMessage)
-        {
-            LogMessage(statusMessage);
-        }
-
         private void CriticalErrorEvent(string message, Exception ex)
         {
             LogError(message, true);
-        }
-
-        private void ErrorEventHandler(string errorMessage, Exception ex)
-        {
-            LogError(errorMessage, ex);
-        }
-
-        private void WarningEventHandler(string warningMessage)
-        {
-            LogWarning(warningMessage);
         }
 
         /// <summary>
@@ -3226,12 +3184,6 @@ namespace AnalysisManagerProg
                 LogWarning(formattedError);
             }
 
-        }
-
-        private void ProgressUpdateHandler(string progressMessage, float percentComplete)
-        {
-            mStatusTools.CurrentOperation = progressMessage;
-            mStatusTools.UpdateAndWrite(percentComplete);
         }
 
         #endregion
