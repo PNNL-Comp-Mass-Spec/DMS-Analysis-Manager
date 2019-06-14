@@ -16,7 +16,8 @@ namespace AnalysisManager_Ape_PlugIn
         {
             // Retrieve shared resources, including the JobParameters file from the previous job step
             var result = GetSharedResources();
-            if (result != CloseOutType.CLOSEOUT_SUCCESS) {
+            if (result != CloseOutType.CLOSEOUT_SUCCESS)
+            {
                 return result;
             }
 
@@ -41,7 +42,8 @@ namespace AnalysisManager_Ape_PlugIn
 
             var apeOperations = mJobParams.GetParam("ApeOperations");
 
-            if (string.IsNullOrWhiteSpace(apeOperations)) {
+            if (string.IsNullOrWhiteSpace(apeOperations))
+            {
                 mMessage = "ApeOperations parameter is not defined";
                 return false;
             }
@@ -146,10 +148,7 @@ namespace AnalysisManager_Ape_PlugIn
             return true;
         }
 
-
         #endregion
-
-
 
     }
 }

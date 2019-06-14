@@ -36,9 +36,11 @@ namespace AnalysisManager_Ape_PlugIn
         /// </summary>
         /// <param name="apeOperations"></param>
         /// <returns></returns>
-        public bool RunApeOperations(string apeOperations) {
+        public bool RunApeOperations(string apeOperations)
+        {
             var ok = false;
-            foreach (var apeOperation in apeOperations.Split(',')) {
+            foreach (var apeOperation in apeOperations.Split(','))
+            {
                 ok = RunApeOperation(apeOperation.Trim());
                 if (!ok) break;
             }
@@ -125,10 +127,10 @@ namespace AnalysisManager_Ape_PlugIn
             // Update the step tool progress
             // However, Ape routinely reports progress of 0% or 100% at the start and end of certain subtasks, so ignore those values
             // if (e.percentComplete > 0 && e.percentComplete < 100)
-                // mProgress = PROGRESS_PCT_APE_START + (PROGRESS_PCT_APE_DONE - PROGRESS_PCT_APE_START) * e.percentComplete / 100.0F;
+            // mProgress = PROGRESS_PCT_APE_START + (PROGRESS_PCT_APE_DONE - PROGRESS_PCT_APE_START) * e.percentComplete / 100.0F;
 
             // if (!string.IsNullOrEmpty(e.taskDescription))
-                // mCurrentApeTask = e.taskDescription;
+            // mCurrentApeTask = e.taskDescription;
 
             // if (System.DateTime.UtcNow.Subtract(mLastStatusUpdateTime).TotalSeconds >= 10)
             // {
