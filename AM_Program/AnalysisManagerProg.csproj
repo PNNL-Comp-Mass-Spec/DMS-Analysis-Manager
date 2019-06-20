@@ -47,6 +47,10 @@
     <StartupObject>AnalysisManagerProg.Program</StartupObject>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Cyclops, Version=1.1.7107.29277, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\AM_Common\Cyclops.dll</HintPath>
+    </Reference>
     <Reference Include="DMSUpdateManager">
       <HintPath>..\AM_Common\DMSUpdateManager.dll</HintPath>
     </Reference>
