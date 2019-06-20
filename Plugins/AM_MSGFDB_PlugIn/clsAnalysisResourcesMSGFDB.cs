@@ -441,6 +441,14 @@ namespace AnalysisManagerMSGFDBPlugIn
             // Retrieve the _mgf.zip file and extract the .mgf file
             // Note that if the file was found in MyEMSL, GetZippedMgfFile will auto-call ProcessMyEMSLDownloadQueue to download the file
 
+            var mgfFile = new FileInfo(Path.Combine(mWorkDir, DatasetName + DOT_MGF_EXTENSION));
+            if (mgfFile.Exists)
+            {
+                // The .mgf file is already in the working directory
+                // This will be the case when running jobs remotely
+                return CloseOutType.CLOSEOUT_SUCCESS;
+            }
+
             var result = GetZippedMgfFile();
             if (result == CloseOutType.CLOSEOUT_SUCCESS)
                 return CloseOutType.CLOSEOUT_SUCCESS;
