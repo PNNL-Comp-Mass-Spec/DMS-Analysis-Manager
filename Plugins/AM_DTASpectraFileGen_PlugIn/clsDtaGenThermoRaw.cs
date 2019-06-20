@@ -313,7 +313,7 @@ namespace DTASpectraFileGen
                 }
                 else
                 {
-                    // Processing succeded
+                    // Processing succeeded
                     // We don't need to keep the console output file long-term
                     mJobParams.AddResultFileToSkip(CONSOLE_OUTPUT_FILENAME);
                     mResults = ProcessResults.SF_SUCCESS;
@@ -325,7 +325,7 @@ namespace DTASpectraFileGen
 
         /// <summary>
         /// Method that actually makes the DTA files
-        /// This functon is called by MakeDTAFilesThreaded
+        /// This method is called by MakeDTAFilesThreaded
         /// </summary>
         /// <returns>TRUE for success; FALSE for failure</returns>
         /// <remarks></remarks>
