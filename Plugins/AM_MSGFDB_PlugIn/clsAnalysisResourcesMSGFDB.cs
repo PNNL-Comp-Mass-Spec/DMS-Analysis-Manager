@@ -19,6 +19,8 @@ namespace AnalysisManagerMSGFDBPlugIn
     public class clsAnalysisResourcesMSGFDB : clsAnalysisResources
     {
 
+        public const string MSCONVERT_FILENAME = "msconvert.exe";
+
         /// <summary>
         /// Initialize options
         /// </summary>

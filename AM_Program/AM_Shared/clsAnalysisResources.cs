@@ -121,6 +121,16 @@ namespace AnalysisManagerBase
         public const string RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER = "bruker_tof_baf";
 
         /// <summary>
+        /// Bruker TOF tdf data
+        /// </summary>
+        /// <remarks>
+        /// This is used by instrument External_Bruker_timsTOF
+        /// Inside the .D directory are files analysis.tdf and analysis.tdf_bin; there is also .m subdirectory that has a microTOFQImpacTemAcquisition.method file;
+        /// there is not a ser or fid file
+        /// </remarks>
+        public const string RAW_DATA_TYPE_BRUKER_TOF_TDF_FOLDER = "bruker_tof_tdf";
+
+        /// <summary>
         /// Result type for SEQUEST
         /// </summary>
         public const string RESULT_TYPE_SEQUEST = "Peptide_Hit";
@@ -175,6 +185,11 @@ namespace AnalysisManagerBase
         /// Concatenated dta file
         /// </summary>
         public const string CDTA_ZIPPED_EXTENSION = "_dta.zip";
+
+        /// <summary>
+        /// Zipped .mgf file
+        /// </summary>
+        public const string MGF_ZIPPED_EXTENSION = "_mgf.zip";
 
         /// <summary>
         /// QStar .wiff file
@@ -443,7 +458,12 @@ namespace AnalysisManagerBase
             /// <summary>
             /// Used by Maxis_01; Inside the .D directory is the analysis.baf file; there is also .m subdirectory that has a microTOFQMaxAcquisition.method file; there is not a ser or fid file
             /// </summary>
-            BrukerTOFBaf = 12
+            BrukerTOFBaf = 12,
+
+            /// <summary>
+            /// Used by External_Bruker_timsTOF; Inside the .D directory are files analysis.tdf and analysis.tdf_bin
+            /// </summary>
+            BrukerTOFTdf = 13
         }
 
         /// <summary>
@@ -2537,6 +2557,9 @@ namespace AnalysisManagerBase
                     return eRawDataTypeConstants.BrukerMALDIImaging;
                 case RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER:
                     return eRawDataTypeConstants.BrukerTOFBaf;
+                case RAW_DATA_TYPE_BRUKER_TOF_TDF_FOLDER:
+                    return eRawDataTypeConstants.BrukerTOFTdf;
+
                 default:
                     return eRawDataTypeConstants.Unknown;
             }

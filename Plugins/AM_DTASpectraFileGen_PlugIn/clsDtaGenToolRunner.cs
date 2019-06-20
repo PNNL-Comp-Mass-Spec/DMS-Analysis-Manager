@@ -261,9 +261,28 @@ namespace DTASpectraFileGen
                 case clsAnalysisResources.eRawDataTypeConstants.AgilentDFolder:
                     concatenateDTAs = true;
                     return eDTAGeneratorConstants.MGFtoDTA;
+
+                case clsAnalysisResources.eRawDataTypeConstants.BrukerTOFTdf:
+
+                    concatenateDTAs = false;
+                    if (string.Equals(dtaGenerator, clsDtaGenThermoRaw.MSCONVERT_FILENAME, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return eDTAGeneratorConstants.MSConvert;
+                    }
+
+                    if (string.IsNullOrEmpty(dtaGenerator))
+                    {
+                        errorMessage = NotifyMissingParameter(jobParams, "DtaGenerator");
+                    }
+                    else
+                    {
+                        errorMessage = "Bruker analysis.tdf files can only be converted to .mgf using MSConvert";
+                    }
+
+                    return eDTAGeneratorConstants.Unknown;
+
                 default:
                     errorMessage = "Unsupported data type for DTA generation: " + rawDataType;
-
                     return eDTAGeneratorConstants.Unknown;
             }
         }
@@ -869,6 +888,22 @@ namespace DTASpectraFileGen
             return output.ToString();
         }
 
+        private bool RenameZipFileIfRequired(string workDir, string sourceFileName, string finalZipFileName)
+        {
+            if (string.IsNullOrWhiteSpace(finalZipFileName))
+                return true;
+
+            var zipFileToRename = new FileInfo(Path.Combine(workDir, sourceFileName));
+            if (!zipFileToRename.Exists)
+            {
+                LogError("Zip file not found, job " + mJob + ", step " + mStepNum + ": " + zipFileToRename.FullName);
+                return false;
+            }
+
+            zipFileToRename.MoveTo(Path.Combine(mWorkDir, finalZipFileName));
+            return true;
+        }
+
         private bool ScanMatchIsPossible(clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType parentIonDataHeader,
             IReadOnlyDictionary<int, SortedSet<int>> fragIonDataScanStatus)
         {
@@ -1170,24 +1205,43 @@ namespace DTASpectraFileGen
         /// <remarks></remarks>
         private CloseOutType ZipConcatenatedDtaFile()
         {
-            var DtaFileName = mDatasetName + clsAnalysisResources.CDTA_EXTENSION;
-            var DtaFilePath = Path.Combine(mWorkDir, DtaFileName);
+            var convertToCDTA = mJobParams.GetJobParameter("DtaGenerator", "ConvertMGFtoCDTA", true);
+
+            string inputFileExtension;
+            string finalZipFileName;
+
+            if (convertToCDTA)
+            {
+                inputFileExtension = clsAnalysisResources.CDTA_EXTENSION;
+                finalZipFileName = string.Empty;
+            }
+            else
+            {
+                inputFileExtension = clsAnalysisResources.DOT_MGF_EXTENSION;
+                finalZipFileName = mDatasetName + "_mgf.zip";
+            }
+
+            var inputFileName = mDatasetName + inputFileExtension;
+            var inputFilePath = Path.Combine(mWorkDir, inputFileName);
 
             LogMessage("Zipping concatenated spectra file, job " + mJob + ", step " + mStepNum);
 
-            // Verify the _dta.txt file exists
-            if (!File.Exists(DtaFilePath))
+            // Verify the _dta.txt or .mgf file exists
+            if (!File.Exists(inputFilePath))
             {
-                LogWarning("Error: Unable to find concatenated dta file");
+                LogWarning("Error: Unable to find spectrum file " + inputFileName);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
             // Zip the file using IonicZip
             try
             {
-                if (ZipFile(DtaFilePath, false))
+                if (ZipFile(inputFilePath, false))
                 {
-                    return CloseOutType.CLOSEOUT_SUCCESS;
+                    if (RenameZipFileIfRequired(mWorkDir, mDatasetName + ".zip", finalZipFileName))
+                        return CloseOutType.CLOSEOUT_SUCCESS;
+
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
             }
             catch (Exception ex)
@@ -1199,7 +1253,7 @@ namespace DTASpectraFileGen
             // Occasionally the zip file is corrupted and will need to be zipped using ICSharpCode.SharpZipLib instead
             // If the file exists and is not zero bytes in length, try zipping again, but instead use ICSharpCode.SharpZipLib
 
-            var zipFile = new FileInfo(GetZipFilePathForFile(DtaFilePath));
+            var zipFile = new FileInfo(GetZipFilePathForFile(inputFilePath));
             if (!zipFile.Exists || zipFile.Length <= 0)
             {
                 var msg = "Error zipping spectrum file, job " + mJob + ", step " + mStepNum;
@@ -1211,12 +1265,16 @@ namespace DTASpectraFileGen
             {
 
 #pragma warning disable 618
-                if (ZipFileSharpZipLib(DtaFilePath))
+                if (ZipFileSharpZipLib(inputFilePath))
 #pragma warning restore 618
                 {
-                    var warningMsg = string.Format("Zip file created using IonicZip was corrupted; successfully compressed it using SharpZipLib instead: {0}", DtaFileName);
+                    var warningMsg = string.Format("Zip file created using IonicZip was corrupted; successfully compressed it using SharpZipLib instead: {0}", inputFileName);
                     LogWarning(warningMsg);
-                    return CloseOutType.CLOSEOUT_SUCCESS;
+
+                    if (RenameZipFileIfRequired(mWorkDir, mDatasetName + ".zip", finalZipFileName))
+                        return CloseOutType.CLOSEOUT_SUCCESS;
+
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 var msg = "Error zipping spectrum file using SharpZipLib, job " + mJob + ", step " + mStepNum;

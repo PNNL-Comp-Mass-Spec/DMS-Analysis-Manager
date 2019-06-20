@@ -323,9 +323,11 @@ namespace DTASpectraFileGen
                     case clsAnalysisResources.eRawDataTypeConstants.AgilentDFolder:
                     case clsAnalysisResources.eRawDataTypeConstants.BrukerFTFolder:
                     case clsAnalysisResources.eRawDataTypeConstants.BrukerTOFBaf:
+                    case clsAnalysisResources.eRawDataTypeConstants.BrukerTOFTdf:
                         // As of 11/19/2010, the _Log.txt file is created inside the .D folder
                         logFilePath = Path.Combine(mInputFilePath, mDatasetName) + "_log.txt";
                         break;
+
                     default:
                         logFilePath = Path.Combine(mWorkDir, Path.GetFileNameWithoutExtension(mInputFilePath) + "_log.txt");
                         break;

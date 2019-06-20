@@ -203,6 +203,7 @@ namespace AnalysisManagerBase
                     break;
                 case clsAnalysisResources.eRawDataTypeConstants.BrukerFTFolder:
                 case clsAnalysisResources.eRawDataTypeConstants.BrukerTOFBaf:
+                case clsAnalysisResources.eRawDataTypeConstants.BrukerTOFTdf:
                     // Call RetrieveDotDFolder() to copy the directory and all subdirectories
 
                     // Both the MSXml step tool and DeconTools require the .Baf file

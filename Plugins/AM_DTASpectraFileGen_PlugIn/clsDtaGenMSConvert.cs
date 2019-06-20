@@ -69,15 +69,19 @@ namespace DTASpectraFileGen
 
             mProgress = 75;
 
-            // Convert the .mgf file to _dta.txt
-            if (!ConvertMGFtoDTA())
+            var convertToCDTA = mJobParams.GetJobParameter("DtaGenerator", "ConvertMGFtoCDTA", true);
+            if (convertToCDTA)
             {
-                if (mStatus != ProcessStatus.SF_ABORTING)
+                // Convert the .mgf file to _dta.txt
+                if (!ConvertMGFtoDTA())
                 {
-                    mResults = ProcessResults.SF_FAILURE;
-                    mStatus = ProcessStatus.SF_ERROR;
+                    if (mStatus != ProcessStatus.SF_ABORTING)
+                    {
+                        mResults = ProcessResults.SF_FAILURE;
+                        mStatus = ProcessStatus.SF_ERROR;
+                    }
+                    return;
                 }
-                return;
             }
 
             mResults = ProcessResults.SF_SUCCESS;
@@ -155,7 +159,10 @@ namespace DTASpectraFileGen
                     case clsAnalysisResources.eRawDataTypeConstants.mzML:
                         instrumentFilePath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_MZML_EXTENSION);
                         break;
+                    case clsAnalysisResources.eRawDataTypeConstants.BrukerTOFTdf:
+                        instrumentFilePath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_D_EXTENSION);
                         break;
+
                     default:
                         LogError("Raw data file type not supported: " + eRawDataType);
                         return false;

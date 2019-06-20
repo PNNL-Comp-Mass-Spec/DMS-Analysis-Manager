@@ -24,7 +24,7 @@ namespace DTASpectraFileGen
     {
         #region "Constants"
 
-        protected const int DEFAULT_SCAN_STOP = 999999;
+        protected const int DEFAULT_SCAN_STOP = 99999999;
 
         private const string CONSOLE_OUTPUT_FILENAME = "DeconMSn_ConsoleOutput.txt";
 
@@ -166,12 +166,25 @@ namespace DTASpectraFileGen
                 case clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile:
                     dataFileExtension = clsAnalysisResources.DOT_RAW_EXTENSION;
                     break;
+
                 case clsAnalysisResources.eRawDataTypeConstants.mzXML:
                     dataFileExtension = clsAnalysisResources.DOT_MZXML_EXTENSION;
                     break;
+
                 case clsAnalysisResources.eRawDataTypeConstants.mzML:
                     dataFileExtension = clsAnalysisResources.DOT_MZML_EXTENSION;
                     break;
+
+                case clsAnalysisResources.eRawDataTypeConstants.BrukerTOFTdf:
+                    if (Directory.Exists(Path.Combine(workDir, datasetName + clsAnalysisResources.DOT_D_EXTENSION)))
+                    {
+                        mErrMsg = string.Empty;
+                        return true;
+                    }
+
+                    LogError("Instrument directory not found in working directory for dataset " + datasetName);
+                    return false;
+
                 default:
                     LogError("Unsupported data type: " + mRawDataType);
                     return false;

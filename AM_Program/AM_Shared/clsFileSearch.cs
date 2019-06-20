@@ -2387,7 +2387,7 @@ namespace AnalysisManagerBase
                     {
                         // DeconTools_V2 now supports reading the .D files directly
                         // Call RetrieveDotDFolder() to copy the directory and all subdirectories
-                        success = RetrieveDotDFolder(createStoragePathInfoOnly, skipBAFFiles: true);
+                        success = RetrieveDotDFolder(createStoragePathInfoOnly, skipBafAndTdfFiles: true);
                     }
 
                     break;
@@ -2426,22 +2426,23 @@ namespace AnalysisManagerBase
                     break;
                 case clsAnalysisResources.eRawDataTypeConstants.BrukerFTFolder:
                 case clsAnalysisResources.eRawDataTypeConstants.BrukerTOFBaf:
+                case clsAnalysisResources.eRawDataTypeConstants.BrukerTOFTdf:
                     // Call RetrieveDotDFolder() to copy the directory and all subdirectories
 
                     // Both the MSXml step tool and DeconTools require the .Baf file
                     // We previously didn't need this file for DeconTools, but, now that DeconTools is using CompassXtract, we need the file
                     // In contrast, ICR-2LS only needs the ser or FID file, plus the apexAcquisition.method file in the .md folder
 
-                    var skipBAFFiles = false;
+                    var skipBafAndTdfFiles = false;
 
                     var stepTool = mJobParams.GetJobParameter("StepTool", "Unknown");
 
                     if (string.Equals(stepTool, "ICR2LS", StringComparison.OrdinalIgnoreCase))
                     {
-                        skipBAFFiles = true;
+                        skipBafAndTdfFiles = true;
                     }
 
-                    success = RetrieveDotDFolder(createStoragePathInfoOnly, skipBAFFiles);
+                    success = RetrieveDotDFolder(createStoragePathInfoOnly, skipBafAndTdfFiles);
 
                     break;
                 case clsAnalysisResources.eRawDataTypeConstants.BrukerMALDIImaging:
@@ -2473,12 +2474,14 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <returns>TRUE for success; FALSE for failure</returns>
         /// <remarks></remarks>
-        private bool RetrieveDotDFolder(bool createStoragePathInfoOnly, bool skipBAFFiles)
+        private bool RetrieveDotDFolder(bool createStoragePathInfoOnly, bool skipBafAndTdfFiles)
         {
             var fileNamesToSkip = new List<string>();
-            if (skipBAFFiles)
+            if (skipBafAndTdfFiles)
             {
                 fileNamesToSkip.Add("analysis.baf");
+                fileNamesToSkip.Add("analysis.tdf");
+                fileNamesToSkip.Add("analysis.tdf_bin");
             }
 
             return RetrieveDotXFolder(clsAnalysisResources.DOT_D_EXTENSION, createStoragePathInfoOnly, fileNamesToSkip);
