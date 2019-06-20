@@ -140,26 +140,27 @@ namespace DTASpectraFileGen
                     OnStatusEvent("Creating .MGF file using MSConvert");
                 }
 
-                string rawFilePath;
+                string instrumentFilePath;
 
-                // Construct the path to the .raw file
+                // Construct the path to the instrument data file
                 switch (eRawDataType)
                 {
                     case clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile:
-                        rawFilePath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_RAW_EXTENSION);
+                        instrumentFilePath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_RAW_EXTENSION);
                         break;
                     case clsAnalysisResources.eRawDataTypeConstants.mzXML:
-                        rawFilePath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_MZXML_EXTENSION);
+                        instrumentFilePath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_MZXML_EXTENSION);
                         break;
                     case clsAnalysisResources.eRawDataTypeConstants.mzML:
-                        rawFilePath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_MZML_EXTENSION);
+                        instrumentFilePath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_MZML_EXTENSION);
+                        break;
                         break;
                     default:
                         LogError("Raw data file type not supported: " + eRawDataType);
                         return false;
                 }
 
-                mInstrumentFileName = Path.GetFileName(rawFilePath);
+                mInstrumentFileName = Path.GetFileName(instrumentFilePath);
                 mJobParams.AddResultFileToSkip(mInstrumentFileName);
 
                 const int SCAN_START = 1;
@@ -168,7 +169,7 @@ namespace DTASpectraFileGen
                 if (eRawDataType == clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile)
                 {
                     // Get the maximum number of scans in the file
-                    mMaxScanInFile = GetMaxScan(rawFilePath);
+                    mMaxScanInFile = GetMaxScan(instrumentFilePath);
                 }
                 else
                 {
@@ -203,9 +204,9 @@ namespace DTASpectraFileGen
                 {
                     if (scanStop == 999999 && scanStop < mMaxScanInFile)
                     {
-                        // The default scan range for processing all scans has traditionally been 1 to 999999
-                        // This scan range is defined for this job's settings file, but this dataset has over 1 million spectra
-                        // Assume that the user actually wants to analyze all of the spectra
+                        // The default scan range for processing all scans was traditionally from scan 1 to scan 999999.
+                        // This scan range may be defined in the job's settings file.
+                        // This dataset has over 1 million spectra; assume that the user actually wants to analyze all of the spectra
                         scanStop = mMaxScanInFile;
                     }
 

@@ -121,29 +121,29 @@ namespace DTASpectraFileGen
             mDtaToolNameLoc = progLoc;
         }
 
-        protected bool VerifyDirExists(string TestDir)
+        protected bool VerifyDirExists(string testDir)
         {
             // Verifies that the specified directory exists
-            if (Directory.Exists(TestDir))
+            if (Directory.Exists(testDir))
             {
                 mErrMsg = "";
                 return true;
             }
 
-            mErrMsg = "Directory " + TestDir + " not found";
+            mErrMsg = "Directory " + testDir + " not found";
             return false;
         }
 
-        protected bool VerifyFileExists(string TestFile)
+        protected bool VerifyFileExists(string testFile)
         {
             // Verifies specified file exists
-            if (File.Exists(TestFile))
+            if (File.Exists(testFile))
             {
                 mErrMsg = "";
                 return true;
             }
 
-            mErrMsg = "File " + TestFile + " not found";
+            mErrMsg = "File " + testFile + " not found";
             return false;
         }
 
