@@ -235,7 +235,7 @@ namespace DTASpectraFileGen
                 mNumScans = scanStop - SCAN_START + 1;
 
                 // Lookup Centroid Settings
-                var centroidMGF = mJobParams.GetJobParameter("CentroidMGF", false);
+                var centroidMGF = mJobParams.GetJobParameter("CentroidMGF", true);
 
                 // Look for parameter CentroidPeakCountToRetain in the DtaGenerator section
                 var centroidPeakCountToRetain = mJobParams.GetJobParameter("DtaGenerator", "CentroidPeakCountToRetain", 0);
