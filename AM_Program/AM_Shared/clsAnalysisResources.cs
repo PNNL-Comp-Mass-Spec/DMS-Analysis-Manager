@@ -96,7 +96,7 @@ namespace AnalysisManagerBase
         /// Bruker MALDI spot data
         /// </summary>
         /// <remarks>
-        /// The following is used by BrukerTOF_01 (e.g. Bruker TOF_TOF)
+        /// This is used by BrukerTOF_01 (e.g. Bruker TOF_TOF)
         /// Directory has a .EMF file and a single subdirectory that has an acqu file and fid file
         /// </remarks>
         public const string RAW_DATA_TYPE_BRUKER_MALDI_SPOT = "bruker_maldi_spot";
@@ -105,7 +105,7 @@ namespace AnalysisManagerBase
         /// Bruker MALDI imaging data
         /// </summary>
         /// <remarks>
-        /// The following is used by instruments 9T_FTICR_Imaging and BrukerTOF_Imaging_01
+        /// This is used by instruments 9T_FTICR_Imaging and BrukerTOF_Imaging_01
         /// Series of zipped subdirectories, with names like 0_R00X329.zip; subdirectories inside the .Zip files have fid files
         /// </remarks>
         public const string RAW_DATA_TYPE_BRUKER_MALDI_IMAGING = "bruker_maldi_imaging";
@@ -114,7 +114,7 @@ namespace AnalysisManagerBase
         /// Bruker TOF baf data
         /// </summary>
         /// <remarks>
-        /// The following is used by instrument Maxis_01
+        /// This is used by instrument Maxis_01
         /// Inside the .D directory is the analysis.baf file; there is also .m subdirectory that has a microTOFQMaxAcquisition.method file;
         /// there is not a ser or fid file
         /// </remarks>
@@ -441,7 +441,7 @@ namespace AnalysisManagerBase
             BrukerMALDIImaging = 11,
 
             /// <summary>
-            /// Used by Maxis01; Inside the .D directory is the analysis.baf file; there is also .m subdirectory that has a microTOFQMaxAcquisition.method file; there is not a ser or fid file
+            /// Used by Maxis_01; Inside the .D directory is the analysis.baf file; there is also .m subdirectory that has a microTOFQMaxAcquisition.method file; there is not a ser or fid file
             /// </summary>
             BrukerTOFBaf = 12
         }

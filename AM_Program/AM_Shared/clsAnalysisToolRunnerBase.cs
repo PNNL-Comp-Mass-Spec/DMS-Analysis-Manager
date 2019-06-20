@@ -1349,38 +1349,38 @@ namespace AnalysisManagerBase
                 case clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile:
                     fileOrDirectoryName = Path.Combine(mWorkDir, Dataset + clsAnalysisResources.DOT_RAW_EXTENSION);
                     isFile = true;
-
                     break;
+
                 case clsAnalysisResources.eRawDataTypeConstants.AgilentQStarWiffFile:
                     fileOrDirectoryName = Path.Combine(mWorkDir, Dataset + clsAnalysisResources.DOT_WIFF_EXTENSION);
                     isFile = true;
-
                     break;
+
                 case clsAnalysisResources.eRawDataTypeConstants.UIMF:
                     fileOrDirectoryName = Path.Combine(mWorkDir, Dataset + clsAnalysisResources.DOT_UIMF_EXTENSION);
                     isFile = true;
-
                     break;
+
                 case clsAnalysisResources.eRawDataTypeConstants.mzXML:
                     fileOrDirectoryName = Path.Combine(mWorkDir, Dataset + clsAnalysisResources.DOT_MZXML_EXTENSION);
                     isFile = true;
-
                     break;
+
                 case clsAnalysisResources.eRawDataTypeConstants.mzML:
                     fileOrDirectoryName = Path.Combine(mWorkDir, Dataset + clsAnalysisResources.DOT_MZML_EXTENSION);
                     isFile = true;
-
                     break;
+
                 case clsAnalysisResources.eRawDataTypeConstants.AgilentDFolder:
                     fileOrDirectoryName = Path.Combine(mWorkDir, Dataset + clsAnalysisResources.DOT_D_EXTENSION);
                     isFile = false;
-
                     break;
+
                 case clsAnalysisResources.eRawDataTypeConstants.MicromassRawFolder:
                     fileOrDirectoryName = Path.Combine(mWorkDir, Dataset + clsAnalysisResources.DOT_RAW_EXTENSION);
                     isFile = false;
-
                     break;
+
                 case clsAnalysisResources.eRawDataTypeConstants.ZippedSFolders:
 
                     var newSourceDirectory = clsAnalysisResources.ResolveSerStoragePath(mWorkDir);
@@ -1397,44 +1397,31 @@ namespace AnalysisManagerBase
                     }
 
                     isFile = false;
-
                     break;
+
                 case clsAnalysisResources.eRawDataTypeConstants.BrukerFTFolder:
                     // Bruker_FT directories are actually .D directories
                     fileOrDirectoryName = Path.Combine(mWorkDir, Dataset + clsAnalysisResources.DOT_D_EXTENSION);
                     isFile = false;
-
                     break;
+
                 case clsAnalysisResources.eRawDataTypeConstants.BrukerMALDISpot:
-                    ////////////////////////////////////
-                    // TODO: Finalize this code
-                    //       DMS doesn't yet have a BrukerTOF dataset
-                    //       so we don't know the official directory structure
-                    ////////////////////////////////////
-
+                    // Has a .EMF file and a single subdirectory that has an acqu file and fid file
                     fileOrDirectoryName = Path.Combine(mWorkDir, Dataset);
                     isFile = false;
-
                     break;
+
                 case clsAnalysisResources.eRawDataTypeConstants.BrukerMALDIImaging:
-
-                    ////////////////////////////////////
-                    // TODO: Finalize this code
-                    //       DMS doesn't yet have a BrukerTOF dataset
-                    //       so we don't know the official directory structure
-                    ////////////////////////////////////
-
+                    // Series of zipped subdirectories, with names like 0_R00X329.zip; subdirectories inside the .Zip files have fid files
                     fileOrDirectoryName = Path.Combine(mWorkDir, Dataset);
                     isFile = false;
-
                     break;
-                case clsAnalysisResources.eRawDataTypeConstants.BrukerTOFBaf:
 
-                    // BrukerTOFBaf directories are actually .D directories
+                case clsAnalysisResources.eRawDataTypeConstants.BrukerTOFBaf:
                     fileOrDirectoryName = Path.Combine(mWorkDir, Dataset + clsAnalysisResources.DOT_D_EXTENSION);
                     isFile = false;
-
                     break;
+
                 default:
                     // Should never get this value
                     mMessage = "DeleteRawDataFiles, Invalid RawDataType specified: " + eRawDataType;
