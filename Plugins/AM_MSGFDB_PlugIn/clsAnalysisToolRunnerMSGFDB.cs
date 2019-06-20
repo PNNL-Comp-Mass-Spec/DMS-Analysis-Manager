@@ -25,7 +25,8 @@ namespace AnalysisManagerMSGFDBPlugIn
             Unknown = 0,
             CDTA = 1,
             MzXML = 2,
-            MzML = 3
+            MzML = 3,
+            MGF = 4
         }
 
         #endregion
@@ -374,14 +375,22 @@ namespace AnalysisManagerMSGFDBPlugIn
                     inputFileName = Dataset + clsAnalysisResources.CDTA_EXTENSION;
                     inputFileDescription = "CDTA (_dta.txt) file";
                     break;
+
+                case InputFileFormatTypes.MGF:
+                    inputFileName = Dataset + clsAnalysisResources.DOT_MGF_EXTENSION;
+                    inputFileDescription = ".mgf file";
+                    break;
+
                 case InputFileFormatTypes.MzML:
                     inputFileName = Dataset + clsAnalysisResources.DOT_MZML_EXTENSION;
                     inputFileDescription = ".mzML file";
                     break;
+
                 case InputFileFormatTypes.MzXML:
                     inputFileName = Dataset + clsAnalysisResources.DOT_MZXML_EXTENSION;
                     inputFileDescription = ".mzXML file";
                     break;
+
                 default:
                     LogError("Unsupported InputFileFormat: " + eInputFileFormat);
                     // Immediately exit the plugin; results and console output files will not be saved
@@ -880,8 +889,16 @@ namespace AnalysisManagerMSGFDBPlugIn
                 return CloseOutType.CLOSEOUT_SUCCESS;
             }
 
-            eInputFileFormat = InputFileFormatTypes.CDTA;
             assumedScanType = mJobParams.GetParam("AssumedScanType");
+
+            var mgfFile = new FileInfo(Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_MGF_EXTENSION));
+            if (mgfFile.Exists)
+            {
+                eInputFileFormat = InputFileFormatTypes.MGF;
+                return CloseOutType.CLOSEOUT_SUCCESS;
+            }
+
+            eInputFileFormat = InputFileFormatTypes.CDTA;
 
             if (!validateCdtaAndCreateScanTypeFile)
                 return CloseOutType.CLOSEOUT_SUCCESS;

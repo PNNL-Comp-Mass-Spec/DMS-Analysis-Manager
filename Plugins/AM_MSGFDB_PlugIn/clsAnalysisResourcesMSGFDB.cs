@@ -101,20 +101,38 @@ namespace AnalysisManagerMSGFDBPlugIn
                 }
                 else
                 {
-                    currentTask = "RetrieveDtaFiles";
-                    result = GetCDTAFile();
+                    currentTask = "RetrieveDtaOrMGFFiles";
+
+                    var dtaGenerator = mJobParams.GetJobParameter("DtaGenerator", string.Empty);
+                    var convertToCDTA = mJobParams.GetJobParameter("DtaGenerator", "ConvertMGFtoCDTA", true);
+
+                    if (string.Equals(dtaGenerator, MSCONVERT_FILENAME, StringComparison.OrdinalIgnoreCase) && !convertToCDTA)
+                    {
+                        result = GetMGFFile();
+
+                        // Future: ValidateMGFFile
+                    }
+                    else
+                    {
+                        result = GetCDTAFile();
+
+                        if (result == CloseOutType.CLOSEOUT_SUCCESS)
+                        {
+                            currentTask = "ValidateCDTAFile";
+                            result = ValidateCDTAFile();
+                        }
+                    }
 
                     if (result == CloseOutType.CLOSEOUT_SUCCESS)
                     {
                         currentTask = "GetMasicFiles";
                         result = GetMasicFiles();
+                        if (result == CloseOutType.CLOSEOUT_FILE_NOT_FOUND)
+                        {
+                            clsGlobal.AppendToComment(mMessage, "Use a settings file with parameter AssumedScanType");
+                        }
                     }
 
-                    if (result == CloseOutType.CLOSEOUT_SUCCESS)
-                    {
-                        currentTask = "ValidateCDTAFile";
-                        result = ValidateCDTAFile();
-                    }
                 }
 
                 if (result != CloseOutType.CLOSEOUT_SUCCESS)
@@ -127,9 +145,15 @@ namespace AnalysisManagerMSGFDBPlugIn
                 // Add all the extensions of the files to delete after run
                 // Do not skip all .gz files because the MSGF+ results are compressed using .gz
                 mJobParams.AddResultFileExtensionToSkip(DOT_MZXML_EXTENSION);
-                mJobParams.AddResultFileExtensionToSkip(CDTA_ZIPPED_EXTENSION); // Zipped DTA
-                mJobParams.AddResultFileExtensionToSkip(CDTA_EXTENSION); // Unzipped, concatenated DTA
-                mJobParams.AddResultFileExtensionToSkip("temp.tsv"); // MSGFDB creates .txt.temp.tsv files, which we don't need
+
+                mJobParams.AddResultFileExtensionToSkip(CDTA_ZIPPED_EXTENSION);
+                mJobParams.AddResultFileExtensionToSkip(CDTA_EXTENSION);
+
+                mJobParams.AddResultFileExtensionToSkip(MGF_ZIPPED_EXTENSION);
+                mJobParams.AddResultFileExtensionToSkip(DOT_MGF_EXTENSION);
+
+                // MSGFDB creates .txt.temp.tsv files, which we don't need
+                mJobParams.AddResultFileExtensionToSkip("temp.tsv");
 
                 mJobParams.AddResultFileExtensionToSkip(SCAN_STATS_FILE_SUFFIX);
                 mJobParams.AddResultFileExtensionToSkip(SCAN_STATS_EX_FILE_SUFFIX);
@@ -141,6 +165,26 @@ namespace AnalysisManagerMSGFDBPlugIn
                 LogError("Exception in GetResources (CurrentTask = " + currentTask + ")", ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
+        }
+
+        private void AppendSharedResultDirectoriesToComment()
+        {
+            var sharedResultsFolders = mJobParams.GetParam(JOB_PARAM_SHARED_RESULTS_FOLDERS);
+            if (string.IsNullOrEmpty(sharedResultsFolders))
+            {
+                mMessage = clsGlobal.AppendToComment(mMessage, "Job parameter SharedResultsFolders is empty");
+                return;
+            }
+
+            if (sharedResultsFolders.Contains(","))
+            {
+                mMessage = clsGlobal.AppendToComment(mMessage, "shared results folders: " + sharedResultsFolders);
+            }
+            else
+            {
+                mMessage = clsGlobal.AppendToComment(mMessage, "shared results folder " + sharedResultsFolders);
+            }
+
         }
 
         /// <summary>
@@ -270,31 +314,16 @@ namespace AnalysisManagerMSGFDBPlugIn
 
         private CloseOutType GetCDTAFile()
         {
-            // Retrieve the _DTA.txt file
+            // Retrieve the _DTA.txt or .mgf file
             // Note that if the file was found in MyEMSL, RetrieveDtaFiles will auto-call ProcessMyEMSLDownloadQueue to download the file
 
             if (FileSearch.RetrieveDtaFiles())
                 return CloseOutType.CLOSEOUT_SUCCESS;
 
-            var sharedResultsFolders = mJobParams.GetParam(JOB_PARAM_SHARED_RESULTS_FOLDERS);
-            if (string.IsNullOrEmpty(sharedResultsFolders))
-            {
-                mMessage = clsGlobal.AppendToComment(mMessage, "Job parameter SharedResultsFolders is empty");
-                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
-            }
-
-            if (sharedResultsFolders.Contains(","))
-            {
-                mMessage = clsGlobal.AppendToComment(mMessage, "shared results folders: " + sharedResultsFolders);
-            }
-            else
-            {
-                mMessage = clsGlobal.AppendToComment(mMessage, "shared results folder " + sharedResultsFolders);
-            }
+            AppendSharedResultDirectoriesToComment();
 
             // Errors were reported in function call, so just return
             return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
-
         }
 
         private CloseOutType GetMasicFiles()
@@ -405,6 +434,22 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
+
+        private CloseOutType GetMGFFile()
+        {
+            // Retrieve the _mgf.zip file and extract the .mgf file
+            // Note that if the file was found in MyEMSL, GetZippedMgfFile will auto-call ProcessMyEMSLDownloadQueue to download the file
+
+            var result = GetZippedMgfFile();
+            if (result == CloseOutType.CLOSEOUT_SUCCESS)
+                return CloseOutType.CLOSEOUT_SUCCESS;
+
+            AppendSharedResultDirectoriesToComment();
+
+            // Errors were reported in function call, so just return
+            return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+        }
+
 
         private CloseOutType ValidateCDTAFile()
         {
