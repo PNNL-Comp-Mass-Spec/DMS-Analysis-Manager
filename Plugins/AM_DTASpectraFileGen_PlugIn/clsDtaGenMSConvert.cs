@@ -248,6 +248,19 @@ namespace DTASpectraFileGen
 
                 var centroidPeakCountMinimum = mJobParams.GetJobParameter("DtaGenerator", "CentroidPeakCountMinimum", 0);
 
+                var combineIonMobilitySpectra = mJobParams.GetJobParameter("DtaGenerator", "CombineIonMobilitySpectra", false);
+
+                var combineIonMobilityPrecursorTol = string.Empty;
+                var combineIonMobilityScanTimeTol = string.Empty;
+                var combineIonMobilityIonMobilityTol = string.Empty;
+
+                if (combineIonMobilitySpectra)
+                {
+                    combineIonMobilityPrecursorTol = mJobParams.GetJobParameter("DtaGenerator", "CombineIMSPrecursorTol", "0.005");
+                    combineIonMobilityScanTimeTol = mJobParams.GetJobParameter("DtaGenerator", "CombineIMSScanTimeTol", "0.5");
+                    combineIonMobilityIonMobilityTol = mJobParams.GetJobParameter("DtaGenerator", "CombineIMSIonMobilityTol", "0.01");
+                }
+
                 if (ForceCentroidOn)
                 {
                     centroidMGF = true;
@@ -292,6 +305,22 @@ namespace DTASpectraFileGen
                     argumentList.Add(string.Format("--filter \"scanNumber [{0},{1}]\"", SCAN_START, scanStop));
                 }
 
+                if (combineIonMobilitySpectra)
+                {
+                    argumentList.Add("--combineIonMobilitySpectra");
+
+                    // Customize the title line to be of the form
+                    // TITLE=DatasetName.223560.223560.5 NativeID:'merged=223559', IonMobility:'1.392141709988'
+                    argumentList.Add("--filter \"titleMaker <RunId>.<ScanNumber>.<ScanNumber>.<ChargeState> NativeID:'<Id>', IonMobility:'<IonMobility>'\"");
+
+                    // Combine MS/MS spectra with similar precursor m/z, scan time, and ion mobility drift times
+                    argumentList.Add(string.Format("--filter \"scanSumming precursorTol={0} scanTimeTol={1} ionMobilityTol={2}\"",
+                                                   combineIonMobilityPrecursorTol,
+                                                   combineIonMobilityScanTimeTol,
+                                                   combineIonMobilityIonMobilityTol));
+                }
+
+                argumentList.Add("--32");
                 argumentList.Add("--mgf");
                 argumentList.Add("-o " + mWorkDir);
 
