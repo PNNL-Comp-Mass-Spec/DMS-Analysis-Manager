@@ -527,6 +527,14 @@ namespace AnalysisManagerMSGFDBPlugIn
                 return true;
             }
 
+            if (clsGlobal.IsMatch(instrumentGroup, "Bruker_timsTOF"))
+            {
+                // Bruker TOF with high res MS/MS
+                instrumentIDNew = "2";
+                autoSwitchReason = "based on instrument group " + instrumentGroup;
+                return true;
+            }
+
             instrumentIDNew = string.Empty;
             autoSwitchReason = string.Empty;
             return false;
@@ -2528,7 +2536,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                                         return CloseOutType.CLOSEOUT_FAILED;
                                 }
 
-                                OnStatusEvent(string.Format("Using Fragmentation method ID {0} because of Assumed scan type {1}",
+                                OnStatusEvent(string.Format("Using Fragmentation method ID {0} because of assumed scan type {1}",
                                               paramFileLine.ParamInfo.Value, assumedScanType));
                             }
                             else
