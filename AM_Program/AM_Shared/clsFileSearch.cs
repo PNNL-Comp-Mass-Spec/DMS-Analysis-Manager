@@ -2034,7 +2034,7 @@ namespace AnalysisManagerBase
 
             if (!datasetDirectory.Exists)
             {
-                OnErrorEvent("Dataset directory with MASIC files not found: " + datasetDirectory.FullName);
+                OnErrorEvent("Dataset directory not found: " + datasetDirectory.FullName);
                 return false;
             }
 
@@ -2042,7 +2042,8 @@ namespace AnalysisManagerBase
             var subDirectories = datasetDirectory.GetDirectories("SIC*");
             if (subDirectories.Length == 0)
             {
-                OnErrorEvent("Dataset directory does not contain any MASIC results directories: " + datasetDirectory.FullName);
+                OnErrorEvent("Dataset directory does not contain any MASIC results directories");
+                OnWarningEvent("Dataset directory path: " + datasetDirectory.FullName);
                 return false;
             }
 
@@ -2066,7 +2067,8 @@ namespace AnalysisManagerBase
 
             if (string.IsNullOrEmpty(newestScanStatsFilePath))
             {
-                OnErrorEvent("MASIC ScanStats file not found below " + datasetDirectory.FullName);
+                OnErrorEvent("MASIC ScanStats file not found below the dataset directory");
+                OnWarningEvent("Dataset directory path: " + datasetDirectory.FullName);
                 return false;
             }
 
