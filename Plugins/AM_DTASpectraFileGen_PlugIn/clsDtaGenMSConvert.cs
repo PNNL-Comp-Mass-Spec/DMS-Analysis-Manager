@@ -246,6 +246,8 @@ namespace DTASpectraFileGen
                     centroidPeakCountToRetain = mJobParams.GetJobParameter("CentroidPeakCountToRetain", DEFAULT_CENTROID_PEAK_COUNT_TO_RETAIN);
                 }
 
+                var centroidPeakCountMinimum = mJobParams.GetJobParameter("DtaGenerator", "CentroidPeakCountMinimum", 0);
+
                 if (ForceCentroidOn)
                 {
                     centroidMGF = true;
@@ -278,6 +280,11 @@ namespace DTASpectraFileGen
                     argumentList.Add("--filter \"peakPicking true 1-\"");
                     argumentList.Add(string.Format("--filter \"threshold count {0} most-intense\"", centroidPeakCountToRetain));
 
+                    if (centroidPeakCountMinimum > 0)
+                    {
+                        // Assure that spectra have a minimum number of data points
+                        argumentList.Add(string.Format("--filter \"defaultArrayLength {0}-\"", centroidPeakCountMinimum));
+                    }
                 }
 
                 if (limitingScanRange)
