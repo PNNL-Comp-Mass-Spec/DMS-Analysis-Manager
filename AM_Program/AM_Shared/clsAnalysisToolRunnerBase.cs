@@ -1418,6 +1418,8 @@ namespace AnalysisManagerBase
                     break;
 
                 case clsAnalysisResources.eRawDataTypeConstants.BrukerTOFBaf:
+                case clsAnalysisResources.eRawDataTypeConstants.BrukerTOFTdf:
+                    // BrukerTOFBaf and BrukerTOFTdf directories are actually .D directories
                     fileOrDirectoryName = Path.Combine(mWorkDir, Dataset + clsAnalysisResources.DOT_D_EXTENSION);
                     isFile = false;
                     break;
