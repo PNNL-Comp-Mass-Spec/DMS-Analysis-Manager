@@ -2414,6 +2414,36 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
+        /// Retrieve the _mgf.zip file for this dataset and extract the .mgf file
+        /// </summary>
+        /// <returns>Closeout code</returns>
+        /// <remarks>
+        /// Do not use RetrieveMZXmlFile since that function looks for any valid MSXML_Gen directory for this dataset
+        /// Instead, use FindAndRetrieveMiscFiles
+        /// </remarks>
+        protected CloseOutType GetZippedMgfFile()
+        {
+
+            LogMessage("Getting _mgf.zip file");
+
+            var fileToGet = mDatasetName + MGF_ZIPPED_EXTENSION;
+
+            if (!FileSearch.FindAndRetrieveMiscFiles(fileToGet, true))
+            {
+                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+            }
+            mJobParams.AddResultFileToSkip(fileToGet);
+
+            // ReSharper disable once RedundantNameQualifier
+            if (!mMyEMSLUtilities.ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadLayout.FlatNoSubdirectories))
+            {
+                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+            }
+
+            return CloseOutType.CLOSEOUT_SUCCESS;
+        }
+
+        /// <summary>
         /// Log an error message when a .mzXML or .mzML file could not be found
         /// </summary>
         /// <param name="fileMissingFromCache"></param>
