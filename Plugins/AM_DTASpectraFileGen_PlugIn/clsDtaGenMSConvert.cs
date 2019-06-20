@@ -9,6 +9,7 @@
 
 using AnalysisManagerBase;
 using System;
+using System.Collections.Generic;
 using System.IO;
 
 namespace DTASpectraFileGen
@@ -244,7 +245,9 @@ namespace DTASpectraFileGen
                 }
 
                 // Set up command
-                var arguments = " " + rawFilePath;
+                var argumentList = new List<string> {
+                    instrumentFilePath
+                };
 
                 if (centroidMGF)
                 {
@@ -265,16 +268,20 @@ namespace DTASpectraFileGen
                         centroidPeakCountToRetain = 25;
                     }
 
-                    arguments += " --filter \"peakPicking true 1-\" --filter \"threshold count " + centroidPeakCountToRetain + " most-intense\"";
+                    argumentList.Add("--filter \"peakPicking true 1-\"");
+                    argumentList.Add(string.Format("--filter \"threshold count {0} most-intense\"", centroidPeakCountToRetain));
+
                 }
 
                 if (limitingScanRange)
                 {
-                    arguments += " --filter \"scanNumber [" + SCAN_START + "," + scanStop + "]\"";
+                    argumentList.Add(string.Format("--filter \"scanNumber [{0},{1}]\"", SCAN_START, scanStop));
                 }
 
-                arguments += " --mgf -o " + mWorkDir;
+                argumentList.Add("--mgf");
+                argumentList.Add("-o " + mWorkDir);
 
+                var arguments = string.Join(" ", argumentList);
                 if (mDebugLevel > 0)
                 {
                     OnStatusEvent(mDtaToolNameLoc + " " + arguments);
