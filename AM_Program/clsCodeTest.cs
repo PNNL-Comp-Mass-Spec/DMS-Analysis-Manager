@@ -15,6 +15,7 @@ using System.Reflection;
 using System.Runtime.Versioning;
 using System.Text;
 using System.Text.RegularExpressions;
+using Cyclops;
 using FileInfo = System.IO.FileInfo;
 
 namespace AnalysisManagerProg
@@ -1178,6 +1179,69 @@ namespace AnalysisManagerProg
         }
 
         /// <summary>
+        /// Manually run cyclops
+        /// </summary>
+        public void TestRunCyclops()
+        {
+            bool processingSuccess;
+
+            try
+            {
+                var candidateRDirectories = new List<string> {
+                    @"C:\Program Files\R\R-3.6.0\bin\x64",
+                    @"C:\Program Files\R\R-3.5.2patched\bin\x64"
+                };
+
+                var paramDictionary = new Dictionary<string, string>
+                {
+                    {"Job", "1716477"},
+                    {"CyclopsWorkflowName", "ITQ_ExportOperation.xml"},
+                    {"workDir", @"C:\Temp\Cyclops"},
+                    {"Consolidation_Factor", ""},
+                    {"Fixed_Effect", ""},
+                    {"RunProteinProphet", "False"},
+                    {"orgdbdir", @"C:\DMS_Temp_Org"}
+                };
+
+                foreach (var candidateDir in candidateRDirectories)
+                {
+                    LogDebug("Looking for " + candidateDir);
+                    if (Directory.Exists(candidateDir))
+                    {
+                        paramDictionary.Add("RDLL", @"C:\Program Files\R\R-3.6.0\bin\x64");
+                        break;
+                    }
+                }
+
+                if (!paramDictionary.TryGetValue("RDLL", out var rBinPath))
+                {
+                    LogError("R directory not found");
+                    return;
+                }
+                else
+                {
+                    LogMessage("R directory path: " + rBinPath);
+                }
+
+                var cyclops = new CyclopsController(paramDictionary);
+                RegisterEvents(cyclops);
+
+                cyclops.ErrorEvent += Cyclops_ErrorEvent;
+                cyclops.WarningEvent += Cyclops_WarningEvent;
+                cyclops.StatusEvent += Cyclops_StatusEvent;
+
+                processingSuccess = cyclops.Run();
+            }
+            catch (Exception ex)
+            {
+                LogError("Error running Cyclops: " + ex.Message, ex);
+                processingSuccess = false;
+            }
+
+            Console.WriteLine("processingSuccess = " + processingSuccess);
+        }
+
+        /// <summary>
         /// Run a test query
         /// </summary>
         public void TestRunQuery()
@@ -1841,6 +1905,27 @@ namespace AnalysisManagerProg
             }
         }
 
+        private void Cyclops_ErrorEvent(string message, Exception ex)
+        {
+            // Cyclops error messages sometimes contain a carriage return followed by a stack trace
+            // We don't want that information in mMessage so split on \r and \n
+            var messageParts = message.Split('\r', '\n');
+            LogError(messageParts[0]);
+        }
+
+        private void Cyclops_WarningEvent(string message)
+        {
+            // Cyclops messages sometimes contain a carriage return followed by a stack trace
+            // We don't want that information in mMessage so split on \r and \n
+            var messageParts = message.Split('\r', '\n');
+            LogWarning(messageParts[0]);
+        }
+
+
+        private void Cyclops_StatusEvent(string message)
+        {
+            LogMessage(message);
+        }
         #endregion
 
     }

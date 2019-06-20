@@ -25,7 +25,7 @@ namespace AnalysisManagerProg
 {
     static class Program
     {
-        public const string PROGRAM_DATE = "June 14, 2019";
+        public const string PROGRAM_DATE = "June 19, 2019";
 
         private static bool mCodeTestMode;
         private static bool mTraceMode;
@@ -143,7 +143,9 @@ namespace AnalysisManagerProg
 
                         // testHarness.TestGetProcesses();
 
-                        testHarness.TestCopyToLocalWithHashCheck();
+                        // testHarness.TestCopyToLocalWithHashCheck();
+
+                        testHarness.TestRunCyclops();
 
                     }
                     catch (Exception ex)
