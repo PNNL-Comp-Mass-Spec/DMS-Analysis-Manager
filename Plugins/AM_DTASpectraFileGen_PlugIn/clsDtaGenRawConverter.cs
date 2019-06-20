@@ -78,23 +78,23 @@ namespace DTASpectraFileGen
             {
                 var rawDataType = mJobParams.GetJobParameter("RawDataType", "");
 
-                var oMGFConverter = new clsMGFConverter(mDebugLevel, mWorkDir)
+                var mgfConverter = new clsMGFConverter(mDebugLevel, mWorkDir)
                 {
                     IncludeExtraInfoOnParentIonLine = true,
                     MinimumIonsPerSpectrum = mJobParams.GetJobParameter("IonCounts", "IonCount", 0)
                 };
 
-                RegisterEvents(oMGFConverter);
+                RegisterEvents(mgfConverter);
 
                 var eRawDataType = clsAnalysisResources.GetRawDataType(rawDataType);
-                var success = oMGFConverter.ConvertMGFtoDTA(eRawDataType, mDatasetName);
+                var success = mgfConverter.ConvertMGFtoDTA(eRawDataType, mDatasetName);
 
                 if (!success)
                 {
-                    mErrMsg = oMGFConverter.ErrorMessage;
+                    mErrMsg = mgfConverter.ErrorMessage;
                 }
 
-                mSpectraFileCount = oMGFConverter.SpectraCountWritten;
+                mSpectraFileCount = mgfConverter.SpectraCountWritten;
                 mProgress = 95;
 
                 return success;

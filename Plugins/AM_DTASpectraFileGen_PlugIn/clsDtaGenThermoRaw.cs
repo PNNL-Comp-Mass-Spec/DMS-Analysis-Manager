@@ -152,15 +152,15 @@ namespace DTASpectraFileGen
         /// <summary>
         /// Tests for existence of .raw file in specified location
         /// </summary>
-        /// <param name="WorkDir">Directory where .raw file should be found</param>
-        /// <param name="DSName">Name of dataset being processed</param>
+        /// <param name="workDir">Directory where .raw file should be found</param>
+        /// <param name="datasetName">Name of dataset being processed</param>
         /// <returns>TRUE if file found; FALSE otherwise</returns>
         /// <remarks></remarks>
-        private bool VerifyRawFileExists(string WorkDir, string DSName)
+        private bool VerifyRawFileExists(string workDir, string datasetName)
         {
             string dataFileExtension;
 
-            // Verifies a the data file exists in specified directory
+            // Verifies that the data file exists in the specified directory
             switch (mRawDataType)
             {
                 case clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile:
@@ -177,22 +177,22 @@ namespace DTASpectraFileGen
                     return false;
             }
 
-            mJobParams.AddResultFileToSkip(DSName + dataFileExtension);
+            mJobParams.AddResultFileToSkip(datasetName + dataFileExtension);
 
-            if (File.Exists(Path.Combine(WorkDir, DSName + dataFileExtension)))
+            if (File.Exists(Path.Combine(workDir, datasetName + dataFileExtension)))
             {
                 mErrMsg = string.Empty;
                 return true;
             }
 
             var mgfFileExtension = clsAnalysisResources.DOT_MGF_EXTENSION;
-            if (File.Exists(Path.Combine(WorkDir, DSName + mgfFileExtension)))
+            if (File.Exists(Path.Combine(workDir, datasetName + mgfFileExtension)))
             {
                 mErrMsg = string.Empty;
                 return true;
             }
 
-            LogError("Instrument data file not found in working directory for dataset " + DSName);
+            LogError("Instrument data file not found in working directory for dataset " + datasetName);
             return false;
         }
 
@@ -686,12 +686,12 @@ namespace DTASpectraFileGen
 
         private readonly Regex reDTAFile = new Regex(@"(\d+)\.\d+\.\d+\.dta$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-        private void UpdateDTAProgress(string DTAFileName)
+        private void UpdateDTAProgress(string dtaFileName)
         {
             try
             {
                 // Extract out the scan number from the DTA filename
-                var reMatch = reDTAFile.Match(DTAFileName);
+                var reMatch = reDTAFile.Match(dtaFileName);
                 if (reMatch.Success)
                 {
                     if (int.TryParse(reMatch.Groups[1].Value, out var scanNumber))

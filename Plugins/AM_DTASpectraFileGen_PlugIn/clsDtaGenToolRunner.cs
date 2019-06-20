@@ -109,29 +109,29 @@ namespace DTASpectraFileGen
         public CloseOutType CreateMSMSSpectra()
         {
             // Make the spectra files
-            var Result = MakeSpectraFiles();
-            if (Result != CloseOutType.CLOSEOUT_SUCCESS)
-                return Result;
+            var result = MakeSpectraFiles();
+            if (result != CloseOutType.CLOSEOUT_SUCCESS)
+                return result;
 
             // Concatenate spectra files
             if (mConcatenateDTAs)
             {
-                Result = ConcatSpectraFiles();
-                if (Result != CloseOutType.CLOSEOUT_SUCCESS)
-                    return Result;
+                result = ConcatSpectraFiles();
+                if (result != CloseOutType.CLOSEOUT_SUCCESS)
+                    return result;
             }
 
             if (mCentroidDTAs)
             {
-                Result = CentroidCDTA();
-                if (Result != CloseOutType.CLOSEOUT_SUCCESS)
-                    return Result;
+                result = CentroidCDTA();
+                if (result != CloseOutType.CLOSEOUT_SUCCESS)
+                    return result;
             }
 
             // Zip concatenated spectra files
-            Result = ZipConcatenatedDtaFile();
-            if (Result != CloseOutType.CLOSEOUT_SUCCESS)
-                return Result;
+            result = ZipConcatenatedDtaFile();
+            if (result != CloseOutType.CLOSEOUT_SUCCESS)
+                return result;
 
             // If we got to here, everything's OK
             return CloseOutType.CLOSEOUT_SUCCESS;
@@ -182,23 +182,23 @@ namespace DTASpectraFileGen
             return eDtaGeneratorType;
         }
 
-        public static eDTAGeneratorConstants GetDTAGeneratorInfo(IJobParams oJobParams, out string errorMessage)
+        public static eDTAGeneratorConstants GetDTAGeneratorInfo(IJobParams jobParams, out string errorMessage)
         {
-            return GetDTAGeneratorInfo(oJobParams, out _, out errorMessage);
+            return GetDTAGeneratorInfo(jobParams, out _, out errorMessage);
         }
 
-        public static eDTAGeneratorConstants GetDTAGeneratorInfo(IJobParams oJobParams, out bool concatenateDTAs, out string errorMessage)
+        public static eDTAGeneratorConstants GetDTAGeneratorInfo(IJobParams jobParams, out bool concatenateDTAs, out string errorMessage)
         {
-            var dtaGenerator = oJobParams.GetJobParameter("DtaGenerator", "");
-            var rawDataType = oJobParams.GetJobParameter("RawDataType", "");
-            var mgfInstrumentData = oJobParams.GetJobParameter("MGFInstrumentData", false);
+            var dtaGenerator = jobParams.GetJobParameter("DtaGenerator", string.Empty);
+            var rawDataType = jobParams.GetJobParameter("RawDataType", string.Empty);
+            var mgfInstrumentData = jobParams.GetJobParameter("MGFInstrumentData", false);
 
             errorMessage = string.Empty;
             concatenateDTAs = true;
 
             if (string.IsNullOrEmpty(rawDataType))
             {
-                errorMessage = NotifyMissingParameter(oJobParams, "RawDataType");
+                errorMessage = NotifyMissingParameter(jobParams, "RawDataType");
                 return eDTAGeneratorConstants.Unknown;
             }
 
@@ -218,25 +218,25 @@ namespace DTASpectraFileGen
                     switch (dtaGenerator.ToLower())
                     {
                         case clsDtaGenThermoRaw.MSCONVERT_FILENAME_LOWER:
-
                             return eDTAGeneratorConstants.MSConvert;
-                        case clsDtaGenThermoRaw.DECON_CONSOLE_FILENAME_LOWER:
 
+                        case clsDtaGenThermoRaw.DECON_CONSOLE_FILENAME_LOWER:
                             return eDTAGeneratorConstants.DeconConsole;
+
                         case clsDtaGenThermoRaw.EXTRACT_MSN_FILENAME_LOWER:
                             concatenateDTAs = true;
-
                             return eDTAGeneratorConstants.ExtractMSn;
+
                         case clsDtaGenThermoRaw.DECONMSN_FILENAME_LOWER:
-
                             return eDTAGeneratorConstants.DeconMSn;
-                        case clsDtaGenThermoRaw.RAWCONVERTER_FILENAME_LOWER:
 
+                        case clsDtaGenThermoRaw.RAWCONVERTER_FILENAME_LOWER:
                             return eDTAGeneratorConstants.RawConverter;
+
                         default:
                             if (string.IsNullOrEmpty(dtaGenerator))
                             {
-                                errorMessage = NotifyMissingParameter(oJobParams, "DtaGenerator");
+                                errorMessage = NotifyMissingParameter(jobParams, "DtaGenerator");
                             }
                             else
                             {
@@ -247,7 +247,7 @@ namespace DTASpectraFileGen
                     }
 
                 case clsAnalysisResources.eRawDataTypeConstants.mzML:
-                    if (dtaGenerator.ToLower() == clsDtaGenThermoRaw.MSCONVERT_FILENAME.ToLower())
+                    if (string.Equals(dtaGenerator, clsDtaGenThermoRaw.MSCONVERT_FILENAME, StringComparison.OrdinalIgnoreCase))
                     {
                         concatenateDTAs = false;
                         return eDTAGeneratorConstants.MSConvert;
@@ -260,7 +260,6 @@ namespace DTASpectraFileGen
 
                 case clsAnalysisResources.eRawDataTypeConstants.AgilentDFolder:
                     concatenateDTAs = true;
-
                     return eDTAGeneratorConstants.MGFtoDTA;
                 default:
                     errorMessage = "Unsupported data type for DTA generation: " + rawDataType;
@@ -499,12 +498,12 @@ namespace DTASpectraFileGen
             try
             {
                 // Create a centroided _DTA.txt file from the .Raw file (first creates a .MGF file, then converts to _DTA.txt)
-                var oMSConvert = new clsDtaGenMSConvert();
-                oMSConvert.Setup(GetDtaGenInitParams(), this);
+                var msConvertRunner = new clsDtaGenMSConvert();
+                msConvertRunner.Setup(GetDtaGenInitParams(), this);
 
-                oMSConvert.ForceCentroidOn = true;
+                msConvertRunner.ForceCentroidOn = true;
 
-                var eResult = StartAndWaitForDTAGenerator(oMSConvert, "CentroidCDTA", true);
+                var eResult = StartAndWaitForDTAGenerator(msConvertRunner, "CentroidCDTA", true);
 
                 if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
                 {
@@ -669,15 +668,15 @@ namespace DTASpectraFileGen
 
             try
             {
-                var oCDTAReaderParentIons = new clsDtaTextFileReader(false);
-                if (!oCDTAReaderParentIons.OpenFile(cdtaWithParentIonData))
+                var cdtaReaderParentIons = new clsDtaTextFileReader(false);
+                if (!cdtaReaderParentIons.OpenFile(cdtaWithParentIonData))
                 {
                     LogError("Error opening CDTA file with the parent ion data");
                     return false;
                 }
 
-                var oCDTAReaderFragIonData = new clsDtaTextFileReader(true);
-                if (!oCDTAReaderFragIonData.OpenFile(cdtaWithFragIonData))
+                var cdtaReaderFragIonData = new clsDtaTextFileReader(true);
+                if (!cdtaReaderFragIonData.OpenFile(cdtaWithFragIonData))
                 {
                     LogError("Error opening CDTA file with centroided spectra data");
                     return false;
@@ -692,7 +691,7 @@ namespace DTASpectraFileGen
 
                 while (true)
                 {
-                    var nextSpectrumAvailable = oCDTAReaderFragIonData.ReadNextSpectrum(out _, out var fragIonDataHeaderCentroid);
+                    var nextSpectrumAvailable = cdtaReaderFragIonData.ReadNextSpectrum(out _, out var fragIonDataHeaderCentroid);
 
                     if (!nextSpectrumAvailable)
                     {
@@ -717,11 +716,11 @@ namespace DTASpectraFileGen
                 }
 
                 // Close, then re-open cdtaWithFragIonData
-                oCDTAReaderFragIonData.CloseFile();
-                var fragIonDataHeader = oCDTAReaderFragIonData.GetNewSpectrumHeaderInfo();
+                cdtaReaderFragIonData.CloseFile();
+                var fragIonDataHeader = cdtaReaderFragIonData.GetNewSpectrumHeaderInfo();
 
-                oCDTAReaderFragIonData = new clsDtaTextFileReader(true);
-                if (!oCDTAReaderFragIonData.OpenFile(cdtaWithFragIonData))
+                cdtaReaderFragIonData = new clsDtaTextFileReader(true);
+                if (!cdtaReaderFragIonData.OpenFile(cdtaWithFragIonData))
                 {
                     LogError("Error re-opening CDTA file with the fragment ion data (after initial scan of the file)");
                     return false;
@@ -732,7 +731,7 @@ namespace DTASpectraFileGen
                 var spectrumCountSkipped = 0;
                 using (var writer = new StreamWriter(new FileStream(cdtaFileFinal, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
-                    while (oCDTAReaderParentIons.ReadNextSpectrum(out _, out var parentIonDataHeader))
+                    while (cdtaReaderParentIons.ReadNextSpectrum(out _, out var parentIonDataHeader))
                     {
                         if (!ScanMatchIsPossible(parentIonDataHeader, fragIonDataScanStatus))
                         {
@@ -746,7 +745,7 @@ namespace DTASpectraFileGen
 
                         while (!ScanHeadersMatch(parentIonDataHeader, fragIonDataHeader))
                         {
-                            nextSpectrumAvailable = oCDTAReaderFragIonData.ReadNextSpectrum(out _, out fragIonDataHeader);
+                            nextSpectrumAvailable = cdtaReaderFragIonData.ReadNextSpectrum(out _, out fragIonDataHeader);
                             if (!nextSpectrumAvailable)
                                 break;
                         }
@@ -756,11 +755,11 @@ namespace DTASpectraFileGen
                         {
                             // We never did find a match; this is unexpected
                             // Try closing the FragIonData file, re-opening, and parsing again
-                            oCDTAReaderFragIonData.CloseFile();
-                            fragIonDataHeader = oCDTAReaderFragIonData.GetNewSpectrumHeaderInfo();
+                            cdtaReaderFragIonData.CloseFile();
+                            fragIonDataHeader = cdtaReaderFragIonData.GetNewSpectrumHeaderInfo();
 
-                            oCDTAReaderFragIonData = new clsDtaTextFileReader(true);
-                            if (!oCDTAReaderFragIonData.OpenFile(cdtaWithFragIonData))
+                            cdtaReaderFragIonData = new clsDtaTextFileReader(true);
+                            if (!cdtaReaderFragIonData.OpenFile(cdtaWithFragIonData))
                             {
                                 LogError("Error re-opening CDTA file with the fragment ion data (when nextSpectrumAvailable = False)");
                                 return false;
@@ -768,7 +767,7 @@ namespace DTASpectraFileGen
 
                             while (!ScanHeadersMatch(parentIonDataHeader, fragIonDataHeader))
                             {
-                                nextSpectrumAvailable = oCDTAReaderFragIonData.ReadNextSpectrum(out _, out fragIonDataHeader);
+                                nextSpectrumAvailable = cdtaReaderFragIonData.ReadNextSpectrum(out _, out fragIonDataHeader);
                                 if (!nextSpectrumAvailable)
                                     break;
                             }
@@ -789,7 +788,7 @@ namespace DTASpectraFileGen
                             writer.WriteLine(parentIonDataHeader.SpectrumTitleWithCommentChars);
                             writer.WriteLine(parentIonDataHeader.ParentIonLineText);
 
-                            var dataLinesToAppend = RemoveTitleAndParentIonLines(oCDTAReaderFragIonData.GetMostRecentSpectrumFileText());
+                            var dataLinesToAppend = RemoveTitleAndParentIonLines(cdtaReaderFragIonData.GetMostRecentSpectrumFileText());
 
                             if (string.IsNullOrWhiteSpace(dataLinesToAppend))
                             {
@@ -815,8 +814,8 @@ namespace DTASpectraFileGen
 
                 try
                 {
-                    oCDTAReaderParentIons.CloseFile();
-                    oCDTAReaderFragIonData.CloseFile();
+                    cdtaReaderParentIons.CloseFile();
+                    cdtaReaderFragIonData.CloseFile();
                 }
                 catch (Exception)
                 {
@@ -910,12 +909,12 @@ namespace DTASpectraFileGen
             return false;
         }
 
-        private CloseOutType StartAndWaitForDTAGenerator(ISpectraFileProcessor oDTAGenerator, string callingFunction, bool secondPass)
+        private CloseOutType StartAndWaitForDTAGenerator(ISpectraFileProcessor dtaGenerator, string callingFunction, bool secondPass)
         {
-            var retVal = oDTAGenerator.Start();
+            var retVal = dtaGenerator.Start();
             if (retVal == ProcessStatus.SF_ERROR)
             {
-                LogError("Error starting spectra processor: " + oDTAGenerator.ErrMsg);
+                LogError("Error starting spectra processor: " + dtaGenerator.ErrMsg);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -925,46 +924,46 @@ namespace DTASpectraFileGen
             }
 
             // Loop until the spectra generator finishes
-            while ((oDTAGenerator.Status == ProcessStatus.SF_STARTING) | (oDTAGenerator.Status == ProcessStatus.SF_RUNNING))
+            while ((dtaGenerator.Status == ProcessStatus.SF_STARTING) | (dtaGenerator.Status == ProcessStatus.SF_RUNNING))
             {
                 if (secondPass)
                 {
-                    mProgress = CENTROID_CDTA_PROGRESS_START + oDTAGenerator.Progress * (100f - CENTROID_CDTA_PROGRESS_START) / 100f;
+                    mProgress = CENTROID_CDTA_PROGRESS_START + dtaGenerator.Progress * (100f - CENTROID_CDTA_PROGRESS_START) / 100f;
                 }
                 else
                 {
                     if (mCentroidDTAs)
                     {
-                        mProgress = oDTAGenerator.Progress * (CENTROID_CDTA_PROGRESS_START / 100f);
+                        mProgress = dtaGenerator.Progress * (CENTROID_CDTA_PROGRESS_START / 100f);
                     }
                     else
                     {
-                        mProgress = oDTAGenerator.Progress;
+                        mProgress = dtaGenerator.Progress;
                     }
                 }
 
-                UpdateStatusRunning(mProgress, oDTAGenerator.SpectraFileCount);
+                UpdateStatusRunning(mProgress, dtaGenerator.SpectraFileCount);
 
                 // Delay for 5 seconds
                 clsGlobal.IdleLoop(5);
             }
 
-            UpdateStatusRunning(mProgress, oDTAGenerator.SpectraFileCount);
+            UpdateStatusRunning(mProgress, dtaGenerator.SpectraFileCount);
 
             // Check for reason spectra generator exited
-            if (oDTAGenerator.Results == ProcessResults.SF_FAILURE)
+            if (dtaGenerator.Results == ProcessResults.SF_FAILURE)
             {
-                LogError("Error making DTA files in " + callingFunction + ": " + oDTAGenerator.ErrMsg);
+                LogError("Error making DTA files in " + callingFunction + ": " + dtaGenerator.ErrMsg);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            if (oDTAGenerator.Results == ProcessResults.SF_ABORTED)
+            if (dtaGenerator.Results == ProcessResults.SF_ABORTED)
             {
                 LogError("DTA generation aborted in " + callingFunction + "");
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            if (oDTAGenerator.Results == ProcessResults.SF_NO_FILES_CREATED)
+            if (dtaGenerator.Results == ProcessResults.SF_NO_FILES_CREATED)
             {
                 LogError("No spectra files created in " + callingFunction);
                 return CloseOutType.CLOSEOUT_NO_DTA_FILES;
