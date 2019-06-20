@@ -202,8 +202,18 @@ namespace AnalysisManagerMSGFDBPlugIn
                 var success = msgfPlusUtils.LookupScanTypesForDataset(DatasetName, out var countLowResMSn, out var countHighResMSn, out var countHCDMSn);
                 if (!success)
                 {
-                    LogError("LookupScanTypesForDataset returned false for dataset " + DatasetName);
-                    return false;
+                    var assumedScanType = mJobParams.GetParam("AssumedScanType");
+
+                    if (string.IsNullOrWhiteSpace(assumedScanType))
+                    {
+                        LogError("LookupScanTypesForDataset returned false for dataset " + DatasetName);
+                        return false;
+                    }
+
+                    LogMessage(string.Format("LookupScanTypesForDataset returned false for dataset {0}; " +
+                                             "however, AssumedScanType is {1} and thus the scan stats are not required",
+                                             DatasetName,
+                                             assumedScanType));
                 }
 
                 mJobParams.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, MSGFPlusUtils.SCAN_COUNT_LOW_RES_MSN, countLowResMSn);
@@ -333,7 +343,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             if (!string.IsNullOrWhiteSpace(assumedScanType))
             {
-                // Scan type is assumed; we don't need the Masic ScanStats.txt files or the .Raw file
+                // Scan type is assumed; we don't need the MASIC ScanStats.txt files or the .Raw file
                 switch (assumedScanType.ToUpper())
                 {
                     case "CID":
@@ -458,7 +468,6 @@ namespace AnalysisManagerMSGFDBPlugIn
             // Errors were reported in function call, so just return
             return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
         }
-
 
         private CloseOutType ValidateCDTAFile()
         {
