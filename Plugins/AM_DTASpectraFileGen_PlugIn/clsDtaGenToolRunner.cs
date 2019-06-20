@@ -1192,8 +1192,7 @@ namespace DTASpectraFileGen
             }
             catch (Exception ex)
             {
-                var msg = "Exception zipping concat dta file, job " + mJob + ", step " + mStepNum + ": " + ex.Message;
-                LogError(msg);
+                LogError("Exception zipping spectrum file, job " + mJob + ", step " + mStepNum + ": " + ex.Message);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -1203,7 +1202,7 @@ namespace DTASpectraFileGen
             var zipFile = new FileInfo(GetZipFilePathForFile(DtaFilePath));
             if (!zipFile.Exists || zipFile.Length <= 0)
             {
-                var msg = "Error zipping concat dta file, job " + mJob + ", step " + mStepNum;
+                var msg = "Error zipping spectrum file, job " + mJob + ", step " + mStepNum;
                 LogError(msg);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -1220,13 +1219,13 @@ namespace DTASpectraFileGen
                     return CloseOutType.CLOSEOUT_SUCCESS;
                 }
 
-                var msg = "Error zipping concat dta file using SharpZipLib, job " + mJob + ", step " + mStepNum;
+                var msg = "Error zipping spectrum file using SharpZipLib, job " + mJob + ", step " + mStepNum;
                 LogError(msg);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
             catch (Exception ex)
             {
-                var msg = "Exception zipping concat dta file using SharpZipLib, job " + mJob + ", step " + mStepNum;
+                var msg = "Exception zipping spectrum file using SharpZipLib, job " + mJob + ", step " + mStepNum;
                 LogError(msg, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
