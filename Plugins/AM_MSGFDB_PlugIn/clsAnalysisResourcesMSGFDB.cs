@@ -280,6 +280,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 // Construct a list of any files that we don't want to copy
                 var filesToIgnore = GetDefaultWorkDirFilesToIgnore();
+                filesToIgnore.Add(DatasetName + MGF_ZIPPED_EXTENSION);
 
                 var copyWorkDirSuccess = CopyWorkDirFilesToRemote(transferUtility, filesToIgnore);
 
