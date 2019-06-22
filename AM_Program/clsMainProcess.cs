@@ -1348,11 +1348,11 @@ namespace AnalysisManagerProg
                     errorMessageCountToReturn = 1;
 
                 // Initialize the RegEx that splits out the timestamp from the error message
-                var reErrorLine = new Regex(ERROR_MATCH_REGEX, RegexOptions.Compiled | RegexOptions.IgnoreCase);
-                var reJobStartLine = new Regex(JOB_START_REGEX, RegexOptions.Compiled | RegexOptions.IgnoreCase);
+                var errorLineMatcher = new Regex(ERROR_MATCH_REGEX, RegexOptions.Compiled | RegexOptions.IgnoreCase);
+                var jobStartLineMatcher = new Regex(JOB_START_REGEX, RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
                 // Initialize the queue that holds recent error messages
-                var qErrorMsgQueue = new Queue<string>(errorMessageCountToReturn);
+                var msgQueue = new Queue<string>(errorMessageCountToReturn);
 
                 // Initialize the hashtable to hold the error messages, but without date stamps
                 var uniqueErrorMessages = new Dictionary<string, DateTime>(StringComparer.OrdinalIgnoreCase);
@@ -1380,7 +1380,7 @@ namespace AnalysisManagerProg
                     var logFileCountProcessed = 0;
                     var checkForMostRecentJob = true;
 
-                    while (qErrorMsgQueue.Count < errorMessageCountToReturn && logFileCountProcessed < MAX_LOG_FILES_TO_SEARCH)
+                    while (msgQueue.Count < errorMessageCountToReturn && logFileCountProcessed < MAX_LOG_FILES_TO_SEARCH)
                     {
                         if (File.Exists(logFilePath))
                         {
@@ -1397,18 +1397,18 @@ namespace AnalysisManagerProg
                                     if (dataLine == null)
                                         continue;
 
-                                    var oMatchError = reErrorLine.Match(dataLine);
+                                    var matchError = errorLineMatcher.Match(dataLine);
 
-                                    if (oMatchError.Success)
+                                    if (matchError.Success)
                                     {
-                                        DetermineRecentErrorCacheError(oMatchError, dataLine, uniqueErrorMessages, qErrorMsgQueue,
+                                        DetermineRecentErrorCacheError(matchError, dataLine, uniqueErrorMessages, msgQueue,
                                                                        errorMessageCountToReturn);
                                     }
 
                                     if (!checkForMostRecentJob)
                                         continue;
 
-                                    var jobMatch = reJobStartLine.Match(dataLine);
+                                    var jobMatch = jobStartLineMatcher.Match(dataLine);
                                     if (!jobMatch.Success)
                                         continue;
 
@@ -1430,7 +1430,7 @@ namespace AnalysisManagerProg
 
                             if (checkForMostRecentJob && mostRecentJobInfoFromLogs.Length > 0)
                             {
-                                // We determine the most recent job; no need to check other log files
+                                // We determined the most recent job; no need to check other log files
                                 checkForMostRecentJob = false;
                             }
                         }
@@ -1439,11 +1439,11 @@ namespace AnalysisManagerProg
                         // Increment the log file counter, regardless of whether or not the log file was found
                         logFileCountProcessed += 1;
 
-                        if (qErrorMsgQueue.Count >= errorMessageCountToReturn)
+                        if (msgQueue.Count >= errorMessageCountToReturn)
                             continue;
 
                         // We still haven't found errorMessageCountToReturn error messages
-                        // Keep checking older log files as long as qErrorMsgQueue.Count < errorMessageCountToReturn
+                        // Keep checking older log files as long as msgQueue.Count < errorMessageCountToReturn
 
                         // Decrement the log file path by one day
                         logFilePath = DecrementLogFilePath(logFilePath);
@@ -1457,18 +1457,18 @@ namespace AnalysisManagerProg
                 if (loggerReportsError)
                 {
                     // Append the error message reported by the Logger to the error message queue (treating it as the newest error)
-                    var match = reErrorLine.Match(LogTools.MostRecentErrorMessage);
+                    var match = errorLineMatcher.Match(LogTools.MostRecentErrorMessage);
 
                     if (match.Success)
                     {
-                        DetermineRecentErrorCacheError(match, LogTools.MostRecentErrorMessage, uniqueErrorMessages, qErrorMsgQueue, errorMessageCountToReturn);
+                        DetermineRecentErrorCacheError(match, LogTools.MostRecentErrorMessage, uniqueErrorMessages, msgQueue, errorMessageCountToReturn);
                     }
                 }
 
-                // Populate recentErrorMessages and recentErrorMessageDates using the messages stored in qErrorMsgQueue
-                while (qErrorMsgQueue.Count > 0)
+                // Populate recentErrorMessages and recentErrorMessageDates using the messages stored in msgQueue
+                while (msgQueue.Count > 0)
                 {
-                    var errorMessageClean = qErrorMsgQueue.Dequeue();
+                    var errorMessageClean = msgQueue.Dequeue();
 
                     // Find the newest timestamp for this message
                     if (!uniqueErrorMessages.TryGetValue(errorMessageClean, out var timeStamp))

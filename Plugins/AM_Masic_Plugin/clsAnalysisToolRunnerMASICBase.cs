@@ -193,7 +193,7 @@ namespace AnalysisManagerMasicPlugin
                 LogDebug(masicExePath + arguments);
             }
 
-            var objMasicProgRunner = new ProgRunner
+            var masicProgRunner = new ProgRunner
             {
                 CreateNoWindow = true,
                 CacheStandardOutput = false,
@@ -207,10 +207,10 @@ namespace AnalysisManagerMasicPlugin
 
             ResetProgRunnerCpuUsage();
 
-            objMasicProgRunner.StartAndMonitorProgram();
+            masicProgRunner.StartAndMonitorProgram();
 
             // Wait for the job to complete
-            var blnSuccess = WaitForJobToFinish(objMasicProgRunner);
+            var success = WaitForJobToFinish(masicProgRunner);
 
             // Delay for 3 seconds to make sure program exits
             clsGlobal.IdleLoop(3);
@@ -219,7 +219,7 @@ namespace AnalysisManagerMasicPlugin
             ExtractErrorsFromMASICLogFile(logFile);
 
             // Verify MASIC exited due to job completion
-            if (blnSuccess)
+            if (success)
             {
                 mJobParams.AddResultFileToSkip(logFile.Name);
             }
@@ -278,36 +278,36 @@ namespace AnalysisManagerMasicPlugin
 
                 using (var fsInFile = new FileStream(statusFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
                 {
-                    using (var objXmlReader = new XmlTextReader(fsInFile))
+                    using (var reader = new XmlTextReader(fsInFile))
                     {
-                        objXmlReader.WhitespaceHandling = WhitespaceHandling.None;
+                        reader.WhitespaceHandling = WhitespaceHandling.None;
 
-                        while (objXmlReader.Read())
+                        while (reader.Read())
                         {
-                            if (objXmlReader.NodeType != XmlNodeType.Element)
+                            if (reader.NodeType != XmlNodeType.Element)
                                 continue;
 
-                            switch (objXmlReader.Name)
+                            switch (reader.Name)
                             {
                                 case "ProcessingStep":
-                                    if (!objXmlReader.IsEmptyElement)
+                                    if (!reader.IsEmptyElement)
                                     {
-                                        if (objXmlReader.Read())
-                                            mProcessStep = objXmlReader.Value;
+                                        if (reader.Read())
+                                            mProcessStep = reader.Value;
                                     }
                                     break;
                                 case "Progress":
-                                    if (!objXmlReader.IsEmptyElement)
+                                    if (!reader.IsEmptyElement)
                                     {
-                                        if (objXmlReader.Read())
-                                            progress = objXmlReader.Value;
+                                        if (reader.Read())
+                                            progress = reader.Value;
                                     }
                                     break;
                                 case "Error":
-                                    if (!objXmlReader.IsEmptyElement)
+                                    if (!reader.IsEmptyElement)
                                     {
-                                        if (objXmlReader.Read())
-                                            mErrorMessage = objXmlReader.Value;
+                                        if (reader.Read())
+                                            mErrorMessage = reader.Value;
                                     }
                                     break;
                             }
@@ -397,42 +397,42 @@ namespace AnalysisManagerMasicPlugin
                 return true;
             }
 
-            var objSettingsFile = new XmlSettingsFileAccessor();
+            var masicSettings = new XmlSettingsFileAccessor();
 
-            if (!objSettingsFile.LoadSettings(parameterFilePath))
+            if (!masicSettings.LoadSettings(parameterFilePath))
             {
                 LogError("Error loading parameter file " + parameterFilePath);
                 return false;
             }
 
-            if (!objSettingsFile.SectionPresent("MasicExportOptions"))
+            if (!masicSettings.SectionPresent("MasicExportOptions"))
             {
                 LogWarning("MasicExportOptions section not found in " + parameterFilePath);
-                objSettingsFile.SetParam("MasicExportOptions", "IncludeHeaders", "True");
-                objSettingsFile.SaveSettings();
+                masicSettings.SetParam("MasicExportOptions", "IncludeHeaders", "True");
+                masicSettings.SaveSettings();
                 return true;
             }
 
-            var includeHeaders = objSettingsFile.GetParam("MasicExportOptions", "IncludeHeaders", false, out _);
+            var includeHeaders = masicSettings.GetParam("MasicExportOptions", "IncludeHeaders", false, out _);
 
             if (!includeHeaders)
             {
                 // File needs to be updated
-                objSettingsFile.SetParam("MasicExportOptions", "IncludeHeaders", "True");
-                objSettingsFile.SaveSettings();
+                masicSettings.SetParam("MasicExportOptions", "IncludeHeaders", "True");
+                masicSettings.SaveSettings();
             }
 
             return true;
         }
 
-        private bool WaitForJobToFinish(ProgRunner objMasicProgRunner)
+        private bool WaitForJobToFinish(ProgRunner masicProgRunner)
         {
             const int MAX_RUNTIME_HOURS = 24;
             const int SECONDS_BETWEEN_UPDATE = 30;
 
-            var blnSICsXMLFileExists = false;
-            var dtStartTime = DateTime.UtcNow;
-            var blnAbortedProgram = false;
+            var sicsXMLFileExists = false;
+            var startTime = DateTime.UtcNow;
+            var abortedProgram = false;
 
             // Wait for completion
             mJobRunning = true;
@@ -442,14 +442,14 @@ namespace AnalysisManagerMasicPlugin
                 // Wait for 30 seconds
                 clsGlobal.IdleLoop(SECONDS_BETWEEN_UPDATE);
 
-                if (objMasicProgRunner.State == ProgRunner.States.NotMonitoring)
+                if (masicProgRunner.State == ProgRunner.States.NotMonitoring)
                 {
                     mJobRunning = false;
                 }
                 else
                 {
                     // Update the status
-                    CalculateNewStatus(objMasicProgRunner.Program);
+                    CalculateNewStatus(masicProgRunner.Program);
                     UpdateStatusFile();
 
                     var processID = 0;
@@ -457,10 +457,10 @@ namespace AnalysisManagerMasicPlugin
                     try
                     {
                         // Note that the call to GetCoreUsage() will take at least 1 second
-                        processID = objMasicProgRunner.PID;
+                        processID = masicProgRunner.PID;
                         var coreUsage = clsGlobal.ProcessInfo.GetCoreUsageByProcessID(processID);
 
-                        UpdateProgRunnerCpuUsage(objMasicProgRunner.PID, coreUsage, SECONDS_BETWEEN_UPDATE);
+                        UpdateProgRunnerCpuUsage(masicProgRunner.PID, coreUsage, SECONDS_BETWEEN_UPDATE);
                     }
                     catch (Exception ex)
                     {
@@ -472,11 +472,11 @@ namespace AnalysisManagerMasicPlugin
                     LogProgress("MASIC");
                 }
 
-                if (DateTime.UtcNow.Subtract(dtStartTime).TotalHours >= MAX_RUNTIME_HOURS)
+                if (DateTime.UtcNow.Subtract(startTime).TotalHours >= MAX_RUNTIME_HOURS)
                 {
                     // Abort processing
-                    objMasicProgRunner.StopMonitoringProgram(kill: true);
-                    blnAbortedProgram = true;
+                    masicProgRunner.StopMonitoringProgram(kill: true);
+                    abortedProgram = true;
                 }
             }
 
@@ -485,36 +485,36 @@ namespace AnalysisManagerMasicPlugin
                 LogDebug("clsAnalysisToolRunnerMASICBase.WaitForJobToFinish(); MASIC process has ended");
             }
 
-            if (blnAbortedProgram)
+            if (abortedProgram)
             {
                 mErrorMessage = "Aborted MASIC processing since over " + MAX_RUNTIME_HOURS + " hours have elapsed";
                 LogError("clsAnalysisToolRunnerMASICBase.WaitForJobToFinish(); " + mErrorMessage);
                 return false;
             }
 
-            if ((int)objMasicProgRunner.State == 10)
+            if ((int)masicProgRunner.State == 10)
             {
-                LogError("clsAnalysisToolRunnerMASICBase.WaitForJobToFinish(); objMasicProgRunner.State = 10");
+                LogError("clsAnalysisToolRunnerMASICBase.WaitForJobToFinish(); masicProgRunner.State = 10");
                 return false;
             }
 
-            if (objMasicProgRunner.ExitCode == 0)
+            if (masicProgRunner.ExitCode == 0)
                 return true;
 
-            LogError("clsAnalysisToolRunnerMASICBase.WaitForJobToFinish(); objMasicProgRunner.ExitCode is nonzero: " + objMasicProgRunner.ExitCode);
+            LogError("clsAnalysisToolRunnerMASICBase.WaitForJobToFinish(); masicProgRunner.ExitCode is nonzero: " + masicProgRunner.ExitCode);
 
             // See if a _SICs.XML file was created
             if (Directory.GetFiles(mWorkDir, "*" + SICS_XML_FILE_SUFFIX).Length > 0)
             {
-                blnSICsXMLFileExists = true;
+                sicsXMLFileExists = true;
             }
 
-            if (objMasicProgRunner.ExitCode != 32)
+            if (masicProgRunner.ExitCode != 32)
                 return false;
 
             // FindSICPeaksError
             // As long as the _SICs.xml file was created, we can safely ignore this error
-            if (blnSICsXMLFileExists)
+            if (sicsXMLFileExists)
             {
                 LogWarning(
                     "clsAnalysisToolRunnerMASICBase.WaitForJobToFinish(); " + SICS_XML_FILE_SUFFIX +
