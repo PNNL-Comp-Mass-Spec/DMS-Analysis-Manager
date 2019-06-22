@@ -455,7 +455,7 @@ namespace AnalysisManagerProg
             // var postResultsToDB = true;
 
             // Note: add file clsDtaRefLogMassErrorExtractor to this project to use this functionality
-            // var oMassErrorExtractor = new clsDtaRefLogMassErrorExtractor(mMgrSettings, workDir, mDebugLevel, postResultsToDB);
+            // var massErrorExtractor = new clsDtaRefLogMassErrorExtractor(mMgrSettings, workDir, mDebugLevel, postResultsToDB);
 
             foreach (DataRow curRow in Dt.Rows)
             {
@@ -473,7 +473,7 @@ namespace AnalysisManagerProg
                 if (Directory.Exists(dtaRefineryDataFolderPath))
                 {
                     Console.WriteLine("Processing " + dtaRefineryDataFolderPath);
-                    // oMassErrorExtractor.ParseDTARefineryLogFile(udtPSMJob.Dataset, udtPSMJob.DatasetID, udtPSMJob.Job, udtPSMJob.DtaRefineryDataFolderPath)
+                    // massErrorExtractor.ParseDTARefineryLogFile(udtPSMJob.Dataset, udtPSMJob.DatasetID, udtPSMJob.Job, udtPSMJob.DtaRefineryDataFolderPath)
                 }
                 else
                 {
@@ -863,8 +863,8 @@ namespace AnalysisManagerProg
 
             if (success)
             {
-                IJobParams oJobParams = InitializeManagerParams();
-                oJobParams.AddAdditionalParameter("PeptideSearch", clsAnalysisResources.JOB_PARAM_GENERATED_FASTA_NAME, mFastaFileName);
+                IJobParams jobParams = InitializeManagerParams();
+                jobParams.AddAdditionalParameter("PeptideSearch", clsAnalysisResources.JOB_PARAM_GENERATED_FASTA_NAME, mFastaFileName);
 
                 //const bool msgfPlus = true;
                 //var jobNum = "12345";
@@ -876,15 +876,15 @@ namespace AnalysisManagerProg
                 //string fastaFilePath;
 
                 // Uncomment the following if the MSGFDB plugin is associated with the solution
-                //var oTool = new AnalysisManagerMSGFDBPlugIn.clsMSGFDBUtils(
-                //    mMgrSettings, oJobParams, jobNum, mMgrSettings.GetParam(clsAnalysisMgrSettings.MGR_PARAM_WORK_DIR), debugLevel, msgfPlus);
+                //var tool = new AnalysisManagerMSGFDBPlugIn.clsMSGFDBUtils(
+                //    mMgrSettings, jobParams, jobNum, mMgrSettings.GetParam(clsAnalysisMgrSettings.MGR_PARAM_WORK_DIR), debugLevel, msgfPlus);
 
                 //RegisterEvents(oTool);
 
                 //float fastaFileSizeKB;
 
                 //// Note that fastaFilePath will be populated by this function call
-                //var eResult = oTool.InitializeFastaFile(JavaProgLoc, MSGFDbProgLoc, out fastaFileSizeKB, out fastaFileIsDecoy, out fastaFilePath);
+                //var eResult = tool.InitializeFastaFile(JavaProgLoc, MSGFDbProgLoc, out fastaFileSizeKB, out fastaFileIsDecoy, out fastaFilePath);
             }
 
             return success;
@@ -1855,13 +1855,13 @@ namespace AnalysisManagerProg
 
         #region "EventNotifier events"
 
-        private void RegisterEvents(EventNotifier oProcessingClass)
+        private void RegisterEvents(EventNotifier processingClass)
         {
-            oProcessingClass.DebugEvent += DebugEventHandler;
-            oProcessingClass.StatusEvent += StatusEventHandler;
-            oProcessingClass.ErrorEvent += ErrorEventHandler;
-            oProcessingClass.WarningEvent += WarningEventHandler;
-            oProcessingClass.ProgressUpdate += ProgressUpdateHandler;
+            processingClass.DebugEvent += DebugEventHandler;
+            processingClass.StatusEvent += StatusEventHandler;
+            processingClass.ErrorEvent += ErrorEventHandler;
+            processingClass.WarningEvent += WarningEventHandler;
+            processingClass.ProgressUpdate += ProgressUpdateHandler;
         }
 
         private void DebugEventHandler(string statusMessage)

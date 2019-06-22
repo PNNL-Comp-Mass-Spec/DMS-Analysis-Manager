@@ -86,9 +86,9 @@ namespace AnalysisManagerMasicPlugin
             RegisterEvents(mMSXmlCreator);
             mMSXmlCreator.LoopWaiting += MSXmlCreator_LoopWaiting;
 
-            var blnSuccess = mMSXmlCreator.CreateMZXMLFile();
+            var success = mMSXmlCreator.CreateMZXMLFile();
 
-            if (!blnSuccess && string.IsNullOrEmpty(mMessage))
+            if (!success && string.IsNullOrEmpty(mMessage))
             {
                 mMessage = mMSXmlCreator.ErrorMessage;
                 if (string.IsNullOrEmpty(mMessage))
@@ -101,7 +101,7 @@ namespace AnalysisManagerMasicPlugin
                 }
             }
 
-            if (!blnSuccess)
+            if (!success)
                 return string.Empty;
 
             var mzXMLFilePath = Path.ChangeExtension(fiThermoRawFile.FullName, "mzXML");
