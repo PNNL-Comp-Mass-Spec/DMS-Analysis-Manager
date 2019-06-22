@@ -161,7 +161,7 @@ namespace AnalysisManagerMasicPlugin
                 mMASICStatusFileName = "MasicStatus.xml";
             }
 
-            // Make sure the MASIC.Exe file exists
+            // Make sure the MASIC executable file exists (MASIC_Console.exe)
             try
             {
                 masicExePath = mMgrParams.GetParam("MasicProgLoc");
@@ -173,7 +173,7 @@ namespace AnalysisManagerMasicPlugin
             }
             catch (Exception ex)
             {
-                LogError("clsAnalysisToolRunnerMASICBase.StartMASICAndWait(); Error looking for MASIC .Exe at " + masicExePath, ex);
+                LogError("clsAnalysisToolRunnerMASICBase.StartMASICAndWait(); Error looking for MASIC_Console.exe at " + masicExePath, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
