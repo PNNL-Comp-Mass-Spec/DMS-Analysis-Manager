@@ -9,6 +9,7 @@
 using AnalysisManagerBase;
 using PRISM;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Xml;
 
@@ -180,17 +181,20 @@ namespace AnalysisManagerMasicPlugin
 
             var logFile = new FileInfo(Path.Combine(mWorkDir, "MASIC_Log_Job" + mJob + ".txt"));
 
-            // Define the parameters to send to Masic.exe
-            var arguments =
-                " /I:" + inputFilePath +
-                " /O:" + outputFolderPath +
-                " /P:" + parameterFilePath +
-                " /Q /SF:" + mMASICStatusFileName +
-                " /L:" + PathUtils.PossiblyQuotePath(logFile.FullName);
+            // Define the parameters to send to MASIC_Console.exe
+            var argumentList = new List<string>
+            {
+                "/I:" + inputFilePath,
+                "/O:" + outputFolderPath,
+                "/P:" + parameterFilePath,
+                "/SF:" + mMASICStatusFileName,
+                "/L:" + PathUtils.PossiblyQuotePath(logFile.FullName)
+            };
 
+            var arguments = string.Join(" ", argumentList);
             if (mDebugLevel >= 1)
             {
-                LogDebug(masicExePath + arguments);
+                LogDebug(masicExePath + " " + arguments);
             }
 
             var masicProgRunner = new ProgRunner
