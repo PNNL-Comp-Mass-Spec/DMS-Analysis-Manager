@@ -530,6 +530,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             if (clsGlobal.IsMatch(instrumentGroup, "Bruker_timsTOF"))
             {
                 // Bruker TOF with high res MS/MS
+                // Use instrument type 2 (TOF)
                 instrumentIDNew = "2";
                 autoSwitchReason = "based on instrument group " + instrumentGroup;
                 return true;
