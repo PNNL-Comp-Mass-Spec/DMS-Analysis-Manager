@@ -13,39 +13,39 @@ using System.Text.RegularExpressions;
 namespace AnalysisManagerMSGFDBPlugIn
 {
     /// <summary>
-    /// MSGF+ Utilities
+    /// MS-GF+ Utilities
     /// </summary>
     public class MSGFPlusUtils : EventNotifier
     {
         #region "Constants"
 
         /// <summary>
-        /// Progress value for MSGF+ starting
+        /// Progress value for MS-GF+ starting
         /// </summary>
         public const float PROGRESS_PCT_MSGFPLUS_STARTING = 1;
 
         /// <summary>
-        /// Progress value for MSGF+ loading the FASTA file
+        /// Progress value for MS-GF+ loading the FASTA file
         /// </summary>
         public const float PROGRESS_PCT_MSGFPLUS_LOADING_DATABASE = 2;
 
         /// <summary>
-        /// Progress value for MSGF+ reading the spectra file
+        /// Progress value for MS-GF+ reading the spectra file
         /// </summary>
         public const float PROGRESS_PCT_MSGFPLUS_READING_SPECTRA = 3;
 
         /// <summary>
-        /// Progress value for MSGF+ spawning worker threads
+        /// Progress value for MS-GF+ spawning worker threads
         /// </summary>
         public const float PROGRESS_PCT_MSGFPLUS_THREADS_SPAWNED = 4;
 
         /// <summary>
-        /// Progress value for MSGF+ computing FDRs
+        /// Progress value for MS-GF+ computing FDRs
         /// </summary>
         public const float PROGRESS_PCT_MSGFPLUS_COMPUTING_FDRS = 95;
 
         /// <summary>
-        /// Progress value for MSGF+ having completed
+        /// Progress value for MS-GF+ having completed
         /// </summary>
         public const float PROGRESS_PCT_MSGFPLUS_COMPLETE = 96;
 
@@ -126,7 +126,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         private const string MSGFPLUS_OPTION_NNET = "nnet";
 
         /// <summary>
-        /// Number of tolerable termini parameter (used by MSGF+)
+        /// Number of tolerable termini parameter (used by MS-GF+)
         /// </summary>
         private const string MSGFPLUS_OPTION_NTT = "NTT";
 
@@ -146,18 +146,18 @@ namespace AnalysisManagerMSGFDBPlugIn
         public const string MSGFPLUS_OPTION_TDA = "TDA";
 
         /// <summary>
-        /// MSGF+ TSV file suffix
+        /// MS-GF+ TSV file suffix
         /// </summary>
         public const string MSGFPLUS_TSV_SUFFIX = "_msgfplus.tsv";
 
         /// <summary>
-        /// MSGF+ jar file name
+        /// MS-GF+ jar file name
         /// </summary>
         /// <remarks>Previously MSGFDB.jar</remarks>
         public const string MSGFPLUS_JAR_NAME = "MSGFPlus.jar";
 
         /// <summary>
-        /// MSGF+ console output file name
+        /// MS-GF+ console output file name
         /// </summary>
         public const string MSGFPLUS_CONSOLE_OUTPUT_FILE = "MSGFPlus_ConsoleOutput.txt";
 
@@ -167,7 +167,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         private const string ENZYMES_FILE_NAME = "enzymes.txt";
 
         /// <summary>
-        /// MSGF+ mods file name
+        /// MS-GF+ mods file name
         /// </summary>
         public const string MOD_FILE_NAME = "MSGFPlus_Mods.txt";
 
@@ -234,7 +234,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         public string ErrorMessage { get; private set; } = string.Empty;
 
         /// <summary>
-        /// MSGF+ version
+        /// MS-GF+ version
         /// </summary>
         public string MSGFPlusVersion { get; private set; }
 
@@ -259,7 +259,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         public int ThreadCountActual { get; private set; }
 
         /// <summary>
-        /// Number of processing tasks to be run by MSGF+
+        /// Number of processing tasks to be run by MS-GF+
         /// </summary>
         public int TaskCountTotal { get; private set; }
 
@@ -323,9 +323,9 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// Update the parameter if using the MSGFDB syntax yet should be using the MS-GF+ syntax
         /// Also make updates from older parameter names to newer names (e.g. MinNumPeaksPerSpectrum instead of MinNumPeaks)
         /// </summary>
-        /// <param name="msgfPlusParameters">Standard MSGF+ parameters</param>
-        /// <param name="paramFileLine">MSGF+ parameter file line</param>
-        /// <param name="replacementParameter">New MSGF+ parameter</param>
+        /// <param name="msgfPlusParameters">Standard MS-GF+ parameters</param>
+        /// <param name="paramFileLine">MS-GF+ parameter file line</param>
+        /// <param name="replacementParameter">New MS-GF+ parameter</param>
         /// <returns>True if a replacement parameter is defined, otherwise false</returns>
         /// <remarks>
         /// If the parameter does need to be replaced, the value in paramInfo will be changed to an empty string
@@ -343,7 +343,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 if (!int.TryParse(paramFileLine.ParamInfo.Value, out var value))
                 {
-                    throw new Exception(string.Format("Parameter {0} does not contain an integer in the MSGF+ parameter file: {1}",
+                    throw new Exception(string.Format("Parameter {0} does not contain an integer in the MS-GF+ parameter file: {1}",
                                                       MSGFPLUS_OPTION_NNET, paramFileLine.ParamInfo.Value));
                 }
 
@@ -544,7 +544,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Update the instrument ID if needed
         /// </summary>
-        /// <param name="paramFileLine">MSGF+ parameter file line tracking instrument ID; its value may get updated by this method</param>
+        /// <param name="paramFileLine">MS-GF+ parameter file line tracking instrument ID; its value may get updated by this method</param>
         /// <param name="instrumentIDNew"></param>
         /// <param name="autoSwitchReason"></param>
         /// <remarks></remarks>
@@ -916,7 +916,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                     if (enzymeDefParts.Length < 4)
                     {
-                        ErrorMessage = "Invalid enzyme definition in the MSGF+ parameter file: " + enzymeDef;
+                        ErrorMessage = "Invalid enzyme definition in the MS-GF+ parameter file: " + enzymeDef;
                         OnErrorEvent(ErrorMessage);
                         return false;
                     }
@@ -1398,7 +1398,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         }
 
         /// <summary>
-        /// Get the given MSGF+ parameter by name
+        /// Get the given MS-GF+ parameter by name
         /// Throws an exception if an invalid name
         /// </summary>
         /// <param name="msgfPlusParameters"></param>
@@ -1490,7 +1490,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         }
 
         /// <summary>
-        /// Get an MSGF+ parameter to replace the given parameter
+        /// Get an MS-GF+ parameter to replace the given parameter
         /// </summary>
         /// <param name="msgfPlusParameters"></param>
         /// <param name="paramInfo"></param>
@@ -1551,11 +1551,11 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// Initialize the FASTA file
         /// </summary>
         /// <param name="javaProgLoc">Path to java.exe</param>
-        /// <param name="msgfPlusProgLoc">MSGF+ program location</param>
+        /// <param name="msgfPlusProgLoc">MS-GF+ program location</param>
         /// <param name="fastaFileSizeKB">Output: FASTA file size (in KB)</param>
         /// <param name="fastaFileIsDecoy">Output: True if the FASTA file is a decoy FASTA</param>
         /// <param name="fastaFilePath">Output: FASTA file path</param>
-        /// <param name="msgfPlusParameterFilePath">MSGF+ parameter file path</param>
+        /// <param name="msgfPlusParameterFilePath">MS-GF+ parameter file path</param>
         /// <returns></returns>
         public CloseOutType InitializeFastaFile(string javaProgLoc, string msgfPlusProgLoc, out float fastaFileSizeKB, out bool fastaFileIsDecoy,
             out string fastaFilePath, string msgfPlusParameterFilePath)
@@ -1568,11 +1568,11 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// Initialize the FASTA file
         /// </summary>
         /// <param name="javaProgLoc">Path to java.exe</param>
-        /// <param name="msgfPlusProgLoc">MSGF+ program location</param>
+        /// <param name="msgfPlusProgLoc">MS-GF+ program location</param>
         /// <param name="fastaFileSizeKB">Output: FASTA file size (in KB)</param>
         /// <param name="fastaFileIsDecoy">Output: True if the FASTA file is a decoy FASTA</param>
         /// <param name="fastaFilePath">Output: FASTA file path</param>
-        /// <param name="msgfPlusParameterFilePath">MSGF+ parameter file path</param>
+        /// <param name="msgfPlusParameterFilePath">MS-GF+ parameter file path</param>
         /// <param name="maxFastaFileSizeMB">Maximum FASTA file size (in MB); MzRefinery sets this to 50 MB to give faster search times</param>
         /// <returns></returns>
         public CloseOutType InitializeFastaFile(
@@ -1892,7 +1892,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         }
 
         /// <summary>
-        /// Verify that the MSGF+ .mzid file ends with XML tag MzIdentML
+        /// Verify that the MS-GF+ .mzid file ends with XML tag MzIdentML
         /// </summary>
         /// <param name="fiMzidFile"></param>
         /// <returns></returns>
@@ -1917,7 +1917,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             return validClosingTag;
         }
 
-        // Example Console output (verbose mode used by an old version of MSGF+):
+        // Example Console output (verbose mode used by an old version of MS-GF+):
         //
         // MS-GF+ Release (v2016.01.20) (1/20/2016)
         // Loading database files...
@@ -2451,7 +2451,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             // Keys are the parameter name, values are the parameter line(s) and associated MSGFPlusParameter(s)
             var paramFileParamToLineMapping = new Dictionary<string, List<MSGFPlusKeyValueParamFileLine>>(StringComparer.OrdinalIgnoreCase);
 
-            // This will be set to True if the parameter file has TDA=1, meaning MSGF+ will auto-added decoy proteins to its list of candidate proteins
+            // This will be set to True if the parameter file has TDA=1, meaning MS-GF+ will auto-added decoy proteins to its list of candidate proteins
             // When TDA is 1, the FASTA must only contain normal (forward) protein sequences
             ResultsIncludeAutoAddedDecoyPeptides = false;
 
@@ -2891,7 +2891,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Override Instrument ID based on the instrument class and scan types in the _ScanType file
         /// </summary>
-        /// <param name="paramFileLine">MSGF+ parameter file line tracking instrument ID; its value may get updated by this method</param>
+        /// <param name="paramFileLine">MS-GF+ parameter file line tracking instrument ID; its value may get updated by this method</param>
         /// <param name="scanTypeFilePath"></param>
         /// <param name="instrumentGroup"></param>
         /// <returns></returns>
@@ -3289,7 +3289,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// Override the parameter value if defined in overrideParams
         /// </summary>
         /// <param name="overrideParams"></param>
-        /// <param name="paramFileLine">MSGF+ parameter file line</param>
+        /// <param name="paramFileLine">MS-GF+ parameter file line</param>
         private void PossiblyOverrideParameter(IReadOnlyDictionary<string, string> overrideParams, MSGFPlusKeyValueParamFileLine paramFileLine)
         {
             if (overrideParams.TryGetValue(paramFileLine.ParamInfo.ParameterName, out var valueOverride))

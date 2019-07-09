@@ -13,7 +13,7 @@ using System.IO;
 namespace AnalysisManagerMSGFDBPlugIn
 {
     /// <summary>
-    /// Class for running MSGF+ analysis
+    /// Class for running MS-GF+ analysis
     /// </summary>
     // ReSharper disable once UnusedMember.Global
     public class clsAnalysisToolRunnerMSGFDB : clsAnalysisToolRunnerBase
@@ -43,7 +43,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         private string mMSGFPlusProgLoc;
 
         /// <summary>
-        /// This will be set to True if the parameter file has TDA=1, meaning MSGF+ auto-added decoy proteins to its list of candidate proteins
+        /// This will be set to True if the parameter file has TDA=1, meaning MS-GF+ auto-added decoy proteins to its list of candidate proteins
         /// When TDA is 1, the FASTA must only contain normal (forward) protein sequences
         /// </summary>
         private bool mResultsIncludeAutoAddedDecoyPeptides;
@@ -63,7 +63,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         #region "Methods"
 
         /// <summary>
-        /// Runs MSGF+ tool (aka MS-GF+)
+        /// Runs MS-GF+ tool (aka MSGF+)
         /// </summary>
         /// <returns>CloseOutType enum indicating success or failure</returns>
         public override CloseOutType RunTool()
@@ -90,14 +90,14 @@ namespace AnalysisManagerMSGFDBPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                // Run MSGF+ (includes indexing the fasta file)
+                // Run MS-GF+ (includes indexing the FASTA file)
 
                 var processingResult = RunMSGFPlus(javaProgLoc, out var fiMSGFPlusResults, out var processingError, out var tooManySkippedSpectra);
                 if (processingResult != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     if (string.IsNullOrEmpty(mMessage))
                     {
-                        mMessage = "Unknown error running MSGF+";
+                        mMessage = "Unknown error running MS-GF+";
                     }
 
                     // If the MSGFPlus_ConsoleOutput.txt file or the .mzid file exist, we want to move them to the failed results folder
@@ -144,7 +144,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                     if (dirtyFileExists)
                     {
-                        mMessage = "MSGF+ _dirty.gz file found; this indicates a processing error";
+                        mMessage = "MS-GF+ _dirty.gz file found; this indicates a processing error";
                         processingError = true;
                     }
                     else
@@ -154,7 +154,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                         {
                             if (string.IsNullOrEmpty(mMessage))
                             {
-                                mMessage = "Unknown error post-processing the MSGF+ results";
+                                mMessage = "Unknown error post-processing the MS-GF+ results";
                             }
 
                             processingError = true;
@@ -167,7 +167,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 {
                     if (string.IsNullOrEmpty(mMessage))
                     {
-                        mMessage = "MSGF+ results file not found: " + fiMSGFPlusResults.Name;
+                        mMessage = "MS-GF+ results file not found: " + fiMSGFPlusResults.Name;
                         processingError = true;
                     }
                 }
@@ -177,7 +177,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     processingError = true;
                     if (string.IsNullOrEmpty(mMessage))
                     {
-                        LogError("MSGF+ did not reach completion");
+                        LogError("MS-GF+ did not reach completion");
                     }
                 }
 
@@ -237,7 +237,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         }
 
         /// <summary>
-        /// Index the Fasta file (if needed) then run MSGF+
+        /// Index the Fasta file (if needed) then run MS-GF+
         /// </summary>
         /// <param name="javaProgLoc"></param>
         /// <param name="fiMSGFPlusResults"></param>
@@ -273,7 +273,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             processingError = false;
             tooManySkippedSpectra = false;
 
-            // Determine the path to MSGF+
+            // Determine the path to MS-GF+
             // Manager parameter MSGFPlusProgLoc will either come from the Manager Control database,
             // or on Linux from file ManagerSettingsLocal.xml
             mMSGFPlusProgLoc = DetermineProgramLocation("MSGFPlusProgLoc", MSGFPlusUtils.MSGFPLUS_JAR_NAME);
@@ -284,7 +284,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            // Note: we will store the MSGF+ version info in the database after the first line is written to file MSGFPlus_ConsoleOutput.txt
+            // Note: we will store the MS-GF+ version info in the database after the first line is written to file MSGFPlus_ConsoleOutput.txt
             mToolVersionWritten = false;
 
             mMSGFPlusComplete = false;
@@ -350,7 +350,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             {
                 if (string.IsNullOrEmpty(mMessage))
                 {
-                    mMessage = "Problem parsing MSGF+ parameter file";
+                    mMessage = "Problem parsing MS-GF+ parameter file";
                 }
                 // Immediately exit the plugin; results and console output files will not be saved
                 return CloseOutType.CLOSEOUT_FAILED;
@@ -364,7 +364,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             // This will be set to True if the parameter file contains both TDA=1 and showDecoy=1
             mResultsIncludeAutoAddedDecoyPeptides = mMSGFPlusUtils.ResultsIncludeAutoAddedDecoyPeptides;
 
-            LogMessage("Running MSGF+");
+            LogMessage("Running MS-GF+");
 
             string inputFileName;
             string inputFileDescription;
@@ -399,13 +399,13 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             var inputFile = new FileInfo(Path.Combine(mWorkDir, inputFileName));
 
-            // If an MSGF+ analysis crashes with an "out-of-memory" error, we need to reserve more memory for Java.
+            // If an MS-GF+ analysis crashes with an "out-of-memory" error, we need to reserve more memory for Java.
             // The amount of memory required depends on both the fasta file size and the size of the input data file (_dta.txt or .mzML)
             //   since data from all spectra are cached in memory.
             // Customize this on a per-job basis using the MSGFDBJavaMemorySize setting in the settings file
             // (job 611216 succeeded with a value of 5000)
 
-            // Prior to January 2016, MSGF+ used 4 to 7 threads, and if MSGFDBJavaMemorySize was too small,
+            // Prior to January 2016, MS-GF+ used 4 to 7 threads, and if MSGFDBJavaMemorySize was too small,
             // we ran the risk of one thread crashing and the results files missing the search results for the spectra assigned to that thread
             // For large _dta.txt files, 2000 MB of memory could easily be small enough to result in crashing threads
             // Consequently, the default is now 4000 MB
@@ -451,7 +451,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 javaMemorySizeMB = minimumJavaMemoryMB;
             }
 
-            // Set up and execute a program runner to run MSGF+
+            // Set up and execute a program runner to run MS-GF+
             var arguments = " -Xmx" + javaMemorySizeMB + "M -jar " + msgfPlusJarFilePath;
 
             // Define the input file, output file, and fasta file
@@ -466,9 +466,9 @@ namespace AnalysisManagerMSGFDBPlugIn
             // Make sure the machine has enough free memory to run MSGFPlus
             var logFreeMemoryOnSuccess = (mDebugLevel >= 1);
 
-            if (!clsAnalysisResources.ValidateFreeMemorySize(javaMemorySizeMB, "MSGF+", logFreeMemoryOnSuccess))
+            if (!clsAnalysisResources.ValidateFreeMemorySize(javaMemorySizeMB, "MS-GF+", logFreeMemoryOnSuccess))
             {
-                mMessage = "Not enough free memory to run MSGF+";
+                mMessage = "Not enough free memory to run MS-GF+";
                 // Immediately exit the plugin; results and console output files will not be saved
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -478,16 +478,16 @@ namespace AnalysisManagerMSGFDBPlugIn
             bool validExistingResults;
             if (fiMSGFPlusResults.Exists)
             {
-                // Don't actually run MSGF+ if the results file exists and ends in </MzIdentML>
+                // Don't actually run MS-GF+ if the results file exists and ends in </MzIdentML>
                 validExistingResults = MSGFPlusUtils.MSGFPlusResultsFileHasClosingTag(fiMSGFPlusResults);
                 if (validExistingResults)
                 {
-                    LogMessage(string.Format("Using existing MSGF+ results: {0} created {1}",
+                    LogMessage(string.Format("Using existing MS-GF+ results: {0} created {1}",
                         fiMSGFPlusResults.Name, fiMSGFPlusResults.LastWriteTime.ToString(DATE_TIME_FORMAT)));
                 }
                 else
                 {
-                    LogMessage(string.Format("Deleting incomplete existing MSGF+ results: {0} created {1}",
+                    LogMessage(string.Format("Deleting incomplete existing MS-GF+ results: {0} created {1}",
                                              fiMSGFPlusResults.Name, fiMSGFPlusResults.LastWriteTime.ToString(DATE_TIME_FORMAT)));
                     fiMSGFPlusResults.Delete();
                     fiMSGFPlusResults.Refresh();
@@ -536,11 +536,11 @@ namespace AnalysisManagerMSGFDBPlugIn
             {
                 if (mMSGFPlusComplete)
                 {
-                    LogError("MSGF+ log file reported it was complete, but aborted the ProgRunner since Java was frozen");
+                    LogError("MS-GF+ log file reported it was complete, but aborted the ProgRunner since Java was frozen");
                 }
                 else
                 {
-                    LogError("Error running MSGF+");
+                    LogError("Error running MS-GF+");
                 }
 
                 if (mMSGFPlusComplete)
@@ -558,11 +558,11 @@ namespace AnalysisManagerMSGFDBPlugIn
                 {
                     if (mCmdRunner.ExitCode != 0)
                     {
-                        LogWarning("MSGF+ returned a non-zero exit code: " + mCmdRunner.ExitCode);
+                        LogWarning("MS-GF+ returned a non-zero exit code: " + mCmdRunner.ExitCode);
                     }
                     else
                     {
-                        LogWarning("Call to MSGF+ failed (but exit code is 0)");
+                        LogWarning("Call to MS-GF+ failed (but exit code is 0)");
                     }
                 }
             }
@@ -573,11 +573,11 @@ namespace AnalysisManagerMSGFDBPlugIn
                 {
                     var savedCountCompleted = mMSGFPlusUtils.TaskCountCompleted;
 
-                    // MSGF+ finished, but the log file doesn't report that all of the threads finished
+                    // MS-GF+ finished, but the log file doesn't report that all of the threads finished
                     // Wait 5 more seconds, then parse the log file again
                     // Keep checking and waiting for up to 45 seconds
 
-                    LogWarning("MSGF+ finished, but the log file reports " + mMSGFPlusUtils.TaskCountCompleted + " / " + mMSGFPlusUtils.TaskCountTotal +
+                    LogWarning("MS-GF+ finished, but the log file reports " + mMSGFPlusUtils.TaskCountCompleted + " / " + mMSGFPlusUtils.TaskCountTotal +
                                " completed tasks");
 
                     var waitStartTime = DateTime.UtcNow;
@@ -594,17 +594,17 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                     if (mMSGFPlusUtils.TaskCountCompleted == mMSGFPlusUtils.TaskCountTotal)
                     {
-                        LogMessage("Reparsing the MSGF+ log file now indicates that all tasks finished " + "(waited " +
+                        LogMessage("Reparsing the MS-GF+ log file now indicates that all tasks finished " + "(waited " +
                                    DateTime.UtcNow.Subtract(waitStartTime).TotalSeconds.ToString("0") + " seconds)");
                     }
                     else if (mMSGFPlusUtils.TaskCountCompleted > savedCountCompleted)
                     {
-                        LogWarning("Reparsing the MSGF+ log file now indicates that " + mMSGFPlusUtils.TaskCountCompleted + " tasks finished. " +
+                        LogWarning("Reparsing the MS-GF+ log file now indicates that " + mMSGFPlusUtils.TaskCountCompleted + " tasks finished. " +
                                    "That is an increase over the previous value but still not all " + mMSGFPlusUtils.TaskCountTotal + " tasks");
                     }
                     else
                     {
-                        LogWarning("Reparsing the MSGF+ log file indicated the same number of completed tasks");
+                        LogWarning("Reparsing the MS-GF+ log file indicated the same number of completed tasks");
                     }
                 }
 
@@ -614,14 +614,14 @@ namespace AnalysisManagerMSGFDBPlugIn
                     {
                         // All but one of the tasks finished
                         LogWarning(
-                            "MSGF+ finished, but the logs indicate that one of the " + mMSGFPlusUtils.TaskCountTotal + " tasks did not complete; " +
+                            "MS-GF+ finished, but the logs indicate that one of the " + mMSGFPlusUtils.TaskCountTotal + " tasks did not complete; " +
                             "this could indicate an error", true);
                     }
                     else
                     {
                         // 2 or more tasks did not finish
                         mMSGFPlusComplete = false;
-                        LogError("MSGF+ finished, but the logs are incomplete, showing " + mMSGFPlusUtils.TaskCountCompleted + " / " +
+                        LogError("MS-GF+ finished, but the logs are incomplete, showing " + mMSGFPlusUtils.TaskCountCompleted + " / " +
                                  mMSGFPlusUtils.TaskCountTotal + " completed search tasks");
 
                         // Do not return CLOSEOUT_FAILED, as that causes the plugin to immediately exit; results and console output files would not be saved in that case
@@ -638,7 +638,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     var msg = string.Copy(mMessage);
                     if (string.IsNullOrWhiteSpace(msg))
                     {
-                        msg = "MSGF+ processing failed";
+                        msg = "MS-GF+ processing failed";
                     }
                     msg += "; logs show " + mMSGFPlusUtils.TaskCountCompleted + " / " + mMSGFPlusUtils.TaskCountTotal + " completed search tasks";
                     LogError(msg);
@@ -652,7 +652,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             mProgress = MSGFPlusUtils.PROGRESS_PCT_MSGFPLUS_COMPLETE;
             mStatusTools.UpdateAndWrite(mProgress);
-            LogMessage("MSGF+ Search Complete", 3);
+            LogMessage("MS-GF+ Search Complete", 3);
 
             if (mMSGFPlusUtils.ContinuumSpectraSkipped > 0)
             {
@@ -666,7 +666,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     //
                     // Failed jobs that are found to have this comment will have their settings files auto-updated and the job will auto-reset
 
-                    LogError(clsAnalysisResources.SPECTRA_ARE_NOT_CENTROIDED + " with MSGF+");
+                    LogError(clsAnalysisResources.SPECTRA_ARE_NOT_CENTROIDED + " with MS-GF+");
                     processingError = true;
                 }
                 else
@@ -686,13 +686,13 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                     if (fractionSkipped > 0.2 && !spectraAreCentroided)
                     {
-                        LogError("MSGF+ skipped " + percentSkipped + " of the spectra because they did not appear centroided");
+                        LogError("MS-GF+ skipped " + percentSkipped + " of the spectra because they did not appear centroided");
                         tooManySkippedSpectra = true;
                     }
                     else
                     {
                         LogWarning(
-                            "MSGF+ processed some of the spectra, but it skipped " +
+                            "MS-GF+ processed some of the spectra, but it skipped " +
                             mMSGFPlusUtils.ContinuumSpectraSkipped + " spectra that were not centroided " +
                             "(" + percentSkipped + " skipped)", true);
                     }
@@ -725,7 +725,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             // Start the program and wait for it to finish
             // However, while it's running, LoopWaiting will get called via events
-            var success = mCmdRunner.RunProgram(javaExePath, arguments, "MSGF+", true);
+            var success = mCmdRunner.RunProgram(javaExePath, arguments, "MS-GF+", true);
 
             return success;
         }
@@ -736,7 +736,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         }
 
         /// <summary>
-        /// Convert the .mzid file created by MSGF+ to a .tsv file
+        /// Convert the .mzid file created by MS-GF+ to a .tsv file
         /// </summary>
         /// <param name="mzidFileName"></param>
         /// <returns>The name of the .tsv file if successful; empty string if an error</returns>
@@ -958,7 +958,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             UpdateProgRunnerCpuUsage(mCmdRunner, SECONDS_BETWEEN_UPDATE);
 
-            LogProgress("MSGF+");
+            LogProgress("MS-GF+");
 
             if (mProgress < MSGFPlusUtils.PROGRESS_PCT_MSGFPLUS_COMPLETE)
                 return;
@@ -978,11 +978,11 @@ namespace AnalysisManagerMSGFDBPlugIn
                 if (DateTime.UtcNow.Subtract(mMSGFPlusCompletionTime).TotalMinutes < waitTimeMinutes)
                     return;
 
-                // MSGF+ is finished but hasn't exited after 5 minutes (longer for long-running jobs)
-                // If there is a large number results, we need to given MSGF+ time to sort them prior to writing to disk
+                // MS-GF+ is finished but hasn't exited after 5 minutes (longer for long-running jobs)
+                // If there is a large number results, we need to given MS-GF+ time to sort them prior to writing to disk
                 // However, it is also possible that Java frozen and thus the process should be aborted
 
-                var warningMessage = "MSGF+ has been stuck at " +
+                var warningMessage = "MS-GF+ has been stuck at " +
                                      MSGFPlusUtils.PROGRESS_PCT_MSGFPLUS_COMPLETE.ToString("0") + "% complete for " + waitTimeMinutes + " minutes; " +
                                      "aborting since Java appears frozen";
 
@@ -996,7 +996,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         }
 
         /// <summary>
-        /// Renames the results file created by a Parallel MSGF+ instance to have _Part##.mzid as a suffix
+        /// Renames the results file created by a Parallel MS-GF+ instance to have _Part##.mzid as a suffix
         /// </summary>
         /// <param name="resultsFileName"></param>
         /// <returns>The path to the new file if success, otherwise the original filename</returns>
@@ -1122,7 +1122,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     return CloseOutType.CLOSEOUT_SUCCESS;
                 }
 
-                // Examine the MSGF+ TSV file to see if it's empty
+                // Examine the MS-GF+ TSV file to see if it's empty
                 using (var reader = new StreamReader(new FileStream(Path.Combine(mWorkDir, msgfPlusResultsFileName), FileMode.Open, FileAccess.Read,
                                                                     FileShare.ReadWrite)))
                 {
@@ -1142,7 +1142,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                     if (dataLines <= 1)
                     {
-                        LogWarning("MSGF+ did not identify any peptides (TSV file is empty)", true);
+                        LogWarning("MS-GF+ did not identify any peptides (TSV file is empty)", true);
                         return CloseOutType.CLOSEOUT_SUCCESS;
                     }
                 }
@@ -1174,10 +1174,10 @@ namespace AnalysisManagerMSGFDBPlugIn
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 return result;
 
-            // Read the MSGF+ Console_Output file and look for "seconds elapsed", "minutes elapsed", and "hours elapsed" entries
-            // If the elapsed time from the job status file is more than 10% shorter than MSGF+ runtime, use the MSGF+ runtime instead
-            // This will be the case if the analysis manager crashes while MSGF+ is running but MSGF+ actually finishes and another manager uses the existing results
-            // Also require the MSGF+ progress to be over 95%
+            // Read the MS-GF+ Console_Output file and look for "seconds elapsed", "minutes elapsed", and "hours elapsed" entries
+            // If the elapsed time from the job status file is more than 10% shorter than MS-GF+ runtime, use the MS-GF+ runtime instead
+            // This will be the case if the analysis manager crashes while MS-GF+ is running but MS-GF+ actually finishes and another manager uses the existing results
+            // Also require the MS-GF+ progress to be over 95%
             try
             {
                 if (mMSGFPlusUtils == null)
@@ -1191,7 +1191,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 if (msgfPlusProgress < MSGFPlusUtils.PROGRESS_PCT_MSGFPLUS_COMPLETE - 5)
                 {
                     LogWarning(string.Format(
-                                   "Progress from the MSGF+ console output file is {0:F0}, " +
+                                   "Progress from the MS-GF+ console output file is {0:F0}, " +
                                    "which is much less than the expected value of {1:F0}; " +
                                    "will not compare to the RemoteStart and RemoteFinish job parameters",
                                    msgfPlusProgress, MSGFPlusUtils.PROGRESS_PCT_MSGFPLUS_COMPLETE));
@@ -1202,7 +1202,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 if (mMSGFPlusUtils.ElapsedTimeHours * 60 <= 1)
                 {
                     LogWarning(string.Format(
-                                   "Processing time from the MSGF+ console output file is {0:F1} minutes; " +
+                                   "Processing time from the MS-GF+ console output file is {0:F1} minutes; " +
                                    "will not compare to the RemoteStart and RemoteFinish job parameters",
                                    mMSGFPlusUtils.ElapsedTimeHours * 60));
 
@@ -1225,7 +1225,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     return CloseOutType.CLOSEOUT_SUCCESS;
 
                 LogMessage(string.Format(
-                               "Updating the RemoteStart and RemoteFinish times based on the processing time reported in the MSGF+ console output file; " +
+                               "Updating the RemoteStart and RemoteFinish times based on the processing time reported in the MS-GF+ console output file; " +
                                "changing from {0:F1} hours to {1:F1} hours",
                                elapsedTimeHoursFromStatusFile, mMSGFPlusUtils.ElapsedTimeHours));
 
@@ -1240,14 +1240,14 @@ namespace AnalysisManagerMSGFDBPlugIn
             }
             catch (Exception ex)
             {
-                LogError("Error post-processing MSGF+ results retrieved from the remote processor", ex);
+                LogError("Error post-processing MS-GF+ results retrieved from the remote processor", ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
         }
 
         /// <summary>
-        /// Retrieve MSGF+ results that were run remotely
+        /// Retrieve MS-GF+ results that were run remotely
         /// </summary>
         /// <param name="transferUtility">Transfer utility</param>
         /// <param name="verifyCopied">Log warnings if any files are missing.  When false, logs debug messages instead</param>

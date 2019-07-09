@@ -177,7 +177,7 @@ namespace AnalysisManagerMSGFPlugin
 
                 if (mUsingMSGFDB && eResultType == clsPHRPReader.ePeptideHitResultType.MSGFPlus)
                 {
-                    // Analysis tool is MSGF+ so we don't actually need to run the MSGF re-scorer
+                    // Analysis tool is MS-GF+ so we don't actually need to run the MSGF re-scorer
                     // Simply copy the values from the MSGFDB result file
 
                     StoreToolVersionInfoPrecomputedProbabilities(eResultType);
@@ -308,7 +308,7 @@ namespace AnalysisManagerMSGFPlugin
         }
 
         /// <summary>
-        /// Examines the SEQUEST, X!Tandem, Inspect, or MSGF+ param file to determine if ETD mode is enabled
+        /// Examines the SEQUEST, X!Tandem, Inspect, or MS-GF+ param file to determine if ETD mode is enabled
         /// </summary>
         /// <param name="eResultType"></param>
         /// <param name="searchToolParamFilePath"></param>
@@ -371,10 +371,10 @@ namespace AnalysisManagerMSGFPlugin
         }
 
         /// <summary>
-        /// Examines the MSGF+ param file to determine if ETD mode is enabled
+        /// Examines the MS-GF+ param file to determine if ETD mode is enabled
         /// If it is, sets mETDMode to True
         /// </summary>
-        /// <param name="searchToolParamFilePath">MSGF+ parameter file to read</param>
+        /// <param name="searchToolParamFilePath">MS-GF+ parameter file to read</param>
         /// <returns>True if success; false if an error</returns>
         private bool CheckETDModeEnabledMSGFPlus(string searchToolParamFilePath)
         {
@@ -386,10 +386,10 @@ namespace AnalysisManagerMSGFPlugin
 
                 if (mDebugLevel >= 2)
                 {
-                    LogDebug("Reading the MSGF+ parameter file: " + searchToolParamFilePath);
+                    LogDebug("Reading the MS-GF+ parameter file: " + searchToolParamFilePath);
                 }
 
-                // Read the data from the MSGF+ Param file
+                // Read the data from the MS-GF+ Param file
                 using (var reader = new StreamReader(new FileStream(searchToolParamFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
                 {
                     while (!reader.EndOfStream)
@@ -405,7 +405,7 @@ namespace AnalysisManagerMSGFPlugin
 
                         if (mDebugLevel >= 3)
                         {
-                            LogDebug("MSGF+ " + MSGFPLUS_FRAG_METHOD_TAG + " line found: " + dataLine);
+                            LogDebug("MS-GF+ " + MSGFPLUS_FRAG_METHOD_TAG + " line found: " + dataLine);
                         }
 
                         // Look for the equals sign
@@ -433,7 +433,7 @@ namespace AnalysisManagerMSGFPlugin
                         }
                         else
                         {
-                            LogWarning("MSGF+ " + MSGFPLUS_FRAG_METHOD_TAG + " line does not have an equals sign; " +
+                            LogWarning("MS-GF+ " + MSGFPLUS_FRAG_METHOD_TAG + " line does not have an equals sign; " +
                                        "will assume not using ETD ions: " + dataLine);
                         }
 
@@ -444,7 +444,7 @@ namespace AnalysisManagerMSGFPlugin
             }
             catch (Exception ex)
             {
-                LogError("Error reading the MSGF+ param file", ex);
+                LogError("Error reading the MS-GF+ param file", ex);
                 return false;
             }
 
@@ -706,7 +706,7 @@ namespace AnalysisManagerMSGFPlugin
 
                 case clsPHRPReader.ePeptideHitResultType.MSGFPlus:
 
-                    // Convert MSGF+ results to input format required for MSGF
+                    // Convert MS-GF+ results to input format required for MSGF
                     mMSGFInputCreator = new clsMSGFInputCreatorMSGFDB(mDatasetName, mWorkDir);
                     break;
 
@@ -2382,7 +2382,7 @@ namespace AnalysisManagerMSGFPlugin
         }
 
         /// <summary>
-        /// Stores the tool version info in the database when using MODa or MSGF+ probabilities to create the MSGF files
+        /// Stores the tool version info in the database when using MODa or MS-GF+ probabilities to create the MSGF files
         /// </summary>
         /// <remarks></remarks>
         private bool StoreToolVersionInfoPrecomputedProbabilities(clsPHRPReader.ePeptideHitResultType eResultType)

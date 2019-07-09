@@ -6,7 +6,7 @@ namespace AnalysisManagerMSGFDBPlugIn
     public class MSGFPlusParameter
     {
         /// <summary>
-        /// Name of the parameter in an MSGF+ parameter file
+        /// Name of the parameter in an MS-GF+ parameter file
         /// </summary>
         public string ParameterName { get; }
 
@@ -59,7 +59,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         public string Value { get; private set; }
 
         /// <summary>
-        /// Alternate names used for this parameter in an MSGF+ parameter file
+        /// Alternate names used for this parameter in an MS-GF+ parameter file
         /// </summary>
         /// <remarks>Case-insensitive names</remarks>
         public SortedSet<string> SynonymList { get; }

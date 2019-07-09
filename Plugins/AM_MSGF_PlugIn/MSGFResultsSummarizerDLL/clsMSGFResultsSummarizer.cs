@@ -370,7 +370,7 @@ namespace MSGFResultsSummarizer
         private void CheckForScanGaps(List<int> scanList)
         {
             // Look for scan range gaps in the spectra list
-            // The occurrence of large gaps indicates that a processing thread in MSGF+ crashed and the results may be incomplete
+            // The occurrence of large gaps indicates that a processing thread in MS-GF+ crashed and the results may be incomplete
             scanList.Sort();
 
             var success = LookupScanStats(out var totalSpectra, out var totalMSnSpectra);
@@ -633,7 +633,7 @@ namespace MSGFResultsSummarizer
                 // Use FDR = #Reverse / #Forward
                 //
                 // Alternative FDR formula is:  FDR = 2 * #Reverse / (#Forward + #Reverse)
-                // But, since MSGF+ uses "#Reverse / #Forward" we'll use that here too
+                // But, since MS-GF+ uses "#Reverse / #Forward" we'll use that here too
                 //
                 // If no reverse hits are present or if none of the data has MSGF values, we'll clear psmResults and update mErrorMessage
 
@@ -681,7 +681,7 @@ namespace MSGFResultsSummarizer
                     // X!Tandem decoy proteins               '%[:]reversed'
                     // Inspect reversed/scrambled proteins   'xxx.%'
                     // MSGFDB reversed proteins  'rev[_]%'
-                    // MSGF+ reversed proteins   'xxx[_]%'
+                    // MS-GF+ reversed proteins  'xxx[_]%'
 
                     if (protein.StartsWith("reversed_") || protein.StartsWith("scrambled_") || protein.EndsWith(":reversed") ||
                         protein.StartsWith("xxx_") || protein.StartsWith("xxx.") || protein.StartsWith("rev_"))

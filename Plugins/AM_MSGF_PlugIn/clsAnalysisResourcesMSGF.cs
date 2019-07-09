@@ -94,7 +94,7 @@ namespace AnalysisManagerMSGFPlugin
             if (eResultType == clsPHRPReader.ePeptideHitResultType.Sequest ||
                 eResultType == clsPHRPReader.ePeptideHitResultType.XTandem ||
                 eResultType == clsPHRPReader.ePeptideHitResultType.Inspect ||
-                eResultType == clsPHRPReader.ePeptideHitResultType.MSGFPlus || // MSGF+
+                eResultType == clsPHRPReader.ePeptideHitResultType.MSGFPlus || // MS-GF+
                 eResultType == clsPHRPReader.ePeptideHitResultType.MODa ||
                 eResultType == clsPHRPReader.ePeptideHitResultType.MODPlus ||
                 eResultType == clsPHRPReader.ePeptideHitResultType.MSPathFinder)
@@ -119,14 +119,14 @@ namespace AnalysisManagerMSGFPlugin
 
             if (eResultType == clsPHRPReader.ePeptideHitResultType.MSGFPlus)
             {
-                // We do not need the mzXML file, the parameter file, or various other files if we are running MSGF+ and running MSGF v6432 or later
+                // We do not need the mzXML file, the parameter file, or various other files if we are running MS-GF+ and running MSGF v6432 or later
                 // Determine this by looking for job parameter MSGF_Version
 
                 var msgfStepToolVersion = mJobParams.GetParam("MSGF_Version");
 
                 if (string.IsNullOrWhiteSpace(msgfStepToolVersion))
                 {
-                    // Production version of MSGF+; don't need the parameter file, ModSummary file, or mzXML file
+                    // Production version of MS-GF+; don't need the parameter file, ModSummary file, or mzXML file
                     onlyCopyFHTandSYNfiles = true;
                 }
                 else
@@ -152,7 +152,7 @@ namespace AnalysisManagerMSGFPlugin
             }
             else
             {
-                // Not running MSGF+ or running MSGF+ but using legacy msgf
+                // Not running MS-GF+ or running MS-GF+ but using legacy MSGF
                 onlyCopyFHTandSYNfiles = false;
 
                 if (!mgfInstrumentData)
@@ -176,7 +176,7 @@ namespace AnalysisManagerMSGFPlugin
 
             if (!onlyCopyFHTandSYNfiles)
             {
-                // Get the Sequest, X!Tandem, Inspect, MSGF+, MODa, MODPlus, or MSPathFinder parameter file
+                // Get the SEQUEST, X!Tandem, Inspect, MS-GF+, MODa, MODPlus, or MSPathFinder parameter file
                 fileToGet = mJobParams.GetParam("ParmFileName");
                 if (!FileSearch.FindAndRetrieveMiscFiles(fileToGet, false))
                 {

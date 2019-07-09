@@ -14,7 +14,7 @@ using System.Linq;
 namespace AnalysisManagerMSGFDBPlugIn
 {
     /// <summary>
-    /// Retrieve resources for the MSGFDB (aka MSGF+) plugin
+    /// Retrieve resources for the MS-GF+ (aka MSGF+) plugin
     /// </summary>
     public class clsAnalysisResourcesMSGFDB : clsAnalysisResources
     {
@@ -31,7 +31,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         }
 
         /// <summary>
-        /// Retrieves files necessary for running MSGF+
+        /// Retrieves files necessary for running MS-GF+
         /// </summary>
         /// <returns>CloseOutType indicating success or failure</returns>
         public override CloseOutType GetResources()
@@ -49,12 +49,12 @@ namespace AnalysisManagerMSGFDBPlugIn
                     return result;
                 }
 
-                // Make sure the machine has enough free memory to run MSGF+
+                // Make sure the machine has enough free memory to run MS-GF+
                 // Setting MSGFDBJavaMemorySize is stored in the settings file for the job
                 currentTask = "ValidateFreeMemorySize";
                 if (!ValidateFreeMemorySize("MSGFDBJavaMemorySize", false))
                 {
-                    mMessage = "Not enough free memory to run MSGF+";
+                    mMessage = "Not enough free memory to run MS-GF+";
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
@@ -143,7 +143,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 currentTask = "Add extensions to skip";
 
                 // Add all the extensions of the files to delete after run
-                // Do not skip all .gz files because the MSGF+ results are compressed using .gz
+                // Do not skip all .gz files because the MS-GF+ results are compressed using .gz
                 mJobParams.AddResultFileExtensionToSkip(DOT_MZXML_EXTENSION);
 
                 mJobParams.AddResultFileExtensionToSkip(CDTA_ZIPPED_EXTENSION);
@@ -407,7 +407,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                             mMessage = "ScanTypes defined in the \"Collision Mode\" column or \"Scan Filter Text\" column";
                         }
 
-                        mMessage += " do not contain detailed CID, ETD, or HCD information; MSGF+ could use the wrong scoring model; fix this problem before running MSGF+";
+                        mMessage += " do not contain detailed CID, ETD, or HCD information; MS-GF+ could use the wrong scoring model; fix this problem before running MS-GF+";
 
                         return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                     }
@@ -434,7 +434,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             if (!detailedScanTypesDefinedNewFile)
             {
                 mMessage = "ScanTypes defined in the ScanTypeName column do not contain detailed CID, ETD, or HCD information; " +
-                    "MSGF+ could use the wrong scoring model; fix this problem before running MSGF+";
+                    "MS-GF+ could use the wrong scoring model; fix this problem before running MS-GF+";
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 

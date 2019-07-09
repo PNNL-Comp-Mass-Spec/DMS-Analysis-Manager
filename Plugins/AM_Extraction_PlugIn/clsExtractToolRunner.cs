@@ -38,7 +38,7 @@ namespace AnalysisManagerExtractionPlugin
         /// <summary>
         /// For all tools, progress will be between 33% and 66% complete while PHRP is running
         /// For SEQUEST, we also run Peptide Prophet, during which progress will be between 66% and 100%
-        /// For SplitFasta MSGF+ jobs, we merge .mzid files, during which progress will be between 66% and 100%
+        /// For SplitFasta MS-GF+ jobs, we merge .mzid files, during which progress will be between 66% and 100%
         /// </summary>
         private const float PROGRESS_PHRP_DONE = 66;
 
@@ -118,7 +118,7 @@ namespace AnalysisManagerExtractionPlugin
                 {
                     case clsAnalysisResources.RESULT_TYPE_SEQUEST:
                         // Run the Peptide Extractor DLL
-                        currentAction = "running peptide extraction for Sequest";
+                        currentAction = "running peptide extraction for SEQUEST";
                         result = PerformPeptideExtraction();
 
                         // Check for no data first. If no data, exit but still copy results to server
@@ -133,15 +133,15 @@ namespace AnalysisManagerExtractionPlugin
                             mProgress = PROGRESS_EXTRACTION_DONE;     // 33% done
                             UpdateStatusRunning(mProgress);
 
-                            currentAction = "running peptide hits result processor for Sequest";
-                            result = RunPhrpForSequest();
+                            currentAction = "running peptide hits result processor for SEQUEST";
+                            result = RunPhrpForSEQUEST();
                         }
 
                         if (result == CloseOutType.CLOSEOUT_SUCCESS)
                         {
                             mProgress = PROGRESS_PHRP_DONE;   // 66% done
                             UpdateStatusRunning(mProgress);
-                            currentAction = "running peptide prophet for Sequest";
+                            currentAction = "running peptide prophet for SEQUEST";
                             RunPeptideProphet();
                         }
 
@@ -161,7 +161,7 @@ namespace AnalysisManagerExtractionPlugin
 
                     case clsAnalysisResources.RESULT_TYPE_MSGFPLUS:
                         // Run PHRP
-                        currentAction = "running peptide hits result processor for MSGF+";
+                        currentAction = "running peptide hits result processor for MS-GF+";
                         result = RunPhrpForMSGFPlus();
 
                         var splitFastaEnabled = mJobParams.GetJobParameter("SplitFasta", false);
@@ -533,9 +533,9 @@ namespace AnalysisManagerExtractionPlugin
         }
 
         /// <summary>
-        /// Convert the .mzid file created by MSGF+ to a .tsv file
+        /// Convert the .mzid file created by MS-GF+ to a .tsv file
         /// </summary>
-        /// <param name="suffixToAdd">Suffix to add when parsing files created by Parallel MSGF+</param>
+        /// <param name="suffixToAdd">Suffix to add when parsing files created by Parallel MS-GF+</param>
         /// <returns>The path to the .tsv file if successful; empty string if an error</returns>
         /// <remarks></remarks>
         private string ConvertMZIDToTSV(string suffixToAdd)
@@ -628,7 +628,7 @@ namespace AnalysisManagerExtractionPlugin
         }
 
         /// <summary>
-        /// Create the Peptide to Protein map file for the given MSGF+ results file
+        /// Create the Peptide to Protein map file for the given MS-GF+ results file
         /// </summary>
         /// <param name="resultsFileName"></param>
         /// <returns></returns>
@@ -743,7 +743,7 @@ namespace AnalysisManagerExtractionPlugin
                                     {
                                         if (headerMapping[headerName] < 0)
                                         {
-                                            LogError(string.Format("Header {0} not found in {1}; unable to merge the MSGF+ .tsv files",
+                                            LogError(string.Format("Header {0} not found in {1}; unable to merge the MS-GF+ .tsv files",
                                                                    headerName, Path.GetFileName(sourceFilePath)));
                                             return CloseOutType.CLOSEOUT_FAILED;
                                         }
@@ -846,7 +846,7 @@ namespace AnalysisManagerExtractionPlugin
                     if (mDebugLevel >= 1)
                     {
                         LogMessage(
-                            "Read " + totalLinesProcessed + " data lines from " + numberOfClonedSteps + " MSGF+ .tsv files; wrote " +
+                            "Read " + totalLinesProcessed + " data lines from " + numberOfClonedSteps + " MS-GF+ .tsv files; wrote " +
                             filterPassingPSMCount + " PSMs to the merged file");
                     }
                 }
@@ -1058,7 +1058,7 @@ namespace AnalysisManagerExtractionPlugin
         }
 
         /// <summary>
-        /// Perform peptide hit extraction for Sequest data
+        /// Perform peptide hit extraction for SEQUEST data
         /// </summary>
         /// <returns>CloseOutType representing success or failure</returns>
         /// <remarks></remarks>
@@ -1258,11 +1258,11 @@ namespace AnalysisManagerExtractionPlugin
         }
 
         /// <summary>
-        /// Runs PeptideHitsResultsProcessor on Sequest output
+        /// Runs PeptideHitsResultsProcessor on SEQUEST output
         /// </summary>
         /// <returns>CloseOutType representing success or failure</returns>
         /// <remarks></remarks>
-        private CloseOutType RunPhrpForSequest()
+        private CloseOutType RunPhrpForSEQUEST()
         {
             CloseOutType result;
             string synFilePath;
@@ -1273,7 +1273,7 @@ namespace AnalysisManagerExtractionPlugin
             // Run the processor
             if (mDebugLevel > 3)
             {
-                LogDebug("clsExtractToolRunner.RunPhrpForSequest(); Starting PHRP");
+                LogDebug("clsExtractToolRunner.RunPhrpForSEQUEST(); Starting PHRP");
             }
             try
             {
@@ -1656,7 +1656,7 @@ namespace AnalysisManagerExtractionPlugin
                     CloseOutType result;
                     if (!File.Exists(targetFilePath))
                     {
-                        // Processing MSGF+ results, work with .tsv files
+                        // Processing MS-GF+ results, work with .tsv files
 
                         if (splitFastaEnabled)
                         {
@@ -1760,7 +1760,7 @@ namespace AnalysisManagerExtractionPlugin
 
                         if (splitFastaEnabled)
                         {
-                            currentStep = "Merging Parallel MSGF+ results";
+                            currentStep = "Merging Parallel MS-GF+ results";
 
                             var numberOfHitsPerScanToKeep = mJobParams.GetJobParameter("MergeResultsToKeepPerScan", 2);
                             if (numberOfHitsPerScanToKeep < 1)
@@ -2029,7 +2029,7 @@ namespace AnalysisManagerExtractionPlugin
             {
                 if (warnFilesNotFound)
                 {
-                    LogWarning("MSGF+ console output files not found");
+                    LogWarning("MS-GF+ console output files not found");
                 }
 
                 consoleOutputFilesDir.Refresh();
@@ -2759,7 +2759,7 @@ namespace AnalysisManagerExtractionPlugin
 
             if (mJobParams.GetParam("ResultType") == clsAnalysisResources.RESULT_TYPE_SEQUEST)
             {
-                // Sequest result type
+                // SEQUEST result type
 
                 // Lookup the version of the PeptideFileExtractor
                 if (!StoreToolVersionInfoForLoadedAssembly(ref toolVersionInfo, "PeptideFileExtractor"))
