@@ -1177,8 +1177,8 @@ namespace AnalysisManagerExtractionPlugin
                 RegisterEvents(cmdRunner);
                 cmdRunner.LoopWaiting += MzidMerger_LoopWaiting;
 
-                // Abort MzidMerger if it runs for over 720 minutes (this generally indicates that it's stuck)
-                const int maxRuntimeSeconds = 720 * 60;
+                // Abort MzidMerger if it runs for over 36 hours (this generally indicates that it's stuck)
+                const int maxRuntimeSeconds = 36 * 60 * 60;
                 var success = cmdRunner.RunProgram(progLoc, arguments, "MzidMerger", true, maxRuntimeSeconds);
 
                 if (!success)
