@@ -158,7 +158,7 @@ namespace AnalysisManagerExtractionPlugin
 
                     // Define the precursor mass tolerance threshold
                     // At a minimum, use 6 Da, though we'll bump that up by 1 Da for each charge state (7 Da for CS 2, 8 Da for CS 3, 9 Da for CS 4, etc.)
-                    // However, for MSGF+ we require that the masses match within 0.1 Da because the IsotopeError column allows for a more accurate comparison
+                    // However, for MS-GF+ we require that the masses match within 0.1 Da because the IsotopeError column allows for a more accurate comparison
 
                     if (searchEngineParams.PrecursorMassToleranceDa < 6)
                     {

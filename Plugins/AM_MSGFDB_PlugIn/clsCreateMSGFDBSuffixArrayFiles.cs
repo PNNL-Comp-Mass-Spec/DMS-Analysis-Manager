@@ -16,7 +16,7 @@ using System.Text.RegularExpressions;
 namespace AnalysisManagerMSGFDBPlugIn
 {
     /// <summary>
-    /// Create MSGF+ suffix array files
+    /// Create MS-GF+ suffix array files
     /// </summary>
     public class clsCreateMSGFDBSuffixArrayFiles : EventNotifier
     {
@@ -148,7 +148,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 if (debugLevel >= 1 && fileSizeTotalKB >= 1000)
                 {
-                    OnStatusEvent("Copying existing MSGF+ index files from " + remoteIndexDirectory.FullName);
+                    OnStatusEvent("Copying existing MS-GF+ index files from " + remoteIndexDirectory.FullName);
                 }
 
                 // Copy each file in filesToCopy (overwrite existing files)
@@ -288,7 +288,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 if (remoteIndexDirectory.Parent == null || !remoteIndexDirectory.Parent.Exists)
                 {
-                    errorMessage = "Parent directory for the MSGF+ index files directory not found: " + remoteIndexDirPath;
+                    errorMessage = "Parent directory for the MS-GF+ index files directory not found: " + remoteIndexDirPath;
                     return false;
                 }
 
@@ -377,7 +377,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <param name="logFileDir"></param>
         /// <param name="debugLevel">1 for normal, 2 for more verbose, 5 for the most verbose</param>
         /// <param name="javaProgLoc"></param>
-        /// <param name="msgfPlusProgLoc">Path to the MSGF+ .jar file</param>
+        /// <param name="msgfPlusProgLoc">Path to the MS-GF+ .jar file</param>
         /// <param name="fastaFilePath">FASTA file path (on the local computer)</param>
         /// <param name="fastaFileIsDecoy">
         /// When True, only creates the forward-based index files.
@@ -878,7 +878,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             if (remoteIndexDirectory.Parent == null || !remoteIndexDirectory.Parent.Exists)
             {
-                OnErrorEvent("Cannot read/write MSGF+ index files from remote share; directory not found; " + remoteIndexDirectory.FullName);
+                OnErrorEvent("Cannot read/write MS-GF+ index files from remote share; directory not found; " + remoteIndexDirectory.FullName);
                 fiRemoteLockFile = null;
                 return false;
             }
@@ -904,7 +904,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             }
             catch (Exception ex)
             {
-                OnErrorEvent("Exception creating remote MSGF+ suffix array lock file at " +
+                OnErrorEvent("Exception creating remote MS-GF+ suffix array lock file at " +
                              remoteIndexDirectory.FullName + "; " + currentTask, ex);
                 return false;
             }
@@ -929,7 +929,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         }
 
         /// <summary>
-        /// Delete old MSGF+ index files
+        /// Delete old MS-GF+ index files
         /// </summary>
         /// <param name="remoteIndexDirPath"></param>
         /// <param name="debugLevel"></param>
@@ -946,7 +946,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     return;
                 }
 
-                // MSGF+ index files for protein collections are grouped by ArchiveOutputFile ID, rounded to the nearest 1000
+                // MS-GF+ index files for protein collections are grouped by ArchiveOutputFile ID, rounded to the nearest 1000
                 // For example \\gigasax\MSGFPlus_Index_Files\2000 and \\gigasax\MSGFPlus_Index_Files\3000
                 // The MaxDirSize.txt file will be up one directory
                 // Similarly, for Legacy FASTA files, the MaxDirSize.txt file is in the parent directory of \\Proto-7\MSGFPlus_Index_Files\Other
@@ -1062,7 +1062,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             existingFileList = string.Empty;
             missingFiles = string.Empty;
 
-            // Suffixes for MSGFDB (effective 8/22/2011) and MSGF+
+            // Suffixes for MSGFDB (effective 8/22/2011) and MS-GF+
             filesToFind.Add(".canno");
             filesToFind.Add(".cnlcp");
             filesToFind.Add(".csarr");
@@ -1122,11 +1122,11 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             if (string.Equals(fiJarFile.Name, MSGFDB_JAR_NAME, StringComparison.OrdinalIgnoreCase))
             {
-                // Not MSGF+
+                // Not MS-GF+
                 return false;
             }
 
-            // Using MSGF+
+            // Using MS-GF+
             return true;
         }
 
@@ -1295,11 +1295,11 @@ namespace AnalysisManagerMSGFDBPlugIn
             string sourceDescription;
             if (verifyingRemoteDirectory)
             {
-                sourceDescription = "Remote MSGF+ index file";
+                sourceDescription = "Remote MS-GF+ index file";
             }
             else
             {
-                sourceDescription = "Local MSGF+ index file";
+                sourceDescription = "Local MS-GF+ index file";
             }
 
             foreach (var entry in filesToCopy)
@@ -1308,16 +1308,16 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 if (!fiSourceFile.Exists)
                 {
-                    // Remote MSGF+ index file not found
-                    // Local MSGF+ index file not found
+                    // Remote MS-GF+ index file not found
+                    // Local MS-GF+ index file not found
                     OnWarningEvent(sourceDescription + " not found: " + fiSourceFile.FullName);
                     return false;
                 }
 
                 if (fiSourceFile.Length != entry.Value)
                 {
-                    // Remote MSGF+ index file is not the expected size
-                    // Local MSGF+ index file is not the expected size
+                    // Remote MS-GF+ index file is not the expected size
+                    // Local MS-GF+ index file is not the expected size
                     OnWarningEvent(sourceDescription + " is not the expected size: " + fiSourceFile.FullName + " should be " + entry.Value +
                                    " bytes but is actually " + fiSourceFile.Length + " bytes");
                     return false;

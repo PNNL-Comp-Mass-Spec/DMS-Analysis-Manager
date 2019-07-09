@@ -4,7 +4,7 @@
 //
 // Created 07/20/2010
 //
-// This class reads a Sequest _syn.txt file in support of creating the input file for MSGF
+// This class reads a SEQUEST _syn.txt file in support of creating the input file for MSGF
 //
 //*********************************************************************************************************
 
@@ -30,7 +30,7 @@ namespace AnalysisManagerMSGFPlugin
 
         protected override void InitializeFilePaths()
         {
-            // Customize mPHRPResultFilePath for Sequest synopsis files
+            // Customize mPHRPResultFilePath for SEQUEST synopsis files
             mPHRPFirstHitsFilePath = CombineIfValidFile(mWorkDir, clsPHRPParserSequest.GetPHRPFirstHitsFileName(mDatasetName));
             mPHRPSynopsisFilePath = CombineIfValidFile(mWorkDir, clsPHRPParserSequest.GetPHRPSynopsisFileName(mDatasetName));
 
@@ -44,7 +44,7 @@ namespace AnalysisManagerMSGFPlugin
 
             // Examine the score values and possibly filter out this line
 
-            // Sequest filter rules are relaxed forms of the MTS Peptide DB Minima (Peptide DB minima 6, filter set 149)
+            // SEQUEST filter rules are relaxed forms of the MTS Peptide DB Minima (Peptide DB minima 6, filter set 149)
             // All data must have DelCn <= 0.25
             // For Partially or fully tryptic, or protein terminal;
             //    XCorr >= 1.5 for 1+ or 2+

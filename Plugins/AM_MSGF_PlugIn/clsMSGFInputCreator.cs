@@ -7,7 +7,7 @@
 // This class reads a tab-delimited text file (created by the Peptide File Extractor or by PHRP)
 // and creates a tab-delimited text file suitable for processing by MSGF
 //
-// The class must be derived by a sub-class customized for the specific analysis tool (Sequest, X!Tandem, Inspect, etc.)
+// The class must be derived by a sub-class customized for the specific analysis tool (SEQUEST, X!Tandem, Inspect, etc.)
 //
 //*********************************************************************************************************
 
@@ -649,7 +649,7 @@ namespace AnalysisManagerMSGFPlugin
                     if (passesFilters)
                     {
                         // If this line is a duplicate of the previous line, skip it
-                        // This happens in Sequest _syn.txt files where the line is repeated for all protein matches
+                        // This happens in SEQUEST _syn.txt files where the line is repeated for all protein matches
 
                         if (scanNumberPrevious == objPSM.ScanNumber &&
                             chargePrevious == objPSM.Charge &&

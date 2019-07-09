@@ -57,14 +57,14 @@ namespace AnalysisManagerExtractionPlugin
             base.Setup(stepToolName, mgrParams, jobParams, statusTools, myEMSLUtilities);
 
             // Always retrieve the FASTA file because PHRP uses it
-            // This includes for MSGF+ because it uses the order of the proteins in the
+            // This includes for MS-GF+ because it uses the order of the proteins in the
             // FASTA file to determine the protein to include in the FHT file
 
             SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, true);
         }
 
         /// <summary>
-        /// Examines the SEQUEST, X!Tandem, Inspect, or MSGF+ param file to determine if ETD mode is enabled
+        /// Examines the SEQUEST, X!Tandem, Inspect, or MS-GF+ param file to determine if ETD mode is enabled
         /// </summary>
         /// <param name="resultType"></param>
         /// <param name="searchToolParamFilePath"></param>
@@ -85,7 +85,7 @@ namespace AnalysisManagerExtractionPlugin
             switch (resultType)
             {
                 case RESULT_TYPE_SEQUEST:
-                    runAscore = CheckAScoreRequiredSequest(searchToolParamFilePath);
+                    runAscore = CheckAScoreRequiredSEQUEST(searchToolParamFilePath);
                     break;
 
                 case RESULT_TYPE_XTANDEM:
@@ -116,9 +116,9 @@ namespace AnalysisManagerExtractionPlugin
         }
 
         /// <summary>
-        /// Examines the MSGF+ param file to determine if phospho STY is enabled
+        /// Examines the MS-GF+ param file to determine if phospho STY is enabled
         /// </summary>
-        /// <param name="searchToolParamFilePath">MSGF+ parameter file to read</param>
+        /// <param name="searchToolParamFilePath">MS-GF+ parameter file to read</param>
         /// <returns>True if we should run AScore, otherwise false</returns>
         private bool CheckAScoreRequiredMSGFPlus(string searchToolParamFilePath)
         {
@@ -131,10 +131,10 @@ namespace AnalysisManagerExtractionPlugin
 
                 if (mDebugLevel >= 2)
                 {
-                    LogDebug("Reading the MSGF+ parameter file: " + searchToolParamFilePath);
+                    LogDebug("Reading the MS-GF+ parameter file: " + searchToolParamFilePath);
                 }
 
-                // Read the data from the MSGF+ Param file
+                // Read the data from the MS-GF+ Param file
                 using (var reader = new StreamReader(new FileStream(searchToolParamFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
                 {
 
@@ -150,7 +150,7 @@ namespace AnalysisManagerExtractionPlugin
 
                         if (mDebugLevel >= 3)
                         {
-                            LogDebug("MSGF+ " + DYNAMIC_MOD_TAG + " line found: " + dataLine);
+                            LogDebug("MS-GF+ " + DYNAMIC_MOD_TAG + " line found: " + dataLine);
                         }
 
                         // Look for the equals sign
@@ -175,7 +175,7 @@ namespace AnalysisManagerExtractionPlugin
                             {
                                 if (!modDef.StartsWith("None", StringComparison.OrdinalIgnoreCase))
                                 {
-                                    LogWarning("Incomplete mod def line in MSGF+ parameter file: " + modDef);
+                                    LogWarning("Incomplete mod def line in MS-GF+ parameter file: " + modDef);
                                 }
                                 continue;
                             }
@@ -206,7 +206,7 @@ namespace AnalysisManagerExtractionPlugin
                         }
                         else
                         {
-                            LogWarning("MSGF+ " + DYNAMIC_MOD_TAG + " line does not have an equals sign; ignoring " + dataLine);
+                            LogWarning("MS-GF+ " + DYNAMIC_MOD_TAG + " line does not have an equals sign; ignoring " + dataLine);
                         }
 
                     }
@@ -216,7 +216,7 @@ namespace AnalysisManagerExtractionPlugin
             }
             catch (Exception ex)
             {
-                LogError("Error reading the MSGF+ param file", ex);
+                LogError("Error reading the MS-GF+ param file", ex);
                 return false;
             }
 
@@ -227,7 +227,7 @@ namespace AnalysisManagerExtractionPlugin
         /// </summary>
         /// <param name="searchToolParamFilePath">SEQUEST parameter file to read</param>
         /// <returns>True if we should run AScore, otherwise false</returns>
-        private bool CheckAScoreRequiredSequest(string searchToolParamFilePath)
+        private bool CheckAScoreRequiredSEQUEST(string searchToolParamFilePath)
         {
             const string DIFF_SEARCH_OPTIONS_TAG = "diff_search_options";
 
@@ -533,7 +533,7 @@ namespace AnalysisManagerExtractionPlugin
                 switch (resultType)
                 {
                     case RESULT_TYPE_SEQUEST:
-                        result = GetSequestFiles();
+                        result = GetSEQUESTFiles();
                         break;
 
                     case RESULT_TYPE_XTANDEM:
@@ -590,7 +590,7 @@ namespace AnalysisManagerExtractionPlugin
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
-        private CloseOutType GetSequestFiles()
+        private CloseOutType GetSEQUESTFiles()
         {
             // Get the concatenated .out file
             if (!FileSearch.RetrieveOutFiles(false))
@@ -789,7 +789,7 @@ namespace AnalysisManagerExtractionPlugin
                 string mzidSuffix;
                 if (!string.IsNullOrEmpty(sourceDir))
                 {
-                    // Running MSGF+ with gzipped results
+                    // Running MS-GF+ with gzipped results
                     mzidSuffix = ".mzid.gz";
                 }
                 else
@@ -800,7 +800,7 @@ namespace AnalysisManagerExtractionPlugin
 
                     if (!string.IsNullOrEmpty(mzidSourceDirAlt))
                     {
-                        // Running MSGF+ with gzipped results
+                        // Running MS-GF+ with gzipped results
                         mzidSuffix = ".mzid.gz";
                         sourceDir = mzidSourceDirAlt;
                     }
@@ -810,7 +810,7 @@ namespace AnalysisManagerExtractionPlugin
                         var zipSourceDir = FileSearch.FindDataFile(DatasetName + "_msgfplus" + suffixToAdd + ".zip", true, false);
                         if (!string.IsNullOrEmpty(zipSourceDir))
                         {
-                            // Running MSGF+ with zipped results
+                            // Running MS-GF+ with zipped results
                             mzidSuffix = ".zip";
                             sourceDir = zipSourceDir;
                         }
@@ -829,7 +829,7 @@ namespace AnalysisManagerExtractionPlugin
                             {
                                 // File not found; log a warning
                                 LogWarning(
-                                    "Could not find the _msgfplus.mzid.gz, _msgfplus.zip file, or the _msgfdb.zip file; assuming we're running MSGF+");
+                                    "Could not find the _msgfplus.mzid.gz, _msgfplus.zip file, or the _msgfdb.zip file; assuming we're running MS-GF+");
                                 mzidSuffix = ".mzid.gz";
                             }
                         }
@@ -1063,7 +1063,7 @@ namespace AnalysisManagerExtractionPlugin
                 if (string.IsNullOrWhiteSpace(phrpResultsSourceDir))
                 {
                     // PHRP has not been run yet (which will typically be the case)
-                    // Note that we'll obtain the MSGF+ parameter file in RetrieveMiscFiles
+                    // Note that we'll obtain the MS-GF+ parameter file in RetrieveMiscFiles
                     return CloseOutType.CLOSEOUT_SUCCESS;
                 }
 
@@ -1121,7 +1121,7 @@ namespace AnalysisManagerExtractionPlugin
                     mJobParams.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, JOB_PARAM_SKIP_PHRP, true);
                 }
 
-                // Note that we'll obtain the MSGF+ parameter file in RetrieveMiscFiles
+                // Note that we'll obtain the MS-GF+ parameter file in RetrieveMiscFiles
                 return CloseOutType.CLOSEOUT_SUCCESS;
 
             }
@@ -1290,7 +1290,7 @@ namespace AnalysisManagerExtractionPlugin
             {
                 // Call RetrieveGeneratedParamFile() now to re-create the parameter file, retrieve the _ModDefs.txt file,
                 //   and retrieve the MassCorrectionTags.txt file
-                // Although the ModDefs file should have been created when SEQUEST, X!Tandem, Inspect, MSGF+, or MSAlign ran,
+                // Although the ModDefs file should have been created when SEQUEST, X!Tandem, Inspect, MS-GF+, or MSAlign ran,
                 //   we re-generate it here just in case T_Param_File_Mass_Mods had missing information
                 // Furthermore, we need the search engine parameter file for the PHRPReader
 

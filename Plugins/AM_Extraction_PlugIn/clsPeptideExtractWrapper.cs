@@ -16,7 +16,7 @@ using System.Text.RegularExpressions;
 namespace AnalysisManagerExtractionPlugin
 {
     /// <summary>
-    /// Perform Peptide extraction from Sequest results
+    /// Perform Peptide extraction from SEQUEST results
     /// </summary>
     /// <remarks></remarks>
     public class clsPeptideExtractWrapper : EventNotifier
