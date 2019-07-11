@@ -269,7 +269,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                     {
                         try
                         {
-                            StartPpmErrorCharter(msgfPlusResults);
+                            StartPpmErrorCharter(msgfPlusResults, fixedMSXmlFile);
                         }
                         catch (Exception ex)
                         {
@@ -1100,7 +1100,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             try
             {
                 // Create the plots
-                var success = StartPpmErrorCharter(msgfPlusResults);
+                var success = StartPpmErrorCharter(msgfPlusResults, fixedMSXmlFile);
 
                 if (!success)
                 {
@@ -1170,9 +1170,9 @@ namespace AnalysisManagerMzRefineryPlugIn
                 var mzRefFileGzipped = new FileInfo(fixedMSXmlFile.FullName + clsAnalysisResources.DOT_GZ_EXTENSION);
 
                 // Copy the .mzXML.gz or .mzML.gz file to the cache
-                var remoteCachefilePath = CopyFileToServerCache(mMSXmlCacheFolder.FullName, mzRefFileGzipped.FullName, purgeOldFilesIfNeeded: true);
+                var remoteCacheFilePath = CopyFileToServerCache(mMSXmlCacheFolder.FullName, mzRefFileGzipped.FullName, purgeOldFilesIfNeeded: true);
 
-                if (string.IsNullOrEmpty(remoteCachefilePath))
+                if (string.IsNullOrEmpty(remoteCacheFilePath))
                 {
                     if (string.IsNullOrEmpty(mMessage))
                     {
@@ -1185,7 +1185,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 var cacheInfoFilePath = mzRefFileGzipped.FullName + "_CacheInfo.txt";
                 using (var writer = new StreamWriter(new FileStream(cacheInfoFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
-                    writer.WriteLine(remoteCachefilePath);
+                    writer.WriteLine(remoteCacheFilePath);
                 }
 
                 mJobParams.AddResultFileToSkip(mzRefFileGzipped.Name);
@@ -1441,14 +1441,15 @@ namespace AnalysisManagerMzRefineryPlugIn
             return true;
         }
 
-        private bool StartPpmErrorCharter(FileSystemInfo msgfPlusResults)
+        private bool StartPpmErrorCharter(FileSystemInfo msgfPlusResults, FileSystemInfo fixedMSXmlFile)
         {
             LogMessage("Running PPMErrorCharter");
 
             // Set up and execute a program runner to run the PPMErrorCharter
-            var arguments = " " + msgfPlusResults.FullName +
-                            " " + mMzRefinerSpecEValueThreshold.ToString("0.###E+00") +
-                            " /Python";
+            var arguments = " -I:" + msgfPlusResults.FullName +
+                            " -EValue:" + mMzRefinerSpecEValueThreshold.ToString("0.###E+00") +
+                            " -MzML:" + fixedMSXmlFile.FullName +
+                            " -Python";
 
             if (mDebugLevel >= 1)
             {
