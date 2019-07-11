@@ -780,9 +780,9 @@ namespace AnalysisManagerBase
 
             paramValue = string.Empty;
 
-            foreach (var oEntry in mJobParams)
+            foreach (var entry in mJobParams)
             {
-                if (oEntry.Value.TryGetValue(paramName, out paramValue))
+                if (entry.Value.TryGetValue(paramName, out paramValue))
                 {
                     if (string.IsNullOrWhiteSpace(paramValue))
                     {
