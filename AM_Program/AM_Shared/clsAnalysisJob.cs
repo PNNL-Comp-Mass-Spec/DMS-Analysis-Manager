@@ -581,7 +581,20 @@ namespace AnalysisManagerBase
         /// <returns>Value for specified parameter; valueIfMissing if not found</returns>
         public bool GetJobParameter(string section, string name, bool valueIfMissing)
         {
-            return clsGlobal.CBoolSafe(GetParam(section, name), valueIfMissing);
+            var valueText = GetParam(section, name);
+
+            if (string.IsNullOrWhiteSpace(valueText))
+                return valueIfMissing;
+
+            if (bool.TryParse(valueText, out var value))
+                return value;
+
+            if (int.TryParse(valueText, out var integerValue))
+            {
+                return integerValue != 0;
+            }
+
+            return valueIfMissing;
         }
 
         /// <summary>
