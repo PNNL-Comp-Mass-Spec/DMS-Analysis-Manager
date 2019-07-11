@@ -54,7 +54,7 @@ namespace AnalysisManagerBase
         public string ErrorMessage { get; private set; }
 
         /// <summary>
-        /// MSGF+ index files folder path
+        /// MS-GF+ index files folder path
         /// </summary>
         public string MSGFPlusIndexFilesFolderPathLegacyDB { get; set; }
 

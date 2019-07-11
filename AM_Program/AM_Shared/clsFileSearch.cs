@@ -1342,7 +1342,7 @@ namespace AnalysisManagerBase
             if (!string.Equals(sourceFile.Extension, clsAnalysisResources.DOT_GZ_EXTENSION, StringComparison.OrdinalIgnoreCase))
                 return true;
 
-            // Do not skip all .gz files because we compress MSGF+ results using .gz and we want to keep those
+            // Do not skip all .gz files because we compress MS-GF+ results using .gz and we want to keep those
 
             mJobParams.AddResultFileToSkip(sourceFile.Name);
             mJobParams.AddResultFileToSkip(sourceFile.Name.Substring(0, sourceFile.Name.Length - clsAnalysisResources.DOT_GZ_EXTENSION.Length));

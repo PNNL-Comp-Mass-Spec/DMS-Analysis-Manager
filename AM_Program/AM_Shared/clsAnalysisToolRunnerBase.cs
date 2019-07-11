@@ -2300,7 +2300,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="additionalJobs">Output: Non Peptide Hit jobs (e.g. DeconTools or MASIC)</param>
         /// <param name="errorMsg">Output: error message</param>
-        /// <returns>Peptide Hit Jobs (e.g. MSGF+ or Sequest)</returns>
+        /// <returns>Peptide Hit Jobs (e.g. MS-GF+ or Sequest)</returns>
         /// <remarks>This method updates property NumberOfClonedSteps for the analysis jobs</remarks>
         protected List<clsDataPackageJobInfo> RetrieveDataPackagePeptideHitJobInfo(
             out List<clsDataPackageJobInfo> additionalJobs,
@@ -2399,7 +2399,7 @@ namespace AnalysisManagerBase
                     logIntervalMinutes = 1;
 
                 // Log progress; example message:
-                //    ... 14.1% complete for MSGF+, job 1635879
+                //    ... 14.1% complete for MS-GF+, job 1635879
                 var progressMessage = " ... " + mProgress.ToString("0.0") + "% complete for " + toolName + ", job " + Job;
 
                 if (DateTime.UtcNow.Subtract(mLastProgressConsoleTime).TotalMinutes >= CONSOLE_PROGRESS_INTERVAL_MINUTES)

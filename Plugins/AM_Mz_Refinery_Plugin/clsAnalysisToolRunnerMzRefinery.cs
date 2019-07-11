@@ -77,7 +77,7 @@ namespace AnalysisManagerMzRefineryPlugIn
         private DirectoryInfo mMSXmlCacheFolder;
 
         /// <summary>
-        /// Command runner for MSGF+, MzRefinery (which uses MSConvert), and PPMErrorCharter
+        /// Command runner for MS-GF+, MzRefinery (which uses MSConvert), and PPMErrorCharter
         /// </summary>
         /// <remarks>eMzRefinerProgRunnerMode keeps track of the current ProgRunner and is used by MonitorProgress</remarks>
         private clsRunDosProgram mCmdRunner;
@@ -87,7 +87,7 @@ namespace AnalysisManagerMzRefineryPlugIn
         #region "Methods"
 
         /// <summary>
-        /// Runs MSGF+ then runs MSConvert with the MzRefiner filter
+        /// Runs MS-GF+ then runs MSConvert with the MzRefiner filter
         /// </summary>
         /// <returns>CloseOutType enum indicating success or failure</returns>
         public override CloseOutType RunTool()
@@ -174,7 +174,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                     }
                 }
 
-                // Look for existing MSGF+ results (which would have been retrieved by clsAnalysisResourcesMzRefinery)
+                // Look for existing MS-GF+ results (which would have been retrieved by clsAnalysisResourcesMzRefinery)
 
                 var msgfPlusResults = new FileInfo(Path.Combine(mWorkDir, mDatasetName + MSGFPLUS_MZID_SUFFIX));
                 var skippedMSGFPlus = false;
@@ -188,7 +188,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 }
                 else
                 {
-                    // Run MSGF+ (includes indexing the fasta file)
+                    // Run MS-GF+ (includes indexing the fasta file)
                     result = RunMSGFPlus(javaProgLoc, msXmlFileExtension, out msgfPlusResults);
                 }
 
@@ -196,7 +196,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 {
                     if (string.IsNullOrEmpty(mMessage))
                     {
-                        LogError("Unknown error running MSGF+ prior to running MzRefiner");
+                        LogError("Unknown error running MS-GF+ prior to running MzRefiner");
                     }
                     return result;
                 }
@@ -282,7 +282,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                         Path.Combine(mWorkDir, "NOTE - Orphan folder; safe to delete.txt"),
                         FileMode.Create, FileAccess.Write, FileShare.Read)))
                     {
-                        writer.WriteLine("This folder contains MSGF+ results and the MzRefinery log file from a failed attempt at running MzRefinery for job " + mJob + ".");
+                        writer.WriteLine("This folder contains MS-GF+ results and the MzRefinery log file from a failed attempt at running MzRefinery for job " + mJob + ".");
                         writer.WriteLine("The files can be used to investigate the MzRefinery failure.");
                         writer.WriteLine("the directory can be safely deleted.");
                     }
@@ -308,8 +308,8 @@ namespace AnalysisManagerMzRefineryPlugIn
 
                     if (msgfPlusResults != null && msgfPlusResults.Exists)
                     {
-                        // MSGF+ succeeded but MzRefinery or PostProcessing failed
-                        // We will mark the job as failed, but we want to move the MSGF+ results into the transfer folder
+                        // MS-GF+ succeeded but MzRefinery or PostProcessing failed
+                        // We will mark the job as failed, but we want to move the MS-GF+ results into the transfer folder
 
                         if (skippedMSGFPlus)
                         {
@@ -339,7 +339,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 if (!processingError)
                     return CloseOutType.CLOSEOUT_SUCCESS;
 
-                // If we get here, MSGF+ succeeded, but MzRefinery or PostProcessing failed
+                // If we get here, MS-GF+ succeeded, but MzRefinery or PostProcessing failed
                 LogWarning("Processing failed; see results at " + mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH));
                 if (mUnableToUseMzRefinery)
                 {
@@ -357,18 +357,18 @@ namespace AnalysisManagerMzRefineryPlugIn
         }
 
         /// <summary>
-        /// Index the Fasta file (if needed) then run MSGF+
+        /// Index the Fasta file (if needed) then run MS-GF+
         /// </summary>
         /// <param name="javaProgLoc">Path to Java</param>
         /// <param name="msXmlFileExtension">.mzXML or .mzML</param>
-        /// <param name="msgfPlusResults">Output: MSGF+ results file</param>
+        /// <param name="msgfPlusResults">Output: MS-GF+ results file</param>
         /// <returns></returns>
         /// <remarks></remarks>
         private CloseOutType RunMSGFPlus(string javaProgLoc, string msXmlFileExtension, out FileInfo msgfPlusResults)
         {
             msgfPlusResults = null;
 
-            // Determine the path to MSGF+
+            // Determine the path to MS-GF+
             mMSGFPlusProgLoc = DetermineProgramLocation("MSGFPlusProgLoc", MSGFPlusUtils.MSGFPLUS_JAR_NAME);
 
             if (string.IsNullOrWhiteSpace(mMSGFPlusProgLoc))
@@ -376,7 +376,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            // Note: we will store the MSGF+ version info in the database after the first line is written to file MSGFPlus_ConsoleOutput.txt
+            // Note: we will store the MS-GF+ version info in the database after the first line is written to file MSGFPlus_ConsoleOutput.txt
             mToolVersionWritten = false;
 
             mMSGFPlusComplete = false;
@@ -417,7 +417,7 @@ namespace AnalysisManagerMzRefineryPlugIn
 
             var instrumentGroup = mJobParams.GetJobParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, "InstrumentGroup", string.Empty);
 
-            // Read the MSGF+ Parameter File
+            // Read the MS-GF+ Parameter File
 
             var overrideParams = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
@@ -468,16 +468,16 @@ namespace AnalysisManagerMzRefineryPlugIn
             var resultsFileName = mDatasetName + MSGFPLUS_MZID_SUFFIX;
             msgfPlusResults = new FileInfo(Path.Combine(mWorkDir, resultsFileName));
 
-            LogMessage("Running MSGF+");
+            LogMessage("Running MS-GF+");
 
-            // If an MSGF+ analysis crashes with an "out-of-memory" error, we need to reserve more memory for Java
+            // If an MS-GF+ analysis crashes with an "out-of-memory" error, we need to reserve more memory for Java
             // The amount of memory required depends on both the fasta file size and the size of the input .mzML file, since data from all spectra are cached in memory
             // Customize this on a per-job basis using the MSGFDBJavaMemorySize setting in the settings file
             var javaMemorySize = mJobParams.GetJobParameter("MzRefMSGFPlusJavaMemorySize", 1500);
             if (javaMemorySize < 512)
                 javaMemorySize = 512;
 
-            // Set up and execute a program runner to run MSGF+
+            // Set up and execute a program runner to run MS-GF+
             var arguments = " -Xmx" + javaMemorySize + "M" +
                             " -jar " + msgfplusJarFilePath +
                             " -s " + mDatasetName + msXmlFileExtension +
@@ -485,16 +485,16 @@ namespace AnalysisManagerMzRefineryPlugIn
                             " -d " + PossiblyQuotePath(fastaFilePath) +
                             " -conf " + finalParamFile.Name;
 
-            // Make sure the machine has enough free memory to run MSGF+
+            // Make sure the machine has enough free memory to run MS-GF+
             var logFreeMemoryOnSuccess = !(mDebugLevel < 1);
 
-            if (!clsAnalysisResources.ValidateFreeMemorySize(javaMemorySize, "MSGF+", logFreeMemoryOnSuccess))
+            if (!clsAnalysisResources.ValidateFreeMemorySize(javaMemorySize, "MS-GF+", logFreeMemoryOnSuccess))
             {
-                LogError("Not enough free memory to run MSGF+");
+                LogError("Not enough free memory to run MS-GF+");
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            success = StartMSGFPlus(javaExePath, "MSGF+", arguments);
+            success = StartMSGFPlus(javaExePath, "MS-GF+", arguments);
 
             if (!success && string.IsNullOrEmpty(mMSGFPlusUtils.ConsoleOutputErrorMsg))
             {
@@ -531,11 +531,11 @@ namespace AnalysisManagerMzRefineryPlugIn
                 string msg;
                 if (mMSGFPlusComplete)
                 {
-                    msg = "MSGF+ log file reported it was complete, but aborted the ProgRunner since Java was frozen";
+                    msg = "MS-GF+ log file reported it was complete, but aborted the ProgRunner since Java was frozen";
                 }
                 else
                 {
-                    msg = "Error running MSGF+";
+                    msg = "Error running MS-GF+";
                 }
 
                 LogError(msg);
@@ -555,11 +555,11 @@ namespace AnalysisManagerMzRefineryPlugIn
                 {
                     if (mCmdRunner.ExitCode != 0)
                     {
-                        LogWarning("MSGF+ returned a non-zero exit code: " + mCmdRunner.ExitCode);
+                        LogWarning("MS-GF+ returned a non-zero exit code: " + mCmdRunner.ExitCode);
                     }
                     else
                     {
-                        LogWarning("Call to MSGF+ failed (but exit code is 0)");
+                        LogWarning("Call to MS-GF+ failed (but exit code is 0)");
                     }
                 }
             }
@@ -570,7 +570,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 mStatusTools.UpdateAndWrite(mProgress);
                 if (mDebugLevel >= 3)
                 {
-                    LogDebug("MSGF+ Search Complete");
+                    LogDebug("MS-GF+ Search Complete");
                 }
             }
 
@@ -581,7 +581,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             {
                 if (string.IsNullOrEmpty(mMessage))
                 {
-                    LogError("MSGF+ results file not found: " + resultsFileName);
+                    LogError("MS-GF+ results file not found: " + resultsFileName);
                 }
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -619,7 +619,7 @@ namespace AnalysisManagerMzRefineryPlugIn
 
             mProgRunnerMode = eMzRefinerProgRunnerMode.MSGFPlus;
 
-            // Start MSGF+ and wait for it to exit
+            // Start MS-GF+ and wait for it to exit
             var success = mCmdRunner.RunProgram(javaExePath, arguments, searchEngineName, true);
 
             mProgRunnerMode = eMzRefinerProgRunnerMode.Unknown;
@@ -636,7 +636,7 @@ namespace AnalysisManagerMzRefineryPlugIn
         {
             try
             {
-                // Compress the MSGF+ .mzID file
+                // Compress the MS-GF+ .mzID file
                 var success = mDotNetZipTools.GZipFile(msgfPlusResults.FullName, true);
 
                 if (!success)
@@ -745,7 +745,7 @@ namespace AnalysisManagerMzRefineryPlugIn
 
                 UpdateProgRunnerCpuUsage(mCmdRunner, SECONDS_BETWEEN_UPDATE);
 
-                LogProgress("MSGF+ for MzRefinery");
+                LogProgress("MS-GF+ for MzRefinery");
 
                 if (mProgress < MSGFPlusUtils.PROGRESS_PCT_MSGFPLUS_COMPLETE)
                     return;
@@ -760,9 +760,9 @@ namespace AnalysisManagerMzRefineryPlugIn
                     if (DateTime.UtcNow.Subtract(mMSGFPlusCompletionTime).TotalMinutes < 5)
                         return;
 
-                    // MSGF+ is stuck at 96% complete and has been that way for 5 minutes
+                    // MS-GF+ is stuck at 96% complete and has been that way for 5 minutes
                     // Java is likely frozen and thus the process should be aborted
-                    var warningMessage = "MSGF+ has been stuck at " +
+                    var warningMessage = "MS-GF+ has been stuck at " +
                                          MSGFPlusUtils.PROGRESS_PCT_MSGFPLUS_COMPLETE.ToString("0") + "% complete for 5 minutes; " +
                                          "aborting since Java appears frozen";
                     LogWarning(warningMessage);
@@ -789,7 +789,7 @@ namespace AnalysisManagerMzRefineryPlugIn
         }
 
         /// <summary>
-        /// Parse the MSGF+ console output file to determine the MSGF+ version and to track the search progress
+        /// Parse the MS-GF+ console output file to determine the MS-GF+ version and to track the search progress
         /// </summary>
         /// <remarks></remarks>
         private void ParseMSGFPlusConsoleOutputFile(string workingDirectory)
@@ -807,7 +807,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 // Ignore errors here
                 if (mDebugLevel >= 2)
                 {
-                    LogError("Error parsing MSGF+ console output file: " + ex.Message);
+                    LogError("Error parsing MS-GF+ console output file: " + ex.Message);
                 }
             }
         }
@@ -1202,7 +1202,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 return true;
             }
 
-            // Compress the MSGF+ .mzID file
+            // Compress the MS-GF+ .mzID file
             var gzipSuccess = CompressMSGFPlusResults(msgfPlusResults);
 
             return gzipSuccess;
@@ -1271,7 +1271,7 @@ namespace AnalysisManagerMzRefineryPlugIn
         /// Start mzRefinery
         /// </summary>
         /// <param name="originalMSXmlFile">.mzML file</param>
-        /// <param name="msgfPlusResults">.mzid file from MSGF+</param>
+        /// <param name="msgfPlusResults">.mzid file from MS-GF+</param>
         /// <returns></returns>
         private bool StartMzRefinery(FileSystemInfo originalMSXmlFile, FileSystemInfo msgfPlusResults)
         {
@@ -1405,7 +1405,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 {
                     if (string.IsNullOrEmpty(mMessage))
                     {
-                        LogError("MSGF+ identified too few peptides; unable to use MzRefinery with this dataset");
+                        LogError("MS-GF+ identified too few peptides; unable to use MzRefinery with this dataset");
                         mForceGeneratePPMErrorPlots = true;
                     }
                     else
