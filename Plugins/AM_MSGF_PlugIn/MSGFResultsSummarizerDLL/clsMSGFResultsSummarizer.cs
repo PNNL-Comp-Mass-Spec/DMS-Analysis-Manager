@@ -1158,11 +1158,14 @@ namespace MSGFResultsSummarizer
 
                 if (!string.IsNullOrEmpty(seqMapReader.ResultToSeqMapFilename))
                 {
-                    var resultToSeqMapFile = new FileInfo(Path.Combine(seqMapReader.InputDirectoryPath, seqMapReader.ResultToSeqMapFilename));
+                    var resultToSeqMapFilePath = clsPHRPReader.FindResultToSeqMapFile(seqMapReader.InputDirectoryPath,
+                                                                                      phrpSynopsisFilePath,
+                                                                                      seqMapReader.ResultToSeqMapFilename,
+                                                                                      out _);
 
-                    if (resultToSeqMapFile.Exists)
+                    if (!string.IsNullOrWhiteSpace(resultToSeqMapFilePath))
                     {
-                        success = seqMapReader.GetProteinMapping(out resultToSeqMap, out seqToProteinMap, out sequenceInfo);
+                        success = seqMapReader.GetProteinMapping(resultToSeqMap, seqToProteinMap, sequenceInfo);
 
                         if (!success)
                         {
