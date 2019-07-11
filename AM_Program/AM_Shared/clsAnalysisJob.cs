@@ -476,7 +476,7 @@ namespace AnalysisManagerBase
             {
                 value = GetParam(name);
 
-                if (string.IsNullOrEmpty(value))
+                if (string.IsNullOrWhiteSpace(value))
                 {
                     return valueIfMissing;
                 }
@@ -489,7 +489,6 @@ namespace AnalysisManagerBase
 
             // Note: if value is not True or False, this will throw an exception; the calling procedure will need to handle that exception
             return Convert.ToBoolean(value);
-
         }
 
         /// <summary>
@@ -535,7 +534,7 @@ namespace AnalysisManagerBase
             {
                 value = GetParam(name);
 
-                if (string.IsNullOrEmpty(value))
+                if (string.IsNullOrWhiteSpace(value))
                 {
                     return valueIfMissing;
                 }
@@ -926,7 +925,7 @@ namespace AnalysisManagerBase
                         if (paramNamesToIgnore.ContainsKey(paramName.Value))
                         {
                             var requiredParameter = paramNamesToIgnore[paramName.Value];
-                            if (string.IsNullOrEmpty(requiredParameter) || paramNames.Contains(requiredParameter))
+                            if (string.IsNullOrWhiteSpace(requiredParameter) || paramNames.Contains(requiredParameter))
                             {
                                 // Remove this parameter from this section
                                 paramsToRemove.Add(paramItem);
@@ -939,7 +938,7 @@ namespace AnalysisManagerBase
                             // This is most commonly used to add attribute step="1"
 
                             var attribName = paramsToAddAsAttribute[paramName.Value];
-                            if (string.IsNullOrEmpty(attribName))
+                            if (string.IsNullOrWhiteSpace(attribName))
                                 attribName = paramName.Value;
 
                             var paramValue = paramItem.Attribute("value");
@@ -1324,7 +1323,7 @@ namespace AnalysisManagerBase
             var dotNetVersion = clsGlobal.GetDotNetVersion();
 
             string managerVersion;
-            if (!string.IsNullOrEmpty(dotNetVersion))
+            if (!string.IsNullOrWhiteSpace(dotNetVersion))
             {
                 if (!dotNetVersion.StartsWith("v", StringComparison.OrdinalIgnoreCase))
                     dotNetVersion = "v" + dotNetVersion;
