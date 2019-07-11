@@ -25,7 +25,7 @@ namespace AnalysisManagerProg
 {
     static class Program
     {
-        public const string PROGRAM_DATE = "June 21, 2019";
+        public const string PROGRAM_DATE = "July 11, 2019";
 
         private static bool mCodeTestMode;
         private static bool mTraceMode;
