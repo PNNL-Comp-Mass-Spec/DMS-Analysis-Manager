@@ -212,8 +212,8 @@ namespace MSGFPlusIndexFileCopier
             {
                 Console.WriteLine();
                 Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
-                                      "This program copies MSGF+ index files (suffix array files) from the local folder " +
-                                      "to the remote share where MSGF+ index files are stored. Once the copy is complete, " +
+                                      "This program copies MS-GF+ index files (suffix array files) from the local folder " +
+                                      "to the remote share where MS-GF+ index files are stored. Once the copy is complete, " +
                                       "it creates the .MSGFPlusIndexFileInfo file. If the suffix array files " +
                                       "have already been copied to the remote share, use switch /X to create " +
                                       "the .MSGFPlusIndexFileInfo file without copying any files."));
@@ -229,7 +229,7 @@ namespace MSGFPlusIndexFileCopier
                 Console.WriteLine();
                 Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
                                       "FastaFilePath specifies the path to the fasta file; " +
-                                      "MSGF+ index files to be copied should be in the same folder as the fasta file. " +
+                                      "MS-GF+ index files to be copied should be in the same folder as the fasta file. " +
                                       "If using /X, FastaFilePath does not have to point to an existing file; " +
                                       "only the filename will be used"));
                 Console.WriteLine();

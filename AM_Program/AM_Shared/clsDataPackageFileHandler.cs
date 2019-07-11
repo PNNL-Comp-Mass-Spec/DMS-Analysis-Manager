@@ -63,7 +63,7 @@ namespace AnalysisManagerBase
             public bool RetrieveDTAFiles;
 
             /// <summary>
-            /// Set to True to obtain MSGF+ .mzid.gz files
+            /// Set to True to obtain MS-GF+ .mzid.gz files
             /// </summary>
             /// <remarks></remarks>
             public bool RetrieveMzidFiles;
@@ -96,7 +96,7 @@ namespace AnalysisManagerBase
         private struct udtDataPackageJobMetadata
         {
             /// <summary>
-            /// True if MSGF+ searched a .mzML file; if false, likely searched a _dta.txt file
+            /// True if MS-GF+ searched a .mzML file; if false, likely searched a _dta.txt file
             /// </summary>
             public bool SearchUsedMzML;
         }
@@ -141,7 +141,7 @@ namespace AnalysisManagerBase
         /// <param name="stepToolFilter">step tool to filter on; if an empty string, returns the input directory for the primary step tool for the job</param>
         /// <param name="workingDir"></param>
         /// <returns>Path to the .mzML or .mzML.gz file; empty string if not found</returns>
-        /// <remarks>Uses the highest job step to determine the input directory, meaning the .mzML.gz file returned will be the one used by MSGF+</remarks>
+        /// <remarks>Uses the highest job step to determine the input directory, meaning the .mzML.gz file returned will be the one used by MS-GF+</remarks>
         private string FindMzMLForJob(string datasetName, int job, string stepToolFilter, string workingDir)
         {
             if (clsGlobal.OfflineMode)
@@ -420,7 +420,7 @@ namespace AnalysisManagerBase
                 var mzidFile = new FileInfo(mzIdFileToInspect);
                 if (!mzidFile.Exists)
                 {
-                    OnErrorEvent("Unable to examine the mzid file to determine whether MSGF+ searched a .mzML file; file Not found:   " + mzIdFileToInspect);
+                    OnErrorEvent("Unable to examine the mzid file to determine whether MS-GF+ searched a .mzML file; file Not found:   " + mzIdFileToInspect);
                     return false;
                 }
 
@@ -479,7 +479,7 @@ namespace AnalysisManagerBase
             }
             catch (Exception ex)
             {
-                OnErrorEvent("Exception examining the mzid file To determine whether MSGF+ searched a .mzML file", ex);
+                OnErrorEvent("Exception examining the mzid file To determine whether MS-GF+ searched a .mzML file", ex);
                 return false;
             }
 
@@ -579,7 +579,7 @@ namespace AnalysisManagerBase
 
                 if (retrievalOptions.RetrieveMzidFiles && dataPkgJob.PeptideHitResultType == clsPHRPReader.ePeptideHitResultType.MSGFPlus)
                 {
-                    // Retrieve MSGF+ .mzid files
+                    // Retrieve MS-GF+ .mzid files
                     // They will either be stored as .zip files or as .gz files
 
                     if (dataPkgJob.NumberOfClonedSteps > 0)
@@ -801,7 +801,7 @@ namespace AnalysisManagerBase
                                 if (sourceFilename.EndsWith("_msgfplus.zip", StringComparison.OrdinalIgnoreCase) ||
                                     sourceFilename.EndsWith("_msgfplus.mzid.gz", StringComparison.OrdinalIgnoreCase))
                                 {
-                                    warningMessage += "; Confirm job used MSGF+ and not MSGFDB";
+                                    warningMessage += "; Confirm job used MS-GF+ and not MSGFDB";
                                 }
                                 mAnalysisResources.UpdateStatusMessage(warningMessage);
                                 OnWarningEvent("Required PHRP file not found: " + sourceFilePath);
@@ -876,7 +876,7 @@ namespace AnalysisManagerBase
             string localDirectoryPath,
             ICollection<string> foundFiles)
         {
-            // Find the _dta.txt or .mzML.gz file that was used for a MSGF+ search
+            // Find the _dta.txt or .mzML.gz file that was used for a MS-GF+ search
 
             var mzIDFileToInspect = string.Empty;
 

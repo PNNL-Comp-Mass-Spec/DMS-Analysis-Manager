@@ -106,8 +106,8 @@ namespace AnalysisManagerMzRefineryPlugIn
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
 
-                // Look for existing MSGF+ results in the transfer folder
-                currentTask = "Find existing MSGF+ results";
+                // Look for existing MS-GF+ results in the transfer folder
+                currentTask = "Find existing MS-GF+ results";
 
                 if (!FindExistingMSGFPlusResults(mzRefParamFile))
                 {
@@ -160,7 +160,7 @@ namespace AnalysisManagerMzRefineryPlugIn
         }
 
         /// <summary>
-        /// Check for existing MSGF+ results in the transfer directory
+        /// Check for existing MS-GF+ results in the transfer directory
         /// </summary>
         /// <returns>True if no errors, false if a problem</returns>
         /// <remarks>Will return True even if existing results are not found</remarks>
@@ -186,7 +186,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             var transferDirectory = new DirectoryInfo(Path.Combine(transferFolderPath, DatasetName, resultsFolderName));
             if (!transferDirectory.Exists)
             {
-                // This is not an error -- it just means there are no existing MSGF+ results to use
+                // This is not an error -- it just means there are no existing MS-GF+ results to use
                 return true;
             }
 
@@ -196,7 +196,7 @@ namespace AnalysisManagerMzRefineryPlugIn
 
             if (!msgfPlusResults.Exists)
             {
-                // This is not an error -- it just means there are no existing MSGF+ results to use
+                // This is not an error -- it just means there are no existing MS-GF+ results to use
                 return true;
             }
 
@@ -212,19 +212,19 @@ namespace AnalysisManagerMzRefineryPlugIn
             if (!mzRefParamFile.Exists)
             {
                 // This is unusual; typically if the mzid.gz file exists there should be a MzRefinery parameter file
-                LogWarning("Found " + msgfPlusResults.FullName + " but did not find " + mzRefParamFile.Name + "; will re-run MSGF+");
+                LogWarning("Found " + msgfPlusResults.FullName + " but did not find " + mzRefParamFile.Name + "; will re-run MS-GF+");
                 return true;
             }
 
             // Compare the remote parameter file and the local one to make sure they match
             if (!clsGlobal.TextFilesMatch(mzRefParamFile.FullName, Path.Combine(mWorkDir, mzRefParamFileName), true))
             {
-                LogMessage("MzRefinery parameter file in transfer folder does not match the official MzRefinery parameter file; will re-run MSGF+");
+                LogMessage("MzRefinery parameter file in transfer folder does not match the official MzRefinery parameter file; will re-run MS-GF+");
                 return true;
             }
 
             // Existing results found
-            // Copy the MSGF+ results locally
+            // Copy the MS-GF+ results locally
             var localFilePath = Path.Combine(mWorkDir, msgfPlusResults.Name);
             msgfPlusResults.CopyTo(localFilePath, true);
 
@@ -236,7 +236,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 msgfPlusConsoleOutput.CopyTo(localFilePath, true);
             }
 
-            LogMessage("Found existing MSGF+ results to use for MzRefinery");
+            LogMessage("Found existing MS-GF+ results to use for MzRefinery");
 
             return true;
         }

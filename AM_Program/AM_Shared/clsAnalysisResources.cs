@@ -146,7 +146,7 @@ namespace AnalysisManagerBase
         public const string RESULT_TYPE_INSPECT = "IN_Peptide_Hit";
 
         /// <summary>
-        /// Result type for MSGF+
+        /// Result type for MS-GF+ (aka MSGF+)
         /// (and previously MSGFDB)
         /// </summary>
         public const string RESULT_TYPE_MSGFPLUS = "MSG_Peptide_Hit";
@@ -1964,7 +1964,7 @@ namespace AnalysisManagerBase
         public static List<string> GetDefaultDecoyPrefixes()
         {
 
-            // Decoy proteins created by MSGF+ start with XXX_
+            // Decoy proteins created by MS-GF+ start with XXX_
             // Decoy proteins created by DMS start with Reversed_ or XXX_
             var decoyPrefixes = new List<string> {
                 "Reversed_",
@@ -3032,7 +3032,7 @@ namespace AnalysisManagerBase
         /// <param name="legacyFastaName">
         /// Output: the FASTA file name
         /// For split FASTA searches, will be the original FASTA file if running extraction,
-        /// or if running MSGF+ (or similar), the split FASTA file corresponding to this job step</param>
+        /// or if running MS-GF+ (or similar), the split FASTA file corresponding to this job step</param>
         /// <param name="fastaFileSizeGB">Output: FASTA file size, in GB</param>
         /// <returns>Space required, in MB</returns>
         /// <remarks>Uses both mJobParams and mMgrParams; returns 0 if a problem (e.g. the legacy fasta file is not listed in V_Organism_DB_File_Export)</remarks>
@@ -3096,7 +3096,7 @@ namespace AnalysisManagerBase
 
                 fastaFileSizeGB = fileSizeKB / 1024.0 / 1024;
 
-                // Assume that the MSGF+ index files will be 15 times larger than the legacy FASTA file itself
+                // Assume that the MS-GF+ index files will be 15 times larger than the legacy FASTA file itself
                 var fileSizeMB = (fileSizeKB + fileSizeKB * 15) / 1024.0;
 
                 // Pad the expected size by an additional 15%
@@ -4095,7 +4095,7 @@ namespace AnalysisManagerBase
 
                                 if (dataPkgJob.Value.Tool.StartsWith("msgf", StringComparison.OrdinalIgnoreCase))
                                 {
-                                    // MSGF+
+                                    // MS-GF+
                                     fileSpecListCurrent = new List<string> {
                                         "MSGFPlus:_msgfplus_syn.txt",
                                         "MSGFPlus:_msgfplus_syn_ModSummary.txt",
@@ -4457,7 +4457,7 @@ namespace AnalysisManagerBase
 
                 if (proteinCollectionInfo.UsingLegacyFasta)
                 {
-                    // Estimate the drive space required to download the fasta file and its associated MSGF+ index files
+                    // Estimate the drive space required to download the fasta file and its associated MS-GF+ index files
                     requiredFreeSpaceMB = LookupLegacyDBDiskSpaceRequiredMB(proteinCollectionInfo, out var legacyFastaName, out fastaFileSizeGB);
 
                     if (fastaFileSizeGB > maxLegacyFASTASizeGB)
@@ -4953,14 +4953,14 @@ namespace AnalysisManagerBase
                 {
                     // Less than 80% of the spectra are centroided
                     // Post a message similar to:
-                    //   MSGF+ will likely skip 90% of the spectra because they did not appear centroided
-                    mMessage = "MSGF+ will likely skip " + ((1 - fractionCentroided) * 100).ToString("0") + "% of the spectra because they do not appear centroided";
+                    //   MS-GF+ will likely skip 90% of the spectra because they did not appear centroided
+                    mMessage = "MS-GF+ will likely skip " + ((1 - fractionCentroided) * 100).ToString("0") + "% of the spectra because they do not appear centroided";
                     LogMessage(mMessage + commentSuffix);
                     return false;
                 }
 
-                // None of the spectra are centroided; unable to process with MSGF+
-                mMessage = SPECTRA_ARE_NOT_CENTROIDED + " with MSGF+";
+                // None of the spectra are centroided; unable to process with MS-GF+
+                mMessage = SPECTRA_ARE_NOT_CENTROIDED + " with MS-GF+";
                 LogMessage(mMessage + commentSuffix, 0, true);
                 return false;
             }
@@ -5112,7 +5112,7 @@ namespace AnalysisManagerBase
 
             if (logFreeMemoryOnSuccess)
             {
-                // Example message: MSGF+ will use 4000 MB; system has 7296 MB available
+                // Example message: MS-GF+ will use 4000 MB; system has 7296 MB available
                 var message = stepToolName + " will use " + freeMemoryRequiredMB + " MB; " +
                              "system has " + freeMemoryMB.ToString("0") + " MB available";
                 LogTools.LogDebug(message);
