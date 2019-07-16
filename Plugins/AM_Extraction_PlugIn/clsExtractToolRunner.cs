@@ -144,7 +144,6 @@ namespace AnalysisManagerExtractionPlugin
                             currentAction = "running peptide prophet for SEQUEST";
                             RunPeptideProphet();
                         }
-
                         break;
 
                     case clsAnalysisResources.RESULT_TYPE_XTANDEM:
@@ -169,7 +168,6 @@ namespace AnalysisManagerExtractionPlugin
                         {
                             result = RunMzidMerger(Dataset + "_msgfplus_Part*.mzid", Dataset + "_msgfplus.mzid");
                         }
-
                         break;
 
                     case clsAnalysisResources.RESULT_TYPE_MSALIGN:
@@ -201,7 +199,6 @@ namespace AnalysisManagerExtractionPlugin
                         {
                             processingSuccess = false;
                         }
-
                         break;
 
                     case clsAnalysisResources.RESULT_TYPE_MODPLUS:
@@ -227,7 +224,6 @@ namespace AnalysisManagerExtractionPlugin
                         {
                             processingSuccess = false;
                         }
-
                         break;
 
                     case clsAnalysisResources.RESULT_TYPE_MSPATHFINDER:

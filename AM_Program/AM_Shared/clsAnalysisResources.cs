@@ -4518,7 +4518,7 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Overrides base class version of the function to creates a Sequest params file compatible
+        /// Overrides base class version of the function to create a Sequest params file compatible
         /// with the Bioworks version on this System. Uses the ParamFileGenerator dll
         /// </summary>
         /// <param name="paramFileName">Name of param file to be created</param>
