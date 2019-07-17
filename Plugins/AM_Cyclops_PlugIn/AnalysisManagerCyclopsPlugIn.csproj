@@ -76,7 +76,8 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>copy "$(TargetPath)" "$(ProjectDir)..\..\AM_Common"
+    <PostBuildEvent>xcopy "$(TargetPath)" "$(ProjectDir)..\..\AM_Common" /Y
+xcopy "$(TargetDir)$(TargetName).pdb" "$(ProjectDir)..\..\AM_Common\" /Y
 copy "$(TargetPath)" "$(ProjectDir)..\..\AM_Program\bin"
 xcopy "$(TargetDir)RDotNet*.dll" "$(ProjectDir)..\..\AM_Program\bin" /D /y
 xcopy "$(TargetDir)Cyclops.dll" "$(ProjectDir)..\..\AM_Program\bin" /D /y

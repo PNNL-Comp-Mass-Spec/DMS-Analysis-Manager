@@ -210,8 +210,8 @@ xcopy "$(ProjectDir)..\AM_Common\ThermoFisher.CommonCore.MassPrecisionEstimator.
 xcopy "$(ProjectDir)..\AM_Common\ThermoFisher.CommonCore.RawFileReader.dll" "$(TargetDir)" /D /Y
 xcopy "$(ProjectDir)..\AM_Common\ThermoRawFileReader.dll" "$(TargetDir)" /D /Y
 
-xcopy "$(TargetDir)AnalysisManagerProg.exe" "$(ProjectDir)..\AM_Common\" /D /Y
-xcopy "$(TargetDir)AnalysisManagerProg.pdb" "$(ProjectDir)..\AM_Common\" /D /Y
+xcopy "$(TargetPath)" "$(ProjectDir)..\AM_Common\" /D /Y
+xcopy "$(TargetDir)$(TargetName).pdb" "$(ProjectDir)..\AM_Common\" /D /Y
 
 rem if exist "$(TargetDir)SQLite.Interop.dll" (del "$(TargetDir)SQLite.Interop.dll")
 rem if not exist "$(TargetDir)x86" mkdir "$(TargetDir)x86"
