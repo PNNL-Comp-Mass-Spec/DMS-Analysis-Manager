@@ -976,7 +976,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         public CloseOutType CreatePeptideToProteinMapping(string resultsFileName, bool resultsIncludeAutoAddedDecoyPeptides, string localOrgDbFolder)
         {
             return CreatePeptideToProteinMapping(resultsFileName, resultsIncludeAutoAddedDecoyPeptides, localOrgDbFolder,
-                clsPeptideToProteinMapEngine.ePeptideInputFileFormatConstants.MSGFDBResultsFile);
+                clsPeptideToProteinMapEngine.ePeptideInputFileFormatConstants.MSGFPlusResultsFile);
         }
 
         /// <summary>
