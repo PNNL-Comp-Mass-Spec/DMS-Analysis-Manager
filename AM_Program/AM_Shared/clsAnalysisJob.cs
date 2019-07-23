@@ -469,7 +469,6 @@ namespace AnalysisManagerBase
         /// </remarks>
         public bool GetJobParameter(string name, bool valueIfMissing)
         {
-
             string value;
 
             try
@@ -499,7 +498,6 @@ namespace AnalysisManagerBase
         /// <returns>Value for specified parameter; valueIfMissing if not found</returns>
         public string GetJobParameter(string name, string valueIfMissing)
         {
-
             string value;
 
             try
