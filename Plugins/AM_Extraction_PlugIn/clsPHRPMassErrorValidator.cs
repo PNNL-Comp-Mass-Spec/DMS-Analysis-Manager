@@ -147,7 +147,7 @@ namespace AnalysisManagerExtractionPlugin
                     var searchEngineParams = LoadSearchEngineParameters(reader, searchEngineParamFilePath, eResultType);
 
                     // Check for a custom charge carrier mass
-                    if (clsPHRPParserMSGFDB.GetCustomChargeCarrierMass(searchEngineParams, out var customChargeCarrierMass))
+                    if (clsPHRPParserMSGFPlus.GetCustomChargeCarrierMass(searchEngineParams, out var customChargeCarrierMass))
                     {
                         if (mDebugLevel >= 2)
                         {

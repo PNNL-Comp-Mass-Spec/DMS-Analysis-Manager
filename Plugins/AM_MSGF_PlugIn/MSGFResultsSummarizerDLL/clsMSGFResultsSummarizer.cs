@@ -1274,10 +1274,10 @@ namespace MSGFResultsSummarizer
 
                         if (ResultType == clsPHRPReader.ePeptideHitResultType.MSGFPlus | ResultType == clsPHRPReader.ePeptideHitResultType.MSAlign)
                         {
-                            psmFDR = currentPSM.GetScoreDbl(clsPHRPParserMSGFDB.DATA_COLUMN_FDR, clsPSMInfo.UNKNOWN_FDR);
+                            psmFDR = currentPSM.GetScoreDbl(clsPHRPParserMSGFPlus.DATA_COLUMN_FDR, clsPSMInfo.UNKNOWN_FDR);
                             if (psmFDR < 0)
                             {
-                                psmFDR = currentPSM.GetScoreDbl(clsPHRPParserMSGFDB.DATA_COLUMN_EFDR, clsPSMInfo.UNKNOWN_FDR);
+                                psmFDR = currentPSM.GetScoreDbl(clsPHRPParserMSGFPlus.DATA_COLUMN_EFDR, clsPSMInfo.UNKNOWN_FDR);
                             }
                         }
                         else if (ResultType == clsPHRPReader.ePeptideHitResultType.MODa)

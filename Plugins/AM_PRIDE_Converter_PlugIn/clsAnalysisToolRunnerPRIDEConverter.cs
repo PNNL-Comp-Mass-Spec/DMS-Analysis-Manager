@@ -1388,19 +1388,19 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                 break;
 
                             case clsPHRPReader.ePeptideHitResultType.MSGFPlus:
-                                fdr = reader.CurrentPSM.GetScoreDbl(clsPHRPParserMSGFDB.DATA_COLUMN_FDR, -1);
+                                fdr = reader.CurrentPSM.GetScoreDbl(clsPHRPParserMSGFPlus.DATA_COLUMN_FDR, -1);
                                 if (fdr > -1)
                                 {
                                     fdrValuesArePresent = true;
                                 }
 
-                                pepFDR = reader.CurrentPSM.GetScoreDbl(clsPHRPParserMSGFDB.DATA_COLUMN_PepFDR, -1);
+                                pepFDR = reader.CurrentPSM.GetScoreDbl(clsPHRPParserMSGFPlus.DATA_COLUMN_PepFDR, -1);
                                 if (pepFDR > -1)
                                 {
                                     pepFDRValuesArePresent = true;
                                 }
 
-                                pValue = reader.CurrentPSM.GetScoreDbl(clsPHRPParserMSGFDB.DATA_COLUMN_PValue, PVALUE_NOT_DEFINED);
+                                pValue = reader.CurrentPSM.GetScoreDbl(clsPHRPParserMSGFPlus.DATA_COLUMN_PValue, PVALUE_NOT_DEFINED);
                                 scoreForCurrentMatch = msgfSpecEValue;
                                 break;
                         }
@@ -1549,8 +1549,8 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                 break;
 
                             case clsPHRPReader.ePeptideHitResultType.MSGFPlus:
-                                totalPRMScore = reader.CurrentPSM.GetScore(clsPHRPParserMSGFDB.DATA_COLUMN_DeNovoScore);
-                                pValueFormatted = reader.CurrentPSM.GetScore(clsPHRPParserMSGFDB.DATA_COLUMN_PValue);
+                                totalPRMScore = reader.CurrentPSM.GetScore(clsPHRPParserMSGFPlus.DATA_COLUMN_DeNovoScore);
+                                pValueFormatted = reader.CurrentPSM.GetScore(clsPHRPParserMSGFPlus.DATA_COLUMN_PValue);
                                 break;
                         }
 

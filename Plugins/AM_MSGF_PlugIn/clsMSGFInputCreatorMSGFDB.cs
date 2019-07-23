@@ -33,8 +33,8 @@ namespace AnalysisManagerMSGFPlugin
         protected override void InitializeFilePaths()
         {
             // Customize mPHRPResultFilePath for MSGFDB synopsis files
-            mPHRPFirstHitsFilePath = CombineIfValidFile(mWorkDir, clsPHRPParserMSGFDB.GetPHRPFirstHitsFileName(mDatasetName));
-            mPHRPSynopsisFilePath = CombineIfValidFile(mWorkDir, clsPHRPParserMSGFDB.GetPHRPSynopsisFileName(mDatasetName));
+            mPHRPFirstHitsFilePath = CombineIfValidFile(mWorkDir, clsPHRPParserMSGFPlus.GetPHRPFirstHitsFileName(mDatasetName));
+            mPHRPSynopsisFilePath = CombineIfValidFile(mWorkDir, clsPHRPParserMSGFPlus.GetPHRPSynopsisFileName(mDatasetName));
 
             UpdateMSGFInputOutputFilePaths();
         }
