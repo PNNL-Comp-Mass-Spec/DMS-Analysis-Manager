@@ -15,7 +15,6 @@ using System.Reflection;
 using System.Runtime.Versioning;
 using System.Text;
 using System.Text.RegularExpressions;
-using Cyclops;
 using FileInfo = System.IO.FileInfo;
 
 namespace AnalysisManagerProg
@@ -1223,14 +1222,15 @@ namespace AnalysisManagerProg
                     LogMessage("R directory path: " + rBinPath);
                 }
 
-                var cyclops = new CyclopsController(paramDictionary);
-                RegisterEvents(cyclops);
+                //var cyclops = new CyclopsController(paramDictionary);
+                //RegisterEvents(cyclops);
 
-                cyclops.ErrorEvent += Cyclops_ErrorEvent;
-                cyclops.WarningEvent += Cyclops_WarningEvent;
-                cyclops.StatusEvent += Cyclops_StatusEvent;
+                //cyclops.ErrorEvent += Cyclops_ErrorEvent;
+                //cyclops.WarningEvent += Cyclops_WarningEvent;
+                //cyclops.StatusEvent += Cyclops_StatusEvent;
 
-                processingSuccess = cyclops.Run();
+                //processingSuccess = cyclops.Run();
+                processingSuccess = false;
             }
             catch (Exception ex)
             {
