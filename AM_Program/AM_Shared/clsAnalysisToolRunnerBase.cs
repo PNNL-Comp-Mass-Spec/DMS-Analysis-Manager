@@ -151,11 +151,6 @@ namespace AnalysisManagerBase
         protected clsDotNetZipTools mDotNetZipTools;
 
         /// <summary>
-        /// Set to true if we need to abort processing as soon as possible
-        /// </summary>
-        protected bool mNeedToAbortProcessing;
-
-        /// <summary>
         /// Analysis job summary file
         /// </summary>
         protected clsSummaryFile mSummaryFile;
