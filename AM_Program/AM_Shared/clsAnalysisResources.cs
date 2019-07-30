@@ -1291,7 +1291,8 @@ namespace AnalysisManagerBase
             {
                 try
                 {
-                    mFastaTools = new Protein_Exporter.clsGetFASTAFromDMS(mFastaToolsCnStr) {
+                    mFastaTools = new Protein_Exporter.clsGetFASTAFromDMS(mFastaToolsCnStr)
+                    {
                         DecoyProteinsUseXXX = decoyProteinsUseXXX
                     };
                     RegisterEvents(mFastaTools);
@@ -1330,6 +1331,16 @@ namespace AnalysisManagerBase
                         LogError(mMessage, ex);
                         LogDebugMessage("Connection string: " + mFastaToolsCnStr);
                         LogDebugMessage("Current user: " + Environment.UserName);
+
+                        if (ex.Message.IndexOf("The timeout period elapsed prior to obtaining a connection from the pool", StringComparison.OrdinalIgnoreCase) >= 0)
+                        {
+                            // This error can happen if too many analysis jobs run in a row and clsGetFASTAFromDMS doesn't free connections to the database
+
+                            // Could not open database connection after 6 tries, Timeout expired.
+                            // The timeout period elapsed prior to obtaining a connection from the pool.
+                            // This may have occurred because all pooled connections were in use and max pool size was reached.
+                            mNeedToAbortProcessing = true;
+                        }
                         return false;
                     }
                     retryCount -= 1;
