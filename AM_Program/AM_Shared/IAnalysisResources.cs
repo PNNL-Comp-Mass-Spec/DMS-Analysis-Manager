@@ -22,6 +22,11 @@ namespace AnalysisManagerBase
         /// </summary>
         string Message { get; }
 
+        /// <summary>
+        /// Set this to true if we need to abort processing as soon as possible due to a critical error
+        /// </summary>
+        bool NeedToAbortProcessing { get; }
+
         #endregion
 
         #region "Methods"

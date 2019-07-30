@@ -674,6 +674,11 @@ namespace AnalysisManagerBase
         public string Message => mMessage;
 
         /// <summary>
+        /// Set this to true if we need to abort processing as soon as possible due to a critical error
+        /// </summary>
+        public bool NeedToAbortProcessing => mNeedToAbortProcessing;
+
+        /// <summary>
         /// True when the step tool contains the text DataExtractor
         /// </summary>
         private bool RunningDataExtraction => StepToolName.ToLower().Contains("DataExtractor".ToLower());

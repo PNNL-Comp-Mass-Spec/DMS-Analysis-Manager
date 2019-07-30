@@ -28,6 +28,11 @@ namespace AnalysisManagerBase
         /// <remarks>Text here will be stored in the Completion_Message column in the database when the job is closed</remarks>
         protected string mMessage;
 
+        /// <summary>
+        /// Set to true if we need to abort processing as soon as possible
+        /// </summary>
+        protected bool mNeedToAbortProcessing;
+
         private readonly string mDerivedClassName;
 
         /// <summary>
