@@ -956,7 +956,6 @@ namespace AnalysisManagerProg
                         return CloseOutType.CLOSEOUT_SUCCESS;
 
                     return resultCode == CloseOutType.CLOSEOUT_SUCCESS ? CloseOutType.CLOSEOUT_FAILED : resultCode;
-
                 }
 
                 // Run the job
@@ -2308,6 +2307,14 @@ namespace AnalysisManagerProg
                 if (resultCode == CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     return true;
+                }
+
+                if (toolResourcer.NeedToAbortProcessing)
+                {
+                    mNeedToAbortProcessing = true;
+                    ShowTrace("toolResourcer.NeedToAbortProcessing = True; closing job step task");
+                    mAnalysisTask.CloseTask(CloseOutType.CLOSEOUT_FAILED, toolResourcer.Message);
+                    return false;
                 }
 
                 mMostRecentErrorMessage = "GetResources returned result: " + resultCode;
