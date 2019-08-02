@@ -76,10 +76,12 @@ namespace AnalysisManagerBase
             if (waitTimeMinutes >= 30)
             {
                 waitTimeLogIntervalSeconds = 240;
-            } else if (waitTimeMinutes >= 15)
+            }
+            else if (waitTimeMinutes >= 15)
             {
                 waitTimeLogIntervalSeconds = 120;
-            } else if (waitTimeMinutes >= 5)
+            }
+            else if (waitTimeMinutes >= 5)
             {
                 waitTimeLogIntervalSeconds = 60;
             }
@@ -114,6 +116,7 @@ namespace AnalysisManagerBase
             mFileTools.LockQueueTimedOut += FileTools_LockQueueTimedOut;
             mFileTools.LockQueueWaitComplete += FileTools_LockQueueWaitComplete;
             mFileTools.WaitingForLockQueue += FileTools_WaitingForLockQueue;
+            mFileTools.WaitingForLockQueueNotifyLockFilePaths += FileTools_WaitingForLockQueueNotifyLockFilePaths;
         }
 
         /// <summary>
@@ -296,20 +299,31 @@ namespace AnalysisManagerBase
 
         private void FileTools_WaitingForLockQueue(string sourceFilePath, string targetFilePath, int backlogSourceMB, int backlogTargetMB)
         {
-            if (IsLockQueueLogMessageNeeded(ref mLockQueueWaitTimeStart, ref mLastLockQueueWaitTimeLog))
+            if (!IsLockQueueLogMessageNeeded(ref mLockQueueWaitTimeStart, ref mLastLockQueueWaitTimeLog))
+                return;
+
+            mLastLockQueueWaitTimeLog = DateTime.UtcNow;
+            if (mDebugLevel >= 1)
             {
-                mLastLockQueueWaitTimeLog = DateTime.UtcNow;
-                if (mDebugLevel >= 1)
-                {
-                    var msg = "Waiting for lockfile queue to fall below threshold (" + mDerivedClassName + "); " +
-                        "SourceBacklog=" + backlogSourceMB + " MB, " +
-                        "TargetBacklog=" + backlogTargetMB + " MB, " +
-                        "Source=" + sourceFilePath + ", " +
-                        "Target=" + targetFilePath;
-                    LogDebug(msg);
-                }
+                LogDebug(string.Format(
+                             "Waiting for lockfile queue to fall below threshold ({0}); " +
+                             "SourceBacklog={1:N0} MB, TargetBacklog={2:N0} MB, " +
+                             "Source={3}, Target={4}",
+                             mDerivedClassName, backlogSourceMB, backlogTargetMB, sourceFilePath, targetFilePath));
             }
 
+        }
+
+        private void FileTools_WaitingForLockQueueNotifyLockFilePaths(string sourceLockFilePath, string targetLockFilePath, string adminBypassMessage)
+        {
+            if (string.IsNullOrWhiteSpace(adminBypassMessage))
+            {
+                LogMessage(string.Format("Waiting for lockfile queue to fall below threshold; see lock file(s) at {0} and {1}",
+                                         sourceLockFilePath ?? "(n/a)", targetLockFilePath ?? "(n/a)"));
+                return;
+            }
+
+            LogMessage(adminBypassMessage);
         }
 
         #endregion
