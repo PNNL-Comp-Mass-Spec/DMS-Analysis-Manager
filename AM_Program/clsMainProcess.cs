@@ -598,9 +598,13 @@ namespace AnalysisManagerProg
                     }
 
                     if (clsGlobal.OfflineMode)
+                    {
                         ShowTrace("Looking for an available offline task in the task queue directory");
+                    }
                     else
+                    {
                         ShowTrace("Requesting a new task from DMS_Pipeline");
+                    }
 
                     // Re-initialize these utilities for each analysis job
                     // Note that when RetrieveResources is called, the MyEMSL certificate file (svc-dms.pfx) will be verified to exist
@@ -609,7 +613,6 @@ namespace AnalysisManagerProg
                     RegisterEvents(mMyEMSLUtilities);
 
                     // Get an analysis job, if any are available
-
                     var taskReturn = mAnalysisTask.RequestTask();
 
                     switch (taskReturn)
