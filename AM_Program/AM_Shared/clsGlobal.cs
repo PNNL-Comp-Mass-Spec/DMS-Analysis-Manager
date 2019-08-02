@@ -210,9 +210,7 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public static string CollapseList(List<string> fieldNames)
         {
-
             return FlattenList(fieldNames, "\t");
-
         }
 
         /// <summary>
@@ -336,7 +334,6 @@ namespace AnalysisManagerBase
                 return string.Empty;
 
             return GetAssemblyVersion(entryAssembly);
-
         }
 
         /// <summary>
@@ -376,11 +373,8 @@ namespace AnalysisManagerBase
         /// <remarks>Uses a timeout of 30 seconds</remarks>
         public static bool GetDataTableByQuery(string sqlStr, string connectionString, string callingFunction, short retryCount, out DataTable queryResults)
         {
-
             const int timeoutSeconds = 30;
-
             return GetDataTableByQuery(sqlStr, connectionString, callingFunction, retryCount, out queryResults, timeoutSeconds);
-
         }
 
         /// <summary>
@@ -1389,14 +1383,11 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public static bool TextFilesMatch(string filePath1, string filePath2, bool ignoreWhitespace)
         {
-
             const int comparisonStartLine = 0;
             const int comparisonEndLine = 0;
 
             return TextFilesMatch(filePath1, filePath2, comparisonStartLine, comparisonEndLine, ignoreWhitespace, null);
-
         }
-
 
         /// <summary>
         /// Compares two files line-by-line.  If comparisonStartLine is > 0, ignores differences up until the given line number.  If
@@ -1410,9 +1401,7 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public static bool TextFilesMatch(string filePath1, string filePath2, int comparisonStartLine, int comparisonEndLine, bool ignoreWhitespace)
         {
-
             return TextFilesMatch(filePath1, filePath2, comparisonStartLine, comparisonEndLine, ignoreWhitespace, null);
-
         }
 
         /// <summary>
@@ -1591,7 +1580,6 @@ namespace AnalysisManagerBase
             }
 
             return false;
-
         }
 
         /// <summary>
@@ -1631,7 +1619,6 @@ namespace AnalysisManagerBase
             var sharePathNew = newHostName + sharePath.Substring(slashLoc + 1);
 
             return sharePathNew;
-
         }
 
         /// <summary>
