@@ -2798,12 +2798,38 @@ namespace AnalysisManagerBase
             {
                 using (var reader = new StreamReader(new FileStream(toolVersionInfoFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
-                    if (!reader.EndOfStream)
-                    {
-                        LogDebug("Storing tool version info in DB for " + toolJobDescription);
+                    var storeToolVersionInfo = false;
+                    var toolVersionInfo = new List<string>();
+                    LogDebug("Storing tool version info in DB for " + toolJobDescription);
 
-                        var toolVersionInfo = reader.ReadLine();
-                        mToolVersionUtilities.StoreToolVersionInDatabase(toolVersionInfo);
+                    while (!reader.EndOfStream)
+                    {
+                        var dataLine = reader.ReadLine();
+
+                        if (string.IsNullOrWhiteSpace(dataLine))
+                            continue;
+
+                        if (dataLine.StartsWith(clsToolVersionUtilities.TOOL_VERSION_INFO_SECTION_HEADER))
+                        {
+                            storeToolVersionInfo = true;
+                            continue;
+                        }
+
+                        if (!storeToolVersionInfo)
+                            continue;
+
+                        toolVersionInfo.Add(dataLine);
+                    }
+
+                    if (toolVersionInfo.Count > 0)
+                    {
+                        mToolVersionUtilities.StoreToolVersionInDatabase(string.Join("; ", toolVersionInfo));
+                    }
+                    else
+                    {
+                        LogWarning(string.Format(
+                                       "Tool version info file {0} did not have line {1}",
+                                       toolVersionInfoFile.Name, clsToolVersionUtilities.TOOL_VERSION_INFO_SECTION_HEADER));
                     }
                 }
             }

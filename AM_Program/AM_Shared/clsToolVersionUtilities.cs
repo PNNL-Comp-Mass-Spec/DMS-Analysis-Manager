@@ -31,6 +31,11 @@ namespace AnalysisManagerBase
         /// </summary>
         public const string TOOL_VERSION_INFO_PREFIX = "Tool_Version_Info_";
 
+        /// <summary>
+        /// Lines of text in the Tool_Version_Info file after this line indicate tool versions
+        /// </summary>
+        public const string TOOL_VERSION_INFO_SECTION_HEADER = "ToolVersionInfo:";
+
         #endregion
 
         #region "Module variables"
@@ -323,7 +328,7 @@ namespace AnalysisManagerBase
                     writer.WriteLine("Job: " + Job);
                     writer.WriteLine("Step: " + mJobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Step"));
                     writer.WriteLine("Tool: " + mJobParams.GetParam("StepTool"));
-                    writer.WriteLine("ToolVersionInfo:");
+                    writer.WriteLine(TOOL_VERSION_INFO_SECTION_HEADER);
 
                     writer.WriteLine(toolVersionInfo.Replace("; ", Environment.NewLine));
 
