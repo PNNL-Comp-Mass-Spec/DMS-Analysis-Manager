@@ -2737,7 +2737,8 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             // If running on a Proto storage server (e.g. Proto-4, Proto-5, or Proto-11),
             // we will limit the number of cores used to 75% of the total core count
-            var limitCoreUsage = Dns.GetHostName().StartsWith("proto-", StringComparison.OrdinalIgnoreCase);
+            var limitCoreUsage = Dns.GetHostName().StartsWith("Proto-", StringComparison.OrdinalIgnoreCase) ||
+                                 Dns.GetHostName().StartsWith("PrismWeb", StringComparison.OrdinalIgnoreCase);
 
             if (paramFileThreadCount <= 0 || limitCoreUsage)
             {
@@ -2749,7 +2750,17 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 if (limitCoreUsage)
                 {
-                    var maxAllowedCores = (int)Math.Floor(coreCount * 0.75);
+                    int maxAllowedCores;
+                    if (Dns.GetHostName().StartsWith("PrismWeb3", StringComparison.OrdinalIgnoreCase))
+                    {
+                        // User fewer cores on the web server
+                        maxAllowedCores = (int)Math.Floor(coreCount * 0.5);
+                    }
+                    else
+                    {
+                        maxAllowedCores = (int)Math.Floor(coreCount * 0.75);
+                    }
+
                     if (paramFileThreadCount > 0 && paramFileThreadCount < maxAllowedCores)
                     {
                         // Leave paramFileThreadCount unchanged
