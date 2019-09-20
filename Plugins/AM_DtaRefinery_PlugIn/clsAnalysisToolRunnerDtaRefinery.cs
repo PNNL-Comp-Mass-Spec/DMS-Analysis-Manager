@@ -155,12 +155,12 @@ namespace AnalysisManagerDtaRefineryPlugIn
                 clsGlobal.IdleLoop(0.5);
 
                 // Open DTARefinery_Console_Output.txt and look for the last line with the text "error"
-                var fiConsoleOutputFile = new FileInfo(Path.Combine(mWorkDir, consoleOutputFileName));
+                var consoleOutputFile = new FileInfo(Path.Combine(mWorkDir, consoleOutputFileName));
                 var consoleOutputErrorMessage = string.Empty;
 
-                if (fiConsoleOutputFile.Exists)
+                if (consoleOutputFile.Exists)
                 {
-                    using (var consoleOutputReader = new StreamReader(new FileStream(fiConsoleOutputFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                    using (var consoleOutputReader = new StreamReader(new FileStream(consoleOutputFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                     {
                         while (!consoleOutputReader.EndOfStream)
                         {
@@ -212,14 +212,14 @@ namespace AnalysisManagerDtaRefineryPlugIn
             }
             else
             {
-                var oMassErrorExtractor = new clsDtaRefLogMassErrorExtractor(mMgrParams, mWorkDir, mDebugLevel, blnPostResultsToDB: true);
-                RegisterEvents(oMassErrorExtractor);
+                var massErrorExtractor = new clsDtaRefLogMassErrorExtractor(mMgrParams, mWorkDir, mDebugLevel, postResultsToDB: true);
+                RegisterEvents(massErrorExtractor);
 
-                var intDatasetID = mJobParams.GetJobParameter("DatasetID", 0);
+                var datasetID = mJobParams.GetJobParameter("DatasetID", 0);
 
-                var blnSuccess = oMassErrorExtractor.ParseDTARefineryLogFile(mDatasetName, intDatasetID, mJob);
+                var massErrorsExtracted = massErrorExtractor.ParseDTARefineryLogFile(mDatasetName, datasetID, mJob);
 
-                if (!blnSuccess)
+                if (!massErrorsExtracted)
                 {
                     mMessage = "Error parsing DTA refinery log file to extract mass error stats";
                     LogErrorToDatabase(mMessage + ", job " + mJob);
@@ -264,15 +264,15 @@ namespace AnalysisManagerDtaRefineryPlugIn
         {
             try
             {
-                var fiSourceFile = new FileInfo(Path.Combine(mWorkDir, mDatasetName + "_dta_DtaRefineryLog.txt"));
-                if (!fiSourceFile.Exists)
+                var sourceFile = new FileInfo(Path.Combine(mWorkDir, mDatasetName + "_dta_DtaRefineryLog.txt"));
+                if (!sourceFile.Exists)
                 {
-                    LogDebug("DTA_Refinery log file not found by IsXTandemFinished: " + fiSourceFile.Name, 10);
+                    LogDebug("DTA_Refinery log file not found by IsXTandemFinished: " + sourceFile.Name, 10);
                     return false;
                 }
 
-                var tmpFilePath = fiSourceFile.FullName + ".tmp";
-                fiSourceFile.CopyTo(tmpFilePath, true);
+                var tmpFilePath = sourceFile.FullName + ".tmp";
+                sourceFile.CopyTo(tmpFilePath, true);
                 mJobParams.AddResultFileToSkip(tmpFilePath);
                 clsGlobal.IdleLoop(0.1);
 
@@ -284,7 +284,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
 
                         if (dataLine != null && dataLine.Contains("finished x!tandem"))
                         {
-                            LogMessage("X!Tandem has finished searching and now DTA_Refinery is running (parsed " + fiSourceFile.Name + ")");
+                            LogMessage("X!Tandem has finished searching and now DTA_Refinery is running (parsed " + sourceFile.Name + ")");
                             return true;
                         }
                     }
@@ -356,15 +356,15 @@ namespace AnalysisManagerDtaRefineryPlugIn
         {
             try
             {
-                var fiSourceFile = new FileInfo(Path.Combine(mWorkDir, mDatasetName + "_dta_DtaRefineryLog.txt"));
-                if (!fiSourceFile.Exists)
+                var sourceFile = new FileInfo(Path.Combine(mWorkDir, mDatasetName + "_dta_DtaRefineryLog.txt"));
+                if (!sourceFile.Exists)
                 {
                     mMessage = string.Empty;
-                    LogError("DtaRefinery Log file not found (" + fiSourceFile.Name + ")");
+                    LogError("DtaRefinery Log file not found (" + sourceFile.Name + ")");
                     return false;
                 }
 
-                using (var reader = new StreamReader(new FileStream(fiSourceFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(sourceFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
                     while (!reader.EndOfStream)
                     {
@@ -421,16 +421,16 @@ namespace AnalysisManagerDtaRefineryPlugIn
 
             try
             {
-                var ioWorkDirectory = new DirectoryInfo(mWorkDir);
-                var ioFiles = ioWorkDirectory.GetFiles("*_dta.*");
+                var workDirectory = new DirectoryInfo(mWorkDir);
+                var dtaFiles = workDirectory.GetFiles("*_dta.*");
 
-                foreach (var ioFile in ioFiles)
+                foreach (var dtaFile in dtaFiles)
                 {
-                    if (!ioFile.Name.EndsWith("_FIXED_dta.txt", StringComparison.InvariantCultureIgnoreCase))
+                    if (!dtaFile.Name.EndsWith("_FIXED_dta.txt", StringComparison.InvariantCultureIgnoreCase))
                     {
-                        targetFile = ioFile.Name;
-                        ioFile.Attributes = ioFile.Attributes & ~FileAttributes.ReadOnly;
-                        ioFile.Delete();
+                        targetFile = dtaFile.Name;
+                        dtaFile.Attributes = dtaFile.Attributes & ~FileAttributes.ReadOnly;
+                        dtaFile.Delete();
                     }
                 }
             }

@@ -47,37 +47,37 @@ namespace AnalysisManagerDtaRefineryPlugIn
             LogMessage("Getting param file");
 
             // Retrieve param file
-            var strParamFileName = mJobParams.GetParam("ParmFileName");
+            var paramFileName = mJobParams.GetParam("ParmFileName");
 
-            if (!RetrieveGeneratedParamFile(strParamFileName))
+            if (!RetrieveGeneratedParamFile(paramFileName))
             {
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
-            var strParamFileStoragePathKeyName = clsGlobal.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "DTA_Refinery";
+            var paramFileStoragePathKeyName = clsGlobal.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "DTA_Refinery";
 
-            var strDtaRefineryParmFileStoragePath = mMgrParams.GetParam(strParamFileStoragePathKeyName);
-            if (string.IsNullOrEmpty(strDtaRefineryParmFileStoragePath))
+            var dtaRefineryParmFileStoragePath = mMgrParams.GetParam(paramFileStoragePathKeyName);
+            if (string.IsNullOrEmpty(dtaRefineryParmFileStoragePath))
             {
-                strDtaRefineryParmFileStoragePath = @"\\gigasax\dms_parameter_Files\DTARefinery";
-                LogErrorToDatabase("Parameter '" + strParamFileStoragePathKeyName +
+                dtaRefineryParmFileStoragePath = @"\\gigasax\dms_parameter_Files\DTARefinery";
+                LogErrorToDatabase("Parameter '" + paramFileStoragePathKeyName +
                     "' is not defined (obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); " +
-                    "will assume: " + strDtaRefineryParmFileStoragePath);
+                    "will assume: " + dtaRefineryParmFileStoragePath);
             }
 
             // Retrieve settings files aka default file that will have values overwritten by parameter file values
             // Stored in same location as parameter file
-            if (!FileSearch.RetrieveFile(XTANDEM_DEFAULT_INPUT_FILE, strDtaRefineryParmFileStoragePath))
+            if (!FileSearch.RetrieveFile(XTANDEM_DEFAULT_INPUT_FILE, dtaRefineryParmFileStoragePath))
             {
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
-            if (!FileSearch.RetrieveFile(XTANDEM_TAXONOMY_LIST_FILE, strDtaRefineryParmFileStoragePath))
+            if (!FileSearch.RetrieveFile(XTANDEM_TAXONOMY_LIST_FILE, dtaRefineryParmFileStoragePath))
             {
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
-            if (!FileSearch.RetrieveFile(mJobParams.GetParam("DTARefineryXMLFile"), strDtaRefineryParmFileStoragePath))
+            if (!FileSearch.RetrieveFile(mJobParams.GetParam("DTARefineryXMLFile"), dtaRefineryParmFileStoragePath))
             {
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
@@ -91,18 +91,18 @@ namespace AnalysisManagerDtaRefineryPlugIn
             }
 
             // Make sure the _DTA.txt file has parent ion lines with text: scan=x and cs=y
-            var strCDTAPath = Path.Combine(mWorkDir, DatasetName + "_dta.txt");
-            const bool blnReplaceSourceFile = true;
-            const bool blnDeleteSourceFileIfUpdated = true;
+            var cdtaPath = Path.Combine(mWorkDir, DatasetName + "_dta.txt");
+            const bool replaceSourceFile = true;
+            const bool deleteSourceFileIfUpdated = true;
 
-            if (!ValidateCDTAFileScanAndCSTags(strCDTAPath, blnReplaceSourceFile, blnDeleteSourceFileIfUpdated, ""))
+            if (!ValidateCDTAFileScanAndCSTags(cdtaPath, replaceSourceFile, deleteSourceFileIfUpdated, ""))
             {
                 mMessage = "Error validating the _DTA.txt file";
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
             // If the _dta.txt file is over 2 GB in size, condense it
-            if (!ValidateCDTAFileSize(mWorkDir, Path.GetFileName(strCDTAPath)))
+            if (!ValidateCDTAFileSize(mWorkDir, Path.GetFileName(cdtaPath)))
             {
                 // Errors were reported in function call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
@@ -128,7 +128,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
             {
                 LogMessage(
                     "Validating that the _dta.txt file has centroided spectra (required by MSGF+)");
-                if (!ValidateCDTAFileIsCentroided(strCDTAPath))
+                if (!ValidateCDTAFileIsCentroided(cdtaPath))
                 {
                     // mMessage is already updated
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
@@ -141,17 +141,17 @@ namespace AnalysisManagerDtaRefineryPlugIn
             mJobParams.AddResultFileExtensionToSkip(".dta");        // DTA files
             mJobParams.AddResultFileExtensionToSkip(DatasetName + ".xml");
 
-            mJobParams.AddResultFileToSkip(strParamFileName);
-            mJobParams.AddResultFileToSkip(Path.GetFileNameWithoutExtension(strParamFileName) + "_ModDefs.txt");
+            mJobParams.AddResultFileToSkip(paramFileName);
+            mJobParams.AddResultFileToSkip(Path.GetFileNameWithoutExtension(paramFileName) + "_ModDefs.txt");
             mJobParams.AddResultFileToSkip("Mass_Correction_Tags.txt");
 
             mJobParams.AddResultFileToKeep(DatasetName + "_dta.zip");
 
             // Set up run parameter file to reference spectra file, taxonomy file, and analysis parameter file
-            var success = UpdateParameterFile(out var strErrorMessage);
+            var success = UpdateParameterFile(out var errorMessage);
             if (!success)
             {
-                var msg = "clsAnalysisResourcesDtaRefinery.GetResources(), failed making input file: " + strErrorMessage;
+                var msg = "clsAnalysisResourcesDtaRefinery.GetResources(), failed making input file: " + errorMessage;
                 LogError(msg);
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
@@ -252,8 +252,8 @@ namespace AnalysisManagerDtaRefineryPlugIn
             if (string.IsNullOrWhiteSpace(fileName))
                 return;
 
-            var strFilePathToCheck = Path.Combine(mWorkDir, fileName);
-            if (!ValidateFileHasData(strFilePathToCheck, fileDescription, out _))
+            var filePathToCheck = Path.Combine(mWorkDir, fileName);
+            if (!ValidateFileHasData(filePathToCheck, fileDescription, out _))
             {
                 if (mDebugLevel >= 1)
                 {
@@ -262,54 +262,54 @@ namespace AnalysisManagerDtaRefineryPlugIn
                         " does not have any tab-delimited lines that start with a number; file will be deleted so that DTARefinery can proceed without considering TIC or ion intensity");
                 }
 
-                File.Delete(strFilePathToCheck);
+                File.Delete(filePathToCheck);
             }
         }
 
-        private bool UpdateParameterFile(out string strErrorMessage)
+        private bool UpdateParameterFile(out string errorMessage)
         {
             var xtandemDefaultInput = Path.Combine(mWorkDir, XTANDEM_DEFAULT_INPUT_FILE);
             var xtandemTaxonomyList = Path.Combine(mWorkDir, XTANDEM_TAXONOMY_LIST_FILE);
             var paramFilePath = Path.Combine(mWorkDir, mJobParams.GetParam("DTARefineryXMLFile"));
             var dtaRefineryDirectory = Path.GetDirectoryName(mMgrParams.GetParam("DtaRefineryLoc"));
 
-            strErrorMessage = string.Empty;
+            errorMessage = string.Empty;
 
             try
             {
-                var fiTemplateFile = new FileInfo(paramFilePath);
+                var templateFile = new FileInfo(paramFilePath);
 
-                if (!fiTemplateFile.Exists)
+                if (!templateFile.Exists)
                 {
-                    strErrorMessage = "File not found: " + fiTemplateFile.FullName;
+                    errorMessage = "File not found: " + templateFile.FullName;
                     return false;
                 }
 
                 if (string.IsNullOrWhiteSpace(dtaRefineryDirectory))
                 {
-                    strErrorMessage = "Manager parameter DtaRefineryLoc is empty";
+                    errorMessage = "Manager parameter DtaRefineryLoc is empty";
                     return false;
                 }
 
                 // Open the template XML file
-                var objTemplate = new XmlDocument {
+                var template = new XmlDocument {
                     PreserveWhitespace = true
                 };
 
                 try
                 {
-                    objTemplate.Load(fiTemplateFile.FullName);
+                    template.Load(templateFile.FullName);
                 }
                 catch (Exception ex)
                 {
-                    strErrorMessage = "Error loading file " + fiTemplateFile.Name + ": " + ex.Message;
+                    errorMessage = "Error loading file " + templateFile.Name + ": " + ex.Message;
                     return false;
                 }
 
                 // Now override the values for xtandem parameters file
                 try
                 {
-                    var root = objTemplate.DocumentElement;
+                    var root = template.DocumentElement;
 
                     var XTandemExePath = Path.Combine(dtaRefineryDirectory, "aux_xtandem_module\\tandem_5digit_precision.exe");
 
@@ -330,35 +330,35 @@ namespace AnalysisManagerDtaRefineryPlugIn
                 }
                 catch (Exception ex)
                 {
-                    strErrorMessage = "Error updating the MSInFile nodes: " + ex.Message;
+                    errorMessage = "Error updating the MSInFile nodes: " + ex.Message;
                     return false;
                 }
 
                 // Write out the new file
-                objTemplate.Save(paramFilePath);
+                template.Save(paramFilePath);
             }
             catch (Exception ex)
             {
-                strErrorMessage = "Error: " + ex.Message;
+                errorMessage = "Error: " + ex.Message;
                 return false;
             }
 
             return true;
         }
 
-        private bool ValidateDeconMSnLogFile(string strFilePath)
+        private bool ValidateDeconMSnLogFile(string filePath)
         {
-            var oValidator = new clsDeconMSnLogFileValidator();
-            RegisterEvents(oValidator);
+            var validator = new clsDeconMSnLogFileValidator();
+            RegisterEvents(validator);
 
-            var blnSuccess = oValidator.ValidateDeconMSnLogFile(strFilePath);
-            if (!blnSuccess)
+            var success = validator.ValidateDeconMSnLogFile(filePath);
+            if (!success)
             {
                 // The error will have already been logged
                 return false;
             }
 
-            if (oValidator.FileUpdated)
+            if (validator.FileUpdated)
             {
                 LogWarning("clsDeconMSnLogFileValidator.ValidateFile updated one or more rows " +
                            "in the DeconMSn_Log.txt file to replace values with intensities of 0 with 1");

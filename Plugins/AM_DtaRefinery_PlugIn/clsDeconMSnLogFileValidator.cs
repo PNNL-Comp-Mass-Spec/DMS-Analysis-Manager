@@ -24,26 +24,26 @@ namespace AnalysisManagerDtaRefineryPlugIn
 
         private string CollapseLine(IReadOnlyList<string> dataColumns)
         {
-            var sbCollapsed = new StringBuilder(1024);
+            var collapsedLine = new StringBuilder(1024);
 
             if (dataColumns.Count > 0)
             {
-                sbCollapsed.Append(dataColumns[0]);
-                for (var intIndex = 1; intIndex <= dataColumns.Count - 1; intIndex++)
+                collapsedLine.Append(dataColumns[0]);
+                for (var index = 1; index <= dataColumns.Count - 1; index++)
                 {
-                    sbCollapsed.Append("\t" + dataColumns[intIndex]);
+                    collapsedLine.Append("\t" + dataColumns[index]);
                 }
             }
 
-            return sbCollapsed.ToString();
+            return collapsedLine.ToString();
         }
 
         /// <summary>
         /// Parse the specified DeconMSn log file to check for intensity values in the last two columns that are zero
         /// </summary>
-        /// <param name="strSourceFilePath">Path to the file</param>
+        /// <param name="sourceFilePath">Path to the file</param>
         /// <returns>True if success; false if an unrecoverable error</returns>
-        public bool ValidateDeconMSnLogFile(string strSourceFilePath)
+        public bool ValidateDeconMSnLogFile(string sourceFilePath)
         {
             var headerValidated = false;
 
@@ -52,11 +52,11 @@ namespace AnalysisManagerDtaRefineryPlugIn
 
             try
             {
-                mFileUpdated = false;
+                FileUpdated = false;
 
                 var tempFilePath = Path.GetTempFileName();
 
-                using (var reader = new StreamReader(new FileStream(strSourceFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                using (var reader = new StreamReader(new FileStream(sourceFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
                 using (var writer = new StreamWriter(new FileStream(tempFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
                 {
                     while (!reader.EndOfStream)
@@ -88,7 +88,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
 
                             if (columnCountUpdated > 0)
                             {
-                                mFileUpdated = true;
+                                FileUpdated = true;
                                 writer.WriteLine(CollapseLine(dataColumns));
                             }
                             else
@@ -112,25 +112,25 @@ namespace AnalysisManagerDtaRefineryPlugIn
                     }
                 }
 
-                if (mFileUpdated)
+                if (FileUpdated)
                 {
-                    // First rename strFilePath
-                    var ioFileInfo = new FileInfo(strSourceFilePath);
+                    // First rename filePath
+                    var sourceFile = new FileInfo(sourceFilePath);
 
-                    if (ioFileInfo.DirectoryName == null)
+                    if (sourceFile.DirectoryName == null)
                     {
-                        OnErrorEvent("Unable to determine the parent directory of " + strSourceFilePath);
+                        OnErrorEvent("Unable to determine the parent directory of " + sourceFilePath);
                         return false;
                     }
 
-                    var strTargetFilePath = Path.Combine(ioFileInfo.DirectoryName,
-                        Path.GetFileNameWithoutExtension(ioFileInfo.Name) + "_Original.txt");
+                    var targetFilePath = Path.Combine(sourceFile.DirectoryName,
+                        Path.GetFileNameWithoutExtension(sourceFile.Name) + "_Original.txt");
 
-                    if (File.Exists(strTargetFilePath))
+                    if (File.Exists(targetFilePath))
                     {
                         try
                         {
-                            File.Delete(strTargetFilePath);
+                            File.Delete(targetFilePath);
                         }
                         catch (Exception ex)
                         {
@@ -140,20 +140,20 @@ namespace AnalysisManagerDtaRefineryPlugIn
 
                     try
                     {
-                        ioFileInfo.MoveTo(strTargetFilePath);
+                        sourceFile.MoveTo(targetFilePath);
 
-                        // Now copy the temp file to strFilePath
-                        File.Copy(tempFilePath, strSourceFilePath, false);
+                        // Now copy the temp file to sourceFilePath
+                        File.Copy(tempFilePath, sourceFilePath, false);
                     }
                     catch (Exception ex)
                     {
                         OnErrorEvent("Error replacing source file with new file: " + ex.Message, ex);
 
-                        if (ioFileInfo.DirectoryName != null)
+                        if (sourceFile.DirectoryName != null)
                         {
-                            // Copy the temp file to strFilePath
-                            File.Copy(tempFilePath, Path.Combine(ioFileInfo.DirectoryName,
-                                Path.GetFileNameWithoutExtension(ioFileInfo.Name) + "_New.txt"), true);
+                            // Copy the temp file to filePath
+                            File.Copy(tempFilePath, Path.Combine(sourceFile.DirectoryName,
+                                Path.GetFileNameWithoutExtension(sourceFile.Name) + "_New.txt"), true);
                             File.Delete(tempFilePath);
                         }
 
@@ -185,13 +185,13 @@ namespace AnalysisManagerDtaRefineryPlugIn
 
             if (dataColumns.Length > 1)
             {
-                var lstSplitLine = new List<string>(dataColumns);
+                var splitLine = new List<string>(dataColumns);
 
-                var colIndex = lstSplitLine.IndexOf("Parent_Intensity");
+                var colIndex = splitLine.IndexOf("Parent_Intensity");
                 if (colIndex > 0)
                     parentIntensityColIndex = colIndex;
 
-                colIndex = lstSplitLine.IndexOf("Mono_Intensity");
+                colIndex = splitLine.IndexOf("Mono_Intensity");
                 if (colIndex > 0)
                     monoIntensityColIndex = colIndex;
             }

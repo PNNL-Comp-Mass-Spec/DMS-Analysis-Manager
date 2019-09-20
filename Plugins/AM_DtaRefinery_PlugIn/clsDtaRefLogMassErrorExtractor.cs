@@ -35,34 +35,34 @@ namespace AnalysisManagerDtaRefineryPlugIn
         /// Constructor
         /// </summary>
         /// <param name="mgrParams"></param>
-        /// <param name="strWorkDir"></param>
-        /// <param name="intDebugLevel"></param>
-        /// <param name="blnPostResultsToDB"></param>
-        public clsDtaRefLogMassErrorExtractor(IMgrParams mgrParams, string strWorkDir, short intDebugLevel, bool blnPostResultsToDB)
+        /// <param name="workDir"></param>
+        /// <param name="debugLevel"></param>
+        /// <param name="postResultsToDB"></param>
+        public clsDtaRefLogMassErrorExtractor(IMgrParams mgrParams, string workDir, short debugLevel, bool postResultsToDB)
         {
             mMgrParams = mgrParams;
-            mWorkDir = strWorkDir;
-            mDebugLevel = intDebugLevel;
-            mPostResultsToDB = blnPostResultsToDB;
+            mWorkDir = workDir;
+            mDebugLevel = debugLevel;
+            mPostResultsToDB = postResultsToDB;
         }
 
-        private string ConstructXML(udtMassErrorInfoType udtMassErrorInfo)
+        private string ConstructXML(udtMassErrorInfoType massErrorInfo)
         {
-            var sbXml = new StringBuilder();
+            var xml = new StringBuilder();
 
             try
             {
-                sbXml.Append("<DTARef_MassErrorStats>");
+                xml.Append("<DTARef_MassErrorStats>");
 
-                sbXml.Append(Convert.ToString("<Dataset>") + udtMassErrorInfo.DatasetName + "</Dataset>");
-                sbXml.Append(Convert.ToString("<PSM_Source_Job>") + udtMassErrorInfo.PSMJob + "</PSM_Source_Job>");
+                xml.Append(Convert.ToString("<Dataset>") + massErrorInfo.DatasetName + "</Dataset>");
+                xml.Append(Convert.ToString("<PSM_Source_Job>") + massErrorInfo.PSMJob + "</PSM_Source_Job>");
 
-                sbXml.Append("<Measurements>");
-                sbXml.Append(Convert.ToString("<Measurement Name=\"" + "MassErrorPPM" + "\">") + udtMassErrorInfo.MassErrorPPM + "</Measurement>");
-                sbXml.Append(Convert.ToString("<Measurement Name=\"" + "MassErrorPPM_Refined" + "\">") + udtMassErrorInfo.MassErrorPPMRefined + "</Measurement>");
-                sbXml.Append("</Measurements>");
+                xml.Append("<Measurements>");
+                xml.Append(Convert.ToString("<Measurement Name=\"" + "MassErrorPPM" + "\">") + massErrorInfo.MassErrorPPM + "</Measurement>");
+                xml.Append(Convert.ToString("<Measurement Name=\"" + "MassErrorPPM_Refined" + "\">") + massErrorInfo.MassErrorPPMRefined + "</Measurement>");
+                xml.Append("</Measurements>");
 
-                sbXml.Append("</DTARef_MassErrorStats>");
+                xml.Append("</DTARef_MassErrorStats>");
             }
             catch (Exception ex)
             {
@@ -71,54 +71,54 @@ namespace AnalysisManagerDtaRefineryPlugIn
                 return string.Empty;
             }
 
-            return sbXml.ToString();
+            return xml.ToString();
         }
 
         /// <summary>
         /// Parse the DTA Refinery log file
         /// </summary>
-        /// <param name="strDatasetName"></param>
-        /// <param name="intDatasetID"></param>
-        /// <param name="intPSMJob"></param>
+        /// <param name="datasetName"></param>
+        /// <param name="datasetID"></param>
+        /// <param name="pSMJob"></param>
         /// <returns></returns>
-        public bool ParseDTARefineryLogFile(string strDatasetName, int intDatasetID, int intPSMJob)
+        public bool ParseDTARefineryLogFile(string datasetName, int datasetID, int pSMJob)
         {
-            return ParseDTARefineryLogFile(strDatasetName, intDatasetID, intPSMJob, mWorkDir);
+            return ParseDTARefineryLogFile(datasetName, datasetID, pSMJob, mWorkDir);
         }
 
         /// <summary>
         /// Parse the DTA Refinery log file
         /// </summary>
-        /// <param name="strDatasetName"></param>
-        /// <param name="intDatasetID"></param>
-        /// <param name="intPSMJob"></param>
-        /// <param name="strWorkDirPath"></param>
+        /// <param name="datasetName"></param>
+        /// <param name="datasetID"></param>
+        /// <param name="pSMJob"></param>
+        /// <param name="workDirPath"></param>
         /// <returns></returns>
-        public bool ParseDTARefineryLogFile(string strDatasetName, int intDatasetID, int intPSMJob, string strWorkDirPath)
+        public bool ParseDTARefineryLogFile(string datasetName, int datasetID, int pSMJob, string workDirPath)
         {
-            var blnOriginalDistributionSection = false;
-            var blnRefinedDistributionSection = false;
+            var originalDistributionSection = false;
+            var refinedDistributionSection = false;
 
             var reMassError = new Regex(@"Robust estimate[ \t]+([^\t ]+)", RegexOptions.Compiled);
 
             try
             {
-                var udtMassErrorInfo = new udtMassErrorInfoType
+                var massErrorInfo = new udtMassErrorInfoType
                 {
-                    DatasetName = strDatasetName,
-                    PSMJob = intPSMJob,
+                    DatasetName = datasetName,
+                    PSMJob = pSMJob,
                     MassErrorPPM = double.MinValue,
                     MassErrorPPMRefined = double.MinValue
                 };
 
-                var fiSourceFile = new FileInfo(Path.Combine(strWorkDirPath, strDatasetName + "_dta_DtaRefineryLog.txt"));
-                if (!fiSourceFile.Exists)
+                var sourceFile = new FileInfo(Path.Combine(workDirPath, datasetName + "_dta_DtaRefineryLog.txt"));
+                if (!sourceFile.Exists)
                 {
-                    OnErrorEvent("DtaRefinery Log file not found; " + fiSourceFile.FullName);
+                    OnErrorEvent("DtaRefinery Log file not found; " + sourceFile.FullName);
                     return false;
                 }
 
-                using (var reader = new StreamReader(new FileStream(fiSourceFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(sourceFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
                     while (!reader.EndOfStream)
                     {
@@ -128,14 +128,14 @@ namespace AnalysisManagerDtaRefineryPlugIn
 
                         if (dataLine.IndexOf("ORIGINAL parent ion mass error distribution", StringComparison.OrdinalIgnoreCase) >= 0)
                         {
-                            blnOriginalDistributionSection = true;
-                            blnRefinedDistributionSection = false;
+                            originalDistributionSection = true;
+                            refinedDistributionSection = false;
                         }
 
                         if (dataLine.IndexOf("REFINED parent ion mass error distribution", StringComparison.OrdinalIgnoreCase) >= 0)
                         {
-                            blnOriginalDistributionSection = false;
-                            blnRefinedDistributionSection = true;
+                            originalDistributionSection = false;
+                            refinedDistributionSection = true;
                         }
 
                         if (!dataLine.StartsWith("Robust estimate", StringComparison.OrdinalIgnoreCase))
@@ -145,16 +145,16 @@ namespace AnalysisManagerDtaRefineryPlugIn
 
                         if (reMatch.Success)
                         {
-                            if (double.TryParse(reMatch.Groups[1].Value, out var dblMassError))
+                            if (double.TryParse(reMatch.Groups[1].Value, out var massError))
                             {
-                                if (blnOriginalDistributionSection)
+                                if (originalDistributionSection)
                                 {
-                                    udtMassErrorInfo.MassErrorPPM = dblMassError;
+                                    massErrorInfo.MassErrorPPM = massError;
                                 }
 
-                                if (blnRefinedDistributionSection)
+                                if (refinedDistributionSection)
                                 {
-                                    udtMassErrorInfo.MassErrorPPMRefined = dblMassError;
+                                    massErrorInfo.MassErrorPPMRefined = massError;
                                 }
                             }
                             else
@@ -172,15 +172,15 @@ namespace AnalysisManagerDtaRefineryPlugIn
                     }
                 }
 
-                if (udtMassErrorInfo.MassErrorPPM > double.MinValue)
+                if (massErrorInfo.MassErrorPPM > double.MinValue)
                 {
-                    var strXMLResults = ConstructXML(udtMassErrorInfo);
+                    var xmlResults = ConstructXML(massErrorInfo);
 
                     if (mPostResultsToDB)
                     {
-                        var blnSuccess = PostMassErrorInfoToDB(intDatasetID, strXMLResults);
+                        var success = PostMassErrorInfoToDB(datasetID, xmlResults);
 
-                        if (!blnSuccess)
+                        if (!success)
                         {
                             // The error should have already been reported
                             return false;
@@ -197,7 +197,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
             return true;
         }
 
-        private bool PostMassErrorInfoToDB(int intDatasetID, string strXMLResults)
+        private bool PostMassErrorInfoToDB(int datasetID, string xmlResults)
         {
             const int MAX_RETRY_COUNT = 3;
 
@@ -205,20 +205,20 @@ namespace AnalysisManagerDtaRefineryPlugIn
             {
                 // Call stored procedure STORE_MASS_ERROR_STATS_SP_NAME in DMS5
 
-                var objCommand = new SqlCommand
+                var cmd = new SqlCommand
                 {
                     CommandType = CommandType.StoredProcedure,
                     CommandText = STORE_MASS_ERROR_STATS_SP_NAME
                 };
 
-                objCommand.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
-                objCommand.Parameters.Add(new SqlParameter("@DatasetID", SqlDbType.Int)).Value = intDatasetID;
-                objCommand.Parameters.Add(new SqlParameter("@ResultsXML", SqlDbType.Xml)).Value = strXMLResults;
+                cmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
+                cmd.Parameters.Add(new SqlParameter("@DatasetID", SqlDbType.Int)).Value = datasetID;
+                cmd.Parameters.Add(new SqlParameter("@ResultsXML", SqlDbType.Xml)).Value = xmlResults;
 
-                var objAnalysisTask = new clsAnalysisJob(mMgrParams, mDebugLevel);
+                var analysisTask = new clsAnalysisJob(mMgrParams, mDebugLevel);
 
                 // Execute the SP (retry the call up to 4 times)
-                var ResCode = objAnalysisTask.DMSProcedureExecutor.ExecuteSP(objCommand, MAX_RETRY_COUNT);
+                var ResCode = analysisTask.DMSProcedureExecutor.ExecuteSP(cmd, MAX_RETRY_COUNT);
 
                 if (ResCode == 0)
                 {
