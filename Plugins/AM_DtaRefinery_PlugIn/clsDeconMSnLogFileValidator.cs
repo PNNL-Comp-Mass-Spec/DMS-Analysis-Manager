@@ -14,13 +14,11 @@ namespace AnalysisManagerDtaRefineryPlugIn
     /// <remarks></remarks>
     public class clsDeconMSnLogFileValidator : EventNotifier
     {
-        private bool mFileUpdated;
-
         /// <summary>
         /// Indicates whether the intensity values in the original file were updated
         /// </summary>
         /// <returns>True if the file was updated</returns>
-        public bool FileUpdated => mFileUpdated;
+        public bool FileUpdated { get; private set; }
 
         private string CollapseLine(IReadOnlyList<string> dataColumns)
         {
