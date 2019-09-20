@@ -253,8 +253,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
                 return;
 
             var strFilePathToCheck = Path.Combine(mWorkDir, fileName);
-            string strErrorMessage;
-            if (!ValidateFileHasData(strFilePathToCheck, fileDescription, out strErrorMessage))
+            if (!ValidateFileHasData(strFilePathToCheck, fileDescription, out _))
             {
                 if (mDebugLevel >= 1)
                 {
@@ -269,16 +268,16 @@ namespace AnalysisManagerDtaRefineryPlugIn
 
         private bool UpdateParameterFile(out string strErrorMessage)
         {
-            var XtandemDefaultInput = Path.Combine(mWorkDir, XTANDEM_DEFAULT_INPUT_FILE);
-            var XtandemTaxonomyList = Path.Combine(mWorkDir, XTANDEM_TAXONOMY_LIST_FILE);
-            var ParamFilePath = Path.Combine(mWorkDir, mJobParams.GetParam("DTARefineryXMLFile"));
-            var DtaRefineryDirectory = Path.GetDirectoryName(mMgrParams.GetParam("dtarefineryloc"));
+            var xtandemDefaultInput = Path.Combine(mWorkDir, XTANDEM_DEFAULT_INPUT_FILE);
+            var xtandemTaxonomyList = Path.Combine(mWorkDir, XTANDEM_TAXONOMY_LIST_FILE);
+            var paramFilePath = Path.Combine(mWorkDir, mJobParams.GetParam("DTARefineryXMLFile"));
+            var dtaRefineryDirectory = Path.GetDirectoryName(mMgrParams.GetParam("DtaRefineryLoc"));
 
             strErrorMessage = string.Empty;
 
             try
             {
-                var fiTemplateFile = new FileInfo(ParamFilePath);
+                var fiTemplateFile = new FileInfo(paramFilePath);
 
                 if (!fiTemplateFile.Exists)
                 {
@@ -286,9 +285,9 @@ namespace AnalysisManagerDtaRefineryPlugIn
                     return false;
                 }
 
-                if (string.IsNullOrWhiteSpace(DtaRefineryDirectory))
+                if (string.IsNullOrWhiteSpace(dtaRefineryDirectory))
                 {
-                    strErrorMessage = "Manager parameter dtarefineryloc is empty";
+                    strErrorMessage = "Manager parameter DtaRefineryLoc is empty";
                     return false;
                 }
 
@@ -312,7 +311,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
                 {
                     var root = objTemplate.DocumentElement;
 
-                    var XTandemExePath = Path.Combine(DtaRefineryDirectory, "aux_xtandem_module\\tandem_5digit_precision.exe");
+                    var XTandemExePath = Path.Combine(dtaRefineryDirectory, "aux_xtandem_module\\tandem_5digit_precision.exe");
 
                     if (root != null)
                     {
@@ -322,11 +321,11 @@ namespace AnalysisManagerDtaRefineryPlugIn
 
                         var inputParam = root.SelectSingleNode("/allPars/xtandemPars/par[@label='default input']");
                         if (inputParam != null)
-                            inputParam.InnerXml = XtandemDefaultInput;
+                            inputParam.InnerXml = xtandemDefaultInput;
 
                         var taxonomyListParam = root.SelectSingleNode("/allPars/xtandemPars/par[@label='taxonomy list']");
                         if (taxonomyListParam != null)
-                            taxonomyListParam.InnerXml = XtandemTaxonomyList;
+                            taxonomyListParam.InnerXml = xtandemTaxonomyList;
                     }
                 }
                 catch (Exception ex)
@@ -336,7 +335,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
                 }
 
                 // Write out the new file
-                objTemplate.Save(ParamFilePath);
+                objTemplate.Save(paramFilePath);
             }
             catch (Exception ex)
             {

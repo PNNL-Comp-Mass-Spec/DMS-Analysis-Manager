@@ -101,21 +101,21 @@ namespace AnalysisManagerDtaRefineryPlugIn
             // Capture the console output (including output to the error stream) via redirection symbols:
             //    exePath arguments > ConsoleOutputFile.txt 2>&1
 
-            var strBatchFilePath = Path.Combine(mWorkDir, "Run_DTARefinery.bat");
-            var strConsoleOutputFileName = "DTARefinery_Console_Output.txt";
-            mJobParams.AddResultFileToSkip(Path.GetFileName(strBatchFilePath));
+            var batchFilePath = Path.Combine(mWorkDir, "Run_DTARefinery.bat");
+            var consoleOutputFileName = "DTARefinery_Console_Output.txt";
+            mJobParams.AddResultFileToSkip(Path.GetFileName(batchFilePath));
 
             var strBatchFileCmdLine = progLoc + " " + arguments + " > " + strConsoleOutputFileName + " 2>&1";
 
             // Create the batch file
-            using (var writer = new StreamWriter(new FileStream(strBatchFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+            using (var writer = new StreamWriter(new FileStream(batchFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
             {
                 if (mDebugLevel >= 1)
                 {
-                    LogDebug(strBatchFileCmdLine);
+                    LogDebug(batchFileCmdLine);
                 }
 
-                writer.WriteLine(strBatchFileCmdLine);
+                writer.WriteLine(batchFileCmdLine);
             }
 
             mProgress = PROGRESS_PCT_DTA_REFINERY_RUNNING;
@@ -124,14 +124,14 @@ namespace AnalysisManagerDtaRefineryPlugIn
 
             // Start the program and wait for it to finish
             // However, while it's running, LoopWaiting will get called via events
-            var processingSuccess = mCmdRunner.RunProgram(strBatchFilePath, string.Empty, "DTARefinery", true);
+            var processingSuccess = mCmdRunner.RunProgram(batchFilePath, string.Empty, "DTARefinery", true);
 
             if (!processingSuccess)
             {
                 clsGlobal.IdleLoop(0.5);
 
                 // Open DTARefinery_Console_Output.txt and look for the last line with the text "error"
-                var fiConsoleOutputFile = new FileInfo(Path.Combine(mWorkDir, strConsoleOutputFileName));
+                var fiConsoleOutputFile = new FileInfo(Path.Combine(mWorkDir, consoleOutputFileName));
                 var consoleOutputErrorMessage = string.Empty;
 
                 if (fiConsoleOutputFile.Exists)
@@ -281,7 +281,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
         /// <remarks></remarks>
         private bool StoreToolVersionInfo()
         {
-            var strToolVersionInfo = string.Empty;
+            var toolVersionInfo = string.Empty;
 
             if (mDebugLevel >= 2)
             {
@@ -290,31 +290,31 @@ namespace AnalysisManagerDtaRefineryPlugIn
 
             // Store paths to key files in toolFiles
             var toolFiles = new List<FileInfo>();
-            var ioDtaRefineryFileInfo = new FileInfo(mMgrParams.GetParam("DTARefineryLoc"));
+            var dtaRefineryFileInfo = new FileInfo(mMgrParams.GetParam("DTARefineryLoc"));
 
-            if (ioDtaRefineryFileInfo.Exists)
+            if (dtaRefineryFileInfo.Exists)
             {
-                toolFiles.Add(ioDtaRefineryFileInfo);
+                toolFiles.Add(dtaRefineryFileInfo);
 
-                if (ioDtaRefineryFileInfo.DirectoryName == null)
+                if (dtaRefineryFileInfo.DirectoryName == null)
                 {
-                    LogError("Unable to determine the parent directory of " + ioDtaRefineryFileInfo.FullName);
+                    LogError("Unable to determine the parent directory of " + dtaRefineryFileInfo.FullName);
                 }
                 else
                 {
-                    var strXTandemModuleLoc = Path.Combine(ioDtaRefineryFileInfo.DirectoryName, @"aux_xtandem_module\tandem_5digit_precision.exe");
-                    toolFiles.Add(new FileInfo(strXTandemModuleLoc));
+                    var xTandemModuleLoc = Path.Combine(dtaRefineryFileInfo.DirectoryName, @"aux_xtandem_module\tandem_5digit_precision.exe");
+                    toolFiles.Add(new FileInfo(xTandemModuleLoc));
                 }
             }
             else
             {
-                LogError("DTARefinery not found: " + ioDtaRefineryFileInfo.FullName);
+                LogError("DTARefinery not found: " + dtaRefineryFileInfo.FullName);
                 return false;
             }
 
             try
             {
-                return SetStepTaskToolVersion(strToolVersionInfo, toolFiles, saveToolVersionTextFile: false);
+                return SetStepTaskToolVersion(toolVersionInfo, toolFiles, saveToolVersionTextFile: false);
             }
             catch (Exception ex)
             {
