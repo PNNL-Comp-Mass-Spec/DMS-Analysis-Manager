@@ -128,8 +128,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
 
             var batchFileCmdLine = pythonExe + " " + progLoc + " " + arguments + " > " + consoleOutputFileName + " 2>&1";
 
-            LogDebug("Creating batch file with command:");
-            LogDebug(batchFileCmdLine);
+            LogDebug("Creating batch file at " + batchFilePath);
 
             // Create the batch file
             using (var writer = new StreamWriter(new FileStream(batchFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
