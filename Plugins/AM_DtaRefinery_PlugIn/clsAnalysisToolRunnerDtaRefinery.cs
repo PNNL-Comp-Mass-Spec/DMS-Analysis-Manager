@@ -82,13 +82,34 @@ namespace AnalysisManagerDtaRefineryPlugIn
             mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
             // verify that program file exists
-            // DTARefineryLoc will be something like this: "c:\dms_programs\DTARefinery\dta_refinery.exe"
+            // DTARefineryLoc will be something like this: "c:\dms_programs\DTARefinery\dta_refinery.py"
             var progLoc = mMgrParams.GetParam("DTARefineryLoc");
             if (!File.Exists(progLoc))
             {
                 if (progLoc.Length == 0)
-                    progLoc = "Parameter 'DTARefineryLoc' not defined for this manager";
-                LogError("Cannot find DTA_Refinery program file: " + progLoc);
+                    LogError("Parameter 'DTARefineryLoc' not defined for this manager");
+                else
+                    LogError("Cannot find DTA_Refinery program file: " + progLoc);
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            // Verify that Python.exe exists
+            // Python3ProgLoc will be something like this: "C:\Python36"
+            var pythonProgLoc = mMgrParams.GetParam("Python3ProgLoc");
+            if (!Directory.Exists(pythonProgLoc))
+            {
+                if (pythonProgLoc.Length == 0)
+                    LogError("Parameter 'Python3ProgLoc' not defined for this manager");
+                else
+                    LogError("Cannot find python in directory: " + pythonProgLoc);
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            var pythonExe = new FileInfo(Path.Combine(pythonProgLoc, "python.exe"));
+
+            if (!pythonExe.Exists)
+            {
+                LogError("Python executable not found at: " + pythonExe.FullName);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -105,7 +126,10 @@ namespace AnalysisManagerDtaRefineryPlugIn
             var consoleOutputFileName = "DTARefinery_Console_Output.txt";
             mJobParams.AddResultFileToSkip(Path.GetFileName(batchFilePath));
 
-            var strBatchFileCmdLine = progLoc + " " + arguments + " > " + strConsoleOutputFileName + " 2>&1";
+            var batchFileCmdLine = pythonExe + " " + progLoc + " " + arguments + " > " + consoleOutputFileName + " 2>&1";
+
+            LogDebug("Creating batch file with command:");
+            LogDebug(batchFileCmdLine);
 
             // Create the batch file
             using (var writer = new StreamWriter(new FileStream(batchFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
