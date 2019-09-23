@@ -143,7 +143,7 @@ namespace AnalysisManager_Ape_PlugIn
                           "WHERE Data_Package_ID = " + dataPackageID + " and Tool Like 'Sequest%'";
 
             var jobList = string.Empty;
-            var intJobCount = 0;
+            var jobCount = 0;
             using (var conn = new SqlConnection(connectionString))
             {
                 conn.Open();
@@ -156,7 +156,7 @@ namespace AnalysisManager_Ape_PlugIn
                         if (!string.IsNullOrEmpty(reader[0].ToString()))
                         {
                             jobList += reader[0] + ", ";
-                            intJobCount += 1;
+                            jobCount += 1;
                         }
                     }
                 }
@@ -168,7 +168,7 @@ namespace AnalysisManager_Ape_PlugIn
             }
             else
             {
-                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.INFO, "Retrieving " + intJobCount + " jobs in clsApeAMGetImprovResults");
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.INFO, "Retrieving " + jobCount + " jobs in clsApeAMGetImprovResults");
                 LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, "Job list: " + jobList);
             }
 

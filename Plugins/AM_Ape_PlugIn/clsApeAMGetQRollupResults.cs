@@ -130,8 +130,8 @@ namespace AnalysisManager_Ape_PlugIn
                 sqlText = sqlText + " and Ini_File_Name = '" + GetJobParam("ApeMDIniFilename") + "'";
             }
 
-            var QIDList = string.Empty;
-            var intQIDCount = 0;
+            var qidList = string.Empty;
+            var qidCount = 0;
             using (var conn = new SqlConnection(connectionString))
             {
                 conn.Open();
@@ -143,24 +143,24 @@ namespace AnalysisManager_Ape_PlugIn
                     {
                         if (!string.IsNullOrEmpty(reader[0].ToString()))
                         {
-                            QIDList += reader[0] + ", ";
-                            intQIDCount += 1;
+                            qidList += reader[0] + ", ";
+                            qidCount += 1;
                         }
                     }
                 }
             }
 
-            if (string.IsNullOrEmpty(QIDList))
+            if (string.IsNullOrEmpty(qidList))
             {
                 mErrorMessage = "QIDs not found via query " + sqlText;
             }
             else
             {
-                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.INFO, "Retrieving " + intQIDCount + " QIDs in clsApeAMGetQRollupResults");
-                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, "QID list: " + QIDList);
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.INFO, "Retrieving " + qidCount + " QIDs in clsApeAMGetQRollupResults");
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, "QID list: " + qidList);
             }
 
-            return QIDList;
+            return qidList;
         }
 
     }

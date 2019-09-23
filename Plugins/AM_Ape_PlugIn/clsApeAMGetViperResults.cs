@@ -119,8 +119,8 @@ namespace AnalysisManager_Ape_PlugIn
                 sqlText = sqlText + " and Ini_File_Name = '" + GetJobParam("ApeMDIniFilename") + "'";
             }
 
-            var MDIDList = string.Empty;
-            var intMDIDCount = 0;
+            var mdidList = string.Empty;
+            var mdidCount = 0;
             using (var conn = new SqlConnection(connectionString))
             {
                 conn.Open();
@@ -132,24 +132,24 @@ namespace AnalysisManager_Ape_PlugIn
                     {
                         if (!string.IsNullOrEmpty(reader[0].ToString()))
                         {
-                            MDIDList += reader[0] + ", ";
-                            intMDIDCount += 1;
+                            mdidList += reader[0] + ", ";
+                            mdidCount += 1;
                         }
                     }
                 }
             }
 
-            if (string.IsNullOrEmpty(MDIDList))
+            if (string.IsNullOrEmpty(mdidList))
             {
                 mErrorMessage = "MDIDs not found via query " + sqlText;
             }
             else
             {
-                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.INFO, "Retrieving " + intMDIDCount + " MDIDs in clsApeAMGetViperResults");
-                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, "MDID list: " + MDIDList);
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.INFO, "Retrieving " + mdidCount + " MDIDs in clsApeAMGetViperResults");
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, "MDID list: " + mdidList);
             }
 
-            return MDIDList;
+            return mdidList;
         }
 
     }

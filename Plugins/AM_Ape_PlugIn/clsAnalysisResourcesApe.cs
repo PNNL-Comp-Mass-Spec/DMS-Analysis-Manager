@@ -111,9 +111,9 @@ namespace AnalysisManager_Ape_PlugIn
             }
 
             // Retrieve the Ape Workflow file specified for this job
-            var strApeWorkflowFileName = mJobParams.GetParam("ApeWorkflowName");
+            var apeWorkflowFileName = mJobParams.GetParam("ApeWorkflowName");
             // Retrieve the Workflow file name specified for this job
-            if (string.IsNullOrEmpty(strApeWorkflowFileName))
+            if (string.IsNullOrEmpty(apeWorkflowFileName))
             {
                 LogError("Parameter ApeWorkflowName not defined in the job parameters for this job; unable to continue");
                 return false;
@@ -122,10 +122,10 @@ namespace AnalysisManager_Ape_PlugIn
             var dmsWorkflowsDirectoryPath = mMgrParams.GetParam("DMSWorkflowsFolderPath", @"\\gigasax\DMS_Workflows");
             var apeWorkflowDirectory = Path.Combine(dmsWorkflowsDirectoryPath, "Ape", analysisType);
 
-            LogMessage("Retrieving workflow file: " + Path.Combine(apeWorkflowDirectory, strApeWorkflowFileName));
+            LogMessage("Retrieving workflow file: " + Path.Combine(apeWorkflowDirectory, apeWorkflowFileName));
 
             // Now copy the Ape workflow file to the working directory
-            if (!CopyFileToWorkDir(strApeWorkflowFileName, apeWorkflowDirectory, mWorkDir))
+            if (!CopyFileToWorkDir(apeWorkflowFileName, apeWorkflowDirectory, mWorkDir))
             {
                 // Errors were reported in function call, so just return
                 return false;

@@ -101,10 +101,10 @@ namespace AnalysisManager_Ape_PlugIn
             public readonly string taskDescription;     // Current task
             public readonly float percentComplete;      // number between 0 and 100
 
-            public ProgressChangedEventArgs(string strTaskDescription, float fPercentComplete)
+            public ProgressChangedEventArgs(string description, float progressPercentComplete)
             {
-                taskDescription = strTaskDescription;
-                percentComplete = fPercentComplete;
+                taskDescription = description;
+                percentComplete = progressPercentComplete;
             }
         }
 

@@ -107,7 +107,7 @@ namespace AnalysisManager_Ape_PlugIn
             return success;
         }
 
-        private bool StartProteinParsimony(string apeDatabase)
+        private bool StartProteinParsimony(string apeDatabasePath)
         {
             const string SOURCE_TABLE = "T_Row_Metadata";
 
@@ -116,12 +116,12 @@ namespace AnalysisManager_Ape_PlugIn
             {
                 var parsimonyRunner = new SetCover.Runner();
 
-                var fiDatabase = new FileInfo(apeDatabase);
-                if (fiDatabase.Directory == null)
+                var apeDatabaseFile = new FileInfo(apeDatabasePath);
+                if (apeDatabaseFile.Directory == null)
                     throw new IOException("Error determining the parent directory path for the Ape database");
 
                 // Add the protein parsimony tables
-                success = parsimonyRunner.ProcessSQLite(fiDatabase.Directory.FullName, fiDatabase.Name, SOURCE_TABLE);
+                success = parsimonyRunner.ProcessSQLite(apeDatabaseFile.Directory.FullName, apeDatabaseFile.Name, SOURCE_TABLE);
 
             }
             catch (Exception ex)
