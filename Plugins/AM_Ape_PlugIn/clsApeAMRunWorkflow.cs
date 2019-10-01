@@ -1,8 +1,6 @@
 ﻿using AnalysisManagerBase;
-using PRISM.Logging;
 using System;
 using System.IO;
-using PRISM;
 
 namespace AnalysisManager_Ape_PlugIn
 {
@@ -32,23 +30,21 @@ namespace AnalysisManager_Ape_PlugIn
             var progressHandler = new Ape.SqlConversionHandler(delegate (bool done, bool conversionSuccess, int percent, string msg)
             {
                 if (conversionSuccess)
-                    Console.WriteLine(msg);
+                    OnStatusEvent(msg);
                 else
-                    ConsoleMsgUtils.ShowWarning(msg);
+                    OnWarningEvent(msg);
 
                 if (done)
                 {
                     if (conversionSuccess)
                     {
-                        LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.INFO, "Ape successfully ran workflow " + GetJobParam("ApeWorkflowName"));
+                        OnStatusEvent("Ape successfully ran workflow " + GetJobParam("ApeWorkflowName"));
                         success = true;
                     }
                     else
                     {
                         mErrorMessage = "Error running Ape in clsApeAMRunWorkflow";
-                        ConsoleMsgUtils.ShowWarning(mErrorMessage);
-
-                        LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, mErrorMessage);
+                        OnErrorEvent(mErrorMessage);
                         success = false;
                     }
                 }
@@ -115,6 +111,7 @@ namespace AnalysisManager_Ape_PlugIn
             try
             {
                 var parsimonyRunner = new SetCover.Runner();
+                RegisterEvents(parsimonyRunner);
 
                 var apeDatabaseFile = new FileInfo(apeDatabasePath);
                 if (apeDatabaseFile.Directory == null)

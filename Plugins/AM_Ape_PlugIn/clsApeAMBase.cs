@@ -1,15 +1,12 @@
 using AnalysisManagerBase;
 using PRISM.Logging;
 using System;
+using PRISM;
 
 namespace AnalysisManager_Ape_PlugIn
 {
-    class clsApeAMBase
+    class clsApeAMBase : EventNotifier
     {
-        #region "Event Delegates and Classes"
-        public event ProgressChangedEventHandler ProgressChanged;
-        public delegate void ProgressChangedEventHandler(object sender, ProgressChangedEventArgs e);
-        #endregion
 
         #region Enums
         public enum eSqlServerToSqlLiteConversionMode
@@ -55,7 +52,6 @@ namespace AnalysisManager_Ape_PlugIn
 
         #endregion
 
-
         #region Utility Methods
 
         public string RequireMgrParam(string paramName)
@@ -63,7 +59,7 @@ namespace AnalysisManager_Ape_PlugIn
             var val = mMgrParams.GetParam(paramName);
             if (string.IsNullOrEmpty(val))
             {
-                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.WARN, string.Format("Required job parameter '{0}' was missing.", paramName));
+                OnWarningEvent(string.Format("Required job parameter '{0}' was missing.", paramName));
             }
             return val;
         }
@@ -73,7 +69,7 @@ namespace AnalysisManager_Ape_PlugIn
             var val = mJobParams.GetParam(paramName);
             if (string.IsNullOrEmpty(val))
             {
-                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.WARN, string.Format("Required job parameter '{0}' was missing.", paramName));
+                OnWarningEvent(string.Format("Required job parameter '{0}' was missing.", paramName));
             }
             return val;
         }
@@ -88,25 +84,16 @@ namespace AnalysisManager_Ape_PlugIn
             return mJobParams.GetJobParameter(paramName, defaultValue);
         }
 
-
         #endregion
 
-        protected void OnProgressChanged(string TaskDescription, float PctComplete)
+        /// <summary>Progress update</summary>
+        /// <param name="progressMessage">Progress message</param>
+        /// <param name="percentComplete">Value between 0 and 100</param>
+        protected void OnProgressChanged(string progressMessage, float percentComplete)
         {
-            ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(TaskDescription, PctComplete));
+            base.OnProgressUpdate(progressMessage, percentComplete);
         }
 
-        public class ProgressChangedEventArgs : EventArgs
-        {
-            public readonly string taskDescription;     // Current task
-            public readonly float percentComplete;      // number between 0 and 100
-
-            public ProgressChangedEventArgs(string description, float progressPercentComplete)
-            {
-                taskDescription = description;
-                percentComplete = progressPercentComplete;
-            }
-        }
 
     }
 }

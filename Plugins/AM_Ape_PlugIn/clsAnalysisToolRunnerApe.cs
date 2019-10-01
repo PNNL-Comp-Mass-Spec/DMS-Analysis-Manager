@@ -120,7 +120,10 @@ namespace AnalysisManager_Ape_PlugIn
         {
             // run the appropriate Mage pipeline(s) according to operations list parameter
             var apeOperations = mJobParams.GetParam("ApeOperations");
+
             var ops = new clsApeAMOperations(mJobParams, mMgrParams);
+            RegisterEvents(ops);
+
             var success = ops.RunApeOperations(apeOperations);
 
             if (!success)

@@ -1,9 +1,10 @@
 using System;
 using AnalysisManagerBase;
+using PRISM;
 
 namespace AnalysisManager_Ape_PlugIn
 {
-    public class clsApeAMOperations
+    public class clsApeAMOperations : EventNotifier
     {
 
         #region Member Variables
@@ -62,8 +63,8 @@ namespace AnalysisManager_Ape_PlugIn
             {
                 var apeWfObj = new clsApeAMRunWorkflow(mJobParams, mMgrParams);
 
-                // Attach the progress event handler
-                apeWfObj.ProgressChanged += ApeProgressChanged;
+                // Attach the event handlers
+                RegisterEventsCustomProgressHandler(apeWfObj);
 
                 var success = apeWfObj.RunWorkflow();
 
@@ -77,8 +78,8 @@ namespace AnalysisManager_Ape_PlugIn
             {
                 var apeImpObj = new clsApeAMGetImprovResults(mJobParams, mMgrParams);
 
-                // Attach the progress event handler
-                apeImpObj.ProgressChanged += ApeProgressChanged;
+                // Attach the event handlers
+                RegisterEventsCustomProgressHandler(apeImpObj);
 
                 var success = apeImpObj.GetImprovResults(mJobParams.GetParam("DataPackageID"));
 
@@ -92,8 +93,8 @@ namespace AnalysisManager_Ape_PlugIn
             {
                 var apeQImpObj = new clsApeAMGetQRollupResults(mJobParams, mMgrParams);
 
-                // Attach the progress event handler
-                apeQImpObj.ProgressChanged += ApeProgressChanged;
+                // Attach the event handlers
+                RegisterEventsCustomProgressHandler(apeQImpObj);
 
                 var success = apeQImpObj.GetQRollupResults(mJobParams.GetParam("DataPackageID"));
 
@@ -107,8 +108,8 @@ namespace AnalysisManager_Ape_PlugIn
             {
                 var apeVImpObj = new clsApeAMGetViperResults(mJobParams, mMgrParams);
 
-                // Attach the progress event handler
-                apeVImpObj.ProgressChanged += ApeProgressChanged;
+                // Attach the event handlers
+                RegisterEventsCustomProgressHandler(apeVImpObj);
 
                 var success = apeVImpObj.GetQRollupResults(mJobParams.GetParam("DataPackageID"));
 
@@ -123,7 +124,16 @@ namespace AnalysisManager_Ape_PlugIn
 
         }
 
-        void ApeProgressChanged(object sender, clsApeAMBase.ProgressChangedEventArgs e)
+        private void RegisterEventsCustomProgressHandler(EventNotifier sourceClass)
+        {
+            sourceClass.DebugEvent += ApeProgressChanged;
+            sourceClass.StatusEvent += OnStatusEvent;
+            sourceClass.ErrorEvent += OnErrorEvent;
+            sourceClass.WarningEvent += OnWarningEvent;
+            sourceClass.ProgressUpdate += OnProgressUpdate;
+        }
+
+        void ApeProgressChanged(string message)
         {
 
             // Update the step tool progress

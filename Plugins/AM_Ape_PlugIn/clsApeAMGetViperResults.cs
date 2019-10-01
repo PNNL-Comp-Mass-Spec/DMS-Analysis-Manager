@@ -1,5 +1,4 @@
 using AnalysisManagerBase;
-using PRISM.Logging;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
@@ -47,13 +46,13 @@ namespace AnalysisManager_Ape_PlugIn
                 {
                     if (conversionSuccess)
                     {
-                        LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.INFO, "Ape successfully created QRollup database." + GetJobParam("ApeWorkflowName"));
+                        OnStatusEvent("Ape successfully created QRollup database." + GetJobParam("ApeWorkflowName"));
                         success = true;
                     }
                     else
                     {
                         mErrorMessage = "Error using APE to create QRollup database for workflow " + GetJobParam("ApeWorkflowName");
-                        LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, mErrorMessage);
+                        OnErrorEvent(mErrorMessage);
                         success = false;
                     }
                 }
@@ -145,8 +144,8 @@ namespace AnalysisManager_Ape_PlugIn
             }
             else
             {
-                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.INFO, "Retrieving " + mdidCount + " MDIDs in clsApeAMGetViperResults");
-                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, "MDID list: " + mdidList);
+                OnStatusEvent("Retrieving " + mdidCount + " MDIDs in clsApeAMGetViperResults");
+                OnDebugEvent("MDID list: " + mdidList);
             }
 
             return mdidList;

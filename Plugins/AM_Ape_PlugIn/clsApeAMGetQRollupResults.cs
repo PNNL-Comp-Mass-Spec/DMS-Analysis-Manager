@@ -41,19 +41,19 @@ namespace AnalysisManager_Ape_PlugIn
             var success = true;
             var mHandle = new Ape.SqlConversionHandler(delegate (bool done, bool conversionSuccess, int percent, string msg)
             {
-                Console.WriteLine(msg);
+                OnStatusEvent(msg);
 
                 if (done)
                 {
                     if (conversionSuccess)
                     {
-                        LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.INFO, "Ape successfully created QRollup database." + GetJobParam("ApeWorkflowName"));
+                        OnStatusEvent("Ape successfully created QRollup database." + GetJobParam("ApeWorkflowName"));
                         success = true;
                     }
                     else
                     {
                         mErrorMessage = "Error running Ape in GetQRollupResultsAll";
-                        LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, mErrorMessage);
+                        OnErrorEvent(mErrorMessage);
                         success = false;
                     }
                 }
@@ -156,8 +156,8 @@ namespace AnalysisManager_Ape_PlugIn
             }
             else
             {
-                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.INFO, "Retrieving " + qidCount + " QIDs in clsApeAMGetQRollupResults");
-                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, "QID list: " + qidList);
+                OnStatusEvent("Retrieving " + qidCount + " QIDs in clsApeAMGetQRollupResults");
+                OnDebugEvent("QID list: " + qidList);
             }
 
             return qidList;

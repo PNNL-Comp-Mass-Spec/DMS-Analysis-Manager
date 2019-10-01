@@ -1,6 +1,4 @@
 using AnalysisManagerBase;
-using PRISM.Logging;
-using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.IO;
@@ -41,19 +39,19 @@ namespace AnalysisManager_Ape_PlugIn
             var success = true;
             var mHandle = new Ape.SqlConversionHandler(delegate (bool done, bool conversionSuccess, int percent, string msg)
             {
-                Console.WriteLine(msg);
+                OnStatusEvent(msg);
 
                 if (done)
                 {
                     if (conversionSuccess)
                     {
-                        LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.INFO, "Ape successfully created Improv database." + GetJobParam("ApeWorkflowName"));
+                        OnStatusEvent("Ape successfully created Improv database." + GetJobParam("ApeWorkflowName"));
                         success = true;
                     }
                     else
                     {
                         mErrorMessage = "Error running Ape in GetImprovResultsAll";
-                        LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, mErrorMessage);
+                        OnErrorEvent(mErrorMessage);
                         success = false;
                     }
                 }
@@ -168,8 +166,8 @@ namespace AnalysisManager_Ape_PlugIn
             }
             else
             {
-                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.INFO, "Retrieving " + jobCount + " jobs in clsApeAMGetImprovResults");
-                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, "Job list: " + jobList);
+                OnStatusEvent("Retrieving " + jobCount + " jobs in clsApeAMGetImprovResults");
+                OnDebugEvent("Job list: " + jobList);
             }
 
             return jobList;
