@@ -149,6 +149,13 @@ namespace AnalysisManager_Ape_PlugIn
             //    mLastStatusUpdateTime = System.DateTime.UtcNow;
             //    mStatusTools.UpdateAndWrite(EnumMgrStatus.RUNNING, EnumTaskStatus.RUNNING, EnumTaskStatusDetail.RUNNING_TOOL, mProgress);
             // }
+
+            if (DateTime.UtcNow.Subtract(mLastProgressTime).TotalSeconds < 9)
+                return;
+
+            mLastProgressTime = DateTime.UtcNow;
+            ConsoleMsgUtils.ShowDebug(message);
+
         }
 
         #endregion
