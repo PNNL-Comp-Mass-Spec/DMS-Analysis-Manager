@@ -13,13 +13,13 @@ namespace AnalysisManager_Ape_PlugIn
 
         protected IMgrParams mMgrParams;
 
-        private string mErrorMessage = string.Empty;
+        private DateTime mLastProgressTime = DateTime.UtcNow;
 
         #endregion
 
         #region "Properties"
 
-        public string ErrorMessage => mErrorMessage;
+        public string ErrorMessage { get; private set; } = string.Empty;
 
         #endregion
 
@@ -44,7 +44,8 @@ namespace AnalysisManager_Ape_PlugIn
             foreach (var apeOperation in apeOperations.Split(','))
             {
                 ok = RunApeOperation(apeOperation.Trim());
-                if (!ok) break;
+                if (!ok)
+                    break;
             }
             return ok;
         }
@@ -69,7 +70,7 @@ namespace AnalysisManager_Ape_PlugIn
                 var success = apeWfObj.RunWorkflow();
 
                 if (!success)
-                    mErrorMessage = "Error running apeWorkflow: " + apeWfObj.ErrorMessage;
+                    ErrorMessage = "Error running apeWorkflow: " + apeWfObj.ErrorMessage;
 
                 return success;
             }
@@ -84,7 +85,7 @@ namespace AnalysisManager_Ape_PlugIn
                 var success = apeImpObj.GetImprovResults(mJobParams.GetParam("DataPackageID"));
 
                 if (!success)
-                    mErrorMessage = "Error getting ImprovResults: " + apeImpObj.ErrorMessage;
+                    ErrorMessage = "Error getting ImprovResults: " + apeImpObj.ErrorMessage;
 
                 return success;
             }
@@ -99,7 +100,7 @@ namespace AnalysisManager_Ape_PlugIn
                 var success = apeQImpObj.GetQRollupResults(mJobParams.GetParam("DataPackageID"));
 
                 if (!success)
-                    mErrorMessage = "Error obtaining QRollup Results: " + apeQImpObj.ErrorMessage;
+                    ErrorMessage = "Error obtaining QRollup Results: " + apeQImpObj.ErrorMessage;
 
                 return success;
             }
@@ -114,12 +115,12 @@ namespace AnalysisManager_Ape_PlugIn
                 var success = apeVImpObj.GetQRollupResults(mJobParams.GetParam("DataPackageID"));
 
                 if (!success)
-                    mErrorMessage = "Error obtaining VIPER results: " + apeVImpObj.ErrorMessage;
+                    ErrorMessage = "Error obtaining VIPER results: " + apeVImpObj.ErrorMessage;
 
                 return success;
             }
 
-            mErrorMessage = "Ape Operation: " + apeOperation + "not recognized";
+            ErrorMessage = "Ape Operation: " + apeOperation + "not recognized";
             return false;
 
         }
