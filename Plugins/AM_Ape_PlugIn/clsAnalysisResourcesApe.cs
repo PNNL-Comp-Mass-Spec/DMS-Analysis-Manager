@@ -51,16 +51,17 @@ namespace AnalysisManager_Ape_PlugIn
 
             foreach (var apeOperation in apeOperations.Split(','))
             {
-                if (!string.IsNullOrWhiteSpace(apeOperation))
-                {
-                    success = RunApeOperation(apeOperation.Trim());
-                    if (!success)
-                    {
-                        if (string.IsNullOrEmpty(mMessage))
-                            mMessage = "Error running Ape resources operation " + apeOperation;
-                        break;
-                    }
-                }
+                if (string.IsNullOrWhiteSpace(apeOperation))
+                    continue;
+
+                success = RunApeOperation(apeOperation.Trim());
+                if (success)
+                    continue;
+
+                if (string.IsNullOrEmpty(mMessage))
+                    mMessage = "Error running Ape resources operation " + apeOperation;
+
+                break;
             }
 
             return success;
