@@ -24,7 +24,6 @@ namespace AnalysisManagerMsXmlGenPlugIn
         protected readonly string mProgramPath;
         private readonly string mDatasetName;
         protected readonly clsAnalysisResources.eRawDataTypeConstants mRawDataType;
-        private string mSourceFilePath = string.Empty;
         protected string mOutputFileName = string.Empty;
 
         private readonly clsAnalysisResources.MSXMLOutputTypeConstants mOutputType;
@@ -72,7 +71,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
         protected abstract string ProgramName { get; }
 
-        public string SourceFilePath => mSourceFilePath;
+        public string SourceFilePath { get; private set; }
 
         #endregion
 
@@ -137,21 +136,21 @@ namespace AnalysisManagerMsXmlGenPlugIn
             switch (mRawDataType)
             {
                 case clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile:
-                    mSourceFilePath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_RAW_EXTENSION);
+                    SourceFilePath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_RAW_EXTENSION);
                     break;
                 case clsAnalysisResources.eRawDataTypeConstants.AgilentDFolder:
                 case clsAnalysisResources.eRawDataTypeConstants.BrukerTOFBaf:
                 case clsAnalysisResources.eRawDataTypeConstants.BrukerFTFolder:
-                    mSourceFilePath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_D_EXTENSION);
+                    SourceFilePath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_D_EXTENSION);
                     break;
                 case clsAnalysisResources.eRawDataTypeConstants.mzXML:
-                    mSourceFilePath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_MZXML_EXTENSION);
+                    SourceFilePath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_MZXML_EXTENSION);
                     break;
                 case clsAnalysisResources.eRawDataTypeConstants.mzML:
-                    mSourceFilePath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_MZML_EXTENSION);
+                    SourceFilePath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_MZML_EXTENSION);
                     break;
                 default:
-                    throw new ArgumentOutOfRangeException("Unsupported raw data type: " + mRawDataType);
+                    throw new ArgumentOutOfRangeException(nameof(mRawDataType), "Unsupported raw data type: " + mRawDataType);
             }
 
             mErrorMessage = string.Empty;
@@ -186,7 +185,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
             // Set up and execute a program runner to run MS XML executable
 
-            var arguments = CreateArguments(msXmlFormat, mSourceFilePath);
+            var arguments = CreateArguments(msXmlFormat, SourceFilePath);
 
             var success = SetupTool();
             if (!success)
@@ -256,8 +255,14 @@ namespace AnalysisManagerMsXmlGenPlugIn
             }
 
             // Make sure the output file was created and is not empty
-            var sourceFile = new FileInfo(mSourceFilePath);
-            var outputFilePath = Path.Combine(sourceFile.Directory.FullName, GetOutputFileName(msXmlFormat, mSourceFilePath, mRawDataType));
+            var sourceFile = new FileInfo(SourceFilePath);
+            if (sourceFile.Directory == null)
+            {
+                mErrorMessage = "Unable to determine the parent directory of " + sourceFile.FullName;
+                return false;
+            }
+
+            var outputFilePath = Path.Combine(sourceFile.Directory.FullName, GetOutputFileName(msXmlFormat, SourceFilePath, mRawDataType));
 
             if (!File.Exists(outputFilePath))
             {
