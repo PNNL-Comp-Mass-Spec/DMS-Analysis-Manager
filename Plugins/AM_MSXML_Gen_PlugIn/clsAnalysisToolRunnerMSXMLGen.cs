@@ -284,6 +284,9 @@ namespace AnalysisManagerMsXmlGenPlugIn
                     case clsAnalysisResources.MSXMLOutputTypeConstants.mzXML:
                         resultFileExtension = clsAnalysisResources.DOT_MZXML_EXTENSION;
                         break;
+                    case clsAnalysisResources.MSXMLOutputTypeConstants.mgf:
+                        resultFileExtension = clsAnalysisResources.DOT_MGF_EXTENSION;
+                        break;
                     default:
                         throw new Exception("Unrecognized MSXMLOutputType value");
                 }
@@ -300,7 +303,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 // Possibly update the file using results from RawConverter
 
                 var recalculatePrecursors = mJobParams.GetJobParameter("RecalculatePrecursors", false);
-                if (recalculatePrecursors)
+                if (recalculatePrecursors && mMSXmlOutputFileType != clsAnalysisResources.MSXMLOutputTypeConstants.mgf)
                 {
                     var success = RecalculatePrecursorIons(msXmlFile);
                     if (!success)

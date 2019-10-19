@@ -270,6 +270,13 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 return false;
             }
 
+
+            if (mOutputType == clsAnalysisResources.MSXMLOutputTypeConstants.mgf)
+            {
+                // Do not try to validate it
+                return true;
+            }
+
             // Validate that the output file is complete
             if (!ValidateMsXmlFile(mOutputType, outputFilePath))
             {
@@ -381,8 +388,8 @@ namespace AnalysisManagerMsXmlGenPlugIn
                             }
                             return false;
                         }
-
                         break;
+
                     case clsAnalysisResources.MSXMLOutputTypeConstants.mzML:
                         if (mostRecentLine != "</indexedmzML>")
                         {
@@ -397,8 +404,8 @@ namespace AnalysisManagerMsXmlGenPlugIn
                             }
                             return false;
                         }
-
                         break;
+
                     default:
                         mErrorMessage = "Unrecognized output type: " + eOutputType;
 
