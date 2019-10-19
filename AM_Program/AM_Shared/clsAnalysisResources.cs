@@ -479,7 +479,12 @@ namespace AnalysisManagerBase
             /// <summary>
             /// mzML
             /// </summary>
-            mzML = 1
+            mzML = 1,
+
+            /// <summary>
+            /// Mascot generic file
+            /// </summary>
+            mgf = 2
         }
 
         /// <summary>

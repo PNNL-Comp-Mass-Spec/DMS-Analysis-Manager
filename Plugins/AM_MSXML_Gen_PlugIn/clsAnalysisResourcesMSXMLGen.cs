@@ -45,7 +45,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                         return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
                     }
 
-                    if (!msXmlFormat.ToLower().Contains("mzml"))
+                    if (msXmlFormat.IndexOf(clsMSXmlGen.MZML_FILE_FORMAT, StringComparison.OrdinalIgnoreCase) < 0)
                     {
                         LogError("ProMex_Bruker jobs require mzML files, not " + msXmlFormat + " files");
                         return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;

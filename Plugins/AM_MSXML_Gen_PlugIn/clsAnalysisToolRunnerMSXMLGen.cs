@@ -112,18 +112,23 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 var msXmlFormat = mJobParams.GetParam("MSXMLOutputType");            // Typically mzXML or mzML
 
                 // Determine the output type
-                switch (msXmlFormat.ToLower())
+                if (msXmlFormat.Equals(clsMSXmlGen.MZXML_FILE_FORMAT, StringComparison.OrdinalIgnoreCase))
                 {
-                    case "mzxml":
-                        mMSXmlOutputFileType = clsAnalysisResources.MSXMLOutputTypeConstants.mzXML;
-                        break;
-                    case "mzml":
-                        mMSXmlOutputFileType = clsAnalysisResources.MSXMLOutputTypeConstants.mzML;
-                        break;
-                    default:
-                        LogWarning("msXmlFormat string is not mzXML or mzML (" + msXmlFormat + "); will default to mzXML");
-                        mMSXmlOutputFileType = clsAnalysisResources.MSXMLOutputTypeConstants.mzXML;
-                        break;
+                    mMSXmlOutputFileType = clsAnalysisResources.MSXMLOutputTypeConstants.mzXML;
+                }
+                else if (msXmlFormat.Equals(clsMSXmlGen.MZML_FILE_FORMAT, StringComparison.OrdinalIgnoreCase))
+                {
+                    mMSXmlOutputFileType = clsAnalysisResources.MSXMLOutputTypeConstants.mzML;
+                }
+                else if (msXmlFormat.Equals(clsMSXmlGen.MGF_FILE_FORMAT, StringComparison.OrdinalIgnoreCase))
+                {
+                    mMSXmlOutputFileType = clsAnalysisResources.MSXMLOutputTypeConstants.mgf;
+                }
+                else
+                {
+                    LogWarning("msXmlFormat string is not mzXML, mzML, or mgf (" + msXmlFormat + "); will default to mzML");
+                    mMSXmlOutputFileType = clsAnalysisResources.MSXMLOutputTypeConstants.mzML;
+
                 }
 
                 // Lookup Centroid Settings

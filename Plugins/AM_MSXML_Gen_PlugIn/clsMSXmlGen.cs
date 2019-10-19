@@ -12,6 +12,10 @@ namespace AnalysisManagerMsXmlGenPlugIn
         // Define a maximum runtime of 36 hours
         const int MAX_RUNTIME_SECONDS = 36 * 60 * 60;
 
+        public const string MZXML_FILE_FORMAT = "mzXML";
+        public const string MZML_FILE_FORMAT = "mzML";
+        public const string MGF_FILE_FORMAT = "mgf";
+
         #endregion
 
         #region "Module Variables"
@@ -122,13 +126,13 @@ namespace AnalysisManagerMsXmlGenPlugIn
         protected abstract string CreateArguments(string msXmlFormat, string rawFilePath);
 
         /// <summary>
-        /// Generate the mzXML or mzML file
+        /// Generate the mzXML, mzML, or .mgf file file
         /// </summary>
         /// <returns>True if success; false if a failure</returns>
         /// <remarks></remarks>
         public bool CreateMSXMLFile()
         {
-            var msXmlFormat = "mzXML";
+            string msXmlFormat;
 
             switch (mRawDataType)
             {
@@ -155,11 +159,18 @@ namespace AnalysisManagerMsXmlGenPlugIn
             switch (mOutputType)
             {
                 case clsAnalysisResources.MSXMLOutputTypeConstants.mzXML:
-                    msXmlFormat = "mzXML";
+                    msXmlFormat = MZXML_FILE_FORMAT;
                     break;
                 case clsAnalysisResources.MSXMLOutputTypeConstants.mzML:
-                    msXmlFormat = "mzML";
+                    msXmlFormat = MZML_FILE_FORMAT;
                     break;
+                case clsAnalysisResources.MSXMLOutputTypeConstants.mgf:
+                    msXmlFormat = MGF_FILE_FORMAT;
+                    break;
+
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(mOutputType), "Unsupported output type: " + mRawDataType);
+
             }
 
             var cmdRunner = new clsRunDosProgram(Path.GetDirectoryName(mProgramPath));

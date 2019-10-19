@@ -132,14 +132,14 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
         protected override string GetOutputFileName(string msXmlFormat, string rawFilePath, clsAnalysisResources.eRawDataTypeConstants rawDataType)
         {
-            if (string.Equals(msXmlFormat, "mzML", StringComparison.InvariantCultureIgnoreCase) &&
+            if (string.Equals(msXmlFormat, MZML_FILE_FORMAT, StringComparison.OrdinalIgnoreCase) &&
                 mRawDataType == clsAnalysisResources.eRawDataTypeConstants.mzML)
             {
                 // Input and output files are both .mzML
                 return Path.GetFileNameWithoutExtension(rawFilePath) + "_new" + clsAnalysisResources.DOT_MZML_EXTENSION;
             }
 
-            if (string.Equals(msXmlFormat, "mzXML", StringComparison.InvariantCultureIgnoreCase) &&
+            if (string.Equals(msXmlFormat, MZXML_FILE_FORMAT, StringComparison.OrdinalIgnoreCase) &&
                 mRawDataType == clsAnalysisResources.eRawDataTypeConstants.mzXML)
             {
                 // Input and output files are both .mzXML
