@@ -411,7 +411,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 return mzMLUpdated;
             }
 
-            LogError("Unsupported tool for precursursor recalculation: " + recalculatePrecursorsTool);
+            LogError("Unsupported tool for precursor recalculation: " + recalculatePrecursorsTool);
             return false;
         }
 
@@ -585,8 +585,8 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
                 if (!reIndexedMzMLFile.Exists)
                 {
-                    LogError("Reindexed mzML file not found at " + reindexedMzMLFile.FullName);
-                    mMessage = "Reindexed mzML file not found";
+                    LogError("Re-indexed mzML file not found at " + reIndexedMzMLFile.FullName);
+                    mMessage = "Re-indexed mzML file not found";
                     return false;
                 }
 
