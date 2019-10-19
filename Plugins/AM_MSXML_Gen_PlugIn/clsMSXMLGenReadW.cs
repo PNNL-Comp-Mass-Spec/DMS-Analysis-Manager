@@ -34,6 +34,9 @@ namespace AnalysisManagerMsXmlGenPlugIn
         {
             string arguments;
 
+            if (!msXmlFormat.Equals(MZXML_FILE_FORMAT) && !msXmlFormat.Equals(MZML_FILE_FORMAT))
+            {
+                throw new ArgumentOutOfRangeException(nameof(msXmlFormat), "ReAdW only supports mzXML and mzML as an output format, not " + msXmlFormat);
             }
 
             if (mProgramPath.ToLower().Contains(@"\v2."))
