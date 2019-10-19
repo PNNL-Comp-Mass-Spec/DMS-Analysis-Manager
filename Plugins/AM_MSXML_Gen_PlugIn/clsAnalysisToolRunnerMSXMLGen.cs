@@ -289,9 +289,9 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 }
 
                 var msXmlFilePath = Path.Combine(mWorkDir, mDatasetName + resultFileExtension);
-                var fiMSXmlFile = new FileInfo(msXmlFilePath);
+                var msXmlFile = new FileInfo(msXmlFilePath);
 
-                if (!fiMSXmlFile.Exists)
+                if (!msXmlFile.Exists)
                 {
                     LogError(resultFileExtension + " file not found: " + Path.GetFileName(msXmlFilePath));
                     return false;
@@ -302,7 +302,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 var recalculatePrecursors = mJobParams.GetJobParameter("RecalculatePrecursors", false);
                 if (recalculatePrecursors)
                 {
-                    var success = RecalculatePrecursorIons(fiMSXmlFile);
+                    var success = RecalculatePrecursorIons(msXmlFile);
                     if (!success)
                     {
                         return false;
@@ -310,12 +310,12 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 }
 
                 // Compress the file using GZip
-                LogMessage("GZipping " + fiMSXmlFile.Name);
+                LogMessage("GZipping " + msXmlFile.Name);
 
                 // Note that if this process turns out to be slow, we can have MSConvert do this for us using --gzip
                 // However, that will not work if RecalculatePrecursors is true
-                fiMSXmlFile = GZipFile(fiMSXmlFile);
-                if (fiMSXmlFile == null)
+                var msXmlFileZipped = GZipFile(msXmlFile);
+                if (msXmlFileZipped == null)
                 {
                     return false;
                 }
@@ -336,13 +336,13 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 if (storeInCache)
                 {
                     // Copy the .mzXML or .mzML file to the MSXML cache
-                    var remoteCachefilePath = CopyFileToServerCache(mMSXmlCacheFolder.FullName, fiMSXmlFile.FullName, purgeOldFilesIfNeeded: true);
+                    var remoteCachefilePath = CopyFileToServerCache(mMSXmlCacheFolder.FullName, msXmlFileZipped.FullName, purgeOldFilesIfNeeded: true);
 
                     if (string.IsNullOrEmpty(remoteCachefilePath))
                     {
                         if (string.IsNullOrEmpty(mMessage))
                         {
-                            LogError("CopyFileToServerCache returned false for " + fiMSXmlFile.Name);
+                            LogError("CopyFileToServerCache returned false for " + msXmlFileZipped.Name);
                         }
                         return false;
                     }
