@@ -254,7 +254,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 return string.Empty;
             }
 
-            if (string.Equals(recalculatePrecursorsTool, clsRawConverterRunner.RAWCONVERTER_FILENAME, StringComparison.InvariantCultureIgnoreCase))
+            if (string.Equals(recalculatePrecursorsTool, clsRawConverterRunner.RAWCONVERTER_FILENAME, StringComparison.OrdinalIgnoreCase))
             {
                 var rawConverterDir = mMgrParams.GetParam("RawConverterProgLoc");
                 if (string.IsNullOrWhiteSpace(rawConverterDir))
@@ -398,7 +398,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 return false;
             }
 
-            if (string.Equals(recalculatePrecursorsTool, clsRawConverterRunner.RAWCONVERTER_FILENAME, StringComparison.InvariantCultureIgnoreCase))
+            if (string.Equals(recalculatePrecursorsTool, clsRawConverterRunner.RAWCONVERTER_FILENAME, StringComparison.OrdinalIgnoreCase))
             {
                 // Using RawConverter.exe
                 var rawConverterExe = new FileInfo(recalculatePrecursorsToolProgLoc);
