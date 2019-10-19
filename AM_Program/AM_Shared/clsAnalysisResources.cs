@@ -715,6 +715,16 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
+        /// Register event handlers
+        /// </summary>
+        /// <param name="processingClass"></param>
+        /// <param name="writeDebugEventsToLog"></param>
+        protected sealed override void RegisterEvents(EventNotifier processingClass, bool writeDebugEventsToLog = true)
+        {
+            base.RegisterEvents(processingClass, writeDebugEventsToLog);
+        }
+
+        /// <summary>
         /// Initialize class
         /// </summary>
         /// <param name="stepToolName">Name of the current step tool</param>
