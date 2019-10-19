@@ -26,6 +26,7 @@ namespace AnalysisManagerBase
     /// <summary>
     /// Base class for job resource class
     /// </summary>
+    [SuppressMessage("ReSharper", "UnusedMember.Global")]
     public abstract class clsAnalysisResources : clsAnalysisMgrBase, IAnalysisResources
     {
 
@@ -120,6 +121,8 @@ namespace AnalysisManagerBase
         /// </remarks>
         public const string RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER = "bruker_tof_baf";
 
+        // ReSharper disable CommentTypo
+
         /// <summary>
         /// Bruker TOF tdf data
         /// </summary>
@@ -129,6 +132,8 @@ namespace AnalysisManagerBase
         /// there is not a ser or fid file
         /// </remarks>
         public const string RAW_DATA_TYPE_BRUKER_TOF_TDF_FOLDER = "bruker_tof_tdf";
+
+        // ReSharper restore CommentTypo
 
         /// <summary>
         /// Result type for SEQUEST
