@@ -6,7 +6,7 @@ using PRISM.Logging;
 using Renci.SshNet.Sftp;
 using System;
 using System.Collections.Generic;
-using System.Data;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -3328,31 +3328,6 @@ namespace AnalysisManagerBase
             mJobParams.AddAdditionalParameter(jobParamsSection, "RawDataType", dataPkgJob.RawDataType);
 
             return true;
-
-        }
-
-        private static clsDataPackageDatasetInfo ParseDataPackageDatasetInfoRow(DataRow curRow)
-        {
-
-            var datasetName = clsGlobal.DbCStr(curRow["Dataset"]);
-            var datasetId = clsGlobal.DbCInt(curRow["DatasetID"]);
-
-            var datasetInfo = new clsDataPackageDatasetInfo(datasetName, datasetId)
-            {
-                Instrument = clsGlobal.DbCStr(curRow["Instrument"]),
-                InstrumentGroup = clsGlobal.DbCStr(curRow["InstrumentGroup"]),
-                Experiment = clsGlobal.DbCStr(curRow["Experiment"]),
-                Experiment_Reason = clsGlobal.DbCStr(curRow["Experiment_Reason"]),
-                Experiment_Comment = clsGlobal.DbCStr(curRow["Experiment_Comment"]),
-                Experiment_Organism = clsGlobal.DbCStr(curRow["Organism"]),
-                Experiment_NEWT_ID = clsGlobal.DbCInt(curRow["Experiment_NEWT_ID"]),
-                Experiment_NEWT_Name = clsGlobal.DbCStr(curRow["Experiment_NEWT_Name"]),
-                ServerStoragePath = clsGlobal.DbCStr(curRow["Dataset_Folder_Path"]),
-                ArchiveStoragePath = clsGlobal.DbCStr(curRow["Archive_Folder_Path"]),
-                RawDataType = clsGlobal.DbCStr(curRow["RawDataType"])
-            };
-
-            return datasetInfo;
 
         }
 
