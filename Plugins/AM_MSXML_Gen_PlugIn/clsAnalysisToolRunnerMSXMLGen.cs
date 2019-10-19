@@ -403,6 +403,12 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 // Using RawConverter.exe
                 var rawConverterExe = new FileInfo(recalculatePrecursorsToolProgLoc);
 
+                if (rawConverterExe.Directory == null)
+                {
+                    LogError("Cannot determine the parent directory of " + rawConverterExe.FullName);
+                    return false;
+                }
+
                 var rawConverterSuccess = RecalculatePrecursorIonsCreateMGF(rawConverterExe.Directory.FullName, rawFilePath, out var mgfFile);
                 if (!rawConverterSuccess)
                     return false;
