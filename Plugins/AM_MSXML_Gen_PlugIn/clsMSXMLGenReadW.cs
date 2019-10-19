@@ -14,30 +14,29 @@ namespace AnalysisManagerMsXmlGenPlugIn
 {
     public class clsMSXMLGenReadW : clsMSXmlGen
     {
-        protected override string ProgramName
-        {
-            get { return "ReAdW"; }
-        }
+        protected override string ProgramName => "ReAdW";
 
         #region "Methods"
 
-        public clsMSXMLGenReadW(string WorkDir, string ReadWProgramPath, string DatasetName, clsAnalysisResources.eRawDataTypeConstants RawDataType,
-            clsAnalysisResources.MSXMLOutputTypeConstants eOutputType, bool CentroidMSXML)
-            : base(WorkDir, ReadWProgramPath, DatasetName, clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile, eOutputType, CentroidMSXML)
+        public clsMSXMLGenReadW(string workDir, string readWProgramPath, string datasetName, clsAnalysisResources.eRawDataTypeConstants rawDataType,
+            clsAnalysisResources.MSXMLOutputTypeConstants outputType, bool centroidMSXML)
+            : base(workDir, readWProgramPath, datasetName, clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile, outputType, centroidMSXML)
         {
-            if (RawDataType != clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile)
+            if (rawDataType != clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile)
             {
-                throw new ArgumentOutOfRangeException("clsMSXMLGenReadW can only be used to process Thermo .Raw files");
+                throw new ArgumentOutOfRangeException(nameof(rawDataType), "clsMSXMLGenReadW can only be used to process Thermo .Raw files");
             }
 
             mUseProgRunnerResultCode = true;
         }
 
-        protected override string CreateArguments(string msXmlFormat, string RawFilePath)
+        protected override string CreateArguments(string msXmlFormat, string rawFilePath)
         {
-            string arguments = null;
+            string arguments;
 
-            if (mProgramPath.ToLower().Contains("\\v2."))
+            }
+
+            if (mProgramPath.ToLower().Contains(@"\v2."))
             {
                 // Version 2.x syntax
                 // Syntax is: readw <raw file path> <c/p> [<output file>]
@@ -45,11 +44,11 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 if (mCentroidMS1 || mCentroidMS2)
                 {
                     // Centroiding is enabled
-                    arguments = " " + RawFilePath + " c";
+                    arguments = " " + rawFilePath + " c";
                 }
                 else
                 {
-                    arguments = " " + RawFilePath + " p";
+                    arguments = " " + rawFilePath + " p";
                 }
             }
             else
@@ -61,16 +60,16 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 if (mCentroidMS1 || mCentroidMS2)
                 {
                     // Centroiding is enabled
-                    arguments = " --" + msXmlFormat + " " + " -c " + RawFilePath;
+                    arguments = " --" + msXmlFormat + " " + " -c " + rawFilePath;
                 }
                 else
                 {
                     // Not centroiding
-                    arguments = " --" + msXmlFormat + " " + RawFilePath;
+                    arguments = " --" + msXmlFormat + " " + rawFilePath;
                 }
             }
 
-            mOutputFileName = GetOutputFileName(msXmlFormat, RawFilePath, mRawDataType);
+            mOutputFileName = GetOutputFileName(msXmlFormat, rawFilePath, mRawDataType);
 
             return arguments;
         }

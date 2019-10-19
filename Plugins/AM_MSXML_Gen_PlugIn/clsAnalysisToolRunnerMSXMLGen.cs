@@ -545,11 +545,11 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 var eRawDataType = clsAnalysisResources.eRawDataTypeConstants.mzML;
                 var outputFileType = clsAnalysisResources.MSXMLOutputTypeConstants.mzML;
 
-                var sourcefileBase = Path.GetFileNameWithoutExtension(mzMLFilePath);
+                var sourceFileBase = Path.GetFileNameWithoutExtension(mzMLFilePath);
 
                 var msConvertRunner = new clsMSXmlGenMSConvert(
                     mWorkDir, mMSXmlGeneratorAppPath,
-                    sourcefileBase, eRawDataType, outputFileType,
+                    sourceFileBase, eRawDataType, outputFileType,
                     centroidMS1: false, centroidMS2: false, centroidPeakCountToRetain: 0)
                 {
                     ConsoleOutputSuffix = "_Reindex",
@@ -581,9 +581,9 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 }
 
                 // Replace the original .mzML file with the new .mzML file
-                var reindexedMzMLFile = new FileInfo(Path.Combine(mWorkDir, msConvertRunner.OutputFileName));
+                var reIndexedMzMLFile = new FileInfo(Path.Combine(mWorkDir, msConvertRunner.OutputFileName));
 
-                if (!reindexedMzMLFile.Exists)
+                if (!reIndexedMzMLFile.Exists)
                 {
                     LogError("Reindexed mzML file not found at " + reindexedMzMLFile.FullName);
                     mMessage = "Reindexed mzML file not found";
@@ -593,7 +593,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 // Replace the original .mzML file with the indexed one
                 File.Delete(mzMLFilePath);
 
-                reindexedMzMLFile.MoveTo(mzMLFilePath);
+                reIndexedMzMLFile.MoveTo(mzMLFilePath);
                 return true;
             }
             catch (Exception ex)
