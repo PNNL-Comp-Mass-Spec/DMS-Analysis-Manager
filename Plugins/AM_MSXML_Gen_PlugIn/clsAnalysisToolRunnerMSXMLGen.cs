@@ -370,7 +370,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
         /// </summary>
         /// <param name="sourceMsXmlFile">MzML file to read</param>
         /// <returns>True if success, false if an error</returns>
-        private bool RecalculatePrecursorIons(FileInfo sourceMsXmlFile)
+        private bool RecalculatePrecursorIons(FileSystemInfo sourceMsXmlFile)
         {
             if (mMSXmlOutputFileType != clsAnalysisResources.MSXMLOutputTypeConstants.mzML)
             {
@@ -467,7 +467,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
             }
         }
 
-        private bool RecalculatePrecursorIonsUpdateMzML(FileInfo sourceMsXmlFile, FileInfo mgfFile)
+        private bool RecalculatePrecursorIonsUpdateMzML(FileSystemInfo sourceMsXmlFile, FileSystemInfo mgfFile)
         {
             try
             {
