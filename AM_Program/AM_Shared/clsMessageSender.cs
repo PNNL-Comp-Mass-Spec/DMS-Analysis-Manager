@@ -155,9 +155,7 @@ namespace AnalysisManagerBase
             {
                 if (hasConnection)
                 {
-                    producer?.Dispose();
-                    session?.Dispose();
-                    connection?.Dispose();
+                    connection?.Close();
                     hasConnection = false;
                 }
             }
