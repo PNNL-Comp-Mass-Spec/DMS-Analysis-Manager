@@ -2,6 +2,7 @@
 using Apache.NMS;
 using System;
 using System.Collections.Generic;
+using PRISM;
 
 namespace AnalysisManagerBase
 {
@@ -65,10 +66,11 @@ namespace AnalysisManagerBase
 
                 producer.Send(textMessage);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 // something went wrong trying to send message,
                 // get rid of current set of connection object - they'll never work again anyway
+                ConsoleMsgUtils.ShowDebug("Exception contacting the ActiveMQ server: " + ex.Message);
                 DestroyConnection();
             }
         }
