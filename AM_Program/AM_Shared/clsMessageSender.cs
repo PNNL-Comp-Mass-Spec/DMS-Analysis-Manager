@@ -106,7 +106,11 @@ namespace AnalysisManagerBase
             {
                 try
                 {
-                    var connectionFactory = new Apache.NMS.ActiveMQ.ConnectionFactory(brokerUri);
+                    var connectionFactory = new Apache.NMS.ActiveMQ.ConnectionFactory(brokerUri, processorName)
+                    {
+                        AcknowledgementMode = AcknowledgementMode.AutoAcknowledge
+                    };
+
                     connection = connectionFactory.CreateConnection();
                     connection.RequestTimeout = new TimeSpan(0, 0, timeoutSeconds);
                     connection.Start();
