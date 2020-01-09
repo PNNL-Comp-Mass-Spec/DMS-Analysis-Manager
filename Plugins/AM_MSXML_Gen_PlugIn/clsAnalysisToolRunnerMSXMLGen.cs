@@ -567,8 +567,10 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
                 var msConvertRunner = new clsMSXmlGenMSConvert(
                     mWorkDir, mMSXmlGeneratorAppPath,
-                    sourceFileBase, eRawDataType, outputFileType,
-                    centroidMS1: false, centroidMS2: false, centroidPeakCountToRetain: 0)
+                    sourceFileBase, rawDataTypeEnum, outputFileType,
+                    centroidMS1: false, centroidMS2: false,
+                    centroidPeakCountToRetain: 0,
+                    jobParams: mJobParams)
                 {
                     ConsoleOutputSuffix = "_Reindex",
                     DebugLevel = mDebugLevel

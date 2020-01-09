@@ -33,28 +33,46 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
         #region "Methods"
 
-        public clsMSXmlGenMSConvert(string WorkDir, string msConvertProgramPath, string datasetName,
-            clsAnalysisResources.eRawDataTypeConstants rawDataType, clsAnalysisResources.MSXMLOutputTypeConstants eOutputType,
-            string customMSConvertArguments) : base(WorkDir, msConvertProgramPath, datasetName, rawDataType, eOutputType, centroidMSXML: false)
+        public clsMSXmlGenMSConvert(
+            string workDir,
+            string msConvertProgramPath,
+            string datasetName,
+            clsAnalysisResources.eRawDataTypeConstants rawDataType,
+            clsAnalysisResources.MSXMLOutputTypeConstants eOutputType,
+            string customMSConvertArguments,
+            IJobParams jobParams) : base(workDir, msConvertProgramPath, datasetName, rawDataType, eOutputType, centroidMSXML: false, jobParams: jobParams)
         {
             mCustomMSConvertArguments = customMSConvertArguments;
 
             mUseProgRunnerResultCode = false;
         }
 
-        public clsMSXmlGenMSConvert(string workDir, string msConvertProgramPath, string datasetName,
-            clsAnalysisResources.eRawDataTypeConstants rawDataType, clsAnalysisResources.MSXMLOutputTypeConstants eOutputType, bool centroidMSXML,
-            int centroidPeakCountToRetain) : base(workDir, msConvertProgramPath, datasetName, rawDataType, eOutputType, centroidMSXML)
+        public clsMSXmlGenMSConvert(
+            string workDir,
+            string msConvertProgramPath,
+            string datasetName,
+            clsAnalysisResources.eRawDataTypeConstants rawDataType,
+            clsAnalysisResources.MSXMLOutputTypeConstants eOutputType,
+            bool centroidMSXML,
+            int centroidPeakCountToRetain,
+            IJobParams jobParams) : base(workDir, msConvertProgramPath, datasetName, rawDataType, eOutputType, centroidMSXML, jobParams: jobParams)
         {
             mCentroidPeakCountToRetain = centroidPeakCountToRetain;
 
             mUseProgRunnerResultCode = false;
         }
 
-        public clsMSXmlGenMSConvert(string workDir, string msConvertProgramPath, string datasetName,
-            clsAnalysisResources.eRawDataTypeConstants rawDataType, clsAnalysisResources.MSXMLOutputTypeConstants eOutputType, bool centroidMS1,
-            bool centroidMS2, int centroidPeakCountToRetain)
-            : base(workDir, msConvertProgramPath, datasetName, rawDataType, eOutputType, centroidMS1, centroidMS2)
+        public clsMSXmlGenMSConvert(
+            string workDir,
+            string msConvertProgramPath,
+            string datasetName,
+            clsAnalysisResources.eRawDataTypeConstants rawDataType,
+            clsAnalysisResources.MSXMLOutputTypeConstants eOutputType,
+            bool centroidMS1,
+            bool centroidMS2,
+            int centroidPeakCountToRetain,
+            IJobParams jobParams)
+            : base(workDir, msConvertProgramPath, datasetName, rawDataType, eOutputType, centroidMS1, centroidMS2, jobParams)
         {
             mCentroidPeakCountToRetain = centroidPeakCountToRetain;
 

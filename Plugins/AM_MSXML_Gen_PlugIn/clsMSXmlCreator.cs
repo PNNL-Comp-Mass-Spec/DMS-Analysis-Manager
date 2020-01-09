@@ -178,7 +178,11 @@ namespace AnalysisManagerMsXmlGenPlugIn
             {
                 // ReAdW
                 // mMSXmlGeneratorAppPath should have been populated during the call to StoreToolVersionInfo()
-                mMSXmlGen = new clsMSXMLGenReadW(mWorkDir, mMSXmlGeneratorAppPath, mDatasetName, eRawDataType, eOutputType, CentroidMSXML);
+
+                // ReSharper disable once ConditionIsAlwaysTrueOrFalse
+                mMSXmlGen = new clsMSXMLGenReadW(mWorkDir, mMSXmlGeneratorAppPath, mDatasetName,
+                                                 rawDataTypeEnum, outputType,
+                                                 centroidMSXML, mJobParams);
 
                 if (rawDataType != clsAnalysisResources.RAW_DATA_TYPE_DOT_RAW_FILES)
                 {
@@ -209,13 +213,15 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
                 if (string.IsNullOrWhiteSpace(customMSConvertArguments))
                 {
-                    mMSXmlGen = new clsMSXmlGenMSConvert(mWorkDir, mMSXmlGeneratorAppPath, mDatasetName, eRawDataType, eOutputType, CentroidMSXML,
-                        CentroidPeakCountToRetain);
+                    mMSXmlGen = new clsMSXmlGenMSConvert(mWorkDir, mMSXmlGeneratorAppPath, mDatasetName,
+                                                         rawDataTypeEnum, outputType,
+                                                         centroidMSXML, centroidPeakCountToRetain, mJobParams);
                 }
                 else
                 {
-                    mMSXmlGen = new clsMSXmlGenMSConvert(mWorkDir, mMSXmlGeneratorAppPath, mDatasetName, eRawDataType, eOutputType,
-                        CustomMSConvertArguments);
+                    mMSXmlGen = new clsMSXmlGenMSConvert(mWorkDir, mMSXmlGeneratorAppPath, mDatasetName,
+                                                         rawDataTypeEnum, outputType,
+                                                         customMSConvertArguments, mJobParams);
                 }
             }
             else

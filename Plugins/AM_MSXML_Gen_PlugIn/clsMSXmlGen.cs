@@ -67,6 +67,11 @@ namespace AnalysisManagerMsXmlGenPlugIn
             }
         }
 
+        /// <summary>
+        /// Job parameters
+        /// </summary>
+        protected IJobParams JobParams { get; }
+
         public string OutputFileName => mOutputFileName;
 
         protected abstract string ProgramName { get; }
@@ -84,8 +89,15 @@ namespace AnalysisManagerMsXmlGenPlugIn
         /// <param name="rawDataType"></param>
         /// <param name="eOutputType"></param>
         /// <param name="centroidMSXML"></param>
-        protected clsMSXmlGen(string workDir, string programPath, string datasetName, clsAnalysisResources.eRawDataTypeConstants rawDataType,
-            clsAnalysisResources.MSXMLOutputTypeConstants eOutputType, bool centroidMSXML)
+        /// <param name="jobParams"></param>
+        protected clsMSXmlGen(
+            string workDir,
+            string programPath,
+            string datasetName,
+            clsAnalysisResources.eRawDataTypeConstants rawDataType,
+            clsAnalysisResources.MSXMLOutputTypeConstants eOutputType,
+            bool centroidMSXML,
+            IJobParams jobParams)
         {
             mWorkDir = workDir;
             mProgramPath = programPath;
@@ -94,6 +106,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
             mOutputType = eOutputType;
             mCentroidMS1 = centroidMSXML;
             mCentroidMS2 = centroidMSXML;
+            JobParams = jobParams;
 
             mErrorMessage = string.Empty;
         }
@@ -108,8 +121,16 @@ namespace AnalysisManagerMsXmlGenPlugIn
         /// <param name="eOutputType"></param>
         /// <param name="centroidMS1"></param>
         /// <param name="centroidMS2"></param>
-        protected clsMSXmlGen(string workDir, string programPath, string datasetName, clsAnalysisResources.eRawDataTypeConstants rawDataType,
-            clsAnalysisResources.MSXMLOutputTypeConstants eOutputType, bool centroidMS1, bool centroidMS2)
+        /// <param name="jobParams"></param>
+        protected clsMSXmlGen(
+            string workDir,
+            string programPath,
+            string datasetName,
+            clsAnalysisResources.eRawDataTypeConstants rawDataType,
+            clsAnalysisResources.MSXMLOutputTypeConstants eOutputType,
+            bool centroidMS1,
+            bool centroidMS2,
+            IJobParams jobParams)
         {
             mWorkDir = workDir;
             mProgramPath = programPath;
@@ -118,6 +139,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
             mOutputType = eOutputType;
             mCentroidMS1 = centroidMS1;
             mCentroidMS2 = centroidMS2;
+            JobParams = jobParams;
 
             mErrorMessage = string.Empty;
         }
@@ -138,11 +160,13 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 case clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile:
                     SourceFilePath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_RAW_EXTENSION);
                     break;
+
                 case clsAnalysisResources.eRawDataTypeConstants.AgilentDFolder:
                 case clsAnalysisResources.eRawDataTypeConstants.BrukerTOFBaf:
                 case clsAnalysisResources.eRawDataTypeConstants.BrukerFTFolder:
                     SourceFilePath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_D_EXTENSION);
                     break;
+
                 case clsAnalysisResources.eRawDataTypeConstants.mzXML:
                     SourceFilePath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_MZXML_EXTENSION);
                     break;

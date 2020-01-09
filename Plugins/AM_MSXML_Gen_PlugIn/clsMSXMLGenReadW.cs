@@ -18,9 +18,15 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
         #region "Methods"
 
-        public clsMSXMLGenReadW(string workDir, string readWProgramPath, string datasetName, clsAnalysisResources.eRawDataTypeConstants rawDataType,
-            clsAnalysisResources.MSXMLOutputTypeConstants outputType, bool centroidMSXML)
-            : base(workDir, readWProgramPath, datasetName, clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile, outputType, centroidMSXML)
+        public clsMSXMLGenReadW(
+            string workDir,
+            string readWProgramPath,
+            string datasetName,
+            clsAnalysisResources.eRawDataTypeConstants rawDataType,
+            clsAnalysisResources.MSXMLOutputTypeConstants outputType,
+            bool centroidMSXML,
+            IJobParams jobParams)
+            : base(workDir, readWProgramPath, datasetName, clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile, outputType, centroidMSXML, jobParams)
         {
             if (rawDataType != clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile)
             {
