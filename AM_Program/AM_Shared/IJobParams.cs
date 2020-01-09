@@ -163,7 +163,10 @@ namespace AnalysisManagerBase
         /// <param name="paramName">Name of parameter</param>
         /// <param name="paramValue">Value for parameter</param>
         /// <returns>True if success, False if an error</returns>
-        /// <remarks></remarks>
+        /// <remarks>
+        /// The section name is typically "JobParameters" or "StepParameters"
+        /// See constants JOB_PARAMETERS_SECTION and STEP_PARAMETERS_SECTION
+        /// </remarks>
         bool AddAdditionalParameter(string sectionName, string paramName, string paramValue);
 
         /// <summary>

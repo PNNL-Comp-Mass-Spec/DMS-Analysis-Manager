@@ -12,8 +12,12 @@ using PRISM;
 using System;
 using System.IO;
 
+// ReSharper disable UnusedMember.Global
 namespace AnalysisManagerMsXmlGenPlugIn
 {
+    /// <summary>
+    /// This class is used by plugins to create a .mzML or .mzXML file for a dataset
+    /// </summary>
     public class clsMSXMLCreator : EventNotifier
     {
         #region "Classwide variables"
@@ -54,6 +58,11 @@ namespace AnalysisManagerMsXmlGenPlugIn
             ErrorMessage = string.Empty;
         }
 
+        /// <summary>
+        /// Convert a .mzML file to .mzXML
+        /// </summary>
+        /// <returns>True if success; false if an error</returns>
+        /// <remarks>This is used by class clsMSGFRunner in the MSGF Plugin</remarks>
         public bool ConvertMzMLToMzXML()
         {
             // mzXML filename is dataset plus .mzXML
@@ -138,7 +147,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
         /// Generate the mzXML
         /// </summary>
         /// <returns>True if success; false if an error</returns>
-        /// <remarks></remarks>
+        /// <remarks>This is used by class clsMSGFRunner in the MSGF Plugin</remarks>
         public bool CreateMZXMLFile()
         {
             // Turn on Centroiding, which will result in faster mzXML file generation time and smaller .mzXML files
@@ -274,7 +283,6 @@ namespace AnalysisManagerMsXmlGenPlugIn
             return true;
         }
 
-        // ReSharper disable once UnusedMember.Global
         /// <summary>
         /// Update the current dataset name
         /// </summary>
