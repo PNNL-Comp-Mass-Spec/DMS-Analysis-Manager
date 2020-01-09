@@ -173,6 +173,21 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 case clsAnalysisResources.eRawDataTypeConstants.mzML:
                     SourceFilePath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_MZML_EXTENSION);
                     break;
+
+                case clsAnalysisResources.eRawDataTypeConstants.UIMF:
+                    var processingAgilentDotD = JobParams.GetJobParameter("MSXMLGenerator", "ProcessingAgilentDotD", false);
+
+                    if (processingAgilentDotD)
+                    {
+                        SourceFilePath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_D_EXTENSION);
+                    }
+                    else
+                    {
+                        SourceFilePath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_UIMF_EXTENSION);
+                    }
+
+                    break;
+
                 default:
                     throw new ArgumentOutOfRangeException(nameof(mRawDataType), "Unsupported raw data type: " + mRawDataType);
             }
@@ -225,6 +240,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
             if (ConsoleOutputSuffix == null)
                 ConsoleOutputSuffix = string.Empty;
+
             ConsoleOutputFileName = Path.GetFileNameWithoutExtension(mProgramPath) + "_ConsoleOutput" + ConsoleOutputSuffix + ".txt";
 
             cmdRunner.CreateNoWindow = true;

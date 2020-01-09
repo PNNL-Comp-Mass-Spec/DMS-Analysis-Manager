@@ -54,6 +54,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
                 // Get input data file
                 var rawDataType = mJobParams.GetParam("RawDataType");
+                var instrumentName = mJobParams.GetParam("Instrument");
 
                 var retrievalAttempts = 0;
 
@@ -66,24 +67,52 @@ namespace AnalysisManagerMsXmlGenPlugIn
                         case RAW_DATA_TYPE_DOT_D_FOLDERS:
                         case RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER:
                         case RAW_DATA_TYPE_BRUKER_FT_FOLDER:
-                            currentTask = "Retrieve spectra: " + strRawDataType;
+                            currentTask = string.Format("Retrieve spectra: {0}; instrument: {1}", rawDataType, instrumentName);
+                            var datasetResult = GetDatasetFile(rawDataType);
+                            if (datasetResult == CloseOutType.CLOSEOUT_FILE_NOT_FOUND)
+                                return datasetResult;
 
-                            if (FileSearch.RetrieveSpectra(strRawDataType))
+                            break;
+
+                        case RAW_DATA_TYPE_DOT_UIMF_FILES:
+                            // Check whether the dataset directory has an Agilent .D directory
+                            // If it does, retrieve it; otherwise, retrieve the .UIMF file
+                            // Instruments IMS08_AgQTOF05 and IMS09_AgQToF06 should have .D directories
+
+                            var isAgilentDotD = DatasetHasAgilentDotD();
+
+                            if (isAgilentDotD)
                             {
-                                // Raw file
-                                mJobParams.AddResultFileExtensionToSkip(DOT_RAW_EXTENSION);
+                                // Retrieve the .D directory
+                                currentTask = string.Format("Retrieve .D directory; instrument: {0}", instrumentName);
+                                var dotDSuccess = FileSearch.RetrieveDotDFolder(false, skipBafAndTdfFiles: true);
+                                if (!dotDSuccess)
+                                    return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+
+                                mJobParams.AddAdditionalParameter("MSXMLGenerator", "ProcessingAgilentDotD", true);
                             }
                             else
                             {
-                                LogDebug("clsAnalysisResourcesMSXMLGen.GetResources: Error occurred retrieving spectra.");
-                                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+                                // Retrieve the .uimf file for these
+                                currentTask = string.Format("Retrieve .UIMF file; instrument: {0}", instrumentName);
+                                var uimfResult = GetDatasetFile(rawDataType);
+                                if (uimfResult == CloseOutType.CLOSEOUT_FILE_NOT_FOUND)
+                                    return uimfResult;
+
+                                mJobParams.AddAdditionalParameter("MSXMLGenerator", "ProcessingAgilentDotD", false);
                             }
+
                             break;
+
                         default:
                             mMessage = "Dataset type " + rawDataType + " is not supported";
                             LogDebug(
-                                "clsAnalysisResourcesMSXMLGen.GetResources: " + mMessage + "; must be " + RAW_DATA_TYPE_DOT_RAW_FILES + ", " +
-                                RAW_DATA_TYPE_DOT_D_FOLDERS + ", " + RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER + ", or " + RAW_DATA_TYPE_BRUKER_FT_FOLDER);
+                                "clsAnalysisResourcesMSXMLGen.GetResources: " + mMessage + "; must be " +
+                                RAW_DATA_TYPE_DOT_RAW_FILES + ", " +
+                                RAW_DATA_TYPE_DOT_D_FOLDERS + ", " +
+                                RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER + ", " +
+                                RAW_DATA_TYPE_DOT_UIMF_FILES + ", or " +
+                                RAW_DATA_TYPE_BRUKER_FT_FOLDER);
 
                             return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                     }
@@ -144,6 +173,45 @@ namespace AnalysisManagerMsXmlGenPlugIn
             }
 
             return CloseOutType.CLOSEOUT_SUCCESS;
+        }
+
+        /// <summary>
+        /// Look for a .D directory for this dataset
+        /// </summary>
+        /// <returns>True if found, otherwise empty string</returns>
+        private bool DatasetHasAgilentDotD()
+        {
+            FindValidDirectory(
+                DatasetName, string.Empty, DatasetName + ".d", 2,
+                false,
+                false,
+                out var validDirectoryFound,
+                false,
+                out var _);
+
+            if (validDirectoryFound)
+            {
+                LogMessage("Found .d directory for " + DatasetName);
+                return true;
+            }
+
+            LogMessage("Did not find a .d directory for " + DatasetName + "; will process the dataset's .UIMF file");
+            return false;
+        }
+
+        private CloseOutType GetDatasetFile(string rawDataType)
+        {
+
+            if (FileSearch.RetrieveSpectra(rawDataType))
+            {
+                // Raw file
+                mJobParams.AddResultFileExtensionToSkip(DOT_RAW_EXTENSION);
+                return CloseOutType.CLOSEOUT_SUCCESS;
+            }
+
+            LogDebug("clsAnalysisResourcesMSXMLGen.GetDatasetFile: Error occurred retrieving spectra.");
+            return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+
         }
 
     }

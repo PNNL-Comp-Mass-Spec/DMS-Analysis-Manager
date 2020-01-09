@@ -2474,7 +2474,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <returns>TRUE for success; FALSE for failure</returns>
         /// <remarks></remarks>
-        private bool RetrieveDotDFolder(bool createStoragePathInfoOnly, bool skipBafAndTdfFiles)
+        public bool RetrieveDotDFolder(bool createStoragePathInfoOnly, bool skipBafAndTdfFiles)
         {
             var fileNamesToSkip = new List<string>();
             if (skipBafAndTdfFiles)
