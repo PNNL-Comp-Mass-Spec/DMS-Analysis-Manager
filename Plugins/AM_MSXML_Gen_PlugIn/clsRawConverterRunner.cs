@@ -9,7 +9,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
     {
         #region "Constants"
 
-        public const string RAWCONVERTER_FILENAME = "RawConverter.exe";
+        public const string RAW_CONVERTER_FILENAME = "RawConverter.exe";
 
         #endregion
 
@@ -33,7 +33,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
         /// </summary>
         public clsRawConverterRunner(string rawConverterDir, int debugLevel = 1)
         {
-            RawConverterExePath = Path.Combine(rawConverterDir, RAWCONVERTER_FILENAME);
+            RawConverterExePath = Path.Combine(rawConverterDir, RAW_CONVERTER_FILENAME);
             if (!File.Exists(RawConverterExePath))
             {
                 throw new FileNotFoundException(RawConverterExePath);
@@ -52,31 +52,32 @@ namespace AnalysisManagerMsXmlGenPlugIn
         {
             try
             {
-                var fiSourceFile = new FileInfo(rawFilePath);
+                var sourceFile = new FileInfo(rawFilePath);
 
                 if (mDebugLevel > 0)
                 {
                     OnProgressUpdate("Creating .MGF file using RawConverter", 0);
                 }
 
-                var fiRawConverter = new FileInfo(RawConverterExePath);
+                var rawConverter = new FileInfo(RawConverterExePath);
 
                 // Set up command
-                var arguments = " " + clsGlobal.PossiblyQuotePath(fiSourceFile.FullName) + 
-                                " --mgf";
+                var arguments =
+                    " " + clsGlobal.PossiblyQuotePath(sourceFile.FullName) +
+                    " --mgf";
 
                 if (mDebugLevel > 0)
                 {
-                    OnProgressUpdate(fiRawConverter.FullName + " " + arguments, 0);
+                    OnProgressUpdate(rawConverter.FullName + " " + arguments, 0);
                 }
 
                 // Setup a program runner tool to make the spectra files
                 // The working directory must be the directory that has RawConverter.exe
                 // Otherwise, the program creates the .mgf file in C:\  (and will likely get Access Denied)
 
-                var consoleOutputFilePath = Path.Combine(fiSourceFile.Directory.FullName, "RawConverter_ConsoleOutput.txt");
+                var consoleOutputFilePath = Path.Combine(sourceFile.Directory.FullName, "RawConverter_ConsoleOutput.txt");
 
-                var progRunner = new clsRunDosProgram(fiRawConverter.Directory.FullName, mDebugLevel)
+                var progRunner = new clsRunDosProgram(rawConverter.Directory.FullName, mDebugLevel)
                 {
                     CreateNoWindow = true,
                     CacheStandardOutput = true,
@@ -86,10 +87,10 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 };
                 progRunner.ErrorEvent += ProgRunner_ErrorEvent;
 
-                if (!progRunner.RunProgram(fiRawConverter.FullName, arguments, "RawConverter", true))
+                if (!progRunner.RunProgram(rawConverter.FullName, arguments, "RawConverter", true))
                 {
                     // .RunProgram returned False
-                    OnErrorEvent("Error running " + Path.GetFileNameWithoutExtension(fiRawConverter.Name));
+                    OnErrorEvent("Error running " + Path.GetFileNameWithoutExtension(rawConverter.Name));
                     return false;
                 }
 

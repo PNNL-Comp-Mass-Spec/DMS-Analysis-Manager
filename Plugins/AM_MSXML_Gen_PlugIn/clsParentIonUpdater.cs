@@ -68,22 +68,22 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
                 // Cache the parent ion m/z and charge values in the MGF file
 
-                while (mgfFileReader.ReadNextSpectrum(out var objMGFSpectrum))
+                while (mgfFileReader.ReadNextSpectrum(out var mgfSpectrum))
                 {
-                    var objCurrentSpectrum = mgfFileReader.CurrentSpectrum;
-                    var udtChargeInfo = new udtChargeInfoType
+                    var currentSpectrum = mgfFileReader.CurrentSpectrum;
+                    var chargeInfo = new udtChargeInfoType
                     {
-                        ParentIonMH = objCurrentSpectrum.ParentIonMH,
-                        ParentIonMZ = objCurrentSpectrum.ParentIonMZ,
-                        Charge = objCurrentSpectrum.ParentIonCharges[0]
+                        ParentIonMH = currentSpectrum.ParentIonMH,
+                        ParentIonMZ = currentSpectrum.ParentIonMZ,
+                        Charge = currentSpectrum.ParentIonCharges[0]
                     };
 
-                    if (!cachedParentIonInfo.TryGetValue(objMGFSpectrum.ScanNumber, out var chargeInfoList))
+                    if (!cachedParentIonInfo.TryGetValue(mgfSpectrum.ScanNumber, out var chargeInfoList))
                     {
                         chargeInfoList = new List<udtChargeInfoType>();
-                        cachedParentIonInfo.Add(objMGFSpectrum.ScanNumber, chargeInfoList);
+                        cachedParentIonInfo.Add(mgfSpectrum.ScanNumber, chargeInfoList);
                     }
-                    chargeInfoList.Add(udtChargeInfo);
+                    chargeInfoList.Add(chargeInfo);
                 }
 
                 mgfFileReader.CloseFile();
@@ -137,14 +137,14 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 {
                     var lastScan = 0;
 
-                    while (dtaFileReader.ReadNextSpectrum(out var objDTASpectrum))
+                    while (dtaFileReader.ReadNextSpectrum(out var dtaSpectrum))
                     {
-                        if (!cachedParentIonInfo.TryGetValue(objDTASpectrum.ScanNumber, out var chargeInfoList))
+                        if (!cachedParentIonInfo.TryGetValue(dtaSpectrum.ScanNumber, out var chargeInfoList))
                         {
-                            OnWarningEvent("Warning, scan " + objDTASpectrum.ScanNumber + " not found in MGF file; unable to update the data");
+                            OnWarningEvent("Warning, scan " + dtaSpectrum.ScanNumber + " not found in MGF file; unable to update the data");
                             if (removeUnmatchedSpectra)
                             {
-                                Console.WriteLine("Skipping scan " + objDTASpectrum.ScanNumber);
+                                Console.WriteLine("Skipping scan " + dtaSpectrum.ScanNumber);
                             }
                             else
                             {
@@ -154,18 +154,18 @@ namespace AnalysisManagerMsXmlGenPlugIn
                             continue;
                         }
 
-                        if (lastScan == objDTASpectrum.ScanNumber)
+                        if (lastScan == dtaSpectrum.ScanNumber)
                         {
                             // Skip this entry from the source _dta.txt file since it is a duplicate of the previously written scan
                             continue;
                         }
 
                         // Update the cached scan info
-                        lastScan = objDTASpectrum.ScanNumber;
+                        lastScan = dtaSpectrum.ScanNumber;
 
                         var chargeStateOld = dtaFileReader.CurrentSpectrum.ParentIonCharges[0];
 
-                        foreach (var udtChargeInfo in chargeInfoList)
+                        foreach (var chargeInfo in chargeInfoList)
                         {
                             // Write a blank link before each title line
                             writer.WriteLine();
@@ -174,7 +174,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                             // =================================== "CPTAC_Peptidome_Test1_P1_R2_Poroshell_03Feb12_Frodo_Poroshell300SB.2.2.1.dta" ==================================
 
                             var titleLine = dtaFileReader.GetSpectrumTitleWithCommentChars();
-                            var chargeStateNew = udtChargeInfo.Charge;
+                            var chargeStateNew = chargeInfo.Charge;
 
                             if (chargeStateOld != chargeStateNew)
                             {
@@ -191,16 +191,16 @@ namespace AnalysisManagerMsXmlGenPlugIn
                             //
 
                             var scanNumber = dtaFileReader.CurrentSpectrum.ScanNumber;
-                            var outLine = udtChargeInfo.ParentIonMH.ToString("0.0######") + " " + chargeStateNew + "   scan=" + scanNumber + " cs=" +
+                            var outLine = chargeInfo.ParentIonMH.ToString("0.0######") + " " + chargeStateNew + "   scan=" + scanNumber + " cs=" +
                                           chargeStateNew;
 
                             writer.WriteLine(outLine);
 
                             // Write the ions using the data from the DTA file
                             var dtaMsMsData = dtaFileReader.GetMSMSDataAsText();
-                            foreach (var strItem in dtaMsMsData)
+                            foreach (var item in dtaMsMsData)
                             {
-                                writer.WriteLine(strItem);
+                                writer.WriteLine(item);
                             }
                         }
                     }
@@ -314,7 +314,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
                 var totalSpectrumCount = 0;
                 var spectraRead = 0;
-                var dtLastProgress = DateTime.UtcNow;
+                var lastProgress = DateTime.UtcNow;
 
                 OnProgressUpdate("Processing mzML file " + mzMLFilePath, 0);
 
@@ -403,9 +403,9 @@ namespace AnalysisManagerMsXmlGenPlugIn
                                         }
 
                                         spectraRead += 1;
-                                        if (DateTime.UtcNow.Subtract(dtLastProgress).TotalSeconds >= 1)
+                                        if (DateTime.UtcNow.Subtract(lastProgress).TotalSeconds >= 1)
                                         {
-                                            dtLastProgress = DateTime.UtcNow;
+                                            lastProgress = DateTime.UtcNow;
 
                                             var percentComplete = 0;
                                             if (totalSpectrumCount > 0)

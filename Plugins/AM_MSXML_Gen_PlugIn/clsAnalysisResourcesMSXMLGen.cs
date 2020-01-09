@@ -53,14 +53,14 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 }
 
                 // Get input data file
-                var strRawDataType = mJobParams.GetParam("RawDataType");
+                var rawDataType = mJobParams.GetParam("RawDataType");
 
                 var retrievalAttempts = 0;
 
                 while (retrievalAttempts < 2)
                 {
                     retrievalAttempts += 1;
-                    switch (strRawDataType.ToLower())
+                    switch (rawDataType.ToLower())
                     {
                         case RAW_DATA_TYPE_DOT_RAW_FILES:
                         case RAW_DATA_TYPE_DOT_D_FOLDERS:
@@ -80,7 +80,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                             }
                             break;
                         default:
-                            mMessage = "Dataset type " + strRawDataType + " is not supported";
+                            mMessage = "Dataset type " + rawDataType + " is not supported";
                             LogDebug(
                                 "clsAnalysisResourcesMSXMLGen.GetResources: " + mMessage + "; must be " + RAW_DATA_TYPE_DOT_RAW_FILES + ", " +
                                 RAW_DATA_TYPE_DOT_D_FOLDERS + ", " + RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER + ", or " + RAW_DATA_TYPE_BRUKER_FT_FOLDER);

@@ -163,7 +163,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 }
 
                 var rawDataType = mJobParams.GetParam("RawDataType");
-                var eRawDataType = clsAnalysisResources.GetRawDataType(rawDataType);
+                var rawDataTypeEnum = clsAnalysisResources.GetRawDataType(rawDataType);
 
                 clsMSXmlGen msXmlGen;
 
@@ -173,8 +173,11 @@ namespace AnalysisManagerMsXmlGenPlugIn
                     // ReAdW
                     // mMSXmlGeneratorAppPath should have been populated during the call to StoreToolVersionInfo()
 
-                    msXmlGen = new clsMSXMLGenReadW(mWorkDir, mMSXmlGeneratorAppPath, mDatasetName, eRawDataType, mMSXmlOutputFileType,
-                        centroidMS1 | centroidMS2);
+                    msXmlGen = new clsMSXMLGenReadW(
+                        mWorkDir, mMSXmlGeneratorAppPath, mDatasetName,
+                        rawDataTypeEnum, mMSXmlOutputFileType,
+                        centroidMS1 | centroidMS2,
+                        mJobParams);
 
                     if (rawDataType != clsAnalysisResources.RAW_DATA_TYPE_DOT_RAW_FILES)
                     {
@@ -188,13 +191,19 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
                     if (string.IsNullOrWhiteSpace(customMSConvertArguments))
                     {
-                        msXmlGen = new clsMSXmlGenMSConvert(mWorkDir, mMSXmlGeneratorAppPath, mDatasetName, eRawDataType, mMSXmlOutputFileType,
-                            centroidMS1, centroidMS2, centroidPeakCountToRetain);
+                        msXmlGen = new clsMSXmlGenMSConvert(
+                            mWorkDir, mMSXmlGeneratorAppPath, mDatasetName,
+                            rawDataTypeEnum, mMSXmlOutputFileType,
+                            centroidMS1, centroidMS2,
+                            centroidPeakCountToRetain,
+                            mJobParams);
                     }
                     else
                     {
-                        msXmlGen = new clsMSXmlGenMSConvert(mWorkDir, mMSXmlGeneratorAppPath, mDatasetName, eRawDataType, mMSXmlOutputFileType,
-                            customMSConvertArguments);
+                        msXmlGen = new clsMSXmlGenMSConvert(
+                            mWorkDir, mMSXmlGeneratorAppPath, mDatasetName,
+                            rawDataTypeEnum, mMSXmlOutputFileType,
+                            customMSConvertArguments, mJobParams);
                     }
                 }
                 else
@@ -254,17 +263,17 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 return string.Empty;
             }
 
-            if (string.Equals(recalculatePrecursorsTool, clsRawConverterRunner.RAWCONVERTER_FILENAME, StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(recalculatePrecursorsTool, clsRawConverterRunner.RAW_CONVERTER_FILENAME, StringComparison.OrdinalIgnoreCase))
             {
                 var rawConverterDir = mMgrParams.GetParam("RawConverterProgLoc");
                 if (string.IsNullOrWhiteSpace(rawConverterDir))
                 {
                     LogError("Manager parameter RawConverterProgLoc is not defined; cannot find the directory for " +
-                             clsRawConverterRunner.RAWCONVERTER_FILENAME);
+                             clsRawConverterRunner.RAW_CONVERTER_FILENAME);
                     return string.Empty;
                 }
 
-                return Path.Combine(rawConverterDir, clsRawConverterRunner.RAWCONVERTER_FILENAME);
+                return Path.Combine(rawConverterDir, clsRawConverterRunner.RAW_CONVERTER_FILENAME);
             }
 
             return string.Empty;
@@ -339,9 +348,9 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 if (storeInCache)
                 {
                     // Copy the .mzXML or .mzML file to the MSXML cache
-                    var remoteCachefilePath = CopyFileToServerCache(mMSXmlCacheFolder.FullName, msXmlFileZipped.FullName, purgeOldFilesIfNeeded: true);
+                    var remoteCacheFilePath = CopyFileToServerCache(mMSXmlCacheFolder.FullName, msXmlFileZipped.FullName, purgeOldFilesIfNeeded: true);
 
-                    if (string.IsNullOrEmpty(remoteCachefilePath))
+                    if (string.IsNullOrEmpty(remoteCacheFilePath))
                     {
                         if (string.IsNullOrEmpty(mMessage))
                         {
@@ -354,7 +363,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                     var cacheInfoFilePath = msXmlFilePath + "_CacheInfo.txt";
                     using (var writer = new StreamWriter(new FileStream(cacheInfoFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                     {
-                        writer.WriteLine(remoteCachefilePath);
+                        writer.WriteLine(remoteCacheFilePath);
                     }
                 }
             }
@@ -382,16 +391,16 @@ namespace AnalysisManagerMsXmlGenPlugIn
             }
 
             var rawDataType = mJobParams.GetParam("RawDataType");
-            var eRawDataType = clsAnalysisResources.GetRawDataType(rawDataType);
+            var rawDataTypeEnum = clsAnalysisResources.GetRawDataType(rawDataType);
             string rawFilePath;
 
-            if (eRawDataType == clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile)
+            if (rawDataTypeEnum == clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile)
             {
                 rawFilePath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_RAW_EXTENSION);
             }
             else
             {
-                LogError("Unsupported dataset type for RecalculatePrecursors=True; must be .Raw, not " + eRawDataType);
+                LogError("Unsupported dataset type for RecalculatePrecursors=True; must be .Raw, not " + rawDataTypeEnum);
                 return false;
             }
 
@@ -401,7 +410,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 return false;
             }
 
-            if (string.Equals(recalculatePrecursorsTool, clsRawConverterRunner.RAWCONVERTER_FILENAME, StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(recalculatePrecursorsTool, clsRawConverterRunner.RAW_CONVERTER_FILENAME, StringComparison.OrdinalIgnoreCase))
             {
                 // Using RawConverter.exe
                 var rawConverterExe = new FileInfo(recalculatePrecursorsToolProgLoc);
@@ -551,7 +560,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                     return false;
                 }
 
-                var eRawDataType = clsAnalysisResources.eRawDataTypeConstants.mzML;
+                var rawDataTypeEnum = clsAnalysisResources.eRawDataTypeConstants.mzML;
                 var outputFileType = clsAnalysisResources.MSXMLOutputTypeConstants.mzML;
 
                 var sourceFileBase = Path.GetFileNameWithoutExtension(mzMLFilePath);

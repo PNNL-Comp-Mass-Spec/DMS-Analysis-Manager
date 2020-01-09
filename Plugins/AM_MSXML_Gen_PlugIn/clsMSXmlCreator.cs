@@ -35,13 +35,21 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
         public string ErrorMessage { get; private set; }
 
-        public clsMSXMLCreator(string MSXmlGeneratorAppPath, string WorkDir, string Dataset, short DebugLevel, IJobParams JobParams)
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="msXmlGeneratorAppPath"></param>
+        /// <param name="workDir"></param>
+        /// <param name="dataset"></param>
+        /// <param name="debugLevel"></param>
+        /// <param name="jobParams"></param>
+        public clsMSXMLCreator(string msXmlGeneratorAppPath, string workDir, string dataset, short debugLevel, IJobParams jobParams)
         {
-            mMSXmlGeneratorAppPath = MSXmlGeneratorAppPath;
-            mWorkDir = WorkDir;
-            mDatasetName = Dataset;
-            mDebugLevel = DebugLevel;
-            mJobParams = JobParams;
+            mMSXmlGeneratorAppPath = msXmlGeneratorAppPath;
+            mWorkDir = workDir;
+            mDatasetName = dataset;
+            mDebugLevel = debugLevel;
+            mJobParams = jobParams;
 
             ErrorMessage = string.Empty;
         }
@@ -49,15 +57,15 @@ namespace AnalysisManagerMsXmlGenPlugIn
         public bool ConvertMzMLToMzXML()
         {
             // mzXML filename is dataset plus .mzXML
-            var strMzXmlFilePath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_MZXML_EXTENSION);
+            var mzXmlFilePath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_MZXML_EXTENSION);
 
-            if (File.Exists(strMzXmlFilePath) || File.Exists(strMzXmlFilePath + clsAnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX))
+            if (File.Exists(mzXmlFilePath) || File.Exists(mzXmlFilePath + clsAnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX))
             {
                 // File already exists; nothing to do
                 return true;
             }
 
-            var strSourceFilePath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_MZML_EXTENSION);
+            var sourceFilePath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_MZML_EXTENSION);
 
             var progLoc = mMSXmlGeneratorAppPath;
             if (!File.Exists(progLoc))
@@ -69,15 +77,15 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
             if (mDebugLevel >= 2)
             {
-                OnStatusEvent("Creating the .mzXML file for " + mDatasetName + " using " + Path.GetFileName(strSourceFilePath));
+                OnStatusEvent("Creating the .mzXML file for " + mDatasetName + " using " + Path.GetFileName(sourceFilePath));
             }
 
             // Setup a program runner tool to call MSConvert
-            var oProgRunner = new clsRunDosProgram(mWorkDir, mDebugLevel);
-            RegisterEvents(oProgRunner);
+            var progRunner = new clsRunDosProgram(mWorkDir, mDebugLevel);
+            RegisterEvents(progRunner);
 
             // Set up command
-            var arguments = clsAnalysisToolRunnerBase.PossiblyQuotePath(strSourceFilePath) +
+            var arguments = clsAnalysisToolRunnerBase.PossiblyQuotePath(sourceFilePath) +
                             " --32 " +
                             "--mzXML " +
                             "-o " + mWorkDir;
@@ -87,17 +95,17 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 OnStatusEvent(progLoc + " " + arguments);
             }
 
-            oProgRunner.CreateNoWindow = true;
-            oProgRunner.CacheStandardOutput = true;
-            oProgRunner.EchoOutputToConsole = true;
+            progRunner.CreateNoWindow = true;
+            progRunner.CacheStandardOutput = true;
+            progRunner.EchoOutputToConsole = true;
 
-            oProgRunner.WriteConsoleOutputToFile = false;
-            oProgRunner.ConsoleOutputFilePath = string.Empty;
+            progRunner.WriteConsoleOutputToFile = false;
+            progRunner.ConsoleOutputFilePath = string.Empty;
             // Allow the console output filename to be auto-generated
 
-            var dtStartTimeUTC = DateTime.UtcNow;
+            var startTimeUTC = DateTime.UtcNow;
 
-            if (!oProgRunner.RunProgram(progLoc, arguments, "MSConvert", true))
+            if (!progRunner.RunProgram(progLoc, arguments, "MSConvert", true))
             {
                 // .RunProgram returned False
                 ErrorMessage = "Error running " + Path.GetFileNameWithoutExtension(progLoc) + " to convert the .mzML file to a .mzXML file";
@@ -111,16 +119,16 @@ namespace AnalysisManagerMsXmlGenPlugIn
             }
 
             // Validate that the .mzXML file was actually created
-            if (!File.Exists(strMzXmlFilePath))
+            if (!File.Exists(mzXmlFilePath))
             {
                 ErrorMessage = ".mzXML file was not created by MSConvert";
-                OnErrorEvent(ErrorMessage + ": " + strMzXmlFilePath);
+                OnErrorEvent(ErrorMessage + ": " + mzXmlFilePath);
                 return false;
             }
 
             if (mDebugLevel >= 1)
             {
-                mMSXmlGen.LogCreationStatsSourceToMsXml(dtStartTimeUTC, strSourceFilePath, strMzXmlFilePath);
+                mMSXmlGen.LogCreationStatsSourceToMsXml(startTimeUTC, sourceFilePath, mzXmlFilePath);
             }
 
             return true;
@@ -134,25 +142,22 @@ namespace AnalysisManagerMsXmlGenPlugIn
         public bool CreateMZXMLFile()
         {
             // Turn on Centroiding, which will result in faster mzXML file generation time and smaller .mzXML files
-            var CentroidMSXML = true;
-
-            var blnSuccess = false;
+            var centroidMSXML = true;
 
             // mzXML filename is dataset plus .mzXML
-            string strMzXmlFilePath = null;
-            strMzXmlFilePath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_MZXML_EXTENSION);
+            var mzXmlFilePath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_MZXML_EXTENSION);
 
-            if (File.Exists(strMzXmlFilePath) || File.Exists(strMzXmlFilePath + clsAnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX))
+            if (File.Exists(mzXmlFilePath) || File.Exists(mzXmlFilePath + clsAnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX))
             {
                 // File already exists; nothing to do
                 return true;
             }
 
-            var eOutputType = clsAnalysisResources.MSXMLOutputTypeConstants.mzXML;
+            var outputType = clsAnalysisResources.MSXMLOutputTypeConstants.mzXML;
 
             // Instantiate the processing class
             // Note that mMSXmlGeneratorAppPath should have been populated by StoreToolVersionInfo() by an Analysis Manager plugin using clsAnalysisToolRunnerBase.GetMSXmlGeneratorAppPath()
-            var strMSXmlGeneratorExe = Path.GetFileName(mMSXmlGeneratorAppPath);
+            var msXmlGeneratorExe = Path.GetFileName(mMSXmlGeneratorAppPath);
 
             if (!File.Exists(mMSXmlGeneratorAppPath))
             {
@@ -167,9 +172,9 @@ namespace AnalysisManagerMsXmlGenPlugIn
             }
 
             var rawDataType = mJobParams.GetParam("RawDataType");
-            var eRawDataType = clsAnalysisResources.GetRawDataType(rawDataType);
+            var rawDataTypeEnum = clsAnalysisResources.GetRawDataType(rawDataType);
 
-            if (strMSXmlGeneratorExe.ToLower().Contains("readw"))
+            if (msXmlGeneratorExe.ToLower().Contains("readw"))
             {
                 // ReAdW
                 // mMSXmlGeneratorAppPath should have been populated during the call to StoreToolVersionInfo()
@@ -182,28 +187,27 @@ namespace AnalysisManagerMsXmlGenPlugIn
                     return false;
                 }
             }
-            else if (strMSXmlGeneratorExe.ToLower().Contains("msconvert"))
+            else if (msXmlGeneratorExe.ToLower().Contains("msconvert"))
             {
                 // MSConvert
 
                 // Lookup Centroid Settings
-                CentroidMSXML = mJobParams.GetJobParameter("CentroidMSXML", true);
-                var CentroidPeakCountToRetain = 0;
+                centroidMSXML = mJobParams.GetJobParameter("CentroidMSXML", true);
 
                 // Look for parameter CentroidPeakCountToRetain in the MSXMLGenerator section
-                CentroidPeakCountToRetain = mJobParams.GetJobParameter("MSXMLGenerator", "CentroidPeakCountToRetain", 0);
+                var centroidPeakCountToRetain = mJobParams.GetJobParameter("MSXMLGenerator", "CentroidPeakCountToRetain", 0);
 
-                if (CentroidPeakCountToRetain == 0)
+                if (centroidPeakCountToRetain == 0)
                 {
                     // Look for parameter CentroidPeakCountToRetain in any section
-                    CentroidPeakCountToRetain = mJobParams.GetJobParameter("CentroidPeakCountToRetain",
-                        clsMSXmlGenMSConvert.DEFAULT_CENTROID_PEAK_COUNT_TO_RETAIN);
+                    centroidPeakCountToRetain = mJobParams.GetJobParameter("CentroidPeakCountToRetain",
+                                                                           clsMSXmlGenMSConvert.DEFAULT_CENTROID_PEAK_COUNT_TO_RETAIN);
                 }
 
                 // Look for custom processing arguments
-                var CustomMSConvertArguments = mJobParams.GetJobParameter("MSXMLGenerator", "CustomMSConvertArguments", "");
+                var customMSConvertArguments = mJobParams.GetJobParameter("MSXMLGenerator", "CustomMSConvertArguments", "");
 
-                if (string.IsNullOrWhiteSpace(CustomMSConvertArguments))
+                if (string.IsNullOrWhiteSpace(customMSConvertArguments))
                 {
                     mMSXmlGen = new clsMSXmlGenMSConvert(mWorkDir, mMSXmlGeneratorAppPath, mDatasetName, eRawDataType, eOutputType, CentroidMSXML,
                         CentroidPeakCountToRetain);
@@ -216,7 +220,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
             }
             else
             {
-                ErrorMessage = "Unsupported XmlGenerator: " + strMSXmlGeneratorExe;
+                ErrorMessage = "Unsupported XmlGenerator: " + msXmlGeneratorExe;
                 OnErrorEvent(ErrorMessage);
                 return false;
             }
@@ -224,33 +228,34 @@ namespace AnalysisManagerMsXmlGenPlugIn
             // Register the events in mMSXMLGen
             RegisterMsXmlGenEventHandlers(mMSXmlGen);
 
-            var dtStartTimeUTC = DateTime.UtcNow;
+            var startTimeUTC = DateTime.UtcNow;
 
             // Create the file
-            blnSuccess = mMSXmlGen.CreateMSXMLFile();
+            var success = mMSXmlGen.CreateMSXMLFile();
 
-            if (!blnSuccess)
+            if (!success)
             {
                 ErrorMessage = mMSXmlGen.ErrorMessage;
                 OnErrorEvent(mMSXmlGen.ErrorMessage);
                 return false;
             }
-            else if (mMSXmlGen.ErrorMessage.Length > 0)
+
+            if (mMSXmlGen.ErrorMessage.Length > 0)
             {
                 OnWarningEvent(mMSXmlGen.ErrorMessage);
             }
 
             // Validate that the .mzXML file was actually created
-            if (!File.Exists(strMzXmlFilePath))
+            if (!File.Exists(mzXmlFilePath))
             {
-                ErrorMessage = ".mzXML file was not created by " + strMSXmlGeneratorExe;
-                OnErrorEvent(ErrorMessage + ": " + strMzXmlFilePath);
+                ErrorMessage = ".mzXML file was not created by " + msXmlGeneratorExe;
+                OnErrorEvent(ErrorMessage + ": " + mzXmlFilePath);
                 return false;
             }
 
             if (mDebugLevel >= 1)
             {
-                mMSXmlGen.LogCreationStatsSourceToMsXml(dtStartTimeUTC, mMSXmlGen.SourceFilePath, strMzXmlFilePath);
+                mMSXmlGen.LogCreationStatsSourceToMsXml(startTimeUTC, mMSXmlGen.SourceFilePath, mzXmlFilePath);
             }
 
             return true;

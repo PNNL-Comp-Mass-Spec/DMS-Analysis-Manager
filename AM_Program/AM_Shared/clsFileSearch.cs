@@ -1835,7 +1835,7 @@ namespace AnalysisManagerBase
                 }
             }
 
-            // Unconcatenate OUT file if needed
+            // Deconcatenate OUT file if needed
             if (unConcatenate)
             {
                 OnStatusEvent("Splitting concatenated OUT file");
@@ -2366,17 +2366,17 @@ namespace AnalysisManagerBase
         {
 
             var success = false;
-            var StoragePath = mJobParams.GetParam("DatasetStoragePath");
+            var storagePath = mJobParams.GetParam("DatasetStoragePath");
 
             OnStatusEvent("Retrieving spectra file(s)");
 
-            var eRawDataType = clsAnalysisResources.GetRawDataType(rawDataType);
-            switch (eRawDataType)
+            var rawDataTypeEnum = clsAnalysisResources.GetRawDataType(rawDataType);
+            switch (rawDataTypeEnum)
             {
                 case clsAnalysisResources.eRawDataTypeConstants.AgilentDFolder:
                     // Agilent ion trap data
-                    if (StoragePath.ToLower().Contains("Agilent_SL1".ToLower()) ||
-                        StoragePath.ToLower().Contains("Agilent_XCT1".ToLower()))
+                    if (storagePath.ToLower().Contains("Agilent_SL1".ToLower()) ||
+                        storagePath.ToLower().Contains("Agilent_XCT1".ToLower()))
                     {
                         // For Agilent Ion Trap datasets acquired on Agilent_SL1 or Agilent_XCT1 in 2005,
                         //  we would pre-process the data beforehand to create MGF files
@@ -2451,7 +2451,7 @@ namespace AnalysisManagerBase
                     break;
                 default:
                     // rawDataType is not recognized or not supported by this function
-                    if (eRawDataType == clsAnalysisResources.eRawDataTypeConstants.Unknown)
+                    if (rawDataTypeEnum == clsAnalysisResources.eRawDataTypeConstants.Unknown)
                     {
 
                         OnErrorEvent("Invalid data type specified: " + rawDataType);

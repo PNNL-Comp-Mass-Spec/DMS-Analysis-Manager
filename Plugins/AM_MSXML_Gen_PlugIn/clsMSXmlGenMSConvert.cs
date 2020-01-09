@@ -155,9 +155,9 @@ namespace AnalysisManagerMsXmlGenPlugIn
             //  registry entry at HKEY_CURRENT_USER\Software\ProteoWizard
             //  to indicate that we agree to the Thermo license
 
-            var objProteowizardTools = new clsProteowizardTools(DebugLevel);
+            var proteowizardTools = new clsProteowizardTools(DebugLevel);
 
-            return objProteowizardTools.RegisterProteoWizard();
+            return proteowizardTools.RegisterProteoWizard();
         }
 
         #endregion
