@@ -170,6 +170,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 case clsAnalysisResources.eRawDataTypeConstants.mzXML:
                     SourceFilePath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_MZXML_EXTENSION);
                     break;
+
                 case clsAnalysisResources.eRawDataTypeConstants.mzML:
                     SourceFilePath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_MZML_EXTENSION);
                     break;
@@ -332,6 +333,18 @@ namespace AnalysisManagerMsXmlGenPlugIn
         {
             try
             {
+                if (string.IsNullOrWhiteSpace(sourceFilePath))
+                {
+                    OnErrorEvent("LogCreationStatsSourceToMsXml: sourceFilePath is an empty string");
+                    return;
+                }
+
+                if (string.IsNullOrWhiteSpace(msXmlFilePath))
+                {
+                    OnErrorEvent("LogCreationStatsSourceToMsXml: msXmlFilePath is an empty string");
+                    return;
+                }
+
                 // Save some stats to the log
                 double sourceFileSizeMB = 0;
                 double msXmlSizeMB = 0;

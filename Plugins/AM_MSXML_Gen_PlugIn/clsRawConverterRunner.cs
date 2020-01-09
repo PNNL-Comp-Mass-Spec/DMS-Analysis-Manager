@@ -53,6 +53,11 @@ namespace AnalysisManagerMsXmlGenPlugIn
             try
             {
                 var sourceFile = new FileInfo(rawFilePath);
+                if (sourceFile.Directory == null)
+                {
+                    OnErrorEvent("Unable to determine the parent directory of the instrument file: " + rawFilePath);
+                    return false;
+                }
 
                 if (mDebugLevel > 0)
                 {
@@ -60,6 +65,11 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 }
 
                 var rawConverter = new FileInfo(RawConverterExePath);
+                if (rawConverter.Directory == null)
+                {
+                    OnErrorEvent("Unable to determine the parent directory of the converter exe: " + RawConverterExePath);
+                    return false;
+                }
 
                 // Set up command
                 var arguments =

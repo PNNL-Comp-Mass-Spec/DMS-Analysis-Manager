@@ -538,6 +538,12 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
         private bool ReindexMzML(string mzMLFilePath)
         {
+            if (string.IsNullOrWhiteSpace(mzMLFilePath))
+            {
+                LogWarning("ReindexMzML: mzMLFilePath is an empty string");
+                return false;
+            }
+
             try
             {
                 if (mDebugLevel > 4)

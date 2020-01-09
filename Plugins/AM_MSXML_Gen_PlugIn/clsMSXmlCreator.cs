@@ -166,6 +166,13 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 return false;
             }
 
+            if (string.IsNullOrEmpty(msXmlGeneratorExe))
+            {
+                ErrorMessage = "Path.GetFileName returned an empty string for MSXmlGenerator path " + mMSXmlGeneratorAppPath;
+                OnErrorEvent(ErrorMessage + ": " + mMSXmlGeneratorAppPath);
+                return false;
+            }
+
             if (mDebugLevel >= 2)
             {
                 OnStatusEvent("Creating the .mzXML file for " + mDatasetName);
