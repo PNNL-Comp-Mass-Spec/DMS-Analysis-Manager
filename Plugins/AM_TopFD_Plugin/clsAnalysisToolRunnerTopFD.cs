@@ -138,6 +138,22 @@ namespace AnalysisManagerTopFDPlugIn
 
         }
 
+
+        /// <summary>
+        /// Zip the _file and _html directories, if they exist
+        /// Next, Make the local results directory, move files into that directory, then copy the files to the transfer directory on the Proto-x server
+        /// </summary>
+        /// <returns>True if success, otherwise false</returns>
+        private bool CopyResultsToTransferDirectory()
+        {
+            var zipSuccess = ZipTopFDDirectories();
+            if (!zipSuccess)
+                return false;
+
+            var success = base.CopyResultsToTransferDirectory();
+            return success;
+        }
+
         /// <summary>
         /// Returns a dictionary mapping parameter names to argument names
         /// </summary>
@@ -403,14 +419,26 @@ namespace AnalysisManagerTopFDPlugIn
             // Make sure the output files were created and are not zero-bytes
             // If the input .mzML file only has MS spectra and no MS/MS spectra, the output files will be empty
 
-            // Dictionary mapping a results file suffix to the full results file name
+            // resultsFiles is a dictionary mapping a results file suffix to the full results file name
+
             // Require that the .feature and _ms2.msalign files were created
+            // Starting with TopPIC 1.3, the program creates _ms1.feature and _ms2.feature instead of a single .feature file
+            //
             // TopFD likely also created a _ms1.msalign file, but it's not required for TopPIC so we don't check for it
             var resultsFiles = new Dictionary<string, string>
             {
-                {TOPFD_FEATURE_FILE_SUFFIX, mDatasetName + TOPFD_FEATURE_FILE_SUFFIX},
                 {MSALIGN_FILE_SUFFIX, mDatasetName + MSALIGN_FILE_SUFFIX}
             };
+
+            var legacyFeatureFile = new FileInfo(Path.Combine(mWorkDir, mDatasetName + TOPFD_FEATURE_FILE_SUFFIX));
+            if (legacyFeatureFile.Exists)
+            {
+                resultsFiles.Add(TOPFD_FEATURE_FILE_SUFFIX, legacyFeatureFile.Name);
+            }
+            else
+            {
+                resultsFiles.Add("_ms2" + TOPFD_FEATURE_FILE_SUFFIX, mDatasetName + "_ms2" + TOPFD_FEATURE_FILE_SUFFIX);
+            }
 
             var validResultFiles = 0;
 
@@ -484,7 +512,7 @@ namespace AnalysisManagerTopFDPlugIn
         /// <remarks></remarks>
         private void TrimConsoleOutputFile(string consoleOutputFilePath)
         {
-            var reExtractScan = new Regex(@"Processing spectrum Scan_(?<Scan>\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            var reExtractScan = new Regex(@"Processing spectrum Scan[ _](?<Scan>\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
             try
             {
@@ -582,6 +610,45 @@ namespace AnalysisManagerTopFDPlugIn
                 {
                     LogError("Error trimming console output file (" + consoleOutputFilePath + ")", ex);
                 }
+            }
+        }
+
+        private bool ZipTopFDDirectories()
+        {
+            var currentDirectory = "?undefined?";
+
+            try
+            {
+                var subdirectoriesToZip = new List<string> {
+                    Dataset + "_file",
+                    Dataset + "_html"
+                };
+
+                foreach (var subdirectoryName in subdirectoriesToZip)
+                {
+                    currentDirectory = subdirectoryName;
+
+                    var directoryToFind = new DirectoryInfo(Path.Combine(mWorkDir, subdirectoryName));
+                    currentDirectory = directoryToFind.FullName;
+
+                    if (!directoryToFind.Exists)
+                    {
+                        LogWarning("Subdirectory not found; nothing to zip: " + directoryToFind.FullName);
+                        continue;
+                    }
+
+                    var zipFilePath = Path.Combine(mWorkDir, subdirectoryName + ".zip");
+                    LogMessage(string.Format("Zipping {0} to create {1}", directoryToFind.FullName, Path.GetFileName(zipFilePath)));
+
+                    mDotNetZipTools.ZipDirectory(directoryToFind.FullName, zipFilePath, true);
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LogError(string.Format("Error zipping {0}", currentDirectory), ex);
+                return false;
             }
         }
 

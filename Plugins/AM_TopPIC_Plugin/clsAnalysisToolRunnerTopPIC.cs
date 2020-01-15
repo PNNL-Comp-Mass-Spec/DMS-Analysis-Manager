@@ -151,16 +151,15 @@ namespace AnalysisManagerTopPICPlugIn
 
             base.CopyFailedResultsToArchiveDirectory();
         }
-
         /// <summary>
         /// Returns a dictionary mapping parameter names to argument names
         /// </summary>
+        /// <param name="useSeparateErrorTolerances"></param>
         /// <returns></returns>
-        private Dictionary<string, string> GetTopPICParameterNames()
+        private Dictionary<string, string> GetTopPICParameterNames(bool useSeparateErrorTolerances)
         {
             var paramToArgMapping = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
-                {"ErrorTolerance", "error-tolerance"},
                 {"MaxShift", "max-shift"},
                 {"MinShift", "min-shift"},
                 {"NumShift", "num-shift"},
@@ -171,6 +170,18 @@ namespace AnalysisManagerTopPICPlugIn
                 {"Decoy", "decoy"},
                 {"NTerminalProteinForms", "n-terminal-form"}
             };
+
+            if (useSeparateErrorTolerances)
+            {
+                // TopPIC 1.3 renamed the error tolerance parameter to --mass-error-tolerance
+                paramToArgMapping.Add("ErrorTolerance", "mass-error-tolerance");
+                paramToArgMapping.Add("ProteoformErrorTolerance", "proteoform-error-tolerance");
+            }
+            else
+            {
+                // TopPIC 1.2 and early used --error-tolerance
+                paramToArgMapping.Add("ErrorTolerance", "error-tolerance");
+            }
 
             return paramToArgMapping;
         }
@@ -489,8 +500,13 @@ namespace AnalysisManagerTopPICPlugIn
                 return eResult;
             }
 
+            // If file DatasetName_ms2.feature exists, assume that we are using TopPIC 1.3 and are thus using separate error tolerances
+            var ms2FeatureFile = new FileInfo(Path.Combine(mWorkDir, Dataset + "_ms2" + clsAnalysisResourcesTopPIC.TOPFD_FEATURE_FILE_SUFFIX));
+            var useSeparateErrorTolerances = ms2FeatureFile.Exists;
+
             // Obtain the dictionary that maps parameter names to argument names
-            var paramToArgMapping = GetTopPICParameterNames();
+            var paramToArgMapping = GetTopPICParameterNames(useSeparateErrorTolerances);
+
             var paramNamesToSkip = new SortedSet<string>(StringComparer.OrdinalIgnoreCase) {
                 "NumMods",
                 "StaticMod",
@@ -915,10 +931,12 @@ namespace AnalysisManagerTopPICPlugIn
                     return false;
                 }
 
-                // Zip the two Html directories
-                // The November 2018 and later releases of TopPIC have Html directories that start with the text _ms2_toppic
-                // Earlier versions do not start with _ms2_toppic
+                // Zip the Html directory (or directories)
+                // The TopPIC 1.3 release of TopPIC (January 2020) creates just one _html directory, named DatasetName_html
+                // The TopPIC 1.2 release of TopPIC (November 2018) has Html directories that include the text _ms2_toppic
+                // Earlier versions do not have _ms2_toppic
                 var directoriesToCompress = new List<string> {
+                    "_html",
                     "_ms2_toppic_prsm_cutoff_html",
                     "_ms2_toppic_proteoform_cutoff_html",
                     "_ms2_prsm_cutoff_html",
@@ -931,12 +949,9 @@ namespace AnalysisManagerTopPICPlugIn
                     var success = ZipTopPICResultsDirectory(directorySuffix);
                     if (success)
                         directoriesZipped++;
-
-                    if (directoriesZipped >= 2)
-                        break;
                 }
 
-                if (directoriesZipped >= 2)
+                if (directoriesZipped >= 1)
                     return true;
 
                 LogError("Expected TopPIC html directories were not found");
@@ -1076,6 +1091,9 @@ namespace AnalysisManagerTopPICPlugIn
                             continue;
 
                         writer.WriteLine(dataLine);
+
+                        if (validFile)
+                            continue;
 
                         var dataColumns = dataLine.Split('\t');
 
@@ -1265,6 +1283,12 @@ namespace AnalysisManagerTopPICPlugIn
                         LogWarning("TopPIC results directory is empty; nothing to zip: " + sourceDirectory.Name);
                     }
                     return false;
+                }
+
+                var existingZipFile = new FileInfo(zipFilePath);
+                if (existingZipFile.Exists)
+                {
+                    existingZipFile.Delete();
                 }
 
                 if (mDebugLevel >= 1)

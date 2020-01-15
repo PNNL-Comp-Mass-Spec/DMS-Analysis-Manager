@@ -7,6 +7,7 @@
 
 using AnalysisManagerBase;
 using System.Collections.Generic;
+using System.IO;
 
 namespace AnalysisManagerTopPICPlugIn
 {
@@ -20,7 +21,7 @@ namespace AnalysisManagerTopPICPlugIn
         /// .feature file created by TopFD
         /// </summary>
         /// <remarks>Tracks LC/MS features</remarks>
-        private const string TOPFD_FEATURE_FILE_SUFFIX = ".feature";
+        public const string TOPFD_FEATURE_FILE_SUFFIX = ".feature";
 
         /// <summary>
         /// _ms2.msalign file created by TopFD
@@ -62,19 +63,67 @@ namespace AnalysisManagerTopPICPlugIn
 
             LogMessage("Getting data files");
 
-            var filesToRetrieve = new List<string> {
-                DatasetName + TOPFD_FEATURE_FILE_SUFFIX,
-                DatasetName + MSALIGN_FILE_SUFFIX
-            };
+            // Find the _ms2.msalign file
+            var ms2MSAlignFile = DatasetName + MSALIGN_FILE_SUFFIX;
+            var success = FileSearch.FindAndRetrieveMiscFiles(ms2MSAlignFile, false, true, out var sourceDirPath);
+            if (!success)
+            {
+                // Errors were reported in function call, so just return
+                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+            }
+
+            mJobParams.AddResultFileToSkip(ms2MSAlignFile);
+
+
+            // TopPIC 1.2 and earlier created a .feature file
+            // TopPIC 1.3 creates two files: _ms1.feature and _ms2.feature
+
+            // Keys in this dictionary are filenames, values are True if the file needs to be unzipped
+            var filesToRetrieve = new Dictionary<string, bool>();
+
+            var legacyFeatureFile = new FileInfo(Path.Combine(sourceDirPath, DatasetName + TOPFD_FEATURE_FILE_SUFFIX));
+            if (legacyFeatureFile.Exists)
+            {
+                filesToRetrieve.Add(legacyFeatureFile.Name, false);
+            }
+            else
+            {
+                filesToRetrieve.Add(DatasetName + "_ms1" + TOPFD_FEATURE_FILE_SUFFIX, false);
+                filesToRetrieve.Add(DatasetName + "_ms2" + TOPFD_FEATURE_FILE_SUFFIX, false);
+
+                // Also retrieve the _html.zip file
+                filesToRetrieve.Add(DatasetName + "_html.zip", true);
+            }
 
             foreach (var fileToRetrieve in filesToRetrieve)
             {
-                if (!FileSearch.FindAndRetrieveMiscFiles(fileToRetrieve, false))
+                var fileName = fileToRetrieve.Key;
+                var unzip = fileToRetrieve.Value;
+
+                if (!FileSearch.FindAndRetrieveMiscFiles(fileName, false))
                 {
                     // Errors were reported in function call, so just return
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
-                mJobParams.AddResultFileToSkip(fileToRetrieve);
+
+                if (!unzip)
+                {
+                    mJobParams.AddResultFileToSkip(fileName);
+                    continue;
+                }
+
+                // Unzip the file
+                // Do not call AddResultFileToSkip on the .zip file since TopPIC will create new files and the Zip file will be re-generated
+
+                var zipOutputDirectoryPath = Path.Combine(mWorkDir, DatasetName + "_html");
+                LogMessage("Unzipping file " + fileName);
+                if (UnzipFileStart(Path.Combine(mWorkDir, fileName), zipOutputDirectoryPath, "clsAnalysisResourcesTopPIC.GetResources", false))
+                {
+                    continue;
+                }
+
+                // Errors should have already been reported
+                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
             if (!ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadLayout.FlatNoSubdirectories))
