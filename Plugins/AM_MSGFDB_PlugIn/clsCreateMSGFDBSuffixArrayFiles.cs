@@ -985,8 +985,8 @@ namespace AnalysisManagerMSGFDBPlugIn
                 {
                     OnWarningEvent("Remote index directory does not have file MaxDirSize.txt; cannot purge old index files in " + remoteIndexDirPath);
                     OnStatusEvent(string.Format(
-                                  "Create file {0} with 'MaxSizeGB=50' on a single line. " +
-                                  "Comment lines are allowed using # as a comment character", maxDirSizeFile.Name));
+                        "Create file {0} with 'MaxSizeGB=50' on a single line. " +
+                        "Comment lines are allowed using # as a comment character", maxDirSizeFile.Name));
 
                     return;
                 }

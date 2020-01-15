@@ -1191,10 +1191,10 @@ namespace AnalysisManagerMSGFDBPlugIn
                 if (msgfPlusProgress < MSGFPlusUtils.PROGRESS_PCT_MSGFPLUS_COMPLETE - 5)
                 {
                     LogWarning(string.Format(
-                                   "Progress from the MS-GF+ console output file is {0:F0}, " +
-                                   "which is much less than the expected value of {1:F0}; " +
-                                   "will not compare to the RemoteStart and RemoteFinish job parameters",
-                                   msgfPlusProgress, MSGFPlusUtils.PROGRESS_PCT_MSGFPLUS_COMPLETE));
+                        "Progress from the MS-GF+ console output file is {0:F0}, " +
+                        "which is much less than the expected value of {1:F0}; " +
+                        "will not compare to the RemoteStart and RemoteFinish job parameters",
+                        msgfPlusProgress, MSGFPlusUtils.PROGRESS_PCT_MSGFPLUS_COMPLETE));
 
                     return CloseOutType.CLOSEOUT_SUCCESS;
                 }
@@ -1202,9 +1202,9 @@ namespace AnalysisManagerMSGFDBPlugIn
                 if (mMSGFPlusUtils.ElapsedTimeHours * 60 <= 1)
                 {
                     LogWarning(string.Format(
-                                   "Processing time from the MS-GF+ console output file is {0:F1} minutes; " +
-                                   "will not compare to the RemoteStart and RemoteFinish job parameters",
-                                   mMSGFPlusUtils.ElapsedTimeHours * 60));
+                        "Processing time from the MS-GF+ console output file is {0:F1} minutes; " +
+                        "will not compare to the RemoteStart and RemoteFinish job parameters",
+                        mMSGFPlusUtils.ElapsedTimeHours * 60));
 
                     return CloseOutType.CLOSEOUT_SUCCESS;
                 }
@@ -1225,9 +1225,9 @@ namespace AnalysisManagerMSGFDBPlugIn
                     return CloseOutType.CLOSEOUT_SUCCESS;
 
                 LogMessage(string.Format(
-                               "Updating the RemoteStart and RemoteFinish times based on the processing time reported in the MS-GF+ console output file; " +
-                               "changing from {0:F1} hours to {1:F1} hours",
-                               elapsedTimeHoursFromStatusFile, mMSGFPlusUtils.ElapsedTimeHours));
+                    "Updating the RemoteStart and RemoteFinish times based on the processing time reported in the MS-GF+ console output file; " +
+                    "changing from {0:F1} hours to {1:F1} hours",
+                    elapsedTimeHoursFromStatusFile, mMSGFPlusUtils.ElapsedTimeHours));
 
                 var newRemoteStart = remoteFinish.AddHours(-mMSGFPlusUtils.ElapsedTimeHours);
 

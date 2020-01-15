@@ -2828,8 +2828,8 @@ namespace AnalysisManagerBase
                     else
                     {
                         LogWarning(string.Format(
-                                       "Tool version info file {0} did not have line {1}",
-                                       toolVersionInfoFile.Name, clsToolVersionUtilities.TOOL_VERSION_INFO_SECTION_HEADER));
+                            "Tool version info file {0} did not have line {1}",
+                            toolVersionInfoFile.Name, clsToolVersionUtilities.TOOL_VERSION_INFO_SECTION_HEADER));
                     }
                 }
             }

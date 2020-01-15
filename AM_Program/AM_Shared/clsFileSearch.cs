@@ -264,7 +264,6 @@ namespace AnalysisManagerBase
         /// <remarks>Logs an error if the file is not found</remarks>
         public bool FindAndRetrieveMiscFiles(string fileName, bool unzip, bool searchArchivedDatasetDir, out string sourceDirPath)
         {
-
             return FindAndRetrieveMiscFiles(fileName, unzip, searchArchivedDatasetDir, out sourceDirPath, logFileNotFound: true);
         }
 

@@ -306,10 +306,10 @@ namespace AnalysisManagerBase
             if (mDebugLevel >= 1)
             {
                 LogDebug(string.Format(
-                             "Waiting for lockfile queue to fall below threshold ({0}); " +
-                             "SourceBacklog={1:N0} MB, TargetBacklog={2:N0} MB, " +
-                             "Source={3}, Target={4}",
-                             mDerivedClassName, backlogSourceMB, backlogTargetMB, sourceFilePath, targetFilePath));
+                    "Waiting for lockfile queue to fall below threshold ({0}); " +
+                    "SourceBacklog={1:N0} MB, TargetBacklog={2:N0} MB, " +
+                    "Source={3}, Target={4}",
+                    mDerivedClassName, backlogSourceMB, backlogTargetMB, sourceFilePath, targetFilePath));
             }
 
         }

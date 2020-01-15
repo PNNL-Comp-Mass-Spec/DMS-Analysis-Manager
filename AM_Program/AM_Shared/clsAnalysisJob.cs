@@ -1129,8 +1129,8 @@ namespace AnalysisManagerBase
                         if (workDir.Parent == null)
                         {
                             LogWarning(string.Format(
-                                           "Unable to determine the parent directory of {0}; cannot update the name to contain x_",
-                                           workDir.FullName));
+                                "Unable to determine the parent directory of {0}; cannot update the name to contain x_",
+                                workDir.FullName));
                             continue;
                         }
 
@@ -1141,24 +1141,24 @@ namespace AnalysisManagerBase
                             if (Directory.Exists(newWorkDirPath))
                             {
                                 LogMessage(string.Format(
-                                               "Deleting old working directory prior to renaming another old working directory; deleting {0}",
-                                               newWorkDirPath));
+                                    "Deleting old working directory prior to renaming another old working directory; deleting {0}",
+                                    newWorkDirPath));
 
                                 Directory.Delete(newWorkDirPath, true);
 
                             }
 
                             LogMessage(string.Format(
-                                           "Renaming old working directory since no current .info files refer to it; moving {0} to {1}",
-                                           workDir.FullName, Path.GetFileName(newWorkDirPath)));
+                                "Renaming old working directory since no current .info files refer to it; moving {0} to {1}",
+                                workDir.FullName, Path.GetFileName(newWorkDirPath)));
 
                             workDir.MoveTo(newWorkDirPath);
                         }
                         catch (Exception ex)
                         {
                             LogWarning(string.Format(
-                                           "Error renaming {0} to {1}: {2}",
-                                           workDir.FullName, Path.GetFileName(newWorkDirPath), ex.Message));
+                                "Error renaming {0} to {1}: {2}",
+                                workDir.FullName, Path.GetFileName(newWorkDirPath), ex.Message));
                         }
 
                     }
@@ -1203,16 +1203,16 @@ namespace AnalysisManagerBase
                         try
                         {
                             LogMessage(string.Format(
-                                           "Deleting old working directory since over {0} days old: {1}",
-                                           PURGE_THRESHOLD_DAYS, oldWorkDir.FullName));
+                                "Deleting old working directory since over {0} days old: {1}",
+                                PURGE_THRESHOLD_DAYS, oldWorkDir.FullName));
 
                             oldWorkDir.Delete(true);
                         }
                         catch (Exception ex)
                         {
                             LogWarning(string.Format(
-                                           "Error deleting {0}: {1}",
-                                           oldWorkDir.FullName, ex.Message));
+                                "Error deleting {0}: {1}",
+                                oldWorkDir.FullName, ex.Message));
                         }
 
                     }
@@ -1844,8 +1844,8 @@ namespace AnalysisManagerBase
                 if (lockFile.Exists)
                 {
                     LogWarning(string.Format(
-                                   "Job {0} has already been closed; however, a lock file still exists at {1}; re-trying the call to FinalizeJob",
-                                   mJobId, lockFile.FullName));
+                        "Job {0} has already been closed; however, a lock file still exists at {1}; re-trying the call to FinalizeJob",
+                        mJobId, lockFile.FullName));
 
                     TaskClosed = false;
                 }
@@ -1855,8 +1855,9 @@ namespace AnalysisManagerBase
             {
                 // Job 1234567 has already been closed; will not call SetStepTaskComplete again
                 LogWarning(string.Format(
-                               "Job {0} has already been closed; will not call {1} again",
-                               mJobId, SP_NAME_SET_COMPLETE));
+                    "Job {0} has already been closed; will not call {1} again",
+                    mJobId, SP_NAME_SET_COMPLETE));
+
                 return;
             }
 

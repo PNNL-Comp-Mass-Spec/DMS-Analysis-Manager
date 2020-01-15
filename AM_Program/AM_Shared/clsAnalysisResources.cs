@@ -3521,8 +3521,9 @@ namespace AnalysisManagerBase
                     LogWarning(string.Format("Warning: {0}; cannot manage drive space usage: {1}", baseErrorMessage, orgDbDirectory.FullName));
 
                     LogMessage(string.Format(
-                                   "Create file {0} with 'MaxSizeGB=50' on a single line. " +
-                                   "Comment lines are allowed using # as a comment character", maxDirSizeFile.Name));
+                        "Create file {0} with 'MaxSizeGB=50' on a single line. " +
+                        "Comment lines are allowed using # as a comment character", maxDirSizeFile.Name));
+
                     return;
                 }
 
@@ -3669,8 +3670,9 @@ namespace AnalysisManagerBase
 
             if (requiredFreeSpaceMB > 0 && finalFreeSpaceGB * 1024.0 < requiredFreeSpaceMB)
             {
-                LogMessage(string.Format("Warning: unable to delete enough files to free up the required space on {0} " +
-                                         "({1:F1} GB vs. {2:F1} GB); " + "deleted {3:F1} GB of cached files",
+                LogMessage(string.Format(
+                    "Warning: unable to delete enough files to free up the required space on {0} " +
+                    "({1:F1} GB vs. {2:F1} GB); " + "deleted {3:F1} GB of cached files",
                     localDriveInfo.Name, finalFreeSpaceGB, requiredFreeSpaceMB / 1024.0, clsGlobal.BytesToGB(totalBytesPurged)));
             }
 
@@ -3817,8 +3819,8 @@ namespace AnalysisManagerBase
                             if (debugLevel >= 2)
                             {
                                 LogTools.LogDebug(string.Format(
-                                                      "Purging FASTA files: {0:F1} / {1:F1} MB deleted",
-                                                      clsGlobal.BytesToMB(totalBytesPurged), clsGlobal.BytesToMB(bytesToPurge)));
+                                    "Purging FASTA files: {0:F1} / {1:F1} MB deleted",
+                                    clsGlobal.BytesToMB(totalBytesPurged), clsGlobal.BytesToMB(bytesToPurge)));
                             }
 
                             if (clsGlobal.BytesToGB(totalBytesPurged) > 10)
@@ -3832,8 +3834,9 @@ namespace AnalysisManagerBase
                         {
                             // Enough files have been deleted
                             LogTools.LogMessage(string.Format(
-                                                    "Space usage in {0} is now below {1} GB; deleted {2:F1} GB of cached files",
-                                                    orgDbDirectory.FullName, maxSizeGB, clsGlobal.BytesToGB(totalBytesPurgedOverall)));
+                                "Space usage in {0} is now below {1} GB; deleted {2:F1} GB of cached files",
+                                orgDbDirectory.FullName, maxSizeGB, clsGlobal.BytesToGB(totalBytesPurgedOverall)));
+
                             return true;
                         }
                     }
@@ -3849,8 +3852,8 @@ namespace AnalysisManagerBase
                 if (!purgeSuccessful)
                 {
                     LogTools.LogWarning(string.Format(
-                                            "Warning: unable to delete enough files to lower the space usage in {0} to below {1} GB; " +
-                                            "deleted {2:F1} GB of cached files", orgDbDirectory.FullName, maxSizeGB, clsGlobal.BytesToGB(totalBytesPurgedOverall)));
+                        "Warning: unable to delete enough files to lower the space usage in {0} to below {1} GB; " +
+                        "deleted {2:F1} GB of cached files", orgDbDirectory.FullName, maxSizeGB, clsGlobal.BytesToGB(totalBytesPurgedOverall)));
                 }
 
                 return true;
@@ -3900,15 +3903,17 @@ namespace AnalysisManagerBase
 
                 if (abortCopy)
                 {
-                    LogError(string.Format("File size mismatch; WaitForRemoteFileCopy reports abortCopy=true for remote file {0}",
-                                           remoteFasta.FullName));
+                    LogError(string.Format(
+                        "File size mismatch; WaitForRemoteFileCopy reports abortCopy=true for remote file {0}",
+                        remoteFasta.FullName));
                     return false;
                 }
 
                 if (filesMatch)
                 {
-                    LogDebug(string.Format("Using existing FASTA file {0} on {1}",
-                                           remoteFasta.FullName, transferUtility.RemoteHostName));
+                    LogDebug(string.Format(
+                        "Using existing FASTA file {0} on {1}",
+                        remoteFasta.FullName, transferUtility.RemoteHostName));
                     return true;
                 }
 
@@ -3917,9 +3922,10 @@ namespace AnalysisManagerBase
             else
             {
 
-                LogDebug(string.Format("Fasta file size on remote host is different than local file ({0} bytes vs. {1} bytes locally); " +
-                                       "copying {2} to {3}", remoteFasta.Length, sourceFasta.Length, sourceFasta.Name,
-                                       transferUtility.RemoteHostName));
+                LogDebug(string.Format(
+                    "Fasta file size on remote host is different than local file ({0} bytes vs. {1} bytes locally); " +
+                    "copying {2} to {3}", remoteFasta.Length, sourceFasta.Length, sourceFasta.Name,
+                    transferUtility.RemoteHostName));
             }
 
             return false;
@@ -4474,8 +4480,8 @@ namespace AnalysisManagerBase
                     if (fastaFileSizeGB > maxLegacyFASTASizeGB)
                     {
                         LogWarning(string.Format(
-                                       "Not retrieving FASTA file {0} since it is {1:F2} GB, which is larger than the max size threshold of {2:F1} GB",
-                                       legacyFastaName, fastaFileSizeGB, maxLegacyFASTASizeGB));
+                            "Not retrieving FASTA file {0} since it is {1:F2} GB, which is larger than the max size threshold of {2:F1} GB",
+                            legacyFastaName, fastaFileSizeGB, maxLegacyFASTASizeGB));
 
                         resultCode = CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                         return false;

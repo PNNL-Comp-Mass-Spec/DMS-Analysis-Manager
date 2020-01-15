@@ -2971,6 +2971,7 @@ namespace AnalysisManagerProg
                     LogWarning(string.Format(
                         "Did not find any SQLite_1.x.y directories in the manager directory; " +
                         "cannot confirm that {0} is up-to-date for this OS", SQLITE_DLL));
+
                     return;
                 }
 
@@ -2986,7 +2987,8 @@ namespace AnalysisManagerProg
                     if (!match.Success)
                     {
                         LogDebug(string.Format(
-                                     "Ignoring {0} since did not end with a version of the form X.Y.Z", srcDir.Name));
+                            "Ignoring {0} since did not end with a version of the form X.Y.Z", srcDir.Name));
+
                         continue;
                     }
 
@@ -3005,8 +3007,9 @@ namespace AnalysisManagerProg
                 if (srcDirVersions.Count == 0)
                 {
                     LogWarning(string.Format(
-                                   "Did not find any SQLite_1.x.y directories in the manager directory; " +
-                                   "cannot confirm that {0} is up-to-date for this OS", SQLITE_DLL));
+                        "Did not find any SQLite_1.x.y directories in the manager directory; " +
+                        "cannot confirm that {0} is up-to-date for this OS", SQLITE_DLL));
+
                     return;
                 }
 
@@ -3019,6 +3022,7 @@ namespace AnalysisManagerProg
                     LogWarning(string.Format(
                         "{0} is missing file {1}; cannot validate against the DLL in the manager directory",
                         newestSrcDir.FullName, newestDll.Name));
+
                     return;
                 }
 
@@ -3035,16 +3039,18 @@ namespace AnalysisManagerProg
                 if (soFiles.Length == 0)
                 {
                     LogWarning(string.Format(
-                                   "{0} is missing file {1}; cannot validate against the .so file in the manager directory",
-                                   newestSrcDir.FullName, SQLITE_INTEROP_FILE));
+                        "{0} is missing file {1}; cannot validate against the .so file in the manager directory",
+                        newestSrcDir.FullName, SQLITE_INTEROP_FILE));
+
                     return;
                 }
 
                 if (soFiles.Length > 1)
                 {
                     LogWarning(string.Format(
-                                   "Found multiple {0} files in {1} (including subdirectories); cannot validate against the .so file in the manager directory",
-                                   SQLITE_INTEROP_FILE, newestSrcDir.FullName));
+                        "Found multiple {0} files in {1} (including subdirectories); cannot validate against the .so file in the manager directory",
+                        SQLITE_INTEROP_FILE, newestSrcDir.FullName));
+
                     return;
                 }
 
