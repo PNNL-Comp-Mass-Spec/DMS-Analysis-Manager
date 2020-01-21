@@ -386,8 +386,8 @@ namespace AnalysisManagerTopPICPlugIn
                             // The second line is dashes
                             // The third line has the TopPIC version
                             if (string.IsNullOrEmpty(mTopPICVersion) &&
-                                dataLine.ToLower().StartsWith("toppic") &&
-                                !dataLine.ToLower().Contains(TOPPIC_EXE_NAME.ToLower()))
+                                dataLine.IndexOf("TopPIC", StringComparison.OrdinalIgnoreCase) == 0 &&
+                                dataLine.IndexOf(TOPPIC_EXE_NAME, StringComparison.OrdinalIgnoreCase) < 0)
                             {
                                 if (mDebugLevel >= 2)
                                 {
@@ -407,9 +407,10 @@ namespace AnalysisManagerTopPICPlugIn
                                 currentProgress = processingStep.Value;
                             }
 
-                            if (linesRead > 12 &&
+                            if (linesRead > 7 &&
                                 dataLineLCase.Contains("error") &&
                                 !dataLineLCase.Contains("error tolerance:") &&
+                                !dataLineLCase.Contains("error tolerance for ") &&
                                 string.IsNullOrEmpty(mConsoleOutputErrorMsg))
                             {
                                 mConsoleOutputErrorMsg = "Error running TopPIC: " + dataLine;
@@ -1330,7 +1331,7 @@ namespace AnalysisManagerTopPICPlugIn
 
                         // Parameter lines are of the form "Error tolerance:,15 ppm"
                         // Replace the comma with spaces
-                        var paramParts = parameter.Split(new char[] {','}, 2);
+                        var paramParts = parameter.Split(new char[] { ',' }, 2);
                         if (paramParts.Length <= 1)
                         {
                             writer.WriteLine(parameter);
