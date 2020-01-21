@@ -151,6 +151,36 @@ namespace AnalysisManagerTopPICPlugIn
 
             base.CopyFailedResultsToArchiveDirectory();
         }
+
+        private bool ExamineConsoleItemNumberOrProgress(
+            string dataLine,
+            ref float lastItemNumberOrProgress,
+            float itemNumberOrProgress,
+            ref float itemNumberOrProgressOutputThreshold,
+            int outputThresholdIncrement,
+            out string lastProcessingLine)
+        {
+
+            if (itemNumberOrProgress < lastItemNumberOrProgress)
+            {
+                // We have entered a new processing mode; reset the threshold
+                itemNumberOrProgressOutputThreshold = 0;
+            }
+
+            lastItemNumberOrProgress = itemNumberOrProgress;
+
+            if (itemNumberOrProgress < itemNumberOrProgressOutputThreshold)
+            {
+                lastProcessingLine = dataLine;
+                return false;
+            }
+
+            // Write out this line and bump up itemNumberOutputThreshold by the given increment
+            itemNumberOrProgressOutputThreshold += outputThresholdIncrement;
+            lastProcessingLine = string.Empty;
+            return true;
+        }
+
         /// <summary>
         /// Returns a dictionary mapping parameter names to argument names
         /// </summary>
@@ -269,6 +299,13 @@ namespace AnalysisManagerTopPICPlugIn
             // Deleting temporary files - finished.
             // TopPIC finished.
 
+
+            // TopPIC version 1.3.1 reports percent complete values in some sections; for example:
+            // Non PTM filtering - started.
+            // Non PTM filtering - processing 0.01%.
+            // Non PTM filtering - processing 9.02%.
+            // Non PTM filtering - processing 25%.
+
             var processingSteps = new SortedList<string, int>
             {
                 // {"Zero PTM filtering", 0},
@@ -300,6 +337,9 @@ namespace AnalysisManagerTopPICPlugIn
             // Generating xml files - processing 398 PrSMs.
             var undefinedProgressMatcher = new Regex(@"processing (?<Item>\d+) [a-z]+\.",
                                                        RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            // RegEx to match lines like:
+            // Non PTM filtering - processing 9.03%.
+            var percentCompleteMatcher = new Regex(@"processing (?<Progress>[0-9.]+)%", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
             try
             {
@@ -323,6 +363,9 @@ namespace AnalysisManagerTopPICPlugIn
                 var currentTaskItemsProcessed = 0;
                 var currentTaskTotalItems = 0;
                 var undefinedProgress = false;
+
+                float percentCompleteThisTask = 0;
+                var progressReportedAsPercentComplete = false;
 
                 using (var reader = new StreamReader(new FileStream(consoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
@@ -372,28 +415,47 @@ namespace AnalysisManagerTopPICPlugIn
                                 mConsoleOutputErrorMsg = "Error running TopPIC: " + dataLine;
                             }
 
-                            var progressMatch = incrementalProgressMatcher.Match(dataLine);
-                            if (progressMatch.Success)
+                            var percentCompleteMatch = percentCompleteMatcher.Match(dataLine);
+                            if (percentCompleteMatch.Success)
                             {
-                                if (int.TryParse(progressMatch.Groups["Item"].Value, out var itemValue))
-                                    currentTaskItemsProcessed = itemValue;
-
-                                if (int.TryParse(progressMatch.Groups["Total"].Value, out var totalValue))
-                                    currentTaskTotalItems = totalValue;
-
+                                percentCompleteThisTask = float.Parse(percentCompleteMatch.Groups["Progress"].Value);
+                                progressReportedAsPercentComplete = true;
                                 undefinedProgress = false;
                             }
-
-                            var undefinedProgressMatch = undefinedProgressMatcher.Match(dataLine);
-                            if (undefinedProgressMatch.Success)
+                            else
                             {
-                                undefinedProgress = true;
+                                progressReportedAsPercentComplete = false;
+
+                                var progressMatch = incrementalProgressMatcher.Match(dataLine);
+                                if (progressMatch.Success)
+                                {
+                                    if (int.TryParse(progressMatch.Groups["Item"].Value, out var itemValue))
+                                        currentTaskItemsProcessed = itemValue;
+
+                                    if (int.TryParse(progressMatch.Groups["Total"].Value, out var totalValue))
+                                        currentTaskTotalItems = totalValue;
+
+                                    undefinedProgress = false;
+                                }
+
+                                var undefinedProgressMatch = undefinedProgressMatcher.Match(dataLine);
+                                if (undefinedProgressMatch.Success)
+                                {
+                                    undefinedProgress = true;
+                                }
                             }
                         }
                     }
                 }
 
                 float effectiveProgress;
+                if (progressReportedAsPercentComplete)
+                {
+                    // Convert % complete for this step into a pseudo item count by multiplying by 100
+                    currentTaskItemsProcessed = (int)Math.Round(percentCompleteThisTask * 100, 0);
+                    currentTaskTotalItems = 100 * 100;
+                }
+
                 if (!undefinedProgress && currentTaskItemsProcessed > 0 && currentTaskTotalItems > 0)
                 {
                     var nextProgress = 100;
@@ -738,7 +800,14 @@ namespace AnalysisManagerTopPICPlugIn
             // Generating xml files - processing 100 Proteins.
             // Converting xml files to html files - processing 100 of 2833 files.
 
-            var reExtractItem = new Regex(@"processing +(?<Item>\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            var extractItemWithCount = new Regex(@"processing +(?<Item>\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+            // This RegEx matches lines of the form:
+            //
+            // Non PTM filtering - processing 0.122%.
+            // Non PTM filtering - processing 5.6%.
+
+            var extractItemWithPercentComplete = new Regex(@"processing +(?<Progress>[0-9.]+)%", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
             try
             {
@@ -762,8 +831,11 @@ namespace AnalysisManagerTopPICPlugIn
                 using (var reader = new StreamReader(new FileStream(consoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 using (var writer = new StreamWriter(new FileStream(trimmedFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
-                    var itemNumberOutputThreshold = 0;
-                    var lastItemNumber = 0;
+                    float progressOutputThreshold = 0;
+                    float itemNumberOutputThreshold = 0;
+
+                    float lastProgress = 0;
+                    float lastItemNumber = 0;
                     var lastProcessingLine = string.Empty;
 
                     while (!reader.EndOfStream)
@@ -776,33 +848,44 @@ namespace AnalysisManagerTopPICPlugIn
                         }
 
                         var keepLine = true;
+                        var regexMatched = false;
 
-                        var match = reExtractItem.Match(dataLine);
-                        if (match.Success)
+                        var percentCompleteMatch = extractItemWithPercentComplete.Match(dataLine);
+                        if (percentCompleteMatch.Success)
                         {
-                            var itemNumber = int.Parse(match.Groups["Item"].Value);
+                            regexMatched = true;
 
-                            if (itemNumber < lastItemNumber)
-                            {
-                                // We have entered a new processing mode; reset the threshold
-                                itemNumberOutputThreshold = 0;
-                            }
+                            var percentComplete = float.Parse(percentCompleteMatch.Groups["Progress"].Value);
 
-                            lastItemNumber = itemNumber;
+                            keepLine = ExamineConsoleItemNumberOrProgress(
+                                dataLine,
+                                ref lastProgress,
+                                percentComplete,
+                                ref progressOutputThreshold,
+                                20,
+                                out lastProcessingLine);
+                        }
+                        else
+                        {
+                            var match = extractItemWithCount.Match(dataLine);
+                            if (match.Success)
+                            {
+                                regexMatched = true;
 
-                            if (itemNumber < itemNumberOutputThreshold)
-                            {
-                                keepLine = false;
-                                lastProcessingLine = dataLine;
-                            }
-                            else
-                            {
-                                // Write out this line and bump up itemNumberOutputThreshold by 250
-                                itemNumberOutputThreshold += 250;
-                                lastProcessingLine = string.Empty;
+                                var itemNumber = int.Parse(match.Groups["Item"].Value);
+
+                                keepLine = ExamineConsoleItemNumberOrProgress(
+                                    dataLine,
+                                    ref lastItemNumber,
+                                    itemNumber,
+                                    ref itemNumberOutputThreshold,
+                                    250,
+                                    out lastProcessingLine);
+
                             }
                         }
-                        else if (!string.IsNullOrWhiteSpace(lastProcessingLine))
+
+                        if (!regexMatched && !string.IsNullOrWhiteSpace(lastProcessingLine))
                         {
                             writer.WriteLine(lastProcessingLine);
                             lastProcessingLine = string.Empty;
