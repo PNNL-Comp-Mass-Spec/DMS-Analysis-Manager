@@ -138,6 +138,7 @@ namespace DTASpectraFileGen
                 mInstrumentFileName = Path.GetFileName(rawFilePath);
                 mJobParams.AddResultFileToSkip(mInstrumentFileName);
 
+                // Determine the raw file converter .exe name
                 var rawConverter = new FileInfo(mDtaToolNameLoc);
                 if (rawConverter.Directory == null)
                 {

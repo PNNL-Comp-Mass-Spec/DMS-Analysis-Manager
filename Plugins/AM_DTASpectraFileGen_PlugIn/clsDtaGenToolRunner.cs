@@ -97,8 +97,6 @@ namespace DTASpectraFileGen
             var success = CopyResultsToTransferDirectory();
 
             return success ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
-
-
         }
 
         /// <summary>

@@ -1233,7 +1233,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             {
                 if (debugLevel >= 1)
                 {
-                    OnStatusEvent("File not found in ValidateCannoFile (" + cannoFile.Name + "); re-indexing");
+                    OnStatusEvent("Canno file not found locally (" + cannoFile.FullName + "); copying from remote or re-indexing");
                 }
                 return false;
             }
