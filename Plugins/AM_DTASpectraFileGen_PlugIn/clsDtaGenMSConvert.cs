@@ -266,7 +266,7 @@ namespace DTASpectraFileGen
                     centroidMGF = true;
                 }
 
-                // Set up command
+                // Construct a list of arguments to send to MSConvert
                 var argumentList = new List<string> {
                     instrumentFilePath
                 };
@@ -322,6 +322,10 @@ namespace DTASpectraFileGen
 
                 argumentList.Add("--32");
                 argumentList.Add("--mgf");
+
+                // Instruct MSConvert to use a single thread to avoid it freezing if one of the threads throws an exception
+                argumentList.Add("--singleThreaded");
+
                 argumentList.Add("-o " + mWorkDir);
 
                 var arguments = string.Join(" ", argumentList);

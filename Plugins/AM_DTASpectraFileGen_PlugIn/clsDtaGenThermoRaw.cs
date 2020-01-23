@@ -108,12 +108,26 @@ namespace DTASpectraFileGen
             // Note that clsDtaGenMSConvert will update mInstrumentFileName if processing a .mzXml file
             mInstrumentFileName = mDatasetName + ".raw";
 
-            // Make the DTA files (the process runs in a separate thread)
+            var useSingleThread= false;
+
+            // Make the DTA files
             try
             {
-                mDTAFileCreationThread = new System.Threading.Thread(MakeDTAFilesThreaded);
-                mDTAFileCreationThread.Start();
-                mStatus = ProcessStatus.SF_RUNNING;
+                // ReSharper disable HeuristicUnreachableCode
+                // ReSharper disable once ConditionIsAlwaysTrueOrFalse
+                if (useSingleThread)
+                {
+                    MakeDTAFilesThreaded();
+                }
+                // ReSharper restore HeuristicUnreachableCode
+                else
+                {
+                    // Run the process in a separate thread
+                    mDTAFileCreationThread = new System.Threading.Thread(MakeDTAFilesThreaded);
+                    mDTAFileCreationThread.Start();
+                    mStatus = ProcessStatus.SF_RUNNING;
+                }
+
             }
             catch (Exception ex)
             {
