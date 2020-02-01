@@ -515,22 +515,32 @@ namespace AnalysisManagerBase
                 CommandText = SP_NAME_SET_TASK_TOOL_VERSION
             };
 
-            cmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
             cmd.Parameters.Add(new SqlParameter("@job", SqlDbType.Int)).Value = mJobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Job", 0);
             cmd.Parameters.Add(new SqlParameter("@step", SqlDbType.Int)).Value = mJobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Step", 0);
             cmd.Parameters.Add(new SqlParameter("@ToolVersionInfo", SqlDbType.VarChar, 900)).Value = toolVersionInfo;
+            cmd.Parameters.Add(new SqlParameter("@returnCode", SqlDbType.VarChar, 64)).Direction = ParameterDirection.Output;
 
             var analysisTask = new clsAnalysisJob(mMgrParams, DebugLevel);
 
             // Execute the stored procedure (retry the call up to 4 times)
             var resCode = analysisTask.PipelineDBProcedureExecutor.ExecuteSP(cmd, 4);
 
-            if (resCode == 0)
+            var returnCode = cmd.Parameters["@returnCode"].Value.ToString();
+
+            if (resCode == 0 && string.IsNullOrWhiteSpace(returnCode))
             {
                 return true;
             }
 
-            OnErrorEvent("Error " + resCode + " storing tool version in database for current processing step");
+            if (resCode != 0)
+            {
+                OnErrorEvent("Error " + resCode + " storing tool version in database for current processing step");
+            }
+            else
+            {
+                OnErrorEvent(SP_NAME_SET_TASK_TOOL_VERSION + " reported return code " + returnCode);
+            }
+
             return false;
         }
 

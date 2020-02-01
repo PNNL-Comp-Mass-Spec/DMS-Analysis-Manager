@@ -1357,7 +1357,6 @@ namespace AnalysisManagerBase
                     CommandType = CommandType.StoredProcedure
                 };
 
-                cmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
                 cmd.Parameters.Add(new SqlParameter("@processorName", SqlDbType.VarChar, 128)).Value = ManagerName;
                 cmd.Parameters.Add(new SqlParameter("@jobNumber", SqlDbType.Int)).Direction = ParameterDirection.Output;
                 cmd.Parameters.Add(new SqlParameter("@parameters", SqlDbType.VarChar, 8000)).Direction = ParameterDirection.Output;
@@ -1368,6 +1367,8 @@ namespace AnalysisManagerBase
                 var remoteInfo = runJobsRemotely ? clsRemoteTransferUtility.GetRemoteInfoXml(mMgrParams) : string.Empty;
                 cmd.Parameters.Add(new SqlParameter("@remoteInfo", SqlDbType.VarChar, 900)).Value = remoteInfo;
 
+                cmd.Parameters.Add(new SqlParameter("@returnCode", SqlDbType.VarChar, 64)).Direction = ParameterDirection.Output;
+
                 if (mDebugLevel > 4 || TraceMode)
                 {
                     LogDebug("clsAnalysisJob.RequestAnalysisJob(), connection string: " + mBrokerConnStr, (int)BaseLogger.LogLevels.DEBUG);
@@ -1376,15 +1377,34 @@ namespace AnalysisManagerBase
                 }
 
                 // Execute the SP
-                var retVal = PipelineDBProcedureExecutor.ExecuteSP(cmd, 1);
+                var resCode = PipelineDBProcedureExecutor.ExecuteSP(cmd, 1);
+
+                var returnCode = cmd.Parameters["@returnCode"].Value.ToString();
+
+                if (!string.IsNullOrWhiteSpace(returnCode))
+                {
+
+                    if (int.TryParse(returnCode, out var returnCodeValue) && returnCodeValue == RET_VAL_TASK_NOT_AVAILABLE)
+                    {
+                        // No jobs found
+                        return RequestTaskResult.NoTaskFound;
+                    }
+
+                    // The return code was not an empty string, which indicates an error
+                    LogError("RequestAnalysisJobFromDB(), SP execution has return code " + returnCode +
+                             "; Msg text = " + (string)cmd.Parameters["@message"].Value);
+
+                    return RequestTaskResult.ResultError;
+                }
 
                 RequestTaskResult taskResult;
 
-                switch (retVal)
+                switch (resCode)
                 {
                     case RET_VAL_OK:
+
                         // No errors found in SP call, so see if any step tasks were found
-                        mJobId = Convert.ToInt32(cmd.Parameters["@jobNumber"].Value);
+                            mJobId = Convert.ToInt32(cmd.Parameters["@jobNumber"].Value);
                         var jobParamsXML = Convert.ToString(cmd.Parameters["@parameters"].Value);
 
                         // Step task was found; get the data for it
@@ -1406,11 +1426,6 @@ namespace AnalysisManagerBase
                         taskResult = RequestTaskResult.TaskFound;
                         break;
 
-                    case RET_VAL_TASK_NOT_AVAILABLE:
-                        // No jobs found
-                        taskResult = RequestTaskResult.NoTaskFound;
-                        break;
-
                     case ExecuteDatabaseSP.RET_VAL_EXCESSIVE_RETRIES:
                         // Too many retries
                         taskResult = RequestTaskResult.TooManyRetries;
@@ -1423,8 +1438,8 @@ namespace AnalysisManagerBase
 
                     default:
                         // There was an SP error
-                        LogError("clsAnalysisJob.RequestAnalysisJob(), SP execution error " + retVal + "; " +
-                            "Msg text = " + Convert.ToString(cmd.Parameters["@message"].Value));
+                        LogError("clsAnalysisJob.RequestAnalysisJob(), SP execution error " + resCode + "; " +
+                                 "Msg text = " + Convert.ToString(cmd.Parameters["@message"].Value));
                         taskResult = RequestTaskResult.ResultError;
                         break;
                 }
@@ -1948,20 +1963,28 @@ namespace AnalysisManagerBase
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
             cmd.Parameters.Add(new SqlParameter("@managerName", SqlDbType.VarChar, 128)).Value = ManagerName;
             cmd.Parameters.Add(new SqlParameter("@infoOnly", SqlDbType.TinyInt)).Value = 0;
             cmd.Parameters.Add(new SqlParameter("@message", SqlDbType.VarChar, 512)).Direction = ParameterDirection.Output;
+            cmd.Parameters.Add(new SqlParameter("@returnCode", SqlDbType.VarChar, 64)).Direction = ParameterDirection.Output;
 
             // Execute the Stored Procedure (retry the call up to 3 times)
-            var returnCode = PipelineDBProcedureExecutor.ExecuteSP(cmd, 3);
+            var resCode = PipelineDBProcedureExecutor.ExecuteSP(cmd, 3);
 
-            if (returnCode == 0)
+            var returnCode = cmd.Parameters["@returnCode"].Value.ToString();
+
+            if (resCode == 0 && string.IsNullOrWhiteSpace(returnCode))
             {
                 return;
             }
 
-            LogError("Error " + returnCode + " calling " + cmd.CommandText);
+            if (resCode != 0)
+            {
+                LogError("Error " + resCode + " calling " + cmd.CommandText);
+                return;
+            }
+
+            LogError("Call to " + SP_NAME_REPORT_IDLE + " reported return code : " + returnCode);
         }
 
         /// <summary>
@@ -1993,13 +2016,13 @@ namespace AnalysisManagerBase
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
             cmd.Parameters.Add(new SqlParameter("@job", SqlDbType.Int)).Value = GetJobParameter(STEP_PARAMETERS_SECTION, "Job", 0);
             cmd.Parameters.Add(new SqlParameter("@step", SqlDbType.Int)).Value = GetJobParameter(STEP_PARAMETERS_SECTION, "Step", 0);
             cmd.Parameters.Add(new SqlParameter("@completionCode", SqlDbType.Int)).Value = compCode;
             cmd.Parameters.Add(new SqlParameter("@completionMessage", SqlDbType.VarChar, 256)).Value = compMsg.Trim('\r', '\n');
             cmd.Parameters.Add(new SqlParameter("@evaluationCode", SqlDbType.Int)).Value = evalCode;
             cmd.Parameters.Add(new SqlParameter("@evaluationMessage", SqlDbType.VarChar, 256)).Value = evalMsg.Trim('\r', '\n');
+            cmd.Parameters.Add(new SqlParameter("@returnCode", SqlDbType.VarChar, 64)).Direction = ParameterDirection.Output;
 
             var orgDbNameParam = cmd.Parameters.Add(new SqlParameter("@organismDBName", SqlDbType.VarChar, 128));
 
@@ -2062,14 +2085,22 @@ namespace AnalysisManagerBase
             messageParam.Direction = ParameterDirection.Output;
 
             // Call Stored Procedure SetStepTaskComplete (retry the call up to 20 times)
-            var returnCode = PipelineDBProcedureExecutor.ExecuteSP(cmd, 20);
+            var resCode = PipelineDBProcedureExecutor.ExecuteSP(cmd, 20);
 
-            if (returnCode == 0)
-            {
+            var returnCode = cmd.Parameters["@returnCode"].Value.ToString();
+
+            if (resCode == 0 && string.IsNullOrWhiteSpace(returnCode))
                 return true;
-            }
 
-            var errorMessage = "Error " + returnCode + " setting analysis job complete";
+            string errorMessage;
+            if (resCode != 0)
+            {
+                errorMessage = "Error " + resCode + " setting analysis job complete";
+            }
+            else
+            {
+                errorMessage = "Stored procedure " + SP_NAME_SET_COMPLETE + " reported return code " + returnCode;
+            }
 
             var messageDetails = clsGlobal.DbCStr(messageParam.Value);
             if (!string.IsNullOrWhiteSpace(messageDetails))

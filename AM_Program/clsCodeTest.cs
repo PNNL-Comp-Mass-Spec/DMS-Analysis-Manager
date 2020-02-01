@@ -1271,7 +1271,7 @@ namespace AnalysisManagerProg
                 CommandType = CommandType.StoredProcedure,
                 CommandText = "GetJobStepParamsAsTable"
             };
-            cmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
+
             cmd.Parameters.Add(new SqlParameter("@jobNumber", SqlDbType.Int)).Value = 1026591;
             cmd.Parameters.Add(new SqlParameter("@stepNumber", SqlDbType.Int)).Value = 3;
             cmd.Parameters.Add(new SqlParameter("@message", SqlDbType.VarChar, 512)).Direction = ParameterDirection.Output;

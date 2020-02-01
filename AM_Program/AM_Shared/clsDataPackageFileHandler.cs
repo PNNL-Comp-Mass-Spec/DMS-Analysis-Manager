@@ -157,7 +157,6 @@ namespace AnalysisManagerBase
                     CommandType = CommandType.StoredProcedure
                 };
 
-                cmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
                 cmd.Parameters.Add(new SqlParameter("@job", SqlDbType.Int)).Value = job;
 
                 var stepToolFilterParam = cmd.Parameters.Add(new SqlParameter("@stepToolFilter", SqlDbType.VarChar, 8000));

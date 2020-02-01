@@ -265,9 +265,6 @@ namespace AnalysisManagerBase
                     CommandType = CommandType.StoredProcedure,
                 };
 
-                cmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int));
-                cmd.Parameters["@Return"].Direction = ParameterDirection.ReturnValue;
-
                 // Manager items
                 AddSPParameter(cmd.Parameters, "@MgrName", statusInfo.MgrName, 128);
                 AddSPParameter(cmd.Parameters, "@MgrStatusCode", (int)statusInfo.MgrStatus);

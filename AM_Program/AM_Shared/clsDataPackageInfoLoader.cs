@@ -292,7 +292,6 @@ namespace AnalysisManagerBase
                     CommandTimeout = TIMEOUT_SECONDS
                 };
 
-                cmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
                 cmd.Parameters.Add(new SqlParameter("@jobNumber", SqlDbType.Int)).Value = jobNumber;
                 cmd.Parameters.Add(new SqlParameter("@stepNumber", SqlDbType.Int)).Value = 1;
 

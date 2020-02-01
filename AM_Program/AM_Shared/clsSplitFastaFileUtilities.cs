@@ -315,13 +315,13 @@ namespace AnalysisManagerBase
                         CommandText = SP_NAME_UPDATE_ORGANISM_DB_FILE
                     };
 
-                    cmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
                     cmd.Parameters.Add(new SqlParameter("@FastaFileName", SqlDbType.VarChar, 128)).Value = splitFastaName;
                     cmd.Parameters.Add(new SqlParameter("@OrganismName", SqlDbType.VarChar, 128)).Value = organismName;
                     cmd.Parameters.Add(new SqlParameter("@NumProteins", SqlDbType.Int)).Value = currentSplitFasta.NumProteins;
                     cmd.Parameters.Add(new SqlParameter("@NumResidues", SqlDbType.BigInt)).Value = currentSplitFasta.NumResidues;
                     cmd.Parameters.Add(new SqlParameter("@FileSizeKB", SqlDbType.Int)).Value = (splitFastaFileInfo.Length / 1024.0).ToString("0");
                     cmd.Parameters.Add(new SqlParameter("@Message", SqlDbType.VarChar, 512)).Value = string.Empty;
+                    cmd.Parameters.Add(new SqlParameter("@returnCode", SqlDbType.VarChar, 64)).Direction = ParameterDirection.Output;
 
                     var retryCount = 3;
                     while (retryCount > 0)
@@ -334,15 +334,15 @@ namespace AnalysisManagerBase
                                 cmd.Connection = connection;
                                 cmd.ExecuteNonQuery();
 
-                                var resultCode = Convert.ToInt32(cmd.Parameters["@Return"].Value);
+                                var returnCode = cmd.Parameters["@returnCode"].Value.ToString();
 
-                                if (resultCode != 0)
+                                if (!string.IsNullOrWhiteSpace(returnCode))
                                 {
                                     // Error occurred
-                                    ErrorMessage = SP_NAME_UPDATE_ORGANISM_DB_FILE + " returned a non-zero error code of " + resultCode;
+                                    ErrorMessage = SP_NAME_UPDATE_ORGANISM_DB_FILE + " reported return code " + returnCode;
 
                                     var statusMessage = cmd.Parameters["@Message"].Value;
-                                    if ((statusMessage != null))
+                                    if (statusMessage != null)
                                     {
                                         ErrorMessage = ErrorMessage + "; " + Convert.ToString(statusMessage);
                                     }
@@ -413,7 +413,7 @@ namespace AnalysisManagerBase
                     CommandText = SP_NAME_REFRESH_CACHED_ORG_DB_INFO
                 };
 
-                cmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
+                cmd.Parameters.Add(new SqlParameter("@returnCode", SqlDbType.VarChar, 64)).Direction = ParameterDirection.Output;
 
                 var retryCount = 3;
                 while (retryCount > 0)
@@ -426,12 +426,12 @@ namespace AnalysisManagerBase
                             cmd.Connection = connection;
                             cmd.ExecuteNonQuery();
 
-                            var resultCode = Convert.ToInt32(cmd.Parameters["@Return"].Value);
+                            var returnCode = cmd.Parameters["@returnCode"].Value.ToString();
 
-                            if (resultCode != 0)
+                            if (!string.IsNullOrWhiteSpace(returnCode))
                             {
                                 // Error occurred
-                                OnErrorEvent("Call to " + SP_NAME_REFRESH_CACHED_ORG_DB_INFO + " returned a non-zero error code: " + resultCode);
+                                OnErrorEvent("Call to " + SP_NAME_REFRESH_CACHED_ORG_DB_INFO + " reported return code : " + returnCode);
                             }
 
                         }
