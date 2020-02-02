@@ -1380,11 +1380,12 @@ namespace AnalysisManagerBase
                 var resCode = PipelineDBProcedureExecutor.ExecuteSP(cmd, 1);
 
                 var returnCode = cmd.Parameters["@returnCode"].Value.ToString();
+                var returnCodeValue = clsGlobal.GetReturnCodeValue(returnCode);
 
-                if (!string.IsNullOrWhiteSpace(returnCode))
+                if (returnCodeValue != 0)
                 {
 
-                    if (int.TryParse(returnCode, out var returnCodeValue) && returnCodeValue == RET_VAL_TASK_NOT_AVAILABLE)
+                    if (returnCodeValue == RET_VAL_TASK_NOT_AVAILABLE)
                     {
                         // No jobs found
                         return RequestTaskResult.NoTaskFound;
@@ -1972,8 +1973,9 @@ namespace AnalysisManagerBase
             var resCode = PipelineDBProcedureExecutor.ExecuteSP(cmd, 3);
 
             var returnCode = cmd.Parameters["@returnCode"].Value.ToString();
+            var returnCodeValue = clsGlobal.GetReturnCodeValue(returnCode);
 
-            if (resCode == 0 && string.IsNullOrWhiteSpace(returnCode))
+            if (resCode == 0 && returnCodeValue == 0)
             {
                 return;
             }
@@ -2088,9 +2090,12 @@ namespace AnalysisManagerBase
             var resCode = PipelineDBProcedureExecutor.ExecuteSP(cmd, 20);
 
             var returnCode = cmd.Parameters["@returnCode"].Value.ToString();
+            var returnCodeValue = clsGlobal.GetReturnCodeValue(returnCode);
 
-            if (resCode == 0 && string.IsNullOrWhiteSpace(returnCode))
+            if (resCode == 0 && returnCodeValue == 0)
+            {
                 return true;
+            }
 
             string errorMessage;
             if (resCode != 0)

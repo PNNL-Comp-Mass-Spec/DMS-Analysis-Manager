@@ -335,8 +335,9 @@ namespace AnalysisManagerBase
                                 cmd.ExecuteNonQuery();
 
                                 var returnCode = cmd.Parameters["@returnCode"].Value.ToString();
+                                var returnCodeValue = clsGlobal.GetReturnCodeValue(returnCode);
 
-                                if (!string.IsNullOrWhiteSpace(returnCode))
+                                if (returnCodeValue != 0)
                                 {
                                     // Error occurred
                                     ErrorMessage = SP_NAME_UPDATE_ORGANISM_DB_FILE + " reported return code " + returnCode;
@@ -427,8 +428,9 @@ namespace AnalysisManagerBase
                             cmd.ExecuteNonQuery();
 
                             var returnCode = cmd.Parameters["@returnCode"].Value.ToString();
+                            var returnCodeValue = clsGlobal.GetReturnCodeValue(returnCode);
 
-                            if (!string.IsNullOrWhiteSpace(returnCode))
+                            if (returnCodeValue != 0)
                             {
                                 // Error occurred
                                 OnErrorEvent("Call to " + SP_NAME_REFRESH_CACHED_ORG_DB_INFO + " reported return code : " + returnCode);

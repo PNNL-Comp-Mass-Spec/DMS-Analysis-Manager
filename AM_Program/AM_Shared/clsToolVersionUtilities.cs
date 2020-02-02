@@ -526,8 +526,9 @@ namespace AnalysisManagerBase
             var resCode = analysisTask.PipelineDBProcedureExecutor.ExecuteSP(cmd, 4);
 
             var returnCode = cmd.Parameters["@returnCode"].Value.ToString();
+            var returnCodeValue = clsGlobal.GetReturnCodeValue(returnCode);
 
-            if (resCode == 0 && string.IsNullOrWhiteSpace(returnCode))
+            if (resCode == 0 && returnCodeValue == 0)
             {
                 return true;
             }
