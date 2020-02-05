@@ -9,6 +9,7 @@ using AnalysisManagerBase;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using CsvHelper;
 
@@ -198,7 +199,8 @@ namespace AnalysisManagerTopPICPlugIn
                 {"ProteoformCutoffType", "proteoform-cutoff-type"},
                 {"ProteoformCutoffValue", "proteoform-cutoff-value"},
                 {"Decoy", "decoy"},
-                {"NTerminalProteinForms", "n-terminal-form"}
+                {"NTerminalProteinForms", "n-terminal-form"},
+                {"KeepTempFiles", "keep-temp-files"}
             };
 
             if (useSeparateErrorTolerances)
@@ -575,7 +577,8 @@ namespace AnalysisManagerTopPICPlugIn
                 "StaticMod",
                 "DynamicMod",
                 "NTerminalProteinForms",
-                "Decoy"
+                "Decoy",
+                "KeepTempFiles"
             };
 
             cmdLineOptions = paramFileReader.ConvertParamsToArgs(paramFileEntries, paramToArgMapping, paramNamesToSkip, "--");
@@ -589,9 +592,16 @@ namespace AnalysisManagerTopPICPlugIn
             // Other options for activation are CID, HCDCID, ETDCID, or UVPDCID
             cmdLineOptions += " --activation=FILE";
 
-            if (paramFileReader.ParamIsEnabled(paramFileEntries, "Decoy"))
+            // Arguments in this list are appended as --decoy or --keep-temp-files and not as "--decoy True" or "--keep-temp-files True"
+            // Append these if set to True in the parameter file
+            var extraArguments = new List<string> {"Decoy", "KeepTempFiles"};
+
+            foreach (var optionalArgument in extraArguments)
             {
-                cmdLineOptions += " --decoy";
+                if (paramFileReader.ParamIsEnabled(paramFileEntries, optionalArgument))
+                {
+                    cmdLineOptions += " --" + paramToArgMapping[optionalArgument];
+                }
             }
 
             var staticMods = new List<string>();
@@ -674,11 +684,11 @@ namespace AnalysisManagerTopPICPlugIn
             // Set up and execute a program runner to run TopPIC
             // By default uses all cores; limit the number of cores to 4 with "--thread-number 4"
 
-            var eResult = ParseTopPICParameterFile(fastaFileIsDecoy, out var cmdLineOptions);
+            var result = ParseTopPICParameterFile(fastaFileIsDecoy, out var cmdLineOptions);
 
-            if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
+            if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
-                return eResult;
+                return result;
             }
 
             var msalignFileName = mDatasetName + clsAnalysisResourcesTopPIC.MSALIGN_FILE_SUFFIX;
@@ -1015,6 +1025,40 @@ namespace AnalysisManagerTopPICPlugIn
                     return false;
                 }
 
+                // Add numerous temp files to skip
+                // These are created when the parameter file has KeepTempFiles=True
+                // Example names:
+                //   DatasetName_ms2.toppic_one_filter_prefix
+                //   DatasetName_ms2.toppic_two_ptm_complete
+                //   DatasetName_ms2.toppic_zero_ptm_internal
+
+                var tempFileShiftNames = new List<string> {
+                    "zero",
+                    "one",
+                    "two"
+                };
+
+                var tempFileSuffixes = new List<string>
+                {
+                    "filter_complete",
+                    "filter_internal",
+                    "filter_prefix",
+                    "filter_suffix",
+                    "ptm_complete",
+                    "ptm_internal",
+                    "ptm_prefix",
+                    "ptm_suffix"
+                };
+
+                foreach (var shiftName in tempFileShiftNames)
+                {
+                    foreach (var suffixName in tempFileSuffixes)
+                    {
+                        var fileNameToSkip = string.Format("{0}_ms2.toppic_{1}_{2}", Dataset, shiftName, suffixName);
+                        mJobParams.AddResultFileToSkip(fileNameToSkip);
+                    }
+                }
+
                 // Zip the Html directory (or directories)
                 // The TopPIC 1.3 release of TopPIC (January 2020) creates just one _html directory, named DatasetName_html
                 // The TopPIC 1.2 release of TopPIC (November 2018) has Html directories that include the text _ms2_toppic
@@ -1107,16 +1151,26 @@ namespace AnalysisManagerTopPICPlugIn
                 }
 
                 CsvParser csvParser = null;
+                var currentLineNumber = 0;
 
                 // Open the input file and output file
                 // The output file will not include the Parameters block before the header line of the data block
+
+                // Note that the csvParser is instantiated with the StreamReader and thus
+                // reader.EndOfStream is no longer reliable after the CsvParser has been instantiated
+
                 using (var reader = new StreamReader(new FileStream(sourceFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 using (var writer = new StreamWriter(new FileStream(targetFile.FullName, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
                 {
-                    while (!reader.EndOfStream)
+                    while (true)
                     {
+
                         if (!foundParamHeaderB)
                         {
+                            if (reader.EndOfStream)
+                                break;
+
+                            currentLineNumber++;
                             var paramBlockLine = reader.ReadLine();
 
                             if (string.IsNullOrEmpty(paramBlockLine))
@@ -1163,11 +1217,31 @@ namespace AnalysisManagerTopPICPlugIn
                         string dataLine;
                         if (useCsvReader)
                         {
-                            var csvCols = csvParser.Read();
-                            dataLine = string.Join("\t", csvCols);
+                            try
+                            {
+                                currentLineNumber++;
+                                var csvCols = csvParser.Read();
+
+                                if (csvCols == null)
+                                {
+                                    // csvParser returns Null after all lines have been read from the file
+                                    break;
+                                }
+                                dataLine = string.Join("\t", csvCols);
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine("Csv reader raised exception reading line {0}: {1}", currentLineNumber, ex.Message);
+                                break;
+                            }
+
                         }
                         else
                         {
+                            if (reader.EndOfStream)
+                                break;
+
+                            currentLineNumber++;
                             dataLine = reader.ReadLine();
                         }
 
