@@ -7,14 +7,31 @@
 
 using AnalysisManagerBase;
 using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Text.RegularExpressions;
 
 namespace AnalysisManagerTopFDPlugIn
 {
+
     /// <summary>
     /// Retrieve resources for the TopFD plugin
     /// </summary>
     public class clsAnalysisResourcesTopFD : clsAnalysisResources
     {
+
+        public const string JOB_PARAM_EXISTING_TOPFD_RESULTS_DIRECTORY = "ExistingTopFDResultsDirectory";
+        public const string JOB_PARAM_EXISTING_TOPFD_TOOL_VERSION = "ExistingTopFDResultsToolVersion";
+
+        #region "Structures"
+
+        private struct TopFDJobInfoType
+        {
+            public string ToolVersion;
+            public string ResultsDirectoryName;
+        }
+
+        #endregion
 
         /// <summary>
         /// Retrieve required files
@@ -42,7 +59,6 @@ namespace AnalysisManagerTopFDPlugIn
                     return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
                 }
 
-
                 // Retrieve the TopFD parameter file
                 currentTask = "Retrieve the TopFD parameter file " + topFdParamFile;
 
@@ -62,17 +78,29 @@ namespace AnalysisManagerTopFDPlugIn
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
 
-                currentTask = "Get Input file";
+                currentTask = "Find existing results";
 
-                var eResult = GetMzMLFile();
-                if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    mMessage = "";
+                // Look for existing TopFD results for this dataset (using the same parameter file and same version of TopFD)
+                // Simulate running TopFD if a match is found
+                var existingResultsFound = FindExistingTopFDResults(out var criticalError);
+
+                if (criticalError)
                     return CloseOutType.CLOSEOUT_FAILED;
-                }
 
-                // Make sure we don't move the .mzML file into the results folder
-                mJobParams.AddResultFileExtensionToSkip(DOT_MZML_EXTENSION);
+                if (!existingResultsFound)
+                {
+                    currentTask = "Get Input file";
+
+                    var eResult = GetMzMLFile();
+                    if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
+                    {
+                        mMessage = "";
+                        return CloseOutType.CLOSEOUT_FAILED;
+                    }
+
+                    // Make sure we don't move the .mzML file into the results folder
+                    mJobParams.AddResultFileExtensionToSkip(DOT_MZML_EXTENSION);
+                }
 
                 if (!ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadLayout.FlatNoSubdirectories))
                 {
@@ -88,6 +116,203 @@ namespace AnalysisManagerTopFDPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
+        }
+
+        /// <summary>
+        /// Look for an existing TopFD results for this dataset (using the same parameter file and same version of TopFD)
+        /// If found, creates job step parameters ExistingTopFDResultsDirectory and ExistingTopFDResultsToolVersion
+        /// </summary>
+        /// <param name="criticalError"></param>
+        /// <returns>True if existing results were found, otherwise false</returns>
+        private bool FindExistingTopFDResults(out bool criticalError)
+        {
+            criticalError = false;
+
+            try
+            {
+                var datasetID = mJobParams.GetJobParameter("DatasetID", 0);
+                if (datasetID == 0)
+                {
+                    LogError("Job parameters do not have DatasetID (or it is 0); unable to look for existing TopFD results");
+                    criticalError = true;
+                    return false;
+                }
+
+                var settingsFileToFind = mJobParams.GetJobParameter("SettingsFileName", string.Empty).Trim();
+                if (string.IsNullOrWhiteSpace(settingsFileToFind))
+                {
+                    LogError("Job parameters do not SettingsFileName (or it is an empty string); unable to look for existing TopFD results");
+                    criticalError = true;
+                    return false;
+                }
+
+                // Determine the path to the TopFD program
+                var topFDProgLoc = clsAnalysisToolRunnerBase.DetermineProgramLocation(
+                    mMgrParams, mJobParams, StepToolName,
+                    "TopFDProgLoc",
+                    clsAnalysisToolRunnerTopFD.TOPFD_EXE_NAME,
+                    out var errorMessage);
+
+                if (string.IsNullOrWhiteSpace(topFDProgLoc))
+                {
+                    // The error has already been logged, but we need to update mMessage
+                    mMessage = clsGlobal.AppendToComment(mMessage, errorMessage);
+                    criticalError = true;
+                    return false;
+                }
+
+                var topFDExe = new FileInfo(topFDProgLoc);
+                if (!topFDExe.Exists)
+                {
+                    mMessage = clsGlobal.AppendToComment(mMessage, "File not found: " + topFDExe.FullName);
+                    criticalError = true;
+                    return false;
+                }
+
+                // Data Source=gigasax;Initial Catalog=DMS_Pipeline
+                var brokerDbConnectionString = mMgrParams.GetParam("BrokerConnectionString");
+
+                // Part 1: Find other TopFD jobs for this dataset
+                var jobStepsQuery = "SELECT Job, Tool_Version, Output_Folder " +
+                                    "FROM V_Job_Steps_History_Export " +
+                                    "WHERE Tool = 'TopFD' AND " +
+                                    "      Dataset_ID = " + datasetID + " AND " +
+                                    "      State = 5 " +
+                                    "ORDER BY Job Desc";
+
+                var success1 = clsGlobal.GetQueryResults(
+                    jobStepsQuery,
+                    brokerDbConnectionString,
+                    out var jobStepsResults,
+                    "FindExistingTopFDResults");
+
+                if (!success1 || jobStepsResults.Count <= 0)
+                    return false;
+
+                var jobCandidates = new Dictionary<int, TopFDJobInfoType>();
+
+                var dateMatcher = new Regex(@"\d+-\d+-\d+ \d+:\d+:\d+ (AM|PM)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+                foreach (var result in jobStepsResults)
+                {
+                    // Parse out the TopFD.exe date from the tool version
+                    // For example:
+                    // TopFD 1.3.1; topfd.exe: 2020-01-13 10:55:30 AM
+
+                    var job = result[0];
+                    if (!int.TryParse(job, out var jobValue))
+                    {
+                        LogWarning(string.Format("Dataset {0} has a non-numeric job in V_Job_Steps_History_Export: {1}", datasetID, job));
+                        continue;
+                    }
+
+                    var toolVersion = result[1];
+                    var resultsDirectory = result[2];
+
+                    var charIndex = toolVersion.IndexOf("topfd.exe:", StringComparison.OrdinalIgnoreCase);
+                    if (charIndex < 0)
+                        continue;
+
+                    // The executable date should be in the form defined by clsAnalysisToolRunnerBase.DATE_TIME_FORMAT
+
+                    var topFDToolAndDate = toolVersion.Substring(charIndex);
+
+                    var dateMatch = dateMatcher.Match(topFDToolAndDate);
+                    if (!dateMatch.Success)
+                    {
+                        LogWarning(string.Format(
+                            "The TopFD tool version for dataset {0}, job {1} does not contain a date: {2}",
+                            datasetID, job, topFDToolAndDate));
+                        continue;
+                    }
+
+                    if (!DateTime.TryParse(dateMatch.Value, out var existingJobToolDate))
+                    {
+                        LogWarning(string.Format(
+                            "The TopFD tool version for dataset {0}, job {1} is not a valid date: {2}",
+                            datasetID, job, topFDToolAndDate));
+                        continue;
+                    }
+
+                    if (Math.Abs(topFDExe.LastWriteTime.Subtract(existingJobToolDate).TotalHours) > 3)
+                    {
+                        // The local topfd.exe file has a modification time more than 3 hours apart from that in the ToolVersion info
+                        continue;
+                    }
+
+                    var topFDJobInfo = new TopFDJobInfoType
+                    {
+                        ToolVersion = toolVersion,
+                        ResultsDirectoryName = resultsDirectory
+                    };
+
+                    jobCandidates.Add(jobValue, topFDJobInfo);
+                }
+
+                var jobList = string.Join(",", jobCandidates.Keys);
+
+                // Data Source=gigasax;Initial Catalog=DMS5
+                var dmsConnectionString = mMgrParams.GetParam("ConnectionString");
+
+                // Part 2: Determine the settings files for the jobs in jobCandidates
+                var settingsFileQuery = "SELECT Job, SettingsFileName " +
+                                        "FROM V_Analysis_Job_Export_DataPkg " +
+                                        "WHERE Job in (" + jobList + ") " +
+                                        "ORDER BY Job Desc";
+
+                var success2 = clsGlobal.GetQueryResults(
+                    settingsFileQuery,
+                    dmsConnectionString,
+                    out var settingsFileResults,
+                    "FindExistingTopFDResults");
+
+                if (!success2 || settingsFileResults.Count <= 0)
+                    return false;
+
+                foreach (var result in settingsFileResults)
+                {
+                    var job = result[0];
+                    if (!int.TryParse(job, out var jobValue))
+                    {
+                        LogWarning(string.Format("Dataset {0} has a non-numeric job in V_Analysis_Job_Export: {1}", datasetID, job));
+                        continue;
+                    }
+
+                    var settingsFile = result[1].Trim();
+                    if (!settingsFile.Equals(settingsFileToFind))
+                        continue;
+
+                    // This job used the same settings file
+                    // Use its existing TopFD results
+
+                    var datasetStoragePath = mJobParams.GetParam("DatasetStoragePath");
+                    var datasetDirectoryPath = Path.Combine(datasetStoragePath, mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_DATASET_FOLDER_NAME));
+                    var resultsDirectoryPath = Path.Combine(datasetDirectoryPath, jobCandidates[jobValue].ResultsDirectoryName);
+
+                    var resultsDirectory = new DirectoryInfo(resultsDirectoryPath);
+                    if (!resultsDirectory.Exists)
+                    {
+                        LogWarning(string.Format("Results directory not found for dataset {0}, job {1}: {2}", datasetID, job, resultsDirectoryPath));
+                        continue;
+                    }
+
+                    var existingResultsDirectory = resultsDirectory.FullName;
+                    var toolVersionInfo = jobCandidates[jobValue].ToolVersion;
+
+                    mJobParams.AddAdditionalParameter("StepParameters", JOB_PARAM_EXISTING_TOPFD_RESULTS_DIRECTORY, existingResultsDirectory);
+                    mJobParams.AddAdditionalParameter("StepParameters", JOB_PARAM_EXISTING_TOPFD_TOOL_VERSION, toolVersionInfo);
+
+                    return true;
+                }
+
+                return false;
+            }
+            catch (Exception ex)
+            {
+                // Ignore errors here
+                LogError("Error looking for existing TopFD results: " + ex.Message);
+                return false;
+            }
         }
     }
 }

@@ -34,7 +34,7 @@ namespace AnalysisManagerTopFDPlugIn
         private const string MSALIGN_FILE_SUFFIX = "_ms2.msalign";
 
         private const string TOPFD_CONSOLE_OUTPUT = "TopFD_ConsoleOutput.txt";
-        private const string TOPFD_EXE_NAME = "topfd.exe";
+        public const string TOPFD_EXE_NAME = "topfd.exe";
 
         private const float PROGRESS_PCT_STARTING = 1;
         private const float PROGRESS_PCT_COMPLETE = 99;
@@ -96,7 +96,25 @@ namespace AnalysisManagerTopFDPlugIn
                 mTopFDVersion = string.Empty;
                 mConsoleOutputErrorMsg = string.Empty;
 
-                var processingResult = StartTopFD(mTopFDProgLoc);
+                // Check whether an existing TopFD results directory was found
+                var existingTopFDResultsDirectory = mJobParams.GetJobParameter(
+                    "StepParameters",
+                    clsAnalysisResourcesTopFD.JOB_PARAM_EXISTING_TOPFD_RESULTS_DIRECTORY,
+                    string.Empty);
+
+                CloseOutType processingResult;
+                bool zipSubdirectories;
+
+                if (!string.IsNullOrWhiteSpace(existingTopFDResultsDirectory))
+                {
+                    processingResult = RetrieveExistingTopFDResults(existingTopFDResultsDirectory);
+                    zipSubdirectories = false;
+                }
+                else
+                {
+                    processingResult = StartTopFD(mTopFDProgLoc);
+                    zipSubdirectories = true;
+                }
 
                 mProgress = PROGRESS_PCT_COMPLETE;
 
@@ -123,7 +141,7 @@ namespace AnalysisManagerTopFDPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                var success = CopyResultsToTransferDirectory();
+                var success = CopyResultsToTransferDirectory(zipSubdirectories);
                 if (!success)
                     return CloseOutType.CLOSEOUT_FAILED;
 
@@ -138,17 +156,20 @@ namespace AnalysisManagerTopFDPlugIn
 
         }
 
-
         /// <summary>
         /// Zip the _file and _html directories, if they exist
         /// Next, Make the local results directory, move files into that directory, then copy the files to the transfer directory on the Proto-x server
         /// </summary>
+        /// <param name="zipSubdirectories"></param>
         /// <returns>True if success, otherwise false</returns>
-        private bool CopyResultsToTransferDirectory()
+        private bool CopyResultsToTransferDirectory(bool zipSubdirectories)
         {
-            var zipSuccess = ZipTopFDDirectories();
-            if (!zipSuccess)
-                return false;
+            if (zipSubdirectories)
+            {
+                var zipSuccess = ZipTopFDDirectories();
+                if (!zipSuccess)
+                    return false;
+            }
 
             var success = base.CopyResultsToTransferDirectory();
             return success;
@@ -349,6 +370,73 @@ namespace AnalysisManagerTopFDPlugIn
             }
 
             return CloseOutType.CLOSEOUT_SUCCESS;
+        }
+
+        private CloseOutType RetrieveExistingTopFDResults(string sourceDirectoryPath)
+        {
+
+            try
+            {
+                // Copy the existing TopFD results files to the working directory
+                // Do not copy the _html.zip file; TopPIC doesn't need it (and it can be huge)
+
+                var filesToFind = new List<string>
+                {
+                    mDatasetName + "_ms1.feature",
+                    mDatasetName + "_ms2.feature",
+                    mDatasetName + "_ms2.msalign",
+                    mDatasetName + "_feature.xml",
+                    "TopFD_ConsoleOutput.txt"
+                };
+
+                var paramFileName = mJobParams.GetParam("TopFD_ParamFile");
+
+                if (string.IsNullOrWhiteSpace(paramFileName))
+                {
+                    LogWarning("TopFD parameter file not defined in the job settings; will use the TopFD parameter file that was already copied locally");
+                }
+                else
+                {
+                    filesToFind.Add(paramFileName);
+                }
+
+                var sourceDirectory = new DirectoryInfo(sourceDirectoryPath);
+
+                foreach (var fileToFind in filesToFind)
+                {
+                    var sourceFile = new FileInfo(Path.Combine(sourceDirectory.FullName, fileToFind));
+                    if (!sourceFile.Exists)
+                    {
+                        LogError("Cannot retrieve existing TopFD results; existing TopFD results file not found at " + sourceFile.FullName);
+                        return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+                    }
+
+                    var destinationFilePath = Path.Combine(mWorkDir, sourceFile.Name);
+                    sourceFile.CopyTo(destinationFilePath, true);
+                }
+
+                mEvalMessage = string.Format(
+                    "Retrieved {0} existing TopFD result files from {1}",
+                    filesToFind.Count, sourceDirectory.FullName);
+
+                LogMessage(EvalMessage);
+
+                var toolVersionInfo = mJobParams.GetJobParameter(
+                    "StepParameters",
+                    clsAnalysisResourcesTopFD.JOB_PARAM_EXISTING_TOPFD_TOOL_VERSION,
+                    string.Empty);
+
+                SetStepTaskToolVersion(toolVersionInfo, new List<FileInfo>(), saveToolVersionTextFile: false);
+
+                return CloseOutType.CLOSEOUT_SUCCESS;
+            }
+            catch (Exception ex)
+            {
+                // Ignore errors here
+                LogError("Error retrieving existing TopFD results: " + ex.Message);
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+
         }
 
         private CloseOutType StartTopFD(string progLoc)
