@@ -1536,7 +1536,6 @@ namespace AnalysisManagerBase
             string stepToolName, string progLocManagerParamName, string exeName,
             out string errorMessage)
         {
-
             // Check whether the settings file specifies that a specific version of the step tool be used
             var stepToolVersion = jobParams.GetParam(stepToolName + "_Version");
 

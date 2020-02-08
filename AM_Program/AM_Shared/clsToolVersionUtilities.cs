@@ -364,8 +364,12 @@ namespace AnalysisManagerBase
                     {
                         if (toolFile.Exists)
                         {
-                            exeInfo = clsGlobal.AppendToComment(exeInfo, toolFile.Name + ": " +
-                                                                         toolFile.LastWriteTime.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT));
+                            // Note: the TopFD plugin expects the tool version to be in the format
+                            // program.exe: yyyy-MM-dd hh:mm:ss tt
+                            var toolFileNameAndDate = toolFile.Name + ": " +
+                                                      toolFile.LastWriteTime.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT);
+
+                            exeInfo = clsGlobal.AppendToComment(exeInfo, toolFileNameAndDate);
 
                             if (DebugLevel >= 2)
                                 OnStatusEvent("EXE Info: " + exeInfo);
