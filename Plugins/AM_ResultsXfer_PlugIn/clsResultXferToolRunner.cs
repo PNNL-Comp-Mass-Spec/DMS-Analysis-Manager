@@ -73,7 +73,7 @@ namespace AnalysisManagerResultsXferPlugin
 
         private bool ChangeFolderPathsToLocal(string serverName, ref string transferFolderPath, ref string datasetStoragePath)
         {
-            var connectionString = mMgrParams.GetParam("connectionstring");
+            var connectionString = mMgrParams.GetParam("ConnectionString");
 
             var datasetStorageVolServer = LookupLocalPath(serverName, datasetStoragePath, "raw-storage", connectionString);
             if (string.IsNullOrWhiteSpace(datasetStorageVolServer))
@@ -242,21 +242,21 @@ namespace AnalysisManagerResultsXferPlugin
         /// <summary>
         /// Moves files from one local directory to another local directory
         /// </summary>
-        /// <param name="sourceFolderpath"></param>
+        /// <param name="sourceFolderPath"></param>
         /// <param name="targetFolderPath"></param>
         /// <param name="overwriteExisting"></param>
         /// <returns></returns>
         /// <remarks></remarks>
-        protected bool MoveFilesLocally(string sourceFolderpath, string targetFolderPath, bool overwriteExisting)
+        protected bool MoveFilesLocally(string sourceFolderPath, string targetFolderPath, bool overwriteExisting)
         {
             var success = true;
             var errorCount = 0;
 
             try
             {
-                if (sourceFolderpath.StartsWith(@"\\"))
+                if (sourceFolderPath.StartsWith(@"\\"))
                 {
-                    mMessage = "MoveFilesLocally cannot be used with files on network shares; " + sourceFolderpath;
+                    mMessage = "MoveFilesLocally cannot be used with files on network shares; " + sourceFolderPath;
                     return false;
                 }
 
@@ -266,7 +266,7 @@ namespace AnalysisManagerResultsXferPlugin
                     return false;
                 }
 
-                var diSourceFolder = new DirectoryInfo(sourceFolderpath);
+                var diSourceFolder = new DirectoryInfo(sourceFolderPath);
                 var diTargetFolder = new DirectoryInfo(targetFolderPath);
 
                 if (!diTargetFolder.Exists)
@@ -341,7 +341,7 @@ namespace AnalysisManagerResultsXferPlugin
             }
             catch (Exception ex)
             {
-                LogError("Error moving directory " + sourceFolderpath + ": " + ex.Message);
+                LogError("Error moving directory " + sourceFolderPath + ": " + ex.Message);
                 success = false;
             }
 
