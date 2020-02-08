@@ -81,6 +81,8 @@ namespace AnalysisManagerTopPICPlugIn
             // Keys in this dictionary are filenames, values are True if the file needs to be unzipped
             var filesToRetrieve = new Dictionary<string, bool>();
 
+            var htmlFileName = DatasetName + "_html.zip";
+
             var legacyFeatureFile = new FileInfo(Path.Combine(sourceDirPath, DatasetName + TOPFD_FEATURE_FILE_SUFFIX));
             if (legacyFeatureFile.Exists)
             {
@@ -91,8 +93,9 @@ namespace AnalysisManagerTopPICPlugIn
                 filesToRetrieve.Add(DatasetName + "_ms1" + TOPFD_FEATURE_FILE_SUFFIX, false);
                 filesToRetrieve.Add(DatasetName + "_ms2" + TOPFD_FEATURE_FILE_SUFFIX, false);
 
-                // Also retrieve the _html.zip file
-                filesToRetrieve.Add(DatasetName + "_html.zip", true);
+                // Also retrieve the _html.zip file, though it is not required to exist
+                // In particular, if the TopFD step for this job used TopFD results from a prior job, the transfer directory will not have an _html.zip file
+                filesToRetrieve.Add(htmlFileName, true);
             }
 
             foreach (var fileToRetrieve in filesToRetrieve)
@@ -100,10 +103,23 @@ namespace AnalysisManagerTopPICPlugIn
                 var fileName = fileToRetrieve.Key;
                 var unzip = fileToRetrieve.Value;
 
-                if (!FileSearch.FindAndRetrieveMiscFiles(fileName, false))
+                var fileIsRequired = !fileName.Equals(htmlFileName);
+
+                if (!FileSearch.FindAndRetrieveMiscFiles(fileName, false, true, fileIsRequired))
                 {
-                    // Errors were reported in function call, so just return
-                    return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+                    if (fileIsRequired)
+                    {
+                        // This was a required file; abort
+                        // Errors were reported in function call, so just return
+                        return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+                    }
+
+                    // Create the html subdirectory
+                    var htmlDirectory = new DirectoryInfo(Path.Combine(mWorkDir, DatasetName + "_html"));
+                    if (!htmlDirectory.Exists)
+                        htmlDirectory.Create();
+
+                    continue;
                 }
 
                 if (!unzip)
@@ -113,7 +129,7 @@ namespace AnalysisManagerTopPICPlugIn
                 }
 
                 // Unzip the file
-                // Do not call AddResultFileToSkip on the .zip file since TopPIC will create new files and the Zip file will be re-generated
+                // Do not call AddResultFileToSkip on the .zip file since TopPIC will create new files and the zip file will be re-generated
 
                 var zipOutputDirectoryPath = Path.Combine(mWorkDir, DatasetName + "_html");
                 LogMessage("Unzipping file " + fileName);
