@@ -17,44 +17,23 @@ using AnalysisManagerBase;
 using PRISM;
 using PRISM.Logging;
 using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
+using System.Threading;
+using PRISM.FileProcessor;
 
 namespace AnalysisManagerProg
 {
     static class Program
     {
-        public const string PROGRAM_DATE = "February 7, 2020";
+        public const string PROGRAM_DATE = "February 10, 2020";
 
-        private static bool mCodeTestMode;
-        private static bool mTraceMode;
-        private static bool mDisableMessageQueue;
-        private static bool mDisableMyEMSL;
-        private static bool mDisplayDllVersions;
-        private static bool mPushRemoteMgrFilesOnly;
-        private static bool mShowVersionOnly;
-
-        private static string mDisplayDllPath;
+        private static bool mTraceMode = false;
 
         /// <summary>
         /// The main entry point for the application.
         /// </summary>
         /// <returns> Returns 0 if no error, error code if an error</returns>
-        public static int Main()
+        public static int Main(string[] args)
         {
-
-            var commandLineParser = new clsParseCommandLine();
-
-            mCodeTestMode = false;
-            mTraceMode = false;
-            mDisableMessageQueue = false;
-            mDisableMyEMSL = false;
-            mDisplayDllVersions = false;
-            mPushRemoteMgrFilesOnly = false;
-            mDisplayDllPath = string.Empty;
-            mShowVersionOnly = false;
-
             var osVersionInfo = new OSVersionInfo();
 
             var osVersion = osVersionInfo.GetOSVersion();
@@ -67,47 +46,43 @@ namespace AnalysisManagerProg
 
             try
             {
-                bool validArgs;
+                var exeName = System.IO.Path.GetFileName(System.Reflection.Assembly.GetExecutingAssembly().GetName().Name);
 
-                // Look for /T or /Test on the command line
-                // If present, this means "code test mode" is enabled
-                //
-                // Other valid switches are /I, /NoStatus, /T, /Test, /CodeTest, /Trace, /EL, /Offline, /Version, /Q, and /?
-                //
-                if (commandLineParser.ParseCommandLine())
+                var cmdLineParser = new CommandLineParser<CommandLineOptions>(exeName,
+                    ProcessFilesOrDirectoriesBase.GetAppVersion(PROGRAM_DATE))
                 {
-                    validArgs = SetOptionsUsingCommandLineParameters(commandLineParser);
-                }
-                else
-                {
-                    if (commandLineParser.NoParameters)
-                    {
-                        validArgs = true;
-                    }
-                    else
-                    {
-                        if (commandLineParser.NeedToShowHelp)
-                        {
-                            ShowProgramHelp();
-                        }
-                        else
-                        {
-                            ConsoleMsgUtils.ShowWarning("Error parsing the command line arguments");
-                            clsParseCommandLine.PauseAtConsole(750);
-                        }
-                        return -1;
-                    }
-                }
+                    ProgramInfo = "This program processes DMS analysis jobs for PRISM. Normal operation is to run the program without any command line switches.",
+                    ContactInfo =
+                        "Program written by Dave Clark, Matthew Monroe, and John Sandoval for the Department of Energy (PNNL, Richland, WA)" +
+                        Environment.NewLine +
+                        "E-mail: matthew.monroe@pnnl.gov or proteomics@pnnl.gov" + Environment.NewLine +
+                        "Website: https://omics.pnl.gov/ or https://panomics.pnnl.gov/" + Environment.NewLine + Environment.NewLine +
+                        "Licensed under the 2-Clause BSD License; you may not use this file except in compliance with the License.  " +
+                        "You may obtain a copy of the License at https://opensource.org/licenses/BSD-2-Clause"
+                };
 
-                if (commandLineParser.NeedToShowHelp || !validArgs)
+                var parsed = cmdLineParser.ParseArgs(args, false);
+                var options = parsed.ParsedResults;
+                if (args.Length > 0 && !parsed.Success)
                 {
-                    ShowProgramHelp();
+                    // Delay for 1500 msec in case the user double clicked this file from within Windows Explorer (or started the program via a shortcut)
+                    Thread.Sleep(1500);
                     return -1;
+                }
+
+                mTraceMode = options.TraceMode;
+                if (!clsGlobal.OfflineMode)
+                {
+                    if (!clsGlobal.LinuxOS && options.LinuxOSMode)
+                        EnableOfflineMode(true);
+
+                    if (!clsGlobal.OfflineMode && options.OfflineMode)
+                        EnableOfflineMode();
                 }
 
                 ShowTrace("Command line arguments parsed");
 
-                if (mShowVersionOnly)
+                if (options.ShowVersionOnly)
                 {
                     DisplayVersion();
                     clsGlobal.IdleLoop(0.5);
@@ -115,7 +90,7 @@ namespace AnalysisManagerProg
                 }
 
                 // Note: CodeTestMode is enabled using command line switch /T
-                if (mCodeTestMode)
+                if (options.CodeTestMode)
                 {
                     ShowTrace("Code test mode enabled");
 
@@ -159,10 +134,10 @@ namespace AnalysisManagerProg
                     return 0;
                 }
 
-                if (mDisplayDllVersions)
+                if (options.DisplayDllVersions)
                 {
                     var testHarness = new CodeTest();
-                    testHarness.DisplayDllVersions(mDisplayDllPath);
+                    testHarness.DisplayDllVersions(options.DisplayDllPath);
                     clsParseCommandLine.PauseAtConsole();
                     return 0;
                 }
@@ -170,11 +145,11 @@ namespace AnalysisManagerProg
                 // Initiate automated analysis
                 ShowTrace("Instantiating clsMainProcess");
 
-                var mainProcess = new clsMainProcess(mTraceMode)
+                var mainProcess = new clsMainProcess(options.TraceMode)
                 {
-                    DisableMessageQueue = mDisableMessageQueue,
-                    DisableMyEMSL = mDisableMyEMSL,
-                    PushRemoteMgrFilesOnly = mPushRemoteMgrFilesOnly
+                    DisableMessageQueue = options.DisableMessageQueue,
+                    DisableMyEMSL = options.DisableMyEMSL,
+                    PushRemoteMgrFilesOnly = options.PushRemoteMgrFilesOnly
                 };
 
                 var returnCode = mainProcess.Main();
@@ -190,14 +165,13 @@ namespace AnalysisManagerProg
                 FileLogger.FlushPendingMessages();
                 return -1;
             }
-
         }
 
         private static void DisplayVersion()
         {
             Console.WriteLine();
             Console.WriteLine("DMS Analysis Manager");
-            Console.WriteLine("Version " + GetAppVersion(PROGRAM_DATE));
+            Console.WriteLine("Version " + ProcessFilesOrDirectoriesBase.GetAppVersion(PROGRAM_DATE));
             Console.WriteLine("Host    " + Environment.MachineName);
             Console.WriteLine("User    " + Environment.UserName);
             Console.WriteLine();
@@ -207,7 +181,6 @@ namespace AnalysisManagerProg
 
         private static void DisplayOSVersion()
         {
-
             try
             {
                 // For this to work properly on Windows 10, you must add a app.manifest file
@@ -244,184 +217,6 @@ namespace AnalysisManagerProg
         private static void EnableOfflineMode(bool runningLinux)
         {
             clsMainProcess.EnableOfflineMode(runningLinux);
-        }
-
-        /// <summary>
-        /// Returns the .NET assembly version followed by the program date
-        /// </summary>
-        /// <param name="programDate"></param>
-        /// <returns></returns>
-        /// <remarks></remarks>
-        private static string GetAppVersion(string programDate)
-        {
-            return PRISM.FileProcessor.ProcessFilesOrDirectoriesBase.GetAppVersion(programDate);
-        }
-
-        private static bool SetOptionsUsingCommandLineParameters(clsParseCommandLine commandLineParser)
-        {
-            // Returns True if no problems; otherwise, returns false
-
-            var validParameters = new List<string> {
-                "T",
-                "CodeTest",
-                "Test",
-                "Trace",
-                "Verbose",
-                "NQ",
-                "NoMyEMSL",
-                "DLL",
-                "PushRemote",
-                "Offline",
-                "Linux",
-                "V",
-                "Version"
-            };
-
-            try
-            {
-                // Make sure no invalid parameters are present
-                if (commandLineParser.InvalidParametersPresent(validParameters))
-                {
-                    ShowErrorMessage("Invalid command line parameters",
-                        (from item in commandLineParser.InvalidParameters(validParameters) select "/" + item).ToList());
-
-                    return false;
-                }
-
-                // Query commandLineParser to see if various parameters are present
-
-                if (commandLineParser.IsParameterPresent("T"))
-                    mCodeTestMode = true;
-
-                if (commandLineParser.IsParameterPresent("CodeTest"))
-                    mCodeTestMode = true;
-
-                if (commandLineParser.IsParameterPresent("Test"))
-                    mCodeTestMode = true;
-
-                if (commandLineParser.IsParameterPresent("Trace"))
-                    mTraceMode = true;
-
-                if (commandLineParser.IsParameterPresent("Verbose"))
-                    mTraceMode = true;
-
-                if (commandLineParser.IsParameterPresent("NQ"))
-                    mDisableMessageQueue = true;
-
-                if (commandLineParser.IsParameterPresent("NoMyEMSL"))
-                    mDisableMyEMSL = true;
-
-                if (commandLineParser.IsParameterPresent("DLL"))
-                {
-                    mDisplayDllVersions = true;
-                    if (commandLineParser.RetrieveValueForParameter("DLL", out var value))
-                    {
-                        if (!string.IsNullOrWhiteSpace(value))
-                        {
-                            mDisplayDllPath = value;
-                        }
-                    }
-                }
-
-                if (commandLineParser.IsParameterPresent("PushRemote"))
-                    mPushRemoteMgrFilesOnly = true;
-
-                if (!clsGlobal.OfflineMode)
-                {
-                    if (!clsGlobal.LinuxOS && commandLineParser.IsParameterPresent("Linux"))
-                        EnableOfflineMode(true);
-
-                    if (!clsGlobal.OfflineMode && commandLineParser.IsParameterPresent("Offline"))
-                        EnableOfflineMode();
-                }
-
-                if (commandLineParser.IsParameterPresent("V"))
-                    mShowVersionOnly = true;
-
-                if (commandLineParser.IsParameterPresent("Version"))
-                    mShowVersionOnly = true;
-
-                return true;
-            }
-            catch (Exception ex)
-            {
-                LogTools.LogError("Error parsing the command line parameters", ex);
-                return false;
-            }
-        }
-
-        private static void ShowErrorMessage(string title, IEnumerable<string> errorMessages)
-        {
-            ConsoleMsgUtils.ShowErrors(title, errorMessages);
-        }
-
-        private static void ShowProgramHelp()
-        {
-            try
-            {
-                var exeName = Path.GetFileName(PRISM.FileProcessor.ProcessFilesOrDirectoriesBase.GetAppPath());
-
-                Console.WriteLine("This program processes DMS analysis jobs for PRISM. Normal operation is to run the program without any command line switches.");
-                Console.WriteLine();
-                Console.WriteLine("Program syntax:" + Environment.NewLine +
-                                  exeName + " [/NQ] [/NoMyEMSL] [/T] [/Trace]");
-                Console.WriteLine("[/DLL] [/PushRemote]");
-                Console.WriteLine("[/Offline] [/Linux] [/Version]");
-
-                Console.WriteLine();
-                Console.WriteLine("Use /NQ to disable posting status messages to the message queue");
-                Console.WriteLine();
-                Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
-                                      "Use /NoMyEMSL to disable searching for files in MyEMSL. " +
-                                      "This is useful if MyEMSL is offline or the current user does not have read access to SimpleSearch"));
-                Console.WriteLine();
-                Console.WriteLine("Use /T or /Test to start the program in code test mode.");
-                Console.WriteLine();
-                Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
-                                      "Use /Trace or /Verbose to enable trace mode, where debug messages are written to the command prompt"));
-                Console.WriteLine();
-                Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
-                                      "Use /DLL to display the version of all DLLs in the same directory as this .exe"));
-                Console.WriteLine();
-                Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
-                                      "Use /DLL:Path to display the version of all DLLs in the specified directory (surround path with double quotes if spaces)"));
-                Console.WriteLine();
-                Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
-                                      "Use /PushRemote to use the DMSUpdateManager to push new/updated files to the remote host associated with this manager. " +
-                                      "This is only valid if the manager has parameter RunJobsRemotely set to True in the Manager Control DB. " +
-                                      "Ignored if /Offline is used."));
-                Console.WriteLine();
-                Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
-                                      "Use /Offline to enable offline mode (database access and use of external servers is disabled). " +
-                                      "Requires that the ManagerSettingsLocal.xml file has several settings defined, including LocalTaskQueuePath and LocalWorkDirPath"));
-                Console.WriteLine();
-                Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
-                                      "Use /Linux to disable access to Windows-specific methods. " +
-                                      "Both /Offline and /Linux are auto-enabled if the path separation character is /"));
-                Console.WriteLine();
-                Console.WriteLine("Use /Version to see the program version and OS version");
-                Console.WriteLine();
-                Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
-                                      "Program written by Dave Clark, Matthew Monroe, and John Sandoval for the Department of Energy (PNNL, Richland, WA)"));
-                Console.WriteLine();
-
-                Console.WriteLine("Version: " + GetAppVersion(PROGRAM_DATE));
-                Console.WriteLine();
-
-                Console.WriteLine("E-mail: matthew.monroe@pnnl.gov or proteomics@pnnl.gov");
-                Console.WriteLine("Website: https://omics.pnl.gov/ or https://panomics.pnnl.gov/");
-                Console.WriteLine();
-
-                Console.WriteLine("Licensed under the 2-Clause BSD License; you may not use this file except in compliance with the License.  " +
-                                  "You may obtain a copy of the License at https://opensource.org/licenses/BSD-2-Clause");
-                Console.WriteLine();
-
-                clsParseCommandLine.PauseAtConsole(1500);
-            }
-            catch (Exception ex)
-            {
-                ConsoleMsgUtils.ShowWarning("Error displaying the program syntax: " + ex.Message);
-            }
         }
 
         private static void ShowTrace(string message)

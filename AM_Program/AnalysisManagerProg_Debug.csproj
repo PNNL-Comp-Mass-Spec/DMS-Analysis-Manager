@@ -118,6 +118,7 @@
     <Compile Include="clsCodeTestAM.cs" />
     <Compile Include="clsMainProcess.cs" />
     <Compile Include="clsPluginLoader.cs" />
+    <Compile Include="CommandLineOptions.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
