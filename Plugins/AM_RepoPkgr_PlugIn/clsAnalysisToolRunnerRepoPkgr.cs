@@ -3,9 +3,10 @@ using AnalysisManagerBase;
 using AnalysisManagerMsXmlGenPlugIn;
 using System;
 using System.Collections.Generic;
-using System.Data.SqlClient;
 using System.IO;
+using System.Linq;
 using System.Text.RegularExpressions;
+using PRISMDatabaseUtils;
 
 namespace AnalysisManager_RepoPkgr_Plugin
 {
@@ -740,7 +741,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
                 var fileID = int.Parse(reMatch.Groups[1].Value);
 
                 var sqlQuery = "SELECT FileName FROM V_Archived_Output_File_Protein_Collections WHERE Archived_File_ID = " + fileID;
-                var retryCount = 3;
+                short retryCount = 3;
                 var proteinSeqsDBConnectionString = mMgrParams.GetParam("FastaCnString");
                 if (string.IsNullOrWhiteSpace(proteinSeqsDBConnectionString))
                 {
@@ -748,41 +749,10 @@ namespace AnalysisManager_RepoPkgr_Plugin
                     return orgDbName;
                 }
 
-                var proteinCollectionList = new List<string>();
+                var dbTools = DbToolsFactory.GetDBTools(proteinSeqsDBConnectionString);
 
-                while (retryCount > 0)
-                {
-                    try
-                    {
-                        using (var connection = new SqlConnection(proteinSeqsDBConnectionString))
-                        {
-                            connection.Open();
-                            using (var dbCommand = new SqlCommand(sqlQuery, connection))
-                            {
-                                var dbReader = dbCommand.ExecuteReader();
-                                if (dbReader.HasRows)
-                                {
-                                    while (dbReader.Read())
-                                    {
-                                        proteinCollectionList.Add(dbReader.GetString(0));
-                                    }
-                                }
-                            }
-                        }
-
-                        // Data successfully retrieved
-                        // Exit the while loop
-                        break;
-                    }
-                    catch (Exception ex)
-                    {
-                        retryCount -= 1;
-                        LogError("Exception getting protein collection info from Protein Sequences database for Archived_File_ID = " + fileID, ex);
-
-                        // Delay for 2 seconds before trying again
-                        clsGlobal.IdleLoop(2);
-                    }
-                }
+                var success = dbTools.GetQueryResults(sqlQuery, out var results, retryCount: retryCount, retryDelaySeconds: 2);
+                var proteinCollectionList = results.SelectMany(x => x).ToList();
 
                 if (proteinCollectionList.Count > 0 && proteinCollectionList.Count < 4)
                 {

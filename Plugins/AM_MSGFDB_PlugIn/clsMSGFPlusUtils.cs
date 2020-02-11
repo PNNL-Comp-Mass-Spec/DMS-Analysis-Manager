@@ -9,6 +9,7 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
+using PRISMDatabaseUtils;
 
 namespace AnalysisManagerMSGFDBPlugIn
 {
@@ -2179,8 +2180,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                                 effectiveProgress = PROGRESS_PCT_MSGFPLUS_COMPUTING_FDRS;
                             }
                         }
-                        else if (dataLine.StartsWith("MS-GF+ complete", StringComparison.OrdinalIgnoreCase) ||
-                                 dataLine.StartsWith("MS-GF+ complete", StringComparison.OrdinalIgnoreCase))
+                        else if (dataLine.StartsWith("MS-GF+ complete", StringComparison.OrdinalIgnoreCase))
                         {
                             if (effectiveProgress < PROGRESS_PCT_MSGFPLUS_COMPLETE)
                             {
@@ -3135,21 +3135,21 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 foreach (DataRow curRow in dtResults.Rows)
                 {
-                    countLowResMSn += clsGlobal.DbCInt(curRow["CID-MSn"]);
-                    countHighResMSn += clsGlobal.DbCInt(curRow["CID-HMSn"]);
-                    countHCDMSn += clsGlobal.DbCInt(curRow["HCD-HMSn"]);
+                    countLowResMSn += curRow["CID-MSn"].CastDBVal<int>();
+                    countHighResMSn += curRow["CID-HMSn"].CastDBVal<int>();
+                    countHCDMSn += curRow["HCD-HMSn"].CastDBVal<int>();
 
-                    countHighResMSn += clsGlobal.DbCInt(curRow["ETD-HMSn"]);
-                    countLowResMSn += clsGlobal.DbCInt(curRow["ETD-MSn"]);
+                    countHighResMSn += curRow["ETD-HMSn"].CastDBVal<int>();
+                    countLowResMSn += curRow["ETD-MSn"].CastDBVal<int>();
 
-                    countHighResMSn += clsGlobal.DbCInt(curRow["SA_ETD-HMSn"]);
-                    countLowResMSn += clsGlobal.DbCInt(curRow["SA_ETD-MSn"]);
+                    countHighResMSn += curRow["SA_ETD-HMSn"].CastDBVal<int>();
+                    countLowResMSn += curRow["SA_ETD-MSn"].CastDBVal<int>();
 
-                    countHighResMSn += clsGlobal.DbCInt(curRow["HMSn"]);
-                    countLowResMSn += clsGlobal.DbCInt(curRow["MSn"]);
+                    countHighResMSn += curRow["HMSn"].CastDBVal<int>();
+                    countLowResMSn += curRow["MSn"].CastDBVal<int>();
 
-                    countHighResMSn += clsGlobal.DbCInt(curRow["PQD-HMSn"]);
-                    countLowResMSn += clsGlobal.DbCInt(curRow["PQD-MSn"]);
+                    countHighResMSn += curRow["PQD-HMSn"].CastDBVal<int>();
+                    countLowResMSn += curRow["PQD-MSn"].CastDBVal<int>();
                 }
 
                 dtResults.Dispose();

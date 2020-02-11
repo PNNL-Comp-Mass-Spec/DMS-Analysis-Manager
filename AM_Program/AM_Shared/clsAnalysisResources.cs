@@ -13,6 +13,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml;
 using System.Xml.Linq;
+using PRISMDatabaseUtils;
 
 //*********************************************************************************************************
 // Written by Dave Clark and Matthew Monroe for the US Department of Energy
@@ -724,7 +725,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="processingClass"></param>
         /// <param name="writeDebugEventsToLog"></param>
-        protected sealed override void RegisterEvents(EventNotifier processingClass, bool writeDebugEventsToLog = true)
+        protected sealed override void RegisterEvents(IEventNotifier processingClass, bool writeDebugEventsToLog = true)
         {
             base.RegisterEvents(processingClass, writeDebugEventsToLog);
         }
@@ -1880,7 +1881,7 @@ namespace AnalysisManagerBase
 
             var curRow = resultSet.Rows[0];
 
-            var storagePath = clsGlobal.DbCStr(curRow[0]);
+            var storagePath = curRow[0].CastDBVal<string>();
 
             resultSet.Dispose();
             return storagePath;

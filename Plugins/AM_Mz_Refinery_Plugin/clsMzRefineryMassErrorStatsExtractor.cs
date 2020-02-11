@@ -1,10 +1,10 @@
 ﻿using AnalysisManagerBase;
 using System;
 using System.Data;
-using System.Data.SqlClient;
 using System.IO;
 using System.Linq;
 using System.Text;
+using PRISMDatabaseUtils;
 
 namespace AnalysisManagerMzRefineryPlugIn
 {
@@ -172,23 +172,19 @@ namespace AnalysisManagerMzRefineryPlugIn
 
             try
             {
+                var analysisTask = new clsAnalysisJob(mMgrParams, mDebugLevel);
+                var dbTools = analysisTask.DMSProcedureExecutor;
+
                 // Call stored procedure StoreDTARefMassErrorStats in DMS5
                 // Data is stored in table T_Dataset_QC
+                var sqlCmd = dbTools.CreateCommand(STORE_MASS_ERROR_STATS_SP_NAME, CommandType.StoredProcedure);
 
-                var sqlCmd = new SqlCommand
-                {
-                    CommandType = CommandType.StoredProcedure,
-                    CommandText = STORE_MASS_ERROR_STATS_SP_NAME
-                };
-
-                sqlCmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
-                sqlCmd.Parameters.Add(new SqlParameter("@DatasetID", SqlDbType.Int)).Value = datasetID;
-                sqlCmd.Parameters.Add(new SqlParameter("@ResultsXML", SqlDbType.Xml)).Value = xmlResults;
-
-                var analysisTask = new clsAnalysisJob(mMgrParams, mDebugLevel);
+                dbTools.AddParameter(sqlCmd, "@Return", SqlType.Int, direction: ParameterDirection.ReturnValue);
+                dbTools.AddTypedParameter(sqlCmd, "@DatasetID", SqlType.Int, value: datasetID);
+                dbTools.AddParameter(sqlCmd, "@ResultsXML", SqlType.Xml, value: xmlResults);
 
                 // Execute the SP (retry the call up to 4 times)
-                var resCode = analysisTask.DMSProcedureExecutor.ExecuteSP(sqlCmd, MAX_RETRY_COUNT);
+                var resCode = dbTools.ExecuteSP(sqlCmd, MAX_RETRY_COUNT);
 
                 if (resCode == 0)
                 {

@@ -3,13 +3,13 @@ using PRISM.Logging;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml;
 using System.Xml.Linq;
+using PRISMDatabaseUtils;
 
 //*********************************************************************************************************
 // Written by Dave Clark and Matthew Monroe for the US Department of Energy
@@ -1352,22 +1352,19 @@ namespace AnalysisManagerBase
             try
             {
                 // Set up the command object prior to SP execution
-                var cmd = new SqlCommand(SP_NAME_REQUEST_TASK)
-                {
-                    CommandType = CommandType.StoredProcedure
-                };
+                var cmd = PipelineDBProcedureExecutor.CreateCommand(SP_NAME_REQUEST_TASK, CommandType.StoredProcedure);
 
-                cmd.Parameters.Add(new SqlParameter("@processorName", SqlDbType.VarChar, 128)).Value = ManagerName;
-                cmd.Parameters.Add(new SqlParameter("@jobNumber", SqlDbType.Int)).Direction = ParameterDirection.Output;
-                cmd.Parameters.Add(new SqlParameter("@parameters", SqlDbType.VarChar, 8000)).Direction = ParameterDirection.Output;
-                cmd.Parameters.Add(new SqlParameter("@message", SqlDbType.VarChar, 512)).Direction = ParameterDirection.Output;
-                cmd.Parameters.Add(new SqlParameter("@infoOnly", SqlDbType.TinyInt)).Value = 0;
-                cmd.Parameters.Add(new SqlParameter("@analysisManagerVersion", SqlDbType.VarChar, 128)).Value = managerVersion;
+                PipelineDBProcedureExecutor.AddParameter(cmd, "@processorName", SqlType.VarChar, 128, ManagerName);
+                PipelineDBProcedureExecutor.AddParameter(cmd, "@jobNumber", SqlType.Int, direction: ParameterDirection.Output);
+                PipelineDBProcedureExecutor.AddParameter(cmd, "@parameters", SqlType.VarChar, 8000, direction: ParameterDirection.Output);
+                PipelineDBProcedureExecutor.AddParameter(cmd, "@message", SqlType.VarChar, 512, direction: ParameterDirection.Output);
+                PipelineDBProcedureExecutor.AddParameter(cmd, "@infoOnly", SqlType.TinyInt, value: 0);
+                PipelineDBProcedureExecutor.AddParameter(cmd, "@analysisManagerVersion", SqlType.VarChar, 128, managerVersion);
 
                 var remoteInfo = runJobsRemotely ? clsRemoteTransferUtility.GetRemoteInfoXml(mMgrParams) : string.Empty;
-                cmd.Parameters.Add(new SqlParameter("@remoteInfo", SqlDbType.VarChar, 900)).Value = remoteInfo;
+                PipelineDBProcedureExecutor.AddParameter(cmd, "@remoteInfo", SqlType.VarChar, 900, remoteInfo);
 
-                cmd.Parameters.Add(new SqlParameter("@returnCode", SqlDbType.VarChar, 64)).Direction = ParameterDirection.Output;
+                PipelineDBProcedureExecutor.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, direction: ParameterDirection.Output);
 
                 if (mDebugLevel > 4 || TraceMode)
                 {
@@ -1427,12 +1424,12 @@ namespace AnalysisManagerBase
                         taskResult = RequestTaskResult.TaskFound;
                         break;
 
-                    case ExecuteDatabaseSP.RET_VAL_EXCESSIVE_RETRIES:
+                    case DbUtilsConstants.RET_VAL_EXCESSIVE_RETRIES:
                         // Too many retries
                         taskResult = RequestTaskResult.TooManyRetries;
                         break;
 
-                    case ExecuteDatabaseSP.RET_VAL_DEADLOCK:
+                    case DbUtilsConstants.RET_VAL_DEADLOCK:
                         // Transaction was deadlocked on lock resources with another process and has been chosen as the deadlock victim
                         taskResult = RequestTaskResult.Deadlock;
                         break;
@@ -1959,15 +1956,12 @@ namespace AnalysisManagerBase
             }
 
             // Setup for execution of the stored procedure
-            var cmd = new SqlCommand(SP_NAME_REPORT_IDLE)
-            {
-                CommandType = CommandType.StoredProcedure
-            };
+            var cmd = PipelineDBProcedureExecutor.CreateCommand(SP_NAME_REPORT_IDLE, CommandType.StoredProcedure);
 
-            cmd.Parameters.Add(new SqlParameter("@managerName", SqlDbType.VarChar, 128)).Value = ManagerName;
-            cmd.Parameters.Add(new SqlParameter("@infoOnly", SqlDbType.TinyInt)).Value = 0;
-            cmd.Parameters.Add(new SqlParameter("@message", SqlDbType.VarChar, 512)).Direction = ParameterDirection.Output;
-            cmd.Parameters.Add(new SqlParameter("@returnCode", SqlDbType.VarChar, 64)).Direction = ParameterDirection.Output;
+            PipelineDBProcedureExecutor.AddParameter(cmd, "@managerName", SqlType.VarChar, 128, ManagerName);
+            PipelineDBProcedureExecutor.AddParameter(cmd, "@infoOnly", SqlType.TinyInt, value: 0);
+            PipelineDBProcedureExecutor.AddParameter(cmd, "@message", SqlType.VarChar, 512, direction: ParameterDirection.Output);
+            PipelineDBProcedureExecutor.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, direction: ParameterDirection.Output);
 
             // Execute the Stored Procedure (retry the call up to 3 times)
             var resCode = PipelineDBProcedureExecutor.ExecuteSP(cmd, 3);
@@ -2013,78 +2007,68 @@ namespace AnalysisManagerBase
                 evalMsg = string.Empty;
 
             // Setup for execution of stored procedure SetStepTaskComplete
-            var cmd = new SqlCommand(SP_NAME_SET_COMPLETE)
-            {
-                CommandType = CommandType.StoredProcedure
-            };
+            var cmd = PipelineDBProcedureExecutor.CreateCommand(SP_NAME_SET_COMPLETE, CommandType.StoredProcedure);
 
-            cmd.Parameters.Add(new SqlParameter("@job", SqlDbType.Int)).Value = GetJobParameter(STEP_PARAMETERS_SECTION, "Job", 0);
-            cmd.Parameters.Add(new SqlParameter("@step", SqlDbType.Int)).Value = GetJobParameter(STEP_PARAMETERS_SECTION, "Step", 0);
-            cmd.Parameters.Add(new SqlParameter("@completionCode", SqlDbType.Int)).Value = compCode;
-            cmd.Parameters.Add(new SqlParameter("@completionMessage", SqlDbType.VarChar, 256)).Value = compMsg.Trim('\r', '\n');
-            cmd.Parameters.Add(new SqlParameter("@evaluationCode", SqlDbType.Int)).Value = evalCode;
-            cmd.Parameters.Add(new SqlParameter("@evaluationMessage", SqlDbType.VarChar, 256)).Value = evalMsg.Trim('\r', '\n');
-            cmd.Parameters.Add(new SqlParameter("@returnCode", SqlDbType.VarChar, 64)).Direction = ParameterDirection.Output;
+            PipelineDBProcedureExecutor.AddParameter(cmd, "@job", SqlType.Int, value: GetJobParameter(STEP_PARAMETERS_SECTION, "Job", 0));
+            PipelineDBProcedureExecutor.AddParameter(cmd, "@step", SqlType.Int, value: GetJobParameter(STEP_PARAMETERS_SECTION, "Step", 0));
+            PipelineDBProcedureExecutor.AddParameter(cmd, "@completionCode", SqlType.Int, value: compCode);
+            PipelineDBProcedureExecutor.AddParameter(cmd, "@completionMessage", SqlType.VarChar, 256, compMsg.Trim('\r', '\n'));
+            PipelineDBProcedureExecutor.AddParameter(cmd, "@evaluationCode", SqlType.Int, value: evalCode);
+            PipelineDBProcedureExecutor.AddParameter(cmd, "@evaluationMessage", SqlType.VarChar, 256, evalMsg.Trim('\r', '\n'));
+            PipelineDBProcedureExecutor.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, direction: ParameterDirection.Output);
 
-            var orgDbNameParam = cmd.Parameters.Add(new SqlParameter("@organismDBName", SqlDbType.VarChar, 128));
+            if (!TryGetParam("PeptideSearch", clsAnalysisResources.JOB_PARAM_GENERATED_FASTA_NAME, out var orgDbName))
+            {
+                orgDbName = string.Empty;
+            }
+            PipelineDBProcedureExecutor.AddParameter(cmd, "@organismDBName", SqlType.VarChar, 128, orgDbName);
 
-            if (TryGetParam("PeptideSearch", clsAnalysisResources.JOB_PARAM_GENERATED_FASTA_NAME, out var orgDbName))
+            if (!TryGetParam(STEP_PARAMETERS_SECTION, clsRemoteTransferUtility.STEP_PARAM_REMOTE_INFO, out var remoteInfo, false))
             {
-                orgDbNameParam.Value = orgDbName;
+                remoteInfo = string.Empty;
             }
-            else
-            {
-                orgDbNameParam.Value = string.Empty;
-            }
-
-            var remoteInfoParam = cmd.Parameters.Add(new SqlParameter("@remoteInfo", SqlDbType.VarChar, 900));
-            if (TryGetParam(STEP_PARAMETERS_SECTION, clsRemoteTransferUtility.STEP_PARAM_REMOTE_INFO, out var remoteInfo, false))
-            {
-                remoteInfoParam.Value = remoteInfo;
-            }
-            else
-            {
-                remoteInfoParam.Value = string.Empty;
-            }
+            PipelineDBProcedureExecutor.AddParameter(cmd, "@remoteInfo", SqlType.VarChar, 900, remoteInfo);
 
             // Note: leave remoteTimestampParam.Value as null if job parameter RemoteTimestamp is empty
-            var remoteTimestampParam = cmd.Parameters.Add(new SqlParameter("@remoteTimestamp", SqlDbType.VarChar, 24));
             if (TryGetParam(STEP_PARAMETERS_SECTION, clsRemoteTransferUtility.STEP_PARAM_REMOTE_TIMESTAMP, out var remoteTimestamp, false))
             {
-                if (!string.IsNullOrWhiteSpace(remoteTimestamp))
-                    remoteTimestampParam.Value = remoteTimestamp;
+                if (string.IsNullOrWhiteSpace(remoteTimestamp))
+                    remoteTimestamp = null;
             }
+            PipelineDBProcedureExecutor.AddParameter(cmd, "@remoteTimestamp", SqlType.VarChar, 24, remoteTimestamp);
 
             // Note: leave remoteProgressParam.Value as null if job parameter RemoteProgress is empty
             //
-            var remoteProgressParam = cmd.Parameters.Add(new SqlParameter("@remoteProgress", SqlDbType.Real));
+            object remoteProgress = null;
             if (TryGetParam(STEP_PARAMETERS_SECTION, clsRemoteTransferUtility.STEP_PARAM_REMOTE_PROGRESS, out var remoteProgressText, false))
             {
-                remoteProgressParam.Value = clsGlobal.CSngSafe(remoteProgressText, 0);
+                remoteProgress = clsGlobal.CSngSafe(remoteProgressText, 0);
             }
+            PipelineDBProcedureExecutor.AddParameter(cmd, "@remoteProgress", SqlType.Real, value: remoteProgress);
 
             // Note: leave remoteStartParam.Value as null if job parameter RemoteStart is empty
-            var remoteStartParam = cmd.Parameters.Add(new SqlParameter("@remoteStart", SqlDbType.DateTime));
+            object remoteStart = null;
             if (TryGetParam(STEP_PARAMETERS_SECTION, clsRemoteTransferUtility.STEP_PARAM_REMOTE_START, out var remoteStartText, false))
             {
                 // remoteStartText should be UTC-based
-                if (DateTime.TryParse(remoteStartText, out var remoteStart))
-                    remoteStartParam.Value = remoteStart;
+                if (DateTime.TryParse(remoteStartText, out var remoteStartDt))
+                    remoteStart = remoteStartDt;
             }
+            PipelineDBProcedureExecutor.AddParameter(cmd, "@remoteStart", SqlType.DateTime, value: remoteStart);
 
             // Note: leave remoteFinishParam.Value as null if job parameter RemoteFinish is empty
-            var remoteFinishParam = cmd.Parameters.Add(new SqlParameter("@remoteFinish", SqlDbType.DateTime));
+            object remoteFinish = null;
             if (TryGetParam(STEP_PARAMETERS_SECTION, clsRemoteTransferUtility.STEP_PARAM_REMOTE_FINISH, out var remoteFinishText, false))
             {
                 // remoteFinishText should be UTC-based
-                if (DateTime.TryParse(remoteFinishText, out var remoteFinish))
-                    remoteFinishParam.Value = remoteFinish;
+                if (DateTime.TryParse(remoteFinishText, out var remoteFinishDt))
+                    remoteFinish = remoteFinishDt;
             }
+            PipelineDBProcedureExecutor.AddParameter(cmd, "@remoteFinish", SqlType.DateTime, value: remoteFinish);
 
-            cmd.Parameters.Add(new SqlParameter("@processorName", SqlDbType.VarChar, 128)).Value = ManagerName;
+            PipelineDBProcedureExecutor.AddParameter(cmd, "@processorName", SqlType.VarChar, 128, ManagerName);
 
-            var messageParam = cmd.Parameters.Add(new SqlParameter("@message", SqlDbType.VarChar, 512));
-            messageParam.Direction = ParameterDirection.Output;
+            var messageParam = PipelineDBProcedureExecutor.AddParameter(cmd, "@message", SqlType.VarChar, 512, direction: ParameterDirection.Output);
 
             // Call Stored Procedure SetStepTaskComplete (retry the call up to 20 times)
             var resCode = PipelineDBProcedureExecutor.ExecuteSP(cmd, 20);
@@ -2107,7 +2091,7 @@ namespace AnalysisManagerBase
                 errorMessage = "Stored procedure " + SP_NAME_SET_COMPLETE + " reported return code " + returnCode;
             }
 
-            var messageDetails = clsGlobal.DbCStr(messageParam.Value);
+            var messageDetails = messageParam.Value?.CastDBVal<string>();
             if (!string.IsNullOrWhiteSpace(messageDetails))
             {
                 LogError(errorMessage + ": " + messageDetails);

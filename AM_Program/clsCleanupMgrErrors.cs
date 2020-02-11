@@ -1,10 +1,9 @@
 ﻿using AnalysisManagerBase;
 using System;
 using System.Data;
-using System.Data.SqlClient;
 using System.IO;
 using System.Security.AccessControl;
-using PRISM;
+using PRISMDatabaseUtils;
 
 namespace AnalysisManagerProg
 {
@@ -546,23 +545,19 @@ namespace AnalysisManagerProg
                 if (failureMessage == null)
                     failureMessage = string.Empty;
 
-                var procedureExecutor = new ExecuteDatabaseSP(mMgrConfigDBConnectionString);
+                var procedureExecutor = DbToolsFactory.GetDBTools(mMgrConfigDBConnectionString);
                 RegisterEvents(procedureExecutor);
 
                 // Set up the command object prior to SP execution
-                var cmd = new SqlCommand(SP_NAME_REPORT_MGR_ERROR_CLEANUP)
-                {
-                    CommandType = CommandType.StoredProcedure
-                };
+                var cmd = procedureExecutor.CreateCommand(SP_NAME_REPORT_MGR_ERROR_CLEANUP, CommandType.StoredProcedure);
 
-                cmd.Parameters.Add(new SqlParameter("@ManagerName", SqlDbType.VarChar, 128)).Value = mManagerName;
-                cmd.Parameters.Add(new SqlParameter("@State", SqlDbType.Int)).Value = eMgrCleanupActionCode;
-                cmd.Parameters.Add(new SqlParameter("@FailureMsg", SqlDbType.VarChar, 512)).Value = failureMessage;
-                cmd.Parameters.Add(new SqlParameter("@message", SqlDbType.VarChar, 512)).Direction = ParameterDirection.Output;
+                procedureExecutor.AddParameter(cmd, "@ManagerName", SqlType.VarChar, 128, mManagerName);
+                procedureExecutor.AddParameter(cmd, "@State", SqlType.Int, value: eMgrCleanupActionCode);
+                procedureExecutor.AddParameter(cmd, "@FailureMsg", SqlType.VarChar, 512, failureMessage);
+                procedureExecutor.AddParameter(cmd, "@message", SqlType.VarChar, 128, direction: ParameterDirection.Output);
 
                 // Execute the SP
                 procedureExecutor.ExecuteSP(cmd);
-
             }
             catch (Exception ex)
             {

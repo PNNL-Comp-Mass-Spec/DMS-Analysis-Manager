@@ -9,10 +9,10 @@ using AnalysisManagerBase;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using PRISMDatabaseUtils;
 using ThermoRawFileReader;
 
 namespace AnalysisManagerGlyQIQPlugin
@@ -63,7 +63,7 @@ namespace AnalysisManagerGlyQIQPlugin
 
         private XRawFileIO mThermoFileReader;
 
-        private PRISM.ExecuteDatabaseSP mStoredProcedureExecutor;
+        private IDBTools mStoredProcedureExecutor;
 
         #endregion
 
@@ -498,61 +498,6 @@ namespace AnalysisManagerGlyQIQPlugin
             {
                 // Call stored procedure StoreJobPSMStats in DMS5
 
-                var objCommand = new SqlCommand
-                {
-                    CommandType = CommandType.StoredProcedure,
-                    CommandText = STORE_JOB_PSM_RESULTS_SP_NAME
-                };
-
-                objCommand.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int));
-                objCommand.Parameters["@Return"].Direction = ParameterDirection.ReturnValue;
-
-                objCommand.Parameters.Add(new SqlParameter("@Job", SqlDbType.Int));
-                objCommand.Parameters["@Job"].Direction = ParameterDirection.Input;
-                objCommand.Parameters["@Job"].Value = jobNumber;
-
-                objCommand.Parameters.Add(new SqlParameter("@MSGFThreshold", SqlDbType.Float));
-                objCommand.Parameters["@MSGFThreshold"].Direction = ParameterDirection.Input;
-
-                objCommand.Parameters["@MSGFThreshold"].Value = 1;
-
-                objCommand.Parameters.Add(new SqlParameter("@FDRThreshold", SqlDbType.Float));
-                objCommand.Parameters["@FDRThreshold"].Direction = ParameterDirection.Input;
-                objCommand.Parameters["@FDRThreshold"].Value = 0.25;
-
-                objCommand.Parameters.Add(new SqlParameter("@SpectraSearched", SqlDbType.Int));
-                objCommand.Parameters["@SpectraSearched"].Direction = ParameterDirection.Input;
-                objCommand.Parameters["@SpectraSearched"].Value = mSpectraSearched;
-
-                objCommand.Parameters.Add(new SqlParameter("@TotalPSMs", SqlDbType.Int));
-                objCommand.Parameters["@TotalPSMs"].Direction = ParameterDirection.Input;
-                objCommand.Parameters["@TotalPSMs"].Value = udtPSMStats.TotalPSMs;
-
-                objCommand.Parameters.Add(new SqlParameter("@UniquePeptides", SqlDbType.Int));
-                objCommand.Parameters["@UniquePeptides"].Direction = ParameterDirection.Input;
-                objCommand.Parameters["@UniquePeptides"].Value = udtPSMStats.UniquePeptideCount;
-
-                objCommand.Parameters.Add(new SqlParameter("@UniqueProteins", SqlDbType.Int));
-                objCommand.Parameters["@UniqueProteins"].Direction = ParameterDirection.Input;
-                objCommand.Parameters["@UniqueProteins"].Value = udtPSMStats.UniqueProteinCount;
-
-                objCommand.Parameters.Add(new SqlParameter("@TotalPSMsFDRFilter", SqlDbType.Int));
-                objCommand.Parameters["@TotalPSMsFDRFilter"].Direction = ParameterDirection.Input;
-                objCommand.Parameters["@TotalPSMsFDRFilter"].Value = udtPSMStats.TotalPSMs;
-
-                objCommand.Parameters.Add(new SqlParameter("@UniquePeptidesFDRFilter", SqlDbType.Int));
-                objCommand.Parameters["@UniquePeptidesFDRFilter"].Direction = ParameterDirection.Input;
-                objCommand.Parameters["@UniquePeptidesFDRFilter"].Value = udtPSMStats.UniquePeptideCount;
-
-                objCommand.Parameters.Add(new SqlParameter("@UniqueProteinsFDRFilter", SqlDbType.Int));
-                objCommand.Parameters["@UniqueProteinsFDRFilter"].Direction = ParameterDirection.Input;
-                objCommand.Parameters["@UniqueProteinsFDRFilter"].Value = udtPSMStats.UniqueProteinCount;
-
-                objCommand.Parameters.Add(new SqlParameter("@MSGFThresholdIsEValue", SqlDbType.TinyInt));
-                objCommand.Parameters["@MSGFThresholdIsEValue"].Direction = ParameterDirection.Input;
-
-                objCommand.Parameters["@MSGFThresholdIsEValue"].Value = 0;
-
                 if (mStoredProcedureExecutor == null || !string.IsNullOrWhiteSpace(dmsConnectionStringOverride))
                 {
                     string strConnectionString;
@@ -572,13 +517,29 @@ namespace AnalysisManagerGlyQIQPlugin
                         strConnectionString = dmsConnectionStringOverride;
                     }
 
-                    mStoredProcedureExecutor = new PRISM.ExecuteDatabaseSP(strConnectionString);
+                    mStoredProcedureExecutor = DbToolsFactory.GetDBTools(strConnectionString);
                     mStoredProcedureExecutor.DebugEvent += ExecuteSP_DebugEvent;
                     mStoredProcedureExecutor.ErrorEvent += ExecuteSP_DBErrorEvent;
                 }
 
+                var dbTools = mStoredProcedureExecutor;
+                var cmd = dbTools.CreateCommand(STORE_JOB_PSM_RESULTS_SP_NAME, CommandType.StoredProcedure);
+
+                dbTools.AddParameter(cmd, "@Return", SqlType.Int, direction: ParameterDirection.ReturnValue);
+                dbTools.AddTypedParameter(cmd, "@Job", SqlType.Int, value: jobNumber);
+                dbTools.AddTypedParameter(cmd, "@MSGFThreshold", SqlType.Float, value: 1);
+                dbTools.AddTypedParameter(cmd, "@FDRThreshold", SqlType.Float, value: 0.25);
+                dbTools.AddTypedParameter(cmd, "@SpectraSearched", SqlType.Int, value: mSpectraSearched);
+                dbTools.AddTypedParameter(cmd, "@TotalPSMs", SqlType.Int, value: udtPSMStats.TotalPSMs);
+                dbTools.AddTypedParameter(cmd, "@UniquePeptides", SqlType.Int, value: udtPSMStats.UniquePeptideCount);
+                dbTools.AddTypedParameter(cmd, "@UniqueProteins", SqlType.Int, value: udtPSMStats.UniqueProteinCount);
+                dbTools.AddTypedParameter(cmd, "@TotalPSMsFDRFilter", SqlType.Int, value: udtPSMStats.TotalPSMs);
+                dbTools.AddTypedParameter(cmd, "@UniquePeptidesFDRFilter", SqlType.Int, value: udtPSMStats.UniquePeptideCount);
+                dbTools.AddTypedParameter(cmd, "@UniqueProteinsFDRFilter", SqlType.Int, value: udtPSMStats.UniqueProteinCount);
+                dbTools.AddTypedParameter(cmd, "@MSGFThresholdIsEValue", SqlType.TinyInt, value: 0);
+
                 // Execute the SP (retry the call up to 3 times)
-                var resCode = mStoredProcedureExecutor.ExecuteSP(objCommand, MAX_RETRY_COUNT, out _);
+                var resCode = mStoredProcedureExecutor.ExecuteSP(cmd, MAX_RETRY_COUNT);
 
                 if (resCode == 0)
                 {

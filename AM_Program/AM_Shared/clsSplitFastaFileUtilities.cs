@@ -5,8 +5,8 @@ using PRISM.Logging;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
 using System.IO;
+using PRISMDatabaseUtils;
 
 namespace AnalysisManagerBase
 {
@@ -269,8 +269,8 @@ namespace AnalysisManagerBase
 
             foreach (DataRow dataRow in legacyStaticFiles.Rows)
             {
-                var legacyFASTAFilePath = clsGlobal.DbCStr(dataRow[0]);
-                organismName = clsGlobal.DbCStr(dataRow[1]);
+                var legacyFASTAFilePath = dataRow[0].CastDBVal<string>();
+                organismName = dataRow[1].CastDBVal<string>();
 
                 return legacyFASTAFilePath;
             }
@@ -308,69 +308,38 @@ namespace AnalysisManagerBase
                     var splitFastaFileInfo = new FileInfo(currentSplitFasta.FilePath);
                     splitFastaName = splitFastaFileInfo.Name;
 
-                    // Setup for execution of the stored procedure
-                    var cmd = new SqlCommand
-                    {
-                        CommandType = CommandType.StoredProcedure,
-                        CommandText = SP_NAME_UPDATE_ORGANISM_DB_FILE
-                    };
+                    var dbTools = DbToolsFactory.GetDBTools(mDMSConnectionString);
 
-                    cmd.Parameters.Add(new SqlParameter("@FastaFileName", SqlDbType.VarChar, 128)).Value = splitFastaName;
-                    cmd.Parameters.Add(new SqlParameter("@OrganismName", SqlDbType.VarChar, 128)).Value = organismName;
-                    cmd.Parameters.Add(new SqlParameter("@NumProteins", SqlDbType.Int)).Value = currentSplitFasta.NumProteins;
-                    cmd.Parameters.Add(new SqlParameter("@NumResidues", SqlDbType.BigInt)).Value = currentSplitFasta.NumResidues;
-                    cmd.Parameters.Add(new SqlParameter("@FileSizeKB", SqlDbType.Int)).Value = (splitFastaFileInfo.Length / 1024.0).ToString("0");
-                    cmd.Parameters.Add(new SqlParameter("@Message", SqlDbType.VarChar, 512)).Value = string.Empty;
-                    cmd.Parameters.Add(new SqlParameter("@returnCode", SqlDbType.VarChar, 64)).Direction = ParameterDirection.Output;
+                    // Setup for execution of the stored procedure
+                    var cmd = dbTools.CreateCommand(SP_NAME_UPDATE_ORGANISM_DB_FILE, CommandType.StoredProcedure);
+
+                    dbTools.AddParameter(cmd, "@FastaFileName", SqlType.VarChar, 128, splitFastaName);
+                    dbTools.AddParameter(cmd, "@OrganismName", SqlType.VarChar, 128, organismName);
+                    dbTools.AddTypedParameter(cmd, "@NumProteins", SqlType.Int, value: currentSplitFasta.NumProteins);
+                    dbTools.AddTypedParameter(cmd, "@NumResidues", SqlType.BigInt, value: currentSplitFasta.NumResidues);
+                    dbTools.AddTypedParameter(cmd, "@FileSizeKB", SqlType.Int, value: (int)Math.Round(splitFastaFileInfo.Length / 1024.0));
+                    dbTools.AddParameter(cmd, "@Message", SqlType.VarChar, 512, string.Empty);
+                    dbTools.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, direction: ParameterDirection.Output);
 
                     var retryCount = 3;
-                    while (retryCount > 0)
+                    dbTools.ExecuteSP(cmd, retryCount, 2);
+
+                    var returnCode = clsGlobal.GetReturnCodeValue(cmd.Parameters["@returnCode"].Value.ToString());
+                    if (returnCode != 0)
                     {
-                        try
+                        // Error occurred
+                        ErrorMessage = SP_NAME_UPDATE_ORGANISM_DB_FILE + " reported return code " + returnCode;
+
+                        var statusMessage = cmd.Parameters["@Message"].Value;
+                        if (statusMessage != null)
                         {
-                            using (var connection = new SqlConnection(mDMSConnectionString))
-                            {
-                                connection.Open();
-                                cmd.Connection = connection;
-                                cmd.ExecuteNonQuery();
-
-                                var returnCode = cmd.Parameters["@returnCode"].Value.ToString();
-                                var returnCodeValue = clsGlobal.GetReturnCodeValue(returnCode);
-
-                                if (returnCodeValue != 0)
-                                {
-                                    // Error occurred
-                                    ErrorMessage = SP_NAME_UPDATE_ORGANISM_DB_FILE + " reported return code " + returnCode;
-
-                                    var statusMessage = cmd.Parameters["@Message"].Value;
-                                    if (statusMessage != null)
-                                    {
-                                        ErrorMessage = ErrorMessage + "; " + Convert.ToString(statusMessage);
-                                    }
-
-                                    OnErrorEvent(ErrorMessage);
-                                    return false;
-                                }
-
-                            }
-
-                            break;
-
-                        }
-                        catch (Exception ex)
-                        {
-                            retryCount -= 1;
-                            ErrorMessage = "Exception storing fasta file " + splitFastaName + " in T_Organism_DB_File: " + ex.Message;
-                            OnErrorEvent(ErrorMessage);
-                            // Delay for 2 seconds before trying again
-                            clsGlobal.IdleLoop(2);
-
+                            ErrorMessage = ErrorMessage + "; " + Convert.ToString(statusMessage);
                         }
 
+                        OnErrorEvent(ErrorMessage);
+                        return false;
                     }
-
                 }
-
             }
             catch (Exception ex)
             {
@@ -407,52 +376,22 @@ namespace AnalysisManagerBase
 
             try
             {
-                // Setup for execution of the stored procedure
-                var cmd = new SqlCommand
-                {
-                    CommandType = CommandType.StoredProcedure,
-                    CommandText = SP_NAME_REFRESH_CACHED_ORG_DB_INFO
-                };
+                var dbTools = DbToolsFactory.GetDBTools(mProteinSeqsDBConnectionString);
 
-                cmd.Parameters.Add(new SqlParameter("@returnCode", SqlDbType.VarChar, 64)).Direction = ParameterDirection.Output;
+                // Setup for execution of the stored procedure
+                var cmd = dbTools.CreateCommand(SP_NAME_REFRESH_CACHED_ORG_DB_INFO, CommandType.StoredProcedure);
+
+                dbTools.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, direction: ParameterDirection.Output);
 
                 var retryCount = 3;
-                while (retryCount > 0)
+                dbTools.ExecuteSP(cmd, retryCount, 2);
+
+                var returnCode = clsGlobal.GetReturnCodeValue(cmd.Parameters["@returnCode"].Value.ToString());
+                if (returnCode != 0)
                 {
-                    try
-                    {
-                        using (var connection = new SqlConnection(mProteinSeqsDBConnectionString))
-                        {
-                            connection.Open();
-                            cmd.Connection = connection;
-                            cmd.ExecuteNonQuery();
-
-                            var returnCode = cmd.Parameters["@returnCode"].Value.ToString();
-                            var returnCodeValue = clsGlobal.GetReturnCodeValue(returnCode);
-
-                            if (returnCodeValue != 0)
-                            {
-                                // Error occurred
-                                OnErrorEvent("Call to " + SP_NAME_REFRESH_CACHED_ORG_DB_INFO + " reported return code : " + returnCode);
-                            }
-
-                        }
-
-                        break;
-
-                    }
-                    catch (Exception ex)
-                    {
-                        retryCount -= 1;
-                        ErrorMessage = "Exception updating the cached organism DB info on ProteinSeqs: " + ex.Message;
-                        OnErrorEvent(ErrorMessage);
-                        // Delay for 2 seconds before trying again
-                        clsGlobal.IdleLoop(2);
-
-                    }
-
+                    // Error occurred
+                    OnErrorEvent("Call to " + SP_NAME_REFRESH_CACHED_ORG_DB_INFO + " reported return code : " + returnCode);
                 }
-
             }
             catch (Exception ex)
             {

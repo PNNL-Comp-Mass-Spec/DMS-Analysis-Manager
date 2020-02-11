@@ -2,10 +2,10 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using PRISMDatabaseUtils;
 
 namespace AnalysisManagerBase
 {
@@ -511,23 +511,19 @@ namespace AnalysisManagerBase
         /// <returns></returns>
         public bool StoreToolVersionInDatabase(string toolVersionInfo)
         {
+            var analysisTask = new clsAnalysisJob(mMgrParams, DebugLevel);
+            var dbTools = analysisTask.PipelineDBProcedureExecutor;
 
             // Setup for execution of the stored procedure
-            var cmd = new SqlCommand
-            {
-                CommandType = CommandType.StoredProcedure,
-                CommandText = SP_NAME_SET_TASK_TOOL_VERSION
-            };
+            var cmd = dbTools.CreateCommand(SP_NAME_SET_TASK_TOOL_VERSION, CommandType.StoredProcedure);
 
-            cmd.Parameters.Add(new SqlParameter("@job", SqlDbType.Int)).Value = mJobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Job", 0);
-            cmd.Parameters.Add(new SqlParameter("@step", SqlDbType.Int)).Value = mJobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Step", 0);
-            cmd.Parameters.Add(new SqlParameter("@ToolVersionInfo", SqlDbType.VarChar, 900)).Value = toolVersionInfo;
-            cmd.Parameters.Add(new SqlParameter("@returnCode", SqlDbType.VarChar, 64)).Direction = ParameterDirection.Output;
-
-            var analysisTask = new clsAnalysisJob(mMgrParams, DebugLevel);
+            dbTools.AddTypedParameter(cmd, "@job", SqlType.Int, value: mJobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Job", 0));
+            dbTools.AddTypedParameter(cmd, "@step", SqlType.Int, value: mJobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Step", 0));
+            dbTools.AddParameter(cmd, "@ToolVersionInfo", SqlType.VarChar, 900, toolVersionInfo);
+            dbTools.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, direction: ParameterDirection.Output);
 
             // Execute the stored procedure (retry the call up to 4 times)
-            var resCode = analysisTask.PipelineDBProcedureExecutor.ExecuteSP(cmd, 4);
+            var resCode = dbTools.ExecuteSP(cmd, 4);
 
             var returnCode = cmd.Parameters["@returnCode"].Value.ToString();
             var returnCodeValue = clsGlobal.GetReturnCodeValue(returnCode);

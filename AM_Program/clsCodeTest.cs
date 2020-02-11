@@ -6,7 +6,6 @@ using Renci.SshNet;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
@@ -16,6 +15,7 @@ using System.Runtime.Versioning;
 using System.Text;
 using System.Text.RegularExpressions;
 using Cyclops;
+using PRISMDatabaseUtils;
 using FileInfo = System.IO.FileInfo;
 
 namespace AnalysisManagerProg
@@ -459,15 +459,15 @@ namespace AnalysisManagerProg
 
             foreach (DataRow curRow in Dt.Rows)
             {
-                var dataset = clsGlobal.DbCStr(curRow["Dataset"]);
-                var datasetID = clsGlobal.DbCInt(curRow["Dataset_ID"]);
-                var job = clsGlobal.DbCInt(curRow["Job"]);
-                var dtaRefineryDataFolderPath = Path.Combine(clsGlobal.DbCStr(curRow["Dataset_Folder_Path"]),
-                                                             clsGlobal.DbCStr(curRow["Output_Folder"]));
+                var dataset = curRow["Dataset"].CastDBVal<string>();
+                var datasetID = curRow["Dataset_ID"].CastDBVal<int>();
+                var job = curRow["Job"].CastDBVal<int>();
+                var dtaRefineryDataFolderPath = Path.Combine(curRow["Dataset_Folder_Path"].CastDBVal<string>(),
+                                                             curRow["Output_Folder"].CastDBVal<string>());
 
                 if (!Directory.Exists(dtaRefineryDataFolderPath))
                 {
-                    dtaRefineryDataFolderPath = Path.Combine(clsGlobal.DbCStr(curRow["Transfer_Folder_Path"]), clsGlobal.DbCStr(curRow["Output_Folder"]));
+                    dtaRefineryDataFolderPath = Path.Combine(curRow["Transfer_Folder_Path"].CastDBVal<string>(), curRow["Output_Folder"].CastDBVal<string>());
                 }
 
                 if (Directory.Exists(dtaRefineryDataFolderPath))
@@ -1266,22 +1266,20 @@ namespace AnalysisManagerProg
         /// </summary>
         public void TestRunSP()
         {
-            var cmd = new SqlCommand
-            {
-                CommandType = CommandType.StoredProcedure,
-                CommandText = "GetJobStepParamsAsTable"
-            };
-
-            cmd.Parameters.Add(new SqlParameter("@jobNumber", SqlDbType.Int)).Value = 1026591;
-            cmd.Parameters.Add(new SqlParameter("@stepNumber", SqlDbType.Int)).Value = 3;
-            cmd.Parameters.Add(new SqlParameter("@message", SqlDbType.VarChar, 512)).Direction = ParameterDirection.Output;
-
             const string connectionString = "Data Source=gigasax;Initial Catalog=dms_pipeline;Integrated Security=SSPI;";
-            const string callingFunction = "TestRunSP";
             const short retryCount = 2;
             const int timeoutSeconds = 30;
 
-            clsGlobal.GetDataTableByCmd(cmd, connectionString, callingFunction, retryCount, out var results, timeoutSeconds);
+            var dbTools = DbToolsFactory.GetDBTools(connectionString, timeoutSeconds);
+            var cmd = dbTools.CreateCommand("GetJobStepParamsAsTable", CommandType.StoredProcedure);
+
+            dbTools.AddParameter(cmd, "@jobNumber", SqlType.Int, value: 1026591);
+            dbTools.AddParameter(cmd, "@stepNumber", SqlType.Int, value: 3);
+            dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, direction: ParameterDirection.Output);
+
+            var success = dbTools.ExecuteSPDataTable(cmd, out var results, retryCount);
+            //const string callingFunction = "TestRunSP";
+            //clsGlobal.GetDataTableByCmd(cmd, connectionString, callingFunction, retryCount, out var results, timeoutSeconds);
 
             foreach (DataRow row in results.Rows)
             {

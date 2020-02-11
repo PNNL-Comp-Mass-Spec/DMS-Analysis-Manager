@@ -4,12 +4,12 @@ using PRISMWin;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using PRISMDatabaseUtils;
 
 //*********************************************************************************************************
 // Written by Dave Clark and Matthew Monroe for the US Department of Energy
@@ -392,14 +392,14 @@ namespace AnalysisManagerBase
             string sqlStr, string connectionString, string callingFunction,
             short retryCount, out DataTable queryResults, int timeoutSeconds)
         {
-
-            var cmd = new SqlCommand(sqlStr)
-            {
-                CommandType = CommandType.Text
-            };
-
-            return GetDataTableByCmd(cmd, connectionString, callingFunction, retryCount, out queryResults, timeoutSeconds);
-
+            //var cmd = new SqlCommand(sqlStr)
+            //{
+            //    CommandType = CommandType.Text
+            //};
+            //
+            //return GetDataTableByCmd(cmd, connectionString, callingFunction, retryCount, out queryResults, timeoutSeconds);
+            var dbTools = DbToolsFactory.GetDBTools(connectionString, timeoutSeconds);
+            return dbTools.GetQueryResultsDataTable(sqlStr, out queryResults, callingFunction, retryCount);
         }
 
         /// <summary>
@@ -413,8 +413,9 @@ namespace AnalysisManagerBase
         /// <param name="timeoutSeconds">Query timeout (in seconds); minimum is 5 seconds; suggested value is 30 seconds</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks></remarks>
+        [Obsolete("Use PRISMDatabaseUtils.DbToolsFactory.GetDBTools(...).GetQueryDataTable(...)", true)]
         public static bool GetDataTableByCmd(
-            SqlCommand cmd,
+            System.Data.SqlClient.SqlCommand cmd,
             string connectionString,
             string callingFunction,
             short retryCount,
@@ -445,13 +446,13 @@ namespace AnalysisManagerBase
             {
                 try
                 {
-                    using (var cn = new SqlConnection(connectionString))
+                    using (var cn = new System.Data.SqlClient.SqlConnection(connectionString))
                     {
 
                         cmd.Connection = cn;
                         cmd.CommandTimeout = timeoutSeconds;
 
-                        using (var da = new SqlDataAdapter(cmd))
+                        using (var da = new System.Data.SqlClient.SqlDataAdapter(cmd))
                         {
                             using (var ds = new DataSet())
                             {
@@ -601,7 +602,7 @@ namespace AnalysisManagerBase
             if (timeoutSeconds < 5)
                 timeoutSeconds = 5;
 
-            var DBTools = new DBTools(connectionString);
+            var DBTools = DbToolsFactory.GetDBTools(connectionString);
             RegisterEvents(DBTools);
 
             var success = DBTools.GetQueryResults(sqlQuery, out queryResults, callingFunction, retryCount, timeoutSeconds, maxRowsToReturn);
@@ -909,7 +910,6 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public static bool CopyAndRenameFileWithBackup(string sourceFilePath, string targetDirectoryPath, string targetFileName, int versionCountToKeep)
         {
-
             try
             {
                 var sourceFile = new FileInfo(sourceFilePath);
@@ -963,20 +963,17 @@ namespace AnalysisManagerBase
                         {
                             fileToRename.MoveTo(newFilePath);
                         }
-
                     }
                     catch (Exception)
                     {
                         // Ignore errors here; we'll continue on with the next file
                     }
-
                 }
 
                 var finalFilePath = Path.Combine(targetDirectoryPath, targetFileName);
 
                 // Now copy the file from sourceFilePath to newFilePath
                 sourceFile.CopyTo(finalFilePath, true);
-
             }
             catch (Exception)
             {
@@ -984,62 +981,6 @@ namespace AnalysisManagerBase
             }
 
             return true;
-
-        }
-
-        /// <summary>
-        /// Converts an database field value to a string, checking for null values
-        /// </summary>
-        /// <param name="dbValue">Value from database</param>
-        /// <returns></returns>
-        /// <remarks></remarks>
-        public static string DbCStr(object dbValue)
-        {
-            return DBTools.GetString(dbValue);
-        }
-
-        /// <summary>
-        /// Converts an database field value to a single, checking for null values
-        /// </summary>
-        /// <param name="dbValue">Value from database</param>
-        /// <returns></returns>
-        /// <remarks>An exception will be thrown if the value is not numeric</remarks>
-        public static float DbCSng(object dbValue)
-        {
-            return DBTools.GetFloat(dbValue);
-        }
-
-        /// <summary>
-        /// Converts an database field value to a double, checking for null values
-        /// </summary>
-        /// <param name="dbValue">Value from database</param>
-        /// <returns></returns>
-        /// <remarks>An exception will be thrown if the value is not numeric</remarks>
-        public static double DbCDbl(object dbValue)
-        {
-            return DBTools.GetDouble(dbValue);
-        }
-
-        /// <summary>
-        /// Converts an database field value to an integer (int32), checking for null values
-        /// </summary>
-        /// <param name="dbValue">Value from database</param>
-        /// <returns></returns>
-        /// <remarks>An exception will be thrown if the value is not numeric</remarks>
-        public static int DbCInt(object dbValue)
-        {
-            return DBTools.GetInteger(dbValue);
-        }
-
-        /// <summary>
-        /// Converts an database field value to a long integer (int64), checking for null values
-        /// </summary>
-        /// <param name="dbValue">Value from database</param>
-        /// <returns></returns>
-        /// <remarks>An exception will be thrown if the value is not numeric</remarks>
-        public static long DbCLng(object dbValue)
-        {
-            return DBTools.GetLong(dbValue);
         }
 
         /// <summary>
@@ -1791,7 +1732,7 @@ namespace AnalysisManagerBase
 
         #region "EventNotifier events"
 
-        private static void RegisterEvents(EventNotifier oProcessingClass, bool writeDebugEventsToLog = true)
+        private static void RegisterEvents(IEventNotifier oProcessingClass, bool writeDebugEventsToLog = true)
         {
             if (writeDebugEventsToLog)
             {

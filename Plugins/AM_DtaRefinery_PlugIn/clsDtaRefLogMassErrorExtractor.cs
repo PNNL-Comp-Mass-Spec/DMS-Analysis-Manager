@@ -2,10 +2,10 @@
 using PRISM;
 using System;
 using System.Data;
-using System.Data.SqlClient;
 using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
+using PRISMDatabaseUtils;
 
 namespace AnalysisManagerDtaRefineryPlugIn
 {
@@ -205,27 +205,24 @@ namespace AnalysisManagerDtaRefineryPlugIn
             {
                 // Call stored procedure STORE_MASS_ERROR_STATS_SP_NAME in DMS5
 
-                var cmd = new SqlCommand
-                {
-                    CommandType = CommandType.StoredProcedure,
-                    CommandText = STORE_MASS_ERROR_STATS_SP_NAME
-                };
-
-                cmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
-                cmd.Parameters.Add(new SqlParameter("@DatasetID", SqlDbType.Int)).Value = datasetID;
-                cmd.Parameters.Add(new SqlParameter("@ResultsXML", SqlDbType.Xml)).Value = xmlResults;
-
                 var analysisTask = new clsAnalysisJob(mMgrParams, mDebugLevel);
+                var dbTools = analysisTask.DMSProcedureExecutor;
+
+                var cmd = dbTools.CreateCommand(STORE_MASS_ERROR_STATS_SP_NAME, CommandType.StoredProcedure);
+
+                dbTools.AddParameter(cmd, "@Return", SqlType.Int, direction: ParameterDirection.ReturnValue);
+                dbTools.AddTypedParameter(cmd, "@DatasetID", SqlType.Int, value: datasetID);
+                dbTools.AddParameter(cmd, "@ResultsXML", SqlType.Xml, value: xmlResults);
 
                 // Execute the SP (retry the call up to 4 times)
-                var ResCode = analysisTask.DMSProcedureExecutor.ExecuteSP(cmd, MAX_RETRY_COUNT);
+                var resCode = dbTools.ExecuteSP(cmd, MAX_RETRY_COUNT);
 
-                if (ResCode == 0)
+                if (resCode == 0)
                 {
                     return true;
                 }
 
-                OnErrorEvent("Error storing DTA Refinery Mass Error Results in the database, " + STORE_MASS_ERROR_STATS_SP_NAME + " returned " + ResCode);
+                OnErrorEvent("Error storing DTA Refinery Mass Error Results in the database, " + STORE_MASS_ERROR_STATS_SP_NAME + " returned " + resCode);
                 return false;
             }
             catch (Exception ex)

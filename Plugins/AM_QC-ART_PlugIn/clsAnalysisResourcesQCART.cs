@@ -14,6 +14,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml.XPath;
+using PRISMDatabaseUtils;
 
 namespace AnalysisManagerQCARTPlugin
 {
@@ -923,7 +924,7 @@ namespace AnalysisManagerQCARTPlugin
 
                         foreach (var dataVal in row.ItemArray)
                         {
-                            dataValues.Add(clsGlobal.DbCStr(dataVal));
+                            dataValues.Add(dataVal.CastDBVal<string>());
                         }
 
                         var datasetName = dataValues[datasetNameIndex];

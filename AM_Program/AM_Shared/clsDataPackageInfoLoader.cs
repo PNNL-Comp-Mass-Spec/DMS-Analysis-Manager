@@ -3,8 +3,8 @@ using PRISM.Logging;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
 using System.Linq;
+using PRISMDatabaseUtils;
 
 namespace AnalysisManagerBase
 {
@@ -196,7 +196,7 @@ namespace AnalysisManagerBase
                 {
                     foreach (DataRow curRow in resultSet.Rows)
                     {
-                        var datasetCount = clsGlobal.DbCInt(curRow[0]);
+                        var datasetCount = curRow[0].CastDBVal<int>();
 
                         if (datasetCount > 0)
                         {
@@ -256,21 +256,19 @@ namespace AnalysisManagerBase
         /// The analysis job must have completed successfully, since the parameters
         /// are retrieved from tables T_Jobs_History, T_Job_Steps_History, and T_Job_Parameters_History
         /// </summary>
-        /// <param name="brokerConnection">DMS_Pipeline database connection (must already be open)</param>
+        /// <param name="dbTools">DMS_Pipeline database connection</param>
         /// <param name="jobNumber">Job number</param>
         /// <param name="jobParameters">Output parameter: Dictionary of job parameters where keys are parameter names (section names are ignored)</param>
         /// <param name="errorMsg"></param>
         /// <returns>True if success; false if an error</returns>
         /// <remarks>This procedure is used by clsAnalysisToolRunnerPRIDEConverter</remarks>
         private static bool LookupJobParametersFromHistory(
-            SqlConnection brokerConnection,
+            IDBTools dbTools,
             int jobNumber,
             out Dictionary<string, string> jobParameters,
             out string errorMsg)
         {
-
             const int RETRY_COUNT = 3;
-            const int TIMEOUT_SECONDS = 30;
 
             jobParameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             errorMsg = string.Empty;
@@ -285,48 +283,14 @@ namespace AnalysisManagerBase
 
             try
             {
-                var cmd = new SqlCommand("GetJobStepParamsAsTableUseHistory")
-                {
-                    CommandType = CommandType.StoredProcedure,
-                    Connection = brokerConnection,
-                    CommandTimeout = TIMEOUT_SECONDS
-                };
+                var cmd = dbTools.CreateCommand("GetJobStepParamsAsTableUseHistory", CommandType.StoredProcedure);
 
-                cmd.Parameters.Add(new SqlParameter("@jobNumber", SqlDbType.Int)).Value = jobNumber;
-                cmd.Parameters.Add(new SqlParameter("@stepNumber", SqlDbType.Int)).Value = 1;
+                dbTools.AddParameter(cmd, "@jobNumber", SqlType.Int, value: jobNumber);
+                dbTools.AddParameter(cmd, "@stepNumber", SqlType.Int, value: 1);
 
                 // Execute the SP
-
-                DataTable resultSet = null;
-                var retryCount = RETRY_COUNT;
-                var success = false;
-
-                while (retryCount > 0 && !success)
-                {
-                    try
-                    {
-                        using (var da = new SqlDataAdapter(cmd))
-                        {
-                            using (var ds = new DataSet())
-                            {
-                                da.Fill(ds);
-                                resultSet = ds.Tables[0];
-                            }
-                        }
-
-                        success = true;
-                    }
-                    catch (Exception ex)
-                    {
-                        retryCount -= 1;
-                        var msg = "Exception running stored procedure " + cmd.CommandText + ": " + ex.Message + "; RetryCount = " + retryCount;
-
-                        LogTools.LogError(msg);
-
-                        // Delay for 5 seconds before trying again
-                        clsGlobal.IdleLoop(5);
-                    }
-                }
+                var returnCode = dbTools.ExecuteSPDataTable(cmd, out var resultSet, RETRY_COUNT, 5);
+                var success = returnCode == 0;
 
                 if (!success)
                 {
@@ -346,9 +310,9 @@ namespace AnalysisManagerBase
 
                 foreach (DataRow curRow in resultSet.Rows)
                 {
-                    // var section = clsGlobal.DbCStr(curRow[0])
-                    var parameter = clsGlobal.DbCStr(curRow[1]);
-                    var value = clsGlobal.DbCStr(curRow[2]);
+                    // var section = curRow[0]?.CastDBVal<string>()
+                    var parameter = curRow[1]?.CastDBVal<string>();
+                    var value = curRow[2]?.CastDBVal<string>();
 
                     if (jobParameters.ContainsKey(parameter))
                     {
@@ -378,24 +342,24 @@ namespace AnalysisManagerBase
         private static clsDataPackageDatasetInfo ParseDataPackageDatasetInfoRow(DataRow curRow)
         {
 
-            var datasetName = clsGlobal.DbCStr(curRow["Dataset"]);
-            var datasetId = clsGlobal.DbCInt(curRow["DatasetID"]);
+            var datasetName = curRow["Dataset"].CastDBVal<string>();
+            var datasetId = curRow["DatasetID"].CastDBVal<int>();
 
             var datasetInfo = new clsDataPackageDatasetInfo(datasetName, datasetId)
             {
-                Instrument = clsGlobal.DbCStr(curRow["Instrument"]),
-                InstrumentGroup = clsGlobal.DbCStr(curRow["InstrumentGroup"]),
-                Experiment = clsGlobal.DbCStr(curRow["Experiment"]),
-                Experiment_Reason = clsGlobal.DbCStr(curRow["Experiment_Reason"]),
-                Experiment_Comment = clsGlobal.DbCStr(curRow["Experiment_Comment"]),
-                Experiment_Organism = clsGlobal.DbCStr(curRow["Organism"]),
-                Experiment_Tissue_ID = clsGlobal.DbCStr(curRow["Experiment_Tissue_ID"]),
-                Experiment_Tissue_Name = clsGlobal.DbCStr(curRow["Experiment_Tissue_Name"]),
-                Experiment_NEWT_ID = clsGlobal.DbCInt(curRow["Experiment_NEWT_ID"]),
-                Experiment_NEWT_Name = clsGlobal.DbCStr(curRow["Experiment_NEWT_Name"]),
-                ServerStoragePath = clsGlobal.DbCStr(curRow["Dataset_Folder_Path"]),
-                ArchiveStoragePath = clsGlobal.DbCStr(curRow["Archive_Folder_Path"]),
-                RawDataType = clsGlobal.DbCStr(curRow["RawDataType"])
+                Instrument = curRow["Instrument"].CastDBVal<string>(),
+                InstrumentGroup = curRow["InstrumentGroup"].CastDBVal<string>(),
+                Experiment = curRow["Experiment"].CastDBVal<string>(),
+                Experiment_Reason = curRow["Experiment_Reason"].CastDBVal<string>(),
+                Experiment_Comment = curRow["Experiment_Comment"].CastDBVal<string>(),
+                Experiment_Organism = curRow["Organism"].CastDBVal<string>(),
+                Experiment_Tissue_ID = curRow["Experiment_Tissue_ID"].CastDBVal<string>(),
+                Experiment_Tissue_Name = curRow["Experiment_Tissue_Name"].CastDBVal<string>(),
+                Experiment_NEWT_ID = curRow["Experiment_NEWT_ID"].CastDBVal<int>(),
+                Experiment_NEWT_Name = curRow["Experiment_NEWT_Name"].CastDBVal<string>(),
+                ServerStoragePath = curRow["Dataset_Folder_Path"].CastDBVal<string>(),
+                ArchiveStoragePath = curRow["Archive_Folder_Path"].CastDBVal<string>(),
+                RawDataType = curRow["RawDataType"].CastDBVal<string>()
             };
 
             return datasetInfo;
@@ -411,30 +375,30 @@ namespace AnalysisManagerBase
         public static clsDataPackageJobInfo ParseDataPackageJobInfoRow(DataRow curRow)
         {
 
-            var dataPkgJob = clsGlobal.DbCInt(curRow["Job"]);
-            var dataPkgDataset = clsGlobal.DbCStr(curRow["Dataset"]);
+            var dataPkgJob = curRow["Job"].CastDBVal<int>();
+            var dataPkgDataset = curRow["Dataset"].CastDBVal<string>();
 
             var jobInfo = new clsDataPackageJobInfo(dataPkgJob, dataPkgDataset)
             {
-                DatasetID = clsGlobal.DbCInt(curRow["DatasetID"]),
-                Instrument = clsGlobal.DbCStr(curRow["Instrument"]),
-                InstrumentGroup = clsGlobal.DbCStr(curRow["InstrumentGroup"]),
-                Experiment = clsGlobal.DbCStr(curRow["Experiment"]),
-                Experiment_Reason = clsGlobal.DbCStr(curRow["Experiment_Reason"]),
-                Experiment_Comment = clsGlobal.DbCStr(curRow["Experiment_Comment"]),
-                Experiment_Organism = clsGlobal.DbCStr(curRow["Organism"]),
-                Experiment_NEWT_ID = clsGlobal.DbCInt(curRow["Experiment_NEWT_ID"]),
-                Experiment_NEWT_Name = clsGlobal.DbCStr(curRow["Experiment_NEWT_Name"]),
-                Tool = clsGlobal.DbCStr(curRow["Tool"]),
-                ResultType = clsGlobal.DbCStr(curRow["ResultType"])
+                DatasetID = curRow["DatasetID"].CastDBVal<int>(),
+                Instrument = curRow["Instrument"].CastDBVal<string>(),
+                InstrumentGroup = curRow["InstrumentGroup"].CastDBVal<string>(),
+                Experiment = curRow["Experiment"].CastDBVal<string>(),
+                Experiment_Reason = curRow["Experiment_Reason"].CastDBVal<string>(),
+                Experiment_Comment = curRow["Experiment_Comment"].CastDBVal<string>(),
+                Experiment_Organism = curRow["Organism"].CastDBVal<string>(),
+                Experiment_NEWT_ID = curRow["Experiment_NEWT_ID"].CastDBVal<int>(),
+                Experiment_NEWT_Name = curRow["Experiment_NEWT_Name"].CastDBVal<string>(),
+                Tool = curRow["Tool"].CastDBVal<string>(),
+                ResultType = curRow["ResultType"].CastDBVal<string>()
             };
 
             jobInfo.PeptideHitResultType = clsPHRPReader.GetPeptideHitResultType(jobInfo.ResultType);
-            jobInfo.SettingsFileName = clsGlobal.DbCStr(curRow["SettingsFileName"]);
-            jobInfo.ParameterFileName = clsGlobal.DbCStr(curRow["ParameterFileName"]);
-            jobInfo.OrganismDBName = clsGlobal.DbCStr(curRow["OrganismDBName"]);
-            jobInfo.ProteinCollectionList = clsGlobal.DbCStr(curRow["ProteinCollectionList"]);
-            jobInfo.ProteinOptions = clsGlobal.DbCStr(curRow["ProteinOptions"]);
+            jobInfo.SettingsFileName = curRow["SettingsFileName"].CastDBVal<string>();
+            jobInfo.ParameterFileName = curRow["ParameterFileName"].CastDBVal<string>();
+            jobInfo.OrganismDBName = curRow["OrganismDBName"].CastDBVal<string>();
+            jobInfo.ProteinCollectionList = curRow["ProteinCollectionList"].CastDBVal<string>();
+            jobInfo.ProteinOptions = curRow["ProteinOptions"].CastDBVal<string>();
 
             // This will be updated later for SplitFasta jobs (using function LookupJobParametersFromHistory)
             jobInfo.NumberOfClonedSteps = 0;
@@ -448,18 +412,18 @@ namespace AnalysisManagerBase
                 jobInfo.LegacyFastaFileName = "na";
             }
 
-            jobInfo.ServerStoragePath = clsGlobal.DbCStr(curRow["ServerStoragePath"]);
-            jobInfo.ArchiveStoragePath = clsGlobal.DbCStr(curRow["ArchiveStoragePath"]);
-            jobInfo.ResultsFolderName = clsGlobal.DbCStr(curRow["ResultsFolder"]);
-            jobInfo.DatasetFolderName = clsGlobal.DbCStr(curRow["DatasetFolder"]);
+            jobInfo.ServerStoragePath = curRow["ServerStoragePath"].CastDBVal<string>();
+            jobInfo.ArchiveStoragePath = curRow["ArchiveStoragePath"].CastDBVal<string>();
+            jobInfo.ResultsFolderName = curRow["ResultsFolder"].CastDBVal<string>();
+            jobInfo.DatasetFolderName = curRow["DatasetFolder"].CastDBVal<string>();
 
-            var sharedResultsFolder = clsGlobal.DbCStr(curRow["SharedResultsFolder"]);
+            var sharedResultsFolder = curRow["SharedResultsFolder"].CastDBVal<string>();
             if (!string.IsNullOrWhiteSpace(sharedResultsFolder))
             {
                 jobInfo.SharedResultsFolders.Add(sharedResultsFolder);
             }
 
-            jobInfo.RawDataType = clsGlobal.DbCStr(curRow["RawDataType"]);
+            jobInfo.RawDataType = curRow["RawDataType"].CastDBVal<string>();
 
             return jobInfo;
 
@@ -526,6 +490,7 @@ namespace AnalysisManagerBase
             out List<clsDataPackageJobInfo> additionalJobs,
             out string errorMsg)
         {
+            const int TIMEOUT_SECONDS = 30;
 
             // This list tracks the info for the Peptide Hit jobs (e.g. MS-GF+ or Sequest) associated with the data package
             var dataPackagePeptideHitJobs = new List<clsDataPackageJobInfo>();
@@ -554,7 +519,6 @@ namespace AnalysisManagerBase
 
             try
             {
-
                 foreach (var kvItem in dctDataPackageJobs)
                 {
                     if (kvItem.Value.PeptideHitResultType == clsPHRPReader.ePeptideHitResultType.Unknown)
@@ -566,9 +530,7 @@ namespace AnalysisManagerBase
                         // Cache this job info in dataPackagePeptideHitJobs
                         dataPackagePeptideHitJobs.Add(kvItem.Value);
                     }
-
                 }
-
             }
             catch (Exception ex)
             {
@@ -584,51 +546,43 @@ namespace AnalysisManagerBase
                                       where dataPkgJob.Tool.ToLower().Contains("SplitFasta".ToLower())
                                       select dataPkgJob).ToList();
 
-
                 if (splitFastaJobs.Count > 0)
                 {
                     var lastStatusTime = DateTime.UtcNow;
                     var statusIntervalSeconds = 4;
                     var jobsProcessed = 0;
 
-                    using (var brokerConnection = new SqlConnection(connectionString))
+                    var dbTools = DbToolsFactory.GetDBTools(connectionString, TIMEOUT_SECONDS);
+
+                    foreach (var dataPkgJob in splitFastaJobs)
                     {
-                        brokerConnection.Open();
+                        var success = LookupJobParametersFromHistory(dbTools, dataPkgJob.Job, out var dataPkgJobParameters, out errorMsg);
 
-                        foreach (var dataPkgJob in splitFastaJobs)
+                        if (!success)
                         {
+                            return new List<clsDataPackageJobInfo>();
+                        }
 
-                            var success = LookupJobParametersFromHistory(brokerConnection, dataPkgJob.Job, out var dataPkgJobParameters, out errorMsg);
+                        if (dataPkgJobParameters.TryGetValue("NumberOfClonedSteps", out var numberOfClonedSteps))
+                        {
+                            if (int.TryParse(numberOfClonedSteps, out var clonedStepCount))
+                                dataPkgJob.NumberOfClonedSteps = clonedStepCount;
+                        }
 
-                            if (!success)
-                            {
-                                return new List<clsDataPackageJobInfo>();
-                            }
+                        jobsProcessed += 1;
 
-                            if (dataPkgJobParameters.TryGetValue("NumberOfClonedSteps", out var numberOfClonedSteps))
-                            {
-                                if (int.TryParse(numberOfClonedSteps, out var clonedStepCount))
-                                    dataPkgJob.NumberOfClonedSteps = clonedStepCount;
-                            }
+                        if (DateTime.UtcNow.Subtract(lastStatusTime).TotalSeconds >= statusIntervalSeconds)
+                        {
+                            var pctComplete = jobsProcessed / (float)splitFastaJobs.Count * 100;
+                            LogDebugMessage("Retrieving job parameters from history for SplitFasta jobs; " + pctComplete.ToString("0") + "% complete");
 
-                            jobsProcessed += 1;
+                            lastStatusTime = DateTime.UtcNow;
 
-                            if (DateTime.UtcNow.Subtract(lastStatusTime).TotalSeconds >= statusIntervalSeconds)
-                            {
-                                var pctComplete = jobsProcessed / (float)splitFastaJobs.Count * 100;
-                                LogDebugMessage("Retrieving job parameters from history for SplitFasta jobs; " + pctComplete.ToString("0") + "% complete");
-
-                                lastStatusTime = DateTime.UtcNow;
-
-                                // Double the status interval, allowing for a maximum of 30 seconds
-                                statusIntervalSeconds = Math.Min(30, statusIntervalSeconds * 2);
-
-                            }
+                            // Double the status interval, allowing for a maximum of 30 seconds
+                            statusIntervalSeconds = Math.Min(30, statusIntervalSeconds * 2);
                         }
                     }
-
                 }
-
             }
             catch (Exception ex)
             {
@@ -637,9 +591,6 @@ namespace AnalysisManagerBase
             }
 
             return dataPackagePeptideHitJobs;
-
         }
-
-
     }
 }

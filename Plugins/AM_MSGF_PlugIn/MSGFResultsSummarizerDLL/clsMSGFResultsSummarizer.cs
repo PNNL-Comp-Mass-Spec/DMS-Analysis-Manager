@@ -15,11 +15,11 @@ using PRISM;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using PRISMDatabaseUtils;
 
 // ReSharper disable UnusedMember.Global
 
@@ -132,7 +132,7 @@ namespace MSGFResultsSummarizer
         private readonly string mWorkDir;
         private readonly string mConnectionString;
 
-        private readonly ExecuteDatabaseSP mStoredProcedureExecutor;
+        private readonly IDBTools mStoredProcedureExecutor;
 
         // The following is auto-determined in ProcessMSGFResults
         private string mMSGFSynopsisFileName = string.Empty;
@@ -295,7 +295,7 @@ namespace MSGFResultsSummarizer
             mConnectionString = connectionString;
             mDebugLevel = debugLevel;
 
-            mStoredProcedureExecutor = new ExecuteDatabaseSP(mConnectionString);
+            mStoredProcedureExecutor = DbToolsFactory.GetDBTools(mConnectionString);
             RegisterEvents(mStoredProcedureExecutor);
 
             ContactDatabase = true;
@@ -451,8 +451,7 @@ namespace MSGFResultsSummarizer
                                      "        SUM(CASE WHEN Scan_Type LIKE '%MSn' THEN Scan_Count ELSE 0 END) AS ScanCountMSn" +
                                      " FROM V_Dataset_Scans_Export DSE" + " WHERE Dataset = '" + DatasetName + "'" + " GROUP BY Scan_Count_Total";
 
-
-                var dbTools = new DBTools(mConnectionString);
+                var dbTools = DbToolsFactory.GetDBTools(mConnectionString);
                 RegisterEvents(dbTools);
 
                 var success = dbTools.GetQueryResults(queryScanStats, out var scanStatsFromDb, "LookupScanStats_V_Dataset_Scans_Export");
@@ -899,53 +898,42 @@ namespace MSGFResultsSummarizer
             {
                 // Call stored procedure StoreJobPSMStats in DMS5
 
-                var sqlCommand = new SqlCommand(STORE_JOB_PSM_RESULTS_SP_NAME) { CommandType = CommandType.StoredProcedure };
-
-                sqlCommand.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
-                sqlCommand.Parameters.Add(new SqlParameter("@Job", SqlDbType.Int)).Value = job;
-
-                sqlCommand.Parameters.Add(new SqlParameter("@MSGFThreshold", SqlDbType.Float));
+                var dbTools = mStoredProcedureExecutor;
+                var reportThreshold = MSGFThreshold;
+                var thresholdIsEValue = 0;
                 if (ResultType == clsPHRPReader.ePeptideHitResultType.MSAlign)
                 {
-                    sqlCommand.Parameters["@MSGFThreshold"].Value = EValueThreshold;
-                }
-                else
-                {
-                    sqlCommand.Parameters["@MSGFThreshold"].Value = MSGFThreshold;
+                    reportThreshold = EValueThreshold;
+                    thresholdIsEValue = 1;
                 }
 
-                sqlCommand.Parameters.Add(new SqlParameter("@FDRThreshold", SqlDbType.Float)).Value = FDRThreshold;
-                sqlCommand.Parameters.Add(new SqlParameter("@SpectraSearched", SqlDbType.Int)).Value = mSpectraSearched;
-                sqlCommand.Parameters.Add(new SqlParameter("@TotalPSMs", SqlDbType.Int)).Value = mMSGFBasedCounts.TotalPSMs;
-                sqlCommand.Parameters.Add(new SqlParameter("@UniquePeptides", SqlDbType.Int)).Value = mMSGFBasedCounts.UniquePeptideCount;
-                sqlCommand.Parameters.Add(new SqlParameter("@UniqueProteins", SqlDbType.Int)).Value = mMSGFBasedCounts.UniqueProteinCount;
-                sqlCommand.Parameters.Add(new SqlParameter("@TotalPSMsFDRFilter", SqlDbType.Int)).Value = mFDRBasedCounts.TotalPSMs;
-                sqlCommand.Parameters.Add(new SqlParameter("@UniquePeptidesFDRFilter", SqlDbType.Int)).Value = mFDRBasedCounts.UniquePeptideCount;
-                sqlCommand.Parameters.Add(new SqlParameter("@UniqueProteinsFDRFilter", SqlDbType.Int)).Value = mFDRBasedCounts.UniqueProteinCount;
+                var cmd = dbTools.CreateCommand(STORE_JOB_PSM_RESULTS_SP_NAME, CommandType.StoredProcedure);
 
-                sqlCommand.Parameters.Add(new SqlParameter("@MSGFThresholdIsEValue", SqlDbType.TinyInt));
-                if (ResultType == clsPHRPReader.ePeptideHitResultType.MSAlign)
-                {
-                    sqlCommand.Parameters["@MSGFThresholdIsEValue"].Value = 1;
-                }
-                else
-                {
-                    sqlCommand.Parameters["@MSGFThresholdIsEValue"].Value = 0;
-                }
-
-                sqlCommand.Parameters.Add(new SqlParameter("@PercentMSnScansNoPSM", SqlDbType.Real)).Value = mPercentMSnScansNoPSM;
-                sqlCommand.Parameters.Add(new SqlParameter("@MaximumScanGapAdjacentMSn", SqlDbType.Int)).Value = MaximumScanGapAdjacentMSn;
-                sqlCommand.Parameters.Add(new SqlParameter("@UniquePhosphopeptideCountFDR", SqlDbType.Int)).Value = mFDRBasedCounts.UniquePhosphopeptideCount;
-                sqlCommand.Parameters.Add(new SqlParameter("@UniquePhosphopeptidesCTermK", SqlDbType.Int)).Value = mFDRBasedCounts.UniquePhosphopeptidesCTermK;
-                sqlCommand.Parameters.Add(new SqlParameter("@UniquePhosphopeptidesCTermR", SqlDbType.Int)).Value = mFDRBasedCounts.UniquePhosphopeptidesCTermR;
-                sqlCommand.Parameters.Add(new SqlParameter("@MissedCleavageRatio", SqlDbType.Real)).Value = mFDRBasedCounts.MissedCleavageRatio;
-                sqlCommand.Parameters.Add(new SqlParameter("@MissedCleavageRatioPhospho", SqlDbType.Real)).Value = mFDRBasedCounts.MissedCleavageRatioPhospho;
-                sqlCommand.Parameters.Add(new SqlParameter("@TrypticPeptides", SqlDbType.Int)).Value = mFDRBasedCounts.TrypticPeptides;
-                sqlCommand.Parameters.Add(new SqlParameter("@KeratinPeptides", SqlDbType.Int)).Value = mFDRBasedCounts.KeratinPeptides;
-                sqlCommand.Parameters.Add(new SqlParameter("@TrypsinPeptides", SqlDbType.Int)).Value = mFDRBasedCounts.TrypsinPeptides;
+                dbTools.AddParameter(cmd, "@Return", SqlType.Int, direction: ParameterDirection.ReturnValue);
+                dbTools.AddTypedParameter(cmd, "@Job", SqlType.Int, value: job);
+                dbTools.AddTypedParameter(cmd, "@MSGFThreshold", SqlType.Float, value: reportThreshold);
+                dbTools.AddTypedParameter(cmd, "@FDRThreshold", SqlType.Float, value: FDRThreshold);
+                dbTools.AddTypedParameter(cmd, "@SpectraSearched", SqlType.Int, value: mSpectraSearched);
+                dbTools.AddTypedParameter(cmd, "@TotalPSMs", SqlType.Int, value: mMSGFBasedCounts.TotalPSMs);
+                dbTools.AddTypedParameter(cmd, "@UniquePeptides", SqlType.Int, value: mMSGFBasedCounts.UniquePeptideCount);
+                dbTools.AddTypedParameter(cmd, "@UniqueProteins", SqlType.Int, value: mMSGFBasedCounts.UniqueProteinCount);
+                dbTools.AddTypedParameter(cmd, "@TotalPSMsFDRFilter", SqlType.Int, value: mFDRBasedCounts.TotalPSMs);
+                dbTools.AddTypedParameter(cmd, "@UniquePeptidesFDRFilter", SqlType.Int, value: mFDRBasedCounts.UniquePeptideCount);
+                dbTools.AddTypedParameter(cmd, "@UniqueProteinsFDRFilter", SqlType.Int, value: mFDRBasedCounts.UniqueProteinCount);
+                dbTools.AddTypedParameter(cmd, "@MSGFThresholdIsEValue", SqlType.TinyInt, value: thresholdIsEValue);
+                dbTools.AddTypedParameter(cmd, "@PercentMSnScansNoPSM", SqlType.Real, value: mPercentMSnScansNoPSM);
+                dbTools.AddTypedParameter(cmd, "@MaximumScanGapAdjacentMSn", SqlType.Int, value: MaximumScanGapAdjacentMSn);
+                dbTools.AddTypedParameter(cmd, "@UniquePhosphopeptideCountFDR", SqlType.Int, value: mFDRBasedCounts.UniquePhosphopeptideCount);
+                dbTools.AddTypedParameter(cmd, "@UniquePhosphopeptidesCTermK", SqlType.Int, value: mFDRBasedCounts.UniquePhosphopeptidesCTermK);
+                dbTools.AddTypedParameter(cmd, "@UniquePhosphopeptidesCTermR", SqlType.Int, value: mFDRBasedCounts.UniquePhosphopeptidesCTermR);
+                dbTools.AddTypedParameter(cmd, "@MissedCleavageRatio", SqlType.Real, value: mFDRBasedCounts.MissedCleavageRatio);
+                dbTools.AddTypedParameter(cmd, "@MissedCleavageRatioPhospho", SqlType.Real, value: mFDRBasedCounts.MissedCleavageRatioPhospho);
+                dbTools.AddTypedParameter(cmd, "@TrypticPeptides", SqlType.Int, value: mFDRBasedCounts.TrypticPeptides);
+                dbTools.AddTypedParameter(cmd, "@KeratinPeptides", SqlType.Int, value: mFDRBasedCounts.KeratinPeptides);
+                dbTools.AddTypedParameter(cmd, "@TrypsinPeptides", SqlType.Int, value: mFDRBasedCounts.TrypsinPeptides);
 
                 // Execute the SP (retry the call up to 3 times)
-                var result = mStoredProcedureExecutor.ExecuteSP(sqlCommand, MAX_RETRY_COUNT, out var errorMessage);
+                var result = mStoredProcedureExecutor.ExecuteSP(cmd, out var errorMessage, MAX_RETRY_COUNT);
 
                 if (result == 0)
                 {

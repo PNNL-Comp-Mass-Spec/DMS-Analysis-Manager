@@ -1,10 +1,10 @@
-using PRISM;
 using PRISM.Logging;
 using System;
 using System.Collections.Generic;
-using System.Data.SqlClient;
+using System.Data.Common;
 using System.IO;
 using System.Xml.Linq;
+using PRISMDatabaseUtils;
 
 //*********************************************************************************************************
 // Written by Dave Clark and Matthew Monroe for the US Department of Energy
@@ -94,12 +94,12 @@ namespace AnalysisManagerBase
         /// <summary>
         /// DMS stored procedure executor
         /// </summary>
-        public ExecuteDatabaseSP DMSProcedureExecutor { get; }
+        public IDBTools DMSProcedureExecutor { get; }
 
         /// <summary>
         /// Pipeline database stored procedure executor
         /// </summary>
-        public ExecuteDatabaseSP PipelineDBProcedureExecutor { get; }
+        public IDBTools PipelineDBProcedureExecutor { get; }
 
         #endregion
 
@@ -186,8 +186,8 @@ namespace AnalysisManagerBase
 
             mDebugLevel = debugLvl;
 
-            DMSProcedureExecutor = new ExecuteDatabaseSP(mConnStr);
-            PipelineDBProcedureExecutor = new ExecuteDatabaseSP(mBrokerConnStr);
+            DMSProcedureExecutor = DbToolsFactory.GetDBTools(mConnStr);
+            PipelineDBProcedureExecutor = DbToolsFactory.GetDBTools(mBrokerConnStr);
 
             DMSProcedureExecutor.DebugEvent += ProcedureExecutor_DebugEvent;
             PipelineDBProcedureExecutor.DebugEvent += ProcedureExecutor_DebugEvent;
@@ -288,7 +288,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="sqlCmd">SQL command object containing params</param>
         /// <remarks></remarks>
-        protected void PrintCommandParams(SqlCommand sqlCmd)
+        protected void PrintCommandParams(DbCommand sqlCmd)
         {
             // Verify there really are command parameters
             if (sqlCmd == null)
@@ -298,9 +298,9 @@ namespace AnalysisManagerBase
 
             var paramDetails = "";
 
-            foreach (SqlParameter param in sqlCmd.Parameters)
+            foreach (DbParameter param in sqlCmd.Parameters)
             {
-                paramDetails += Environment.NewLine + "Name= " + param.ParameterName + "\t, Value= " + clsGlobal.DbCStr(param.Value);
+                paramDetails += Environment.NewLine + "Name= " + param.ParameterName + "\t, Value= " + param.Value.CastDBVal<string>();
             }
 
             LogDebug("Parameter list:" + paramDetails);

@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.IO;
 using System.Text;
+using PRISMDatabaseUtils;
 
 namespace AnalysisManagerResultsXferPlugin
 {
@@ -228,7 +229,7 @@ namespace AnalysisManagerResultsXferPlugin
 
             foreach (DataRow curRow in dt.Rows)
             {
-                var volServer = clsGlobal.DbCStr(curRow["VolServer"]);
+                var volServer = curRow["VolServer"].CastDBVal<string>();
                 var localFolderPath = Path.Combine(volServer, uncFolderPath);
                 return localFolderPath;
             }

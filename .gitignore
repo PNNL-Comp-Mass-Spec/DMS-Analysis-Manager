@@ -49,3 +49,4 @@ CachedLibs/
 /AM_Common/PdfSharp.dll
 /AM_Common/ProteinFileReader.dll
 /AM_Common/System.IO.Compression.dll
+*.pdb

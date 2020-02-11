@@ -1,8 +1,9 @@
 using AnalysisManagerBase;
 using System;
 using System.Collections.Generic;
-using System.Data.SqlClient;
 using System.IO;
+using System.Linq;
+using PRISMDatabaseUtils;
 
 namespace AnalysisManager_Ape_PlugIn
 {
@@ -120,21 +121,17 @@ namespace AnalysisManager_Ape_PlugIn
 
             var mdidList = string.Empty;
             var mdidCount = 0;
-            using (var conn = new SqlConnection(connectionString))
+
+            var dbTools = DbToolsFactory.GetDBTools(connectionString);
+
+            // Get the matching MD_IDs for this data package
+            var success = dbTools.GetQueryResults(sqlText, out var results);
+            if (success)
             {
-                conn.Open();
-                // Get the matching MD_IDs for this data package
-                var query = new SqlCommand(sqlText, conn);
-                using (var reader = query.ExecuteReader())
+                foreach (var result in results.SelectMany(x => x).Where(x => !string.IsNullOrWhiteSpace(x)))
                 {
-                    while (reader.Read())
-                    {
-                        if (!string.IsNullOrEmpty(reader[0].ToString()))
-                        {
-                            mdidList += reader[0] + ", ";
-                            mdidCount += 1;
-                        }
-                    }
+                    mdidList += result + ", ";
+                    mdidCount++;
                 }
             }
 

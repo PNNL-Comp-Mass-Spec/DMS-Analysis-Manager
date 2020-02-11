@@ -335,7 +335,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="processingClass"></param>
         /// <param name="writeDebugEventsToLog"></param>
-        protected override void RegisterEvents(EventNotifier processingClass, bool writeDebugEventsToLog = true)
+        protected override void RegisterEvents(IEventNotifier processingClass, bool writeDebugEventsToLog = true)
         {
             base.RegisterEvents(processingClass, writeDebugEventsToLog);
 

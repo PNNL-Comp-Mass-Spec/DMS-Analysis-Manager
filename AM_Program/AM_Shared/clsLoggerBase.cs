@@ -111,7 +111,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="processingClass"></param>
         /// <param name="writeDebugEventsToLog"></param>
-        protected virtual void RegisterEvents(EventNotifier processingClass, bool writeDebugEventsToLog = true)
+        protected virtual void RegisterEvents(IEventNotifier processingClass, bool writeDebugEventsToLog = true)
         {
             if (writeDebugEventsToLog)
             {

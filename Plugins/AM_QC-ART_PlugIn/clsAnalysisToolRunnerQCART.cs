@@ -9,10 +9,12 @@ using AnalysisManagerBase;
 using PRISM;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Xml;
+using PRISMDatabaseUtils;
 
 namespace AnalysisManagerQCARTPlugin
 {
@@ -628,10 +630,8 @@ namespace AnalysisManagerQCARTPlugin
         /// <returns></returns>
         private bool StoreResultsInDB(double qcartValue)
         {
-
             try
             {
-
                 var targetDatasetMasicJob = mJobParams.GetJobParameter("SourceJob2", 0);
 
                 var xmlData = ConstructXmlForDbPosting(mDatasetName, targetDatasetMasicJob, qcartValue);
@@ -643,27 +643,14 @@ namespace AnalysisManagerQCARTPlugin
                 // Call stored procedure StoreQCARTResults
                 // Retry up to 3 times
 
-                var objCommand = new System.Data.SqlClient.SqlCommand();
+                var dbTools = DbToolsFactory.GetDBTools(connectionString);
+                var cmd = dbTools.CreateCommand(STORE_QCART_RESULTS, CommandType.StoredProcedure);
 
-                {
-                    objCommand.CommandType = System.Data.CommandType.StoredProcedure;
-                    objCommand.CommandText = STORE_QCART_RESULTS;
+                dbTools.AddParameter(cmd, "@Return", SqlType.Int, direction: ParameterDirection.ReturnValue);
+                dbTools.AddTypedParameter(cmd, "@DatasetID", SqlType.Int, value: datasetID);
+                dbTools.AddParameter(cmd, "@ResultsXML", SqlType.Xml, value: xmlData);
 
-                    objCommand.Parameters.Add(new System.Data.SqlClient.SqlParameter("@Return", System.Data.SqlDbType.Int));
-                    objCommand.Parameters["@Return"].Direction = System.Data.ParameterDirection.ReturnValue;
-
-                    objCommand.Parameters.Add(new System.Data.SqlClient.SqlParameter("@DatasetID", System.Data.SqlDbType.Int));
-                    objCommand.Parameters["@DatasetID"].Direction = System.Data.ParameterDirection.Input;
-                    objCommand.Parameters["@DatasetID"].Value = datasetID;
-
-                    objCommand.Parameters.Add(new System.Data.SqlClient.SqlParameter("@ResultsXML", System.Data.SqlDbType.Xml));
-                    objCommand.Parameters["@ResultsXML"].Direction = System.Data.ParameterDirection.Input;
-                    objCommand.Parameters["@ResultsXML"].Value = xmlData;
-                }
-
-                var executor = new ExecuteDatabaseSP(connectionString);
-
-                var returnCode = executor.ExecuteSP(objCommand, 3);
+                var returnCode = dbTools.ExecuteSP(cmd, 3);
 
                 if (returnCode == 0)
                 {
@@ -672,7 +659,6 @@ namespace AnalysisManagerQCARTPlugin
 
                 LogError("Error storing the QC-ART result in the database");
                 return false;
-
             }
             catch (Exception ex)
             {
@@ -680,7 +666,6 @@ namespace AnalysisManagerQCARTPlugin
                 LogError(mMessage + ": " + ex.Message);
                 return false;
             }
-
         }
 
         /// <summary>
@@ -689,7 +674,6 @@ namespace AnalysisManagerQCARTPlugin
         /// <remarks></remarks>
         private bool StoreToolVersionInfo(string rProgLoc)
         {
-
             var toolVersionInfo = string.Empty;
 
             if (mDebugLevel >= 2)
@@ -710,7 +694,6 @@ namespace AnalysisManagerQCARTPlugin
                     LogError("Exception calling SetStepTaskToolVersion", ex);
                     return false;
                 }
-
             }
 
             mToolVersionUtilities.StoreToolVersionInfoViaSystemDiagnostics(ref toolVersionInfo, fiProgram.FullName);
@@ -730,7 +713,6 @@ namespace AnalysisManagerQCARTPlugin
                 LogError("Exception calling SetStepTaskToolVersion", ex);
                 return false;
             }
-
         }
 
         #endregion

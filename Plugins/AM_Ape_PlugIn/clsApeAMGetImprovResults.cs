@@ -1,7 +1,8 @@
 using AnalysisManagerBase;
 using System.Collections.Generic;
-using System.Data.SqlClient;
 using System.IO;
+using System.Linq;
+using PRISMDatabaseUtils;
 
 namespace AnalysisManager_Ape_PlugIn
 {
@@ -142,21 +143,17 @@ namespace AnalysisManager_Ape_PlugIn
 
             var jobList = string.Empty;
             var jobCount = 0;
-            using (var conn = new SqlConnection(connectionString))
+
+            var dbTools = DbToolsFactory.GetDBTools(connectionString);
+
+            // Get the matching jobs from the Data Package
+            var success = dbTools.GetQueryResults(sqlText, out var results);
+            if (success)
             {
-                conn.Open();
-                // Get the matching jobs from the Data Package
-                var query = new SqlCommand(sqlText, conn);
-                using (var reader = query.ExecuteReader())
+                foreach (var result in results.SelectMany(x => x).Where(x => !string.IsNullOrWhiteSpace(x)))
                 {
-                    while (reader.Read())
-                    {
-                        if (!string.IsNullOrEmpty(reader[0].ToString()))
-                        {
-                            jobList += reader[0] + ", ";
-                            jobCount += 1;
-                        }
-                    }
+                    jobList += result + ", ";
+                    jobCount++;
                 }
             }
 

@@ -4,12 +4,12 @@ using PRISM.Logging;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Text;
 using System.Xml;
+using PRISMDatabaseUtils;
 
 namespace AnalysisManagerBase
 {
@@ -151,33 +151,30 @@ namespace AnalysisManagerBase
 
             try
             {
+                var dbTools = DbToolsFactory.GetDBTools(mBrokerDBConnectionString);
+
                 // Set up the command object prior to SP execution
-                var cmd = new SqlCommand(SP_NAME_GET_JOB_STEP_INPUT_FOLDER)
-                {
-                    CommandType = CommandType.StoredProcedure
-                };
+                var cmd = dbTools.CreateCommand(SP_NAME_GET_JOB_STEP_INPUT_FOLDER, CommandType.StoredProcedure);
 
-                cmd.Parameters.Add(new SqlParameter("@job", SqlDbType.Int)).Value = job;
+                dbTools.AddParameter(cmd, "@job", SqlType.Int, value: job);
 
-                var stepToolFilterParam = cmd.Parameters.Add(new SqlParameter("@stepToolFilter", SqlDbType.VarChar, 8000));
-                stepToolFilterParam.Value = stepToolFilter;
+                var stepToolFilterParam = dbTools.AddParameter(cmd, "@stepToolFilter", SqlType.VarChar, 8000, stepToolFilter);
 
-                cmd.Parameters.Add(new SqlParameter("@inputFolderName", SqlDbType.VarChar, 128)).Direction = ParameterDirection.Output;
-                cmd.Parameters.Add(new SqlParameter("@stepToolMatch", SqlDbType.VarChar, 64)).Direction = ParameterDirection.Output;
+                dbTools.AddParameter(cmd, "@inputFolderName", SqlType.VarChar, 128, direction: ParameterDirection.Output);
+                dbTools.AddParameter(cmd, "@stepToolMatch", SqlType.VarChar, 64, direction: ParameterDirection.Output);
 
                 var matchFound = false;
                 var inputDirectoryName = string.Empty;
                 var stepToolMatch = string.Empty;
 
-                var pipelineDBProcedureExecutor = new ExecuteDatabaseSP(mBrokerDBConnectionString);
-                pipelineDBProcedureExecutor.DebugEvent += OnDebugEvent;
-                pipelineDBProcedureExecutor.ErrorEvent += ProcedureExecutor_DBErrorEvent;
-                pipelineDBProcedureExecutor.WarningEvent += OnWarningEvent;
+                dbTools.DebugEvent += OnDebugEvent;
+                dbTools.ErrorEvent += ProcedureExecutor_DBErrorEvent;
+                dbTools.WarningEvent += OnWarningEvent;
 
                 while (!matchFound)
                 {
                     // Execute the SP
-                    pipelineDBProcedureExecutor.ExecuteSP(cmd, 1);
+                    dbTools.ExecuteSP(cmd, 1);
 
                     inputDirectoryName = Convert.ToString(cmd.Parameters["@inputFolderName"].Value);
                     stepToolMatch = Convert.ToString(cmd.Parameters["@stepToolMatch"].Value);

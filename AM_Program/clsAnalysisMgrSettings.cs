@@ -8,13 +8,13 @@
 
 using AnalysisManagerBase;
 using PRISM;
-using PRISM.AppSettings;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
 using System.IO;
 using System.Xml;
+using PRISMDatabaseUtils;
+using PRISMDatabaseUtils.AppSettings;
 
 namespace AnalysisManagerProg
 {
@@ -25,7 +25,7 @@ namespace AnalysisManagerProg
     /// Loads initial settings from local config file, then checks to see if remainder of settings should be loaded or manager set to inactive.
     /// If manager active, retrieves remainder of settings manager parameters database.
     /// </remarks>
-    public class clsAnalysisMgrSettings : MgrSettings, IMgrParams
+    public class clsAnalysisMgrSettings : MgrSettingsDB, IMgrParams
     {
 
         #region "Constants"
@@ -130,17 +130,14 @@ namespace AnalysisManagerProg
 
                 ShowTrace("AckManagerUpdateRequired using " + connectionString);
 
-                var procedureExecutor = new ExecuteDatabaseSP(connectionString);
+                var procedureExecutor = DbToolsFactory.GetDBTools(connectionString);
                 RegisterEvents(procedureExecutor);
 
                 // Set up the command object prior to SP execution
-                var cmd = new SqlCommand(SP_NAME_ACK_MANAGER_UPDATE)
-                {
-                    CommandType = CommandType.StoredProcedure
-                };
+                var cmd = procedureExecutor.CreateCommand(SP_NAME_ACK_MANAGER_UPDATE, CommandType.StoredProcedure);
 
-                cmd.Parameters.Add(new SqlParameter("@managerName", SqlDbType.VarChar, 128)).Value = ManagerName;
-                cmd.Parameters.Add(new SqlParameter("@message", SqlDbType.VarChar, 512)).Direction = ParameterDirection.Output;
+                procedureExecutor.AddParameter(cmd, "@managerName", SqlType.VarChar, 128, ManagerName);
+                procedureExecutor.AddParameter(cmd, "@message", SqlType.VarChar, 512, direction: ParameterDirection.Output);
 
                 // Execute the SP
                 procedureExecutor.ExecuteSP(cmd);
@@ -376,7 +373,7 @@ namespace AnalysisManagerProg
             ShowTrace("Query V_Pipeline_Step_Tools_Detail_Report in broker");
 
             // Query the database
-            var dbTools = new DBTools(connectionString);
+            var dbTools = DbToolsFactory.GetDBTools(connectionString);
             RegisterEvents(dbTools);
 
             var success = dbTools.GetQueryResults(sqlQuery, out var queryResults, "LoadBrokerDBSettings", retryCount);
