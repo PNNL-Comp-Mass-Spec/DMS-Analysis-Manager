@@ -454,7 +454,7 @@ namespace MSGFResultsSummarizer
                 var dbTools = DbToolsFactory.GetDBTools(mConnectionString);
                 RegisterEvents(dbTools);
 
-                var success = dbTools.GetQueryResults(queryScanStats, out var scanStatsFromDb, "LookupScanStats_V_Dataset_Scans_Export");
+                var success = dbTools.GetQueryResults(queryScanStats, out var scanStatsFromDb, callingFunction: "LookupScanStats_V_Dataset_Scans_Export");
 
                 if (success && scanStatsFromDb.Count > 0)
                 {
@@ -476,7 +476,7 @@ namespace MSGFResultsSummarizer
 
                 var queryScanTotal = "" + " SELECT [Scan Count]" + " FROM V_Dataset_Export" + " WHERE Dataset = '" + DatasetName + "'";
 
-                success = dbTools.GetQueryResults(queryScanTotal, out var datasetScanCountFromDb, "LookupScanStats_V_Dataset_Export");
+                success = dbTools.GetQueryResults(queryScanTotal, out var datasetScanCountFromDb, callingFunction: "LookupScanStats_V_Dataset_Export");
 
                 if (success && datasetScanCountFromDb.Count > 0)
                 {

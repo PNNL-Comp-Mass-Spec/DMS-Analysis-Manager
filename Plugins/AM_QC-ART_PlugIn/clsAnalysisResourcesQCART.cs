@@ -866,7 +866,7 @@ namespace AnalysisManagerQCARTPlugin
                 var dmsConnectionString = mMgrParams.GetParam("connectionstring");
 
                 // Get a table to hold the results of the query
-                var success = clsGlobal.GetDataTableByQuery(sqlStr.ToString(), dmsConnectionString, "RetrieveQCMetricsFromDB", RETRY_COUNT, out var resultSet);
+                var success = clsGlobal.GetDataTableByQuery(sqlStr.ToString(), dmsConnectionString, RETRY_COUNT, out var resultSet);
 
                 string errorMessage;
 

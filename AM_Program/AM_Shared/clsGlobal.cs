@@ -399,7 +399,7 @@ namespace AnalysisManagerBase
             //
             //return GetDataTableByCmd(cmd, connectionString, callingFunction, retryCount, out queryResults, timeoutSeconds);
             var dbTools = DbToolsFactory.GetDBTools(connectionString, timeoutSeconds);
-            return dbTools.GetQueryResultsDataTable(sqlStr, out queryResults, callingFunction, retryCount);
+            return dbTools.GetQueryResultsDataTable(sqlStr, out queryResults, retryCount, callingFunction: callingFunction);
         }
 
         /// <summary>
@@ -605,7 +605,7 @@ namespace AnalysisManagerBase
             var DBTools = DbToolsFactory.GetDBTools(connectionString);
             RegisterEvents(DBTools);
 
-            var success = DBTools.GetQueryResults(sqlQuery, out queryResults, callingFunction, retryCount, timeoutSeconds, maxRowsToReturn);
+            var success = DBTools.GetQueryResults(sqlQuery, out queryResults, retryCount, timeoutSeconds, maxRowsToReturn, callingFunction: callingFunction);
 
             return success;
 

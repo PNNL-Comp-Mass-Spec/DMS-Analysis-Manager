@@ -376,7 +376,7 @@ namespace AnalysisManagerProg
             var dbTools = DbToolsFactory.GetDBTools(connectionString);
             RegisterEvents(dbTools);
 
-            var success = dbTools.GetQueryResults(sqlQuery, out var queryResults, "LoadBrokerDBSettings", retryCount);
+            var success = dbTools.GetQueryResults(sqlQuery, out var queryResults, retryCount);
 
             // If loop exited due to errors, return false
             if (!success)

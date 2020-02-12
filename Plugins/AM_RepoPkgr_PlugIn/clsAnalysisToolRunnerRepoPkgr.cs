@@ -751,7 +751,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
                 var dbTools = DbToolsFactory.GetDBTools(proteinSeqsDBConnectionString);
 
-                var success = dbTools.GetQueryResults(sqlQuery, out var results, retryCount: retryCount, retryDelaySeconds: 2);
+                var success = dbTools.GetQueryResults(sqlQuery, out var results, retryCount, retryDelaySeconds: 2);
                 var proteinCollectionList = results.SelectMany(x => x).ToList();
 
                 if (proteinCollectionList.Count > 0 && proteinCollectionList.Count < 4)

@@ -332,7 +332,7 @@ namespace AnalysisManagerSMAQCPlugIn
 
             var dbTools = DbToolsFactory.GetDBTools(connectionString);
 
-            if (dbTools.GetQueryScalar(sqlStr, out var objResult, retryCount: retryCount, retryDelaySeconds: 5))
+            if (dbTools.GetQueryScalar(sqlStr, out var objResult, retryCount, 5))
             {
                 if (objResult != null)
                 {
