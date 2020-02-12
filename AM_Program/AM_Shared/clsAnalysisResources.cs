@@ -1858,7 +1858,7 @@ namespace AnalysisManagerBase
 
 
             // Get a table to hold the results of the query
-            var success = clsGlobal.GetDataTableByQuery(sqlStr.ToString(), connectionString, "GetDataPackageStoragePath", RETRY_COUNT, out var resultSet);
+            var success = clsGlobal.GetDataTableByQuery(sqlStr.ToString(), connectionString, RETRY_COUNT, out var resultSet);
 
             if (!success)
             {
@@ -3035,7 +3035,7 @@ namespace AnalysisManagerBase
             var dmsConnectionString = mMgrParams.GetParam("ConnectionString");
 
             // Get a table to hold the results of the query
-            var success = clsGlobal.GetDataTableByQuery(sqlStr.ToString(), dmsConnectionString, "LookupJobInfo", RETRY_COUNT, out var resultSet);
+            var success = clsGlobal.GetDataTableByQuery(sqlStr.ToString(), dmsConnectionString, RETRY_COUNT, out var resultSet);
 
             if (!success)
             {
@@ -3106,7 +3106,7 @@ namespace AnalysisManagerBase
 
                 // Results, as a list of columns (first row only if multiple rows)
 
-                var success = clsGlobal.GetQueryResultsTopRow(sqlQuery, dmsConnectionString, out var legacyDbSize, "LookupLegacyDBSizeWithIndices");
+                var success = clsGlobal.GetQueryResultsTopRow(sqlQuery, dmsConnectionString, out var legacyDbSize, callingFunction: "LookupLegacyDBSizeWithIndices");
 
                 if (!success || legacyDbSize == null || legacyDbSize.Count == 0)
                 {

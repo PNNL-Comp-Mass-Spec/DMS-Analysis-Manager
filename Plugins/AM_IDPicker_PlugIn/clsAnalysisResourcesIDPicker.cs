@@ -176,7 +176,7 @@ namespace AnalysisManagerIDPickerPlugIn
 
             var sqlQuery = "SELECT OrganismDBName FROM V_Analysis_Job WHERE (Job = " + mJob + ")";
 
-            var success = clsGlobal.GetQueryResultsTopRow(sqlQuery, dmsConnectionString, out var orgDbNameForJob, "LookupLegacyFastaFileName");
+            var success = clsGlobal.GetQueryResultsTopRow(sqlQuery, dmsConnectionString, out var orgDbNameForJob);
 
             if (!success || orgDbNameForJob == null || orgDbNameForJob.Count == 0)
             {

@@ -486,7 +486,7 @@ namespace AnalysisManager_AScore_PlugIn
                 sqlQuery += " SELECT Input_Folder, 2 AS Preference, Saved FROM DMS_Pipeline.dbo.V_Job_Steps_History " + sqlWhere;
                 sqlQuery += " ORDER BY Preference, saved";
 
-                var success = clsGlobal.GetQueryResultsTopRow(sqlQuery, connectionString, out var firstSharedResultsDirectory, "GetSharedResultsDirectoryName");
+                var success = clsGlobal.GetQueryResultsTopRow(sqlQuery, connectionString, out var firstSharedResultsDirectory);
 
                 if (!success || firstSharedResultsDirectory.Count == 0)
                 {

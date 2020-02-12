@@ -3116,7 +3116,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 const int retryCount = 2;
 
                 // Get a table to hold the results of the query
-                var success = clsGlobal.GetDataTableByQuery(sqlStr.ToString(), connectionString, "LookupScanTypesForDataset", retryCount, out var dtResults);
+                var success = clsGlobal.GetDataTableByQuery(sqlStr.ToString(), connectionString, retryCount, out var dtResults);
 
                 if (!success)
                 {

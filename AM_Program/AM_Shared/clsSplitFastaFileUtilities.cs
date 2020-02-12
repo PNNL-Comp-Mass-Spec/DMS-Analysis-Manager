@@ -260,7 +260,7 @@ namespace AnalysisManagerBase
             sqlQuery.Append(" FROM V_Legacy_Static_File_Locations");
             sqlQuery.Append(" WHERE FileName = '" + legacyFASTAFileName + "'");
 
-            var success = clsGlobal.GetDataTableByQuery(sqlQuery.ToString(), mProteinSeqsDBConnectionString, "GetLegacyFastaFilePath", retryCount, out var legacyStaticFiles, timeoutSeconds);
+            var success = clsGlobal.GetDataTableByQuery(sqlQuery.ToString(), mProteinSeqsDBConnectionString, retryCount, out var legacyStaticFiles, timeoutSeconds);
 
             if (!success)
             {

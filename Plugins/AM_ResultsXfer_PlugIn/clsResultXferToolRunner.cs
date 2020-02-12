@@ -218,7 +218,7 @@ namespace AnalysisManagerResultsXferPlugin
             sbSql.Append(" ORDER BY CASE WHEN [Function] = '" + folderFunction + "' THEN 1 ELSE 2 END, ID DESC");
 
             // Get a table to hold the results of the query
-            var blnSuccess = clsGlobal.GetDataTableByQuery(sbSql.ToString(), connectionString, "LookupLocalPath", retryCount, out var dt);
+            var blnSuccess = clsGlobal.GetDataTableByQuery(sbSql.ToString(), connectionString, retryCount, out var dt);
 
             if (!blnSuccess)
             {

@@ -12,6 +12,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 
 // ReSharper disable UnusedMember.Global
@@ -1702,7 +1703,7 @@ namespace AnalysisManagerBase
                 var connectionString = mgrParams.GetParam("MgrCnfgDbConnectStr");
                 var managerName = mgrParams.ManagerName;
 
-                var newDebugLevel = GetManagerDebugLevel(connectionString, managerName, debugLevel, "GetCurrentMgrSettingsFromDB", 0);
+                var newDebugLevel = GetManagerDebugLevel(connectionString, managerName, debugLevel, 0, "GetCurrentMgrSettingsFromDB");
 
                 if (debugLevel > 0 && newDebugLevel != debugLevel)
                 {
@@ -1723,7 +1724,7 @@ namespace AnalysisManagerBase
 
         }
 
-        static short GetManagerDebugLevel(string connectionString, string managerName, short currentDebugLevel, string callingFunction, int recursionLevel)
+        static short GetManagerDebugLevel(string connectionString, string managerName, short currentDebugLevel, int recursionLevel, [CallerMemberName] string callingFunction = "")
         {
 
             if (clsGlobal.OfflineMode)
@@ -1742,7 +1743,7 @@ namespace AnalysisManagerBase
                 "WHERE ManagerName = '" + managerName + "' AND " + " ParameterName IN ('DebugLevel', 'MgrSettingGroupName')";
 
             var callingFunctions = clsGlobal.AppendToComment(callingFunction, "GetManagerDebugLevel");
-            var success = clsGlobal.GetQueryResults(sqlQuery, connectionString, out var mgrParamsFromDb, callingFunctions);
+            var success = clsGlobal.GetQueryResults(sqlQuery, connectionString, out var mgrParamsFromDb, callingFunction: callingFunctions);
 
             if (!success || mgrParamsFromDb.Count <= 0)
                 return currentDebugLevel;
@@ -1762,7 +1763,7 @@ namespace AnalysisManagerBase
                 {
                     // DebugLevel is defined by a manager settings group; repeat the query to V_MgrParams
 
-                    var debugLevel = GetManagerDebugLevel(connectionString, paramValue, currentDebugLevel, callingFunction, recursionLevel + 1);
+                    var debugLevel = GetManagerDebugLevel(connectionString, paramValue, currentDebugLevel, recursionLevel + 1, callingFunction);
                     return debugLevel;
                 }
             }

@@ -183,8 +183,7 @@ namespace AnalysisManagerTopFDPlugIn
                 var success1 = clsGlobal.GetQueryResults(
                     jobStepsQuery,
                     brokerDbConnectionString,
-                    out var jobStepsResults,
-                    "FindExistingTopFDResults");
+                    out var jobStepsResults);
 
                 if (!success1 || jobStepsResults.Count <= 0)
                     return false;
@@ -263,8 +262,7 @@ namespace AnalysisManagerTopFDPlugIn
                 var success2 = clsGlobal.GetQueryResults(
                     settingsFileQuery,
                     dmsConnectionString,
-                    out var settingsFileResults,
-                    "FindExistingTopFDResults");
+                    out var settingsFileResults);
 
                 if (!success2 || settingsFileResults.Count <= 0)
                     return false;

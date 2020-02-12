@@ -8,6 +8,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using PRISMDatabaseUtils;
 
@@ -366,15 +367,15 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="sqlStr">Sql query</param>
         /// <param name="connectionString">Connection string</param>
-        /// <param name="callingFunction">Name of the calling function</param>
         /// <param name="retryCount">Number of times to retry (in case of a problem)</param>
         /// <param name="queryResults">DataTable (Output Parameter)</param>
+        /// <param name="callingFunction">Name of the calling function</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks>Uses a timeout of 30 seconds</remarks>
-        public static bool GetDataTableByQuery(string sqlStr, string connectionString, string callingFunction, short retryCount, out DataTable queryResults)
+        public static bool GetDataTableByQuery(string sqlStr, string connectionString, short retryCount, out DataTable queryResults, [CallerMemberName] string callingFunction = "")
         {
             const int timeoutSeconds = 30;
-            return GetDataTableByQuery(sqlStr, connectionString, callingFunction, retryCount, out queryResults, timeoutSeconds);
+            return GetDataTableByQuery(sqlStr, connectionString, retryCount, out queryResults, timeoutSeconds, callingFunction);
         }
 
         /// <summary>
@@ -382,15 +383,15 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="sqlStr">Sql query</param>
         /// <param name="connectionString">Connection string</param>
-        /// <param name="callingFunction">Name of the calling function</param>
         /// <param name="retryCount">Number of times to retry (in case of a problem)</param>
         /// <param name="queryResults">DataTable (Output Parameter)</param>
         /// <param name="timeoutSeconds">Query timeout (in seconds); minimum is 5 seconds; suggested value is 30 seconds</param>
+        /// <param name="callingFunction">Name of the calling function</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks></remarks>
         public static bool GetDataTableByQuery(
-            string sqlStr, string connectionString, string callingFunction,
-            short retryCount, out DataTable queryResults, int timeoutSeconds)
+            string sqlStr, string connectionString,
+            short retryCount, out DataTable queryResults, int timeoutSeconds, [CallerMemberName] string callingFunction = "")
         {
             //var cmd = new SqlCommand(sqlStr)
             //{
@@ -407,20 +408,20 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="cmd">SqlCommand var (query or stored procedure)</param>
         /// <param name="connectionString">Connection string</param>
-        /// <param name="callingFunction">Name of the calling function</param>
         /// <param name="retryCount">Number of times to retry (in case of a problem)</param>
         /// <param name="queryResults">DataTable (Output Parameter)</param>
         /// <param name="timeoutSeconds">Query timeout (in seconds); minimum is 5 seconds; suggested value is 30 seconds</param>
+        /// <param name="callingFunction">Name of the calling function</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks></remarks>
         [Obsolete("Use PRISMDatabaseUtils.DbToolsFactory.GetDBTools(...).GetQueryDataTable(...)", true)]
         public static bool GetDataTableByCmd(
             System.Data.SqlClient.SqlCommand cmd,
             string connectionString,
-            string callingFunction,
             short retryCount,
             out DataTable queryResults,
-            int timeoutSeconds)
+            int timeoutSeconds,
+            [CallerMemberName] string callingFunction = "")
         {
 
             if (cmd == null)
@@ -534,9 +535,9 @@ namespace AnalysisManagerBase
         /// <param name="sqlQuery">Query to run</param>
         /// <param name="connectionString">Connection string</param>
         /// <param name="firstQueryResult">Results, as a list of columns (first row only if multiple rows)</param>
-        /// <param name="callingFunction">Name of the calling function (for logging purposes)</param>
         /// <param name="retryCount">Number of times to retry (in case of a problem)</param>
         /// <param name="timeoutSeconds">Query timeout (in seconds); minimum is 5 seconds; suggested value is 30 seconds</param>
+        /// <param name="callingFunction">Name of the calling function (for logging purposes)</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks>
         /// Null values are converted to empty strings
@@ -547,12 +548,12 @@ namespace AnalysisManagerBase
             string sqlQuery,
             string connectionString,
             out List<string> firstQueryResult,
-            string callingFunction,
             short retryCount = 3,
-            int timeoutSeconds = 5)
+            int timeoutSeconds = 5,
+            [CallerMemberName] string callingFunction = "")
         {
 
-            var success = GetQueryResults(sqlQuery, connectionString, out var queryResults, callingFunction, retryCount, timeoutSeconds, maxRowsToReturn: 1);
+            var success = GetQueryResults(sqlQuery, connectionString, out var queryResults, retryCount, timeoutSeconds, maxRowsToReturn: 1, callingFunction);
 
             if (success)
             {
@@ -570,10 +571,10 @@ namespace AnalysisManagerBase
         /// <param name="sqlQuery">Query to run</param>
         /// <param name="connectionString">Connection string</param>
         /// <param name="queryResults">Results (list of list of strings)</param>
-        /// <param name="callingFunction">Name of the calling function (for logging purposes)</param>
         /// <param name="retryCount">Number of times to retry (in case of a problem)</param>
         /// <param name="timeoutSeconds">Query timeout (in seconds); minimum is 5 seconds; suggested value is 30 seconds</param>
         /// <param name="maxRowsToReturn">Maximum rows to return; 0 to return all rows</param>
+        /// <param name="callingFunction">Name of the calling function (for logging purposes)</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks>
         /// Null values are converted to empty strings
@@ -584,10 +585,10 @@ namespace AnalysisManagerBase
             string sqlQuery,
             string connectionString,
             out List<List<string>> queryResults,
-            string callingFunction,
             short retryCount = 3,
             int timeoutSeconds = 30,
-            int maxRowsToReturn = 0)
+            int maxRowsToReturn = 0,
+            [CallerMemberName] string callingFunction = "")
         {
 
             if (OfflineMode)

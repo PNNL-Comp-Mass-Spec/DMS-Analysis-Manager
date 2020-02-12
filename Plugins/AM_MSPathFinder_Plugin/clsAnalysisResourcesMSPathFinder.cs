@@ -192,7 +192,7 @@ namespace AnalysisManagerMSPathFinderPlugin
                               " WHERE Job = " + mJob + " AND Step_Number < " + stepNum + " AND Input_Folder_Name LIKE '" + PBF_GEN_FOLDER_PREFIX + "%'" +
                               " ORDER by Step_Number DESC";
 
-                    if (!clsGlobal.GetQueryResultsTopRow(sql, dmsConnectionString, out var inputFolderNameFromDB, "RetrievePBFFile"))
+                    if (!clsGlobal.GetQueryResultsTopRow(sql, dmsConnectionString, out var inputFolderNameFromDB))
                     {
                         mMessage = "Error looking up the correct PBF_Gen folder name in T_Job_Steps";
                         return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;

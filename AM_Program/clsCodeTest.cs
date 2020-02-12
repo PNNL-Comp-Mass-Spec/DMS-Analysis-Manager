@@ -437,7 +437,7 @@ namespace AnalysisManagerProg
             const short RetryCount = 2;
 
 
-            var success = clsGlobal.GetDataTableByQuery(sql, connectionString, "ProcessDtaRefineryLogFiles", RetryCount, out var Dt);
+            var success = clsGlobal.GetDataTableByQuery(sql, connectionString, RetryCount, out var Dt);
 
             if (!success)
             {
@@ -1249,11 +1249,10 @@ namespace AnalysisManagerProg
             const string sqlStr = "Select top 50 * from t_log_entries";
 
             const string connectionString = "Data Source=gigasax;Initial Catalog=dms_pipeline;Integrated Security=SSPI;";
-            const string callingFunction = "TestRunQuery";
             const short retryCount = 2;
             const int timeoutSeconds = 30;
 
-            clsGlobal.GetDataTableByQuery(sqlStr, connectionString, callingFunction, retryCount, out var results, timeoutSeconds);
+            clsGlobal.GetDataTableByQuery(sqlStr, connectionString, retryCount, out var results, timeoutSeconds);
 
             foreach (DataRow row in results.Rows)
             {

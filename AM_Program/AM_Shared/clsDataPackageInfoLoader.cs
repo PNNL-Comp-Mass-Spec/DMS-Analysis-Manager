@@ -89,7 +89,7 @@ namespace AnalysisManagerBase
 
 
             // Get a table to hold the results of the query
-            var success = clsGlobal.GetDataTableByQuery(sqlStr.ToString(), connectionString, "LoadDataPackageDatasetInfo", RETRY_COUNT, out var resultSet);
+            var success = clsGlobal.GetDataTableByQuery(sqlStr.ToString(), connectionString, RETRY_COUNT, out var resultSet);
 
             if (!success)
             {
@@ -166,7 +166,7 @@ namespace AnalysisManagerBase
 
 
             // Get a table to hold the results of the query
-            var success = clsGlobal.GetDataTableByQuery(sqlStr.ToString(), connectionString, "LoadDataPackageJobInfo", RETRY_COUNT, out var resultSet);
+            var success = clsGlobal.GetDataTableByQuery(sqlStr.ToString(), connectionString, RETRY_COUNT, out var resultSet);
 
             if (!success)
             {
@@ -191,7 +191,7 @@ namespace AnalysisManagerBase
                 sqlStr.Append(" WHERE Data_Package_ID = " + dataPackageID);
 
                 // Get a table to hold the results of the query
-                success = clsGlobal.GetDataTableByQuery(sqlStr.ToString(), connectionString, "LoadDataPackageJobInfo", RETRY_COUNT, out resultSet);
+                success = clsGlobal.GetDataTableByQuery(sqlStr.ToString(), connectionString, RETRY_COUNT, out resultSet);
                 if (success && resultSet.Rows.Count > 0)
                 {
                     foreach (DataRow curRow in resultSet.Rows)
