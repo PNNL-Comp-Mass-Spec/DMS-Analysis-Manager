@@ -1355,16 +1355,16 @@ namespace AnalysisManagerBase
                 var cmd = PipelineDBProcedureExecutor.CreateCommand(SP_NAME_REQUEST_TASK, CommandType.StoredProcedure);
 
                 PipelineDBProcedureExecutor.AddParameter(cmd, "@processorName", SqlType.VarChar, 128, ManagerName);
-                PipelineDBProcedureExecutor.AddParameter(cmd, "@jobNumber", SqlType.Int, direction: ParameterDirection.Output);
-                PipelineDBProcedureExecutor.AddParameter(cmd, "@parameters", SqlType.VarChar, 8000, direction: ParameterDirection.Output);
-                PipelineDBProcedureExecutor.AddParameter(cmd, "@message", SqlType.VarChar, 512, direction: ParameterDirection.Output);
+                var jobNumberParam = PipelineDBProcedureExecutor.AddParameter(cmd, "@jobNumber", SqlType.Int, direction: ParameterDirection.Output);
+                var jobParamsParam = PipelineDBProcedureExecutor.AddParameter(cmd, "@parameters", SqlType.VarChar, 8000, direction: ParameterDirection.Output);
+                var messageParam = PipelineDBProcedureExecutor.AddParameter(cmd, "@message", SqlType.VarChar, 512, direction: ParameterDirection.Output);
                 PipelineDBProcedureExecutor.AddParameter(cmd, "@infoOnly", SqlType.TinyInt, value: 0);
                 PipelineDBProcedureExecutor.AddParameter(cmd, "@analysisManagerVersion", SqlType.VarChar, 128, managerVersion);
 
                 var remoteInfo = runJobsRemotely ? clsRemoteTransferUtility.GetRemoteInfoXml(mMgrParams) : string.Empty;
                 PipelineDBProcedureExecutor.AddParameter(cmd, "@remoteInfo", SqlType.VarChar, 900, remoteInfo);
 
-                PipelineDBProcedureExecutor.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, direction: ParameterDirection.Output);
+                var returnParam = PipelineDBProcedureExecutor.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, direction: ParameterDirection.Output);
 
                 if (mDebugLevel > 4 || TraceMode)
                 {
@@ -1376,7 +1376,7 @@ namespace AnalysisManagerBase
                 // Execute the SP
                 var resCode = PipelineDBProcedureExecutor.ExecuteSP(cmd, 1);
 
-                var returnCode = cmd.Parameters["@returnCode"].Value.ToString();
+                var returnCode = returnParam.Value.ToString();
                 var returnCodeValue = clsGlobal.GetReturnCodeValue(returnCode);
 
                 if (returnCodeValue != 0)
@@ -1390,7 +1390,7 @@ namespace AnalysisManagerBase
 
                     // The return code was not an empty string, which indicates an error
                     LogError("RequestAnalysisJobFromDB(), SP execution has return code " + returnCode +
-                             "; Msg text = " + (string)cmd.Parameters["@message"].Value);
+                             "; Msg text = " + (string)messageParam.Value);
 
                     return RequestTaskResult.ResultError;
                 }
@@ -1402,8 +1402,8 @@ namespace AnalysisManagerBase
                     case RET_VAL_OK:
 
                         // No errors found in SP call, so see if any step tasks were found
-                            mJobId = Convert.ToInt32(cmd.Parameters["@jobNumber"].Value);
-                        var jobParamsXML = Convert.ToString(cmd.Parameters["@parameters"].Value);
+                            mJobId = Convert.ToInt32(jobNumberParam.Value);
+                        var jobParamsXML = Convert.ToString(jobParamsParam.Value);
 
                         // Step task was found; get the data for it
                         var jobParameters = ParseXMLJobParameters(jobParamsXML).ToList();
@@ -1437,7 +1437,7 @@ namespace AnalysisManagerBase
                     default:
                         // There was an SP error
                         LogError("clsAnalysisJob.RequestAnalysisJob(), SP execution error " + resCode + "; " +
-                                 "Msg text = " + Convert.ToString(cmd.Parameters["@message"].Value));
+                                 "Msg text = " + Convert.ToString(messageParam.Value));
                         taskResult = RequestTaskResult.ResultError;
                         break;
                 }
@@ -1961,12 +1961,12 @@ namespace AnalysisManagerBase
             PipelineDBProcedureExecutor.AddParameter(cmd, "@managerName", SqlType.VarChar, 128, ManagerName);
             PipelineDBProcedureExecutor.AddParameter(cmd, "@infoOnly", SqlType.TinyInt, value: 0);
             PipelineDBProcedureExecutor.AddParameter(cmd, "@message", SqlType.VarChar, 512, direction: ParameterDirection.Output);
-            PipelineDBProcedureExecutor.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, direction: ParameterDirection.Output);
+            var returnParam = PipelineDBProcedureExecutor.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, direction: ParameterDirection.Output);
 
             // Execute the Stored Procedure (retry the call up to 3 times)
             var resCode = PipelineDBProcedureExecutor.ExecuteSP(cmd, 3);
 
-            var returnCode = cmd.Parameters["@returnCode"].Value.ToString();
+            var returnCode = returnParam.Value.ToString();
             var returnCodeValue = clsGlobal.GetReturnCodeValue(returnCode);
 
             if (resCode == 0 && returnCodeValue == 0)
@@ -2015,7 +2015,7 @@ namespace AnalysisManagerBase
             PipelineDBProcedureExecutor.AddParameter(cmd, "@completionMessage", SqlType.VarChar, 256, compMsg.Trim('\r', '\n'));
             PipelineDBProcedureExecutor.AddParameter(cmd, "@evaluationCode", SqlType.Int, value: evalCode);
             PipelineDBProcedureExecutor.AddParameter(cmd, "@evaluationMessage", SqlType.VarChar, 256, evalMsg.Trim('\r', '\n'));
-            PipelineDBProcedureExecutor.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, direction: ParameterDirection.Output);
+            var returnParam = PipelineDBProcedureExecutor.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, direction: ParameterDirection.Output);
 
             if (!TryGetParam("PeptideSearch", clsAnalysisResources.JOB_PARAM_GENERATED_FASTA_NAME, out var orgDbName))
             {
@@ -2073,7 +2073,7 @@ namespace AnalysisManagerBase
             // Call Stored Procedure SetStepTaskComplete (retry the call up to 20 times)
             var resCode = PipelineDBProcedureExecutor.ExecuteSP(cmd, 20);
 
-            var returnCode = cmd.Parameters["@returnCode"].Value.ToString();
+            var returnCode = returnParam.Value.ToString();
             var returnCodeValue = clsGlobal.GetReturnCodeValue(returnCode);
 
             if (resCode == 0 && returnCodeValue == 0)

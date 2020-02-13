@@ -160,8 +160,8 @@ namespace AnalysisManagerBase
 
                 var stepToolFilterParam = dbTools.AddParameter(cmd, "@stepToolFilter", SqlType.VarChar, 8000, stepToolFilter);
 
-                dbTools.AddParameter(cmd, "@inputFolderName", SqlType.VarChar, 128, direction: ParameterDirection.Output);
-                dbTools.AddParameter(cmd, "@stepToolMatch", SqlType.VarChar, 64, direction: ParameterDirection.Output);
+                var inputFolderParam = dbTools.AddParameter(cmd, "@inputFolderName", SqlType.VarChar, 128, direction: ParameterDirection.Output);
+                var stepToolMatchParam =dbTools.AddParameter(cmd, "@stepToolMatch", SqlType.VarChar, 64, direction: ParameterDirection.Output);
 
                 var matchFound = false;
                 var inputDirectoryName = string.Empty;
@@ -176,8 +176,8 @@ namespace AnalysisManagerBase
                     // Execute the SP
                     dbTools.ExecuteSP(cmd, 1);
 
-                    inputDirectoryName = Convert.ToString(cmd.Parameters["@inputFolderName"].Value);
-                    stepToolMatch = Convert.ToString(cmd.Parameters["@stepToolMatch"].Value);
+                    inputDirectoryName = Convert.ToString(inputFolderParam.Value);
+                    stepToolMatch = Convert.ToString(stepToolMatchParam.Value);
 
                     if (string.IsNullOrWhiteSpace(inputDirectoryName))
                     {
