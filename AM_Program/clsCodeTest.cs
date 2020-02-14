@@ -1246,7 +1246,7 @@ namespace AnalysisManagerProg
         /// </summary>
         public void TestRunQuery()
         {
-            const string sqlStr = "Select top 50 * from t_log_entries";
+            const string sqlStr = "Select top 15 * from t_log_entries where posting_time >= DateAdd(day, -15, GetDate())";
 
             const string connectionString = "Data Source=gigasax;Initial Catalog=dms_pipeline;Integrated Security=SSPI;";
             const short retryCount = 2;
@@ -1254,9 +1254,10 @@ namespace AnalysisManagerProg
 
             clsGlobal.GetDataTableByQuery(sqlStr, connectionString, retryCount, out var results, timeoutSeconds);
 
+            Console.WriteLine("{0,-10} {1,-21} {2,-20} {3}", "Entry_ID", "Date", "Posted_By", "Message");
             foreach (DataRow row in results.Rows)
             {
-                Console.WriteLine(row[0] + ": " + row[1]);
+                Console.WriteLine("{0,-10} {1,-21:yyyy-MM-dd hh:mm tt} {2,-20} {3}", row[0], row[2], row[1], row[4]);
             }
         }
 
@@ -1277,8 +1278,6 @@ namespace AnalysisManagerProg
             dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, direction: ParameterDirection.Output);
 
             var success = dbTools.ExecuteSPDataTable(cmd, out var results, retryCount);
-            //const string callingFunction = "TestRunSP";
-            //clsGlobal.GetDataTableByCmd(cmd, connectionString, callingFunction, retryCount, out var results, timeoutSeconds);
 
             foreach (DataRow row in results.Rows)
             {

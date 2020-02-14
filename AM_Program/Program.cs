@@ -24,7 +24,7 @@ namespace AnalysisManagerProg
 {
     static class Program
     {
-        public const string PROGRAM_DATE = "February 11, 2020";
+        public const string PROGRAM_DATE = "February 13, 2020";
 
         private static bool mTraceMode = false;
 
@@ -99,11 +99,7 @@ namespace AnalysisManagerProg
                     try
                     {
                         // testHarness.SystemMemoryUsage();
-                        // testHarness.TestDTASplit();
-                        // testHarness.TestProteinDBExport(@"C:\DMS_Temp_Org");
-                        // testHarness.TestDeleteFiles();
                         // testHarness.GenerateScanStatsFile();
-                        // testHarness.TestArchiveFailedResults();
                         // testHarness.TestGetToolVersionInfo();
                         // testHarness.TestConnectRSA();
                         // testHarness.TestGZip();
@@ -120,7 +116,7 @@ namespace AnalysisManagerProg
 
                         // testHarness.TestCopyToLocalWithHashCheck();
 
-                        testHarness.TestRunCyclops();
+                        testHarness.TestRunQuery();
 
                     }
                     catch (Exception ex)
