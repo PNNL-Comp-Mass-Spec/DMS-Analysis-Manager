@@ -1270,14 +1270,14 @@ namespace AnalysisManagerProg
             const short retryCount = 2;
             const int timeoutSeconds = 30;
 
-            var dbTools = DbToolsFactory.GetDBTools(connectionString, timeoutSeconds);
+            var dbTools = DbToolsFactory.GetDBTools(connectionString, timeoutSeconds, debugMode: true);
             RegisterEvents(dbTools);
 
             var cmd = dbTools.CreateCommand("GetJobStepParamsAsTable", CommandType.StoredProcedure);
 
-            dbTools.AddParameter(cmd, "@jobNumber", SqlType.Int, value: 1026591);
-            dbTools.AddParameter(cmd, "@stepNumber", SqlType.Int, value: 3);
-            dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, direction: ParameterDirection.Output);
+            dbTools.AddParameter(cmd, "@jobNumber", SqlType.Int).Value = 1026591;
+            dbTools.AddParameter(cmd, "@stepNumber", SqlType.Int).Value = 3;
+            dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512).Direction = ParameterDirection.Output;
 
             var success = dbTools.ExecuteSPDataTable(cmd, out var results, retryCount);
 

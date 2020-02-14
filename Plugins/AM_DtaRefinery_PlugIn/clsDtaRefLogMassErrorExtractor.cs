@@ -210,9 +210,9 @@ namespace AnalysisManagerDtaRefineryPlugIn
 
                 var cmd = dbTools.CreateCommand(STORE_MASS_ERROR_STATS_SP_NAME, CommandType.StoredProcedure);
 
-                dbTools.AddParameter(cmd, "@Return", SqlType.Int, direction: ParameterDirection.ReturnValue);
+                dbTools.AddParameter(cmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
                 dbTools.AddTypedParameter(cmd, "@DatasetID", SqlType.Int, value: datasetID);
-                dbTools.AddParameter(cmd, "@ResultsXML", SqlType.Xml, value: xmlResults);
+                dbTools.AddParameter(cmd, "@ResultsXML", SqlType.Xml).Value = xmlResults;
 
                 // Execute the SP (retry the call up to 4 times)
                 var resCode = dbTools.ExecuteSP(cmd, MAX_RETRY_COUNT);

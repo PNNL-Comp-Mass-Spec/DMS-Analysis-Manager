@@ -157,12 +157,12 @@ namespace AnalysisManagerBase
                 // Set up the command object prior to SP execution
                 var cmd = dbTools.CreateCommand(SP_NAME_GET_JOB_STEP_INPUT_FOLDER, CommandType.StoredProcedure);
 
-                dbTools.AddParameter(cmd, "@job", SqlType.Int, value: job);
+                dbTools.AddParameter(cmd, "@job", SqlType.Int).Value = job;
 
                 var stepToolFilterParam = dbTools.AddParameter(cmd, "@stepToolFilter", SqlType.VarChar, 8000, stepToolFilter);
 
-                var inputFolderParam = dbTools.AddParameter(cmd, "@inputFolderName", SqlType.VarChar, 128, direction: ParameterDirection.Output);
-                var stepToolMatchParam =dbTools.AddParameter(cmd, "@stepToolMatch", SqlType.VarChar, 64, direction: ParameterDirection.Output);
+                var inputFolderParam = dbTools.AddParameter(cmd, "@inputFolderName", SqlType.VarChar, 128, ParameterDirection.Output);
+                var stepToolMatchParam =dbTools.AddParameter(cmd, "@stepToolMatch", SqlType.VarChar, 64, ParameterDirection.Output);
 
                 var matchFound = false;
                 var inputDirectoryName = string.Empty;

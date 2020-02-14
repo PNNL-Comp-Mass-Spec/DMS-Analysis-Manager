@@ -179,9 +179,9 @@ namespace AnalysisManagerMzRefineryPlugIn
                 // Data is stored in table T_Dataset_QC
                 var sqlCmd = dbTools.CreateCommand(STORE_MASS_ERROR_STATS_SP_NAME, CommandType.StoredProcedure);
 
-                dbTools.AddParameter(sqlCmd, "@Return", SqlType.Int, direction: ParameterDirection.ReturnValue);
+                dbTools.AddParameter(sqlCmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
                 dbTools.AddTypedParameter(sqlCmd, "@DatasetID", SqlType.Int, value: datasetID);
-                dbTools.AddParameter(sqlCmd, "@ResultsXML", SqlType.Xml, value: xmlResults);
+                dbTools.AddParameter(sqlCmd, "@ResultsXML", SqlType.Xml).Value = xmlResults;
 
                 // Execute the SP (retry the call up to 4 times)
                 var resCode = dbTools.ExecuteSP(sqlCmd, MAX_RETRY_COUNT);

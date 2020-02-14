@@ -552,9 +552,9 @@ namespace AnalysisManagerProg
                 var cmd = dbTools.CreateCommand(SP_NAME_REPORT_MGR_ERROR_CLEANUP, CommandType.StoredProcedure);
 
                 dbTools.AddParameter(cmd, "@ManagerName", SqlType.VarChar, 128, mManagerName);
-                dbTools.AddParameter(cmd, "@State", SqlType.Int, value: eMgrCleanupActionCode);
+                dbTools.AddParameter(cmd, "@State", SqlType.Int).Value = eMgrCleanupActionCode;
                 dbTools.AddParameter(cmd, "@FailureMsg", SqlType.VarChar, 512, failureMessage);
-                dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 128, direction: ParameterDirection.Output);
+                dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 128, ParameterDirection.Output);
 
                 // Execute the SP
                 dbTools.ExecuteSP(cmd);

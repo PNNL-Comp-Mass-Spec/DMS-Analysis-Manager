@@ -648,9 +648,9 @@ namespace AnalysisManagerQCARTPlugin
 
                 var cmd = dbTools.CreateCommand(STORE_QCART_RESULTS, CommandType.StoredProcedure);
 
-                dbTools.AddParameter(cmd, "@Return", SqlType.Int, direction: ParameterDirection.ReturnValue);
+                dbTools.AddParameter(cmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
                 dbTools.AddTypedParameter(cmd, "@DatasetID", SqlType.Int, value: datasetID);
-                dbTools.AddParameter(cmd, "@ResultsXML", SqlType.Xml, value: xmlData);
+                dbTools.AddParameter(cmd, "@ResultsXML", SqlType.Xml).Value = xmlData;
 
                 var returnCode = dbTools.ExecuteSP(cmd, 3);
 

@@ -525,7 +525,7 @@ namespace AnalysisManagerGlyQIQPlugin
                 var dbTools = mStoredProcedureExecutor;
                 var cmd = dbTools.CreateCommand(STORE_JOB_PSM_RESULTS_SP_NAME, CommandType.StoredProcedure);
 
-                dbTools.AddParameter(cmd, "@Return", SqlType.Int, direction: ParameterDirection.ReturnValue);
+                dbTools.AddParameter(cmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
                 dbTools.AddTypedParameter(cmd, "@Job", SqlType.Int, value: jobNumber);
                 dbTools.AddTypedParameter(cmd, "@MSGFThreshold", SqlType.Float, value: 1);
                 dbTools.AddTypedParameter(cmd, "@FDRThreshold", SqlType.Float, value: 0.25);

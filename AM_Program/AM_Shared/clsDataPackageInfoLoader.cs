@@ -285,8 +285,8 @@ namespace AnalysisManagerBase
             {
                 var cmd = dbTools.CreateCommand("GetJobStepParamsAsTableUseHistory", CommandType.StoredProcedure);
 
-                dbTools.AddParameter(cmd, "@jobNumber", SqlType.Int, value: jobNumber);
-                dbTools.AddParameter(cmd, "@stepNumber", SqlType.Int, value: 1);
+                dbTools.AddParameter(cmd, "@jobNumber", SqlType.Int).Value = jobNumber;
+                dbTools.AddParameter(cmd, "@stepNumber", SqlType.Int).Value = 1;
 
                 // Execute the SP
                 var returnCode = dbTools.ExecuteSPDataTable(cmd, out var resultSet, RETRY_COUNT, 5);

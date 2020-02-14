@@ -320,7 +320,7 @@ namespace AnalysisManagerBase
                     dbTools.AddTypedParameter(cmd, "@NumResidues", SqlType.BigInt, value: currentSplitFasta.NumResidues);
                     dbTools.AddTypedParameter(cmd, "@FileSizeKB", SqlType.Int, value: (int)Math.Round(splitFastaFileInfo.Length / 1024.0));
                     var messageParam = dbTools.AddParameter(cmd, "@Message", SqlType.VarChar, 512, string.Empty);
-                    var returnParam = dbTools.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, direction: ParameterDirection.Output);
+                    var returnParam = dbTools.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, ParameterDirection.Output);
 
                     var retryCount = 3;
                     dbTools.ExecuteSP(cmd, retryCount, 2);
@@ -383,7 +383,7 @@ namespace AnalysisManagerBase
                 // Setup for execution of the stored procedure
                 var cmd = dbTools.CreateCommand(SP_NAME_REFRESH_CACHED_ORG_DB_INFO, CommandType.StoredProcedure);
 
-                var returnParam = dbTools.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, direction: ParameterDirection.Output);
+                var returnParam = dbTools.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, ParameterDirection.Output);
 
                 var retryCount = 3;
                 dbTools.ExecuteSP(cmd, retryCount, 2);

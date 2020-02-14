@@ -324,7 +324,7 @@ namespace AnalysisManagerBase
                 paramName = "@" + paramName;
             }
 
-            PipelineDBProcedureExecutor.AddParameter(cmd, paramName, SqlType.Int, value: value);
+            PipelineDBProcedureExecutor.AddParameter(cmd, paramName, SqlType.Int).Value = value;
         }
 
         private void AddSPParameter(System.Data.Common.DbCommand cmd, string paramName, DateTime value)
@@ -335,7 +335,7 @@ namespace AnalysisManagerBase
                 paramName = "@" + paramName;
             }
 
-            PipelineDBProcedureExecutor.AddParameter(cmd, paramName, SqlType.DateTime, value: value);
+            PipelineDBProcedureExecutor.AddParameter(cmd, paramName, SqlType.DateTime).Value = value;
         }
 
         private void AddSPParameter(System.Data.Common.DbCommand cmd, string paramName, float value)
@@ -346,7 +346,7 @@ namespace AnalysisManagerBase
                 paramName = "@" + paramName;
             }
 
-            PipelineDBProcedureExecutor.AddParameter(cmd, paramName, SqlType.Real, value: value);
+            PipelineDBProcedureExecutor.AddParameter(cmd, paramName, SqlType.Real).Value = value;
         }
 
         private void AddSPParameterOutput(System.Data.Common.DbCommand cmd, string paramName, string value, int varCharLength)
