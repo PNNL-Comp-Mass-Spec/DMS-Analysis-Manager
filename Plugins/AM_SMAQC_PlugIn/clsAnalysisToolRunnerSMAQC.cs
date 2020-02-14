@@ -337,7 +337,7 @@ namespace AnalysisManagerSMAQCPlugIn
             {
                 if (objResult != null)
                 {
-                    instrumentID = (int) objResult;
+                    instrumentID = objResult.CastDBVal<int>();
                     blnSuccess = true;
                 }
             }
