@@ -194,12 +194,10 @@ namespace AnalysisManager_Mage_PlugIn
 
                         while (drReader.Read())
                         {
-
                             var sampleName = drReader.GetString(0);
                             var ionCount = drReader.GetByte(1);
 
                             sampleToIonMapping.Add(sampleName, ionCount);
-
                         }
                     }
 

@@ -323,7 +323,7 @@ namespace AnalysisManagerSMAQCPlugIn
                 return false;
             }
 
-            var connectionString = mMgrParams.GetParam("connectionstring");
+            var connectionString = mMgrParams.GetParam("ConnectionString");
             var blnSuccess = false;
 
             var sqlStr = "SELECT Instrument_ID " + "FROM V_Dataset_Instrument_List_Report " + "WHERE ID = " + strDatasetID;

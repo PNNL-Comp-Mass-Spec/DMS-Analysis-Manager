@@ -393,12 +393,6 @@ namespace AnalysisManagerBase
             string sqlStr, string connectionString,
             short retryCount, out DataTable queryResults, int timeoutSeconds, [CallerMemberName] string callingFunction = "")
         {
-            //var cmd = new SqlCommand(sqlStr)
-            //{
-            //    CommandType = CommandType.Text
-            //};
-            //
-            //return GetDataTableByCmd(cmd, connectionString, callingFunction, retryCount, out queryResults, timeoutSeconds);
             var dbTools = DbToolsFactory.GetDBTools(connectionString, timeoutSeconds);
             RegisterEvents(dbTools);
 

@@ -637,7 +637,7 @@ namespace AnalysisManagerQCARTPlugin
                 var xmlData = ConstructXmlForDbPosting(mDatasetName, targetDatasetMasicJob, qcartValue);
 
                 // Gigasax.DMS5
-                var connectionString = mMgrParams.GetParam("connectionstring");
+                var connectionString = mMgrParams.GetParam("ConnectionString");
                 var datasetID = mJobParams.GetJobParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetID", 0);
 
                 // Call stored procedure StoreQCARTResults
