@@ -130,17 +130,17 @@ namespace AnalysisManagerProg
 
                 ShowTrace("AckManagerUpdateRequired using " + connectionString);
 
-                var procedureExecutor = DbToolsFactory.GetDBTools(connectionString);
-                RegisterEvents(procedureExecutor);
+                var dbTools = DbToolsFactory.GetDBTools(connectionString);
+                RegisterEvents(dbTools);
 
                 // Set up the command object prior to SP execution
-                var cmd = procedureExecutor.CreateCommand(SP_NAME_ACK_MANAGER_UPDATE, CommandType.StoredProcedure);
+                var cmd = dbTools.CreateCommand(SP_NAME_ACK_MANAGER_UPDATE, CommandType.StoredProcedure);
 
-                procedureExecutor.AddParameter(cmd, "@managerName", SqlType.VarChar, 128, ManagerName);
-                procedureExecutor.AddParameter(cmd, "@message", SqlType.VarChar, 512, direction: ParameterDirection.Output);
+                dbTools.AddParameter(cmd, "@managerName", SqlType.VarChar, 128, ManagerName);
+                dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, direction: ParameterDirection.Output);
 
                 // Execute the SP
-                procedureExecutor.ExecuteSP(cmd);
+                dbTools.ExecuteSP(cmd);
             }
             catch (Exception ex)
             {

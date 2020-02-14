@@ -602,13 +602,14 @@ namespace AnalysisManagerBase
 
             if (retryCount < 1)
                 retryCount = 1;
+
             if (timeoutSeconds < 5)
                 timeoutSeconds = 5;
 
-            var DBTools = DbToolsFactory.GetDBTools(connectionString);
-            RegisterEvents(DBTools);
+            var dbTools = DbToolsFactory.GetDBTools(connectionString);
+            RegisterEvents(dbTools);
 
-            var success = DBTools.GetQueryResults(sqlQuery, out queryResults, retryCount, timeoutSeconds, maxRowsToReturn, callingFunction: callingFunction);
+            var success = dbTools.GetQueryResults(sqlQuery, out queryResults, retryCount, maxRowsToReturn, timeoutSeconds: timeoutSeconds, callingFunction: callingFunction);
 
             return success;
 
@@ -1735,21 +1736,21 @@ namespace AnalysisManagerBase
 
         #region "EventNotifier events"
 
-        private static void RegisterEvents(IEventNotifier oProcessingClass, bool writeDebugEventsToLog = true)
+        private static void RegisterEvents(IEventNotifier processingClass, bool writeDebugEventsToLog = true)
         {
             if (writeDebugEventsToLog)
             {
-                oProcessingClass.DebugEvent += DebugEventHandler;
+                processingClass.DebugEvent += DebugEventHandler;
             }
             else
             {
-                oProcessingClass.DebugEvent += DebugEventHandlerConsoleOnly;
+                processingClass.DebugEvent += DebugEventHandlerConsoleOnly;
             }
 
-            oProcessingClass.StatusEvent += StatusEventHandler;
-            oProcessingClass.ErrorEvent += ErrorEventHandler;
-            oProcessingClass.WarningEvent += WarningEventHandler;
-            // Ignore: oProcessingClass.ProgressUpdate += ProgressUpdateHandler;
+            processingClass.StatusEvent += StatusEventHandler;
+            processingClass.ErrorEvent += ErrorEventHandler;
+            processingClass.WarningEvent += WarningEventHandler;
+            // Ignore: processingClass.ProgressUpdate += ProgressUpdateHandler;
         }
 
         private static void DebugEventHandlerConsoleOnly(string statusMessage)

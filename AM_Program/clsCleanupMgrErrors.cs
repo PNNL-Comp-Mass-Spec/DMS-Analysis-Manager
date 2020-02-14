@@ -545,19 +545,19 @@ namespace AnalysisManagerProg
                 if (failureMessage == null)
                     failureMessage = string.Empty;
 
-                var procedureExecutor = DbToolsFactory.GetDBTools(mMgrConfigDBConnectionString);
-                RegisterEvents(procedureExecutor);
+                var dbTools = DbToolsFactory.GetDBTools(mMgrConfigDBConnectionString);
+                RegisterEvents(dbTools);
 
                 // Set up the command object prior to SP execution
-                var cmd = procedureExecutor.CreateCommand(SP_NAME_REPORT_MGR_ERROR_CLEANUP, CommandType.StoredProcedure);
+                var cmd = dbTools.CreateCommand(SP_NAME_REPORT_MGR_ERROR_CLEANUP, CommandType.StoredProcedure);
 
-                procedureExecutor.AddParameter(cmd, "@ManagerName", SqlType.VarChar, 128, mManagerName);
-                procedureExecutor.AddParameter(cmd, "@State", SqlType.Int, value: eMgrCleanupActionCode);
-                procedureExecutor.AddParameter(cmd, "@FailureMsg", SqlType.VarChar, 512, failureMessage);
-                procedureExecutor.AddParameter(cmd, "@message", SqlType.VarChar, 128, direction: ParameterDirection.Output);
+                dbTools.AddParameter(cmd, "@ManagerName", SqlType.VarChar, 128, mManagerName);
+                dbTools.AddParameter(cmd, "@State", SqlType.Int, value: eMgrCleanupActionCode);
+                dbTools.AddParameter(cmd, "@FailureMsg", SqlType.VarChar, 512, failureMessage);
+                dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 128, direction: ParameterDirection.Output);
 
                 // Execute the SP
-                procedureExecutor.ExecuteSP(cmd);
+                dbTools.ExecuteSP(cmd);
             }
             catch (Exception ex)
             {
