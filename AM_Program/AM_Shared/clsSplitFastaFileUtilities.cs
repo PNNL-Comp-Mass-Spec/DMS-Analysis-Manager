@@ -309,6 +309,7 @@ namespace AnalysisManagerBase
                     splitFastaName = splitFastaFileInfo.Name;
 
                     var dbTools = DbToolsFactory.GetDBTools(mDMSConnectionString);
+                    RegisterEvents(dbTools);
 
                     // Setup for execution of the stored procedure
                     var cmd = dbTools.CreateCommand(SP_NAME_UPDATE_ORGANISM_DB_FILE, CommandType.StoredProcedure);
@@ -377,6 +378,7 @@ namespace AnalysisManagerBase
             try
             {
                 var dbTools = DbToolsFactory.GetDBTools(mProteinSeqsDBConnectionString);
+                RegisterEvents(dbTools);
 
                 // Setup for execution of the stored procedure
                 var cmd = dbTools.CreateCommand(SP_NAME_REFRESH_CACHED_ORG_DB_INFO, CommandType.StoredProcedure);

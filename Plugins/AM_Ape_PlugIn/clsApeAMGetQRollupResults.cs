@@ -133,6 +133,7 @@ namespace AnalysisManager_Ape_PlugIn
             var qidCount = 0;
 
             var dbTools = DbToolsFactory.GetDBTools(connectionString);
+            RegisterEvents(dbTools);
 
             // Get the matching QIDs for this data package
             var success = dbTools.GetQueryResults(sqlText, out var results);

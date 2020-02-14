@@ -1271,6 +1271,8 @@ namespace AnalysisManagerProg
             const int timeoutSeconds = 30;
 
             var dbTools = DbToolsFactory.GetDBTools(connectionString, timeoutSeconds);
+            RegisterEvents(dbTools);
+
             var cmd = dbTools.CreateCommand("GetJobStepParamsAsTable", CommandType.StoredProcedure);
 
             dbTools.AddParameter(cmd, "@jobNumber", SqlType.Int, value: 1026591);

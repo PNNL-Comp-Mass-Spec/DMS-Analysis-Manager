@@ -644,6 +644,8 @@ namespace AnalysisManagerQCARTPlugin
                 // Retry up to 3 times
 
                 var dbTools = DbToolsFactory.GetDBTools(connectionString);
+                RegisterEvents(dbTools);
+
                 var cmd = dbTools.CreateCommand(STORE_QCART_RESULTS, CommandType.StoredProcedure);
 
                 dbTools.AddParameter(cmd, "@Return", SqlType.Int, direction: ParameterDirection.ReturnValue);

@@ -400,6 +400,8 @@ namespace AnalysisManagerBase
             //
             //return GetDataTableByCmd(cmd, connectionString, callingFunction, retryCount, out queryResults, timeoutSeconds);
             var dbTools = DbToolsFactory.GetDBTools(connectionString, timeoutSeconds);
+            RegisterEvents(dbTools);
+
             return dbTools.GetQueryResultsDataTable(sqlStr, out queryResults, retryCount, callingFunction: callingFunction);
         }
 

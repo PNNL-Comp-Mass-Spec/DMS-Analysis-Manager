@@ -152,6 +152,7 @@ namespace AnalysisManagerBase
             try
             {
                 var dbTools = DbToolsFactory.GetDBTools(mBrokerDBConnectionString);
+                RegisterEvents(dbTools);
 
                 // Set up the command object prior to SP execution
                 var cmd = dbTools.CreateCommand(SP_NAME_GET_JOB_STEP_INPUT_FOLDER, CommandType.StoredProcedure);
