@@ -551,7 +551,7 @@ namespace AnalysisManager_AScore_PlugIn
 
         /// <summary>Use this method to chain events between classes</summary>
         /// <param name="sourceClass"></param>
-        protected void RegisterEvents(EventNotifier sourceClass)
+        protected void RegisterEvents(IEventNotifier sourceClass)
         {
             sourceClass.ErrorEvent += OnErrorEvent;
             sourceClass.WarningEvent += OnWarningEvent;

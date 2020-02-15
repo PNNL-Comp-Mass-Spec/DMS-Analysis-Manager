@@ -137,6 +137,16 @@ namespace AnalysisManagerBase
         /// <param name="messageType"></param>
         protected void UnregisterEventHandler(EventNotifier processingClass, BaseLogger.LogLevels messageType)
         {
+            UnregisterEventHandler((IEventNotifier)processingClass, messageType);
+        }
+
+        /// <summary>
+        /// Unregister the event handler for the given LogLevel
+        /// </summary>
+        /// <param name="processingClass"></param>
+        /// <param name="messageType"></param>
+        protected void UnregisterEventHandler(IEventNotifier processingClass, BaseLogger.LogLevels messageType)
+        {
             switch (messageType)
             {
                 case BaseLogger.LogLevels.DEBUG:
