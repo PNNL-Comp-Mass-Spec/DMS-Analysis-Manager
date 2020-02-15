@@ -372,6 +372,7 @@ namespace AnalysisManagerBase
         /// <param name="callingFunction">Name of the calling function</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks>Uses a timeout of 30 seconds</remarks>
+        [Obsolete("Use PRISMDatabaseUtils.DbToolsFactory.GetDBTools(...).GetQueryResultsDataTable(...)", true)]
         public static bool GetDataTableByQuery(string sqlStr, string connectionString, short retryCount, out DataTable queryResults, [CallerMemberName] string callingFunction = "")
         {
             const int timeoutSeconds = 30;
@@ -389,11 +390,16 @@ namespace AnalysisManagerBase
         /// <param name="callingFunction">Name of the calling function</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks></remarks>
+        [Obsolete("Use PRISMDatabaseUtils.DbToolsFactory.GetDBTools(...).GetQueryResultsDataTable(...)", true)]
         public static bool GetDataTableByQuery(
-            string sqlStr, string connectionString,
-            short retryCount, out DataTable queryResults, int timeoutSeconds, [CallerMemberName] string callingFunction = "")
+            string sqlStr,
+            string connectionString,
+            short retryCount,
+            out DataTable queryResults,
+            int timeoutSeconds,
+            [CallerMemberName] string callingFunction = "")
         {
-            var dbTools = DbToolsFactory.GetDBTools(connectionString, timeoutSeconds);
+            var dbTools = DbToolsFactory.GetDBTools(connectionString, timeoutSeconds, false);
             RegisterEvents(dbTools);
 
             return dbTools.GetQueryResultsDataTable(sqlStr, out queryResults, retryCount, callingFunction: callingFunction);
@@ -410,7 +416,7 @@ namespace AnalysisManagerBase
         /// <param name="callingFunction">Name of the calling function</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks></remarks>
-        [Obsolete("Use PRISMDatabaseUtils.DbToolsFactory.GetDBTools(...).GetQueryDataTable(...)", true)]
+        [Obsolete("Use PRISMDatabaseUtils.DbToolsFactory.GetDBTools(...).GetQueryResultsDataTable(...)", true)]
         public static bool GetDataTableByCmd(
             System.Data.SqlClient.SqlCommand cmd,
             string connectionString,
@@ -540,6 +546,7 @@ namespace AnalysisManagerBase
         /// Numbers are converted to their string equivalent
         /// Use the GetDataTable functions in this class if you need to retain numeric values or null values
         /// </remarks>
+        [Obsolete("Use GetQueryResultsTopRow that accepts a dbTools instance", true)]
         public static bool GetQueryResultsTopRow(
             string sqlQuery,
             string connectionString,
@@ -610,6 +617,7 @@ namespace AnalysisManagerBase
         /// Numbers are converted to their string equivalent
         /// Use the GetDataTable functions in this class if you need to retain numeric values or null values
         /// </remarks>
+        [Obsolete("Use PRISMDatabaseUtils.DbToolsFactory.GetDBTools(...).GetQueryResultsDataTable(...)", false)]
         public static bool GetQueryResults(
             string sqlQuery,
             string connectionString,
