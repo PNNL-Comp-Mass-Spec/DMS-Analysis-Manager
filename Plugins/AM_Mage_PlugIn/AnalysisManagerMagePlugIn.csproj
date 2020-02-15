@@ -91,8 +91,14 @@
     <Compile Include="SQL.cs" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="PRISM-DatabaseUtils">
+      <Version>1.0.5</Version>
+    </PackageReference>
     <PackageReference Include="PRISM-Library">
       <Version>2.6.1</Version>
+    </PackageReference>
+    <PackageReference Include="PRISMWin-Library">
+      <Version>1.0.14</Version>
     </PackageReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
