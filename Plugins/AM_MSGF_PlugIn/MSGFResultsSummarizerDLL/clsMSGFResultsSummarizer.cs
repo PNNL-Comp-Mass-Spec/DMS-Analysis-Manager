@@ -114,15 +114,6 @@ namespace MSGFResultsSummarizer
 
         private string mErrorMessage = string.Empty;
         private readonly short mDebugLevel;
-
-        private int mSpectraSearched;
-
-        /// <summary>
-        /// Value between 0 and 100, indicating the percentage of the MS2 spectra with search results that are
-        /// more than 2 scans away from an adjacent spectrum
-        /// </summary>
-        /// <remarks></remarks>
-        private double mPercentMSnScansNoPSM;
         private readonly bool mTraceMode;
 
         private udtPSMStatsType mMSGFBasedCounts;
@@ -200,7 +191,11 @@ namespace MSGFResultsSummarizer
 
         public string OutputDirectoryPath { get; set; } = string.Empty;
 
-        public double PercentMSnScansNoPSM => mPercentMSnScansNoPSM;
+        /// <summary>
+        /// Value between 0 and 100, indicating the percentage of the MS2 spectra with search results that are
+        /// more than 2 scans away from an adjacent spectrum
+        /// </summary>
+        public double PercentMSnScansNoPSM { get; private set; }
 
         public bool PostJobPSMResultsToDB { get; set; }
 
@@ -208,7 +203,7 @@ namespace MSGFResultsSummarizer
 
         public string ResultTypeName => ResultType.ToString();
 
-        public int SpectraSearched => mSpectraSearched;
+        public int SpectraSearched { get; private set; }
 
         public int TotalPSMsFDR => mFDRBasedCounts.TotalPSMs;
 
@@ -349,11 +344,11 @@ namespace MSGFResultsSummarizer
                     }
                 }
 
-                mSpectraSearched = uniqueSpectra.Count;
+                SpectraSearched = uniqueSpectra.Count;
 
                 // Set these to defaults for now
                 MaximumScanGapAdjacentMSn = 0;
-                mPercentMSnScansNoPSM = 100;
+                PercentMSnScansNoPSM = 100;
 
                 if (!ContactDatabase)
                 {
@@ -399,12 +394,12 @@ namespace MSGFResultsSummarizer
 
             if (totalMSnSpectra > 0)
             {
-                mPercentMSnScansNoPSM = (1 - scanList.Count / (float)totalMSnSpectra) * 100.0;
+                PercentMSnScansNoPSM = (1 - scanList.Count / (float)totalMSnSpectra) * 100.0;
             }
             else
             {
                 // Report 100% because we cannot accurately compute this value without knowing totalMSnSpectra
-                mPercentMSnScansNoPSM = 100;
+                PercentMSnScansNoPSM = 100;
             }
 
             if (totalSpectra > 0)
@@ -920,7 +915,7 @@ namespace MSGFResultsSummarizer
                 dbTools.AddTypedParameter(cmd, "@Job", SqlType.Int, value: job);
                 dbTools.AddTypedParameter(cmd, "@MSGFThreshold", SqlType.Float, value: reportThreshold);
                 dbTools.AddTypedParameter(cmd, "@FDRThreshold", SqlType.Float, value: FDRThreshold);
-                dbTools.AddTypedParameter(cmd, "@SpectraSearched", SqlType.Int, value: mSpectraSearched);
+                dbTools.AddTypedParameter(cmd, "@SpectraSearched", SqlType.Int, value: SpectraSearched);
                 dbTools.AddTypedParameter(cmd, "@TotalPSMs", SqlType.Int, value: mMSGFBasedCounts.TotalPSMs);
                 dbTools.AddTypedParameter(cmd, "@UniquePeptides", SqlType.Int, value: mMSGFBasedCounts.UniquePeptideCount);
                 dbTools.AddTypedParameter(cmd, "@UniqueProteins", SqlType.Int, value: mMSGFBasedCounts.UniqueProteinCount);
@@ -928,7 +923,7 @@ namespace MSGFResultsSummarizer
                 dbTools.AddTypedParameter(cmd, "@UniquePeptidesFDRFilter", SqlType.Int, value: mFDRBasedCounts.UniquePeptideCount);
                 dbTools.AddTypedParameter(cmd, "@UniqueProteinsFDRFilter", SqlType.Int, value: mFDRBasedCounts.UniqueProteinCount);
                 dbTools.AddTypedParameter(cmd, "@MSGFThresholdIsEValue", SqlType.TinyInt, value: thresholdIsEValue);
-                dbTools.AddTypedParameter(cmd, "@PercentMSnScansNoPSM", SqlType.Real, value: mPercentMSnScansNoPSM);
+                dbTools.AddTypedParameter(cmd, "@PercentMSnScansNoPSM", SqlType.Real, value: PercentMSnScansNoPSM);
                 dbTools.AddTypedParameter(cmd, "@MaximumScanGapAdjacentMSn", SqlType.Int, value: MaximumScanGapAdjacentMSn);
                 dbTools.AddTypedParameter(cmd, "@UniquePhosphopeptideCountFDR", SqlType.Int, value: mFDRBasedCounts.UniquePhosphopeptideCount);
                 dbTools.AddTypedParameter(cmd, "@UniquePhosphopeptidesCTermK", SqlType.Int, value: mFDRBasedCounts.UniquePhosphopeptidesCTermK);
@@ -978,7 +973,7 @@ namespace MSGFResultsSummarizer
             try
             {
                 mErrorMessage = string.Empty;
-                mSpectraSearched = 0;
+                SpectraSearched = 0;
                 mMSGFBasedCounts.Clear();
                 mFDRBasedCounts.Clear();
 
@@ -998,6 +993,9 @@ namespace MSGFResultsSummarizer
                     // These tools do not have first-hits files; use the Synopsis file instead to determine scan counts
                     phrpFirstHitsFileName = phrpSynopsisFileName;
                 }
+
+                if (phrpSynopsisFileName == null)
+                    throw new NullReferenceException(nameof(phrpSynopsisFileName) + " is null");
 
                 mMSGFSynopsisFileName = Path.GetFileNameWithoutExtension(phrpSynopsisFileName) + MSGF_RESULT_FILENAME_SUFFIX;
 
@@ -1628,7 +1626,7 @@ namespace MSGFResultsSummarizer
                         mJob.ToString(),
                         MSGFThreshold.ToString("0.00E+00"),
                         FDRThreshold.ToString("0.000"),
-                        mSpectraSearched.ToString(),
+                        SpectraSearched.ToString(),
                         mMSGFBasedCounts.TotalPSMs.ToString(),
                         mMSGFBasedCounts.UniquePeptideCount.ToString(),
                         mMSGFBasedCounts.UniqueProteinCount.ToString(),
