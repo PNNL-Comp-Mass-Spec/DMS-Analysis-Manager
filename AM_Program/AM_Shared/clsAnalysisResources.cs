@@ -3093,7 +3093,7 @@ namespace AnalysisManagerBase
                 var dmsConnectionString = mMgrParams.GetParam("ConnectionString");
                 if (string.IsNullOrWhiteSpace(dmsConnectionString))
                 {
-                    LogError("Error in LookupLegacyDBSizeWithIndices: manager parameter ConnectionString is not defined");
+                    LogError("Error in LookupLegacyDBDiskSpaceRequiredMB: manager parameter ConnectionString is not defined");
                     return 0;
                 }
 
@@ -3137,7 +3137,8 @@ namespace AnalysisManagerBase
 
                 if (!int.TryParse(legacyDbSize.First(), out var fileSizeKB))
                 {
-                    LogMessage("Legacy fasta file size is not numeric, job " + mJob + ", file " + legacyFastaName + ": " + legacyDbSize.First(), 0, true);
+                    var logMessage = "Legacy fasta file size is not numeric, job " + mJob + ", file " + legacyFastaName + ": " + legacyDbSize.First();
+                    LogMessage(logMessage, 0, true);
                     return 0;
                 }
 
@@ -3152,7 +3153,7 @@ namespace AnalysisManagerBase
             }
             catch (Exception ex)
             {
-                LogError("Error in LookupLegacyDBSizeWithIndices", ex);
+                LogError("Error in LookupLegacyDBDiskSpaceRequiredMB", ex);
                 return 0;
             }
 

@@ -612,7 +612,7 @@ namespace AnalysisManagerProg
                 var fileName = Path.GetFileName(srcFilePath);
                 if (fileName == null)
                 {
-                    Console.WriteLine("Filename could not be parsed from " + srcFilePath);
+                    Console.WriteLine("Filename could not be parsed from parameter " + nameof(srcFilePath));
                     return;
                 }
 

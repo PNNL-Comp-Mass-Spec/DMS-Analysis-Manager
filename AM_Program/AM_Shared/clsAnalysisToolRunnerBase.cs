@@ -686,7 +686,7 @@ namespace AnalysisManagerBase
                 var sourceFileName = Path.GetFileName(sourceFilePath);
                 if (sourceFileName == null)
                 {
-                    LogError("Filename not found in " + sourceFilePath + "; cannot copy");
+                    LogError("Parameter " + nameof(sourceFilePath) + " is null; nothing to copy");
                     return false;
                 }
 
@@ -1704,6 +1704,7 @@ namespace AnalysisManagerBase
                 var connectionString = mgrParams.GetParam("MgrCnfgDbConnectStr");
                 var managerName = mgrParams.ManagerName;
 
+                // ReSharper disable once ExplicitCallerInfoArgument
                 var newDebugLevel = GetManagerDebugLevel(connectionString, managerName, debugLevel, 0, "GetCurrentMgrSettingsFromDB");
 
                 if (debugLevel > 0 && newDebugLevel != debugLevel)
