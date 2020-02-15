@@ -643,7 +643,7 @@ namespace AnalysisManagerQCARTPlugin
                 // Call stored procedure StoreQCARTResults
                 // Retry up to 3 times
 
-                var dbTools = DbToolsFactory.GetDBTools(connectionString);
+                var dbTools = DbToolsFactory.GetDBTools(connectionString, debugMode: TraceMode);
                 RegisterEvents(dbTools);
 
                 var cmd = dbTools.CreateCommand(STORE_QCART_RESULTS, CommandType.StoredProcedure);

@@ -373,7 +373,7 @@ namespace AnalysisManagerProg
                 mgrConfigDBConnectionString = mMgrSettings.GetParam(MgrSettings.MGR_PARAM_MGR_CFG_DB_CONN_STRING);
             }
 
-            mMgrErrorCleanup = new clsCleanupMgrErrors(mgrConfigDBConnectionString, mMgrName, mDebugLevel, mMgrDirectoryPath, mWorkDirPath);
+            mMgrErrorCleanup = new clsCleanupMgrErrors(mgrConfigDBConnectionString, mMgrName, mDebugLevel, mMgrDirectoryPath, mWorkDirPath, TraceMode);
 
             ShowTrace("Initialize the Summary file");
 

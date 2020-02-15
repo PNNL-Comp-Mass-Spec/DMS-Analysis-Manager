@@ -227,7 +227,7 @@ namespace AnalysisManagerBase
             if (dbConnectionString == null)
                 dbConnectionString = string.Empty;
 
-            PipelineDBProcedureExecutor = DbToolsFactory.GetDBTools(dbConnectionString);
+            PipelineDBProcedureExecutor = DbToolsFactory.GetDBTools(dbConnectionString, debugMode: false);
             RegisterEvents(PipelineDBProcedureExecutor);
 
             DBConnectionString = dbConnectionString;

@@ -11,6 +11,7 @@ using PRISM.Logging;
 using System;
 using System.IO;
 using System.Linq;
+using PRISMDatabaseUtils;
 
 namespace AnalysisManager_AScore_PlugIn
 {
@@ -52,6 +53,7 @@ namespace AnalysisManager_AScore_PlugIn
 
         public ExtractionType ExtractionParams { get; set; }
         public string ExtractedResultsFileName { get; set; }
+        public bool TraceMode { get; set; }
         public string WorkingDir { get; set; }
         public string ResultsDBFileName { get; set; }
         public string searchType { get; set; }

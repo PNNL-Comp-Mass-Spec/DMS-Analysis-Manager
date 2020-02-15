@@ -122,7 +122,7 @@ namespace AnalysisManager_Ape_PlugIn
             var mdidList = string.Empty;
             var mdidCount = 0;
 
-            var dbTools = DbToolsFactory.GetDBTools(connectionString);
+            var dbTools = DbToolsFactory.GetDBTools(connectionString, debugMode: mMgrParams.TraceMode);
             RegisterEvents(dbTools);
 
             // Get the matching MD_IDs for this data package

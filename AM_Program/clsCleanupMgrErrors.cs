@@ -97,8 +97,9 @@ namespace AnalysisManagerProg
         private readonly string mManagerName;
 
         private readonly string mMgrDirectoryPath;
-
+        private readonly bool mTraceMode;
         private readonly string mWorkingDirPath;
+
         #endregion
 
         /// <summary>
@@ -109,7 +110,14 @@ namespace AnalysisManagerProg
         /// <param name="debugLevel"></param>
         /// <param name="mgrDirectoryPath"></param>
         /// <param name="workingDirPath"></param>
-        public clsCleanupMgrErrors(string mgrConfigDBConnectionString, string managerName, short debugLevel, string mgrDirectoryPath, string workingDirPath)
+        /// <param name="traceMode"></param>
+        public clsCleanupMgrErrors(
+            string mgrConfigDBConnectionString,
+            string managerName,
+            short debugLevel,
+            string mgrDirectoryPath,
+            string workingDirPath,
+            bool traceMode)
         {
             if (string.IsNullOrEmpty(mgrConfigDBConnectionString) && !clsGlobal.OfflineMode)
                 throw new Exception("Manager config DB connection string is not defined");
@@ -122,6 +130,7 @@ namespace AnalysisManagerProg
             mDebugLevel = debugLevel;
 
             mMgrDirectoryPath = mgrDirectoryPath;
+            mTraceMode = traceMode;
             mWorkingDirPath = workingDirPath;
 
             mInitialized = true;
@@ -545,7 +554,7 @@ namespace AnalysisManagerProg
                 if (failureMessage == null)
                     failureMessage = string.Empty;
 
-                var dbTools = DbToolsFactory.GetDBTools(mMgrConfigDBConnectionString);
+                var dbTools = DbToolsFactory.GetDBTools(mMgrConfigDBConnectionString, debugMode: mTraceMode);
                 RegisterEvents(dbTools);
 
                 // Set up the command object prior to SP execution

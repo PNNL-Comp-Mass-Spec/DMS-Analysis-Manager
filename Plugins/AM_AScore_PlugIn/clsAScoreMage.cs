@@ -219,6 +219,8 @@ namespace AnalysisManager_AScore_PlugIn
             ascoreModule.WarningEvent += OnWarningEvent;
 
             ascoreModule.ExtractionParams = GetExtractionParametersFromJobParameters();
+
+            ascoreModule.TraceMode = mMgrParams.TraceMode;
             ascoreModule.WorkingDir = mWorkingDir;
             ascoreModule.ResultsDBFileName = mResultsDBFileName;
             ascoreModule.ascoreParamFileName = mParamFilename;

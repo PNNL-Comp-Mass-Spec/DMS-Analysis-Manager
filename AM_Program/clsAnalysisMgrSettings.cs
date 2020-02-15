@@ -130,7 +130,7 @@ namespace AnalysisManagerProg
 
                 ShowTrace("AckManagerUpdateRequired using " + connectionString);
 
-                var dbTools = DbToolsFactory.GetDBTools(connectionString);
+                var dbTools = DbToolsFactory.GetDBTools(connectionString, debugMode: TraceMode);
                 RegisterEvents(dbTools);
 
                 // Set up the command object prior to SP execution
@@ -373,7 +373,7 @@ namespace AnalysisManagerProg
             ShowTrace("Query V_Pipeline_Step_Tools_Detail_Report in broker");
 
             // Query the database
-            var dbTools = DbToolsFactory.GetDBTools(connectionString);
+            var dbTools = DbToolsFactory.GetDBTools(connectionString, debugMode: TraceMode);
             RegisterEvents(dbTools);
 
             var success = dbTools.GetQueryResults(sqlQuery, out var queryResults, retryCount);

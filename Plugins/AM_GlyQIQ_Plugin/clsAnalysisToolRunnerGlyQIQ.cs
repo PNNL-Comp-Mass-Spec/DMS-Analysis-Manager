@@ -12,6 +12,8 @@ using System.Data;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using PRISM;
+using PRISM.Logging;
 using PRISMDatabaseUtils;
 using ThermoRawFileReader;
 
@@ -517,8 +519,10 @@ namespace AnalysisManagerGlyQIQPlugin
                         strConnectionString = dmsConnectionStringOverride;
                     }
 
-                    mStoredProcedureExecutor = DbToolsFactory.GetDBTools(strConnectionString);
-                    mStoredProcedureExecutor.DebugEvent += ExecuteSP_DebugEvent;
+                    mStoredProcedureExecutor = DbToolsFactory.GetDBTools(strConnectionString, debugMode: TraceMode);
+                    RegisterEvents(mStoredProcedureExecutor);
+
+                    UnregisterEventHandler((EventNotifier)mStoredProcedureExecutor, BaseLogger.LogLevels.ERROR);
                     mStoredProcedureExecutor.ErrorEvent += ExecuteSP_DBErrorEvent;
                 }
 

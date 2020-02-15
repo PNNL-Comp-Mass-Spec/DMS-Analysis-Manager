@@ -123,6 +123,7 @@ namespace MSGFResultsSummarizer
         /// </summary>
         /// <remarks></remarks>
         private double mPercentMSnScansNoPSM;
+        private readonly bool mTraceMode;
 
         private udtPSMStatsType mMSGFBasedCounts;
         private udtPSMStatsType mFDRBasedCounts;
@@ -264,9 +265,10 @@ namespace MSGFResultsSummarizer
         /// <param name="datasetName">Dataset name</param>
         /// <param name="job">Job number</param>
         /// <param name="sourceDirectoryPath">Source directory path</param>
+        /// <param name="traceMode">When true, show database queries</param>
         /// <remarks></remarks>
-        public clsMSGFResultsSummarizer(clsPHRPReader.ePeptideHitResultType resultType, string datasetName, int job, string sourceDirectoryPath)
-            : this(resultType, datasetName, job, sourceDirectoryPath, DEFAULT_CONNECTION_STRING, debugLevel: 1)
+        public clsMSGFResultsSummarizer(clsPHRPReader.ePeptideHitResultType resultType, string datasetName, int job, string sourceDirectoryPath, bool traceMode)
+            : this(resultType, datasetName, job, sourceDirectoryPath, DEFAULT_CONNECTION_STRING, debugLevel: 1, traceMode: traceMode)
         {
         }
 
@@ -279,6 +281,7 @@ namespace MSGFResultsSummarizer
         /// <param name="sourceDirectoryPath">Source folder path</param>
         /// <param name="connectionString">DMS connection string</param>
         /// <param name="debugLevel">Debug Level</param>
+        /// <param name="traceMode">When true, show database queries</param>
         /// <remarks></remarks>
         public clsMSGFResultsSummarizer(
             clsPHRPReader.ePeptideHitResultType resultType,
@@ -286,7 +289,8 @@ namespace MSGFResultsSummarizer
             int job,
             string sourceDirectoryPath,
             string connectionString,
-            short debugLevel)
+            short debugLevel,
+            bool traceMode)
         {
             ResultType = resultType;
             mDatasetName = datasetName;
@@ -294,8 +298,9 @@ namespace MSGFResultsSummarizer
             mWorkDir = sourceDirectoryPath;
             mConnectionString = connectionString;
             mDebugLevel = debugLevel;
+            mTraceMode = traceMode;
 
-            mStoredProcedureExecutor = DbToolsFactory.GetDBTools(mConnectionString);
+            mStoredProcedureExecutor = DbToolsFactory.GetDBTools(mConnectionString, debugMode: mTraceMode);
             RegisterEvents(mStoredProcedureExecutor);
 
             ContactDatabase = true;
@@ -447,13 +452,14 @@ namespace MSGFResultsSummarizer
                     return false;
                 }
 
-                var queryScanStats = "" + " SELECT Scan_Count_Total, " +
+                var queryScanStats = " SELECT Scan_Count_Total, " +
                                      "        SUM(CASE WHEN Scan_Type LIKE '%MSn' THEN Scan_Count ELSE 0 END) AS ScanCountMSn" +
                                      " FROM V_Dataset_Scans_Export DSE" + " WHERE Dataset = '" + DatasetName + "'" + " GROUP BY Scan_Count_Total";
 
-                var dbTools = DbToolsFactory.GetDBTools(mConnectionString);
+                var dbTools = DbToolsFactory.GetDBTools(mConnectionString, debugMode: mTraceMode);
                 RegisterEvents(dbTools);
 
+                // ReSharper disable once ExplicitCallerInfoArgument
                 var success = dbTools.GetQueryResults(queryScanStats, out var scanStatsFromDb, callingFunction: "LookupScanStats_V_Dataset_Scans_Export");
 
                 if (success && scanStatsFromDb.Count > 0)
@@ -476,6 +482,7 @@ namespace MSGFResultsSummarizer
 
                 var queryScanTotal = "" + " SELECT [Scan Count]" + " FROM V_Dataset_Export" + " WHERE Dataset = '" + DatasetName + "'";
 
+                // ReSharper disable once ExplicitCallerInfoArgument
                 success = dbTools.GetQueryResults(queryScanTotal, out var datasetScanCountFromDb, callingFunction: "LookupScanStats_V_Dataset_Export");
 
                 if (success && datasetScanCountFromDb.Count > 0)

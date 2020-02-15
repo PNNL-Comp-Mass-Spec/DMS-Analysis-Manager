@@ -16,6 +16,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using PRISM.Logging;
 
 namespace AnalysisManagerExtractionPlugin
 {
@@ -1407,10 +1408,11 @@ namespace AnalysisManagerExtractionPlugin
             // ReSharper disable once UseImplicitlyTypedVariableEvident
             const clsPHRPReader.ePeptideHitResultType resultType = clsPHRPReader.ePeptideHitResultType.MSAlign;
 
-            var summarizer = new clsMSGFResultsSummarizer(resultType, mDatasetName, mJob, mWorkDir);
+            var summarizer = new clsMSGFResultsSummarizer(resultType, mDatasetName, mJob, mWorkDir, traceMode: TraceMode);
             RegisterEvents(summarizer);
 
             // Monitor events for "permission was denied"
+            UnregisterEventHandler(summarizer, BaseLogger.LogLevels.ERROR);
             summarizer.ErrorEvent += MSGFResultsSummarizer_ErrorHandler;
 
             summarizer.MSGFThreshold = clsMSGFResultsSummarizer.DEFAULT_MSGF_THRESHOLD;

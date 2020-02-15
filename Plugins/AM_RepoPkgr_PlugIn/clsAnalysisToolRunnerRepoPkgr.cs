@@ -749,7 +749,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
                     return orgDbName;
                 }
 
-                var dbTools = DbToolsFactory.GetDBTools(proteinSeqsDBConnectionString);
+                var dbTools = DbToolsFactory.GetDBTools(proteinSeqsDBConnectionString, debugMode: TraceMode);
                 RegisterEvents(dbTools);
 
                 var success = dbTools.GetQueryResults(sqlQuery, out var results, retryCount, retryDelaySeconds: 2);

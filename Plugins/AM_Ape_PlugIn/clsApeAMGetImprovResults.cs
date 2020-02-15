@@ -144,7 +144,7 @@ namespace AnalysisManager_Ape_PlugIn
             var jobList = string.Empty;
             var jobCount = 0;
 
-            var dbTools = DbToolsFactory.GetDBTools(connectionString);
+            var dbTools = DbToolsFactory.GetDBTools(connectionString, debugMode: mMgrParams.TraceMode);
             RegisterEvents(dbTools);
 
             // Get the matching jobs from the Data Package

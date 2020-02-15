@@ -330,7 +330,7 @@ namespace AnalysisManagerSMAQCPlugIn
 
             instrumentID = 0;
 
-            var dbTools = DbToolsFactory.GetDBTools(connectionString);
+            var dbTools = DbToolsFactory.GetDBTools(connectionString, debugMode: TraceMode);
             RegisterEvents(dbTools);
 
             if (dbTools.GetQueryScalar(sqlStr, out var objResult, retryCount, 5))
