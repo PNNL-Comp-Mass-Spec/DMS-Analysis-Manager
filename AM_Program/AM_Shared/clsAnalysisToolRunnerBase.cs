@@ -14,6 +14,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
+using PRISMDatabaseUtils;
 
 // ReSharper disable UnusedMember.Global
 namespace AnalysisManagerBase
@@ -1743,7 +1744,10 @@ namespace AnalysisManagerBase
                 "WHERE ManagerName = '" + managerName + "' AND " + " ParameterName IN ('DebugLevel', 'MgrSettingGroupName')";
 
             var callingFunctions = clsGlobal.AppendToComment(callingFunction, "GetManagerDebugLevel");
-            var success = clsGlobal.GetQueryResults(sqlQuery, connectionString, out var mgrParamsFromDb, callingFunction: callingFunctions);
+
+            var dbTools = DbToolsFactory.GetDBTools(connectionString, debugMode: false);
+
+            var success = dbTools.GetQueryResults(sqlQuery, out var mgrParamsFromDb, callingFunction: callingFunctions);
 
             if (!success || mgrParamsFromDb.Count <= 0)
                 return currentDebugLevel;
@@ -2277,7 +2281,7 @@ namespace AnalysisManagerBase
         {
 
             // Gigasax.DMS_Pipeline
-            var connectionString = mMgrParams.GetParam("BrokerConnectionString");
+            var brokerDbConnectionString = mMgrParams.GetParam("BrokerConnectionString");
 
             var dataPackageID = mJobParams.GetJobParameter("DataPackageID", -1);
 
@@ -2287,7 +2291,10 @@ namespace AnalysisManagerBase
                 return false;
             }
 
-            return clsDataPackageInfoLoader.LoadDataPackageDatasetInfo(connectionString, dataPackageID, out dctDataPackageDatasets);
+            var dbTools = DbToolsFactory.GetDBTools(brokerDbConnectionString, debugMode: TraceMode);
+            RegisterEvents(dbTools);
+
+            return clsDataPackageInfoLoader.LoadDataPackageDatasetInfo(dbTools, dataPackageID, out dctDataPackageDatasets);
         }
 
         /// <summary>
@@ -2303,7 +2310,7 @@ namespace AnalysisManagerBase
         {
 
             // Gigasax.DMS_Pipeline
-            var connectionString = mMgrParams.GetParam("BrokerConnectionString");
+            var brokerDbConnectionString = mMgrParams.GetParam("BrokerConnectionString");
 
             var dataPackageID = mJobParams.GetJobParameter("DataPackageID", -1);
 
@@ -2314,8 +2321,10 @@ namespace AnalysisManagerBase
                 return new List<clsDataPackageJobInfo>();
             }
 
-            return clsDataPackageInfoLoader.RetrieveDataPackagePeptideHitJobInfo(
-                connectionString, dataPackageID, out additionalJobs, out errorMsg);
+            var dbTools = DbToolsFactory.GetDBTools(brokerDbConnectionString, debugMode: TraceMode);
+            RegisterEvents(dbTools);
+
+            return clsDataPackageInfoLoader.RetrieveDataPackagePeptideHitJobInfo(dbTools, dataPackageID, out additionalJobs, out errorMsg);
         }
 
         /// <summary>

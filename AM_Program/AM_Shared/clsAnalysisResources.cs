@@ -1451,7 +1451,7 @@ namespace AnalysisManagerBase
                 // and that DMS knows about them
                 mSplitFastaFileUtility = new clsSplitFastaFileUtilities(
                     dmsConnectionString, proteinSeqsDBConnectionString,
-                    numberOfClonedSteps, mMgrName, mFileCopyUtilities);
+                    numberOfClonedSteps, mMgrName, TraceMode, mFileCopyUtilities);
 
                 RegisterEvents(mSplitFastaFileUtility);
 
@@ -1856,9 +1856,8 @@ namespace AnalysisManagerBase
             sqlStr.Append("From V_DMS_Data_Packages ");
             sqlStr.Append("Where ID = " + dataPackageID);
 
-
-            // Get a table to hold the results of the query
-            var success = clsGlobal.GetDataTableByQuery(sqlStr.ToString(), connectionString, RETRY_COUNT, out var resultSet);
+            var dbTools = DbToolsFactory.GetDBTools(connectionString, debugMode: false);
+            var success = dbTools.GetQueryResultsDataTable(sqlStr.ToString(), out var resultSet, RETRY_COUNT);
 
             if (!success)
             {
@@ -2951,7 +2950,10 @@ namespace AnalysisManagerBase
                 return false;
             }
 
-            return clsDataPackageInfoLoader.LoadDataPackageDatasetInfo(connectionString, dataPackageID, out dctDataPackageDatasets);
+            var dbTools = DbToolsFactory.GetDBTools(connectionString, debugMode: TraceMode);
+            RegisterEvents(dbTools);
+
+            return clsDataPackageInfoLoader.LoadDataPackageDatasetInfo(dbTools, dataPackageID, out dctDataPackageDatasets);
         }
 
         /// <summary>
@@ -2977,7 +2979,10 @@ namespace AnalysisManagerBase
                 return false;
             }
 
-            return clsDataPackageInfoLoader.LoadDataPackageJobInfo(connectionString, dataPackageID, out dctDataPackageJobs);
+            var dbTools = DbToolsFactory.GetDBTools(connectionString, debugMode: TraceMode);
+            RegisterEvents(dbTools);
+
+            return clsDataPackageInfoLoader.LoadDataPackageJobInfo(dbTools, dataPackageID, out dctDataPackageJobs);
         }
 
         /// <summary>
@@ -3034,8 +3039,10 @@ namespace AnalysisManagerBase
             // Gigasax.DMS5
             var dmsConnectionString = mMgrParams.GetParam("ConnectionString");
 
-            // Get a table to hold the results of the query
-            var success = clsGlobal.GetDataTableByQuery(sqlStr.ToString(), dmsConnectionString, RETRY_COUNT, out var resultSet);
+            var dbTools = DbToolsFactory.GetDBTools(dmsConnectionString, debugMode: TraceMode);
+            RegisterEvents(dbTools);
+
+            var success = dbTools.GetQueryResultsDataTable(sqlStr.ToString(), out var resultSet, RETRY_COUNT);
 
             if (!success)
             {
@@ -3106,7 +3113,10 @@ namespace AnalysisManagerBase
 
                 // Results, as a list of columns (first row only if multiple rows)
 
-                var success = clsGlobal.GetQueryResultsTopRow(sqlQuery, dmsConnectionString, out var legacyDbSize, callingFunction: "LookupLegacyDBSizeWithIndices");
+                var dbTools = DbToolsFactory.GetDBTools(dmsConnectionString, debugMode: TraceMode);
+                RegisterEvents(dbTools);
+
+                var success = clsGlobal.GetQueryResultsTopRow(dbTools, sqlQuery, out var legacyDbSize);
 
                 if (!success || legacyDbSize == null || legacyDbSize.Count == 0)
                 {
@@ -4362,11 +4372,14 @@ namespace AnalysisManagerBase
         {
 
             // Gigasax.DMS_Pipeline
-            var connectionString = mMgrParams.GetParam("BrokerConnectionString");
+            var brokerDbConnectionString = mMgrParams.GetParam("BrokerConnectionString");
 
             var dataPackageID = mJobParams.GetJobParameter("DataPackageID", -1);
 
-            var dataPackageFileHandler = new clsDataPackageFileHandler(connectionString, dataPackageID, this);
+            var dbTools = DbToolsFactory.GetDBTools(brokerDbConnectionString, debugMode: TraceMode);
+            RegisterEvents(dbTools);
+
+            var dataPackageFileHandler = new clsDataPackageFileHandler(dbTools, dataPackageID, this);
             RegisterEvents(dataPackageFileHandler);
 
             var success = dataPackageFileHandler.RetrieveDataPackagePeptideHitJobPHRPFiles(

@@ -48,6 +48,8 @@ namespace AnalysisManagerBase
 
         private clsFastaFileSplitter mSplitter;
 
+        private readonly bool mTraceMode;
+
         /// <summary>
         /// Most recent error message
         /// </summary>
@@ -70,6 +72,7 @@ namespace AnalysisManagerBase
         /// <param name="proteinSeqsDBConnectionString"></param>
         /// <param name="numSplitParts"></param>
         /// <param name="managerName"></param>
+        /// <param name="traceMode"></param>
         /// <param name="fileCopyUtils"></param>
         /// <remarks></remarks>
         public clsSplitFastaFileUtilities(
@@ -77,12 +80,14 @@ namespace AnalysisManagerBase
             string proteinSeqsDBConnectionString,
             int numSplitParts,
             string managerName,
+            bool traceMode,
             clsFileCopyUtilities fileCopyUtils)
         {
             mDMSConnectionString = dmsConnectionString;
             mProteinSeqsDBConnectionString = proteinSeqsDBConnectionString;
             mNumSplitParts = numSplitParts;
             mManagerName = managerName;
+            mTraceMode = traceMode;
 
             MSGFPlusIndexFilesFolderPathLegacyDB = @"\\Proto-7\MSGFPlus_Index_Files\Other";
 
@@ -260,7 +265,10 @@ namespace AnalysisManagerBase
             sqlQuery.Append(" FROM V_Legacy_Static_File_Locations");
             sqlQuery.Append(" WHERE FileName = '" + legacyFASTAFileName + "'");
 
-            var success = clsGlobal.GetDataTableByQuery(sqlQuery.ToString(), mProteinSeqsDBConnectionString, retryCount, out var legacyStaticFiles, timeoutSeconds);
+            var dbTools = DbToolsFactory.GetDBTools(mProteinSeqsDBConnectionString, timeoutSeconds, debugMode: mTraceMode);
+            RegisterEvents(dbTools);
+
+            var success = dbTools.GetQueryResultsDataTable(sqlQuery.ToString(), out var legacyStaticFiles, retryCount);
 
             if (!success)
             {
@@ -308,7 +316,7 @@ namespace AnalysisManagerBase
                     var splitFastaFileInfo = new FileInfo(currentSplitFasta.FilePath);
                     splitFastaName = splitFastaFileInfo.Name;
 
-                    var dbTools = DbToolsFactory.GetDBTools(mDMSConnectionString);
+                    var dbTools = DbToolsFactory.GetDBTools(mDMSConnectionString, debugMode: mTraceMode);
                     RegisterEvents(dbTools);
 
                     // Setup for execution of the stored procedure
@@ -377,7 +385,7 @@ namespace AnalysisManagerBase
 
             try
             {
-                var dbTools = DbToolsFactory.GetDBTools(mProteinSeqsDBConnectionString);
+                var dbTools = DbToolsFactory.GetDBTools(mProteinSeqsDBConnectionString, debugMode: mTraceMode);
                 RegisterEvents(dbTools);
 
                 // Setup for execution of the stored procedure

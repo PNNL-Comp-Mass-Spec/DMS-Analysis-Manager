@@ -3115,8 +3115,11 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 const int retryCount = 2;
 
+                var dbTools = DbToolsFactory.GetDBTools(connectionString, debugMode: mMgrParams.TraceMode);
+                RegisterEvents(dbTools);
+
                 // Get a table to hold the results of the query
-                var success = clsGlobal.GetDataTableByQuery(sqlStr.ToString(), connectionString, retryCount, out var dtResults);
+                var success = dbTools.GetQueryResultsDataTable(sqlStr.ToString(), out var dtResults, retryCount);
 
                 if (!success)
                 {

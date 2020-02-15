@@ -16,7 +16,6 @@ using System.Text;
 using System.Text.RegularExpressions;
 using Cyclops;
 using PRISMDatabaseUtils;
-using FileInfo = System.IO.FileInfo;
 
 namespace AnalysisManagerProg
 {
@@ -436,8 +435,10 @@ namespace AnalysisManagerProg
             const string connectionString = "Data Source=gigasax;Initial Catalog=DMS5;Integrated Security=SSPI;";
             const short RetryCount = 2;
 
+            var dbTools = DbToolsFactory.GetDBTools(connectionString, debugMode: true);
+            RegisterEvents(dbTools);
 
-            var success = clsGlobal.GetDataTableByQuery(sql, connectionString, RetryCount, out var Dt);
+            var success = dbTools.GetQueryResultsDataTable(sql, out var Dt, RetryCount);
 
             if (!success)
             {
@@ -1252,7 +1253,10 @@ namespace AnalysisManagerProg
             const short retryCount = 2;
             const int timeoutSeconds = 30;
 
-            clsGlobal.GetDataTableByQuery(sqlStr, connectionString, retryCount, out var results, timeoutSeconds);
+            var dbTools = DbToolsFactory.GetDBTools(connectionString, timeoutSeconds, true);
+            RegisterEvents(dbTools);
+
+            dbTools.GetQueryResultsDataTable(sqlStr, out var results, retryCount);
 
             Console.WriteLine("{0,-10} {1,-21} {2,-20} {3}", "Entry_ID", "Date", "Posted_By", "Message");
             foreach (DataRow row in results.Rows)

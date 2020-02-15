@@ -186,11 +186,17 @@ namespace AnalysisManagerBase
 
             mDebugLevel = debugLvl;
 
-            DMSProcedureExecutor = DbToolsFactory.GetDBTools(mConnStr);
-            PipelineDBProcedureExecutor = DbToolsFactory.GetDBTools(mBrokerConnStr);
+            DMSProcedureExecutor = DbToolsFactory.GetDBTools(mConnStr, debugMode: mMgrParams.TraceMode);
+            PipelineDBProcedureExecutor = DbToolsFactory.GetDBTools(mBrokerConnStr, debugMode: mMgrParams.TraceMode);
 
             DMSProcedureExecutor.DebugEvent += ProcedureExecutor_DebugEvent;
             PipelineDBProcedureExecutor.DebugEvent += ProcedureExecutor_DebugEvent;
+
+            DMSProcedureExecutor.StatusEvent += ProcedureExecutor_StatusEvent;
+            PipelineDBProcedureExecutor.StatusEvent += ProcedureExecutor_StatusEvent;
+
+            DMSProcedureExecutor.WarningEvent += ProcedureExecutor_WarningEvent;
+            PipelineDBProcedureExecutor.WarningEvent += ProcedureExecutor_WarningEvent;
 
             DMSProcedureExecutor.ErrorEvent += ProcedureExecutor_DBErrorEvent;
             PipelineDBProcedureExecutor.ErrorEvent += ProcedureExecutor_DBErrorEvent;
@@ -314,6 +320,16 @@ namespace AnalysisManagerBase
         private void ProcedureExecutor_DebugEvent(string message)
         {
             LogDebug(message, (int)BaseLogger.LogLevels.DEBUG);
+        }
+
+        private void ProcedureExecutor_StatusEvent(string message)
+        {
+            LogDebug(message, (int)BaseLogger.LogLevels.INFO);
+        }
+
+        private void ProcedureExecutor_WarningEvent(string message)
+        {
+            LogDebug(message, (int)BaseLogger.LogLevels.WARN);
         }
 
         private void ProcedureExecutor_DBErrorEvent(string message, Exception ex)

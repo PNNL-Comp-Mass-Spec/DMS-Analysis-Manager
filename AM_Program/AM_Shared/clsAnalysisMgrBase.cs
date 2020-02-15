@@ -50,7 +50,7 @@ namespace AnalysisManagerBase
         /// <remarks>
         /// This property is updated when the Setup method is called in clsAnalysisResources or clsAnalysisToolRunnerBase
         /// </remarks>
-        protected bool TraceMode { get; set; }
+        public bool TraceMode { get; protected set; }
 
         #endregion
 

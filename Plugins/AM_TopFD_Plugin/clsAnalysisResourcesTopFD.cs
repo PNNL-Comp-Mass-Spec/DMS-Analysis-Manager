@@ -10,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
+using PRISMDatabaseUtils;
 
 namespace AnalysisManagerTopFDPlugIn
 {
@@ -180,12 +181,13 @@ namespace AnalysisManagerTopFDPlugIn
                                     "      State = 5 " +
                                     "ORDER BY Job Desc";
 
-                var success1 = clsGlobal.GetQueryResults(
-                    jobStepsQuery,
-                    brokerDbConnectionString,
-                    out var jobStepsResults);
 
-                if (!success1 || jobStepsResults.Count <= 0)
+                var dbToolsDMSPipeline = DbToolsFactory.GetDBTools(brokerDbConnectionString, debugMode: mMgrParams.TraceMode);
+                RegisterEvents(dbToolsDMSPipeline);
+
+                var successForJobs = dbToolsDMSPipeline.GetQueryResults(jobStepsQuery, out var jobStepsResults);
+
+                if (!successForJobs || jobStepsResults.Count <= 0)
                     return false;
 
                 var jobCandidates = new Dictionary<int, TopFDJobInfoType>();
@@ -259,12 +261,12 @@ namespace AnalysisManagerTopFDPlugIn
                                         "WHERE Job in (" + jobList + ") " +
                                         "ORDER BY Job Desc";
 
-                var success2 = clsGlobal.GetQueryResults(
-                    settingsFileQuery,
-                    dmsConnectionString,
-                    out var settingsFileResults);
+                var dbToolsDMS = DbToolsFactory.GetDBTools(dmsConnectionString, debugMode: mMgrParams.TraceMode);
+                RegisterEvents(dbToolsDMS);
 
-                if (!success2 || settingsFileResults.Count <= 0)
+                var successForSettingsFiles = dbToolsDMS.GetQueryResults(settingsFileQuery, out var settingsFileResults);
+
+                if (!successForSettingsFiles || settingsFileResults.Count <= 0)
                     return false;
 
                 foreach (var result in settingsFileResults)

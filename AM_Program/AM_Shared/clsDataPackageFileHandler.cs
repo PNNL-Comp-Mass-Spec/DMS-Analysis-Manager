@@ -108,9 +108,9 @@ namespace AnalysisManagerBase
         private readonly clsAnalysisResources mAnalysisResources;
 
         /// <summary>
-        /// Typically Gigasax.DMS_Pipeline
+        /// Instance of IDBTools
         /// </summary>
-        private readonly string mBrokerDBConnectionString;
+        private readonly IDBTools mDbTools;
 
         private readonly clsDataPackageInfoLoader mDataPackageInfoLoader;
 
@@ -119,16 +119,16 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="brokerDbConnectionString">Gigasax.DMS_Pipeline</param>
+        /// <param name="dbTools">Instance of IDBTools</param>
         /// <param name="dataPackageID">Data package ID</param>
         /// <param name="resourcesClass">Resource class</param>
-        public clsDataPackageFileHandler(string brokerDbConnectionString, int dataPackageID, clsAnalysisResources resourcesClass)
+        public clsDataPackageFileHandler(IDBTools dbTools, int dataPackageID, clsAnalysisResources resourcesClass)
         {
             mAnalysisResources = resourcesClass;
 
-            mDataPackageInfoLoader = new clsDataPackageInfoLoader(brokerDbConnectionString, dataPackageID);
+            mDataPackageInfoLoader = new clsDataPackageInfoLoader(dbTools, dataPackageID);
 
-            mBrokerDBConnectionString = brokerDbConnectionString;
+            mDbTools = dbTools;
         }
 
         /// <summary>
@@ -151,31 +151,29 @@ namespace AnalysisManagerBase
 
             try
             {
-                var dbTools = DbToolsFactory.GetDBTools(mBrokerDBConnectionString);
-                RegisterEvents(dbTools);
 
                 // Set up the command object prior to SP execution
-                var cmd = dbTools.CreateCommand(SP_NAME_GET_JOB_STEP_INPUT_FOLDER, CommandType.StoredProcedure);
+                var cmd = mDbTools.CreateCommand(SP_NAME_GET_JOB_STEP_INPUT_FOLDER, CommandType.StoredProcedure);
 
-                dbTools.AddParameter(cmd, "@job", SqlType.Int).Value = job;
+                mDbTools.AddParameter(cmd, "@job", SqlType.Int).Value = job;
 
-                var stepToolFilterParam = dbTools.AddParameter(cmd, "@stepToolFilter", SqlType.VarChar, 8000, stepToolFilter);
+                var stepToolFilterParam = mDbTools.AddParameter(cmd, "@stepToolFilter", SqlType.VarChar, 8000, stepToolFilter);
 
-                var inputFolderParam = dbTools.AddParameter(cmd, "@inputFolderName", SqlType.VarChar, 128, ParameterDirection.Output);
-                var stepToolMatchParam =dbTools.AddParameter(cmd, "@stepToolMatch", SqlType.VarChar, 64, ParameterDirection.Output);
+                var inputFolderParam = mDbTools.AddParameter(cmd, "@inputFolderName", SqlType.VarChar, 128, ParameterDirection.Output);
+                var stepToolMatchParam =mDbTools.AddParameter(cmd, "@stepToolMatch", SqlType.VarChar, 64, ParameterDirection.Output);
 
                 var matchFound = false;
                 var inputDirectoryName = string.Empty;
                 var stepToolMatch = string.Empty;
 
-                dbTools.DebugEvent += OnDebugEvent;
-                dbTools.ErrorEvent += ProcedureExecutor_DBErrorEvent;
-                dbTools.WarningEvent += OnWarningEvent;
+                mDbTools.DebugEvent += OnDebugEvent;
+                mDbTools.ErrorEvent += ProcedureExecutor_DBErrorEvent;
+                mDbTools.WarningEvent += OnWarningEvent;
 
                 while (!matchFound)
                 {
                     // Execute the SP
-                    dbTools.ExecuteSP(cmd, 1);
+                    mDbTools.ExecuteSP(cmd, 1);
 
                     inputDirectoryName = Convert.ToString(inputFolderParam.Value);
                     stepToolMatch = Convert.ToString(stepToolMatchParam.Value);

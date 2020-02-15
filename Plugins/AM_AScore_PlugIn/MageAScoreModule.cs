@@ -480,19 +480,21 @@ namespace AnalysisManager_AScore_PlugIn
             {
                 var sqlWhere = "WHERE Job = " + jobNumber + " AND Tool LIKE '%" + toolName + "%' AND (ISNULL(Input_Folder, '') <> '')";
 
-                var sqlQuery = "";
-                sqlQuery += " SELECT Input_Folder, 1 AS Preference, GetDate() AS Saved FROM DMS_Pipeline.dbo.V_Job_Steps " + sqlWhere;
-                sqlQuery += " UNION ";
-                sqlQuery += " SELECT Input_Folder, 2 AS Preference, Saved FROM DMS_Pipeline.dbo.V_Job_Steps_History " + sqlWhere;
-                sqlQuery += " ORDER BY Preference, saved";
+                var sqlQuery =
+                    " SELECT Input_Folder, 1 AS Preference, GetDate() AS Saved FROM DMS_Pipeline.dbo.V_Job_Steps " + sqlWhere +
+                    " UNION " +
+                    " SELECT Input_Folder, 2 AS Preference, Saved FROM DMS_Pipeline.dbo.V_Job_Steps_History " + sqlWhere +
+                    " ORDER BY Preference, saved";
 
-                var success = clsGlobal.GetQueryResultsTopRow(sqlQuery, connectionString, out var firstSharedResultsDirectory);
+                var dbTools = DbToolsFactory.GetDBTools(connectionString, debugMode: TraceMode);
+                RegisterEvents(dbTools);
+
+                var success = clsGlobal.GetQueryResultsTopRow(dbTools, sqlQuery, out var firstSharedResultsDirectory);
 
                 if (!success || firstSharedResultsDirectory.Count == 0)
                 {
                     LogTools.LogError("Cannot determine shared results directory; match not found for job " + jobNumber + " and tool " + toolName + " in V_Job_Steps or V_Job_Steps_History");
                     return string.Empty;
-
                 }
 
                 // Return the first column (the Input_Folder name)

@@ -11,6 +11,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using PRISMDatabaseUtils;
 
 namespace AnalysisManagerMSPathFinderPlugin
 {
@@ -192,7 +193,12 @@ namespace AnalysisManagerMSPathFinderPlugin
                               " WHERE Job = " + mJob + " AND Step_Number < " + stepNum + " AND Input_Folder_Name LIKE '" + PBF_GEN_FOLDER_PREFIX + "%'" +
                               " ORDER by Step_Number DESC";
 
-                    if (!clsGlobal.GetQueryResultsTopRow(sql, dmsConnectionString, out var inputFolderNameFromDB))
+                    var dbTools = DbToolsFactory.GetDBTools(dmsConnectionString, debugMode: TraceMode);
+                    RegisterEvents(dbTools);
+
+                    var success = clsGlobal.GetQueryResultsTopRow(dbTools, sql, out var inputFolderNameFromDB);
+
+                    if (!success)
                     {
                         mMessage = "Error looking up the correct PBF_Gen folder name in T_Job_Steps";
                         return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;

@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using PRISMDatabaseUtils;
 
 namespace AnalysisManager_RepoPkgr_Plugin
 {
@@ -48,13 +49,16 @@ namespace AnalysisManager_RepoPkgr_Plugin
             var localOrgDBDirectory = mMgrParams.GetParam("OrgDbDir");
 
             // Gigasax.DMS_Pipeline
-            var connectionString = mMgrParams.GetParam("BrokerConnectionString");
+            var brokerDbConnectionString = mMgrParams.GetParam("BrokerConnectionString");
 
             var dataPkgId = mJobParams.GetJobParameter("DataPackageID", -1);
 
             // additionalJobs tracks non Peptide-hit jobs (e.g. DeconTools or MASIC jobs)
 
-            var dataPackageInfoLoader = new clsDataPackageInfoLoader(connectionString, dataPkgId);
+            var dbTools = DbToolsFactory.GetDBTools(brokerDbConnectionString, debugMode: TraceMode);
+            RegisterEvents(dbTools);
+
+            var dataPackageInfoLoader = new clsDataPackageInfoLoader(dbTools, dataPkgId);
 
             var dataPackagePeptideHitJobs = dataPackageInfoLoader.RetrieveDataPackagePeptideHitJobInfo(out var additionalJobs);
             var success = RetrieveFastaFiles(localOrgDBDirectory, dataPackagePeptideHitJobs);
@@ -265,14 +269,16 @@ namespace AnalysisManager_RepoPkgr_Plugin
                 RetrieveMzXMLFile = true
             };
 
-            var dataPackageFileHandler = new clsDataPackageFileHandler(dataPackageInfoLoader.ConnectionString, dataPackageInfoLoader.DataPackageID, this);
+            var dataPackageFileHandler = new clsDataPackageFileHandler(
+                dataPackageInfoLoader.DBTools,
+                dataPackageInfoLoader.DataPackageID,
+                this);
 
             var success = dataPackageFileHandler.RetrieveDataPackageMzXMLFiles(dctInstrumentDataToRetrieve, udtOptions);
 
             return success;
 
         }
-
 
         /// <summary>
         /// Find datasets that do not have a .mzXML file

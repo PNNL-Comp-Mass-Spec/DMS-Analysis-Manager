@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using PRISMDatabaseUtils;
 
 namespace AnalysisManagerIDPickerPlugIn
 {
@@ -176,7 +177,10 @@ namespace AnalysisManagerIDPickerPlugIn
 
             var sqlQuery = "SELECT OrganismDBName FROM V_Analysis_Job WHERE (Job = " + mJob + ")";
 
-            var success = clsGlobal.GetQueryResultsTopRow(sqlQuery, dmsConnectionString, out var orgDbNameForJob);
+            var dbTools = DbToolsFactory.GetDBTools(dmsConnectionString, debugMode: TraceMode);
+            RegisterEvents(dbTools);
+
+            var success = clsGlobal.GetQueryResultsTopRow(dbTools, sqlQuery, out var orgDbNameForJob);
 
             if (!success || orgDbNameForJob == null || orgDbNameForJob.Count == 0)
             {

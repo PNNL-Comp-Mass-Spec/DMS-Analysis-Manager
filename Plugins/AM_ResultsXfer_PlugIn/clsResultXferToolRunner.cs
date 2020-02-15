@@ -175,7 +175,6 @@ namespace AnalysisManagerResultsXferPlugin
 
         private string LookupLocalPath(string serverName, string uncFolderPath, string folderFunction, string connectionString)
         {
-            const short retryCount = 3;
             string strMsg;
 
             if (!uncFolderPath.StartsWith(@"\\"))
@@ -217,10 +216,13 @@ namespace AnalysisManagerResultsXferPlugin
             sbSql.Append("        [Path] = '" + uncFolderPath + "\\')");
             sbSql.Append(" ORDER BY CASE WHEN [Function] = '" + folderFunction + "' THEN 1 ELSE 2 END, ID DESC");
 
-            // Get a table to hold the results of the query
-            var blnSuccess = clsGlobal.GetDataTableByQuery(sbSql.ToString(), connectionString, retryCount, out var dt);
+            var dbTools = DbToolsFactory.GetDBTools(connectionString, debugMode: mMgrParams.TraceMode);
+            RegisterEvents(dbTools);
 
-            if (!blnSuccess)
+            // Get a table to hold the results of the query
+            var success = dbTools.GetQueryResultsDataTable(sbSql.ToString(), out var dt);
+
+            if (!success)
             {
                 strMsg = "LookupLocalPath; Excessive failures attempting to retrieve folder info from database";
                 LogError(strMsg);

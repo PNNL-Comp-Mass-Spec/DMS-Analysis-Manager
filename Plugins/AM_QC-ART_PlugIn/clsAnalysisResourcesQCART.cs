@@ -863,10 +863,13 @@ namespace AnalysisManagerQCARTPlugin
                 sqlStr.AppendLine(")");
 
                 // Gigasax.DMS5
-                var dmsConnectionString = mMgrParams.GetParam("connectionstring");
+                var dmsConnectionString = mMgrParams.GetParam("ConnectionString");
+
+                var dbTools = DbToolsFactory.GetDBTools(dmsConnectionString, debugMode: mMgrParams.TraceMode);
+                RegisterEvents(dbTools);
 
                 // Get a table to hold the results of the query
-                var success = clsGlobal.GetDataTableByQuery(sqlStr.ToString(), dmsConnectionString, RETRY_COUNT, out var resultSet);
+                var success = dbTools.GetQueryResultsDataTable(sqlStr.ToString(), out var resultSet);
 
                 string errorMessage;
 

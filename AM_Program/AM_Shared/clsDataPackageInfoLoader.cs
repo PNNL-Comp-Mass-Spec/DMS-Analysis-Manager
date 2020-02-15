@@ -11,16 +11,16 @@ namespace AnalysisManagerBase
     /// <summary>
     /// Data package info loader
     /// </summary>
-    public class clsDataPackageInfoLoader : clsLoggerBase
+    public sealed class clsDataPackageInfoLoader : clsLoggerBase
     {
 
         private static DateTime mLastJobParameterFromHistoryLookup = DateTime.UtcNow;
 
         /// <summary>
-        /// Database connection string
+        /// Instance of IDBTools
         /// </summary>
         /// <remarks>Typically Gigasax.DMS_Pipeline</remarks>
-        public string ConnectionString { get; }
+        public IDBTools DBTools { get; }
 
         /// <summary>
         /// Data package ID
@@ -30,11 +30,11 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="brokerDbConnectionString"></param>
+        /// <param name="dbTools"></param>
         /// <param name="dataPackageID"></param>
-        public clsDataPackageInfoLoader(string brokerDbConnectionString, int dataPackageID)
+        public clsDataPackageInfoLoader(IDBTools dbTools, int dataPackageID)
         {
-            ConnectionString = brokerDbConnectionString;
+            DBTools = dbTools;
             DataPackageID = dataPackageID;
         }
 
@@ -52,25 +52,22 @@ namespace AnalysisManagerBase
                 return false;
             }
 
-            return LoadDataPackageDatasetInfo(ConnectionString, DataPackageID, out dctDataPackageDatasets);
+            return LoadDataPackageDatasetInfo(DBTools, DataPackageID, out dctDataPackageDatasets);
         }
 
         /// <summary>
         /// Looks up dataset information for a data package
         /// </summary>
-        /// <param name="connectionString">Database connection string (DMS_Pipeline DB, aka the broker DB)</param>
+        /// <param name="dbTools">Instance of IDbTools</param>
         /// <param name="dataPackageID">Data Package ID</param>
         /// <param name="dctDataPackageDatasets">Datasets associated with the given data package</param>
         /// <returns>True if a data package is defined and it has datasets associated with it</returns>
         /// <remarks></remarks>
         public static bool LoadDataPackageDatasetInfo(
-            string connectionString,
+            IDBTools dbTools,
             int dataPackageID,
             out Dictionary<int, clsDataPackageDatasetInfo> dctDataPackageDatasets)
         {
-
-            // Obtains the dataset information for a data package
-            const short RETRY_COUNT = 3;
 
             dctDataPackageDatasets = new Dictionary<int, clsDataPackageDatasetInfo>();
 
@@ -87,9 +84,8 @@ namespace AnalysisManagerBase
             sqlStr.Append(" WHERE Data_Package_ID = " + dataPackageID);
             sqlStr.Append(" ORDER BY Dataset");
 
-
             // Get a table to hold the results of the query
-            var success = clsGlobal.GetDataTableByQuery(sqlStr.ToString(), connectionString, RETRY_COUNT, out var resultSet);
+            var success = dbTools.GetQueryResultsDataTable(sqlStr.ToString(), out var resultSet);
 
             if (!success)
             {
@@ -126,7 +122,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Looks up job information for the given data package
         /// </summary>
-        /// <param name="connectionString">Database connection string (DMS_Pipeline DB, aka the broker DB)</param>
+        /// <param name="dbTools">Instance of IDbTools</param>
         /// <param name="dataPackageID">Data Package ID</param>
         /// <param name="dctDataPackageJobs">Jobs associated with the given data package</param>
         /// <returns>True if a data package is defined and it has analysis jobs associated with it</returns>
@@ -135,13 +131,10 @@ namespace AnalysisManagerBase
         /// In contrast, RetrieveDataPackagePeptideHitJobInfo does update NumberOfClonedSteps
         /// </remarks>
         public static bool LoadDataPackageJobInfo(
-            string connectionString,
+            IDBTools dbTools,
             int dataPackageID,
             out Dictionary<int, clsDataPackageJobInfo> dctDataPackageJobs)
         {
-
-            // Obtains the job information for a data package
-            const short RETRY_COUNT = 3;
 
             dctDataPackageJobs = new Dictionary<int, clsDataPackageJobInfo>();
 
@@ -164,20 +157,19 @@ namespace AnalysisManagerBase
             sqlStr.Append(" WHERE Data_Package_ID = " + dataPackageID);
             sqlStr.Append(" ORDER BY Dataset, Tool, Job, Step");
 
-
             // Get a table to hold the results of the query
-            var success = clsGlobal.GetDataTableByQuery(sqlStr.ToString(), connectionString, RETRY_COUNT, out var resultSet);
+            var successForJobs = dbTools.GetQueryResultsDataTable(sqlStr.ToString(), out var dataPackageJobs);
 
-            if (!success)
+            if (!successForJobs)
             {
                 var errorMessage = "LoadDataPackageJobInfo; Excessive failures attempting to retrieve data package job info from database";
                 LogTools.LogError(errorMessage);
-                resultSet.Dispose();
+                dataPackageJobs.Dispose();
                 return false;
             }
 
             // Verify at least one row returned
-            if (resultSet.Rows.Count < 1)
+            if (dataPackageJobs.Rows.Count < 1)
             {
                 // No data was returned
                 string warningMessage;
@@ -191,10 +183,11 @@ namespace AnalysisManagerBase
                 sqlStr.Append(" WHERE Data_Package_ID = " + dataPackageID);
 
                 // Get a table to hold the results of the query
-                success = clsGlobal.GetDataTableByQuery(sqlStr.ToString(), connectionString, RETRY_COUNT, out resultSet);
-                if (success && resultSet.Rows.Count > 0)
+                var successForDatasets = dbTools.GetQueryResultsDataTable(sqlStr.ToString(), out var dataPackageDatasets);
+
+                if (successForDatasets && dataPackageDatasets.Rows.Count > 0)
                 {
-                    foreach (DataRow curRow in resultSet.Rows)
+                    foreach (DataRow curRow in dataPackageDatasets.Rows)
                     {
                         var datasetCount = curRow[0].CastDBVal<int>();
 
@@ -218,7 +211,7 @@ namespace AnalysisManagerBase
                 return false;
             }
 
-            foreach (DataRow curRow in resultSet.Rows)
+            foreach (DataRow curRow in dataPackageJobs.Rows)
             {
                 var dataPkgJob = ParseDataPackageJobInfoRow(curRow);
 
@@ -240,7 +233,7 @@ namespace AnalysisManagerBase
                 }
             }
 
-            resultSet.Dispose();
+            dataPackageJobs.Dispose();
 
             return true;
 
@@ -268,7 +261,6 @@ namespace AnalysisManagerBase
             out Dictionary<string, string> jobParameters,
             out string errorMsg)
         {
-            const int RETRY_COUNT = 3;
 
             jobParameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             errorMsg = string.Empty;
@@ -289,7 +281,7 @@ namespace AnalysisManagerBase
                 dbTools.AddParameter(cmd, "@stepNumber", SqlType.Int).Value = 1;
 
                 // Execute the SP
-                var returnCode = dbTools.ExecuteSPDataTable(cmd, out var resultSet, RETRY_COUNT, 5);
+                var returnCode = dbTools.ExecuteSPDataTable(cmd, out var resultSet);
                 var success = returnCode == 0;
 
                 if (!success)
@@ -313,6 +305,9 @@ namespace AnalysisManagerBase
                     // var section = curRow[0]?.CastDBVal<string>()
                     var parameter = curRow[1]?.CastDBVal<string>();
                     var value = curRow[2]?.CastDBVal<string>();
+
+                    if (string.IsNullOrWhiteSpace(parameter))
+                        continue;
 
                     if (jobParameters.ContainsKey(parameter))
                     {
@@ -437,10 +432,6 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public List<clsDataPackageJobInfo> RetrieveDataPackagePeptideHitJobInfo(out List<clsDataPackageJobInfo> additionalJobs)
         {
-
-            // Gigasax.DMS_Pipeline
-            var connectionString = ConnectionString;
-
             if (DataPackageID < 0)
             {
                 LogError("DataPackageID is not defined for this analysis job");
@@ -448,7 +439,7 @@ namespace AnalysisManagerBase
                 return new List<clsDataPackageJobInfo>();
             }
 
-            var dataPackagePeptideHitJobs = RetrieveDataPackagePeptideHitJobInfo(connectionString, DataPackageID, out additionalJobs, out var errorMsg);
+            var dataPackagePeptideHitJobs = RetrieveDataPackagePeptideHitJobInfo(DBTools, DataPackageID, out additionalJobs, out var errorMsg);
 
             if (!string.IsNullOrWhiteSpace(errorMsg))
             {
@@ -461,36 +452,35 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Lookup the Peptide Hit jobs associated with the data package
         /// </summary>
-        /// <param name="connectionString">Connection string to the DMS_Pipeline database</param>
+        /// <param name="dbTools">DMS_Pipeline database connection</param>
         /// <param name="dataPackageID">Data package ID</param>
         /// <param name="errorMsg">Output: error message</param>
         /// <returns>Peptide Hit Jobs (e.g. MS-GF+ or Sequest)</returns>
         /// <remarks>Alternatively use the overloaded version that includes additionalJobs</remarks>
         // ReSharper disable once UnusedMember.Global
         public static List<clsDataPackageJobInfo> RetrieveDataPackagePeptideHitJobInfo(
-            string connectionString,
+            IDBTools dbTools,
             int dataPackageID,
             out string errorMsg)
         {
-            return RetrieveDataPackagePeptideHitJobInfo(connectionString, dataPackageID, out _, out errorMsg);
+            return RetrieveDataPackagePeptideHitJobInfo(dbTools, dataPackageID, out _, out errorMsg);
         }
 
         /// <summary>
         /// Lookup the Peptide Hit jobs associated with the data package; non-peptide hit jobs are returned via additionalJobs
         /// </summary>
-        /// <param name="connectionString">Connection string to the DMS_Pipeline database</param>
+        /// <param name="dbTools">DMS_Pipeline database connection</param>
         /// <param name="dataPackageID">Data package ID</param>
         /// <param name="additionalJobs">Output: Non Peptide Hit jobs (e.g. DeconTools or MASIC)</param>
         /// <param name="errorMsg">Output: error message</param>
         /// <returns>Peptide Hit Jobs (e.g. MS-GF+ or Sequest)</returns>
         /// <remarks>This method updates property NumberOfClonedSteps for the analysis jobs</remarks>
         public static List<clsDataPackageJobInfo> RetrieveDataPackagePeptideHitJobInfo(
-            string connectionString,
+            IDBTools dbTools,
             int dataPackageID,
             out List<clsDataPackageJobInfo> additionalJobs,
             out string errorMsg)
         {
-            const int TIMEOUT_SECONDS = 30;
 
             // This list tracks the info for the Peptide Hit jobs (e.g. MS-GF+ or Sequest) associated with the data package
             var dataPackagePeptideHitJobs = new List<clsDataPackageJobInfo>();
@@ -505,7 +495,7 @@ namespace AnalysisManagerBase
 
             try
             {
-                if (!LoadDataPackageJobInfo(connectionString, dataPackageID, out dctDataPackageJobs))
+                if (!LoadDataPackageJobInfo(dbTools, dataPackageID, out dctDataPackageJobs))
                 {
                     errorMsg = "Error looking up datasets and jobs using LoadDataPackageJobInfo";
                     return dataPackagePeptideHitJobs;
@@ -551,8 +541,6 @@ namespace AnalysisManagerBase
                     var lastStatusTime = DateTime.UtcNow;
                     var statusIntervalSeconds = 4;
                     var jobsProcessed = 0;
-
-                    var dbTools = DbToolsFactory.GetDBTools(connectionString, TIMEOUT_SECONDS);
 
                     foreach (var dataPkgJob in splitFastaJobs)
                     {

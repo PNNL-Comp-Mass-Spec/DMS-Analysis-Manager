@@ -1,6 +1,7 @@
 ﻿using AnalysisManagerBase;
 using System.Collections.Generic;
 using System.Linq;
+using PRISMDatabaseUtils;
 
 namespace AnalysisManager_Mage_PlugIn
 {
@@ -58,10 +59,13 @@ namespace AnalysisManager_Mage_PlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            var connectionString = mMgrParams.GetParam("brokerconnectionstring");
+            var connectionString = mMgrParams.GetParam("BrokerConnectionString");
+
+            var dbTools = DbToolsFactory.GetDBTools(connectionString, debugMode: mMgrParams.TraceMode);
+            RegisterEvents(dbTools);
 
             var peptideHitJobs = clsDataPackageInfoLoader.RetrieveDataPackagePeptideHitJobInfo(
-                connectionString, dataPackageID, out var lstAdditionalJobs, out var errorMsg);
+                dbTools, dataPackageID, out var lstAdditionalJobs, out var errorMsg);
 
             if (!string.IsNullOrEmpty(errorMsg))
             {

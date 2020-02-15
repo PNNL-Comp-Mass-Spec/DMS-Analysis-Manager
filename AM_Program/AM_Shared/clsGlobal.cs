@@ -562,6 +562,39 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
+        /// Run a query against a SQL Server database
+        /// </summary>
+        /// <param name="dbTools">Instance of IDBTools</param>
+        /// <param name="sqlQuery">Query to run</param>
+        /// <param name="firstQueryResult">Results, as a list of columns (first row only if multiple rows)</param>
+        /// <param name="retryCount">Number of times to retry (in case of a problem)</param>
+        /// <param name="callingFunction">Name of the calling function (for logging purposes)</param>
+        /// <returns>True if success, false if an error</returns>
+        /// <remarks>
+        /// Null values are converted to empty strings
+        /// Numbers are converted to their string equivalent
+        /// Use the GetDataTable functions in this class if you need to retain numeric values or null values
+        /// </remarks>
+        public static bool GetQueryResultsTopRow(
+            IDBTools dbTools,
+            string sqlQuery,
+            out List<string> firstQueryResult,
+            short retryCount = 3,
+            [CallerMemberName] string callingFunction = "UnknownMethod")
+        {
+            var success = dbTools.GetQueryResults(sqlQuery, out var queryResults, retryCount, callingFunction: callingFunction);
+
+            if (success)
+            {
+                firstQueryResult = queryResults.FirstOrDefault() ?? new List<string>();
+                return true;
+            }
+
+            firstQueryResult = new List<string>();
+            return false;
+        }
+
+        /// <summary>
         /// Run a query against a SQL Server database, return the results as a list of strings
         /// </summary>
         /// <param name="sqlQuery">Query to run</param>
@@ -600,7 +633,7 @@ namespace AnalysisManagerBase
             if (timeoutSeconds < 5)
                 timeoutSeconds = 5;
 
-            var dbTools = DbToolsFactory.GetDBTools(connectionString);
+            var dbTools = DbToolsFactory.GetDBTools(connectionString, debugMode: false);
             RegisterEvents(dbTools);
 
             var success = dbTools.GetQueryResults(sqlQuery, out queryResults, retryCount, maxRowsToReturn, timeoutSeconds: timeoutSeconds, callingFunction: callingFunction);
