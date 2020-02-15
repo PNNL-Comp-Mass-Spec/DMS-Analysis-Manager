@@ -334,7 +334,8 @@ namespace AnalysisManagerBase
 
         private void ProcedureExecutor_DBErrorEvent(string message, Exception ex)
         {
-            if (message.Contains("permission was denied"))
+            if (message.IndexOf("permission was denied", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                message.IndexOf("permission denied", StringComparison.OrdinalIgnoreCase) >= 0)
             {
                 try
                 {

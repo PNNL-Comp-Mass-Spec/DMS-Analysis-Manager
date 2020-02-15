@@ -845,18 +845,16 @@ namespace AnalysisManagerGlyQIQPlugin
 
         #region "Event Handlers"
 
-        private void ExecuteSP_DebugEvent(string errorMessage)
-        {
-            LogDebug("StoredProcedureExecutor: " + errorMessage);
-        }
-
         private void ExecuteSP_DBErrorEvent(string errorMessage, Exception ex)
         {
-            LogError("StoredProcedureExecutor: " + errorMessage);
-
-            if (Message.ToLower().Contains("permission was denied"))
+            if (Message.IndexOf("permission was denied", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                Message.IndexOf("permission denied", StringComparison.OrdinalIgnoreCase) >= 0)
             {
                 LogErrorToDatabase(Message);
+            }
+            else
+            {
+                LogError(errorMessage, ex);
             }
         }
 

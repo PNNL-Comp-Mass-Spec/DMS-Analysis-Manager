@@ -2725,9 +2725,14 @@ namespace AnalysisManagerMSGFPlugin
         /// <param name="ex"></param>
         private void MSGFResultsSummarizer_ErrorHandler(string errorMessage, Exception ex)
         {
-            if (Message.ToLower().Contains("permission was denied"))
+            if (errorMessage.IndexOf("permission was denied", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                errorMessage.IndexOf("permission denied", StringComparison.OrdinalIgnoreCase) >= 0)
             {
                 LogErrorToDatabase(errorMessage);
+            }
+            else
+            {
+                LogError(errorMessage, ex);
             }
         }
 
