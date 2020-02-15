@@ -263,36 +263,38 @@ namespace AnalysisManagerBase
                 var cmd = PipelineDBProcedureExecutor.CreateCommand(SP_NAME_UPDATE_MANAGER_STATUS, CommandType.StoredProcedure);
 
                 // Manager items
-                AddSPParameter(cmd, "@MgrName", statusInfo.MgrName, 128);
-                AddSPParameter(cmd, "@MgrStatusCode", (int)statusInfo.MgrStatus);
+                PipelineDBProcedureExecutor.AddTypedParameter(cmd, "@MgrName", SqlType.VarChar, 128, statusInfo.MgrName);
 
-                AddSPParameter(cmd, "@LastUpdate", statusInfo.LastUpdate.ToLocalTime());
-                AddSPParameter(cmd, "@LastStartTime", statusInfo.LastStartTime.ToLocalTime());
-                AddSPParameter(cmd, "@CPUUtilization", statusInfo.CPUUtilization);
-                AddSPParameter(cmd, "@FreeMemoryMB", statusInfo.FreeMemoryMB);
-                AddSPParameter(cmd, "@ProcessID", statusInfo.ProcessID);
-                AddSPParameter(cmd, "@ProgRunnerProcessID", statusInfo.ProgRunnerProcessID);
-                AddSPParameter(cmd, "@ProgRunnerCoreUsage", statusInfo.ProgRunnerCoreUsage);
+                PipelineDBProcedureExecutor.AddTypedParameter(cmd, "@MgrStatusCode", SqlType.Int, 0, (int)statusInfo.MgrStatus);
 
-                AddSPParameter(cmd, "@MostRecentErrorMessage", statusInfo.MostRecentErrorMessage, 1024);
+                PipelineDBProcedureExecutor.AddTypedParameter(cmd, "@LastUpdate", SqlType.DateTime, 0, statusInfo.LastUpdate.ToLocalTime());
+                PipelineDBProcedureExecutor.AddTypedParameter(cmd, "@LastStartTime", SqlType.DateTime, 0, statusInfo.LastStartTime.ToLocalTime());
+                PipelineDBProcedureExecutor.AddTypedParameter(cmd, "@CPUUtilization", SqlType.Float, 0, statusInfo.CPUUtilization);
+                PipelineDBProcedureExecutor.AddTypedParameter(cmd, "@FreeMemoryMB", SqlType.Float, 0, statusInfo.FreeMemoryMB);
+                PipelineDBProcedureExecutor.AddTypedParameter(cmd, "@ProcessID", SqlType.Int, 0, statusInfo.ProcessID);
+                PipelineDBProcedureExecutor.AddTypedParameter(cmd, "@ProgRunnerProcessID", SqlType.Int, 0, statusInfo.ProgRunnerProcessID);
+                PipelineDBProcedureExecutor.AddTypedParameter(cmd, "@ProgRunnerCoreUsage", SqlType.Float, 0, statusInfo.ProgRunnerCoreUsage);
+
+                PipelineDBProcedureExecutor.AddTypedParameter(cmd, "@MostRecentErrorMessage", SqlType.VarChar, 1024, statusInfo.MostRecentErrorMessage);
 
                 // Task items
-                AddSPParameter(cmd, "@StepTool", statusInfo.Task.Tool, 128);
-                AddSPParameter(cmd, "@TaskStatusCode", (int)statusInfo.Task.Status);
-                AddSPParameter(cmd, "@DurationHours", statusInfo.Task.DurationHours);
-                AddSPParameter(cmd, "@Progress", statusInfo.Task.Progress);
-                AddSPParameter(cmd, "@CurrentOperation", statusInfo.Task.CurrentOperation, 256);
+                PipelineDBProcedureExecutor.AddTypedParameter(cmd, "@StepTool", SqlType.VarChar, 128, statusInfo.Task.Tool);
+                PipelineDBProcedureExecutor.AddTypedParameter(cmd, "@TaskStatusCode", SqlType.Int, 0, (int)statusInfo.Task.Status);
+
+                PipelineDBProcedureExecutor.AddTypedParameter(cmd, "@DurationHours", SqlType.Float, 0, statusInfo.Task.DurationHours);
+                PipelineDBProcedureExecutor.AddTypedParameter(cmd, "@Progress", SqlType.Float, 0, statusInfo.Task.Progress);
+                PipelineDBProcedureExecutor.AddTypedParameter(cmd, "@CurrentOperation", SqlType.VarChar, 256, statusInfo.Task.CurrentOperation);
 
                 // Task detail items
-                AddSPParameter(cmd, "@TaskDetailStatusCode", (int)statusInfo.Task.TaskDetails.Status);
-                AddSPParameter(cmd, "@Job", statusInfo.Task.TaskDetails.Job);
-                AddSPParameter(cmd, "@JobStep", statusInfo.Task.TaskDetails.JobStep);
-                AddSPParameter(cmd, "@Dataset", statusInfo.Task.TaskDetails.Dataset, 256);
-                AddSPParameter(cmd, "@MostRecentLogMessage", statusInfo.Task.TaskDetails.MostRecentLogMessage, 1024);
-                AddSPParameter(cmd, "@MostRecentJobInfo", statusInfo.Task.TaskDetails.MostRecentJobInfo, 256);
-                AddSPParameter(cmd, "@SpectrumCount", statusInfo.Task.TaskDetails.SpectrumCount);
+                PipelineDBProcedureExecutor.AddTypedParameter(cmd, "@TaskDetailStatusCode", SqlType.Int, 0, (int)statusInfo.Task.TaskDetails.Status);
+                PipelineDBProcedureExecutor.AddTypedParameter(cmd, "@Job", SqlType.Int, 0, statusInfo.Task.TaskDetails.Job);
+                PipelineDBProcedureExecutor.AddTypedParameter(cmd, "@JobStep", SqlType.Int, 0, statusInfo.Task.TaskDetails.JobStep);
+                PipelineDBProcedureExecutor.AddTypedParameter(cmd, "@Dataset", SqlType.VarChar, 256, statusInfo.Task.TaskDetails.Dataset);
+                PipelineDBProcedureExecutor.AddTypedParameter(cmd, "@MostRecentLogMessage", SqlType.VarChar, 1024, statusInfo.Task.TaskDetails.MostRecentLogMessage);
+                PipelineDBProcedureExecutor.AddTypedParameter(cmd, "@MostRecentJobInfo", SqlType.VarChar, 256, statusInfo.Task.TaskDetails.MostRecentJobInfo);
+                PipelineDBProcedureExecutor.AddTypedParameter(cmd, "@SpectrumCount", SqlType.Int, 0, statusInfo.Task.TaskDetails.SpectrumCount);
 
-                AddSPParameterOutput(cmd, "@message", string.Empty, 512);
+                PipelineDBProcedureExecutor.AddParameter(cmd, "@message", SqlType.VarChar, 512, string.Empty, ParameterDirection.Output);
 
                 // Execute the SP
                 PipelineDBProcedureExecutor.ExecuteSP(cmd);
@@ -303,61 +305,6 @@ namespace AnalysisManagerBase
                 // Ignore errors here
                 Console.WriteLine("Error in clsDBStatusLogger.LogStatus: " + ex.Message);
             }
-        }
-
-        private void AddSPParameter(System.Data.Common.DbCommand cmd, string paramName, string value, int varCharLength)
-        {
-            // Make sure the parameter starts with an @ sign
-            if (!paramName.StartsWith("@"))
-            {
-                paramName = "@" + paramName;
-            }
-
-            PipelineDBProcedureExecutor.AddParameter(cmd, paramName, SqlType.VarChar, varCharLength, value);
-        }
-
-        private void AddSPParameter(System.Data.Common.DbCommand cmd, string paramName, int value)
-        {
-            // Make sure the parameter starts with an @ sign
-            if (!paramName.StartsWith("@"))
-            {
-                paramName = "@" + paramName;
-            }
-
-            PipelineDBProcedureExecutor.AddParameter(cmd, paramName, SqlType.Int).Value = value;
-        }
-
-        private void AddSPParameter(System.Data.Common.DbCommand cmd, string paramName, DateTime value)
-        {
-            // Make sure the parameter starts with an @ sign
-            if (!paramName.StartsWith("@"))
-            {
-                paramName = "@" + paramName;
-            }
-
-            PipelineDBProcedureExecutor.AddParameter(cmd, paramName, SqlType.DateTime).Value = value;
-        }
-
-        private void AddSPParameter(System.Data.Common.DbCommand cmd, string paramName, float value)
-        {
-            // Make sure the parameter starts with an @ sign
-            if (!paramName.StartsWith("@"))
-            {
-                paramName = "@" + paramName;
-            }
-
-            PipelineDBProcedureExecutor.AddParameter(cmd, paramName, SqlType.Real).Value = value;
-        }
-
-        private void AddSPParameterOutput(System.Data.Common.DbCommand cmd, string paramName, string value, int varCharLength)
-        {
-            // Make sure the parameter starts with an @ sign
-            if (!paramName.StartsWith("@"))
-            {
-                paramName = "@" + paramName;
-            }
-
-            PipelineDBProcedureExecutor.AddParameter(cmd, paramName, SqlType.VarChar, varCharLength, value, ParameterDirection.Output);
         }
 
         #endregion
