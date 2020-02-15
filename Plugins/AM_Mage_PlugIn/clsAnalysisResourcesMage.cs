@@ -27,8 +27,8 @@ namespace AnalysisManager_Mage_PlugIn
 
             var mageOperations = mJobParams.GetParam("MageOperations", string.Empty);
 
-            var jobAnalysistype = mJobParams.GetParam("AnalysisType", string.Empty);
-            var requireDeconJobs = jobAnalysistype == "iTRAQ";
+            var jobAnalysisType = mJobParams.GetParam("AnalysisType", string.Empty);
+            var requireDeconJobs = jobAnalysisType == "iTRAQ";
 
             var requireMasicJobs = mageOperations.Contains("ImportReporterIons");
 

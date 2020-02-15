@@ -822,11 +822,10 @@ namespace AnalysisManagerQCARTPlugin
         /// <summary>
         /// Query the database for specific QC Metrics required by QC-ART
         /// </summary>
-        /// <param name="datasetNamesToRetrieveMectrics"></param>
+        /// <param name="datasetNamesToRetrieveMetrics"></param>
         /// <returns>True if success, otherwise an error</returns>
-        private bool RetrieveQCMetricsFromDB(ICollection<string> datasetNamesToRetrieveMectrics)
+        private bool RetrieveQCMetricsFromDB(ICollection<string> datasetNamesToRetrieveMetrics)
         {
-            const int RETRY_COUNT = 3;
             const string DATASET_COLUMN = "DatasetName";
             const string FRACTION_COLUMN = "Fraction";
 
@@ -835,9 +834,9 @@ namespace AnalysisManagerQCARTPlugin
                 var datasetParseErrors = new List<string>();
                 var datasetsMatched = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
 
-                if (datasetNamesToRetrieveMectrics.Count == 0)
+                if (datasetNamesToRetrieveMetrics.Count == 0)
                 {
-                    LogError("datasetNamesToRetrieveMectrics is empty");
+                    LogError("datasetNamesToRetrieveMetrics is empty");
                     return false;
                 }
 
@@ -859,7 +858,7 @@ namespace AnalysisManagerQCARTPlugin
                 sqlStr.AppendLine("FROM V_Dataset_QC_Metrics_Export ");
                 sqlStr.AppendLine("WHERE Dataset IN (");
 
-                sqlStr.Append("'" + string.Join("', '", datasetNamesToRetrieveMectrics) + "'");
+                sqlStr.Append("'" + string.Join("', '", datasetNamesToRetrieveMetrics) + "'");
                 sqlStr.AppendLine(")");
 
                 // Gigasax.DMS5
@@ -887,7 +886,7 @@ namespace AnalysisManagerQCARTPlugin
                 {
                     // No data was returned
                     errorMessage = "QC Metrics not found";
-                    LogErrorForOneOrMoreDatasets(errorMessage, datasetNamesToRetrieveMectrics, "RetrieveQCMetricsFromDB");
+                    LogErrorForOneOrMoreDatasets(errorMessage, datasetNamesToRetrieveMetrics, "RetrieveQCMetricsFromDB");
 
                     return false;
                 }
@@ -962,12 +961,12 @@ namespace AnalysisManagerQCARTPlugin
                 if (datasetParseErrors.Count == 0)
                 {
                     // No errors; confirm that all of the datasets were found
-                    if (datasetsMatched.Count == datasetNamesToRetrieveMectrics.Count)
+                    if (datasetsMatched.Count == datasetNamesToRetrieveMetrics.Count)
                     {
                         return true;
                     }
 
-                    var missingDatasets = datasetNamesToRetrieveMectrics.Except(datasetsMatched).ToList();
+                    var missingDatasets = datasetNamesToRetrieveMetrics.Except(datasetsMatched).ToList();
 
                     errorMessage = "QC metrics not found in V_Dataset_QC_Metrics_Export";
                     LogErrorForOneOrMoreDatasets(errorMessage, missingDatasets, "RetrieveQCMetricsFromDB");

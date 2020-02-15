@@ -16,6 +16,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Xml;
+using PRISM.Logging;
 
 namespace AnalysisManagerMSGFPlugin
 {
@@ -569,7 +570,8 @@ namespace AnalysisManagerMSGFPlugin
                 //   <note type="input" label="scoring, c ions">yes</note>
                 //   <note type="input" label="scoring, z ions">yes</note>
 
-                var objParamFile = new XmlDocument {
+                var objParamFile = new XmlDocument
+                {
                     PreserveWhitespace = true
                 };
                 objParamFile.Load(searchToolParamFilePath);
@@ -2428,19 +2430,26 @@ namespace AnalysisManagerMSGFPlugin
                 // Gigasax.DMS5
                 var connectionString = mMgrParams.GetParam("ConnectionString");
 
-                var objSummarizer = new clsMSGFResultsSummarizer(eResultType, mDatasetName, mJob, mWorkDir, connectionString, mDebugLevel);
-                RegisterEvents(objSummarizer);
+                var summarizer = new clsMSGFResultsSummarizer(
+                    eResultType, mDatasetName, mJob,
+                    mWorkDir,
+                    connectionString,
+                    mDebugLevel,
+                    TraceMode);
 
-                objSummarizer.ErrorEvent += MSGFResultsSummarizer_ErrorHandler;
+                RegisterEvents(summarizer);
 
-                objSummarizer.MSGFThreshold = clsMSGFResultsSummarizer.DEFAULT_MSGF_THRESHOLD;
+                UnregisterEventHandler(summarizer, BaseLogger.LogLevels.ERROR);
+                summarizer.ErrorEvent += MSGFResultsSummarizer_ErrorHandler;
 
-                objSummarizer.ContactDatabase = true;
-                objSummarizer.PostJobPSMResultsToDB = true;
-                objSummarizer.SaveResultsToTextFile = false;
-                objSummarizer.DatasetName = mDatasetName;
+                summarizer.MSGFThreshold = clsMSGFResultsSummarizer.DEFAULT_MSGF_THRESHOLD;
 
-                success = objSummarizer.ProcessMSGFResults();
+                summarizer.ContactDatabase = true;
+                summarizer.PostJobPSMResultsToDB = true;
+                summarizer.SaveResultsToTextFile = false;
+                summarizer.DatasetName = mDatasetName;
+
+                success = summarizer.ProcessMSGFResults();
 
                 if (!success)
                 {
@@ -2448,21 +2457,21 @@ namespace AnalysisManagerMSGFPlugin
 
                     var detailedMsg = string.Copy(msg);
 
-                    if (objSummarizer.ErrorMessage.Length > 0)
+                    if (summarizer.ErrorMessage.Length > 0)
                     {
-                        detailedMsg += ": " + objSummarizer.ErrorMessage;
+                        detailedMsg += ": " + summarizer.ErrorMessage;
                     }
 
-                    detailedMsg += "; input file name: " + objSummarizer.MSGFSynopsisFileName;
+                    detailedMsg += "; input file name: " + summarizer.MSGFSynopsisFileName;
 
                     LogError(msg, detailedMsg);
                 }
                 else
                 {
-                    if (objSummarizer.DatasetScanStatsLookupError)
+                    if (summarizer.DatasetScanStatsLookupError)
                     {
-                        if (string.IsNullOrWhiteSpace(mMessage) && !string.IsNullOrWhiteSpace(objSummarizer.ErrorMessage))
-                            LogError(objSummarizer.ErrorMessage);
+                        if (string.IsNullOrWhiteSpace(mMessage) && !string.IsNullOrWhiteSpace(summarizer.ErrorMessage))
+                            LogError(summarizer.ErrorMessage);
                     }
                 }
             }
