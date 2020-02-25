@@ -338,14 +338,14 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
         }
 
         /// <summary>
-        /// Create a new MSSQLReader module to do a specific query
+        /// Create a new SQLReader module to do a specific query
         /// </summary>
         /// <param name="sql">Query to use</param>
         /// <param name="connectionString"></param>
         /// <returns></returns>
-        public static MSSQLReader MakeDBReaderModule(string sql, string connectionString)
+        public static SQLReader MakeDBReaderModule(string sql, string connectionString)
         {
-            var reader = new MSSQLReader(connectionString)
+            var reader = new SQLReader(connectionString)
             {
                 SQLText = sql
             };

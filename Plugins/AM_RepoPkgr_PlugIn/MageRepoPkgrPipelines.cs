@@ -181,7 +181,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
                                         queryTemplateName));
             }
 
-            var sqlReader = new MSSQLReader(cnStr)
+            var sqlReader = new SQLReader(cnStr)
             {
                 SQLText = sqlText
             };

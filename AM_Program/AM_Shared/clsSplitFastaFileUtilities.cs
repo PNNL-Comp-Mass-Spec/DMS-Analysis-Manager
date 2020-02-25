@@ -288,7 +288,7 @@ namespace AnalysisManagerBase
 
         }
 
-        private bool StoreSplitFastaFileNames(string organismName, IEnumerable<clsFastaFileSplitter.udtFastaFileInfoType> splitFastaFiles)
+        private bool StoreSplitFastaFileNames(string organismName, IEnumerable<clsFastaFileSplitter.FastaFileInfoType> splitFastaFiles)
         {
 
             var splitFastaName = "??";
