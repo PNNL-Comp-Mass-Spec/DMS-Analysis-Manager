@@ -127,7 +127,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                     {
                         msFileInfoScanner = (MSFileInfoScannerInterfaces.iMSFileInfoScanner) obj;
                         msg = "Loaded MSFileInfoScanner from " + msFileInfoScannerDLLPath;
-                        if (mDebugLevel >= 2)
+                        if (mDebugLevel >= 1)
                         {
                             OnDebugEvent(msg);
                         }
