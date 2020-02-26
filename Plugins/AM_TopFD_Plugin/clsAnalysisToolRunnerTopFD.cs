@@ -55,6 +55,8 @@ namespace AnalysisManagerTopFDPlugIn
 
         private DateTime mLastConsoleOutputParse;
 
+        private bool mMzMLInstrumentIdAdjustmentRequired;
+
         private clsRunDosProgram mCmdRunner;
 
         #endregion
@@ -257,43 +259,65 @@ namespace AnalysisManagerTopFDPlugIn
                         var dataLine = reader.ReadLine();
                         linesRead += 1;
 
-                        if (!string.IsNullOrWhiteSpace(dataLine))
-                        {
-                            if (linesRead <= 3)
-                            {
-                                // The first line has the TopFD executable name and the command line arguments
-                                // The second line is dashes
-                                // The third line has the TopFD version
-                                if (string.IsNullOrEmpty(mTopFDVersion) &&
-                                    dataLine.ToLower().StartsWith("topfd") &&
-                                    !dataLine.ToLower().Contains(TOPFD_EXE_NAME.ToLower()))
-                                {
-                                    if (mDebugLevel >= 2)
-                                    {
-                                        LogDebug("TopFD version: " + dataLine);
-                                    }
+                        if (string.IsNullOrWhiteSpace(dataLine))
+                            continue;
 
-                                    mTopFDVersion = string.Copy(dataLine);
-                                }
-                            }
-                            else
+                        var dataLineLower = dataLine.ToLower();
+
+                        if (linesRead <= 3)
+                        {
+                            // The first line has the TopFD executable name and the command line arguments
+                            // The second line is dashes
+                            // The third line has the TopFD version
+                            if (string.IsNullOrEmpty(mTopFDVersion) &&
+                                dataLineLower.StartsWith("topfd") &&
+                                !dataLineLower.Contains(TOPFD_EXE_NAME.ToLower()))
                             {
-                                // Update progress if the line starts with Processing spectrum
-                                if (dataLine.StartsWith("Processing spectrum", StringComparison.OrdinalIgnoreCase))
+                                if (mDebugLevel >= 2)
                                 {
-                                    var match = reExtractPercentFinished.Match(dataLine);
-                                    if (match.Success)
-                                    {
-                                        actualProgress = short.Parse(match.Groups["PercentComplete"].Value);
-                                    }
+                                    LogDebug("TopFD version: " + dataLine);
                                 }
-                                else if (linesRead > 12 &&
-                                         dataLine.ToLower().Contains("error") &&
-                                         !dataLine.Contains("Error tolerance:") &&
-                                         string.IsNullOrEmpty(mConsoleOutputErrorMsg))
-                                {
-                                    mConsoleOutputErrorMsg = "Error running TopFD: " + dataLine;
-                                }
+
+                                mTopFDVersion = string.Copy(dataLine);
+                            }
+
+                            continue;
+                        }
+
+                        // Update progress if the line starts with Processing spectrum
+                        if (dataLine.StartsWith("Processing spectrum", StringComparison.OrdinalIgnoreCase))
+                        {
+                            var match = reExtractPercentFinished.Match(dataLine);
+                            if (match.Success)
+                            {
+                                actualProgress = short.Parse(match.Groups["PercentComplete"].Value);
+                            }
+
+                            continue;
+                        }
+
+                        if (linesRead < 12)
+                            continue;
+
+                        if ((dataLineLower.Contains("error") || dataLineLower.Contains("terminate called after throwing an instance")) &&
+                            !dataLine.Contains("Error tolerance:") &&
+                            string.IsNullOrEmpty(mConsoleOutputErrorMsg))
+                        {
+                            mConsoleOutputErrorMsg = "Error running TopFD: " + dataLine;
+                            continue;
+                        }
+
+                        if (dataLine.IndexOf("Invalid cvParam accession", StringComparison.OrdinalIgnoreCase) > 0)
+                        {
+                            if (dataLineLower.Contains("1003029"))
+                            {
+                                LogWarning(
+                                    "TopFD is unable to process this .mzML file since it comes from " +
+                                    "an unrecognized instrument (Orbitrap Eclipse, MS:1003029); " +
+                                    "will update the .mzML file and try again");
+
+                                mMzMLInstrumentIdAdjustmentRequired = true;
+                                break;
                             }
                         }
                     }
