@@ -114,7 +114,17 @@ namespace AnalysisManagerTopFDPlugIn
                 }
                 else
                 {
-                    processingResult = StartTopFD(mTopFDProgLoc);
+                    mMzMLInstrumentIdAdjustmentRequired = false;
+                    var mzMLFileName = Dataset + clsAnalysisResources.DOT_MZML_EXTENSION;
+
+                    processingResult = StartTopFD(mTopFDProgLoc, mzMLFileName);
+
+                    if (mMzMLInstrumentIdAdjustmentRequired)
+                    {
+                        var updatedMzMLFileName = UpdateInstrumentInMzMLFile(mzMLFileName);
+
+                        processingResult = StartTopFD(mTopFDProgLoc, updatedMzMLFileName);
+                    }
                     zipSubdirectories = true;
                 }
 
@@ -463,7 +473,7 @@ namespace AnalysisManagerTopFDPlugIn
 
         }
 
-        private CloseOutType StartTopFD(string progLoc)
+        private CloseOutType StartTopFD(string progLoc, string mzMLFileName)
         {
 
             LogMessage("Running TopFD");
@@ -475,8 +485,7 @@ namespace AnalysisManagerTopFDPlugIn
                 return eResult;
             }
 
-            var arguments = cmdLineOptions + " " +
-                            Dataset + clsAnalysisResources.DOT_MZML_EXTENSION;
+            var arguments = cmdLineOptions + " " + mzMLFileName;
 
             LogDebug(progLoc + " " + arguments);
 
@@ -722,6 +731,86 @@ namespace AnalysisManagerTopFDPlugIn
                 {
                     LogError("Error trimming console output file (" + consoleOutputFilePath + ")", ex);
                 }
+            }
+        }
+
+        private string UpdateInstrumentInMzMLFile(string sourceMzMLFilename)
+        {
+            try
+            {
+                // CV params to update
+                // Keys are the accession to find; values are the new accession
+                // The instrument name for the cvParam will be left unchanged to assure that the file size doesn't change
+                var cvParamsToUpdate = new Dictionary<string, string> {
+                    {"MS:1003029", "MS:1002416"}    // Replace the accession for "Orbitrap Eclipse" with that for "Orbitrap Fusion"
+                };
+
+                var sourceMzMLFile = new FileInfo(Path.Combine(mWorkDir, sourceMzMLFilename));
+                if (!sourceMzMLFile.Exists)
+                {
+                    LogError("Unable to create an updated .mzML file with a new instrument class: source mzML file not found");
+                    return string.Empty;
+                }
+
+                var updatedMzMLFilename = Path.GetFileNameWithoutExtension(sourceMzMLFilename) + "_new" + Path.GetExtension(sourceMzMLFilename);
+                var updatedMzMLFile = new FileInfo(Path.Combine(mWorkDir, updatedMzMLFilename));
+
+                mJobParams.AddResultFileToSkip(updatedMzMLFilename);
+
+                using (var reader = new StreamReader(new FileStream(sourceMzMLFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var writer = new StreamWriter(new FileStream(updatedMzMLFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                {
+                    while (!reader.EndOfStream)
+                    {
+                        var dataLine = reader.ReadLine();
+
+                        if (string.IsNullOrEmpty(dataLine))
+                            continue;
+
+                        if (!dataLine.Trim().StartsWith("<cvParam"))
+                        {
+                            writer.WriteLine(dataLine);
+                            continue;
+                        }
+
+                        var matchFound = false;
+                        foreach (var item in cvParamsToUpdate)
+                        {
+                            if (dataLine.Contains(item.Key))
+                            {
+                                var updatedLine = dataLine.Replace(item.Key, item.Value);
+                                writer.WriteLine(updatedLine);
+                                matchFound = true;
+                                break;
+                            }
+                        }
+
+                        if (matchFound)
+                        {
+                            break;
+                        }
+
+                        writer.WriteLine(dataLine);
+                    }
+
+                    // Read/write the remaining lines
+                    while (!reader.EndOfStream)
+                    {
+                        var dataLine = reader.ReadLine();
+
+                        if (string.IsNullOrEmpty(dataLine))
+                            continue;
+
+                        writer.WriteLine(dataLine);
+                    }
+                }
+
+                return updatedMzMLFile.FullName;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error creating the updated .mzML file with a new instrument class", ex);
+                return string.Empty;
             }
         }
 
