@@ -39,6 +39,12 @@
             Tune value
             </summary>
         </member>
+        <member name="M:ThermoRawFileReader.udtTuneMethodSetting.ToString">
+            <summary>
+            Display the category, name, and value of this setting
+            </summary>
+            <returns></returns>
+        </member>
         <member name="T:ThermoRawFileReader.RawFileInfo">
             <summary>
             Type for File Information
@@ -89,6 +95,16 @@
             <summary>
             Logon name of the user when the file was created
             </summary>
+        </member>
+        <member name="F:ThermoRawFileReader.RawFileInfo.Devices">
+            <summary>
+            Dictionary tracking the device data stored in the .raw file
+            Keys are Device type, values are the number of devices
+            </summary>
+            <remarks>
+            Typically a .raw file has a single device, of type Device.MS
+            Some .raw files also have LC information, stored as Device.Analog or Device.UV
+            </remarks>
         </member>
         <member name="F:ThermoRawFileReader.RawFileInfo.InstFlags">
             <summary>
@@ -520,6 +536,12 @@
             Return a summary of this object
             </summary>
             <returns></returns>
+        </member>
+        <member name="M:ThermoRawFileReader.DeviceInfo.#ctor(System.String)">
+            <summary>
+            Constructor
+            </summary>
+            <param name="instrumentName"></param>
         </member>
         <member name="T:ThermoRawFileReader.ActivationTypeConstants">
             <summary>
@@ -968,6 +990,12 @@
             Cached file header
             </summary>
         </member>
+        <member name="F:ThermoRawFileReader.XRawFileIO.mCorruptMemoryEncountered">
+            <summary>
+            This is set to true if an exception is raised with the message "memory is corrupt"
+            It is also set to true if the .raw file does not have any MS data
+            </summary>
+        </member>
         <member name="P:ThermoRawFileReader.XRawFileIO.FileInfo">
             <summary>
             File info for the currently loaded .raw file
@@ -1140,11 +1168,48 @@
             </summary>
             <returns>True if no error, False if an error</returns>
         </member>
+        <member name="M:ThermoRawFileReader.XRawFileIO.GetChromatogramData(ThermoFisher.CommonCore.Data.Business.Device,System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Get the list of intensity values, by scan, for the given device
+            Use this method to retrieve scan-based values for LC devices stored in the .raw file
+            </summary>
+            <param name="deviceType">Device type</param>
+            <param name="deviceNumber">Device number (1 based)</param>
+            <param name="scanStart">Start scan, or 0 to use ScanStart</param>
+            <param name="scanEnd">End scan, or 0 to use ScanEnd</param>
+            <returns>Dictionary where keys are scan number and values are the intensity for the scan</returns>
+            <remarks>
+            If the scan has multiple intensity values, they are summed
+            Scans that have no data will still be present in the dictionary, but with an intensity of 0
+            </remarks>
+        </member>
+        <member name="M:ThermoRawFileReader.XRawFileIO.GetChromatogramData2D(ThermoFisher.CommonCore.Data.Business.Device,System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Get the intensities, by scan, for the given device
+            </summary>
+            <param name="deviceType">Device type</param>
+            <param name="deviceNumber">Device number (1 based)</param>
+            <param name="scanStart">Start scan, or 0 to use ScanStart</param>
+            <param name="scanEnd">End scan, or 0 to use ScanEnd</param>
+            <returns>Dictionary where keys are scan number and values are the list of intensities for that scan</returns>
+            <remarks>Scans that have no data will still be present in the dictionary, but with an empty list of doubles</remarks>
+        </member>
         <member name="M:ThermoRawFileReader.XRawFileIO.GetCollisionEnergy(System.Int32)">
             <summary>
             Return the collision energy (or energies) for the given scan
             </summary>
             <param name="scan">Scan number</param>
+            <returns></returns>
+        </member>
+        <member name="M:ThermoRawFileReader.XRawFileIO.GetDeviceInfo(ThermoFisher.CommonCore.Data.Business.Device,System.Int32)">
+            <summary>
+            Get the instrument information of the specified device
+            </summary>
+        </member>
+        <member name="M:ThermoRawFileReader.XRawFileIO.GetDeviceStats">
+            <summary>
+            Get a count of the number of instruments of each device type, as stored in the .raw file
+            </summary>
             <returns></returns>
         </member>
         <member name="M:ThermoRawFileReader.XRawFileIO.GetNumScans">
@@ -1318,6 +1383,15 @@
             </summary>
             <param name="filePath"></param>
             <returns></returns>
+        </member>
+        <member name="M:ThermoRawFileReader.XRawFileIO.ValidateAndSelectDevice(ThermoFisher.CommonCore.Data.Business.Device,System.Int32)">
+            <summary>
+            Validate that the .raw file has this device. If it does, select it using mXRawFile.SelectInstrument
+            If the device does not exist or there is an error, returns a message describing the problem
+            </summary>
+            <param name="deviceType"></param>
+            <param name="deviceNumber"></param>
+            <returns>Empty string if the device was successfully selected, otherwise an error message</returns>
         </member>
         <member name="M:ThermoRawFileReader.XRawFileIO.#ctor">
             <summary>
