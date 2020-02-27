@@ -122,6 +122,7 @@ namespace AnalysisManagerTopFDPlugIn
                     if (mMzMLInstrumentIdAdjustmentRequired)
                     {
                         var updatedMzMLFileName = UpdateInstrumentInMzMLFile(mzMLFileName);
+                        mConsoleOutputErrorMsg = string.Empty;
 
                         processingResult = StartTopFD(mTopFDProgLoc, updatedMzMLFileName);
                     }
@@ -745,17 +746,22 @@ namespace AnalysisManagerTopFDPlugIn
                     {"MS:1003029", "MS:1002416"}    // Replace the accession for "Orbitrap Eclipse" with that for "Orbitrap Fusion"
                 };
 
-                var sourceMzMLFile = new FileInfo(Path.Combine(mWorkDir, sourceMzMLFilename));
+                var mzMLFilePath = Path.Combine(mWorkDir, sourceMzMLFilename);
+                var sourceMzMLFile = new FileInfo(mzMLFilePath);
                 if (!sourceMzMLFile.Exists)
                 {
                     LogError("Unable to create an updated .mzML file with a new instrument class: source mzML file not found");
                     return string.Empty;
                 }
 
-                var updatedMzMLFilename = Path.GetFileNameWithoutExtension(sourceMzMLFilename) + "_new" + Path.GetExtension(sourceMzMLFilename);
-                var updatedMzMLFile = new FileInfo(Path.Combine(mWorkDir, updatedMzMLFilename));
+                // Rename the source file
+                var oldMzMLFilename = Path.GetFileNameWithoutExtension(sourceMzMLFilename) + "_old" + Path.GetExtension(sourceMzMLFilename);
+                sourceMzMLFile.MoveTo(Path.Combine(mWorkDir, oldMzMLFilename));
 
-                mJobParams.AddResultFileToSkip(updatedMzMLFilename);
+                var updatedMzMLFile = new FileInfo(mzMLFilePath);
+
+                mJobParams.AddResultFileToSkip(oldMzMLFilename);
+                mJobParams.AddResultFileToSkip(updatedMzMLFile.Name);
 
                 using (var reader = new StreamReader(new FileStream(sourceMzMLFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 using (var writer = new StreamWriter(new FileStream(updatedMzMLFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read)))
