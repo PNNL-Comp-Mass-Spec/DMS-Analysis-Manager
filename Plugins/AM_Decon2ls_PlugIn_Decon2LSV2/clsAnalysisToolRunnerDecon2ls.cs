@@ -982,8 +982,8 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
                 case clsAnalysisResources.eRawDataTypeConstants.BrukerFTFolder:
                 case clsAnalysisResources.eRawDataTypeConstants.BrukerTOFBaf:
-
                     return DeconToolsFileTypeConstants.Bruker;
+
                 case clsAnalysisResources.eRawDataTypeConstants.BrukerMALDISpot:
 
                     // Future: Add support for this after Decon2LS is updated
@@ -1131,14 +1131,22 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                     switch (kvStat.Key)
                     {
                         case "Scan/Frame":
-                            int.TryParse(kvStat.Value, out mDeconToolsStatus.CurrentLCScan);
+                            if (int.TryParse(kvStat.Value.Replace(",", string.Empty), out var currentScan))
+                            {
+                                mDeconToolsStatus.CurrentLCScan = currentScan;
+                            }
                             break;
+
                         case "PercentComplete":
                             float.TryParse(kvStat.Value, out mDeconToolsStatus.PercentComplete);
                             break;
+
                         // ReSharper disable once StringLiteralTypo
                         case "AccumlatedFeatures":
                         case "AccumulatedFeatures":
+                        case "ScansProcessed":
+                        case "ScansPerMinute":
+                            // Ignore these
                             break;
                     }
                 }
