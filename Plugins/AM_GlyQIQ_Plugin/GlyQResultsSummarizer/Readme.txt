@@ -18,7 +18,7 @@ only work if the parent folder is of the form GLY201503151614_Auto1170022
 Written by Matthew Monroe for the Department of Energy (PNNL, Richland, WA)
 Copyright 2015, Battelle Memorial Institute.  All Rights Reserved.
 
-E-mail: matthew.monroe@pnnl.gov or matt@alchemistmatt.com
+E-mail: matthew.monroe@pnnl.gov or proteomics@pnnl.gov
 Website: http://panomics.pnnl.gov/ or http://omics.pnl.gov
 -------------------------------------------------------------------------------
 
