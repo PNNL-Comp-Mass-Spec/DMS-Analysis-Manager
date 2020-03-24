@@ -455,11 +455,13 @@ namespace DTASpectraFileGen
                         switch (kvStat.Key)
                         {
                             case "Scan":
-                                int.TryParse(kvStat.Value, out mDeconConsoleStatus.CurrentLCScan);
-                                break;
                             case "Scan/Frame":
-                                int.TryParse(kvStat.Value, out mDeconConsoleStatus.CurrentLCScan);
+                                if (int.TryParse(kvStat.Value.Replace(",", string.Empty), out var currentScanOrFrame))
+                                {
+                                    mDeconConsoleStatus.CurrentLCScan = currentScanOrFrame;
+                                }
                                 break;
+
                             case "PercentComplete":
                                 float.TryParse(kvStat.Value, out mDeconConsoleStatus.PercentComplete);
                                 break;
