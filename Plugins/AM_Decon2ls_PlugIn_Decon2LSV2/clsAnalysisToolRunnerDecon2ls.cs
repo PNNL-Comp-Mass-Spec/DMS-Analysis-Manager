@@ -67,7 +67,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             Ascii = 3,
             Bruker = 4,
             Bruker_Ascii = 5,
-            Finnigan = 6,
+            Thermo_Raw = 6,
             ICR2LS_RawData = 7,
             Micromass_RawData = 8,
             MZXML_RawData = 9,
@@ -921,8 +921,8 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                     return "Bruker";
                 case DeconToolsFileTypeConstants.Bruker_Ascii:
                     return "Bruker_Ascii";
-                case DeconToolsFileTypeConstants.Finnigan:
-                    return "Finnigan";
+                case DeconToolsFileTypeConstants.Thermo_Raw:
+                    return "Thermo_Raw";
                 case DeconToolsFileTypeConstants.ICR2LS_RawData:
                     return "ICR2LS_RawData";
                 case DeconToolsFileTypeConstants.Micromass_RawData:
@@ -950,20 +950,20 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             switch (eRawDataType)
             {
                 case clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile:
+                    return DeconToolsFileTypeConstants.Thermo_Raw;
 
-                    return DeconToolsFileTypeConstants.Finnigan;
                 case clsAnalysisResources.eRawDataTypeConstants.AgilentQStarWiffFile:
-
                     return DeconToolsFileTypeConstants.Agilent_WIFF;
+
                 case clsAnalysisResources.eRawDataTypeConstants.UIMF:
-
                     return DeconToolsFileTypeConstants.PNNL_UIMF;
+
                 case clsAnalysisResources.eRawDataTypeConstants.AgilentDFolder:
-
                     return DeconToolsFileTypeConstants.Agilent_D;
-                case clsAnalysisResources.eRawDataTypeConstants.MicromassRawFolder:
 
+                case clsAnalysisResources.eRawDataTypeConstants.MicromassRawFolder:
                     return DeconToolsFileTypeConstants.Micromass_RawData;
+
                 case clsAnalysisResources.eRawDataTypeConstants.ZippedSFolders:
                     if (string.Equals(InstrumentClass, "BrukerFTMS", StringComparison.OrdinalIgnoreCase))
                     {
