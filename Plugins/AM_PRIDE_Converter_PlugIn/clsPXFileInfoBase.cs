@@ -11,7 +11,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         #region "Structures and Enums"
 
         /// <summary>
-        /// ProteomeXhcnage file type
+        /// ProteomeXChange file type
         /// </summary>
         public enum ePXFileType
         {
@@ -26,8 +26,9 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             Result = 1,
 
             /// <summary>
-            /// .mzid.gz files from MSGF+  (listed as "result" files in the .px file)
+            /// .mzid.gz files from MS-GF+  (listed as "result" files in the .px file)
             /// </summary>
+            /// <remarks>Older MS-GF+ jobs have .mzid.zip files</remarks>
             ResultMzId = 2,
 
             /// <summary>
