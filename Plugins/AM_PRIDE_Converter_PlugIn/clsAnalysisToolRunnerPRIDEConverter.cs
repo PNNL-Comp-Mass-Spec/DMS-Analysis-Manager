@@ -4022,6 +4022,14 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     }
                     else
                     {
+                        if (sourceFile.FullName.Equals(localFile.FullName))
+                        {
+                            // The file already exists in the working directory
+                            // This is likely a data caching logic error, since, even if the file is copied locally (e.g. renaming from _msgfplus.zip to _msgfplus.mzid.gz), the file should have been stored in a subdirectory
+                            LogError("File already found in the working directory; this is likely a code logic error: " + localFile.FullName);
+                            return false;
+                        }
+
                         // Retrieve the file, allowing for up to 3 attempts (uses CopyFileUsingLocks)
                         analysisResults.CopyFileWithRetry(sourceFile.FullName, localFile.FullName, true);
 
