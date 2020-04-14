@@ -690,6 +690,35 @@ namespace AnalysisManagerBase
                     {
                         foreach (var filePath in foundFiles)
                         {
+                            var currentFileInfo = new FileInfo(filePath);
+                            if (currentFileInfo.Name.EndsWith("_msgfplus.zip", StringComparison.OrdinalIgnoreCase))
+                            {
+                                // Convert the _msgfplus.zip file to a .mzid.gz file
+                                if (currentFileInfo.Exists)
+                                {
+                                    dotNetTools.UnzipFile(currentFileInfo.FullName, workingDir);
+                                    var unzippedFilePath = MostRecentUnzippedFile(dotNetTools);
+
+                                    dotNetTools.GZipFile(unzippedFilePath, true);
+                                    var gzipFilePath = dotNetTools.MostRecentZipFilePath;
+                                    var gzipFileSource = new FileInfo(gzipFilePath);
+
+                                    // Move the file into a subdirectory below the working directory
+                                    // This is necessary in case a dataset has multiple analysis jobs in the same data package
+                                    var jobSubDirectory = new DirectoryInfo(Path.Combine(workingDir, "Job" + dataPkgJob.Job));
+                                    if (!jobSubDirectory.Exists)
+                                    {
+                                        jobSubDirectory.Create();
+                                    }
+
+                                    var gzipFilePathNew = Path.Combine(jobSubDirectory.FullName, gzipFileSource.Name);
+                                    gzipFileSource.MoveTo(gzipFilePathNew);
+
+                                    writer.WriteLine(gzipFilePathNew);
+                                    continue;
+                                }
+                            }
+
                             writer.WriteLine(filePath);
                         }
                     }
@@ -1605,7 +1634,7 @@ namespace AnalysisManagerBase
         /// <param name="prefixRequired"></param>
         /// <param name="dataPkgJob"></param>
         /// <param name="foundFiles"></param>
-        /// <param name="zipFileCandidates">Candidate mzid .zip files</param>
+        /// <param name="zipFileCandidates">Candidate .mzid.zip files</param>
         /// <param name="gzipFileCandidates">Candidate .mzid.gz files</param>
         /// <param name="zippedPepXmlFile"></param>
         /// <returns></returns>
