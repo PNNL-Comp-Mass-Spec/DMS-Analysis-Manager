@@ -3984,63 +3984,63 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                         continue;
                     }
 
-                    var fiSourceFile = new FileInfo(sourceFilePath);
+                    var sourceFile = new FileInfo(sourceFilePath);
 
-                    if (!fiSourceFile.Exists)
+                    if (!sourceFile.Exists)
                     {
                         fileCountNotFound += 1;
                         LogError(string.Format("File not found for job {0}: {1}", job, sourceFilePath));
                         continue;
                     }
 
-                    var targetFilePath = Path.Combine(mWorkDir, fiSourceFile.Name);
+                    var targetFilePath = Path.Combine(mWorkDir, sourceFile.Name);
 
-                    var fiLocalFile = new FileInfo(targetFilePath);
+                    var localFile = new FileInfo(targetFilePath);
                     var alreadyCopiedToTransferDirectory = false;
 
-                    if (fiSourceFile.Name.EndsWith(DOT_MZML, StringComparison.OrdinalIgnoreCase) ||
-                        fiSourceFile.Name.EndsWith(DOT_MZML_GZ, StringComparison.OrdinalIgnoreCase))
+                    if (sourceFile.Name.EndsWith(DOT_MZML, StringComparison.OrdinalIgnoreCase) ||
+                        sourceFile.Name.EndsWith(DOT_MZML_GZ, StringComparison.OrdinalIgnoreCase))
                     {
                         // mzML files can be large
                         // If the file already exists in the transfer directory and the sizes match, do not recopy
 
-                        var fiFileInTransferDirectory = new FileInfo(Path.Combine(remoteTransferFolder, fiSourceFile.Name));
+                        var fileInTransferDirectory = new FileInfo(Path.Combine(remoteTransferFolder, sourceFile.Name));
 
-                        if (fiFileInTransferDirectory.Exists)
+                        if (fileInTransferDirectory.Exists)
                         {
-                            if (fiFileInTransferDirectory.Length == fiSourceFile.Length)
+                            if (fileInTransferDirectory.Length == sourceFile.Length)
                             {
                                 alreadyCopiedToTransferDirectory = true;
-                                LogDebug(string.Format("Skipping file {0} since already copied to {1}", fiSourceFile.Name, remoteTransferFolder));
+                                LogDebug(string.Format("Skipping file {0} since already copied to {1}", sourceFile.Name, remoteTransferFolder));
                             }
                         }
                     }
 
                     if (alreadyCopiedToTransferDirectory)
                     {
-                        filesCopied.Add(fiSourceFile.Name);
+                        filesCopied.Add(sourceFile.Name);
                     }
                     else
                     {
                         // Retrieve the file, allowing for up to 3 attempts (uses CopyFileUsingLocks)
-                        analysisResults.CopyFileWithRetry(fiSourceFile.FullName, fiLocalFile.FullName, true);
+                        analysisResults.CopyFileWithRetry(sourceFile.FullName, localFile.FullName, true);
 
-                        if (!fiLocalFile.Exists)
+                        if (!localFile.Exists)
                         {
-                            LogError("PHRP file was not copied locally: " + fiLocalFile.Name);
+                            LogError("PHRP file was not copied locally: " + localFile.Name);
                             return false;
                         }
 
-                        filesCopied.Add(fiSourceFile.Name);
+                        filesCopied.Add(sourceFile.Name);
 
                         var unzipped = false;
 
                         // Decompress .zip files
                         // Do not decompress .gz files since we can decompress them on-the-fly while reading them
-                        if (string.Equals(fiLocalFile.Extension, ".zip", StringComparison.OrdinalIgnoreCase))
+                        if (string.Equals(localFile.Extension, ".zip", StringComparison.OrdinalIgnoreCase))
                         {
                             // Decompress the .zip file
-                            mDotNetZipTools.UnzipFile(fiLocalFile.FullName, mWorkDir);
+                            mDotNetZipTools.UnzipFile(localFile.FullName, mWorkDir);
                             unzipped = true;
                         }
 
@@ -4054,7 +4054,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                         }
                     }
 
-                    AddToListIfNew(mPreviousDatasetFilesToDelete, fiLocalFile.FullName);
+                    AddToListIfNew(mPreviousDatasetFilesToDelete, localFile.FullName);
                 }
 
                 if (mMyEMSLUtilities.FilesToDownload.Count > 0)
