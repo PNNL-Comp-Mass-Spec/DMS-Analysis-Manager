@@ -2855,7 +2855,8 @@ namespace AnalysisManagerBase
         {
             // Value prior to December 2014: 3 TB
             // Value effective December 2014: 20 TB
-            const int spaceUsageThresholdGB = 20000;
+            // Value effective April 2020: 18 TB
+            const int spaceUsageThresholdGB = 18000;
             PurgeOldServerCacheFiles(cacheDirectoryPath, spaceUsageThresholdGB);
         }
 
