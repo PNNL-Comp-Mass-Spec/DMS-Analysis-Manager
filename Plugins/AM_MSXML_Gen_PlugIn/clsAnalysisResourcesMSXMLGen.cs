@@ -76,12 +76,13 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
                         case RAW_DATA_TYPE_DOT_UIMF_FILES:
                             // Check whether the dataset directory has an Agilent .D directory
-                            // If it does, retrieve it; otherwise, retrieve the .UIMF file
+                            // If it does, and if PreferUIMF is false, retrieve it; otherwise, retrieve the .UIMF file
                             // Instruments IMS08_AgQTOF05 and IMS09_AgQToF06 should have .D directories
 
                             var isAgilentDotD = DatasetHasAgilentDotD();
+                            var preferUIMF = mJobParams.GetJobParameter("PreferUIMF", false);
 
-                            if (isAgilentDotD)
+                            if (isAgilentDotD && !preferUIMF)
                             {
                                 // Retrieve the .D directory
                                 currentTask = string.Format("Retrieve .D directory; instrument: {0}", instrumentName);
