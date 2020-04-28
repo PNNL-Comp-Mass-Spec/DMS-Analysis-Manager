@@ -73,44 +73,56 @@ namespace AnalysisManager_Mage_PlugIn
         /// <returns></returns>
         public bool RunMageOperation(string mageOperation)
         {
-            var blnSuccess = false;
+            var success = false;
 
             // Note: case statements must be lowercase
             switch (mageOperation.ToLower())
             {
+                // ReSharper disable StringLiteralTypo
                 case "extractfromjobs":
-                    blnSuccess = ExtractFromJobs();
+                    success = ExtractFromJobs();
                     break;
+
                 case "getfactors":
-                    blnSuccess = GetFactors();
+                    success = GetFactors();
                     break;
+
                 case "importdatapackagefiles":
-                    blnSuccess = ImportDataPackageFiles();
+                    success = ImportDataPackageFiles();
                     break;
+
                 case "importimprovclusterfiles":
-                    blnSuccess = ImportIMPROVClusterDataPackageFile();
+                    success = ImportIMPROVClusterDataPackageFile();
                     break;
+
                 case "getfdrtables":
-                    blnSuccess = ImportFDRTables();
+                    success = ImportFDRTables();
                     break;
+
                 case "importfirsthits":
-                    blnSuccess = ImportFirstHits();
+                    success = ImportFirstHits();
                     break;
+
                 case "importreporterions":
-                    blnSuccess = ImportReporterIons();
+                    success = ImportReporterIons();
                     break;
+
                 case "importrawfilelist":
-                    blnSuccess = ImportRawFileList();
+                    success = ImportRawFileList();
                     break;
+
                 case "importjoblist":
-                    blnSuccess = ImportJobList();
+                    success = ImportJobList();
                     break;
+
                 case "nooperation":
-                    blnSuccess = NoOperation();
+                    success = NoOperation();
                     break;
-                    // Future: throw an error
+
+                // ReSharper restore StringLiteralTypo
             }
-            return blnSuccess;
+
+            return success;
         }
 
 
