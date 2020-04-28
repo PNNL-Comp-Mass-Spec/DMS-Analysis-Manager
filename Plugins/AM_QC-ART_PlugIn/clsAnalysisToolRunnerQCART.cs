@@ -650,7 +650,7 @@ namespace AnalysisManagerQCARTPlugin
 
                 dbTools.AddParameter(cmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
                 dbTools.AddTypedParameter(cmd, "@DatasetID", SqlType.Int, value: datasetID);
-                dbTools.AddParameter(cmd, "@ResultsXML", SqlType.Xml).Value = xmlData;
+                dbTools.AddParameter(cmd, "@ResultsXML", SqlType.XML).Value = xmlData;
 
                 var returnCode = dbTools.ExecuteSP(cmd, 3);
 
