@@ -1,6 +1,7 @@
 ﻿using AnalysisManagerBase;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using PRISMDatabaseUtils;
 
 namespace AnalysisManager_Mage_PlugIn
@@ -28,7 +29,7 @@ namespace AnalysisManager_Mage_PlugIn
             var mageOperations = mJobParams.GetParam("MageOperations", string.Empty);
 
             var jobAnalysisType = mJobParams.GetParam("AnalysisType", string.Empty);
-            var requireDeconJobs = jobAnalysisType == "iTRAQ";
+            var checkDeconJobs = jobAnalysisType == "iTRAQ";
 
             var requireMasicJobs = mageOperations.Contains("ImportReporterIons");
 
@@ -46,7 +47,7 @@ namespace AnalysisManager_Mage_PlugIn
                 requireMasicJobs = true;
             }
 
-            if (!(requireMasicJobs || requireDeconJobs))
+            if (!(requireMasicJobs || checkDeconJobs))
             {
                 return CloseOutType.CLOSEOUT_SUCCESS;
             }
@@ -80,7 +81,6 @@ namespace AnalysisManager_Mage_PlugIn
             }
 
             var masicJobsAreValid = true;
-            var deconJobsAreValid = true;
             mMessage = string.Empty;
 
             // Confirm that every Peptide_Hit job has a corresponding MASIC job (required to populate table T_Reporter_Ions)
@@ -89,23 +89,20 @@ namespace AnalysisManager_Mage_PlugIn
                 masicJobsAreValid = ValidateMasicJobs(dataPackageID, peptideHitJobs, lstAdditionalJobs);
             }
 
-            if (requireDeconJobs)
+            if (checkDeconJobs)
             {
-                deconJobsAreValid = ValidateDeconJobs(dataPackageID, peptideHitJobs, lstAdditionalJobs);
+                ValidateDeconJobs(dataPackageID, peptideHitJobs, lstAdditionalJobs);
             }
 
-            if (masicJobsAreValid && deconJobsAreValid)
-                return CloseOutType.CLOSEOUT_SUCCESS;
-
-            return CloseOutType.CLOSEOUT_FAILED;
+            return masicJobsAreValid ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
         }
 
-        private bool ValidateDeconJobs(
+        private void ValidateDeconJobs(
             int dataPackageID,
             IReadOnlyCollection<clsDataPackageJobInfo> peptideHitJobs,
             IReadOnlyCollection<clsDataPackageJobInfo> lstAdditionalJobs)
         {
-            return ValidateMatchingJobs(dataPackageID, peptideHitJobs, lstAdditionalJobs, "HMMA_Peak", "DeconTools");
+            ValidateMatchingJobs(dataPackageID, peptideHitJobs, lstAdditionalJobs, "HMMA_Peak", "DeconTools");
         }
 
         private bool ValidateMasicJobs(int dataPackageID,
@@ -122,7 +119,7 @@ namespace AnalysisManager_Mage_PlugIn
             string resultType,
             string toolName)
         {
-            var missingMasicCount = 0;
+            var missingJobCount = 0;
 
             foreach (var job in peptideHitJobs)
             {
@@ -134,36 +131,49 @@ namespace AnalysisManager_Mage_PlugIn
                      select matchingJob).Any();
 
                 if (!matchFound)
-                    missingMasicCount++;
+                    missingJobCount++;
             }
 
-            if (missingMasicCount <= 0)
+            if (missingJobCount <= 0)
             {
                 return true;
             }
 
-            var msg = "Data package " + dataPackageID;
+            var msg = new StringBuilder();
+            msg.Append("Data package " + dataPackageID);
 
-            if (missingMasicCount == peptideHitJobs.Count)
-                msg += " does not have any " + toolName + " jobs";
+            if (missingJobCount == peptideHitJobs.Count)
+            {
+                msg.Append(" does not have any " + toolName + " jobs");
+            }
             else
             {
-                msg += " has " + missingMasicCount + " PeptideHit job";
-                if (missingMasicCount > 1)
-                    msg += "s that do not";
+                msg.Append(" has " + missingJobCount + " PeptideHit job");
+                if (missingJobCount > 1)
+                    msg.Append("s that do not");
                 else
-                    msg += " that does not";
+                    msg.Append(" that does not");
 
-                msg += " have a matching corresponding " + toolName + " job";
+                msg.Append(" have a matching corresponding " + toolName + " job");
             }
 
-            if (toolName == "MASIC")
-                msg += "; required in order to extract reporter ion information";
+            switch (toolName)
+            {
+                case "MASIC":
+                    LogError(msg + "; required in order to extract reporter ion information");
+                    break;
 
-            if (toolName == "DeconTools")
-                msg += "; required for IDM";
+                case "DeconTools":
+                    // Data package 3545 does not have any DeconTools jobs; the IDM tool uses _isos.csv files if they exist, but they're not required
+                    var warningMessage = msg + "; the IDM tool uses _isos.csv files if they exist, but they're not required";
+                    LogWarning(warningMessage);
+                    mJobParams.AddAdditionalParameter("AnalysisResourcesClass", "Evaluation_Message", warningMessage);
+                    break;
 
-            LogError(msg);
+                default:
+                    LogError(msg.ToString());
+                    break;
+            }
 
             return false;
         }

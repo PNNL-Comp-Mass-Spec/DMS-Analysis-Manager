@@ -100,6 +100,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Can be used to pass information regarding the results of this analysis back to the DMS_Pipeline DB
         /// </summary>
+        /// <remarks>Text here will be stored in the Evaluation_Message column in the database when the job is closed</remarks>
         protected string mEvalMessage = string.Empty;
 
         /// <summary>

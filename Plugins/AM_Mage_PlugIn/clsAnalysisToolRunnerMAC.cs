@@ -39,6 +39,12 @@ namespace AnalysisManager_Mage_PlugIn
                 // Store the MAC tool version info in the database
                 StoreToolVersionInfo();
 
+                var cachedWarningMessage = mJobParams.GetJobParameter("AnalysisResourcesClass", "Evaluation_Message", string.Empty);
+                if (!string.IsNullOrWhiteSpace(cachedWarningMessage))
+                {
+                    mEvalMessage = clsGlobal.AppendToComment(mEvalMessage, cachedWarningMessage);
+                }
+
                 LogMessage("Running MAC Plugin");
 
                 bool processingSuccess;
