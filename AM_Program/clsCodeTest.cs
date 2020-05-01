@@ -1857,7 +1857,7 @@ namespace AnalysisManagerProg
 
         #region "EventNotifier events"
 
-        private void RegisterEvents(EventNotifier processingClass)
+        private void RegisterEvents(IEventNotifier processingClass)
         {
             processingClass.DebugEvent += DebugEventHandler;
             processingClass.StatusEvent += StatusEventHandler;

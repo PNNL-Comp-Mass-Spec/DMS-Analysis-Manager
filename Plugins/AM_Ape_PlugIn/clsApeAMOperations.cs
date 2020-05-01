@@ -1,6 +1,7 @@
 using System;
 using AnalysisManagerBase;
 using PRISM;
+using PRISM.Logging;
 
 namespace AnalysisManager_Ape_PlugIn
 {
@@ -70,7 +71,9 @@ namespace AnalysisManager_Ape_PlugIn
                 var success = apeWfObj.RunWorkflow();
 
                 if (!success)
+                {
                     ErrorMessage = "Error running apeWorkflow: " + apeWfObj.ErrorMessage;
+                }
 
                 return success;
             }
@@ -125,7 +128,7 @@ namespace AnalysisManager_Ape_PlugIn
 
         }
 
-        private void RegisterEventsCustomProgressHandler(EventNotifier sourceClass)
+        private void RegisterEventsCustomProgressHandler(IEventNotifier sourceClass)
         {
             sourceClass.DebugEvent += ApeProgressChanged;
             sourceClass.StatusEvent += OnStatusEvent;

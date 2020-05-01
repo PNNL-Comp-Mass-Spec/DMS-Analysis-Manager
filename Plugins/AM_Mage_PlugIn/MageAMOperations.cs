@@ -513,7 +513,7 @@ namespace AnalysisManager_Mage_PlugIn
             return paramNameList.Split(',').Select(paramName => mageObject.GetJobParam(paramName.Trim())).ToArray();
         }
 
-        private void RegisterMageEvents(EventNotifier sourceClass)
+        private void RegisterMageEvents(IEventNotifier sourceClass)
         {
             sourceClass.DebugEvent += Mage_DebugEvent;
             sourceClass.StatusEvent += OnStatusEvent;

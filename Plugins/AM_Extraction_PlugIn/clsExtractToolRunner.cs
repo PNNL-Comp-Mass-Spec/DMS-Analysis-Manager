@@ -1106,7 +1106,7 @@ namespace AnalysisManagerExtractionPlugin
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
-        private void RegisterPHRPEvents(EventNotifier phrp)
+        private void RegisterPHRPEvents(IEventNotifier phrp)
         {
             RegisterEvents(phrp);
 
@@ -1114,7 +1114,6 @@ namespace AnalysisManagerExtractionPlugin
             phrp.ProgressUpdate -= ProgressUpdateHandler;
             phrp.ProgressUpdate += PHRP_ProgressChanged;
             phrp.SkipConsoleWriteIfNoProgressListener = true;
-
         }
 
         private CloseOutType RunMzidMerger(string mzidFilenameMatchSpec, string combinedMzidFileName)
