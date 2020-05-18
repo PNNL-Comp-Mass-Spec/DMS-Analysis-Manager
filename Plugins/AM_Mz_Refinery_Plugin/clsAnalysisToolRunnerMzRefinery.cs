@@ -269,7 +269,19 @@ namespace AnalysisManagerMzRefineryPlugIn
                     {
                         try
                         {
-                            StartPpmErrorCharter(msgfPlusResults, fixedMSXmlFile);
+                            if (fixedMSXmlFile.Exists)
+                            {
+                                StartPpmErrorCharter(msgfPlusResults, fixedMSXmlFile);
+                            }
+                            else if (originalMSXmlFile.Exists)
+                            {
+                                StartPpmErrorCharter(msgfPlusResults, originalMSXmlFile);
+                            }
+                            else
+                            {
+                                LogWarning("Unable to generate PPMError plots for debugging purposes; .mzML file not found");
+                            }
+
                         }
                         catch (Exception ex)
                         {
