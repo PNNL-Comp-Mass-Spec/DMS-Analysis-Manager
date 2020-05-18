@@ -12,6 +12,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerMSGFDBPlugIn
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerMSFraggerPlugIn", "..\Plugins\AM_MSFragger_Plugin\AnalysisManagerMSFraggerPlugIn.csproj", "{DAE7C38E-A9AC-44C2-AC16-F3CEA558927D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerMzRefineryPlugIn", "..\Plugins\AM_Mz_Refinery_Plugin\AnalysisManagerMzRefineryPlugIn.csproj", "{2B8D4538-555C-4D01-A508-A75CBE76147C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -38,6 +40,10 @@ Global
 		{DAE7C38E-A9AC-44C2-AC16-F3CEA558927D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DAE7C38E-A9AC-44C2-AC16-F3CEA558927D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DAE7C38E-A9AC-44C2-AC16-F3CEA558927D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2B8D4538-555C-4D01-A508-A75CBE76147C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2B8D4538-555C-4D01-A508-A75CBE76147C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2B8D4538-555C-4D01-A508-A75CBE76147C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2B8D4538-555C-4D01-A508-A75CBE76147C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
