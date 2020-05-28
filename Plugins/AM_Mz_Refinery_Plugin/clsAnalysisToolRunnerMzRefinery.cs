@@ -26,6 +26,7 @@ namespace AnalysisManagerMzRefineryPlugIn
         #region "Constants and Enums"
 
         private const float PROGRESS_PCT_MzREFINERY_COMPLETE = 97;
+
         private const float PROGRESS_PCT_PLOTS_GENERATED = 98;
 
         private const float PROGRESS_PCT_COMPLETE = 99;
@@ -365,7 +366,6 @@ namespace AnalysisManagerMzRefineryPlugIn
                 LogError("Error in MzRefineryPlugin->RunTool", ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-
         }
 
         /// <summary>
@@ -728,7 +728,6 @@ namespace AnalysisManagerMzRefineryPlugIn
                 LogError("Error in ExtractMzRefinerOptionsFromParameterFile", ex);
                 return false;
             }
-
         }
 
         private DateTime mLastConsoleOutputParse = DateTime.MinValue;
@@ -1105,6 +1104,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 LogError("Error parsing mzRefinement.tsv file: " + ex.Message, ex);
             }
         }
+
         private bool PostProcessMzRefineryResults(FileSystemInfo msgfPlusResults, FileInfo fixedMSXmlFile, bool skippedMSGFPlus)
         {
             var originalMsXmlFilePath = Path.Combine(mWorkDir, mDatasetName + fixedMSXmlFile.Extension);
@@ -1276,7 +1276,6 @@ namespace AnalysisManagerMzRefineryPlugIn
                 LogError("Error copying the .mzML.gz file to the remote cache folder", ex);
                 return false;
             }
-
         }
 
         /// <summary>
@@ -1562,7 +1561,6 @@ namespace AnalysisManagerMzRefineryPlugIn
             LogErrorToDatabase(errorMsg + ", job " + mJob);
             mMessage = errorMsg;
             return false;
-
         }
 
         /// <summary>
@@ -1610,7 +1608,6 @@ namespace AnalysisManagerMzRefineryPlugIn
                 return false;
             }
         }
-
 
         /// <summary>
         /// Update .mzML file using the parent ion m/z values listed in a _dta.txt file
@@ -1811,7 +1808,6 @@ namespace AnalysisManagerMzRefineryPlugIn
                 return false;
             }
         }
-
 
         private void UpdateProgress(float progressCompleteOverall)
         {

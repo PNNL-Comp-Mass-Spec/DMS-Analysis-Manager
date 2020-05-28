@@ -74,9 +74,17 @@ namespace AnalysisManagerMzRefineryPlugIn
             return sbXml.ToString();
         }
 
+        /// <summary>
+        /// Parse the PPM Error Charter console output file to extract the mass error reported in this table
+        /// </summary>
+        /// <param name="datasetName"></param>
+        /// <param name="datasetID"></param>
+        /// <param name="psmJob"></param>
+        /// <param name="ppmErrorCharterConsoleOutputFilePath"></param>
+        /// <returns></returns>
         public bool ParsePPMErrorCharterOutput(string datasetName, int datasetID, int psmJob, string ppmErrorCharterConsoleOutputFilePath)
         {
-            // Parse the Console Output file to extract the mass error reported in this table
+            // Example console output:
             //
             // Using fixed data file "E:\DMS_WorkDir\DatasetName_FIXED.mzML"
             // Statistic                   Original    Refined
@@ -135,12 +143,14 @@ namespace AnalysisManagerMzRefineryPlugIn
 
                 if (Math.Abs(MassErrorInfo.MassErrorPPM - double.MinValue) < float.Epsilon)
                 {
+                    // Did not find 'MedianMassErrorPPM' in the PPM Error Charter output
                     ErrorMessage = "Did not find '" + MASS_ERROR_PPM + "' in the PPM Error Charter output";
                     return false;
                 }
 
                 if (Math.Abs(MassErrorInfo.MassErrorPPMRefined - double.MinValue) < float.Epsilon)
                 {
+                    // Did not find 'MedianMassErrorPPM' with two values in the PPM Error Charter output
                     ErrorMessage = "Did not find '" + MASS_ERROR_PPM + "' with two values in the PPM Error Charter output";
                     return false;
                 }
