@@ -198,7 +198,9 @@ namespace AnalysisManagerMzRefineryPlugIn
                 }
                 else
                 {
-                    ErrorMessage = "Error storing MzRefinery Mass Error Results in the database, " + STORE_MASS_ERROR_STATS_SP_NAME + " returned " + resCode;
+                    ErrorMessage = string.Format(
+                        "Error storing MzRefinery Mass Error Results in the database, {0} returned {1}",
+                        STORE_MASS_ERROR_STATS_SP_NAME, resCode);
                     success = false;
                 }
             }
