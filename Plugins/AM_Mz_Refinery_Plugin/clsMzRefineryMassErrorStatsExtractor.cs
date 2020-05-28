@@ -28,7 +28,13 @@ namespace AnalysisManagerMzRefineryPlugIn
         /// </summary>
         public clsMassErrorInfo MassErrorInfo { get; }
 
-        public clsMzRefineryMassErrorStatsExtractor(IMgrParams mgrParams, short debugLevel, bool postResultsToDB)
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="mgrParams"></param>
+        /// <param name="debugLevel"></param>
+        /// <param name="postResultsToDB"></param>
+        public clsMzRefineryMassErrorStatsExtractor(IMgrParams mgrParams, short debugLevel, bool postResultsToDB = true)
         {
             mMgrParams = mgrParams;
             mDebugLevel = debugLevel;

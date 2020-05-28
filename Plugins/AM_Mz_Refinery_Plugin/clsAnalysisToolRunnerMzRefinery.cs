@@ -1531,7 +1531,7 @@ namespace AnalysisManagerMzRefineryPlugIn
 
         private bool StorePPMErrorStatsInDB()
         {
-            var massErrorExtractor = new clsMzRefineryMassErrorStatsExtractor(mMgrParams, mDebugLevel, postResultsToDB: true);
+            var massErrorExtractor = new clsMzRefineryMassErrorStatsExtractor(mMgrParams, mDebugLevel);
 
             var datasetID = mJobParams.GetJobParameter("DatasetID", 0);
 
