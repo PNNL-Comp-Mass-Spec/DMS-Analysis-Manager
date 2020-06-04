@@ -36,6 +36,13 @@ namespace AnalysisManagerProg
             HelpText = "Enable trace mode, where debug messages are written to the command prompt")]
         public bool TraceMode { get; set; }
 
+        /// <summary>
+        /// Immediately stop the program when this named location is reached
+        /// </summary>
+        [Option("TraceStopPoint", "TraceStop", "Stop", HelpShowsDefault = false,
+            HelpText = "Immediately stop the program when this named location is reached. " +
+                       "Example command line: AnalysisManagerProg.exe /Trace /TraceStopPoint:UpdateIdle")]
+        public string TraceStopPoint { get; set; }
 
         /// <summary>
         /// When true, display DLL versions
@@ -89,6 +96,7 @@ namespace AnalysisManagerProg
         public CommandLineOptions()
         {
             DisplayDllPath = string.Empty;
+            TraceStopPoint = string.Empty;
         }
     }
 }
