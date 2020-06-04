@@ -887,7 +887,7 @@ namespace AnalysisManagerBase
                 {
                     // No valid messages were found in recentErrorMessages
                     // Call StoreNewErrorMessage to clear the stored error messages
-                    StoreNewErrorMessage("", true);
+                    StoreNewErrorMessage(string.Empty, true);
                 }
             }
         }
@@ -1324,7 +1324,7 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Updates status file
+        /// Updates status file to indicate that the manager is closing
         /// </summary>
         /// <param name="managerIdleMessage"></param>
         /// <param name="recentErrorMessages"></param>
@@ -1343,7 +1343,7 @@ namespace AnalysisManagerBase
             StoreRecentErrorMessages(recentErrorMessages);
             StoreRecentJobInfo(jobInfo);
 
-            WriteStatusFile(forceLogToBrokerDB);
+            WriteStatusFile(forceLogToBrokerDB, false);
 
         }
 
@@ -1450,7 +1450,7 @@ namespace AnalysisManagerBase
             TaskStatus = EnumTaskStatus.NO_TASK;
             MostRecentLogMessage = managerIdleMessage;
 
-            WriteStatusFile(forceLogToBrokerDB);
+            WriteStatusFile(forceLogToBrokerDB, false);
         }
 
         /// <summary>
@@ -1500,7 +1500,7 @@ namespace AnalysisManagerBase
 
             OfflineJobStatusFilePath = string.Empty;
 
-            WriteStatusFile(forceLogToBrokerDB);
+            WriteStatusFile(forceLogToBrokerDB, false);
         }
 
         /// <summary>
@@ -1551,7 +1551,7 @@ namespace AnalysisManagerBase
             StoreRecentJobInfo(recentJobInfo);
             StoreRecentErrorMessages(recentErrorMessages);
 
-            WriteStatusFile(true);
+            WriteStatusFile(true, false);
         }
 
         /// <summary>
@@ -1578,7 +1578,7 @@ namespace AnalysisManagerBase
             StoreRecentErrorMessages(recentErrorMessages);
             StoreRecentJobInfo(recentJobInfo);
 
-            WriteStatusFile(true);
+            WriteStatusFile(true, false);
         }
 
         /// <summary>
