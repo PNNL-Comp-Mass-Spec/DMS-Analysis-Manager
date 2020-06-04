@@ -170,6 +170,11 @@ namespace AnalysisManagerProg
         public clsMainProcess(CommandLineOptions options)
         {
             Options = options;
+            clsGlobal.TraceMode = options.TraceMode;
+            clsGlobal.TraceStopPoint = options.TraceStopPoint;
+
+            TraceMode = options.TraceMode;
+
             mConfigChanged = false;
             mDebugLevel = 0;
             mDMSProgramsSynchronized = false;
@@ -179,6 +184,11 @@ namespace AnalysisManagerProg
             var exeInfo = new FileInfo(PRISM.FileProcessor.ProcessFilesOrDirectoriesBase.GetAppPath());
             mMgrExeName = exeInfo.Name;
             mMgrDirectoryPath = exeInfo.DirectoryName;
+        }
+
+        private void CheckStopTrace(string currentTraceLocation)
+        {
+            clsGlobal.CheckStopTrace(Options.TraceStopPoint, currentTraceLocation, Options.TraceMode);
         }
 
         /// <summary>

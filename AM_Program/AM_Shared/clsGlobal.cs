@@ -87,6 +87,16 @@ namespace AnalysisManagerBase
         public static bool OfflineMode { get; private set; }
 
         /// <summary>
+        /// When true, show trace messages
+        /// </summary>
+        public static bool TraceMode { get; set; }
+
+        /// <summary>
+        /// Trace point at which to immediately halt program execution
+        /// </summary>
+        public static string TraceStopPoint { get; set; } = string.Empty;
+
+        /// <summary>
         /// System process info
         /// </summary>
         public static SystemProcessInfo ProcessInfo
@@ -185,6 +195,40 @@ namespace AnalysisManagerBase
             }
 
             return textIfZeroOrMultiple;
+        }
+
+        /// <summary>
+        /// If TraceStopPoint matches currentTraceLocation, exit the application immediately
+        /// </summary>
+        /// <param name="currentTraceLocation"></param>
+        /// <remarks>If TraceMode is true, will show the current trace point name if not a match</remarks>
+        public static void CheckStopTrace(string currentTraceLocation)
+        {
+            CheckStopTrace(TraceStopPoint, currentTraceLocation, TraceMode);
+        }
+
+        /// <summary>
+        /// If traceStopPoint matches currentTraceLocation, exit the application immediately
+        /// </summary>
+        /// <param name="traceStopPoint"></param>
+        /// <param name="currentTraceLocation"></param>
+        /// <param name="traceModeEnabled"></param>
+        /// <remarks>If traceModeEnabled is true, will show the current trace point name if not a match</remarks>
+        public static void CheckStopTrace(string traceStopPoint, string currentTraceLocation, bool traceModeEnabled)
+        {
+            if (string.IsNullOrEmpty(traceStopPoint))
+                return;
+
+            if (traceStopPoint.Equals(currentTraceLocation, StringComparison.OrdinalIgnoreCase))
+            {
+                Console.WriteLine();
+                ConsoleMsgUtils.ShowWarning("Exiting application at trace point " + currentTraceLocation);
+                Environment.Exit(0);
+            }
+            else if (traceModeEnabled)
+            {
+                ConsoleMsgUtils.ShowDebug("Trace point: " + currentTraceLocation);
+            }
         }
 
         /// <summary>
