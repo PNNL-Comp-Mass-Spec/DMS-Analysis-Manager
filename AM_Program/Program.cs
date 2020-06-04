@@ -141,7 +141,7 @@ namespace AnalysisManagerProg
                 // Initiate automated analysis
                 ShowTrace("Instantiating clsMainProcess");
 
-                var mainProcess = new clsMainProcess(options.TraceMode)
+                var mainProcess = new clsMainProcess(options)
                 {
                     DisableMessageQueue = options.DisableMessageQueue,
                     DisableMyEMSL = options.DisableMyEMSL,

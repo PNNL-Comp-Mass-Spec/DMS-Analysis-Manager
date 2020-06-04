@@ -55,8 +55,10 @@ namespace AnalysisManagerProg
             try
             {
                 // Load settings from config file AnalysisManagerProg.exe.config
-                var mainProcess = new clsMainProcess(TRACE_MODE_ENABLED);
-                mainProcess.InitMgSettings(false);
+                var options = new CommandLineOptions {TraceMode = TRACE_MODE_ENABLED};
+
+                var mainProcess = new clsMainProcess(options);
+                mainProcess.InitMgrSettings(false);
 
                 var configFileSettings = mainProcess.LoadMgrSettingsFromFile();
 

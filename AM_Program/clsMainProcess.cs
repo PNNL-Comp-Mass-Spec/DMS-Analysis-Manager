@@ -93,6 +93,8 @@ namespace AnalysisManagerProg
         /// </summary>
         public bool DisableMyEMSL { get; set; }
 
+        private CommandLineOptions Options { get; }
+
         /// <summary>
         /// When true, only push analysis manager files to the remote host using the DMSUpdateManager
         /// Do not request a new analysis job
@@ -165,9 +167,9 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Constructor
         /// </summary>
-        public clsMainProcess(bool traceModeEnabled)
+        public clsMainProcess(CommandLineOptions options)
         {
-            TraceMode = traceModeEnabled;
+            Options = options;
             mConfigChanged = false;
             mDebugLevel = 0;
             mDMSProgramsSynchronized = false;
