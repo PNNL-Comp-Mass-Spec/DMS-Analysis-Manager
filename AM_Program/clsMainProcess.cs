@@ -440,7 +440,7 @@ namespace AnalysisManagerProg
         /// When true, if an exception is encountered, immediately throws
         /// the exception so that the calling method can handle it
         /// </param>
-        public void InitMgSettings(bool throwExceptions)
+        public void InitMgrSettings(bool throwExceptions)
         {
             try
             {
