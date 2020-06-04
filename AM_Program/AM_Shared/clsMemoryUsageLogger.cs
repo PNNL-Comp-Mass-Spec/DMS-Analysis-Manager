@@ -224,11 +224,16 @@ namespace AnalysisManagerBase
         {
             if (!mPerfCountersInitialized)
             {
+                clsGlobal.CheckStopTrace("InitMemoryUsagePerfCounters");
                 InitializePerfCounters();
             }
 
+            clsGlobal.CheckStopTrace("GetProcessMemoryUsageMB");
             var processMemoryUsageMB = GetProcessMemoryUsageMB();
+
+            clsGlobal.CheckStopTrace("GetFreeMemoryMB");
             var freeMemoryMB = GetFreeMemoryMB();
+
             float poolPagedMemory;
             float poolNonPagedMemory;
 
@@ -239,7 +244,10 @@ namespace AnalysisManagerBase
             }
             else
             {
+                clsGlobal.CheckStopTrace("GetPoolPagedMemory");
                 poolPagedMemory = GetPoolPagedMemory();
+
+                clsGlobal.CheckStopTrace("GetPoolNonPagedMemory");
                 poolNonPagedMemory = GetPoolNonPagedMemory();
             }
 
@@ -338,6 +346,7 @@ namespace AnalysisManagerBase
 
             try
             {
+                clsGlobal.CheckStopTrace("InitPerfCounterMemoryMB");
                 mPerfCounterFreeMemory = new PerformanceCounter("Memory", "Available MBytes") { ReadOnly = true };
             }
             catch (Exception ex)
@@ -347,6 +356,7 @@ namespace AnalysisManagerBase
 
             try
             {
+                clsGlobal.CheckStopTrace("InitPerfCounterPoolPaged");
                 mPerfCounterPoolPagedBytes = new PerformanceCounter("Memory", "Pool Paged Bytes") { ReadOnly = true };
             }
             catch (Exception ex)
@@ -356,6 +366,7 @@ namespace AnalysisManagerBase
 
             try
             {
+                clsGlobal.CheckStopTrace("InitPerfCounterPoolNonPaged");
                 mPerfCounterPoolNonPagedBytes = new PerformanceCounter("Memory", "Pool NonPaged Bytes") { ReadOnly = true };
             }
             catch (Exception ex)

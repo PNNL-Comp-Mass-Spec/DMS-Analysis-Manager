@@ -145,6 +145,7 @@ namespace AnalysisManagerProg
 
                     ShowTrace("Pushing new/updated DMS_Programs files to remote host");
 
+                    CheckStopTrace("RunDMSUpdateManager");
                     transferUtility.RunDMSUpdateManager();
                     return 0;
                 }
@@ -201,6 +202,8 @@ namespace AnalysisManagerProg
 
             var hostName = System.Net.Dns.GetHostName();
 
+            CheckStopTrace("CreateDefaultFileLogger");
+
             // Define the default logging info
             // This will get updated below
             var baseLogFileName = clsGlobal.LinuxOS ? DEFAULT_BASE_LOGFILE_NAME.Replace('\\', '/') : DEFAULT_BASE_LOGFILE_NAME;
@@ -230,6 +233,8 @@ namespace AnalysisManagerProg
                     defaultDmsConnectionString = dmsConnectionStringFromConfig;
                 }
 
+                CheckStopTrace("CreateDefaultDbLogger");
+
                 ShowTrace("Instantiate a DbLogger using " + defaultDmsConnectionString);
 
                 // ReSharper disable once ConditionIsAlwaysTrueOrFalse
@@ -245,7 +250,11 @@ namespace AnalysisManagerProg
 
                 try
                 {
-                    InitMgSettings(true);
+                    CheckStopTrace("InitMgrSettings");
+
+                    InitMgrSettings(true);
+
+                    CheckStopTrace("LoadMgrSettingsFromFile");
 
                     // Load settings from config file AnalysisManagerProg.exe.config
                     var configFileSettings = LoadMgrSettingsFromFile();
@@ -256,6 +265,8 @@ namespace AnalysisManagerProg
                         RegisterEvents(settingsClass);
                         settingsClass.CriticalErrorEvent += CriticalErrorEvent;
                     }
+
+                    CheckStopTrace("LoadSettings");
 
                     var success = mMgrSettings.LoadSettings(configFileSettings);
                     if (!success)
@@ -298,6 +309,8 @@ namespace AnalysisManagerProg
 
             var logFileNameBase = GetBaseLogFileName();
 
+            CheckStopTrace("CreateFileLogger");
+
             // The analysis manager determines when to log or not log based on internal logic
             // Set the LogLevel tracked by FileLogger to DEBUG so that all messages sent to the class are logged
             LogTools.CreateFileLogger(logFileNameBase, BaseLogger.LogLevels.DEBUG);
@@ -305,6 +318,8 @@ namespace AnalysisManagerProg
             if (!clsGlobal.OfflineMode)
             {
                 var logCnStr = mMgrSettings.GetParam("ConnectionString");
+
+                CheckStopTrace("CreateDbLogger");
 
                 // ReSharper disable once ConditionIsAlwaysTrueOrFalse
                 LogTools.CreateDbLogger(logCnStr, "Analysis Tool Manager: " + mMgrName, TraceMode && ENABLE_LOGGER_TRACE_MODE);
@@ -314,6 +329,8 @@ namespace AnalysisManagerProg
             var relativeLogFilePath = LogTools.CurrentLogFilePath;
             var logFile = new FileInfo(relativeLogFilePath);
             ShowTrace("Initializing log file " + PathUtils.CompactPathString(logFile.FullName, 60));
+
+            CheckStopTrace("LogStartup");
 
             var appVersion = Assembly.GetEntryAssembly()?.GetName().Version;
             var startupMsg = "=== Started Analysis Manager V" + appVersion + " ===== ";
@@ -333,6 +350,8 @@ namespace AnalysisManagerProg
 
             if (clsGlobal.OfflineMode)
             {
+                CheckStopTrace("CreateConfigFileWatcher");
+
                 mLocalSettingsFileWatcher = CreateConfigFileWatcher(clsAnalysisMgrSettings.LOCAL_MANAGER_SETTINGS_FILE);
                 mLocalSettingsFileWatcher.Changed += ConfigFileWatcher_Changed;
             }
@@ -359,6 +378,8 @@ namespace AnalysisManagerProg
                     return false;
                 }
             }
+
+            CheckStopTrace("CreateAnalysisTask");
 
             // Setup the tool for getting tasks
             ShowTrace("Instantiate mAnalysisTask as new clsAnalysisJob");
@@ -394,6 +415,8 @@ namespace AnalysisManagerProg
 
             ShowTrace("Initialize the Plugin Loader");
 
+            CheckStopTrace("CreatePluginLoader");
+
             mPluginLoader = new clsPluginLoader(mSummaryFile, mMgrDirectoryPath);
             RegisterEvents(mPluginLoader);
 
@@ -403,6 +426,8 @@ namespace AnalysisManagerProg
             // Use a custom error event handler
             UnregisterEventHandler(mPluginLoader, BaseLogger.LogLevels.ERROR);
             mPluginLoader.ErrorEvent += PluginLoader_ErrorEventHandler;
+
+            CheckStopTrace("ExitInitMgr");
 
             // Everything worked
             return true;
@@ -459,11 +484,15 @@ namespace AnalysisManagerProg
                 var oneTaskStarted = false;
                 var oneTaskPerformed = false;
 
+                CheckStopTrace("InitStatusTools");
                 InitStatusTools();
 
                 while (loopCount < maxLoopCount && requestJobs)
                 {
+                    CheckStopTrace("UpdateStatusIdle");
                     UpdateStatusIdle("No analysis jobs found");
+
+                    CheckStopTrace("CheckConfigChanged");
 
                     // Check for configuration change
                     // This variable will be true if the AnalysisManagerProg.exe.config file has been updated
@@ -473,6 +502,8 @@ namespace AnalysisManagerProg
                         mConfigChanged = false;
 
                         ShowTrace("Reloading manager settings since config file has changed");
+
+                        CheckStopTrace("ReloadManagerSettings");
 
                         if (!ReloadManagerSettings())
                         {
@@ -485,6 +516,8 @@ namespace AnalysisManagerProg
                     }
                     else
                     {
+                        CheckStopTrace("UpdateManagerSettings");
+
                         // Reload the manager control DB settings in case they have changed
                         // However, only reload every 2 minutes
                         if (!UpdateManagerSettings(ref lastConfigDBUpdate, 2))
@@ -516,6 +549,8 @@ namespace AnalysisManagerProg
                         clsGlobal.IdleLoop(0.75);
                         return;
                     }
+
+                    CheckStopTrace("CheckUpdateRequired");
 
                     var mgrUpdateRequired = mMgrSettings.GetParam("ManagerUpdateRequired", false);
 
@@ -577,6 +612,8 @@ namespace AnalysisManagerProg
                         break;
                     }
 
+                    CheckStopTrace("ValidateWorkingDir");
+
                     // Verify working directory properly specified and empty
                     if (!ValidateWorkingDir())
                     {
@@ -600,6 +637,8 @@ namespace AnalysisManagerProg
 
                     if (!clsGlobal.LinuxOS)
                     {
+                        CheckStopTrace("CheckPendingUpdates");
+
                         if (WindowsUpdatesArePending())
                         {
                             // Check whether the computer is likely to install the monthly Windows Updates within the next few hours
@@ -618,11 +657,15 @@ namespace AnalysisManagerProg
                         ShowTrace("Requesting a new task from DMS_Pipeline");
                     }
 
+                    CheckStopTrace("CreateMyEMSLUtilities");
+
                     // Re-initialize these utilities for each analysis job
                     // Note that when RetrieveResources is called, the MyEMSL certificate file (svc-dms.pfx) will be verified to exist
                     // (via GetSharedResources calling CertificateFileExists)
                     mMyEMSLUtilities = new clsMyEMSLUtilities(mDebugLevel, mWorkDirPath, TraceMode);
                     RegisterEvents(mMyEMSLUtilities);
+
+                    CheckStopTrace("RequestTask");
 
                     // Get an analysis job, if any are available
                     var taskReturn = mAnalysisTask.RequestTask();
@@ -781,6 +824,8 @@ namespace AnalysisManagerProg
                     LogMessage("Analysis complete for all available jobs");
                 }
 
+                CheckStopTrace("CloseManager");
+
                 ShowTrace("Closing the manager");
                 UpdateClose("Closing manager.");
             }
@@ -796,6 +841,8 @@ namespace AnalysisManagerProg
 
                     // Wait 1 second to give the message queue time to flush
                     clsGlobal.IdleLoop(1);
+
+                    CheckStopTrace("DisposeMessageQueue");
 
                     ShowTrace("Disposing message queue via mStatusTools.DisposeMessageQueue");
                     mStatusTools.DisposeMessageQueue();
@@ -2793,7 +2840,11 @@ namespace AnalysisManagerProg
         private void UpdateStatusIdle(string managerIdleMessage)
         {
             ShowTrace("Manager is idle");
+
+            CheckStopTrace("DetermineRecentErrorMessages");
             var recentErrorMessages = DetermineRecentErrorMessages(5, ref mMostRecentJobInfo);
+
+            CheckStopTrace("UpdateIdle");
             mStatusTools.UpdateIdle(managerIdleMessage, recentErrorMessages, mMostRecentJobInfo, true);
         }
 

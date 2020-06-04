@@ -306,7 +306,6 @@ namespace AnalysisManagerBase
             mLastFileWriteTime = DateTime.MinValue;
 
             ClearCachedInfo();
-
         }
 
         /// <summary>
@@ -665,6 +664,7 @@ namespace AnalysisManagerBase
 
             try
             {
+                clsGlobal.CheckStopTrace("LogStatusToMessageQueue");
 
                 if (mMessageSender == null)
                 {
@@ -672,6 +672,8 @@ namespace AnalysisManagerBase
                     {
                         OnStatusEvent("Initializing message queue with URI '" + MessageQueueURI + "' and Topic '" + MessageQueueTopic + "'");
                     }
+
+                    clsGlobal.CheckStopTrace("CreateMessageSender");
 
                     mMessageSender = new clsMessageSender(MessageQueueURI, MessageQueueTopic, MgrName);
                     mMessageSender.ErrorEvent += MessageSender_ErrorEvent;
@@ -696,6 +698,8 @@ namespace AnalysisManagerBase
                     mLastMessageQueueErrorTime = logTimeInit;
                     mLastMessageQueueWarningTime = logTimeInit;
                 }
+
+                clsGlobal.CheckStopTrace("LogToQueueLogger");
 
                 if (mQueueLogger != null)
                 {
@@ -732,6 +736,8 @@ namespace AnalysisManagerBase
             if (mBrokerDBLogger == null)
                 return;
 
+            clsGlobal.CheckStopTrace("LogStatusToBrokerDatabase");
+
             var statusInfo = new clsDBStatusLogger.udtStatusInfoType
             {
                 MgrName = MgrName,
@@ -764,6 +770,8 @@ namespace AnalysisManagerBase
                 }
             }
 
+            clsGlobal.CheckStopTrace("CreateTaskInfoType");
+
             var task = new clsDBStatusLogger.udtTaskInfoType
             {
                 Tool = Tool,
@@ -772,6 +780,8 @@ namespace AnalysisManagerBase
                 Progress = Progress,
                 CurrentOperation = CurrentOperation
             };
+
+            clsGlobal.CheckStopTrace("CreateTaskDetailsType");
 
             var taskDetails = new clsDBStatusLogger.udtTaskDetailsType
             {
@@ -786,6 +796,8 @@ namespace AnalysisManagerBase
 
             task.TaskDetails = taskDetails;
             statusInfo.Task = task;
+
+            clsGlobal.CheckStopTrace("LogStatusToBroker");
 
             mBrokerDBLogger.LogStatus(statusInfo, forceLogToBrokerDB);
         }
@@ -871,7 +883,6 @@ namespace AnalysisManagerBase
                     mRecentErrorMessageCount += 1;
                 }
 
-
                 if (mRecentErrorMessageCount == 0)
                 {
                     // No valid messages were found in recentErrorMessages
@@ -904,9 +915,13 @@ namespace AnalysisManagerBase
             try
             {
                 lastUpdate = DateTime.UtcNow;
+
+                clsGlobal.CheckStopTrace("GetProcessID");
                 processId = GetProcessID();
 
                 cpuUtilization = (int)GetCPUUtilization();
+
+                clsGlobal.CheckStopTrace("GetFreeMemoryMB");
                 freeMemoryMB = GetFreeMemoryMB();
             }
             catch (Exception)
@@ -915,6 +930,7 @@ namespace AnalysisManagerBase
             }
 
             WriteStatusFile(lastUpdate, processId, cpuUtilization, freeMemoryMB, forceLogToBrokerDB);
+            clsGlobal.CheckStopTrace("WriteStatusFile");
         }
 
         /// <summary>
@@ -935,6 +951,7 @@ namespace AnalysisManagerBase
             var runTimeHours = GetRunTime();
             WriteStatusFile(this, lastUpdate, processId, cpuUtilization, freeMemoryMB, runTimeHours, true, forceLogToBrokerDB);
 
+            clsGlobal.CheckStopTrace("CheckForAbortProcessingFile");
             CheckForAbortProcessingFile();
 
             // Log the memory usage to a local file
@@ -972,10 +989,12 @@ namespace AnalysisManagerBase
 
             try
             {
+                clsGlobal.CheckStopTrace("GenerateStatusXML");
                 xmlText = GenerateStatusXML(status, lastUpdate, processId, cpuUtilization, freeMemoryMB, runTimeHours);
 
                 if (writeToDisk)
                 {
+                    clsGlobal.CheckStopTrace("WriteStatusFileToDisk");
                     WriteStatusFileToDisk(xmlText);
                 }
             }
@@ -996,7 +1015,6 @@ namespace AnalysisManagerBase
             {
                 // Send the status info to the Broker DB
                 // Note that mBrokerDBLogger() only logs the status every x minutes (unless forceLogToBrokerDB = True)
-
                 LogStatusToBrokerDatabase(forceLogToBrokerDB);
             }
         }
