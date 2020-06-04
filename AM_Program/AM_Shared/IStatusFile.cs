@@ -427,8 +427,13 @@ namespace AnalysisManagerBase
         /// Writes the status file
         /// </summary>
         /// <param name="forceLogToBrokerDB">If true, will force mBrokerDBLogger to report the manager status to the database</param>
+        /// <param name ="includeCpuUsage">
+        /// When true, include the total CPU utilization percent in the status file.
+        /// This can lead to PerfLib warnings and errors in the Windows Event Log;
+        /// thus this should be set to false if simply reporting that the manager is idle
+        /// </param>
         /// <remarks></remarks>
-        void WriteStatusFile(bool forceLogToBrokerDB);
+        void WriteStatusFile(bool forceLogToBrokerDB, bool includeCpuUsage);
 
         #endregion
 

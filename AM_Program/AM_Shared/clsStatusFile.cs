@@ -904,8 +904,13 @@ namespace AnalysisManagerBase
         /// Updates the status in various locations, including on disk and with the message broker and/or broker DB
         /// </summary>
         /// <param name="forceLogToBrokerDB">If true, will force mBrokerDBLogger to report the manager status directly to the database (if initialized)</param>
+        /// <param name ="usePerformanceCounters">
+        /// When true, include the total CPU utilization percent in the status file and call mMemoryUsageLogger.WriteMemoryUsageLogEntry()
+        /// This can lead to PerfLib warnings and errors in the Windows Event Log;
+        /// thus this should be set to false if simply reporting that the manager is idle
+        /// </param>
         /// <remarks>The Message queue is always updated if LogToMsgQueue is true</remarks>
-        public void WriteStatusFile(bool forceLogToBrokerDB)
+        public void WriteStatusFile(bool forceLogToBrokerDB, bool usePerformanceCounters = true)
         {
             var lastUpdate = DateTime.MinValue;
             var processId = 0;
@@ -919,18 +924,33 @@ namespace AnalysisManagerBase
                 clsGlobal.CheckStopTrace("GetProcessID");
                 processId = GetProcessID();
 
-                cpuUtilization = (int)GetCPUUtilization();
+                if (usePerformanceCounters)
+                {
+                    clsGlobal.CheckStopTrace("GetCPUUtilization");
+                    cpuUtilization = (int)GetCPUUtilization();
+                }
+                else if (clsGlobal.TraceMode)
+                {
+                    ConsoleMsgUtils.ShowDebug("Skipping call to GetCPUUtilization in WriteStatusFile");
+                }
 
                 clsGlobal.CheckStopTrace("GetFreeMemoryMB");
                 freeMemoryMB = GetFreeMemoryMB();
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // Ignore errors here
+                ConsoleMsgUtils.ShowDebug("Exception getting process ID, CPU utilization, or free memory: " + ex.Message);
             }
 
-            WriteStatusFile(lastUpdate, processId, cpuUtilization, freeMemoryMB, forceLogToBrokerDB);
+            if (clsGlobal.TraceMode)
+            {
+                ConsoleMsgUtils.ShowDebug(
+                    "Call WriteStatusFile with processId {0}, CPU {1}%, Free Memory {2:F0} MB",
+                    processId, cpuUtilization, freeMemoryMB);
+            }
+
             clsGlobal.CheckStopTrace("WriteStatusFile");
+            WriteStatusFile(lastUpdate, processId, cpuUtilization, freeMemoryMB, forceLogToBrokerDB, usePerformanceCounters);
         }
 
         /// <summary>
@@ -943,9 +963,21 @@ namespace AnalysisManagerBase
         /// <param name="forceLogToBrokerDB">
         /// If true, will force mBrokerDBLogger to report the manager status directly to the database (if initialized)
         /// Otherwise, mBrokerDBLogger only logs the status periodically
-        /// Typically false</param>
+        /// Typically false
+        /// </param>
+        /// <param name ="usePerformanceCounters">
+        /// When true, include the total CPU utilization percent in the status file and call mMemoryUsageLogger.WriteMemoryUsageLogEntry()
+        /// This can lead to PerfLib warnings and errors in the Windows Event Log;
+        /// thus this should be set to false if simply reporting that the manager is idle
+        /// </param>
         /// <remarks>The Message queue is always updated if LogToMsgQueue is true</remarks>
-        public void WriteStatusFile(DateTime lastUpdate, int processId, int cpuUtilization, float freeMemoryMB, bool forceLogToBrokerDB = false)
+        public void WriteStatusFile(
+            DateTime lastUpdate,
+            int processId,
+            int cpuUtilization,
+            float freeMemoryMB,
+            bool forceLogToBrokerDB = false,
+            bool usePerformanceCounters = true)
         {
 
             var runTimeHours = GetRunTime();
@@ -954,9 +986,17 @@ namespace AnalysisManagerBase
             clsGlobal.CheckStopTrace("CheckForAbortProcessingFile");
             CheckForAbortProcessingFile();
 
-            // Log the memory usage to a local file
-            mMemoryUsageLogger?.WriteMemoryUsageLogEntry();
+            if (usePerformanceCounters)
+            {
+                clsGlobal.CheckStopTrace("WriteMemoryUsageLogEntry");
 
+                // Log the memory usage to a local file
+                mMemoryUsageLogger?.WriteMemoryUsageLogEntry();
+            }
+            else if (clsGlobal.TraceMode)
+            {
+                ConsoleMsgUtils.ShowDebug("Skipping call to WriteMemoryUsageLogEntry in WriteStatusFile");
+            }
         }
 
         /// <summary>
