@@ -2711,6 +2711,10 @@ namespace AnalysisManagerProg
             return true;
         }
 
+        /// <summary>
+        /// Updates status file to indicate that the manager is closing
+        /// </summary>
+        /// <param name="ManagerCloseMessage"></param>
         private void UpdateClose(string ManagerCloseMessage)
         {
             var recentErrorMessages = DetermineRecentErrorMessages(5, ref mMostRecentJobInfo);
