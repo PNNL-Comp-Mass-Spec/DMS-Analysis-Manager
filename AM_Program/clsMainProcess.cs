@@ -265,6 +265,9 @@ namespace AnalysisManagerProg
                         settingsClass.CriticalErrorEvent += CriticalErrorEvent;
                     }
 
+                    Console.WriteLine();
+                    mMgrSettings.ValidatePgPass(configFileSettings);
+
                     CheckStopTrace("LoadSettings");
 
                     var success = mMgrSettings.LoadSettings(configFileSettings);

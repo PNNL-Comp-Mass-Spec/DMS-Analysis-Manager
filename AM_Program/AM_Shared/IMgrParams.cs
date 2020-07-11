@@ -112,6 +112,13 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         bool LoadSettings(Dictionary<string, string> configFileSettings);
 
+        /// <summary>
+        /// Examine configFileSettings to look for parameters MgrCnfgDbConnectStr and/or DefaultDMSConnString
+        /// If defined, and if pointing to a PostgreSQL server, look for a pgpass file for the current user
+        /// </summary>
+        /// <param name="configFileSettings"></param>
+        void ValidatePgPass(IReadOnlyDictionary<string, string> configFileSettings);
+
         #endregion
     }
 
