@@ -297,39 +297,38 @@ namespace AnalysisManagerMSGFPlugin
             var synopsisFileInfo = new FileInfo(synFilePath);
             long synFileSizeBytes = synopsisFileInfo.Exists ? synopsisFile.Length : 0;
 
-            if (!onlyCopyFirstHitsAndSynopsisFiles)
+            // Get the ModSummary.txt file
+            // Note that clsMSGFResultsSummarizer will use this file to determine if a dynamic reporter ion search was performed (e.g. dynamic TMT)
+
+            var modSummaryFile = clsPHRPReader.GetPHRPModSummaryFileName(resultType, DatasetName);
+            var modSummaryFileFound = FileSearch.FindAndRetrievePHRPDataFile(ref modSummaryFile, synFilePath);
+            if (!modSummaryFileFound)
             {
-                // Get the ModSummary.txt file
-                var modSummaryFile = clsPHRPReader.GetPHRPModSummaryFileName(resultType, DatasetName);
-                var modSummaryFileFound = FileSearch.FindAndRetrievePHRPDataFile(ref modSummaryFile, synFilePath);
-                if (!modSummaryFileFound)
+                // _ModSummary.txt file not found
+                // This will happen if the synopsis file is empty
+                // Try to copy the _ModDefs.txt file instead
+
+                if (synFileSizeBytes == 0)
                 {
-                    // _ModSummary.txt file not found
-                    // This will happen if the synopsis file is empty
-                    // Try to copy the _ModDefs.txt file instead
+                    // If the synopsis file is 0-bytes, the _ModSummary.txt file won't exist; that's OK
 
-                    if (synFileSizeBytes == 0)
+                    var modDefsFile = Path.GetFileNameWithoutExtension(mJobParams.GetParam("ParmFileName")) + PHRP_MOD_DEFS_SUFFIX;
+
+                    if (FileSearch.FindAndRetrieveMiscFiles(modDefsFile, false))
                     {
-                        // If the synopsis file is 0-bytes, the _ModSummary.txt file won't exist; that's OK
-
-                        var modDefsFile = Path.GetFileNameWithoutExtension(mJobParams.GetParam("ParmFileName")) + PHRP_MOD_DEFS_SUFFIX;
-
-                        if (FileSearch.FindAndRetrieveMiscFiles(modDefsFile, false))
-                        {
-                            // Rename the file to end in _ModSummary.txt
-                            mPendingFileRenames.Add(modDefsFile, modSummaryFile);
-                        }
-                        else
-                        {
-                            // Errors were reported in function call, so just return
-                            return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
-                        }
+                        // Rename the file to end in _ModSummary.txt
+                        mPendingFileRenames.Add(modDefsFile, modSummaryFile);
                     }
                     else
                     {
                         // Errors were reported in function call, so just return
                         return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
                     }
+                }
+                else
+                {
+                    // Errors were reported in function call, so just return
+                    return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
                 }
             }
 
