@@ -389,9 +389,9 @@ namespace MSGFResultsSummarizer
                 RegisterEvents(dbTools);
 
                 // ReSharper disable once ExplicitCallerInfoArgument
-                var success = dbTools.GetQueryResults(queryScanStats, out var scanStatsFromDb, callingFunction: "LookupScanStats_V_Dataset_Scans_Export");
+                var scanStatsSuccess = dbTools.GetQueryResults(queryScanStats, out var scanStatsFromDb, callingFunction: "LookupScanStats_V_Dataset_Scans_Export");
 
-                if (success && scanStatsFromDb.Count > 0)
+                if (scanStatsSuccess && scanStatsFromDb.Count > 0)
                 {
                     foreach (var resultRow in scanStatsFromDb)
                     {
@@ -400,7 +400,6 @@ namespace MSGFResultsSummarizer
 
                         if (!int.TryParse(scanCountTotal, out totalSpectra))
                         {
-                            success = false;
                             break;
                         }
 
@@ -412,9 +411,9 @@ namespace MSGFResultsSummarizer
                 var queryScanTotal = "" + " SELECT [Scan Count]" + " FROM V_Dataset_Export" + " WHERE Dataset = '" + DatasetName + "'";
 
                 // ReSharper disable once ExplicitCallerInfoArgument
-                success = dbTools.GetQueryResults(queryScanTotal, out var datasetScanCountFromDb, callingFunction: "LookupScanStats_V_Dataset_Export");
+                var scanCountSuccess = dbTools.GetQueryResults(queryScanTotal, out var datasetScanCountFromDb, callingFunction: "LookupScanStats_V_Dataset_Export");
 
-                if (success && datasetScanCountFromDb.Count > 0)
+                if (scanCountSuccess && datasetScanCountFromDb.Count > 0)
                 {
                     foreach (var resultRow in datasetScanCountFromDb)
                     {
@@ -974,22 +973,18 @@ namespace MSGFResultsSummarizer
                 ////////////////////
                 // Filter on MSGF or EValue and compute the stats
                 //
-                var usingMSGFOrEValueFilter = true;
                 ReportDebugMessage("Call FilterAndComputeStats with usingMSGFOrEValueFilter = true", 3);
 
-                // ReSharper disable once ConditionIsAlwaysTrueOrFalse
-                var success = FilterAndComputeStats(usingMSGFOrEValueFilter, normalizedPSMs, seqToProteinMap, sequenceInfo);
+                var success = FilterAndComputeStats(usingMSGFOrEValueFilter: true, normalizedPSMs, seqToProteinMap, sequenceInfo);
 
                 ReportDebugMessage("FilterAndComputeStats returned " + success, 3);
 
                 ////////////////////
                 // Filter on FDR and compute the stats
                 //
-                usingMSGFOrEValueFilter = false;
                 ReportDebugMessage("Call FilterAndComputeStats with usingMSGFOrEValueFilter = false", 3);
 
-                // ReSharper disable once ConditionIsAlwaysTrueOrFalse
-                var successViaFDR = FilterAndComputeStats(usingMSGFOrEValueFilter, normalizedPSMs, seqToProteinMap, sequenceInfo);
+                var successViaFDR = FilterAndComputeStats(usingMSGFOrEValueFilter: false, normalizedPSMs, seqToProteinMap, sequenceInfo);
 
                 ReportDebugMessage("FilterAndComputeStats returned " + success, 3);
 
