@@ -40,73 +40,6 @@ namespace MSGFResultsSummarizer
 
         private const string MSGF_RESULT_FILENAME_SUFFIX = "_MSGF.txt";
 
-        #endregion
-
-        #region "Structures"
-
-        private struct udtPSMStatsType
-        {
-            /// <summary>
-            /// Number of spectra with a match
-            /// </summary>
-            /// <remarks></remarks>
-            public int TotalPSMs;
-
-            /// <summary>
-            /// Number of distinct peptides
-            /// </summary>
-            /// <remarks>
-            /// For modified peptides, collapses peptides with the same sequence and same modifications (+/- 1 residue)
-            /// For example, LS*SPATLNSR and LSS*PATLNSR are considered equivalent
-            /// But P#EPT*IDES and PEP#T*IDES and P#EPTIDES* are all different
-            /// (the collapsing of similar peptides is done in method LoadPSMs with the call to FindNormalizedSequence)
-            /// </remarks>
-            public int UniquePeptideCount;
-
-            /// <summary>
-            /// Number of distinct proteins
-            /// </summary>
-            /// <remarks></remarks>
-            public int UniqueProteinCount;
-
-            public int UniquePhosphopeptideCount;
-            public int UniquePhosphopeptidesCTermK;
-
-            public int UniquePhosphopeptidesCTermR;
-
-            /// <summary>
-            /// Number of unique peptides that come from Keratin proteins
-            /// </summary>
-            public int KeratinPeptides;
-
-            /// <summary>
-            /// Number of unique peptides that come from Trypsin proteins
-            /// </summary>
-            public int TrypsinPeptides;
-
-            /// <summary>
-            /// Number of unique peptides that are partially or fully tryptic
-            /// </summary>
-            public int TrypticPeptides;
-
-            public float MissedCleavageRatio;
-
-            public float MissedCleavageRatioPhospho;
-
-            public void Clear()
-            {
-                TotalPSMs = 0;
-                UniquePeptideCount = 0;
-                UniqueProteinCount = 0;
-                UniquePhosphopeptideCount = 0;
-                UniquePhosphopeptidesCTermK = 0;
-                UniquePhosphopeptidesCTermR = 0;
-                MissedCleavageRatio = 0;
-                MissedCleavageRatioPhospho = 0;
-                KeratinPeptides = 0;
-                TrypsinPeptides = 0;
-                TrypticPeptides = 0;
-            }
         }
 
         #endregion
@@ -117,8 +50,8 @@ namespace MSGFResultsSummarizer
         private readonly short mDebugLevel;
         private readonly bool mTraceMode;
 
-        private udtPSMStatsType mMSGFBasedCounts;
-        private udtPSMStatsType mFDRBasedCounts;
+        private clsPSMStats mMSGFBasedCounts;
+        private clsPSMStats mFDRBasedCounts;
 
         private readonly string mDatasetName;
         private readonly int mJob;
@@ -1767,12 +1700,19 @@ namespace MSGFResultsSummarizer
             return true;
         }
 
-        private udtPSMStatsType TabulatePSMStats(
+        /// <summary>
+        /// Tabulate PSM stats
+        /// </summary>
+        /// <param name="uniqueSequences">Keys in this dictionary are SeqID values; the values track observation count, whether the peptide ends in K or R, etc.</param>
+        /// <param name="uniqueProteins">Keys in this dictionary are protein names; the values are observation count</param>
+        /// <param name="uniquePhosphopeptides">Keys in this dictionary are SeqID values; the values track observation count, whether the peptide ends in K or R, etc.</param>
+        /// <returns></returns>
+        private clsPSMStats TabulatePSMStats(
             IDictionary<int, clsUniqueSeqInfo> uniqueSequences,
             IDictionary<string, int> uniqueProteins,
             IDictionary<int, clsUniqueSeqInfo> uniquePhosphopeptides)
         {
-            var psmStats = new udtPSMStatsType
+            var psmStats = new clsPSMStats()
             {
                 TotalPSMs = (from item in uniqueSequences select item.Value.ObsCount).Sum(),
                 UniquePeptideCount = uniqueSequences.Count,
