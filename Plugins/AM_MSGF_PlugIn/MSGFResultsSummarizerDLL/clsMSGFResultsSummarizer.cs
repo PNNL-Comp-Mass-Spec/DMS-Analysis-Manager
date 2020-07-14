@@ -1401,7 +1401,7 @@ namespace MSGFResultsSummarizer
                             // This check only works if the _ModSummary.txt file was loaded because it relies on the mod name being Phosph
                             foreach (var modification in normalizedPeptide.Modifications)
                             {
-                                if (string.Equals(modification.Key, "Phosph", StringComparison.InvariantCultureIgnoreCase))
+                                if (string.Equals(modification.Key, "Phosph", StringComparison.OrdinalIgnoreCase))
                                 {
                                     psmInfo.Phosphopeptide = true;
                                     break;
