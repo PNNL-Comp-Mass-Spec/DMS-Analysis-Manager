@@ -51,6 +51,7 @@
     <Compile Include="clsMSGFResultsSummarizer.cs" />
     <Compile Include="clsNormalizedPeptideInfo.cs" />
     <Compile Include="clsPSMInfo.cs" />
+    <Compile Include="clsPSMStats.cs" />
     <Compile Include="clsUniqueSeqInfo.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
