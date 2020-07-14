@@ -51,7 +51,7 @@ namespace AnalysisManagerBase
             public bool CreateJobPathFiles;
 
             /// <summary>
-            /// Set to true to obtain the mzXML file for the dataset associated with this job
+            /// Set to true to obtain the mzXML or mzML file for the dataset associated with this job
             /// </summary>
             /// <remarks>If the .mzXML file does not exist, retrieves the instrument data file (e.g. Thermo .raw file)</remarks>
             public bool RetrieveMzXMLFile;
@@ -1301,7 +1301,7 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Look for the .mzXML and/or .raw file
+        /// Look for the .mzXML, .mzML, or .raw file
         /// </summary>
         /// <param name="dataPkgJob">Data package job info</param>
         /// <param name="retrievalOptions">File retrieval options</param>

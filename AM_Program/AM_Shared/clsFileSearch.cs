@@ -655,11 +655,11 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Looks for the newest .mzXML file for this dataset
+        /// Looks for the newest .mzXML or .mzML file for this dataset
         /// </summary>
-        /// <param name="hashCheckFilePath">Output parameter: path to the hashcheck file if the .mzXML file was found in the MSXml cache</param>
+        /// <param name="hashCheckFilePath">Output parameter: path to the hashcheck file if the .mzXML or .mzML file was found in the MSXml cache</param>
         /// <returns>Full path to the file, if found; empty string if no match</returns>
-        /// <remarks>Supports both gzipped mzXML files and unzipped ones (gzipping was enabled in September 2014)</remarks>
+        /// <remarks>Supports both gzipped mzXML/mzML files and unzipped ones (gzipping was enabled in September 2014)</remarks>
         public string FindMZXmlFile(out string hashCheckFilePath)
         {
 
@@ -1659,7 +1659,7 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Looks for the newest mzXML file for this dataset
+        /// Looks for the newest .mzXML or .mzML file for this dataset
         /// First looks for the newest file in \\Proto-11\MSXML_Cache
         /// If not found, looks in the dataset directory, looking for subDirectories
         /// MSXML_Gen_1_154_DatasetID, MSXML_Gen_1_93_DatasetID, or MSXML_Gen_1_39_DatasetID (plus some others)
@@ -1667,7 +1667,7 @@ namespace AnalysisManagerBase
         /// <param name="createStoragePathInfoOnly"></param>
         /// <param name="sourceFilePath">Output parameter: Returns the full path to the file that was retrieved</param>
         /// <returns>True if the file was found and retrieved, otherwise False</returns>
-        /// <remarks>The retrieved file might be gzipped.  For MzML files, use RetrieveMzMLFile</remarks>
+        /// <remarks>The retrieved file might be gzipped</remarks>
         public bool RetrieveMZXmlFile(bool createStoragePathInfoOnly, out string sourceFilePath)
         {
 
@@ -1682,7 +1682,7 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Retrieves this dataset's mzXML or mzML file
+        /// Retrieves this dataset's .mzXML or .mzML file
         /// </summary>
         /// <param name="createStoragePathInfoOnly"></param>
         /// <param name="sourceFilePath">Full path to the file that should be retrieved</param>

@@ -118,14 +118,14 @@ namespace AnalysisManagerMSGFPlugin
 
             if (resultType == clsPHRPReader.ePeptideHitResultType.MSGFPlus)
             {
-                // We do not need the mzXML file, the parameter file, or various other files if we are running MS-GF+ and running MSGF v6432 or later
+                // We do not need the mzML file, the parameter file, or various other files if we are running MS-GF+ and running MSGF v6432 or later
                 // Determine this by looking for job parameter MSGF_Version
 
                 var msgfStepToolVersion = mJobParams.GetParam("MSGF_Version");
 
                 if (string.IsNullOrWhiteSpace(msgfStepToolVersion))
                 {
-                    // Production version of MS-GF+; don't need the parameter file, ModSummary file, or mzXML file
+                    // Production version of MS-GF+; don't need the parameter file or mzML file
                     onlyCopyFirstHitsAndSynopsisFiles = true;
                 }
                 else
