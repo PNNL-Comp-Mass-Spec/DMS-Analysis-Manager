@@ -30,7 +30,9 @@ namespace AnalysisManagerMSGFPlugin
 
         #region "Module variables"
 
-        // Keys are the original file name, values are the new name
+        /// <summary>
+        /// Keys are the original file name, values are the new name
+        /// </summary>
         private Dictionary<string, string> mPendingFileRenames;
 
         #endregion

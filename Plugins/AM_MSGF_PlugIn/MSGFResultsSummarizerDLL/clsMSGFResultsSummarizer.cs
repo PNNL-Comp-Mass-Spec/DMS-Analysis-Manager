@@ -4,8 +4,9 @@
 //
 // Created 02/14/2012
 //
-// This class reads an MSGF results file and accompanying peptide/protein map file
-//  to count the number of peptides passing a given MSGF threshold
+// This class reads an MS-GF+ results file and accompanying peptide/protein map file
+// to count the number of peptides passing a given MSGF threshold
+//
 // Reports PSM count, unique peptide count, and unique protein count
 //
 //*********************************************************************************************************
