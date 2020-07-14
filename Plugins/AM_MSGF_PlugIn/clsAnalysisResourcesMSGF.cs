@@ -77,37 +77,34 @@ namespace AnalysisManagerMSGFPlugin
         /// <summary>
         /// Retrieves input files needed for MSGF
         /// </summary>
-        /// <param name="resultType">String specifying type of analysis results input to extraction process</param>
+        /// <param name="resultTypeName">String specifying type of analysis results input to extraction process</param>
         /// <returns>CloseOutType specifying results</returns>
         /// <remarks></remarks>
-        private CloseOutType GetInputFiles(string resultType)
+        private CloseOutType GetInputFiles(string resultTypeName)
         {
-            string fileToGet;
-            var synFilePath = string.Empty;
-
-            bool success;
-            bool onlyCopyFHTandSYNfiles;
+            bool onlyCopyFirstHitsAndSynopsisFiles;
 
             // Make sure the ResultType is valid
-            var eResultType = clsPHRPReader.GetPeptideHitResultType(resultType);
+            var resultType = clsPHRPReader.GetPeptideHitResultType(resultTypeName);
 
-            if (eResultType == clsPHRPReader.ePeptideHitResultType.Sequest ||
-                eResultType == clsPHRPReader.ePeptideHitResultType.XTandem ||
-                eResultType == clsPHRPReader.ePeptideHitResultType.Inspect ||
-                eResultType == clsPHRPReader.ePeptideHitResultType.MSGFPlus || // MS-GF+
-                eResultType == clsPHRPReader.ePeptideHitResultType.MODa ||
-                eResultType == clsPHRPReader.ePeptideHitResultType.MODPlus ||
-                eResultType == clsPHRPReader.ePeptideHitResultType.MSPathFinder)
+            bool validToolType;
+            if (resultType == clsPHRPReader.ePeptideHitResultType.Sequest ||
+                resultType == clsPHRPReader.ePeptideHitResultType.XTandem ||
+                resultType == clsPHRPReader.ePeptideHitResultType.Inspect ||
+                resultType == clsPHRPReader.ePeptideHitResultType.MSGFPlus || // MS-GF+
+                resultType == clsPHRPReader.ePeptideHitResultType.MODa ||
+                resultType == clsPHRPReader.ePeptideHitResultType.MODPlus ||
+                resultType == clsPHRPReader.ePeptideHitResultType.MSPathFinder)
             {
-                success = true;
+                validToolType = true;
             }
             else
             {
-                LogError("Invalid tool result type (not supported by MSGF): " + resultType);
-                success = false;
+                LogError("Invalid tool result type in clsAnalysisResourcesMSGF.GetInputFiles (not supported by MSGF): " + resultType);
+                validToolType = false;
             }
 
-            if (!success)
+            if (!validToolType)
             {
                 return (CloseOutType.CLOSEOUT_NO_OUT_FILES);
             }
@@ -117,7 +114,7 @@ namespace AnalysisManagerMSGFPlugin
             var eRawDataType = GetRawDataType(rawDataType);
             var mgfInstrumentData = mJobParams.GetJobParameter("MGFInstrumentData", false);
 
-            if (eResultType == clsPHRPReader.ePeptideHitResultType.MSGFPlus)
+            if (resultType == clsPHRPReader.ePeptideHitResultType.MSGFPlus)
             {
                 // We do not need the mzXML file, the parameter file, or various other files if we are running MS-GF+ and running MSGF v6432 or later
                 // Determine this by looking for job parameter MSGF_Version
@@ -127,7 +124,7 @@ namespace AnalysisManagerMSGFPlugin
                 if (string.IsNullOrWhiteSpace(msgfStepToolVersion))
                 {
                     // Production version of MS-GF+; don't need the parameter file, ModSummary file, or mzXML file
-                    onlyCopyFHTandSYNfiles = true;
+                    onlyCopyFirstHitsAndSynopsisFiles = true;
                 }
                 else
                 {
@@ -135,25 +132,25 @@ namespace AnalysisManagerMSGFPlugin
                     // Check whether the version is one of the known versions for the old MSGF
                     if (clsMSGFRunner.IsLegacyMSGFVersion(msgfStepToolVersion))
                     {
-                        onlyCopyFHTandSYNfiles = false;
+                        onlyCopyFirstHitsAndSynopsisFiles = false;
                     }
                     else
                     {
-                        onlyCopyFHTandSYNfiles = true;
+                        onlyCopyFirstHitsAndSynopsisFiles = true;
                     }
                 }
             }
-            else if (eResultType == clsPHRPReader.ePeptideHitResultType.MODa |
-                     eResultType == clsPHRPReader.ePeptideHitResultType.MODPlus |
-                     eResultType == clsPHRPReader.ePeptideHitResultType.MSPathFinder)
+            else if (resultType == clsPHRPReader.ePeptideHitResultType.MODa |
+                     resultType == clsPHRPReader.ePeptideHitResultType.MODPlus |
+                     resultType == clsPHRPReader.ePeptideHitResultType.MSPathFinder)
             {
                 // We do not need any raw data files for MODa, modPlus, or MSPathFinder
-                onlyCopyFHTandSYNfiles = true;
+                onlyCopyFirstHitsAndSynopsisFiles = true;
             }
             else
             {
                 // Not running MS-GF+ or running MS-GF+ but using legacy MSGF
-                onlyCopyFHTandSYNfiles = false;
+                onlyCopyFirstHitsAndSynopsisFiles = false;
 
                 if (!mgfInstrumentData)
                 {
@@ -174,7 +171,7 @@ namespace AnalysisManagerMSGFPlugin
                 }
             }
 
-            if (!onlyCopyFHTandSYNfiles)
+            if (!onlyCopyFirstHitsAndSynopsisFiles)
             {
                 // Get the SEQUEST, X!Tandem, Inspect, MS-GF+, MODa, MODPlus, or MSPathFinder parameter file
                 fileToGet = mJobParams.GetParam("ParmFileName");
@@ -461,11 +458,11 @@ namespace AnalysisManagerMSGFPlugin
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
-        private bool CreateEmptyResultToSeqMapFile(string fileName)
+        private bool CreateEmptyResultToSeqMapFile(string resultToSeqMapFile)
         {
             try
             {
-                var filePath = Path.Combine(mWorkDir, fileName);
+                var filePath = Path.Combine(mWorkDir, resultToSeqMapFile);
                 using (var writer = new StreamWriter(new FileStream(filePath, FileMode.CreateNew, FileAccess.Write, FileShare.Read)))
                 {
                     writer.WriteLine("Result_ID\tUnique_Seq_ID");
@@ -473,8 +470,8 @@ namespace AnalysisManagerMSGFPlugin
             }
             catch (Exception ex)
             {
-                var Msg = "Error creating empty ResultToSeqMap file: " + ex.Message;
-                LogError(Msg);
+                var errorMessage = "Error creating empty ResultToSeqMap file: " + ex.Message;
+                LogError(errorMessage);
                 return false;
             }
 

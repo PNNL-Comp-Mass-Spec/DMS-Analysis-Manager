@@ -570,13 +570,13 @@ namespace AnalysisManagerMSGFPlugin
                 //   <note type="input" label="scoring, c ions">yes</note>
                 //   <note type="input" label="scoring, z ions">yes</note>
 
-                var objParamFile = new XmlDocument
+                var paramFile = new XmlDocument
                 {
                     PreserveWhitespace = true
                 };
-                objParamFile.Load(searchToolParamFilePath);
+                paramFile.Load(searchToolParamFilePath);
 
-                if (objParamFile.DocumentElement == null)
+                if (paramFile.DocumentElement == null)
                 {
                     LogError("Error reading the X!Tandem param file: DocumentElement is null");
                     return false;
@@ -584,44 +584,44 @@ namespace AnalysisManagerMSGFPlugin
 
                 for (var settingIndex = 0; settingIndex <= 1; settingIndex++)
                 {
-                    XmlNodeList objSelectedNodes;
+                    XmlNodeList selectedNodes;
 
                     switch (settingIndex)
                     {
                         case 0:
-                            objSelectedNodes = objParamFile.DocumentElement.SelectNodes("/bioml/note[@label='scoring, c ions']");
+                            selectedNodes = paramFile.DocumentElement.SelectNodes("/bioml/note[@label='scoring, c ions']");
                             break;
                         case 1:
-                            objSelectedNodes = objParamFile.DocumentElement.SelectNodes("/bioml/note[@label='scoring, z ions']");
+                            selectedNodes = paramFile.DocumentElement.SelectNodes("/bioml/note[@label='scoring, z ions']");
                             break;
                         default:
-                            objSelectedNodes = null;
+                            selectedNodes = null;
                             break;
                     }
 
-                    if (objSelectedNodes == null)
+                    if (selectedNodes == null)
                     {
                         continue;
                     }
 
-                    for (var matchIndex = 0; matchIndex <= objSelectedNodes.Count - 1; matchIndex++)
+                    for (var matchIndex = 0; matchIndex <= selectedNodes.Count - 1; matchIndex++)
                     {
-                        var xmlAttributes = objSelectedNodes.Item(matchIndex)?.Attributes;
+                        var xmlAttributes = selectedNodes.Item(matchIndex)?.Attributes;
 
                         // Make sure this node has an attribute named type with value "input"
-                        var objAttributeNode = xmlAttributes?.GetNamedItem("type");
+                        var attributeNode = xmlAttributes?.GetNamedItem("type");
 
-                        if (objAttributeNode == null)
+                        if (attributeNode == null)
                         {
                             // Node does not have an attribute named "type"
                             continue;
                         }
 
-                        if (objAttributeNode.Value.ToLower() != "input")
+                        if (attributeNode.Value.ToLower() != "input")
                             continue;
 
                         // Valid node; examine its InnerText value
-                        if (objSelectedNodes.Item(matchIndex)?.InnerText.ToLower() == "yes")
+                        if (selectedNodes.Item(matchIndex)?.InnerText.ToLower() == "yes")
                         {
                             mETDMode = true;
                         }
@@ -825,14 +825,14 @@ namespace AnalysisManagerMSGFPlugin
 
         private bool CreateMSGFResultsFromMSGFPlusResults()
         {
-            var objMSGFInputCreator = new clsMSGFInputCreatorMSGFDB(mDatasetName, mWorkDir);
+            var msgfInputCreator = new clsMSGFInputCreatorMSGFDB(mDatasetName, mWorkDir);
 
-            if (!CreateMSGFResultsFromMSGFPlusResults(objMSGFInputCreator, MSGF_PHRP_DATA_SOURCE_SYN.ToLower()))
+            if (!CreateMSGFResultsFromMSGFPlusResults(msgfInputCreator, MSGF_PHRP_DATA_SOURCE_SYN.ToLower()))
             {
                 return false;
             }
 
-            if (!CreateMSGFResultsFromMSGFPlusResults(objMSGFInputCreator, MSGF_PHRP_DATA_SOURCE_FHT.ToLower()))
+            if (!CreateMSGFResultsFromMSGFPlusResults(msgfInputCreator, MSGF_PHRP_DATA_SOURCE_FHT.ToLower()))
             {
                 return false;
             }
@@ -844,7 +844,7 @@ namespace AnalysisManagerMSGFPlugin
             return success;
         }
 
-        private bool CreateMSGFResultsFromMSGFPlusResults(clsMSGFInputCreatorMSGFDB objMSGFInputCreator, string synOrFHT)
+        private bool CreateMSGFResultsFromMSGFPlusResults(clsMSGFInputCreatorMSGFDB msgfInputCreator, string synOrFHT)
         {
             var sourceFilePath = Path.Combine(mWorkDir, mDatasetName + "_msgfplus_" + synOrFHT + ".txt");
 
@@ -859,14 +859,14 @@ namespace AnalysisManagerMSGFPlugin
                 sourceFilePath = sourceFilePathAlternate;
             }
 
-            var success = objMSGFInputCreator.CreateMSGFFileUsingMSGFDBSpecProb(sourceFilePath, synOrFHT);
+            var success = msgfInputCreator.CreateMSGFFileUsingMSGFDBSpecProb(sourceFilePath, synOrFHT);
 
             if (!success)
             {
                 mMessage = "Error creating MSGF file for " + Path.GetFileName(sourceFilePath);
-                if (!string.IsNullOrEmpty(objMSGFInputCreator.ErrorMessage))
+                if (!string.IsNullOrEmpty(msgfInputCreator.ErrorMessage))
                 {
-                    mMessage += ": " + objMSGFInputCreator.ErrorMessage;
+                    mMessage += ": " + msgfInputCreator.ErrorMessage;
                 }
                 return false;
             }
@@ -1203,7 +1203,7 @@ namespace AnalysisManagerMSGFPlugin
 
             // Initialize the column mapping
             // Using a case-insensitive comparer
-            var objColumnHeaders = new SortedDictionary<string, int>(StringComparer.OrdinalIgnoreCase)
+            var columnHeaders = new SortedDictionary<string, int>(StringComparer.OrdinalIgnoreCase)
             {
                 {MSGF_RESULT_COLUMN_SpectrumFile, 0},
                 {MSGF_RESULT_COLUMN_Title, 1},
@@ -1247,7 +1247,7 @@ namespace AnalysisManagerMSGFPlugin
                         if (dataCols[0].ToLower() == MSGF_RESULT_COLUMN_SpectrumFile.ToLower())
                         {
                             // Parse the header line to confirm the column ordering
-                            clsPHRPReader.ParseColumnHeaders(dataCols, objColumnHeaders);
+                            clsPHRPReader.ParseColumnHeaders(dataCols, columnHeaders);
                             skipLine = true;
                         }
 
@@ -1257,14 +1257,14 @@ namespace AnalysisManagerMSGFPlugin
                     if (skipLine || dataCols.Length < 4)
                         continue;
 
-                    var originalPeptide = clsPHRPReader.LookupColumnValue(dataCols, MSGF_RESULT_COLUMN_Title, objColumnHeaders);
-                    var scan = clsPHRPReader.LookupColumnValue(dataCols, MSGF_RESULT_COLUMN_ScanNumber, objColumnHeaders);
-                    var charge = clsPHRPReader.LookupColumnValue(dataCols, MSGF_RESULT_COLUMN_Charge, objColumnHeaders);
-                    var protein = clsPHRPReader.LookupColumnValue(dataCols, MSGF_RESULT_COLUMN_Protein_First, objColumnHeaders);
-                    var peptide = clsPHRPReader.LookupColumnValue(dataCols, MSGF_RESULT_COLUMN_Annotation, objColumnHeaders);
-                    var resultID = clsPHRPReader.LookupColumnValue(dataCols, MSGF_RESULT_COLUMN_Result_ID, objColumnHeaders);
-                    var specProb = clsPHRPReader.LookupColumnValue(dataCols, MSGF_RESULT_COLUMN_SpecProb, objColumnHeaders);
-                    var dataSource = clsPHRPReader.LookupColumnValue(dataCols, MSGF_RESULT_COLUMN_Data_Source, objColumnHeaders);
+                    var originalPeptide = clsPHRPReader.LookupColumnValue(dataCols, MSGF_RESULT_COLUMN_Title, columnHeaders);
+                    var scan = clsPHRPReader.LookupColumnValue(dataCols, MSGF_RESULT_COLUMN_ScanNumber, columnHeaders);
+                    var charge = clsPHRPReader.LookupColumnValue(dataCols, MSGF_RESULT_COLUMN_Charge, columnHeaders);
+                    var protein = clsPHRPReader.LookupColumnValue(dataCols, MSGF_RESULT_COLUMN_Protein_First, columnHeaders);
+                    var peptide = clsPHRPReader.LookupColumnValue(dataCols, MSGF_RESULT_COLUMN_Annotation, columnHeaders);
+                    var resultID = clsPHRPReader.LookupColumnValue(dataCols, MSGF_RESULT_COLUMN_Result_ID, columnHeaders);
+                    var specProb = clsPHRPReader.LookupColumnValue(dataCols, MSGF_RESULT_COLUMN_SpecProb, columnHeaders);
+                    var dataSource = clsPHRPReader.LookupColumnValue(dataCols, MSGF_RESULT_COLUMN_Data_Source, columnHeaders);
                     var notes = string.Empty;
 
                     if (mgfInstrumentData)
@@ -1365,15 +1365,15 @@ namespace AnalysisManagerMSGFPlugin
                         if (!int.TryParse(resultID, out var idValue))
                             continue;
 
-                        var objSkipList = mMSGFInputCreator.GetSkippedInfoByResultId(idValue);
+                        var skipList = mMSGFInputCreator.GetSkippedInfoByResultId(idValue);
 
-                        for (var index = 0; index <= objSkipList.Count - 1; index++)
+                        for (var index = 0; index <= skipList.Count - 1; index++)
                         {
                             // Split the entry on the tab character
                             // The item left of the tab is the skipped result id
                             // the item right of the tab is the protein corresponding to the skipped result id
 
-                            var skipInfo = objSkipList[index].Split(chSepChars, 2);
+                            var skipInfo = skipList[index].Split(chSepChars, 2);
 
                             writer.WriteLine(skipInfo[0] + "\t" + scan + "\t" + charge + "\t" + skipInfo[1] + "\t" +
                                                     originalPeptide + "\t" + specProb + "\t" + notes);

@@ -37,14 +37,14 @@ namespace AnalysisManagerMSGFPlugin
             UpdateMSGFInputOutputFilePaths();
         }
 
-        protected override bool PassesFilters(clsPSM objPSM)
+        protected override bool PassesFilters(clsPSM currentPSM)
         {
             var passesFilters = false;
 
             // Keep MODa results with Probability >= 0.2  (higher probability values are better)
             // This will typically keep all data in the _syn.txt file
 
-            var probability = objPSM.GetScoreDbl(clsPHRPParserMODa.DATA_COLUMN_Probability, 0);
+            var probability = currentPSM.GetScoreDbl(clsPHRPParserMODa.DATA_COLUMN_Probability, 0);
             if (probability >= 0.2)
             {
                 passesFilters = true;

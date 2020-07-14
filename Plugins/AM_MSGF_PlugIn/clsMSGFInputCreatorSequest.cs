@@ -37,7 +37,7 @@ namespace AnalysisManagerMSGFPlugin
             UpdateMSGFInputOutputFilePaths();
         }
 
-        protected override bool PassesFilters(clsPSM objPSM)
+        protected override bool PassesFilters(clsPSM currentPSM)
         {
             bool isProteinTerminus;
             var passesFilters = false;
@@ -54,7 +54,7 @@ namespace AnalysisManagerMSGFPlugin
             //    XCorr >= 2.0 for 2+
             //    XCorr >= 2.5 for >=3+
 
-            if (objPSM.Peptide.StartsWith("-") || objPSM.Peptide.EndsWith("-"))
+            if (currentPSM.Peptide.StartsWith("-") || currentPSM.Peptide.EndsWith("-"))
             {
                 isProteinTerminus = true;
             }
@@ -63,11 +63,11 @@ namespace AnalysisManagerMSGFPlugin
                 isProteinTerminus = false;
             }
 
-            var deltaCN = objPSM.GetScoreDbl(clsPHRPParserSequest.DATA_COLUMN_DelCn);
-            var xCorr = objPSM.GetScoreDbl(clsPHRPParserSequest.DATA_COLUMN_XCorr);
+            var deltaCN = currentPSM.GetScoreDbl(clsPHRPParserSequest.DATA_COLUMN_DelCn);
+            var xCorr = currentPSM.GetScoreDbl(clsPHRPParserSequest.DATA_COLUMN_XCorr);
 
-            int cleavageState = clsPeptideCleavageStateCalculator.CleavageStateToShort(objPSM.CleavageState);
-            var cleavageStateAlt = (short)objPSM.GetScoreInt(clsPHRPParserSequest.DATA_COLUMN_NumTrypticEnds, 0);
+            int cleavageState = clsPeptideCleavageStateCalculator.CleavageStateToShort(currentPSM.CleavageState);
+            var cleavageStateAlt = (short)currentPSM.GetScoreInt(clsPHRPParserSequest.DATA_COLUMN_NumTrypticEnds, 0);
 
             if (cleavageStateAlt > cleavageState)
             {
@@ -79,7 +79,7 @@ namespace AnalysisManagerMSGFPlugin
                 if (cleavageState >= 1 || isProteinTerminus)
                 {
                     // Partially or fully tryptic, or protein terminal
-                    if (objPSM.Charge == 1 | objPSM.Charge == 2)
+                    if (currentPSM.Charge == 1 | currentPSM.Charge == 2)
                     {
                         if (xCorr >= 1.5)
                             passesFilters = true;
@@ -94,12 +94,12 @@ namespace AnalysisManagerMSGFPlugin
                 else
                 {
                     // Non-tryptic
-                    if (objPSM.Charge == 1)
+                    if (currentPSM.Charge == 1)
                     {
                         if (xCorr >= 1.5)
                             passesFilters = true;
                     }
-                    else if (objPSM.Charge == 2)
+                    else if (currentPSM.Charge == 2)
                     {
                         if (xCorr >= 2.0)
                             passesFilters = true;

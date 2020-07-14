@@ -88,15 +88,15 @@ namespace AnalysisManagerMSGFPlugin
 
                         while (reader.MoveNext())
                         {
-                            var objPSM = reader.CurrentPSM;
+                            var currentPSM = reader.CurrentPSM;
 
                             // Converting MODa/MODPlus probability to a fake Spectral Probability using 1 - probability
-                            var probability = objPSM.GetScoreDbl(probabilityColumnName, 0);
+                            var probability = currentPSM.GetScoreDbl(probabilityColumnName, 0);
                             var probabilityValue = (1 - probability).ToString("0.0000");
 
-                            // objPSM.MSGFSpecProb comes from column Probability
-                            writer.WriteLine(objPSM.ResultID + "\t" + objPSM.ScanNumber + "\t" + objPSM.Charge + "\t" + objPSM.ProteinFirst + "\t" +
-                                             objPSM.Peptide + "\t" + probabilityValue + "\t" + string.Empty);
+                            // currentPSM.MSGFSpecProb comes from column Probability
+                            writer.WriteLine(currentPSM.ResultID + "\t" + currentPSM.ScanNumber + "\t" + currentPSM.Charge + "\t" + currentPSM.ProteinFirst + "\t" +
+                                             currentPSM.Peptide + "\t" + probabilityValue + "\t" + string.Empty);
                         }
                     }
                 }
@@ -150,12 +150,12 @@ namespace AnalysisManagerMSGFPlugin
 
                         while (reader.MoveNext())
                         {
-                            var objPSM = reader.CurrentPSM;
+                            var currentPSM = reader.CurrentPSM;
 
-                            // objPSM.MSGFSpecEValue comes from column MSGFDB_SpecProb   if MS-GFDB
+                            // currentPSM.MSGFSpecEValue comes from column MSGFDB_SpecProb   if MS-GFDB
                             //                    it comes from column MSGFDB_SpecEValue if MS-GF+
-                            writer.WriteLine(objPSM.ResultID + "\t" + objPSM.ScanNumber + "\t" + objPSM.Charge + "\t" + objPSM.ProteinFirst + "\t" +
-                                             objPSM.Peptide + "\t" + objPSM.MSGFSpecEValue + "\t" + string.Empty);
+                            writer.WriteLine(currentPSM.ResultID + "\t" + currentPSM.ScanNumber + "\t" + currentPSM.Charge + "\t" + currentPSM.ProteinFirst + "\t" +
+                                             currentPSM.Peptide + "\t" + currentPSM.MSGFSpecEValue + "\t" + string.Empty);
                         }
                     }
                 }
@@ -169,7 +169,7 @@ namespace AnalysisManagerMSGFPlugin
             return true;
         }
 
-        protected override bool PassesFilters(clsPSM objPSM)
+        protected override bool PassesFilters(clsPSM currentPSM)
         {
             // All MSGFDB data is considered to be "filter-passing"
             return true;

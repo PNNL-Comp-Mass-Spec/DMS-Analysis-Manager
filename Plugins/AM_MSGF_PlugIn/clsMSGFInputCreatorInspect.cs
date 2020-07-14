@@ -37,16 +37,16 @@ namespace AnalysisManagerMSGFPlugin
             UpdateMSGFInputOutputFilePaths();
         }
 
-        protected override bool PassesFilters(clsPSM objPSM)
+        protected override bool PassesFilters(clsPSM currentPSM)
         {
             var passesFilters = false;
 
             // Keep Inspect results with pValue <= 0.2 Or TotalPRMScore >= 50 or FScore >= 0
             // PHRP has likely already filtered the _inspect_syn.txt file using these filters
 
-            var pValue = objPSM.GetScoreDbl(clsPHRPParserInspect.DATA_COLUMN_PValue);
-            var totalPRMScore = objPSM.GetScoreDbl(clsPHRPParserInspect.DATA_COLUMN_TotalPRMScore);
-            var fScore = objPSM.GetScoreDbl(clsPHRPParserInspect.DATA_COLUMN_FScore);
+            var pValue = currentPSM.GetScoreDbl(clsPHRPParserInspect.DATA_COLUMN_PValue);
+            var totalPRMScore = currentPSM.GetScoreDbl(clsPHRPParserInspect.DATA_COLUMN_TotalPRMScore);
+            var fScore = currentPSM.GetScoreDbl(clsPHRPParserInspect.DATA_COLUMN_FScore);
 
             if (pValue <= 0.2 || totalPRMScore >= 50 || fScore >= 0)
             {
