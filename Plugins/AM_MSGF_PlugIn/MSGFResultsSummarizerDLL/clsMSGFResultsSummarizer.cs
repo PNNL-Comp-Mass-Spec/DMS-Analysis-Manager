@@ -60,7 +60,11 @@ namespace MSGFResultsSummarizer
 
         private readonly IDBTools mStoredProcedureExecutor;
 
-        // The following is auto-determined in ProcessMSGFResults
+
+        /// <summary>
+        /// PHRP _syn.txt file name
+        /// </summary>
+        /// <remarks>This is auto-determined in ProcessMSGFResults</remarks>
         private string mMSGFSynopsisFileName = string.Empty;
 
         #endregion
@@ -443,8 +447,11 @@ namespace MSGFResultsSummarizer
         /// <param name="sequenceInfo">Sequence information (empty if the _resultToSeqMap file was not found)</param>
         /// <returns></returns>
         /// <remarks></remarks>
-        private bool FilterAndComputeStats(bool usingMSGFOrEValueFilter, IDictionary<int, clsPSMInfo> normalizedPSMs,
-            IDictionary<int, List<clsProteinInfo>> seqToProteinMap, IDictionary<int, clsSeqInfo> sequenceInfo)
+        private bool FilterAndComputeStats(
+            bool usingMSGFOrEValueFilter,
+            IDictionary<int, clsPSMInfo> normalizedPSMs,
+            IDictionary<int, List<clsProteinInfo>> seqToProteinMap,
+            IDictionary<int, clsSeqInfo> sequenceInfo)
         {
             var filteredPSMs = new Dictionary<int, clsPSMInfo>();
 
@@ -962,7 +969,6 @@ namespace MSGFResultsSummarizer
                 // We'll deal with multiple proteins for each peptide later when we parse the _ResultToSeqMap.txt and _SeqToProteinMap.txt files
                 // If those files are not found, we'll simply use the protein information stored in psmResults
                 var normalizedPSMs = new Dictionary<int, clsPSMInfo>();
-
 
                 var successLoading = LoadPSMs(phrpSynopsisFilePath, normalizedPSMs, out _, out var seqToProteinMap, out var sequenceInfo);
                 if (!successLoading)
@@ -1591,8 +1597,10 @@ namespace MSGFResultsSummarizer
         /// <returns></returns>
         /// <remarks></remarks>
         private bool SummarizeResults(
-            bool usingMSGFOrEValueFilter, IDictionary<int, clsPSMInfo> filteredPSMs,
-            IDictionary<int, List<clsProteinInfo>> seqToProteinMap, IDictionary<int, clsSeqInfo> sequenceInfo)
+            bool usingMSGFOrEValueFilter,
+            IDictionary<int, clsPSMInfo> filteredPSMs,
+            IDictionary<int, List<clsProteinInfo>> seqToProteinMap,
+            IDictionary<int, clsSeqInfo> sequenceInfo)
         {
             try
             {
@@ -1634,7 +1642,6 @@ namespace MSGFResultsSummarizer
                     }
 
                     var addResultProtein = true;
-
 
                     if (sequenceInfo.Count > 0 && sequenceInfo.TryGetValue(seqId, out _))
                     {
