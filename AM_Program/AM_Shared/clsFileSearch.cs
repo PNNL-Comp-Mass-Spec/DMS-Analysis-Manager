@@ -776,17 +776,17 @@ namespace AnalysisManagerBase
             out string hashCheckFilePath)
         {
 
-            var MsXMLFilename = string.Copy(DatasetName);
+            var msXMLFilename = string.Copy(DatasetName);
             hashCheckFilePath = string.Empty;
 
             switch (msXmlType)
             {
                 case clsAnalysisResources.MSXMLOutputTypeConstants.mzXML:
-                    MsXMLFilename += clsAnalysisResources.DOT_MZXML_EXTENSION + clsAnalysisResources.DOT_GZ_EXTENSION;
+                    msXMLFilename += clsAnalysisResources.DOT_MZXML_EXTENSION + clsAnalysisResources.DOT_GZ_EXTENSION;
                     break;
                 case clsAnalysisResources.MSXMLOutputTypeConstants.mzML:
                     // All MzML files should be gzipped
-                    MsXMLFilename += clsAnalysisResources.DOT_MZML_EXTENSION + clsAnalysisResources.DOT_GZ_EXTENSION;
+                    msXMLFilename += clsAnalysisResources.DOT_MZML_EXTENSION + clsAnalysisResources.DOT_GZ_EXTENSION;
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(msXmlType), "Unsupported enum value for MSXMLOutputTypeConstants: " + msXmlType);
@@ -817,7 +817,7 @@ namespace AnalysisManagerBase
             if (string.IsNullOrEmpty(yearQuarter))
             {
                 // Perform an exhaustive recursive search of the MSXML file cache
-                var filesToAppend = msXmlCacheDirectory.GetFiles(MsXMLFilename, SearchOption.AllDirectories);
+                var filesToAppend = msXmlCacheDirectory.GetFiles(msXMLFilename, SearchOption.AllDirectories);
 
                 if (filesToAppend.Length == 0 && msXmlType == clsAnalysisResources.MSXMLOutputTypeConstants.mzXML)
                 {
@@ -839,7 +839,7 @@ namespace AnalysisManagerBase
 
                     if (subDirectories.Length > 0)
                     {
-                        var filesToAppend = subDirectories.First().GetFiles(MsXMLFilename, SearchOption.TopDirectoryOnly);
+                        var filesToAppend = subDirectories.First().GetFiles(msXMLFilename, SearchOption.TopDirectoryOnly);
                         if (filesToAppend.Length == 0 && msXmlType == clsAnalysisResources.MSXMLOutputTypeConstants.mzXML)
                         {
                             // Older .mzXML files were not gzipped
