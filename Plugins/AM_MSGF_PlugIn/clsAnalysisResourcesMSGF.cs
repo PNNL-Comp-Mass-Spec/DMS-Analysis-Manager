@@ -176,45 +176,51 @@ namespace AnalysisManagerMSGFPlugin
             if (!onlyCopyFirstHitsAndSynopsisFiles)
             {
                 // Get the SEQUEST, X!Tandem, Inspect, MS-GF+, MODa, MODPlus, or MSPathFinder parameter file
-                fileToGet = mJobParams.GetParam("ParmFileName");
-                if (!FileSearch.FindAndRetrieveMiscFiles(fileToGet, false))
+                var paramFile = mJobParams.GetParam("ParmFileName");
+                if (!FileSearch.FindAndRetrieveMiscFiles(paramFile, false))
                 {
                     // Errors were reported in function call, so just return
                     return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
                 }
-                mJobParams.AddResultFileToSkip(fileToGet);
+                mJobParams.AddResultFileToSkip(paramFile);
 
                 // Also copy the _ProteinMods.txt file
-                fileToGet = clsPHRPReader.GetPHRPProteinModsFileName(eResultType, DatasetName);
-                if (!FileSearch.FindAndRetrieveMiscFiles(fileToGet, false))
+                var proteinModsFile = clsPHRPReader.GetPHRPProteinModsFileName(resultType, DatasetName);
+                if (!FileSearch.FindAndRetrieveMiscFiles(proteinModsFile, false))
                 {
                     // Ignore this error; we don't really need this file
                 }
                 else
                 {
-                    mJobParams.AddResultFileToKeep(fileToGet);
+                    mJobParams.AddResultFileToKeep(proteinModsFile);
                 }
             }
 
             // Get the PHRP _syn.txt file
-            fileToGet = clsPHRPReader.GetPHRPSynopsisFileName(eResultType, DatasetName);
-            if (!string.IsNullOrEmpty(fileToGet))
+            var synopsisFile = clsPHRPReader.GetPHRPSynopsisFileName(resultType, DatasetName);
+            string synFilePath;
+
+            if (!string.IsNullOrEmpty(synopsisFile))
             {
-                success = FileSearch.FindAndRetrievePHRPDataFile(ref fileToGet, "");
-                if (!success)
+                var synopsisFileFound = FileSearch.FindAndRetrievePHRPDataFile(ref synopsisFile, "");
+                if (!synopsisFileFound)
                 {
                     // Errors were reported in function call, so just return
                     return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
                 }
-                synFilePath = Path.Combine(mWorkDir, fileToGet);
+                synFilePath = Path.Combine(mWorkDir, synopsisFile);
+            }
+            else
+            {
+                synFilePath = string.Empty;
             }
 
             // Get the PHRP _fht.txt file
-            fileToGet = clsPHRPReader.GetPHRPFirstHitsFileName(eResultType, DatasetName);
-            if (!string.IsNullOrEmpty(fileToGet))
+            var firstHitsFile = clsPHRPReader.GetPHRPFirstHitsFileName(resultType, DatasetName);
+            if (!string.IsNullOrEmpty(firstHitsFile))
             {
-                success = FileSearch.FindAndRetrievePHRPDataFile(ref fileToGet, synFilePath);
-                if (!success)
+                var firstHitsFileFound = FileSearch.FindAndRetrievePHRPDataFile(ref firstHitsFile, synFilePath);
+                if (!firstHitsFileFound)
                 {
                     // Errors were reported in function call, so just return
                     return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
@@ -222,38 +228,49 @@ namespace AnalysisManagerMSGFPlugin
             }
 
             // Get the PHRP _ResultToSeqMap.txt file
-            fileToGet = clsPHRPReader.GetPHRPFirstHitsFileName(eResultType, DatasetName);
-            if (!string.IsNullOrEmpty(fileToGet))
+            var resultToSeqMapFile = clsPHRPReader.GetPHRPResultToSeqMapFileName(resultType, DatasetName);
+            bool resultToSeqMapFileFound;
+
+            if (!string.IsNullOrEmpty(resultToSeqMapFile))
             {
-                success = FileSearch.FindAndRetrievePHRPDataFile(ref fileToGet, synFilePath);
-                if (!success)
+                resultToSeqMapFileFound = FileSearch.FindAndRetrievePHRPDataFile(ref resultToSeqMapFile, synFilePath);
+                if (!resultToSeqMapFileFound)
                 {
                     // Errors were reported in function call, so just return
                     return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
                 }
+            }
+            else
+            {
+                resultToSeqMapFileFound = false;
             }
 
             // Get the PHRP _SeqToProteinMap.txt file
-            fileToGet = clsPHRPReader.GetPHRPFirstHitsFileName(eResultType, DatasetName);
-            if (!string.IsNullOrEmpty(fileToGet))
+            var seqToProteinMapFile = clsPHRPReader.GetPHRPSeqToProteinMapFileName(resultType, DatasetName);
+            bool seqToProteinMapFileFound;
+            if (!string.IsNullOrEmpty(seqToProteinMapFile))
             {
-                success = FileSearch.FindAndRetrievePHRPDataFile(ref fileToGet, synFilePath);
-                if (!success)
+                seqToProteinMapFileFound = FileSearch.FindAndRetrievePHRPDataFile(ref seqToProteinMapFile, synFilePath);
+                if (!seqToProteinMapFileFound)
                 {
                     // Errors were reported in function call, so just return
                     return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
                 }
             }
+            else
+            {
+                seqToProteinMapFileFound = false;
+            }
 
             // Get the PHRP _PepToProtMapMTS.txt file
-            fileToGet = clsPHRPReader.GetPHRPPepToProteinMapFileName(eResultType, DatasetName);
-            if (!string.IsNullOrEmpty(fileToGet))
+            var pepToProteinMapFile = clsPHRPReader.GetPHRPPepToProteinMapFileName(resultType, DatasetName);
+            if (!string.IsNullOrEmpty(pepToProteinMapFile))
             {
                 // We're passing a dummy syn file name to FileSearch.FindAndRetrievePHRPDataFile
                 // because there are a few jobs that have file _msgfplus_fht.txt (created by the November 2016 version of the DataExtractor tool)
                 // but also have file msgfdb_PepToProtMapMTS.txt (created by an older version of the MSGFPlus tool)
-                success = FileSearch.FindAndRetrievePHRPDataFile(ref fileToGet, "Dataset_msgfdb.txt");
-                if (!success)
+                var pepToProteinMapFileFound = FileSearch.FindAndRetrievePHRPDataFile(ref pepToProteinMapFile, "Dataset_msgfdb.txt");
+                if (!pepToProteinMapFileFound)
                 {
                     if (mJobParams.GetJobParameter("IgnorePeptideToProteinMapError", false))
                     {
@@ -271,25 +288,21 @@ namespace AnalysisManagerMSGFPlugin
                 }
             }
 
-            success = ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadLayout.FlatNoSubdirectories);
-            if (!success)
+            var downloadQueueProcessed = ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadLayout.FlatNoSubdirectories);
+            if (!downloadQueueProcessed)
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            Int64 synFileSizeBytes = 0;
-            var fiSynopsisFile = new FileInfo(synFilePath);
-            if (fiSynopsisFile.Exists)
-            {
-                synFileSizeBytes = fiSynopsisFile.Length;
-            }
+            var synopsisFileInfo = new FileInfo(synFilePath);
+            long synFileSizeBytes = synopsisFileInfo.Exists ? synopsisFile.Length : 0;
 
-            if (!onlyCopyFHTandSYNfiles)
+            if (!onlyCopyFirstHitsAndSynopsisFiles)
             {
                 // Get the ModSummary.txt file
-                fileToGet = clsPHRPReader.GetPHRPModSummaryFileName(eResultType, DatasetName);
-                success = FileSearch.FindAndRetrievePHRPDataFile(ref fileToGet, synFilePath);
-                if (!success)
+                var modSummaryFile = clsPHRPReader.GetPHRPModSummaryFileName(resultType, DatasetName);
+                var modSummaryFileFound = FileSearch.FindAndRetrievePHRPDataFile(ref modSummaryFile, synFilePath);
+                if (!modSummaryFileFound)
                 {
                     // _ModSummary.txt file not found
                     // This will happen if the synopsis file is empty
@@ -298,14 +311,13 @@ namespace AnalysisManagerMSGFPlugin
                     if (synFileSizeBytes == 0)
                     {
                         // If the synopsis file is 0-bytes, the _ModSummary.txt file won't exist; that's OK
-                        var targetFile = Path.Combine(mWorkDir, fileToGet);
 
                         var modDefsFile = Path.GetFileNameWithoutExtension(mJobParams.GetParam("ParmFileName")) + PHRP_MOD_DEFS_SUFFIX;
 
-                        if (!FileSearch.FindAndRetrieveMiscFiles(modDefsFile, false))
+                        if (FileSearch.FindAndRetrieveMiscFiles(modDefsFile, false))
                         {
                             // Rename the file to end in _ModSummary.txt
-                            mPendingFileRenames.Add(modDefsFile, targetFile);
+                            mPendingFileRenames.Add(modDefsFile, modSummaryFile);
                         }
                         else
                         {
@@ -324,16 +336,15 @@ namespace AnalysisManagerMSGFPlugin
             // Copy the PHRP files so that the PHRPReader can determine the modified residues and extract the protein names
             // clsMSGFResultsSummarizer also uses these files
 
-            fileToGet = clsPHRPReader.GetPHRPResultToSeqMapFileName(eResultType, DatasetName);
-            if (!string.IsNullOrEmpty(fileToGet))
+            if (!string.IsNullOrEmpty(resultToSeqMapFile))
             {
-                if (!FileSearch.FindAndRetrievePHRPDataFile(ref fileToGet, synFilePath))
+                if (!resultToSeqMapFileFound)
                 {
                     if (synFileSizeBytes == 0)
                     {
                         // If the synopsis file is 0-bytes, the _ResultToSeqMap.txt file won't exist
                         // That's OK; we'll create an empty file with just a header line
-                        if (!CreateEmptyResultToSeqMapFile(fileToGet))
+                        if (!CreateEmptyResultToSeqMapFile(resultToSeqMapFile))
                         {
                             return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
                         }
@@ -346,16 +357,15 @@ namespace AnalysisManagerMSGFPlugin
                 }
             }
 
-            fileToGet = clsPHRPReader.GetPHRPSeqToProteinMapFileName(eResultType, DatasetName);
-            if (!string.IsNullOrEmpty(fileToGet))
+            if (!string.IsNullOrEmpty(seqToProteinMapFile))
             {
-                if (!FileSearch.FindAndRetrievePHRPDataFile(ref fileToGet, synFilePath))
+                if (!seqToProteinMapFileFound)
                 {
                     if (synFileSizeBytes == 0)
                     {
                         // If the synopsis file is 0-bytes, the _SeqToProteinMap.txt file won't exist
                         // That's OK; we'll create an empty file with just a header line
-                        if (!CreateEmptySeqToProteinMapFile(fileToGet))
+                        if (!CreateEmptySeqToProteinMapFile(seqToProteinMapFile))
                         {
                             return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
                         }
@@ -368,15 +378,15 @@ namespace AnalysisManagerMSGFPlugin
                 }
             }
 
-            fileToGet = clsPHRPReader.GetPHRPSeqInfoFileName(eResultType, DatasetName);
-            if (!string.IsNullOrEmpty(fileToGet))
+            var seqInfoFile = clsPHRPReader.GetPHRPSeqInfoFileName(resultType, DatasetName);
+            if (!string.IsNullOrEmpty(seqInfoFile))
             {
-                if (FileSearch.FindAndRetrievePHRPDataFile(ref fileToGet, synFilePath))
+                if (FileSearch.FindAndRetrievePHRPDataFile(ref seqInfoFile, synFilePath))
                 {
                 }
                 else
                 {
-                    LogWarning("SeqInfo file not found (" + fileToGet + "); modifications will be inferred using the ModSummary.txt file");
+                    LogWarning("SeqInfo file not found (" + seqInfoFile + "); modifications will be inferred using the ModSummary.txt file");
                 }
             }
 
@@ -393,16 +403,16 @@ namespace AnalysisManagerMSGFPlugin
                 mJobParams.AddResultFileExtensionToSkip(DOT_MGF_EXTENSION);
 
             }
-            else if (!onlyCopyFHTandSYNfiles)
+            else if (!onlyCopyFirstHitsAndSynopsisFiles)
             {
 
                 // See if a .mzXML file already exists for this dataset
-                success = FileSearch.RetrieveMZXmlFile(false, out var mzXMLFilePath);
+                var mzXmlFileRetrieved = FileSearch.RetrieveMZXmlFile(false, out var mzXMLFilePath);
 
                 // Make sure we don't move the .mzXML file into the results folder
                 mJobParams.AddResultFileExtensionToSkip(DOT_MZXML_EXTENSION);
 
-                if (success)
+                if (mzXmlFileRetrieved)
                 {
                     // .mzXML file found and copied locally; no need to retrieve the .Raw file
                     if (mDebugLevel >= 1)
@@ -442,8 +452,8 @@ namespace AnalysisManagerMSGFPlugin
                 }
             }
 
-            success = ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadLayout.FlatNoSubdirectories);
-            if (!success)
+            var downloadQueueProcessed2 = ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadLayout.FlatNoSubdirectories);
+            if (!downloadQueueProcessed2)
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
