@@ -50,6 +50,7 @@
         /// </summary>
         public clsUniqueSeqInfo()
         {
+            // ReSharper disable once VirtualMemberCallInConstructor
             Clear();
         }
 

@@ -635,7 +635,7 @@ namespace MSGFResultsSummarizer
                 // Sort the data by ascending SpecEValue, then step through the list and compute FDR
                 // Use FDR = #Reverse / #Forward
                 //
-                // Alternative FDR formula is:  FDR = 2 * #Reverse / (#Forward + #Reverse)
+                // Alternative FDR formula is: FDR = 2 * #Reverse / (#Forward + #Reverse)
                 // But, since MS-GF+ uses "#Reverse / #Forward" we'll use that here too
                 //
                 // If no reverse hits are present or if none of the data has MSGF values, we'll clear psmResults and update mErrorMessage
@@ -797,7 +797,7 @@ namespace MSGFResultsSummarizer
             }
 
             // Step through the normalized peptides that correspond to newNormalizedPeptide.CleanSequence
-            // Note that each candidate will have an empty CleanSequence value because of how they are stored in dictNormalizedPeptides
+            // Note that each candidate will have an empty CleanSequence value because of how they are stored in normalizedPeptidesByCleanSequence
 
             foreach (var candidate in normalizedPeptideCandidates)
             {
@@ -884,8 +884,17 @@ namespace MSGFResultsSummarizer
             return new Regex(@"(TRYP_(PIG|BOVIN)|Contaminant_Trypa)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         }
 
-        public static clsNormalizedPeptideInfo GetNormalizedPeptideInfo(string peptideCleanSequence,
-            IEnumerable<KeyValuePair<string, int>> modifications, int seqID)
+        /// <summary>
+        /// Initialize a NormalizedPeptideInfo object using a clean sequence and list of modifications,
+        /// </summary>
+        /// <param name="peptideCleanSequence"></param>
+        /// <param name="modifications"></param>
+        /// <param name="seqID"></param>
+        /// <returns></returns>
+        public static clsNormalizedPeptideInfo GetNormalizedPeptideInfo(
+            string peptideCleanSequence,
+            IEnumerable<KeyValuePair<string, int>> modifications,
+            int seqID)
         {
             var normalizedPeptide = new clsNormalizedPeptideInfo(peptideCleanSequence);
             normalizedPeptide.StoreModifications(modifications);
@@ -1038,7 +1047,6 @@ namespace MSGFResultsSummarizer
 
                 ////////////////////
                 // Load the PSMs and sequence info
-                //
 
                 // The keys in this dictionary are NormalizedSeqID values, which are custom-assigned
                 // by this class to keep track of peptide sequences on a basis where modifications are tracked with some wiggle room
@@ -1113,14 +1121,17 @@ namespace MSGFResultsSummarizer
         /// Normalizes the peptide sequence (mods are tracked, but no longer associated with specific residues) and populates normalizedPSMs
         /// </summary>
         /// <param name="phrpSynopsisFilePath"></param>
-        /// <param name="normalizedPSMs"></param>
-        /// <param name="resultToSeqMap"></param>
-        /// <param name="seqToProteinMap"></param>
-        /// <param name="sequenceInfo"></param>
+        /// <param name="normalizedPSMs">Dictionary where keys are Sequence ID and values are clsPSMInfo objects</param>
+        /// <param name="resultToSeqMap">SortedList mapping PSM ResultID to Sequence ID</param>
+        /// <param name="seqToProteinMap">Dictionary where keys are sequence ID and values are a list of protein info</param>
+        /// <param name="sequenceInfo">Dictionary where keys are sequence ID and values are information about the sequence</param>
         /// <returns></returns>
         /// <remarks></remarks>
-        private bool LoadPSMs(string phrpSynopsisFilePath, IDictionary<int, clsPSMInfo> normalizedPSMs,
-            out SortedList<int, int> resultToSeqMap, out SortedList<int, List<clsProteinInfo>> seqToProteinMap,
+        private bool LoadPSMs(
+            string phrpSynopsisFilePath,
+            IDictionary<int, clsPSMInfo> normalizedPSMs,
+            out SortedList<int, int> resultToSeqMap,
+            out SortedList<int, List<clsProteinInfo>> seqToProteinMap,
             out SortedList<int, clsSeqInfo> sequenceInfo)
         {
             var specEValue = clsPSMInfo.UNKNOWN_MSGF_SPEC_EVALUE;
