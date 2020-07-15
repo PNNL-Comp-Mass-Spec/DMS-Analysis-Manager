@@ -40,6 +40,13 @@ namespace MSGFResultsSummarizer
 
         private const string MSGF_RESULT_FILENAME_SUFFIX = "_MSGF.txt";
 
+        private enum ReporterIonTypes
+        {
+            None = 0,
+            iTRAQ4plex = 1,
+            iTRAQ8plex = 2,
+            TMT6plex = 3,
+            TMT16plex = 4
         }
 
         #endregion
@@ -60,6 +67,20 @@ namespace MSGFResultsSummarizer
 
         private readonly IDBTools mStoredProcedureExecutor;
 
+        /// <summary>
+        /// This will be set to true if the _ModSummary.txt file has iTRAQ or TMT as a dynamic mod
+        /// </summary>
+        private bool mDynamicReporterIonPTM;
+
+        /// <summary>
+        /// The reporter ion type, when mDynamicReporterIonPTM is true
+        /// </summary>
+        private ReporterIonTypes mDynamicReporterIonType;
+
+        /// <summary>
+        /// The mod name, as loaded from the _ModSummary.txt file
+        /// </summary>
+        private string mDynamicReporterIonName = string.Empty;
 
         /// <summary>
         /// PHRP _syn.txt file name
@@ -908,6 +929,10 @@ namespace MSGFResultsSummarizer
 
             try
             {
+                mDynamicReporterIonPTM = false;
+                mDynamicReporterIonType = ReporterIonTypes.None;
+                mDynamicReporterIonName = string.Empty;
+
                 mErrorMessage = string.Empty;
                 SpectraSearched = 0;
                 mMSGFBasedCounts.Clear();
@@ -933,15 +958,27 @@ namespace MSGFResultsSummarizer
                 if (phrpSynopsisFileName == null)
                     throw new NullReferenceException(nameof(phrpSynopsisFileName) + " is null");
 
+                var modSummaryFileName = clsPHRPReader.GetPHRPModSummaryFileName(ResultType, DatasetName);
+
                 mMSGFSynopsisFileName = Path.GetFileNameWithoutExtension(phrpSynopsisFileName) + MSGF_RESULT_FILENAME_SUFFIX;
 
                 var phrpFirstHitsFilePath = Path.Combine(mWorkDir, phrpFirstHitsFileName);
                 var phrpSynopsisFilePath = Path.Combine(mWorkDir, phrpSynopsisFileName);
+                var phrpModSummaryFilePath = Path.Combine(mWorkDir, modSummaryFileName);
 
                 if (!File.Exists(phrpSynopsisFilePath))
                 {
                     SetErrorMessage("File not found: " + phrpSynopsisFilePath);
                     return false;
+                }
+
+                if (!File.Exists(phrpModSummaryFilePath))
+                {
+                    OnWarningEvent("ModSummary.txt file not found; will not be able to examine dynamic mods");
+                }
+                else
+                {
+                    ParseModSummaryFile(phrpModSummaryFilePath);
                 }
 
                 /////////////////////
@@ -1500,6 +1537,110 @@ namespace MSGFResultsSummarizer
             }
 
             return GetNormalizedPeptideInfo(peptideCleanSequence, modList, seqID);
+        }
+
+        private void ParseModSummaryFile(string phrpModSummaryFilePath)
+        {
+            try
+            {
+                var headersParsed = false;
+                var columnMap = new Dictionary<string, int>();
+
+                var columnNamesByIdentifier = new Dictionary<string, SortedSet<string>>();
+
+                DataTableUtils.AddColumnIdentifier(columnNamesByIdentifier, "Modification_Symbol");
+                DataTableUtils.AddColumnIdentifier(columnNamesByIdentifier, "Modification_Mass");
+                DataTableUtils.AddColumnIdentifier(columnNamesByIdentifier, "Target_Residues");
+                DataTableUtils.AddColumnIdentifier(columnNamesByIdentifier, "Modification_Type");
+                DataTableUtils.AddColumnIdentifier(columnNamesByIdentifier, "Mass_Correction_Tag");
+                DataTableUtils.AddColumnIdentifier(columnNamesByIdentifier, "Occurrence_Count");
+
+                var reporterIonNames = new Dictionary<string, ReporterIonTypes>(StringComparer.OrdinalIgnoreCase)
+                {
+                    // ReSharper disable StringLiteralTypo
+                    {"TMT6Tag", ReporterIonTypes.TMT6plex},         // DMS Mass_Correction_Tag name
+                    {"TMT6plex", ReporterIonTypes.TMT6plex},        // UniMod name
+                    {"TMT16Tag", ReporterIonTypes.TMT16plex},       // DMS Mass_Correction_Tag name
+                    {"TMT16plex", ReporterIonTypes.TMT16plex},      // Non-standard (should not be encountered)
+                    {"TMTpro", ReporterIonTypes.TMT16plex},         // UniMod name
+                    {"itrac", ReporterIonTypes.iTRAQ4plex},         // DMS Mass_Correction_Tag name
+                    {"iTRAQ4plex", ReporterIonTypes.iTRAQ4plex},    // UniMod name
+                    {"iTRAQ", ReporterIonTypes.iTRAQ4plex},         // UniMod synonym
+                    {"iTRAQ8", ReporterIonTypes.iTRAQ8plex},        // DMS Mass_Correction_Tag name
+                    {"iTRAQ8plex", ReporterIonTypes.iTRAQ8plex}     // UniMod name
+                    // ReSharper restore StringLiteralTypo
+                };
+
+                using (var reader = new StreamReader(new FileStream(phrpModSummaryFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                {
+                    while (!reader.EndOfStream)
+                    {
+                        var dataLine = reader.ReadLine();
+                        if (string.IsNullOrWhiteSpace(dataLine))
+                            continue;
+
+                        if (!headersParsed)
+                        {
+                            headersParsed = true;
+
+                            if (dataLine.StartsWith("Modification_"))
+                            {
+
+                                DataTableUtils.GetColumnMappingFromHeaderLine(columnMap, dataLine, columnNamesByIdentifier);
+                                continue;
+                            }
+
+                            // Missing header line; assume the order
+                            columnMap.Add("Modification_Symbol", 0);
+                            columnMap.Add("Modification_Mass", 1);
+                            columnMap.Add("Target_Residues", 2);
+                            columnMap.Add("Modification_Type", 3);
+                            columnMap.Add("Mass_Correction_Tag", 4);
+                        }
+
+                        var resultRow = dataLine.Split('\t');
+
+                        // var modificationSymbol = DataTableUtils.GetColumnValue(resultRow, columnMap, "Modification_Symbol");
+                        // var targetResidues = DataTableUtils.GetColumnValue(resultRow, columnMap, "Target_Residues");
+                        var modificationType = DataTableUtils.GetColumnValue(resultRow, columnMap, "Modification_Type");
+                        var massCorrectionTag = DataTableUtils.GetColumnValue(resultRow, columnMap, "Mass_Correction_Tag");
+
+                        if (!modificationType.Equals("D"))
+                            continue;
+
+                        if (!reporterIonNames.TryGetValue(massCorrectionTag, out var reporterIonType))
+                            continue;
+
+                        if (!mDynamicReporterIonPTM)
+                        {
+                            mDynamicReporterIonPTM = true;
+                            mDynamicReporterIonType = reporterIonType;
+                            mDynamicReporterIonName = massCorrectionTag;
+                            continue;
+                        }
+
+                        if (mDynamicReporterIonType != reporterIonType)
+                        {
+                            OnWarningEvent(string.Format(
+                                "ModSummary.txt file has a mix of reporter ion types: {0} and {1}",
+                                mDynamicReporterIonType, reporterIonType));
+                        }
+
+                        if (!mDynamicReporterIonName.Equals(massCorrectionTag))
+                        {
+                            OnWarningEvent(string.Format(
+                                "ModSummary.txt file has a mix of reporter ion mod names: {0} and {1}",
+                                mDynamicReporterIonName, massCorrectionTag));
+                        }
+                    }
+                }
+
+            }
+            catch (Exception ex)
+            {
+                OnWarningEvent("Exception parsing the ModSummary file: " + ex.Message);
+                Console.WriteLine(ex.StackTrace);
+            }
         }
 
         private void ReportDebugMessage(string message, int debugLevel = 2)
