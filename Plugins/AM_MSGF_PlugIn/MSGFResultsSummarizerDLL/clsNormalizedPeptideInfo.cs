@@ -13,11 +13,10 @@ namespace MSGFResultsSummarizer
         /// <remarks>This field is empty in dictNormalizedPeptides because the keys in the dictionary are the clean sequence</remarks>
         public string CleanSequence { get; }
 
-        // ReSharper disable once CollectionNeverUpdated.Global
         /// <summary>
         /// List of modified amino acids
         /// </summary>
-        /// <remarks>Keys are mod names or symbols; values are the 0-based residue index</remarks>
+        /// <remarks>Keys are mod names or symbols; values are the 1-based residue number</remarks>
         public List<KeyValuePair<string, int>> Modifications { get; }
 
         /// <summary>

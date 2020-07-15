@@ -763,7 +763,7 @@ namespace MSGFResultsSummarizer
                     // Mod names do match
                     if (Math.Abs(newNormalizedPeptide.Modifications[modIndex].Value - candidate.Modifications[modIndex].Value) <= 1)
                     {
-                        // The affected residues are at the same index or are one index apart
+                        // The affected residues are at the same residue or are one residue apart
                         residueMatchCount += 1;
                     }
                 }
@@ -1463,7 +1463,7 @@ namespace MSGFResultsSummarizer
                 }
                 else
                 {
-                    modList.Add(new KeyValuePair<string, int>(primarySequence[index].ToString(), index));
+                    modList.Add(new KeyValuePair<string, int>(primarySequence[index].ToString(), aminoAcidList.Length));
                 }
             }
 
@@ -1483,12 +1483,12 @@ namespace MSGFResultsSummarizer
                 {
                     var colonIndex = modDescriptor.IndexOf(':');
                     string modName;
-                    var modIndex = 0;
+                    var residueNumber = 0;
 
                     if (colonIndex > 0)
                     {
                         modName = modDescriptor.Substring(0, colonIndex);
-                        int.TryParse(modDescriptor.Substring(colonIndex + 1), out modIndex);
+                        int.TryParse(modDescriptor.Substring(colonIndex + 1), out residueNumber);
                     }
                     else
                     {
@@ -1501,7 +1501,7 @@ namespace MSGFResultsSummarizer
                         throw new Exception(string.Format("Empty mod name parsed from the ModDescription for SeqID {0}: {1}", seqInfo.SeqID, seqInfo.ModDescription));
                     }
 
-                    modList.Add(new KeyValuePair<string, int>(modName, modIndex));
+                    modList.Add(new KeyValuePair<string, int>(modName, residueNumber));
                 }
             }
 
