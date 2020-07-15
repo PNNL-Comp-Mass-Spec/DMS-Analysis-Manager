@@ -1029,8 +1029,8 @@ namespace AnalysisManagerMzRefineryPlugIn
                         clsGlobal.TryGetValueFloat(dataColumns, headerMapping["MS2 Final stDev"], out var finalStDevMS2);
                         clsGlobal.TryGetValueFloat(dataColumns, headerMapping["MS2 Tolerance for 99%"], out var toleranceFor99PctMS2);
 
-                        var reThresholdValue = new Regex(@"MME <= (?<Threshold>.+)");
-                        var thresholdMatch = reThresholdValue.Match(thresholdRange);
+                        var thresholdValueMatcher = new Regex(@"MME <= (?<Threshold>.+)");
+                        var thresholdMatch = thresholdValueMatcher.Match(thresholdRange);
                         if (thresholdMatch.Success)
                         {
                             if (double.TryParse(thresholdMatch.Groups["Threshold"].Value, out var specEValueThreshold))

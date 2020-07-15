@@ -716,20 +716,22 @@ namespace MSGFResultsSummarizer
         }
 
         /// <summary>
-        /// Search dictNormalizedPeptides for an entry that either exactly matches normalizedPeptide
+        /// Search normalizedPeptidesByCleanSequence for an entry that either exactly matches normalizedPeptide
         /// or nearly matches normalizedPeptide
         /// </summary>
-        /// <param name="dictNormalizedPeptides">Existing tracked normalized peptides; key is clean sequence, value is a list of normalized peptide info structs</param>
+        /// <param name="normalizedPeptidesByCleanSequence">Existing tracked normalized peptides; key is clean sequence, value is a list of normalized peptide info structs</param>
         /// <param name="newNormalizedPeptide">New normalized peptide</param>
         /// <returns>The Sequence ID of a matching normalized peptide, or -1 if no match</returns>
         /// <remarks>A near match is one where the position of each modified residue is the same or just one residue apart</remarks>
-        public static int FindNormalizedSequence(IReadOnlyDictionary<string, List<clsNormalizedPeptideInfo>> dictNormalizedPeptides, clsNormalizedPeptideInfo newNormalizedPeptide)
+        public static int FindNormalizedSequence(
+            IReadOnlyDictionary<string, List<clsNormalizedPeptideInfo>> normalizedPeptidesByCleanSequence,
+            clsNormalizedPeptideInfo newNormalizedPeptide)
         {
             // Find normalized peptides with the new normalized peptide's clean sequence
 
-            if (!dictNormalizedPeptides.TryGetValue(newNormalizedPeptide.CleanSequence, out var normalizedPeptideCandidates))
+            if (!normalizedPeptidesByCleanSequence.TryGetValue(newNormalizedPeptide.CleanSequence, out var normalizedPeptideCandidates))
             {
-                return clsPSMInfo.UNKNOWN_SEQID;
+                return clsPSMInfo.UNKNOWN_SEQUENCE_ID;
             }
 
             // Step through the normalized peptides that correspond to newNormalizedPeptide.CleanSequence
@@ -773,7 +775,7 @@ namespace MSGFResultsSummarizer
                 }
             }
 
-            return clsPSMInfo.UNKNOWN_SEQID;
+            return clsPSMInfo.UNKNOWN_SEQUENCE_ID;
         }
 
         private clsPHRPStartupOptions GetMinimalMemoryPHRPStartupOptions()
@@ -1051,13 +1053,13 @@ namespace MSGFResultsSummarizer
             var loadMSGFResults = true;
 
             // Regex for determining that a peptide has a missed cleavage (i.e. an internal tryptic cleavage point)
-            var reMissedCleavage = new Regex(@"[KR][^P][A-Z]", RegexOptions.Compiled);
+            var missedCleavageMatcher = new Regex(@"[KR][^P][A-Z]", RegexOptions.Compiled);
 
             // Regex to match keratin proteins
-            var reKeratinProtein = GetKeratinRegEx();
+            var keratinProteinMatcher = GetKeratinRegEx();
 
             // Regex to match trypsin proteins
-            var reTrypsinProtein = GetTrypsinRegEx();
+            var trypsinProteinMatcher = GetTrypsinRegEx();
 
             resultToSeqMap = new SortedList<int, int>();
             seqToProteinMap = new SortedList<int, List<clsProteinInfo>>();
@@ -1131,7 +1133,7 @@ namespace MSGFResultsSummarizer
                 // The SeqID value tracked by udtNormalizedPeptideType is the SeqID of the first sequence to get normalized to the given entry
                 // If sequenceInfoAvailable is False, values are the ResultID value of the first peptide to get normalized to the given entry
                 //
-                var dictNormalizedPeptides = new Dictionary<string, List<clsNormalizedPeptideInfo>>();
+                var normalizedPeptidesByCleanSequence = new Dictionary<string, List<clsNormalizedPeptideInfo>>();
 
                 using (var reader = new clsPHRPReader(phrpSynopsisFilePath, startupOptions))
                 {
@@ -1228,18 +1230,18 @@ namespace MSGFResultsSummarizer
                         var normalizedPeptide = new clsNormalizedPeptideInfo(string.Empty);
 
                         var normalized = false;
-                        var seqID = clsPSMInfo.UNKNOWN_SEQID;
+                        var seqID = clsPSMInfo.UNKNOWN_SEQUENCE_ID;
 
                         if (sequenceInfoAvailable && resultToSeqMap != null)
                         {
                             if (!resultToSeqMap.TryGetValue(currentPSM.ResultID, out seqID))
                             {
-                                seqID = clsPSMInfo.UNKNOWN_SEQID;
+                                seqID = clsPSMInfo.UNKNOWN_SEQUENCE_ID;
 
                                 // This result is not listed in the _ResultToSeqMap file, likely because it was already processed for this scan
-                                // Look for a match in dictNormalizedPeptides that matches this peptide's clean sequence
+                                // Look for a match in normalizedPeptidesByCleanSequence that matches this peptide's clean sequence
 
-                                if (dictNormalizedPeptides.TryGetValue(currentPSM.PeptideCleanSequence, out var normalizedPeptides))
+                                if (normalizedPeptidesByCleanSequence.TryGetValue(currentPSM.PeptideCleanSequence, out var normalizedPeptides))
                                 {
                                     foreach (var normalizedItem in normalizedPeptides)
                                     {
@@ -1253,7 +1255,7 @@ namespace MSGFResultsSummarizer
                                 }
                             }
 
-                            if (seqID != clsPSMInfo.UNKNOWN_SEQID)
+                            if (seqID != clsPSMInfo.UNKNOWN_SEQUENCE_ID)
                             {
                                 if (sequenceInfo.TryGetValue(seqID, out var seqInfo))
                                 {
@@ -1268,9 +1270,9 @@ namespace MSGFResultsSummarizer
                             normalizedPeptide = NormalizeSequence(currentPSM.Peptide, seqID);
                         }
 
-                        var normalizedSeqID = FindNormalizedSequence(dictNormalizedPeptides, normalizedPeptide);
+                        var normalizedSeqID = FindNormalizedSequence(normalizedPeptidesByCleanSequence, normalizedPeptide);
 
-                        if (normalizedSeqID != clsPSMInfo.UNKNOWN_SEQID)
+                        if (normalizedSeqID != clsPSMInfo.UNKNOWN_SEQUENCE_ID)
                         {
                             // We're already tracking this normalized peptide (or one very similar to it)
 
@@ -1326,16 +1328,15 @@ namespace MSGFResultsSummarizer
                             // SeqID will typically come from the ResultToSeqMap file
                             // But, if that file is not available, we use the ResultID of the peptide
 
-                            if (seqID == clsPSMInfo.UNKNOWN_SEQID)
+                            if (seqID == clsPSMInfo.UNKNOWN_SEQUENCE_ID)
                             {
                                 seqID = currentPSM.ResultID;
                             }
 
-
-                            if (!dictNormalizedPeptides.TryGetValue(normalizedPeptide.CleanSequence, out var normalizedPeptides))
+                            if (!normalizedPeptidesByCleanSequence.TryGetValue(normalizedPeptide.CleanSequence, out var normalizedPeptides))
                             {
                                 normalizedPeptides = new List<clsNormalizedPeptideInfo>();
-                                dictNormalizedPeptides.Add(normalizedPeptide.CleanSequence, normalizedPeptides);
+                                normalizedPeptidesByCleanSequence.Add(normalizedPeptide.CleanSequence, normalizedPeptides);
                             }
 
                             // Make a new normalized peptide entry that does not have clean sequence
@@ -1364,7 +1365,7 @@ namespace MSGFResultsSummarizer
                             {
                                 psmInfo.MissedCleavage = true;
                             }
-                            else if (reMissedCleavage.IsMatch(normalizedPeptide.CleanSequence))
+                            else if (missedCleavageMatcher.IsMatch(normalizedPeptide.CleanSequence))
                             {
                                 Console.WriteLine("NumMissedCleavages is zero but the peptide matches the MissedCleavage Regex; this is unexpected");
                                 psmInfo.MissedCleavage = true;
@@ -1373,7 +1374,7 @@ namespace MSGFResultsSummarizer
                             // Check whether this peptide is from Keratin or a related protein
                             foreach (var proteinName in currentPSM.Proteins)
                             {
-                                if (reKeratinProtein.IsMatch(proteinName))
+                                if (keratinProteinMatcher.IsMatch(proteinName))
                                 {
                                     psmInfo.KeratinPeptide = true;
                                     break;
@@ -1383,7 +1384,7 @@ namespace MSGFResultsSummarizer
                             // Check whether this peptide is from Trypsin or a related protein
                             foreach (var proteinName in currentPSM.Proteins)
                             {
-                                if (reTrypsinProtein.IsMatch(proteinName))
+                                if (trypsinProteinMatcher.IsMatch(proteinName))
                                 {
                                     psmInfo.TrypsinPeptide = true;
                                     break;

@@ -110,11 +110,11 @@ namespace AnalysisManagerMSGFDBPlugIn
                             };
 
                             // Keys in this dictionary are column names, values are the 0-based column index
-                            var dctHeaderMapping = clsGlobal.ParseHeaderLine(dataLine, headerNames);
+                            var columnMap = clsGlobal.ParseHeaderLine(dataLine, headerNames);
 
-                            scanNumberColIndex = dctHeaderMapping["ScanNumber"];
-                            collisionModeColIndex = dctHeaderMapping["Collision Mode"];
-                            scanFilterColIndex = dctHeaderMapping["Scan Filter Text"];
+                            scanNumberColIndex = columnMap["ScanNumber"];
+                            collisionModeColIndex = columnMap["Collision Mode"];
+                            scanFilterColIndex = columnMap["Scan Filter Text"];
                             continue;
                         }
 
@@ -238,12 +238,12 @@ namespace AnalysisManagerMSGFDBPlugIn
                                 };
 
                                 // Keys in this dictionary are column names, values are the 0-based column index
-                                var dctHeaderMapping = clsGlobal.ParseHeaderLine(dataLine, headerNames);
+                                var columnMap = clsGlobal.ParseHeaderLine(dataLine, headerNames);
 
-                                scanNumberColIndex = dctHeaderMapping["ScanNumber"];
-                                scanTimeColIndex = dctHeaderMapping["ScanTime"];
-                                scanTypeColIndex = dctHeaderMapping["ScanType"];
-                                scanTypeNameColIndex = dctHeaderMapping["ScanTypeName"];
+                                scanNumberColIndex = columnMap["ScanNumber"];
+                                scanTimeColIndex = columnMap["ScanTime"];
+                                scanTypeColIndex = columnMap["ScanType"];
+                                scanTypeNameColIndex = columnMap["ScanTypeName"];
                                 continue;
                             }
 

@@ -1556,17 +1556,19 @@ namespace AnalysisManagerBase
                         {
                             var requiredColumns = new List<string> { "Job", "SearchUsedMzML" };
 
-                            var dctHeaderMapping = clsGlobal.ParseHeaderLine(dataLine, requiredColumns);
+                            var columnMap = clsGlobal.ParseHeaderLine(dataLine, requiredColumns);
 
                             foreach (var column in requiredColumns)
                             {
-                                if (dctHeaderMapping[column] >= 0) continue;
+                                if (columnMap[column] >= 0)
+                                    continue;
+
                                 OnWarningEvent(string.Format("{0} column not found in {1}", column, dataPkgJobMetadataFile.FullName));
                                 return cachedJobMetadata;
                             }
 
-                            jobColIndex = dctHeaderMapping["Job"];
-                            mzMlUsedColIndex = dctHeaderMapping["SearchUsedMzML"];
+                            jobColIndex = columnMap["Job"];
+                            mzMlUsedColIndex = columnMap["SearchUsedMzML"];
 
                             headersParsed = true;
 

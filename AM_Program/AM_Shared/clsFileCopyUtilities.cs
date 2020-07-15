@@ -309,8 +309,8 @@ namespace AnalysisManagerBase
                 }
 
                 var sourceFile = new FileInfo(sourceFilePath);
-                var TargetName = datasetName + sourceFile.Extension;
-                var destFilePath = Path.Combine(targetFolderPath, TargetName);
+                var targetName = datasetName + sourceFile.Extension;
+                var destFilePath = Path.Combine(targetFolderPath, targetName);
 
                 if (createStoragePathInfoOnly)
                 {
@@ -419,26 +419,26 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Creates a file named DestFilePath but with "_StoragePathInfo.txt" appended to the name
+        /// Creates a file at destFilePath but with "_StoragePathInfo.txt" appended to the name
         /// The file's contents is the path given by sourceFilePath
         /// </summary>
         /// <param name="sourceFilePath">The path to write to the StoragePathInfo file</param>
-        /// <param name="DestFilePath">The path where the file would have been copied to</param>
+        /// <param name="destFilePath">The path where the file would have been copied to</param>
         /// <returns></returns>
         /// <remarks></remarks>
-        public bool CreateStoragePathInfoFile(string sourceFilePath, string DestFilePath)
+        public bool CreateStoragePathInfoFile(string sourceFilePath, string destFilePath)
         {
 
             var infoFilePath = string.Empty;
 
             try
             {
-                if (sourceFilePath == null || DestFilePath == null)
+                if (sourceFilePath == null || destFilePath == null)
                 {
                     return false;
                 }
 
-                infoFilePath = DestFilePath + STORAGE_PATH_INFO_FILE_SUFFIX;
+                infoFilePath = destFilePath + STORAGE_PATH_INFO_FILE_SUFFIX;
 
                 using (var writer = new StreamWriter(new FileStream(infoFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {

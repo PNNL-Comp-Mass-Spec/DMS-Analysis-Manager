@@ -13,7 +13,7 @@ namespace MSGFResultsSummarizer
 
         public const double UNKNOWN_EVALUE = double.MaxValue;
         public const int UNKNOWN_FDR = -1;
-        public const int UNKNOWN_SEQID = -1;
+        public const int UNKNOWN_SEQUENCE_ID = -1;
 
         private readonly List<PSMObservation> mObservations;
 
