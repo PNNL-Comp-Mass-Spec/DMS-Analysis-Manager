@@ -1343,7 +1343,7 @@ namespace MSGFResultsSummarizer
                                 {
                                     foreach (var normalizedItem in normalizedPeptides)
                                     {
-                                        if (normalizedItem.SeqID >= 0)
+                                        if (normalizedItem.SeqID != clsPSMInfo.UNKNOWN_SEQUENCE_ID)
                                         {
                                             // Match found; use the given SeqID value
                                             seqID = normalizedItem.SeqID;
