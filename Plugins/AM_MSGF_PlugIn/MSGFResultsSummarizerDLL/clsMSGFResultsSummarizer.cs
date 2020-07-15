@@ -361,7 +361,7 @@ namespace MSGFResultsSummarizer
                 PercentMSnScansNoPSM = 100;
             }
 
-            if (totalSpectra > 0)
+            if (scanList.Count > 0)
             {
                 // Compare the last scan number seen to the total number of scans
                 var scanGap = totalSpectra - scanList[scanList.Count - 1] - 1;
