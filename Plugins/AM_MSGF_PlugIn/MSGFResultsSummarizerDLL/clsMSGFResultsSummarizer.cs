@@ -990,9 +990,11 @@ namespace MSGFResultsSummarizer
                 mDynamicReporterIonName = string.Empty;
 
                 mErrorMessage = string.Empty;
+
+                mMSGFBasedCounts?.Clear();
+                mFDRBasedCounts?.Clear();
+
                 SpectraSearched = 0;
-                mMSGFBasedCounts.Clear();
-                mFDRBasedCounts.Clear();
 
                 /////////////////////
                 // Define the file paths
