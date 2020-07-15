@@ -15,9 +15,7 @@ namespace MSGFResultsSummarizer
         public const int UNKNOWN_FDR = -1;
         public const int UNKNOWN_SEQUENCE_ID = -1;
 
-        private readonly List<PSMObservation> mObservations;
-
-        public override int ObsCount => mObservations.Count;
+        public override int ObsCount => Observations.Count;
 
         /// <summary>
         /// True if this is a phosphopeptide
@@ -37,18 +35,18 @@ namespace MSGFResultsSummarizer
         /// <summary>
         /// Details for each PSM that maps to this class
         /// </summary>
-        public List<PSMObservation> Observations => mObservations;
+        public List<PSMObservation> Observations { get; }
 
         public double BestMSGF
         {
             get
             {
-                if (mObservations.Count == 0)
+                if (Observations.Count == 0)
                 {
                     return UNKNOWN_MSGF_SPEC_EVALUE;
                 }
 
-                return (from item in mObservations orderby item.MSGF select item.MSGF).First();
+                return (from item in Observations orderby item.MSGF select item.MSGF).First();
             }
         }
 
@@ -56,12 +54,12 @@ namespace MSGFResultsSummarizer
         {
             get
             {
-                if (mObservations.Count == 0)
+                if (Observations.Count == 0)
                 {
                     return UNKNOWN_EVALUE;
                 }
 
-                return (from item in mObservations orderby item.EValue select item.EValue).First();
+                return (from item in Observations orderby item.EValue select item.EValue).First();
             }
         }
 
@@ -69,12 +67,12 @@ namespace MSGFResultsSummarizer
         {
             get
             {
-                if (mObservations.Count == 0)
+                if (Observations.Count == 0)
                 {
                     return UNKNOWN_FDR;
                 }
 
-                return (from item in mObservations orderby item.FDR select item.FDR).First();
+                return (from item in Observations orderby item.FDR select item.FDR).First();
             }
         }
 
@@ -83,7 +81,7 @@ namespace MSGFResultsSummarizer
         /// </summary>
         public clsPSMInfo()
         {
-            mObservations = new List<PSMObservation>();
+            Observations = new List<PSMObservation>();
             Clear();
         }
 
@@ -94,8 +92,8 @@ namespace MSGFResultsSummarizer
         {
             base.Clear();
             Protein = string.Empty;
-            SeqIdFirst = UNKNOWN_SEQID;
-            mObservations?.Clear();
+            SeqIdFirst = UNKNOWN_SEQUENCE_ID;
+            Observations?.Clear();
             Phosphopeptide = false;
         }
 
@@ -105,7 +103,7 @@ namespace MSGFResultsSummarizer
         /// <param name="observation"></param>
         public void AddObservation(PSMObservation observation)
         {
-            mObservations.Add(observation);
+            Observations.Add(observation);
         }
 
         /// <summary>
@@ -143,18 +141,18 @@ namespace MSGFResultsSummarizer
 
         public override string ToString()
         {
-            if (mObservations.Count == 0)
+            if (Observations.Count == 0)
             {
                 return string.Format("SeqID {0}, {1} (0 observations)", SeqIdFirst, Protein);
             }
 
-            if (mObservations.Count == 1)
+            if (Observations.Count == 1)
             {
-                return string.Format("SeqID {0}, {1}, Scan {2} (1 observation)", SeqIdFirst, Protein, mObservations[0].Scan);
+                return string.Format("SeqID {0}, {1}, Scan {2} (1 observation)", SeqIdFirst, Protein, Observations[0].Scan);
             }
 
-            return string.Format("SeqID {0}, {1}, Scans {2}-{3} ({4} observations)", SeqIdFirst, Protein, mObservations[0].Scan,
-                                 mObservations[mObservations.Count - 1].Scan, mObservations.Count);
+            return string.Format("SeqID {0}, {1}, Scans {2}-{3} ({4} observations)", SeqIdFirst, Protein, Observations[0].Scan,
+                                 Observations[Observations.Count - 1].Scan, Observations.Count);
         }
 
         public class PSMObservation
