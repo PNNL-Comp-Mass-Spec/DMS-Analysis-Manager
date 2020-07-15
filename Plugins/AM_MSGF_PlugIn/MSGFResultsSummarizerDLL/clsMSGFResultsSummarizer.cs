@@ -300,7 +300,7 @@ namespace MSGFResultsSummarizer
             }
             catch (Exception ex)
             {
-                SetErrorMessage(ex.Message);
+                SetErrorMessage("Exception in ExamineFirstHitsFile: " + ex.Message);
                 Console.WriteLine(ex.StackTrace);
             }
         }
@@ -1024,7 +1024,7 @@ namespace MSGFResultsSummarizer
             }
             catch (Exception ex)
             {
-                SetErrorMessage(ex.Message);
+                SetErrorMessage("Exception in ProcessMSGFResults: " + ex.Message);
                 Console.WriteLine(ex.StackTrace);
                 return false;
             }
@@ -1434,7 +1434,7 @@ namespace MSGFResultsSummarizer
             }
             catch (Exception ex)
             {
-                SetErrorMessage(ex.Message);
+                SetErrorMessage("Exception in LoadPSMs: " + ex.Message);
                 Console.WriteLine(ex.StackTrace);
                 success = false;
             }
