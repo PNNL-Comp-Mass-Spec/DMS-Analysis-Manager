@@ -847,40 +847,18 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="headerLine">Tab delimited list of headers</param>
         /// <param name="expectedHeaderNames">Expected header column names</param>
-        /// <param name="isCaseSensitive">True if the header names are case sensitive</param>
         /// <returns>Dictionary with the header names and 0-based column index</returns>
         /// <remarks>Header names not found in headerLine will have an index of -1</remarks>
-        public static Dictionary<string, int> ParseHeaderLine(string headerLine, List<string> expectedHeaderNames, bool isCaseSensitive = false)
+        public static Dictionary<string, int> ParseHeaderLine(string headerLine, List<string> expectedHeaderNames)
         {
-            var headerMapping = new Dictionary<string, int>();
-
-            var columnNames = headerLine.Split('\t').ToList();
-
-            foreach (var expectedName in expectedHeaderNames)
+            var columnNamesByIdentifier = new Dictionary<string, SortedSet<string>>();
+            foreach (var headerName in expectedHeaderNames)
             {
-                var colIndex = -1;
-
-                if (isCaseSensitive)
-                {
-                    colIndex = columnNames.IndexOf(expectedName);
-                }
-                else
-                {
-                    for (var i = 0; i <= columnNames.Count - 1; i++)
-                    {
-                        if (IsMatch(columnNames[i], expectedName))
-                        {
-                            colIndex = i;
-                            break;
-                        }
-                    }
-                }
-
-                headerMapping.Add(expectedName, colIndex);
+                DataTableUtils.AddColumnIdentifier(columnNamesByIdentifier, headerName);
             }
 
-            return headerMapping;
-
+            var columnMap = DataTableUtils.GetColumnMappingFromHeaderLine(headerLine, columnNamesByIdentifier);
+            return columnMap;
         }
 
         /// <summary>

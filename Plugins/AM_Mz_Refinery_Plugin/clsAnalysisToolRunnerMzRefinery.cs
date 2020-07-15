@@ -9,6 +9,7 @@ using AnalysisManagerBase;
 using AnalysisManagerMSGFDBPlugIn;
 using MsMsDataFileReader;
 using PRISM;
+using PRISMDatabaseUtils;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -982,7 +983,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 }
 
                 // This dictionary maps column name to column index
-                Dictionary<string, int> headerMapping = null;
+                Dictionary<string, int> columnMap = null;
 
                 var requiredColumns = new List<string> {
                     "ThresholdValue",
@@ -1007,27 +1008,27 @@ namespace AnalysisManagerMzRefineryPlugIn
                         if (string.IsNullOrWhiteSpace(dataLine))
                             continue;
 
-                        if (headerMapping == null)
+                        if (columnMap == null)
                         {
-                            headerMapping = clsGlobal.ParseHeaderLine(dataLine, requiredColumns);
+                            columnMap = clsGlobal.ParseHeaderLine(dataLine, requiredColumns);
                             continue;
                         }
 
                         var dataColumns = dataLine.Split('\t');
 
-                        clsGlobal.TryGetValue(dataColumns, headerMapping["ThresholdValue"], out var thresholdRange);
-                        clsGlobal.TryGetValueInt(dataColumns, headerMapping["Excluded (score)"], out var countExcludedByScore);
-                        clsGlobal.TryGetValueInt(dataColumns, headerMapping["Excluded (mass error)"], out var countExcludedByMassError);
+                        var thresholdRange = DataTableUtils.GetColumnValue(dataColumns, columnMap, "ThresholdValue");
+                        var countExcludedByScore = DataTableUtils.GetColumnValue(dataColumns, columnMap, "Excluded (score)", 0);
+                        var countExcludedByMassError = DataTableUtils.GetColumnValue(dataColumns, columnMap, "Excluded (mass error)", 0);
 
-                        clsGlobal.TryGetValue(dataColumns, headerMapping["MS1 Shift method"], out var shiftMethodMS1);
-                        clsGlobal.TryGetValueInt(dataColumns, headerMapping["MS1 Included"], out var includedMS1);
-                        clsGlobal.TryGetValueFloat(dataColumns, headerMapping["MS1 Final stDev"], out var finalStDevMS1);
-                        clsGlobal.TryGetValueFloat(dataColumns, headerMapping["MS1 Tolerance for 99%"], out var toleranceFor99PctMS1);
+                        var shiftMethodMS1 = DataTableUtils.GetColumnValue(dataColumns, columnMap, "MS1 Shift method");
+                        var includedMS1 = DataTableUtils.GetColumnValue(dataColumns, columnMap, "MS1 Included", 0);
+                        var finalStDevMS1 = DataTableUtils.GetColumnValue(dataColumns, columnMap, "MS1 Final stDev", 0.0);
+                        var toleranceFor99PctMS1 = DataTableUtils.GetColumnValue(dataColumns, columnMap, "MS1 Tolerance for 99%", 0.0);
 
-                        clsGlobal.TryGetValue(dataColumns, headerMapping["MS2 Shift method"], out var shiftMethodMS2);
-                        clsGlobal.TryGetValueInt(dataColumns, headerMapping["MS2 Included"], out var includedMS2);
-                        clsGlobal.TryGetValueFloat(dataColumns, headerMapping["MS2 Final stDev"], out var finalStDevMS2);
-                        clsGlobal.TryGetValueFloat(dataColumns, headerMapping["MS2 Tolerance for 99%"], out var toleranceFor99PctMS2);
+                        var shiftMethodMS2 = DataTableUtils.GetColumnValue(dataColumns, columnMap, "MS2 Shift method");
+                        var includedMS2 = DataTableUtils.GetColumnValue(dataColumns, columnMap, "MS2 Included", 0);
+                        var finalStDevMS2 = DataTableUtils.GetColumnValue(dataColumns, columnMap, "MS2 Final stDev", 0.0);
+                        var toleranceFor99PctMS2 = DataTableUtils.GetColumnValue(dataColumns, columnMap, "MS2 Tolerance for 99%", 0.0);
 
                         var thresholdValueMatcher = new Regex(@"MME <= (?<Threshold>.+)");
                         var thresholdMatch = thresholdValueMatcher.Match(thresholdRange);

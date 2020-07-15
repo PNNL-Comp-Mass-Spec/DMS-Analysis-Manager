@@ -17,6 +17,7 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using PRISM.Logging;
+using PRISMDatabaseUtils;
 
 namespace AnalysisManagerExtractionPlugin
 {
@@ -679,7 +680,7 @@ namespace AnalysisManagerExtractionPlugin
                 var mergedFilePath = Path.Combine(mWorkDir, mDatasetName + "_msgfplus.tsv");
 
                 // Keys in this dictionary are column names, values are the 0-based column index
-                var headerMapping = new Dictionary<string, int>();
+                var columnMap = new Dictionary<string, int>();
 
                 // This dictionary keeps track of the top hit(s) for each scan/charge combo
                 // Keys are scan_charge
@@ -725,7 +726,6 @@ namespace AnalysisManagerExtractionPlugin
                                     // Write the header line
                                     mergedFileWriter.WriteLine(dataLine);
 
-                                    const bool IS_CASE_SENSITIVE = false;
                                     var headerNames = new List<string>
                                     {
                                         "ScanNum",
@@ -734,11 +734,11 @@ namespace AnalysisManagerExtractionPlugin
                                         "Protein",
                                         "SpecEValue"
                                     };
-                                    headerMapping = clsGlobal.ParseHeaderLine(dataLine, headerNames, IS_CASE_SENSITIVE);
+                                    columnMap = clsGlobal.ParseHeaderLine(dataLine, headerNames);
 
                                     foreach (var headerName in headerNames)
                                     {
-                                        if (headerMapping[headerName] < 0)
+                                        if (columnMap[headerName] < 0)
                                         {
                                             LogError(string.Format("Header {0} not found in {1}; unable to merge the MS-GF+ .tsv files",
                                                                    headerName, Path.GetFileName(sourceFilePath)));
@@ -750,16 +750,13 @@ namespace AnalysisManagerExtractionPlugin
                                 {
                                     var splitLine = dataLine.Split('\t');
 
-                                    var scanNumber = splitLine[headerMapping["ScanNum"]];
-                                    var chargeState = splitLine[headerMapping["Charge"]];
-
-                                    int.TryParse(scanNumber, out var scanNumberValue);
-                                    int.TryParse(chargeState, out var chargeStateValue);
+                                    var scanNumber = DataTableUtils.GetColumnValue(splitLine, columnMap, "ScanNum", 0);
+                                    var chargeState = DataTableUtils.GetColumnValue(splitLine, columnMap, "Charge", 0);
 
                                     var scanChargeCombo = scanNumber + "_" + chargeState;
-                                    var peptide = splitLine[headerMapping["Peptide"]];
-                                    var protein = splitLine[headerMapping["Protein"]];
-                                    var specEValueText = splitLine[headerMapping["SpecEValue"]];
+                                    var peptide = DataTableUtils.GetColumnValue(splitLine, columnMap, "Peptide");
+                                    var protein = DataTableUtils.GetColumnValue(splitLine, columnMap, "Protein");
+                                    var specEValueText = DataTableUtils.GetColumnValue(splitLine, columnMap, "SpecEValue");
 
                                     if (!double.TryParse(specEValueText, out var specEValue))
                                     {
@@ -798,7 +795,7 @@ namespace AnalysisManagerExtractionPlugin
                                     else
                                     {
                                         // New entry for this scan/charge combo
-                                        hitsForScan = new clsMSGFPlusPSMs(scanNumberValue, chargeStateValue, numberOfHitsPerScanToKeep);
+                                        hitsForScan = new clsMSGFPlusPSMs(scanNumber, chargeState, numberOfHitsPerScanToKeep);
                                         hitsForScan.AddPSM(udtPSM, protein);
 
                                         dctScanChargeTopHits.Add(scanChargeCombo, hitsForScan);
