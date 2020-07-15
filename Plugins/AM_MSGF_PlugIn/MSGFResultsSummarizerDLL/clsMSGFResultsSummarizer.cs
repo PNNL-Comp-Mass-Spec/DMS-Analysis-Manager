@@ -461,12 +461,9 @@ namespace MSGFResultsSummarizer
             // Make sure .PassesFilter is false for all of the observations
             foreach (var kvEntry in normalizedPSMs)
             {
-                foreach (var observation in kvEntry.Value.Observations)
+                foreach (var observation in kvEntry.Value.Observations.Where(observation => observation.PassesFilter))
                 {
-                    if (observation.PassesFilter)
-                    {
-                        observation.PassesFilter = false;
-                    }
+                    observation.PassesFilter = false;
                 }
             }
 
@@ -518,12 +515,9 @@ namespace MSGFResultsSummarizer
 
                 foreach (var entry in filteredPSMs)
                 {
-                    foreach (var observation in entry.Value.Observations)
+                    foreach (var observation in entry.Value.Observations.Where(observation => observation.FDR > FDRThreshold))
                     {
-                        if (observation.FDR > FDRThreshold)
-                        {
-                            observation.PassesFilter = false;
-                        }
+                        observation.PassesFilter = false;
                     }
                 }
             }
