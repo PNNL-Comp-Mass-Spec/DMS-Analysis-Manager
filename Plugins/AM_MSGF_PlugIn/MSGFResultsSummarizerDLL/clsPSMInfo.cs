@@ -6,9 +6,6 @@ namespace MSGFResultsSummarizer
 {
     public sealed class clsPSMInfo : clsUniqueSeqInfo
     {
-        [Obsolete("Use UNKNOWN_MSGF_SPEC_EVALUE")]
-        public const double UNKNOWN_MSGF_SPECPROB = 10;
-
         public const double UNKNOWN_MSGF_SPEC_EVALUE = 10;
 
         public const double UNKNOWN_EVALUE = double.MaxValue;
