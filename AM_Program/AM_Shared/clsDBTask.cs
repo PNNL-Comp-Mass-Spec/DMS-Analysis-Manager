@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Data.Common;
 using System.IO;
+using System.Text;
 using System.Xml.Linq;
 using PRISMDatabaseUtils;
 
@@ -302,15 +303,17 @@ namespace AnalysisManagerBase
             if (sqlCmd.Parameters.Count < 1)
                 return;
 
-            var paramDetails = "";
+            var paramDetails = new StringBuilder();
 
             foreach (DbParameter param in sqlCmd.Parameters)
             {
-                paramDetails += Environment.NewLine + "Name= " + param.ParameterName + "\t, Value= " + param.Value.CastDBVal<string>();
+                paramDetails.AppendLine(string.Format(
+                    "  Name= {0,-25}  Value= {1}",
+                    param.ParameterName,
+                    param.Value.CastDBVal<string>()));
             }
 
-            LogDebug("Parameter list:" + paramDetails);
-
+            LogDebug(paramDetails.ToString().TrimStart());
         }
 
         #endregion
