@@ -370,9 +370,10 @@ namespace AnalysisManagerBase
 
             if (maxCopyAttempts < 1)
                 maxCopyAttempts = 1;
+
             var retryCount = maxCopyAttempts;
 
-            while (retryCount > 0)
+            while (true)
             {
                 try
                 {
@@ -533,22 +534,17 @@ namespace AnalysisManagerBase
             }
 
             // If we got to here, there were too many failures
-            if (retryCount < 1)
+            string logMessage;
+            if (maxAttempts == 1)
             {
-                string msg;
-                if (maxAttempts == 1)
-                {
-                    msg = "File not found: " + fileName;
-                }
-                else
-                {
-                    msg = "File not be found after " + maxAttempts + " tries: " + fileName;
-                }
-
-                LogMessageOrError(msg, logMsgTypeIfNotFound);
-
-                return false;
+                logMessage = "File not found: " + fileName;
             }
+            else
+            {
+                logMessage = "File not be found after " + maxAttempts + " tries: " + fileName;
+            }
+
+            LogMessageOrError(logMessage, logMsgTypeIfNotFound);
 
             return false;
 
