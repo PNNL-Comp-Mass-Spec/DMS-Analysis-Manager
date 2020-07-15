@@ -477,7 +477,7 @@ namespace MSGFResultsSummarizer
             var filteredPSMs = new Dictionary<int, clsPSMInfo>();
 
             var success = false;
-            var filterPSMs = true;
+            bool filterPSMs;
 
             // Make sure .PassesFilter is false for all of the observations
             foreach (var kvEntry in normalizedPSMs)
@@ -494,11 +494,13 @@ namespace MSGFResultsSummarizer
                 {
                     // Filter on EValue
                     success = FilterPSMsByEValue(EValueThreshold, normalizedPSMs, filteredPSMs);
+                    filterPSMs = true;
                 }
                 else if (MSGFThreshold < 1)
                 {
                     // Filter on MSGF (though for MSPathFinder we're using SpecEValue)
                     success = FilterPSMsByMSGF(MSGFThreshold, normalizedPSMs, filteredPSMs);
+                    filterPSMs = true;
                 }
                 else
                 {
@@ -543,15 +545,17 @@ namespace MSGFResultsSummarizer
                 }
             }
 
-            if (success)
-            {
-                // Summarize the results, counting the number of peptides, unique peptides, and proteins
-                // We also count phosphopeptides using several metrics
-                ReportDebugMessage("Call SummarizeResults for " + filteredPSMs.Count + " Filtered PSMs", 3);
+            if (!success)
+                return false;
 
-                success = SummarizeResults(usingMSGFOrEValueFilter, filteredPSMs, seqToProteinMap, sequenceInfo);
+            // Summarize the results, counting the number of peptides, unique peptides, and proteins
+            // We also count phosphopeptides using several metrics
+            ReportDebugMessage("Call SummarizeResults for " + filteredPSMs.Count + " Filtered PSMs", 3);
 
-                ReportDebugMessage("SummarizeResults returned " + success, 3);
+            success = SummarizeResults(usingMSGFOrEValueFilter, filteredPSMs, seqToProteinMap, sequenceInfo);
+
+            ReportDebugMessage("SummarizeResults returned " + success, 3);
+
             }
 
             return success;
