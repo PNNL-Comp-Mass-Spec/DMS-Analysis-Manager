@@ -49,7 +49,17 @@ namespace MSGFResultsSummarizer
         public float MissedCleavageRatio { get; set; }
 
         public float MissedCleavageRatioPhospho { get; set; }
+        
+        /// <summary>
+        /// Percent of filter-passing PSMs that are missing a reporter ion on the peptide N-terminus
+        /// </summary>
+        /// <remarks>Value between 0 and 100</remarks>
+        public float PercentPSMsMissingNTermReporterIon { get; set; }
 
+        /// <summary>
+        /// Percent of filter-passing PSMs that are missing a reporter ion
+        /// </summary>
+        /// <remarks>Value between 0 and 100</remarks>
         public float PercentPSMsMissingReporterIon { get; set; }
 
         /// <summary>
@@ -70,6 +80,8 @@ namespace MSGFResultsSummarizer
             UniquePhosphopeptidesCTermR = 0;
             MissedCleavageRatio = 0;
             MissedCleavageRatioPhospho = 0;
+            PercentPSMsMissingNTermReporterIon = 0;
+            PercentPSMsMissingReporterIon = 0;
             KeratinPeptides = 0;
             TrypsinPeptides = 0;
             TrypticPeptides = 0;

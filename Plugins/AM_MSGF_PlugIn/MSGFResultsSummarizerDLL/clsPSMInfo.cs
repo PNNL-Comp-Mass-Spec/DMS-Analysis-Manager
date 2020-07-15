@@ -175,8 +175,21 @@ namespace MSGFResultsSummarizer
             /// </summary>
             public double EValue { get; set; }
 
+            /// <summary>
+            /// True if the peptide is missing TMT or iTRAQ at the peptide N-terminus
+            /// </summary>
+            public bool MissingNTermReporterIon { get; set; }
+
+            /// <summary>
+            /// True if the peptide is missing TMT or iTRAQ at one or more locations (N-terminus and each lysine)
+            /// </summary>
+            public bool MissingReporterIon { get; set; }
+
             public bool PassesFilter { get; set; }
 
+            /// <summary>
+            /// Constructor
+            /// </summary>
             public PSMObservation()
             {
                 Clear();
@@ -188,6 +201,8 @@ namespace MSGFResultsSummarizer
                 FDR = UNKNOWN_FDR;
                 MSGF = UNKNOWN_MSGF_SPEC_EVALUE;
                 EValue = UNKNOWN_EVALUE;
+                MissingNTermReporterIon = false;
+                MissingReporterIon = false;
                 PassesFilter = false;
             }
 

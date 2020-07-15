@@ -386,6 +386,45 @@ namespace MSGFResultsSummarizer
             return missedCleavageRatio;
         }
 
+        private void ComputeMissingReporterIonPercent(Dictionary<int, clsPSMInfo> filteredPSMs)
+        {
+            mFDRBasedCounts.PercentPSMsMissingNTermReporterIon = 0;
+            mFDRBasedCounts.PercentPSMsMissingReporterIon = 0;
+
+            try
+            {
+                var filterPassingPSMs = 0;
+                var missingNTerminalReporterIon = 0;
+                var missingReporterIon = 0;
+
+                foreach (var observation in filteredPSMs.Values.SelectMany(psm => psm.Observations.Where(observation => observation.PassesFilter)))
+                {
+                    filterPassingPSMs++;
+                    if (observation.MissingNTermReporterIon)
+                    {
+                        missingNTerminalReporterIon++;
+                    }
+
+                    if (observation.MissingReporterIon)
+                    {
+                        missingReporterIon++;
+                    }
+                }
+
+                if (filterPassingPSMs == 0)
+                    return;
+
+                mFDRBasedCounts.PercentPSMsMissingNTermReporterIon = missingNTerminalReporterIon / (float)filterPassingPSMs * 100;
+                mFDRBasedCounts.PercentPSMsMissingReporterIon = missingReporterIon / (float)filterPassingPSMs * 100;
+            }
+            catch (Exception ex)
+            {
+                SetErrorMessage("Exception in VerifyReporterIonPTMs: " + ex.Message);
+                Console.WriteLine(ex.StackTrace);
+            }
+
+        }
+
         /// <summary>
         /// Lookup the total scans and number of MS/MS scans for the dataset defined by property DatasetName
         /// </summary>
@@ -556,6 +595,10 @@ namespace MSGFResultsSummarizer
 
             ReportDebugMessage("SummarizeResults returned " + success, 3);
 
+            if (success && mDynamicReporterIonPTM && !usingMSGFOrEValueFilter)
+            {
+                // Look for peptides that are missing a reporter ion at the N terminus or on a residue
+                ComputeMissingReporterIonPercent(filteredPSMs);
             }
 
             return success;
@@ -1451,6 +1494,12 @@ namespace MSGFResultsSummarizer
                                 EValue = psmEValue
                             };
 
+
+                            if (mDynamicReporterIonPTM)
+                            {
+                                ValidateReporterIonPTMs(normalizedPeptide, observation);
+                            }
+
                             psmInfo.AddObservation(observation);
 
                             if (normalizedPSMs.ContainsKey(seqID))
@@ -1871,6 +1920,68 @@ namespace MSGFResultsSummarizer
             return psmStats;
         }
 
+        private void ValidateReporterIonPTMs(clsNormalizedPeptideInfo normalizedPeptide, clsPSMInfo.PSMObservation observation)
+        {
+            var labeledNTerminus = false;
+            var labeledLysineCount = 0;
+
+            // The search had a reporter ion (like TMT or iTRAQ) as a dynamic mod
+            // Check whether this peptide is missing the reporter ion from a required location
+            foreach (var modification in normalizedPeptide.Modifications)
+            {
+                if (string.Equals(modification.Key, mDynamicReporterIonName, StringComparison.OrdinalIgnoreCase))
+                {
+                    var residueNumber = modification.Value;
+                    var currentResidue = normalizedPeptide.CleanSequence[residueNumber - 1];
+
+                    if (residueNumber == 1)
+                    {
+                        labeledNTerminus = true;
+                    }
+
+                    if (currentResidue == 'K')
+                    {
+                        labeledLysineCount++;
+                    }
+                }
+            }
+
+            var lysineCount = normalizedPeptide.CleanSequence.Count(residue => residue == 'K');
+
+            switch (mDynamicReporterIonType)
+            {
+                case ReporterIonTypes.iTRAQ4plex:
+                case ReporterIonTypes.iTRAQ8plex:
+                case ReporterIonTypes.TMT6plex:
+                case ReporterIonTypes.TMT16plex:
+                    if (normalizedPeptide.CleanSequence.StartsWith("K"))
+                    {
+                        // Because of how mods are listed in the _SeqInfo.txt file, we need to bump up lysineCount by one
+                        lysineCount++;
+                    }
+
+                    if (!labeledNTerminus)
+                    {
+                        observation.MissingNTermReporterIon = true;
+                    }
+
+                    if (!labeledNTerminus || labeledLysineCount < lysineCount)
+                    {
+                        observation.MissingReporterIon = true;
+                    }
+                    break;
+
+                case ReporterIonTypes.None:
+                    throw new Exception("Invalid ReporterIonType encountered in ValidateReporterIonPTMs");
+
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+        }
+
+        /// <summary>
+        /// Custom comparer for sorting msgfToResultIDMap
+        /// </summary>
         private class clsMSGFtoResultIDMapComparer : IComparer<KeyValuePair<double, int>>
         {
             public int Compare(KeyValuePair<double, int> x, KeyValuePair<double, int> y)
