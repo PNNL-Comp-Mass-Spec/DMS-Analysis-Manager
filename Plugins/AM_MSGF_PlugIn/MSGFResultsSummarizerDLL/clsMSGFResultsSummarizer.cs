@@ -1281,32 +1281,31 @@ namespace MSGFResultsSummarizer
 
                             foreach (var observation in normalizedPSMInfo.Observations)
                             {
-                                if (observation.Scan == currentPSM.ScanNumber)
+                                if (observation.Scan != currentPSM.ScanNumber)
+                                    continue;
+
+                                // Scan already stored
+                                // Update the scores if this PSM has a better score than the cached one
+                                if (psmFDR > clsPSMInfo.UNKNOWN_FDR)
                                 {
-                                    // Scan already stored
-
-                                    // Update the scores if this PSM has a better score than the cached one
-                                    if (psmFDR > clsPSMInfo.UNKNOWN_FDR)
+                                    if (psmFDR < observation.FDR)
                                     {
-                                        if (psmFDR < observation.FDR)
-                                        {
-                                            observation.FDR = psmFDR;
-                                        }
+                                        observation.FDR = psmFDR;
                                     }
-
-                                    if (psmMSGF < observation.MSGF)
-                                    {
-                                        observation.MSGF = psmMSGF;
-                                    }
-
-                                    if (psmEValue < observation.EValue)
-                                    {
-                                        observation.EValue = psmEValue;
-                                    }
-
-                                    addObservation = false;
-                                    break;
                                 }
+
+                                if (psmMSGF < observation.MSGF)
+                                {
+                                    observation.MSGF = psmMSGF;
+                                }
+
+                                if (psmEValue < observation.EValue)
+                                {
+                                    observation.EValue = psmEValue;
+                                }
+
+                                addObservation = false;
+                                break;
                             }
 
                             if (addObservation)

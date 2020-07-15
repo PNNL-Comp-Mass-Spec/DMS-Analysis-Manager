@@ -380,10 +380,8 @@ namespace AnalysisManagerMSGFPlugin
             var seqInfoFile = clsPHRPReader.GetPHRPSeqInfoFileName(resultType, DatasetName);
             if (!string.IsNullOrEmpty(seqInfoFile))
             {
-                if (FileSearch.FindAndRetrievePHRPDataFile(ref seqInfoFile, synFilePath))
-                {
-                }
-                else
+                var seqInfoFileFound = FileSearch.FindAndRetrievePHRPDataFile(ref seqInfoFile, synFilePath);
+                if (!seqInfoFileFound)
                 {
                     LogWarning("SeqInfo file not found (" + seqInfoFile + "); modifications will be inferred using the ModSummary.txt file");
                 }
