@@ -901,13 +901,13 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 // Make sure this is either a new _dta.txt file or identical to a previous one
                 // Abort processing if the job list contains multiple jobs for the same dataset but those jobs used different _dta.txt files
-                // However, if one of the jobs is Sequest and one is MSGF+, preferentially use the _dta.txt file from the MSGF+ job
+                // However, if one of the jobs is SEQUEST and one is MS-GF+, preferentially use the _dta.txt file from the MS-GF+ job
 
                 if (mCDTAFileStats.TryGetValue(cdtaFile.Name, out var existingFileInfo))
                 {
                     if (existingFileInfo.JobInfo.Tool.ToLower().StartsWith("msgf"))
                     {
-                        // Existing job found, but it's a MSGF+ job (which is fully supported by PRIDE)
+                        // Existing job found, but it's a MS-GF+ job (which is fully supported by PRIDE)
                         // Just use the existing .mgf file
                         return true;
                     }
@@ -3587,7 +3587,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             // Update the cached NEWT info
             AddNEWTInfo(jobInfo.Value.Experiment_NEWT_ID, jobInfo.Value.Experiment_NEWT_Name);
 
-            // Retrieve the PHRP files, MSGF+ results, and _dta.txt or .mzML.gz file for this job
+            // Retrieve the PHRP files, MS-GF+ results, and _dta.txt or .mzML.gz file for this job
             var filesCopied = new List<string>();
 
             success = RetrievePHRPFiles(job, dataset, analysisResults, remoteTransferFolder, filesCopied);
@@ -4759,7 +4759,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                     case "SpectraData":
                                         if (searchedMzML)
                                         {
-                                            // MSGF+ will list an .mzML file here
+                                            // MS-GF+ will list an .mzML file here
                                             // Although we upload .mzML.gz files, the .mzid.gz file needs to list the input file as .mzML
                                             // Thus, do not update the .mzid.gz file
                                         }
