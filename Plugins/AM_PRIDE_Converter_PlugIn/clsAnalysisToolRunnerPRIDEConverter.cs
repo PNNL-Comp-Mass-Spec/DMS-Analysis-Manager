@@ -2951,8 +2951,10 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                             var mods = string.Empty;
                             foreach (var modEntry in sampleMetadata.Modifications)
                             {
+                                // Mod CVs must be comma separated, with no space after the comma
                                 if (mods.Length > 0)
-                                    mods += ", ";
+                                    mods += ",";
+
                                 mods += GetCVString(modEntry.Value);
                             }
 
