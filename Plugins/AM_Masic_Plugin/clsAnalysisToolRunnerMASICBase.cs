@@ -125,8 +125,8 @@ namespace AnalysisManagerMasicPlugin
             UpdateStatusFile();
 
             // Run the cleanup routine from the base class
-            var ePostProcessingResult = PerfPostAnalysisTasks();
-            if (ePostProcessingResult != CloseOutType.CLOSEOUT_SUCCESS)
+            var postProcessingResult = PerfPostAnalysisTasks();
+            if (postProcessingResult != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -351,17 +351,17 @@ namespace AnalysisManagerMasicPlugin
             }
 
             // Zip the _SICs.XML file (if it exists; it won't if SkipSICProcessing = True in the parameter file)
-            var FoundFiles = Directory.GetFiles(mWorkDir, "*" + SICS_XML_FILE_SUFFIX);
+            var foundFiles = Directory.GetFiles(mWorkDir, "*" + SICS_XML_FILE_SUFFIX);
 
-            if (FoundFiles.Length > 0)
+            if (foundFiles.Length > 0)
             {
                 // Setup zipper
 
                 var zipFileName = mDatasetName + "_SICs.zip";
 
-                if (!ZipFile(FoundFiles[0], true, Path.Combine(mWorkDir, zipFileName)))
+                if (!ZipFile(foundFiles[0], true, Path.Combine(mWorkDir, zipFileName)))
                 {
-                    LogErrorToDatabase("Error zipping " + Path.GetFileName(FoundFiles[0]) + ", job " + mJob);
+                    LogErrorToDatabase("Error zipping " + Path.GetFileName(foundFiles[0]) + ", job " + mJob);
                     UpdateStatusMessage("Error zipping " + SICS_XML_FILE_SUFFIX + " file");
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
