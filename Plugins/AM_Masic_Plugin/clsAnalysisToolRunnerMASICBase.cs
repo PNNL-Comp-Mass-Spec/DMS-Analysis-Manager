@@ -10,8 +10,10 @@ using AnalysisManagerBase;
 using PRISM;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.IO;
 using System.Xml;
+using PRISMDatabaseUtils;
 
 namespace AnalysisManagerMasicPlugin
 {
@@ -20,8 +22,10 @@ namespace AnalysisManagerMasicPlugin
     /// </summary>
     public abstract class clsAnalysisToolRunnerMASICBase : clsAnalysisToolRunnerBase
     {
+
         #region "Module variables"
 
+        private const string STORE_REPORTER_ION_OBS_STATS_SP_NAME = "StoreReporterIonObsStats";
         private const string SICS_XML_FILE_SUFFIX = "_SICs.xml";
 
         // Job running status variable
@@ -31,6 +35,9 @@ namespace AnalysisManagerMasicPlugin
 
         private string mProcessStep = string.Empty;
         private string mMASICStatusFileName = string.Empty;
+
+        private string mReporterIonName = string.Empty;
+        private int mReporterIonObservationRateTopNPct;
 
         #endregion
 
@@ -370,10 +377,172 @@ namespace AnalysisManagerMasicPlugin
             // Add all the extensions of the files to delete after run
             mJobParams.AddResultFileExtensionToSkip(SICS_XML_FILE_SUFFIX); // Unzipped, concatenated DTA
 
+            // If a _RepIonObsRate.txt file was created, read the data and push into DMS
+            var success = StoreReporterIonObservationRateStats();
+            if (!success)
+            {
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+
             // Add the current job data to the summary file
             UpdateSummaryFile();
 
             return CloseOutType.CLOSEOUT_SUCCESS;
+        }
+
+        private bool ReadReporterIonObservationRateFile(
+            FileSystemInfo observationRateFile,
+            out List<double> observationStatsAll,
+            out List<double> observationStatsTopNPct)
+        {
+            observationStatsAll = new List<double>();
+            observationStatsTopNPct = new List<double>();
+
+            try
+            {
+                LogDebug("Reading " + observationRateFile.FullName);
+
+                using (var reader = new StreamReader(new FileStream(observationRateFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                {
+                    if (reader.EndOfStream)
+                    {
+                        LogError("Reporter ion observation rate file is empty: " + observationRateFile.FullName);
+                        return false;
+                    }
+
+                    // Skip the header line
+                    reader.ReadLine();
+
+                    var channel = 0;
+
+                    while (!reader.EndOfStream)
+                    {
+                        var dataLine = reader.ReadLine();
+
+                        if (string.IsNullOrWhiteSpace(dataLine))
+                            continue;
+
+                        // Columns:
+                        // Reporter_Ion     Observation_Rate     Observation_Rate_Top80Pct
+                        var lineParts = dataLine.Split('\t');
+
+                        channel++;
+
+                        if (lineParts.Length < 3)
+                        {
+                            LogError(string.Format(
+                                "Channel {0} in the reporter ion observation rate file has fewer than three columns; corrupt file: {1}",
+                                channel, observationRateFile.FullName));
+                            return false;
+                        }
+
+                        if (!double.TryParse(lineParts[1], out var observationRateAll))
+                        {
+                            LogError(string.Format(
+                                "Channel {0} in the reporter ion observation rate file has a non-numeric Observation_Rate value: {1}",
+                                channel, lineParts[1]));
+                            return false;
+                        }
+
+                        if (!double.TryParse(lineParts[2], out var observationRateTopNPct))
+                        {
+                            LogError(string.Format(
+                                "Channel {0} in the reporter ion observation rate file has a non-numeric Observation_Rate_Top80Pct value: {1}",
+                                channel, lineParts[2]));
+                            return false;
+                        }
+
+                        observationStatsAll.Add(observationRateAll);
+                        observationStatsTopNPct.Add(observationRateTopNPct);
+                    }
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error reading the _RepIonObsRate.txt file", ex);
+                return false;
+            }
+        }
+
+        private bool StoreReporterIonObservationRateStats()
+        {
+            const int MAX_RETRY_COUNT = 3;
+
+            try
+            {
+                var observationRateFile = new FileInfo(Path.Combine(mWorkDir, Dataset + "_RepIonObsRate.txt"));
+                if (!observationRateFile.Exists)
+                    return true;
+
+                var dataLoaded = ReadReporterIonObservationRateFile(
+                    observationRateFile,
+                    out var observationStatsAll,
+                    out var observationStatsTopNPct);
+
+                if (!dataLoaded)
+                    return false;
+
+                var analysisTask = new clsAnalysisJob(mMgrParams, mDebugLevel);
+                var dbTools = analysisTask.DMSProcedureExecutor;
+
+                // Call stored procedure StoreDTARefMassErrorStats in DMS5
+                // Data is stored in table T_Dataset_QC
+                var sqlCmd = dbTools.CreateCommand(STORE_REPORTER_ION_OBS_STATS_SP_NAME, CommandType.StoredProcedure);
+
+                // ReSharper disable once CommentTypo
+                // Note that reporterIonName must match a Label in T_Sample_Labelling_Reporter_Ions
+                if (string.IsNullOrWhiteSpace(mReporterIonName))
+                {
+                    var parameterFileName = mJobParams.GetParam("parmFileName");
+                    if (string.IsNullOrWhiteSpace(parameterFileName))
+                    {
+                        LogError(string.Format(
+                            "The parameter file name is empty for job {0}; " +
+                            "cannot store reporter ion observation stats in the database",
+                            mJob));
+
+                        return false;
+                    }
+
+                    LogError(string.Format(
+                        "Reporter ion name is empty for job {0}; " +
+                        "cannot store reporter ion observation stats in the database",
+                        mJob));
+
+                    return false;
+                }
+
+                dbTools.AddParameter(sqlCmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
+                dbTools.AddTypedParameter(sqlCmd, "@job", SqlType.Int, value: mJob);
+                dbTools.AddParameter(sqlCmd, "@reporterIon", SqlType.VarChar, 64).Value = mReporterIonName;
+                dbTools.AddParameter(sqlCmd, "@topNPct", SqlType.Int).Value = mReporterIonObservationRateTopNPct;
+                dbTools.AddParameter(sqlCmd, "@observationStatsAll", SqlType.VarChar, 4000).Value = string.Join(",", observationStatsAll);
+                dbTools.AddParameter(sqlCmd, "@observationStatsTopNPct", SqlType.VarChar, 4000).Value = string.Join(",", observationStatsTopNPct);
+                dbTools.AddTypedParameter(sqlCmd, "@message", SqlType.VarChar, 255, ParameterDirection.InputOutput);
+                dbTools.AddTypedParameter(sqlCmd, "@infoOnly", SqlType.TinyInt, value: 0);
+
+                // Execute the SP (retry the call up to 3 times)
+                var resCode = dbTools.ExecuteSP(sqlCmd, MAX_RETRY_COUNT);
+
+                if (resCode == 0)
+                {
+                    return true;
+                }
+
+                LogError(string.Format(
+                    "Error storing reporter ion observation stats in the database, {0} returned {1}",
+                    STORE_REPORTER_ION_OBS_STATS_SP_NAME, resCode));
+
+                return false;
+
+            }
+            catch (Exception ex)
+            {
+                LogError("Error posting reporter ion observation rate stats", ex);
+                return false;
+            }
         }
 
         /// <summary>
@@ -392,7 +561,7 @@ namespace AnalysisManagerMasicPlugin
         /// Validate that required options are defined in the MASIC parameter file
         /// </summary>
         /// <param name="parameterFilePath"></param>
-        /// <remarks></remarks>
+        /// <remarks>Also reads ReporterIonMassMode and ReporterIonObservationRateTopNPct</remarks>
         protected bool ValidateParameterFile(string parameterFilePath)
         {
             if (string.IsNullOrWhiteSpace(parameterFilePath))
@@ -400,6 +569,8 @@ namespace AnalysisManagerMasicPlugin
                 LogWarning("The MASIC Parameter File path is empty; nothing to validate");
                 return true;
             }
+
+            LogDebug("Reading options in MASIC parameter file: " + Path.GetFileName(parameterFilePath));
 
             var masicSettings = new XmlSettingsFileAccessor();
 
@@ -424,6 +595,64 @@ namespace AnalysisManagerMasicPlugin
                 // File needs to be updated
                 masicSettings.SetParam("MasicExportOptions", "IncludeHeaders", "True");
                 masicSettings.SaveSettings();
+            }
+
+            if (masicSettings.SectionPresent("MasicExportOptions"))
+            {
+                var reporterIonMassMode = masicSettings.GetParam("MasicExportOptions", "ReporterIonMassMode", 0);
+
+                switch (reporterIonMassMode)
+                {
+                   case 1:
+                        // ITraqFourMZ
+                        mReporterIonName = "iTRAQ";
+                        break;
+
+                    case 3:
+                        // TMTTwoMZ
+                        mReporterIonName = "TMT2";
+                        break;
+
+                    case 4:
+                        // TMTSixMZ
+                        mReporterIonName = "TMT6";
+                        break;
+
+                    case 5:
+                        // ITraqEightMZHighRes
+                        mReporterIonName = "iTRAQ8";
+                        break;
+
+                    case 6:
+                        // ITraqEightMZLowRes
+                        mReporterIonName = "iTRAQ8";
+                        break;
+
+                    case 10:
+                        // TMTTenMZ
+                        mReporterIonName = "TMT10";
+                        break;
+
+                    case 16:
+                        // TMTElevenMZ
+                        mReporterIonName = "TMT11";
+                        break;
+
+                    case 18:
+                        // TMTSixteenMZ
+                        mReporterIonName = "TMT16";
+                        break;
+
+                    default:
+                        mReporterIonName = "ReporterIonMassMode_" + reporterIonMassMode;
+                        break;
+
+                }
+            }
+
+            if (masicSettings.SectionPresent("PlotOptions"))
+            {
+                mReporterIonObservationRateTopNPct = masicSettings.GetParam("PlotOptions", "ReporterIonObservationRateTopNPct", 0);
             }
 
             return true;
