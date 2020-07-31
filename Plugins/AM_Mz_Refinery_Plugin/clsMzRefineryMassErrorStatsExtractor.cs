@@ -199,7 +199,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 dbTools.AddTypedParameter(sqlCmd, "@DatasetID", SqlType.Int, value: datasetID);
                 dbTools.AddParameter(sqlCmd, "@ResultsXML", SqlType.XML).Value = xmlResults;
 
-                // Execute the SP (retry the call up to 4 times)
+                // Execute the SP (retry the call up to 3 times)
                 var resCode = dbTools.ExecuteSP(sqlCmd, MAX_RETRY_COUNT);
 
                 if (resCode == 0)
