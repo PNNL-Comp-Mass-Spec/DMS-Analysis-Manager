@@ -573,7 +573,7 @@ namespace AnalysisManagerMasicPlugin
                 dbTools.AddParameter(sqlCmd, "@topNPct", SqlType.Int).Value = mReporterIonObservationRateTopNPct;
                 dbTools.AddParameter(sqlCmd, "@observationStatsAll", SqlType.VarChar, 4000).Value = string.Join(",", observationStatsAll);
                 dbTools.AddParameter(sqlCmd, "@observationStatsTopNPct", SqlType.VarChar, 4000).Value = string.Join(",", observationStatsTopNPct);
-                dbTools.AddTypedParameter(sqlCmd, "@message", SqlType.VarChar, 255, ParameterDirection.InputOutput);
+                var messageParam = dbTools.AddTypedParameter(sqlCmd, "@message", SqlType.VarChar, 255, ParameterDirection.InputOutput);
                 dbTools.AddTypedParameter(sqlCmd, "@infoOnly", SqlType.TinyInt, value: 0);
 
                 // Execute the SP (retry the call up to 3 times)
@@ -584,9 +584,13 @@ namespace AnalysisManagerMasicPlugin
                     return true;
                 }
 
+                var errorMessage = string.IsNullOrWhiteSpace(messageParam.Value.ToString())
+                                       ? "No error message"
+                                       : messageParam.Value.CastDBVal<string>();
+
                 LogError(string.Format(
-                    "Error storing reporter ion observation stats in the database, {0} returned {1}",
-                    STORE_REPORTER_ION_OBS_STATS_SP_NAME, resCode));
+                    "Error storing reporter ion observation stats in the database, {0} returned {1}: {2}",
+                    STORE_REPORTER_ION_OBS_STATS_SP_NAME, resCode, errorMessage));
 
                 return false;
 
