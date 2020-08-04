@@ -381,6 +381,9 @@ namespace AnalysisManagerMasicPlugin
                     // TMTTenMZ
                     return "TMT10";
 
+                case 11:
+                    // OGlcNAc
+                    return "PCGalNAz";
 
                 case 16:
                     // TMTElevenMZ
