@@ -135,6 +135,10 @@ namespace AnalysisManagerMasicPlugin
             var postProcessingResult = PerfPostAnalysisTasks();
             if (postProcessingResult != CloseOutType.CLOSEOUT_SUCCESS)
             {
+                // Something went wrong
+                // In order to help diagnose things, we will move whatever files were created into the result folder,
+                //  archive it using CopyFailedResultsToArchiveDirectory, then return CloseOutType.CLOSEOUT_FAILED
+                CopyFailedResultsToArchiveDirectory();
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
