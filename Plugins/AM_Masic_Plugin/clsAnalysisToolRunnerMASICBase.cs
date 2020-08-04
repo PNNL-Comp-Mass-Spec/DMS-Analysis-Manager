@@ -345,6 +345,56 @@ namespace AnalysisManagerMasicPlugin
             }
         }
 
+        /// <summary>
+        /// Get the DMS-compatible reporter ion name from the MASIC reporter ion mass mode
+        /// </summary>
+        /// <param name="reporterIonMassMode">MASIC reporter ion mass mode</param>
+        /// <returns></returns>
+        /// <remarks>MASIC mass modes: https://github.com/PNNL-Comp-Mass-Spec/MASIC/blob/59474ab345ce7878f0646a6e83fa1bb22ee84579/clsReporterIons.cs#L15
+        /// </remarks>
+        private static string GetReporterIonNameFromMassMode(int reporterIonMassMode)
+        {
+
+            switch (reporterIonMassMode)
+            {
+                case 1:
+                    // ITraqFourMZ
+                    return "iTRAQ";
+
+                case 3:
+                    // TMTTwoMZ
+                    return "TMT2";
+
+                case 4:
+                    // TMTSixMZ
+                    return "TMT6";
+
+                case 5:
+                    // ITraqEightMZHighRes
+                    return "iTRAQ8";
+
+                case 6:
+                    // ITraqEightMZLowRes
+                    return "iTRAQ8";
+
+                case 10:
+                    // TMTTenMZ
+                    return "TMT10";
+
+
+                case 16:
+                    // TMTElevenMZ
+                    return "TMT11";
+
+                case 18:
+                    // TMTSixteenMZ
+                    return "TMT16";
+
+                default:
+                    return "ReporterIonMassMode_" + reporterIonMassMode;
+            }
+        }
+
         protected virtual CloseOutType PerfPostAnalysisTasks()
         {
             // Stop the job timer
@@ -601,53 +651,7 @@ namespace AnalysisManagerMasicPlugin
             {
                 var reporterIonMassMode = masicSettings.GetParam("MasicExportOptions", "ReporterIonMassMode", 0);
 
-                switch (reporterIonMassMode)
-                {
-                   case 1:
-                        // ITraqFourMZ
-                        mReporterIonName = "iTRAQ";
-                        break;
-
-                    case 3:
-                        // TMTTwoMZ
-                        mReporterIonName = "TMT2";
-                        break;
-
-                    case 4:
-                        // TMTSixMZ
-                        mReporterIonName = "TMT6";
-                        break;
-
-                    case 5:
-                        // ITraqEightMZHighRes
-                        mReporterIonName = "iTRAQ8";
-                        break;
-
-                    case 6:
-                        // ITraqEightMZLowRes
-                        mReporterIonName = "iTRAQ8";
-                        break;
-
-                    case 10:
-                        // TMTTenMZ
-                        mReporterIonName = "TMT10";
-                        break;
-
-                    case 16:
-                        // TMTElevenMZ
-                        mReporterIonName = "TMT11";
-                        break;
-
-                    case 18:
-                        // TMTSixteenMZ
-                        mReporterIonName = "TMT16";
-                        break;
-
-                    default:
-                        mReporterIonName = "ReporterIonMassMode_" + reporterIonMassMode;
-                        break;
-
-                }
+                mReporterIonName = GetReporterIonNameFromMassMode(reporterIonMassMode);
             }
 
             if (masicSettings.SectionPresent("PlotOptions"))
