@@ -349,6 +349,22 @@ namespace AnalysisManagerMasicPlugin
             }
         }
 
+        private int GetColumnIndex(string headerLine, string columnName, int indexIfMissing)
+        {
+            var columnNames = headerLine.Split('\t');
+            for (var i = 0; i < columnNames.Length; i++)
+            {
+                if (columnNames[i].Equals(columnName, StringComparison.OrdinalIgnoreCase))
+                    return i;
+            }
+
+            LogWarning(string.Format(
+                "Header line does not contain column '{0}'; will presume the data is in column {1}",
+                columnName, indexIfMissing + 1));
+
+            return indexIfMissing;
+        }
+
         /// <summary>
         /// Get the DMS-compatible reporter ion name from the MASIC reporter ion mass mode
         /// </summary>
@@ -467,8 +483,10 @@ namespace AnalysisManagerMasicPlugin
                         return false;
                     }
 
-                    // Skip the header line
-                    reader.ReadLine();
+                    // Validate the header line
+                    var headerLine = reader.ReadLine();
+
+                    var obsRateColumnIndex = GetColumnIndex(headerLine, "Observation_Rate_Top80Pct", 2);
 
                     var channel = 0;
 
@@ -485,7 +503,7 @@ namespace AnalysisManagerMasicPlugin
 
                         channel++;
 
-                        if (lineParts.Length < 3)
+                        if (lineParts.Length < obsRateColumnIndex+1)
                         {
                             LogError(string.Format(
                                 "Channel {0} in the reporter ion observation rate file has fewer than three columns; corrupt file: {1}",
@@ -501,11 +519,11 @@ namespace AnalysisManagerMasicPlugin
                             return false;
                         }
 
-                        if (!double.TryParse(lineParts[2], out var observationRateTopNPct))
+                        if (!double.TryParse(lineParts[obsRateColumnIndex], out var observationRateTopNPct))
                         {
                             LogError(string.Format(
                                 "Channel {0} in the reporter ion observation rate file has a non-numeric Observation_Rate_Top80Pct value: {1}",
-                                channel, lineParts[2]));
+                                channel, lineParts[obsRateColumnIndex]));
                             return false;
                         }
 

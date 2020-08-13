@@ -124,6 +124,22 @@ namespace MASIC_ReporterIonObsStatsUploader
             return GetBaseClassErrorMessage();
         }
 
+        private int GetColumnIndex(string headerLine, string columnName, int indexIfMissing)
+        {
+            var columnNames = headerLine.Split('\t');
+            for (var i = 0; i < columnNames.Length; i++)
+            {
+                if (columnNames[i].Equals(columnName, StringComparison.OrdinalIgnoreCase))
+                    return i;
+            }
+
+            OnWarningEvent(string.Format(
+                "Header line does not contain column '{0}'; will presume the data is in column {1}",
+                columnName, indexIfMissing + 1));
+
+            return indexIfMissing;
+        }
+
         /// <summary>
         /// Look for a file named JobParameters_1786663.xml
         /// Alternatively, extract the job from the directory name if of the form SIC202002211558_Auto1786663
@@ -355,8 +371,10 @@ namespace MASIC_ReporterIonObsStatsUploader
                         return false;
                     }
 
-                    // Skip the header line
-                    reader.ReadLine();
+                    // Validate the header line
+                    var headerLine = reader.ReadLine();
+
+                    var obsRateColumnIndex = GetColumnIndex(headerLine, "Observation_Rate_Top80Pct", 2);
 
                     var channel = 0;
 
@@ -373,7 +391,7 @@ namespace MASIC_ReporterIonObsStatsUploader
 
                         channel++;
 
-                        if (lineParts.Length < 3)
+                        if (lineParts.Length < obsRateColumnIndex + 1)
                         {
                             OnErrorEvent(string.Format(
                                 "Channel {0} in the reporter ion observation rate file has fewer than three columns; corrupt file: {1}",
@@ -389,11 +407,11 @@ namespace MASIC_ReporterIonObsStatsUploader
                             return false;
                         }
 
-                        if (!double.TryParse(lineParts[2], out var observationRateTopNPct))
+                        if (!double.TryParse(lineParts[obsRateColumnIndex], out var observationRateTopNPct))
                         {
                             OnErrorEvent(string.Format(
                                 "Channel {0} in the reporter ion observation rate file has a non-numeric Observation_Rate_Top80Pct value: {1}",
-                                channel, lineParts[2]));
+                                channel, lineParts[obsRateColumnIndex]));
                             return false;
                         }
 
