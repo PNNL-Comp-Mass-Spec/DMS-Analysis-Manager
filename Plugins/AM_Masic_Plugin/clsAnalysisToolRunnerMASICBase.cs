@@ -463,12 +463,86 @@ namespace AnalysisManagerMasicPlugin
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
+        private bool ReadReporterIonIntensityStatsFile(
+            FileSystemInfo intensityStatsFile,
+            out List<int> medianIntensitiesTopNPct
+            )
+        {
+            medianIntensitiesTopNPct = new List<int>();
+
+            try
+            {
+                LogDebug("Reading " + intensityStatsFile.FullName);
+
+                using (var reader = new StreamReader(new FileStream(intensityStatsFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                {
+                    if (reader.EndOfStream)
+                    {
+                        LogError("Reporter ion intensity stats file is empty: " + intensityStatsFile.FullName);
+                        return false;
+                    }
+
+                    // Validate the header line
+                    var headerLine = reader.ReadLine();
+
+                    var medianColumnIndex = GetColumnIndex(headerLine, "Median_Top80Pct", 2);
+
+                    var channel = 0;
+
+                    while (!reader.EndOfStream)
+                    {
+                        var dataLine = reader.ReadLine();
+
+                        if (string.IsNullOrWhiteSpace(dataLine))
+                            continue;
+
+                        // Columns:
+                        // Reporter_Ion    NonZeroCount_Top80Pct    Median_Top80Pct    InterQuartileRange_Top80Pct    LowerWhisker_Top80Pct    etc.
+                        var lineParts = dataLine.Split('\t');
+
+                        if (lineParts.Length > 0 && lineParts[0].StartsWith("Reporter_Ion", StringComparison.OrdinalIgnoreCase))
+                        {
+                            // The _RepIonStats.txt file has two tables of intensity stats
+                            // We have reached the second table
+                            break;
+                        }
+
+                        channel++;
+
+                        if (lineParts.Length < medianColumnIndex + 1)
+                        {
+                            LogError(string.Format(
+                                "Channel {0} in the reporter ion intensity stats file has fewer than three columns; corrupt file: {1}",
+                                channel, intensityStatsFile.FullName));
+                            return false;
+                        }
+
+                        if (!int.TryParse(lineParts[medianColumnIndex], out var medianTopNPct))
+                        {
+                            LogError(string.Format(
+                                "Channel {0} in the reporter ion intensity stats file has a non-integer Median_Top80Pct value: {1}",
+                                channel, lineParts[medianColumnIndex]));
+                            return false;
+                        }
+
+                        medianIntensitiesTopNPct.Add(medianTopNPct);
+                    }
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error reading the _RepIonStats.txt file", ex);
+                return false;
+            }
+        }
+
         private bool ReadReporterIonObservationRateFile(
             FileSystemInfo observationRateFile,
-            out List<double> observationStatsAll,
             out List<double> observationStatsTopNPct)
         {
-            observationStatsAll = new List<double>();
+
             observationStatsTopNPct = new List<double>();
 
             try
@@ -511,14 +585,6 @@ namespace AnalysisManagerMasicPlugin
                             return false;
                         }
 
-                        if (!double.TryParse(lineParts[1], out var observationRateAll))
-                        {
-                            LogError(string.Format(
-                                "Channel {0} in the reporter ion observation rate file has a non-numeric Observation_Rate value: {1}",
-                                channel, lineParts[1]));
-                            return false;
-                        }
-
                         if (!double.TryParse(lineParts[obsRateColumnIndex], out var observationRateTopNPct))
                         {
                             LogError(string.Format(
@@ -527,7 +593,6 @@ namespace AnalysisManagerMasicPlugin
                             return false;
                         }
 
-                        observationStatsAll.Add(observationRateAll);
                         observationStatsTopNPct.Add(observationRateTopNPct);
                     }
                 }
@@ -551,36 +616,30 @@ namespace AnalysisManagerMasicPlugin
                 if (!observationRateFile.Exists)
                     return true;
 
-                var dataLoaded = ReadReporterIonObservationRateFile(
+                var intensityStatsFile = new FileInfo(Path.Combine(mWorkDir, Dataset + "_RepIonStats.txt"));
+
+                var obsRatesLoaded = ReadReporterIonObservationRateFile(
                     observationRateFile,
-                    out var observationStatsAll,
                     out var observationStatsTopNPct);
 
-                if (!dataLoaded)
+                var intensityStatsLoaded = ReadReporterIonIntensityStatsFile(
+                    intensityStatsFile,
+                    out var medianIntensitiesTopNPct);
+
+                if (!obsRatesLoaded || !intensityStatsLoaded)
                     return false;
 
                 var analysisTask = new clsAnalysisJob(mMgrParams, mDebugLevel);
                 var dbTools = analysisTask.DMSProcedureExecutor;
 
-                // Call stored procedure StoreDTARefMassErrorStats in DMS5
-                // Data is stored in table T_Dataset_QC
+                // Call stored procedure StoreReporterIonObsStats in DMS5
+                // Data is stored in table T_Reporter_Ion_Observation_Rates
                 var sqlCmd = dbTools.CreateCommand(STORE_REPORTER_ION_OBS_STATS_SP_NAME, CommandType.StoredProcedure);
 
                 // ReSharper disable once CommentTypo
                 // Note that reporterIonName must match a Label in T_Sample_Labelling_Reporter_Ions
                 if (string.IsNullOrWhiteSpace(mReporterIonName))
                 {
-                    var parameterFileName = mJobParams.GetParam("parmFileName");
-                    if (string.IsNullOrWhiteSpace(parameterFileName))
-                    {
-                        LogError(string.Format(
-                            "The parameter file name is empty for job {0}; " +
-                            "cannot store reporter ion observation stats in the database",
-                            mJob));
-
-                        return false;
-                    }
-
                     LogError(string.Format(
                         "Reporter ion name is empty for job {0}; " +
                         "cannot store reporter ion observation stats in the database",
@@ -593,8 +652,8 @@ namespace AnalysisManagerMasicPlugin
                 dbTools.AddTypedParameter(sqlCmd, "@job", SqlType.Int, value: mJob);
                 dbTools.AddParameter(sqlCmd, "@reporterIon", SqlType.VarChar, 64).Value = mReporterIonName;
                 dbTools.AddParameter(sqlCmd, "@topNPct", SqlType.Int).Value = mReporterIonObservationRateTopNPct;
-                dbTools.AddParameter(sqlCmd, "@observationStatsAll", SqlType.VarChar, 4000).Value = string.Join(",", observationStatsAll);
                 dbTools.AddParameter(sqlCmd, "@observationStatsTopNPct", SqlType.VarChar, 4000).Value = string.Join(",", observationStatsTopNPct);
+                dbTools.AddParameter(sqlCmd, "@medianIntensitiesTopNPct", SqlType.VarChar, 4000).Value = string.Join(",", medianIntensitiesTopNPct);
                 var messageParam = dbTools.AddTypedParameter(sqlCmd, "@message", SqlType.VarChar, 255, ParameterDirection.InputOutput);
                 dbTools.AddTypedParameter(sqlCmd, "@infoOnly", SqlType.TinyInt, value: 0);
 
@@ -611,11 +670,10 @@ namespace AnalysisManagerMasicPlugin
                                        : messageParam.Value.CastDBVal<string>();
 
                 LogError(string.Format(
-                    "Error storing reporter ion observation stats in the database, {0} returned {1}: {2}",
+                    "Error storing reporter ion observation stats and and median intensities in the database, {0} returned {1}: {2}",
                     STORE_REPORTER_ION_OBS_STATS_SP_NAME, resCode, errorMessage));
 
                 return false;
-
             }
             catch (Exception ex)
             {
