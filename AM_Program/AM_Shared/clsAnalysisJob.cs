@@ -745,25 +745,18 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public void SetParam(string section, string paramName, string paramValue)
         {
-            if (!mJobParams.TryGetValue(section, out var oParams))
+            if (!mJobParams.TryGetValue(section, out var parameters))
             {
                 // New section; add it
-                oParams = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-                mJobParams.Add(section, oParams);
+                parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                mJobParams.Add(section, parameters);
             }
 
             if (paramValue == null)
                 paramValue = string.Empty;
 
-            if (oParams.ContainsKey(paramName))
-            {
-                oParams[paramName] = paramValue;
-            }
-            else
-            {
-                oParams.Add(paramName, paramValue);
-            }
-
+            // Add/update paramName
+            parameters[paramName] = paramValue;
         }
 
         /// <summary>
