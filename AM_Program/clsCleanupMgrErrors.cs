@@ -219,7 +219,7 @@ namespace AnalysisManagerProg
         /// <remarks></remarks>
         public bool CleanWorkDir(float holdoffSeconds)
         {
-            return CleanWorkDir(mWorkingDirPath, DEFAULT_HOLDOFF_SECONDS);
+            return CleanWorkDir(mWorkingDirPath, holdoffSeconds);
         }
 
         /// <summary>
