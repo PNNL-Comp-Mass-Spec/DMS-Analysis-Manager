@@ -24,6 +24,9 @@ namespace AnalysisManagerProg
     /// </summary>
     public class CodeTest : clsLoggerBase
     {
+        // Ignore Spelling: perf, dta, Inj, mgf, dmsarch, Geobacter, bemidjiensis, Bem, lovelyi, metallireducens, sp, filetype, Micrococcus, luteus, nr
+        // Ignore Spelling: const, bool, Qonvert, msgfspecprob, pek, Archaea, Sprot, Trembl, yyyy, dd, hh, ss, tt, Mam, gimli, Rar, Pos
+
         private Protein_Exporter.clsGetFASTAFromDMS mFastaTools;
         private bool mGenerationComplete;
         private readonly string mFastaToolsCnStr = "Data Source=proteinseqs;Initial Catalog=Protein_Sequences;Integrated Security=SSPI;";
@@ -144,7 +147,7 @@ namespace AnalysisManagerProg
                         var frameworkVersion = "??";
 
                         var customAttributes = fileAssembly.GetCustomAttributes(typeof(TargetFrameworkAttribute)).ToList();
-                        if (customAttributes != null && customAttributes.Count > 0)
+                        if (customAttributes?.Count > 0)
                         {
                             var frameworkAttribute = (TargetFrameworkAttribute)customAttributes.First();
                             frameworkVersion = frameworkAttribute.FrameworkDisplayName;
@@ -352,7 +355,7 @@ namespace AnalysisManagerProg
         /// <remarks></remarks>
         private clsAnalysisJob InitializeManagerParams()
         {
-            var debugLevel = 1;
+            const int debugLevel = 1;
 
             var jobParams = new clsAnalysisJob(mMgrSettings, 0);
 
@@ -492,14 +495,15 @@ namespace AnalysisManagerProg
         /// </summary>
         public void RunMSConvert()
         {
-            var workDir = @"C:\DMS_WorkDir";
+            const string workDir = @"C:\DMS_WorkDir";
 
-            var exePath = @"C:\DMS_Programs\ProteoWizard\msconvert.exe";
-            var dataFilePath = @"C:\DMS_WorkDir\QC_ShewPartialInj_15_02-100ng_Run-1_20Jan16_Pippin_15-08-53.raw";
-            var arguments = dataFilePath +
-                            @" --filter ""peakPicking true 1-"" " +
-                            @" --filter ""threshold count 500 most-intense"" " +
-                            @" --mgf -o C:\DMS_WorkDir";
+            const string  exePath = @"C:\DMS_Programs\ProteoWizard\msconvert.exe";
+            const string  dataFilePath = @"C:\DMS_WorkDir\QC_ShewPartialInj_15_02-100ng_Run-1_20Jan16_Pippin_15-08-53.raw";
+            const string arguments =
+                dataFilePath +
+                @" --filter ""peakPicking true 1-"" " +
+                @" --filter ""threshold count 500 most-intense"" " +
+                @" --mgf -o C:\DMS_WorkDir";
 
             mProgRunner = new clsRunDosProgram(workDir, mDebugLevel)
             {
@@ -527,7 +531,6 @@ namespace AnalysisManagerProg
         /// </summary>
         public void TestArchiveFailedResults()
         {
-
             GetCodeTestToolRunner(out var jobParams);
 
             if (string.IsNullOrWhiteSpace(mMgrSettings.GetParam(clsAnalysisMgrSettings.MGR_PARAM_FAILED_RESULTS_FOLDER_PATH)))
@@ -543,7 +546,6 @@ namespace AnalysisManagerProg
                             mMgrSettings.SetParam(clsAnalysisMgrSettings.MGR_PARAM_FAILED_RESULTS_FOLDER_PATH, "");
                         else
                             mMgrSettings.SetParam(clsAnalysisMgrSettings.MGR_PARAM_FAILED_RESULTS_FOLDER_PATH, Path.Combine(localWorkDir.Parent.FullName, clsAnalysisToolRunnerBase.DMS_FAILED_RESULTS_DIRECTORY_NAME));
-
                     }
                     else
                     {
@@ -586,8 +588,8 @@ namespace AnalysisManagerProg
         /// </summary>
         public void TestArchiveFileStart()
         {
-            var paramFilePath = @"D:\Temp\sequest_N14_NE.params";
-            var targetFolderPath = @"\\gigasax\dms_parameter_Files\Sequest";
+            const string paramFilePath = @"D:\Temp\sequest_N14_NE.params";
+            const string targetFolderPath = @"\\gigasax\dms_parameter_Files\Sequest";
 
             TestArchiveFile(paramFilePath, targetFolderPath);
 
@@ -641,7 +643,7 @@ namespace AnalysisManagerProg
                         // See if the renamed file exists; if it does, we'll have to tweak the name
                         var revisionNumber = 1;
                         string newPath;
-                        do
+                        while (true)
                         {
                             newPath = Path.Combine(targetFolderPath, newName);
                             if (!File.Exists(newPath))
@@ -649,9 +651,9 @@ namespace AnalysisManagerProg
                                 break;
                             }
 
-                            revisionNumber += 1;
+                            revisionNumber++;
                             newName = newNameBase + "_v" + revisionNumber + Path.GetExtension(targetFilePath);
-                        } while (true);
+                        }
 
                         archivedFile.MoveTo(newPath);
 
@@ -673,7 +675,7 @@ namespace AnalysisManagerProg
         }
 
         /// <summary>
-        /// Test using sftp to list files on a remote host
+        /// Test using SFTP to list files on a remote host
         /// Connect using an RSA private key file
         /// </summary>
         public void TestConnectRSA()
@@ -684,8 +686,8 @@ namespace AnalysisManagerProg
                 return;
             }
 
-            var host = "PrismWeb2";
-            var username = "svc-dms";
+            const string host = "PrismWeb2";
+            const string username = "svc-dms";
 
             var keyFile = new FileInfo(@"C:\DMS_RemoteInfo\Svc-Dms.key");
             if (!keyFile.Exists)
@@ -731,11 +733,10 @@ namespace AnalysisManagerProg
             catch (InvalidOperationException ex)
             {
                 if (ex.Message.Contains("Invalid data type"))
-                    throw new Exception("Passphrase error connecting to " + host + " as user " + username, ex);
+                    throw new Exception("Pass phrase error connecting to " + host + " as user " + username, ex);
 
                 throw;
             }
-
         }
 
         /// <summary>
@@ -743,14 +744,14 @@ namespace AnalysisManagerProg
         /// </summary>
         public void TestCopyToLocalWithHashCheck()
         {
-            var remoteFilePath = @"\\gigasax\dms_parameter_Files\Formularity\PNNL_CIA_DB_1500_B.bin";
-            var targetDirectoryPath = @"C:\DMS_Temp_Org";
+            const string  remoteFilePath = @"\\gigasax\dms_parameter_Files\Formularity\PNNL_CIA_DB_1500_B.bin";
+            const string targetDirectoryPath = @"C:\DMS_Temp_Org";
 
             var fileTools = new FileTools("AnalysisManager", 1);
             var fileSyncUtil = new FileSyncUtils(fileTools);
             RegisterEvents(fileSyncUtil);
 
-            var recheckIntervalDays = 1;
+            const int recheckIntervalDays = 1;
             var success = fileSyncUtil.CopyFileToLocal(remoteFilePath, targetDirectoryPath, out var errorMessage, recheckIntervalDays);
 
             if (success)
@@ -776,8 +777,8 @@ namespace AnalysisManagerProg
             var transferUtility = new clsRemoteTransferUtility(mMgrSettings, jobParams);
             RegisterEvents(transferUtility);
 
-            var sourceFilePath = @"C:\DMS_Temp_Org\uniref50_2013-02-14.fasta";
-            var remoteDirectoryPath = "/file1/temp/DMSOrgDBs";
+            const string sourceFilePath = @"C:\DMS_Temp_Org\uniref50_2013-02-14.fasta";
+            const string remoteDirectoryPath = "/file1/temp/DMSOrgDBs";
 
             var success = transferUtility.CopyFileToRemote(sourceFilePath, remoteDirectoryPath, useLockFile: true);
 
@@ -806,7 +807,6 @@ namespace AnalysisManagerProg
         /// </summary>
         public void TestDTASplit()
         {
-
             const int debugLevel = 2;
 
             var jobParams = InitializeMgrAndJobParams(debugLevel);
@@ -832,7 +832,6 @@ namespace AnalysisManagerProg
             var toolRunner = pluginLoader.GetToolRunner("dta_split".ToLower());
             toolRunner.Setup("CodeTest", mMgrSettings, jobParams, statusTools, summaryFile, myEMSLUtilities);
             toolRunner.RunTool();
-
         }
 
         /// <summary>
@@ -843,12 +842,11 @@ namespace AnalysisManagerProg
         /// <returns></returns>
         public bool TestProteinDBExport(string destFolder)
         {
-
             // ReSharper disable StringLiteralTypo
 
             // Test what the Protein_Exporter does if a protein collection name is truncated (and thus invalid)
             var proteinCollectionList = "Geobacter_bemidjiensis_Bem_T_2006-10-10,Geobacter_lovelyi_SZ_2007-06-19,Geobacter_metallireducens_GS-15_2007-10-02,Geobacter_sp_";
-            var proteinOptions = "seq_direction=forward,filetype=fasta";
+            const string proteinOptions = "seq_direction=forward,filetype=fasta";
 
             // Test a 2 MB fasta file:
             proteinCollectionList = "Micrococcus_luteus_NCTC2665_Uniprot_20160119,Tryp_Pig_Bov";
@@ -918,7 +916,6 @@ namespace AnalysisManagerProg
                 mFastaTools.FileGenerationStarted += FileGenerationStarted;
                 mFastaTools.FileGenerationCompleted += FileGenerationCompleted;
                 mFastaTools.FileGenerationProgress += FileGenerationProgress;
-
             }
 
             // Initialize fasta generation state variables
@@ -953,7 +950,7 @@ namespace AnalysisManagerProg
             if (mFastaGenTimeOut)
             {
                 // Fasta generator hung - report error and exit
-                Console.WriteLine("Timeout error while generating OrdDb file (" + FASTA_GEN_TIMEOUT_INTERVAL_SEC + " seconds have elapsed)");
+                Console.WriteLine("Timeout error while generating OrgDb file (" + FASTA_GEN_TIMEOUT_INTERVAL_SEC + " seconds have elapsed)");
                 return false;
             }
 
@@ -966,7 +963,7 @@ namespace AnalysisManagerProg
         /// </summary>
         public void TestDeleteFiles()
         {
-            var outFileName = "MyTestDataset_out.txt";
+            const string outFileName = "MyTestDataset_out.txt";
 
             var toolRunner = GetCodeTestToolRunner(out var jobParams);
 
@@ -1033,8 +1030,8 @@ namespace AnalysisManagerProg
         /// </summary>
         public void TestGetToolVersionInfo()
         {
-            var dllFile = "AM_Shared.dll";
-            var dllFile64Bit = "PeptideToProteinMapEngine.dll";
+            const string dllFile = "AM_Shared.dll";
+            const string dllFile64Bit = "PeptideToProteinMapEngine.dll";
 
             var toolRunner = GetCodeTestToolRunner();
 
@@ -1094,7 +1091,6 @@ namespace AnalysisManagerProg
             Console.ResetColor();
             foreach (ConsoleColor eColor in Enum.GetValues(typeof(ConsoleColor)))
             {
-
                 Console.Write("{0,-12} [", eColor);
 
                 Console.ForegroundColor = eColor;
@@ -1116,7 +1112,6 @@ namespace AnalysisManagerProg
         /// <param name="connStr">ODBC-style connection string</param>
         public void TestDatabaseLogging(string connStr)
         {
-
             LogTools.CreateDbLogger(connStr, "clsCodeTest");
 
             LogTools.WriteLog(LogTools.LoggerTypes.LogDb, BaseLogger.LogLevels.INFO, "Test analysis manager status message");
@@ -1195,7 +1190,7 @@ namespace AnalysisManagerProg
                     @"C:\Program Files\R\R-3.5.2patched\bin\x64"
                 };
 
-                var paramDictionary = new Dictionary<string, string>
+                var paramDictionary = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
                 {
                     {"Job", "1716477"},
                     {"CyclopsWorkflowName", "ITQ_ExportOperation.xml"},
@@ -1203,7 +1198,7 @@ namespace AnalysisManagerProg
                     {"Consolidation_Factor", ""},
                     {"Fixed_Effect", ""},
                     {"RunProteinProphet", "False"},
-                    {"orgdbdir", @"C:\DMS_Temp_Org"}
+                    {"orgDbDir", @"C:\DMS_Temp_Org"}
                 };
 
                 foreach (var candidateDir in candidateRDirectories)
@@ -1319,7 +1314,6 @@ namespace AnalysisManagerProg
         /// </summary>
         public void TestGZip()
         {
-
             var toolRunner = GetCodeTestToolRunner();
 
             var sourceFile = new FileInfo(@"\\proto-2\UnitTest_Files\ThermoRawFileReader\QC_Mam_16_01_125ng_2pt0-IT22_Run-A_16Oct17_Pippin_AQ_17-10-01.raw");
@@ -1354,7 +1348,6 @@ namespace AnalysisManagerProg
             Console.WriteLine("Deleting files in the temp directory");
             gzippedFile.Delete();
             roundTripFile.Delete();
-
         }
 
         /// <summary>
@@ -1378,7 +1371,6 @@ namespace AnalysisManagerProg
         /// <remarks>This uses DotNetZip</remarks>
         public void TestZip()
         {
-
             var toolRunner = GetCodeTestToolRunner();
 
             const string sourceFilePath = @"F:\Temp\ZipTest\QExact01\UDD-1_27Feb13_Gimli_12-07-03_HCD.mgf";
@@ -1419,7 +1411,7 @@ namespace AnalysisManagerProg
         /// <returns></returns>
         public bool TestMALDIDataUnzip(string sourceDatasetFolder)
         {
-            var debugLevel = 2;
+            const int debugLevel = 2;
 
             var resourceTester = new ResourceTestClass();
 
@@ -1430,7 +1422,6 @@ namespace AnalysisManagerProg
             {
                 sourceDatasetFolder = @"\\Proto-10\9T_FTICR_Imaging\2010_4\ratjoint071110_INCAS_MS";
             }
-
 
             GetCodeTestToolRunner(out var jobParams, out var myEMSLUtilities);
 
@@ -1471,7 +1462,6 @@ namespace AnalysisManagerProg
             statusTools.ConfigureMemoryLogging(true, 5, exeInfo.DirectoryName);
 
             statusTools.WriteStatusFile();
-
         }
 
         /// <summary>
@@ -1513,7 +1503,6 @@ namespace AnalysisManagerProg
             dotNetZipTools.ZipDirectory(@"F:\Temp\FolderTest", @"F:\Temp\ZippedFolderTest.zip");
             stopWatch.Stop();
             Console.WriteLine("Elapsed time: {0:F3} seconds", stopWatch.ElapsedMilliseconds / 1000.0);
-
         }
 
         /// <summary>
@@ -1546,7 +1535,7 @@ namespace AnalysisManagerProg
         /// </summary>
         public bool GenerateScanStatsFile(string inputFilePath, string workingDir)
         {
-            var msFileInfoScannerDir = @"C:\DMS_Programs\MSFileInfoScanner";
+            const string msFileInfoScannerDir = @"C:\DMS_Programs\MSFileInfoScanner";
 
             var msFileInfoScannerDLLPath = Path.Combine(msFileInfoScannerDir, "MSFileInfoScanner.dll");
             if (!File.Exists(msFileInfoScannerDLLPath))
@@ -1585,7 +1574,6 @@ namespace AnalysisManagerProg
 
             // Set the completion flag
             mGenerationComplete = true;
-
         }
 
         private void FileGenerationProgress(string statusMsg, double fractionDone)
@@ -1613,7 +1601,7 @@ namespace AnalysisManagerProg
         /// </summary>
         public void TestProgRunner()
         {
-            var appPath = @"F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\AM_Program\bin\XTandem\tandem.exe";
+            const string appPath = @"F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\AM_Program\bin\XTandem\tandem.exe";
 
             var workDir = Path.GetDirectoryName(appPath);
 
@@ -1649,18 +1637,18 @@ namespace AnalysisManagerProg
         /// </summary>
         public void TestProgRunnerIDPicker()
         {
-            var mWorkDir = @"C:\DMS_WorkDir";
+            const string mWorkDir = @"C:\DMS_WorkDir";
             var consoleOutputFileName = string.Empty;
-            var writeConsoleOutputFileRealtime = false;
+            const bool writeConsoleOutputFileRealtime = false;
 
-            var exePath = @"C:\DMS_Programs\IDPicker\idpQonvert.exe";
-            var arguments =
+            const string exePath = @"C:\DMS_Programs\IDPicker\idpQonvert.exe";
+            const string arguments =
                 @"-MaxFDR 0.1 -ProteinDatabase C:\DMS_Temp_Org\ID_003521_89E56851.fasta " +
                 @"-SearchScoreWeights ""msgfspecprob -1"" " +
                 @"-OptimizeScoreWeights 1 -NormalizedSearchScores msgfspecprob -DecoyPrefix Reversed_ " +
                 @"-dump C:\DMS_WorkDir\Malaria844_msms_29Dec11_Draco_11-10-04.pepXML";
 
-            var programDescription = "IDPQonvert";
+            const string programDescription = "IDPQonvert";
 
             var progRunner = new clsRunDosProgram(mWorkDir, mDebugLevel)
             {
@@ -1691,7 +1679,6 @@ namespace AnalysisManagerProg
         /// </summary>
         public void TestMSXmlCachePurge()
         {
-
             var toolRunner = GetCodeTestToolRunner();
 
             const string cacheFolderPath = @"\\proto-2\past\PurgeTest";
@@ -1766,12 +1753,10 @@ namespace AnalysisManagerProg
         /// </summary>
         public void SystemMemoryUsage()
         {
-
             var freeMemoryMB = clsGlobal.GetFreeMemoryMB();
 
             Console.WriteLine();
             Console.WriteLine("Available memory (MB) = {0:F1}", freeMemoryMB);
-
         }
 
         /// <summary>
@@ -1779,7 +1764,7 @@ namespace AnalysisManagerProg
         /// </summary>
         public void TestGetFileContents()
         {
-            var filePath = "TestInputFile.txt";
+            const string filePath = "TestInputFile.txt";
             var contents = GetFileContents(filePath);
 
             Console.WriteLine(contents);
@@ -1806,12 +1791,11 @@ namespace AnalysisManagerProg
         /// </summary>
         public void TestGetVersionInfo()
         {
-
             var toolRunner = GetCodeTestToolRunner();
 
-            var pathToTestx86 = @"F:\My Documents\Projects\DataMining\DMS_Programs\DLLVersionInspector\bin\32bit_Dll_Examples\UIMFLibrary.dll";
-            var pathToTestx64 = @"F:\My Documents\Projects\DataMining\DMS_Programs\DLLVersionInspector\bin\64bit_Dll_Examples\UIMFLibrary.dll";
-            var pathToTestAnyCPU = @"F:\My Documents\Projects\DataMining\DMS_Programs\DLLVersionInspector\bin\AnyCPU_DLL_Examples\UIMFLibrary.dll";
+            const string pathToTestx86 = @"F:\My Documents\Projects\DataMining\DMS_Programs\DLLVersionInspector\bin\32bit_Dll_Examples\UIMFLibrary.dll";
+            const string pathToTestx64 = @"F:\My Documents\Projects\DataMining\DMS_Programs\DLLVersionInspector\bin\64bit_Dll_Examples\UIMFLibrary.dll";
+            const string pathToTestAnyCPU = @"F:\My Documents\Projects\DataMining\DMS_Programs\DLLVersionInspector\bin\AnyCPU_DLL_Examples\UIMFLibrary.dll";
 
             var toolVersionInfo = string.Empty;
             toolRunner.StoreToolVersionInfoOneFile(ref toolVersionInfo, pathToTestx86);
@@ -1850,7 +1834,6 @@ namespace AnalysisManagerProg
 
         private class ResourceTestClass : clsAnalysisResources
         {
-
             public override CloseOutType GetResources()
             {
                 return CloseOutType.CLOSEOUT_SUCCESS;
@@ -1924,7 +1907,6 @@ namespace AnalysisManagerProg
             var messageParts = message.Split('\r', '\n');
             LogWarning(messageParts[0]);
         }
-
 
         private void Cyclops_StatusEvent(string message)
         {

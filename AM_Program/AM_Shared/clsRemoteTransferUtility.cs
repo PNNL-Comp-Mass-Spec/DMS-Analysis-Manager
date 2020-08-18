@@ -187,7 +187,6 @@ namespace AnalysisManagerBase
         {
             get
             {
-
                 var statusFileNames = new List<string>
                 {
                     JobStatusFile,
@@ -221,7 +220,6 @@ namespace AnalysisManagerBase
             RemoteTaskQueuePath = string.Empty;
             RemoteWorkDirPath = string.Empty;
             WorkDir = string.Empty;
-
         }
 
         /// <summary>
@@ -349,7 +347,6 @@ namespace AnalysisManagerBase
 
             try
             {
-
                 DefineRemoteInfo();
 
                 var infoFileName = GetBaseStatusFilename(JobNum, StepNum, remoteTimestamp) + ".info";
@@ -411,7 +408,6 @@ namespace AnalysisManagerBase
         /// <param name="keepEmptyDirectory">When true, delete all files/directories in the remote WorkDir but don't remove WorkDir</param>
         public void DeleteRemoteWorkDir(bool keepEmptyDirectory = false)
         {
-
             try
             {
                 if (string.IsNullOrEmpty(RemoteWorkDirPath))
@@ -423,7 +419,6 @@ namespace AnalysisManagerBase
             {
                 OnErrorEvent("Error deleting remote work directory", ex);
             }
-
         }
 
         /// <summary>
@@ -433,7 +428,6 @@ namespace AnalysisManagerBase
         /// <remarks>Uses the RemoteTimestamp job parameter</remarks>
         private string GetBaseStatusFilename()
         {
-
             var remoteTimestamp = JobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, STEP_PARAM_REMOTE_TIMESTAMP);
             if (string.IsNullOrWhiteSpace(remoteTimestamp))
             {
@@ -484,7 +478,6 @@ namespace AnalysisManagerBase
         /// <returns></returns>
         public static string GetOfflineJobStatusFilePath(IMgrParams mgrParams, IJobParams jobParams)
         {
-
             var job = jobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Job", 0);
             var step = jobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Step", 0);
             var stepTool = jobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "StepTool", "");
@@ -568,7 +561,6 @@ namespace AnalysisManagerBase
         /// <remarks>RemoteInfo is sent to the database via stored procedure SetStepTaskComplete</remarks>
         private string GetRemoteInfoXml(bool useDefaultManagerRemoteInfo)
         {
-
             if (useDefaultManagerRemoteInfo)
             {
                 return GetRemoteInfoXml(MgrParams);
@@ -644,7 +636,6 @@ namespace AnalysisManagerBase
                 var statusFiles = GetRemoteFileListing(RemoteTaskQueuePathForTool, baseTrackingFilename + "*");
 
                 return statusFiles;
-
             }
             catch (Exception ex)
             {
@@ -759,7 +750,6 @@ namespace AnalysisManagerBase
 
                 if (string.IsNullOrEmpty(dmsUpdateMgrSource))
                 {
-
                     var sourceCandidates = new List<string>
                     {
                         @"C:\DMS_Programs"
@@ -841,13 +831,12 @@ namespace AnalysisManagerBase
 
                     if (!string.IsNullOrWhiteSpace(errorMessage))
                         errorMessages.Add(errorMessage);
-
                 }
 
                 if (dirsProcessed > 0)
                     return true;
 
-                var msg = "Error pushing DMS Programs files to the remote host; UpdateRemoteHost returns false";
+                const string msg = "Error pushing DMS Programs files to the remote host; UpdateRemoteHost returns false";
 
                 if (errorMessages.Count == 0)
                 {
@@ -881,7 +870,6 @@ namespace AnalysisManagerBase
         /// </remarks>
         public void UpdateParameters(bool useDefaultManagerRemoteInfo)
         {
-
             WorkDir = MgrParams.GetParam("WorkDir");
             DebugLevel = MgrParams.GetParam("DebugLevel", 2);
 
@@ -938,7 +926,6 @@ namespace AnalysisManagerBase
                     RemoteTaskQueuePath = clsXMLUtils.GetXmlValue(elements, "taskQueue");
                     RemoteWorkDirPath = clsXMLUtils.GetXmlValue(elements, "workDir");
                     RemoteOrgDBPath = clsXMLUtils.GetXmlValue(elements, "orgDB");
-
                 }
                 catch (Exception ex)
                 {
@@ -974,11 +961,9 @@ namespace AnalysisManagerBase
             if (string.IsNullOrWhiteSpace(DatasetName))
                 throw new Exception("Dataset name is empty; check the job parameters");
 
-
             // Validate additional parameters, then load the RSA private key info
             // If successful, mParametersValidated will be set to true
             UpdateParameters();
-
         }
 
         /// <summary>
@@ -1039,7 +1024,6 @@ namespace AnalysisManagerBase
                         abortCopy = true;
                         return false;
                     }
-
                 }
                 else
                 {

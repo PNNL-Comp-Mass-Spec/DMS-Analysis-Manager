@@ -18,7 +18,6 @@ namespace AnalysisManagerMasicPlugin
     /// <remarks></remarks>
     public class clsAnalysisToolRunnerMASICAgilent : clsAnalysisToolRunnerMASICBase
     {
-
         protected override CloseOutType RunMASIC()
         {
             string parameterFilePath;

@@ -30,6 +30,8 @@ namespace AnalysisManagerBase
     [SuppressMessage("ReSharper", "UnusedMember.Global")]
     public abstract class clsAnalysisResources : clsAnalysisMgrBase, IAnalysisResources
     {
+        // Ignore Spelling: tdf, ser, fid, baf, dta, acqu, maldi, tof, wiff, uimf, tims, MODa, deconv, msgfdb
+        // Ignore Spelling: num, parm, Cn, fht, xt, histone, loc
 
         #region "Constants"
 
@@ -339,7 +341,7 @@ namespace AnalysisManagerBase
         public const string JOB_PARAM_DICTIONARY_JOB_SETTINGS_FILE_MAP = "PackedParam_JobSettingsFileMap";
 
         /// <summary>
-        /// Packed job parameter KobToolNameMap
+        /// Packed job parameter JobToolNameMap
         /// </summary>
         /// <remarks>This is used by clsAnalysisResourcesPhosphoFdrAggregator</remarks>
         public const string JOB_PARAM_DICTIONARY_JOB_TOOL_MAP = "PackedParam_JobToolNameMap";
@@ -670,7 +672,6 @@ namespace AnalysisManagerBase
                     if (mMyEMSLSearchDisabled && !FileSearch.MyEMSLSearchDisabled)
                         FileSearch.MyEMSLSearchDisabled = true;
                 }
-
             }
         }
 
@@ -692,7 +693,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// True when the step tool contains the text DataExtractor
         /// </summary>
-        private bool RunningDataExtraction => StepToolName.ToLower().Contains("DataExtractor".ToLower());
+        private bool RunningDataExtraction => StepToolName.IndexOf("DataExtractor", StringComparison.OrdinalIgnoreCase) >= 0;
 
         /// <summary>
         /// Step tool name
@@ -837,7 +838,7 @@ namespace AnalysisManagerBase
 
             // Find .hashcheck files
             var hashcheckFiles = orgDbDir.GetFiles(sourceFasta.Name + "*" + Protein_Exporter.clsGetFASTAFromDMS.HASHCHECK_SUFFIX);
-            if (hashcheckFiles.Length <= 0)
+            if (hashcheckFiles.Length == 0)
             {
                 LogError("Local hashcheck file not found for " + sourceFasta.FullName + "; cannot copy remotely");
                 return false;
@@ -878,7 +879,6 @@ namespace AnalysisManagerBase
                                            remoteFasta.FullName, transferUtility.RemoteHostName));
                     return true;
                 }
-
             }
             else
             {
@@ -903,8 +903,9 @@ namespace AnalysisManagerBase
             LogError(string.Format("Error copying {0} to {1} on {2}", sourceFasta.Name, transferUtility.RemoteOrgDBPath,
                                    transferUtility.RemoteHostName));
             return false;
-
         }
+
+        // Ignore Spelling: work dir
 
         /// <summary>
         /// Copy files in the working directory to a remote host, skipping files in filesToIgnore
@@ -915,7 +916,6 @@ namespace AnalysisManagerBase
         /// <returns>True if success, otherwise false</returns>
         protected bool CopyWorkDirFilesToRemote(clsRemoteTransferUtility transferUtility, SortedSet<string> filesToIgnore)
         {
-
             try
             {
                 LogDebug("Copying work dir files to remote host " + transferUtility.RemoteHostName);
@@ -965,7 +965,6 @@ namespace AnalysisManagerBase
                 LogError("Exception copying resources to remote host " + transferUtility.RemoteHostName, ex);
                 return false;
             }
-
         }
 
         /// <summary>
@@ -1093,7 +1092,6 @@ namespace AnalysisManagerBase
             {
                 writer.WriteLine(filePath);
             }
-
         }
 
         /// <summary>
@@ -1110,7 +1108,6 @@ namespace AnalysisManagerBase
             // Cache the current dataset and job info
             mCachedDatasetAndJobInfo = GetCurrentDatasetAndJobInfo();
             mCachedDatasetAndJobInfoIsDefined = true;
-
         }
 
         /// <summary>
@@ -1127,7 +1124,6 @@ namespace AnalysisManagerBase
             OverrideCurrentDatasetAndJobInfo(mCachedDatasetAndJobInfo);
 
             mCachedDatasetAndJobInfoIsDefined = false;
-
         }
 
         /// <summary>
@@ -1225,6 +1221,8 @@ namespace AnalysisManagerBase
             }
         }
 
+        // Ignore Spelling: yyyy-MM-dd, hh:mm:ss tt, nn
+
         /// <summary>
         /// Create a new lock file named dataFilePath + ".lock"
         /// </summary>
@@ -1234,7 +1232,6 @@ namespace AnalysisManagerBase
         /// <remarks>An exception will be thrown if the lock file already exists</remarks>
         public static string CreateLockFile(string dataFilePath, string taskDescription)
         {
-
             var lockFilePath = dataFilePath + clsGlobal.LOCK_FILE_EXTENSION;
             using (var writer = new StreamWriter(new FileStream(lockFilePath, FileMode.CreateNew, FileAccess.Write, FileShare.Read)))
             {
@@ -1242,7 +1239,6 @@ namespace AnalysisManagerBase
             }
 
             return lockFilePath;
-
         }
 
         /// <summary>
@@ -1269,7 +1265,6 @@ namespace AnalysisManagerBase
         /// <remarks>If the file was found in MyEMSL, sourceDirectoryPath will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
         public bool CopyFileToWorkDir(string sourceFileName, string sourceDirectoryPath, string targetDirectoryPath, BaseLogger.LogLevels logMsgTypeIfNotFound)
         {
-
             return mFileCopyUtilities.CopyFileToWorkDir(sourceFileName, sourceDirectoryPath, targetDirectoryPath, logMsgTypeIfNotFound);
         }
 
@@ -1283,7 +1278,6 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         protected bool CreateFastaFile(clsProteinCollectionInfo proteinCollectionInfo, string targetDirectory, bool decoyProteinsUseXXX)
         {
-
             if (mDebugLevel >= 1)
             {
                 LogMessage("Creating fasta file in " + targetDirectory);
@@ -1303,7 +1297,6 @@ namespace AnalysisManagerBase
                     LogMessage("Error in CreateFastaFile: " + mMessage, 0, true);
                     return false;
                 }
-
             }
 
             var retryCount = 1;
@@ -1364,7 +1357,7 @@ namespace AnalysisManagerBase
                         }
                         return false;
                     }
-                    retryCount -= 1;
+                    retryCount--;
                 }
             }
 
@@ -1472,7 +1465,6 @@ namespace AnalysisManagerBase
                     mMessage = mSplitFastaFileUtility.ErrorMessage;
                     return false;
                 }
-
             }
             else
             {
@@ -1506,7 +1498,6 @@ namespace AnalysisManagerBase
                     LogError("mFastaTools.ExportFASTAFile returned an empty Hash string for the OrgDB; unable to continue; " + orgDBDescription);
                     return false;
                 }
-
             }
             catch (Exception ex)
             {
@@ -1573,14 +1564,12 @@ namespace AnalysisManagerBase
                         // Ignore errors here
                     }
                 }
-
             }
 
             UpdateLastUsedFile(fastaFile);
 
             // If we got to here, everything worked OK
             return true;
-
         }
 
         /// <summary>
@@ -1592,7 +1581,6 @@ namespace AnalysisManagerBase
         [Obsolete("Unused")]
         private bool CreateSettingsFile(string FileText, string FileNamePath)
         {
-
             var formattedXMLWriter = new clsFormattedXMLWriter();
 
             if (!formattedXMLWriter.WriteXMLToFile(FileText, FileNamePath))
@@ -1670,10 +1658,8 @@ namespace AnalysisManagerBase
         /// <remarks>Only valid for Thermo .Raw files and .UIMF files.  Will delete the .Raw (or .UIMF) after creating the ScanStats file</remarks>
         protected bool GenerateScanStatsFile()
         {
-
             const bool deleteRawDataFile = true;
             return GenerateScanStatsFile(deleteRawDataFile);
-
         }
 
         /// <summary>
@@ -1684,7 +1670,6 @@ namespace AnalysisManagerBase
         /// <remarks>Only valid for Thermo .Raw files and .UIMF files</remarks>
         protected bool GenerateScanStatsFile(bool deleteRawDataFile)
         {
-
             var rawDataType = mJobParams.GetParam("RawDataType");
             var datasetID = mJobParams.GetJobParameter("DatasetID", 0);
 
@@ -1768,7 +1753,6 @@ namespace AnalysisManagerBase
                 {
                     // Ignore errors here
                 }
-
             }
             else
             {
@@ -1780,7 +1764,6 @@ namespace AnalysisManagerBase
             }
 
             return success;
-
         }
 
         /// <summary>
@@ -1834,7 +1817,6 @@ namespace AnalysisManagerBase
             jobInfo.RawDataType = mJobParams.GetJobParameter(jobParamsSection, "RawDataType", string.Empty);
 
             return jobInfo;
-
         }
 
         /// <summary>
@@ -1846,7 +1828,6 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         protected static string GetDataPackageStoragePath(string connectionString, int dataPackageID)
         {
-
             // Requests Dataset information from a data package
             const short RETRY_COUNT = 3;
 
@@ -1861,7 +1842,7 @@ namespace AnalysisManagerBase
 
             if (!success)
             {
-                var errorMessage = "GetDataPackageStoragePath; Excessive failures attempting to retrieve data package info from database";
+                const string errorMessage = "GetDataPackageStoragePath; Excessive failures attempting to retrieve data package info from database";
                 LogTools.LogError(errorMessage);
                 resultSet.Dispose();
                 return string.Empty;
@@ -1894,7 +1875,6 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public static string GetDatasetYearQuarter(string directoryPath)
         {
-
             if (string.IsNullOrEmpty(directoryPath))
             {
                 return string.Empty;
@@ -1918,7 +1898,6 @@ namespace AnalysisManagerBase
             }
 
             return string.Empty;
-
         }
 
         /// <summary>
@@ -1930,10 +1909,8 @@ namespace AnalysisManagerBase
         /// <remarks>Decoy proteins start with Reversed_</remarks>
         public static double GetDecoyFastaCompositionStats(FileInfo fastaFile, out int proteinCount)
         {
-
             var decoyProteinPrefix = GetDefaultDecoyPrefixes().First();
             return GetDecoyFastaCompositionStats(fastaFile, decoyProteinPrefix, out proteinCount);
-
         }
 
         /// <summary>
@@ -1946,7 +1923,6 @@ namespace AnalysisManagerBase
         /// <remarks>Decoy proteins start with decoyProteinPrefix</remarks>
         public static double GetDecoyFastaCompositionStats(FileInfo fastaFile, string decoyProteinPrefix, out int proteinCount)
         {
-
             // Look for protein names that look like:
             // >decoyProteinPrefix
             // where
@@ -1972,11 +1948,11 @@ namespace AnalysisManagerBase
                     // Protein header line found
                     if (dataLine.StartsWith(prefixToFind))
                     {
-                        reverseProteinCount += 1;
+                        reverseProteinCount++;
                     }
                     else
                     {
-                        forwardProteinCount += 1;
+                        forwardProteinCount++;
                     }
                 }
             }
@@ -1990,7 +1966,6 @@ namespace AnalysisManagerBase
             }
 
             return fractionDecoy;
-
         }
 
         /// <summary>
@@ -1999,7 +1974,6 @@ namespace AnalysisManagerBase
         /// <returns></returns>
         public static List<string> GetDefaultDecoyPrefixes()
         {
-
             // Decoy proteins created by MS-GF+ start with XXX_
             // Decoy proteins created by DMS start with Reversed_ or XXX_
             var decoyPrefixes = new List<string> {
@@ -2010,7 +1984,6 @@ namespace AnalysisManagerBase
             };
 
             return decoyPrefixes;
-
         }
 
         /// <summary>
@@ -2037,7 +2010,6 @@ namespace AnalysisManagerBase
         /// <returns>True if success, false if an error</returns>
         private bool GetExistingJobParametersFile()
         {
-
             if (clsGlobal.OfflineMode)
                 return true;
 
@@ -2109,14 +2081,12 @@ namespace AnalysisManagerBase
                 }
 
                 return success;
-
             }
             catch (Exception ex)
             {
                 LogError("Exception in GetExistingJobParametersFile", ex);
                 return false;
             }
-
         }
 
         /// <summary>
@@ -2126,7 +2096,6 @@ namespace AnalysisManagerBase
         /// <returns>Dictionary of FASTA files, including the last usage date for each</returns>
         private static Dictionary<FileInfo, DateTime> GetFastaFilesByLastUse(DirectoryInfo orgDbDirectory)
         {
-
             // Keys are the fasta file; values are the lastUsed time of the file (nominally obtained from a .hashcheck or .LastUsed file)
             var dctFastaFiles = new Dictionary<FileInfo, DateTime>();
 
@@ -2198,7 +2167,6 @@ namespace AnalysisManagerBase
                         {
                             // Ignore errors here
                         }
-
                     }
 
                     dctFastaFiles.Add(fastaFile, lastUsed);
@@ -2209,7 +2177,6 @@ namespace AnalysisManagerBase
                 Console.WriteLine();
 
             return dctFastaFiles;
-
         }
 
         /// <summary>
@@ -2252,7 +2219,6 @@ namespace AnalysisManagerBase
         /// <remarks>Uses job parameter OutputFolderName, which should be something like MSXML_Gen_1_120_275966</remarks>
         public static string GetMSXmlCacheFolderPath(string cacheDirectoryPathBase, IJobParams jobParams, out string errorMessage)
         {
-
             // Lookup the output directory name; e.g. MSXML_Gen_1_120_275966
             var outputDirectoryName = jobParams.GetJobParameter(JOB_PARAM_OUTPUT_FOLDER_NAME, string.Empty);
             if (string.IsNullOrEmpty(outputDirectoryName))
@@ -2273,7 +2239,6 @@ namespace AnalysisManagerBase
             }
 
             return GetMSXmlCacheFolderPath(cacheDirectoryPathBase, jobParams, msXmlToolNameVersionDirectory, out errorMessage);
-
         }
 
         /// <summary>
@@ -2291,7 +2256,6 @@ namespace AnalysisManagerBase
             string msXmlToolNameVersionDirectory,
             out string errorMessage)
         {
-
             errorMessage = string.Empty;
 
             var datasetStoragePath = jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetStoragePath");
@@ -2317,7 +2281,6 @@ namespace AnalysisManagerBase
             var targetDirectoryPath = Path.Combine(cacheDirectoryPathBase, msXmlToolNameVersionDirectory, yearQuarter);
 
             return targetDirectoryPath;
-
         }
 
         /// <summary>
@@ -2328,7 +2291,6 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public static string GetMSXmlToolNameVersionFolder(string toolNameVersionDatasetIdDirectory)
         {
-
             // Remove the dataset ID from the end of the directory name
             var reToolNameAndVersion = new Regex(@"^(?<ToolNameVersion>.+\d+_\d+)_\d+$");
             var reMatch = reToolNameAndVersion.Match(toolNameVersionDatasetIdDirectory);
@@ -2338,7 +2300,6 @@ namespace AnalysisManagerBase
             }
 
             return reMatch.Groups["ToolNameVersion"].ToString();
-
         }
 
         /// <summary>
@@ -2353,19 +2314,11 @@ namespace AnalysisManagerBase
         {
             var msXmlOutputType = mJobParams.GetJobParameter("MSXMLOutputType", string.Empty);
 
-            CloseOutType eResult;
+            var result = string.Equals(msXmlOutputType, "mzxml", StringComparison.OrdinalIgnoreCase) ?
+                GetMzXMLFile() :
+                GetMzMLFile();
 
-            if (msXmlOutputType.ToLower() == "mzxml")
-            {
-                eResult = GetMzXMLFile();
-            }
-            else
-            {
-                eResult = GetMzMLFile();
-            }
-
-            return eResult;
-
+            return result;
         }
 
         /// <summary>
@@ -2374,7 +2327,6 @@ namespace AnalysisManagerBase
         /// <returns>Closeout code</returns>
         protected CloseOutType GetMzMLFile()
         {
-
             LogMessage("Getting mzML file");
 
             const bool unzipFile = true;
@@ -2386,7 +2338,6 @@ namespace AnalysisManagerBase
             }
 
             return CloseOutType.CLOSEOUT_SUCCESS;
-
         }
 
         /// <summary>
@@ -2399,7 +2350,6 @@ namespace AnalysisManagerBase
         /// </remarks>
         protected CloseOutType GetMzXMLFile()
         {
-
             LogMessage("Getting mzXML file");
 
             // Note that capitalization matters for the extension; it must be .mzXML
@@ -2416,7 +2366,6 @@ namespace AnalysisManagerBase
                 {
                     return HandleMsXmlRetrieveFailure(fileMissingFromCache, errorMessage, DOT_MZXML_EXTENSION);
                 }
-
             }
             mJobParams.AddResultFileToSkip(fileToGet);
 
@@ -2427,7 +2376,6 @@ namespace AnalysisManagerBase
             }
 
             return CloseOutType.CLOSEOUT_SUCCESS;
-
         }
 
         /// <summary>
@@ -2436,7 +2384,6 @@ namespace AnalysisManagerBase
         /// <returns></returns>
         protected CloseOutType GetPBFFile()
         {
-
             LogMessage("Getting PBF file");
 
             var success = FileSearch.RetrieveCachedPBFFile(out var errorMessage, out var fileMissingFromCache, out _);
@@ -2446,7 +2393,6 @@ namespace AnalysisManagerBase
             }
 
             return CloseOutType.CLOSEOUT_SUCCESS;
-
         }
 
         /// <summary>
@@ -2459,7 +2405,6 @@ namespace AnalysisManagerBase
         /// </remarks>
         protected CloseOutType GetZippedMgfFile()
         {
-
             LogMessage("Getting _mgf.zip file");
 
             var fileToGet = mDatasetName + MGF_ZIPPED_EXTENSION;
@@ -2488,7 +2433,6 @@ namespace AnalysisManagerBase
         /// <returns></returns>
         protected CloseOutType HandleMsXmlRetrieveFailure(bool fileMissingFromCache, string errorMessage, string msXmlExtension)
         {
-
             if (fileMissingFromCache)
             {
                 if (string.IsNullOrEmpty(errorMessage))
@@ -2510,7 +2454,6 @@ namespace AnalysisManagerBase
 
             LogMessage(errorMessage, 0, true);
             return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
-
         }
 
         /// <summary>
@@ -2521,7 +2464,6 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public static clsDataPackageJobInfo GetPseudoDataPackageJobInfo(clsDataPackageDatasetInfo datasetInfo)
         {
-
             // Store the negative of the dataset ID as the job number
             var pseudoJob = -datasetInfo.DatasetID;
             var jobInfo = new clsDataPackageJobInfo(pseudoJob, datasetInfo.Dataset)
@@ -2581,7 +2523,6 @@ namespace AnalysisManagerBase
             }
 
             return jobInfo;
-
         }
 
         /// <summary>
@@ -2591,7 +2532,6 @@ namespace AnalysisManagerBase
         /// <returns></returns>
         public static eRawDataTypeConstants GetRawDataType(string rawDataType)
         {
-
             if (string.IsNullOrEmpty(rawDataType))
             {
                 return eRawDataTypeConstants.Unknown;
@@ -2629,7 +2569,6 @@ namespace AnalysisManagerBase
                 default:
                     return eRawDataTypeConstants.Unknown;
             }
-
         }
 
         /// <summary>
@@ -2640,7 +2579,6 @@ namespace AnalysisManagerBase
         /// <returns></returns>
         public static string GetRawDataTypeName(IJobParams jobParams, out string errorMessage)
         {
-
             errorMessage = string.Empty;
 
             var msXmlOutputType = jobParams.GetParam("MSXMLOutputType");
@@ -2667,7 +2605,6 @@ namespace AnalysisManagerBase
         /// <returns></returns>
         protected string GetRawDataTypeName()
         {
-
             var rawDataTypeName = GetRawDataTypeName(mJobParams, out var errorMessage);
 
             if (string.IsNullOrWhiteSpace(rawDataTypeName))
@@ -2685,7 +2622,6 @@ namespace AnalysisManagerBase
             }
 
             return rawDataTypeName;
-
         }
 
         /// <summary>
@@ -2767,7 +2703,6 @@ namespace AnalysisManagerBase
             }
 
             return splitFastaName;
-
         }
 
         /// <summary>
@@ -2778,7 +2713,6 @@ namespace AnalysisManagerBase
         /// <returns></returns>
         public static int GetSplitFastaIteration(IJobParams jobParams, out string errorMessage)
         {
-
             errorMessage = string.Empty;
 
             var cloneStepRenumberStart = jobParams.GetJobParameter("CloneStepRenumberStart", 0);
@@ -2798,7 +2732,6 @@ namespace AnalysisManagerBase
             }
 
             return stepNumber - cloneStepRenumberStart + 1;
-
         }
 
         /// <summary>
@@ -2808,7 +2741,6 @@ namespace AnalysisManagerBase
         /// <returns>Dictionary where keys are the step number and values are the XElement node with the step parameters for the given step</returns>
         private Dictionary<int, XElement> GetStepParametersSections(XContainer doc)
         {
-
             var stepNumToParamsMap = new Dictionary<int, XElement>();
 
             var stepParamSections = doc.Elements("sections").Elements("section").ToList();
@@ -2833,7 +2765,6 @@ namespace AnalysisManagerBase
                     // Add or update the XML for this section
                     stepNumToParamsMap[stepNumber] = section;
                 }
-
             }
 
             return stepNumToParamsMap;
@@ -2846,7 +2777,6 @@ namespace AnalysisManagerBase
         /// <returns></returns>
         protected string GetTransferFolderPathForJobStep(bool useInputDirectory)
         {
-
             var transferDirPathBase = mJobParams.GetParam(JOB_PARAM_TRANSFER_FOLDER_PATH);
             if (string.IsNullOrEmpty(transferDirPathBase))
             {
@@ -2879,7 +2809,6 @@ namespace AnalysisManagerBase
             var transferDirectoryPath = Path.Combine(transferDirPathBase, datasetDirectoryName, directoryName);
 
             return transferDirectoryPath;
-
         }
 
         /// <summary>
@@ -2916,7 +2845,6 @@ namespace AnalysisManagerBase
 
                 yield return file;
             }
-
         }
 
         /// <summary>
@@ -2938,7 +2866,6 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         protected bool LoadDataPackageDatasetInfo(out Dictionary<int, clsDataPackageDatasetInfo> dctDataPackageDatasets)
         {
-
             // Gigasax.DMS_Pipeline
             var connectionString = mMgrParams.GetParam("BrokerConnectionString");
 
@@ -2967,7 +2894,6 @@ namespace AnalysisManagerBase
         /// </remarks>
         private bool LoadDataPackageJobInfo(out Dictionary<int, clsDataPackageJobInfo> dctDataPackageJobs)
         {
-
             // Gigasax.DMS_Pipeline
             var connectionString = mMgrParams.GetParam("BrokerConnectionString");
 
@@ -3019,7 +2945,6 @@ namespace AnalysisManagerBase
         /// <remarks>This procedure is used by clsAnalysisResourcesQCART</remarks>
         protected bool LookupJobInfo(int jobNumber, out clsDataPackageJobInfo jobInfo)
         {
-
             const int RETRY_COUNT = 3;
 
             var sqlStr = new StringBuilder();
@@ -3046,7 +2971,7 @@ namespace AnalysisManagerBase
 
             if (!success)
             {
-                var errorMessage = "LookupJobInfo; Excessive failures attempting to retrieve data package job info from database";
+                const string errorMessage = "LookupJobInfo; Excessive failures attempting to retrieve data package job info from database";
                 LogMessage(errorMessage, 0, true);
                 resultSet.Dispose();
                 jobInfo = genericJobInfo;
@@ -3065,7 +2990,6 @@ namespace AnalysisManagerBase
             jobInfo = clsDataPackageInfoLoader.ParseDataPackageJobInfoRow(resultSet.Rows[0]);
 
             return true;
-
         }
 
         /// <summary>
@@ -3149,14 +3073,12 @@ namespace AnalysisManagerBase
 
                 // Pad the expected size by an additional 15%
                 return fileSizeMB * 1.15;
-
             }
             catch (Exception ex)
             {
                 LogError("Error in LookupLegacyDBDiskSpaceRequiredMB", ex);
                 return 0;
             }
-
         }
 
         /// <summary>
@@ -3169,7 +3091,6 @@ namespace AnalysisManagerBase
         /// <returns></returns>
         private bool MergeJobParamXMLStepParameters(string sourceJobParamXMLFilePath, string masterJobParamXMLFilePath)
         {
-
             try
             {
                 var sourceDoc = XDocument.Load(sourceJobParamXMLFilePath);
@@ -3188,7 +3109,6 @@ namespace AnalysisManagerBase
                 // Initialize stepParamSectionsMerged using stepParamSectionsMaster
                 foreach (var section in stepParamSectionsMaster)
                 {
-
                     stepParamSectionsMerged.Add(section.Key, section.Value);
                 }
 
@@ -3223,23 +3143,19 @@ namespace AnalysisManagerBase
 
                 using (var fileWriter = new StreamWriter(new FileStream(masterJobParamXMLFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
                 {
-
                     using (var writer = XmlWriter.Create(fileWriter, settings))
                     {
                         masterDoc.Save(writer);
                     }
-
                 }
 
                 return true;
-
             }
             catch (Exception ex)
             {
                 LogError("Error in MergeJobParamXMLStepParameters", ex);
                 return false;
             }
-
         }
 
         /// <summary>
@@ -3264,7 +3180,6 @@ namespace AnalysisManagerBase
         /// <remarks> Does not override the job number</remarks>
         public bool OverrideCurrentDatasetAndJobInfo(clsDataPackageJobInfo dataPkgJob)
         {
-
             var aggregationJob = false;
 
             if (string.IsNullOrEmpty(dataPkgJob.Dataset))
@@ -3355,7 +3270,6 @@ namespace AnalysisManagerBase
             mJobParams.AddAdditionalParameter(jobParamsSection, "RawDataType", dataPkgJob.RawDataType);
 
             return true;
-
         }
 
         /// <summary>
@@ -3402,7 +3316,6 @@ namespace AnalysisManagerBase
         /// <returns>Number of bytes deleted</returns>
         private static long PurgeFastaFiles(FileInfo fileToPurge, string legacyFastaFileBaseName, short debugLevel, bool preview)
         {
-
             var baseName = Path.GetFileNameWithoutExtension(fileToPurge.Name);
 
             if (!string.IsNullOrWhiteSpace(legacyFastaFileBaseName) && baseName.StartsWith(legacyFastaFileBaseName, StringComparison.OrdinalIgnoreCase))
@@ -3467,7 +3380,6 @@ namespace AnalysisManagerBase
             }
 
             return bytesDeleted;
-
         }
 
         /// <summary>
@@ -3555,13 +3467,11 @@ namespace AnalysisManagerBase
                         localDriveInfo, orgDbDirectory, legacyFastaFileBaseName,
                         freeSpaceThresholdPercent, requiredFreeSpaceMB, percentFreeSpaceAtStart, preview);
                 }
-
             }
             catch (Exception ex)
             {
                 LogError("Error in PurgeFastaFilesIfLowFreeSpace", ex);
             }
-
         }
 
         /// <summary>
@@ -3586,7 +3496,10 @@ namespace AnalysisManagerBase
         {
             var freeSpaceGB = clsGlobal.BytesToGB(localDriveInfo.AvailableFreeSpace);
 
-            var logInfoMessages = mDebugLevel >= 1 && freeSpaceGB < 100 || mDebugLevel >= 2 && freeSpaceGB < 250 || mDebugLevel >= 3;
+            var logInfoMessages =
+                mDebugLevel >= 1 && freeSpaceGB < 100 ||
+                mDebugLevel >= 2 && freeSpaceGB < 250 ||
+                mDebugLevel >= 3;
 
             if (logInfoMessages)
             {
@@ -3687,7 +3600,6 @@ namespace AnalysisManagerBase
                     "({1:F1} GB vs. {2:F1} GB); " + "deleted {3:F1} GB of cached files",
                     localDriveInfo.Name, finalFreeSpaceGB, requiredFreeSpaceMB / 1024.0, clsGlobal.BytesToGB(totalBytesPurged)));
             }
-
         }
 
         /// <summary>
@@ -3737,7 +3649,6 @@ namespace AnalysisManagerBase
                             }
                             break;
                         }
-
                     }
                 }
 
@@ -3858,7 +3769,6 @@ namespace AnalysisManagerBase
 
                     purgeSuccessful = totalBytesPurged >= bytesToPurge;
                     break;
-
                 } // end while
 
                 if (!purgeSuccessful)
@@ -3869,14 +3779,12 @@ namespace AnalysisManagerBase
                 }
 
                 return true;
-
             }
             catch (Exception ex)
             {
                 LogTools.LogError("Error in PurgeFastaFilesUsingSpaceUsedThreshold", ex);
                 return false;
             }
-
         }
 
         private bool RemoteFastaFilesMatch(
@@ -3884,7 +3792,6 @@ namespace AnalysisManagerBase
             SftpFile remoteFasta, SftpFile remoteHashcheck,
             clsRemoteTransferUtility transferUtility)
         {
-
             var remoteHostName = transferUtility.RemoteHostName;
 
             if (remoteFasta == null)
@@ -3933,7 +3840,6 @@ namespace AnalysisManagerBase
             }
             else
             {
-
                 LogDebug(string.Format(
                     "Fasta file size on remote host is different than local file ({0} bytes vs. {1} bytes locally); " +
                     "copying {2} to {3}", remoteFasta.Length, sourceFasta.Length, sourceFasta.Name,
@@ -3955,7 +3861,6 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public static string ResolveStoragePath(string directoryPath, string fileName)
         {
-
             var physicalFilePath = string.Empty;
 
             var filePath = Path.Combine(directoryPath, fileName);
@@ -3983,12 +3888,10 @@ namespace AnalysisManagerBase
                             physicalFilePath = dataLine;
                         }
                     }
-
                 }
             }
 
             return physicalFilePath;
-
         }
 
         /// <summary>
@@ -4039,12 +3942,12 @@ namespace AnalysisManagerBase
                         physicalFilePath = string.Empty;
                     }
                 }
-
             }
 
             return physicalFilePath;
-
         }
+
+        // Ignore Spelling: nocopy
 
         /// <summary>
         /// Retrieve the files specified by the file processing options parameter
@@ -4068,7 +3971,6 @@ namespace AnalysisManagerBase
             DataPackageFileRetrievalModeConstants fileRetrievalMode,
             out Dictionary<int, clsDataPackageJobInfo> dctDataPackageJobs)
         {
-
             bool success;
 
             try
@@ -4130,7 +4032,6 @@ namespace AnalysisManagerBase
                                         "MSGFPlus:_msgfplus_syn_ModSummary.txt",
                                         "MSGFPlus:_dta.zip"
                                     };
-
                                 }
 
                                 if (dataPkgJob.Value.Tool.StartsWith("sequest", StringComparison.OrdinalIgnoreCase))
@@ -4142,7 +4043,6 @@ namespace AnalysisManagerBase
                                         "sequest:_syn_ModSummary.txt",
                                         "sequest:_dta.zip"
                                     };
-
                                 }
 
                                 if (dataPkgJob.Value.Tool.StartsWith("xtandem", StringComparison.OrdinalIgnoreCase))
@@ -4153,7 +4053,6 @@ namespace AnalysisManagerBase
                                         "xtandem:_xt_syn_ModSummary.txt",
                                         "xtandem:_dta.zip"
                                     };
-
                                 }
 
                                 break;
@@ -4208,12 +4107,12 @@ namespace AnalysisManagerBase
 
                                     var alternateSourceFileName = string.Empty;
 
-                                    if (sourceFileName.ToLower().Contains("_msgfdb"))
+                                    if (sourceFileName.IndexOf("_msgfdb", StringComparison.OrdinalIgnoreCase) >= 0)
                                     {
                                         // Auto-look for the _msgfplus version of this file
                                         alternateSourceFileName = clsGlobal.ReplaceIgnoreCase(sourceFileName, "_msgfdb", "_msgfplus");
                                     }
-                                    else if (sourceFileName.ToLower().Contains("_msgfplus"))
+                                    else if (sourceFileName.IndexOf("_msgfplus", StringComparison.OrdinalIgnoreCase) >= 0)
                                     {
                                         // Auto-look for the _msgfdb version of this file
                                         alternateSourceFileName = clsGlobal.ReplaceIgnoreCase(sourceFileName, "_msgfplus", "_msgfdb");
@@ -4228,7 +4127,6 @@ namespace AnalysisManagerBase
                                         }
                                     }
                                 }
-
                             }
 
                             if (string.IsNullOrEmpty(sourceDirectoryPath))
@@ -4292,7 +4190,7 @@ namespace AnalysisManagerBase
                                 mJobParams.AddAdditionalParameter("DataPackageMetadata", spectraFileKey, sourceFileName);
                             }
 
-                            if (saveMode.ToLower() != "copy")
+                            if (!string.Equals(saveMode, "copy", StringComparison.OrdinalIgnoreCase))
                             {
                                 mJobParams.AddResultFileToSkip(sourceFileName);
                             }
@@ -4303,15 +4201,12 @@ namespace AnalysisManagerBase
                             {
                                 LogMessage("Copied " + sourceFileName + " from directory " + sourceDirectoryPath);
                             }
-
                         }
                         catch (Exception ex)
                         {
                             LogError("RetrieveAggregateFiles; Exception during copy of file: " + sourceFileName + " from directory " + sourceDirectoryPath + " for job " + dataPkgJob.Key, ex);
                             return false;
-
                         }
-
                     }
                 }
 
@@ -4325,7 +4220,6 @@ namespace AnalysisManagerBase
                 OverrideCurrentDatasetAndJobInfo(currentDatasetAndJobInfo);
 
                 success = true;
-
             }
             catch (Exception ex)
             {
@@ -4334,7 +4228,6 @@ namespace AnalysisManagerBase
             }
 
             return success;
-
         }
 
         /// <summary>
@@ -4349,7 +4242,6 @@ namespace AnalysisManagerBase
             clsDataPackageFileHandler.udtDataPackageRetrievalOptionsType retrievalOptions,
             out List<clsDataPackageJobInfo> dataPackagePeptideHitJobs)
         {
-
             const float progressPercentAtStart = 0;
             const float progressPercentAtFinish = 20;
             return RetrieveDataPackagePeptideHitJobPHRPFiles(retrievalOptions, out dataPackagePeptideHitJobs, progressPercentAtStart, progressPercentAtFinish);
@@ -4371,7 +4263,6 @@ namespace AnalysisManagerBase
             float progressPercentAtStart,
             float progressPercentAtFinish)
         {
-
             // Gigasax.DMS_Pipeline
             var brokerDbConnectionString = mMgrParams.GetParam("BrokerConnectionString");
 
@@ -4390,7 +4281,6 @@ namespace AnalysisManagerBase
             mJobParams.AddResultFileToSkip(clsDataPackageFileHandler.DATA_PKG_JOB_METADATA_FILE);
 
             return success;
-
         }
 
         /// <summary>
@@ -4402,7 +4292,7 @@ namespace AnalysisManagerBase
         /// <remarks>Stores the name of the FASTA file as a new job parameter named "generatedFastaName" in section "PeptideSearch"</remarks>
         protected bool RetrieveOrgDB(string orgDbDirectoryPath, out CloseOutType resultCode)
         {
-            var maxLegacyFASTASizeGB = 100;
+            const int maxLegacyFASTASizeGB = 100;
             return RetrieveOrgDB(orgDbDirectoryPath, out resultCode, maxLegacyFASTASizeGB, out _);
         }
 
@@ -4442,7 +4332,7 @@ namespace AnalysisManagerBase
                 var legacyFastaFileBaseName = string.Empty;
 
                 if (proteinCollectionInfo.UsingLegacyFasta && !string.IsNullOrWhiteSpace(proteinCollectionInfo.LegacyFastaName) &&
-                    proteinCollectionInfo.LegacyFastaName.ToLower() != "na")
+                    !string.Equals(proteinCollectionInfo.LegacyFastaName, "na", StringComparison.OrdinalIgnoreCase))
                 {
                     legacyFastaFileBaseName = Path.GetFileNameWithoutExtension(proteinCollectionInfo.LegacyFastaName);
                 }
@@ -4546,7 +4436,6 @@ namespace AnalysisManagerBase
                 resultCode = CloseOutType.CLOSEOUT_FAILED;
                 return false;
             }
-
         }
 
         /// <summary>
@@ -4556,7 +4445,6 @@ namespace AnalysisManagerBase
         /// <returns>True for success; False for failure</returns>
         protected bool RetrieveGeneratedParamFile(string paramFileName)
         {
-
             IGenerateFile paramFileGenerator = null;
 
             try
@@ -4651,7 +4539,6 @@ namespace AnalysisManagerBase
                 }
                 return false;
             }
-
         }
 
         /// <summary>
@@ -4662,11 +4549,9 @@ namespace AnalysisManagerBase
         [Obsolete("Unused")]
         protected internal bool RetrieveSettingsFileFromDb()
         {
-
             var OutputFile = Path.Combine(mWorkDir, mJobParams.GetParam("SettingsFileName"));
 
             return CreateSettingsFile(mJobParams.GetParam("ParameterXML"), OutputFile);
-
         }
 
         /// <summary>
@@ -4680,7 +4565,6 @@ namespace AnalysisManagerBase
             var memoryStream = new MemoryStream();
             using (var xWriter = new XmlTextWriter(memoryStream, Encoding.UTF8))
             {
-
                 xWriter.Formatting = Formatting.Indented;
                 xWriter.Indentation = 2;
                 xWriter.IndentChar = ' ';
@@ -4717,7 +4601,6 @@ namespace AnalysisManagerBase
 
                 var memoryStreamReader = new StreamReader(memoryStream);
                 xmlText = memoryStreamReader.ReadToEnd();
-
             }
 
             var jobParamsFile = new FileInfo(Path.Combine(WorkDir, clsAnalysisJob.OFFLINE_JOB_PARAMS_FILE));
@@ -4727,8 +4610,9 @@ namespace AnalysisManagerBase
             }
 
             mJobParams.AddResultFileToSkip(jobParamsFile.Name);
-
         }
+
+        // Ignore Spelling: Bioworks, moda, modplus, toppic
 
         /// <summary>
         /// Specifies the Bioworks version for use by the Param File Generator DLL
@@ -4738,7 +4622,6 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         protected IGenerateFile.ParamFileType SetParamFileType(string toolName)
         {
-
             var toolNameToTypeMapping = new Dictionary<string, IGenerateFile.ParamFileType>(StringComparer.OrdinalIgnoreCase)
             {
                 {"sequest", IGenerateFile.ParamFileType.BioWorks_Current},
@@ -4752,7 +4635,6 @@ namespace AnalysisManagerBase
                 {"modplus", IGenerateFile.ParamFileType.MODPlus},
                 {"toppic", IGenerateFile.ParamFileType.TopPIC}
             };
-
 
             if (toolNameToTypeMapping.TryGetValue(toolName, out var paramFileType))
             {
@@ -4882,7 +4764,6 @@ namespace AnalysisManagerBase
             }
 
             return success;
-
         }
 
         /// <summary>
@@ -4908,7 +4789,6 @@ namespace AnalysisManagerBase
             }
 
             return success;
-
         }
 
         /// <summary>
@@ -4927,7 +4807,6 @@ namespace AnalysisManagerBase
             }
 
             return success;
-
         }
 
         /// <summary>
@@ -4937,7 +4816,6 @@ namespace AnalysisManagerBase
         /// <returns></returns>
         public bool ValidateCDTAFileIsCentroided(string cdtaPath)
         {
-
             try
             {
                 // Read the m/z values in the _dta.txt file
@@ -4977,7 +4855,6 @@ namespace AnalysisManagerBase
                     }
 
                     return true;
-
                 }
 
                 if (fractionCentroided > 0.001)
@@ -5000,7 +4877,6 @@ namespace AnalysisManagerBase
                 LogError("Exception in ValidateCDTAFileIsCentroided", ex);
                 return false;
             }
-
         }
 
         /// <summary>
@@ -5028,7 +4904,6 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public static bool ValidateFileHasData(string filePath, string fileDescription, out string errorMessage, int numericDataColIndex)
         {
-
             var dataFound = false;
 
             errorMessage = string.Empty;
@@ -5082,7 +4957,6 @@ namespace AnalysisManagerBase
                 {
                     errorMessage = fileDescription + " is empty (no data)";
                 }
-
             }
             catch (Exception)
             {
@@ -5091,7 +4965,6 @@ namespace AnalysisManagerBase
             }
 
             return dataFound;
-
         }
 
         /// <summary>
@@ -5128,7 +5001,6 @@ namespace AnalysisManagerBase
         /// <returns></returns>
         public static bool ValidateFreeMemorySize(int freeMemoryRequiredMB, string stepToolName, bool logFreeMemoryOnSuccess)
         {
-
             var freeMemoryMB = clsGlobal.GetFreeMemoryMB();
 
             if (freeMemoryRequiredMB >= freeMemoryMB)
@@ -5218,7 +5090,6 @@ namespace AnalysisManagerBase
                 LogError("FASTA validation error: " + ex.Message, ex);
                 return false;
             }
-
         }
 
         #endregion
@@ -5227,7 +5098,6 @@ namespace AnalysisManagerBase
 
         private void CDTAUtilities_ProgressEvent(string taskDescription, float percentComplete)
         {
-
             if (mDebugLevel >= 1)
             {
                 if (mDebugLevel == 1 && DateTime.UtcNow.Subtract(mLastCDTAUtilitiesUpdateTime).TotalSeconds >= 60 ||
@@ -5238,7 +5108,6 @@ namespace AnalysisManagerBase
                     LogDebugMessage(" ... CDTAUtilities: " + percentComplete.ToString("0.00") + "% complete");
                 }
             }
-
         }
 
         private void FastaTools_FileGenerationCompleted(string fullOutputPath)
@@ -5249,7 +5118,6 @@ namespace AnalysisManagerBase
 
         private void FastaTools_FileGenerationProgress(string statusMsg, double fractionDone)
         {
-
             const int MINIMUM_LOG_INTERVAL_SEC = 10;
 
             var forceLog = mDebugLevel >= 1 && statusMsg.Contains(Protein_Exporter.clsGetFASTAFromDMS.LOCK_FILE_PROGRESS_TEXT);
@@ -5265,7 +5133,6 @@ namespace AnalysisManagerBase
                     LogDebugMessage("Generating Fasta file, " + (fractionDone * 100).ToString("0.0") + "% complete, " + statusMsg);
                 }
             }
-
         }
 
         /// <summary>
@@ -5294,7 +5161,6 @@ namespace AnalysisManagerBase
             {
                 LogDebugMessage(" ... SplitFastaFile: " + progressMessage);
             }
-
         }
 
         private void SplitFastaFileUtility_SplittingBaseFastaFile(string baseFastaFileName, int numSplitParts)
@@ -5328,5 +5194,4 @@ namespace AnalysisManagerBase
         #endregion
 
     }
-
 }

@@ -13,13 +13,11 @@ using System.IO;
 
 namespace AnalysisManagerBase
 {
-
     /// <summary>
     /// Tools for manipulating and documenting the assemblies used for each analysis job
     /// </summary>
     public class clsAssemblyTools
     {
-
         #region "Methods"
 
         /// <summary>
@@ -90,7 +88,6 @@ namespace AnalysisManagerBase
 
                 summaryFile.Add(fileInfo);
             }
-
         }
 
         #endregion

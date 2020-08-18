@@ -217,7 +217,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                     oFileTools.CopyFileUsingLocks(sourceFile, targetFile.FullName, manager, true);
 
-                    filesCopied += 1;
+                    filesCopied++;
 
                     if (debugLevel >= 1 && DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 30)
                     {
@@ -243,7 +243,6 @@ namespace AnalysisManagerMSGFDBPlugIn
             }
 
             return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
-
         }
 
         private void CopyIndexFilesToRemote(FileInfo fiFastaFile, string remoteIndexDirPath, int debugLevel)
@@ -367,7 +366,6 @@ namespace AnalysisManagerMSGFDBPlugIn
                 errorMessage = "Exception in CopyIndexFilesToRemote; " + ex.Message;
                 return false;
             }
-
         }
 
         /// <summary>
@@ -479,7 +477,6 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 if (!reindexingRequired)
                 {
-
                     currentTask = "Validating that expected files exist";
                     var existingFiles = FindExistingSuffixArrayFiles(
                         fastaFileIsDecoy, outputNameBase, fastaFile.DirectoryName,
@@ -647,7 +644,6 @@ namespace AnalysisManagerMSGFDBPlugIn
                 OnErrorEvent(mErrorMessage + "; " + currentTask, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-
         }
 
         private CloseOutType CreateSuffixArrayFilesWork(string logFileDir, int debugLevel, FileInfo fiFastaFile,
@@ -867,7 +863,6 @@ namespace AnalysisManagerMSGFDBPlugIn
                 OnErrorEvent("clsCreateMSGFDBSuffixArrayFiles.CreateLockFile, " + mErrorMessage, ex);
                 return false;
             }
-
         }
 
         private bool CreateRemoteSuffixArrayLockFile(
@@ -937,7 +932,6 @@ namespace AnalysisManagerMSGFDBPlugIn
         {
             try
             {
-
                 var remoteIndexDir = new DirectoryInfo(remoteIndexDirPath);
 
                 if (!remoteIndexDir.Exists)
@@ -998,7 +992,6 @@ namespace AnalysisManagerMSGFDBPlugIn
             {
                 OnErrorEvent("Error deleting old index files in " + remoteIndexDirPath, ex);
             }
-
         }
 
         private string DetermineRemoteMSGFPlusIndexFilesDirectoryPath(
@@ -1015,7 +1008,6 @@ namespace AnalysisManagerMSGFDBPlugIn
             var reMatch = reExtractNum.Match(fastaFileName);
             if (reMatch.Success)
             {
-
                 if (int.TryParse(reMatch.Groups[1].Value, out var generatedFastaFileNumber))
                 {
                     // Round down to the nearest 1000
@@ -1172,7 +1164,6 @@ namespace AnalysisManagerMSGFDBPlugIn
             }
         }
 
-
         private void UpdateRemoteLastUsedFile(string remoteIndexDirPath, string fastaFileName)
         {
             try
@@ -1193,7 +1184,6 @@ namespace AnalysisManagerMSGFDBPlugIn
                         // Use UtcNow for dates in LastUsed files
                         writer.WriteLine(DateTime.UtcNow.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT));
                     }
-
                 }
                 catch (IOException)
                 {
@@ -1203,7 +1193,6 @@ namespace AnalysisManagerMSGFDBPlugIn
                 {
                     OnWarningEvent(string.Format("Unable to create a new .LastUsed file at {0}: {1}", lastUsedFilePath, ex.Message));
                 }
-
             }
             catch (Exception ex)
             {
@@ -1221,7 +1210,6 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <returns>True if the file is valid, false if it is missing, corrupt, or from the legacy MSGFDB</returns>
         private bool ValidateCannoFile(FileInfo fastaFile, string outputNameBase, int debugLevel)
         {
-
             if (string.IsNullOrWhiteSpace(fastaFile.DirectoryName))
             {
                 OnErrorEvent("Cannot determine the parent directory of the FASTA file, " + fastaFile.FullName);
@@ -1399,6 +1387,5 @@ namespace AnalysisManagerMSGFDBPlugIn
                 DeleteLockFile(fiLockFile);
             }
         }
-
     }
 }

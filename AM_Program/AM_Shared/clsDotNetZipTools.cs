@@ -61,7 +61,6 @@ namespace AnalysisManagerBase
 
         private void DeleteFile(FileSystemInfo targetFile)
         {
-
             try
             {
                 if (DebugLevel >= 3)
@@ -81,7 +80,6 @@ namespace AnalysisManagerBase
                 // Log this as an error, but don't treat this as fatal
                 LogError("Error deleting " + targetFile.FullName, ex);
             }
-
         }
 
         /// <summary>
@@ -131,7 +129,6 @@ namespace AnalysisManagerBase
         /// <returns>True if success; false if an error</returns>
         public bool GUnzipFile(string gzipFilePath, string targetDirectory, Ionic.Zip.ExtractExistingFileAction overwriteBehavior)
         {
-
             MostRecentZipFilePath = string.Copy(gzipFilePath);
             MostRecentUnzippedFiles.Clear();
 
@@ -208,7 +205,6 @@ namespace AnalysisManagerBase
                 {
                     actualDecompressedFile.LastWriteTimeUtc = fileToGUnzip.LastWriteTimeUtc;
                 }
-
             }
             catch (Exception ex)
             {
@@ -217,7 +213,6 @@ namespace AnalysisManagerBase
             }
 
             return true;
-
         }
 
         /// <summary>
@@ -241,7 +236,6 @@ namespace AnalysisManagerBase
         /// <returns>True if success; false if an error</returns>
         public bool GZipFile(string sourceFilePath, string targetFolderPath, bool deleteSourceAfterZip)
         {
-
             var sourceFile = new FileInfo(sourceFilePath);
 
             var gzipFilePath = Path.Combine(targetFolderPath, sourceFile.Name + ".gz");
@@ -251,7 +245,6 @@ namespace AnalysisManagerBase
 
             try
             {
-
                 if (File.Exists(gzipFilePath))
                 {
                     if (DebugLevel >= 3)
@@ -281,7 +274,6 @@ namespace AnalysisManagerBase
             }
 
             return true;
-
         }
 
         /// <summary>
@@ -323,7 +315,6 @@ namespace AnalysisManagerBase
                 }
 
                 gzippedFile.LastWriteTimeUtc = fileToGZip.LastWriteTimeUtc;
-
             }
             catch (Exception ex)
             {
@@ -332,7 +323,6 @@ namespace AnalysisManagerBase
             }
 
             return true;
-
         }
 
         private void LogError(string errorMessage)
@@ -363,7 +353,6 @@ namespace AnalysisManagerBase
             bool fileWasZipped,
             string zipProgramName)
         {
-
             long totalSizeBytes = 0;
             double unzipSpeedMBPerSec;
 
@@ -375,7 +364,6 @@ namespace AnalysisManagerBase
             if (fileOrFolderZippedOrUnzipped is FileInfo processedFile)
             {
                 totalSizeBytes = processedFile.Length;
-
             }
             else if (fileOrFolderZippedOrUnzipped is DirectoryInfo processedDirectory)
             {
@@ -413,7 +401,6 @@ namespace AnalysisManagerBase
             {
                 OnStatusEvent(Message);
             }
-
         }
 
         /// <summary>
@@ -462,7 +449,6 @@ namespace AnalysisManagerBase
         /// <returns>True if success; false if an error</returns>
         public bool UnzipFile(string zipFilePath, string targetDirectory, string fileFilter, Ionic.Zip.ExtractExistingFileAction overwriteBehavior)
         {
-
             Message = string.Empty;
             MostRecentZipFilePath = string.Copy(zipFilePath);
             MostRecentUnzippedFiles.Clear();
@@ -485,7 +471,6 @@ namespace AnalysisManagerBase
                 // Ionic.Zip.ZipFile
                 using (var zipper = new ZipFile(zipFilePath))
                 {
-
                     var startTime = DateTime.UtcNow;
 
                     if (string.IsNullOrEmpty(fileFilter))
@@ -524,9 +509,7 @@ namespace AnalysisManagerBase
                     {
                         ReportZipStats(fileToUnzip, startTime, endTime, false, DOTNET_ZIP_NAME);
                     }
-
                 }
-
             }
             catch (Exception ex)
             {
@@ -535,7 +518,6 @@ namespace AnalysisManagerBase
             }
 
             return true;
-
         }
 
         /// <summary>
@@ -558,10 +540,8 @@ namespace AnalysisManagerBase
         /// <returns>True if a valid zip file, otherwise false</returns>
         public bool VerifyZipFile(string zipFilePath, float crcCheckThresholdGB)
         {
-
             try
             {
-
                 // Confirm that the zip file was created
                 var zipFile = new FileInfo(zipFilePath);
                 if (!zipFile.Exists)
@@ -591,12 +571,10 @@ namespace AnalysisManagerBase
                     return true;
                 }
 
-
                 // Unzip each zipped file to a byte buffer (no need to actually write to disk)
                 // Ionic.Zip.ZipFile
                 using (var zipper = new ZipFile(zipFilePath))
                 {
-
                     var entries = zipper.SelectEntries("*");
 
                     foreach (var entry in entries)
@@ -608,10 +586,7 @@ namespace AnalysisManagerBase
                         if (!success)
                             return false;
                     }
-
                 }
-
-
             }
             catch (Exception ex)
             {
@@ -620,7 +595,6 @@ namespace AnalysisManagerBase
             }
 
             return true;
-
         }
 
         private bool VerifyZipFileEntry(string zipFilePath, ZipEntry entry)
@@ -652,7 +626,6 @@ namespace AnalysisManagerBase
                     OnWarningEvent(Message);
                     return false;
                 }
-
             }
 
             return true;
@@ -666,11 +639,9 @@ namespace AnalysisManagerBase
         /// <returns>True if success; false if an error</returns>
         public bool ZipFile(string sourceFilePath, bool deleteSourceAfterZip)
         {
-
             var zipFilePath = GetZipFilePathForFile(sourceFilePath);
 
             return ZipFile(sourceFilePath, deleteSourceAfterZip, zipFilePath);
-
         }
 
         /// <summary>
@@ -682,7 +653,6 @@ namespace AnalysisManagerBase
         /// <returns>True if success; false if an error</returns>
         public bool ZipFile(string sourceFilePath, bool deleteSourceAfterZip, string zipFilePath)
         {
-
             var fileToZip = new FileInfo(sourceFilePath);
 
             Message = string.Empty;
@@ -690,7 +660,6 @@ namespace AnalysisManagerBase
 
             try
             {
-
                 if (File.Exists(zipFilePath))
                 {
                     if (DebugLevel >= 3)
@@ -728,9 +697,7 @@ namespace AnalysisManagerBase
                     {
                         ReportZipStats(fileToZip, startTime, endTime, true, DOTNET_ZIP_NAME);
                     }
-
                 }
-
             }
             catch (Exception ex)
             {
@@ -752,7 +719,6 @@ namespace AnalysisManagerBase
             }
 
             return true;
-
         }
 
         /// <summary>
@@ -788,7 +754,6 @@ namespace AnalysisManagerBase
         /// <returns>True if success; false if an error</returns>
         public bool ZipDirectory(string sourceDirectoryPath, string zipFilePath, bool recurse, string fileFilter)
         {
-
             var directoryToZip = new DirectoryInfo(sourceDirectoryPath);
 
             Message = string.Empty;
@@ -848,9 +813,7 @@ namespace AnalysisManagerBase
                     {
                         ReportZipStats(directoryToZip, startTime, endTime, true, DOTNET_ZIP_NAME);
                     }
-
                 }
-
             }
             catch (Exception ex)
             {
@@ -867,9 +830,6 @@ namespace AnalysisManagerBase
             }
 
             return true;
-
         }
-
     }
-
 }

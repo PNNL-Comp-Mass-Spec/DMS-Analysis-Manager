@@ -22,6 +22,7 @@ namespace AnalysisManagerMasicPlugin
     /// </summary>
     public abstract class clsAnalysisToolRunnerMASICBase : clsAnalysisToolRunnerBase
     {
+        // Ignore Spelling: Traq, labelling, Glc, Az
 
         #region "Module variables"
 
@@ -62,7 +63,7 @@ namespace AnalysisManagerMasicPlugin
                         if (string.IsNullOrEmpty(dataLine))
                             continue;
 
-                        if (dataLine.ToLower().Contains("error"))
+                        if (dataLine.IndexOf("error", StringComparison.OrdinalIgnoreCase) >= 0)
                         {
                             if (errorCount == 0)
                             {
@@ -72,7 +73,7 @@ namespace AnalysisManagerMasicPlugin
                             if (errorCount <= 10)
                                 LogWarning(" ... " + dataLine);
 
-                            errorCount += 1;
+                            errorCount++;
                         }
                     }
 
@@ -81,7 +82,6 @@ namespace AnalysisManagerMasicPlugin
                         LogWarning(string.Format(" ... {0} total errors", errorCount));
                     }
                 }
-
             }
             catch (Exception ex)
             {
@@ -151,7 +151,6 @@ namespace AnalysisManagerMasicPlugin
             var success = CopyResultsToTransferDirectory();
 
             return success ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
-
         }
 
         protected CloseOutType StartMASICAndWait(string inputFilePath, string outputFolderPath, string parameterFilePath)
@@ -330,7 +329,6 @@ namespace AnalysisManagerMasicPlugin
                     }
                 }
 
-
                 if (string.IsNullOrEmpty(progress))
                     return;
 
@@ -374,7 +372,6 @@ namespace AnalysisManagerMasicPlugin
         /// </remarks>
         private static string GetReporterIonNameFromMassMode(int reporterIonMassMode)
         {
-
             switch (reporterIonMassMode)
             {
                 case 1:
@@ -542,7 +539,6 @@ namespace AnalysisManagerMasicPlugin
             FileSystemInfo observationRateFile,
             out List<double> observationStatsTopNPct)
         {
-
             observationStatsTopNPct = new List<double>();
 
             try
@@ -670,7 +666,7 @@ namespace AnalysisManagerMasicPlugin
                                        : messageParam.Value.CastDBVal<string>();
 
                 LogError(string.Format(
-                    "Error storing reporter ion observation stats and and median intensities in the database, {0} returned {1}: {2}",
+                    "Error storing reporter ion observation stats and median intensities in the database, {0} returned {1}: {2}",
                     STORE_REPORTER_ION_OBS_STATS_SP_NAME, resCode, errorMessage));
 
                 return false;

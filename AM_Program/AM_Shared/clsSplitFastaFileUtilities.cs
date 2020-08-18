@@ -15,7 +15,6 @@ namespace AnalysisManagerBase
     /// </summary>
     public class clsSplitFastaFileUtilities : EventNotifier
     {
-
         /// <summary>
         /// LockFile name
         /// </summary>
@@ -106,7 +105,6 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         private StreamWriter CreateLockStream(FileSystemInfo baseFastaFile, out string lockFilePath)
         {
-
             var startTime = DateTime.UtcNow;
             var attemptCount = 0;
 
@@ -117,7 +115,7 @@ namespace AnalysisManagerBase
 
             do
             {
-                attemptCount += 1;
+                attemptCount++;
                 var creatingLockFile = false;
 
                 try
@@ -149,7 +147,6 @@ namespace AnalysisManagerBase
                         }
 
                         WaitingForLockFile = false;
-
                     }
 
                     // Try to create a lock file so that the calling procedure can create the required .Fasta file (or validate that it now exists)
@@ -162,7 +159,6 @@ namespace AnalysisManagerBase
                     // We have successfully created a lock file,
                     // so we should exit the Do Loop
                     break;
-
                 }
                 catch (Exception ex)
                 {
@@ -181,7 +177,6 @@ namespace AnalysisManagerBase
                     {
                         OnWarningEvent("Exception while monitoring " + LOCK_FILE_PROGRESS_TEXT + " " + lockFi.FullName + ": " + ex.Message);
                     }
-
                 }
 
                 // Something went wrong; wait for 15 seconds then try again
@@ -198,9 +193,7 @@ namespace AnalysisManagerBase
             } while (true);
 
             return lockStream;
-
         }
-
 
         private void DeleteLockStream(string lockFilePath, TextWriter lockStream)
         {
@@ -212,7 +205,6 @@ namespace AnalysisManagerBase
 
                 while (retryCount > 0)
                 {
-
                     try
                     {
                         var lockFi = new FileInfo(lockFilePath);
@@ -221,23 +213,20 @@ namespace AnalysisManagerBase
                             lockFi.Delete();
                         }
                         break;
-
                     }
                     catch (Exception ex)
                     {
                         OnErrorEvent("Exception deleting lock file in DeleteLockStream: " + ex.Message);
-                        retryCount -= 1;
+                        retryCount--;
                         var oRandom = new Random();
                         clsGlobal.IdleLoop(0.25 + oRandom.NextDouble());
                     }
                 }
-
             }
             catch (Exception ex)
             {
                 OnErrorEvent("Exception in DeleteLockStream: " + ex.Message);
             }
-
         }
 
         /// <summary>
@@ -249,7 +238,6 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         private string GetLegacyFastaFilePath(string legacyFASTAFileName, out string organismName)
         {
-
             const short retryCount = 3;
             const int timeoutSeconds = 120;
 
@@ -285,12 +273,10 @@ namespace AnalysisManagerBase
 
             // Database query was successful, but no rows were returned
             return string.Empty;
-
         }
 
         private bool StoreSplitFastaFileNames(string organismName, IEnumerable<clsFastaFileSplitter.FastaFileInfoType> splitFastaFiles)
         {
-
             var splitFastaName = "??";
 
             if (string.IsNullOrWhiteSpace(mDMSConnectionString))
@@ -330,7 +316,7 @@ namespace AnalysisManagerBase
                     var messageParam = dbTools.AddParameter(cmd, "@Message", SqlType.VarChar, 512, string.Empty);
                     var returnParam = dbTools.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, ParameterDirection.Output);
 
-                    var retryCount = 3;
+                    const int retryCount = 3;
                     dbTools.ExecuteSP(cmd, retryCount, 2);
 
                     var returnCode = clsGlobal.GetReturnCodeValue(returnParam.Value.ToString());
@@ -358,7 +344,6 @@ namespace AnalysisManagerBase
             }
 
             return true;
-
         }
 
         /// <summary>
@@ -393,7 +378,7 @@ namespace AnalysisManagerBase
 
                 var returnParam = dbTools.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, ParameterDirection.Output);
 
-                var retryCount = 3;
+                const int retryCount = 3;
                 dbTools.ExecuteSP(cmd, retryCount, 2);
 
                 var returnCode = clsGlobal.GetReturnCodeValue(returnParam.Value.ToString());
@@ -408,7 +393,6 @@ namespace AnalysisManagerBase
                 ErrorMessage = "Exception in UpdateCachedOrganismDBInfo: " + ex.Message;
                 OnErrorEvent(ErrorMessage);
             }
-
         }
 
         /// <summary>
@@ -420,12 +404,10 @@ namespace AnalysisManagerBase
         /// <remarks>If the split file is not found, will automatically split the original file and update DMS with the split file information</remarks>
         public bool ValidateSplitFastaFile(string baseFastaName, string splitFastaName)
         {
-
             var currentTask = "Initializing";
 
             try
             {
-
                 currentTask = "GetLegacyFastaFilePath for splitFastaName";
                 var knownSplitFastaFilePath = GetLegacyFastaFilePath(splitFastaName, out _);
                 var reSplitFiles = false;
@@ -639,15 +621,12 @@ namespace AnalysisManagerBase
                                 }
                             }
                         }
-
                     }
-
                 }
 
                 // Delete the lock file
                 currentTask = "DeleteLockStream (fasta file created)";
                 DeleteLockStream(lockFilePath, lockStream);
-
             }
             catch (Exception ex)
             {
@@ -657,7 +636,6 @@ namespace AnalysisManagerBase
             }
 
             return true;
-
         }
 
         #region "Events and Event Handlers"

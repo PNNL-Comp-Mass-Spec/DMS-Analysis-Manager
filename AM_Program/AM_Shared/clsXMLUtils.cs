@@ -10,7 +10,6 @@ namespace AnalysisManagerBase
     /// </summary>
     public static class clsXMLUtils
     {
-
         /// <summary>
         /// Extract the string value inside an XML element
         /// </summary>
@@ -29,7 +28,6 @@ namespace AnalysisManagerBase
                 return valueIfMissing;
 
             return firstElement.Value;
-
         }
 
         /// <summary>
@@ -103,6 +101,5 @@ namespace AnalysisManagerBase
 
             return valueIfMissing;
         }
-
     }
 }

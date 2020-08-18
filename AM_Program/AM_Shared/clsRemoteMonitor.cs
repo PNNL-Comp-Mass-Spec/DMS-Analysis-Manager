@@ -141,7 +141,6 @@ namespace AnalysisManagerBase
             IToolRunner toolRunner,
             clsStatusFile statusTools)
         {
-
             JobParams = jobParams;
 
             WorkDir = mgrParams.GetParam("WorkDir");
@@ -196,7 +195,6 @@ namespace AnalysisManagerBase
 
             try
             {
-
                 OnDebugEvent("Archiving status files for " + TransferUtility.JobStepDescription);
 
                 SortedSet<string> statusFiles;
@@ -267,7 +265,6 @@ namespace AnalysisManagerBase
 
             try
             {
-
                 OnDebugEvent("Retrieving status files for " + TransferUtility.JobStepDescription);
 
                 var statusFiles = TransferUtility.GetStatusFiles();
@@ -328,11 +325,9 @@ namespace AnalysisManagerBase
                         {
                             return jobStatus;
                         }
-
                     }
                     else if (!jobFinished)
                     {
-
                         // A lock file exists, but no .jobstatus file exists yet, and a .success or .fail file was not found
                         // If the .lock file is over 24 hours old, we probably have an issue
                         var lockFileAgeHours = DateTime.UtcNow.Subtract(remoteLockFile.LastWriteTimeUtc).TotalHours;
@@ -384,7 +379,6 @@ namespace AnalysisManagerBase
                 // Return .Undefined, which will fail out the job step
                 return EnumRemoteJobStatus.Undefined;
             }
-
         }
 
         private void LogError(string message, Exception ex = null)
@@ -593,9 +587,7 @@ namespace AnalysisManagerBase
                     RemoteProgress = status.Progress;
 
                     StatusTools.UpdateRemoteStatus(status, lastUpdate, processId, cpuUtilization, freeMemoryMB);
-
                 }
-
             }
             catch (Exception ex)
             {
@@ -606,7 +598,6 @@ namespace AnalysisManagerBase
             }
 
             return jobStatus;
-
         }
 
         /// <summary>
@@ -625,7 +616,6 @@ namespace AnalysisManagerBase
             out DateTime remoteStart,
             out DateTime remoteFinish)
         {
-
             completionMessage = string.Empty;
             remoteStart = DateTime.MinValue;
             remoteFinish= DateTime.MinValue;
@@ -786,7 +776,6 @@ namespace AnalysisManagerBase
                 }
 
                 return true;
-
             }
             catch (Exception ex)
             {
@@ -877,9 +866,9 @@ namespace AnalysisManagerBase
                     else
                         lastUpdate = statusResultFile.LastWriteTimeUtc;
 
-                    var cpuUtilization = 0;
-                    var freeMemoryMB = 0;
-                    var processId = 0;
+                    const int cpuUtilization = 0;
+                    const int freeMemoryMB = 0;
+                    const int processId = 0;
 
                     status.ProgRunnerProcessID = 0;
 
@@ -906,9 +895,7 @@ namespace AnalysisManagerBase
                     RemoteProgress = status.Progress;
 
                     StatusTools.UpdateRemoteStatus(status, lastUpdate, processId, cpuUtilization, freeMemoryMB);
-
                 }
-
             }
             catch (Exception ex)
             {
@@ -981,5 +968,4 @@ namespace AnalysisManagerBase
 
         #endregion
     }
-
 }

@@ -715,8 +715,8 @@ namespace AnalysisManagerExtractionPlugin
                                 if (string.IsNullOrWhiteSpace(dataLine))
                                     continue;
 
-                                linesRead += 1;
-                                totalLinesProcessed += 1;
+                                linesRead++;
+                                totalLinesProcessed++;
 
                                 if (linesRead == 1)
                                 {
@@ -763,7 +763,7 @@ namespace AnalysisManagerExtractionPlugin
                                         if (warningsLogged < 10)
                                         {
                                             LogWarning("SpecEValue was not numeric: " + specEValueText + " in " + dataLine);
-                                            warningsLogged += 1;
+                                            warningsLogged++;
 
                                             if (warningsLogged >= 10)
                                             {
@@ -831,7 +831,7 @@ namespace AnalysisManagerExtractionPlugin
 
                             if (!string.Equals(psm.Peptide, lastPeptide))
                             {
-                                filterPassingPSMCount += 1;
+                                filterPassingPSMCount++;
                                 lastPeptide = psm.Peptide;
                             }
                         }
@@ -897,8 +897,8 @@ namespace AnalysisManagerExtractionPlugin
                                 if (string.IsNullOrWhiteSpace(dataLine))
                                     continue;
 
-                                linesRead += 1;
-                                totalLinesProcessed += 1;
+                                linesRead++;
+                                totalLinesProcessed++;
 
                                 if (linesRead == 1 && iteration == 1)
                                 {
@@ -939,7 +939,7 @@ namespace AnalysisManagerExtractionPlugin
                                     if (addCurrentPeptide)
                                     {
                                         writer.WriteLine(dataLine);
-                                        totalLinesToWrite += 1;
+                                        totalLinesToWrite++;
                                     }
                                 }
                             }
@@ -2495,8 +2495,8 @@ namespace AnalysisManagerExtractionPlugin
 
                             var lineIn = fileReaders[fileIndex].ReadLine();
 
-                            linesRead[fileIndex] += 1;
-                            totalLinesRead += 1;
+                            linesRead[fileIndex]++;
+                            totalLinesRead++;
 
                             if (lineIn == null)
                                 continue;
@@ -2619,7 +2619,7 @@ namespace AnalysisManagerExtractionPlugin
                     while (!reader.EndOfStream)
                     {
                         var lineIn = reader.ReadLine();
-                        linesRead += 1;
+                        linesRead++;
 
                         if (lineIn == null)
                             continue;
@@ -2646,7 +2646,7 @@ namespace AnalysisManagerExtractionPlugin
                         if (processLine)
                         {
                             outputFileWriters[targetFileIndex].WriteLine(lineIn);
-                            targetFileIndex += 1;
+                            targetFileIndex++;
                             if (targetFileIndex == splitFileCount)
                                 targetFileIndex = 0;
                         }

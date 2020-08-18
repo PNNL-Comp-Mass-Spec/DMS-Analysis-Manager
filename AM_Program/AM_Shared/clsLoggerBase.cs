@@ -10,7 +10,6 @@ namespace AnalysisManagerBase
     /// </summary>
     public abstract class clsLoggerBase
     {
-
         /// <summary>
         /// Debug level
         /// </summary>
@@ -63,7 +62,6 @@ namespace AnalysisManagerBase
             {
                 clsGlobal.ErrorWritingToLog(errorMessage, ex);
             }
-
         }
 
         /// <summary>
@@ -191,6 +189,5 @@ namespace AnalysisManagerBase
         {
             LogWarning(warningMessage);
         }
-
     }
 }

@@ -24,6 +24,7 @@ namespace AnalysisManagerBase
     /// </summary>
     public class clsAnalysisToolRunnerBase : clsAnalysisMgrBase, IToolRunner
     {
+        // Ignore Spelling: acqu, fid, baf, tdf, yyyy-MM-dd, hh:mm:ss tt, Cnfg, str, Dta, cmd, Cpu, crc, usr
 
         #region "Constants"
 
@@ -323,7 +324,6 @@ namespace AnalysisManagerBase
             mMessage = string.Empty;
             mEvalCode = 0;
             mEvalMessage = string.Empty;
-
         }
 
         /// <summary>
@@ -358,7 +358,6 @@ namespace AnalysisManagerBase
             }
 
             return elapsedTime.Hours.ToString("###0") + ":" + elapsedTime.Minutes.ToString("00") + ":" + elapsedTime.Seconds.ToString("00");
-
         }
 
         /// <summary>
@@ -407,19 +406,17 @@ namespace AnalysisManagerBase
 
             return currentTaskProgressAtStart +
                 currentTaskItemsProcessed / (float)currentTaskTotalItems * (currentTaskProgressAtEnd - currentTaskProgressAtStart);
-
         }
 
         /// <summary>
         /// Computes the maximum threads to allow given the number of cores on the machine and
-        /// the the amount of memory that each thread is allowed to reserve
+        /// the amount of memory that each thread is allowed to reserve
         /// </summary>
         /// <param name="memorySizeMBPerThread">Amount of memory allocated to each thread</param>
         /// <returns>Maximum number of cores to use</returns>
         /// <remarks></remarks>
         protected int ComputeMaxThreadsGivenMemoryPerThread(float memorySizeMBPerThread)
         {
-
             if (memorySizeMBPerThread < 512)
                 memorySizeMBPerThread = 512;
 
@@ -446,7 +443,6 @@ namespace AnalysisManagerBase
             }
 
             return maxThreadsToAllow;
-
         }
 
         /// <summary>
@@ -512,7 +508,6 @@ namespace AnalysisManagerBase
         /// <returns>Path to the remotely cached file; empty path if an error</returns>
         protected string CopyFileToServerCache(string cacheDirectoryPath, string sourceFilePath, bool purgeOldFilesIfNeeded)
         {
-
             try
             {
                 // mResultsDirectoryName should contain the output directory; e.g. MSXML_Gen_1_120_275966
@@ -546,7 +541,6 @@ namespace AnalysisManagerBase
                     return string.Empty;
                 }
 
-
                 var success = CopyFileToServerCache(
                     cacheDirectoryPath, toolNameVersionFolder, sourceFilePath, datasetYearQuarter,
                     purgeOldFilesIfNeeded: purgeOldFilesIfNeeded, remoteCacheFilePath: out var remoteCacheFilePath);
@@ -563,14 +557,12 @@ namespace AnalysisManagerBase
                 }
 
                 return remoteCacheFilePath;
-
             }
             catch (Exception ex)
             {
                 LogError("Exception in CopyFileToServerCache", ex);
                 return string.Empty;
             }
-
         }
 
         /// <summary>
@@ -582,7 +574,7 @@ namespace AnalysisManagerBase
         /// <param name="sourceFilePath">Path to the data file</param>
         /// <param name="datasetYearQuarter">
         /// Dataset year quarter text (optional)
-        /// Example value is 2013_2; if this this parameter is blank, will auto-determine using Job Parameter DatasetStoragePath
+        /// Example value is 2013_2; if this parameter is blank, will auto-determine using Job Parameter DatasetStoragePath
         /// </param>
         /// <param name="purgeOldFilesIfNeeded">Set to True to automatically purge old files if the space usage is over 20 TB</param>
         /// <returns>True if success, false if an error</returns>
@@ -600,7 +592,6 @@ namespace AnalysisManagerBase
             return CopyFileToServerCache(
                 cacheDirectoryPath, subDirectoryInTarget, sourceFilePath,
                 datasetYearQuarter, purgeOldFilesIfNeeded, out _);
-
         }
 
         /// <summary>
@@ -612,7 +603,7 @@ namespace AnalysisManagerBase
         /// <param name="sourceFilePath">Path to the data file</param>
         /// <param name="datasetYearQuarter">
         /// Dataset year quarter text (optional)
-        /// Example value is 2013_2; if this this parameter is blank, will auto-determine using Job Parameter DatasetStoragePath
+        /// Example value is 2013_2; if this parameter is blank, will auto-determine using Job Parameter DatasetStoragePath
         /// </param>
         /// <param name="purgeOldFilesIfNeeded">Set to True to automatically purge old files if the space usage is over 20 TB</param>
         /// <param name="remoteCacheFilePath">Output parameter: the target file path (determined by this function)</param>
@@ -629,7 +620,6 @@ namespace AnalysisManagerBase
             bool purgeOldFilesIfNeeded,
             out string remoteCacheFilePath)
         {
-
             remoteCacheFilePath = string.Empty;
 
             try
@@ -728,14 +718,13 @@ namespace AnalysisManagerBase
                 LogError("Error in CopyFileToServerCache", ex);
                 return false;
             }
-
         }
 
         /// <summary>
         /// Copies the .mzXML file to the generic MSXML_Cache directory, e.g. \\proto-6\MSXML_Cache\MSConvert
         /// </summary>
         /// <param name="sourceFilePath"></param>
-        /// <param name="datasetYearQuarter">Dataset year quarter text, e.g. 2013_2; if this this parameter is blank, will auto-determine using Job Parameter DatasetStoragePath</param>
+        /// <param name="datasetYearQuarter">Dataset year quarter text, e.g. 2013_2; if this parameter is blank, will auto-determine using Job Parameter DatasetStoragePath</param>
         /// <param name="msXmlGeneratorName">Name of the MzXML generator, e.g. MSConvert</param>
         /// <param name="purgeOldFilesIfNeeded">Set to True to automatically purge old files if the space usage is over 20 TB</param>
         /// <returns>True if success; false if an error</returns>
@@ -745,7 +734,6 @@ namespace AnalysisManagerBase
         /// </remarks>
         protected bool CopyMzXMLFileToServerCache(string sourceFilePath, string datasetYearQuarter, string msXmlGeneratorName, bool purgeOldFilesIfNeeded)
         {
-
             try
             {
                 var msXMLCacheDirectoryPath = mMgrParams.GetParam(clsAnalysisResources.JOB_PARAM_MSXML_CACHE_FOLDER_PATH, string.Empty);
@@ -762,14 +750,12 @@ namespace AnalysisManagerBase
 
                 var success = CopyFileToServerCache(msXMLCacheDirectoryPath, msXmlGeneratorName, sourceFilePath, datasetYearQuarter, purgeOldFilesIfNeeded);
                 return success;
-
             }
             catch (Exception ex)
             {
                 LogError("Error in CopyMzXMLFileToServerCache", ex);
                 return false;
             }
-
         }
 
         /// <summary>
@@ -779,7 +765,6 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         protected bool CopyResultsFolderToServer()
         {
-
             var transferDirectoryPath = GetTransferFolderPath();
 
             if (string.IsNullOrEmpty(transferDirectoryPath))
@@ -801,7 +786,6 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         protected bool CopyResultsFolderToServer(string transferDirectoryPath)
         {
-
             var sourceDirectoryPath = string.Empty;
             string targetDirectoryPath;
 
@@ -848,7 +832,6 @@ namespace AnalysisManagerBase
                     analysisResults.CopyFailedResultsToArchiveDirectory(sourceDirectoryPath);
                     return false;
                 }
-
             }
             catch (Exception ex)
             {
@@ -876,7 +859,6 @@ namespace AnalysisManagerBase
 
                 if (!success)
                     errorEncountered = true;
-
             }
             catch (Exception ex)
             {
@@ -927,12 +909,10 @@ namespace AnalysisManagerBase
             int retryHoldoffSeconds,
             bool increaseHoldoffOnEachRetry)
         {
-
             var filesToOverwrite = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
 
             try
             {
-
                 if (analysisResults.FolderExistsWithRetry(targetDirectoryPath))
                 {
                     // The target directory already exists
@@ -980,7 +960,6 @@ namespace AnalysisManagerBase
                         return false;
                     }
                 }
-
             }
             catch (Exception ex)
             {
@@ -1021,7 +1000,7 @@ namespace AnalysisManagerBase
                     // Continue copying files; we'll fail the results at the end of this function
                     LogError(" CopyResultsFolderToServer: error copying " + fileToCopy.Name + " to " + targetPath, ex);
                     errorEncountered = true;
-                    failedFileCount += 1;
+                    failedFileCount++;
                 }
             }
 
@@ -1038,11 +1017,9 @@ namespace AnalysisManagerBase
 
                 if (!success)
                     errorEncountered = true;
-
             }
 
             return success;
-
         }
 
         /// <summary>
@@ -1077,16 +1054,9 @@ namespace AnalysisManagerBase
                 return false;
             }
 
-            bool copySuccess;
-
-            if (string.IsNullOrWhiteSpace(transferDirectoryPathOverride))
-            {
-                copySuccess = CopyResultsFolderToServer();
-            }
-            else
-            {
-                copySuccess = CopyResultsFolderToServer(transferDirectoryPathOverride);
-            }
+            var copySuccess = string.IsNullOrWhiteSpace(transferDirectoryPathOverride)
+                ? CopyResultsFolderToServer()
+                : CopyResultsFolderToServer(transferDirectoryPathOverride);
 
             return copySuccess;
         }
@@ -1099,20 +1069,18 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         protected string CreateRemoteTransferFolder(clsAnalysisResults analysisResults)
         {
-
             var transferDirectoryPath = mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH);
 
             // Verify transfer directory exists
             // First make sure TransferFolderPath is defined
             if (string.IsNullOrEmpty(transferDirectoryPath))
             {
-                var msg = "Transfer directory path not defined";
+                const string msg = "Transfer directory path not defined";
                 LogError(msg, msg + "; job param 'transferFolderPath' is empty");
                 return string.Empty;
             }
 
             return CreateRemoteTransferFolder(analysisResults, transferDirectoryPath);
-
         }
 
         /// <summary>
@@ -1124,7 +1092,6 @@ namespace AnalysisManagerBase
         /// <returns>The full path to the remote transfer directory; an empty string if an error</returns>
         protected string CreateRemoteTransferFolder(clsAnalysisResults analysisResults, string transferDirectoryPath)
         {
-
             if (string.IsNullOrEmpty(mResultsDirectoryName))
             {
                 LogError("Results directory name is not defined, " + mJobParams.GetJobStepDescription());
@@ -1143,7 +1110,6 @@ namespace AnalysisManagerBase
                     LogError("Transfer directory not found: " + transferDirectoryPath);
                     return string.Empty;
                 }
-
             }
             catch (Exception ex)
             {
@@ -1189,7 +1155,6 @@ namespace AnalysisManagerBase
 
             // Now append the output directory name to remoteTransferDirectoryPath
             return Path.Combine(remoteTransferDirectoryPath, mResultsDirectoryName);
-
         }
 
         /// <summary>
@@ -1225,7 +1190,6 @@ namespace AnalysisManagerBase
         /// <remarks>Raises exception if error occurs</remarks>
         public static bool DeleteFileWithRetries(string fileNamePath, int debugLevel, int maxRetryCount)
         {
-
             var retryCount = 0;
             var errType = AMFileNotDeletedAfterRetryException.RetryExceptionType.IO_Exception;
 
@@ -1251,7 +1215,6 @@ namespace AnalysisManagerBase
                         LogTools.LogDebug("clsAnalysisToolRunnerBase.DeleteFileWithRetries, normal exit");
                     }
                     return true;
-
                 }
                 catch (UnauthorizedAccessException ex1)
                 {
@@ -1267,8 +1230,7 @@ namespace AnalysisManagerBase
                     }
                     File.SetAttributes(fileNamePath, File.GetAttributes(fileNamePath) & ~FileAttributes.ReadOnly & ~FileAttributes.System);
                     errType = AMFileNotDeletedAfterRetryException.RetryExceptionType.Unauthorized_Access_Exception;
-                    retryCount += 1;
-
+                    retryCount++;
                 }
                 catch (IOException ex2)
                 {
@@ -1289,8 +1251,7 @@ namespace AnalysisManagerBase
 
                     // Do a garbage collection to assure file handles have been released
                     ProgRunner.GarbageCollectNow();
-                    retryCount += 1;
-
+                    retryCount++;
                 }
                 catch (Exception ex3)
                 {
@@ -1302,7 +1263,6 @@ namespace AnalysisManagerBase
 
             // If we got to here, we've exceeded the max retry limit
             throw new AMFileNotDeletedAfterRetryException(fileNamePath, errType, "Unable to delete or move file after multiple retries");
-
         }
 
         /// <summary>
@@ -1336,7 +1296,6 @@ namespace AnalysisManagerBase
         /// <returns>True if success, false if an error</returns>
         protected bool DeleteRawDataFiles(clsAnalysisResources.eRawDataTypeConstants eRawDataType)
         {
-
             // Deletes the raw data files/directories from the working directory
             bool isFile;
             var isNetworkDir = false;
@@ -1481,7 +1440,6 @@ namespace AnalysisManagerBase
             }
 
             return true;
-
         }
 
         /// <summary>
@@ -1501,7 +1459,6 @@ namespace AnalysisManagerBase
             {
                 LogMessage("Exception deleting temporary file " + filePath + ": " + ex.Message, 0, true);
             }
-
         }
 
         /// <summary>
@@ -1563,7 +1520,6 @@ namespace AnalysisManagerBase
             IMgrParams mgrParams,
             out string errorMessage)
         {
-
             errorMessage = string.Empty;
 
             // Lookup the path to the directory that contains the Step tool
@@ -1604,7 +1560,6 @@ namespace AnalysisManagerBase
             }
 
             return progLoc;
-
         }
 
         /// <summary>
@@ -1615,7 +1570,6 @@ namespace AnalysisManagerBase
         /// <remarks>Data will have been stored by function clsAnalysisResources.StorePackedJobParameterDictionary</remarks>
         protected Dictionary<string, string> ExtractPackedJobParameterDictionary(string packedJobParameterName)
         {
-
             var dctData = new Dictionary<string, string>();
 
             var extractedParams = ExtractPackedJobParameterList(packedJobParameterName);
@@ -1640,7 +1594,6 @@ namespace AnalysisManagerBase
             }
 
             return dctData;
-
         }
 
         /// <summary>
@@ -1651,7 +1604,6 @@ namespace AnalysisManagerBase
         /// <remarks>Data will have been stored by function clsAnalysisResources.StorePackedJobParameterDictionary</remarks>
         protected List<string> ExtractPackedJobParameterList(string packedJobParameterName)
         {
-
             var packedJobParams = mJobParams.GetJobParameter(packedJobParameterName, string.Empty);
 
             if (string.IsNullOrEmpty(packedJobParams))
@@ -1687,7 +1639,6 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public static bool GetCurrentMgrDebugLevelFromDB(int updateIntervalSeconds, IMgrParams mgrParams, ref short debugLevel)
         {
-
             try
             {
                 if (updateIntervalSeconds > 0 && DateTime.UtcNow.Subtract(mLastManagerSettingsUpdateTime).TotalSeconds < updateIntervalSeconds)
@@ -1715,21 +1666,18 @@ namespace AnalysisManagerBase
                 }
 
                 return true;
-
             }
             catch (Exception ex)
             {
-                var errorMessage = "Exception getting current manager settings from the manager control DB";
+                const string errorMessage = "Exception getting current manager settings from the manager control DB";
                 LogTools.LogError(errorMessage, ex);
             }
 
             return false;
-
         }
 
-        static short GetManagerDebugLevel(string connectionString, string managerName, short currentDebugLevel, int recursionLevel, [CallerMemberName] string callingFunction = "")
+        private static short GetManagerDebugLevel(string connectionString, string managerName, short currentDebugLevel, int recursionLevel, [CallerMemberName] string callingFunction = "")
         {
-
             if (clsGlobal.OfflineMode)
             {
                 return currentDebugLevel;
@@ -1743,7 +1691,7 @@ namespace AnalysisManagerBase
             var sqlQuery =
                 "SELECT ParameterName, ParameterValue " +
                 "FROM V_MgrParams " +
-                "WHERE ManagerName = '" + managerName + "' AND " + " ParameterName IN ('DebugLevel', 'MgrSettingGroupName')";
+                "WHERE ManagerName = '" + managerName + "' AND ParameterName IN ('DebugLevel', 'MgrSettingGroupName')";
 
             var callingFunctions = clsGlobal.AppendToComment(callingFunction, "GetManagerDebugLevel");
 
@@ -1751,7 +1699,7 @@ namespace AnalysisManagerBase
 
             var success = dbTools.GetQueryResults(sqlQuery, out var mgrParamsFromDb, callingFunction: callingFunctions);
 
-            if (!success || mgrParamsFromDb.Count <= 0)
+            if (!success || mgrParamsFromDb.Count == 0)
                 return currentDebugLevel;
 
             foreach (var resultRow in mgrParamsFromDb)
@@ -1775,7 +1723,6 @@ namespace AnalysisManagerBase
             }
 
             return currentDebugLevel;
-
         }
 
         /// <summary>
@@ -1785,7 +1732,6 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         protected string GetJavaProgLoc()
         {
-
             var javaProgLoc = GetJavaProgLoc(mMgrParams, out var errorMessage);
 
             if (!string.IsNullOrEmpty(javaProgLoc))
@@ -1797,7 +1743,6 @@ namespace AnalysisManagerBase
                 LogError(errorMessage);
 
             return string.Empty;
-
         }
 
         /// <summary>
@@ -1848,35 +1793,26 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         protected string GetMSXmlGeneratorAppPath()
         {
-
             var msXmlGeneratorExe = GetMSXmlGeneratorExeName();
 
-            string msXmlGeneratorAppPath;
-
-            if (msXmlGeneratorExe.ToLower().Contains("readw"))
+            if (msXmlGeneratorExe.IndexOf("readw", StringComparison.OrdinalIgnoreCase) >= 0)
             {
                 // ReadW
                 // Note that msXmlGenerator will likely be ReAdW.exe
-                msXmlGeneratorAppPath = DetermineProgramLocation("ReAdWProgLoc", msXmlGeneratorExe);
-
+                return DetermineProgramLocation("ReAdWProgLoc", msXmlGeneratorExe);
             }
-            else if (msXmlGeneratorExe.ToLower().Contains("msconvert"))
+
+            if (msXmlGeneratorExe.IndexOf("msconvert", StringComparison.OrdinalIgnoreCase) >= 0)
             {
                 // MSConvert
                 var proteoWizardDir = mMgrParams.GetParam("ProteoWizardDir");
 
                 // MSConvert.exe is stored in the ProteoWizard directory
-                msXmlGeneratorAppPath = Path.Combine(proteoWizardDir, msXmlGeneratorExe);
-
-            }
-            else
-            {
-                LogError("Invalid value for MSXMLGenerator; should be 'ReadW' or 'MSConvert'");
-                msXmlGeneratorAppPath = string.Empty;
+                return Path.Combine(proteoWizardDir, msXmlGeneratorExe);
             }
 
-            return msXmlGeneratorAppPath;
-
+            LogError("Invalid value for MSXMLGenerator; should be 'ReadW' or 'MSConvert'");
+            return string.Empty;
         }
 
         /// <summary>
@@ -1906,7 +1842,6 @@ namespace AnalysisManagerBase
         /// <remarks>This function is public because it is used by the Cyclops test harness program</remarks>
         public string GetRPathFromWindowsRegistry()
         {
-
             const string RCORE_SUBKEY = @"SOFTWARE\R-core";
 
             try
@@ -1975,7 +1910,6 @@ namespace AnalysisManagerBase
                     }
 
                     bin = Path.Combine(installPath, "bin");
-
                 }
                 else
                 {
@@ -2027,7 +1961,6 @@ namespace AnalysisManagerBase
                         {
                             currentVersion = new Version(currentVersionText);
                         }
-
                     }
 
                     // Up to 2.11.x, DLLs are installed in R_HOME\bin
@@ -2051,7 +1984,6 @@ namespace AnalysisManagerBase
                 LogError("Exception in GetRPathFromWindowsRegistry", ex);
                 return string.Empty;
             }
-
         }
 
         /// <summary>
@@ -2061,7 +1993,6 @@ namespace AnalysisManagerBase
         /// <remarks>For example, \\proto-7\DMS3_XFER\</remarks>
         protected string GetTransferFolderPath()
         {
-
             var transferDirectoryPath = mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH);
 
             if (string.IsNullOrEmpty(transferDirectoryPath))
@@ -2071,7 +2002,6 @@ namespace AnalysisManagerBase
             }
 
             return transferDirectoryPath;
-
         }
 
         /// <summary>
@@ -2122,13 +2052,12 @@ namespace AnalysisManagerBase
             // Note that mDotNetZipTools logs error messages using LogTools
             var success = mDotNetZipTools.GZipFile(sourceFilePath, deleteSourceAfterZip);
 
-            if (!success && mDotNetZipTools.Message.ToLower().Contains("OutOfMemoryException".ToLower()))
+            if (!success && mDotNetZipTools.Message.IndexOf("OutOfMemoryException", StringComparison.OrdinalIgnoreCase) >= 0)
             {
                 mNeedToAbortProcessing = true;
             }
 
             return success;
-
         }
 
         /// <summary>
@@ -2140,19 +2069,17 @@ namespace AnalysisManagerBase
         /// <returns>True if success; false if an error</returns>
         public bool GZipFile(string sourceFilePath, string targetDirectoryPath, bool deleteSourceAfterZip)
         {
-
             mDotNetZipTools.DebugLevel = mDebugLevel;
 
             // Note that mDotNetZipTools logs error messages using LogTools
             var success = mDotNetZipTools.GZipFile(sourceFilePath, targetDirectoryPath, deleteSourceAfterZip);
 
-            if (!success && mDotNetZipTools.Message.ToLower().Contains("OutOfMemoryException".ToLower()))
+            if (!success && mDotNetZipTools.Message.IndexOf("OutOfMemoryException", StringComparison.OrdinalIgnoreCase) >= 0)
             {
                 mNeedToAbortProcessing = true;
             }
 
             return success;
-
         }
 
         /// <summary>
@@ -2174,10 +2101,9 @@ namespace AnalysisManagerBase
         /// <returns>FileInfo object of the new .gz file or null if an error</returns>
         public FileInfo GZipFile(FileInfo fileToCompress, bool deleteSourceAfterZip)
         {
-
             try
             {
-                var success = GZipFile(fileToCompress.FullName, true);
+                var success = GZipFile(fileToCompress.FullName, deleteSourceAfterZip);
 
                 if (!success)
                 {
@@ -2196,14 +2122,12 @@ namespace AnalysisManagerBase
                 }
 
                 return gzippedFile;
-
             }
             catch (Exception ex)
             {
                 LogError("Exception in GZipFile", ex);
                 return null;
             }
-
         }
 
         /// <summary>
@@ -2215,7 +2139,6 @@ namespace AnalysisManagerBase
         /// <remarks>Core count will be a minimum of 1 and a maximum of Environment.ProcessorCount</remarks>
         public static int ParseThreadCount(string threadCountText, int maxThreadsToAllow)
         {
-
             var rePercentage = new Regex("([0-9.]+)%");
 
             if (string.IsNullOrWhiteSpace(threadCountText))
@@ -2270,7 +2193,6 @@ namespace AnalysisManagerBase
                 coreCount = 1;
 
             return coreCount;
-
         }
 
         /// <summary>
@@ -2281,7 +2203,6 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         protected bool LoadDataPackageDatasetInfo(out Dictionary<int, clsDataPackageDatasetInfo> dctDataPackageDatasets)
         {
-
             // Gigasax.DMS_Pipeline
             var brokerDbConnectionString = mMgrParams.GetParam("BrokerConnectionString");
 
@@ -2310,7 +2231,6 @@ namespace AnalysisManagerBase
             out List<clsDataPackageJobInfo> additionalJobs,
             out string errorMsg)
         {
-
             // Gigasax.DMS_Pipeline
             var brokerDbConnectionString = mMgrParams.GetParam("BrokerConnectionString");
 
@@ -2349,7 +2269,6 @@ namespace AnalysisManagerBase
 
                 // Settings file wasn't found
                 return false;
-
             }
 
             // Settings file wasn't required
@@ -2423,13 +2342,11 @@ namespace AnalysisManagerBase
                 // Synchronize the stored Debug level with the value stored in the database
                 const int MGR_SETTINGS_UPDATE_INTERVAL_SECONDS = 300;
                 GetCurrentMgrDebugLevelFromDB(MGR_SETTINGS_UPDATE_INTERVAL_SECONDS);
-
             }
             catch (Exception)
             {
                 // Ignore errors here
             }
-
         }
 
         /// <summary>
@@ -2455,7 +2372,6 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         protected bool MakeResultsDirectory()
         {
-
             mStatusTools.UpdateAndWrite(EnumMgrStatus.RUNNING, EnumTaskStatus.RUNNING, EnumTaskStatusDetail.PACKAGING_RESULTS, 0);
 
             // Makes results directory and moves files into it
@@ -2479,7 +2395,6 @@ namespace AnalysisManagerBase
             }
 
             return true;
-
         }
 
         /// <summary>
@@ -2488,7 +2403,6 @@ namespace AnalysisManagerBase
         /// <returns></returns>
         protected bool MoveResultFiles()
         {
-
             const int REJECT_LOGGING_THRESHOLD = 10;
             const int ACCEPT_LOGGING_THRESHOLD = 50;
             const int LOG_LEVEL_REPORT_ACCEPT_OR_REJECT = 5;
@@ -2575,7 +2489,7 @@ namespace AnalysisManagerBase
                     }
 
                     // Look for invalid characters in the filename
-                    // (Required because extract_msn.exe sometimes leaves files with names like "C3 90 68 C2" (ascii codes) in working directory)
+                    // (Required because extract_msn.exe sometimes leaves files with names like "C3 90 68 C2" (ASCII codes) in working directory)
                     // Note: now evaluating each character in the filename
                     if (okToMove)
                     {
@@ -2658,7 +2572,6 @@ namespace AnalysisManagerBase
                                 // If we get here, the copy succeeded;
                                 // The original file (in the work directory) will get deleted when the work directory is "cleaned" after the job finishes
                             }
-
                         }
                         catch (Exception ex2)
                         {
@@ -2668,7 +2581,6 @@ namespace AnalysisManagerBase
                             errorEncountered = true;
                         }
                     }
-
                 }
 
                 if (mDebugLevel >= LOG_LEVEL_REPORT_ACCEPT_OR_REJECT)
@@ -2690,9 +2602,7 @@ namespace AnalysisManagerBase
                             LogDebug(" MoveResultFiles: Rejected a total of " + extension.Value + " files with extension " + extension.Key);
                         }
                     }
-
                 }
-
             }
             catch (Exception ex)
             {
@@ -2739,12 +2649,10 @@ namespace AnalysisManagerBase
         /// <returns></returns>
         public static string NotifyMissingParameter(IJobParams oJobParams, string parameterName)
         {
-
             var settingsFile = oJobParams.GetJobParameter("SettingsFileName", "?UnknownSettingsFile?");
             var toolName = oJobParams.GetJobParameter("ToolName", "?UnknownToolName?");
 
             return "Settings file " + settingsFile + " for tool " + toolName + " does not have parameter " + parameterName + " defined";
-
         }
 
         /// <summary>
@@ -2771,7 +2679,6 @@ namespace AnalysisManagerBase
             {
                 mSummaryFile.SaveSummaryFile(Path.Combine(OutputPath, summaryFileName));
             }
-
         }
 
         /// <summary>
@@ -2887,9 +2794,7 @@ namespace AnalysisManagerBase
         /// <param name="spaceUsageThresholdGB">Maximum space usage, in GB (cannot be less than 1000 on Proto-x servers; 10 otherwise)</param>
         private void PurgeOldServerCacheFiles(string cacheDirectoryPath, int spaceUsageThresholdGB)
         {
-
             {
-
                 var dataFiles = new List<KeyValuePair<DateTime, FileInfo>>();
 
                 double totalSizeMB = 0;
@@ -2948,7 +2853,6 @@ namespace AnalysisManagerBase
                         {
                             writer.WriteLine(DateTime.Now.ToString(DATE_TIME_FORMAT) + " - " + mMgrName);
                         }
-
                     }
                     catch (Exception)
                     {
@@ -3048,18 +2952,17 @@ namespace AnalysisManagerBase
                                 dataFile.FullName));
 
                             sizeDeletedMB += fileSizeMB;
-                            fileDeleteCount += 1;
+                            fileDeleteCount++;
 
                             if (hashCheckFile.Exists)
                             {
                                 hashCheckFile.Delete();
                             }
-
                         }
                         catch (Exception ex)
                         {
                             // Keep track of the number of times we have an exception
-                            fileDeleteErrorCount += 1;
+                            fileDeleteErrorCount++;
 
                             var exceptionName = ex.GetType().ToString();
                             if (errorSummary.TryGetValue(exceptionName, out var occurrences))
@@ -3070,7 +2973,6 @@ namespace AnalysisManagerBase
                             {
                                 errorSummary.Add(exceptionName, 1);
                             }
-
                         }
 
                         if (totalSizeMB / 1024.0 < spaceUsageThresholdGB * 0.95)
@@ -3111,14 +3013,12 @@ namespace AnalysisManagerBase
                             // Ignore the error
                         }
                     }
-
                 }
                 catch (Exception ex)
                 {
                     LogMessage("Error in PurgeOldServerCacheFiles: " + clsGlobal.GetExceptionStackTrace(ex), 0, true);
                 }
             }
-
         }
 
         /// <summary>
@@ -3140,7 +3040,6 @@ namespace AnalysisManagerBase
 
             transferDirectoryPath = transferDirectory.Parent.FullName;
             mJobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH, transferDirectoryPath);
-
         }
 
         /// <summary>
@@ -3150,7 +3049,6 @@ namespace AnalysisManagerBase
         /// <remarks>List of files to delete is tracked via mJobParams.ServerFilesToDelete; must store full file paths in ServerFilesToDelete</remarks>
         public bool RemoveNonResultServerFiles()
         {
-
             var currentFile = "??";
 
             try
@@ -3168,7 +3066,7 @@ namespace AnalysisManagerBase
 
                     if (File.Exists(fileToDelete))
                     {
-                        // Assure that the file is not set to readonly or system, then delete it
+                        // Assure that the file is not set to ReadOnly or System, then delete it
                         File.SetAttributes(fileToDelete, File.GetAttributes(fileToDelete) & ~FileAttributes.ReadOnly & ~FileAttributes.System);
                         File.Delete(fileToDelete);
                     }
@@ -3182,7 +3080,6 @@ namespace AnalysisManagerBase
             }
 
             return true;
-
         }
 
         /// <summary>
@@ -3194,7 +3091,6 @@ namespace AnalysisManagerBase
         /// <remarks>First deletes the target file, then renames the original file to the updated file name</remarks>
         protected bool ReplaceUpdatedFile(FileInfo originalFile, FileInfo updatedFile)
         {
-
             try
             {
                 var finalFilePath = originalFile.FullName;
@@ -3216,7 +3112,6 @@ namespace AnalysisManagerBase
 
                 return false;
             }
-
         }
 
         /// <summary>
@@ -3239,12 +3134,15 @@ namespace AnalysisManagerBase
         /// If successful, the calling procedure will typically next call
         /// PostProcessRemoteResults then CopyResultsToTransferDirectory
         /// </remarks>
+        /// <exception cref="NotImplementedException"></exception>
         public virtual bool RetrieveRemoteResults(
             clsRemoteTransferUtility transferUtility,
             bool verifyCopied,
             out List<string> retrievedFilePaths)
         {
-            throw new NotImplementedException("Plugin " + StepToolName + " must implement RetrieveRemoteResults to allow for remote processing; that method must call RetrieveRemoteResultFiles");
+            throw new NotImplementedException(
+                "Plugin " + StepToolName + " must implement RetrieveRemoteResults to allow for remote processing; " +
+                "that method must call RetrieveRemoteResultFiles");
         }
 
         /// <summary>
@@ -3265,7 +3163,6 @@ namespace AnalysisManagerBase
 
             try
             {
-
                 var remoteSourceDirectory = transferUtility.RemoteJobStepWorkDirPath;
                 var warnIfMissing = verifyCopied;
 
@@ -3305,7 +3202,6 @@ namespace AnalysisManagerBase
                     LogError("Expected result files not found on " + transferUtility.RemoteHostName);
 
                 return false;
-
             }
             catch (Exception ex)
             {
@@ -3322,7 +3218,6 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public virtual CloseOutType RunTool()
         {
-
             // Make log entry
             LogMessage(mMgrName + ": Starting analysis, job " + Job);
 
@@ -3332,7 +3227,6 @@ namespace AnalysisManagerBase
             // Remainder of method is supplied by subclasses
 
             return CloseOutType.CLOSEOUT_SUCCESS;
-
         }
 
         /// <summary>
@@ -3384,7 +3278,6 @@ namespace AnalysisManagerBase
                 LogError("Exception in SortTextFile", ex);
                 return false;
             }
-
         }
 
         /// <summary>
@@ -3471,7 +3364,6 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         protected bool SynchronizeFolders(string sourceDirectoryPath, string targetDirectoryPath, bool copySubdirectories)
         {
-
             var fileNameFilterSpecs = new List<string> { "*" };
             var fileNameExclusionSpecs = new List<string>();
             const int maxRetryCount = 3;
@@ -3489,7 +3381,6 @@ namespace AnalysisManagerBase
         /// <remarks>Will retry failed copies up to 3 times</remarks>
         protected bool SynchronizeFolders(string sourceDirectoryPath, string targetDirectoryPath, string fileNameFilterSpec)
         {
-
             var fileNameFilterSpecs = new List<string> { fileNameFilterSpec };
             var fileNameExclusionSpecs = new List<string>();
             const int maxRetryCount = 3;
@@ -3508,7 +3399,6 @@ namespace AnalysisManagerBase
         /// <remarks>Will retry failed copies up to 3 times</remarks>
         protected bool SynchronizeFolders(string sourceDirectoryPath, string targetDirectoryPath, List<string> fileNameFilterSpecs)
         {
-
             var fileNameExclusionSpecs = new List<string>();
             const int maxRetryCount = 3;
             const bool copySubdirectories = false;
@@ -3527,7 +3417,6 @@ namespace AnalysisManagerBase
         /// <remarks>Will retry failed copies up to 3 times</remarks>
         protected bool SynchronizeFolders(string sourceDirectoryPath, string targetDirectoryPath, List<string> fileNameFilterSpecs, List<string> fileNameExclusionSpecs)
         {
-
             const int maxRetryCount = 3;
             const bool copySubdirectories = false;
 
@@ -3546,10 +3435,8 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         protected bool SynchronizeFolders(string sourceDirectoryPath, string targetDirectoryPath, List<string> fileNameFilterSpecs, List<string> fileNameExclusionSpecs, int maxRetryCount)
         {
-
             const bool copySubdirectories = false;
             return SynchronizeFolders(sourceDirectoryPath, targetDirectoryPath, fileNameFilterSpecs, fileNameExclusionSpecs, maxRetryCount, copySubdirectories);
-
         }
 
         /// <summary>
@@ -3604,7 +3491,7 @@ namespace AnalysisManagerBase
                     }
                 }
 
-                if ((fileNameExclusionSpecs != null) && fileNameExclusionSpecs.Count > 0)
+                if (fileNameExclusionSpecs?.Count > 0)
                 {
                     // Remove any files from filesToCopy that would get matched by items in fileNameExclusionSpecs
 
@@ -3658,7 +3545,7 @@ namespace AnalysisManagerBase
                             }
                             else
                             {
-                                retriesRemaining -= 1;
+                                retriesRemaining--;
                                 if (retriesRemaining < 0)
                                 {
                                     mMessage = "Error copying " + sourceFile.FullName + " to " + targetFile.DirectoryName;
@@ -3671,7 +3558,6 @@ namespace AnalysisManagerBase
                                 clsGlobal.IdleLoop(2);
                             }
                         }
-
                     }
                 }
 
@@ -3690,10 +3576,8 @@ namespace AnalysisManagerBase
                             LogError("Error copying subdirectory " + subDirectory.FullName + " to " + targetDirectoryPath);
                             break;
                         }
-
                     }
                 }
-
             }
             catch (Exception ex)
             {
@@ -3702,7 +3586,6 @@ namespace AnalysisManagerBase
             }
 
             return true;
-
         }
 
         /// <summary>
@@ -3711,7 +3594,6 @@ namespace AnalysisManagerBase
         /// <returns>TRUE for success, FALSE for failure</returns>
         protected bool UpdateSummaryFile()
         {
-
             try
             {
                 // Add a separator
@@ -3750,7 +3632,6 @@ namespace AnalysisManagerBase
                 mSummaryFile.Add(Environment.NewLine);
                 mSummaryFile.Add("=====================================================================================");
                 mSummaryFile.Add(Environment.NewLine);
-
             }
             catch (Exception ex)
             {
@@ -3760,7 +3641,6 @@ namespace AnalysisManagerBase
             }
 
             return true;
-
         }
 
         /// <summary>
@@ -3803,7 +3683,6 @@ namespace AnalysisManagerBase
 
             // Note that mDotNetZipTools logs error messages using LogTools
             return mDotNetZipTools.UnzipFile(zipFilePath, targetDirectory, FileFilter);
-
         }
 
         /// <summary>
@@ -3843,14 +3722,12 @@ namespace AnalysisManagerBase
                 }
 
                 return coreUsage;
-
             }
             catch (Exception ex)
             {
                 LogError("Exception in UpdateCpuUsageByProcessName determining the processor usage of " + processName, ex);
                 return -1;
             }
-
         }
 
         /// <summary>
@@ -3893,10 +3770,9 @@ namespace AnalysisManagerBase
                         mCoreUsageHistory.Dequeue();
                     }
                 }
-
             }
 
-            if (mCoreUsageHistory.Count <= 0)
+            if (mCoreUsageHistory.Count == 0)
                 return;
 
             mStatusTools.ProgRunnerProcessID = processID;
@@ -3935,13 +3811,14 @@ namespace AnalysisManagerBase
             {
                 // Log a warning since this is not a fatal error
                 if (string.IsNullOrWhiteSpace(cmdRunner.ProcessPath))
+                {
                     LogWarning("Exception getting core usage for process ID " + cmdRunner.ProcessID + ": " + ex.Message);
+                }
                 else
                 {
                     var processName = Path.GetFileName(cmdRunner.ProcessPath);
                     LogWarning("Exception getting core usage for " + processName + ", process ID " + cmdRunner.ProcessID + ": " + ex.Message);
                 }
-
             }
         }
 
@@ -3961,7 +3838,7 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         protected void UpdateStatusFile(float percentComplete)
         {
-            var frequencySeconds = 15;
+            const int frequencySeconds = 15;
             UpdateStatusFile(percentComplete, frequencySeconds);
         }
 
@@ -3982,7 +3859,6 @@ namespace AnalysisManagerBase
                 mLastStatusFileUpdate = DateTime.UtcNow;
                 UpdateStatusRunning(percentComplete);
             }
-
         }
 
         /// <summary>
@@ -4068,7 +3944,6 @@ namespace AnalysisManagerBase
 
                 using (var reader = new StreamReader(new FileStream(dtaFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
-
                     while (!reader.EndOfStream)
                     {
                         var dataLine = reader.ReadLine();
@@ -4079,14 +3954,12 @@ namespace AnalysisManagerBase
                             break;
                         }
                     }
-
                 }
 
                 if (!dataFound)
                 {
                     LogError("The _DTA.txt file is empty");
                 }
-
             }
             catch (Exception ex)
             {
@@ -4095,7 +3968,6 @@ namespace AnalysisManagerBase
             }
 
             return dataFound;
-
         }
 
         /// <summary>
@@ -4113,7 +3985,6 @@ namespace AnalysisManagerBase
             var success = mDotNetZipTools.VerifyZipFile(zipFilePath, crcCheckThresholdGB);
 
             return success;
-
         }
 
         /// <summary>
@@ -4129,13 +4000,12 @@ namespace AnalysisManagerBase
             // Note that mDotNetZipTools logs error messages using LogTools
             var success = mDotNetZipTools.ZipFile(sourceFilePath, deleteSourceAfterZip);
 
-            if (!success && mDotNetZipTools.Message.ToLower().Contains("OutOfMemoryException".ToLower()))
+            if (!success && mDotNetZipTools.Message.IndexOf("OutOfMemoryException", StringComparison.OrdinalIgnoreCase) >= 0)
             {
                 mNeedToAbortProcessing = true;
             }
 
             return success;
-
         }
 
         /// <summary>
@@ -4146,7 +4016,6 @@ namespace AnalysisManagerBase
         [Obsolete("Use ZipFile, which uses DotNetZip")]
         public bool ZipFileSharpZipLib(string sourceFilePath)
         {
-
             try
             {
                 var sourceFile = new FileInfo(sourceFilePath);
@@ -4155,7 +4024,6 @@ namespace AnalysisManagerBase
 
                 try
                 {
-
                     if (File.Exists(zipFilePath))
                     {
                         if (mDebugLevel >= 3)
@@ -4164,7 +4032,6 @@ namespace AnalysisManagerBase
                         }
 
                         File.Delete(zipFilePath);
-
                     }
                 }
                 catch (Exception ex)
@@ -4179,20 +4046,15 @@ namespace AnalysisManagerBase
                 // Verify that the zip file is not corrupt
                 // Files less than 4 GB get a full CRC check
                 // Large files get a quick check
-                if (!VerifyZipFile(zipFilePath))
-                {
-                    return false;
-                }
+                var success = VerifyZipFile(zipFilePath);
 
-                return true;
-
+                return success;
             }
             catch (Exception ex)
             {
                 LogError("Exception zipping " + sourceFilePath + " using SharpZipLib", ex);
                 return false;
             }
-
         }
 
         /// <summary>
@@ -4209,13 +4071,12 @@ namespace AnalysisManagerBase
             // Note that mDotNetZipTools logs error messages using LogTools
             var success = mDotNetZipTools.ZipFile(sourceFilePath, deleteSourceAfterZip, zipFilePath);
 
-            if (!success && mDotNetZipTools.Message.ToLower().Contains("OutOfMemoryException".ToLower()))
+            if (!success && mDotNetZipTools.Message.IndexOf("OutOfMemoryException", StringComparison.OrdinalIgnoreCase) >= 0)
             {
                 mNeedToAbortProcessing = true;
             }
 
             return success;
-
         }
 
         /// <summary>
@@ -4227,7 +4088,6 @@ namespace AnalysisManagerBase
         /// <remarks>The original file is not deleted, but the name is added to ResultFilesToSkip in mJobParams</remarks>
         protected bool ZipOutputFile(FileInfo fileToCompress, string fileDescription)
         {
-
             try
             {
                 if (string.IsNullOrWhiteSpace(fileDescription))
@@ -4286,5 +4146,4 @@ namespace AnalysisManagerBase
         #endregion
 
     }
-
 }

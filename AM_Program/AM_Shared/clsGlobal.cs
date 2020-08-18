@@ -28,6 +28,7 @@ namespace AnalysisManagerBase
     [SuppressMessage("ReSharper", "UnusedMember.Global")]
     public static class clsGlobal
     {
+        // Ignore Spelling: cmd, Sql, Utc
 
         #region "Constants"
 
@@ -107,7 +108,6 @@ namespace AnalysisManagerBase
                 {
                     mSystemProcessInfo = new SystemProcessInfo();
                     RegisterEvents(mSystemProcessInfo);
-
                 }
                 return mSystemProcessInfo;
             }
@@ -134,7 +134,6 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public static string AppendToComment(string baseComment, string addnlComment)
         {
-
             if (string.IsNullOrWhiteSpace(baseComment))
             {
                 if (string.IsNullOrWhiteSpace(addnlComment))
@@ -301,7 +300,6 @@ namespace AnalysisManagerBase
                 {
                     lockFile.Delete();
                 }
-
             }
             catch (Exception)
             {
@@ -403,7 +401,6 @@ namespace AnalysisManagerBase
             }
 
             return version;
-
         }
 
         /// <summary>
@@ -424,9 +421,9 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Runs the specified Sql query
+        /// Runs the specified SQL query
         /// </summary>
-        /// <param name="sqlStr">Sql query</param>
+        /// <param name="sqlStr">SQL query</param>
         /// <param name="connectionString">Connection string</param>
         /// <param name="retryCount">Number of times to retry (in case of a problem)</param>
         /// <param name="queryResults">DataTable (Output Parameter)</param>
@@ -469,7 +466,6 @@ namespace AnalysisManagerBase
             int timeoutSeconds,
             [CallerMemberName] string callingFunction = "")
         {
-
             if (cmd == null)
                 throw new ArgumentException("command is undefined", nameof(cmd));
 
@@ -495,7 +491,6 @@ namespace AnalysisManagerBase
                 {
                     using (var cn = new System.Data.SqlClient.SqlConnection(connectionString))
                     {
-
                         cmd.Connection = cn;
                         cmd.CommandTimeout = timeoutSeconds;
 
@@ -514,7 +509,7 @@ namespace AnalysisManagerBase
                 {
                     string msg;
 
-                    retryCount -= 1;
+                    retryCount--;
                     if (cmd.CommandType == CommandType.StoredProcedure)
                     {
                         msg = callingFunction + "; Exception running stored procedure " + cmd.CommandText;
@@ -553,7 +548,6 @@ namespace AnalysisManagerBase
 
             queryResults = null;
             return false;
-
         }
 
         /// <summary>
@@ -599,7 +593,6 @@ namespace AnalysisManagerBase
             int timeoutSeconds = 5,
             [CallerMemberName] string callingFunction = "")
         {
-
             var success = GetQueryResults(sqlQuery, connectionString, out var queryResults, retryCount, timeoutSeconds, maxRowsToReturn: 1, callingFunction);
 
             if (success)
@@ -671,7 +664,6 @@ namespace AnalysisManagerBase
             int maxRowsToReturn = 0,
             [CallerMemberName] string callingFunction = "")
         {
-
             if (OfflineMode)
             {
                 LogTools.LogError(string.Format("Offline mode enabled; {0} cannot execute query {1}", callingFunction, sqlQuery));
@@ -691,7 +683,6 @@ namespace AnalysisManagerBase
             var success = dbTools.GetQueryResults(sqlQuery, out queryResults, retryCount, maxRowsToReturn, timeoutSeconds: timeoutSeconds, callingFunction: callingFunction);
 
             return success;
-
         }
 
         /// <summary>
@@ -720,7 +711,6 @@ namespace AnalysisManagerBase
             }
 
             return StackTraceFormatter.GetExceptionStackTrace(ex);
-
         }
 
         /// <summary>
@@ -734,7 +724,6 @@ namespace AnalysisManagerBase
         /// </remarks>
         public static KeyValuePair<string, string> GetKeyValueSetting(string settingText)
         {
-
             var emptyKvPair = new KeyValuePair<string, string>(string.Empty, string.Empty);
 
             if (string.IsNullOrWhiteSpace(settingText))
@@ -816,7 +805,6 @@ namespace AnalysisManagerBase
         /// <remarks>Two null strings are considered equal, even if treatNullAsEmptyString is false</remarks>
         public static bool IsMatch(string text1, string text2, bool treatNullAsEmptyString)
         {
-
             if (treatNullAsEmptyString && string.IsNullOrWhiteSpace(text1) && string.IsNullOrWhiteSpace(text2))
             {
                 return true;
@@ -1102,7 +1090,6 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public static string CreateHashcheckFile(string dataFilePath, bool computeMD5Hash)
         {
-
             string md5Hash;
 
             if (!File.Exists(dataFilePath))
@@ -1161,7 +1148,6 @@ namespace AnalysisManagerBase
         /// <remarks>See also TextFilesMatch</remarks>
         public static bool FilesMatch(string filePath1, string filePath2)
         {
-
             try
             {
                 var file1 = new FileInfo(filePath1);
@@ -1192,7 +1178,6 @@ namespace AnalysisManagerBase
                 }
 
                 return true;
-
             }
             catch (Exception ex)
             {
@@ -1201,7 +1186,6 @@ namespace AnalysisManagerBase
             }
 
             return false;
-
         }
 
         /// <summary>
@@ -1226,8 +1210,6 @@ namespace AnalysisManagerBase
 
             try
             {
-                DriveInfo localDriveInfo;
-
                 if (Path.DirectorySeparatorChar == '/' || targetDirectory.FullName.StartsWith("/"))
                 {
                     // Linux system, with a path like /file1/temp/DMSOrgDBs/
@@ -1247,8 +1229,7 @@ namespace AnalysisManagerBase
                     {
                         try
                         {
-                            localDriveInfo = new DriveInfo(candidatePath);
-                            return localDriveInfo;
+                            return new DriveInfo(candidatePath);
                         }
                         catch (Exception ex)
                         {
@@ -1264,11 +1245,9 @@ namespace AnalysisManagerBase
                     var driveLetter = targetDirectory.FullName.Substring(0, 2);
                     if (driveLetter.EndsWith(":"))
                     {
-                        localDriveInfo = new DriveInfo(driveLetter);
-                        return localDriveInfo;
+                        return new DriveInfo(driveLetter);
                     }
                 }
-
             }
             catch (Exception ex)
             {
@@ -1277,7 +1256,6 @@ namespace AnalysisManagerBase
 
             LogTools.LogWarning(baseWarningMsg);
             return null;
-
         }
 
         /// <summary>
@@ -1322,7 +1300,6 @@ namespace AnalysisManagerBase
                     LogTools.LogWarning(errorMessage);
                     freeSpaceMB = 0;
                 }
-
             }
             else
             {
@@ -1358,7 +1335,6 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public static string ReplaceIgnoreCase(string textToSearch, string textToFind, string replacementText)
         {
-
             var charIndex = textToSearch.IndexOf(textToFind, StringComparison.OrdinalIgnoreCase);
 
             if (charIndex < 0)
@@ -1442,7 +1418,6 @@ namespace AnalysisManagerBase
             int comparisonStartLine, int comparisonEndLine,
             bool ignoreWhitespace, List<Regex> lineIgnoreRegExSpecs)
         {
-
             var whiteSpaceChars = new List<char>() { '\t', ' ' }.ToArray();
 
             try
@@ -1453,11 +1428,10 @@ namespace AnalysisManagerBase
                 {
                     using (var reader2 = new StreamReader(new FileStream(filePath2, FileMode.Open, FileAccess.Read, FileShare.Read)))
                     {
-
                         while (!reader1.EndOfStream)
                         {
                             var dataLine1 = reader1.ReadLine();
-                            lineNumber += 1;
+                            lineNumber++;
 
                             if (comparisonEndLine > 0 && lineNumber > comparisonEndLine)
                             {
@@ -1512,7 +1486,7 @@ namespace AnalysisManagerBase
                             // Ignoring whitespace
                             // If file1 only has blank lines from here on out, the files match; otherwise, they don't
                             // See if the remaining lines are blank
-                            do
+                            while (true)
                             {
                                 if (dataLine1.Length != 0)
                                 {
@@ -1533,11 +1507,9 @@ namespace AnalysisManagerBase
                                     dataLine1 = string.Empty;
                                 else
                                     dataLine1 = dataLine1.Trim(whiteSpaceChars);
-
-                            } while (true);
+                            }
 
                             break;
-
                         }
 
                         if (reader2.EndOfStream)
@@ -1574,14 +1546,12 @@ namespace AnalysisManagerBase
                 }
 
                 return true;
-
             }
             catch (Exception)
             {
                 // Error occurred
                 return false;
             }
-
         }
 
         private static bool TextFilesMatchIgnoreLine(string dataLine, IReadOnlyCollection<Regex> lineIgnoreRegExSpecs)
@@ -1613,7 +1583,6 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public static string UpdateHostName(string sharePath, string newHostName)
         {
-
             if (!newHostName.StartsWith(@"\\"))
             {
                 throw new NotSupportedException(@"\\ not found at the start of newHostName (" + newHostName + "); " +
@@ -1717,7 +1686,6 @@ namespace AnalysisManagerBase
             string dataFilePath, string hashFilePath, out string errorMessage,
             bool checkDate, bool computeHash, bool checkSize)
         {
-
             var validFile = FileSyncUtils.ValidateFileVsHashcheck(dataFilePath, hashFilePath, out errorMessage, checkDate, computeHash, checkSize);
             return validFile;
         }
@@ -1743,8 +1711,8 @@ namespace AnalysisManagerBase
         /// <param name="directoryDescription"></param>
         /// <param name="directoryPath"></param>
         /// <param name="minFreeSpaceMB"></param>
-        /// <param name="logToDatabase"></param>
         /// <param name="errorMessage">Output: error message</param>
+        /// <param name="logToDatabase"></param>
         /// <returns>True if the drive has sufficient free space, otherwise false</returns>
         /// <remarks>Supports local drives on Windows and Linux; supports remote shares like \\Server\Share\ on Windows</remarks>
         public static bool ValidateFreeDiskSpace(
@@ -1754,7 +1722,6 @@ namespace AnalysisManagerBase
             out string errorMessage,
             bool logToDatabase = false)
         {
-
             errorMessage = string.Empty;
 
             var targetDirectory = new DirectoryInfo(directoryPath);

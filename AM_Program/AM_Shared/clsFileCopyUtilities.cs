@@ -11,7 +11,6 @@ namespace AnalysisManagerBase
     /// </summary>
     public class clsFileCopyUtilities : EventNotifier
     {
-
         #region "Constants"
 
         private const int DEFAULT_FILE_EXISTS_RETRY_HOLDOFF_SECONDS = 15;
@@ -108,11 +107,9 @@ namespace AnalysisManagerBase
         /// <remarks>If the file was found in MyEMSL, sourceFolderPath will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
         public bool CopyFileToWorkDir(string sourceFileName, string sourceFolderPath, string targetFolderPath)
         {
-
             const int MAX_ATTEMPTS = 3;
             return CopyFileToWorkDir(sourceFileName, sourceFolderPath, targetFolderPath,
                 BaseLogger.LogLevels.ERROR, createStoragePathInfoOnly: false, maxCopyAttempts: MAX_ATTEMPTS);
-
         }
 
         /// <summary>
@@ -126,11 +123,9 @@ namespace AnalysisManagerBase
         /// <remarks>If the file was found in MyEMSL, sourceFolderPath will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
         public bool CopyFileToWorkDir(string sourceFileName, string sourceFolderPath, string targetFolderPath, BaseLogger.LogLevels logMsgTypeIfNotFound)
         {
-
             const int MAX_ATTEMPTS = 3;
             return CopyFileToWorkDir(sourceFileName, sourceFolderPath, targetFolderPath,
                 logMsgTypeIfNotFound, createStoragePathInfoOnly: false, maxCopyAttempts: MAX_ATTEMPTS);
-
         }
 
         /// <summary>
@@ -150,10 +145,8 @@ namespace AnalysisManagerBase
             BaseLogger.LogLevels logMsgTypeIfNotFound,
             int maxCopyAttempts)
         {
-
             return CopyFileToWorkDir(sourceFileName, sourceFolderPath, targetFolderPath,
                 logMsgTypeIfNotFound, createStoragePathInfoOnly: false, maxCopyAttempts: maxCopyAttempts);
-
         }
 
         /// <summary>
@@ -173,11 +166,9 @@ namespace AnalysisManagerBase
             BaseLogger.LogLevels logMsgTypeIfNotFound,
             bool createStoragePathInfoOnly)
         {
-
             const int MAX_ATTEMPTS = 3;
             return CopyFileToWorkDir(sourceFileName, sourceFolderPath, targetFolderPath,
                 logMsgTypeIfNotFound, createStoragePathInfoOnly, MAX_ATTEMPTS);
-
         }
 
         /// <summary>
@@ -199,7 +190,6 @@ namespace AnalysisManagerBase
             bool createStoragePathInfoOnly,
             int maxCopyAttempts)
         {
-
             try
             {
                 var sourceFilePath = Path.Combine(sourceFolderPath, sourceFileName);
@@ -244,7 +234,6 @@ namespace AnalysisManagerBase
             }
 
             return false;
-
         }
 
         /// <summary>
@@ -293,7 +282,6 @@ namespace AnalysisManagerBase
             bool createStoragePathInfoOnly,
             int maxCopyAttempts)
         {
-
             var sourceFilePath = string.Empty;
 
             try
@@ -336,9 +324,7 @@ namespace AnalysisManagerBase
             }
 
             return false;
-
         }
-
 
         /// <summary>
         /// Copies a file with retries in case of failure
@@ -365,7 +351,6 @@ namespace AnalysisManagerBase
         /// <remarks>Logs copy errors</remarks>
         public bool CopyFileWithRetry(string srcFilePath, string destFilePath, bool overwrite, int maxCopyAttempts)
         {
-
             const int RETRY_HOLDOFF_SECONDS = 15;
 
             if (maxCopyAttempts < 1)
@@ -398,7 +383,7 @@ namespace AnalysisManagerBase
                 {
                     OnErrorEvent("Exception copying file " + srcFilePath + " to " + destFilePath + "; Retry Count = " + retryCount, ex);
 
-                    retryCount -= 1;
+                    retryCount--;
 
                     if (!overwrite && File.Exists(destFilePath))
                     {
@@ -416,7 +401,6 @@ namespace AnalysisManagerBase
 
             // If we got to here, there were too many failures
             return false;
-
         }
 
         /// <summary>
@@ -429,7 +413,6 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public bool CreateStoragePathInfoFile(string sourceFilePath, string destFilePath)
         {
-
             var infoFilePath = string.Empty;
 
             try
@@ -445,7 +428,6 @@ namespace AnalysisManagerBase
                 {
                     writer.WriteLine(sourceFilePath);
                 }
-
             }
             catch (Exception ex)
             {
@@ -454,7 +436,6 @@ namespace AnalysisManagerBase
             }
 
             return true;
-
         }
 
         /// <summary>
@@ -479,10 +460,8 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         private bool FileExistsWithRetry(string fileName, int retryHoldoffSeconds, BaseLogger.LogLevels logMsgTypeIfNotFound)
         {
-
             const int MAX_ATTEMPTS = 3;
             return FileExistsWithRetry(fileName, retryHoldoffSeconds, logMsgTypeIfNotFound, MAX_ATTEMPTS);
-
         }
 
         /// <summary>
@@ -496,7 +475,6 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public bool FileExistsWithRetry(string fileName, int retryHoldoffSeconds, BaseLogger.LogLevels logMsgTypeIfNotFound, int maxAttempts)
         {
-
             if (maxAttempts < 1)
                 maxAttempts = 1;
 
@@ -525,7 +503,7 @@ namespace AnalysisManagerBase
                     LogMessageOrError(msg, logMsgTypeIfNotFound);
                 }
 
-                retryCount -= 1;
+                retryCount--;
                 if (retryCount > 0)
                 {
                     // Wait RetryHoldoffSeconds seconds before retrying
@@ -547,7 +525,6 @@ namespace AnalysisManagerBase
             LogMessageOrError(logMessage, logMsgTypeIfNotFound);
 
             return false;
-
         }
 
         /// <summary>
@@ -577,7 +554,6 @@ namespace AnalysisManagerBase
         {
             ResetTimestampForQueueWaitTime?.Invoke();
         }
-
 
         #endregion
     }

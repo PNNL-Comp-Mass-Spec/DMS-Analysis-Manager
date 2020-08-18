@@ -27,7 +27,6 @@ namespace AnalysisManagerBase
 
             mWindowsProcessStats = new PRISMWin.ProcessStats(LIMIT_LOGGING_BY_TIME_OF_DAY);
             mWindowsProcessStats.ErrorEvent += OnWindowsProcessErrorEvent;
-
         }
 
         /// <summary>
@@ -171,7 +170,6 @@ namespace AnalysisManagerBase
             {
                 OnErrorEvent(message, ex);
             }
-
         }
     }
 }

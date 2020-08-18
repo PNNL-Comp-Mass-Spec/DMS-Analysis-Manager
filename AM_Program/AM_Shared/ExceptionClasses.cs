@@ -11,13 +11,11 @@ using System;
 
 namespace AnalysisManagerBase
 {
-
     /// <summary>
     /// Specialized handler for "file not found" exception
     /// </summary>
     public class AMFileNotFoundException : ApplicationException
     {
-
         #region "Properties"
 
         /// <summary>
@@ -38,7 +36,6 @@ namespace AnalysisManagerBase
         public AMFileNotFoundException(string filePath, string errorMessage) : base(errorMessage)
         {
             FilePath = filePath;
-
         }
 
         #endregion
@@ -50,7 +47,6 @@ namespace AnalysisManagerBase
     /// </summary>
     public class AMFolderNotFoundException : ApplicationException
     {
-
         #region "Properties"
 
         /// <summary>
@@ -71,7 +67,6 @@ namespace AnalysisManagerBase
         public AMFolderNotFoundException(string folderPath, string errorMessage) : base(errorMessage)
         {
             FolderPath = folderPath;
-
         }
         #endregion
 
@@ -82,7 +77,6 @@ namespace AnalysisManagerBase
     /// </summary>
     public class AMFileNotDeletedAfterRetryException : ApplicationException
     {
-
         #region "Enums"
 
         /// <summary>
@@ -130,7 +124,6 @@ namespace AnalysisManagerBase
         {
             FilePath = filePath;
             ExcType = ExceptionType;
-
         }
         #endregion
 
@@ -141,7 +134,6 @@ namespace AnalysisManagerBase
     /// </summary>
     public class AMFileNotDeletedException : ApplicationException
     {
-
         #region "Properties"
 
         /// <summary>
@@ -162,10 +154,8 @@ namespace AnalysisManagerBase
         public AMFileNotDeletedException(string filePath, string errorMessage) : base(errorMessage)
         {
             FilePath = filePath;
-
         }
         #endregion
 
     }
-
 }

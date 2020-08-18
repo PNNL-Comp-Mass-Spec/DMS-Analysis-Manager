@@ -75,7 +75,6 @@ namespace AnalysisManagerMasicPlugin
                     LogError(mMessage);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
-
             }
 
             // Add additional extensions to delete after the tool finishes
@@ -100,6 +99,5 @@ namespace AnalysisManagerMasicPlugin
             // All finished
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
-
     }
 }

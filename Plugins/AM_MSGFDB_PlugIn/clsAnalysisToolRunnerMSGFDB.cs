@@ -233,7 +233,6 @@ namespace AnalysisManagerMSGFDBPlugIn
                 LogError("Error in MSGFDbPlugin->RunTool: " + ex.Message, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-
         }
 
         /// <summary>
@@ -267,7 +266,6 @@ namespace AnalysisManagerMSGFDBPlugIn
                     fiMSGFPlusResultsSplitFasta.MoveTo(fiMSGFPlusResults.FullName);
                     fiMSGFPlusResults.Refresh();
                 }
-
             }
 
             processingError = false;
@@ -431,7 +429,6 @@ namespace AnalysisManagerMSGFDBPlugIn
                 minimumJavaMemoryMB = (int)Math.Ceiling(fastaBasedMinimumJavaMemoryMB / 500.0) * 500;
                 warningMsg = string.Format("Increasing Java memory size from {0:N0} MB to {1:N0} MB due to large FASTA file ({2:N0} MB)",
                     javaMemorySizeMB, minimumJavaMemoryMB, fastaFileSizeKB / 1024.0);
-
             }
             else if (spectraBasedMinimumJavaMemoryMB > javaMemorySizeMB)
             {
@@ -777,7 +774,6 @@ namespace AnalysisManagerMSGFDBPlugIn
             }
 
             return Path.GetFileName(tsvFilePath);
-
         }
 
         /// <summary>
@@ -1040,7 +1036,6 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <remarks></remarks>
         private void ParseConsoleOutputFile(string workingDirectory)
         {
-
             try
             {
                 if (mMSGFPlusUtils == null)
@@ -1051,7 +1046,6 @@ namespace AnalysisManagerMSGFDBPlugIn
                 {
                     mProgress = msgfPlusProgress;
                 }
-
             }
             catch (Exception ex)
             {
@@ -1135,7 +1129,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                             continue;
                         }
 
-                        dataLines += 1;
+                        dataLines++;
                         if (dataLines > 2)
                             break;
                     }
@@ -1243,7 +1237,6 @@ namespace AnalysisManagerMSGFDBPlugIn
                 LogError("Error post-processing MS-GF+ results retrieved from the remote processor", ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-
         }
 
         /// <summary>
@@ -1305,7 +1298,6 @@ namespace AnalysisManagerMSGFDBPlugIn
                 var success = RetrieveRemoteResultFiles(transferUtility, filesToRetrieve, verifyCopied, out retrievedFilePaths);
 
                 return success;
-
             }
             catch (Exception ex)
             {

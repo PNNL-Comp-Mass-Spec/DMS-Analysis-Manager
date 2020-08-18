@@ -131,6 +131,5 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             Text = prefix + keyValueParam + comment;
         }
-
     }
 }

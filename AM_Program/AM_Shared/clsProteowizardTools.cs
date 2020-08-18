@@ -106,7 +106,6 @@ namespace AnalysisManagerBase
                     }
 
                     regSoftware.Close();
-
                 }
                 catch (Exception ex)
                 {
@@ -152,11 +151,10 @@ namespace AnalysisManagerBase
                     }
                     regSoftware.Close();
                 }
-
             }
             catch (Exception ex)
             {
-                var msg = "Error creating ProteoWizard registry key";
+                const string msg = "Error creating ProteoWizard registry key";
                 Console.WriteLine(msg + ": " + ex.Message);
                 OnErrorEvent(msg, ex);
                 return false;
@@ -164,6 +162,5 @@ namespace AnalysisManagerBase
 
             return true;
         }
-
     }
 }

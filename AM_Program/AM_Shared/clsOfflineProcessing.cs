@@ -28,7 +28,6 @@ namespace AnalysisManagerBase
             int compCode, string compMsg,
             int evalCode = 0, string evalMsg = "")
         {
-
             var infoFile = new FileInfo(infoFilePath);
             var lockFile = new FileInfo(Path.ChangeExtension(infoFile.FullName, clsGlobal.LOCK_FILE_EXTENSION));
 
@@ -45,7 +44,6 @@ namespace AnalysisManagerBase
 
             try
             {
-
                 string targetFilePath;
                 if (succeeded)
                     targetFilePath = Path.ChangeExtension(infoFilePath, ".success");
@@ -123,7 +121,6 @@ namespace AnalysisManagerBase
             // No problems; delete the lock file
             if (lockFile.Exists)
                 lockFile.Delete();
-
         }
 
         /// <summary>
@@ -154,6 +151,5 @@ namespace AnalysisManagerBase
                 fileToRename.MoveTo(newFilePath);
             }
         }
-
     }
 }

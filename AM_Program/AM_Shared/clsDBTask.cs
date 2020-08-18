@@ -17,13 +17,11 @@ using PRISMDatabaseUtils;
 
 namespace AnalysisManagerBase
 {
-
     /// <summary>
     /// Base class for handling task-related data
     /// </summary>
     public abstract class clsDBTask : clsLoggerBase
     {
-
         #region "Enums"
 
         /// <summary>
@@ -207,7 +205,6 @@ namespace AnalysisManagerBase
                 DMSProcedureExecutor.DebugMessagesEnabled = true;
                 PipelineDBProcedureExecutor.DebugMessagesEnabled = true;
             }
-
         }
 
         /// <summary>
@@ -217,7 +214,6 @@ namespace AnalysisManagerBase
         /// <returns></returns>
         protected IEnumerable<udtParameterInfoType> ParseXMLJobParameters(string jobParamsXML)
         {
-
             try
             {
                 var jobParameters = new List<udtParameterInfoType>();
@@ -231,7 +227,6 @@ namespace AnalysisManagerBase
 
                     foreach (var section in doc.Elements("sections").Elements("section"))
                     {
-
                         string sectionName;
                         if (section.HasAttributes)
                         {
@@ -273,21 +268,17 @@ namespace AnalysisManagerBase
                             };
 
                             jobParameters.Add(udtParamInfo);
-
                         }
                     }
-
                 }
 
                 return jobParameters;
-
             }
             catch (Exception ex)
             {
                 LogError("clsDBTask.FillParamDict(), exception determining job parameters", ex);
                 return new List<udtParameterInfoType>();
             }
-
         }
 
         /// <summary>
@@ -356,5 +347,4 @@ namespace AnalysisManagerBase
         #endregion
 
     }
-
 }

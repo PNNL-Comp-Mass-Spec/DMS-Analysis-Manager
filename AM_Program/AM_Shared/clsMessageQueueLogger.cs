@@ -5,7 +5,6 @@ using System.Threading;
 
 namespace AnalysisManagerBase
 {
-
     /// <summary>
     /// Delegate that does the eventual posting
     /// </summary>
@@ -17,7 +16,6 @@ namespace AnalysisManagerBase
     /// </summary>
     class clsMessageQueueLogger : EventNotifier
     {
-
         /// <summary>
         /// Actual delegate registers here
         /// </summary>
@@ -129,6 +127,5 @@ namespace AnalysisManagerBase
                 waitHandle.Close();
             }
         }
-
     }
 }

@@ -13,12 +13,12 @@ using PRISMDatabaseUtils;
 
 namespace AnalysisManagerBase
 {
-
     /// <summary>
     /// Data package file handler
     /// </summary>
     public class clsDataPackageFileHandler : EventNotifier
     {
+        // Ignore Spelling: cryptum, kv
 
         #region "Constants"
 
@@ -151,7 +151,6 @@ namespace AnalysisManagerBase
 
             try
             {
-
                 // Set up the command object prior to SP execution
                 var cmd = mDbTools.CreateCommand(SP_NAME_GET_JOB_STEP_INPUT_FOLDER, CommandType.StoredProcedure);
 
@@ -237,7 +236,7 @@ namespace AnalysisManagerBase
 
                     if (string.IsNullOrEmpty(cacheInfoFileName))
                     {
-                        OnErrorEvent("FindValidDirectory reported a match to a file in MyEMSL (" + datasetDirectoryPath + ") " + "but MyEMSLUtilities.RecentlyFoundMyEMSLFiles is empty");
+                        OnErrorEvent("FindValidDirectory reported a match to a file in MyEMSL (" + datasetDirectoryPath + ") but MyEMSLUtilities.RecentlyFoundMyEMSLFiles is empty");
                         return string.Empty;
                     }
 
@@ -323,14 +322,12 @@ namespace AnalysisManagerBase
                 localCacheInfoFile.Delete();
 
                 return remoteMsXmlFilePath;
-
             }
             catch (Exception ex)
             {
                 OnErrorEvent("Exception finding the .mzML file used by job " + job, ex);
                 return string.Empty;
             }
-
         }
 
         /// <summary>
@@ -364,7 +361,6 @@ namespace AnalysisManagerBase
 
             zipFileCandidates.Add(zipFile);
             gzipFileCandidates.Add(gZipFile);
-
         }
 
         private string GetJobInfoFilePath(int job)
@@ -409,7 +405,6 @@ namespace AnalysisManagerBase
         /// <returns></returns>
         private bool MSGFPlusSearchUsedMzML(string mzIdFileToInspect, clsDotNetZipTools dotNetTools)
         {
-
             try
             {
                 var mzidFile = new FileInfo(mzIdFileToInspect);
@@ -433,7 +428,6 @@ namespace AnalysisManagerBase
 
                     mzidFilePathLocal = MostRecentUnzippedFile(dotNetTools);
                     deleteLocalFile = true;
-
                 }
                 else
                 {
@@ -470,14 +464,12 @@ namespace AnalysisManagerBase
                 }
 
                 return SearchUsedMzML;
-
             }
             catch (Exception ex)
             {
                 OnErrorEvent("Exception examining the mzid file To determine whether MS-GF+ searched a .mzML file", ex);
                 return false;
             }
-
         }
 
         /// <summary>
@@ -532,7 +524,6 @@ namespace AnalysisManagerBase
             string workingDir,
             clsDataPackageJobInfo dataPkgJob)
         {
-
             try
             {
                 // Keys in this list are filenames; values are True if the file is required and False if not required
@@ -594,7 +585,6 @@ namespace AnalysisManagerBase
                         candidateMzIdFiles.Add(candidateFile);
                         filesToGet.Add(candidateFile, false);
                     }
-
                 }
 
                 if (retrievalOptions.RetrievePepXMLFiles && dataPkgJob.PeptideHitResultType != clsPHRPReader.ePeptideHitResultType.Unknown ||
@@ -616,7 +606,6 @@ namespace AnalysisManagerBase
                     {
                         Directory.CreateDirectory(localDirectoryPath);
                     }
-
                 }
                 else
                 {
@@ -680,7 +669,6 @@ namespace AnalysisManagerBase
 
                     if (!success)
                         return false;
-
                 }
 
                 if (retrievalOptions.CreateJobPathFiles)
@@ -737,7 +725,6 @@ namespace AnalysisManagerBase
                 }
 
                 return true;
-
             }
             catch (Exception ex)
             {
@@ -745,7 +732,6 @@ namespace AnalysisManagerBase
                 return false;
             }
         }
-
 
         /// <summary>
         /// Process files found for a single peptide hit job (as tracked by filesToGet)
@@ -833,7 +819,6 @@ namespace AnalysisManagerBase
                                 return false;
                             }
                         }
-
                     }
                     else
                     {
@@ -850,7 +835,6 @@ namespace AnalysisManagerBase
                             }
                         }
 
-
                         if (!fileCopied)
                         {
                             if (eLogMsgTypeIfNotFound != BaseLogger.LogLevels.DEBUG)
@@ -859,7 +843,6 @@ namespace AnalysisManagerBase
                                 mAnalysisResources.RestoreCachedDataAndJobInfo();
                                 return false;
                             }
-
                         }
                         else
                         {
@@ -876,18 +859,15 @@ namespace AnalysisManagerBase
                             }
                         }
                     }
-
                 }
 
                 return true;
-
             }
             catch (Exception ex)
             {
                 OnErrorEvent("ProcessPeptideHitJobFiles; Exception processing file " + sourceFilename + " in directory " + sourceDirectoryPath, ex);
                 return false;
             }
-
         }
 
         private bool FindAndProcessPeakDataFile(
@@ -966,7 +946,7 @@ namespace AnalysisManagerBase
                     if (targetMzMLFile.Exists)
                         return true;
 
-                    var eLogMsgTypeIfNotFound = BaseLogger.LogLevels.ERROR;
+                    const BaseLogger.LogLevels eLogMsgTypeIfNotFound = BaseLogger.LogLevels.ERROR;
 
                     var fileCopied = mAnalysisResources.CopyFileToWorkDir(sourceMzMLFile.Name, sourceMzMLFile.DirectoryName, localDirectoryPath, eLogMsgTypeIfNotFound);
 
@@ -974,7 +954,6 @@ namespace AnalysisManagerBase
                     {
                         OnStatusEvent("Copied " + sourceMzMLFile.Name + " from directory " + sourceMzMLFile.DirectoryName);
                         foundFiles.Add(Path.Combine(localDirectoryPath, sourceMzMLFile.Name));
-
                     }
                 }
             }
@@ -1019,7 +998,6 @@ namespace AnalysisManagerBase
             int job,
             out string newFilePath)
         {
-
             try
             {
                 var fileToRename = new FileInfo(Path.Combine(sourceDirectoryPath, sourceFileName));
@@ -1029,7 +1007,6 @@ namespace AnalysisManagerBase
 
                 mAnalysisResources.AddResultFileToSkip(Path.GetFileName(newFilePath));
                 return true;
-
             }
             catch (Exception ex)
             {
@@ -1037,7 +1014,6 @@ namespace AnalysisManagerBase
                 newFilePath = string.Empty;
                 return false;
             }
-
         }
 
         /// <summary>
@@ -1056,7 +1032,6 @@ namespace AnalysisManagerBase
             float progressPercentAtStart,
             float progressPercentAtFinish)
         {
-
             // Keys in this dictionary are DatasetID, values are a command of the form "Copy \\Server\Share\Directory\Dataset.raw Dataset.raw"
             // Note that we're explicitly defining the target filename to make sure the case of the letters matches the dataset name's case
             var dctRawFileRetrievalCommands = new Dictionary<int, string>();
@@ -1088,7 +1063,6 @@ namespace AnalysisManagerBase
                     OnErrorEvent("Did not find any datasets associated with this job's data package ID (" + mDataPackageInfoLoader.DataPackageID + ")");
                     return false;
                 }
-
             }
             catch (Exception ex)
             {
@@ -1114,7 +1088,6 @@ namespace AnalysisManagerBase
                     // Did not find any peptide hit jobs associated with this job's data package ID
                     // This is atypical, but is allowed
                 }
-
             }
             catch (Exception ex)
             {
@@ -1181,7 +1154,6 @@ namespace AnalysisManagerBase
                             mAnalysisResources.RestoreCachedDataAndJobInfo();
                             return false;
                         }
-
                     }
 
                     // Find the instrument data file or directory if a new dataset
@@ -1194,18 +1166,15 @@ namespace AnalysisManagerBase
                         }
                     }
 
-                    jobsProcessed += 1;
+                    jobsProcessed++;
                     var progress = clsAnalysisToolRunnerBase.ComputeIncrementalProgress(
                         progressPercentAtStart, progressPercentAtFinish, jobsProcessed,
                         dataPackagePeptideHitJobs.Count + additionalJobs.Count);
 
                     OnProgressUpdate("RetrieveDataPackagePeptideHitJobPHRPFiles (PeptideHit Jobs)", progress);
-
-
-                } // dataPkgJob in dataPackagePeptideHitJobs
+                }
 
                 // Now process the additional jobs to retrieve the instrument data for each one
-
                 foreach (var dataPkgJob in additionalJobs)
                 {
                     // Find the instrument data file or directory if a new dataset
@@ -1218,15 +1187,13 @@ namespace AnalysisManagerBase
                         }
                     }
 
-                    jobsProcessed += 1;
+                    jobsProcessed++;
                     var progress = clsAnalysisToolRunnerBase.ComputeIncrementalProgress(
                         progressPercentAtStart, progressPercentAtFinish, jobsProcessed,
                         dataPackagePeptideHitJobs.Count + additionalJobs.Count);
 
                     OnProgressUpdate("RetrieveDataPackagePeptideHitJobPHRPFiles (Additional Jobs)", progress);
-
-
-                } // in additionalJobs
+                }
 
                 // Look for any datasets that are associated with this data package yet have no jobs
                 foreach (var datasetItem in dctDataPackageDatasets)
@@ -1279,7 +1246,6 @@ namespace AnalysisManagerBase
 
                     // Store the dataset paths in a Packed Job Parameter
                     mAnalysisResources.StorePackedJobParameterDictionary(dctDatasetRawFilePaths, clsAnalysisResources.JOB_PARAM_DICTIONARY_DATASET_FILE_PATHS);
-
                 }
 
                 if (retrievalOptions.RetrieveMzXMLFile)
@@ -1297,7 +1263,6 @@ namespace AnalysisManagerBase
                 OnErrorEvent("Error in RetrieveDataPackagePeptideHitJobPHRPFiles", ex);
                 return false;
             }
-
         }
 
         /// <summary>
@@ -1318,7 +1283,6 @@ namespace AnalysisManagerBase
             KeyValuePair<string, string>> dctInstrumentDataToRetrieve,
             IDictionary<string, string> dctDatasetRawFilePaths)
         {
-
             if (retrievalOptions.RetrieveMzXMLFile)
             {
                 // See if a .mzXML file already exists for this dataset
@@ -1347,7 +1311,6 @@ namespace AnalysisManagerBase
 
             var rawFilePath = mAnalysisResources.DirectorySearch.FindDatasetFileOrDirectory(out var isDirectory, retrievalOptions.AssumeInstrumentDataUnpurged);
 
-
             if (!string.IsNullOrEmpty(rawFilePath))
             {
                 string copyCommand;
@@ -1368,7 +1331,6 @@ namespace AnalysisManagerBase
             }
 
             return true;
-
         }
 
         /// <summary>
@@ -1386,7 +1348,6 @@ namespace AnalysisManagerBase
             Dictionary<clsDataPackageJobInfo, KeyValuePair<string, string>> dctInstrumentDataToRetrieve,
             udtDataPackageRetrievalOptionsType retrievalOptions)
         {
-
             bool success;
 
             var currentJob = 0;
@@ -1433,7 +1394,6 @@ namespace AnalysisManagerBase
                     var hashcheckFilePath = kvMzXMLFileInfo.Value;
 
                     currentJob = kvItem.Key.Job;
-
 
                     if (!datasetNamesProcessed.Contains(kvItem.Key.Dataset))
                     {
@@ -1488,33 +1448,29 @@ namespace AnalysisManagerBase
                                 OnErrorEvent("Error occurred retrieving instrument data file for job " + currentJob);
                                 return false;
                             }
-
                         }
 
                         datasetNamesProcessed.Add(kvItem.Key.Dataset);
                     }
 
-                    datasetsProcessed += 1;
+                    datasetsProcessed++;
 
                     // Compute a % complete value between 0 and 2%
                     var percentComplete = datasetsProcessed / (float)datasetsToProcess * 2;
                     OnProgressUpdate("Retrieving MzXML files", percentComplete);
 
-
-                    if ((DateTime.UtcNow.Subtract(lastProgressUpdate).TotalSeconds >= 30))
+                    if (DateTime.UtcNow.Subtract(lastProgressUpdate).TotalSeconds >= 30)
                     {
                         lastProgressUpdate = DateTime.UtcNow;
 
                         OnStatusEvent("Retrieving mzXML files: " + datasetsProcessed + " / " + datasetsToProcess + " datasets");
                     }
-
                 }
 
                 // Restore the dataset and job info for this aggregation job
                 mAnalysisResources.RestoreCachedDataAndJobInfo();
 
                 success = true;
-
             }
             catch (Exception ex)
             {
@@ -1523,7 +1479,6 @@ namespace AnalysisManagerBase
             }
 
             return success;
-
         }
 
         private Dictionary<int, udtDataPackageJobMetadata> LoadCachedDataPkgJobMetadata(
@@ -1539,7 +1494,6 @@ namespace AnalysisManagerBase
                 using (var reader = new StreamReader(
                     new FileStream(dataPkgJobMetadataFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
-
                     var headersParsed = false;
                     var jobColIndex = 0;
                     var mzMlUsedColIndex = 0;
@@ -1588,7 +1542,6 @@ namespace AnalysisManagerBase
 
                         cachedJobMetadata.Add(job, jobMetadata);
                     }
-
                 }
             }
             catch (Exception ex)
@@ -1650,7 +1603,6 @@ namespace AnalysisManagerBase
             ICollection<string> gzipFileCandidates,
             string zippedPepXmlFile)
         {
-
             if (zipFileCandidates.Count > 0 || gzipFileCandidates.Count > 0)
             {
                 var matchedFilePath = string.Empty;
@@ -1691,7 +1643,6 @@ namespace AnalysisManagerBase
 
                 if (prefixRequired)
                 {
-
                     var sourceFileName = dataPkgJob.Dataset + "_msgfplus.mzid.gz";
                     var prefixToAdd = "Job" + dataPkgJob.Job + "_";
 
@@ -1709,7 +1660,6 @@ namespace AnalysisManagerBase
                 }
 
                 foundFiles.Add(matchedFilePath);
-
             }
 
             if (!string.IsNullOrWhiteSpace(zippedPepXmlFile))

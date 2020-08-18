@@ -76,7 +76,6 @@ namespace AnalysisManagerBase
         /// <remarks>Exceptions will be reported using event ErrorEvent</remarks>
         public List<FileInfo> SplitMgfFile(string mgfFilePath, int splitCount, string fileSuffix)
         {
-
             try
             {
                 if (string.IsNullOrWhiteSpace(fileSuffix))
@@ -118,8 +117,6 @@ namespace AnalysisManagerBase
                 {
                     using (var scanToPartMapWriter = new StreamWriter(new FileStream(scanMapFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                     {
-
-
                         // Write the header to the map file
 
                         {
@@ -166,8 +163,8 @@ namespace AnalysisManagerBase
                                     nextWriter.Writer.WriteLine(dataLine);
                                 }
 
-                                nextWriter.SpectraWritten += 1;
-                                totalSpectraWritten += 1;
+                                nextWriter.SpectraWritten++;
+                                totalSpectraWritten++;
 
                                 scanToPartMapWriter.WriteLine(scanNumber + '\t' + totalSpectraWritten + '\t' + nextWriter.PartNumber + '\t' + nextWriter.SpectraWritten);
 
@@ -201,7 +198,6 @@ namespace AnalysisManagerBase
                                 {
                                     totalSpectraWritten += nextWriter.SpectraWritten;
                                 }
-
                             }
 
                             if (totalSpectraWritten == 0)
@@ -210,26 +206,20 @@ namespace AnalysisManagerBase
                                 return new List<FileInfo>();
                             }
                         }
-
-
                     }
                 }
 
                 return splitMgfFiles;
-
             }
             catch (Exception ex)
             {
                 OnErrorEvent("Error in SplitMgfFile: " + ex.Message);
                 return new List<FileInfo>();
             }
-
-
         }
 
         private List<string> GetNextMGFSpectrum(StreamReader mgfFileReader, ref string previousLine, ref long bytesRead, out int scanNumber)
         {
-
             var spectrumFound = false;
             var spectrumData = new List<string>();
             scanNumber = 0;
@@ -248,7 +238,6 @@ namespace AnalysisManagerBase
                 dataLine = string.Copy(previousLine);
                 previousLine = string.Empty;
             }
-
 
             while (true)
             {
@@ -298,8 +287,6 @@ namespace AnalysisManagerBase
             }
 
             return spectrumData;
-
         }
-
     }
 }

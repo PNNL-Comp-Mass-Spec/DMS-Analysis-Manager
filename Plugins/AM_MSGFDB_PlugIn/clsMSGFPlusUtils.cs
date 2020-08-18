@@ -413,7 +413,6 @@ namespace AnalysisManagerMSGFDBPlugIn
                 return true;
             }
 
-
             if (clsGlobal.IsMatch(paramFileLine.ParamInfo.ParameterName, "showDecoy"))
             {
                 // Not valid for MS-GF+; skip it
@@ -459,7 +458,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     while (linesRead < headerLinesToAppend && !reader.EndOfStream)
                     {
                         var dataLine = reader.ReadLine();
-                        linesRead += 1;
+                        linesRead++;
 
                         if (string.IsNullOrEmpty(dataLine))
                             continue;
@@ -640,7 +639,6 @@ namespace AnalysisManagerMSGFDBPlugIn
                         OnWarningEvent("Unable to run MzidToTsvConverter.exe with mono");
                         return string.Empty;
                     }
-
                 }
 
                 if (mDebugLevel >= 1)
@@ -867,7 +865,6 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             try
             {
-
                 var createFile = false;
 
                 var enzymeBuilder = new StringBuilder();
@@ -964,7 +961,6 @@ namespace AnalysisManagerMSGFDBPlugIn
                 OnErrorEvent(ErrorMessage, ex);
                 return false;
             }
-
         }
 
         /// <summary>
@@ -1029,7 +1025,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                         var dataLine = reader.ReadLine();
                         if (!string.IsNullOrEmpty(dataLine))
                         {
-                            linesRead += 1;
+                            linesRead++;
                         }
                     }
                 }
@@ -1193,9 +1189,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 }
 
                 return CloseOutType.CLOSEOUT_FAILED;
-
             }
-
         }
 
         /// <summary>
@@ -1279,7 +1273,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                                 dctRequiredContaminants[proteinName] = true;
                             }
 
-                            proteinCount += 1;
+                            proteinCount++;
                         }
 
                         trimmedFastaWriter.WriteLine(dataLine);
@@ -1385,7 +1379,6 @@ namespace AnalysisManagerMSGFDBPlugIn
                 OnErrorEvent("Exception creating decoy fasta file", ex);
                 return string.Empty;
             }
-
         }
 
         /// <summary>
@@ -1418,7 +1411,6 @@ namespace AnalysisManagerMSGFDBPlugIn
 
         private List<MSGFPlusParameter> GetMSGFPlusParameters()
         {
-
             var msgfPlusParameters = new List<MSGFPlusParameter>
             {
                 new MSGFPlusParameter("SpectrumFile", "s"),
@@ -1679,7 +1671,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 while (trimIteration <= 2)
                 {
-                    trimIteration += 1;
+                    trimIteration++;
                     fastaFilePathTrimmed = CreateTrimmedFasta(fastaFilePath, maxFastaFileSizeMB);
 
                     if (!string.IsNullOrEmpty(fastaFilePathTrimmed))
@@ -1722,7 +1714,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             while (indexIteration <= 2)
             {
-                indexIteration += 1;
+                indexIteration++;
 
                 var result = indexedDBCreator.CreateSuffixArrayFiles(mWorkDir, mDebugLevel, javaProgLoc, msgfPlusProgLoc, fastaFilePath,
                     fastaFileIsDecoy, msgfPlusIndexFilesFolderPath, msgfPlusIndexFilesFolderPathLegacyDB);
@@ -1805,7 +1797,6 @@ namespace AnalysisManagerMSGFDBPlugIn
                         }
                         else if (scanNumberColIndex >= 0)
                         {
-
                             if (!int.TryParse(columns[scanNumberColIndex], out var scanNumber))
                                 continue;
 
@@ -1899,7 +1890,6 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <returns></returns>
         public static bool MSGFPlusResultsFileHasClosingTag(FileSystemInfo fiMzidFile)
         {
-
             // Check whether the mzid file ends with XML tag </MzIdentML>
             var lastLine = string.Empty;
             using (var reader = new StreamReader(new FileStream(fiMzidFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
@@ -2077,7 +2067,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     while (!reader.EndOfStream)
                     {
                         var dataLine = reader.ReadLine();
-                        linesRead += 1;
+                        linesRead++;
 
                         if (string.IsNullOrWhiteSpace(dataLine))
                             continue;
@@ -2121,7 +2111,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                             // Spectra are typically ignored either because they have too few ions, or because the data is not centroided
                             if (dataLine.IndexOf("spectrum is not centroided", StringComparison.OrdinalIgnoreCase) > 0)
                             {
-                                ContinuumSpectraSkipped += 1;
+                                ContinuumSpectraSkipped++;
                             }
                         }
                         else if (dataLine.StartsWith("Loading database files", StringComparison.OrdinalIgnoreCase))
@@ -2200,7 +2190,6 @@ namespace AnalysisManagerMSGFDBPlugIn
                         UpdatePercentComplete(dataLine, ref percentCompleteAllTasks, ref tasksCompleteViaSearchProgress);
 
                         UpdateElapsedTime(dataLine, ref totalElapsedTimeHours);
-
                     }
                 }
 
@@ -2220,11 +2209,9 @@ namespace AnalysisManagerMSGFDBPlugIn
                     {
                         effectiveProgress = PROGRESS_PCT_MSGFPLUS_COMPLETE;
                     }
-
                 }
 
                 ElapsedTimeHours = totalElapsedTimeHours;
-
             }
             catch (Exception ex)
             {
@@ -2253,7 +2240,6 @@ namespace AnalysisManagerMSGFDBPlugIn
         private bool ParseMSGFDBModifications(string sourceParameterFilePath, StringBuilder sbOptions, int numMods,
             IReadOnlyCollection<string> staticMods, IReadOnlyCollection<string> dynamicMods, IReadOnlyCollection<string> customAminoAcids)
         {
-
             try
             {
                 var parameterFile = new FileInfo(sourceParameterFilePath);
@@ -2287,7 +2273,6 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                         foreach (var customAADef in customAminoAcids)
                         {
-
                             if (ParseMSGFPlusValidateMod(customAADef, out var customAADefClean))
                             {
                                 if (MisleadingModDef(customAADefClean, "Custom AA", "custom", "opt"))
@@ -2313,7 +2298,6 @@ namespace AnalysisManagerMSGFDBPlugIn
                     {
                         foreach (var staticMod in staticMods)
                         {
-
                             if (ParseMSGFPlusValidateMod(staticMod, out var modClean))
                             {
                                 if (MisleadingModDef(modClean, "Static mod", "fix", "opt"))
@@ -2339,7 +2323,6 @@ namespace AnalysisManagerMSGFDBPlugIn
                     {
                         foreach (var dynamicMod in dynamicMods)
                         {
-
                             if (ParseMSGFPlusValidateMod(dynamicMod, out var modClean))
                             {
                                 if (MisleadingModDef(modClean, "Dynamic mod", "opt", "fix"))
@@ -2364,7 +2347,6 @@ namespace AnalysisManagerMSGFDBPlugIn
                 OnErrorEvent(ErrorMessage, ex);
                 return false;
             }
-
         }
 
         /// <summary>
@@ -2488,7 +2470,6 @@ namespace AnalysisManagerMSGFDBPlugIn
                     // Check whether paramFileLine.ParamName is one of the standard parameter names defined in msgfPlusParameters
                     if (TryGetParameter(msgfPlusParameters, paramFileLine.ParamName, valueText, out var paramInfo))
                     {
-
                         if (!string.IsNullOrWhiteSpace(comment))
                         {
                             paramInfo.UpdateComment(comment, whiteSpaceBeforeComment);
@@ -2558,7 +2539,6 @@ namespace AnalysisManagerMSGFDBPlugIn
                             }
                             else if (!string.IsNullOrWhiteSpace(instrumentGroup))
                             {
-
                                 if (!CanDetermineInstIdFromInstGroup(instrumentGroup, out var instrumentIDNew, out var autoSwitchReason))
                                 {
                                     var datasetName = mJobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_DATASET_NAME);
@@ -2704,7 +2684,6 @@ namespace AnalysisManagerMSGFDBPlugIn
                             enzymeDefs.Add(valueText);
                         }
                     }
-
                 }
 
                 if (isTDA)
@@ -2712,7 +2691,6 @@ namespace AnalysisManagerMSGFDBPlugIn
                     // Parameter file contains TDA=1 and we're running MS-GF+
                     ResultsIncludeAutoAddedDecoyPeptides = true;
                 }
-
             }
             catch (Exception ex)
             {
@@ -3364,7 +3342,6 @@ namespace AnalysisManagerMSGFDBPlugIn
                     completedTasks.Add(taskNumber);
                 }
             }
-
         }
 
         /// <summary>
@@ -3456,7 +3433,6 @@ namespace AnalysisManagerMSGFDBPlugIn
             IEnumerable<string> dynamicMods,
             IEnumerable<string> customAminoAcids)
         {
-
             try
             {
                 // Note that ParseMSGFPlusValidateMod will set this to True if a dynamic or static mod is STY phosphorylation
@@ -3540,15 +3516,15 @@ namespace AnalysisManagerMSGFDBPlugIn
                     while (!reader.EndOfStream)
                     {
                         var dataLine = reader.ReadLine();
-                        linesRead += 1;
+                        linesRead++;
 
                         if (linesRead <= 1 || string.IsNullOrEmpty(dataLine))
                             continue;
 
-                        peptideCount += 1;
+                        peptideCount++;
                         if (dataLine.Contains(PROTEIN_NAME_NO_MATCH))
                         {
-                            peptideCountNoMatch += 1;
+                            peptideCountNoMatch++;
                             if (unmatchedPeptides.Count < 5)
                             {
                                 unmatchedPeptides.Add(dataLine);
@@ -3611,7 +3587,6 @@ namespace AnalysisManagerMSGFDBPlugIn
                 OnErrorEvent(ErrorMessage, ex);
                 return false;
             }
-
         }
 
         /// <summary>

@@ -18,6 +18,7 @@ namespace AnalysisManagerMSGFDBPlugIn
     /// </summary>
     public class clsAnalysisResourcesMSGFDB : clsAnalysisResources
     {
+        // Ignore Spelling: Dta, Fto, Mgf
 
         public const string MSCONVERT_FILENAME = "msconvert.exe";
 
@@ -132,7 +133,6 @@ namespace AnalysisManagerMSGFDBPlugIn
                             clsGlobal.AppendToComment(mMessage, "Use a settings file with parameter AssumedScanType");
                         }
                     }
-
                 }
 
                 if (result != CloseOutType.CLOSEOUT_SUCCESS)
@@ -184,7 +184,6 @@ namespace AnalysisManagerMSGFDBPlugIn
             {
                 mMessage = clsGlobal.AppendToComment(mMessage, "shared results folder " + sharedResultsFolders);
             }
-
         }
 
         /// <summary>
@@ -219,7 +218,6 @@ namespace AnalysisManagerMSGFDBPlugIn
                 mJobParams.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, MSGFPlusUtils.SCAN_COUNT_LOW_RES_MSN, countLowResMSn);
                 mJobParams.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, MSGFPlusUtils.SCAN_COUNT_HIGH_RES_MSN, countHighResMSn);
                 mJobParams.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, MSGFPlusUtils.SCAN_COUNT_HCD_MSN, countHCDMSn);
-
             }
             catch (Exception ex)
             {
@@ -314,7 +312,6 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                     clsGlobal.IdleLoop(5);
                 }
-
             }
             catch (Exception ex)
             {
@@ -593,7 +590,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     }
                 }
 
-                if (columnIndicesToCheck.Count <= 0)
+                if (columnIndicesToCheck.Count == 0)
                     return false;
 
                 while (!reader.EndOfStream && !detailedScanTypesDefined)
@@ -629,7 +626,6 @@ namespace AnalysisManagerMSGFDBPlugIn
 
         private bool ValidateScanStatsFileHasScanTypeNameColumn(string scanStatsFilePath)
         {
-
             using (var reader = new StreamReader(new FileStream(scanStatsFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
             {
                 if (reader.EndOfStream)

@@ -255,12 +255,7 @@ namespace AnalysisManagerProg
 
             // Delete all of the files and directories in the work directory
             var workDir = new DirectoryInfo(workDirPath);
-            if (!DeleteFilesWithRetry(workDir))
-            {
-                return false;
-            }
-
-            return true;
+            return DeleteFilesWithRetry(workDir);
         }
 
         private bool DeleteFilesWithRetry(DirectoryInfo workDir)
@@ -275,11 +270,10 @@ namespace AnalysisManagerProg
             {
                 foreach (var fileToDelete in workDir.GetFiles())
                 {
-
                     if (!fileTools.DeleteFileWithRetry(fileToDelete, DELETE_RETRY_COUNT, out var errorMessage))
                     {
                         LogError(errorMessage);
-                        failedDeleteCount += 1;
+                        failedDeleteCount++;
                     }
                 }
 
@@ -319,8 +313,8 @@ namespace AnalysisManagerProg
                                 // Add the new access rule
                                 subDirectory.SetAccessControl(directoryAcl);
 
-                                // Make sure the readonly flag and system flags are not set
-                                // It's likely not even possible for a directory to have a readonly flag set, but it doesn't hurt to check
+                                // Make sure the ReadOnly flag and System flags are not set
+                                // It's likely not even possible for a directory to have a ReadOnly flag set, but it doesn't hurt to check
                                 subDirectory.Refresh();
                                 var attributes = subDirectory.Attributes;
                                 if ((attributes & FileAttributes.ReadOnly) == FileAttributes.ReadOnly ||
@@ -339,28 +333,28 @@ namespace AnalysisManagerProg
                                 {
                                     var failureMessage = "Error deleting directory " + subDirectory.FullName + ": " + ex3.Message;
                                     LogError(failureMessage);
-                                    failedDeleteCount += 1;
+                                    failedDeleteCount++;
                                 }
                             }
                             catch (Exception ex2)
                             {
                                 var failureMessage = "Error updating permissions for directory " + subDirectory.FullName + ": " + ex2.Message;
                                 LogError(failureMessage);
-                                failedDeleteCount += 1;
+                                failedDeleteCount++;
                             }
                         }
                         catch (Exception ex)
                         {
                             var failureMessage = "Error deleting directory " + subDirectory.FullName + ": " + ex.Message;
                             LogError(failureMessage);
-                            failedDeleteCount += 1;
+                            failedDeleteCount++;
                         }
                     }
                     else
                     {
                         var failureMessage = "Error deleting working directory subdirectory " + subDirectory.FullName;
                         LogError(failureMessage);
-                        failedDeleteCount += 1;
+                        failedDeleteCount++;
                     }
                 }
             }
@@ -371,12 +365,8 @@ namespace AnalysisManagerProg
                 return false;
             }
 
-            if (failedDeleteCount == 0)
-            {
-                return true;
-            }
-
-            return false;
+            // Return true if no failures
+            return failedDeleteCount == 0;
         }
 
         /// <summary>

@@ -13,7 +13,6 @@ namespace AnalysisManagerBase
     /// </summary>
     public sealed class clsDataPackageInfoLoader : clsLoggerBase
     {
-
         private static DateTime mLastJobParameterFromHistoryLookup = DateTime.UtcNow;
 
         /// <summary>
@@ -68,7 +67,6 @@ namespace AnalysisManagerBase
             int dataPackageID,
             out Dictionary<int, clsDataPackageDatasetInfo> dctDataPackageDatasets)
         {
-
             dctDataPackageDatasets = new Dictionary<int, clsDataPackageDatasetInfo>();
 
             var sqlStr = new System.Text.StringBuilder();
@@ -89,7 +87,7 @@ namespace AnalysisManagerBase
 
             if (!success)
             {
-                var errorMessage = "LoadDataPackageDatasetInfo; Excessive failures attempting to retrieve data package dataset info from database";
+                const string errorMessage = "LoadDataPackageDatasetInfo; Excessive failures attempting to retrieve data package dataset info from database";
                 LogTools.LogError(errorMessage);
                 resultSet.Dispose();
                 return false;
@@ -116,7 +114,6 @@ namespace AnalysisManagerBase
 
             resultSet.Dispose();
             return true;
-
         }
 
         /// <summary>
@@ -135,7 +132,6 @@ namespace AnalysisManagerBase
             int dataPackageID,
             out Dictionary<int, clsDataPackageJobInfo> dctDataPackageJobs)
         {
-
             dctDataPackageJobs = new Dictionary<int, clsDataPackageJobInfo>();
 
             var sqlStr = new System.Text.StringBuilder();
@@ -162,7 +158,7 @@ namespace AnalysisManagerBase
 
             if (!successForJobs)
             {
-                var errorMessage = "LoadDataPackageJobInfo; Excessive failures attempting to retrieve data package job info from database";
+                const string errorMessage = "LoadDataPackageJobInfo; Excessive failures attempting to retrieve data package job info from database";
                 LogTools.LogError(errorMessage);
                 dataPackageJobs.Dispose();
                 return false;
@@ -236,7 +232,6 @@ namespace AnalysisManagerBase
             dataPackageJobs.Dispose();
 
             return true;
-
         }
 
         private static void LogDebugMessage(string debugMessage)
@@ -261,7 +256,6 @@ namespace AnalysisManagerBase
             out Dictionary<string, string> jobParameters,
             out string errorMsg)
         {
-
             jobParameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             errorMsg = string.Empty;
 
@@ -323,7 +317,6 @@ namespace AnalysisManagerBase
                 resultSet.Dispose();
 
                 return true;
-
             }
             catch (Exception ex)
             {
@@ -331,12 +324,10 @@ namespace AnalysisManagerBase
                 LogTools.LogError(errorMsg, ex);
                 return false;
             }
-
         }
 
         private static clsDataPackageDatasetInfo ParseDataPackageDatasetInfoRow(DataRow curRow)
         {
-
             var datasetName = curRow["Dataset"].CastDBVal<string>();
             var datasetId = curRow["DatasetID"].CastDBVal<int>();
 
@@ -358,7 +349,6 @@ namespace AnalysisManagerBase
             };
 
             return datasetInfo;
-
         }
 
         /// <summary>
@@ -369,7 +359,6 @@ namespace AnalysisManagerBase
         /// <returns></returns>
         public static clsDataPackageJobInfo ParseDataPackageJobInfoRow(DataRow curRow)
         {
-
             var dataPkgJob = curRow["Job"].CastDBVal<int>();
             var dataPkgDataset = curRow["Dataset"].CastDBVal<string>();
 
@@ -421,7 +410,6 @@ namespace AnalysisManagerBase
             jobInfo.RawDataType = curRow["RawDataType"].CastDBVal<string>();
 
             return jobInfo;
-
         }
 
         /// <summary>
@@ -481,7 +469,6 @@ namespace AnalysisManagerBase
             out List<clsDataPackageJobInfo> additionalJobs,
             out string errorMsg)
         {
-
             // This list tracks the info for the Peptide Hit jobs (e.g. MS-GF+ or Sequest) associated with the data package
             var dataPackagePeptideHitJobs = new List<clsDataPackageJobInfo>();
             errorMsg = string.Empty;
@@ -557,7 +544,7 @@ namespace AnalysisManagerBase
                                 dataPkgJob.NumberOfClonedSteps = clonedStepCount;
                         }
 
-                        jobsProcessed += 1;
+                        jobsProcessed++;
 
                         if (DateTime.UtcNow.Subtract(lastStatusTime).TotalSeconds >= statusIntervalSeconds)
                         {

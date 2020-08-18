@@ -58,6 +58,7 @@
     <Compile Include="clsAnalysisToolRunnerMASICAgilent.cs" />
     <Compile Include="clsAnalysisToolRunnerMASICBase.cs" />
     <Compile Include="clsAnalysisToolRunnerMASICFinnigan.cs" />
+    <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

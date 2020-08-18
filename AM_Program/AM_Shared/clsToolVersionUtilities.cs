@@ -65,7 +65,6 @@ namespace AnalysisManagerBase
         /// <remarks>Ranges from 0 (minimum output) to 5 (max detail)</remarks>
         private short DebugLevel { get; }
 
-
         /// <summary>
         /// Job number
         /// </summary>
@@ -76,7 +75,6 @@ namespace AnalysisManagerBase
         /// </summary>
         public string StepToolName { get; }
 
-
         /// <summary>
         /// Tool version info file
         /// </summary>
@@ -86,7 +84,6 @@ namespace AnalysisManagerBase
         /// Working directory
         /// </summary>
         private string WorkDir { get; }
-
 
         #endregion
 
@@ -151,7 +148,7 @@ namespace AnalysisManagerBase
 
                 progRunner.SkipConsoleWriteIfNoErrorListener = true;
 
-                var args = "--help";
+                const string args = "--help";
 
                 var success = progRunner.RunProgram(msConvertInfo.FullName, args, "MSConvert", false);
 
@@ -193,14 +190,12 @@ namespace AnalysisManagerBase
 
                 OnErrorEvent("Did not find ProteoWizard release info in the help text from " + Path.GetFileName(msConvertPath));
                 return false;
-
             }
             catch (Exception ex)
             {
                 OnErrorEvent("Exception determining MSConvert version of " + msConvertPath, ex);
                 return false;
             }
-
         }
 
         /// <summary>
@@ -213,7 +208,6 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         private bool ReadVersionInfoFile(string dllFilePath, string versionInfoFilePath, out string version)
         {
-
             version = string.Empty;
             var success = false;
 
@@ -228,7 +222,6 @@ namespace AnalysisManagerBase
                 // Open versionInfoFilePath and read the Version= line
                 using (var reader = new StreamReader(new FileStream(versionInfoFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
-
                     while (!reader.EndOfStream)
                     {
                         var dataLine = reader.ReadLine();
@@ -282,9 +275,7 @@ namespace AnalysisManagerBase
 
                         }
                     }
-
                 }
-
             }
             catch (Exception ex)
             {
@@ -292,7 +283,6 @@ namespace AnalysisManagerBase
             }
 
             return success;
-
         }
 
         /// <summary>
@@ -322,7 +312,6 @@ namespace AnalysisManagerBase
 
                 using (var writer = new StreamWriter(new FileStream(toolVersionFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
                 {
-
                     writer.WriteLine("Date: " + DateTime.Now.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT));
                     writer.WriteLine("Dataset: " + Dataset);
                     writer.WriteLine("Job: " + Job);
@@ -331,15 +320,12 @@ namespace AnalysisManagerBase
                     writer.WriteLine(TOOL_VERSION_INFO_SECTION_HEADER);
 
                     writer.WriteLine(toolVersionInfo.Replace("; ", Environment.NewLine));
-
                 }
-
             }
             catch (Exception ex)
             {
                 OnErrorEvent("Exception saving tool version info", ex);
             }
-
         }
 
         /// <summary>
@@ -352,7 +338,6 @@ namespace AnalysisManagerBase
         /// <remarks>This procedure should be called once the version (or versions) of the tools associated with the current step have been determined</remarks>
         public bool SetStepTaskToolVersion(string toolVersionInfo, IEnumerable<FileInfo> toolFiles, bool saveToolVersionTextFile = true)
         {
-
             var exeInfo = string.Empty;
             string toolVersionInfoCombined;
 
@@ -382,7 +367,6 @@ namespace AnalysisManagerBase
                         {
                             OnStatusEvent("Warning: Tool file not found: " + toolFile.FullName);
                         }
-
                     }
                     catch (Exception ex)
                     {
@@ -433,7 +417,6 @@ namespace AnalysisManagerBase
         /// <remarks>This method is appropriate for plugins that call a .NET executable</remarks>
         public bool StoreDotNETToolVersionInfo(string progLoc, IReadOnlyCollection<string> additionalDLLs)
         {
-
             var toolVersionInfo = string.Empty;
 
             if (DebugLevel >= 2)
@@ -453,7 +436,6 @@ namespace AnalysisManagerBase
                     OnErrorEvent("Exception calling SetStepTaskToolVersion", ex);
                     return false;
                 }
-
             }
 
             // Lookup the version of the .NET program
@@ -501,7 +483,6 @@ namespace AnalysisManagerBase
                 OnErrorEvent("Exception calling SetStepTaskToolVersion", ex);
                 return false;
             }
-
         }
 
         /// <summary>
@@ -555,7 +536,6 @@ namespace AnalysisManagerBase
         /// <remarks>Use StoreToolVersionInfoOneFile for DLLs not loaded in memory</remarks>
         public bool StoreToolVersionInfoForLoadedAssembly(ref string toolVersionInfo, string assemblyName, bool includeRevision = true)
         {
-
             try
             {
                 var assembly = System.Reflection.Assembly.Load(assemblyName).GetName();
@@ -571,7 +551,6 @@ namespace AnalysisManagerBase
                 }
 
                 toolVersionInfo = clsGlobal.AppendToComment(toolVersionInfo, nameAndVersion);
-
             }
             catch (Exception ex)
             {
@@ -580,7 +559,6 @@ namespace AnalysisManagerBase
             }
 
             return true;
-
         }
 
         /// <summary>
@@ -593,7 +571,6 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public bool StoreToolVersionInfoOneFile(ref string toolVersionInfo, string dllFilePath)
         {
-
             bool success;
 
             try
@@ -604,7 +581,6 @@ namespace AnalysisManagerBase
                 {
                     OnWarningEvent("Warning: File not found by StoreToolVersionInfoOneFile: " + dllFilePath);
                     return false;
-
                 }
 
                 var assembly = System.Reflection.Assembly.LoadFrom(dllFileInfo.FullName);
@@ -645,7 +621,6 @@ namespace AnalysisManagerBase
             }
 
             return success;
-
         }
 
         /// <summary>
@@ -657,7 +632,6 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public bool StoreToolVersionInfoViaSystemDiagnostics(ref string toolVersionInfo, string dllFilePath)
         {
-
             try
             {
                 var dllFileInfo = new FileInfo(dllFilePath);
@@ -701,14 +675,12 @@ namespace AnalysisManagerBase
                 toolVersionInfo = clsGlobal.AppendToComment(toolVersionInfo, nameAndVersion);
 
                 return true;
-
             }
             catch (Exception ex)
             {
                 OnErrorEvent("Exception determining File Version for " + Path.GetFileName(dllFilePath), ex);
                 return false;
             }
-
         }
 
         /// <summary>
@@ -746,7 +718,6 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         private bool StoreToolVersionInfoOneFileUseExe(ref string toolVersionInfo, string dllFilePath, string versionInspectorExeName)
         {
-
             try
             {
                 var appPath = Path.Combine(clsGlobal.GetAppDirectoryPath(), versionInspectorExeName);
@@ -768,7 +739,6 @@ namespace AnalysisManagerBase
                 // Call DLLVersionInspector_x86.exe or DLLVersionInspector_x64.exe to determine the tool version
 
                 var versionInfoFilePath = Path.Combine(WorkDir, Path.GetFileNameWithoutExtension(dllFileInfo.Name) + "_VersionInfo.txt");
-
 
                 var args = clsGlobal.PossiblyQuotePath(dllFileInfo.FullName) + " /O:" + clsGlobal.PossiblyQuotePath(versionInfoFilePath);
 
@@ -817,7 +787,6 @@ namespace AnalysisManagerBase
                 toolVersionInfo = clsGlobal.AppendToComment(toolVersionInfo, version);
 
                 return true;
-
             }
             catch (Exception ex)
             {
@@ -826,8 +795,6 @@ namespace AnalysisManagerBase
             }
 
             return false;
-
         }
-
     }
 }

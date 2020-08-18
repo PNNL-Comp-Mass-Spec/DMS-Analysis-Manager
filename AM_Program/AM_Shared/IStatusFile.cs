@@ -12,7 +12,6 @@ using System.Collections.Generic;
 
 namespace AnalysisManagerBase
 {
-
     #region "Enums"
 
     /// <summary>
@@ -125,7 +124,6 @@ namespace AnalysisManagerBase
     /// </summary>
     public interface IStatusFile
     {
-
         #region "Properties"
 
         /// <summary>
@@ -438,5 +436,4 @@ namespace AnalysisManagerBase
         #endregion
 
     }
-
 }

@@ -17,7 +17,6 @@ namespace AnalysisManagerProg
     // ReSharper disable once UnusedMember.Global
     public class clsCodeTestAM : clsAnalysisToolRunnerBase
     {
-
         #region "Methods"
 
         /// <summary>

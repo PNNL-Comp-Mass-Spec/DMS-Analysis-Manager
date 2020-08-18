@@ -7,14 +7,12 @@
 
 namespace AnalysisManagerBase
 {
-
     /// <summary>
     /// Interface for analysis resources
     /// </summary>
     /// <remarks></remarks>
     public interface IAnalysisResources
     {
-
         #region "Properties"
 
         /// <summary>

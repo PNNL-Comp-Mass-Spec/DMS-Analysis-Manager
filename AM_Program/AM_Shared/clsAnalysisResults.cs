@@ -11,13 +11,11 @@ using System.IO;
 
 namespace AnalysisManagerBase
 {
-
     /// <summary>
     /// Analysis job results handling class
     /// </summary>
     public class clsAnalysisResults : clsAnalysisMgrBase
     {
-
         #region "Module variables"
         private const string FAILED_RESULTS_FOLDER_INFO_TEXT = "FailedResultsFolderInfo_";
 
@@ -56,14 +54,12 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public clsAnalysisResults(IMgrParams mgrParams, IJobParams jobParams) : base("clsAnalysisResults")
         {
-
             mMgrParams = mgrParams;
             mJobParams = jobParams;
             var mgrName = mMgrParams.ManagerName;
             mDebugLevel = (short)mMgrParams.GetParam("DebugLevel", 1);
 
             InitFileTools(mgrName, mDebugLevel);
-
         }
 
         /// <summary>
@@ -158,16 +154,9 @@ namespace AnalysisManagerBase
                         }
                     }
                 }
-                catch (Exception ex)
+                catch (Exception ex) when (continueOnError)
                 {
-                    if (continueOnError)
-                    {
-                        LogError("clsAnalysisResults,CopyDirectory", ex);
-                    }
-                    else
-                    {
-                        throw;
-                    }
+                    LogError("clsAnalysisResults,CopyDirectory", ex);
                 }
             }
 
@@ -246,7 +235,7 @@ namespace AnalysisManagerBase
 
             while (attemptCount <= maxRetryCount)
             {
-                attemptCount += 1;
+                attemptCount++;
 
                 try
                 {
@@ -286,7 +275,6 @@ namespace AnalysisManagerBase
             }
 
             throw new IOException("Excessive failures during file copy");
-
         }
 
         /// <summary>
@@ -330,7 +318,6 @@ namespace AnalysisManagerBase
 
             try
             {
-
                 // Make sure the target directory exists
                 CreateFolderWithRetry(failedResultsDirectoryPath, 2, 5);
 
@@ -368,13 +355,11 @@ namespace AnalysisManagerBase
 
                     LogMessage("Copy complete");
                 }
-
             }
             catch (Exception ex)
             {
                 LogError("Error copying results from " + sourceDirectoryPath + " to " + failedResultsDirectoryPath, ex);
             }
-
         }
 
         private void CopyFailedResultsCreateInfoFile(string folderInfoFilePath, string resultsFolderName)
@@ -408,7 +393,6 @@ namespace AnalysisManagerBase
                     writer.WriteLine("FastaFileName" + '\t' + mJobParams.GetParam("PeptideSearch", clsAnalysisResources.JOB_PARAM_GENERATED_FASTA_NAME));
                 }
             }
-
         }
 
         /// <summary>
@@ -458,7 +442,7 @@ namespace AnalysisManagerBase
 
             while (attemptCount <= maxRetryCount)
             {
-                attemptCount += 1;
+                attemptCount++;
 
                 try
                 {
@@ -495,7 +479,6 @@ namespace AnalysisManagerBase
             {
                 throw new IOException("Excessive failures during directory creation");
             }
-
         }
 
         private void DeleteOldFailedResultsFolders(DirectoryInfo targetDirectory)
@@ -537,14 +520,12 @@ namespace AnalysisManagerBase
                     {
                         LogError("Error renaming failed results info file to " + targetFilePath, ex);
                     }
-
                 }
                 catch (Exception ex)
                 {
                     LogError("Error deleting old failed results directory", ex);
                 }
             }
-
         }
 
         /// <summary>
@@ -582,7 +563,6 @@ namespace AnalysisManagerBase
         /// <returns>True if the directory exists, otherwise false</returns>
         public bool FolderExistsWithRetry(string directoryPath, int maxRetryCount, int retryHoldoffSeconds, bool increaseHoldoffOnEachRetry)
         {
-
             var attemptCount = 0;
 
             float actualRetryHoldoffSeconds = retryHoldoffSeconds;
@@ -600,7 +580,6 @@ namespace AnalysisManagerBase
                 {
                     var directoryExists = Directory.Exists(directoryPath);
                     return directoryExists;
-
                 }
                 catch (Exception ex)
                 {
@@ -619,16 +598,13 @@ namespace AnalysisManagerBase
                 {
                     actualRetryHoldoffSeconds *= 1.5f;
                 }
-
             }
 
             // Exception occurred; return False
             return false;
-
         }
 
         #endregion
 
     }
-
 }

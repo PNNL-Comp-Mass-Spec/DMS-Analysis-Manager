@@ -14,6 +14,8 @@ namespace AnalysisManagerBase
     /// </summary>
     public class clsDirectorySearch : EventNotifier
     {
+        // Ignore Spelling: pre, Xtract
+
         #region "Constants"
 
         /// <summary>
@@ -150,7 +152,8 @@ namespace AnalysisManagerBase
                 case clsAnalysisResources.eRawDataTypeConstants.AgilentDFolder:
                     // Agilent ion trap data
 
-                    if (StoragePath.ToLower().Contains("Agilent_SL1".ToLower()) || StoragePath.ToLower().Contains("Agilent_XCT1".ToLower()))
+                    if (StoragePath.IndexOf("Agilent_SL1", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                        StoragePath.IndexOf("Agilent_XCT1", StringComparison.OrdinalIgnoreCase) >= 0)
                     {
                         // For Agilent Ion Trap datasets acquired on Agilent_SL1 or Agilent_XCT1 in 2005,
                         //  we would pre-process the data beforehand to create MGF files
@@ -224,13 +227,12 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Finds the dataset directory containing Bruker Maldi imaging .zip files
+        /// Finds the dataset directory containing Bruker MALDI imaging .zip files
         /// </summary>
         /// <param name="assumeUnpurged"></param>
         /// <returns>The full path to the dataset directory</returns>
         public string FindBrukerMALDIImagingFolders(bool assumeUnpurged = false)
         {
-
             const string ZIPPED_BRUKER_IMAGING_SECTIONS_FILE_MASK = "*R*X*.zip";
 
             // Look for the dataset directory; it must contain .Zip files with names like 0_R00X442.zip
@@ -243,7 +245,6 @@ namespace AnalysisManagerBase
                 return string.Empty;
 
             return datasetDirPath;
-
         }
 
         /// <summary>
@@ -267,7 +268,6 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public string FindDatasetFile(int maxAttempts, string fileExtension, bool assumeUnpurged = false)
         {
-
             if (!fileExtension.StartsWith("."))
             {
                 fileExtension = "." + fileExtension;
@@ -317,7 +317,6 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public string FindDotXFolder(string directoryExtension, bool assumeUnpurged)
         {
-
             if (!directoryExtension.StartsWith("."))
             {
                 directoryExtension = "." + directoryExtension;
@@ -352,7 +351,6 @@ namespace AnalysisManagerBase
 
             // No match found
             return string.Empty;
-
         }
 
         /// <summary>
@@ -362,7 +360,6 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public string FindMGFFile(int maxAttempts, bool assumeUnpurged)
         {
-
             // Data files are in a subdirectory off of the main dataset directory
             // Files are renamed with dataset name because MASIC requires this. Other analysis types don't care
 
@@ -387,7 +384,6 @@ namespace AnalysisManagerBase
 
             // No match was found
             return string.Empty;
-
         }
 
         /// <summary>
@@ -397,7 +393,6 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         private string FindSFolders(bool assumeUnpurged = false)
         {
-
             // First Check for the existence of a 0.ser directory
             var fileNameToFind = string.Empty;
 
@@ -412,10 +407,9 @@ namespace AnalysisManagerBase
             }
 
             // The 0.ser directory does not exist; look for zipped s-folders
-            datasetDirectoryPath = FindValidDirectory(DatasetName, "s*.zip", retrievingInstrumentDataDir: true, assumeUnpurged: assumeUnpurged);
+            var alternateDirectoryPath = FindValidDirectory(DatasetName, "s*.zip", retrievingInstrumentDataDir: true, assumeUnpurged: assumeUnpurged);
 
-            return datasetDirectoryPath;
-
+            return alternateDirectoryPath;
         }
 
         /// <summary>
@@ -430,11 +424,9 @@ namespace AnalysisManagerBase
         /// <remarks>Although fileNameToFind could be empty, you are highly encouraged to filter by either fileNameToFind or by directoryNameToFind when using FindValidDirectory</remarks>
         public string FindValidDirectory(string dsName, string fileNameToFind, bool retrievingInstrumentDataDir)
         {
-
             const string directoryNameToFind = "";
             return FindValidDirectory(dsName, fileNameToFind, directoryNameToFind, DEFAULT_MAX_RETRY_COUNT,
                 logDirectoryNotFound: true, retrievingInstrumentDataDir: retrievingInstrumentDataDir);
-
         }
 
         /// <summary>
@@ -450,14 +442,12 @@ namespace AnalysisManagerBase
         /// <remarks>Although fileNameToFind could be empty, you are highly encouraged to filter by either fileNameToFind or by directoryNameToFind when using FindValidDirectory</remarks>
         private string FindValidDirectory(string dsName, string fileNameToFind, bool retrievingInstrumentDataDir, bool assumeUnpurged)
         {
-
             const string directoryNameToFind = "";
 
             return FindValidDirectory(dsName, fileNameToFind, directoryNameToFind, DEFAULT_MAX_RETRY_COUNT,
                 logDirectoryNotFound: true, retrievingInstrumentDataDir: retrievingInstrumentDataDir,
                 assumeUnpurged: assumeUnpurged,
                 validDirectoryFound: out _, directoryNotFoundMessage: out _);
-
         }
 
         /// <summary>
@@ -473,10 +463,8 @@ namespace AnalysisManagerBase
         /// <remarks>Although fileNameToFind and directoryNameToFind could both be empty, you are highly encouraged to filter by either fileNameToFind or by directoryNameToFind when using FindValidDirectory</remarks>
         public string FindValidDirectory(string dsName, string fileNameToFind, string directoryNameToFind, int maxRetryCount)
         {
-
             return FindValidDirectory(dsName, fileNameToFind, directoryNameToFind, maxRetryCount,
                 logDirectoryNotFound: true, retrievingInstrumentDataDir: false);
-
         }
 
         /// <summary>
@@ -496,7 +484,6 @@ namespace AnalysisManagerBase
             string dsName, string fileNameToFind, string directoryNameToFind,
             int maxRetryCount, bool logDirectoryNotFound, bool retrievingInstrumentDataDir)
         {
-
             return FindValidDirectory(dsName, fileNameToFind, directoryNameToFind, maxRetryCount, logDirectoryNotFound, retrievingInstrumentDataDir,
                 assumeUnpurged: false,
                 validDirectoryFound: out _, directoryNotFoundMessage: out _);
@@ -621,12 +608,11 @@ namespace AnalysisManagerBase
 
                                 if (validDirectory)
                                 {
-                                    // Jump out of the foreach
+                                    // Jump out of the for each loop
                                     bestPath = pathToCheckAlt;
                                     break;
                                 }
                             }
-
                         }
 
                         if (validDirectory)
@@ -636,7 +622,6 @@ namespace AnalysisManagerBase
                         }
 
                         fileNotFoundEncountered = true;
-
                     }
                     catch (Exception ex)
                     {
@@ -661,7 +646,6 @@ namespace AnalysisManagerBase
                         }
                         OnDebugEvent(msg);
                     }
-
                 }
                 else
                 {
@@ -687,9 +671,7 @@ namespace AnalysisManagerBase
                             OnWarningEvent(msg);
                         }
                     }
-
                 }
-
             }
             catch (Exception ex)
             {
@@ -698,7 +680,6 @@ namespace AnalysisManagerBase
             }
 
             return bestPath;
-
         }
 
         /// <summary>
@@ -713,7 +694,6 @@ namespace AnalysisManagerBase
         /// <remarks>FileNameToFind is a file in the dataset directory; it is NOT a file in directoryNameToFind</remarks>
         private bool FindValidDirectoryMyEMSL(string dataset, string fileNameToFind, string subdirectoryName, bool logDirectoryNotFound, bool recurse)
         {
-
             if (string.IsNullOrEmpty(fileNameToFind))
                 fileNameToFind = "*";
 
@@ -772,7 +752,6 @@ namespace AnalysisManagerBase
         /// <remarks>FileNameToFind is a file in the dataset directory; it is NOT a file in directoryNameToFind</remarks>
         private bool FindValidDirectoryUNC(string pathToCheck, string fileNameToFind, string directoryNameToFind, int maxAttempts, bool logDirectoryNotFound)
         {
-
             // First check whether this directory exists
             // Using a 1 second holdoff between retries
             if (!DirectoryExistsWithRetry(pathToCheck, 1, maxAttempts, logDirectoryNotFound))
@@ -867,7 +846,6 @@ namespace AnalysisManagerBase
             }
 
             return validDirectory;
-
         }
 
         /// <summary>
@@ -881,7 +859,6 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         private bool DirectoryExistsWithRetry(string directoryPath, int retryHoldoffSeconds, int maxAttempts, bool logDirectoryNotFound)
         {
-
             if (maxAttempts < 1)
                 maxAttempts = 1;
 
@@ -912,7 +889,7 @@ namespace AnalysisManagerBase
                     }
                 }
 
-                retryCount -= 1;
+                retryCount--;
                 if (retryCount <= 0)
                 {
                     return false;
@@ -923,7 +900,6 @@ namespace AnalysisManagerBase
             }
 
             return false;
-
         }
 
         #endregion

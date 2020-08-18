@@ -18,7 +18,6 @@ namespace AnalysisManagerBase
     /// <remarks>Implemented by clsAnalysisToolRunnerBase</remarks>
     public interface IToolRunner
     {
-
         #region "Properties"
 
         /// <summary>
@@ -133,5 +132,4 @@ namespace AnalysisManagerBase
         #endregion
 
     }
-
 }

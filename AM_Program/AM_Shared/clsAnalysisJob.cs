@@ -21,13 +21,13 @@ using PRISMDatabaseUtils;
 
 namespace AnalysisManagerBase
 {
-
     /// <summary>
     /// Provides DB access and tools for one analysis job
     /// </summary>
     /// <remarks></remarks>
     public class clsAnalysisJob : clsDBTask, IJobParams
     {
+        // Ignore Spelling: dir, dirs
 
         #region "Constants"
 
@@ -86,7 +86,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <remarks>
         /// Comparison checks if the end of the fileName matches any entry ResultFileExtensionsToSkip:
-        /// If (tmpFileNameLCase.EndsWith(ext, StringComparison.OrdinalIgnoreCase)) Then OkToMove = False
+        /// if (tmpFileNameLCase.EndsWith(ext, StringComparison.OrdinalIgnoreCase)) { okToMove = false; }
         /// </remarks>
         protected SortedSet<string> mResultFileExtensionsToSkip = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
 
@@ -192,7 +192,6 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public bool AddAdditionalParameter(string sectionName, string paramName, bool paramValue)
         {
-
             try
             {
                 SetParam(sectionName, paramName, paramValue.ToString());
@@ -203,7 +202,6 @@ namespace AnalysisManagerBase
                 LogError("Exception adding parameter: " + paramName + " Value: " + paramValue, ex);
                 return false;
             }
-
         }
 
         /// <summary>
@@ -216,7 +214,6 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public bool AddAdditionalParameter(string sectionName, string paramName, int paramValue)
         {
-
             try
             {
                 SetParam(sectionName, paramName, paramValue.ToString());
@@ -227,7 +224,6 @@ namespace AnalysisManagerBase
                 LogError("Exception adding parameter: " + paramName + " Value: " + paramValue, ex);
                 return false;
             }
-
         }
 
         /// <summary>
@@ -240,7 +236,6 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public bool AddAdditionalParameter(string sectionName, string paramName, string paramValue)
         {
-
             try
             {
                 if (paramValue == null)
@@ -254,7 +249,6 @@ namespace AnalysisManagerBase
                 LogError("Exception adding parameter: " + paramName + " Value: " + paramValue, ex);
                 return false;
             }
-
         }
 
         /// <summary>
@@ -398,7 +392,7 @@ namespace AnalysisManagerBase
                     {
                         if (DateTime.UtcNow.Subtract(jobStatusFile.LastWriteTimeUtc).TotalHours < 12)
                         {
-                            // The file is aged, but the jobstatus file is less than 12 hours old
+                            // The file is aged, but the job status file is less than 12 hours old
                             continue;
                         }
                     }
@@ -479,7 +473,6 @@ namespace AnalysisManagerBase
                 {
                     return valueIfMissing;
                 }
-
             }
             catch
             {
@@ -508,7 +501,6 @@ namespace AnalysisManagerBase
                 {
                     return valueIfMissing;
                 }
-
             }
             catch
             {
@@ -536,7 +528,6 @@ namespace AnalysisManagerBase
                 {
                     return valueIfMissing;
                 }
-
             }
             catch
             {
@@ -545,7 +536,6 @@ namespace AnalysisManagerBase
 
             // Note: if value is not a number, this will throw an exception; the calling procedure will need to handle that exception
             return Convert.ToInt32(value);
-
         }
 
         /// <summary>
@@ -656,7 +646,6 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public string GetParam(string name)
         {
-
             if (TryGetParam(name, out var value))
             {
                 return value;
@@ -673,7 +662,6 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public string GetParam(string section, string name)
         {
-
             if (string.IsNullOrEmpty(name))
             {
                 // User actually wanted to look for the parameter that is currently in the Section Variable, using an empty string as the default value
@@ -733,7 +721,6 @@ namespace AnalysisManagerBase
                 // Add the parameter to the first section
                 mJobParams.First().Value.Add(paramName, paramValue);
             }
-
         }
 
         /// <summary>
@@ -766,10 +753,7 @@ namespace AnalysisManagerBase
         /// <returns></returns>
         public static bool SuccessOrNoData(CloseOutType toolRunnerResult)
         {
-            if (toolRunnerResult == CloseOutType.CLOSEOUT_SUCCESS || toolRunnerResult == CloseOutType.CLOSEOUT_NO_DATA)
-                return true;
-
-            return false;
+            return toolRunnerResult == CloseOutType.CLOSEOUT_SUCCESS || toolRunnerResult == CloseOutType.CLOSEOUT_NO_DATA;
         }
 
         /// <summary>
@@ -781,7 +765,6 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public bool TryGetParam(string paramName, out string paramValue)
         {
-
             paramValue = string.Empty;
 
             foreach (var entry in mJobParams)
@@ -797,7 +780,6 @@ namespace AnalysisManagerBase
             }
 
             return false;
-
         }
 
         /// <summary>
@@ -858,7 +840,6 @@ namespace AnalysisManagerBase
             {
                 mResultFilesToSkip.Remove(fileName);
             }
-
         }
 
         /// <summary>
@@ -881,7 +862,6 @@ namespace AnalysisManagerBase
             IReadOnlyDictionary<string, string> paramNamesToIgnore,
             IReadOnlyDictionary<string, string> paramsToAddAsAttribute)
         {
-
             try
             {
                 // Note that XDocument supersedes XmlDocument and can often be easier to use since XDocument is LINQ-based
@@ -954,7 +934,6 @@ namespace AnalysisManagerBase
                             {
                                 attributesToAdd.Add(attribName, paramValue.Value);
                             }
-
                         }
                     }
 
@@ -986,18 +965,16 @@ namespace AnalysisManagerBase
                 var filteredXML = sbOutput.ToString();
 
                 return filteredXML;
-
             }
             catch (Exception ex)
             {
                 LogError("Error in FilterXmlSection", ex);
                 return paramXml;
             }
-
         }
 
         /// <summary>
-        /// Rename or delete old directories in the WorkDirs specified by any .info files below the base task queue directory
+        /// Rename or delete old directories in the working directories specified by any .info files below the base task queue directory
         /// Ignores files in the /Completed/ directory
         /// </summary>
         /// <param name="taskQueuePathBase"></param>
@@ -1008,7 +985,6 @@ namespace AnalysisManagerBase
 
             try
             {
-
                 var jobStepMatcher = new Regex(@"^Job\d+_Step\d+$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
                 var xJobStepMatcher = new Regex(@"^x_Job\d+_Step\d+$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
@@ -1025,7 +1001,7 @@ namespace AnalysisManagerBase
                     return;
 
                 // Construct a list of WorkDir paths tracked by the current .info, .fail, and .success files
-                // Also keep track of the parent directory (or directories) of the job-specific Work Dirs
+                // Also keep track of the parent directory (or directories) of the job-specific working directories
 
                 var activeWorkDirs = new Dictionary<string, DirectoryInfo>();
                 var parentWorkDirs = new Dictionary<string, DirectoryInfo>();
@@ -1085,9 +1061,10 @@ namespace AnalysisManagerBase
                         if (activeWorkDirs.ContainsKey(workDir.FullName))
                         {
                             if (TraceMode)
-                                ConsoleMsgUtils.ShowDebug("  Ignore {0} since referred to by a recent task info file",
-                                                          workDir.Name);
-
+                            {
+                                ConsoleMsgUtils.ShowDebug(
+                                    "  Ignore {0} since referred to by a recent task info file",workDir.Name);
+                            }
                             // This work dir is active; ignore it
                             continue;
                         }
@@ -1102,7 +1079,10 @@ namespace AnalysisManagerBase
                         if (!jobStepMatcher.IsMatch(workDir.Name))
                         {
                             if (TraceMode)
-                                ConsoleMsgUtils.ShowDebug("  Ignore WorkDir directory since not of the form JobX_StepY: " + workDir.FullName);
+                            {
+                                ConsoleMsgUtils.ShowDebug(
+                                    "  Ignore WorkDir directory since not of the form JobX_StepY: " + workDir.FullName);
+                            }
                             continue;
                         }
 
@@ -1112,8 +1092,10 @@ namespace AnalysisManagerBase
                         if (lastModifiedUtc >= orphanedDateThresholdUtc)
                         {
                             if (TraceMode)
+                            {
                                 ConsoleMsgUtils.ShowDebug("  Ignoring {0} since last modified {1}",
                                                           workDir.Name, lastModifiedUtc.ToLocalTime());
+                            }
 
                             // Files in the WorkDir are less than 5 days old; leave it unchanged
                             continue;
@@ -1138,7 +1120,6 @@ namespace AnalysisManagerBase
                                     newWorkDirPath));
 
                                 Directory.Delete(newWorkDirPath, true);
-
                             }
 
                             LogMessage(string.Format(
@@ -1153,7 +1134,6 @@ namespace AnalysisManagerBase
                                 "Error renaming {0} to {1}: {2}",
                                 workDir.FullName, Path.GetFileName(newWorkDirPath), ex.Message));
                         }
-
                     }
 
                     if (TraceMode)
@@ -1165,7 +1145,6 @@ namespace AnalysisManagerBase
 
                     foreach (var oldWorkDir in oldWorkDirs)
                     {
-
                         oldWorkDir.Refresh();
                         if (!oldWorkDir.Exists)
                         {
@@ -1186,8 +1165,11 @@ namespace AnalysisManagerBase
                         if (lastModifiedUtc >= purgeThresholdUtc)
                         {
                             if (TraceMode)
-                                ConsoleMsgUtils.ShowDebug("  Ignoring {0} since last modified {1}",
-                                                          oldWorkDir.Name, lastModifiedUtc.ToLocalTime());
+                            {
+                                ConsoleMsgUtils.ShowDebug(
+                                    "  Ignoring {0} since last modified {1}",
+                                    oldWorkDir.Name, lastModifiedUtc.ToLocalTime());
+                            }
 
                             // Files in the old WorkDir are less than 14 days old; leave it unchanged
                             continue;
@@ -1207,21 +1189,17 @@ namespace AnalysisManagerBase
                                 "Error deleting {0}: {1}",
                                 oldWorkDir.FullName, ex.Message));
                         }
-
                     }
                 }
-
             }
             catch (Exception ex)
             {
                 LogError("Exception looking for old WorkDirs for .info, .success, and .fail files below " + taskQueuePathBase, ex);
             }
-
         }
 
         private bool ReadOfflineJobInfoFile(FileSystemInfo infoFile, out int jobId, out int stepNum, out string workDirPath, out string staged)
         {
-
             jobId = 0;
             stepNum = 0;
             workDirPath = string.Empty;
@@ -1305,8 +1283,8 @@ namespace AnalysisManagerBase
                     TaskWasAssigned = false;
                     break;
             }
-            return result;
 
+            return result;
         }
 
         /// <summary>
@@ -1316,7 +1294,6 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         private RequestTaskResult RequestAnalysisJobFromDB(bool runJobsRemotely)
         {
-
             if (clsGlobal.OfflineMode)
             {
                 throw new Exception("RequestAnalysisJobFromDB should not be called when offline mode is enabled");
@@ -1374,7 +1351,6 @@ namespace AnalysisManagerBase
 
                 if (returnCodeValue != 0)
                 {
-
                     if (returnCodeValue == RET_VAL_TASK_NOT_AVAILABLE)
                     {
                         // No jobs found
@@ -1388,14 +1364,12 @@ namespace AnalysisManagerBase
                     return RequestTaskResult.ResultError;
                 }
 
-                RequestTaskResult taskResult;
-
                 switch (resCode)
                 {
                     case RET_VAL_OK:
 
                         // No errors found in SP call, so see if any step tasks were found
-                            mJobId = Convert.ToInt32(jobNumberParam.Value);
+                        mJobId = Convert.ToInt32(jobNumberParam.Value);
                         var jobParamsXML = Convert.ToString(jobParamsParam.Value);
 
                         // Step task was found; get the data for it
@@ -1404,8 +1378,7 @@ namespace AnalysisManagerBase
                         if (jobParameters.Count == 0)
                         {
                             LogWarning("Unable to parse out job parameters from the job parameters XML");
-                            taskResult = RequestTaskResult.ResultError;
-                            break;
+                            return RequestTaskResult.ResultError;
                         }
 
                         foreach (var paramInfo in jobParameters)
@@ -1414,43 +1387,34 @@ namespace AnalysisManagerBase
                         }
 
                         SaveJobParameters(mMgrParams.GetParam("WorkDir"), jobParamsXML, mJobId);
-                        taskResult = RequestTaskResult.TaskFound;
-                        break;
+                        return RequestTaskResult.TaskFound;
 
                     case DbUtilsConstants.RET_VAL_EXCESSIVE_RETRIES:
                         // Too many retries
-                        taskResult = RequestTaskResult.TooManyRetries;
-                        break;
+                        return RequestTaskResult.TooManyRetries;
 
                     case DbUtilsConstants.RET_VAL_DEADLOCK:
                         // Transaction was deadlocked on lock resources with another process and has been chosen as the deadlock victim
-                        taskResult = RequestTaskResult.Deadlock;
-                        break;
+                        return RequestTaskResult.Deadlock;
 
                     default:
                         // There was an SP error
                         LogError("clsAnalysisJob.RequestAnalysisJob(), SP execution error " + resCode + "; " +
                                  "Msg text = " + Convert.ToString(messageParam.Value));
-                        taskResult = RequestTaskResult.ResultError;
-                        break;
+                        return RequestTaskResult.ResultError;
                 }
-
-                return taskResult;
-
             }
             catch (Exception ex)
             {
                 LogError("Exception requesting analysis job", ex);
                 return RequestTaskResult.ResultError;
             }
-
         }
 
         private RequestTaskResult RequestOfflineAnalysisJob()
         {
             try
             {
-
                 var reJobStepTimestamp = new Regex(@"(?<JobStep>Job\d+_Step\d+)_(?<TimeStamp>.+)\.info", RegexOptions.Compiled);
 
                 var stepToolList = mMgrParams.GetParam("StepToolsEnabled");
@@ -1491,7 +1455,7 @@ namespace AnalysisManagerBase
                         continue;
 
                     // Keys in this dictionary are of the form Job1449939_Step3
-                    // Values are are KeyValuePair of Timestamp and .info file, where Timestamp is of the form 20170518_0353
+                    // Values are KeyValuePair of Timestamp and .info file, where Timestamp is of the form 20170518_0353
                     var jobStepInfoFiles = new Dictionary<string, KeyValuePair<string, FileInfo>>();
 
                     // Step through the info files, keeping track of the newest file for each Job/Step combo
@@ -1540,7 +1504,6 @@ namespace AnalysisManagerBase
                         if (SelectOfflineJobInfoFile(infoFileToProcess))
                             return RequestTaskResult.TaskFound;
                     }
-
                 }
 
                 return RequestTaskResult.NoTaskFound;
@@ -1550,7 +1513,6 @@ namespace AnalysisManagerBase
                 LogError("Exception checking for an available offline analysis job", ex);
                 return RequestTaskResult.ResultError;
             }
-
         }
 
         /// <summary>
@@ -1626,13 +1588,11 @@ namespace AnalysisManagerBase
                 clsGlobal.CopyAndRenameFileWithBackup(xmlParameterFile.FullName, clsGlobal.GetAppDirectoryPath(), "RecentJobParameters.xml", 5);
 
                 LogDebug(msg, (int)BaseLogger.LogLevels.DEBUG);
-
             }
             catch (Exception ex)
             {
                 LogError("Exception saving analysis job parameters to " + xmlParameterFilePath, ex);
             }
-
         }
 
         /// <summary>
@@ -1715,7 +1675,6 @@ namespace AnalysisManagerBase
 
                 var jobParameters = ParseXMLJobParameters(jobParamsXML).ToList();
 
-
                 if (jobParameters.Count == 0)
                 {
                     FinalizeFailedOfflineJob(infoFile, startTime, "Unable to parse out job parameters from the job parameters file: " + jobParamsFile.FullName);
@@ -1740,7 +1699,6 @@ namespace AnalysisManagerBase
                 LogError("Exception in LockOfflineJobInfoFile", ex);
                 return false;
             }
-
         }
 
         /// <summary>
@@ -1766,7 +1724,6 @@ namespace AnalysisManagerBase
         /// </remarks>
         private void CreateLocalLockFile(string lockFilePath)
         {
-
             var lockFileContents = new List<string>
             {
                 "Date: " + DateTime.Now.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT),
@@ -1801,7 +1758,6 @@ namespace AnalysisManagerBase
                 // Lock file content doesn't match the expected value
                 throw new Exception(errorMessage);
             }
-
         }
 
         /// <summary>
@@ -1886,7 +1842,6 @@ namespace AnalysisManagerBase
                     LogError("Error setting job complete in database, job " + mJobId);
                 }
             }
-
         }
 
         /// <summary>
@@ -1900,7 +1855,6 @@ namespace AnalysisManagerBase
         /// non-existent file named Placeholder.txt, with the date of the directory's last write time</remarks>
         private DateTime GetDirectoryLastWriteTime(DirectoryInfo directory, bool recurse = false)
         {
-
             var newestDateUtc = DateTime.MinValue;
 
             var searchOption = recurse ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
@@ -1926,14 +1880,12 @@ namespace AnalysisManagerBase
         /// <param name="oldInfoFile"></param>
         private static void RenameOldInfoFile(FileInfo oldInfoFile)
         {
-
             // Old .info file with existingTimestamp; rename to .oldinfo
             clsOfflineProcessing.RenameFileChangeExtension(oldInfoFile, ".oldinfo", true);
 
             // Also check for a .lock file; if found, rename it
             var oldLockFile = new FileInfo(Path.ChangeExtension(oldInfoFile.FullName, clsGlobal.LOCK_FILE_EXTENSION));
             clsOfflineProcessing.RenameFileChangeExtension(oldLockFile, ".oldlock", true);
-
         }
 
         /// <summary>
@@ -1987,7 +1939,6 @@ namespace AnalysisManagerBase
         /// <remarks>evalCode and EvalMsg not presently used</remarks>
         protected bool SetAnalysisJobComplete(int compCode, string compMsg, int evalCode, string evalMsg)
         {
-
             if (clsGlobal.OfflineMode)
             {
                 throw new Exception("SetAnalysisJobComplete should not be called when offline mode is enabled");
@@ -2105,7 +2056,6 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public string GetCurrentJobToolDescription()
         {
-
             // The ToolName job parameter holds the name of the job script we are executing
             var scriptName = GetParam("ToolName");
 
@@ -2114,11 +2064,10 @@ namespace AnalysisManagerBase
             var stepNumber = GetParam(STEP_PARAMETERS_SECTION, "Step");
 
             return GetJobToolDescription(scriptName, stepTool, stepNumber);
-
         }
 
         /// <summary>
-        /// Generate a description of the tool (aks Pipeline Script), step tool, and optionally the step number for the current analysis job
+        /// Generate a description of the tool (aka Pipeline Script), step tool, and optionally the step number for the current analysis job
         /// Example tool names are "Sequest, Step 3" or "DTA_Gen (Sequest), Step 1" or "DataExtractor (XTandem), Step 4"
         /// </summary>
         /// <param name="toolName">Tool name</param>
@@ -2147,7 +2096,6 @@ namespace AnalysisManagerBase
             }
 
             return toolAndStepTool;
-
         }
 
         #endregion

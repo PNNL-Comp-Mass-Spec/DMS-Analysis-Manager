@@ -94,7 +94,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                         if (string.IsNullOrWhiteSpace(dataLine))
                             continue;
 
-                        linesRead += 1;
+                        linesRead++;
                         var dataCols = dataLine.Split('\t');
 
                         var firstColumnIsNumber = FirstColumnIsInteger(dataCols);
@@ -221,7 +221,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                                 continue;
                             }
 
-                            linesRead += 1;
+                            linesRead++;
                             var dataColumns = dataLine.Split('\t');
 
                             var firstColumnIsNumber = FirstColumnIsInteger(dataColumns);
@@ -292,7 +292,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                             writer.WriteLine(scanNumber + "\t" + scanTypeName + "\t" + scanType + "\t" + scanTime.ToString("0.0000"));
 
-                            ValidScanTypeLineCount += 1;
+                            ValidScanTypeLineCount++;
                         }
                     }
                 }
@@ -316,6 +316,5 @@ namespace AnalysisManagerMSGFDBPlugIn
         {
             return int.TryParse(dataColumns[0], out var _);
         }
-
     }
 }

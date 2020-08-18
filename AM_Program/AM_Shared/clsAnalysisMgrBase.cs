@@ -5,7 +5,6 @@ using System.IO;
 
 namespace AnalysisManagerBase
 {
-
     /// <summary>
     /// Analysis manager base class
     /// </summary>
@@ -65,7 +64,6 @@ namespace AnalysisManagerBase
 
         private bool IsLockQueueLogMessageNeeded(ref DateTime lockQueueWaitTimeStart, ref DateTime lastLockQueueWaitTimeLog)
         {
-
             int waitTimeLogIntervalSeconds;
 
             if (lockQueueWaitTimeStart == DateTime.MinValue)
@@ -311,7 +309,6 @@ namespace AnalysisManagerBase
                     "Source={3}, Target={4}",
                     mDerivedClassName, backlogSourceMB, backlogTargetMB, sourceFilePath, targetFilePath));
             }
-
         }
 
         private void FileTools_WaitingForLockQueueNotifyLockFilePaths(string sourceLockFilePath, string targetLockFilePath, string adminBypassMessage)

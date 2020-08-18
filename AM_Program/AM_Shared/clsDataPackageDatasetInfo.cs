@@ -117,8 +117,6 @@ namespace AnalysisManagerBase
             ServerStoragePath = string.Empty;
             ArchiveStoragePath = string.Empty;
             RawDataType = string.Empty;
-
         }
-
     }
 }

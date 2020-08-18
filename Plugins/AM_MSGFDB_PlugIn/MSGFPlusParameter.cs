@@ -30,7 +30,6 @@ namespace AnalysisManagerMSGFDBPlugIn
         {
             get
             {
-
                 if (string.IsNullOrWhiteSpace(Comment))
                     return string.Empty;
 
@@ -200,7 +199,6 @@ namespace AnalysisManagerMSGFDBPlugIn
             return parameterCopy;
         }
 
-
         /// <summary>
         /// Return the text of the line from the parameter file (including the comment, if any)
         /// </summary>
@@ -209,6 +207,5 @@ namespace AnalysisManagerMSGFDBPlugIn
         {
             return ParameterName + ": " + Value;
         }
-
     }
 }

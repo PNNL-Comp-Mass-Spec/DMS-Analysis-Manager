@@ -10,6 +10,8 @@ namespace MASIC_ReporterIonObsStatsUploader
 {
     public class ReporterIonStatsUploader : PRISM.FileProcessor.ProcessFilesBase
     {
+        // Ignore Spelling: Traq, Glc, Az, labelling
+
         private const string STORE_REPORTER_ION_OBS_STATS_SP_NAME = "StoreReporterIonObsStats";
 
         #region "Properties"
@@ -100,7 +102,7 @@ namespace MASIC_ReporterIonObsStatsUploader
 
             datasetName = string.Empty;
 
-            // ReSharper disable once ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator
+            // ReSharper disable once ForEachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator
             foreach (var suffix in suffixesToMatch)
             {
                 if (!inputFile.Name.EndsWith(suffix, StringComparison.OrdinalIgnoreCase))
@@ -204,7 +206,6 @@ namespace MASIC_ReporterIonObsStatsUploader
         /// </remarks>
         public static string GetReporterIonNameFromMassMode(int reporterIonMassMode)
         {
-
             switch (reporterIonMassMode)
             {
                 case 1:
@@ -607,7 +608,7 @@ namespace MASIC_ReporterIonObsStatsUploader
                                        : messageParam.Value.CastDBVal<string>();
 
                 OnErrorEvent(string.Format(
-                    "Error storing reporter ion observation stats and and median intensities in the database, {0} returned {1}: {2}",
+                    "Error storing reporter ion observation stats and median intensities in the database, {0} returned {1}: {2}",
                     STORE_REPORTER_ION_OBS_STATS_SP_NAME, resCode, errorMessage));
 
                 return false;
@@ -648,7 +649,6 @@ namespace MASIC_ReporterIonObsStatsUploader
         }
 
         #endregion
-
 
     }
 }

@@ -121,5 +121,4 @@ namespace AnalysisManagerBase
 
         #endregion
     }
-
 }

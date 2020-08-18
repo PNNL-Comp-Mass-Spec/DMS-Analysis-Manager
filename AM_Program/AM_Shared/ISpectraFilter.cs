@@ -10,7 +10,6 @@ using PRISM.Logging;
 
 namespace AnalysisManagerBase
 {
-
     #region "Enums"
 
     /// <summary>
@@ -126,7 +125,6 @@ namespace AnalysisManagerBase
     /// </summary>
     public interface ISpectraFilter
     {
-
         #region "Properties"
 
         /// <summary>

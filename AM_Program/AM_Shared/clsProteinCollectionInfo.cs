@@ -66,7 +66,6 @@ namespace AnalysisManagerBase
 
             // Update mOrgDBDescription and UsingLegacyFasta
             UpdateDescription();
-
         }
 
         /// <summary>
@@ -94,7 +93,5 @@ namespace AnalysisManagerBase
                 IsValid = false;
             }
         }
-
     }
-
 }

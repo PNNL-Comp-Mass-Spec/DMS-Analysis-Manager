@@ -12,13 +12,11 @@ using System.IO;
 
 namespace AnalysisManagerBase
 {
-
     /// <summary>
     /// Provides a looping wrapper around a ProgRunner object for running command-line programs
     /// </summary>
     public class clsRunDosProgram : EventNotifier
     {
-
         #region "Module variables"
 
         /// <summary>
@@ -511,14 +509,12 @@ namespace AnalysisManagerBase
                     }
 
                     mProgRunner.StopMonitoringProgram(kill: true);
-
                 } // end while
 
                 mStopTime = DateTime.UtcNow;
                 mIsRunning = false;
 
                 clsGlobal.ProcessInfo.ClearCachedPerformanceCounterForProcessID(cachedProcessID);
-
             }
             catch (Exception ex)
             {
@@ -604,7 +600,6 @@ namespace AnalysisManagerBase
             {
                 mCachedConsoleErrors += Environment.NewLine + newText;
             }
-
         }
 
         private void ProgRunner_ConsoleOutputEvent(string newText)
@@ -617,5 +612,4 @@ namespace AnalysisManagerBase
             // This event is ignored by this class
         }
     }
-
 }

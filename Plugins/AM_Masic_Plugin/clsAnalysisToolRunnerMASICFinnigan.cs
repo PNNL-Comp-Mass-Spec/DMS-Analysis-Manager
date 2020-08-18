@@ -18,6 +18,8 @@ namespace AnalysisManagerMasicPlugin
     /// <remarks></remarks>
     public class clsAnalysisToolRunnerMASICFinnigan : clsAnalysisToolRunnerMASICBase
     {
+        // Ignore Spelling: parm
+
         #region "Module Variables"
 
         private AnalysisManagerMsXmlGenPlugIn.clsMSXMLCreator mMSXmlCreator;
@@ -30,7 +32,7 @@ namespace AnalysisManagerMasicPlugin
 
             var parameterFileName = mJobParams.GetParam("parmFileName");
 
-            if (parameterFileName != null && parameterFileName.Trim().ToLower() != "na")
+            if (parameterFileName != null && !string.Equals(parameterFileName.Trim(), "na", StringComparison.OrdinalIgnoreCase))
             {
                 parameterFilePath = Path.Combine(mWorkDir, mJobParams.GetParam("parmFileName"));
             }
@@ -74,11 +76,15 @@ namespace AnalysisManagerMasicPlugin
         }
 
         /// <summary>
-        /// Converts the .Raw file specified by fiThermoRawFile to a .mzXML file
+        /// Converts the .Raw file specified by thermoRawFile to a .mzXML file
         /// </summary>
-        /// <param name="fiThermoRawFile"></param>
+        /// <param name="thermoRawFile"></param>
         /// <returns>Path to the newly created .mzXML file</returns>
-        private string ConvertRawToMzXML(FileInfo fiThermoRawFile)
+#pragma warning disable IDE0051 // Remove unused private members
+#pragma warning disable RCS1213 // Remove unused member declaration.
+        private string ConvertRawToMzXML(FileInfo thermoRawFile)
+#pragma warning restore RCS1213 // Remove unused member declaration.
+#pragma warning restore IDE0051 // Remove unused private members
         {
             var msXmlGeneratorAppPath = GetMSXmlGeneratorAppPath();
 
@@ -104,7 +110,7 @@ namespace AnalysisManagerMasicPlugin
             if (!success)
                 return string.Empty;
 
-            var mzXMLFilePath = Path.ChangeExtension(fiThermoRawFile.FullName, "mzXML");
+            var mzXMLFilePath = Path.ChangeExtension(thermoRawFile.FullName, "mzXML");
             if (!File.Exists(mzXMLFilePath))
             {
                 mMessage = "MSXmlCreator did not create the .mzXML file";

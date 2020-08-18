@@ -26,6 +26,8 @@ namespace AnalysisManagerProg
     /// <remarks></remarks>
     public class clsMainProcess : clsLoggerBase
     {
+        // Ignore Spelling: dir, Lp, sid, Lewy, Fractestrecheck, smeagol
+
         #region "Constants"
 
         private const int MAX_ERROR_COUNT = 10;
@@ -198,7 +200,6 @@ namespace AnalysisManagerProg
         /// <remarks></remarks>
         private bool InitMgr()
         {
-
             var hostName = System.Net.Dns.GetHostName();
 
             CheckStopTrace("CreateDefaultFileLogger");
@@ -285,7 +286,6 @@ namespace AnalysisManagerProg
                     {
                         ShowTraceMessage("Initialized MgrParams");
                     }
-
                 }
                 catch (Exception ex)
                 {
@@ -448,15 +448,11 @@ namespace AnalysisManagerProg
             {
                 mMgrSettings = new clsAnalysisMgrSettings(mMgrDirectoryPath, TraceMode);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (!throwExceptions)
             {
-                if (throwExceptions)
-                    throw;
-
                 ConsoleMsgUtils.ShowError("Exception instantiating clsAnalysisMgrSettings", ex);
                 clsGlobal.IdleLoop(0.5);
             }
-
         }
 
         /// <summary>
@@ -558,10 +554,10 @@ namespace AnalysisManagerProg
 
                     if (mgrUpdateRequired)
                     {
-                        var msg = "Manager update is required";
+                        const string msg = "Manager update is required";
                         LogMessage(msg);
                         mMgrSettings.AckManagerUpdateRequired();
-                        UpdateStatusIdle("Manager update is required");
+                        UpdateStatusIdle(msg);
                         return;
                     }
 
@@ -590,7 +586,7 @@ namespace AnalysisManagerProg
                         mMgrErrorCleanup.DeleteStatusFlagFile(mDebugLevel);
                     }
 
-                    // Verify that an error hasn't left the the system in an odd state
+                    // Verify that an error hasn't left the system in an odd state
                     if (StatusFlagFileError())
                     {
                         LogError("Flag file exists - unable to perform any further analysis jobs");
@@ -690,14 +686,14 @@ namespace AnalysisManagerProg
                             ShowTrace("Error requesting a task for " + mMgrName);
 
                             // There was a problem getting the task; errors were logged by RequestTaskResult
-                            criticalMgrErrorCount += 1;
+                            criticalMgrErrorCount++;
                             break;
 
                         case clsDBTask.RequestTaskResult.TaskFound:
 
                             ShowTrace("Task found for " + mMgrName);
 
-                            tasksStartedCount += 1;
+                            tasksStartedCount++;
                             successiveDeadLockCount = 0;
 
                             try
@@ -733,7 +729,7 @@ namespace AnalysisManagerProg
                                     }
                                     else if (!runningRemote)
                                     {
-                                        criticalMgrErrorCount += 1;
+                                        criticalMgrErrorCount++;
                                     }
                                 }
                             }
@@ -747,7 +743,7 @@ namespace AnalysisManagerProg
                                 // Set the job state to failed
                                 mAnalysisTask.CloseTask(CloseOutType.CLOSEOUT_FAILED, "Exception thrown by DoAnalysisJob");
 
-                                criticalMgrErrorCount += 1;
+                                criticalMgrErrorCount++;
                                 mNeedToAbortProcessing = true;
                             }
                             break;
@@ -765,9 +761,9 @@ namespace AnalysisManagerProg
 
                             ShowTrace("Deadlock");
 
-                            // A deadlock error occured
+                            // A deadlock error occurred
                             // Query the DB again, but only if we have not had 3 deadlock results in a row
-                            successiveDeadLockCount += 1;
+                            successiveDeadLockCount++;
                             if (successiveDeadLockCount >= 3)
                             {
                                 var msg = "Deadlock encountered " + successiveDeadLockCount + " times in a row when requesting a new task; exiting";
@@ -787,7 +783,7 @@ namespace AnalysisManagerProg
                         ShowTrace("Need to abort processing");
                         break;
                     }
-                    loopCount += 1;
+                    loopCount++;
 
                     // If the only problem was deleting non result files, we want to stop the manager
                     if (mMgrErrorCleanup.DetectErrorDeletingFilesFlagFile())
@@ -840,7 +836,6 @@ namespace AnalysisManagerProg
             {
                 if (mStatusTools != null)
                 {
-
                     // Wait 1 second to give the message queue time to flush
                     clsGlobal.IdleLoop(1);
 
@@ -999,10 +994,7 @@ namespace AnalysisManagerProg
                 // If completed (success or fail), retrieve the results
                 success = CheckRemoteJobStatus(toolRunner, out resultCode, out remoteMonitor);
 
-                if (success && clsAnalysisJob.SuccessOrNoData(resultCode))
-                    jobSucceeded = true;
-                else
-                    jobSucceeded = false;
+                jobSucceeded = success && clsAnalysisJob.SuccessOrNoData(resultCode);
             }
             else
             {
@@ -1092,7 +1084,9 @@ namespace AnalysisManagerProg
                 // Examine toolRunner.Message to determine if we should use it as the completion message
                 string compMsg;
                 if (toolRunner.Message.StartsWith("Calibration failed"))
+                {
                     compMsg = toolRunner.Message;
+                }
                 else
                 {
                     compMsg = string.Empty;
@@ -1108,7 +1102,6 @@ namespace AnalysisManagerProg
                 var cleanupSuccess = CleanupAfterJob(deleteRemoteJobFiles, remoteMonitor);
 
                 return cleanupSuccess ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
-
             }
             catch (Exception ex)
             {
@@ -1116,7 +1109,6 @@ namespace AnalysisManagerProg
                 mStatusTools.UpdateIdle("Error encountered", "clsMainProcess.DoAnalysisJob(): " + ex.Message, mMostRecentJobInfo, true);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-
         }
 
         private bool CheckRemoteJobStatus(
@@ -1124,7 +1116,6 @@ namespace AnalysisManagerProg
             out CloseOutType resultCode,
             out clsRemoteMonitor remoteMonitor)
         {
-
             try
             {
                 LogDebug("Instantiating clsRemoteMonitor to check remote job status");
@@ -1134,7 +1125,6 @@ namespace AnalysisManagerProg
 
                 remoteMonitor.StaleJobStatusFileEvent += RemoteMonitor_StaleJobStatusFileEvent;
                 remoteMonitor.StaleLockFileEvent += RemoteMonitor_StaleLockFileEvent;
-
             }
             catch (Exception ex)
             {
@@ -1190,7 +1180,6 @@ namespace AnalysisManagerProg
                         resultCode = CloseOutType.CLOSEOUT_FAILED_REMOTE;
                         return false;
                 }
-
             }
             catch (Exception ex)
             {
@@ -1357,7 +1346,6 @@ namespace AnalysisManagerProg
                     var previousLogFilePath = match.Groups["BaseName"].Value + newDate.ToString(FileLogger.LOG_FILE_DATE_CODE) + Path.GetExtension(logFilePath);
                     return previousLogFilePath;
                 }
-
             }
             catch (Exception ex)
             {
@@ -1365,7 +1353,6 @@ namespace AnalysisManagerProg
             }
 
             return string.Empty;
-
         }
 
         /// <summary>
@@ -1380,11 +1367,11 @@ namespace AnalysisManagerProg
         /// <remarks></remarks>
         public IEnumerable<string> DetermineRecentErrorMessages(int errorMessageCountToReturn, ref string mostRecentJobInfo)
         {
-            // This regex will match all text up to the first comma (this is the time stamp), followed by a comma, then the error message, then the text ", Error,"
+            // This RegEx will match all text up to the first comma (this is the time stamp), followed by a comma, then the error message, then the text ", Error,"
             const string ERROR_MATCH_REGEX = "^(?<Date>[^,]+),(?<Error>.+), Error, *$";
 
-            // This regex looks for information on a job starting
-            // Note: do not try to match "Step \d+" with this regex due to variations on how the log message appears
+            // This RegEx looks for information on a job starting
+            // Note: do not try to match "Step \d+" with this RegEx due to variations on how the log message appears
             const string JOB_START_REGEX = @"^(?<Date>[^,]+),.+Started analysis job (?<Job>\d+), Dataset (?<Dataset>.+), Tool (?<Tool>[^,]+)";
 
             // Examples matching log entries
@@ -1422,15 +1409,8 @@ namespace AnalysisManagerProg
 
                 // Examine the most recent error reported by the logger
                 var mostRecentErrorMsg = LogTools.MostRecentErrorMessage;
-                bool loggerReportsError;
-                if (!string.IsNullOrWhiteSpace(mostRecentErrorMsg))
-                {
-                    loggerReportsError = true;
-                }
-                else
-                {
-                    loggerReportsError = false;
-                }
+
+                var loggerReportsError = !string.IsNullOrWhiteSpace(mostRecentErrorMsg);
 
                 var logFilePath = GetRecentLogFilename();
 
@@ -1449,7 +1429,6 @@ namespace AnalysisManagerProg
                         {
                             using (var reader = new StreamReader(new FileStream(logFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                             {
-
                                 if (errorMessageCountToReturn < 1)
                                     errorMessageCountToReturn = 1;
 
@@ -1488,7 +1467,6 @@ namespace AnalysisManagerProg
                                         // Ignore errors here
                                     }
                                 }
-
                             }
 
                             if (checkForMostRecentJob && mostRecentJobInfoFromLogs.Length > 0)
@@ -1500,7 +1478,7 @@ namespace AnalysisManagerProg
                         // else: Log file not found; that's OK, we'll decrement the name by one day and keep checking
 
                         // Increment the log file counter, regardless of whether or not the log file was found
-                        logFileCountProcessed += 1;
+                        logFileCountProcessed++;
 
                         if (msgQueue.Count >= errorMessageCountToReturn)
                             continue;
@@ -1571,7 +1549,6 @@ namespace AnalysisManagerProg
                 }
                 return new List<string>();
             }
-
         }
 
         private void DetermineRecentErrorCacheError(
@@ -1598,7 +1575,7 @@ namespace AnalysisManagerProg
             }
             else
             {
-                // Regex didn't match; this is unexpected
+                // RegEx didn't match; this is unexpected
                 timeStamp = DateTime.MinValue;
                 errorMessageClean = errorMessage;
             }
@@ -1736,7 +1713,6 @@ namespace AnalysisManagerProg
             {
                 return string.Empty;
             }
-
         }
 
         /// <summary>
@@ -1781,32 +1757,23 @@ namespace AnalysisManagerProg
 
         private clsCleanupMgrErrors.eCleanupModeConstants GetManagerErrorCleanupMode()
         {
-            clsCleanupMgrErrors.eCleanupModeConstants eManagerErrorCleanupMode;
-
             var managerErrorCleanupMode = mMgrSettings.GetParam("ManagerErrorCleanupMode", "0");
 
             switch (managerErrorCleanupMode.Trim())
             {
                 case "0":
-                    eManagerErrorCleanupMode = clsCleanupMgrErrors.eCleanupModeConstants.Disabled;
-                    break;
+                    return clsCleanupMgrErrors.eCleanupModeConstants.Disabled;
                 case "1":
-                    eManagerErrorCleanupMode = clsCleanupMgrErrors.eCleanupModeConstants.CleanupOnce;
-                    break;
+                    return clsCleanupMgrErrors.eCleanupModeConstants.CleanupOnce;
                 case "2":
-                    eManagerErrorCleanupMode = clsCleanupMgrErrors.eCleanupModeConstants.CleanupAlways;
-                    break;
+                    return clsCleanupMgrErrors.eCleanupModeConstants.CleanupAlways;
                 default:
-                    eManagerErrorCleanupMode = clsCleanupMgrErrors.eCleanupModeConstants.Disabled;
-                    break;
+                    return clsCleanupMgrErrors.eCleanupModeConstants.Disabled;
             }
-
-            return eManagerErrorCleanupMode;
         }
 
         private bool HandleJobFailure(IToolRunner toolRunner, CloseOutType resultCode)
         {
-
             ShowTrace("Tool run error; cleaning up");
 
             try
@@ -1827,7 +1794,8 @@ namespace AnalysisManagerProg
                     mMgrErrorCleanup.CreateErrorDeletingFilesFlagFile();
                 }
 
-                if (resultCode == CloseOutType.CLOSEOUT_NO_DTA_FILES && mAnalysisTask.GetParam("StepTool").ToLower() == "sequest")
+                if (resultCode == CloseOutType.CLOSEOUT_NO_DTA_FILES &&
+                    string.Equals(mAnalysisTask.GetParam("StepTool"), "sequest", StringComparison.OrdinalIgnoreCase))
                 {
                     // This was a Sequest job, but no .DTA files were found
                     // Return True; do not count this as a manager failure
@@ -2119,7 +2087,7 @@ namespace AnalysisManagerProg
                 while (!reader.EndOfStream)
                 {
                     var dataLine = reader.ReadLine();
-                    lineCount += 1;
+                    lineCount++;
 
                     // Assume that the first line is the header line, which we'll skip
                     if (lineCount == 1 || string.IsNullOrWhiteSpace(dataLine))
@@ -2274,7 +2242,6 @@ namespace AnalysisManagerProg
                 LogError("Error re-loading manager settings", ex);
                 return false;
             }
-
         }
 
         private void RemoveTempFiles()
@@ -2386,7 +2353,6 @@ namespace AnalysisManagerProg
                 mStatusTools.UpdateIdle("Error encountered", "clsMainProcess.RetrieveResources(): " + ex.Message, mMostRecentJobInfo, true);
                 return false;
             }
-
         }
 
         private bool RunJobLocally(
@@ -2399,7 +2365,6 @@ namespace AnalysisManagerProg
 
             try
             {
-
                 ShowTrace("Running the step tool locally");
 
                 resultCode = toolRunner.RunTool();
@@ -2467,7 +2432,6 @@ namespace AnalysisManagerProg
 
                 return false;
             }
-
         }
 
         private bool RunJobRemotely(
@@ -2478,7 +2442,6 @@ namespace AnalysisManagerProg
         {
             try
             {
-
                 ShowTrace("Instantiating clsRemoteTransferUtility");
 
                 var transferUtility = InitializeRemoteTransferUtility();
@@ -2573,7 +2536,6 @@ namespace AnalysisManagerProg
 
                 resultCode = CloseOutType.CLOSEOUT_RUNNING_REMOTE;
                 return true;
-
             }
             catch (Exception ex)
             {
@@ -2766,7 +2728,6 @@ namespace AnalysisManagerProg
         /// <remarks></remarks>
         private bool UpdateManagerSettings(ref DateTime lastConfigDBUpdate, double minutesBetweenUpdates)
         {
-
             if (!(DateTime.UtcNow.Subtract(lastConfigDBUpdate).TotalMinutes >= minutesBetweenUpdates))
                 return true;
 
@@ -2901,12 +2862,7 @@ namespace AnalysisManagerProg
                         datasetStoragePath = datasetStorageDirectory.FullName;
                     }
 
-                    if (!ValidateFreeDiskSpaceWork("Dataset directory", datasetStoragePath, datasetStorageMinFreeSpaceGB * 1024, out errorMessage))
-                    {
-                        return false;
-                    }
-
-                    return true;
+                    return ValidateFreeDiskSpaceWork("Dataset directory", datasetStoragePath, datasetStorageMinFreeSpaceGB * 1024, out errorMessage);
                 }
 
                 var workingDirMinFreeSpaceMB = mMgrSettings.GetParam("WorkDirMinFreeSpaceMB", DEFAULT_WORKING_DIR_MIN_FREE_SPACE_MB);
@@ -3105,7 +3061,6 @@ namespace AnalysisManagerProg
                     LogMessage(string.Format("Copying {0} to {1}", newestInterop.FullName, mgrDir.FullName));
                     newestInterop.CopyTo(activeInterop.FullName, true);
                 }
-
             }
             catch (Exception ex)
             {
@@ -3153,7 +3108,6 @@ namespace AnalysisManagerProg
                             // The directory is now empty
                             return true;
                         }
-
                     }
                     catch (Exception ex)
                     {
@@ -3241,7 +3195,6 @@ namespace AnalysisManagerProg
 
                 LogWarning(formattedError);
             }
-
         }
 
         #endregion
@@ -3286,6 +3239,5 @@ namespace AnalysisManagerProg
                 LogDebug("Config file changed");
             }
         }
-
     }
 }

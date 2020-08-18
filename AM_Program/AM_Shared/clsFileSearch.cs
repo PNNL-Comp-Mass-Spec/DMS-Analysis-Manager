@@ -113,7 +113,6 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         private bool CopySFoldersToWorkDir(bool createStoragePathInfoOnly)
         {
-
             var datasetDirectoryPath = mDirectorySearch.FindValidDirectory(DatasetName, "s*.zip",
                                                                            retrievingInstrumentDataDir: true);
 
@@ -192,20 +191,17 @@ namespace AnalysisManagerBase
 
                     // If we get here, the delete succeeded, so we can dequeue the file
                     filesToDelete.Dequeue();
-
                 }
                 catch (Exception)
                 {
                     // Exception deleting the file; ignore this error
                 }
-
             }
 
             if (!string.IsNullOrEmpty(fileToQueueForDeletion))
             {
                 filesToDelete.Enqueue(fileToQueueForDeletion);
             }
-
         }
 
         private bool FileExistsInWorkDir(string fileName)
@@ -281,7 +277,6 @@ namespace AnalysisManagerBase
             string fileName, bool unzip, bool searchArchivedDatasetDir,
             out string sourceDirPath, bool logFileNotFound)
         {
-
             const bool CreateStoragePathInfoFile = false;
 
             // Look for the file in the various directories
@@ -321,7 +316,6 @@ namespace AnalysisManagerBase
             }
 
             return true;
-
         }
 
         /// <summary>
@@ -340,7 +334,6 @@ namespace AnalysisManagerBase
             bool addToResultFileSkipList = true,
             bool logFileNotFound = true)
         {
-
             var success = FindAndRetrieveMiscFiles(
                 fileToGet, unzip: false, searchArchivedDatasetDir: true, logFileNotFound: logFileNotFound);
 
@@ -373,7 +366,6 @@ namespace AnalysisManagerBase
             }
 
             return true;
-
         }
 
         /// <summary>
@@ -383,7 +375,6 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public string FindCDTAFile(out string errorMessage)
         {
-
             errorMessage = string.Empty;
 
             // Retrieve zipped DTA file
@@ -450,7 +441,6 @@ namespace AnalysisManagerBase
         /// <remarks>If the file is found in MyEMSL, the directory path returned will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
         public string FindDataFile(string fileToFind, bool searchArchivedDatasetDir, bool logFileNotFound = true)
         {
-
             try
             {
                 // Fill collection with possible directory locations
@@ -502,7 +492,6 @@ namespace AnalysisManagerBase
                         // Parent directory \ Dataset directory
                         directoriesToSearch.Add(FindDataFileAddFolder(parentDirPath, datasetDirectoryName, string.Empty));
                     }
-
                 }
 
                 var matchingDirectoryPath = string.Empty;
@@ -527,7 +516,6 @@ namespace AnalysisManagerBase
                                 matchingDirectoryPath = DatasetInfoBase.AppendMyEMSLFileID(directoryPath, matchingMyEMSLFiles.First().FileID);
                                 break;
                             }
-
                         }
                         else
                         {
@@ -540,9 +528,7 @@ namespace AnalysisManagerBase
                                     break;
                                 }
                             }
-
                         }
-
                     }
                     catch (Exception ex)
                     {
@@ -577,7 +563,6 @@ namespace AnalysisManagerBase
                 }
 
                 return string.Empty;
-
             }
             catch (Exception ex)
             {
@@ -586,7 +571,6 @@ namespace AnalysisManagerBase
 
             // We'll only get here if an exception occurs
             return string.Empty;
-
         }
 
         private string FindDataFileAddFolder(string parentDirPath, string datasetDirName, string inputDirName)
@@ -598,7 +582,6 @@ namespace AnalysisManagerBase
             }
 
             return targetDirPath;
-
         }
 
         /// <summary>
@@ -662,7 +645,6 @@ namespace AnalysisManagerBase
         /// <remarks>Supports both gzipped mzXML/mzML files and unzipped ones (gzipping was enabled in September 2014)</remarks>
         public string FindMZXmlFile(out string hashCheckFilePath)
         {
-
             // First look in the MsXML cache directory
             var matchingFilePath = FindMsXmlFileInCache(clsAnalysisResources.MSXMLOutputTypeConstants.mzXML, out hashCheckFilePath);
 
@@ -734,7 +716,6 @@ namespace AnalysisManagerBase
                     {
                         return Path.Combine(msXmlServerPath, msXmlDirectoryName, DatasetInfoBase.AppendMyEMSLFileID(mzXMLFilename, myEmslFileID));
                     }
-
                 }
                 else
                 {
@@ -750,18 +731,13 @@ namespace AnalysisManagerBase
                         {
                             // MSXml directory found; return the path to the file
                             return Path.Combine(subDirectories[0].FullName, mzXMLFilename);
-
                         }
-
                     }
-
                 }
-
             }
 
             // If we get here, no match was found
             return string.Empty;
-
         }
 
         /// <summary>
@@ -775,7 +751,6 @@ namespace AnalysisManagerBase
             clsAnalysisResources.MSXMLOutputTypeConstants msXmlType,
             out string hashCheckFilePath)
         {
-
             var msXMLFilename = string.Copy(DatasetName);
             hashCheckFilePath = string.Empty;
 
@@ -828,7 +803,6 @@ namespace AnalysisManagerBase
                 var query = (from item in filesToAppend orderby item.LastWriteTimeUtc descending select item).Take(1);
 
                 matchingFiles.AddRange(query);
-
             }
             else
             {
@@ -848,11 +822,8 @@ namespace AnalysisManagerBase
 
                         var query = (from item in filesToAppend orderby item.LastWriteTimeUtc descending select item).Take(1);
                         matchingFiles.AddRange(query);
-
                     }
-
                 }
-
             }
 
             if (matchingFiles.Count == 0)
@@ -906,7 +877,6 @@ namespace AnalysisManagerBase
                 if (int.TryParse(reMatch.Groups["X"].Value, out X))
                     success = true;
                 int.TryParse(reMatch.Groups["Y"].Value, out Y);
-
             }
             else
             {
@@ -930,7 +900,6 @@ namespace AnalysisManagerBase
             }
 
             return success;
-
         }
 
         /// <summary>
@@ -967,7 +936,6 @@ namespace AnalysisManagerBase
             }
 
             return applySectionFilter;
-
         }
 
         /// <summary>
@@ -980,7 +948,6 @@ namespace AnalysisManagerBase
         /// </remarks>
         private IEnumerable<string> GetSharedResultDirList()
         {
-
             var sharedResultDirNames = new List<string>();
 
             var sharedResultsDirectoryList = mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_SHARED_RESULTS_FOLDERS);
@@ -1007,7 +974,6 @@ namespace AnalysisManagerBase
             }
 
             return sharedResultDirNames;
-
         }
 
         /// <summary>
@@ -1100,7 +1066,6 @@ namespace AnalysisManagerBase
             out bool fileMissingFromCache,
             out string sourceDirectoryPath)
         {
-
             errorMessage = string.Empty;
             fileMissingFromCache = false;
             sourceDirectoryPath = string.Empty;
@@ -1271,7 +1236,6 @@ namespace AnalysisManagerBase
                 {
                     errorMessage += " or " + candidateSourceDir;
                 }
-
             }
 
             if (sourceDirectory == null || !sourceDirectory.Exists)
@@ -1356,7 +1320,6 @@ namespace AnalysisManagerBase
 
             errorMessage = mDotNetZipTools.Message;
             return false;
-
         }
 
         /// <summary>
@@ -1367,7 +1330,6 @@ namespace AnalysisManagerBase
         /// <remarks>progLocName is typically DeconToolsProgLoc, LipidToolsProgLoc, or TargetedWorkflowsProgLoc</remarks>
         public bool RetrievePNNLOmicsResourceFiles(string progLocName)
         {
-
             const string OMICS_ELEMENT_DATA_FILE = "PNNLOmicsElementData.xml";
 
             try
@@ -1388,7 +1350,6 @@ namespace AnalysisManagerBase
                 }
 
                 sourceFile.CopyTo(Path.Combine(mWorkDir, OMICS_ELEMENT_DATA_FILE));
-
             }
             catch (Exception ex)
             {
@@ -1397,7 +1358,6 @@ namespace AnalysisManagerBase
             }
 
             return true;
-
         }
 
         /// <summary>
@@ -1410,7 +1370,6 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         private bool RetrieveDatasetFile(string fileExtension, bool createStoragePathInfoOnly, int maxAttempts)
         {
-
             var datasetFilePath = mDirectorySearch.FindDatasetFile(maxAttempts, fileExtension);
             if (string.IsNullOrEmpty(datasetFilePath))
             {
@@ -1452,13 +1411,11 @@ namespace AnalysisManagerBase
         /// <remarks>If the _dta.zip or _dta.txt file already exists in the working directory, will not re-copy it from the remote directory</remarks>
         public bool RetrieveDtaFiles()
         {
-
             var targetZipFilePath = Path.Combine(mWorkDir, DatasetName + clsAnalysisResources.CDTA_ZIPPED_EXTENSION);
             var targetCDTAFilePath = Path.Combine(mWorkDir, DatasetName + clsAnalysisResources.CDTA_EXTENSION);
 
             if (!File.Exists(targetCDTAFilePath) && !File.Exists(targetZipFilePath))
             {
-
                 // Find the CDTA file
                 var sourceFilePath = FindCDTAFile(out var errorMessage);
 
@@ -1484,7 +1441,6 @@ namespace AnalysisManagerBase
                     {
                         return false;
                     }
-
                 }
                 else
                 {
@@ -1511,7 +1467,6 @@ namespace AnalysisManagerBase
                         OnStatusEvent("Copied " + sourceFile.Name + " from directory " + sourceFile.FullName);
                     }
                 }
-
             }
 
             if (File.Exists(targetCDTAFilePath))
@@ -1550,7 +1505,6 @@ namespace AnalysisManagerBase
             }
 
             return true;
-
         }
 
         /// <summary>
@@ -1561,7 +1515,6 @@ namespace AnalysisManagerBase
         /// <returns>TRUE for success; FALSE for failure</returns>
         public bool RetrieveFile(string fileName, string sourceDirectoryPath)
         {
-
             // Copy the file
             if (!mFileCopyUtilities.CopyFileToWorkDir(fileName, sourceDirectoryPath, mWorkDir, BaseLogger.LogLevels.ERROR))
             {
@@ -1569,7 +1522,6 @@ namespace AnalysisManagerBase
             }
 
             return true;
-
         }
 
         /// <summary>
@@ -1583,7 +1535,6 @@ namespace AnalysisManagerBase
         public bool RetrieveFile(string fileName, string sourceDirectoryPath, int maxCopyAttempts,
             BaseLogger.LogLevels logMsgTypeIfNotFound = BaseLogger.LogLevels.ERROR)
         {
-
             // Copy the file
             if (maxCopyAttempts < 1)
                 maxCopyAttempts = 1;
@@ -1594,7 +1545,6 @@ namespace AnalysisManagerBase
             }
 
             return true;
-
         }
 
         /// <summary>
@@ -1607,7 +1557,6 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         private bool RetrieveMgfFile(bool getCdfAlso, bool createStoragePathInfoOnly, int maxAttempts)
         {
-
             var mgfFilePath = mDirectorySearch.FindMGFFile(maxAttempts, assumeUnpurged: false);
 
             if (string.IsNullOrEmpty(mgfFilePath))
@@ -1655,7 +1604,6 @@ namespace AnalysisManagerBase
             OnErrorEvent("CDF File not found");
 
             return false;
-
         }
 
         /// <summary>
@@ -1670,7 +1618,6 @@ namespace AnalysisManagerBase
         /// <remarks>The retrieved file might be gzipped</remarks>
         public bool RetrieveMZXmlFile(bool createStoragePathInfoOnly, out string sourceFilePath)
         {
-
             sourceFilePath = FindMZXmlFile(out var hashCheckFilePath);
 
             if (string.IsNullOrEmpty(sourceFilePath))
@@ -1691,7 +1638,6 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public bool RetrieveMZXmlFileUsingSourceFile(bool createStoragePathInfoOnly, string sourceFilePath, string hashCheckFilePath)
         {
-
             if (sourceFilePath.StartsWith(MYEMSL_PATH_FLAG))
             {
                 return mMyEMSLUtilities.AddFileToDownloadQueue(sourceFilePath);
@@ -1725,7 +1671,6 @@ namespace AnalysisManagerBase
             }
 
             return false;
-
         }
 
         /// <summary>
@@ -1738,7 +1683,6 @@ namespace AnalysisManagerBase
         /// <remarks>If createStoragePathInfoOnly is true and the source file matches the target file, the hash is not recomputed</remarks>
         private bool RetrieveMzXMLFileVerifyHash(FileSystemInfo sourceFile, string hashCheckFilePath, bool createStoragePathInfoOnly)
         {
-
             string targetFilePath;
             bool computeHash;
 
@@ -1777,7 +1721,6 @@ namespace AnalysisManagerBase
                     // Delete the local file to force it to be re-generated
                     File.Delete(targetFilePath);
                 }
-
             }
             catch (Exception)
             {
@@ -1798,7 +1741,6 @@ namespace AnalysisManagerBase
             }
 
             return false;
-
         }
 
         /// <summary>
@@ -1809,7 +1751,6 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public bool RetrieveOutFiles(bool unConcatenate)
         {
-
             // Retrieve zipped OUT file
             var zippedFileName = DatasetName + "_out.zip";
             var zippedDirectoryName = FindDataFile(zippedFileName);
@@ -1863,7 +1804,6 @@ namespace AnalysisManagerBase
             }
 
             return true;
-
         }
 
         /// <summary>
@@ -1875,13 +1815,11 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public bool RetrieveScanStatsFiles(bool createStoragePathInfoOnly)
         {
-
             return RetrieveScanAndSICStatsFiles(
                 retrieveSICStatsFile: false,
                 createStoragePathInfoOnly: createStoragePathInfoOnly,
                 retrieveScanStatsFile: true,
                 retrieveScanStatsExFile: true);
-
         }
 
         /// <summary>
@@ -1895,14 +1833,12 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public bool RetrieveScanStatsFiles(bool createStoragePathInfoOnly, bool retrieveScanStatsFile, bool retrieveScanStatsExFile)
         {
-
             const bool retrieveSICStatsFile = false;
             return RetrieveScanAndSICStatsFiles(
                 retrieveSICStatsFile,
                 createStoragePathInfoOnly,
                 retrieveScanStatsFile,
                 retrieveScanStatsExFile);
-
         }
 
         /// <summary>
@@ -1921,7 +1857,6 @@ namespace AnalysisManagerBase
             bool retrieveScanStatsFile,
             bool retrieveScanStatsExFile)
         {
-
             var nonCriticalFileSuffixes = new List<string>();
             const bool RETRIEVE_REPORTERIONS_FILE = false;
 
@@ -1932,7 +1867,6 @@ namespace AnalysisManagerBase
                 retrieveScanStatsExFile,
                 RETRIEVE_REPORTERIONS_FILE,
                 nonCriticalFileSuffixes);
-
         }
 
         /// <summary>
@@ -1958,7 +1892,6 @@ namespace AnalysisManagerBase
             long bestScanStatsFileTransactionID = 0;
 
             const int MAX_ATTEMPTS = 1;
-
 
             var requiredFileSuffixes = new List<string>();
 
@@ -2087,7 +2020,6 @@ namespace AnalysisManagerBase
                 retrieveScanStatsExFile: retrieveScanStatsExFile,
                 retrieveReporterIonsFile: retrieveReporterIonsFile,
                 nonCriticalFileSuffixes: nonCriticalFileSuffixes);
-
         }
 
         /// <summary>
@@ -2110,7 +2042,6 @@ namespace AnalysisManagerBase
             bool retrieveReporterIonsFile,
             List<string> nonCriticalFileSuffixes)
         {
-
             const int maxCopyAttempts = 2;
 
             // Copy the MASIC files from the MASIC results directory
@@ -2172,7 +2103,6 @@ namespace AnalysisManagerBase
                 // All files have been found
                 // The calling process should download them using ProcessMyEMSLDownloadQueue()
                 return true;
-
             }
 
             var masicResultsDirectory = new DirectoryInfo(masicResultsDirPath);
@@ -2233,12 +2163,10 @@ namespace AnalysisManagerBase
 
             // All files successfully copied
             return true;
-
         }
 
         private bool RetrieveSICFileMyEMSL(string fileToFind, string sicDirectoryName, IReadOnlyCollection<string> nonCriticalFileSuffixes)
         {
-
             var matchingMyEMSLFiles = mMyEMSLUtilities.FindFiles(fileToFind, sicDirectoryName, DatasetName, recurse: false);
 
             if (matchingMyEMSLFiles.Count > 0)
@@ -2249,7 +2177,6 @@ namespace AnalysisManagerBase
                 }
 
                 mMyEMSLUtilities.AddFileToDownloadQueue(matchingMyEMSLFiles.First().FileInfo);
-
             }
             else
             {
@@ -2263,7 +2190,6 @@ namespace AnalysisManagerBase
             }
 
             return true;
-
         }
 
         private bool RetrieveSICFileUNC(
@@ -2273,7 +2199,6 @@ namespace AnalysisManagerBase
             int maxCopyAttempts,
             IReadOnlyCollection<string> nonCriticalFileSuffixes)
         {
-
             var sourceFile = new FileInfo(Path.Combine(masicResultsDirectoryPath, fileToFind));
 
             if (mDebugLevel >= 3)
@@ -2320,7 +2245,6 @@ namespace AnalysisManagerBase
             }
 
             return true;
-
         }
 
         /// <summary>
@@ -2363,7 +2287,6 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public bool RetrieveSpectra(string rawDataType, bool createStoragePathInfoOnly, int maxAttempts)
         {
-
             var success = false;
             var storagePath = mJobParams.GetParam("DatasetStoragePath");
 
@@ -2452,12 +2375,10 @@ namespace AnalysisManagerBase
                     // rawDataType is not recognized or not supported by this function
                     if (rawDataTypeEnum == clsAnalysisResources.eRawDataTypeConstants.Unknown)
                     {
-
                         OnErrorEvent("Invalid data type specified: " + rawDataType);
                     }
                     else
                     {
-
                         OnErrorEvent("Data type " + rawDataType + " is not supported by the RetrieveSpectra function");
                     }
                     break;
@@ -2509,7 +2430,6 @@ namespace AnalysisManagerBase
             bool createStoragePathInfoOnly,
             List<string> fileNamesToSkip)
         {
-
             // Copies a data directory ending in directoryExtension to the working directory
 
             // Find the instrument data directory (e.g. Dataset.D or Dataset.Raw) in the dataset directory
@@ -2556,9 +2476,7 @@ namespace AnalysisManagerBase
                     }
 
                     mFileCopyUtilities.CopyDirectory(sourceDirectory.FullName, destinationDirPath, fileNamesToSkip);
-
                 }
-
             }
             catch (Exception ex)
             {
@@ -2568,7 +2486,6 @@ namespace AnalysisManagerBase
 
             // If we get here, all is fine
             return true;
-
         }
 
         /// <summary>
@@ -2581,7 +2498,6 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public bool RetrieveBrukerMALDIImagingFolders(bool unzipOverNetwork)
         {
-
             const string ZIPPED_BRUKER_IMAGING_SECTIONS_FILE_MASK = "*R*X*.zip";
 
             var chameleonCachedDataDirPath= mMgrParams.GetParam("ChameleonCachedDataFolder");
@@ -2597,7 +2513,6 @@ namespace AnalysisManagerBase
             {
                 if (string.IsNullOrEmpty(chameleonCachedDataDirPath))
                 {
-
                     OnErrorEvent("Chameleon cached data directory not defined; unable to unzip MALDI imaging data");
                     return false;
                 }
@@ -2606,7 +2521,6 @@ namespace AnalysisManagerBase
                 chameleonCachedDataDir = new DirectoryInfo(chameleonCachedDataDirPath);
                 if (!chameleonCachedDataDir.Exists)
                 {
-
                     OnErrorEvent("Chameleon cached data directory does not exist: " + chameleonCachedDataDir.FullName);
                     return false;
                 }
@@ -2622,24 +2536,20 @@ namespace AnalysisManagerBase
                         {
                             if (mDebugLevel >= 2)
                             {
-
                                 OnDebugEvent("Deleting old dataset subdirectory from chameleon cached data directory: " + subDirectory.FullName);
                             }
 
                             if (mMgrParams.ManagerName.ToLower().Contains("monroe"))
                             {
-
                                 OnDebugEvent(" Skipping delete since this is a development computer");
                             }
                             else
                             {
                                 subDirectory.Delete(true);
                             }
-
                         }
                         catch (Exception ex)
                         {
-
                             OnErrorEvent("Error deleting cached subdirectory " + subDirectory.FullName, ex);
                             return false;
                         }
@@ -2654,11 +2564,9 @@ namespace AnalysisManagerBase
                         misFile.Delete();
                     }
                 }
-
             }
             catch (Exception ex)
             {
-
                 OnErrorEvent("Error cleaning out old data from the Chameleon cached data directory", ex);
                 return false;
             }
@@ -2693,7 +2601,6 @@ namespace AnalysisManagerBase
 
                     if (!clsGlobal.IsMatch(Path.GetFileName(misFiles[0]), imagingSeqFilePathFinal))
                     {
-
                         OnDebugEvent(string.Format("Note: Renaming .mis file (ImagingSequence file) from {0} to {1}",
                                      Path.GetFileName(misFiles[0]),
                                      Path.GetFileName(imagingSeqFilePathFinal)));
@@ -2709,7 +2616,6 @@ namespace AnalysisManagerBase
             }
             catch (Exception ex)
             {
-
                 OnErrorEvent("Error obtaining ImagingSequence (.mis) file", ex);
                 return false;
             }
@@ -2764,7 +2670,6 @@ namespace AnalysisManagerBase
 
                     foreach (var entry in remoteZipFile.Entries)
                     {
-
                         if (!entry.IsDirectory)
                         {
                             var pathToCheck = Path.Combine(unzipDirPathBase, entry.FileName.Replace('/', '\\'));
@@ -2780,7 +2685,6 @@ namespace AnalysisManagerBase
                     if (!unzipFile)
                         continue;
 
-
                     // Unzip the file to the Chameleon cached data directory
                     // If unzipOverNetwork=True, we want to copy the file locally first
 
@@ -2791,7 +2695,6 @@ namespace AnalysisManagerBase
                     }
                     else
                     {
-
                         try
                         {
                             // Copy the file to the work directory on the local computer
@@ -2815,11 +2718,9 @@ namespace AnalysisManagerBase
                                 OnErrorEvent("Error copying Zip file; unable to process MALDI imaging data");
                                 return false;
                             }
-
                         }
                         catch (Exception ex)
                         {
-
                             OnErrorEvent("Error copying zipped instrument data, file " + zipFilePathRemote, ex);
                             return false;
                         }
@@ -2839,11 +2740,9 @@ namespace AnalysisManagerBase
 
                             zipFile.ExtractAll(unzipDirPathBase, Ionic.Zip.ExtractExistingFileAction.DoNotOverwrite);
                         }
-
                     }
                     catch (Exception ex)
                     {
-
                         OnErrorEvent("Error extracting zipped instrument data, file " + zipFilePathToExtract, ex);
                         return false;
                     }
@@ -2881,13 +2780,10 @@ namespace AnalysisManagerBase
                             clsGlobal.IdleLoop(0.5);
                         }
                     }
-
                 }
-
             }
             catch (Exception ex)
             {
-
                 OnErrorEvent("Error extracting zipped instrument data from " + zipFilePathRemote, ex);
                 return false;
             }
@@ -2903,7 +2799,6 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         private bool RetrieveSFolders(bool createStoragePathInfoOnly, int maxAttempts)
         {
-
             try
             {
                 // First Check for the existence of a 0.ser directory
@@ -2948,7 +2843,6 @@ namespace AnalysisManagerBase
 
                         return true;
                     }
-
                 }
 
                 // If the 0.ser directory does not exist, unzip the zipped s-folders
@@ -3041,7 +2935,6 @@ namespace AnalysisManagerBase
                         return false;
                     }
                 }
-
             }
             catch (Exception ex)
             {
@@ -3051,7 +2944,6 @@ namespace AnalysisManagerBase
 
             // Got to here, so everything must have worked
             return true;
-
         }
 
         /// <summary>
@@ -3063,7 +2955,6 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         private bool SafeToIgnore(string fileName, IReadOnlyCollection<string> nonCriticalFileSuffixes)
         {
-
             if (nonCriticalFileSuffixes != null)
             {
                 foreach (var suffix in nonCriticalFileSuffixes)
@@ -3074,11 +2965,9 @@ namespace AnalysisManagerBase
                         return true;
                     }
                 }
-
             }
 
             return false;
-
         }
 
         /// <summary>
@@ -3103,7 +2992,6 @@ namespace AnalysisManagerBase
 
                 if (zipFilePath == null)
                 {
-
                     OnErrorEvent(callingFunctionName + " called UnzipFileStart with an empty file path");
                     return false;
                 }
@@ -3133,7 +3021,6 @@ namespace AnalysisManagerBase
                 var success = mDotNetZipTools.UnzipFile(zipFilePath, outputDirectoryPath);
 
                 return success;
-
             }
             catch (Exception ex)
             {

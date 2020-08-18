@@ -9,7 +9,6 @@ using System.Collections.Generic;
 
 namespace AnalysisManagerBase
 {
-
     #region "Enums"
 
     /// <summary>
@@ -119,7 +118,6 @@ namespace AnalysisManagerBase
     /// <remarks>Implemented in clsAnalysisJob</remarks>
     public interface IJobParams
     {
-
         #region "Properties"
 
         /// <summary>

@@ -16,7 +16,6 @@ using System.Xml;
 
 namespace AnalysisManagerBase
 {
-
     /// <summary>
     /// Provides tools for creating and updating an analysis status file
     /// </summary>
@@ -29,7 +28,6 @@ namespace AnalysisManagerBase
     /// </remarks>
     public class clsStatusFile : EventNotifier, IStatusFile
     {
-
         #region "Module variables"
 
         /// <summary>
@@ -95,7 +93,6 @@ namespace AnalysisManagerBase
 
                 return mBrokerDBLogger.DBConnectionString;
             }
-
         }
 
         /// <summary>
@@ -110,7 +107,6 @@ namespace AnalysisManagerBase
 
                 return mBrokerDBLogger.DBStatusUpdateIntervalMinutes;
             }
-
         }
 
         /// <summary>
@@ -426,7 +422,6 @@ namespace AnalysisManagerBase
             {
                 // Ignore errors here
             }
-
         }
 
         /// <summary>
@@ -531,7 +526,6 @@ namespace AnalysisManagerBase
 
             // Unknown enum
             return "Unknown Mgr Status";
-
         }
 
         /// <summary>
@@ -542,13 +536,11 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         private string ConvertTaskStatusToString(EnumTaskStatus statusEnum)
         {
-
             if (mTaskStatusMap.TryGetValue(statusEnum, out var statusText))
                 return statusText;
 
             // Unknown enum
             return "Unknown Task Status";
-
         }
 
         /// <summary>
@@ -559,13 +551,11 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         private string ConvertTaskStatusDetailToString(EnumTaskStatusDetail statusEnum)
         {
-
             if (mTaskStatusDetailMap.TryGetValue(statusEnum, out var statusText))
                 return statusText;
 
             // Unknown enum
             return "Unknown Task Status Detail";
-
         }
 
         private void DefineEnumToStringMapping(
@@ -573,7 +563,6 @@ namespace AnalysisManagerBase
             IDictionary<EnumTaskStatus, string> taskStatusMap,
             IDictionary<EnumTaskStatusDetail, string> taskStatusDetailMap)
         {
-
             mgrStatusMap.Clear();
             mgrStatusMap.Add(EnumMgrStatus.DISABLED_LOCAL, "Disabled Local");
             mgrStatusMap.Add(EnumMgrStatus.DISABLED_MC, "Disabled MC");
@@ -596,7 +585,6 @@ namespace AnalysisManagerBase
             taskStatusDetailMap.Add(EnumTaskStatusDetail.RETRIEVING_RESOURCES, "Retrieving Resources");
             taskStatusDetailMap.Add(EnumTaskStatusDetail.RUNNING_TOOL, "Running Tool");
             taskStatusDetailMap.Add(EnumTaskStatusDetail.CLOSING, "Closing");
-
         }
 
         /// <summary>
@@ -721,9 +709,7 @@ namespace AnalysisManagerBase
                     var msg = "Error in LogStatusToMessageQueue: " + ex.Message;
                     OnErrorEvent(msg, ex);
                 }
-
             }
-
         }
 
         /// <summary>
@@ -821,7 +807,6 @@ namespace AnalysisManagerBase
 
         private void StoreNewErrorMessage(string errorMessage, bool clearExistingMessages)
         {
-
             if (clearExistingMessages)
             {
                 if (errorMessage == null)
@@ -840,7 +825,7 @@ namespace AnalysisManagerBase
                 {
                     if (mRecentErrorMessageCount < MAX_ERROR_MESSAGE_COUNT_TO_CACHE)
                     {
-                        mRecentErrorMessageCount += 1;
+                        mRecentErrorMessageCount++;
                     }
 
                     // Shift each of the entries by one
@@ -853,7 +838,6 @@ namespace AnalysisManagerBase
                     mRecentErrorMessages[0] = errorMessage;
                 }
             }
-
         }
 
         /// <summary>
@@ -880,7 +864,7 @@ namespace AnalysisManagerBase
                         continue;
 
                     mRecentErrorMessages[mRecentErrorMessageCount] = errorMsg;
-                    mRecentErrorMessageCount += 1;
+                    mRecentErrorMessageCount++;
                 }
 
                 if (mRecentErrorMessageCount == 0)
@@ -979,7 +963,6 @@ namespace AnalysisManagerBase
             bool forceLogToBrokerDB = false,
             bool usePerformanceCounters = true)
         {
-
             var runTimeHours = GetRunTime();
             WriteStatusFile(this, lastUpdate, processId, cpuUtilization, freeMemoryMB, runTimeHours, true, forceLogToBrokerDB);
 
@@ -1024,7 +1007,6 @@ namespace AnalysisManagerBase
             bool writeToDisk,
             bool forceLogToBrokerDB = false)
         {
-
             string xmlText;
 
             try
@@ -1199,7 +1181,6 @@ namespace AnalysisManagerBase
 
                 return xmlText;
             }
-
         }
 
         private void WriteStatusFileToDisk(string xmlText)
@@ -1299,12 +1280,11 @@ namespace AnalysisManagerBase
                 mWritingErrorCountSaved = 0;
 
                 success = true;
-
             }
             catch (Exception ex)
             {
                 // Increment the error counter
-                mWritingErrorCountSaved += 1;
+                mWritingErrorCountSaved++;
 
                 if (mWritingErrorCountSaved >= WRITE_FAILURE_LOG_THRESHOLD && logWarning)
                 {
@@ -1320,7 +1300,6 @@ namespace AnalysisManagerBase
             }
 
             return success;
-
         }
 
         /// <summary>
@@ -1344,7 +1323,6 @@ namespace AnalysisManagerBase
             StoreRecentJobInfo(jobInfo);
 
             WriteStatusFile(forceLogToBrokerDB, false);
-
         }
 
         /// <summary>

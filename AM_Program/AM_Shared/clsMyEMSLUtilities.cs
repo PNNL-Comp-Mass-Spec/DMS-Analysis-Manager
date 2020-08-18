@@ -13,7 +13,6 @@ namespace AnalysisManagerBase
     /// </summary>
     public class clsMyEMSLUtilities : EventNotifier
     {
-
         /// <summary>
         /// MyEMSL path flag
         /// </summary>
@@ -142,7 +141,6 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public static string AddFileToMyEMSLDirectoryPath(string myEmslDirectoryPath, string fileName)
         {
-
             var myEMSLFileID = DatasetInfoBase.ExtractMyEMSLFileID(myEmslDirectoryPath, out var directoryPathClean);
 
             var filePath = Path.Combine(directoryPathClean, fileName);
@@ -186,7 +184,6 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public bool AddFileToDownloadQueue(string encodedFilePath, bool unzipRequired = false)
         {
-
             var myEMSLFileID = DatasetInfoBase.ExtractMyEMSLFileID(encodedFilePath);
 
             if (myEMSLFileID <= 0)
@@ -255,7 +252,6 @@ namespace AnalysisManagerBase
         /// <remarks>subdirectoryName can contain a partial path, for example 2013_09_10_DPB_Unwashed_Media_25um.d\2013_09_10_In_1sec_1MW.m</remarks>
         public List<DatasetDirectoryOrFileInfo> FindFiles(string fileName, string subdirectoryName, string datasetName, bool recurse)
         {
-
             // Make sure the dataset name is being tracked by mMyEMSLDatasetListInfo
             AddDataset(datasetName);
 
@@ -297,12 +293,10 @@ namespace AnalysisManagerBase
             AllFoundMyEMSLFiles.AddRange(filesToAdd);
 
             return mRecentlyFoundMyEMSLFiles;
-
         }
 
         private bool GetCachedArchivedFileInfo(long myEMSLFileID, out ArchivedFileInfo matchingFileInfo)
         {
-
             matchingFileInfo = null;
 
             var fileInfoQuery = (from item in mRecentlyFoundMyEMSLFiles where item.FileID == myEMSLFileID select item.FileInfo).ToList();
@@ -325,7 +319,6 @@ namespace AnalysisManagerBase
         /// <remarks>Returns True if the download queue is empty</remarks>
         public bool ProcessMyEMSLDownloadQueue(string downloadDirectoryPath, Downloader.DownloadLayout directoryLayout)
         {
-
             if (mMyEMSLDatasetListInfo.FilesToDownload.Count == 0)
             {
                 // Nothing to download; that's OK
@@ -348,15 +341,13 @@ namespace AnalysisManagerBase
             }
 
             return false;
-
         }
 
         #region "MyEMSL Event Handlers"
 
-
         private void MyEMSLDatasetListInfo_MyEMSLOffline(string message)
         {
-            mMyEMSLConnectionErrorCount += 1;
+            mMyEMSLConnectionErrorCount++;
 
             if (mMyEMSLConnectionErrorCount < 3)
                 return;
@@ -364,7 +355,7 @@ namespace AnalysisManagerBase
             // Disable contacting MyEMSL for the next 15 minutes (or longer if mMyEMSLDisableCount is > 1)
             mMyEMSLAutoDisabled = true;
 
-            mMyEMSLDisableCount += 1;
+            mMyEMSLDisableCount++;
             mMyEMSLReEnableTime = DateTime.UtcNow.AddMinutes(15 * mMyEMSLDisableCount);
             OnWarningEvent("Disabling MyEMSL until " + mMyEMSLReEnableTime.ToLocalTime().ToString(DATETIME_FORMAT_NO_SECONDS));
         }
@@ -401,7 +392,6 @@ namespace AnalysisManagerBase
                     mDotNetZipTools.GUnzipFile(fileToUnzip.FullName, e.DownloadDirectoryPath);
                     MostRecentUnzippedFiles.AddRange(mDotNetZipTools.MostRecentUnzippedFiles);
                 }
-
             }
 
             FileDownloaded?.Invoke(sender, e);
@@ -433,7 +423,5 @@ namespace AnalysisManagerBase
                 return GetHashCodeForItem(obj);
             }
         }
-
     }
-
 }

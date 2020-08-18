@@ -12,7 +12,6 @@ using System.Linq;
 // Last updated 02/03/2016
 //*********************************************************************************************************
 
-
 namespace AnalysisManagerBase
 {
     /// <summary>
@@ -20,7 +19,6 @@ namespace AnalysisManagerBase
     /// </summary>
     public class clsMemoryUsageLogger : EventNotifier
     {
-
         #region "Constants and Enums"
 
         private const char COL_SEP = '\t';
@@ -112,7 +110,6 @@ namespace AnalysisManagerBase
             MinimumLogIntervalMinutes = minLogIntervalMinutes;
 
             mLastWriteTime = DateTime.MinValue;
-
         }
 
         /// <summary>
@@ -165,7 +162,6 @@ namespace AnalysisManagerBase
             {
                 OnErrorEvent("Exception archiving old log files", ex);
             }
-
         }
 
         /// <summary>
@@ -330,7 +326,6 @@ namespace AnalysisManagerBase
                 OnErrorEvent("Exception determining memory usage of the current process", ex);
                 return 0;
             }
-
         }
 
         /// <summary>
@@ -375,7 +370,6 @@ namespace AnalysisManagerBase
             }
 
             mPerfCountersInitialized = true;
-
         }
 
         /// <summary>
@@ -411,7 +405,6 @@ namespace AnalysisManagerBase
 
                 using (var writer = new StreamWriter(new FileStream(logFilePath, FileMode.Append, FileAccess.Write, FileShare.Read)))
                 {
-
                     if (writeHeader)
                     {
                         writer.WriteLine(GetMemoryUsageHeader());
@@ -421,7 +414,6 @@ namespace AnalysisManagerBase
                 }
 
                 ArchiveOldLogs(logFilePath);
-
             }
             catch
             {
@@ -435,9 +427,7 @@ namespace AnalysisManagerBase
                 {
                     OnWarningEvent(msg + " in folder " + LogFolderPath);
                 }
-
             }
-
         }
 
         #endregion

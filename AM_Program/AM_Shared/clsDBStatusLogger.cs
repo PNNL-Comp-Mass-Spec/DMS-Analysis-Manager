@@ -11,16 +11,13 @@ using PRISMDatabaseUtils;
 //
 //*********************************************************************************************************
 
-
 namespace AnalysisManagerBase
 {
-
     /// <summary>
     /// Status logger
     /// </summary>
     public class clsDBStatusLogger : EventNotifier
     {
-
         #region "Structures"
 
         /// <summary>
@@ -243,7 +240,6 @@ namespace AnalysisManagerBase
         /// <remarks>This function is valid, but the primary way that we track status is when WriteStatusFile calls LogStatusToMessageQueue</remarks>
         public void LogStatus(udtStatusInfoType statusInfo, bool forceLogToDB)
         {
-
             try
             {
                 if (string.IsNullOrEmpty(DBConnectionString))
@@ -298,7 +294,6 @@ namespace AnalysisManagerBase
 
                 // Execute the SP
                 PipelineDBProcedureExecutor.ExecuteSP(cmd);
-
             }
             catch (Exception ex)
             {

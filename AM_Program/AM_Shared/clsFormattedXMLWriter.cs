@@ -17,7 +17,6 @@ namespace AnalysisManagerBase
     /// </summary>
     public class clsFormattedXMLWriter
     {
-
         #region "Properties"
 
         /// <summary>
@@ -37,7 +36,6 @@ namespace AnalysisManagerBase
         /// <returns></returns>
         public bool WriteXMLToFile(string xmlText, string outputFilePath)
         {
-
             XmlDocument doc;
 
             ErrMsg = "";
@@ -47,7 +45,6 @@ namespace AnalysisManagerBase
                 // Instantiate doc
                 doc = new XmlDocument();
                 doc.LoadXml(xmlText);
-
             }
             catch (Exception ex)
             {
@@ -70,14 +67,12 @@ namespace AnalysisManagerBase
                 }
 
                 return true;
-
             }
             catch (Exception ex)
             {
                 ErrMsg = "Error writing XML to file " + outputFilePath + ": " + ex.Message;
                 return false;
             }
-
         }
         #endregion
 

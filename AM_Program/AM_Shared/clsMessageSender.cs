@@ -6,14 +6,12 @@ using PRISM;
 
 namespace AnalysisManagerBase
 {
-
     /// <summary>
     /// Sends messages to ActiveMQ message broker using NMS client library
     /// </summary>
     /// <remarks></remarks>
     class clsMessageSender
     {
-
         private readonly string topicName;
         private readonly string brokerUri;
 
@@ -134,7 +132,7 @@ namespace AnalysisManagerBase
                     clsGlobal.IdleLoop(3);
                 }
 
-                retriesRemaining -= 1;
+                retriesRemaining--;
             }
 
             // If we get here, we never could connect to the message broker

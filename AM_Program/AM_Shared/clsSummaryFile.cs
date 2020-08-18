@@ -11,7 +11,6 @@ using System.IO;
 //
 //*********************************************************************************************************
 
-
 namespace AnalysisManagerBase
 {
     /// <summary>
@@ -19,7 +18,6 @@ namespace AnalysisManagerBase
     /// </summary>
     public class clsSummaryFile
     {
-
         #region "Module Variables"
 
         private readonly List<string> mLines = new List<string>();
@@ -61,7 +59,6 @@ namespace AnalysisManagerBase
             {
                 return false;
             }
-
         }
 
         /// <summary>
@@ -77,5 +74,4 @@ namespace AnalysisManagerBase
         #endregion
 
     }
-
 }

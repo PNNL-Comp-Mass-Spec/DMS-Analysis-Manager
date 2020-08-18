@@ -5,12 +5,12 @@ using System.IO;
 
 namespace AnalysisManagerBase
 {
-
     /// <summary>
     /// DTA utilities
     /// </summary>
     public class clsCDTAUtilities : EventNotifier
     {
+        // Ignore Spelling: dta
 
         private CondenseCDTAFile.clsCDTAFileCondenser mCDTACondenser;
 
@@ -28,7 +28,6 @@ namespace AnalysisManagerBase
             bool createIndexFile = true
             )
         {
-
             try
             {
                 OnStatusEvent(string.Format("Converting {0} to a .mgf file", cdtaFile.Name));
@@ -72,7 +71,6 @@ namespace AnalysisManagerBase
                     OnErrorEvent("A .mgf file was not created using the _dta.txt file: " + dtaToMGF.GetErrorMessage());
                     return false;
                 }
-
             }
             catch (Exception ex)
             {
@@ -91,7 +89,6 @@ namespace AnalysisManagerBase
         /// <returns>True if success; false if an error</returns>
         public bool RemoveSparseSpectra(string workDir, string inputFileName)
         {
-
             const int MINIMUM_ION_COUNT = 3;
 
             var parentIonLineIsNext = false;
@@ -101,7 +98,6 @@ namespace AnalysisManagerBase
             var spectraCountRemoved = 0;
 
             var sbCurrentSpectrum = new System.Text.StringBuilder();
-
 
             try
             {
@@ -131,11 +127,9 @@ namespace AnalysisManagerBase
                 // Open the input file
                 using (var reader = new StreamReader(new FileStream(originalFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
                 {
-
                     // Create the output file
                     using (var writer = new StreamWriter(new FileStream(updatedFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read)))
                     {
-
                         while (!reader.EndOfStream)
                         {
                             var dataLine = reader.ReadLine();
@@ -146,7 +140,6 @@ namespace AnalysisManagerBase
                             }
                             else
                             {
-
                                 if (dataLine.StartsWith("="))
                                 {
                                     // DTA header line, for example:
@@ -161,15 +154,14 @@ namespace AnalysisManagerBase
                                         }
                                         else
                                         {
-                                            spectraCountRemoved += 1;
+                                            spectraCountRemoved++;
                                         }
                                         sbCurrentSpectrum.Clear();
                                         ionCount = 0;
                                     }
 
                                     parentIonLineIsNext = true;
-                                    spectraParsed += 1;
-
+                                    spectraParsed++;
                                 }
                                 else if (parentIonLineIsNext)
                                 {
@@ -181,11 +173,10 @@ namespace AnalysisManagerBase
                                 {
                                     // Line is not a header or the parent ion line
                                     // Assume a data line
-                                    ionCount += 1;
+                                    ionCount++;
                                 }
 
                                 sbCurrentSpectrum.AppendLine(dataLine);
-
                             }
                         }
 
@@ -198,10 +189,9 @@ namespace AnalysisManagerBase
                             }
                             else
                             {
-                                spectraCountRemoved += 1;
+                                spectraCountRemoved++;
                             }
                         }
-
                     }
                 }
 
@@ -216,7 +206,6 @@ namespace AnalysisManagerBase
                 }
 
                 FinalizeCDTAValidation(spectraRemoved, replaceSourceFile, deleteSourceFileIfUpdated, originalFile, updatedFile);
-
             }
             catch (Exception ex)
             {
@@ -225,7 +214,6 @@ namespace AnalysisManagerBase
             }
 
             return true;
-
         }
 
         /// <summary>
@@ -265,7 +253,7 @@ namespace AnalysisManagerBase
                     {
                         oldFilePath += addon.ToString();
                     }
-                    addon += 1;
+                    addon++;
                 } while (File.Exists(oldFilePath));
 
                 originalFile.MoveTo(oldFilePath);
@@ -285,9 +273,7 @@ namespace AnalysisManagerBase
                 ProgRunner.GarbageCollectNow();
 
                 updatedFile.Delete();
-
             }
-
         }
 
         /// <summary>
@@ -307,7 +293,6 @@ namespace AnalysisManagerBase
         public bool ValidateCDTAFileScanAndCSTags(string sourceFilePath, bool replaceSourceFile, bool deleteSourceFileIfUpdated,
                                                   string outputFilePath)
         {
-
             var parentIonLineIsNext = false;
             var parentIonLineUpdated = false;
 
@@ -351,11 +336,9 @@ namespace AnalysisManagerBase
                 // Open the input file
                 using (var reader = new StreamReader(new FileStream(originalFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
                 {
-
                     // Create the output file
                     using (var writer = new StreamWriter(new FileStream(updatedFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read)))
                     {
-
                         while (!reader.EndOfStream)
                         {
                             var dataLine = reader.ReadLine();
@@ -380,7 +363,6 @@ namespace AnalysisManagerBase
                                 dtaTextReader.ExtractScanInfoFromDtaHeader(dtaHeader, out scanNumberStart, out _, out _, out charge);
 
                                 parentIonLineIsNext = true;
-
                             }
                             else if (parentIonLineIsNext)
                             {
@@ -406,26 +388,22 @@ namespace AnalysisManagerBase
                                 }
 
                                 parentIonLineIsNext = false;
-
                             }
 
                             writer.WriteLine(dataLine);
                         }
-
                     }
                 }
 
                 FinalizeCDTAValidation(parentIonLineUpdated, replaceSourceFile, deleteSourceFileIfUpdated, originalFile, updatedFile);
 
                 return true;
-
             }
             catch (Exception ex)
             {
                 OnErrorEvent("Exception in ValidateCDTAFileScanAndCSTags: " + ex.Message);
                 return false;
             }
-
         }
 
         /// <summary>
@@ -492,7 +470,6 @@ namespace AnalysisManagerBase
                     {
                         OnErrorEvent("Old _DTA.txt file not found:" + cdtaFile.FullName + "; cannot delete");
                     }
-
                 }
                 catch (Exception ex)
                 {
@@ -501,18 +478,15 @@ namespace AnalysisManagerBase
                 }
 
                 return true;
-
             }
             catch (Exception ex)
             {
                 OnErrorEvent("Exception in ValidateCDTAFileSize: " + ex.Message);
                 return false;
             }
-
         }
 
         #region "Event Handlers"
-
 
         private void CDTACondenser_ProgressChanged(string taskDescription, float percentComplete)
         {
@@ -522,5 +496,4 @@ namespace AnalysisManagerBase
         #endregion
 
     }
-
 }

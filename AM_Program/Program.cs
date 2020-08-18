@@ -24,7 +24,7 @@ namespace AnalysisManagerProg
 {
     static class Program
     {
-        public const string PROGRAM_DATE = "August 12, 2020";
+        public const string PROGRAM_DATE = "August 18, 2020";
 
         private static bool mTraceMode;
 
@@ -37,7 +37,7 @@ namespace AnalysisManagerProg
             var osVersionInfo = new OSVersionInfo();
 
             var osVersion = osVersionInfo.GetOSVersion();
-            if (!osVersion.ToLower().Contains("windows"))
+            if (osVersion.IndexOf("windows", StringComparison.OrdinalIgnoreCase) < 0)
             {
                 // Running on Linux
                 // Auto-enable offline mode
@@ -117,7 +117,6 @@ namespace AnalysisManagerProg
                         // testHarness.TestCopyToLocalWithHashCheck();
 
                         testHarness.TestRunQuery();
-
                     }
                     catch (Exception ex)
                     {

@@ -12,7 +12,6 @@ namespace AnalysisManagerBase
     /// </summary>
     public class clsKeyValueParamFileReader : EventNotifier
     {
-
         /// <summary>
         /// Most recent error message
         /// </summary>
@@ -77,7 +76,6 @@ namespace AnalysisManagerBase
             SortedSet<string> paramNamesToSkip,
             string argumentPrefix)
         {
-
             var sbOptions = new StringBuilder(500);
 
             try
@@ -111,7 +109,6 @@ namespace AnalysisManagerBase
                                                      kvSetting.Key, Path.GetFileName(ParamFilePath)));
                     }
                 }
-
             }
             catch (Exception ex)
             {
@@ -143,7 +140,6 @@ namespace AnalysisManagerBase
             ErrorMessage = errorMessage;
             OnErrorEvent(errorMessage, ex);
         }
-
 
         /// <summary>
         /// Returns true if paramFileEntries contains parameter paramName and the parameter's value is True or a positive integer
@@ -183,7 +179,6 @@ namespace AnalysisManagerBase
         /// <remarks>Values in paramFileEntries will include any comment text</remarks>
         public CloseOutType ParseKeyValueParameterFile(out List<KeyValuePair<string, string>> paramFileEntries)
         {
-
             var result = ParseKeyValueParameterFileWork(out var paramFileLines);
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
@@ -219,7 +214,6 @@ namespace AnalysisManagerBase
 
         private CloseOutType ParseKeyValueParameterFileWork(out List<KeyValueParamFileLine> paramFileLines)
         {
-
             paramFileLines = new List<KeyValueParamFileLine>();
 
             if (string.IsNullOrWhiteSpace(ParamFileName))
@@ -266,8 +260,6 @@ namespace AnalysisManagerBase
                 LogError(errMsg, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-
         }
-
     }
 }

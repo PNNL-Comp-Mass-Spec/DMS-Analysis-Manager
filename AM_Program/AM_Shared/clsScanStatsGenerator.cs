@@ -84,7 +84,6 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public bool GenerateScanStatsFile(string inputFilePath, string outputDirectoryPath, int datasetID)
         {
-
             try
             {
                 MSFileInfoScannerErrorCount = 0;
@@ -124,14 +123,12 @@ namespace AnalysisManagerBase
                     ErrorMessage = ErrorMessage + ": " + msgAddnl;
                 }
                 return false;
-
             }
             catch (Exception ex)
             {
                 ErrorMessage = "Exception in GenerateScanStatsFile: " + ex.Message;
                 return false;
             }
-
         }
 
         private MSFileInfoScannerInterfaces.iMSFileInfoScanner LoadMSFileInfoScanner(string msFileInfoScannerDLLPath)
@@ -159,7 +156,6 @@ namespace AnalysisManagerBase
                             OnStatusEvent(msg);
                         }
                     }
-
                 }
             }
             catch (Exception ex)
@@ -190,9 +186,7 @@ namespace AnalysisManagerBase
         private void MSFileInfoScanner_ErrorEvent(string message, Exception ex)
         {
             ErrorMessage = message;
-            MSFileInfoScannerErrorCount += 1;
+            MSFileInfoScannerErrorCount++;
         }
-
     }
-
 }

@@ -183,7 +183,7 @@ namespace AnalysisManagerExtractionPlugin
                     while (reader.MoveNext())
                     {
 
-                        intPsmCount += 1;
+                        intPsmCount++;
 
                         if (intPsmCount % 100 == 0 && DateTime.UtcNow.Subtract(dtLastProgress).TotalSeconds >= 15)
                         {
@@ -229,7 +229,7 @@ namespace AnalysisManagerExtractionPlugin
 
                         var peptideDescription = "Scan=" + currentPSM.ScanNumberStart + ", charge=" + currentPSM.Charge + ", peptide=" +
                                                  currentPSM.PeptideWithNumericMods;
-                        intErrorCount += 1;
+                        intErrorCount++;
 
                         // Keep track of the 100 largest mass errors
                         if (lstLargestMassErrors.Count < 100)
@@ -297,7 +297,7 @@ namespace AnalysisManagerExtractionPlugin
                         var iterator = 0;
                         foreach (var massError in lstLargestMassErrors)
                         {
-                            iterator += 1;
+                            iterator++;
                             if (iterator >= lstLargestMassErrors.Count / 2.0)
                             {
                                 InformLargeErrorExample(massError);

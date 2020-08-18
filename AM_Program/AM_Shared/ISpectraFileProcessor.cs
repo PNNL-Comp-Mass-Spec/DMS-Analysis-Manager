@@ -53,7 +53,6 @@ namespace AnalysisManagerBase
     /// </summary>
     public interface ISpectraFileProcessor
     {
-
         #region "Properties"
 
         /// <summary>

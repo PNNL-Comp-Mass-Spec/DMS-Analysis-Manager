@@ -8,7 +8,6 @@ namespace AnalysisManagerBase
     /// </summary>
     public class KeyValueParamFileLine
     {
-
         /// <summary>
         /// Line number in the parameter file
         /// </summary>

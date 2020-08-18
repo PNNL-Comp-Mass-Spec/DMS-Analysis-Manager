@@ -181,7 +181,6 @@ namespace AnalysisManagerProg
         /// <remarks></remarks>
         private object LoadObject(string className, string assemblyName)
         {
-
             try
             {
                 // Build instance of tool runner subclass from class name and assembly file name.
@@ -230,7 +229,6 @@ namespace AnalysisManagerProg
                 OnErrorEvent(string.Format("clsPluginLoader.LoadObject(), for class {0}, assembly {1}", className, assemblyName), ex);
                 return null;
             }
-
         }
 
         /// <summary>

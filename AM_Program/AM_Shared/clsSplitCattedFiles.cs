@@ -11,7 +11,6 @@ namespace AnalysisManagerBase
     /// </summary>
     public class clsSplitCattedFiles
     {
-
         #region "Constants"
 
         private const string REGEX_FILE_SEPARATOR = @"^\s*[=]{5,}\s*\""(?<filename>.+)""\s*[=]{5,}\s*$";
@@ -37,7 +36,6 @@ namespace AnalysisManagerBase
             mFileNameParts = new Regex(REGEX_FILE_NAME_PARTS, RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
             mDTAFirstLine = new Regex(REGEX_DTA_FIRST_LINE, RegexOptions.CultureInvariant | RegexOptions.Compiled);
-
         }
 
         /// <summary>
@@ -118,7 +116,6 @@ namespace AnalysisManagerBase
             {
                 using (var reader = new StreamReader(new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
                 {
-
                     while (!reader.EndOfStream)
                     {
                         var dataLine = reader.ReadLine();
@@ -150,7 +147,7 @@ namespace AnalysisManagerBase
                                 fileName = fileSepMatch.Groups["filename"].Value;
                             }
 
-                            fileCounter += 1;
+                            fileCounter++;
                             fileText.Clear();
 
                             if (!reader.EndOfStream)
@@ -161,21 +158,17 @@ namespace AnalysisManagerBase
                             {
                                 dataLine = string.Empty;
                             }
-
                         }
 
                         if (fileCounter > 0)
                         {
                             fileText.Enqueue(dataLine);
                         }
-
                     }
-
                 }
 
                 // Process the data stored in queue fileText, saving to file fileName
                 ProcessSplitFile(ref fileText, fileName, resultsFolder, ref filesToSkip);
-
             }
             catch (Exception ex)
             {
@@ -201,7 +194,6 @@ namespace AnalysisManagerBase
 
             using (var writer = new StreamWriter(new FileStream(Path.Combine(resultsFolder, exportFileName), FileMode.Create, FileAccess.Write, FileShare.Read)))
             {
-
                 if (fileText.Count > 0 && mDTAFirstLine.IsMatch(fileText.Peek()))
                 {
                     var outputLine = fileText.Dequeue();
@@ -226,10 +218,7 @@ namespace AnalysisManagerBase
                     var outputLine = fileText.Dequeue();
                     writer.WriteLine(outputLine);
                 }
-
             }
-
-
         }
 
         /// <summary>
@@ -255,12 +244,11 @@ namespace AnalysisManagerBase
                 {
                     var dataLine = reader.ReadLine();
                     if (dataLine != null && reOutFileSepMatcher.IsMatch(dataLine))
-                        fileCount += 1;
+                        fileCount++;
                 }
             }
 
             mResultsFileCount = fileCount;
         }
-
     }
 }

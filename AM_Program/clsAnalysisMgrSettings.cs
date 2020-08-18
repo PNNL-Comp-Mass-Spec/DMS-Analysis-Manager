@@ -27,7 +27,6 @@ namespace AnalysisManagerProg
     /// </remarks>
     public class clsAnalysisMgrSettings : MgrSettingsDB, IMgrParams
     {
-
         #region "Constants"
 
         const string SP_NAME_ACK_MANAGER_UPDATE = "AckManagerUpdateRequired";
@@ -165,7 +164,6 @@ namespace AnalysisManagerProg
         /// <remarks></remarks>
         public bool LoadSettings(Dictionary<string, string> configFileSettings)
         {
-
             var loadSettingsFromDB = !clsGlobal.OfflineMode;
 
             var success = LoadSettings(configFileSettings, loadSettingsFromDB);
@@ -328,7 +326,6 @@ namespace AnalysisManagerProg
                 }
 
                 return ParseXMLSettings(settingNodes, TraceMode);
-
             }
             catch (Exception ex)
             {
@@ -336,7 +333,6 @@ namespace AnalysisManagerProg
                 ReportError(ErrMsg, ex);
                 return null;
             }
-
         }
 
         /// <summary>

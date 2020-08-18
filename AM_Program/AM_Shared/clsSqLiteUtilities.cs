@@ -12,7 +12,6 @@ namespace AnalysisManagerBase
     [SuppressMessage("ReSharper", "UnusedMember.Global")]
     public class clsSqLiteUtilities
     {
-
         /// <summary>
         /// Clones a database, optionally skipping tables in list tablesToSkip
         /// </summary>
@@ -50,10 +49,8 @@ namespace AnalysisManagerBase
         /// <returns>True if success, false if a problem</returns>
         public bool CloneDB(string sourceDBPath, string targetDBPath, bool appendToExistingDB, List<string> tablesToSkip)
         {
-
             var currentTable = string.Empty;
             var appendingToExistingDB = false;
-
 
             try
             {
@@ -92,7 +89,6 @@ namespace AnalysisManagerBase
 
                         cnTargetDB.Open();
                         var cmdTargetDB = cnTargetDB.CreateCommand();
-
 
                         Dictionary<string, string> dctExistingTables;
                         if (appendingToExistingDB)
@@ -211,8 +207,6 @@ namespace AnalysisManagerBase
         /// <returns></returns>
         public bool CopySqliteTable(string sourceDBPath, string tableName, string targetDBPath)
         {
-
-
             try
             {
                 using (var cnSourceDB = new SQLiteConnection("Data Source = " + sourceDBPath))
@@ -247,7 +241,6 @@ namespace AnalysisManagerBase
 
                         using (var transaction = cnTarget.BeginTransaction())
                         {
-
                             // Create the target table
                             cmdTargetDB.CommandText = tableCreateSql;
                             cmdTargetDB.ExecuteNonQuery();
@@ -313,7 +306,6 @@ namespace AnalysisManagerBase
             out Dictionary<string, string> dctIndexToTableMap,
             string tableNameFilter)
         {
-
             var dctObjects = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             dctIndexToTableMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
