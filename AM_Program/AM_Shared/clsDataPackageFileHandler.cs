@@ -1270,7 +1270,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="dataPkgJob">Data package job info</param>
         /// <param name="retrievalOptions">File retrieval options</param>
-        /// <param name="rawFileRetrievalCommands">Commands to copy .raw files to the local computer (to be placed in a batch file)</param>
+        /// <param name="rawFileRetrievalCommands">Commands to copy .raw files to the local computer (to be placed in batch file RetrieveInstrumentData.bat)</param>
         /// <param name="instrumentDataToRetrieve">Instrument files that need to be copied locally so that an mzXML file can be made</param>
         /// <param name="datasetRawFilePaths">Mapping of dataset name to the remote location of the .raw file</param>
         /// <returns></returns>
@@ -1313,18 +1313,47 @@ namespace AnalysisManagerBase
 
             if (!string.IsNullOrEmpty(rawFilePath))
             {
-                string copyCommand;
+                string copyCommandIfNotExist;
+
                 if (isDirectory)
                 {
                     var fileName = Path.GetFileName(rawFilePath);
-                    copyCommand = "if not exist " + fileName + " copy " + rawFilePath + @" .\" + fileName + " /S /I";
+                    string copyCommand;
+
+                    if (rawFilePath.StartsWith(clsMyEMSLUtilities.MYEMSL_PATH_FLAG))
+                    {
+                        // The path starts with \\MyEMSL
+                        copyCommand = string.Format(
+                            @"C:\DMS_Programs\MyEMSLDownloader\MyEMSLDownloader.exe /Dataset:{0} /Files:{1}",
+                            dataPkgJob.Dataset, fileName);
+                    }
+                    else
+                    {
+                        copyCommand = "copy " + rawFilePath + @" .\" + fileName + " /S /I";
+                    }
+
+                    copyCommandIfNotExist = "if not exist " + fileName + " " + copyCommand;
                 }
                 else
                 {
                     // Make sure the case of the filename matches the case of the dataset name
                     // Also, make sure the extension is lowercase
                     var fileName = dataPkgJob.Dataset + Path.GetExtension(rawFilePath).ToLower();
-                    copyCommand = "if not exist " + fileName + " copy " + rawFilePath + " " + fileName;
+                    string copyCommand;
+
+                    if (rawFilePath.StartsWith(clsMyEMSLUtilities.MYEMSL_PATH_FLAG))
+                    {
+                        // The path starts with \\MyEMSL
+                        copyCommand = string.Format(
+                            @"C:\DMS_Programs\MyEMSLDownloader\MyEMSLDownloader.exe /Dataset:{0} /Files:{1}",
+                            dataPkgJob.Dataset, fileName);
+                    }
+                    else
+                    {
+                        copyCommand = "copy " + rawFilePath + " " + fileName;
+                    }
+
+                    copyCommandIfNotExist = "if not exist " + fileName + " " + copyCommand;
                 }
 
                 rawFileRetrievalCommands.Add(dataPkgJob.DatasetID, copyCommandIfNotExist);
