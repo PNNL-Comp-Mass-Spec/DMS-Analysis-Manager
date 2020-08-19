@@ -59,8 +59,8 @@ namespace AnalysisManagerBase
         /// Delegate for CopyWithLocksComplete
         /// </summary>
         /// <param name="startTimeUtc"></param>
-        /// <param name="destFilePath"></param>
-        public delegate void CopyWithLocksCompleteHandler(DateTime startTimeUtc, string destFilePath);
+        /// <param name="destinationFilePath"></param>
+        public delegate void CopyWithLocksCompleteHandler(DateTime startTimeUtc, string destinationFilePath);
 
         #endregion
 
@@ -86,15 +86,15 @@ namespace AnalysisManagerBase
         /// Copy a folder from one location to another, optionally skipping some files by name
         /// </summary>
         /// <param name="sourceFolderPath">The source directory path</param>
-        /// <param name="destFolderPath">The destination directory path</param>
+        /// <param name="destinationFolderPath">The destination directory path</param>
         /// <param name="fileNamesToSkip">
         /// List of file names to skip when copying the directory (and subdirectories)
         /// Can optionally contain full path names to skip
         /// </param>
-        public void CopyDirectory(string sourceFolderPath, string destFolderPath, List<string> fileNamesToSkip)
+        public void CopyDirectory(string sourceFolderPath, string destinationFolderPath, List<string> fileNamesToSkip)
         {
             OnResetTimestampForQueueWaitTime();
-            mFileTools.CopyDirectory(sourceFolderPath, destFolderPath, fileNamesToSkip);
+            mFileTools.CopyDirectory(sourceFolderPath, destinationFolderPath, fileNamesToSkip);
         }
 
         /// <summary>
@@ -199,7 +199,7 @@ namespace AnalysisManagerBase
                     return mMyEMSLUtilities.AddFileToDownloadQueue(sourceFilePath);
                 }
 
-                var destFilePath = Path.Combine(targetFolderPath, sourceFileName);
+                var destinationFilePath = Path.Combine(targetFolderPath, sourceFileName);
 
                 // Verify source file exists
                 const int HOLDOFF_SECONDS = 1;
@@ -213,10 +213,10 @@ namespace AnalysisManagerBase
                 if (createStoragePathInfoOnly)
                 {
                     // Create a storage path info file
-                    return CreateStoragePathInfoFile(sourceFilePath, destFilePath);
+                    return CreateStoragePathInfoFile(sourceFilePath, destinationFilePath);
                 }
 
-                if (CopyFileWithRetry(sourceFilePath, destFilePath, true, maxCopyAttempts))
+                if (CopyFileWithRetry(sourceFilePath, destinationFilePath, true, maxCopyAttempts))
                 {
                     if (mDebugLevel > 3)
                     {
@@ -298,15 +298,15 @@ namespace AnalysisManagerBase
 
                 var sourceFile = new FileInfo(sourceFilePath);
                 var targetName = datasetName + sourceFile.Extension;
-                var destFilePath = Path.Combine(targetFolderPath, targetName);
+                var destinationFilePath = Path.Combine(targetFolderPath, targetName);
 
                 if (createStoragePathInfoOnly)
                 {
                     // Create a storage path info file
-                    return CreateStoragePathInfoFile(sourceFilePath, destFilePath);
+                    return CreateStoragePathInfoFile(sourceFilePath, destinationFilePath);
                 }
 
-                if (CopyFileWithRetry(sourceFilePath, destFilePath, true, maxCopyAttempts))
+                if (CopyFileWithRetry(sourceFilePath, destinationFilePath, true, maxCopyAttempts))
                 {
                     if (mDebugLevel > 3)
                     {
@@ -343,13 +343,13 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Copies a file with retries in case of failure
         /// </summary>
-        /// <param name="srcFilePath">Full path to source file</param>
-        /// <param name="destFilePath">Full path to destination file</param>
+        /// <param name="sourceFilePath">Full path to source file</param>
+        /// <param name="destinationFilePath">Full path to destination file</param>
         /// <param name="overwrite">TRUE to overwrite existing destination file; FALSE otherwise</param>
         /// <param name="maxCopyAttempts">Maximum number of attempts to make when errors are encountered while copying the file</param>
         /// <returns>TRUE for success; FALSE for error</returns>
         /// <remarks>Logs copy errors</remarks>
-        public bool CopyFileWithRetry(string srcFilePath, string destFilePath, bool overwrite, int maxCopyAttempts)
+        public bool CopyFileWithRetry(string sourceFilePath, string destinationFilePath, bool overwrite, int maxCopyAttempts)
         {
             const int RETRY_HOLDOFF_SECONDS = 15;
 
@@ -365,29 +365,29 @@ namespace AnalysisManagerBase
                     OnResetTimestampForQueueWaitTime();
                     var startTime = DateTime.UtcNow;
 
-                    if (mFileTools.CopyFileUsingLocks(srcFilePath, destFilePath, overwrite))
+                    if (mFileTools.CopyFileUsingLocks(sourceFilePath, destinationFilePath, overwrite))
                     {
-                        OnCopyWithLocksComplete(startTime, destFilePath);
+                        OnCopyWithLocksComplete(startTime, destinationFilePath);
                         return true;
                     }
 
-                    OnErrorEvent("CopyFileUsingLocks returned false copying " + srcFilePath + " to " + destFilePath);
+                    OnErrorEvent("CopyFileUsingLocks returned false copying " + sourceFilePath + " to " + destinationFilePath);
                     return false;
                 }
                 catch (PathTooLongException ex)
                 {
-                    OnErrorEvent("Exception copying file " + srcFilePath + " to " + destFilePath + "; path too long", ex);
+                    OnErrorEvent("Exception copying file " + sourceFilePath + " to " + destinationFilePath + "; path too long", ex);
                     return false;
                 }
                 catch (Exception ex)
                 {
-                    OnErrorEvent("Exception copying file " + srcFilePath + " to " + destFilePath + "; Retry Count = " + retryCount, ex);
+                    OnErrorEvent("Exception copying file " + sourceFilePath + " to " + destinationFilePath + "; Retry Count = " + retryCount, ex);
 
                     retryCount--;
 
-                    if (!overwrite && File.Exists(destFilePath))
+                    if (!overwrite && File.Exists(destinationFilePath))
                     {
-                        OnErrorEvent("Tried to overwrite an existing file when Overwrite = False: " + destFilePath);
+                        OnErrorEvent("Tried to overwrite an existing file when Overwrite = False: " + destinationFilePath);
                         return false;
                     }
 
@@ -404,25 +404,25 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Creates a file at destFilePath but with "_StoragePathInfo.txt" appended to the name
+        /// Creates a file at destinationFilePath but with "_StoragePathInfo.txt" appended to the name
         /// The file's contents is the path given by sourceFilePath
         /// </summary>
         /// <param name="sourceFilePath">The path to write to the StoragePathInfo file</param>
-        /// <param name="destFilePath">The path where the file would have been copied to</param>
+        /// <param name="destinationFilePath">The path where the file would have been copied to</param>
         /// <returns></returns>
         /// <remarks></remarks>
-        public bool CreateStoragePathInfoFile(string sourceFilePath, string destFilePath)
+        public bool CreateStoragePathInfoFile(string sourceFilePath, string destinationFilePath)
         {
             var infoFilePath = string.Empty;
 
             try
             {
-                if (sourceFilePath == null || destFilePath == null)
+                if (sourceFilePath == null || destinationFilePath == null)
                 {
                     return false;
                 }
 
-                infoFilePath = destFilePath + STORAGE_PATH_INFO_FILE_SUFFIX;
+                infoFilePath = destinationFilePath + STORAGE_PATH_INFO_FILE_SUFFIX;
 
                 using (var writer = new StreamWriter(new FileStream(infoFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
@@ -531,10 +531,10 @@ namespace AnalysisManagerBase
         /// Raise event CopyWithLocksComplete
         /// </summary>
         /// <param name="startTimeUtc">Time the copy started (or the time that CopyFileUsingLocks was called)</param>
-        /// <param name="destFilePath">Destination file path (used to determine the file size)</param>
-        private void OnCopyWithLocksComplete(DateTime startTimeUtc, string destFilePath)
+        /// <param name="destinationFilePath">Destination file path (used to determine the file size)</param>
+        private void OnCopyWithLocksComplete(DateTime startTimeUtc, string destinationFilePath)
         {
-            CopyWithLocksComplete?.Invoke(startTimeUtc, destFilePath);
+            CopyWithLocksComplete?.Invoke(startTimeUtc, destinationFilePath);
         }
 
         private void LogMessageOrError(string msg, BaseLogger.LogLevels logMsgTypeIfNotFound)

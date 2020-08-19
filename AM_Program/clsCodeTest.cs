@@ -131,8 +131,8 @@ namespace AnalysisManagerProg
                     filesToVersion = sourceDirectory.GetFiles(fileNameFileSpec).ToList();
                 }
 
-                var dctResults = new Dictionary<string, KeyValuePair<string, string>>(StringComparer.CurrentCultureIgnoreCase);
-                var dctErrors = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
+                var results = new Dictionary<string, KeyValuePair<string, string>>(StringComparer.OrdinalIgnoreCase);
+                var errors = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
 
                 Console.WriteLine("Obtaining versions for " + filesToVersion.Count + " files");
 
@@ -158,13 +158,13 @@ namespace AnalysisManagerProg
                             frameworkVersion = string.Empty;
                         }
 
-                        if (dctResults.ContainsKey(currentFile.FullName))
+                        if (results.ContainsKey(currentFile.FullName))
                         {
                             Console.WriteLine("Skipping duplicate file: " + currentFile.Name + ", " + fileVersion + " and " + frameworkVersion);
                         }
                         else
                         {
-                            dctResults.Add(currentFile.FullName, new KeyValuePair<string, string>(fileVersion, frameworkVersion));
+                            results.Add(currentFile.FullName, new KeyValuePair<string, string>(fileVersion, frameworkVersion));
                         }
                     }
                     catch (BadImageFormatException ex)
@@ -177,36 +177,36 @@ namespace AnalysisManagerProg
                             var fileAssembly2 = Assembly.ReflectionOnlyLoadFrom(currentFile.FullName);
                             var fileVersion2 = fileAssembly2.ImageRuntimeVersion;
 
-                            if (dctResults.ContainsKey(currentFile.FullName))
+                            if (results.ContainsKey(currentFile.FullName))
                             {
                                 Console.WriteLine("Skipping duplicate file: " + currentFile.Name + ", " + fileVersion2 + " (missing dependencies)");
                             }
                             else
                             {
-                                dctResults.Add(currentFile.FullName, new KeyValuePair<string, string>(fileVersion2, "Unknown, missing dependencies"));
+                                results.Add(currentFile.FullName, new KeyValuePair<string, string>(fileVersion2, "Unknown, missing dependencies"));
                             }
                         }
                         catch (Exception ex2)
                         {
-                            if (dctErrors.ContainsKey(currentFile.FullName))
+                            if (errors.ContainsKey(currentFile.FullName))
                             {
                                 Console.WriteLine("Skipping duplicate error: " + currentFile.Name + ": " + ex2.Message);
                             }
                             else
                             {
-                                dctErrors.Add(currentFile.FullName, ex.Message);
+                                errors.Add(currentFile.FullName, ex.Message);
                             }
                         }
                     }
                     catch (Exception ex)
                     {
-                        if (dctErrors.ContainsKey(currentFile.FullName))
+                        if (errors.ContainsKey(currentFile.FullName))
                         {
                             Console.WriteLine("Skipping duplicate error: " + currentFile.Name + ": " + ex.Message);
                         }
                         else
                         {
-                            dctErrors.Add(currentFile.FullName, ex.Message);
+                            errors.Add(currentFile.FullName, ex.Message);
                         }
                     }
                 }
@@ -214,7 +214,7 @@ namespace AnalysisManagerProg
                 Console.WriteLine();
                 Console.WriteLine();
 
-                var query = (from item in dctResults orderby item.Key select item).ToList();
+                var query = (from item in results orderby item.Key select item).ToList();
 
                 Console.WriteLine("{0,-50} {1,-20} {2}", "Filename", ".NET Version", "Target Framework");
                 foreach (var result in query)
@@ -222,13 +222,13 @@ namespace AnalysisManagerProg
                     Console.WriteLine("{0,-50} {1,-20} {2}", Path.GetFileName(result.Key), " " + result.Value.Key, result.Value.Value);
                 }
 
-                if (dctErrors.Count > 0)
+                if (errors.Count > 0)
                 {
                     Console.WriteLine();
                     Console.WriteLine();
                     Console.WriteLine("DLLs likely not .NET");
 
-                    var errorList = (from item in dctErrors orderby item.Key select item).ToList();
+                    var errorList = (from item in errors orderby item.Key select item).ToList();
 
                     Console.WriteLine("{0,-30} {1}", "Filename", "Error");
 
@@ -603,7 +603,7 @@ namespace AnalysisManagerProg
             Console.WriteLine("Done syncing files");
         }
 
-        private void TestArchiveFile(string srcFilePath, string targetFolderPath)
+        private void TestArchiveFile(string sourceFilePath, string targetFolderPath)
         {
             try
             {
@@ -613,10 +613,10 @@ namespace AnalysisManagerProg
 
                 var needToArchiveFile = false;
 
-                var fileName = Path.GetFileName(srcFilePath);
+                var fileName = Path.GetFileName(sourceFilePath);
                 if (fileName == null)
                 {
-                    Console.WriteLine("Filename could not be parsed from parameter " + nameof(srcFilePath));
+                    Console.WriteLine("Filename could not be parsed from parameter " + nameof(sourceFilePath));
                     return;
                 }
 
@@ -631,7 +631,7 @@ namespace AnalysisManagerProg
                     // Read the files line-by-line and compare
                     // Since the first 2 lines of a Sequest parameter file don't matter, and since the 3rd line can vary from computer to computer, we start the comparison at the 4th line
 
-                    if (!clsGlobal.TextFilesMatch(srcFilePath, targetFilePath, 4, 0, true, lineIgnoreRegExSpecs))
+                    if (!clsGlobal.TextFilesMatch(sourceFilePath, targetFilePath, 4, 0, true, lineIgnoreRegExSpecs))
                     {
                         // Files don't match; rename the old file
 
@@ -664,8 +664,8 @@ namespace AnalysisManagerProg
                 if (needToArchiveFile)
                 {
                     // Copy the new parameter file to the archive
-                    Console.WriteLine("Copying " + Path.GetFileName(srcFilePath) + " to " + targetFilePath);
-                    File.Copy(srcFilePath, targetFilePath, true);
+                    Console.WriteLine("Copying " + Path.GetFileName(sourceFilePath) + " to " + targetFilePath);
+                    File.Copy(sourceFilePath, targetFilePath, true);
                 }
             }
             catch (Exception ex)
@@ -838,9 +838,9 @@ namespace AnalysisManagerProg
         /// Test creation of a .fasta file from a protein collection
         /// Also calls Running BuildSA
         /// </summary>
-        /// <param name="destFolder"></param>
+        /// <param name="destinationDirectory"></param>
         /// <returns></returns>
-        public bool TestProteinDBExport(string destFolder)
+        public bool TestProteinDBExport(string destinationDirectory)
         {
             // ReSharper disable StringLiteralTypo
 
@@ -860,7 +860,7 @@ namespace AnalysisManagerProg
 
             // ReSharper restore StringLiteralTypo
 
-            var success = TestProteinDBExport(destFolder, "na", proteinCollectionList, proteinOptions);
+            var success = TestProteinDBExport(destinationDirectory, "na", proteinCollectionList, proteinOptions);
 
             if (success)
             {
@@ -894,12 +894,12 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Test creation of a .fasta file from a protein collection
         /// </summary>
-        /// <param name="destFolder"></param>
+        /// <param name="destinationDirectory"></param>
         /// <param name="legacyFasta"></param>
         /// <param name="proteinCollectionList"></param>
         /// <param name="proteinOptions"></param>
         /// <returns></returns>
-        public bool TestProteinDBExport(string destFolder, string legacyFasta, string proteinCollectionList, string proteinOptions)
+        public bool TestProteinDBExport(string destinationDirectory, string legacyFasta, string proteinCollectionList, string proteinOptions)
         {
             // Instantiate fasta tool if not already done
             if (mFastaTools == null)
@@ -933,7 +933,7 @@ namespace AnalysisManagerProg
             try
             {
                 mFastaTimer.Start();
-                mFastaTools.ExportFASTAFile(proteinCollectionList, proteinOptions, legacyFasta, destFolder);
+                mFastaTools.ExportFASTAFile(proteinCollectionList, proteinOptions, legacyFasta, destinationDirectory);
             }
             catch (Exception ex)
             {

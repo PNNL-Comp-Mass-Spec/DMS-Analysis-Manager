@@ -1268,6 +1268,8 @@ namespace AnalysisManagerBase
             return mFileCopyUtilities.CopyFileToWorkDir(sourceFileName, sourceDirectoryPath, targetDirectoryPath, logMsgTypeIfNotFound);
         }
 
+        // Ignore Spelling: Nx
+
         /// <summary>
         /// Creates a Fasta file using Protein_Exporter.dll
         /// </summary>
@@ -2040,8 +2042,8 @@ namespace AnalysisManagerBase
                 }
 
                 // Copy the file, renaming to avoid a naming collision
-                var destFilePath = Path.Combine(mWorkDir, Path.GetFileNameWithoutExtension(sourceFile.Name) + "_PreviousStep.xml");
-                if (mFileCopyUtilities.CopyFileWithRetry(sourceFile.FullName, destFilePath, overwrite: true, maxCopyAttempts: 3))
+                var destinationFilePath = Path.Combine(mWorkDir, Path.GetFileNameWithoutExtension(sourceFile.Name) + "_PreviousStep.xml");
+                if (mFileCopyUtilities.CopyFileWithRetry(sourceFile.FullName, destinationFilePath, overwrite: true, maxCopyAttempts: 3))
                 {
                     if (mDebugLevel > 3)
                     {
@@ -2054,7 +2056,7 @@ namespace AnalysisManagerBase
                     return false;
                 }
 
-                var sourceJobParamXMLFile = new FileInfo(destFilePath);
+                var sourceJobParamXMLFile = new FileInfo(destinationFilePath);
 
                 var masterJobParamXMLFile = new FileInfo(Path.Combine(mWorkDir, clsAnalysisJob.JobParametersFilename(mJob)));
 
@@ -2097,7 +2099,7 @@ namespace AnalysisManagerBase
         private static Dictionary<FileInfo, DateTime> GetFastaFilesByLastUse(DirectoryInfo orgDbDirectory)
         {
             // Keys are the fasta file; values are the lastUsed time of the file (nominally obtained from a .hashcheck or .LastUsed file)
-            var dctFastaFiles = new Dictionary<FileInfo, DateTime>();
+            var fastaFiles = new Dictionary<FileInfo, DateTime>();
 
             var lastProgress = DateTime.UtcNow;
             var longRunning = false;
@@ -2116,13 +2118,13 @@ namespace AnalysisManagerBase
                     Console.Write(".");
                 }
 
-                if (!dctFastaFiles.ContainsKey(fastaFile))
+                if (!fastaFiles.ContainsKey(fastaFile))
                 {
                     var lastUsed = DateMax(fastaFile.LastWriteTimeUtc, fastaFile.CreationTimeUtc);
 
                     if (fastaFile.Directory == null)
                     {
-                        dctFastaFiles.Add(fastaFile, lastUsed);
+                        fastaFiles.Add(fastaFile, lastUsed);
                         continue;
                     }
 
@@ -2169,14 +2171,14 @@ namespace AnalysisManagerBase
                         }
                     }
 
-                    dctFastaFiles.Add(fastaFile, lastUsed);
+                    fastaFiles.Add(fastaFile, lastUsed);
                 }
             }
 
             if (longRunning)
                 Console.WriteLine();
 
-            return dctFastaFiles;
+            return fastaFiles;
         }
 
         /// <summary>
@@ -2861,10 +2863,10 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Looks up dataset information for a data package
         /// </summary>
-        /// <param name="dctDataPackageDatasets"></param>
+        /// <param name="dataPackageDatasets"></param>
         /// <returns>True if a data package is defined and it has datasets associated with it</returns>
         /// <remarks></remarks>
-        protected bool LoadDataPackageDatasetInfo(out Dictionary<int, clsDataPackageDatasetInfo> dctDataPackageDatasets)
+        protected bool LoadDataPackageDatasetInfo(out Dictionary<int, clsDataPackageDatasetInfo> dataPackageDatasets)
         {
             // Gigasax.DMS_Pipeline
             var connectionString = mMgrParams.GetParam("BrokerConnectionString");
@@ -2873,26 +2875,26 @@ namespace AnalysisManagerBase
 
             if (dataPackageID < 0)
             {
-                dctDataPackageDatasets = new Dictionary<int, clsDataPackageDatasetInfo>();
+                dataPackageDatasets = new Dictionary<int, clsDataPackageDatasetInfo>();
                 return false;
             }
 
             var dbTools = DbToolsFactory.GetDBTools(connectionString, debugMode: TraceMode);
             RegisterEvents(dbTools);
 
-            return clsDataPackageInfoLoader.LoadDataPackageDatasetInfo(dbTools, dataPackageID, out dctDataPackageDatasets);
+            return clsDataPackageInfoLoader.LoadDataPackageDatasetInfo(dbTools, dataPackageID, out dataPackageDatasets);
         }
 
         /// <summary>
         /// Looks up dataset information for the data package associated with this analysis job
         /// </summary>
-        /// <param name="dctDataPackageJobs"></param>
+        /// <param name="dataPackageJobs"></param>
         /// <returns>True if a data package is defined and it has analysis jobs associated with it</returns>
         /// <remarks>
         /// Property NumberOfClonedSteps is not updated for the analysis jobs returned by this method
         /// In contrast, RetrieveDataPackagePeptideHitJobInfo does update NumberOfClonedSteps
         /// </remarks>
-        private bool LoadDataPackageJobInfo(out Dictionary<int, clsDataPackageJobInfo> dctDataPackageJobs)
+        private bool LoadDataPackageJobInfo(out Dictionary<int, clsDataPackageJobInfo> dataPackageJobs)
         {
             // Gigasax.DMS_Pipeline
             var connectionString = mMgrParams.GetParam("BrokerConnectionString");
@@ -2901,14 +2903,14 @@ namespace AnalysisManagerBase
 
             if (dataPackageID < 0)
             {
-                dctDataPackageJobs = new Dictionary<int, clsDataPackageJobInfo>();
+                dataPackageJobs = new Dictionary<int, clsDataPackageJobInfo>();
                 return false;
             }
 
             var dbTools = DbToolsFactory.GetDBTools(connectionString, debugMode: TraceMode);
             RegisterEvents(dbTools);
 
-            return clsDataPackageInfoLoader.LoadDataPackageJobInfo(dbTools, dataPackageID, out dctDataPackageJobs);
+            return clsDataPackageInfoLoader.LoadDataPackageJobInfo(dbTools, dataPackageID, out dataPackageJobs);
         }
 
         /// <summary>
@@ -3508,15 +3510,15 @@ namespace AnalysisManagerBase
             }
 
             // Obtain a dictionary of FASTA files where Keys are FileInfo and values are last usage date
-            var dctFastaFiles = GetFastaFilesByLastUse(orgDbDirectory);
+            var fastaFiles = GetFastaFilesByLastUse(orgDbDirectory);
 
-            var fastaFilesByLastUse = (from item in dctFastaFiles orderby item.Value select item.Key);
+            var fastaFilesByLastUse = (from item in fastaFiles orderby item.Value select item.Key);
             long totalBytesPurged = 0;
 
             foreach (var fileToPurge in fastaFilesByLastUse)
             {
                 // Abort this process if the LastUsed date of this file is less than 5 days old
-                if (dctFastaFiles.TryGetValue(fileToPurge, out var lastUsed))
+                if (fastaFiles.TryGetValue(fileToPurge, out var lastUsed))
                 {
                     if (DateTime.UtcNow.Subtract(lastUsed).TotalDays < 5)
                     {
@@ -3698,9 +3700,9 @@ namespace AnalysisManagerBase
 
                     // Space usage is too high; need to purge some files
                     // Obtain a dictionary of FASTA files where Keys are FileInfo and values are last usage date
-                    var dctFastaFiles = GetFastaFilesByLastUse(orgDbDirectory);
+                    var fastaFiles = GetFastaFilesByLastUse(orgDbDirectory);
 
-                    if (dctFastaFiles.Count == 0)
+                    if (fastaFiles.Count == 0)
                     {
                         LogTools.LogWarning("Did not find any FASTA files to purge in " + orgDbDirectory.FullName);
 
@@ -3708,7 +3710,7 @@ namespace AnalysisManagerBase
                         return true;
                     }
 
-                    var fastaFilesByLastUse = (from item in dctFastaFiles orderby item.Value select item.Key).ToList();
+                    var fastaFilesByLastUse = (from item in fastaFiles orderby item.Value select item.Key).ToList();
 
                     var bytesToPurge = (long)(spaceUsageBytes - maxSizeGB * 1024.0 * 1024 * 1024);
                     long totalBytesPurged = 0;
@@ -3719,7 +3721,7 @@ namespace AnalysisManagerBase
                         filesProcessed++;
 
                         // Abort this process if the LastUsed date of this file is less than 5 days old
-                        if (dctFastaFiles.TryGetValue(fileToPurge, out var lastUsed))
+                        if (fastaFiles.TryGetValue(fileToPurge, out var lastUsed))
                         {
                             if (DateTime.UtcNow.Subtract(lastUsed).TotalDays < 5)
                             {
@@ -3914,7 +3916,7 @@ namespace AnalysisManagerBase
 
             if (File.Exists(filePath))
             {
-                // The desired file is located in folder FolderPath
+                // The desired file is located in directory FolderPath
                 // The _StoragePathInfo.txt file is present
                 // Open that file to read the file path on the first line of the file
 
@@ -3960,7 +3962,7 @@ namespace AnalysisManagerBase
         /// MSGFPlus:_msgfplus_syn.txt,MSGFPlus:_msgfplus_syn_ModSummary.txt,MSGFPlus:_dta.zip
         /// </param>
         /// <param name="fileRetrievalMode">Used by plugins to indicate the types of files that are required (in case fileSpecList is not configured correctly for a given data package job)</param>
-        /// <param name="dctDataPackageJobs"></param>
+        /// <param name="dataPackageJobs"></param>
         /// <returns>True if success, false if a problem</returns>
         /// <remarks>
         /// This function is used by plugins PhosphoFDRAggregator and PRIDEMzXML
@@ -3969,25 +3971,25 @@ namespace AnalysisManagerBase
         protected bool RetrieveAggregateFiles(
             List<string> fileSpecList,
             DataPackageFileRetrievalModeConstants fileRetrievalMode,
-            out Dictionary<int, clsDataPackageJobInfo> dctDataPackageJobs)
+            out Dictionary<int, clsDataPackageJobInfo> dataPackageJobs)
         {
             bool success;
 
             try
             {
-                // Note that LoadDataPackageJobInfo does not update NumberOfClonedSteps in dctDataPackageJobs
+                // Note that LoadDataPackageJobInfo does not update NumberOfClonedSteps in dataPackageJobs
                 // RetrieveAggregateFiles does not support split-fasta jobs, so it does not need NumberOfClonedSteps and thus no need to call RetrieveDataPackagePeptideHitJobInfo
-                if (!LoadDataPackageJobInfo(out dctDataPackageJobs))
+                if (!LoadDataPackageJobInfo(out dataPackageJobs))
                 {
                     mMessage = "Error looking up datasets and jobs using LoadDataPackageJobInfo";
-                    dctDataPackageJobs = null;
+                    dataPackageJobs = null;
                     return false;
                 }
             }
             catch (Exception ex)
             {
                 LogError("RetrieveAggregateFiles; Exception calling LoadDataPackageJobInfo", ex);
-                dctDataPackageJobs = null;
+                dataPackageJobs = null;
                 return false;
             }
 
@@ -3998,7 +4000,7 @@ namespace AnalysisManagerBase
                 // Cache the current dataset and job info
                 var currentDatasetAndJobInfo = GetCurrentDatasetAndJobInfo();
 
-                foreach (var dataPkgJob in dctDataPackageJobs)
+                foreach (var dataPkgJob in dataPackageJobs)
                 {
                     if (!OverrideCurrentDatasetAndJobInfo(dataPkgJob.Value))
                     {
@@ -5172,9 +5174,9 @@ namespace AnalysisManagerBase
 
         #region "FileCopyUtilities Events"
 
-        private void FileCopyUtilities_CopyWithLocksComplete(DateTime startTimeUtc, string destFilePath)
+        private void FileCopyUtilities_CopyWithLocksComplete(DateTime startTimeUtc, string destinationFilePath)
         {
-            LogCopyStats(startTimeUtc, destFilePath);
+            LogCopyStats(startTimeUtc, destinationFilePath);
         }
 
         private void FileCopyUtilities_ResetTimestampForQueueWaitTime()

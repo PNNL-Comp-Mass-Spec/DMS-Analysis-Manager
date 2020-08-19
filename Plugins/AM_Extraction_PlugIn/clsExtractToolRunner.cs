@@ -27,6 +27,8 @@ namespace AnalysisManagerExtractionPlugin
     /// <remarks></remarks>
     public class clsExtractToolRunner : clsAnalysisToolRunnerBase
     {
+        // Ignore Spelling: modp, tda, MODa, tsv, moda, ascore, parm, xmx, nal, Txt, Utils, Prot, Phrp, msgfdb, mspath, toppic
+
         #region "Constants"
 
         public const float PROGRESS_EXTRACTION_START = 3;
@@ -685,12 +687,12 @@ namespace AnalysisManagerExtractionPlugin
                 // This dictionary keeps track of the top hit(s) for each scan/charge combo
                 // Keys are scan_charge
                 // Values are the clsMSGFPlusPSMs class, which keeps track of the top numberOfHitsPerScanToKeep hits for each scan/charge combo
-                var dctScanChargeTopHits = new Dictionary<string, clsMSGFPlusPSMs>();
+                var dictionary = new Dictionary<string, clsMSGFPlusPSMs>();
 
                 // This dictionary keeps track of the best score (lowest SpecEValue) for each scan/charge combo
                 // Keys are scan_charge
                 // Values the lowest SpecEValue for the scan/charge
-                var dctScanChargeBestScore = new Dictionary<string, double>();
+                var scanChargeBestScore = new Dictionary<string, double>();
 
                 long totalLinesProcessed = 0;
                 var warningsLogged = 0;
@@ -781,15 +783,15 @@ namespace AnalysisManagerExtractionPlugin
                                         DataLine = dataLine
                                     };
 
-                                    if (dctScanChargeTopHits.TryGetValue(scanChargeCombo, out var hitsForScan))
+                                    if (dictionary.TryGetValue(scanChargeCombo, out var hitsForScan))
                                     {
                                         // Possibly store this value
 
                                         var passesFilter = hitsForScan.AddPSM(udtPSM, protein);
 
-                                        if (passesFilter && specEValue < dctScanChargeBestScore[scanChargeCombo])
+                                        if (passesFilter && specEValue < scanChargeBestScore[scanChargeCombo])
                                         {
-                                            dctScanChargeBestScore[scanChargeCombo] = specEValue;
+                                            scanChargeBestScore[scanChargeCombo] = specEValue;
                                         }
                                     }
                                     else
@@ -798,8 +800,8 @@ namespace AnalysisManagerExtractionPlugin
                                         hitsForScan = new clsMSGFPlusPSMs(scanNumber, chargeState, numberOfHitsPerScanToKeep);
                                         hitsForScan.AddPSM(udtPSM, protein);
 
-                                        dctScanChargeTopHits.Add(scanChargeCombo, hitsForScan);
-                                        dctScanChargeBestScore.Add(scanChargeCombo, specEValue);
+                                        dictionary.Add(scanChargeCombo, hitsForScan);
+                                        scanChargeBestScore.Add(scanChargeCombo, specEValue);
                                     }
                                 }
                             }
@@ -808,16 +810,16 @@ namespace AnalysisManagerExtractionPlugin
 
                     if (mDebugLevel >= 2)
                     {
-                        LogDebug("Sorting results for " + dctScanChargeBestScore.Count + " lines of scan/charge combos");
+                        LogDebug("Sorting results for " + scanChargeBestScore.Count + " lines of scan/charge combos");
                     }
 
                     // Sort the data, then write to disk
-                    var scansByScore = from item in dctScanChargeBestScore orderby item.Value select item.Key;
+                    var scansByScore = from item in scanChargeBestScore orderby item.Value select item.Key;
                     var filterPassingPSMCount = 0;
 
                     foreach (var scanChargeCombo in scansByScore)
                     {
-                        var hitsForScan = dctScanChargeTopHits[scanChargeCombo];
+                        var hitsForScan = dictionary[scanChargeCombo];
                         var lastPeptide = string.Empty;
 
                         foreach (var psm in hitsForScan.PSMs)
@@ -2551,24 +2553,24 @@ namespace AnalysisManagerExtractionPlugin
         }
 
         /// <summary>
-        /// Reads srcFilePath line-by-line and splits into multiple files such that none of the output
+        /// Reads sourceFilePath line-by-line and splits into multiple files such that none of the output
         /// files has length greater than maxSizeBytes. Can also check for a header line on the first line;
         /// if a header line is found, all of the split files will be assigned the same header line
         /// </summary>
-        /// <param name="srcFilePath">FilePath to parse</param>
+        /// <param name="sourceFilePath">FilePath to parse</param>
         /// <param name="maxSizeBytes">Maximum size of each file</param>
         /// <param name="lookForHeaderLine">When true, looks for a header line by checking if the first column contains a number</param>
         /// <param name="splitFileList">Output array listing the full paths to the split files that were created</param>
         /// <returns>True if success, false if failure</returns>
         /// <remarks></remarks>
-        private bool SplitFileRoundRobin(string srcFilePath, long maxSizeBytes, bool lookForHeaderLine, out List<string> splitFileList)
+        private bool SplitFileRoundRobin(string sourceFilePath, long maxSizeBytes, bool lookForHeaderLine, out List<string> splitFileList)
         {
             bool success;
             splitFileList = new List<string>();
 
             try
             {
-                var sourceFile = new FileInfo(srcFilePath);
+                var sourceFile = new FileInfo(sourceFilePath);
                 if (!sourceFile.Exists)
                 {
                     LogError("File not found: " + sourceFile.FullName);

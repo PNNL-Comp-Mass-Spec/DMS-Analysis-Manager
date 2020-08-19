@@ -12,6 +12,8 @@ namespace AnalysisManagerBase
     [SuppressMessage("ReSharper", "UnusedMember.Global")]
     public class clsSqLiteUtilities
     {
+        // Ignore Spelling: sqlite, sql, tbl
+
         /// <summary>
         /// Clones a database, optionally skipping tables in list tablesToSkip
         /// </summary>
@@ -59,16 +61,16 @@ namespace AnalysisManagerBase
                     cnSourceDB.Open();
 
                     // Get list of tables in source DB
-                    var dctTableInfo = GetDBObjects(cnSourceDB, "table");
+                    var tableInfo = GetDBObjects(cnSourceDB, "table");
 
-                    // Delete the "sqlite_sequence" database from dctTableInfo if present
-                    if (dctTableInfo.ContainsKey("sqlite_sequence"))
+                    // Delete the "sqlite_sequence" database from tableInfo if present
+                    if (tableInfo.ContainsKey("sqlite_sequence"))
                     {
-                        dctTableInfo.Remove("sqlite_sequence");
+                        tableInfo.Remove("sqlite_sequence");
                     }
 
                     // Get list of indices in source DB
-                    var dctIndexInfo = GetDBObjects(cnSourceDB, "index", out var dctIndexToTableMap);
+                    var indexInfo = GetDBObjects(cnSourceDB, "index", out var indexToTableMap);
 
                     if (File.Exists(targetDBPath))
                     {
@@ -90,23 +92,23 @@ namespace AnalysisManagerBase
                         cnTargetDB.Open();
                         var cmdTargetDB = cnTargetDB.CreateCommand();
 
-                        Dictionary<string, string> dctExistingTables;
+                        Dictionary<string, string> existingTables;
                         if (appendingToExistingDB)
                         {
                             // Lookup the table names that already exist in the target
-                            dctExistingTables = GetDBObjects(cnTargetDB, "table");
+                            existingTables = GetDBObjects(cnTargetDB, "table");
                         }
                         else
                         {
-                            dctExistingTables = new Dictionary<string, string>();
+                            existingTables = new Dictionary<string, string>();
                         }
 
                         // Create each table
-                        foreach (var kvp in dctTableInfo)
+                        foreach (var kvp in tableInfo)
                         {
                             if (!string.IsNullOrEmpty(kvp.Value))
                             {
-                                if (dctExistingTables.ContainsKey(kvp.Key))
+                                if (existingTables.ContainsKey(kvp.Key))
                                 {
                                     if (!tablesToSkip.Contains(kvp.Key))
                                     {
@@ -122,7 +124,7 @@ namespace AnalysisManagerBase
                             }
                         }
 
-                        foreach (var kvp in dctIndexInfo)
+                        foreach (var kvp in indexInfo)
                         {
                             if (!string.IsNullOrEmpty(kvp.Value))
                             {
@@ -130,9 +132,9 @@ namespace AnalysisManagerBase
 
                                 if (appendingToExistingDB)
                                 {
-                                    if (dctIndexToTableMap.TryGetValue(kvp.Key, out var indexTargetTable))
+                                    if (indexToTableMap.TryGetValue(kvp.Key, out var indexTargetTable))
                                     {
-                                        if (dctExistingTables.ContainsKey(indexTargetTable))
+                                        if (existingTables.ContainsKey(indexTargetTable))
                                         {
                                             createIndex = false;
                                         }
@@ -154,7 +156,7 @@ namespace AnalysisManagerBase
                             cmdTargetDB.ExecuteNonQuery();
 
                             // Populate each table
-                            foreach (var kvp in dctTableInfo)
+                            foreach (var kvp in tableInfo)
                             {
                                 currentTable = string.Copy(kvp.Key);
 
@@ -214,7 +216,7 @@ namespace AnalysisManagerBase
                     cnSourceDB.Open();
                     var cmdSourceDB = cnSourceDB.CreateCommand();
 
-                    // Lookup up the table creation Sql
+                    // Lookup up the table creation SQL
                     var sql = "SELECT sql FROM main.sqlite_master WHERE name = '" + tableName + "'";
                     cmdSourceDB.CommandText = sql;
 
@@ -227,7 +229,7 @@ namespace AnalysisManagerBase
                     var tableCreateSql = result.ToString();
 
                     // Look for any indices on this table
-                    var dctIndexInfo = GetDBObjects(cnSourceDB, "index", out _, tableName);
+                    var indexInfo = GetDBObjects(cnSourceDB, "index", out _, tableName);
 
                     // Connect to the target database
                     using (var cnTarget = new SQLiteConnection("Data Source = " + targetDBPath))
@@ -251,7 +253,7 @@ namespace AnalysisManagerBase
                             cmdTargetDB.ExecuteNonQuery();
 
                             // Create any indices
-                            foreach (var item in dctIndexInfo)
+                            foreach (var item in indexInfo)
                             {
                                 cmdTargetDB.CommandText = item.Value;
                                 cmdTargetDB.ExecuteNonQuery();
@@ -286,10 +288,10 @@ namespace AnalysisManagerBase
             return GetDBObjects(cnDatabase, objectType, out _, tableName);
         }
 
-        private Dictionary<string, string> GetDBObjects(SQLiteConnection cnDatabase, string objectType, out Dictionary<string, string> dctIndexToTableMap)
+        private Dictionary<string, string> GetDBObjects(SQLiteConnection cnDatabase, string objectType, out Dictionary<string, string> indexToTableMap)
         {
             var tableName = string.Empty;
-            return GetDBObjects(cnDatabase, objectType, out dctIndexToTableMap, tableName);
+            return GetDBObjects(cnDatabase, objectType, out indexToTableMap, tableName);
         }
 
         /// <summary>
@@ -297,17 +299,17 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="cnDatabase">Database connection object</param>
         /// <param name="objectType">Should be 'table' or 'index'</param>
-        /// <param name="dctIndexToTableMap">Output parameter, only used if objectType is "index"; Keys are Index names and Values are the names of the tables that the indices apply to</param>
+        /// <param name="indexToTableMap">Output parameter, only used if objectType is "index"; Keys are Index names and Values are the names of the tables that the indices apply to</param>
         /// <param name="tableNameFilter">Optional table name to filter on (useful when looking for indices that refer to a given table)</param>
         /// <returns>Dictionary where Keys are the object names and Values are the Sql to create that object</returns>
         private Dictionary<string, string> GetDBObjects(
             SQLiteConnection cnDatabase, string
             objectType,
-            out Dictionary<string, string> dctIndexToTableMap,
+            out Dictionary<string, string> indexToTableMap,
             string tableNameFilter)
         {
-            var dctObjects = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-            dctIndexToTableMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            var dbObjects = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            indexToTableMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
             var cmd = new SQLiteCommand(cnDatabase);
 
@@ -325,16 +327,16 @@ namespace AnalysisManagerBase
             {
                 while (reader.Read())
                 {
-                    dctObjects.Add(Convert.ToString(reader["Name"]), Convert.ToString(reader["sql"]));
+                    dbObjects.Add(Convert.ToString(reader["Name"]), Convert.ToString(reader["sql"]));
 
                     if (objectType == "index")
                     {
-                        dctIndexToTableMap.Add(Convert.ToString(reader["Name"]), Convert.ToString(reader["tbl_name"]));
+                        indexToTableMap.Add(Convert.ToString(reader["Name"]), Convert.ToString(reader["tbl_name"]));
                     }
                 }
             }
 
-            return dctObjects;
+            return dbObjects;
         }
     }
 }

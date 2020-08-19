@@ -143,11 +143,11 @@ namespace AnalysisManagerBase
                     return false;
                 }
 
-                var destFilePath = Path.Combine(mWorkDir, sourceFileName);
+                var destinationFilePath = Path.Combine(mWorkDir, sourceFileName);
 
                 if (createStoragePathInfoOnly)
                 {
-                    if (!mFileCopyUtilities.CreateStoragePathInfoFile(sourceZipFile, destFilePath))
+                    if (!mFileCopyUtilities.CreateStoragePathInfoFile(sourceZipFile, destinationFilePath))
                     {
                         OnErrorEvent("Error creating storage path info file for " + sourceZipFile);
                         return false;
@@ -155,7 +155,7 @@ namespace AnalysisManagerBase
                 }
                 else
                 {
-                    if (!mFileCopyUtilities.CopyFileWithRetry(sourceZipFile, destFilePath, false))
+                    if (!mFileCopyUtilities.CopyFileWithRetry(sourceZipFile, destinationFilePath, false))
                     {
                         OnErrorEvent("Error copying file " + sourceZipFile);
                         return false;
@@ -337,7 +337,7 @@ namespace AnalysisManagerBase
             var success = FindAndRetrieveMiscFiles(
                 fileToGet, unzip: false, searchArchivedDatasetDir: true, logFileNotFound: logFileNotFound);
 
-            if (!success && fileToGet.ToLower().Contains("msgfplus"))
+            if (!success && fileToGet.IndexOf("msgfplus", StringComparison.OrdinalIgnoreCase) >= 0)
             {
                 if (string.IsNullOrEmpty(synopsisFileName))
                     synopsisFileName = "Dataset_msgfdb.txt";
@@ -2297,8 +2297,8 @@ namespace AnalysisManagerBase
             {
                 case clsAnalysisResources.eRawDataTypeConstants.AgilentDFolder:
                     // Agilent ion trap data
-                    if (storagePath.ToLower().Contains("Agilent_SL1".ToLower()) ||
-                        storagePath.ToLower().Contains("Agilent_XCT1".ToLower()))
+                    if (storagePath.IndexOf("Agilent_SL1", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                        storagePath.IndexOf("Agilent_XCT1", StringComparison.OrdinalIgnoreCase) >= 0)
                     {
                         // For Agilent Ion Trap datasets acquired on Agilent_SL1 or Agilent_XCT1 in 2005,
                         //  we would pre-process the data beforehand to create MGF files
@@ -2539,7 +2539,7 @@ namespace AnalysisManagerBase
                                 OnDebugEvent("Deleting old dataset subdirectory from chameleon cached data directory: " + subDirectory.FullName);
                             }
 
-                            if (mMgrParams.ManagerName.ToLower().Contains("monroe"))
+                            if (mMgrParams.ManagerName.IndexOf("monroe", StringComparison.OrdinalIgnoreCase) >= 0)
                             {
                                 OnDebugEvent(" Skipping delete since this is a development computer");
                             }

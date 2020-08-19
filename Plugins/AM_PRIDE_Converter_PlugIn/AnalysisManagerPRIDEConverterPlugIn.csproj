@@ -63,6 +63,7 @@
     <Compile Include="clsPXFileInfoBase.cs" />
     <Compile Include="clsResultFileContainer.cs" />
     <Compile Include="clsSampleMetadata.cs" />
+    <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

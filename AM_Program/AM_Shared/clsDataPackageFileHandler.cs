@@ -159,7 +159,7 @@ namespace AnalysisManagerBase
                 var stepToolFilterParam = mDbTools.AddParameter(cmd, "@stepToolFilter", SqlType.VarChar, 8000, stepToolFilter);
 
                 var inputFolderParam = mDbTools.AddParameter(cmd, "@inputFolderName", SqlType.VarChar, 128, ParameterDirection.Output);
-                var stepToolMatchParam =mDbTools.AddParameter(cmd, "@stepToolMatch", SqlType.VarChar, 64, ParameterDirection.Output);
+                var stepToolMatchParam = mDbTools.AddParameter(cmd, "@stepToolMatch", SqlType.VarChar, 64, ParameterDirection.Output);
 
                 var matchFound = false;
                 var inputDirectoryName = string.Empty;
@@ -1034,17 +1034,17 @@ namespace AnalysisManagerBase
         {
             // Keys in this dictionary are DatasetID, values are a command of the form "Copy \\Server\Share\Directory\Dataset.raw Dataset.raw"
             // Note that we're explicitly defining the target filename to make sure the case of the letters matches the dataset name's case
-            var dctRawFileRetrievalCommands = new Dictionary<int, string>();
+            var rawFileRetrievalCommands = new Dictionary<int, string>();
 
             // Keys in this dictionary are dataset name, values are the full path to the instrument data file for the dataset
             // This information is stored in packed job parameter JOB_PARAM_DICTIONARY_DATASET_FILE_PATHS
-            var dctDatasetRawFilePaths = new Dictionary<string, string>();
+            var datasetRawFilePaths = new Dictionary<string, string>();
 
             // This list tracks the info for the jobs associated with this aggregation job's data package
             dataPackagePeptideHitJobs = new List<clsDataPackageJobInfo>();
 
             // This dictionary tracks the datasets associated with this aggregation job's data package
-            Dictionary<int, clsDataPackageDatasetInfo> dctDataPackageDatasets;
+            Dictionary<int, clsDataPackageDatasetInfo> dataPackageDatasets;
 
             var debugLevel = mAnalysisResources.DebugLevel;
             var workingDir = mAnalysisResources.WorkDir;
@@ -1056,9 +1056,9 @@ namespace AnalysisManagerBase
 
             try
             {
-                var success = mDataPackageInfoLoader.LoadDataPackageDatasetInfo(out dctDataPackageDatasets);
+                var success = mDataPackageInfoLoader.LoadDataPackageDatasetInfo(out dataPackageDatasets);
 
-                if (!success || dctDataPackageDatasets.Count == 0)
+                if (!success || dataPackageDatasets.Count == 0)
                 {
                     OnErrorEvent("Did not find any datasets associated with this job's data package ID (" + mDataPackageInfoLoader.DataPackageID + ")");
                     return false;
@@ -1074,7 +1074,7 @@ namespace AnalysisManagerBase
             // The values are KeyValuePairs of path to the .mzXML file and path to the .hashcheck file (if any)
             // The KeyValuePair will have empty strings if the .Raw file needs to be retrieved
             // This information is used by RetrieveDataPackageMzXMLFiles when copying files locally
-            var dctInstrumentDataToRetrieve = new Dictionary<clsDataPackageJobInfo, KeyValuePair<string, string>>();
+            var instrumentDataToRetrieve = new Dictionary<clsDataPackageJobInfo, KeyValuePair<string, string>>();
 
             // This list tracks analysis jobs that are not PeptideHit jobs
             List<clsDataPackageJobInfo> additionalJobs;
@@ -1157,9 +1157,9 @@ namespace AnalysisManagerBase
                     }
 
                     // Find the instrument data file or directory if a new dataset
-                    if (!dctRawFileRetrievalCommands.ContainsKey(dataPkgJob.DatasetID))
+                    if (!rawFileRetrievalCommands.ContainsKey(dataPkgJob.DatasetID))
                     {
-                        if (!RetrieveDataPackageInstrumentFile(dataPkgJob, retrievalOptions, dctRawFileRetrievalCommands, dctInstrumentDataToRetrieve, dctDatasetRawFilePaths))
+                        if (!RetrieveDataPackageInstrumentFile(dataPkgJob, retrievalOptions, rawFileRetrievalCommands, instrumentDataToRetrieve, datasetRawFilePaths))
                         {
                             mAnalysisResources.RestoreCachedDataAndJobInfo();
                             return false;
@@ -1178,9 +1178,9 @@ namespace AnalysisManagerBase
                 foreach (var dataPkgJob in additionalJobs)
                 {
                     // Find the instrument data file or directory if a new dataset
-                    if (!dctRawFileRetrievalCommands.ContainsKey(dataPkgJob.DatasetID))
+                    if (!rawFileRetrievalCommands.ContainsKey(dataPkgJob.DatasetID))
                     {
-                        if (!RetrieveDataPackageInstrumentFile(dataPkgJob, retrievalOptions, dctRawFileRetrievalCommands, dctInstrumentDataToRetrieve, dctDatasetRawFilePaths))
+                        if (!RetrieveDataPackageInstrumentFile(dataPkgJob, retrievalOptions, rawFileRetrievalCommands, instrumentDataToRetrieve, datasetRawFilePaths))
                         {
                             mAnalysisResources.RestoreCachedDataAndJobInfo();
                             return false;
@@ -1196,9 +1196,9 @@ namespace AnalysisManagerBase
                 }
 
                 // Look for any datasets that are associated with this data package yet have no jobs
-                foreach (var datasetItem in dctDataPackageDatasets)
+                foreach (var datasetItem in dataPackageDatasets)
                 {
-                    if (dctRawFileRetrievalCommands.ContainsKey(datasetItem.Key))
+                    if (rawFileRetrievalCommands.ContainsKey(datasetItem.Key))
                         continue;
 
                     var dataPkgJob = clsAnalysisResources.GetPseudoDataPackageJobInfo(datasetItem.Value);
@@ -1211,7 +1211,7 @@ namespace AnalysisManagerBase
                         return false;
                     }
 
-                    if (!RetrieveDataPackageInstrumentFile(dataPkgJob, retrievalOptions, dctRawFileRetrievalCommands, dctInstrumentDataToRetrieve, dctDatasetRawFilePaths))
+                    if (!RetrieveDataPackageInstrumentFile(dataPkgJob, retrievalOptions, rawFileRetrievalCommands, instrumentDataToRetrieve, datasetRawFilePaths))
                     {
                         mAnalysisResources.RestoreCachedDataAndJobInfo();
                         return false;
@@ -1226,33 +1226,33 @@ namespace AnalysisManagerBase
                 // Restore the dataset and job info for this aggregation job
                 mAnalysisResources.RestoreCachedDataAndJobInfo();
 
-                if (dctRawFileRetrievalCommands.Count == 0)
+                if (rawFileRetrievalCommands.Count == 0)
                 {
                     OnErrorEvent("Did not find any datasets associated with this job's data package ID (" + mDataPackageInfoLoader.DataPackageID + ")");
                     return false;
                 }
 
-                if (dctRawFileRetrievalCommands.Count > 0)
+                if (rawFileRetrievalCommands.Count > 0)
                 {
                     // Create a batch file with commands for retrieve the dataset files
                     var batchFilePath = Path.Combine(workingDir, "RetrieveInstrumentData.bat");
                     using (var writer = new StreamWriter(new FileStream(batchFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                     {
-                        foreach (var item in dctRawFileRetrievalCommands.Values)
+                        foreach (var item in rawFileRetrievalCommands.Values)
                         {
                             writer.WriteLine(item);
                         }
                     }
 
                     // Store the dataset paths in a Packed Job Parameter
-                    mAnalysisResources.StorePackedJobParameterDictionary(dctDatasetRawFilePaths, clsAnalysisResources.JOB_PARAM_DICTIONARY_DATASET_FILE_PATHS);
+                    mAnalysisResources.StorePackedJobParameterDictionary(datasetRawFilePaths, clsAnalysisResources.JOB_PARAM_DICTIONARY_DATASET_FILE_PATHS);
                 }
 
                 if (retrievalOptions.RetrieveMzXMLFile)
                 {
                     // All of the PHRP data files have been successfully retrieved; now retrieve the mzXML files or the .Raw files
                     // If retrievalOptions.CreateJobPathFiles = True then we will create StoragePathInfo files
-                    var success = RetrieveDataPackageMzXMLFiles(dctInstrumentDataToRetrieve, retrievalOptions);
+                    var success = RetrieveDataPackageMzXMLFiles(instrumentDataToRetrieve, retrievalOptions);
                     return success;
                 }
 
@@ -1270,18 +1270,18 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="dataPkgJob">Data package job info</param>
         /// <param name="retrievalOptions">File retrieval options</param>
-        /// <param name="dctRawFileRetrievalCommands">Commands to copy .raw files to the local computer (to be placed in a batch file)</param>
-        /// <param name="dctInstrumentDataToRetrieve">Instrument files that need to be copied locally so that an mzXML file can be made</param>
-        /// <param name="dctDatasetRawFilePaths">Mapping of dataset name to the remote location of the .raw file</param>
+        /// <param name="rawFileRetrievalCommands">Commands to copy .raw files to the local computer (to be placed in a batch file)</param>
+        /// <param name="instrumentDataToRetrieve">Instrument files that need to be copied locally so that an mzXML file can be made</param>
+        /// <param name="datasetRawFilePaths">Mapping of dataset name to the remote location of the .raw file</param>
         /// <returns></returns>
         /// <remarks></remarks>
         private bool RetrieveDataPackageInstrumentFile(
             clsDataPackageJobInfo dataPkgJob,
             udtDataPackageRetrievalOptionsType retrievalOptions,
-            IDictionary<int, string> dctRawFileRetrievalCommands,
+            IDictionary<int, string> rawFileRetrievalCommands,
             IDictionary<clsDataPackageJobInfo,
-            KeyValuePair<string, string>> dctInstrumentDataToRetrieve,
-            IDictionary<string, string> dctDatasetRawFilePaths)
+            KeyValuePair<string, string>> instrumentDataToRetrieve,
+            IDictionary<string, string> datasetRawFilePaths)
         {
             if (retrievalOptions.RetrieveMzXMLFile)
             {
@@ -1295,7 +1295,7 @@ namespace AnalysisManagerBase
                     if (dataPkgJob.RawDataType == clsAnalysisResources.RAW_DATA_TYPE_DOT_RAW_FILES)
                     {
                         // Will need to retrieve the .Raw file for this dataset
-                        dctInstrumentDataToRetrieve.Add(dataPkgJob, new KeyValuePair<string, string>(string.Empty, string.Empty));
+                        instrumentDataToRetrieve.Add(dataPkgJob, new KeyValuePair<string, string>(string.Empty, string.Empty));
                     }
                     else
                     {
@@ -1305,7 +1305,7 @@ namespace AnalysisManagerBase
                 }
                 else
                 {
-                    dctInstrumentDataToRetrieve.Add(dataPkgJob, new KeyValuePair<string, string>(mzXMLFilePath, hashcheckFilePath));
+                    instrumentDataToRetrieve.Add(dataPkgJob, new KeyValuePair<string, string>(mzXMLFilePath, hashcheckFilePath));
                 }
             }
 
@@ -1326,17 +1326,18 @@ namespace AnalysisManagerBase
                     var fileName = dataPkgJob.Dataset + Path.GetExtension(rawFilePath).ToLower();
                     copyCommand = "if not exist " + fileName + " copy " + rawFilePath + " " + fileName;
                 }
-                dctRawFileRetrievalCommands.Add(dataPkgJob.DatasetID, copyCommand);
-                dctDatasetRawFilePaths.Add(dataPkgJob.Dataset, rawFilePath);
+
+                rawFileRetrievalCommands.Add(dataPkgJob.DatasetID, copyCommandIfNotExist);
+                datasetRawFilePaths.Add(dataPkgJob.Dataset, rawFilePath);
             }
 
             return true;
         }
 
         /// <summary>
-        /// Retrieve the .mzXML files for the jobs in dctInstrumentDataToRetrieve
+        /// Retrieve the .mzXML files for the jobs in instrumentDataToRetrieve
         /// </summary>
-        /// <param name="dctInstrumentDataToRetrieve">
+        /// <param name="instrumentDataToRetrieve">
         /// The keys in this dictionary are JobInfo entries
         /// The values in this dictionary are KeyValuePairs of path to the .mzXML file and path to the .hashcheck file (if any).
         /// The KeyValuePair will have empty strings if the .Raw file needs to be retrieved
@@ -1345,7 +1346,7 @@ namespace AnalysisManagerBase
         /// <returns>True if success, false if an error</returns>
         /// <remarks>If retrievalOptions.CreateJobPathFiles is True, will create StoragePathInfo files for the .mzXML or .Raw files</remarks>
         public bool RetrieveDataPackageMzXMLFiles(
-            Dictionary<clsDataPackageJobInfo, KeyValuePair<string, string>> dctInstrumentDataToRetrieve,
+            Dictionary<clsDataPackageJobInfo, KeyValuePair<string, string>> instrumentDataToRetrieve,
             udtDataPackageRetrievalOptionsType retrievalOptions)
         {
             bool success;
@@ -1380,12 +1381,12 @@ namespace AnalysisManagerBase
 
                 var lastProgressUpdate = DateTime.UtcNow;
                 var datasetsProcessed = 0;
-                var datasetsToProcess = dctInstrumentDataToRetrieve.Count;
+                var datasetsToProcess = instrumentDataToRetrieve.Count;
 
                 // Retrieve the instrument data
                 // Note that RetrieveMZXmlFileUsingSourceFile will add MyEMSL files to the download queue
 
-                foreach (var kvItem in dctInstrumentDataToRetrieve)
+                foreach (var kvItem in instrumentDataToRetrieve)
                 {
                     // The key in kvMzXMLFileInfo is the path to the .mzXML or .mzML file
                     // The value in kvMzXMLFileInfo is the path to the .hashcheck file

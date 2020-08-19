@@ -1234,10 +1234,10 @@ namespace AnalysisManagerMSGFDBPlugIn
                 // Construct the list of required contaminant proteins
                 var contaminantUtility = new clsFastaContaminantUtility();
 
-                var dctRequiredContaminants = new Dictionary<string, bool>();
+                var requiredContaminants = new Dictionary<string, bool>();
                 foreach (var proteinName in contaminantUtility.ProteinNames)
                 {
-                    dctRequiredContaminants.Add(proteinName, false);
+                    requiredContaminants.Add(proteinName, false);
                 }
 
                 long maxSizeBytes = maxFastaFileSizeMB * 1024 * 1024;
@@ -1268,9 +1268,9 @@ namespace AnalysisManagerMSGFDBPlugIn
                                 spaceIndex = dataLine.Length - 1;
                             var proteinName = dataLine.Substring(1, spaceIndex - 1);
 
-                            if (dctRequiredContaminants.ContainsKey(proteinName))
+                            if (requiredContaminants.ContainsKey(proteinName))
                             {
-                                dctRequiredContaminants[proteinName] = true;
+                                requiredContaminants[proteinName] = true;
                             }
 
                             proteinCount++;
@@ -1281,7 +1281,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     }
 
                     // Add any missing contaminants
-                    foreach (var protein in dctRequiredContaminants)
+                    foreach (var protein in requiredContaminants)
                     {
                         if (!protein.Value)
                         {

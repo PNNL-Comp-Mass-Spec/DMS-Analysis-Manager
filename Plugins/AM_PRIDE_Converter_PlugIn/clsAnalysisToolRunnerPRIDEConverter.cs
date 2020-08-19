@@ -12,6 +12,9 @@ using System.Xml;
 
 namespace AnalysisManagerPRIDEConverterPlugIn
 {
+    // Ignore Spelling: ProteomeXchange, Px, Unimod, Cv, Pos, Frac, yyyy-MM-dd, pubmed, amaZon, SolariX, Bio, Deca, Unmarshaller, Xmx
+    // Ignore Spelling: Xpath, sourcefile, spectrafile, reportfile, roc
+
     /// <summary>
     /// Class for running PRIDEConverter
     /// </summary>
@@ -415,7 +418,6 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 return copySuccess ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
 
-
             }
             catch (Exception ex)
             {
@@ -542,10 +544,10 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
         private int SortPreference(string tool)
         {
-            if (tool.ToLower().StartsWith("msgfplus"))
+            if (tool.StartsWith("msgfplus", StringComparison.OrdinalIgnoreCase))
                 return 0;
 
-            if (tool.ToLower().StartsWith("xtandem"))
+            if (tool.StartsWith("xtandem", StringComparison.OrdinalIgnoreCase))
                 return 1;
 
             return 5;
@@ -630,34 +632,34 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         {
             var fiFile = new FileInfo(filePath);
 
-            if (mPxResultFiles.TryGetValue(fileId, out var oPXFileInfo))
+            if (mPxResultFiles.TryGetValue(fileId, out _))
             {
                 // File already defined in the mapping list
                 return true;
             }
 
-            if (!mPxMasterFileList.TryGetValue(fiFile.Name, out var oMasterPXFileInfo))
+            if (!mPxMasterFileList.TryGetValue(fiFile.Name, out var masterPXFileInfo))
             {
                 // File not found in mPxMasterFileList, we cannot add the mapping
                 LogError("File " + fiFile.Name + " not found in mPxMasterFileList; unable to add to mPxResultFiles");
                 return false;
             }
 
-            if (oMasterPXFileInfo.FileID != fileId)
+            if (masterPXFileInfo.FileID != fileId)
             {
                 var msg = "FileID mismatch for " + fiFile.Name;
-                LogError(msg + ":  mPxMasterFileList.FileID = " + oMasterPXFileInfo.FileID + " vs. FileID " + fileId + " passed into AddPxFileToMapping");
+                LogError(msg + ":  mPxMasterFileList.FileID = " + masterPXFileInfo.FileID + " vs. FileID " + fileId + " passed into AddPxFileToMapping");
                 mMessage = msg;
                 return false;
             }
 
             var filename = CheckFilenameCase(fiFile, dataPkgJob.Dataset);
 
-            oPXFileInfo = new clsPXFileInfo(filename, dataPkgJob);
-            oPXFileInfo.Update(oMasterPXFileInfo);
-            oPXFileInfo.PXFileType = eFileType;
+            var pxFileInfo = new clsPXFileInfo(filename, dataPkgJob);
+            pxFileInfo.Update(masterPXFileInfo);
+            pxFileInfo.PXFileType = eFileType;
 
-            mPxResultFiles.Add(fileId, oPXFileInfo);
+            mPxResultFiles.Add(fileId, pxFileInfo);
 
             return true;
         }
@@ -817,7 +819,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             {
                 var fileBaseName = Path.GetFileNameWithoutExtension(fiFile.Name);
 
-                if (fileBaseName.ToLower().StartsWith(dataset.ToLower()))
+                if (fileBaseName.StartsWith(dataset, StringComparison.OrdinalIgnoreCase))
                 {
                     if (!fileBaseName.StartsWith(dataset))
                     {
@@ -905,7 +907,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 if (mCDTAFileStats.TryGetValue(cdtaFile.Name, out var existingFileInfo))
                 {
-                    if (existingFileInfo.JobInfo.Tool.ToLower().StartsWith("msgf"))
+                    if (existingFileInfo.JobInfo.Tool.StartsWith("msgf", StringComparison.OrdinalIgnoreCase))
                     {
                         // Existing job found, but it's a MS-GF+ job (which is fully supported by PRIDE)
                         // Just use the existing .mgf file
@@ -1045,14 +1047,14 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 // Look for a StoragePathInfo file
                 var mzXmlStoragePathFile = fiMzXmlFilePathLocal.FullName + clsAnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX;
 
-                string destPath;
+                string destinationPath;
                 bool success;
                 if (File.Exists(mzXmlStoragePathFile))
                 {
-                    success = RetrieveStoragePathInfoTargetFile(mzXmlStoragePathFile, analysisResults, out destPath);
+                    success = RetrieveStoragePathInfoTargetFile(mzXmlStoragePathFile, analysisResults, out destinationPath);
                     if (success)
                     {
-                        AddToListIfNew(mPreviousDatasetFilesToDelete, destPath);
+                        AddToListIfNew(mPreviousDatasetFilesToDelete, destinationPath);
                         return true;
                     }
                 }
@@ -1104,7 +1106,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                         if (File.Exists(datasetFilePathLocal + clsAnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX))
                         {
                             RetrieveStoragePathInfoTargetFile(datasetFilePathLocal + clsAnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX,
-                                analysisResults, IsFolder: true, destPath: out destPath);
+                                analysisResults, IsFolder: true, destinationPath: out destinationPath);
                         }
                         else
                         {
@@ -1122,8 +1124,8 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                         if (File.Exists(datasetFilePathLocal + clsAnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX))
                         {
                             RetrieveStoragePathInfoTargetFile(datasetFilePathLocal + clsAnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX,
-                                analysisResults, out destPath);
-                            AddToListIfNew(mPreviousDatasetFilesToDelete, destPath);
+                                analysisResults, out destinationPath);
+                            AddToListIfNew(mPreviousDatasetFilesToDelete, destinationPath);
                         }
                         else
                         {
@@ -2437,15 +2439,15 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             }
             else
             {
-                if (PeptideHitResultType == clsPHRPReader.ePeptideHitResultType.MSGFPlus && toolName.ToUpper().StartsWith("MSGF"))
+                if (PeptideHitResultType == clsPHRPReader.ePeptideHitResultType.MSGFPlus && toolName.StartsWith("MSGF", StringComparison.OrdinalIgnoreCase))
                 {
                     // Tool Version in the template file is likely correct; use it
                 }
-                else if (PeptideHitResultType == clsPHRPReader.ePeptideHitResultType.Sequest && toolName.ToUpper().StartsWith("SEQUEST"))
+                else if (PeptideHitResultType == clsPHRPReader.ePeptideHitResultType.Sequest && toolName.StartsWith("SEQUEST", StringComparison.OrdinalIgnoreCase))
                 {
                     // Tool Version in the template file is likely correct; use it
                 }
-                else if (PeptideHitResultType == clsPHRPReader.ePeptideHitResultType.XTandem && toolName.ToUpper().Contains("TANDEM"))
+                else if (PeptideHitResultType == clsPHRPReader.ePeptideHitResultType.XTandem && toolName.IndexOf("TANDEM", StringComparison.OrdinalIgnoreCase) >= 0)
                 {
                     // Tool Version in the template file is likely correct; use it
                 }
@@ -3497,7 +3499,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                         if (!string.IsNullOrWhiteSpace(dataLine))
                         {
-                            if (dataLine.ToLower().Contains(" error "))
+                            if (dataLine.IndexOf(" error ", StringComparison.OrdinalIgnoreCase) >= 0)
                             {
                                 if (string.IsNullOrEmpty(mConsoleOutputErrorMsg))
                                 {
@@ -4097,18 +4099,23 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             }
         }
 
-        private bool RetrieveStoragePathInfoTargetFile(string storagePathInfoFilePath, clsAnalysisResults analysisResults,
-            out string destPath)
+        private bool RetrieveStoragePathInfoTargetFile(
+            string storagePathInfoFilePath,
+            clsAnalysisResults analysisResults,
+            out string destinationPath)
         {
-            return RetrieveStoragePathInfoTargetFile(storagePathInfoFilePath, analysisResults, IsFolder: false, destPath: out destPath);
+            return RetrieveStoragePathInfoTargetFile(storagePathInfoFilePath, analysisResults, IsFolder: false, destinationPath: out destinationPath);
         }
 
-        private bool RetrieveStoragePathInfoTargetFile(string storagePathInfoFilePath, clsAnalysisResults analysisResults, bool IsFolder,
-            out string destPath)
+        private bool RetrieveStoragePathInfoTargetFile(
+            string storagePathInfoFilePath,
+            clsAnalysisResults analysisResults,
+            bool IsFolder,
+            out string destinationPath)
         {
             var sourceFilePath = string.Empty;
 
-            destPath = string.Empty;
+            destinationPath = string.Empty;
 
             try
             {
@@ -4136,15 +4143,15 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     return false;
                 }
 
-                destPath = Path.Combine(mWorkDir, Path.GetFileName(sourceFilePath));
+                destinationPath = Path.Combine(mWorkDir, Path.GetFileName(sourceFilePath));
 
                 if (IsFolder)
                 {
-                    analysisResults.CopyDirectory(sourceFilePath, destPath, overwrite: true);
+                    analysisResults.CopyDirectory(sourceFilePath, destinationPath, overwrite: true);
                 }
                 else
                 {
-                    analysisResults.CopyFileWithRetry(sourceFilePath, destPath, overwrite: true);
+                    analysisResults.CopyFileWithRetry(sourceFilePath, destinationPath, overwrite: true);
                 }
             }
             catch (Exception ex)
@@ -4345,28 +4352,28 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 try
                 {
                     // Copy the files we want to keep to the remote Transfer Directory
-                    foreach (var srcFilePath in mPreviousDatasetFilesToCopy)
+                    foreach (var sourceFilePath in mPreviousDatasetFilesToCopy)
                     {
-                        if (string.IsNullOrWhiteSpace(srcFilePath))
+                        if (string.IsNullOrWhiteSpace(sourceFilePath))
                             continue;
 
-                        var targetFilePath = Path.Combine(remoteTransferFolder, Path.GetFileName(srcFilePath));
+                        var targetFilePath = Path.Combine(remoteTransferFolder, Path.GetFileName(sourceFilePath));
 
-                        if (!File.Exists(srcFilePath))
+                        if (!File.Exists(sourceFilePath))
                             continue;
 
-                        if (string.Equals(srcFilePath, targetFilePath, StringComparison.OrdinalIgnoreCase))
+                        if (string.Equals(sourceFilePath, targetFilePath, StringComparison.OrdinalIgnoreCase))
                             continue;
 
                         try
                         {
-                            analysisResults.CopyFileWithRetry(srcFilePath, targetFilePath, true);
-                            AddToListIfNew(mPreviousDatasetFilesToDelete, srcFilePath);
+                            analysisResults.CopyFileWithRetry(sourceFilePath, targetFilePath, true);
+                            AddToListIfNew(mPreviousDatasetFilesToDelete, sourceFilePath);
                         }
                         catch (Exception ex)
                         {
                             LogError("Exception copying file to transfer directory", ex);
-                            filesToRetry.Add(srcFilePath);
+                            filesToRetry.Add(sourceFilePath);
                         }
                     }
                 }

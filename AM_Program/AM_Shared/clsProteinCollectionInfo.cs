@@ -1,4 +1,5 @@
-﻿
+﻿using System;
+
 namespace AnalysisManagerBase
 {
     /// <summary>
@@ -75,13 +76,13 @@ namespace AnalysisManagerBase
         /// <remarks>Updates ErrorMessage if an error</remarks>
         public void UpdateDescription()
         {
-            if (!string.IsNullOrWhiteSpace(ProteinCollectionList) && ProteinCollectionList.ToLower() != "na")
+            if (!string.IsNullOrWhiteSpace(ProteinCollectionList) && !string.Equals(ProteinCollectionList, "na", StringComparison.OrdinalIgnoreCase))
             {
                 OrgDBDescription = "Protein collection: " + ProteinCollectionList + " with options " + ProteinCollectionOptions;
                 UsingLegacyFasta = false;
                 IsValid = true;
             }
-            else if (!string.IsNullOrWhiteSpace(LegacyFastaName) && LegacyFastaName.ToLower() != "na")
+            else if (!string.IsNullOrWhiteSpace(LegacyFastaName) && !string.Equals(LegacyFastaName, "na", StringComparison.OrdinalIgnoreCase))
             {
                 OrgDBDescription = "Legacy DB: " + LegacyFastaName;
                 UsingLegacyFasta = true;

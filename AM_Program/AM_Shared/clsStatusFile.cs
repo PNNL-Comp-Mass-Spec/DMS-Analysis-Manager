@@ -1202,7 +1202,7 @@ namespace AnalysisManagerBase
             var logWarning = true;
 
             // ReSharper disable once StringLiteralTypo
-            if (Tool.ToLower().Contains("glyq") || Tool.ToLower().Contains("modplus"))
+            if (Tool.IndexOf("glyq", StringComparison.OrdinalIgnoreCase) >= 0 || Tool.IndexOf("modplus", StringComparison.OrdinalIgnoreCase) >= 0)
             {
                 if (mDebugLevel < 3)
                     logWarning = false;

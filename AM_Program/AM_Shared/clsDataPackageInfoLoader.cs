@@ -40,18 +40,18 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Looks up dataset information for a data package
         /// </summary>
-        /// <param name="dctDataPackageDatasets"></param>
+        /// <param name="dataPackageDatasets"></param>
         /// <returns>True if a data package is defined and it has datasets associated with it</returns>
         /// <remarks></remarks>
-        public bool LoadDataPackageDatasetInfo(out Dictionary<int, clsDataPackageDatasetInfo> dctDataPackageDatasets)
+        public bool LoadDataPackageDatasetInfo(out Dictionary<int, clsDataPackageDatasetInfo> dataPackageDatasets)
         {
             if (DataPackageID < 0)
             {
-                dctDataPackageDatasets = new Dictionary<int, clsDataPackageDatasetInfo>();
+                dataPackageDatasets = new Dictionary<int, clsDataPackageDatasetInfo>();
                 return false;
             }
 
-            return LoadDataPackageDatasetInfo(DBTools, DataPackageID, out dctDataPackageDatasets);
+            return LoadDataPackageDatasetInfo(DBTools, DataPackageID, out dataPackageDatasets);
         }
 
         /// <summary>
@@ -59,15 +59,15 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="dbTools">Instance of IDbTools</param>
         /// <param name="dataPackageID">Data Package ID</param>
-        /// <param name="dctDataPackageDatasets">Datasets associated with the given data package</param>
+        /// <param name="dataPackageDatasets">Datasets associated with the given data package</param>
         /// <returns>True if a data package is defined and it has datasets associated with it</returns>
         /// <remarks></remarks>
         public static bool LoadDataPackageDatasetInfo(
             IDBTools dbTools,
             int dataPackageID,
-            out Dictionary<int, clsDataPackageDatasetInfo> dctDataPackageDatasets)
+            out Dictionary<int, clsDataPackageDatasetInfo> dataPackageDatasets)
         {
-            dctDataPackageDatasets = new Dictionary<int, clsDataPackageDatasetInfo>();
+            dataPackageDatasets = new Dictionary<int, clsDataPackageDatasetInfo>();
 
             var sqlStr = new System.Text.StringBuilder();
 
@@ -106,9 +106,9 @@ namespace AnalysisManagerBase
             {
                 var datasetInfo = ParseDataPackageDatasetInfoRow(curRow);
 
-                if (!dctDataPackageDatasets.ContainsKey(datasetInfo.DatasetID))
+                if (!dataPackageDatasets.ContainsKey(datasetInfo.DatasetID))
                 {
-                    dctDataPackageDatasets.Add(datasetInfo.DatasetID, datasetInfo);
+                    dataPackageDatasets.Add(datasetInfo.DatasetID, datasetInfo);
                 }
             }
 
@@ -121,7 +121,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="dbTools">Instance of IDbTools</param>
         /// <param name="dataPackageID">Data Package ID</param>
-        /// <param name="dctDataPackageJobs">Jobs associated with the given data package</param>
+        /// <param name="dataPackageJobs">Jobs associated with the given data package</param>
         /// <returns>True if a data package is defined and it has analysis jobs associated with it</returns>
         /// <remarks>
         /// Property NumberOfClonedSteps is not updated for the analysis jobs returned by this method
@@ -130,9 +130,9 @@ namespace AnalysisManagerBase
         public static bool LoadDataPackageJobInfo(
             IDBTools dbTools,
             int dataPackageID,
-            out Dictionary<int, clsDataPackageJobInfo> dctDataPackageJobs)
+            out Dictionary<int, clsDataPackageJobInfo> dataPackageJobs)
         {
-            dctDataPackageJobs = new Dictionary<int, clsDataPackageJobInfo>();
+            dataPackageJobs = new Dictionary<int, clsDataPackageJobInfo>();
 
             var sqlStr = new System.Text.StringBuilder();
 
@@ -154,18 +154,18 @@ namespace AnalysisManagerBase
             sqlStr.Append(" ORDER BY Dataset, Tool, Job, Step");
 
             // Get a table to hold the results of the query
-            var successForJobs = dbTools.GetQueryResultsDataTable(sqlStr.ToString(), out var dataPackageJobs);
+            var successForJobs = dbTools.GetQueryResultsDataTable(sqlStr.ToString(), out var dataPackageJobQueryResults);
 
             if (!successForJobs)
             {
                 const string errorMessage = "LoadDataPackageJobInfo; Excessive failures attempting to retrieve data package job info from database";
                 LogTools.LogError(errorMessage);
-                dataPackageJobs.Dispose();
+                dataPackageJobQueryResults.Dispose();
                 return false;
             }
 
             // Verify at least one row returned
-            if (dataPackageJobs.Rows.Count < 1)
+            if (dataPackageJobQueryResults.Rows.Count < 1)
             {
                 // No data was returned
                 string warningMessage;
@@ -207,18 +207,18 @@ namespace AnalysisManagerBase
                 return false;
             }
 
-            foreach (DataRow curRow in dataPackageJobs.Rows)
+            foreach (DataRow curRow in dataPackageJobQueryResults.Rows)
             {
                 var dataPkgJob = ParseDataPackageJobInfoRow(curRow);
 
-                if (!dctDataPackageJobs.ContainsKey(dataPkgJob.Job))
+                if (!dataPackageJobs.ContainsKey(dataPkgJob.Job))
                 {
-                    dctDataPackageJobs.Add(dataPkgJob.Job, dataPkgJob);
+                    dataPackageJobs.Add(dataPkgJob.Job, dataPkgJob);
                 }
                 else
                 {
                     // Existing job; append an additional SharedResultsFolder
-                    var existingPkgJob = dctDataPackageJobs[dataPkgJob.Job];
+                    var existingPkgJob = dataPackageJobs[dataPkgJob.Job];
                     foreach (var sharedResultsFolder in dataPkgJob.SharedResultsFolders)
                     {
                         if (existingPkgJob.SharedResultsFolders.Contains(sharedResultsFolder))
@@ -229,7 +229,7 @@ namespace AnalysisManagerBase
                 }
             }
 
-            dataPackageJobs.Dispose();
+            dataPackageJobQueryResults.Dispose();
 
             return true;
         }
@@ -478,11 +478,11 @@ namespace AnalysisManagerBase
 
             // This dictionary will track the jobs associated with this aggregation job's data package
             // Key is job number, value is an instance of clsDataPackageJobInfo
-            Dictionary<int, clsDataPackageJobInfo> dctDataPackageJobs;
+            Dictionary<int, clsDataPackageJobInfo> dataPackageJobs;
 
             try
             {
-                if (!LoadDataPackageJobInfo(dbTools, dataPackageID, out dctDataPackageJobs))
+                if (!LoadDataPackageJobInfo(dbTools, dataPackageID, out dataPackageJobs))
                 {
                     errorMsg = "Error looking up datasets and jobs using LoadDataPackageJobInfo";
                     return dataPackagePeptideHitJobs;
@@ -496,7 +496,7 @@ namespace AnalysisManagerBase
 
             try
             {
-                foreach (var kvItem in dctDataPackageJobs)
+                foreach (var kvItem in dataPackageJobs)
                 {
                     if (kvItem.Value.PeptideHitResultType == clsPHRPReader.ePeptideHitResultType.Unknown)
                     {
@@ -520,7 +520,7 @@ namespace AnalysisManagerBase
                 // If present, we need to determine the value for job parameter NumberOfClonedSteps
 
                 var splitFastaJobs = (from dataPkgJob in dataPackagePeptideHitJobs
-                                      where dataPkgJob.Tool.ToLower().Contains("SplitFasta".ToLower())
+                                      where dataPkgJob.Tool.IndexOf("SplitFasta", StringComparison.OrdinalIgnoreCase) >= 0
                                       select dataPkgJob).ToList();
 
                 if (splitFastaJobs.Count > 0)

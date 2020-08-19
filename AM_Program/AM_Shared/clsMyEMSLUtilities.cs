@@ -13,6 +13,8 @@ namespace AnalysisManagerBase
     /// </summary>
     public class clsMyEMSLUtilities : EventNotifier
     {
+        // Ignore Spelling: yyyy-MM-dd hh:mm tt, dest
+
         /// <summary>
         /// MyEMSL path flag
         /// </summary>
@@ -313,8 +315,8 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Retrieve queued files from MyEMSL
         /// </summary>
-        /// <param name="downloadDirectoryPath">Target directory path (ignored for files defined in dctDestFilePathOverride)</param>
-        /// <param name="directoryLayout">Directory Layout (ignored for files defined in dctDestFilePathOverride)</param>
+        /// <param name="downloadDirectoryPath">Target directory path (ignored for files defined in destinationFilePathOverride)</param>
+        /// <param name="directoryLayout">Directory Layout (ignored for files defined in destinationFilePathOverride)</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks>Returns True if the download queue is empty</remarks>
         public bool ProcessMyEMSLDownloadQueue(string downloadDirectoryPath, Downloader.DownloadLayout directoryLayout)
@@ -378,14 +380,14 @@ namespace AnalysisManagerBase
                 if (!fileToUnzip.Exists)
                     return;
 
-                if (fileToUnzip.Extension.ToLower() == ".zip")
+                if (string.Equals(fileToUnzip.Extension, ".zip", StringComparison.OrdinalIgnoreCase))
                 {
                     // Decompress the .zip file
                     OnStatusEvent("Unzipping file " + fileToUnzip.Name);
                     mDotNetZipTools.UnzipFile(fileToUnzip.FullName, e.DownloadDirectoryPath);
                     MostRecentUnzippedFiles.AddRange(mDotNetZipTools.MostRecentUnzippedFiles);
                 }
-                else if (fileToUnzip.Extension.ToLower() == ".gz")
+                else if (string.Equals(fileToUnzip.Extension, ".gz", StringComparison.OrdinalIgnoreCase))
                 {
                     // Decompress the .gz file
                     OnStatusEvent("Unzipping file " + fileToUnzip.Name);

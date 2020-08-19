@@ -121,29 +121,29 @@ namespace AnalysisManagerBase
         /// Log stats related to copying a file
         /// </summary>
         /// <param name="startTimeUtc">Time the copy started (or the time that CopyFileUsingLocks was called)</param>
-        /// <param name="destFilePath">Destination file path (used to determine the file size)</param>
+        /// <param name="destinationFilePath">Destination file path (used to determine the file size)</param>
         /// <param name="logThresholdSeconds">Threshold for logging the file copy details</param>
         /// <remarks>Only writes to the log if the copy time exceeds logThresholdSeconds</remarks>
-        protected void LogCopyStats(DateTime startTimeUtc, string destFilePath, int logThresholdSeconds = 10)
+        protected void LogCopyStats(DateTime startTimeUtc, string destinationFilePath, int logThresholdSeconds = 10)
         {
             var elapsedSeconds = DateTime.UtcNow.Subtract(startTimeUtc).TotalSeconds;
             if (elapsedSeconds < logThresholdSeconds)
                 return;
 
-            var destFile = new FileInfo(destFilePath);
-            if (destFile.Exists)
+            var destinationFile = new FileInfo(destinationFilePath);
+            if (destinationFile.Exists)
             {
-                var fileSizeMB = clsGlobal.BytesToMB(destFile.Length);
+                var fileSizeMB = clsGlobal.BytesToMB(destinationFile.Length);
                 var copyRateMBPerSec = fileSizeMB / elapsedSeconds;
 
                 // Note that mFileTools may have been waiting for a lock file queue to subside,
                 // in which case the copyRate doesn't represent the actual connection speed between the two computers
                 LogDebug(string.Format("  Copied {0:N0} MB file in {1:N0} seconds, transferring at {2:N0} MB/sec: {3}",
-                    fileSizeMB, elapsedSeconds, copyRateMBPerSec, destFile.Name));
+                    fileSizeMB, elapsedSeconds, copyRateMBPerSec, destinationFile.Name));
             }
             else
             {
-                LogError("Cannot log copy time since target file not found: " + destFilePath);
+                LogError("Cannot log copy time since target file not found: " + destinationFilePath);
             }
         }
 

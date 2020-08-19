@@ -142,7 +142,7 @@ namespace AnalysisManagerBase
                     return false;
                 }
 
-                if (fileToGUnzip.Extension.ToLower() != ".gz")
+                if (!string.Equals(fileToGUnzip.Extension, ".gz", StringComparison.OrdinalIgnoreCase))
                 {
                     LogError("Not a GZipped file; must have extension .gz: " + fileToGUnzip.FullName);
                     return false;

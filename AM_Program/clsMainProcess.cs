@@ -2963,8 +2963,8 @@ namespace AnalysisManagerProg
 
                 // Find the newest SQLite_1.*.* directory
                 // For example, SQLite_1.0.108
-                var srcDirs = mgrDir.GetDirectories("SQLite_1.*.*");
-                if (srcDirs.Length == 0)
+                var sourceDirs = mgrDir.GetDirectories("SQLite_1.*.*");
+                if (sourceDirs.Length == 0)
                 {
                     LogWarning(string.Format(
                         "Did not find any SQLite_1.x.y directories in the manager directory; " +
@@ -2973,36 +2973,36 @@ namespace AnalysisManagerProg
                     return;
                 }
 
-                var srcDirVersions = new Dictionary<Version, DirectoryInfo>();
+                var sourceDirVersions = new Dictionary<Version, DirectoryInfo>();
 
                 var sortedVersions = new SortedSet<Version>();
 
                 var versionMatcher = new Regex(@"(?<Major>\d+)\.(?<Minor>\d+)\.(?<Revision>\d+)$", RegexOptions.Compiled);
 
-                foreach (var srcDir in srcDirs)
+                foreach (var sourceDir in sourceDirs)
                 {
-                    var match = versionMatcher.Match(srcDir.Name);
+                    var match = versionMatcher.Match(sourceDir.Name);
                     if (!match.Success)
                     {
                         LogDebug(string.Format(
-                            "Ignoring {0} since did not end with a version of the form X.Y.Z", srcDir.Name));
+                            "Ignoring {0} since did not end with a version of the form X.Y.Z", sourceDir.Name));
 
                         continue;
                     }
 
-                    var srcDirVersion = new Version(
+                    var sourceDirVersion = new Version(
                         int.Parse(match.Groups["Major"].Value),
                         int.Parse(match.Groups["Minor"].Value),
                         int.Parse(match.Groups["Revision"].Value));
 
-                    if (sortedVersions.Contains(srcDirVersion))
+                    if (sortedVersions.Contains(sourceDirVersion))
                         continue;
 
-                    srcDirVersions.Add(srcDirVersion, srcDir);
-                    sortedVersions.Add(srcDirVersion);
+                    sourceDirVersions.Add(sourceDirVersion, sourceDir);
+                    sortedVersions.Add(sourceDirVersion);
                 }
 
-                if (srcDirVersions.Count == 0)
+                if (sourceDirVersions.Count == 0)
                 {
                     LogWarning(string.Format(
                         "Did not find any SQLite_1.x.y directories in the manager directory; " +
@@ -3012,7 +3012,7 @@ namespace AnalysisManagerProg
                 }
 
                 // Select the newest SQLite_1.*.* directory
-                var newestSrcDir = srcDirVersions[sortedVersions.Last()];
+                var newestSrcDir = sourceDirVersions[sortedVersions.Last()];
 
                 var newestDll = new FileInfo(Path.Combine(newestSrcDir.FullName, SQLITE_DLL));
                 if (!newestDll.Exists)

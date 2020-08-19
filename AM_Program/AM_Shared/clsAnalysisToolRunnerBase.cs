@@ -1570,7 +1570,7 @@ namespace AnalysisManagerBase
         /// <remarks>Data will have been stored by function clsAnalysisResources.StorePackedJobParameterDictionary</remarks>
         protected Dictionary<string, string> ExtractPackedJobParameterDictionary(string packedJobParameterName)
         {
-            var dctData = new Dictionary<string, string>();
+            var jobParameters = new Dictionary<string, string>();
 
             var extractedParams = ExtractPackedJobParameterList(packedJobParameterName);
 
@@ -1582,9 +1582,9 @@ namespace AnalysisManagerBase
                     var key = paramEntry.Substring(0, equalsIndex);
                     var value = paramEntry.Substring(equalsIndex + 1);
 
-                    if (!dctData.ContainsKey(key))
+                    if (!jobParameters.ContainsKey(key))
                     {
-                        dctData.Add(key, value);
+                        jobParameters.Add(key, value);
                     }
                 }
                 else
@@ -1593,7 +1593,7 @@ namespace AnalysisManagerBase
                 }
             }
 
-            return dctData;
+            return jobParameters;
         }
 
         /// <summary>
@@ -2198,10 +2198,10 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Looks up dataset information for the data package associated with this analysis job
         /// </summary>
-        /// <param name="dctDataPackageDatasets"></param>
+        /// <param name="dataPackageDatasets"></param>
         /// <returns>True if a data package is defined and it has datasets associated with it</returns>
         /// <remarks></remarks>
-        protected bool LoadDataPackageDatasetInfo(out Dictionary<int, clsDataPackageDatasetInfo> dctDataPackageDatasets)
+        protected bool LoadDataPackageDatasetInfo(out Dictionary<int, clsDataPackageDatasetInfo> dataPackageDatasets)
         {
             // Gigasax.DMS_Pipeline
             var brokerDbConnectionString = mMgrParams.GetParam("BrokerConnectionString");
@@ -2210,14 +2210,14 @@ namespace AnalysisManagerBase
 
             if (dataPackageID < 0)
             {
-                dctDataPackageDatasets = new Dictionary<int, clsDataPackageDatasetInfo>();
+                dataPackageDatasets = new Dictionary<int, clsDataPackageDatasetInfo>();
                 return false;
             }
 
             var dbTools = DbToolsFactory.GetDBTools(brokerDbConnectionString, debugMode: TraceMode);
             RegisterEvents(dbTools);
 
-            return clsDataPackageInfoLoader.LoadDataPackageDatasetInfo(dbTools, dataPackageID, out dctDataPackageDatasets);
+            return clsDataPackageInfoLoader.LoadDataPackageDatasetInfo(dbTools, dataPackageID, out dataPackageDatasets);
         }
 
         /// <summary>
@@ -2421,8 +2421,8 @@ namespace AnalysisManagerBase
                     EnumTaskStatusDetail.PACKAGING_RESULTS, 0);
 
                 resultsDirectoryNamePath = Path.Combine(mWorkDir, mResultsDirectoryName);
-                var dctRejectStats = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-                var dctAcceptStats = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+                var rejectStats = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+                var acceptStats = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
 
                 // Log status
                 if (mDebugLevel >= 2)
@@ -2511,18 +2511,18 @@ namespace AnalysisManagerBase
                         {
                             var fileExtension = Path.GetExtension(tmpFileName);
 
-                            if (dctRejectStats.TryGetValue(fileExtension, out var rejectCount))
+                            if (rejectStats.TryGetValue(fileExtension, out var rejectCount))
                             {
-                                dctRejectStats[fileExtension] = rejectCount + 1;
+                                rejectStats[fileExtension] = rejectCount + 1;
                             }
                             else
                             {
-                                dctRejectStats.Add(fileExtension, 1);
+                                rejectStats.Add(fileExtension, 1);
                             }
 
                             // Only log the first 10 times files of a given extension are rejected
-                            //  However, if a file was rejected due to invalid characters in the name, we don't track that rejection with dctRejectStats
-                            if (dctRejectStats[fileExtension] <= REJECT_LOGGING_THRESHOLD)
+                            //  However, if a file was rejected due to invalid characters in the name, we don't track that rejection with rejectStats
+                            if (rejectStats[fileExtension] <= REJECT_LOGGING_THRESHOLD)
                             {
                                 LogDebug(" MoveResultFiles: Rejected file:  " + tmpFileName);
                             }
@@ -2537,17 +2537,17 @@ namespace AnalysisManagerBase
                     {
                         var fileExtension = Path.GetExtension(tmpFileName);
 
-                        if (dctAcceptStats.TryGetValue(fileExtension, out var acceptCount))
+                        if (acceptStats.TryGetValue(fileExtension, out var acceptCount))
                         {
-                            dctAcceptStats[fileExtension] = acceptCount + 1;
+                            acceptStats[fileExtension] = acceptCount + 1;
                         }
                         else
                         {
-                            dctAcceptStats.Add(fileExtension, 1);
+                            acceptStats.Add(fileExtension, 1);
                         }
 
                         // Only log the first 50 times files of a given extension are accepted
-                        if (dctAcceptStats[fileExtension] <= ACCEPT_LOGGING_THRESHOLD)
+                        if (acceptStats[fileExtension] <= ACCEPT_LOGGING_THRESHOLD)
                         {
                             LogDebug(" MoveResultFiles: Accepted file:  " + tmpFileName);
                         }
@@ -2585,8 +2585,8 @@ namespace AnalysisManagerBase
 
                 if (mDebugLevel >= LOG_LEVEL_REPORT_ACCEPT_OR_REJECT)
                 {
-                    // Look for any extensions in dctAcceptStats that had over 50 accepted files
-                    foreach (var extension in dctAcceptStats)
+                    // Look for any extensions in acceptStats that had over 50 accepted files
+                    foreach (var extension in acceptStats)
                     {
                         if (extension.Value > ACCEPT_LOGGING_THRESHOLD)
                         {
@@ -2594,8 +2594,8 @@ namespace AnalysisManagerBase
                         }
                     }
 
-                    // Look for any extensions in  dctRejectStats that had over 10 rejected files
-                    foreach (var extension in dctRejectStats)
+                    // Look for any extensions in rejectStats that had over 10 rejected files
+                    foreach (var extension in rejectStats)
                     {
                         if (extension.Value > REJECT_LOGGING_THRESHOLD)
                         {

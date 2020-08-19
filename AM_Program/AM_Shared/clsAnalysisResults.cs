@@ -66,13 +66,13 @@ namespace AnalysisManagerBase
         /// Copies a source directory to the destination directory. Allows overwriting.
         /// </summary>
         /// <param name="sourcePath">The source directory path.</param>
-        /// <param name="destPath">The destination directory path.</param>
+        /// <param name="destinationPath">The destination directory path.</param>
         /// <param name="overwrite">True if the destination file can be overwritten; otherwise, false.</param>
         /// <remarks></remarks>
         // ReSharper disable once UnusedMember.Global
-        public void CopyDirectory(string sourcePath, string destPath, bool overwrite)
+        public void CopyDirectory(string sourcePath, string destinationPath, bool overwrite)
         {
-            CopyDirectory(sourcePath, destPath, overwrite, maxRetryCount: DEFAULT_RETRY_COUNT, continueOnError: true);
+            CopyDirectory(sourcePath, destinationPath, overwrite, maxRetryCount: DEFAULT_RETRY_COUNT, continueOnError: true);
         }
 
         /// <summary>
@@ -170,54 +170,54 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Copy the file, optionally overwriting
         /// </summary>
-        /// <param name="srcFilePath">Source file path</param>
-        /// <param name="destFilePath">Destination file path</param>
+        /// <param name="sourceFilePath">Source file path</param>
+        /// <param name="destinationFilePath">Destination file path</param>
         /// <param name="overwrite">True to overwrite if it exists</param>
         /// <remarks>Tries up to 3 times, waiting 15 seconds between attempts</remarks>
         // ReSharper disable once UnusedMember.Global
-        public void CopyFileWithRetry(string srcFilePath, string destFilePath, bool overwrite)
+        public void CopyFileWithRetry(string sourceFilePath, string destinationFilePath, bool overwrite)
         {
             const bool increaseHoldoffOnEachRetry = false;
-            CopyFileWithRetry(srcFilePath, destFilePath, overwrite, DEFAULT_RETRY_COUNT, DEFAULT_RETRY_HOLDOFF_SEC, increaseHoldoffOnEachRetry);
+            CopyFileWithRetry(sourceFilePath, destinationFilePath, overwrite, DEFAULT_RETRY_COUNT, DEFAULT_RETRY_HOLDOFF_SEC, increaseHoldoffOnEachRetry);
         }
 
         /// <summary>
         /// Copy the file, optionally overwriting
         /// </summary>
-        /// <param name="srcFilePath">Source file path</param>
-        /// <param name="destFilePath">Destination file path</param>
+        /// <param name="sourceFilePath">Source file path</param>
+        /// <param name="destinationFilePath">Destination file path</param>
         /// <param name="overwrite">True to overwrite if it exists</param>
         /// <param name="increaseHoldoffOnEachRetry"></param>
         // ReSharper disable once UnusedMember.Global
-        public void CopyFileWithRetry(string srcFilePath, string destFilePath, bool overwrite, bool increaseHoldoffOnEachRetry)
+        public void CopyFileWithRetry(string sourceFilePath, string destinationFilePath, bool overwrite, bool increaseHoldoffOnEachRetry)
         {
-            CopyFileWithRetry(srcFilePath, destFilePath, overwrite, DEFAULT_RETRY_COUNT, DEFAULT_RETRY_HOLDOFF_SEC, increaseHoldoffOnEachRetry);
+            CopyFileWithRetry(sourceFilePath, destinationFilePath, overwrite, DEFAULT_RETRY_COUNT, DEFAULT_RETRY_HOLDOFF_SEC, increaseHoldoffOnEachRetry);
         }
 
         /// <summary>
         /// Copy the file, optionally overwriting
         /// </summary>
-        /// <param name="srcFilePath">Source file path</param>
-        /// <param name="destFilePath">Destination file path</param>
+        /// <param name="sourceFilePath">Source file path</param>
+        /// <param name="destinationFilePath">Destination file path</param>
         /// <param name="overwrite">True to overwrite if it exists</param>
         /// <param name="maxRetryCount">Maximum attempts</param>
         /// <param name="retryHoldoffSeconds">Seconds between attempts</param>
-        public void CopyFileWithRetry(string srcFilePath, string destFilePath, bool overwrite, int maxRetryCount, int retryHoldoffSeconds)
+        public void CopyFileWithRetry(string sourceFilePath, string destinationFilePath, bool overwrite, int maxRetryCount, int retryHoldoffSeconds)
         {
             const bool increaseHoldoffOnEachRetry = false;
-            CopyFileWithRetry(srcFilePath, destFilePath, overwrite, maxRetryCount, retryHoldoffSeconds, increaseHoldoffOnEachRetry);
+            CopyFileWithRetry(sourceFilePath, destinationFilePath, overwrite, maxRetryCount, retryHoldoffSeconds, increaseHoldoffOnEachRetry);
         }
 
         /// <summary>
         /// Copy the file, optionally overwriting
         /// </summary>
-        /// <param name="srcFilePath">Source file path</param>
-        /// <param name="destFilePath">Destination file path</param>
+        /// <param name="sourceFilePath">Source file path</param>
+        /// <param name="destinationFilePath">Destination file path</param>
         /// <param name="overwrite">True to overwrite if it exists</param>
         /// <param name="maxRetryCount">Maximum attempts</param>
         /// <param name="retryHoldoffSeconds">Seconds between attempts</param>
         /// <param name="increaseHoldoffOnEachRetry">If true, increase the holdoff between each attempt</param>
-        public void CopyFileWithRetry(string srcFilePath, string destFilePath, bool overwrite, int maxRetryCount, int retryHoldoffSeconds, bool increaseHoldoffOnEachRetry)
+        public void CopyFileWithRetry(string sourceFilePath, string destinationFilePath, bool overwrite, int maxRetryCount, int retryHoldoffSeconds, bool increaseHoldoffOnEachRetry)
         {
             var attemptCount = 0;
             float actualRetryHoldoffSeconds = retryHoldoffSeconds;
@@ -228,9 +228,9 @@ namespace AnalysisManagerBase
                 maxRetryCount = 1;
 
             // First make sure the source file exists
-            if (!File.Exists(srcFilePath))
+            if (!File.Exists(sourceFilePath))
             {
-                throw new IOException("clsAnalysisResults,CopyFileWithRetry: Source file not found for copy operation: " + srcFilePath);
+                throw new IOException("clsAnalysisResults,CopyFileWithRetry: Source file not found for copy operation: " + sourceFilePath);
             }
 
             while (attemptCount <= maxRetryCount)
@@ -242,21 +242,21 @@ namespace AnalysisManagerBase
                     ResetTimestampForQueueWaitTimeLogging();
                     var startTime = DateTime.UtcNow;
 
-                    if (mFileTools.CopyFileUsingLocks(srcFilePath, destFilePath, overwrite))
+                    if (mFileTools.CopyFileUsingLocks(sourceFilePath, destinationFilePath, overwrite))
                     {
-                        LogCopyStats(startTime, destFilePath);
+                        LogCopyStats(startTime, destinationFilePath);
                         return;
                     }
 
-                    LogError("CopyFileUsingLocks returned false copying " + srcFilePath + " to " + destFilePath);
+                    LogError("CopyFileUsingLocks returned false copying " + sourceFilePath + " to " + destinationFilePath);
                 }
                 catch (Exception ex)
                 {
-                    LogError("clsAnalysisResults,CopyFileWithRetry: error copying " + srcFilePath + " to " + destFilePath, ex);
+                    LogError("clsAnalysisResults,CopyFileWithRetry: error copying " + sourceFilePath + " to " + destinationFilePath, ex);
 
-                    if (!overwrite && File.Exists(destFilePath))
+                    if (!overwrite && File.Exists(destinationFilePath))
                     {
-                        throw new IOException("Tried to overwrite an existing file when overwrite = False: " + destFilePath);
+                        throw new IOException("Tried to overwrite an existing file when overwrite = False: " + destinationFilePath);
                     }
 
                     if (attemptCount > maxRetryCount)
