@@ -319,7 +319,7 @@ namespace AnalysisManagerBase
                     const int retryCount = 3;
                     dbTools.ExecuteSP(cmd, retryCount, 2);
 
-                    var returnCode = clsGlobal.GetReturnCodeValue(returnParam.Value.ToString());
+                    var returnCode = clsGlobal.GetReturnCodeValue(dbTools.GetString(returnParam.Value));
                     if (returnCode != 0)
                     {
                         // Error occurred
@@ -381,7 +381,7 @@ namespace AnalysisManagerBase
                 const int retryCount = 3;
                 dbTools.ExecuteSP(cmd, retryCount, 2);
 
-                var returnCode = clsGlobal.GetReturnCodeValue(returnParam.Value.ToString());
+                var returnCode = clsGlobal.GetReturnCodeValue(dbTools.GetString(returnParam.Value));
                 if (returnCode != 0)
                 {
                     // Error occurred

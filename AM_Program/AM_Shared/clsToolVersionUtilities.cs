@@ -506,7 +506,7 @@ namespace AnalysisManagerBase
             // Execute the stored procedure (retry the call up to 4 times)
             var resCode = dbTools.ExecuteSP(cmd, 4);
 
-            var returnCode = returnParam.Value.ToString();
+            var returnCode = dbTools.GetString(returnParam.Value);
             var returnCodeValue = clsGlobal.GetReturnCodeValue(returnCode);
 
             if (resCode == 0 && returnCodeValue == 0)

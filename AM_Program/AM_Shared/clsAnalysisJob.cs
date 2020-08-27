@@ -1270,15 +1270,18 @@ namespace AnalysisManagerBase
                 case RequestTaskResult.NoTaskFound:
                     TaskWasAssigned = false;
                     break;
+
                 case RequestTaskResult.TaskFound:
                     TaskWasAssigned = true;
                     break;
+
                 case RequestTaskResult.TooManyRetries:
                 case RequestTaskResult.Deadlock:
                     // Make sure the database didn't actually assign a job to this manager
                     ReportManagerIdle();
                     TaskWasAssigned = false;
                     break;
+
                 default:
                     TaskWasAssigned = false;
                     break;
@@ -1290,8 +1293,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Requests a single analysis job using RequestStepTaskXML
         /// </summary>
-        /// <returns></returns>
-        /// <remarks></remarks>
+        /// <returns>Enum indicating if task was found</returns>
         private RequestTaskResult RequestAnalysisJobFromDB(bool runJobsRemotely)
         {
             if (clsGlobal.OfflineMode)
@@ -1346,7 +1348,8 @@ namespace AnalysisManagerBase
                 // Execute the SP
                 var resCode = PipelineDBProcedureExecutor.ExecuteSP(cmd, 1);
 
-                var returnCode = returnParam.Value.ToString();
+                var returnCode = PipelineDBProcedureExecutor.GetString(returnParam.Value);
+
                 var returnCodeValue = clsGlobal.GetReturnCodeValue(returnCode);
 
                 if (returnCodeValue != 0)
@@ -1911,7 +1914,7 @@ namespace AnalysisManagerBase
             // Execute the Stored Procedure (retry the call up to 3 times)
             var resCode = PipelineDBProcedureExecutor.ExecuteSP(cmd, 3);
 
-            var returnCode = returnParam.Value.ToString();
+            var returnCode = PipelineDBProcedureExecutor.GetString(returnParam.Value);
             var returnCodeValue = clsGlobal.GetReturnCodeValue(returnCode);
 
             if (resCode == 0 && returnCodeValue == 0)
@@ -2017,7 +2020,7 @@ namespace AnalysisManagerBase
             // Call Stored Procedure SetStepTaskComplete (retry the call up to 20 times)
             var resCode = PipelineDBProcedureExecutor.ExecuteSP(cmd, 20);
 
-            var returnCode = returnParam.Value.ToString();
+            var returnCode = PipelineDBProcedureExecutor.GetString(returnParam.Value);
             var returnCodeValue = clsGlobal.GetReturnCodeValue(returnCode);
 
             if (resCode == 0 && returnCodeValue == 0)
