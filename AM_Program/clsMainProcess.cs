@@ -687,6 +687,10 @@ namespace AnalysisManagerProg
 
                             // There was a problem getting the task; errors were logged by RequestTaskResult
                             criticalMgrErrorCount++;
+
+                            // Delay for an increasing amount of time as an increasing number of deadlocks and/or resultErrors occur
+                            PauseManagerForCooldown(criticalMgrErrorCount + successiveDeadLockCount);
+
                             break;
 
                         case clsDBTask.RequestTaskResult.TaskFound:
@@ -762,13 +766,20 @@ namespace AnalysisManagerProg
                             ShowTrace("Deadlock");
 
                             // A deadlock error occurred
-                            // Query the DB again, but only if we have not had 3 deadlock results in a row
+                            // Deadlocks can occur when too many managers are requesting a job at once
+
                             successiveDeadLockCount++;
                             if (successiveDeadLockCount >= 3)
                             {
+                                // Encountered 3 deadlocks in a row
                                 var msg = "Deadlock encountered " + successiveDeadLockCount + " times in a row when requesting a new task; exiting";
                                 LogWarning(msg);
                                 requestJobs = false;
+                            }
+                            else
+                            {
+                                // Delay for an increasing amount of time as an increasing number of deadlocks and/or resultErrors occur
+                                PauseManagerForCooldown(criticalMgrErrorCount + successiveDeadLockCount);
                             }
                             break;
 
@@ -2197,6 +2208,14 @@ namespace AnalysisManagerProg
             }
 
             return statusParsed;
+        }
+
+        private void PauseManagerForCooldown(int errorOrDeadlockCount)
+        {
+            var cooldownSeconds = 10 + 10 * errorOrDeadlockCount;
+
+            LogMessage(string.Format("Pausing manager for {0} seconds", cooldownSeconds));
+            ProgRunner.SleepMilliseconds(cooldownSeconds * 1000);
         }
 
         /// <summary>
