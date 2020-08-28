@@ -46,6 +46,11 @@
         public bool Tryptic { get; set; }
 
         /// <summary>
+        /// True if the peptide has any acetylated K residues
+        /// </summary>
+        public bool AcetylPeptide { get; set; }
+
+        /// <summary>
         /// Constructor
         /// </summary>
         public clsUniqueSeqInfo()

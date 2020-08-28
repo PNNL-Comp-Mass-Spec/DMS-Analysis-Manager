@@ -28,6 +28,8 @@ namespace MSGFResultsSummarizer
 {
     public class clsMSGFResultsSummarizer : EventNotifier
     {
+        // Ignore Spelling: phosph, Acetyl, MODa, psm, xxx, structs, peptides, Cntm, sp, gi, Trypa, udt, uni, itrac, Tpro
+
         #region "Constants and Enums"
 
         public const double DEFAULT_MSGF_THRESHOLD = 1E-10;        // 1E-10
@@ -209,6 +211,10 @@ namespace MSGFResultsSummarizer
         public int TrypticPeptidesMSGF => mMSGFBasedCounts.TrypticPeptides;
 
         public int TrypticPeptidesFDR => mFDRBasedCounts.TrypticPeptides;
+
+        public int AcetylPeptidesMSGF => mMSGFBasedCounts.AcetylPeptides;
+
+        public int AcetylPeptidesFDR => mFDRBasedCounts.AcetylPeptides;
 
         #endregion
 
@@ -789,6 +795,7 @@ namespace MSGFResultsSummarizer
             IReadOnlyDictionary<string, List<clsNormalizedPeptideInfo>> normalizedPeptidesByCleanSequence,
             clsNormalizedPeptideInfo newNormalizedPeptide)
         {
+            // ReSharper disable once CommentTypo
             // Find normalized peptides with the new normalized peptide's clean sequence
 
             if (!normalizedPeptidesByCleanSequence.TryGetValue(newNormalizedPeptide.CleanSequence, out var normalizedPeptideCandidates))
@@ -859,7 +866,7 @@ namespace MSGFResultsSummarizer
         /// <remarks>Used by SMAQC</remarks>
         public static Regex GetKeratinRegEx()
         {
-            // Regex to match keratin proteins, including
+            // RegEx to match keratin proteins, including
             //   K1C9_HUMAN, K1C10_HUMAN, K1CI_HUMAN
             //   K2C1_HUMAN, K2C1B_HUMAN, K2C3_HUMAN, K2C6C_HUMAN, K2C71_HUMAN
             //   K22E_HUMAN And K22O_HUMAN
@@ -877,7 +884,7 @@ namespace MSGFResultsSummarizer
         /// <remarks>Used by SMAQC</remarks>
         public static Regex GetTrypsinRegEx()
         {
-            // Regex to match trypsin proteins, including
+            // RegEx to match trypsin proteins, including
             //   TRYP_PIG, sp|TRYP_PIG, Contaminant_TRYP_PIG, Cntm_P00761|TRYP_PIG
             //   Contaminant_TRYP_BOVIN And gi|136425|sp|P00760|TRYP_BOVIN
             //   Contaminant_Trypa
@@ -953,6 +960,7 @@ namespace MSGFResultsSummarizer
                 dbTools.AddTypedParameter(cmd, "@dynamicReporterIon", SqlType.TinyInt, value: mDynamicReporterIonPTM);
                 dbTools.AddTypedParameter(cmd, "@percentPSMsMissingNTermReporterIon", SqlType.Float, value: percentPSMsMissingNTermReporterIon);
                 dbTools.AddTypedParameter(cmd, "@percentPSMsMissingReporterIon", SqlType.Float, value: percentPSMsMissingReporterIon);
+                dbTools.AddTypedParameter(cmd, "@uniqueAcetylPeptidesFDR", SqlType.Int, value: mFDRBasedCounts.AcetylPeptides);
 
                 // Execute the SP (retry the call up to 3 times)
                 var result = mStoredProcedureExecutor.ExecuteSP(cmd, out var errorMessage, MAX_RETRY_COUNT);
@@ -1150,13 +1158,13 @@ namespace MSGFResultsSummarizer
 
             var loadMSGFResults = true;
 
-            // Regex for determining that a peptide has a missed cleavage (i.e. an internal tryptic cleavage point)
+            // RegEx for determining that a peptide has a missed cleavage (i.e. an internal tryptic cleavage point)
             var missedCleavageMatcher = new Regex(@"[KR][^P][A-Z]", RegexOptions.Compiled);
 
-            // Regex to match keratin proteins
+            // RegEx to match keratin proteins
             var keratinProteinMatcher = GetKeratinRegEx();
 
-            // Regex to match trypsin proteins
+            // RegEx to match trypsin proteins
             var trypsinProteinMatcher = GetTrypsinRegEx();
 
             resultToSeqMap = new SortedList<int, int>();
@@ -1464,7 +1472,7 @@ namespace MSGFResultsSummarizer
                             }
                             else if (missedCleavageMatcher.IsMatch(normalizedPeptide.CleanSequence))
                             {
-                                Console.WriteLine("NumMissedCleavages is zero but the peptide matches the MissedCleavage Regex; this is unexpected");
+                                Console.WriteLine("NumMissedCleavages is zero but the peptide matches the MissedCleavage RegEx; this is unexpected");
                                 psmInfo.MissedCleavage = true;
                             }
 
@@ -1502,6 +1510,13 @@ namespace MSGFResultsSummarizer
                                 if (string.Equals(modification.Key, "Phosph", StringComparison.OrdinalIgnoreCase))
                                 {
                                     psmInfo.Phosphopeptide = true;
+                                    break;
+                                }
+
+                                if (string.Equals(modification.Key, "Acetyl", StringComparison.OrdinalIgnoreCase) ||
+                                    string.Equals(modification.Key, "AcNoTMT", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    psmInfo.AcetylPeptide = true;
                                     break;
                                 }
                             }
@@ -1822,6 +1837,9 @@ namespace MSGFResultsSummarizer
                 // The Keys in this dictionary are SeqID values; the values track observation count, whether the peptide ends in K or R, etc.
                 var uniquePhosphopeptides = new Dictionary<int, clsUniqueSeqInfo>();
 
+                // The Keys in this dictionary are SeqID values; the values track observation count, whether the peptide ends in K or R, etc.
+                var uniqueAcetylPeptides = new Dictionary<int, clsUniqueSeqInfo>();
+
                 // The Keys in this dictionary are protein names; the values are observation count
                 var uniqueProteins = new Dictionary<string, int>();
 
@@ -1847,6 +1865,11 @@ namespace MSGFResultsSummarizer
                     if (result.Value.Phosphopeptide)
                     {
                         AddUpdateUniqueSequence(uniquePhosphopeptides, seqId, seqInfoToStore);
+                    }
+
+                    if (result.Value.AcetylPeptide)
+                    {
+                        AddUpdateUniqueSequence(uniqueAcetylPeptides, seqId, seqInfoToStore);
                     }
 
                     var addResultProtein = true;
@@ -1890,7 +1913,7 @@ namespace MSGFResultsSummarizer
                 }
 
                 // Obtain the stats to store
-                var psmStats = TabulatePSMStats(uniqueSequences, uniqueProteins, uniquePhosphopeptides);
+                var psmStats = TabulatePSMStats(uniqueSequences, uniqueProteins, uniquePhosphopeptides, uniqueAcetylPeptides);
 
                 if (usingMSGFOrEValueFilter)
                 {
@@ -1916,11 +1939,12 @@ namespace MSGFResultsSummarizer
         /// <param name="uniqueSequences">Keys in this dictionary are SeqID values; the values track observation count, whether the peptide ends in K or R, etc.</param>
         /// <param name="uniqueProteins">Keys in this dictionary are protein names; the values are observation count</param>
         /// <param name="uniquePhosphopeptides">Keys in this dictionary are SeqID values; the values track observation count, whether the peptide ends in K or R, etc.</param>
-        /// <returns></returns>
+        /// <param name="uniqueAcetylPeptides">Keys in this dictionary are SeqID values; the values track observation count, whether the peptide ends in K or R, etc.</param>
         private clsPSMStats TabulatePSMStats(
             IDictionary<int, clsUniqueSeqInfo> uniqueSequences,
             IDictionary<string, int> uniqueProteins,
-            IDictionary<int, clsUniqueSeqInfo> uniquePhosphopeptides)
+            IDictionary<int, clsUniqueSeqInfo> uniquePhosphopeptides,
+            IDictionary<int, clsUniqueSeqInfo> uniqueAcetylPeptides)
         {
             var psmStats = new clsPSMStats()
             {
@@ -1931,6 +1955,7 @@ namespace MSGFResultsSummarizer
                 KeratinPeptides = (from item in uniqueSequences where item.Value.KeratinPeptide select item.Key).Count(),
                 TrypsinPeptides = (from item in uniqueSequences where item.Value.TrypsinPeptide select item.Key).Count(),
                 TrypticPeptides = (from item in uniqueSequences where item.Value.Tryptic select item.Key).Count(),
+                AcetylPeptides = uniqueAcetylPeptides.Count,
                 UniquePhosphopeptideCount = uniquePhosphopeptides.Count,
                 UniquePhosphopeptidesCTermK = (from item in uniquePhosphopeptides where item.Value.CTermK select item.Key).Count(),
                 UniquePhosphopeptidesCTermR = (from item in uniquePhosphopeptides where item.Value.CTermR select item.Key).Count(),

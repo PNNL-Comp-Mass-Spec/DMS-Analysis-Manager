@@ -26,9 +26,20 @@ namespace MSGFResultsSummarizer
         /// <remarks></remarks>
         public int UniqueProteinCount { get; set; }
 
+        /// <summary>
+        /// Number of distinct phosphopeptides
+        /// </summary>
+        /// <remarks>A peptide is counted as a phosphopeptide if any S, T, or Y is phosphorylated</remarks>
         public int UniquePhosphopeptideCount { get; set; }
+
+        /// <summary>
+        /// Number of distinct phosphopeptides with K on the C-terminus
+        /// </summary>
         public int UniquePhosphopeptidesCTermK { get; set; }
 
+        /// <summary>
+        /// Number of distinct phosphopeptides with R on the C-terminus
+        /// </summary>
         public int UniquePhosphopeptidesCTermR { get; set; }
 
         /// <summary>
@@ -46,10 +57,21 @@ namespace MSGFResultsSummarizer
         /// </summary>
         public int TrypticPeptides { get; set; }
 
+        /// <summary>
+        /// Number of unique peptides that have at list one acetylated K
+        /// </summary>
+        public int AcetylPeptides { get; set; }
+
+        /// <summary>
+        /// Fraction of peptides that have a missed cleavage (internal K or R)
+        /// </summary>
         public float MissedCleavageRatio { get; set; }
 
+        /// <summary>
+        /// Fraction of phosphopeptides that have a missed cleavage (internal K or R)
+        /// </summary>
         public float MissedCleavageRatioPhospho { get; set; }
-        
+
         /// <summary>
         /// Percent of filter-passing PSMs that are missing a reporter ion on the peptide N-terminus
         /// </summary>
@@ -85,6 +107,7 @@ namespace MSGFResultsSummarizer
             KeratinPeptides = 0;
             TrypsinPeptides = 0;
             TrypticPeptides = 0;
+            AcetylPeptides = 0;
         }
     }
 }
