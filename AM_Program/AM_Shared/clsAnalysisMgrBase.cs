@@ -261,7 +261,7 @@ namespace AnalysisManagerBase
         {
             if (mDebugLevel >= 1)
             {
-                var msg = "Lockfile queue timed out after " + waitTimeMinutes.ToString("0") + " minutes " + "(" + mDerivedClassName + "); Source=" + sourceFilePath + ", Target=" + targetFilePath;
+                var msg = "Lock file queue timed out after " + waitTimeMinutes.ToString("0") + " minutes " + "(" + mDerivedClassName + "); Source=" + sourceFilePath + ", Target=" + targetFilePath;
                 LogWarning(msg);
             }
         }
@@ -274,7 +274,7 @@ namespace AnalysisManagerBase
                 var minutesText = waitTimeMinutes.ToString("0");
                 var timeUnits = minutesText == "1" ? "minute" : "minutes";
 
-                var msg = string.Format("Exited lockfile queue after {0} {1} ({2}; will now copy file", minutesText, timeUnits, mDerivedClassName);
+                var msg = string.Format("Exited lock file queue after {0} {1} ({2}; will now copy file", minutesText, timeUnits, mDerivedClassName);
                 LogDebug(msg);
             }
         }
@@ -304,7 +304,7 @@ namespace AnalysisManagerBase
             if (mDebugLevel >= 1)
             {
                 LogDebug(string.Format(
-                    "Waiting for lockfile queue to fall below threshold ({0}); " +
+                    "Waiting for lock file queue to fall below threshold ({0}); " +
                     "SourceBacklog={1:N0} MB, TargetBacklog={2:N0} MB, " +
                     "Source={3}, Target={4}",
                     mDerivedClassName, backlogSourceMB, backlogTargetMB, sourceFilePath, targetFilePath));
@@ -315,7 +315,7 @@ namespace AnalysisManagerBase
         {
             if (string.IsNullOrWhiteSpace(adminBypassMessage))
             {
-                LogMessage(string.Format("Waiting for lockfile queue to fall below threshold; see lock file(s) at {0} and {1}",
+                LogMessage(string.Format("Waiting for lock file queue to fall below threshold; see lock file(s) at {0} and {1}",
                                          sourceLockFilePath ?? "(n/a)", targetLockFilePath ?? "(n/a)"));
                 return;
             }
