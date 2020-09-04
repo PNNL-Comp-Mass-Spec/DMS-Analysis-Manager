@@ -2276,6 +2276,63 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
+        /// Read a parameter file with Key=Value settings (as used by MS-GF+, MSPathFinder, and TopPIC)
+        /// Assumes the file is in the working directory tracked by mWorkDir
+        /// </summary>
+        /// <param name="toolName">Tool name (for logging)</param>
+        /// <param name="parameterFileName">Parameter file name</param>
+        /// <param name="paramFileEntries">Output: List of setting names and values read from the parameter file</param>
+        /// <param name="paramFileReader">Output: Parameter file reader instance</param>
+        /// <param name="removeComments">When true, remove # delimited comments from setting values</param>
+        /// <returns></returns>
+        protected CloseOutType LoadSettingsFromKeyValueParameterFile(
+            string toolName,
+            string parameterFileName,
+            out List<KeyValuePair<string, string>> paramFileEntries,
+            out PRISM.AppSettings.KeyValueParamFileReader paramFileReader,
+            bool removeComments = false)
+        {
+            return LoadSettingsFromKeyValueParameterFile(
+                toolName, mWorkDir, parameterFileName,
+                out paramFileEntries,
+                out paramFileReader,
+                removeComments);
+        }
+
+        /// <summary>
+        /// Read a parameter file with Key=Value settings (as used by MS-GF+, MSPathFinder, and TopPIC)
+        /// </summary>
+        /// <param name="toolName">Tool name (for logging)</param>
+        /// <param name="workingDirectoryPath">Directory with the parameter file</param>
+        /// <param name="parameterFileName">Parameter file name</param>
+        /// <param name="paramFileEntries">Output: List of setting names and values read from the parameter file</param>
+        /// <param name="paramFileReader">Output: Parameter file reader instance</param>
+        /// <param name="removeComments">When true, remove # delimited comments from setting values</param>
+        /// <returns></returns>
+        protected CloseOutType LoadSettingsFromKeyValueParameterFile(
+            string toolName,
+            string workingDirectoryPath,
+            string parameterFileName,
+            out List<KeyValuePair<string, string>> paramFileEntries,
+            out PRISM.AppSettings.KeyValueParamFileReader paramFileReader,
+            bool removeComments = false)
+        {
+            paramFileReader = new PRISM.AppSettings.KeyValueParamFileReader(toolName, workingDirectoryPath, parameterFileName);
+            RegisterEvents(paramFileReader);
+
+            var success = paramFileReader.ParseKeyValueParameterFile(out paramFileEntries, removeComments);
+            if (success)
+                return CloseOutType.CLOSEOUT_SUCCESS;
+
+            mMessage = paramFileReader.ErrorMessage;
+
+            if (paramFileReader.ParamFileNotFound)
+                return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
+
+            return CloseOutType.CLOSEOUT_FAILED;
+        }
+
+        /// <summary>
         /// Logs current progress to the log file at a given interval (track progress with mProgress)
         /// </summary>
         /// <param name="toolName"></param>

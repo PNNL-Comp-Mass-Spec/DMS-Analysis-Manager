@@ -701,16 +701,21 @@ namespace AnalysisManagerMSPathFinderPlugin
             cmdLineOptions = string.Empty;
             tdaEnabled = false;
 
-            var paramFileName = mJobParams.GetParam("ParmFileName");
+            var parameterFileName = mJobParams.GetParam("ParmFileName");
 
-            var paramFileReader = new clsKeyValueParamFileReader("MSPathFinder", mWorkDir, paramFileName);
-            RegisterEvents(paramFileReader);
-
-            var eResult = paramFileReader.ParseKeyValueParameterFile(out var paramFileEntries);
-            if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
+            // Although ParseKeyValueParameterFile checks for paramFileName being an empty string,
+            // we check for it here since the name comes from the settings file, so we want to customize the error message
+            if (string.IsNullOrWhiteSpace(parameterFileName))
             {
-                mMessage = paramFileReader.ErrorMessage;
-                return eResult;
+                LogError("MSPathFinder parameter file not defined in the job settings (param name ParmFileName)");
+                return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
+            }
+
+            var result = LoadSettingsFromKeyValueParameterFile("MSPathFinder", parameterFileName, out var paramFileEntries, out var paramFileReader);
+
+            if (result != CloseOutType.CLOSEOUT_SUCCESS)
+            {
+                return result;
             }
 
             // Obtain the dictionary that maps parameter names to argument names

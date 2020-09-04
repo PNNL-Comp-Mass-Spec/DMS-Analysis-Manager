@@ -1,4 +1,4 @@
-﻿using AnalysisManagerBase;
+﻿using PRISM.AppSettings;
 
 namespace AnalysisManagerMSGFDBPlugIn
 {

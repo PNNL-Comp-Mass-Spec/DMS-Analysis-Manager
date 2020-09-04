@@ -710,11 +710,11 @@ namespace AnalysisManagerMzRefineryPlugIn
 
             try
             {
-                var paramFileReader = new clsKeyValueParamFileReader("MzRefinery", parameterFilePath);
+                var paramFileReader = new PRISM.AppSettings.KeyValueParamFileReader("MzRefinery", parameterFilePath);
                 RegisterEvents(paramFileReader);
 
-                var result = paramFileReader.ParseKeyValueParameterFile(out var paramFileEntries);
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
+                var success = paramFileReader.ParseKeyValueParameterFile(out var paramFileEntries);
+                if (!success)
                 {
                     LogError(paramFileReader.ErrorMessage);
                     return false;

@@ -1511,25 +1511,21 @@ namespace AnalysisManagerMSGFDBPlugIn
                 return valueIfNotFound;
             }
 
-            var paramFileReader = new clsKeyValueParamFileReader("MS-GF+", sourceParameterFilePath);
-            RegisterEvents(paramFileReader);
-
-            var result = paramFileReader.ParseKeyValueParameterFile(out var paramFileEntries);
-            if (result != CloseOutType.CLOSEOUT_SUCCESS)
-            {
-                ErrorMessage = "Error reading MS-GF+ parameter file in GetSettingFromMSGFPlusParamFile";
-                return valueIfNotFound;
-            }
-
             try
             {
-                foreach (var kvSetting in paramFileEntries)
+                var paramFileReader = new KeyValueParamFileReader("MS-GF+", sourceParameterFilePath);
+                RegisterEvents(paramFileReader);
+
+                var success = paramFileReader.ParseKeyValueParameterFile(out var paramFileEntries);
+                if (!success)
                 {
-                    if (clsGlobal.IsMatch(kvSetting.Key, settingToFind))
-                    {
-                        return kvSetting.Value;
-                    }
+                    ErrorMessage = clsGlobal.AppendToComment(
+                            "Error reading MS-GF+ parameter file in GetSettingFromMSGFPlusParamFile",
+                            paramFileReader.ErrorMessage);
+                    return valueIfNotFound;
                 }
+
+                return KeyValueParamFileReader.GetParameterValue(paramFileEntries, settingToFind, valueIfNotFound);
             }
             catch (Exception ex)
             {
@@ -2420,14 +2416,17 @@ namespace AnalysisManagerMSGFDBPlugIn
                 return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
             }
 
-            var paramFileReader = new clsKeyValueParamFileReader("MS-GF+", sourceParamFile.FullName);
+            var paramFileReader = new KeyValueParamFileReader("MS-GF+", sourceParamFile.FullName);
             RegisterEvents(paramFileReader);
 
-            var result = paramFileReader.ParseKeyValueParameterFileGetAllLines(out var sourceParamFileLines);
-            if (result != CloseOutType.CLOSEOUT_SUCCESS)
+            var paramFileSuccess = paramFileReader.ParseKeyValueParameterFileGetAllLines(out var sourceParamFileLines);
+            if (!paramFileSuccess)
             {
-                ErrorMessage = paramFileReader.ErrorMessage;
-                return result;
+                ErrorMessage = clsGlobal.AppendToComment(
+                    "Error reading MS-GF+ parameter file in ParseMSGFPlusParameterFile",
+                    paramFileReader.ErrorMessage);
+
+                return paramFileReader.ParamFileNotFound ? CloseOutType.CLOSEOUT_NO_PARAM_FILE : CloseOutType.CLOSEOUT_FAILED;
             }
 
             // Keys are the parameter name, values are the parameter line(s) and associated MSGFPlusParameter(s)

@@ -98,7 +98,6 @@
     <Compile Include="clsDirectorySearch.cs" />
     <Compile Include="clsFormattedXMLWriter.cs" />
     <Compile Include="clsGlobal.cs" />
-    <Compile Include="clsKeyValueParamFileReader.cs" />
     <Compile Include="clsLoggerBase.cs" />
     <Compile Include="clsMemoryUsageLogger.cs" />
     <Compile Include="clsMessageContainer.cs" />
@@ -130,7 +129,6 @@
     <Compile Include="ISpectraFilter.cs" />
     <Compile Include="IStatusFile.cs" />
     <Compile Include="IToolRunner.cs" />
-    <Compile Include="KeyValueParamFileLine.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="clsFileSearch.cs" />
   </ItemGroup>
@@ -148,7 +146,7 @@
       <Version>1.1.6</Version>
     </PackageReference>
     <PackageReference Include="PRISM-Library">
-      <Version>2.6.10</Version>
+      <Version>2.6.13</Version>
     </PackageReference>
     <PackageReference Include="PRISMWin-Library">
       <Version>1.0.14</Version>

@@ -299,14 +299,11 @@ namespace AnalysisManagerProMexPlugIn
                 return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
             }
 
-            var paramFileReader = new clsKeyValueParamFileReader("ProMex", mWorkDir, paramFileName);
-            RegisterEvents(paramFileReader);
+            var result = LoadSettingsFromKeyValueParameterFile("ProMex", parameterFileName, out var paramFileEntries, out var paramFileReader);
 
-            var eResult = paramFileReader.ParseKeyValueParameterFile(out var paramFileEntries);
-            if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
+            if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
-                mMessage = paramFileReader.ErrorMessage;
-                return eResult;
+                return result;
             }
 
             // Obtain the dictionary that maps parameter names to argument names

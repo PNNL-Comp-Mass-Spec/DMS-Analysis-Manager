@@ -554,15 +554,13 @@ namespace AnalysisManagerTopPICPlugIn
 
             cmdLineOptions = string.Empty;
 
-            var paramFileName = mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_PARAMETER_FILE);
-            var paramFileReader = new clsKeyValueParamFileReader("TopPIC", mWorkDir, paramFileName);
-            RegisterEvents(paramFileReader);
+            var parameterFileName = mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_PARAMETER_FILE);
 
-            var eResult = paramFileReader.ParseKeyValueParameterFile(out var paramFileEntries);
-            if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
+            var result = LoadSettingsFromKeyValueParameterFile("TopPIC", parameterFileName, out var paramFileEntries, out var paramFileReader);
+
+            if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
-                mMessage = paramFileReader.ErrorMessage;
-                return eResult;
+                return result;
             }
 
             // If file DatasetName_ms2.feature exists, assume that we are using TopPIC 1.3 and are thus using separate error tolerances

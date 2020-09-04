@@ -369,14 +369,11 @@ namespace AnalysisManagerTopFDPlugIn
                 return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
             }
 
-            var paramFileReader = new clsKeyValueParamFileReader("TopFD", mWorkDir, paramFileName);
-            RegisterEvents(paramFileReader);
+            var result = LoadSettingsFromKeyValueParameterFile("TopFD", parameterFileName, out var paramFileEntries, out var paramFileReader);
 
-            var eResult = paramFileReader.ParseKeyValueParameterFile(out var paramFileEntries);
-            if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
+            if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
-                mMessage = paramFileReader.ErrorMessage;
-                return eResult;
+                return result;
             }
 
             // Obtain the dictionary that maps parameter names to argument names

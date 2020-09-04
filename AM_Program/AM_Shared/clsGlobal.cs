@@ -724,34 +724,7 @@ namespace AnalysisManagerBase
         /// </remarks>
         public static KeyValuePair<string, string> GetKeyValueSetting(string settingText)
         {
-            var emptyKvPair = new KeyValuePair<string, string>(string.Empty, string.Empty);
-
-            if (string.IsNullOrWhiteSpace(settingText))
-                return emptyKvPair;
-
-            settingText = settingText.Trim();
-
-            if (settingText.StartsWith("#") || !settingText.Contains('='))
-                return emptyKvPair;
-
-            var charIndex = settingText.IndexOf("=", StringComparison.Ordinal);
-
-            if (charIndex <= 0)
-                return emptyKvPair;
-
-            var key = settingText.Substring(0, charIndex).Trim();
-            string value;
-
-            if (charIndex < settingText.Length - 1)
-            {
-                value = settingText.Substring(charIndex + 1).Trim();
-            }
-            else
-            {
-                value = string.Empty;
-            }
-
-            return new KeyValuePair<string, string>(key, value);
+            return PRISM.AppSettings.KeyValueParamFileReader.GetKeyValueSetting(settingText);
         }
 
         /// <summary>
