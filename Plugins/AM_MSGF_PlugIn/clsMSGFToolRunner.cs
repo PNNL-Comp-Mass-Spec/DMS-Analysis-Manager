@@ -2117,7 +2117,7 @@ namespace AnalysisManagerMSGFPlugin
 
                         var dataCols = dataLine.Split();
 
-                        if (dataCols.Length <= 0)
+                        if (dataCols.Length == 0)
                             continue;
 
                         if (msgfSpecProbColIndex < 0)
@@ -2570,7 +2570,7 @@ namespace AnalysisManagerMSGFPlugin
 
                         var splitLine = dataLine.Split().ToList();
 
-                        if (splitLine.Count <= 0)
+                        if (splitLine.Count == 0)
                         {
                             writer.WriteLine();
                             continue;

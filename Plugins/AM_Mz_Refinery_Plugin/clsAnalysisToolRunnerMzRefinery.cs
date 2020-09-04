@@ -321,7 +321,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 {
                     var msgfPlusResultsExist = false;
 
-                    if (msgfPlusResults != null && msgfPlusResults.Exists)
+                    if (msgfPlusResults?.Exists == true)
                     {
                         // MS-GF+ succeeded but MzRefinery or PostProcessing failed
                         // We will mark the job as failed, but we want to move the MS-GF+ results into the transfer folder
@@ -344,7 +344,6 @@ namespace AnalysisManagerMzRefineryPlugIn
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
                 }
-
 
                 var success = CopyResultsToTransferDirectory();
 
@@ -500,7 +499,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                             " -conf " + finalParamFile.Name;
 
             // Make sure the machine has enough free memory to run MS-GF+
-            var logFreeMemoryOnSuccess = !(mDebugLevel < 1);
+            var logFreeMemoryOnSuccess = mDebugLevel >= 1;
 
             if (!clsAnalysisResources.ValidateFreeMemorySize(javaMemorySize, "MS-GF+", logFreeMemoryOnSuccess))
             {
