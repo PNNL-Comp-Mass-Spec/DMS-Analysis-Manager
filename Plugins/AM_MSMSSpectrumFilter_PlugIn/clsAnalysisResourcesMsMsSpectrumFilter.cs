@@ -184,39 +184,38 @@ namespace MSMSSpectrumFilterAM
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
-        private bool FindExistingScanStatsFile(string strDatasetFolderPath)
+        private bool FindExistingScanStatsFile(string datasetDirectoryPath)
         {
-            var diDatasetFolder = new DirectoryInfo(strDatasetFolderPath);
-            var blnFilesFound = false;
+            var datasetDirectory = new DirectoryInfo(datasetDirectoryPath);
 
             try
             {
-                if (!diDatasetFolder.Exists)
+                if (!datasetDirectory.Exists)
                 {
-                    LogError("Dataset directory not found: " + strDatasetFolderPath);
+                    LogError("Dataset directory not found: " + datasetDirectoryPath);
                 }
 
-                var lstFiles = diDatasetFolder.GetFiles(DatasetName + "_ScanStats.txt", SearchOption.AllDirectories).ToList();
+                var scanStatsFiles = datasetDirectory.GetFiles(DatasetName + "_ScanStats.txt", SearchOption.AllDirectories).ToList();
 
-                if (lstFiles.Count == 0)
+                if (scanStatsFiles.Count == 0)
                 {
                     if (mDebugLevel >= 2)
                     {
-                        LogWarning("No _ScanStats.txt files were found in subfolders below " + strDatasetFolderPath);
+                        LogWarning("No _ScanStats.txt files were found in subdirectories below " + datasetDirectoryPath);
                     }
                     return false;
                 }
 
-                // Find the newest file in lstFiles
-                var lstSortedFiles = (from item in lstFiles orderby item.LastWriteTime descending select item).ToList();
+                // Find the newest file in scanStatsFiles
+                var sortedScanStatsFiles = (from item in scanStatsFiles orderby item.LastWriteTime descending select item).ToList();
 
-                var fiNewestScanStatsFile = lstSortedFiles[0];
+                var newestScanStatsFile = sortedScanStatsFiles[0];
 
                 // Copy the ScanStats file locally
-                fiNewestScanStatsFile.CopyTo(Path.Combine(mWorkDir, fiNewestScanStatsFile.Name));
+                newestScanStatsFile.CopyTo(Path.Combine(mWorkDir, newestScanStatsFile.Name));
 
                 // Read the first line of the file and confirm that the _ScanTypeName column exists
-                using (var reader = new StreamReader(new FileStream(fiNewestScanStatsFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                using (var reader = new StreamReader(new FileStream(newestScanStatsFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
                 {
                     var dataLine = reader.ReadLine();
 
@@ -232,7 +231,7 @@ namespace MSMSSpectrumFilterAM
                 }
 
                 // Look for the _ScanStatsEx.txt file
-                var strScanStatsExPath = Path.Combine(fiNewestScanStatsFile.Directory.FullName, Path.GetFileNameWithoutExtension(fiNewestScanStatsFile.Name) + "Ex.txt");
+                var strScanStatsExPath = Path.Combine(newestScanStatsFile.Directory.FullName, Path.GetFileNameWithoutExtension(newestScanStatsFile.Name) + "Ex.txt");
 
                 if (File.Exists(strScanStatsExPath))
                 {
@@ -241,27 +240,23 @@ namespace MSMSSpectrumFilterAM
 
                     if (mDebugLevel >= 1)
                     {
-                        LogMessage("Using existing _ScanStats.txt from " + fiNewestScanStatsFile.FullName);
+                        LogMessage("Using existing _ScanStats.txt from " + newestScanStatsFile.FullName);
                     }
 
-                    blnFilesFound = true;
+                    return true;
                 }
-                else
+
+                if (mDebugLevel >= 1)
                 {
-                    if (mDebugLevel >= 1)
-                    {
-                        LogWarning("The _ScanStats.txt file was found at " + fiNewestScanStatsFile.FullName + " but the _ScanStatsEx.txt file was not present");
-                    }
-                    return false;
+                    LogWarning("The _ScanStats.txt file was found at " + newestScanStatsFile.FullName + " but the _ScanStatsEx.txt file was not present");
                 }
+                return false;
             }
             catch (Exception ex)
             {
                 LogError("Exception in FindExistingScanStatsFile", ex);
                 return false;
             }
-
-            return blnFilesFound;
         }
 
         #endregion

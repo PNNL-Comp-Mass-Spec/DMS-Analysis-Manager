@@ -80,34 +80,34 @@ namespace AnalysisManagerResultsCleanupPlugin
 
             try
             {
-                var strTransferDirectoryPath = mJobParams.GetJobParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH, string.Empty);
-                var strResultsFolderName = mJobParams.GetJobParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, "InputFolderName", string.Empty);
+                var transferDirectoryPath = mJobParams.GetJobParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH, string.Empty);
+                var resultsDirectoryName = mJobParams.GetJobParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, "InputFolderName", string.Empty);
 
-                if (string.IsNullOrWhiteSpace(strTransferDirectoryPath))
+                if (string.IsNullOrWhiteSpace(transferDirectoryPath))
                 {
                     mMessage = "transferFolderPath not defined";
                     LogError(mMessage);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                if (string.IsNullOrWhiteSpace(strResultsFolderName))
+                if (string.IsNullOrWhiteSpace(resultsDirectoryName))
                 {
                     mMessage = "InputFolderName not defined";
                     LogError(mMessage);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                var diTransferFolder = new DirectoryInfo(strTransferDirectoryPath);
+                var transferDirectory = new DirectoryInfo(transferDirectoryPath);
 
-                if (!diTransferFolder.Exists)
+                if (!transferDirectory.Exists)
                 {
-                    mMessage = "transferFolder not found at " + strTransferDirectoryPath;
+                    mMessage = "transferFolder not found at " + transferDirectoryPath;
                     LogError(mMessage);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                var diResultsFolder = new DirectoryInfo(Path.Combine(diTransferFolder.FullName, strResultsFolderName));
-                eResult = RemoveOldResultsDb3Files(diResultsFolder);
+                var resultsDirectory = new DirectoryInfo(Path.Combine(transferDirectory.FullName, resultsDirectoryName));
+                eResult = RemoveOldResultsDb3Files(resultsDirectory);
             }
             catch (Exception ex)
             {
@@ -119,50 +119,50 @@ namespace AnalysisManagerResultsCleanupPlugin
             return eResult;
         }
 
-        private CloseOutType RemoveOldResultsDb3Files(DirectoryInfo diResultsFolder)
+        private CloseOutType RemoveOldResultsDb3Files(DirectoryInfo resultsDirectory)
         {
-            var intStepFolderCount = 0;
+            var stepDirectoryCount = 0;
 
             try
             {
-                var reStepNumber = new Regex(@"Step_(\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-                var dctResultsFiles = new Dictionary<int, FileInfo>();
+                var stepNumberMatcher = new Regex(@"Step_(\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+                var resultsFiles = new Dictionary<int, FileInfo>();
 
-                // Look for Results.db3 files in the subfolders of the transfer folder
-                // Only process folders that start with the text "Step_"
-                foreach (var diSubfolder in diResultsFolder.GetDirectories("Step_*"))
+                // Look for Results.db3 files in the subdirectories of the transfer directory
+                // Only process directories that start with the text "Step_"
+                foreach (var subdirectory in resultsDirectory.GetDirectories("Step_*"))
                 {
-                    intStepFolderCount += 1;
+                    stepDirectoryCount++;
 
                     // Parse out the step number
-                    var reMatch = reStepNumber.Match(diSubfolder.Name);
+                    var reMatch = stepNumberMatcher.Match(subdirectory.Name);
 
                     if (reMatch.Success && int.TryParse(reMatch.Groups[1].Value, out var intStepNumber))
                     {
-                        if (!dctResultsFiles.ContainsKey(intStepNumber))
+                        if (!resultsFiles.ContainsKey(intStepNumber))
                         {
-                            foreach (var fiFile in diSubfolder.GetFiles(RESULTS_DB3_FILE))
+                            foreach (var fiFile in subdirectory.GetFiles(RESULTS_DB3_FILE))
                             {
-                                dctResultsFiles.Add(intStepNumber, fiFile);
+                                resultsFiles.Add(intStepNumber, fiFile);
                                 break;
                             }
                         }
                     }
                 }
 
-                if (dctResultsFiles.Count > 1)
+                if (resultsFiles.Count > 1)
                 {
                     // Delete the Results.db3 files for the steps prior to intLastStep
-                    var intLastStep = dctResultsFiles.Keys.Max();
-                    var intFileCountDeleted = 0;
+                    var lastStep = resultsFiles.Keys.Max();
+                    var fileCountDeleted = 0;
 
-                    var lnqQuery = from item in dctResultsFiles where item.Key < intLastStep select item;
+                    var lnqQuery = from item in resultsFiles where item.Key < lastStep select item;
                     foreach (var item in lnqQuery)
                     {
                         try
                         {
                             item.Value.Delete();
-                            intFileCountDeleted += 1;
+                            fileCountDeleted += 1;
                         }
                         catch (Exception ex)
                         {
@@ -170,26 +170,26 @@ namespace AnalysisManagerResultsCleanupPlugin
                         }
                     }
 
-                    mEvalMessage = "Deleted " + intFileCountDeleted + " extra " + RESULTS_DB3_FILE + " " +
-                                    clsGlobal.CheckPlural(intFileCountDeleted, "file", "files");
+                    mEvalMessage = "Deleted " + fileCountDeleted + " extra " + RESULTS_DB3_FILE + " " +
+                                    clsGlobal.CheckPlural(fileCountDeleted, "file", "files");
 
-                    LogMessage(mEvalMessage + " from " + diResultsFolder.FullName);
+                    LogMessage(mEvalMessage + " from " + resultsDirectory.FullName);
                 }
-                else if (dctResultsFiles.Count == 1)
+                else if (resultsFiles.Count == 1)
                 {
-                    mEvalMessage = "Results folder has just one " + RESULTS_DB3_FILE + " file";
+                    mEvalMessage = "Results directories has just one " + RESULTS_DB3_FILE + " file";
                     LogMessage(mEvalMessage);
                 }
                 else
                 {
-                    if (intStepFolderCount > 0)
+                    if (stepDirectoryCount > 0)
                     {
-                        LogWarning("None of the Step_# folders has a " + RESULTS_DB3_FILE + " file", true);
+                        LogWarning("None of the Step_# directories has a " + RESULTS_DB3_FILE + " file", true);
                     }
                     else
                     {
-                        mMessage = "Results folder does not have any Step_# folders";
-                        LogError(mMessage + ": " + diResultsFolder.FullName);
+                        mMessage = "Results directory does not have any Step_# directories";
+                        LogError(mMessage + ": " + resultsDirectory.FullName);
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
                 }
@@ -210,8 +210,8 @@ namespace AnalysisManagerResultsCleanupPlugin
         /// <remarks></remarks>
         protected bool StoreToolVersionInfo()
         {
-            var strToolVersionInfo = string.Empty;
-            var strAppFolderPath = clsGlobal.GetAppDirectoryPath();
+            var toolVersionInfo = string.Empty;
+            var appDirectoryPath = clsGlobal.GetAppDirectoryPath();
 
             if (mDebugLevel >= 2)
             {
@@ -219,13 +219,13 @@ namespace AnalysisManagerResultsCleanupPlugin
             }
 
             // Lookup the version of the Analysis Manager
-            if (!StoreToolVersionInfoForLoadedAssembly(ref strToolVersionInfo, "AnalysisManagerProg"))
+            if (!StoreToolVersionInfoForLoadedAssembly(ref toolVersionInfo, "AnalysisManagerProg"))
             {
                 return false;
             }
 
             // Lookup the version of AnalysisManagerResultsCleanupPlugin
-            if (!StoreToolVersionInfoForLoadedAssembly(ref strToolVersionInfo, "AnalysisManagerResultsCleanupPlugin"))
+            if (!StoreToolVersionInfoForLoadedAssembly(ref toolVersionInfo, "AnalysisManagerResultsCleanupPlugin"))
             {
                 return false;
             }
@@ -233,13 +233,13 @@ namespace AnalysisManagerResultsCleanupPlugin
             // Store the path to AnalysisManagerProg.exe and AnalysisManagerResultsCleanupPlugin.dll in toolFiles
             var toolFiles = new List<FileInfo>
             {
-                new FileInfo(Path.Combine(strAppFolderPath, "AnalysisManagerProg.exe")),
-                new FileInfo(Path.Combine(strAppFolderPath, "AnalysisManagerResultsCleanupPlugin.dll"))
+                new FileInfo(Path.Combine(appDirectoryPath, "AnalysisManagerProg.exe")),
+                new FileInfo(Path.Combine(appDirectoryPath, "AnalysisManagerResultsCleanupPlugin.dll"))
             };
 
             try
             {
-                return SetStepTaskToolVersion(strToolVersionInfo, toolFiles, saveToolVersionTextFile: false);
+                return SetStepTaskToolVersion(toolVersionInfo, toolFiles, saveToolVersionTextFile: false);
             }
             catch (Exception ex)
             {

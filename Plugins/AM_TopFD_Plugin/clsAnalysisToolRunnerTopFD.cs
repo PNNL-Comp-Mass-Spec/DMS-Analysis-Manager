@@ -360,11 +360,11 @@ namespace AnalysisManagerTopFDPlugIn
         {
             cmdLineOptions = string.Empty;
 
-            var paramFileName = mJobParams.GetParam("TopFD_ParamFile");
+            var parameterFileName = mJobParams.GetParam("TopFD_ParamFile");
 
             // Although ParseKeyValueParameterFile checks for paramFileName being an empty string,
             // we check for it here since the name comes from the settings file, so we want to customize the error message
-            if (string.IsNullOrWhiteSpace(paramFileName))
+            if (string.IsNullOrWhiteSpace(parameterFileName))
             {
                 LogError("TopFD parameter file not defined in the job settings (param name TopFD_ParamFile)");
                 return CloseOutType.CLOSEOUT_NO_PARAM_FILE;

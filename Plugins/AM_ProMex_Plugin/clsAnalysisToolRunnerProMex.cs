@@ -291,11 +291,11 @@ namespace AnalysisManagerProMexPlugIn
         {
             cmdLineOptions = string.Empty;
 
-            var paramFileName = mJobParams.GetParam("ProMexParamFile");
+            var parameterFileName = mJobParams.GetParam("ProMexParamFile");
 
             // Although ParseKeyValueParameterFile checks for paramFileName being an empty string,
             // we check for it here since the name comes from the settings file, so we want to customize the error message
-            if (string.IsNullOrWhiteSpace(paramFileName))
+            if (string.IsNullOrWhiteSpace(parameterFileName))
             {
                 LogError("ProMex parameter file not defined in the job settings (param name ProMexParamFile)");
                 return CloseOutType.CLOSEOUT_NO_PARAM_FILE;

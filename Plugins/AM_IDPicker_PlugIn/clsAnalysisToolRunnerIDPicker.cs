@@ -269,11 +269,11 @@ namespace AnalysisManagerIDPickerPlugIn
 
                 if (!skipIDPicker)
                 {
-                    var moveResult = MoveFilesIntoIDPickerSubfolder();
+                    var moveResult = MoveFilesIntoIDPickerSubdirectory();
                     if (moveResult != CloseOutType.CLOSEOUT_SUCCESS)
                     {
                         // Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                        mMessage = "Error moving files into IDPicker subfolder";
+                        mMessage = "Error moving files into IDPicker subdirectory";
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
                 }
@@ -813,7 +813,7 @@ namespace AnalysisManagerIDPickerPlugIn
             return true;
         }
 
-        private CloseOutType MoveFilesIntoIDPickerSubfolder()
+        private CloseOutType MoveFilesIntoIDPickerSubdirectory()
         {
             var errorEncountered = false;
 
@@ -869,7 +869,7 @@ namespace AnalysisManagerIDPickerPlugIn
                     if (!success)
                     {
                         errorEncountered = true;
-                        LogError("Unable to move " + fileToMove.Name + " into the IDPicker subfolder; tried " + (attempts - 1) + " times");
+                        LogError("Unable to move " + fileToMove.Name + " into the IDPicker subdirectory; tried " + (attempts - 1) + " times");
                     }
                 }
             }

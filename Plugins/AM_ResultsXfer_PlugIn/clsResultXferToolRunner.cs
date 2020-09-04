@@ -245,46 +245,46 @@ namespace AnalysisManagerResultsXferPlugin
         /// <summary>
         /// Moves files from one local directory to another local directory
         /// </summary>
-        /// <param name="sourceFolderPath"></param>
-        /// <param name="targetFolderPath"></param>
+        /// <param name="sourceDirectoryPath"></param>
+        /// <param name="targetDirectoryPath"></param>
         /// <param name="overwriteExisting"></param>
         /// <returns></returns>
         /// <remarks></remarks>
-        protected bool MoveFilesLocally(string sourceFolderPath, string targetFolderPath, bool overwriteExisting)
+        protected bool MoveFilesLocally(string sourceDirectoryPath, string targetDirectoryPath, bool overwriteExisting)
         {
             var success = true;
             var errorCount = 0;
 
             try
             {
-                if (sourceFolderPath.StartsWith(@"\\"))
+                if (sourceDirectoryPath.StartsWith(@"\\"))
                 {
-                    mMessage = "MoveFilesLocally cannot be used with files on network shares; " + sourceFolderPath;
+                    mMessage = "MoveFilesLocally cannot be used with files on network shares; " + sourceDirectoryPath;
                     return false;
                 }
 
-                if (targetFolderPath.StartsWith(@"\\"))
+                if (targetDirectoryPath.StartsWith(@"\\"))
                 {
-                    mMessage = "MoveFilesLocally cannot be used with files on network shares; " + targetFolderPath;
+                    mMessage = "MoveFilesLocally cannot be used with files on network shares; " + targetDirectoryPath;
                     return false;
                 }
 
-                var diSourceFolder = new DirectoryInfo(sourceFolderPath);
-                var diTargetFolder = new DirectoryInfo(targetFolderPath);
+                var sourceDirectory = new DirectoryInfo(sourceDirectoryPath);
+                var targetDirectory = new DirectoryInfo(targetDirectoryPath);
 
-                if (!diTargetFolder.Exists)
-                    diTargetFolder.Create();
+                if (!targetDirectory.Exists)
+                    targetDirectory.Create();
 
                 if (mDebugLevel >= 2)
                 {
-                    LogDebug("Moving files locally to " + diTargetFolder.FullName);
+                    LogDebug("Moving files locally to " + targetDirectory.FullName);
                 }
 
-                foreach (var fiSourceFile in diSourceFolder.GetFiles())
+                foreach (var fiSourceFile in sourceDirectory.GetFiles())
                 {
                     try
                     {
-                        var fiTargetFile = new FileInfo(Path.Combine(diTargetFolder.FullName, fiSourceFile.Name));
+                        var fiTargetFile = new FileInfo(Path.Combine(targetDirectory.FullName, fiSourceFile.Name));
 
                         if (fiTargetFile.Exists)
                         {
@@ -317,9 +317,9 @@ namespace AnalysisManagerResultsXferPlugin
                 }
 
                 // Recursively call this function for each subdirectory
-                foreach (var diSubFolder in diSourceFolder.GetDirectories())
+                foreach (var subdirectory in sourceDirectory.GetDirectories())
                 {
-                    var subDirSuccess = MoveFilesLocally(diSubFolder.FullName, Path.Combine(diTargetFolder.FullName, diSubFolder.Name),
+                    var subDirSuccess = MoveFilesLocally(subdirectory.FullName, Path.Combine(targetDirectory.FullName, subdirectory.Name),
                         overwriteExisting);
                     if (!subDirSuccess)
                     {
@@ -328,23 +328,23 @@ namespace AnalysisManagerResultsXferPlugin
                 }
 
                 // Delete this folder if it is empty
-                diSourceFolder.Refresh();
-                if (diSourceFolder.GetFileSystemInfos("*", SearchOption.AllDirectories).Length == 0)
+                sourceDirectory.Refresh();
+                if (sourceDirectory.GetFileSystemInfos("*", SearchOption.AllDirectories).Length == 0)
                 {
                     try
                     {
-                        diSourceFolder.Delete();
+                        sourceDirectory.Delete();
                     }
                     catch (Exception ex)
                     {
                         // Log a warning, but ignore this error
-                        LogWarning("Unable to delete folder " + diSourceFolder.FullName + ": " + ex);
+                        LogWarning("Unable to delete folder " + sourceDirectory.FullName + ": " + ex);
                     }
                 }
             }
             catch (Exception ex)
             {
-                LogError("Error moving directory " + sourceFolderPath + ": " + ex.Message);
+                LogError("Error moving directory " + sourceDirectoryPath + ": " + ex.Message);
                 success = false;
             }
 

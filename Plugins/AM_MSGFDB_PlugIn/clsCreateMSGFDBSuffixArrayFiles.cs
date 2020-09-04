@@ -263,7 +263,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Copies the suffix array files for the specified fasta file to the remote MSGFPlus_Index_File share
         /// </summary>
-        /// <param name="fiFastaFile"></param>
+        /// <param name="fastaFile"></param>
         /// <param name="remoteIndexDirPath"></param>
         /// <param name="debugLevel"></param>
         /// <param name="managerName">Manager name (only required because the constructor for PRISM.FileTools requires this)</param>
@@ -275,7 +275,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <param name="errorMessage"></param>
         /// <returns></returns>
         /// <remarks>This function is used both by this class and by the MSGFPlusIndexFileCopier console application</remarks>
-        public static bool CopyIndexFilesToRemote(FileInfo fiFastaFile, string remoteIndexDirPath, int debugLevel, string managerName,
+        public static bool CopyIndexFilesToRemote(FileInfo fastaFile, string remoteIndexDirPath, int debugLevel, string managerName,
                                                   bool createIndexFileForExistingFiles, out string errorMessage)
         {
             errorMessage = string.Empty;
@@ -300,13 +300,13 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 if (createIndexFileForExistingFiles)
                 {
-                    var remoteFastaPath = Path.Combine(remoteIndexDirPath, fiFastaFile.Name);
-                    fiFastaFile = new FileInfo(remoteFastaPath);
+                    var remoteFastaPath = Path.Combine(remoteIndexDirPath, fastaFile.Name);
+                    fastaFile = new FileInfo(remoteFastaPath);
                 }
 
-                if (fiFastaFile.Directory == null)
+                if (fastaFile.Directory == null)
                 {
-                    errorMessage = "Local FASTA file directory not found: " + fiFastaFile.FullName;
+                    errorMessage = "Local FASTA file directory not found: " + fastaFile.FullName;
                     return false;
                 }
 
@@ -314,20 +314,20 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 var fileInfo = new List<string>();
 
-                // Find the index files for fiFastaFile
-                foreach (var fiSourceFile in fiFastaFile.Directory.GetFiles(Path.GetFileNameWithoutExtension(fiFastaFile.Name) + ".*"))
+                // Find the index files for fastaFile
+                foreach (var sourceFile in fastaFile.Directory.GetFiles(Path.GetFileNameWithoutExtension(fastaFile.Name) + ".*"))
                 {
-                    if (fiSourceFile.FullName == fiFastaFile.FullName)
+                    if (sourceFile.FullName == fastaFile.FullName)
                         continue;
 
                     // Skip the file if the extension is .hashcheck or .MSGFPlusIndexFileInfo
-                    if (fiSourceFile.Extension == clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX ||
-                        fiSourceFile.Extension == MSGF_PLUS_INDEX_FILE_INFO_SUFFIX)
+                    if (sourceFile.Extension == clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX ||
+                        sourceFile.Extension == MSGF_PLUS_INDEX_FILE_INFO_SUFFIX)
                         continue;
 
-                    filesToCopy.Add(fiSourceFile.Name, fiSourceFile.Length);
-                    fileInfo.Add(fiSourceFile.Name + "\t" + fiSourceFile.Length + "\t" +
-                                 fiSourceFile.LastWriteTimeUtc.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT));
+                    filesToCopy.Add(sourceFile.Name, sourceFile.Length);
+                    fileInfo.Add(sourceFile.Name + "\t" + sourceFile.Length + "\t" +
+                                 sourceFile.LastWriteTimeUtc.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT));
                 }
 
                 if (!createIndexFileForExistingFiles)
@@ -337,7 +337,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                     foreach (var entry in filesToCopy)
                     {
-                        var sourceFilePath = Path.Combine(fiFastaFile.Directory.FullName, entry.Key);
+                        var sourceFilePath = Path.Combine(fastaFile.Directory.FullName, entry.Key);
                         var targetFilePath = Path.Combine(remoteIndexDirectory.FullName, entry.Key);
 
                         var success = oFileTools.CopyFileUsingLocks(sourceFilePath, targetFilePath, managerName, true);
@@ -351,7 +351,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 // Create the .MSGFPlusIndexFileInfo file for this fasta file
                 var fiMSGFPlusIndexFileInfo = new FileInfo(
-                    Path.Combine(remoteIndexDirectory.FullName, fiFastaFile.Name + MSGF_PLUS_INDEX_FILE_INFO_SUFFIX));
+                    Path.Combine(remoteIndexDirectory.FullName, fastaFile.Name + MSGF_PLUS_INDEX_FILE_INFO_SUFFIX));
 
                 using (var writer = new StreamWriter(new FileStream(fiMSGFPlusIndexFileInfo.FullName, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {

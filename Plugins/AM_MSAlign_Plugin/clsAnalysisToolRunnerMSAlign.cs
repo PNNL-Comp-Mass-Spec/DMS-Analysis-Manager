@@ -19,6 +19,8 @@ namespace AnalysisManagerMSAlignPlugIn
     // ReSharper disable once UnusedMember.Global
     public class clsAnalysisToolRunnerMSAlign : clsAnalysisToolRunnerBase
     {
+        // Ignore Spelling: Xmx, classpath, html, xsl, Prsm, Parm
+
         #region "Constants and Enums"
 
         protected const string MSAlign_CONSOLE_OUTPUT = "MSAlign_ConsoleOutput.txt";
@@ -481,31 +483,31 @@ namespace AnalysisManagerMSAlignPlugIn
                     msAlignWork.CreateSubdirectory("etc");
                 }
 
-                // Copy all files in the jar and xsl folders to the target
-                var subfolderNames = new List<string> {
+                // Copy all files in the jar and xsl directories to the target
+                var subdirectoryNames = new List<string> {
                     "jar", "xsl"
                 };
 
                 if (eMSAlignVersion != eMSAlignVersionType.v0pt5)
                 {
-                    subfolderNames.Add("etc");
+                    subdirectoryNames.Add("etc");
                 }
 
-                foreach (var subFolder in subfolderNames)
+                foreach (var subdirectoryToFind in subdirectoryNames)
                 {
-                    var targetSubfolder = Path.Combine(msAlignWork.FullName, subFolder);
+                    var targetSubdirectory = Path.Combine(msAlignWork.FullName, subdirectoryToFind);
 
-                    var subfolder = msAlignSrc.GetDirectories(subFolder);
+                    var matchingSubdirectory = msAlignSrc.GetDirectories(subdirectoryToFind);
 
-                    if (subfolder.Length == 0)
+                    if (matchingSubdirectory.Length == 0)
                     {
-                        LogError("Source MSAlign subfolder not found: " + targetSubfolder);
+                        LogError("Source MSAlign subdirectory not found: " + targetSubdirectory);
                         return false;
                     }
 
-                    foreach (var file in subfolder[0].GetFiles())
+                    foreach (var file in matchingSubdirectory[0].GetFiles())
                     {
-                        file.CopyTo(Path.Combine(targetSubfolder, file.Name));
+                        file.CopyTo(Path.Combine(targetSubdirectory, file.Name));
                     }
                 }
             }
@@ -1261,7 +1263,7 @@ namespace AnalysisManagerMSAlignPlugIn
                 var targetFilePath = Path.Combine(mWorkDir, mDatasetName + "_MSAlign_Results_" + folderName.ToUpper() + ".zip");
                 var sourceFolderPath = Path.Combine(mMSAlignWorkFolderPath, folderName);
 
-                // Confirm that the directory has one or more files or subfolders
+                // Confirm that the directory has one or more files or subdirectories
                 var sourceFolder = new DirectoryInfo(sourceFolderPath);
                 if (sourceFolder.GetFileSystemInfos().Length == 0)
                 {

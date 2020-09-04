@@ -161,16 +161,16 @@ namespace AnalysisManagerSMAQCPlugIn
                     );
                 }
 
-                var diFolderInfo = new DirectoryInfo(serverPath);
+                var datasetDirectory = new DirectoryInfo(serverPath);
 
-                if (!diFolderInfo.Exists)
+                if (!datasetDirectory.Exists)
                 {
-                    mMessage = "Dataset directory not found: " + diFolderInfo.FullName;
+                    mMessage = "Dataset directory not found: " + datasetDirectory.FullName;
                 }
                 else
                 {
-                    // See if the ServerPath folder actually contains a subfolder named strMASICResultsFolderName
-                    var masicResultsDirectory = new DirectoryInfo(Path.Combine(diFolderInfo.FullName, masicResultsDirectoryName));
+                    // See if the ServerPath folder actually contains a subdirectory named masicResultsDirectoryName
+                    var masicResultsDirectory = new DirectoryInfo(Path.Combine(datasetDirectory.FullName, masicResultsDirectoryName));
 
                     if (!masicResultsDirectory.Exists)
                     {

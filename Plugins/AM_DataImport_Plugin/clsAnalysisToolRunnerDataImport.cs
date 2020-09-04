@@ -92,13 +92,13 @@ namespace AnalysisManagerDataImportPlugIn
         }
 
         /// <summary>
-        /// Move the files from the source folder to a new subfolder below the source folder
+        /// Move the files from the source directory to a new subdirectory below the source directory
         /// </summary>
         /// <returns></returns>
-        /// <remarks>The name of the new subfolder comes from mResultsDirectoryName</remarks>
+        /// <remarks>The name of the new subdirectory comes from mResultsDirectoryName</remarks>
         protected bool MoveImportedFiles()
         {
-            var targetFolder = "??";
+            var targetDirectoryPath = "??";
             var targetFilePath = "??";
 
             try
@@ -110,37 +110,37 @@ namespace AnalysisManagerDataImportPlugIn
                     return true;
                 }
 
-                targetFolder = Path.Combine(mSourceFiles[0].DirectoryName, mResultsDirectoryName);
-                var fiTargetFolder = new DirectoryInfo(targetFolder);
-                if (fiTargetFolder.Exists)
+                targetDirectoryPath = Path.Combine(mSourceFiles[0].DirectoryName, mResultsDirectoryName);
+                var targetDirectory = new DirectoryInfo(targetDirectoryPath);
+                if (targetDirectory.Exists)
                 {
                     // Need to rename the target folder
-                    fiTargetFolder.MoveTo(fiTargetFolder.FullName + "_" + System.DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss"));
-                    fiTargetFolder = new DirectoryInfo(targetFolder);
+                    targetDirectory.MoveTo(targetDirectory.FullName + "_" + System.DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss"));
+                    targetDirectory = new DirectoryInfo(targetDirectoryPath);
                 }
 
-                if (!fiTargetFolder.Exists)
+                if (!targetDirectory.Exists)
                 {
-                    fiTargetFolder.Create();
+                    targetDirectory.Create();
                 }
 
-                foreach (var fiFile in mSourceFiles)
+                foreach (var sourceFile in mSourceFiles)
                 {
                     try
                     {
-                        targetFilePath = Path.Combine(targetFolder, fiFile.Name);
-                        fiFile.MoveTo(targetFilePath);
+                        targetFilePath = Path.Combine(targetDirectoryPath, sourceFile.Name);
+                        sourceFile.MoveTo(targetFilePath);
                     }
                     catch (Exception ex)
                     {
-                        LogWarning("Error moving file " + fiFile.Name + " to " + targetFilePath + ": " + ex.Message);
+                        LogWarning("Error moving file " + sourceFile.Name + " to " + targetFilePath + ": " + ex.Message);
                         return false;
                     }
                 }
             }
             catch (Exception ex)
             {
-                LogError("Error moving files to " + targetFolder + ":" + ex.Message, ex);
+                LogError("Error moving files to " + targetDirectoryPath + ":" + ex.Message, ex);
                 return false;
             }
 

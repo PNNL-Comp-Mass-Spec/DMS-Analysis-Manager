@@ -438,55 +438,55 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                 }
 
                 // The source folder is one level up from the .Jar file
-                var diMSAlignSrc = new DirectoryInfo(fiMSAlignJarFile.Directory.Parent.FullName);
-                var diMSAlignWork = new DirectoryInfo(Path.Combine(mWorkDir, "MSAlign"));
+                var msAlignSourceDirectory = new DirectoryInfo(fiMSAlignJarFile.Directory.Parent.FullName);
+                var msAlignWorkingDirectory = new DirectoryInfo(Path.Combine(mWorkDir, "MSAlign"));
 
                 LogMessage("Copying MSAlign program file to the Work Directory");
 
                 // Make sure the directory doesn't already exist
-                if (diMSAlignWork.Exists)
+                if (msAlignWorkingDirectory.Exists)
                 {
-                    diMSAlignWork.Delete(true);
+                    msAlignWorkingDirectory.Delete(true);
                 }
 
                 // Create the directory
-                diMSAlignWork.Create();
-                mMSAlignWorkFolderPath = diMSAlignWork.FullName;
+                msAlignWorkingDirectory.Create();
+                mMSAlignWorkFolderPath = msAlignWorkingDirectory.FullName;
 
                 // Create the subdirectories
-                diMSAlignWork.CreateSubdirectory("html");
-                diMSAlignWork.CreateSubdirectory("jar");
-                diMSAlignWork.CreateSubdirectory("xml");
-                diMSAlignWork.CreateSubdirectory("xsl");
-                diMSAlignWork.CreateSubdirectory("etc");
+                msAlignWorkingDirectory.CreateSubdirectory("html");
+                msAlignWorkingDirectory.CreateSubdirectory("jar");
+                msAlignWorkingDirectory.CreateSubdirectory("xml");
+                msAlignWorkingDirectory.CreateSubdirectory("xsl");
+                msAlignWorkingDirectory.CreateSubdirectory("etc");
 
                 // Copy all files in the jar and xsl folders to the target
-                var lstSubfolderNames = new List<string> {"jar", "xsl", "etc"};
+                var subdirectoryNames = new List<string> {"jar", "xsl", "etc"};
 
-                foreach (var strSubFolder in lstSubfolderNames)
+                foreach (var subdirectoryName in subdirectoryNames)
                 {
-                    var strTargetSubfolder = Path.Combine(diMSAlignWork.FullName, strSubFolder);
+                    var targetSubdirectoryPath = Path.Combine(msAlignWorkingDirectory.FullName, subdirectoryName);
 
-                    var diSubfolder = diMSAlignSrc.GetDirectories(strSubFolder);
+                    var sourceSubdirectory = msAlignSourceDirectory.GetDirectories(subdirectoryName);
 
-                    if (diSubfolder.Length == 0)
+                    if (sourceSubdirectory.Length == 0)
                     {
-                        LogError("Source MSAlign subfolder not found: " + strTargetSubfolder);
+                        LogError("Source MSAlign subdirectory not found: " + targetSubdirectoryPath);
                         return false;
                     }
 
-                    foreach (var fiFile in diSubfolder[0].GetFiles())
+                    foreach (var sourceFile in sourceSubdirectory[0].GetFiles())
                     {
-                        fiFile.CopyTo(Path.Combine(strTargetSubfolder, fiFile.Name));
+                        sourceFile.CopyTo(Path.Combine(targetSubdirectoryPath, sourceFile.Name));
                     }
                 }
 
                 // Copy the histone ptm XML files
-                var fiSourceFiles = diMSAlignSrc.GetFiles("histone*_ptm.xml").ToList();
+                var sourcePtmFiles = msAlignSourceDirectory.GetFiles("histone*_ptm.xml").ToList();
 
-                foreach (var fiFile in fiSourceFiles)
+                foreach (var sourceFile in sourcePtmFiles)
                 {
-                    fiFile.CopyTo(Path.Combine(diMSAlignWork.FullName, fiFile.Name));
+                    sourceFile.CopyTo(Path.Combine(msAlignWorkingDirectory.FullName, sourceFile.Name));
                 }
             }
             catch (Exception ex)
@@ -1117,13 +1117,13 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                 var strTargetFilePath = Path.Combine(mWorkDir, mDatasetName + "_MSAlign_Results_" + strFolderName.ToUpper() + ".zip");
                 var strSourceFolderPath = Path.Combine(mMSAlignWorkFolderPath, strFolderName);
 
-                // Confirm that the directory has one or more files or subfolders
-                var diSourceFolder = new DirectoryInfo(strSourceFolderPath);
-                if (diSourceFolder.GetFileSystemInfos().Length == 0)
+                // Confirm that the directory has one or more files or subdirectories
+                var sourceDirectory = new DirectoryInfo(strSourceFolderPath);
+                if (sourceDirectory.GetFileSystemInfos().Length == 0)
                 {
                     if (mDebugLevel >= 1)
                     {
-                        LogWarning("MSAlign results folder is empty; nothing to zip: " + strSourceFolderPath);
+                        LogWarning("MSAlign results directory is empty; nothing to zip: " + strSourceFolderPath);
                     }
                     return false;
                 }
