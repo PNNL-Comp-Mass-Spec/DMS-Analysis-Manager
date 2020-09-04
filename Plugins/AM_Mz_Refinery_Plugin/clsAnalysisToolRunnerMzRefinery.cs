@@ -853,7 +853,6 @@ namespace AnalysisManagerMzRefineryPlugIn
             // processing file: E:\DMS_WorkDir\Dataset.mzML
             // writing output file: .\Dataset_FIXED.mzML
 
-
             // ReSharper disable CommentTypo
 
             // Example warnings (these may be out of date)
@@ -1028,7 +1027,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                         var finalStDevMS2 = DataTableUtils.GetColumnValue(dataColumns, columnMap, "MS2 Final stDev", 0.0);
                         var toleranceFor99PctMS2 = DataTableUtils.GetColumnValue(dataColumns, columnMap, "MS2 Tolerance for 99%", 0.0);
 
-                        var thresholdValueMatcher = new Regex(@"MME <= (?<Threshold>.+)");
+                        var thresholdValueMatcher = new Regex("MME <= (?<Threshold>.+)");
                         var thresholdMatch = thresholdValueMatcher.Match(thresholdRange);
                         if (thresholdMatch.Success)
                         {
@@ -1059,7 +1058,6 @@ namespace AnalysisManagerMzRefineryPlugIn
 
                         mMzRefinerGoodMS1Spectra = includedMS1;
                         mMzRefinerGoodMS2FragmentIons = includedMS2;
-
 
                         var logMessage = string.Format("MzRefinery stats: included {0:#,##0} MS1 spectra and {1:#,##0} MS2 fragment ions; " +
                                                        "excluded {2:#,##0} by score and {3:#,##0} by mass error; " +
@@ -1632,7 +1630,6 @@ namespace AnalysisManagerMzRefineryPlugIn
                 var parentIonsNotMatched = 0;
                 var parentIonsUpdated = 0;
                 var parentIonsWithMultiChargeState = 0;
-
 
                 var maxScanMS2 = parentIonMZs.Keys.Max();
                 var lastProgress = DateTime.UtcNow;

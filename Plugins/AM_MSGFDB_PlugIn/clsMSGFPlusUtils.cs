@@ -2014,7 +2014,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         private readonly Regex reSpectraSearched = new Regex(@"Spectrum.+\(total: *(?<SpectrumCount>\d+)\)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private readonly Regex reTaskComplete = new Regex(@"pool-\d+-thread-\d+: Task +(?<TaskNumber>\d+) +completed", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private readonly Regex rePercentComplete = new Regex(@"Search progress: (?<TasksComplete>\d+) / \d+ tasks?, (?<PercentComplete>[0-9.]+)%", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-        private readonly Regex reElapsedTime = new Regex(@"(?<ElapsedTime>[0-9.]+) (?<Units>seconds|minutes|hours) elapsed", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private readonly Regex reElapsedTime = new Regex("(?<ElapsedTime>[0-9.]+) (?<Units>seconds|minutes|hours) elapsed", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         /// <summary>
         /// Parse the MSGFPlus console output file to determine the MS-GF+ version and to track the search progress
         /// </summary>
@@ -3195,7 +3195,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             if (customAminoAcidDef)
             {
                 // Make sure that the custom amino acid definition does not have any invalid characters
-                var reInvalidCharacters = new Regex(@"[^CHNOS0-9]", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+                var reInvalidCharacters = new Regex("[^CHNOS0-9]", RegexOptions.IgnoreCase | RegexOptions.Compiled);
                 var invalidCharacters = reInvalidCharacters.Matches(modClean);
 
                 if (invalidCharacters.Count > 0)

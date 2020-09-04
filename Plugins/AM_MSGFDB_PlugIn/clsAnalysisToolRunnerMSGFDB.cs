@@ -259,7 +259,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     mMessage = errorMessage;
 
                 var fiMSGFPlusResultsSplitFasta = new FileInfo(
-                    Path.Combine(mWorkDir, Dataset + "_msgfplus" + "_Part" + iteration + ".mzid"));
+                    Path.Combine(mWorkDir, Dataset + "_msgfplus_Part" + iteration + ".mzid"));
 
                 if (!fiMSGFPlusResults.Exists && fiMSGFPlusResultsSplitFasta.Exists)
                 {
@@ -591,17 +591,20 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                     if (mMSGFPlusUtils.TaskCountCompleted == mMSGFPlusUtils.TaskCountTotal)
                     {
-                        LogMessage("Reparsing the MS-GF+ log file now indicates that all tasks finished " + "(waited " +
-                                   DateTime.UtcNow.Subtract(waitStartTime).TotalSeconds.ToString("0") + " seconds)");
+                        LogMessage(string.Format(
+                            "Re-parsing the MS-GF+ log file now indicates that all tasks finished (waited {0:0} seconds)",
+                            DateTime.UtcNow.Subtract(waitStartTime).TotalSeconds));
                     }
                     else if (mMSGFPlusUtils.TaskCountCompleted > savedCountCompleted)
                     {
-                        LogWarning("Reparsing the MS-GF+ log file now indicates that " + mMSGFPlusUtils.TaskCountCompleted + " tasks finished. " +
-                                   "That is an increase over the previous value but still not all " + mMSGFPlusUtils.TaskCountTotal + " tasks");
+                        LogWarning(string.Format(
+                            "Re-parsing the MS-GF+ log file now indicates that {0} tasks finished. " +
+                            "That is an increase over the previous value but still not all {1} tasks",
+                            mMSGFPlusUtils.TaskCountCompleted, mMSGFPlusUtils.TaskCountTotal));
                     }
                     else
                     {
-                        LogWarning("Reparsing the MS-GF+ log file indicated the same number of completed tasks");
+                        LogWarning("Re-parsing the MS-GF+ log file indicated the same number of completed tasks");
                     }
                 }
 
