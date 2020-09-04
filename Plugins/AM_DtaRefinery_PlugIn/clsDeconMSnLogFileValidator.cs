@@ -77,11 +77,11 @@ namespace AnalysisManagerDtaRefineryPlugIn
                             {
                                 ValidateColumnIsPositive(dataColumns, parentIntensityColIndex, out var parentIntensityColumnUpdated);
                                 if (parentIntensityColumnUpdated)
-                                    columnCountUpdated += 1;
+                                    columnCountUpdated++;
 
                                 ValidateColumnIsPositive(dataColumns, monoIntensityColIndex, out var monoIntensityColumnUpdated);
                                 if (monoIntensityColumnUpdated)
-                                    columnCountUpdated += 1;
+                                    columnCountUpdated++;
                             }
 
                             if (columnCountUpdated > 0)

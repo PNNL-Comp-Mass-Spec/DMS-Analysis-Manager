@@ -350,7 +350,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                         if (intWarningCount < 5 && strProteinResidues.GetHashCode() != oReader.ProteinSequence.GetHashCode())
                         {
                             LogWarning("Changed invalid residues to '-' in protein " + oReader.ProteinName);
-                            intWarningCount += 1;
+                            intWarningCount++;
                         }
 
                         var intIndex = 0;
@@ -815,7 +815,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                     while (!reader.EndOfStream)
                     {
                         var dataLine = reader.ReadLine();
-                        linesRead += 1;
+                        linesRead++;
 
                         if (!string.IsNullOrWhiteSpace(dataLine))
                         {
@@ -1052,7 +1052,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                     while (!reader.EndOfStream)
                     {
                         var dataLine = reader.ReadLine();
-                        linesRead += 1;
+                        linesRead++;
 
                         if (!string.IsNullOrEmpty(dataLine))
                         {

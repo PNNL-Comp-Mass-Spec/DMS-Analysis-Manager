@@ -284,7 +284,7 @@ namespace AnalysisManagerMSDeconvPlugIn
                         mScanNumMap.Add(oldScanNum, mNextScanNumber);
                         writer.WriteString(mNextScanNumber.ToString());
 
-                        mNextScanNumber += 1;
+                        mNextScanNumber++;
                     }
                     else
                     {

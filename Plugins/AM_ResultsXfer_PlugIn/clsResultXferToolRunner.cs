@@ -302,7 +302,7 @@ namespace AnalysisManagerResultsXferPlugin
                     }
                     catch (Exception ex)
                     {
-                        errorCount += 1;
+                        errorCount++;
                         if (errorCount == 1)
                         {
                             LogError("Error moving file " + fiSourceFile.Name + ": " + ex.Message, ex);

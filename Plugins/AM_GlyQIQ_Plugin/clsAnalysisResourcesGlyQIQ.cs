@@ -81,7 +81,7 @@ namespace AnalysisManagerGlyQIQPlugin
             // Otherwise, use TotalCoreCount - 1
             var maxAllowedCores = mStatusTools.GetCoreCount();
             if (maxAllowedCores > 4)
-                maxAllowedCores -= 1;
+                maxAllowedCores--;
 
             var coreCount = clsAnalysisToolRunnerBase.ParseThreadCount(coreCountText, maxAllowedCores);
 
@@ -132,7 +132,7 @@ namespace AnalysisManagerGlyQIQPlugin
                     while (!reader.EndOfStream)
                     {
                         reader.ReadLine();
-                        numTargets += 1;
+                        numTargets++;
                     }
                 }
 
@@ -557,11 +557,11 @@ namespace AnalysisManagerGlyQIQPlugin
 
                         lstWriters[outputFileIndex].WriteLine(lineIn);
 
-                        targetsWritten += 1;
+                        targetsWritten++;
                         if (targetsWritten >= nextThreshold)
                         {
                             // Advance the output file index
-                            outputFileIndex += 1;
+                            outputFileIndex++;
 
                             var newThreshold = (int)Math.Floor(numTargets / (float)mGlyQIQParams.WorkingParameterFolders.Count * (outputFileIndex + 1));
                             if (newThreshold > nextThreshold)
@@ -570,7 +570,7 @@ namespace AnalysisManagerGlyQIQPlugin
                             }
                             else
                             {
-                                nextThreshold += 1;
+                                nextThreshold++;
                             }
                         }
                     }

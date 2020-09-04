@@ -334,7 +334,7 @@ namespace AnalysisManagerProMexPlugIn
                         var lineIn = resultsReader.ReadLine();
                         if (!string.IsNullOrEmpty(lineIn))
                         {
-                            lineCount += 1;
+                            lineCount++;
                             if (lineCount > 2)
                             {
                                 return true;

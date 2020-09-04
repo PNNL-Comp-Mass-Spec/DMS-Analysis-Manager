@@ -393,7 +393,7 @@ namespace AnalysisManagerMSAlignPlugIn
                         if (warningCount < 5 && proteinResidues.GetHashCode() != oReader.ProteinSequence.GetHashCode())
                         {
                             LogWarning("Changed invalid residues to '-' in protein " + oReader.ProteinName);
-                            warningCount += 1;
+                            warningCount++;
                         }
 
                         var index = 0;
@@ -919,7 +919,7 @@ namespace AnalysisManagerMSAlignPlugIn
                     while (!reader.EndOfStream)
                     {
                         var dataLine = reader.ReadLine();
-                        linesRead += 1;
+                        linesRead++;
 
                         if (!string.IsNullOrWhiteSpace(dataLine))
                         {

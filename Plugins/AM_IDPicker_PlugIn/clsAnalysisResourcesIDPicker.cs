@@ -379,7 +379,7 @@ namespace AnalysisManagerIDPickerPlugIn
 
             while (retrievalAttempts < 2)
             {
-                retrievalAttempts += 1;
+                retrievalAttempts++;
                 if (!RetrieveMASICFiles(DatasetName))
                 {
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;

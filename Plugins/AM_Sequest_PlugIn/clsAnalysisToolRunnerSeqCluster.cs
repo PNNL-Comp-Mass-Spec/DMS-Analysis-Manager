@@ -344,7 +344,7 @@ namespace AnalysisManagerSequestPlugin
                     clsGlobal.IdleLoop(5);
                 }
 
-                iterationsRemaining -= 1;
+                iterationsRemaining--;
             } while (mOutFileCandidates.Count > 0 && iterationsRemaining >= 0);
 
             // Append any remaining .out files to the _out.txt.tmp file, then rename it to _out.txt
@@ -642,7 +642,7 @@ namespace AnalysisManagerSequestPlugin
                             var reMatch = reReceivedReadyMsg.Match(dataLine);
                             if (reMatch.Success)
                             {
-                                mSequestNodesSpawned += 1;
+                                mSequestNodesSpawned++;
                             }
                             else
                             {
@@ -675,7 +675,7 @@ namespace AnalysisManagerSequestPlugin
 
                         if (dtaCountRemaining > mSequestNodesSpawned)
                         {
-                            mNodeCountSpawnErrorOccurrences += 1;
+                            mNodeCountSpawnErrorOccurrences++;
 
                             var message = "Not enough nodes were spawned (Threshold = " + nodeCountMinimum + " nodes): " + mSequestNodesSpawned +
                                              " spawned vs. " + nodeCountExpected + " expected; " +
@@ -706,7 +706,7 @@ namespace AnalysisManagerSequestPlugin
                     LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG,
                                          " ... Over 15 minutes have elapsed since sequest.exe was called; aborting since node names could not be determined");
 
-                    mNodeCountSpawnErrorOccurrences += 1;
+                    mNodeCountSpawnErrorOccurrences++;
                     mResetPVM = true;
                 }
             }
@@ -921,7 +921,7 @@ namespace AnalysisManagerSequestPlugin
                             {
                                 // Entry is old enough (or processAllRemainingFiles=True); pop it off the queue
                                 entry = mOutFileCandidates.Dequeue();
-                                itemsProcessed += 1;
+                                itemsProcessed++;
 
                                 try
                                 {
@@ -1045,7 +1045,7 @@ namespace AnalysisManagerSequestPlugin
                     break;
                 }
 
-                maxPVMResetAttempts -= 1;
+                maxPVMResetAttempts--;
                 if (maxPVMResetAttempts > 0)
                 {
                     LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.WARN,
@@ -1353,7 +1353,7 @@ namespace AnalysisManagerSequestPlugin
 
                         if (dataLine != null && dataLine.StartsWith("Searched dta file"))
                         {
-                            dtaCountSearched += 1;
+                            dtaCountSearched++;
                         }
 
                         sbContents.AppendLine(dataLine);
@@ -1534,7 +1534,7 @@ namespace AnalysisManagerSequestPlugin
                                 mSequestNodes.Add(nodeName, DateTime.UtcNow);
                             }
 
-                            nodeCountCurrent += 1;
+                            nodeCountCurrent++;
                         }
                     }
                 }
@@ -1554,7 +1554,7 @@ namespace AnalysisManagerSequestPlugin
                 {
                     if (DateTime.UtcNow.Subtract(sequestNode.Value).TotalMinutes <= STALE_NODE_THRESHOLD_MINUTES)
                     {
-                        nodeCountActive += 1;
+                        nodeCountActive++;
                     }
                 }
 
@@ -1563,7 +1563,7 @@ namespace AnalysisManagerSequestPlugin
 
                 if (nodeCountActive < activeNodeCountMinimum && !mIgnoreNodeCountActiveErrors)
                 {
-                    mNodeCountActiveErrorOccurrences += 1;
+                    mNodeCountActiveErrorOccurrences++;
                     var message = "Too many nodes are inactive (Threshold = " + activeNodeCountMinimum + " nodes): " + nodeCountActive +
                                   " active vs. " + mSequestNodesSpawned + " total nodes at start; " +
                                   "mNodeCountActiveErrorOccurrences=" + mNodeCountActiveErrorOccurrences;

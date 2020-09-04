@@ -404,7 +404,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
 
                     try
                     {
-                        intCopyAttempts += 1;
+                        intCopyAttempts++;
                         strLipidMapsDBFileTarget = Path.Combine(diLipidMapsDBFolder.FullName, strNewestLipidMapsDBFileName);
                         File.Copy(strLipidMapsDBFileLocal, strLipidMapsDBFileTarget);
                         break;
@@ -515,7 +515,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                     {
                         try
                         {
-                            intDownloadAttempts += 1;
+                            intDownloadAttempts++;
                             strNewestLipidMapsDBFileName = DownloadNewLipidMapsDB(diLipidMapsDBFolder, strNewestLipidMapsDBFileName);
                             break;
                         }

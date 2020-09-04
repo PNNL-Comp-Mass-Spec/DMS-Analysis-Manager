@@ -753,7 +753,7 @@ namespace DTASpectraFileGen
                         {
                             LogWarning("MergeCDTAs could not find spectrum with StartScan=" + parentIonDataHeader.ScanNumberStart + " and EndScan=" +
                                        parentIonDataHeader.ScanNumberEnd + " for " + Path.GetFileName(cdtaWithParentIonData));
-                            spectrumCountSkipped += 1;
+                            spectrumCountSkipped++;
                             continue;
                         }
 
@@ -794,7 +794,7 @@ namespace DTASpectraFileGen
                                 LogWarning("MergeCDTAs could not find spectrum with StartScan=" + parentIonDataHeader.ScanNumberStart +
                                            " and EndScan=" + parentIonDataHeader.ScanNumberEnd + " for " +
                                            Path.GetFileName(cdtaWithParentIonData));
-                                spectrumCountSkipped += 1;
+                                spectrumCountSkipped++;
                             }
                         }
 

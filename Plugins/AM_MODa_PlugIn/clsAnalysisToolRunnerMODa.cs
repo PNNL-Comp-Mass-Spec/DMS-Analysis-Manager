@@ -345,7 +345,7 @@ namespace AnalysisManagerMODaPlugIn
                     while (!reader.EndOfStream)
                     {
                         var dataLine = reader.ReadLine();
-                        linesRead += 1;
+                        linesRead++;
 
                         if (string.IsNullOrWhiteSpace(dataLine))
                             continue;

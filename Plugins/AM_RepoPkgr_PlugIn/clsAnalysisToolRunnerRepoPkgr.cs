@@ -609,7 +609,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
                 else
                     errorCount++;
 
-                datasetsProcessed += 1;
+                datasetsProcessed++;
                 mProgress = ComputeIncrementalProgress(PROGRESS_PCT_MZID_RESULTS_COPIED, PROGRESS_PCT_INSTRUMENT_DATA_COPIED, datasetsProcessed, dctDatasetRawFilePaths.Count);
                 mStatusTools.UpdateAndWrite(mProgress);
             }

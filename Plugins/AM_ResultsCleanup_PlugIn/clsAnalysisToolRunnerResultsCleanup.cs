@@ -162,7 +162,7 @@ namespace AnalysisManagerResultsCleanupPlugin
                         try
                         {
                             item.Value.Delete();
-                            fileCountDeleted += 1;
+                            fileCountDeleted++;
                         }
                         catch (Exception ex)
                         {

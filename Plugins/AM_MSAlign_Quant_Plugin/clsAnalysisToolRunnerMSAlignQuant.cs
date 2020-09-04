@@ -440,7 +440,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
 
                                 if (charIndex > 0)
                                 {
-                                    charIndex += 1;
+                                    charIndex++;
                                 }
                                 else if (dataLineLCase.StartsWith("error"))
                                 {

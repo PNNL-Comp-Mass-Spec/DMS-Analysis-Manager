@@ -214,7 +214,7 @@ namespace DTASpectraFileGen
 
                                     if (autoNumberScans)
                                     {
-                                        scanNumberCurrent += 1;
+                                        scanNumberCurrent++;
                                         scanInfo.ScanStart = scanNumberCurrent;
                                         scanInfo.ScanEnd = scanNumberCurrent;
                                         // Store a charge of 0 for now; we'll update it later if the selectedIon element has a MS:1000041 attribute

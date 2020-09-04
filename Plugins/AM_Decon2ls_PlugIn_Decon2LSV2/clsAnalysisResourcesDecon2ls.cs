@@ -301,11 +301,11 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                         var msLevel = rawFileReader.GetMSLevel(scanNumber);
                         if (msLevel == 1)
                         {
-                            countMs1 += 1;
+                            countMs1++;
                         }
                         else if (msLevel > 1)
                         {
-                            countMSn += 1;
+                            countMSn++;
                         }
 
                         var logMessage = string.Format("Examining scan levels in .raw file, scan {0} / {1}", scanNumber, scanCount);

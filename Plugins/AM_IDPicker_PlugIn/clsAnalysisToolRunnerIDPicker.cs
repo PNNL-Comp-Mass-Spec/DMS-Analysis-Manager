@@ -859,7 +859,7 @@ namespace AnalysisManagerIDPickerPlugIn
                         }
                         catch (Exception)
                         {
-                            attempts += 1;
+                            attempts++;
                             clsGlobal.IdleLoop(2);
                         }
                     } while (!success && attempts <= 3);

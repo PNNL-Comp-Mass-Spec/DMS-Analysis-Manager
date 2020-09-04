@@ -481,7 +481,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                     if (result != CloseOutType.CLOSEOUT_SUCCESS)
                     {
-                        jobFailureCount += 1;
+                        jobFailureCount++;
                         if (!continueOnError || jobFailureCount > maxErrorCount)
                             break;
                     }
@@ -491,7 +491,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                         datasetsProcessed.Add(udtCurrentJobInfo.DatasetID, udtCurrentJobInfo.Dataset);
                     }
 
-                    jobsProcessed += 1;
+                    jobsProcessed++;
                     mProgress = ComputeIncrementalProgress(PROGRESS_PCT_TOOL_RUNNER_STARTING, PROGRESS_PCT_SAVING_RESULTS, jobsProcessed,
                         mDataPackagePeptideHitJobs.Count);
                     mStatusTools.UpdateAndWrite(mProgress);
@@ -3980,7 +3980,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                     if (!sourceFile.Exists)
                     {
-                        fileCountNotFound += 1;
+                        fileCountNotFound++;
                         LogError(string.Format("File not found for job {0}: {1}", job, sourceFilePath));
                         continue;
                     }

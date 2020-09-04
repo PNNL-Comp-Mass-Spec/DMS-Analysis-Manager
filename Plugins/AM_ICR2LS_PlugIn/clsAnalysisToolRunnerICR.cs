@@ -274,7 +274,7 @@ namespace AnalysisManagerICR2LSPlugIn
                         LogError("Error deleting data file, attempt #" + RetryCount);
                     }
                     ErrMsg = ex.Message;
-                    RetryCount += 1;
+                    RetryCount++;
                 }
                 catch (Exception ex)
                 {

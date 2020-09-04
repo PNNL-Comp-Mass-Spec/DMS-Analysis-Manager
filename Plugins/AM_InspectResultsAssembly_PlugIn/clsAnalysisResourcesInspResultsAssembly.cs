@@ -157,7 +157,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                         }
                         return false;
                     }
-                    fileCopyCount += 1;
+                    fileCopyCount++;
 
                     // Update the list of files to delete from the server
                     mJobParams.AddServerFileToDelete(Path.Combine(transferFolderName, inspectResultsFile));
@@ -201,7 +201,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                             }
                             return false;
                         }
-                        fileCopyCount += 1;
+                        fileCopyCount++;
 
                         // Update the list of files to delete from the server
                         mJobParams.AddServerFileToDelete(Path.Combine(transferFolderName, fileName));

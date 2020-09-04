@@ -1205,7 +1205,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                     var lineIn = srReader.ReadLine();
                     if (!string.IsNullOrWhiteSpace(lineIn))
                     {
-                        dataLineCount += 1;
+                        dataLineCount++;
                     }
                 }
             }

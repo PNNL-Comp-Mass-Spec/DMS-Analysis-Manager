@@ -157,7 +157,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
 
             if (success)
             {
-                paramFilesCopied += 1;
+                paramFilesCopied++;
             }
 
             return success;

@@ -950,7 +950,7 @@ namespace AnalysisManagerMODPlusPlugin
                         if (eStatus >= clsMODPlusRunner.MODPlusRunnerStatusCodes.Success)
                         {
                             // Analysis completed (or failed)
-                            stepsComplete += 1;
+                            stepsComplete++;
 
                             if (!completedThreads.Contains(modPlusRunner.Key))
                             {

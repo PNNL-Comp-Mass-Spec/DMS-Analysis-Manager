@@ -71,7 +71,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
 
                 while (retrievalAttempts < 2)
                 {
-                    retrievalAttempts += 1;
+                    retrievalAttempts++;
                     switch (strRawDataType.ToLower())
                     {
                         case RAW_DATA_TYPE_DOT_D_FOLDERS:

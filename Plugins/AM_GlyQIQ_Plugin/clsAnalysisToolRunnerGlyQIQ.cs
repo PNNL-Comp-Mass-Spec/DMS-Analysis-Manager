@@ -200,7 +200,7 @@ namespace AnalysisManagerGlyQIQPlugin
                             while (!reader.EndOfStream)
                             {
                                 var dataLine = reader.ReadLine();
-                                linesRead += 1;
+                                linesRead++;
 
                                 if (linesRead == 1 && core > 1)
                                 {
@@ -266,11 +266,11 @@ namespace AnalysisManagerGlyQIQPlugin
                     {
                         if (scanInfo.MSLevel > 1)
                         {
-                            ms2ScanCount += 1;
+                            ms2ScanCount++;
                         }
                         else
                         {
-                            ms1ScanCount += 1;
+                            ms1ScanCount++;
                         }
                     }
                 }
@@ -370,7 +370,7 @@ namespace AnalysisManagerGlyQIQPlugin
                             uniqueCodes.Add(compoundCode);
                         }
 
-                        totalPSMs += 1;
+                        totalPSMs++;
                     }
                 }
 
@@ -715,7 +715,7 @@ namespace AnalysisManagerGlyQIQPlugin
                         if (eStatus >= clsGlyQIqRunner.GlyQIqRunnerStatusCodes.Success)
                         {
                             // Analysis completed (or failed)
-                            stepsComplete += 1;
+                            stepsComplete++;
 
                             if (!completedCores.Contains(glyQRunner.Key))
                             {

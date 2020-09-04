@@ -692,11 +692,11 @@ namespace MSGFResultsSummarizer
                     if (protein.StartsWith("reversed_") || protein.StartsWith("scrambled_") || protein.EndsWith(":reversed") ||
                         protein.StartsWith("xxx_") || protein.StartsWith("xxx.") || protein.StartsWith("rev_"))
                     {
-                        decoyResults += 1;
+                        decoyResults++;
                     }
                     else
                     {
-                        forwardResults += 1;
+                        forwardResults++;
                     }
 
                     if (forwardResults > 0)
@@ -830,7 +830,7 @@ namespace MSGFResultsSummarizer
                     if (Math.Abs(newNormalizedPeptide.Modifications[modIndex].Value - candidate.Modifications[modIndex].Value) <= 1)
                     {
                         // The affected residues are at the same residue or are one residue apart
-                        residueMatchCount += 1;
+                        residueMatchCount++;
                     }
                 }
 

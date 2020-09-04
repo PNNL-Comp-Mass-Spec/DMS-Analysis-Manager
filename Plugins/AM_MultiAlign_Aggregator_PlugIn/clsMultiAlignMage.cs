@@ -621,19 +621,19 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                             {
                                 if (dataLine.Contains("Dataset Information: "))
                                 {
-                                    totalDatasets += 1;
+                                    totalDatasets++;
                                 }
                                 else if (dataLine.Contains("- Adding features to cache database"))
                                 {
-                                    datasetsLoaded += 1;
+                                    datasetsLoaded++;
                                 }
                                 else if (dataLine.Contains("- Features Aligned -"))
                                 {
-                                    datasetsAligned += 1;
+                                    datasetsAligned++;
                                 }
                                 else if (dataLine.Contains("- Clustering Charge State"))
                                 {
-                                    chargeStatesClustered += 1;
+                                    chargeStatesClustered++;
                                 }
                                 else if (dataLine.Contains("No baseline dataset or database was selected"))
                                 {

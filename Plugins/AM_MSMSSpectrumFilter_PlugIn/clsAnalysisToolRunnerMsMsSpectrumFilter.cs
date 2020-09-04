@@ -181,11 +181,11 @@ namespace MSMSSpectrumFilterAM
 
                 while (cdtaReaderOriginal.ReadNextSpectrum(out var msmsDataListFilter, out var spectrumHeaderInfoOrig))
                 {
-                    originalCDTASpectra += 1;
+                    originalCDTASpectra++;
 
                     if (cdtaReaderFiltered.ReadNextSpectrum(out var msmsDataListOrig, out var spectrumHeaderInfoFilter))
                     {
-                        filteredCDTASpectra += 1;
+                        filteredCDTASpectra++;
 
                         // If the parent ions differ or the MS/MS spectral data differs, the files do not match
 
@@ -293,7 +293,7 @@ namespace MSMSSpectrumFilterAM
                         {
                             if (reFind.Match(dataLine).Success)
                             {
-                                dtaCount += 1;
+                                dtaCount++;
                             }
                         }
                     }

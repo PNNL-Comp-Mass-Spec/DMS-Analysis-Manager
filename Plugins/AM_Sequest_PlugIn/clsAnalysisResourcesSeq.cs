@@ -119,7 +119,7 @@ namespace AnalysisManagerSequestPlugin
                             break;
                         }
 
-                        revisionNumber += 1;
+                        revisionNumber++;
                         newName = newNameBase + "_v" + revisionNumber + Path.GetExtension(targetFilePath);
                     } while (true);
 
@@ -456,18 +456,18 @@ namespace AnalysisManagerSequestPlugin
             {
                 if (!VerifyRemoteDatabase(fastaFilePath, @"\\" + nodeName + @"\" + nodeDbLoc, out var fileAlreadyExists, out var notEnoughFreeSpace))
                 {
-                    nodeCountFailed += 1;
+                    nodeCountFailed++;
                     fileAlreadyExists = true;
 
                     if (notEnoughFreeSpace)
                     {
-                        nodeCountNotEnoughFreeSpace += 1;
+                        nodeCountNotEnoughFreeSpace++;
                     }
                 }
 
-                nodeCountProcessed += 1;
+                nodeCountProcessed++;
                 if (fileAlreadyExists)
-                    nodeCountFileAlreadyExists += 1;
+                    nodeCountFileAlreadyExists++;
             }
 
             if (nodeCountProcessed == 0)

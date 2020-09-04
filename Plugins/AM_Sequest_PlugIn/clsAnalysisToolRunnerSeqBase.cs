@@ -240,7 +240,7 @@ namespace AnalysisManagerSequestPlugin
                     mOutFileNamesAppended.Add(sourceOutFile.Name);
                 }
 
-                mTotalOutFileCount += 1;
+                mTotalOutFileCount++;
             }
 
             var dtaFilePath = Path.ChangeExtension(sourceOutFile.FullName, "dta");
@@ -467,7 +467,7 @@ namespace AnalysisManagerSequestPlugin
             foreach (var dtaFile in dtaFiles)
             {
                 dtaWriters[dtaFileIndex].WriteLine(dtaFile);
-                dtaFileIndex += 1;
+                dtaFileIndex++;
                 if (dtaFileIndex > (processorsToUse - 1))
                     dtaFileIndex = 0;
             }
@@ -682,7 +682,7 @@ namespace AnalysisManagerSequestPlugin
                     success = false;
                 }
 
-                retriesRemaining -= 1;
+                retriesRemaining--;
             } while (!success && retriesRemaining > 0);
 
             if (!success)
@@ -843,7 +843,7 @@ namespace AnalysisManagerSequestPlugin
                         }
                     }
 
-                    filesChecked += 1;
+                    filesChecked++;
 
                     if (dataFound)
                         break;
@@ -1035,7 +1035,7 @@ namespace AnalysisManagerSequestPlugin
                             hostDtaCounts.Add(hostNameForDtaCount, 1);
                         }
 
-                        dtaCount += 1;
+                        dtaCount++;
                     }
                 }
 

@@ -396,7 +396,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
                     while (dataLine != null)
                     {
-                        linesRead += 1;
+                        linesRead++;
 
                         if (linesRead == 1)
                         {
@@ -526,7 +526,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                         var dataLine = reader.ReadLine();
                         if (!string.IsNullOrEmpty(dataLine))
                         {
-                            linesRead += 1;
+                            linesRead++;
                         }
                     }
                 }
@@ -696,7 +696,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                                 // mod.ModMass = splitLine[1];
                                 // mod.Residues = splitLine[2];
 
-                                modCount += 1;
+                                modCount++;
                             }
                         }
                     }
@@ -1239,7 +1239,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                     while (!reader.EndOfStream)
                     {
                         var dataLine = reader.ReadLine();
-                        linesRead += 1;
+                        linesRead++;
 
                         if (string.IsNullOrEmpty(dataLine))
                             continue;
@@ -1259,7 +1259,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                         {
                             if (splitLine[3].StartsWith("XXX"))
                             {
-                                decoyProteinCount += 1;
+                                decoyProteinCount++;
                             }
                         }
 

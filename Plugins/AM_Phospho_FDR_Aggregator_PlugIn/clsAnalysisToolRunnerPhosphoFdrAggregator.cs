@@ -866,7 +866,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                     var success = DetermineInputFilePaths(jobFolder.Value, ref udtJobMetadata, fileSuffixesToCombine);
                     if (!success)
                     {
-                        jobCountSkippedNoSynFile += 1;
+                        jobCountSkippedNoSynFile++;
                     }
                     else
                     {
@@ -905,7 +905,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                         // Ignore errors
                     }
 
-                    mJobFoldersProcessed += 1;
+                    mJobFoldersProcessed++;
                     var subTaskProgress = mJobFoldersProcessed / (float)mTotalJobFolders * 100f;
 
                     mProgress = ComputeIncrementalProgress(PROGRESS_PCT_PHOSPHO_FDR_RUNNING, PROGRESS_PCT_PHOSPHO_FDR_COMPLETE, subTaskProgress);

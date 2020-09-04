@@ -252,7 +252,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                     {
                         if (int.TryParse(reader.Value, out var listItemCount))
                         {
-                            listItemCount += 1;
+                            listItemCount++;
                         }
                         else
                         {
@@ -402,7 +402,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                                             writer.WriteAttributes(reader, true);
                                         }
 
-                                        spectraRead += 1;
+                                        spectraRead++;
                                         if (DateTime.UtcNow.Subtract(lastProgress).TotalSeconds >= 1)
                                         {
                                             lastProgress = DateTime.UtcNow;

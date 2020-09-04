@@ -619,7 +619,7 @@ namespace DTASpectraFileGen
                 }
                 else
                 {
-                    locCharge += 1;
+                    locCharge++;
                 }
             }
 

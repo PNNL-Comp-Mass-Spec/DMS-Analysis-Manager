@@ -1227,7 +1227,7 @@ namespace AnalysisManagerMSGFPlugin
                 while (!reader.EndOfStream)
                 {
                     var dataLine = reader.ReadLine();
-                    linesRead += 1;
+                    linesRead++;
                     var skipLine = false;
 
                     if (string.IsNullOrEmpty(dataLine))
@@ -1271,7 +1271,7 @@ namespace AnalysisManagerMSGFPlugin
 
                         if (actualScanNumber == 0)
                         {
-                            mgfLookupErrorCount += 1;
+                            mgfLookupErrorCount++;
 
                             // Log the first 5 instances to the log file as warnings
                             LogWarning(
@@ -1294,7 +1294,7 @@ namespace AnalysisManagerMSGFPlugin
                     else
                     {
                         // The specProb column does not contain a number
-                        specProbErrorCount += 1;
+                        specProbErrorCount++;
 
                         if (specProbErrorCount <= MAX_ERRORS_TO_LOG)
                         {
@@ -1318,7 +1318,7 @@ namespace AnalysisManagerMSGFPlugin
 
                         if (specProb.Contains("precursor mass"))
                         {
-                            precursorMassErrorCount += 1;
+                            precursorMassErrorCount++;
                         }
 
                         if (originalPeptide != peptide)
@@ -1613,7 +1613,7 @@ namespace AnalysisManagerMSGFPlugin
                         if (string.IsNullOrEmpty(dataLine))
                             continue;
 
-                        linesRead += 1;
+                        linesRead++;
                         var dataCols = dataLine.Split('\t').ToList();
 
                         if (linesRead == 1)
@@ -2069,7 +2069,7 @@ namespace AnalysisManagerMSGFPlugin
                             while (!reader.EndOfStream)
                             {
                                 var dataLine = reader.ReadLine();
-                                linesRead += 1;
+                                linesRead++;
 
                                 if (!headerWritten)
                                 {
@@ -2207,7 +2207,7 @@ namespace AnalysisManagerMSGFPlugin
                     while (!reader.EndOfStream)
                     {
                         var dataLine = reader.ReadLine();
-                        linesRead += 1;
+                        linesRead++;
 
                         if (string.IsNullOrWhiteSpace(dataLine))
                             continue;
@@ -2278,7 +2278,7 @@ namespace AnalysisManagerMSGFPlugin
                         if (string.IsNullOrWhiteSpace(dataLine))
                             continue;
 
-                        linesRead += 1;
+                        linesRead++;
 
                         if (linesRead == 1)
                         {
@@ -2304,7 +2304,7 @@ namespace AnalysisManagerMSGFPlugin
                                 }
 
                                 // Initialize a new segment
-                                udtThisSegment.Segment += 1;
+                                udtThisSegment.Segment++;
                                 udtThisSegment.Entries = 0;
                                 udtThisSegment.FilePath = AddFileNameSuffix(msgfInputFilePath, udtThisSegment.Segment);
 
@@ -2321,8 +2321,8 @@ namespace AnalysisManagerMSGFPlugin
                                 throw new Exception("writer has not been initialized; this indicates a bug in SplitMSGFInputFile");
 
                             writer.WriteLine(dataLine);
-                            udtThisSegment.Entries += 1;
-                            lineCountAllSegments += 1;
+                            udtThisSegment.Entries++;
+                            lineCountAllSegments++;
                         }
                     }
 
@@ -2493,7 +2493,7 @@ namespace AnalysisManagerMSGFPlugin
                     while (!reader.EndOfStream)
                     {
                         reader.ReadLine();
-                        lineCount += 1;
+                        lineCount++;
                     }
                 }
 
@@ -2505,10 +2505,10 @@ namespace AnalysisManagerMSGFPlugin
                     // Running MSGF twice; first for CID spectra and then for ETD spectra
                     // Divide the progress by 2, then add 0.5 if we're on the second iteration
 
-                    fraction = fraction / 2.0;
+                    fraction /= 2.0;
                     if (mCollisionModeIteration > 1)
                     {
-                        fraction = fraction + 0.5;
+                        fraction += 0.5;
                     }
                 }
 
@@ -2518,7 +2518,7 @@ namespace AnalysisManagerMSGFPlugin
             catch (Exception ex)
             {
                 // Log errors the first 3 times they occur
-                errorCount += 1;
+                errorCount++;
                 if (errorCount <= 3)
                 {
                     LogError("Error counting the number of lines in the MSGF results file, " + msgfResultsFilePath, ex);
@@ -2677,7 +2677,7 @@ namespace AnalysisManagerMSGFPlugin
         /// <remarks></remarks>
         private void MSGFInputCreator_ErrorEvent(string message, Exception ex)
         {
-            mMSGFInputCreatorErrorCount += 1;
+            mMSGFInputCreatorErrorCount++;
             if (mMSGFInputCreatorErrorCount < 10 || mMSGFInputCreatorErrorCount % 1000 == 0)
             {
                 LogError("Error reported by MSGFInputCreator; " + message + " (ErrorCount=" + mMSGFInputCreatorErrorCount + ")");
@@ -2700,7 +2700,7 @@ namespace AnalysisManagerMSGFPlugin
         /// <remarks></remarks>
         private void MSGFInputCreator_WarningEvent(string warningMessage)
         {
-            mMSGFInputCreatorWarningCount += 1;
+            mMSGFInputCreatorWarningCount++;
             if (mMSGFInputCreatorWarningCount < 10 || mMSGFInputCreatorWarningCount % 1000 == 0)
             {
                 LogWarning("Warning reported by MSGFInputCreator; " + warningMessage + " (WarnCount=" + mMSGFInputCreatorWarningCount + ")");

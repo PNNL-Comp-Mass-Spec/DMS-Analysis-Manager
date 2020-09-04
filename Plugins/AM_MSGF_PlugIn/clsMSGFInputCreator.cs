@@ -206,7 +206,7 @@ namespace AnalysisManagerMSGFPlugin
                     if (!spectrumFound)
                         break;
 
-                    spectrumIndex += 1;
+                    spectrumIndex++;
 
                     if (udtSpectrumHeaderInfo.ParentIonChargeCount == 0)
                     {
@@ -300,7 +300,7 @@ namespace AnalysisManagerMSGFPlugin
 
                                     var warningMessage = "MSGF Results are empty for result code '" + peptideResultCode +
                                                             "'; this is unexpected";
-                                    missingValueCount += 1;
+                                    missingValueCount++;
                                     if (missingValueCount <= MAX_WARNINGS_TO_REPORT)
                                     {
                                         if (missingValueCount == MAX_WARNINGS_TO_REPORT)
@@ -328,7 +328,7 @@ namespace AnalysisManagerMSGFPlugin
                                                         peptideResultCode + "'; this is unexpected";
 
                                 // Report the first 10 times this happens
-                                missingValueCount += 1;
+                                missingValueCount++;
                                 if (missingValueCount <= MAX_WARNINGS_TO_REPORT)
                                 {
                                     if (missingValueCount == MAX_WARNINGS_TO_REPORT)
@@ -699,7 +699,7 @@ namespace AnalysisManagerMSGFPlugin
                         {
                             scanNumberToWrite = 0;
 
-                            mgfIndexLookupFailureCount += 1;
+                            mgfIndexLookupFailureCount++;
                             if (mgfIndexLookupFailureCount <= 10)
                             {
                                 ReportError("Unable to find " + scanAndCharge + " in mScanAndChargeToMGFIndex for peptide " + currentPSM.Peptide);
@@ -727,7 +727,7 @@ namespace AnalysisManagerMSGFPlugin
                     phrpSource + "\t" +
                     currentPSM.CollisionMode);
 
-                mMSGFInputFileLineCount += 1;
+                mMSGFInputFileLineCount++;
 
                 try
                 {

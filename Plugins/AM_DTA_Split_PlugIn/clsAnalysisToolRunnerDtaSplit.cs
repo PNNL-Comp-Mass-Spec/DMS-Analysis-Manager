@@ -223,7 +223,7 @@ namespace AnalysisManagerDtaSplitPlugIn
                             if (spectraCountRead > 0)
                             {
                                 // Increment splitFileNum, but only after the first spectrum has been read
-                                splitFileNum += 1;
+                                splitFileNum++;
                                 if (splitFileNum > segmentCountToCreate)
                                 {
                                     splitFileNum = 1;
@@ -236,8 +236,8 @@ namespace AnalysisManagerDtaSplitPlugIn
                                 }
                             }
 
-                            spectraCountRead += 1;
-                            spectraCountBySegment[splitFileNum] += 1;
+                            spectraCountRead++;
+                            spectraCountBySegment[splitFileNum]++;
                         }
 
                         if (DateTime.UtcNow.Subtract(lastStatusUpdate).TotalSeconds >= STATUS_UPDATE_INTERVAL_SECONDS)
@@ -297,7 +297,7 @@ namespace AnalysisManagerDtaSplitPlugIn
                         var splitMatch = r_FileSeparator.Match(dataLine);
                         if (splitMatch.Success)
                         {
-                            spectraCount += 1;
+                            spectraCount++;
                         }
                     }
 
