@@ -207,6 +207,7 @@ namespace AnalysisManagerMSPathFinderPlugin
                 {"maxFragCharge", "maxFragCharge"},
                 {"minMass", "minMass"},
                 {"maxMass", "maxMass"},
+                {"NumMatchesPerSpec", "n"},
                 {"tagSearch", "tagSearch"}
             };
 
