@@ -9,6 +9,7 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
+using PRISM.AppSettings;
 using PRISMDatabaseUtils;
 
 namespace AnalysisManagerMSGFDBPlugIn
@@ -18,6 +19,9 @@ namespace AnalysisManagerMSGFDBPlugIn
     /// </summary>
     public class MSGFPlusUtils : EventNotifier
     {
+        // Ignore Spelling: Tsv, nnet, utils, tims, ident, MZIDto, Conc, Xmx, cp, defs, Chymotrypsin, Lys, Glu, Arg, glutamyl, endopeptidase
+        // Ignore Spelling: ntt, ccm, iso, novo, tda, frag, hcd, msn, hmsn, cid, etd, Hydroxyproline, prot
+
         #region "Constants"
 
         /// <summary>
@@ -2374,7 +2378,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Read the MS-GF+ options file and create a new, customized version
         /// </summary>
-        /// <param name="fastaFileSizeKB">Size of the .Fasta file, in KB</param>
+        /// <param name="fastaFileSizeKB">Size of the .Fasta file, in KB (unused)</param>
         /// <param name="fastaFileIsDecoy">True if the fasta file has had forward and reverse index files created</param>
         /// <param name="assumedScanType">Empty string if no assumed scan type; otherwise CID, ETD, or HCD</param>
         /// <param name="scanTypeFilePath">The path to the ScanType file (which lists the scan type for each scan); should be empty string if no ScanType file</param>
@@ -3594,7 +3598,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// </summary>
         /// <param name="sourceParamFile">FileInfo object to the source parameter file. If a new parameter file was created, this will now have extension .original</param>
         /// <param name="msgfPlusParamFileLines"></param>
-        /// <param name="alwaysCreate">If false, only replace the original file file if at least one parameter has been updated; if true, always replace it</param>
+        /// <param name="alwaysCreate">If false, only replace the original file if at least one parameter has been updated; if true, always replace it</param>
         /// <param name="finalParamFile">FileInfo object to the parameter file to use; will have path sourceParameterFilePath</param>
         /// <returns></returns>
         private CloseOutType WriteMSGFPlusParameterFile(

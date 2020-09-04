@@ -13,6 +13,8 @@ namespace AnalysisManagerIDPickerPlugIn
     /// </summary>
     public class clsAnalysisToolRunnerIDPicker : clsAnalysisToolRunnerBase
     {
+        // Ignore Spelling: cmd, idp, Qonvert, prepend, parm, MODa, xxx
+
         #region "Module Variables"
 
         /// <summary>

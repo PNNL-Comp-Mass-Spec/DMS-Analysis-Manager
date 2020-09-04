@@ -24,8 +24,10 @@ namespace AnalysisManagerProg
     /// </summary>
     public class CodeTest : clsLoggerBase
     {
+        // ReSharper disable CommentTypo
         // Ignore Spelling: perf, dta, Inj, mgf, dmsarch, Geobacter, bemidjiensis, Bem, lovelyi, metallireducens, sp, filetype, Micrococcus, luteus, nr
         // Ignore Spelling: const, bool, Qonvert, msgfspecprob, pek, Archaea, Sprot, Trembl, yyyy, dd, hh, ss, tt, Mam, gimli, Rar, Pos
+        // ReSharper restore CommentTypo
 
         private Protein_Exporter.clsGetFASTAFromDMS mFastaTools;
         private bool mGenerationComplete;

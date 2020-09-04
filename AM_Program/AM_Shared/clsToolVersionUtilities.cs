@@ -14,6 +14,8 @@ namespace AnalysisManagerBase
     /// </summary>
     public class clsToolVersionUtilities : EventNotifier
     {
+        // Ignore Spelling: yyyy-MM-dd hh:mm:ss tt
+
         #region "Constants"
 
         /// <summary>

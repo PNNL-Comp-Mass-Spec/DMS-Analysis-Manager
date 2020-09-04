@@ -21,6 +21,7 @@ namespace AnalysisManagerMSPathFinderPlugin
     /// </summary>
     public class clsAnalysisResourcesMSPathFinder : clsAnalysisResources
     {
+        // Ignore Spelling: Parm
 
         /// <summary>
         /// Initialize options
@@ -75,7 +76,7 @@ namespace AnalysisManagerMSPathFinderPlugin
         /// <summary>
         /// Look for existing .tsv result files
         /// These will only exist if a search was interrupted before it finished
-        /// The files will be in a subfolder below DMS_FailedResults and will need to have been manually copied to the transfer folder for this job
+        /// The files will be in a subdirectory below DMS_FailedResults and will need to have been manually copied to the transfer folder for this job
         /// </summary>
         /// <returns>True if success (even if no files were found); false if an error</returns>
         private bool RetrieveExistingSearchResults()

@@ -20,6 +20,8 @@ namespace AnalysisManagerMSGFDBPlugIn
     /// </summary>
     public class clsCreateMSGFDBSuffixArrayFiles : EventNotifier
     {
+        // Ignore Spelling: canno, Xmx, tda, cp, Utc
+
         #region "Constants"
 
         private const string MSGF_PLUS_INDEX_FILE_INFO_SUFFIX = ".MSGFPlusIndexFileInfo";
@@ -503,7 +505,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                         // Make sure all of the index files have a file modification date newer than the fasta file
                         // We only do this for legacy fasta files, since their file modification date will be the same on all pubs
 
-                        // We can't do this for programatically generated fasta files (that use protein collections)
+                        // We can't do this for programmatically generated fasta files (that use protein collections)
                         // since their modification date will be the time that the file was created
 
                         foreach (var fiIndexFile in existingFiles)
@@ -545,7 +547,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 if (clsGlobal.OfflineMode)
                 {
-                    // The manager that pushed the FASTA files to the the remote host should have also indexed them and pushed all of the index files to this host
+                    // The manager that pushed the FASTA files to the remote host should have also indexed them and pushed all of the index files to this host
                     // We can still re-index the files using the local FASTA file
                     OnWarningEvent("Index files are missing or out of date for " + fastaFilePath + "; will re-generate them");
                     remoteLockFileCreated = false;
@@ -1361,7 +1363,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                               "; waiting for file to be removed by other manager generating suffix array files");
             }
 
-            // Lock file found; wait up to maxWaitTimeHours hours
+            // Lock file found; wait up to maxWaitTimeHours
             var staleFile = false;
             while (fiLockFile.Exists)
             {

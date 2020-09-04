@@ -20,6 +20,8 @@ namespace AnalysisManagerBrukerDAExportPlugin
     // ReSharper disable once UnusedMember.Global
     public class clsAnalysisToolRunnerBrukerDAExport : clsAnalysisToolRunnerBase
     {
+        // Ignore Spelling: Daltonik
+
         #region "Constants and Enums"
 
         private const float PROGRESS_PCT_STARTING = 5;

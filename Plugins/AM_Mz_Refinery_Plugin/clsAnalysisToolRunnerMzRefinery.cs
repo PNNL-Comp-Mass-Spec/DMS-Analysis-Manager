@@ -24,6 +24,8 @@ namespace AnalysisManagerMzRefineryPlugIn
     // ReSharper disable once UnusedMember.Global
     public class clsAnalysisToolRunnerMzRefinery : clsAnalysisToolRunnerBase
     {
+        // Ignore Spelling: Dta, Utils, endian, modplus, Xmx, conf, Cyanothece, Cyano, Caulo, Prepend, cv
+
         #region "Constants and Enums"
 
         private const float PROGRESS_PCT_MzREFINERY_COMPLETE = 97;

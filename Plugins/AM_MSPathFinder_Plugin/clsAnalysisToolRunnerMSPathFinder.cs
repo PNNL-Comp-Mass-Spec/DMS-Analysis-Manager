@@ -21,6 +21,7 @@ namespace AnalysisManagerMSPathFinderPlugin
     // ReSharper disable once UnusedMember.Global
     public class clsAnalysisToolRunnerMSPathFinder : clsAnalysisToolRunnerBase
     {
+        // Ignore Spelling: Frag, tda, Samwise, Dehydro, Acetyl, Parm, Ic
 
         #region "Constants and Enums"
 
@@ -859,7 +860,7 @@ namespace AnalysisManagerMSPathFinderPlugin
 
         private bool PostProcessMSPathFinderResults()
         {
-            // Move the output files into a subfolder so that we can zip them
+            // Move the output files into a subdirectory so that we can zip them
             string compressDirPath;
 
             try

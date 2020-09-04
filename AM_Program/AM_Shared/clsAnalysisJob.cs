@@ -27,7 +27,7 @@ namespace AnalysisManagerBase
     /// <remarks></remarks>
     public class clsAnalysisJob : clsDBTask, IJobParams
     {
-        // Ignore Spelling: dir, dirs
+        // Ignore Spelling: dir, dirs, ok
 
         #region "Constants"
 
@@ -334,7 +334,7 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Look for files matching fileSpec that are over thresholdHours hours old
+        /// Look for files matching fileSpec that are over thresholdHours old
         /// Delete any that are found
         /// </summary>
         /// <param name="taskQueueDirectory"></param>
@@ -843,7 +843,7 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Filter the job parameters in paramXml to remove extra items from section sectionName
+        /// Filter the job parameters in paramXml to remove extra items from the given section
         /// </summary>
         /// <param name="paramXml">Job Parameters XML to filter</param>
         /// <param name="sectionName">sectionName to match</param>

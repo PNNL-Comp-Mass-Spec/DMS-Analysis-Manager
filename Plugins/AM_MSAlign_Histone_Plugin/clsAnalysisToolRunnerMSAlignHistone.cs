@@ -19,9 +19,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
     /// </summary>
     public class clsAnalysisToolRunnerMSAlignHistone : clsAnalysisToolRunnerBase
     {
-        //*********************************************************************************************************
-        // Class for running MSAlign Histone analysis
-        //*********************************************************************************************************
+        // Ignore Spelling: Histone, parm, Xmx, classpath, html, xsl, ptm, Frag
 
         #region "Constants and Enums"
 
@@ -589,7 +587,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                         if (keyName.ToLower() == INSTRUMENT_ACTIVATION_TYPE_KEY)
                         {
                             // If this is a bruker dataset, we need to make sure that the value for this entry is not FILE
-                            // The reason is that the mzXML file created by Bruker's compass program does not include the scantype information (CID, ETD, etc.)
+                            // The reason is that the mzXML file created by Bruker's compass program does not include the ScanType information (CID, ETD, etc.)
 
                             // The ToolName job parameter holds the name of the job script we are executing
                             var scriptName = mJobParams.GetParam("ToolName");

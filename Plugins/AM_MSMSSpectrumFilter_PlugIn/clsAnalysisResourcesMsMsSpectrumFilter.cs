@@ -21,6 +21,8 @@ namespace MSMSSpectrumFilterAM
     /// </summary>
     public class clsAnalysisResourcesMsMsSpectrumFilter : clsAnalysisResources
     {
+        // Ignore Spelling: Dta
+
         #region "Methods"
 
         /// <summary>

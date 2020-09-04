@@ -21,6 +21,8 @@ namespace AnalysisManagerTopPICPlugIn
     // ReSharper disable once UnusedMember.Global
     public class clsAnalysisToolRunnerTopPIC : clsAnalysisToolRunnerBase
     {
+        // Ignore Spelling: toppic, html, cmd, prsm, ptm, Csv, Unimod
+
         #region "Constants and Enums"
 
         private const string TOPPIC_CONSOLE_OUTPUT = "TopPIC_ConsoleOutput.txt";
@@ -335,7 +337,7 @@ namespace AnalysisManagerTopPICPlugIn
             var incrementalProgressMatcher = new Regex(@"processing (?<Item>\d+) of (?<Total>\d+) [a-z]+",
                                                        RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-            // Regex to match lines like:
+            // RegEx to match lines like:
             // Generating xml files - processing 398 PrSMs.
             var undefinedProgressMatcher = new Regex(@"processing (?<Item>\d+) [a-z]+\.",
                                                        RegexOptions.Compiled | RegexOptions.IgnoreCase);

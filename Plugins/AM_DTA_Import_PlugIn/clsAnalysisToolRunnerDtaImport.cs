@@ -17,6 +17,8 @@ namespace AnalysisManagerDtaImportPlugIn
     /// </summary>
     public class clsAnalysisToolRunnerDtaImport : clsAnalysisToolRunnerBase
     {
+        // Ignore Spelling: dta, pnl
+
         #region "Methods"
 
         /// <summary>
@@ -63,8 +65,8 @@ namespace AnalysisManagerDtaImportPlugIn
             {
                 // Note: the DTAFolderLocation is defined in the Manager_Control DB, and is specific for this manager
                 //       for example: \\pnl\projects\MSSHARE\SPurvine
-                // This folder must contain subfolders whose name matches the output_folder name assigned to each job
-                // Furthermore, each subfolder must have a file named Dataset_dta.zip
+                // This folder must contain subdirectories whose name matches the output_folder name assigned to each job
+                // Furthermore, each subdirectory must have a file named Dataset_dta.zip
 
                 sourceFolderNamePath = Path.Combine(mMgrParams.GetParam("DTAFolderLocation"), mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME));
                 completeFolderNamePath = Path.Combine(mMgrParams.GetParam("DTAProcessedFolderLocation"), mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME));

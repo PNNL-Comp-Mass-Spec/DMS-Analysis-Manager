@@ -17,6 +17,8 @@ namespace AnalysisManagerDataImportPlugIn
     /// </summary>
     public class clsAnalysisToolRunnerDataImport : clsAnalysisToolRunnerBase
     {
+        // Ignore Spelling: yyyy-MM-dd_HH-mm-ss
+
         #region "Module Variables"
 
         protected List<FileInfo> mSourceFiles;

@@ -25,6 +25,8 @@ namespace AnalysisManagerMSGFPlugin
     /// </summary>
     public class clsMSGFRunner : clsAnalysisToolRunnerBase
     {
+        // Ignore Spelling: MODa, Parm, Xmx, cp, modp, bioml, msgfdb, Chymotrypsin, Lys, Glu, Arg
+
         #region "Constants and enums"
 
         private const float PROGRESS_PCT_PARAM_FILE_EXAMINED_FOR_ETD = 2;
@@ -1224,7 +1226,7 @@ namespace AnalysisManagerMSGFPlugin
             using (var reader = new StreamReader(new FileStream(msgfResultsFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
             using (var writer = new StreamWriter(new FileStream(msgfSynopsisResults, FileMode.Create, FileAccess.Write, FileShare.Read)))
             {
-                // Write out the headers to swMSGFSynFile
+                // Write out the headers
                 mMSGFInputCreator.WriteMSGFResultsHeaders(writer);
 
                 var headerLineParsed = false;
@@ -1548,7 +1550,7 @@ namespace AnalysisManagerMSGFPlugin
         }
 
         /// <summary>
-        /// Looks for file fileNameToFind in the transfer folder for this job
+        /// Looks for fileNameToFind in the transfer folder for this job
         /// If found, copies the file to the work directory
         /// </summary>
         /// <param name="fileNameToFind"></param>
@@ -2337,7 +2339,7 @@ namespace AnalysisManagerMSGFPlugin
                         }
                     }
 
-                    // Close the the output files
+                    // Close the output files
                     writer?.Flush();
                     writer?.Dispose();
 

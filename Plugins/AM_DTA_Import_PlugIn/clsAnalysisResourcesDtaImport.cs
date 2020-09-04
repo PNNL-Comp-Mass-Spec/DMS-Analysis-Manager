@@ -9,6 +9,7 @@ namespace AnalysisManagerDtaImportPlugIn
     /// </summary>
     public class clsAnalysisResourcesDtaImport : clsAnalysisResources
     {
+        // Ignore Spelling: dta, pnl
 
         /// <summary>
         /// Retrieve required files
@@ -40,8 +41,8 @@ namespace AnalysisManagerDtaImportPlugIn
             {
                 // Note: the DTAFolderLocation is defined in the Manager_Control DB, and is specific for this manager
                 //       for example: \\pnl\projects\MSSHARE\SPurvine
-                // This folder must contain subfolders whose name matches the output_folder name assigned to each job
-                // Furthermore, each subfolder must have a file named Dataset_dta.zip
+                // This folder must contain subdirectories whose name matches the output_folder name assigned to each job
+                // Furthermore, each subdirectory must have a file named Dataset_dta.zip
 
                 var sourceFolderNamePath = Path.Combine(mMgrParams.GetParam("DTAFolderLocation"), mJobParams.GetParam(JOB_PARAM_OUTPUT_FOLDER_NAME));
 
@@ -64,7 +65,7 @@ namespace AnalysisManagerDtaImportPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                // If valid zip file is found, uzip the contents
+                // If valid zip file is found, unzip the contents
                 foreach (var fileName in fileEntries)
                 {
                     if (UnzipFileStart(Path.Combine(mWorkDir, fileName), mWorkDir, "clsAnalysisResourcesDtaImport.ValidateDTA", false))

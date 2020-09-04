@@ -1620,7 +1620,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="updateIntervalSeconds">
         /// The minimum number of seconds between updates
-        /// If fewer than updateIntervalSeconds seconds have elapsed since the last call to this function, no update will occur
+        /// If fewer than updateIntervalSeconds have elapsed since the last call to this function, no update will occur
         /// </param>
         /// <returns></returns>
         /// <remarks></remarks>
@@ -3900,7 +3900,7 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Update Status.xml every frequencySeconds seconds using percentComplete
+        /// Update Status.xml every frequencySeconds using percentComplete
         /// </summary>
         /// <param name="percentComplete">Percent complete</param>
         /// <param name="frequencySeconds">Minimum time between updates, in seconds (must be at least 5)</param>

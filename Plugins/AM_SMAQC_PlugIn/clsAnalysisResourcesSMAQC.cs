@@ -12,6 +12,7 @@ namespace AnalysisManagerSMAQCPlugIn
     /// </summary>
     public class clsAnalysisResourcesSMAQC : clsAnalysisResources
     {
+        // Ignore Spelling: Parm
 
         /// <summary>
         /// Retrieve required files

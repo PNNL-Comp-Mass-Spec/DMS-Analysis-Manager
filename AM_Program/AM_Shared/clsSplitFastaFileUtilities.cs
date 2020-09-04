@@ -15,6 +15,8 @@ namespace AnalysisManagerBase
     /// </summary>
     public class clsSplitFastaFileUtilities : EventNotifier
     {
+        // Ignore Spelling: Lockfile, Seqs, admins
+
         /// <summary>
         /// LockFile name
         /// </summary>
@@ -527,7 +529,7 @@ namespace AnalysisManagerBase
                 OnSplittingBaseFastaFile(baseFastaFile.FullName, mNumSplitParts);
 
                 // Perform the splitting
-                //    Call SplitFastaFile to create a split file, using mNumSplitParts parts
+                //    Call SplitFastaFile to create a split file, using mNumSplitParts
 
                 mSplitter = new clsFastaFileSplitter
                 {
