@@ -849,9 +849,6 @@ namespace AnalysisManagerMSPathFinderPlugin
 
             if (!string.IsNullOrWhiteSpace(comment))
             {
-                // As of August 12, 2011, the comment cannot contain a comma
-                // Sangtae Kim has promised to fix this, but for now, we'll replace commas with semicolons
-                comment = comment.Replace(",", ";");
                 modClean += "     " + comment;
             }
 
