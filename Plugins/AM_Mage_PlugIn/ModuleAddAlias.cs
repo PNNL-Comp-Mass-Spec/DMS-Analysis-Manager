@@ -4,13 +4,11 @@ using System.Linq;
 
 namespace AnalysisManager_Mage_PlugIn
 {
-
     /// <summary>
     /// Mage filter module that adds and "Alias" column to data stream
     /// </summary>
     public class ModuleAddAlias : ContentFilter
     {
-
         // Column indexes
         private int _aliasColIdx;
         private int _datasetIdx;
@@ -118,7 +116,6 @@ namespace AnalysisManager_Mage_PlugIn
         /// <returns>Lookup table of aliases for names, indexed by name</returns>
         public static Dictionary<string, string> BuildAliasLookupTable(HashSet<string> uniqueNameSet, bool padAliasWidth = true)
         {
-
             // get sorted list of unique dataset names
             var nameList = new List<string>(uniqueNameSet);
             nameList.Sort();
@@ -237,6 +234,5 @@ namespace AnalysisManager_Mage_PlugIn
                 }
             }
         }
-
     }
 }

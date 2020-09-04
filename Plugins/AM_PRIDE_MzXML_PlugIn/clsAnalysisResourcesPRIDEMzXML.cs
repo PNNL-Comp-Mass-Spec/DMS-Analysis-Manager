@@ -9,7 +9,6 @@ namespace AnalysisManagerPRIDEMzXMLPlugIn
     /// </summary>
     public class clsAnalysisResourcesPRIDEMzXML : clsAnalysisResources
     {
-
         /// <summary>
         /// Retrieve required files
         /// </summary>

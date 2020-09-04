@@ -92,7 +92,6 @@ namespace AnalysisManagerMSAlignHistonePlugIn
         /// <returns>CloseOutType enum indicating success or failure</returns>
         public override CloseOutType RunTool()
         {
-
             try
             {
                 // Call base class for initial setup
@@ -315,7 +314,6 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                 var success = CopyResultsToTransferDirectory();
 
                 return success ? eResult : CloseOutType.CLOSEOUT_FAILED;
-
             }
             catch (Exception ex)
             {
@@ -323,7 +321,6 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                 LogError(mMessage, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-
         }
 
         protected bool CopyFastaCheckResidues(string strSourceFilePath, string strTargetFilePath)
@@ -384,7 +381,6 @@ namespace AnalysisManagerMSAlignHistonePlugIn
         /// </summary>
         public override void CopyFailedResultsToArchiveDirectory()
         {
-
             try
             {
                 mJobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MZXML_EXTENSION);
@@ -403,7 +399,6 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                 }
 
                 File.Delete(Path.Combine(mWorkDir, mDatasetName + ".mzXML"));
-
             }
             catch (Exception)
             {
@@ -636,7 +631,6 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                         {
                             LogWarning("Ignoring unrecognized MSAlign_Histone parameter: " + keyName);
                         }
-
                     }
                 }
             }
@@ -1011,7 +1005,6 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                         }
 
                         LogErrorNoMessageUpdate(msg + ": " + fiSearchResultFile.FullName);
-
                     }
                 }
             }

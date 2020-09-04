@@ -16,7 +16,6 @@ namespace AnalysisManagerResultsXferPlugin
     /// </summary>
     public class clsAnalysisResourcesResultXfer : clsAnalysisResources
     {
-
         /// <summary>
         /// Obtains resources necessary for performing analysis results transfer
         /// </summary>
@@ -33,6 +32,5 @@ namespace AnalysisManagerResultsXferPlugin
 
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
-
     }
 }

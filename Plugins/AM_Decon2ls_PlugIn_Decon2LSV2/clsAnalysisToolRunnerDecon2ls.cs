@@ -412,7 +412,6 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 LogError("Error in CreateQCPlots", ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-
         }
 
         /// <summary>
@@ -475,7 +474,6 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                                     if (fitValue <= maxFitValue)
                                         dataLineCount = 1;
                                 }
-
                             }
                             else
                             {
@@ -487,7 +485,6 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                                 // At least one valid data line has been found
                                 return true;
                             }
-
                         }
                         else
                         {
@@ -521,7 +518,6 @@ namespace AnalysisManagerDecon2lsV2PlugIn
         /// <returns></returns>
         public override CloseOutType RunTool()
         {
-
             // Do the base class stuff
             if (base.RunTool() != CloseOutType.CLOSEOUT_SUCCESS)
             {
@@ -636,7 +632,6 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             var success = CopyResultsToTransferDirectory();
 
             return success ? eReturnCode : CloseOutType.CLOSEOUT_FAILED;
-
         }
 
         private CloseOutType RunDecon2Ls()
@@ -797,7 +792,6 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
             LogError("AssembleResults returned " + eResult);
             return CloseOutType.CLOSEOUT_FAILED;
-
         }
 
         private DeconToolsStateType StartDeconTools(string progLoc, string inputFilePath, string paramFilePath, DeconToolsFileTypeConstants eFileType)

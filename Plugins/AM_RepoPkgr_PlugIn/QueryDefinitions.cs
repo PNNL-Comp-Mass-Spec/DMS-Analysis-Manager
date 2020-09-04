@@ -140,7 +140,6 @@ namespace AnalysisManager_RepoPkgr_PlugIn
                 var sqlWithSecondFilter = sql + " AND " + string.Format(FilterSQL, filter);
                 return sqlWithSecondFilter;
             }
-
         } // end class QueryDefinition
     }
 }

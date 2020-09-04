@@ -19,7 +19,6 @@ namespace AnalysisManagerThermoPeakDataExporterPlugIn
     // ReSharper disable once UnusedMember.Global
     public class clsAnalysisToolRunnerThermoPeakDataExporter : clsAnalysisToolRunnerBase
     {
-
         #region "Constants"
 
         private const string THERMO_DATA_EXPORTER_CONSOLE_OUTPUT = "ThermoDataExporter_ConsoleOutput.txt";
@@ -116,14 +115,12 @@ namespace AnalysisManagerThermoPeakDataExporterPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
 
                 return processingResult;
-
             }
             catch (Exception ex)
             {
                 mMessage = "Error in TopFDPlugin->RunTool: " + ex.Message;
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-
         }
 
         /// <summary>
@@ -133,7 +130,6 @@ namespace AnalysisManagerThermoPeakDataExporterPlugIn
         /// <remarks></remarks>
         private void ParseConsoleOutputFile(string consoleOutputFilePath)
         {
-
             // Example Console output
 
             // Using options:
@@ -208,7 +204,6 @@ namespace AnalysisManagerThermoPeakDataExporterPlugIn
 
         private CloseOutType StartThermoPeakDataExporter(string progLoc)
         {
-
             LogMessage("Running ThermoPeakDataExporter");
 
             // Future, if needed: filter by intensity, m/z, and/or scan
@@ -287,7 +282,6 @@ namespace AnalysisManagerThermoPeakDataExporterPlugIn
             }
 
             return CloseOutType.CLOSEOUT_SUCCESS;
-
         }
 
         /// <summary>

@@ -562,7 +562,6 @@ namespace AnalysisManagerOMSSAPlugIn
                         // Template only has one MSOutFile node tree defined
                         // Nothing else to update
                     }
-
                 }
                 catch (Exception ex)
                 {

@@ -110,14 +110,12 @@ namespace AnalysisManagerDtaSplitPlugIn
                 var success = CopyResultsToTransferDirectory();
 
                 return success ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
-
             }
             catch (Exception ex)
             {
                 mMessage = "Error in DtaSplitPlugin->RunTool: " + ex.Message;
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-
         }
 
         /// <summary>
@@ -251,7 +249,6 @@ namespace AnalysisManagerDtaSplitPlugIn
 
                         writer[splitFileNum].WriteLine(dataLine);
                     }
-
                 }
 
                 for (var splitFileNum = 1; splitFileNum <= segmentCountToCreate; splitFileNum++)
@@ -283,7 +280,6 @@ namespace AnalysisManagerDtaSplitPlugIn
 
             try
             {
-
                 if (mDebugLevel >= 2)
                 {
                     LogDebug("Counting the number of spectra in the source _Dta.txt file: " + Path.GetFileName(sourceFilePath));

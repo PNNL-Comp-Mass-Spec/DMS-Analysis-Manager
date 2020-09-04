@@ -14,7 +14,6 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
     /// </summary>
     public class clsMultiAlignMage : EventNotifier
     {
-
         #region Member Variables
 
         private string mResultsDBFileName = "";
@@ -208,7 +207,6 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 
         private bool GetMultiAlignParameterFile()
         {
-
             try
             {
                 // Retrieve the MultiAlign Parameter .xml file specified for this job
@@ -247,7 +245,6 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 
 
             return true;
-
         }
 
         /// <summary>
@@ -280,10 +277,8 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
         /// <param name="fileSpec"></param>
         private bool CopyMultiAlignInputFiles(IBaseModule multialignJobsToProcess, string fileSpec)
         {
-
             try
             {
-
                 var columnsToIncludeInOutput = "Job, Dataset, Dataset_ID, Tool, Settings_File, Parameter_File, Instrument";
                 var fileList = GetListOfFilesFromDirectoryList(multialignJobsToProcess, fileSpec, columnsToIncludeInOutput);
 
@@ -309,7 +304,6 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                 };
 
                 ProcessingPipeline.Assemble("File_Copy", fileList, copier).RunRoot(null);
-
             }
             catch (Exception ex)
             {
@@ -319,7 +313,6 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
             }
 
             return true;
-
         }
 
         /// <summary>
@@ -388,7 +381,6 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
         /// <returns></returns>
         private bool BuildMultiAlignInputTextFile(string strInputFileExtension)
         {
-
             const string INPUT_FILENAME = "input.txt";
 
             var TargetFilePath = Path.Combine(mWorkingDir, INPUT_FILENAME);
@@ -397,7 +389,6 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 
             try
             {
-
                 var Files = Directory.GetFiles(mWorkingDir, "*" + strInputFileExtension);
 
                 if (Files.Length == 0)
@@ -443,7 +434,6 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                 OnErrorEvent(mMessage + ": " + ex.Message);
                 return false;
             }
-
         }
 
         #endregion
@@ -463,7 +453,6 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
         /// </summary>
         private void CmdRunner_LoopWaiting()
         {
-
             // Update the status file (limit the updates to every 5 seconds)
             if (DateTime.UtcNow.Subtract(mLastStatusUpdate).TotalSeconds >= 5)
             {
@@ -512,7 +501,6 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                 {" - Creating report", eProgressSteps.CreatingReport},
                 {" - Analysis Complete", eProgressSteps.Complete}
             };
-
         }
 
         /// <summary>
@@ -548,14 +536,12 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 
                         strLogFilePath = fiFiles[intBestIndex].FullName;
                     }
-
                 }
 
                 if (!string.IsNullOrWhiteSpace(strLogFilePath))
                 {
                     ParseMultiAlignLogFile(strLogFilePath);
                 }
-
             }
             catch (Exception ex)
             {
@@ -564,9 +550,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                 {
                     OnErrorEvent("Error finding the MultiAlign log file at " + mWorkingDir + ": " + ex.Message);
                 }
-
             }
-
         }
 
         /// <summary>
@@ -576,7 +560,6 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
         /// <remarks></remarks>
         private void ParseMultiAlignLogFile(string logFilePath)
         {
-
             // The MultiAlign log file is quite big, but we can keep track of progress by looking for known text in the log file lines
             // Dictionary mProgressStepLogText keeps track of the lines of text to match while mProgressStepPercentComplete keeps track of the % complete values to use
 
@@ -657,10 +640,8 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                                     mMultialignErrorMessage = "No baseline dataset or database was selected";
                                 }
                             }
-
                         }
                     }
-
                 }
 
                 // Compute the actual progress
@@ -680,12 +661,10 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                         if (eProgress == eProgressSteps.LoadingDatasets)
                         {
                             subProgressPercent = datasetsLoaded * 100 / (double)totalDatasets;
-
                         }
                         else if (eProgress == eProgressSteps.AligningDatasets)
                         {
                             subProgressPercent = datasetsAligned * 100 / (double)totalDatasets;
-
                         }
                         else if (eProgress == eProgressSteps.PerformingClustering)
                         {
@@ -705,9 +684,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                             {
                                 progressOverall += (float)(subProgressPercent * (intProgressNext - actualProgress) / 100.0);
                             }
-
                         }
-
                     }
 
                     if (mProgress < progressOverall)
@@ -719,10 +696,8 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                             mLastProgressWriteTime = DateTime.UtcNow;
                             LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, " ... " + mProgress.ToString("0.0") + "% complete");
                         }
-
                     }
                 }
-
             }
             catch (Exception ex)
             {
@@ -732,7 +707,6 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                     OnErrorEvent("Error parsing MultiAlign log file (" + logFilePath + "): " + ex.Message);
                 }
             }
-
         }
 
         #endregion
@@ -747,7 +721,6 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
         [Obsolete("Unused")]
         public class MageMultiAlign : ContentFilter
         {
-
             #region Member Variables
 
             private string[] mJobFieldNames;
@@ -792,7 +765,6 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                     mResultsDirectoryIndex = folderColIndex;
                 else
                     throw new Exception("ColumnDefsFinished could not find column Directory or Folder");
-
             }
 
             #endregion
@@ -852,7 +824,6 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
         /// </summary>
         public class MageFileImport : FileContentProcessor
         {
-
             #region Properties
 
             // public string DBTableName { get; set; }

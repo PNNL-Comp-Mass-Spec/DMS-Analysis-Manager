@@ -18,7 +18,6 @@ namespace AnalysisManagerMsXmlGenPlugIn
     /// </summary>
     public class clsAnalysisToolRunnerMSXMLGen : clsAnalysisToolRunnerBase
     {
-
         #region "Module Variables"
 
         private const float PROGRESS_PCT_MSXML_GEN_RUNNING = 5;
@@ -128,7 +127,6 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 {
                     LogWarning("msXmlFormat string is not mzXML, mzML, or mgf (" + msXmlFormat + "); will default to mzML");
                     mMSXmlOutputFileType = clsAnalysisResources.MSXMLOutputTypeConstants.mzML;
-
                 }
 
                 // Lookup Centroid Settings

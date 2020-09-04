@@ -16,7 +16,6 @@ namespace AnalysisManagerMultiAlignPlugIn
     /// </summary>
     public class clsAnalysisResourcesMultiAlign : clsAnalysisResources
     {
-
         /// <summary>
         /// Retrieve required files
         /// </summary>

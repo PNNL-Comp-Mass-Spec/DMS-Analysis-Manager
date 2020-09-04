@@ -5,14 +5,12 @@ using System.IO;
 
 namespace AnalysisManager_Mage_PlugIn
 {
-
     /// <summary>
     /// Class that defines basic Mage pipelines and functions that
     /// provide sub-operations that make up operations that Mac Mage plug-in can execute
     /// </summary>
     public class MageAMFileProcessingPipelines : MageAMPipelineBase
     {
-
         #region Constructors
 
         /// <summary>
@@ -37,7 +35,6 @@ namespace AnalysisManager_Mage_PlugIn
         /// <param name="fileProcessName">Process to apply to file content extraction</param>
         public void ImportJobResults(string jobListQuery, string fileNameSelector, string tableName, string fileProcessName)
         {
-
             // get list of jobs from data package that have ReporterIon results
             BaseModule jobList = GetListOfDMSItems(jobListQuery);
 
@@ -63,7 +60,6 @@ namespace AnalysisManager_Mage_PlugIn
         /// <param name="tableName">SQLite table name that receives extracted contents of files</param>
         public void ImportFileList(string jobListQuery, string fileNameSelector, string tableName)
         {
-
             // get list of datasets from jobs from data package (Note: NOT the data package dataset list)
             var jobList = GetListOfDMSItems(jobListQuery);
 
@@ -88,7 +84,6 @@ namespace AnalysisManager_Mage_PlugIn
         /// <param name="importMode">Valid modes: CopyAndImport, SimpleImport, AddDatasetIDToImport, IMPROVClusterImport</param>
         public void ImportFilesInDirectoryToSQLite(string inputDirectoryPath, string fileNameList, string importMode)
         {
-
             var reader = new FileListFilter();
             reader.AddDirectoryPath(inputDirectoryPath);
             reader.FileNameSelector = GetJobParam("FileNameSelector");
@@ -226,7 +221,6 @@ namespace AnalysisManager_Mage_PlugIn
         /// <param name="sql">Query to use a source of factors</param>
         public void GetDatasetFactors(string sql)
         {
-
             // first pipeline - get factors crosstab to sink object
             var reader = MakeDBReaderModule(sql);
 
@@ -303,7 +297,6 @@ namespace AnalysisManager_Mage_PlugIn
             // Example message:
             // Importing result files into SQLite, storing in table T_Results; 6 jobs
             OnDebugEvent(string.Format("{0} into SQLite, storing in table {1}; {2} {3}", taskDescription, tableName, itemCount, itemDescription));
-
         }
     }
 }

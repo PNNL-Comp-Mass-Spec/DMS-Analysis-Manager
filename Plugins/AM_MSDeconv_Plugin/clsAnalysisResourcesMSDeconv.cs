@@ -14,7 +14,6 @@ namespace AnalysisManagerMSDeconvPlugIn
     /// </summary>
     public class clsAnalysisResourcesMSDeconv : clsAnalysisResources
     {
-
         /// <summary>
         /// Retrieve required files
         /// </summary>

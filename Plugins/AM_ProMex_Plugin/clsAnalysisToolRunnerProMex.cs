@@ -137,7 +137,6 @@ namespace AnalysisManagerProMexPlugIn
                 var success = CopyResultsToTransferDirectory();
 
                 return success ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
-
             }
             catch (Exception ex)
             {
@@ -145,7 +144,6 @@ namespace AnalysisManagerProMexPlugIn
                 LogError(mMessage, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-
         }
 
         /// <summary>
@@ -431,7 +429,6 @@ namespace AnalysisManagerProMexPlugIn
                 {
                     writer.WriteLine(mCmdRunner.CachedConsoleOutput);
                 }
-
             }
 
             // Parse the console output file one more time to check for errors
@@ -445,7 +442,6 @@ namespace AnalysisManagerProMexPlugIn
 
             if (!blnSuccess)
             {
-
                 LogError("Error running ProMex");
 
                 if (mCmdRunner.ExitCode != 0)

@@ -127,7 +127,6 @@ namespace DTASpectraFileGen
                     mDTAFileCreationThread.Start();
                     mStatus = ProcessStatus.SF_RUNNING;
                 }
-
             }
             catch (Exception ex)
             {
@@ -277,14 +276,12 @@ namespace DTASpectraFileGen
                     }
                     return numScans;
                 }
-
             }
             catch (Exception ex)
             {
                 OnErrorEvent("Error determining the max scan number in the .raw file", ex);
                 return 0;
             }
-
         }
 
         /// <summary>

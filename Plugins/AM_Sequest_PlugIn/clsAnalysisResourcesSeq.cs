@@ -24,7 +24,6 @@ namespace AnalysisManagerSequestPlugin
     /// </summary>
     public class clsAnalysisResourcesSeq : clsAnalysisResources
     {
-
         /// <summary>
         /// Initialize options
         /// </summary>
@@ -741,6 +740,5 @@ namespace AnalysisManagerSequestPlugin
                 return false;
             }
         }
-
     }
 }

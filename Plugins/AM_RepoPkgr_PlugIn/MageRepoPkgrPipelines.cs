@@ -279,7 +279,6 @@ namespace AnalysisManager_RepoPkgr_Plugin
         {
             //	todo Log pipeline event message?
             Console.WriteLine(args.Message);
-
         }
 
         #endregion

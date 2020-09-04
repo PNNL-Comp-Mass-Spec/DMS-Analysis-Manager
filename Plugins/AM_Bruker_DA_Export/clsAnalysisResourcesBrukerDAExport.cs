@@ -12,20 +12,17 @@ using System.IO;
 
 namespace AnalysisManagerBrukerDAExportPlugin
 {
-
     /// <summary>
     /// Retrieve resources for the Bruker DA Export plugin
     /// </summary>
     public class clsAnalysisResourcesBrukerDAExport : clsAnalysisResources
     {
-
         /// <summary>
         /// Retrieve required files
         /// </summary>
         /// <returns>Closeout code</returns>
         public override CloseOutType GetResources()
         {
-
             var currentTask = "Initializing";
 
             try
@@ -154,7 +151,6 @@ namespace AnalysisManagerBrukerDAExportPlugin
                             LogError("Exception deleting file " + file.FullName, ex2);
                             mMessage = string.Empty;
                         }
-
                     }
                 }
 
@@ -175,15 +171,12 @@ namespace AnalysisManagerBrukerDAExportPlugin
                 }
 
                 return CloseOutType.CLOSEOUT_SUCCESS;
-
             }
             catch (Exception ex)
             {
                 LogError("Exception in GetResources (task = " + currentTask + ")", ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-
         }
-
     }
 }

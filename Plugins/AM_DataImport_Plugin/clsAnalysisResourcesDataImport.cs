@@ -14,7 +14,6 @@ namespace AnalysisManagerDataImportPlugIn
     /// </summary>
     public class clsAnalysisResourcesDataImport : clsAnalysisResources
     {
-
         /// <summary>
         /// Retrieve required files
         /// </summary>
@@ -25,6 +24,5 @@ namespace AnalysisManagerDataImportPlugIn
             var result = GetSharedResources();
             return result;
         }
-        
     }
 }

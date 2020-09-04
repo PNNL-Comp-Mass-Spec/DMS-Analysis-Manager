@@ -3,14 +3,12 @@ using System.Linq;
 
 namespace AnalysisManagerDecon2lsV2PlugIn
 {
-
     /// <summary>
     /// XML Parameter file reader
     /// </summary>
     /// <remarks>This class is used by clsAnalysisToolRunnerDecon2ls</remarks>
     public class clsXMLParamFileReader
     {
-
         /// <summary>
         /// Sections and parameters
         /// </summary>
@@ -63,7 +61,6 @@ namespace AnalysisManagerDecon2lsV2PlugIn
         /// <remarks></remarks>
         private Dictionary<string, Dictionary<string, string>> CacheXMLParamFile(string paramFilePath)
         {
-
             var dctSections = new Dictionary<string, Dictionary<string, string>>();
 
             // Read the entire XML file into a Linq to XML XDocument object
@@ -76,7 +73,6 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             CacheXMLParseSection(parameters, ref dctSections);
 
             return dctSections;
-
         }
 
         /// <summary>
@@ -120,7 +116,6 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                     }
                 }
             }
-
         }
 
         /// <summary>
@@ -131,7 +126,6 @@ namespace AnalysisManagerDecon2lsV2PlugIn
         /// <returns></returns>
         public bool GetParameter(string parameterName, bool valueIfMissing)
         {
-
             var value = GetParameter(parameterName, string.Empty);
 
             if (string.IsNullOrEmpty(value))
@@ -143,7 +137,6 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             }
 
             return valueIfMissing;
-
         }
 
         /// <summary>
@@ -154,20 +147,15 @@ namespace AnalysisManagerDecon2lsV2PlugIn
         /// <returns></returns>
         public string GetParameter(string parameterName, string valueIfMissing)
         {
-
             foreach (var section in mSections)
             {
-
                 if (section.Value.TryGetValue(parameterName, out var value))
                 {
                     return value;
                 }
-
             }
 
             return valueIfMissing;
-
         }
-
     }
 }

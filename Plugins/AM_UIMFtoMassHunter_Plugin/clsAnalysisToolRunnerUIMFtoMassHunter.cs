@@ -107,7 +107,6 @@ namespace AnalysisManagerUIMFtoMassHunterPlugin
                 var success = CopyResultsToTransferDirectory();
 
                 return success ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
-
             }
             catch (Exception ex)
             {
@@ -115,7 +114,6 @@ namespace AnalysisManagerUIMFtoMassHunterPlugin
                 LogError(mMessage, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-
         }
 
         private bool ConvertToAgilentDotD()
@@ -236,7 +234,6 @@ namespace AnalysisManagerUIMFtoMassHunterPlugin
 
                 using (var reader = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
-
                     while (!reader.EndOfStream)
                     {
                         var dataLine = reader.ReadLine();
@@ -252,7 +249,6 @@ namespace AnalysisManagerUIMFtoMassHunterPlugin
                         }
                     }
                 }
-
             }
             catch (Exception ex)
             {
@@ -262,7 +258,6 @@ namespace AnalysisManagerUIMFtoMassHunterPlugin
                     LogError("Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
                 }
             }
-
         }
 
         private void StoreConsoleErrorMessage(StreamReader reader, string firstDataLine)
@@ -282,7 +277,6 @@ namespace AnalysisManagerUIMFtoMassHunterPlugin
                 {
                     mConsoleOutputErrorMsg += "; " + dataLine;
                 }
-
             }
         }
 
@@ -292,7 +286,6 @@ namespace AnalysisManagerUIMFtoMassHunterPlugin
         /// <remarks></remarks>
         protected bool StoreToolVersionInfo(string progLoc)
         {
-
             var additionalDLLs = new List<string>
             {
                 "UIMFLibrary.dll"
@@ -308,7 +301,6 @@ namespace AnalysisManagerUIMFtoMassHunterPlugin
 
         void CmdRunner_LoopWaiting()
         {
-
             // Synchronize the stored Debug level with the value stored in the database
 
             {
@@ -324,7 +316,6 @@ namespace AnalysisManagerUIMFtoMassHunterPlugin
                     LogProgress("UIMFtoMassHunter");
                 }
             }
-
         }
 
         #endregion

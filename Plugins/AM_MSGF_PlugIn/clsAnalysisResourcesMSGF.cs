@@ -398,11 +398,9 @@ namespace AnalysisManagerMSGFPlugin
                 }
 
                 mJobParams.AddResultFileExtensionToSkip(DOT_MGF_EXTENSION);
-
             }
             else if (!onlyCopyFirstHitsAndSynopsisFiles)
             {
-
                 // See if a .mzXML file already exists for this dataset
                 var mzXmlFileRetrieved = FileSearch.RetrieveMZXmlFile(false, out var mzXMLFilePath);
 

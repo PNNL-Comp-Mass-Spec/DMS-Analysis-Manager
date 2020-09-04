@@ -149,7 +149,6 @@ namespace AnalysisManagerMODaPlugIn
                 var success = CopyResultsToTransferDirectory();
 
                 return success ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
-
             }
             catch (Exception ex)
             {
@@ -157,7 +156,6 @@ namespace AnalysisManagerMODaPlugIn
                 LogError(mMessage, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-
         }
 
         private bool StartMODa(string javaProgLoc)

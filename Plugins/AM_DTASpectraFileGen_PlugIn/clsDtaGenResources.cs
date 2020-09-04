@@ -17,7 +17,6 @@ namespace DTASpectraFileGen
     /// <remarks></remarks>
     public class clsDtaGenResources : clsAnalysisResources
     {
-
         /// <summary>
         /// Text used to track that existing DeconMSn results are being used
         /// </summary>
@@ -197,6 +196,5 @@ namespace DTASpectraFileGen
 
             return true;
         }
-
     }
 }

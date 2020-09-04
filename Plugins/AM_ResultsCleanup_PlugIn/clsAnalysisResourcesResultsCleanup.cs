@@ -9,7 +9,6 @@ using AnalysisManagerBase;
 
 namespace AnalysisManagerResultsCleanupPlugin
 {
-
     /// <summary>
     /// Retrieve resources for the Results Cleanup plugin
     /// </summary>

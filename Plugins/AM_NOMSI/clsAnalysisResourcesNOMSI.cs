@@ -11,20 +11,17 @@ using System.IO;
 
 namespace AnalysisManagerNOMSIPlugin
 {
-
     /// <summary>
     /// Retrieve resources for the NOMSI plugin
     /// </summary>
     public class clsAnalysisResourcesNOMSI : clsAnalysisResources
     {
-
         /// <summary>
         /// Retrieve required files
         /// </summary>
         /// <returns>Closeout code</returns>
         public override CloseOutType GetResources()
         {
-
             var currentTask = "Initializing";
 
             try
@@ -88,7 +85,6 @@ namespace AnalysisManagerNOMSIPlugin
                 }
 
                 return CloseOutType.CLOSEOUT_SUCCESS;
-
             }
             catch (Exception ex)
             {
@@ -97,7 +93,6 @@ namespace AnalysisManagerNOMSIPlugin
 
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-
         }
     }
 }

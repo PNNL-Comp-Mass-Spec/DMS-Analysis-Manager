@@ -71,7 +71,6 @@ namespace AnalysisManager_RepoPkgr_PlugIn
             // for each zip file in target directory
             foreach (var tarFi in diTargetDir.GetFiles("*.zip"))
             {
-
                 // get job prefix from zip file
                 var pfx = Regex.Match(tarFi.Name, @"Job_\d*_").Groups[0].Value;
 
@@ -122,6 +121,5 @@ namespace AnalysisManager_RepoPkgr_PlugIn
 
             return filesUpdated;
         }
-
     }
 }

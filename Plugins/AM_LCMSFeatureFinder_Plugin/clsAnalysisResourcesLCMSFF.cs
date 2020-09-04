@@ -267,6 +267,5 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
 
             return result;
         }
-
     }
 }

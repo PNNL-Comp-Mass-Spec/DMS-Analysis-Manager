@@ -12,7 +12,6 @@ using System.IO;
 
 namespace AnalysisManagerMetaboliteDetectorPlugin
 {
-
     /// <summary>
     /// Class for running the Metabolite Detector
     /// </summary>
@@ -123,7 +122,6 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
                 var success = CopyResultsToTransferDirectory();
 
                 return success ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
-
             }
             catch (Exception ex)
             {
@@ -131,7 +129,6 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
                 LogError(mMessage, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-
         }
 
         private void ParseConsoleOutputFile(string strConsoleOutputFilePath)
@@ -160,7 +157,6 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
 
                 using (var reader = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
-
                     while (!reader.EndOfStream)
                     {
                         var dataLine = reader.ReadLine();
@@ -176,7 +172,6 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
                         }
                     }
                 }
-
             }
             catch (Exception ex)
             {
@@ -186,7 +181,6 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
                     LogError("Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
                 }
             }
-
         }
 
         /// <summary>
@@ -209,7 +203,6 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
                 }
 
                 return true;
-
             }
             catch (Exception ex)
             {
@@ -311,7 +304,6 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
                 {
                     mConsoleOutputErrorMsg += "; " + dataLine;
                 }
-
             }
         }
 
@@ -321,7 +313,6 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
         /// <remarks></remarks>
         private bool StoreToolVersionInfo(string strProgLoc)
         {
-
             var strToolVersionInfo = string.Empty;
 
             if (mDebugLevel >= 2)
@@ -342,7 +333,6 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
                     LogError("Exception calling SetStepTaskToolVersion", ex);
                     return false;
                 }
-
             }
 
             // Lookup the version of the .NET program
@@ -363,7 +353,6 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
                 LogError("Exception calling SetStepTaskToolVersion", ex);
                 return false;
             }
-
         }
 
         #endregion
@@ -372,7 +361,6 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
 
         void CmdRunner_LoopWaiting()
         {
-
             // Synchronize the stored Debug level with the value stored in the database
 
             {
@@ -388,7 +376,6 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
                     LogProgress("MetaboliteDetector");
                 }
             }
-
         }
 
         #endregion

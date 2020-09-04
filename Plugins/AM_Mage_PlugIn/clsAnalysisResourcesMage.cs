@@ -6,13 +6,11 @@ using PRISMDatabaseUtils;
 
 namespace AnalysisManager_Mage_PlugIn
 {
-
     /// <summary>
     /// Retrieve resources for the Mage plugin
     /// </summary>
     public class clsAnalysisResourcesMage : clsAnalysisResourcesMAC
     {
-
         /// <summary>
         /// Retrieve required files
         /// </summary>
@@ -177,6 +175,5 @@ namespace AnalysisManager_Mage_PlugIn
 
             return false;
         }
-
     }
 }

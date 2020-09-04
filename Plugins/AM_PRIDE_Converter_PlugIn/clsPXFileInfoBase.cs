@@ -7,7 +7,6 @@ namespace AnalysisManagerPRIDEConverterPlugIn
     /// </summary>
     public class clsPXFileInfoBase
     {
-
         #region "Structures and Enums"
 
         /// <summary>

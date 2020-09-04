@@ -8,7 +8,6 @@ namespace AnalysisManagerDtaSplitPlugIn
     /// </summary>
     public class clsAnalysisResourcesDtaSplit : clsAnalysisResources
     {
-
         /// <summary>
         /// Retrieve required files
         /// </summary>
@@ -42,6 +41,5 @@ namespace AnalysisManagerDtaSplitPlugIn
             // All finished
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
-
     }
 }

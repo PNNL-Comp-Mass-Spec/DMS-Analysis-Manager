@@ -285,7 +285,6 @@ namespace AnalysisManagerMzRefineryPlugIn
                             {
                                 LogWarning("Unable to generate PPMError plots for debugging purposes; .mzML file not found");
                             }
-
                         }
                         catch (Exception ex)
                         {
@@ -674,7 +673,6 @@ namespace AnalysisManagerMzRefineryPlugIn
 
         private void CopyFailedResultsToArchiveFolder(string msXmlFileExtension)
         {
-
             try
             {
                 var msXmlFiles = new DirectoryInfo(mWorkDir).GetFiles("*" + msXmlFileExtension);
@@ -689,7 +687,6 @@ namespace AnalysisManagerMzRefineryPlugIn
             }
 
             base.CopyFailedResultsToArchiveDirectory();
-
         }
 
         /// <summary>
@@ -929,7 +926,6 @@ namespace AnalysisManagerMzRefineryPlugIn
                         {
                             LogError("Fewer than 100 matches after filtering; cannot use MzRefinery on this dataset");
                         }
-
                     }
                 }
             }
@@ -1100,7 +1096,6 @@ namespace AnalysisManagerMzRefineryPlugIn
 
                     LogMessage(logMessage);
                 }
-
             }
             catch (Exception ex)
             {
@@ -1269,7 +1264,6 @@ namespace AnalysisManagerMzRefineryPlugIn
                             parentIonsForScan.Add(parentIonCharge, spectrumHeaderInfo.ParentIonMZ);
                         }
                     }
-
                 }
 
                 return true;
@@ -1620,7 +1614,6 @@ namespace AnalysisManagerMzRefineryPlugIn
         {
             try
             {
-
                 var success = ReadParentIonMZsFromCDTA(out var parentIonMZs);
                 if (!success)
                     return false;
@@ -1715,7 +1708,6 @@ namespace AnalysisManagerMzRefineryPlugIn
                                     var progress = scanNumber / (float)maxScanMS2 * 100;
                                     LogDebug(string.Format("Updating parent ion m/z's in the mzML file, {0:F1}% complete", progress));
                                 }
-
                             }
                         }
 

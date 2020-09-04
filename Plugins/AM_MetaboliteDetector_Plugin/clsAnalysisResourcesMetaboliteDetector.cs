@@ -10,20 +10,17 @@ using System;
 
 namespace AnalysisManagerMetaboliteDetectorPlugin
 {
-
     /// <summary>
     /// Retrieve resources for the Metabolite Detector plugin
     /// </summary>
     public class clsAnalysisResourcesMetaboliteDetector : clsAnalysisResources
     {
-        
         /// <summary>
         /// Retrieve required files
         /// </summary>
         /// <returns>Closeout code</returns>
         public override CloseOutType GetResources()
         {
-
             var currentTask = "Initializing";
 
             try
@@ -59,16 +56,13 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
                 }
 
                 return CloseOutType.CLOSEOUT_SUCCESS;
-
             }
             catch (Exception ex)
             {
                 LogError("Exception in GetResources; task = " + currentTask, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-
         }
-
 
     }
 }

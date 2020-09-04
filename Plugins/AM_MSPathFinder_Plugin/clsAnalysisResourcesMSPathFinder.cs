@@ -15,7 +15,6 @@ using PRISMDatabaseUtils;
 
 namespace AnalysisManagerMSPathFinderPlugin
 {
-
     /// <summary>
     /// Retrieve resources for the MSPathFinder plugin
     /// </summary>
@@ -129,7 +128,6 @@ namespace AnalysisManagerMSPathFinderPlugin
 
         private bool RetrieveFastaAndParamFile()
         {
-
             var currentTask = "Initializing";
 
             try

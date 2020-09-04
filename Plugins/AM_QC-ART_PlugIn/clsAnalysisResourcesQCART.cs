@@ -18,7 +18,6 @@ using PRISMDatabaseUtils;
 
 namespace AnalysisManagerQCARTPlugin
 {
-
     /// <summary>
     /// Retrieve resources for the QC-ART plugin
     /// </summary>
@@ -95,7 +94,6 @@ namespace AnalysisManagerQCARTPlugin
         /// <returns>Closeout code</returns>
         public override CloseOutType GetResources()
         {
-
             var currentTask = "Initializing";
 
             mProjectName = string.Empty;
@@ -172,7 +170,6 @@ namespace AnalysisManagerQCARTPlugin
                     var lockFilePath = CreateLockFile(baselineMetadataFilePath, "Creating QCART baseline data via " + mMgrName);
 
                     mJobParams.AddAdditionalParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAMETER_QCART_BASELINE_METADATA_LOCKFILE, lockFilePath);
-
                 }
                 // This list contains the dataset names for which we need to obtain QC Metric values (P_2C, MS1_2B, etc.)
                 var datasetNamesToRetrieveMetrics = new SortedSet<string>
@@ -212,7 +209,6 @@ namespace AnalysisManagerQCARTPlugin
                     success = CreateBaselineDatasetInfoFile(baselineDatasets);
                     if (!success)
                         return CloseOutType.CLOSEOUT_FAILED;
-
                 }
 
                 currentTask = "Process the MyEMSL download queue";
@@ -241,14 +237,12 @@ namespace AnalysisManagerQCARTPlugin
                 }
 
                 return CloseOutType.CLOSEOUT_SUCCESS;
-
             }
             catch (Exception ex)
             {
                 LogError("Exception in GetResources; task = " + currentTask, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-
         }
 
         /// <summary>
@@ -375,7 +369,6 @@ namespace AnalysisManagerQCARTPlugin
                 LogError("Exception in CustomizeQCRScript", ex);
                 return false;
             }
-
         }
 
         /// <summary>
@@ -385,7 +378,6 @@ namespace AnalysisManagerQCARTPlugin
         /// <returns>True if success, otherwise false</returns>
         private bool CreateBaselineDatasetInfoFile(Dictionary<string, int> baselineDatasets)
         {
-
             try
             {
                 var datasetParseErrors = new List<string>();
@@ -404,7 +396,6 @@ namespace AnalysisManagerQCARTPlugin
                         }
                         writer.WriteLine(dataset.Key + "," + fractionNumber);
                     }
-
                 }
 
                 if (datasetParseErrors.Count == 0)
@@ -415,14 +406,12 @@ namespace AnalysisManagerQCARTPlugin
                 LogErrorForOneOrMoreDatasets(errorMessage, datasetParseErrors, "CreateBaselineDatasetInfoFile");
 
                 return false;
-
             }
             catch (Exception ex)
             {
                 LogError("Exception in CreateBaselineDatasetInfoFile", ex);
                 return false;
             }
-
         }
 
         /// <summary>
@@ -450,7 +439,6 @@ namespace AnalysisManagerQCARTPlugin
 
             var scxFraction = int.Parse(match.Groups[1].Value);
             return scxFraction;
-
         }
 
         /// <summary>
@@ -542,7 +530,6 @@ namespace AnalysisManagerQCARTPlugin
 
                 var success = RetrieveExistingBaselineResultFile(fiBaselineMetadata, out criticalError);
                 return success;
-
             }
             catch (Exception ex)
             {
@@ -550,7 +537,6 @@ namespace AnalysisManagerQCARTPlugin
                 criticalError = true;
                 return false;
             }
-
         }
 
         /// <summary>
@@ -689,7 +675,6 @@ namespace AnalysisManagerQCARTPlugin
                 LogError("Exception in ParseQCARTParamFile", ex);
                 return false;
             }
-
         }
 
         /// <summary>
@@ -700,7 +685,6 @@ namespace AnalysisManagerQCARTPlugin
         /// <returns>True if success; otherwise false</returns>
         private bool RetrieveDataForBaselineDatasets(string paramFileName, Dictionary<string, int> baselineDatasets)
         {
-
             foreach (var datasetJobInfo in baselineDatasets)
             {
                 var baselineDatasetName = datasetJobInfo.Key;
@@ -732,7 +716,6 @@ namespace AnalysisManagerQCARTPlugin
             }
 
             return true;
-
         }
 
         /// <summary>
@@ -743,7 +726,6 @@ namespace AnalysisManagerQCARTPlugin
         /// <returns>True if the baseline results were successfully copied locally; otherwise false</returns>
         private bool RetrieveExistingBaselineResultFile(FileInfo fiBaselineMetadata, out bool criticalError)
         {
-
             criticalError = false;
 
             try
@@ -809,7 +791,6 @@ namespace AnalysisManagerQCARTPlugin
                 mJobParams.AddResultFileToSkip(fiBaselineResultsFileSource.Name);
 
                 return true;
-
             }
             catch (Exception ex)
             {
@@ -907,7 +888,6 @@ namespace AnalysisManagerQCARTPlugin
 
                         if (string.Equals(headers[colIndex], DATASET_COLUMN))
                             datasetNameIndex = colIndex;
-
                     }
 
                     if (fractionColIndex < 0)
@@ -979,14 +959,12 @@ namespace AnalysisManagerQCARTPlugin
                 LogErrorForOneOrMoreDatasets(errorMessage, datasetParseErrors, "RetrieveQCMetricsFromDB");
 
                 return false;
-
             }
             catch (Exception ex)
             {
                 LogError("Exception in RetrieveQCMetricsFromDB", ex);
                 return false;
             }
-
         }
 
         /// <summary>
@@ -999,7 +977,6 @@ namespace AnalysisManagerQCARTPlugin
         {
             try
             {
-
                 var targetDatasetName = mJobParams.GetJobParameter("SourceJob2Dataset", string.Empty);
                 var targetDatasetMasicJob = mJobParams.GetJobParameter("SourceJob2", 0);
 
@@ -1054,14 +1031,12 @@ namespace AnalysisManagerQCARTPlugin
                 mJobParams.AddAdditionalParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, "inputFolderName", inputFolderNameCached);
 
                 return true;
-
             }
             catch (Exception ex)
             {
                 LogError("Exception in RetrieveReporterIonsFile", ex);
                 return false;
             }
-
         }
 
         /// <summary>
@@ -1078,6 +1053,5 @@ namespace AnalysisManagerQCARTPlugin
 
             return unixPath + "/";
         }
-
     }
 }

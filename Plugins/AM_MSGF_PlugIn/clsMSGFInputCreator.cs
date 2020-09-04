@@ -202,7 +202,6 @@ namespace AnalysisManagerMSGFPlugin
 
                 while (true)
                 {
-
                     var spectrumFound = mgfReader.ReadNextSpectrum(out _, out var udtSpectrumHeaderInfo);
                     if (!spectrumFound)
                         break;
@@ -239,7 +238,6 @@ namespace AnalysisManagerMSGFPlugin
 
             ReportError("No spectra were found in the MGF file");
             return false;
-
         }
 
         /// <summary>
@@ -346,9 +344,7 @@ namespace AnalysisManagerMSGFPlugin
                             }
                         }
                     }
-
                 }
-
             }
             catch (Exception ex)
             {
@@ -524,14 +520,12 @@ namespace AnalysisManagerMSGFPlugin
 
         public List<string> GetSkippedInfoByResultId(int resultID)
         {
-
             if (mSkippedLineInfo.TryGetValue(resultID, out var skipList))
             {
                 return skipList;
             }
 
             return new List<string>();
-
         }
 
         /// <summary>
@@ -542,14 +536,12 @@ namespace AnalysisManagerMSGFPlugin
         /// <remarks></remarks>
         public int GetScanByMGFSpectrumIndex(int mgfSpectrumIndex)
         {
-
             if (mMGFIndexToScan.TryGetValue(mgfSpectrumIndex, out var scanNumber))
             {
                 return scanNumber;
             }
 
             return 0;
-
         }
 
         private void LogError(string errorMessage)
@@ -784,6 +776,5 @@ namespace AnalysisManagerMSGFPlugin
         {
             writer.WriteLine("Result_ID\tScan\tCharge\tProtein\tPeptide\tSpecProb\tNotes");
         }
-
     }
 }

@@ -74,7 +74,6 @@ namespace AnalysisManager_Ape_PlugIn
         /// <returns></returns>
         private bool RunApeOperation(string apeOperation)
         {
-
             if (apeOperation.Equals("RunWorkFlow", StringComparison.OrdinalIgnoreCase))
             {
                 var success = GetWorkflowFiles();
@@ -93,7 +92,6 @@ namespace AnalysisManager_Ape_PlugIn
             //   GetQRollupResults
 
             return true;
-
         }
 
         #region Ape Operations
@@ -137,7 +135,6 @@ namespace AnalysisManager_Ape_PlugIn
 
         private bool GetQRollupFiles()
         {
-
             var dataPackagePath = Path.Combine(mJobParams.GetParam(JOB_PARAM_TRANSFER_FOLDER_PATH), mJobParams.GetParam(JOB_PARAM_OUTPUT_FOLDER_NAME));
 
             if (!CopyFileToWorkDir("Results.db3", Path.Combine(dataPackagePath, mJobParams.GetParam("StepInputFolderName")), mWorkDir))

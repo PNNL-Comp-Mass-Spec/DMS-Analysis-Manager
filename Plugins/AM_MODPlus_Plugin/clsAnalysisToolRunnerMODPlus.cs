@@ -134,14 +134,12 @@ namespace AnalysisManagerMODPlusPlugin
                 var success = CopyResultsToTransferDirectory();
 
                 return success ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
-
             }
             catch (Exception ex)
             {
                 LogError("Error in MODPlusPlugin->RunTool", ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-
         }
 
         /// <summary>
@@ -1063,7 +1061,6 @@ namespace AnalysisManagerMODPlusPlugin
 
                 if (!blnSuccess)
                 {
-
                     LogError("Error running MODPlus");
 
                     if (exitCode != 0)

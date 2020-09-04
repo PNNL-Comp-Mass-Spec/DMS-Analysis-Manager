@@ -9,10 +9,8 @@ using System.Text.RegularExpressions;
 
 namespace AnalysisManager_Mage_PlugIn
 {
-
     public class MageAMPipelineBase : EventNotifier
     {
-
         #region Member Variables
 
         protected readonly Regex mProcessingResults = new Regex(@"Extracting results for job (\d+)", RegexOptions.Compiled);
@@ -222,7 +220,6 @@ namespace AnalysisManager_Mage_PlugIn
                             return;
                     }
                     mLastProgressTime = DateTime.UtcNow;
-
                 }
             }
 

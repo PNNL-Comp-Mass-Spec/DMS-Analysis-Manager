@@ -264,7 +264,6 @@ namespace AnalysisManagerICR2LSPlugIn
 
             try
             {
-
                 if (string.IsNullOrEmpty(statusFilePath))
                 {
                     return false;
@@ -347,7 +346,6 @@ namespace AnalysisManagerICR2LSPlugIn
                                 // Ignore the line
                             }
                         }
-
                     }
 
                     if (statusDate.Length > 0 && statusTime.Length > 0)
@@ -415,7 +413,6 @@ namespace AnalysisManagerICR2LSPlugIn
 
                 return false;
             }
-
         }
 
         private void InitializeStatusLogFileWatcher(string strWorkDir, string strFilenameToWatch)
@@ -771,7 +768,6 @@ namespace AnalysisManagerICR2LSPlugIn
                 LogDebug("Processing state Finished; Processed " + mICR2LSStatus.ScansProcessed + " scans");
             }
             return true;
-
         }
 
         /// <summary>
@@ -780,7 +776,6 @@ namespace AnalysisManagerICR2LSPlugIn
         /// <remarks></remarks>
         protected bool StoreToolVersionInfo()
         {
-
             var toolVersionInfo = string.Empty;
 
             if (mDebugLevel >= 2)

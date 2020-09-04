@@ -236,7 +236,6 @@ namespace AnalysisManagerExtractionPlugin
                     {
                         using (var reader = new StreamReader(new FileStream(consoleOutputFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                         {
-
                             while (!reader.EndOfStream)
                             {
                                 var lineIn = reader.ReadLine();
@@ -343,7 +342,6 @@ namespace AnalysisManagerExtractionPlugin
                 OnErrorEvent("Exception while running the peptide hit results processor: " + ex.Message, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-
         }
 
         private readonly Regex reProcessing = new Regex(@"Processing: (\d+)");
@@ -458,7 +456,6 @@ namespace AnalysisManagerExtractionPlugin
             }
 
             return CloseOutType.CLOSEOUT_SUCCESS;
-
         }
 
         #endregion

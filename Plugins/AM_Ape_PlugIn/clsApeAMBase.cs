@@ -7,7 +7,6 @@ namespace AnalysisManager_Ape_PlugIn
 {
     class clsApeAMBase : EventNotifier
     {
-
         #region Enums
         public enum eSqlServerToSqlLiteConversionMode
         {
@@ -93,7 +92,6 @@ namespace AnalysisManager_Ape_PlugIn
         {
             base.OnProgressUpdate(progressMessage, percentComplete);
         }
-
 
     }
 }

@@ -14,7 +14,6 @@ namespace AnalysisManagerInSpecTPlugIn
     /// </summary>
     public class clsAnalysisResourcesIN : clsAnalysisResources
     {
-
         /// <summary>
         /// Initialize options
         /// </summary>
@@ -150,6 +149,5 @@ namespace AnalysisManagerInSpecTPlugIn
 
             return true;
         }
-
     }
 }

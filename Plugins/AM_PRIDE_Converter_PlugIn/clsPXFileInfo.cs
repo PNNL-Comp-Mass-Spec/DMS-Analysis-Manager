@@ -8,7 +8,6 @@ namespace AnalysisManagerPRIDEConverterPlugIn
     /// </summary>
     public class clsPXFileInfo : clsPXFileInfoBase
     {
-
         #region "Properties"
 
         /// <summary>

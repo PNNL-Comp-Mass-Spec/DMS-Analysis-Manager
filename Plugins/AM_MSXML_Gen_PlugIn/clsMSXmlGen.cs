@@ -209,7 +209,6 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
                 default:
                     throw new ArgumentOutOfRangeException(nameof(mOutputType), "Unsupported output type: " + mRawDataType);
-
             }
 
             var cmdRunner = new clsRunDosProgram(Path.GetDirectoryName(mProgramPath));

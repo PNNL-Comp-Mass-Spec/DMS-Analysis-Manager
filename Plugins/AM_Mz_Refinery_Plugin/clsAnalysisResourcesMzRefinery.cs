@@ -4,13 +4,11 @@ using System.IO;
 
 namespace AnalysisManagerMzRefineryPlugIn
 {
-
     /// <summary>
     /// Retrieve resources for the MzRefinery plugin
     /// </summary>
     public class clsAnalysisResourcesMzRefinery : clsAnalysisResources
     {
-
         /// <summary>
         /// Initialize options
         /// </summary>
@@ -122,7 +120,6 @@ namespace AnalysisManagerMzRefineryPlugIn
                 LogError(mMessage + "; task = " + currentTask + "; " + clsGlobal.GetExceptionStackTrace(ex));
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-
         }
 
         private CloseOutType GetCDTAFile()
@@ -156,7 +153,6 @@ namespace AnalysisManagerMzRefineryPlugIn
 
             // Errors were reported in function call, so just return
             return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
-
         }
 
         /// <summary>
@@ -240,6 +236,5 @@ namespace AnalysisManagerMzRefineryPlugIn
 
             return true;
         }
-
     }
 }

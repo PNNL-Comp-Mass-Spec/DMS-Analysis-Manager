@@ -162,7 +162,6 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                 var success = CopyResultsToTransferDirectory();
 
                 return success ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
-
             }
             catch (Exception ex)
             {
@@ -170,7 +169,6 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                 LogError(mMessage, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-
         }
 
         protected bool AddMSGFSpecProbValues(int jobNumber, string synFilePath, string fileTypeTag)
@@ -417,7 +415,6 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
 
                                     writer.WriteLine(jobNumber + "\t" + dataLine);
                                 }
-
                             }
                         }    // foreach fiResultFile
                     }    // foreach jobFolder

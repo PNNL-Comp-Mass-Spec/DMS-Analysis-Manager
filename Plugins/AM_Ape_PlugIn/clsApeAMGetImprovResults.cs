@@ -8,7 +8,6 @@ namespace AnalysisManager_Ape_PlugIn
 {
     class clsApeAMGetImprovResults : clsApeAMBase
     {
-
         #region Member Variables
 
         #endregion
@@ -56,7 +55,6 @@ namespace AnalysisManager_Ape_PlugIn
                         success = false;
                     }
                 }
-
             });
 
             var apeMTSServerName = GetJobParam("ApeMTSServer");
@@ -170,7 +168,5 @@ namespace AnalysisManager_Ape_PlugIn
 
             return jobList;
         }
-
     }
-
 }

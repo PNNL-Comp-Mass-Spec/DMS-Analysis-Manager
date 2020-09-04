@@ -396,7 +396,6 @@ namespace DTASpectraFileGen
                 OnErrorEvent(mErrMsg, ex);
                 return false;
             }
-
         }
 
         private void MGFtoDTA_ErrorEvent(string message)

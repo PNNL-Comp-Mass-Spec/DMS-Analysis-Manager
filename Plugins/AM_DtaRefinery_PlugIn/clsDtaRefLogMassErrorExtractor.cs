@@ -230,7 +230,6 @@ namespace AnalysisManagerDtaRefineryPlugIn
                 OnErrorEvent("Exception storing DTA Refinery Mass Error Results in the database: " + ex.Message, ex);
                 return false;
             }
-
         }
     }
 }

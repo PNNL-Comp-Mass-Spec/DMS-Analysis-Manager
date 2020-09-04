@@ -78,7 +78,6 @@ namespace AnalysisManagerExtractionPlugin
         /// <returns>CloseOutType representing success or failure</returns>
         public override CloseOutType RunTool()
         {
-
             var currentAction = "preparing for extraction";
 
             try
@@ -313,7 +312,6 @@ namespace AnalysisManagerExtractionPlugin
                 LogError("Exception running extraction tool", ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-
         }
 
         /// <summary>
@@ -1117,10 +1115,8 @@ namespace AnalysisManagerExtractionPlugin
 
         private CloseOutType RunMzidMerger(string mzidFilenameMatchSpec, string combinedMzidFileName)
         {
-
             try
             {
-
                 if (string.IsNullOrWhiteSpace(mzidFilenameMatchSpec))
                 {
                     LogError("mzidFilenameMatchSpec is empty; unable to run the MzidMerger");
@@ -1276,7 +1272,6 @@ namespace AnalysisManagerExtractionPlugin
                 synFilePath = string.Copy(targetFilePath);
 
                 result = phrp.ExtractDataFromResults(targetFilePath, mGeneratedFastaFilePath, clsAnalysisResources.RESULT_TYPE_SEQUEST);
-
             }
             catch (Exception ex)
             {
@@ -1578,7 +1573,6 @@ namespace AnalysisManagerExtractionPlugin
                         LogWarning(msg);
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
-
                 }
                 catch (Exception ex)
                 {
@@ -1663,7 +1657,6 @@ namespace AnalysisManagerExtractionPlugin
 
                         for (var iteration = 1; iteration <= numberOfClonedSteps; iteration++)
                         {
-
                             currentStep = "Verifying that .tsv files exist; iteration " + iteration;
 
                             string suffixToAdd;
@@ -1751,7 +1744,6 @@ namespace AnalysisManagerExtractionPlugin
                                 }
                                 pepToProtMapCount++;
                             }
-
                         }
 
                         if (splitFastaEnabled)
@@ -2451,7 +2443,6 @@ namespace AnalysisManagerExtractionPlugin
         /// <remarks></remarks>
         private bool InterleaveFiles(IReadOnlyList<string> fileList, string combinedFilePath, bool lookForHeaderLine)
         {
-
             try
             {
                 if (fileList == null || fileList.Count == 0)
@@ -2539,7 +2530,6 @@ namespace AnalysisManagerExtractionPlugin
                     {
                         fileReaders[fileIndex].Dispose();
                     }
-
                 }
 
                 return true;
@@ -2549,7 +2539,6 @@ namespace AnalysisManagerExtractionPlugin
                 LogError("Exception in clsExtractToolRunner.InterleaveFiles", ex);
                 return false;
             }
-
         }
 
         /// <summary>
@@ -2661,7 +2650,6 @@ namespace AnalysisManagerExtractionPlugin
                         outputFileWriters[fileIndex].Flush();
                         outputFileWriters[fileIndex].Dispose();
                     }
-
                 }
 
                 success = true;
@@ -2915,7 +2903,6 @@ namespace AnalysisManagerExtractionPlugin
             {
                 LogError(errorMessage, ex);
             }
-
         }
 
         private DateTime mLastMzidMergerUpdate = DateTime.MinValue;

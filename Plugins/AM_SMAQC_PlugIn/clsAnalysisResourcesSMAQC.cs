@@ -6,7 +6,6 @@ using System.IO;
 
 namespace AnalysisManagerSMAQCPlugIn
 {
-
     /// <summary>
     /// Retrieve resources for the SMAQC plugin
     /// </summary>
@@ -266,7 +265,6 @@ namespace AnalysisManagerSMAQCPlugIn
                 if (autoSwitchFilename)
                 {
                     fileToGet = clsPHRPReader.AutoSwitchToLegacyMSGFDBIfRequired(phrpFile, msgfplusSynopsisFile);
-
                 }
                 else
                 {

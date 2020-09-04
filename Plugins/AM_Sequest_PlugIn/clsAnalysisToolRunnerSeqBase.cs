@@ -62,7 +62,6 @@ namespace AnalysisManagerSequestPlugin
         /// <returns>CloseOutType value indicating success or failure</returns>
         public override CloseOutType RunTool()
         {
-
             // Do the base class stuff
             if (base.RunTool() != CloseOutType.CLOSEOUT_SUCCESS)
             {
@@ -503,7 +502,6 @@ namespace AnalysisManagerSequestPlugin
 
             do
             {
-
                 // Wait 5 seconds
                 clsGlobal.IdleLoop(5);
 

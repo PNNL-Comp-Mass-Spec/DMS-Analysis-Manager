@@ -4,7 +4,6 @@ using System.Collections.Generic;
 
 namespace AnalysisManager_AScore_PlugIn
 {
-
     /// <summary>
     /// Simple Mage FileContentProcessor module
     /// that imports the contents of files that it receives via standard tabular input
@@ -13,7 +12,6 @@ namespace AnalysisManager_AScore_PlugIn
     [Obsolete("Unused")]
     public class MageFileImport : FileContentProcessor
     {
-
         public string DBTableName { get; set; }
         public string DBFilePath { get; set; }
         public string ImportColumnList { get; set; }
@@ -41,7 +39,5 @@ namespace AnalysisManager_AScore_PlugIn
                 clsAScoreMagePipeline.ImportFileToSQLiteWithColumnMods(sourcePath, DBFilePath, DBTableName, ImportColumnList, context);
             }
         }
-
     }
-
 }

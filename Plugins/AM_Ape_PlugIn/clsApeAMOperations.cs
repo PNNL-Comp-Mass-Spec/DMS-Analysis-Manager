@@ -7,7 +7,6 @@ namespace AnalysisManager_Ape_PlugIn
 {
     public class clsApeAMOperations : EventNotifier
     {
-
         #region Member Variables
 
         protected IJobParams mJobParams;
@@ -60,7 +59,6 @@ namespace AnalysisManager_Ape_PlugIn
         /// <returns></returns>
         private bool RunApeOperation(string apeOperation)
         {
-
             if (apeOperation.Equals("RunWorkflow", StringComparison.OrdinalIgnoreCase))
             {
                 var apeWfObj = new clsApeAMRunWorkflow(mJobParams, mMgrParams);
@@ -125,7 +123,6 @@ namespace AnalysisManager_Ape_PlugIn
 
             ErrorMessage = "Ape Operation: " + apeOperation + "not recognized";
             return false;
-
         }
 
         private void RegisterEventsCustomProgressHandler(IEventNotifier sourceClass)
@@ -139,7 +136,6 @@ namespace AnalysisManager_Ape_PlugIn
 
         void ApeProgressChanged(string message)
         {
-
             // Update the step tool progress
             // However, Ape routinely reports progress of 0% or 100% at the start and end of certain subtasks, so ignore those values
             // if (e.percentComplete > 0 && e.percentComplete < 100)
@@ -159,7 +155,6 @@ namespace AnalysisManager_Ape_PlugIn
 
             mLastProgressTime = DateTime.UtcNow;
             ConsoleMsgUtils.ShowDebug(message);
-
         }
 
         #endregion

@@ -4,13 +4,11 @@ using System.IO;
 
 namespace AnalysisManagerMSAlignQuantPlugIn
 {
-
     /// <summary>
     /// Retrieve resources for the MSAlign Quant plugin
     /// </summary>
     public class clsAnalysisResourcesMSAlignQuant : clsAnalysisResources
     {
-
         /// <summary>
         /// Job parameter tracking the input file name for MSAlign Quant
         /// </summary>
@@ -114,7 +112,6 @@ namespace AnalysisManagerMSAlignQuantPlugIn
         /// <remarks></remarks>
         private CloseOutType GetInputFiles(string resultType)
         {
-
             try
             {
                 var inputFolderName = mJobParams.GetParam("inputFolderName");
@@ -144,7 +141,6 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                 {
                     return result;
                 }
-
             }
             catch (Exception ex)
             {
@@ -157,7 +153,6 @@ namespace AnalysisManagerMSAlignQuantPlugIn
 
         private CloseOutType GetMSAlignFiles()
         {
-
             LogMessage("Getting data files");
 
             // Retrieve the MSAlign_Quant parameter file
@@ -202,7 +197,6 @@ namespace AnalysisManagerMSAlignQuantPlugIn
 
         private CloseOutType RetrieveMSAlignQuantParameterFile()
         {
-
             // For example, MSAlign_Quant_Workflow_2012-07-25
             // The parameter name is MSAlignQuantParamFile even when the step tool is TopPIC
 
@@ -229,7 +223,6 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                 return CloseOutType.CLOSEOUT_SUCCESS;
 
             return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
-
         }
     }
 }

@@ -88,7 +88,6 @@ namespace AnalysisManagerDataImportPlugIn
                 LogError("Error in DataImportPlugin->RunTool: " + ex.Message, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-
         }
 
         /// <summary>

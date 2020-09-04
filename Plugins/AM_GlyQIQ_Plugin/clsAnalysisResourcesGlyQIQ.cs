@@ -13,7 +13,6 @@ using System.Linq;
 
 namespace AnalysisManagerGlyQIQPlugin
 {
-
     /// <summary>
     /// Retrieve resources for the GlyQ-IQ plugin
     /// </summary>

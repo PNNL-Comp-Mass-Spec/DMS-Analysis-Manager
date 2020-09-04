@@ -152,7 +152,6 @@ namespace AnalysisManagerQCARTPlugin
                 var success = CopyResultsToTransferDirectory();
 
                 return success ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
-
             }
             catch (Exception ex)
             {
@@ -160,7 +159,6 @@ namespace AnalysisManagerQCARTPlugin
                 LogError(mMessage, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-
         }
 
         /// <summary>
@@ -185,10 +183,8 @@ namespace AnalysisManagerQCARTPlugin
         /// <returns></returns>
         private string ConstructXmlForDbPosting(string datasetName, int masicJob, double qcartValue)
         {
-
             try
             {
-
                 var sb = new StringBuilder();
                 var settings = new XmlWriterSettings
                 {
@@ -213,7 +209,6 @@ namespace AnalysisManagerQCARTPlugin
                 }
 
                 return sb.ToString();
-
             }
             catch (Exception ex)
             {
@@ -221,7 +216,6 @@ namespace AnalysisManagerQCARTPlugin
                 Console.WriteLine(ex);
                 return string.Empty;
             }
-
         }
 
         private bool CreateBaselineMetricsMetadataFile(
@@ -337,7 +331,6 @@ namespace AnalysisManagerQCARTPlugin
             {
                 // Ignore errors here
             }
-
         }
 
         /// <summary>
@@ -346,7 +339,6 @@ namespace AnalysisManagerQCARTPlugin
         /// <returns>Dictionary of dataset names and Masic jobs</returns>
         private Dictionary<string, int> GetPackedDatasetNamesAndJobs()
         {
-
             var datasetNamesAndJobsText = ExtractPackedJobParameterDictionary(clsAnalysisResourcesQCART.JOB_PARAMETER_QCART_BASELINE_DATASET_NAMES_AND_JOBS);
 
             var datasetNamesAndJobs = new Dictionary<string, int>(datasetNamesAndJobsText.Count);
@@ -357,11 +349,9 @@ namespace AnalysisManagerQCARTPlugin
                 {
                     datasetNamesAndJobs.Add(item.Key, masicJob);
                 }
-
             }
 
             return datasetNamesAndJobs;
-
         }
 
         private bool LoadQCARTResults(FileSystemInfo fiResults, out double qcartValue)
@@ -502,7 +492,6 @@ namespace AnalysisManagerQCARTPlugin
                     mJobParams.AddResultFileToSkip(fiNewBaselineData.Name);
 
                 return success;
-
             }
             catch (Exception ex)
             {
@@ -723,7 +712,6 @@ namespace AnalysisManagerQCARTPlugin
 
         void CmdRunner_LoopWaiting()
         {
-
             // Synchronize the stored Debug level with the value stored in the database
 
             {
@@ -743,7 +731,6 @@ namespace AnalysisManagerQCARTPlugin
                 }
                 */
             }
-
         }
 
         #endregion

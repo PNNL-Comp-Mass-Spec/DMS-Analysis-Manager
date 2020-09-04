@@ -138,7 +138,6 @@ namespace AnalysisManagerOMSSAPlugIn
             var success = CopyResultsToTransferDirectory();
 
             return success ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
-
         }
 
         /// <summary>
@@ -167,7 +166,6 @@ namespace AnalysisManagerOMSSAPlugIn
 
         private bool ConvertOMSSA2PepXmlFile()
         {
-
             try
             {
                 // set up formatdb.exe to reference the organsim DB file (fasta)
@@ -227,7 +225,6 @@ namespace AnalysisManagerOMSSAPlugIn
                 LogError("clsAnalysisToolRunnerOM.ConvertOMSSA2PepXmlFile, exception, " + ex.Message);
                 return false;
             }
-
         }
 
         /// <summary>

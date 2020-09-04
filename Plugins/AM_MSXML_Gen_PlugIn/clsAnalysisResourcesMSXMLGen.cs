@@ -202,7 +202,6 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
         private CloseOutType GetDatasetFile(string rawDataType)
         {
-
             if (FileSearch.RetrieveSpectra(rawDataType))
             {
                 // Raw file
@@ -212,8 +211,6 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
             LogDebug("clsAnalysisResourcesMSXMLGen.GetDatasetFile: Error occurred retrieving spectra.");
             return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
-
         }
-
     }
 }

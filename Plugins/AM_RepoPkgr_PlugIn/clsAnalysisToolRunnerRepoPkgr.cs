@@ -219,7 +219,6 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
                 var msg = "Data package " + mRepoPackager.DataPkgId + " has " + dataPkgJobCountMatch + " associated jobs, but no instrument data files were retrieved";
                 LogWarning(msg);
-
             }
             mProgress = PROGRESS_PCT_INSTRUMENT_DATA_COPIED;
             mStatusTools.UpdateAndWrite(mProgress);
@@ -240,7 +239,6 @@ namespace AnalysisManager_RepoPkgr_Plugin
             mIncludeSequestResults = mJobParams.GetJobParameter("IncludeSequestResults", false);	// This will get auto-changed to True if no MSGF+ jobs are found in the data package
             mIncludeInstrumentData = mJobParams.GetJobParameter("IncludeInstrumentData", true);
             mIncludeMzXMLFiles = mJobParams.GetJobParameter("IncludeMzXMLFiles", true);
-
         }
 
         /// <summary>
@@ -298,12 +296,10 @@ namespace AnalysisManager_RepoPkgr_Plugin
             Dictionary<string, string> dctDatasetRawDataTypes,
           out string datasetFilePathLocal)
         {
-
             datasetFilePathLocal = string.Empty;
 
             try
             {
-
                 // Look in mWorkDir for the .mzXML or .mzML file for this dataset
                 var candidateFileNames = new List<string>
                     {
@@ -373,7 +369,6 @@ namespace AnalysisManager_RepoPkgr_Plugin
                         // Copy the dataset directory locally
                         analysisResults.CopyDirectory(datasetFilePathRemote, datasetFilePathLocal, overwrite: true);
                     }
-
                 }
                 else
                 {
@@ -455,7 +450,6 @@ namespace AnalysisManager_RepoPkgr_Plugin
                 LogError(mMessage, ex);
                 return string.Empty;
             }
-
         }
 
         private void DeleteFileIgnoreErrors(string filePath)
@@ -479,12 +473,10 @@ namespace AnalysisManager_RepoPkgr_Plugin
             Dictionary<string, string> dctDatasetYearQuarter,
             Dictionary<string, string> dctDatasetRawDataTypes)
         {
-
             var datasetFilePathLocal = string.Empty;
 
             try
             {
-
                 var instrumentDataDirectoryPath = Path.Combine(mOutputResultsDirectoryPath, "Instrument_Data");
 
                 if (!dctDatasetRawDataTypes.TryGetValue(datasetName, out var rawDataType))
@@ -492,7 +484,6 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
                 if (rawDataType != clsAnalysisResources.RAW_DATA_TYPE_DOT_UIMF_FILES && mIncludeMzXMLFiles)
                 {
-
                     // Create the .mzXML or .mzML file if it is missing
                     var mzXmlFilePathLocal = CreateMzXMLFileIfMissing(msXmlCreator, datasetName, analysisResults,
                                                                       dctDatasetRawFilePaths,
@@ -580,12 +571,10 @@ namespace AnalysisManager_RepoPkgr_Plugin
             }
 
             return true;
-
         }
 
         private bool RetrieveInstrumentData(out int datasetsProcessed)
         {
-
             // Extract the packed parameters
             var dctDatasetRawFilePaths = ExtractPackedJobParameterDictionary(clsAnalysisResources.JOB_PARAM_DICTIONARY_DATASET_FILE_PATHS);
             var dctDatasetYearQuarter = ExtractPackedJobParameterDictionary(clsAnalysisResourcesRepoPkgr.JOB_PARAM_DICTIONARY_DATASET_STORAGE_YEAR_QUARTER);
@@ -613,7 +602,6 @@ namespace AnalysisManager_RepoPkgr_Plugin
             // Process each dataset
             foreach (var datasetName in dctDatasetRawFilePaths.Keys)
             {
-
                 var success = ProcessDataset(analysisResults, msXmlCreator, datasetName, dctDatasetRawFilePaths, dctDatasetYearQuarter, dctDatasetRawDataTypes);
 
                 if (success)
@@ -624,7 +612,6 @@ namespace AnalysisManager_RepoPkgr_Plugin
                 datasetsProcessed += 1;
                 mProgress = ComputeIncrementalProgress(PROGRESS_PCT_MZID_RESULTS_COPIED, PROGRESS_PCT_INSTRUMENT_DATA_COPIED, datasetsProcessed, dctDatasetRawFilePaths.Count);
                 mStatusTools.UpdateAndWrite(mProgress);
-
             }
 
             if (successCount > 0)
@@ -638,7 +625,6 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
             mMessage = "Could not retrieve instrument data for any of the datasets in Data package " + mRepoPackager.DataPkgId + "; FailCount = " + errorCount;
             return false;
-
         }
 
         protected bool RetrieveStoragePathInfoTargetFile(string storagePathInfoFilePath, clsAnalysisResults analysisResults, ref string destPath)
@@ -687,7 +673,6 @@ namespace AnalysisManager_RepoPkgr_Plugin
                 {
                     analysisResults.CopyFileWithRetry(sourceFilePath, destPath, overwrite: true);
                 }
-
             }
             catch (Exception ex)
             {
@@ -697,7 +682,6 @@ namespace AnalysisManager_RepoPkgr_Plugin
             }
 
             return true;
-
         }
 
         private bool StoreToolVersionInfo()
@@ -717,7 +701,6 @@ namespace AnalysisManager_RepoPkgr_Plugin
                 LogError("Exception calling SetStepTaskToolVersion", ex);
                 return false;
             }
-
         }
 
         /// <summary>
@@ -760,7 +743,6 @@ namespace AnalysisManager_RepoPkgr_Plugin
                     var orgDbNameNew = string.Join("_", proteinCollectionList) + ".fasta";
                     return orgDbNameNew;
                 }
-
             }
             catch (Exception ex)
             {

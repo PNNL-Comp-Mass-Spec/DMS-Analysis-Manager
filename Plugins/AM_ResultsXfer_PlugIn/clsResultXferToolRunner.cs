@@ -107,7 +107,6 @@ namespace AnalysisManagerResultsXferPlugin
         /// </remarks>
         private void DeleteTransferFolderIfEmpty()
         {
-
             var transferFolderPath = mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH);
             if (string.IsNullOrWhiteSpace(transferFolderPath))
             {

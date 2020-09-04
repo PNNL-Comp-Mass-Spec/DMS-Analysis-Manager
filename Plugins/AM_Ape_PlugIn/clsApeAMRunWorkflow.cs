@@ -48,7 +48,6 @@ namespace AnalysisManager_Ape_PlugIn
                         success = false;
                     }
                 }
-
             });
 
             var apeWorkflow = Path.Combine(mWorkingDir, GetJobParam("ApeWorkflowName"));
@@ -119,7 +118,6 @@ namespace AnalysisManager_Ape_PlugIn
 
                 // Add the protein parsimony tables
                 success = parsimonyRunner.ProcessSQLite(apeDatabaseFile.Directory.FullName, apeDatabaseFile.Name, SOURCE_TABLE);
-
             }
             catch (Exception ex)
             {

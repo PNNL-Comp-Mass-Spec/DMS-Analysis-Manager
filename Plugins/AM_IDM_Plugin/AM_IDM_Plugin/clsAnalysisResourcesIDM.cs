@@ -9,14 +9,12 @@ namespace AnalysisManager_IDM_Plugin
     /// </summary>
     public class clsAnalysisResourcesIDM : clsAnalysisResources
     {
-
         /// <summary>
         /// Retrieve required files
         /// </summary>
         /// <returns>Closeout code</returns>
         public override CloseOutType GetResources()
         {
-
             try
             {
                 // Retrieve shared resources, including the JobParameters file from the previous job step
@@ -52,7 +50,6 @@ namespace AnalysisManager_IDM_Plugin
                         mJobParams.AddResultFileToSkip(clsAnalysisToolRunnerIDM.EXISTING_IDM_RESULTS_FILE_NAME);
                     }
                 }
-
             }
             catch (Exception ex)
             {
@@ -61,6 +58,5 @@ namespace AnalysisManager_IDM_Plugin
 
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
-
     }
 }

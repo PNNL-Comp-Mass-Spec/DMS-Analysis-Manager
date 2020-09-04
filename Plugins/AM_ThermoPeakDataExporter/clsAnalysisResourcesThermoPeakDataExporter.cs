@@ -17,7 +17,6 @@ namespace AnalysisManagerThermoPeakDataExporterPlugIn
     // ReSharper disable once UnusedMember.Global
     public class clsAnalysisResourcesThermoPeakDataExporter : clsAnalysisResources
     {
-
         /// <summary>
         /// Retrieve required files
         /// </summary>
@@ -74,7 +73,6 @@ namespace AnalysisManagerThermoPeakDataExporterPlugIn
                 LogError(mMessage + "; task = " + currentTask + "; " + clsGlobal.GetExceptionStackTrace(ex));
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-
         }
     }
 }

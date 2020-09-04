@@ -3,7 +3,6 @@ using Mage;
 
 namespace AnalysisManager_AScore_PlugIn
 {
-
     /// <summary>
     /// Class for managing IJobParams object
     /// </summary>

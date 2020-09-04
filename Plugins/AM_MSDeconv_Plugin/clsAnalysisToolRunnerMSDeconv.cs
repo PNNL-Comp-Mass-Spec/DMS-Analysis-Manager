@@ -133,7 +133,6 @@ namespace AnalysisManagerMSDeconvPlugIn
                     {
                         LogWarning("Call to MSDeconv failed (but exit code is 0)");
                     }
-
                 }
                 else
                 {
@@ -192,14 +191,12 @@ namespace AnalysisManagerMSDeconvPlugIn
                 var success = CopyResultsToTransferDirectory();
 
                 return success ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
-
             }
             catch (Exception ex)
             {
                 mMessage = "Error in MSDeconvPlugin->RunTool: " + ex.Message;
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-
         }
 
         // Example Console output:

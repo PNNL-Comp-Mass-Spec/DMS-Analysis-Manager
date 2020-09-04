@@ -157,9 +157,7 @@ namespace AnalysisManagerXTandemPlugIn
 
                         taxonomyWriter.WriteLine(updatedLine);
                     }
-
                 }
-
             }
             catch (Exception ex)
             {
@@ -222,10 +220,8 @@ namespace AnalysisManagerXTandemPlugIn
 
                             inputFileWriter.WriteLine(updatedLine);
                         }
-
                     }
                 }
-
             }
             catch (Exception ex)
             {
@@ -328,7 +324,6 @@ namespace AnalysisManagerXTandemPlugIn
                 LogError(mMessage + ": " + ex.Message);
                 return false;
             }
-
         }
 
         private DateTime mLastUpdateTime;

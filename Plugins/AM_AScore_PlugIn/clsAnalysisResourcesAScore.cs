@@ -8,14 +8,12 @@ namespace AnalysisManager_AScore_PlugIn
     /// </summary>
     public class clsAnalysisResourcesAScore : clsAnalysisResources
     {
-
         /// <summary>
         /// Retrieve required files
         /// </summary>
         /// <returns>Closeout code</returns>
         public override CloseOutType GetResources()
         {
-
             // Retrieve shared resources, including the JobParameters file from the previous job step
             var result = GetSharedResources();
             if (result != CloseOutType.CLOSEOUT_SUCCESS) {
@@ -51,7 +49,6 @@ namespace AnalysisManager_AScore_PlugIn
         /// <returns></returns>
         private bool RetrieveFastaFile(out CloseOutType resultCode)
         {
-
             var currentTask = "Initializing";
 
 
@@ -65,7 +62,6 @@ namespace AnalysisManager_AScore_PlugIn
                 var success = RetrieveOrgDB(orgDbDirectoryPath, out resultCode);
 
                 return success;
-
             }
             catch (Exception ex)
             {
@@ -74,7 +70,6 @@ namespace AnalysisManager_AScore_PlugIn
                 resultCode = CloseOutType.CLOSEOUT_FAILED;
                 return false;
             }
-
         }
 
 

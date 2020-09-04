@@ -215,7 +215,6 @@ namespace AnalysisManagerFormularityPlugin
                     {
                         if (!string.IsNullOrWhiteSpace(tableCell))
                         {
-
                             if (pngFileNames.Contains(tableCell))
                             {
                                 var pngFileName = tableCell;
@@ -259,7 +258,6 @@ namespace AnalysisManagerFormularityPlugin
                 OnErrorEvent("Error creating the PDF using .png files from " + dataSource, ex);
                 return false;
             }
-
         }
 
         /// <summary>
@@ -270,7 +268,6 @@ namespace AnalysisManagerFormularityPlugin
         /// <returns></returns>
         public static List<List<string>> GetPngFileTableLayout(string datasetName, string datasetDetailReportLink)
         {
-
             // PNG filename suffix
             var suffix = "_" + datasetName + ".png";
 

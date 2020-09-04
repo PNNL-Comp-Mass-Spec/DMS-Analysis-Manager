@@ -160,7 +160,6 @@ namespace AnalysisManagerPBFGenerator
                                 LogError("Unrecognized PbfFormatVersion. Update file clsAnalysisToolRunnerPBFGenerator.cs in the PBFSpectraFileGen Plugin " +
                                          "of the Analysis Manager to add version " + mPbfFormatVersion + "; next, reset the failed job step");
                             }
-
                         }
                         else
                         {
@@ -221,7 +220,6 @@ namespace AnalysisManagerPBFGenerator
                 var success = CopyResultsToTransferDirectory();
 
                 return success ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
-
             }
             catch (Exception ex)
             {
@@ -229,7 +227,6 @@ namespace AnalysisManagerPBFGenerator
                 LogError(mMessage, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-
         }
 
         /// <summary>

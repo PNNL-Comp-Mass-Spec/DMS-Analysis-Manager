@@ -417,14 +417,12 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 var copySuccess = CopyResultsToTransferDirectory(mCacheFolderPath);
 
                 return copySuccess ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
-
             }
             catch (Exception ex)
             {
                 LogError("Exception in PRIDEConverterPlugin->RunTool", ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-
         }
 
         /// <summary>
@@ -988,7 +986,6 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 LogError(mMessage, ex);
                 return false;
             }
-
         }
 
         /// <summary>
@@ -996,7 +993,6 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// </summary>
         public override void CopyFailedResultsToArchiveDirectory()
         {
-
             // Make sure the PRIDEConverter console output file is retained
             mJobParams.RemoveResultFileToSkip(PRIDEConverter_CONSOLE_OUTPUT);
 
@@ -1212,7 +1208,6 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 LogError("Exception in CreateMzXMLFileIfMissing", ex);
                 return false;
             }
-
         }
 
         private string CreatePseudoMSGFFileUsingPHRPReader(int job, string dataset, udtFilterThresholdsType udtFilterThresholds,
@@ -1833,7 +1828,6 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 return false;
             }
 
-
         }
 
         private string CreateMSGFReportXMLFile(string templateFileName, clsDataPackageJobInfo dataPkgJob, string pseudoMsgfFilePath,
@@ -2225,7 +2219,6 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 foreach (var proteinEntry in pseudoMSGFData)
                 {
-
                     if (!mCachedProteins.TryGetValue(proteinEntry.Key, out var indexAndSequence))
                     {
                         // Protein not found in mCachedProteins; this is unexpected (should have already been added by CreatePseudoMSGFFileUsingPHRPReader()
@@ -2480,7 +2473,6 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// <remarks></remarks>
         private bool CreatePrideXMLFile(int job, string dataset, string prideReportXMLFilePath, out string prideXmlFilePath)
         {
-
             prideXmlFilePath = string.Empty;
 
             try
@@ -2530,7 +2522,6 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 LogError("Exception in CreatePrideXMLFile for job " + job, ex);
                 return false;
             }
-
         }
 
         private bool CreatePXSubmissionFile(IReadOnlyDictionary<string, string> templateParameters)
@@ -3035,7 +3026,6 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
         private bool DefinePxFileMapping(int fileID, int parentFileID)
         {
-
             if (!mPxResultFiles.TryGetValue(fileID, out var oPXFileInfo))
             {
                 LogError("FileID " + fileID + " not found in mPxResultFiles; unable to add parent file");
@@ -3630,7 +3620,6 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
                 }
-
             }
             else
             {
@@ -3746,7 +3735,6 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             }
 
             return CloseOutType.CLOSEOUT_FAILED;
-
         }
 
         private string PXFileTypeName(clsPXFileInfoBase.ePXFileType ePXFileType)

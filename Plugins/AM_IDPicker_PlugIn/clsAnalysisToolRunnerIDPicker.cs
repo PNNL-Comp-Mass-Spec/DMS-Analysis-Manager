@@ -283,7 +283,6 @@ namespace AnalysisManagerIDPickerPlugIn
                 var success = CopyResultsToTransferDirectory();
 
                 return success ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
-
             }
             catch (Exception ex)
             {
@@ -291,7 +290,6 @@ namespace AnalysisManagerIDPickerPlugIn
                 LogError(mMessage, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-
         }
 
         private bool RunIDPickerWrapper(clsPHRPReader.ePeptideHitResultType ePHRPResultType, string synFilePath, string fastaFilePath,
@@ -1245,7 +1243,6 @@ namespace AnalysisManagerIDPickerPlugIn
                 {
                     writer.WriteLine(exePathOriginal + " " + argumentsOriginal + " > " + consoleOutputFileName + " 2>&1");
                 }
-
             }
 
             if (captureConsoleOutputViaDosRedirection || string.IsNullOrEmpty(consoleOutputFileName))

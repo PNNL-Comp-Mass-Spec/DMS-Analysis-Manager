@@ -42,7 +42,6 @@ namespace AnalysisManagerICR2LSPlugIn
         /// <returns>CloseOutType enum representing completion status</returns>
         public override CloseOutType RunTool()
         {
-
             var currentTask = "Initializing";
 
             try

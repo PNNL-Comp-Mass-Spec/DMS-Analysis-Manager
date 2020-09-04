@@ -114,7 +114,6 @@ namespace AnalysisManagerBrukerDAExportPlugin
                             }
                             exportSuccess = false;
                         }
-
                     }
                     else
                     {
@@ -150,7 +149,6 @@ namespace AnalysisManagerBrukerDAExportPlugin
                 var success = CopyResultsToTransferDirectory();
 
                 return success ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
-
             }
             catch (Exception ex)
             {
@@ -158,7 +156,6 @@ namespace AnalysisManagerBrukerDAExportPlugin
                 LogError(mMessage, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-
         }
 
         private int EstimateMaxRuntime(string dataFolderPath)
@@ -205,7 +202,6 @@ namespace AnalysisManagerBrukerDAExportPlugin
         {
             try
             {
-
                 mConsoleOutputErrorMsg = string.Empty;
 
                 var rawDataType = mJobParams.GetParam("RawDataType");
@@ -305,7 +301,6 @@ namespace AnalysisManagerBrukerDAExportPlugin
                     {
                         writer.WriteLine(cmdRunner.CachedConsoleOutput);
                     }
-
                 }
 
                 if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))
@@ -325,7 +320,6 @@ namespace AnalysisManagerBrukerDAExportPlugin
 
                 if (!success || mMaxRuntimeReached)
                 {
-
                     var msg = "Error exporting Bruker data using DataAnalysis.exe";
                     if (mMaxRuntimeReached)
                     {
@@ -364,7 +358,6 @@ namespace AnalysisManagerBrukerDAExportPlugin
                 }
 
                 return true;
-
             }
             catch (Exception ex)
             {
@@ -372,7 +365,6 @@ namespace AnalysisManagerBrukerDAExportPlugin
                 LogError(mMessage, ex);
                 return false;
             }
-
         }
 
         /// <summary>
@@ -404,7 +396,6 @@ namespace AnalysisManagerBrukerDAExportPlugin
                 }
 
                 return fiFiles[0].FullName;
-
             }
             catch (Exception ex)
             {
@@ -412,7 +403,6 @@ namespace AnalysisManagerBrukerDAExportPlugin
                 LogError(mMessage, ex);
                 return string.Empty;
             }
-
         }
 
         private List<FileInfo> GetXMLSpectraFiles(DirectoryInfo diWorkDir)
@@ -472,7 +462,6 @@ namespace AnalysisManagerBrukerDAExportPlugin
 
                 using (var reader = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
-
                     while (!reader.EndOfStream)
                     {
                         var dataLine = reader.ReadLine();
@@ -500,9 +489,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
                                 int.TryParse(reMatch.Groups[1].Value, out currentScan);
                             }
                         }
-
                     }
-
                 }
 
                 if (totalScans > 0)
@@ -520,7 +507,6 @@ namespace AnalysisManagerBrukerDAExportPlugin
                         LogDebug(" ... " + mProgress.ToString("0") + "% complete");
                     }
                 }
-
             }
             catch (Exception ex)
             {
@@ -530,7 +516,6 @@ namespace AnalysisManagerBrukerDAExportPlugin
                     LogWarning("Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
                 }
             }
-
         }
 
         private void StoreConsoleErrorMessage(StreamReader reader, string firstDataLine)
@@ -550,7 +535,6 @@ namespace AnalysisManagerBrukerDAExportPlugin
                 {
                     mConsoleOutputErrorMsg += "; " + dataLine;
                 }
-
             }
         }
 
@@ -595,7 +579,6 @@ namespace AnalysisManagerBrukerDAExportPlugin
                 LogError(mMessage, ex);
                 return false;
             }
-
         }
 
 
@@ -605,7 +588,6 @@ namespace AnalysisManagerBrukerDAExportPlugin
         /// <remarks></remarks>
         protected bool StoreToolVersionInfo(string strProgLoc)
         {
-
             var strToolVersionInfo = string.Empty;
 
             if (mDebugLevel >= 2)
@@ -626,7 +608,6 @@ namespace AnalysisManagerBrukerDAExportPlugin
                     LogError("Exception calling SetStepTaskToolVersion", ex);
                     return false;
                 }
-
             }
 
             // Lookup the version of the DataAnalysis program
@@ -652,7 +633,6 @@ namespace AnalysisManagerBrukerDAExportPlugin
                 LogError("Exception calling SetStepTaskToolVersion", ex);
                 return false;
             }
-
         }
 
         #endregion
@@ -661,16 +641,13 @@ namespace AnalysisManagerBrukerDAExportPlugin
 
         void CmdRunner_LoopWaiting()
         {
-
             {
-
                 // Parse the console output file every 15 seconds
                 if (DateTime.UtcNow.Subtract(mLastConsoleOutputParse).TotalSeconds >= 15)
                 {
                     mLastConsoleOutputParse = DateTime.UtcNow;
 
                     ParseConsoleOutputFile(Path.Combine(mWorkDir, DATA_EXPORT_CONSOLE_OUTPUT));
-
                 }
 
                 UpdateStatusFile();

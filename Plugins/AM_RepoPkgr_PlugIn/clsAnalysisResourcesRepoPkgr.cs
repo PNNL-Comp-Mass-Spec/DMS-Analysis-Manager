@@ -85,7 +85,6 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
 
             return CloseOutType.CLOSEOUT_SUCCESS;
-
         }
 
         #endregion // Member_Functions
@@ -98,7 +97,6 @@ namespace AnalysisManager_RepoPkgr_Plugin
             IEnumerable<clsDataPackageJobInfo> additionalJobs,
             bool includeMzXmlFiles)
         {
-
             // The keys in this dictionary are udtJobInfo entries; the values in this dictionary are KeyValuePairs of path to the .mzXML or .mzML file and path to the .hashcheck file (if any)
             // The KeyValuePair will have empty strings if the .Raw file needs to be retrieved
             var dctInstrumentDataToRetrieve = new Dictionary<clsDataPackageJobInfo, KeyValuePair<string, string>>();
@@ -180,9 +178,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
                                 return false;
                             }
                         }
-
                     }
-
                 }
 
                 // Note that FindDatasetFileOrDirectory will return the default dataset directory path, even if the data file is not found
@@ -234,7 +230,6 @@ namespace AnalysisManager_RepoPkgr_Plugin
                     LogMessage(progressMsg);
                 }
 
-
             }
 
             if (missingInstrumentDataCount > 0)
@@ -277,7 +272,6 @@ namespace AnalysisManager_RepoPkgr_Plugin
             var success = dataPackageFileHandler.RetrieveDataPackageMzXMLFiles(dctInstrumentDataToRetrieve, udtOptions);
 
             return success;
-
         }
 
         /// <summary>
@@ -337,14 +331,12 @@ namespace AnalysisManager_RepoPkgr_Plugin
                     StorePackedJobParameterList(datasetNames.ToList(), JOB_PARAM_DATASETS_MISSING_MZXML_FILES);
                     StorePackedJobParameterList(datasetYearQuarter.ToList(), JOB_PARAM_DICTIONARY_DATASET_STORAGE_YEAR_QUARTER);
                 }
-
             }
             catch (Exception ex)
             {
                 mMessage = "Exception in FindMissingMzXmlFiles";
                 LogError(mMessage + ": " + ex.Message);
             }
-
         }
 
         private bool RetrieveFastaFiles(string orgDbDirectoryPath, IEnumerable<clsDataPackageJobInfo> dataPackagePeptideHitJobs)

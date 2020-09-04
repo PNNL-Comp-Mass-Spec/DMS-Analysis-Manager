@@ -9,7 +9,6 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
     /// </summary>
     public class clsAnalysisResourcesInspResultsAssembly : clsAnalysisResources
     {
-
         /// <summary>
         /// Initialize options
         /// </summary>
@@ -218,6 +217,5 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
             return true;
         }
-
     }
 }

@@ -10,7 +10,6 @@ namespace AnalysisManagerICR2LSPlugIn
     /// </summary>
     public class clsAnalysisResourcesIcr2ls : clsAnalysisResources
     {
-
         /// <summary>
         /// Retrieve required files
         /// </summary>
@@ -284,6 +283,5 @@ namespace AnalysisManagerICR2LSPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
         }
-
     }
 }

@@ -110,7 +110,6 @@ namespace AnalysisManagerDtaImportPlugIn
             }
             catch (Exception ex)
             {
-
                 LogError("Error copying results folder to transfer directory",
                          "Error copying results folder to " + targetFolderNamePath, ex);
                 return CloseOutType.CLOSEOUT_FAILED;

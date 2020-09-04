@@ -14,13 +14,11 @@ using PRISMDatabaseUtils;
 
 namespace AnalysisManagerTopFDPlugIn
 {
-
     /// <summary>
     /// Retrieve resources for the TopFD plugin
     /// </summary>
     public class clsAnalysisResourcesTopFD : clsAnalysisResources
     {
-
         public const string JOB_PARAM_EXISTING_TOPFD_RESULTS_DIRECTORY = "ExistingTopFDResultsDirectory";
         public const string JOB_PARAM_EXISTING_TOPFD_TOOL_VERSION = "ExistingTopFDResultsToolVersion";
 
@@ -116,7 +114,6 @@ namespace AnalysisManagerTopFDPlugIn
                 LogError(mMessage + "; task = " + currentTask + "; " + clsGlobal.GetExceptionStackTrace(ex));
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-
         }
 
         /// <summary>

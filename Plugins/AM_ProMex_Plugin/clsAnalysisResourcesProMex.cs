@@ -15,7 +15,6 @@ namespace AnalysisManagerProMexPlugIn
     /// </summary>
     public class clsAnalysisResourcesProMex : clsAnalysisResources
     {
-
         /// <summary>
         /// Initialize options
         /// </summary>

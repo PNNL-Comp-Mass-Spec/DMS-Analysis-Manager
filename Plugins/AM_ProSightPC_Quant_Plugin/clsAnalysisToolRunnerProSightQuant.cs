@@ -45,7 +45,6 @@ namespace AnalysisManagerProSightQuantPlugIn
         /// <returns>CloseOutType enum indicating success or failure</returns>
         public override CloseOutType RunTool()
         {
-
             try
             {
                 // Call base class for initial setup
@@ -250,7 +249,6 @@ namespace AnalysisManagerProSightQuantPlugIn
                 LogError(mMessage, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-
         }
 
         /// <summary>
@@ -350,7 +348,6 @@ namespace AnalysisManagerProSightQuantPlugIn
                         {"Peak Loading complete", PROGRESS_TARGETED_WORKFLOWS_PEAKS_LOADED},
                         {"---- PROCESSING COMPLETE ----", PROGRESS_TARGETED_WORKFLOWS_PROCESSING_COMPLETE}
                     };
-
                 }
 
                 if (!File.Exists(strConsoleOutputFilePath))

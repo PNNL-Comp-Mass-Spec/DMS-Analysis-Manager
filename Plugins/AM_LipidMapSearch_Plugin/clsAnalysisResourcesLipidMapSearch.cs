@@ -6,13 +6,11 @@ using System.Linq;
 
 namespace AnalysisManagerLipidMapSearchPlugIn
 {
-
     /// <summary>
     /// Retrieve resources for the Lipid Map Search plugin
     /// </summary>
     public class clsAnalysisResourcesLipidMapSearch : clsAnalysisResources
     {
-
         /// <summary>
         /// DeconTools peaks file suffix
         /// </summary>

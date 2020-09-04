@@ -211,7 +211,6 @@ namespace AnalysisManagerMODPlusPlugin
 
                 dataLine = mReader.ReadLine();
             }
-
         }
     }
 }

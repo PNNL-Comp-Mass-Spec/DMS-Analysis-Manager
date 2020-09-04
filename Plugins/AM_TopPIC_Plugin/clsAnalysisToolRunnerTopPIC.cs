@@ -134,14 +134,12 @@ namespace AnalysisManagerTopPICPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
 
                 return processingResult;
-
             }
             catch (Exception ex)
             {
                 LogError("Error in TopPICPlugin->RunTool", ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-
         }
 
         /// <summary>
@@ -162,7 +160,6 @@ namespace AnalysisManagerTopPICPlugIn
             int outputThresholdIncrement,
             out string lastProcessingLine)
         {
-
             if (itemNumberOrProgress < lastItemNumberOrProgress)
             {
                 // We have entered a new processing mode; reset the threshold
@@ -473,7 +470,6 @@ namespace AnalysisManagerTopPICPlugIn
 
                     effectiveProgress = ComputeIncrementalProgress(currentProgress, nextProgress,
                                                                    currentTaskItemsProcessed, currentTaskTotalItems);
-
                 }
                 else
                 {
@@ -532,7 +528,6 @@ namespace AnalysisManagerTopPICPlugIn
                 }
 
                 return true;
-
             }
             catch (Exception ex)
             {
@@ -642,7 +637,6 @@ namespace AnalysisManagerTopPICPlugIn
                             }
                         }
                     }
-
                 } // for
             }
             catch (Exception ex)
@@ -677,7 +671,6 @@ namespace AnalysisManagerTopPICPlugIn
 
         private CloseOutType StartTopPIC(bool fastaFileIsDecoy, string progLoc)
         {
-
             LogMessage("Running TopPIC");
 
             // Set up and execute a program runner to run TopPIC
@@ -891,7 +884,6 @@ namespace AnalysisManagerTopPICPlugIn
                                     ref itemNumberOutputThreshold,
                                     250,
                                     out lastProcessingLine);
-
                             }
                         }
 
@@ -905,7 +897,6 @@ namespace AnalysisManagerTopPICPlugIn
                         {
                             writer.WriteLine(dataLine);
                         }
-
                     }
                 }
 
@@ -946,7 +937,6 @@ namespace AnalysisManagerTopPICPlugIn
         /// </remarks>
         private bool ValidateAndZipResults(out bool noValidResults)
         {
-
             noValidResults = false;
 
             try
@@ -1089,7 +1079,6 @@ namespace AnalysisManagerTopPICPlugIn
                 LogError("Exception in ValidateAndZipResults", ex);
                 return false;
             }
-
         }
 
         private bool ValidateFastaFile(out bool fastaFileIsDecoy)
@@ -1163,7 +1152,6 @@ namespace AnalysisManagerTopPICPlugIn
                 {
                     while (true)
                     {
-
                         if (!foundParamHeaderB)
                         {
                             if (reader.EndOfStream)
@@ -1233,7 +1221,6 @@ namespace AnalysisManagerTopPICPlugIn
                                 Console.WriteLine("Csv reader raised exception reading line {0}: {1}", currentLineNumber, ex.Message);
                                 break;
                             }
-
                         }
                         else
                         {
@@ -1284,7 +1271,6 @@ namespace AnalysisManagerTopPICPlugIn
                 LogError("Exception in ValidateResultTableFile", ex);
                 return false;
             }
-
         }
 
         /// <summary>
@@ -1296,7 +1282,6 @@ namespace AnalysisManagerTopPICPlugIn
         /// <remarks>A valid modification definition contains 5 parts and doesn't contain any whitespace</remarks>
         private bool ValidateMod(string mod, out string modClean)
         {
-
             modClean = string.Empty;
 
             var poundIndex = mod.IndexOf('#');
@@ -1352,7 +1337,6 @@ namespace AnalysisManagerTopPICPlugIn
 
             foreach (var modEntry in modList)
             {
-
                 if (ValidateMod(modEntry, out var modClean))
                 {
                     validatedMods.Add(modClean);
@@ -1423,7 +1407,6 @@ namespace AnalysisManagerTopPICPlugIn
 
         private bool ZipTopPICResultsDirectory(string directorySuffix)
         {
-
             try
             {
                 var zipFilePath = Path.Combine(mWorkDir, mDatasetName + directorySuffix + ".zip");
@@ -1470,7 +1453,6 @@ namespace AnalysisManagerTopPICPlugIn
                 LogError(string.Format("Exception compressing the {0} directory created by TopPIC", directorySuffix), ex);
                 return false;
             }
-
         }
 
         #endregion

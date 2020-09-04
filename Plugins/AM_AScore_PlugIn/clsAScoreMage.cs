@@ -11,10 +11,8 @@ using System.Linq;
 
 namespace AnalysisManager_AScore_PlugIn
 {
-
     public class clsAScoreMagePipeline : EventNotifier
     {
-
         #region Member Variables
 
         protected string mResultsDBFileName = string.Empty;
@@ -139,7 +137,6 @@ namespace AnalysisManager_AScore_PlugIn
 
         private bool GetAScoreParameterFile()
         {
-
             if (string.IsNullOrEmpty(mParamFilename))
             {
                 mErrorMessage = "AScore ParmFileName not defined in the settings for this job; unable to continue";
@@ -187,7 +184,6 @@ namespace AnalysisManager_AScore_PlugIn
             }
 
             return true;
-
         }
 
         /// <summary>
@@ -232,7 +228,6 @@ namespace AnalysisManager_AScore_PlugIn
 
             var pipeline = ProcessingPipeline.Assemble("Process", jobsToProcess, ascoreModule);
             pipeline.RunRoot(null);
-
         }
 
         // <summary>
@@ -339,7 +334,6 @@ namespace AnalysisManager_AScore_PlugIn
 
             var pipeline = ProcessingPipeline.Assemble("ImportFileToSQLitePipeline", reader, writer);
             pipeline.RunRoot(null);
-
         }
         /*--*/
         /// <summary>

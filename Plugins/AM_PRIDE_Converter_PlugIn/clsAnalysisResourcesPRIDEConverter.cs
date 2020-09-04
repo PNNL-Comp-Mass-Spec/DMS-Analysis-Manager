@@ -70,7 +70,6 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// <returns>Closeout code</returns>
         public override CloseOutType GetResources()
         {
-
             var result = GetSharedResources();
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {

@@ -8,11 +8,9 @@ using System.Linq;
 
 namespace AnalysisManager_Mage_PlugIn
 {
-
     // ReSharper disable once UnusedMember.Global
     public class clsAnalysisToolRunnerMage : clsAnalysisToolRunnerMAC
     {
-
         public const string T_ALIAS_FILE = "t_alias.txt";
         public const string T_ALIAS_TABLE = "T_alias";
 
@@ -158,7 +156,6 @@ namespace AnalysisManager_Mage_PlugIn
 
                         while (drReader.Read())
                         {
-
                             var sampleName = drReader.GetString(1);
                             if (!sampleNames.Contains(sampleName, StringComparer.OrdinalIgnoreCase))
                                 sampleNames.Add(sampleName);
@@ -252,7 +249,6 @@ namespace AnalysisManager_Mage_PlugIn
                         ionColumns.Add("Ion_129");
                         ionColumns.Add("Ion_130");
                         ionColumns.Add("Ion_131");
-
                     }
 
                     if (workFlowSteps.Contains("8plex"))
@@ -292,11 +288,8 @@ namespace AnalysisManager_Mage_PlugIn
                                         "; you need to specify " + labelingScheme + " in the ApeWorkflowStepList parameter of the Ape step";
                             return false;
                         }
-
                     }
-
                 }
-
             }
             catch (Exception ex)
             {
@@ -312,7 +305,6 @@ namespace AnalysisManager_Mage_PlugIn
 
         protected bool ValidateSqliteDB(string mageOperations, FileInfo resultsDB)
         {
-
             // If the Mage Operations list contains "ExtractFromJobs", make sure that table "t_results" was created
             // If it wasn't, no matching jobs were found and we should fail out this job step
             if (mageOperations.Contains("ExtractFromJobs"))
@@ -368,11 +360,9 @@ namespace AnalysisManager_Mage_PlugIn
                     }
                     return false;
                 }
-
             }
 
             return true;
-
         }
     }
 }

@@ -23,7 +23,6 @@ namespace AnalysisManager_Ape_PlugIn
         {
             try
             {
-
                 // Do the base class stuff
                 if (base.RunTool() != CloseOutType.CLOSEOUT_SUCCESS)
                 {
@@ -110,7 +109,6 @@ namespace AnalysisManager_Ape_PlugIn
                 LogError(mMessage, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-
         }
 
         /// <summary>
@@ -138,7 +136,6 @@ namespace AnalysisManager_Ape_PlugIn
         /// <remarks></remarks>
         private bool StoreToolVersionInfo()
         {
-
             var toolVersionInfo = string.Empty;
 
             if (mDebugLevel >= 2)
@@ -162,9 +159,7 @@ namespace AnalysisManager_Ape_PlugIn
                 LogError("Exception calling SetStepTaskToolVersion: " + ex.Message, ex);
                 return false;
             }
-
         }
-
     }
 }
 

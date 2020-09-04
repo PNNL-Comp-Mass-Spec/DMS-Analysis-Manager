@@ -9,13 +9,11 @@ using AnalysisManagerBase;
 
 namespace AnalysisManagerMSAlignHistonePlugIn
 {
-
     /// <summary>
     /// Retrieve resources for the MSAlign Histone plugin
     /// </summary>
     public class clsAnalysisResourcesMSAlignHistone : clsAnalysisResources
     {
-
         /// <summary>
         /// MSDeconv .msalign filename
         /// </summary>

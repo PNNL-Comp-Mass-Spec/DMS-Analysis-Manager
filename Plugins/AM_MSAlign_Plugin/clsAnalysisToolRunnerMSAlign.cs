@@ -311,7 +311,6 @@ namespace AnalysisManagerMSAlignPlugIn
                 var success = CopyResultsToTransferDirectory();
 
                 return success ? eResult : CloseOutType.CLOSEOUT_FAILED;
-
             }
             catch (Exception ex)
             {
@@ -319,7 +318,6 @@ namespace AnalysisManagerMSAlignPlugIn
                 LogError(mMessage, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-
         }
 
         protected bool AddResultTableHeaderLine(string sourceFilePath)
@@ -812,7 +810,6 @@ namespace AnalysisManagerMSAlignPlugIn
 
         protected bool InitializeMSInputFolder(string msAlignWorkFolderPath, eMSAlignVersionType eMSAlignVersion)
         {
-
             try
             {
                 var msInputFolderPath = Path.Combine(msAlignWorkFolderPath, "msinput");

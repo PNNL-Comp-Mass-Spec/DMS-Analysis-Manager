@@ -20,7 +20,6 @@ namespace AnalysisManagerFormularityPlugin
     /// </summary>
     public class clsAnalysisResourcesFormularity : clsAnalysisResources
     {
-
         public const string JOB_PARAM_FORMULARITY_CALIBRATION_PEAKS_FILE = "CalibrationPeaksFile";
 
         /// <summary>
@@ -34,7 +33,6 @@ namespace AnalysisManagerFormularityPlugin
         /// <returns>Closeout code</returns>
         public override CloseOutType GetResources()
         {
-
             var currentTask = "Initializing";
 
             try
@@ -177,7 +175,6 @@ namespace AnalysisManagerFormularityPlugin
                                 peaksFileName);
 
                             break;
-
                         }
                         else if (scriptName.Equals("Formularity_Bruker", StringComparison.OrdinalIgnoreCase))
                         {
@@ -216,7 +213,6 @@ namespace AnalysisManagerFormularityPlugin
                 }
 
                 return CloseOutType.CLOSEOUT_SUCCESS;
-
             }
             catch (Exception ex)
             {
@@ -225,12 +221,10 @@ namespace AnalysisManagerFormularityPlugin
 
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-
         }
 
         private bool RetrieveCalibrationPeaksFile(string paramFileStoragePath, string paramFileName)
         {
-
             try
             {
                 var paramFilePath = Path.Combine(paramFileStoragePath, paramFileName);
@@ -322,7 +316,6 @@ namespace AnalysisManagerFormularityPlugin
                         clsAnalysisJob.STEP_PARAMETERS_SECTION,
                         JOB_PARAM_FORMULARITY_CALIBRATION_PEAKS_FILE,
                         calibrationPeaksFileName);
-
                 }
 
                 return true;
@@ -333,6 +326,5 @@ namespace AnalysisManagerFormularityPlugin
                 return false;
             }
         }
-
     }
 }

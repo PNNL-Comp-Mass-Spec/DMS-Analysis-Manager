@@ -11,7 +11,6 @@ using System.IO;
 
 namespace AnalysisManagerMODPlusPlugin
 {
-
     /// <summary>
     /// Retrieve resources for the MODPlus plugin
     /// </summary>

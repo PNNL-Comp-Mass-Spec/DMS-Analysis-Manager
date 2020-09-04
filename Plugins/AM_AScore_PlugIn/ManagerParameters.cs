@@ -3,7 +3,6 @@ using Mage;
 
 namespace AnalysisManager_AScore_PlugIn
 {
-
     // class for managing IMgrParams object
     public class ManagerParameters
     {
@@ -26,6 +25,5 @@ namespace AnalysisManager_AScore_PlugIn
             return val;
         }
     }
-
 
 }

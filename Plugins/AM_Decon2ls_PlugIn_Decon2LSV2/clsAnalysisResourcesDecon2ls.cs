@@ -13,7 +13,6 @@ namespace AnalysisManagerDecon2lsV2PlugIn
     /// </summary>
     public class clsAnalysisResourcesDecon2ls : clsAnalysisResources
     {
-
         /// <summary>
         /// Job parameter to track that MS/MS processing has been auto-enabled
         /// </summary>

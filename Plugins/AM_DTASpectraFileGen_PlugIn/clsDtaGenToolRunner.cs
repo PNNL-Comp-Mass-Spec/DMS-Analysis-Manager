@@ -350,7 +350,6 @@ namespace DTASpectraFileGen
             var success = CopyResultsToTransferDirectory();
 
             return success ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
-
         }
 
         private SpectraFileProcessorParams GetDtaGenInitParams()
@@ -1261,7 +1260,6 @@ namespace DTASpectraFileGen
 
             try
             {
-
 #pragma warning disable 618
                 if (ZipFileSharpZipLib(inputFilePath))
 #pragma warning restore 618

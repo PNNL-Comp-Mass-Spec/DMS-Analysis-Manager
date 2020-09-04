@@ -10,7 +10,6 @@ using System;
 
 namespace AnalysisManagerPBFGenerator
 {
-
     /// <summary>
     /// Retrieve resources for the PBF Generator plugin
     /// </summary>

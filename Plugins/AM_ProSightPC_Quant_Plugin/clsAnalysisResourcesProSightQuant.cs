@@ -3,13 +3,11 @@ using System.IO;
 
 namespace AnalysisManagerProSightQuantPlugIn
 {
-
     /// <summary>
     /// Retrieve resources for the ProSight Quant plugin
     /// </summary>
     public class clsAnalysisResourcesProSightQuant : clsAnalysisResources
     {
-
         /// <summary>
         /// ProSight PC results file name
         /// </summary>

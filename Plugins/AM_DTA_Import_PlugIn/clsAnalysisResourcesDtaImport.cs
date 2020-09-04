@@ -98,6 +98,5 @@ namespace AnalysisManagerDtaImportPlugIn
 
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
-
     }
 }

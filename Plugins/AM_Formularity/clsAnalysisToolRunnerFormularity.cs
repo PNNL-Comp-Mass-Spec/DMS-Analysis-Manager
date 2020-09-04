@@ -116,7 +116,6 @@ namespace AnalysisManagerFormularityPlugin
                             return CloseOutType.CLOSEOUT_FAILED;
                         }
                     }
-
                 }
                 else
                 {
@@ -169,7 +168,6 @@ namespace AnalysisManagerFormularityPlugin
                 var success = CopyResultsToTransferDirectory();
 
                 return success ? eReturnCode : CloseOutType.CLOSEOUT_FAILED;
-
             }
             catch (Exception ex)
             {
@@ -177,7 +175,6 @@ namespace AnalysisManagerFormularityPlugin
                 LogError(mMessage, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-
         }
 
         /// <summary>
@@ -185,14 +182,12 @@ namespace AnalysisManagerFormularityPlugin
         /// </summary>
         public override void CopyFailedResultsToArchiveDirectory()
         {
-
             try
             {
                 var diWorkDir = new DirectoryInfo(mWorkDir);
 
                 foreach (var spectrumFile in GetXmlSpectraFiles(diWorkDir, out _))
                     spectrumFile.Delete();
-
             }
             catch (Exception)
             {
@@ -205,7 +200,6 @@ namespace AnalysisManagerFormularityPlugin
 
         private CloseOutType CreatePlotViewHTML(FileSystemInfo workDir, List<FileInfo> pngFiles)
         {
-
             const string LITERAL_TEXT_FLAG = "text: ";
 
             try
@@ -277,7 +271,6 @@ namespace AnalysisManagerFormularityPlugin
                 LogError(mMessage, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-
         }
 
         /// <summary>
@@ -317,14 +310,12 @@ namespace AnalysisManagerFormularityPlugin
                 LogError(mMessage, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-
         }
 
         private CloseOutType CreatePlotsUsingNOMSI(string progLocNOMSI, FileSystemInfo reportFile)
         {
             try
             {
-
                 // Set up and execute a program runner to run NOMSI
 
                 var arguments = reportFile.Name;
@@ -376,7 +367,6 @@ namespace AnalysisManagerFormularityPlugin
                 LogError(mMessage, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-
         }
 
         [Obsolete("Unused")]
@@ -436,7 +426,6 @@ namespace AnalysisManagerFormularityPlugin
                 }
 
                 return CloseOutType.CLOSEOUT_SUCCESS;
-
             }
             catch (Exception ex)
             {
@@ -444,7 +433,6 @@ namespace AnalysisManagerFormularityPlugin
                 LogError(mMessage, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-
         }
 
         private List<FileInfo> GetXmlSpectraFiles(DirectoryInfo diWorkDir, out string wildcardMatchSpec)
@@ -509,7 +497,6 @@ namespace AnalysisManagerFormularityPlugin
 
             try
             {
-
                 var reErrorMessage = new Regex(@"Error:(?<ErrorMessage>.+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
                 if (!File.Exists(consoleOutputFilePath))
@@ -575,10 +562,8 @@ namespace AnalysisManagerFormularityPlugin
                             mMessage = dataLine;
                             StoreConsoleErrorMessage(reader, dataLine);
                         }
-
                     }
                 }
-
 
             }
             catch (Exception ex)
@@ -589,12 +574,10 @@ namespace AnalysisManagerFormularityPlugin
                     LogErrorNoMessageUpdate("Error parsing console output file (" + consoleOutputFilePath + "): " + ex.Message);
                 }
             }
-
         }
 
         private CloseOutType PostProcessResults(string progLocNOMSI, ref bool processingSuccess)
         {
-
             try
             {
                 // The results files will be in a subdirectory with today's date
@@ -706,7 +689,6 @@ namespace AnalysisManagerFormularityPlugin
                 LogError(mMessage, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-
         }
 
         /// <summary>
@@ -780,7 +762,6 @@ namespace AnalysisManagerFormularityPlugin
             out int fileCountNoPeaks,
             out bool nothingToAlign)
         {
-
             // Set up and execute a program runner to run Formularity
 
             var arguments = " CIA " +
@@ -823,7 +804,6 @@ namespace AnalysisManagerFormularityPlugin
                 {
                     writer.WriteLine(cmdRunner.CachedConsoleOutput);
                 }
-
             }
 
             // Parse the console output file to look for errors
@@ -858,12 +838,10 @@ namespace AnalysisManagerFormularityPlugin
 
         private bool ProcessScansWithFormularity(string progLoc, string datasetScansFilePath, out bool nothingToAlign)
         {
-
             nothingToAlign = false;
 
             try
             {
-
                 mConsoleOutputErrorMsg = string.Empty;
 
                 LogMessage("Processing data using Formularity");
@@ -986,7 +964,6 @@ namespace AnalysisManagerFormularityPlugin
                 }
 
                 return true;
-
             }
             catch (Exception ex)
             {
@@ -994,7 +971,6 @@ namespace AnalysisManagerFormularityPlugin
                 LogError(mMessage, ex);
                 return false;
             }
-
         }
 
         private void StoreConsoleErrorMessage(StreamReader reader, string dataLine)
@@ -1010,7 +986,6 @@ namespace AnalysisManagerFormularityPlugin
                 {
                     mConsoleOutputErrorMsg += "; " + dataLine;
                 }
-
             }
         }
 
@@ -1079,7 +1054,6 @@ namespace AnalysisManagerFormularityPlugin
 
         void CmdRunner_LoopWaiting()
         {
-
             // Synchronize the stored Debug level with the value stored in the database
 
             {
@@ -1094,9 +1068,7 @@ namespace AnalysisManagerFormularityPlugin
 
                     LogProgress("Formularity");
                 }
-
             }
-
         }
 
         #endregion

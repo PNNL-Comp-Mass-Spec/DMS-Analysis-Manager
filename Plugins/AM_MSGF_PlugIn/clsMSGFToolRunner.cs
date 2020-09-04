@@ -136,7 +136,6 @@ namespace AnalysisManagerMSGFPlugin
         /// <returns>CloseOutType representing success or failure</returns>
         public override CloseOutType RunTool()
         {
-
             // Call base class for initial setup
             if (base.RunTool() != CloseOutType.CLOSEOUT_SUCCESS)
             {
@@ -362,7 +361,6 @@ namespace AnalysisManagerMSGFPlugin
                     LogDebug("MSPathFinder does not support ETD data processing; will set mETDMode to False");
                     success = true;
                     break;
-
             }
 
             if (mETDMode)
@@ -507,7 +505,6 @@ namespace AnalysisManagerMSGFPlugin
 
                             if (ionWeights.Length >= 12)
                             {
-
                                 double.TryParse(ionWeights[5], out var cWeight);
                                 double.TryParse(ionWeights[11], out var zWeight);
 
@@ -557,7 +554,6 @@ namespace AnalysisManagerMSGFPlugin
         /// <returns>True if success; false if an error</returns>
         private bool CheckETDModeEnabledXTandem(string searchToolParamFilePath)
         {
-
             try
             {
                 mETDMode = false;
@@ -680,7 +676,6 @@ namespace AnalysisManagerMSGFPlugin
         /// <remarks></remarks>
         private bool CreateMSGFInputFile(clsPHRPReader.ePeptideHitResultType eResultType, bool doNotFilterPeptides, bool mgfInstrumentData, out int msgfInputFileLineCount)
         {
-
             var success = true;
 
             msgfInputFileLineCount = 0;
@@ -874,7 +869,6 @@ namespace AnalysisManagerMSGFPlugin
             }
 
             return true;
-
         }
 
         private bool CreateMzXMLFile()
@@ -1173,7 +1167,6 @@ namespace AnalysisManagerMSGFPlugin
             }
 
             return success;
-
         }
 
         /// <summary>
@@ -1218,8 +1211,6 @@ namespace AnalysisManagerMSGFPlugin
                 {MSGF_RESULT_COLUMN_Collision_Mode, 8},
                 {MSGF_RESULT_COLUMN_SpecProb, 9}
             };
-
-
 
             // Read the data from the MSGF Result file and
             // write the Synopsis MSGF Results to a new file
@@ -1430,7 +1421,6 @@ namespace AnalysisManagerMSGFPlugin
         private bool ProcessFilesWrapper(clsAnalysisResources.eRawDataTypeConstants eRawDataType, clsPHRPReader.ePeptideHitResultType eResultType,
             bool doNotFilterPeptides, bool mgfInstrumentData)
         {
-
             // Parse the SEQUEST, X!Tandem, Inspect, or MODa parameter file to determine if ETD mode was used
             var searchToolParamFilePath = Path.Combine(mWorkDir, mJobParams.GetParam("ParmFileName"));
 
@@ -1722,7 +1712,6 @@ namespace AnalysisManagerMSGFPlugin
 
         private bool RunMSGFonMSGFDBCachedData(IReadOnlyCollection<string> lstData, string msgfInputFilePath, string msgfResultsFilePathFinal, string collisionMode)
         {
-
             try
             {
                 var inputFileTempPath = AddFileNameSuffix(msgfInputFilePath, collisionMode);
@@ -2067,7 +2056,6 @@ namespace AnalysisManagerMSGFPlugin
         {
             try
             {
-
                 // Create the output file
                 using (var writer = new StreamWriter(new FileStream(msgfOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
@@ -2111,7 +2099,6 @@ namespace AnalysisManagerMSGFPlugin
 
         private bool LoadMSGFResults(string msgfResultsFilePath, out Dictionary<int, string> msgfResults)
         {
-
             msgfResults = new Dictionary<int, string>();
 
             try

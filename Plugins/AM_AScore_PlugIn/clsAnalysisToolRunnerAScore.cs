@@ -25,7 +25,6 @@ namespace AnalysisManager_AScore_PlugIn
         {
             try
             {
-
                 // Do the base class stuff
                 if (base.RunTool() != CloseOutType.CLOSEOUT_SUCCESS)
                 {
@@ -55,7 +54,6 @@ namespace AnalysisManager_AScore_PlugIn
                 }
                 else
                 {
-
                     mCurrentAScoreTask = "Running AScore";
                     mStatusTools.UpdateAndWrite(EnumMgrStatus.RUNNING, EnumTaskStatus.RUNNING,
                                                  EnumTaskStatusDetail.RUNNING_TOOL, mProgress);
@@ -129,16 +127,13 @@ namespace AnalysisManager_AScore_PlugIn
                 var success = CopyResultsToTransferDirectory();
 
                 return success ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
-
             }
             catch (Exception ex)
             {
                 mMessage = "Error in AScorePlugin->RunTool";
                 LogError(mMessage, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
-
             }
-
 
         }
 
@@ -159,7 +154,6 @@ namespace AnalysisManager_AScore_PlugIn
 
                 outputFile = new FileInfo(Path.Combine(mWorkDir, "AScore_Job_Map.txt"));
                 ExportTable(sqlLiteDB, "t_results_file_list_metadata", outputFile);
-
             }
             catch (Exception ex)
             {
@@ -169,7 +163,6 @@ namespace AnalysisManager_AScore_PlugIn
             }
 
             return true;
-
         }
 
         private void ExportTable(FileSystemInfo sqlLiteDB, string tableName, FileSystemInfo targetFile)
@@ -191,7 +184,6 @@ namespace AnalysisManager_AScore_PlugIn
 
             var pipeline = ProcessingPipeline.Assemble("ExportTable", reader, writer);
             pipeline.RunRoot(null);
-
         }
 
         /// <summary>
@@ -221,7 +213,6 @@ namespace AnalysisManager_AScore_PlugIn
                     {
                         // Ignore errors here
                     }
-
                 }
             }
 
@@ -237,7 +228,6 @@ namespace AnalysisManager_AScore_PlugIn
             }
 
             return success;
-
         }
 
         /// <summary>
@@ -251,7 +241,6 @@ namespace AnalysisManager_AScore_PlugIn
 
             return success;
         }
-
 
     }
 }

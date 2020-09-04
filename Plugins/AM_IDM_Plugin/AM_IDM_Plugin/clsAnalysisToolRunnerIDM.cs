@@ -7,7 +7,6 @@ using System.IO;
 
 namespace AnalysisManager_IDM_Plugin
 {
-
     /// <summary>
     /// Class for running the IDM utility
     /// </summary>
@@ -141,7 +140,6 @@ namespace AnalysisManager_IDM_Plugin
                 var success = CopyResultsToTransferDirectory();
 
                 return success ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
-
             }
             catch (Exception ex)
             {
@@ -149,16 +147,13 @@ namespace AnalysisManager_IDM_Plugin
                 LogError(mMessage, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-
         }
 
         private void InterferenceDetectorProgressHandler(InterferenceDetector id, ProgressInfo e)
         {
-
             mProgress = e.Value;
 
             UpdateStatusFile(mProgress, 60);
-
         }
 
         /// <summary>
@@ -170,7 +165,6 @@ namespace AnalysisManager_IDM_Plugin
             var idmDLL = Path.Combine(clsGlobal.GetAppDirectoryPath(), "InterDetect.dll");
 
             StoreDotNETToolVersionInfo(idmDLL);
-
         }
 
         #endregion

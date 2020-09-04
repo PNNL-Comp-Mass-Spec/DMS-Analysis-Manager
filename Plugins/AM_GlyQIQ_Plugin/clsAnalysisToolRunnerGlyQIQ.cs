@@ -150,7 +150,6 @@ namespace AnalysisManagerGlyQIQPlugin
                 RemoveNonResultServerFiles();
 
                 return CloseOutType.CLOSEOUT_SUCCESS;
-
             }
             catch (Exception ex)
             {
@@ -158,7 +157,6 @@ namespace AnalysisManagerGlyQIQPlugin
                 LogError(mMessage, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-
         }
 
         private bool CombineResultFiles()
@@ -264,7 +262,6 @@ namespace AnalysisManagerGlyQIQPlugin
 
                 for (var scan = 1; scan <= scanCount; scan++)
                 {
-
                     if (mThermoFileReader.GetScanInfo(scan, out clsScanInfo scanInfo))
                     {
                         if (scanInfo.MSLevel > 1)
@@ -489,7 +486,6 @@ namespace AnalysisManagerGlyQIQPlugin
             {
                 // This error can be safely ignored
             }
-
         }
 
         protected bool PostJobResults(int jobNumber, udtPSMStatsType udtPSMStats, string dmsConnectionStringOverride)
@@ -560,7 +556,6 @@ namespace AnalysisManagerGlyQIQPlugin
                 LogError("Exception storing PSM Results in database: " + ex.Message);
                 return false;
             }
-
         }
 
         protected void PruneConsoleOutputFiles(FileInfo fiConsoleOutputFile, DirectoryInfo diTargetFolder)
@@ -828,7 +823,6 @@ namespace AnalysisManagerGlyQIQPlugin
         /// <remarks></remarks>
         protected bool StoreToolVersionInfo(string progLoc)
         {
-
             var additionalDLLs = new List<string>
             {
                 "IQGlyQ.dll",

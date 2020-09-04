@@ -115,7 +115,6 @@ namespace AnalysisManagerMODaPlugIn
         {
             try
             {
-
                 var cdtaUtilities = new clsCDTAUtilities();
                 RegisterEvents(cdtaUtilities);
 
@@ -156,7 +155,6 @@ namespace AnalysisManagerMODaPlugIn
                 LogError(mMessage, ex);
                 return false;
             }
-
         }
     }
 }

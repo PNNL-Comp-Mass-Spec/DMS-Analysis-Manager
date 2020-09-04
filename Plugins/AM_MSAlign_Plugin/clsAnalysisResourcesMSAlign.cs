@@ -14,7 +14,6 @@ namespace AnalysisManagerMSAlignPlugIn
     /// </summary>
     public class clsAnalysisResourcesMSAlign : clsAnalysisResources
     {
-
         /// <summary>
         /// MSDeconv .msalign file suffix
         /// </summary>

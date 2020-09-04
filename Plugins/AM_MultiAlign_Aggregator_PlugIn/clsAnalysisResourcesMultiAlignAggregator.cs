@@ -7,7 +7,6 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
     /// </summary>
     public class clsAnalysisResourcesMultiAlignAggregator : clsAnalysisResources
     {
-
         /// <summary>
         /// Retrieve required files
         /// </summary>
@@ -25,8 +24,6 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
             mJobParams.AddResultFileExtensionToSkip(SearchType);
 
             return CloseOutType.CLOSEOUT_SUCCESS;
-
         }
-
     }
 }

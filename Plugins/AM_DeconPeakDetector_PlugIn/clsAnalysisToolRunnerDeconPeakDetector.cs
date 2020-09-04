@@ -124,14 +124,12 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
                 var success = CopyResultsToTransferDirectory();
 
                 return success ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
-
             }
             catch (Exception ex)
             {
                 LogError("Error in DeconPeakDetectorPlugin->RunTool", ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-
         }
 
         // Example Console output

@@ -226,7 +226,6 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                 LogError("Exception during Inspect Results Assembly", ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-
         }
 
         /// <summary>
@@ -317,7 +316,6 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                 LogError(mMessage + ": " + ex.Message);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-
         }
 
         /// <summary>
@@ -488,7 +486,6 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                 LogError(mMessage + ": " + ex.Message);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-
         }
 
         private StreamWriter CreateNewExportFile(string exportFilePath)
@@ -1071,7 +1068,6 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                         using (var reader = new StreamReader(new FileStream(ptModsFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
                         using (var writer = new StreamWriter(new FileStream(ptModsFilePathNew, FileMode.Create, FileAccess.Write, FileShare.Read)))
                         {
-
                             while (!reader.EndOfStream)
                             {
                                 var dataLine = reader.ReadLine();
@@ -1238,7 +1234,6 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
                 using (var reader = new StreamReader(new FileStream(inspectResultsPath, FileMode.Open, FileAccess.Read, FileShare.Read)))
                 {
-
                     var linesRead = 0;
 
                     while (!reader.EndOfStream)
@@ -1271,7 +1266,6 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                         if (decoyProteinCount > 10)
                             break;
                     }
-
                 }
 
 

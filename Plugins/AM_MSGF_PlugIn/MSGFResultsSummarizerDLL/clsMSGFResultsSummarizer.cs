@@ -268,7 +268,6 @@ namespace MSGFResultsSummarizer
 
         private void AddUpdateUniqueSequence(IDictionary<int, clsUniqueSeqInfo> uniqueSequences, int seqId, clsUniqueSeqInfo seqInfoToStore)
         {
-
             if (uniqueSequences.TryGetValue(seqId, out var existingSeqInfo))
             {
                 existingSeqInfo.UpdateObservationCount(seqInfoToStore.ObsCount + existingSeqInfo.ObsCount);
@@ -323,7 +322,6 @@ namespace MSGFResultsSummarizer
                 var scanList = uniqueSpectra.Values.Distinct().ToList();
 
                 CheckForScanGaps(scanList);
-
             }
             catch (Exception ex)
             {
@@ -428,7 +426,6 @@ namespace MSGFResultsSummarizer
                 SetErrorMessage("Exception in VerifyReporterIonPTMs: " + ex.Message);
                 Console.WriteLine(ex.StackTrace);
             }
-
         }
 
         /// <summary>
@@ -995,7 +992,6 @@ namespace MSGFResultsSummarizer
         /// <remarks></remarks>
         public bool ProcessMSGFResults()
         {
-
             DatasetScanStatsLookupError = false;
 
             try
@@ -1673,7 +1669,6 @@ namespace MSGFResultsSummarizer
 
                             if (dataLine.StartsWith("Modification_"))
                             {
-
                                 DataTableUtils.GetColumnMappingFromHeaderLine(columnMap, dataLine, columnNamesByIdentifier);
                                 continue;
                             }
@@ -1722,7 +1717,6 @@ namespace MSGFResultsSummarizer
                         }
                     }
                 }
-
             }
             catch (Exception ex)
             {
@@ -1800,7 +1794,6 @@ namespace MSGFResultsSummarizer
             {
                 SetErrorMessage("Exception saving results to " + outputFilePath + ": " + ex.Message);
             }
-
         }
 
         private void SetErrorMessage(string errMsg)

@@ -73,7 +73,6 @@ namespace AnalysisManagerInSpecTPlugIn
         /// <remarks></remarks>
         public override CloseOutType RunTool()
         {
-
             var objIndexedDBCreator = new clsCreateInspectIndexedDB();
 
             try
@@ -186,7 +185,6 @@ namespace AnalysisManagerInSpecTPlugIn
                 mMessage = "Error in InspectPlugin->RunTool: " + ex.Message;
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-
         }
 
         /// <summary>
@@ -255,7 +253,6 @@ namespace AnalysisManagerInSpecTPlugIn
                             }
                         }
                     }
-
                 }
 
                 if (mDebugLevel >= 2)
@@ -379,7 +376,6 @@ namespace AnalysisManagerInSpecTPlugIn
                 }
 
                 Console.WriteLine();
-
             }
             catch (Exception)
             {

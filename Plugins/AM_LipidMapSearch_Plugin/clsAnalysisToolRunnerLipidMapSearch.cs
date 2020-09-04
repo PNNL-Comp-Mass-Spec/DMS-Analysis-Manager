@@ -242,7 +242,6 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                 var success = CopyResultsToTransferDirectory();
 
                 return success ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
-
             }
             catch (Exception ex)
             {
@@ -250,7 +249,6 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                 LogError(mMessage, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-
         }
 
         /// <summary>
@@ -623,7 +621,6 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                         {"Writing results", PROGRESS_PCT_LIPID_TOOLS_WRITING_RESULTS},
                         {"Writing QC data", PROGRESS_PCT_LIPID_TOOLS_WRITING_QC_DATA}
                     };
-
                 }
 
                 if (!File.Exists(consoleOutputFilePath))

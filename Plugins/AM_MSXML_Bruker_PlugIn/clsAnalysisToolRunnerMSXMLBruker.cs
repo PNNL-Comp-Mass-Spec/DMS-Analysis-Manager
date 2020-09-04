@@ -13,7 +13,6 @@ using System.Linq;
 
 namespace AnalysisManagerMsXmlBrukerPlugIn
 {
-
     /// <summary>
     /// Class for running MSXML Bruker
     /// </summary>
@@ -137,7 +136,6 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
                 return CloseOutType.CLOSEOUT_SUCCESS;
 
             return CloseOutType.CLOSEOUT_FAILED;
-
         }
 
         /// <summary>
@@ -294,7 +292,6 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
             }
 
             mJobParams.AddResultFileToSkip(resultsFile.Name);
-
         }
 
         /// <summary>

@@ -12,7 +12,6 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
     /// </summary>
     public class clsAnalysisResourcesPhosphoFdrAggregator : clsAnalysisResources
     {
-
         /// <summary>
         /// Retrieve required files
         /// </summary>

@@ -2,13 +2,11 @@
 
 namespace AnalysisManager_Mage_PlugIn
 {
-
     /// <summary>
     /// Get SQL for queries
     /// </summary>
     internal class SQL
     {
-
         // holds a single query definition template
         public class QueryTemplate
         {
@@ -60,6 +58,5 @@ namespace AnalysisManager_Mage_PlugIn
         {
             return string.Format(qt.TemplateSQL, paramVals);
         }
-
     }
 }

@@ -223,7 +223,6 @@ namespace DTASpectraFileGen
 
                     if (scanStop < mMaxScanInFile)
                         limitingScanRange = true;
-
                 }
                 else
                 {

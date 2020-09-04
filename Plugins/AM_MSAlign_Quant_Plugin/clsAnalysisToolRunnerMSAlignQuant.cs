@@ -189,7 +189,6 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                     {
                         LogWarning("Call to TargetedWorkflowsConsole failed (but exit code is 0)");
                     }
-
                 }
                 else
                 {
@@ -236,7 +235,6 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                 var success = CopyResultsToTransferDirectory();
 
                 return success ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
-
             }
             catch (Exception ex)
             {
@@ -244,7 +242,6 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                 LogError(mMessage, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-
         }
 
         /// <summary>
@@ -379,7 +376,6 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                         {"Peak Loading complete", PROGRESS_TARGETED_WORKFLOWS_PEAKS_LOADED},
                         {"---- PROCESSING COMPLETE ----", PROGRESS_TARGETED_WORKFLOWS_PROCESSING_COMPLETE}
                     };
-
                 }
 
                 if (!File.Exists(consoleOutputFilePath))

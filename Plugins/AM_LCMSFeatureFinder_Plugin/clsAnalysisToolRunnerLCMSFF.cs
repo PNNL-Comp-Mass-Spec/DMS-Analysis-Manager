@@ -105,7 +105,6 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
             var copyResult = CopyResultsToTransferDirectory();
 
             return copyResult ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
-
         }
 
         /// <summary>
@@ -187,7 +186,6 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
                 success = mToolVersionUtilities.StoreToolVersionInfoOneFile64Bit(ref toolVersionInfo, Path.Combine(featureFinderInfo.DirectoryName, "UIMFLibrary.dll"));
                 if (!success)
                     return false;
-
             }
 
             try

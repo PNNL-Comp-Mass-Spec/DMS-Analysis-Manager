@@ -30,7 +30,6 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
         public bool CreateQCPlots(string inputFilePath, string outputFolderPath)
         {
-
             try
             {
                 MSFileInfoScannerErrorCount = 0;
@@ -165,6 +164,5 @@ namespace AnalysisManagerDecon2lsV2PlugIn
         {
             mSuccess = mMSFileInfoScanner.ProcessMSFileOrDirectory(mInputFilePath, mOutputFolderPath);
         }
-
     }
 }

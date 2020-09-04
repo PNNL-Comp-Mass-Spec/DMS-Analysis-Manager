@@ -10,13 +10,11 @@ using System.IO;
 
 namespace AnalysisManagerDeconPeakDetectorPlugIn
 {
-
     /// <summary>
     /// Retrieve resources for the Decon Peak Detector plugin
     /// </summary>
     public class clsAnalysisResourcesDeconPeakDetector : clsAnalysisResources
     {
-
         /// <summary>
         /// Retrieve required files
         /// </summary>

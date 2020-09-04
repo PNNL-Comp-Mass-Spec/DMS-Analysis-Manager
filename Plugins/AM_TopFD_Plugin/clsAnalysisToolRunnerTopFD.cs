@@ -160,14 +160,12 @@ namespace AnalysisManagerTopFDPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
 
                 return processingResult;
-
             }
             catch (Exception ex)
             {
                 mMessage = "Error in TopFDPlugin->RunTool: " + ex.Message;
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-
         }
 
         /// <summary>
@@ -217,7 +215,6 @@ namespace AnalysisManagerTopFDPlugIn
         /// <remarks></remarks>
         private void ParseConsoleOutputFile(string consoleOutputFilePath)
         {
-
             // Example Console output (yes, TopFD misspells "running"):
 
             // ReSharper disable CommentTypo
@@ -407,7 +404,6 @@ namespace AnalysisManagerTopFDPlugIn
 
         private CloseOutType RetrieveExistingTopFDResults(string sourceDirectoryPath)
         {
-
             try
             {
                 // Copy the existing TopFD results files to the working directory
@@ -469,12 +465,10 @@ namespace AnalysisManagerTopFDPlugIn
                 LogError("Error retrieving existing TopFD results: " + ex.Message);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-
         }
 
         private CloseOutType StartTopFD(string progLoc, string mzMLFileName)
         {
-
             LogMessage("Running TopFD");
 
             var eResult = ParseTopFDParameterFile(out var cmdLineOptions);
@@ -592,7 +586,6 @@ namespace AnalysisManagerTopFDPlugIn
             }
 
             return CloseOutType.CLOSEOUT_SUCCESS;
-
         }
 
         /// <summary>

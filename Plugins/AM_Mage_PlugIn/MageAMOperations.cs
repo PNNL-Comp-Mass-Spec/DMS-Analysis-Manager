@@ -8,13 +8,11 @@ using System.Linq;
 
 namespace AnalysisManager_Mage_PlugIn
 {
-
     /// <summary>
     /// Class that defines Mac Mage operations that can be selected by the "MageOperations" parameter
     /// </summary>
     public class MageAMOperations : EventNotifier
     {
-
         #region Member Variables
 
         private readonly IJobParams _jobParams;
@@ -365,7 +363,6 @@ namespace AnalysisManager_Mage_PlugIn
                 using (var reader = new StreamReader(new FileStream(tAliasFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 using (var writer = new StreamWriter(new FileStream(updatedFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
                 {
-
                     // List of column indices to write to the output file (we skip columns with an empty column name)
                     var columnsIndicesToUse = new SortedSet<int>();
 
@@ -408,7 +405,6 @@ namespace AnalysisManager_Mage_PlugIn
                                                                  skipList.Count, tAliasFile.Name));
                                 }
                             }
-
                         }
 
                         // Add data for columns that had a valid header
@@ -447,7 +443,6 @@ namespace AnalysisManager_Mage_PlugIn
 
                 // Delete the temp file
                 File.Delete(updatedFilePath);
-
             }
             catch (Exception ex)
             {
@@ -536,10 +531,8 @@ namespace AnalysisManager_Mage_PlugIn
                     OnDebugEvent(message);
                     break;
             }
-
         }
 
         #endregion
     }
-
 }

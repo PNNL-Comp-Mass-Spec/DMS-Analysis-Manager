@@ -113,7 +113,6 @@ namespace AnalysisManager_AScore_PlugIn
         /// <returns></returns>
         protected override bool CheckFilter(ref string[] values)
         {
-
             try
             {
                 // extract contents of results file for current job to local file in working directory
@@ -266,7 +265,6 @@ namespace AnalysisManager_AScore_PlugIn
                         LogTools.LogError("Error deleting file " + Path.GetFileName(ascoreOutputFilePath) +
                                  " (" + ex.Message + "); may lead to duplicate values in Results.db3", ex);
                     }
-
                 }
 
                 // Delete extracted_results file and DTA file
@@ -288,7 +286,6 @@ namespace AnalysisManager_AScore_PlugIn
                 Console.WriteLine(ex.Message);
                 throw;
             }
-
         }
 
         #endregion
@@ -502,7 +499,6 @@ namespace AnalysisManager_AScore_PlugIn
                 // Return the first column (the Input_Folder name)
                 var sharedResultsDirectory = firstSharedResultsDirectory.First();
                 return sharedResultsDirectory;
-
             }
             catch (Exception ex)
             {
@@ -510,7 +506,6 @@ namespace AnalysisManager_AScore_PlugIn
                          " in GetSharedResultsDirectoryName: " + ex.Message, ex);
                 return string.Empty;
             }
-
 
         }
 

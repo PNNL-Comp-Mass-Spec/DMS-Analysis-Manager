@@ -72,7 +72,6 @@ namespace AnalysisManagerExtractionPlugin
         /// <returns>True if we should run AScore, otherwise false</returns>
         private bool CheckAScoreRequired(string resultType, string searchToolParamFilePath)
         {
-
             if (string.IsNullOrEmpty(searchToolParamFilePath))
             {
                 LogError("PeptideHit param file path is empty; unable to continue");
@@ -129,7 +128,6 @@ namespace AnalysisManagerExtractionPlugin
 
             try
             {
-
                 if (mDebugLevel >= 2)
                 {
                     LogDebug("Reading the MS-GF+ parameter file: " + searchToolParamFilePath);
@@ -138,7 +136,6 @@ namespace AnalysisManagerExtractionPlugin
                 // Read the data from the MS-GF+ Param file
                 using (var reader = new StreamReader(new FileStream(searchToolParamFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
                 {
-
                     while (!reader.EndOfStream)
                     {
                         var dataLine = reader.ReadLine();
@@ -209,7 +206,6 @@ namespace AnalysisManagerExtractionPlugin
                         {
                             LogWarning("MS-GF+ " + DYNAMIC_MOD_TAG + " line does not have an equals sign; ignoring " + dataLine);
                         }
-
                     }
                 }
 
@@ -220,7 +216,6 @@ namespace AnalysisManagerExtractionPlugin
                 LogError("Error reading the MS-GF+ param file", ex);
                 return false;
             }
-
         }
 
         /// <summary>
@@ -236,7 +231,6 @@ namespace AnalysisManagerExtractionPlugin
 
             try
             {
-
                 if (mDebugLevel >= 2)
                 {
                     LogDebug("Reading the SEQUEST parameter file: " + searchToolParamFilePath);
@@ -270,7 +264,6 @@ namespace AnalysisManagerExtractionPlugin
 
                             if (modDefParts.Length >= 2)
                             {
-
                                 for (var i = 0; i < modDefParts.Length; i += 2)
                                 {
                                     if (modDefParts.Length <= i + 1)
@@ -291,9 +284,7 @@ namespace AnalysisManagerExtractionPlugin
                                         runAscore = true;
                                         break;
                                     }
-
                                 }
-
                             }
                             else
                             {
@@ -317,7 +308,6 @@ namespace AnalysisManagerExtractionPlugin
                 LogError("Error reading the SEQUEST param file", ex);
                 return false;
             }
-
         }
 
         /// <summary>
@@ -331,7 +321,6 @@ namespace AnalysisManagerExtractionPlugin
 
             try
             {
-
                 if (mDebugLevel >= 2)
                 {
                     LogDebug("Reading the X!Tandem parameter file: " + searchToolParamFilePath);
@@ -433,7 +422,6 @@ namespace AnalysisManagerExtractionPlugin
 
                 return false;
             }
-
         }
 
         /// <summary>
@@ -946,7 +934,6 @@ namespace AnalysisManagerExtractionPlugin
                         // This file is not critical, so pass false to logFileNotFound
                         FileSearch.FindAndRetrieveMiscFiles(MSGFPlusUtils.MSGFPLUS_CONSOLE_OUTPUT_FILE, unzip: false,
                                                             searchArchivedDatasetDir: true, logFileNotFound: false);
-
                     }
 
                     // Manually add several files to skip
@@ -1046,7 +1033,6 @@ namespace AnalysisManagerExtractionPlugin
                         mStatusTools.UpdateAndWrite(EnumMgrStatus.RUNNING, EnumTaskStatus.RUNNING, EnumTaskStatusDetail.RUNNING_TOOL,
                                                      progressOverall, 0, "", "", "", false);
                     }
-
                 } // foreach cloned step
 
                 if (newestMzIdOrTsvFile <= DateTime.MinValue)
@@ -1124,14 +1110,12 @@ namespace AnalysisManagerExtractionPlugin
 
                 // Note that we'll obtain the MS-GF+ parameter file in RetrieveMiscFiles
                 return CloseOutType.CLOSEOUT_SUCCESS;
-
             }
             catch (Exception ex)
             {
                 LogError("Error in GetMSGFPlusFiles at step " + currentStep, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-
         }
 
         private CloseOutType GetMSAlignFiles()
@@ -1208,7 +1192,6 @@ namespace AnalysisManagerExtractionPlugin
 
             // Errors were reported in function call, so just return
             return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
-
         }
 
         /// <summary>
@@ -1377,7 +1360,6 @@ namespace AnalysisManagerExtractionPlugin
                 LogError("Error retrieving miscellaneous files", ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-
         }
 
         protected bool RetrieveToolVersionFile(string resultTypeName)
@@ -1435,6 +1417,5 @@ namespace AnalysisManagerExtractionPlugin
 
             return success;
         }
-
     }
 }

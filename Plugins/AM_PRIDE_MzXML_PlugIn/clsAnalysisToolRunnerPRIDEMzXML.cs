@@ -113,7 +113,6 @@ namespace AnalysisManagerPRIDEMzXMLPlugIn
             var success = CopyResultsToTransferDirectory();
 
             return success ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
-
         }
 
         /// <summary>

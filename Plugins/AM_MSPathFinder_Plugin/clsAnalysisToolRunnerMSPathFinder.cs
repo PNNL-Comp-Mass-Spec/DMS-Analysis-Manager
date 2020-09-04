@@ -69,7 +69,6 @@ namespace AnalysisManagerMSPathFinderPlugin
         /// <returns>CloseOutType enum indicating success or failure</returns>
         public override CloseOutType RunTool()
         {
-
             try
             {
                 // Call base class for initial setup
@@ -169,7 +168,6 @@ namespace AnalysisManagerMSPathFinderPlugin
                 var success = CopyResultsToTransferDirectory();
 
                 return success ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
-
             }
             catch (Exception ex)
             {
@@ -177,7 +175,6 @@ namespace AnalysisManagerMSPathFinderPlugin
                 LogError(mMessage, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-
         }
 
         /// <summary>
@@ -595,7 +592,10 @@ namespace AnalysisManagerMSPathFinderPlugin
         /// <param name="dynamicMods">List of Dynamic Mods</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks></remarks>
-        private bool ParseMSPathFinderModifications(ref string cmdLineOptions, int numMods, IReadOnlyCollection<string> staticMods,
+        private bool ParseMSPathFinderModifications(
+            ref string cmdLineOptions,
+            int numMods,
+            IReadOnlyCollection<string> staticMods,
             IReadOnlyCollection<string> dynamicMods)
         {
             const string MOD_FILE_NAME = "MSPathFinder_Mods.txt";
@@ -624,7 +624,6 @@ namespace AnalysisManagerMSPathFinderPlugin
                     {
                         foreach (var staticMod in staticMods)
                         {
-
                             if (ParseMSPathFinderValidateMod(staticMod, out var modClean))
                             {
                                 if (modClean.Contains(",opt,"))
@@ -655,7 +654,6 @@ namespace AnalysisManagerMSPathFinderPlugin
                     {
                         foreach (var dynamicMod in dynamicMods)
                         {
-
                             if (ParseMSPathFinderValidateMod(dynamicMod, out var modClean))
                             {
                                 if (modClean.Contains(",fix,"))
@@ -678,7 +676,6 @@ namespace AnalysisManagerMSPathFinderPlugin
                 }
 
                 success = true;
-
             }
             catch (Exception ex)
             {
@@ -699,7 +696,6 @@ namespace AnalysisManagerMSPathFinderPlugin
         /// <remarks></remarks>
         public CloseOutType ParseMSPathFinderParameterFile(bool fastaFileIsDecoy, out string cmdLineOptions, out bool tdaEnabled)
         {
-
             cmdLineOptions = string.Empty;
             tdaEnabled = false;
 
@@ -772,7 +768,6 @@ namespace AnalysisManagerMSPathFinderPlugin
                             dynamicMods.Add(paramValue);
                         }
                     }
-
                 }
             }
             catch (Exception ex)
@@ -1065,7 +1060,6 @@ namespace AnalysisManagerMSPathFinderPlugin
             };
 
             return StoreDotNETToolVersionInfo(progLoc, additionalDLLs);
-
         }
 
         #endregion

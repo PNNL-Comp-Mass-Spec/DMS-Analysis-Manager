@@ -7,13 +7,11 @@ using System.IO;
 
 namespace AnalysisManager_Mage_PlugIn
 {
-
     /// <summary>
     /// This class provides a generic base for MAC tool run operations common to all MAC tool plug-ins.
     /// </summary>
     public abstract class clsAnalysisToolRunnerMAC : clsAnalysisToolRunnerBase
     {
-
         #region "Constants"
 
         protected const string MAGE_LOG_FILE_NAME = "Mage_Log.txt";
@@ -50,7 +48,6 @@ namespace AnalysisManager_Mage_PlugIn
                 bool processingSuccess;
                 try
                 {
-
                     // Run the appropriate MAC pipeline(s) according to mode parameter
                     processingSuccess = RunMACTool();
 
@@ -81,7 +78,6 @@ namespace AnalysisManager_Mage_PlugIn
                     {
                         LogError(dataPackageSourceDirectoryName + " directory in the data package is empty or does not exist");
                     }
-
                 }
 
                 // Stop the job timer
@@ -112,7 +108,6 @@ namespace AnalysisManager_Mage_PlugIn
                 var success = CopyResultsToTransferDirectory();
 
                 return success ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
-
             }
             catch (Exception ex)
             {
@@ -120,7 +115,6 @@ namespace AnalysisManager_Mage_PlugIn
                 LogError(msg, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-
         }
 
         /// <summary>
@@ -134,7 +128,6 @@ namespace AnalysisManager_Mage_PlugIn
         /// <remarks></remarks>
         protected bool StoreToolVersionInfo()
         {
-
             string toolVersionInfo;
 
             if (mDebugLevel >= 2)
@@ -164,7 +157,6 @@ namespace AnalysisManager_Mage_PlugIn
                 LogError("Exception calling SetStepTaskToolVersion: " + ex.Message);
                 return false;
             }
-
         }
 
         /// <summary>
@@ -216,11 +208,9 @@ namespace AnalysisManager_Mage_PlugIn
                                 errorMessage = "is missing column " + columnName;
                                 return false;
                             }
-
                         }
                     }
                 }
-
             }
             catch (Exception ex)
             {
@@ -250,10 +240,8 @@ namespace AnalysisManager_Mage_PlugIn
                         var result = cmd.ExecuteScalar();
                         if (Convert.ToInt32(result) > 0)
                             tableFound = true;
-
                     }
                 }
-
             }
             catch (Exception ex)
             {
@@ -275,7 +263,6 @@ namespace AnalysisManager_Mage_PlugIn
         /// </summary>
         /// <returns></returns>
         protected abstract List<FileInfo> GetToolSupplementalVersionInfo();
-
 
     }
 }

@@ -182,7 +182,6 @@ namespace AnalysisManagerExtractionPlugin
 
                     while (reader.MoveNext())
                     {
-
                         intPsmCount++;
 
                         if (intPsmCount % 100 == 0 && DateTime.UtcNow.Subtract(dtLastProgress).TotalSeconds >= 15)
@@ -249,7 +248,6 @@ namespace AnalysisManagerExtractionPlugin
                             }
                         }
                     }
-
                 }
 
                 if (intPsmCount == 0)
@@ -316,6 +314,5 @@ namespace AnalysisManagerExtractionPlugin
                 return false;
             }
         }
-
     }
 }

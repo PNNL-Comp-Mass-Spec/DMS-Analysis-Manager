@@ -14,7 +14,6 @@ using System.Text.RegularExpressions;
 
 namespace AnalysisManagerNOMSIPlugin
 {
-
     /// <summary>
     /// Class for running NOMSI
     /// </summary>
@@ -163,7 +162,6 @@ namespace AnalysisManagerNOMSIPlugin
                 var success = CopyResultsToTransferDirectory();
 
                 return success ? eReturnCode : CloseOutType.CLOSEOUT_FAILED;
-
             }
             catch (Exception ex)
             {
@@ -171,7 +169,6 @@ namespace AnalysisManagerNOMSIPlugin
                 LogError(mMessage, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-
         }
 
         /// <summary>
@@ -179,7 +176,6 @@ namespace AnalysisManagerNOMSIPlugin
         /// </summary>
         public override void CopyFailedResultsToArchiveDirectory()
         {
-
             try
             {
                 var diWorkDir = new DirectoryInfo(mWorkDir);
@@ -187,7 +183,6 @@ namespace AnalysisManagerNOMSIPlugin
 
                 foreach (var file in fiSpectraFiles)
                     file.Delete();
-
             }
             catch (Exception)
             {
@@ -225,7 +220,6 @@ namespace AnalysisManagerNOMSIPlugin
             }
 
             return filesToMove.Count;
-
         }
 
         /// <summary>
@@ -248,7 +242,6 @@ namespace AnalysisManagerNOMSIPlugin
 
             try
             {
-
                 var reErrorMessage = new Regex(@"err\t\[(.+)\]", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
                 if (!File.Exists(strConsoleOutputFilePath))
@@ -268,7 +261,6 @@ namespace AnalysisManagerNOMSIPlugin
 
                 using (var reader = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
-
                     while (!reader.EndOfStream)
                     {
                         var dataLine = reader.ReadLine();
@@ -304,9 +296,7 @@ namespace AnalysisManagerNOMSIPlugin
                             mNoPeaksFound = true;
                         }
                     }
-
                 }
-
             }
             catch (Exception ex)
             {
@@ -316,7 +306,6 @@ namespace AnalysisManagerNOMSIPlugin
                     LogErrorNoMessageUpdate("Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
                 }
             }
-
         }
 
         private void PostProcessResultsOneScan(DirectoryInfo diZipWork, int scanCount, int scanNumber)
@@ -419,7 +408,6 @@ namespace AnalysisManagerNOMSIPlugin
                 {
                     writer.WriteLine(cmdRunner.CachedConsoleOutput);
                 }
-
             }
 
             if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))
@@ -469,12 +457,10 @@ namespace AnalysisManagerNOMSIPlugin
 
         private bool ProcessScansWithNOMSI(string progLoc, out bool noPeaksFound)
         {
-
             noPeaksFound = false;
 
             try
             {
-
                 mConsoleOutputErrorMsg = string.Empty;
 
                 LogMessage("Processing data using NOMSI");
@@ -565,7 +551,6 @@ namespace AnalysisManagerNOMSIPlugin
                 }
 
                 return true;
-
             }
             catch (Exception ex)
             {
@@ -573,7 +558,6 @@ namespace AnalysisManagerNOMSIPlugin
                 LogError(mMessage, ex);
                 return false;
             }
-
         }
 
         private void StoreConsoleErrorMessage(StreamReader reader, string firstDataLine)
@@ -593,7 +577,6 @@ namespace AnalysisManagerNOMSIPlugin
                 {
                     mConsoleOutputErrorMsg += "; " + dataLine;
                 }
-
             }
         }
 
@@ -673,7 +656,6 @@ namespace AnalysisManagerNOMSIPlugin
 
         void CmdRunner_LoopWaiting()
         {
-
             // Synchronize the stored Debug level with the value stored in the database
 
             {
@@ -688,9 +670,7 @@ namespace AnalysisManagerNOMSIPlugin
 
                     LogProgress("NOMSI");
                 }
-
             }
-
         }
 
         #endregion

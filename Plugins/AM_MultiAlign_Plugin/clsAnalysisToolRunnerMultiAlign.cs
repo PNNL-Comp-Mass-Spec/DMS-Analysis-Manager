@@ -137,7 +137,6 @@ namespace AnalysisManagerMultiAlignPlugIn
             var success = CopyResultsToTransferDirectory();
 
             return success ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
-
         }
 
         protected CloseOutType RenameLogFile()

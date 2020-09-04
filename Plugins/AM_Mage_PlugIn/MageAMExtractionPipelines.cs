@@ -5,7 +5,6 @@ using System;
 
 namespace AnalysisManager_Mage_PlugIn
 {
-
     /// <summary>
     /// Class that defines basic Mage pipelines and functions that
     /// provide sub-operations that make up file extraction operations
@@ -16,7 +15,6 @@ namespace AnalysisManager_Mage_PlugIn
     /// </summary>
     public class MageAMExtractionPipelines : MageAMPipelineBase
     {
-
         #region Member Variables
 
         /// <summary>
@@ -74,7 +72,6 @@ namespace AnalysisManager_Mage_PlugIn
             ExtractionParams.KeepAllResults = GetJobParam("KeepAllResults", "Yes");
             ExtractionParams.ResultFilterSetID = GetJobParam("ResultFilterSetID", "All Pass");
             ExtractionParams.MSGFCutoff = GetJobParam("MSGFCutoff", "All Pass");
-
         }
 
         /// <summary>

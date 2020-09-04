@@ -534,7 +534,6 @@ namespace MSMSSpectrumFilterAM
 
         private bool GenerateFinniganScanStatsFiles()
         {
-
             try
             {
                 if (mDebugLevel >= 1)
@@ -612,7 +611,6 @@ namespace MSMSSpectrumFilterAM
                 LogErrors("GenerateFinniganScanStatsFiles", "Error generating _ScanStats.txt files", ex);
                 return false;
             }
-
         }
 
         private DateTime mLastStatusUpdate = DateTime.MinValue;

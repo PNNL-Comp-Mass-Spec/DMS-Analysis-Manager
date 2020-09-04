@@ -25,7 +25,6 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
         {
             try
             {
-
                 // Do the base class stuff
                 if (base.RunTool() != CloseOutType.CLOSEOUT_SUCCESS)
                 {
@@ -145,16 +144,13 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                 var success = CopyResultsToTransferDirectory();
 
                 return success ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
-
             }
             catch (Exception ex)
             {
                 mMessage = "Error in MultiAlignPlugin->RunTool";
                 LogError(mMessage, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
-
             }
-
         }
 
         /// <summary>
@@ -178,7 +174,6 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                     else
                         mMessage = "Unknown error running MultiAlign";
                 }
-
             }
             catch (Exception ex)
             {
@@ -188,7 +183,6 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
             }
 
             return bSuccess;
-
         }
 
         /// <summary>
@@ -197,7 +191,6 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
         /// <remarks></remarks>
         protected bool StoreToolVersionInfo(string strMultiAlignProgLoc)
         {
-
             var toolVersionInfo = string.Empty;
 
             if (mDebugLevel >= 2)
@@ -260,7 +253,6 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                 LogError("Exception calling SetStepTaskToolVersion: " + ex.Message);
                 return false;
             }
-
         }
 
         /// <summary>
@@ -271,7 +263,6 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
         /// <returns></returns>
         private bool ZipPlotsDirectory(DirectoryInfo plotsDirectory, int fileCountThreshold = 50)
         {
-
             try
             {
                 if (fileCountThreshold < 10)
@@ -333,10 +324,8 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                             else if (errorCount == 10)
                                 LogError("Over 10 exceptions deleting plot files; additional exceptions will not be logged");
                         }
-
                     }
                 }
-
             }
             catch (Exception ex)
             {
@@ -345,9 +334,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
             }
 
             return true;
-
         }
-
     }
 }
 

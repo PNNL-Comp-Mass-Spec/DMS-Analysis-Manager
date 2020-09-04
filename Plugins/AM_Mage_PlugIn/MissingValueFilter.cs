@@ -2,10 +2,8 @@
 
 namespace AnalysisManager_Mage_PlugIn
 {
-
     public class MissingValueFilter : ContentFilter
     {
-
         private int _fillColIdx;
         private string _rememberedFillValue = "";
 
@@ -19,7 +17,6 @@ namespace AnalysisManager_Mage_PlugIn
         // handle a data row - make sure alias field has an appropriate value
         protected override bool CheckFilter(ref string[] vals)
         {
-
             var val = vals[_fillColIdx];
             if (string.IsNullOrEmpty(val))
             {
@@ -37,6 +34,5 @@ namespace AnalysisManager_Mage_PlugIn
             }
             return true;
         }
-
     }
 }

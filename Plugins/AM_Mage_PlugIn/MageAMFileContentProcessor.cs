@@ -4,14 +4,12 @@ using System.IO;
 
 namespace AnalysisManager_Mage_PlugIn
 {
-
     /// <summary>
     /// Subclass of the Mage FileContentProcessor class 
     /// that performs processes specific to the MAC Mage plug-in
     /// </summary>
     public class MageAMFileContentProcessor : FileContentProcessor
     {
-
         #region Member Variables
 
         // Specific set of allowed file names.
