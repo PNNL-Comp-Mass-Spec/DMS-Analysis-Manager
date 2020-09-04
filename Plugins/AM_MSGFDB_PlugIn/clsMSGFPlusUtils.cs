@@ -2833,7 +2833,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             //
             // As of March 23, 2015, if the user is searching for Phospho mods with TMT labeling enabled,
             // MS-GF+ will use a model trained for TMT peptides (without phospho)
-            // In this case, the user should probably use a parameter file with Protocol=1 defined (which leads to sbOptions having "-protocol 1")
+            // In this case, the user should probably use a parameter file with Protocol=1 defined (which leads to Options having "-protocol 1")
 
             // By default, MS-GF+ filters out spectra with fewer than 10 data points
             // Override this threshold to 5 data points (if not yet defined)

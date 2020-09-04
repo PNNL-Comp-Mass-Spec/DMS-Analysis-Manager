@@ -1755,10 +1755,10 @@ namespace AnalysisManagerMSGFPlugin
                     using (var reader = new StreamReader(new FileStream(resultFileTempPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                     using (var writer = new StreamWriter(new FileStream(msgfResultsFilePathFinal, FileMode.Append, FileAccess.Write, FileShare.Read)))
                     {
-                        // Read and skip the first line of srTempResults (it's a header)
+                        // Read and skip the first line of resultFileTempPath (it's a header)
                         reader.ReadLine();
 
-                        // Append the remaining lines to swFinalResults
+                        // Append the remaining lines to msgfResultsFilePathFinal
                         while (!reader.EndOfStream)
                         {
                             writer.WriteLine(reader.ReadLine());
@@ -2014,7 +2014,7 @@ namespace AnalysisManagerMSGFPlugin
             // Write out all matches for each spectrum
             arguments += " -x 0";
 
-            // SpecProbThreshold threshold of 1, i.e., do not filter results by the computed SpecProb value
+            // SpecProbThreshold of 1, i.e., do not filter results by the computed SpecProb value
             arguments += " -p 1";
 
             LogDebug(mJavaProgLoc + " " + arguments);

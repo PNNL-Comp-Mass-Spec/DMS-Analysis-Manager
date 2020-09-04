@@ -14,7 +14,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// </summary>
         /// <remarks>
         /// Also set to true if the constructor that accepts an MSGFPlusParameter is called,
-        /// since this is a new parameter that needs to be included when when re-writing the parameter file</remarks>
+        /// since this is a new parameter that needs to be included when re-writing the parameter file</remarks>
         public bool LineUpdated { get; private set; }
 
         /// <summary>
