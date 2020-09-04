@@ -23,6 +23,7 @@ namespace AnalysisManagerExtractionPlugin
     /// <remarks></remarks>
     public class clsAnalysisResourcesExtraction : clsAnalysisResources
     {
+        // Ignore Spelling: Defs, diff, bioml, Parm, mgf, MODa, msgfdb, foreach, dta
 
         /// <summary>
         /// ModDefs file suffix
@@ -1209,54 +1210,6 @@ namespace AnalysisManagerExtractionPlugin
             return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
 
         }
-
-        // Deprecated function
-        //
-        ///// <summary>
-        ///// Copies the default Mass Correction Tags file to the working directory
-        ///// </summary>
-        ///// <returns>True if success, otherwise false</returns>
-        ///// <remarks></remarks>
-        //protected bool RetrieveDefaultMassCorrectionTagsFile()
-        //{
-        //    try
-        //    {
-        //        var paramFileStoragePath = mJobParams.GetParam("ParmFileStoragePath");
-        //        var ioFolderInfo = new DirectoryInfo(paramFileStoragePath).Parent;
-        //
-        //        var ioSubfolders = ioFolderInfo.GetDirectories("MassCorrectionTags");
-        //
-        //        if (ioSubfolders.Length == 0)
-        //        {
-        //            mMessage = "MassCorrectionTags folder not found at " + ioFolderInfo.FullName;
-        //            LogError(mMessage);
-        //            return false;
-        //        }
-        //
-        //        var ioFiles = ioSubfolders[0].GetFiles(MASS_CORRECTION_TAGS_FILENAME);
-        //        if (ioFiles.Length == 0)
-        //        {
-        //            mMessage = MASS_CORRECTION_TAGS_FILENAME + " file not found at " + ioSubfolders[0].FullName;
-        //            LogError(mMessage);
-        //            return false;
-        //        }
-        //
-        //        if (mDebugLevel >= 1)
-        //        {
-        //            LogError("Retrieving default Mass Correction Tags file from " + ioFiles[0].FullName);
-        //        }
-        //
-        //        ioFiles[0].CopyTo(Path.Combine(mWorkDir, ioFiles[0].Name));
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        mMessage = "Error retrieving " + MASS_CORRECTION_TAGS_FILENAME;
-        //        LogError(mMessage + ": " + ex.Message);
-        //        return false;
-        //    }
-        //
-        //    return true;
-        //}
 
         /// <summary>
         /// Examine residuesToSearch to look for any residue in residuesToFind

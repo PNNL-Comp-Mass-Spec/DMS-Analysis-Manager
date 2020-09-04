@@ -322,60 +322,6 @@ namespace AnalysisManagerProMexPlugIn
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
-        /// <summary>
-        /// Validates that the modification definition text
-        /// </summary>
-        /// <param name="strMod">Modification definition</param>
-        /// <param name="strModClean">Cleaned-up modification definition (output param)</param>
-        /// <returns>True if valid; false if invalid</returns>
-        /// <remarks>Valid modification definition contains 5 parts and doesn't contain any whitespace</remarks>
-        protected bool ParseProMexValidateMod(string strMod, out string strModClean)
-        {
-            var strComment = string.Empty;
-
-            strModClean = string.Empty;
-
-            var intPoundIndex = strMod.IndexOf('#');
-            if (intPoundIndex > 0)
-            {
-                strComment = strMod.Substring(intPoundIndex);
-                strMod = strMod.Substring(0, intPoundIndex - 1).Trim();
-            }
-
-            var strSplitMod = strMod.Split(',');
-
-            if (strSplitMod.Length < 5)
-            {
-                // Invalid mod definition; must have 5 sections
-                LogError("Invalid modification string; must have 5 sections: " + strMod);
-                return false;
-            }
-
-            // Make sure mod does not have both * and any
-            if (strSplitMod[1].Trim() == "*" && strSplitMod[3].ToLower().Trim() == "any")
-            {
-                LogError("Modification cannot contain both * and any: " + strMod);
-                return false;
-            }
-
-            // Reconstruct the mod definition, making sure there is no whitespace
-            strModClean = strSplitMod[0].Trim();
-            for (var intIndex = 1; intIndex <= strSplitMod.Length - 1; intIndex++)
-            {
-                strModClean += "," + strSplitMod[intIndex].Trim();
-            }
-
-            if (!string.IsNullOrWhiteSpace(strComment))
-            {
-                // As of August 12, 2011, the comment cannot contain a comma
-                // Sangtae Kim has promised to fix this, but for now, we'll replace commas with semicolons
-                strComment = strComment.Replace(",", ";");
-                strModClean += "     " + strComment;
-            }
-
-            return true;
-        }
-
         private bool PostProcessProMexResults(FileSystemInfo fiResultsFile)
         {
             // Make sure there are at least two features in the .ms1ft file
