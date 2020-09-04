@@ -448,7 +448,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             // paramFile will contain the path to either the original parameter file or the customized one
 
             result = mMSGFPlusUtils.ParseMSGFPlusParameterFile(
-                fastaFileSizeKB, fastaFileIsDecoy, assumedScanType, scanTypeFilePath,
+                fastaFileIsDecoy, assumedScanType, scanTypeFilePath,
                 instrumentGroup, paramFilePath, overrideParams,
                 out var sourceParamFile, out var finalParamFile);
 

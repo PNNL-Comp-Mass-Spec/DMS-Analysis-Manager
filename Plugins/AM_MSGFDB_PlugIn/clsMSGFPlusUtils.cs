@@ -2352,7 +2352,6 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Read the MS-GF+ options file and optionally create a new, customized version
         /// </summary>
-        /// <param name="fastaFileSizeKB">Size of the .Fasta file, in KB</param>
         /// <param name="fastaFileIsDecoy">True if the fasta file has had forward and reverse index files created</param>
         /// <param name="assumedScanType">Empty string if no assumed scan type; otherwise CID, ETD, or HCD</param>
         /// <param name="scanTypeFilePath">The path to the ScanType file (which lists the scan type for each scan); should be empty string if no ScanType file</param>
@@ -2363,14 +2362,14 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <returns>Options string if success; empty string if an error</returns>
         /// <remarks></remarks>
         public CloseOutType ParseMSGFPlusParameterFile(
-            float fastaFileSizeKB, bool fastaFileIsDecoy, string assumedScanType,
+            bool fastaFileIsDecoy, string assumedScanType,
             string scanTypeFilePath, string instrumentGroup, string sourceParameterFilePath,
             out FileInfo sourceParamFile, out FileInfo finalParamFile)
         {
             var overrideParams = new Dictionary<string, string>();
 
             return ParseMSGFPlusParameterFile(
-                fastaFileSizeKB, fastaFileIsDecoy, assumedScanType,
+                fastaFileIsDecoy, assumedScanType,
                 scanTypeFilePath, instrumentGroup, sourceParameterFilePath,
                 overrideParams, out sourceParamFile, out finalParamFile);
         }
@@ -2378,7 +2377,6 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Read the MS-GF+ options file and create a new, customized version
         /// </summary>
-        /// <param name="fastaFileSizeKB">Size of the .Fasta file, in KB (unused)</param>
         /// <param name="fastaFileIsDecoy">True if the fasta file has had forward and reverse index files created</param>
         /// <param name="assumedScanType">Empty string if no assumed scan type; otherwise CID, ETD, or HCD</param>
         /// <param name="scanTypeFilePath">The path to the ScanType file (which lists the scan type for each scan); should be empty string if no ScanType file</param>
@@ -2390,7 +2388,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <returns>CloseOutType.CLOSEOUT_SUCCESS, otherwise an error code</returns>
         /// <remarks></remarks>
         public CloseOutType ParseMSGFPlusParameterFile(
-            float fastaFileSizeKB, bool fastaFileIsDecoy, string assumedScanType,
+            bool fastaFileIsDecoy, string assumedScanType,
             string scanTypeFilePath, string instrumentGroup, string sourceParameterFilePath,
             Dictionary<string, string> overrideParams,
             out FileInfo sourceParamFile, out FileInfo finalParamFile)

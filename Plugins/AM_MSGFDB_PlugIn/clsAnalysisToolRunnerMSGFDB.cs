@@ -329,7 +329,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             // Read the MSGFPlus Parameter File and optionally create a new one with customized parameters
             // paramFile will contain the path to either the original parameter file or the customized one
             result = mMSGFPlusUtils.ParseMSGFPlusParameterFile(
-                fastaFileSizeKB, fastaFileIsDecoy, assumedScanType, scanTypeFilePath,
+                fastaFileIsDecoy, assumedScanType, scanTypeFilePath,
                 instrumentGroup, parameterFilePath,
                 out var sourceParamFile, out var finalParamFile);
 
