@@ -172,7 +172,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 else
                 {
                     var msXmlOutputType = mJobParams.GetJobParameter("MSXMLOutputType", string.Empty);
-                    if (msXmlOutputType.ToLower() == "mzxml")
+                    if (string.Equals(msXmlOutputType, "mzxml", StringComparison.OrdinalIgnoreCase))
                     {
                         msXmlFileExtension = clsAnalysisResources.DOT_MZXML_EXTENSION;
                     }
@@ -437,7 +437,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             var overrideParams = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
             var jobScript = mJobParams.GetJobParameter("ToolName", "");
-            if (jobScript.ToLower().StartsWith("modplus"))
+            if (jobScript.StartsWith("modplus", StringComparison.OrdinalIgnoreCase))
             {
                 if (fastaFileIsDecoy)
                 {

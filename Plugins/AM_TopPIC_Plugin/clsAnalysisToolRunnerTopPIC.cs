@@ -1114,7 +1114,7 @@ namespace AnalysisManagerTopPICPlugIn
             var proteinOptions = mJobParams.GetParam("ProteinOptions");
             if (!string.IsNullOrEmpty(proteinOptions))
             {
-                if (proteinOptions.ToLower().Contains("seq_direction=decoy"))
+                if (proteinOptions.IndexOf("seq_direction=decoy", StringComparison.OrdinalIgnoreCase) >= 0)
                 {
                     fastaFileIsDecoy = true;
                 }

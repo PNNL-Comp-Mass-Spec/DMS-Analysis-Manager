@@ -137,7 +137,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                 return true;
             }
 
-            if (paramFileName.ToLower().StartsWith("xxx_ascore_") || paramFileName.ToLower().StartsWith("xxx_undefined"))
+            if (paramFileName.StartsWith("xxx_ascore_", StringComparison.OrdinalIgnoreCase) || paramFileName.StartsWith("xxx_undefined", StringComparison.OrdinalIgnoreCase))
             {
                 // Dummy parameter file; ignore it
                 // Update the job parameter to be an empty string so that this parameter is ignored in BuildInputFile

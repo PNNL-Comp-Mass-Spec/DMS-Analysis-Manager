@@ -414,7 +414,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                     foreach (var TmpFile_loopVariable in Files)
                     {
                         var TmpFile = TmpFile_loopVariable;
-                        if (!string.IsNullOrWhiteSpace(alignmentDataset) && TmpFile.ToLower().Contains(alignmentDataset.ToLower()))
+                        if (!string.IsNullOrWhiteSpace(alignmentDataset) && TmpFile.IndexOf(alignmentDataset, StringComparison.OrdinalIgnoreCase) >= 0)
                         {
                             // Append an asterisk to this dataset's path to indicate that it is the base dataset to which the others will be aligned
                             writer.WriteLine(TmpFile + "*");

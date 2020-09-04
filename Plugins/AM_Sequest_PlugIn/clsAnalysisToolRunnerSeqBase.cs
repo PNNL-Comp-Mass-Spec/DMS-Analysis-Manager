@@ -763,7 +763,7 @@ namespace AnalysisManagerSequestPlugin
                                 continue;
 
                             var dataLineTrimmed = dataLine.Trim();
-                            if (!dataLineTrimmed.ToLower().StartsWith("TurboSEQUEST".ToLower()))
+                            if (!dataLineTrimmed.StartsWith("TurboSEQUEST", StringComparison.OrdinalIgnoreCase))
                                 continue;
 
                             toolVersionInfo = dataLineTrimmed;
@@ -1124,7 +1124,7 @@ namespace AnalysisManagerSequestPlugin
                     }
 
                     // Determine the median number of spectra processed (ignoring the head nodes)
-                    var ratesFiltered = (from item in hostProcessingRates where !item.Key.ToLower().Contains("seqcluster") select item.Value).ToList();
+                    var ratesFiltered = (from item in hostProcessingRates where !(item.Key.IndexOf("seqcluster", StringComparison.OrdinalIgnoreCase) >= 0) select item.Value).ToList();
                     var processingRateMedian = ComputeMedian(ratesFiltered);
 
                     // Only show warnings if processingRateMedian is at least 10; otherwise, we don't have enough sampling statistics
@@ -1140,7 +1140,7 @@ namespace AnalysisManagerSequestPlugin
                             var hostName = item.Key;
                             var hostProcessingRate = item.Value;
 
-                            if (hostProcessingRate < lowThresholdRate && !hostName.ToLower().Contains("seqcluster"))
+                            if (hostProcessingRate < lowThresholdRate && !(hostName.IndexOf("seqcluster", StringComparison.OrdinalIgnoreCase) >= 0))
                             {
                                 warningCount = +1;
                             }
@@ -1171,7 +1171,7 @@ namespace AnalysisManagerSequestPlugin
                             var hostName = item.Key;
                             var hostProcessingRate = item.Value;
 
-                            if (hostProcessingRate > highThresholdRate && !hostName.ToLower().Contains("seqcluster"))
+                            if (hostProcessingRate > highThresholdRate && !(hostName.IndexOf("seqcluster", StringComparison.OrdinalIgnoreCase) >= 0))
                             {
                                 warningCount = +1;
                             }

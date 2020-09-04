@@ -619,7 +619,7 @@ namespace AnalysisManagerIDPickerPlugIn
 
                     foreach (var prefix in reversedProteinPrefixes)
                     {
-                        if (protein.ToLower().StartsWith(prefix.ToLower()))
+                        if (protein.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
                         {
                             var proteinPrefix = protein.Substring(0, prefix.Length);
 
@@ -1163,7 +1163,7 @@ namespace AnalysisManagerIDPickerPlugIn
                     mDotNetZipTools.DebugLevel = mDebugLevel;
                     success = mDotNetZipTools.ZipDirectory(reportFolder.FullName, zippedResultsFilePath, true);
 
-                    if (!success && mDotNetZipTools.Message.ToLower().Contains("OutOfMemoryException".ToLower()))
+                    if (!success && mDotNetZipTools.Message.IndexOf("OutOfMemoryException", StringComparison.OrdinalIgnoreCase) >= 0)
                     {
                         mNeedToAbortProcessing = true;
                     }
@@ -1283,7 +1283,7 @@ namespace AnalysisManagerIDPickerPlugIn
                 // Note that ProgRunner will have already included them in the ConsoleOutput.txt file
                 foreach (var error in mCmdRunnerErrors)
                 {
-                    if (!error.ToLower().StartsWith("warning"))
+                    if (!error.StartsWith("warning", StringComparison.OrdinalIgnoreCase))
                     {
                         LogError("... " + error);
                     }

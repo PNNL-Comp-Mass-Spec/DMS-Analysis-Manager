@@ -133,7 +133,7 @@ namespace AnalysisManagerExtractionPlugin
                             var lineIn = reader.ReadLine();
                             if (!string.IsNullOrWhiteSpace(lineIn))
                             {
-                                if (lineIn.ToLower().Contains("error"))
+                                if (lineIn.IndexOf("error", StringComparison.OrdinalIgnoreCase) >= 0)
                                 {
                                     ErrMsg += "; " + lineIn;
                                     OnWarningEvent(ErrMsg);

@@ -482,7 +482,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
                             continue;
                         }
 
-                        if (dataLine.ToLower().StartsWith("error occurred"))
+                        if (dataLine.StartsWith("error occurred", StringComparison.OrdinalIgnoreCase))
                         {
                             StoreConsoleErrorMessage(reader, dataLine);
                         }

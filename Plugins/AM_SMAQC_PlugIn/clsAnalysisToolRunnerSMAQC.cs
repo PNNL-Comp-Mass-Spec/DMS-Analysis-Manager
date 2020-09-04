@@ -607,7 +607,7 @@ namespace AnalysisManagerSMAQCPlugIn
                         }
                         else if (string.IsNullOrEmpty(mConsoleOutputErrorMsg))
                         {
-                            if (dataLineNoTimestamp.ToLower().Contains("error"))
+                            if (dataLineNoTimestamp.IndexOf("error", StringComparison.OrdinalIgnoreCase) >= 0)
                             {
                                 mConsoleOutputErrorMsg += "; " + dataLineNoTimestamp;
                             }

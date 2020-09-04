@@ -595,7 +595,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                             if (scriptName.StartsWith("MSAlign_Bruker", StringComparison.OrdinalIgnoreCase) ||
                                 scriptName.StartsWith("MSAlign_Histone", StringComparison.OrdinalIgnoreCase))
                             {
-                                if (value.ToUpper() == "FILE")
+                                if (string.Equals(value, "FILE", StringComparison.OrdinalIgnoreCase))
                                 {
                                     mMessage = "Must specify an explicit scan type for " + keyName +
                                                 " in the MSAlign parameter file (CID, HCD, or ETD)";
@@ -610,12 +610,12 @@ namespace AnalysisManagerMSAlignHistonePlugIn
 
                         if (keyName.ToLower() == SEARCH_TYPE_KEY)
                         {
-                            if (value.ToUpper() == "TARGET+DECOY")
+                            if (string.Equals(value, "TARGET+DECOY", StringComparison.OrdinalIgnoreCase))
                             {
                                 // Make sure the protein collection is not a Decoy protein collection
                                 var proteinOptions = mJobParams.GetParam("ProteinOptions");
 
-                                if (proteinOptions.ToLower().Contains("seq_direction=decoy"))
+                                if (proteinOptions.IndexOf("seq_direction=decoy", StringComparison.OrdinalIgnoreCase) >= 0)
                                 {
                                     mMessage =
                                         "MSAlign parameter file contains searchType=TARGET+DECOY; " +
@@ -830,7 +830,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                                 // Originally the second line was the MSAlign version
                                 // Starting in November 2016, the first line is the command line and the second line is a separator (series of dashes)
                                 // The fourth line is the MSAlign version
-                                if (string.IsNullOrEmpty(mMSAlignVersion) && dataLine.ToLower().Contains("ms-align"))
+                                if (string.IsNullOrEmpty(mMSAlignVersion) && dataLine.IndexOf("ms-align", StringComparison.OrdinalIgnoreCase) >= 0)
                                 {
                                     if (mDebugLevel >= 2 && string.IsNullOrWhiteSpace(mMSAlignVersion))
                                     {
@@ -841,7 +841,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                                 }
                                 else
                                 {
-                                    if (dataLine.ToLower().Contains("error") || dataLine.Contains("[ java.lang"))
+                                    if (dataLine.IndexOf("error", StringComparison.OrdinalIgnoreCase) >= 0 || dataLine.Contains("[ java.lang"))
                                     {
                                         mConsoleOutputErrorMsg = "Error running MSAlign: " + dataLine;
                                     }

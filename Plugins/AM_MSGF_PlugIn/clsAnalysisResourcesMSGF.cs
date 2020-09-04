@@ -56,7 +56,7 @@ namespace AnalysisManagerMSGFPlugin
 
             var scriptName = mJobParams.GetParam("ToolName");
 
-            if (!scriptName.ToLower().StartsWith("MSGFPlus".ToLower()))
+            if (!scriptName.StartsWith("MSGFPlus", StringComparison.OrdinalIgnoreCase))
             {
                 // Make sure the machine has enough free memory to run MSGF
                 if (!ValidateFreeMemorySize("MSGFJavaMemorySize"))

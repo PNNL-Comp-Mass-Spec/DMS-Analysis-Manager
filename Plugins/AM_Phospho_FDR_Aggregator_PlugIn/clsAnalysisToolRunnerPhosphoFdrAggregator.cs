@@ -375,7 +375,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                                 if (headerLine == null)
                                     continue;
 
-                                var replaceFirstColumnWithJob = headerLine.ToLower().StartsWith("job");
+                                var replaceFirstColumnWithJob = headerLine.StartsWith("job", StringComparison.OrdinalIgnoreCase);
 
                                 if (firstFileProcessed)
                                 {
@@ -454,17 +454,17 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
 
             var datasetType = DatasetTypeConstants.Unknown;
 
-            if (settingsFileName.ToLower().Contains("_cid"))
+            if (settingsFileName.IndexOf("_cid", StringComparison.OrdinalIgnoreCase) >= 0)
             {
                 datasetType = DatasetTypeConstants.CID;
             }
 
-            if (settingsFileName.ToLower().Contains("_etd"))
+            if (settingsFileName.IndexOf("_etd", StringComparison.OrdinalIgnoreCase) >= 0)
             {
                 datasetType = DatasetTypeConstants.ETD;
             }
 
-            if (settingsFileName.ToLower().Contains("_hcd"))
+            if (settingsFileName.IndexOf("_hcd", StringComparison.OrdinalIgnoreCase) >= 0)
             {
                 datasetType = DatasetTypeConstants.HCD;
             }
@@ -517,7 +517,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
             var synFile = string.Empty;
             var runningSequest = false;
 
-            if (udtJobMetadata.ToolName.ToLower().StartsWith("sequest"))
+            if (udtJobMetadata.ToolName.StartsWith("sequest", StringComparison.OrdinalIgnoreCase))
             {
                 runningSequest = true;
                 fhtFile = udtJobMetadata.Dataset + "_fht.txt";
@@ -525,14 +525,14 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                 udtJobMetadata.ToolNameForAScore = "sequest";
             }
 
-            if (udtJobMetadata.ToolName.ToLower().StartsWith("xtandem"))
+            if (udtJobMetadata.ToolName.StartsWith("xtandem", StringComparison.OrdinalIgnoreCase))
             {
                 fhtFile = udtJobMetadata.Dataset + "_xt_fht.txt";
                 synFile = udtJobMetadata.Dataset + "_xt_syn.txt";
                 udtJobMetadata.ToolNameForAScore = "xtandem";
             }
 
-            if (udtJobMetadata.ToolName.ToLower().StartsWith("msgfplus"))
+            if (udtJobMetadata.ToolName.StartsWith("msgfplus", StringComparison.OrdinalIgnoreCase))
             {
                 fhtFile = udtJobMetadata.Dataset + "_msgfplus_fht.txt";
                 synFile = udtJobMetadata.Dataset + "_msgfplus_syn.txt";

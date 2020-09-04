@@ -765,11 +765,11 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                         {
                             sbOptions.Append(" -" + strArgumentSwitch + " " + value);
                         }
-                        else if (key.ToLower() == "adducts")
+                        else if (string.Equals(key, "adducts", StringComparison.OrdinalIgnoreCase))
                         {
                             sbOptions.Append(" -adducts " + "\"" + value + "\"");
                         }
-                        else if (key.ToLower() == "noscangroups")
+                        else if (string.Equals(key, "noscangroups", StringComparison.OrdinalIgnoreCase))
                         {
                             if (bool.TryParse(value, out var blnValue))
                             {

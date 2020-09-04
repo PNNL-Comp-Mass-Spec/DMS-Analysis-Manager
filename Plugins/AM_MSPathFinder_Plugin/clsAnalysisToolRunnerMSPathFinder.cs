@@ -239,7 +239,7 @@ namespace AnalysisManagerMSPathFinderPlugin
             var proteinOptions = mJobParams.GetParam("ProteinOptions");
             if (!string.IsNullOrEmpty(proteinOptions))
             {
-                if (proteinOptions.ToLower().Contains("seq_direction=decoy"))
+                if (proteinOptions.IndexOf("seq_direction=decoy", StringComparison.OrdinalIgnoreCase) >= 0)
                 {
                     fastaFileIsDecoy = true;
                 }
@@ -250,7 +250,7 @@ namespace AnalysisManagerMSPathFinderPlugin
 
         private bool LineStartsWith(string dataLine, string matchString)
         {
-            return dataLine.ToLower().StartsWith(matchString.ToLower());
+            return dataLine.StartsWith(matchString, StringComparison.OrdinalIgnoreCase);
         }
 
         private readonly Regex mPromexFeatureStats = new Regex(@"ProMex[^\d]+(\d+)/(\d+) features loaded", RegexOptions.Compiled | RegexOptions.IgnoreCase);

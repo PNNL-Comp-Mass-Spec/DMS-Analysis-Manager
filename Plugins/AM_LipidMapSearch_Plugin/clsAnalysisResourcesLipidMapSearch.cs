@@ -97,7 +97,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                 return false;
             }
 
-            if (!strDeconToolsFolderName.ToUpper().StartsWith("DLS"))
+            if (!strDeconToolsFolderName.StartsWith("DLS", System.StringComparison.OrdinalIgnoreCase))
             {
                 mMessage = "InputFolderName step parameter is not a DeconTools folder; it should start with DLS and is auto-determined by the SourceJob SpecialProcessing text";
                 LogError(mMessage);
@@ -201,14 +201,14 @@ namespace AnalysisManagerLipidMapSearchPlugIn
             var diInputFolder = new DirectoryInfo(strInputFolder);
             var diInputFolderArchive = new DirectoryInfo(strInputFolderArchive);
 
-            if (!diInputFolder.Name.ToUpper().StartsWith("DLS"))
+            if (!diInputFolder.Name.StartsWith("DLS", System.StringComparison.OrdinalIgnoreCase))
             {
                 mMessage = "SourceJob2FolderPath is not a DeconTools folder; the last folder should start with DLS and is auto-determined by the SourceJob2 SpecialProcessing text";
                 LogError(mMessage);
                 return false;
             }
 
-            if (!diInputFolderArchive.Name.ToUpper().StartsWith("DLS"))
+            if (!diInputFolderArchive.Name.StartsWith("DLS", System.StringComparison.OrdinalIgnoreCase))
             {
                 mMessage = "SourceJob2FolderPathArchive is not a DeconTools folder; the last folder should start with DLS and is auto-determined by the SourceJob2 SpecialProcessing text";
                 LogError(mMessage);

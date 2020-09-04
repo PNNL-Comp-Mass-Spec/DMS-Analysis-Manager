@@ -433,7 +433,7 @@ namespace AnalysisManagerMODPlusPlugin
             var strDatasetType = mJobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetType");
             var instrumentResolutionMsMs = LOW_RES_FLAG;
 
-            if (strDatasetType.ToLower().EndsWith("hmsn"))
+            if (strDatasetType.EndsWith("hmsn", StringComparison.OrdinalIgnoreCase))
             {
                 instrumentResolutionMsMs = HIGH_RES_FLAG;
             }
@@ -823,7 +823,7 @@ namespace AnalysisManagerMODPlusPlugin
                 var spectrumFileName = mDatasetName;
 
                 var msXmlOutputType = mJobParams.GetJobParameter("MSXMLOutputType", string.Empty);
-                if (msXmlOutputType.ToLower() == "mzxml")
+                if (string.Equals(msXmlOutputType, "mzxml", StringComparison.OrdinalIgnoreCase))
                 {
                     spectrumFileName += clsAnalysisResources.DOT_MZXML_EXTENSION;
                 }

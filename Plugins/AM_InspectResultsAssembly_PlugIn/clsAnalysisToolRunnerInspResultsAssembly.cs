@@ -676,7 +676,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                             continue;
                         }
 
-                        if (dataLineTrimmed.ToLower().StartsWith("mod"))
+                        if (dataLineTrimmed.StartsWith("mod", StringComparison.OrdinalIgnoreCase))
                         {
                             // Modification definition line
 
@@ -1255,7 +1255,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                         if (linesRead == 1)
                         {
                             // Verify that splitLine[3] is "Protein"
-                            if (!splitLine[3].ToLower().StartsWith("protein"))
+                            if (!splitLine[3].StartsWith("protein", StringComparison.OrdinalIgnoreCase))
                             {
                                 LogWarning("The fourth column in the Inspect results file does not start with 'Protein'; this is unexpected");
                             }

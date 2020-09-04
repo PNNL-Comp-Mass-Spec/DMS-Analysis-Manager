@@ -45,7 +45,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 throw new ArgumentOutOfRangeException(nameof(msXmlFormat), "ReAdW only supports mzXML and mzML as an output format, not " + msXmlFormat);
             }
 
-            if (mProgramPath.ToLower().Contains(@"\v2."))
+            if (mProgramPath.IndexOf(@"\v2.", StringComparison.OrdinalIgnoreCase) >= 0)
             {
                 // Version 2.x syntax
                 // Syntax is: readw <raw file path> <c/p> [<output file>]

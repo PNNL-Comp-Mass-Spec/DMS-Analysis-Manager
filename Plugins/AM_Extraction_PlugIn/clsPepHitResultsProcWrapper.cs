@@ -243,7 +243,7 @@ namespace AnalysisManagerExtractionPlugin
                                 if (string.IsNullOrWhiteSpace(lineIn))
                                     continue;
 
-                                if (!lineIn.ToLower().Contains("error"))
+                                if (!(lineIn.IndexOf("error", StringComparison.OrdinalIgnoreCase) >= 0))
                                     continue;
 
                                 mErrMsg += "; " + lineIn;

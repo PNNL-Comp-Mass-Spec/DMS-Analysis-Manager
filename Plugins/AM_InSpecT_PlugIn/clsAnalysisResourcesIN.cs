@@ -135,7 +135,7 @@ namespace AnalysisManagerInSpecTPlugIn
             // Check to see if the job is parallelized
             //  If it is parallelized, we do not need to unzip the concatenated DTA file (since it is already unzipped)
             //  If not parallelized, we do need to unzip
-            if (!isParallelized || Path.GetExtension(dtaResultFileName).ToLower() == ".zip")
+            if (!isParallelized || string.Equals(Path.GetExtension(dtaResultFileName), ".zip", StringComparison.OrdinalIgnoreCase))
             {
                 // Unzip concatenated DTA file
                 LogMessage("Unzipping concatenated DTA file");

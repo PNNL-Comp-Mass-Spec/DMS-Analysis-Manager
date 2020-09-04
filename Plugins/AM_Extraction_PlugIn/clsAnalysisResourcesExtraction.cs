@@ -389,7 +389,7 @@ namespace AnalysisManagerExtractionPlugin
                             continue;
                         }
 
-                        if (objAttributeNode.Value.ToLower() != "input")
+                        if (!string.Equals(objAttributeNode.Value, "input", StringComparison.OrdinalIgnoreCase))
                             continue;
 
                         // Valid node; examine its InnerText value
@@ -1305,7 +1305,7 @@ namespace AnalysisManagerExtractionPlugin
                         mJobParams.AddResultFileToSkip(modDefsFilename);
                     }
                 }
-                else if (remoteModDefsDirectory.ToLower().StartsWith(@"\\proto"))
+                else if (remoteModDefsDirectory.StartsWith(@"\\proto", StringComparison.OrdinalIgnoreCase))
                 {
                     if (clsGlobal.FilesMatch(fiModDefsFile.FullName, Path.Combine(remoteModDefsDirectory, modDefsFilename)))
                     {
@@ -1355,11 +1355,11 @@ namespace AnalysisManagerExtractionPlugin
 
                 CloseOutType result;
 
-                if (scriptName.ToLower().Contains("mzxml") || scriptName.ToLower().Contains("msgfplus_bruker"))
+                if (scriptName.IndexOf("mzxml", StringComparison.OrdinalIgnoreCase) >= 0 || scriptName.IndexOf("msgfplus_bruker", StringComparison.OrdinalIgnoreCase) >= 0)
                 {
                     result = GetMzXMLFile();
                 }
-                else if (scriptName.ToLower().Contains("mzml"))
+                else if (scriptName.IndexOf("mzml", StringComparison.OrdinalIgnoreCase) >= 0)
                 {
                     result = GetMzMLFile();
                 }
@@ -1412,7 +1412,7 @@ namespace AnalysisManagerExtractionPlugin
                 }
                 else if (!success)
                 {
-                    if (toolVersionFile.ToLower().Contains("msgfplus"))
+                    if (toolVersionFile.IndexOf("msgfplus", StringComparison.OrdinalIgnoreCase) >= 0)
                     {
                         var toolVersionFileLegacy = "Tool_Version_Info_MSGFDB.txt";
                         success = FileSearch.FindAndRetrieveMiscFiles(toolVersionFileLegacy, false, false);

@@ -624,7 +624,7 @@ namespace AnalysisManagerMSAlignPlugIn
 
                             if (scriptName == "MSAlign_Bruker")
                             {
-                                if (value.ToUpper() == "FILE")
+                                if (string.Equals(value, "FILE", StringComparison.OrdinalIgnoreCase))
                                 {
                                     mMessage = "Must specify an explicit scan type for " + keyName +
                                                 " in the MSAlign parameter file (CID, HCD, or ETD)";
@@ -639,12 +639,12 @@ namespace AnalysisManagerMSAlignPlugIn
 
                         if (keyName.ToLower() == SEARCH_TYPE_KEY)
                         {
-                            if (value.ToUpper() == "TARGET+DECOY")
+                            if (string.Equals(value, "TARGET+DECOY", StringComparison.OrdinalIgnoreCase))
                             {
                                 // Make sure the protein collection is not a Decoy protein collection
                                 var proteinOptions = mJobParams.GetParam("ProteinOptions");
 
-                                if (proteinOptions.ToLower().Contains("seq_direction=decoy"))
+                                if (proteinOptions.IndexOf("seq_direction=decoy", StringComparison.OrdinalIgnoreCase) >= 0)
                                 {
                                     mMessage = "MSAlign parameter file contains searchType=TARGET+DECOY; " +
                                                 "protein options for this analysis job must contain seq_direction=forward, not seq_direction=decoy";
@@ -709,7 +709,7 @@ namespace AnalysisManagerMSAlignPlugIn
                                             default:
                                                 if (keyName.ToLower() == CUTOFF_TYPE_KEY)
                                                 {
-                                                    if (value.ToUpper() == "EVALUE")
+                                                    if (string.Equals(value, "EVALUE", StringComparison.OrdinalIgnoreCase))
                                                     {
                                                         eValueCutoffType = true;
                                                     }
@@ -738,7 +738,7 @@ namespace AnalysisManagerMSAlignPlugIn
                                 }
                                 else
                                 {
-                                    if (eMSAlignVersion >= eMSAlignVersionType.v0pt7 && keyName.ToLower() == "eValueThreshold")
+                                    if (eMSAlignVersion >= eMSAlignVersionType.v0pt7 && string.Equals(keyName, "eValueThreshold", StringComparison.OrdinalIgnoreCase))
                                     {
                                         // v0.7 and up use cutoffType and cutoff instead of eValueThreshold
                                         writer.WriteLine("cutoffType=EVALUE");
@@ -746,7 +746,7 @@ namespace AnalysisManagerMSAlignPlugIn
                                     }
                                     else if (eMSAlignVersion == eMSAlignVersionType.v0pt6 && keyName.ToLower() == CUTOFF_TYPE_KEY)
                                     {
-                                        if (value.ToUpper() == "EVALUE")
+                                        if (string.Equals(value, "EVALUE", StringComparison.OrdinalIgnoreCase))
                                         {
                                             eValueCutoffType = true;
                                         }
@@ -929,7 +929,7 @@ namespace AnalysisManagerMSAlignPlugIn
                                 // Originally the first line was the MSAlign version
                                 // Starting in November 2016, the first line is the command line and the second line is a separator (series of dashes)
                                 // The third line is the MSAlign version
-                                if (string.IsNullOrEmpty(mMSAlignVersion) && dataLine.ToLower().Contains("ms-align"))
+                                if (string.IsNullOrEmpty(mMSAlignVersion) && dataLine.IndexOf("ms-align", StringComparison.OrdinalIgnoreCase) >= 0)
                                 {
                                     if (mDebugLevel >= 2 && string.IsNullOrWhiteSpace(mMSAlignVersion))
                                     {
@@ -940,7 +940,7 @@ namespace AnalysisManagerMSAlignPlugIn
                                 }
                                 else
                                 {
-                                    if (dataLine.ToLower().Contains("error"))
+                                    if (dataLine.IndexOf("error", StringComparison.OrdinalIgnoreCase) >= 0)
                                     {
                                         if (string.IsNullOrEmpty(mConsoleOutputErrorMsg))
                                         {
@@ -965,7 +965,7 @@ namespace AnalysisManagerMSAlignPlugIn
                             }
                             else if (string.IsNullOrEmpty(mConsoleOutputErrorMsg))
                             {
-                                if (dataLine.ToLower().StartsWith("error"))
+                                if (dataLine.StartsWith("error", StringComparison.OrdinalIgnoreCase))
                                 {
                                     mConsoleOutputErrorMsg += "; " + dataLine;
                                 }

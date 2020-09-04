@@ -278,7 +278,7 @@ namespace AnalysisManagerNOMSIPlugin
                             continue;
                         }
 
-                        if (dataLine.ToLower().StartsWith("error "))
+                        if (dataLine.StartsWith("error ", StringComparison.OrdinalIgnoreCase))
                         {
                             StoreConsoleErrorMessage(reader, dataLine);
                         }
@@ -640,7 +640,7 @@ namespace AnalysisManagerNOMSIPlugin
                             continue;
                         }
 
-                        if (dataLine.Trim().ToLower().StartsWith("param_dm_target_file"))
+                        if (dataLine.Trim().StartsWith("param_dm_target_file", StringComparison.OrdinalIgnoreCase))
                         {
                             writer.WriteLine("param_dm_target_file=" + Path.Combine(mWorkDir, targetsFileName));
                         }

@@ -1201,7 +1201,7 @@ namespace AnalysisManagerExtractionPlugin
                                 if (string.IsNullOrWhiteSpace(lineIn))
                                     continue;
 
-                                if (!lineIn.ToUpper().StartsWith("ERROR:"))
+                                if (!lineIn.StartsWith("ERROR:", StringComparison.OrdinalIgnoreCase))
                                     continue;
 
                                 LogError(lineIn);
@@ -2814,7 +2814,7 @@ namespace AnalysisManagerExtractionPlugin
                 {
                     var toolName = mJobParams.GetJobParameter("ToolName", "");
 
-                    if (toolName.ToLower().StartsWith("inspect"))
+                    if (toolName.StartsWith("inspect", StringComparison.OrdinalIgnoreCase))
                     {
                         // Ignore this error for inspect if running an unrestricted search
                         var paramFileName = mJobParams.GetJobParameter("ParmFileName", "");

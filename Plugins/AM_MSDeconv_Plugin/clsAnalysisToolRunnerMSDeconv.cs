@@ -266,7 +266,7 @@ namespace AnalysisManagerMSDeconvPlugIn
                                 // Originally the first line was the MS-Deconv version
                                 // Starting in November 2016, the first line is the command line and the second line is a separator (series of dashes)
                                 // The third line is the MSDeconv version
-                                if (string.IsNullOrEmpty(mMSDeconvVersion) && dataLine.ToLower().Contains("ms-deconv"))
+                                if (string.IsNullOrEmpty(mMSDeconvVersion) && dataLine.IndexOf("ms-deconv", StringComparison.OrdinalIgnoreCase) >= 0)
                                 {
                                     if (mDebugLevel >= 2 && string.IsNullOrWhiteSpace(mMSDeconvVersion))
                                     {
@@ -277,7 +277,7 @@ namespace AnalysisManagerMSDeconvPlugIn
                                 }
                                 else
                                 {
-                                    if (dataLine.ToLower().Contains("error"))
+                                    if (dataLine.IndexOf("error", StringComparison.OrdinalIgnoreCase) >= 0)
                                     {
                                         if (string.IsNullOrEmpty(mConsoleOutputErrorMsg))
                                         {
@@ -303,7 +303,7 @@ namespace AnalysisManagerMSDeconvPlugIn
                                 }
                                 else if (string.IsNullOrEmpty(mConsoleOutputErrorMsg))
                                 {
-                                    if (dataLine.ToLower().StartsWith("error"))
+                                    if (dataLine.StartsWith("error", StringComparison.OrdinalIgnoreCase))
                                     {
                                         mConsoleOutputErrorMsg += "; " + dataLine;
                                     }

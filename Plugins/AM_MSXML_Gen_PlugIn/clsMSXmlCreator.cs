@@ -190,7 +190,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
             var rawDataType = mJobParams.GetParam("RawDataType");
             var rawDataTypeEnum = clsAnalysisResources.GetRawDataType(rawDataType);
 
-            if (msXmlGeneratorExe.ToLower().Contains("readw"))
+            if (msXmlGeneratorExe.IndexOf("readw", StringComparison.OrdinalIgnoreCase) >= 0)
             {
                 // ReAdW
                 // mMSXmlGeneratorAppPath should have been populated during the call to StoreToolVersionInfo()
@@ -207,7 +207,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                     return false;
                 }
             }
-            else if (msXmlGeneratorExe.ToLower().Contains("msconvert"))
+            else if (msXmlGeneratorExe.IndexOf("msconvert", StringComparison.OrdinalIgnoreCase) >= 0)
             {
                 // MSConvert
 

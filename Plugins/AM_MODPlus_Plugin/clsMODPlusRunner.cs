@@ -256,7 +256,7 @@ namespace AnalysisManagerMODPlusPlugin
                             continue;
                         }
 
-                        if (dataLine.ToLower().StartsWith("release date:"))
+                        if (dataLine.StartsWith("release date:", StringComparison.OrdinalIgnoreCase))
                         {
                             ReleaseDate = dataLine.Substring(13).TrimStart();
                             continue;

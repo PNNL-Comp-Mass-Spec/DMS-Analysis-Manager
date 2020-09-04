@@ -170,7 +170,7 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
                             continue;
                         }
 
-                        if (dataLine.ToLower().StartsWith("error "))
+                        if (dataLine.StartsWith("error ", StringComparison.OrdinalIgnoreCase))
                         {
                             StoreConsoleErrorMessage(reader, dataLine);
                         }

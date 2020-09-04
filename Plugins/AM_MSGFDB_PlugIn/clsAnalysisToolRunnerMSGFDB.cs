@@ -871,14 +871,14 @@ namespace AnalysisManagerMSGFDBPlugIn
             var scriptName = mJobParams.GetParam("ToolName");
             scanTypeFilePath = string.Empty;
 
-            if (scriptName.ToLower().Contains("mzxml") ||
-                scriptName.ToLower().Contains("msgfplus_bruker"))
+            if (scriptName.IndexOf("mzxml", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                scriptName.IndexOf("msgfplus_bruker", StringComparison.OrdinalIgnoreCase) >= 0)
             {
                 eInputFileFormat = InputFileFormatTypes.MzXML;
                 return CloseOutType.CLOSEOUT_SUCCESS;
             }
 
-            if (scriptName.ToLower().Contains("mzml") ||
+            if (scriptName.IndexOf("mzml", StringComparison.OrdinalIgnoreCase) >= 0 ||
                 scriptName.IndexOf("DeconMSn_MzRefinery", StringComparison.OrdinalIgnoreCase) > 0)
             {
                 eInputFileFormat = InputFileFormatTypes.MzML;
@@ -1090,7 +1090,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 string msgfPlusResultsFileName;
                 var extension = Path.GetExtension(resultsFileName);
-                if (extension != null && extension.ToLower() == ".mzid")
+                if (extension != null && string.Equals(extension, ".mzid", StringComparison.OrdinalIgnoreCase))
                 {
                     // Convert the .mzid file to a .tsv file
 

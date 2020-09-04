@@ -24,7 +24,7 @@ namespace AnalysisManagerMasicPlugin
 
             var parameterFileName = mJobParams.GetParam("parmFileName");
 
-            if (parameterFileName != null && parameterFileName.Trim().ToLower() != "na")
+            if (parameterFileName != null && !string.Equals(parameterFileName.Trim(), "na", StringComparison.OrdinalIgnoreCase))
             {
                 parameterFilePath = Path.Combine(mWorkDir, mJobParams.GetParam("parmFileName"));
             }

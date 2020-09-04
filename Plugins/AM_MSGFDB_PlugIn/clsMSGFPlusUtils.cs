@@ -1143,7 +1143,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 }
                 else
                 {
-                    if (mPeptideToProteinMapper.GetErrorMessage().Length == 0 && mPeptideToProteinMapper.StatusMessage.ToLower().Contains("error"))
+                    if (mPeptideToProteinMapper.GetErrorMessage().Length == 0 && mPeptideToProteinMapper.StatusMessage.IndexOf("error", StringComparison.OrdinalIgnoreCase) >= 0)
                     {
                         OnErrorEvent("Error running the PeptideToProteinMapEngine: " + mPeptideToProteinMapper.StatusMessage);
                     }
@@ -1615,7 +1615,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             }
             else
             {
-                if (proteinOptions.ToLower().Contains("seq_direction=decoy"))
+                if (proteinOptions.IndexOf("seq_direction=decoy", StringComparison.OrdinalIgnoreCase) >= 0)
                 {
                     fastaFileIsDecoy = true;
                 }
@@ -2705,7 +2705,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             // Define the thread count; note that MSGFDBThreads could be "all"
             var dmsDefinedThreadCountText = mJobParams.GetJobParameter("MSGFDBThreads", string.Empty);
-            if (string.IsNullOrWhiteSpace(dmsDefinedThreadCountText) || dmsDefinedThreadCountText.ToLower() == "all" ||
+            if (string.IsNullOrWhiteSpace(dmsDefinedThreadCountText) || string.Equals(dmsDefinedThreadCountText, "all", StringComparison.OrdinalIgnoreCase) ||
                 !int.TryParse(dmsDefinedThreadCountText, out var dmsDefinedThreadCount))
             {
                 dmsDefinedThreadCount = 0;
@@ -3167,7 +3167,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             }
 
             // Check whether this is a custom AA definition
-            var query = (from item in modParts where item.ToLower() == "custom" select item).ToList();
+            var query = (from item in modParts where string.Equals(item, "custom", StringComparison.OrdinalIgnoreCase) select item).ToList();
             var customAminoAcidDef = query.Count > 0;
 
             if (modParts.Length < 5)

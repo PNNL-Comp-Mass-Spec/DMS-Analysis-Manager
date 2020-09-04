@@ -122,7 +122,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                     default:
                         if (!File.Exists(isosFilePath) && !File.Exists(scansFilePath))
                         {
-                            if (mInputFilePath.ToLower().EndsWith(".d"))
+                            if (mInputFilePath.EndsWith(".d", StringComparison.OrdinalIgnoreCase))
                             {
                                 dotDFolder = true;
                             }
@@ -971,7 +971,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                         return DeconToolsFileTypeConstants.Bruker;
                     }
 
-                    if (InstrumentClass.ToLower() == "finnigan_fticr")
+                    if (string.Equals(InstrumentClass, "finnigan_fticr", StringComparison.OrdinalIgnoreCase))
                     {
                         // Data from old Finnigan FTICR
                         return DeconToolsFileTypeConstants.SUN_EXTREL;
@@ -1524,7 +1524,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
         private void QCPlotGenerator_ErrorEvent(string message, Exception ex)
         {
-            if (message.ToLower().Contains(MS_FILE_INFO_SCANNER_NO_ISOS_DATA.ToLower()))
+            if (message.IndexOf(MS_FILE_INFO_SCANNER_NO_ISOS_DATA, StringComparison.OrdinalIgnoreCase) >= 0)
                 mMSFileInfoScannerReportsEmptyIsosFile = true;
         }
 

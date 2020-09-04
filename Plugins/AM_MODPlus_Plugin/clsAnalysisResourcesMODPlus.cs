@@ -104,7 +104,7 @@ namespace AnalysisManagerMODPlusPlugin
                 }
                 else
                 {
-                    if (!proteinOptions.ToLower().Contains("seq_direction=decoy"))
+                    if (!(proteinOptions.IndexOf("seq_direction=decoy", StringComparison.OrdinalIgnoreCase) >= 0))
                     {
                         LogError("Job parameter ProteinOptions does not contain seq_direction=decoy; cannot analyze with MODPlus; choose a DMS-generated decoy protein collection");
                         return false;

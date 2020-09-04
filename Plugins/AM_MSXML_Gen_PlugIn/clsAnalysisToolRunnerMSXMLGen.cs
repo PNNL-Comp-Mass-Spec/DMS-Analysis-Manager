@@ -168,7 +168,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 clsMSXmlGen msXmlGen;
 
                 // Determine the program path and Instantiate the processing class
-                if (msXmlGenerator.ToLower().Contains("readw"))
+                if (msXmlGenerator.IndexOf("readw", StringComparison.OrdinalIgnoreCase) >= 0)
                 {
                     // ReAdW
                     // mMSXmlGeneratorAppPath should have been populated during the call to StoreToolVersionInfo()
@@ -185,7 +185,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
                 }
-                else if (msXmlGenerator.ToLower().Contains("msconvert"))
+                else if (msXmlGenerator.IndexOf("msconvert", StringComparison.OrdinalIgnoreCase) >= 0)
                 {
                     // MSConvert
 
@@ -554,7 +554,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 var msXmlGenerator = mJobParams.GetParam("MSXMLGenerator");
                 // Must be MSConvert.exe
 
-                if (!msXmlGenerator.ToLower().Contains("msconvert"))
+                if (!(msXmlGenerator.IndexOf("msconvert", StringComparison.OrdinalIgnoreCase) >= 0))
                 {
                     LogError("ParentIonUpdater only supports MSConvert, not " + msXmlGenerator);
                     return false;
@@ -651,13 +651,13 @@ namespace AnalysisManagerMsXmlGenPlugIn
             var msXmlGenerator = mJobParams.GetParam("MSXMLGenerator");
 
             mMSXmlGeneratorAppPath = string.Empty;
-            if (msXmlGenerator.ToLower().Contains("readw"))
+            if (msXmlGenerator.IndexOf("readw", StringComparison.OrdinalIgnoreCase) >= 0)
             {
                 // ReAdW
                 // Note that msXmlGenerator will likely be ReAdW.exe
                 mMSXmlGeneratorAppPath = DetermineProgramLocation("ReAdWProgLoc", msXmlGenerator);
             }
-            else if (msXmlGenerator.ToLower().Contains("msconvert"))
+            else if (msXmlGenerator.IndexOf("msconvert", StringComparison.OrdinalIgnoreCase) >= 0)
             {
                 // MSConvert
                 // MSConvert.exe is stored in the ProteoWizard folder

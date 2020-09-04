@@ -619,7 +619,7 @@ namespace AnalysisManagerMSGFPlugin
                             continue;
                         }
 
-                        if (attributeNode.Value.ToLower() != "input")
+                        if (!string.Equals(attributeNode.Value, "input", StringComparison.OrdinalIgnoreCase))
                             continue;
 
                         // Valid node; examine its InnerText value
@@ -1246,7 +1246,7 @@ namespace AnalysisManagerMSGFPlugin
 
                     if (!headerLineParsed)
                     {
-                        if (dataCols[0].ToLower() == MSGF_RESULT_COLUMN_SpectrumFile.ToLower())
+                        if (string.Equals(dataCols[0], MSGF_RESULT_COLUMN_SpectrumFile, StringComparison.OrdinalIgnoreCase))
                         {
                             // Parse the header line to confirm the column ordering
                             clsPHRPReader.ParseColumnHeaders(dataCols, columnHeaders);
@@ -1654,7 +1654,7 @@ namespace AnalysisManagerMSGFPlugin
 
                             if (dataCols.Count > collisionModeColIndex)
                             {
-                                if (dataCols[collisionModeColIndex].ToUpper() == "ETD")
+                                if (string.Equals(dataCols[collisionModeColIndex], "ETD", StringComparison.OrdinalIgnoreCase))
                                 {
                                     etdData.Add(dataLine);
                                 }
@@ -2240,7 +2240,7 @@ namespace AnalysisManagerMSGFPlugin
                         }
                         else
                         {
-                            if (dataLine.ToLower().Contains("error"))
+                            if (dataLine.IndexOf("error", StringComparison.OrdinalIgnoreCase) >= 0)
                             {
                                 if (string.IsNullOrEmpty(mConsoleOutputErrorMsg))
                                 {

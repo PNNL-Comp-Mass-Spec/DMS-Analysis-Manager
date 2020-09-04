@@ -539,7 +539,7 @@ namespace AnalysisManagerFormularityPlugin
                         }
 
                         // Check for "Warning: no data points found in FileName"
-                        if (dataLine.StartsWith("Warning", StringComparison.OrdinalIgnoreCase) && dataLine.ToLower().Contains("no data points found"))
+                        if (dataLine.StartsWith("Warning", StringComparison.OrdinalIgnoreCase) && dataLine.IndexOf("no data points found", StringComparison.OrdinalIgnoreCase) >= 0)
                         {
                             fileCountNoPeaks++;
                             continue;
@@ -569,7 +569,7 @@ namespace AnalysisManagerFormularityPlugin
                             mMessage = reMatch.Groups["ErrorMessage"].Value;
                             StoreConsoleErrorMessage(reader, dataLine);
                         }
-                        else if (dataLine.ToLower().StartsWith("error "))
+                        else if (dataLine.StartsWith("error ", StringComparison.OrdinalIgnoreCase))
                         {
                             // Store this error message, plus any remaining console output lines
                             mMessage = dataLine;
