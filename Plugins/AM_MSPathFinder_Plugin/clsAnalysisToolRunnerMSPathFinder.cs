@@ -187,36 +187,6 @@ namespace AnalysisManagerMSPathFinderPlugin
             base.CopyFailedResultsToArchiveDirectory();
         }
 
-        private Dictionary<string, string> GetMSPathFinderParameterNames()
-        {
-            var dctParamNames = new Dictionary<string, string>(25, StringComparer.OrdinalIgnoreCase)
-            {
-                {"PMTolerance", "t"},
-                {"FragTolerance", "f"},
-                {"SearchMode", "m"},
-                {"ActivationMethod", "act"},
-                {"TDA", "tda"},
-                {"minLength", "minLength"},
-                {"maxLength", "maxLength"},
-                {"minCharge", "minCharge"},
-                {"maxCharge", "maxCharge"},
-                {"minFragCharge", "minFragCharge"},
-                {"maxFragCharge", "maxFragCharge"},
-                {"minMass", "minMass"},
-                {"maxMass", "maxMass"},
-                {"NumMatchesPerSpec", "n"},
-                {"tagSearch", "tagSearch"}
-            };
-
-            // The following are special cases;
-            // do not add to dctParamNames
-            //   NumMods
-            //   StaticMod
-            //   DynamicMod
-
-            return dctParamNames;
-        }
-
         private bool InitializeFastaFile(out bool fastaFileIsDecoy)
         {
             fastaFileIsDecoy = false;
@@ -584,122 +554,18 @@ namespace AnalysisManagerMSPathFinderPlugin
         }
 
         /// <summary>
-        /// Parses the static and dynamic modification information to create the MSPathFinder Mods file
-        /// </summary>
-        /// <param name="cmdLineOptions">String builder of command line arguments to pass to MSPathFinder</param>
-        /// <param name="numMods">Max Number of Modifications per peptide</param>
-        /// <param name="staticMods">List of Static Mods</param>
-        /// <param name="dynamicMods">List of Dynamic Mods</param>
-        /// <returns>True if success, false if an error</returns>
-        /// <remarks></remarks>
-        private bool ParseMSPathFinderModifications(
-            ref string cmdLineOptions,
-            int numMods,
-            IReadOnlyCollection<string> staticMods,
-            IReadOnlyCollection<string> dynamicMods)
-        {
-            const string MOD_FILE_NAME = "MSPathFinder_Mods.txt";
-            bool success;
-
-            try
-            {
-                var modFilePath = Path.Combine(mWorkDir, MOD_FILE_NAME);
-
-                cmdLineOptions += " -mod " + modFilePath;
-
-                using (var modFileWriter = new StreamWriter(new FileStream(modFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
-                {
-                    modFileWriter.WriteLine("# This file is used to specify modifications for MSPathFinder");
-                    modFileWriter.WriteLine("");
-                    modFileWriter.WriteLine("# Max Number of Modifications per peptide");
-                    modFileWriter.WriteLine("NumMods=" + numMods);
-
-                    modFileWriter.WriteLine("");
-                    modFileWriter.WriteLine("# Static mods");
-                    if (staticMods.Count == 0)
-                    {
-                        modFileWriter.WriteLine("# None");
-                    }
-                    else
-                    {
-                        foreach (var staticMod in staticMods)
-                        {
-                            if (ParseMSPathFinderValidateMod(staticMod, out var modClean))
-                            {
-                                if (modClean.Contains(",opt,"))
-                                {
-                                    // Static (fixed) mod is listed as dynamic
-                                    // Abort the analysis since the parameter file is misleading and needs to be fixed
-                                    var errMsg =
-                                        "Static mod definition contains ',opt,'; update the param file to have ',fix,' or change to 'DynamicMod='";
-                                    LogError(errMsg, errMsg + "; " + staticMod);
-                                    return false;
-                                }
-                                modFileWriter.WriteLine(modClean);
-                            }
-                            else
-                            {
-                                return false;
-                            }
-                        }
-                    }
-
-                    modFileWriter.WriteLine("");
-                    modFileWriter.WriteLine("# Dynamic mods");
-                    if (dynamicMods.Count == 0)
-                    {
-                        modFileWriter.WriteLine("# None");
-                    }
-                    else
-                    {
-                        foreach (var dynamicMod in dynamicMods)
-                        {
-                            if (ParseMSPathFinderValidateMod(dynamicMod, out var modClean))
-                            {
-                                if (modClean.Contains(",fix,"))
-                                {
-                                    // Dynamic (optional) mod is listed as static
-                                    // Abort the analysis since the parameter file is misleading and needs to be fixed
-                                    var errMsg =
-                                        "Dynamic mod definition contains ',fix,'; update the param file to have ',opt,' or change to 'StaticMod='";
-                                    LogError(errMsg, errMsg + "; " + dynamicMod);
-                                    return false;
-                                }
-                                modFileWriter.WriteLine(modClean);
-                            }
-                            else
-                            {
-                                return false;
-                            }
-                        }
-                    }
-                }
-
-                success = true;
-            }
-            catch (Exception ex)
-            {
-                LogError("Exception creating MSPathFinder Mods file", ex);
-                success = false;
-            }
-
-            return success;
-        }
-
-        /// <summary>
-        /// Read the MSPathFinder options file and convert the options to command line switches
+        /// Read the MSPathFinder parameter file and validate the static and dynamic mods
         /// </summary>
         /// <param name="fastaFileIsDecoy">True if the fasta file has had forward and reverse index files created</param>
-        /// <param name="cmdLineOptions">Output: MSPathFinder command line arguments</param>
+        /// <param name="parameterFileName">Output: MSPathFinder parameter file name</param>
         /// <param name="tdaEnabled"></param>
         /// <returns>Options string if success; empty string if an error</returns>
         /// <remarks></remarks>
-        public CloseOutType ParseMSPathFinderParameterFile(bool fastaFileIsDecoy, out string cmdLineOptions, out bool tdaEnabled)
+        public CloseOutType ParseMSPathFinderParameterFile(bool fastaFileIsDecoy, out string parameterFileName, out bool tdaEnabled)
         {
-            cmdLineOptions = string.Empty;
             tdaEnabled = false;
 
-            var parameterFileName = mJobParams.GetParam("ParmFileName");
+            parameterFileName = mJobParams.GetParam("ParmFileName");
 
             // Although ParseKeyValueParameterFile checks for paramFileName being an empty string,
             // we check for it here since the name comes from the settings file, so we want to customize the error message
@@ -716,78 +582,11 @@ namespace AnalysisManagerMSPathFinderPlugin
                 return result;
             }
 
-            // Obtain the dictionary that maps parameter names to argument names
-            var paramToArgMapping = GetMSPathFinderParameterNames();
-            var paramNamesToSkip = new SortedSet<string>(StringComparer.OrdinalIgnoreCase) {
-                "NumMods",
-                "StaticMod",
-                "DynamicMod"
-            };
-
-            cmdLineOptions = paramFileReader.ConvertParamsToArgs(paramFileEntries, paramToArgMapping, paramNamesToSkip, "-");
-            if (string.IsNullOrWhiteSpace(cmdLineOptions))
-            {
-                mMessage = paramFileReader.ErrorMessage;
-                return CloseOutType.CLOSEOUT_FAILED;
-            }
-
-            var numMods = 0;
-            var staticMods = new List<string>();
-            var dynamicMods = new List<string>();
-
-            try
-            {
-                foreach (var kvSetting in paramFileEntries)
-                {
-                    var paramValue = kvSetting.Value;
-
-                    if (clsGlobal.IsMatch(kvSetting.Key, "NumMods"))
-                    {
-                        if (int.TryParse(paramValue, out var intValue))
-                        {
-                            numMods = intValue;
-                        }
-                        else
-                        {
-                            var errMsg = "Invalid value for NumMods in the MSPathFinder parameter file";
-                            LogError(errMsg, errMsg + ": " + kvSetting.Key + "=" + kvSetting.Value);
-                            return CloseOutType.CLOSEOUT_FAILED;
-                        }
-                    }
-                    else if (clsGlobal.IsMatch(kvSetting.Key, "StaticMod"))
-                    {
-                        if (!string.IsNullOrWhiteSpace(paramValue) && !clsGlobal.IsMatch(paramValue, "none"))
-                        {
-                            staticMods.Add(paramValue);
-                        }
-                    }
-                    else if (clsGlobal.IsMatch(kvSetting.Key, "DynamicMod"))
-                    {
-                        if (!string.IsNullOrWhiteSpace(paramValue) && !clsGlobal.IsMatch(paramValue, "none"))
-                        {
-                            dynamicMods.Add(paramValue);
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                mMessage = "Exception extracting dynamic and static mod information from the TopPIC parameter file";
-                LogError(mMessage, ex);
-                return CloseOutType.CLOSEOUT_FAILED;
-            }
-
-            // Create the modification file and append the -mod switch
-            if (!ParseMSPathFinderModifications(ref cmdLineOptions, numMods, staticMods, dynamicMods))
-            {
-                return CloseOutType.CLOSEOUT_FAILED;
-            }
+            tdaEnabled = paramFileReader.ParamIsEnabled(paramFileEntries, "TDA");
 
             // ReSharper disable once InvertIf
-            if (paramToArgMapping.ContainsKey("-tda 1"))
+            if (tdaEnabled)
             {
-                tdaEnabled = true;
-
                 // MSPathFinder should be run with a forward=only protein collection; allow MSPathFinder to add the decoy proteins
                 if (fastaFileIsDecoy)
                 {
@@ -933,19 +732,10 @@ namespace AnalysisManagerMSPathFinderPlugin
             // Read the MSPathFinder Parameter File
             // The parameter file name specifies the mass modifications to consider, plus also the analysis parameters
 
-            var eResult = ParseMSPathFinderParameterFile(fastaFileIsDecoy, out var cmdLineOptions, out tdaEnabled);
+            var result = ParseMSPathFinderParameterFile(fastaFileIsDecoy, out var parameterFileName, out tdaEnabled);
 
-            if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
+            if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
-                return false;
-            }
-
-            if (string.IsNullOrEmpty(cmdLineOptions))
-            {
-                if (string.IsNullOrEmpty(mMessage))
-                {
-                    mMessage = "Problem parsing MSPathFinder parameter file";
-                }
                 return false;
             }
 
@@ -956,6 +746,8 @@ namespace AnalysisManagerMSPathFinderPlugin
             var localOrgDbFolder = mMgrParams.GetParam("OrgDbDir");
             var fastaFilePath = Path.Combine(localOrgDbFolder, mJobParams.GetParam("PeptideSearch", "generatedFastaName"));
 
+            var paramFilePath = Path.Combine(mWorkDir, parameterFileName);
+
             LogMessage("Running MSPathFinder");
 
             // Set up and execute a program runner to run MSPathFinder
@@ -964,7 +756,7 @@ namespace AnalysisManagerMSPathFinderPlugin
                             " -feature " + featureFilePath +
                             " -d " + fastaFilePath +
                             " -o " + mWorkDir +
-                            " " + cmdLineOptions;
+                            " -ParamFile " + paramFilePath;
 
             if (mDebugLevel >= 1)
             {
