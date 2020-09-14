@@ -77,11 +77,17 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         private readonly string mJavaProgLoc = string.Empty;
         private string mMSXmlGeneratorAppPath = string.Empty;
 
-        private bool mCreateMSGFReportFilesOnly;
-        private bool mCreateMGFFiles;
-        private bool mCreatePrideXMLFiles;
+        // [Obsolete("No longer used")]
+        // private bool mCreateMSGFReportFilesOnly;
 
-        private bool mIncludePepXMLFiles;
+        private bool mCreateMGFFiles;
+
+        // [Obsolete("No longer used")]
+        // private bool mCreatePrideXMLFiles;
+
+        // [Obsolete("No longer used")]
+        // private bool mIncludePepXMLFiles;
+
         private bool mProcessMzIdFiles;
 
         private string mCacheFolderPath = string.Empty;
@@ -102,6 +108,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// <summary>
         /// Cached FASTA file name
         /// </summary>
+        [Obsolete("No longer used")]
         private string mCachedOrgDBName = string.Empty;
 
         /// <summary>
@@ -142,6 +149,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// </remarks>
         private Dictionary<int, clsPXFileInfo> mPxResultFiles;
 
+        [Obsolete("No longer used")]
         private udtFilterThresholdsType mFilterThresholdsUsed;
 
         /// <summary>
@@ -218,6 +226,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
         #region "Structures and Enums"
 
+        [Obsolete("No longer used")]
         private struct udtFilterThresholdsType
         {
             public float PValueThreshold;
@@ -445,7 +454,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             try
             {
                 // Initialize the class-wide variables
-                var udtFilterThresholds = InitializeOptions();
+                InitializeOptions();
 
                 // Extract the dataset raw file paths
                 var datasetRawFilePaths = ExtractPackedJobParameterDictionary(clsAnalysisResources.JOB_PARAM_DICTIONARY_DATASET_FILE_PATHS);
@@ -474,8 +483,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     LogDebug(string.Format("{0}: {1}", jobsProcessed + 1, mStatusTools.CurrentOperation), 10);
 
                     var result = ProcessJob(
-                        jobInfo, udtFilterThresholds,
-                        analysisResults, dataPackageDatasets,
+                        jobInfo, analysisResults, dataPackageDatasets,
                         remoteTransferFolder, datasetRawFilePaths,
                         templateParameters, assumeInstrumentDataUnpurged);
 
@@ -1021,7 +1029,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// Newly created .mzXML files will be copied to the MSXML_Cache folder
         /// </summary>
         /// <returns>True if the file exists or was created</returns>
-        /// <remarks></remarks>
+        [Obsolete("No longer used")]
         private bool CreateMzXMLFileIfMissing(string dataset, clsAnalysisResults analysisResults,
             IReadOnlyDictionary<string, string> datasetRawFilePaths)
         {
@@ -1210,6 +1218,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             }
         }
 
+        [Obsolete("No longer used")]
         private string CreatePseudoMSGFFileUsingPHRPReader(int job, string dataset, udtFilterThresholdsType udtFilterThresholds,
             IDictionary<string, List<udtPseudoMSGFDataType>> pseudoMSGFData)
         {
@@ -1693,7 +1702,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// <param name="udtFilterThresholds"></param>
         /// <param name="prideReportXMLFilePath">Output parameter: the full path of the newly created .msgf-report.xml file</param>
         /// <returns>True if success, false if an error</returns>
-        /// <remarks></remarks>
+        [Obsolete("No longer used")]
         private bool CreateMSGFReportFile(int job, string dataset, udtFilterThresholdsType udtFilterThresholds,
             out string prideReportXMLFilePath)
         {
@@ -1805,20 +1814,21 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 AddToListIfNew(mPreviousDatasetFilesToDelete, pseudoMsgfFilePath);
 
-                if (!mCreateMSGFReportFilesOnly)
-                {
-                    prideReportXMLFilePath = CreateMSGFReportXMLFile(templateFileName, dataPkgJob, pseudoMsgfFilePath, pseudoMSGFData,
-                        orgDBNameGenerated, proteinCollectionListOrFasta, udtFilterThresholds);
+                // Deprecated:
+                //if (!mCreateMSGFReportFilesOnly)
+                //{
+                //    prideReportXMLFilePath = CreateMSGFReportXMLFile(templateFileName, dataPkgJob, pseudoMsgfFilePath, pseudoMSGFData,
+                //        orgDBNameGenerated, proteinCollectionListOrFasta, udtFilterThresholds);
 
-                    if (string.IsNullOrEmpty(prideReportXMLFilePath))
-                    {
-                        if (string.IsNullOrEmpty(mMessage))
-                        {
-                            LogError("Pride report XML file not created for job " + job + ", dataset " + dataset);
-                        }
-                        return false;
-                    }
-                }
+                //    if (string.IsNullOrEmpty(prideReportXMLFilePath))
+                //    {
+                //        if (string.IsNullOrEmpty(mMessage))
+                //        {
+                //            LogError("Pride report XML file not created for job " + job + ", dataset " + dataset);
+                //        }
+                //        return false;
+                //    }
+                //}
 
                 return true;
             }
@@ -1830,6 +1840,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
         }
 
+        [Obsolete("No longer used")]
         private string CreateMSGFReportXMLFile(string templateFileName, clsDataPackageJobInfo dataPkgJob, string pseudoMsgfFilePath,
             IReadOnlyDictionary<string, List<udtPseudoMSGFDataType>> pseudoMSGFData, string orgDBNameGenerated,
             string proteinCollectionListOrFasta, udtFilterThresholdsType udtFilterThresholds)
@@ -2210,6 +2221,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             return prideReportXMLFilePath;
         }
 
+        [Obsolete("No longer used")]
         private bool CreateMSGFReportXMLFileWriteIDs(XmlWriter writer,
             IReadOnlyDictionary<string, List<udtPseudoMSGFDataType>> pseudoMSGFData, string orgDBNameGenerated)
         {
@@ -2334,6 +2346,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             return true;
         }
 
+        [Obsolete("No longer used")]
         private bool CreateMSGFReportXMLFileWriteProteins(XmlWriter writer, string orgDBNameGenerated)
         {
             try
@@ -2381,6 +2394,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             return true;
         }
 
+        [Obsolete("No longer used")]
         private void CreateMSGFReportXmlFileWriteSoftwareVersion(XmlReader xmlReader, XmlWriter writer,
             clsPHRPReader.ePeptideHitResultType PeptideHitResultType)
         {
@@ -2470,7 +2484,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// <param name="prideReportXMLFilePath"></param>
         /// <param name="prideXmlFilePath">Output parameter: the full path of the newly created .msgf-pride.xml file</param>
         /// <returns>True if success, false if an error</returns>
-        /// <remarks></remarks>
+        [Obsolete("No longer used")]
         private bool CreatePrideXMLFile(int job, string dataset, string prideReportXMLFilePath, out string prideXmlFilePath)
         {
             prideXmlFilePath = string.Empty;
@@ -2528,7 +2542,8 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         {
             const string TBD = "******* UPDATE ****** ";
 
-            var filterText = string.Empty;
+            // Deprecated:
+            // var filterText = string.Empty;
 
             try
             {
@@ -2573,53 +2588,54 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 {
                     submissionType = COMPLETE_SUBMISSION;
 
-                    if (mFilterThresholdsUsed.UseFDRThreshold || mFilterThresholdsUsed.UsePepFDRThreshold || mFilterThresholdsUsed.UseMSGFSpecEValue)
-                    {
-                        const string filterTextBase = "msgf-pride.xml files are filtered on ";
-                        filterText = string.Empty;
+                    // Deprecated:
+                    // if (mFilterThresholdsUsed.UseFDRThreshold || mFilterThresholdsUsed.UsePepFDRThreshold || mFilterThresholdsUsed.UseMSGFSpecEValue)
+                    // {
+                    //     const string filterTextBase = "msgf-pride.xml files are filtered on ";
+                    //     filterText = string.Empty;
 
-                        if (mFilterThresholdsUsed.UseFDRThreshold)
-                        {
-                            if (string.IsNullOrEmpty(filterText))
-                            {
-                                filterText = filterTextBase;
-                            }
-                            else
-                            {
-                                filterText += " and ";
-                            }
+                    //     if (mFilterThresholdsUsed.UseFDRThreshold)
+                    //     {
+                    //         if (string.IsNullOrEmpty(filterText))
+                    //         {
+                    //             filterText = filterTextBase;
+                    //         }
+                    //         else
+                    //         {
+                    //             filterText += " and ";
+                    //         }
 
-                            filterText += (mFilterThresholdsUsed.FDRThreshold * 100).ToString("0.0") + "% FDR at the PSM level";
-                        }
+                    //         filterText += (mFilterThresholdsUsed.FDRThreshold * 100).ToString("0.0") + "% FDR at the PSM level";
+                    //     }
 
-                        if (mFilterThresholdsUsed.UsePepFDRThreshold)
-                        {
-                            if (string.IsNullOrEmpty(filterText))
-                            {
-                                filterText = filterTextBase;
-                            }
-                            else
-                            {
-                                filterText += " and ";
-                            }
+                    //     if (mFilterThresholdsUsed.UsePepFDRThreshold)
+                    //     {
+                    //         if (string.IsNullOrEmpty(filterText))
+                    //         {
+                    //             filterText = filterTextBase;
+                    //         }
+                    //         else
+                    //         {
+                    //             filterText += " and ";
+                    //         }
 
-                            filterText += (mFilterThresholdsUsed.PepFDRThreshold * 100).ToString("0.0") + "% FDR at the peptide level";
-                        }
+                    //         filterText += (mFilterThresholdsUsed.PepFDRThreshold * 100).ToString("0.0") + "% FDR at the peptide level";
+                    //     }
 
-                        if (mFilterThresholdsUsed.UseMSGFSpecEValue)
-                        {
-                            if (string.IsNullOrEmpty(filterText))
-                            {
-                                filterText = filterTextBase;
-                            }
-                            else
-                            {
-                                filterText += " and ";
-                            }
+                    //     if (mFilterThresholdsUsed.UseMSGFSpecEValue)
+                    //     {
+                    //         if (string.IsNullOrEmpty(filterText))
+                    //         {
+                    //             filterText = filterTextBase;
+                    //         }
+                    //         else
+                    //         {
+                    //             filterText += " and ";
+                    //         }
 
-                            filterText += "MSGF Spectral Probability <= " + mFilterThresholdsUsed.MSGFSpecEValueThreshold.ToString("0.0E+00");
-                        }
-                    }
+                    //         filterText += "MSGF Spectral Probability <= " + mFilterThresholdsUsed.MSGFSpecEValueThreshold.ToString("0.0E+00");
+                    //     }
+                    // }
                 }
 
                 var paramsWithCVs = new SortedSet<string>
@@ -2699,12 +2715,13 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                     if (submissionType == COMPLETE_SUBMISSION)
                     {
-                        // Note that the comment field has been deprecated in v2.x of the px file
-                        // However, we don't have a good alternative place to put this comment, so we'll include it anyway
-                        if (!string.IsNullOrWhiteSpace(filterText))
-                        {
-                            WritePXHeader(writer, "comment", filterText, paramsWithCVs);
-                        }
+                        // Deprecated:
+                        // // Note that the comment field has been deprecated in v2.x of the px file
+                        // // However, we don't have a good alternative place to put this comment, so we'll include it anyway
+                        // if (!string.IsNullOrWhiteSpace(filterText))
+                        // {
+                        //     WritePXHeader(writer, "comment", filterText, paramsWithCVs);
+                        // }
                     }
                     else
                     {
@@ -3118,7 +3135,6 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// <param name="instrumentGroup"></param>
         /// <param name="accession">Output parameter</param>
         /// <param name="description">Output parameter</param>
-        /// <remarks></remarks>
         private void GetInstrumentAccession(string instrumentGroup, out string accession, out string description)
         {
             accession = string.Empty;
@@ -3185,10 +3201,12 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     description = "LTQ Orbitrap";
                     break;
                 case "QExactive":
+                case "GC-QExactive":
+                case "QEHFX":
                     accession = "MS:1001911";
                     description = "Q Exactive";
                     break;
-                case "Sciex_QTrap":
+                case "QTrap":
                     accession = "MS:1000931";
                     description = "QTRAP 5500";
                     break;
@@ -3208,6 +3226,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             }
         }
 
+        [Obsolete("No longer used")]
         private string GetPrideConverterVersion(string prideConverterProgLoc)
         {
             var prideConverterVersion = "unknown";
@@ -3281,26 +3300,27 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             return defaultValue;
         }
 
-        private udtFilterThresholdsType InitializeOptions()
+        private void InitializeOptions()
         {
             // Update the processing options
-            mCreatePrideXMLFiles = mJobParams.GetJobParameter("CreatePrideXMLFiles", false);
 
-            mCreateMSGFReportFilesOnly = mJobParams.GetJobParameter("CreateMSGFReportFilesOnly", false);
+            // Deprecated:
+            // mCreatePrideXMLFiles = mJobParams.GetJobParameter("CreatePrideXMLFiles", false);
+            // mCreateMSGFReportFilesOnly = mJobParams.GetJobParameter("CreateMSGFReportFilesOnly", false);
+            // mIncludePepXMLFiles = mJobParams.GetJobParameter("IncludePepXMLFiles", true);
+
             mCreateMGFFiles = mJobParams.GetJobParameter("CreateMGFFiles", true);
 
-            mIncludePepXMLFiles = mJobParams.GetJobParameter("IncludePepXMLFiles", true);
             mProcessMzIdFiles = mJobParams.GetJobParameter("IncludeMzIdFiles", true);
 
-            if (mCreateMSGFReportFilesOnly)
-            {
-                mCreateMGFFiles = false;
-                mIncludePepXMLFiles = false;
-                mProcessMzIdFiles = false;
-                mCreatePrideXMLFiles = false;
-            }
-
-            mCachedOrgDBName = string.Empty;
+            // Deprecated:
+            // if (mCreateMSGFReportFilesOnly)
+            // {
+            //     mCreateMGFFiles = false;
+            //     mIncludePepXMLFiles = false;
+            //     mProcessMzIdFiles = false;
+            //     mCreatePrideXMLFiles = false;
+            // }
 
             // Initialize the protein dictionaries
             mCachedProteins = new Dictionary<string, KeyValuePair<int, string>>();
@@ -3319,7 +3339,8 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             mPreviousDatasetFilesToCopy = new List<string>();
 
             // Initialize additional items
-            mFilterThresholdsUsed = new udtFilterThresholdsType();
+
+            // Deprecated: mFilterThresholdsUsed = new udtFilterThresholdsType();
             mInstrumentGroupsStored = new Dictionary<string, SortedSet<string>>();
             mSearchToolsUsed = new SortedSet<string>();
             mExperimentNEWTInfo = new Dictionary<int, string>();
@@ -3329,25 +3350,26 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
             mMzIdSampleInfo = new Dictionary<string, clsSampleMetadata>(StringComparer.OrdinalIgnoreCase);
 
-            // Determine the filter thresholds
-            var udtFilterThresholds = new udtFilterThresholdsType();
-            udtFilterThresholds.Clear();
-            udtFilterThresholds.PValueThreshold = mJobParams.GetJobParameter("PValueThreshold", udtFilterThresholds.PValueThreshold);
-            udtFilterThresholds.FDRThreshold = mJobParams.GetJobParameter("FDRThreshold", udtFilterThresholds.FDRThreshold);
-            udtFilterThresholds.PepFDRThreshold = mJobParams.GetJobParameter("PepFDRThreshold", udtFilterThresholds.PepFDRThreshold);
+            // Deprecated:
+            // // Determine the filter thresholds
+            // var udtFilterThresholds = new udtFilterThresholdsType();
+            // udtFilterThresholds.Clear();
+            // udtFilterThresholds.PValueThreshold = mJobParams.GetJobParameter("PValueThreshold", udtFilterThresholds.PValueThreshold);
+            // udtFilterThresholds.FDRThreshold = mJobParams.GetJobParameter("FDRThreshold", udtFilterThresholds.FDRThreshold);
+            // udtFilterThresholds.PepFDRThreshold = mJobParams.GetJobParameter("PepFDRThreshold", udtFilterThresholds.PepFDRThreshold);
 
-            // Support both SpecProb and SpecEValue job parameters
-            udtFilterThresholds.MSGFSpecEValueThreshold = mJobParams.GetJobParameter("MSGFSpecProbThreshold", udtFilterThresholds.MSGFSpecEValueThreshold);
-            udtFilterThresholds.MSGFSpecEValueThreshold = mJobParams.GetJobParameter("MSGFSpecEvalueThreshold", udtFilterThresholds.MSGFSpecEValueThreshold);
+            // // Support both SpecProb and SpecEValue job parameters
+            // udtFilterThresholds.MSGFSpecEValueThreshold = mJobParams.GetJobParameter("MSGFSpecProbThreshold", udtFilterThresholds.MSGFSpecEValueThreshold);
+            // udtFilterThresholds.MSGFSpecEValueThreshold = mJobParams.GetJobParameter("MSGFSpecEvalueThreshold", udtFilterThresholds.MSGFSpecEValueThreshold);
 
-            udtFilterThresholds.UseFDRThreshold = mJobParams.GetJobParameter("UseFDRThreshold", udtFilterThresholds.UseFDRThreshold);
-            udtFilterThresholds.UsePepFDRThreshold = mJobParams.GetJobParameter("UsePepFDRThreshold", udtFilterThresholds.UsePepFDRThreshold);
+            // udtFilterThresholds.UseFDRThreshold = mJobParams.GetJobParameter("UseFDRThreshold", udtFilterThresholds.UseFDRThreshold);
+            // udtFilterThresholds.UsePepFDRThreshold = mJobParams.GetJobParameter("UsePepFDRThreshold", udtFilterThresholds.UsePepFDRThreshold);
 
-            // Support both SpecProb and SpecEValue job parameters
-            udtFilterThresholds.UseMSGFSpecEValue = mJobParams.GetJobParameter("UseMSGFSpecProb", udtFilterThresholds.UseMSGFSpecEValue);
-            udtFilterThresholds.UseMSGFSpecEValue = mJobParams.GetJobParameter("UseMSGFSpecEValue", udtFilterThresholds.UseMSGFSpecEValue);
+            // // Support both SpecProb and SpecEValue job parameters
+            // udtFilterThresholds.UseMSGFSpecEValue = mJobParams.GetJobParameter("UseMSGFSpecProb", udtFilterThresholds.UseMSGFSpecEValue);
+            // udtFilterThresholds.UseMSGFSpecEValue = mJobParams.GetJobParameter("UseMSGFSpecEValue", udtFilterThresholds.UseMSGFSpecEValue);
 
-            return udtFilterThresholds;
+            //return udtFilterThresholds;
         }
 
         /// <summary>
@@ -3433,7 +3455,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// Parse the PRIDEConverter console output file to determine the PRIDE Version
         /// </summary>
         /// <param name="consoleOutputFilePath"></param>
-        /// <remarks></remarks>
+        [Obsolete("No longer used")]
         private void ParseConsoleOutputFile(string consoleOutputFilePath)
         {
             // ReSharper disable CommentTypo
@@ -3515,7 +3537,6 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// Process one job
         /// </summary>
         /// <param name="jobInfo">Keys are job numbers and values contain job info</param>
-        /// <param name="udtFilterThresholds"></param>
         /// <param name="analysisResults"></param>
         /// <param name="dataPackageDatasets"></param>
         /// <param name="remoteTransferFolder"></param>
@@ -3525,7 +3546,6 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// <returns></returns>
         private CloseOutType ProcessJob(
             KeyValuePair<int, clsDataPackageJobInfo> jobInfo,
-            udtFilterThresholdsType udtFilterThresholds,
             clsAnalysisResults analysisResults,
             IReadOnlyDictionary<int, clsDataPackageDatasetInfo> dataPackageDatasets,
             string remoteTransferFolder,
@@ -3533,7 +3553,6 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             IReadOnlyDictionary<string, string> templateParameters,
             bool assumeInstrumentDataUnpurged)
         {
-            bool success;
             var resultFiles = new clsResultFileContainer();
 
             var job = jobInfo.Value.Job;
@@ -3546,15 +3565,16 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 // Retrieve the dataset files for this dataset
                 mPreviousDatasetName = dataset;
 
-                if (mCreatePrideXMLFiles && !mCreateMSGFReportFilesOnly)
-                {
-                    // Create the .mzXML files if it is missing
-                    success = CreateMzXMLFileIfMissing(dataset, analysisResults, datasetRawFilePaths);
-                    if (!success)
-                    {
-                        return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
-                    }
-                }
+                // Deprecated:
+                // if (mCreatePrideXMLFiles && !mCreateMSGFReportFilesOnly)
+                // {
+                //     // Create the .mzXML files if it is missing
+                //     success = CreateMzXMLFileIfMissing(dataset, analysisResults, datasetRawFilePaths);
+                //     if (!success)
+                //     {
+                //         return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+                //     }
+                // }
             }
 
             // Update the cached analysis tool names
@@ -3584,7 +3604,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             // Retrieve the PHRP files, MS-GF+ results, and _dta.txt or .mzML.gz file for this job
             var filesCopied = new List<string>();
 
-            success = RetrievePHRPFiles(job, dataset, analysisResults, remoteTransferFolder, filesCopied);
+            var success = RetrievePHRPFiles(job, dataset, analysisResults, remoteTransferFolder, filesCopied);
             if (!success)
             {
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
@@ -3667,65 +3687,67 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 }
             }
 
-            if (mIncludePepXMLFiles && jobInfo.Value.PeptideHitResultType != clsPHRPReader.ePeptideHitResultType.Unknown ||
-                jobInfo.Value.PeptideHitResultType == clsPHRPReader.ePeptideHitResultType.Sequest)
-            {
-                var pepXmlFilename = jobInfo.Value.Dataset + ".pepXML";
-                var pepXMLFile = new FileInfo(Path.Combine(mWorkDir, pepXmlFilename));
-                if (pepXMLFile.Exists)
-                {
-                    // Make sure it is capitalized correctly, then gzip it
+            // Deprecated
+            // if (mIncludePepXMLFiles && jobInfo.Value.PeptideHitResultType != clsPHRPReader.ePeptideHitResultType.Unknown ||
+            //     jobInfo.Value.PeptideHitResultType == clsPHRPReader.ePeptideHitResultType.Sequest)
+            // {
+            //     var pepXmlFilename = jobInfo.Value.Dataset + ".pepXML";
+            //     var pepXMLFile = new FileInfo(Path.Combine(mWorkDir, pepXmlFilename));
+            //     if (pepXMLFile.Exists)
+            //     {
+            //         // Make sure it is capitalized correctly, then gzip it
 
-                    if (!string.Equals(pepXMLFile.Name, pepXmlFilename, StringComparison.Ordinal))
-                    {
-                        pepXMLFile.MoveTo(pepXMLFile.FullName + ".tmp");
-                        pepXMLFile.MoveTo(Path.Combine(mWorkDir, pepXmlFilename));
-                    }
+            //         if (!string.Equals(pepXMLFile.Name, pepXmlFilename, StringComparison.Ordinal))
+            //         {
+            //             pepXMLFile.MoveTo(pepXMLFile.FullName + ".tmp");
+            //             pepXMLFile.MoveTo(Path.Combine(mWorkDir, pepXmlFilename));
+            //         }
 
-                    // Note that the original file will be auto-deleted after the .gz file is created
-                    var gzippedPepXMLFile = GZipFile(pepXMLFile);
+            //         // Note that the original file will be auto-deleted after the .gz file is created
+            //         var gzippedPepXMLFile = GZipFile(pepXMLFile);
 
-                    if (gzippedPepXMLFile == null)
-                    {
-                        if (string.IsNullOrEmpty(mMessage))
-                        {
-                            LogError("GZipFile returned false for " + pepXMLFile.FullName);
-                        }
-                        return CloseOutType.CLOSEOUT_FAILED;
-                    }
+            //         if (gzippedPepXMLFile == null)
+            //         {
+            //             if (string.IsNullOrEmpty(mMessage))
+            //             {
+            //                 LogError("GZipFile returned false for " + pepXMLFile.FullName);
+            //             }
+            //             return CloseOutType.CLOSEOUT_FAILED;
+            //         }
 
-                    resultFiles.PepXMLFile = gzippedPepXMLFile.FullName;
-                }
-            }
+            //         resultFiles.PepXMLFile = gzippedPepXMLFile.FullName;
+            //     }
+            // }
 
             // Store the instrument group and instrument name
             StoreInstrumentInfo(jobInfo.Value);
 
             resultFiles.PrideXmlFilePath = string.Empty;
 
-            if (mCreatePrideXMLFiles)
-            {
-                // Create the .msgf-report.xml file for this job
+            // Deprecated:
+            //if (mCreatePrideXMLFiles)
+            //{
+            //    // Create the .msgf-report.xml file for this job
 
-                success = CreateMSGFReportFile(job, dataset, udtFilterThresholds, out var prideReportXMLFilePath);
-                if (!success)
-                {
-                    return CloseOutType.CLOSEOUT_FAILED;
-                }
+            //    success = CreateMSGFReportFile(job, dataset, udtFilterThresholds, out var prideReportXMLFilePath);
+            //    if (!success)
+            //    {
+            //        return CloseOutType.CLOSEOUT_FAILED;
+            //    }
 
-                AddToListIfNew(mPreviousDatasetFilesToDelete, prideReportXMLFilePath);
+            //    AddToListIfNew(mPreviousDatasetFilesToDelete, prideReportXMLFilePath);
 
-                if (!mCreateMSGFReportFilesOnly)
-                {
-                    // Create the .msgf-Pride.xml file for this job
-                    success = CreatePrideXMLFile(job, dataset, prideReportXMLFilePath, out var prideXmlPath);
-                    resultFiles.PrideXmlFilePath = prideXmlPath;
-                    if (!success)
-                    {
-                        return CloseOutType.CLOSEOUT_FAILED;
-                    }
-                }
-            }
+            //    if (!mCreateMSGFReportFilesOnly)
+            //    {
+            //        // Create the .msgf-Pride.xml file for this job
+            //        success = CreatePrideXMLFile(job, dataset, prideReportXMLFilePath, out var prideXmlPath);
+            //        resultFiles.PrideXmlFilePath = prideXmlPath;
+            //        if (!success)
+            //        {
+            //            return CloseOutType.CLOSEOUT_FAILED;
+            //        }
+            //    }
+            //}
 
             success = AppendToPXFileInfo(jobInfo.Value, datasetRawFilePaths, resultFiles);
 
@@ -4151,6 +4173,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             return true;
         }
 
+        [Obsolete("No longer used")]
         private bool RunPrideConverter(int job, string dataset, string msgfResultsFilePath, string mzXMLFilePath, string prideReportFilePath)
         {
             if (string.IsNullOrEmpty(msgfResultsFilePath))
@@ -4283,36 +4306,37 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             // Store paths to key files in toolFiles
             var toolFiles = new List<FileInfo>();
 
-            if (mCreatePrideXMLFiles)
-            {
-                var fiPrideConverter = new FileInfo(prideConverterProgLoc);
-                if (!fiPrideConverter.Exists)
-                {
-                    try
-                    {
-                        toolVersionInfo = "Unknown";
-                        return SetStepTaskToolVersion(toolVersionInfo, new List<FileInfo>());
-                    }
-                    catch (Exception ex)
-                    {
-                        var msg = "Exception calling SetStepTaskToolVersion: " + ex.Message;
-                        LogError(msg);
-                        return false;
-                    }
-                }
+            // Deprecated:
+            //if (mCreatePrideXMLFiles)
+            //{
+            //    var fiPrideConverter = new FileInfo(prideConverterProgLoc);
+            //    if (!fiPrideConverter.Exists)
+            //    {
+            //        try
+            //        {
+            //            toolVersionInfo = "Unknown";
+            //            return SetStepTaskToolVersion(toolVersionInfo, new List<FileInfo>());
+            //        }
+            //        catch (Exception ex)
+            //        {
+            //            var msg = "Exception calling SetStepTaskToolVersion: " + ex.Message;
+            //            LogError(msg);
+            //            return false;
+            //        }
+            //    }
 
-                // Run the PRIDE Converter using the -version switch to determine its version
-                toolVersionInfo = GetPrideConverterVersion(fiPrideConverter.FullName);
+            //    // Run the PRIDE Converter using the -version switch to determine its version
+            //    toolVersionInfo = GetPrideConverterVersion(fiPrideConverter.FullName);
 
-                toolFiles.Add(fiPrideConverter);
-            }
-            else
+            //    toolFiles.Add(fiPrideConverter);
+            //}
+            //else
+            //{
+
+            // Lookup the version of the AnalysisManagerPrideConverter plugin
+            if (!StoreToolVersionInfoForLoadedAssembly(ref toolVersionInfo, "AnalysisManagerPRIDEConverterPlugIn", includeRevision: false))
             {
-                // Lookup the version of the AnalysisManagerPrideConverter plugin
-                if (!StoreToolVersionInfoForLoadedAssembly(ref toolVersionInfo, "AnalysisManagerPRIDEConverterPlugIn", includeRevision: false))
-                {
-                    return false;
-                }
+                return false;
             }
 
             toolFiles.Add(new FileInfo(mMSXmlGeneratorAppPath));
@@ -4416,6 +4440,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             }
         }
 
+        [Obsolete("No longer used")]
         private eMSGFReportXMLFileLocation UpdateMSGFReportXMLFileLocation(eMSGFReportXMLFileLocation eFileLocation, string elementName, bool insideMzDataDescription)
         {
             switch (elementName)
@@ -4547,10 +4572,12 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 // If <ModificationParams /> is found, remove it
 
-                var success = false;
-                string mzIdFilePath;
-
-                if (dataPkgJob.NumberOfClonedSteps > 0)
+                var success = UpdateMzIdFile(remoteTransferFolder, dataPkgJob.Job, dataPkgJob.Dataset, searchedMzML, 0, sampleMetadata, out var mzIdFilePath, out mzIdExistsRemotely);
+                if (success)
+                {
+                    mzIdFilePaths.Add(mzIdFilePath);
+                }
+                else if (dataPkgJob.NumberOfClonedSteps > 0)
                 {
                     mzIdExistsRemotely = false;
 
@@ -4577,14 +4604,6 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                         {
                             break;
                         }
-                    }
-                }
-                else
-                {
-                    success = UpdateMzIdFile(remoteTransferFolder, dataPkgJob.Job, dataPkgJob.Dataset, searchedMzML, 0, sampleMetadata, out mzIdFilePath, out mzIdExistsRemotely);
-                    if (success)
-                    {
-                        mzIdFilePaths.Add(mzIdFilePath);
                     }
                 }
 
@@ -4972,6 +4991,12 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 {
                     // Nothing was changed; delete the .tmp file
                     updatedMzidFile.Delete();
+
+                    if (JobFileRenameRequired(dataPkgJob))
+                    {
+                        mzIdFilePath = Path.Combine(mWorkDir, dataPkgDataset + "_Job" + dataPkgJob + "_msgfplus" + filePartText + DOT_MZID_GZ);
+                        sourceMzidFile.MoveTo(mzIdFilePath);
+                    }
                     return true;
                 }
 
@@ -4993,6 +5018,8 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     }
 
                     updatedMzidFile.MoveTo(mzIdFilePath);
+
+                    return true;
                 }
                 catch (Exception ex)
                 {
@@ -5000,7 +5027,6 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     return false;
                 }
 
-                return true;
             }
             catch (Exception ex)
             {
@@ -5387,7 +5413,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// <summary>
         /// Event handler for CmdRunner.LoopWaiting event
         /// </summary>
-        /// <remarks></remarks>
+        [Obsolete("No longer used")]
         private void CmdRunner_LoopWaiting()
         {
             if (DateTime.UtcNow.Subtract(mLastConsoleOutputParse).TotalSeconds >= 15)
