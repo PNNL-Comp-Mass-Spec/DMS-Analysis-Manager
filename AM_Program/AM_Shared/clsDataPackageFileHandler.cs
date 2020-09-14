@@ -777,17 +777,17 @@ namespace AnalysisManagerBase
                         }
                     }
 
-                    BaseLogger.LogLevels eLogMsgTypeIfNotFound;
+                    BaseLogger.LogLevels logMsgTypeIfNotFound;
 
                     if (!fileRequired)
                     {
                         // It's OK if this file doesn't exist, we'll just log a debug message
-                        eLogMsgTypeIfNotFound = BaseLogger.LogLevels.DEBUG;
+                        logMsgTypeIfNotFound = BaseLogger.LogLevels.DEBUG;
                     }
                     else
                     {
                         // This file must exist; log an error if it's not found
-                        eLogMsgTypeIfNotFound = BaseLogger.LogLevels.ERROR;
+                        logMsgTypeIfNotFound = BaseLogger.LogLevels.ERROR;
                     }
 
                     if (retrievalOptions.CreateJobPathFiles && !sourceDirectoryPath.StartsWith(clsAnalysisResources.MYEMSL_PATH_FLAG))
@@ -805,7 +805,7 @@ namespace AnalysisManagerBase
                         }
                         else
                         {
-                            if (eLogMsgTypeIfNotFound != BaseLogger.LogLevels.DEBUG)
+                            if (logMsgTypeIfNotFound != BaseLogger.LogLevels.DEBUG)
                             {
                                 var warningMessage = "Required PHRP file not found: " + sourceFilename;
                                 if (sourceFilename.EndsWith("_msgfplus.zip", StringComparison.OrdinalIgnoreCase) ||
@@ -823,12 +823,12 @@ namespace AnalysisManagerBase
                     else
                     {
                         // Note for files in MyEMSL, this call will simply add the file to the download queue; use ProcessMyEMSLDownloadQueue() to retrieve the file
-                        var fileCopied = mAnalysisResources.CopyFileToWorkDir(sourceFilename, sourceDirectoryPath, localDirectoryPath, eLogMsgTypeIfNotFound);
+                        var fileCopied = mAnalysisResources.CopyFileToWorkDir(sourceFilename, sourceDirectoryPath, localDirectoryPath, logMsgTypeIfNotFound);
 
                         if (!fileCopied)
                         {
                             var alternateFileName = clsPHRPReader.AutoSwitchToLegacyMSGFDBIfRequired(sourceFilename, "Dataset_msgfdb.txt");
-                            fileCopied = mAnalysisResources.CopyFileToWorkDir(alternateFileName, sourceDirectoryPath, localDirectoryPath, eLogMsgTypeIfNotFound);
+                            fileCopied = mAnalysisResources.CopyFileToWorkDir(alternateFileName, sourceDirectoryPath, localDirectoryPath, logMsgTypeIfNotFound);
                             if (fileCopied)
                             {
                                 sourceFilename = alternateFileName;
@@ -837,7 +837,7 @@ namespace AnalysisManagerBase
 
                         if (!fileCopied)
                         {
-                            if (eLogMsgTypeIfNotFound != BaseLogger.LogLevels.DEBUG)
+                            if (logMsgTypeIfNotFound != BaseLogger.LogLevels.DEBUG)
                             {
                                 OnErrorEvent("CopyFileToWorkDir returned False for " + sourceFilename + " using directory " + sourceDirectoryPath);
                                 mAnalysisResources.RestoreCachedDataAndJobInfo();

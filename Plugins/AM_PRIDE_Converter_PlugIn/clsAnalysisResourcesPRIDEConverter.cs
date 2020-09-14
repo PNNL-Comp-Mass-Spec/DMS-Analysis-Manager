@@ -465,12 +465,12 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     return false;
                 }
 
-                var ConnectionString = mMgrParams.GetParam("brokerconnectionstring");
+                var connectionString = mMgrParams.GetParam("BrokerConnectionString");
                 var dataPackageID = mJobParams.GetJobParameter("DataPackageID", -1);
 
                 var matchFound = false;
                 var sourceFolders = new List<string> {
-                    GetDataPackageStoragePath(ConnectionString, dataPackageID),
+                    GetDataPackageStoragePath(connectionString, dataPackageID),
                     transferFolderPath
                 };
 
