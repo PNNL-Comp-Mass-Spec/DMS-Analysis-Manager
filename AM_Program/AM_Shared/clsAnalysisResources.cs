@@ -1276,13 +1276,23 @@ namespace AnalysisManagerBase
         /// <param name="proteinCollectionInfo"></param>
         /// <param name="targetDirectory">Directory where file will be created</param>
         /// <param name="decoyProteinsUseXXX">When true, decoy protein names start with XXX_</param>
+        /// <param name="previewMode">Set to true to show the filename that would be retrieved</param>
         /// <returns>TRUE for success; FALSE for failure</returns>
         /// <remarks></remarks>
-        protected bool CreateFastaFile(clsProteinCollectionInfo proteinCollectionInfo, string targetDirectory, bool decoyProteinsUseXXX)
+        protected bool CreateFastaFile(
+            clsProteinCollectionInfo proteinCollectionInfo,
+            string targetDirectory,
+            bool decoyProteinsUseXXX,
+            bool previewMode)
         {
             if (mDebugLevel >= 1)
             {
-                LogMessage("Creating fasta file in " + targetDirectory);
+                // Creating fasta file in ...
+                // or
+                // Preview retrieval of fasta file ...
+                LogMessage(string.Format("{0} fasta file in {1}",
+                    previewMode ? "Preview retrieval of" : "Creating",
+                    targetDirectory));
             }
 
             if (!Directory.Exists(targetDirectory))
@@ -1489,16 +1499,43 @@ namespace AnalysisManagerBase
                     return false;
                 }
 
-                var hashString = mFastaTools.ExportFASTAFile(proteinCollectionInfo.ProteinCollectionList,
-                                                             proteinCollectionInfo.ProteinCollectionOptions,
-                                                             legacyFastaToUse,
-                                                             targetDirectory);
-
-                if (string.IsNullOrEmpty(hashString))
+                if (previewMode)
                 {
-                    // Fasta generator returned empty hash string
-                    LogError("mFastaTools.ExportFASTAFile returned an empty Hash string for the OrgDB; unable to continue; " + orgDBDescription);
-                    return false;
+                    if (mDebugLevel >= 1)
+                    {
+                        LogMessage(string.Format(
+                            "Simulate call to mFastaTools.ExportFASTAFile for " +
+                            "ProteinCollectionList '{0}', ProteinCollectionOptions '{1}',  and legacy FASTA {2}",
+                            proteinCollectionInfo.ProteinCollectionList,
+                            proteinCollectionInfo.ProteinCollectionOptions,
+                            legacyFastaToUse));
+                    }
+
+                    if ((string.IsNullOrEmpty(proteinCollectionInfo.ProteinCollectionList) ||
+                         proteinCollectionInfo.ProteinCollectionList.Equals("na")) &&
+                        !string.IsNullOrEmpty(legacyFastaToUse) && !legacyFastaToUse.Equals("na"))
+                    {
+                        mFastaFileName = legacyFastaToUse;
+                    }
+                    else
+                    {
+                        mFastaFileName = proteinCollectionInfo.ProteinCollectionList;
+                    }
+                }
+                else
+                {
+                    var hashString = mFastaTools.ExportFASTAFile(
+                        proteinCollectionInfo.ProteinCollectionList,
+                        proteinCollectionInfo.ProteinCollectionOptions,
+                        legacyFastaToUse,
+                        targetDirectory);
+
+                    if (string.IsNullOrEmpty(hashString))
+                    {
+                        // Fasta generator returned empty hash string
+                        LogError("mFastaTools.ExportFASTAFile returned an empty Hash string for the OrgDB; unable to continue; " + orgDBDescription);
+                        return false;
+                    }
                 }
             }
             catch (Exception ex)
@@ -1539,7 +1576,7 @@ namespace AnalysisManagerBase
                 // Log the name of the .Fasta file we're using
                 LogDebugMessage("Fasta generation complete, using database: " + mFastaFileName, null);
 
-                if (mDebugLevel >= 2)
+                if (mDebugLevel >= 2 && !previewMode)
                 {
                     // Also log the file creation and modification dates
 
@@ -1568,7 +1605,10 @@ namespace AnalysisManagerBase
                 }
             }
 
-            UpdateLastUsedFile(fastaFile);
+            if (!previewMode)
+            {
+                UpdateLastUsedFile(fastaFile);
+            }
 
             // If we got to here, everything worked OK
             return true;
@@ -4290,12 +4330,13 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="orgDbDirectoryPath">Directory on analysis machine where fasta files are stored</param>
         /// <param name="resultCode">Output: status code</param>
+        /// <param name="previewMode">Set to true to show the filename that would be retrieved</param>
         /// <returns>TRUE for success; FALSE for failure</returns>
         /// <remarks>Stores the name of the FASTA file as a new job parameter named "generatedFastaName" in section "PeptideSearch"</remarks>
-        protected bool RetrieveOrgDB(string orgDbDirectoryPath, out CloseOutType resultCode)
+        protected bool RetrieveOrgDB(string orgDbDirectoryPath, out CloseOutType resultCode, bool previewMode = false)
         {
             const int maxLegacyFASTASizeGB = 100;
-            return RetrieveOrgDB(orgDbDirectoryPath, out resultCode, maxLegacyFASTASizeGB, out _);
+            return RetrieveOrgDB(orgDbDirectoryPath, out resultCode, maxLegacyFASTASizeGB, out _, previewMode: previewMode);
         }
 
         /// <summary>
@@ -4308,6 +4349,7 @@ namespace AnalysisManagerBase
         /// Returns False if the file was not copied because it is too large</param>
         /// <param name="fastaFileSizeGB">Output: FASTA file size, in GB</param>
         /// <param name="decoyProteinsUseXXX">When true, decoy protein names start with XXX_ (defaults to True as of April 2019)</param>
+        /// <param name="previewMode">Set to true to show the filename that would be retrieved</param>
         /// <returns>TRUE for success; FALSE for failure</returns>
         /// <remarks>Stores the name of the FASTA file as a new job parameter named "generatedFastaName" in section "PeptideSearch"</remarks>
         protected bool RetrieveOrgDB(
@@ -4315,7 +4357,8 @@ namespace AnalysisManagerBase
             out CloseOutType resultCode,
             float maxLegacyFASTASizeGB,
             out double fastaFileSizeGB,
-            bool decoyProteinsUseXXX = true)
+            bool decoyProteinsUseXXX = true,
+            bool previewMode = false)
         {
             const int freeSpaceThresholdPercent = 20;
 
@@ -4362,12 +4405,15 @@ namespace AnalysisManagerBase
                     // Validate the FASTA file against the .localhashcheck file (created if missing)
                     var success = ValidateOfflineFASTA(fastaFile);
 
-                    if (success)
+                    if (success && !previewMode)
                     {
                         UpdateLastUsedFile(fastaFile);
                     }
 
-                    PurgeFastaFilesIfLowFreeSpace(orgDbDirectoryPath, freeSpaceThresholdPercent, 0, legacyFastaFileBaseName);
+                    if (!previewMode)
+                    {
+                        PurgeFastaFilesIfLowFreeSpace(orgDbDirectoryPath, freeSpaceThresholdPercent, 0, legacyFastaFileBaseName);
+                    }
 
                     if (success)
                         resultCode = CloseOutType.CLOSEOUT_SUCCESS;
@@ -4398,17 +4444,20 @@ namespace AnalysisManagerBase
                 // Delete old fasta files and suffix array files if getting low on disk space
                 // Do not delete any files related to the current Legacy Fasta file (if defined)
 
-                PurgeFastaFilesIfLowFreeSpace(orgDbDirectoryPath, freeSpaceThresholdPercent, requiredFreeSpaceMB, legacyFastaFileBaseName);
+                if (!previewMode)
+                {
+                    PurgeFastaFilesIfLowFreeSpace(orgDbDirectoryPath, freeSpaceThresholdPercent, requiredFreeSpaceMB, legacyFastaFileBaseName);
+                }
 
                 // Make a new fasta file from scratch
-                if (!CreateFastaFile(proteinCollectionInfo, orgDbDirectoryPath, decoyProteinsUseXXX))
+                if (!CreateFastaFile(proteinCollectionInfo, orgDbDirectoryPath, decoyProteinsUseXXX, previewMode))
                 {
                     // There was a problem. Log entries in lower-level routines provide documentation
                     resultCode = CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                     return false;
                 }
 
-                if (Math.Abs(fastaFileSizeGB) < float.Epsilon)
+                if (Math.Abs(fastaFileSizeGB) < float.Epsilon && !previewMode)
                 {
                     // Determine the FASTA file size (should already be known for legacy FASTA files)
                     var fastaFile = new FileInfo(Path.Combine(orgDbDirectoryPath, mFastaFileName));
@@ -4427,7 +4476,10 @@ namespace AnalysisManagerBase
 
                 // Delete old fasta files and suffix array files if getting low on disk space
                 // No need to pass a value for legacyFastaFileBaseName because a .fasta.LastUsed file will have been created/updated by CreateFastaFile
-                PurgeFastaFilesIfLowFreeSpace(orgDbDirectoryPath, freeSpaceThresholdPercent, 0, "");
+                if (!previewMode)
+                {
+                    PurgeFastaFilesIfLowFreeSpace(orgDbDirectoryPath, freeSpaceThresholdPercent, 0, "");
+                }
 
                 resultCode = CloseOutType.CLOSEOUT_SUCCESS;
                 return true;

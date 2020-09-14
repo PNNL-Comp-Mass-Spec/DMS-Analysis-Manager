@@ -168,8 +168,8 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
-            // Obtain the FASTA files (typically generated from protein collections) used for the jobs in dataPackagePeptideHitJobs
-            if (!RetrieveFastaFiles(dataPackagePeptideHitJobs))
+            // Validate the FASTA files (typically generated from protein collections) used for the jobs in dataPackagePeptideHitJobs
+            if (!ValidateFastaFiles(dataPackagePeptideHitJobs))
             {
                 return CloseOutType.CLOSEOUT_NO_FAS_FILES;
             }
@@ -292,7 +292,13 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             return templateFileName;
         }
 
-        private bool RetrieveFastaFiles(IEnumerable<clsDataPackageJobInfo> dataPackagePeptideHitJobs)
+        /// <summary>
+        /// Prior to September 2020 we retrieved the FASTA files associated with each job
+        /// This tool does not actually use FASTA files, so we instead simply validate that the jobs have a FASTA file associated with them
+        /// </summary>
+        /// <param name="dataPackagePeptideHitJobs"></param>
+        /// <returns>True if each job has a FASTA file, otherwise false</returns>
+        private bool ValidateFastaFiles(IEnumerable<clsDataPackageJobInfo> dataPackagePeptideHitJobs)
         {
             var orgDbDirectoryPath = mMgrParams.GetParam("OrgDbDir");
 
@@ -300,7 +306,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             {
                 // This dictionary is used to avoid calling RetrieveOrgDB() for every job
                 // The dictionary keys are LegacyFastaFileName, ProteinOptions, and ProteinCollectionList combined with underscores
-                // The dictionary values are the name of the generated (or retrieved) fasta file
+                // The dictionary values are the value stored in generatedFastaName by RetrieveOrgDB
                 var orgDBParamsToGeneratedFileNameMap = new Dictionary<string, string>();
 
                 // Cache the current dataset and job info
@@ -310,16 +316,17 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 {
                     var dictionaryKey = dataPkgJob.LegacyFastaFileName + "_" + dataPkgJob.ProteinCollectionList + "_" + dataPkgJob.ProteinOptions;
 
-                    if (orgDBParamsToGeneratedFileNameMap.TryGetValue(dictionaryKey, out var generatedOrgDBName))
+                    if (orgDBParamsToGeneratedFileNameMap.TryGetValue(dictionaryKey, out var proteinCollectionListOrLegacyFastaName))
                     {
-                        // Organism DB was already generated
+                        // We already processed this protein collection list of legacy FASTA file
                     }
                     else
                     {
                         OverrideCurrentDatasetAndJobInfo(dataPkgJob);
 
                         mJobParams.AddAdditionalParameter("PeptideSearch", "generatedFastaName", string.Empty);
-                        if (!RetrieveOrgDB(orgDbDirectoryPath, out var resultCode))
+
+                        if (!RetrieveOrgDB(orgDbDirectoryPath, out var resultCode, true))
                         {
                             if (string.IsNullOrEmpty(mMessage))
                                 mMessage = "Call to RetrieveOrgDB returned false in clsAnalysisResourcesPRIDEConverter.RetrieveFastaFiles";
@@ -327,9 +334,9 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                             return false;
                         }
 
-                        generatedOrgDBName = mJobParams.GetJobParameter("PeptideSearch", "generatedFastaName", string.Empty);
+                        proteinCollectionListOrLegacyFastaName = mJobParams.GetJobParameter("PeptideSearch", "generatedFastaName", string.Empty);
 
-                        if (string.IsNullOrEmpty(generatedOrgDBName))
+                        if (string.IsNullOrEmpty(proteinCollectionListOrLegacyFastaName))
                         {
                             mMessage = "FASTA file was not generated when RetrieveFastaFiles called RetrieveOrgDB";
                             LogError(mMessage + " (class clsAnalysisResourcesPRIDEConverter)");
@@ -337,24 +344,13 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                             return false;
                         }
 
-                        if (generatedOrgDBName != dataPkgJob.OrganismDBName)
-                        {
-                            if (dataPkgJob.OrganismDBName == null)
-                                dataPkgJob.OrganismDBName = "??";
-
-                            mMessage = "Generated FASTA file name (" + generatedOrgDBName + ") does not match expected fasta file name (" +
-                                        dataPkgJob.OrganismDBName + "); aborting";
-                            LogError(mMessage + " (class clsAnalysisResourcesPRIDEConverter)");
-                            OverrideCurrentDatasetAndJobInfo(currentDatasetAndJobInfo);
-                            return false;
-                        }
-
-                        orgDBParamsToGeneratedFileNameMap.Add(dictionaryKey, generatedOrgDBName);
+                        orgDBParamsToGeneratedFileNameMap.Add(dictionaryKey, proteinCollectionListOrLegacyFastaName);
                     }
 
-                    // Add a new job parameter that associates generatedOrgDBName with this job
-
-                    mJobParams.AddAdditionalParameter("PeptideSearch", GetGeneratedFastaParamNameForJob(dataPkgJob.Job), generatedOrgDBName);
+                    // Add a new job parameter that associates proteinCollectionListOrLegacyFastaName with this job
+                    // This value was previously used by method CreateMSGFReportFile in clsAnalysisToolRunnerPRIDEConverter,
+                    // but that method (and related methods) were deprecated in September 2020
+                    mJobParams.AddAdditionalParameter("PeptideSearch", GetGeneratedFastaParamNameForJob(dataPkgJob.Job), proteinCollectionListOrLegacyFastaName);
                 }
 
                 // Restore the dataset and job info for this aggregation job
