@@ -13,7 +13,7 @@ using System.Xml;
 namespace AnalysisManagerPRIDEConverterPlugIn
 {
     // Ignore Spelling: ProteomeXchange, Px, Unimod, Cv, Pos, Frac, yyyy-MM-dd, pubmed, amaZon, SolariX, Bio, Deca, Unmarshaller, Xmx
-    // Ignore Spelling: Xpath, sourcefile, spectrafile, reportfile, roc
+    // Ignore Spelling: Xpath, sourcefile, spectrafile, reportfile, roc, udt, const
 
     /// <summary>
     /// Class for running PRIDEConverter
@@ -451,7 +451,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 var datasetRawFilePaths = ExtractPackedJobParameterDictionary(clsAnalysisResources.JOB_PARAM_DICTIONARY_DATASET_FILE_PATHS);
 
                 // Process each job in mDataPackagePeptideHitJobs
-                // Sort the jobs by dataset so that we can use the same .mzXML file for datasets with multiple jobs
+                // Sort the jobs by dataset so that we can use the same .mzML file for datasets with multiple jobs
                 var linqJobsSortedByDataset = (from item in mDataPackagePeptideHitJobs orderby item.Value.Dataset, SortPreference(item.Value.Tool) select item);
 
                 var assumeInstrumentDataUnpurged = mJobParams.GetJobParameter("AssumeInstrumentDataUnpurged", true);
@@ -1734,7 +1734,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 if (mCachedOrgDBName != orgDBNameGenerated)
                 {
-                    // Need to read the proteins from the fasta file
+                    // Need to read the proteins from the FASTA file
 
                     mCachedProteins.Clear();
                     mCachedProteinPSMCounts.Clear();

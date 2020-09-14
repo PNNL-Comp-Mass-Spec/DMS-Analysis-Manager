@@ -10,6 +10,7 @@ namespace AnalysisManager_Cyclops_PlugIn
     /// </summary>
     public class clsAnalysisResourcesCyclops : clsAnalysisResources
     {
+        // Ignore Spelling: filetype, workflows
 
         /// <summary>
         /// Retrieve required files

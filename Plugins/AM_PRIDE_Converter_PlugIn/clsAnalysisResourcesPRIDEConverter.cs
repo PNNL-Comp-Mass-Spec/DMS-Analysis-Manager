@@ -13,6 +13,8 @@ namespace AnalysisManagerPRIDEConverterPlugIn
     /// <remarks>Named PRIDEConverter due to us previously pushing data to PRIDE</remarks>
     public class clsAnalysisResourcesPRIDEConverter : clsAnalysisResources
     {
+        // Ignore Spelling: Xchange, Parm, MZid
+
         /// <summary>
         /// Packed parameter DatasetsMissingMzXMLFiles
         /// </summary>
@@ -396,7 +398,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                     if (fiFiles.Count == 0)
                     {
-                        // File not found; see if any files containin MSGF_REPORT_FILE_SUFFIX exist in the data package folder
+                        // File not found; see if any files containing MSGF_REPORT_FILE_SUFFIX exist in the data package folder
                         fiFiles = diDataPackageFolder.GetFiles("*" + MSGF_REPORT_FILE_SUFFIX + "*").ToList();
                     }
                 }
