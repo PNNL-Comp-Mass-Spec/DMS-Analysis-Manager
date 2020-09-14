@@ -8,6 +8,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Xml;
 using PRISMDatabaseUtils;
 
@@ -568,22 +569,29 @@ namespace AnalysisManagerBase
                     // Retrieve MS-GF+ .mzid files
                     // They will either be stored as .zip files or as .gz files
 
-                    if (dataPkgJob.NumberOfClonedSteps > 0)
-                    {
-                        for (var splitFastaResultID = 1; splitFastaResultID <= dataPkgJob.NumberOfClonedSteps; splitFastaResultID++)
-                        {
-                            GetMzIdFilesToFind(datasetName, splitFastaResultID, zipFileCandidates, gzipFileCandidates);
-                        }
-                    }
-                    else
-                    {
-                        GetMzIdFilesToFind(datasetName, 0, zipFileCandidates, gzipFileCandidates);
-                    }
+                    GetMzIdFilesToFind(datasetName, 0, zipFileCandidates, gzipFileCandidates);
 
                     foreach (var candidateFile in zipFileCandidates.Union(gzipFileCandidates))
                     {
                         candidateMzIdFiles.Add(candidateFile);
                         filesToGet.Add(candidateFile, false);
+                    }
+
+                    if (dataPkgJob.NumberOfClonedSteps > 0)
+                    {
+                        zipFileCandidates.Clear();
+                        gzipFileCandidates.Clear();
+
+                        for (var splitFastaResultID = 1; splitFastaResultID <= dataPkgJob.NumberOfClonedSteps; splitFastaResultID++)
+                        {
+                            GetMzIdFilesToFind(datasetName, splitFastaResultID, zipFileCandidates, gzipFileCandidates);
+                        }
+
+                        foreach (var candidateFile in zipFileCandidates.Union(gzipFileCandidates))
+                        {
+                            candidateMzIdFiles.Add(candidateFile);
+                            filesToGet.Add(candidateFile, false);
+                        }
                     }
                 }
 
@@ -759,10 +767,20 @@ namespace AnalysisManagerBase
 
             try
             {
+                var mzidFileFound = false;
+
                 foreach (var sourceFile in filesToGet)
                 {
                     sourceFilename = sourceFile.Key;
                     var fileRequired = sourceFile.Value;
+
+                    if (mzidFileFound && IsMzidFile(sourceFilename, out var splitFasta) && splitFasta)
+                    {
+                        // This is a split FASTA .mzid file
+                        // Skip it since we already found Dataset_msgfplus.mzid.gz
+                        // (assuming that Dataset_msgfplus.mzid.gz is listed earlier in filesToGet than Dataset_msgfplus_Part6.mzid.gz is listed)
+                        continue;
+                    }
 
                     // Typically only use FindDataFile() for the first file in filesToGet; we will assume the other files are in that directory
                     // However, if the file resides in MyEMSL, we need to call FindDataFile for every new file because FindDataFile will append the MyEMSL File ID for each file
@@ -798,10 +816,18 @@ namespace AnalysisManagerBase
                         if (File.Exists(sourceFilePath))
                         {
                             foundFiles.Add(sourceFilePath);
+                            if (IsMzidFile(sourceFilePath, out var splitFastaMzid) && !splitFastaMzid)
+                            {
+                                mzidFileFound = true;
+                            }
                         }
                         else if (File.Exists(alternateFileName))
                         {
                             foundFiles.Add(alternateFileName);
+                            if (IsMzidFile(alternateFileName, out var splitFastaMzid) && !splitFastaMzid)
+                            {
+                                mzidFileFound = true;
+                            }
                         }
                         else
                         {
@@ -988,6 +1014,25 @@ namespace AnalysisManagerBase
             }
 
             return true;
+        }
+
+        private bool IsMzidFile(string fileNameOrPath, out bool splitFastaMzid)
+        {
+            splitFastaMzid = false;
+
+            if (fileNameOrPath.EndsWith("_msgfplus.mzid.gz", StringComparison.OrdinalIgnoreCase) ||
+                fileNameOrPath.EndsWith("_msgfplus.zip", StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            var splitFastaMatcher = new Regex(@"_msgfplus_Part\d+\.mzid\.gz", RegexOptions.IgnoreCase);
+
+            if (splitFastaMatcher.IsMatch(fileNameOrPath))
+            {
+                splitFastaMzid = true;
+                return true;
+            }
+
+            return false;
         }
 
         private bool RenameDuplicatePHRPFile(
