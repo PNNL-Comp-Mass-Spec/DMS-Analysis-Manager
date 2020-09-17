@@ -1350,14 +1350,15 @@ namespace AnalysisManagerBase
         /// <param name="filePath1">First file</param>
         /// <param name="filePath2">Second file</param>
         /// <param name="ignoreWhitespace">If true, removes white space from the beginning and end of each line before comparing</param>
+        /// <param name="lineIgnoreRegExSpecs">List of RegEx match specs that indicate lines to ignore</param>
         /// <returns></returns>
         /// <remarks></remarks>
-        public static bool TextFilesMatch(string filePath1, string filePath2, bool ignoreWhitespace)
+        public static bool TextFilesMatch(string filePath1, string filePath2, bool ignoreWhitespace, List<Regex> lineIgnoreRegExSpecs = null)
         {
             const int comparisonStartLine = 0;
             const int comparisonEndLine = 0;
 
-            return TextFilesMatch(filePath1, filePath2, comparisonStartLine, comparisonEndLine, ignoreWhitespace, null);
+            return TextFilesMatch(filePath1, filePath2, comparisonStartLine, comparisonEndLine, ignoreWhitespace, lineIgnoreRegExSpecs);
         }
 
         /// <summary>
@@ -1391,7 +1392,7 @@ namespace AnalysisManagerBase
             int comparisonStartLine, int comparisonEndLine,
             bool ignoreWhitespace, List<Regex> lineIgnoreRegExSpecs)
         {
-            var whiteSpaceChars = new List<char>() { '\t', ' ' }.ToArray();
+            var whiteSpaceChars = new List<char> { '\t', ' ' }.ToArray();
 
             try
             {
