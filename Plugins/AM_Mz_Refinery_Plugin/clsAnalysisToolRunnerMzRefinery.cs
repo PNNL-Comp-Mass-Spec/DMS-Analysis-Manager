@@ -24,7 +24,9 @@ namespace AnalysisManagerMzRefineryPlugIn
     // ReSharper disable once UnusedMember.Global
     public class clsAnalysisToolRunnerMzRefinery : clsAnalysisToolRunnerBase
     {
-        // Ignore Spelling: Dta, Utils, endian, modplus, Xmx, conf, Cyanothece, Cyano, Caulo, Prepend, cv
+        // ReSharper disable CommentTypo
+        // Ignore Spelling: Dta, Utils, endian, modplus, Xmx, conf, Cyanothece, Cyano, Caulo, Prepend, cv, outfile, identfile, indexedmzML
+        // ReSharper restore CommentTypo
 
         #region "Constants and Enums"
 
@@ -1278,17 +1280,25 @@ namespace AnalysisManagerMzRefineryPlugIn
         /// <param name="originalMSXmlFile">.mzML file</param>
         /// <param name="msgfPlusResults">.mzid file from MS-GF+</param>
         /// <returns></returns>
-        private bool StartMzRefinery(FileSystemInfo originalMSXmlFile, FileSystemInfo msgfPlusResults)
+        private bool StartMzRefinery(FileInfo originalMSXmlFile, FileSystemInfo msgfPlusResults)
         {
             mConsoleOutputErrorMsg = string.Empty;
 
             LogMessage("Running MzRefinery using MSConvert");
 
+            if (originalMSXmlFile.DirectoryName == null)
+            {
+                LogError("Cannot determine the parent directory of the input file: " + originalMSXmlFile.FullName);
+                return false;
+            }
             // Set up and execute a program runner to run MSConvert
             // Provide the path to the .mzML file plus the --filter switch with the information required to run MzRefiner
 
+            var outputFile = new FileInfo(Path.Combine(originalMSXmlFile.DirectoryName,
+                Path.GetFileNameWithoutExtension(originalMSXmlFile.Name) + "_FIXED.mzML"));
+
             var arguments = originalMSXmlFile.FullName +
-                            " --outfile " + Path.GetFileNameWithoutExtension(originalMSXmlFile.Name) + "_FIXED.mzML" +
+                            " --outfile " + outputFile.Name +
                             " --filter \"mzRefiner " + msgfPlusResults.FullName;
 
             // MzRefiner will perform a segmented correction if there are at least 500 matches; it will perform a global shift if between 100 and 500 matches
@@ -1352,19 +1362,39 @@ namespace AnalysisManagerMzRefineryPlugIn
 
             if (!string.IsNullOrWhiteSpace(mCmdRunner.CachedConsoleErrors))
             {
-                // Append the error messages to the log
-                // Note that ProgRunner will have already included them in the ConsoleOutput.txt file
-
-                var consoleError = "Console error: " + mCmdRunner.CachedConsoleErrors.Replace(Environment.NewLine, "; ");
-                if (string.IsNullOrWhiteSpace(mConsoleOutputErrorMsg))
-                {
-                    mConsoleOutputErrorMsg = consoleError;
-                }
-                else
-                {
-                    LogError(consoleError);
-                }
                 success = false;
+
+                if (mCmdRunner.CachedConsoleErrors.Trim().Equals("[MSData::stringToPair] Bad format:"))
+                {
+                    // Ignore this error if a _FIXED.mzML file was created and it is of comparable size to the input file
+                    outputFile.Refresh();
+                    if (outputFile.Exists && outputFile.Length >= originalMSXmlFile.Length * 0.95)
+                    {
+                        LogWarning(string.Format(
+                            "Ignoring error '[MSData::stringToPair] Bad format' since the _FIXED.mzML was created " +
+                            "and is similar in size to the input file ({0:F0} MB vs. {1:F0} MB)",
+                            outputFile.Length / 1024.0 / 1024.0,
+                            originalMSXmlFile.Length / 1024.0 / 1024.0));
+
+                        success = true;
+                    }
+                }
+
+                if (!success)
+                {
+                    // Append the error messages to the log
+                    // Note that ProgRunner will have already included them in the ConsoleOutput.txt file
+
+                    var consoleError = "Console error: " + mCmdRunner.CachedConsoleErrors.Replace(Environment.NewLine, "; ");
+                    if (string.IsNullOrWhiteSpace(mConsoleOutputErrorMsg))
+                    {
+                        mConsoleOutputErrorMsg = consoleError;
+                    }
+                    else
+                    {
+                        LogError(consoleError);
+                    }
+                }
             }
 
             if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))
