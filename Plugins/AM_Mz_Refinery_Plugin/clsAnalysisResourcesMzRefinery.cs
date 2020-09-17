@@ -1,6 +1,8 @@
 ﻿using AnalysisManagerBase;
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Text.RegularExpressions;
 
 namespace AnalysisManagerMzRefineryPlugIn
 {
@@ -213,7 +215,21 @@ namespace AnalysisManagerMzRefineryPlugIn
             }
 
             // Compare the remote parameter file and the local one to make sure they match
-            if (!clsGlobal.TextFilesMatch(mzRefParamFile.FullName, Path.Combine(mWorkDir, mzRefParamFileName), true))
+
+            // The MS-GF+ tool runner will auto-add these two parameters if not in the source file (see method GetMSGFPlusParameters)
+            // They will thus likely be in the MzRefinery parameter file in the working directory but not in the remote file
+            // Ignore these lines when checking if two files match
+            var lineIgnoreRegExSpecs = new List<Regex> {
+                new Regex("^MinNumPeaksPerSpectrum=5", RegexOptions.Compiled),
+                new Regex("^AddFeatures=1", RegexOptions.Compiled),
+                new Regex("^NumThreads=", RegexOptions.Compiled)
+            };
+
+            if (!clsGlobal.TextFilesMatch(
+                    mzRefParamFile.FullName,
+                    Path.Combine(mWorkDir, mzRefParamFileName),
+                    true,
+                    lineIgnoreRegExSpecs))
             {
                 LogMessage("MzRefinery parameter file in transfer folder does not match the official MzRefinery parameter file; will re-run MS-GF+");
                 return true;
