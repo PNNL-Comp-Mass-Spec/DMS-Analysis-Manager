@@ -272,8 +272,8 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 var result = msgfPlusUtils.InitializeFastaFile(
                     javaProgLoc, msgfPlusJarFilePath,
-                    out var _, out var _,
-                    out var _, parameterFilePath);
+                    out _, out _,
+                    out _, parameterFilePath);
 
                 if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
@@ -552,7 +552,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 if (columnIndicesToCheck.Count == 0)
                 {
-                    if (float.TryParse(headerColumns[0], out var _) || float.TryParse(headerColumns[1], out _))
+                    if (float.TryParse(headerColumns[0], out _) || float.TryParse(headerColumns[1], out _))
                     {
                         // This file does not have a header line
                         if (headerColumns.Count >= 11)
@@ -644,7 +644,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     return true;
                 }
 
-                if (!float.TryParse(columns[0], out var _) && !float.TryParse(columns[1], out _))
+                if (!float.TryParse(columns[0], out _) && !float.TryParse(columns[1], out _))
                     return false;
 
                 // This file does not have a header line

@@ -314,7 +314,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <returns></returns>
         private bool FirstColumnIsInteger(IReadOnlyList<string> dataColumns)
         {
-            return int.TryParse(dataColumns[0], out var _);
+            return int.TryParse(dataColumns[0], out _);
         }
     }
 }

@@ -394,7 +394,7 @@ namespace AnalysisManagerExtractionPlugin
 
                     foreach (var decoyPrefix in decoyPrefixes)
                     {
-                        var fractionDecoy = clsAnalysisResources.GetDecoyFastaCompositionStats(fastaFile, decoyPrefix, out var _);
+                        var fractionDecoy = clsAnalysisResources.GetDecoyFastaCompositionStats(fastaFile, decoyPrefix, out _);
 
                         if (fractionDecoy * 100 >= MINIMUM_PERCENT_DECOY)
                         {
