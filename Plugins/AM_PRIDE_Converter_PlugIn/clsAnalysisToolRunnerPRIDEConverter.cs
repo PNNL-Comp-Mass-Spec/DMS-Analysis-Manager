@@ -1570,7 +1570,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                             reader.CurrentPSM.MSGFSpecEValue + "\t" +
                             reader.CurrentPSM.PeptideCleanSequence.Length + "\t" +
                             totalPRMScore + "\t" + "0\t" + "0\t" + "0\t" + "0\t" +
-                            reader.CurrentPSM.NumTrypticTerminii + "\t" +
+                            reader.CurrentPSM.NumTrypticTermini + "\t" +
                             pValueFormatted + "\t" + "0\t" +
                             deltaScore + "\t" +
                             deltaScoreOther + "\t" +
@@ -1626,7 +1626,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                             PValue = string.Copy(pValueFormatted),
                             MQScore = string.Copy(reader.CurrentPSM.MSGFSpecEValue),
                             TotalPRMScore = string.Copy(totalPRMScore),
-                            NTT = reader.CurrentPSM.NumTrypticTerminii,
+                            NTT = reader.CurrentPSM.NumTrypticTermini,
                             MSGFSpecEValue = string.Copy(reader.CurrentPSM.MSGFSpecEValue),
                             DeltaScore = string.Copy(deltaScore),
                             DeltaScoreOther = string.Copy(deltaScoreOther),
