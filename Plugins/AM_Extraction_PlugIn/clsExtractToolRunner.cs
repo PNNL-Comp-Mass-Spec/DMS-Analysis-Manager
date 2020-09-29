@@ -2792,12 +2792,12 @@ namespace AnalysisManagerExtractionPlugin
 
             try
             {
-                var oValidator = new clsPHRPMassErrorValidator(mDebugLevel);
-                RegisterEvents(oValidator);
+                var massErrorValidator = new clsPHRPMassErrorValidator(mDebugLevel);
+                RegisterEvents(massErrorValidator);
 
                 var paramFilePath = Path.Combine(mWorkDir, searchEngineParamFileName);
 
-                success = oValidator.ValidatePHRPResultMassErrors(inputFilePath, resultType, paramFilePath);
+                success = massErrorValidator.ValidatePHRPResultMassErrors(inputFilePath, resultType, paramFilePath);
                 if (!success)
                 {
                     var toolName = mJobParams.GetJobParameter("ToolName", "");
@@ -2816,13 +2816,13 @@ namespace AnalysisManagerExtractionPlugin
 
                     if (!success)
                     {
-                        if (string.IsNullOrWhiteSpace(oValidator.ErrorMessage))
+                        if (string.IsNullOrWhiteSpace(massErrorValidator.ErrorMessage))
                         {
                             LogError("ValidatePHRPResultMassErrors returned false");
                         }
                         else
                         {
-                            LogError(oValidator.ErrorMessage);
+                            LogError(massErrorValidator.ErrorMessage);
                         }
                     }
                 }
