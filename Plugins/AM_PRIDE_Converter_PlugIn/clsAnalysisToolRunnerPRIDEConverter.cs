@@ -5209,6 +5209,8 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
         private void WritePXInstruments(TextWriter writer, ICollection<string> paramsWithCVs)
         {
+            var accessionsWritten = new SortedSet<string>();
+
             foreach (var instrumentGroup in mInstrumentGroupsStored)
             {
                 GetInstrumentAccession(instrumentGroup.Key, out var accession, out var description);
@@ -5219,6 +5221,11 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     accession = "MS:1000751";
                     description = "TSQ Quantum Ultra";
                 }
+
+                if (accessionsWritten.Contains(accession))
+                    continue;
+
+                accessionsWritten.Add(accession);
 
                 var instrumentCV = GetInstrumentCv(accession, description);
                 WritePXHeader(writer, "instrument", instrumentCV, paramsWithCVs);
