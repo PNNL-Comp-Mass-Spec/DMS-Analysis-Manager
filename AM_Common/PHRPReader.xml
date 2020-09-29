@@ -260,7 +260,7 @@
         <member name="F:PHRPReader.clsModificationDefinition.mTargetResidues">
             <summary>
             Target residues, tracked as a space-free, comma-free list of one letter amino acid residue symbols that this mod can apply to
-            Use the *_SYMBOL_DMS constants for the peptide and protein terminii symbols (&lt; and &gt; for the peptide terminii; [ and ] for the protein terminii)
+            Use the *_SYMBOL_DMS constants for the peptide and protein termini symbols (&lt; and &gt; for the peptide termini; [ and ] for the protein termini)
             </summary>
             <remarks>
             If this is empty, the given modification can apply to any residue or terminus
@@ -314,8 +314,8 @@
             <remarks>
             If an empty string, the modification can apply to any residue or terminus;
             Otherwise, should contain a space-free, comma-free list of one letter amino acid residue symbols that this mod can apply to.
-            Use the *_SYMBOL_DMS constants for the peptide and protein terminii symbols
-            (less than and greater than signs for the peptide terminii; [ and ] for the protein terminii)
+            Use the *_SYMBOL_DMS constants for the peptide and protein termini symbols
+            (less than and greater than signs for the peptide termini; [ and ] for the protein termini)
             </remarks>
         </member>
         <member name="P:PHRPReader.clsModificationDefinition.ModificationType">
@@ -375,7 +375,7 @@
         </member>
         <member name="M:PHRPReader.clsModificationDefinition.#ctor(System.Double,System.String,PHRPReader.clsModificationDefinition.eModificationTypeConstants)">
             <summary>
-            Constructor that takes a mod mass, target residues, and modification tye
+            Constructor that takes a mod mass, target residues, and modification type
             </summary>
             <param name="modificationMass"></param>
             <param name="targetResidues"></param>
@@ -456,7 +456,7 @@
         <member name="M:PHRPReader.clsModificationDefinition.CanAffectPeptideOrProteinTerminus">
             <summary>
             Returns True if this modification can affect the peptide or protein terminus
-            Note that some modifications can affect either peptide terminii or internal residues
+            Note that some modifications can affect either peptide termini or internal residues
             </summary>
             <returns></returns>
             <remarks></remarks>
@@ -1447,7 +1447,7 @@
             </summary>
             <param name="modificationDefinition"></param>
             <param name="useNextAvailableModificationSymbol"></param>
-            <returns>The index of the newly added modification, or the the index of the modification that modificationDefinition matches </returns>
+            <returns>The index of the newly added modification, or the index of the modification that modificationDefinition matches </returns>
             <remarks></remarks>
         </member>
         <member name="M:PHRPReader.clsPeptideModificationContainer.AppendStandardRefinementModifications">
@@ -4998,7 +4998,7 @@
             <value></value>
             <returns></returns>
             <remarks>
-            CleavageState, NumMissedCleavages, and NumTrypticTerminii are typically populated using UpdateCleavageInfo
+            CleavageState, NumMissedCleavages, and NumTrypticTermini are typically populated using UpdateCleavageInfo
             </remarks>
         </member>
         <member name="P:PHRPReader.clsPSM.CollisionMode">
@@ -5076,18 +5076,18 @@
             <value></value>
             <returns></returns>
             <remarks>
-            CleavageState, NumMissedCleavages, and NumTrypticTerminii are typically populated using UpdateCleavageInfo
+            CleavageState, NumMissedCleavages, and NumTrypticTermini are typically populated using UpdateCleavageInfo
             </remarks>
         </member>
-        <member name="P:PHRPReader.clsPSM.NumTrypticTerminii">
+        <member name="P:PHRPReader.clsPSM.NumTrypticTermini">
             <summary>
-            Number of tryptic terminii (or similar if not using trypsin)
+            Number of tryptic termini (or similar if not using trypsin)
             </summary>
             <value></value>
             <returns></returns>
             <remarks>
             2 means fully tryptic, 1 means partially tryptic, 0 means non-tryptic
-            CleavageState, NumMissedCleavages, and NumTrypticTerminii are typically populated using UpdateCleavageInfo
+            CleavageState, NumMissedCleavages, and NumTrypticTermini are typically populated using UpdateCleavageInfo
             </remarks>
         </member>
         <member name="P:PHRPReader.clsPSM.Peptide">
@@ -5230,7 +5230,7 @@
             <summary>
             Add the details for a modified residue
             </summary>
-            <param name="residue">Amino acid letter; use angle brackets or square brackets for peptide or protein terminii (see the SYMBOL_DMS constants in clsAminoAcidModInfo)</param>
+            <param name="residue">Amino acid letter; use angle brackets or square brackets for peptide or protein termini (see the SYMBOL_DMS constants in clsAminoAcidModInfo)</param>
             <param name="residueLocInPeptide">Location of the residue in the peptide; use 1 for an N-terminal mod</param>
             <param name="residueTerminusState">Terminus state of residue</param>
             <param name="modDefinition">Modification details</param>
@@ -5240,7 +5240,7 @@
             <summary>
             Add the details for a modified residue
             </summary>
-            <param name="residue">Amino acid letter; use angle brackets or square brackets for peptide or protein terminii (see the SYMBOL_DMS constants in clsAminoAcidModInfo)</param>
+            <param name="residue">Amino acid letter; use angle brackets or square brackets for peptide or protein termini (see the SYMBOL_DMS constants in clsAminoAcidModInfo)</param>
             <param name="residueLocInPeptide">Location of the residue in the peptide; use 1 for an N-terminal mod</param>
             <param name="residueTerminusState">Terminus state of residue</param>
             <param name="modDefinition">Modification details</param>
@@ -5342,7 +5342,7 @@
         </member>
         <member name="M:PHRPReader.clsPSM.SetPeptide(System.String,PHRPReader.clsPeptideCleavageStateCalculator)">
             <summary>
-            Update the peptide sequence (auto-determines the clean sequence); also auto-update the the cleavage state info
+            Update the peptide sequence (auto-determines the clean sequence); also auto-update the cleavage state info
             </summary>
             <param name="peptide">Peptide sequence (can optionally contain modification symbols; can optionally contain prefix and suffix residues)</param>
             <param name="cleavageStateCalculator">Cleavage state calculator object</param>
@@ -5367,7 +5367,7 @@
         </member>
         <member name="M:PHRPReader.clsPSM.UpdateCleavageInfo(PHRPReader.clsPeptideCleavageStateCalculator)">
             <summary>
-            Auto-determine the number of missed cleavages, cleavage state, and number of tryptic terminii based on the peptide sequence
+            Auto-determine the number of missed cleavages, cleavage state, and number of tryptic termini based on the peptide sequence
             </summary>
             <param name="cleavageStateCalculator"></param>
             <remarks></remarks>
@@ -5638,7 +5638,7 @@
             0 means no-enzyme, 1 means partially tryptic, 2 means fully tryptic
             </summary>
             <returns></returns>
-            <remarks>For trypsin, this is NTT or Number of Tryptic Terminii</remarks>
+            <remarks>For trypsin, this is NTT or Number of Tryptic Termini</remarks>
         </member>
         <member name="P:PHRPReader.clsSearchEngineParameters.ModInfo">
             <summary>
@@ -5654,7 +5654,7 @@
         </member>
         <member name="P:PHRPReader.clsSearchEngineParameters.PrecursorMassToleranceDa">
             <summary>
-            Precursor mass tolerance, in Da; 0 if unknown
+            Precursor mass tolerance, in Daltons; 0 if unknown
             </summary>
             <returns></returns>
         </member>
