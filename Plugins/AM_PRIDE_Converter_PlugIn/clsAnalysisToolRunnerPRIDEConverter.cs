@@ -617,7 +617,6 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 FileID = mPxMasterFileList.Count + 1
             };
 
-
             if (fiFile.Exists)
             {
                 oPXFileInfo.Length = fiFile.Length;
@@ -1489,7 +1488,6 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                         {
                             // Determine the protein index in mCachedProteins
 
-
                             if (!mCachedProteins.TryGetValue(reader.CurrentPSM.ProteinFirst, out var indexAndSequence))
                             {
                                 // Protein not found in mCachedProteins
@@ -1837,7 +1835,6 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 LogError("Exception in CreateMSGFReportFile for job " + job + ", dataset " + dataset, ex);
                 return false;
             }
-
         }
 
         [Obsolete("No longer used")]
@@ -5026,7 +5023,6 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     LogError("Exception replacing the original .mzid.gz file with the updated one for job " + dataPkgJob + ", dataset " + dataPkgDataset, ex);
                     return false;
                 }
-
             }
             catch (Exception ex)
             {
@@ -5360,7 +5356,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     break;
             }
 
-            if (isLTQ | isLCQ)
+            if (isLTQ || isLCQ)
             {
                 instrumentDetailsAutoDefined = true;
 

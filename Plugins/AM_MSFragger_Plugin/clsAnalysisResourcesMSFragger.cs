@@ -9,7 +9,6 @@ using System;
 using AnalysisManagerBase;
 using System.Collections.Generic;
 
-
 namespace AnalysisManagerMSFraggerPlugIn
 {
     /// <summary>
@@ -17,7 +16,6 @@ namespace AnalysisManagerMSFraggerPlugIn
     /// </summary>
     class clsAnalysisResourcesMSFragger : clsAnalysisResources
     {
-
         /// <summary>
         /// Initialize options
         /// </summary>
@@ -82,7 +80,6 @@ namespace AnalysisManagerMSFraggerPlugIn
                 }
 
                 return CloseOutType.CLOSEOUT_SUCCESS;
-
             }
             catch (Exception ex)
             {
@@ -90,6 +87,5 @@ namespace AnalysisManagerMSFraggerPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
         }
-
     }
 }

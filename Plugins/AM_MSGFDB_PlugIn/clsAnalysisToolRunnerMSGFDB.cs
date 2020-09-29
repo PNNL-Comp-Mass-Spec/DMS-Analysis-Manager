@@ -1029,7 +1029,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             catch (Exception ex)
             {
                 LogError("Error renaming file " + resultsFileName + " to " + filePathNew, ex);
-                return (resultsFileName);
+                return resultsFileName;
             }
         }
 
@@ -1214,7 +1214,9 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 if (!DateTime.TryParse(remoteStartText, out var remoteStart) ||
                     !DateTime.TryParse(remoteFinishText, out var remoteFinish))
+                {
                     return CloseOutType.CLOSEOUT_SUCCESS;
+                }
 
                 var elapsedTimeHoursFromStatusFile = remoteFinish.Subtract(remoteStart).TotalHours;
 

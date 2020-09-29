@@ -3609,7 +3609,7 @@ namespace AnalysisManagerBase
                         // Target threshold reached
                         if (mDebugLevel >= 1)
                         {
-                            LogMessage(string.Format("Free space on {0} ({1:F1} GB) is now over {2}% of the total space; " + "deleted {3:F1} GB of cached files",
+                            LogMessage(string.Format("Free space on {0} ({1:F1} GB) is now over {2}% of the total space; deleted {3:F1} GB of cached files",
                                 localDriveInfo.Name, updatedFreeSpaceGB, freeSpaceThresholdPercent, clsGlobal.BytesToGB(totalBytesPurged)));
                         }
                         break;

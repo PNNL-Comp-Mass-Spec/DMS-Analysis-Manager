@@ -38,6 +38,5 @@ namespace AnalysisManagerTest
 
             Console.WriteLine("Status written to " + statusTools.FileNamePath);
         }
-
     }
 }

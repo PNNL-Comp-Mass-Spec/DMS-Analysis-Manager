@@ -261,7 +261,7 @@ namespace AnalysisManagerBase
         {
             if (mDebugLevel >= 1)
             {
-                var msg = "Lock file queue timed out after " + waitTimeMinutes.ToString("0") + " minutes " + "(" + mDerivedClassName + "); Source=" + sourceFilePath + ", Target=" + targetFilePath;
+                var msg = "Lock file queue timed out after " + waitTimeMinutes.ToString("0") + " minutes (" + mDerivedClassName + "); Source=" + sourceFilePath + ", Target=" + targetFilePath;
                 LogWarning(msg);
             }
         }

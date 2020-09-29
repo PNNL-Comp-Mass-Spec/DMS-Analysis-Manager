@@ -421,7 +421,7 @@ namespace AnalysisManagerBase
         /// Finds the server or archive directory where specified file is located
         /// </summary>
         /// <param name="fileToFind">Name of the file to search for</param>
-        /// <returns>Path to the directory containing the file if the file was found; empty string if not found found</returns>
+        /// <returns>Path to the directory containing the file if the file was found; empty string if not found</returns>
         /// <remarks>If the file is found in MyEMSL, the directory path returned will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
         public string FindDataFile(string fileToFind)
         {
@@ -437,7 +437,7 @@ namespace AnalysisManagerBase
         /// (mAuroraAvailable and MyEMSLSearchDisabled take precedence)
         /// </param>
         /// <param name="logFileNotFound">True if an error should be logged when a file is not found</param>
-        /// <returns>Path to the directory containing the file if the file was found; empty string if not found found</returns>
+        /// <returns>Path to the directory containing the file if the file was found; empty string if not found</returns>
         /// <remarks>If the file is found in MyEMSL, the directory path returned will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
         public string FindDataFile(string fileToFind, bool searchArchivedDatasetDir, bool logFileNotFound = true)
         {
@@ -1238,7 +1238,7 @@ namespace AnalysisManagerBase
                 }
             }
 
-            if (sourceDirectory == null || !sourceDirectory.Exists)
+            if (sourceDirectory?.Exists != true)
             {
                 errorMessage += ")";
                 fileMissingFromCache = true;
@@ -1538,6 +1538,7 @@ namespace AnalysisManagerBase
             // Copy the file
             if (maxCopyAttempts < 1)
                 maxCopyAttempts = 1;
+
             if (!mFileCopyUtilities.CopyFileToWorkDir(fileName, sourceDirectoryPath, mWorkDir,
                 logMsgTypeIfNotFound, createStoragePathInfoOnly: false, maxCopyAttempts: maxCopyAttempts))
             {
@@ -1575,7 +1576,9 @@ namespace AnalysisManagerBase
             // Do the copy
             if (!mFileCopyUtilities.CopyFileToWorkDirWithRename(DatasetName, mgfFile.Name, mgfFile.DirectoryName, mWorkDir,
                 BaseLogger.LogLevels.ERROR, createStoragePathInfoOnly, maxCopyAttempts: 3))
+            {
                 return false;
+            }
 
             // If we don't need to copy the .cdf file, we're done; otherwise, find the .cdf file and copy it
             if (!getCdfAlso)

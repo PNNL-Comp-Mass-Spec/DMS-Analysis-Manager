@@ -1022,7 +1022,9 @@ namespace AnalysisManagerBase
 
             if (fileNameOrPath.EndsWith("_msgfplus.mzid.gz", StringComparison.OrdinalIgnoreCase) ||
                 fileNameOrPath.EndsWith("_msgfplus.zip", StringComparison.OrdinalIgnoreCase))
+            {
                 return true;
+            }
 
             var splitFastaMatcher = new Regex(@"_msgfplus_Part\d+\.mzid\.gz", RegexOptions.IgnoreCase);
 

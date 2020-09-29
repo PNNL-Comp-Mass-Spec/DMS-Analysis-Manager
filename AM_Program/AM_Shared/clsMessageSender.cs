@@ -10,7 +10,7 @@ namespace AnalysisManagerBase
     /// Sends messages to ActiveMQ message broker using NMS client library
     /// </summary>
     /// <remarks></remarks>
-    class clsMessageSender
+    internal class clsMessageSender
     {
         private readonly string topicName;
         private readonly string brokerUri;

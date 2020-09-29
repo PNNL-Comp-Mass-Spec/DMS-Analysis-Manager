@@ -424,7 +424,7 @@ namespace AnalysisManagerBase
                         {
                             // If the directory exists but no split fasta files exist, assume that we need to re-split the FASTA file
                             var existingSplitFastaFile = new FileInfo(knownSplitFastaFilePath);
-                            if (existingSplitFastaFile.Directory == null || !existingSplitFastaFile.Directory.Exists)
+                            if (existingSplitFastaFile.Directory?.Exists != true)
                             {
                                 ErrorMessage = "Cannot find directory with the base FASTA file: " + knownSplitFastaFilePath;
                                 OnErrorEvent(ErrorMessage);

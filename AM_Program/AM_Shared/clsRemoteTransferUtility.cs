@@ -250,7 +250,7 @@ namespace AnalysisManagerBase
         /// <param name="warnIfMissing">Log warnings if any files are missing.  When false, logs debug messages instead</param>
         /// <returns>
         /// True on success, false if an error
-        /// Returns False if if any files were missing, even if warnIfMissing is false
+        /// Returns False if any files were missing, even if warnIfMissing is false
         /// </returns>
         /// <remarks>Calls UpdateParameters if necessary; that method will throw an exception if there are missing parameters or configuration issues</remarks>
         public bool CopyFilesFromRemote(

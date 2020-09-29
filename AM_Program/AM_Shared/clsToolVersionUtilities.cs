@@ -131,7 +131,7 @@ namespace AnalysisManagerBase
 
                 if (!msConvertInfo.Exists)
                 {
-                    OnWarningEvent("File not found by GetMSConvertToolVersion" + ": " + msConvertPath);
+                    OnWarningEvent("File not found by GetMSConvertToolVersion: " + msConvertPath);
                     return false;
                 }
 

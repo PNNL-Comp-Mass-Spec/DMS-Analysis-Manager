@@ -1010,7 +1010,6 @@ namespace AnalysisManagerExtractionPlugin
                             if (fileNumber > filesMerged)
                                 filesMerged = fileNumber;
 
-
                             if (totalFiles > 0)
                             {
                                 progressSubtask = ComputeIncrementalProgress(0, 75, filesMerged / (float)totalFiles * 100);
@@ -2642,7 +2641,6 @@ namespace AnalysisManagerExtractionPlugin
                                 targetFileIndex = 0;
                         }
                     }
-
 
                     // Close the output files
                     for (var fileIndex = 0; fileIndex <= splitFileCount - 1; fileIndex++)

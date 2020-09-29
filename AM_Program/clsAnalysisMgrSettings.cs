@@ -27,9 +27,14 @@ namespace AnalysisManagerProg
     /// </remarks>
     public class clsAnalysisMgrSettings : MgrSettingsDB, IMgrParams
     {
+        // Ignore Spelling: ack
+
         #region "Constants"
 
-        const string SP_NAME_ACK_MANAGER_UPDATE = "AckManagerUpdateRequired";
+        /// <summary>
+        /// Stored procedure used to acknowledge that a manager update is required
+        /// </summary>
+        private const string SP_NAME_ACK_MANAGER_UPDATE = "AckManagerUpdateRequired";
 
         /// <summary>
         /// File with settings loaded when OfflineMode is enabled

@@ -14,7 +14,7 @@ namespace AnalysisManagerBase
     /// <summary>
     /// Class for interacting with a message queue
     /// </summary>
-    class clsMessageQueueLogger : EventNotifier
+    internal class clsMessageQueueLogger : EventNotifier
     {
         /// <summary>
         /// Actual delegate registers here

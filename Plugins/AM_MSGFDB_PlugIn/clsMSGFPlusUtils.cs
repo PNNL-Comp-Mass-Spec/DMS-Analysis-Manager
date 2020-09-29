@@ -988,8 +988,11 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <param name="localOrgDbFolder"></param>
         /// <param name="ePeptideInputFileFormat"></param>
         /// <returns></returns>
-        public CloseOutType CreatePeptideToProteinMapping(string resultsFileName, bool resultsIncludeAutoAddedDecoyPeptides,
-            string localOrgDbFolder, clsPeptideToProteinMapEngine.ePeptideInputFileFormatConstants ePeptideInputFileFormat)
+        public CloseOutType CreatePeptideToProteinMapping(
+            string resultsFileName,
+            bool resultsIncludeAutoAddedDecoyPeptides,
+            string localOrgDbFolder,
+            clsPeptideToProteinMapEngine.ePeptideInputFileFormatConstants ePeptideInputFileFormat)
         {
             // Note that job parameter "generatedFastaName" gets defined by clsAnalysisResources.RetrieveOrgDB
             var dbFilename = mJobParams.GetParam("PeptideSearch", clsAnalysisResources.JOB_PARAM_GENERATED_FASTA_NAME);

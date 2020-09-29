@@ -86,7 +86,7 @@ namespace AnalysisManagerBase
 
                     try
                     {
-                        var sTargetConnectionString = ("Data Source = " + targetDBPath) + "; Version=3; DateTimeFormat=Ticks;";
+                        var sTargetConnectionString = "Data Source = " + targetDBPath + "; Version=3; DateTimeFormat=Ticks;";
                         var cnTargetDB = new SQLiteConnection(sTargetConnectionString);
 
                         cnTargetDB.Open();
@@ -152,7 +152,7 @@ namespace AnalysisManagerBase
 
                         try
                         {
-                            cmdTargetDB.CommandText = ("ATTACH DATABASE '" + sourceDBPath) + "' AS SourceDB;";
+                            cmdTargetDB.CommandText = "ATTACH DATABASE '" + sourceDBPath + "' AS SourceDB;";
                             cmdTargetDB.ExecuteNonQuery();
 
                             // Populate each table

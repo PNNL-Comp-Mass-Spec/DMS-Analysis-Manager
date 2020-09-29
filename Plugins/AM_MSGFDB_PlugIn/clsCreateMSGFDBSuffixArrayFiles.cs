@@ -323,7 +323,9 @@ namespace AnalysisManagerMSGFDBPlugIn
                     // Skip the file if the extension is .hashcheck or .MSGFPlusIndexFileInfo
                     if (sourceFile.Extension == clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX ||
                         sourceFile.Extension == MSGF_PLUS_INDEX_FILE_INFO_SUFFIX)
+                    {
                         continue;
+                    }
 
                     filesToCopy.Add(sourceFile.Name, sourceFile.Length);
                     fileInfo.Add(sourceFile.Name + "\t" + sourceFile.Length + "\t" +

@@ -19,7 +19,6 @@ namespace AnalysisManagerMSFraggerPlugIn
     // ReSharper disable once UnusedMember.Global
     public class clsAnalysisToolRunnerMSFragger : clsAnalysisToolRunnerBase
     {
-
         #region "Constants and Enums"
 
         private const string MSFragger_CONSOLE_OUTPUT = "MSFragger_ConsoleOutput.txt";
@@ -121,14 +120,12 @@ namespace AnalysisManagerMSFraggerPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
 
                 return processingResult;
-
             }
             catch (Exception ex)
             {
                 LogError("Error in MSFraggerPlugin->RunTool", ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-
         }
 
         /// <summary>
@@ -147,7 +144,6 @@ namespace AnalysisManagerMSFraggerPlugIn
         /// <returns></returns>
         private int GetNumThreadsToUse()
         {
-
             var coreCount = clsGlobal.GetCoreCount();
             int numThreadsToUse;
 
@@ -312,7 +308,6 @@ namespace AnalysisManagerMSFraggerPlugIn
 
                                 if (int.TryParse(sliceMatch.Groups["Total"].Value, out var totalValue))
                                     totalSlices = totalValue;
-
                             } else if (currentSlice > 0)
                             {
                                 var progressMatch = progressMatcher.Match(dataLine);
@@ -367,7 +362,6 @@ namespace AnalysisManagerMSFraggerPlugIn
 
         private CloseOutType StartMSFragger()
         {
-
             LogMessage("Running MSFragger");
 
             // Customize the path to the FASTA file and the number of threads to use
@@ -549,7 +543,6 @@ namespace AnalysisManagerMSFraggerPlugIn
                     {
                         writer.WriteLine("num_threads = " + numThreadsToUse);
                     }
-
                 }
 
                 // Replace the original parameter file with the updated one
@@ -598,7 +591,6 @@ namespace AnalysisManagerMSFraggerPlugIn
 
         private bool ValidateFastaFile()
         {
-
             // Define the path to the fasta file
             var localOrgDbFolder = mMgrParams.GetParam(clsAnalysisResources.MGR_PARAM_ORG_DB_DIR);
 
@@ -617,7 +609,7 @@ namespace AnalysisManagerMSFraggerPlugIn
             var proteinOptions = mJobParams.GetParam("ProteinOptions");
             if (!string.IsNullOrEmpty(proteinOptions))
             {
-                if (proteinOptions.ToLower().Contains("seq_direction=decoy"))
+                if (proteinOptions.IndexOf("seq_direction=decoy", StringComparison.OrdinalIgnoreCase) >= 0)
                 {
                     // fastaFileIsDecoy = true;
                 }

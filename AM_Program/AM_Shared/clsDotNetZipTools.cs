@@ -178,7 +178,7 @@ namespace AnalysisManagerBase
                 else
                 {
                     // Make sure the target directory exists
-                    if (decompressedFile.Directory != null && !decompressedFile.Directory.Exists)
+                    if (decompressedFile.Directory?.Exists == false)
                         decompressedFile.Directory.Create();
                 }
 
