@@ -4550,6 +4550,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
             sampleMetadata.Modifications.Clear();
             sampleMetadata.InstrumentGroup = dataPkgJob.InstrumentGroup;
+            sampleMetadata.InstrumentName = dataPkgJob.Instrument;
             sampleMetadata.Quantification = string.Empty;
             sampleMetadata.ExperimentalFactor = dataPkgJob.Experiment;
 

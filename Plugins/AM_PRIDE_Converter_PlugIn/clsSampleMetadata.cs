@@ -102,6 +102,10 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         public string InstrumentGroup { get; set; }
 
         /// <summary>
+        /// Instrument Name
+        /// </summary>
+        /// <remarks>Recommended to use MS CVs</remarks>
+        public string InstrumentName { get; set; }
 
         /// <summary>
         /// Quantification details
@@ -134,6 +138,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             Disease = string.Empty;
             Modifications.Clear();
             InstrumentGroup = string.Empty;
+            InstrumentName = string.Empty;
             Quantification = string.Empty;
             ExperimentalFactor = string.Empty;
         }
