@@ -5275,6 +5275,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             writer.WriteEndElement();
         }
 
+        [Obsolete("No longer used")]
         private bool WriteXMLInstrumentInfo(XmlWriter oWriter, string instrumentGroup)
         {
             var instrumentDetailsAutoDefined = false;
