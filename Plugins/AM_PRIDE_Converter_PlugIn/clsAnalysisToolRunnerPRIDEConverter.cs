@@ -1871,8 +1871,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 prideReportXMLFilePath = pseudoMsgfFilePath + "-report.xml";
 
                 using (var writer = new XmlTextWriter(
-                    new FileStream(prideReportXMLFilePath, FileMode.Create, FileAccess.Write, FileShare.Read),
-                    new UTF8Encoding(false)))
+                    new FileStream(prideReportXMLFilePath, FileMode.Create, FileAccess.Write, FileShare.Read), new UTF8Encoding(false)))
                 using (var xmlReader = new XmlTextReader(
                     new FileStream(Path.Combine(mWorkDir, templateFileName), FileMode.Open, FileAccess.Read, FileShare.Read)))
                 {
@@ -2968,7 +2967,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                             // modification
                             fileInfoCols.Add(mods);
 
-                            GetInstrumentAccession(sampleMetadata.InstrumentGroup, out var instrumentAccession, out var instrumentDescription);
+                            GetInstrumentAccession(sampleMetadata.InstrumentGroup, sampleMetadata.InstrumentName, out var instrumentAccession, out var instrumentDescription);
 
                             var instrumentCV = GetInstrumentCv(instrumentAccession, instrumentDescription);
 
@@ -3130,9 +3129,10 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// Determines the Accession and Description for the given instrument group
         /// </summary>
         /// <param name="instrumentGroup"></param>
+        /// <param name="instrumentName"></param>
         /// <param name="accession">Output parameter</param>
         /// <param name="description">Output parameter</param>
-        private void GetInstrumentAccession(string instrumentGroup, out string accession, out string description)
+        private void GetInstrumentAccession(string instrumentGroup, string instrumentName, out string accession, out string description)
         {
             accession = string.Empty;
             description = string.Empty;
@@ -3168,9 +3168,18 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     break;
                 case "TSQ":
                 case "GC-TSQ":
-                    // TSQ_3 and TSQ_4 are TSQ Vantage instruments
-                    accession = "MS:1001510";
-                    description = "TSQ Vantage";
+                    if (instrumentName.Equals("TSQ_1") || instrumentName.Equals("TSQ_2"))
+                    {
+                        // TSQ_1 and TSQ_2 are TSQ Quantum Ultra instruments
+                        accession = "MS:1000751";
+                        description = "TSQ Quantum Ultra";
+                    }
+                    else
+                    {
+                        // TSQ_3, TSQ_4, and TSQ_5 are TSQ Vantage instruments
+                        accession = "MS:1001510";
+                        description = "TSQ Vantage";
+                    }
                     break;
                 case "LCQ":
                     accession = "MS:1000554";
@@ -3200,8 +3209,23 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 case "QExactive":
                 case "GC-QExactive":
                 case "QEHFX":
-                    accession = "MS:1001911";
-                    description = "Q Exactive";
+                    if (instrumentName.Equals("QExactHF03") || instrumentName.Equals("QExactHF05"))
+                    {
+                        accession = "MS:1002523";
+                        description = "Q Exactive HF";
+                    }
+                    else if (instrumentName.Contains("HFX"))
+                    {
+                        // The correct accession is MS:1002877 for "Q Exactive HF-X"
+                        // However, as of October 2020, MassIVE does not yet support this accession
+                        accession = "MS:1002523";
+                        description = "Q Exactive HF";
+                    }
+                    else
+                    {
+                        accession = "MS:1001911";
+                        description = "Q Exactive";
+                    }
                     break;
                 case "QTrap":
                     accession = "MS:1000931";
@@ -5210,14 +5234,9 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
             foreach (var instrumentGroup in mInstrumentGroupsStored)
             {
-                GetInstrumentAccession(instrumentGroup.Key, out var accession, out var description);
+                var instrumentName = instrumentGroup.Value.Count == 1 ? instrumentGroup.Value.First() : string.Empty;
 
-                if (instrumentGroup.Value.Contains("TSQ_2") && instrumentGroup.Value.Count == 1)
-                {
-                    // TSQ_1 is a TSQ Quantum Ultra
-                    accession = "MS:1000751";
-                    description = "TSQ Quantum Ultra";
-                }
+                GetInstrumentAccession(instrumentGroup.Key, instrumentName, out var accession, out var description);
 
                 if (accessionsWritten.Contains(accession))
                     continue;
