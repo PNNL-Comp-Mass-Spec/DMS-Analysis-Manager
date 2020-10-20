@@ -7,6 +7,8 @@ namespace AnalysisManagerMsXmlGenPlugIn
 {
     public class clsRawConverterRunner : EventNotifier
     {
+        // Ignore Spelling: mgf
+
         #region "Constants"
 
         public const string RAW_CONVERTER_FILENAME = "RawConverter.exe";

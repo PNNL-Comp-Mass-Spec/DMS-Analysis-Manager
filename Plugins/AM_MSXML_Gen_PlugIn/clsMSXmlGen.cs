@@ -7,6 +7,8 @@ namespace AnalysisManagerMsXmlGenPlugIn
 {
     public abstract class clsMSXmlGen : EventNotifier
     {
+        // Ignore Spelling: mgf
+
         #region "Constants"
 
         // Define a maximum runtime of 36 hours
@@ -147,7 +149,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
         protected abstract string CreateArguments(string msXmlFormat, string rawFilePath);
 
         /// <summary>
-        /// Generate the mzXML, mzML, or .mgf file file
+        /// Generate the mzXML, mzML, or .mgf file
         /// </summary>
         /// <returns>True if success; false if a failure</returns>
         /// <remarks></remarks>

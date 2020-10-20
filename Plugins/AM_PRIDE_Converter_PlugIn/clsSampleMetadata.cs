@@ -8,6 +8,8 @@ namespace AnalysisManagerPRIDEConverterPlugIn
     /// </summary>
     public class clsSampleMetadata
     {
+        // Ignore Spelling: CvRef, UniMod
+
         /// <summary>
         /// CV Param Info
         /// </summary>
@@ -70,37 +72,39 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         public string Species { get; set; }
 
         /// <summary>
-        /// Species
+        /// Tissue
         /// </summary>
         /// <remarks>Recommended to use BRENDA CVs (BTO)</remarks>
         public string Tissue { get; set; }
 
         /// <summary>
-        /// Species
+        /// Cell type
         /// </summary>
         /// <remarks>Recommended to use CL CVs</remarks>
         public string CellType { get; set; }
 
         /// <summary>
-        /// Species
+        /// Disease
         /// </summary>
         /// <remarks>Recommended to use DOID CVs</remarks>
         public string Disease { get; set; }
 
         /// <summary>
-        /// Species
+        /// Modifications
         /// </summary>
-        /// <remarks>Recommended to use PSI-MOD, though Unimod is acceptable</remarks>
+        /// <remarks>Recommended to use PSI-MOD, though UniMod is acceptable</remarks>
         public Dictionary<string, udtCvParamInfoType> Modifications { get; set; }
 
         /// <summary>
-        /// Species
+        /// Instrument Group
         /// </summary>
         /// <remarks>Recommended to use MS CVs</remarks>
         public string InstrumentGroup { get; set; }
 
         /// <summary>
-        /// Quantification detials
+
+        /// <summary>
+        /// Quantification details
         /// </summary>
         public string Quantification { get; set; }
 

@@ -7,6 +7,8 @@ namespace AnalysisManagerPRIDEConverterPlugIn
     /// </summary>
     public class clsPXFileInfoBase
     {
+        // Ignore Spelling: ProteomeXchange
+
         #region "Structures and Enums"
 
         /// <summary>

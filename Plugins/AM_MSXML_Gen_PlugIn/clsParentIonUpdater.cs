@@ -12,6 +12,8 @@ namespace AnalysisManagerMsXmlGenPlugIn
 {
     public class clsParentIonUpdater : EventNotifier
     {
+        // Ignore Spelling: indexedmzML, cv, dta, mgf, 2016-Sep-10, peptidome
+
         private const string XML_ELEMENT_INDEXED_MZML = "indexedmzML";
         private const string XML_ELEMENT_MZML = "mzML";
         private const string XML_ELEMENT_SOFTWARE_LIST = "softwareList";
@@ -171,7 +173,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                             writer.WriteLine();
 
                             // Write the spectrum title line, for example:
-                            // =================================== "CPTAC_Peptidome_Test1_P1_R2_Poroshell_03Feb12_Frodo_Poroshell300SB.2.2.1.dta" ==================================
+                            // =================================== "CPTAC_Peptidome_Test1_P1_R2_13Jan12_Polaroid_11-10-14.2.2.1.dta" ==================================
 
                             var titleLine = dtaFileReader.GetSpectrumTitleWithCommentChars();
                             var chargeStateNew = chargeInfo.Charge;

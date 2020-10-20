@@ -20,7 +20,9 @@ namespace AnalysisManagerMsXmlGenPlugIn
     /// </summary>
     public class clsMSXMLCreator : EventNotifier
     {
-        #region "Classwide variables"
+        // Ignore Spelling: Centroiding
+
+        #region "Class wide variables"
 
         private readonly string mMSXmlGeneratorAppPath;
         private readonly IJobParams mJobParams;

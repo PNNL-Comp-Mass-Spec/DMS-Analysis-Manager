@@ -8,6 +8,8 @@ namespace AnalysisManagerPRIDEConverterPlugIn
     /// </summary>
     public class clsPXFileInfo : clsPXFileInfoBase
     {
+        // Ignore Spelling: ProteomeXchange
+
         #region "Properties"
 
         /// <summary>

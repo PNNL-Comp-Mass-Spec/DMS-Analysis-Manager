@@ -18,6 +18,8 @@ namespace AnalysisManagerMsXmlGenPlugIn
     /// </summary>
     public class clsAnalysisToolRunnerMSXMLGen : clsAnalysisToolRunnerBase
     {
+        // Ignore Spelling: Reindex, mgf
+
         #region "Module Variables"
 
         private const float PROGRESS_PCT_MSXML_GEN_RUNNING = 5;

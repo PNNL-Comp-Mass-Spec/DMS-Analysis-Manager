@@ -15,6 +15,8 @@ namespace AnalysisManagerMsXmlGenPlugIn
 {
     public class clsMSXmlGenMSConvert : clsMSXmlGen
     {
+        // Ignore Spelling: centroiding, outfile
+
         public const int DEFAULT_CENTROID_PEAK_COUNT_TO_RETAIN = 500;
 
         /// <summary>

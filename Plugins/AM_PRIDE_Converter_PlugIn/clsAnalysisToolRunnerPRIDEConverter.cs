@@ -4306,8 +4306,8 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             // Deprecated:
             //if (mCreatePrideXMLFiles)
             //{
-            //    var fiPrideConverter = new FileInfo(prideConverterProgLoc);
-            //    if (!fiPrideConverter.Exists)
+            //    var prideConverter = new FileInfo(prideConverterProgLoc);
+            //    if (!prideConverter.Exists)
             //    {
             //        try
             //        {
@@ -4323,9 +4323,9 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             //    }
 
             //    // Run the PRIDE Converter using the -version switch to determine its version
-            //    toolVersionInfo = GetPrideConverterVersion(fiPrideConverter.FullName);
+            //    toolVersionInfo = GetPrideConverterVersion(prideConverter.FullName);
 
-            //    toolFiles.Add(fiPrideConverter);
+            //    toolFiles.Add(prideConverter);
             //}
             //else
             //{
