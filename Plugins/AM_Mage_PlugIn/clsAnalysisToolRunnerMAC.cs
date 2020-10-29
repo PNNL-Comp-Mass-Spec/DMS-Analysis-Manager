@@ -263,6 +263,5 @@ namespace AnalysisManager_Mage_PlugIn
         /// </summary>
         /// <returns></returns>
         protected abstract List<FileInfo> GetToolSupplementalVersionInfo();
-
     }
 }

@@ -92,6 +92,5 @@ namespace AnalysisManager_Ape_PlugIn
         {
             base.OnProgressUpdate(progressMessage, percentComplete);
         }
-
     }
 }

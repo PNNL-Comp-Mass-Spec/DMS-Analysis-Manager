@@ -134,7 +134,6 @@ namespace AnalysisManager_AScore_PlugIn
                 LogError(mMessage, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-
         }
 
         private bool ExportAScoreResults()
@@ -241,7 +240,6 @@ namespace AnalysisManager_AScore_PlugIn
 
             return success;
         }
-
     }
 }
 

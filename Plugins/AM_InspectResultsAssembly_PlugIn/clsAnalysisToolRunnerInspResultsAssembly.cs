@@ -656,7 +656,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                     LogDebug("clsAnalysisToolRunnerInspResultsAssembly.ExtractModInfoFromInspectParamFile(): Reading " + inspectParameterFilePath);
                 }
 
-                // Read the contents of proteinToPeptideMappingFilePath
+                // Read the Inspect parameter file
                 using (var reader = new StreamReader((new FileStream(inspectParameterFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))))
                 {
                     while (!reader.EndOfStream)
@@ -1271,7 +1271,6 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                             break;
                     }
                 }
-
 
                 if (decoyProteinCount == 0)
                 {

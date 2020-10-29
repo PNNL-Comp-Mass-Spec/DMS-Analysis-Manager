@@ -506,7 +506,6 @@ namespace AnalysisManager_AScore_PlugIn
                          " in GetSharedResultsDirectoryName: " + ex.Message, ex);
                 return string.Empty;
             }
-
         }
 
         // Build Mage source module containing one job to process

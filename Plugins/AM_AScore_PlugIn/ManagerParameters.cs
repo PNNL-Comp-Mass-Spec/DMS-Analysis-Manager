@@ -25,5 +25,4 @@ namespace AnalysisManager_AScore_PlugIn
             return val;
         }
     }
-
 }

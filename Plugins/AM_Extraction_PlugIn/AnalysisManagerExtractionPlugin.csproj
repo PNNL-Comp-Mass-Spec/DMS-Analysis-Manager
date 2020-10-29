@@ -70,6 +70,7 @@
     <Compile Include="clsPeptideExtractWrapper.cs" />
     <Compile Include="clsPeptideProphetWrapper.cs" />
     <Compile Include="clsPHRPMassErrorValidator.cs" />
+    <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

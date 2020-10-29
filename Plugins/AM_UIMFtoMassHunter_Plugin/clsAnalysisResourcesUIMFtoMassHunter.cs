@@ -101,6 +101,5 @@ namespace AnalysisManagerUIMFtoMassHunterPlugin
                 return CloseOutType.CLOSEOUT_FAILED;
             }
         }
-
     }
 }

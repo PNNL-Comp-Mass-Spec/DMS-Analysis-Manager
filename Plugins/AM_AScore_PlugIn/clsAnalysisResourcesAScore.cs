@@ -51,7 +51,6 @@ namespace AnalysisManager_AScore_PlugIn
         {
             var currentTask = "Initializing";
 
-
             try
             {
                 // Retrieve the Fasta file
@@ -71,7 +70,6 @@ namespace AnalysisManager_AScore_PlugIn
                 return false;
             }
         }
-
 
         ///// <summary>
         ///// run the AScore pipeline(s) listed in "AScoreOperations" parameter
@@ -126,7 +124,6 @@ namespace AnalysisManager_AScore_PlugIn
 
         //    return blnSuccess;
         //}
-
 
         //#region AScore Operations
 
@@ -201,8 +198,6 @@ namespace AnalysisManager_AScore_PlugIn
         //}
 
         //#endregion
-
-
 
     }
 }

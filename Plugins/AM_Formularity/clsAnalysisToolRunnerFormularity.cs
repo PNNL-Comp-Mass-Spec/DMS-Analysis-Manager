@@ -564,7 +564,6 @@ namespace AnalysisManagerFormularityPlugin
                         }
                     }
                 }
-
             }
             catch (Exception ex)
             {

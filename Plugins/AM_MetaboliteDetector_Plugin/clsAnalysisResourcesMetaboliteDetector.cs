@@ -63,6 +63,5 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
                 return CloseOutType.CLOSEOUT_FAILED;
             }
         }
-
     }
 }

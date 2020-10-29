@@ -229,7 +229,6 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
                     LogMessage(progressMsg);
                 }
-
             }
 
             if (missingInstrumentDataCount > 0)
