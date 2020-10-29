@@ -977,7 +977,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         public CloseOutType CreatePeptideToProteinMapping(string resultsFileName, bool resultsIncludeAutoAddedDecoyPeptides, string localOrgDbFolder)
         {
             return CreatePeptideToProteinMapping(resultsFileName, resultsIncludeAutoAddedDecoyPeptides, localOrgDbFolder,
-                clsPeptideToProteinMapEngine.ePeptideInputFileFormatConstants.MSGFPlusResultsFile);
+                clsPeptideToProteinMapEngine.PeptideInputFileFormatConstants.MSGFPlusResultsFile);
         }
 
         /// <summary>
@@ -986,13 +986,13 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <param name="resultsFileName"></param>
         /// <param name="resultsIncludeAutoAddedDecoyPeptides"></param>
         /// <param name="localOrgDbFolder"></param>
-        /// <param name="ePeptideInputFileFormat"></param>
+        /// <param name="peptideInputFileFormat"></param>
         /// <returns></returns>
         public CloseOutType CreatePeptideToProteinMapping(
             string resultsFileName,
             bool resultsIncludeAutoAddedDecoyPeptides,
             string localOrgDbFolder,
-            clsPeptideToProteinMapEngine.ePeptideInputFileFormatConstants ePeptideInputFileFormat)
+            clsPeptideToProteinMapEngine.PeptideInputFileFormatConstants peptideInputFileFormat)
         {
             // Note that job parameter "generatedFastaName" gets defined by clsAnalysisResources.RetrieveOrgDB
             var dbFilename = mJobParams.GetParam("PeptideSearch", clsAnalysisResources.JOB_PARAM_GENERATED_FASTA_NAME);
@@ -1087,20 +1087,24 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 ignorePeptideToProteinMapperErrors = mJobParams.GetJobParameter("IgnorePeptideToProteinMapError", false);
 
-                mPeptideToProteinMapper = new clsPeptideToProteinMapEngine
+                var options = new ProteinCoverageSummarizer.ProteinCoverageSummarizerOptions()
                 {
-                    DeleteTempFiles = true,
                     IgnoreILDifferences = false,
-                    InspectParameterFilePath = string.Empty,
                     MatchPeptidePrefixAndSuffixToProtein = false,
                     OutputProteinSequence = false,
-                    PeptideInputFileFormat = ePeptideInputFileFormat,
                     PeptideFileSkipFirstLine = false,
-                    ProteinDataRemoveSymbolCharacters = true,
+                    RemoveSymbolCharacters = true,
                     ProteinInputFilePath = fastaFileToSearch,
                     SaveProteinToPeptideMappingFile = true,
                     SearchAllProteinsForPeptideSequence = true,
                     SearchAllProteinsSkipCoverageComputationSteps = true
+                };
+
+                mPeptideToProteinMapper = new clsPeptideToProteinMapEngine(options)
+                {
+                    DeleteTempFiles = true,
+                    InspectParameterFilePath = string.Empty,
+                    PeptideInputFileFormat = peptideInputFileFormat
                 };
 
                 RegisterEvents(mPeptideToProteinMapper);

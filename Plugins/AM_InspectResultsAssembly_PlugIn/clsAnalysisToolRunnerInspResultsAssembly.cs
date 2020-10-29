@@ -560,14 +560,25 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
                 ignorePeptideToProteinMapperErrors = mJobParams.GetJobParameter("IgnorePeptideToProteinMapError", false);
 
-                mPeptideToProteinMapper = new clsPeptideToProteinMapEngine();
+                var options = new ProteinCoverageSummarizer.ProteinCoverageSummarizerOptions()
+                {
+                    IgnoreILDifferences = false,
+                    MatchPeptidePrefixAndSuffixToProtein = false,
+                    OutputProteinSequence = false,
+                    PeptideFileSkipFirstLine = false,
+                    ProteinInputFilePath = Path.Combine(orgDbDir, dbFilename),
+                    SaveProteinToPeptideMappingFile = true,
+                    SearchAllProteinsForPeptideSequence = true,
+                    SearchAllProteinsSkipCoverageComputationSteps = true
+                };
+
+                mPeptideToProteinMapper = new clsPeptideToProteinMapEngine(options);
 
                 RegisterEvents(mPeptideToProteinMapper);
                 mPeptideToProteinMapper.ProgressUpdate -= ProgressUpdateHandler;
                 mPeptideToProteinMapper.ProgressUpdate += PeptideToProteinMapper_ProgressChanged;
 
-                mPeptideToProteinMapper.DeleteInspectTempFiles = true;
-                mPeptideToProteinMapper.IgnoreILDifferences = false;
+                mPeptideToProteinMapper.DeleteTempFiles = true;
                 mPeptideToProteinMapper.InspectParameterFilePath = Path.Combine(mWorkDir, INSPECT_INPUT_PARAMS_FILENAME);
 
                 if (mDebugLevel > 2)
@@ -580,14 +591,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                     mPeptideToProteinMapper.LogMessagesToFile = false;
                 }
 
-                mPeptideToProteinMapper.MatchPeptidePrefixAndSuffixToProtein = false;
-                mPeptideToProteinMapper.OutputProteinSequence = false;
-                mPeptideToProteinMapper.PeptideInputFileFormat = clsPeptideToProteinMapEngine.ePeptideInputFileFormatConstants.InspectResultsFile;
-                mPeptideToProteinMapper.PeptideFileSkipFirstLine = false;
-                mPeptideToProteinMapper.ProteinInputFilePath = Path.Combine(orgDbDir, dbFilename);
-                mPeptideToProteinMapper.SaveProteinToPeptideMappingFile = true;
-                mPeptideToProteinMapper.SearchAllProteinsForPeptideSequence = true;
-                mPeptideToProteinMapper.SearchAllProteinsSkipCoverageComputationSteps = true;
+                mPeptideToProteinMapper.PeptideInputFileFormat = clsPeptideToProteinMapEngine.PeptideInputFileFormatConstants.InspectResultsFile;
 
                 var success = mPeptideToProteinMapper.ProcessFile(inputFilePath, mWorkDir, string.Empty, true);
 
