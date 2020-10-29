@@ -136,6 +136,23 @@ namespace AnalysisManagerExtractionPlugin
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
 
+                var scriptName = mJobParams.GetParam("ToolName");
+                bool ignorePeptideToProteinMapErrors;
+
+                if (scriptName.StartsWith("MSPathFinder", StringComparison.OrdinalIgnoreCase))
+                {
+                    OnStatusEvent("Ignoring peptide to protein mapping errors since this is an MSPathFinder job");
+                    ignorePeptideToProteinMapErrors = true;
+                }
+                else
+                {
+                    ignorePeptideToProteinMapErrors = mJobParams.GetJobParameter("IgnorePeptideToProteinMapError", false);
+                    if (ignorePeptideToProteinMapErrors)
+                    {
+                        OnStatusEvent("Ignoring peptide to protein mapping errors since job parameter IgnorePeptideToProteinMapError is true");
+                    }
+                }
+
                 mPHRPConsoleOutputFilePath = Path.Combine(psmResultsFile.Directory.FullName, "PHRPOutput.txt");
 
                 var progLoc = mMgrParams.GetParam("PHRPProgLoc");
@@ -194,6 +211,11 @@ namespace AnalysisManagerExtractionPlugin
                 if (!string.IsNullOrWhiteSpace(msgfPlusEValue))
                 {
                     arguments += " /MSGFPlusEValue:" + msgfPlusEValue;
+                }
+
+                if (ignorePeptideToProteinMapErrors)
+                {
+                    arguments += " /IgnorePepToProtMapErrors";
                 }
 
                 if (mDebugLevel >= 1)
