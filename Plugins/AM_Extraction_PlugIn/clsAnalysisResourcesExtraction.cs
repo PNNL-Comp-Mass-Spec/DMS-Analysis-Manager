@@ -102,7 +102,7 @@ namespace AnalysisManagerExtractionPlugin
                 case RESULT_TYPE_MODPLUS:
                 case RESULT_TYPE_MSPATHFINDER:
                 case RESULT_TYPE_TOPPIC:
-                    LogDebug(string.Format("{0} does not support running AScore as part of data extraction", RESULT_TYPE_INSPECT));
+                    LogDebug(string.Format("{0} does not support running AScore as part of data extraction", resultType));
                     runAscore = false;
                     break;
 
