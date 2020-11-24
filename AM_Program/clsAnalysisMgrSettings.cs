@@ -194,6 +194,16 @@ namespace AnalysisManagerProg
         }
 
         /// <summary>
+        /// Check for the existence of a job task parameter
+        /// </summary>
+        /// <param name="name">Parameter name</param>
+        /// <returns>True if the parameter is defined, false if not</returns>
+        public bool HasParam(string name)
+        {
+            return MgrParams.ContainsKey(name);
+        }
+
+        /// <summary>
         /// Retrieves the manager and global settings from the Manager Control and Broker databases
         /// Or, if clsGlobal.OfflineMode is true, load settings from file ManagerSettingsLocal.xml
         /// </summary>

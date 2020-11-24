@@ -85,6 +85,13 @@ namespace AnalysisManagerBase
         int GetParam(string itemKey, int valueIfMissing);
 
         /// <summary>
+        /// Check for the existence of a job task parameter
+        /// </summary>
+        /// <param name="name">Parameter name</param>
+        /// <returns>True if the parameter is defined, false if not</returns>
+        bool HasParam(string name);
+
+        /// <summary>
         /// Sets a parameter in the parameters string dictionary
         /// </summary>
         /// <param name="itemKey">Key name for the item</param>

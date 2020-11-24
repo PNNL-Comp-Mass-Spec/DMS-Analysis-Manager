@@ -464,7 +464,11 @@ namespace AnalysisManagerBase
                 return;
             }
 
-            var failedResultsDirectoryPath = mMgrParams.GetParam("FailedResultsFolderPath");
+            var failedResultsDirectoryPath = mMgrParams.GetParam(mMgrParams.HasParam("FailedResultsDirectoryPath") ? 
+                                                                     "FailedResultsDirectoryPath" :
+                                                                     "FailedResultsFolderPath");
+
+
             if (string.IsNullOrWhiteSpace(failedResultsDirectoryPath))
             {
                 LogErrorToDatabase("Manager parameter FailedResultsFolderPath not defined for manager " + mMgrParams.ManagerName);
