@@ -94,20 +94,20 @@ namespace AnalysisManagerBase
 
                 mMSFileInfoScanner.ErrorEvent += MSFileInfoScanner_ErrorEvent;
 
-                mMSFileInfoScanner.CheckFileIntegrity = false;
-                mMSFileInfoScanner.CreateDatasetInfoFile = false;
-                mMSFileInfoScanner.CreateScanStatsFile = true;
-                mMSFileInfoScanner.SaveLCMS2DPlots = false;
-                mMSFileInfoScanner.SaveTICAndBPIPlots = false;
-                mMSFileInfoScanner.CheckCentroidingStatus = false;
+                mMSFileInfoScanner.Options.CheckFileIntegrity = false;
+                mMSFileInfoScanner.Options.CreateDatasetInfoFile = false;
+                mMSFileInfoScanner.Options.CreateScanStatsFile = true;
+                mMSFileInfoScanner.Options.SaveLCMS2DPlots = false;
+                mMSFileInfoScanner.Options.SaveTICAndBPIPlots = false;
+                mMSFileInfoScanner.Options.CheckCentroidingStatus = false;
 
-                mMSFileInfoScanner.UpdateDatasetStatsTextFile = false;
-                mMSFileInfoScanner.DatasetIDOverride = datasetID;
+                mMSFileInfoScanner.Options.UpdateDatasetStatsTextFile = false;
+                mMSFileInfoScanner.Options.DatasetID = datasetID;
 
                 if (ScanStart > 0 || ScanEnd > 0)
                 {
-                    mMSFileInfoScanner.ScanStart = ScanStart;
-                    mMSFileInfoScanner.ScanEnd = ScanEnd;
+                    mMSFileInfoScanner.Options.ScanStart = ScanStart;
+                    mMSFileInfoScanner.Options.ScanEnd = ScanEnd;
                 }
 
                 var success = mMSFileInfoScanner.ProcessMSFileOrDirectory(inputFilePath, outputDirectoryPath);

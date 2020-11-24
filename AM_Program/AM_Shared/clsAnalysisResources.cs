@@ -609,7 +609,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Spectrum type classifier
         /// </summary>
-        public SpectraTypeClassifier.clsSpectrumTypeClassifier mSpectraTypeClassifier;
+        public SpectraTypeClassifier.SpectrumTypeClassifier mSpectraTypeClassifier;
 
         private clsFileCopyUtilities mFileCopyUtilities;
 
@@ -4875,7 +4875,7 @@ namespace AnalysisManagerBase
                 // Read the m/z values in the _dta.txt file
                 // Examine the data in each spectrum to determine if it is centroided
 
-                mSpectraTypeClassifier = new SpectraTypeClassifier.clsSpectrumTypeClassifier();
+                mSpectraTypeClassifier = new SpectraTypeClassifier.SpectrumTypeClassifier();
                 RegisterEvents(mSpectraTypeClassifier);
                 mSpectraTypeClassifier.ReadingSpectra += SpectraTypeClassifier_ReadingSpectra;
 
