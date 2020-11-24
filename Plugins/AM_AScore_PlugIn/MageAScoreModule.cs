@@ -1,7 +1,7 @@
 using AnalysisManagerBase;
 using AScore_DLL;
 using AScore_DLL.Managers;
-using AScore_DLL.Managers.DatasetManagers;
+using AScore_DLL.Managers.PSM_Managers;
 using AScore_DLL.Managers.SpectraManagers;
 using Mage;
 using MageExtExtractionFilters;
@@ -207,23 +207,27 @@ namespace AnalysisManager_AScore_PlugIn
 
                 spectraCache.OpenFile(dtaFile);
 
-                DatasetManager datasetManager;
+                PsmResultsManager psmResultsManager;
 
                 switch (searchType)
                 {
                     case "xtandem":
-                        datasetManager = new XTandemFHT(fhtFile);
+                        psmResultsManager = new XTandemFHT(fhtFile);
                         break;
+
                     case "sequest":
-                        datasetManager = new SequestFHT(fhtFile);
+                        psmResultsManager = new SequestFHT(fhtFile);
                         break;
+
                     case "inspect":
-                        datasetManager = new InspectFHT(fhtFile);
+                        psmResultsManager = new InspectFHT(fhtFile);
                         break;
+
                     case "msgfdb":
                     case "msgfplus":
-                        datasetManager = new MsgfdbFHT(fhtFile);
+                        psmResultsManager = new MsgfdbFHT(fhtFile);
                         break;
+
                     default:
                         Console.WriteLine("Incorrect search type check again");
                         return false;
@@ -234,7 +238,7 @@ namespace AnalysisManager_AScore_PlugIn
 
                 RegisterEvents(ascoreEngine);
 
-                ascoreEngine.RunAScoreOnSingleFile(spectraCache, datasetManager, ascoreParameters, ascoreOutputFilePath, FastaFilePath);
+                ascoreEngine.RunAScoreOnSingleFile(spectraCache, psmResultsManager, ascoreParameters, ascoreOutputFilePath, FastaFilePath);
 
                 Console.WriteLine();
 

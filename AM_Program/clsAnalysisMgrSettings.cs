@@ -60,7 +60,7 @@ namespace AnalysisManagerProg
         /// Manager parameter: failed results folder path
         /// </summary>
         /// <remarks>Directory where results from failed analysis tasks are stored</remarks>
-        public const string MGR_PARAM_FAILED_RESULTS_FOLDER_PATH = "FailedResultsFolderPath";
+        public const string MGR_PARAM_FAILED_RESULTS_DIRECTORY_PATH = "FailedResultsDirectoryPath";
 
         /// <summary>
         /// Manager parameter: local task queue path

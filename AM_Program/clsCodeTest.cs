@@ -535,7 +535,7 @@ namespace AnalysisManagerProg
         {
             GetCodeTestToolRunner(out var jobParams);
 
-            if (string.IsNullOrWhiteSpace(mMgrSettings.GetParam(clsAnalysisMgrSettings.MGR_PARAM_FAILED_RESULTS_FOLDER_PATH)))
+            if (string.IsNullOrWhiteSpace(mMgrSettings.GetParam(clsAnalysisMgrSettings.MGR_PARAM_FAILED_RESULTS_DIRECTORY_PATH)))
             {
                 if (clsGlobal.LinuxOS)
                 {
@@ -545,18 +545,18 @@ namespace AnalysisManagerProg
                         var localWorkDir = new DirectoryInfo(localWorkDirPath);
 
                         if (localWorkDir.Parent == null)
-                            mMgrSettings.SetParam(clsAnalysisMgrSettings.MGR_PARAM_FAILED_RESULTS_FOLDER_PATH, "");
+                            mMgrSettings.SetParam(clsAnalysisMgrSettings.MGR_PARAM_FAILED_RESULTS_DIRECTORY_PATH, "");
                         else
-                            mMgrSettings.SetParam(clsAnalysisMgrSettings.MGR_PARAM_FAILED_RESULTS_FOLDER_PATH, Path.Combine(localWorkDir.Parent.FullName, clsAnalysisToolRunnerBase.DMS_FAILED_RESULTS_DIRECTORY_NAME));
+                            mMgrSettings.SetParam(clsAnalysisMgrSettings.MGR_PARAM_FAILED_RESULTS_DIRECTORY_PATH, Path.Combine(localWorkDir.Parent.FullName, clsAnalysisToolRunnerBase.DMS_FAILED_RESULTS_DIRECTORY_NAME));
                     }
                     else
                     {
-                        mMgrSettings.SetParam(clsAnalysisMgrSettings.MGR_PARAM_FAILED_RESULTS_FOLDER_PATH, "");
+                        mMgrSettings.SetParam(clsAnalysisMgrSettings.MGR_PARAM_FAILED_RESULTS_DIRECTORY_PATH, "");
                     }
                 }
                 else
                 {
-                    mMgrSettings.SetParam(clsAnalysisMgrSettings.MGR_PARAM_FAILED_RESULTS_FOLDER_PATH, @"C:\" + clsAnalysisToolRunnerBase.DMS_FAILED_RESULTS_DIRECTORY_NAME);
+                    mMgrSettings.SetParam(clsAnalysisMgrSettings.MGR_PARAM_FAILED_RESULTS_DIRECTORY_PATH, @"C:\" + clsAnalysisToolRunnerBase.DMS_FAILED_RESULTS_DIRECTORY_NAME);
                 }
             }
 
