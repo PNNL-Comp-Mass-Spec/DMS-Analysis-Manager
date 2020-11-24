@@ -1626,8 +1626,8 @@ namespace AnalysisManagerBase
         /// The minimum number of seconds between updates
         /// If fewer than updateIntervalSeconds have elapsed since the last call to this function, no update will occur
         /// </param>
-        /// <returns></returns>
         /// <remarks></remarks>
+        /// <returns>Debug level</returns>
         protected bool GetCurrentMgrDebugLevelFromDB(int updateIntervalSeconds)
         {
             return GetCurrentMgrDebugLevelFromDB(updateIntervalSeconds, mMgrParams, ref mDebugLevel);
@@ -2256,8 +2256,8 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Loads the job settings file
         /// </summary>
-        /// <returns>TRUE for success, FALSE for failure</returns>
         /// <remarks></remarks>
+        /// <returns>True if successfully loaded, false if an error</returns>
         protected bool LoadSettingsFile()
         {
             var fileName = mJobParams.GetParam("SettingsFileName");
@@ -3709,8 +3709,8 @@ namespace AnalysisManagerBase
         /// Output directory is mWorkDir
         /// </summary>
         /// <param name="zipFilePath">File to unzip</param>
-        /// <returns></returns>
         /// <remarks></remarks>
+        /// <returns>True if successful, false if a problem</returns>
         public bool UnzipFile(string zipFilePath)
         {
             return UnzipFile(zipFilePath, mWorkDir, string.Empty);
@@ -3724,6 +3724,7 @@ namespace AnalysisManagerBase
         /// <param name="targetDirectory">Target directory for the extracted files</param>
         /// <returns></returns>
         /// <remarks></remarks>
+        /// <returns>True if successful, false if a problem</returns>
         public bool UnzipFile(string zipFilePath, string targetDirectory)
         {
             return UnzipFile(zipFilePath, targetDirectory, string.Empty);
@@ -3736,8 +3737,8 @@ namespace AnalysisManagerBase
         /// <param name="zipFilePath">File to unzip</param>
         /// <param name="targetDirectory">Target directory for the extracted files</param>
         /// <param name="FileFilter">FilterSpec to apply, for example *.txt</param>
-        /// <returns></returns>
         /// <remarks></remarks>
+        /// <returns>True if successful, false if a problem</returns>
         public bool UnzipFile(string zipFilePath, string targetDirectory, string FileFilter)
         {
             mDotNetZipTools.DebugLevel = mDebugLevel;

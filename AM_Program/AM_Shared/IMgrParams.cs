@@ -14,6 +14,8 @@ namespace AnalysisManagerBase
     /// </summary>
     public interface IMgrParams
     {
+        // Ignore Spelling: PostgreSQL, pgpass, Ack
+
         #region "Properties"
 
         /// <summary>
@@ -102,7 +104,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Retrieves the manager and global settings from various databases
         /// </summary>
-        /// <returns></returns>
+        /// <returns>True if successful; False on error</returns>
         bool LoadDBSettings();
 
         /// <summary>

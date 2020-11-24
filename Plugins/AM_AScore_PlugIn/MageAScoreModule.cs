@@ -21,6 +21,8 @@ namespace AnalysisManager_AScore_PlugIn
     /// </summary>
     public class MageAScoreModule : ContentFilter
     {
+        // Ignore Spelling: dta, InputColumnPos, cid, etd, hcd, msgfdb
+
         #region Constants
 
         /// <summary>
@@ -247,13 +249,13 @@ namespace AnalysisManager_AScore_PlugIn
                 if (fiAScoreFile.Exists)
                 {
                     // Look for the _ProteinMap.txt file
-                    // Ascore will create that file if a valid FastaFile is defined
+                    // AScore will create that file if a valid FastaFile is defined
                     var fiProteinMap = new FileInfo(Path.Combine(WorkingDir, Path.GetFileNameWithoutExtension(fiAScoreFile.Name) + "_ProteinMap.txt"));
                     if (fiProteinMap.Exists && fiProteinMap.Length > fiAScoreFile.Length)
                         fiAScoreFile = fiProteinMap;
 
                     // load AScore results into SQLite database
-                    const string tableName = "t_results_ascore";
+                    const string tableName = "T_Results_AScore";
                     var dbFilePath = Path.Combine(WorkingDir, ResultsDBFileName);
                     clsAScoreMagePipeline.ImportFileToSQLite(fiAScoreFile.FullName, dbFilePath, tableName);
                 }
@@ -296,7 +298,7 @@ namespace AnalysisManager_AScore_PlugIn
 
         #region MageAScore Mage Pipelines
 
-        // Build and run Mage pipeline to to extract contents of job
+        // Build and run Mage pipeline to extract contents of job
         private void ExtractResultsForJob(BaseModule currentJob, ExtractionType extractionParams, string extractedResultsFileName)
         {
             // search job result directories for list of results files to process and accumulate into buffer module

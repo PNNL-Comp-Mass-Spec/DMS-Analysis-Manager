@@ -80,8 +80,8 @@ namespace AnalysisManagerBase
         /// <param name="inputFilePath">Dataset file</param>
         /// <param name="outputDirectoryPath">Output directory</param>
         /// <param name="datasetID">Dataset ID</param>
-        /// <returns></returns>
         /// <remarks></remarks>
+        /// <returns>True if successful, false if an error</returns>
         public bool GenerateScanStatsFile(string inputFilePath, string outputDirectoryPath, int datasetID)
         {
             try
