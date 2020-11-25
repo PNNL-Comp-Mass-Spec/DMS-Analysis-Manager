@@ -3,8 +3,6 @@ using PRISM.Logging;
 using PRISMWin;
 using System;
 using System.Collections.Generic;
-using System.Data;
-using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -25,7 +23,6 @@ namespace AnalysisManagerBase
     /// <summary>
     /// Globally useful methods
     /// </summary>
-    [SuppressMessage("ReSharper", "UnusedMember.Global")]
     public static class clsGlobal
     {
         // Ignore Spelling: cmd, Sql, Utc
@@ -227,20 +224,6 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Collapse an array of items to a tab-delimited list
-        /// </summary>
-        /// <param name="items"></param>
-        public static string CollapseLine(string[] items)
-        {
-            if (items == null || items.Length == 0)
-            {
-                return string.Empty;
-            }
-
-            return CollapseList(items.ToList());
-        }
-
-        /// <summary>
         /// Collapse a list of items to a tab-delimited list
         /// </summary>
         /// <param name="fieldNames"></param>
@@ -335,16 +318,6 @@ namespace AnalysisManagerBase
         /// Returns the directory in which the entry assembly (typically the Program .exe file) resides
         /// </summary>
         /// <returns>Full directory path</returns>
-        [Obsolete("Use GetAppDirectoryPath")]
-        public static string GetAppFolderPath()
-        {
-            return GetAppDirectoryPath();
-        }
-
-        /// <summary>
-        /// Returns the directory in which the entry assembly (typically the Program .exe file) resides
-        /// </summary>
-        /// <returns>Full directory path</returns>
         public static string GetAppDirectoryPath()
         {
             if (mAppDirectoryPath != null)
@@ -392,150 +365,14 @@ namespace AnalysisManagerBase
             return version;
         }
 
-        /// <summary>
-        /// Runs the specified Sql query
-        /// </summary>
-        /// <param name="sqlStr">Sql query</param>
-        /// <param name="connectionString">Connection string</param>
-        /// <param name="retryCount">Number of times to retry (in case of a problem)</param>
-        /// <param name="queryResults">DataTable (Output Parameter)</param>
-        /// <param name="callingFunction">Name of the calling function</param>
-        /// <returns>True if success, false if an error</returns>
-        /// <remarks>Uses a timeout of 30 seconds</remarks>
-        [Obsolete("Use PRISMDatabaseUtils.DbToolsFactory.GetDBTools(...).GetQueryResultsDataTable(...)", true)]
-        public static bool GetDataTableByQuery(string sqlStr, string connectionString, short retryCount, out DataTable queryResults, [CallerMemberName] string callingFunction = "")
-        {
-            const int timeoutSeconds = 30;
-            return GetDataTableByQuery(sqlStr, connectionString, retryCount, out queryResults, timeoutSeconds, callingFunction);
-        }
+        // [Obsolete("Use PRISMDatabaseUtils.DbToolsFactory.GetDBTools(...).GetQueryResultsDataTable(...)", true)]
+        // public static bool GetDataTableByQuery(string sqlStr, string connectionString, short retryCount, out DataTable queryResults, [CallerMemberName] string callingFunction = "")
 
-        /// <summary>
-        /// Runs the specified SQL query
-        /// </summary>
-        /// <param name="sqlStr">SQL query</param>
-        /// <param name="connectionString">Connection string</param>
-        /// <param name="retryCount">Number of times to retry (in case of a problem)</param>
-        /// <param name="queryResults">DataTable (Output Parameter)</param>
-        /// <param name="timeoutSeconds">Query timeout (in seconds); minimum is 5 seconds; suggested value is 30 seconds</param>
-        /// <param name="callingFunction">Name of the calling function</param>
-        /// <returns>True if success, false if an error</returns>
-        [Obsolete("Use PRISMDatabaseUtils.DbToolsFactory.GetDBTools(...).GetQueryResultsDataTable(...)", true)]
-        public static bool GetDataTableByQuery(
-            string sqlStr,
-            string connectionString,
-            short retryCount,
-            out DataTable queryResults,
-            int timeoutSeconds,
-            [CallerMemberName] string callingFunction = "")
-        {
-            var dbTools = DbToolsFactory.GetDBTools(connectionString, timeoutSeconds, false);
-            RegisterEvents(dbTools);
+        // [Obsolete("Use PRISMDatabaseUtils.DbToolsFactory.GetDBTools(...).GetQueryResultsDataTable(...)", true)]
+        // public static bool GetDataTableByQuery(string sqlStr, string connectionString, short retryCount, out DataTable queryResults, int timeoutSeconds, [CallerMemberName] string callingFunction = "")
 
-            return dbTools.GetQueryResultsDataTable(sqlStr, out queryResults, retryCount, callingFunction: callingFunction);
-        }
-
-        /// <summary>
-        /// Runs the stored procedure or database query defined by "cmd"
-        /// </summary>
-        /// <param name="cmd">SqlCommand var (query or stored procedure)</param>
-        /// <param name="connectionString">Connection string</param>
-        /// <param name="retryCount">Number of times to retry (in case of a problem)</param>
-        /// <param name="queryResults">DataTable (Output Parameter)</param>
-        /// <param name="timeoutSeconds">Query timeout (in seconds); minimum is 5 seconds; suggested value is 30 seconds</param>
-        /// <param name="callingFunction">Name of the calling function</param>
-        /// <returns>True if success, false if an error</returns>
-        [Obsolete("Use PRISMDatabaseUtils.DbToolsFactory.GetDBTools(...).GetQueryResultsDataTable(...)", true)]
-        public static bool GetDataTableByCmd(
-            System.Data.SqlClient.SqlCommand cmd,
-            string connectionString,
-            short retryCount,
-            out DataTable queryResults,
-            int timeoutSeconds,
-            [CallerMemberName] string callingFunction = "")
-        {
-            if (cmd == null)
-                throw new ArgumentException("command is undefined", nameof(cmd));
-
-            if (string.IsNullOrEmpty(connectionString))
-            {
-                throw new ArgumentException("ConnectionString cannot be empty", nameof(connectionString));
-            }
-
-            if (string.IsNullOrEmpty(callingFunction))
-                callingFunction = "UnknownCaller";
-            if (retryCount < 1)
-                retryCount = 1;
-            if (timeoutSeconds < 5)
-                timeoutSeconds = 5;
-
-            // When data retrieval fails, delay for 5 seconds on the first try
-            // Double the delay time for each subsequent attempt, up to a maximum of 90 seconds between attempts
-            var retryDelaySeconds = 5;
-
-            while (retryCount > 0)
-            {
-                try
-                {
-                    using (var cn = new System.Data.SqlClient.SqlConnection(connectionString))
-                    {
-                        cmd.Connection = cn;
-                        cmd.CommandTimeout = timeoutSeconds;
-
-                        using (var da = new System.Data.SqlClient.SqlDataAdapter(cmd))
-                        {
-                            using (var ds = new DataSet())
-                            {
-                                da.Fill(ds);
-                                queryResults = ds.Tables[0];
-                            }
-                        }
-                    }
-                    return true;
-                }
-                catch (Exception ex)
-                {
-                    string msg;
-
-                    retryCount--;
-                    if (cmd.CommandType == CommandType.StoredProcedure)
-                    {
-                        msg = callingFunction + "; Exception running stored procedure " + cmd.CommandText;
-                    }
-                    else if (cmd.CommandType == CommandType.TableDirect)
-                    {
-                        msg = callingFunction + "; Exception querying table " + cmd.CommandText;
-                    }
-                    else
-                    {
-                        msg = callingFunction + "; Exception querying database";
-                    }
-
-                    msg += ": " + ex.Message + "; ConnectionString: " + connectionString;
-                    msg += ", RetryCount = " + retryCount;
-
-                    if (cmd.CommandType == CommandType.Text)
-                    {
-                        msg += ", Query = " + cmd.CommandText;
-                    }
-
-                    LogTools.LogError(msg);
-
-                    if (retryCount <= 0)
-                        break;
-
-                    IdleLoop(retryDelaySeconds);
-
-                    retryDelaySeconds *= 2;
-                    if (retryDelaySeconds > 90)
-                    {
-                        retryDelaySeconds = 90;
-                    }
-                }
-            }
-
-            queryResults = null;
-            return false;
-        }
+        // [Obsolete("Use PRISMDatabaseUtils.DbToolsFactory.GetDBTools(...).GetQueryResultsDataTable(...)", true)]
+        // public static bool GetDataTableByCmd(System.Data.SqlClient.SqlCommand cmd, string connectionString, short retryCount, out DataTable queryResults, int timeoutSeconds, [CallerMemberName] string callingFunction = "")
 
         /// <summary>
         /// Determine the version of .NET that is running
@@ -555,41 +392,8 @@ namespace AnalysisManagerBase
             }
         }
 
-        /// <summary>
-        /// Run a query against a SQL Server database
-        /// </summary>
-        /// <param name="sqlQuery">Query to run</param>
-        /// <param name="connectionString">Connection string</param>
-        /// <param name="firstQueryResult">Results, as a list of columns (first row only if multiple rows)</param>
-        /// <param name="retryCount">Number of times to retry (in case of a problem)</param>
-        /// <param name="timeoutSeconds">Query timeout (in seconds); minimum is 5 seconds; suggested value is 30 seconds</param>
-        /// <param name="callingFunction">Name of the calling function (for logging purposes)</param>
-        /// <returns>True if success, false if an error</returns>
-        /// <remarks>
-        /// Null values are converted to empty strings
-        /// Numbers are converted to their string equivalent
-        /// Use the GetDataTable functions in this class if you need to retain numeric values or null values
-        /// </remarks>
-        [Obsolete("Use GetQueryResultsTopRow that accepts a dbTools instance", true)]
-        public static bool GetQueryResultsTopRow(
-            string sqlQuery,
-            string connectionString,
-            out List<string> firstQueryResult,
-            short retryCount = 3,
-            int timeoutSeconds = 5,
-            [CallerMemberName] string callingFunction = "")
-        {
-            var success = GetQueryResults(sqlQuery, connectionString, out var queryResults, retryCount, timeoutSeconds, maxRowsToReturn: 1, callingFunction);
-
-            if (success)
-            {
-                firstQueryResult = queryResults.FirstOrDefault() ?? new List<string>();
-                return true;
-            }
-
-            firstQueryResult = new List<string>();
-            return false;
-        }
+        // [Obsolete("Use GetQueryResultsTopRow that accepts a dbTools instance", true)]
+        // public static bool GetQueryResultsTopRow(string sqlQuery, string connectionString, out List<string> firstQueryResult, short retryCount = 3, int timeoutSeconds = 5, [CallerMemberName] string callingFunction = "")
 
         /// <summary>
         /// Run a query against a SQL Server database
@@ -624,52 +428,8 @@ namespace AnalysisManagerBase
             return false;
         }
 
-        /// <summary>
-        /// Run a query against a SQL Server database, return the results as a list of strings
-        /// </summary>
-        /// <param name="sqlQuery">Query to run</param>
-        /// <param name="connectionString">Connection string</param>
-        /// <param name="queryResults">Results (list of list of strings)</param>
-        /// <param name="retryCount">Number of times to retry (in case of a problem)</param>
-        /// <param name="timeoutSeconds">Query timeout (in seconds); minimum is 5 seconds; suggested value is 30 seconds</param>
-        /// <param name="maxRowsToReturn">Maximum rows to return; 0 to return all rows</param>
-        /// <param name="callingFunction">Name of the calling function (for logging purposes)</param>
-        /// <returns>True if success, false if an error</returns>
-        /// <remarks>
-        /// Null values are converted to empty strings
-        /// Numbers are converted to their string equivalent
-        /// Use the GetDataTable functions in this class if you need to retain numeric values or null values
-        /// </remarks>
-        [Obsolete("Use PRISMDatabaseUtils.DbToolsFactory.GetDBTools(...).GetQueryResultsDataTable(...)", false)]
-        public static bool GetQueryResults(
-            string sqlQuery,
-            string connectionString,
-            out List<List<string>> queryResults,
-            short retryCount = 3,
-            int timeoutSeconds = 30,
-            int maxRowsToReturn = 0,
-            [CallerMemberName] string callingFunction = "")
-        {
-            if (OfflineMode)
-            {
-                LogTools.LogError(string.Format("Offline mode enabled; {0} cannot execute query {1}", callingFunction, sqlQuery));
-                queryResults = new List<List<string>>();
-                return false;
-            }
-
-            if (retryCount < 1)
-                retryCount = 1;
-
-            if (timeoutSeconds < 5)
-                timeoutSeconds = 5;
-
-            var dbTools = DbToolsFactory.GetDBTools(connectionString, debugMode: false);
-            RegisterEvents(dbTools);
-
-            var success = dbTools.GetQueryResults(sqlQuery, out queryResults, retryCount, maxRowsToReturn, timeoutSeconds: timeoutSeconds, callingFunction: callingFunction);
-
-            return success;
-        }
+        // [Obsolete("Use PRISMDatabaseUtils.DbToolsFactory.GetDBTools(...).GetQueryResultsDataTable(...)", false)]
+        // public static bool GetQueryResults(string sqlQuery, string connectionString, out List<List<string>> queryResults, short retryCount = 3, int timeoutSeconds = 30, int maxRowsToReturn = 0, [CallerMemberName] string callingFunction = "")
 
         /// <summary>
         /// Parses the .StackTrace text of the given exception to return a compact description of the current stack
@@ -695,20 +455,6 @@ namespace AnalysisManagerBase
             }
 
             return StackTraceFormatter.GetExceptionStackTrace(ex);
-        }
-
-        /// <summary>
-        /// Parse settingText to extract the key name and value (separated by an equals sign)
-        /// </summary>
-        /// <param name="settingText"></param>
-        /// <returns>Key/Value pair</returns>
-        /// <remarks>
-        /// If the line starts with # it is treated as a comment line and an empty key/value pair will be returned
-        /// If the line contains a # sign in the middle, the comment is left intact
-        /// </remarks>
-        public static KeyValuePair<string, string> GetKeyValueSetting(string settingText)
-        {
-            return PRISM.AppSettings.KeyValueParamFileReader.GetKeyValueSetting(settingText);
         }
 
         /// <summary>
@@ -853,27 +599,6 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Converts a string value to a boolean equivalent
-        /// </summary>
-        /// <param name="value"></param>
-        /// <remarks>Returns false if an exception</remarks>
-        public static bool CBoolSafe(string value)
-        {
-            return PRISM.DataUtils.StringToValueUtils.CBoolSafe(value);
-        }
-
-        /// <summary>
-        /// Converts a string value to a boolean equivalent
-        /// </summary>
-        /// <param name="value"></param>
-        /// <param name="defaultValue">Boolean value to return if value is empty or an exception occurs</param>
-        /// <remarks>Returns false if an exception</remarks>
-        public static bool CBoolSafe(string value, bool defaultValue)
-        {
-            return PRISM.DataUtils.StringToValueUtils.CBoolSafe(value, defaultValue);
-        }
-
-        /// <summary>
         /// Converts value to an integer
         /// </summary>
         /// <param name="value"></param>
@@ -979,46 +704,6 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Computes the MD5 hash for a file
-        /// </summary>
-        /// <param name="filePath"></param>
-        [Obsolete("Use PRISM.HashUtilities.ComputeFileHashMD5")]
-        public static string ComputeFileHashMD5(string filePath)
-        {
-            return HashUtilities.ComputeFileHashMD5(filePath);
-        }
-
-        /// <summary>
-        /// Computes the MD5 hash for a string
-        /// </summary>
-        /// <param name="text"></param>
-        [Obsolete("Use PRISM.HashUtilities.ComputeStringHashMD5")]
-        public static string ComputeStringHashMD5(string text)
-        {
-            return HashUtilities.ComputeStringHashMD5(text);
-        }
-
-        /// <summary>
-        /// Computes the SHA-1 hash for a file
-        /// </summary>
-        /// <param name="filePath"></param>
-        [Obsolete("Use PRISM.HashUtilities.ComputeFileHashSha1")]
-        public static string ComputeFileHashSha1(string filePath)
-        {
-            return HashUtilities.ComputeFileHashSha1(filePath);
-        }
-
-        /// <summary>
-        /// Computes the SHA-1 hash for a string
-        /// </summary>
-        /// <param name="text"></param>
-        [Obsolete("Use PRISM.HashUtilities.ComputeStringHashSha1")]
-        public static string ComputeStringHashSha1(string text)
-        {
-            return HashUtilities.ComputeStringHashSha1(text);
-        }
-
-        /// <summary>
         /// Creates a .hashcheck file for the specified file
         /// The file will be created in the same directory as the data file, and will contain size, modification_date_utc, and hash
         /// </summary>
@@ -1046,23 +731,6 @@ namespace AnalysisManagerBase
                 ConsoleMsgUtils.ShowWarning(warningMessage);
 
             return hashcheckFilePath;
-        }
-
-        /// <summary>
-        /// Creates a .hashcheck file for the specified file, using the given hash string
-        /// The file will be created in the same directory as the data file, and will contain size, modification_date_utc, hash, and hash type
-        /// </summary>
-        /// <param name="dataFilePath"></param>
-        /// <param name="md5Hash"></param>
-        /// <returns>The full path to the .hashcheck file; empty string if a problem</returns>
-        [Obsolete("Use PRISM.HashUtilities.CreateHashcheckFile and specify the hash type")]
-        public static string CreateHashcheckFile(string dataFilePath, string md5Hash)
-        {
-            var hashCheckFilePath = HashUtilities.CreateHashcheckFileWithHash(dataFilePath, HashUtilities.HashTypeConstants.MD5, md5Hash, out var warningMessage);
-            if (!string.IsNullOrWhiteSpace(warningMessage))
-                ConsoleMsgUtils.ShowWarning(warningMessage);
-
-            return hashCheckFilePath;
         }
 
         /// <summary>
@@ -1502,42 +1170,6 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Change the host name in the given share path to use a different host
-        /// </summary>
-        /// <param name="sharePath"></param>
-        /// <param name="newHostName"></param>
-        public static string UpdateHostName(string sharePath, string newHostName)
-        {
-            if (!newHostName.StartsWith(@"\\"))
-            {
-                throw new NotSupportedException(@"\\ not found at the start of newHostName (" + newHostName + "); " +
-                                                @"The UpdateHostName function only works with UNC paths, e.g. \\ServerName\Share\");
-            }
-
-            if (!newHostName.EndsWith("\\"))
-            {
-                newHostName += "\\";
-            }
-
-            if (!sharePath.StartsWith(@"\\"))
-            {
-                throw new NotSupportedException(@"\\ not found at the start of sharePath (" + sharePath + "); " +
-                                                @"The UpdateHostName function only works with UNC paths, e.g. \\ServerName\Share\");
-            }
-
-            var slashLoc = sharePath.IndexOf("\\", 3, StringComparison.Ordinal);
-
-            if (slashLoc < 0)
-            {
-                throw new Exception("Backslash not found after the 3rd character in SharePath, " + sharePath);
-            }
-
-            var sharePathNew = newHostName + sharePath.Substring(slashLoc + 1);
-
-            return sharePathNew;
-        }
-
-        /// <summary>
         /// Returns True if the computer name is Pub-1000 or higher
         /// </summary>
         public static bool UsingVirtualMachineOnPIC()
@@ -1551,81 +1183,6 @@ namespace AnalysisManagerBase
             }
 
             return false;
-        }
-
-        /// <summary>
-        /// Looks for a .hashcheck file for the specified data file
-        /// If found, opens the file and reads the stored values: size, modification_date_utc, and hash
-        /// Next compares the stored values to the actual values
-        /// Checks file size and file date, but does not compute the hash
-        /// </summary>
-        /// <param name="dataFilePath">Data file to check.</param>
-        /// <param name="hashFilePath">Hashcheck file for the given data file (auto-defined if blank)</param>
-        /// <param name="errorMessage"></param>
-        /// <returns>True if the hashcheck file exists and the actual file matches the expected values; false if a mismatch or a problem</returns>
-        /// <remarks>The .hashcheck file has the same name as the data file, but with ".hashcheck" appended</remarks>
-        [Obsolete("Use PRISM.FileSyncUtils.ValidateFileVsHashcheck")]
-        public static bool ValidateFileVsHashcheck(string dataFilePath, string hashFilePath, out string errorMessage)
-        {
-            return ValidateFileVsHashcheck(dataFilePath, hashFilePath, out errorMessage, checkDate: true, computeHash: false, checkSize: true);
-        }
-
-        /// <summary>
-        /// Looks for a .hashcheck file for the specified data file
-        /// If found, opens the file and reads the stored values: size, modification_date_utc, and hash
-        /// Next compares the stored values to the actual values
-        /// Checks file size, plus optionally date and hash
-        /// </summary>
-        /// <param name="dataFilePath">Data file to check.</param>
-        /// <param name="hashFilePath">Hashcheck file for the given data file (auto-defined if blank)</param>
-        /// <param name="errorMessage"></param>
-        /// <param name="checkDate">If True, compares UTC modification time; times must agree within 2 seconds</param>
-        /// <param name="computeHash"></param>
-        /// <returns>True if the hashcheck file exists and the actual file matches the expected values; false if a mismatch or a problem</returns>
-        /// <remarks>The .hashcheck file has the same name as the data file, but with ".hashcheck" appended</remarks>
-        [Obsolete("Use PRISM.FileSyncUtils.ValidateFileVsHashcheck")]
-        public static bool ValidateFileVsHashcheck(
-            string dataFilePath, string hashFilePath, out string errorMessage,
-            bool checkDate, bool computeHash)
-        {
-            return ValidateFileVsHashcheck(dataFilePath, hashFilePath, out errorMessage, checkDate, computeHash, checkSize: true);
-        }
-
-        /// <summary>
-        /// Looks for a .hashcheck file for the specified data file; returns false if not found
-        /// If found, compares the stored values to the actual values (size, modification_date_utc, and hash)
-        /// Next compares the stored values to the actual values
-        /// </summary>
-        /// <param name="dataFilePath">Data file to check</param>
-        /// <param name="hashFilePath">Hashcheck file for the given data file (auto-defined if blank)</param>
-        /// <param name="errorMessage">Output: error message</param>
-        /// <param name="checkDate">If True, compares UTC modification time; times must agree within 2 seconds</param>
-        /// <param name="computeHash">If true, compute the file hash (every time); if false, only compare file size and date</param>
-        /// <param name="checkSize">If true, compare the actual file size to that in the hashcheck file</param>
-        /// <returns>True if the hashcheck file exists and the actual file matches the expected values; false if a mismatch or a problem</returns>
-        /// <remarks>The .hashcheck file has the same name as the data file, but with ".hashcheck" appended</remarks>
-        [Obsolete("Use PRISM.FileSyncUtils.ValidateFileVsHashcheck")]
-        public static bool ValidateFileVsHashcheck(
-            string dataFilePath, string hashFilePath, out string errorMessage,
-            bool checkDate, bool computeHash, bool checkSize)
-        {
-            var validFile = FileSyncUtils.ValidateFileVsHashcheck(dataFilePath, hashFilePath, out errorMessage, checkDate, computeHash, checkSize);
-            return validFile;
-        }
-
-        /// <summary>
-        /// Check the free space on the drive with the given directory
-        /// </summary>
-        [Obsolete("Use the version with argument logToDatabase")]
-        public static bool ValidateFreeDiskSpace(
-            string directoryDescription,
-            string directoryPath,
-            int minFreeSpaceMB,
-            LogTools.LoggerTypes eLogLocationIfNotFound,
-            out string errorMessage)
-        {
-            var logToDatabase = eLogLocationIfNotFound == LogTools.LoggerTypes.LogDb;
-            return ValidateFreeDiskSpace(directoryDescription, directoryPath, minFreeSpaceMB, out errorMessage, logToDatabase);
         }
 
         /// <summary>

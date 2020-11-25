@@ -3396,16 +3396,6 @@ namespace AnalysisManagerMSGFDBPlugIn
         }
 
         /// <summary>
-        /// Previously returned true if legacy MSGFDB should have been used
-        /// Now always returns false
-        /// </summary>
-        /// <param name="jobParams"></param>
-        public static bool UseLegacyMSGFDB(IJobParams jobParams)
-        {
-            return false;
-        }
-
-        /// <summary>
         /// Verify that the static mods, dynamic mods, and/or custom amino acid definitions are valid
         /// </summary>
         /// <param name="staticMods"></param>
