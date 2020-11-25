@@ -22,8 +22,14 @@ using PRISM.FileProcessor;
 
 namespace AnalysisManagerProg
 {
+    /// <summary>
+    /// Main program
+    /// </summary>
     public static class Program
     {
+        /// <summary>
+        /// Program date
+        /// </summary>
         public const string PROGRAM_DATE = "September 28, 2020";
 
         private static bool mTraceMode;

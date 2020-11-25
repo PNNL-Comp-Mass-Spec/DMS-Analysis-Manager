@@ -19,7 +19,7 @@ namespace AnalysisManagerTopFDPlugIn
     // ReSharper disable once UnusedMember.Global
     public class clsAnalysisToolRunnerTopFD : clsAnalysisToolRunnerBase
     {
-        // Ignore Spelling: html, sn, cv
+        // Ignore Spelling: html, sn, cv, Aragorn
 
         #region "Constants"
 
