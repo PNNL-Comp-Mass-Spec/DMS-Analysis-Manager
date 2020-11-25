@@ -162,7 +162,7 @@ namespace AnalysisManagerBase
         ProcessStatus Start();
 
         /// <summary>
-        /// //
+        /// Abort processing
         /// </summary>
         ProcessStatus Abort();
 
