@@ -106,7 +106,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
         private MSFileInfoScannerInterfaces.iMSFileInfoScanner LoadMSFileInfoScanner(string msFileInfoScannerDLLPath)
         {
-            const string MsDataFileReaderClass = "MSFileInfoScanner.clsMSFileInfoScanner";
+            const string MsDataFileReaderClass = "MSFileInfoScanner.MSFileInfoScanner";
 
             MSFileInfoScannerInterfaces.iMSFileInfoScanner msFileInfoScanner = null;
             string msg;

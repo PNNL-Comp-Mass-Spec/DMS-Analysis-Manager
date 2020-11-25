@@ -130,7 +130,7 @@ namespace AnalysisManagerBase
 
         private MSFileInfoScannerInterfaces.iMSFileInfoScanner LoadMSFileInfoScanner(string msFileInfoScannerDLLPath)
         {
-            const string MsDataFileReaderClass = "MSFileInfoScanner.clsMSFileInfoScanner";
+            const string MsDataFileReaderClass = "MSFileInfoScanner.MSFileInfoScanner";
 
             MSFileInfoScannerInterfaces.iMSFileInfoScanner msFileInfoScanner = null;
 
