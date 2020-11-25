@@ -6,7 +6,8 @@
 
 using System.Diagnostics.CodeAnalysis;
 
-[assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "<Pending>", Scope = "type", Target = "~T:AnalysisManagerDecon2lsV2PlugIn.clsAnalysisToolRunnerDecon2ls")]
-[assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "<Pending>", Scope = "type", Target = "~T:AnalysisManagerDecon2lsV2PlugIn.clsAnalysisToolRunnerDecon2ls.udtDeconToolsStatusType")]
-[assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "<Pending>", Scope = "type", Target = "~T:AnalysisManagerDecon2lsV2PlugIn.clsXMLParamFileReader")]
-[assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "<Pending>", Scope = "type", Target = "~T:AnalysisManagerDecon2lsV2PlugIn.clsAnalysisResourcesDecon2ls")]
+[assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Allowed", Scope = "type", Target = "~T:AnalysisManagerDecon2lsV2PlugIn.clsAnalysisToolRunnerDecon2ls")]
+[assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Allowed", Scope = "type", Target = "~T:AnalysisManagerDecon2lsV2PlugIn.clsAnalysisToolRunnerDecon2ls.udtDeconToolsStatusType")]
+[assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Allowed", Scope = "type", Target = "~T:AnalysisManagerDecon2lsV2PlugIn.clsXMLParamFileReader")]
+[assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Allowed", Scope = "type", Target = "~T:AnalysisManagerDecon2lsV2PlugIn.clsAnalysisResourcesDecon2ls")]
+[assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Allowed", Scope = "type", Target = "~T:AnalysisManagerDecon2lsV2PlugIn.clsDeconToolsQCPlotsGenerator")]

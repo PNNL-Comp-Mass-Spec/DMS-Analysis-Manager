@@ -6,4 +6,4 @@
 
 using System.Diagnostics.CodeAnalysis;
 
-[assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "<Pending>", Scope = "type", Target = "~T:AnalysisManagerFormularityPlugin.clsAnalysisResourcesFormularity")]
+[assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Allowed", Scope = "type", Target = "~T:AnalysisManagerFormularityPlugin.clsAnalysisResourcesFormularity")]

@@ -299,7 +299,6 @@ namespace AnalysisManagerTopPICPlugIn
             // Deleting temporary files - finished.
             // TopPIC finished.
 
-
             // TopPIC version 1.3.1 reports percent complete values in some sections; for example:
             // Non PTM filtering - started.
             // Non PTM filtering - processing 0.01%.
@@ -339,7 +338,7 @@ namespace AnalysisManagerTopPICPlugIn
                                                        RegexOptions.Compiled | RegexOptions.IgnoreCase);
             // RegEx to match lines like:
             // Non PTM filtering - processing 9.03%.
-            var percentCompleteMatcher = new Regex(@"processing (?<Progress>[0-9.]+)%", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            var percentCompleteMatcher = new Regex("processing (?<Progress>[0-9.]+)%", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
             try
             {
@@ -810,7 +809,7 @@ namespace AnalysisManagerTopPICPlugIn
             // Non PTM filtering - processing 0.122%.
             // Non PTM filtering - processing 5.6%.
 
-            var extractItemWithPercentComplete = new Regex(@"processing +(?<Progress>[0-9.]+)%", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            var extractItemWithPercentComplete = new Regex("processing +(?<Progress>[0-9.]+)%", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
             try
             {
@@ -1330,7 +1329,7 @@ namespace AnalysisManagerTopPICPlugIn
             return true;
         }
 
-        private List<string> ValidateTopPICMods(IReadOnlyCollection<string> modList, out List<string> invalidMods)
+        private List<string> ValidateTopPICMods(IEnumerable<string> modList, out List<string> invalidMods)
         {
             var validatedMods = new List<string>();
             invalidMods = new List<string>();
@@ -1388,7 +1387,7 @@ namespace AnalysisManagerTopPICPlugIn
 
                         // Parameter lines are of the form "Error tolerance:,15 ppm"
                         // Replace the comma with spaces
-                        var paramParts = parameter.Split(new char[] { ',' }, 2);
+                        var paramParts = parameter.Split(new[] { ',' }, 2);
                         if (paramParts.Length <= 1)
                         {
                             writer.WriteLine(parameter);

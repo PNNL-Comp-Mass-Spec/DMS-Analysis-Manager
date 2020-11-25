@@ -391,7 +391,9 @@ namespace AnalysisManagerTopFDPlugIn
             if (paramFileReader.ParamIsEnabled(paramFileEntries, "MS1Missing"))
             {
                 if (paramToArgMapping.TryGetValue("MS1Missing", out var argumentName))
+                {
                     cmdLineOptions += " --" + argumentName;
+                }
                 else
                 {
                     LogError("Parameter to argument mapping dictionary does not have MS1Missing");

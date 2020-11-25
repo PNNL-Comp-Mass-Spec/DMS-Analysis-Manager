@@ -621,7 +621,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 }
 
                 // Set up and execute a program runner to run MzidToTsvConverter.exe
-                var arguments = GetMZIDtoTSVCommandLine(mzidFileName, tsvFileName, mWorkDir, mzidToTsvConverterProgLoc);
+                var arguments = GetMZIDtoTSVCommandLine(mzidFileName, tsvFileName, mWorkDir);
 
                 var mzidToTsvRunner = new clsRunDosProgram(mWorkDir, mDebugLevel)
                 {
@@ -815,8 +815,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <param name="mzidFileName"></param>
         /// <param name="tsvFileName"></param>
         /// <param name="workingDirectory"></param>
-        /// <param name="mzidToTsvConverterProgLoc"></param>
-        public static string GetMZIDtoTSVCommandLine(string mzidFileName, string tsvFileName, string workingDirectory, string mzidToTsvConverterProgLoc)
+        public static string GetMZIDtoTSVCommandLine(string mzidFileName, string tsvFileName, string workingDirectory)
         {
             var arguments =
                 " -mzid:" + clsAnalysisToolRunnerBase.PossiblyQuotePath(Path.Combine(workingDirectory, mzidFileName)) +
@@ -2220,7 +2219,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Parses the static modifications, dynamic modifications, and custom amino acid information to create the MS-GF+ Mods file
         /// </summary>
-        /// <param name="sourceParameterFilePath">Full path to the MSGF parameter file; will create file MSGFPlus_Mods.txt in the same folder</param>
+        /// <param name="sourceParameterFilePath">Full path to the MS-GF+ parameter file; will create file MSGFPlus_Mods.txt in the same folder</param>
         /// <param name="sbOptions">String builder of command line arguments to pass to MS-GF+</param>
         /// <param name="numMods">Max Number of Modifications per peptide</param>
         /// <param name="staticMods">List of Static Mods</param>
@@ -3075,7 +3074,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 sqlStr.Append("   HMSn, MSn, ");
                 sqlStr.Append("   [PQD-HMSn], [PQD-MSn]");
                 sqlStr.Append(" FROM V_Dataset_ScanType_CrossTab");
-                sqlStr.Append(" WHERE Dataset = '" + datasetName + "'");
+                sqlStr.AppendFormat(" WHERE Dataset = '{0}'", datasetName);
 
                 const int retryCount = 2;
 

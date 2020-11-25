@@ -84,7 +84,6 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                     break;
                 }
 
-
                 if (!mSuccess)
                 {
                     ErrorMessage = "Error generating QC Plots using " + inputFilePath;

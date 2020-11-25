@@ -41,7 +41,6 @@ namespace AnalysisManagerBase
         /// Spectra filter did not alter any spectra
         /// </summary>
         SF_NO_SPECTRA_ALTERED = -4
-
     }
 
     /// <summary>

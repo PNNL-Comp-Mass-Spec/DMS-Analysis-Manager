@@ -351,7 +351,6 @@ namespace AnalysisManagerMSAlignPlugIn
                     }
                 }
 
-
                 // Delete the source file, then rename the new file to match the source file
                 File.Delete(sourceFilePath);
 

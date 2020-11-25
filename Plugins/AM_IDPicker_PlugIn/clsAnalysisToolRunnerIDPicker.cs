@@ -527,7 +527,7 @@ namespace AnalysisManagerIDPickerPlugIn
                                 " /F:" + PossiblyQuotePath(fastaFilePath) +
                                 " /H:" + iHitsPerSpectrum;
 
-                if (ePHRPResultType == clsPHRPReader.ePeptideHitResultType.MODa | ePHRPResultType == clsPHRPReader.ePeptideHitResultType.MODPlus)
+                if (ePHRPResultType == clsPHRPReader.ePeptideHitResultType.MODa || ePHRPResultType == clsPHRPReader.ePeptideHitResultType.MODPlus)
                 {
                     // The SpecProb values listed in the _syn_MSGF.txt file are not true spectral probabilities
                     // Instead, they're just 1 - Probability  (where Probability is a value between 0 and 1 assigned by MODa)
@@ -1029,7 +1029,7 @@ namespace AnalysisManagerIDPickerPlugIn
             var progLoc = Path.Combine(mIDPickerProgramFolder, IDPicker_Qonvert);
 
             // Possibly override some options
-            if (ePHRPResultType == clsPHRPReader.ePeptideHitResultType.MODa | ePHRPResultType == clsPHRPReader.ePeptideHitResultType.MODPlus)
+            if (ePHRPResultType == clsPHRPReader.ePeptideHitResultType.MODa || ePHRPResultType == clsPHRPReader.ePeptideHitResultType.MODPlus)
             {
                 // Higher MODa probability scores are better
                 mIDPickerOptions["SearchScoreWeights"] = "Probability 1";
@@ -1082,7 +1082,7 @@ namespace AnalysisManagerIDPickerPlugIn
         {
             const int maxRuntimeMinutes = 60;
 
-            var outputFolderName = "IDPicker";
+            const string outputFolderName = "IDPicker";
 
             // Define the errors that we can ignore
             ClearConcurrentBag(ref mCmdRunnerErrorsToIgnore);
@@ -1326,8 +1326,6 @@ namespace AnalysisManagerIDPickerPlugIn
         {
             var toolVersionInfo = string.Empty;
 
-            var success = false;
-
             if (mDebugLevel >= 2)
             {
                 LogDebug("Determining tool version info");
@@ -1342,7 +1340,7 @@ namespace AnalysisManagerIDPickerPlugIn
             if (skipIDPicker)
             {
                 // Only store the version of PeptideListToXML.exe in the database
-                success = base.StoreToolVersionInfoOneFile(ref toolVersionInfo, mPeptideListToXMLExePath);
+                StoreToolVersionInfoOneFile(ref toolVersionInfo, mPeptideListToXMLExePath);
                 toolFiles.Add(new FileInfo(mPeptideListToXMLExePath));
             }
             else
@@ -1361,7 +1359,6 @@ namespace AnalysisManagerIDPickerPlugIn
                         return false;
                     }
                 }
-
 
                 if (idPickerProgram.Directory == null)
                 {

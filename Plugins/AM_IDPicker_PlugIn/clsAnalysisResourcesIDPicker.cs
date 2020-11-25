@@ -13,6 +13,8 @@ namespace AnalysisManagerIDPickerPlugIn
     /// </summary>
     public class clsAnalysisResourcesIDPicker : clsAnalysisResources
     {
+        // Ignore Spelling: ParmFileName, msgfdb
+
         /// <summary>
         /// ID Picker parameter file name
         /// </summary>
@@ -95,7 +97,7 @@ namespace AnalysisManagerIDPickerPlugIn
             {
                 // Retrieve the MASIC ScanStats.txt and ScanStatsEx.txt files
 
-                if (eRawDataType == eRawDataTypeConstants.ThermoRawFile | eRawDataType == eRawDataTypeConstants.UIMF)
+                if (eRawDataType == eRawDataTypeConstants.ThermoRawFile || eRawDataType == eRawDataTypeConstants.UIMF)
                 {
                     var noScanStats = mJobParams.GetJobParameter("PepXMLNoScanStats", false);
                     if (noScanStats)
@@ -246,7 +248,7 @@ namespace AnalysisManagerIDPickerPlugIn
                 if (!success && eResultType == clsPHRPReader.ePeptideHitResultType.MSGFPlus &&
                     toolVersionInfoFile != null && fileToGet.Contains(Path.GetFileName(toolVersionInfoFile)))
                 {
-                    var toolVersionFileLegacy = "Tool_Version_Info_MSGFDB.txt";
+                    const string toolVersionFileLegacy = "Tool_Version_Info_MSGFDB.txt";
                     success = FileSearch.FindAndRetrieveMiscFiles(toolVersionFileLegacy, false, false);
                     if (success)
                     {
@@ -351,7 +353,7 @@ namespace AnalysisManagerIDPickerPlugIn
                 idPickerParamFileName = DEFAULT_IDPICKER_PARAM_FILE_NAME;
             }
 
-            var paramFileStoragePathKeyName = clsGlobal.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "IDPicker";
+            const string paramFileStoragePathKeyName = clsGlobal.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "IDPicker";
             var idPickerParamFilePath = mMgrParams.GetParam(paramFileStoragePathKeyName);
             if (string.IsNullOrEmpty(idPickerParamFilePath))
             {

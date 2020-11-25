@@ -52,6 +52,7 @@
   <ItemGroup>
     <Compile Include="clsAnalysisResourcesTopPIC.cs" />
     <Compile Include="clsAnalysisToolRunnerTopPIC.cs" />
+    <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
