@@ -1189,7 +1189,7 @@ namespace AnalysisManagerTopPICPlugIn
                                     {
                                         // Instantiate the CSV Reader
                                         // Using CsvParser instead of CsvReader since we don't need to read specific columns
-                                        csvParser = new CsvParser(reader);
+                                        csvParser = new CsvParser(reader, System.Globalization.CultureInfo.InvariantCulture);
                                     }
                                 }
                             }
