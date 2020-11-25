@@ -271,16 +271,14 @@ namespace AnalysisManagerTopFDPlugIn
                         if (string.IsNullOrWhiteSpace(dataLine))
                             continue;
 
-                        var dataLineLower = dataLine.ToLower();
-
                         if (linesRead <= 3)
                         {
                             // The first line has the TopFD executable name and the command line arguments
                             // The second line is dashes
                             // The third line has the TopFD version
                             if (string.IsNullOrEmpty(mTopFDVersion) &&
-                                dataLineLower.StartsWith("topfd") &&
-                                !dataLineLower.Contains(TOPFD_EXE_NAME.ToLower()))
+                                dataLine.IndexOf("TopFD", StringComparison.OrdinalIgnoreCase) == 0 &&
+                                dataLine.IndexOf(TOPFD_EXE_NAME, StringComparison.OrdinalIgnoreCase) < 0)
                             {
                                 if (mDebugLevel >= 2)
                                 {
@@ -308,9 +306,10 @@ namespace AnalysisManagerTopFDPlugIn
                         if (linesRead < 12)
                             continue;
 
-                        if ((dataLineLower.Contains("error") || dataLineLower.Contains("terminate called after throwing an instance")) &&
-                            !dataLine.Contains("Error tolerance:") &&
-                            string.IsNullOrEmpty(mConsoleOutputErrorMsg))
+                        if (string.IsNullOrEmpty(mConsoleOutputErrorMsg) &&
+                            dataLine.IndexOf("Error tolerance:", StringComparison.OrdinalIgnoreCase) < 0 &&
+                            (dataLine.IndexOf("error", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                             dataLine.IndexOf("terminate called after throwing an instance", StringComparison.OrdinalIgnoreCase) >= 0))
                         {
                             mConsoleOutputErrorMsg = "Error running TopFD: " + dataLine;
                             continue;
@@ -318,7 +317,7 @@ namespace AnalysisManagerTopFDPlugIn
 
                         if (dataLine.IndexOf("Invalid cvParam accession", StringComparison.OrdinalIgnoreCase) > 0)
                         {
-                            if (dataLineLower.Contains("1003029"))
+                            if (dataLine.Contains("1003029"))
                             {
                                 LogWarning(
                                     "TopFD is unable to process this .mzML file since it comes from " +
