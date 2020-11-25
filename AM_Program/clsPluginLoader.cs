@@ -106,7 +106,6 @@ namespace AnalysisManagerProg
         /// <param name="className">Name of class for plugin (return value) </param>
         /// <param name="assemblyName">Name of assembly for plugin (return value)</param>
         /// <returns>TRUE for success, FALSE for failure</returns>
-        /// <remarks></remarks>
         private bool GetPluginInfo(string xpath, out string className, out string assemblyName)
         {
             var doc = new XmlDocument();
@@ -178,7 +177,6 @@ namespace AnalysisManagerProg
         /// <param name="className">Name of class to load (from GetPluginInfo)</param>
         /// <param name="assemblyName">Name of assembly to load (from GetPluginInfo)</param>
         /// <returns>An object referencing the specified dll</returns>
-        /// <remarks></remarks>
         private object LoadObject(string className, string assemblyName)
         {
             try
@@ -236,7 +234,6 @@ namespace AnalysisManagerProg
         /// </summary>
         /// <param name="toolName">Name of tool</param>
         /// <returns>An object meeting the IToolRunner interface</returns>
-        /// <remarks></remarks>
         public IToolRunner GetToolRunner(string toolName)
         {
             var xpath = "//ToolRunners/ToolRunner[@Tool='" + toolName.ToLower() + "']";
@@ -281,7 +278,6 @@ namespace AnalysisManagerProg
         /// </summary>
         /// <param name="toolName">Name of analysis tool</param>
         /// <returns>An object meeting the IAnalysisResources interface</returns>
-        /// <remarks></remarks>
         public IAnalysisResources GetAnalysisResources(string toolName)
         {
             var xpath = "//Resourcers/Resourcer[@Tool='" + toolName.ToLower() + "']";
@@ -326,7 +322,6 @@ namespace AnalysisManagerProg
         /// </summary>
         /// <param name="pluginInfoFileName">Name of plugin info file</param>
         /// <returns>Path to plugin info file</returns>
-        /// <remarks></remarks>
         private string GetPluginInfoFilePath(string pluginInfoFileName)
         {
             return Path.Combine(mMgrFolderPath, pluginInfoFileName);

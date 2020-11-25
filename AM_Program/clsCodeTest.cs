@@ -49,7 +49,6 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <remarks></remarks>
         public CodeTest()
         {
             const bool TRACE_MODE_ENABLED = true;
@@ -353,8 +352,6 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Initializes mMgrSettings and returns example job params
         /// </summary>
-        /// <returns></returns>
-        /// <remarks></remarks>
         private clsAnalysisJob InitializeManagerParams()
         {
             const int debugLevel = 1;
@@ -841,7 +838,6 @@ namespace AnalysisManagerProg
         /// Also calls Running BuildSA
         /// </summary>
         /// <param name="destinationDirectory"></param>
-        /// <returns></returns>
         public bool TestProteinDBExport(string destinationDirectory)
         {
             // ReSharper disable StringLiteralTypo
@@ -900,7 +896,6 @@ namespace AnalysisManagerProg
         /// <param name="legacyFasta"></param>
         /// <param name="proteinCollectionList"></param>
         /// <param name="proteinOptions"></param>
-        /// <returns></returns>
         public bool TestProteinDBExport(string destinationDirectory, string legacyFasta, string proteinCollectionList, string proteinOptions)
         {
             // Instantiate fasta tool if not already done
@@ -1410,7 +1405,6 @@ namespace AnalysisManagerProg
         /// Retrieve and decompress MALDI data
         /// </summary>
         /// <param name="sourceDatasetFolder"></param>
-        /// <returns></returns>
         public bool TestMALDIDataUnzip(string sourceDatasetFolder)
         {
             const int debugLevel = 2;
@@ -1447,7 +1441,6 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Writes the status file
         /// </summary>
-        /// <remarks></remarks>
         public void TestStatusLogging()
         {
             var statusTools = new clsStatusFile("Status.xml", 2);
@@ -1701,7 +1694,6 @@ namespace AnalysisManagerProg
         /// </summary>
         /// <param name="folderPath">Folder to examine</param>
         /// <param name="datasetName">Dataset name</param>
-        /// <remarks></remarks>
         public void FixICR2LSResultFileNames(string folderPath, string datasetName)
         {
             var extensionsToCheck = new List<string>();

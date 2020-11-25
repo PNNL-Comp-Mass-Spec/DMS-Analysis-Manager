@@ -10,7 +10,6 @@ namespace AnalysisManagerBase
     /// <summary>
     /// Interface for analysis resources
     /// </summary>
-    /// <remarks></remarks>
     public interface IAnalysisResources
     {
         #region "Properties"
@@ -37,7 +36,6 @@ namespace AnalysisManagerBase
         /// <param name="jobParams">Job parameter object</param>
         /// <param name="statusTools">Status tools object</param>
         /// <param name="myEMSLUtilities">MyEMSL download utilities</param>
-        /// <remarks></remarks>
         void Setup(
             string stepToolName,
             IMgrParams mgrParams,
@@ -49,7 +47,6 @@ namespace AnalysisManagerBase
         /// Main processing function for obtaining the required resources
         /// </summary>
         /// <returns>Status value indicating success or failure</returns>
-        /// <remarks></remarks>
         CloseOutType GetResources();
 
         /// <summary>
@@ -65,7 +62,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="resourceOption">Option to get</param>
         /// <returns>The option value (true or false)</returns>
-        /// <remarks></remarks>
         bool GetOption(clsGlobal.eAnalysisResourceOptions resourceOption);
 
         /// <summary>
@@ -73,7 +69,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="resourceOption">Option to set</param>
         /// <param name="enabled">True or false</param>
-        /// <remarks></remarks>
         void SetOption(clsGlobal.eAnalysisResourceOptions resourceOption, bool enabled);
 
         #endregion

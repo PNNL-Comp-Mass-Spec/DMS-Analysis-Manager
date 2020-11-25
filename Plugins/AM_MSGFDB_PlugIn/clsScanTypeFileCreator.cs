@@ -174,7 +174,6 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// create the ScanType file using the MASIC ScanStats file
         /// </summary>
-        /// <returns></returns>
         public bool CreateScanTypeFile()
         {
             try
@@ -311,7 +310,6 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// Return true if the value in the first index of dataColumns is an Integer
         /// </summary>
         /// <param name="dataColumns"></param>
-        /// <returns></returns>
         private bool FirstColumnIsInteger(IReadOnlyList<string> dataColumns)
         {
             return int.TryParse(dataColumns[0], out _);

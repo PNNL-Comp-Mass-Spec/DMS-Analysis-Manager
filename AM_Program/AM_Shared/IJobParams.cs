@@ -174,7 +174,6 @@ namespace AnalysisManagerBase
         /// <param name="paramName">Name of parameter</param>
         /// <param name="paramValue">Boolean value for parameter</param>
         /// <returns>True if success, False if an error</returns>
-        /// <remarks></remarks>
         bool AddAdditionalParameter(string sectionName, string paramName, bool paramValue);
 
         /// <summary>
@@ -184,7 +183,6 @@ namespace AnalysisManagerBase
         /// <param name="paramName">Name of parameter</param>
         /// <param name="paramValue">Integer value for parameter</param>
         /// <returns>True if success, False if an error</returns>
-        /// <remarks></remarks>
         bool AddAdditionalParameter(string sectionName, string paramName, int paramValue);
 
         /// <summary>
@@ -192,7 +190,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="datasetName"></param>
         /// <param name="datasetID"></param>
-        /// <remarks></remarks>
         void AddDatasetInfo(string datasetName, int datasetID);
 
         /// <summary>
@@ -249,14 +246,12 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Get job parameter section names
         /// </summary>
-        /// <returns></returns>
         List<string> GetAllSectionNames();
 
         /// <summary>
         /// Get a description of the step tool and script name
         /// </summary>
         /// <returns>Tool name, e.g. "Sequest" or "DTA_Gen (Sequest)" or "DataExtractor (XTandem)"</returns>
-        /// <remarks></remarks>
         string GetCurrentJobToolDescription();
 
         /// <summary>
@@ -270,7 +265,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="name">Key name for parameter</param>
         /// <returns>Value for specified parameter; empty string if not found</returns>
-        /// <remarks></remarks>
         string GetParam(string name);
 
         /// <summary>
@@ -279,7 +273,6 @@ namespace AnalysisManagerBase
         /// <param name="section">Section name for parameter</param>
         /// <param name="name">Key name for parameter</param>
         /// <returns>Value for specified parameter; empty string if not found</returns>
-        /// <remarks></remarks>
         string GetParam(string section, string name);
 
         /// <summary>
@@ -366,14 +359,12 @@ namespace AnalysisManagerBase
         /// Remove a filename that was previously added to ResultFilesToSkip
         /// </summary>
         /// <param name="fileName"></param>
-        /// <remarks></remarks>
         void RemoveResultFileToSkip(string fileName);
 
         /// <summary>
         /// Requests a task from the database
         /// </summary>
         /// <returns>Enum indicating if task was found</returns>
-        /// <remarks></remarks>
         clsDBTask.RequestTaskResult RequestTask();
 
         /// <summary>
@@ -381,7 +372,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="keyName">Parameter name</param>
         /// <param name="value">Parameter value</param>
-        /// <remarks></remarks>
         void SetParam(string keyName, string value);
 
         /// <summary>
@@ -390,7 +380,6 @@ namespace AnalysisManagerBase
         /// <param name="section">Section name</param>
         /// <param name="keyName">Parameter name</param>
         /// <param name="value">Parameter value</param>
-        /// <remarks></remarks>
         void SetParam(string section, string keyName, string value);
 
         #endregion

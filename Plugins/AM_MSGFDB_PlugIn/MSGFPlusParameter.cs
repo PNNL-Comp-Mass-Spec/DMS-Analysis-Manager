@@ -107,7 +107,6 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Get the Key=Value text for this parameter
         /// </summary>
-        /// <returns></returns>
         public string GetKeyValueParamNoComment()
         {
             if (string.IsNullOrWhiteSpace(ParameterName))
@@ -120,7 +119,6 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// Check whether this parameter has this synonym
         /// </summary>
         /// <param name="parameterName"></param>
-        /// <returns></returns>
         public bool HasSynonym(string parameterName)
         {
             return SynonymList.Contains(parameterName);
@@ -202,7 +200,6 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Return the text of the line from the parameter file (including the comment, if any)
         /// </summary>
-        /// <returns></returns>
         public override string ToString()
         {
             return ParameterName + ": " + Value;

@@ -141,7 +141,6 @@ namespace AnalysisManagerMSFraggerPlugIn
         /// <summary>
         /// Determine the number of threads to use for MSFragger
         /// </summary>
-        /// <returns></returns>
         private int GetNumThreadsToUse()
         {
             var coreCount = clsGlobal.GetCoreCount();
@@ -163,7 +162,6 @@ namespace AnalysisManagerMSFraggerPlugIn
         /// Parse the MSFragger console output file to determine the MSFragger version and to track the search progress
         /// </summary>
         /// <param name="consoleOutputFilePath"></param>
-        /// <remarks></remarks>
         private void ParseConsoleOutputFile(string consoleOutputFilePath)
         {
             const string MSFTBX = "MSFTBX";
@@ -563,7 +561,6 @@ namespace AnalysisManagerMSFraggerPlugIn
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        /// <remarks></remarks>
         private bool StoreToolVersionInfo()
         {
             if (mDebugLevel >= 2)
@@ -636,7 +633,6 @@ namespace AnalysisManagerMSFraggerPlugIn
         /// <summary>
         /// Event handler for CmdRunner.LoopWaiting event
         /// </summary>
-        /// <remarks></remarks>
         private void CmdRunner_LoopWaiting()
         {
             const int SECONDS_BETWEEN_UPDATE = 30;

@@ -19,7 +19,6 @@ namespace AnalysisManagerExtractionPlugin
     /// <summary>
     /// Calls the PeptideProphetRunner application
     /// </summary>
-    /// <remarks></remarks>
     public class clsPeptideProphetWrapper : EventNotifier
     {
         #region "Constants"

@@ -9,7 +9,6 @@ namespace AnalysisManagerBase
     /// <summary>
     /// Sends messages to ActiveMQ message broker using NMS client library
     /// </summary>
-    /// <remarks></remarks>
     internal class clsMessageSender
     {
         private readonly string topicName;
@@ -78,7 +77,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="retryCount"></param>
         /// <param name="timeoutSeconds"></param>
-        /// <remarks></remarks>
         private void CreateConnection(int retryCount = 2, int timeoutSeconds = 15)
         {
             if (hasConnection)

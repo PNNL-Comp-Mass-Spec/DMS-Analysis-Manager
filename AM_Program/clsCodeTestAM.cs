@@ -28,7 +28,6 @@ namespace AnalysisManagerProg
         /// <param name="statusTools">Object for updating status file as job progresses</param>
         /// <param name="summaryFile"></param>
         /// <param name="myEMSLUtilities"></param>
-        /// <remarks></remarks>
         public override void Setup(
             string stepToolName,
             IMgrParams mgrParams,
@@ -49,7 +48,6 @@ namespace AnalysisManagerProg
         /// Runs the analysis tool
         /// </summary>
         /// <returns>CloseOutType value indicating success or failure</returns>
-        /// <remarks></remarks>
         public override CloseOutType RunTool()
         {
             var eReturnCode = CloseOutType.CLOSEOUT_SUCCESS;

@@ -206,7 +206,6 @@ namespace AnalysisManagerBase
         /// <param name="sourceDBPath"></param>
         /// <param name="tableName"></param>
         /// <param name="targetDBPath"></param>
-        /// <returns></returns>
         public bool CopySqliteTable(string sourceDBPath, string tableName, string targetDBPath)
         {
             try

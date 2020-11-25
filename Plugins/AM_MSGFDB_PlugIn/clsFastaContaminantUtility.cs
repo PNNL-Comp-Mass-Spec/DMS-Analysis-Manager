@@ -12,7 +12,6 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Keys are protein names, values are key/value pairs where the key is description and the value is protein sequence
         /// </summary>
-        /// <remarks></remarks>
         private Dictionary<string, KeyValuePair<string, string>> mProteins;
 
         /// <summary>
@@ -32,7 +31,6 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <remarks></remarks>
         public clsFastaContaminantUtility()
         {
             InitializeProteinLists();

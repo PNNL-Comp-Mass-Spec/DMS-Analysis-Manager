@@ -24,7 +24,6 @@ namespace AnalysisManagerExtractionPlugin
     /// <summary>
     /// Primary class for controlling data extraction
     /// </summary>
-    /// <remarks></remarks>
     public class clsExtractToolRunner : clsAnalysisToolRunnerBase
     {
         // Ignore Spelling: modp, tda, MODa, tsv, moda, ascore, parm, xmx, nal, Txt, Utils, Prot, Phrp, msgfdb, mspath, toppic
@@ -320,7 +319,6 @@ namespace AnalysisManagerExtractionPlugin
         /// <param name="filteredMODaResultsFilePath">Output parameter: path to the filtered results file</param>
         /// <param name="keepAllResults"></param>
         /// <returns>The path to the .txt file if successful; empty string if an error</returns>
-        /// <remarks></remarks>
         private CloseOutType ConvertMODaResultsToTxt(out string filteredMODaResultsFilePath, bool keepAllResults)
         {
             var fdrThreshold = mJobParams.GetJobParameter("MODaFDRThreshold", 0.05f);
@@ -535,7 +533,6 @@ namespace AnalysisManagerExtractionPlugin
         /// </summary>
         /// <param name="suffixToAdd">Suffix to add when parsing files created by Parallel MS-GF+</param>
         /// <returns>The path to the .tsv file if successful; empty string if an error</returns>
-        /// <remarks></remarks>
         private string ConvertMZIDToTSV(string suffixToAdd)
         {
             try
@@ -629,7 +626,6 @@ namespace AnalysisManagerExtractionPlugin
         /// Create the Peptide to Protein map file for the given MS-GF+ results file
         /// </summary>
         /// <param name="resultsFileName"></param>
-        /// <returns></returns>
         private CloseOutType CreateMSGFPlusResultsProteinToPeptideMappingFile(string resultsFileName)
         {
             LogMessage("Creating the missing _PepToProtMap.txt file");
@@ -1054,7 +1050,6 @@ namespace AnalysisManagerExtractionPlugin
         /// Perform peptide hit extraction for SEQUEST data
         /// </summary>
         /// <returns>CloseOutType representing success or failure</returns>
-        /// <remarks></remarks>
         private CloseOutType PerformPeptideExtraction()
         {
             var pepExtractTool = new clsPeptideExtractWrapper(mMgrParams, mJobParams, ref mStatusTools);
@@ -1251,7 +1246,6 @@ namespace AnalysisManagerExtractionPlugin
         /// Runs PeptideHitsResultsProcessor on SEQUEST output
         /// </summary>
         /// <returns>CloseOutType representing success or failure</returns>
-        /// <remarks></remarks>
         private CloseOutType RunPhrpForSEQUEST()
         {
             CloseOutType result;
@@ -2406,7 +2400,6 @@ namespace AnalysisManagerExtractionPlugin
         /// Deletes each file in splitFileList
         /// </summary>
         /// <param name="splitFileList">Full paths to files to delete</param>
-        /// <remarks></remarks>
         private void DeleteTemporaryFiles(IReadOnlyCollection<string> splitFileList)
         {
             PRISM.ProgRunner.GarbageCollectNow();
@@ -2439,7 +2432,6 @@ namespace AnalysisManagerExtractionPlugin
         /// <param name="combinedFilePath">File to create</param>
         /// <param name="lookForHeaderLine">When true, looks for a header line by checking if the first column contains a number</param>
         /// <returns>True if success; false if failure</returns>
-        /// <remarks></remarks>
         private bool InterleaveFiles(IReadOnlyList<string> fileList, string combinedFilePath, bool lookForHeaderLine)
         {
             try
@@ -2550,7 +2542,6 @@ namespace AnalysisManagerExtractionPlugin
         /// <param name="lookForHeaderLine">When true, looks for a header line by checking if the first column contains a number</param>
         /// <param name="splitFileList">Output array listing the full paths to the split files that were created</param>
         /// <returns>True if success, false if failure</returns>
-        /// <remarks></remarks>
         private bool SplitFileRoundRobin(string sourceFilePath, long maxSizeBytes, bool lookForHeaderLine, out List<string> splitFileList)
         {
             bool success;
@@ -2664,7 +2655,6 @@ namespace AnalysisManagerExtractionPlugin
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        /// <remarks></remarks>
         private bool StoreToolVersionInfo()
         {
             var toolVersionInfo = string.Empty;
@@ -2908,7 +2898,6 @@ namespace AnalysisManagerExtractionPlugin
         /// <summary>
         /// Event handler for CmdRunner.LoopWaiting event for MzidMerger
         /// </summary>
-        /// <remarks></remarks>
         private void MzidMerger_LoopWaiting()
         {
             // Update the status by parsing the PHRP console output file every 20 seconds

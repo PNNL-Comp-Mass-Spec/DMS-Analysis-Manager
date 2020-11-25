@@ -244,7 +244,6 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Determine the status of a remotely running job
         /// </summary>
-        /// <returns></returns>
         public EnumRemoteJobStatus GetRemoteJobStatus()
         {
             try
@@ -449,7 +448,6 @@ namespace AnalysisManagerBase
         /// Read the .jobstatus file retrieved from the remote host
         /// </summary>
         /// <param name="jobStatusFilePath"></param>
-        /// <remarks></remarks>
         private EnumRemoteJobStatus ParseJobStatusFile(string jobStatusFilePath)
         {
             EnumRemoteJobStatus jobStatus;
@@ -608,7 +606,6 @@ namespace AnalysisManagerBase
         /// <param name="completionMessage">Completion message</param>
         /// <param name="remoteStart">Processing start time on the remote host (local time)</param>
         /// <param name="remoteFinish">Processing end time on the remote host (local time)</param>
-        /// <returns></returns>
         public bool ParseStatusResultFile(
             string statusResultFilePath,
             out CloseOutType eToolRunnerResult,

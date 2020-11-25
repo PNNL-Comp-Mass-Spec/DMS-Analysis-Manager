@@ -69,7 +69,6 @@ namespace AnalysisManagerBase
         /// <param name="statusTools">Object for status reporting</param>
         /// <param name="summaryFile">Object for creating an analysis job summary file</param>
         /// <param name="myEMSLUtilities">MyEMSL download Utilities</param>
-        /// <remarks></remarks>
         void Setup(
             string stepToolName,
             IMgrParams mgrParams,
@@ -83,7 +82,6 @@ namespace AnalysisManagerBase
         /// Major work is performed by overrides
         /// </summary>
         /// <returns>CloseoutType enum representing completion status</returns>
-        /// <remarks></remarks>
         CloseOutType RunTool();
 
         /// <summary>

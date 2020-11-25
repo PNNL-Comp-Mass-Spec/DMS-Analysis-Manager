@@ -66,19 +66,16 @@ namespace AnalysisManagerBase
             /// <summary>
             /// Set to True to obtain MS-GF+ .mzid.gz files
             /// </summary>
-            /// <remarks></remarks>
             public bool RetrieveMzidFiles;
 
             /// <summary>
             /// Set to True to obtain .pepXML files (typically stored as _pepXML.zip)
             /// </summary>
-            /// <remarks></remarks>
             public bool RetrievePepXMLFiles;
 
             /// <summary>
             /// Set to True to obtain the _syn.txt file and related PHRP files
             /// </summary>
-            /// <remarks></remarks>
             public bool RetrievePHRPFiles;
 
             /// <summary>
@@ -374,7 +371,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="job"></param>
         /// <param name="workDirPath"></param>
-        /// <returns></returns>
         public static string GetJobInfoFilePath(int job, string workDirPath)
         {
             return Path.Combine(workDirPath, JOB_INFO_FILE_PREFIX + job + ".txt");
@@ -385,7 +381,6 @@ namespace AnalysisManagerBase
         /// Returns an empty string if no recent unzipped files
         /// </summary>
         /// <param name="dotNetTools"></param>
-        /// <returns></returns>
         private string MostRecentUnzippedFile(clsDotNetZipTools dotNetTools)
         {
             if (dotNetTools.MostRecentUnzippedFiles.Count > 0)
@@ -403,7 +398,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="mzIdFileToInspect"></param>
         /// <param name="dotNetTools"></param>
-        /// <returns></returns>
         private bool MSGFPlusSearchUsedMzML(string mzIdFileToInspect, clsDotNetZipTools dotNetTools)
         {
             try
@@ -517,7 +511,6 @@ namespace AnalysisManagerBase
         /// <param name="dotNetTools"></param>
         /// <param name="workingDir"></param>
         /// <param name="dataPkgJob">Data package job</param>
-        /// <returns></returns>
         private bool ProcessOnePeptideHitJob(
             udtDataPackageRetrievalOptionsType retrievalOptions,
             IDictionary<int, udtDataPackageJobMetadata> cachedJobMetadata,
@@ -750,7 +743,6 @@ namespace AnalysisManagerBase
         /// <param name="filesToGet">Keys in this list are filenames; values are True if the file is required and False if not required</param>
         /// <param name="foundFiles"></param>
         /// <param name="pendingFileRenames"></param>
-        /// <returns></returns>
         private bool ProcessPeptideHitJobFiles(
             udtDataPackageRetrievalOptionsType retrievalOptions,
             string localDirectoryPath,
@@ -1072,7 +1064,6 @@ namespace AnalysisManagerBase
         /// <param name="progressPercentAtStart">Percent complete value to use for computing incremental progress</param>
         /// <param name="progressPercentAtFinish">Percent complete value to use for computing incremental progress</param>
         /// <returns>True if success, false if an error</returns>
-        /// <remarks></remarks>
         public bool RetrieveDataPackagePeptideHitJobPHRPFiles(
             udtDataPackageRetrievalOptionsType retrievalOptions,
             out List<clsDataPackageJobInfo> dataPackagePeptideHitJobs,
@@ -1320,8 +1311,6 @@ namespace AnalysisManagerBase
         /// <param name="rawFileRetrievalCommands">Commands to copy .raw files to the local computer (to be placed in batch file RetrieveInstrumentData.bat)</param>
         /// <param name="instrumentDataToRetrieve">Instrument files that need to be copied locally so that an mzXML file can be made</param>
         /// <param name="datasetRawFilePaths">Mapping of dataset name to the remote location of the .raw file</param>
-        /// <returns></returns>
-        /// <remarks></remarks>
         private bool RetrieveDataPackageInstrumentFile(
             clsDataPackageJobInfo dataPkgJob,
             udtDataPackageRetrievalOptionsType retrievalOptions,
@@ -1669,7 +1658,6 @@ namespace AnalysisManagerBase
         /// <param name="zipFileCandidates">Candidate .mzid.zip files</param>
         /// <param name="gzipFileCandidates">Candidate .mzid.gz files</param>
         /// <param name="zippedPepXmlFile"></param>
-        /// <returns></returns>
         private bool UnzipFiles(
             clsDotNetZipTools dotNetTools,
             string workingDir,

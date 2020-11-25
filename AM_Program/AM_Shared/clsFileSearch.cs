@@ -110,7 +110,6 @@ namespace AnalysisManagerBase
         /// and each file's first line will be the full path to the source file
         /// </param>
         /// <returns>TRUE for success; FALSE for failure</returns>
-        /// <remarks></remarks>
         private bool CopySFoldersToWorkDir(bool createStoragePathInfoOnly)
         {
             var datasetDirectoryPath = mDirectorySearch.FindValidDirectory(DatasetName, "s*.zip",
@@ -173,7 +172,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="filesToDelete">Queue of files to delete (full file paths)</param>
         /// <param name="fileToQueueForDeletion">Optional: new file to add to the queue; blank to do nothing</param>
-        /// <remarks></remarks>
         protected void DeleteQueuedFiles(Queue<string> filesToDelete, string fileToQueueForDeletion)
         {
             if (filesToDelete.Count > 0)
@@ -243,7 +241,6 @@ namespace AnalysisManagerBase
         /// <param name="searchArchivedDatasetDir">TRUE if the EMSL archive (Aurora) should also be searched</param>
         /// <param name="logFileNotFound">True if an error should be logged when a file is not found</param>
         /// <returns>TRUE for success; FALSE for failure</returns>
-        /// <remarks></remarks>
         public bool FindAndRetrieveMiscFiles(string fileName, bool unzip, bool searchArchivedDatasetDir, bool logFileNotFound)
         {
             return FindAndRetrieveMiscFiles(fileName, unzip, searchArchivedDatasetDir, out _, logFileNotFound);
@@ -272,7 +269,6 @@ namespace AnalysisManagerBase
         /// <param name="sourceDirPath">Output parameter: the directory from which the file was copied</param>
         /// <param name="logFileNotFound">True if an error should be logged when a file is not found</param>
         /// <returns>TRUE for success; FALSE for failure</returns>
-        /// <remarks></remarks>
         private bool FindAndRetrieveMiscFiles(
             string fileName, bool unzip, bool searchArchivedDatasetDir,
             out string sourceDirPath, bool logFileNotFound)
@@ -372,7 +368,6 @@ namespace AnalysisManagerBase
         /// Finds the _DTA.txt file for this dataset
         /// </summary>
         /// <returns>The path to the _dta.zip file (or _dta.txt file)</returns>
-        /// <remarks></remarks>
         public string FindCDTAFile(out string errorMessage)
         {
             errorMessage = string.Empty;
@@ -591,7 +586,6 @@ namespace AnalysisManagerBase
         /// <param name="directoryPath">Folder path to examine</param>
         /// <param name="fileName">File name to find</param>
         /// <returns>Full path to the file, if found; empty string if no match</returns>
-        /// <remarks></remarks>
         public static string FindFileInDirectoryTree(string directoryPath, string fileName)
         {
             return FindFileInDirectoryTree(directoryPath, fileName, new SortedSet<string>());
@@ -861,7 +855,6 @@ namespace AnalysisManagerBase
         /// <param name="X"></param>
         /// <param name="Y"></param>
         /// <returns>True if success, false otherwise</returns>
-        /// <remarks></remarks>
         private bool GetBrukerImagingFileCoords(string coordinate, Regex rxyMatcher, Regex rxMatcher, out int R, out int X, out int Y)
         {
             // Try to match names like R00X438Y093
@@ -909,8 +902,6 @@ namespace AnalysisManagerBase
         /// <param name="jobParams"></param>
         /// <param name="startSectionX"></param>
         /// <param name="endSectionX"></param>
-        /// <returns></returns>
-        /// <remarks></remarks>
         private bool GetBrukerImagingSectionFilter(IJobParams jobParams, out int startSectionX, out int endSectionX)
         {
             var applySectionFilter = false;
@@ -1326,7 +1317,6 @@ namespace AnalysisManagerBase
         /// Retrieves file PNNLOmicsElementData.xml from the program directory of the program specified by progLocName
         /// </summary>
         /// <param name="progLocName"></param>
-        /// <returns></returns>
         /// <remarks>progLocName is typically DeconToolsProgLoc, LipidToolsProgLoc, or TargetedWorkflowsProgLoc</remarks>
         public bool RetrievePNNLOmicsResourceFiles(string progLocName)
         {
@@ -1367,7 +1357,6 @@ namespace AnalysisManagerBase
         /// <param name="createStoragePathInfoOnly">If true, create a storage path info file</param>
         /// <param name="maxAttempts">Maximum number of attempts</param>
         /// <returns>TRUE for success; FALSE for failure</returns>
-        /// <remarks></remarks>
         private bool RetrieveDatasetFile(string fileExtension, bool createStoragePathInfoOnly, int maxAttempts)
         {
             var datasetFilePath = mDirectorySearch.FindDatasetFile(maxAttempts, fileExtension);
@@ -1555,7 +1544,6 @@ namespace AnalysisManagerBase
         /// <param name="createStoragePathInfoOnly"></param>
         /// <param name="maxAttempts"></param>
         /// <returns>TRUE for success; FALSE for failure</returns>
-        /// <remarks></remarks>
         private bool RetrieveMgfFile(bool getCdfAlso, bool createStoragePathInfoOnly, int maxAttempts)
         {
             var mgfFilePath = mDirectorySearch.FindMGFFile(maxAttempts, assumeUnpurged: false);
@@ -1638,7 +1626,6 @@ namespace AnalysisManagerBase
         /// <param name="sourceFilePath">Full path to the file that should be retrieved</param>
         /// <param name="hashCheckFilePath"></param>
         /// <returns>True if success, false if not retrieved or a hash error</returns>
-        /// <remarks></remarks>
         public bool RetrieveMZXmlFileUsingSourceFile(bool createStoragePathInfoOnly, string sourceFilePath, string hashCheckFilePath)
         {
             if (sourceFilePath.StartsWith(MYEMSL_PATH_FLAG))
@@ -1751,7 +1738,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="unConcatenate">TRUE to split concatenated file; FALSE to leave the file concatenated</param>
         /// <returns>TRUE for success, FALSE for error</returns>
-        /// <remarks></remarks>
         public bool RetrieveOutFiles(bool unConcatenate)
         {
             // Retrieve zipped OUT file
@@ -1815,7 +1801,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="createStoragePathInfoOnly">If true, creates a storage path info file but doesn't actually copy the files</param>
         /// <returns>True if the file was found and retrieved, otherwise False</returns>
-        /// <remarks></remarks>
         public bool RetrieveScanStatsFiles(bool createStoragePathInfoOnly)
         {
             return RetrieveScanAndSICStatsFiles(
@@ -1833,7 +1818,6 @@ namespace AnalysisManagerBase
         /// <param name="retrieveScanStatsFile">If True, retrieves the ScanStats.txt file</param>
         /// <param name="retrieveScanStatsExFile">If True, retrieves the ScanStatsEx.txt file</param>
         /// <returns>True if the file was found and retrieved, otherwise False</returns>
-        /// <remarks></remarks>
         public bool RetrieveScanStatsFiles(bool createStoragePathInfoOnly, bool retrieveScanStatsFile, bool retrieveScanStatsExFile)
         {
             const bool retrieveSICStatsFile = false;
@@ -1853,7 +1837,6 @@ namespace AnalysisManagerBase
         /// <param name="retrieveScanStatsFile">If True, retrieves the ScanStats.txt file</param>
         /// <param name="retrieveScanStatsExFile">If True, retrieves the ScanStatsEx.txt file</param>
         /// <returns>True if the file was found and retrieved, otherwise False</returns>
-        /// <remarks></remarks>
         public bool RetrieveScanAndSICStatsFiles(
             bool retrieveSICStatsFile,
             bool createStoragePathInfoOnly,
@@ -1883,7 +1866,6 @@ namespace AnalysisManagerBase
         /// <param name="retrieveReporterIonsFile">If True, retrieves the ReporterIons.txt file</param>
         /// <param name="nonCriticalFileSuffixes">Filename suffixes that can be missing.  For example, "ScanStatsEx.txt"</param>
         /// <returns>True if the file was found and retrieved, otherwise False</returns>
-        /// <remarks></remarks>
         public bool RetrieveScanAndSICStatsFiles(
             bool retrieveSICStatsFile,
             bool createStoragePathInfoOnly,
@@ -2255,7 +2237,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="rawDataType">Type of data to copy</param>
         /// <returns>TRUE for success; FALSE for failure</returns>
-        /// <remarks></remarks>
         public bool RetrieveSpectra(string rawDataType)
         {
             const bool createStoragePathInfoOnly = false;
@@ -2271,7 +2252,6 @@ namespace AnalysisManagerBase
         /// and this file's first line will be the full path to the spectrum file (or spectrum directory)
         /// </param>
         /// <returns>TRUE for success; FALSE for failure</returns>
-        /// <remarks></remarks>
         public bool RetrieveSpectra(string rawDataType, bool createStoragePathInfoOnly)
         {
             return RetrieveSpectra(rawDataType, createStoragePathInfoOnly, clsDirectorySearch.DEFAULT_MAX_RETRY_COUNT);
@@ -2287,7 +2267,6 @@ namespace AnalysisManagerBase
         /// </param>
         /// <param name="maxAttempts">Maximum number of attempts</param>
         /// <returns>TRUE for success; FALSE for failure</returns>
-        /// <remarks></remarks>
         public bool RetrieveSpectra(string rawDataType, bool createStoragePathInfoOnly, int maxAttempts)
         {
             var success = false;
@@ -2396,7 +2375,6 @@ namespace AnalysisManagerBase
         /// Retrieves an Agilent or Bruker .D directory for the analysis job in progress
         /// </summary>
         /// <returns>TRUE for success; FALSE for failure</returns>
-        /// <remarks></remarks>
         public bool RetrieveDotDFolder(bool createStoragePathInfoOnly, bool skipBafAndTdfFiles)
         {
             var fileNamesToSkip = new List<string>();
@@ -2414,7 +2392,6 @@ namespace AnalysisManagerBase
         /// Retrieves a Micromass .raw directory for the analysis job in progress
         /// </summary>
         /// <returns>TRUE for success; FALSE for failure</returns>
-        /// <remarks></remarks>
         private bool RetrieveDotRawFolder(bool createStoragePathInfoOnly)
         {
             return RetrieveDotXFolder(clsAnalysisResources.DOT_RAW_EXTENSION, createStoragePathInfoOnly, new List<string>());
@@ -2427,7 +2404,6 @@ namespace AnalysisManagerBase
         /// <param name="createStoragePathInfoOnly"></param>
         /// <param name="fileNamesToSkip"></param>
         /// <returns>TRUE for success; FALSE for failure</returns>
-        /// <remarks></remarks>
         private bool RetrieveDotXFolder(
             string directoryExtension,
             bool createStoragePathInfoOnly,
@@ -2497,8 +2473,6 @@ namespace AnalysisManagerBase
         /// This data is unzipped into a subdirectory in the Chameleon cached data directory
         /// </summary>
         /// <param name="unzipOverNetwork"></param>
-        /// <returns></returns>
-        /// <remarks></remarks>
         public bool RetrieveBrukerMALDIImagingFolders(bool unzipOverNetwork)
         {
             const string ZIPPED_BRUKER_IMAGING_SECTIONS_FILE_MASK = "*R*X*.zip";
@@ -2799,7 +2773,6 @@ namespace AnalysisManagerBase
         /// Unzips dataset directories to the working directory
         /// </summary>
         /// <returns>TRUE for success; FALSE for failure</returns>
-        /// <remarks></remarks>
         private bool RetrieveSFolders(bool createStoragePathInfoOnly, int maxAttempts)
         {
             try
@@ -2954,8 +2927,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="fileName"></param>
         /// <param name="nonCriticalFileSuffixes"></param>
-        /// <returns></returns>
-        /// <remarks></remarks>
         private bool SafeToIgnore(string fileName, IReadOnlyCollection<string> nonCriticalFileSuffixes)
         {
             if (nonCriticalFileSuffixes != null)
@@ -2981,7 +2952,6 @@ namespace AnalysisManagerBase
         /// <param name="callingFunctionName">Calling function name (used for debugging purposes)</param>
         /// <param name="forceExternalZipProgramUse">If True, force use of PKZipC.exe</param>
         /// <returns>True if success, otherwise false</returns>
-        /// <remarks></remarks>
         public bool UnzipFileStart(string zipFilePath, string outputDirectoryPath, string callingFunctionName, bool forceExternalZipProgramUse)
         {
             var unzipToolName = "??";

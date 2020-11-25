@@ -75,7 +75,6 @@ namespace AnalysisManagerBase
         /// <param name="managerName"></param>
         /// <param name="traceMode"></param>
         /// <param name="fileCopyUtils"></param>
-        /// <remarks></remarks>
         public clsSplitFastaFileUtilities(
             string dmsConnectionString,
             string proteinSeqsDBConnectionString,
@@ -104,7 +103,6 @@ namespace AnalysisManagerBase
         /// <param name="baseFastaFile"></param>
         /// <param name="lockFilePath">Output parameter: path to the newly created lock file</param>
         /// <returns>Lock file handle</returns>
-        /// <remarks></remarks>
         private StreamWriter CreateLockStream(FileSystemInfo baseFastaFile, out string lockFilePath)
         {
             var startTime = DateTime.UtcNow;
@@ -237,7 +235,6 @@ namespace AnalysisManagerBase
         /// <param name="legacyFASTAFileName"></param>
         /// <param name="organismName">Output parameter: the organism name for this fasta file</param>
         /// <returns>The path to the file if found; empty string if no match</returns>
-        /// <remarks></remarks>
         private string GetLegacyFastaFilePath(string legacyFASTAFileName, out string organismName)
         {
             const short retryCount = 3;

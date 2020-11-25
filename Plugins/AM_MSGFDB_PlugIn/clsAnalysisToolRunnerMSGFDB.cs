@@ -242,7 +242,6 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <param name="fiMSGFPlusResults"></param>
         /// <param name="processingError"></param>
         /// <param name="tooManySkippedSpectra"></param>
-        /// <returns></returns>
         private CloseOutType RunMSGFPlus(
             string javaProgLoc,
             out FileInfo fiMSGFPlusResults,
@@ -740,7 +739,6 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// </summary>
         /// <param name="mzidFileName"></param>
         /// <returns>The name of the .tsv file if successful; empty string if an error</returns>
-        /// <remarks></remarks>
         private string ConvertMZIDToTSV(string mzidFileName)
         {
             // Determine the path to the MzidToTsvConverter
@@ -861,7 +859,6 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// Output: assumed scan type (only applicable for CDTA files)
         /// Comes from job param AssumedScanType, which is typically not defined, meaning a _ScanType.txt file needs to be created</param>
         /// <param name="scanTypeFilePath">Output: scan type file path (if one is created)</param>
-        /// <returns></returns>
         private CloseOutType DetermineInputFileFormat(
             bool validateCdtaAndCreateScanTypeFile,
             out InputFileFormatTypes eInputFileFormat,
@@ -926,7 +923,6 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <param name="fileNamePrefix">Prefix text (may be an empty string)</param>
         /// <param name="fileName"></param>
         /// <param name="fileNameSuffix">Suffix text (may be an empty string)</param>
-        /// <returns></returns>
         private string GenerateResultFileName(string fileNamePrefix, string fileName, string fileNameSuffix)
         {
             return fileNamePrefix + Path.GetFileNameWithoutExtension(fileName) +
@@ -999,7 +995,6 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// </summary>
         /// <param name="resultsFileName"></param>
         /// <returns>The path to the new file if success, otherwise the original filename</returns>
-        /// <remarks></remarks>
         private string ParallelMSGFPlusRenameFile(string resultsFileName)
         {
             var filePathNew = "??";
@@ -1036,7 +1031,6 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Parse the MSGFPlus console output file to determine the MSGFPlus version and to track the search progress
         /// </summary>
-        /// <remarks></remarks>
         private void ParseConsoleOutputFile(string workingDirectory)
         {
             try
@@ -1315,7 +1309,6 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        /// <remarks></remarks>
         private bool StoreToolVersionInfo()
         {
             LogMessage("Determining tool version info", 2);
@@ -1347,7 +1340,6 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Event handler for CmdRunner.LoopWaiting event
         /// </summary>
-        /// <remarks></remarks>
         private void CmdRunner_LoopWaiting()
         {
             MonitorProgress();

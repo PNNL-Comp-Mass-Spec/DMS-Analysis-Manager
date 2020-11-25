@@ -48,19 +48,16 @@ namespace AnalysisManagerBase
             /// <summary>
             /// Overall CPU utilization of all threads
             /// </summary>
-            /// <remarks></remarks>
             public float CPUUtilization;
 
             /// <summary>
             /// System-wide free memory
             /// </summary>
-            /// <remarks></remarks>
             public float FreeMemoryMB;
 
             /// <summary>
             /// Return the ProcessID of the Analysis manager
             /// </summary>
-            /// <remarks></remarks>
             public int ProcessID;
 
             /// <summary>
@@ -72,7 +69,6 @@ namespace AnalysisManagerBase
             /// <summary>
             /// Number of cores in use by an externally spawned process
             /// </summary>
-            /// <remarks></remarks>
             public float ProgRunnerCoreUsage;
 
             /// <summary>
@@ -218,7 +214,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="dbConnectionString">Database connection string</param>
         /// <param name="dbStatusUpdateIntervalMinutes">Minimum interval between updating the manager status in the database</param>
-        /// <remarks></remarks>
         public clsDBStatusLogger(string dbConnectionString, float dbStatusUpdateIntervalMinutes)
         {
             if (dbConnectionString == null)

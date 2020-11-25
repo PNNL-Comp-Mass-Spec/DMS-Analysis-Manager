@@ -18,7 +18,6 @@ namespace AnalysisManagerExtractionPlugin
     /// <summary>
     /// Perform Peptide extraction from SEQUEST results
     /// </summary>
-    /// <remarks></remarks>
     public class clsPeptideExtractWrapper : EventNotifier
     {
         #region "Event Handlers"
@@ -108,7 +107,6 @@ namespace AnalysisManagerExtractionPlugin
         /// <param name="mgrParams">IMgrParams object containing manager settings</param>
         /// <param name="jobParams">IJobParams object containing job parameters</param>
         /// <param name="StatusTools"></param>
-        /// <remarks></remarks>
         public clsPeptideExtractWrapper(IMgrParams mgrParams, IJobParams jobParams, ref IStatusFile StatusTools)
         {
             mDebugLevel = (short)mgrParams.GetParam("DebugLevel", 1);
@@ -122,7 +120,6 @@ namespace AnalysisManagerExtractionPlugin
         /// Performs peptide extraction by calling extractor DLL
         /// </summary>
         /// <returns>CloseOutType indicating success or failure</returns>
-        /// <remarks></remarks>
         public CloseOutType PerformExtraction()
         {
             var startParams = new clsPeptideFileExtractor.StartupArguments(mWorkDir, mDatasetName)

@@ -120,13 +120,11 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Starts the spectra file creation process
         /// </summary>
-        /// <returns></returns>
         ProcessStatus Start();
 
         /// <summary>
         /// Aborts spectra file creation
         /// </summary>
-        /// <returns></returns>
         ProcessStatus Abort();
 
         #endregion

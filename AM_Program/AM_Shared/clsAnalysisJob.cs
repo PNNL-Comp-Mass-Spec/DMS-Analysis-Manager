@@ -24,7 +24,6 @@ namespace AnalysisManagerBase
     /// <summary>
     /// Provides DB access and tools for one analysis job
     /// </summary>
-    /// <remarks></remarks>
     public class clsAnalysisJob : clsDBTask, IJobParams
     {
         // Ignore Spelling: dir, dirs, ok
@@ -119,40 +118,26 @@ namespace AnalysisManagerBase
         /// <summary>
         /// List of dataset names and dataset IDs associated with this aggregation job
         /// </summary>
-        /// <value></value>
-        /// <returns></returns>
-        /// <remarks></remarks>
         public Dictionary<string, int> DatasetInfoList => mDatasetInfoList;
 
         /// <summary>
         /// List of file names that WILL be moved to the results directory, even if they are in ResultFilesToSkip or ResultFileExtensionsToSkip
         /// </summary>
-        /// <value></value>
-        /// <returns></returns>
-        /// <remarks></remarks>
         public SortedSet<string> ResultFilesToKeep => mResultFilesToKeep;
 
         /// <summary>
         /// List of file names to NOT move to the results directory
         /// </summary>
-        /// <value></value>
-        /// <returns></returns>
-        /// <remarks></remarks>
         public SortedSet<string> ResultFilesToSkip => mResultFilesToSkip;
 
         /// <summary>
         /// List of file extensions to NOT move to the results directory; comparison checks if the end of the fileName matches any entry in ResultFileExtensionsToSkip
         /// </summary>
-        /// <value></value>
-        /// <returns></returns>
-        /// <remarks></remarks>
         public SortedSet<string> ResultFileExtensionsToSkip => mResultFileExtensionsToSkip;
 
         /// <summary>
         /// List of file paths to remove from the storage server (full file paths)
         /// </summary>
-        /// <value></value>
-        /// <returns></returns>
         /// <remarks>Used by clsAnalysisToolRunnerBase.RemoveNonResultServerFiles</remarks>
         public SortedSet<string> ServerFilesToDelete => mServerFilesToDelete;
 
@@ -175,7 +160,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="mgrParams">IMgrParams object containing manager parameters</param>
         /// <param name="debugLvl">Debug level</param>
-        /// <remarks></remarks>
         public clsAnalysisJob(IMgrParams mgrParams, short debugLvl) : base(mgrParams, debugLvl)
         {
             mJobParams = new Dictionary<string, Dictionary<string, string>>(StringComparer.OrdinalIgnoreCase);
@@ -189,7 +173,6 @@ namespace AnalysisManagerBase
         /// <param name="paramName">Name of parameter</param>
         /// <param name="paramValue">Boolean value for parameter</param>
         /// <returns>True if success, False if an error</returns>
-        /// <remarks></remarks>
         public bool AddAdditionalParameter(string sectionName, string paramName, bool paramValue)
         {
             try
@@ -211,7 +194,6 @@ namespace AnalysisManagerBase
         /// <param name="paramName">Name of parameter</param>
         /// <param name="paramValue">Integer value for parameter</param>
         /// <returns>True if success, False if an error</returns>
-        /// <remarks></remarks>
         public bool AddAdditionalParameter(string sectionName, string paramName, int paramValue)
         {
             try
@@ -233,7 +215,6 @@ namespace AnalysisManagerBase
         /// <param name="paramName">Name of parameter</param>
         /// <param name="paramValue">Value for parameter</param>
         /// <returns>True if success, False if an error</returns>
-        /// <remarks></remarks>
         public bool AddAdditionalParameter(string sectionName, string paramName, string paramValue)
         {
             try
@@ -256,7 +237,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="datasetName"></param>
         /// <param name="datasetID"></param>
-        /// <remarks></remarks>
         public void AddDatasetInfo(string datasetName, int datasetID)
         {
             if (string.IsNullOrWhiteSpace(datasetName))
@@ -287,7 +267,6 @@ namespace AnalysisManagerBase
         /// Add a fileName to definitely move to the results directory
         /// </summary>
         /// <param name="fileName"></param>
-        /// <remarks></remarks>
         public void AddResultFileToKeep(string fileName)
         {
             if (string.IsNullOrWhiteSpace(fileName))
@@ -304,7 +283,6 @@ namespace AnalysisManagerBase
         /// Add a fileName to not move to the results directory
         /// </summary>
         /// <param name="fileName"></param>
-        /// <remarks></remarks>
         public void AddResultFileToSkip(string fileName)
         {
             if (string.IsNullOrWhiteSpace(fileName))
@@ -321,7 +299,6 @@ namespace AnalysisManagerBase
         /// Add a file to be deleted from the storage server (requires full file path)
         /// </summary>
         /// <param name="filePath">Full path to the file</param>
-        /// <remarks></remarks>
         public void AddServerFileToDelete(string filePath)
         {
             if (string.IsNullOrWhiteSpace(filePath))
@@ -445,7 +422,6 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Get job parameter section names
         /// </summary>
-        /// <returns></returns>
         public List<string> GetAllSectionNames()
         {
             return mJobParams.Keys.ToList();
@@ -643,7 +619,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="name">Key name for parameter</param>
         /// <returns>Value for specified parameter; empty string if not found</returns>
-        /// <remarks></remarks>
         public string GetParam(string name)
         {
             if (TryGetParam(name, out var value))
@@ -659,7 +634,6 @@ namespace AnalysisManagerBase
         /// <param name="section">Section name for parameter</param>
         /// <param name="name">Key name for parameter</param>
         /// <returns>Value for specified parameter; empty string if not found</returns>
-        /// <remarks></remarks>
         public string GetParam(string section, string name)
         {
             if (string.IsNullOrEmpty(name))
@@ -679,7 +653,6 @@ namespace AnalysisManagerBase
         /// Job parameters file
         /// </summary>
         /// <param name="jobNum"></param>
-        /// <returns></returns>
         public static string JobParametersFilename(int jobNum)
         {
             return clsGlobal.JOB_PARAMETERS_FILE_PREFIX + jobNum + ".xml";
@@ -699,7 +672,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="paramName">Parameter name</param>
         /// <param name="paramValue">Parameter value</param>
-        /// <remarks></remarks>
         public void SetParam(string paramName, string paramValue)
         {
             var matchFound = false;
@@ -729,7 +701,6 @@ namespace AnalysisManagerBase
         /// <param name="section">Section name</param>
         /// <param name="paramName">Parameter name</param>
         /// <param name="paramValue">Parameter value</param>
-        /// <remarks></remarks>
         public void SetParam(string section, string paramName, string paramValue)
         {
             if (!mJobParams.TryGetValue(section, out var parameters))
@@ -750,7 +721,6 @@ namespace AnalysisManagerBase
         /// Return true if toolRunnerResult is CLOSEOUT_SUCCESS or CLOSEOUT_NO_DATA
         /// </summary>
         /// <param name="toolRunnerResult"></param>
-        /// <returns></returns>
         public static bool SuccessOrNoData(CloseOutType toolRunnerResult)
         {
             return toolRunnerResult == CloseOutType.CLOSEOUT_SUCCESS || toolRunnerResult == CloseOutType.CLOSEOUT_NO_DATA;
@@ -762,7 +732,6 @@ namespace AnalysisManagerBase
         /// <param name="paramName">Parameter Name</param>
         /// <param name="paramValue">Output: parameter value</param>
         /// <returns>True if success, False if not found</returns>
-        /// <remarks></remarks>
         public bool TryGetParam(string paramName, out string paramValue)
         {
             paramValue = string.Empty;
@@ -789,7 +758,6 @@ namespace AnalysisManagerBase
         /// <param name="paramName">Parameter Name</param>
         /// <param name="paramValue">Output: parameter value</param>
         /// <returns>True if success, False if not found</returns>
-        /// <remarks></remarks>
         public bool TryGetParam(string section, string paramName, out string paramValue)
         {
             return TryGetParam(section, paramName, out paramValue, true);
@@ -803,7 +771,6 @@ namespace AnalysisManagerBase
         /// <param name="paramValue">Output: parameter value</param>
         /// <param name="searchAllSectionsIfNotFound">If True, searches other sections for the parameter if not found in the specified section</param>
         /// <returns>True if success, False if not found</returns>
-        /// <remarks></remarks>
         public bool TryGetParam(string section, string paramName, out string paramValue, bool searchAllSectionsIfNotFound)
         {
             paramValue = string.Empty;
@@ -833,7 +800,6 @@ namespace AnalysisManagerBase
         /// Remove a fileName that was previously added to ResultFilesToSkip
         /// </summary>
         /// <param name="fileName"></param>
-        /// <remarks></remarks>
         public void RemoveResultFileToSkip(string fileName)
         {
             if (mResultFilesToSkip.Contains(fileName))
@@ -1250,7 +1216,6 @@ namespace AnalysisManagerBase
         /// Requests a task from the database
         /// </summary>
         /// <returns>Enum indicating if task was found</returns>
-        /// <remarks></remarks>
         public RequestTaskResult RequestTask()
         {
             RequestTaskResult result;
@@ -1521,7 +1486,6 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Reset the class-wide variables to their defaults
         /// </summary>
-        /// <remarks></remarks>
         public void Reset()
         {
             TaskClosed = false;
@@ -2056,7 +2020,6 @@ namespace AnalysisManagerBase
         /// Example tool names are "Sequest, Step 3" or "DTA_Gen (Sequest), Step 1" or "DataExtractor (XTandem), Step 4"
         /// </summary>
         /// <returns>Tool name and step number</returns>
-        /// <remarks></remarks>
         public string GetCurrentJobToolDescription()
         {
             // The ToolName job parameter holds the name of the job script we are executing

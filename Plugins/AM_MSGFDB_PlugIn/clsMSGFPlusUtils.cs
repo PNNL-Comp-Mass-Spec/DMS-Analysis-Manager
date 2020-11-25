@@ -551,7 +551,6 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <param name="paramFileLine">MS-GF+ parameter file line tracking instrument ID; its value may get updated by this method</param>
         /// <param name="instrumentIDNew"></param>
         /// <param name="autoSwitchReason"></param>
-        /// <remarks></remarks>
         private void AutoUpdateInstrumentIDIfChanged(MSGFPlusKeyValueParamFileLine paramFileLine, string instrumentIDNew, string autoSwitchReason)
         {
             if (string.IsNullOrEmpty(instrumentIDNew) || string.Equals(instrumentIDNew, paramFileLine.ParamInfo.Value))
@@ -703,7 +702,6 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <param name="datasetName">Dataset name (output file will be named DatasetName_msgfdb.tsv)</param>
         /// <param name="mzidFileName">.mzid file name (assumed to be in the work directory)</param>
         /// <returns>TSV file path, or an empty string if an error</returns>
-        /// <remarks></remarks>
         [Obsolete("Use the version of ConvertMzidToTsv that simply accepts a dataset name and .mzid file path and uses MzidToTsvConverter.exe")]
         public string ConvertMZIDToTSV(string javaProgLoc, string msgfDbProgLoc, string datasetName, string mzidFileName)
         {
@@ -818,7 +816,6 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <param name="tsvFileName"></param>
         /// <param name="workingDirectory"></param>
         /// <param name="mzidToTsvConverterProgLoc"></param>
-        /// <returns></returns>
         public static string GetMZIDtoTSVCommandLine(string mzidFileName, string tsvFileName, string workingDirectory, string mzidToTsvConverterProgLoc)
         {
             var arguments =
@@ -838,7 +835,6 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <param name="workingDirectory"></param>
         /// <param name="msgfDbProgLoc"></param>
         /// <param name="javaMemorySizeMB"></param>
-        /// <returns></returns>
         [Obsolete("Use GetMZIDtoTSVCommandLine for MzidToTsvConverter.exe")]
         public static string GetMZIDtoTSVCommandLine(string mzidFileName, string tsvFileName, string workingDirectory, string msgfDbProgLoc, int javaMemorySizeMB)
         {
@@ -973,7 +969,6 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <param name="resultsFileName"></param>
         /// <param name="resultsIncludeAutoAddedDecoyPeptides"></param>
         /// <param name="localOrgDbFolder"></param>
-        /// <returns></returns>
         public CloseOutType CreatePeptideToProteinMapping(string resultsFileName, bool resultsIncludeAutoAddedDecoyPeptides, string localOrgDbFolder)
         {
             return CreatePeptideToProteinMapping(resultsFileName, resultsIncludeAutoAddedDecoyPeptides, localOrgDbFolder,
@@ -987,7 +982,6 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <param name="resultsIncludeAutoAddedDecoyPeptides"></param>
         /// <param name="localOrgDbFolder"></param>
         /// <param name="peptideInputFileFormat"></param>
-        /// <returns></returns>
         public CloseOutType CreatePeptideToProteinMapping(
             string resultsFileName,
             bool resultsIncludeAutoAddedDecoyPeptides,
@@ -1209,7 +1203,6 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <param name="fastaFilePath">Fasta file to trim</param>
         /// <param name="maxFastaFileSizeMB">Maximum file size</param>
         /// <returns>Full path to the trimmed fasta; empty string if a problem</returns>
-        /// <remarks></remarks>
         private string CreateTrimmedFasta(string fastaFilePath, int maxFastaFileSizeMB)
         {
             try
@@ -1323,7 +1316,6 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <param name="inputFilePath">Fasta file to process</param>
         /// <param name="outputDirectoryPath">Output folder to create decoy file in</param>
         /// <returns>Full path to the decoy fasta file</returns>
-        /// <remarks></remarks>
         private string GenerateDecoyFastaFile(string inputFilePath, string outputDirectoryPath)
         {
             const char PROTEIN_LINE_START_CHAR = '>';
@@ -1499,7 +1491,6 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <param name="msgfPlusParameters"></param>
         /// <param name="paramInfo"></param>
         /// <param name="replacementParameterName"></param>
-        /// <returns></returns>
         private MSGFPlusParameter GetReplacementParameter(
             IEnumerable<MSGFPlusParameter> msgfPlusParameters,
             MSGFPlusParameter paramInfo,
@@ -1556,7 +1547,6 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <param name="fastaFileIsDecoy">Output: True if the FASTA file is a decoy FASTA</param>
         /// <param name="fastaFilePath">Output: FASTA file path</param>
         /// <param name="msgfPlusParameterFilePath">MS-GF+ parameter file path</param>
-        /// <returns></returns>
         public CloseOutType InitializeFastaFile(string javaProgLoc, string msgfPlusProgLoc, out float fastaFileSizeKB, out bool fastaFileIsDecoy,
             out string fastaFilePath, string msgfPlusParameterFilePath)
         {
@@ -1574,7 +1564,6 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <param name="fastaFilePath">Output: FASTA file path</param>
         /// <param name="msgfPlusParameterFilePath">MS-GF+ parameter file path</param>
         /// <param name="maxFastaFileSizeMB">Maximum FASTA file size (in MB); MzRefinery sets this to 50 MB to give faster search times</param>
-        /// <returns></returns>
         public CloseOutType InitializeFastaFile(
             string javaProgLoc, string msgfPlusProgLoc, out float fastaFileSizeKB, out bool fastaFileIsDecoy,
             out string fastaFilePath, string msgfPlusParameterFilePath, int maxFastaFileSizeMB)
@@ -1763,8 +1752,6 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <param name="highResMSn">High Res MSn spectra (but not HCD)</param>
         /// <param name="hcdMSn">HCD Spectra</param>
         /// <param name="other">Spectra that are not MSn</param>
-        /// <returns></returns>
-        /// <remarks></remarks>
         public bool LoadScanTypeFile(string scanTypeFilePath, out Dictionary<int, string> lowResMSn, out Dictionary<int, string> highResMSn,
             out Dictionary<int, string> hcdMSn, out Dictionary<int, string> other)
         {
@@ -1894,7 +1881,6 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// Verify that the MS-GF+ .mzid file ends with XML tag MzIdentML
         /// </summary>
         /// <param name="fiMzidFile"></param>
-        /// <returns></returns>
         public static bool MSGFPlusResultsFileHasClosingTag(FileSystemInfo fiMzidFile)
         {
             // Check whether the mzid file ends with XML tag </MzIdentML>
@@ -2242,7 +2228,6 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <param name="dynamicMods">List of Dynamic Mods</param>
         /// <param name="customAminoAcids">List of Custom Amino Acids</param>
         /// <returns>True if success, false if an error</returns>
-        /// <remarks></remarks>
         [Obsolete("Deprecated in February 2019")]
         private bool ParseMSGFDBModifications(string sourceParameterFilePath, StringBuilder sbOptions, int numMods,
             IReadOnlyCollection<string> staticMods, IReadOnlyCollection<string> dynamicMods, IReadOnlyCollection<string> customAminoAcids)
@@ -2367,7 +2352,6 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <param name="sourceParamFile">FileInfo object to the source parameter file. If a new parameter file was created, this will now have extension .original</param>
         /// <param name="finalParamFile">FileInfo object to the parameter file to use; will have path sourceParameterFilePath</param>
         /// <returns>Options string if success; empty string if an error</returns>
-        /// <remarks></remarks>
         public CloseOutType ParseMSGFPlusParameterFile(
             bool fastaFileIsDecoy, string assumedScanType,
             string scanTypeFilePath, string instrumentGroup, string sourceParameterFilePath,
@@ -2393,7 +2377,6 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <param name="sourceParamFile">FileInfo object to the source parameter file. If a new parameter file was created, this will now have extension .original</param>
         /// <param name="finalParamFile">FileInfo object to the parameter file to use; will have path sourceParameterFilePath</param>
         /// <returns>CloseOutType.CLOSEOUT_SUCCESS, otherwise an error code</returns>
-        /// <remarks></remarks>
         public CloseOutType ParseMSGFPlusParameterFile(
             bool fastaFileIsDecoy, string assumedScanType,
             string scanTypeFilePath, string instrumentGroup, string sourceParameterFilePath,
@@ -2891,8 +2874,6 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <param name="paramFileLine">MS-GF+ parameter file line tracking instrument ID; its value may get updated by this method</param>
         /// <param name="scanTypeFilePath"></param>
         /// <param name="instrumentGroup"></param>
-        /// <returns></returns>
-        /// <remarks></remarks>
         private CloseOutType DetermineInstrumentID(MSGFPlusKeyValueParamFileLine paramFileLine, string scanTypeFilePath, string instrumentGroup)
         {
             // InstrumentID values:
@@ -2953,7 +2934,6 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// Return true if paramValue is an empty string or "None"
         /// </summary>
         /// <param name="paramValue"></param>
-        /// <returns></returns>
         private bool EmptyOrNone(string paramValue)
         {
             return string.IsNullOrWhiteSpace(paramValue) || clsGlobal.IsMatch(paramValue, "None");
@@ -3072,7 +3052,6 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <param name="countLowResMSn"></param>
         /// <param name="countHighResMSn"></param>
         /// <param name="countHCDMSn"></param>
-        /// <returns></returns>
         public bool LookupScanTypesForDataset(string datasetName, out int countLowResMSn, out int countHighResMSn, out int countHCDMSn)
         {
             countLowResMSn = 0;
@@ -3423,7 +3402,6 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// Now always returns false
         /// </summary>
         /// <param name="jobParams"></param>
-        /// <returns></returns>
         public static bool UseLegacyMSGFDB(IJobParams jobParams)
         {
             return false;
@@ -3435,7 +3413,6 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <param name="staticMods"></param>
         /// <param name="dynamicMods"></param>
         /// <param name="customAminoAcids"></param>
-        /// <returns></returns>
         private bool ValidateMSGFPlusModifications(
             IEnumerable<string> staticMods,
             IEnumerable<string> dynamicMods,
@@ -3605,7 +3582,6 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <param name="msgfPlusParamFileLines"></param>
         /// <param name="alwaysCreate">If false, only replace the original file if at least one parameter has been updated; if true, always replace it</param>
         /// <param name="finalParamFile">FileInfo object to the parameter file to use; will have path sourceParameterFilePath</param>
-        /// <returns></returns>
         private CloseOutType WriteMSGFPlusParameterFile(
             FileInfo sourceParamFile,
             IReadOnlyCollection<MSGFPlusKeyValueParamFileLine> msgfPlusParamFileLines,
@@ -3686,7 +3662,6 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// Zips MS-GF+ Output File (creating a .gz file)
         /// </summary>
         /// <returns>CloseOutType enum indicating success or failure</returns>
-        /// <remarks></remarks>
         public CloseOutType ZipOutputFile(clsAnalysisToolRunnerBase oToolRunner, string fileName)
         {
             try

@@ -50,7 +50,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="msFileInfoScannerDLLPath"></param>
         /// <param name="debugLevel"></param>
-        /// <remarks></remarks>
         public clsScanStatsGenerator(string msFileInfoScannerDLLPath, int debugLevel)
         {
             mMSFileInfoScannerDLLPath = msFileInfoScannerDLLPath;
@@ -66,7 +65,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="inputFilePath">Dataset file</param>
         /// <param name="outputDirectoryPath">Output directory</param>
-        /// <returns></returns>
         /// <remarks>Will list DatasetID as 0 in the output file</remarks>
         // ReSharper disable once UnusedMember.Global
         public bool GenerateScanStatsFile(string inputFilePath, string outputDirectoryPath)
@@ -80,7 +78,6 @@ namespace AnalysisManagerBase
         /// <param name="inputFilePath">Dataset file</param>
         /// <param name="outputDirectoryPath">Output directory</param>
         /// <param name="datasetID">Dataset ID</param>
-        /// <remarks></remarks>
         /// <returns>True if successful, false if an error</returns>
         public bool GenerateScanStatsFile(string inputFilePath, string outputDirectoryPath, int datasetID)
         {

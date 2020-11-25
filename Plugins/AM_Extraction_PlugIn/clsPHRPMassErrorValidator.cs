@@ -24,9 +24,6 @@ namespace AnalysisManagerExtractionPlugin
         /// Value between 0 and 100
         /// If more than this percent of the data has a mass error larger than the threshold, ValidatePHRPResultMassErrors returns false
         /// </summary>
-        /// <value></value>
-        /// <returns></returns>
-        /// <remarks></remarks>
         public double ErrorThresholdPercent => mErrorThresholdPercent;
 
         public clsPHRPMassErrorValidator(int intDebugLevel)
@@ -81,7 +78,6 @@ namespace AnalysisManagerExtractionPlugin
         /// <param name="eResultType"></param>
         /// <param name="searchEngineParamFilePath"></param>
         /// <returns>True if less than mErrorThresholdPercent of the data is bad; False otherwise</returns>
-        /// <remarks></remarks>
         public bool ValidatePHRPResultMassErrors(string inputFilePath, clsPHRPReader.ePeptideHitResultType eResultType, string searchEngineParamFilePath)
         {
             try

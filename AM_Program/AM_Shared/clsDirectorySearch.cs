@@ -21,7 +21,6 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Maximum number of attempts to find a directory or file
         /// </summary>
-        /// <remarks></remarks>
         public const int DEFAULT_MAX_RETRY_COUNT = 3;
 
         /// <summary>
@@ -98,7 +97,6 @@ namespace AnalysisManagerBase
         /// <param name="pathsToCheck">List of Tuples where the string is a directory or file path, and the boolean is logIfMissing</param>
         /// <param name="directoryOrFilePath">Path to add</param>
         /// <param name="logIfMissing">True to log a message if the path is not found</param>
-        /// <remarks></remarks>
         private void AddPathToCheck(ICollection<Tuple<string, bool>> pathsToCheck, string directoryOrFilePath, bool logIfMissing)
         {
             pathsToCheck.Add(new Tuple<string, bool>(directoryOrFilePath, logIfMissing));
@@ -252,7 +250,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="fileExtension"></param>
         /// <returns>The full path to the directory; an empty string if no match</returns>
-        /// <remarks></remarks>
         public string FindDatasetFile(string fileExtension)
         {
             return FindDatasetFile(DEFAULT_MAX_RETRY_COUNT, fileExtension);
@@ -265,7 +262,6 @@ namespace AnalysisManagerBase
         /// <param name="fileExtension"></param>
         /// <param name="assumeUnpurged"></param>
         /// <returns>The full path to the directory; an empty string if no match</returns>
-        /// <remarks></remarks>
         public string FindDatasetFile(int maxAttempts, string fileExtension, bool assumeUnpurged = false)
         {
             if (!fileExtension.StartsWith("."))
@@ -302,7 +298,6 @@ namespace AnalysisManagerBase
         /// Finds a .D directory below the dataset directory
         /// </summary>
         /// <param name="assumeUnpurged"></param>
-        /// <returns></returns>
         private string FindDotRawFolder(bool assumeUnpurged = false)
         {
             return FindDotXFolder(clsAnalysisResources.DOT_RAW_EXTENSION, assumeUnpurged);
@@ -314,7 +309,6 @@ namespace AnalysisManagerBase
         /// <param name="directoryExtension"></param>
         /// <param name="assumeUnpurged"></param>
         /// <returns>The full path to the directory; an empty string if no match</returns>
-        /// <remarks></remarks>
         public string FindDotXFolder(string directoryExtension, bool assumeUnpurged)
         {
             if (!directoryExtension.StartsWith("."))
@@ -356,8 +350,6 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Finds the best .mgf file for the current dataset
         /// </summary>
-        /// <returns></returns>
-        /// <remarks></remarks>
         public string FindMGFFile(int maxAttempts, bool assumeUnpurged)
         {
             // Data files are in a subdirectory off of the main dataset directory
@@ -389,8 +381,6 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Finds the dataset directory containing either a 0.ser subdirectory or containing zipped S-folders
         /// </summary>
-        /// <returns></returns>
-        /// <remarks></remarks>
         private string FindSFolders(bool assumeUnpurged = false)
         {
             // First Check for the existence of a 0.ser directory
@@ -855,8 +845,6 @@ namespace AnalysisManagerBase
         /// <param name="retryHoldoffSeconds">Time, in seconds, to wait between retrying; if 0, will default to 5 seconds; maximum value is 600 seconds</param>
         /// <param name="maxAttempts">Maximum number of attempts</param>
         /// <param name="logDirectoryNotFound">If true, log a warning if the directory is not found</param>
-        /// <returns></returns>
-        /// <remarks></remarks>
         private bool DirectoryExistsWithRetry(string directoryPath, int retryHoldoffSeconds, int maxAttempts, bool logDirectoryNotFound)
         {
             if (maxAttempts < 1)

@@ -165,7 +165,6 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Overall CPU utilization of all threads
         /// </summary>
-        /// <remarks></remarks>
         int CpuUtilization { get; set; }
 
         /// <summary>
@@ -227,7 +226,6 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Number of cores in use by an externally spawned process
         /// </summary>
-        /// <remarks></remarks>
         float ProgRunnerCoreUsage { get; set; }
 
         /// <summary>
@@ -257,7 +255,6 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Returns the number of cores
         /// </summary>
-        /// <returns></returns>
         /// <remarks>Not affected by hyperthreading, so a computer with two 4-core chips will report 8 cores</remarks>
         int GetCoreCount();
 
@@ -270,8 +267,6 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Return the ProcessID of the running process
         /// </summary>
-        /// <returns></returns>
-        /// <remarks></remarks>
         int GetProcessID();
 
         /// <summary>
@@ -287,14 +282,12 @@ namespace AnalysisManagerBase
         /// <param name="recentErrorMessages"></param>
         /// <param name="jobInfo">Information on the job that started most recently</param>
         /// <param name="forceLogToBrokerDB">If true, will force mBrokerDBLogger to report the manager status directly to the database (if initialized)</param>
-        /// <remarks></remarks>
         void UpdateClose(string managerIdleMessage, IEnumerable<string> recentErrorMessages, string jobInfo, bool forceLogToBrokerDB);
 
         /// <summary>
         /// Updates status file
         /// </summary>
         /// <param name="percentComplete">Job completion percentage (value between 0 and 100)</param>
-        /// <remarks></remarks>
         void UpdateAndWrite(float percentComplete);
 
         /// <summary>
@@ -304,7 +297,6 @@ namespace AnalysisManagerBase
         /// <param name="eTaskStatus">Task status code</param>
         /// <param name="eTaskStatusDetail">Detailed task status</param>
         /// <param name="percentComplete">Job completion percentage (value between 0 and 100)</param>
-        /// <remarks></remarks>
         void UpdateAndWrite(EnumMgrStatus eMgrStatus, EnumTaskStatus eTaskStatus, EnumTaskStatusDetail eTaskStatusDetail, float percentComplete);
 
         /// <summary>
@@ -313,7 +305,6 @@ namespace AnalysisManagerBase
         /// <param name="status">Job status enum</param>
         /// <param name="percentComplete">Job completion percentage (value between 0 and 100)</param>
         /// <param name="spectrumCountTotal">Number of DTA files (i.e., spectra files); relevant for Sequest, X!Tandem, and Inspect</param>
-        /// <remarks></remarks>
         void UpdateAndWrite(EnumTaskStatus status, float percentComplete, int spectrumCountTotal);
 
         /// <summary>
@@ -328,7 +319,6 @@ namespace AnalysisManagerBase
         /// <param name="mostRecentErrorMessage">Most recent error posted to the logger (leave blank if unknown)</param>
         /// <param name="recentJobInfo">Information on the job that started most recently</param>
         /// <param name="forceLogToBrokerDB">If true, will force mBrokerDBLogger to report the manager status directly to the database (if initialized)</param>
-        /// <remarks></remarks>
         void UpdateAndWrite(
             EnumMgrStatus eMgrStatus,
             EnumTaskStatus eTaskStatus,
@@ -343,7 +333,6 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Sets status file to show manager idle
         /// </summary>
-        /// <remarks></remarks>
         void UpdateIdle();
 
         /// <summary>
@@ -351,7 +340,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="managerIdleMessage">Reason why the manager is idle (leave blank if unknown)</param>
         /// <param name="forceLogToBrokerDB">If true, will force mBrokerDBLogger to report the manager status directly to the database (if initialized)</param>
-        /// <remarks></remarks>
         void UpdateIdle(string managerIdleMessage, bool forceLogToBrokerDB);
 
         /// <summary>
@@ -361,7 +349,6 @@ namespace AnalysisManagerBase
         /// <param name="idleErrorMessage">Error message explaining why the manager is idle</param>
         /// <param name="recentJobInfo">Information on the job that started most recently</param>
         /// <param name="forceLogToBrokerDB">If true, will force mBrokerDBLogger to report the manager status directly to the database (if initialized)</param>
-        /// <remarks></remarks>
         void UpdateIdle(string managerIdleMessage, string idleErrorMessage, string recentJobInfo, bool forceLogToBrokerDB);
 
         /// <summary>
@@ -371,14 +358,12 @@ namespace AnalysisManagerBase
         /// <param name="recentErrorMessages">Recent error messages written to the log file (leave blank if unknown)</param>
         /// <param name="recentJobInfo">Information on the job that started most recently</param>
         /// <param name="forceLogToBrokerDB">If true, will force mBrokerDBLogger to report the manager status directly to the database (if initialized)</param>
-        /// <remarks></remarks>
         void UpdateIdle(string managerIdleMessage, IEnumerable<string> recentErrorMessages, string recentJobInfo, bool forceLogToBrokerDB);
 
         /// <summary>
         /// Logs to the status file that the manager is disabled
         /// (either in the manager control DB or via the local AnalysisManagerProg.exe.config file)
         /// </summary>
-        /// <remarks></remarks>
         void UpdateDisabled(EnumMgrStatus managerStatus);
 
         /// <summary>
@@ -387,7 +372,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="managerStatus"></param>
         /// <param name="managerDisableMessage">Description of why the manager is disabled (leave blank if unknown)</param>
-        /// <remarks></remarks>
         void UpdateDisabled(EnumMgrStatus managerStatus, string managerDisableMessage);
 
         /// <summary>
@@ -398,13 +382,11 @@ namespace AnalysisManagerBase
         /// <param name="managerDisableMessage">Description of why the manager is disabled (leave blank if unknown)</param>
         /// <param name="recentErrorMessages">Recent error messages written to the log file (leave blank if unknown)</param>
         /// <param name="recentJobInfo">Information on the job that started most recently</param>
-        /// <remarks></remarks>
         void UpdateDisabled(EnumMgrStatus managerStatus, string managerDisableMessage, IEnumerable<string> recentErrorMessages, string recentJobInfo);
 
         /// <summary>
         /// Logs to the status file that a flag file exists, indicating that the manager did not exit cleanly on a previous run
         /// </summary>
-        /// <remarks></remarks>
         void UpdateFlagFileExists();
 
         /// <summary>
@@ -412,13 +394,11 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="recentErrorMessages">Recent error messages written to the log file (leave blank if unknown)</param>
         /// <param name="recentJobInfo">Information on the job that started most recently</param>
-        /// <remarks></remarks>
         void UpdateFlagFileExists(IEnumerable<string> recentErrorMessages, string recentJobInfo);
 
         /// <summary>
         /// Writes out a new status file, indicating that the manager is still alive
         /// </summary>
-        /// <remarks></remarks>
         void WriteStatusFile();
 
         /// <summary>
@@ -430,7 +410,6 @@ namespace AnalysisManagerBase
         /// This can lead to PerfLib warnings and errors in the Windows Event Log;
         /// thus this should be set to false if simply reporting that the manager is idle
         /// </param>
-        /// <remarks></remarks>
         void WriteStatusFile(bool forceLogToBrokerDB, bool includeCpuUsage);
 
         #endregion

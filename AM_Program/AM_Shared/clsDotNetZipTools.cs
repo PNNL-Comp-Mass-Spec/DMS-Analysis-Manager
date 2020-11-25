@@ -41,9 +41,6 @@ namespace AnalysisManagerBase
         /// Returns the files most recently unzipped
         /// Keys in the KeyValuePairs are filenames while values are relative paths (in case the .zip file has folders)
         /// </summary>
-        /// <value></value>
-        /// <returns></returns>
-        /// <remarks></remarks>
         public List<KeyValuePair<string, string>> MostRecentUnzippedFiles { get; } = new List<KeyValuePair<string, string>>();
 
         #endregion
@@ -86,7 +83,6 @@ namespace AnalysisManagerBase
         /// Gets the .zip file path to create when zipping a single file
         /// </summary>
         /// <param name="sourceFilePath"></param>
-        /// <returns></returns>
         public static string GetZipFilePathForFile(string sourceFilePath)
         {
             var sourceFile = new FileInfo(sourceFilePath);
@@ -281,7 +277,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="fileToGZip">File to compress</param>
         /// <param name="gzipFilePath"></param>
-        /// <returns></returns>
         /// <remarks>The .gz file created by PRISM.dll will include header information (filename and timestamp of the original file)</remarks>
         private bool GZipUsingGZipStream(FileInfo fileToGZip, string gzipFilePath)
         {
@@ -726,7 +721,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="sourceDirectoryPath"></param>
         /// <param name="zipFilePath"></param>
-        /// <returns></returns>
         public bool ZipDirectory(string sourceDirectoryPath, string zipFilePath)
         {
             return ZipDirectory(sourceDirectoryPath, zipFilePath, true, string.Empty);
@@ -738,7 +732,6 @@ namespace AnalysisManagerBase
         /// <param name="sourceDirectoryPath"></param>
         /// <param name="zipFilePath"></param>
         /// <param name="recurse"></param>
-        /// <returns></returns>
         public bool ZipDirectory(string sourceDirectoryPath, string zipFilePath, bool recurse)
         {
             return ZipDirectory(sourceDirectoryPath, zipFilePath, recurse, string.Empty);

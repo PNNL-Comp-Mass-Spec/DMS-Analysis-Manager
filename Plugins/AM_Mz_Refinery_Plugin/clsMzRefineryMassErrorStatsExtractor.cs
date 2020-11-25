@@ -12,7 +12,6 @@ namespace AnalysisManagerMzRefineryPlugIn
     /// This class reads the console text from the PPMErrorCharter's console output and extracts the parent ion mass error information
     /// It passes on the information to DMS for storage in table T_Dataset_QC
     /// </summary>
-    /// <remarks></remarks>
     public class clsMzRefineryMassErrorStatsExtractor
     {
         private const string STORE_MASS_ERROR_STATS_SP_NAME = "StoreDTARefMassErrorStats";
@@ -81,7 +80,6 @@ namespace AnalysisManagerMzRefineryPlugIn
         /// <param name="datasetID"></param>
         /// <param name="psmJob"></param>
         /// <param name="ppmErrorCharterConsoleOutputFilePath"></param>
-        /// <returns></returns>
         public bool ParsePPMErrorCharterOutput(string datasetName, int datasetID, int psmJob, string ppmErrorCharterConsoleOutputFilePath)
         {
             // Example console output:

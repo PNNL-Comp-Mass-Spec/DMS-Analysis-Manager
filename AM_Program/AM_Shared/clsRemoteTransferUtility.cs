@@ -226,7 +226,6 @@ namespace AnalysisManagerBase
         /// Convert a list of settings to XML
         /// </summary>
         /// <param name="settings"></param>
-        /// <returns></returns>
         private static string ConstructRemoteInfoXml(IEnumerable<KeyValuePair<string, string>> settings)
         {
             var xmlText = new StringBuilder();
@@ -453,7 +452,6 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Return text in the form "Job1234_Step3"
         /// </summary>
-        /// <returns></returns>
         /// <remarks>Intended for use in file and directory names</remarks>
         private string GetJobStepFileOrFolderName()
         {
@@ -463,7 +461,6 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Return text in the form "Job1234_Step3"
         /// </summary>
-        /// <returns></returns>
         /// <remarks>Intended for use in file and directory names</remarks>
         private static string GetJobStepFileOrFolderName(int job, int step)
         {
@@ -475,7 +472,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="mgrParams"></param>
         /// <param name="jobParams"></param>
-        /// <returns></returns>
         public static string GetOfflineJobStatusFilePath(IMgrParams mgrParams, IJobParams jobParams)
         {
             var job = jobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Job", 0);
@@ -988,7 +984,6 @@ namespace AnalysisManagerBase
         /// <param name="sourceFile">Source file</param>
         /// <param name="remoteFile"></param>
         /// <param name="abortCopy"></param>
-        /// <returns></returns>
         public bool WaitForRemoteFileCopy(FileInfo sourceFile, SftpFile remoteFile, out bool abortCopy)
         {
             var remoteFilePath = remoteFile.FullName;

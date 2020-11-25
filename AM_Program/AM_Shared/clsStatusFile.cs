@@ -137,7 +137,6 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Overall CPU utilization of all threads
         /// </summary>
-        /// <remarks></remarks>
         public int CpuUtilization { get; set; }
 
         /// <summary>
@@ -174,7 +173,6 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Number of cores in use by an externally spawned process
         /// </summary>
-        /// <remarks></remarks>
         public float ProgRunnerCoreUsage { get; set; }
 
         /// <summary>
@@ -271,7 +269,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="statusFilePath">Full path to status file</param>
         /// <param name="debugLevel"></param>
-        /// <remarks></remarks>
         public clsStatusFile(string statusFilePath, int debugLevel)
         {
             mMgrStatusMap = new Dictionary<EnumMgrStatus, string>();
@@ -310,7 +307,6 @@ namespace AnalysisManagerBase
         /// <param name="logMemoryUsage"></param>
         /// <param name="minimumMemoryUsageLogIntervalMinutes"></param>
         /// <param name="memoryUsageLogFolderPath"></param>
-        /// <remarks></remarks>
         public void ConfigureMemoryLogging(bool logMemoryUsage, float minimumMemoryUsageLogIntervalMinutes, string memoryUsageLogFolderPath)
         {
             if (logMemoryUsage)
@@ -401,7 +397,6 @@ namespace AnalysisManagerBase
         /// Looks for file "AbortProcessingNow.txt"
         /// If found, sets property AbortProcessingNow to True
         /// </summary>
-        /// <remarks></remarks>
         public void CheckForAbortProcessingFile()
         {
             try
@@ -427,7 +422,6 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Clears the cached information about dataset, job, progress, etc.
         /// </summary>
-        /// <remarks></remarks>
         private void ClearCachedInfo()
         {
             Progress = 0;
@@ -458,7 +452,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="statusText">Text from ConvertMgrStatusToString or the string representation of the enum</param>
         /// <returns>Task status enum</returns>
-        /// <remarks></remarks>
         public EnumMgrStatus ConvertToMgrStatusFromText(string statusText)
         {
             foreach (var item in mMgrStatusMap)
@@ -478,7 +471,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="statusText">Text from ConvertTaskStatusToString or the string representation of the enum</param>
         /// <returns>Task status enum</returns>
-        /// <remarks></remarks>
         public EnumTaskStatus ConvertToTaskStatusFromText(string statusText)
         {
             foreach (var item in mTaskStatusMap)
@@ -498,7 +490,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="statusText">Text from ConvertTaskStatusDetailToString or the string representation of the enum</param>
         /// <returns>Task status enum</returns>
-        /// <remarks></remarks>
         public EnumTaskStatusDetail ConvertToTaskDetailStatusFromText(string statusText)
         {
             foreach (var item in mTaskStatusDetailMap)
@@ -518,7 +509,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="statusEnum">A MgrStatus enum</param>
         /// <returns>String representation of input object (sentence case and underscores to spaces)</returns>
-        /// <remarks></remarks>
         private string ConvertMgrStatusToString(EnumMgrStatus statusEnum)
         {
             if (mMgrStatusMap.TryGetValue(statusEnum, out var statusText))
@@ -533,7 +523,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="statusEnum">A Task Status enum</param>
         /// <returns>String representation of input object (sentence case and underscores to spaces)</returns>
-        /// <remarks></remarks>
         private string ConvertTaskStatusToString(EnumTaskStatus statusEnum)
         {
             if (mTaskStatusMap.TryGetValue(statusEnum, out var statusText))
@@ -548,7 +537,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="statusEnum">A TaskStatusDetail enum</param>
         /// <returns>String representation of input object (sentence case and underscores to spaces)</returns>
-        /// <remarks></remarks>
         private string ConvertTaskStatusDetailToString(EnumTaskStatusDetail statusEnum)
         {
             if (mTaskStatusDetailMap.TryGetValue(statusEnum, out var statusText))
@@ -624,8 +612,6 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Return the ProcessID of the Analysis manager
         /// </summary>
-        /// <returns></returns>
-        /// <remarks></remarks>
         public int GetProcessID()
         {
             var processID = Process.GetCurrentProcess().Id;
@@ -635,7 +621,6 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Get the directory path for the status file tracked by FileNamePath
         /// </summary>
-        /// <returns></returns>
         private string GetStatusFileDirectory()
         {
             var statusFileDirectory = Path.GetDirectoryName(FileNamePath);
@@ -844,7 +829,6 @@ namespace AnalysisManagerBase
         /// Copies messages from recentErrorMessages to mRecentErrorMessages; ignores messages that are Nothing or blank
         /// </summary>
         /// <param name="recentErrorMessages"></param>
-        /// <remarks></remarks>
         private void StoreRecentErrorMessages(IEnumerable<string> recentErrorMessages)
         {
             if (recentErrorMessages == null)
@@ -1050,7 +1034,6 @@ namespace AnalysisManagerBase
         /// <param name="cpuUtilization">CPU utilization</param>
         /// <param name="freeMemoryMB">Free memory in MB</param>
         /// <param name="runTimeHours">Runtime, in hours</param>
-        /// <returns></returns>
         private static string GenerateStatusXML(
             clsStatusFile status,
             DateTime lastUpdate,
@@ -1309,7 +1292,6 @@ namespace AnalysisManagerBase
         /// <param name="recentErrorMessages"></param>
         /// <param name="jobInfo">Information on the job that started most recently</param>
         /// <param name="forceLogToBrokerDB">If true, will force mBrokerDBLogger to report the manager status directly to the database (if initialized)</param>
-        /// <remarks></remarks>
         public void UpdateClose(string managerIdleMessage, IEnumerable<string> recentErrorMessages, string jobInfo, bool forceLogToBrokerDB)
         {
             ClearCachedInfo();
@@ -1343,7 +1325,6 @@ namespace AnalysisManagerBase
         /// <param name="eTaskStatus">Task status enum</param>
         /// <param name="eTaskStatusDetail">Task status detail enum</param>
         /// <param name="percentComplete">Job completion percentage (value between 0 and 100)</param>
-        /// <remarks></remarks>
         public void UpdateAndWrite(EnumMgrStatus eMgrStatus, EnumTaskStatus eTaskStatus, EnumTaskStatusDetail eTaskStatusDetail,
                                    float percentComplete)
         {
@@ -1360,7 +1341,6 @@ namespace AnalysisManagerBase
         /// <param name="status">Job status enum</param>
         /// <param name="percentComplete">Job completion percentage (value between 0 and 100)</param>
         /// <param name="spectrumCountTotal">Number of DTA files (i.e., spectra files); relevant for Sequest, X!Tandem, and Inspect</param>
-        /// <remarks></remarks>
         public void UpdateAndWrite(EnumTaskStatus status, float percentComplete, int spectrumCountTotal)
         {
             TaskStatus = status;
@@ -1382,7 +1362,6 @@ namespace AnalysisManagerBase
         /// <param name="mostRecentErrorMessage">Most recent error posted to the logger (leave blank if unknown)</param>
         /// <param name="recentJobInfo">Information on the job that started most recently</param>
         /// <param name="forceLogToBrokerDB">If true, will force mBrokerDBLogger to report the manager status directly to the database (if initialized)</param>
-        /// <remarks></remarks>
         public void UpdateAndWrite(
             EnumMgrStatus eMgrStatus,
             EnumTaskStatus eTaskStatus,
@@ -1410,7 +1389,6 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Sets status file to show manager idle
         /// </summary>
-        /// <remarks></remarks>
         public void UpdateIdle()
         {
             UpdateIdle("Manager Idle", false);
@@ -1421,7 +1399,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="managerIdleMessage">Reason why the manager is idle (leave blank if unknown)</param>
         /// <param name="forceLogToBrokerDB">If true, will force mBrokerDBLogger to report the manager status directly to the database (if initialized)</param>
-        /// <remarks></remarks>
         public void UpdateIdle(string managerIdleMessage, bool forceLogToBrokerDB)
         {
             ClearCachedInfo();
@@ -1438,7 +1415,6 @@ namespace AnalysisManagerBase
         /// <param name="idleErrorMessage">Error message explaining why the manager is idle</param>
         /// <param name="recentJobInfo">Information on the job that started most recently</param>
         /// <param name="forceLogToBrokerDB">If true, will force mBrokerDBLogger to report the manager status directly to the database (if initialized)</param>
-        /// <remarks></remarks>
         public void UpdateIdle(string managerIdleMessage, string idleErrorMessage, string recentJobInfo, bool forceLogToBrokerDB)
         {
             StoreNewErrorMessage(idleErrorMessage, true);
@@ -1452,7 +1428,6 @@ namespace AnalysisManagerBase
         /// <param name="recentErrorMessages">Recent error messages written to the log file (leave blank if unknown)</param>
         /// <param name="recentJobInfo">Information on the job that started most recently</param>
         /// <param name="forceLogToBrokerDB">If true, will force mBrokerDBLogger to report the manager status directly to the database (if initialized)</param>
-        /// <remarks></remarks>
         public void UpdateIdle(string managerIdleMessage, IEnumerable<string> recentErrorMessages, string recentJobInfo, bool forceLogToBrokerDB)
         {
             StoreRecentErrorMessages(recentErrorMessages);
@@ -1485,7 +1460,6 @@ namespace AnalysisManagerBase
         /// Updates status file to show manager disabled
         /// (either in the manager control DB or via the local AnalysisManagerProg.exe.config file)
         /// </summary>
-        /// <remarks></remarks>
         public void UpdateDisabled(EnumMgrStatus managerStatus)
         {
             UpdateDisabled(managerStatus, "Manager Disabled");
@@ -1497,7 +1471,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="managerStatus"></param>
         /// <param name="managerDisableMessage">Description of why the manager is disabled (leave blank if unknown)</param>
-        /// <remarks></remarks>
         public void UpdateDisabled(EnumMgrStatus managerStatus, string managerDisableMessage)
         {
             UpdateDisabled(managerStatus, managerDisableMessage, new List<string>(), MostRecentJobInfo);
@@ -1511,7 +1484,6 @@ namespace AnalysisManagerBase
         /// <param name="managerDisableMessage">Description of why the manager is disabled (leave blank if unknown)</param>
         /// <param name="recentErrorMessages">Recent error messages written to the log file (leave blank if unknown)</param>
         /// <param name="recentJobInfo">Information on the job that started most recently</param>
-        /// <remarks></remarks>
         public void UpdateDisabled(EnumMgrStatus managerStatus, string managerDisableMessage, IEnumerable<string> recentErrorMessages,
                                    string recentJobInfo)
         {
@@ -1535,7 +1507,6 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Updates status file to show manager stopped due to a flag file
         /// </summary>
-        /// <remarks></remarks>
         public void UpdateFlagFileExists()
         {
             UpdateFlagFileExists(new List<string>(), MostRecentJobInfo);
@@ -1546,7 +1517,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="recentErrorMessages">Recent error messages written to the log file (leave blank if unknown)</param>
         /// <param name="recentJobInfo">Information on the job that started most recently</param>
-        /// <remarks></remarks>
         public void UpdateFlagFileExists(IEnumerable<string> recentErrorMessages, string recentJobInfo)
         {
             ClearCachedInfo();
@@ -1579,7 +1549,6 @@ namespace AnalysisManagerBase
         /// Total time the job has been running
         /// </summary>
         /// <returns>Number of hours manager has been processing job</returns>
-        /// <remarks></remarks>
         private float GetRunTime()
         {
             return (float)DateTime.UtcNow.Subtract(TaskStartTime).TotalHours;

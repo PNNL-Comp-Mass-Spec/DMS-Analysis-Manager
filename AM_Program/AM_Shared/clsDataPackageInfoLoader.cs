@@ -42,7 +42,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="dataPackageDatasets"></param>
         /// <returns>True if a data package is defined and it has datasets associated with it</returns>
-        /// <remarks></remarks>
         public bool LoadDataPackageDatasetInfo(out Dictionary<int, clsDataPackageDatasetInfo> dataPackageDatasets)
         {
             if (DataPackageID < 0)
@@ -61,7 +60,6 @@ namespace AnalysisManagerBase
         /// <param name="dataPackageID">Data Package ID</param>
         /// <param name="dataPackageDatasets">Datasets associated with the given data package</param>
         /// <returns>True if a data package is defined and it has datasets associated with it</returns>
-        /// <remarks></remarks>
         public static bool LoadDataPackageDatasetInfo(
             IDBTools dbTools,
             int dataPackageID,
@@ -356,7 +354,6 @@ namespace AnalysisManagerBase
         /// or from
         /// </summary>
         /// <param name="curRow"></param>
-        /// <returns></returns>
         public static clsDataPackageJobInfo ParseDataPackageJobInfoRow(DataRow curRow)
         {
             var dataPkgJob = curRow["Job"].CastDBVal<int>();
@@ -417,7 +414,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="additionalJobs">Non Peptide Hit jobs (e.g. DeconTools or MASIC)</param>
         /// <returns>Peptide Hit Jobs (e.g. MS-GF+ or Sequest)</returns>
-        /// <remarks></remarks>
         public List<clsDataPackageJobInfo> RetrieveDataPackagePeptideHitJobInfo(out List<clsDataPackageJobInfo> additionalJobs)
         {
             if (DataPackageID < 0)

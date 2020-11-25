@@ -256,7 +256,6 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <remarks></remarks>
         public clsAnalysisToolRunnerBase() : base("clsAnalysisToolRunnerBase")
         {
             mProgRunnerStartTime = DateTime.UtcNow;
@@ -272,7 +271,6 @@ namespace AnalysisManagerBase
         /// <param name="statusTools">Object for status reporting</param>
         /// <param name="summaryFile">Object for creating an analysis job summary file</param>
         /// <param name="myEMSLUtilities">MyEMSL download Utilities</param>
-        /// <remarks></remarks>
         public virtual void Setup(
             string stepToolName,
             IMgrParams mgrParams,
@@ -332,7 +330,6 @@ namespace AnalysisManagerBase
         /// <param name="startTime">Time job started</param>
         /// <param name="stopTime">Time of job completion</param>
         /// <returns>Total job run time (HH:MM)</returns>
-        /// <remarks></remarks>
         protected string CalcElapsedTime(DateTime startTime, DateTime stopTime)
         {
             if (stopTime < startTime)
@@ -367,7 +364,6 @@ namespace AnalysisManagerBase
         /// <param name="currentTaskProgressAtEnd">Progress at the start of the current subtask (value between 0 and 100)</param>
         /// <param name="subTaskProgress">Progress of the current subtask (value between 0 and 100)</param>
         /// <returns>Overall progress (value between 0 and 100)</returns>
-        /// <remarks></remarks>
         public static float ComputeIncrementalProgress(float currentTaskProgressAtStart, float currentTaskProgressAtEnd, float subTaskProgress)
         {
             if (subTaskProgress < 0)
@@ -391,7 +387,6 @@ namespace AnalysisManagerBase
         /// <param name="currentTaskItemsProcessed">Number of items processed so far during this subtask</param>
         /// <param name="currentTaskTotalItems">Total number of items to process during this subtask</param>
         /// <returns>Overall progress (value between 0 and 100)</returns>
-        /// <remarks></remarks>
         public static float ComputeIncrementalProgress(float currentTaskProgressAtStart, float currentTaskProgressAtEnd, int currentTaskItemsProcessed, int currentTaskTotalItems)
         {
             if (currentTaskTotalItems < 1)
@@ -414,7 +409,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="memorySizeMBPerThread">Amount of memory allocated to each thread</param>
         /// <returns>Maximum number of cores to use</returns>
-        /// <remarks></remarks>
         protected int ComputeMaxThreadsGivenMemoryPerThread(float memorySizeMBPerThread)
         {
             if (memorySizeMBPerThread < 512)
@@ -766,7 +760,6 @@ namespace AnalysisManagerBase
         /// Copies the files from the results directory to the transfer directory on the server
         /// </summary>
         /// <returns>True if success, otherwise false</returns>
-        /// <remarks></remarks>
         protected bool CopyResultsFolderToServer()
         {
             var transferDirectoryPath = GetTransferFolderPath();
@@ -787,7 +780,6 @@ namespace AnalysisManagerBase
         /// e.g. \\proto-6\DMS3_Xfer\ or
         /// \\protoapps\PeptideAtlas_Staging\1000_DataPackageName</param>
         /// <returns>True if success, otherwise false</returns>
-        /// <remarks></remarks>
         protected bool CopyResultsFolderToServer(string transferDirectoryPath)
         {
             var sourceDirectoryPath = string.Empty;
@@ -901,7 +893,6 @@ namespace AnalysisManagerBase
         /// <param name="retryCount"></param>
         /// <param name="retryHoldoffSeconds"></param>
         /// <param name="increaseHoldoffOnEachRetry"></param>
-        /// <returns></returns>
         private bool CopyResultsFolderRecursive(
             string rootSourceDirectoryPath,
             string sourceDirectoryPath,
@@ -1070,7 +1061,6 @@ namespace AnalysisManagerBase
         /// Creates the directory if it does not exist
         /// </summary>
         /// <returns>The full path to the remote transfer directory; an empty string if an error</returns>
-        /// <remarks></remarks>
         protected string CreateRemoteTransferFolder(clsAnalysisResults analysisResults)
         {
             var transferDirectoryPath = mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH);
@@ -1626,7 +1616,6 @@ namespace AnalysisManagerBase
         /// The minimum number of seconds between updates
         /// If fewer than updateIntervalSeconds have elapsed since the last call to this function, no update will occur
         /// </param>
-        /// <remarks></remarks>
         /// <returns>Debug level</returns>
         protected bool GetCurrentMgrDebugLevelFromDB(int updateIntervalSeconds)
         {
@@ -1640,7 +1629,6 @@ namespace AnalysisManagerBase
         /// <param name="mgrParams">Manager params</param>
         /// <param name="debugLevel">Input/Output parameter: set to the current debug level, will be updated to the debug level in the manager control DB</param>
         /// <returns>True for success; False for error</returns>
-        /// <remarks></remarks>
         public static bool GetCurrentMgrDebugLevelFromDB(int updateIntervalSeconds, IMgrParams mgrParams, ref short debugLevel)
         {
             try
@@ -1733,7 +1721,6 @@ namespace AnalysisManagerBase
         /// Determine the path to java.exe
         /// </summary>
         /// <returns>The path to the java.exe, or an empty string if the manager parameter is not defined or if java.exe does not exist</returns>
-        /// <remarks></remarks>
         protected string GetJavaProgLoc()
         {
             var javaProgLoc = GetJavaProgLoc(mMgrParams, out var errorMessage);
@@ -1753,7 +1740,6 @@ namespace AnalysisManagerBase
         /// Determine the path to java.exe
         /// </summary>
         /// <returns>The path to the java.exe, or an empty string if the manager parameter is not defined or if java.exe does not exist</returns>
-        /// <remarks></remarks>
         public static string GetJavaProgLoc(IMgrParams mgrParams, out string errorMessage)
         {
             string paramName;
@@ -1793,8 +1779,6 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Returns the full path to the program to use for converting a dataset to a .mzXML file
         /// </summary>
-        /// <returns></returns>
-        /// <remarks></remarks>
         protected string GetMSXmlGeneratorAppPath()
         {
             var msXmlGeneratorExe = GetMSXmlGeneratorExeName();
@@ -1822,8 +1806,6 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Returns the name of the .Exe to use to convert a dataset to a .mzXML file
         /// </summary>
-        /// <returns></returns>
-        /// <remarks></remarks>
         protected string GetMSXmlGeneratorExeName()
         {
             // Determine the path to the XML Generator
@@ -1993,7 +1975,6 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Lookup the base transfer directory path
         /// </summary>
-        /// <returns></returns>
         /// <remarks>For example, \\proto-7\DMS3_XFER\</remarks>
         protected string GetTransferFolderPath()
         {
@@ -2012,7 +1993,6 @@ namespace AnalysisManagerBase
         /// Gets the .zip file path to create when zipping a single file
         /// </summary>
         /// <param name="sourceFilePath"></param>
-        /// <returns></returns>
         public string GetZipFilePathForFile(string sourceFilePath)
         {
             return clsDotNetZipTools.GetZipFilePathForFile(sourceFilePath);
@@ -2023,7 +2003,6 @@ namespace AnalysisManagerBase
         /// Output directory is mWorkDir
         /// </summary>
         /// <param name="gzipFilePath">File to decompress</param>
-        /// <returns></returns>
         public bool GUnzipFile(string gzipFilePath)
         {
             return GUnzipFile(gzipFilePath, mWorkDir);
@@ -2034,7 +2013,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="gzipFilePath">File to unzip</param>
         /// <param name="targetDirectory">Target directory for the extracted files</param>
-        /// <returns></returns>
         public bool GUnzipFile(string gzipFilePath, string targetDirectory)
         {
             mDotNetZipTools.DebugLevel = mDebugLevel;
@@ -2204,7 +2182,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="dataPackageDatasets"></param>
         /// <returns>True if a data package is defined and it has datasets associated with it</returns>
-        /// <remarks></remarks>
         protected bool LoadDataPackageDatasetInfo(out Dictionary<int, clsDataPackageDatasetInfo> dataPackageDatasets)
         {
             // Gigasax.DMS_Pipeline
@@ -2256,7 +2233,6 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Loads the job settings file
         /// </summary>
-        /// <remarks></remarks>
         /// <returns>True if successfully loaded, false if an error</returns>
         protected bool LoadSettingsFile()
         {
@@ -2288,7 +2264,6 @@ namespace AnalysisManagerBase
         /// <param name="paramFileEntries">Output: List of setting names and values read from the parameter file</param>
         /// <param name="paramFileReader">Output: Parameter file reader instance</param>
         /// <param name="removeComments">When true, remove # delimited comments from setting values</param>
-        /// <returns></returns>
         protected CloseOutType LoadSettingsFromKeyValueParameterFile(
             string toolName,
             string parameterFileName,
@@ -2312,7 +2287,6 @@ namespace AnalysisManagerBase
         /// <param name="paramFileEntries">Output: List of setting names and values read from the parameter file</param>
         /// <param name="paramFileReader">Output: Parameter file reader instance</param>
         /// <param name="removeComments">When true, remove # delimited comments from setting values</param>
-        /// <returns></returns>
         protected CloseOutType LoadSettingsFromKeyValueParameterFile(
             string toolName,
             string workingDirectoryPath,
@@ -2430,7 +2404,6 @@ namespace AnalysisManagerBase
         /// Creates a results directory after analysis complete
         /// </summary>
         /// <returns>True if success, otherwise false</returns>
-        /// <remarks></remarks>
         protected bool MakeResultsDirectory()
         {
             mStatusTools.UpdateAndWrite(EnumMgrStatus.RUNNING, EnumTaskStatus.RUNNING, EnumTaskStatusDetail.PACKAGING_RESULTS, 0);
@@ -2461,7 +2434,6 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Makes results directory and moves files into it
         /// </summary>
-        /// <returns></returns>
         protected bool MoveResultFiles()
         {
             const int REJECT_LOGGING_THRESHOLD = 10;
@@ -2707,7 +2679,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="oJobParams"></param>
         /// <param name="parameterName"></param>
-        /// <returns></returns>
         public static string NotifyMissingParameter(IJobParams oJobParams, string parameterName)
         {
             var settingsFile = oJobParams.GetJobParameter("SettingsFileName", "?UnknownSettingsFile?");
@@ -2747,7 +2718,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="path"></param>
         /// <returns>The path (updated if necessary)</returns>
-        /// <remarks></remarks>
         public static string PossiblyQuotePath(string path)
         {
             return clsGlobal.PossiblyQuotePath(path);
@@ -3086,7 +3056,6 @@ namespace AnalysisManagerBase
         /// Updates the dataset name to the final directory name in the transferFolderPath job parameter
         /// Updates the transfer directory path to remove the final directory name
         /// </summary>
-        /// <remarks></remarks>
         protected void RedefineAggregationJobDatasetAndTransferFolder()
         {
             var transferDirectoryPath = mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH);
@@ -3276,7 +3245,6 @@ namespace AnalysisManagerBase
         /// Major work is performed by overrides
         /// </summary>
         /// <returns>CloseoutType enum representing completion status</returns>
-        /// <remarks></remarks>
         public virtual CloseOutType RunTool()
         {
             // Make log entry
@@ -3296,7 +3264,6 @@ namespace AnalysisManagerBase
         /// <param name="textFilePath">File to sort</param>
         /// <param name="sortedFilePath">File to write the sorted data to</param>
         /// <param name="hasHeaderLine">True if the source file has a header line</param>
-        /// <returns></returns>
         protected bool SortTextFile(string textFilePath, string sortedFilePath, bool hasHeaderLine)
         {
             try
@@ -3397,7 +3364,6 @@ namespace AnalysisManagerBase
         /// <param name="toolVersionInfo">Version info string to append the version info to</param>
         /// <param name="dllFilePath">Path to the DLL</param>
         /// <returns>True if success; false if an error</returns>
-        /// <remarks></remarks>
         public bool StoreToolVersionInfoOneFile(ref string toolVersionInfo, string dllFilePath)
         {
             return mToolVersionUtilities.StoreToolVersionInfoOneFile(ref toolVersionInfo, dllFilePath);
@@ -3409,7 +3375,6 @@ namespace AnalysisManagerBase
         /// <param name="sourceDirectoryPath"></param>
         /// <param name="targetDirectoryPath"></param>
         /// <returns>True if success, false if an error</returns>
-        /// <remarks></remarks>
         protected bool SynchronizeFolders(string sourceDirectoryPath, string targetDirectoryPath)
         {
             return SynchronizeFolders(sourceDirectoryPath, targetDirectoryPath, "*");
@@ -3422,7 +3387,6 @@ namespace AnalysisManagerBase
         /// <param name="targetDirectoryPath"></param>
         /// <param name="copySubdirectories">If true, recursively copies subdirectories</param>
         /// <returns>True if success, false if an error</returns>
-        /// <remarks></remarks>
         protected bool SynchronizeFolders(string sourceDirectoryPath, string targetDirectoryPath, bool copySubdirectories)
         {
             var fileNameFilterSpecs = new List<string> { "*" };
@@ -3493,7 +3457,6 @@ namespace AnalysisManagerBase
         /// <param name="fileNameExclusionSpecs">One or more filename filters for excluding files; can use * as a wildcard</param>
         /// <param name="maxRetryCount">Will retry failed copies up to maxRetryCount times; use 0 for no retries</param>
         /// <returns>True if success, false if an error</returns>
-        /// <remarks></remarks>
         protected bool SynchronizeFolders(string sourceDirectoryPath, string targetDirectoryPath, List<string> fileNameFilterSpecs, List<string> fileNameExclusionSpecs, int maxRetryCount)
         {
             const bool copySubdirectories = false;
@@ -3510,7 +3473,6 @@ namespace AnalysisManagerBase
         /// <param name="maxRetryCount">Will retry failed copies up to maxRetryCount times; use 0 for no retries</param>
         /// <param name="copySubdirectories">If true, recursively copies subdirectories</param>
         /// <returns>True if success, false if an error</returns>
-        /// <remarks></remarks>
         protected bool SynchronizeFolders(
             string sourceDirectoryPath,
             string targetDirectoryPath,
@@ -3709,7 +3671,6 @@ namespace AnalysisManagerBase
         /// Output directory is mWorkDir
         /// </summary>
         /// <param name="zipFilePath">File to unzip</param>
-        /// <remarks></remarks>
         /// <returns>True if successful, false if a problem</returns>
         public bool UnzipFile(string zipFilePath)
         {
@@ -3722,8 +3683,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="zipFilePath">File to unzip</param>
         /// <param name="targetDirectory">Target directory for the extracted files</param>
-        /// <returns></returns>
-        /// <remarks></remarks>
         /// <returns>True if successful, false if a problem</returns>
         public bool UnzipFile(string zipFilePath, string targetDirectory)
         {
@@ -3737,7 +3696,6 @@ namespace AnalysisManagerBase
         /// <param name="zipFilePath">File to unzip</param>
         /// <param name="targetDirectory">Target directory for the extracted files</param>
         /// <param name="FileFilter">FilterSpec to apply, for example *.txt</param>
-        /// <remarks></remarks>
         /// <returns>True if successful, false if a problem</returns>
         public bool UnzipFile(string zipFilePath, string targetDirectory, string FileFilter)
         {
@@ -3887,7 +3845,6 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Update Status.xml every 15 seconds using mProgress
         /// </summary>
-        /// <remarks></remarks>
         protected void UpdateStatusFile()
         {
             UpdateStatusFile(mProgress);
@@ -3897,7 +3854,6 @@ namespace AnalysisManagerBase
         /// Update Status.xml every 15 seconds using percentComplete
         /// </summary>
         /// <param name="percentComplete">Percent complete</param>
-        /// <remarks></remarks>
         protected void UpdateStatusFile(float percentComplete)
         {
             const int frequencySeconds = 15;
@@ -3909,7 +3865,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="percentComplete">Percent complete</param>
         /// <param name="frequencySeconds">Minimum time between updates, in seconds (must be at least 5)</param>
-        /// <remarks></remarks>
         protected void UpdateStatusFile(float percentComplete, int frequencySeconds)
         {
             if (frequencySeconds < 5)
@@ -3946,7 +3901,6 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Update Status.xml now using mProgress
         /// </summary>
-        /// <remarks></remarks>
         protected void UpdateStatusRunning()
         {
             UpdateStatusRunning(mProgress);
@@ -3956,7 +3910,6 @@ namespace AnalysisManagerBase
         /// Update Status.xml now using percentComplete
         /// </summary>
         /// <param name="percentComplete"></param>
-        /// <remarks></remarks>
         protected void UpdateStatusRunning(float percentComplete)
         {
             mProgress = percentComplete;
@@ -3968,7 +3921,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="percentComplete"></param>
         /// <param name="spectrumCountTotal"></param>
-        /// <remarks></remarks>
         protected void UpdateStatusRunning(float percentComplete, int spectrumCountTotal)
         {
             mProgress = percentComplete;
@@ -3979,7 +3931,6 @@ namespace AnalysisManagerBase
         /// Make sure the _DTA.txt file exists and has at least one spectrum in it
         /// </summary>
         /// <returns>True if success; false if failure</returns>
-        /// <remarks></remarks>
         protected bool ValidateCDTAFile()
         {
             var dtaFilePath = Path.Combine(mWorkDir, Dataset + clsAnalysisResources.CDTA_EXTENSION);
@@ -3991,7 +3942,6 @@ namespace AnalysisManagerBase
         /// Validate that a _dta.txt file is not empty
         /// </summary>
         /// <param name="dtaFilePath"></param>
-        /// <returns></returns>
         protected bool ValidateCDTAFile(string dtaFilePath)
         {
             var dataFound = false;

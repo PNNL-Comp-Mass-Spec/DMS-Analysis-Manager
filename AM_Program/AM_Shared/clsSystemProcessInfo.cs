@@ -32,7 +32,6 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Clear the performance counter cached for the given Process ID
         /// </summary>
-        /// <remarks></remarks>
         public void ClearCachedPerformanceCounterForProcessID(int processId)
         {
             mWindowsProcessStats?.ClearCachedPerformanceCounterForProcessID(processId);
@@ -41,7 +40,6 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Report the number of cores
         /// </summary>
-        /// <returns></returns>
         public int GetCoreCount()
         {
             if (clsGlobal.LinuxOS)
@@ -70,7 +68,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="processName">Process name</param>
         /// <param name="processIDs">Output: process IDs associated with the process</param>
-        /// <returns></returns>
         public float GetCoreUsageByProcessName(string processName, out List<int> processIDs)
         {
             if (clsGlobal.LinuxOS)
@@ -102,7 +99,6 @@ namespace AnalysisManagerBase
         /// Determine the core usage for a given process (by ID)
         /// </summary>
         /// <param name="processID"></param>
-        /// <returns></returns>
         public float GetCoreUsageByProcessID(int processID)
         {
             if (clsGlobal.LinuxOS)

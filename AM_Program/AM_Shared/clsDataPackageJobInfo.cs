@@ -56,17 +56,11 @@ namespace AnalysisManagerBase
         /// <summary>
         /// NEWT ID for Experiment_Organism; see https://dms2.pnl.gov/ontology/report/NEWT/
         /// </summary>
-        /// <value></value>
-        /// <returns></returns>
-        /// <remarks></remarks>
         public int Experiment_NEWT_ID { get; set; }
 
         /// <summary>
         /// NEWT Name for Experiment_Organism; see https://dms2.pnl.gov/ontology/report/NEWT/
         /// </summary>
-        /// <value></value>
-        /// <returns></returns>
-        /// <remarks></remarks>
         public string Experiment_NEWT_Name { get; set; }
 
         /// <summary>
@@ -77,8 +71,6 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Number of steps in a split fasta job
         /// </summary>
-        /// <value></value>
-        /// <returns></returns>
         /// <remarks>0 if not a split fasta job</remarks>
         public int NumberOfClonedSteps { get; set; }
 
@@ -105,8 +97,6 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Generated Fasta File Name or legacy fasta file name
         /// </summary>
-        /// <value></value>
-        /// <returns></returns>
         /// <remarks>
         /// For jobs where ProteinCollectionList = 'na', this is the legacy fasta file name
         /// Otherwise, this is the generated fasta file name (or "na")
@@ -131,13 +121,11 @@ namespace AnalysisManagerBase
         /// <summary>
         /// the directory (on the storage server) just above the dataset directory
         /// </summary>
-        /// <returns></returns>
         public string ServerStoragePath { get; set; }
 
         /// <summary>
         /// The directory (in the archive) just above the dataset directory
         /// </summary>
-        /// <returns></returns>
         public string ArchiveStoragePath { get; set; }
 
         /// <summary>
@@ -163,7 +151,6 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <remarks></remarks>
         public clsDataPackageJobInfo(int job, string datasetName)
         {
             Job = job;
@@ -199,7 +186,6 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Return job number and dataset name
         /// </summary>
-        /// <returns></returns>
         public override string ToString()
         {
             return Job + ": " + Dataset;

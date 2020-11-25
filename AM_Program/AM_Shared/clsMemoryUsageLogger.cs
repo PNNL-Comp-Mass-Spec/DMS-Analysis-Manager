@@ -61,17 +61,12 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Output folder for the log file
         /// </summary>
-        /// <value></value>
-        /// <returns></returns>
         /// <remarks>If this is an empty string, the log file is created in the working directory</remarks>
         public string LogFolderPath { get; }
 
         /// <summary>
         /// The minimum interval between appending a new memory usage entry to the log
         /// </summary>
-        /// <value></value>
-        /// <returns></returns>
-        /// <remarks></remarks>
         public float MinimumLogIntervalMinutes
         {
             get => mMinimumMemoryUsageLogIntervalMinutes;
@@ -168,7 +163,6 @@ namespace AnalysisManagerBase
         /// Returns the amount of free memory on the current machine
         /// </summary>
         /// <returns>Free memory, in MB</returns>
-        /// <remarks></remarks>
         public float GetFreeMemoryMB()
         {
             if (clsGlobal.LinuxOS)
@@ -200,7 +194,6 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Memory usage header
         /// </summary>
-        /// <returns></returns>
         private string GetMemoryUsageHeader()
         {
             return
@@ -215,7 +208,6 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Summarize memory usage
         /// </summary>
-        /// <returns></returns>
         private string GetMemoryUsageSummary()
         {
             if (!mPerfCountersInitialized)
@@ -264,7 +256,6 @@ namespace AnalysisManagerBase
         /// Returns the amount of pool NonPaged memory on the current machine
         /// </summary>
         /// <returns>Pool NonPaged memory, in MB</returns>
-        /// <remarks></remarks>
         public float GetPoolNonPagedMemory()
         {
             try
@@ -287,7 +278,6 @@ namespace AnalysisManagerBase
         /// Returns the amount of pool paged memory on the current machine
         /// </summary>
         /// <returns>Pool Paged memory, in MB</returns>
-        /// <remarks></remarks>
         public float GetPoolPagedMemory()
         {
             try
@@ -310,7 +300,6 @@ namespace AnalysisManagerBase
         /// Returns the amount of memory that the currently running process is using
         /// </summary>
         /// <returns>Memory usage, in MB</returns>
-        /// <remarks></remarks>
         public float GetProcessMemoryUsageMB()
         {
             try

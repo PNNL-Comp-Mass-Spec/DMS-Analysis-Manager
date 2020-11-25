@@ -29,7 +29,6 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Clears summary file data
         /// </summary>
-        /// <remarks></remarks>
         public void Clear()
         {
             mLines.Clear();
@@ -40,7 +39,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="AnalysisSummaryFilePath">Full path of summary file to create</param>
         /// <returns>TRUE for success; FALSE for failure</returns>
-        /// <remarks></remarks>
         public bool SaveSummaryFile(string AnalysisSummaryFilePath)
         {
             try
@@ -65,7 +63,6 @@ namespace AnalysisManagerBase
         /// Adds a line of data to summary file
         /// </summary>
         /// <param name="line">Data to be added</param>
-        /// <remarks></remarks>
         public void Add(string line)
         {
             mLines.Add(line);

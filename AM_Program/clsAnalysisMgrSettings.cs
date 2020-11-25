@@ -155,7 +155,6 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Disable the manager by changing MgrActive_Local to False in AnalysisManagerProg.exe.config
         /// </summary>
-        /// <returns></returns>
         public bool DisableManagerLocally()
         {
             return WriteConfigSetting(MGR_PARAM_MGR_ACTIVE_LOCAL, "False");
@@ -166,7 +165,6 @@ namespace AnalysisManagerProg
         /// </summary>
         /// <param name="configFileSettings">Manager settings loaded from file AppName.exe.config</param>
         /// <returns>True if successful; False on error</returns>
-        /// <remarks></remarks>
         public bool LoadSettings(Dictionary<string, string> configFileSettings)
         {
             var loadSettingsFromDB = !clsGlobal.OfflineMode;
@@ -207,7 +205,6 @@ namespace AnalysisManagerProg
         /// Retrieves the manager and global settings from the Manager Control and Broker databases
         /// Or, if clsGlobal.OfflineMode is true, load settings from file ManagerSettingsLocal.xml
         /// </summary>
-        /// <returns></returns>
         public bool LoadDBSettings()
         {
             if (clsGlobal.OfflineMode)
@@ -232,7 +229,6 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Update MgrParams using settings in file ManagerSettingsLocal.xml
         /// </summary>
-        /// <returns></returns>
         private bool LoadLocalSettings()
         {
             var settings = ReadLocalSettingsFile();
@@ -291,7 +287,6 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Read settings from file ManagerSettingsLocal.xml
         /// </summary>
-        /// <returns></returns>
         private Dictionary<string, string> ReadLocalSettingsFile()
         {
             XmlDocument configDoc;
@@ -355,7 +350,6 @@ namespace AnalysisManagerProg
         /// </summary>
         /// <param name="retryCount">Number of times to retry (in case of a problem)</param>
         /// <returns>True for success; False for error</returns>
-        /// <remarks></remarks>
         private bool LoadBrokerDBSettings(short retryCount = 6)
         {
             // Retrieves global settings from the Broker DB. Performs retries if necessary.
@@ -521,7 +515,6 @@ namespace AnalysisManagerProg
         /// Loads an app config file for changing parameters
         /// </summary>
         /// <returns>App config file as an XML document if successful; NOTHING on failure</returns>
-        /// <remarks></remarks>
         private XmlDocument LoadConfigDocument()
         {
             try

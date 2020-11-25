@@ -32,7 +32,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="filePath">Path of file not found</param>
         /// <param name="errorMessage">Exception message</param>
-        /// <remarks></remarks>
         public AMFileNotFoundException(string filePath, string errorMessage) : base(errorMessage)
         {
             FilePath = filePath;
@@ -63,7 +62,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="folderPath">Path of folder not found</param>
         /// <param name="errorMessage">Exception message</param>
-        /// <remarks></remarks>
         public AMFolderNotFoundException(string folderPath, string errorMessage) : base(errorMessage)
         {
             FolderPath = folderPath;
@@ -119,7 +117,6 @@ namespace AnalysisManagerBase
         /// <param name="filePath">Path of file that could not be deleted</param>
         /// <param name="ExceptionType">Exception type</param>
         /// <param name="errorMessage">Exception message</param>
-        /// <remarks></remarks>
         public AMFileNotDeletedAfterRetryException(string filePath, RetryExceptionType ExceptionType, string errorMessage) : base(errorMessage)
         {
             FilePath = filePath;
@@ -150,7 +147,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="filePath">Path of file that could not be deleted</param>
         /// <param name="errorMessage">Exception message</param>
-        /// <remarks></remarks>
         public AMFileNotDeletedException(string filePath, string errorMessage) : base(errorMessage)
         {
             FilePath = filePath;

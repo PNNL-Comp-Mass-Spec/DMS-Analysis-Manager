@@ -50,34 +50,22 @@ namespace AnalysisManagerBase
         /// BTO ID for Experiment_Tissue; see https://dms2.pnl.gov/tissue/report
         /// For example, BTO:0000131
         /// </summary>
-        /// <value></value>
-        /// <returns></returns>
-        /// <remarks></remarks>
         public string Experiment_Tissue_ID { get; set; }
 
         /// <summary>
         /// Experiment_Tissue name; see https://dms2.pnl.gov/tissue/report
         /// For example, blood plasma
         /// </summary>
-        /// <value></value>
-        /// <returns></returns>
-        /// <remarks></remarks>
         public string Experiment_Tissue_Name { get; set; }
 
         /// <summary>
         /// NEWT ID for Experiment_Organism; see https://dms2.pnl.gov/ontology/report/NEWT/
         /// </summary>
-        /// <value></value>
-        /// <returns></returns>
-        /// <remarks></remarks>
         public int Experiment_NEWT_ID { get; set; }
 
         /// <summary>
         /// NEWT Name for Experiment_Organism; see https://dms2.pnl.gov/ontology/report/NEWT/
         /// </summary>
-        /// <value></value>
-        /// <returns></returns>
-        /// <remarks></remarks>
         public string Experiment_NEWT_Name { get; set; }
 
         /// <summary>
@@ -98,7 +86,6 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <remarks></remarks>
         public clsDataPackageDatasetInfo(string datasetName, int datasetId)
         {
             Dataset = datasetName;

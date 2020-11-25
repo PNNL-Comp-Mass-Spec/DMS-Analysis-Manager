@@ -273,7 +273,6 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// This option is used by the MSGFPlusIndexFileCopier program when switch /X is provided
         /// </param>
         /// <param name="errorMessage"></param>
-        /// <returns></returns>
         /// <remarks>This function is used both by this class and by the MSGFPlusIndexFileCopier console application</remarks>
         public static bool CopyIndexFilesToRemote(FileInfo fastaFile, string remoteIndexDirPath, int debugLevel, string managerName,
                                                   bool createIndexFileForExistingFiles, out string errorMessage)
@@ -391,7 +390,6 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// (.fasta files not created from the protein sequences database)
         /// </param>
         /// <returns>CloseOutType enum indicating success or failure</returns>
-        /// <remarks></remarks>
         public CloseOutType CreateSuffixArrayFiles(string logFileDir, short debugLevel, string javaProgLoc, string msgfPlusProgLoc,
                                                    string fastaFilePath, bool fastaFileIsDecoy, string msgfPlusIndexFilesDirPathBase,
                                                    string msgfPlusIndexFilesDirPathLegacyDB)
@@ -1044,7 +1042,6 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <param name="existingFileList">Output param: semicolon separated list of existing files</param>
         /// <param name="missingFiles">Output param: semicolon separated list of missing files</param>
         /// <returns>A list of the files that currently exist</returns>
-        /// <remarks></remarks>
         private List<FileInfo> FindExistingSuffixArrayFiles(
             bool fastaFileIsDecoy, string outputNameBase,
             string directoryPathToSearch, ICollection<string> filesToFind,
@@ -1109,7 +1106,6 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// Check whether jarFilePath matches MSGFDB.jar
         /// </summary>
         /// <param name="jarFilePath"></param>
-        /// <returns></returns>
         public bool IsMSGFPlus(string jarFilePath)
         {
             const string MSGFDB_JAR_NAME = "MSGFDB.jar";
@@ -1130,8 +1126,6 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// Look for errors in the console output file created by the call to BuildSA
         /// </summary>
         /// <param name="consoleOutputFilePath"></param>
-        /// <returns></returns>
-        /// <remarks></remarks>
         private string ParseConsoleOutputFile(string consoleOutputFilePath)
         {
             try
@@ -1280,7 +1274,6 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <param name="dtMinWriteTimeThresholdUTC"></param>
         /// <param name="verifyingRemoteDirectory">True when validating files on a remote server, false if verifying the local DMS_Temp_Org directory</param>
         /// <returns>True if all files are found and are the right size</returns>
-        /// <remarks></remarks>
         private bool ValidateFiles(string directoryPathToCheck, Dictionary<string, long> filesToCopy, bool usingLegacyFasta,
                                    DateTime dtMinWriteTimeThresholdUTC, bool verifyingRemoteDirectory)
         {

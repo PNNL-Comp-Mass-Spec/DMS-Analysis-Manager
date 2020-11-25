@@ -131,7 +131,6 @@ namespace AnalysisManagerBase
         /// <param name="baseComment">Initial comment</param>
         /// <param name="addnlComment">Comment to be appended</param>
         /// <returns>String containing both comments</returns>
-        /// <remarks></remarks>
         public static string AppendToComment(string baseComment, string addnlComment)
         {
             if (string.IsNullOrWhiteSpace(baseComment))
@@ -162,7 +161,6 @@ namespace AnalysisManagerBase
         /// Convert Bytes to Gigabytes
         /// </summary>
         /// <param name="bytes"></param>
-        /// <returns></returns>
         public static double BytesToGB(long bytes)
         {
             return bytes / 1024.0 / 1024.0 / 1024.0;
@@ -172,7 +170,6 @@ namespace AnalysisManagerBase
         /// Convert Bytes to Megabytes
         /// </summary>
         /// <param name="bytes"></param>
-        /// <returns></returns>
         public static double BytesToMB(long bytes)
         {
             return bytes / 1024.0 / 1024.0;
@@ -185,7 +182,6 @@ namespace AnalysisManagerBase
         /// <param name="textIfOneItem"></param>
         /// <param name="textIfZeroOrMultiple"></param>
         /// <returns>Returns textIfOneItem if count is 1; otherwise, returns textIfZeroOrMultiple</returns>
-        /// <remarks></remarks>
         public static string CheckPlural(int count, string textIfOneItem, string textIfZeroOrMultiple)
         {
             if (count == 1)
@@ -234,8 +230,6 @@ namespace AnalysisManagerBase
         /// Collapse an array of items to a tab-delimited list
         /// </summary>
         /// <param name="items"></param>
-        /// <returns></returns>
-        /// <remarks></remarks>
         public static string CollapseLine(string[] items)
         {
             if (items == null || items.Length == 0)
@@ -250,8 +244,6 @@ namespace AnalysisManagerBase
         /// Collapse a list of items to a tab-delimited list
         /// </summary>
         /// <param name="fieldNames"></param>
-        /// <returns></returns>
-        /// <remarks></remarks>
         public static string CollapseList(List<string> fieldNames)
         {
             return FlattenList(fieldNames, "\t");
@@ -288,7 +280,6 @@ namespace AnalysisManagerBase
         /// Delete the lock file for the corresponding data file
         /// </summary>
         /// <param name="dataFilePath"></param>
-        /// <remarks></remarks>
         public static void DeleteLockFile(string dataFilePath)
         {
             try
@@ -330,8 +321,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="itemList"></param>
         /// <param name="delimiter"></param>
-        /// <returns></returns>
-        /// <remarks></remarks>
         public static string FlattenList(List<string> itemList, string delimiter)
         {
             if (itemList == null || itemList.Count == 0)
@@ -430,7 +419,6 @@ namespace AnalysisManagerBase
         /// <param name="timeoutSeconds">Query timeout (in seconds); minimum is 5 seconds; suggested value is 30 seconds</param>
         /// <param name="callingFunction">Name of the calling function</param>
         /// <returns>True if success, false if an error</returns>
-        /// <remarks></remarks>
         [Obsolete("Use PRISMDatabaseUtils.DbToolsFactory.GetDBTools(...).GetQueryResultsDataTable(...)", true)]
         public static bool GetDataTableByQuery(
             string sqlStr,
@@ -456,7 +444,6 @@ namespace AnalysisManagerBase
         /// <param name="timeoutSeconds">Query timeout (in seconds); minimum is 5 seconds; suggested value is 30 seconds</param>
         /// <param name="callingFunction">Name of the calling function</param>
         /// <returns>True if success, false if an error</returns>
-        /// <remarks></remarks>
         [Obsolete("Use PRISMDatabaseUtils.DbToolsFactory.GetDBTools(...).GetQueryResultsDataTable(...)", true)]
         public static bool GetDataTableByCmd(
             System.Data.SqlClient.SqlCommand cmd,
@@ -553,7 +540,6 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Determine the version of .NET that is running
         /// </summary>
-        /// <returns></returns>
         public static string GetDotNetVersion()
         {
             try
@@ -690,7 +676,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="ex"></param>
         /// <returns>String similar to "Stack trace: clsCodeTest.Test-:-clsCodeTest.TestException-:-clsCodeTest.InnerTestException in clsCodeTest.vb:line 86"</returns>
-        /// <remarks></remarks>
         public static string GetExceptionStackTrace(Exception ex)
         {
             return GetExceptionStackTrace(ex, false);
@@ -702,7 +687,6 @@ namespace AnalysisManagerBase
         /// <param name="ex"></param>
         /// <param name="multiLineOutput">When true, format the stack trace using newline characters instead of -:-</param>
         /// <returns>String similar to "Stack trace: clsCodeTest.Test-:-clsCodeTest.TestException-:-clsCodeTest.InnerTestException in clsCodeTest.vb:line 86"</returns>
-        /// <remarks></remarks>
         public static string GetExceptionStackTrace(Exception ex, bool multiLineOutput)
         {
             if (multiLineOutput)
@@ -827,7 +811,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="filePath"></param>
         /// <returns>filePath as-is if no spaces, otherwise filePath surrounded by double quotes </returns>
-        /// <remarks></remarks>
         public static string PossiblyQuotePath(string filePath)
         {
             return PathUtils.PossiblyQuotePath(filePath);
@@ -840,7 +823,6 @@ namespace AnalysisManagerBase
         /// <param name="colIndex"></param>
         /// <param name="value"></param>
         /// <returns>True if success; false if colIndex is less than 0 or colIndex is out of range for dataColumns()</returns>
-        /// <remarks></remarks>
         public static bool TryGetValue(string[] dataColumns, int colIndex, out string value)
         {
             return PRISM.DataUtils.StringToValueUtils.TryGetValue(dataColumns, colIndex, out value);
@@ -853,7 +835,6 @@ namespace AnalysisManagerBase
         /// <param name="colIndex"></param>
         /// <param name="value"></param>
         /// <returns>True if success; false if colIndex is less than 0, colIndex is out of range for dataColumns(), or the text cannot be converted to an integer</returns>
-        /// <remarks></remarks>
         public static bool TryGetValueInt(string[] dataColumns, int colIndex, out int value)
         {
             return PRISM.DataUtils.StringToValueUtils.TryGetValueInt(dataColumns, colIndex, out value);
@@ -866,7 +847,6 @@ namespace AnalysisManagerBase
         /// <param name="colIndex"></param>
         /// <param name="value"></param>
         /// <returns>True if success; false if colIndex is less than 0, colIndex is out of range for dataColumns(), or the text cannot be converted to a float</returns>
-        /// <remarks></remarks>
         public static bool TryGetValueFloat(string[] dataColumns, int colIndex, out float value)
         {
             return PRISM.DataUtils.StringToValueUtils.TryGetValueFloat(dataColumns, colIndex, out value);
@@ -876,7 +856,6 @@ namespace AnalysisManagerBase
         /// Converts a string value to a boolean equivalent
         /// </summary>
         /// <param name="value"></param>
-        /// <returns></returns>
         /// <remarks>Returns false if an exception</remarks>
         public static bool CBoolSafe(string value)
         {
@@ -888,7 +867,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="value"></param>
         /// <param name="defaultValue">Boolean value to return if value is empty or an exception occurs</param>
-        /// <returns></returns>
         /// <remarks>Returns false if an exception</remarks>
         public static bool CBoolSafe(string value, bool defaultValue)
         {
@@ -900,8 +878,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="value"></param>
         /// <param name="defaultValue">Integer to return if value is not numeric</param>
-        /// <returns></returns>
-        /// <remarks></remarks>
         public static int CIntSafe(string value, int defaultValue)
         {
             return PRISM.DataUtils.StringToValueUtils.CIntSafe(value, defaultValue);
@@ -912,8 +888,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="value"></param>
         /// <param name="defaultValue">Float to return if value is not numeric</param>
-        /// <returns></returns>
-        /// <remarks></remarks>
         public static float CSngSafe(string value, float defaultValue)
         {
             return PRISM.DataUtils.StringToValueUtils.CFloatSafe(value, defaultValue);
@@ -929,7 +903,6 @@ namespace AnalysisManagerBase
         /// <param name="targetFileName"></param>
         /// <param name="versionCountToKeep">Maximum backup copies of the file to keep; must be 9 or less</param>
         /// <returns>True if Success, false if failure </returns>
-        /// <remarks></remarks>
         public static bool CopyAndRenameFileWithBackup(string sourceFilePath, string targetDirectoryPath, string targetFileName, int versionCountToKeep)
         {
             try
@@ -1009,8 +982,6 @@ namespace AnalysisManagerBase
         /// Computes the MD5 hash for a file
         /// </summary>
         /// <param name="filePath"></param>
-        /// <returns></returns>
-        /// <remarks></remarks>
         [Obsolete("Use PRISM.HashUtilities.ComputeFileHashMD5")]
         public static string ComputeFileHashMD5(string filePath)
         {
@@ -1021,8 +992,6 @@ namespace AnalysisManagerBase
         /// Computes the MD5 hash for a string
         /// </summary>
         /// <param name="text"></param>
-        /// <returns></returns>
-        /// <remarks></remarks>
         [Obsolete("Use PRISM.HashUtilities.ComputeStringHashMD5")]
         public static string ComputeStringHashMD5(string text)
         {
@@ -1033,8 +1002,6 @@ namespace AnalysisManagerBase
         /// Computes the SHA-1 hash for a file
         /// </summary>
         /// <param name="filePath"></param>
-        /// <returns></returns>
-        /// <remarks></remarks>
         [Obsolete("Use PRISM.HashUtilities.ComputeFileHashSha1")]
         public static string ComputeFileHashSha1(string filePath)
         {
@@ -1045,8 +1012,6 @@ namespace AnalysisManagerBase
         /// Computes the SHA-1 hash for a string
         /// </summary>
         /// <param name="text"></param>
-        /// <returns></returns>
-        /// <remarks></remarks>
         [Obsolete("Use PRISM.HashUtilities.ComputeStringHashSha1")]
         public static string ComputeStringHashSha1(string text)
         {
@@ -1060,7 +1025,6 @@ namespace AnalysisManagerBase
         /// <param name="dataFilePath"></param>
         /// <param name="computeMD5Hash">If True, computes the MD5 hash, otherwise creates a hashcheck file with an empty string for the hash</param>
         /// <returns>The full path to the .hashcheck file; empty string if a problem</returns>
-        /// <remarks></remarks>
         public static string CreateHashcheckFile(string dataFilePath, bool computeMD5Hash)
         {
             string md5Hash;
@@ -1091,7 +1055,6 @@ namespace AnalysisManagerBase
         /// <param name="dataFilePath"></param>
         /// <param name="md5Hash"></param>
         /// <returns>The full path to the .hashcheck file; empty string if a problem</returns>
-        /// <remarks></remarks>
         [Obsolete("Use PRISM.HashUtilities.CreateHashcheckFile and specify the hash type")]
         public static string CreateHashcheckFile(string dataFilePath, string md5Hash)
         {
@@ -1176,7 +1139,6 @@ namespace AnalysisManagerBase
         /// Supports both Windows and Linux paths
         /// </summary>
         /// <param name="targetDirectory"></param>
-        /// <returns></returns>
         public static DriveInfo GetLocalDriveInfo(DirectoryInfo targetDirectory)
         {
             var baseWarningMsg = "Unable to instantiate a DriveInfo object for " + targetDirectory.FullName;
@@ -1235,7 +1197,6 @@ namespace AnalysisManagerBase
         /// Determine the free disk space on the drive with the given directory
         /// </summary>
         /// <param name="targetDirectory"></param>
-        /// <returns></returns>
         private static double GetFreeDiskSpaceLinux(DirectoryInfo targetDirectory)
         {
             var driveInfo = GetLocalDriveInfo(targetDirectory);
@@ -1304,8 +1265,6 @@ namespace AnalysisManagerBase
         /// <param name="textToSearch"></param>
         /// <param name="textToFind"></param>
         /// <param name="replacementText"></param>
-        /// <returns></returns>
-        /// <remarks></remarks>
         public static string ReplaceIgnoreCase(string textToSearch, string textToFind, string replacementText)
         {
             var charIndex = textToSearch.IndexOf(textToFind, StringComparison.OrdinalIgnoreCase);
@@ -1351,8 +1310,6 @@ namespace AnalysisManagerBase
         /// <param name="filePath2">Second file</param>
         /// <param name="ignoreWhitespace">If true, removes white space from the beginning and end of each line before comparing</param>
         /// <param name="lineIgnoreRegExSpecs">List of RegEx match specs that indicate lines to ignore</param>
-        /// <returns></returns>
-        /// <remarks></remarks>
         public static bool TextFilesMatch(string filePath1, string filePath2, bool ignoreWhitespace, List<Regex> lineIgnoreRegExSpecs = null)
         {
             const int comparisonStartLine = 0;
@@ -1369,8 +1326,6 @@ namespace AnalysisManagerBase
         /// <param name="comparisonStartLine">Line at which to start the comparison; if 0 or 1, compares all lines</param>
         /// <param name="comparisonEndLine">Line at which to end the comparison; if 0, compares all the way to the end</param>
         /// <param name="ignoreWhitespace">If true, removes white space from the beginning and end of each line before comparing</param>
-        /// <returns></returns>
-        /// <remarks></remarks>
         public static bool TextFilesMatch(string filePath1, string filePath2, int comparisonStartLine, int comparisonEndLine, bool ignoreWhitespace)
         {
             return TextFilesMatch(filePath1, filePath2, comparisonStartLine, comparisonEndLine, ignoreWhitespace, null);
@@ -1385,8 +1340,6 @@ namespace AnalysisManagerBase
         /// <param name="comparisonEndLine">Line at which to end the comparison; if 0, compares all the way to the end</param>
         /// <param name="ignoreWhitespace">If true, removes whitespace from the beginning and end of each line before comparing</param>
         /// <param name="lineIgnoreRegExSpecs">List of RegEx match specs that indicate lines to ignore</param>
-        /// <returns></returns>
-        /// <remarks></remarks>
         public static bool TextFilesMatch(
             string filePath1, string filePath2,
             int comparisonStartLine, int comparisonEndLine,
@@ -1553,8 +1506,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="sharePath"></param>
         /// <param name="newHostName"></param>
-        /// <returns></returns>
-        /// <remarks></remarks>
         public static string UpdateHostName(string sharePath, string newHostName)
         {
             if (!newHostName.StartsWith(@"\\"))
@@ -1589,8 +1540,6 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Returns True if the computer name is Pub-1000 or higher
         /// </summary>
-        /// <returns></returns>
-        /// <remarks></remarks>
         public static bool UsingVirtualMachineOnPIC()
         {
             var rePub1000 = new Regex(@"Pub-1\d{3,}", RegexOptions.IgnoreCase);

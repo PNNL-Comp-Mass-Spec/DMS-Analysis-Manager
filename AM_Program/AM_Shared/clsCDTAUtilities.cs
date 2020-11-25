@@ -18,7 +18,6 @@ namespace AnalysisManagerBase
         /// Convert a _dta.txt file to a .mgf file
         /// </summary>
         /// <returns>True if success, false if an error</returns>
-        /// <remarks></remarks>
         // ReSharper disable once UnusedMember.Global
         public bool ConvertCDTAToMGF(
             FileInfo cdtaFile,
@@ -228,7 +227,6 @@ namespace AnalysisManagerBase
         /// </param>
         /// <param name="originalFile">File handle to the original CDTA file</param>
         /// <param name="updatedFile">File handle to the new CDTA file</param>
-        /// <remarks></remarks>
         protected void FinalizeCDTAValidation(bool newCDTAFileHasUpdates, bool replaceSourceFile, bool deleteSourceFileIfUpdated,
                                               FileInfo originalFile, FileInfo updatedFile)
         {
@@ -411,8 +409,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="workDir">Folder with the CDTA file</param>
         /// <param name="inputFileName">CDTA filename</param>
-        /// <returns></returns>
-        /// <remarks></remarks>
         public bool ValidateCDTAFileSize(string workDir, string inputFileName)
         {
             const int FILE_SIZE_THRESHOLD = int.MaxValue;

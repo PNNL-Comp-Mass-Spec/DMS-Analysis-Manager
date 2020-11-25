@@ -45,7 +45,6 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Class is waiting until next time it's due to check status of called program (good time for external processing)
         /// </summary>
-        /// <remarks></remarks>
         public event LoopWaitingEventHandler LoopWaiting;
 
         /// <summary>
@@ -56,7 +55,6 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Text that was written to the console
         /// </summary>
-        /// <remarks></remarks>
         public event ConsoleOutputEventEventHandler ConsoleOutputEvent;
 
         /// <summary>
@@ -68,7 +66,6 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Program execution exceeded MaxRuntimeSeconds
         /// </summary>
-        /// <remarks></remarks>
         public event TimeoutEventHandler Timeout;
 
         /// <summary>
@@ -146,9 +143,6 @@ namespace AnalysisManagerBase
         /// File path to which the console output will be written if WriteConsoleOutputToFile is true
         /// If blank, file path will be auto-defined in the WorkDir  when program execution starts
         /// </summary>
-        /// <value></value>
-        /// <returns></returns>
-        /// <remarks></remarks>
         public string ConsoleOutputFilePath { get; set; } = string.Empty;
 
         /// <summary>
@@ -177,7 +171,6 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Maximum amount of time (seconds) that the program will be allowed to run; 0 if allowed to run indefinitely
         /// </summary>
-        /// <value></value>
         public int MaxRuntimeSeconds { get; private set; }
 
         /// <summary>
@@ -290,7 +283,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="workDir">Work directory for input/output files, if any</param>
         /// <param name="debugLevel">Debug level (Higher values mean more log messages)</param>
-        /// <remarks></remarks>
         public clsRunDosProgram(string workDir, int debugLevel = 1)
         {
             WorkDir = workDir;
@@ -310,7 +302,6 @@ namespace AnalysisManagerBase
         /// Call this function to instruct this class to terminate the running program
         /// </summary>
         /// <param name="postLogEntry">True if an entry should be posted to the log</param>
-        /// <remarks></remarks>
         public void AbortProgramNow(bool postLogEntry)
         {
             mAbortProgramPostLogEntry = postLogEntry;

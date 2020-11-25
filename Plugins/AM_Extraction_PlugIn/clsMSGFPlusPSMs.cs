@@ -53,7 +53,6 @@ namespace AnalysisManagerExtractionPlugin
         /// <param name="udtPSM"></param>
         /// <param name="protein"></param>
         /// <returns>True if the PSM was stored, otherwise false</returns>
-        /// <remarks></remarks>
         public bool AddPSM(udtPSMType udtPSM, string protein)
         {
             udtPSM.Peptide = RemovePrefixAndSuffix(udtPSM.Peptide);

@@ -24,7 +24,6 @@ namespace AnalysisManagerMzRefineryPlugIn
         /// Retrieves files necessary for running MzRefinery
         /// </summary>
         /// <returns>CloseOutType indicating success or failure</returns>
-        /// <remarks></remarks>
         public override CloseOutType GetResources()
         {
             var currentTask = "Initializing";

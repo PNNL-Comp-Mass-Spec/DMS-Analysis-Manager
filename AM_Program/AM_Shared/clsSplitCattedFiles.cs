@@ -44,7 +44,6 @@ namespace AnalysisManagerBase
         /// <param name="datasetName"></param>
         /// <param name="resultsFolderPath"></param>
         /// <param name="filesToSkip">Files to skip</param>
-        /// <returns></returns>
         public bool SplitCattedDTAsOnly(string datasetName, string resultsFolderPath, SortedSet<string> filesToSkip)
         {
             var cdtaFilePath = Path.Combine(resultsFolderPath, datasetName + clsAnalysisResources.CDTA_EXTENSION);
@@ -66,7 +65,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="datasetName"></param>
         /// <param name="resultsFolderPath"></param>
-        /// <returns></returns>
         public bool SplitCattedOutsOnly(string datasetName, string resultsFolderPath)
         {
             var outFilePath = Path.Combine(resultsFolderPath, datasetName + "_out.txt");
@@ -91,7 +89,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="filePath">Source _DTA.txt or _Out.txt file</param>
         /// <param name="filesToSkip">Files to skip (full .dta or .out file name)</param>
-        /// <remarks></remarks>
         private bool SplitCattedFile(string filePath, SortedSet<string> filesToSkip)
         {
             var fileText = new Queue<string>();

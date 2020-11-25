@@ -127,7 +127,6 @@ namespace AnalysisManagerBase
             /// <summary>
             /// Return Name and Value
             /// </summary>
-            /// <returns></returns>
             public override string ToString()
             {
                 return ParamName + ": " + Value;
@@ -139,16 +138,12 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Value showing if a transfer task was assigned
         /// </summary>
-        /// <value></value>
         /// <returns>TRUE if task was assigned; otherwise false</returns>
-        /// <remarks></remarks>
         public bool TaskWasAssigned { get; protected set; } = false;
 
         /// <summary>
         /// Debug level
         /// </summary>
-        /// <value></value>
-        /// <returns></returns>
         /// <remarks>Values from 0 (minimum output) to 5 (max detail)</remarks>
         public short DebugLevel
         {
@@ -170,7 +165,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="mgrParams">An IMgrParams object containing manager parameters</param>
         /// <param name="debugLvl">Debug level</param>
-        /// <remarks></remarks>
         protected clsDBTask(IMgrParams mgrParams, short debugLvl)
         {
             mMgrParams = mgrParams;
@@ -211,7 +205,6 @@ namespace AnalysisManagerBase
         /// Populate the job parameters list using XML-based job parameters
         /// </summary>
         /// <param name="jobParamsXML"></param>
-        /// <returns></returns>
         protected IEnumerable<udtParameterInfoType> ParseXMLJobParameters(string jobParamsXML)
         {
             try
@@ -285,7 +278,6 @@ namespace AnalysisManagerBase
         /// Debugging routine for printing SP calling params
         /// </summary>
         /// <param name="sqlCmd">SQL command object containing params</param>
-        /// <remarks></remarks>
         protected void PrintCommandParams(DbCommand sqlCmd)
         {
             // Verify there really are command parameters

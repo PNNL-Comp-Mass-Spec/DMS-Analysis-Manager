@@ -246,7 +246,6 @@ namespace AnalysisManagerBase
         /// <param name="logMsgTypeIfNotFound">Type of message to log if the file is not found</param>
         /// <param name="maxCopyAttempts">Maximum number of attempts to make when errors are encountered while copying the file</param>
         /// <returns>TRUE for success; FALSE for failure</returns>
-        /// <remarks></remarks>
         public bool CopyFileToWorkDirWithRename(
             string datasetName,
             string sourceFileName,
@@ -272,7 +271,6 @@ namespace AnalysisManagerBase
         /// The first line of the StoragePathInfo.txt file will be the full path to the source file</param>
         /// <param name="maxCopyAttempts">Maximum number of attempts to make when errors are encountered while copying the file</param>
         /// <returns>TRUE for success; FALSE for failure</returns>
-        /// <remarks></remarks>
         public bool CopyFileToWorkDirWithRename(
             string datasetName,
             string sourceFileName,
@@ -409,8 +407,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="sourceFilePath">The path to write to the StoragePathInfo file</param>
         /// <param name="destinationFilePath">The path where the file would have been copied to</param>
-        /// <returns></returns>
-        /// <remarks></remarks>
         public bool CreateStoragePathInfoFile(string sourceFilePath, string destinationFilePath)
         {
             var infoFilePath = string.Empty;
@@ -443,8 +439,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="fileName"></param>
         /// <param name="logMsgTypeIfNotFound">Type of message to log if the file is not found</param>
-        /// <returns></returns>
-        /// <remarks></remarks>
         public bool FileExistsWithRetry(string fileName, BaseLogger.LogLevels logMsgTypeIfNotFound)
         {
             return FileExistsWithRetry(fileName, DEFAULT_FILE_EXISTS_RETRY_HOLDOFF_SECONDS, logMsgTypeIfNotFound);
@@ -457,7 +451,6 @@ namespace AnalysisManagerBase
         /// <param name="retryHoldoffSeconds">Number of seconds to wait between subsequent attempts to check for the file</param>
         /// <param name="logMsgTypeIfNotFound">Type of message to log if the file is not found</param>
         /// <returns>True if the file exists, otherwise false</returns>
-        /// <remarks></remarks>
         private bool FileExistsWithRetry(string fileName, int retryHoldoffSeconds, BaseLogger.LogLevels logMsgTypeIfNotFound)
         {
             const int MAX_ATTEMPTS = 3;
@@ -472,7 +465,6 @@ namespace AnalysisManagerBase
         /// <param name="logMsgTypeIfNotFound">Type of message to log if the file is not found</param>
         /// <param name="maxAttempts">Maximum number of attempts</param>
         /// <returns>True if the file exists, otherwise false</returns>
-        /// <remarks></remarks>
         public bool FileExistsWithRetry(string fileName, int retryHoldoffSeconds, BaseLogger.LogLevels logMsgTypeIfNotFound, int maxAttempts)
         {
             if (maxAttempts < 1)

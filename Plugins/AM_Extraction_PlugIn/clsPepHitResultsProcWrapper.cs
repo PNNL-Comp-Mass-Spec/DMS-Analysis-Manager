@@ -22,7 +22,6 @@ namespace AnalysisManagerExtractionPlugin
     /// <summary>
     /// Calls PeptideHitResultsProcRunner.exe
     /// </summary>
-    /// <remarks></remarks>
     public class clsPepHitResultsProcWrapper : EventNotifier
     {
         #region "Constants"
@@ -67,7 +66,6 @@ namespace AnalysisManagerExtractionPlugin
         /// </summary>
         /// <param name="mgrParams">IMgrParams object containing manager settings</param>
         /// <param name="jobParams">IJobParams object containing job parameters</param>
-        /// <remarks></remarks>
         public clsPepHitResultsProcWrapper(IMgrParams mgrParams, IJobParams jobParams)
         {
             mMgrParams = mgrParams;
@@ -489,7 +487,6 @@ namespace AnalysisManagerExtractionPlugin
         /// <summary>
         /// Event handler for CmdRunner.LoopWaiting event
         /// </summary>
-        /// <remarks></remarks>
         private void CmdRunner_LoopWaiting()
         {
             // Update the status by parsing the PHRP console output file every 20 seconds

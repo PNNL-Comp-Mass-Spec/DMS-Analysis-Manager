@@ -27,7 +27,6 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Register ProteoWizard
         /// </summary>
-        /// <returns></returns>
         public bool RegisterProteoWizard()
         {
             if (clsGlobal.LinuxOS)
@@ -42,7 +41,6 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Register ProteoWizard
         /// </summary>
-        /// <returns></returns>
         private bool RegisterProteoWizardWindows()
         {
             var valueMissing = false;

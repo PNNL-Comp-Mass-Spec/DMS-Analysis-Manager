@@ -118,7 +118,6 @@ namespace AnalysisManagerBase
         /// <param name="msConvertPath">Full path to msconvert.exe</param>
         /// <param name="versionInfo">Output: version info</param>
         /// <returns>True if success; false if an error</returns>
-        /// <remarks></remarks>
         // ReSharper disable once InconsistentNaming
         // ReSharper disable once UnusedMember.Global
         public bool GetMSConvertToolVersion(string msConvertPath, out string versionInfo)
@@ -206,8 +205,6 @@ namespace AnalysisManagerBase
         /// <param name="dllFilePath"></param>
         /// <param name="versionInfoFilePath"></param>
         /// <param name="version"></param>
-        /// <returns></returns>
-        /// <remarks></remarks>
         private bool ReadVersionInfoFile(string dllFilePath, string versionInfoFilePath, out string version)
         {
             version = string.Empty;
@@ -293,8 +290,6 @@ namespace AnalysisManagerBase
         /// <param name="directoryPath"></param>
         /// <param name="toolVersionInfo"></param>
         /// <param name="stepToolNameOverride"></param>
-        /// <returns></returns>
-        /// <remarks></remarks>
         public void SaveToolVersionInfoFile(string directoryPath, string toolVersionInfo, string stepToolNameOverride = "")
         {
             try
@@ -491,7 +486,6 @@ namespace AnalysisManagerBase
         /// Store the tool version info in the database
         /// </summary>
         /// <param name="toolVersionInfo"></param>
-        /// <returns></returns>
         public bool StoreToolVersionInDatabase(string toolVersionInfo)
         {
             var analysisTask = new clsAnalysisJob(mMgrParams, DebugLevel);
@@ -570,7 +564,6 @@ namespace AnalysisManagerBase
         /// <param name="toolVersionInfo">Version info string to append the version info to</param>
         /// <param name="dllFilePath">Path to the DLL</param>
         /// <returns>True if success; false if an error</returns>
-        /// <remarks></remarks>
         public bool StoreToolVersionInfoOneFile(ref string toolVersionInfo, string dllFilePath)
         {
             bool success;
@@ -631,7 +624,6 @@ namespace AnalysisManagerBase
         /// <param name="toolVersionInfo">Version info string to append the version info to</param>
         /// <param name="dllFilePath">Path to the DLL</param>
         /// <returns>True if success; false if an error</returns>
-        /// <remarks></remarks>
         public bool StoreToolVersionInfoViaSystemDiagnostics(ref string toolVersionInfo, string dllFilePath)
         {
             try
@@ -691,7 +683,6 @@ namespace AnalysisManagerBase
         /// <param name="toolVersionInfo"></param>
         /// <param name="dllFilePath"></param>
         /// <returns>True if success; false if an error</returns>
-        /// <remarks></remarks>
         public bool StoreToolVersionInfoOneFile32Bit(ref string toolVersionInfo, string dllFilePath)
         {
             return StoreToolVersionInfoOneFileUseExe(ref toolVersionInfo, dllFilePath, "DLLVersionInspector_x86.exe");
@@ -703,7 +694,6 @@ namespace AnalysisManagerBase
         /// <param name="toolVersionInfo"></param>
         /// <param name="dllFilePath"></param>
         /// <returns>True if success; false if an error</returns>
-        /// <remarks></remarks>
         // ReSharper disable once UnusedMember.Global
         public bool StoreToolVersionInfoOneFile64Bit(ref string toolVersionInfo, string dllFilePath)
         {
@@ -717,7 +707,6 @@ namespace AnalysisManagerBase
         /// <param name="dllFilePath"></param>
         /// <param name="versionInspectorExeName">DLLVersionInspector_x86.exe or DLLVersionInspector_x64.exe</param>
         /// <returns>True if success; false if an error</returns>
-        /// <remarks></remarks>
         private bool StoreToolVersionInfoOneFileUseExe(ref string toolVersionInfo, string dllFilePath, string versionInspectorExeName)
         {
             try

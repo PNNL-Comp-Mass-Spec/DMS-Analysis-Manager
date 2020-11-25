@@ -33,7 +33,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="xmlText"></param>
         /// <param name="outputFilePath"></param>
-        /// <returns></returns>
         public bool WriteXMLToFile(string xmlText, string outputFilePath)
         {
             XmlDocument doc;

@@ -51,7 +51,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="mgrParams">Manager parameter object</param>
         /// <param name="jobParams">Job parameter object</param>
-        /// <remarks></remarks>
         public clsAnalysisResults(IMgrParams mgrParams, IJobParams jobParams) : base("clsAnalysisResults")
         {
             mMgrParams = mgrParams;
@@ -68,7 +67,6 @@ namespace AnalysisManagerBase
         /// <param name="sourcePath">The source directory path.</param>
         /// <param name="destinationPath">The destination directory path.</param>
         /// <param name="overwrite">True if the destination file can be overwritten; otherwise, false.</param>
-        /// <remarks></remarks>
         // ReSharper disable once UnusedMember.Global
         public void CopyDirectory(string sourcePath, string destinationPath, bool overwrite)
         {
@@ -83,7 +81,6 @@ namespace AnalysisManagerBase
         /// <param name="overwrite">True if the destination file can be overwritten; otherwise, false.</param>
         /// <param name="maxRetryCount">The number of times to retry a failed copy of a file; if 0 or 1 then only tries once</param>
         /// <param name="continueOnError">When true, then will continue copying even if an error occurs</param>
-        /// <remarks></remarks>
         public void CopyDirectory(string sourceDirPath, string targetDirPath, bool overwrite, int maxRetryCount, bool continueOnError)
         {
             var sourceDirectory = new DirectoryInfo(sourceDirPath);

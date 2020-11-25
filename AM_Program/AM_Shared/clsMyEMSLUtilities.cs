@@ -54,42 +54,27 @@ namespace AnalysisManagerBase
         /// <summary>
         /// The most recently downloaded files; keys are the full paths to the downloaded file, values are extended file info
         /// </summary>
-        /// <value></value>
-        /// <returns></returns>
-        /// <remarks></remarks>
         public Dictionary<string, ArchivedFileInfo> DownloadedFiles => mMyEMSLDatasetListInfo.DownloadedFiles;
 
         /// <summary>
         /// MyEMSL IDs of files queued to be downloaded
         /// </summary>
-        /// <value></value>
-        /// <returns></returns>
-        /// <remarks></remarks>
         public Dictionary<long, DownloadQueue.udtFileToDownload> FilesToDownload => mMyEMSLDatasetListInfo.FilesToDownload;
 
         /// <summary>
         /// All files found in MyEMSL via calls to FindFiles
         /// </summary>
-        /// <value></value>
-        /// <returns></returns>
-        /// <remarks></remarks>
         public List<DatasetDirectoryOrFileInfo> AllFoundMyEMSLFiles { get; }
 
         /// <summary>
         /// Returns the files most recently unzipped
         /// Keys in the KeyValuePairs are filenames while values are relative paths (in case the .zip file has directories)
         /// </summary>
-        /// <value></value>
-        /// <returns></returns>
-        /// <remarks></remarks>
         public List<KeyValuePair<string, string>> MostRecentUnzippedFiles { get; }
 
         /// <summary>
         /// Files most recently found via a call to FindFiles
         /// </summary>
-        /// <value></value>
-        /// <returns></returns>
-        /// <remarks></remarks>
         public List<DatasetDirectoryOrFileInfo> RecentlyFoundMyEMSLFiles => mRecentlyFoundMyEMSLFiles;
 
         #endregion
@@ -100,7 +85,6 @@ namespace AnalysisManagerBase
         /// <param name="debugLevel">Debug level (higher number means more messages)</param>
         /// <param name="workingDir">Working directory path</param>
         /// <param name="traceMode">Set to true to show additional debug messages</param>
-        /// <remarks></remarks>
         public clsMyEMSLUtilities(int debugLevel, string workingDir, bool traceMode = false)
         {
             mMyEMSLDatasetListInfo = new DatasetListInfo
@@ -139,8 +123,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="myEmslDirectoryPath">Directory path to which fileName will be appended</param>
         /// <param name="fileName">Filename to append</param>
-        /// <returns></returns>
-        /// <remarks></remarks>
         public static string AddFileToMyEMSLDirectoryPath(string myEmslDirectoryPath, string fileName)
         {
             var myEMSLFileID = DatasetInfoBase.ExtractMyEMSLFileID(myEmslDirectoryPath, out var directoryPathClean);
@@ -159,7 +141,6 @@ namespace AnalysisManagerBase
         /// Make sure that the MyEMSL DatasetListInfo class knows to search for the given dataset
         /// </summary>
         /// <param name="datasetName">Dataset name</param>
-        /// <remarks></remarks>
         public void AddDataset(string datasetName)
         {
             if (!mMyEMSLDatasetListInfo.ContainsDataset(datasetName))
@@ -172,7 +153,6 @@ namespace AnalysisManagerBase
         /// Queue a file to be downloaded
         /// </summary>
         /// <param name="fileInfo">Archive File Info</param>
-        /// <remarks></remarks>
         public void AddFileToDownloadQueue(ArchivedFileInfo fileInfo)
         {
             mMyEMSLDatasetListInfo.AddFileToDownloadQueue(fileInfo);
@@ -183,7 +163,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="encodedFilePath">File path that includes @MyEMSLID_12345</param>
         /// <param name="unzipRequired">True if the file should be unzipped</param>
-        /// <remarks></remarks>
         public bool AddFileToDownloadQueue(string encodedFilePath, bool unzipRequired = false)
         {
             var myEMSLFileID = DatasetInfoBase.ExtractMyEMSLFileID(encodedFilePath);
@@ -228,7 +207,6 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Clear the list of MyEMSL files found via calls to FindFiles
         /// </summary>
-        /// <remarks></remarks>
         public void ClearAllFoundFiles()
         {
             AllFoundMyEMSLFiles.Clear();
@@ -237,7 +215,6 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Clear the queue of files to download
         /// </summary>
-        /// <remarks></remarks>
         public void ClearDownloadQueue()
         {
             mMyEMSLDatasetListInfo.FilesToDownload.Clear();

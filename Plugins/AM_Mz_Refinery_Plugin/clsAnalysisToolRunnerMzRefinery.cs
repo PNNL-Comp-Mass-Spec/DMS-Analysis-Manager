@@ -377,8 +377,6 @@ namespace AnalysisManagerMzRefineryPlugIn
         /// <param name="javaProgLoc">Path to Java</param>
         /// <param name="msXmlFileExtension">.mzXML or .mzML</param>
         /// <param name="msgfPlusResults">Output: MS-GF+ results file</param>
-        /// <returns></returns>
-        /// <remarks></remarks>
         private CloseOutType RunMSGFPlus(string javaProgLoc, string msXmlFileExtension, out FileInfo msgfPlusResults)
         {
             msgfPlusResults = null;
@@ -803,7 +801,6 @@ namespace AnalysisManagerMzRefineryPlugIn
         /// <summary>
         /// Parse the MS-GF+ console output file to determine the MS-GF+ version and to track the search progress
         /// </summary>
-        /// <remarks></remarks>
         private void ParseMSGFPlusConsoleOutputFile(string workingDirectory)
         {
             try
@@ -828,7 +825,6 @@ namespace AnalysisManagerMzRefineryPlugIn
         /// Parse the MSConvert console output file to look for errors from MzRefiner
         /// </summary>
         /// <param name="consoleOutputFilePath"></param>
-        /// <remarks></remarks>
         private void ParseMSConvertConsoleOutputFile(string consoleOutputFilePath)
         {
             // Example console output
@@ -943,7 +939,6 @@ namespace AnalysisManagerMzRefineryPlugIn
         /// Parse the mzRefinement.tsv created by MzRefiner
         /// </summary>
         /// <param name="msXmlFile">.mzML file</param>
-        /// <remarks></remarks>
         private void ParseMzRefinementStatsFile(FileSystemInfo msXmlFile)
         {
             // Example results from the .tsv file (reformatted from column-based to row-based data for readability)
@@ -1223,7 +1218,6 @@ namespace AnalysisManagerMzRefineryPlugIn
         /// <param name="parentIonMZs">
         /// Dictionary where keys are scan numbers are values are a dictionary of parent ion charge and m/z for a given scan
         /// </param>
-        /// <returns></returns>
         private bool ReadParentIonMZsFromCDTA(out Dictionary<int, Dictionary<int, double>> parentIonMZs)
         {
             parentIonMZs = new Dictionary<int, Dictionary<int, double>>();
@@ -1279,7 +1273,6 @@ namespace AnalysisManagerMzRefineryPlugIn
         /// </summary>
         /// <param name="originalMSXmlFile">.mzML file</param>
         /// <param name="msgfPlusResults">.mzid file from MS-GF+</param>
-        /// <returns></returns>
         private bool StartMzRefinery(FileInfo originalMSXmlFile, FileSystemInfo msgfPlusResults)
         {
             mConsoleOutputErrorMsg = string.Empty;
@@ -1590,7 +1583,6 @@ namespace AnalysisManagerMzRefineryPlugIn
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        /// <remarks></remarks>
         private bool StoreToolVersionInfo()
         {
             if (mDebugLevel >= 2)
@@ -1636,7 +1628,6 @@ namespace AnalysisManagerMzRefineryPlugIn
         /// <summary>
         /// Update .mzML file using the parent ion m/z values listed in a _dta.txt file
         /// </summary>
-        /// <returns></returns>
         private bool UpdateMzMLUsingCDTA()
         {
             try
@@ -1845,7 +1836,6 @@ namespace AnalysisManagerMzRefineryPlugIn
         /// <summary>
         /// Event handler for CmdRunner.LoopWaiting event
         /// </summary>
-        /// <remarks></remarks>
         private void CmdRunner_LoopWaiting()
         {
             MonitorProgress();

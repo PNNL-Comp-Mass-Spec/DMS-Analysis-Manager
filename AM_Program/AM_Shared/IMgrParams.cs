@@ -45,13 +45,11 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Calls stored procedure AckManagerUpdateRequired in the Manager Control DB
         /// </summary>
-        /// <remarks></remarks>
         void AckManagerUpdateRequired();
 
         /// <summary>
         /// Disable the manager by changing MgrActive_Local to False in AnalysisManagerProg.exe.config
         /// </summary>
-        /// <returns></returns>
         bool DisableManagerLocally();
 
         /// <summary>
@@ -98,7 +96,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="itemKey">Key name for the item</param>
         /// <param name="itemValue">Value to assign to the key</param>
-        /// <remarks></remarks>
         void SetParam(string itemKey, string itemValue);
 
         /// <summary>
@@ -118,7 +115,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="configFileSettings">Manager settings loaded from file AnalysisManagerProg.exe.config</param>
         /// <returns>True if successful; False on error</returns>
-        /// <remarks></remarks>
         bool LoadSettings(Dictionary<string, string> configFileSettings);
 
         /// <summary>

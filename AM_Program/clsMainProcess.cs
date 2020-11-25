@@ -23,7 +23,6 @@ namespace AnalysisManagerProg
     /// <summary>
     /// Master processing class for analysis manager
     /// </summary>
-    /// <remarks></remarks>
     public class clsMainProcess : clsLoggerBase
     {
         // Ignore Spelling: dir, Lp, sid, Lewy, Fractestrecheck, smeagol
@@ -115,7 +114,6 @@ namespace AnalysisManagerProg
         /// Starts program execution
         /// </summary>
         /// <returns>0 if no error; error code if an error</returns>
-        /// <remarks></remarks>
         public int Main()
         {
             try
@@ -197,7 +195,6 @@ namespace AnalysisManagerProg
         /// Initializes the manager settings
         /// </summary>
         /// <returns>TRUE for success, FALSE for failure</returns>
-        /// <remarks></remarks>
         private bool InitMgr()
         {
             var hostName = System.Net.Dns.GetHostName();
@@ -458,7 +455,6 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Loop to perform all analysis jobs
         /// </summary>
-        /// <remarks></remarks>
         public void DoAnalysis()
         {
             ShowTrace("Entering clsMainProcess.DoAnalysis");
@@ -1264,7 +1260,6 @@ namespace AnalysisManagerProg
         /// <param name="dataset">Dataset name</param>
         /// <param name="toolName">Tool name (or step tool name)</param>
         /// <returns>Info string, similar to: Job 375797; DataExtractor (XTandem), Step 4; QC_Shew_09_01_b_pt5_25Mar09_Griffin_09-02-03; 3/26/2009 3:17:57 AM</returns>
-        /// <remarks></remarks>
         private string ConstructMostRecentJobInfoText(string jobStartTimeStamp, int job, string dataset, string toolName)
         {
             try
@@ -1335,8 +1330,6 @@ namespace AnalysisManagerProg
         /// Given a log file with a name like AnalysisMgr_03-25-2009.txt, returns the log file name for the previous day
         /// </summary>
         /// <param name="logFilePath"></param>
-        /// <returns></returns>
-        /// <remarks></remarks>
         private string DecrementLogFilePath(string logFilePath)
         {
             try
@@ -1375,7 +1368,6 @@ namespace AnalysisManagerProg
         /// <param name="errorMessageCountToReturn">Maximum number of error messages to return</param>
         /// <param name="mostRecentJobInfo">Info on the most recent job started by this manager</param>
         /// <returns>List of recent errors</returns>
-        /// <remarks></remarks>
         public IEnumerable<string> DetermineRecentErrorMessages(int errorMessageCountToReturn, ref string mostRecentJobInfo)
         {
             // This RegEx will match all text up to the first comma (this is the time stamp), followed by a comma, then the error message, then the text ", Error,"
@@ -1669,7 +1661,6 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Sets the local mgr_active flag to False for serious problems
         /// </summary>
-        /// <remarks></remarks>
         private void DisableManagerLocally()
         {
             // Note: We previously called mMgrSettings.DisableManagerLocally() to update AnalysisManager.config.exe
@@ -1699,7 +1690,6 @@ namespace AnalysisManagerProg
         /// Get the base log file name, as defined in the manager parameters
         /// </summary>
         /// <param name="mgrParams"></param>
-        /// <returns></returns>
         public static string GetBaseLogFileName(IMgrParams mgrParams)
         {
             var logFileNameBase = mgrParams.GetParam("LogFileName", DEFAULT_BASE_LOGFILE_NAME);
@@ -1729,7 +1719,6 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Extract the value DefaultDMSConnString from AnalysisManagerProg.exe.config
         /// </summary>
-        /// <returns></returns>
         private string GetXmlConfigDefaultConnectionString()
         {
             return GetXmlConfigFileSetting("DefaultDMSConnString");
@@ -1936,7 +1925,6 @@ namespace AnalysisManagerProg
         /// Initialize the remote transfer utility
         /// Used by RunJobRemotely and when PushFilesToRemoteHost is true
         /// </summary>
-        /// <returns></returns>
         private clsRemoteTransferUtility InitializeRemoteTransferUtility()
         {
             var transferUtility = new clsRemoteTransferUtility(mMgrSettings, mAnalysisTask);
@@ -1958,7 +1946,6 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Initializes the status file writing tool
         /// </summary>
-        /// <remarks></remarks>
         private void InitStatusTools()
         {
             if (mStatusTools != null)
@@ -2222,7 +2209,6 @@ namespace AnalysisManagerProg
         /// Reload the settings from AnalysisManagerProg.exe.config
         /// </summary>
         /// <returns>True if success, false if now disabled locally or if an error</returns>
-        /// <remarks></remarks>
         private bool ReloadManagerSettings()
         {
             try
@@ -2743,8 +2729,6 @@ namespace AnalysisManagerProg
         /// </summary>
         /// <param name="lastConfigDBUpdate"></param>
         /// <param name="minutesBetweenUpdates"></param>
-        /// <returns></returns>
-        /// <remarks></remarks>
         private bool UpdateManagerSettings(ref DateTime lastConfigDBUpdate, double minutesBetweenUpdates)
         {
             if (!(DateTime.UtcNow.Subtract(lastConfigDBUpdate).TotalMinutes >= minutesBetweenUpdates))
@@ -2838,7 +2822,6 @@ namespace AnalysisManagerProg
         /// </summary>
         /// <param name="toolResourcer"></param>
         /// <param name="errorMessage"></param>
-        /// <returns></returns>
         /// <remarks>Disables the manager if the working directory drive does not have enough space</remarks>
         private bool ValidateFreeDiskSpace(IAnalysisResources toolResourcer, out string errorMessage)
         {
@@ -3090,7 +3073,6 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Verifies working directory is properly specified and is empty
         /// </summary>
-        /// <returns></returns>
         private bool ValidateWorkingDir()
         {
             // Verify working directory is valid
@@ -3243,7 +3225,6 @@ namespace AnalysisManagerProg
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        /// <remarks></remarks>
         private void ConfigFileWatcher_Changed(object sender, FileSystemEventArgs e)
         {
             mConfigFileWatcher.EnableRaisingEvents = false;

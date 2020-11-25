@@ -20,7 +20,6 @@ namespace AnalysisManagerExtractionPlugin
     /// <summary>
     /// Manages retrieval of all files needed for data extraction
     /// </summary>
-    /// <remarks></remarks>
     public class clsAnalysisResourcesExtraction : clsAnalysisResources
     {
         // Ignore Spelling: Defs, diff, bioml, Parm, mgf, MODa, msgfdb, foreach, dta
@@ -428,7 +427,6 @@ namespace AnalysisManagerExtractionPlugin
         /// Gets all files needed to perform data extraction
         /// </summary>
         /// <returns>CloseOutType specifying results</returns>
-        /// <remarks></remarks>
         public override CloseOutType GetResources()
         {
             // Retrieve shared resources, including the JobParameters file from the previous job step
@@ -504,7 +502,6 @@ namespace AnalysisManagerExtractionPlugin
         /// <param name="resultType">String specifying type of analysis results input to extraction process</param>
         /// <param name="createPepToProtMapFile"></param>
         /// <returns>CloseOutType specifying results</returns>
-        /// <remarks></remarks>
         private CloseOutType GetInputFiles(string resultType, out bool createPepToProtMapFile)
         {
             createPepToProtMapFile = false;
@@ -1216,7 +1213,6 @@ namespace AnalysisManagerExtractionPlugin
         /// (including the search engine parameter file, _ModDefs.txt and MassCorrectionTags.txt)
         /// </summary>
         /// <returns>CloseOutType specifying results</returns>
-        /// <remarks></remarks>
         protected internal CloseOutType RetrieveMiscFiles(string resultType)
         {
             var paramFileName = mJobParams.GetParam("ParmFileName");

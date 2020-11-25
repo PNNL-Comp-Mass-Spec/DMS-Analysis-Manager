@@ -159,13 +159,11 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Starts the spectra filter operation
         /// </summary>
-        /// <returns></returns>
         ProcessStatus Start();
 
         /// <summary>
         /// //
         /// </summary>
-        /// <returns></returns>
         ProcessStatus Abort();
 
         #endregion

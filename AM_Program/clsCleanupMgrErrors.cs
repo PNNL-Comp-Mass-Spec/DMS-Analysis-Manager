@@ -141,7 +141,6 @@ namespace AnalysisManagerProg
         /// </summary>
         /// <param name="eManagerErrorCleanupMode"></param>
         /// <param name="debugLevel"></param>
-        /// <returns></returns>
         public bool AutoCleanupManagerErrors(eCleanupModeConstants eManagerErrorCleanupMode, int debugLevel)
         {
             if (!mInitialized)
@@ -205,7 +204,6 @@ namespace AnalysisManagerProg
         /// Deletes all files in working directory (using a 3 second holdoff after calling GC.Collect via PRISM.ProgRunner.GarbageCollectNow)
         /// </summary>
         /// <returns>TRUE for success; FALSE for failure</returns>
-        /// <remarks></remarks>
         public bool CleanWorkDir()
         {
             return CleanWorkDir(mWorkingDirPath, DEFAULT_HOLDOFF_SECONDS);
@@ -216,7 +214,6 @@ namespace AnalysisManagerProg
         /// </summary>
         /// <param name="holdoffSeconds">Number of seconds to wait after calling PRISM.ProgRunner.GarbageCollectNow()</param>
         /// <returns>TRUE for success; FALSE for failure</returns>
-        /// <remarks></remarks>
         public bool CleanWorkDir(float holdoffSeconds)
         {
             return CleanWorkDir(mWorkingDirPath, holdoffSeconds);
@@ -228,7 +225,6 @@ namespace AnalysisManagerProg
         /// <param name="workDirPath">Full path to working directory</param>
         /// <param name="holdoffSeconds">Number of seconds to wait after calling PRISM.ProgRunner.GarbageCollectNow()</param>
         /// <returns>TRUE for success; FALSE for failure</returns>
-        /// <remarks></remarks>
         private bool CleanWorkDir(string workDirPath, float holdoffSeconds)
         {
             double actualHoldoffSeconds;
@@ -372,7 +368,6 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Creates a dummy file in the application directory when a error has occurred when trying to delete non result files
         /// </summary>
-        /// <remarks></remarks>
         public void CreateErrorDeletingFilesFlagFile()
         {
             try
@@ -393,7 +388,6 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Creates a dummy file in the application directory to be used for controlling job request bypass
         /// </summary>
-        /// <remarks></remarks>
         public void CreateStatusFlagFile()
         {
             try
@@ -415,7 +409,6 @@ namespace AnalysisManagerProg
         /// Deletes the Decon2LS OA Server flag file
         /// </summary>
         /// <returns>True if no flag file exists or if file was successfully deleted</returns>
-        /// <remarks></remarks>
         public bool DeleteDeconServerFlagFile(int DebugLevel)
         {
             var flagFilePath = Path.Combine(mMgrDirectoryPath, DECON_SERVER_FLAG_FILE_NAME);
@@ -429,7 +422,6 @@ namespace AnalysisManagerProg
         /// <param name="flagFilePath">Full path to the file to delete</param>
         /// <param name="debugLevel"></param>
         /// <returns>True if no flag file exists or if file was successfully deleted</returns>
-        /// <remarks></remarks>
         private bool DeleteFlagFile(string flagFilePath, int debugLevel)
         {
             try
@@ -469,7 +461,6 @@ namespace AnalysisManagerProg
         /// Deletes the analysis manager flag file
         /// </summary>
         /// <returns>True if no flag file exists or if file was successfully deleted</returns>
-        /// <remarks></remarks>
         public bool DeleteStatusFlagFile(int DebugLevel)
         {
             var flagFilePath = FlagFilePath;
@@ -481,7 +472,6 @@ namespace AnalysisManagerProg
         /// Determines if error deleting files flag file exists in application directory
         /// </summary>
         /// <returns>TRUE if flag file exists; FALSE otherwise</returns>
-        /// <remarks></remarks>
         public bool DetectErrorDeletingFilesFlagFile()
         {
             var testFile = Path.Combine(mMgrDirectoryPath, ERROR_DELETING_FILES_FILENAME);
@@ -493,7 +483,6 @@ namespace AnalysisManagerProg
         /// Determines if flag file exists in application directory
         /// </summary>
         /// <returns>TRUE if flag file exists; FALSE otherwise</returns>
-        /// <remarks></remarks>
         public bool DetectStatusFlagFile()
         {
             var flagFile = new FileInfo(FlagFilePath);
@@ -504,7 +493,6 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Deletes the error deleting files flag file
         /// </summary>
-        /// <remarks></remarks>
         public void DeleteErrorDeletingFilesFlagFile()
         {
             var deletionFlagFile = new FileInfo(Path.Combine(mMgrDirectoryPath, ERROR_DELETING_FILES_FILENAME));

@@ -10,7 +10,6 @@ namespace AnalysisManagerBase
     /// <summary>
     /// This class splits a Mascot Generic File (mgf file) into multiple parts
     /// </summary>
-    /// <remarks></remarks>
     [SuppressMessage("ReSharper", "UnusedMember.Global")]
     public class clsSplitMGFFile : EventNotifier
     {
@@ -48,7 +47,6 @@ namespace AnalysisManagerBase
         /// <summary>
         ///  Constructor
         /// </summary>
-        /// <remarks></remarks>
         public clsSplitMGFFile()
         {
             mExtractScan = new Regex(@".+\.(\d+)\.\d+\.\d?", RegexOptions.Compiled | RegexOptions.IgnoreCase);
