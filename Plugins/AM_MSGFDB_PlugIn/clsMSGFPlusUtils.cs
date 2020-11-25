@@ -1708,7 +1708,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             var msgfPlusIndexFilesFolderPath = mMgrParams.GetParam("MSGFPlusIndexFilesFolderPath", @"\\gigasax\MSGFPlus_Index_Files");
             var msgfPlusIndexFilesFolderPathLegacyDB = mMgrParams.GetParam("MSGFPlusIndexFilesFolderPathLegacyDB", @"\\proto-7\MSGFPlus_Index_Files");
 
-            while (indexIteration <= 2)
+            while (true)
             {
                 indexIteration++;
 
@@ -1720,7 +1720,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     break;
                 }
 
-                if (result == CloseOutType.CLOSEOUT_FAILED || result != CloseOutType.CLOSEOUT_FAILED && indexIteration > 2)
+                if (result == CloseOutType.CLOSEOUT_FAILED || indexIteration > 2)
                 {
                     if (!string.IsNullOrEmpty(indexedDBCreator.ErrorMessage))
                     {
@@ -1788,44 +1788,43 @@ namespace AnalysisManagerMSGFDBPlugIn
                             // Expected headers are ScanNumber   ScanTypeName   ScanType
                             scanNumberColIndex = columns.IndexOf("ScanNumber");
                             scanTypeNameColIndex = columns.IndexOf("ScanTypeName");
+                            continue;
                         }
-                        else if (scanNumberColIndex >= 0)
+
+                        if (!int.TryParse(columns[scanNumberColIndex], out var scanNumber))
+                            continue;
+
+                        if (scanTypeNameColIndex < 0)
+                            continue;
+
+                        var scanType = columns[scanTypeNameColIndex];
+                        var scanTypeLCase = scanType.ToLower();
+
+                        if (scanTypeLCase.Contains("hcd"))
                         {
-                            if (!int.TryParse(columns[scanNumberColIndex], out var scanNumber))
-                                continue;
-
-                            if (scanTypeNameColIndex < 0)
-                                continue;
-
-                            var scanType = columns[scanTypeNameColIndex];
-                            var scanTypeLCase = scanType.ToLower();
-
-                            if (scanTypeLCase.Contains("hcd"))
-                            {
-                                hcdMSn.Add(scanNumber, scanType);
-                            }
-                            else if (scanTypeLCase.Contains("hmsn"))
-                            {
-                                highResMSn.Add(scanNumber, scanType);
-                            }
-                            else if (scanTypeLCase.Contains("msn"))
-                            {
-                                // Not HCD and doesn't contain HMSn; assume low-res
-                                lowResMSn.Add(scanNumber, scanType);
-                            }
-                            else if (scanTypeLCase.Contains("cid") || scanTypeLCase.Contains("etd"))
-                            {
-                                // The ScanTypeName likely came from the "Collision Mode" column of a MASIC ScanStatsEx file; we don't know if it is high res MSn or low res MSn
-                                // This will be the case for MASIC results from prior to February 1, 2010, since those results did not have the ScanTypeName column in the _ScanStats.txt file
-                                // We'll assume low res
-                                lowResMSn.Add(scanNumber, scanType);
-                            }
-                            else
-                            {
-                                // Does not contain MSn or HCD
-                                // Likely SRM or MS1
-                                other.Add(scanNumber, scanType);
-                            }
+                            hcdMSn.Add(scanNumber, scanType);
+                        }
+                        else if (scanTypeLCase.Contains("hmsn"))
+                        {
+                            highResMSn.Add(scanNumber, scanType);
+                        }
+                        else if (scanTypeLCase.Contains("msn"))
+                        {
+                            // Not HCD and doesn't contain HMSn; assume low-res
+                            lowResMSn.Add(scanNumber, scanType);
+                        }
+                        else if (scanTypeLCase.Contains("cid") || scanTypeLCase.Contains("etd"))
+                        {
+                            // The ScanTypeName likely came from the "Collision Mode" column of a MASIC ScanStatsEx file; we don't know if it is high res MSn or low res MSn
+                            // This will be the case for MASIC results from prior to February 1, 2010, since those results did not have the ScanTypeName column in the _ScanStats.txt file
+                            // We'll assume low res
+                            lowResMSn.Add(scanNumber, scanType);
+                        }
+                        else
+                        {
+                            // Does not contain MSn or HCD
+                            // Likely SRM or MS1
+                            other.Add(scanNumber, scanType);
                         }
                     }
                 }
