@@ -533,12 +533,7 @@ namespace AnalysisManagerBase
                 return false;
             }
 
-            if (ProgramAborted)
-            {
-                return false;
-            }
-
-            return true;
+            return !ProgramAborted;
         }
 
         /// <summary>

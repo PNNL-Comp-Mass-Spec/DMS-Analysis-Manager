@@ -202,7 +202,14 @@ namespace AnalysisManagerMSGFDBPlugIn
                     // Create the scan type output file
                     using (var writer = new StreamWriter(new FileStream(ScanTypeFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                     {
-                        writer.WriteLine("ScanNumber\t" + "ScanTypeName\t" + "ScanType\t" + "ScanTime");
+                        var headerNames = new List<string>
+                        {
+                            "ScanNumber",
+                            "ScanTypeName",
+                            "ScanType",
+                            "ScanTime"
+                        };
+                        writer.WriteLine(string.Join("\t", headerNames));
 
                         // Define the default column mapping
                         var scanNumberColIndex = 1;
@@ -228,13 +235,6 @@ namespace AnalysisManagerMSGFDBPlugIn
                             if (linesRead == 1 && dataColumns.Length > 0 && !firstColumnIsNumber)
                             {
                                 // This is a header line; define the column mapping
-
-                                var headerNames = new List<string> {
-                                    "ScanNumber",
-                                    "ScanTime",
-                                    "ScanType",
-                                    "ScanTypeName"
-                                };
 
                                 // Keys in this dictionary are column names, values are the 0-based column index
                                 var columnMap = clsGlobal.ParseHeaderLine(dataLine, headerNames);

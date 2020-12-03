@@ -1430,15 +1430,7 @@ namespace AnalysisManagerBase
                 mAnalysisResources.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_GZ_EXTENSION);
                 // .gz file
 
-                bool createStoragePathInfoOnly;
-                if (retrievalOptions.CreateJobPathFiles)
-                {
-                    createStoragePathInfoOnly = true;
-                }
-                else
-                {
-                    createStoragePathInfoOnly = false;
-                }
+                var createStoragePathInfoOnly = retrievalOptions.CreateJobPathFiles;
 
                 var datasetNamesProcessed = new SortedSet<string>();
 

@@ -113,7 +113,7 @@ namespace AnalysisManagerBase
             lockFilePath = Path.Combine(baseFastaFile.FullName + clsGlobal.LOCK_FILE_EXTENSION);
             var lockFi = new FileInfo(lockFilePath);
 
-            do
+            while (true)
             {
                 attemptCount++;
                 var creatingLockFile = false;
@@ -190,7 +190,7 @@ namespace AnalysisManagerBase
                     // Exception: Unable to create Lockfile required to split fasta file ...
                     throw new Exception("Unable to create " + LOCK_FILE_PROGRESS_TEXT + " required to split fasta file " + baseFastaFile.FullName + "; tried 4 times without success");
                 }
-            } while (true);
+            }
 
             return lockStream;
         }

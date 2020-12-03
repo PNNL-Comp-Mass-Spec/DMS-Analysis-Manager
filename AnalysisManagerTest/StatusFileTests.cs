@@ -27,7 +27,7 @@ namespace AnalysisManagerTest
                 clsGlobal.EnableOfflineMode(linuxOS);
 
             var statusFile = new FileInfo(statusFileName);
-            var debugLevel = 2;
+            const int debugLevel = 2;
 
             // clsStatusTools inherits EventNotifier, which will show messages at the console if an event does not have a subscriber
             var statusTools = new clsStatusFile(statusFile.FullName, debugLevel) {

@@ -146,18 +146,13 @@ namespace AnalysisManagerMSFraggerPlugIn
         private int GetNumThreadsToUse()
         {
             var coreCount = clsGlobal.GetCoreCount();
-            int numThreadsToUse;
 
             if (coreCount > 4)
             {
-                numThreadsToUse = coreCount - 1;
-            }
-            else
-            {
-                numThreadsToUse = coreCount;
+                return coreCount - 1;
             }
 
-            return numThreadsToUse;
+            return coreCount;
         }
 
         /// <summary>

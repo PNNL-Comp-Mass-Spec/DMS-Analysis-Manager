@@ -45,7 +45,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// File downloaded event
         /// </summary>
-        public event FileDownloadedEventHandler FileDownloaded;
+        public event EventHandler<FileDownloadedEventArgs> FileDownloaded;
 
         #endregion
 
@@ -59,7 +59,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// MyEMSL IDs of files queued to be downloaded
         /// </summary>
-        public Dictionary<long, DownloadQueue.udtFileToDownload> FilesToDownload => mMyEMSLDatasetListInfo.FilesToDownload;
+        public Dictionary<long, DownloadQueue.FileDownloadInfo> FilesToDownload => mMyEMSLDatasetListInfo.FilesToDownload;
 
         /// <summary>
         /// All files found in MyEMSL via calls to FindFiles

@@ -172,12 +172,7 @@ namespace AnalysisManagerBase
                 throw new Exception("Error splitting " + filePath + " in SplitCattedFile: " + ex.Message, ex);
             }
 
-            if (fileCounter > 0)
-            {
-                return true;
-            }
-
-            return false;
+            return fileCounter > 0;
         }
 
         private void ProcessSplitFile(ref Queue<string> fileText, string exportFileName, string resultsFolder, ref SortedSet<string> filesToSkip)

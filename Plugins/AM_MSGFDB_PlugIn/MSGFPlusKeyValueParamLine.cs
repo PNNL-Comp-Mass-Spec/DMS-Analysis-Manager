@@ -2,7 +2,7 @@
 
 namespace AnalysisManagerMSGFDBPlugIn
 {
-    class MSGFPlusKeyValueParamFileLine : KeyValueParamFileLine
+    internal class MSGFPlusKeyValueParamFileLine : KeyValueParamFileLine
     {
         /// <summary>
         /// Comment character
@@ -103,7 +103,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             if (includeOriginalAsComment)
             {
-                var whitespaceBeforeComment = "        # ";
+                const string whitespaceBeforeComment = "        # ";
                 ParamInfo.UpdateComment(originalValue, whitespaceBeforeComment);
             }
 

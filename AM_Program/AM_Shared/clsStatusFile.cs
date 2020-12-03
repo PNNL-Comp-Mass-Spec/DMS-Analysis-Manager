@@ -35,7 +35,7 @@ namespace AnalysisManagerBase
         /// </summary>
         public const string ABORT_PROCESSING_NOW_FILENAME = "AbortProcessingNow.txt";
 
-        const int MAX_ERROR_MESSAGE_COUNT_TO_CACHE = 10;
+        private const int MAX_ERROR_MESSAGE_COUNT_TO_CACHE = 10;
 
         private int mRecentErrorMessageCount;
 
@@ -614,8 +614,7 @@ namespace AnalysisManagerBase
         /// </summary>
         public int GetProcessID()
         {
-            var processID = Process.GetCurrentProcess().Id;
-            return processID;
+            return Process.GetCurrentProcess().Id;
         }
 
         /// <summary>
@@ -625,10 +624,7 @@ namespace AnalysisManagerBase
         {
             var statusFileDirectory = Path.GetDirectoryName(FileNamePath);
 
-            if (statusFileDirectory == null)
-                return ".";
-
-            return statusFileDirectory;
+            return statusFileDirectory ?? ".";
         }
 
         private void LogStatusToMessageQueue(string xmlText, string managerName)

@@ -8,7 +8,7 @@ namespace AnalysisManagerBase
     /// <summary>
     /// Utilize for offline job processing
     /// </summary>
-    public class clsOfflineProcessing
+    public static class clsOfflineProcessing
     {
         /// <summary>
         /// Update files in the TaskQueue directory, renaming the .info file to .success or .fail and appending the completion code and eval code info
@@ -137,7 +137,9 @@ namespace AnalysisManagerBase
             if (targetFile.Exists)
             {
                 if (replaceExisting)
+                {
                     targetFile.Delete();
+                }
                 else
                 {
                     throw new Exception(

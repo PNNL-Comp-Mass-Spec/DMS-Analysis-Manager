@@ -1036,14 +1036,8 @@ namespace AnalysisManagerBase
                 mResourceOptions = new Dictionary<clsGlobal.eAnalysisResourceOptions, bool>();
             }
 
-            if (mResourceOptions.ContainsKey(resourceOption))
-            {
-                mResourceOptions[resourceOption] = enabled;
-            }
-            else
-            {
-                mResourceOptions.Add(resourceOption, enabled);
-            }
+            // Add/update resourceOption
+            mResourceOptions[resourceOption] = enabled;
 
             if (resourceOption == clsGlobal.eAnalysisResourceOptions.MyEMSLSearchDisabled)
             {
@@ -3604,7 +3598,7 @@ namespace AnalysisManagerBase
             {
                 LogMessage(string.Format(
                     "Warning: unable to delete enough files to free up the required space on {0} " +
-                    "({1:F1} GB vs. {2:F1} GB); " + "deleted {3:F1} GB of cached files",
+                    "({1:F1} GB vs. {2:F1} GB); deleted {3:F1} GB of cached files",
                     localDriveInfo.Name, finalFreeSpaceGB, requiredFreeSpaceMB / 1024.0, clsGlobal.BytesToGB(totalBytesPurged)));
             }
         }
@@ -4705,7 +4699,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Convert a string list to a packed job parameter (items are separated by tab characters)
         /// </summary>
-        /// <param name="packedJobParams">Packed job parameters to store as parameter parameterName</param>
+        /// <param name="packedJobParams">Packed job parameters to store as param parameterName</param>
         /// <param name="parameterName">Packed job parameter name</param>
         protected void StorePackedJobParameterList(List<string> packedJobParams, string parameterName)
         {

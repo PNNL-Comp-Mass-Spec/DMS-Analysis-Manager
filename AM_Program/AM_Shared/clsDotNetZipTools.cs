@@ -817,12 +817,7 @@ namespace AnalysisManagerBase
             // Verify that the zip file is not corrupt
             // Files less than 4 GB get a full CRC check
             // Large files get a quick check
-            if (!VerifyZipFile(zipFilePath))
-            {
-                return false;
-            }
-
-            return true;
+            return VerifyZipFile(zipFilePath);
         }
     }
 }

@@ -53,12 +53,12 @@ namespace AnalysisManagerMzRefineryPlugIn
             {
                 sbXml.Append("<DTARef_MassErrorStats>");
 
-                sbXml.Append(Convert.ToString("<Dataset>") + MassErrorInfo.DatasetName + "</Dataset>");
-                sbXml.Append(Convert.ToString("<PSM_Source_Job>") + MassErrorInfo.PSMJob + "</PSM_Source_Job>");
+                sbXml.AppendFormat("<Dataset>{0}</Dataset>", MassErrorInfo.DatasetName);
+                sbXml.AppendFormat("<PSM_Source_Job>{0}</PSM_Source_Job>", MassErrorInfo.PSMJob);
 
                 sbXml.Append("<Measurements>");
-                sbXml.Append(Convert.ToString("<Measurement Name=\"" + "MassErrorPPM" + "\">") + MassErrorInfo.MassErrorPPM + "</Measurement>");
-                sbXml.Append(Convert.ToString("<Measurement Name=\"" + "MassErrorPPM_Refined" + "\">") + MassErrorInfo.MassErrorPPMRefined + "</Measurement>");
+                sbXml.AppendFormat("<Measurement Name=\"{0}\">{1}</Measurement>", "MassErrorPPM", MassErrorInfo.MassErrorPPM);
+                sbXml.AppendFormat("<Measurement Name=\"{0}\">{1}</Measurement>", "MassErrorPPM_Refined", MassErrorInfo.MassErrorPPMRefined);
                 sbXml.Append("</Measurements>");
 
                 sbXml.Append("</DTARef_MassErrorStats>");
@@ -180,8 +180,6 @@ namespace AnalysisManagerMzRefineryPlugIn
 
         private bool PostMassErrorInfoToDB(int datasetID, string xmlResults)
         {
-            const int MAX_RETRY_COUNT = 3;
-
             bool success;
 
             try
@@ -198,7 +196,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 dbTools.AddParameter(sqlCmd, "@ResultsXML", SqlType.XML).Value = xmlResults;
 
                 // Execute the SP (retry the call up to 3 times)
-                var resCode = dbTools.ExecuteSP(sqlCmd, MAX_RETRY_COUNT);
+                var resCode = dbTools.ExecuteSP(sqlCmd);
 
                 if (resCode == 0)
                 {

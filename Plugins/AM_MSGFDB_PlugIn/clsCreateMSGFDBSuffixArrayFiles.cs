@@ -286,7 +286,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 var remoteIndexDirectory = new DirectoryInfo(remoteIndexDirPath);
 
-                if (remoteIndexDirectory.Parent == null || !remoteIndexDirectory.Parent.Exists)
+                if (remoteIndexDirectory.Parent?.Exists != true)
                 {
                     errorMessage = "Parent directory for the MS-GF+ index files directory not found: " + remoteIndexDirPath;
                     return false;
@@ -396,7 +396,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         {
             const float MAX_WAIT_TIME_HOURS = 1.0f;
 
-            var maxWaitTimeHours = MAX_WAIT_TIME_HOURS;
+            const float maxWaitTimeHours = MAX_WAIT_TIME_HOURS;
 
             var currentTask = "Initializing";
 
@@ -873,7 +873,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         {
             var remoteIndexDirectory = new DirectoryInfo(remoteIndexDirPath);
 
-            if (remoteIndexDirectory.Parent == null || !remoteIndexDirectory.Parent.Exists)
+            if (remoteIndexDirectory.Parent?.Exists != true)
             {
                 OnErrorEvent("Cannot read/write MS-GF+ index files from remote share; directory not found; " + remoteIndexDirectory.FullName);
                 fiRemoteLockFile = null;
@@ -1003,8 +1003,6 @@ namespace AnalysisManagerMSGFDBPlugIn
         {
             var reExtractNum = new Regex(@"^ID_(\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-            string remoteIndexDirectory;
-
             // DMS-generated fasta files will have a name of the form ID_003949_3D6802EE.fasta
             // Parse out the number (003949 in this case)
             var reMatch = reExtractNum.Match(fastaFileName);
@@ -1019,16 +1017,14 @@ namespace AnalysisManagerMSGFDBPlugIn
                     if (string.IsNullOrWhiteSpace(msgfPlusIndexFilesDirPathBase))
                         return string.Empty;
 
-                    remoteIndexDirectory = Path.Combine(msgfPlusIndexFilesDirPathBase, directoryName);
-                    return remoteIndexDirectory;
+                    return Path.Combine(msgfPlusIndexFilesDirPathBase, directoryName);
                 }
             }
 
             if (string.IsNullOrWhiteSpace(msgfPlusIndexFilesDirPathLegacyDB))
                 return string.Empty;
 
-            remoteIndexDirectory = Path.Combine(msgfPlusIndexFilesDirPathLegacyDB, "Other");
-            return remoteIndexDirectory;
+            return Path.Combine(msgfPlusIndexFilesDirPathLegacyDB, "Other");
         }
 
         /// <summary>
@@ -1141,7 +1137,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     while (!srReader.EndOfStream)
                     {
                         var dataLine = srReader.ReadLine();
-                        if (dataLine != null && dataLine.StartsWith("Error", StringComparison.OrdinalIgnoreCase))
+                        if (dataLine?.StartsWith("Error", StringComparison.OrdinalIgnoreCase) == true)
                         {
                             OnErrorEvent("BuildSA reports: " + dataLine);
                             if (dataLine.Contains("too many redundant proteins"))

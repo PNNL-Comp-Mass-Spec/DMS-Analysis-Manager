@@ -90,11 +90,7 @@ namespace AnalysisManagerBase
                         }
                         else
                         {
-                            if (bool.Parse(Convert.ToString(registryValue)))
-                            {
-                                valueMissing = false;
-                            }
-                            else
+                            if (!bool.Parse(Convert.ToString(registryValue)))
                             {
                                 valueMissing = true;
                             }

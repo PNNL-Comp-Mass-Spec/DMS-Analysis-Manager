@@ -145,7 +145,7 @@ namespace AnalysisManagerProg
                 // and if we did, retrieve its information
                 if (nodeList.Count != 1)
                 {
-                    var testToolMatcher = new Regex(@"@Tool='(?<TestToolName>test_(?<AltToolName>[a-z_-]+))'", RegexOptions.IgnoreCase);
+                    var testToolMatcher = new Regex("@Tool='(?<TestToolName>test_(?<AltToolName>[a-z_-]+))'", RegexOptions.IgnoreCase);
                     var match = testToolMatcher.Match(pluginInfo);
 
                     if (match.Success)

@@ -582,7 +582,7 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Looks for file fileName in directoryPath or any of its subdirectories
+        /// Looks for the file in directoryPath or any of its subdirectories
         /// The filename may contain a wildcard character, in which case the first match will be returned
         /// </summary>
         /// <param name="directoryPath">Folder path to examine</param>
@@ -594,7 +594,7 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Looks for file fileName in directoryPath or any of its subdirectories
+        /// Looks for the file in directoryPath or any of its subdirectories
         /// The filename may contain a wildcard character, in which case the first match will be returned
         /// </summary>
         /// <param name="directoryPath">Directory path to examine</param>
@@ -1386,13 +1386,9 @@ namespace AnalysisManagerBase
                 OnDebugEvent("Retrieving file " + datasetFile.FullName);
             }
 
-            if (mFileCopyUtilities.CopyFileToWorkDir(datasetFile.Name, datasetFile.DirectoryName, mWorkDir,
-                BaseLogger.LogLevels.ERROR, createStoragePathInfoOnly))
-            {
-                return true;
-            }
-
-            return false;
+            return mFileCopyUtilities.CopyFileToWorkDir(
+                datasetFile.Name, datasetFile.DirectoryName,
+                mWorkDir, BaseLogger.LogLevels.ERROR, createStoragePathInfoOnly);
         }
 
         /// <summary>
@@ -1507,12 +1503,8 @@ namespace AnalysisManagerBase
         public bool RetrieveFile(string fileName, string sourceDirectoryPath)
         {
             // Copy the file
-            if (!mFileCopyUtilities.CopyFileToWorkDir(fileName, sourceDirectoryPath, mWorkDir, BaseLogger.LogLevels.ERROR))
-            {
-                return false;
-            }
-
-            return true;
+            return mFileCopyUtilities.CopyFileToWorkDir(
+                fileName, sourceDirectoryPath, mWorkDir, BaseLogger.LogLevels.ERROR);
         }
 
         /// <summary>
@@ -1530,17 +1522,13 @@ namespace AnalysisManagerBase
             if (maxCopyAttempts < 1)
                 maxCopyAttempts = 1;
 
-            if (!mFileCopyUtilities.CopyFileToWorkDir(fileName, sourceDirectoryPath, mWorkDir,
-                logMsgTypeIfNotFound, createStoragePathInfoOnly: false, maxCopyAttempts: maxCopyAttempts))
-            {
-                return false;
-            }
-
-            return true;
+            return mFileCopyUtilities.CopyFileToWorkDir(
+                fileName, sourceDirectoryPath, mWorkDir,
+                logMsgTypeIfNotFound, createStoragePathInfoOnly: false, maxCopyAttempts: maxCopyAttempts);
         }
 
         /// <summary>
-        /// Retrieves an Agilent ion trap .mgf file or .cdf/,mgf pair for analysis job in progress
+        /// Retrieves an Agilent ion trap .mgf file or .cdf/.mgf pair for analysis job in progress
         /// </summary>
         /// <param name="getCdfAlso">TRUE if .cdf file is needed along with .mgf file; FALSE otherwise</param>
         /// <param name="createStoragePathInfoOnly"></param>
@@ -2797,11 +2785,7 @@ namespace AnalysisManagerBase
                     {
                         if (createStoragePathInfoOnly)
                         {
-                            if (mFileCopyUtilities.CreateStoragePathInfoFile(sourceDirectory.FullName, mWorkDir + @"\"))
-                            {
-                                return true;
-                            }
-                            return false;
+                            return mFileCopyUtilities.CreateStoragePathInfoFile(sourceDirectory.FullName, mWorkDir + @"\");
                         }
 
                         // Copy the 0.ser directory to the Work directory

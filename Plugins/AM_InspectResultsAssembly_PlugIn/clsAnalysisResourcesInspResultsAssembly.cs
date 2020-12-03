@@ -31,8 +31,6 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                 return result;
             }
 
-            string numClonedSteps = null;
-
             var transferFolderName = Path.Combine(mJobParams.GetParam(JOB_PARAM_TRANSFER_FOLDER_PATH), DatasetName);
             var zippedResultName = DatasetName + "_inspect.zip";
             const string searchLogResultName = "InspectSearchLog.txt";
@@ -57,7 +55,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
-            numClonedSteps = mJobParams.GetParam("NumberOfClonedSteps");
+            var numClonedSteps = mJobParams.GetParam("NumberOfClonedSteps");
             if (string.IsNullOrEmpty(numClonedSteps))
             {
                 // This is not a parallelized job

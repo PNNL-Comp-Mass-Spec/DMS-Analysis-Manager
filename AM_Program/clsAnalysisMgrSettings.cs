@@ -238,14 +238,8 @@ namespace AnalysisManagerProg
             // Add/Update settings
             foreach (var setting in settings)
             {
-                if (MgrParams.ContainsKey(setting.Key))
-                {
-                    MgrParams[setting.Key] = setting.Value;
-                }
-                else
-                {
-                    MgrParams.Add(setting.Key, setting.Value);
-                }
+                // Add/update the setting
+                MgrParams[setting.Key] = setting.Value;
             }
 
             // Validate several key local manager settings
@@ -386,7 +380,7 @@ namespace AnalysisManagerProg
             // If loop exited due to errors, return false
             if (!success)
             {
-                var statusMessage = "clsAnalysisMgrSettings.LoadBrokerDBSettings; Excessive failures attempting to retrieve settings from broker database";
+                const string statusMessage = "clsAnalysisMgrSettings.LoadBrokerDBSettings; Excessive failures attempting to retrieve settings from broker database";
                 ReportError(statusMessage, false);
                 return false;
             }

@@ -7,14 +7,13 @@
 
 using System;
 using AnalysisManagerBase;
-using System.Collections.Generic;
 
 namespace AnalysisManagerMSFraggerPlugIn
 {
     /// <summary>
     /// Retrieve resources for the MSFragger plugin
     /// </summary>
-    class clsAnalysisResourcesMSFragger : clsAnalysisResources
+    public class clsAnalysisResourcesMSFragger : clsAnalysisResources
     {
         // Ignore Spelling: Fragger
 

@@ -354,7 +354,9 @@ namespace AnalysisManagerBase
                             exeInfo = clsGlobal.AppendToComment(exeInfo, toolFileNameAndDate);
 
                             if (DebugLevel >= 2)
+                            {
                                 OnStatusEvent("EXE Info: " + exeInfo);
+                            }
                             else
                             {
                                 OnDebugEvent("EXE Info: " + exeInfo);
