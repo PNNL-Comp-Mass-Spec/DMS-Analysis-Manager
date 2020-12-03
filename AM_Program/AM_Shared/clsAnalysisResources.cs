@@ -6,7 +6,6 @@ using PRISM.Logging;
 using Renci.SshNet.Sftp;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -27,7 +26,6 @@ namespace AnalysisManagerBase
     /// <summary>
     /// Base class for job resource class
     /// </summary>
-    [SuppressMessage("ReSharper", "UnusedMember.Global")]
     public abstract class clsAnalysisResources : clsAnalysisMgrBase, IAnalysisResources
     {
         // Ignore Spelling: tdf, ser, fid, baf, dta, acqu, maldi, tof, wiff, uimf, tims, MODa, deconv, msgfdb

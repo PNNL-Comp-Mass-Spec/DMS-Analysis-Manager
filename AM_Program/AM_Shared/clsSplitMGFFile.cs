@@ -10,9 +10,10 @@ namespace AnalysisManagerBase
     /// <summary>
     /// This class splits a Mascot Generic File (mgf file) into multiple parts
     /// </summary>
-    [SuppressMessage("ReSharper", "UnusedMember.Global")]
     public class clsSplitMGFFile : EventNotifier
     {
+        // Ignore Spelling: mgf
+
         /// <summary>
         /// Output file info
         /// </summary>

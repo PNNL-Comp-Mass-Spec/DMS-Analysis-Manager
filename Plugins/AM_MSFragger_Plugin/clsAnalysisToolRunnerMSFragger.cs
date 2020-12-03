@@ -13,6 +13,8 @@ using System.Text.RegularExpressions;
 
 namespace AnalysisManagerMSFraggerPlugIn
 {
+    // Ignore Spelling: Fragger
+
     /// <summary>
     /// Class for running MSFragger analysis
     /// </summary>

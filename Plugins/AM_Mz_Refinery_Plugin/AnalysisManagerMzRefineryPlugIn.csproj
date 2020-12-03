@@ -58,6 +58,7 @@
     <Compile Include="clsAnalysisToolRunnerMzRefinery.cs" />
     <Compile Include="clsMassErrorInfo.cs" />
     <Compile Include="clsMzRefineryMassErrorStatsExtractor.cs" />
+    <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

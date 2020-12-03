@@ -16,6 +16,8 @@ namespace AnalysisManagerBase
     /// </summary>
     public class clsFileSearch : EventNotifier
     {
+        // Ignore Spelling: Finalizers, msgfdb, Deconcatenate, ser, gzipping, Workflows, dta, mgf, CompassXtract
+
         #region "Constants"
 
         private const string MYEMSL_PATH_FLAG = clsMyEMSLUtilities.MYEMSL_PATH_FLAG;

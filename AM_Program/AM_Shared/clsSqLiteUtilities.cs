@@ -9,7 +9,6 @@ namespace AnalysisManagerBase
     /// <summary>
     /// SQLite utilities
     /// </summary>
-    [SuppressMessage("ReSharper", "UnusedMember.Global")]
     public class clsSqLiteUtilities
     {
         // Ignore Spelling: sqlite, sql, tbl

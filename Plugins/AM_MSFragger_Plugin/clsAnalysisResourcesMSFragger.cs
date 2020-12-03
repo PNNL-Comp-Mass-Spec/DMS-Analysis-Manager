@@ -16,6 +16,8 @@ namespace AnalysisManagerMSFraggerPlugIn
     /// </summary>
     class clsAnalysisResourcesMSFragger : clsAnalysisResources
     {
+        // Ignore Spelling: Fragger
+
         /// <summary>
         /// Initialize options
         /// </summary>
