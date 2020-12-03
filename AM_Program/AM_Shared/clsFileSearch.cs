@@ -303,7 +303,7 @@ namespace AnalysisManagerBase
                 return true;
 
             OnStatusEvent("Unzipping file " + fileName);
-            if (UnzipFileStart(Path.Combine(mWorkDir, fileName), mWorkDir, "FindAndRetrieveMiscFiles", false))
+            if (UnzipFileStart(Path.Combine(mWorkDir, fileName), mWorkDir, "FindAndRetrieveMiscFiles"))
             {
                 if (mDebugLevel >= 3)
                 {
@@ -1469,7 +1469,7 @@ namespace AnalysisManagerBase
 
             // Unzip concatenated DTA file
             OnStatusEvent("Unzipping concatenated DTA file");
-            if (UnzipFileStart(targetZipFilePath, mWorkDir, "RetrieveDtaFiles", false))
+            if (UnzipFileStart(targetZipFilePath, mWorkDir, "RetrieveDtaFiles"))
             {
                 if (mDebugLevel >= 1)
                 {
@@ -1756,7 +1756,7 @@ namespace AnalysisManagerBase
 
             // Unzip concatenated OUT file
             OnStatusEvent("Unzipping concatenated OUT file");
-            if (UnzipFileStart(Path.Combine(mWorkDir, zippedFileName), mWorkDir, "RetrieveOutFiles", false))
+            if (UnzipFileStart(Path.Combine(mWorkDir, zippedFileName), mWorkDir, "RetrieveOutFiles"))
             {
                 if (mDebugLevel >= 1)
                 {
@@ -2950,9 +2950,8 @@ namespace AnalysisManagerBase
         /// <param name="zipFilePath">File to unzip</param>
         /// <param name="outputDirectoryPath">Target directory for the extracted files</param>
         /// <param name="callingFunctionName">Calling function name (used for debugging purposes)</param>
-        /// <param name="forceExternalZipProgramUse">If True, force use of PKZipC.exe</param>
         /// <returns>True if success, otherwise false</returns>
-        public bool UnzipFileStart(string zipFilePath, string outputDirectoryPath, string callingFunctionName, bool forceExternalZipProgramUse)
+        public bool UnzipFileStart(string zipFilePath, string outputDirectoryPath, string callingFunctionName)
         {
             var unzipToolName = "??";
 

@@ -138,7 +138,7 @@ namespace AnalysisManagerInSpecTPlugIn
             {
                 // Unzip concatenated DTA file
                 LogMessage("Unzipping concatenated DTA file");
-                if (UnzipFileStart(Path.Combine(mWorkDir, dtaResultFileName), mWorkDir, "clsAnalysisResourcesIN.RetrieveDtaFiles", false))
+                if (UnzipFileStart(Path.Combine(mWorkDir, dtaResultFileName), mWorkDir, "clsAnalysisResourcesIN.RetrieveDtaFiles"))
                 {
                     if (mDebugLevel >= 1)
                     {

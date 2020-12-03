@@ -1356,7 +1356,7 @@ namespace AnalysisManagerProg
             const int debugLevel = 2;
             var resourcer = GetResourcesObject(debugLevel);
 
-            var success = resourcer.UnzipFileStart(zipFilePath, outFolderPath, "TestUnzip", false);
+            var success = resourcer.UnzipFileStart(zipFilePath, outFolderPath, "TestUnzip");
             // success = resourcer.UnzipFileStart(zipFilePath, outFolderPath, "TestUnzip", True)
 
             return success;

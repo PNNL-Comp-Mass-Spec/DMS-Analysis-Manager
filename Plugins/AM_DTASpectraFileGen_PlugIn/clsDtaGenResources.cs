@@ -150,7 +150,7 @@ namespace DTASpectraFileGen
 
                 LogMessage("Unzipping file " + Path.GetFileName(zippedDTAFilePath));
 
-                if (UnzipFileStart(tempZipFilePath, mWorkDir, "clsDtaGenResources", false))
+                if (UnzipFileStart(tempZipFilePath, mWorkDir, "clsDtaGenResources"))
                 {
                     if (mDebugLevel >= 1)
                     {

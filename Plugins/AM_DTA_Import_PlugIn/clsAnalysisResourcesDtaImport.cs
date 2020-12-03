@@ -68,7 +68,7 @@ namespace AnalysisManagerDtaImportPlugIn
                 // If valid zip file is found, unzip the contents
                 foreach (var fileName in fileEntries)
                 {
-                    if (UnzipFileStart(Path.Combine(mWorkDir, fileName), mWorkDir, "clsAnalysisResourcesDtaImport.ValidateDTA", false))
+                    if (UnzipFileStart(Path.Combine(mWorkDir, fileName), mWorkDir, "clsAnalysisResourcesDtaImport.ValidateDTA"))
                     {
                         if (mDebugLevel >= 1)
                         {

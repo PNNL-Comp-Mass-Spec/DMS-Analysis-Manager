@@ -4722,11 +4722,10 @@ namespace AnalysisManagerBase
         /// <param name="zipFilePath">File to unzip</param>
         /// <param name="outputDirectoryPath">Target directory for the extracted files</param>
         /// <param name="callingFunctionName">Calling function name (used for debugging purposes)</param>
-        /// <param name="forceExternalZipProgramUse">If True, force use of PKZipC.exe</param>
         /// <returns>True if success, otherwise false</returns>
-        public bool UnzipFileStart(string zipFilePath, string outputDirectoryPath, string callingFunctionName, bool forceExternalZipProgramUse)
+        public bool UnzipFileStart(string zipFilePath, string outputDirectoryPath, string callingFunctionName)
         {
-            var success = FileSearch.UnzipFileStart(zipFilePath, outputDirectoryPath, callingFunctionName, forceExternalZipProgramUse);
+            var success = FileSearch.UnzipFileStart(zipFilePath, outputDirectoryPath, callingFunctionName);
             return success;
         }
 

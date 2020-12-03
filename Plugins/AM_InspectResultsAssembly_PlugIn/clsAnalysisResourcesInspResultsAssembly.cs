@@ -76,7 +76,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                 {
                     LogMessage("Unzipping Inspect result file");
                 }
-                if (UnzipFileStart(Path.Combine(mWorkDir, zippedResultName), mWorkDir, "clsAnalysisResourcesInspResultsAssembly.GetResources", false))
+                if (UnzipFileStart(Path.Combine(mWorkDir, zippedResultName), mWorkDir, "clsAnalysisResourcesInspResultsAssembly.GetResources"))
                 {
                     if (mDebugLevel >= 1)
                     {
