@@ -132,7 +132,7 @@ namespace AnalysisManagerTopPICPlugIn
 
                 var zipOutputDirectoryPath = Path.Combine(mWorkDir, DatasetName + "_html");
                 LogMessage("Unzipping file " + fileName);
-                if (UnzipFileStart(Path.Combine(mWorkDir, fileName), zipOutputDirectoryPath, "clsAnalysisResourcesTopPIC.GetResources", false))
+                if (UnzipFileStart(Path.Combine(mWorkDir, fileName), zipOutputDirectoryPath, "clsAnalysisResourcesTopPIC.GetResources"))
                 {
                     continue;
                 }
