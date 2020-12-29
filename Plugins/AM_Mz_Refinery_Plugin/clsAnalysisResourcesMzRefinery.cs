@@ -11,6 +11,8 @@ namespace AnalysisManagerMzRefineryPlugIn
     /// </summary>
     public class clsAnalysisResourcesMzRefinery : clsAnalysisResources
     {
+        // Ignore Spelling: dta
+
         /// <summary>
         /// Initialize options
         /// </summary>
