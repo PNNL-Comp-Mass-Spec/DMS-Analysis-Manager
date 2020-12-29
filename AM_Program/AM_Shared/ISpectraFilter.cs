@@ -18,19 +18,9 @@ namespace AnalysisManagerBase
     public enum ProcessResults
     {
         /// <summary>
-        /// Operation succeeded
+        /// Spectra filter did not alter any spectra
         /// </summary>
-        SF_SUCCESS = 0,
-
-        /// <summary>
-        /// Operation failed
-        /// </summary>
-        SF_FAILURE = -1,
-
-        /// <summary>
-        /// Spectra filter operation didn't fail, but no output files were created
-        /// </summary>
-        SF_NO_FILES_CREATED = -2,
+        SF_NO_SPECTRA_ALTERED = -4,
 
         /// <summary>
         /// Spectra filter operation aborted
@@ -38,9 +28,19 @@ namespace AnalysisManagerBase
         SF_ABORTED = -3,
 
         /// <summary>
-        /// Spectra filter did not alter any spectra
+        /// Spectra filter operation didn't fail, but no output files were created
         /// </summary>
-        SF_NO_SPECTRA_ALTERED = -4
+        SF_NO_FILES_CREATED = -2,
+
+        /// <summary>
+        /// Operation failed
+        /// </summary>
+        SF_FAILURE = -1,
+
+        /// <summary>
+        /// Operation succeeded
+        /// </summary>
+        SF_SUCCESS = 0,
     }
 
     /// <summary>
