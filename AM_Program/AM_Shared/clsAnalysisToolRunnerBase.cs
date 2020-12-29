@@ -458,10 +458,9 @@ namespace AnalysisManagerBase
                 return;
             }
 
-            var failedResultsDirectoryPath = mMgrParams.GetParam(mMgrParams.HasParam("FailedResultsDirectoryPath") ? 
+            var failedResultsDirectoryPath = mMgrParams.GetParam(mMgrParams.HasParam("FailedResultsDirectoryPath") ?
                                                                      "FailedResultsDirectoryPath" :
                                                                      "FailedResultsFolderPath");
-
 
             if (string.IsNullOrWhiteSpace(failedResultsDirectoryPath))
             {

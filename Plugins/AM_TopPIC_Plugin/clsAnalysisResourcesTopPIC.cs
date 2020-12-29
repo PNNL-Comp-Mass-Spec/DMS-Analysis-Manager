@@ -73,7 +73,6 @@ namespace AnalysisManagerTopPICPlugIn
 
             mJobParams.AddResultFileToSkip(ms2MSAlignFile);
 
-
             // TopPIC 1.2 and earlier created a .feature file
             // TopPIC 1.3 creates two files: _ms1.feature and _ms2.feature
 
