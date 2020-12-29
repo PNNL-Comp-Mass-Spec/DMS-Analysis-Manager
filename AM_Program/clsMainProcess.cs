@@ -1011,6 +1011,12 @@ namespace AnalysisManagerProg
                 var resourcesRetrieved = RetrieveResources(toolResourcer, jobNum, datasetName, out resultCode);
                 if (!resourcesRetrieved)
                 {
+                    if (resultCode == CloseOutType.SKIPPED_MZ_REFINERY)
+                    {
+                        // This is not an error; we're simply skipping MZ_Refinery
+                        return CloseOutType.CLOSEOUT_SUCCESS;
+                    }
+
                     // Error occurred
                     // Note that mAnalysisTask.CloseTask() should have already been called
                     var reportSuccess = HandleJobFailure(toolRunner, resultCode);
@@ -2326,16 +2332,33 @@ namespace AnalysisManagerProg
                     return false;
                 }
 
-                mMostRecentErrorMessage = "GetResources returned result: " + resultCode;
-                ShowTrace(mMostRecentErrorMessage + "; closing job step task");
+                var statusMessage = "GetResources returned result: " + resultCode;
+                ShowTrace(statusMessage + "; closing job step task");
 
-                var compMsg = string.IsNullOrWhiteSpace(toolResourcer.Message) ? resultCode.ToString() : toolResourcer.Message;
+                string compMsg;
+                bool errorProcessing;
+                if (resultCode == CloseOutType.SKIPPED_MZ_REFINERY)
+                {
+                    compMsg = string.IsNullOrWhiteSpace(toolResourcer.Message) ? string.Empty : toolResourcer.Message;
+                    errorProcessing=false;
+                }
+                else
+                {
+                    compMsg = string.IsNullOrWhiteSpace(toolResourcer.Message) ? resultCode.ToString() : toolResourcer.Message;
+                    errorProcessing = true;
+                    mMostRecentErrorMessage = statusMessage;
+                    LogError(mMgrName + ": " + clsGlobal.AppendToComment(mMostRecentErrorMessage, toolResourcer.Message) + ", Job " + jobNum + ", Dataset " + datasetName);
+                }
 
-                LogError(mMgrName + ": " + clsGlobal.AppendToComment(mMostRecentErrorMessage, toolResourcer.Message) + ", Job " + jobNum + ", Dataset " + datasetName);
                 mAnalysisTask.CloseTask(resultCode, compMsg);
 
                 mMgrErrorCleanup.CleanWorkDir();
-                UpdateStatusIdle("Error encountered: " + mMostRecentErrorMessage);
+
+                if (errorProcessing)
+                {
+                    UpdateStatusIdle("Error encountered: " + mMostRecentErrorMessage);
+                }
+
                 mMgrErrorCleanup.DeleteStatusFlagFile(mDebugLevel);
 
                 return false;

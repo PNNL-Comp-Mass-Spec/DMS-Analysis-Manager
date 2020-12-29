@@ -94,6 +94,11 @@ namespace AnalysisManagerBase
         CLOSEOUT_UNABLE_TO_USE_MZ_REFINERY = 17,
 
         /// <summary>
+        /// Skipped running MZ Refinery because parameter MzRefParamFile has "SkipAll"
+        /// </summary>
+        SKIPPED_MZ_REFINERY = 18,
+
+        /// <summary>
         /// No data (no results)
         /// </summary>
         CLOSEOUT_NO_DATA = 20,

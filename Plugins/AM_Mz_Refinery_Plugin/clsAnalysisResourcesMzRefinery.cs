@@ -42,6 +42,12 @@ namespace AnalysisManagerMzRefineryPlugIn
                     return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
                 }
 
+                if (mzRefParamFile.Equals("SkipAll", StringComparison.OrdinalIgnoreCase))
+                {
+                    // Do not perform any processing with MzRefinery
+                    return CloseOutType.SKIPPED_MZ_REFINERY;
+                }
+
                 currentTask = "Get input file(s)";
 
                 // Typically only MsXMLGenerator is defined
