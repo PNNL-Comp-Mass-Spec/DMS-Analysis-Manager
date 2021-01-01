@@ -708,6 +708,30 @@ namespace AnalysisManagerBase
                                 }
                             }
 
+                            if (currentFileInfo.Exists &&
+                                currentFileInfo.Directory != null &&
+                                currentFileInfo.Directory.FullName.Equals(workingDir, StringComparison.OrdinalIgnoreCase))
+                            {
+                                // Move the file into a subdirectory below the working directory
+                                // This is necessary in case a dataset has multiple analysis jobs in the same data package
+
+                                // Furthermore, method RetrievePHRPFiles in the tool runner class of the PRIDE Converter plugin
+                                // requires that files be copied from a separate location to the working directory
+                                // It raises an error if the file is found to exist in the working directory
+
+                                var jobSubDirectory = new DirectoryInfo(Path.Combine(workingDir, "Job" + dataPkgJob.Job));
+                                if (!jobSubDirectory.Exists)
+                                {
+                                    jobSubDirectory.Create();
+                                }
+
+                                var newFilePath = Path.Combine(jobSubDirectory.FullName, currentFileInfo.Name);
+                                currentFileInfo.MoveTo(newFilePath);
+
+                                writer.WriteLine(newFilePath);
+                                continue;
+                            }
+
                             writer.WriteLine(filePath);
                         }
                     }
