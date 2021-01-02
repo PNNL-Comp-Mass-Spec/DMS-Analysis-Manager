@@ -3,6 +3,7 @@ using PRISM.Logging;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using MyEMSLReader;
 
 namespace AnalysisManagerBase
 {
@@ -192,12 +193,16 @@ namespace AnalysisManagerBase
         {
             try
             {
-                var sourceFilePath = Path.Combine(sourceFolderPath, sourceFileName);
-
                 if (sourceFolderPath.StartsWith(MYEMSL_PATH_FLAG))
                 {
-                    return mMyEMSLUtilities.AddFileToDownloadQueue(sourceFilePath);
+                    if (sourceFolderPath.Contains(DatasetInfoBase.MYEMSL_FILE_ID_TAG))
+                    {
+                        return mMyEMSLUtilities.AddFileToDownloadQueue(sourceFolderPath);
+                    }
+                    return mMyEMSLUtilities.AddFileToDownloadQueue(Path.Combine(sourceFolderPath, sourceFileName));
                 }
+
+                var sourceFilePath = Path.Combine(sourceFolderPath, sourceFileName);
 
                 var destinationFilePath = Path.Combine(targetFolderPath, sourceFileName);
 
