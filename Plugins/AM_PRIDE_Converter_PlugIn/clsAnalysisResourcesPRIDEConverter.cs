@@ -326,7 +326,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                         mJobParams.AddAdditionalParameter("PeptideSearch", "generatedFastaName", string.Empty);
 
-                        if (!RetrieveOrgDB(orgDbDirectoryPath, out var resultCode, true))
+                        if (!RetrieveOrgDB(orgDbDirectoryPath, out _, true))
                         {
                             if (string.IsNullOrEmpty(mMessage))
                                 mMessage = "Call to RetrieveOrgDB returned false in clsAnalysisResourcesPRIDEConverter.RetrieveFastaFiles";
