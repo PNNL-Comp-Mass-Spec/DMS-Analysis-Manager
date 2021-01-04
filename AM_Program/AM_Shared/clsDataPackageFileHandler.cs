@@ -393,6 +393,28 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
+        /// Move the file into a subdirectory below the working directory
+        /// </summary>
+        /// <param name="workDirInfo"></param>
+        /// <param name="dataPkgJob"></param>
+        /// <param name="sourceFile"></param>
+        /// <returns>Full path to the destination file path</returns>
+        private string MoveFileToJobSubdirectory(FileSystemInfo workDirInfo, clsDataPackageJobInfo dataPkgJob, FileInfo sourceFile)
+        {
+            var jobSubDirectory = new DirectoryInfo(Path.Combine(workDirInfo.FullName, "Job" + dataPkgJob.Job));
+            if (!jobSubDirectory.Exists)
+            {
+                jobSubDirectory.Create();
+            }
+
+            var destinationFilePath = Path.Combine(jobSubDirectory.FullName, sourceFile.Name);
+            sourceFile.MoveTo(destinationFilePath);
+            sourceFile.Refresh();
+
+            return sourceFile.FullName;
+        }
+
+        /// <summary>
         /// Open an .mzid or .mzid.gz file and look for the SpectraData element
         /// If the location of the file specified by SpectraData points to a .mzML or .mzML.gz file, return true
         /// Otherwise, return false
@@ -695,14 +717,7 @@ namespace AnalysisManagerBase
 
                                     // Move the file into a subdirectory below the working directory
                                     // This is necessary in case a dataset has multiple analysis jobs in the same data package
-                                    var jobSubDirectory = new DirectoryInfo(Path.Combine(workingDir, "Job" + dataPkgJob.Job));
-                                    if (!jobSubDirectory.Exists)
-                                    {
-                                        jobSubDirectory.Create();
-                                    }
-
-                                    var gzipFilePathNew = Path.Combine(jobSubDirectory.FullName, gzipFileSource.Name);
-                                    gzipFileSource.MoveTo(gzipFilePathNew);
+                                    var gzipFilePathNew = MoveFileToJobSubdirectory(workDirInfo, dataPkgJob, gzipFileSource);
 
                                     writer.WriteLine(gzipFilePathNew);
                                     continue;
@@ -710,8 +725,7 @@ namespace AnalysisManagerBase
                             }
 
                             if (currentFileInfo.Exists &&
-                                currentFileInfo.Directory != null &&
-                                currentFileInfo.Directory.FullName.Equals(workingDir, StringComparison.OrdinalIgnoreCase))
+                                currentFileInfo.Directory?.FullName.Equals(workDirInfo.FullName, StringComparison.OrdinalIgnoreCase) == true)
                             {
                                 // Move the file into a subdirectory below the working directory
                                 // This is necessary in case a dataset has multiple analysis jobs in the same data package
@@ -720,14 +734,7 @@ namespace AnalysisManagerBase
                                 // requires that files be copied from a separate location to the working directory
                                 // It raises an error if the file is found to exist in the working directory
 
-                                var jobSubDirectory = new DirectoryInfo(Path.Combine(workingDir, "Job" + dataPkgJob.Job));
-                                if (!jobSubDirectory.Exists)
-                                {
-                                    jobSubDirectory.Create();
-                                }
-
-                                var newFilePath = Path.Combine(jobSubDirectory.FullName, currentFileInfo.Name);
-                                currentFileInfo.MoveTo(newFilePath);
+                                var newFilePath = MoveFileToJobSubdirectory(workDirInfo, dataPkgJob, currentFileInfo);
 
                                 writer.WriteLine(newFilePath);
                                 continue;
