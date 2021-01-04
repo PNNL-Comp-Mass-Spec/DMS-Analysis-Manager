@@ -137,10 +137,10 @@ namespace AnalysisManagerBase
         /// <param name="datasetName"></param>
         /// <param name="job"></param>
         /// <param name="stepToolFilter">step tool to filter on; if an empty string, returns the input directory for the primary step tool for the job</param>
-        /// <param name="workingDir"></param>
+        /// <param name="workDirInfo"></param>
         /// <returns>Path to the .mzML or .mzML.gz file; empty string if not found</returns>
         /// <remarks>Uses the highest job step to determine the input directory, meaning the .mzML.gz file returned will be the one used by MS-GF+</remarks>
-        private string FindMzMLForJob(string datasetName, int job, string stepToolFilter, string workingDir)
+        private string FindMzMLForJob(string datasetName, int job, string stepToolFilter, FileSystemInfo workDirInfo)
         {
             if (clsGlobal.OfflineMode)
             {
@@ -277,7 +277,7 @@ namespace AnalysisManagerBase
 
                     var success = mAnalysisResources.CopyFileToWorkDir(
                         sourceCacheInfoFile.Name, sourceCacheInfoFile.DirectoryName,
-                        workingDir, BaseLogger.LogLevels.ERROR);
+                        workDirInfo.FullName, BaseLogger.LogLevels.ERROR);
 
                     if (!success)
                     {
@@ -290,7 +290,7 @@ namespace AnalysisManagerBase
 
                 // Open the CacheInfo file and read the first line
 
-                var localCacheInfoFile = new FileInfo(Path.Combine(workingDir, cacheInfoFileName));
+                var localCacheInfoFile = new FileInfo(Path.Combine(workDirInfo.FullName, cacheInfoFileName));
                 if (!localCacheInfoFile.Exists)
                 {
                     OnErrorEvent("CacheInfo file not found in the working directory; should have been retrieved from " + cacheInfoFileSourceType);
@@ -509,13 +509,13 @@ namespace AnalysisManagerBase
         /// <param name="retrievalOptions">File retrieval options</param>
         /// <param name="cachedJobMetadata"></param>
         /// <param name="dotNetTools"></param>
-        /// <param name="workingDir"></param>
+        /// <param name="workDirInfo"></param>
         /// <param name="dataPkgJob">Data package job</param>
         private bool ProcessOnePeptideHitJob(
             udtDataPackageRetrievalOptionsType retrievalOptions,
             IDictionary<int, udtDataPackageJobMetadata> cachedJobMetadata,
             clsDotNetZipTools dotNetTools,
-            string workingDir,
+            FileSystemInfo workDirInfo,
             clsDataPackageJobInfo dataPkgJob)
         {
             try
@@ -598,11 +598,11 @@ namespace AnalysisManagerBase
 
                 // Check whether a synopsis file by this name has already been copied locally
                 // If it has, we have multiple jobs for the same dataset with the same analysis tool, and we'll thus need to add a prefix to each filename
-                if (!retrievalOptions.CreateJobPathFiles && File.Exists(Path.Combine(workingDir, synopsisFileName)))
+                if (!retrievalOptions.CreateJobPathFiles && File.Exists(Path.Combine(workDirInfo.FullName, synopsisFileName)))
                 {
                     prefixRequired = true;
 
-                    localDirectoryPath = Path.Combine(workingDir, "FileRename");
+                    localDirectoryPath = Path.Combine(workDirInfo.FullName, "FileRename");
                     if (!Directory.Exists(localDirectoryPath))
                     {
                         Directory.CreateDirectory(localDirectoryPath);
@@ -611,7 +611,7 @@ namespace AnalysisManagerBase
                 else
                 {
                     prefixRequired = false;
-                    localDirectoryPath = string.Copy(workingDir);
+                    localDirectoryPath = string.Copy(workDirInfo.FullName);
                 }
 
                 // foundFiles tracks files that have been found
@@ -641,7 +641,7 @@ namespace AnalysisManagerBase
                 // Now perform any required file renames
                 foreach (var fileToRename in pendingFileRenames)
                 {
-                    if (RenameDuplicatePHRPFile(localDirectoryPath, fileToRename, workingDir,
+                    if (RenameDuplicatePHRPFile(localDirectoryPath, fileToRename, workDirInfo.FullName,
                                                 "Job" + dataPkgJob.Job + "_", dataPkgJob.Job,
                                                 out var newFilePath))
                     {
@@ -664,7 +664,7 @@ namespace AnalysisManagerBase
                         cachedJobMetadata,
                         dotNetTools,
                         dataPkgJob,
-                        workingDir,
+                        workDirInfo,
                         localDirectoryPath,
                         foundFiles);
 
@@ -685,7 +685,7 @@ namespace AnalysisManagerBase
                                 // Convert the _msgfplus.zip file to a .mzid.gz file
                                 if (currentFileInfo.Exists)
                                 {
-                                    dotNetTools.UnzipFile(currentFileInfo.FullName, workingDir);
+                                    dotNetTools.UnzipFile(currentFileInfo.FullName, workDirInfo.FullName);
                                     var unzippedFilePath = MostRecentUnzippedFile(dotNetTools);
 
                                     dotNetTools.GZipFile(unzippedFilePath, true);
@@ -739,7 +739,7 @@ namespace AnalysisManagerBase
                 else
                 {
                     var unzipSuccess = UnzipFiles(
-                        dotNetTools, workingDir, prefixRequired, dataPkgJob,
+                        dotNetTools, workDirInfo, prefixRequired, dataPkgJob,
                         foundFiles, zipFileCandidates, gzipFileCandidates,
                         zippedPepXmlFile);
 
@@ -918,7 +918,7 @@ namespace AnalysisManagerBase
             IDictionary<int, udtDataPackageJobMetadata> cachedJobMetadata,
             clsDotNetZipTools dotNetTools,
             clsDataPackageJobInfo dataPkgJob,
-            string workingDir,
+            FileSystemInfo workDirInfo,
             string localDirectoryPath,
             ICollection<string> foundFiles)
         {
@@ -965,7 +965,7 @@ namespace AnalysisManagerBase
                     stepToolFilter = "MSGFPlus";
                 }
 
-                var mzMLFilePathRemote = FindMzMLForJob(dataPkgJob.Dataset, dataPkgJob.Job, stepToolFilter, workingDir);
+                var mzMLFilePathRemote = FindMzMLForJob(dataPkgJob.Dataset, dataPkgJob.Job, stepToolFilter, workDirInfo);
 
                 if (string.IsNullOrEmpty(mzMLFilePathRemote))
                     return true;
@@ -1025,7 +1025,7 @@ namespace AnalysisManagerBase
 
                     // The retrieved file is probably named Dataset_dta.zip
                     // We'll add it to foundFiles, but the exact name is not critical
-                    foundFiles.Add(Path.Combine(workingDir, dataPkgJob.Dataset + clsAnalysisResources.CDTA_ZIPPED_EXTENSION));
+                    foundFiles.Add(Path.Combine(workDirInfo.FullName, dataPkgJob.Dataset + clsAnalysisResources.CDTA_ZIPPED_EXTENSION));
                 }
             }
 
@@ -1116,6 +1116,8 @@ namespace AnalysisManagerBase
                 throw new Exception("RetrieveDataPackagePeptideHitJobPHRPFiles does not support offline mode");
             }
 
+            var workDirInfo = new DirectoryInfo(workingDir);
+
             try
             {
                 var success = mDataPackageInfoLoader.LoadDataPackageDatasetInfo(out dataPackageDatasets);
@@ -1159,7 +1161,7 @@ namespace AnalysisManagerBase
 
             try
             {
-                var dotNetTools = new clsDotNetZipTools(debugLevel, workingDir);
+                var dotNetTools = new clsDotNetZipTools(debugLevel, workDirInfo.FullName);
                 RegisterEvents(dotNetTools);
 
                 // Make sure the MyEMSL download queue is empty
@@ -1209,7 +1211,7 @@ namespace AnalysisManagerBase
                     }
                     else
                     {
-                        var success = ProcessOnePeptideHitJob(retrievalOptions, cachedJobMetadata, dotNetTools, workingDir, dataPkgJob);
+                        var success = ProcessOnePeptideHitJob(retrievalOptions, cachedJobMetadata, dotNetTools, workDirInfo, dataPkgJob);
 
                         if (!success)
                         {
@@ -1297,7 +1299,7 @@ namespace AnalysisManagerBase
                 if (rawFileRetrievalCommands.Count > 0)
                 {
                     // Create a batch file with commands for retrieve the dataset files
-                    var batchFilePath = Path.Combine(workingDir, "RetrieveInstrumentData.bat");
+                    var batchFilePath = Path.Combine(workDirInfo.FullName, "RetrieveInstrumentData.bat");
                     using (var writer = new StreamWriter(new FileStream(batchFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                     {
                         foreach (var item in rawFileRetrievalCommands.Values)
@@ -1667,7 +1669,7 @@ namespace AnalysisManagerBase
         /// If the .mzid file is named Dataset_msgfplus.zip, unzip it, then compress it so that it's named Dataset.mzid.gz
         /// </summary>
         /// <param name="dotNetTools"></param>
-        /// <param name="workingDir"></param>
+        /// <param name="workDirInfo"></param>
         /// <param name="prefixRequired"></param>
         /// <param name="dataPkgJob"></param>
         /// <param name="foundFiles"></param>
@@ -1676,7 +1678,7 @@ namespace AnalysisManagerBase
         /// <param name="zippedPepXmlFile"></param>
         private bool UnzipFiles(
             clsDotNetZipTools dotNetTools,
-            string workingDir,
+            FileSystemInfo workDirInfo,
             bool prefixRequired,
             clsDataPackageJobInfo dataPkgJob,
             ICollection<string> foundFiles,
@@ -1690,7 +1692,7 @@ namespace AnalysisManagerBase
 
                 foreach (var gzipCandidate in gzipFileCandidates)
                 {
-                    var gzippedMzidFile = new FileInfo(Path.Combine(workingDir, gzipCandidate));
+                    var gzippedMzidFile = new FileInfo(Path.Combine(workDirInfo.FullName, gzipCandidate));
                     if (gzippedMzidFile.Exists)
                     {
                         matchedFilePath = gzippedMzidFile.FullName;
@@ -1702,7 +1704,7 @@ namespace AnalysisManagerBase
                 {
                     foreach (var zipCandidate in zipFileCandidates)
                     {
-                        var fileToUnzip = new FileInfo(Path.Combine(workingDir, zipCandidate));
+                        var fileToUnzip = new FileInfo(Path.Combine(workDirInfo.FullName, zipCandidate));
                         if (fileToUnzip.Exists)
                         {
                             dotNetTools.UnzipFile(fileToUnzip.FullName);
@@ -1728,8 +1730,8 @@ namespace AnalysisManagerBase
                     var prefixToAdd = "Job" + dataPkgJob.Job + "_";
 
                     var success = RenameDuplicatePHRPFile(
-                        workingDir, sourceFileName,
-                        workingDir, prefixToAdd,
+                        workDirInfo.FullName, sourceFileName,
+                        workDirInfo.FullName, prefixToAdd,
                         dataPkgJob.Job,
                         out matchedFilePath);
 
@@ -1746,7 +1748,7 @@ namespace AnalysisManagerBase
             if (!string.IsNullOrWhiteSpace(zippedPepXmlFile))
             {
                 // Unzip _pepXML.zip if it exists
-                var fileToUnzip = new FileInfo(Path.Combine(workingDir, zippedPepXmlFile));
+                var fileToUnzip = new FileInfo(Path.Combine(workDirInfo.FullName, zippedPepXmlFile));
                 if (fileToUnzip.Exists)
                 {
                     dotNetTools.UnzipFile(fileToUnzip.FullName);
