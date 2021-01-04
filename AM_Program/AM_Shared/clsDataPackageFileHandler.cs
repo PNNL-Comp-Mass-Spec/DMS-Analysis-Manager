@@ -200,11 +200,12 @@ namespace AnalysisManagerBase
                 // Note that FindValidDirectory will search both the dataset directory and in inputDirectoryName below the dataset directory
 
                 var datasetDirectoryPath = mAnalysisResources.FindValidDirectory(
-                    datasetName, "*_CacheInfo.txt", directoryNameToFind: inputDirectoryName, maxAttempts: 1,
-                    logDirectoryNotFound: false, retrievingInstrumentDataDir: false, assumeUnpurged: false,
-                    validDirectoryFound: out var validFolderFound, directoryNotFoundMessage: out _);
+                    datasetName, "*_CacheInfo.txt", inputDirectoryName,
+                    maxAttempts: 1, logDirectoryNotFound: false,
+                    retrievingInstrumentDataDir: false, validDirectoryFound: out var validDirectoryFound,
+                    assumeUnpurged: false, directoryNotFoundMessage: out _);
 
-                if (!validFolderFound)
+                if (!validDirectoryFound)
                 {
                     return string.Empty;
                 }

@@ -12,7 +12,6 @@ using System.Diagnostics.CodeAnalysis;
 [assembly: SuppressMessage("General", "RCS1079:Throwing of new NotImplementedException.", Justification = "This is a placeholder method; derived class will override it", Scope = "member", Target = "~M:AnalysisManagerBase.clsAnalysisToolRunnerBase.RetrieveRemoteResults(AnalysisManagerBase.clsRemoteTransferUtility,System.Boolean,System.Collections.Generic.List{System.String}@)~System.Boolean")]
 [assembly: SuppressMessage("Performance", "RCS1197:Optimize StringBuilder.Append/AppendLine call.", Justification = "Acceptable", Scope = "module")]
 [assembly: SuppressMessage("Readability", "RCS1123:Add parentheses when necessary.", Justification = "Parentheses not needed", Scope = "module")]
-[assembly: SuppressMessage("Readability", "RCS1205:Order named arguments according to the order of parameters.", Justification = "Allow order for readability", Scope = "member", Target = "~M:AnalysisManagerBase.clsDataPackageFileHandler.FindMzMLForJob(System.String,System.Int32,System.String,System.String)~System.String")]
 [assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Allowed", Scope = "type", Target = "~T:AnalysisManagerBase.clsAnalysisJob")]
 [assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Allowed", Scope = "type", Target = "~T:AnalysisManagerBase.clsAnalysisMgrBase")]
 [assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Allowed", Scope = "type", Target = "~T:AnalysisManagerBase.clsAnalysisResources")]
