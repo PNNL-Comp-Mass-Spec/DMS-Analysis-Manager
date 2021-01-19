@@ -5308,6 +5308,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 case "Orbitrap":
                 case "VelosOrbi":
                 case "QExactive":
+                case "QEHFX":
                     instrumentDetailsAutoDefined = true;
 
                     WriteXMLInstrumentInfoESI(oWriter, "positive");
