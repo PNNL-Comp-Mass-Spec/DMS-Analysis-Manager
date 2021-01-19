@@ -7,6 +7,7 @@ using System.Data;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using PRISM.AppSettings;
@@ -552,7 +553,12 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <param name="paramFileLine">MS-GF+ parameter file line tracking instrument ID; its value may get updated by this method</param>
         /// <param name="instrumentIDNew"></param>
         /// <param name="autoSwitchReason"></param>
-        private void AutoUpdateInstrumentIDIfChanged(MSGFPlusKeyValueParamFileLine paramFileLine, string instrumentIDNew, string autoSwitchReason)
+        /// <param name="callerName"></param>
+        private void AutoUpdateInstrumentIDIfChanged(
+            MSGFPlusKeyValueParamFileLine paramFileLine,
+            string instrumentIDNew,
+            string autoSwitchReason,
+            [CallerMemberName] string callerName = "")
         {
             if (string.IsNullOrEmpty(instrumentIDNew) || string.Equals(instrumentIDNew, paramFileLine.ParamInfo.Value))
             {
@@ -583,10 +589,23 @@ namespace AnalysisManagerMSGFDBPlugIn
                         break;
                 }
 
-                OnStatusEvent("Auto-updating instrument ID " +
-                              "from " + paramFileLine.ParamInfo.Value + " to " + instrumentIDNew +
-                              " (" + instrumentDescription + ") " + autoSwitchReason);
+                if (paramFileLine.ParamInfo.ValueLocked)
+                {
+                    OnStatusEvent(string.Format(
+                        "Although code logic suggests to use InstrumentID {0} ({1}), " +
+                        "the existing value will be left as {2} since it is locked in the parameter file (via an exclamation mark)",
+                        instrumentIDNew, instrumentDescription, paramFileLine.ParamInfo.Value));
+                }
+                else
+                {
+                    OnStatusEvent(string.Format(
+                        "Auto-updating instrument ID from {0} to {1} ({2}) {3}; called by {4}",
+                        paramFileLine.ParamInfo.Value, instrumentIDNew, instrumentDescription, autoSwitchReason, callerName));
+                }
             }
+
+            if (paramFileLine.ParamInfo.ValueLocked)
+                return;
 
             paramFileLine.UpdateParamValue(instrumentIDNew);
         }
@@ -1427,9 +1446,9 @@ namespace AnalysisManagerMSGFDBPlugIn
                 // One exception: when it is UVPD (mode 4), we use -m 4
                 new MSGFPlusParameter(MSGFPLUS_OPTION_FRAGMENTATION_METHOD, "m"),
 
-                // This setting is auto-updated based on the instrument class for this dataset,
+                // This setting is auto-updated based on the instrument group for this dataset,
                 // plus also the scan types listed In the _ScanType.txt file
-                // (thus, the value in the parameter file Is typically ignored)
+                // (thus, the value in the parameter file is typically ignored)
                 new MSGFPlusParameter(MSGFPLUS_OPTION_INSTRUMENT_ID, "inst"),
 
                 new MSGFPlusParameter("EnzymeID", "e"),
@@ -1481,6 +1500,11 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             // The following is a special case; do not add it
             //   "EnzymeDef"
+
+            foreach (var parameter in msgfPlusParameters)
+            {
+                RegisterEvents(parameter);
+            }
 
             return msgfPlusParameters;
         }
