@@ -499,9 +499,10 @@ namespace AnalysisManagerMSGFDBPlugIn
 
         private bool CanDetermineInstIdFromInstGroup(string instrumentGroup, out string instrumentIDNew, out string autoSwitchReason)
         {
-            if (clsGlobal.IsMatch(instrumentGroup, "QExactive"))
+            if (clsGlobal.IsMatch(instrumentGroup, "QExactive") ||
+                clsGlobal.IsMatch(instrumentGroup, "QEHFX"))
             {
-                // Thermo Instruments
+                // Thermo Q Exactive or Q Exactive HFX
                 instrumentIDNew = "3";
                 autoSwitchReason = "based on instrument group " + instrumentGroup;
                 return true;
