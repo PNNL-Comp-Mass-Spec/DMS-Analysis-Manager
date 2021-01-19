@@ -18,6 +18,8 @@ namespace AnalysisManagerMSGFDBPlugIn
     // ReSharper disable once UnusedMember.Global
     public class clsAnalysisToolRunnerMSGFDB : clsAnalysisToolRunnerBase
     {
+        // Ignore Spelling: Utils
+
         #region "Constants and Enums"
 
         private enum InputFileFormatTypes
@@ -355,6 +357,8 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             if (!string.Equals(sourceParamFile.FullName, finalParamFile.FullName))
             {
+                // Do not copy the original parameter file to the results directory
+                // Example name to skip: MSGFPlus_Tryp_MetOx_20ppmParTol.original
                 AddResultFileToSkipIfNoError(sourceParamFile.Name);
             }
 
