@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace AnalysisManagerMSGFDBPlugIn
 {
-    public class MSGFPlusParameter
+    public class MSGFPlusParameter : PRISM.EventNotifier
     {
         /// <summary>
         /// Name of the parameter in an MS-GF+ parameter file
@@ -56,6 +57,15 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// Parameter value
         /// </summary>
         public string Value { get; private set; }
+
+        /// <summary>
+        /// When True the text stored in the Value property will not be changed via a call to UpdateValue
+        /// </summary>
+        /// <remarks>
+        /// When reading the MS-GF+ (or MzRefinery) parameter file, if a value ends with an exclamation mark,
+        /// the exclamation mark will be removed by the Analysis Manager and ValueLocked will be set to true
+        /// </remarks>
+        public bool ValueLocked { get; set; }
 
         /// <summary>
         /// Alternate names used for this parameter in an MS-GF+ parameter file
@@ -151,9 +161,39 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// Update the value for this parameter
         /// </summary>
         /// <param name="value"></param>
-        public void UpdateValue(string value)
+        /// <param name="callerName"></param>
+        /// <returns>
+        /// True if the value was updated or the value is locked, but the new value is the same
+        /// False if the value is locked and the new value is different
+        /// </returns>
+        /// <remarks>
+        /// If value ends with an exclamation mark, the exclamation mark will be removed and ValueLocked will be set to true
+        /// This method will return True in this case, since the value was likely changed (but cannot be changed again)
+        /// </remarks>
+        public bool UpdateValue(string value, [CallerMemberName] string callerName = "")
         {
+            if (ValueLocked)
+            {
+                if (value?.Equals(Value) == true)
+                    return true;
+
+                OnWarningEvent(string.Format(
+                    "Not changing locked value for {0} from '{1}' to '{2}'; calling method: {3}",
+                    ParameterName, Value ?? string.Empty, value ?? string.Empty,
+                    callerName));
+
+                return false;
+            }
+
+            if (value?.EndsWith("!") == true)
+            {
+                Value = value.TrimEnd('!');
+                ValueLocked = true;
+                return true;
+            }
+
             Value = value ?? string.Empty;
+            return true;
         }
 
         /// <summary>
@@ -193,16 +233,21 @@ namespace AnalysisManagerMSGFDBPlugIn
             parameterCopy.UpdateComment(Comment, WhiteSpaceBeforeComment);
 
             parameterCopy.UpdateValue(copyValue ? Value : newValue);
+            if (!parameterCopy.ValueLocked)
+            {
+                parameterCopy.ValueLocked = ValueLocked;
+            }
 
             return parameterCopy;
         }
 
         /// <summary>
-        /// Return the text of the line from the parameter file (including the comment, if any)
+        /// Show the parameter name and value
         /// </summary>
         public override string ToString()
         {
-            return ParameterName + ": " + Value;
+            var lockedFlag = ValueLocked ? " (Locked)" : string.Empty;
+            return string.Format("{0}: {1}{2}", ParameterName, Value, lockedFlag);
         }
     }
 }

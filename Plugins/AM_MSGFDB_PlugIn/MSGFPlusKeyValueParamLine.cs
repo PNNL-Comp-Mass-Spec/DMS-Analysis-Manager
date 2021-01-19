@@ -97,10 +97,13 @@ namespace AnalysisManagerMSGFDBPlugIn
         public void UpdateParamValue(string valueOverride, bool includeOriginalAsComment = false)
         {
             var originalValue = string.Copy(ParamInfo.GetKeyValueParamNoComment());
-            ParamInfo.UpdateValue(valueOverride);
+            var updateAllowed = ParamInfo.UpdateValue(valueOverride);
 
-            // Also update the value tracked by base.ParamValue
-            UpdateValue(valueOverride);
+            if (updateAllowed)
+            {
+                // Also update the value tracked by base.ParamValue
+                UpdateValue(valueOverride);
+            }
 
             if (includeOriginalAsComment)
             {
