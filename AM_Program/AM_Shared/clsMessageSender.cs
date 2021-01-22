@@ -58,6 +58,8 @@ namespace AnalysisManagerBase
             try
             {
                 var textMessage = session.CreateTextMessage(messageContainer.Message);
+                textMessage.NMSTimeToLive = TimeSpan.FromMinutes(60);
+                textMessage.NMSDeliveryMode = MsgDeliveryMode.NonPersistent;
                 textMessage.Properties.SetString("ProcessorName",
                                                  string.IsNullOrWhiteSpace(messageContainer.ManagerName) ? processorName : messageContainer.ManagerName);
 
