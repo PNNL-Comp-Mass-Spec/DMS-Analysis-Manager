@@ -23,7 +23,7 @@ namespace AnalysisManagerMSGFPlugin
         /// <param name="workDir">Working directory</param>
         /// <remarks></remarks>
         public clsMSGFInputCreatorMSGFDB(string datasetName, string workDir)
-            : base(datasetName, workDir, clsPHRPReader.ePeptideHitResultType.MSGFPlus)
+            : base(datasetName, workDir, clsPHRPReader.PeptideHitResultTypes.MSGFPlus)
         {
             // Initialize the file paths
             // This updates mPHRPFirstHitsFilePath and mPHRPSynopsisFilePath
@@ -44,12 +44,12 @@ namespace AnalysisManagerMSGFPlugin
         /// using the Probability values for the MSGF score
         /// </summary>
         /// <param name="sourceFilePath"></param>
-        /// <param name="eResultType"></param>
+        /// <param name="resultType"></param>
         /// <param name="sourceFileDescription"></param>
         /// <returns></returns>
         /// <remarks>Note that higher probability values are better.  Also, note that Probability is actually just a score between 0 and 1; not a true probability</remarks>
         [Obsolete("This function does not appear to be used anywhere")]
-        public bool CreateMSGFFileUsingMODaOrModPlusProbabilities(string sourceFilePath, clsPHRPReader.ePeptideHitResultType eResultType, string sourceFileDescription)
+        public bool CreateMSGFFileUsingMODaOrModPlusProbabilities(string sourceFilePath, clsPHRPReader.PeptideHitResultTypes resultType, string sourceFileDescription)
         {
             try
             {
@@ -65,13 +65,13 @@ namespace AnalysisManagerMSGFPlugin
 
                 var probabilityColumnName = clsPHRPParserMODPlus.DATA_COLUMN_Probability;
 
-                if (eResultType == clsPHRPReader.ePeptideHitResultType.MODa)
+                if (resultType == clsPHRPReader.PeptideHitResultTypes.MODa)
                 {
                     probabilityColumnName = clsPHRPParserMODa.DATA_COLUMN_Probability;
                 }
 
                 // Open the file (no need to read the Mods and Seq Info since we're not actually running MSGF)
-                using (var reader = new clsPHRPReader(sourceFilePath, eResultType, startupOptions))
+                using (var reader = new clsPHRPReader(sourceFilePath, resultType, startupOptions))
                 {
                     RegisterEvents(reader);
 
@@ -133,7 +133,7 @@ namespace AnalysisManagerMSGFPlugin
                 var startupOptions = GetMinimalMemoryPHRPStartupOptions();
 
                 // Open the file (no need to read the Mods and Seq Info since we're not actually running MSGF)
-                using (var reader = new clsPHRPReader(sourceFilePath, clsPHRPReader.ePeptideHitResultType.MSGFPlus, startupOptions))
+                using (var reader = new clsPHRPReader(sourceFilePath, clsPHRPReader.PeptideHitResultTypes.MSGFPlus, startupOptions))
                 {
                     RegisterEvents(reader);
 

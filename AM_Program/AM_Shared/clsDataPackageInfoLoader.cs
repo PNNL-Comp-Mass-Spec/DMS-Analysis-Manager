@@ -494,7 +494,7 @@ namespace AnalysisManagerBase
             {
                 foreach (var kvItem in dataPackageJobs)
                 {
-                    if (kvItem.Value.PeptideHitResultType == clsPHRPReader.ePeptideHitResultType.Unknown)
+                    if (kvItem.Value.PeptideHitResultType == clsPHRPReader.PeptideHitResultTypes.Unknown)
                     {
                         additionalJobs.Add(kvItem.Value);
                     }

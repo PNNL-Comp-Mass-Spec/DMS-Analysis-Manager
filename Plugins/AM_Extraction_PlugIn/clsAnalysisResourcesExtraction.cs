@@ -1371,7 +1371,7 @@ namespace AnalysisManagerExtractionPlugin
                 var toolVersionFileNewName = string.Empty;
 
                 var toolNameForScript = mJobParams.GetJobParameter("ToolName", string.Empty);
-                if (resultType == clsPHRPReader.ePeptideHitResultType.MSGFPlus && toolNameForScript == "MSGFPlus_IMS")
+                if (resultType == clsPHRPReader.PeptideHitResultTypes.MSGFPlus && toolNameForScript == "MSGFPlus_IMS")
                 {
                     // PeptideListToXML expects the ToolVersion file to be named "Tool_Version_Info_MSGFPlus.txt"
                     // However, this is the MSGFPlus_IMS script, so the file is currently "Tool_Version_Info_MSGFPlus_IMS.txt"

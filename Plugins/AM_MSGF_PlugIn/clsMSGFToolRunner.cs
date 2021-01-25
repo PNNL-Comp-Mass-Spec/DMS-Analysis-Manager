@@ -147,10 +147,10 @@ namespace AnalysisManagerMSGFPlugin
             // Determine the raw data type
             var eRawDataType = clsAnalysisResources.GetRawDataType(mJobParams.GetParam("RawDataType"));
 
-            // Resolve eResultType
-            var eResultType = clsPHRPReader.GetPeptideHitResultType(mJobParams.GetParam("ResultType"));
+            // Resolve resultType
+            var resultType = clsPHRPReader.GetPeptideHitResultType(mJobParams.GetParam("ResultType"));
 
-            if (eResultType == clsPHRPReader.ePeptideHitResultType.Unknown)
+            if (resultType == clsPHRPReader.PeptideHitResultTypes.Unknown)
             {
                 // Result type is not supported
                 LogError("ResultType is not supported by MSGF in MSGFToolRunner: " + mJobParams.GetParam("ResultType"));
@@ -177,48 +177,48 @@ namespace AnalysisManagerMSGFPlugin
             {
                 var processingError = false;
 
-                if (mUsingMSGFDB && eResultType == clsPHRPReader.ePeptideHitResultType.MSGFPlus)
+                if (mUsingMSGFDB && resultType == clsPHRPReader.PeptideHitResultTypes.MSGFPlus)
                 {
                     // Analysis tool is MS-GF+ so we don't actually need to run the MSGF re-scorer
                     // Simply copy the values from the MSGFDB result file
 
-                    StoreToolVersionInfoPrecomputedProbabilities(eResultType);
+                    StoreToolVersionInfoPrecomputedProbabilities(resultType);
 
                     if (!CreateMSGFResultsFromMSGFPlusResults())
                     {
                         processingError = true;
                     }
                 }
-                else if (eResultType == clsPHRPReader.ePeptideHitResultType.MODa)
+                else if (resultType == clsPHRPReader.PeptideHitResultTypes.MODa)
                 {
                     // Analysis tool is MODa, which MSGF does not support
                     // Instead, summarize the MODa results using FDR alone
 
-                    StoreToolVersionInfoPrecomputedProbabilities(eResultType);
+                    StoreToolVersionInfoPrecomputedProbabilities(resultType);
 
                     if (!SummarizeMODaResults())
                     {
                         processingError = true;
                     }
                 }
-                else if (eResultType == clsPHRPReader.ePeptideHitResultType.MODPlus)
+                else if (resultType == clsPHRPReader.PeptideHitResultTypes.MODPlus)
                 {
                     // Analysis tool is MODPlus, which MSGF does not support
                     // Instead, summarize the MODPlus results using FDR alone
 
-                    StoreToolVersionInfoPrecomputedProbabilities(eResultType);
+                    StoreToolVersionInfoPrecomputedProbabilities(resultType);
 
                     if (!SummarizeMODPlusResults())
                     {
                         processingError = true;
                     }
                 }
-                else if (eResultType == clsPHRPReader.ePeptideHitResultType.MSPathFinder)
+                else if (resultType == clsPHRPReader.PeptideHitResultTypes.MSPathFinder)
                 {
                     // Analysis tool is MSPathFinder, which MSGF does not support
                     // Instead, summarize the MSPathFinder results using FDR alone
 
-                    StoreToolVersionInfoPrecomputedProbabilities(eResultType);
+                    StoreToolVersionInfoPrecomputedProbabilities(resultType);
 
                     if (!SummarizeMSPathFinderResults())
                     {
@@ -227,7 +227,7 @@ namespace AnalysisManagerMSGFPlugin
                 }
                 else
                 {
-                    if (!ProcessFilesWrapper(eRawDataType, eResultType, doNotFilterPeptides, mgfInstrumentData))
+                    if (!ProcessFilesWrapper(eRawDataType, resultType, doNotFilterPeptides, mgfInstrumentData))
                     {
                         processingError = true;
                     }
@@ -242,7 +242,7 @@ namespace AnalysisManagerMSGFPlugin
                         // Sleep for 1 second to give the MSGF results file a chance to finalize
                         clsGlobal.IdleLoop(1);
 
-                        var success = PostProcessMSGFResults(eResultType, mMSGFResultsFilePath, mgfInstrumentData);
+                        var success = PostProcessMSGFResults(resultType, mMSGFResultsFilePath, mgfInstrumentData);
 
                         if (!success)
                         {
@@ -312,10 +312,10 @@ namespace AnalysisManagerMSGFPlugin
         /// <summary>
         /// Examines the SEQUEST, X!Tandem, Inspect, or MS-GF+ param file to determine if ETD mode is enabled
         /// </summary>
-        /// <param name="eResultType"></param>
+        /// <param name="resultType"></param>
         /// <param name="searchToolParamFilePath"></param>
         /// <returns>True if success; false if an error</returns>
-        private bool CheckETDModeEnabled(clsPHRPReader.ePeptideHitResultType eResultType, string searchToolParamFilePath)
+        private bool CheckETDModeEnabled(clsPHRPReader.PeptideHitResultTypes resultType, string searchToolParamFilePath)
         {
             mETDMode = false;
             var success = false;
@@ -328,36 +328,36 @@ namespace AnalysisManagerMSGFPlugin
 
             mStatusTools.CurrentOperation = "Checking whether ETD mode is enabled";
 
-            switch (eResultType)
+            switch (resultType)
             {
-                case clsPHRPReader.ePeptideHitResultType.Sequest:
+                case clsPHRPReader.PeptideHitResultTypes.Sequest:
                     success = CheckETDModeEnabledSequest(searchToolParamFilePath);
                     break;
 
-                case clsPHRPReader.ePeptideHitResultType.XTandem:
+                case clsPHRPReader.PeptideHitResultTypes.XTandem:
                     success = CheckETDModeEnabledXTandem(searchToolParamFilePath);
                     break;
 
-                case clsPHRPReader.ePeptideHitResultType.Inspect:
+                case clsPHRPReader.PeptideHitResultTypes.Inspect:
                     LogDebug("Inspect does not support ETD data processing; will set mETDMode to False");
                     success = true;
                     break;
 
-                case clsPHRPReader.ePeptideHitResultType.MSGFPlus:
+                case clsPHRPReader.PeptideHitResultTypes.MSGFPlus:
                     success = CheckETDModeEnabledMSGFPlus(searchToolParamFilePath);
                     break;
 
-                case clsPHRPReader.ePeptideHitResultType.MODa:
+                case clsPHRPReader.PeptideHitResultTypes.MODa:
                     LogDebug("MODa does not support ETD data processing; will set mETDMode to False");
                     success = true;
                     break;
 
-                case clsPHRPReader.ePeptideHitResultType.MODPlus:
+                case clsPHRPReader.PeptideHitResultTypes.MODPlus:
                     LogDebug("MODPlus does not support ETD data processing; will set mETDMode to False");
                     success = true;
                     break;
 
-                case clsPHRPReader.ePeptideHitResultType.MSPathFinder:
+                case clsPHRPReader.PeptideHitResultTypes.MSPathFinder:
                     LogDebug("MSPathFinder does not support ETD data processing; will set mETDMode to False");
                     success = true;
                     break;
@@ -668,13 +668,13 @@ namespace AnalysisManagerMSGFPlugin
         /// Creates the MSGF Input file by reading SEQUEST, X!Tandem, or Inspect PHRP result file and extracting the relevant information
         /// Uses the ModSummary.txt file to determine the dynamic and static mods used
         /// </summary>
-        /// <param name="eResultType"></param>
+        /// <param name="resultType"></param>
         /// <param name="doNotFilterPeptides"></param>
         /// <param name="mgfInstrumentData"></param>
         /// <param name="msgfInputFileLineCount"></param>
         /// <returns></returns>
         /// <remarks></remarks>
-        private bool CreateMSGFInputFile(clsPHRPReader.ePeptideHitResultType eResultType, bool doNotFilterPeptides, bool mgfInstrumentData, out int msgfInputFileLineCount)
+        private bool CreateMSGFInputFile(clsPHRPReader.PeptideHitResultTypes resultType, bool doNotFilterPeptides, bool mgfInstrumentData, out int msgfInputFileLineCount)
         {
             var success = true;
 
@@ -683,39 +683,39 @@ namespace AnalysisManagerMSGFPlugin
             mMSGFInputCreatorWarningCount = 0;
 
             // Convert the peptide-hit result file (from PHRP) to a tab-delimited input file to be read by MSGF
-            switch (eResultType)
+            switch (resultType)
             {
-                case clsPHRPReader.ePeptideHitResultType.Sequest:
+                case clsPHRPReader.PeptideHitResultTypes.Sequest:
 
                     // Convert SEQUEST results to input format required for MSGF
                     mMSGFInputCreator = new clsMSGFInputCreatorSequest(mDatasetName, mWorkDir);
                     break;
 
-                case clsPHRPReader.ePeptideHitResultType.XTandem:
+                case clsPHRPReader.PeptideHitResultTypes.XTandem:
 
                     // Convert X!Tandem results to input format required for MSGF
                     mMSGFInputCreator = new clsMSGFInputCreatorXTandem(mDatasetName, mWorkDir);
                     break;
 
-                case clsPHRPReader.ePeptideHitResultType.Inspect:
+                case clsPHRPReader.PeptideHitResultTypes.Inspect:
 
                     // Convert Inspect results to input format required for MSGF
                     mMSGFInputCreator = new clsMSGFInputCreatorInspect(mDatasetName, mWorkDir);
                     break;
 
-                case clsPHRPReader.ePeptideHitResultType.MSGFPlus:
+                case clsPHRPReader.PeptideHitResultTypes.MSGFPlus:
 
                     // Convert MS-GF+ results to input format required for MSGF
                     mMSGFInputCreator = new clsMSGFInputCreatorMSGFDB(mDatasetName, mWorkDir);
                     break;
 
-                case clsPHRPReader.ePeptideHitResultType.MODa:
+                case clsPHRPReader.PeptideHitResultTypes.MODa:
 
                     // Convert MODa results to input format required for MSGF
                     mMSGFInputCreator = new clsMSGFInputCreatorMODa(mDatasetName, mWorkDir);
                     break;
 
-                case clsPHRPReader.ePeptideHitResultType.MODPlus:
+                case clsPHRPReader.PeptideHitResultTypes.MODPlus:
 
                     // Convert MODPlus results to input format required for MSGF
                     mMSGFInputCreator = new clsMSGFInputCreatorMODPlus(mDatasetName, mWorkDir);
@@ -723,7 +723,7 @@ namespace AnalysisManagerMSGFPlugin
 
                 default:
                     // Should never get here; invalid result type specified
-                    LogError("Invalid PeptideHit ResultType specified: " + eResultType);
+                    LogError("Invalid PeptideHit ResultType specified: " + resultType);
 
                     success = false;
                     break;
@@ -774,7 +774,7 @@ namespace AnalysisManagerMSGFPlugin
             // Summarize the results to determine the number of peptides and proteins at a given FDR threshold
             // Any results based on a MSGF SpecProb will be meaningless because we didn't run MSGF on the MODa results
             // Post the results to the database
-            var success = SummarizeMSGFResults(clsPHRPReader.ePeptideHitResultType.MODa);
+            var success = SummarizeMSGFResults(clsPHRPReader.PeptideHitResultTypes.MODa);
 
             if (success)
             {
@@ -791,7 +791,7 @@ namespace AnalysisManagerMSGFPlugin
             // Summarize the results to determine the number of peptides and proteins at a given FDR threshold
             // Any results based on a MSGF SpecProb will be meaningless because we didn't run MSGF on the MODPlus results
             // Post the results to the database
-            var success = SummarizeMSGFResults(clsPHRPReader.ePeptideHitResultType.MODPlus);
+            var success = SummarizeMSGFResults(clsPHRPReader.PeptideHitResultTypes.MODPlus);
 
             if (success)
             {
@@ -808,7 +808,7 @@ namespace AnalysisManagerMSGFPlugin
             // Summarize the results to determine the number of peptides and proteins at a given FDR threshold
             // Will use SpecEValue in place of MSGF SpecProb
             // Post the results to the database
-            var success = SummarizeMSGFResults(clsPHRPReader.ePeptideHitResultType.MSPathFinder);
+            var success = SummarizeMSGFResults(clsPHRPReader.PeptideHitResultTypes.MSPathFinder);
 
             if (success)
             {
@@ -836,7 +836,7 @@ namespace AnalysisManagerMSGFPlugin
 
             // Summarize the results in the _syn_MSGF.txt file
             // Post the results to the database
-            var success = SummarizeMSGFResults(clsPHRPReader.ePeptideHitResultType.MSGFPlus);
+            var success = SummarizeMSGFResults(clsPHRPReader.PeptideHitResultTypes.MSGFPlus);
 
             return success;
         }
@@ -1054,14 +1054,14 @@ namespace AnalysisManagerMSGFPlugin
         /// The synopsis-based MSGF results will be extended to include any entries skipped when
         ///  creating the MSGF input file (to aid in linking up files later)
         /// </summary>
-        /// <param name="eResultType">PHRP result type</param>
+        /// <param name="resultType">PHRP result type</param>
         /// <param name="msgfResultsFilePath">MSGF results file to examine</param>
         /// <param name="mgfInstrumentData">True when the instrument data file is a .mgf file</param>
         /// <returns>True if success; false if one or more errors</returns>
         /// <remarks></remarks>
-        private bool PostProcessMSGFResults(clsPHRPReader.ePeptideHitResultType eResultType, string msgfResultsFilePath, bool mgfInstrumentData)
+        private bool PostProcessMSGFResults(clsPHRPReader.PeptideHitResultTypes resultType, string msgfResultsFilePath, bool mgfInstrumentData)
         {
-            FileInfo fiInputFile;
+            FileInfo inputFile;
 
             string msgfSynopsisResults;
 
@@ -1084,16 +1084,16 @@ namespace AnalysisManagerMSGFPlugin
                     LogDebug("MSGF complete; post-processing the results");
                 }
 
-                fiInputFile = new FileInfo(msgfResultsFilePath);
+                inputFile = new FileInfo(msgfResultsFilePath);
 
-                if (fiInputFile.Directory == null)
+                if (inputFile.Directory == null)
                 {
                     LogError("Unable to determine the parent directory of the MSGF results file: " + msgfResultsFilePath);
                     return false;
                 }
 
                 // Define the path to write the synopsis MSGF results to
-                msgfSynopsisResults = Path.Combine(fiInputFile.Directory.FullName, Path.GetFileNameWithoutExtension(fiInputFile.Name) + "_PostProcess.txt");
+                msgfSynopsisResults = Path.Combine(inputFile.Directory.FullName, Path.GetFileNameWithoutExtension(inputFile.Name) + "_PostProcess.txt");
 
                 mProgress = PROGRESS_PCT_MSGF_POST_PROCESSING;
                 mStatusTools.UpdateAndWrite(mProgress);
@@ -1117,7 +1117,7 @@ namespace AnalysisManagerMSGFPlugin
                 clsGlobal.IdleLoop(0.5);
 
                 // Delete the original file
-                fiInputFile.Delete();
+                inputFile.Delete();
                 clsGlobal.IdleLoop(0.5);
 
                 // Rename the _PostProcess.txt file
@@ -1135,9 +1135,9 @@ namespace AnalysisManagerMSGFPlugin
             {
                 // Summarize the results in the _syn_MSGF.txt file
                 // Post the results to the database
-                LogDebug("Call SummarizeMSGFResults for eResultType " + eResultType, 3);
+                LogDebug("Call SummarizeMSGFResults for resultType " + resultType, 3);
 
-                var summarizeSuccess = SummarizeMSGFResults(eResultType);
+                var summarizeSuccess = SummarizeMSGFResults(resultType);
 
                 LogDebug("SummarizeMSGFResults returned " + summarizeSuccess, 3);
             }
@@ -1152,11 +1152,11 @@ namespace AnalysisManagerMSGFPlugin
                 LogDebug("CreateMSGFFirstHitsFile returned " + success, 3);
             }
 
-            if (success && eResultType != clsPHRPReader.ePeptideHitResultType.MSGFPlus)
+            if (success && resultType != clsPHRPReader.PeptideHitResultTypes.MSGFPlus)
             {
-                LogDebug("Call UpdateProteinModsFile for eResultType " + eResultType, 3);
+                LogDebug("Call UpdateProteinModsFile for resultType " + resultType, 3);
 
-                success = UpdateProteinModsFile(eResultType, msgfResultsFilePath);
+                success = UpdateProteinModsFile(resultType, msgfResultsFilePath);
 
                 LogDebug("UpdateProteinModsFile returned " + success, 3);
             }
@@ -1399,11 +1399,11 @@ namespace AnalysisManagerMSGFPlugin
             return true;
         }
 
-        private bool ProcessFileWithMSGF(clsPHRPReader.ePeptideHitResultType eResultType, int msgfInputFileLineCount, string msgfInputFilePath, string msgfResultsFilePath)
+        private bool ProcessFileWithMSGF(clsPHRPReader.PeptideHitResultTypes resultType, int msgfInputFileLineCount, string msgfInputFilePath, string msgfResultsFilePath)
         {
             bool success;
 
-            if (eResultType == clsPHRPReader.ePeptideHitResultType.MSGFPlus)
+            if (resultType == clsPHRPReader.PeptideHitResultTypes.MSGFPlus)
             {
                 // Input file may contain a mix of scan types (CID, ETD, and/or HCD)
                 // If this is the case, call MSGF twice: first for the CID and HCD spectra, then again for the ETD spectra
@@ -1418,13 +1418,13 @@ namespace AnalysisManagerMSGFPlugin
             return success;
         }
 
-        private bool ProcessFilesWrapper(clsAnalysisResources.eRawDataTypeConstants eRawDataType, clsPHRPReader.ePeptideHitResultType eResultType,
+        private bool ProcessFilesWrapper(clsAnalysisResources.eRawDataTypeConstants eRawDataType, clsPHRPReader.PeptideHitResultTypes resultType,
             bool doNotFilterPeptides, bool mgfInstrumentData)
         {
             // Parse the SEQUEST, X!Tandem, Inspect, or MODa parameter file to determine if ETD mode was used
             var searchToolParamFilePath = Path.Combine(mWorkDir, mJobParams.GetParam("ParmFileName"));
 
-            var success = CheckETDModeEnabled(eResultType, searchToolParamFilePath);
+            var success = CheckETDModeEnabled(resultType, searchToolParamFilePath);
             if (!success)
             {
                 LogError("Error examining param file to determine if ETD mode was enabled");
@@ -1435,7 +1435,7 @@ namespace AnalysisManagerMSGFPlugin
             mStatusTools.UpdateAndWrite(mProgress);
 
             // Create the _MSGF_input.txt file
-            success = CreateMSGFInputFile(eResultType, doNotFilterPeptides, mgfInstrumentData, out var msgfInputFileLineCount);
+            success = CreateMSGFInputFile(resultType, doNotFilterPeptides, mgfInstrumentData, out var msgfInputFileLineCount);
 
             if (!success)
             {
@@ -1511,7 +1511,7 @@ namespace AnalysisManagerMSGFPlugin
                 {
                     // Run MSGF
                     // Note that mMSGFInputFilePath and mMSGFResultsFilePath get populated by CreateMSGFInputFile
-                    success = ProcessFileWithMSGF(eResultType, msgfInputFileLineCount, mMSGFInputFilePath, mMSGFResultsFilePath);
+                    success = ProcessFileWithMSGF(resultType, msgfInputFileLineCount, mMSGFInputFilePath, mMSGFResultsFilePath);
                 }
 
                 if (!success)
@@ -2376,7 +2376,7 @@ namespace AnalysisManagerMSGFPlugin
         /// Stores the tool version info in the database when using MODa or MS-GF+ probabilities to create the MSGF files
         /// </summary>
         /// <remarks></remarks>
-        private bool StoreToolVersionInfoPrecomputedProbabilities(clsPHRPReader.ePeptideHitResultType eResultType)
+        private bool StoreToolVersionInfoPrecomputedProbabilities(clsPHRPReader.PeptideHitResultTypes resultType)
         {
             var toolVersionInfo = string.Empty;
 
@@ -2393,7 +2393,7 @@ namespace AnalysisManagerMSGFPlugin
 
             var toolFiles = new List<FileInfo>();
 
-            if (eResultType == clsPHRPReader.ePeptideHitResultType.MSGFPlus)
+            if (resultType == clsPHRPReader.PeptideHitResultTypes.MSGFPlus)
             {
                 // Store the path to MSGFDB.jar
                 toolFiles.Add(new FileInfo(mMSGFProgLoc));
@@ -2410,7 +2410,7 @@ namespace AnalysisManagerMSGFPlugin
             }
         }
 
-        private bool SummarizeMSGFResults(clsPHRPReader.ePeptideHitResultType eResultType)
+        private bool SummarizeMSGFResults(clsPHRPReader.PeptideHitResultTypes resultType)
         {
             bool success;
 
@@ -2420,7 +2420,7 @@ namespace AnalysisManagerMSGFPlugin
                 var connectionString = mMgrParams.GetParam("ConnectionString");
 
                 var summarizer = new clsMSGFResultsSummarizer(
-                    eResultType, mDatasetName, mJob,
+                    resultType, mDatasetName, mJob,
                     mWorkDir,
                     connectionString,
                     mDebugLevel,
@@ -2526,15 +2526,15 @@ namespace AnalysisManagerMSGFPlugin
             }
         }
 
-        private bool UpdateProteinModsFile(clsPHRPReader.ePeptideHitResultType eResultType, string msgfResultsFilePath)
+        private bool UpdateProteinModsFile(clsPHRPReader.PeptideHitResultTypes resultType, string msgfResultsFilePath)
         {
             bool success;
 
             try
             {
-                LogDebug("Contact clsPHRPReader.GetPHRPProteinModsFileName for eResultType " + eResultType, 3);
+                LogDebug("Contact clsPHRPReader.GetPHRPProteinModsFileName for resultType " + resultType, 3);
 
-                var fiProteinModsFile = new FileInfo(Path.Combine(mWorkDir, clsPHRPReader.GetPHRPProteinModsFileName(eResultType, mDatasetName)));
+                var fiProteinModsFile = new FileInfo(Path.Combine(mWorkDir, clsPHRPReader.GetPHRPProteinModsFileName(resultType, mDatasetName)));
                 var fiProteinModsFileNew = new FileInfo(fiProteinModsFile.FullName + ".tmp");
 
                 if (!fiProteinModsFile.Exists)

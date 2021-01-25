@@ -604,33 +604,33 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         {
             var fiFile = new FileInfo(filePath);
 
-            if (mPxMasterFileList.TryGetValue(fiFile.Name, out var oPXFileInfo))
+            if (mPxMasterFileList.TryGetValue(fiFile.Name, out var pxFileInfo))
             {
                 // File already exists
-                return oPXFileInfo.FileID;
+                return pxFileInfo.FileID;
             }
 
             var filename = CheckFilenameCase(fiFile, dataPkgJob.Dataset);
 
-            oPXFileInfo = new clsPXFileInfoBase(filename, dataPkgJob)
+            pxFileInfo = new clsPXFileInfoBase(filename, dataPkgJob)
             {
                 FileID = mPxMasterFileList.Count + 1
             };
 
             if (fiFile.Exists)
             {
-                oPXFileInfo.Length = fiFile.Length;
-                oPXFileInfo.MD5Hash = string.Empty;      // Don't compute the hash; it's not needed
+                pxFileInfo.Length = fiFile.Length;
+                pxFileInfo.MD5Hash = string.Empty;      // Don't compute the hash; it's not needed
             }
             else
             {
-                oPXFileInfo.Length = 0;
-                oPXFileInfo.MD5Hash = string.Empty;
+                pxFileInfo.Length = 0;
+                pxFileInfo.MD5Hash = string.Empty;
             }
 
-            mPxMasterFileList.Add(fiFile.Name, oPXFileInfo);
+            mPxMasterFileList.Add(fiFile.Name, pxFileInfo);
 
-            return oPXFileInfo.FileID;
+            return pxFileInfo.FileID;
         }
 
         private bool AddPxResultFile(int fileId, clsPXFileInfoBase.ePXFileType eFileType, string filePath, clsDataPackageJobInfo dataPkgJob)
@@ -945,7 +945,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 var filename = CheckFilenameCase(cdtaFile, dataPkgJob.Dataset);
 
-                var oFileInfo = new clsPXFileInfoBase(filename, dataPkgJob)
+                var fileInfo = new clsPXFileInfoBase(filename, dataPkgJob)
                 {
                     // File ID doesn't matter; just use 0
                     FileID = 0,
@@ -953,7 +953,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     MD5Hash = md5Hash
                 };
 
-                mCDTAFileStats.Add(cdtaFile.Name, oFileInfo);
+                mCDTAFileStats.Add(cdtaFile.Name, fileInfo);
 
                 var success = cdtaUtilities.ConvertCDTAToMGF(cdtaFile, dataPkgJob.Dataset, combine2And3PlusCharges, maximumIonsPer100MzInterval, createIndexFile);
                 if (!success)
@@ -1322,7 +1322,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                         switch (dataPkgJob.PeptideHitResultType)
                         {
-                            case clsPHRPReader.ePeptideHitResultType.Sequest:
+                            case clsPHRPReader.PeptideHitResultTypes.Sequest:
                                 if (msgfSpecEValue < MSGF_SPEC_EVALUE_NOT_DEFINED)
                                 {
                                     pValue = ComputeApproximateEValue(msgfSpecEValue);
@@ -1346,7 +1346,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                 }
                                 break;
 
-                            case clsPHRPReader.ePeptideHitResultType.XTandem:
+                            case clsPHRPReader.PeptideHitResultTypes.XTandem:
                                 if (msgfSpecEValue < MSGF_SPEC_EVALUE_NOT_DEFINED)
                                 {
                                     pValue = ComputeApproximateEValue(msgfSpecEValue);
@@ -1369,7 +1369,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                 }
                                 break;
 
-                            case clsPHRPReader.ePeptideHitResultType.Inspect:
+                            case clsPHRPReader.PeptideHitResultTypes.Inspect:
                                 pValue = reader.CurrentPSM.GetScoreDbl(clsPHRPParserInspect.DATA_COLUMN_PValue, PVALUE_NOT_DEFINED);
 
                                 if (msgfSpecEValue < MSGF_SPEC_EVALUE_NOT_DEFINED)
@@ -1392,7 +1392,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                 }
                                 break;
 
-                            case clsPHRPReader.ePeptideHitResultType.MSGFPlus:
+                            case clsPHRPReader.PeptideHitResultTypes.MSGFPlus:
                                 fdr = reader.CurrentPSM.GetScoreDbl(clsPHRPParserMSGFPlus.DATA_COLUMN_FDR, -1);
                                 if (fdr > -1)
                                 {
@@ -1496,7 +1496,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                                 var proteinUCase = reader.CurrentPSM.ProteinFirst.ToUpper();
 
-                                if (dataPkgJob.PeptideHitResultType == clsPHRPReader.ePeptideHitResultType.MSGFPlus)
+                                if (dataPkgJob.PeptideHitResultType == clsPHRPReader.PeptideHitResultTypes.MSGFPlus)
                                 {
                                     if (proteinUCase.StartsWith("REV_") || proteinUCase.StartsWith("XXX_"))
                                     {
@@ -1532,27 +1532,27 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                         switch (dataPkgJob.PeptideHitResultType)
                         {
-                            case clsPHRPReader.ePeptideHitResultType.Sequest:
+                            case clsPHRPReader.PeptideHitResultTypes.Sequest:
                                 totalPRMScore = reader.CurrentPSM.GetScore(clsPHRPParserSequest.DATA_COLUMN_Sp);
                                 pValueFormatted = pValue.ToString("0.00");
                                 deltaScore = reader.CurrentPSM.GetScore(clsPHRPParserSequest.DATA_COLUMN_DelCn);
                                 deltaScoreOther = reader.CurrentPSM.GetScore(clsPHRPParserSequest.DATA_COLUMN_DelCn2);
                                 break;
 
-                            case clsPHRPReader.ePeptideHitResultType.XTandem:
+                            case clsPHRPReader.PeptideHitResultTypes.XTandem:
                                 totalPRMScore = reader.CurrentPSM.GetScore(clsPHRPParserXTandem.DATA_COLUMN_Peptide_Hyperscore);
                                 pValueFormatted = pValue.ToString("0.00");
                                 deltaScore = reader.CurrentPSM.GetScore(clsPHRPParserXTandem.DATA_COLUMN_DeltaCn2);
                                 break;
 
-                            case clsPHRPReader.ePeptideHitResultType.Inspect:
+                            case clsPHRPReader.PeptideHitResultTypes.Inspect:
                                 totalPRMScore = reader.CurrentPSM.GetScore(clsPHRPParserInspect.DATA_COLUMN_TotalPRMScore);
                                 pValueFormatted = reader.CurrentPSM.GetScore(clsPHRPParserInspect.DATA_COLUMN_PValue);
                                 deltaScore = reader.CurrentPSM.GetScore(clsPHRPParserInspect.DATA_COLUMN_DeltaScore);
                                 deltaScoreOther = reader.CurrentPSM.GetScore(clsPHRPParserInspect.DATA_COLUMN_DeltaScoreOther);
                                 break;
 
-                            case clsPHRPReader.ePeptideHitResultType.MSGFPlus:
+                            case clsPHRPReader.PeptideHitResultTypes.MSGFPlus:
                                 totalPRMScore = reader.CurrentPSM.GetScore(clsPHRPParserMSGFPlus.DATA_COLUMN_DeNovoScore);
                                 pValueFormatted = reader.CurrentPSM.GetScore(clsPHRPParserMSGFPlus.DATA_COLUMN_PValue);
                                 break;
@@ -2392,7 +2392,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
         [Obsolete("No longer used")]
         private void CreateMSGFReportXmlFileWriteSoftwareVersion(XmlReader xmlReader, XmlWriter writer,
-            clsPHRPReader.ePeptideHitResultType PeptideHitResultType)
+            clsPHRPReader.PeptideHitResultTypes PeptideHitResultType)
         {
             var toolName = string.Empty;
             var toolVersion = string.Empty;
@@ -2442,15 +2442,15 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             }
             else
             {
-                if (PeptideHitResultType == clsPHRPReader.ePeptideHitResultType.MSGFPlus && toolName.StartsWith("MSGF", StringComparison.OrdinalIgnoreCase))
+                if (PeptideHitResultType == clsPHRPReader.PeptideHitResultTypes.MSGFPlus && toolName.StartsWith("MSGF", StringComparison.OrdinalIgnoreCase))
                 {
                     // Tool Version in the template file is likely correct; use it
                 }
-                else if (PeptideHitResultType == clsPHRPReader.ePeptideHitResultType.Sequest && toolName.StartsWith("SEQUEST", StringComparison.OrdinalIgnoreCase))
+                else if (PeptideHitResultType == clsPHRPReader.PeptideHitResultTypes.Sequest && toolName.StartsWith("SEQUEST", StringComparison.OrdinalIgnoreCase))
                 {
                     // Tool Version in the template file is likely correct; use it
                 }
-                else if (PeptideHitResultType == clsPHRPReader.ePeptideHitResultType.XTandem && toolName.IndexOf("TANDEM", StringComparison.OrdinalIgnoreCase) >= 0)
+                else if (PeptideHitResultType == clsPHRPReader.PeptideHitResultTypes.XTandem && toolName.IndexOf("TANDEM", StringComparison.OrdinalIgnoreCase) >= 0)
                 {
                     // Tool Version in the template file is likely correct; use it
                 }
@@ -3039,13 +3039,13 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
         private bool DefinePxFileMapping(int fileID, int parentFileID)
         {
-            if (!mPxResultFiles.TryGetValue(fileID, out var oPXFileInfo))
+            if (!mPxResultFiles.TryGetValue(fileID, out var pxFileInfo))
             {
                 LogError("FileID " + fileID + " not found in mPxResultFiles; unable to add parent file");
                 return false;
             }
 
-            oPXFileInfo.AddFileMapping(parentFileID);
+            pxFileInfo.AddFileMapping(parentFileID);
 
             return true;
         }
@@ -3684,7 +3684,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
             // Update the .mzid.gz file(s) for this job
 
-            if (mProcessMzIdFiles && jobInfo.Value.PeptideHitResultType == clsPHRPReader.ePeptideHitResultType.MSGFPlus)
+            if (mProcessMzIdFiles && jobInfo.Value.PeptideHitResultType == clsPHRPReader.PeptideHitResultTypes.MSGFPlus)
             {
                 mMessage = string.Empty;
 
@@ -3709,8 +3709,8 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             }
 
             // Deprecated
-            // if (mIncludePepXMLFiles && jobInfo.Value.PeptideHitResultType != clsPHRPReader.ePeptideHitResultType.Unknown ||
-            //     jobInfo.Value.PeptideHitResultType == clsPHRPReader.ePeptideHitResultType.Sequest)
+            // if (mIncludePepXMLFiles && jobInfo.Value.PeptideHitResultType != clsPHRPReader.PeptideHitResultTypes.Unknown ||
+            //     jobInfo.Value.PeptideHitResultType == clsPHRPReader.PeptideHitResultTypes.Sequest)
             // {
             //     var pepXmlFilename = jobInfo.Value.Dataset + ".pepXML";
             //     var pepXMLFile = new FileInfo(Path.Combine(mWorkDir, pepXmlFilename));
@@ -5296,7 +5296,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         }
 
         [Obsolete("No longer used")]
-        private bool WriteXMLInstrumentInfo(XmlWriter oWriter, string instrumentGroup)
+        private bool WriteXMLInstrumentInfo(XmlWriter writer, string instrumentGroup)
         {
             var instrumentDetailsAutoDefined = false;
 
@@ -5311,17 +5311,17 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 case "QEHFX":
                     instrumentDetailsAutoDefined = true;
 
-                    WriteXMLInstrumentInfoESI(oWriter, "positive");
+                    WriteXMLInstrumentInfoESI(writer, "positive");
 
-                    oWriter.WriteStartElement("analyzerList");
-                    oWriter.WriteAttributeString("count", "2");
+                    writer.WriteStartElement("analyzerList");
+                    writer.WriteAttributeString("count", "2");
 
-                    WriteXMLInstrumentInfoAnalyzer(oWriter, "MS", "MS:1000083", "radial ejection linear ion trap");
-                    WriteXMLInstrumentInfoAnalyzer(oWriter, "MS", "MS:1000484", "orbitrap");
+                    WriteXMLInstrumentInfoAnalyzer(writer, "MS", "MS:1000083", "radial ejection linear ion trap");
+                    WriteXMLInstrumentInfoAnalyzer(writer, "MS", "MS:1000484", "orbitrap");
 
-                    oWriter.WriteEndElement();   // analyzerList
+                    writer.WriteEndElement();   // analyzerList
 
-                    WriteXMLInstrumentInfoDetector(oWriter, "MS", "MS:1000624", "inductive detector");
+                    WriteXMLInstrumentInfoDetector(writer, "MS", "MS:1000624", "inductive detector");
                     break;
 
                 case "LCQ":
@@ -5338,32 +5338,32 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 case "LTQ-FT":
                     instrumentDetailsAutoDefined = true;
 
-                    WriteXMLInstrumentInfoESI(oWriter, "positive");
+                    WriteXMLInstrumentInfoESI(writer, "positive");
 
-                    oWriter.WriteStartElement("analyzerList");
-                    oWriter.WriteAttributeString("count", "2");
+                    writer.WriteStartElement("analyzerList");
+                    writer.WriteAttributeString("count", "2");
 
-                    WriteXMLInstrumentInfoAnalyzer(oWriter, "MS", "MS:1000083", "radial ejection linear ion trap");
-                    WriteXMLInstrumentInfoAnalyzer(oWriter, "MS", "MS:1000079", "fourier transform ion cyclotron resonance mass spectrometer");
+                    WriteXMLInstrumentInfoAnalyzer(writer, "MS", "MS:1000083", "radial ejection linear ion trap");
+                    WriteXMLInstrumentInfoAnalyzer(writer, "MS", "MS:1000079", "fourier transform ion cyclotron resonance mass spectrometer");
 
-                    oWriter.WriteEndElement();   // analyzerList
+                    writer.WriteEndElement();   // analyzerList
 
-                    WriteXMLInstrumentInfoDetector(oWriter, "MS", "MS:1000624", "inductive detector");
+                    WriteXMLInstrumentInfoDetector(writer, "MS", "MS:1000624", "inductive detector");
                     break;
 
                 case "Exactive":
                     instrumentDetailsAutoDefined = true;
 
-                    WriteXMLInstrumentInfoESI(oWriter, "positive");
+                    WriteXMLInstrumentInfoESI(writer, "positive");
 
-                    oWriter.WriteStartElement("analyzerList");
-                    oWriter.WriteAttributeString("count", "1");
+                    writer.WriteStartElement("analyzerList");
+                    writer.WriteAttributeString("count", "1");
 
-                    WriteXMLInstrumentInfoAnalyzer(oWriter, "MS", "MS:1000484", "orbitrap");
+                    WriteXMLInstrumentInfoAnalyzer(writer, "MS", "MS:1000484", "orbitrap");
 
-                    oWriter.WriteEndElement();   // analyzerList
+                    writer.WriteEndElement();   // analyzerList
 
-                    WriteXMLInstrumentInfoDetector(oWriter, "MS", "MS:1000624", "inductive detector");
+                    WriteXMLInstrumentInfoDetector(writer, "MS", "MS:1000624", "inductive detector");
                     break;
 
                 default:
@@ -5382,51 +5382,51 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             {
                 instrumentDetailsAutoDefined = true;
 
-                WriteXMLInstrumentInfoESI(oWriter, "positive");
+                WriteXMLInstrumentInfoESI(writer, "positive");
 
-                oWriter.WriteStartElement("analyzerList");
-                oWriter.WriteAttributeString("count", "1");
+                writer.WriteStartElement("analyzerList");
+                writer.WriteAttributeString("count", "1");
 
                 if (isLCQ)
                 {
-                    WriteXMLInstrumentInfoAnalyzer(oWriter, "MS", "MS:1000082", "quadrupole ion trap");
+                    WriteXMLInstrumentInfoAnalyzer(writer, "MS", "MS:1000082", "quadrupole ion trap");
                 }
                 else
                 {
-                    WriteXMLInstrumentInfoAnalyzer(oWriter, "MS", "MS:1000083", "radial ejection linear ion trap");
+                    WriteXMLInstrumentInfoAnalyzer(writer, "MS", "MS:1000083", "radial ejection linear ion trap");
                 }
 
-                oWriter.WriteEndElement();   // analyzerList
+                writer.WriteEndElement();   // analyzerList
 
-                WriteXMLInstrumentInfoDetector(oWriter, "MS", "MS:1000347", "dynode");
+                WriteXMLInstrumentInfoDetector(writer, "MS", "MS:1000347", "dynode");
             }
 
             return instrumentDetailsAutoDefined;
         }
 
-        private void WriteXMLInstrumentInfoAnalyzer(XmlWriter oWriter, string cvLabel, string accession, string description)
+        private void WriteXMLInstrumentInfoAnalyzer(XmlWriter writer, string cvLabel, string accession, string description)
         {
-            oWriter.WriteStartElement("analyzer");
-            WriteCVParam(oWriter, cvLabel, accession, description, string.Empty);
-            oWriter.WriteEndElement();
+            writer.WriteStartElement("analyzer");
+            WriteCVParam(writer, cvLabel, accession, description, string.Empty);
+            writer.WriteEndElement();
         }
 
-        private void WriteXMLInstrumentInfoDetector(XmlWriter oWriter, string cvLabel, string accession, string description)
+        private void WriteXMLInstrumentInfoDetector(XmlWriter writer, string cvLabel, string accession, string description)
         {
-            oWriter.WriteStartElement("detector");
-            WriteCVParam(oWriter, cvLabel, accession, description, string.Empty);
-            oWriter.WriteEndElement();
+            writer.WriteStartElement("detector");
+            WriteCVParam(writer, cvLabel, accession, description, string.Empty);
+            writer.WriteEndElement();
         }
 
-        private void WriteXMLInstrumentInfoESI(XmlWriter oWriter, string polarity)
+        private void WriteXMLInstrumentInfoESI(XmlWriter writer, string polarity)
         {
             if (string.IsNullOrEmpty(polarity))
                 polarity = "positive";
 
-            oWriter.WriteStartElement("source");
-            WriteCVParam(oWriter, "MS", "MS:1000073", "electrospray ionization", string.Empty);
-            WriteCVParam(oWriter, "MS", "MS:1000037", "polarity", polarity);
-            oWriter.WriteEndElement();
+            writer.WriteStartElement("source");
+            WriteCVParam(writer, "MS", "MS:1000073", "electrospray ionization", string.Empty);
+            WriteCVParam(writer, "MS", "MS:1000037", "polarity", polarity);
+            writer.WriteEndElement();
         }
 
         #endregion

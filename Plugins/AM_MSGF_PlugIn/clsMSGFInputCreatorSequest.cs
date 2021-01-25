@@ -21,7 +21,7 @@ namespace AnalysisManagerMSGFPlugin
         /// <param name="workDir">Working directory</param>
         /// <remarks></remarks>
         public clsMSGFInputCreatorSequest(string datasetName, string workDir)
-            : base(datasetName, workDir, clsPHRPReader.ePeptideHitResultType.Sequest)
+            : base(datasetName, workDir, clsPHRPReader.PeptideHitResultTypes.Sequest)
         {
             // Initialize the file paths
             // This updates mPHRPFirstHitsFilePath and mPHRPSynopsisFilePath

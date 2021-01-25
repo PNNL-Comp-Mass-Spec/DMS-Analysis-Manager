@@ -90,13 +90,13 @@ namespace AnalysisManagerMSGFPlugin
             var resultType = clsPHRPReader.GetPeptideHitResultType(resultTypeName);
 
             bool validToolType;
-            if (resultType == clsPHRPReader.ePeptideHitResultType.Sequest ||
-                resultType == clsPHRPReader.ePeptideHitResultType.XTandem ||
-                resultType == clsPHRPReader.ePeptideHitResultType.Inspect ||
-                resultType == clsPHRPReader.ePeptideHitResultType.MSGFPlus || // MS-GF+
-                resultType == clsPHRPReader.ePeptideHitResultType.MODa ||
-                resultType == clsPHRPReader.ePeptideHitResultType.MODPlus ||
-                resultType == clsPHRPReader.ePeptideHitResultType.MSPathFinder)
+            if (resultType == clsPHRPReader.PeptideHitResultTypes.Sequest ||
+                resultType == clsPHRPReader.PeptideHitResultTypes.XTandem ||
+                resultType == clsPHRPReader.PeptideHitResultTypes.Inspect ||
+                resultType == clsPHRPReader.PeptideHitResultTypes.MSGFPlus || // MS-GF+
+                resultType == clsPHRPReader.PeptideHitResultTypes.MODa ||
+                resultType == clsPHRPReader.PeptideHitResultTypes.MODPlus ||
+                resultType == clsPHRPReader.PeptideHitResultTypes.MSPathFinder)
             {
                 validToolType = true;
             }
@@ -116,7 +116,7 @@ namespace AnalysisManagerMSGFPlugin
             var eRawDataType = GetRawDataType(rawDataType);
             var mgfInstrumentData = mJobParams.GetJobParameter("MGFInstrumentData", false);
 
-            if (resultType == clsPHRPReader.ePeptideHitResultType.MSGFPlus)
+            if (resultType == clsPHRPReader.PeptideHitResultTypes.MSGFPlus)
             {
                 // We do not need the mzML file, the parameter file, or various other files if we are running MS-GF+ and running MSGF v6432 or later
                 // Determine this by looking for job parameter MSGF_Version
@@ -142,9 +142,9 @@ namespace AnalysisManagerMSGFPlugin
                     }
                 }
             }
-            else if (resultType == clsPHRPReader.ePeptideHitResultType.MODa |
-                     resultType == clsPHRPReader.ePeptideHitResultType.MODPlus |
-                     resultType == clsPHRPReader.ePeptideHitResultType.MSPathFinder)
+            else if (resultType == clsPHRPReader.PeptideHitResultTypes.MODa |
+                     resultType == clsPHRPReader.PeptideHitResultTypes.MODPlus |
+                     resultType == clsPHRPReader.PeptideHitResultTypes.MSPathFinder)
             {
                 // We do not need any raw data files for MODa, modPlus, or MSPathFinder
                 onlyCopyFirstHitsAndSynopsisFiles = true;

@@ -580,7 +580,7 @@ namespace AnalysisManagerBase
 
                 var datasetName = dataPkgJob.Dataset;
 
-                if (retrievalOptions.RetrieveMzidFiles && dataPkgJob.PeptideHitResultType == clsPHRPReader.ePeptideHitResultType.MSGFPlus)
+                if (retrievalOptions.RetrieveMzidFiles && dataPkgJob.PeptideHitResultType == clsPHRPReader.PeptideHitResultTypes.MSGFPlus)
                 {
                     // Retrieve MS-GF+ .mzid files
                     // They will either be stored as .zip files or as .gz files
@@ -611,8 +611,8 @@ namespace AnalysisManagerBase
                     }
                 }
 
-                if (retrievalOptions.RetrievePepXMLFiles && dataPkgJob.PeptideHitResultType != clsPHRPReader.ePeptideHitResultType.Unknown ||
-                    dataPkgJob.PeptideHitResultType == clsPHRPReader.ePeptideHitResultType.Sequest)
+                if (retrievalOptions.RetrievePepXMLFiles && dataPkgJob.PeptideHitResultType != clsPHRPReader.PeptideHitResultTypes.Unknown ||
+                    dataPkgJob.PeptideHitResultType == clsPHRPReader.PeptideHitResultTypes.Sequest)
                 {
                     // Retrieve .pepXML files, which are stored as _pepXML.zip files
                     zippedPepXmlFile = datasetName + "_pepXML.zip";
@@ -1212,7 +1212,7 @@ namespace AnalysisManagerBase
                             "Dataset name mismatch: {0} vs. {1}", dataPkgJob.Dataset, mAnalysisResources.DatasetName));
                     }
 
-                    if (dataPkgJob.PeptideHitResultType == clsPHRPReader.ePeptideHitResultType.Unknown)
+                    if (dataPkgJob.PeptideHitResultType == clsPHRPReader.PeptideHitResultTypes.Unknown)
                     {
                         var msg = "PeptideHit ResultType not recognized for job " + dataPkgJob.Job + ": " + dataPkgJob.ResultType;
                         LogTools.LogWarning(msg);

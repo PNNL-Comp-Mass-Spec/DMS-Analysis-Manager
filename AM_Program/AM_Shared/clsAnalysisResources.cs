@@ -2495,7 +2495,7 @@ namespace AnalysisManagerBase
                 Tool = "Dataset info (no tool)",
                 NumberOfClonedSteps = 0,
                 ResultType = "Dataset info (no type)",
-                PeptideHitResultType = clsPHRPReader.ePeptideHitResultType.Unknown,
+                PeptideHitResultType = clsPHRPReader.PeptideHitResultTypes.Unknown,
                 SettingsFileName = string.Empty,
                 ParameterFileName = string.Empty,
                 OrganismDBName = string.Empty,

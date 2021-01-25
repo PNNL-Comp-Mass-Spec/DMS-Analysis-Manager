@@ -96,18 +96,18 @@ namespace MSGFResultsSummarizerExe
             try
             {
                 // Initialize a dictionary object that will be used to either find the appropriate input file, or determine the file type of the specified input file
-                var fileSuffixes = new Dictionary<string, clsPHRPReader.ePeptideHitResultType>
+                var fileSuffixes = new Dictionary<string, clsPHRPReader.PeptideHitResultTypes>
                 {
-                    {"_xt_MSGF.txt", clsPHRPReader.ePeptideHitResultType.XTandem},
-                    {"_msgfdb_syn_MSGF.txt", clsPHRPReader.ePeptideHitResultType.MSGFPlus},
-                    {"_inspect_syn_MSGF.txt", clsPHRPReader.ePeptideHitResultType.Inspect},
-                    {"_syn_MSGF.txt", clsPHRPReader.ePeptideHitResultType.Sequest},
-                    {"_msalign_syn.txt", clsPHRPReader.ePeptideHitResultType.MSAlign},
-                    {"_mspath_syn.txt", clsPHRPReader.ePeptideHitResultType.MSPathFinder}
+                    {"_xt_MSGF.txt", clsPHRPReader.PeptideHitResultTypes.XTandem},
+                    {"_msgfdb_syn_MSGF.txt", clsPHRPReader.PeptideHitResultTypes.MSGFPlus},
+                    {"_inspect_syn_MSGF.txt", clsPHRPReader.PeptideHitResultTypes.Inspect},
+                    {"_syn_MSGF.txt", clsPHRPReader.PeptideHitResultTypes.Sequest},
+                    {"_msalign_syn.txt", clsPHRPReader.PeptideHitResultTypes.MSAlign},
+                    {"_mspath_syn.txt", clsPHRPReader.PeptideHitResultTypes.MSPathFinder}
                 };
 
 
-                var eResultType = clsPHRPReader.ePeptideHitResultType.Unknown;
+                var resultType = clsPHRPReader.PeptideHitResultTypes.Unknown;
 
                 if (string.IsNullOrWhiteSpace(mMSGFSynFilePath))
                 {
@@ -133,14 +133,14 @@ namespace MSGFResultsSummarizerExe
                         {
                             // Match found
                             mMSGFSynFilePath = matchingFiles[0].FullName;
-                            eResultType = suffixEntry.Value;
+                            resultType = suffixEntry.Value;
                             break;
                         }
                     }
 
                     var suffixesSearched = string.Join(", ", fileSuffixes.Keys.ToList());
 
-                    if (eResultType == clsPHRPReader.ePeptideHitResultType.Unknown)
+                    if (resultType == clsPHRPReader.PeptideHitResultTypes.Unknown)
                     {
                         var warningMessage = "Did not find any files in the source directory with the expected file name suffixes\n" +
                             "Looked for " + suffixesSearched + " in \n" + inputDirectory.FullName;
@@ -153,22 +153,22 @@ namespace MSGFResultsSummarizerExe
                 {
                     // Determine the result type of mMSGFSynFilePath
 
-                    eResultType = clsPHRPReader.AutoDetermineResultType(mMSGFSynFilePath);
+                    resultType = clsPHRPReader.AutoDeterminresultType(mMSGFSynFilePath);
 
-                    if (eResultType == clsPHRPReader.ePeptideHitResultType.Unknown)
+                    if (resultType == clsPHRPReader.PeptideHitResultTypes.Unknown)
                     {
                         foreach (var suffixEntry in fileSuffixes)
                         {
                             if (mMSGFSynFilePath.ToLower().EndsWith(suffixEntry.Key.ToLower()))
                             {
                                 // Match found
-                                eResultType = suffixEntry.Value;
+                                resultType = suffixEntry.Value;
                                 break;
                             }
                         }
                     }
 
-                    if (eResultType == clsPHRPReader.ePeptideHitResultType.Unknown)
+                    if (resultType == clsPHRPReader.PeptideHitResultTypes.Unknown)
                     {
                         ShowErrorMessage("Unable to determine result type from input file name: " + mMSGFSynFilePath);
                         return false;
@@ -185,7 +185,7 @@ namespace MSGFResultsSummarizerExe
                 if (string.IsNullOrWhiteSpace(mDatasetName))
                 {
                     // Auto-determine the dataset name
-                    mDatasetName = clsPHRPReader.AutoDetermineDatasetName(sourceFile.Name, eResultType);
+                    mDatasetName = clsPHRPReader.AutoDetermineDatasetName(sourceFile.Name, resultType);
 
                     if (string.IsNullOrEmpty(mDatasetName))
                     {
@@ -218,7 +218,7 @@ namespace MSGFResultsSummarizerExe
                     }
                 }
 
-                var summarizer = new clsMSGFResultsSummarizer(eResultType, mDatasetName, mJob, sourceFile.Directory.FullName)
+                var summarizer = new clsMSGFResultsSummarizer(resultType, mDatasetName, mJob, sourceFile.Directory.FullName)
                 {
                     MSGFThreshold = clsMSGFResultsSummarizer.DEFAULT_MSGF_THRESHOLD,
                     EValueThreshold = clsMSGFResultsSummarizer.DEFAULT_EVALUE_THRESHOLD,
@@ -250,7 +250,7 @@ namespace MSGFResultsSummarizerExe
 
                 string filterText;
 
-                if (summarizer.ResultType == clsPHRPReader.ePeptideHitResultType.MSAlign)
+                if (summarizer.ResultType == clsPHRPReader.PeptideHitResultTypes.MSAlign)
                 {
                     Console.WriteLine("EValue Threshold: ".PadRight(25) + summarizer.EValueThreshold.ToString("0.00E+00"));
                     filterText = "EValue";

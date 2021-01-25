@@ -36,7 +36,7 @@ namespace AnalysisManagerExtractionPlugin
             OnErrorEvent("  ... large error example: " + massErrorEntry.Key + " Da for " + massErrorEntry.Value);
         }
 
-        private clsSearchEngineParameters LoadSearchEngineParameters(clsPHRPReader phrpReader, string searchEngineParamFilePath, clsPHRPReader.ePeptideHitResultType eResultType)
+        private clsSearchEngineParameters LoadSearchEngineParameters(clsPHRPReader phrpReader, string searchEngineParamFilePath, clsPHRPReader.PeptideHitResultTypes resultType)
         {
             clsSearchEngineParameters searchEngineParams = null;
 
@@ -45,7 +45,7 @@ namespace AnalysisManagerExtractionPlugin
                 if (string.IsNullOrEmpty(searchEngineParamFilePath))
                 {
                     OnWarningEvent("Search engine parameter file not defined; will assume a maximum tolerance of 10 Da");
-                    searchEngineParams = new clsSearchEngineParameters(eResultType.ToString());
+                    searchEngineParams = new clsSearchEngineParameters(resultType.ToString());
                     searchEngineParams.AddUpdateParameter("peptide_mass_tol", "10");
                 }
                 else
@@ -56,7 +56,7 @@ namespace AnalysisManagerExtractionPlugin
                     {
                         OnWarningEvent("Error loading search engine parameter file " + Path.GetFileName(searchEngineParamFilePath) +
                                            "; will assume a maximum tolerance of 10 Da");
-                        searchEngineParams = new clsSearchEngineParameters(eResultType.ToString());
+                        searchEngineParams = new clsSearchEngineParameters(resultType.ToString());
                         searchEngineParams.AddUpdateParameter("peptide_mass_tol", "10");
                     }
                 }
@@ -75,24 +75,24 @@ namespace AnalysisManagerExtractionPlugin
         /// is more than 6 Da away (more for higher charge states)
         /// </summary>
         /// <param name="inputFilePath"></param>
-        /// <param name="eResultType"></param>
+        /// <param name="resultType"></param>
         /// <param name="searchEngineParamFilePath"></param>
         /// <returns>True if less than mErrorThresholdPercent of the data is bad; False otherwise</returns>
-        public bool ValidatePHRPResultMassErrors(string inputFilePath, clsPHRPReader.ePeptideHitResultType eResultType, string searchEngineParamFilePath)
+        public bool ValidatePHRPResultMassErrors(string inputFilePath, clsPHRPReader.PeptideHitResultTypes resultType, string searchEngineParamFilePath)
         {
             try
             {
                 ErrorMessage = string.Empty;
 
-                var oPeptideMassCalculator = new clsPeptideMassCalculator();
+                var peptideMassCalculator = new clsPeptideMassCalculator();
 
-                var oStartupOptions = new clsPHRPStartupOptions
+                var startupOptions = new clsPHRPStartupOptions
                 {
                     LoadModsAndSeqInfo = true,
                     LoadMSGFResults = false,
                     LoadScanStatsData = false,
                     MaxProteinsPerPSM = 1,
-                    PeptideMassCalculator = oPeptideMassCalculator
+                    PeptideMassCalculator = peptideMassCalculator
                 };
 
                 var intPsmCount = 0;
@@ -101,7 +101,7 @@ namespace AnalysisManagerExtractionPlugin
 
                 var lstLargestMassErrors = new SortedDictionary<double, string>();
 
-                using (var reader = new clsPHRPReader(inputFilePath, eResultType, oStartupOptions))
+                using (var reader = new clsPHRPReader(inputFilePath, resultType, startupOptions))
                 {
                     RegisterEvents(reader);
 
@@ -140,7 +140,7 @@ namespace AnalysisManagerExtractionPlugin
                     reader.SkipDuplicatePSMs = true;
 
                     // Load the search engine parameters
-                    var searchEngineParams = LoadSearchEngineParameters(reader, searchEngineParamFilePath, eResultType);
+                    var searchEngineParams = LoadSearchEngineParameters(reader, searchEngineParamFilePath, resultType);
 
                     // Check for a custom charge carrier mass
                     if (clsPHRPParserMSGFPlus.GetCustomChargeCarrierMass(searchEngineParams, out var customChargeCarrierMass))
@@ -149,7 +149,7 @@ namespace AnalysisManagerExtractionPlugin
                         {
                             OnDebugEvent(string.Format("Custom charge carrier mass defined: {0:F3} Da", customChargeCarrierMass));
                         }
-                        oPeptideMassCalculator.ChargeCarrierMass = customChargeCarrierMass;
+                        peptideMassCalculator.ChargeCarrierMass = customChargeCarrierMass;
                     }
 
                     // Define the precursor mass tolerance threshold
@@ -199,7 +199,7 @@ namespace AnalysisManagerExtractionPlugin
                         var massError = currentPSM.PrecursorNeutralMass - currentPSM.PeptideMonoisotopicMass;
                         double toleranceCurrent;
 
-                        if (eResultType == clsPHRPReader.ePeptideHitResultType.MSGFPlus &&
+                        if (resultType == clsPHRPReader.PeptideHitResultTypes.MSGFPlus &&
                             highResMS1 &&
                             currentPSM.TryGetScore("IsotopeError", out var psmIsotopeError))
                         {

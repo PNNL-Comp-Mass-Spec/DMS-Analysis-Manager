@@ -1289,7 +1289,7 @@ namespace AnalysisManagerExtractionPlugin
 
             // Validate that the mass errors are within tolerance
             var paramFileName = mJobParams.GetParam("ParmFileName");
-            if (!ValidatePHRPResultMassErrors(synFilePath, clsPHRPReader.ePeptideHitResultType.Sequest, paramFileName))
+            if (!ValidatePHRPResultMassErrors(synFilePath, clsPHRPReader.PeptideHitResultTypes.Sequest, paramFileName))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -1340,7 +1340,7 @@ namespace AnalysisManagerExtractionPlugin
 
             // Validate that the mass errors are within tolerance
             // Use input.xml for the X!Tandem parameter file
-            if (!ValidatePHRPResultMassErrors(synFilePath, clsPHRPReader.ePeptideHitResultType.XTandem, "input.xml"))
+            if (!ValidatePHRPResultMassErrors(synFilePath, clsPHRPReader.PeptideHitResultTypes.XTandem, "input.xml"))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -1392,7 +1392,7 @@ namespace AnalysisManagerExtractionPlugin
 
             // Summarize the number of PSMs in _msalign_syn.txt
             // ReSharper disable once UseImplicitlyTypedVariableEvident
-            const clsPHRPReader.ePeptideHitResultType resultType = clsPHRPReader.ePeptideHitResultType.MSAlign;
+            const clsPHRPReader.PeptideHitResultTypes resultType = clsPHRPReader.PeptideHitResultTypes.MSAlign;
 
             var summarizer = new clsMSGFResultsSummarizer(resultType, mDatasetName, mJob, mWorkDir, traceMode: TraceMode);
             RegisterEvents(summarizer);
@@ -1427,7 +1427,7 @@ namespace AnalysisManagerExtractionPlugin
 
             // Validate that the mass errors are within tolerance
             var paramFileName = mJobParams.GetParam("ParmFileName");
-            if (!ValidatePHRPResultMassErrors(synFilePath, clsPHRPReader.ePeptideHitResultType.MSAlign, paramFileName))
+            if (!ValidatePHRPResultMassErrors(synFilePath, clsPHRPReader.PeptideHitResultTypes.MSAlign, paramFileName))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -1500,7 +1500,7 @@ namespace AnalysisManagerExtractionPlugin
 
                 // Could validate that the mass errors are within tolerance
                 // var paramFileName = mJobParams.GetParam("ParmFileName");
-                // if (!ValidatePHRPResultMassErrors(synFilePath, clsPHRPReader.ePeptideHitResultType.MODa, paramFileName))
+                // if (!ValidatePHRPResultMassErrors(synFilePath, clsPHRPReader.PeptideHitResultTypes.MODa, paramFileName))
                 //     return CloseOutType.CLOSEOUT_FAILED;
                 // else
                 //     return CloseOutType.CLOSEOUT_SUCCESS;
@@ -1575,7 +1575,7 @@ namespace AnalysisManagerExtractionPlugin
 
                 // Could validate that the mass errors are within tolerance
                 // var paramFileName = mJobParams.GetParam("ParmFileName");
-                // if (!ValidatePHRPResultMassErrors(synFilePath, clsPHRPReader.ePeptideHitResultType.MODPlus, paramFileName))
+                // if (!ValidatePHRPResultMassErrors(synFilePath, clsPHRPReader.PeptideHitResultTypes.MODPlus, paramFileName))
                 //     return CloseOutType.CLOSEOUT_FAILED;
                 // else
                 //     return CloseOutType.CLOSEOUT_SUCCESS;
@@ -1823,7 +1823,7 @@ namespace AnalysisManagerExtractionPlugin
 
                 // Validate that the mass errors are within tolerance
                 var paramFileName = mJobParams.GetParam("ParmFileName");
-                if (!ValidatePHRPResultMassErrors(synFilePath, clsPHRPReader.ePeptideHitResultType.MSGFPlus, paramFileName))
+                if (!ValidatePHRPResultMassErrors(synFilePath, clsPHRPReader.PeptideHitResultTypes.MSGFPlus, paramFileName))
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -1900,7 +1900,7 @@ namespace AnalysisManagerExtractionPlugin
 
                 // Validate that the mass errors are within tolerance
                 var paramFileName = mJobParams.GetParam("ParmFileName");
-                if (!ValidatePHRPResultMassErrors(synFilePath, clsPHRPReader.ePeptideHitResultType.MSPathFinder, paramFileName))
+                if (!ValidatePHRPResultMassErrors(synFilePath, clsPHRPReader.PeptideHitResultTypes.MSPathFinder, paramFileName))
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -1977,7 +1977,7 @@ namespace AnalysisManagerExtractionPlugin
 
                 // Validate that the mass errors are within tolerance
                 var paramFileName = mJobParams.GetParam("ParmFileName");
-                if (!ValidatePHRPResultMassErrors(synFilePath, clsPHRPReader.ePeptideHitResultType.TopPIC, paramFileName))
+                if (!ValidatePHRPResultMassErrors(synFilePath, clsPHRPReader.PeptideHitResultTypes.TopPIC, paramFileName))
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -2153,7 +2153,7 @@ namespace AnalysisManagerExtractionPlugin
 
             // Validate that the mass errors are within tolerance
             var paramFileName = mJobParams.GetParam("ParmFileName");
-            if (!ValidatePHRPResultMassErrors(synFilePath, clsPHRPReader.ePeptideHitResultType.Inspect, paramFileName))
+            if (!ValidatePHRPResultMassErrors(synFilePath, clsPHRPReader.PeptideHitResultTypes.Inspect, paramFileName))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -2773,7 +2773,7 @@ namespace AnalysisManagerExtractionPlugin
             }
         }
 
-        private bool ValidatePHRPResultMassErrors(string inputFilePath, clsPHRPReader.ePeptideHitResultType resultType,
+        private bool ValidatePHRPResultMassErrors(string inputFilePath, clsPHRPReader.PeptideHitResultTypes resultType,
             string searchEngineParamFileName)
         {
             bool success;

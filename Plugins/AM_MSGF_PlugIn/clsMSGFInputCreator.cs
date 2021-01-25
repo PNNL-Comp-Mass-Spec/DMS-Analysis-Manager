@@ -34,7 +34,7 @@ namespace AnalysisManagerMSGFPlugin
         protected readonly string mDatasetName;
         protected readonly string mWorkDir;
 
-        private readonly clsPHRPReader.ePeptideHitResultType mPeptideHitResultType;
+        private readonly clsPHRPReader.PeptideHitResultTypes mPeptideHitResultType;
 
         private readonly SortedDictionary<int, List<string>> mSkippedLineInfo;
 
@@ -104,13 +104,13 @@ namespace AnalysisManagerMSGFPlugin
         /// </summary>
         /// <param name="datasetName">Dataset Name</param>
         /// <param name="workDir">Working directory</param>
-        /// <param name="eResultType">PeptideHit result type</param>
+        /// <param name="resultType">PeptideHit result type</param>
         /// <remarks></remarks>
-        protected clsMSGFInputCreator(string datasetName, string workDir, clsPHRPReader.ePeptideHitResultType eResultType)
+        protected clsMSGFInputCreator(string datasetName, string workDir, clsPHRPReader.PeptideHitResultTypes resultType)
         {
             mDatasetName = datasetName;
             mWorkDir = workDir;
-            mPeptideHitResultType = eResultType;
+            mPeptideHitResultType = resultType;
 
             mErrorMessage = string.Empty;
 

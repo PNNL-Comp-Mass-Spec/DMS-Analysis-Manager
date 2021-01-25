@@ -82,7 +82,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// PeptideHit result type
         /// </summary>
-        public clsPHRPReader.ePeptideHitResultType PeptideHitResultType { get; set; }
+        public clsPHRPReader.PeptideHitResultTypes PeptideHitResultType { get; set; }
 
         /// <summary>
         /// Settings file name
@@ -168,7 +168,7 @@ namespace AnalysisManagerBase
             Tool = string.Empty;
             NumberOfClonedSteps = 0;
             ResultType = string.Empty;
-            PeptideHitResultType = clsPHRPReader.ePeptideHitResultType.Unknown;
+            PeptideHitResultType = clsPHRPReader.PeptideHitResultTypes.Unknown;
             SettingsFileName = string.Empty;
             ParameterFileName = string.Empty;
             OrganismDBName = string.Empty;

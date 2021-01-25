@@ -160,7 +160,7 @@ namespace MSGFResultsSummarizer
 
         public bool PostJobPSMResultsToDB { get; set; }
 
-        public clsPHRPReader.ePeptideHitResultType ResultType { get; }
+        public clsPHRPReader.PeptideHitResultTypes ResultType { get; }
 
         public string ResultTypeName => ResultType.ToString();
 
@@ -227,7 +227,7 @@ namespace MSGFResultsSummarizer
         /// <param name="sourceDirectoryPath">Source directory path</param>
         /// <param name="traceMode">When true, show database queries</param>
         /// <remarks></remarks>
-        public clsMSGFResultsSummarizer(clsPHRPReader.ePeptideHitResultType resultType, string datasetName, int job, string sourceDirectoryPath, bool traceMode)
+        public clsMSGFResultsSummarizer(clsPHRPReader.PeptideHitResultTypes resultType, string datasetName, int job, string sourceDirectoryPath, bool traceMode)
             : this(resultType, datasetName, job, sourceDirectoryPath, DEFAULT_CONNECTION_STRING, debugLevel: 1, traceMode: traceMode)
         {
         }
@@ -244,7 +244,7 @@ namespace MSGFResultsSummarizer
         /// <param name="traceMode">When true, show database queries</param>
         /// <remarks></remarks>
         public clsMSGFResultsSummarizer(
-            clsPHRPReader.ePeptideHitResultType resultType,
+            clsPHRPReader.PeptideHitResultTypes resultType,
             string datasetName,
             int job,
             string sourceDirectoryPath,
@@ -532,7 +532,7 @@ namespace MSGFResultsSummarizer
 
             if (usingMSGFOrEValueFilter)
             {
-                if (ResultType == clsPHRPReader.ePeptideHitResultType.MSAlign)
+                if (ResultType == clsPHRPReader.PeptideHitResultTypes.MSAlign)
                 {
                     // Filter on EValue
                     success = FilterPSMsByEValue(EValueThreshold, normalizedPSMs, filteredPSMs);
@@ -920,7 +920,7 @@ namespace MSGFResultsSummarizer
                 var dbTools = mStoredProcedureExecutor;
                 var reportThreshold = MSGFThreshold;
                 var thresholdIsEValue = 0;
-                if (ResultType == clsPHRPReader.ePeptideHitResultType.MSAlign)
+                if (ResultType == clsPHRPReader.PeptideHitResultTypes.MSAlign)
                 {
                     reportThreshold = EValueThreshold;
                     thresholdIsEValue = 1;
@@ -1016,9 +1016,9 @@ namespace MSGFResultsSummarizer
                 // We use the Synopsis file to count the number of peptides and proteins observed
                 var phrpSynopsisFileName = clsPHRPReader.GetPHRPSynopsisFileName(ResultType, mDatasetName);
 
-                if (ResultType == clsPHRPReader.ePeptideHitResultType.XTandem || ResultType == clsPHRPReader.ePeptideHitResultType.MSAlign ||
-                    ResultType == clsPHRPReader.ePeptideHitResultType.MODa || ResultType == clsPHRPReader.ePeptideHitResultType.MODPlus ||
-                    ResultType == clsPHRPReader.ePeptideHitResultType.MSPathFinder)
+                if (ResultType == clsPHRPReader.PeptideHitResultTypes.XTandem || ResultType == clsPHRPReader.PeptideHitResultTypes.MSAlign ||
+                    ResultType == clsPHRPReader.PeptideHitResultTypes.MODa || ResultType == clsPHRPReader.PeptideHitResultTypes.MODPlus ||
+                    ResultType == clsPHRPReader.PeptideHitResultTypes.MSPathFinder)
                 {
                     // These tools do not have first-hits files; use the Synopsis file instead to determine scan counts
                     phrpFirstHitsFileName = phrpSynopsisFileName;
@@ -1169,8 +1169,8 @@ namespace MSGFResultsSummarizer
 
             try
             {
-                if (ResultType == clsPHRPReader.ePeptideHitResultType.MODa || ResultType == clsPHRPReader.ePeptideHitResultType.MODPlus ||
-                    ResultType == clsPHRPReader.ePeptideHitResultType.MSPathFinder)
+                if (ResultType == clsPHRPReader.PeptideHitResultTypes.MODa || ResultType == clsPHRPReader.PeptideHitResultTypes.MODPlus ||
+                    ResultType == clsPHRPReader.PeptideHitResultTypes.MSPathFinder)
                 {
                     loadMSGFResults = false;
                 }
@@ -1253,7 +1253,7 @@ namespace MSGFResultsSummarizer
 
                         var valid = false;
 
-                        if (ResultType == clsPHRPReader.ePeptideHitResultType.MSAlign)
+                        if (ResultType == clsPHRPReader.PeptideHitResultTypes.MSAlign)
                         {
                             // Use the EValue reported by MSAlign
 
@@ -1262,12 +1262,12 @@ namespace MSGFResultsSummarizer
                                 valid = double.TryParse(eValueText, out eValue);
                             }
                         }
-                        else if (ResultType == clsPHRPReader.ePeptideHitResultType.MODa | ResultType == clsPHRPReader.ePeptideHitResultType.MODPlus)
+                        else if (ResultType == clsPHRPReader.PeptideHitResultTypes.MODa | ResultType == clsPHRPReader.PeptideHitResultTypes.MODPlus)
                         {
                             // MODa / MODPlus results don't have spectral probability, but they do have FDR
                             valid = true;
                         }
-                        else if (ResultType == clsPHRPReader.ePeptideHitResultType.MSPathFinder)
+                        else if (ResultType == clsPHRPReader.PeptideHitResultTypes.MSPathFinder)
                         {
                             // Use SpecEValue in place of SpecProb
                             valid = true;
@@ -1304,7 +1304,7 @@ namespace MSGFResultsSummarizer
                         var psmEValue = eValue;
                         double psmFDR;
 
-                        if (ResultType == clsPHRPReader.ePeptideHitResultType.MSGFPlus | ResultType == clsPHRPReader.ePeptideHitResultType.MSAlign)
+                        if (ResultType == clsPHRPReader.PeptideHitResultTypes.MSGFPlus | ResultType == clsPHRPReader.PeptideHitResultTypes.MSAlign)
                         {
                             psmFDR = currentPSM.GetScoreDbl(clsPHRPParserMSGFPlus.DATA_COLUMN_FDR, clsPSMInfo.UNKNOWN_FDR);
                             if (psmFDR < 0)
@@ -1312,15 +1312,15 @@ namespace MSGFResultsSummarizer
                                 psmFDR = currentPSM.GetScoreDbl(clsPHRPParserMSGFPlus.DATA_COLUMN_EFDR, clsPSMInfo.UNKNOWN_FDR);
                             }
                         }
-                        else if (ResultType == clsPHRPReader.ePeptideHitResultType.MODa)
+                        else if (ResultType == clsPHRPReader.PeptideHitResultTypes.MODa)
                         {
                             psmFDR = currentPSM.GetScoreDbl(clsPHRPParserMODa.DATA_COLUMN_QValue, clsPSMInfo.UNKNOWN_FDR);
                         }
-                        else if (ResultType == clsPHRPReader.ePeptideHitResultType.MODPlus)
+                        else if (ResultType == clsPHRPReader.PeptideHitResultTypes.MODPlus)
                         {
                             psmFDR = currentPSM.GetScoreDbl(clsPHRPParserMODPlus.DATA_COLUMN_QValue, clsPSMInfo.UNKNOWN_FDR);
                         }
-                        else if (ResultType == clsPHRPReader.ePeptideHitResultType.MSPathFinder)
+                        else if (ResultType == clsPHRPReader.PeptideHitResultTypes.MSPathFinder)
                         {
                             psmFDR = currentPSM.GetScoreDbl(clsPHRPParserMSPathFinder.DATA_COLUMN_QValue, clsPSMInfo.UNKNOWN_FDR);
                         }
@@ -1493,8 +1493,8 @@ namespace MSGFResultsSummarizer
                             }
 
                             // Check whether this peptide is partially or fully tryptic
-                            if (currentPSM.CleavageState == clsPeptideCleavageStateCalculator.ePeptideCleavageStateConstants.Full ||
-                                currentPSM.CleavageState == clsPeptideCleavageStateCalculator.ePeptideCleavageStateConstants.Partial)
+                            if (currentPSM.CleavageState == clsPeptideCleavageStateCalculator.PeptideCleavageStateConstants.Full ||
+                                currentPSM.CleavageState == clsPeptideCleavageStateCalculator.PeptideCleavageStateConstants.Partial)
                             {
                                 psmInfo.Tryptic = true;
                             }
