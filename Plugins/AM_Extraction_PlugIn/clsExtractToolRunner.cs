@@ -10,7 +10,6 @@ using AnalysisManagerBase;
 using AnalysisManagerMSGFDBPlugIn;
 using MSGFResultsSummarizer;
 using PHRPReader;
-using PRISM;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -1596,8 +1595,7 @@ namespace AnalysisManagerExtractionPlugin
 
             try
             {
-                var skipPHRP = mJobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION,
-                                                           clsAnalysisResourcesExtraction.JOB_PARAM_SKIP_PHRP, false);
+                var skipPHRP = mJobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, clsAnalysisResourcesExtraction.JOB_PARAM_SKIP_PHRP, false);
 
                 if (skipPHRP)
                 {
