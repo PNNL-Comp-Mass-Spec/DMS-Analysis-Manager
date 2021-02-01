@@ -269,7 +269,7 @@ namespace AnalysisManagerBase
                 var minutesText = waitTimeMinutes.ToString("0");
                 var timeUnits = minutesText == "1" ? "minute" : "minutes";
 
-                var msg = string.Format("Exited lock file queue after {0} {1} ({2}; will now copy file", minutesText, timeUnits, mDerivedClassName);
+                var msg = string.Format("Exited lock file queue after {0} {1} ({2}); will now copy file", minutesText, timeUnits, mDerivedClassName);
                 LogDebug(msg);
             }
         }
