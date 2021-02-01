@@ -1354,6 +1354,14 @@
             Clear modifications
             </summary>
         </member>
+        <member name="M:PHRPReader.clsPeptideModificationContainer.FindClosestMatchedMod(System.Collections.Generic.IReadOnlyCollection{System.Collections.Generic.KeyValuePair{System.Double,PHRPReader.clsModificationDefinition}},System.Char,System.Boolean)">
+            <summary>
+            Find the modification in matchedMods with smallest delta mass value
+            </summary>
+            <param name="matchedMods">List of modifications where keys are absolute value of delta mass and values are the modification definition</param>
+            <param name="chTargetResidue"></param>
+            <param name="addTargetResidue">If true, add the target residue to the modification definition's target residues list (if missing)</param>
+        </member>
         <member name="M:PHRPReader.clsPeptideModificationContainer.GenerateGenericModMassName(System.Double)">
             <summary>
             Converts a modification mass to a generic 8 character name
@@ -1421,9 +1429,9 @@
             Find the mass correction tag with the given mass, adding to the unknown modification list if not found and addToModificationListIfUnknown is true
             </summary>
             <param name="modificationMass"></param>
-            <param name="massDigitsOfPrecision"></param>
+            <param name="massDigitsOfPrecision">Number of digits after the decimal point to round to when comparing mod masses</param>
             <param name="addToModificationListIfUnknown"></param>
-            <param name="massDigitsOfPrecisionLoose"></param>
+            <param name="massDigitsOfPrecisionLoose">Number of digits after the decimal point to round to, for a more lenient match (if no match found using massDigitsOfPrecision)</param>
             <returns>Mod name, or empty string if no match</returns>
         </member>
         <member name="M:PHRPReader.clsPeptideModificationContainer.LookupDynamicModificationDefinitionByTargetInfo(System.Char,System.Char,PHRPReader.clsAminoAcidModInfo.ResidueTerminusStateConstants,System.Boolean@)">
@@ -1437,7 +1445,7 @@
             <returns>Modification details</returns>
             <remarks>If modificationSymbol does not match any of the mods, a modification with a mass of 0 is returned</remarks>
         </member>
-        <member name="M:PHRPReader.clsPeptideModificationContainer.LookupModificationDefinitionByMass(System.Double,System.Char,PHRPReader.clsAminoAcidModInfo.ResidueTerminusStateConstants,System.Boolean@,System.Boolean,System.Byte)">
+        <member name="M:PHRPReader.clsPeptideModificationContainer.LookupModificationDefinitionByMass(System.Double,System.Char,PHRPReader.clsAminoAcidModInfo.ResidueTerminusStateConstants,System.Boolean@,System.Boolean,System.Byte,System.Byte)">
             <summary>
             Looks for an existing modification with the given modification mass and target residues
             </summary>
@@ -1449,7 +1457,8 @@
             <param name="residueTerminusState"></param>
             <param name="existingModFound"></param>
             <param name="addToModificationListIfUnknown"></param>
-            <param name="massDigitsOfPrecision"></param>
+            <param name="massDigitsOfPrecision">Number of digits after the decimal point to round to when comparing mod masses</param>
+            <param name="massDigitsOfPrecisionLoose">Number of digits after the decimal point to round to, for a more lenient match (if no match found using massDigitsOfPrecision)</param>
             <returns>The best matched modification; if no match is found, returns a newly created modification definition, adding it to mModifications if addToModificationListIfUnknown is True</returns>
             <remarks>If chTargetResidue is nothing, follows similar matching logic, but skips defined modifications with defined .TargetResidues</remarks>
         </member>
@@ -1462,7 +1471,7 @@
             <param name="modMass">Monoisotopic mass</param>
             <returns>True if found, otherwise false</returns>
         </member>
-        <member name="M:PHRPReader.clsPeptideModificationContainer.LookupModificationDefinitionByMassAndModType(System.Double,PHRPReader.clsModificationDefinition.ModificationTypeConstants,System.Char,PHRPReader.clsAminoAcidModInfo.ResidueTerminusStateConstants,System.Boolean@,System.Boolean,System.Byte)">
+        <member name="M:PHRPReader.clsPeptideModificationContainer.LookupModificationDefinitionByMassAndModType(System.Double,PHRPReader.clsModificationDefinition.ModificationTypeConstants,System.Char,PHRPReader.clsAminoAcidModInfo.ResidueTerminusStateConstants,System.Boolean@,System.Boolean,System.Byte,System.Byte)">
             <summary>
             Looks for an existing modification with the given modification mass, modification type, and target residues
             </summary>
@@ -1474,7 +1483,8 @@
             <param name="residueTerminusState"></param>
             <param name="existingModFound"></param>
             <param name="addToModificationListIfUnknown"></param>
-            <param name="massDigitsOfPrecision"></param>
+            <param name="massDigitsOfPrecision">Number of digits after the decimal point to round to when comparing mod masses</param>
+            <param name="massDigitsOfPrecisionLoose">Number of digits after the decimal point to round to, for a more lenient match (if no match found using massDigitsOfPrecision)</param>
             <returns>The best matched modification; if no match is found, returns a newly created modification definition, adding it to mModifications if addToModificationListIfUnknown = True</returns>
             <remarks>If chTargetResidue is nothing, follows similar matching logic, but skips defined modifications with defined .TargetResidues</remarks>
         </member>
