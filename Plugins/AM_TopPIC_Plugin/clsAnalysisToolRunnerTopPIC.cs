@@ -30,12 +30,14 @@ namespace AnalysisManagerTopPICPlugIn
         private const float PROGRESS_PCT_STARTING = 1;
         private const float PROGRESS_PCT_COMPLETE = 99;
 
-        private const string PRSM_TSV_RESULT_TABLE_NAME_SUFFIX_ORIGINAL = "_ms2.OUTPUT_TABLE";
+        private const string PRSM_TSV_OUTPUT_TABLE_NAME_SUFFIX_ORIGINAL = "_ms2.OUTPUT_TABLE";
         private const string PRSM_CSV_RESULT_TABLE_NAME_SUFFIX_ORIGINAL = "_ms2_toppic_prsm.csv";
+        private const string PRSM_TSV_RESULT_TABLE_NAME_SUFFIX_ORIGINAL = "_ms2_toppic_prsm.tsv";
         private const string PRSM_RESULT_TABLE_NAME_SUFFIX_FINAL = "_TopPIC_PrSMs.txt";
 
-        private const string PROTEOFORM_TSV_RESULT_TABLE_NAME_SUFFIX_ORIGINAL = "_ms2.FORM_OUTPUT_TABLE";
+        private const string PROTEOFORM_TSV_OUTPUT_TABLE_NAME_SUFFIX_ORIGINAL = "_ms2.FORM_OUTPUT_TABLE";
         private const string PROTEOFORM_CSV_RESULT_TABLE_NAME_SUFFIX_ORIGINAL = "_ms2_toppic_proteoform.csv";
+        private const string PROTEOFORM_TSV_RESULT_TABLE_NAME_SUFFIX_ORIGINAL = "_ms2_toppic_proteoform.tsv";
         private const string PROTEOFORM_RESULT_TABLE_NAME_SUFFIX_FINAL = "_TopPIC_Proteoforms.txt";
 
         #endregion
@@ -940,70 +942,63 @@ namespace AnalysisManagerTopPICPlugIn
 
             try
             {
-                // Dictionary mapping the original results file name created by TopPIC to the final name for the file
-                // This dictionary applied to TopPIC prior to the November 2018 release of TopPIC
-                var tsvResultTableFiles = new Dictionary<string, string>
+                // This list tracks the original results file names for the TopPIC output files
+                var resultFileNames = new List<TopPICResultFileInfo>
                 {
-                    {PRSM_TSV_RESULT_TABLE_NAME_SUFFIX_ORIGINAL, PRSM_RESULT_TABLE_NAME_SUFFIX_FINAL},
-                    {PROTEOFORM_TSV_RESULT_TABLE_NAME_SUFFIX_ORIGINAL, PROTEOFORM_RESULT_TABLE_NAME_SUFFIX_FINAL}
+                    // TopPIC output file names prior to November 2018 (version 1.1.2)
+                    new TopPICResultFileInfo(
+                        PRSM_TSV_OUTPUT_TABLE_NAME_SUFFIX_ORIGINAL, PROTEOFORM_TSV_OUTPUT_TABLE_NAME_SUFFIX_ORIGINAL),
+
+                    // TopPIC output file names used between November 2018 and January 2020 (versions 1.2.2, 1.2.3, and 1.3.1)
+                    new TopPICResultFileInfo(
+                        PRSM_CSV_RESULT_TABLE_NAME_SUFFIX_ORIGINAL, PROTEOFORM_CSV_RESULT_TABLE_NAME_SUFFIX_ORIGINAL, true),
+
+                    // TopPIC output file names used in 2021 (version 1.4.4)
+                    new TopPICResultFileInfo(
+                        PRSM_TSV_RESULT_TABLE_NAME_SUFFIX_ORIGINAL, PROTEOFORM_TSV_RESULT_TABLE_NAME_SUFFIX_ORIGINAL)
                 };
 
-                // Dictionary mapping the original results file name created by TopPIC to the final name for the file
-                // This dictionary applies to the November 2018 release of TopPIC and newer
-                var csvResultTableFiles = new Dictionary<string, string>
-                {
-                    {PRSM_CSV_RESULT_TABLE_NAME_SUFFIX_ORIGINAL, PRSM_RESULT_TABLE_NAME_SUFFIX_FINAL},
-                    {PROTEOFORM_CSV_RESULT_TABLE_NAME_SUFFIX_ORIGINAL, PROTEOFORM_RESULT_TABLE_NAME_SUFFIX_FINAL}
-                };
+                var targetPrsmFile = new FileInfo(Path.Combine(mWorkDir, mDatasetName + PRSM_RESULT_TABLE_NAME_SUFFIX_FINAL));
+                var targetProteoformFile = new FileInfo(Path.Combine(mWorkDir, mDatasetName + PROTEOFORM_RESULT_TABLE_NAME_SUFFIX_FINAL));
+
+                var prsmResultsFound = false;
 
                 var validPrsmResults = false;
                 var validProteoformResults = false;
 
-                foreach (var resultFile in tsvResultTableFiles)
+                foreach (var resultFileInfo in resultFileNames)
                 {
-                    var sourceFile = new FileInfo(Path.Combine(mWorkDir, mDatasetName + resultFile.Key));
-                    var targetFile = new FileInfo(Path.Combine(mWorkDir, mDatasetName + resultFile.Value));
+                    var sourcePrsmFile = new FileInfo(Path.Combine(mWorkDir, mDatasetName + resultFileInfo.PrsmFileSuffix));
+                    var sourceProteoformFile = new FileInfo(Path.Combine(mWorkDir, mDatasetName + resultFileInfo.ProteoformFileSuffix));
 
-                    if (!sourceFile.Exists)
+                    if (!sourcePrsmFile.Exists)
                         continue;
 
-                    var prsmFile = string.Equals(resultFile.Key, PRSM_TSV_RESULT_TABLE_NAME_SUFFIX_ORIGINAL);
+                    prsmResultsFound = true;
 
-                    // When parsing the _prsm results file, extract the **** Parameters **** block from the start of the file and save to TopPIC_RuntimeParameters.txt
-                    var saveParameterFile = prsmFile;
-                    var success = ValidateResultTableFile(sourceFile, targetFile, saveParameterFile, false);
+                    if (!sourceProteoformFile.Exists)
+                    {
+                        LogError(string.Format(
+                            "TopPIC Prsm results file exists ({0}) but the proteoform results file is missing ({1})",
+                            sourcePrsmFile.Name, sourceProteoformFile.Name));
+                        break;
+                    }
 
-                    if (prsmFile && success)
-                        validPrsmResults = true;
+                    // Extract the **** Parameters **** block from the start of the PRSM results file and save to TopPIC_RuntimeParameters.txt
+                    validPrsmResults = ValidateResultTableFile(sourcePrsmFile, targetPrsmFile, true, resultFileInfo.IsCsvDelimited);
 
-                    if (!prsmFile && success)
-                        validProteoformResults = true;
-                }
+                    validProteoformResults = ValidateResultTableFile(sourceProteoformFile, targetProteoformFile, false, resultFileInfo.IsCsvDelimited);
 
-                foreach (var resultFile in csvResultTableFiles)
-                {
-                    var sourceFile = new FileInfo(Path.Combine(mWorkDir, mDatasetName + resultFile.Key));
-                    var targetFile = new FileInfo(Path.Combine(mWorkDir, mDatasetName + resultFile.Value));
-
-                    if (!sourceFile.Exists)
-                        continue;
-
-                    var prsmFile = string.Equals(resultFile.Key, PRSM_CSV_RESULT_TABLE_NAME_SUFFIX_ORIGINAL);
-
-                    // When parsing the _prsm results file, extract the **** Parameters **** block from the start of the file and save to TopPIC_RuntimeParameters.txt
-                    var saveParameterFile = prsmFile;
-                    var success = ValidateResultTableFile(sourceFile, targetFile, saveParameterFile, true);
-
-                    if (prsmFile && success)
-                        validPrsmResults = true;
-
-                    if (!prsmFile && success)
-                        validProteoformResults = true;
+                    break;
                 }
 
                 if (!validPrsmResults)
                 {
-                    LogError("Valid TopPIC Prsm results file not found");
+                    if (prsmResultsFound)
+                        LogError("Valid TopPIC Prsm results file not found");
+                    else
+                        LogError("TopPIC Prsm results file not found");
+
                     return false;
                 }
 

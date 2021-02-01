@@ -54,6 +54,7 @@
     <Compile Include="clsAnalysisToolRunnerTopPIC.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="TopPICResultFileInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="CsvHelper">
