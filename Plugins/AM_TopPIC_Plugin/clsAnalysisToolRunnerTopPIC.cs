@@ -1108,7 +1108,7 @@ namespace AnalysisManagerTopPICPlugIn
 
         private bool ValidateResultTableFile(FileSystemInfo sourceFile, FileSystemInfo targetFile, bool saveParameterFile, bool useCsvReader)
         {
-            var reParametersHeader = new Regex(@"\*+ Parameters \*+", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            var parametersHeaderMatcher = new Regex(@"\*+ Parameters \*+", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
             try
             {
@@ -1158,7 +1158,7 @@ namespace AnalysisManagerTopPICPlugIn
                                 continue;
 
                             // Look for the parameters header: ********************** Parameters **********************
-                            var match = reParametersHeader.Match(paramBlockLine);
+                            var match = parametersHeaderMatcher.Match(paramBlockLine);
                             if (match.Success)
                             {
                                 if (!foundParamHeaderA)
