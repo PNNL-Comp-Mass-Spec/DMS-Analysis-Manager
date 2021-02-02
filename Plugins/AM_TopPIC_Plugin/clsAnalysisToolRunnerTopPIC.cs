@@ -1132,6 +1132,9 @@ namespace AnalysisManagerTopPICPlugIn
                     LogMessage("Validating that the TopPIC results file is not empty");
                 }
 
+                // This RegEx is used to remove double quotes from the start and end of a column value
+                var quoteMatcher = new Regex("\"(?<Data>.*)\"", RegexOptions.Compiled);
+
                 CsvParser csvParser = null;
                 var currentLineNumber = 0;
 
@@ -1228,7 +1231,21 @@ namespace AnalysisManagerTopPICPlugIn
                         if (string.IsNullOrWhiteSpace(dataLine))
                             continue;
 
-                        writer.WriteLine(dataLine);
+                        // Starting with TopPIC v1.4.4, data in the protein description and proteoform columns are surrounded by double-quotes
+                        // These double quotes are not necessary for a tab-delimited file
+                        // We will thus remove them
+
+                        var lineParts = dataLine.Split('\t');
+                        for (var i = 0; i < lineParts.Length; i++)
+                        {
+                            var match = quoteMatcher.Match(lineParts[i]);
+                            if (!match.Success)
+                                continue;
+
+                            lineParts[i] = match.Groups["Data"].Value;
+                        }
+
+                        writer.WriteLine(string.Join("\t", lineParts));
 
                         if (validFile)
                             continue;
