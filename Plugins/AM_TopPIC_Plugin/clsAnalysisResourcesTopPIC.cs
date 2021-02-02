@@ -16,6 +16,8 @@ namespace AnalysisManagerTopPICPlugIn
     /// </summary>
     public class clsAnalysisResourcesTopPIC : clsAnalysisResources
     {
+        // Ignore Spelling: parm, html
+
         /// <summary>
         /// .feature file created by TopFD
         /// </summary>

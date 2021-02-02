@@ -20,7 +20,7 @@ namespace AnalysisManagerTopPICPlugIn
     // ReSharper disable once UnusedMember.Global
     public class clsAnalysisToolRunnerTopPIC : clsAnalysisToolRunnerBase
     {
-        // Ignore Spelling: toppic, html, cmd, prsm, ptm, Csv, Unimod
+        // Ignore Spelling: toppic, html, cmd, prsm, ptm, Csv, Unimod, json
 
         #region "Constants and Enums"
 
