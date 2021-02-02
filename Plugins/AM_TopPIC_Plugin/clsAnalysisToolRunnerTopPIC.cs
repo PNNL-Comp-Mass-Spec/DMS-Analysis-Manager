@@ -307,8 +307,6 @@ namespace AnalysisManagerTopPICPlugIn
 
             var processingSteps = new SortedList<string, int>
             {
-                // {"Zero PTM filtering", 0},
-                // {"Zero PTM search", 10},
                 {"Non PTM filtering", 0},
                 {"Non PTM search", 10},
                 {"One PTM filtering", 15},
@@ -316,11 +314,13 @@ namespace AnalysisManagerTopPICPlugIn
                 {"Diagonal filtering", 25},
                 {"Two PTM search", 45},
                 {"Combining PRSMs", 65},
+                {"Merging PRSMs", 65},
                 // The space after "computation" in "E-value computation " is important to avoid matching "E-value computation:" in the parameters block
                 {"E-value computation ", 70},
                 {"Finding PrSM clusters", 89},
                 {"Generating PrSM xml files", 90},
                 {"Converting PrSM xml files to html files", 93},
+                {"Converting PrSM xml files to json files", 93},
                 {"Generating proteoform xml files", 95},
                 {"Converting proteoform xml files to html files", 98},
                 {"Deleting temporary files", 99},
