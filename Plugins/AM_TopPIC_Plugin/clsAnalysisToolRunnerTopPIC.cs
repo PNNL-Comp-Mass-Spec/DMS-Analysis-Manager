@@ -186,7 +186,6 @@ namespace AnalysisManagerTopPICPlugIn
         /// Returns a dictionary mapping parameter names to argument names
         /// </summary>
         /// <param name="useSeparateErrorTolerances"></param>
-        /// <returns></returns>
         private Dictionary<string, string> GetTopPICParameterNames(bool useSeparateErrorTolerances)
         {
             var paramToArgMapping = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
@@ -222,7 +221,6 @@ namespace AnalysisManagerTopPICPlugIn
         /// Parse the TopPIC console output file to determine the TopPIC version and to track the search progress
         /// </summary>
         /// <param name="consoleOutputFilePath"></param>
-        /// <remarks></remarks>
         private void ParseConsoleOutputFile(string consoleOutputFilePath)
         {
             // Example Console output
@@ -498,7 +496,7 @@ namespace AnalysisManagerTopPICPlugIn
         /// <param name="modDescription">Either "static" or "dynamic"</param>
         /// <param name="modsFileName">Filename that mods are written to</param>
         /// <param name="modArgumentSwitch">Argument name to append to cmdLineOptions along with the mod file name</param>
-        /// <returns></returns>
+        /// <returns>True if success, false if an error</returns>
         private bool ParseTopPICModifications(
             ref string cmdLineOptions,
             IReadOnlyCollection<string> modList,
@@ -543,7 +541,6 @@ namespace AnalysisManagerTopPICPlugIn
         /// <param name="fastaFileIsDecoy">The plugin will set this to true if the FASTA file is a forward+reverse FASTA file</param>
         /// <param name="cmdLineOptions">Output: TopPIC command line arguments</param>
         /// <returns>Options string if success; empty string if an error</returns>
-        /// <remarks></remarks>
         public CloseOutType ParseTopPICParameterFile(bool fastaFileIsDecoy, out string cmdLineOptions)
         {
             const string STATIC_MODS_FILE_NAME = "TopPIC_Static_Mods.txt";
@@ -761,7 +758,6 @@ namespace AnalysisManagerTopPICPlugIn
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        /// <remarks></remarks>
         private bool StoreToolVersionInfo()
         {
             if (mDebugLevel >= 2)
@@ -791,7 +787,6 @@ namespace AnalysisManagerTopPICPlugIn
         /// Reads the console output file and removes the majority of the "Processing" messages
         /// </summary>
         /// <param name="consoleOutputFilePath"></param>
-        /// <remarks></remarks>
         private void TrimConsoleOutputFile(string consoleOutputFilePath)
         {
             // This RegEx matches lines of the form:
@@ -1473,7 +1468,6 @@ namespace AnalysisManagerTopPICPlugIn
         /// <summary>
         /// Event handler for CmdRunner.LoopWaiting event
         /// </summary>
-        /// <remarks></remarks>
         private void CmdRunner_LoopWaiting()
         {
             const int SECONDS_BETWEEN_UPDATE = 30;
