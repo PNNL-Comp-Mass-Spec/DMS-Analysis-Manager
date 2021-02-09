@@ -30,7 +30,7 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Program date
         /// </summary>
-        public const string PROGRAM_DATE = "February 1, 2021";
+        public const string PROGRAM_DATE = "February 8, 2021";
 
         private static bool mTraceMode;
 
@@ -40,18 +40,15 @@ namespace AnalysisManagerProg
         /// <returns> Returns 0 if no error, error code if an error</returns>
         public static int Main(string[] args)
         {
-            var osVersionInfo = new OSVersionInfo();
-
-            var osVersion = osVersionInfo.GetOSVersion();
-            if (osVersion.IndexOf("windows", StringComparison.OrdinalIgnoreCase) < 0)
-            {
-                // Running on Linux
-                // Auto-enable offline mode
-                EnableOfflineMode(true);
-            }
-
             try
             {
+                if (SystemInfo.IsLinux)
+                {
+                    // Running on Linux
+                    // Auto-enable offline mode
+                    EnableOfflineMode(true);
+                }
+
                 var exeName = System.IO.Path.GetFileName(System.Reflection.Assembly.GetExecutingAssembly().GetName().Name);
 
                 var cmdLineParser = new CommandLineParser<CommandLineOptions>(exeName,
