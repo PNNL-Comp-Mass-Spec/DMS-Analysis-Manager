@@ -24,6 +24,8 @@ namespace AnalysisManagerExtractionPlugin
     /// </summary>
     public class clsPepHitResultsProcWrapper : EventNotifier
     {
+        // Ignore Spelling: MODa, Parm, Pvalue, PepToProt
+
         #region "Constants"
 
         public const string PHRP_LOG_FILE_NAME = "PHRP_LogFile.txt";
@@ -188,12 +190,12 @@ namespace AnalysisManagerExtractionPlugin
                     arguments += " /F:" + clsAnalysisToolRunnerBase.PossiblyQuotePath(fastaFilePath);
                 }
 
-                // Note that PHRP assumes /InsFHT=True and /InsSyn=True by default
+                // Note that PHRP assumes /FHT=True and /Syn=True by default
                 // Thus, we only need to use these switches if either of these should be false
                 if (!createFirstHitsFile || !createSynopsisFile)
                 {
-                    arguments += " /InsFHT:" + createFirstHitsFile;
-                    arguments += " /InsSyn:" + createSynopsisFile;
+                    arguments += " /FHT:" + createFirstHitsFile;
+                    arguments += " /Syn:" + createSynopsisFile;
                 }
 
                 // PHRP defaults to use /MSGFPlusSpecEValue:5E-7  and  /MSGFPlusEValue:0.75
