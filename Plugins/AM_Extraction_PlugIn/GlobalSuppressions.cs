@@ -6,3 +6,4 @@
 using System.Diagnostics.CodeAnalysis;
 
 [assembly: SuppressMessage("Readability", "RCS1123:Add parentheses when necessary.", Justification = "Parentheses not needed", Scope = "member", Target = "~M:AnalysisManagerExtractionPlugin.clsExtractToolRunner.PHRP_ProgressChanged(System.String,System.Single)")]
+[assembly: SuppressMessage("Design", "RCS1075:Avoid empty catch clause that catches System.Exception.", Justification = "Ignore errors deleting this file", Scope = "member", Target = "~M:AnalysisManagerExtractionPlugin.clsPepHitResultsProcWrapper.ExtractDataFromResults(System.String,System.Boolean,System.Boolean,System.String,System.String)~AnalysisManagerBase.CloseOutType")]

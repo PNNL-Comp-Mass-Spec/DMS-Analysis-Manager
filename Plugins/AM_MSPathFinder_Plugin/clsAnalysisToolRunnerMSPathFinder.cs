@@ -259,7 +259,7 @@ namespace AnalysisManagerMSPathFinderPlugin
             // C(0) H(0) N(0) O(1) S(0),M,opt,Everywhere,Oxidation
             // C(0) H(-1) N(0) O(0) S(0),C,opt,Everywhere,Dehydro
             // C(2) H(2) N(0) O(1) S(0),*,opt,ProteinNTerm,Acetyl
-            // Getting MS1 features from E:\DMS_WorkDir\NCR_2A_G_27Jun15_Samwise_15-05-04.ms1ft.
+            // Loading MS1 features from E:\DMS_WorkDir\NCR_2A_G_27Jun15_Samwise_15-05-04.ms1ft.
             // Reading raw file...Elapsed Time: 0.0304 sec
             // Reading ProMex results...332/354 features loaded...Elapsed Time: 5.0866 sec
             // Generating sequence tags for MS/MS spectra...
