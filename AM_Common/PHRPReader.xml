@@ -3470,7 +3470,7 @@
             </summary>
             <returns>List of header names</returns>
         </member>
-        <member name="M:PHRPReader.clsPHRPParserTopPIC.GetColumnHeaderNamesAndIDs">
+        <member name="M:PHRPReader.clsPHRPParserTopPIC.GetColumnHeaderNamesAndIDs(System.Boolean)">
             <summary>
             Header names and enums for the PHRP synopsis file for this tool
             </summary>
