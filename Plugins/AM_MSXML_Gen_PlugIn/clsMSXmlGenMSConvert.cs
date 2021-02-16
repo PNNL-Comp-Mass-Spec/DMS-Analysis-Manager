@@ -144,9 +144,6 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
             mOutputFileName = GetOutputFileName(msXmlFormat, rawFilePath, mRawDataType);
 
-            // Instruct MSConvert to use a single thread to avoid it freezing if one of the threads throws an exception
-            arguments += " --singleThreaded";
-
             // Specify the output directory and the output file name
             arguments += "  -o " + mWorkDir + " --outfile " + mOutputFileName;
 
