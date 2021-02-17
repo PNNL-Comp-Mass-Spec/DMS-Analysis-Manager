@@ -60,6 +60,7 @@
   <ItemGroup>
     <Compile Include="clsAnalysisResourcesXT.cs" />
     <Compile Include="clsAnalysisToolRunnerXT.cs" />
+    <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

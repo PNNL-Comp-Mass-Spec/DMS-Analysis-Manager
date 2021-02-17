@@ -8,3 +8,6 @@ using System.Diagnostics.CodeAnalysis;
 
 [assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Allowed", Scope = "type", Target = "~T:DTASpectraFileGen.clsDtaGenThermoRaw")]
 [assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Allowed", Scope = "type", Target = "~T:DTASpectraFileGen.clsDtaGenDeconConsole")]
+[assembly: SuppressMessage("Readability", "RCS1123:Add parentheses when necessary.", Justification = "Parentheses not needed", Scope = "member", Target = "~M:DTASpectraFileGen.clsDtaGenDeconConsole.ParseDeconToolsLogFile(System.Boolean@,System.DateTime@)")]
+[assembly: SuppressMessage("Readability", "RCS1123:Add parentheses when necessary.", Justification = "Parentheses not needed", Scope = "member", Target = "~M:DTASpectraFileGen.clsDtaGenThermoRaw.MakeDTAFiles~System.Boolean")]
+[assembly: SuppressMessage("Readability", "RCS1123:Add parentheses when necessary.", Justification = "Parentheses not needed", Scope = "member", Target = "~M:DTASpectraFileGen.clsDtaGenToolRunner.StartAndWaitForDTAGenerator(AnalysisManagerBase.ISpectraFileProcessor,System.String,System.Boolean)~AnalysisManagerBase.CloseOutType")]

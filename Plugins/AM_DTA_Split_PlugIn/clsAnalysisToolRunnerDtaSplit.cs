@@ -34,12 +34,12 @@ namespace AnalysisManagerDtaSplitPlugIn
         public clsAnalysisToolRunnerDtaSplit()
         {
             r_FileSeparator = new Regex(@"^\s*[=]{5,}\s+\""(?<rootname>.+)\.(?<startscan>\d+)\." +
-                                             @"(?<endscan>\d+)\.(?<chargestate>\d+)\.(?<filetype>.+)\""\s+[=]{5,}\s*$",
+                                        @"(?<endscan>\d+)\.(?<chargestate>\d+)\.(?<filetype>.+)\""\s+[=]{5,}\s*$",
                                              RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
             // Presently not used
             r_DTAFirstLine = new Regex(@"^\s*(?<parentmass>\d+\.\d+)\s+\d+\s+scan\=(?<scannum>\d+)\s+" +
-                                            @"cs\=(?<chargestate>\d+)$",
+                                       @"cs\=(?<chargestate>\d+)$",
                                             RegexOptions.CultureInvariant | RegexOptions.Compiled);
         }
 
