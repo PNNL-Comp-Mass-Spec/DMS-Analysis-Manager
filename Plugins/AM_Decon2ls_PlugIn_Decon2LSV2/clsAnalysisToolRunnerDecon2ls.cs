@@ -450,57 +450,56 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                     return false;
                 }
 
-                using (var reader = new StreamReader(new FileStream(isosFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using var reader = new StreamReader(new FileStream(isosFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+                while (!reader.EndOfStream)
                 {
-                    while (!reader.EndOfStream)
+                    var dataLine = reader.ReadLine();
+
+                    if (string.IsNullOrEmpty(dataLine))
+                        continue;
+
+                    if (headerLineProcessed)
                     {
-                        var dataLine = reader.ReadLine();
-
-                        if (string.IsNullOrEmpty(dataLine))
-                            continue;
-
-                        if (headerLineProcessed)
+                        // This is a data line
+                        if (maxFitValue < 1 && fitColumnIndex >= 0)
                         {
-                            // This is a data line
-                            if (maxFitValue < 1 && fitColumnIndex >= 0)
-                            {
-                                // Filter on isotopic Fit value
-                                var dataColumns = dataLine.Split(',');
-                                if (dataColumns.Length < fitColumnIndex)
-                                    continue;
+                            // Filter on isotopic Fit value
+                            var dataColumns = dataLine.Split(',');
+                            if (dataColumns.Length < fitColumnIndex)
+                                continue;
 
-                                if (double.TryParse(dataColumns[fitColumnIndex], out var fitValue))
-                                {
-                                    if (fitValue <= maxFitValue)
-                                        dataLineCount = 1;
-                                }
-                            }
-                            else
+                            if (double.TryParse(dataColumns[fitColumnIndex], out var fitValue))
                             {
-                                dataLineCount = 1;
-                            }
-
-                            if (!countTotalDataLines && dataLineCount > 0)
-                            {
-                                // At least one valid data line has been found
-                                return true;
+                                if (fitValue <= maxFitValue)
+                                    dataLineCount = 1;
                             }
                         }
                         else
                         {
-                            var dataColumns = dataLine.Split(',');
-
-                            for (var i = 0; i < dataColumns.Length; i++)
-                            {
-                                if (string.Equals(dataColumns[i], "fit", StringComparison.OrdinalIgnoreCase))
-                                {
-                                    fitColumnIndex = i;
-                                    break;
-                                }
-                            }
-
-                            headerLineProcessed = true;
+                            dataLineCount = 1;
                         }
+
+                        if (!countTotalDataLines && dataLineCount > 0)
+                        {
+                            // At least one valid data line has been found
+                            return true;
+                        }
+                    }
+                    else
+                    {
+                        var dataColumns = dataLine.Split(',');
+
+                        for (var i = 0; i < dataColumns.Length; i++)
+                        {
+                            if (string.Equals(dataColumns[i], "fit", StringComparison.OrdinalIgnoreCase))
+                            {
+                                fitColumnIndex = i;
+                                break;
+                            }
+                        }
+
+                        headerLineProcessed = true;
                     }
                 }
             }
@@ -1033,70 +1032,71 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                         break;
                 }
 
-                if (File.Exists(logFilePath))
+                if (!File.Exists(logFilePath))
                 {
-                    using (var reader = new StreamReader(new FileStream(logFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                    return;
+                }
+
+                using var reader = new StreamReader(new FileStream(logFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+                while (!reader.EndOfStream)
+                {
+                    var dataLine = reader.ReadLine();
+
+                    if (string.IsNullOrWhiteSpace(dataLine))
+                        continue;
+
+                    var charIndex = dataLine.ToLower().IndexOf("finished file processing", StringComparison.Ordinal);
+
+                    if (charIndex >= 0)
                     {
-                        while (!reader.EndOfStream)
+                        var dateValid = false;
+                        if (charIndex > 1)
                         {
-                            var dataLine = reader.ReadLine();
-
-                            if (string.IsNullOrWhiteSpace(dataLine))
-                                continue;
-
-                            var charIndex = dataLine.ToLower().IndexOf("finished file processing", StringComparison.Ordinal);
-
-                            if (charIndex >= 0)
+                            // Parse out the date from dataLine
+                            if (DateTime.TryParse(dataLine.Substring(0, charIndex).Trim(), out finishTime))
                             {
-                                var dateValid = false;
-                                if (charIndex > 1)
-                                {
-                                    // Parse out the date from dataLine
-                                    if (DateTime.TryParse(dataLine.Substring(0, charIndex).Trim(), out finishTime))
-                                    {
-                                        dateValid = true;
-                                    }
-                                    else
-                                    {
-                                        // Unable to parse out the date
-                                        LogMessage("Unable to parse date from string '" +
-                                            dataLine.Substring(0, charIndex).Trim() + "'; " +
-                                            "will use file modification date as the processing finish time", 0, true);
-                                    }
-                                }
-
-                                if (!dateValid)
-                                {
-                                    var fileInfo = new FileInfo(logFilePath);
-                                    finishTime = fileInfo.LastWriteTime;
-                                }
-
-                                if (mDebugLevel >= 3)
-                                {
-                                    LogDebug("DeconTools log file reports 'finished file processing' at " +
-                                        finishTime.ToString(DATE_TIME_FORMAT));
-                                }
-
-                                finishedProcessing = true;
-                                break;
+                                dateValid = true;
                             }
-
-                            charIndex = dataLine.ToLower().IndexOf("scan/frame", StringComparison.Ordinal);
-                            if (charIndex >= 0)
+                            else
                             {
-                                scanFrameLine = dataLine.Substring(charIndex);
-                            }
-
-                            charIndex = dataLine.IndexOf("ERROR THROWN", StringComparison.Ordinal);
-                            if (charIndex > 0)
-                            {
-                                // An exception was reported in the log file; treat this as a fatal error
-                                mMessage = "Error thrown by DeconTools";
-
-                                LogMessage("DeconTools reports " + dataLine.Substring(charIndex), 0, true);
-                                mDeconToolsExceptionThrown = true;
+                                // Unable to parse out the date
+                                LogMessage("Unable to parse date from string '" +
+                                           dataLine.Substring(0, charIndex).Trim() + "'; " +
+                                           "will use file modification date as the processing finish time", 0, true);
                             }
                         }
+
+                        if (!dateValid)
+                        {
+                            var fileInfo = new FileInfo(logFilePath);
+                            finishTime = fileInfo.LastWriteTime;
+                        }
+
+                        if (mDebugLevel >= 3)
+                        {
+                            LogDebug("DeconTools log file reports 'finished file processing' at " +
+                                     finishTime.ToString(DATE_TIME_FORMAT));
+                        }
+
+                        finishedProcessing = true;
+                        break;
+                    }
+
+                    charIndex = dataLine.ToLower().IndexOf("scan/frame", StringComparison.Ordinal);
+                    if (charIndex >= 0)
+                    {
+                        scanFrameLine = dataLine.Substring(charIndex);
+                    }
+
+                    charIndex = dataLine.IndexOf("ERROR THROWN", StringComparison.Ordinal);
+                    if (charIndex > 0)
+                    {
+                        // An exception was reported in the log file; treat this as a fatal error
+                        mMessage = "Error thrown by DeconTools";
+
+                        LogMessage("DeconTools reports " + dataLine.Substring(charIndex), 0, true);
+                        mDeconToolsExceptionThrown = true;
                     }
                 }
             }
@@ -1109,44 +1109,44 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 }
             }
 
-            if (!string.IsNullOrWhiteSpace(scanFrameLine))
+            if (string.IsNullOrWhiteSpace(scanFrameLine))
+                return;
+
+            // Parse scanFrameLine
+            // It will look like:
+            // Scan/Frame= 347; PercentComplete= 2.7; AccumulatedFeatures= 614
+
+            var progressStats = scanFrameLine.Split(';');
+
+            for (var i = 0; i <= progressStats.Length - 1; i++)
             {
-                // Parse scanFrameLine
-                // It will look like:
-                // Scan/Frame= 347; PercentComplete= 2.7; AccumulatedFeatures= 614
+                var kvStat = ParseKeyValue(progressStats[i]);
+                if (string.IsNullOrWhiteSpace(kvStat.Key)) continue;
 
-                var progressStats = scanFrameLine.Split(';');
-
-                for (var i = 0; i <= progressStats.Length - 1; i++)
+                switch (kvStat.Key)
                 {
-                    var kvStat = ParseKeyValue(progressStats[i]);
-                    if (string.IsNullOrWhiteSpace(kvStat.Key)) continue;
+                    case "Scan/Frame":
+                        if (int.TryParse(kvStat.Value.Replace(",", string.Empty), out var currentScan))
+                        {
+                            mDeconToolsStatus.CurrentLCScan = currentScan;
+                        }
+                        break;
 
-                    switch (kvStat.Key)
-                    {
-                        case "Scan/Frame":
-                            if (int.TryParse(kvStat.Value.Replace(",", string.Empty), out var currentScan))
-                            {
-                                mDeconToolsStatus.CurrentLCScan = currentScan;
-                            }
-                            break;
+                    case "PercentComplete":
+                        float.TryParse(kvStat.Value, out mDeconToolsStatus.PercentComplete);
+                        break;
 
-                        case "PercentComplete":
-                            float.TryParse(kvStat.Value, out mDeconToolsStatus.PercentComplete);
-                            break;
-
-                        // ReSharper disable once StringLiteralTypo
-                        case "AccumlatedFeatures":
-                        case "AccumulatedFeatures":
-                        case "ScansProcessed":
-                        case "ScansPerMinute":
-                            // Ignore these
-                            break;
-                    }
+                    // ReSharper disable once StringLiteralTypo
+                    case "AccumlatedFeatures":
+                    case "AccumulatedFeatures":
+                    case "ScansProcessed":
+                    case "ScansPerMinute":
+                        // Ignore these
+                        break;
                 }
-
-                mProgress = mDeconToolsStatus.PercentComplete;
             }
+
+            mProgress = mDeconToolsStatus.PercentComplete;
         }
 
         /// <summary>

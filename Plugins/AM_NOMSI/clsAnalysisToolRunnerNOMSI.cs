@@ -259,42 +259,41 @@ namespace AnalysisManagerNOMSIPlugin
                     LogDebug("Parsing file " + strConsoleOutputFilePath);
                 }
 
-                using (var reader = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using var reader = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+                while (!reader.EndOfStream)
                 {
-                    while (!reader.EndOfStream)
+                    var dataLine = reader.ReadLine();
+
+                    if (string.IsNullOrWhiteSpace(dataLine))
                     {
-                        var dataLine = reader.ReadLine();
+                        continue;
+                    }
 
-                        if (string.IsNullOrWhiteSpace(dataLine))
-                        {
-                            continue;
-                        }
+                    if (dataLine.StartsWith("error ", StringComparison.OrdinalIgnoreCase))
+                    {
+                        StoreConsoleErrorMessage(reader, dataLine);
+                    }
 
-                        if (dataLine.StartsWith("error ", StringComparison.OrdinalIgnoreCase))
-                        {
-                            StoreConsoleErrorMessage(reader, dataLine);
-                        }
+                    var reMatch = reErrorMessage.Match(dataLine);
+                    if (reMatch.Success)
+                    {
+                        var errorMessage = reMatch.Groups[1].Value;
 
-                        var reMatch = reErrorMessage.Match(dataLine);
-                        if (reMatch.Success)
-                        {
-                            var errorMessage = reMatch.Groups[1].Value;
-
-                            if (errorMessage.Contains("No peaks found") ||
-                                errorMessage.Contains("Only one peak found"))
-                            {
-                                mNoPeaksFound = true;
-                            }
-                            else
-                            {
-                                mConsoleOutputErrorMsg = clsGlobal.AppendToComment(mConsoleOutputErrorMsg, errorMessage);
-                            }
-                        }
-                        else if (dataLine.Contains("No peaks found") ||
-                                 dataLine.Contains("Only one peak found"))
+                        if (errorMessage.Contains("No peaks found") ||
+                            errorMessage.Contains("Only one peak found"))
                         {
                             mNoPeaksFound = true;
                         }
+                        else
+                        {
+                            mConsoleOutputErrorMsg = clsGlobal.AppendToComment(mConsoleOutputErrorMsg, errorMessage);
+                        }
+                    }
+                    else if (dataLine.Contains("No peaks found") ||
+                             dataLine.Contains("Only one peak found"))
+                    {
+                        mNoPeaksFound = true;
                     }
                 }
             }
@@ -404,10 +403,9 @@ namespace AnalysisManagerNOMSIPlugin
                 // Write the console output to a text file
                 clsGlobal.IdleLoop(0.25);
 
-                using (var writer = new StreamWriter(new FileStream(cmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
-                {
-                    writer.WriteLine(cmdRunner.CachedConsoleOutput);
-                }
+                using var writer = new StreamWriter(new FileStream(cmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
+
+                writer.WriteLine(cmdRunner.CachedConsoleOutput);
             }
 
             if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))

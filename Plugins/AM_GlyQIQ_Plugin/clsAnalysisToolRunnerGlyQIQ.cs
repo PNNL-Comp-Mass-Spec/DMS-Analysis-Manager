@@ -194,28 +194,27 @@ namespace AnalysisManagerGlyQIQPlugin
                             continue;
                         }
 
+                        using var reader = new StreamReader(new FileStream(fiResultFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
                         var linesRead = 0;
-                        using (var reader = new StreamReader(new FileStream(fiResultFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                        while (!reader.EndOfStream)
                         {
-                            while (!reader.EndOfStream)
+                            var dataLine = reader.ReadLine();
+                            linesRead++;
+
+                            if (linesRead == 1 && core > 1)
                             {
-                                var dataLine = reader.ReadLine();
-                                linesRead++;
+                                // This is the header line from a core 2 or later file
+                                // Skip it
+                                continue;
+                            }
 
-                                if (linesRead == 1 && core > 1)
-                                {
-                                    // This is the header line from a core 2 or later file
-                                    // Skip it
-                                    continue;
-                                }
+                            writerUnfiltered.WriteLine(dataLine);
 
-                                writerUnfiltered.WriteLine(dataLine);
-
-                                // Write lines that do not contain "FutureTarget" to the _iqResults.txt file
-                                if (string.IsNullOrEmpty(dataLine) || !reFutureTarget.IsMatch(dataLine))
-                                {
-                                    writerFiltered.WriteLine(dataLine);
-                                }
+                            // Write lines that do not contain "FutureTarget" to the _iqResults.txt file
+                            if (string.IsNullOrEmpty(dataLine) || !reFutureTarget.IsMatch(dataLine))
+                            {
+                                writerFiltered.WriteLine(dataLine);
                             }
                         }
                     }

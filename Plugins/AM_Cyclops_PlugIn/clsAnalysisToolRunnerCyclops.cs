@@ -201,27 +201,26 @@ namespace AnalysisManager_Cyclops_PlugIn
                 {
                     var lineCount = 0;
 
-                    using (var logFileReader = new StreamReader(new FileStream(fiCyclopsLogFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                    using var logFileReader = new StreamReader(new FileStream(fiCyclopsLogFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+                    while (!logFileReader.EndOfStream)
                     {
-                        while (!logFileReader.EndOfStream)
+                        var dataLine = logFileReader.ReadLine();
+                        lineCount++;
+
+                        if (lineCount == 1)
                         {
-                            var dataLine = logFileReader.ReadLine();
-                            lineCount++;
-
-                            if (lineCount == 1)
+                            if (string.Equals(dataLine, INITIALIZING_LOG_FILE))
                             {
-                                if (string.Equals(dataLine, INITIALIZING_LOG_FILE))
-                                {
-                                    deleteFile = true;
-                                }
-
-                                continue;
+                                deleteFile = true;
                             }
 
-                            // There is more than one line in the log file
-                            deleteFile = false;
-                            break;
+                            continue;
                         }
+
+                        // There is more than one line in the log file
+                        deleteFile = false;
+                        break;
                     }
                 }
 

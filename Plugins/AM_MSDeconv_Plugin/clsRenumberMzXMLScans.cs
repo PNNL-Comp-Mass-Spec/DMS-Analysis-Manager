@@ -38,43 +38,43 @@ namespace AnalysisManagerMSDeconvPlugIn
                 {
                     reader.WhitespaceHandling = WhitespaceHandling.Significant;
 
-                    using (var writer = new XmlTextWriter(new FileStream(targetFilePath, FileMode.Create, FileAccess.Write, FileShare.Read), Encoding.GetEncoding("ISO-8859-1")))
+                    using var writer = new XmlTextWriter(new FileStream(targetFilePath, FileMode.Create, FileAccess.Write, FileShare.Read), Encoding.GetEncoding("ISO-8859-1"))
                     {
-                        writer.Formatting = Formatting.Indented;
-                        writer.Indentation = 2;
-                        writer.IndentChar = ' ';
+                        Formatting = Formatting.Indented,
+                        Indentation = 2,
+                        IndentChar = ' '
+                    };
 
-                        while (reader.Read())
+                    while (reader.Read())
+                    {
+                        if (reader.NodeType == XmlNodeType.Element)
                         {
-                            if (reader.NodeType == XmlNodeType.Element)
+                            if (reader.Name == XML_ELEMENT_SCAN)
                             {
-                                if (reader.Name == XML_ELEMENT_SCAN)
-                                {
-                                    WriteUpdatedScan(reader, writer);
-                                }
-                                else if (reader.Name == XML_ELEMENT_PRECURSOR_MZ)
-                                {
-                                    WriteUpdatedPrecursorMz(reader, writer);
-                                }
-                                else
-                                {
-                                    WriteShallowNode(reader, writer);
-                                }
+                                WriteUpdatedScan(reader, writer);
+                            }
+                            else if (reader.Name == XML_ELEMENT_PRECURSOR_MZ)
+                            {
+                                WriteUpdatedPrecursorMz(reader, writer);
                             }
                             else
                             {
                                 WriteShallowNode(reader, writer);
                             }
                         }
-
-                        writer.WriteWhitespace(Environment.NewLine);
+                        else
+                        {
+                            WriteShallowNode(reader, writer);
+                        }
                     }
-                } // end using
+
+                    writer.WriteWhitespace(Environment.NewLine);
+                }
 
                 // Regenerate the byte-offset index at the end of the file
-                var blnSuccess = IndexMzXmlFile(targetFilePath);
+                var success = IndexMzXmlFile(targetFilePath);
 
-                return blnSuccess;
+                return success;
             }
             catch (Exception ex)
             {
@@ -92,17 +92,17 @@ namespace AnalysisManagerMSDeconvPlugIn
 
                 var reScanNum = new Regex(@"<scan.+num=""(\d+)""", RegexOptions.Compiled);
 
-                var fiOriginalFile = new FileInfo(filePath);
-                var fiIndexedFile = new FileInfo(fiOriginalFile.FullName + ".indexed");
+                var originalFile = new FileInfo(filePath);
+                var indexedFile = new FileInfo(originalFile.FullName + ".indexed");
 
                 var reader = new clsBinaryTextReader();
-                if (!reader.OpenFile(fiOriginalFile.FullName))
+                if (!reader.OpenFile(originalFile.FullName))
                     return false;
 
                 var lineTerminator = Environment.NewLine;
 
-                using (var fsIndexedFile = new FileStream(fiIndexedFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read))
-                using (var writer = new StreamWriter(fsIndexedFile))
+                using (var indexedFileStream= new FileStream(indexedFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read))
+                using (var writer = new StreamWriter(indexedFileStream))
                 {
                     while (reader.ReadLine())
                     {
@@ -123,7 +123,7 @@ namespace AnalysisManagerMSDeconvPlugIn
                             // Write out the scan index
                             lineTerminator = reader.CurrentLineTerminator;
 
-                            // Note: adding 2 to the offset becauser <index has two spaces in front of it
+                            // Note: adding 2 to the offset because <index has two spaces in front of it
                             var indexOffset = reader.CurrentLineByteOffsetStart + 2;
 
                             writer.Write("  <index name=\"scan\">" + lineTerminator);
@@ -156,31 +156,30 @@ namespace AnalysisManagerMSDeconvPlugIn
 
                 using (var mySha1 = SHA1.Create())
                 {
-                    using (var fsIndexedFile = new FileStream(fiIndexedFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
+                    using (var indexedFileStream = new FileStream(indexedFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
                     {
-                        hashValue = mySha1.ComputeHash(fsIndexedFile);
+                        hashValue = mySha1.ComputeHash(indexedFileStream);
                     }
                     mySha1.Dispose();
                 }
 
                 PRISM.ProgRunner.GarbageCollectNow();
 
-                using (var fsIndexedFile = new FileStream(fiIndexedFile.FullName, FileMode.Append, FileAccess.Write, FileShare.ReadWrite))
+                using (var indexedFileStream = new FileStream(indexedFile.FullName, FileMode.Append, FileAccess.Write, FileShare.ReadWrite))
                 {
-                    using (var writerAppend = new StreamWriter(fsIndexedFile))
+                    using var writer = new StreamWriter(indexedFileStream);
+
+                    var sb = new StringBuilder();
+
+                    foreach (var oneByte in hashValue)
                     {
-                        var sb = new StringBuilder();
-
-                        foreach (var oneByte in hashValue)
-                        {
-                            sb.AppendFormat("{0:x2}", oneByte);
-                        }
-
-                        writerAppend.Write(sb.ToString());
-
-                        writerAppend.Write("</sha1>" + lineTerminator);
-                        writerAppend.Write("</mzXML>" + lineTerminator);
+                        sb.AppendFormat("{0:x2}", oneByte);
                     }
+
+                    writer.Write(sb.ToString());
+
+                    writer.Write("</sha1>" + lineTerminator);
+                    writer.Write("</mzXML>" + lineTerminator);
                 }
 
                 // Replace the target file with the indexed copy
@@ -188,14 +187,14 @@ namespace AnalysisManagerMSDeconvPlugIn
 
                 try
                 {
-                    if (fiOriginalFile.Directory == null)
-                        throw new DirectoryNotFoundException("Cannot determine the parent directory of " + fiOriginalFile.FullName);
+                    if (originalFile.Directory == null)
+                        throw new DirectoryNotFoundException("Cannot determine the parent directory of " + originalFile.FullName);
 
-                    var newFilename = Path.GetFileNameWithoutExtension(fiOriginalFile.Name) + "_original" + fiOriginalFile.Extension;
-                    var targetFilePath = Path.Combine(fiOriginalFile.Directory.FullName, newFilename);
-                    fiOriginalFile.MoveTo(targetFilePath);
+                    var newFilename = Path.GetFileNameWithoutExtension(originalFile.Name) + "_original" + originalFile.Extension;
+                    var targetFilePath = Path.Combine(originalFile.Directory.FullName, newFilename);
+                    originalFile.MoveTo(targetFilePath);
 
-                    fiIndexedFile.MoveTo(filePath);
+                    indexedFile.MoveTo(filePath);
                 }
                 catch (Exception ex)
                 {

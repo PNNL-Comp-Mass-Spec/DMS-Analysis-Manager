@@ -111,21 +111,20 @@ namespace AnalysisManagerMultiAlignPlugIn
             // Create the MA input file
             try
             {
-                using (var writer = new StreamWriter(new FileStream(TargetFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
-                {
-                    writer.WriteLine("[Files]");
+                using var writer = new StreamWriter(new FileStream(TargetFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
 
-                    //..\SARC_MS_Final\663878_Sarc_MS_13_24Aug10_Cheetah_10-08-02_0000_LCMSFeatures.txt
-                    writer.WriteLine(DatasetFilePath);
+                writer.WriteLine("[Files]");
 
-                    writer.WriteLine("[Database]");
+                //..\SARC_MS_Final\663878_Sarc_MS_13_24Aug10_Cheetah_10-08-02_0000_LCMSFeatures.txt
+                writer.WriteLine(DatasetFilePath);
 
-                    // Database = MT_Human_Sarcopenia_MixedLC_P692
-                    writer.WriteLine("Database = " + mJobParams.GetParam("AMTDB"));
+                writer.WriteLine("[Database]");
 
-                    // Server = elmer
-                    writer.WriteLine("Server = " + mJobParams.GetParam("AMTDBServer"));
-                }
+                // Database = MT_Human_Sarcopenia_MixedLC_P692
+                writer.WriteLine("Database = " + mJobParams.GetParam("AMTDB"));
+
+                // Server = elmer
+                writer.WriteLine("Server = " + mJobParams.GetParam("AMTDBServer"));
             }
             catch (Exception ex)
             {

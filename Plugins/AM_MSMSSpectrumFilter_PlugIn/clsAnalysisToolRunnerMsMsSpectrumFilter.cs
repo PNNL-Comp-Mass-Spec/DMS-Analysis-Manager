@@ -281,20 +281,19 @@ namespace MSMSSpectrumFilterAM
             {
                 var reFind = new Regex(DTA_FILENAME_REGEX, RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-                using (var reader = new StreamReader(new FileStream(dtaTextFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using var reader = new StreamReader(new FileStream(dtaTextFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+                dtaCount = 0;
+
+                while (!reader.EndOfStream)
                 {
-                    dtaCount = 0;
+                    var dataLine = reader.ReadLine();
 
-                    while (!reader.EndOfStream)
+                    if (!string.IsNullOrEmpty(dataLine))
                     {
-                        var dataLine = reader.ReadLine();
-
-                        if (!string.IsNullOrEmpty(dataLine))
+                        if (reFind.Match(dataLine).Success)
                         {
-                            if (reFind.Match(dataLine).Success)
-                            {
-                                dtaCount++;
-                            }
+                            dtaCount++;
                         }
                     }
                 }

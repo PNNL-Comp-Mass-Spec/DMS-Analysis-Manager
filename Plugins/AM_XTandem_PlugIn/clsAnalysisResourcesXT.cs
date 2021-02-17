@@ -142,21 +142,20 @@ namespace AnalysisManagerXTandemPlugIn
             try
             {
                 // Create an instance of StreamWriter to write to a file.
-                using (var taxonomyWriter = new StreamWriter(Path.Combine(WorkingDir, "taxonomy.xml")))
-                using (var baseFileReader = new StreamReader(Path.Combine(WorkingDir, "taxonomy_base.xml")))
+                using var taxonomyWriter = new StreamWriter(Path.Combine(workingDir, "taxonomy.xml"));
+                using var baseFileReader = new StreamReader(Path.Combine(workingDir, "taxonomy_base.xml"));
+
+                while (!baseFileReader.EndOfStream)
                 {
-                    while (!baseFileReader.EndOfStream)
-                    {
-                        var dataLine = baseFileReader.ReadLine();
-                        if (string.IsNullOrWhiteSpace(dataLine))
-                            continue;
+                    var dataLine = baseFileReader.ReadLine();
+                    if (string.IsNullOrWhiteSpace(dataLine))
+                        continue;
 
-                        var updatedLine = dataLine
-                            .Replace("ORGANISM_NAME", OrganismName)
-                            .Replace("FASTA_FILE_PATH", OrgFilePath);
+                    var updatedLine = dataLine
+                        .Replace("ORGANISM_NAME", organismName)
+                        .Replace("FASTA_FILE_PATH", orgFilePath);
 
-                        taxonomyWriter.WriteLine(updatedLine);
-                    }
+                    taxonomyWriter.WriteLine(updatedLine);
                 }
             }
             catch (Exception ex)
@@ -191,35 +190,34 @@ namespace AnalysisManagerXTandemPlugIn
             try
             {
                 // Create an instance of StreamWriter to write to a file.
-                using (var inputFileWriter = new StreamWriter(Path.Combine(WorkingDir, "input.xml")))
-                using (var baseReader = new StreamReader(Path.Combine(WorkingDir, "input_base.txt")))
-                using (var paramFileReader = new StreamReader(ParamFilePath))
+                using var inputFileWriter = new StreamWriter(Path.Combine(workingDir, "input.xml"));
+                using var baseReader = new StreamReader(Path.Combine(workingDir, "input_base.txt"));
+                using var paramFileReader = new StreamReader(paramFilePath);
+
+                while (!paramFileReader.EndOfStream)
                 {
-                    while (!paramFileReader.EndOfStream)
+                    var paramLine = paramFileReader.ReadLine();
+                    if (string.IsNullOrWhiteSpace(paramLine))
+                        continue;
+
+                    inputFileWriter.WriteLine(paramLine);
+
+                    if (paramLine.IndexOf("<bioml>", StringComparison.Ordinal) == -1)
+                        continue;
+
+                    while (!baseReader.EndOfStream)
                     {
-                        var paramLine = paramFileReader.ReadLine();
-                        if (string.IsNullOrWhiteSpace(paramLine))
+                        var baseLine = baseReader.ReadLine();
+                        if (string.IsNullOrWhiteSpace(baseLine))
                             continue;
 
-                        inputFileWriter.WriteLine(paramLine);
+                        var updatedLine = baseLine
+                            .Replace("ORGANISM_NAME", organismName)
+                            .Replace("TAXONOMY_FILE_PATH", taxonomyFilePath)
+                            .Replace("SPECTRUM_FILE_PATH", spectrumFilePath)
+                            .Replace("OUTPUT_FILE_PATH", outputFilePath);
 
-                        if (paramLine.IndexOf("<bioml>", StringComparison.Ordinal) == -1)
-                            continue;
-
-                        while (!baseReader.EndOfStream)
-                        {
-                            var baseLine = baseReader.ReadLine();
-                            if (string.IsNullOrWhiteSpace(baseLine))
-                                continue;
-
-                            var updatedLine = baseLine
-                                .Replace("ORGANISM_NAME", OrganismName)
-                                .Replace("TAXONOMY_FILE_PATH", TaxonomyFilePath)
-                                .Replace("SPECTRUM_FILE_PATH", SpectrumFilePath)
-                                .Replace("OUTPUT_FILE_PATH", OutputFilePath);
-
-                            inputFileWriter.WriteLine(updatedLine);
-                        }
+                        inputFileWriter.WriteLine(updatedLine);
                     }
                 }
             }

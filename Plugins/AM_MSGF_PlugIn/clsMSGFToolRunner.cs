@@ -391,56 +391,55 @@ namespace AnalysisManagerMSGFPlugin
                 }
 
                 // Read the data from the MS-GF+ Param file
-                using (var reader = new StreamReader(new FileStream(searchToolParamFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                using var reader = new StreamReader(new FileStream(searchToolParamFilePath, FileMode.Open, FileAccess.Read, FileShare.Read));
+
+                while (!reader.EndOfStream)
                 {
-                    while (!reader.EndOfStream)
+                    var dataLine = reader.ReadLine();
+
+                    if (string.IsNullOrWhiteSpace(dataLine) || !dataLine.StartsWith(MSGFPLUS_FRAG_METHOD_TAG))
+                        continue;
+
+                    // Check whether this line is FragmentationMethodID=2
+                    // Note that FragmentationMethodID=4 means Merge spectra from the same precursor (e.g. CID/ETD pairs, CID/HCD/ETD triplets)
+                    // This mode is not yet supported
+
+                    if (mDebugLevel >= 3)
                     {
-                        var dataLine = reader.ReadLine();
+                        LogDebug("MS-GF+ " + MSGFPLUS_FRAG_METHOD_TAG + " line found: " + dataLine);
+                    }
 
-                        if (string.IsNullOrWhiteSpace(dataLine) || !dataLine.StartsWith(MSGFPLUS_FRAG_METHOD_TAG))
-                            continue;
+                    // Look for the equals sign
+                    var charIndex = dataLine.IndexOf('=');
+                    if (charIndex > 0)
+                    {
+                        var fragModeText = dataLine.Substring(charIndex + 1).Trim();
 
-                        // Check whether this line is FragmentationMethodID=2
-                        // Note that FragmentationMethodID=4 means Merge spectra from the same precursor (e.g. CID/ETD pairs, CID/HCD/ETD triplets)
-                        // This mode is not yet supported
-
-                        if (mDebugLevel >= 3)
+                        if (int.TryParse(fragModeText, out var fragMode))
                         {
-                            LogDebug("MS-GF+ " + MSGFPLUS_FRAG_METHOD_TAG + " line found: " + dataLine);
-                        }
-
-                        // Look for the equals sign
-                        var charIndex = dataLine.IndexOf('=');
-                        if (charIndex > 0)
-                        {
-                            var fragModeText = dataLine.Substring(charIndex + 1).Trim();
-
-                            if (int.TryParse(fragModeText, out var fragMode))
+                            if (fragMode == 2)
                             {
-                                if (fragMode == 2)
-                                {
-                                    mETDMode = true;
-                                }
-                                else if (fragMode == 4)
-                                {
-                                    // ToDo: Figure out how to handle this mode
-                                    mETDMode = false;
-                                }
-                                else
-                                {
-                                    mETDMode = false;
-                                }
+                                mETDMode = true;
+                            }
+                            else if (fragMode == 4)
+                            {
+                                // ToDo: Figure out how to handle this mode
+                                mETDMode = false;
+                            }
+                            else
+                            {
+                                mETDMode = false;
                             }
                         }
-                        else
-                        {
-                            LogWarning("MS-GF+ " + MSGFPLUS_FRAG_METHOD_TAG + " line does not have an equals sign; " +
-                                       "will assume not using ETD ions: " + dataLine);
-                        }
-
-                        // No point in checking any further since we've parsed the FragmentationMethodID line
-                        break;
                     }
+                    else
+                    {
+                        LogWarning("MS-GF+ " + MSGFPLUS_FRAG_METHOD_TAG + " line does not have an equals sign; " +
+                                   "will assume not using ETD ions: " + dataLine);
+                    }
+
+                    // No point in checking any further since we've parsed the FragmentationMethodID line
+                    break;
                 }
             }
             catch (Exception ex)
@@ -472,69 +471,68 @@ namespace AnalysisManagerMSGFPlugin
                 }
 
                 // Read the data from the SEQUEST Param file
-                using (var reader = new StreamReader(new FileStream(searchToolParamFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                using var reader = new StreamReader(new FileStream(searchToolParamFilePath, FileMode.Open, FileAccess.Read, FileShare.Read));
+
+                while (!reader.EndOfStream)
                 {
-                    while (!reader.EndOfStream)
+                    var dataLine = reader.ReadLine();
+
+                    if (string.IsNullOrWhiteSpace(dataLine) || !dataLine.StartsWith(SEQUEST_ION_SERIES_TAG))
+                        continue;
+
+                    // This is the ion_series line
+                    // If ETD mode is enabled, c and z ions will have a 1 in this series of numbers:
+                    // ion_series = 0 1 1 0.0 0.0 1.0 0.0 0.0 0.0 0.0 0.0 1.0
+                    //
+                    // The key to parsing this data is:
+                    // ion_series = - - -  a   b   c  --- --- ---  x   y   z
+                    // ion_series = 0 1 1 0.0 0.0 1.0 0.0 0.0 0.0 0.0 0.0 1.0
+
+                    if (mDebugLevel >= 3)
                     {
-                        var dataLine = reader.ReadLine();
+                        LogDebug("SEQUEST " + SEQUEST_ION_SERIES_TAG + " line found: " + dataLine);
+                    }
 
-                        if (string.IsNullOrWhiteSpace(dataLine) || !dataLine.StartsWith(SEQUEST_ION_SERIES_TAG))
-                            continue;
+                    // Look for the equals sign
+                    var charIndex = dataLine.IndexOf('=');
+                    if (charIndex > 0)
+                    {
+                        var ionWeightText = dataLine.Substring(charIndex + 1).Trim();
 
-                        // This is the ion_series line
-                        // If ETD mode is enabled, c and z ions will have a 1 in this series of numbers:
-                        // ion_series = 0 1 1 0.0 0.0 1.0 0.0 0.0 0.0 0.0 0.0 1.0
-                        //
-                        // The key to parsing this data is:
-                        // ion_series = - - -  a   b   c  --- --- ---  x   y   z
-                        // ion_series = 0 1 1 0.0 0.0 1.0 0.0 0.0 0.0 0.0 0.0 1.0
+                        // Split ionWeightText on spaces
+                        var ionWeights = ionWeightText.Split(' ');
 
-                        if (mDebugLevel >= 3)
+                        if (ionWeights.Length >= 12)
                         {
-                            LogDebug("SEQUEST " + SEQUEST_ION_SERIES_TAG + " line found: " + dataLine);
-                        }
+                            double.TryParse(ionWeights[5], out var cWeight);
+                            double.TryParse(ionWeights[11], out var zWeight);
 
-                        // Look for the equals sign
-                        var charIndex = dataLine.IndexOf('=');
-                        if (charIndex > 0)
-                        {
-                            var ionWeightText = dataLine.Substring(charIndex + 1).Trim();
-
-                            // Split ionWeightText on spaces
-                            var ionWeights = ionWeightText.Split(' ');
-
-                            if (ionWeights.Length >= 12)
+                            if (mDebugLevel >= 3)
                             {
-                                double.TryParse(ionWeights[5], out var cWeight);
-                                double.TryParse(ionWeights[11], out var zWeight);
-
-                                if (mDebugLevel >= 3)
-                                {
-                                    LogDebug("SEQUEST " + SEQUEST_ION_SERIES_TAG + " line" +
-                                             " has c-ion weighting = " + cWeight +
-                                             " and z-ion weighting = " + zWeight);
-                                }
-
-                                if (cWeight > 0 || zWeight > 0)
-                                {
-                                    mETDMode = true;
-                                }
+                                LogDebug("SEQUEST " + SEQUEST_ION_SERIES_TAG + " line" +
+                                         " has c-ion weighting = " + cWeight +
+                                         " and z-ion weighting = " + zWeight);
                             }
-                            else
+
+                            if (cWeight > 0 || zWeight > 0)
                             {
-                                LogWarning("SEQUEST " + SEQUEST_ION_SERIES_TAG + " line does not have 11 numbers; " +
-                                           "will assume not using ETD ions: " + dataLine);
+                                mETDMode = true;
                             }
                         }
                         else
                         {
-                            LogWarning("SEQUEST " + SEQUEST_ION_SERIES_TAG + " line does not have an equals sign; " +
+                            LogWarning("SEQUEST " + SEQUEST_ION_SERIES_TAG + " line does not have 11 numbers; " +
                                        "will assume not using ETD ions: " + dataLine);
                         }
-
-                        // No point in checking any further since we've parsed the ion_series line
-                        break;
                     }
+                    else
+                    {
+                        LogWarning("SEQUEST " + SEQUEST_ION_SERIES_TAG + " line does not have an equals sign; " +
+                                   "will assume not using ETD ions: " + dataLine);
+                    }
+
+                    // No point in checking any further since we've parsed the ion_series line
+                    break;
                 }
             }
             catch (Exception ex)
@@ -582,20 +580,12 @@ namespace AnalysisManagerMSGFPlugin
 
                 for (var settingIndex = 0; settingIndex <= 1; settingIndex++)
                 {
-                    XmlNodeList selectedNodes;
-
-                    switch (settingIndex)
+                    var selectedNodes = settingIndex switch
                     {
-                        case 0:
-                            selectedNodes = paramFile.DocumentElement.SelectNodes("/bioml/note[@label='scoring, c ions']");
-                            break;
-                        case 1:
-                            selectedNodes = paramFile.DocumentElement.SelectNodes("/bioml/note[@label='scoring, z ions']");
-                            break;
-                        default:
-                            selectedNodes = null;
-                            break;
-                    }
+                        0 => paramFile.DocumentElement.SelectNodes("/bioml/note[@label='scoring, c ions']"),
+                        1 => paramFile.DocumentElement.SelectNodes("/bioml/note[@label='scoring, z ions']"),
+                        _ => null
+                    };
 
                     if (selectedNodes == null)
                     {
@@ -1741,17 +1731,16 @@ namespace AnalysisManagerMSGFPlugin
                 }
                 else
                 {
-                    using (var reader = new StreamReader(new FileStream(resultFileTempPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
-                    using (var writer = new StreamWriter(new FileStream(msgfResultsFilePathFinal, FileMode.Append, FileAccess.Write, FileShare.Read)))
-                    {
-                        // Read and skip the first line of resultFileTempPath (it's a header)
-                        reader.ReadLine();
+                    using var reader = new StreamReader(new FileStream(resultFileTempPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+                    using var writer = new StreamWriter(new FileStream(msgfResultsFilePathFinal, FileMode.Append, FileAccess.Write, FileShare.Read));
 
-                        // Append the remaining lines to msgfResultsFilePathFinal
-                        while (!reader.EndOfStream)
-                        {
-                            writer.WriteLine(reader.ReadLine());
-                        }
+                    // Read and skip the first line of resultFileTempPath (it's a header)
+                    reader.ReadLine();
+
+                    // Append the remaining lines to msgfResultsFilePathFinal
+                    while (!reader.EndOfStream)
+                    {
+                        writer.WriteLine(reader.ReadLine());
                     }
                 }
 
@@ -2057,32 +2046,30 @@ namespace AnalysisManagerMSGFPlugin
             try
             {
                 // Create the output file
-                using (var writer = new StreamWriter(new FileStream(msgfOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
-                {
-                    // Step through the input files and append the results
-                    var headerWritten = false;
-                    foreach (var resultFile in resultFiles)
-                    {
-                        using (var reader = new StreamReader(new FileStream(resultFile, FileMode.Open, FileAccess.Read, FileShare.Read)))
-                        {
-                            var linesRead = 0;
-                            while (!reader.EndOfStream)
-                            {
-                                var dataLine = reader.ReadLine();
-                                linesRead++;
+                using var writer = new StreamWriter(new FileStream(msgfOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
 
-                                if (!headerWritten)
-                                {
-                                    headerWritten = true;
-                                    writer.WriteLine(dataLine);
-                                }
-                                else
-                                {
-                                    if (linesRead > 1)
-                                    {
-                                        writer.WriteLine(dataLine);
-                                    }
-                                }
+                // Step through the input files and append the results
+                var headerWritten = false;
+                foreach (var resultFile in resultFiles)
+                {
+                    using var reader = new StreamReader(new FileStream(resultFile, FileMode.Open, FileAccess.Read, FileShare.Read));
+
+                    var linesRead = 0;
+                    while (!reader.EndOfStream)
+                    {
+                        var dataLine = reader.ReadLine();
+                        linesRead++;
+
+                        if (!headerWritten)
+                        {
+                            headerWritten = true;
+                            writer.WriteLine(dataLine);
+                        }
+                        else
+                        {
+                            if (linesRead > 1)
+                            {
+                                writer.WriteLine(dataLine);
                             }
                         }
                     }
@@ -2106,56 +2093,55 @@ namespace AnalysisManagerMSGFPlugin
                 var success = true;
 
                 var msgfSpecProbColIndex = -1;
-                using (var reader = new StreamReader(new FileStream(msgfResultsFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                using var reader = new StreamReader(new FileStream(msgfResultsFilePath, FileMode.Open, FileAccess.Read, FileShare.Read));
+
+                while (!reader.EndOfStream)
                 {
-                    while (!reader.EndOfStream)
+                    var dataLine = reader.ReadLine();
+
+                    if (string.IsNullOrEmpty(dataLine))
+                        continue;
+
+                    var dataCols = dataLine.Split();
+
+                    if (dataCols.Length == 0)
+                        continue;
+
+                    if (msgfSpecProbColIndex < 0)
                     {
-                        var dataLine = reader.ReadLine();
-
-                        if (string.IsNullOrEmpty(dataLine))
-                            continue;
-
-                        var dataCols = dataLine.Split();
-
-                        if (dataCols.Length == 0)
-                            continue;
-
-                        if (msgfSpecProbColIndex < 0)
+                        // Assume this is the header line, look for SpecProb
+                        for (var index = 0; index <= dataCols.Length - 1; index++)
                         {
-                            // Assume this is the header line, look for SpecProb
-                            for (var index = 0; index <= dataCols.Length - 1; index++)
+                            if (string.Equals(dataCols[index], "SpecProb", StringComparison.InvariantCultureIgnoreCase))
                             {
-                                if (string.Equals(dataCols[index], "SpecProb", StringComparison.InvariantCultureIgnoreCase))
-                                {
-                                    msgfSpecProbColIndex = index;
-                                    break;
-                                }
-                            }
-
-                            if (msgfSpecProbColIndex < 0)
-                            {
-                                // Match not found; abort
-                                LogError("SpecProb column not found in file " + msgfResultsFilePath);
-                                success = false;
+                                msgfSpecProbColIndex = index;
                                 break;
                             }
                         }
-                        else
+
+                        if (msgfSpecProbColIndex < 0)
                         {
-                            // Data line
-                            if (int.TryParse(dataCols[0], out var resultID))
+                            // Match not found; abort
+                            LogError("SpecProb column not found in file " + msgfResultsFilePath);
+                            success = false;
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        // Data line
+                        if (int.TryParse(dataCols[0], out var resultID))
+                        {
+                            if (msgfSpecProbColIndex < dataCols.Length)
                             {
-                                if (msgfSpecProbColIndex < dataCols.Length)
+                                try
                                 {
-                                    try
-                                    {
-                                        msgfResults.Add(resultID, dataCols[msgfSpecProbColIndex]);
-                                    }
-                                    catch (Exception)
-                                    {
-                                        // Ignore errors here
-                                        // Possibly a key violation or a column index issue
-                                    }
+                                    msgfResults.Add(resultID, dataCols[msgfSpecProbColIndex]);
+                                }
+                                catch (Exception)
+                                {
+                                    // Ignore errors here
+                                    // Possibly a key violation or a column index issue
                                 }
                             }
                         }
@@ -2201,40 +2187,39 @@ namespace AnalysisManagerMSGFPlugin
 
                 mConsoleOutputErrorMsg = string.Empty;
 
-                using (var reader = new StreamReader(new FileStream(consoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using var reader = new StreamReader(new FileStream(consoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+                var linesRead = 0;
+                while (!reader.EndOfStream)
                 {
-                    var linesRead = 0;
-                    while (!reader.EndOfStream)
+                    var dataLine = reader.ReadLine();
+                    linesRead++;
+
+                    if (string.IsNullOrWhiteSpace(dataLine))
+                        continue;
+
+                    if (linesRead <= 3 && string.IsNullOrWhiteSpace(mMSGFVersion) && dataLine.StartsWith("MSGF v"))
                     {
-                        var dataLine = reader.ReadLine();
-                        linesRead++;
+                        // Originally the first line was the MSGF version
+                        // Starting in November 2016, the first line is the command line and the second line is a separator (series of dashes)
+                        // The third line is the MSGF version
 
-                        if (string.IsNullOrWhiteSpace(dataLine))
-                            continue;
-
-                        if (linesRead <= 3 && string.IsNullOrWhiteSpace(mMSGFVersion) && dataLine.StartsWith("MSGF v"))
+                        if (mDebugLevel >= 2)
                         {
-                            // Originally the first line was the MSGF version
-                            // Starting in November 2016, the first line is the command line and the second line is a separator (series of dashes)
-                            // The third line is the MSGF version
-
-                            if (mDebugLevel >= 2)
-                            {
-                                LogDebug("MSGF version: " + dataLine);
-                            }
-
-                            mMSGFVersion = string.Copy(dataLine);
+                            LogDebug("MSGF version: " + dataLine);
                         }
-                        else
+
+                        mMSGFVersion = string.Copy(dataLine);
+                    }
+                    else
+                    {
+                        if (dataLine.IndexOf("error", StringComparison.OrdinalIgnoreCase) >= 0)
                         {
-                            if (dataLine.IndexOf("error", StringComparison.OrdinalIgnoreCase) >= 0)
+                            if (string.IsNullOrEmpty(mConsoleOutputErrorMsg))
                             {
-                                if (string.IsNullOrEmpty(mConsoleOutputErrorMsg))
-                                {
-                                    mConsoleOutputErrorMsg = "Error running MSGF:";
-                                }
-                                mConsoleOutputErrorMsg += "; " + dataLine;
+                                mConsoleOutputErrorMsg = "Error running MSGF:";
                             }
+                            mConsoleOutputErrorMsg += "; " + dataLine;
                         }
                     }
                 }
@@ -2263,75 +2248,74 @@ namespace AnalysisManagerMSGFPlugin
                 if (msgfEntriesPerSegment < 100)
                     msgfEntriesPerSegment = 100;
 
-                using (var reader = new StreamReader(new FileStream(msgfInputFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                using var reader = new StreamReader(new FileStream(msgfInputFilePath, FileMode.Open, FileAccess.Read, FileShare.Read));
+
+                StreamWriter writer = null;
+
+                udtSegmentFileInfoType udtThisSegment;
+                udtThisSegment.FilePath = string.Empty;
+                udtThisSegment.Entries = 0;
+                udtThisSegment.Segment = 0;
+
+                while (!reader.EndOfStream)
                 {
-                    StreamWriter writer = null;
+                    var dataLine = reader.ReadLine();
+                    if (string.IsNullOrWhiteSpace(dataLine))
+                        continue;
 
-                    udtSegmentFileInfoType udtThisSegment;
-                    udtThisSegment.FilePath = string.Empty;
-                    udtThisSegment.Entries = 0;
-                    udtThisSegment.Segment = 0;
+                    linesRead++;
 
-                    while (!reader.EndOfStream)
+                    if (linesRead == 1)
                     {
-                        var dataLine = reader.ReadLine();
-                        if (string.IsNullOrWhiteSpace(dataLine))
-                            continue;
+                        // This is the header line; cache it so that we can write it out to the top of each input file
+                        headerLine = string.Copy(dataLine);
+                    }
 
-                        linesRead++;
+                    if (udtThisSegment.Segment == 0 || udtThisSegment.Entries >= msgfEntriesPerSegment)
+                    {
+                        // Need to create a new segment
+                        // However, if the number of lines remaining to be written is less than 5% of msgfEntriesPerSegment then keep writing to this segment
 
-                        if (linesRead == 1)
+                        var lineCountRemaining = msgfInputFileLineCount - lineCountAllSegments;
+
+                        if (udtThisSegment.Segment == 0 || lineCountRemaining > msgfEntriesPerSegment * MSGF_SEGMENT_OVERFLOW_MARGIN)
                         {
-                            // This is the header line; cache it so that we can write it out to the top of each input file
-                            headerLine = string.Copy(dataLine);
-                        }
-
-                        if (udtThisSegment.Segment == 0 || udtThisSegment.Entries >= msgfEntriesPerSegment)
-                        {
-                            // Need to create a new segment
-                            // However, if the number of lines remaining to be written is less than 5% of msgfEntriesPerSegment then keep writing to this segment
-
-                            var lineCountRemaining = msgfInputFileLineCount - lineCountAllSegments;
-
-                            if (udtThisSegment.Segment == 0 || lineCountRemaining > msgfEntriesPerSegment * MSGF_SEGMENT_OVERFLOW_MARGIN)
+                            if (udtThisSegment.Segment > 0)
                             {
-                                if (udtThisSegment.Segment > 0)
-                                {
-                                    // Close the current segment
-                                    writer?.Flush();
-                                    writer?.Dispose();
-                                    segmentFileInfo.Add(udtThisSegment);
-                                }
-
-                                // Initialize a new segment
-                                udtThisSegment.Segment++;
-                                udtThisSegment.Entries = 0;
-                                udtThisSegment.FilePath = AddFileNameSuffix(msgfInputFilePath, udtThisSegment.Segment);
-
-                                writer = new StreamWriter(new FileStream(udtThisSegment.FilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
-
-                                // Write the header line to the new segment
-                                writer.WriteLine(headerLine);
+                                // Close the current segment
+                                writer?.Flush();
+                                writer?.Dispose();
+                                segmentFileInfo.Add(udtThisSegment);
                             }
-                        }
 
-                        if (linesRead > 1)
-                        {
-                            if (writer == null)
-                                throw new Exception("writer has not been initialized; this indicates a bug in SplitMSGFInputFile");
+                            // Initialize a new segment
+                            udtThisSegment.Segment++;
+                            udtThisSegment.Entries = 0;
+                            udtThisSegment.FilePath = AddFileNameSuffix(msgfInputFilePath, udtThisSegment.Segment);
 
-                            writer.WriteLine(dataLine);
-                            udtThisSegment.Entries++;
-                            lineCountAllSegments++;
+                            writer = new StreamWriter(new FileStream(udtThisSegment.FilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
+
+                            // Write the header line to the new segment
+                            writer.WriteLine(headerLine);
                         }
                     }
 
-                    // Close the output files
-                    writer?.Flush();
-                    writer?.Dispose();
+                    if (linesRead > 1)
+                    {
+                        if (writer == null)
+                            throw new Exception("writer has not been initialized; this indicates a bug in SplitMSGFInputFile");
 
-                    segmentFileInfo.Add(udtThisSegment);
+                        writer.WriteLine(dataLine);
+                        udtThisSegment.Entries++;
+                        lineCountAllSegments++;
+                    }
                 }
+
+                // Close the output files
+                writer?.Flush();
+                writer?.Dispose();
+
+                segmentFileInfo.Add(udtThisSegment);
             }
             catch (Exception ex)
             {
@@ -2485,16 +2469,13 @@ namespace AnalysisManagerMSGFPlugin
                     return;
 
                 // Read the data from the results file
-                int lineCount;
-                using (var reader = new StreamReader(new FileStream(msgfResultsFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
-                {
-                    lineCount = 0;
+                using var reader = new StreamReader(new FileStream(msgfResultsFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
 
-                    while (!reader.EndOfStream)
-                    {
-                        reader.ReadLine();
-                        lineCount++;
-                    }
+                var lineCount = 0;
+                while (!reader.EndOfStream)
+                {
+                    reader.ReadLine();
+                    lineCount++;
                 }
 
                 // Update the overall progress
@@ -2616,46 +2597,48 @@ namespace AnalysisManagerMSGFPlugin
                     }
                 }
 
-                if (success)
+                if (!success)
                 {
-                    // Replace the original file with the new one
-                    clsGlobal.IdleLoop(0.2);
-                    ProgRunner.GarbageCollectNow();
+                    return false;
+                }
+
+                // Replace the original file with the new one
+                clsGlobal.IdleLoop(0.2);
+                ProgRunner.GarbageCollectNow();
+
+                try
+                {
+                    LogDebug("Replace " + fiProteinModsFile.FullName + " with " + fiProteinModsFileNew.Name, 3);
+
+                    fiProteinModsFile.Delete();
 
                     try
                     {
-                        LogDebug("Replace " + fiProteinModsFile.FullName + " with " + fiProteinModsFileNew.Name, 3);
-
-                        fiProteinModsFile.Delete();
-
-                        try
+                        fiProteinModsFileNew.MoveTo(fiProteinModsFile.FullName);
+                        if (mDebugLevel >= 2)
                         {
-                            fiProteinModsFileNew.MoveTo(fiProteinModsFile.FullName);
-                            if (mDebugLevel >= 2)
-                            {
-                                LogMessage("Updated MSGF_SpecProb values in the ProteinMods.txt file");
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            LogError("Error updating the ProteinMods.txt file; cannot rename new version", ex);
-                            return false;
+                            LogMessage("Updated MSGF_SpecProb values in the ProteinMods.txt file");
                         }
                     }
                     catch (Exception ex)
                     {
-                        LogError("Error updating the ProteinMods.txt file; cannot delete old version", ex);
+                        LogError("Error updating the ProteinMods.txt file; cannot rename new version", ex);
                         return false;
                     }
                 }
+                catch (Exception ex)
+                {
+                    LogError("Error updating the ProteinMods.txt file; cannot delete old version", ex);
+                    return false;
+                }
+
+                return true;
             }
             catch (Exception ex)
             {
                 LogError("Exception updating the ProteinMods.txt file", ex);
                 return false;
             }
-
-            return success;
         }
 
         #endregion

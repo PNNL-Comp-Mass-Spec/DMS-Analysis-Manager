@@ -1047,8 +1047,10 @@ namespace AnalysisManagerBase
 
             // Create a new memory stream in which to write the XML
             var memStream = new MemoryStream();
-            using var xWriter = new XmlTextWriter(memStream, System.Text.Encoding.UTF8) {
-                Formatting = Formatting.Indented, Indentation = 2
+            using var xWriter = new XmlTextWriter(memStream, System.Text.Encoding.UTF8)
+            {
+                Formatting = Formatting.Indented,
+                Indentation = 2
             };
 
             // Create the XML document in memory

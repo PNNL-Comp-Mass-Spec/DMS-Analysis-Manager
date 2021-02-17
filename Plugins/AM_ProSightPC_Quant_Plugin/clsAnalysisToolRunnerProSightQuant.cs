@@ -147,10 +147,9 @@ namespace AnalysisManagerProSightQuantPlugIn
                     // Write the console output to a text file
                     clsGlobal.IdleLoop(0.25);
 
-                    using (var writer = new StreamWriter(new FileStream(mCmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
-                    {
-                        writer.WriteLine(mCmdRunner.CachedConsoleOutput);
-                    }
+                    using var writer = new StreamWriter(new FileStream(mCmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
+
+                    writer.WriteLine(mCmdRunner.CachedConsoleOutput);
                 }
 
                 // Parse the console output file one more time to check for errors
@@ -258,11 +257,9 @@ namespace AnalysisManagerProSightQuantPlugIn
         /// <remarks></remarks>
         protected string CreateTargetedQuantParamFile()
         {
-            var strTargetedQuantParamFilePath = string.Empty;
-
             try
             {
-                strTargetedQuantParamFilePath = Path.Combine(mWorkDir, TARGETED_QUANT_XML_FILE_NAME);
+                var targetedQuantParamFilePath = Path.Combine(mWorkDir, TARGETED_QUANT_XML_FILE_NAME);
                 var strProSightPCResultsFile = clsAnalysisResourcesProSightQuant.PROSIGHT_PC_RESULT_FILE;
 
                 var strWorkflowParamFileName = mJobParams.GetParam("ProSightQuantParamFile");
@@ -272,29 +269,31 @@ namespace AnalysisManagerProSightQuantPlugIn
                     return string.Empty;
                 }
 
-                using (var swTargetedQuantXMLFile = new XmlTextWriter(strTargetedQuantParamFilePath, System.Text.Encoding.UTF8))
+                using var writer = new XmlTextWriter(targetedQuantParamFilePath, System.Text.Encoding.UTF8)
                 {
-                    swTargetedQuantXMLFile.Formatting = Formatting.Indented;
-                    swTargetedQuantXMLFile.Indentation = 4;
+                    Formatting = Formatting.Indented,
+                    Indentation = 4
+                };
 
-                    swTargetedQuantXMLFile.WriteStartDocument();
-                    swTargetedQuantXMLFile.WriteStartElement("WorkflowParameters");
+                writer.WriteStartDocument();
+                writer.WriteStartElement("WorkflowParameters");
 
-                    WriteXMLSetting(swTargetedQuantXMLFile, "CopyRawFileLocal", "false");
-                    WriteXMLSetting(swTargetedQuantXMLFile, "DeleteLocalDatasetAfterProcessing", "false");
-                    WriteXMLSetting(swTargetedQuantXMLFile, "FileContainingDatasetPaths", "");
-                    WriteXMLSetting(swTargetedQuantXMLFile, "FolderPathForCopiedRawDataset", "");
-                    WriteXMLSetting(swTargetedQuantXMLFile, "LoggingFolder", mWorkDir);
-                    WriteXMLSetting(swTargetedQuantXMLFile, "TargetsFilePath", Path.Combine(mWorkDir, strProSightPCResultsFile));
-                    WriteXMLSetting(swTargetedQuantXMLFile, "TargetType", "LcmsFeature");
-                    WriteXMLSetting(swTargetedQuantXMLFile, "ResultsFolder", mWorkDir);
-                    WriteXMLSetting(swTargetedQuantXMLFile, "WorkflowParameterFile", Path.Combine(mWorkDir, strWorkflowParamFileName));
-                    WriteXMLSetting(swTargetedQuantXMLFile, "WorkflowType", "TopDownTargetedWorkflowExecutor1");
+                WriteXMLSetting(writer, "CopyRawFileLocal", "false");
+                WriteXMLSetting(writer, "DeleteLocalDatasetAfterProcessing", "false");
+                WriteXMLSetting(writer, "FileContainingDatasetPaths", "");
+                WriteXMLSetting(writer, "FolderPathForCopiedRawDataset", "");
+                WriteXMLSetting(writer, "LoggingFolder", mWorkDir);
+                WriteXMLSetting(writer, "TargetsFilePath", Path.Combine(mWorkDir, strProSightPCResultsFile));
+                WriteXMLSetting(writer, "TargetType", "LcmsFeature");
+                WriteXMLSetting(writer, "ResultsFolder", mWorkDir);
+                WriteXMLSetting(writer, "WorkflowParameterFile", Path.Combine(mWorkDir, strWorkflowParamFileName));
+                WriteXMLSetting(writer, "WorkflowType", "TopDownTargetedWorkflowExecutor1");
 
-                    swTargetedQuantXMLFile.WriteEndElement();    // WorkflowParameters
+                writer.WriteEndElement();    // WorkflowParameters
 
-                    swTargetedQuantXMLFile.WriteEndDocument();
-                }
+                writer.WriteEndDocument();
+
+                return targetedQuantParamFilePath;
             }
             catch (Exception ex)
             {
@@ -302,8 +301,6 @@ namespace AnalysisManagerProSightQuantPlugIn
                 LogError(mMessage + ": " + ex.Message);
                 return string.Empty;
             }
-
-            return strTargetedQuantParamFilePath;
         }
 
         // Example Console output:

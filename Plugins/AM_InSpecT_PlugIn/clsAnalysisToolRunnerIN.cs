@@ -242,15 +242,14 @@ namespace AnalysisManagerInSpecTPlugIn
                     writer.WriteLine("DB," + dbFilePath);
 
                     // Append the parameter file contents to the Inspect input file
-                    using (var reader = new StreamReader(new FileStream(paramFilename, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                    using var reader = new StreamReader(new FileStream(paramFilename, FileMode.Open, FileAccess.Read, FileShare.Read));
+
+                    while (!reader.EndOfStream)
                     {
-                        while (!reader.EndOfStream)
+                        var paramLine = reader.ReadLine();
+                        if (paramLine != null)
                         {
-                            var paramLine = reader.ReadLine();
-                            if (paramLine != null)
-                            {
-                                writer.WriteLine(paramLine);
-                            }
+                            writer.WriteLine(paramLine);
                         }
                     }
                 }

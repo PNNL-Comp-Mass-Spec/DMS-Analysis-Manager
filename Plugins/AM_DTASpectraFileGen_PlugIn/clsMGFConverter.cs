@@ -180,75 +180,74 @@ namespace DTASpectraFileGen
                 spectrumIDToScanNumber = new Dictionary<string, udtScanInfoType>();
             }
 
-            using (var reader = new XmlTextReader(mzMLFilePath))
+            using var reader = new XmlTextReader(mzMLFilePath);
+
+            while (reader.Read())
             {
-                while (reader.Read())
+                XMLTextReaderSkipWhitespace(reader);
+                if (reader.ReadState != ReadState.Interactive)
+                    break;
+
+                var scanInfo = new udtScanInfoType();
+                if (reader.NodeType == XmlNodeType.Element)
                 {
-                    XMLTextReaderSkipWhitespace(reader);
-                    if (reader.ReadState != ReadState.Interactive)
-                        break;
-
-                    var scanInfo = new udtScanInfoType();
-                    if (reader.NodeType == XmlNodeType.Element)
+                    switch (reader.Name)
                     {
-                        switch (reader.Name)
-                        {
-                            case "spectrum":
+                        case "spectrum":
 
-                                spectrumID = XMLTextReaderGetAttributeValue(reader, "id", string.Empty);
+                            spectrumID = XMLTextReaderGetAttributeValue(reader, "id", string.Empty);
 
-                                if (!string.IsNullOrEmpty(spectrumID))
+                            if (!string.IsNullOrEmpty(spectrumID))
+                            {
+                                if (MsMsDataFileReader.clsMsMsDataFileReaderBaseClass.ExtractScanInfoFromDtaHeader(spectrumID,
+                                    out var scanNumberStart, out var scanNumberEnd, out var charge))
                                 {
-                                    if (MsMsDataFileReader.clsMsMsDataFileReaderBaseClass.ExtractScanInfoFromDtaHeader(spectrumID,
-                                        out var scanNumberStart, out var scanNumberEnd, out var charge))
-                                    {
-                                        // This title is in a standard format
-                                        scanInfo.ScanStart = scanNumberStart;
-                                        scanInfo.ScanEnd = scanNumberEnd;
-                                        scanInfo.Charge = charge;
-                                    }
-                                    else
-                                    {
-                                        autoNumberScans = true;
-                                    }
-
-                                    if (autoNumberScans)
-                                    {
-                                        scanNumberCurrent++;
-                                        scanInfo.ScanStart = scanNumberCurrent;
-                                        scanInfo.ScanEnd = scanNumberCurrent;
-                                        // Store a charge of 0 for now; we'll update it later if the selectedIon element has a MS:1000041 attribute
-                                        scanInfo.Charge = 0;
-                                    }
-                                    else
-                                    {
-                                        scanNumberCurrent = scanNumberStart;
-                                    }
+                                    // This title is in a standard format
+                                    scanInfo.ScanStart = scanNumberStart;
+                                    scanInfo.ScanEnd = scanNumberEnd;
+                                    scanInfo.Charge = charge;
+                                }
+                                else
+                                {
+                                    autoNumberScans = true;
                                 }
 
-                                break;
-
-                            case "selectedIon":
-                                // Read the cvParams for this selected ion
-                                var cvParams = GetCVParams(reader, "selectedIon");
-
-                                if (cvParams.TryGetValue("MS:1000041", out var valueText))
+                                if (autoNumberScans)
                                 {
-                                    if (int.TryParse(valueText, out var value))
-                                    {
-                                        scanInfo.Charge = value;
-                                    }
+                                    scanNumberCurrent++;
+                                    scanInfo.ScanStart = scanNumberCurrent;
+                                    scanInfo.ScanEnd = scanNumberCurrent;
+                                    // Store a charge of 0 for now; we'll update it later if the selectedIon element has a MS:1000041 attribute
+                                    scanInfo.Charge = 0;
                                 }
-                                break;
-                        }
+                                else
+                                {
+                                    scanNumberCurrent = scanNumberStart;
+                                }
+                            }
+
+                            break;
+
+                        case "selectedIon":
+                            // Read the cvParams for this selected ion
+                            var cvParams = GetCVParams(reader, "selectedIon");
+
+                            if (cvParams.TryGetValue("MS:1000041", out var valueText))
+                            {
+                                if (int.TryParse(valueText, out var value))
+                                {
+                                    scanInfo.Charge = value;
+                                }
+                            }
+                            break;
                     }
-                    else if (reader.NodeType == XmlNodeType.EndElement && reader.Name == "spectrum")
+                }
+                else if (reader.NodeType == XmlNodeType.EndElement && reader.Name == "spectrum")
+                {
+                    // Store this spectrum
+                    if (!string.IsNullOrEmpty(spectrumID))
                     {
-                        // Store this spectrum
-                        if (!string.IsNullOrEmpty(spectrumID))
-                        {
-                            spectrumIDToScanNumber.Add(spectrumID, scanInfo);
-                        }
+                        spectrumIDToScanNumber.Add(spectrumID, scanInfo);
                     }
                 }
             }

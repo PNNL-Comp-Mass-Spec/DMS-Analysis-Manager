@@ -542,95 +542,94 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                 };
 
                 // Open the parameter file
-                using (var reader = new StreamReader(new FileStream(paramFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using var reader = new StreamReader(new FileStream(paramFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+                // The first two parameters on the command line are Fasta File name and input file name
+                commandLine += mInputPropertyValues.FastaFileName + " " + mInputPropertyValues.SpectrumFileName;
+
+                // Now append the parameters defined in the parameter file
+                while (!reader.EndOfStream)
                 {
-                    // The first two parameters on the command line are Fasta File name and input file name
-                    commandLine += mInputPropertyValues.FastaFileName + " " + mInputPropertyValues.SpectrumFileName;
+                    var dataLine = reader.ReadLine();
 
-                    // Now append the parameters defined in the parameter file
-                    while (!reader.EndOfStream)
+                    if (string.IsNullOrWhiteSpace(dataLine) || dataLine.TrimStart().StartsWith("#"))
                     {
-                        var dataLine = reader.ReadLine();
+                        // Comment line or blank line; skip it
+                        continue;
+                    }
 
-                        if (string.IsNullOrWhiteSpace(dataLine) || dataLine.TrimStart().StartsWith("#"))
+                    // Look for an equals sign
+                    var equalsIndex = dataLine.IndexOf('=');
+
+                    if (equalsIndex <= 0)
+                    {
+                        // Unknown line format; skip it
+                        continue;
+                    }
+
+                    // Split the line on the equals sign
+                    var keyName = dataLine.Substring(0, equalsIndex).TrimEnd();
+                    string value;
+                    if (equalsIndex < dataLine.Length - 1)
+                    {
+                        value = dataLine.Substring(equalsIndex + 1).Trim();
+                    }
+                    else
+                    {
+                        value = string.Empty;
+                    }
+
+                    if (keyName.ToLower() == INSTRUMENT_ACTIVATION_TYPE_KEY)
+                    {
+                        // If this is a bruker dataset, we need to make sure that the value for this entry is not FILE
+                        // The reason is that the mzXML file created by Bruker's compass program does not include the ScanType information (CID, ETD, etc.)
+
+                        // The ToolName job parameter holds the name of the job script we are executing
+                        var scriptName = mJobParams.GetParam("ToolName");
+
+                        if (scriptName.StartsWith("MSAlign_Bruker", StringComparison.OrdinalIgnoreCase) ||
+                            scriptName.StartsWith("MSAlign_Histone", StringComparison.OrdinalIgnoreCase))
                         {
-                            // Comment line or blank line; skip it
-                            continue;
-                        }
-
-                        // Look for an equals sign
-                        var equalsIndex = dataLine.IndexOf('=');
-
-                        if (equalsIndex <= 0)
-                        {
-                            // Unknown line format; skip it
-                            continue;
-                        }
-
-                        // Split the line on the equals sign
-                        var keyName = dataLine.Substring(0, equalsIndex).TrimEnd();
-                        string value;
-                        if (equalsIndex < dataLine.Length - 1)
-                        {
-                            value = dataLine.Substring(equalsIndex + 1).Trim();
-                        }
-                        else
-                        {
-                            value = string.Empty;
-                        }
-
-                        if (keyName.ToLower() == INSTRUMENT_ACTIVATION_TYPE_KEY)
-                        {
-                            // If this is a bruker dataset, we need to make sure that the value for this entry is not FILE
-                            // The reason is that the mzXML file created by Bruker's compass program does not include the ScanType information (CID, ETD, etc.)
-
-                            // The ToolName job parameter holds the name of the job script we are executing
-                            var scriptName = mJobParams.GetParam("ToolName");
-
-                            if (scriptName.StartsWith("MSAlign_Bruker", StringComparison.OrdinalIgnoreCase) ||
-                                scriptName.StartsWith("MSAlign_Histone", StringComparison.OrdinalIgnoreCase))
+                            if (string.Equals(value, "FILE", StringComparison.OrdinalIgnoreCase))
                             {
-                                if (string.Equals(value, "FILE", StringComparison.OrdinalIgnoreCase))
-                                {
-                                    mMessage = "Must specify an explicit scan type for " + keyName +
-                                                " in the MSAlign parameter file (CID, HCD, or ETD)";
+                                mMessage = "Must specify an explicit scan type for " + keyName +
+                                           " in the MSAlign parameter file (CID, HCD, or ETD)";
 
-                                    LogError(mMessage + "; this is required because Bruker-created mzXML files " +
-                                             "do not include activationMethod information in the precursorMz tag");
+                                LogError(mMessage + "; this is required because Bruker-created mzXML files " +
+                                         "do not include activationMethod information in the precursorMz tag");
 
-                                    return false;
-                                }
+                                return false;
                             }
                         }
+                    }
 
-                        if (keyName.ToLower() == SEARCH_TYPE_KEY)
+                    if (keyName.ToLower() == SEARCH_TYPE_KEY)
+                    {
+                        if (string.Equals(value, "TARGET+DECOY", StringComparison.OrdinalIgnoreCase))
                         {
-                            if (string.Equals(value, "TARGET+DECOY", StringComparison.OrdinalIgnoreCase))
+                            // Make sure the protein collection is not a Decoy protein collection
+                            var proteinOptions = mJobParams.GetParam("ProteinOptions");
+
+                            if (proteinOptions.IndexOf("seq_direction=decoy", StringComparison.OrdinalIgnoreCase) >= 0)
                             {
-                                // Make sure the protein collection is not a Decoy protein collection
-                                var proteinOptions = mJobParams.GetParam("ProteinOptions");
+                                mMessage =
+                                    "MSAlign parameter file contains searchType=TARGET+DECOY; " +
+                                    "protein options for this analysis job must contain seq_direction=forward, not seq_direction=decoy";
 
-                                if (proteinOptions.IndexOf("seq_direction=decoy", StringComparison.OrdinalIgnoreCase) >= 0)
-                                {
-                                    mMessage =
-                                        "MSAlign parameter file contains searchType=TARGET+DECOY; " +
-                                        "protein options for this analysis job must contain seq_direction=forward, not seq_direction=decoy";
+                                LogError(mMessage);
 
-                                    LogError(mMessage);
-
-                                    return false;
-                                }
+                                return false;
                             }
                         }
+                    }
 
-                        if (dctParameterMap.TryGetValue(keyName, out var switchName))
-                        {
-                            commandLine += " -" + switchName + " " + value;
-                        }
-                        else
-                        {
-                            LogWarning("Ignoring unrecognized MSAlign_Histone parameter: " + keyName);
-                        }
+                    if (dctParameterMap.TryGetValue(keyName, out var switchName))
+                    {
+                        commandLine += " -" + switchName + " " + value;
+                    }
+                    else
+                    {
+                        LogWarning("Ignoring unrecognized MSAlign_Histone parameter: " + keyName);
                     }
                 }
             }

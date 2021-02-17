@@ -339,93 +339,92 @@ namespace DTASpectraFileGen
                     return;
                 }
 
-                using (var reader = new StreamReader(new FileStream(logFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using var reader = new StreamReader(new FileStream(logFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+                while (!reader.EndOfStream)
                 {
-                    while (!reader.EndOfStream)
+                    var dataLine = reader.ReadLine();
+
+                    if (string.IsNullOrWhiteSpace(dataLine))
+                        continue;
+
+                    var charIndex = dataLine.IndexOf("finished file processing", StringComparison.InvariantCultureIgnoreCase);
+
+                    if (charIndex >= 0)
                     {
-                        var dataLine = reader.ReadLine();
+                        var dateValid = false;
+                        if (charIndex > 1)
+                        {
+                            // Parse out the date from lineIn
+                            if (DateTime.TryParse(dataLine.Substring(0, charIndex).Trim(), out finishTime))
+                            {
+                                dateValid = true;
+                            }
+                            else
+                            {
+                                // Unable to parse out the date
+                                OnErrorEvent("Unable to parse date from string '" + dataLine.Substring(0, charIndex).Trim() +
+                                             "'; will use file modification date as the processing finish time");
+                            }
+                        }
 
-                        if (string.IsNullOrWhiteSpace(dataLine))
-                            continue;
+                        if (!dateValid)
+                        {
+                            var logFile = new FileInfo(logFilePath);
+                            finishTime = logFile.LastWriteTime;
+                        }
 
-                        var charIndex = dataLine.IndexOf("finished file processing", StringComparison.InvariantCultureIgnoreCase);
+                        if (mDebugLevel >= 3)
+                        {
+                            OnStatusEvent("DeconConsole log file reports 'finished file processing' at " + finishTime);
+                        }
 
+                        //'If workFlowStep < TOTAL_WORKFLOW_STEPS Then
+                        //'	workFlowStep += 1
+                        //'End If
+
+                        finishedProcessing = true;
+                    }
+
+                    if (charIndex < 0)
+                    {
+                        charIndex = dataLine.IndexOf("DeconTools.Backend.dll", StringComparison.Ordinal);
+                        if (charIndex > 0)
+                        {
+                            // DeconConsole reports "Finished file processing" at the end of each step in the workflow
+                            // Reset finishedProcessing back to false
+                            finishedProcessing = false;
+                        }
+                    }
+
+                    if (charIndex < 0)
+                    {
+                        charIndex = dataLine.IndexOf("scan/frame", StringComparison.OrdinalIgnoreCase);
+                        if (charIndex > 0)
+                        {
+                            scanLine = dataLine.Substring(charIndex);
+                        }
+                    }
+
+                    if (charIndex < 0)
+                    {
+                        charIndex = dataLine.IndexOf("scan=", StringComparison.OrdinalIgnoreCase);
+                        if (charIndex > 0)
+                        {
+                            scanLine = dataLine.Substring(charIndex);
+                        }
+                    }
+
+                    if (charIndex < 0)
+                    {
+                        charIndex = dataLine.IndexOf("ERROR THROWN", StringComparison.Ordinal);
                         if (charIndex >= 0)
                         {
-                            var dateValid = false;
-                            if (charIndex > 1)
-                            {
-                                // Parse out the date from lineIn
-                                if (DateTime.TryParse(dataLine.Substring(0, charIndex).Trim(), out finishTime))
-                                {
-                                    dateValid = true;
-                                }
-                                else
-                                {
-                                    // Unable to parse out the date
-                                    OnErrorEvent("Unable to parse date from string '" + dataLine.Substring(0, charIndex).Trim() +
-                                                 "'; will use file modification date as the processing finish time");
-                                }
-                            }
+                            // An exception was reported in the log file; treat this as a fatal error
+                            mErrMsg = "Error thrown by DeconConsole";
 
-                            if (!dateValid)
-                            {
-                                var logFile = new FileInfo(logFilePath);
-                                finishTime = logFile.LastWriteTime;
-                            }
-
-                            if (mDebugLevel >= 3)
-                            {
-                                OnStatusEvent("DeconConsole log file reports 'finished file processing' at " + finishTime);
-                            }
-
-                            //'If workFlowStep < TOTAL_WORKFLOW_STEPS Then
-                            //'	workFlowStep += 1
-                            //'End If
-
-                            finishedProcessing = true;
-                        }
-
-                        if (charIndex < 0)
-                        {
-                            charIndex = dataLine.IndexOf("DeconTools.Backend.dll", StringComparison.Ordinal);
-                            if (charIndex > 0)
-                            {
-                                // DeconConsole reports "Finished file processing" at the end of each step in the workflow
-                                // Reset finishedProcessing back to false
-                                finishedProcessing = false;
-                            }
-                        }
-
-                        if (charIndex < 0)
-                        {
-                            charIndex = dataLine.IndexOf("scan/frame", StringComparison.OrdinalIgnoreCase);
-                            if (charIndex > 0)
-                            {
-                                scanLine = dataLine.Substring(charIndex);
-                            }
-                        }
-
-                        if (charIndex < 0)
-                        {
-                            charIndex = dataLine.IndexOf("scan=", StringComparison.OrdinalIgnoreCase);
-                            if (charIndex > 0)
-                            {
-                                scanLine = dataLine.Substring(charIndex);
-                            }
-                        }
-
-                        if (charIndex < 0)
-                        {
-                            charIndex = dataLine.IndexOf("ERROR THROWN", StringComparison.Ordinal);
-                            if (charIndex >= 0)
-                            {
-                                // An exception was reported in the log file; treat this as a fatal error
-                                mErrMsg = "Error thrown by DeconConsole";
-
-                                OnErrorEvent("DeconConsole reports " + dataLine.Substring(charIndex));
-                                mDeconConsoleExceptionThrown = true;
-                            }
+                            OnErrorEvent("DeconConsole reports " + dataLine.Substring(charIndex));
+                            mDeconConsoleExceptionThrown = true;
                         }
                     }
                 }

@@ -256,22 +256,21 @@ namespace AnalysisManagerExtractionPlugin
 
                     if (consoleOutputFile.Exists)
                     {
-                        using (var reader = new StreamReader(new FileStream(consoleOutputFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                        using var reader = new StreamReader(new FileStream(consoleOutputFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+                        while (!reader.EndOfStream)
                         {
-                            while (!reader.EndOfStream)
-                            {
-                                var lineIn = reader.ReadLine();
-                                if (string.IsNullOrWhiteSpace(lineIn))
-                                    continue;
+                            var lineIn = reader.ReadLine();
+                            if (string.IsNullOrWhiteSpace(lineIn))
+                                continue;
 
-                                if (lineIn.IndexOf("error", StringComparison.OrdinalIgnoreCase) < 0)
-                                    continue;
+                            if (lineIn.IndexOf("error", StringComparison.OrdinalIgnoreCase) < 0)
+                                continue;
 
-                                mErrMsg += "; " + lineIn;
-                                OnWarningEvent(lineIn);
+                            mErrMsg += "; " + lineIn;
+                            OnWarningEvent(lineIn);
 
-                                errorMessageFound = true;
-                            }
+                            errorMessageFound = true;
                         }
                     }
 
@@ -285,7 +284,7 @@ namespace AnalysisManagerExtractionPlugin
                 }
 
                 // Make sure the key PHRP result files were created
-                var lstFilesToCheck = new List<string>();
+                var filesToCheck = new List<string>();
 
                 string fileDescription;
 
@@ -293,17 +292,17 @@ namespace AnalysisManagerExtractionPlugin
                 {
                     // We're processing Inspect data, and PHRP simply created the _fht.txt file
                     // Thus, only look for the first-hits file
-                    lstFilesToCheck.Add("_fht.txt");
+                    filesToCheck.Add("_fht.txt");
                     fileDescription = "first hits";
                 }
                 else
                 {
-                    lstFilesToCheck.Add("_syn.txt");
+                    filesToCheck.Add("_syn.txt");
                     fileDescription = "synopsis";
                 }
 
                 // Check for an empty first hits or synopsis file
-                var validationResult = ValidatePrimaryResultsFile(psmResultsFile, lstFilesToCheck.First(), fileDescription);
+                var validationResult = ValidatePrimaryResultsFile(psmResultsFile, filesToCheck.First(), fileDescription);
 
                 if (validationResult != CloseOutType.CLOSEOUT_SUCCESS && validationResult != CloseOutType.CLOSEOUT_NO_DATA)
                     return validationResult;
@@ -311,11 +310,11 @@ namespace AnalysisManagerExtractionPlugin
                 if (createSynopsisFile)
                 {
                     // Add additional files to find
-                    lstFilesToCheck.Add("_ResultToSeqMap.txt");
-                    lstFilesToCheck.Add("_SeqInfo.txt");
-                    lstFilesToCheck.Add("_SeqToProteinMap.txt");
-                    lstFilesToCheck.Add("_ModSummary.txt");
-                    lstFilesToCheck.Add("_ModDetails.txt");
+                    filesToCheck.Add("_ResultToSeqMap.txt");
+                    filesToCheck.Add("_SeqInfo.txt");
+                    filesToCheck.Add("_SeqToProteinMap.txt");
+                    filesToCheck.Add("_ModSummary.txt");
+                    filesToCheck.Add("_ModDetails.txt");
 
                     if (!skipProteinMods && validationResult != CloseOutType.CLOSEOUT_NO_DATA)
                     {
@@ -323,17 +322,17 @@ namespace AnalysisManagerExtractionPlugin
                         {
                             if (PeptideHitResultsProcessor.clsPHRPBaseClass.ValidateProteinFastaFile(fastaFilePath, out _))
                             {
-                                lstFilesToCheck.Add("_ProteinMods.txt");
+                                filesToCheck.Add("_ProteinMods.txt");
                             }
                         }
                         else if (resultType == clsAnalysisResources.RESULT_TYPE_MSGFPLUS)
                         {
-                            lstFilesToCheck.Add("_ProteinMods.txt");
+                            filesToCheck.Add("_ProteinMods.txt");
                         }
                     }
                 }
 
-                foreach (var fileName in lstFilesToCheck)
+                foreach (var fileName in filesToCheck)
                 {
                     if (psmResultsFile.Directory.GetFiles("*" + fileName).Length == 0)
                     {

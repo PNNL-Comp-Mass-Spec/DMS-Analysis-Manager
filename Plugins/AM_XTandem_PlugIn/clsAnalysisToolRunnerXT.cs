@@ -288,76 +288,75 @@ namespace AnalysisManagerXTandemPlugIn
                     LogDebug("Parsing file " + strConsoleOutputFilePath);
                 }
 
-                using (var reader = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using var reader = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+                var linesRead = 0;
+                while (!reader.EndOfStream)
                 {
-                    var linesRead = 0;
-                    while (!reader.EndOfStream)
+                    var dataLine = reader.ReadLine();
+                    linesRead++;
+
+                    if (string.IsNullOrWhiteSpace(dataLine))
+                        continue;
+
+                    if (linesRead <= 4 && string.IsNullOrEmpty(mXTandemVersion) && dataLine.StartsWith("X!"))
                     {
-                        var dataLine = reader.ReadLine();
-                        linesRead++;
+                        // Originally the first line was the X!Tandem version
+                        // Starting in November 2016, the first line is the command line and the second line is a separator (series of dashes)
+                        // The third or fourth line should be the X!Tandem version
 
-                        if (string.IsNullOrWhiteSpace(dataLine))
-                            continue;
-
-                        if (linesRead <= 4 && string.IsNullOrEmpty(mXTandemVersion) && dataLine.StartsWith("X!"))
+                        if (mDebugLevel >= 2)
                         {
-                            // Originally the first line was the X!Tandem version
-                            // Starting in November 2016, the first line is the command line and the second line is a separator (series of dashes)
-                            // The third or fourth line should be the X!Tandem version
-
-                            if (mDebugLevel >= 2)
-                            {
-                                LogDebug("X!Tandem version: " + dataLine);
-                            }
-
-                            mXTandemVersion = string.Copy(dataLine);
+                            LogDebug("X!Tandem version: " + dataLine);
                         }
-                        else
+
+                        mXTandemVersion = string.Copy(dataLine);
+                    }
+                    else
+                    {
+                        // Update progress if the line starts with one of the expected phrases
+                        if (dataLine.StartsWith("Loading spectra"))
                         {
-                            // Update progress if the line starts with one of the expected phrases
-                            if (dataLine.StartsWith("Loading spectra"))
+                            mProgress = PROGRESS_PCT_XTANDEM_LOADING_SPECTRA;
+                        }
+                        else if (dataLine.StartsWith("Computing models"))
+                        {
+                            mProgress = PROGRESS_PCT_XTANDEM_COMPUTING_MODELS;
+                        }
+                        else if (dataLine.StartsWith("Model refinement"))
+                        {
+                            mProgress = PROGRESS_PCT_XTANDEM_REFINEMENT;
+                        }
+                        else if (dataLine.StartsWith("\tpartial cleavage"))
+                        {
+                            mProgress = PROGRESS_PCT_XTANDEM_REFINEMENT_PARTIAL_CLEAVAGE;
+                        }
+                        else if (dataLine.StartsWith("\tunanticipated cleavage"))
+                        {
+                            mProgress = PROGRESS_PCT_XTANDEM_REFINEMENT_UNANTICIPATED_CLEAVAGE;
+                        }
+                        else if (dataLine.StartsWith("\tfinishing refinement "))
+                        {
+                            mProgress = PROGRESS_PCT_XTANDEM_REFINEMENT_FINISHING;
+                        }
+                        else if (dataLine.StartsWith("Merging results"))
+                        {
+                            mProgress = PROGRESS_PCT_XTANDEM_MERGING_RESULTS;
+                        }
+                        else if (dataLine.StartsWith("Creating report"))
+                        {
+                            mProgress = PROGRESS_PCT_XTANDEM_CREATING_REPORT;
+                        }
+                        else if (dataLine.StartsWith("Estimated false positives"))
+                        {
+                            mProgress = PROGRESS_PCT_XTANDEM_COMPLETE;
+                        }
+                        else if (dataLine.StartsWith("Valid models"))
+                        {
+                            var reMatch = reExtraceValue.Match(dataLine);
+                            if (reMatch.Success)
                             {
-                                mProgress = PROGRESS_PCT_XTANDEM_LOADING_SPECTRA;
-                            }
-                            else if (dataLine.StartsWith("Computing models"))
-                            {
-                                mProgress = PROGRESS_PCT_XTANDEM_COMPUTING_MODELS;
-                            }
-                            else if (dataLine.StartsWith("Model refinement"))
-                            {
-                                mProgress = PROGRESS_PCT_XTANDEM_REFINEMENT;
-                            }
-                            else if (dataLine.StartsWith("\tpartial cleavage"))
-                            {
-                                mProgress = PROGRESS_PCT_XTANDEM_REFINEMENT_PARTIAL_CLEAVAGE;
-                            }
-                            else if (dataLine.StartsWith("\tunanticipated cleavage"))
-                            {
-                                mProgress = PROGRESS_PCT_XTANDEM_REFINEMENT_UNANTICIPATED_CLEAVAGE;
-                            }
-                            else if (dataLine.StartsWith("\tfinishing refinement "))
-                            {
-                                mProgress = PROGRESS_PCT_XTANDEM_REFINEMENT_FINISHING;
-                            }
-                            else if (dataLine.StartsWith("Merging results"))
-                            {
-                                mProgress = PROGRESS_PCT_XTANDEM_MERGING_RESULTS;
-                            }
-                            else if (dataLine.StartsWith("Creating report"))
-                            {
-                                mProgress = PROGRESS_PCT_XTANDEM_CREATING_REPORT;
-                            }
-                            else if (dataLine.StartsWith("Estimated false positives"))
-                            {
-                                mProgress = PROGRESS_PCT_XTANDEM_COMPLETE;
-                            }
-                            else if (dataLine.StartsWith("Valid models"))
-                            {
-                                var reMatch = reExtraceValue.Match(dataLine);
-                                if (reMatch.Success)
-                                {
-                                    int.TryParse(reMatch.Groups[1].Value, out mXTandemResultsCount);
-                                }
+                                int.TryParse(reMatch.Groups[1].Value, out mXTandemResultsCount);
                             }
                         }
                     }

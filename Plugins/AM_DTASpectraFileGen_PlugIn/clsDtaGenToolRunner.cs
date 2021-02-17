@@ -1160,28 +1160,27 @@ namespace DTASpectraFileGen
 
                 var headerLineFound = false;
 
-                using (var reader = new StreamReader(new FileStream(deconMSnLogFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
-                {
-                    while (!reader.EndOfStream)
-                    {
-                        var dataLine = reader.ReadLine();
+                using var reader = new StreamReader(new FileStream(deconMSnLogFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read));
 
-                        if (!string.IsNullOrEmpty(dataLine))
+                while (!reader.EndOfStream)
+                {
+                    var dataLine = reader.ReadLine();
+
+                    if (!string.IsNullOrEmpty(dataLine))
+                    {
+                        if (headerLineFound)
                         {
-                            if (headerLineFound)
+                            // Found a data line
+                            if (char.IsDigit(dataLine[0]))
                             {
-                                // Found a data line
-                                if (char.IsDigit(dataLine[0]))
-                                {
-                                    existingResultsAreValid = true;
-                                    break;
-                                }
+                                existingResultsAreValid = true;
+                                break;
                             }
-                            else if (dataLine.StartsWith("MSn_Scan"))
-                            {
-                                // Found the header line
-                                headerLineFound = true;
-                            }
+                        }
+                        else if (dataLine.StartsWith("MSn_Scan"))
+                        {
+                            // Found the header line
+                            headerLineFound = true;
                         }
                     }
                 }

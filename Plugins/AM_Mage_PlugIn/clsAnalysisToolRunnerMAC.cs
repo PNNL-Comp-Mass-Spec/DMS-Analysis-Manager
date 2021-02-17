@@ -181,34 +181,32 @@ namespace AnalysisManager_Mage_PlugIn
             try
             {
                 var connectionString = "Data Source = " + fiSqlLiteDatabase.FullName + "; Version=3;";
-                using (var conn = new SQLiteConnection(connectionString))
+                
+                using var conn = new SQLiteConnection(connectionString);
+                conn.Open();
+
+                var query = "select * From " + tableName;
+                using var cmd = new SQLiteCommand(query, conn);
+
+                var reader = cmd.ExecuteReader();
+
+                if (!reader.HasRows)
                 {
-                    conn.Open();
+                    errorMessage = "is empty";
+                    return false;
+                }
 
-                    var query = "select * From " + tableName;
-                    using (var cmd = new SQLiteCommand(query, conn))
+                reader.Read();
+                foreach (var columnName in lstColumns)
+                {
+                    try
                     {
-                        var drReader = cmd.ExecuteReader();
-
-                        if (!drReader.HasRows)
-                        {
-                            errorMessage = "is empty";
-                            return false;
-                        }
-
-                        drReader.Read();
-                        foreach (var columnName in lstColumns)
-                        {
-                            try
-                            {
-                                var result = drReader[columnName];
-                            }
-                            catch (Exception)
-                            {
-                                errorMessage = "is missing column " + columnName;
-                                return false;
-                            }
-                        }
+                        var result = reader[columnName];
+                    }
+                    catch (Exception)
+                    {
+                        errorMessage = "is missing column " + columnName;
+                        return false;
                     }
                 }
             }
@@ -230,18 +228,16 @@ namespace AnalysisManager_Mage_PlugIn
             try
             {
                 var connectionString = "Data Source = " + fiSqlLiteDatabase.FullName + "; Version=3;";
-                using (var conn = new SQLiteConnection(connectionString))
-                {
-                    conn.Open();
 
-                    var query = "select count(*) as Items From sqlite_master where type = 'table' and name = '" + tableName + "' COLLATE NOCASE";
-                    using (var cmd = new SQLiteCommand(query, conn))
-                    {
-                        var result = cmd.ExecuteScalar();
-                        if (Convert.ToInt32(result) > 0)
-                            tableFound = true;
-                    }
-                }
+                using var conn = new SQLiteConnection(connectionString);
+                conn.Open();
+
+                var query = "select count(*) as Items From sqlite_master where type = 'table' and name = '" + tableName + "' COLLATE NOCASE";
+                using var cmd = new SQLiteCommand(query, conn);
+
+                var result = cmd.ExecuteScalar();
+                if (Convert.ToInt32(result) > 0)
+                    tableFound = true;
             }
             catch (Exception ex)
             {

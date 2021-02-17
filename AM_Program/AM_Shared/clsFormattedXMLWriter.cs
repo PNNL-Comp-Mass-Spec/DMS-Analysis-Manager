@@ -54,16 +54,16 @@ namespace AnalysisManagerBase
             try
             {
                 // Write the XML to disk
-                using (var xWriter = new XmlTextWriter(
-                    new FileStream(outputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read), System.Text.Encoding.UTF8))
+                using var xWriter = new XmlTextWriter(
+                    new FileStream(outputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read), System.Text.Encoding.UTF8)
                 {
-                    xWriter.Formatting = Formatting.Indented;
-                    xWriter.Indentation = 2;
-                    xWriter.IndentChar = ' ';
+                    Formatting = Formatting.Indented,
+                    Indentation = 2,
+                    IndentChar = ' '
+                };
 
-                    // Write out the XML
-                    doc.WriteTo(xWriter);
-                }
+                // Write out the XML
+                doc.WriteTo(xWriter);
 
                 return true;
             }

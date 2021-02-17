@@ -160,10 +160,9 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                     // Write the console output to a text file
                     clsGlobal.IdleLoop(0.25);
 
-                    using (var writer = new StreamWriter(new FileStream(mCmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
-                    {
-                        writer.WriteLine(mCmdRunner.CachedConsoleOutput);
-                    }
+                    using var writer = new StreamWriter(new FileStream(mCmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
+
+                    writer.WriteLine(mCmdRunner.CachedConsoleOutput);
                 }
 
                 // Parse the console output file one more time to check for errors
@@ -722,65 +721,64 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                 // Initialize the Param Name dictionary
                 var dctParamNames = GetLipidMapsParameterNames();
 
-                using (var reader = new StreamReader(new FileStream(parameterFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                using var reader = new StreamReader(new FileStream(parameterFilePath, FileMode.Open, FileAccess.Read, FileShare.Read));
+
+                while (!reader.EndOfStream)
                 {
-                    while (!reader.EndOfStream)
+                    var dataLine = reader.ReadLine();
+                    var key = string.Empty;
+                    var value = string.Empty;
+
+                    if (string.IsNullOrWhiteSpace(dataLine))
                     {
-                        var dataLine = reader.ReadLine();
-                        var key = string.Empty;
-                        var value = string.Empty;
+                        continue;
+                    }
 
-                        if (string.IsNullOrWhiteSpace(dataLine))
+                    var dataLineTrimmed = dataLine.Trim();
+
+                    if (!dataLineTrimmed.StartsWith("#") && dataLineTrimmed.Contains("="))
+                    {
+                        var intCharIndex = dataLineTrimmed.IndexOf('=');
+                        if (intCharIndex > 0)
                         {
-                            continue;
-                        }
-
-                        var dataLineTrimmed = dataLine.Trim();
-
-                        if (!dataLineTrimmed.StartsWith("#") && dataLineTrimmed.Contains("="))
-                        {
-                            var intCharIndex = dataLineTrimmed.IndexOf('=');
-                            if (intCharIndex > 0)
+                            key = dataLineTrimmed.Substring(0, intCharIndex).Trim();
+                            if (intCharIndex < dataLineTrimmed.Length - 1)
                             {
-                                key = dataLineTrimmed.Substring(0, intCharIndex).Trim();
-                                if (intCharIndex < dataLineTrimmed.Length - 1)
-                                {
-                                    value = dataLineTrimmed.Substring(intCharIndex + 1).Trim();
-                                }
-                                else
-                                {
-                                    value = string.Empty;
-                                }
+                                value = dataLineTrimmed.Substring(intCharIndex + 1).Trim();
+                            }
+                            else
+                            {
+                                value = string.Empty;
                             }
                         }
+                    }
 
-                        if (string.IsNullOrWhiteSpace(key))
-                            continue;
+                    if (string.IsNullOrWhiteSpace(key))
+                        continue;
 
-                        // Check whether key is one of the standard keys defined in dctParamNames
-                        if (dctParamNames.TryGetValue(key, out var strArgumentSwitch))
+                    // Check whether key is one of the standard keys defined in dctParamNames
+                    if (dctParamNames.TryGetValue(key, out var strArgumentSwitch))
+                    {
+                        sbOptions.Append(" -" + strArgumentSwitch + " " + value);
+                    }
+                    else if (string.Equals(key, "adducts", StringComparison.OrdinalIgnoreCase))
+                    {
+                        sbOptions.Append(" -adducts " + "\"" + value + "\"");
+                    }
+                    else if (string.Equals(key, "noscangroups", StringComparison.OrdinalIgnoreCase))
+                    {
+                        if (bool.TryParse(value, out var blnValue))
                         {
-                            sbOptions.Append(" -" + strArgumentSwitch + " " + value);
-                        }
-                        else if (string.Equals(key, "adducts", StringComparison.OrdinalIgnoreCase))
-                        {
-                            sbOptions.Append(" -adducts " + "\"" + value + "\"");
-                        }
-                        else if (string.Equals(key, "noscangroups", StringComparison.OrdinalIgnoreCase))
-                        {
-                            if (bool.TryParse(value, out var blnValue))
+                            if (blnValue)
                             {
-                                if (blnValue)
-                                {
-                                    sbOptions.Append(" -NoScanGroups");
-                                }
+                                sbOptions.Append(" -NoScanGroups");
                             }
                         }
-                        else
-                        {
-                            // Ignore the option
-                            LogWarning("Unrecognized setting in the LipidMaps parameter file: " + key);
-                        }
+                    }
+                    else
+                    {
+                        // Ignore the option
+                        LogWarning("Unrecognized setting in the LipidMaps parameter file: " + key);
                     }
                 }
             }

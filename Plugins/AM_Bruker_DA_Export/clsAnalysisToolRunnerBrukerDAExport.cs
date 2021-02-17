@@ -297,10 +297,9 @@ namespace AnalysisManagerBrukerDAExportPlugin
                     // Write the console output to a text file
                     clsGlobal.IdleLoop(0.25);
 
-                    using (var writer = new StreamWriter(new FileStream(cmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
-                    {
-                        writer.WriteLine(cmdRunner.CachedConsoleOutput);
-                    }
+                    using var writer = new StreamWriter(new FileStream(cmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
+
+                    writer.WriteLine(cmdRunner.CachedConsoleOutput);
                 }
 
                 if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))

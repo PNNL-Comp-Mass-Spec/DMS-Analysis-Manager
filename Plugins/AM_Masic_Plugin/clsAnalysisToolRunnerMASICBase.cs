@@ -53,34 +53,33 @@ namespace AnalysisManagerMasicPlugin
                 if (!logFile.Exists)
                     return;
 
-                using (var reader = new StreamReader(new FileStream(logFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using var reader = new StreamReader(new FileStream(logFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+                var errorCount = 0;
+                while (!reader.EndOfStream)
                 {
-                    var errorCount = 0;
-                    while (!reader.EndOfStream)
+                    var dataLine = reader.ReadLine();
+
+                    if (string.IsNullOrEmpty(dataLine))
+                        continue;
+
+                    if (dataLine.IndexOf("error", StringComparison.OrdinalIgnoreCase) >= 0)
                     {
-                        var dataLine = reader.ReadLine();
-
-                        if (string.IsNullOrEmpty(dataLine))
-                            continue;
-
-                        if (dataLine.IndexOf("error", StringComparison.OrdinalIgnoreCase) >= 0)
+                        if (errorCount == 0)
                         {
-                            if (errorCount == 0)
-                            {
-                                LogError("Errors found in the MASIC Log File");
-                            }
-
-                            if (errorCount <= 10)
-                                LogWarning(" ... " + dataLine);
-
-                            errorCount++;
+                            LogError("Errors found in the MASIC Log File");
                         }
-                    }
 
-                    if (errorCount > 10)
-                    {
-                        LogWarning(string.Format(" ... {0} total errors", errorCount));
+                        if (errorCount <= 10)
+                            LogWarning(" ... " + dataLine);
+
+                        errorCount++;
                     }
+                }
+
+                if (errorCount > 10)
+                {
+                    LogWarning(string.Format(" ... {0} total errors", errorCount));
                 }
             }
             catch (Exception ex)
@@ -290,42 +289,39 @@ namespace AnalysisManagerMasicPlugin
                 if (!statusFile.Exists)
                     return;
 
-                using (var fsInFile = new FileStream(statusFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                using var reader = new XmlTextReader(new FileStream(statusFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
                 {
-                    using (var reader = new XmlTextReader(fsInFile))
+                    WhitespaceHandling = WhitespaceHandling.None
+                };
+
+                while (reader.Read())
+                {
+                    if (reader.NodeType != XmlNodeType.Element)
+                        continue;
+
+                    switch (reader.Name)
                     {
-                        reader.WhitespaceHandling = WhitespaceHandling.None;
-
-                        while (reader.Read())
-                        {
-                            if (reader.NodeType != XmlNodeType.Element)
-                                continue;
-
-                            switch (reader.Name)
+                        case "ProcessingStep":
+                            if (!reader.IsEmptyElement)
                             {
-                                case "ProcessingStep":
-                                    if (!reader.IsEmptyElement)
-                                    {
-                                        if (reader.Read())
-                                            mProcessStep = reader.Value;
-                                    }
-                                    break;
-                                case "Progress":
-                                    if (!reader.IsEmptyElement)
-                                    {
-                                        if (reader.Read())
-                                            progress = reader.Value;
-                                    }
-                                    break;
-                                case "Error":
-                                    if (!reader.IsEmptyElement)
-                                    {
-                                        if (reader.Read())
-                                            mErrorMessage = reader.Value;
-                                    }
-                                    break;
+                                if (reader.Read())
+                                    mProcessStep = reader.Value;
                             }
-                        }
+                            break;
+                        case "Progress":
+                            if (!reader.IsEmptyElement)
+                            {
+                                if (reader.Read())
+                                    progress = reader.Value;
+                            }
+                            break;
+                        case "Error":
+                            if (!reader.IsEmptyElement)
+                            {
+                                if (reader.Read())
+                                    mErrorMessage = reader.Value;
+                            }
+                            break;
                     }
                 }
 
@@ -573,7 +569,7 @@ namespace AnalysisManagerMasicPlugin
 
                         channel++;
 
-                        if (lineParts.Length < obsRateColumnIndex+1)
+                        if (lineParts.Length < obsRateColumnIndex + 1)
                         {
                             LogError(string.Format(
                                 "Channel {0} in the reporter ion observation rate file has fewer than three columns; corrupt file: {1}",

@@ -159,20 +159,19 @@ namespace AnalysisManagerGlyQIQPlugin
                 {
                     var outputFilePath = Path.Combine(workingDirectory.Value.FullName, mGlyQIQParams.ConsoleOperatingParametersFileName);
 
-                    using (var writer = new StreamWriter(new FileStream(outputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
-                    {
-                        writer.WriteLine("ResultsFolderPath" + "," + Path.Combine(mWorkDir, "Results"));
-                        writer.WriteLine("LoggingFolderPath" + "," + Path.Combine(mWorkDir, "Results"));
-                        writer.WriteLine("FactorsFile" + "," + mGlyQIQParams.FactorsName + ".txt");
-                        writer.WriteLine("ExecutorParameterFile" + "," + EXECUTOR_PARAMETERS_FILE);
-                        writer.WriteLine("XYDataFolder" + "," + "XYDataWriter");
-                        writer.WriteLine("WorkflowParametersFile" + "," + mGlyQIQParams.IQParamFileName);
-                        writer.WriteLine("Alignment" + "," + Path.Combine(workingDirectory.Value.FullName, ALIGNMENT_PARAMETERS_FILENAME));
+                    using var writer = new StreamWriter(new FileStream(outputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
 
-                        // The following file doesn't have to exist
-                        writer.WriteLine("BasicTargetedParameters" + "," +
-                                          Path.Combine(workingDirectory.Value.FullName, "BasicTargetedWorkflowParameters.xml"));
-                    }
+                    writer.WriteLine("ResultsFolderPath" + "," + Path.Combine(mWorkDir, "Results"));
+                    writer.WriteLine("LoggingFolderPath" + "," + Path.Combine(mWorkDir, "Results"));
+                    writer.WriteLine("FactorsFile" + "," + mGlyQIQParams.FactorsName + ".txt");
+                    writer.WriteLine("ExecutorParameterFile" + "," + EXECUTOR_PARAMETERS_FILE);
+                    writer.WriteLine("XYDataFolder" + "," + "XYDataWriter");
+                    writer.WriteLine("WorkflowParametersFile" + "," + mGlyQIQParams.IQParamFileName);
+                    writer.WriteLine("Alignment" + "," + Path.Combine(workingDirectory.Value.FullName, ALIGNMENT_PARAMETERS_FILENAME));
+
+                    // The following file doesn't have to exist
+                    writer.WriteLine("BasicTargetedParameters" + "," +
+                                     Path.Combine(workingDirectory.Value.FullName, "BasicTargetedWorkflowParameters.xml"));
                 }
 
                 return true;
@@ -206,41 +205,40 @@ namespace AnalysisManagerGlyQIQPlugin
 
                     var batchFilePath = Path.Combine(mWorkDir, START_PROGRAM_BATCH_FILE_PREFIX + workingDirectory.Key + ".bat");
 
-                    using (var writer = new StreamWriter(new FileStream(batchFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                    using var writer = new StreamWriter(new FileStream(batchFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
+
+                    // Note that clsGlyQIqRunner expects this batch file to be in a specific format:
+                    // GlyQIQProgramPath "WorkingDirectoryPath" "DatasetName" "DatasetSuffix" "TargetsFileName" "ParamFileName"
+                    //                   "WorkingParametersFolderPath" "LockFileName" "ResultsFolderPath" "CoreNumber"
+                    //
+                    // It will read and parse the batch file to determine the TargetsFile name and folder path so that it can cache the target code values
+                    // Thus, if you change this code, also update clsGlyQIqRunner
+
+                    writer.Write(clsGlobal.PossiblyQuotePath(progLoc));
+
+                    writer.Write(" " + "\"" + mWorkDir + "\"");
+                    writer.Write(" " + "\"" + DatasetName + "\"");
+                    writer.Write(" " + "\"" + "raw" + "\"");
+
+                    if (!splitTargetFileInfo.TryGetValue(core, out var targetsFile))
                     {
-                        // Note that clsGlyQIqRunner expects this batch file to be in a specific format:
-                        // GlyQIQProgramPath "WorkingDirectoryPath" "DatasetName" "DatasetSuffix" "TargetsFileName" "ParamFileName"
-                        //                   "WorkingParametersFolderPath" "LockFileName" "ResultsFolderPath" "CoreNumber"
-                        //
-                        // It will read and parse the batch file to determine the TargetsFile name and folder path so that it can cache the target code values
-                        // Thus, if you change this code, also update clsGlyQIqRunner
-
-                        writer.Write(clsGlobal.PossiblyQuotePath(progLoc));
-
-                        writer.Write(" " + "\"" + mWorkDir + "\"");
-                        writer.Write(" " + "\"" + DatasetName + "\"");
-                        writer.Write(" " + "\"" + "raw" + "\"");
-
-                        if (!splitTargetFileInfo.TryGetValue(core, out var targetsFile))
-                        {
-                            LogError("Logic error; core " + core + " not found in dictionary splitTargetFileInfo");
-                            return false;
-                        }
-
-                        writer.Write(" " + "\"" + targetsFile.Name + "\"");
-
-                        writer.Write(" " + "\"" + mGlyQIQParams.ConsoleOperatingParametersFileName + "\"");
-
-                        writer.Write(" " + "\"" + workingDirectory.Value.FullName + "\"");
-
-                        writer.Write(" " + "\"" + "Lock_" + core + "\"");
-
-                        writer.Write(" " + "\"" + Path.Combine(mWorkDir, "Results") + "\"");
-
-                        writer.Write(" " + "\"" + core + "\"");
-
-                        writer.WriteLine();
+                        LogError("Logic error; core " + core + " not found in dictionary splitTargetFileInfo");
+                        return false;
                     }
+
+                    writer.Write(" " + "\"" + targetsFile.Name + "\"");
+
+                    writer.Write(" " + "\"" + mGlyQIQParams.ConsoleOperatingParametersFileName + "\"");
+
+                    writer.Write(" " + "\"" + workingDirectory.Value.FullName + "\"");
+
+                    writer.Write(" " + "\"" + "Lock_" + core + "\"");
+
+                    writer.Write(" " + "\"" + Path.Combine(mWorkDir, "Results") + "\"");
+
+                    writer.Write(" " + "\"" + core + "\"");
+
+                    writer.WriteLine();
                 }
 
                 return true;

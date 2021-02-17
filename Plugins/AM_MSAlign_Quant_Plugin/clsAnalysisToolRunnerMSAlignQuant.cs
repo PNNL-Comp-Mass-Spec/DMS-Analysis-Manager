@@ -140,10 +140,9 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                     // Write the console output to a text file
                     clsGlobal.IdleLoop(0.25);
 
-                    using (var writer = new StreamWriter(new FileStream(mCmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
-                    {
-                        writer.WriteLine(mCmdRunner.CachedConsoleOutput);
-                    }
+                    using var writer = new StreamWriter(new FileStream(mCmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
+
+                    writer.WriteLine(mCmdRunner.CachedConsoleOutput);
                 }
 
                 // Parse the console output file one more time to check for errors
@@ -294,29 +293,29 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                     return string.Empty;
                 }
 
-                using (var targetedQuantXmlWriter = new XmlTextWriter(targetedQuantParamFilePath, Encoding.UTF8))
+                using var targetedQuantXmlWriter = new XmlTextWriter(targetedQuantParamFilePath, Encoding.UTF8)
                 {
-                    targetedQuantXmlWriter.Formatting = Formatting.Indented;
-                    targetedQuantXmlWriter.Indentation = 4;
+                    Formatting = Formatting.Indented,
+                    Indentation = 4
+                };
 
-                    targetedQuantXmlWriter.WriteStartDocument();
-                    targetedQuantXmlWriter.WriteStartElement("WorkflowParameters");
+                targetedQuantXmlWriter.WriteStartDocument();
+                targetedQuantXmlWriter.WriteStartElement("WorkflowParameters");
 
-                    WriteXMLSetting(targetedQuantXmlWriter, "CopyRawFileLocal", "false");
-                    WriteXMLSetting(targetedQuantXmlWriter, "DeleteLocalDatasetAfterProcessing", "false");
-                    WriteXMLSetting(targetedQuantXmlWriter, "FileContainingDatasetPaths", "");
-                    WriteXMLSetting(targetedQuantXmlWriter, "FolderPathForCopiedRawDataset", "");
-                    WriteXMLSetting(targetedQuantXmlWriter, "LoggingFolder", mWorkDir);
-                    WriteXMLSetting(targetedQuantXmlWriter, "TargetsFilePath", Path.Combine(mWorkDir, psmResultsFileName));
-                    WriteXMLSetting(targetedQuantXmlWriter, "TargetType", "LcmsFeature");
-                    WriteXMLSetting(targetedQuantXmlWriter, "ResultsFolder", mWorkDir);
-                    WriteXMLSetting(targetedQuantXmlWriter, "WorkflowParameterFile", Path.Combine(mWorkDir, workflowParamFileName));
-                    WriteXMLSetting(targetedQuantXmlWriter, "WorkflowType", "TopDownTargetedWorkflowExecutor1");
+                WriteXMLSetting(targetedQuantXmlWriter, "CopyRawFileLocal", "false");
+                WriteXMLSetting(targetedQuantXmlWriter, "DeleteLocalDatasetAfterProcessing", "false");
+                WriteXMLSetting(targetedQuantXmlWriter, "FileContainingDatasetPaths", "");
+                WriteXMLSetting(targetedQuantXmlWriter, "FolderPathForCopiedRawDataset", "");
+                WriteXMLSetting(targetedQuantXmlWriter, "LoggingFolder", mWorkDir);
+                WriteXMLSetting(targetedQuantXmlWriter, "TargetsFilePath", Path.Combine(mWorkDir, psmResultsFileName));
+                WriteXMLSetting(targetedQuantXmlWriter, "TargetType", "LcmsFeature");
+                WriteXMLSetting(targetedQuantXmlWriter, "ResultsFolder", mWorkDir);
+                WriteXMLSetting(targetedQuantXmlWriter, "WorkflowParameterFile", Path.Combine(mWorkDir, workflowParamFileName));
+                WriteXMLSetting(targetedQuantXmlWriter, "WorkflowType", "TopDownTargetedWorkflowExecutor1");
 
-                    targetedQuantXmlWriter.WriteEndElement();    // WorkflowParameters
+                targetedQuantXmlWriter.WriteEndElement();    // WorkflowParameters
 
-                    targetedQuantXmlWriter.WriteEndDocument();
-                }
+                targetedQuantXmlWriter.WriteEndDocument();
             }
             catch (Exception ex)
             {

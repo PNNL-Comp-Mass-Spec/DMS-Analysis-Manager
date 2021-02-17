@@ -286,25 +286,24 @@ namespace AnalysisManagerDtaSplitPlugIn
                 }
 
                 // Open the input file
-                using (var reader = new StreamReader(new FileStream(sourceFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                using var reader = new StreamReader(new FileStream(sourceFilePath, FileMode.Open, FileAccess.Read, FileShare.Read));
+
+                while (!reader.EndOfStream)
                 {
-                    while (!reader.EndOfStream)
-                    {
-                        var dataLine = reader.ReadLine();
-                        if (string.IsNullOrWhiteSpace(dataLine))
-                            continue;
+                    var dataLine = reader.ReadLine();
+                    if (string.IsNullOrWhiteSpace(dataLine))
+                        continue;
 
-                        var splitMatch = r_FileSeparator.Match(dataLine);
-                        if (splitMatch.Success)
-                        {
-                            spectraCount++;
-                        }
-                    }
-
-                    if (mDebugLevel >= 1)
+                    var splitMatch = r_FileSeparator.Match(dataLine);
+                    if (splitMatch.Success)
                     {
-                        LogDebug("Spectrum count in source _Dta.txt file: " + spectraCount);
+                        spectraCount++;
                     }
+                }
+
+                if (mDebugLevel >= 1)
+                {
+                    LogDebug("Spectrum count in source _Dta.txt file: " + spectraCount);
                 }
             }
             catch (Exception ex)

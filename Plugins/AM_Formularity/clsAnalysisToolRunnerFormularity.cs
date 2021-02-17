@@ -514,54 +514,53 @@ namespace AnalysisManagerFormularityPlugin
                     LogDebug("Parsing file " + consoleOutputFilePath);
                 }
 
-                using (var reader = new StreamReader(new FileStream(consoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using var reader = new StreamReader(new FileStream(consoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+                while (!reader.EndOfStream)
                 {
-                    while (!reader.EndOfStream)
+                    var dataLine = reader.ReadLine();
+
+                    if (string.IsNullOrWhiteSpace(dataLine))
                     {
-                        var dataLine = reader.ReadLine();
+                        continue;
+                    }
 
-                        if (string.IsNullOrWhiteSpace(dataLine))
-                        {
-                            continue;
-                        }
+                    // Check for "Warning: no data points found in FileName"
+                    if (dataLine.StartsWith("Warning", StringComparison.OrdinalIgnoreCase) && dataLine.IndexOf("no data points found", StringComparison.OrdinalIgnoreCase) >= 0)
+                    {
+                        fileCountNoPeaks++;
+                        continue;
+                    }
 
-                        // Check for "Warning: no data points found in FileName"
-                        if (dataLine.StartsWith("Warning", StringComparison.OrdinalIgnoreCase) && dataLine.IndexOf("no data points found", StringComparison.OrdinalIgnoreCase) >= 0)
-                        {
-                            fileCountNoPeaks++;
-                            continue;
-                        }
+                    //// Check for "Error: Nothing to align; aborting"
+                    //if (dataLine.StartsWith("Error", StringComparison.OrdinalIgnoreCase) && dataLine.ToLower().Contains("nothing to align"))
+                    //{
+                    //    nothingToAlign = true;
+                    //    mMessage = dataLine;
+                    //    continue;
+                    //}
 
-                        //// Check for "Error: Nothing to align; aborting"
-                        //if (dataLine.StartsWith("Error", StringComparison.OrdinalIgnoreCase) && dataLine.ToLower().Contains("nothing to align"))
-                        //{
-                        //    nothingToAlign = true;
-                        //    mMessage = dataLine;
-                        //    continue;
-                        //}
+                    // Check for Calibration failed; using uncalibrated masses"
+                    if (dataLine.StartsWith("Calibration failed", StringComparison.OrdinalIgnoreCase))
+                    {
+                        calibrationFailed = true;
+                        continue;
+                    }
 
-                        // Check for Calibration failed; using uncalibrated masses"
-                        if (dataLine.StartsWith("Calibration failed", StringComparison.OrdinalIgnoreCase))
-                        {
-                            calibrationFailed = true;
-                            continue;
-                        }
+                    // Look for generic errors
+                    var reMatch = reErrorMessage.Match(dataLine);
 
-                        // Look for generic errors
-                        var reMatch = reErrorMessage.Match(dataLine);
-
-                        if (reMatch.Success)
-                        {
-                            // Store this error message, plus any remaining console output lines
-                            mMessage = reMatch.Groups["ErrorMessage"].Value;
-                            StoreConsoleErrorMessage(reader, dataLine);
-                        }
-                        else if (dataLine.StartsWith("error ", StringComparison.OrdinalIgnoreCase))
-                        {
-                            // Store this error message, plus any remaining console output lines
-                            mMessage = dataLine;
-                            StoreConsoleErrorMessage(reader, dataLine);
-                        }
+                    if (reMatch.Success)
+                    {
+                        // Store this error message, plus any remaining console output lines
+                        mMessage = reMatch.Groups["ErrorMessage"].Value;
+                        StoreConsoleErrorMessage(reader, dataLine);
+                    }
+                    else if (dataLine.StartsWith("error ", StringComparison.OrdinalIgnoreCase))
+                    {
+                        // Store this error message, plus any remaining console output lines
+                        mMessage = dataLine;
+                        StoreConsoleErrorMessage(reader, dataLine);
                     }
                 }
             }
@@ -799,10 +798,9 @@ namespace AnalysisManagerFormularityPlugin
                 // Write the console output to a text file
                 clsGlobal.IdleLoop(0.25);
 
-                using (var writer = new StreamWriter(new FileStream(cmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
-                {
-                    writer.WriteLine(cmdRunner.CachedConsoleOutput);
-                }
+                using var writer = new StreamWriter(new FileStream(cmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
+
+                writer.WriteLine(cmdRunner.CachedConsoleOutput);
             }
 
             // Parse the console output file to look for errors

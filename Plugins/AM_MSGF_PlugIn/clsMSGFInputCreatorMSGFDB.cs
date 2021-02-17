@@ -71,34 +71,31 @@ namespace AnalysisManagerMSGFPlugin
                 }
 
                 // Open the file (no need to read the Mods and Seq Info since we're not actually running MSGF)
-                using (var reader = new clsPHRPReader(sourceFilePath, resultType, startupOptions))
+                using var reader = new clsPHRPReader(sourceFilePath, resultType, startupOptions);
+                RegisterEvents(reader);
+
+                reader.SkipDuplicatePSMs = false;
+
+                // Define the path to write the first-hits MSGF results to
+                var mSGFFilePath = Path.Combine(mWorkDir, Path.GetFileNameWithoutExtension(sourceFilePath) + MSGF_RESULT_FILENAME_SUFFIX);
+
+                // Create the output file
+                using var writer = new StreamWriter(new FileStream(mSGFFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
+
+                // Write out the headers to the writer
+                WriteMSGFResultsHeaders(writer);
+
+                while (reader.MoveNext())
                 {
-                    RegisterEvents(reader);
+                    var currentPSM = reader.CurrentPSM;
 
-                    reader.SkipDuplicatePSMs = false;
+                    // Converting MODa/MODPlus probability to a fake Spectral Probability using 1 - probability
+                    var probability = currentPSM.GetScoreDbl(probabilityColumnName, 0);
+                    var probabilityValue = (1 - probability).ToString("0.0000");
 
-                    // Define the path to write the first-hits MSGF results to
-                    var mSGFFilePath = Path.Combine(mWorkDir, Path.GetFileNameWithoutExtension(sourceFilePath) + MSGF_RESULT_FILENAME_SUFFIX);
-
-                    // Create the output file
-                    using (var writer = new StreamWriter(new FileStream(mSGFFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
-                    {
-                        // Write out the headers to the writer
-                        WriteMSGFResultsHeaders(writer);
-
-                        while (reader.MoveNext())
-                        {
-                            var currentPSM = reader.CurrentPSM;
-
-                            // Converting MODa/MODPlus probability to a fake Spectral Probability using 1 - probability
-                            var probability = currentPSM.GetScoreDbl(probabilityColumnName, 0);
-                            var probabilityValue = (1 - probability).ToString("0.0000");
-
-                            // currentPSM.MSGFSpecProb comes from column Probability
-                            writer.WriteLine(currentPSM.ResultID + "\t" + currentPSM.ScanNumber + "\t" + currentPSM.Charge + "\t" + currentPSM.ProteinFirst + "\t" +
-                                             currentPSM.Peptide + "\t" + probabilityValue + "\t" + string.Empty);
-                        }
-                    }
+                    // currentPSM.MSGFSpecProb comes from column Probability
+                    writer.WriteLine(currentPSM.ResultID + "\t" + currentPSM.ScanNumber + "\t" + currentPSM.Charge + "\t" + currentPSM.ProteinFirst + "\t" +
+                                     currentPSM.Peptide + "\t" + probabilityValue + "\t" + string.Empty);
                 }
             }
             catch (Exception ex)
@@ -133,31 +130,28 @@ namespace AnalysisManagerMSGFPlugin
                 var startupOptions = GetMinimalMemoryPHRPStartupOptions();
 
                 // Open the file (no need to read the Mods and Seq Info since we're not actually running MSGF)
-                using (var reader = new clsPHRPReader(sourceFilePath, clsPHRPReader.PeptideHitResultTypes.MSGFPlus, startupOptions))
+                using var reader = new clsPHRPReader(sourceFilePath, clsPHRPReader.PeptideHitResultTypes.MSGFPlus, startupOptions);
+                RegisterEvents(reader);
+
+                reader.SkipDuplicatePSMs = false;
+
+                // Define the path to write the first-hits MSGF results to
+                var mSGFFilePath = Path.Combine(mWorkDir, Path.GetFileNameWithoutExtension(sourceFilePath) + MSGF_RESULT_FILENAME_SUFFIX);
+
+                // Create the output file
+                using var writer = new StreamWriter(new FileStream(mSGFFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
+
+                // Write out the headers
+                WriteMSGFResultsHeaders(writer);
+
+                while (reader.MoveNext())
                 {
-                    RegisterEvents(reader);
+                    var currentPSM = reader.CurrentPSM;
 
-                    reader.SkipDuplicatePSMs = false;
-
-                    // Define the path to write the first-hits MSGF results to
-                    var mSGFFilePath = Path.Combine(mWorkDir, Path.GetFileNameWithoutExtension(sourceFilePath) + MSGF_RESULT_FILENAME_SUFFIX);
-
-                    // Create the output file
-                    using (var writer = new StreamWriter(new FileStream(mSGFFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
-                    {
-                        // Write out the headers
-                        WriteMSGFResultsHeaders(writer);
-
-                        while (reader.MoveNext())
-                        {
-                            var currentPSM = reader.CurrentPSM;
-
-                            // currentPSM.MSGFSpecEValue comes from column MSGFDB_SpecProb   if MS-GFDB
-                            //                    it comes from column MSGFDB_SpecEValue if MS-GF+
-                            writer.WriteLine(currentPSM.ResultID + "\t" + currentPSM.ScanNumber + "\t" + currentPSM.Charge + "\t" + currentPSM.ProteinFirst + "\t" +
-                                             currentPSM.Peptide + "\t" + currentPSM.MSGFSpecEValue + "\t" + string.Empty);
-                        }
-                    }
+                    // currentPSM.MSGFSpecEValue comes from column MSGFDB_SpecProb   if MS-GFDB
+                    //                    it comes from column MSGFDB_SpecEValue if MS-GF+
+                    writer.WriteLine(currentPSM.ResultID + "\t" + currentPSM.ScanNumber + "\t" + currentPSM.Charge + "\t" + currentPSM.ProteinFirst + "\t" +
+                                     currentPSM.Peptide + "\t" + currentPSM.MSGFSpecEValue + "\t" + string.Empty);
                 }
             }
             catch (Exception ex)

@@ -166,10 +166,9 @@ namespace AnalysisManagerUIMFtoMassHunterPlugin
                 // Write the console output to a text file
                 clsGlobal.IdleLoop(0.25);
 
-                using (var writer = new StreamWriter(new FileStream(cmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
-                {
-                    writer.WriteLine(cmdRunner.CachedConsoleOutput);
-                }
+                using var writer = new StreamWriter(new FileStream(cmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
+
+                writer.WriteLine(cmdRunner.CachedConsoleOutput);
             }
 
             if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))
@@ -232,21 +231,20 @@ namespace AnalysisManagerUIMFtoMassHunterPlugin
                     LogDebug("Parsing file " + strConsoleOutputFilePath);
                 }
 
-                using (var reader = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using var reader = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+                while (!reader.EndOfStream)
                 {
-                    while (!reader.EndOfStream)
+                    var dataLine = reader.ReadLine();
+
+                    if (string.IsNullOrWhiteSpace(dataLine))
                     {
-                        var dataLine = reader.ReadLine();
+                        continue;
+                    }
 
-                        if (string.IsNullOrWhiteSpace(dataLine))
-                        {
-                            continue;
-                        }
-
-                        if (dataLine.StartsWith("error ", StringComparison.OrdinalIgnoreCase))
-                        {
-                            StoreConsoleErrorMessage(reader, dataLine);
-                        }
+                    if (dataLine.StartsWith("error ", StringComparison.OrdinalIgnoreCase))
+                    {
+                        StoreConsoleErrorMessage(reader, dataLine);
                     }
                 }
             }

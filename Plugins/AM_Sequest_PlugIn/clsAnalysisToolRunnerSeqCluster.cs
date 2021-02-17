@@ -911,35 +911,34 @@ namespace AnalysisManagerSequestPlugin
                     if (processAllRemainingFiles || DateTime.UtcNow.Subtract(entry.Value).TotalSeconds >= OUT_FILE_APPEND_HOLDOFF_SECONDS)
                     {
                         // Open the _out.txt.tmp file
-                        using (var writer = new StreamWriter(new FileStream(mTempConcatenatedOutFilePath, FileMode.Append, FileAccess.Write, FileShare.Read)))
+                        using var writer = new StreamWriter(new FileStream(mTempConcatenatedOutFilePath, FileMode.Append, FileAccess.Write, FileShare.Read));
+
+                        itemsProcessed = 0;
+
+                        while (mOutFileCandidates.Count > 0 && appendSuccess &&
+                               (processAllRemainingFiles ||
+                                DateTime.UtcNow.Subtract(entry.Value).TotalSeconds >= OUT_FILE_APPEND_HOLDOFF_SECONDS))
                         {
-                            itemsProcessed = 0;
+                            // Entry is old enough (or processAllRemainingFiles=True); pop it off the queue
+                            entry = mOutFileCandidates.Dequeue();
+                            itemsProcessed++;
 
-                            while (mOutFileCandidates.Count > 0 && appendSuccess &&
-                                   (processAllRemainingFiles ||
-                                    DateTime.UtcNow.Subtract(entry.Value).TotalSeconds >= OUT_FILE_APPEND_HOLDOFF_SECONDS))
+                            try
                             {
-                                // Entry is old enough (or processAllRemainingFiles=True); pop it off the queue
-                                entry = mOutFileCandidates.Dequeue();
-                                itemsProcessed++;
+                                var outFile = new FileInfo(Path.Combine(mWorkDir, entry.Key));
+                                AppendOutFile(outFile, writer);
+                                mLastOutFileStoreTime = DateTime.UtcNow;
+                                mSequestAppearsStalled = false;
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine("Warning, exception appending out file: " + ex.Message);
+                                appendSuccess = false;
+                            }
 
-                                try
-                                {
-                                    var outFile = new FileInfo(Path.Combine(mWorkDir, entry.Key));
-                                    AppendOutFile(outFile, writer);
-                                    mLastOutFileStoreTime = DateTime.UtcNow;
-                                    mSequestAppearsStalled = false;
-                                }
-                                catch (Exception ex)
-                                {
-                                    Console.WriteLine("Warning, exception appending out file: " + ex.Message);
-                                    appendSuccess = false;
-                                }
-
-                                if (mOutFileCandidates.Count > 0)
-                                {
-                                    entry = mOutFileCandidates.Peek();
-                                }
+                            if (mOutFileCandidates.Count > 0)
+                            {
+                                entry = mOutFileCandidates.Peek();
                             }
                         }
                     }
@@ -1345,19 +1344,18 @@ namespace AnalysisManagerSequestPlugin
 
             try
             {
-                using (var reader = new StreamReader(new FileStream(SeqLogFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using var reader = new StreamReader(new FileStream(SeqLogFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+                while (!reader.EndOfStream)
                 {
-                    while (!reader.EndOfStream)
+                    var dataLine = reader.ReadLine();
+
+                    if (dataLine != null && dataLine.StartsWith("Searched dta file"))
                     {
-                        var dataLine = reader.ReadLine();
-
-                        if (dataLine != null && dataLine.StartsWith("Searched dta file"))
-                        {
-                            dtaCountSearched++;
-                        }
-
-                        sbContents.AppendLine(dataLine);
+                        dtaCountSearched++;
                     }
+
+                    sbContents.AppendLine(dataLine);
                 }
             }
             catch (Exception ex)

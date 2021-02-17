@@ -243,15 +243,14 @@ namespace AnalysisManagerInSpecTPlugIn
         /// Creates a lock file
         /// </summary>
         /// <returns>True if success; false if failure</returns>
-        protected bool CreateLockFile(string strLockFilePath)
+        protected bool CreateLockFile(string lockFilePath)
         {
             try
             {
-                using (var writer = new StreamWriter(strLockFilePath))
-                {
-                    // Add Date and time to the file.
-                    writer.WriteLine(DateTime.Now);
-                }
+                using var writer = new StreamWriter(lockFilePath);
+
+                // Add Date and time to the file.
+                writer.WriteLine(DateTime.Now);
             }
             catch (Exception ex)
             {

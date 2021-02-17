@@ -266,16 +266,15 @@ namespace DTASpectraFileGen
                     OnDebugEvent("Opening .raw file with ThermoRawFileReader.XRawFileIO: " + rawFilePath);
                 }
 
-                using (var reader = new XRawFileIO(rawFilePath))
-                {
-                    var numScans = reader.FileInfo.ScanEnd;
+                using var reader = new XRawFileIO(rawFilePath);
 
-                    if (mDebugLevel >= 2)
-                    {
-                        OnDebugEvent(string.Format("Max scan for {0} is {1:N0}", Path.GetFileName(rawFilePath), numScans));
-                    }
-                    return numScans;
+                var numScans = reader.FileInfo.ScanEnd;
+
+                if (mDebugLevel >= 2)
+                {
+                    OnDebugEvent(string.Format("Max scan for {0} is {1:N0}", Path.GetFileName(rawFilePath), numScans));
                 }
+                return numScans;
             }
             catch (Exception ex)
             {
@@ -674,30 +673,29 @@ namespace DTASpectraFileGen
 
             try
             {
-                using (var reader = new StreamReader(new FileStream(progressFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using var reader = new StreamReader(new FileStream(progressFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+                while (!reader.EndOfStream)
                 {
-                    while (!reader.EndOfStream)
+                    var dataLine = reader.ReadLine();
+                    if (string.IsNullOrWhiteSpace(dataLine))
+                        continue;
+
+                    if (dataLine.StartsWith("Percent complete"))
                     {
-                        var dataLine = reader.ReadLine();
-                        if (string.IsNullOrWhiteSpace(dataLine))
-                            continue;
-
-                        if (dataLine.StartsWith("Percent complete"))
+                        var reMatch = reNumber.Match(dataLine);
+                        if (reMatch.Success)
                         {
-                            var reMatch = reNumber.Match(dataLine);
-                            if (reMatch.Success)
-                            {
-                                float.TryParse(reMatch.Groups[1].Value, out mProgress);
-                            }
+                            float.TryParse(reMatch.Groups[1].Value, out mProgress);
                         }
+                    }
 
-                        if (dataLine.StartsWith("Number of MSn scans processed"))
+                    if (dataLine.StartsWith("Number of MSn scans processed"))
+                    {
+                        var reMatch = reNumber.Match(dataLine);
+                        if (reMatch.Success)
                         {
-                            var reMatch = reNumber.Match(dataLine);
-                            if (reMatch.Success)
-                            {
-                                int.TryParse(reMatch.Groups[1].Value, out mSpectraFileCount);
-                            }
+                            int.TryParse(reMatch.Groups[1].Value, out mSpectraFileCount);
                         }
                     }
                 }

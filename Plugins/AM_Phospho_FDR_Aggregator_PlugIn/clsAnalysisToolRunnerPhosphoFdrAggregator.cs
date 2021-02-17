@@ -285,52 +285,51 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
         {
             try
             {
-                var targetFile = Path.Combine(mWorkDir, ASCORE_CONSOLE_OUTPUT_PREFIX + ".txt");
-                using (var writer = new StreamWriter(new FileStream(targetFile, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                var targetFilePath = Path.Combine(mWorkDir, ASCORE_CONSOLE_OUTPUT_PREFIX + ".txt");
+                using var writer = new StreamWriter(new FileStream(targetFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
+
+                var jobFolderList = GetJobFolderList();
+
+                foreach (var jobFolder in jobFolderList)
                 {
-                    var jobFolderList = GetJobFolderList();
+                    var jobNumber = jobFolder.Key;
 
-                    foreach (var jobFolder in jobFolderList)
+                    var logFiles = jobFolder.Value.GetFiles(ASCORE_CONSOLE_OUTPUT_PREFIX + "*").ToList();
+                    if (logFiles.Count == 0)
                     {
-                        var jobNumber = jobFolder.Key;
+                        continue;
+                    }
 
-                        var logFiles = jobFolder.Value.GetFiles(ASCORE_CONSOLE_OUTPUT_PREFIX + "*").ToList();
-                        if (logFiles.Count == 0)
+                    writer.WriteLine("----------------------------------------------------------");
+                    writer.WriteLine("Job: " + jobNumber);
+
+                    foreach (var logFile in logFiles)
+                    {
+                        // Logfile name should be of the form AScore_ConsoleOutput_syn.txt
+                        // Parse out the tag from it -- in this case "syn"
+                        var fileTypeTag = Path.GetFileNameWithoutExtension(logFile.Name).Substring(ASCORE_CONSOLE_OUTPUT_PREFIX.Length + 1);
+
+                        processingRunTimes.TryGetValue(jobNumber + fileTypeTag, out var runtimeMinutes);
+
+                        using (var reader = new StreamReader(new FileStream(logFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
                         {
-                            continue;
-                        }
-
-                        writer.WriteLine("----------------------------------------------------------");
-                        writer.WriteLine("Job: " + jobNumber);
-
-                        foreach (var logFile in logFiles)
-                        {
-                            // Logfile name should be of the form AScore_ConsoleOutput_syn.txt
-                            // Parse out the tag from it -- in this case "syn"
-                            var fileTypeTag = Path.GetFileNameWithoutExtension(logFile.Name).Substring(ASCORE_CONSOLE_OUTPUT_PREFIX.Length + 1);
-
-                            processingRunTimes.TryGetValue(jobNumber + fileTypeTag, out var runtimeMinutes);
-
-                            using (var reader = new StreamReader(new FileStream(logFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                            while (!reader.EndOfStream)
                             {
-                                while (!reader.EndOfStream)
+                                var dataLine = reader.ReadLine();
+                                if (!string.IsNullOrWhiteSpace(dataLine))
                                 {
-                                    var dataLine = reader.ReadLine();
-                                    if (!string.IsNullOrWhiteSpace(dataLine))
-                                    {
-                                        if (dataLine.StartsWith("Percent Completion"))
-                                            continue;
-                                        if (dataLine.Trim().StartsWith("Skipping PHRP result"))
-                                            continue;
+                                    if (dataLine.StartsWith("Percent Completion"))
+                                        continue;
+                                    if (dataLine.Trim().StartsWith("Skipping PHRP result"))
+                                        continue;
 
-                                        writer.WriteLine(dataLine);
-                                    }
+                                    writer.WriteLine(dataLine);
                                 }
                             }
-
-                            writer.WriteLine("Processing time: " + runtimeMinutes.ToString("0.0") + " minutes");
-                            writer.WriteLine();
                         }
+
+                        writer.WriteLine("Processing time: " + runtimeMinutes.ToString("0.0") + " minutes");
+                        writer.WriteLine();
                     }
                 }
             }
@@ -350,75 +349,73 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
 
             try
             {
-                var targetFile = Path.Combine(mWorkDir, "Concatenated" + fileSuffix);
-                using (var writer = new StreamWriter(new FileStream(targetFile, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                var targetFilePath = Path.Combine(mWorkDir, "Concatenated" + fileSuffix);
+                using var writer = new StreamWriter(new FileStream(targetFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
+
+                var jobFolderList = GetJobFolderList();
+                foreach (var jobFolder in jobFolderList)
                 {
-                    var jobFolderList = GetJobFolderList();
-                    foreach (var jobFolder in jobFolderList)
+                    var jobNumber = jobFolder.Key;
+
+                    var filesToCombine = jobFolder.Value.GetFiles("*" + fileSuffix).ToList();
+
+                    foreach (var fiResultFile in filesToCombine)
                     {
-                        var jobNumber = jobFolder.Key;
+                        currentFile = Path.GetFileName(fiResultFile.FullName);
 
-                        var filesToCombine = jobFolder.Value.GetFiles("*" + fileSuffix).ToList();
+                        using var reader = new StreamReader(new FileStream(fiResultFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read));
 
-                        foreach (var fiResultFile in filesToCombine)
+                        if (reader.EndOfStream)
+                            continue;
+
+                        var headerLine = reader.ReadLine();
+                        if (headerLine == null)
+                            continue;
+
+                        var replaceFirstColumnWithJob = headerLine.StartsWith("job", StringComparison.OrdinalIgnoreCase);
+
+                        if (firstFileProcessed)
                         {
-                            currentFile = Path.GetFileName(fiResultFile.FullName);
-
-                            using (var reader = new StreamReader(new FileStream(fiResultFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                            // Skip this header line
+                        }
+                        else
+                        {
+                            // Write the header line
+                            if (replaceFirstColumnWithJob)
                             {
-                                if (reader.EndOfStream)
-                                    continue;
-
-                                var headerLine = reader.ReadLine();
-                                if (headerLine == null)
-                                    continue;
-
-                                var replaceFirstColumnWithJob = headerLine.StartsWith("job", StringComparison.OrdinalIgnoreCase);
-
-                                if (firstFileProcessed)
-                                {
-                                    // Skip this header line
-                                }
-                                else
-                                {
-                                    // Write the header line
-                                    if (replaceFirstColumnWithJob)
-                                    {
-                                        // The Job column is already present
-                                        writer.WriteLine(headerLine);
-                                    }
-                                    else
-                                    {
-                                        // Add the Job column header
-                                        writer.WriteLine("Job\t" + headerLine);
-                                    }
-
-                                    firstFileProcessed = true;
-                                }
-
-                                while (!reader.EndOfStream)
-                                {
-                                    var dataLine = reader.ReadLine();
-                                    if (string.IsNullOrWhiteSpace(dataLine))
-                                        continue;
-
-                                    if (replaceFirstColumnWithJob)
-                                    {
-                                        // Remove the first column from dataLine
-                                        var charIndex = dataLine.IndexOf('\t');
-                                        if (charIndex >= 0)
-                                        {
-                                            writer.WriteLine(jobNumber + "\t" + dataLine.Substring(charIndex + 1));
-                                        }
-                                        continue;
-                                    }
-
-                                    writer.WriteLine(jobNumber + "\t" + dataLine);
-                                }
+                                // The Job column is already present
+                                writer.WriteLine(headerLine);
                             }
-                        }    // foreach fiResultFile
-                    }    // foreach jobFolder
-                }   // using swConcatenatedFile
+                            else
+                            {
+                                // Add the Job column header
+                                writer.WriteLine("Job\t" + headerLine);
+                            }
+
+                            firstFileProcessed = true;
+                        }
+
+                        while (!reader.EndOfStream)
+                        {
+                            var dataLine = reader.ReadLine();
+                            if (string.IsNullOrWhiteSpace(dataLine))
+                                continue;
+
+                            if (replaceFirstColumnWithJob)
+                            {
+                                // Remove the first column from dataLine
+                                var charIndex = dataLine.IndexOf('\t');
+                                if (charIndex >= 0)
+                                {
+                                    writer.WriteLine(jobNumber + "\t" + dataLine.Substring(charIndex + 1));
+                                }
+                                continue;
+                            }
+
+                            writer.WriteLine(jobNumber + "\t" + dataLine);
+                        }
+                    }    // foreach fiResultFile
+                }    // foreach jobFolder
 
                 return true;
             }
@@ -434,14 +431,13 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
         {
             var outputFilePath = Path.Combine(mWorkDir, "Job_to_Dataset_Map.txt");
 
-            using (var writer = new StreamWriter(new FileStream(outputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
-            {
-                writer.WriteLine("Job\t" + "Tool\t" + "Dataset");
+            using var writer = new StreamWriter(new FileStream(outputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
 
-                foreach (var job in jobsProcessed)
-                {
-                    writer.WriteLine(job.Job + "\t" + job.ToolName + "\t" + job.Dataset);
-                }
+            writer.WriteLine("Job\t" + "Tool\t" + "Dataset");
+
+            foreach (var job in jobsProcessed)
+            {
+                writer.WriteLine(job.Job + "\t" + job.ToolName + "\t" + job.Dataset);
             }
         }
 
@@ -1030,10 +1026,9 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                 // Write the console output to a text file
                 clsGlobal.IdleLoop(0.25);
 
-                using (var writer = new StreamWriter(new FileStream(mCmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
-                {
-                    writer.WriteLine(mCmdRunner.CachedConsoleOutput);
-                }
+                using var writer = new StreamWriter(new FileStream(mCmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
+
+                writer.WriteLine(mCmdRunner.CachedConsoleOutput);
             }
 
             if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))

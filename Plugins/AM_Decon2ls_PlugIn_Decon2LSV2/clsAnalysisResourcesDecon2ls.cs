@@ -146,24 +146,23 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
             try
             {
-                using (var paramFileReader = new FileStream(paramFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
+                using var paramFileReader = new FileStream(paramFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read);
+
+                // Open the file and parse the XML
+                var paramFileXml = new XmlDocument();
+                paramFileXml.Load(paramFileReader);
+
+                // Look for the XML: <ProcessMSMS></ProcessMSMS>
+                var node = paramFileXml.SelectSingleNode("//parameters/Miscellaneous/ProcessMSMS");
+
+                if (node != null && node.HasChildNodes)
                 {
-                    // Open the file and parse the XML
-                    var paramFileXml = new XmlDocument();
-                    paramFileXml.Load(paramFileReader);
-
-                    // Look for the XML: <ProcessMSMS></ProcessMSMS>
-                    var node = paramFileXml.SelectSingleNode("//parameters/Miscellaneous/ProcessMSMS");
-
-                    if (node != null && node.HasChildNodes)
+                    // Match found; read the value
+                    if (!bool.TryParse(node.ChildNodes[0].Value, out processMSMS))
                     {
-                        // Match found; read the value
-                        if (!bool.TryParse(node.ChildNodes[0].Value, out processMSMS))
-                        {
-                            // Parameter file formatting error
-                            LogError("Invalid entry for ProcessMSMS in the parameter file; should be True or False");
-                            return false;
-                        }
+                        // Parameter file formatting error
+                        LogError("Invalid entry for ProcessMSMS in the parameter file; should be True or False");
+                        return false;
                     }
                 }
 
@@ -282,54 +281,52 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
             try
             {
-                using (var rawFileReader = new XRawFileIO())
+                using var rawFileReader = new XRawFileIO();
+                RegisterEvents(rawFileReader);
+
+                if (!rawFileReader.OpenRawFile(datasetFilePath))
                 {
-                    RegisterEvents(rawFileReader);
-
-                    if (!rawFileReader.OpenRawFile(datasetFilePath))
-                    {
-                        LogError("Error opening Thermo raw file " + Path.GetFileName(datasetFilePath));
-                        return false;
-                    }
-
-                    var lastProgress = DateTime.UtcNow;
-                    var lastProgressLog = DateTime.UtcNow;
-                    var scanCount = rawFileReader.FileInfo.ScanEnd - rawFileReader.FileInfo.ScanStart + 1;
-
-                    for (var scanNumber = rawFileReader.FileInfo.ScanStart; scanNumber <= rawFileReader.FileInfo.ScanEnd; scanNumber++)
-                    {
-                        var msLevel = rawFileReader.GetMSLevel(scanNumber);
-                        if (msLevel == 1)
-                        {
-                            countMs1++;
-                        }
-                        else if (msLevel > 1)
-                        {
-                            countMSn++;
-                        }
-
-                        var logMessage = string.Format("Examining scan levels in .raw file, scan {0} / {1}", scanNumber, scanCount);
-
-                        if (DateTime.UtcNow.Subtract(lastProgress).TotalSeconds >= 5)
-                        {
-                            // Show progress at the console, but do not write to the log file
-                            LogDebug(logMessage, 10);
-                            lastProgress = DateTime.UtcNow;
-                        }
-
-                        if (DateTime.UtcNow.Subtract(lastProgressLog).TotalSeconds >= 60)
-                        {
-                            lastProgressLog = DateTime.UtcNow;
-                            LogDebug(logMessage, 1);
-
-                            // Note: do not multiply by 100 since we want to call UpdateAndWrite with a number between 0 and 1 (meaning 0 to 1%)
-                            var percentComplete = scanNumber / (float)scanCount;
-                            mStatusTools.UpdateAndWrite(percentComplete);
-                        }
-                    }
-
-                    rawFileReader.CloseRawFile();
+                    LogError("Error opening Thermo raw file " + Path.GetFileName(datasetFilePath));
+                    return false;
                 }
+
+                var lastProgress = DateTime.UtcNow;
+                var lastProgressLog = DateTime.UtcNow;
+                var scanCount = rawFileReader.FileInfo.ScanEnd - rawFileReader.FileInfo.ScanStart + 1;
+
+                for (var scanNumber = rawFileReader.FileInfo.ScanStart; scanNumber <= rawFileReader.FileInfo.ScanEnd; scanNumber++)
+                {
+                    var msLevel = rawFileReader.GetMSLevel(scanNumber);
+                    if (msLevel == 1)
+                    {
+                        countMs1++;
+                    }
+                    else if (msLevel > 1)
+                    {
+                        countMSn++;
+                    }
+
+                    var logMessage = string.Format("Examining scan levels in .raw file, scan {0} / {1}", scanNumber, scanCount);
+
+                    if (DateTime.UtcNow.Subtract(lastProgress).TotalSeconds >= 5)
+                    {
+                        // Show progress at the console, but do not write to the log file
+                        LogDebug(logMessage, 10);
+                        lastProgress = DateTime.UtcNow;
+                    }
+
+                    if (DateTime.UtcNow.Subtract(lastProgressLog).TotalSeconds >= 60)
+                    {
+                        lastProgressLog = DateTime.UtcNow;
+                        LogDebug(logMessage, 1);
+
+                        // Note: do not multiply by 100 since we want to call UpdateAndWrite with a number between 0 and 1 (meaning 0 to 1%)
+                        var percentComplete = scanNumber / (float)scanCount;
+                        mStatusTools.UpdateAndWrite(percentComplete);
+                    }
+                }
+
+                rawFileReader.CloseRawFile();
 
                 return true;
             }
@@ -348,15 +345,14 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             try
             {
                 // ReSharper disable once RedundantNameQualifier
-                using (var reader = new UIMFLibrary.DataReader(datasetFilePath))
-                {
-                    var frameList = reader.GetMasterFrameList();
+                using var reader = new UIMFLibrary.DataReader(datasetFilePath);
 
-                    var query = from item in frameList where item.Value == UIMFData.FrameType.MS1 select item;
-                    countMs1 = query.Count();
+                var frameList = reader.GetMasterFrameList();
 
-                    countMSn = frameList.Count - countMs1;
-                }
+                var query = from item in frameList where item.Value == UIMFData.FrameType.MS1 select item;
+                countMs1 = query.Count();
+
+                countMSn = frameList.Count - countMs1;
 
                 return true;
             }
@@ -396,17 +392,16 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 try
                 {
                     // Now write out the XML to paramFileTemp
-                    using (var updatedParamFileWriter = new StreamWriter(new FileStream(deconParamFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
-                    {
-                        var formattedXmlWriter = new XmlTextWriter(updatedParamFileWriter)
-                        {
-                            Indentation = 1,
-                            IndentChar = '\t',
-                            Formatting = Formatting.Indented
-                        };
+                    using var updatedParamFileWriter = new StreamWriter(new FileStream(deconParamFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
 
-                        updatedXmlDoc.WriteContentTo(formattedXmlWriter);
-                    }
+                    var formattedXmlWriter = new XmlTextWriter(updatedParamFileWriter)
+                    {
+                        Indentation = 1,
+                        IndentChar = '\t',
+                        Formatting = Formatting.Indented
+                    };
+
+                    updatedXmlDoc.WriteContentTo(formattedXmlWriter);
 
                     mJobParams.AddAdditionalParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_PROCESSMSMS_AUTO_ENABLED, true);
                     return true;

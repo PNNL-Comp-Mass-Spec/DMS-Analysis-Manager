@@ -470,10 +470,9 @@ namespace AnalysisManagerMSGFPlugin
             try
             {
                 var filePath = Path.Combine(mWorkDir, resultToSeqMapFile);
-                using (var writer = new StreamWriter(new FileStream(filePath, FileMode.CreateNew, FileAccess.Write, FileShare.Read)))
-                {
-                    writer.WriteLine("Result_ID\tUnique_Seq_ID");
-                }
+                using var writer = new StreamWriter(new FileStream(filePath, FileMode.CreateNew, FileAccess.Write, FileShare.Read));
+
+                writer.WriteLine("Result_ID\tUnique_Seq_ID");
             }
             catch (Exception ex)
             {
@@ -490,10 +489,9 @@ namespace AnalysisManagerMSGFPlugin
             try
             {
                 var filePath = Path.Combine(mWorkDir, FileName);
-                using (var writer = new StreamWriter(new FileStream(filePath, FileMode.CreateNew, FileAccess.Write, FileShare.Read)))
-                {
-                    writer.WriteLine("Unique_Seq_ID\tCleavage_State\tTerminus_State\tProtein_Name\tProtein_Expectation_Value_Log(e)\tProtein_Intensity_Log(I)");
-                }
+                using var writer = new StreamWriter(new FileStream(filePath, FileMode.CreateNew, FileAccess.Write, FileShare.Read));
+
+                writer.WriteLine("Unique_Seq_ID\tCleavage_State\tTerminus_State\tProtein_Name\tProtein_Expectation_Value_Log(e)\tProtein_Intensity_Log(I)");
             }
             catch (Exception ex)
             {

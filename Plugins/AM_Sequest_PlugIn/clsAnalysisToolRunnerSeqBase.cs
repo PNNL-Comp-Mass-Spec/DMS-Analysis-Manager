@@ -362,20 +362,19 @@ namespace AnalysisManagerSequestPlugin
             {
                 var reFileSeparator = new Regex(REGEX_FILE_SEPARATOR, RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
-                using (var reader = new StreamReader(new FileStream(concatenatedTempFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                using var reader = new StreamReader(new FileStream(concatenatedTempFilePath, FileMode.Open, FileAccess.Read, FileShare.Read));
+
+                while (!reader.EndOfStream)
                 {
-                    while (!reader.EndOfStream)
+                    var dataLine = reader.ReadLine();
+                    if (string.IsNullOrWhiteSpace(dataLine))
+                        continue;
+
+                    var fileSepMatch = reFileSeparator.Match(dataLine);
+
+                    if (fileSepMatch.Success)
                     {
-                        var dataLine = reader.ReadLine();
-                        if (string.IsNullOrWhiteSpace(dataLine))
-                            continue;
-
-                        var fileSepMatch = reFileSeparator.Match(dataLine);
-
-                        if (fileSepMatch.Success)
-                        {
-                            dtaFilesToSkip.Add(Path.ChangeExtension(fileSepMatch.Groups["filename"].Value, "dta"));
-                        }
+                        dtaFilesToSkip.Add(Path.ChangeExtension(fileSepMatch.Groups["filename"].Value, "dta"));
                     }
                 }
             }
@@ -752,27 +751,26 @@ namespace AnalysisManagerSequestPlugin
             {
                 if (!string.IsNullOrEmpty(outFilePath))
                 {
-                    using (var reader = new StreamReader(new FileStream(outFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                    using var reader = new StreamReader(new FileStream(outFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+                    while (!reader.EndOfStream)
                     {
-                        while (!reader.EndOfStream)
+                        var dataLine = reader.ReadLine();
+                        if (string.IsNullOrEmpty(dataLine))
+                            continue;
+
+                        var dataLineTrimmed = dataLine.Trim();
+                        if (!dataLineTrimmed.StartsWith("TurboSEQUEST", StringComparison.OrdinalIgnoreCase))
+                            continue;
+
+                        toolVersionInfo = dataLineTrimmed;
+
+                        if (mDebugLevel >= 2)
                         {
-                            var dataLine = reader.ReadLine();
-                            if (string.IsNullOrEmpty(dataLine))
-                                continue;
-
-                            var dataLineTrimmed = dataLine.Trim();
-                            if (!dataLineTrimmed.StartsWith("TurboSEQUEST", StringComparison.OrdinalIgnoreCase))
-                                continue;
-
-                            toolVersionInfo = dataLineTrimmed;
-
-                            if (mDebugLevel >= 2)
-                            {
-                                LogDebug("Sequest Version: " + toolVersionInfo);
-                            }
-
-                            break;
+                            LogDebug("Sequest Version: " + toolVersionInfo);
                         }
+
+                        break;
                     }
                 }
             }

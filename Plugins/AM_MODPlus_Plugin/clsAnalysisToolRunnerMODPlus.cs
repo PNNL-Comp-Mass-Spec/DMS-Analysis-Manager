@@ -339,12 +339,12 @@ namespace AnalysisManagerMODPlusPlugin
                 var paramFileName = Path.GetFileNameWithoutExtension(fiMasterParamFile.Name) + "_Part" + threadNumber + ".xml";
                 var paramFilePath = Path.Combine(fiMasterParamFile.Directory.FullName, paramFileName);
 
-                using (var objXmlWriter = new XmlTextWriter(new FileStream(paramFilePath, FileMode.Create, FileAccess.Write, FileShare.Read), new UTF8Encoding(false)))
+                using (var writer = new XmlTextWriter(new FileStream(paramFilePath, FileMode.Create, FileAccess.Write, FileShare.Read), new UTF8Encoding(false)))
                 {
-                    objXmlWriter.Formatting = Formatting.Indented;
-                    objXmlWriter.Indentation = 4;
+                    writer.Formatting = Formatting.Indented;
+                    writer.Indentation = 4;
 
-                    doc.WriteTo(objXmlWriter);
+                    doc.WriteTo(writer);
                 }
 
                 paramFileList.Add(threadNumber, paramFilePath);

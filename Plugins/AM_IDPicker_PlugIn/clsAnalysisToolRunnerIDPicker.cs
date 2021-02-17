@@ -459,10 +459,9 @@ namespace AnalysisManagerIDPickerPlugIn
                 var datasetLabel = "PNNL/" + mDatasetName.Replace(" ", "_");
 
                 // Create the Assemble.txt file
-                using (var writer = new StreamWriter(new FileStream(assembleFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
-                {
-                    writer.WriteLine(datasetLabel + " " + Path.GetFileName(mIdpXMLFilePath));
-                }
+                using var writer = new StreamWriter(new FileStream(assembleFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
+
+                writer.WriteLine(datasetLabel + " " + Path.GetFileName(mIdpXMLFilePath));
             }
             catch (Exception ex)
             {
@@ -692,57 +691,56 @@ namespace AnalysisManagerIDPickerPlugIn
 
                 var parameterFilePath = Path.Combine(mWorkDir, mIDPickerParamFileNameLocal);
 
-                using (var reader = new StreamReader(new FileStream(parameterFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                using var reader = new StreamReader(new FileStream(parameterFilePath, FileMode.Open, FileAccess.Read, FileShare.Read));
+
+                while (!reader.EndOfStream)
                 {
-                    while (!reader.EndOfStream)
+                    var dataLine = reader.ReadLine();
+
+                    if (string.IsNullOrWhiteSpace(dataLine))
                     {
-                        var dataLine = reader.ReadLine();
+                        continue;
+                    }
 
-                        if (string.IsNullOrWhiteSpace(dataLine))
+                    var trimmedLine = dataLine.Trim();
+
+                    if (trimmedLine.StartsWith("#") || !trimmedLine.Contains('='))
+                    {
+                        continue;
+                    }
+
+                    var key = string.Empty;
+                    var value = string.Empty;
+
+                    var charIndex = trimmedLine.IndexOf('=');
+                    if (charIndex > 0)
+                    {
+                        key = trimmedLine.Substring(0, charIndex).Trim();
+                        if (charIndex < trimmedLine.Length - 1)
                         {
-                            continue;
+                            value = trimmedLine.Substring(charIndex + 1).Trim();
                         }
-
-                        var trimmedLine = dataLine.Trim();
-
-                        if (trimmedLine.StartsWith("#") || !trimmedLine.Contains('='))
+                        else
                         {
-                            continue;
+                            value = string.Empty;
                         }
+                    }
 
-                        var key = string.Empty;
-                        var value = string.Empty;
+                    charIndex = value.IndexOf('#');
+                    if (charIndex >= 0)
+                    {
+                        value = value.Substring(0, charIndex);
+                    }
 
-                        var charIndex = trimmedLine.IndexOf('=');
-                        if (charIndex > 0)
+                    if (!string.IsNullOrWhiteSpace(key))
+                    {
+                        if (mIDPickerOptions.ContainsKey(key))
                         {
-                            key = trimmedLine.Substring(0, charIndex).Trim();
-                            if (charIndex < trimmedLine.Length - 1)
-                            {
-                                value = trimmedLine.Substring(charIndex + 1).Trim();
-                            }
-                            else
-                            {
-                                value = string.Empty;
-                            }
+                            LogWarning("Ignoring duplicate parameter file option '" + key + "' in file " + mIDPickerParamFileNameLocal);
                         }
-
-                        charIndex = value.IndexOf('#');
-                        if (charIndex >= 0)
+                        else
                         {
-                            value = value.Substring(0, charIndex);
-                        }
-
-                        if (!string.IsNullOrWhiteSpace(key))
-                        {
-                            if (mIDPickerOptions.ContainsKey(key))
-                            {
-                                LogWarning("Ignoring duplicate parameter file option '" + key + "' in file " + mIDPickerParamFileNameLocal);
-                            }
-                            else
-                            {
-                                mIDPickerOptions.Add(key, value.Trim());
-                            }
+                            mIDPickerOptions.Add(key, value.Trim());
                         }
                     }
                 }
@@ -772,32 +770,30 @@ namespace AnalysisManagerIDPickerPlugIn
                     LogDebug("Looking for decoy proteins in the MSGF+ synopsis file");
                 }
 
-                using (var reader = new clsPHRPReader(synFilePath, resultType, false, false, false))
+                using var reader = new clsPHRPReader(synFilePath, resultType, false, false, false);
+                RegisterEvents(reader);
+
+                while (reader.MoveNext())
                 {
-                    RegisterEvents(reader);
-
-                    while (reader.MoveNext())
+                    var found = false;
+                    foreach (var prefixToCheck in prefixesToCheck)
                     {
-                        var found = false;
-                        foreach (var prefixToCheck in prefixesToCheck)
+                        if (reader.CurrentPSM.ProteinFirst.ToUpper().StartsWith(prefixToCheck))
                         {
-                            if (reader.CurrentPSM.ProteinFirst.ToUpper().StartsWith(prefixToCheck))
+                            decoyPrefix = reader.CurrentPSM.ProteinFirst.Substring(0, prefixToCheck.Length);
+
+                            if (mDebugLevel >= 4)
                             {
-                                decoyPrefix = reader.CurrentPSM.ProteinFirst.Substring(0, prefixToCheck.Length);
-
-                                if (mDebugLevel >= 4)
-                                {
-                                    LogDebug("Decoy protein prefix found: " + decoyPrefix);
-                                }
-
-                                found = true;
-                                break;
+                                LogDebug("Decoy protein prefix found: " + decoyPrefix);
                             }
-                        }
-                        if (found)
-                        {
+
+                            found = true;
                             break;
                         }
+                    }
+                    if (found)
+                    {
+                        break;
                     }
                 }
             }
@@ -1239,10 +1235,9 @@ namespace AnalysisManagerIDPickerPlugIn
                 }
 
                 // Create the batch file
-                using (var writer = new StreamWriter(new FileStream(exePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
-                {
-                    writer.WriteLine(exePathOriginal + " " + argumentsOriginal + " > " + consoleOutputFileName + " 2>&1");
-                }
+                using var writer = new StreamWriter(new FileStream(exePath, FileMode.Create, FileAccess.Write, FileShare.Read));
+
+                writer.WriteLine(exePathOriginal + " " + argumentsOriginal + " > " + consoleOutputFileName + " 2>&1");
             }
 
             if (captureConsoleOutputViaDosRedirection || string.IsNullOrEmpty(consoleOutputFileName))

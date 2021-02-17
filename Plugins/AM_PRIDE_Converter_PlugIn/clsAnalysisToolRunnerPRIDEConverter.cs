@@ -1870,327 +1870,328 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 prideReportXMLFilePath = pseudoMsgfFilePath + "-report.xml";
 
-                using (var writer = new XmlTextWriter(
-                    new FileStream(prideReportXMLFilePath, FileMode.Create, FileAccess.Write, FileShare.Read), new UTF8Encoding(false)))
-                using (var xmlReader = new XmlTextReader(
-                    new FileStream(Path.Combine(mWorkDir, templateFileName), FileMode.Open, FileAccess.Read, FileShare.Read)))
+                using var xmlReader = new XmlTextReader(
+                    new FileStream(Path.Combine(mWorkDir, templateFileName), FileMode.Open, FileAccess.Read, FileShare.Read));
+
+                using var writer = new XmlTextWriter(
+                    new FileStream(prideReportXMLFilePath, FileMode.Create, FileAccess.Write, FileShare.Read), new UTF8Encoding(false))
                 {
-                    writer.Formatting = Formatting.Indented;
-                    writer.Indentation = 4;
+                    Formatting = Formatting.Indented,
+                    Indentation = 4
+                };
 
-                    writer.WriteStartDocument();
+                writer.WriteStartDocument();
 
-                    while (xmlReader.Read())
+                while (xmlReader.Read())
+                {
+                    switch (xmlReader.NodeType)
                     {
-                        switch (xmlReader.NodeType)
-                        {
-                            case XmlNodeType.Whitespace:
-                                // Skip whitespace since the writer should be auto-formatting things
-                                // writer.WriteWhitespace(xmlReader.Value)
-                                break;
+                        case XmlNodeType.Whitespace:
+                            // Skip whitespace since the writer should be auto-formatting things
+                            // writer.WriteWhitespace(xmlReader.Value)
+                            break;
 
-                            case XmlNodeType.Comment:
-                                writer.WriteComment(xmlReader.Value);
-                                break;
+                        case XmlNodeType.Comment:
+                            writer.WriteComment(xmlReader.Value);
+                            break;
 
-                            case XmlNodeType.Element:
-                                // Start element
+                        case XmlNodeType.Element:
+                            // Start element
 
-                                if (recentElements.Count > 10)
-                                    recentElements.Dequeue();
-                                recentElements.Enqueue("Element " + xmlReader.Name);
+                            if (recentElements.Count > 10)
+                                recentElements.Dequeue();
+                            recentElements.Enqueue("Element " + xmlReader.Name);
 
-                                while (elementCloseDepths.Count > 0 && elementCloseDepths.Peek() > xmlReader.Depth)
-                                {
-                                    elementCloseDepths.Pop();
+                            while (elementCloseDepths.Count > 0 && elementCloseDepths.Peek() > xmlReader.Depth)
+                            {
+                                elementCloseDepths.Pop();
 
-                                    writer.WriteEndElement();
-                                }
+                                writer.WriteEndElement();
+                            }
 
-                                eFileLocation = UpdateMSGFReportXMLFileLocation(eFileLocation, xmlReader.Name, insideMzDataDescription);
+                            eFileLocation = UpdateMSGFReportXMLFileLocation(eFileLocation, xmlReader.Name, insideMzDataDescription);
 
-                                var skipNode = false;
-                                attributeOverride.Clear();
+                            var skipNode = false;
+                            attributeOverride.Clear();
 
-                                switch (xmlReader.Name)
-                                {
-                                    case "sourceFilePath":
-                                        // Update this element's value to contain pseudoMsgfFilePath
-                                        writer.WriteElementString("sourceFilePath", pseudoMsgfFilePath);
+                            switch (xmlReader.Name)
+                            {
+                                case "sourceFilePath":
+                                    // Update this element's value to contain pseudoMsgfFilePath
+                                    writer.WriteElementString("sourceFilePath", pseudoMsgfFilePath);
+                                    skipNode = true;
+                                    break;
+
+                                case "timeCreated":
+                                    // Write out the current date/time in this format: 2012-11-06T16:04:44Z
+                                    writer.WriteElementString("timeCreated", DateTime.Now.ToUniversalTime().ToString("s") + "Z");
+                                    skipNode = true;
+                                    break;
+
+                                case "MzDataDescription":
+                                    insideMzDataDescription = true;
+                                    break;
+
+                                case "sampleName":
+                                    if (eFileLocation == eMSGFReportXMLFileLocation.MzDataAdmin)
+                                    {
+                                        // Write out the current job's Experiment Name
+                                        writer.WriteElementString("sampleName", dataPkgJob.Experiment);
                                         skipNode = true;
-                                        break;
+                                    }
+                                    break;
 
-                                    case "timeCreated":
-                                        // Write out the current date/time in this format: 2012-11-06T16:04:44Z
-                                        writer.WriteElementString("timeCreated", DateTime.Now.ToUniversalTime().ToString("s") + "Z");
-                                        skipNode = true;
-                                        break;
+                                case "sampleDescription":
+                                    if (eFileLocation == eMSGFReportXMLFileLocation.MzDataAdmin)
+                                    {
+                                        // Override the comment attribute for this node
+                                        string commentOverride;
 
-                                    case "MzDataDescription":
-                                        insideMzDataDescription = true;
-                                        break;
-
-                                    case "sampleName":
-                                        if (eFileLocation == eMSGFReportXMLFileLocation.MzDataAdmin)
+                                        if (!string.IsNullOrWhiteSpace(dataPkgJob.Experiment_Reason))
                                         {
-                                            // Write out the current job's Experiment Name
-                                            writer.WriteElementString("sampleName", dataPkgJob.Experiment);
-                                            skipNode = true;
-                                        }
-                                        break;
+                                            commentOverride = dataPkgJob.Experiment_Reason.TrimEnd();
 
-                                    case "sampleDescription":
-                                        if (eFileLocation == eMSGFReportXMLFileLocation.MzDataAdmin)
-                                        {
-                                            // Override the comment attribute for this node
-                                            string commentOverride;
-
-                                            if (!string.IsNullOrWhiteSpace(dataPkgJob.Experiment_Reason))
+                                            if (!string.IsNullOrWhiteSpace(dataPkgJob.Experiment_Comment))
                                             {
-                                                commentOverride = dataPkgJob.Experiment_Reason.TrimEnd();
-
-                                                if (!string.IsNullOrWhiteSpace(dataPkgJob.Experiment_Comment))
+                                                if (commentOverride.EndsWith("."))
                                                 {
-                                                    if (commentOverride.EndsWith("."))
-                                                    {
-                                                        commentOverride += " " + dataPkgJob.Experiment_Comment;
-                                                    }
-                                                    else
-                                                    {
-                                                        commentOverride += ". " + dataPkgJob.Experiment_Comment;
-                                                    }
+                                                    commentOverride += " " + dataPkgJob.Experiment_Comment;
+                                                }
+                                                else
+                                                {
+                                                    commentOverride += ". " + dataPkgJob.Experiment_Comment;
                                                 }
                                             }
-                                            else
-                                            {
-                                                commentOverride = dataPkgJob.Experiment_Comment;
-                                            }
-
-                                            attributeOverride.Add("comment", commentOverride);
                                         }
-                                        break;
-
-                                    case "sourceFile":
-                                        if (eFileLocation == eMSGFReportXMLFileLocation.MzDataAdmin)
+                                        else
                                         {
-                                            writer.WriteStartElement("sourceFile");
-
-                                            writer.WriteElementString("nameOfFile", Path.GetFileName(pseudoMsgfFilePath));
-                                            writer.WriteElementString("pathToFile", pseudoMsgfFilePath);
-                                            writer.WriteElementString("fileType", "MSGF file");
-
-                                            writer.WriteEndElement();  // sourceFile
-                                            skipNode = true;
-                                        }
-                                        break;
-
-                                    case "software":
-                                        if (eFileLocation == eMSGFReportXMLFileLocation.MzDataDataProcessing)
-                                        {
-                                            CreateMSGFReportXmlFileWriteSoftwareVersion(xmlReader, writer, dataPkgJob.PeptideHitResultType);
-                                            skipNode = true;
-                                        }
-                                        break;
-
-                                    case "instrumentName":
-                                        if (eFileLocation == eMSGFReportXMLFileLocation.MzDataInstrument)
-                                        {
-                                            // Write out the actual instrument name
-                                            writer.WriteElementString("instrumentName", dataPkgJob.Instrument);
-                                            skipNode = true;
-
-                                            instrumentDetailsAutoDefined = WriteXMLInstrumentInfo(writer, dataPkgJob.InstrumentGroup);
-                                        }
-                                        break;
-
-                                    case "source":
-                                    case "analyzerList":
-                                    case "detector":
-                                        if (eFileLocation == eMSGFReportXMLFileLocation.MzDataInstrument && instrumentDetailsAutoDefined)
-                                        {
-                                            skipNode = true;
-                                        }
-                                        break;
-
-                                    case "cvParam":
-                                        if (eFileLocation == eMSGFReportXMLFileLocation.ExperimentAdditional)
-                                        {
-                                            // Override the cvParam if it has Accession PRIDE:0000175
-
-                                            writer.WriteStartElement("cvParam");
-
-                                            if (xmlReader.HasAttributes)
-                                            {
-                                                var valueOverride = string.Empty;
-                                                xmlReader.MoveToFirstAttribute();
-                                                do
-                                                {
-                                                    if (xmlReader.Name == "accession" && xmlReader.Value == "PRIDE:0000175")
-                                                    {
-                                                        valueOverride = "DMS PRIDE_Converter " +
-                                                            System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
-                                                    }
-
-                                                    if (xmlReader.Name == "value" && valueOverride.Length > 0)
-                                                    {
-                                                        writer.WriteAttributeString(xmlReader.Name, valueOverride);
-                                                    }
-                                                    else
-                                                    {
-                                                        writer.WriteAttributeString(xmlReader.Name, xmlReader.Value);
-                                                    }
-                                                } while (xmlReader.MoveToNextAttribute());
-                                            }
-
-                                            writer.WriteEndElement();  // cvParam
-                                            skipNode = true;
-                                        }
-                                        break;
-
-                                    case "Identifications":
-                                        if (!CreateMSGFReportXMLFileWriteIDs(writer, pseudoMSGFData, orgDBNameGenerated))
-                                        {
-                                            LogError("CreateMSGFReportXMLFileWriteIDs returned false; aborting");
-                                            return string.Empty;
+                                            commentOverride = dataPkgJob.Experiment_Comment;
                                         }
 
-                                        if (!CreateMSGFReportXMLFileWriteProteins(writer, orgDBNameGenerated))
-                                        {
-                                            LogError("CreateMSGFReportXMLFileWriteProteins returned false; aborting");
-                                            return string.Empty;
-                                        }
-
-                                        skipNode = true;
-                                        break;
-
-                                    case "Fasta":
-                                        // This section is written out by CreateMSGFReportXMLFileWriteIDs
-                                        skipNode = true;
-                                        break;
-
-                                    case "PTMs":
-                                        // In the future, we might write out customized PTMs in CreateMSGFReportXMLFileWriteProteins
-                                        // For now, just copy over whatever is in the template msgf-report.xml file
-                                        skipNode = false;
-                                        break;
-
-                                    case "DatabaseMappings":
-
-                                        writer.WriteStartElement("DatabaseMappings");
-                                        writer.WriteStartElement("DatabaseMapping");
-
-                                        writer.WriteElementString("SearchEngineDatabaseName", orgDBNameGenerated);
-                                        writer.WriteElementString("SearchEngineDatabaseVersion", "Unknown");
-
-                                        writer.WriteElementString("CuratedDatabaseName", proteinCollectionListOrFasta);
-                                        writer.WriteElementString("CuratedDatabaseVersion", "1");
-
-                                        writer.WriteEndElement();      // DatabaseMapping
-                                        writer.WriteEndElement();      // DatabaseMappings
-
-                                        skipNode = true;
-                                        break;
-
-                                    case "ConfigurationOptions":
-                                        writer.WriteStartElement("ConfigurationOptions");
-
-                                        WriteConfigurationOption(writer, "search_engine", "MSGF");
-                                        WriteConfigurationOption(writer, "peptide_threshold", udtFilterThresholds.PValueThreshold.ToString("0.00"));
-                                        WriteConfigurationOption(writer, "add_carbamidomethylation", "false");
-
-                                        writer.WriteEndElement();      // ConfigurationOptions
-
-                                        skipNode = true;
-                                        break;
-                                }
-
-                                if (skipNode)
-                                {
-                                    if (xmlReader.NodeType != XmlNodeType.EndElement)
-                                    {
-                                        // Skip this element (and any children nodes enclosed in this element)
-                                        // Likely should not do this when xmlReader.NodeType is XmlNodeType.EndElement
-                                        xmlReader.Skip();
+                                        attributeOverride.Add("comment", commentOverride);
                                     }
+                                    break;
+
+                                case "sourceFile":
+                                    if (eFileLocation == eMSGFReportXMLFileLocation.MzDataAdmin)
+                                    {
+                                        writer.WriteStartElement("sourceFile");
+
+                                        writer.WriteElementString("nameOfFile", Path.GetFileName(pseudoMsgfFilePath));
+                                        writer.WriteElementString("pathToFile", pseudoMsgfFilePath);
+                                        writer.WriteElementString("fileType", "MSGF file");
+
+                                        writer.WriteEndElement();  // sourceFile
+                                        skipNode = true;
+                                    }
+                                    break;
+
+                                case "software":
+                                    if (eFileLocation == eMSGFReportXMLFileLocation.MzDataDataProcessing)
+                                    {
+                                        CreateMSGFReportXmlFileWriteSoftwareVersion(xmlReader, writer, dataPkgJob.PeptideHitResultType);
+                                        skipNode = true;
+                                    }
+                                    break;
+
+                                case "instrumentName":
+                                    if (eFileLocation == eMSGFReportXMLFileLocation.MzDataInstrument)
+                                    {
+                                        // Write out the actual instrument name
+                                        writer.WriteElementString("instrumentName", dataPkgJob.Instrument);
+                                        skipNode = true;
+
+                                        instrumentDetailsAutoDefined = WriteXMLInstrumentInfo(writer, dataPkgJob.InstrumentGroup);
+                                    }
+                                    break;
+
+                                case "source":
+                                case "analyzerList":
+                                case "detector":
+                                    if (eFileLocation == eMSGFReportXMLFileLocation.MzDataInstrument && instrumentDetailsAutoDefined)
+                                    {
+                                        skipNode = true;
+                                    }
+                                    break;
+
+                                case "cvParam":
+                                    if (eFileLocation == eMSGFReportXMLFileLocation.ExperimentAdditional)
+                                    {
+                                        // Override the cvParam if it has Accession PRIDE:0000175
+
+                                        writer.WriteStartElement("cvParam");
+
+                                        if (xmlReader.HasAttributes)
+                                        {
+                                            var valueOverride = string.Empty;
+                                            xmlReader.MoveToFirstAttribute();
+                                            do
+                                            {
+                                                if (xmlReader.Name == "accession" && xmlReader.Value == "PRIDE:0000175")
+                                                {
+                                                    valueOverride = "DMS PRIDE_Converter " +
+                                                                    System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
+                                                }
+
+                                                if (xmlReader.Name == "value" && valueOverride.Length > 0)
+                                                {
+                                                    writer.WriteAttributeString(xmlReader.Name, valueOverride);
+                                                }
+                                                else
+                                                {
+                                                    writer.WriteAttributeString(xmlReader.Name, xmlReader.Value);
+                                                }
+                                            } while (xmlReader.MoveToNextAttribute());
+                                        }
+
+                                        writer.WriteEndElement();  // cvParam
+                                        skipNode = true;
+                                    }
+                                    break;
+
+                                case "Identifications":
+                                    if (!CreateMSGFReportXMLFileWriteIDs(writer, pseudoMSGFData, orgDBNameGenerated))
+                                    {
+                                        LogError("CreateMSGFReportXMLFileWriteIDs returned false; aborting");
+                                        return string.Empty;
+                                    }
+
+                                    if (!CreateMSGFReportXMLFileWriteProteins(writer, orgDBNameGenerated))
+                                    {
+                                        LogError("CreateMSGFReportXMLFileWriteProteins returned false; aborting");
+                                        return string.Empty;
+                                    }
+
+                                    skipNode = true;
+                                    break;
+
+                                case "Fasta":
+                                    // This section is written out by CreateMSGFReportXMLFileWriteIDs
+                                    skipNode = true;
+                                    break;
+
+                                case "PTMs":
+                                    // In the future, we might write out customized PTMs in CreateMSGFReportXMLFileWriteProteins
+                                    // For now, just copy over whatever is in the template msgf-report.xml file
+                                    skipNode = false;
+                                    break;
+
+                                case "DatabaseMappings":
+
+                                    writer.WriteStartElement("DatabaseMappings");
+                                    writer.WriteStartElement("DatabaseMapping");
+
+                                    writer.WriteElementString("SearchEngineDatabaseName", orgDBNameGenerated);
+                                    writer.WriteElementString("SearchEngineDatabaseVersion", "Unknown");
+
+                                    writer.WriteElementString("CuratedDatabaseName", proteinCollectionListOrFasta);
+                                    writer.WriteElementString("CuratedDatabaseVersion", "1");
+
+                                    writer.WriteEndElement();      // DatabaseMapping
+                                    writer.WriteEndElement();      // DatabaseMappings
+
+                                    skipNode = true;
+                                    break;
+
+                                case "ConfigurationOptions":
+                                    writer.WriteStartElement("ConfigurationOptions");
+
+                                    WriteConfigurationOption(writer, "search_engine", "MSGF");
+                                    WriteConfigurationOption(writer, "peptide_threshold", udtFilterThresholds.PValueThreshold.ToString("0.00"));
+                                    WriteConfigurationOption(writer, "add_carbamidomethylation", "false");
+
+                                    writer.WriteEndElement();      // ConfigurationOptions
+
+                                    skipNode = true;
+                                    break;
+                            }
+
+                            if (skipNode)
+                            {
+                                if (xmlReader.NodeType != XmlNodeType.EndElement)
+                                {
+                                    // Skip this element (and any children nodes enclosed in this element)
+                                    // Likely should not do this when xmlReader.NodeType is XmlNodeType.EndElement
+                                    xmlReader.Skip();
+                                }
+                            }
+                            else
+                            {
+                                // Copy this element from the source file to the target file
+
+                                writer.WriteStartElement(xmlReader.Name);
+
+                                if (xmlReader.HasAttributes)
+                                {
+                                    xmlReader.MoveToFirstAttribute();
+                                    do
+                                    {
+                                        if (attributeOverride.Count > 0 && attributeOverride.TryGetValue(xmlReader.Name, out var overrideValue))
+                                        {
+                                            writer.WriteAttributeString(xmlReader.Name, overrideValue);
+                                        }
+                                        else
+                                        {
+                                            writer.WriteAttributeString(xmlReader.Name, xmlReader.Value);
+                                        }
+                                    } while (xmlReader.MoveToNextAttribute());
+
+                                    elementCloseDepths.Push(xmlReader.Depth);
+                                }
+                                else if (xmlReader.IsEmptyElement)
+                                {
+                                    writer.WriteEndElement();
+                                }
+                            }
+                            break;
+
+                        case XmlNodeType.EndElement:
+
+                            if (recentElements.Count > 10)
+                                recentElements.Dequeue();
+                            recentElements.Enqueue("EndElement " + xmlReader.Name);
+
+                            while (elementCloseDepths.Count > 0 && elementCloseDepths.Peek() > xmlReader.Depth + 1)
+                            {
+                                elementCloseDepths.Pop();
+                                writer.WriteEndElement();
+                            }
+
+                            writer.WriteEndElement();
+
+                            if (xmlReader.Name == "MzDataDescription")
+                            {
+                                insideMzDataDescription = false;
+                            }
+
+                            while (elementCloseDepths.Count > 0 && elementCloseDepths.Peek() > xmlReader.Depth)
+                            {
+                                elementCloseDepths.Pop();
+                            }
+                            break;
+
+                        case XmlNodeType.Text:
+
+                            if (!string.IsNullOrEmpty(xmlReader.Value))
+                            {
+                                if (recentElements.Count > 10)
+                                    recentElements.Dequeue();
+                                if (xmlReader.Value.Length > 10)
+                                {
+                                    recentElements.Enqueue(xmlReader.Value.Substring(0, 10));
                                 }
                                 else
                                 {
-                                    // Copy this element from the source file to the target file
-
-                                    writer.WriteStartElement(xmlReader.Name);
-
-                                    if (xmlReader.HasAttributes)
-                                    {
-                                        xmlReader.MoveToFirstAttribute();
-                                        do
-                                        {
-                                            if (attributeOverride.Count > 0 && attributeOverride.TryGetValue(xmlReader.Name, out var overrideValue))
-                                            {
-                                                writer.WriteAttributeString(xmlReader.Name, overrideValue);
-                                            }
-                                            else
-                                            {
-                                                writer.WriteAttributeString(xmlReader.Name, xmlReader.Value);
-                                            }
-                                        } while (xmlReader.MoveToNextAttribute());
-
-                                        elementCloseDepths.Push(xmlReader.Depth);
-                                    }
-                                    else if (xmlReader.IsEmptyElement)
-                                    {
-                                        writer.WriteEndElement();
-                                    }
+                                    recentElements.Enqueue(xmlReader.Value);
                                 }
-                                break;
+                            }
 
-                            case XmlNodeType.EndElement:
-
-                                if (recentElements.Count > 10)
-                                    recentElements.Dequeue();
-                                recentElements.Enqueue("EndElement " + xmlReader.Name);
-
-                                while (elementCloseDepths.Count > 0 && elementCloseDepths.Peek() > xmlReader.Depth + 1)
-                                {
-                                    elementCloseDepths.Pop();
-                                    writer.WriteEndElement();
-                                }
-
-                                writer.WriteEndElement();
-
-                                if (xmlReader.Name == "MzDataDescription")
-                                {
-                                    insideMzDataDescription = false;
-                                }
-
-                                while (elementCloseDepths.Count > 0 && elementCloseDepths.Peek() > xmlReader.Depth)
-                                {
-                                    elementCloseDepths.Pop();
-                                }
-                                break;
-
-                            case XmlNodeType.Text:
-
-                                if (!string.IsNullOrEmpty(xmlReader.Value))
-                                {
-                                    if (recentElements.Count > 10)
-                                        recentElements.Dequeue();
-                                    if (xmlReader.Value.Length > 10)
-                                    {
-                                        recentElements.Enqueue(xmlReader.Value.Substring(0, 10));
-                                    }
-                                    else
-                                    {
-                                        recentElements.Enqueue(xmlReader.Value);
-                                    }
-                                }
-
-                                writer.WriteString(xmlReader.Value);
-                                break;
-                        }
+                            writer.WriteString(xmlReader.Value);
+                            break;
                     }
-
-                    writer.WriteEndDocument();
                 }
+
+                writer.WriteEndDocument();
             }
             catch (Exception ex)
             {
@@ -2646,344 +2647,343 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     "modification"
                 };
 
-                using (var writer = new StreamWriter(new FileStream(pXFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                using var writer = new StreamWriter(new FileStream(pXFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
+
+                WritePXHeader(writer, "submitter_name", "Matthew Monroe", templateParameters, paramsWithCVs);
+                WritePXHeader(writer, "submitter_email", "matthew.monroe@pnnl.gov", templateParameters, paramsWithCVs);
+                WritePXHeader(writer, "submitter_affiliation", PNNL_NAME_COUNTRY, templateParameters, paramsWithCVs);
+                WritePXHeader(writer, "submitter_pride_login", "matthew.monroe@pnnl.gov", templateParameters, paramsWithCVs);
+
+                WritePXHeader(writer, "lab_head_name", "Richard D. Smith", templateParameters, paramsWithCVs);
+                WritePXHeader(writer, "lab_head_email", "dick.smith@pnnl.gov", templateParameters, paramsWithCVs);
+                WritePXHeader(writer, "lab_head_affiliation", PNNL_NAME_COUNTRY, templateParameters, paramsWithCVs);
+
+                WritePXHeader(writer, "project_title", TBD + "User-friendly Article Title", templateParameters, paramsWithCVs);
+
+                // Minimum 50 characters, max 5000 characters
+                WritePXHeader(writer, "project_description", TBD + "Summary sentence", templateParameters, paramsWithCVs, 50);
+
+                // We don't normally use the project_tag field, so it is commented out
+                // Example official tags are:
+                //  Human proteome project
+                //  Human plasma project
+                // WritePXHeader(writer, "project_tag", TBD + "Official project tag assigned by the repository", templateParameters)
+
+                if (templateParameters.ContainsKey("pubmed_id"))
                 {
-                    WritePXHeader(writer, "submitter_name", "Matthew Monroe", templateParameters, paramsWithCVs);
-                    WritePXHeader(writer, "submitter_email", "matthew.monroe@pnnl.gov", templateParameters, paramsWithCVs);
-                    WritePXHeader(writer, "submitter_affiliation", PNNL_NAME_COUNTRY, templateParameters, paramsWithCVs);
-                    WritePXHeader(writer, "submitter_pride_login", "matthew.monroe@pnnl.gov", templateParameters, paramsWithCVs);
+                    WritePXHeader(writer, "pubmed_id", TBD, templateParameters, paramsWithCVs);
+                }
 
-                    WritePXHeader(writer, "lab_head_name", "Richard D. Smith", templateParameters, paramsWithCVs);
-                    WritePXHeader(writer, "lab_head_email", "dick.smith@pnnl.gov", templateParameters, paramsWithCVs);
-                    WritePXHeader(writer, "lab_head_affiliation", PNNL_NAME_COUNTRY, templateParameters, paramsWithCVs);
+                // We don't normally use this field, so it is commented out
+                // WritePXHeader(writer, "other_omics_link", "Related data is available from PeptideAtlas at http://www.peptideatlas.org/PASS/PASS00297")
 
-                    WritePXHeader(writer, "project_title", TBD + "User-friendly Article Title", templateParameters, paramsWithCVs);
+                // Comma separated list; suggest at least 3 keywords
+                WritePXHeader(writer, "keywords", TBD, templateParameters, paramsWithCVs);
 
-                    // Minimum 50 characters, max 5000 characters
-                    WritePXHeader(writer, "project_description", TBD + "Summary sentence", templateParameters, paramsWithCVs, 50);
+                // Minimum 50 characters, max 5000 characters
+                WritePXHeader(writer, "sample_processing_protocol", TBD, templateParameters, paramsWithCVs, 50);
 
-                    // We don't normally use the project_tag field, so it is commented out
-                    // Example official tags are:
-                    //  Human proteome project
-                    //  Human plasma project
-                    // WritePXHeader(writer, "project_tag", TBD + "Official project tag assigned by the repository", templateParameters)
+                // Minimum 50 characters, max 5000 characters
+                WritePXHeader(writer, "data_processing_protocol", TBD, templateParameters, paramsWithCVs, 50);
 
-                    if (templateParameters.ContainsKey("pubmed_id"))
+                // Example values for experiment_type (a given submission can have more than one experiment_type listed)
+                //   [PRIDE, PRIDE:0000427, Top-down proteomics, ]
+                //   [PRIDE, PRIDE:0000429, Shotgun proteomics, ]
+                //   [PRIDE, PRIDE:0000430, Chemical cross-linking coupled with mass spectrometry proteomics, ]
+                //   [PRIDE, PRIDE:0000433, Affinity purification coupled with mass spectrometry proteomics, ]
+                //   [PRIDE, PRIDE:0000311, SRM/MRM, ]
+                //   [PRIDE, PRIDE:0000447, SWATH MS, ]
+                //   [PRIDE, PRIDE:0000451, MSE, ]
+                //   [PRIDE, PRIDE:0000452, HDMSE, ]
+                //   [PRIDE, PRIDE:0000453, PAcIFIC, ]
+                //   [PRIDE, PRIDE:0000454, All-ion fragmentation, ]
+                //   [MS, MS:1002521, Mass spectrometry imaging,]
+                //   [MS, MS:1002521, Mass spectrometry imaging,]
+
+                var defaultExperiment = GetCVString("PRIDE", "PRIDE:0000429", "Shotgun proteomics");
+                WritePXHeader(writer, "experiment_type", defaultExperiment, templateParameters, paramsWithCVs);
+
+                WritePXLine(writer, new List<string>
+                {
+                    "MTD",
+                    "submission_type",
+                    submissionType
+                });
+
+                if (submissionType == COMPLETE_SUBMISSION)
+                {
+                    // Deprecated:
+                    // // Note that the comment field has been deprecated in v2.x of the px file
+                    // // However, we don't have a good alternative place to put this comment, so we'll include it anyway
+                    // if (!string.IsNullOrWhiteSpace(filterText))
+                    // {
+                    //     WritePXHeader(writer, "comment", filterText, paramsWithCVs);
+                    // }
+                }
+                else
+                {
+                    var comment = "Data produced by the DMS Processing pipeline using ";
+                    if (mSearchToolsUsed.Count == 1)
                     {
-                        WritePXHeader(writer, "pubmed_id", TBD, templateParameters, paramsWithCVs);
+                        comment += "search tool " + mSearchToolsUsed.First();
+                    }
+                    else if (mSearchToolsUsed.Count == 2)
+                    {
+                        comment += "search tools " + mSearchToolsUsed.First() + " and " + mSearchToolsUsed.Last();
+                    }
+                    else if (mSearchToolsUsed.Count > 2)
+                    {
+                        comment += "search tools " + string.Join(", ", (
+                                                                           from item in mSearchToolsUsed where item != mSearchToolsUsed.Last() orderby item select item).ToList());
+                        comment += ", and " + mSearchToolsUsed.Last();
                     }
 
-                    // We don't normally use this field, so it is commented out
-                    // WritePXHeader(writer, "other_omics_link", "Related data is available from PeptideAtlas at http://www.peptideatlas.org/PASS/PASS00297")
+                    WritePXHeader(writer, "reason_for_partial", comment, paramsWithCVs);
+                }
 
-                    // Comma separated list; suggest at least 3 keywords
-                    WritePXHeader(writer, "keywords", TBD, templateParameters, paramsWithCVs);
-
-                    // Minimum 50 characters, max 5000 characters
-                    WritePXHeader(writer, "sample_processing_protocol", TBD, templateParameters, paramsWithCVs, 50);
-
-                    // Minimum 50 characters, max 5000 characters
-                    WritePXHeader(writer, "data_processing_protocol", TBD, templateParameters, paramsWithCVs, 50);
-
-                    // Example values for experiment_type (a given submission can have more than one experiment_type listed)
-                    //   [PRIDE, PRIDE:0000427, Top-down proteomics, ]
-                    //   [PRIDE, PRIDE:0000429, Shotgun proteomics, ]
-                    //   [PRIDE, PRIDE:0000430, Chemical cross-linking coupled with mass spectrometry proteomics, ]
-                    //   [PRIDE, PRIDE:0000433, Affinity purification coupled with mass spectrometry proteomics, ]
-                    //   [PRIDE, PRIDE:0000311, SRM/MRM, ]
-                    //   [PRIDE, PRIDE:0000447, SWATH MS, ]
-                    //   [PRIDE, PRIDE:0000451, MSE, ]
-                    //   [PRIDE, PRIDE:0000452, HDMSE, ]
-                    //   [PRIDE, PRIDE:0000453, PAcIFIC, ]
-                    //   [PRIDE, PRIDE:0000454, All-ion fragmentation, ]
-                    //   [MS, MS:1002521, Mass spectrometry imaging,]
-                    //   [MS, MS:1002521, Mass spectrometry imaging,]
-
-                    var defaultExperiment = GetCVString("PRIDE", "PRIDE:0000429", "Shotgun proteomics");
-                    WritePXHeader(writer, "experiment_type", defaultExperiment, templateParameters, paramsWithCVs);
-
-                    WritePXLine(writer, new List<string>
+                var mouseOrHuman = false;
+                if (mExperimentNEWTInfo.Count == 0)
+                {
+                    // None of the data package jobs had valid NEWT info
+                    var defaultSpecies = TBD + GetCVString("NEWT", "2323", "unclassified Bacteria");
+                    WritePXHeader(writer, "species", defaultSpecies, templateParameters, paramsWithCVs);
+                }
+                else
+                {
+                    // NEWT info is defined; write it out
+                    foreach (var item in mExperimentNEWTInfo)
                     {
-                        "MTD",
-                        "submission_type",
-                        submissionType
-                    });
+                        WritePXHeader(writer, "species", GetNEWTCv(item.Key, item.Value), paramsWithCVs);
 
-                    if (submissionType == COMPLETE_SUBMISSION)
-                    {
-                        // Deprecated:
-                        // // Note that the comment field has been deprecated in v2.x of the px file
-                        // // However, we don't have a good alternative place to put this comment, so we'll include it anyway
-                        // if (!string.IsNullOrWhiteSpace(filterText))
-                        // {
-                        //     WritePXHeader(writer, "comment", filterText, paramsWithCVs);
-                        // }
+                        if (item.Value.IndexOf("Homo sapiens", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                            item.Value.IndexOf("Mus musculus", StringComparison.OrdinalIgnoreCase) >= 0)
+                        {
+                            mouseOrHuman = true;
+                        }
                     }
+                }
+
+                if (mExperimentTissue.Count > 0)
+                {
+                    foreach (var item in mExperimentTissue)
+                    {
+                        WritePXHeader(writer, "tissue", GetCVString("BTO", item.Key, item.Value), templateParameters, paramsWithCVs);
+                    }
+                }
+                else
+                {
+                    string defaultTissue;
+                    if (mouseOrHuman)
+                        defaultTissue = TBD + DEFAULT_TISSUE_CV_MOUSE_HUMAN;
                     else
-                    {
-                        var comment = "Data produced by the DMS Processing pipeline using ";
-                        if (mSearchToolsUsed.Count == 1)
-                        {
-                            comment += "search tool " + mSearchToolsUsed.First();
-                        }
-                        else if (mSearchToolsUsed.Count == 2)
-                        {
-                            comment += "search tools " + mSearchToolsUsed.First() + " and " + mSearchToolsUsed.Last();
-                        }
-                        else if (mSearchToolsUsed.Count > 2)
-                        {
-                            comment += "search tools " + string.Join(", ", (
-                                from item in mSearchToolsUsed where item != mSearchToolsUsed.Last() orderby item select item).ToList());
-                            comment += ", and " + mSearchToolsUsed.Last();
-                        }
+                        defaultTissue = TBD + DEFAULT_TISSUE_CV;
 
-                        WritePXHeader(writer, "reason_for_partial", comment, paramsWithCVs);
+                    WritePXHeader(writer, "tissue", defaultTissue, templateParameters, paramsWithCVs);
+                }
+
+                var defaultCellType = TBD + "Optional, e.g. " + DEFAULT_CELL_TYPE_CV + DELETION_WARNING;
+                var defaultDisease = TBD + "Optional, e.g. " + DEFAULT_DISEASE_TYPE_CV + DELETION_WARNING;
+
+                WritePXHeader(writer, "cell_type", defaultCellType, templateParameters, paramsWithCVs);
+                WritePXHeader(writer, "disease", defaultDisease, templateParameters, paramsWithCVs);
+
+                // Example values for quantification (a given submission can have more than one type listed)
+                //   [PRIDE, PRIDE:0000318, 18O,]
+                //   [PRIDE, PRIDE:0000320, AQUA,]
+                //   [PRIDE, PRIDE:0000319, ICAT,]
+                //   [PRIDE, PRIDE:0000321, ICPL,]
+                //   [PRIDE, PRIDE:0000315, SILAC,]
+                //   [PRIDE, PRIDE:0000314, TMT,]
+                //   [PRIDE, PRIDE:0000313, iTRAQ,]
+                //   [PRIDE, PRIDE:0000323, TIC,]
+                //   [PRIDE, PRIDE:0000322, emPAI,]
+                //   [PRIDE, PRIDE:0000435, Peptide counting,]
+                //   [PRIDE, PRIDE:0000436, Spectral counting,]
+                //   [PRIDE, PRIDE:0000437, Protein Abundance Index – PAI,]
+                //   [PRIDE, PRIDE:0000438, Spectrum count/molecular weight,]
+                //   [PRIDE, PRIDE:0000439, Spectral Abundance Factor – SAF,]
+                //   [PRIDE, PRIDE:0000440, Normalized Spectral Abundance Factor – NSAF,]
+                //   [PRIDE, PRIDE:0000441, APEX - Absolute Protein Expression,]
+                var defaultQuantCV = TBD + "Optional, e.g. " + DEFAULT_QUANTIFICATION_TYPE_CV;
+                WritePXHeader(writer, "quantification", defaultQuantCV, templateParameters, paramsWithCVs);
+
+                if (mInstrumentGroupsStored.Count > 0)
+                {
+                    WritePXInstruments(writer, paramsWithCVs);
+                }
+                else
+                {
+                    // Instrument type is unknown
+                    var defaultInstrument = TBD + GetCVString("MS", "MS:1000031", "instrument model", "CUSTOM UNKNOWN MASS SPEC");
+                    WritePXHeader(writer, "instrument", defaultInstrument, templateParameters, paramsWithCVs);
+                }
+
+                // Note that the modification terms are optional for complete submissions
+                // However, it doesn't hurt to include them
+                WritePXMods(writer, paramsWithCVs);
+
+                // Could write additional terms here
+                // WritePXHeader(writer, "additional", GetCVString("", "", "Patient", "Colorectal cancer patient 1"), templateParameters)
+
+                // If this is a re-submission or re-analysis, use these:
+                // WritePXHeader(writer, "resubmission_px", "PXD00001", templateParameters)
+                // WritePXHeader(writer, "reanalysis_px", "PXD00001", templateParameters)
+
+                // Add a blank line
+                writer.WriteLine();
+
+                // Write the header row for the files
+                WritePXLine(writer, new List<string>
+                {
+                    "FMH",
+                    "file_id",
+                    "file_type",
+                    "file_path",
+                    "file_mapping"
+                });
+
+                var fileInfoCols = new List<string>();
+
+                // Keys in this dictionary are fileIDs, values are file names
+                var resultFileIDs = new Dictionary<int, string>();
+
+                // Append the files and mapping information to the ProteomeXchange PX file
+                foreach (var item in mPxResultFiles)
+                {
+                    fileInfoCols.Clear();
+
+                    fileInfoCols.Add("FME");
+
+                    // file_id
+                    fileInfoCols.Add(item.Key.ToString());
+                    var fileTypeName = PXFileTypeName(item.Value.PXFileType);
+
+                    // file_type; allowed values are result, raw, peak, search, quantification, gel, other
+                    fileInfoCols.Add(fileTypeName);
+
+                    // file_path
+                    fileInfoCols.Add(Path.Combine(@"D:\Upload", mResultsDirectoryName, item.Value.Filename));
+
+                    var fileMappings = new List<string>();
+                    foreach (var mapID in item.Value.FileMappings)
+                    {
+                        // file_mapping
+                        fileMappings.Add(mapID.ToString());
                     }
 
-                    var mouseOrHuman = false;
-                    if (mExperimentNEWTInfo.Count == 0)
+                    fileInfoCols.Add(string.Join(",", fileMappings));
+
+                    WritePXLine(writer, fileInfoCols);
+
+                    if (fileTypeName == "RESULT")
                     {
-                        // None of the data package jobs had valid NEWT info
-                        var defaultSpecies = TBD + GetCVString("NEWT", "2323", "unclassified Bacteria");
-                        WritePXHeader(writer, "species", defaultSpecies, templateParameters, paramsWithCVs);
+                        resultFileIDs.Add(item.Key, item.Value.Filename);
                     }
-                    else
+                }
+
+                // Determine whether the tissue or cell_type columns will be in the SMH section
+                var smhIncludesCellType = DictionaryHasDefinedValue(templateParameters, "cell_type");
+                var smhIncludesDisease = DictionaryHasDefinedValue(templateParameters, "disease");
+
+                var reJobAddon = new Regex(@"(_Job\d+)(_msgfplus)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+                writer.WriteLine();
+
+                // Write the header row for the SMH section
+                var columnNames = new List<string>
+                {
+                    "SMH",
+                    "file_id",
+                    "species",
+                    "tissue",
+                    "cell_type",
+                    "disease",
+                    "modification",
+                    "instrument",
+                    "quantification",
+                    "experimental_factor"
+                };
+
+                WritePXLine(writer, columnNames);
+
+                // Add the SME lines below the SMH line
+                foreach (var resultFile in resultFileIDs)
+                {
+                    fileInfoCols.Clear();
+
+                    fileInfoCols.Add("SME");
+
+                    // file_id
+                    fileInfoCols.Add(resultFile.Key.ToString());
+
+                    var resultFileName = resultFile.Value;
+
+                    if (!mMzIdSampleInfo.TryGetValue(resultFile.Value, out var sampleMetadata))
                     {
-                        // NEWT info is defined; write it out
-                        foreach (var item in mExperimentNEWTInfo)
+                        // Result file name may have been customized to include _Job1000000
+                        // Check for this, and update resultFileName if required
+
+                        var reMatch = reJobAddon.Match(resultFileName);
+                        if (reMatch.Success)
                         {
-                            WritePXHeader(writer, "species", GetNEWTCv(item.Key, item.Value), paramsWithCVs);
-
-                            if (item.Value.IndexOf("Homo sapiens", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                                item.Value.IndexOf("Mus musculus", StringComparison.OrdinalIgnoreCase) >= 0)
-                            {
-                                mouseOrHuman = true;
-                            }
-                        }
-                    }
-
-                    if (mExperimentTissue.Count > 0)
-                    {
-                        foreach (var item in mExperimentTissue)
-                        {
-                            WritePXHeader(writer, "tissue", GetCVString("BTO", item.Key, item.Value), templateParameters, paramsWithCVs);
-                        }
-                    }
-                    else
-                    {
-                        string defaultTissue;
-                        if (mouseOrHuman)
-                            defaultTissue = TBD + DEFAULT_TISSUE_CV_MOUSE_HUMAN;
-                        else
-                            defaultTissue = TBD + DEFAULT_TISSUE_CV;
-
-                        WritePXHeader(writer, "tissue", defaultTissue, templateParameters, paramsWithCVs);
-                    }
-
-                    var defaultCellType = TBD + "Optional, e.g. " + DEFAULT_CELL_TYPE_CV + DELETION_WARNING;
-                    var defaultDisease = TBD + "Optional, e.g. " + DEFAULT_DISEASE_TYPE_CV + DELETION_WARNING;
-
-                    WritePXHeader(writer, "cell_type", defaultCellType, templateParameters, paramsWithCVs);
-                    WritePXHeader(writer, "disease", defaultDisease, templateParameters, paramsWithCVs);
-
-                    // Example values for quantification (a given submission can have more than one type listed)
-                    //   [PRIDE, PRIDE:0000318, 18O,]
-                    //   [PRIDE, PRIDE:0000320, AQUA,]
-                    //   [PRIDE, PRIDE:0000319, ICAT,]
-                    //   [PRIDE, PRIDE:0000321, ICPL,]
-                    //   [PRIDE, PRIDE:0000315, SILAC,]
-                    //   [PRIDE, PRIDE:0000314, TMT,]
-                    //   [PRIDE, PRIDE:0000313, iTRAQ,]
-                    //   [PRIDE, PRIDE:0000323, TIC,]
-                    //   [PRIDE, PRIDE:0000322, emPAI,]
-                    //   [PRIDE, PRIDE:0000435, Peptide counting,]
-                    //   [PRIDE, PRIDE:0000436, Spectral counting,]
-                    //   [PRIDE, PRIDE:0000437, Protein Abundance Index – PAI,]
-                    //   [PRIDE, PRIDE:0000438, Spectrum count/molecular weight,]
-                    //   [PRIDE, PRIDE:0000439, Spectral Abundance Factor – SAF,]
-                    //   [PRIDE, PRIDE:0000440, Normalized Spectral Abundance Factor – NSAF,]
-                    //   [PRIDE, PRIDE:0000441, APEX - Absolute Protein Expression,]
-                    var defaultQuantCV = TBD + "Optional, e.g. " + DEFAULT_QUANTIFICATION_TYPE_CV;
-                    WritePXHeader(writer, "quantification", defaultQuantCV, templateParameters, paramsWithCVs);
-
-                    if (mInstrumentGroupsStored.Count > 0)
-                    {
-                        WritePXInstruments(writer, paramsWithCVs);
-                    }
-                    else
-                    {
-                        // Instrument type is unknown
-                        var defaultInstrument = TBD + GetCVString("MS", "MS:1000031", "instrument model", "CUSTOM UNKNOWN MASS SPEC");
-                        WritePXHeader(writer, "instrument", defaultInstrument, templateParameters, paramsWithCVs);
-                    }
-
-                    // Note that the modification terms are optional for complete submissions
-                    // However, it doesn't hurt to include them
-                    WritePXMods(writer, paramsWithCVs);
-
-                    // Could write additional terms here
-                    // WritePXHeader(writer, "additional", GetCVString("", "", "Patient", "Colorectal cancer patient 1"), templateParameters)
-
-                    // If this is a re-submission or re-analysis, use these:
-                    // WritePXHeader(writer, "resubmission_px", "PXD00001", templateParameters)
-                    // WritePXHeader(writer, "reanalysis_px", "PXD00001", templateParameters)
-
-                    // Add a blank line
-                    writer.WriteLine();
-
-                    // Write the header row for the files
-                    WritePXLine(writer, new List<string>
-                    {
-                        "FMH",
-                        "file_id",
-                        "file_type",
-                        "file_path",
-                        "file_mapping"
-                    });
-
-                    var fileInfoCols = new List<string>();
-
-                    // Keys in this dictionary are fileIDs, values are file names
-                    var resultFileIDs = new Dictionary<int, string>();
-
-                    // Append the files and mapping information to the ProteomeXchange PX file
-                    foreach (var item in mPxResultFiles)
-                    {
-                        fileInfoCols.Clear();
-
-                        fileInfoCols.Add("FME");
-
-                        // file_id
-                        fileInfoCols.Add(item.Key.ToString());
-                        var fileTypeName = PXFileTypeName(item.Value.PXFileType);
-
-                        // file_type; allowed values are result, raw, peak, search, quantification, gel, other
-                        fileInfoCols.Add(fileTypeName);
-
-                        // file_path
-                        fileInfoCols.Add(Path.Combine(@"D:\Upload", mResultsDirectoryName, item.Value.Filename));
-
-                        var fileMappings = new List<string>();
-                        foreach (var mapID in item.Value.FileMappings)
-                        {
-                            // file_mapping
-                            fileMappings.Add(mapID.ToString());
-                        }
-
-                        fileInfoCols.Add(string.Join(",", fileMappings));
-
-                        WritePXLine(writer, fileInfoCols);
-
-                        if (fileTypeName == "RESULT")
-                        {
-                            resultFileIDs.Add(item.Key, item.Value.Filename);
+                            var resultFileNameNew = resultFileName.Substring(0, reMatch.Index) + reMatch.Groups[2].Value +
+                                                    resultFileName.Substring(reMatch.Index + reMatch.Length);
+                            resultFileName = resultFileNameNew;
                         }
                     }
 
-                    // Determine whether the tissue or cell_type columns will be in the SMH section
-                    var smhIncludesCellType = DictionaryHasDefinedValue(templateParameters, "cell_type");
-                    var smhIncludesDisease = DictionaryHasDefinedValue(templateParameters, "disease");
-
-                    var reJobAddon = new Regex(@"(_Job\d+)(_msgfplus)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-
-                    writer.WriteLine();
-
-                    // Write the header row for the SMH section
-                    var columnNames = new List<string>
+                    if (mMzIdSampleInfo.TryGetValue(resultFileName, out sampleMetadata))
                     {
-                        "SMH",
-                        "file_id",
-                        "species",
-                        "tissue",
-                        "cell_type",
-                        "disease",
-                        "modification",
-                        "instrument",
-                        "quantification",
-                        "experimental_factor"
-                    };
+                        fileInfoCols.Add(sampleMetadata.Species);
+                        fileInfoCols.Add(sampleMetadata.Tissue);
 
-                    WritePXLine(writer, columnNames);
-
-                    // Add the SME lines below the SMH line
-                    foreach (var resultFile in resultFileIDs)
-                    {
-                        fileInfoCols.Clear();
-
-                        fileInfoCols.Add("SME");
-
-                        // file_id
-                        fileInfoCols.Add(resultFile.Key.ToString());
-
-                        var resultFileName = resultFile.Value;
-
-                        if (!mMzIdSampleInfo.TryGetValue(resultFile.Value, out var sampleMetadata))
+                        if (smhIncludesCellType)
                         {
-                            // Result file name may have been customized to include _Job1000000
-                            // Check for this, and update resultFileName if required
-
-                            var reMatch = reJobAddon.Match(resultFileName);
-                            if (reMatch.Success)
-                            {
-                                var resultFileNameNew = resultFileName.Substring(0, reMatch.Index) + reMatch.Groups[2].Value +
-                                                        resultFileName.Substring(reMatch.Index + reMatch.Length);
-                                resultFileName = resultFileNameNew;
-                            }
-                        }
-
-                        if (mMzIdSampleInfo.TryGetValue(resultFileName, out sampleMetadata))
-                        {
-                            fileInfoCols.Add(sampleMetadata.Species);
-                            fileInfoCols.Add(sampleMetadata.Tissue);
-
-                            if (smhIncludesCellType)
-                            {
-                                fileInfoCols.Add(sampleMetadata.CellType);
-                            }
-                            else
-                            {
-                                fileInfoCols.Add(string.Empty);
-                            }
-
-                            if (smhIncludesDisease)
-                            {
-                                fileInfoCols.Add(sampleMetadata.Disease);
-                            }
-                            else
-                            {
-                                fileInfoCols.Add(string.Empty);
-                            }
-
-                            var mods = string.Empty;
-                            foreach (var modEntry in sampleMetadata.Modifications)
-                            {
-                                // Mod CVs must be comma separated, with no space after the comma
-                                if (mods.Length > 0)
-                                    mods += ",";
-
-                                mods += GetCVString(modEntry.Value);
-                            }
-
-                            // modification
-                            fileInfoCols.Add(mods);
-
-                            GetInstrumentAccession(sampleMetadata.InstrumentGroup, sampleMetadata.InstrumentName, out var instrumentAccession, out var instrumentDescription);
-
-                            var instrumentCV = GetInstrumentCv(instrumentAccession, instrumentDescription);
-
-                            fileInfoCols.Add(instrumentCV);
-
-                            fileInfoCols.Add(GetValueOrDefault("quantification)", templateParameters, sampleMetadata.Quantification));
-
-                            fileInfoCols.Add(sampleMetadata.ExperimentalFactor);
+                            fileInfoCols.Add(sampleMetadata.CellType);
                         }
                         else
                         {
-                            LogWarning(" Sample Metadata not found for " + resultFile.Value);
+                            fileInfoCols.Add(string.Empty);
                         }
 
-                        WritePXLine(writer, fileInfoCols);
+                        if (smhIncludesDisease)
+                        {
+                            fileInfoCols.Add(sampleMetadata.Disease);
+                        }
+                        else
+                        {
+                            fileInfoCols.Add(string.Empty);
+                        }
+
+                        var mods = string.Empty;
+                        foreach (var modEntry in sampleMetadata.Modifications)
+                        {
+                            // Mod CVs must be comma separated, with no space after the comma
+                            if (mods.Length > 0)
+                                mods += ",";
+
+                            mods += GetCVString(modEntry.Value);
+                        }
+
+                        // modification
+                        fileInfoCols.Add(mods);
+
+                        GetInstrumentAccession(sampleMetadata.InstrumentGroup, sampleMetadata.InstrumentName, out var instrumentAccession, out var instrumentDescription);
+
+                        var instrumentCV = GetInstrumentCv(instrumentAccession, instrumentDescription);
+
+                        fileInfoCols.Add(instrumentCV);
+
+                        fileInfoCols.Add(GetValueOrDefault("quantification)", templateParameters, sampleMetadata.Quantification));
+
+                        fileInfoCols.Add(sampleMetadata.ExperimentalFactor);
                     }
+                    else
+                    {
+                        LogWarning(" Sample Metadata not found for " + resultFile.Value);
+                    }
+
+                    WritePXLine(writer, fileInfoCols);
                 }
             }
             catch (Exception ex)
@@ -3250,8 +3250,6 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         [Obsolete("No longer used")]
         private string GetPrideConverterVersion(string prideConverterProgLoc)
         {
-            var prideConverterVersion = "unknown";
-
             mCmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel);
             RegisterEvents(mCmdRunner);
             mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
@@ -3293,22 +3291,22 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             }
             else
             {
-                var fiVersionFile = new FileInfo(versionFilePath);
+                var versionFile = new FileInfo(versionFilePath);
 
-                if (fiVersionFile.Exists)
+                if (!versionFile.Exists)
+                    return "unknown";
+
+                // Open the version file and read the version
+                using var reader = new StreamReader(new FileStream(versionFile.FullName, FileMode.Open, FileAccess.Read));
+
+                if (!reader.EndOfStream)
                 {
-                    // Open the version file and read the version
-                    using (var reader = new StreamReader(new FileStream(fiVersionFile.FullName, FileMode.Open, FileAccess.Read)))
-                    {
-                        if (!reader.EndOfStream)
-                        {
-                            prideConverterVersion = reader.ReadLine();
-                        }
-                    }
+                    var prideConverterVersion = reader.ReadLine();
+                    return prideConverterVersion;
                 }
             }
 
-            return prideConverterVersion;
+            return "unknown";
         }
 
         private string GetValueOrDefault(string type, IReadOnlyDictionary<string, string> parameters, string defaultValue)
@@ -3522,24 +3520,21 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 mConsoleOutputErrorMsg = string.Empty;
 
-                using (var reader = new StreamReader(new FileStream(consoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using var reader = new StreamReader(new FileStream(consoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+                while (!reader.EndOfStream)
                 {
-                    mConsoleOutputErrorMsg = string.Empty;
+                    var dataLine = reader.ReadLine();
 
-                    while (!reader.EndOfStream)
+                    if (!string.IsNullOrWhiteSpace(dataLine))
                     {
-                        var dataLine = reader.ReadLine();
-
-                        if (!string.IsNullOrWhiteSpace(dataLine))
+                        if (dataLine.IndexOf(" error ", StringComparison.OrdinalIgnoreCase) >= 0)
                         {
-                            if (dataLine.IndexOf(" error ", StringComparison.OrdinalIgnoreCase) >= 0)
+                            if (string.IsNullOrEmpty(mConsoleOutputErrorMsg))
                             {
-                                if (string.IsNullOrEmpty(mConsoleOutputErrorMsg))
-                                {
-                                    mConsoleOutputErrorMsg = "Error running Pride Converter:";
-                                }
-                                mConsoleOutputErrorMsg += "; " + dataLine;
+                                mConsoleOutputErrorMsg = "Error running Pride Converter:";
                             }
+                            mConsoleOutputErrorMsg += "; " + dataLine;
                         }
                     }
                 }
@@ -3833,35 +3828,34 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     return parameters;
                 }
 
-                using (var reader = new StreamReader(new FileStream(templateFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                using var reader = new StreamReader(new FileStream(templateFilePath, FileMode.Open, FileAccess.Read, FileShare.Read));
+
+                while (!reader.EndOfStream)
                 {
-                    while (!reader.EndOfStream)
+                    var dataLine = reader.ReadLine();
+
+                    if (string.IsNullOrEmpty(dataLine))
+                        continue;
+
+                    if (!dataLine.StartsWith("MTD"))
+                        continue;
+
+                    var dataCols = dataLine.Split(new[] { '\t' }, 3).ToList();
+
+                    if (dataCols.Count < 3 || string.IsNullOrEmpty(dataCols[1]))
+                        continue;
+
+                    var keyName = dataCols[1];
+
+                    // Automatically rename parameters updated from v1.x to v2.x of the .px file format
+                    if (keyNameOverrides.TryGetValue(keyName, out var keyNameNew))
                     {
-                        var dataLine = reader.ReadLine();
+                        keyName = keyNameNew;
+                    }
 
-                        if (string.IsNullOrEmpty(dataLine))
-                            continue;
-
-                        if (!dataLine.StartsWith("MTD"))
-                            continue;
-
-                        var dataCols = dataLine.Split(new[] { '\t' }, 3).ToList();
-
-                        if (dataCols.Count < 3 || string.IsNullOrEmpty(dataCols[1]))
-                            continue;
-
-                        var keyName = dataCols[1];
-
-                        // Automatically rename parameters updated from v1.x to v2.x of the .px file format
-                        if (keyNameOverrides.TryGetValue(keyName, out var keyNameNew))
-                        {
-                            keyName = keyNameNew;
-                        }
-
-                        if (!string.Equals(keyName, OBSOLETE_FIELD_FLAG) && !parameters.ContainsKey(keyName))
-                        {
-                            parameters.Add(keyName, dataCols[2].Trim());
-                        }
+                    if (!string.Equals(keyName, OBSOLETE_FIELD_FLAG) && !parameters.ContainsKey(keyName))
+                    {
+                        parameters.Add(keyName, dataCols[2].Trim());
                     }
                 }
             }

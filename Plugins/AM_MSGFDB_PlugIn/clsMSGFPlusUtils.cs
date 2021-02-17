@@ -1023,16 +1023,15 @@ namespace AnalysisManagerMSGFDBPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                using (var reader = new StreamReader(new FileStream(inputFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                using var reader = new StreamReader(new FileStream(inputFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read));
+
+                linesRead = 0;
+                while (!reader.EndOfStream && linesRead < 10)
                 {
-                    linesRead = 0;
-                    while (!reader.EndOfStream && linesRead < 10)
+                    var dataLine = reader.ReadLine();
+                    if (!string.IsNullOrEmpty(dataLine))
                     {
-                        var dataLine = reader.ReadLine();
-                        if (!string.IsNullOrEmpty(dataLine))
-                        {
-                            linesRead++;
-                        }
+                        linesRead++;
                     }
                 }
 
@@ -1302,8 +1301,8 @@ namespace AnalysisManagerMSGFDBPlugIn
                 OnStatusEvent("Trimmed fasta created using " + proteinCount + " proteins; creating the hashcheck file");
 
                 clsGlobal.CreateHashcheckFile(trimmedFasta.FullName, true);
-                var trimmedFastaFilePath = trimmedFasta.FullName;
-                return trimmedFastaFilePath;
+
+                return trimmedFasta.FullName;
             }
             catch (Exception ex)
             {

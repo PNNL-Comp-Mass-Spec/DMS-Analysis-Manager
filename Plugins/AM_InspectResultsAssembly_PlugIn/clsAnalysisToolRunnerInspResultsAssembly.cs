@@ -657,57 +657,56 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                 }
 
                 // Read the Inspect parameter file
-                using (var reader = new StreamReader((new FileStream(inspectParameterFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))))
+                using var reader = new StreamReader((new FileStream(inspectParameterFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)));
+
+                while (!reader.EndOfStream)
                 {
-                    while (!reader.EndOfStream)
+                    var dataLine = reader.ReadLine();
+
+                    if (string.IsNullOrWhiteSpace(dataLine))
+                        continue;
+
+                    var dataLineTrimmed = dataLine.Trim();
+
+                    if (string.IsNullOrEmpty(dataLine))
+                        continue;
+
+                    if (dataLineTrimmed[0] == '#')
                     {
-                        var dataLine = reader.ReadLine();
-
-                        if (string.IsNullOrWhiteSpace(dataLine))
-                            continue;
-
-                        var dataLineTrimmed = dataLine.Trim();
-
-                        if (string.IsNullOrEmpty(dataLine))
-                            continue;
-
-                        if (dataLineTrimmed[0] == '#')
-                        {
-                            // Comment line; skip it
-                            continue;
-                        }
-
-                        if (dataLineTrimmed.StartsWith("mod", StringComparison.OrdinalIgnoreCase))
-                        {
-                            // Modification definition line
-
-                            // Split the line on commas
-                            var splitLine = dataLineTrimmed.Split(',');
-
-                            if (splitLine.Length >= 5 && splitLine[0].ToLower().Trim() == "mod")
-                            {
-                                if (modList.Length == 0)
-                                {
-                                    modList = new udtModInfoType[1];
-                                }
-                                else if (modCount >= modList.Length)
-                                {
-                                    Array.Resize(ref modList, modList.Length * 2);
-                                }
-
-                                // var mod = modList[modCount];
-                                // mod.ModName = splitLine[4];
-                                // mod.ModMass = splitLine[1];
-                                // mod.Residues = splitLine[2];
-
-                                modCount++;
-                            }
-                        }
+                        // Comment line; skip it
+                        continue;
                     }
 
-                    // Shrink modList to the appropriate length
-                    Array.Resize(ref modList, modCount);
+                    if (dataLineTrimmed.StartsWith("mod", StringComparison.OrdinalIgnoreCase))
+                    {
+                        // Modification definition line
+
+                        // Split the line on commas
+                        var splitLine = dataLineTrimmed.Split(',');
+
+                        if (splitLine.Length >= 5 && splitLine[0].ToLower().Trim() == "mod")
+                        {
+                            if (modList.Length == 0)
+                            {
+                                modList = new udtModInfoType[1];
+                            }
+                            else if (modCount >= modList.Length)
+                            {
+                                Array.Resize(ref modList, modList.Length * 2);
+                            }
+
+                            // var mod = modList[modCount];
+                            // mod.ModName = splitLine[4];
+                            // mod.ModMass = splitLine[1];
+                            // mod.Residues = splitLine[2];
+
+                            modCount++;
+                        }
+                    }
                 }
+
+                // Shrink modList to the appropriate length
+                Array.Resize(ref modList, modCount);
             }
             catch (Exception ex)
             {

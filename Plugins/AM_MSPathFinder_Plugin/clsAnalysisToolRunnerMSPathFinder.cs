@@ -786,10 +786,9 @@ namespace AnalysisManagerMSPathFinderPlugin
                 // Write the console output to a text file
                 clsGlobal.IdleLoop(0.25);
 
-                using (var writer = new StreamWriter(new FileStream(mCmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
-                {
-                    writer.WriteLine(mCmdRunner.CachedConsoleOutput);
-                }
+                using var writer = new StreamWriter(new FileStream(mCmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
+
+                writer.WriteLine(mCmdRunner.CachedConsoleOutput);
             }
 
             // Parse the console output file one more time to check for errors

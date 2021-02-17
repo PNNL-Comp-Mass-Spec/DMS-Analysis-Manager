@@ -1382,27 +1382,26 @@ namespace AnalysisManagerTopPICPlugIn
             try
             {
                 var runtimeParamsPath = Path.Combine(mWorkDir, "TopPIC_RuntimeParameters.txt");
-                using (var writer = new StreamWriter(new FileStream(runtimeParamsPath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
+                using var writer = new StreamWriter(new FileStream(runtimeParamsPath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite));
+
+                foreach (var parameter in parameterInfo)
                 {
-                    foreach (var parameter in parameterInfo)
+                    if (!csvBasedParams)
                     {
-                        if (!csvBasedParams)
-                        {
-                            writer.WriteLine(parameter);
-                            continue;
-                        }
-
-                        // Parameter lines are of the form "Error tolerance:,15 ppm"
-                        // Replace the comma with spaces
-                        var paramParts = parameter.Split(new[] { ',' }, 2);
-                        if (paramParts.Length <= 1)
-                        {
-                            writer.WriteLine(parameter);
-                            continue;
-                        }
-
-                        writer.WriteLine("{0,-46}\t{1}", paramParts[0], paramParts[1]);
+                        writer.WriteLine(parameter);
+                        continue;
                     }
+
+                    // Parameter lines are of the form "Error tolerance:,15 ppm"
+                    // Replace the comma with spaces
+                    var paramParts = parameter.Split(new[] { ',' }, 2);
+                    if (paramParts.Length <= 1)
+                    {
+                        writer.WriteLine(parameter);
+                        continue;
+                    }
+
+                    writer.WriteLine("{0,-46}\t{1}", paramParts[0], paramParts[1]);
                 }
             }
             catch (Exception ex)

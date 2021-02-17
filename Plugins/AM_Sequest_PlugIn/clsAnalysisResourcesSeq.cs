@@ -548,25 +548,24 @@ namespace AnalysisManagerSequestPlugin
 
             try
             {
-                using (var reader = new StreamReader(new FileStream(HostFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
-                {
-                    while (!reader.EndOfStream)
-                    {
-                        // Read the line from the file and check to see if it contains a node IP address.
-                        // If it does, add the IP address to the collection of addresses
-                        var dataLine = reader.ReadLine();
+                using var reader = new StreamReader(new FileStream(HostFilePath, FileMode.Open, FileAccess.Read, FileShare.Read));
 
-                        // Verify the line isn't a comment line
-                        if (!string.IsNullOrWhiteSpace(dataLine) && !dataLine.Contains("#"))
+                while (!reader.EndOfStream)
+                {
+                    // Read the line from the file and check to see if it contains a node IP address.
+                    // If it does, add the IP address to the collection of addresses
+                    var dataLine = reader.ReadLine();
+
+                    // Verify the line isn't a comment line
+                    if (!string.IsNullOrWhiteSpace(dataLine) && !dataLine.Contains("#"))
+                    {
+                        // Parse the node name and add it to the collection
+                        var dataCols = dataLine.Split(separators, StringSplitOptions.RemoveEmptyEntries);
+                        if (dataCols.Length >= 1)
                         {
-                            // Parse the node name and add it to the collection
-                            var dataCols = dataLine.Split(separators, StringSplitOptions.RemoveEmptyEntries);
-                            if (dataCols.Length >= 1)
+                            if (!nodes.Contains(dataCols[0]))
                             {
-                                if (!nodes.Contains(dataCols[0]))
-                                {
-                                    nodes.Add(dataCols[0]);
-                                }
+                                nodes.Add(dataCols[0]);
                             }
                         }
                     }

@@ -288,22 +288,20 @@ namespace MSGFResultsSummarizer
 
                 var startupOptions = GetMinimalMemoryPHRPStartupOptions();
 
-                using (var reader = new clsPHRPReader(firstHitsFilePath, startupOptions))
+                using var reader = new clsPHRPReader(firstHitsFilePath, startupOptions);
+                RegisterEvents(reader);
+
+                while (reader.MoveNext())
                 {
-                    RegisterEvents(reader);
+                    var currentPSM = reader.CurrentPSM;
 
-                    while (reader.MoveNext())
+                    if (currentPSM.Charge >= 0)
                     {
-                        var currentPSM = reader.CurrentPSM;
+                        var scanChargeCombo = currentPSM.ScanNumber + "_" + currentPSM.Charge;
 
-                        if (currentPSM.Charge >= 0)
+                        if (!uniqueSpectra.ContainsKey(scanChargeCombo))
                         {
-                            var scanChargeCombo = currentPSM.ScanNumber + "_" + currentPSM.Charge;
-
-                            if (!uniqueSpectra.ContainsKey(scanChargeCombo))
-                            {
-                                uniqueSpectra.Add(scanChargeCombo, currentPSM.ScanNumber);
-                            }
+                            uniqueSpectra.Add(scanChargeCombo, currentPSM.ScanNumber);
                         }
                     }
                 }
@@ -450,7 +448,7 @@ namespace MSGFResultsSummarizer
 
                 var queryScanStats = " SELECT Scan_Count_Total, " +
                                      "        SUM(CASE WHEN Scan_Type LIKE '%MSn' THEN Scan_Count ELSE 0 END) AS ScanCountMSn" +
-                                     " FROM V_Dataset_Scans_Export DSE" + " WHERE Dataset = '" + DatasetName + "'" + " GROUP BY Scan_Count_Total";
+                                     " FROM V_Dataset_Scans_Export DSE" + " WHERE Dataset = '" + DatasetName + "' GROUP BY Scan_Count_Total";
 
                 var dbTools = DbToolsFactory.GetDBTools(mConnectionString, debugMode: mTraceMode);
                 RegisterEvents(dbTools);
@@ -475,7 +473,7 @@ namespace MSGFResultsSummarizer
                     }
                 }
 
-                var queryScanTotal = "" + " SELECT [Scan Count]" + " FROM V_Dataset_Export" + " WHERE Dataset = '" + DatasetName + "'";
+                var queryScanTotal = " SELECT [Scan Count]" + " FROM V_Dataset_Export" + " WHERE Dataset = '" + DatasetName + "'";
 
                 // ReSharper disable once ExplicitCallerInfoArgument
                 var scanCountSuccess = dbTools.GetQueryResults(queryScanTotal, out var datasetScanCountFromDb, callingFunction: "LookupScanStats_V_Dataset_Export");
@@ -1138,8 +1136,7 @@ namespace MSGFResultsSummarizer
         /// <param name="resultToSeqMap">SortedList mapping PSM ResultID to Sequence ID</param>
         /// <param name="seqToProteinMap">Dictionary where keys are sequence ID and values are a list of protein info</param>
         /// <param name="sequenceInfo">Dictionary where keys are sequence ID and values are information about the sequence</param>
-        /// <returns></returns>
-        /// <remarks></remarks>
+        /// <returns>True if successful, false if an error</returns>
         private bool LoadPSMs(
             string phrpSynopsisFilePath,
             IDictionary<int, clsPSMInfo> normalizedPSMs,
@@ -1149,8 +1146,6 @@ namespace MSGFResultsSummarizer
         {
             var specEValue = clsPSMInfo.UNKNOWN_MSGF_SPEC_EVALUE;
             var eValue = clsPSMInfo.UNKNOWN_EVALUE;
-
-            bool success;
 
             var loadMSGFResults = true;
 
@@ -1197,7 +1192,7 @@ namespace MSGFResultsSummarizer
 
                     if (!string.IsNullOrWhiteSpace(resultToSeqMapFilePath))
                     {
-                        success = seqMapReader.GetProteinMapping(resultToSeqMap, seqToProteinMap, sequenceInfo);
+                        var success = seqMapReader.GetProteinMapping(resultToSeqMap, seqToProteinMap, sequenceInfo);
 
                         if (!success)
                         {
@@ -1237,286 +1232,180 @@ namespace MSGFResultsSummarizer
                 //
                 var normalizedPeptidesByCleanSequence = new Dictionary<string, List<clsNormalizedPeptideInfo>>();
 
-                using (var reader = new clsPHRPReader(phrpSynopsisFilePath, startupOptions))
+                using var reader = new clsPHRPReader(phrpSynopsisFilePath, startupOptions);
+                RegisterEvents(reader);
+
+                while (reader.MoveNext())
                 {
-                    RegisterEvents(reader);
+                    var currentPSM = reader.CurrentPSM;
 
-                    while (reader.MoveNext())
+                    if (currentPSM.ScoreRank > 1)
                     {
-                        var currentPSM = reader.CurrentPSM;
+                        // Only keep the first match for each spectrum
+                        continue;
+                    }
 
-                        if (currentPSM.ScoreRank > 1)
+                    var valid = false;
+
+                    if (ResultType == clsPHRPReader.PeptideHitResultTypes.MSAlign)
+                    {
+                        // Use the EValue reported by MSAlign
+
+                        if (currentPSM.TryGetScore("EValue", out var eValueText))
                         {
-                            // Only keep the first match for each spectrum
-                            continue;
+                            valid = double.TryParse(eValueText, out eValue);
                         }
+                    }
+                    else if (ResultType == clsPHRPReader.PeptideHitResultTypes.MODa | ResultType == clsPHRPReader.PeptideHitResultTypes.MODPlus)
+                    {
+                        // MODa / MODPlus results don't have spectral probability, but they do have FDR
+                        valid = true;
+                    }
+                    else if (ResultType == clsPHRPReader.PeptideHitResultTypes.MSPathFinder)
+                    {
+                        // Use SpecEValue in place of SpecProb
+                        valid = true;
 
-                        var valid = false;
-
-                        if (ResultType == clsPHRPReader.PeptideHitResultTypes.MSAlign)
+                        if (currentPSM.TryGetScore(clsPHRPParserMSPathFinder.DATA_COLUMN_SpecEValue, out var specEValueText))
                         {
-                            // Use the EValue reported by MSAlign
-
-                            if (currentPSM.TryGetScore("EValue", out var eValueText))
+                            if (!string.IsNullOrWhiteSpace(specEValueText))
                             {
-                                valid = double.TryParse(eValueText, out eValue);
+                                valid = double.TryParse(specEValueText, out specEValue);
                             }
                         }
-                        else if (ResultType == clsPHRPReader.PeptideHitResultTypes.MODa | ResultType == clsPHRPReader.PeptideHitResultTypes.MODPlus)
-                        {
-                            // MODa / MODPlus results don't have spectral probability, but they do have FDR
-                            valid = true;
-                        }
-                        else if (ResultType == clsPHRPReader.PeptideHitResultTypes.MSPathFinder)
-                        {
-                            // Use SpecEValue in place of SpecProb
-                            valid = true;
 
-                            if (currentPSM.TryGetScore(clsPHRPParserMSPathFinder.DATA_COLUMN_SpecEValue, out var specEValueText))
+                        // SpecEValue was not present
+                        // That's OK, QValue should be present
+                    }
+                    else
+                    {
+                        valid = double.TryParse(currentPSM.MSGFSpecEValue, out specEValue);
+                    }
+
+                    if (!valid)
+                    {
+                        continue;
+                    }
+
+                    // Store in normalizedPSMs
+
+                    var psmInfo = new clsPSMInfo();
+                    psmInfo.Clear();
+
+                    psmInfo.Protein = currentPSM.ProteinFirst;
+
+                    var psmMSGF = specEValue;
+                    var psmEValue = eValue;
+                    double psmFDR;
+
+                    if (ResultType == clsPHRPReader.PeptideHitResultTypes.MSGFPlus | ResultType == clsPHRPReader.PeptideHitResultTypes.MSAlign)
+                    {
+                        psmFDR = currentPSM.GetScoreDbl(clsPHRPParserMSGFPlus.DATA_COLUMN_FDR, clsPSMInfo.UNKNOWN_FDR);
+                        if (psmFDR < 0)
+                        {
+                            psmFDR = currentPSM.GetScoreDbl(clsPHRPParserMSGFPlus.DATA_COLUMN_EFDR, clsPSMInfo.UNKNOWN_FDR);
+                        }
+                    }
+                    else if (ResultType == clsPHRPReader.PeptideHitResultTypes.MODa)
+                    {
+                        psmFDR = currentPSM.GetScoreDbl(clsPHRPParserMODa.DATA_COLUMN_QValue, clsPSMInfo.UNKNOWN_FDR);
+                    }
+                    else if (ResultType == clsPHRPReader.PeptideHitResultTypes.MODPlus)
+                    {
+                        psmFDR = currentPSM.GetScoreDbl(clsPHRPParserMODPlus.DATA_COLUMN_QValue, clsPSMInfo.UNKNOWN_FDR);
+                    }
+                    else if (ResultType == clsPHRPReader.PeptideHitResultTypes.MSPathFinder)
+                    {
+                        psmFDR = currentPSM.GetScoreDbl(clsPHRPParserMSPathFinder.DATA_COLUMN_QValue, clsPSMInfo.UNKNOWN_FDR);
+                    }
+                    else
+                    {
+                        psmFDR = clsPSMInfo.UNKNOWN_FDR;
+                    }
+
+                    var normalizedPeptide = new clsNormalizedPeptideInfo(string.Empty);
+
+                    var normalized = false;
+                    var seqID = clsPSMInfo.UNKNOWN_SEQUENCE_ID;
+
+                    if (sequenceInfoAvailable && resultToSeqMap != null)
+                    {
+                        if (!resultToSeqMap.TryGetValue(currentPSM.ResultID, out seqID))
+                        {
+                            seqID = clsPSMInfo.UNKNOWN_SEQUENCE_ID;
+
+                            // This result is not listed in the _ResultToSeqMap file, likely because it was already processed for this scan
+                            // Look for a match in normalizedPeptidesByCleanSequence that matches this peptide's clean sequence
+
+                            if (normalizedPeptidesByCleanSequence.TryGetValue(currentPSM.PeptideCleanSequence, out var normalizedPeptides))
                             {
-                                if (!string.IsNullOrWhiteSpace(specEValueText))
+                                foreach (var normalizedItem in normalizedPeptides)
                                 {
-                                    valid = double.TryParse(specEValueText, out specEValue);
-                                }
-                            }
-
-                            // SpecEValue was not present
-                            // That's OK, QValue should be present
-                        }
-                        else
-                        {
-                            valid = double.TryParse(currentPSM.MSGFSpecEValue, out specEValue);
-                        }
-
-                        if (!valid)
-                        {
-                            continue;
-                        }
-
-                        // Store in normalizedPSMs
-
-                        var psmInfo = new clsPSMInfo();
-                        psmInfo.Clear();
-
-                        psmInfo.Protein = currentPSM.ProteinFirst;
-
-                        var psmMSGF = specEValue;
-                        var psmEValue = eValue;
-                        double psmFDR;
-
-                        if (ResultType == clsPHRPReader.PeptideHitResultTypes.MSGFPlus | ResultType == clsPHRPReader.PeptideHitResultTypes.MSAlign)
-                        {
-                            psmFDR = currentPSM.GetScoreDbl(clsPHRPParserMSGFPlus.DATA_COLUMN_FDR, clsPSMInfo.UNKNOWN_FDR);
-                            if (psmFDR < 0)
-                            {
-                                psmFDR = currentPSM.GetScoreDbl(clsPHRPParserMSGFPlus.DATA_COLUMN_EFDR, clsPSMInfo.UNKNOWN_FDR);
-                            }
-                        }
-                        else if (ResultType == clsPHRPReader.PeptideHitResultTypes.MODa)
-                        {
-                            psmFDR = currentPSM.GetScoreDbl(clsPHRPParserMODa.DATA_COLUMN_QValue, clsPSMInfo.UNKNOWN_FDR);
-                        }
-                        else if (ResultType == clsPHRPReader.PeptideHitResultTypes.MODPlus)
-                        {
-                            psmFDR = currentPSM.GetScoreDbl(clsPHRPParserMODPlus.DATA_COLUMN_QValue, clsPSMInfo.UNKNOWN_FDR);
-                        }
-                        else if (ResultType == clsPHRPReader.PeptideHitResultTypes.MSPathFinder)
-                        {
-                            psmFDR = currentPSM.GetScoreDbl(clsPHRPParserMSPathFinder.DATA_COLUMN_QValue, clsPSMInfo.UNKNOWN_FDR);
-                        }
-                        else
-                        {
-                            psmFDR = clsPSMInfo.UNKNOWN_FDR;
-                        }
-
-                        var normalizedPeptide = new clsNormalizedPeptideInfo(string.Empty);
-
-                        var normalized = false;
-                        var seqID = clsPSMInfo.UNKNOWN_SEQUENCE_ID;
-
-                        if (sequenceInfoAvailable && resultToSeqMap != null)
-                        {
-                            if (!resultToSeqMap.TryGetValue(currentPSM.ResultID, out seqID))
-                            {
-                                seqID = clsPSMInfo.UNKNOWN_SEQUENCE_ID;
-
-                                // This result is not listed in the _ResultToSeqMap file, likely because it was already processed for this scan
-                                // Look for a match in normalizedPeptidesByCleanSequence that matches this peptide's clean sequence
-
-                                if (normalizedPeptidesByCleanSequence.TryGetValue(currentPSM.PeptideCleanSequence, out var normalizedPeptides))
-                                {
-                                    foreach (var normalizedItem in normalizedPeptides)
+                                    if (normalizedItem.SeqID != clsPSMInfo.UNKNOWN_SEQUENCE_ID)
                                     {
-                                        if (normalizedItem.SeqID != clsPSMInfo.UNKNOWN_SEQUENCE_ID)
-                                        {
-                                            // Match found; use the given SeqID value
-                                            seqID = normalizedItem.SeqID;
-                                            break;
-                                        }
+                                        // Match found; use the given SeqID value
+                                        seqID = normalizedItem.SeqID;
+                                        break;
                                     }
                                 }
                             }
-
-                            if (seqID != clsPSMInfo.UNKNOWN_SEQUENCE_ID)
-                            {
-                                if (sequenceInfo.TryGetValue(seqID, out var seqInfo))
-                                {
-                                    normalizedPeptide = NormalizeSequence(currentPSM.PeptideCleanSequence, seqInfo, seqID);
-                                    normalized = true;
-                                }
-                            }
                         }
 
-                        if (!normalized)
+                        if (seqID != clsPSMInfo.UNKNOWN_SEQUENCE_ID)
                         {
-                            normalizedPeptide = NormalizeSequence(currentPSM.Peptide, seqID);
-                        }
-
-                        var normalizedSeqID = FindNormalizedSequence(normalizedPeptidesByCleanSequence, normalizedPeptide);
-
-                        if (normalizedSeqID != clsPSMInfo.UNKNOWN_SEQUENCE_ID)
-                        {
-                            // We're already tracking this normalized peptide (or one very similar to it)
-
-                            var normalizedPSMInfo = normalizedPSMs[normalizedSeqID];
-                            var addObservation = true;
-
-                            foreach (var observation in normalizedPSMInfo.Observations)
+                            if (sequenceInfo.TryGetValue(seqID, out var seqInfo))
                             {
-                                if (observation.Scan != currentPSM.ScanNumber)
-                                    continue;
-
-                                // Scan already stored
-                                // Update the scores if this PSM has a better score than the cached one
-                                if (psmFDR > clsPSMInfo.UNKNOWN_FDR)
-                                {
-                                    if (psmFDR < observation.FDR)
-                                    {
-                                        observation.FDR = psmFDR;
-                                    }
-                                }
-
-                                if (psmMSGF < observation.MSGF)
-                                {
-                                    observation.MSGF = psmMSGF;
-                                }
-
-                                if (psmEValue < observation.EValue)
-                                {
-                                    observation.EValue = psmEValue;
-                                }
-
-                                addObservation = false;
-                                break;
-                            }
-
-                            if (addObservation)
-                            {
-                                var observation = new clsPSMInfo.PSMObservation
-                                {
-                                    Scan = currentPSM.ScanNumber,
-                                    FDR = psmFDR,
-                                    MSGF = psmMSGF,
-                                    EValue = psmEValue
-                                };
-
-                                normalizedPSMInfo.Observations.Add(observation);
+                                normalizedPeptide = NormalizeSequence(currentPSM.PeptideCleanSequence, seqInfo, seqID);
+                                normalized = true;
                             }
                         }
-                        else
+                    }
+
+                    if (!normalized)
+                    {
+                        normalizedPeptide = NormalizeSequence(currentPSM.Peptide, seqID);
+                    }
+
+                    var normalizedSeqID = FindNormalizedSequence(normalizedPeptidesByCleanSequence, normalizedPeptide);
+
+                    if (normalizedSeqID != clsPSMInfo.UNKNOWN_SEQUENCE_ID)
+                    {
+                        // We're already tracking this normalized peptide (or one very similar to it)
+
+                        var normalizedPSMInfo = normalizedPSMs[normalizedSeqID];
+                        var addObservation = true;
+
+                        foreach (var observation in normalizedPSMInfo.Observations)
                         {
-                            // New normalized sequence
-                            // SeqID will typically come from the ResultToSeqMap file
-                            // But, if that file is not available, we use the ResultID of the peptide
+                            if (observation.Scan != currentPSM.ScanNumber)
+                                continue;
 
-                            if (seqID == clsPSMInfo.UNKNOWN_SEQUENCE_ID)
+                            // Scan already stored
+                            // Update the scores if this PSM has a better score than the cached one
+                            if (psmFDR > clsPSMInfo.UNKNOWN_FDR)
                             {
-                                seqID = currentPSM.ResultID;
-                            }
-
-                            if (!normalizedPeptidesByCleanSequence.TryGetValue(normalizedPeptide.CleanSequence, out var normalizedPeptides))
-                            {
-                                normalizedPeptides = new List<clsNormalizedPeptideInfo>();
-                                normalizedPeptidesByCleanSequence.Add(normalizedPeptide.CleanSequence, normalizedPeptides);
-                            }
-
-                            // Make a new normalized peptide entry that does not have clean sequence
-                            // (to conserve memory, since keys in dictionary normalizedPeptides are clean sequence)
-                            var normalizedPeptideToStore = new clsNormalizedPeptideInfo(string.Empty);
-                            normalizedPeptideToStore.StoreModifications(normalizedPeptide.Modifications);
-                            normalizedPeptideToStore.SeqID = seqID;
-
-                            normalizedPeptides.Add(normalizedPeptideToStore);
-
-                            psmInfo.SeqIdFirst = seqID;
-
-                            var lastResidue = normalizedPeptide.CleanSequence[normalizedPeptide.CleanSequence.Length - 1];
-                            if (lastResidue == 'K')
-                            {
-                                psmInfo.CTermK = true;
-                            }
-                            else if (lastResidue == 'R')
-                            {
-                                psmInfo.CTermR = true;
-                            }
-
-                            // Check whether this peptide has a missed cleavage
-                            // This only works for Trypsin
-                            if (currentPSM.NumMissedCleavages > 0)
-                            {
-                                psmInfo.MissedCleavage = true;
-                            }
-                            else if (missedCleavageMatcher.IsMatch(normalizedPeptide.CleanSequence))
-                            {
-                                Console.WriteLine("NumMissedCleavages is zero but the peptide matches the MissedCleavage RegEx; this is unexpected");
-                                psmInfo.MissedCleavage = true;
-                            }
-
-                            // Check whether this peptide is from Keratin or a related protein
-                            foreach (var proteinName in currentPSM.Proteins)
-                            {
-                                if (keratinProteinMatcher.IsMatch(proteinName))
+                                if (psmFDR < observation.FDR)
                                 {
-                                    psmInfo.KeratinPeptide = true;
-                                    break;
+                                    observation.FDR = psmFDR;
                                 }
                             }
 
-                            // Check whether this peptide is from Trypsin or a related protein
-                            foreach (var proteinName in currentPSM.Proteins)
+                            if (psmMSGF < observation.MSGF)
                             {
-                                if (trypsinProteinMatcher.IsMatch(proteinName))
-                                {
-                                    psmInfo.TrypsinPeptide = true;
-                                    break;
-                                }
+                                observation.MSGF = psmMSGF;
                             }
 
-                            // Check whether this peptide is partially or fully tryptic
-                            if (currentPSM.CleavageState == clsPeptideCleavageStateCalculator.PeptideCleavageStateConstants.Full ||
-                                currentPSM.CleavageState == clsPeptideCleavageStateCalculator.PeptideCleavageStateConstants.Partial)
+                            if (psmEValue < observation.EValue)
                             {
-                                psmInfo.Tryptic = true;
+                                observation.EValue = psmEValue;
                             }
 
-                            // Check whether this is a phosphopeptide
-                            // This check only works if the _ModSummary.txt file was loaded because it relies on the mod name being Phosph
-                            foreach (var modification in normalizedPeptide.Modifications)
-                            {
-                                if (string.Equals(modification.Key, "Phosph", StringComparison.OrdinalIgnoreCase))
-                                {
-                                    psmInfo.Phosphopeptide = true;
-                                    break;
-                                }
+                            addObservation = false;
+                            break;
+                        }
 
-                                if (string.Equals(modification.Key, "Acetyl", StringComparison.OrdinalIgnoreCase) ||
-                                    string.Equals(modification.Key, "AcNoTMT", StringComparison.OrdinalIgnoreCase))
-                                {
-                                    psmInfo.AcetylPeptide = true;
-                                    break;
-                                }
-                            }
-
+                        if (addObservation)
+                        {
                             var observation = new clsPSMInfo.PSMObservation
                             {
                                 Scan = currentPSM.ScanNumber,
@@ -1525,36 +1414,138 @@ namespace MSGFResultsSummarizer
                                 EValue = psmEValue
                             };
 
+                            normalizedPSMInfo.Observations.Add(observation);
+                        }
+                    }
+                    else
+                    {
+                        // New normalized sequence
+                        // SeqID will typically come from the ResultToSeqMap file
+                        // But, if that file is not available, we use the ResultID of the peptide
 
-                            if (mDynamicReporterIonPTM)
+                        if (seqID == clsPSMInfo.UNKNOWN_SEQUENCE_ID)
+                        {
+                            seqID = currentPSM.ResultID;
+                        }
+
+                        if (!normalizedPeptidesByCleanSequence.TryGetValue(normalizedPeptide.CleanSequence, out var normalizedPeptides))
+                        {
+                            normalizedPeptides = new List<clsNormalizedPeptideInfo>();
+                            normalizedPeptidesByCleanSequence.Add(normalizedPeptide.CleanSequence, normalizedPeptides);
+                        }
+
+                        // Make a new normalized peptide entry that does not have clean sequence
+                        // (to conserve memory, since keys in dictionary normalizedPeptides are clean sequence)
+                        var normalizedPeptideToStore = new clsNormalizedPeptideInfo(string.Empty);
+                        normalizedPeptideToStore.StoreModifications(normalizedPeptide.Modifications);
+                        normalizedPeptideToStore.SeqID = seqID;
+
+                        normalizedPeptides.Add(normalizedPeptideToStore);
+
+                        psmInfo.SeqIdFirst = seqID;
+
+                        var lastResidue = normalizedPeptide.CleanSequence[normalizedPeptide.CleanSequence.Length - 1];
+                        if (lastResidue == 'K')
+                        {
+                            psmInfo.CTermK = true;
+                        }
+                        else if (lastResidue == 'R')
+                        {
+                            psmInfo.CTermR = true;
+                        }
+
+                        // Check whether this peptide has a missed cleavage
+                        // This only works for Trypsin
+                        if (currentPSM.NumMissedCleavages > 0)
+                        {
+                            psmInfo.MissedCleavage = true;
+                        }
+                        else if (missedCleavageMatcher.IsMatch(normalizedPeptide.CleanSequence))
+                        {
+                            Console.WriteLine("NumMissedCleavages is zero but the peptide matches the MissedCleavage RegEx; this is unexpected");
+                            psmInfo.MissedCleavage = true;
+                        }
+
+                        // Check whether this peptide is from Keratin or a related protein
+                        foreach (var proteinName in currentPSM.Proteins)
+                        {
+                            if (keratinProteinMatcher.IsMatch(proteinName))
                             {
-                                ValidateReporterIonPTMs(normalizedPeptide, observation);
+                                psmInfo.KeratinPeptide = true;
+                                break;
+                            }
+                        }
+
+                        // Check whether this peptide is from Trypsin or a related protein
+                        foreach (var proteinName in currentPSM.Proteins)
+                        {
+                            if (trypsinProteinMatcher.IsMatch(proteinName))
+                            {
+                                psmInfo.TrypsinPeptide = true;
+                                break;
+                            }
+                        }
+
+                        // Check whether this peptide is partially or fully tryptic
+                        if (currentPSM.CleavageState == clsPeptideCleavageStateCalculator.PeptideCleavageStateConstants.Full ||
+                            currentPSM.CleavageState == clsPeptideCleavageStateCalculator.PeptideCleavageStateConstants.Partial)
+                        {
+                            psmInfo.Tryptic = true;
+                        }
+
+                        // Check whether this is a phosphopeptide
+                        // This check only works if the _ModSummary.txt file was loaded because it relies on the mod name being Phosph
+                        foreach (var modification in normalizedPeptide.Modifications)
+                        {
+                            if (string.Equals(modification.Key, "Phosph", StringComparison.OrdinalIgnoreCase))
+                            {
+                                psmInfo.Phosphopeptide = true;
+                                break;
                             }
 
-                            psmInfo.AddObservation(observation);
+                            if (string.Equals(modification.Key, "Acetyl", StringComparison.OrdinalIgnoreCase) ||
+                                string.Equals(modification.Key, "AcNoTMT", StringComparison.OrdinalIgnoreCase))
+                            {
+                                psmInfo.AcetylPeptide = true;
+                                break;
+                            }
+                        }
 
-                            if (normalizedPSMs.ContainsKey(seqID))
-                            {
-                                Console.WriteLine("Warning: Duplicate key, seqID=" + seqID + "; skipping PSM with ResultID=" + currentPSM.ResultID);
-                            }
-                            else
-                            {
-                                normalizedPSMs.Add(seqID, psmInfo);
-                            }
+                        var observation = new clsPSMInfo.PSMObservation
+                        {
+                            Scan = currentPSM.ScanNumber,
+                            FDR = psmFDR,
+                            MSGF = psmMSGF,
+                            EValue = psmEValue
+                        };
+
+
+                        if (mDynamicReporterIonPTM)
+                        {
+                            ValidateReporterIonPTMs(normalizedPeptide, observation);
+                        }
+
+                        psmInfo.AddObservation(observation);
+
+                        if (normalizedPSMs.ContainsKey(seqID))
+                        {
+                            Console.WriteLine("Warning: Duplicate key, seqID=" + seqID + "; skipping PSM with ResultID=" + currentPSM.ResultID);
+                        }
+                        else
+                        {
+                            normalizedPSMs.Add(seqID, psmInfo);
                         }
                     }
                 }
 
-                success = true;
+                return true;
             }
             catch (Exception ex)
             {
                 SetErrorMessage("Exception in LoadPSMs: " + ex.Message);
                 Console.WriteLine(ex.StackTrace);
-                success = false;
+                return false;
             }
-
-            return success;
         }
 
         /// <summary>
@@ -1655,66 +1646,65 @@ namespace MSGFResultsSummarizer
                     // ReSharper restore StringLiteralTypo
                 };
 
-                using (var reader = new StreamReader(new FileStream(phrpModSummaryFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using var reader = new StreamReader(new FileStream(phrpModSummaryFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+                while (!reader.EndOfStream)
                 {
-                    while (!reader.EndOfStream)
+                    var dataLine = reader.ReadLine();
+                    if (string.IsNullOrWhiteSpace(dataLine))
+                        continue;
+
+                    if (!headersParsed)
                     {
-                        var dataLine = reader.ReadLine();
-                        if (string.IsNullOrWhiteSpace(dataLine))
-                            continue;
+                        headersParsed = true;
 
-                        if (!headersParsed)
+                        if (dataLine.StartsWith("Modification_"))
                         {
-                            headersParsed = true;
-
-                            if (dataLine.StartsWith("Modification_"))
-                            {
-                                DataTableUtils.GetColumnMappingFromHeaderLine(columnMap, dataLine, columnNamesByIdentifier);
-                                continue;
-                            }
-
-                            // Missing header line; assume the order
-                            columnMap.Add("Modification_Symbol", 0);
-                            columnMap.Add("Modification_Mass", 1);
-                            columnMap.Add("Target_Residues", 2);
-                            columnMap.Add("Modification_Type", 3);
-                            columnMap.Add("Mass_Correction_Tag", 4);
-                        }
-
-                        var resultRow = dataLine.Split('\t');
-
-                        // var modificationSymbol = DataTableUtils.GetColumnValue(resultRow, columnMap, "Modification_Symbol");
-                        // var targetResidues = DataTableUtils.GetColumnValue(resultRow, columnMap, "Target_Residues");
-                        var modificationType = DataTableUtils.GetColumnValue(resultRow, columnMap, "Modification_Type");
-                        var massCorrectionTag = DataTableUtils.GetColumnValue(resultRow, columnMap, "Mass_Correction_Tag");
-
-                        if (!modificationType.Equals("D"))
-                            continue;
-
-                        if (!reporterIonNames.TryGetValue(massCorrectionTag, out var reporterIonType))
-                            continue;
-
-                        if (!mDynamicReporterIonPTM)
-                        {
-                            mDynamicReporterIonPTM = true;
-                            mDynamicReporterIonType = reporterIonType;
-                            mDynamicReporterIonName = massCorrectionTag;
+                            DataTableUtils.GetColumnMappingFromHeaderLine(columnMap, dataLine, columnNamesByIdentifier);
                             continue;
                         }
 
-                        if (mDynamicReporterIonType != reporterIonType)
-                        {
-                            OnWarningEvent(string.Format(
-                                "ModSummary.txt file has a mix of reporter ion types: {0} and {1}",
-                                mDynamicReporterIonType, reporterIonType));
-                        }
+                        // Missing header line; assume the order
+                        columnMap.Add("Modification_Symbol", 0);
+                        columnMap.Add("Modification_Mass", 1);
+                        columnMap.Add("Target_Residues", 2);
+                        columnMap.Add("Modification_Type", 3);
+                        columnMap.Add("Mass_Correction_Tag", 4);
+                    }
 
-                        if (!mDynamicReporterIonName.Equals(massCorrectionTag))
-                        {
-                            OnWarningEvent(string.Format(
-                                "ModSummary.txt file has a mix of reporter ion mod names: {0} and {1}",
-                                mDynamicReporterIonName, massCorrectionTag));
-                        }
+                    var resultRow = dataLine.Split('\t');
+
+                    // var modificationSymbol = DataTableUtils.GetColumnValue(resultRow, columnMap, "Modification_Symbol");
+                    // var targetResidues = DataTableUtils.GetColumnValue(resultRow, columnMap, "Target_Residues");
+                    var modificationType = DataTableUtils.GetColumnValue(resultRow, columnMap, "Modification_Type");
+                    var massCorrectionTag = DataTableUtils.GetColumnValue(resultRow, columnMap, "Mass_Correction_Tag");
+
+                    if (!modificationType.Equals("D"))
+                        continue;
+
+                    if (!reporterIonNames.TryGetValue(massCorrectionTag, out var reporterIonType))
+                        continue;
+
+                    if (!mDynamicReporterIonPTM)
+                    {
+                        mDynamicReporterIonPTM = true;
+                        mDynamicReporterIonType = reporterIonType;
+                        mDynamicReporterIonName = massCorrectionTag;
+                        continue;
+                    }
+
+                    if (mDynamicReporterIonType != reporterIonType)
+                    {
+                        OnWarningEvent(string.Format(
+                            "ModSummary.txt file has a mix of reporter ion types: {0} and {1}",
+                            mDynamicReporterIonType, reporterIonType));
+                    }
+
+                    if (!mDynamicReporterIonName.Equals(massCorrectionTag))
+                    {
+                        OnWarningEvent(string.Format(
+                            "ModSummary.txt file has a mix of reporter ion mod names: {0} and {1}",
+                            mDynamicReporterIonName, massCorrectionTag));
                     }
                 }
             }
@@ -1728,7 +1718,9 @@ namespace MSGFResultsSummarizer
         private void ReportDebugMessage(string message, int debugLevel = 2)
         {
             if (mDebugLevel >= debugLevel)
+            {
                 OnDebugEvent(message);
+            }
             else
             {
                 ConsoleMsgUtils.ShowDebug(message);
@@ -1751,44 +1743,43 @@ namespace MSGFResultsSummarizer
                 }
                 outputFilePath = Path.Combine(outputFilePath, mDatasetName + "_PSM_Stats.txt");
 
-                using (var writer = new StreamWriter(new FileStream(outputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                using var writer = new StreamWriter(new FileStream(outputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
+
+                // Header line
+                var headers = new List<string>
                 {
-                    // Header line
-                    var headers = new List<string>
-                    {
-                        "Dataset",
-                        "Job",
-                        "MSGF_Threshold",
-                        "FDR_Threshold",
-                        "Spectra_Searched",
-                        "Total_PSMs_MSGF_Filtered",
-                        "Unique_Peptides_MSGF_Filtered",
-                        "Unique_Proteins_MSGF_Filtered",
-                        "Total_PSMs_FDR_Filtered",
-                        "Unique_Peptides_FDR_Filtered",
-                        "Unique_Proteins_FDR_Filtered"
-                    };
+                    "Dataset",
+                    "Job",
+                    "MSGF_Threshold",
+                    "FDR_Threshold",
+                    "Spectra_Searched",
+                    "Total_PSMs_MSGF_Filtered",
+                    "Unique_Peptides_MSGF_Filtered",
+                    "Unique_Proteins_MSGF_Filtered",
+                    "Total_PSMs_FDR_Filtered",
+                    "Unique_Peptides_FDR_Filtered",
+                    "Unique_Proteins_FDR_Filtered"
+                };
 
-                    writer.WriteLine(string.Join("\t", headers));
+                writer.WriteLine(string.Join("\t", headers));
 
-                    // Stats
-                    var stats = new List<string>
-                    {
-                        mDatasetName,
-                        mJob.ToString(),
-                        MSGFThreshold.ToString("0.00E+00"),
-                        FDRThreshold.ToString("0.000"),
-                        SpectraSearched.ToString(),
-                        mMSGFBasedCounts.TotalPSMs.ToString(),
-                        mMSGFBasedCounts.UniquePeptideCount.ToString(),
-                        mMSGFBasedCounts.UniqueProteinCount.ToString(),
-                        mFDRBasedCounts.TotalPSMs.ToString(),
-                        mFDRBasedCounts.UniquePeptideCount.ToString(),
-                        mFDRBasedCounts.UniqueProteinCount.ToString()
-                    };
+                // Stats
+                var stats = new List<string>
+                {
+                    mDatasetName,
+                    mJob.ToString(),
+                    MSGFThreshold.ToString("0.00E+00"),
+                    FDRThreshold.ToString("0.000"),
+                    SpectraSearched.ToString(),
+                    mMSGFBasedCounts.TotalPSMs.ToString(),
+                    mMSGFBasedCounts.UniquePeptideCount.ToString(),
+                    mMSGFBasedCounts.UniqueProteinCount.ToString(),
+                    mFDRBasedCounts.TotalPSMs.ToString(),
+                    mFDRBasedCounts.UniquePeptideCount.ToString(),
+                    mFDRBasedCounts.UniqueProteinCount.ToString()
+                };
 
-                    writer.WriteLine(string.Join("\t", stats));
-                }
+                writer.WriteLine(string.Join("\t", stats));
             }
             catch (Exception ex)
             {

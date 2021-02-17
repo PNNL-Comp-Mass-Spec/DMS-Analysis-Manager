@@ -159,20 +159,19 @@ namespace AnalysisManagerDtaRefineryPlugIn
 
                 if (consoleOutputFile.Exists)
                 {
-                    using (var consoleOutputReader = new StreamReader(new FileStream(consoleOutputFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
-                    {
-                        while (!consoleOutputReader.EndOfStream)
-                        {
-                            var dataLine = consoleOutputReader.ReadLine();
-                            if (string.IsNullOrWhiteSpace(dataLine))
-                            {
-                                continue;
-                            }
+                    using var consoleOutputReader = new StreamReader(new FileStream(consoleOutputFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
 
-                            if (dataLine.IndexOf("error", StringComparison.InvariantCultureIgnoreCase) >= 0)
-                            {
-                                consoleOutputErrorMessage = string.Copy(dataLine);
-                            }
+                    while (!consoleOutputReader.EndOfStream)
+                    {
+                        var dataLine = consoleOutputReader.ReadLine();
+                        if (string.IsNullOrWhiteSpace(dataLine))
+                        {
+                            continue;
+                        }
+
+                        if (dataLine.IndexOf("error", StringComparison.InvariantCultureIgnoreCase) >= 0)
+                        {
+                            consoleOutputErrorMessage = string.Copy(dataLine);
                         }
                     }
                 }
@@ -361,29 +360,28 @@ namespace AnalysisManagerDtaRefineryPlugIn
                     return false;
                 }
 
-                using (var reader = new StreamReader(new FileStream(sourceFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using var reader = new StreamReader(new FileStream(sourceFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+                while (!reader.EndOfStream)
                 {
-                    while (!reader.EndOfStream)
+                    var dataLine = reader.ReadLine();
+
+                    if (dataLine == null || !dataLine.StartsWith("number of spectra identified less than 2", StringComparison.InvariantCultureIgnoreCase))
+                        continue;
+
+                    if (!reader.EndOfStream)
                     {
-                        var dataLine = reader.ReadLine();
-
-                        if (dataLine == null || !dataLine.StartsWith("number of spectra identified less than 2", StringComparison.InvariantCultureIgnoreCase))
-                            continue;
-
-                        if (!reader.EndOfStream)
+                        dataLine = reader.ReadLine();
+                        if (dataLine != null && dataLine.StartsWith("stop processing", StringComparison.InvariantCultureIgnoreCase))
                         {
-                            dataLine = reader.ReadLine();
-                            if (dataLine != null && dataLine.StartsWith("stop processing", StringComparison.InvariantCultureIgnoreCase))
-                            {
-                                mMessage = string.Empty;
-                                LogError("X!Tandem identified fewer than 2 peptides; unable to use DTARefinery with this dataset");
-                                return false;
-                            }
+                            mMessage = string.Empty;
+                            LogError("X!Tandem identified fewer than 2 peptides; unable to use DTARefinery with this dataset");
+                            return false;
                         }
-
-                        LogWarning("Encountered message 'number of spectra identified less than 2' but did not find 'stop processing' on the next line; " +
-                                   "DTARefinery likely did not complete properly");
                     }
+
+                    LogWarning("Encountered message 'number of spectra identified less than 2' but did not find 'stop processing' on the next line; " +
+                               "DTARefinery likely did not complete properly");
                 }
             }
             catch (Exception ex)
@@ -414,7 +412,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
             // * total ion current in the ICR/Orbitrap cell: _trappedIonsTIC.png
 
             // Delete the original DTA files
-            var targetFile = "??";
+            var targetFileName = "??";
 
             try
             {
@@ -425,15 +423,15 @@ namespace AnalysisManagerDtaRefineryPlugIn
                 {
                     if (!dtaFile.Name.EndsWith("_FIXED_dta.txt", StringComparison.InvariantCultureIgnoreCase))
                     {
-                        targetFile = dtaFile.Name;
-                        dtaFile.Attributes = dtaFile.Attributes & ~FileAttributes.ReadOnly;
+                        targetFileName = dtaFile.Name;
+                        dtaFile.Attributes &= ~FileAttributes.ReadOnly;
                         dtaFile.Delete();
                     }
                 }
             }
             catch (Exception ex)
             {
-                LogError(string.Format("Error deleting file {0}: {1}", targetFile, ex.Message), ex);
+                LogError(string.Format("Error deleting file {0}: {1}", targetFileName, ex.Message), ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 

@@ -63,7 +63,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
             {
                 OnProgressUpdate("Caching parent ion info in " + mgfFilePath, 0);
 
-                var mgfFileReader = new clsMGFFileReader {ReadTextDataOnly = false};
+                var mgfFileReader = new clsMGFFileReader { ReadTextDataOnly = false };
 
                 // Open the MGF file
                 mgfFileReader.OpenFile(mgfFilePath);
@@ -130,7 +130,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 var sourceDtaFile = new FileInfo(dtaFilePath);
                 var updatedDtaFile = new FileInfo(sourceDtaFile.FullName + ".new");
 
-                var dtaFileReader = new clsDtaTextFileReader(false) {ReadTextDataOnly = true};
+                var dtaFileReader = new clsDtaTextFileReader(false) { ReadTextDataOnly = true };
 
                 // Open the _DTA.txt file
                 dtaFileReader.OpenFile(dtaFilePath);
@@ -324,153 +324,154 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 {
                     reader.WhitespaceHandling = WhitespaceHandling.Significant;
 
-                    using (var writer = new XmlTextWriter(new FileStream(updatedMzMLFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read),
-                            System.Text.Encoding.GetEncoding("UTF-8")))
+                    using var writer = new XmlTextWriter(new FileStream(updatedMzMLFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read),
+                        System.Text.Encoding.GetEncoding("UTF-8"))
                     {
-                        writer.Formatting = Formatting.Indented;
-                        writer.Indentation = 2;
-                        writer.IndentChar = ' ';
+                        Formatting = Formatting.Indented,
+                        Indentation = 2,
+                        IndentChar = ' '
+                    };
 
-                        while (reader.Read())
+                    while (reader.Read())
+                    {
+                        var nodeAlreadyWritten = false;
+
+                        // ReSharper disable once ConvertIfStatementToSwitchStatement
+                        if (reader.NodeType == XmlNodeType.Element)
                         {
-                            var nodeAlreadyWritten = false;
-
-                            if (reader.NodeType == XmlNodeType.Element)
+                            switch (reader.Name)
                             {
-                                switch (reader.Name)
-                                {
-                                    case XML_ELEMENT_INDEXED_MZML:
-                                        // Skip this element since the new file will not have an index
-                                        nodeAlreadyWritten = true;
+                                case XML_ELEMENT_INDEXED_MZML:
+                                    // Skip this element since the new file will not have an index
+                                    nodeAlreadyWritten = true;
 
-                                        break;
-                                    case XML_ELEMENT_SOFTWARE_LIST:
-                                        WriteUpdatedSoftwareList(reader, writer, softwareInfo);
-                                        nodeAlreadyWritten = true;
+                                    break;
+                                case XML_ELEMENT_SOFTWARE_LIST:
+                                    WriteUpdatedSoftwareList(reader, writer, softwareInfo);
+                                    nodeAlreadyWritten = true;
 
-                                        break;
-                                    case XML_ELEMENT_DATA_PROCESSING_LIST:
-                                        WriteUpdatedDataProcessingList(reader, writer, softwareInfo);
-                                        nodeAlreadyWritten = true;
+                                    break;
+                                case XML_ELEMENT_DATA_PROCESSING_LIST:
+                                    WriteUpdatedDataProcessingList(reader, writer, softwareInfo);
+                                    nodeAlreadyWritten = true;
 
-                                        break;
-                                    case XML_ELEMENT_SPECTRUM_LIST:
-                                        if (reader.HasAttributes)
+                                    break;
+                                case XML_ELEMENT_SPECTRUM_LIST:
+                                    if (reader.HasAttributes)
+                                    {
+                                        writer.WriteStartElement(reader.Prefix, reader.LocalName, reader.NamespaceURI);
+                                        nodeAlreadyWritten = true;
+                                        while (reader.MoveToNextAttribute())
                                         {
-                                            writer.WriteStartElement(reader.Prefix, reader.LocalName, reader.NamespaceURI);
-                                            nodeAlreadyWritten = true;
-                                            while (reader.MoveToNextAttribute())
+                                            if (reader.Name == "count")
                                             {
-                                                if (reader.Name == "count")
+                                                int.TryParse(reader.Value, out totalSpectrumCount);
+                                                break;
+                                            }
+                                        }
+                                        reader.MoveToFirstAttribute();
+                                        writer.WriteAttributes(reader, true);
+                                    }
+
+                                    break;
+                                case XML_ELEMENT_SPECTRUM:
+                                    currentScanNumber = -1;
+                                    updatedScan = false;
+                                    updatedSelectedIon = false;
+
+                                    if (reader.HasAttributes)
+                                    {
+                                        writer.WriteStartElement(reader.Prefix, reader.LocalName, reader.NamespaceURI);
+                                        nodeAlreadyWritten = true;
+                                        while (reader.MoveToNextAttribute())
+                                        {
+                                            if (reader.Name == "id")
+                                            {
+                                                // Value should be of the form:
+                                                // controllerType=0 controllerNumber=1 scan=2
+
+                                                var scanId = reader.Value;
+                                                var reMatch = reScanNumber.Match(scanId);
+
+                                                if (reMatch.Success)
                                                 {
-                                                    int.TryParse(reader.Value, out totalSpectrumCount);
-                                                    break;
+                                                    currentScanNumber = Convert.ToInt32(reMatch.Groups["ScanNumber"].Value);
                                                 }
+
+                                                break;
                                             }
-                                            reader.MoveToFirstAttribute();
-                                            writer.WriteAttributes(reader, true);
                                         }
 
-                                        break;
-                                    case XML_ELEMENT_SPECTRUM:
-                                        currentScanNumber = -1;
-                                        updatedScan = false;
-                                        updatedSelectedIon = false;
+                                        reader.MoveToFirstAttribute();
+                                        writer.WriteAttributes(reader, true);
+                                    }
 
-                                        if (reader.HasAttributes)
+                                    spectraRead++;
+                                    if (DateTime.UtcNow.Subtract(lastProgress).TotalSeconds >= 1)
+                                    {
+                                        lastProgress = DateTime.UtcNow;
+
+                                        var percentComplete = 0;
+                                        if (totalSpectrumCount > 0)
                                         {
-                                            writer.WriteStartElement(reader.Prefix, reader.LocalName, reader.NamespaceURI);
+                                            percentComplete = (int)(spectraRead / (float)totalSpectrumCount * 100);
+                                        }
+
+                                        OnProgressUpdate(string.Format("{0} spectra read; {1}% complete", spectraRead, percentComplete),
+                                            percentComplete);
+                                    }
+
+                                    break;
+                                case XML_ELEMENT_SCAN:
+                                    // Assure that we only update the first <scan> (in case there are multiple scans)
+                                    if (!updatedScan)
+                                    {
+                                        updatedScan = true;
+
+                                        if (cachedParentIonInfo.TryGetValue(currentScanNumber, out var chargeInfoList))
+                                        {
+                                            WriteUpdatedScan(reader, writer, chargeInfoList);
                                             nodeAlreadyWritten = true;
-                                            while (reader.MoveToNextAttribute())
-                                            {
-                                                if (reader.Name == "id")
-                                                {
-                                                    // Value should be of the form:
-                                                    // controllerType=0 controllerNumber=1 scan=2
-
-                                                    var scanId = reader.Value;
-                                                    var reMatch = reScanNumber.Match(scanId);
-
-                                                    if (reMatch.Success)
-                                                    {
-                                                        currentScanNumber = Convert.ToInt32(reMatch.Groups["ScanNumber"].Value);
-                                                    }
-
-                                                    break;
-                                                }
-                                            }
-
-                                            reader.MoveToFirstAttribute();
-                                            writer.WriteAttributes(reader, true);
                                         }
+                                    }
 
-                                        spectraRead++;
-                                        if (DateTime.UtcNow.Subtract(lastProgress).TotalSeconds >= 1)
+                                    break;
+                                case XML_ELEMENT_SELECTED_ION:
+                                    // Assure that we only update the first <selectedIon> (in case there are multiple precursor ions)
+                                    if (!updatedSelectedIon)
+                                    {
+                                        updatedSelectedIon = true;
+
+                                        if (cachedParentIonInfo.TryGetValue(currentScanNumber, out var chargeInfoList))
                                         {
-                                            lastProgress = DateTime.UtcNow;
-
-                                            var percentComplete = 0;
-                                            if (totalSpectrumCount > 0)
-                                            {
-                                                percentComplete = (int)(spectraRead / (float)totalSpectrumCount * 100);
-                                            }
-
-                                            OnProgressUpdate(string.Format("{0} spectra read; {1}% complete", spectraRead, percentComplete),
-                                                percentComplete);
+                                            WriteUpdatedSelectedIon(reader, writer, chargeInfoList);
+                                            nodeAlreadyWritten = true;
                                         }
-
-                                        break;
-                                    case XML_ELEMENT_SCAN:
-                                        // Assure that we only update the first <scan> (in case there are multiple scans)
-                                        if (!updatedScan)
-                                        {
-                                            updatedScan = true;
-
-                                            if (cachedParentIonInfo.TryGetValue(currentScanNumber, out var chargeInfoList))
-                                            {
-                                                WriteUpdatedScan(reader, writer, chargeInfoList);
-                                                nodeAlreadyWritten = true;
-                                            }
-                                        }
-
-                                        break;
-                                    case XML_ELEMENT_SELECTED_ION:
-                                        // Assure that we only update the first <selectedIon> (in case there are multiple precursor ions)
-                                        if (!updatedSelectedIon)
-                                        {
-                                            updatedSelectedIon = true;
-
-                                            if (cachedParentIonInfo.TryGetValue(currentScanNumber, out var chargeInfoList))
-                                            {
-                                                WriteUpdatedSelectedIon(reader, writer, chargeInfoList);
-                                                nodeAlreadyWritten = true;
-                                            }
-                                        }
-                                        break;
-                                }
+                                    }
+                                    break;
                             }
-                            else if (reader.NodeType == XmlNodeType.EndElement)
+                        }
+                        else if (reader.NodeType == XmlNodeType.EndElement)
+                        {
+                            if (reader.Name == XML_ELEMENT_MZML)
                             {
-                                if (reader.Name == XML_ELEMENT_MZML)
-                                {
-                                    // Write this element, then exit
-                                    atEndOfMzML = true;
-                                }
-                            }
-
-                            if (!nodeAlreadyWritten)
-                            {
-                                WriteShallowNode(reader, writer);
-                            }
-
-                            if (atEndOfMzML)
-                            {
-                                break;
+                                // Write this element, then exit
+                                atEndOfMzML = true;
                             }
                         }
 
-                        writer.WriteWhitespace("\r");
+                        if (!nodeAlreadyWritten)
+                        {
+                            WriteShallowNode(reader, writer);
+                        }
+
+                        if (atEndOfMzML)
+                        {
+                            break;
+                        }
                     }
+
+                    writer.WriteWhitespace("\r");
                 }
 
                 if (replaceMzMLFile)
