@@ -169,43 +169,30 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
             return success;
         }
 
-        public static string GetMsXmlOutputTypeByID(MSXMLOutputTypeConstants eType)
+        public static string GetMsXmlOutputTypeByID(MSXMLOutputTypeConstants fileType)
         {
-            switch (eType)
+            return fileType switch
             {
-                case MSXMLOutputTypeConstants.mzXML:
-                    return "mzXML";
-                case MSXMLOutputTypeConstants.mzData:
-                    return "mzData";
-                case MSXMLOutputTypeConstants.mzML:
-                    return "mzML";
-                case MSXMLOutputTypeConstants.JCAMP:
-                    return "JCAMP";
-                case MSXMLOutputTypeConstants.CSV:
-                    return "CSV";
-                default:
-                    // Includes MSXMLOutputTypeConstants.Invalid
-                    return "";
-            }
+                MSXMLOutputTypeConstants.mzXML => "mzXML",
+                MSXMLOutputTypeConstants.mzData => "mzData",
+                MSXMLOutputTypeConstants.mzML => "mzML",
+                MSXMLOutputTypeConstants.JCAMP => "JCAMP",
+                MSXMLOutputTypeConstants.CSV => "CSV",
+                _ => ""  // Includes MSXMLOutputTypeConstants.Invalid
+            };
         }
 
         public static MSXMLOutputTypeConstants GetMsXmlOutputTypeByName(string typeName)
         {
-            switch (typeName.ToLower())
+            return typeName.ToLower() switch
             {
-                case "mzxml":
-                    return MSXMLOutputTypeConstants.mzXML;
-                case "mzdata":
-                    return MSXMLOutputTypeConstants.mzData;
-                case "mzml":
-                    return MSXMLOutputTypeConstants.mzML;
-                case "jcamp":
-                    return MSXMLOutputTypeConstants.JCAMP;
-                case "csv":
-                    return MSXMLOutputTypeConstants.CSV;
-                default:
-                    return MSXMLOutputTypeConstants.Invalid;
-            }
+                "mzxml" => MSXMLOutputTypeConstants.mzXML,
+                "mzdata" => MSXMLOutputTypeConstants.mzData,
+                "mzml" => MSXMLOutputTypeConstants.mzML,
+                "jcamp" => MSXMLOutputTypeConstants.JCAMP,
+                "csv" => MSXMLOutputTypeConstants.CSV,
+                _ => MSXMLOutputTypeConstants.Invalid
+            };
         }
 
         /// <summary>

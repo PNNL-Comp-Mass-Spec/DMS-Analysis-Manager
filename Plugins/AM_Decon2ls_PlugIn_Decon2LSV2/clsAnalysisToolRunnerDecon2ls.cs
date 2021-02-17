@@ -900,39 +900,26 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             return eDeconToolsStatus;
         }
 
-        private string GetDeconFileTypeText(DeconToolsFileTypeConstants eDeconFileType)
+        private string GetDeconFileTypeText(DeconToolsFileTypeConstants deconFileType)
         {
-            switch (eDeconFileType)
+            return deconFileType switch
             {
-                case DeconToolsFileTypeConstants.Agilent_WIFF:
-                    return "Agilent_WIFF";
-                case DeconToolsFileTypeConstants.Agilent_D:
-                    return "Agilent_D";
-                case DeconToolsFileTypeConstants.Ascii:
-                    return "Ascii";
-                case DeconToolsFileTypeConstants.Bruker:
-                    return "Bruker";
-                case DeconToolsFileTypeConstants.Bruker_Ascii:
-                    return "Bruker_Ascii";
-                case DeconToolsFileTypeConstants.Thermo_Raw:
-                    return "Thermo_Raw";
-                case DeconToolsFileTypeConstants.ICR2LS_RawData:
-                    return "ICR2LS_RawData";
-                case DeconToolsFileTypeConstants.Micromass_RawData:
-                    return "Micromass_RawData";
-                case DeconToolsFileTypeConstants.MZXML_RawData:
-                    return "MZXML_RawData";
-                // Future: Case DeconToolsFileTypeConstants.MZML_RawData : Return "MZML_RawData"
-                case DeconToolsFileTypeConstants.PNNL_IMS:
-                    return "PNNL_IMS";
-                case DeconToolsFileTypeConstants.PNNL_UIMF:
-                    return "PNNL_UIMF";
-                case DeconToolsFileTypeConstants.SUN_EXTREL:
-                    // ReSharper disable once StringLiteralTypo
-                    return "SUNEXTREL";
-                default:
-                    return "Undefined";
-            }
+                DeconToolsFileTypeConstants.Agilent_WIFF => "Agilent_WIFF",
+                DeconToolsFileTypeConstants.Agilent_D => "Agilent_D",
+                DeconToolsFileTypeConstants.Ascii => "Ascii",
+                DeconToolsFileTypeConstants.Bruker => "Bruker",
+                DeconToolsFileTypeConstants.Bruker_Ascii => "Bruker_Ascii",
+                DeconToolsFileTypeConstants.Thermo_Raw => "Thermo_Raw",
+                DeconToolsFileTypeConstants.ICR2LS_RawData => "ICR2LS_RawData",
+                DeconToolsFileTypeConstants.Micromass_RawData => "Micromass_RawData",
+                DeconToolsFileTypeConstants.MZXML_RawData => "MZXML_RawData",
+                // Future: DeconToolsFileTypeConstants.MZML_RawData => "MZML_RawData",
+                DeconToolsFileTypeConstants.PNNL_IMS => "PNNL_IMS",
+                DeconToolsFileTypeConstants.PNNL_UIMF => "PNNL_UIMF",
+                // ReSharper disable once StringLiteralTypo
+                DeconToolsFileTypeConstants.SUN_EXTREL => "SUNEXTREL",
+                _ => "Undefined"
+            };
         }
 
         private DeconToolsFileTypeConstants GetInputFileType(clsAnalysisResources.eRawDataTypeConstants rawDataType)
@@ -1233,62 +1220,33 @@ namespace AnalysisManagerDecon2lsV2PlugIn
         /// <param name="rawDataType"></param>
         public static string GetInputFilePath(string workDirPath, string datasetName, clsAnalysisResources.eRawDataTypeConstants rawDataType)
         {
-            switch (rawDataType)
+            var fileOrDirectoryName = rawDataType switch
             {
-                case clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile:
-                    return Path.Combine(workDirPath, datasetName + clsAnalysisResources.DOT_RAW_EXTENSION);
+                clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile => datasetName + clsAnalysisResources.DOT_RAW_EXTENSION,
+                clsAnalysisResources.eRawDataTypeConstants.AgilentQStarWiffFile => datasetName + clsAnalysisResources.DOT_WIFF_EXTENSION,
+                clsAnalysisResources.eRawDataTypeConstants.UIMF => datasetName + clsAnalysisResources.DOT_UIMF_EXTENSION,
+                clsAnalysisResources.eRawDataTypeConstants.AgilentDFolder => datasetName + clsAnalysisResources.DOT_D_EXTENSION,
+                clsAnalysisResources.eRawDataTypeConstants.MicromassRawFolder => datasetName + clsAnalysisResources.DOT_RAW_EXTENSION + "/_FUNC001.DAT",
+                clsAnalysisResources.eRawDataTypeConstants.ZippedSFolders => datasetName,
 
-                case clsAnalysisResources.eRawDataTypeConstants.AgilentQStarWiffFile:
-                    return Path.Combine(workDirPath, datasetName + clsAnalysisResources.DOT_WIFF_EXTENSION);
+                // Bruker_FT folders are actually .D folders
+                clsAnalysisResources.eRawDataTypeConstants.BrukerFTFolder => datasetName + clsAnalysisResources.DOT_D_EXTENSION,
 
-                case clsAnalysisResources.eRawDataTypeConstants.UIMF:
-                    return Path.Combine(workDirPath, datasetName + clsAnalysisResources.DOT_UIMF_EXTENSION);
+                // Bruker_TOFBaf folders are actually .D folders
+                clsAnalysisResources.eRawDataTypeConstants.BrukerTOFBaf => datasetName + clsAnalysisResources.DOT_D_EXTENSION,
 
-                case clsAnalysisResources.eRawDataTypeConstants.AgilentDFolder:
-                    return Path.Combine(workDirPath, datasetName) + clsAnalysisResources.DOT_D_EXTENSION;
+                // Future: Customize the file or directory name for this dataset type
+                clsAnalysisResources.eRawDataTypeConstants.BrukerMALDISpot => datasetName,
 
-                case clsAnalysisResources.eRawDataTypeConstants.MicromassRawFolder:
-                    return Path.Combine(workDirPath, datasetName) + clsAnalysisResources.DOT_RAW_EXTENSION + "/_FUNC001.DAT";
+                // Future: Customize the file or directory name for this dataset type
+                clsAnalysisResources.eRawDataTypeConstants.BrukerMALDIImaging => datasetName,
 
-                case clsAnalysisResources.eRawDataTypeConstants.ZippedSFolders:
-                    return Path.Combine(workDirPath, datasetName);
+                clsAnalysisResources.eRawDataTypeConstants.mzXML => datasetName + clsAnalysisResources.DOT_MZXML_EXTENSION,
+                clsAnalysisResources.eRawDataTypeConstants.mzML => datasetName + clsAnalysisResources.DOT_MZML_EXTENSION,
+                _ => string.Empty
+            };
 
-                case clsAnalysisResources.eRawDataTypeConstants.BrukerFTFolder:
-                    // Bruker_FT folders are actually .D folders
-                    return Path.Combine(workDirPath, datasetName) + clsAnalysisResources.DOT_D_EXTENSION;
-
-                case clsAnalysisResources.eRawDataTypeConstants.BrukerTOFBaf:
-                    // Bruker_TOFBaf folders are actually .D folders
-                    return Path.Combine(workDirPath, datasetName) + clsAnalysisResources.DOT_D_EXTENSION;
-
-                case clsAnalysisResources.eRawDataTypeConstants.BrukerMALDISpot:
-                    ////////////////////////////////////
-                    // Future: Finalize this code
-                    //       DMS doesn't yet have a BrukerTOF dataset
-                    //        so we don't know the official folder structure
-                    ////////////////////////////////////
-
-                    return Path.Combine(workDirPath, datasetName);
-
-                case clsAnalysisResources.eRawDataTypeConstants.BrukerMALDIImaging:
-                    ////////////////////////////////////
-                    // Future: Finalize this code
-                    //       DMS doesn't yet have a BrukerTOF dataset
-                    //        so we don't know the official folder structure
-                    ////////////////////////////////////
-
-                    return Path.Combine(workDirPath, datasetName);
-
-                case clsAnalysisResources.eRawDataTypeConstants.mzXML:
-                    return Path.Combine(workDirPath, datasetName + clsAnalysisResources.DOT_MZXML_EXTENSION);
-
-                case clsAnalysisResources.eRawDataTypeConstants.mzML:
-                    return Path.Combine(workDirPath, datasetName + clsAnalysisResources.DOT_MZML_EXTENSION);
-
-                default:
-                    // Should never get this value
-                    return string.Empty;
-            }
+            return Path.Combine(workDirPath, fileOrDirectoryName);
         }
 
         /// <summary>

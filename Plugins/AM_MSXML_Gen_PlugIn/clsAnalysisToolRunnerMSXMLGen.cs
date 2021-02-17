@@ -283,22 +283,13 @@ namespace AnalysisManagerMsXmlGenPlugIn
         {
             try
             {
-                string resultFileExtension;
-
-                switch (mMSXmlOutputFileType)
+                var resultFileExtension = mMSXmlOutputFileType switch
                 {
-                    case clsAnalysisResources.MSXMLOutputTypeConstants.mzML:
-                        resultFileExtension = clsAnalysisResources.DOT_MZML_EXTENSION;
-                        break;
-                    case clsAnalysisResources.MSXMLOutputTypeConstants.mzXML:
-                        resultFileExtension = clsAnalysisResources.DOT_MZXML_EXTENSION;
-                        break;
-                    case clsAnalysisResources.MSXMLOutputTypeConstants.mgf:
-                        resultFileExtension = clsAnalysisResources.DOT_MGF_EXTENSION;
-                        break;
-                    default:
-                        throw new Exception("Unrecognized MSXMLOutputType value");
-                }
+                    clsAnalysisResources.MSXMLOutputTypeConstants.mzML => clsAnalysisResources.DOT_MZML_EXTENSION,
+                    clsAnalysisResources.MSXMLOutputTypeConstants.mzXML => clsAnalysisResources.DOT_MZXML_EXTENSION,
+                    clsAnalysisResources.MSXMLOutputTypeConstants.mgf => clsAnalysisResources.DOT_MGF_EXTENSION,
+                    _ => throw new Exception("Unrecognized MSXMLOutputType value")
+                };
 
                 var msXmlFilePath = Path.Combine(mWorkDir, mDatasetName + resultFileExtension);
                 var msXmlFile = new FileInfo(msXmlFilePath);

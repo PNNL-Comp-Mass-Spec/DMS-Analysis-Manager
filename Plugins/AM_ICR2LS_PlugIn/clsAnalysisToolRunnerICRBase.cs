@@ -807,54 +807,26 @@ namespace AnalysisManagerICR2LSPlugIn
             }
         }
 
-        private bool ValidateICR2LSStatus(string strProcessingState)
+        private bool ValidateICR2LSStatus(string processingState)
         {
-            bool blnValid;
-
-            switch (strProcessingState.ToLower())
+            var valid = processingState.ToLower() switch
             {
-                case ICR2LS_STATE_UNKNOWN:
-                    blnValid = true;
-                    break;
-                case ICR2LS_STATE_IDLE:
-                    blnValid = true;
-                    break;
-                case ICR2LS_STATE_PROCESSING:
-                    blnValid = true;
-                    break;
-                case ICR2LS_STATE_KILLED:
-                    blnValid = true;
-                    break;
-                case ICR2LS_STATE_ERROR:
-                    blnValid = true;
-                    break;
-                case ICR2LS_STATE_FINISHED:
-                    blnValid = true;
-                    break;
-                case ICR2LS_STATE_GENERATING:
-                    blnValid = true;
-                    break;
-                case ICR2LS_STATE_TICGENERATION:
-                    blnValid = true;
-                    break;
-                case ICR2LS_STATE_LCQTICGENERATION:
-                    blnValid = true;
-                    break;
-                case ICR2LS_STATE_QTOFPEKGENERATION:
-                    blnValid = true;
-                    break;
-                case ICR2LS_STATE_MMTOFPEKGENERATION:
-                    blnValid = true;
-                    break;
-                case ICR2LS_STATE_LTQFTPEKGENERATION:
-                    blnValid = true;
-                    break;
-                default:
-                    blnValid = false;
-                    break;
-            }
+                ICR2LS_STATE_UNKNOWN => true,
+                ICR2LS_STATE_IDLE => true,
+                ICR2LS_STATE_PROCESSING => true,
+                ICR2LS_STATE_KILLED => true,
+                ICR2LS_STATE_ERROR => true,
+                ICR2LS_STATE_FINISHED => true,
+                ICR2LS_STATE_GENERATING => true,
+                ICR2LS_STATE_TICGENERATION => true,
+                ICR2LS_STATE_LCQTICGENERATION => true,
+                ICR2LS_STATE_QTOFPEKGENERATION => true,
+                ICR2LS_STATE_MMTOFPEKGENERATION => true,
+                ICR2LS_STATE_LTQFTPEKGENERATION => true,
+                _ => false
+            };
 
-            return blnValid;
+            return valid;
         }
 
         protected bool VerifyPEKFileExists(string strFolderPath, string strDatasetName)

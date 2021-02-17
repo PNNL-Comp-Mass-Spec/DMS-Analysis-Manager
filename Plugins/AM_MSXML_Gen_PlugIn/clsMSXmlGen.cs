@@ -155,8 +155,6 @@ namespace AnalysisManagerMsXmlGenPlugIn
         /// <remarks></remarks>
         public bool CreateMSXMLFile()
         {
-            string msXmlFormat;
-
             switch (mRawDataType)
             {
                 case clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile:
@@ -197,21 +195,13 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
             mErrorMessage = string.Empty;
 
-            switch (mOutputType)
+            var msXmlFormat = mOutputType switch
             {
-                case clsAnalysisResources.MSXMLOutputTypeConstants.mzXML:
-                    msXmlFormat = MZXML_FILE_FORMAT;
-                    break;
-                case clsAnalysisResources.MSXMLOutputTypeConstants.mzML:
-                    msXmlFormat = MZML_FILE_FORMAT;
-                    break;
-                case clsAnalysisResources.MSXMLOutputTypeConstants.mgf:
-                    msXmlFormat = MGF_FILE_FORMAT;
-                    break;
-
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(mOutputType), "Unsupported output type: " + mRawDataType);
-            }
+                clsAnalysisResources.MSXMLOutputTypeConstants.mzXML => MZXML_FILE_FORMAT,
+                clsAnalysisResources.MSXMLOutputTypeConstants.mzML => MZML_FILE_FORMAT,
+                clsAnalysisResources.MSXMLOutputTypeConstants.mgf => MGF_FILE_FORMAT,
+                _ => throw new ArgumentOutOfRangeException(nameof(mOutputType), "Unsupported output type: " + mRawDataType)
+            };
 
             var cmdRunner = new clsRunDosProgram(Path.GetDirectoryName(mProgramPath));
             cmdRunner.ErrorEvent += CmdRunner_ErrorEvent;

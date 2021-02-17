@@ -679,19 +679,12 @@ namespace AnalysisManagerMSAlignPlugIn
                                         {
                                             case "protection":
                                                 // Need to update the value
-                                                switch (value.ToUpper())
+                                                value = value.ToUpper() switch
                                                 {
-                                                    case "C57":
-                                                        value = "Carbamidomethylation";
-                                                        break;
-                                                    case "C58":
-                                                        value = "Carboxymethylation";
-                                                        break;
-                                                    default:
-                                                        // Includes "C0"
-                                                        value = "None";
-                                                        break;
-                                                }
+                                                    "C57" => "Carbamidomethylation",
+                                                    "C58" => "Carboxymethylation",
+                                                    _ => "None"
+                                                };
                                                 break;
 
                                             case "instrument":

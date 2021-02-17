@@ -60,6 +60,7 @@
   <ItemGroup>
     <Compile Include="clsAnalysisResourcesMsMsSpectrumFilter.cs" />
     <Compile Include="clsAnalysisToolRunnerMsMsSpectrumFilter.cs" />
+    <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

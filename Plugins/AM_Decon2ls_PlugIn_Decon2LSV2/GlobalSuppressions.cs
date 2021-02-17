@@ -11,3 +11,4 @@ using System.Diagnostics.CodeAnalysis;
 [assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Allowed", Scope = "type", Target = "~T:AnalysisManagerDecon2lsV2PlugIn.clsXMLParamFileReader")]
 [assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Allowed", Scope = "type", Target = "~T:AnalysisManagerDecon2lsV2PlugIn.clsAnalysisResourcesDecon2ls")]
 [assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Allowed", Scope = "type", Target = "~T:AnalysisManagerDecon2lsV2PlugIn.clsDeconToolsQCPlotsGenerator")]
+[assembly: SuppressMessage("Style", "IDE0066:Convert switch statement to expression", Justification = "Leave as-is for readability", Scope = "member", Target = "~M:AnalysisManagerDecon2lsV2PlugIn.clsAnalysisToolRunnerDecon2ls.ParseDeconToolsLogFile(System.Boolean@,System.DateTime@)")]

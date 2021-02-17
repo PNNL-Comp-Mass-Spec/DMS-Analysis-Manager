@@ -166,47 +166,41 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                 }
 
                 // Copy the various log files
-                for (var intLogFileIndex = 1; intLogFileIndex <= 3; intLogFileIndex++)
+                for (var logFileIndex = 1; logFileIndex <= 3; logFileIndex++)
                 {
-                    string fileName;
-                    switch (intLogFileIndex)
+                    var fileName = logFileIndex switch
                     {
-                        case 1:
-                            // Copy the Inspect error file from the transfer directory
-                            fileName = DatasetName + "_" + fileNum + "_error.txt";
-                            break;
-                        case 2:
-                            // Copy each Inspect search log file from the transfer directory
-                            fileName = "InspectSearchLog_" + fileNum + ".txt";
-                            break;
-                        case 3:
-                            // Copy each Inspect console output file from the transfer directory
-                            fileName = "InspectConsoleOutput_" + fileNum + ".txt";
-                            break;
-                        default:
-                            fileName = string.Empty;
-                            break;
-                    }
+                        // Copy the Inspect error file from the transfer directory
+                        1 => DatasetName + "_" + fileNum + "_error.txt",
 
-                    if (File.Exists(Path.Combine(transferFolderName, fileName)))
+                        // Copy each Inspect search log file from the transfer directory
+                        2 => "InspectSearchLog_" + fileNum + ".txt",
+
+                        // Copy each Inspect console output file from the transfer directory
+                        3 => "InspectConsoleOutput_" + fileNum + ".txt",
+                        _ => string.Empty
+                    };
+
+                    if (string.IsNullOrWhiteSpace(fileName) || !File.Exists(Path.Combine(transferFolderName, fileName)))
+                        continue;
+
+                    if (!CopyFileToWorkDir(fileName, transferFolderName, mWorkDir))
                     {
-                        if (!CopyFileToWorkDir(fileName, transferFolderName, mWorkDir))
+                        // Error copying file (error will have already been logged)
+                        if (mDebugLevel >= 3)
                         {
-                            // Error copying file (error will have already been logged)
-                            if (mDebugLevel >= 3)
-                            {
-                                LogError("CopyFileToWorkDir returned False for " + fileName + " using directory " + transferFolderName);
-                            }
-                            return false;
+                            LogError("CopyFileToWorkDir returned False for " + fileName + " using directory " + transferFolderName);
                         }
-                        fileCopyCount++;
-
-                        // Update the list of files to delete from the server
-                        mJobParams.AddServerFileToDelete(Path.Combine(transferFolderName, fileName));
-
-                        // Update the list of local files to delete
-                        mJobParams.AddResultFileToSkip(fileName);
+                        return false;
                     }
+
+                    fileCopyCount++;
+
+                    // Update the list of files to delete from the server
+                    mJobParams.AddServerFileToDelete(Path.Combine(transferFolderName, fileName));
+
+                    // Update the list of local files to delete
+                    mJobParams.AddResultFileToSkip(fileName);
                 }
             }
 

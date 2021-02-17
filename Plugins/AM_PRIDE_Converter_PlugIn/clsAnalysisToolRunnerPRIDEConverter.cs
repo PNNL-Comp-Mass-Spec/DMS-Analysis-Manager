@@ -5064,37 +5064,22 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             }
         }
 
-        private eMzidXMLFileLocation UpdateMZidXMLFileLocation(eMzidXMLFileLocation eFileLocation, string elementName)
+        private eMzidXMLFileLocation UpdateMZidXMLFileLocation(eMzidXMLFileLocation fileLocation, string elementName)
         {
-            switch (elementName)
+            fileLocation = elementName switch
             {
-                case "SequenceCollection":
-                    eFileLocation = eMzidXMLFileLocation.SequenceCollection;
-                    break;
-                case "AnalysisCollection":
-                    eFileLocation = eMzidXMLFileLocation.AnalysisCollection;
-                    break;
-                case "AnalysisProtocolCollection":
-                    eFileLocation = eMzidXMLFileLocation.AnalysisProtocolCollection;
-                    break;
-                case "DataCollection":
-                    eFileLocation = eMzidXMLFileLocation.DataCollection;
-                    break;
-                case "Inputs":
-                    eFileLocation = eMzidXMLFileLocation.Inputs;
-                    break;
-                case "SearchDatabase":
-                    eFileLocation = eMzidXMLFileLocation.InputSearchDatabase;
-                    break;
-                case "SpectraData":
-                    eFileLocation = eMzidXMLFileLocation.InputSpectraData;
-                    break;
-                case "AnalysisData":
-                    eFileLocation = eMzidXMLFileLocation.AnalysisData;
-                    break;
-            }
+                "SequenceCollection" => eMzidXMLFileLocation.SequenceCollection,
+                "AnalysisCollection" => eMzidXMLFileLocation.AnalysisCollection,
+                "AnalysisProtocolCollection" => eMzidXMLFileLocation.AnalysisProtocolCollection,
+                "DataCollection" => eMzidXMLFileLocation.DataCollection,
+                "Inputs" => eMzidXMLFileLocation.Inputs,
+                "SearchDatabase" => eMzidXMLFileLocation.InputSearchDatabase,
+                "SpectraData" => eMzidXMLFileLocation.InputSpectraData,
+                "AnalysisData" => eMzidXMLFileLocation.AnalysisData,
+                _ => fileLocation
+            };
 
-            return eFileLocation;
+            return fileLocation;
         }
 
         /// <summary>

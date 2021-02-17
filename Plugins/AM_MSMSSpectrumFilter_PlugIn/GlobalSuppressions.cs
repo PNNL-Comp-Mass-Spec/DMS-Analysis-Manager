@@ -5,4 +5,4 @@
 
 using System.Diagnostics.CodeAnalysis;
 
-[assembly: SuppressMessage("Simplification", "RCS1190:Join string expressions.", Justification = "Leave as-is for readability", Scope = "member", Target = "~M:AnalysisManagerDtaSplitPlugIn.clsAnalysisToolRunnerDtaSplit.#ctor")]
+[assembly: SuppressMessage("Style", "IDE0066:Convert switch statement to expression", Justification = "Leave as-is for readability", Scope = "member", Target = "~M:MSMSSpectrumFilterAM.clsAnalysisResourcesMsMsSpectrumFilter.GetResources~AnalysisManagerBase.CloseOutType")]
