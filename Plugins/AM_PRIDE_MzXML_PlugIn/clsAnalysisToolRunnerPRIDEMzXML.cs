@@ -118,7 +118,6 @@ namespace AnalysisManagerPRIDEMzXMLPlugIn
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        /// <remarks></remarks>
         protected bool StoreToolVersionInfo()
         {
             var progLoc = mMgrParams.GetParam("MSDataFileTrimmerprogloc");
@@ -130,7 +129,6 @@ namespace AnalysisManagerPRIDEMzXMLPlugIn
         /// <summary>
         /// Event handler for CmdRunner.LoopWaiting event
         /// </summary>
-        /// <remarks></remarks>
         private void CmdRunner_LoopWaiting()
         {
             UpdateStatusFile(PROGRESS_PCT_PRIDEMZXML_RUNNING);

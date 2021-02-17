@@ -107,7 +107,6 @@ namespace MSGFResultsSummarizer
         /// Clone this class as a new clsUniqueSeqInfo instance
         /// </summary>
         /// <param name="obsCountOverride">Observation count override; ignored if less than 0</param>
-        /// <returns></returns>
         public clsUniqueSeqInfo CloneAsSeqInfo(int obsCountOverride = -1)
         {
             var seqInfo = new clsUniqueSeqInfo();

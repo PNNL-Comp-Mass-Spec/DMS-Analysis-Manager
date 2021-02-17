@@ -200,7 +200,6 @@ namespace AnalysisManagerIDPickerPlugIn
         /// <param name="searchEngineParamFileName">Search engine parameter file name</param>
         /// <param name="eReturnCode">Return code</param>
         /// <returns>True if success, otherwise false</returns>
-        /// <remarks></remarks>
         private bool GetInputFiles(string datasetName, string searchEngineParamFileName, out CloseOutType eReturnCode)
         {
             // This tracks the filenames to find.  The Boolean value is True if the file is Required, false if not required
@@ -342,8 +341,6 @@ namespace AnalysisManagerIDPickerPlugIn
         /// <summary>
         /// Retrieve the ID Picker parameter file
         /// </summary>
-        /// <returns></returns>
-        /// <remarks></remarks>
         private bool RetrieveIDPickerParamFile()
         {
             var idPickerParamFileName = mJobParams.GetParam("IDPickerParamFile");
@@ -408,8 +405,6 @@ namespace AnalysisManagerIDPickerPlugIn
         /// Retrieve the MASIC ScanStats.txt and ScanStatsEx.txt files
         /// </summary>
         /// <param name="datasetName"></param>
-        /// <returns></returns>
-        /// <remarks></remarks>
         private bool RetrieveMASICFiles(string datasetName)
         {
             if (!FileSearch.RetrieveScanStatsFiles(false))
@@ -441,7 +436,6 @@ namespace AnalysisManagerIDPickerPlugIn
         /// <param name="resultType">PHRP result type (Sequest, X!Tandem, etc.)</param>
         /// <param name="datasetName">Dataset name</param>
         /// <returns>A generic list with the filenames to find.  The Boolean value is True if the file is Required, false if not required</returns>
-        /// <remarks></remarks>
         private SortedList<string, bool> GetPHRPFileNames(clsPHRPReader.PeptideHitResultTypes resultType, string datasetName)
         {
             var fileNamesToGet = new SortedList<string, bool>();

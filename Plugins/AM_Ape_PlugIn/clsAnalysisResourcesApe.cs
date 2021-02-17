@@ -71,7 +71,6 @@ namespace AnalysisManager_Ape_PlugIn
         /// Run a single Ape operation
         /// </summary>
         /// <param name="apeOperation"></param>
-        /// <returns></returns>
         private bool RunApeOperation(string apeOperation)
         {
             if (apeOperation.Equals("RunWorkFlow", StringComparison.OrdinalIgnoreCase))

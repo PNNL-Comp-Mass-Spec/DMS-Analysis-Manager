@@ -21,7 +21,6 @@ namespace AnalysisManagerMSGFPlugin
         /// </summary>
         /// <param name="datasetName">Dataset name</param>
         /// <param name="workDir">Working directory</param>
-        /// <remarks></remarks>
         public clsMSGFInputCreatorMSGFDB(string datasetName, string workDir)
             : base(datasetName, workDir, clsPHRPReader.PeptideHitResultTypes.MSGFPlus)
         {
@@ -46,7 +45,6 @@ namespace AnalysisManagerMSGFPlugin
         /// <param name="sourceFilePath"></param>
         /// <param name="resultType"></param>
         /// <param name="sourceFileDescription"></param>
-        /// <returns></returns>
         /// <remarks>Note that higher probability values are better.  Also, note that Probability is actually just a score between 0 and 1; not a true probability</remarks>
         [Obsolete("This function does not appear to be used anywhere")]
         public bool CreateMSGFFileUsingMODaOrModPlusProbabilities(string sourceFilePath, clsPHRPReader.PeptideHitResultTypes resultType, string sourceFileDescription)
@@ -113,8 +111,6 @@ namespace AnalysisManagerMSGFPlugin
         /// </summary>
         /// <param name="sourceFilePath">_msgfplus_fht.txt or _msgfplus_syn.txt file</param>
         /// <param name="sourceFileDescription"></param>
-        /// <returns></returns>
-        /// <remarks></remarks>
         public bool CreateMSGFFileUsingMSGFDBSpecProb(string sourceFilePath, string sourceFileDescription)
         {
             try

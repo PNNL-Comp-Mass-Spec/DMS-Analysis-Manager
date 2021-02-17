@@ -250,7 +250,6 @@ namespace AnalysisManagerQCARTPlugin
         /// </summary>
         /// <param name="rScriptName"></param>
         /// <param name="baselineResultsFound"></param>
-        /// <returns></returns>
         private bool CustomizeQCRScript(string rScriptName, bool baselineResultsFound)
         {
             try
@@ -544,7 +543,6 @@ namespace AnalysisManagerQCARTPlugin
         /// </summary>
         /// <param name="outputFolderPath"></param>
         /// <param name="baselineMetadataKey"></param>
-        /// <returns></returns>
         private static string GetBaselineMetadataFilePath(string outputFolderPath, string baselineMetadataKey)
         {
             var baselineMetadataFileName = "QCART_Cache_" + baselineMetadataKey + ".xml";
@@ -588,7 +586,6 @@ namespace AnalysisManagerQCARTPlugin
         /// <param name="paramFilePath">Parameter file path</param>
         /// <param name="baselineDatasets">Output: List of baseline datasets (dataset name and dataset ID)</param>
         /// <param name="baselineMetadataKey">Output: baseline file unique key</param>
-        /// <returns></returns>
         private bool ParseQCARTParamFile(string paramFilePath, out Dictionary<string, int> baselineDatasets, out string baselineMetadataKey)
         {
             const string NO_BASELINE_INFO = "One or more baseline datasets not found in the QC-ART parameter file; " +
@@ -972,7 +969,6 @@ namespace AnalysisManagerQCARTPlugin
         /// for the dataset and job in dataPkgJob
         /// </summary>
         /// <param name="dataPkgJob"></param>
-        /// <returns></returns>
         private bool RetrieveReporterIonsFile(clsDataPackageJobInfo dataPkgJob)
         {
             try

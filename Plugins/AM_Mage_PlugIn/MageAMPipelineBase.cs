@@ -117,7 +117,6 @@ namespace AnalysisManager_Mage_PlugIn
         /// Create a new SQLReader module to do a specific query
         /// </summary>
         /// <param name="sql">Query to use</param>
-        /// <returns></returns>
         protected SQLReader MakeDBReaderModule(string sql)
         {
             var connectionString = RequireMgrParam("ConnectionString");

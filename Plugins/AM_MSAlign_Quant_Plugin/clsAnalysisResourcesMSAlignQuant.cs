@@ -109,7 +109,6 @@ namespace AnalysisManagerMSAlignQuantPlugIn
         /// </summary>
         /// <param name="resultType">String specifying analysis tool result type</param>
         /// <returns>CloseOutType specifying results</returns>
-        /// <remarks></remarks>
         private CloseOutType GetInputFiles(string resultType)
         {
             try

@@ -19,7 +19,6 @@ namespace DTASpectraFileGen
     /// <summary>
     /// This class creates DTA files using either DeconMSn.exe or ExtractMSn.exe
     /// </summary>
-    /// <remarks></remarks>
     public class clsDtaGenThermoRaw : clsDtaGen
     {
         #region "Constants"
@@ -85,7 +84,6 @@ namespace DTASpectraFileGen
         /// Starts DTA creation
         /// </summary>
         /// <returns>ProcessStatus value indicating success or failure</returns>
-        /// <remarks></remarks>
         public override ProcessStatus Start()
         {
             mStatus = ProcessStatus.SF_STARTING;
@@ -141,7 +139,6 @@ namespace DTASpectraFileGen
         /// <summary>
         /// Returns the default path to the DTA generator tool
         /// </summary>
-        /// <returns></returns>
         /// <remarks>The default path can be overridden by updating mDtaToolNameLoc using clsDtaGen.UpdateDtaToolNameLoc</remarks>
         protected virtual string ConstructDTAToolPath()
         {
@@ -168,7 +165,6 @@ namespace DTASpectraFileGen
         /// <param name="workDir">Directory where .raw file should be found</param>
         /// <param name="datasetName">Name of dataset being processed</param>
         /// <returns>TRUE if file found; FALSE otherwise</returns>
-        /// <remarks></remarks>
         private bool VerifyRawFileExists(string workDir, string datasetName)
         {
             string dataFileExtension;
@@ -226,7 +222,6 @@ namespace DTASpectraFileGen
         /// Initializes the class
         /// </summary>
         /// <returns>TRUE for success; FALSE for failure</returns>
-        /// <remarks></remarks>
         protected override bool InitSetup()
         {
             // Verifies all necessary files exist in the specified locations
@@ -296,7 +291,6 @@ namespace DTASpectraFileGen
         /// <summary>
         /// Thread for creation of DTA files
         /// </summary>
-        /// <remarks></remarks>
         protected virtual void MakeDTAFilesThreaded()
         {
             mStatus = ProcessStatus.SF_RUNNING;
@@ -351,7 +345,6 @@ namespace DTASpectraFileGen
         /// This method is called by MakeDTAFilesThreaded
         /// </summary>
         /// <returns>TRUE for success; FALSE for failure</returns>
-        /// <remarks></remarks>
         private bool MakeDTAFiles()
         {
             const int LOOPING_CHUNK_SIZE = 25000;
@@ -732,7 +725,6 @@ namespace DTASpectraFileGen
         /// Verifies at least one DTA file was created
         /// </summary>
         /// <returns>TRUE if at least 1 file created; FALSE otherwise</returns>
-        /// <remarks></remarks>
         private bool VerifyDtaCreation()
         {
             if (mRunningExtractMSn)
@@ -783,7 +775,6 @@ namespace DTASpectraFileGen
         /// <summary>
         /// Event handler for LoopWaiting event
         /// </summary>
-        /// <remarks></remarks>
         protected void CmdRunner_LoopWaiting()
         {
             const int SECONDS_BETWEEN_UPDATE = 15;

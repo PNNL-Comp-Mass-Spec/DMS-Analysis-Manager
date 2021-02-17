@@ -105,7 +105,6 @@ namespace AnalysisManagerMSGFPlugin
         /// <param name="datasetName">Dataset Name</param>
         /// <param name="workDir">Working directory</param>
         /// <param name="resultType">PeptideHit result type</param>
-        /// <remarks></remarks>
         protected clsMSGFInputCreator(string datasetName, string workDir, clsPHRPReader.PeptideHitResultTypes resultType)
         {
             mDatasetName = datasetName;
@@ -243,8 +242,6 @@ namespace AnalysisManagerMSGFPlugin
         /// <summary>
         /// Read the first-hits file and create a new, parallel file with the MSGF results
         /// </summary>
-        /// <returns></returns>
-        /// <remarks></remarks>
         public bool CreateMSGFFirstHitsFile()
         {
             const int MAX_WARNINGS_TO_REPORT = 10;
@@ -358,8 +355,6 @@ namespace AnalysisManagerMSGFPlugin
         /// in the first-hits file that are not filter passing in the synopsis file
         /// If the synopsis file does not exist, simply processes the first-hits file
         /// </summary>
-        /// <returns></returns>
-        /// <remarks></remarks>
         public bool CreateMSGFInputFileUsingPHRPResultFiles()
         {
             var success = false;
@@ -530,7 +525,6 @@ namespace AnalysisManagerMSGFPlugin
         /// </summary>
         /// <param name="mgfSpectrumIndex"></param>
         /// <returns>Scan number if found; 0 if no match</returns>
-        /// <remarks></remarks>
         public int GetScanByMGFSpectrumIndex(int mgfSpectrumIndex)
         {
             if (mMGFIndexToScan.TryGetValue(mgfSpectrumIndex, out var scanNumber))
@@ -584,7 +578,6 @@ namespace AnalysisManagerMSGFPlugin
         /// <param name="msgfInputFileWriter"></param>
         /// <param name="spectrumFileName"></param>
         /// <param name="parsingSynopsisFile"></param>
-        /// <remarks></remarks>
         private void ReadAndStorePHRPData(
             clsPHRPReader reader,
             TextWriter msgfInputFileWriter,

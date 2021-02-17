@@ -281,7 +281,6 @@ namespace AnalysisManagerUIMFtoMassHunterPlugin
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        /// <remarks></remarks>
         protected bool StoreToolVersionInfo(string progLoc)
         {
             var additionalDLLs = new List<string>

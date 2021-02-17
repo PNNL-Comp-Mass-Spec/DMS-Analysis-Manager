@@ -185,7 +185,6 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
         /// <summary>
         /// Read the MetaboliteDetector results file to check for valid results
         /// </summary>
-        /// <returns></returns>
         private bool PostProcessResults()
         {
             try
@@ -308,7 +307,6 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        /// <remarks></remarks>
         private bool StoreToolVersionInfo(string strProgLoc)
         {
             var strToolVersionInfo = string.Empty;

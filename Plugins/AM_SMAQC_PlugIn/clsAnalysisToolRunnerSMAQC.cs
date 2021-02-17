@@ -236,7 +236,6 @@ namespace AnalysisManagerSMAQCPlugIn
         /// <summary>
         /// Use the SMAQC metrics to compute the LLRC score
         /// </summary>
-        /// <returns></returns>
         /// <remarks>
         /// QCDM_2013.09.27.zip requires R 2.x
         /// We updated to R 3.x in November 2015 and have thus deprecated this method</remarks>
@@ -299,8 +298,6 @@ namespace AnalysisManagerSMAQCPlugIn
         /// Looks up the InstrumentID for the dataset associated with this job
         /// </summary>
         /// <param name="instrumentID">Output parameter</param>
-        /// <returns></returns>
-        /// <remarks></remarks>
         private bool LookupInstrumentIDFromDB(ref int instrumentID)
         {
             const short retryCount = 3;
@@ -416,8 +413,6 @@ namespace AnalysisManagerSMAQCPlugIn
         /// Extract the results from a SMAQC results file
         /// </summary>
         /// <param name="ResultsFilePath"></param>
-        /// <returns></returns>
-        /// <remarks></remarks>
         private List<KeyValuePair<string, string>> LoadSMAQCResults(string ResultsFilePath)
         {
             // Typical file contents:
@@ -521,7 +516,6 @@ namespace AnalysisManagerSMAQCPlugIn
         /// Parse the SMAQC console output file to track progress
         /// </summary>
         /// <param name="strConsoleOutputFilePath"></param>
-        /// <remarks></remarks>
         private void ParseConsoleOutputFile(string strConsoleOutputFilePath)
         {
             try
@@ -709,8 +703,6 @@ namespace AnalysisManagerSMAQCPlugIn
         /// Read the SMAQC results files, convert to XML, and post to DMS
         /// </summary>
         /// <param name="ResultsFilePath">Path to the SMAQC results file</param>
-        /// <returns></returns>
-        /// <remarks></remarks>
         private bool ReadAndStoreSMAQCResults(string ResultsFilePath)
         {
             var blnSuccess = false;
@@ -752,7 +744,6 @@ namespace AnalysisManagerSMAQCPlugIn
         /// Renames the SMAQC log file
         /// </summary>
         /// <returns>The full path to the renamed log file, or an empty string if the log file was not found</returns>
-        /// <remarks></remarks>
         private string RenameSMAQCLogFile()
         {
             try
@@ -787,7 +778,6 @@ namespace AnalysisManagerSMAQCPlugIn
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        /// <remarks></remarks>
         private bool StoreToolVersionInfo(string progLoc)
         {
             var additionalDLLs = new List<string>();
@@ -812,7 +802,6 @@ namespace AnalysisManagerSMAQCPlugIn
         /// <summary>
         /// Event handler for CmdRunner.LoopWaiting event
         /// </summary>
-        /// <remarks></remarks>
         private void CmdRunner_LoopWaiting()
         {
             UpdateStatusFile();

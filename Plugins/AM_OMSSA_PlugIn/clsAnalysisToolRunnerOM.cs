@@ -144,7 +144,6 @@ namespace AnalysisManagerOMSSAPlugIn
         /// Zips OMSSA XML output file
         /// </summary>
         /// <returns>CloseOutType enum indicating success or failure</returns>
-        /// <remarks></remarks>
         private bool ZipMainOutputFile()
         {
             var strOMSSAResultsFilePath = Path.Combine(mWorkDir, mDatasetName + "_om.omx");
@@ -156,7 +155,6 @@ namespace AnalysisManagerOMSSAPlugIn
         /// <summary>
         /// Event handler for CmdRunner.LoopWaiting event
         /// </summary>
-        /// <remarks></remarks>
         private void CmdRunner_LoopWaiting()
         {
             UpdateStatusFile(PROGRESS_PCT_OMSSA_RUNNING);
@@ -230,7 +228,6 @@ namespace AnalysisManagerOMSSAPlugIn
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        /// <remarks></remarks>
         private bool StoreToolVersionInfo()
         {
             var strToolVersionInfo = string.Empty;

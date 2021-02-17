@@ -188,7 +188,6 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        /// <remarks></remarks>
         protected bool StoreToolVersionInfo(string strMultiAlignProgLoc)
         {
             var toolVersionInfo = string.Empty;
@@ -260,7 +259,6 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
         /// </summary>
         /// <param name="plotsDirectory"></param>
         /// <param name="fileCountThreshold"></param>
-        /// <returns></returns>
         private bool ZipPlotsDirectory(DirectoryInfo plotsDirectory, int fileCountThreshold = 50)
         {
             try

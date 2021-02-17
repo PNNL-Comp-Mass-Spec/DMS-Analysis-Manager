@@ -97,8 +97,6 @@ namespace MSGFResultsSummarizer
         /// <summary>
         /// Dataset name
         /// </summary>
-        /// <value></value>
-        /// <returns></returns>
         /// <remarks>
         /// Used to contact DMS to lookup the total number of scans and total number of MSn scans
         /// This information is used by
@@ -108,8 +106,6 @@ namespace MSGFResultsSummarizer
         /// <summary>
         /// Set this to false to disable contacting DMS to look up scan stats for the dataset
         /// </summary>
-        /// <value></value>
-        /// <returns></returns>
         /// <remarks>When this is false, we cannot compute MaximumScanGapAdjacentMSn or PercentMSnScansNoPSM</remarks>
         public bool ContactDatabase { get; set; }
 
@@ -226,7 +222,6 @@ namespace MSGFResultsSummarizer
         /// <param name="job">Job number</param>
         /// <param name="sourceDirectoryPath">Source directory path</param>
         /// <param name="traceMode">When true, show database queries</param>
-        /// <remarks></remarks>
         public clsMSGFResultsSummarizer(clsPHRPReader.PeptideHitResultTypes resultType, string datasetName, int job, string sourceDirectoryPath, bool traceMode)
             : this(resultType, datasetName, job, sourceDirectoryPath, DEFAULT_CONNECTION_STRING, debugLevel: 1, traceMode: traceMode)
         {
@@ -242,7 +237,6 @@ namespace MSGFResultsSummarizer
         /// <param name="connectionString">DMS connection string</param>
         /// <param name="debugLevel">Debug Level</param>
         /// <param name="traceMode">When true, show database queries</param>
-        /// <remarks></remarks>
         public clsMSGFResultsSummarizer(
             clsPHRPReader.PeptideHitResultTypes resultType,
             string datasetName,
@@ -431,7 +425,6 @@ namespace MSGFResultsSummarizer
         /// </summary>
         /// <param name="totalSpectra"></param>
         /// <param name="totalMSnSpectra"></param>
-        /// <returns></returns>
         /// <remarks>True if success; false if an error, including if DatasetName is empty or if the dataset is not found in the database</remarks>
         private bool LookupScanStats(out int totalSpectra, out int totalMSnSpectra)
         {
@@ -506,8 +499,6 @@ namespace MSGFResultsSummarizer
         /// <param name="normalizedPSMs">PSM results (keys are NormalizedSeqID, values are the protein and scan info for each normalized sequence)</param>
         /// <param name="seqToProteinMap">Sequence to Protein map information (empty if the _resultToSeqMap file was not found)</param>
         /// <param name="sequenceInfo">Sequence information (empty if the _resultToSeqMap file was not found)</param>
-        /// <returns></returns>
-        /// <remarks></remarks>
         private bool FilterAndComputeStats(
             bool usingMSGFOrEValueFilter,
             IDictionary<int, clsPSMInfo> normalizedPSMs,
@@ -610,7 +601,6 @@ namespace MSGFResultsSummarizer
         /// </summary>
         /// <param name="psmResults">PSM results (keys are NormalizedSeqID, values are the protein and scan info for each normalized sequence)</param>
         /// <returns>True if success; false if no reverse hits are present or if none of the data has MSGF values</returns>
-        /// <remarks></remarks>
         private bool FilterPSMsByFDR(IDictionary<int, clsPSMInfo> psmResults)
         {
             var fdrAlreadyComputed = true;
@@ -857,7 +847,6 @@ namespace MSGFResultsSummarizer
         /// <summary>
         /// Get the RegEx for matching keratin proteins
         /// </summary>
-        /// <returns></returns>
         /// <remarks>Used by SMAQC</remarks>
         public static Regex GetKeratinRegEx()
         {
@@ -875,7 +864,6 @@ namespace MSGFResultsSummarizer
         /// <summary>
         /// Get the RegEx for matching trypsin proteins
         /// </summary>
-        /// <returns></returns>
         /// <remarks>Used by SMAQC</remarks>
         public static Regex GetTrypsinRegEx()
         {
@@ -892,7 +880,6 @@ namespace MSGFResultsSummarizer
         /// <param name="peptideCleanSequence"></param>
         /// <param name="modifications"></param>
         /// <param name="seqID"></param>
-        /// <returns></returns>
         public static clsNormalizedPeptideInfo GetNormalizedPeptideInfo(
             string peptideCleanSequence,
             IEnumerable<KeyValuePair<string, int>> modifications,
@@ -987,7 +974,6 @@ namespace MSGFResultsSummarizer
         /// Process this dataset's synopsis file to determine the PSM stats
         /// </summary>
         /// <returns>True if success; false if an error</returns>
-        /// <remarks></remarks>
         public bool ProcessMSGFResults()
         {
             DatasetScanStatsLookupError = false;
@@ -1553,7 +1539,6 @@ namespace MSGFResultsSummarizer
         /// </summary>
         /// <param name="sequenceWithMods"></param>
         /// <param name="seqID"></param>
-        /// <returns></returns>
         private clsNormalizedPeptideInfo NormalizeSequence(string sequenceWithMods, int seqID)
         {
             var aminoAcidList = new StringBuilder(sequenceWithMods.Length);
@@ -1801,8 +1786,6 @@ namespace MSGFResultsSummarizer
         /// <param name="filteredPSMs">Filter-passing results (keys are NormalizedSeqID, values are the protein and scan info for each normalized sequence)</param>
         /// <param name="seqToProteinMap">Sequence to protein map (keys are sequence ID, values are proteins)</param>
         /// <param name="sequenceInfo">Sequence information (keys are sequence ID, values are sequences</param>
-        /// <returns></returns>
-        /// <remarks></remarks>
         private bool SummarizeResults(
             bool usingMSGFOrEValueFilter,
             IDictionary<int, clsPSMInfo> filteredPSMs,

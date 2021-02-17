@@ -70,7 +70,6 @@ namespace AnalysisManagerInSpecTPlugIn
         /// Runs InSpecT tool
         /// </summary>
         /// <returns>CloseOutType enum indicating success or failure</returns>
-        /// <remarks></remarks>
         public override CloseOutType RunTool()
         {
             var objIndexedDBCreator = new clsCreateInspectIndexedDB();
@@ -191,7 +190,6 @@ namespace AnalysisManagerInSpecTPlugIn
         /// Build inspect input file from base parameter file
         /// </summary>
         /// <returns>CloseOutType enum indicating success or failure</returns>
-        /// <remarks></remarks>
         private string BuildInspectInputFile()
         {
             string inputFilename;
@@ -320,8 +318,6 @@ namespace AnalysisManagerInSpecTPlugIn
         /// Looks for the inspect _errors.txt file in the working folder.  If present, reads and parses it
         /// </summary>
         /// <param name="errorFilename"></param>
-        /// <returns></returns>
-        /// <remarks></remarks>
         protected bool ParseInspectErrorsFile(string errorFilename)
         {
             try
@@ -389,7 +385,6 @@ namespace AnalysisManagerInSpecTPlugIn
         /// Run InSpecT
         /// </summary>
         /// <returns>CloseOutType enum indicating success or failure</returns>
-        /// <remarks></remarks>
         private CloseOutType RunInSpecT(string InspectDir)
         {
             var blnSuccess = false;
@@ -533,7 +528,6 @@ namespace AnalysisManagerInSpecTPlugIn
         /// <summary>
         /// Event handler for CmdRunner.LoopWaiting event
         /// </summary>
-        /// <remarks></remarks>
         private void CmdRunner_LoopWaiting()
         {
             // Update the status file (limit the updates to every 5 seconds)
@@ -609,7 +603,6 @@ namespace AnalysisManagerInSpecTPlugIn
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        /// <remarks></remarks>
         protected bool StoreToolVersionInfo(string strInspectFolder)
         {
             var toolVersionInfo = string.Empty;
@@ -640,7 +633,6 @@ namespace AnalysisManagerInSpecTPlugIn
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        /// <remarks></remarks>
         private void SearchLogFileWatcher_Changed(object sender, FileSystemEventArgs e)
         {
             ParseInspectSearchLogFile(mInspectSearchLogFilePath);

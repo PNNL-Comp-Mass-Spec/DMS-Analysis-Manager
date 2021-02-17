@@ -150,7 +150,6 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
         /// Parse the DeconPeakDetector console output file to track the search progress
         /// </summary>
         /// <param name="strConsoleOutputFilePath"></param>
-        /// <remarks></remarks>
         private void ParseConsoleOutputFile(string strConsoleOutputFilePath)
         {
             try
@@ -285,7 +284,6 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        /// <remarks></remarks>
         private bool StoreToolVersionInfo(string progLoc)
         {
             var additionalDLLs = new List<string>
@@ -307,7 +305,6 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
         /// <summary>
         /// Event handler for CmdRunner.LoopWaiting event
         /// </summary>
-        /// <remarks></remarks>
         private void CmdRunner_LoopWaiting()
         {
             UpdateStatusFile();

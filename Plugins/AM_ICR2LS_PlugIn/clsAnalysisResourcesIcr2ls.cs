@@ -149,7 +149,6 @@ namespace AnalysisManagerICR2LSPlugIn
         /// <param name="strFolderToCheck"></param>
         /// <param name="blnIsFolder"></param>
         /// <returns>The path to the ser file, fid file, or 0.ser folder, if found.  An empty string if not found</returns>
-        /// <remarks></remarks>
         public static string FindSerFileOrFolder(string strFolderToCheck, out bool blnIsFolder)
         {
             blnIsFolder = false;

@@ -40,7 +40,6 @@ namespace AnalysisManager_RepoPkgr_PlugIn
         /// Get connection string for given database tag name
         /// </summary>
         /// <param name="dbTag"></param>
-        /// <returns></returns>
         public string GetCnStr(TagName dbTag)
         {
             if (mDbConnectionStrings.TryGetValue(dbTag, out var connectionString))
@@ -54,7 +53,6 @@ namespace AnalysisManager_RepoPkgr_PlugIn
         /// Get connection string for given query template
         /// </summary>
         /// <param name="queryTemplateName"></param>
-        /// <returns></returns>
         public string GetCnStr(string queryTemplateName)
         {
             var queryDef = GetQueryTemplate(queryTemplateName);

@@ -48,13 +48,11 @@ namespace DTASpectraFileGen
         /// <summary>
         /// When true, the parent ion line will include text like "scan=5823 cs=3"
         /// </summary>
-        /// <returns></returns>
         public bool IncludeExtraInfoOnParentIonLine { get; set; }
 
         /// <summary>
         /// If non-zero, spectra with fewer than this many ions are excluded from the _dta.txt file
         /// </summary>
-        /// <returns></returns>
         public int MinimumIonsPerSpectrum { get; set; }
 
         public int SpectraCountWritten
@@ -89,7 +87,6 @@ namespace DTASpectraFileGen
         /// This function is called by MakeDTAFilesThreaded
         /// </summary>
         /// <returns>TRUE for success; FALSE for failure</returns>
-        /// <remarks></remarks>
         public bool ConvertMGFtoDTA(clsAnalysisResources.eRawDataTypeConstants rawDataType, string datasetName)
         {
             bool success;

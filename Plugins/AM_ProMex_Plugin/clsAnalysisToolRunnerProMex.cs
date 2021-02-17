@@ -179,7 +179,6 @@ namespace AnalysisManagerProMexPlugIn
         /// Parse the ProMex console output file to track the search progress
         /// </summary>
         /// <param name="strConsoleOutputFilePath"></param>
-        /// <remarks></remarks>
         private void ParseConsoleOutputFile(string strConsoleOutputFilePath)
         {
             // Example Console output
@@ -284,7 +283,6 @@ namespace AnalysisManagerProMexPlugIn
         /// </summary>
         /// <param name="cmdLineOptions">Output: MSGFDb command line arguments</param>
         /// <returns>Options string if success; empty string if an error</returns>
-        /// <remarks></remarks>
         public CloseOutType ParseProMexParameterFile(out string cmdLineOptions)
         {
             cmdLineOptions = string.Empty;
@@ -536,7 +534,6 @@ namespace AnalysisManagerProMexPlugIn
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        /// <remarks></remarks>
         protected bool StoreToolVersionInfo(string progLoc)
         {
             var additionalDLLs = new List<string>
@@ -558,7 +555,6 @@ namespace AnalysisManagerProMexPlugIn
         /// <summary>
         /// Event handler for CmdRunner.LoopWaiting event
         /// </summary>
-        /// <remarks></remarks>
         private void CmdRunner_LoopWaiting()
         {
             const int SECONDS_BETWEEN_UPDATE = 30;

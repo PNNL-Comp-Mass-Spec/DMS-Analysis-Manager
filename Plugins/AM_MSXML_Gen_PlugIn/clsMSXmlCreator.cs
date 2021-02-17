@@ -307,7 +307,6 @@ namespace AnalysisManagerMsXmlGenPlugIn
         /// <summary>
         /// Event handler for MSXmlGenReadW.LoopWaiting event
         /// </summary>
-        /// <remarks></remarks>
         private void MSXmlGenReadW_LoopWaiting()
         {
             LoopWaiting?.Invoke();
@@ -317,7 +316,6 @@ namespace AnalysisManagerMsXmlGenPlugIn
         /// Event handler for mMSXmlGen.ProgRunnerStarting event
         /// </summary>
         /// <param name="CommandLine">The command being executed (program path plus command line arguments)</param>
-        /// <remarks></remarks>
         private void MSXmlGenReadW_ProgRunnerStarting(string CommandLine)
         {
             if (mDebugLevel >= 1)

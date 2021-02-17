@@ -112,7 +112,6 @@ namespace AnalysisManager_AScore_PlugIn
         /// Process the job described by the fields in the input values object
         /// </summary>
         /// <param name="values"></param>
-        /// <returns></returns>
         protected override bool CheckFilter(ref string[] values)
         {
             try
@@ -478,7 +477,6 @@ namespace AnalysisManager_AScore_PlugIn
         /// <param name="jobNumber"></param>
         /// <param name="toolName"></param>
         /// <param name="connectionString"></param>
-        /// <returns></returns>
         private string GetSharedResultsDirectoryName(int jobNumber, string toolName, string connectionString)
         {
             try

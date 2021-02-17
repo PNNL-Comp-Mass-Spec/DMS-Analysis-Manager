@@ -139,7 +139,6 @@ namespace AnalysisManagerDecon2lsV2PlugIn
         /// <param name="paramFile"></param>
         /// <param name="processMSMS">Output parameter: true if ProcessMSMS is True in the parameter file</param>
         /// <returns>True if success, false if an error</returns>
-        /// <remarks></remarks>
         private bool IsMSMSProcessingEnabled(FileSystemInfo paramFile, out bool processMSMS)
         {
             processMSMS = false;
@@ -224,7 +223,6 @@ namespace AnalysisManagerDecon2lsV2PlugIn
         /// </summary>
         /// <param name="countMs1"></param>
         /// <param name="countMSn"></param>
-        /// <returns></returns>
         /// <remarks>At present only supports Thermo .Raw files and .UIMF files</remarks>
         private bool ExamineDatasetScanTypes(out int countMs1, out int countMSn)
         {
@@ -367,8 +365,6 @@ namespace AnalysisManagerDecon2lsV2PlugIn
         /// Update the parameter file to have ProcessMSMS set to True
         /// </summary>
         /// <param name="paramFile"></param>
-        /// <returns></returns>
-        /// <remarks></remarks>
         private bool EnableMSMSProcessingInParamFile(FileInfo paramFile)
         {
             try
@@ -426,7 +422,6 @@ namespace AnalysisManagerDecon2lsV2PlugIn
         /// <param name="xpathForSection">XPath specifying the section that contains the desired element.  For example: "//parameters/Miscellaneous"</param>
         /// <param name="elementName">Element name to find (or add)</param>
         /// <param name="newElementValue">New value for this element</param>
-        /// <remarks></remarks>
         private void WriteTempParamFileUpdateElementValue(XmlDocument xmlDoc, string xpathForSection, string elementName, string newElementValue)
         {
             var node = xmlDoc.SelectSingleNode(xpathForSection + "/" + elementName);

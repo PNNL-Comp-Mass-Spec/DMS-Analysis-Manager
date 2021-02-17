@@ -81,7 +81,6 @@ namespace AnalysisManagerMSGFPlugin
         /// </summary>
         /// <param name="resultTypeName">String specifying type of analysis results input to extraction process</param>
         /// <returns>CloseOutType specifying results</returns>
-        /// <remarks></remarks>
         private CloseOutType GetInputFiles(string resultTypeName)
         {
             bool onlyCopyFirstHitsAndSynopsisFiles;

@@ -196,7 +196,6 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// and the dataset Year_Quarter values in "PackedParam_DatasetStorage_YearQuarter"
         /// </summary>
         /// <param name="dataPackagePeptideHitJobs"></param>
-        /// <remarks></remarks>
         private void FindMissingMzXmlFiles(IEnumerable<clsDataPackageJobInfo> dataPackagePeptideHitJobs)
         {
             var datasets = new SortedSet<string>();
@@ -240,7 +239,6 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// Generated FASTA parameter name
         /// </summary>
         /// <param name="Job"></param>
-        /// <returns></returns>
         public static string GetGeneratedFastaParamNameForJob(int Job)
         {
             return "Job" + Job + "_GeneratedFasta";
@@ -251,7 +249,6 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// </summary>
         /// <param name="JobParams"></param>
         /// <param name="WarnIfJobParamMissing"></param>
-        /// <returns></returns>
         public static string GetMSGFReportTemplateFilename(IJobParams JobParams, bool WarnIfJobParamMissing)
         {
             var templateFileName = JobParams.GetJobParameter(JOB_PARAM_MSGF_REPORT_TEMPLATE_FILENAME, string.Empty);
@@ -274,7 +271,6 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// </summary>
         /// <param name="JobParams"></param>
         /// <param name="WarnIfJobParamMissing"></param>
-        /// <returns></returns>
         public static string GetPXSubmissionTemplateFilename(IJobParams JobParams, bool WarnIfJobParamMissing)
         {
             var templateFileName = JobParams.GetJobParameter(JOB_PARAM_PX_SUBMISSION_TEMPLATE_FILENAME, string.Empty);
@@ -539,7 +535,6 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// Store the datasets and jobs tracked by dataPackagePeptideHitJobs into a packed job parameter
         /// </summary>
         /// <param name="dataPackagePeptideHitJobs"></param>
-        /// <remarks></remarks>
         private void StoreDataPackageJobs(IEnumerable<clsDataPackageJobInfo> dataPackagePeptideHitJobs)
         {
             var dataPackageJobs = new List<string>();

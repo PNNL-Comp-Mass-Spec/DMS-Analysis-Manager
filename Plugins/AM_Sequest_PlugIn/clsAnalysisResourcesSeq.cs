@@ -416,7 +416,6 @@ namespace AnalysisManagerSequestPlugin
         /// <param name="fastaFileName">Fasta file name</param>
         /// <param name="orgDbDirectoryPath">Fasta file location on analysis machine</param>
         /// <returns>TRUE for success; FALSE for failure</returns>
-        /// <remarks></remarks>
         private bool VerifyDatabase(string fastaFileName, string orgDbDirectoryPath)
         {
             var hostFilePath = mMgrParams.GetParam("HostsFileLocation");
@@ -540,7 +539,6 @@ namespace AnalysisManagerSequestPlugin
         /// </summary>
         /// <param name="HostFilePath">Name of hosts file on cluster head node</param>
         /// <returns>returns a string collection containing IP addresses for each node</returns>
-        /// <remarks></remarks>
         private List<string> GetHostList(string HostFilePath)
         {
             var nodes = new List<string>();

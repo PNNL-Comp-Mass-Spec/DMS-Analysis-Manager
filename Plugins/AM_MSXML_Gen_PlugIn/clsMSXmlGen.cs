@@ -152,7 +152,6 @@ namespace AnalysisManagerMsXmlGenPlugIn
         /// Generate the mzXML, mzML, or .mgf file
         /// </summary>
         /// <returns>True if success; false if a failure</returns>
-        /// <remarks></remarks>
         public bool CreateMSXMLFile()
         {
             switch (mRawDataType)
@@ -480,7 +479,6 @@ namespace AnalysisManagerMsXmlGenPlugIn
         /// <summary>
         /// Event handler for CmdRunner.LoopWaiting event
         /// </summary>
-        /// <remarks></remarks>
         private void CmdRunner_LoopWaiting()
         {
             LoopWaiting?.Invoke();

@@ -99,7 +99,6 @@ namespace AnalysisManagerMsXmlGenPlugIn
         /// Generate the mzXML or mzML file
         /// </summary>
         /// <returns>CloseOutType enum indicating success or failure</returns>
-        /// <remarks></remarks>
         private CloseOutType CreateMSXMLFile()
         {
             try
@@ -429,7 +428,6 @@ namespace AnalysisManagerMsXmlGenPlugIn
         /// <param name="rawConverterDir"></param>
         /// <param name="rawFilePath"></param>
         /// <param name="mgfFile"></param>
-        /// <returns></returns>
         private bool RecalculatePrecursorIonsCreateMGF(string rawConverterDir, string rawFilePath, out FileInfo mgfFile)
         {
             try
@@ -623,7 +621,6 @@ namespace AnalysisManagerMsXmlGenPlugIn
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        /// <remarks></remarks>
         private bool StoreToolVersionInfo()
         {
             var toolVersionInfo = string.Empty;
@@ -715,7 +712,6 @@ namespace AnalysisManagerMsXmlGenPlugIn
         /// <summary>
         /// Event handler for msXmlGen.LoopWaiting event
         /// </summary>
-        /// <remarks></remarks>
         private void MSXmlGen_LoopWaiting()
         {
             UpdateStatusFile(PROGRESS_PCT_MSXML_GEN_RUNNING);
@@ -726,7 +722,6 @@ namespace AnalysisManagerMsXmlGenPlugIn
         /// Event handler for msXmlGen.ProgRunnerStarting event
         /// </summary>
         /// <param name="CommandLine">The command being executed (program path plus command line arguments)</param>
-        /// <remarks></remarks>
         private void MSXmlGen_ProgRunnerStarting(string CommandLine)
         {
             LogDebug(CommandLine);

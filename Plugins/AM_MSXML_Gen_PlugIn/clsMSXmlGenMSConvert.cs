@@ -28,7 +28,6 @@ namespace AnalysisManagerMsXmlGenPlugIn
         /// <summary>
         /// Custom arguments that will override the auto-defined arguments
         /// </summary>
-        /// <remarks></remarks>
         private readonly string mCustomMSConvertArguments;
 
         protected override string ProgramName => "MSConvert";

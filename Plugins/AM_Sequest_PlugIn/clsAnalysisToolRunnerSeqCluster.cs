@@ -22,7 +22,6 @@ namespace AnalysisManagerSequestPlugin
     /// <summary>
     /// Overrides Sequest tool runner to provide cluster-specific methods
     /// </summary>
-    /// <remarks></remarks>
     public class clsAnalysisToolRunnerSeqCluster : clsAnalysisToolRunnerSeqBase
     {
         #region "Constants"
@@ -122,7 +121,6 @@ namespace AnalysisManagerSequestPlugin
         /// Modifies MakeOUTFiles to remove multiple processes used on non-clustered machines
         /// </summary>
         /// <returns>CloseOutType enum indicating success or failure</returns>
-        /// <remarks></remarks>
         protected override CloseOutType MakeOUTFiles()
         {
             // Creates Sequest .out files from DTA files
@@ -381,7 +379,6 @@ namespace AnalysisManagerSequestPlugin
         /// <summary>
         /// Provides a wait loop while Sequest is running
         /// </summary>
-        /// <remarks></remarks>
         private void CmdRunner_LoopWaiting()
         {
             // Compute the progress by comparing the number of .Out files to the number of .Dta files
@@ -430,7 +427,6 @@ namespace AnalysisManagerSequestPlugin
         /// <summary>
         /// Reads sequest.log file after Sequest finishes and adds cluster statistics info to summary file
         /// </summary>
-        /// <remarks></remarks>
         private void AddClusterStatsToSummaryFile()
         {
             // Write the statistics to the summary file
@@ -779,7 +775,6 @@ namespace AnalysisManagerSequestPlugin
         /// Adds newly created .Out file to mOutFileCandidates and mOutFileCandidateInfo
         /// </summary>
         /// <param name="OutFileName"></param>
-        /// <remarks></remarks>
         private void HandleOutFileChange(string OutFileName)
         {
             try
@@ -1437,7 +1432,6 @@ namespace AnalysisManagerSequestPlugin
         /// Uses PVM command ps -a to determine the number of active nodes
         /// Sets mResetPVM to True if fewer than 50% of the nodes are creating .Out files
         /// </summary>
-        /// <remarks></remarks>
         private void ValidateProcessorsAreActive()
         {
             try

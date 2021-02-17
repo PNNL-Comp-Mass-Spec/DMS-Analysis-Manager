@@ -180,7 +180,6 @@ namespace AnalysisManagerQCARTPlugin
         /// <param name="datasetName">Dataset name</param>
         /// <param name="masicJob">Masic job for the dataset</param>
         /// <param name="qcartValue">QC-ART value</param>
-        /// <returns></returns>
         private string ConstructXmlForDbPosting(string datasetName, int masicJob, double qcartValue)
         {
             try
@@ -442,7 +441,6 @@ namespace AnalysisManagerQCARTPlugin
         /// and copies the metadata file plus the
         /// </summary>
         /// <param name="datasetNamesAndJobs"></param>
-        /// <returns></returns>
         private bool PostProcessResults(Dictionary<string, int> datasetNamesAndJobs)
         {
             try
@@ -616,7 +614,6 @@ namespace AnalysisManagerQCARTPlugin
         /// Store the QC-ART score in the database
         /// </summary>
         /// <param name="qcartValue"></param>
-        /// <returns></returns>
         private bool StoreResultsInDB(double qcartValue)
         {
             try
@@ -662,7 +659,6 @@ namespace AnalysisManagerQCARTPlugin
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        /// <remarks></remarks>
         private bool StoreToolVersionInfo(string rProgLoc)
         {
             var toolVersionInfo = string.Empty;

@@ -126,8 +126,6 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
         /// </summary>
         /// <param name="parameterName">AScoreCIDParamFile or AScoreETDParamFile or AScoreHCDParamFile</param>
         /// <param name="paramFilesCopied">Incremented if the parameter file is found and copied</param>
-        /// <returns></returns>
-        /// <remarks></remarks>
         private bool RetrieveAScoreParamfile(string parameterName, ref int paramFilesCopied)
         {
             var paramFileName = mJobParams.GetJobParameter(parameterName, string.Empty);

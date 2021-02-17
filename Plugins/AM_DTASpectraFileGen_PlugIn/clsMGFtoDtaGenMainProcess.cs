@@ -160,7 +160,6 @@ namespace DTASpectraFileGen
         /// This method is called by MakeDTAFilesThreaded
         /// </summary>
         /// <returns>TRUE for success; FALSE for failure</returns>
-        /// <remarks></remarks>
         private bool ConvertMGFtoDTA(string inputFilePathFull, string outputFolderPath)
         {
             if (mDebugLevel > 0)

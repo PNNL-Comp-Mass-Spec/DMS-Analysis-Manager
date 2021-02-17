@@ -60,7 +60,6 @@ namespace AnalysisManager_Mage_PlugIn
         /// <summary>
         /// Get name and version info for primary Mage MAC tool assembly
         /// </summary>
-        /// <returns></returns>
         protected override string GetToolNameAndVersion()
         {
             var toolVersionInfo = string.Empty;

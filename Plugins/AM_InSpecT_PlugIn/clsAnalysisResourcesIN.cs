@@ -27,7 +27,6 @@ namespace AnalysisManagerInSpecTPlugIn
         /// Retrieves files necessary for performance of Inspect analysis
         /// </summary>
         /// <returns>CloseOutType indicating success or failure</returns>
-        /// <remarks></remarks>
         public override CloseOutType GetResources()
         {
             // Retrieve shared resources, including the JobParameters file from the previous job step
@@ -68,7 +67,6 @@ namespace AnalysisManagerInSpecTPlugIn
         /// Retrieves zipped, concatenated DTA file, unzips, and splits into individual DTA files
         /// </summary>
         /// <returns>TRUE for success, FALSE for error</returns>
-        /// <remarks></remarks>
         public bool RetrieveDtaFiles()
         {
             // Retrieve zipped DTA file

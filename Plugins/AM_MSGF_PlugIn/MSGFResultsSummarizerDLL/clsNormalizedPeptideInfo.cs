@@ -22,7 +22,6 @@ namespace MSGFResultsSummarizer
         /// <summary>
         /// Sequence ID for this normalized peptide
         /// </summary>
-        /// <returns></returns>
         public int SeqID { get; set; }
 
         /// <summary>

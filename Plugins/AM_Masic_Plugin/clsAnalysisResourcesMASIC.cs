@@ -12,7 +12,6 @@ namespace AnalysisManagerMasicPlugin
         /// Retrieves files necessary for MASIC
         /// </summary>
         /// <returns>CloseOutType indicating success or failure</returns>
-        /// <remarks></remarks>
         public override CloseOutType GetResources()
         {
             // Retrieve shared resources, including the JobParameters file from the previous job step

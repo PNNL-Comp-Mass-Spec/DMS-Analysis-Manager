@@ -237,7 +237,6 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
         /// <param name="statusTools">Object for updating status file as job progresses</param>
         /// <param name="summaryFile">Object for creating an analysis job summary file</param>
         /// <param name="myEMSLUtilities">MyEMSL download Utilities</param>
-        /// <remarks></remarks>
         public override void Setup(string stepToolName, IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, clsSummaryFile summaryFile, clsMyEMSLUtilities myEMSLUtilities)
         {
             base.Setup(stepToolName, mgrParams, jobParams, statusTools, summaryFile, myEMSLUtilities);
@@ -322,7 +321,6 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
         /// Assemble the result files
         /// </summary>
         /// <returns>CloseOutType enum indicating success or failure</returns>
-        /// <remarks></remarks>
         private CloseOutType AssembleFiles(string combinedFileName, ResultFileType resFileType, int numResultFiles)
         {
             var inspectResultsFile = "";
@@ -641,8 +639,6 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
         /// </summary>
         /// <param name="inspectParameterFilePath"></param>
         /// <param name="modList"></param>
-        /// <returns></returns>
-        /// <remarks></remarks>
         private bool ExtractModInfoFromInspectParamFile(string inspectParameterFilePath, ref udtModInfoType[] modList)
         {
             try
@@ -722,7 +718,6 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
         /// Use PValue_MinLength5.py to only retain the top hit for each scan (no p-value filtering is actually applied)
         /// </summary>
         /// <returns>CloseOutType enum indicating success or failure</returns>
-        /// <remarks></remarks>
         private CloseOutType FilterInspectResultsByFirstHits()
         {
             var inspectResultsFilePath = Path.Combine(mWorkDir, mInspectResultsFileName);
@@ -740,7 +735,6 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
         /// Filters the inspect results using PValue_MinLength5.py"
         /// </summary>
         /// <returns>CloseOutType enum indicating success or failure</returns>
-        /// <remarks></remarks>
         private CloseOutType FilterInspectResultsByPValue()
         {
             var inspectResultsFilePath = Path.Combine(mWorkDir, mInspectResultsFileName);
@@ -801,7 +795,6 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
         /// In addition, filters the data on p-value of 0.1 or smaller
         /// </summary>
         /// <returns>CloseOutType enum indicating success or failure</returns>
-        /// <remarks></remarks>
         private CloseOutType ReScoreAssembledInspectResults()
         {
             var inspectResultsFilePath = Path.Combine(mWorkDir, mInspectResultsFileName);
@@ -970,7 +963,6 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        /// <remarks></remarks>
         protected bool StoreToolVersionInfo()
         {
             var toolVersionInfo = string.Empty;
@@ -1031,7 +1023,6 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
         /// </summary>
         /// <param name="inspectDirectoryPath"></param>
         /// <param name="inspectParameterFilePath"></param>
-        /// <remarks></remarks>
         private bool UpdatePTModsFile(string inspectDirectoryPath, string inspectParameterFilePath)
         {
             var modList = new udtModInfoType[0];
@@ -1293,8 +1284,6 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
         /// Stores the _inspect_fht.txt file in _inspect_fht.zip (but renames it to _inspect.txt before storing)
         /// Stores the _inspect_filtered.txt file in _inspect.zip (but renames it to _inspect.txt before storing)
         /// </summary>
-        /// <returns></returns>
-        /// <remarks></remarks>
         private CloseOutType ZipInspectResults()
         {
             try

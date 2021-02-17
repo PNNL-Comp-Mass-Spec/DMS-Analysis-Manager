@@ -120,7 +120,6 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <remarks></remarks>
         public clsSampleMetadata()
         {
             Modifications = new Dictionary<string, udtCvParamInfoType>(StringComparer.OrdinalIgnoreCase);

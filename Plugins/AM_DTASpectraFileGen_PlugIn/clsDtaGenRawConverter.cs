@@ -23,7 +23,6 @@ namespace DTASpectraFileGen
         /// <summary>
         /// Returns the default path to the DTA generator tool
         /// </summary>
-        /// <returns></returns>
         /// <remarks>The default path can be overridden by updating mDtaToolNameLoc using clsDtaGen.UpdateDtaToolNameLoc</remarks>
         protected override string ConstructDTAToolPath()
         {
@@ -71,7 +70,6 @@ namespace DTASpectraFileGen
         /// This function is called by MakeDTAFilesThreaded
         /// </summary>
         /// <returns>TRUE for success; FALSE for failure</returns>
-        /// <remarks></remarks>
         private bool ConvertMGFtoDTA()
         {
             try
@@ -112,7 +110,6 @@ namespace DTASpectraFileGen
         /// </summary>
         /// <param name="rawDataType">Raw data file type</param>
         /// <returns>TRUE for success; FALSE for failure</returns>
-        /// <remarks></remarks>
         private bool ConvertRawToMGF(clsAnalysisResources.eRawDataTypeConstants rawDataType)
         {
             try

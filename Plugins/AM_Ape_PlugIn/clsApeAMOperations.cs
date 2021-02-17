@@ -37,7 +37,6 @@ namespace AnalysisManager_Ape_PlugIn
         /// Run a list of Ape operations
         /// </summary>
         /// <param name="apeOperations"></param>
-        /// <returns></returns>
         public bool RunApeOperations(string apeOperations)
         {
             var ok = false;
@@ -56,7 +55,6 @@ namespace AnalysisManager_Ape_PlugIn
         /// Run defined Ape operation(s)
         /// </summary>
         /// <param name="apeOperation"></param>
-        /// <returns></returns>
         private bool RunApeOperation(string apeOperation)
         {
             if (apeOperation.Equals("RunWorkflow", StringComparison.OrdinalIgnoreCase))

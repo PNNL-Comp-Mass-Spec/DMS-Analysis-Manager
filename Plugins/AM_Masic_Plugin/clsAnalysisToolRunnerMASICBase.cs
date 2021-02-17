@@ -363,7 +363,6 @@ namespace AnalysisManagerMasicPlugin
         /// Get the DMS-compatible reporter ion name from the MASIC reporter ion mass mode
         /// </summary>
         /// <param name="reporterIonMassMode">MASIC reporter ion mass mode</param>
-        /// <returns></returns>
         /// <remarks>MASIC mass modes: https://github.com/PNNL-Comp-Mass-Spec/MASIC/blob/59474ab345ce7878f0646a6e83fa1bb22ee84579/clsReporterIons.cs#L15
         /// </remarks>
         private static string GetReporterIonNameFromMassMode(int reporterIonMassMode)
@@ -649,7 +648,6 @@ namespace AnalysisManagerMasicPlugin
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        /// <remarks></remarks>
         private bool StoreToolVersionInfo()
         {
             var masicExecutablePath = mMgrParams.GetParam("MasicProgLoc");

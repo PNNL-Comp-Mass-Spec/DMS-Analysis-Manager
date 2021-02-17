@@ -691,7 +691,6 @@ namespace MSMSSpectrumFilterAM
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        /// <remarks></remarks>
         private bool StoreToolVersionInfo()
         {
             var toolVersionInfo = string.Empty;
@@ -772,7 +771,6 @@ namespace MSMSSpectrumFilterAM
         /// Zips concatenated DTA file to reduce size
         /// </summary>
         /// <returns>CloseOutType enum indicating success or failure</returns>
-        /// <remarks></remarks>
         protected virtual CloseOutType ZipConcatenatedDtaFile()
         {
             // Zips the concatenated dta file

@@ -58,7 +58,6 @@ namespace AnalysisManagerDecon2lsV2PlugIn
         /// </summary>
         /// <param name="paramFilePath"></param>
         /// <returns>Dictionary object where keys are section names and values are dictionary objects of key/value pairs</returns>
-        /// <remarks></remarks>
         private Dictionary<string, Dictionary<string, string>> CacheXMLParamFile(string paramFilePath)
         {
             var dctSections = new Dictionary<string, Dictionary<string, string>>();
@@ -80,7 +79,6 @@ namespace AnalysisManagerDecon2lsV2PlugIn
         /// </summary>
         /// <param name="parameters">XML parameters to examine</param>
         /// <param name="dctParameters">Dictionary object where keys are section names and values are dictionary objects of key/value pairs</param>
-        /// <remarks></remarks>
         private void CacheXMLParseSection(IEnumerable<System.Xml.Linq.XElement> parameters,
                                             ref Dictionary<string, Dictionary<string, string>> dctParameters)
         {
@@ -123,7 +121,6 @@ namespace AnalysisManagerDecon2lsV2PlugIn
         /// </summary>
         /// <param name="parameterName"></param>
         /// <param name="valueIfMissing"></param>
-        /// <returns></returns>
         public bool GetParameter(string parameterName, bool valueIfMissing)
         {
             var value = GetParameter(parameterName, string.Empty);
@@ -144,7 +141,6 @@ namespace AnalysisManagerDecon2lsV2PlugIn
         /// </summary>
         /// <param name="parameterName"></param>
         /// <param name="valueIfMissing"></param>
-        /// <returns></returns>
         public string GetParameter(string parameterName, string valueIfMissing)
         {
             foreach (var section in mSections)

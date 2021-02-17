@@ -246,8 +246,6 @@ namespace AnalysisManagerPBFGenerator
         /// Furthermore, it looks like all of the data in the .raw file is cached in memory and the .PBF file is not created until the very end
         ///  and thus this progress estimation is useless
         /// </summary>
-        /// <returns></returns>
-        /// <remarks></remarks>
         protected float EstimatePBFProgress()
         {
             try
@@ -272,7 +270,6 @@ namespace AnalysisManagerPBFGenerator
         /// Parse the PBFGen console output file to track the search progress
         /// </summary>
         /// <param name="strConsoleOutputFilePath"></param>
-        /// <remarks></remarks>
         private void ParseConsoleOutputFile(string strConsoleOutputFilePath)
         {
             // Example Console output
@@ -456,7 +453,6 @@ namespace AnalysisManagerPBFGenerator
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        /// <remarks></remarks>
         protected bool StoreToolVersionInfo(string progLoc)
         {
             var additionalDLLs = new List<string>
@@ -478,7 +474,6 @@ namespace AnalysisManagerPBFGenerator
         /// <summary>
         /// Event handler for CmdRunner.LoopWaiting event
         /// </summary>
-        /// <remarks></remarks>
         private void CmdRunner_LoopWaiting()
         {
             UpdateStatusFile();

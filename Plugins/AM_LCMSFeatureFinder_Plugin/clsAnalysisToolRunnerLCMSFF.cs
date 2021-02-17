@@ -121,7 +121,6 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
         /// <summary>
         /// Event handler for CmdRunner.LoopWaiting event
         /// </summary>
-        /// <remarks></remarks>
         private void CmdRunner_LoopWaiting()
         {
             UpdateStatusFile(PROGRESS_PCT_FEATURE_FINDER_RUNNING);
@@ -132,7 +131,6 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        /// <remarks></remarks>
         protected bool StoreToolVersionInfo(string featureFinderProgLoc)
         {
             var toolVersionInfo = string.Empty;

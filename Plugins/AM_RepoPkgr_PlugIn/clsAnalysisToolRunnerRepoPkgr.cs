@@ -85,7 +85,6 @@ namespace AnalysisManager_RepoPkgr_Plugin
         /// <summary>
         /// Find (or generate) necessary files and copy them to repository cache directory for upload
         /// </summary>
-        /// <returns></returns>
         private CloseOutType BuildRepoCache()
         {
             SetOptions();

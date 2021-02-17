@@ -44,7 +44,6 @@ namespace AnalysisManagerGlyQIQPlugin
         /// <summary>
         /// Value between 0 and 100
         /// </summary>
-        /// <remarks></remarks>
         public double Progress => mProgress;
 
         public clsRunDosProgram ProgramRunner => mCmdRunner;
@@ -76,7 +75,6 @@ namespace AnalysisManagerGlyQIQPlugin
         /// <summary>
         /// Dictionary tracking target names, and True/False for whether the target has been reported as being searched in the GlyQ-IQ Console Output window
         /// </summary>
-        /// <remarks></remarks>
         protected Dictionary<string, bool> mTargets;
 
         protected GlyQIqRunnerStatusCodes mStatus;
@@ -102,7 +100,6 @@ namespace AnalysisManagerGlyQIQPlugin
         /// <summary>
         /// Forcibly ends GlyQ-IQ
         /// </summary>
-        /// <remarks></remarks>
         public void AbortProcessingNow()
         {
             mCmdRunner?.AbortProgramNow();
@@ -258,7 +255,6 @@ namespace AnalysisManagerGlyQIQPlugin
         /// Parse the GlyQ-IQ console output file to track the search progress
         /// </summary>
         /// <param name="strConsoleOutputFilePath"></param>
-        /// <remarks></remarks>
         private void ParseConsoleOutputFile(string strConsoleOutputFilePath)
         {
             try

@@ -309,7 +309,6 @@ namespace AnalysisManagerGlyQIQPlugin
         /// <param name="fiResultsFile"></param>
         /// <param name="jobNumber"></param>
         /// <param name="dmsConnectionStringOverride">Optional: DMS5 connection string</param>
-        /// <returns></returns>
         /// <remarks>If dmsConnectionStringOverride is empty then PostJobResults will use the Manager Parameters (mMgrParams)</remarks>
         public bool ExamineFilteredResults(FileInfo fiResultsFile, int jobNumber, string dmsConnectionStringOverride)
         {
@@ -819,7 +818,6 @@ namespace AnalysisManagerGlyQIQPlugin
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        /// <remarks></remarks>
         protected bool StoreToolVersionInfo(string progLoc)
         {
             var additionalDLLs = new List<string>
@@ -854,7 +852,6 @@ namespace AnalysisManagerGlyQIQPlugin
         /// <summary>
         /// Event handler for CmdRunner.LoopWaiting event
         /// </summary>
-        /// <remarks></remarks>
         private void CmdRunner_LoopWaiting()
         {
             UpdateStatusFile(mProgress);

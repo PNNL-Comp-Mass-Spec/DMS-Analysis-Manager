@@ -252,7 +252,6 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
         /// </summary>
         /// <param name="dataPackageID"></param>
         /// <param name="tool"></param>
-        /// <returns></returns>
         private SimpleSink GetListOfDataPackageJobsToProcess(string dataPackageID, string tool)
         {
             const string sqlTemplate = @"SELECT * FROM V_Mage_Data_Package_Analysis_Jobs WHERE Data_Package_ID = {0} AND Tool LIKE '%{1}%'";
@@ -335,7 +334,6 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
         /// </summary>
         /// <param name="sql">Query to use</param>
         /// <param name="connectionString"></param>
-        /// <returns></returns>
         public static SQLReader MakeDBReaderModule(string sql, string connectionString)
         {
             var reader = new SQLReader(connectionString)
@@ -378,7 +376,6 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
         /// Build the MultiAlign input file
         /// </summary>
         /// <param name="strInputFileExtension"></param>
-        /// <returns></returns>
         private bool BuildMultiAlignInputTextFile(string strInputFileExtension)
         {
             const string INPUT_FILENAME = "input.txt";
@@ -470,7 +467,6 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
         /// <summary>
         /// Populates dictionary mProgressStepPercentComplete(), which is used by ParseMultiAlignLogFile
         /// </summary>
-        /// <remarks></remarks>
         private void InitializeProgressStepDictionaries()
         {
             mProgressStepPercentComplete = new SortedDictionary<eProgressSteps, Int16>
@@ -507,7 +503,6 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
         /// Parse the MultiAlign log file to track the search progress
         /// Looks in the work directory to auto-determine the log file name
         /// </summary>
-        /// <remarks></remarks>
         private void ParseMultiAlignLogFile()
         {
             var strLogFilePath = string.Empty;
@@ -557,7 +552,6 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
         /// Parse the MultiAlign log file to track the search progress
         /// </summary>
         /// <param name="logFilePath">Full path to the log file</param>
-        /// <remarks></remarks>
         private void ParseMultiAlignLogFile(string logFilePath)
         {
             // The MultiAlign log file is quite big, but we can keep track of progress by looking for known text in the log file lines
@@ -883,7 +877,6 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
             /// Verify that a job parameter is defined
             /// </summary>
             /// <param name="paramName"></param>
-            /// <returns></returns>
             public string RequireJobParam(string paramName)
             {
                 var val = mJobParams.GetParam(paramName);
@@ -899,7 +892,6 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
             /// </summary>
             /// <param name="paramName"></param>
             /// <param name="defaultValue"></param>
-            /// <returns></returns>
             public string RequireJobParam(string paramName, string defaultValue)
             {
                 var val = mJobParams.GetParam(paramName);
@@ -915,7 +907,6 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
             /// Get a job parameter
             /// </summary>
             /// <param name="paramName"></param>
-            /// <returns></returns>
             public string GetJobParam(string paramName)
             {
                 return mJobParams.GetParam(paramName);
@@ -926,7 +917,6 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
             /// </summary>
             /// <param name="paramName"></param>
             /// <param name="defaultValue"></param>
-            /// <returns></returns>
             public string GetJobParam(string paramName, string defaultValue)
             {
                 var val = mJobParams.GetParam(paramName);
@@ -956,7 +946,6 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
             /// Verify that a manager parameter is defined
             /// </summary>
             /// <param name="paramName"></param>
-            /// <returns></returns>
             public string RequireMgrParam(string paramName)
             {
                 var val = mMgrParams.GetParam(paramName);

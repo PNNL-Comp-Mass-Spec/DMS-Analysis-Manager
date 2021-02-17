@@ -279,7 +279,6 @@ namespace AnalysisManager_RepoPkgr_Plugin
         /// and the dataset Year_Quarter values in "PackedParam_DatasetStorage_YearQuarter"
         /// </summary>
         /// <param name="dataPackagePeptideHitJobs"></param>
-        /// <remarks></remarks>
         protected void FindMissingMzXmlFiles(IEnumerable<clsDataPackageJobInfo> dataPackagePeptideHitJobs)
         {
             var datasetNames = new SortedSet<string>();

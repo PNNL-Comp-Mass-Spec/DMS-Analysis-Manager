@@ -121,7 +121,6 @@ namespace AnalysisManager_RepoPkgr_Plugin
         /// Determine if there are any duplicates in the file name column
         /// </summary>
         /// <param name="outputFileColumnName">Name of the column that contains file name</param>
-        /// <returns></returns>
         private bool CheckForDuplicateFileNames(string outputFileColumnName)
         {
             var fileNameCol = AssociatedFiles.ColumnIndex[outputFileColumnName];
@@ -198,7 +197,6 @@ namespace AnalysisManager_RepoPkgr_Plugin
         /// </summary>
         /// <param name="searchList">SimpleSink object holding list of directories to search (plus optional metadata)</param>
         /// <param name="fileNameSelector">Pattern to use to select files (semi-colon delimited list of file matching patterns)</param>
-        /// <returns></returns>
         private SimpleSink GetFileSearchResults(SimpleSink searchList, string fileNameSelector)
         {
             var sourceDirectories = new SinkWrapper(searchList);
@@ -222,7 +220,6 @@ namespace AnalysisManager_RepoPkgr_Plugin
         /// <param name="sourceObject">SimpleSink object containing list of files to copy</param>
         /// <param name="outputDirectory">Full path the output directory</param>
         /// <param name="prefixCol">Name of column in sourceObject to apply to output files as prefix (optional)</param>
-        /// <returns></returns>
         private SimpleSink CopyFiles(SimpleSink sourceObject, string outputDirectory, string prefixCol = "")
         {
             var result = new SimpleSink();

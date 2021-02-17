@@ -694,7 +694,6 @@ namespace AnalysisManagerFormularityPlugin
         /// </summary>
         /// <param name="workDir"></param>
         /// <param name="pngFiles"></param>
-        /// <returns></returns>
         private CloseOutType RenamePlotFiles(DirectoryInfo workDir, out List<FileInfo> pngFiles)
         {
             const int MINIMUM_PNG_FILE_COUNT = 11;
@@ -989,7 +988,6 @@ namespace AnalysisManagerFormularityPlugin
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        /// <remarks></remarks>
         private bool StoreToolVersionInfo(string progLoc)
         {
             var additionalDLLs = new List<string> {

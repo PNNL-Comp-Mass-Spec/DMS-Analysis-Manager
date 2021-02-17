@@ -169,7 +169,6 @@ namespace AnalysisManagerSequestPlugin
         /// </summary>
         /// <param name="sourceOutFile"></param>
         /// <param name="outFileWriter"></param>
-        /// <remarks></remarks>
         protected void AppendOutFile(FileInfo sourceOutFile, StreamWriter outFileWriter)
         {
             const string hdrLeft = "=================================== \"";
@@ -415,7 +414,6 @@ namespace AnalysisManagerSequestPlugin
         /// This function uses the standalone Sequest.exe program; it is not used by the Sequest clusters
         /// </summary>
         /// <returns>CloseOutType enum indicating success or failure</returns>
-        /// <remarks></remarks>
         protected virtual CloseOutType MakeOUTFiles()
         {
             // Creates Sequest .out files from DTA files
@@ -608,7 +606,6 @@ namespace AnalysisManagerSequestPlugin
         /// <param name="DSName">Dataset name</param>
         /// <param name="JobNum">Job number</param>
         /// <returns>TRUE for success; FALSE for failure</returns>
-        /// <remarks></remarks>
         protected virtual bool ConcatOutFiles(string WorkDir, string DSName, int JobNum)
         {
             const int MAX_RETRY_ATTEMPTS = 5;
@@ -729,7 +726,6 @@ namespace AnalysisManagerSequestPlugin
         /// Also records the file date of the Sequest Program .exe
         /// </summary>
         /// <param name="outFilePath"></param>
-        /// <remarks></remarks>
         protected bool StoreToolVersionInfo(string outFilePath)
         {
             var toolFiles = new List<FileInfo>();
@@ -805,8 +801,6 @@ namespace AnalysisManagerSequestPlugin
         /// Make sure at least one .DTA file exists
         /// Also makes sure at least one of the .DTA files has data
         /// </summary>
-        /// <returns></returns>
-        /// <remarks></remarks>
         protected bool ValidateDTAFiles()
         {
             var dataFound = false;
@@ -876,7 +870,6 @@ namespace AnalysisManagerSequestPlugin
         /// Parses out the number of nodes used and the number of slave processes spawned
         /// Counts the number of DTA files analyzed by each process
         /// </summary>
-        /// <remarks></remarks>
         /// <returns>True if file found and information successfully parsed from it (regardless of the validity of the information); False if file not found or error parsing information</returns>
         protected bool ValidateSequestNodeCount(string logFilePath)
         {
@@ -890,7 +883,6 @@ namespace AnalysisManagerSequestPlugin
         /// </summary>
         /// <param name="logFilePath">Path to the sequest.log file to parse</param>
         /// <param name="logToConsole">If true, displays the various status messages at the console</param>
-        /// <remarks></remarks>
         /// <returns>True if file found and information successfully parsed from it (regardless of the validity of the information); False if file not found or error parsing information</returns>
         protected bool ValidateSequestNodeCount(string logFilePath, bool logToConsole)
         {
@@ -1293,7 +1285,6 @@ namespace AnalysisManagerSequestPlugin
         /// <param name="WorkDir">Working directory</param>
         /// <param name="JobNum">Job number</param>
         /// <returns>TRUE for success; FALSE for failure</returns>
-        /// <remarks></remarks>
         protected virtual bool ZipConcatOutFile(string WorkDir, int JobNum)
         {
             var OutFileName = mDatasetName + "_out.txt";

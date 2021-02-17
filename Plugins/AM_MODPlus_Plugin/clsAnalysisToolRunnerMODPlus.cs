@@ -149,7 +149,6 @@ namespace AnalysisManagerMODPlusPlugin
         /// <param name="xpath"></param>
         /// <param name="attributeName"></param>
         /// <param name="attributeValue"></param>
-        /// <remarks></remarks>
         private void AddXMLElement(XmlDocument doc, string xpath, string attributeName, string attributeValue)
         {
             var attributes = new Dictionary<string, string> {
@@ -165,7 +164,6 @@ namespace AnalysisManagerMODPlusPlugin
         /// <param name="doc"></param>
         /// <param name="xpath"></param>
         /// <param name="attributes"></param>
-        /// <remarks></remarks>
         private void AddXMLElement(XmlDocument doc, string xpath, Dictionary<string, string> attributes)
         {
             MakeXPath(doc, xpath, attributes);
@@ -177,7 +175,6 @@ namespace AnalysisManagerMODPlusPlugin
         /// <param name="fiSpectrumFile"></param>
         /// <param name="fiMgfFile"></param>
         /// <returns>True if success, false if an error</returns>
-        /// <remarks></remarks>
         private bool ConvertMsXmlToMGF(FileSystemInfo fiSpectrumFile, FileSystemInfo fiMgfFile)
         {
             // Set up and execute a program runner to run MSConvert
@@ -263,7 +260,6 @@ namespace AnalysisManagerMODPlusPlugin
         /// <param name="fastaFilePath"></param>
         /// <param name="mgfFiles"></param>
         /// <returns>Dictionary where key is the thread number and value is the parameter file path</returns>
-        /// <remarks></remarks>
         private Dictionary<int, string> CreateParameterFiles(string paramFileName, string fastaFilePath, IEnumerable<FileInfo> mgfFiles)
         {
             try
@@ -541,7 +537,6 @@ namespace AnalysisManagerMODPlusPlugin
         /// <param name="doc"></param>
         /// <param name="xpath"></param>
         /// <param name="attributes"></param>
-        /// <returns></returns>
         /// <remarks>Code adapted from "http://stackoverflow.com/questions/508390/create-xml-nodes-based-on-xpath"</remarks>
         private void MakeXPath(XmlDocument doc, string xpath, Dictionary<string, string> attributes)
         {
@@ -792,8 +787,6 @@ namespace AnalysisManagerMODPlusPlugin
         /// </summary>
         /// <param name="javaProgLoc">Path to java.exe</param>
         /// <param name="paramFileList">Output: Dictionary where key is the thread number and value is the parameter file path</param>
-        /// <returns></returns>
-        /// <remarks></remarks>
         protected bool StartMODPlus(string javaProgLoc, out Dictionary<int, string> paramFileList)
         {
             var currentTask = "Initializing";
@@ -1138,7 +1131,6 @@ namespace AnalysisManagerMODPlusPlugin
         /// <summary>
         /// Event handler for CmdRunner.LoopWaiting event
         /// </summary>
-        /// <remarks></remarks>
         private void CmdRunner_LoopWaiting(List<int> processIDs, float coreUsageOverall, int secondsBetweenUpdates)
         {
             UpdateStatusFile(mProgress);

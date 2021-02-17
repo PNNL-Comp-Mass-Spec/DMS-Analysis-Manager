@@ -13,7 +13,6 @@ namespace AnalysisManagerDtaRefineryPlugIn
     /// This class reads a DTA_Refinery log file to extract the parent ion mass error information
     /// It passes on the information to DMS for storage in table T_Dataset_QC
     /// </summary>
-    /// <remarks></remarks>
     public class clsDtaRefLogMassErrorExtractor : EventNotifier
     {
         private const string STORE_MASS_ERROR_STATS_SP_NAME = "StoreDTARefMassErrorStats";
@@ -80,7 +79,6 @@ namespace AnalysisManagerDtaRefineryPlugIn
         /// <param name="datasetName"></param>
         /// <param name="datasetID"></param>
         /// <param name="psmJob"></param>
-        /// <returns></returns>
         public bool ParseDTARefineryLogFile(string datasetName, int datasetID, int psmJob)
         {
             return ParseDTARefineryLogFile(datasetName, datasetID, psmJob, mWorkDir);
@@ -93,7 +91,6 @@ namespace AnalysisManagerDtaRefineryPlugIn
         /// <param name="datasetID"></param>
         /// <param name="psmJob"></param>
         /// <param name="workDirPath"></param>
-        /// <returns></returns>
         public bool ParseDTARefineryLogFile(string datasetName, int datasetID, int psmJob, string workDirPath)
         {
             var originalDistributionSection = false;

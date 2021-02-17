@@ -58,7 +58,6 @@ namespace AnalysisManager_Mage_PlugIn
         ///  make and remember a unique short label for this dataset
         /// </summary>
         /// <param name="dataset"></param>
-        /// <returns></returns>
         private string MakeAlias(string dataset)
         {
             var alias = dataset;

@@ -8,7 +8,6 @@ namespace AnalysisManagerICR2LSPlugIn
     /// <summary>
     /// Performs PEK analysis using ICR-2LS on LTQ-FT MS data
     /// </summary>
-    /// <remarks></remarks>
     public class clsAnalysisToolRunnerLTQ_FTPek : clsAnalysisToolRunnerICRBase
     {
         /// <summary>

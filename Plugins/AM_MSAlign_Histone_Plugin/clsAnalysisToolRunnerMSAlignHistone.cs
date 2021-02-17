@@ -784,7 +784,6 @@ namespace AnalysisManagerMSAlignHistonePlugIn
         /// Parse the MSAlign console output file to determine the MSAlign version and to track the search progress
         /// </summary>
         /// <param name="consoleOutputFilePath"></param>
-        /// <remarks></remarks>
         private void ParseConsoleOutputFile(string consoleOutputFilePath)
         {
             try
@@ -887,7 +886,6 @@ namespace AnalysisManagerMSAlignHistonePlugIn
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        /// <remarks></remarks>
         protected bool StoreToolVersionInfo()
         {
             if (mDebugLevel >= 2)
@@ -1153,7 +1151,6 @@ namespace AnalysisManagerMSAlignHistonePlugIn
         /// <summary>
         /// Event handler for CmdRunner.LoopWaiting event
         /// </summary>
-        /// <remarks></remarks>
         private void CmdRunner_LoopWaiting()
         {
             UpdateStatusFile();

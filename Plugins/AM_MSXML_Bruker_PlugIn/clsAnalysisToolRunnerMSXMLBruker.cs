@@ -142,7 +142,6 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
         /// Generate the mzXML or mzML file
         /// </summary>
         /// <returns>CloseOutType enum indicating success or failure</returns>
-        /// <remarks></remarks>
         private CloseOutType CreateMSXmlFile(out FileInfo resultsFile)
         {
             if (mDebugLevel > 4)
@@ -297,7 +296,6 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        /// <remarks></remarks>
         protected bool StoreToolVersionInfo()
         {
             var toolVersionInfo = string.Empty;
@@ -367,7 +365,6 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
         /// <summary>
         /// Event handler for CompassXportRunner.LoopWaiting event
         /// </summary>
-        /// <remarks></remarks>
         private void CompassXportRunner_LoopWaiting()
         {
             UpdateStatusFile(PROGRESS_PCT_MSXML_GEN_RUNNING);
@@ -379,7 +376,6 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
         /// Event handler for mCompassXportRunner.ProgRunnerStarting event
         /// </summary>
         /// <param name="commandLine">The command being executed (program path plus command line arguments)</param>
-        /// <remarks></remarks>
         private void CompassXportRunner_ProgRunnerStarting(string commandLine)
         {
             LogDebug(commandLine);

@@ -601,7 +601,6 @@ namespace AnalysisManagerLipidMapSearchPlugIn
         /// Parse the LipidTools console output file to track progress
         /// </summary>
         /// <param name="consoleOutputFilePath"></param>
-        /// <remarks></remarks>
         private void ParseConsoleOutputFile(string consoleOutputFilePath)
         {
             try
@@ -711,7 +710,6 @@ namespace AnalysisManagerLipidMapSearchPlugIn
         /// </summary>
         /// <param name="parameterFilePath">Path to the LipidMapSearch Parameter File</param>
         /// <returns>Options string if success; empty string if an error</returns>
-        /// <remarks></remarks>
         private string ParseLipidMapSearchParameterFile(string parameterFilePath)
         {
             var sbOptions = new StringBuilder(500);
@@ -856,7 +854,6 @@ namespace AnalysisManagerLipidMapSearchPlugIn
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        /// <remarks></remarks>
         private bool StoreToolVersionInfo(string progLoc)
         {
             var success = StoreDotNETToolVersionInfo(progLoc);
@@ -873,7 +870,6 @@ namespace AnalysisManagerLipidMapSearchPlugIn
         /// <summary>
         /// Event handler for CmdRunner.LoopWaiting event
         /// </summary>
-        /// <remarks></remarks>
         private void CmdRunner_LoopWaiting()
         {
             UpdateStatusFile();

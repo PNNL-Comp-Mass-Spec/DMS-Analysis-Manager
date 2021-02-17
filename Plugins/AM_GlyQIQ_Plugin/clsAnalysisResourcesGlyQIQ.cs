@@ -503,7 +503,6 @@ namespace AnalysisManagerGlyQIQPlugin
         /// <param name="fiTargetsFile"></param>
         /// <param name="numTargets"></param>
         /// <returns>List of FileInfo objects for the newly created target files (key is core number, value is the Targets file path)</returns>
-        /// <remarks></remarks>
         private Dictionary<int, FileInfo> SplitTargetsFile(FileSystemInfo fiTargetsFile, int numTargets)
         {
             try

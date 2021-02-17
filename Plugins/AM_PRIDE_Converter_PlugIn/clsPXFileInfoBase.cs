@@ -110,7 +110,6 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// <summary>
         /// Returns Job number and filename
         /// </summary>
-        /// <returns></returns>
         public override string ToString()
         {
             return "Job " + JobInfo.Job + ": " + Filename;

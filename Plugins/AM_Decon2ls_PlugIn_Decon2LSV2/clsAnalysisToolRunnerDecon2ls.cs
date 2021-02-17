@@ -98,8 +98,6 @@ namespace AnalysisManagerDecon2lsV2PlugIn
         /// Validate the result files
         /// (legacy code would assemble result files from looping, but that code has been removed)
         /// </summary>
-        /// <returns></returns>
-        /// <remarks></remarks>
         private CloseOutType AssembleResults(clsXMLParamFileReader oDeconToolsParamFileReader)
         {
             var dotDFolder = false;
@@ -264,8 +262,6 @@ namespace AnalysisManagerDecon2lsV2PlugIn
         /// <summary>
         /// Use MSFileInfoScanner to create QC Plots
         /// </summary>
-        /// <returns></returns>
-        /// <remarks></remarks>
         private CloseOutType CreateQCPlots()
         {
             try
@@ -420,7 +416,6 @@ namespace AnalysisManagerDecon2lsV2PlugIn
         /// <param name="isosFilePath"></param>
         /// <param name="maxFitValue">Fit value threshold to apply; use 1 to use all data</param>
         /// <returns>True if it has one or more lines of data, otherwise, returns False</returns>
-        /// <remarks></remarks>
         private bool IsosFileHasData(string isosFilePath, double maxFitValue = 0.15)
         {
             return IsosFileHasData(isosFilePath, out _, false, maxFitValue);
@@ -434,7 +429,6 @@ namespace AnalysisManagerDecon2lsV2PlugIn
         /// <param name="countTotalDataLines">True to count all of the data lines; false to just look for the first data line</param>
         /// <param name="maxFitValue">Fit value threshold to apply; use 1 to use all data</param>
         /// <returns>True if it has one or more lines of data, otherwise, returns False</returns>
-        /// <remarks></remarks>
         private bool IsosFileHasData(string isosFilePath, out int dataLineCount, bool countTotalDataLines, double maxFitValue = 0.15)
         {
             dataLineCount = 0;
@@ -514,7 +508,6 @@ namespace AnalysisManagerDecon2lsV2PlugIn
         /// <summary>
         /// Runs the Decon2LS analysis tool. The actual tool version details (deconvolute or TIC) will be handled by a subclass
         /// </summary>
-        /// <returns></returns>
         public override CloseOutType RunTool()
         {
             // Do the base class stuff
@@ -1141,8 +1134,6 @@ namespace AnalysisManagerDecon2lsV2PlugIn
         /// Returns a KeyValuePair object with the text before the equals sign and the text after the equals sign
         /// </summary>
         /// <param name="data"></param>
-        /// <returns></returns>
-        /// <remarks></remarks>
         private KeyValuePair<string, string> ParseKeyValue(string data)
         {
             var charIndex = data.IndexOf('=');
@@ -1168,7 +1159,6 @@ namespace AnalysisManagerDecon2lsV2PlugIn
         /// <param name="filePath"></param>
         /// <param name="fileDescription"></param>
         /// <returns>True if two or more non-blank lines; otherwise false</returns>
-        /// <remarks></remarks>
         private bool ResultsFileHasData(string filePath, string fileDescription)
         {
             if (!File.Exists(filePath))
@@ -1252,7 +1242,6 @@ namespace AnalysisManagerDecon2lsV2PlugIn
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        /// <remarks></remarks>
         private bool StoreToolVersionInfo(string deconToolsProgLoc)
         {
             var toolVersionInfo = string.Empty;
@@ -1393,7 +1382,6 @@ namespace AnalysisManagerDecon2lsV2PlugIn
         /// <summary>
         /// Event handler for CmdRunner.LoopWaiting event
         /// </summary>
-        /// <remarks></remarks>
         private void CmdRunner_LoopWaiting()
         {
             const int SECONDS_BETWEEN_UPDATE = 30;

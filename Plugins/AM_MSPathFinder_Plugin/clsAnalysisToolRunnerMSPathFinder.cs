@@ -231,7 +231,6 @@ namespace AnalysisManagerMSPathFinderPlugin
         /// Parse the MSPathFinder console output file to track the search progress
         /// </summary>
         /// <param name="consoleOutputFilePath"></param>
-        /// <remarks></remarks>
         private void ParseConsoleOutputFile(string consoleOutputFilePath)
         {
             // Example Console output
@@ -560,7 +559,6 @@ namespace AnalysisManagerMSPathFinderPlugin
         /// <param name="parameterFileName">Output: MSPathFinder parameter file name</param>
         /// <param name="tdaEnabled"></param>
         /// <returns>Options string if success; empty string if an error</returns>
-        /// <remarks></remarks>
         public CloseOutType ParseMSPathFinderParameterFile(bool fastaFileIsDecoy, out string parameterFileName, out bool tdaEnabled)
         {
             tdaEnabled = false;
@@ -841,7 +839,6 @@ namespace AnalysisManagerMSPathFinderPlugin
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        /// <remarks></remarks>
         private bool StoreToolVersionInfo(string progLoc)
         {
             var additionalDLLs = new List<string>
@@ -862,7 +859,6 @@ namespace AnalysisManagerMSPathFinderPlugin
         /// <summary>
         /// Event handler for CmdRunner.LoopWaiting event
         /// </summary>
-        /// <remarks></remarks>
         private void CmdRunner_LoopWaiting()
         {
             const int SECONDS_BETWEEN_UPDATE = 30;

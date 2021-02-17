@@ -232,7 +232,6 @@ namespace AnalysisManager_AScore_PlugIn
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        /// <remarks></remarks>
         private bool StoreToolVersionInfo()
         {
             var ascoreDll = Path.Combine(clsGlobal.GetAppDirectoryPath(), "AScore_DLL.dll");

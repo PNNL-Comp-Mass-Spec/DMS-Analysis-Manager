@@ -662,8 +662,6 @@ namespace AnalysisManagerMSGFPlugin
         /// <param name="doNotFilterPeptides"></param>
         /// <param name="mgfInstrumentData"></param>
         /// <param name="msgfInputFileLineCount"></param>
-        /// <returns></returns>
-        /// <remarks></remarks>
         private bool CreateMSGFInputFile(clsPHRPReader.PeptideHitResultTypes resultType, bool doNotFilterPeptides, bool mgfInstrumentData, out int msgfInputFileLineCount)
         {
             var success = true;
@@ -992,7 +990,6 @@ namespace AnalysisManagerMSGFPlugin
         /// <param name="linesRead"></param>
         /// <param name="precursorMassErrorCount"></param>
         /// <returns>True if more than 10% of the results have a precursor mass error</returns>
-        /// <remarks></remarks>
         private bool PostProcessMSGFCheckPrecursorMassErrorCount(int linesRead, int precursorMassErrorCount)
         {
             const int MAX_ALLOWABLE_PRECURSOR_MASS_ERRORS_PERCENT = 10;
@@ -1048,7 +1045,6 @@ namespace AnalysisManagerMSGFPlugin
         /// <param name="msgfResultsFilePath">MSGF results file to examine</param>
         /// <param name="mgfInstrumentData">True when the instrument data file is a .mgf file</param>
         /// <returns>True if success; false if one or more errors</returns>
-        /// <remarks></remarks>
         private bool PostProcessMSGFResults(clsPHRPReader.PeptideHitResultTypes resultType, string msgfResultsFilePath, bool mgfInstrumentData)
         {
             FileInfo inputFile;
@@ -1167,8 +1163,6 @@ namespace AnalysisManagerMSGFPlugin
         /// <param name="mgfInstrumentData">True when the instrument data file is a .mgf file</param>
         /// <param name="firstHitsDataPresent">Will be set to True if First-hits data is present</param>
         /// <param name="tooManyErrors">Will be set to True if too many errors occur</param>
-        /// <returns></returns>
-        /// <remarks></remarks>
         private bool PostProcessMSGFResultsWork(string msgfResultsFilePath, string msgfSynopsisResults, bool mgfInstrumentData,
             out bool firstHitsDataPresent, out bool tooManyErrors)
         {
@@ -1538,7 +1532,6 @@ namespace AnalysisManagerMSGFPlugin
         /// </summary>
         /// <param name="fileNameToFind"></param>
         /// <returns>True if success; false if an error</returns>
-        /// <remarks></remarks>
         private bool RetrievePreGeneratedDataFile(string fileNameToFind)
         {
             var folderToCheck = "??";
@@ -2164,7 +2157,6 @@ namespace AnalysisManagerMSGFPlugin
         /// Parse the MSGF console output file to determine the MSGF version
         /// </summary>
         /// <param name="consoleOutputFilePath"></param>
-        /// <remarks></remarks>
         private void ParseConsoleOutputFile(string consoleOutputFilePath)
         {
             // Example console output
@@ -2332,7 +2324,6 @@ namespace AnalysisManagerMSGFPlugin
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        /// <remarks></remarks>
         private bool StoreToolVersionInfo()
         {
             if (mDebugLevel >= 2)
@@ -2362,7 +2353,6 @@ namespace AnalysisManagerMSGFPlugin
         /// <summary>
         /// Stores the tool version info in the database when using MODa or MS-GF+ probabilities to create the MSGF files
         /// </summary>
-        /// <remarks></remarks>
         private bool StoreToolVersionInfoPrecomputedProbabilities(clsPHRPReader.PeptideHitResultTypes resultType)
         {
             var toolVersionInfo = string.Empty;
@@ -2660,7 +2650,6 @@ namespace AnalysisManagerMSGFPlugin
         /// </summary>
         /// <param name="message"></param>
         /// <param name="ex"></param>
-        /// <remarks></remarks>
         private void MSGFInputCreator_ErrorEvent(string message, Exception ex)
         {
             mMSGFInputCreatorErrorCount++;
@@ -2683,7 +2672,6 @@ namespace AnalysisManagerMSGFPlugin
         /// Event handler for Warning Events reported by the MSGF Input Creator
         /// </summary>
         /// <param name="warningMessage"></param>
-        /// <remarks></remarks>
         private void MSGFInputCreator_WarningEvent(string warningMessage)
         {
             mMSGFInputCreatorWarningCount++;
@@ -2717,7 +2705,6 @@ namespace AnalysisManagerMSGFPlugin
         /// <summary>
         /// Event handler that fires while MSGF is processing
         /// </summary>
-        /// <remarks></remarks>
         private void MSGFRunner_LoopWaiting()
         {
             if (DateTime.UtcNow.Subtract(mLastUpdateTime).TotalSeconds >= 20)

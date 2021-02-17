@@ -657,7 +657,6 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
         /// Finds the directories that start with Job
         /// </summary>
         /// <returns>Dictionary where key is the Job number and value is a DirectoryInfo object</returns>
-        /// <remarks></remarks>
         protected Dictionary<int, DirectoryInfo> GetJobFolderList()
         {
             var jobFolderList = new Dictionary<int, DirectoryInfo>();
@@ -700,7 +699,6 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
         /// Parse the ProMex console output file to track the search progress
         /// </summary>
         /// <param name="strConsoleOutputFilePath"></param>
-        /// <remarks></remarks>
         private void ParseConsoleOutputFile(string strConsoleOutputFilePath)
         {
             try
@@ -781,7 +779,6 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
         /// <param name="fileSuffixesToCombine">Output parameter: File suffixes that were processed</param>
         /// <param name="processingRunTimes">Output parameter: AScore Runtime (in minutes) for each job/tag combo</param>
         /// <returns>True if success, false if an error</returns>
-        /// <remarks></remarks>
         protected bool ProcessSynopsisFiles(string progLoc, out List<string> fileSuffixesToCombine, out Dictionary<string, double> processingRunTimes)
         {
             var successOverall = true;
@@ -961,7 +958,6 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
         /// <param name="fileTypeTag">Should be syn or fht; append to the AScore_ConsoleOutput file</param>
         /// <param name="processingRunTimes">Output parameter: AScore Runtime (in minutes) for each job/tag combo</param>
         /// <returns>True if success, false if an error</returns>
-        /// <remarks></remarks>
         protected bool RunAscore(
             string progLoc,
             udtJobMetadataForAScore udtJobMetadata,
@@ -1074,7 +1070,6 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        /// <remarks></remarks>
         protected bool StoreToolVersionInfo(string progLoc)
         {
             var additionalDLLs = new List<string>
@@ -1092,7 +1087,6 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
         /// <summary>
         /// Event handler for mCmdRunner.LoopWaiting event
         /// </summary>
-        /// <remarks></remarks>
         private void CmdRunner_LoopWaiting()
         {
             UpdateStatusFile();

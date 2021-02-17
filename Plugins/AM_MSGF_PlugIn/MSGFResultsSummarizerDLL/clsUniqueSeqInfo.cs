@@ -7,7 +7,6 @@
         /// <summary>
         /// Observation count
         /// </summary>
-        /// <returns></returns>
         /// <remarks>Overridden in clsPSMInfo because it tracks specific PSMObservations</remarks>
         public virtual int ObsCount => mObsCount;
 
@@ -24,25 +23,21 @@
         /// <summary>
         /// True if the peptide has an internal K or R that is not followed by P
         /// </summary>
-        /// <returns></returns>
         public bool MissedCleavage { get; set; }
 
         /// <summary>
         /// True if the peptide is from a keratin protein
         /// </summary>
-        /// <returns></returns>
         public bool KeratinPeptide { get; set; }
 
         /// <summary>
         /// True if the peptide is from a trypsin protein
         /// </summary>
-        /// <returns></returns>
         public bool TrypsinPeptide { get; set; }
 
         /// <summary>
         /// True if the peptide is partially or fully tryptic
         /// </summary>
-        /// <returns></returns>
         public bool Tryptic { get; set; }
 
         /// <summary>

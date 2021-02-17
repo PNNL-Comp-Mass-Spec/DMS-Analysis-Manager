@@ -441,7 +441,6 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// <param name="remoteTransferFolder"></param>
         /// <param name="templateParameters"></param>
         /// <param name="dataPackageDatasets">Datasets in the data package (keys are DatasetID)</param>
-        /// <returns></returns>
         private int ProcessJobs(
             clsAnalysisResults analysisResults,
             string remoteTransferFolder,
@@ -674,7 +673,6 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// </summary>
         /// <param name="listToUpdate"></param>
         /// <param name="value"></param>
-        /// <remarks></remarks>
         private void AddToListIfNew(ICollection<string> listToUpdate, string value)
         {
             if (!listToUpdate.Contains(value))
@@ -1013,8 +1011,6 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// Counts the number of items of type eFileType in mPxResultFiles
         /// </summary>
         /// <param name="eFileType"></param>
-        /// <returns></returns>
-        /// <remarks></remarks>
         private int CountResultFilesByType(clsPXFileInfoBase.ePXFileType eFileType)
         {
             var fileCount = (from item in mPxResultFiles where item.Value.PXFileType == eFileType select item).Count();
@@ -3396,7 +3392,6 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// </summary>
         /// <param name="job"></param>
         /// <returns>True if this job's dataset has multiple jobs in mDataPackagePeptideHitJobs, otherwise False</returns>
-        /// <remarks></remarks>
         private bool JobFileRenameRequired(int job)
         {
             if (!mDataPackagePeptideHitJobs.TryGetValue(job, out var dataPkgJob))
@@ -3559,7 +3554,6 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// <param name="datasetRawFilePaths"></param>
         /// <param name="templateParameters"></param>
         /// <param name="assumeInstrumentDataUnpurged"></param>
-        /// <returns></returns>
         private CloseOutType ProcessJob(
             KeyValuePair<int, clsDataPackageJobInfo> jobInfo,
             clsAnalysisResults analysisResults,
@@ -3793,7 +3787,6 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// Caches the keys and values for the method lines (which start with MTD)
         /// </summary>
         /// <returns>Dictionary of keys and values</returns>
-        /// <remarks></remarks>
         private Dictionary<string, string> ReadTemplatePXSubmissionFile()
         {
             const string OBSOLETE_FIELD_FLAG = "SKIP_OBSOLETE_FIELD";
@@ -4302,8 +4295,6 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// Stores the tool version info in the database
         /// </summary>
         /// <param name="prideConverterProgLoc"></param>
-        /// <returns></returns>
-        /// <remarks></remarks>
         private bool StoreToolVersionInfo(string prideConverterProgLoc)
         {
             var toolVersionInfo = string.Empty;
@@ -4515,7 +4506,6 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// <param name="mzIdExistsRemotely">Output parameter: true if the .mzid.gz file already exists in the remote transfer folder</param>
         /// <param name="templateParameters"></param>
         /// <returns>True if success, false if an error</returns>
-        /// <remarks></remarks>
         private bool UpdateMzIdFiles(
             string remoteTransferFolder,
             clsDataPackageJobInfo dataPkgJob,
@@ -5086,7 +5076,6 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// If the CV param info is enclosed in square brackets, assure that it has exactly three commas
         /// </summary>
         /// <param name="cvParam"></param>
-        /// <returns></returns>
         private string ValidateCV(string cvParam)
         {
             if (!cvParam.Trim().StartsWith("[") || !cvParam.Trim().EndsWith("]"))
@@ -5139,7 +5128,6 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// <param name="type">Parameter type</param>
         /// <param name="value">Value for parameter</param>
         /// <param name="paramsWithCVs">Parameters that should have a CV</param>
-        /// <remarks></remarks>
         private void WritePXHeader(TextWriter writer, string type, string value, ICollection<string> paramsWithCVs)
         {
             WritePXHeader(writer, type, value, new Dictionary<string, string>(), paramsWithCVs);
@@ -5154,7 +5142,6 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// <param name="templateParameters">Dictionary of parameters and values loaded from the template .px file</param>
         /// <param name="paramsWithCVs">Parameters that should have a CV</param>
         /// <param name="minimumValueLength">Minimum length for the parameter value</param>
-        /// <remarks></remarks>
         private void WritePXHeader(
             TextWriter writer,
             string type,

@@ -294,7 +294,6 @@ namespace AnalysisManagerICR2LSPlugIn
         /// </summary>
         /// <param name="strFolderPath">Folder to examine</param>
         /// <param name="strDatasetName">Dataset name</param>
-        /// <remarks></remarks>
         [Obsolete("Unused")]
         private void FixICR2LSResultFileNames(string strFolderPath, string strDatasetName)
         {

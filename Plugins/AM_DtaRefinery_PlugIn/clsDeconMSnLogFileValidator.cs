@@ -11,7 +11,6 @@ namespace AnalysisManagerDtaRefineryPlugIn
     /// It makes sure that the intensity values in the last two columns are all > 0
     /// Values that are 0 are auto-changed to 1
     /// </summary>
-    /// <remarks></remarks>
     public class clsDeconMSnLogFileValidator : EventNotifier
     {
         /// <summary>
@@ -176,7 +175,6 @@ namespace AnalysisManagerDtaRefineryPlugIn
         /// <param name="dataLine"></param>
         /// <param name="parentIntensityColIndex">Input/output parameter</param>
         /// <param name="monoIntensityColIndex">Input/output parameter</param>
-        /// <remarks></remarks>
         private void ValidateHeader(string dataLine, ref int parentIntensityColIndex, ref int monoIntensityColIndex)
         {
             var dataColumns = dataLine.Split('\t');

@@ -49,7 +49,6 @@ namespace AnalysisManagerMsXmlGenPlugIn
         /// This function is called by MakeDTAFilesThreaded
         /// </summary>
         /// <returns>TRUE for success; FALSE for failure</returns>
-        /// <remarks></remarks>
         public bool ConvertRawToMGF(string rawFilePath)
         {
             try

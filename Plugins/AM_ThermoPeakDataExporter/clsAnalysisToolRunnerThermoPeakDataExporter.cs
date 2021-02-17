@@ -127,7 +127,6 @@ namespace AnalysisManagerThermoPeakDataExporterPlugIn
         /// Parse the ThermoPeakDataExporter console output file to determine the ThermoPeakDataExporter version and to track the search progress
         /// </summary>
         /// <param name="consoleOutputFilePath"></param>
-        /// <remarks></remarks>
         private void ParseConsoleOutputFile(string consoleOutputFilePath)
         {
             // Example Console output
@@ -287,7 +286,6 @@ namespace AnalysisManagerThermoPeakDataExporterPlugIn
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        /// <remarks></remarks>
         protected bool StoreToolVersionInfo(string progLoc)
         {
             var additionalDLLs = new List<string>
@@ -307,7 +305,6 @@ namespace AnalysisManagerThermoPeakDataExporterPlugIn
         /// <summary>
         /// Event handler for CmdRunner.LoopWaiting event
         /// </summary>
-        /// <remarks></remarks>
         private void CmdRunner_LoopWaiting()
         {
             const int SECONDS_BETWEEN_UPDATE = 30;

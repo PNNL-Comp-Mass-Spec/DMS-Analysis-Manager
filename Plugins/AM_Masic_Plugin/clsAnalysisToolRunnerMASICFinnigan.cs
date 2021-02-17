@@ -15,7 +15,6 @@ namespace AnalysisManagerMasicPlugin
     /// <summary>
     /// Derived class for performing MASIC analysis on Finnigan datasets
     /// </summary>
-    /// <remarks></remarks>
     public class clsAnalysisToolRunnerMASICFinnigan : clsAnalysisToolRunnerMASICBase
     {
         // Ignore Spelling: parm
@@ -123,7 +122,6 @@ namespace AnalysisManagerMasicPlugin
         /// <summary>
         /// Deletes the .raw file from the working directory
         /// </summary>
-        /// <returns></returns>
         protected override CloseOutType DeleteDataFile()
         {
             try

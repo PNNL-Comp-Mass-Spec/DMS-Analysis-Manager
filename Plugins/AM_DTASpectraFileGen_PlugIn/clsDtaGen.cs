@@ -17,7 +17,6 @@ namespace DTASpectraFileGen
     /// <summary>
     /// This is the base class that implements a specific spectra file generator.
     /// </summary>
-    /// <remarks></remarks>
     public abstract class clsDtaGen : EventNotifier, ISpectraFileProcessor
     {
         #region "Module variables"
@@ -90,7 +89,6 @@ namespace DTASpectraFileGen
         /// Aborts processing
         /// </summary>
         /// <returns>ProcessStatus value indicating process was aborted</returns>
-        /// <remarks></remarks>
         public ProcessStatus Abort()
         {
             mAbortRequested = true;

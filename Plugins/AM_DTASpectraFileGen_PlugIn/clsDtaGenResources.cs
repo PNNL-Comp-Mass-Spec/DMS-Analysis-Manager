@@ -14,7 +14,6 @@ namespace DTASpectraFileGen
     /// <summary>
     /// Gets resources necessary for DTA creation
     /// </summary>
-    /// <remarks></remarks>
     public class clsDtaGenResources : clsAnalysisResources
     {
         /// <summary>

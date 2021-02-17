@@ -19,7 +19,6 @@ namespace AnalysisManagerResultsXferPlugin
     /// <summary>
     /// Derived class for performing analysis results transfer
     /// </summary>
-    /// <remarks></remarks>
     public class clsResultXferToolRunner : clsAnalysisToolRunnerBase
     {
         #region "Methods"
@@ -247,8 +246,6 @@ namespace AnalysisManagerResultsXferPlugin
         /// <param name="sourceDirectoryPath"></param>
         /// <param name="targetDirectoryPath"></param>
         /// <param name="overwriteExisting"></param>
-        /// <returns></returns>
-        /// <remarks></remarks>
         protected bool MoveFilesLocally(string sourceDirectoryPath, string targetDirectoryPath, bool overwriteExisting)
         {
             var success = true;
@@ -354,7 +351,6 @@ namespace AnalysisManagerResultsXferPlugin
         /// Performs the results transfer
         /// </summary>
         /// <returns>CloseOutType indicating success or failure></returns>
-        /// <remarks></remarks>
         protected virtual CloseOutType PerformResultsXfer()
         {
             var transferFolderPath = mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH);
@@ -522,7 +518,6 @@ namespace AnalysisManagerResultsXferPlugin
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        /// <remarks></remarks>
         protected bool StoreToolVersionInfo()
         {
             var toolVersionInfo = string.Empty;

@@ -224,7 +224,6 @@ namespace AnalysisManagerMSDeconvPlugIn
         /// Parse the MSDeconv console output file to determine the MSDeconv version and to track the search progress
         /// </summary>
         /// <param name="consoleOutputFilePath"></param>
-        /// <remarks></remarks>
         private void ParseConsoleOutputFile(string consoleOutputFilePath)
         {
             try
@@ -474,8 +473,6 @@ namespace AnalysisManagerMSDeconvPlugIn
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        /// <returns></returns>
-        /// <remarks></remarks>
         protected bool StoreToolVersionInfo()
         {
             if (mDebugLevel >= 2)
@@ -507,7 +504,6 @@ namespace AnalysisManagerMSDeconvPlugIn
         /// Reads the console output file and removes the majority of the percent finished messages
         /// </summary>
         /// <param name="consoleOutputFilePath"></param>
-        /// <remarks></remarks>
         private void TrimConsoleOutputFile(string consoleOutputFilePath)
         {
             try
@@ -616,7 +612,6 @@ namespace AnalysisManagerMSDeconvPlugIn
         /// <summary>
         /// Event handler for CmdRunner.LoopWaiting event
         /// </summary>
-        /// <remarks></remarks>
         private void CmdRunner_LoopWaiting()
         {
             UpdateStatusFile();

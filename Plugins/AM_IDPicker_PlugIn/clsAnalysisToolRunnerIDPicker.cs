@@ -82,7 +82,6 @@ namespace AnalysisManagerIDPickerPlugIn
         /// Runs PepXML converter and IDPicker tool
         /// </summary>
         /// <returns>CloseOutType enum indicating success or failure</returns>
-        /// <remarks></remarks>
         public override CloseOutType RunTool()
         {
             // As of January 21, 2015 we are now always skipping IDPicker (and thus simply creating the .pepXML file)
@@ -381,7 +380,6 @@ namespace AnalysisManagerIDPickerPlugIn
         /// <param name="argumentName">Argument Name</param>
         /// <param name="valueIfMissing">Value to append if not defined in mIDPickerOptions</param>
         /// <returns>The new argument list</returns>
-        /// <remarks></remarks>
         private string AppendArgument(string cmdArgs, string argumentName, string valueIfMissing)
         {
             const bool appendIfMissing = true;
@@ -396,7 +394,6 @@ namespace AnalysisManagerIDPickerPlugIn
         /// <param name="argumentName">Argument Name</param>
         /// <param name="valueIfMissing">Value to append if not defined in mIDPickerOptions</param>
         /// <returns>The new argument list</returns>
-        /// <remarks></remarks>
         private string AppendArgument(string arguments, string optionName, string argumentName, string valueIfMissing)
         {
             const bool appendIfMissing = true;
@@ -412,7 +409,6 @@ namespace AnalysisManagerIDPickerPlugIn
         /// <param name="valueIfMissing">Value to append if not defined in mIDPickerOptions</param>
         /// <param name="appendIfMissing">If True, append the argument using valueIfMissing if not found in mIDPickerOptions; if false, and not found, does not append the argument</param>
         /// <returns>The new argument list</returns>
-        /// <remarks></remarks>
         private string AppendArgument(string arguments, string optionName, string argumentName, string valueIfMissing, bool appendIfMissing)
         {
             bool isMissing;
@@ -486,7 +482,6 @@ namespace AnalysisManagerIDPickerPlugIn
         /// </summary>
         /// <param name="fileName"></param>
         /// <param name="reportFolderPath"></param>
-        /// <remarks></remarks>
         private void CopyFileIntoReportFolder(string fileName, string reportFolderPath)
         {
             try
@@ -576,7 +571,6 @@ namespace AnalysisManagerIDPickerPlugIn
         /// <param name="fastaFilePath"></param>
         /// <param name="decoyPrefix"></param>
         /// <returns>True if success; false if an error</returns>
-        /// <remarks></remarks>
         private bool DetermineDecoyProteinPrefix(string fastaFilePath, out string decoyPrefix)
         {
             decoyPrefix = string.Empty;
@@ -943,8 +937,6 @@ namespace AnalysisManagerIDPickerPlugIn
         /// <summary>
         /// Run idpAssemble to organizes the search results into a hierarchy
         /// </summary>
-        /// <returns></returns>
-        /// <remarks></remarks>
         private bool RunAssemble()
         {
             const int maxRuntimeMinutes = 90;
@@ -1010,8 +1002,6 @@ namespace AnalysisManagerIDPickerPlugIn
         /// <param name="fastaFilePath"></param>
         /// <param name="decoyPrefix"></param>
         /// <param name="ePHRPResultType"></param>
-        /// <returns></returns>
-        /// <remarks></remarks>
         private bool RunQonvert(string fastaFilePath, string decoyPrefix, clsPHRPReader.PeptideHitResultTypes ePHRPResultType)
         {
             const int maxRuntimeMinutes = 90;
@@ -1072,8 +1062,6 @@ namespace AnalysisManagerIDPickerPlugIn
         /// <summary>
         /// Run idpReport to apply parsimony in protein assembly and generate reports
         /// </summary>
-        /// <returns></returns>
-        /// <remarks></remarks>
         private bool RunReport()
         {
             const int maxRuntimeMinutes = 60;
@@ -1192,8 +1180,6 @@ namespace AnalysisManagerIDPickerPlugIn
         /// <param name="consoleOutputFileName">If empty, does not create a console output file</param>
         /// <param name="captureConsoleOutputViaDosRedirection"></param>
         /// <param name="maxRuntimeMinutes"></param>
-        /// <returns></returns>
-        ///  <remarks></remarks>
         private bool RunProgramWork(string programDescription, string exePath, string arguments, string consoleOutputFileName,
             bool captureConsoleOutputViaDosRedirection, int maxRuntimeMinutes)
         {
@@ -1316,7 +1302,6 @@ namespace AnalysisManagerIDPickerPlugIn
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        /// <remarks></remarks>
         private bool StoreToolVersionInfo(string idPickerProgLoc, bool skipIDPicker)
         {
             var toolVersionInfo = string.Empty;
@@ -1449,7 +1434,6 @@ namespace AnalysisManagerIDPickerPlugIn
         /// <summary>
         /// Event handler for CmdRunner.LoopWaiting event
         /// </summary>
-        /// <remarks></remarks>
         private void CmdRunner_LoopWaiting()
         {
             UpdateStatusFile();

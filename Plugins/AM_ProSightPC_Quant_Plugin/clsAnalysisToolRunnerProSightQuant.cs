@@ -254,7 +254,6 @@ namespace AnalysisManagerProSightQuantPlugIn
         /// Creates the targeted quant params XML file
         /// </summary>
         /// <returns>The full path to the file, if successful.  Otherwise, and empty string</returns>
-        /// <remarks></remarks>
         protected string CreateTargetedQuantParamFile()
         {
             try
@@ -331,7 +330,6 @@ namespace AnalysisManagerProSightQuantPlugIn
         /// Parse the TargetedWorkflowsConsole console output file to track progress
         /// </summary>
         /// <param name="strConsoleOutputFilePath"></param>
-        /// <remarks></remarks>
         protected void ParseConsoleOutputFile(string strConsoleOutputFilePath)
         {
             try
@@ -454,7 +452,6 @@ namespace AnalysisManagerProSightQuantPlugIn
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        /// <remarks></remarks>
         protected bool StoreToolVersionInfo(string targetedWorkflowsConsoleProgLoc)
         {
             var additionalDLLs = new List<string>
@@ -484,7 +481,6 @@ namespace AnalysisManagerProSightQuantPlugIn
         /// <summary>
         /// Event handler for CmdRunner.LoopWaiting event
         /// </summary>
-        /// <remarks></remarks>
         protected void CmdRunner_LoopWaiting()
         {
             UpdateStatusFile();

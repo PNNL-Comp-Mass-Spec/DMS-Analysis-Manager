@@ -881,7 +881,6 @@ namespace AnalysisManagerMSAlignPlugIn
         /// Parse the MSAlign console output file to determine the MSAlign version and to track the search progress
         /// </summary>
         /// <param name="consoleOutputFilePath"></param>
-        /// <remarks></remarks>
         private void ParseConsoleOutputFile(string consoleOutputFilePath)
         {
             try
@@ -983,7 +982,6 @@ namespace AnalysisManagerMSAlignPlugIn
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        /// <remarks></remarks>
         protected bool StoreToolVersionInfo()
         {
             if (mDebugLevel >= 2)
@@ -1015,7 +1013,6 @@ namespace AnalysisManagerMSAlignPlugIn
         /// Reads the console output file and removes the majority of the percent finished messages
         /// </summary>
         /// <param name="consoleOutputFilePath"></param>
-        /// <remarks></remarks>
         private void TrimConsoleOutputFile(string consoleOutputFilePath)
         {
             try
@@ -1296,7 +1293,6 @@ namespace AnalysisManagerMSAlignPlugIn
         /// <summary>
         /// Event handler for CmdRunner.LoopWaiting event
         /// </summary>
-        /// <remarks></remarks>
         private void CmdRunner_LoopWaiting()
         {
             const int SECONDS_BETWEEN_UPDATE = 30;

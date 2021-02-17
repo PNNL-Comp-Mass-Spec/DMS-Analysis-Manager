@@ -125,7 +125,6 @@ namespace AnalysisManager_Mage_PlugIn
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        /// <remarks></remarks>
         protected bool StoreToolVersionInfo()
         {
             string toolVersionInfo;
@@ -167,7 +166,6 @@ namespace AnalysisManager_Mage_PlugIn
         /// <param name="lstColumns"></param>
         /// <param name="errorMessage">Error message</param>
         /// <param name="exceptionDetail">Exception details (empty if errorMessage is empty)</param>
-        /// <returns></returns>
         protected bool TableContainsDataAndColumns(
           FileInfo fiSqlLiteDatabase,
           string tableName,
@@ -251,13 +249,11 @@ namespace AnalysisManager_Mage_PlugIn
         /// <summary>
         /// Subclass must override this to provide version info for primary MAC tool assembly
         /// </summary>
-        /// <returns></returns>
         protected abstract string GetToolNameAndVersion();
 
         /// <summary>
         /// Subclass must override this to provide version info for any supplemental MAC tool assemblies
         /// </summary>
-        /// <returns></returns>
         protected abstract List<FileInfo> GetToolSupplementalVersionInfo();
     }
 }

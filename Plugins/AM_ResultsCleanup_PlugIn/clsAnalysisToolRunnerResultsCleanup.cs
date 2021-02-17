@@ -207,7 +207,6 @@ namespace AnalysisManagerResultsCleanupPlugin
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        /// <remarks></remarks>
         protected bool StoreToolVersionInfo()
         {
             var toolVersionInfo = string.Empty;

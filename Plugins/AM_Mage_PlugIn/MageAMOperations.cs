@@ -51,7 +51,6 @@ namespace AnalysisManager_Mage_PlugIn
         /// Run a list of Mage operations
         /// </summary>
         /// <param name="mageOperations"></param>
-        /// <returns></returns>
         public bool RunMageOperations(string mageOperations)
         {
             var ok = false;
@@ -68,7 +67,6 @@ namespace AnalysisManager_Mage_PlugIn
         /// Run a single Mage operation
         /// </summary>
         /// <param name="mageOperation"></param>
-        /// <returns></returns>
         public bool RunMageOperation(string mageOperation)
         {
             var success = false;
@@ -135,7 +133,6 @@ namespace AnalysisManager_Mage_PlugIn
         /// <summary>
         /// Don't do anything
         /// </summary>
-        /// <returns></returns>
         private bool NoOperation()
         {
             GetPriorStepResults();
@@ -146,7 +143,6 @@ namespace AnalysisManager_Mage_PlugIn
         /// Import factors for set of datasets referenced by analysis jobs in data package
         /// to table in the SQLite step results database (in crosstab format).
         /// </summary>
-        /// <returns></returns>
         private bool GetFactors()
         {
             var mageObj = new MageAMFileProcessingPipelines(_jobParams, _mgrParams);
@@ -163,7 +159,6 @@ namespace AnalysisManager_Mage_PlugIn
         /// <summary>
         /// Setup and run Mage Extractor pipeline according to job parameters
         /// </summary>
-        /// <returns></returns>
         private bool ExtractFromJobs()
         {
             var mageObj = new MageAMExtractionPipelines(_jobParams, _mgrParams);
@@ -181,7 +176,6 @@ namespace AnalysisManager_Mage_PlugIn
         /// Import contents of set of master FDR template files (set members defined by job parameters)
         /// to tables in the SQLite step results database.
         /// </summary>
-        /// <returns></returns>
         private bool ImportFDRTables()
         {
             var mageObj = new MageAMFileProcessingPipelines(_jobParams, _mgrParams);
@@ -201,7 +195,6 @@ namespace AnalysisManager_Mage_PlugIn
         /// Imports contents of files specified by job parameter "DataPackageSourceFolderName"
         /// to tables in the SQLite step results database.
         /// </summary>
-        /// <returns></returns>
         private bool ImportDataPackageFiles()
         {
             // Note: Switched from CopyAndImport to SimpleImport in March 2014
@@ -213,7 +206,6 @@ namespace AnalysisManager_Mage_PlugIn
         /// Imports the specified files
         /// </summary>
         /// <param name="importMode">Valid modes: CopyAndImport, SimpleImport, AddDatasetIDToImport, IMPROVClusterImport</param>
-        /// <returns></returns>
         private bool ImportDataPackageFiles(string importMode)
         {
             var mageObj = new MageAMFileProcessingPipelines(_jobParams, _mgrParams);
@@ -272,7 +264,6 @@ namespace AnalysisManager_Mage_PlugIn
         /// to the step results directory and import contents to tables in the SQLite step results database,
         /// process import through filter that fills in missing cluster ID values
         /// </summary>
-        /// <returns></returns>
         private bool ImportIMPROVClusterDataPackageFile()
         {
             const string importMode = "IMPROVClusterImport";
@@ -283,7 +274,6 @@ namespace AnalysisManager_Mage_PlugIn
         /// Import contents of reporter ion results files for MASIC jobs in data package
         /// into a table in the SQLite step results database.
         /// </summary>
-        /// <returns></returns>
         private bool ImportReporterIons()
         {
             _jobParams.AddAdditionalParameter("runtime", "Tool", "MASIC_Finnigan");
@@ -302,7 +292,6 @@ namespace AnalysisManager_Mage_PlugIn
         /// Import contents of Sequest first hits results files for jobs in a data package
         /// into a table in the SQLite step results database.  Add dataset ID to imported data rows.
         /// </summary>
-        /// <returns></returns>
         private bool ImportFirstHits()
         {
             _jobParams.AddAdditionalParameter("runtime", "Tool", "Sequest");
@@ -321,7 +310,6 @@ namespace AnalysisManager_Mage_PlugIn
         /// Import list of .raw files (full paths) for datasets for jobs in data package
         /// into a table in the SQLite step results database
         /// </summary>
-        /// <returns></returns>
         private bool ImportRawFileList()
         {
             _jobParams.AddAdditionalParameter("runtime", "Tool", "Sequest");
@@ -339,7 +327,6 @@ namespace AnalysisManager_Mage_PlugIn
         /// <summary>
         /// Get list of jobs (with metadata) in a data package into a table in the SQLite step results database
         /// </summary>
-        /// <returns></returns>
         private bool ImportJobList()
         {
             var mageObj = new MageAMFileProcessingPipelines(_jobParams, _mgrParams);
@@ -457,7 +444,6 @@ namespace AnalysisManager_Mage_PlugIn
         /// <summary>
         /// Import any results from previous step, if there are any, and if they haven't already be imported
         /// </summary>
-        /// <returns></returns>
         private void GetPriorStepResults()
         {
             if (!_previousStepResultsImported)
@@ -489,7 +475,6 @@ namespace AnalysisManager_Mage_PlugIn
         /// </summary>
         /// <param name="sqlTemplateName">Name of SQL template to use to build query</param>
         /// <param name="mageObject">Object holding a copy of job parameters</param>
-        /// <returns></returns>
         private static string GetSQLForTemplate(string sqlTemplateName, MageAMPipelineBase mageObject)
         {
             var qt = SQL.GetQueryTemplate(sqlTemplateName);

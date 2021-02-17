@@ -247,7 +247,6 @@ namespace AnalysisManagerMSAlignQuantPlugIn
         /// Creates the targeted quant params XML file
         /// </summary>
         /// <returns>The full path to the file, if successful. Otherwise, an empty string</returns>
-        /// <remarks></remarks>
         protected string CreateTargetedQuantParamFile()
         {
             string targetedQuantParamFilePath;
@@ -361,7 +360,6 @@ namespace AnalysisManagerMSAlignQuantPlugIn
         /// Parse the TargetedWorkflowsConsole console output file to track progress
         /// </summary>
         /// <param name="consoleOutputFilePath"></param>
-        /// <remarks></remarks>
         protected void ParseConsoleOutputFile(string consoleOutputFilePath)
         {
             try
@@ -491,7 +489,6 @@ namespace AnalysisManagerMSAlignQuantPlugIn
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        /// <remarks></remarks>
         protected bool StoreToolVersionInfo(string targetedWorkflowsConsoleProgLoc)
         {
             var additionalDLLs = new List<string>
@@ -521,7 +518,6 @@ namespace AnalysisManagerMSAlignQuantPlugIn
         /// <summary>
         /// Event handler for CmdRunner.LoopWaiting event
         /// </summary>
-        /// <remarks></remarks>
         protected void CmdRunner_LoopWaiting()
         {
             UpdateStatusFile();

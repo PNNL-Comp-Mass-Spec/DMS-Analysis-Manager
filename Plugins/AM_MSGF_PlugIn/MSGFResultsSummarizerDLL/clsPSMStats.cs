@@ -6,7 +6,6 @@ namespace MSGFResultsSummarizer
         /// <summary>
         /// Number of spectra with a match
         /// </summary>
-        /// <remarks></remarks>
         public int TotalPSMs { get; set; }
 
         /// <summary>
@@ -23,7 +22,6 @@ namespace MSGFResultsSummarizer
         /// <summary>
         /// Number of distinct proteins
         /// </summary>
-        /// <remarks></remarks>
         public int UniqueProteinCount { get; set; }
 
         /// <summary>

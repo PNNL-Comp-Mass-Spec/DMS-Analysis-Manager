@@ -30,7 +30,6 @@ namespace AnalysisManagerDtaSplitPlugIn
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <remarks></remarks>
         public clsAnalysisToolRunnerDtaSplit()
         {
             r_FileSeparator = new Regex(@"^\s*[=]{5,}\s+\""(?<rootname>.+)\.(?<startscan>\d+)\." +
@@ -124,7 +123,6 @@ namespace AnalysisManagerDtaSplitPlugIn
         /// <param name="sourceFilePath">Input data file path</param>
         /// <param name="segmentCountToCreate">Number of segments to create</param>
         /// <returns>CloseOutType enum indicating success or failure</returns>
-        /// <remarks></remarks>
         private CloseOutType SplitCattedDtaFileIntoSegments(string sourceFilePath, int segmentCountToCreate)
         {
             const float STATUS_UPDATE_INTERVAL_SECONDS = 15;
@@ -273,7 +271,6 @@ namespace AnalysisManagerDtaSplitPlugIn
         /// </summary>
         /// <param name="sourceFilePath"></param>
         /// <returns>The number of spectra found (i.e. the number of header lines found); returns 0 if any problems</returns>
-        /// <remarks></remarks>
         private int CountSpectraInCattedDtaFile(string sourceFilePath)
         {
             var spectraCount = 0;
@@ -367,7 +364,6 @@ namespace AnalysisManagerDtaSplitPlugIn
         /// </summary>
         /// <param name="fi"></param>
         /// <returns>1 if a one-byte line terminator; 2 if a two-byte line terminator</returns>
-        /// <remarks></remarks>
         private int LineEndCharacterCount(FileInfo fi)
         {
             var endCount = 1;         // Initially assume a one-byte line terminator
@@ -401,7 +397,6 @@ namespace AnalysisManagerDtaSplitPlugIn
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        /// <remarks></remarks>
         protected bool StoreToolVersionInfo()
         {
             var cyclopsDll = Path.Combine(clsGlobal.GetAppDirectoryPath(), "AnalysisManagerDtaSplitPlugIn.dll");

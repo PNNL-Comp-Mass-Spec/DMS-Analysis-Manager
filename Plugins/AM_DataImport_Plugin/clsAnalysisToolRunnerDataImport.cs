@@ -93,7 +93,6 @@ namespace AnalysisManagerDataImportPlugIn
         /// <summary>
         /// Move the files from the source directory to a new subdirectory below the source directory
         /// </summary>
-        /// <returns></returns>
         /// <remarks>The name of the new subdirectory comes from mResultsDirectoryName</remarks>
         protected bool MoveImportedFiles()
         {
@@ -149,8 +148,6 @@ namespace AnalysisManagerDataImportPlugIn
         /// <summary>
         /// Import files from the source share to the analysis job folder
         /// </summary>
-        /// <returns></returns>
-        /// <remarks></remarks>
         protected bool PerformDataImport()
         {
             const string MATCH_ALL_FILES = "*";
@@ -264,7 +261,6 @@ namespace AnalysisManagerDataImportPlugIn
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        /// <remarks></remarks>
         protected bool StoreToolVersionInfo()
         {
             var strToolVersionInfo = string.Empty;

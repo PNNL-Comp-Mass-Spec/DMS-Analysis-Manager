@@ -113,7 +113,6 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
         /// Retrieves inspect and inspect log and error files
         /// </summary>
         /// <returns>TRUE for success, FALSE for error</returns>
-        /// <remarks></remarks>
         protected bool RetrieveMultiInspectResultFiles()
         {
             int numOfResultFiles;

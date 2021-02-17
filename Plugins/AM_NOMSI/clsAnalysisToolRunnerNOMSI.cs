@@ -581,7 +581,6 @@ namespace AnalysisManagerNOMSIPlugin
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        /// <remarks></remarks>
         protected bool StoreToolVersionInfo(string progLoc)
         {
             var success = StoreDotNETToolVersionInfo(progLoc);

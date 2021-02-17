@@ -64,7 +64,6 @@ namespace AnalysisManagerMODPlusPlugin
         /// <summary>
         /// Value between 0 and 100
         /// </summary>
-        /// <remarks></remarks>
         public double Progress { get; private set; }
 
         public clsRunDosProgram ProgramRunner { get; private set; }
@@ -84,9 +83,6 @@ namespace AnalysisManagerMODPlusPlugin
         /// <summary>
         /// Program release date, as reported at the console
         /// </summary>
-        /// <value></value>
-        /// <returns></returns>
-        /// <remarks></remarks>
         public string ReleaseDate { get; private set; }
 
         public MODPlusRunnerStatusCodes Status { get; private set; }
@@ -117,7 +113,6 @@ namespace AnalysisManagerMODPlusPlugin
         /// <param name="paramFilePath"></param>
         /// <param name="javaProgLoc"></param>
         /// <param name="modPlusJarFilePath"></param>
-        /// <remarks></remarks>
         public clsMODPlusRunner(string dataset, int processingThread, string workingDirectory, string paramFilePath, string javaProgLoc, string modPlusJarFilePath)
         {
             mDatasetName = dataset;
@@ -141,7 +136,6 @@ namespace AnalysisManagerMODPlusPlugin
         /// <summary>
         /// Forcibly ends MODPlus
         /// </summary>
-        /// <remarks></remarks>
         public void AbortProcessingNow()
         {
             ProgramRunner?.AbortProgramNow();
@@ -232,7 +226,6 @@ namespace AnalysisManagerMODPlusPlugin
         /// Parse the MODPlus console output file to track the search progress
         /// </summary>
         /// <param name="strConsoleOutputFilePath"></param>
-        /// <remarks></remarks>
         private void ParseConsoleOutputFile(string strConsoleOutputFilePath)
         {
             try

@@ -250,7 +250,6 @@ namespace AnalysisManagerICR2LSPlugIn
         /// </summary>
         /// <param name="statusFilePath"></param>
         /// <param name="forceParse"></param>
-        /// <returns></returns>
         private bool ParseICR2LSStatusFile(string statusFilePath, bool forceParse)
         {
             const int MINIMUM_PARSING_INTERVAL_SECONDS = 4;
@@ -489,7 +488,6 @@ namespace AnalysisManagerICR2LSPlugIn
         /// <param name="ResultsFileNamePath"></param>
         /// <param name="eICR2LSMode"></param>
         /// <returns>True if successfully started; otherwise false</returns>
-        /// <remarks></remarks>
         protected bool StartICR2LS(string DSNamePath, string ParamFilePath, string ResultsFileNamePath, ICR2LSProcessingModeConstants eICR2LSMode)
         {
             return StartICR2LS(DSNamePath, ParamFilePath, ResultsFileNamePath, eICR2LSMode, true, false, 0, 0);
@@ -506,8 +504,6 @@ namespace AnalysisManagerICR2LSPlugIn
         /// <param name="skipMS2"></param>
         /// <param name="minScan"></param>
         /// <param name="maxScan"></param>
-        /// <returns></returns>
-        /// <remarks></remarks>
         protected bool StartICR2LS(string instrumentFilePath, string paramFilePath, string resultsFileNamePath,
             ICR2LSProcessingModeConstants eICR2LSMode, bool useAllScans, bool skipMS2, int minScan, int maxScan)
         {
@@ -773,7 +769,6 @@ namespace AnalysisManagerICR2LSPlugIn
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        /// <remarks></remarks>
         protected bool StoreToolVersionInfo()
         {
             var toolVersionInfo = string.Empty;

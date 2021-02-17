@@ -74,7 +74,6 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
         /// Generate the mzXML or mzML file
         /// </summary>
         /// <returns>True if success; false if a failure</returns>
-        /// <remarks></remarks>
         public bool CreateMSXMLFile()
         {
             int formatMode;
@@ -209,7 +208,6 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
         /// <summary>
         /// Event handler for event CmdRunner.LoopWaiting
         /// </summary>
-        /// <remarks></remarks>
         private void CmdRunner_LoopWaiting()
         {
             LoopWaiting?.Invoke();

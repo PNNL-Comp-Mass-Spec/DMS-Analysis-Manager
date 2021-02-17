@@ -183,7 +183,6 @@ namespace AnalysisManagerMultiAlignPlugIn
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        /// <remarks></remarks>
         protected bool StoreToolVersionInfo(string strMultiAlignProgLoc)
         {
             var strToolVersionInfo = string.Empty;
@@ -259,7 +258,6 @@ namespace AnalysisManagerMultiAlignPlugIn
         /// <summary>
         /// Event handler for CmdRunner.LoopWaiting event
         /// </summary>
-        /// <remarks></remarks>
         private void CmdRunner_LoopWaiting()
         {
             UpdateStatusFile(PROGRESS_PCT_MULTIALIGN_RUNNING);

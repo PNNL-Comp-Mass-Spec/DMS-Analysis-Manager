@@ -19,7 +19,6 @@ namespace AnalysisManagerMSGFPlugin
         /// </summary>
         /// <param name="datasetName">Dataset name</param>
         /// <param name="workDir">Working directory</param>
-        /// <remarks></remarks>
         public clsMSGFInputCreatorXTandem(string datasetName, string workDir)
             : base(datasetName, workDir, clsPHRPReader.PeptideHitResultTypes.XTandem)
         {

@@ -18,7 +18,6 @@ namespace DTASpectraFileGen
     /// <summary>
     /// Base class for DTA generation tool runners
     /// </summary>
-    /// <remarks></remarks>
     public class clsDtaGenToolRunner : clsAnalysisToolRunnerBase
     {
         #region "Constants and Enums"
@@ -103,7 +102,6 @@ namespace DTASpectraFileGen
         /// Creates DTA files and filters if necessary
         /// </summary>
         /// <returns>CloseOutType enum indicating success or failure</returns>
-        /// <remarks></remarks>
         public CloseOutType CreateMSMSSpectra()
         {
             // Make the spectra files
@@ -289,7 +287,6 @@ namespace DTASpectraFileGen
         /// Detailed method for running a tool
         /// </summary>
         /// <returns>CloseOutType enum indicating success or failure</returns>
-        /// <remarks></remarks>
         [Obsolete("This method is unused")]
         public CloseOutType DispositionResults()
         {
@@ -371,7 +368,6 @@ namespace DTASpectraFileGen
         /// Creates DTA files
         /// </summary>
         /// <returns>CloseOutType enum indicating success or failure</returns>
-        /// <remarks></remarks>
         public CloseOutType MakeSpectraFiles()
         {
             // Make individual spectra files from input raw data file, using plugin
@@ -481,8 +477,6 @@ namespace DTASpectraFileGen
         /// Creates a centroided .mgf file for the dataset
         /// Then updates the _DTA.txt file with the spectral data from the .mgf file
         /// </summary>
-        /// <returns></returns>
-        /// <remarks></remarks>
         private CloseOutType CentroidCDTA()
         {
             string cdtaFileOriginal;
@@ -585,7 +579,6 @@ namespace DTASpectraFileGen
         /// Concatenates DTA files into a single test file
         /// </summary>
         /// <returns>CloseOutType enum indicating success or failure</returns>
-        /// <remarks></remarks>
         private CloseOutType ConcatSpectraFiles()
         {
             // Packages dta files into concatenated text files
@@ -1013,7 +1006,6 @@ namespace DTASpectraFileGen
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        /// <remarks></remarks>
         private bool StoreToolVersionInfo(string dtaGeneratorAppPath, eDTAGeneratorConstants eDtaGenerator)
         {
             var toolVersionInfo = string.Empty;
@@ -1199,7 +1191,6 @@ namespace DTASpectraFileGen
         /// Zips concatenated DTA file to reduce size
         /// </summary>
         /// <returns>CloseOutType enum indicating success or failure</returns>
-        /// <remarks></remarks>
         private CloseOutType ZipConcatenatedDtaFile()
         {
             var convertToCDTA = mJobParams.GetJobParameter("DtaGenerator", "ConvertMGFtoCDTA", true);

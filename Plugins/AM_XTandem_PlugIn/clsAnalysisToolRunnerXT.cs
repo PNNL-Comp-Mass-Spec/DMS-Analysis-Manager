@@ -206,7 +206,6 @@ namespace AnalysisManagerXTandemPlugIn
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        /// <remarks></remarks>
         protected bool StoreToolVersionInfo()
         {
             if (mDebugLevel >= 2)
@@ -266,7 +265,6 @@ namespace AnalysisManagerXTandemPlugIn
         /// Parse the X!Tandem console output file to determine the X!Tandem version and to track the search progress
         /// </summary>
         /// <param name="strConsoleOutputFilePath"></param>
-        /// <remarks></remarks>
         private void ParseConsoleOutputFile(string strConsoleOutputFilePath)
         {
             var reExtraceValue = new Regex(@"= *(\d+)", RegexOptions.Compiled);
@@ -376,7 +374,6 @@ namespace AnalysisManagerXTandemPlugIn
         /// Zips concatenated XML output file
         /// </summary>
         /// <returns>CloseOutType enum indicating success or failure</returns>
-        /// <remarks></remarks>
         private CloseOutType ZipMainOutputFile()
         {
             try
@@ -422,7 +419,6 @@ namespace AnalysisManagerXTandemPlugIn
         /// <summary>
         /// Event handler for CmdRunner.LoopWaiting event
         /// </summary>
-        /// <remarks></remarks>
         private void CmdRunner_LoopWaiting()
         {
             UpdateStatusFile();

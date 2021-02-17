@@ -133,7 +133,6 @@ namespace AnalysisManager_Ape_PlugIn
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        /// <remarks></remarks>
         private bool StoreToolVersionInfo()
         {
             var toolVersionInfo = string.Empty;

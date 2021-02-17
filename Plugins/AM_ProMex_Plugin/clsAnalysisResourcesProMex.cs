@@ -125,8 +125,6 @@ namespace AnalysisManagerProMexPlugIn
         /// Returns True if this is a ProMex_Bruker job
         /// </summary>
         /// <param name="jobParams"></param>
-        /// <returns></returns>
-        /// <remarks></remarks>
         public static bool IsProMexBrukerJob(IJobParams jobParams)
         {
             // The ToolName job parameter holds the name of the job script we are executing

@@ -49,7 +49,6 @@ namespace AnalysisManagerFormularityPlugin
         /// Add a new page with landscape orientation
         /// </summary>
         /// <param name="pdfDoc"></param>
-        /// <returns></returns>
         private PdfPageInfo AddPage(PdfDocument pdfDoc)
         {
             var currentPageInfo = new PdfPageInfo(pdfDoc, PageMargin, PageOrientation.Landscape);
@@ -65,7 +64,6 @@ namespace AnalysisManagerFormularityPlugin
         /// <param name="width">Plot width, in points</param>
         /// <param name="height">Plot height, in points</param>
         /// <param name="header">Header (optional)</param>
-        /// <returns></returns>
         private void AddPlot(
             PdfPageInfo currentPage, XImage plotImage, double xOffset,
             double width, double height, string header = null)
@@ -92,7 +90,6 @@ namespace AnalysisManagerFormularityPlugin
         /// <param name="xOffset">X offset; if 0, will be at the left page margin</param>
         /// <param name="width">Textbox width; if 0 or larger than the page width, will center the text on the page</param>
         /// <param name="position">Position of the text in the textbox</param>
-        /// <returns></returns>
         private double AddText(
             PdfPageInfo currentPage, string text, XFont font,
             double yScalar = 0, double xOffset = 0,
@@ -145,7 +142,6 @@ namespace AnalysisManagerFormularityPlugin
         /// <param name="pdfFilePath">Path to the PDF file create</param>
         /// <param name="pngFiles"></param>
         /// <param name="dataSource"></param>
-        /// <returns></returns>
         public bool CreatePdf(string pdfFilePath, List<FileInfo> pngFiles, string dataSource = "NOMSI")
         {
             if (string.IsNullOrWhiteSpace(dataSource))
@@ -265,7 +261,6 @@ namespace AnalysisManagerFormularityPlugin
         /// </summary>
         /// <param name="datasetName">Dataset name</param>
         /// <param name="datasetDetailReportLink">Text to display instead of a PNG file</param>
-        /// <returns></returns>
         public static List<List<string>> GetPngFileTableLayout(string datasetName, string datasetDetailReportLink)
         {
             // PNG filename suffix
@@ -295,7 +290,6 @@ namespace AnalysisManagerFormularityPlugin
         /// <param name="text"></param>
         /// <param name="gfx"></param>
         /// <param name="font"></param>
-        /// <returns></returns>
         private static double GetTextHeight(string text, XGraphics gfx, XFont font)
         {
             var textSize = gfx.MeasureString(text, font);

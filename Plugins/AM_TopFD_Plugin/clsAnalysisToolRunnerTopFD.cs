@@ -190,7 +190,6 @@ namespace AnalysisManagerTopFDPlugIn
         /// <summary>
         /// Returns a dictionary mapping parameter names to argument names
         /// </summary>
-        /// <returns></returns>
         private Dictionary<string, string> GetTopFDParameterNames()
         {
             var paramToArgMapping = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
@@ -212,7 +211,6 @@ namespace AnalysisManagerTopFDPlugIn
         /// Parse the TopFD console output file to determine the TopFD version and to track the search progress
         /// </summary>
         /// <param name="consoleOutputFilePath"></param>
-        /// <remarks></remarks>
         private void ParseConsoleOutputFile(string consoleOutputFilePath)
         {
             // Example Console output (yes, TopFD misspells "running"):
@@ -351,7 +349,6 @@ namespace AnalysisManagerTopFDPlugIn
         /// </summary>
         /// <param name="cmdLineOptions">Output: TopFD command line arguments</param>
         /// <returns>Options string if success; empty string if an error</returns>
-        /// <remarks></remarks>
         public CloseOutType ParseTopFDParameterFile(out string cmdLineOptions)
         {
             cmdLineOptions = string.Empty;
@@ -592,8 +589,6 @@ namespace AnalysisManagerTopFDPlugIn
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        /// <returns></returns>
-        /// <remarks></remarks>
         private bool StoreToolVersionInfo()
         {
             if (mDebugLevel >= 2)
@@ -623,7 +618,6 @@ namespace AnalysisManagerTopFDPlugIn
         /// Reads the console output file and removes the majority of the "Processing" messages
         /// </summary>
         /// <param name="consoleOutputFilePath"></param>
-        /// <remarks></remarks>
         private void TrimConsoleOutputFile(string consoleOutputFilePath)
         {
             var reExtractScan = new Regex(@"Processing spectrum Scan[ _](?<Scan>\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
@@ -858,7 +852,6 @@ namespace AnalysisManagerTopFDPlugIn
         /// <summary>
         /// Event handler for CmdRunner.LoopWaiting event
         /// </summary>
-        /// <remarks></remarks>
         private void CmdRunner_LoopWaiting()
         {
             const int SECONDS_BETWEEN_UPDATE = 30;

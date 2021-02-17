@@ -191,7 +191,6 @@ namespace AnalysisManager_AScore_PlugIn
         /// </summary>
         /// <param name="dataPackageID"></param>
         /// <param name="tool"></param>
-        /// <returns></returns>
         private SimpleSink GetListOfDataPackageJobsToProcess(string dataPackageID, string tool)
         {
             const string sqlTemplate = @"SELECT * FROM V_Mage_Data_Package_Analysis_Jobs WHERE Data_Package_ID = {0} AND Tool LIKE '%{1}%'";
@@ -273,7 +272,6 @@ namespace AnalysisManager_AScore_PlugIn
         /// </summary>
         /// <param name="sql">Query to use</param>
         /// <param name="connectionString"></param>
-        /// <returns></returns>
         public static SQLReader MakeDBReaderModule(string sql, string connectionString)
         {
             var reader = new SQLReader(connectionString)

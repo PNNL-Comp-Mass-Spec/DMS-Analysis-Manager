@@ -159,7 +159,6 @@ namespace AnalysisManager_IDM_Plugin
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        /// <remarks></remarks>
         private void StoreToolVersionInfo()
         {
             var idmDLL = Path.Combine(clsGlobal.GetAppDirectoryPath(), "InterDetect.dll");

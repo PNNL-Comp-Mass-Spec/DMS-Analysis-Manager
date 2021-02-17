@@ -23,7 +23,6 @@ namespace AnalysisManager_AScore_PlugIn
         /// Verify that a job parameter is defined
         /// </summary>
         /// <param name="paramName"></param>
-        /// <returns></returns>
         public string RequireJobParam(string paramName)
         {
             var val = mJobParms.GetParam(paramName);
@@ -38,7 +37,6 @@ namespace AnalysisManager_AScore_PlugIn
         /// Get a job parameter
         /// </summary>
         /// <param name="paramName"></param>
-        /// <returns></returns>
         public string GetJobParam(string paramName)
         {
             return mJobParms.GetParam(paramName);
@@ -49,7 +47,6 @@ namespace AnalysisManager_AScore_PlugIn
         /// </summary>
         /// <param name="paramName"></param>
         /// <param name="defaultValue"></param>
-        /// <returns></returns>
         public string GetJobParam(string paramName, string defaultValue)
         {
             var val = mJobParms.GetParam(paramName);

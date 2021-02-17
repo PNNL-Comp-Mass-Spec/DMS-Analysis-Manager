@@ -10,9 +10,6 @@ namespace AnalysisManagerMODPlusPlugin
         /// <summary>
         /// Data lines for the current scan
         /// </summary>
-        /// <value></value>
-        /// <returns></returns>
-        /// <remarks></remarks>
         public List<string> CurrentScanData
         {
             get { return mCurrentScanData; }
@@ -53,7 +50,6 @@ namespace AnalysisManagerMODPlusPlugin
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <remarks></remarks>
         public clsMODPlusResultsReader(string datasetName, FileInfo modPlusResultsFile)
         {
             mResultFile = modPlusResultsFile;

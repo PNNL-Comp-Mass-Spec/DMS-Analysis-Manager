@@ -369,7 +369,6 @@ namespace AnalysisManagerBrukerDAExportPlugin
         /// <summary>
         /// Determine the location of Bruker's DataAnalysis.exe program
         /// </summary>
-        /// <returns></returns>
         protected string FindDataAnalysisProgram()
         {
             try
@@ -414,7 +413,6 @@ namespace AnalysisManagerBrukerDAExportPlugin
         /// Parse the Spectrum Export console output file to track the search progress
         /// </summary>
         /// <param name="strConsoleOutputFilePath"></param>
-        /// <remarks></remarks>
         private void ParseConsoleOutputFile(string strConsoleOutputFilePath)
         {
             // ReSharper disable CommentTypo
@@ -584,7 +582,6 @@ namespace AnalysisManagerBrukerDAExportPlugin
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        /// <remarks></remarks>
         protected bool StoreToolVersionInfo(string strProgLoc)
         {
             var strToolVersionInfo = string.Empty;

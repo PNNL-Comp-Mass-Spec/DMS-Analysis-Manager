@@ -255,7 +255,6 @@ namespace AnalysisManagerDtaRefineryPlugIn
         /// Parses the _DTARefineryLog.txt file to check for a message regarding X!Tandem being finished
         /// </summary>
         /// <returns>True if finished, false if not</returns>
-        /// <remarks></remarks>
         private bool IsXTandemFinished()
         {
             try
@@ -298,7 +297,6 @@ namespace AnalysisManagerDtaRefineryPlugIn
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        /// <remarks></remarks>
         private bool StoreToolVersionInfo()
         {
             var toolVersionInfo = string.Empty;
@@ -347,7 +345,6 @@ namespace AnalysisManagerDtaRefineryPlugIn
         /// Parses the _DTARefineryLog.txt file to look for errors
         /// </summary>
         /// <returns>True if no errors, false if a problem</returns>
-        /// <remarks></remarks>
         private bool ValidateDTARefineryLogFile()
         {
             try
@@ -397,7 +394,6 @@ namespace AnalysisManagerDtaRefineryPlugIn
         /// Zips concatenated XML output file
         /// </summary>
         /// <returns>CloseOutType enum indicating success or failure</returns>
-        /// <remarks></remarks>
         private CloseOutType ZipMainOutputFile()
         {
             // Do we want to zip these output files?  Yes, we keep them all
@@ -476,7 +472,6 @@ namespace AnalysisManagerDtaRefineryPlugIn
         /// <summary>
         /// Event handler for CmdRunner.LoopWaiting event
         /// </summary>
-        /// <remarks></remarks>
         private void CmdRunner_LoopWaiting()
         {
             const string DTA_REFINERY_PROCESS_NAME = "dta_refinery";

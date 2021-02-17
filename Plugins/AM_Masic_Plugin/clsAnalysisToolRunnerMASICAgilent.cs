@@ -15,7 +15,6 @@ namespace AnalysisManagerMasicPlugin
     /// <summary>
     /// Derived class for performing MASIC analysis on Agilent datasets
     /// </summary>
-    /// <remarks></remarks>
     public class clsAnalysisToolRunnerMASICAgilent : clsAnalysisToolRunnerMASICBase
     {
         protected override CloseOutType RunMASIC()

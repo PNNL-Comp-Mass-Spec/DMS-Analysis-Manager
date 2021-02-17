@@ -46,7 +46,6 @@ namespace AnalysisManager_AScore_PlugIn
         /// <summary>
         /// Retrieve the fasta file (if defined)
         /// </summary>
-        /// <returns></returns>
         private bool RetrieveFastaFile(out CloseOutType resultCode)
         {
             var currentTask = "Initializing";
