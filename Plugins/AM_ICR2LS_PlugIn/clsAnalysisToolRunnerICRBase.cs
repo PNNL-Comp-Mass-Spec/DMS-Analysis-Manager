@@ -731,8 +731,8 @@ namespace AnalysisManagerICR2LSPlugIn
             if (!string.Equals(mICR2LSStatus.ProcessingState, ICR2LS_STATE_FINISHED, StringComparison.InvariantCultureIgnoreCase))
             {
                 BaseLogger.LogLevels eLogLevel;
-                if (string.Equals(mICR2LSStatus.ProcessingState, ICR2LS_STATE_ERROR, StringComparison.InvariantCultureIgnoreCase) |
-                    string.Equals(mICR2LSStatus.ProcessingState, ICR2LS_STATE_KILLED, StringComparison.InvariantCultureIgnoreCase) | mProgress < 100)
+                if (string.Equals(mICR2LSStatus.ProcessingState, ICR2LS_STATE_ERROR, StringComparison.InvariantCultureIgnoreCase) ||
+                    string.Equals(mICR2LSStatus.ProcessingState, ICR2LS_STATE_KILLED, StringComparison.InvariantCultureIgnoreCase) || mProgress < 100)
                 {
                     eLogLevel = BaseLogger.LogLevels.ERROR;
                 }

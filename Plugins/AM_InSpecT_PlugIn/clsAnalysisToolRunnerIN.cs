@@ -495,7 +495,7 @@ namespace AnalysisManagerInSpecTPlugIn
                 UpdateStatusRunning();
             }
 
-            if ((mSearchLogFileWatcher != null))
+            if (mSearchLogFileWatcher != null)
             {
                 mSearchLogFileWatcher.EnableRaisingEvents = false;
                 mSearchLogFileWatcher = null;

@@ -1403,9 +1403,9 @@ namespace AnalysisManagerMSGFPlugin
         }
 
         private bool ProcessFilesWrapper(
-            clsAnalysisResources.eRawDataTypeConstants rawDataType, 
+            clsAnalysisResources.eRawDataTypeConstants rawDataType,
             clsPHRPReader.PeptideHitResultTypes resultType,
-            bool doNotFilterPeptides, 
+            bool doNotFilterPeptides,
             bool mgfInstrumentData)
         {
             // Parse the SEQUEST, X!Tandem, Inspect, or MODa parameter file to determine if ETD mode was used

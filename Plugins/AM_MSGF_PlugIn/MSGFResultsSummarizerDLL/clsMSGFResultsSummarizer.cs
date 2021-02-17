@@ -871,7 +871,7 @@ namespace MSGFResultsSummarizer
             //   TRYP_PIG, sp|TRYP_PIG, Contaminant_TRYP_PIG, Cntm_P00761|TRYP_PIG
             //   Contaminant_TRYP_BOVIN And gi|136425|sp|P00760|TRYP_BOVIN
             //   Contaminant_Trypa
-            return new Regex(@"(TRYP_(PIG|BOVIN)|Contaminant_Trypa)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            return new Regex("(TRYP_(PIG|BOVIN)|Contaminant_Trypa)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         }
 
         /// <summary>
@@ -1136,7 +1136,7 @@ namespace MSGFResultsSummarizer
             var loadMSGFResults = true;
 
             // RegEx for determining that a peptide has a missed cleavage (i.e. an internal tryptic cleavage point)
-            var missedCleavageMatcher = new Regex(@"[KR][^P][A-Z]", RegexOptions.Compiled);
+            var missedCleavageMatcher = new Regex("[KR][^P][A-Z]", RegexOptions.Compiled);
 
             // RegEx to match keratin proteins
             var keratinProteinMatcher = GetKeratinRegEx();
@@ -1242,7 +1242,7 @@ namespace MSGFResultsSummarizer
                             valid = double.TryParse(eValueText, out eValue);
                         }
                     }
-                    else if (ResultType == clsPHRPReader.PeptideHitResultTypes.MODa | ResultType == clsPHRPReader.PeptideHitResultTypes.MODPlus)
+                    else if (ResultType == clsPHRPReader.PeptideHitResultTypes.MODa || ResultType == clsPHRPReader.PeptideHitResultTypes.MODPlus)
                     {
                         // MODa / MODPlus results don't have spectral probability, but they do have FDR
                         valid = true;
@@ -1284,7 +1284,7 @@ namespace MSGFResultsSummarizer
                     var psmEValue = eValue;
                     double psmFDR;
 
-                    if (ResultType == clsPHRPReader.PeptideHitResultTypes.MSGFPlus | ResultType == clsPHRPReader.PeptideHitResultTypes.MSAlign)
+                    if (ResultType == clsPHRPReader.PeptideHitResultTypes.MSGFPlus || ResultType == clsPHRPReader.PeptideHitResultTypes.MSAlign)
                     {
                         psmFDR = currentPSM.GetScoreDbl(clsPHRPParserMSGFPlus.DATA_COLUMN_FDR, clsPSMInfo.UNKNOWN_FDR);
                         if (psmFDR < 0)

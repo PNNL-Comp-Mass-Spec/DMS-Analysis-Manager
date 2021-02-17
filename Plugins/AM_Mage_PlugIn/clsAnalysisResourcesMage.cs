@@ -32,8 +32,8 @@ namespace AnalysisManager_Mage_PlugIn
             var requireMasicJobs = mageOperations.Contains("ImportReporterIons");
 
             var workFlowSteps = mJobParams.GetParam("ApeWorkflowStepList", string.Empty);
-            if (workFlowSteps.Contains("4plex") |
-                workFlowSteps.Contains("6plex") |
+            if (workFlowSteps.Contains("4plex") ||
+                workFlowSteps.Contains("6plex") ||
                 workFlowSteps.Contains("8plex"))
             {
                 if (!mageOperations.Contains("ImportReporterIons"))

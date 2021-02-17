@@ -107,7 +107,7 @@ namespace AnalysisManagerMSGFPlugin
 
             if (!validToolType)
             {
-                return (CloseOutType.CLOSEOUT_NO_OUT_FILES);
+                return CloseOutType.CLOSEOUT_NO_OUT_FILES;
             }
 
             // Make sure the dataset type is valid
@@ -141,8 +141,8 @@ namespace AnalysisManagerMSGFPlugin
                     }
                 }
             }
-            else if (resultType == clsPHRPReader.PeptideHitResultTypes.MODa |
-                     resultType == clsPHRPReader.PeptideHitResultTypes.MODPlus |
+            else if (resultType == clsPHRPReader.PeptideHitResultTypes.MODa ||
+                     resultType == clsPHRPReader.PeptideHitResultTypes.MODPlus ||
                      resultType == clsPHRPReader.PeptideHitResultTypes.MSPathFinder)
             {
                 // We do not need any raw data files for MODa, modPlus, or MSPathFinder

@@ -78,8 +78,8 @@ namespace AnalysisManager_AScore_PlugIn
 
             if (mSearchType == "msgfdb")
                 mSearchType = "msgfplus";
-            mParamFilename = mJobParams.GetJobParam("AScoreParamFilename");
 
+            mParamFilename = mJobParams.GetJobParam("AScoreParamFilename");
 
             // Define the path to the fasta file
             mFastaFilePath = string.Empty;
@@ -113,7 +113,7 @@ namespace AnalysisManager_AScore_PlugIn
         {
             var dataPackageID = mJobParams.RequireJobParam("DataPackageID");
 
-            if (mParamFilename == string.Empty)
+            if (string.IsNullOrWhiteSpace(mParamFilename))
                 return true;
 
             if (!GetAScoreParameterFile())
@@ -193,7 +193,7 @@ namespace AnalysisManager_AScore_PlugIn
         /// <param name="tool"></param>
         private SimpleSink GetListOfDataPackageJobsToProcess(string dataPackageID, string tool)
         {
-            const string sqlTemplate = @"SELECT * FROM V_Mage_Data_Package_Analysis_Jobs WHERE Data_Package_ID = {0} AND Tool LIKE '%{1}%'";
+            const string sqlTemplate = "SELECT * FROM V_Mage_Data_Package_Analysis_Jobs WHERE Data_Package_ID = {0} AND Tool LIKE '%{1}%'";
             var connStr = mMgrParams.RequireMgrParam("ConnectionString");
             var sql = string.Format(sqlTemplate, new object[] { dataPackageID, tool });
             var jobList = GetListOfItemsFromDB(sql, connStr);

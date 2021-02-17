@@ -5,13 +5,13 @@ namespace AnalysisManager_Mage_PlugIn
     /// <summary>
     /// Get SQL for queries
     /// </summary>
-    internal class SQL
+    internal static class SQL
     {
         // holds a single query definition template
         public class QueryTemplate
         {
-            public string TemplateSQL { get; private set; }
-            public string ParamNameList { get; private set; }
+            public string TemplateSQL { get; }
+            public string ParamNameList { get; }
             public QueryTemplate(string sql, string list)
             {
                 TemplateSQL = sql;
@@ -29,8 +29,8 @@ namespace AnalysisManager_Mage_PlugIn
                     "DataPackageID, Tool") },
             {"FactorsFromDataPackageID",
                 new QueryTemplate(
-                    "SELECT Dataset, Dataset_ID, Factor, Value " + 
-                    "FROM DMS5.dbo.V_Custom_Factors_List_Report " + 
+                    "SELECT Dataset, Dataset_ID, Factor, Value " +
+                    "FROM DMS5.dbo.V_Custom_Factors_List_Report " +
                     "WHERE Dataset IN (SELECT DISTINCT Dataset FROM V_Mage_Data_Package_Analysis_Jobs WHERE Data_Package_ID = {0})",
                     "DataPackageID") },
             {"JobDatasetsFromDataPackageIDForTool",

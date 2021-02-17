@@ -852,11 +852,11 @@ namespace DTASpectraFileGen
             var output = new StringBuilder(spectrumText.Length);
             var previousLineWasTitleLine = false;
 
-            using (var trReader = new StringReader(spectrumText))
+            using (var reader = new StringReader(spectrumText))
             {
-                while (trReader.Peek() > -1)
+                while (reader.Peek() > -1)
                 {
-                    var dataLine = trReader.ReadLine();
+                    var dataLine = reader.ReadLine();
 
                     if (dataLine != null && dataLine.StartsWith("="))
                     {
@@ -950,7 +950,7 @@ namespace DTASpectraFileGen
             }
 
             // Loop until the spectra generator finishes
-            while ((dtaGenerator.Status == ProcessStatus.SF_STARTING) | (dtaGenerator.Status == ProcessStatus.SF_RUNNING))
+            while ((dtaGenerator.Status == ProcessStatus.SF_STARTING) || (dtaGenerator.Status == ProcessStatus.SF_RUNNING))
             {
                 if (secondPass)
                 {

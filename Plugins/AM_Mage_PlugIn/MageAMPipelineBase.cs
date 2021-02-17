@@ -189,10 +189,12 @@ namespace AnalysisManager_Mage_PlugIn
 
         private void HandlePipelineUpdate(object sender, MageStatusEventArgs args)
         {
-            if (args.Message.StartsWith("preparing to insert tablular data") ||
+            if (args.Message.StartsWith("preparing to insert tabular data") ||
                 args.Message.StartsWith("Starting to insert block of rows") ||
                 args.Message.StartsWith("finished inserting block of rows"))
+            {
                 return;
+            }
 
             var reMatch = mProcessingResults.Match(args.Message);
             if (reMatch.Success)

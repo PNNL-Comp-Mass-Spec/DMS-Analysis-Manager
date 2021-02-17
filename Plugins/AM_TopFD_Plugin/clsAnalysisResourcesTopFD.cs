@@ -184,7 +184,7 @@ namespace AnalysisManagerTopFDPlugIn
 
                 var successForJobs = dbToolsDMSPipeline.GetQueryResults(jobStepsQuery, out var jobStepsResults);
 
-                if (!successForJobs || jobStepsResults.Count <= 0)
+                if (!successForJobs || jobStepsResults.Count == 0)
                     return false;
 
                 var jobCandidates = new Dictionary<int, TopFDJobInfoType>();
@@ -263,7 +263,7 @@ namespace AnalysisManagerTopFDPlugIn
 
                 var successForSettingsFiles = dbToolsDMS.GetQueryResults(settingsFileQuery, out var settingsFileResults);
 
-                if (!successForSettingsFiles || settingsFileResults.Count <= 0)
+                if (!successForSettingsFiles || settingsFileResults.Count == 0)
                     return false;
 
                 foreach (var result in settingsFileResults)

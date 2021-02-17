@@ -53,12 +53,12 @@ namespace AnalysisManagerDtaRefineryPlugIn
             {
                 xml.Append("<DTARef_MassErrorStats>");
 
-                xml.Append(Convert.ToString("<Dataset>") + massErrorInfo.DatasetName + "</Dataset>");
-                xml.Append(Convert.ToString("<PSM_Source_Job>") + massErrorInfo.PSMJob + "</PSM_Source_Job>");
+                xml.AppendFormat("<Dataset>{0}</Dataset>", massErrorInfo.DatasetName);
+                xml.AppendFormat("<PSM_Source_Job>{0}</PSM_Source_Job>", massErrorInfo.PSMJob);
 
                 xml.Append("<Measurements>");
-                xml.Append(Convert.ToString("<Measurement Name=\"" + "MassErrorPPM" + "\">") + massErrorInfo.MassErrorPPM + "</Measurement>");
-                xml.Append(Convert.ToString("<Measurement Name=\"" + "MassErrorPPM_Refined" + "\">") + massErrorInfo.MassErrorPPMRefined + "</Measurement>");
+                xml.AppendFormat("<Measurement Name=\"MassErrorPPM\">{0}</Measurement>", massErrorInfo.MassErrorPPM);
+                xml.AppendFormat("<Measurement Name=\"MassErrorPPM_Refined\">{0}</Measurement>", massErrorInfo.MassErrorPPMRefined);
                 xml.Append("</Measurements>");
 
                 xml.Append("</DTARef_MassErrorStats>");

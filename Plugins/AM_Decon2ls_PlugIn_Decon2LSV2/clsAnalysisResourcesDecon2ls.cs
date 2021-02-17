@@ -426,7 +426,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
         {
             var node = xmlDoc.SelectSingleNode(xpathForSection + "/" + elementName);
 
-            if ((node != null))
+            if (node != null)
             {
                 if (node.HasChildNodes)
                 {
@@ -438,7 +438,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             {
                 node = xmlDoc.SelectSingleNode(xpathForSection);
 
-                if ((node != null))
+                if (node != null)
                 {
                     var newChild = (XmlElement)xmlDoc.CreateNode(XmlNodeType.Element, elementName, string.Empty);
                     newChild.InnerXml = newElementValue;

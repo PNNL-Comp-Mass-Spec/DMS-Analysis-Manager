@@ -37,7 +37,7 @@ namespace AnalysisManagerMasicPlugin
                 case RAW_DATA_TYPE_DOT_D_FOLDERS:
                     // If desired, set the following to True to not actually copy the .Raw
                     // (or .wiff, .uimf, etc.) file locally, and instead determine where it is
-                    // located, then create a text file named "DatesetName.raw_StoragePathInfo.txt"
+                    // located, then create a text file named "DatasetName.raw_StoragePathInfo.txt"
                     // This file would contain just one line of text: the full path to the actual file
 
                     // However, we have found that this can create undo strain on the storage servers (or NWFS Archive)

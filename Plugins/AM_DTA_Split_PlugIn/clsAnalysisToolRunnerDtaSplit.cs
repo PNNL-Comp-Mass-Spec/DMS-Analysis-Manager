@@ -375,10 +375,10 @@ namespace AnalysisManagerDtaSplitPlugIn
             for (var counter = 1; counter <= fi.Length; counter++)
             {
                 var testcode = tr.Read();
-                if (testcode == 10 | testcode == 13)
+                if (testcode == 10 || testcode == 13)
                 {
                     var testcode2 = tr.Read();
-                    if (testcode2 == 10 | testcode2 == 13)
+                    if (testcode2 == 10 || testcode2 == 13)
                     {
                         endCount = 2;
                         break;

@@ -362,7 +362,7 @@ namespace AnalysisManagerNOMSIPlugin
 
             var reGetScanNumber = new Regex(@"scan(\d+).xml", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
-            var arguments = PossiblyQuotePath(spectrumFile.FullName) + " " + 
+            var arguments = PossiblyQuotePath(spectrumFile.FullName) + " " +
                             PossiblyQuotePath(paramFilePath);
 
             if (mDebugLevel >= 1)

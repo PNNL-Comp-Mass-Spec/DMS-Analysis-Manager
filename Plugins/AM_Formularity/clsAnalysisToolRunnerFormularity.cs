@@ -497,7 +497,7 @@ namespace AnalysisManagerFormularityPlugin
 
             try
             {
-                var reErrorMessage = new Regex(@"Error:(?<ErrorMessage>.+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+                var reErrorMessage = new Regex("Error:(?<ErrorMessage>.+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
                 if (!File.Exists(consoleOutputFilePath))
                 {
@@ -876,7 +876,7 @@ namespace AnalysisManagerFormularityPlugin
 
                 if (!File.Exists(calibrationPeaksFilePath))
                 {
-                    LogError("Calibration file not not found", "Calibration file not found: " + calibrationPeaksFilePath);
+                    LogError("Calibration file not found", "Calibration file not found: " + calibrationPeaksFilePath);
                     return false;
                 }
 
@@ -933,7 +933,7 @@ namespace AnalysisManagerFormularityPlugin
                     LogDebug("Formularity processing complete");
                 }
 
-                if (scanCountNoPeaks <= 0 && nothingToAlign == false)
+                if (scanCountNoPeaks <= 0 && !nothingToAlign)
                 {
                     return true;
                 }

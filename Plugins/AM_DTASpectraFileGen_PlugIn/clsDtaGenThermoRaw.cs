@@ -602,7 +602,7 @@ namespace DTASpectraFileGen
 
                 if (locCharge == 0)
                 {
-                    if (explicitChargeStart <= 0 | explicitChargeEnd <= 0)
+                    if (explicitChargeStart <= 0 || explicitChargeEnd <= 0)
                     {
                         break;
                     }
@@ -621,12 +621,12 @@ namespace DTASpectraFileGen
             }
 
             // Disable the watchers
-            if ((mDTAWatcher != null))
+            if (mDTAWatcher != null)
             {
                 mDTAWatcher.EnableRaisingEvents = false;
             }
 
-            if ((mDeconMSnProgressWatcher != null))
+            if (mDeconMSnProgressWatcher != null)
             {
                 mDeconMSnProgressWatcher.EnableRaisingEvents = false;
             }

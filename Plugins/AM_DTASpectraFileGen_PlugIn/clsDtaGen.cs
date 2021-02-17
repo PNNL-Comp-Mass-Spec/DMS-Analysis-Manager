@@ -181,7 +181,7 @@ namespace DTASpectraFileGen
 
             var workDir = new DirectoryInfo(mWorkDir);
 
-            var reValidFiles = new Regex(@".dta$|.txt$|.csv$|.raw$|.params$|.wiff$|.xml$|.mgf$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            var reValidFiles = new Regex(".dta$|.txt$|.csv$|.raw$|.params$|.wiff$|.xml$|.mgf$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
             foreach (var dataFile in workDir.GetFiles())
             {
@@ -232,7 +232,7 @@ namespace DTASpectraFileGen
                 var dtaFiles = workDir.GetFiles("*.dta");
                 int dtaCount;
 
-                if (dtaFiles.Length <= 0)
+                if (dtaFiles.Length == 0)
                 {
                     dtaCount = 0;
                 }

@@ -30,10 +30,8 @@ namespace AnalysisManager_RepoPkgr_PlugIn
         /// <param name="connectionString"></param>
         public void SetCnStr(TagName dbTag, string connectionString)
         {
-            if (mDbConnectionStrings.ContainsKey(dbTag))
-                mDbConnectionStrings[dbTag] = connectionString;
-            else
-                mDbConnectionStrings.Add(dbTag, connectionString);
+            // Add/update the dictionary
+            mDbConnectionStrings[dbTag] = connectionString;
         }
 
         /// <summary>

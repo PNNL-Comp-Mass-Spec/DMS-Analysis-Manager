@@ -105,11 +105,9 @@ namespace MSMSSpectrumFilterAM
                 // Find and copy the ScanStats files from an existing job rather than copying over the .Raw file
                 // However, if the _ScanStats.txt file does not have column ScanTypeName, we will need the .raw file
 
-                var blnIsFolder = false;
-                string strDatasetFileOrFolderPath = null;
                 var blnScanStatsFilesRetrieved = false;
 
-                strDatasetFileOrFolderPath = DirectorySearch.FindDatasetFileOrDirectory(out blnIsFolder, assumeUnpurged: false);
+                var strDatasetFileOrFolderPath = DirectorySearch.FindDatasetFileOrDirectory(out var blnIsFolder, assumeUnpurged: false);
 
                 if (!string.IsNullOrEmpty(strDatasetFileOrFolderPath) && !strDatasetFileOrFolderPath.StartsWith(MYEMSL_PATH_FLAG))
                 {

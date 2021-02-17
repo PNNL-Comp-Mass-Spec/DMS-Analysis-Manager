@@ -513,7 +513,7 @@ namespace AnalysisManagerSequestPlugin
                             "clsAnalysisToolRunnerSeqBase.MakeOutFiles(): progRunners(" + processorIndex + ").State = " +
                             progRunners[processorIndex].State);
                     }
-                    if ((progRunners[processorIndex].State != 0))
+                    if (progRunners[processorIndex].State != 0)
                     {
                         if (mDebugLevel > 4)
                         {
@@ -521,7 +521,7 @@ namespace AnalysisManagerSequestPlugin
                                 "clsAnalysisToolRunnerSeqBase.MakeOutFiles()_2: progRunners(" + processorIndex + ").State = " +
                                 progRunners[processorIndex].State);
                         }
-                        if (((int) progRunners[processorIndex].State != 10))
+                        if ((int)progRunners[processorIndex].State != 10)
                         {
                             if (mDebugLevel > 4)
                             {
@@ -912,7 +912,7 @@ namespace AnalysisManagerSequestPlugin
                 var reWaitingForReadyMsg = new Regex(@"Waiting for ready messages from (\d+) node", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline);
                 var reReceivedReadyMsg = new Regex(@"received ready message from (.+)\(", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline);
                 var reSpawnedSlaveProcesses = new Regex(@"Spawned (\d+) slave processes", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline);
-                var reSearchedDTAFile = new Regex(@"Searched dta file .+ on (.+)", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline);
+                var reSearchedDTAFile = new Regex("Searched dta file .+ on (.+)", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline);
 
                 var hostCount = 0;
                 var nodeCountStarted = 0;
@@ -1057,7 +1057,7 @@ namespace AnalysisManagerSequestPlugin
                         //  "SEQUEST node count is less than the expected value"
 
                         mEvalMessage += "; " + processingMsg;
-                        mEvalCode = mEvalCode | ERROR_CODE_A;
+                        mEvalCode |= ERROR_CODE_A;
                     }
                     else
                     {
@@ -1068,7 +1068,7 @@ namespace AnalysisManagerSequestPlugin
                                 Console.WriteLine(processingMsg);
                             LogWarning(processingMsg);
                             mEvalMessage += "; " + processingMsg;
-                            mEvalCode = mEvalCode | ERROR_CODE_B;
+                            mEvalCode |= ERROR_CODE_B;
 
                             // Update the evaluation message and evaluation code
                             // These will be used by method CloseTask in clsAnalysisJob
@@ -1087,7 +1087,7 @@ namespace AnalysisManagerSequestPlugin
                                 Console.WriteLine(processingMsg);
                             LogError(processingMsg);
                             mEvalMessage += "; " + processingMsg;
-                            mEvalCode = mEvalCode | ERROR_CODE_C;
+                            mEvalCode |= ERROR_CODE_C;
                         }
                     }
 
@@ -1112,14 +1112,17 @@ namespace AnalysisManagerSequestPlugin
                     }
 
                     // Determine the median number of spectra processed (ignoring the head nodes)
-                    var ratesFiltered = (from item in hostProcessingRates where !(item.Key.IndexOf("seqcluster", StringComparison.OrdinalIgnoreCase) >= 0) select item.Value).ToList();
+                    var ratesFiltered = (from item in hostProcessingRates
+                                         where item.Key.IndexOf("seqcluster", StringComparison.OrdinalIgnoreCase) < 0
+                                         select item.Value).ToList();
+
                     var processingRateMedian = ComputeMedian(ratesFiltered);
 
                     // Only show warnings if processingRateMedian is at least 10; otherwise, we don't have enough sampling statistics
 
                     if (processingRateMedian >= 10)
                     {
-                        // Count the number of hosts that had a processing rate fewer than LOW_THRESHOLD_MULTIPLIER times the the median value
+                        // Count the number of hosts that had a processing rate fewer than LOW_THRESHOLD_MULTIPLIER times the median value
                         var warningCount = 0;
                         var lowThresholdRate = LOW_THRESHOLD_MULTIPLIER * processingRateMedian;
 
@@ -1128,7 +1131,7 @@ namespace AnalysisManagerSequestPlugin
                             var hostName = item.Key;
                             var hostProcessingRate = item.Value;
 
-                            if (hostProcessingRate < lowThresholdRate && !(hostName.IndexOf("seqcluster", StringComparison.OrdinalIgnoreCase) >= 0))
+                            if (hostProcessingRate < lowThresholdRate && hostName.IndexOf("seqcluster", StringComparison.OrdinalIgnoreCase) < 0)
                             {
                                 warningCount = +1;
                             }
@@ -1145,7 +1148,7 @@ namespace AnalysisManagerSequestPlugin
                             LogWarning(processingMsg);
 
                             mEvalMessage += "; " + processingMsg;
-                            mEvalCode = mEvalCode | ERROR_CODE_D;
+                            mEvalCode |= ERROR_CODE_D;
                             showDetailedRates = true;
                         }
 
@@ -1159,7 +1162,7 @@ namespace AnalysisManagerSequestPlugin
                             var hostName = item.Key;
                             var hostProcessingRate = item.Value;
 
-                            if (hostProcessingRate > highThresholdRate && !(hostName.IndexOf("seqcluster", StringComparison.OrdinalIgnoreCase) >= 0))
+                            if (hostProcessingRate > highThresholdRate && hostName.IndexOf("seqcluster", StringComparison.OrdinalIgnoreCase) < 0)
                             {
                                 warningCount = +1;
                             }
@@ -1176,7 +1179,7 @@ namespace AnalysisManagerSequestPlugin
                             LogWarning(processingMsg);
 
                             mEvalMessage += "; " + processingMsg;
-                            mEvalCode = mEvalCode | ERROR_CODE_E;
+                            mEvalCode |= ERROR_CODE_E;
                             showDetailedRates = true;
                         }
                     }

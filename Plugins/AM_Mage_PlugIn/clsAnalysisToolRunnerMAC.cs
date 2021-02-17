@@ -179,7 +179,7 @@ namespace AnalysisManager_Mage_PlugIn
             try
             {
                 var connectionString = "Data Source = " + fiSqlLiteDatabase.FullName + "; Version=3;";
-                
+
                 using var conn = new SQLiteConnection(connectionString);
                 conn.Open();
 

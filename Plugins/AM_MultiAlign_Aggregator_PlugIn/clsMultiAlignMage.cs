@@ -254,7 +254,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
         /// <param name="tool"></param>
         private SimpleSink GetListOfDataPackageJobsToProcess(string dataPackageID, string tool)
         {
-            const string sqlTemplate = @"SELECT * FROM V_Mage_Data_Package_Analysis_Jobs WHERE Data_Package_ID = {0} AND Tool LIKE '%{1}%'";
+            const string sqlTemplate = "SELECT * FROM V_Mage_Data_Package_Analysis_Jobs WHERE Data_Package_ID = {0} AND Tool LIKE '%{1}%'";
             var connStr = mMgrParams.RequireMgrParam("ConnectionString");
             var sql = string.Format(sqlTemplate, dataPackageID, tool);
             var jobList = GetListOfItemsFromDB(sql, connStr);

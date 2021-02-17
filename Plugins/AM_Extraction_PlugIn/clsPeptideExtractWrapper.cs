@@ -200,7 +200,7 @@ namespace AnalysisManagerExtractionPlugin
             var workFiles = Directory.GetFiles(mWorkDir);
             var workFileMatch = string.Empty;
 
-            var reCheckSuffix = new Regex(@"_syn.txt$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            var reCheckSuffix = new Regex("_syn.txt$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
             foreach (var workFile in workFiles)
             {

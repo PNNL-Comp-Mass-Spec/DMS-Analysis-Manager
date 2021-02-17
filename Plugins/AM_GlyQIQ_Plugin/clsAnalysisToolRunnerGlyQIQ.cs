@@ -588,7 +588,7 @@ namespace AnalysisManagerGlyQIQPlugin
                     "       LM Worked "
                 };
 
-                var reNumericLine = new Regex(@"^[0-9.]+$", RegexOptions.Compiled);
+                var reNumericLine = new Regex("^[0-9.]+$", RegexOptions.Compiled);
 
                 var consoleOutputFilePruned = Path.Combine(diTargetFolder.FullName, fiConsoleOutputFile.Name);
 

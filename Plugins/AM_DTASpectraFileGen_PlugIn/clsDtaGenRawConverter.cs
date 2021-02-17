@@ -15,11 +15,6 @@ namespace DTASpectraFileGen
 {
     public class clsDtaGenRawConverter : clsDtaGenThermoRaw
     {
-        public override void Setup(SpectraFileProcessorParams initParams, clsAnalysisToolRunnerBase toolRunner)
-        {
-            base.Setup(initParams, toolRunner);
-        }
-
         /// <summary>
         /// Returns the default path to the DTA generator tool
         /// </summary>

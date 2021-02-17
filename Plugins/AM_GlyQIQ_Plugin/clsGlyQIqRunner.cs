@@ -131,7 +131,7 @@ namespace AnalysisManagerGlyQIQPlugin
                 }
 
                 // Replace instances of " " with tab characters
-                fileContents = fileContents.Replace("\"" + " " + "\"", "\t");
+                fileContents = fileContents.Replace("\" \"", "\t");
 
                 // Replace any remaining double quotes with a tab character
                 fileContents = fileContents.Replace("\"", "\t");
@@ -249,7 +249,7 @@ namespace AnalysisManagerGlyQIQPlugin
         //
         // The Target Code is listed at the end of those lines, there 3-6-1-0-0
         // That code corresponds to the third column in the Targets file
-        private readonly Regex reStartWorkflows = new Regex(@"^Start Workflows... .+ on (.+)$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private readonly Regex reStartWorkflows = new Regex("^Start Workflows... .+ on (.+)$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         /// <summary>
         /// Parse the GlyQ-IQ console output file to track the search progress

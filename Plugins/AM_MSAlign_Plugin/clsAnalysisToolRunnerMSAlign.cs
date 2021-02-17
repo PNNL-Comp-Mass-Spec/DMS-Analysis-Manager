@@ -373,7 +373,7 @@ namespace AnalysisManagerMSAlignPlugIn
 
             try
             {
-                var reInvalidResidues = new Regex(@"[BJOUXZ]", RegexOptions.Compiled);
+                var reInvalidResidues = new Regex("[BJOUXZ]", RegexOptions.Compiled);
 
                 var oReader = new ProteinFileReader.FastaFileReader();
                 if (!oReader.OpenFile(sourceFilePath))

@@ -56,18 +56,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
         public int DebugLevel { get; set; } = 1;
 
-        public string ErrorMessage
-        {
-            get
-            {
-                if (mErrorMessage == null)
-                {
-                    return string.Empty;
-                }
-
-                return mErrorMessage;
-            }
-        }
+        public string ErrorMessage => mErrorMessage ?? string.Empty;
 
         /// <summary>
         /// Job parameters

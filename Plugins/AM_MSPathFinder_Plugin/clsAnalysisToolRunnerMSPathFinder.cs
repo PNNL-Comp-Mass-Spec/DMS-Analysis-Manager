@@ -223,7 +223,7 @@ namespace AnalysisManagerMSPathFinderPlugin
 
         private readonly Regex mPromexFeatureStats = new Regex(@"ProMex[^\d]+(\d+)/(\d+) features loaded", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-        private readonly Regex mCheckProgress = new Regex(@"([0-9.]+)% complete", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private readonly Regex mCheckProgress = new Regex("([0-9.]+)% complete", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         private readonly Regex mProcessingProteins = new Regex(@"(\d+) proteins done", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 

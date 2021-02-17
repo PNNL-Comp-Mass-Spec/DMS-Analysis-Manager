@@ -284,7 +284,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
                 RegisterEvents(cmdRunner);
 
                 cmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
-                cmdRunner.Timeout += cmdRunner_Timeout;
+                cmdRunner.Timeout += CmdRunner_Timeout;
                 mProgress = PROGRESS_PCT_STARTING;
 
                 var maxRuntimeSeconds = EstimateMaxRuntime(dataFolderPath);
@@ -389,7 +389,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
                 var fiFiles = brukerDaltonikDir.GetFiles("DataAnalysis.exe", SearchOption.AllDirectories).ToList();
                 if (fiFiles.Count == 0)
                 {
-                    LogError(@"DataAnalysis.exe not found in the Bruker Daltonik folder at " + brukerDaltonikDir.FullName);
+                    LogError("DataAnalysis.exe not found in the Bruker Daltonik folder at " + brukerDaltonikDir.FullName);
                     return string.Empty;
                 }
 
@@ -652,7 +652,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
             }
         }
 
-        private void cmdRunner_Timeout()
+        private void CmdRunner_Timeout()
         {
             mMaxRuntimeReached = true;
         }

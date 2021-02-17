@@ -79,7 +79,7 @@ namespace AnalysisManager_Mage_PlugIn
         }
 
         /// <summary>
-        /// Use contents of Mage simple sink object to build 
+        /// Use contents of Mage simple sink object to build
         /// a lookup table of dataset names to short label equivalents
         /// </summary>
         /// <param name="factorsObj">Mage simple sink object holding </param>
@@ -168,14 +168,14 @@ namespace AnalysisManager_Mage_PlugIn
             return nameLookup;
         }
 
-        // get the minimum number of initial characters necessary to distinquish s1 from s2
+        // get the minimum number of initial characters necessary to distinguish s1 from s2
         private static int GetUniqueWidth(string s1, string s2)
         {
             var width = 0;
             var len = (s1.Length > s2.Length) ? s2.Length : s1.Length;
             for (var i = 0; i < len; i++)
             {
-                if (s1.ElementAt(i) != s2.ElementAt(i))
+                if (s1[i] != s2[i])
                 {
                     width = i;
                     break;
@@ -185,7 +185,7 @@ namespace AnalysisManager_Mage_PlugIn
         }
 
         /// <summary>
-        /// Go through alias lookup table and strip off 
+        /// Go through alias lookup table and strip off
         /// any prefix characters that are shared by all the aliases
         /// </summary>
         public static void StripOffCommonPrefix(Dictionary<string, string> nameLookup)

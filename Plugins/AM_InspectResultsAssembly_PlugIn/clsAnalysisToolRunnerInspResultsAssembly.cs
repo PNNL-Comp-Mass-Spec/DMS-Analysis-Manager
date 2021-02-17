@@ -653,7 +653,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                 }
 
                 // Read the Inspect parameter file
-                using var reader = new StreamReader((new FileStream(inspectParameterFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)));
+                using var reader = new StreamReader(new FileStream(inspectParameterFilePath, FileMode.Open, FileAccess.Read, FileShare.Read));
 
                 while (!reader.EndOfStream)
                 {

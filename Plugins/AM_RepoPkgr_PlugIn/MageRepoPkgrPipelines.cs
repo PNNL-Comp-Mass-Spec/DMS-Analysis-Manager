@@ -127,7 +127,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
             var fileNames = AssociatedFiles.Rows.Select(x => x[fileNameCol]);
             var groupedFileNames = fileNames.GroupBy(y => y).Select(g => new { Value = g.Key, Count = g.Count() });
             var duplicates = groupedFileNames.Where(z => z.Count > 1);
-            return (duplicates.Any());
+            return duplicates.Any();
         }
 
         /// <summary>

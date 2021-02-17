@@ -354,7 +354,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
 
         // ReSharper restore CommentTypo
 
-        private readonly Regex reSubProgress = new Regex(@"Percent complete = ([0-9.]+)", RegexOptions.Compiled);
+        private readonly Regex reSubProgress = new Regex("Percent complete = ([0-9.]+)", RegexOptions.Compiled);
 
         /// <summary>
         /// Parse the TargetedWorkflowsConsole console output file to track progress

@@ -330,7 +330,7 @@ namespace AnalysisManagerOMSSAPlugIn
 
                             try
                             {
-                                if ((objMostRecentComment != null))
+                                if (objMostRecentComment != null)
                                 {
                                     // First append the most recent comment
 
@@ -366,7 +366,7 @@ namespace AnalysisManagerOMSSAPlugIn
                         {
                             // Match was found
 
-                            if ((objMostRecentComment != null))
+                            if (objMostRecentComment != null)
                             {
                                 try
                                 {

@@ -63,7 +63,7 @@ namespace AnalysisManagerSequestPlugin
         public void ArchiveSequestParamFile(string sourceFilePath, string targetFolderPath)
         {
             var lineIgnoreRegExSpecs = new List<Regex> {
-                new Regex(@"mass_type_parent *=.*")
+                new Regex("mass_type_parent *=.*")
             };
 
             var needToArchiveFile = false;
@@ -261,7 +261,7 @@ namespace AnalysisManagerSequestPlugin
                 // Look for a sequest.log.tmp file
                 var logFiles = sourceDirectory.GetFiles("sequest.log.tmp").ToList();
 
-                if (logFiles.Count <= 0)
+                if (logFiles.Count == 0)
                     return CloseOutType.CLOSEOUT_SUCCESS;
 
                 var firstLogFile = logFiles.First();

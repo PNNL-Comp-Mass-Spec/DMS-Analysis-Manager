@@ -175,7 +175,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                     msXmlGen = new clsMSXMLGenReadW(
                         mWorkDir, mMSXmlGeneratorAppPath, mDatasetName,
                         rawDataType, mMSXmlOutputFileType,
-                        centroidMS1 | centroidMS2,
+                        centroidMS1 || centroidMS2,
                         mJobParams);
 
                     if (rawDataTypeName != clsAnalysisResources.RAW_DATA_TYPE_DOT_RAW_FILES)
@@ -542,7 +542,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 var msXmlGenerator = mJobParams.GetParam("MSXMLGenerator");
                 // Must be MSConvert.exe
 
-                if (!(msXmlGenerator.IndexOf("msconvert", StringComparison.OrdinalIgnoreCase) >= 0))
+                if (msXmlGenerator.IndexOf("msconvert", StringComparison.OrdinalIgnoreCase) < 0)
                 {
                     LogError("ParentIonUpdater only supports MSConvert, not " + msXmlGenerator);
                     return false;

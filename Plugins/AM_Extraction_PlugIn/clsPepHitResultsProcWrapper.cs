@@ -46,18 +46,7 @@ namespace AnalysisManagerExtractionPlugin
 
         #region "Properties"
 
-        public string ErrMsg
-        {
-            get
-            {
-                if (mErrMsg == null)
-                {
-                    return string.Empty;
-                }
-
-                return mErrMsg;
-            }
-        }
+        public string ErrMsg => mErrMsg ?? string.Empty;
 
         #endregion
 

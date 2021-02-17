@@ -254,7 +254,7 @@ namespace AnalysisManagerMODPlusPlugin
         }
 
         /// <summary>
-        ///
+        /// Create the parameter files
         /// </summary>
         /// <param name="paramFileName"></param>
         /// <param name="fastaFilePath"></param>
