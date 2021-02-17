@@ -386,15 +386,15 @@ namespace AnalysisManagerSMAQCPlugIn
                 sbXML.Append("<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"yes\"?>");
                 sbXML.Append("<SMAQC_Results>");
 
-                sbXML.Append("<Dataset>" + mDatasetName + "</Dataset>");
-                sbXML.Append("<Job>" + mJob + "</Job>");
-                sbXML.Append("<PSM_Source_Job>" + strPSMSourceJob + "</PSM_Source_Job>");
+                sbXML.AppendFormat("<Dataset>{0}</Dataset>", mDatasetName);
+                sbXML.AppendFormat("<Job>{0}</Job>", mJob);
+                sbXML.AppendFormat("<PSM_Source_Job>{0}</PSM_Source_Job>", strPSMSourceJob);
 
                 sbXML.Append("<Measurements>");
 
                 foreach (var kvResult in lstResults)
                 {
-                    sbXML.Append("<Measurement Name=\"" + kvResult.Key + "\">" + kvResult.Value + "</Measurement>");
+                    sbXML.AppendFormat("<Measurement Name=\"{0}\">{1}</Measurement>", kvResult.Key, kvResult.Value);
                 }
 
                 sbXML.Append("</Measurements>");

@@ -759,11 +759,11 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                     // Check whether key is one of the standard keys defined in dctParamNames
                     if (dctParamNames.TryGetValue(key, out var strArgumentSwitch))
                     {
-                        sbOptions.Append(" -" + strArgumentSwitch + " " + value);
+                        sbOptions.AppendFormat(" -{0} {1}", strArgumentSwitch, value);
                     }
                     else if (string.Equals(key, "adducts", StringComparison.OrdinalIgnoreCase))
                     {
-                        sbOptions.Append(" -adducts \"" + value + "\"");
+                        sbOptions.AppendFormat(" -adducts \"{0}\"", value);
                     }
                     else if (string.Equals(key, "noscangroups", StringComparison.OrdinalIgnoreCase))
                     {

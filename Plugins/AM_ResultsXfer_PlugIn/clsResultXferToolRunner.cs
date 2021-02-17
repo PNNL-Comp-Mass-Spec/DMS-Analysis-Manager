@@ -210,10 +210,10 @@ namespace AnalysisManagerResultsXferPlugin
             //
             sbSql.Append(" SELECT TOP 1 VolServer, [Path]");
             sbSql.Append(" FROM V_Storage_Path_Export");
-            sbSql.Append(" WHERE (MachineName = '" + serverName + "') AND");
-            sbSql.Append("       ([Path] = '" + uncFolderPath + "' OR");
-            sbSql.Append("        [Path] = '" + uncFolderPath + "\\')");
-            sbSql.Append(" ORDER BY CASE WHEN [Function] = '" + folderFunction + "' THEN 1 ELSE 2 END, ID DESC");
+            sbSql.AppendFormat(" WHERE (MachineName = '{0}') AND", serverName);
+            sbSql.AppendFormat("       ([Path] = '{0}' OR", uncFolderPath);
+            sbSql.AppendFormat("        [Path] = '{0}\\')", uncFolderPath);
+            sbSql.AppendFormat(" ORDER BY CASE WHEN [Function] = '{0}' THEN 1 ELSE 2 END, ID DESC", folderFunction);
 
             var dbTools = DbToolsFactory.GetDBTools(connectionString, debugMode: mMgrParams.TraceMode);
             RegisterEvents(dbTools);
