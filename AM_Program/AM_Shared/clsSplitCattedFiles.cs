@@ -125,7 +125,7 @@ namespace AnalysisManagerBase
 
                             if (fileCounter > 0)
                             {
-                                // Process the data stored in queue fileText, saving to file fileName
+                                // Process the data stored in queue fileText, saving to fileName
                                 ProcessSplitFile(ref fileText, fileName, resultsFolder, ref filesToSkip);
                             }
 
@@ -162,7 +162,7 @@ namespace AnalysisManagerBase
                     }
                 }
 
-                // Process the data stored in queue fileText, saving to file fileName
+                // Process the data stored in queue fileText, saving to fileName
                 ProcessSplitFile(ref fileText, fileName, resultsFolder, ref filesToSkip);
             }
             catch (Exception ex)
