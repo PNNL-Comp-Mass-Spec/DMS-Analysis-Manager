@@ -7,7 +7,7 @@ using PRISMDatabaseUtils;
 
 namespace AnalysisManager_Ape_PlugIn
 {
-    class clsApeAMGetViperResults : clsApeAMBase
+    internal class clsApeAMGetViperResults : clsApeAMBase
     {
         #region Member Variables
 

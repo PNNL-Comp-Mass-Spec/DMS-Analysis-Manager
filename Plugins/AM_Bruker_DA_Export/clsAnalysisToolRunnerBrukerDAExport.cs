@@ -638,7 +638,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
 
         #region "Event Handlers"
 
-        void CmdRunner_LoopWaiting()
+        private void CmdRunner_LoopWaiting()
         {
             {
                 // Parse the console output file every 15 seconds
@@ -655,7 +655,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
             }
         }
 
-        void cmdRunner_Timeout()
+        private void cmdRunner_Timeout()
         {
             mMaxRuntimeReached = true;
         }

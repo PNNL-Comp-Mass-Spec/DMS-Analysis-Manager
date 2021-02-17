@@ -6,7 +6,7 @@ using PRISMDatabaseUtils;
 
 namespace AnalysisManager_Ape_PlugIn
 {
-    class clsApeAMGetQRollupResults : clsApeAMBase
+    internal class clsApeAMGetQRollupResults : clsApeAMBase
     {
         #region Member Variables
 

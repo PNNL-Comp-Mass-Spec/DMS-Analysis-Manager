@@ -5,7 +5,7 @@ using PRISM;
 
 namespace AnalysisManager_Ape_PlugIn
 {
-    class clsApeAMBase : EventNotifier
+    internal class clsApeAMBase : EventNotifier
     {
         #region Enums
         public enum eSqlServerToSqlLiteConversionMode

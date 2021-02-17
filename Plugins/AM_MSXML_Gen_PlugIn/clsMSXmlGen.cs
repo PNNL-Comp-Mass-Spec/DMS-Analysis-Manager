@@ -12,7 +12,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
         #region "Constants"
 
         // Define a maximum runtime of 36 hours
-        const int MAX_RUNTIME_SECONDS = 36 * 60 * 60;
+        private const int MAX_RUNTIME_SECONDS = 36 * 60 * 60;
 
         public const string MZXML_FILE_FORMAT = "mzXML";
         public const string MZML_FILE_FORMAT = "mzML";

@@ -1049,7 +1049,7 @@ namespace AnalysisManagerFormularityPlugin
 
         #region "Event Handlers"
 
-        void CmdRunner_LoopWaiting()
+        private void CmdRunner_LoopWaiting()
         {
             // Synchronize the stored Debug level with the value stored in the database
 

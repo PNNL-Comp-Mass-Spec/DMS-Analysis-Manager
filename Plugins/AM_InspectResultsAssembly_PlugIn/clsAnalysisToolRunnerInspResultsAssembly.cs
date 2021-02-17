@@ -74,7 +74,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
         // mPercentCompleteStartLevels is an array that lists the percent complete value to report
         //  at the start of each of the various processing steps performed in this procedure
         // The percent complete values range from 0 to 100
-        const int PERCENT_COMPLETE_LEVEL_COUNT = 5;
+        private const int PERCENT_COMPLETE_LEVEL_COUNT = 5;
         protected float[] mPercentCompleteStartLevels;
 
         #endregion

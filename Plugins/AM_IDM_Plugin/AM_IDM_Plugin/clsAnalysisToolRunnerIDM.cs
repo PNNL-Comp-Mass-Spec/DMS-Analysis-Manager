@@ -10,7 +10,7 @@ namespace AnalysisManager_IDM_Plugin
     /// <summary>
     /// Class for running the IDM utility
     /// </summary>
-    class clsAnalysisToolRunnerIDM : clsAnalysisToolRunnerBase
+    internal class clsAnalysisToolRunnerIDM : clsAnalysisToolRunnerBase
     {
         #region "Constants"
         public const string EXISTING_IDM_RESULTS_FILE_NAME = "ExistingIDMResults.db3";

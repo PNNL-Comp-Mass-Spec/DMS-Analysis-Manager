@@ -4,7 +4,7 @@ using System.IO;
 
 namespace AnalysisManager_Ape_PlugIn
 {
-    class clsApeAMRunWorkflow : clsApeAMBase
+    internal class clsApeAMRunWorkflow : clsApeAMBase
     {
         #region Member Variables
 

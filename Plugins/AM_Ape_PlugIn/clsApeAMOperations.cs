@@ -134,7 +134,7 @@ namespace AnalysisManager_Ape_PlugIn
             sourceClass.ProgressUpdate += OnProgressUpdate;
         }
 
-        void ApeProgressChanged(string message)
+        private void ApeProgressChanged(string message)
         {
             // Update the step tool progress
             // However, Ape routinely reports progress of 0% or 100% at the start and end of certain subtasks, so ignore those values
