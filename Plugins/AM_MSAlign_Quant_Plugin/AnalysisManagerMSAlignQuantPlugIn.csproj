@@ -54,6 +54,7 @@
   <ItemGroup>
     <Compile Include="clsAnalysisResourcesMSAlignQuant.cs" />
     <Compile Include="clsAnalysisToolRunnerMSAlignQuant.cs" />
+    <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

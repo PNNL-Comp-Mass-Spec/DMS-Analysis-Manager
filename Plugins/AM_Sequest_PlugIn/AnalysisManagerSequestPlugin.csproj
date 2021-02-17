@@ -59,6 +59,7 @@
     <Compile Include="clsAnalysisToolRunnerAgilentSeq.cs" />
     <Compile Include="clsAnalysisToolRunnerSeqBase.cs" />
     <Compile Include="clsAnalysisToolRunnerSeqCluster.cs" />
+    <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

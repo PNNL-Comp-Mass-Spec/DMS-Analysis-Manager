@@ -53,6 +53,7 @@
     <Compile Include="clsAnalysisToolRunnerMODPlus.cs" />
     <Compile Include="clsMODPlusResultsReader.cs" />
     <Compile Include="clsMODPlusRunner.cs" />
+    <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -78,6 +78,7 @@
   <ItemGroup>
     <Compile Include="clsAnalysisResourcesRepoPkgr.cs" />
     <Compile Include="clsAnalysisToolRunnerRepoPkgr.cs" />
+    <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="MageRepoPkgrPipelines.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="QueryDefinitions.cs" />

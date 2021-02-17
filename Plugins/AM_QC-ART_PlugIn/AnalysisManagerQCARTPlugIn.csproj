@@ -59,6 +59,7 @@
   <ItemGroup>
     <Compile Include="clsAnalysisResourcesQCART.cs" />
     <Compile Include="clsAnalysisToolRunnerQCART.cs" />
+    <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

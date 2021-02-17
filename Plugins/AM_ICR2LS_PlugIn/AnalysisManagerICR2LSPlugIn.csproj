@@ -74,6 +74,7 @@
     <Compile Include="clsAnalysisToolRunnerICR.cs" />
     <Compile Include="clsAnalysisToolRunnerICRBase.cs" />
     <Compile Include="clsAnalysisToolRunnerLTQ_FTPek.cs" />
+    <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

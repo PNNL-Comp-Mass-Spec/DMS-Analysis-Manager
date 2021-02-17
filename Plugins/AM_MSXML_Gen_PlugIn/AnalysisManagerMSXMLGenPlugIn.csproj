@@ -63,6 +63,7 @@
     <Compile Include="clsMSXMLGenReadW.cs" />
     <Compile Include="clsParentIonUpdater.cs" />
     <Compile Include="clsRawConverterRunner.cs" />
+    <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

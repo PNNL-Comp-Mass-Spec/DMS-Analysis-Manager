@@ -79,6 +79,7 @@
     <Compile Include="clsAnalysisResourcesAScore.cs" />
     <Compile Include="clsAnalysisToolRunnerAScore.cs" />
     <Compile Include="clsAScoreMage.cs" />
+    <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="JobParameters.cs" />
     <Compile Include="MageAScoreModule.cs" />
     <Compile Include="MageFileImport.cs" />

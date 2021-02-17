@@ -57,6 +57,7 @@
   <ItemGroup>
     <Compile Include="clsAnalysisResourcesMODa.cs" />
     <Compile Include="clsAnalysisToolRunnerMODa.cs" />
+    <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

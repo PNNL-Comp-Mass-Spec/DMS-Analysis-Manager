@@ -6,3 +6,5 @@
 using System.Diagnostics.CodeAnalysis;
 
 [assembly: SuppressMessage("Style", "IDE0066:Convert switch statement to expression", Justification = "Leave as-is for readability", Scope = "member", Target = "~M:MSMSSpectrumFilterAM.clsAnalysisResourcesMsMsSpectrumFilter.GetResources~AnalysisManagerBase.CloseOutType")]
+[assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Acceptable legacy name", Scope = "type", Target = "~T:MSMSSpectrumFilterAM.clsAnalysisResourcesMsMsSpectrumFilter")]
+[assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Acceptable legacy name", Scope = "type", Target = "~T:MSMSSpectrumFilterAM.clsAnalysisToolRunnerMsMsSpectrumFilter")]

@@ -61,6 +61,7 @@
     <Compile Include="clsAnalysisResourcesIN.cs" />
     <Compile Include="clsAnalysisToolRunnerIN.cs" />
     <Compile Include="clsCreateInspectIndexedDB.cs" />
+    <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

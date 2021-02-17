@@ -55,6 +55,7 @@
     <Compile Include="clsAnalysisResourcesMSXMLBruker.cs" />
     <Compile Include="clsAnalysisToolRunnerMSXMLBruker.cs" />
     <Compile Include="clsCompassXportRunner.cs" />
+    <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

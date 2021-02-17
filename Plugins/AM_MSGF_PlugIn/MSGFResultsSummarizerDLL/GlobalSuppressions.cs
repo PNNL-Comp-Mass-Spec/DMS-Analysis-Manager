@@ -6,3 +6,6 @@
 using System.Diagnostics.CodeAnalysis;
 
 [assembly: SuppressMessage("Readability", "RCS1123:Add parentheses when necessary.", Justification = "Parentheses not needed", Scope = "member", Target = "~M:MSGFResultsSummarizer.clsMSGFResultsSummarizer.CheckForScanGaps(System.Collections.Generic.List{System.Int32})")]
+[assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Acceptable legacy name", Scope = "type", Target = "~T:MSGFResultsSummarizer.clsMSGFResultsSummarizer")]
+[assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Acceptable legacy name", Scope = "type", Target = "~T:MSGFResultsSummarizer.clsMSGFResultsSummarizer.clsMSGFtoResultIDMapComparer")]
+[assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Acceptable legacy name", Scope = "type", Target = "~T:MSGFResultsSummarizer.clsPSMStats")]

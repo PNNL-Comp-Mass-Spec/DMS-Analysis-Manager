@@ -58,6 +58,7 @@
     <Compile Include="clsAnalysisResourcesMSDeconv.cs" />
     <Compile Include="clsAnalysisToolRunnerMSDeconv.cs" />
     <Compile Include="clsRenumberMzXMLScans.cs" />
+    <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

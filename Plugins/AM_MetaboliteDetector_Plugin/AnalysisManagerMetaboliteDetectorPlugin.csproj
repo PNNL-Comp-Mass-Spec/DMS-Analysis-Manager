@@ -57,6 +57,7 @@
   <ItemGroup>
     <Compile Include="clsAnalysisResourcesMetaboliteDetector.cs" />
     <Compile Include="clsAnalysisToolRunnerMetaboliteDetector.cs" />
+    <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
