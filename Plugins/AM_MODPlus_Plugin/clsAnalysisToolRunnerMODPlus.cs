@@ -980,7 +980,7 @@ namespace AnalysisManagerMODPlusPlugin
                         if (!mToolVersionWritten && !string.IsNullOrWhiteSpace(modPlusRunner.Value.ReleaseDate))
                         {
                             mMODPlusVersion = modPlusRunner.Value.ReleaseDate;
-                            mToolVersionWritten = StoreToolVersionInfo(mMODPlusProgLoc);
+                            mToolVersionWritten = StoreToolVersionInfo();
                         }
                     }
 
@@ -1028,7 +1028,7 @@ namespace AnalysisManagerMODPlusPlugin
                     if (!mToolVersionWritten && !string.IsNullOrWhiteSpace(modPlusRunner.Value.ReleaseDate))
                     {
                         mMODPlusVersion = modPlusRunner.Value.ReleaseDate;
-                        mToolVersionWritten = StoreToolVersionInfo(mMODPlusProgLoc);
+                        mToolVersionWritten = StoreToolVersionInfo();
                     }
 
                     var progRunner = modPlusRunner.Value.ProgramRunner;
@@ -1095,8 +1095,7 @@ namespace AnalysisManagerMODPlusPlugin
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        /// <remarks></remarks>
-        protected bool StoreToolVersionInfo(string strProgLoc)
+        protected bool StoreToolVersionInfo()
         {
             if (mDebugLevel >= 2)
             {
