@@ -335,7 +335,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 }
 
                 // Store the PRIDE Converter version info in the database
-                if (!StoreToolVersionInfo(mPrideConverterProgLoc))
+                if (!StoreToolVersionInfo())
                 {
                     LogError("Aborting since StoreToolVersionInfo returned false");
                     mMessage = "Error determining PRIDE Converter version";
@@ -4294,8 +4294,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        /// <param name="prideConverterProgLoc"></param>
-        private bool StoreToolVersionInfo(string prideConverterProgLoc)
+        private bool StoreToolVersionInfo()
         {
             var toolVersionInfo = string.Empty;
 
@@ -4310,7 +4309,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             // Deprecated:
             //if (mCreatePrideXMLFiles)
             //{
-            //    var prideConverter = new FileInfo(prideConverterProgLoc);
+            //    var prideConverter = new FileInfo(mPrideConverterProgLoc);
             //    if (!prideConverter.Exists)
             //    {
             //        try

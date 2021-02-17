@@ -138,7 +138,7 @@ namespace AnalysisManagerFormularityPlugin
                 else
                 {
                     // Look for the result files and call NOMSI to create plots
-                    eReturnCode = PostProcessResults(progLocNOMSI, ref processingSuccess);
+                    eReturnCode = PostProcessResults(progLocNOMSI);
                 }
 
                 mProgress = PROGRESS_PCT_COMPLETE;
@@ -572,7 +572,7 @@ namespace AnalysisManagerFormularityPlugin
             }
         }
 
-        private CloseOutType PostProcessResults(string progLocNOMSI, ref bool processingSuccess)
+        private CloseOutType PostProcessResults(string progLocNOMSI)
         {
             try
             {

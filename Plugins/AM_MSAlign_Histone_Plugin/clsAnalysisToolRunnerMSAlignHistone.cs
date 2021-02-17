@@ -269,7 +269,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                             // Make sure the _OUTPUT_TABLE.txt file is not empty
                             // Make a copy of the OUTPUT_TABLE.txt file so that we can fix the header row (creating the RESULT_TABLE_NAME_SUFFIX file)
 
-                            if (ValidateResultTableFile(eMSalignVersion, strResultTableSourcePath))
+                            if (ValidateResultTableFile(strResultTableSourcePath))
                             {
                                 eResult = CloseOutType.CLOSEOUT_SUCCESS;
                             }
@@ -1014,7 +1014,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
             return !processingError;
         }
 
-        protected bool ValidateResultTableFile(eMSAlignVersionType eMSalignVersion, string strSourceFilePath)
+        protected bool ValidateResultTableFile(string strSourceFilePath)
         {
             try
             {

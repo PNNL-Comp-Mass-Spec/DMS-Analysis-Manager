@@ -844,7 +844,7 @@ namespace AnalysisManagerMSGFPlugin
                 sourceFilePath = sourceFilePathAlternate;
             }
 
-            var success = msgfInputCreator.CreateMSGFFileUsingMSGFDBSpecProb(sourceFilePath, synOrFHT);
+            var success = msgfInputCreator.CreateMSGFFileUsingMSGFDBSpecProb(sourceFilePath);
 
             if (!success)
             {

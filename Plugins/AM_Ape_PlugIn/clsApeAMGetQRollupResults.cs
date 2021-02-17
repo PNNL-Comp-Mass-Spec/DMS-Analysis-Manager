@@ -28,7 +28,7 @@ namespace AnalysisManager_Ape_PlugIn
         /// <summary>
         /// Setup and run Ape pipeline according to job parameters
         /// </summary>
-        public bool GetQRollupResults(string dataPackageID)
+        public bool GetQRollupResults()
         {
             var success = GetQRollupResultsAll();
             return success;
@@ -37,7 +37,7 @@ namespace AnalysisManager_Ape_PlugIn
         private bool GetQRollupResultsAll()
         {
             var success = true;
-            var mHandle = new Ape.SqlConversionHandler(delegate (bool done, bool conversionSuccess, int percent, string msg)
+            var mHandle = new Ape.SqlConversionHandler(delegate (bool done, bool conversionSuccess, int _, string msg)
             {
                 OnStatusEvent(msg);
 

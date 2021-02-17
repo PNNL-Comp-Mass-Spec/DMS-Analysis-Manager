@@ -623,7 +623,7 @@ namespace AnalysisManagerSMAQCPlugIn
             }
         }
 
-        private string ParseSMAQCParameterFile(string parameterFilePath)
+        private string ParseSMAQCParameterFile()
         {
             // If necessary, could parse a parameter file and convert the options in the parameter file to command line arguments
             // As an example, see function ParseMSGFPlusParameterFile in the AnalysisManagerMSGFDBPlugIn project

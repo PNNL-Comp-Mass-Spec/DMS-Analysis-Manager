@@ -28,7 +28,7 @@ namespace AnalysisManager_Ape_PlugIn
         /// <summary>
         /// Setup and run Ape pipeline according to job parameters
         /// </summary>
-        public bool GetImprovResults(string dataPackageID)
+        public bool GetImprovResults()
         {
             var success = GetImprovResultsAll();
             return success;
@@ -37,7 +37,7 @@ namespace AnalysisManager_Ape_PlugIn
         private bool GetImprovResultsAll()
         {
             var success = true;
-            var mHandle = new Ape.SqlConversionHandler(delegate (bool done, bool conversionSuccess, int percent, string msg)
+            var mHandle = new Ape.SqlConversionHandler(delegate (bool done, bool conversionSuccess, int _, string msg)
             {
                 OnStatusEvent(msg);
 

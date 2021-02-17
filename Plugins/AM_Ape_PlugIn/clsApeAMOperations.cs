@@ -81,7 +81,7 @@ namespace AnalysisManager_Ape_PlugIn
                 // Attach the event handlers
                 RegisterEventsCustomProgressHandler(apeImpObj);
 
-                var success = apeImpObj.GetImprovResults(mJobParams.GetParam("DataPackageID"));
+                var success = apeImpObj.GetImprovResults();
 
                 if (!success)
                     ErrorMessage = "Error getting ImprovResults: " + apeImpObj.ErrorMessage;
@@ -96,7 +96,7 @@ namespace AnalysisManager_Ape_PlugIn
                 // Attach the event handlers
                 RegisterEventsCustomProgressHandler(apeQImpObj);
 
-                var success = apeQImpObj.GetQRollupResults(mJobParams.GetParam("DataPackageID"));
+                var success = apeQImpObj.GetQRollupResults();
 
                 if (!success)
                     ErrorMessage = "Error obtaining QRollup Results: " + apeQImpObj.ErrorMessage;
@@ -111,7 +111,8 @@ namespace AnalysisManager_Ape_PlugIn
                 // Attach the event handlers
                 RegisterEventsCustomProgressHandler(apeVImpObj);
 
-                var success = apeVImpObj.GetQRollupResults(mJobParams.GetParam("DataPackageID"));
+                var dataPackageID = mJobParams.GetParam("DataPackageID");
+                var success = apeVImpObj.GetQRollupResults(dataPackageID);
 
                 if (!success)
                     ErrorMessage = "Error obtaining VIPER results: " + apeVImpObj.ErrorMessage;
