@@ -910,9 +910,10 @@ namespace AnalysisManagerICR2LSPlugIn
                     mLastStatusLogTime = DateTime.UtcNow;
 
                     LogDebug(
-                        "clsAnalysisToolRunnerICRBase.CmdRunner_LoopWaiting(); " + "Processing Time = " +
-                        DateTime.UtcNow.Subtract(mStartTime).TotalMinutes.ToString("0.0") + " minutes; " + "Progress = " +
-                        mProgress.ToString("0.00") + "; " + "Scans Processed = " + mICR2LSStatus.ScansProcessed);
+                        string.Format(
+                            "clsAnalysisToolRunnerICRBase.CmdRunner_LoopWaiting(); " +
+                            "Processing Time = {0:0.0} minutes; Progress = {1:0.00}; Scans Processed = {2}",
+                            DateTime.UtcNow.Subtract(mStartTime).TotalMinutes, mProgress, mICR2LSStatus.ScansProcessed));
                 }
             }
 

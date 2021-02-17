@@ -473,7 +473,7 @@ namespace MSGFResultsSummarizer
                     }
                 }
 
-                var queryScanTotal = " SELECT [Scan Count]" + " FROM V_Dataset_Export" + " WHERE Dataset = '" + DatasetName + "'";
+                var queryScanTotal = " SELECT [Scan Count] FROM V_Dataset_Export WHERE Dataset = '" + DatasetName + "'";
 
                 // ReSharper disable once ExplicitCallerInfoArgument
                 var scanCountSuccess = dbTools.GetQueryResults(queryScanTotal, out var datasetScanCountFromDb, callingFunction: "LookupScanStats_V_Dataset_Export");

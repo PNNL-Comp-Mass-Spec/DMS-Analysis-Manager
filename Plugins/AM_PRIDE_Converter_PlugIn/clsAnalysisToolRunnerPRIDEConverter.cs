@@ -1567,12 +1567,12 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                             reader.CurrentPSM.Charge + "\t" +
                             reader.CurrentPSM.MSGFSpecEValue + "\t" +
                             reader.CurrentPSM.PeptideCleanSequence.Length + "\t" +
-                            totalPRMScore + "\t" + "0\t" + "0\t" + "0\t" + "0\t" +
+                            totalPRMScore + "\t0\t0\t0\t0\t" +
                             reader.CurrentPSM.NumTrypticTermini + "\t" +
-                            pValueFormatted + "\t" + "0\t" +
+                            pValueFormatted + "\t0\t" +
                             deltaScore + "\t" +
                             deltaScoreOther + "\t" +
-                            reader.CurrentPSM.ResultID + "\t" + "0\t" + "0\t" +
+                            reader.CurrentPSM.ResultID + "\t0\t0\t" +
                             reader.CurrentPSM.MSGFSpecEValue;
 
                         // Add or update bestMatchByScan and bestMatchByScanScoreValues

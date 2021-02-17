@@ -808,8 +808,9 @@ namespace DTASpectraFileGen
 
                             if (string.IsNullOrWhiteSpace(dataLinesToAppend))
                             {
-                                LogError("oCDTAReaderFragIonData.GetMostRecentSpectrumFileText returned empty text for " + "StartScan=" +
-                                         parentIonDataHeader.ScanNumberStart + " and " + "EndScan=" + parentIonDataHeader.ScanNumberEnd +
+                                LogError("oCDTAReaderFragIonData.GetMostRecentSpectrumFileText returned empty text for " +
+                                         "StartScan=" + parentIonDataHeader.ScanNumberStart + " and " +
+                                         "EndScan=" + parentIonDataHeader.ScanNumberEnd +
                                          " in MergeCDTAs for " + Path.GetFileName(cdtaWithParentIonData));
                                 return false;
                             }

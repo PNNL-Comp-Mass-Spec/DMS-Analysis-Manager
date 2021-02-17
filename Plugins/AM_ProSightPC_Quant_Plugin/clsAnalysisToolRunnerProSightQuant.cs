@@ -407,7 +407,7 @@ namespace AnalysisManagerProSightQuantPlugIn
                             var charIndex = dataLineLCase.IndexOf("exception of type", StringComparison.OrdinalIgnoreCase);
                             if (charIndex < 0)
                             {
-                                charIndex = dataLineLCase.IndexOf("\t" + "error", StringComparison.OrdinalIgnoreCase);
+                                charIndex = dataLineLCase.IndexOf("\terror", StringComparison.OrdinalIgnoreCase);
 
                                 if (charIndex > 0)
                                 {

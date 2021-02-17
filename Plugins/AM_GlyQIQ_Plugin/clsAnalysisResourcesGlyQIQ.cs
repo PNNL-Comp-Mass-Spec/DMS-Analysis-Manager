@@ -161,16 +161,16 @@ namespace AnalysisManagerGlyQIQPlugin
 
                     using var writer = new StreamWriter(new FileStream(outputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
 
-                    writer.WriteLine("ResultsFolderPath" + "," + Path.Combine(mWorkDir, "Results"));
-                    writer.WriteLine("LoggingFolderPath" + "," + Path.Combine(mWorkDir, "Results"));
-                    writer.WriteLine("FactorsFile" + "," + mGlyQIQParams.FactorsName + ".txt");
-                    writer.WriteLine("ExecutorParameterFile" + "," + EXECUTOR_PARAMETERS_FILE);
-                    writer.WriteLine("XYDataFolder" + "," + "XYDataWriter");
-                    writer.WriteLine("WorkflowParametersFile" + "," + mGlyQIQParams.IQParamFileName);
-                    writer.WriteLine("Alignment" + "," + Path.Combine(workingDirectory.Value.FullName, ALIGNMENT_PARAMETERS_FILENAME));
+                    writer.WriteLine("ResultsFolderPath," + Path.Combine(mWorkDir, "Results"));
+                    writer.WriteLine("LoggingFolderPath," + Path.Combine(mWorkDir, "Results"));
+                    writer.WriteLine("FactorsFile," + mGlyQIQParams.FactorsName + ".txt");
+                    writer.WriteLine("ExecutorParameterFile," + EXECUTOR_PARAMETERS_FILE);
+                    writer.WriteLine("XYDataFolder,XYDataWriter");
+                    writer.WriteLine("WorkflowParametersFile," + mGlyQIQParams.IQParamFileName);
+                    writer.WriteLine("Alignment," + Path.Combine(workingDirectory.Value.FullName, ALIGNMENT_PARAMETERS_FILENAME));
 
                     // The following file doesn't have to exist
-                    writer.WriteLine("BasicTargetedParameters" + "," +
+                    writer.WriteLine("BasicTargetedParameters," +
                                      Path.Combine(workingDirectory.Value.FullName, "BasicTargetedWorkflowParameters.xml"));
                 }
 
@@ -216,9 +216,9 @@ namespace AnalysisManagerGlyQIQPlugin
 
                     writer.Write(clsGlobal.PossiblyQuotePath(progLoc));
 
-                    writer.Write(" " + "\"" + mWorkDir + "\"");
-                    writer.Write(" " + "\"" + DatasetName + "\"");
-                    writer.Write(" " + "\"" + "raw" + "\"");
+                    writer.Write(" \"" + mWorkDir + "\"");
+                    writer.Write(" \"" + DatasetName + "\"");
+                    writer.Write(" \"raw\"");
 
                     if (!splitTargetFileInfo.TryGetValue(core, out var targetsFile))
                     {
@@ -226,17 +226,17 @@ namespace AnalysisManagerGlyQIQPlugin
                         return false;
                     }
 
-                    writer.Write(" " + "\"" + targetsFile.Name + "\"");
+                    writer.Write(" \"" + targetsFile.Name + "\"");
 
-                    writer.Write(" " + "\"" + mGlyQIQParams.ConsoleOperatingParametersFileName + "\"");
+                    writer.Write(" \"" + mGlyQIQParams.ConsoleOperatingParametersFileName + "\"");
 
-                    writer.Write(" " + "\"" + workingDirectory.Value.FullName + "\"");
+                    writer.Write(" \"" + workingDirectory.Value.FullName + "\"");
 
-                    writer.Write(" " + "\"" + "Lock_" + core + "\"");
+                    writer.Write(" \"Lock_" + core + "\"");
 
-                    writer.Write(" " + "\"" + Path.Combine(mWorkDir, "Results") + "\"");
+                    writer.Write(" \"" + Path.Combine(mWorkDir, "Results") + "\"");
 
-                    writer.Write(" " + "\"" + core + "\"");
+                    writer.Write(" \"" + core + "\"");
 
                     writer.WriteLine();
                 }

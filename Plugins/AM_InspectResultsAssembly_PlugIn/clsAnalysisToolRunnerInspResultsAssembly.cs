@@ -418,7 +418,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                                 {
                                     if (!headerLineWritten)
                                     {
-                                        writer.WriteLine("Segment\t" + "Message");
+                                        writer.WriteLine("Segment\tMessage");
                                     }
                                     writer.WriteLine(fileNameCounter + "\t" + dataLine);
                                 }

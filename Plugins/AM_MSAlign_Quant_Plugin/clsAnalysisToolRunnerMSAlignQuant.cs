@@ -435,7 +435,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                             var charIndex = dataLineLCase.IndexOf("exception of type", StringComparison.Ordinal);
                             if (charIndex < 0)
                             {
-                                charIndex = dataLineLCase.IndexOf("\t" + "error", StringComparison.Ordinal);
+                                charIndex = dataLineLCase.IndexOf("\terror", StringComparison.Ordinal);
 
                                 if (charIndex > 0)
                                 {

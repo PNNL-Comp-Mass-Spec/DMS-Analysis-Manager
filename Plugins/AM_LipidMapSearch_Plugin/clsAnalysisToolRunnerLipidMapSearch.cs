@@ -763,7 +763,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                     }
                     else if (string.Equals(key, "adducts", StringComparison.OrdinalIgnoreCase))
                     {
-                        sbOptions.Append(" -adducts " + "\"" + value + "\"");
+                        sbOptions.Append(" -adducts \"" + value + "\"");
                     }
                     else if (string.Equals(key, "noscangroups", StringComparison.OrdinalIgnoreCase))
                     {

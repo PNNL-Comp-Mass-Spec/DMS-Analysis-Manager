@@ -172,8 +172,8 @@ namespace AnalysisManagerSequestPlugin
         /// <remarks></remarks>
         protected void AppendOutFile(FileInfo sourceOutFile, StreamWriter outFileWriter)
         {
-            const string hdrLeft = "=================================== " + "\"";
-            const string hdrRight = "\"" + " ==================================";
+            const string hdrLeft = "=================================== \"";
+            const string hdrRight = "\" ==================================";
 
             if (!sourceOutFile.Exists)
             {
@@ -601,7 +601,7 @@ namespace AnalysisManagerSequestPlugin
         }
 
         /// <summary>
-        /// Concatenates any .out files that still remain in the the working directory
+        /// Concatenates any .out files that still remain in the working directory
         /// If running on the Sequest Cluster, the majority of the files should have already been appended to _out.txt.tmp
         /// </summary>
         /// <param name="WorkDir">Working directory</param>
@@ -675,7 +675,7 @@ namespace AnalysisManagerSequestPlugin
                 }
                 catch (Exception ex)
                 {
-                    LogWarning("Error appending .out files to the _out.txt.tmp file" + ": " + ex.Message);
+                    LogWarning("Error appending .out files to the _out.txt.tmp file: " + ex.Message);
                     // Delay for a random length between 15 and 30 seconds
                     clsGlobal.IdleLoop(oRandom.Next(15, 30));
                     success = false;

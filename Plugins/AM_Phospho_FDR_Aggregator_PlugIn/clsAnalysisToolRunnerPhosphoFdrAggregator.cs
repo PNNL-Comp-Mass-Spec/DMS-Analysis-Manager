@@ -433,7 +433,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
 
             using var writer = new StreamWriter(new FileStream(outputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
 
-            writer.WriteLine("Job\t" + "Tool\t" + "Dataset");
+            writer.WriteLine("Job\tTool\tDataset");
 
             foreach (var job in jobsProcessed)
             {
