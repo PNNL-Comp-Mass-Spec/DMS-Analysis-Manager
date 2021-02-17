@@ -366,7 +366,7 @@ namespace AnalysisManager_AScore_PlugIn
         }
 
         /// <summary>
-        /// make a set of parameters for the extraction pipeline modules using the the job parameters
+        /// make a set of parameters for the extraction pipeline modules using the job parameters
         /// </summary>
         protected ExtractionType GetExtractionParametersFromJobParameters()
         {
