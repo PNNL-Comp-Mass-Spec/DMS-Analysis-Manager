@@ -215,7 +215,7 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
         {
             // Set up and execute a program runner to run the Metabolite Detector
 
-            var arguments = "xyz";
+            const string arguments = "xyz";
 
             if (mDebugLevel >= 1)
             {

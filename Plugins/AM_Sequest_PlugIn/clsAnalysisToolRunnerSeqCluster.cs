@@ -239,7 +239,7 @@ namespace AnalysisManagerSequestPlugin
                         success = false;
                         if (mNodeCountSpawnErrorOccurrences < MAX_NODE_RESPAWN_ATTEMPTS && mNodeCountActiveErrorOccurrences < MAX_NODE_RESPAWN_ATTEMPTS)
                         {
-                            var maxPVMResetAttempts = 4;
+                            const int maxPVMResetAttempts = 4;
 
                             LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.INFO, "Resetting PVM in MakeOUTFiles");
                             success = ResetPVMWithRetry(maxPVMResetAttempts);
@@ -998,7 +998,7 @@ namespace AnalysisManagerSequestPlugin
             finally
             {
                 // Make sure mOutFileHandlerInUse is now zero
-                long zero = 0;
+                const long zero = 0;
                 System.Threading.Interlocked.Exchange(ref mOutFileHandlerInUse, zero);
             }
 
@@ -1137,13 +1137,13 @@ namespace AnalysisManagerSequestPlugin
                     LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, "     " + batchFilePath);
                 }
 
-                var taskName = "HaltPVM";
+                const string taskName = "HaltPVM";
                 if (!InitializeUtilityRunner(taskName, PVMProgFolder))
                 {
                     return false;
                 }
 
-                var maxRuntimeSeconds = 90;
+                const int maxRuntimeSeconds = 90;
                 var success = mUtilityRunner.RunProgram(batchFilePath, "", taskName, false, maxRuntimeSeconds);
 
                 if (!success)
@@ -1182,13 +1182,13 @@ namespace AnalysisManagerSequestPlugin
                     LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, "     " + batchFilePath);
                 }
 
-                var taskName = "WipeTemp";
+                const string taskName = "WipeTemp";
                 if (!InitializeUtilityRunner(taskName, PVMProgFolder))
                 {
                     return false;
                 }
 
-                var maxRuntimeSeconds = 120;
+                const int maxRuntimeSeconds = 120;
                 var success = mUtilityRunner.RunProgram(batchFilePath, "", taskName, true, maxRuntimeSeconds);
 
                 if (!success)
@@ -1235,13 +1235,13 @@ namespace AnalysisManagerSequestPlugin
                     LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, "     " + batchFilePath);
                 }
 
-                var taskName = "StartPVM";
+                const string taskName = "StartPVM";
                 if (!InitializeUtilityRunner(taskName, PVMProgFolder))
                 {
                     return false;
                 }
 
-                var maxRuntimeSeconds = 120;
+                const int maxRuntimeSeconds = 120;
                 var success = mUtilityRunner.RunProgram(batchFilePath, "", taskName, true, maxRuntimeSeconds);
 
                 if (!success)
@@ -1280,13 +1280,13 @@ namespace AnalysisManagerSequestPlugin
                     LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, "     " + batchFilePath);
                 }
 
-                var taskName = "AddHosts";
+                const string taskName = "AddHosts";
                 if (!InitializeUtilityRunner(taskName, PVMProgFolder))
                 {
                     return false;
                 }
 
-                var maxRuntimeSeconds = 120;
+                const int maxRuntimeSeconds = 120;
                 var success = mUtilityRunner.RunProgram(batchFilePath, "", taskName, true, maxRuntimeSeconds);
 
                 if (!success)
@@ -1371,7 +1371,7 @@ namespace AnalysisManagerSequestPlugin
             var NumNodeMachines = GetIntegerFromSeqLogFileString(fileContents, "starting the sequest task on\\s+\\d+\\s+node");
             if (NumNodeMachines == 0)
             {
-                var Msg = "UpdateNodeStats: node machine count line not found";
+                const string Msg = "UpdateNodeStats: node machine count line not found";
                 LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.WARN, Msg);
             }
             else if (NumNodeMachines < 0)
@@ -1389,7 +1389,7 @@ namespace AnalysisManagerSequestPlugin
             var NumSlaveProcesses = GetIntegerFromSeqLogFileString(fileContents, "Spawned\\s+\\d+\\s+slave processes");
             if (NumSlaveProcesses == 0)
             {
-                var Msg = "UpdateNodeStats: slave process count line not found";
+                const string Msg = "UpdateNodeStats: slave process count line not found";
                 LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.WARN, Msg);
             }
             else if (NumSlaveProcesses < 0)
@@ -1479,13 +1479,13 @@ namespace AnalysisManagerSequestPlugin
                     LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, "     " + batchFilePath);
                 }
 
-                var taskName = "CheckActiveNodes";
+                const string taskName = "CheckActiveNodes";
                 if (!InitializeUtilityRunner(taskName, PVMProgFolder))
                 {
                     return;
                 }
 
-                var maxRuntimeSeconds = 60;
+                const int maxRuntimeSeconds = 60;
                 var success = mUtilityRunner.RunProgram(batchFilePath, "", taskName, true, maxRuntimeSeconds);
 
                 if (!success)

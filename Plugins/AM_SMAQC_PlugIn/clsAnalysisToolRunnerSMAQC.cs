@@ -303,7 +303,7 @@ namespace AnalysisManagerSMAQCPlugIn
         /// <remarks></remarks>
         private bool LookupInstrumentIDFromDB(ref int instrumentID)
         {
-            short retryCount = 3;
+            const short retryCount = 3;
 
             var strDatasetID = mJobParams.GetParam("DatasetID");
             mDatasetID = 0;

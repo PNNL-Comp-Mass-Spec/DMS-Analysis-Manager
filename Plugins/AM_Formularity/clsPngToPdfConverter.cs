@@ -165,7 +165,7 @@ namespace AnalysisManagerFormularityPlugin
 
                 // Get the plot layout
 
-                var datasetDetailReportLink = "";
+                const string datasetDetailReportLink = "";
                 var pngFileTableLayout = GetPngFileTableLayout(DatasetName, datasetDetailReportLink);
 
                 var pngFileNames = new SortedSet<string>();
@@ -182,7 +182,7 @@ namespace AnalysisManagerFormularityPlugin
                 }
 
                 // Spacing between plots on the same row
-                var PLOT_SPACING_X = 10;
+                const int PLOT_SPACING_X = 10;
 
                 const int ROWS_PER_AGE = 2;
                 var rowsProcessed = 0;

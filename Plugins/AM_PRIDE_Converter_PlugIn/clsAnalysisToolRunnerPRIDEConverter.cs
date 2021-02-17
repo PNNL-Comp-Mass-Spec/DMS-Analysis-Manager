@@ -351,7 +351,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 // Initialize dataPackageDatasets
                 if (!LoadDataPackageDatasetInfo(out var dataPackageDatasets))
                 {
-                    var msg = "Error loading data package dataset info";
+                    const string msg = "Error loading data package dataset info";
                     LogError(msg + ": clsAnalysisToolRunnerBase.LoadDataPackageDatasetInfo returned false");
                     mMessage = msg;
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -2781,8 +2781,8 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     WritePXHeader(writer, "tissue", defaultTissue, templateParameters, paramsWithCVs);
                 }
 
-                var defaultCellType = TBD + "Optional, e.g. " + DEFAULT_CELL_TYPE_CV + DELETION_WARNING;
-                var defaultDisease = TBD + "Optional, e.g. " + DEFAULT_DISEASE_TYPE_CV + DELETION_WARNING;
+                const string defaultCellType = TBD + "Optional, e.g. " + DEFAULT_CELL_TYPE_CV + DELETION_WARNING;
+                const string defaultDisease = TBD + "Optional, e.g. " + DEFAULT_DISEASE_TYPE_CV + DELETION_WARNING;
 
                 WritePXHeader(writer, "cell_type", defaultCellType, templateParameters, paramsWithCVs);
                 WritePXHeader(writer, "disease", defaultDisease, templateParameters, paramsWithCVs);
@@ -2804,7 +2804,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 //   [PRIDE, PRIDE:0000439, Spectral Abundance Factor – SAF,]
                 //   [PRIDE, PRIDE:0000440, Normalized Spectral Abundance Factor – NSAF,]
                 //   [PRIDE, PRIDE:0000441, APEX - Absolute Protein Expression,]
-                var defaultQuantCV = TBD + "Optional, e.g. " + DEFAULT_QUANTIFICATION_TYPE_CV;
+                const string defaultQuantCV = TBD + "Optional, e.g. " + DEFAULT_QUANTIFICATION_TYPE_CV;
                 WritePXHeader(writer, "quantification", defaultQuantCV, templateParameters, paramsWithCVs);
 
                 if (mInstrumentGroupsStored.Count > 0)
@@ -3423,7 +3423,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             var dataPackagePeptideHitJobs = RetrieveDataPackagePeptideHitJobInfo(out var additionalJobs, out var errorMsg);
             if (dataPackagePeptideHitJobs.Count == 0)
             {
-                var msg = "Error loading data package job info";
+                const string msg = "Error loading data package job info";
                 if (string.IsNullOrEmpty(errorMsg))
                     LogError(msg + ": RetrieveDataPackagePeptideHitJobInfo returned no jobs");
                 else
@@ -4141,7 +4141,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             {
                 if (!File.Exists(storagePathInfoFilePath))
                 {
-                    var msg = "StoragePathInfo file not found";
+                    const string msg = "StoragePathInfo file not found";
                     LogError(msg + ": " + storagePathInfoFilePath);
                     mMessage = msg;
                     return false;
@@ -4157,7 +4157,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 if (string.IsNullOrEmpty(sourceFilePath))
                 {
-                    var msg = "StoragePathInfo file was empty";
+                    const string msg = "StoragePathInfo file was empty";
                     LogError(msg + ": " + storagePathInfoFilePath);
                     mMessage = msg;
                     return false;

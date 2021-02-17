@@ -40,7 +40,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
         /// <returns>CloseOutType enum indicating success or failure</returns>
         public override CloseOutType RunTool()
         {
-            var result = CloseOutType.CLOSEOUT_SUCCESS;
+            const CloseOutType result = CloseOutType.CLOSEOUT_SUCCESS;
 
             // Do the base class stuff
             if (base.RunTool() != CloseOutType.CLOSEOUT_SUCCESS)
@@ -565,8 +565,8 @@ namespace AnalysisManagerMsXmlGenPlugIn
                     return false;
                 }
 
-                var rawDataTypeEnum = clsAnalysisResources.eRawDataTypeConstants.mzML;
-                var outputFileType = clsAnalysisResources.MSXMLOutputTypeConstants.mzML;
+                const clsAnalysisResources.eRawDataTypeConstants rawDataTypeEnum = clsAnalysisResources.eRawDataTypeConstants.mzML;
+                const clsAnalysisResources.MSXMLOutputTypeConstants outputFileType = clsAnalysisResources.MSXMLOutputTypeConstants.mzML;
 
                 var sourceFileBase = Path.GetFileNameWithoutExtension(mzMLFilePath);
 

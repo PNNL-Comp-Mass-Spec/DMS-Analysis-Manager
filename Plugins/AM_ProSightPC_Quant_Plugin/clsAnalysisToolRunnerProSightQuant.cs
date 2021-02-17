@@ -174,7 +174,7 @@ namespace AnalysisManagerProSightQuantPlugIn
 
                 if (!processingSuccess)
                 {
-                    var msg = "Error running TargetedWorkflowsConsole";
+                    const string msg = "Error running TargetedWorkflowsConsole";
 
                     if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))
                     {
@@ -260,7 +260,7 @@ namespace AnalysisManagerProSightQuantPlugIn
             try
             {
                 var targetedQuantParamFilePath = Path.Combine(mWorkDir, TARGETED_QUANT_XML_FILE_NAME);
-                var strProSightPCResultsFile = clsAnalysisResourcesProSightQuant.PROSIGHT_PC_RESULT_FILE;
+                const string strProSightPCResultsFile = clsAnalysisResourcesProSightQuant.PROSIGHT_PC_RESULT_FILE;
 
                 var strWorkflowParamFileName = mJobParams.GetParam("ProSightQuantParamFile");
                 if (string.IsNullOrEmpty(strWorkflowParamFileName))

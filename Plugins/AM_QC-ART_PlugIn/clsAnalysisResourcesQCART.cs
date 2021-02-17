@@ -319,7 +319,7 @@ namespace AnalysisManagerQCARTPlugin
                                     customValue = mJobParams.GetJobParameter(JOB_PARAMETER_QCART_BASELINE_RESULTS_FILENAME, string.Empty);
                                     if (string.IsNullOrWhiteSpace(customValue))
                                     {
-                                        var errorMsg = "Error in CustomizeQCRScript: " + JOB_PARAMETER_QCART_BASELINE_RESULTS_FILENAME + " is undefined";
+                                        const string errorMsg = "Error in CustomizeQCRScript: " + JOB_PARAMETER_QCART_BASELINE_RESULTS_FILENAME + " is undefined";
                                         LogError(errorMsg, errorMsg + "; should have been stored in RetrieveExistingBaselineResultFile");
                                         return false;
                                     }
@@ -402,7 +402,7 @@ namespace AnalysisManagerQCARTPlugin
                     return true;
 
                 // Error parsing out the SCX fraction number from one or more datasets
-                var errorMessage = "Could not determine SCX fraction number";
+                const string errorMessage = "Could not determine SCX fraction number";
                 LogErrorForOneOrMoreDatasets(errorMessage, datasetParseErrors, "CreateBaselineDatasetInfoFile");
 
                 return false;
@@ -732,7 +732,7 @@ namespace AnalysisManagerQCARTPlugin
             {
                 if (fiBaselineMetadata.Directory == null)
                 {
-                    var warningMessage = "QC-ART baseline metadata file directory is null";
+                    const string warningMessage = "QC-ART baseline metadata file directory is null";
                     LogError(warningMessage);
                     return false;
                 }
@@ -743,7 +743,7 @@ namespace AnalysisManagerQCARTPlugin
                 var projectNode = contents.Select("/Parameters/Results/BaselineDataCacheFile");
                 if (!projectNode.MoveNext())
                 {
-                    var warningMessage = "BaselineDataCacheFile node not found in the QC-ART baseline results metadata file; " +
+                    const string warningMessage = "BaselineDataCacheFile node not found in the QC-ART baseline results metadata file; " +
                                          "expected at <Parameters><Results><BaselineDataCacheFile>";
                     LogError(warningMessage);
                     return false;
@@ -752,7 +752,7 @@ namespace AnalysisManagerQCARTPlugin
                 var baselineDataCacheFileName = projectNode.Current.Value;
                 if (string.IsNullOrWhiteSpace(baselineDataCacheFileName))
                 {
-                    var warningMessage = "BaselineDataCacheFile node is empty in the QC-ART baseline results metadata file";
+                    const string warningMessage = "BaselineDataCacheFile node is empty in the QC-ART baseline results metadata file";
                     LogError(warningMessage);
                     return false;
                 }
@@ -982,7 +982,7 @@ namespace AnalysisManagerQCARTPlugin
 
                 if (string.IsNullOrWhiteSpace(targetDatasetName) || targetDatasetMasicJob == 0)
                 {
-                    var baseMessage = "Job parameters SourceJob2Dataset and SourceJob2 not found; populated via the [Special Processing] job parameter";
+                    const string baseMessage = "Job parameters SourceJob2Dataset and SourceJob2 not found; populated via the [Special Processing] job parameter";
                     LogError(baseMessage, baseMessage + "; for example 'SourceJob:Auto{Tool = \"SMAQC_MSMS\"}, Job2:Auto{Tool = \"MASIC_Finnigan\"}'");
                     return false;
                 }
@@ -1002,7 +1002,7 @@ namespace AnalysisManagerQCARTPlugin
 
                     if (string.IsNullOrWhiteSpace(masicFolderPath))
                     {
-                        var baseMessage = "Job parameter SourceJob2FolderPath not found; populated via the [Special Processing] job parameter";
+                        const string baseMessage = "Job parameter SourceJob2FolderPath not found; populated via the [Special Processing] job parameter";
                         LogError(baseMessage, baseMessage + "; for example 'SourceJob:Auto{Tool = \"SMAQC_MSMS\"}, Job2:Auto{Tool = \"MASIC_Finnigan\"}'");
                         return false;
                     }

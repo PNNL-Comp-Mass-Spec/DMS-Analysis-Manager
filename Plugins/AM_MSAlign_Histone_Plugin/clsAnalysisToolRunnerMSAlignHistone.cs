@@ -125,7 +125,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                 }
 
                 // Assume v0.9
-                var eMSalignVersion = eMSAlignVersionType.v0pt9;
+                const eMSAlignVersionType eMSalignVersion = eMSAlignVersionType.v0pt9;
 
                 // We will store the specific MSAlign version info in the database after the first line is written to file MSAlign_ConsoleOutput.txt
 
@@ -994,7 +994,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
 
                     if (!fiSearchResultFile.Exists)
                     {
-                        var msg = "MSAlign results file not found";
+                        const string msg = "MSAlign results file not found";
 
                         if (!processingError)
                         {

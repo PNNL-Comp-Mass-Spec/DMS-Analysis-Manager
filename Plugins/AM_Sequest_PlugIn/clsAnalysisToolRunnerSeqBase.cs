@@ -423,7 +423,7 @@ namespace AnalysisManagerSequestPlugin
             // 12/19/2008 - The number of processors used to be configurable but now this is done with clustering.
             // This code is left here so we can still debug to make sure everything still works
             // var processorsToUse = (int)mMgrParams.GetParam("NumberOfProcessors");
-            var processorsToUse = 1;
+            const int processorsToUse = 1;
 
             // Get a list of .dta file names
             var dtaFiles = Directory.GetFiles(mWorkDir, "*.dta");
@@ -572,7 +572,7 @@ namespace AnalysisManagerSequestPlugin
 
             if (GetOUTFileCountRemaining() < 1)
             {
-                var msg = "No OUT files created";
+                const string msg = "No OUT files created";
                 LogErrorToDatabase(msg + ", job " + mJob + ", step " + mJobParams.GetParam("Step"));
                 UpdateStatusMessage(msg);
                 return CloseOutType.CLOSEOUT_NO_OUT_FILES;
@@ -611,8 +611,8 @@ namespace AnalysisManagerSequestPlugin
         /// <remarks></remarks>
         protected virtual bool ConcatOutFiles(string WorkDir, string DSName, int JobNum)
         {
-            var MAX_RETRY_ATTEMPTS = 5;
-            var MAX_INTERLOCK_WAIT_TIME_MINUTES = 30;
+            const int MAX_RETRY_ATTEMPTS = 5;
+            const int MAX_INTERLOCK_WAIT_TIME_MINUTES = 30;
             bool success;
 
             var oRandom = new Random();

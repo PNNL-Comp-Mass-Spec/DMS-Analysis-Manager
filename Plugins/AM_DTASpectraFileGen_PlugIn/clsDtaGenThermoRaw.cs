@@ -108,7 +108,7 @@ namespace DTASpectraFileGen
             // Note that clsDtaGenMSConvert will update mInstrumentFileName if processing a .mzXml file
             mInstrumentFileName = mDatasetName + ".raw";
 
-            var useSingleThread= false;
+            const bool useSingleThread= false;
 
             // Make the DTA files
             try
@@ -211,7 +211,7 @@ namespace DTASpectraFileGen
                 return true;
             }
 
-            var mgfFileExtension = clsAnalysisResources.DOT_MGF_EXTENSION;
+            const string mgfFileExtension = clsAnalysisResources.DOT_MGF_EXTENSION;
             if (File.Exists(Path.Combine(workDir, datasetName + mgfFileExtension)))
             {
                 mErrMsg = string.Empty;

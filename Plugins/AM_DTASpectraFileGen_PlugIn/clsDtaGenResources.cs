@@ -168,7 +168,7 @@ namespace DTASpectraFileGen
         {
             if (eDtaGeneratorType == clsDtaGenToolRunner.eDTAGeneratorConstants.DeconConsole)
             {
-                var paramFileStoragePathKeyName = clsGlobal.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "DTA_Gen";
+                const string paramFileStoragePathKeyName = clsGlobal.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "DTA_Gen";
 
                 var paramFileStoragePath = mMgrParams.GetParam(paramFileStoragePathKeyName);
                 if (string.IsNullOrEmpty(paramFileStoragePath))

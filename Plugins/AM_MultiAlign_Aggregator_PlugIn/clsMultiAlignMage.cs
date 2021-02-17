@@ -217,7 +217,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                     return false;
                 }
 
-                var strParamFileStoragePathKeyName = clsGlobal.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "MultiAlign";
+                const string strParamFileStoragePathKeyName = clsGlobal.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "MultiAlign";
                 var strMAParameterFileStoragePath = mMgrParams.RequireMgrParam(strParamFileStoragePathKeyName);
                 if (string.IsNullOrEmpty(strMAParameterFileStoragePath))
                 {
@@ -255,7 +255,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
         /// <returns></returns>
         private SimpleSink GetListOfDataPackageJobsToProcess(string dataPackageID, string tool)
         {
-            var sqlTemplate = @"SELECT * FROM V_Mage_Data_Package_Analysis_Jobs WHERE Data_Package_ID = {0} AND Tool LIKE '%{1}%'";
+            const string sqlTemplate = @"SELECT * FROM V_Mage_Data_Package_Analysis_Jobs WHERE Data_Package_ID = {0} AND Tool LIKE '%{1}%'";
             var connStr = mMgrParams.RequireMgrParam("ConnectionString");
             var sql = string.Format(sqlTemplate, dataPackageID, tool);
             var jobList = GetListOfItemsFromDB(sql, connStr);
@@ -279,7 +279,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
         {
             try
             {
-                var columnsToIncludeInOutput = "Job, Dataset, Dataset_ID, Tool, Settings_File, Parameter_File, Instrument";
+                const string columnsToIncludeInOutput = "Job, Dataset, Dataset_ID, Tool, Settings_File, Parameter_File, Instrument";
                 var fileList = GetListOfFilesFromDirectoryList(multialignJobsToProcess, fileSpec, columnsToIncludeInOutput);
 
                 // Check for "--No Files Found--" for any of the jobs

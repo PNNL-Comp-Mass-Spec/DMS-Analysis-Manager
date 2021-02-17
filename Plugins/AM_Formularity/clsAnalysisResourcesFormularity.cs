@@ -95,7 +95,7 @@ namespace AnalysisManagerFormularityPlugin
                     return CloseOutType.CLOSEOUT_NO_FAS_FILES;
                 }
 
-                var recheckIntervalDays = 7;
+                const int recheckIntervalDays = 7;
                 var ciaDbIsValid = fileSyncUtil.CopyFileToLocal(remoteCiaDbPath, orgDbDirectory, out var errorMessage, recheckIntervalDays);
 
                 if (!ciaDbIsValid)

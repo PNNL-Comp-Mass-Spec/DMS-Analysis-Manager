@@ -169,7 +169,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
 
                 if (!processingSuccess)
                 {
-                    var msg = "Error running TargetedWorkflowsConsole";
+                    const string msg = "Error running TargetedWorkflowsConsole";
 
                     if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))
                     {

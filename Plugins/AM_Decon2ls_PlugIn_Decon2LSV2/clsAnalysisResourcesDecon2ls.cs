@@ -183,7 +183,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             if (!paramFile.Exists)
             {
                 // Parameter file not found
-                var errMsg = "Decon2LS param file not found by ValidateDeconProcessingOptions";
+                const string errMsg = "Decon2LS param file not found by ValidateDeconProcessingOptions";
                 LogError(errMsg, errMsg + ": " + paramFileName);
 
                 return false;

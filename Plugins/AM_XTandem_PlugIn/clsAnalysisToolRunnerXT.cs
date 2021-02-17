@@ -106,7 +106,7 @@ namespace AnalysisManagerXTandemPlugIn
             }
 
             // Set up and execute a program runner to run X!Tandem
-            var arguments = "input.xml";
+            const string arguments = "input.xml";
 
             mCmdRunner.CreateNoWindow = true;
             mCmdRunner.CacheStandardOutput = true;

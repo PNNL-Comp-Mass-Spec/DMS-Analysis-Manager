@@ -200,7 +200,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
             // For example, MSAlign_Quant_Workflow_2012-07-25
             // The parameter name is MSAlignQuantParamFile even when the step tool is TopPIC
 
-            var paramFileStoragePathKeyName = clsGlobal.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "MSAlign_Quant";
+            const string paramFileStoragePathKeyName = clsGlobal.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "MSAlign_Quant";
             var paramFileStoragePath = mMgrParams.GetParam(paramFileStoragePathKeyName);
             if (string.IsNullOrEmpty(paramFileStoragePath))
             {

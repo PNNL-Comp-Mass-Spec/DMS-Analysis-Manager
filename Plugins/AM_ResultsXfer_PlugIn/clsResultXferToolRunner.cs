@@ -452,7 +452,7 @@ namespace AnalysisManagerResultsXferPlugin
                         if (!diDatasetFolder.Exists)
                         {
                             // Creation of the dataset directory failed; unable to continue
-                            var msg = "Error trying to create missing dataset directory";
+                            const string msg = "Error trying to create missing dataset directory";
                             LogError(msg, msg + datasetDir + ": folder creation failed for unknown reason");
                             return CloseOutType.CLOSEOUT_FAILED;
                         }
@@ -465,7 +465,7 @@ namespace AnalysisManagerResultsXferPlugin
                 }
                 catch (Exception ex)
                 {
-                    var msg = "Error trying to create missing dataset directory";
+                    const string msg = "Error trying to create missing dataset directory";
                     LogError(msg, msg + ": " + datasetDir, ex);
 
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -511,7 +511,7 @@ namespace AnalysisManagerResultsXferPlugin
             }
             catch (Exception ex)
             {
-                var msg = "Exception moving results folder";
+                const string msg = "Exception moving results folder";
                 LogError(msg, msg + ": " + folderToMove, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }

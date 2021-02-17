@@ -164,7 +164,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 return true;
             }
 
-            var outputType = clsAnalysisResources.MSXMLOutputTypeConstants.mzXML;
+            const clsAnalysisResources.MSXMLOutputTypeConstants outputType = clsAnalysisResources.MSXMLOutputTypeConstants.mzXML;
 
             // Instantiate the processing class
             // Note that mMSXmlGeneratorAppPath should have been populated by StoreToolVersionInfo() by an Analysis Manager plugin using clsAnalysisToolRunnerBase.GetMSXmlGeneratorAppPath()

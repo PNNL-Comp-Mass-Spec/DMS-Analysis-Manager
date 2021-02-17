@@ -141,7 +141,7 @@ namespace AnalysisManagerMultiAlignPlugIn
 
         protected CloseOutType RenameLogFile()
         {
-            var LogExtension = "-log.txt";
+            const string LogExtension = "-log.txt";
             var NewFilename = mDatasetName + LogExtension;
 
             // This is what MultiAlign is currently naming the log file

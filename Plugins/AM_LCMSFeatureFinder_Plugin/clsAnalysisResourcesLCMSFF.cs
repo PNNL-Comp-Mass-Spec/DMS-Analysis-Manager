@@ -69,7 +69,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
                 return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
             }
 
-            var strParamFileStoragePathKeyName = clsGlobal.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "LCMSFeatureFinder";
+            const string strParamFileStoragePathKeyName = clsGlobal.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "LCMSFeatureFinder";
             var strFFIniFileStoragePath = mMgrParams.GetParam(strParamFileStoragePathKeyName);
             if (string.IsNullOrEmpty(strFFIniFileStoragePath))
             {

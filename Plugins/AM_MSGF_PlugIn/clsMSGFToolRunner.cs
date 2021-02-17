@@ -2426,7 +2426,7 @@ namespace AnalysisManagerMSGFPlugin
 
                 if (!success)
                 {
-                    var msg = "Error calling ProcessMSGFResults";
+                    const string msg = "Error calling ProcessMSGFResults";
 
                     var detailedMsg = string.Copy(msg);
 

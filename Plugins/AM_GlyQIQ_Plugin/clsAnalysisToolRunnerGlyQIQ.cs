@@ -545,7 +545,7 @@ namespace AnalysisManagerGlyQIQPlugin
                     return true;
                 }
 
-                var msg = "Error storing PSM Results in database";
+                const string msg = "Error storing PSM Results in database";
                 LogError(msg, msg + ", " + STORE_JOB_PSM_RESULTS_SP_NAME + " returned " + resCode);
 
                 return false;

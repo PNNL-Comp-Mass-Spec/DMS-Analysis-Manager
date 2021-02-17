@@ -123,7 +123,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
             //    exePath arguments > ConsoleOutputFile.txt 2>&1
 
             var batchFilePath = Path.Combine(mWorkDir, "Run_DTARefinery.bat");
-            var consoleOutputFileName = "DTARefinery_Console_Output.txt";
+            const string consoleOutputFileName = "DTARefinery_Console_Output.txt";
             mJobParams.AddResultFileToSkip(Path.GetFileName(batchFilePath));
 
             var batchFileCmdLine = pythonExe + " " + progLoc + " " + arguments + " > " + consoleOutputFileName + " 2>&1";

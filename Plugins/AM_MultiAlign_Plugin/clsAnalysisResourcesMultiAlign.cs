@@ -65,7 +65,7 @@ namespace AnalysisManagerMultiAlignPlugIn
                 return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
             }
 
-            var paramFileStoragePathKeyName = clsGlobal.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "MultiAlign";
+            const string paramFileStoragePathKeyName = clsGlobal.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "MultiAlign";
             var multialignParameterFileStoragePath = mMgrParams.GetParam(paramFileStoragePathKeyName);
             if (string.IsNullOrEmpty(multialignParameterFileStoragePath))
             {

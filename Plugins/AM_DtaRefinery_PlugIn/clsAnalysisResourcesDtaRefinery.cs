@@ -54,7 +54,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
-            var paramFileStoragePathKeyName = clsGlobal.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "DTA_Refinery";
+            const string paramFileStoragePathKeyName = clsGlobal.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "DTA_Refinery";
 
             var dtaRefineryParmFileStoragePath = mMgrParams.GetParam(paramFileStoragePathKeyName);
             if (string.IsNullOrEmpty(dtaRefineryParmFileStoragePath))

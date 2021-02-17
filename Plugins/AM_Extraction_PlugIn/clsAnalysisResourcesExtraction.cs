@@ -1392,7 +1392,7 @@ namespace AnalysisManagerExtractionPlugin
                 {
                     if (toolVersionFile.IndexOf("msgfplus", StringComparison.OrdinalIgnoreCase) >= 0)
                     {
-                        var toolVersionFileLegacy = "Tool_Version_Info_MSGFDB.txt";
+                        const string toolVersionFileLegacy = "Tool_Version_Info_MSGFDB.txt";
                         success = FileSearch.FindAndRetrieveMiscFiles(toolVersionFileLegacy, false, false);
                         if (success)
                         {

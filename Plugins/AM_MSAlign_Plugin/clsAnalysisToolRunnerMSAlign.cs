@@ -339,7 +339,7 @@ namespace AnalysisManagerMSAlignPlugIn
                 using (var reader = new StreamReader(new FileStream(sourceFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 using (var writer = new StreamWriter(new FileStream(targetFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
-                    var headerLine = "Prsm_ID\t" + "Spectrum_ID\t" + "Protein_Sequence_ID\t" + "Spectrum_ID\t" + "Scan(s)\t" + "#peaks\t" + "Charge\t" +
+                    const string headerLine = "Prsm_ID\t" + "Spectrum_ID\t" + "Protein_Sequence_ID\t" + "Spectrum_ID\t" + "Scan(s)\t" + "#peaks\t" + "Charge\t" +
                                      "Precursor_mass\t" + "Protein_name\t" + "Protein_mass\t" + "First_residue\t" + "Last_residue\t" + "Peptide\t" +
                                      "#unexpected_modifications\t" + "#matched_peaks\t" + "#matched_fragment_ions\t" + "E-value";
 
@@ -1138,7 +1138,7 @@ namespace AnalysisManagerMSAlignPlugIn
 
                     if (!searchResultFile.Exists)
                     {
-                        var msg = "MSAlign results file not found";
+                        const string msg = "MSAlign results file not found";
 
                         if (!processingError)
                         {

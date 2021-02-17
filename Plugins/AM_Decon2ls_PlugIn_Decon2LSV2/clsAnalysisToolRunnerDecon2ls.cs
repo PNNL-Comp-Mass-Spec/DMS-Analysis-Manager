@@ -215,7 +215,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                     // Make sure the Isos File exists
                     if (!File.Exists(isosFilePath))
                     {
-                        var msg = "DeconTools Isos file Not Found";
+                        const string msg = "DeconTools Isos file Not Found";
                         LogError(msg, msg + ": " + isosFilePath);
                         return CloseOutType.CLOSEOUT_NO_OUT_FILES;
                     }
@@ -284,7 +284,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 var msFileInfoScannerDir = mMgrParams.GetParam("MSFileInfoScannerDir");
                 if (string.IsNullOrEmpty(msFileInfoScannerDir))
                 {
-                    var msg = "Manager parameter 'MSFileInfoScannerDir' is not defined";
+                    const string msg = "Manager parameter 'MSFileInfoScannerDir' is not defined";
                     LogError("Error in CreateQCPlots: " + msg);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }

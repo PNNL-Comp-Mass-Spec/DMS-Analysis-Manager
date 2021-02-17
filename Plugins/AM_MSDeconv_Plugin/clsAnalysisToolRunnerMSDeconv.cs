@@ -141,14 +141,14 @@ namespace AnalysisManagerMSDeconvPlugIn
                     var resultsFile = new FileInfo(Path.Combine(mWorkDir, resultsFileName));
                     if (!resultsFile.Exists)
                     {
-                        var msg = "MSDeconv results file not found";
+                        const string msg = "MSDeconv results file not found";
                         LogError(msg, msg + " (" + resultsFileName + ")");
 
                         processingSuccess = false;
                     }
                     else if (resultsFile.Length == 0)
                     {
-                        var msg = "MSDeconv results file is empty; assure that the input .mzXML file has MS/MS spectra";
+                        const string msg = "MSDeconv results file is empty; assure that the input .mzXML file has MS/MS spectra";
                         LogError(msg, msg + " (" + resultsFileName + ")");
 
                         processingSuccess = false;

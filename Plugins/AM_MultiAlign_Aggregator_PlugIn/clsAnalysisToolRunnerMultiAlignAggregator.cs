@@ -299,7 +299,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 
                     if (!success)
                     {
-                        var msg = "Error zipping the plot files";
+                        const string msg = "Error zipping the plot files";
                         if (!string.IsNullOrEmpty(mDotNetZipTools.Message))
                             LogError(msg + ": " + mDotNetZipTools.Message);
                         else
