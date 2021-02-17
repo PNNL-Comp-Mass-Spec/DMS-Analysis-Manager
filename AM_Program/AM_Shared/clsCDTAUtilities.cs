@@ -127,69 +127,68 @@ namespace AnalysisManagerBase
                 using (var reader = new StreamReader(new FileStream(originalFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
                 {
                     // Create the output file
-                    using (var writer = new StreamWriter(new FileStream(updatedFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                    using var writer = new StreamWriter(new FileStream(updatedFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read));
+
+                    while (!reader.EndOfStream)
                     {
-                        while (!reader.EndOfStream)
+                        var dataLine = reader.ReadLine();
+
+                        if (string.IsNullOrEmpty(dataLine))
                         {
-                            var dataLine = reader.ReadLine();
-
-                            if (string.IsNullOrEmpty(dataLine))
-                            {
-                                sbCurrentSpectrum.AppendLine();
-                            }
-                            else
-                            {
-                                if (dataLine.StartsWith("="))
-                                {
-                                    // DTA header line, for example:
-                                    // =================================== "H20120523_JQ_CPTAC2_4TP_Exp1_IMAC_01.0002.0002.3.dta" ==================================
-
-                                    if (sbCurrentSpectrum.Length > 0)
-                                    {
-                                        if (ionCount >= MINIMUM_ION_COUNT || spectraParsed == 0)
-                                        {
-                                            // Write the cached spectrum
-                                            writer.Write(sbCurrentSpectrum.ToString());
-                                        }
-                                        else
-                                        {
-                                            spectraCountRemoved++;
-                                        }
-                                        sbCurrentSpectrum.Clear();
-                                        ionCount = 0;
-                                    }
-
-                                    parentIonLineIsNext = true;
-                                    spectraParsed++;
-                                }
-                                else if (parentIonLineIsNext)
-                                {
-                                    // lineIn contains the parent ion line text
-
-                                    parentIonLineIsNext = false;
-                                }
-                                else
-                                {
-                                    // Line is not a header or the parent ion line
-                                    // Assume a data line
-                                    ionCount++;
-                                }
-
-                                sbCurrentSpectrum.AppendLine(dataLine);
-                            }
+                            sbCurrentSpectrum.AppendLine();
                         }
-
-                        if (sbCurrentSpectrum.Length > 0)
+                        else
                         {
-                            if (ionCount >= MINIMUM_ION_COUNT)
+                            if (dataLine.StartsWith("="))
                             {
-                                // Write the cached spectrum
-                                writer.Write(sbCurrentSpectrum.ToString());
+                                // DTA header line, for example:
+                                // =================================== "H20120523_JQ_CPTAC2_4TP_Exp1_IMAC_01.0002.0002.3.dta" ==================================
+
+                                if (sbCurrentSpectrum.Length > 0)
+                                {
+                                    if (ionCount >= MINIMUM_ION_COUNT || spectraParsed == 0)
+                                    {
+                                        // Write the cached spectrum
+                                        writer.Write(sbCurrentSpectrum.ToString());
+                                    }
+                                    else
+                                    {
+                                        spectraCountRemoved++;
+                                    }
+                                    sbCurrentSpectrum.Clear();
+                                    ionCount = 0;
+                                }
+
+                                parentIonLineIsNext = true;
+                                spectraParsed++;
+                            }
+                            else if (parentIonLineIsNext)
+                            {
+                                // lineIn contains the parent ion line text
+
+                                parentIonLineIsNext = false;
                             }
                             else
                             {
-                                spectraCountRemoved++;
+                                // Line is not a header or the parent ion line
+                                // Assume a data line
+                                ionCount++;
                             }
+
+                            sbCurrentSpectrum.AppendLine(dataLine);
+                        }
+                    }
+
+                    if (sbCurrentSpectrum.Length > 0)
+                    {
+                        if (ionCount >= MINIMUM_ION_COUNT)
+                        {
+                            // Write the cached spectrum
+                            writer.Write(sbCurrentSpectrum.ToString());
+                        }
+                        else
+                        {
+                            spectraCountRemoved++;
                         }
                     }
                 }
@@ -335,61 +334,60 @@ namespace AnalysisManagerBase
                 using (var reader = new StreamReader(new FileStream(originalFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
                 {
                     // Create the output file
-                    using (var writer = new StreamWriter(new FileStream(updatedFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                    using var writer = new StreamWriter(new FileStream(updatedFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read));
+
+                    while (!reader.EndOfStream)
                     {
-                        while (!reader.EndOfStream)
+                        var dataLine = reader.ReadLine();
+
+                        if (string.IsNullOrEmpty(dataLine))
                         {
-                            var dataLine = reader.ReadLine();
-
-                            if (string.IsNullOrEmpty(dataLine))
-                            {
-                                writer.WriteLine();
-                                continue;
-                            }
-
-                            var scanNumberStart = 0;
-                            var charge = 0;
-
-                            if (dataLine.StartsWith("="))
-                            {
-                                // Parse the DTA header line, for example:
-                                // =================================== "H20120523_JQ_CPTAC2_4TP_Exp1_IMAC_01.0002.0002.3.dta" ==================================
-
-                                // Remove the leading and trailing characters, then extract the scan and charge
-                                var dtaHeader = dataLine.Trim('=', ' ', '"');
-
-                                dtaTextReader.ExtractScanInfoFromDtaHeader(dtaHeader, out scanNumberStart, out _, out _, out charge);
-
-                                parentIonLineIsNext = true;
-                            }
-                            else if (parentIonLineIsNext)
-                            {
-                                // lineIn contains the parent ion line text
-
-                                // Construct the parent ion line to write out
-                                // Will contain the MH+ value of the parent ion (thus always the 1+ mass, even if actually a different charge)
-                                // Next contains the charge state, then scan= and cs= tags, for example:
-                                // 447.34573 1   scan=3 cs=1
-
-                                if (!dataLine.Contains("scan="))
-                                {
-                                    // Append scan=x to the parent ion line
-                                    dataLine = dataLine.Trim() + "   scan=" + scanNumberStart;
-                                    parentIonLineUpdated = true;
-                                }
-
-                                if (!dataLine.Contains("cs="))
-                                {
-                                    // Append cs=y to the parent ion line
-                                    dataLine = dataLine.Trim() + " cs=" + charge;
-                                    parentIonLineUpdated = true;
-                                }
-
-                                parentIonLineIsNext = false;
-                            }
-
-                            writer.WriteLine(dataLine);
+                            writer.WriteLine();
+                            continue;
                         }
+
+                        var scanNumberStart = 0;
+                        var charge = 0;
+
+                        if (dataLine.StartsWith("="))
+                        {
+                            // Parse the DTA header line, for example:
+                            // =================================== "H20120523_JQ_CPTAC2_4TP_Exp1_IMAC_01.0002.0002.3.dta" ==================================
+
+                            // Remove the leading and trailing characters, then extract the scan and charge
+                            var dtaHeader = dataLine.Trim('=', ' ', '"');
+
+                            dtaTextReader.ExtractScanInfoFromDtaHeader(dtaHeader, out scanNumberStart, out _, out _, out charge);
+
+                            parentIonLineIsNext = true;
+                        }
+                        else if (parentIonLineIsNext)
+                        {
+                            // lineIn contains the parent ion line text
+
+                            // Construct the parent ion line to write out
+                            // Will contain the MH+ value of the parent ion (thus always the 1+ mass, even if actually a different charge)
+                            // Next contains the charge state, then scan= and cs= tags, for example:
+                            // 447.34573 1   scan=3 cs=1
+
+                            if (!dataLine.Contains("scan="))
+                            {
+                                // Append scan=x to the parent ion line
+                                dataLine = dataLine.Trim() + "   scan=" + scanNumberStart;
+                                parentIonLineUpdated = true;
+                            }
+
+                            if (!dataLine.Contains("cs="))
+                            {
+                                // Append cs=y to the parent ion line
+                                dataLine = dataLine.Trim() + " cs=" + charge;
+                                parentIonLineUpdated = true;
+                            }
+
+                            parentIonLineIsNext = false;
+                        }
+
+                        writer.WriteLine(dataLine);
                     }
                 }
 

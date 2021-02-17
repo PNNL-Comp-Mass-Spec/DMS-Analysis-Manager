@@ -456,136 +456,135 @@ namespace AnalysisManagerBase
             {
                 OnDebugEvent("Parse status file " + Path.GetFileName(jobStatusFilePath));
 
-                using (var reader = new StreamReader(new FileStream(jobStatusFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using var reader = new StreamReader(new FileStream(jobStatusFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+                // Note that XDocument supersedes XmlDocument and can often be easier to use since XDocument is LINQ-based
+                var doc = XDocument.Parse(reader.ReadToEnd());
+
+                var managerInfo = doc.Elements("Root").Elements("Manager").ToList();
+
+                // Note: although we pass localStatusFilePath to the clsStatusFile constructor, the path doesn't matter because
+                // we call UpdateRemoteStatus to push the remote status to the message queue only; a status file is not written
+                var localStatusFilePath = Path.Combine(WorkDir, "RemoteStatus.xml");
+
+                var status = new clsStatusFile(localStatusFilePath, DebugLevel)
                 {
-                    // Note that XDocument supersedes XmlDocument and can often be easier to use since XDocument is LINQ-based
-                    var doc = XDocument.Parse(reader.ReadToEnd());
+                    MgrName = clsXMLUtils.GetXmlValue(managerInfo, "MgrName")
+                };
+                RegisterEvents(status);
 
-                    var managerInfo = doc.Elements("Root").Elements("Manager").ToList();
+                // Note: do not configure status to push to the BrokerDB or the MessageQueue
+                // Instead, use the .jobstatus file to populate status, then call StatusTools.UpdateRemoteStatus
+                // which calls WriteStatusFile with writeToDisk=false, which results in the remote status info getting pushed to the MessageQueue
+                // The Status Message DB Updater will then push that info into table T_Processor_Status in the DMS_Pipeline database
 
-                    // Note: although we pass localStatusFilePath to the clsStatusFile constructor, the path doesn't matter because
-                    // we call UpdateRemoteStatus to push the remote status to the message queue only; a status file is not written
-                    var localStatusFilePath = Path.Combine(WorkDir, "RemoteStatus.xml");
+                var mgrStatus = clsXMLUtils.GetXmlValue(managerInfo, "MgrStatus");
+                status.MgrStatus = StatusTools.ConvertToMgrStatusFromText(mgrStatus);
 
-                    var status = new clsStatusFile(localStatusFilePath, DebugLevel)
-                    {
-                        MgrName = clsXMLUtils.GetXmlValue(managerInfo, "MgrName")
-                    };
-                    RegisterEvents(status);
-
-                    // Note: do not configure status to push to the BrokerDB or the MessageQueue
-                    // Instead, use the .jobstatus file to populate status, then call StatusTools.UpdateRemoteStatus
-                    // which calls WriteStatusFile with writeToDisk=false, which results in the remote status info getting pushed to the MessageQueue
-                    // The Status Message DB Updater will then push that info into table T_Processor_Status in the DMS_Pipeline database
-
-                    var mgrStatus = clsXMLUtils.GetXmlValue(managerInfo, "MgrStatus");
-                    status.MgrStatus = StatusTools.ConvertToMgrStatusFromText(mgrStatus);
-
-                    status.TaskStartTime = clsXMLUtils.GetXmlValue(managerInfo, "LastStartTime", DateTime.MinValue).ToUniversalTime();
-                    if (status.TaskStartTime > DateTime.MinValue)
-                    {
-                        status.TaskStartTime = status.TaskStartTime.ToUniversalTime();
-                    }
-
-                    var lastUpdate = clsXMLUtils.GetXmlValue(managerInfo, "LastUpdate", DateTime.MinValue);
-                    if (lastUpdate > DateTime.MinValue)
-                    {
-                        lastUpdate = lastUpdate.ToUniversalTime();
-                    }
-                    else
-                    {
-                        lastUpdate = status.TaskStartTime.ToUniversalTime();
-                    }
-
-                    var cpuUtilization = (int)clsXMLUtils.GetXmlValue(managerInfo, "CPUUtilization", 0f);
-                    var freeMemoryMB = clsXMLUtils.GetXmlValue(managerInfo, "FreeMemoryMB", 0f);
-                    var processId = clsXMLUtils.GetXmlValue(managerInfo, "ProcessID", 0);
-
-                    status.ProgRunnerProcessID = clsXMLUtils.GetXmlValue(managerInfo, "ProgRunnerProcessID", 0);
-
-                    status.ProgRunnerCoreUsage = clsXMLUtils.GetXmlValue(managerInfo, "ProgRunnerCoreUsage", 0f);
-
-                    var taskInfo = doc.Elements("Root").Elements("Task").ToList();
-
-                    status.Tool = clsXMLUtils.GetXmlValue(taskInfo, "Tool");
-
-                    var taskStatus = clsXMLUtils.GetXmlValue(taskInfo, "Status");
-                    status.TaskStatus = StatusTools.ConvertToTaskStatusFromText(taskStatus);
-
-                    switch (status.TaskStatus)
-                    {
-                        case EnumTaskStatus.STOPPED:
-                        case EnumTaskStatus.REQUESTING:
-                        case EnumTaskStatus.NO_TASK:
-                            // The .jobstatus file in the Task Queue directory should not have these task status values
-                            // Return .Undefined, which will fail out the job step
-                            jobStatus = EnumRemoteJobStatus.Undefined;
-                            break;
-
-                        case EnumTaskStatus.RUNNING:
-                        case EnumTaskStatus.CLOSING:
-                            jobStatus = EnumRemoteJobStatus.Running;
-                            break;
-
-                        case EnumTaskStatus.FAILED:
-                            jobStatus = EnumRemoteJobStatus.Failed;
-                            break;
-
-                        default:
-                            // Unrecognized task status
-                            // Return .Undefined, which will fail out the job step
-                            jobStatus = EnumRemoteJobStatus.Undefined;
-                            break;
-                    }
-
-                    status.Progress = clsXMLUtils.GetXmlValue(taskInfo, "Progress", 0f);
-                    status.CurrentOperation = clsXMLUtils.GetXmlValue(taskInfo, "CurrentOperation");
-
-                    var taskDetails = taskInfo.Elements("TaskDetails").ToList();
-
-                    var taskStatusDetail = clsXMLUtils.GetXmlValue(taskDetails, "Status");
-                    status.TaskStatusDetail = StatusTools.ConvertToTaskDetailStatusFromText(taskStatusDetail);
-
-                    status.JobNumber = clsXMLUtils.GetXmlValue(taskDetails, "Job", 0);
-                    status.JobStep = clsXMLUtils.GetXmlValue(taskDetails, "Step", 0);
-                    status.Dataset = clsXMLUtils.GetXmlValue(taskDetails, "Dataset");
-                    status.MostRecentLogMessage = clsXMLUtils.GetXmlValue(taskDetails, "MostRecentLogMessage");
-                    status.MostRecentJobInfo = clsXMLUtils.GetXmlValue(taskDetails, "MostRecentJobInfo");
-                    status.SpectrumCount = clsXMLUtils.GetXmlValue(taskDetails, "SpectrumCount", 0);
-
-                    var coreUsageHistory = ParseCoreUsageHistory(doc);
-
-                    status.StoreCoreUsageHistory(coreUsageHistory);
-
-                    // Cache some remote status values so that SetAnalysisJobComplete can use them
-                    JobParams.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION,
-                                                     clsRemoteTransferUtility.STEP_PARAM_REMOTE_PROGRESS,
-                                                     status.Progress.ToString("0.0###"));
-
-                    // Store the remote start time, converting to UTC via format code "{0:O}"
-                    JobParams.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION,
-                                                     clsRemoteTransferUtility.STEP_PARAM_REMOTE_START,
-                                                     string.Format("{0:O}", status.TaskStartTime));
-
-                    if (status.Progress >= 100)
-                    {
-                        // Store the remote finish time, converting to UTC via format code "{0:O}"
-                        JobParams.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION,
-                                                         clsRemoteTransferUtility.STEP_PARAM_REMOTE_FINISH,
-                                                         string.Format("{0:O}", lastUpdate));
-                    }
-                    else
-                    {
-                        JobParams.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION,
-                                                         clsRemoteTransferUtility.STEP_PARAM_REMOTE_FINISH,
-                                                         string.Empty);
-                    }
-
-                    // Update the cached progress; used by clsMainProcess
-                    RemoteProgress = status.Progress;
-
-                    StatusTools.UpdateRemoteStatus(status, lastUpdate, processId, cpuUtilization, freeMemoryMB);
+                status.TaskStartTime = clsXMLUtils.GetXmlValue(managerInfo, "LastStartTime", DateTime.MinValue).ToUniversalTime();
+                if (status.TaskStartTime > DateTime.MinValue)
+                {
+                    status.TaskStartTime = status.TaskStartTime.ToUniversalTime();
                 }
+
+                var lastUpdate = clsXMLUtils.GetXmlValue(managerInfo, "LastUpdate", DateTime.MinValue);
+                if (lastUpdate > DateTime.MinValue)
+                {
+                    lastUpdate = lastUpdate.ToUniversalTime();
+                }
+                else
+                {
+                    lastUpdate = status.TaskStartTime.ToUniversalTime();
+                }
+
+                var cpuUtilization = (int)clsXMLUtils.GetXmlValue(managerInfo, "CPUUtilization", 0f);
+                var freeMemoryMB = clsXMLUtils.GetXmlValue(managerInfo, "FreeMemoryMB", 0f);
+                var processId = clsXMLUtils.GetXmlValue(managerInfo, "ProcessID", 0);
+
+                status.ProgRunnerProcessID = clsXMLUtils.GetXmlValue(managerInfo, "ProgRunnerProcessID", 0);
+
+                status.ProgRunnerCoreUsage = clsXMLUtils.GetXmlValue(managerInfo, "ProgRunnerCoreUsage", 0f);
+
+                var taskInfo = doc.Elements("Root").Elements("Task").ToList();
+
+                status.Tool = clsXMLUtils.GetXmlValue(taskInfo, "Tool");
+
+                var taskStatus = clsXMLUtils.GetXmlValue(taskInfo, "Status");
+                status.TaskStatus = StatusTools.ConvertToTaskStatusFromText(taskStatus);
+
+                switch (status.TaskStatus)
+                {
+                    case EnumTaskStatus.STOPPED:
+                    case EnumTaskStatus.REQUESTING:
+                    case EnumTaskStatus.NO_TASK:
+                        // The .jobstatus file in the Task Queue directory should not have these task status values
+                        // Return .Undefined, which will fail out the job step
+                        jobStatus = EnumRemoteJobStatus.Undefined;
+                        break;
+
+                    case EnumTaskStatus.RUNNING:
+                    case EnumTaskStatus.CLOSING:
+                        jobStatus = EnumRemoteJobStatus.Running;
+                        break;
+
+                    case EnumTaskStatus.FAILED:
+                        jobStatus = EnumRemoteJobStatus.Failed;
+                        break;
+
+                    default:
+                        // Unrecognized task status
+                        // Return .Undefined, which will fail out the job step
+                        jobStatus = EnumRemoteJobStatus.Undefined;
+                        break;
+                }
+
+                status.Progress = clsXMLUtils.GetXmlValue(taskInfo, "Progress", 0f);
+                status.CurrentOperation = clsXMLUtils.GetXmlValue(taskInfo, "CurrentOperation");
+
+                var taskDetails = taskInfo.Elements("TaskDetails").ToList();
+
+                var taskStatusDetail = clsXMLUtils.GetXmlValue(taskDetails, "Status");
+                status.TaskStatusDetail = StatusTools.ConvertToTaskDetailStatusFromText(taskStatusDetail);
+
+                status.JobNumber = clsXMLUtils.GetXmlValue(taskDetails, "Job", 0);
+                status.JobStep = clsXMLUtils.GetXmlValue(taskDetails, "Step", 0);
+                status.Dataset = clsXMLUtils.GetXmlValue(taskDetails, "Dataset");
+                status.MostRecentLogMessage = clsXMLUtils.GetXmlValue(taskDetails, "MostRecentLogMessage");
+                status.MostRecentJobInfo = clsXMLUtils.GetXmlValue(taskDetails, "MostRecentJobInfo");
+                status.SpectrumCount = clsXMLUtils.GetXmlValue(taskDetails, "SpectrumCount", 0);
+
+                var coreUsageHistory = ParseCoreUsageHistory(doc);
+
+                status.StoreCoreUsageHistory(coreUsageHistory);
+
+                // Cache some remote status values so that SetAnalysisJobComplete can use them
+                JobParams.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION,
+                    clsRemoteTransferUtility.STEP_PARAM_REMOTE_PROGRESS,
+                    status.Progress.ToString("0.0###"));
+
+                // Store the remote start time, converting to UTC via format code "{0:O}"
+                JobParams.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION,
+                    clsRemoteTransferUtility.STEP_PARAM_REMOTE_START,
+                    string.Format("{0:O}", status.TaskStartTime));
+
+                if (status.Progress >= 100)
+                {
+                    // Store the remote finish time, converting to UTC via format code "{0:O}"
+                    JobParams.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION,
+                        clsRemoteTransferUtility.STEP_PARAM_REMOTE_FINISH,
+                        string.Format("{0:O}", lastUpdate));
+                }
+                else
+                {
+                    JobParams.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION,
+                        clsRemoteTransferUtility.STEP_PARAM_REMOTE_FINISH,
+                        string.Empty);
+                }
+
+                // Update the cached progress; used by clsMainProcess
+                RemoteProgress = status.Progress;
+
+                StatusTools.UpdateRemoteStatus(status, lastUpdate, processId, cpuUtilization, freeMemoryMB);
             }
             catch (Exception ex)
             {
@@ -798,101 +797,100 @@ namespace AnalysisManagerBase
                 var taskStartTime = DateTime.MinValue;
                 var taskEndTime = DateTime.MinValue;
 
-                using (var reader = new StreamReader(new FileStream(statusResultFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using var reader = new StreamReader(new FileStream(statusResultFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+                char[] sepChars = { '=' };
+
+                while (!reader.EndOfStream)
                 {
-                    char[] sepChars = { '=' };
+                    var dataLine = reader.ReadLine();
+                    if (string.IsNullOrWhiteSpace(dataLine))
+                        continue;
 
-                    while (!reader.EndOfStream)
+                    var lineParts = dataLine.Split(sepChars, 2);
+
+                    if (lineParts.Length < 2)
                     {
-                        var dataLine = reader.ReadLine();
-                        if (string.IsNullOrWhiteSpace(dataLine))
-                            continue;
-
-                        var lineParts = dataLine.Split(sepChars, 2);
-
-                        if (lineParts.Length < 2)
-                        {
-                            LogWarning(string.Format("Ignoring invalid line in status file {0}: {1}", statusResultFile.Name, dataLine));
-                            continue;
-                        }
-
-                        if (lineParts[0] == "MgrName")
-                            remoteMgrName = lineParts[1];
-
-                        // Start time is based on local time
-                        if (lineParts[0] == "Started")
-                            DateTime.TryParse(lineParts[1], out taskStartTime);
-
-                        // Finish time is based on local time
-                        if (lineParts[0] == "Finished")
-                            DateTime.TryParse(lineParts[1], out taskEndTime);
+                        LogWarning(string.Format("Ignoring invalid line in status file {0}: {1}", statusResultFile.Name, dataLine));
+                        continue;
                     }
 
-                    if (string.IsNullOrWhiteSpace(remoteMgrName))
-                    {
-                        OnErrorEvent(string.Format("File {0} did not contain parameter MgrName; cannot update status for the remote manager",
-                                                   statusResultFile.Name));
-                        return;
-                    }
+                    if (lineParts[0] == "MgrName")
+                        remoteMgrName = lineParts[1];
 
-                    // Note: although we pass localStatusFilePath to the clsStatusFile constructor, the path doesn't matter because
-                    // we call UpdateRemoteStatus to push the remote status to the message queue only; a status file is not written
-                    var localStatusFilePath = Path.Combine(WorkDir, "RemoteStatus.xml");
+                    // Start time is based on local time
+                    if (lineParts[0] == "Started")
+                        DateTime.TryParse(lineParts[1], out taskStartTime);
 
-                    var status = new clsStatusFile(localStatusFilePath, DebugLevel)
-                    {
-                        MgrName = remoteMgrName
-                    };
-                    RegisterEvents(status);
-
-                    // Note: do not configure status to push to the BrokerDB or the MessageQueue
-                    // Instead, use the .jobstatus file to populate status, then call StatusTools.UpdateRemoteStatus
-                    // which calls WriteStatusFile with writeToDisk=false, which results in the remote status info getting pushed to the MessageQueue
-
-                    status.MgrStatus = EnumMgrStatus.STOPPED;
-
-                    if (taskStartTime > DateTime.MinValue)
-                        status.TaskStartTime = taskStartTime.ToUniversalTime();
-                    else
-                        status.TaskStartTime = taskStartTime;
-
-                    DateTime lastUpdate;
-
-                    if (taskEndTime > DateTime.MinValue)
-                        lastUpdate = taskEndTime.ToUniversalTime();
-                    else
-                        lastUpdate = statusResultFile.LastWriteTimeUtc;
-
-                    const int cpuUtilization = 0;
-                    const int freeMemoryMB = 0;
-                    const int processId = 0;
-
-                    status.ProgRunnerProcessID = 0;
-
-                    status.ProgRunnerCoreUsage = 0;
-
-                    status.Tool = string.Empty;
-
-                    status.TaskStatus = EnumTaskStatus.NO_TASK;
-
-                    if (statusResultFile.Name.EndsWith(".success"))
-                        status.Progress = 100;
-                    else
-                        status.Progress = 0;
-
-                    status.CurrentOperation = string.Empty;
-
-                    status.TaskStatusDetail = EnumTaskStatusDetail.NO_TASK;
-
-                    status.JobNumber = 0;
-                    status.JobStep = 0;
-                    status.Dataset = string.Empty;
-
-                    // Update the cached progress; used by clsMainProcess
-                    RemoteProgress = status.Progress;
-
-                    StatusTools.UpdateRemoteStatus(status, lastUpdate, processId, cpuUtilization, freeMemoryMB);
+                    // Finish time is based on local time
+                    if (lineParts[0] == "Finished")
+                        DateTime.TryParse(lineParts[1], out taskEndTime);
                 }
+
+                if (string.IsNullOrWhiteSpace(remoteMgrName))
+                {
+                    OnErrorEvent(string.Format("File {0} did not contain parameter MgrName; cannot update status for the remote manager",
+                        statusResultFile.Name));
+                    return;
+                }
+
+                // Note: although we pass localStatusFilePath to the clsStatusFile constructor, the path doesn't matter because
+                // we call UpdateRemoteStatus to push the remote status to the message queue only; a status file is not written
+                var localStatusFilePath = Path.Combine(WorkDir, "RemoteStatus.xml");
+
+                var status = new clsStatusFile(localStatusFilePath, DebugLevel)
+                {
+                    MgrName = remoteMgrName
+                };
+                RegisterEvents(status);
+
+                // Note: do not configure status to push to the BrokerDB or the MessageQueue
+                // Instead, use the .jobstatus file to populate status, then call StatusTools.UpdateRemoteStatus
+                // which calls WriteStatusFile with writeToDisk=false, which results in the remote status info getting pushed to the MessageQueue
+
+                status.MgrStatus = EnumMgrStatus.STOPPED;
+
+                if (taskStartTime > DateTime.MinValue)
+                    status.TaskStartTime = taskStartTime.ToUniversalTime();
+                else
+                    status.TaskStartTime = taskStartTime;
+
+                DateTime lastUpdate;
+
+                if (taskEndTime > DateTime.MinValue)
+                    lastUpdate = taskEndTime.ToUniversalTime();
+                else
+                    lastUpdate = statusResultFile.LastWriteTimeUtc;
+
+                const int cpuUtilization = 0;
+                const int freeMemoryMB = 0;
+                const int processId = 0;
+
+                status.ProgRunnerProcessID = 0;
+
+                status.ProgRunnerCoreUsage = 0;
+
+                status.Tool = string.Empty;
+
+                status.TaskStatus = EnumTaskStatus.NO_TASK;
+
+                if (statusResultFile.Name.EndsWith(".success"))
+                    status.Progress = 100;
+                else
+                    status.Progress = 0;
+
+                status.CurrentOperation = string.Empty;
+
+                status.TaskStatusDetail = EnumTaskStatusDetail.NO_TASK;
+
+                status.JobNumber = 0;
+                status.JobStep = 0;
+                status.Dataset = string.Empty;
+
+                // Update the cached progress; used by clsMainProcess
+                RemoteProgress = status.Progress;
+
+                StatusTools.UpdateRemoteStatus(status, lastUpdate, processId, cpuUtilization, freeMemoryMB);
             }
             catch (Exception ex)
             {

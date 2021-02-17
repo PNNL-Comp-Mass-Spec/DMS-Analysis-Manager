@@ -461,19 +461,17 @@ namespace AnalysisManagerBase
 
                 if (mzidFilePathLocal.EndsWith(clsAnalysisResources.DOT_GZ_EXTENSION, StringComparison.OrdinalIgnoreCase))
                 {
-                    using (Stream unzippedStream = new GZipStream(new FileStream(mzidFilePathLocal, FileMode.Open, FileAccess.Read, FileShare.Read), CompressionMode.Decompress))
-                    using (var sourceFileReader = new StreamReader(unzippedStream, Encoding.GetEncoding("ISO-8859-1")))
-                    using (var xmlReader = new XmlTextReader(sourceFileReader))
-                    {
-                        SearchUsedMzML = MSGFPlusSearchUsedMzML(xmlReader, mzidFilePathLocal);
-                    }
+                    using Stream unzippedStream = new GZipStream(new FileStream(mzidFilePathLocal, FileMode.Open, FileAccess.Read, FileShare.Read), CompressionMode.Decompress);
+                    using var sourceFileReader = new StreamReader(unzippedStream, Encoding.GetEncoding("ISO-8859-1"));
+                    using var xmlReader = new XmlTextReader(sourceFileReader);
+
+                    SearchUsedMzML = MSGFPlusSearchUsedMzML(xmlReader, mzidFilePathLocal);
                 }
                 else
                 {
-                    using (var xmlReader = new XmlTextReader(mzidFilePathLocal))
-                    {
-                        SearchUsedMzML = MSGFPlusSearchUsedMzML(xmlReader, mzidFilePathLocal);
-                    }
+                    using var xmlReader = new XmlTextReader(mzidFilePathLocal);
+
+                    SearchUsedMzML = MSGFPlusSearchUsedMzML(xmlReader, mzidFilePathLocal);
                 }
 
                 if (deleteLocalFile)
@@ -698,50 +696,50 @@ namespace AnalysisManagerBase
                 if (retrievalOptions.CreateJobPathFiles)
                 {
                     var jobInfoFilePath = GetJobInfoFilePath(dataPkgJob.Job);
-                    using (var writer = new StreamWriter(new FileStream(jobInfoFilePath, FileMode.Append, FileAccess.Write, FileShare.Read)))
+
+                    using var writer = new StreamWriter(new FileStream(jobInfoFilePath, FileMode.Append, FileAccess.Write, FileShare.Read));
+
+                    foreach (var filePath in foundFiles)
                     {
-                        foreach (var filePath in foundFiles)
+                        var currentFileInfo = new FileInfo(filePath);
+                        if (currentFileInfo.Name.EndsWith("_msgfplus.zip", StringComparison.OrdinalIgnoreCase))
                         {
-                            var currentFileInfo = new FileInfo(filePath);
-                            if (currentFileInfo.Name.EndsWith("_msgfplus.zip", StringComparison.OrdinalIgnoreCase))
+                            // Convert the _msgfplus.zip file to a .mzid.gz file
+                            if (currentFileInfo.Exists)
                             {
-                                // Convert the _msgfplus.zip file to a .mzid.gz file
-                                if (currentFileInfo.Exists)
-                                {
-                                    dotNetTools.UnzipFile(currentFileInfo.FullName, workDirInfo.FullName);
-                                    var unzippedFilePath = MostRecentUnzippedFile(dotNetTools);
+                                dotNetTools.UnzipFile(currentFileInfo.FullName, workDirInfo.FullName);
+                                var unzippedFilePath = MostRecentUnzippedFile(dotNetTools);
 
-                                    dotNetTools.GZipFile(unzippedFilePath, true);
-                                    var gzipFilePath = dotNetTools.MostRecentZipFilePath;
-                                    var gzipFileSource = new FileInfo(gzipFilePath);
+                                dotNetTools.GZipFile(unzippedFilePath, true);
+                                var gzipFilePath = dotNetTools.MostRecentZipFilePath;
+                                var gzipFileSource = new FileInfo(gzipFilePath);
 
-                                    // Move the file into a subdirectory below the working directory
-                                    // This is necessary in case a dataset has multiple analysis jobs in the same data package
-                                    var gzipFilePathNew = MoveFileToJobSubdirectory(workDirInfo, dataPkgJob, gzipFileSource);
-
-                                    writer.WriteLine(gzipFilePathNew);
-                                    continue;
-                                }
-                            }
-
-                            if (currentFileInfo.Exists &&
-                                currentFileInfo.Directory?.FullName.Equals(workDirInfo.FullName, StringComparison.OrdinalIgnoreCase) == true)
-                            {
                                 // Move the file into a subdirectory below the working directory
                                 // This is necessary in case a dataset has multiple analysis jobs in the same data package
+                                var gzipFilePathNew = MoveFileToJobSubdirectory(workDirInfo, dataPkgJob, gzipFileSource);
 
-                                // Furthermore, method RetrievePHRPFiles in the tool runner class of the PRIDE Converter plugin
-                                // requires that files be copied from a separate location to the working directory
-                                // It raises an error if the file is found to exist in the working directory
-
-                                var newFilePath = MoveFileToJobSubdirectory(workDirInfo, dataPkgJob, currentFileInfo);
-
-                                writer.WriteLine(newFilePath);
+                                writer.WriteLine(gzipFilePathNew);
                                 continue;
                             }
-
-                            writer.WriteLine(filePath);
                         }
+
+                        if (currentFileInfo.Exists &&
+                            currentFileInfo.Directory?.FullName.Equals(workDirInfo.FullName, StringComparison.OrdinalIgnoreCase) == true)
+                        {
+                            // Move the file into a subdirectory below the working directory
+                            // This is necessary in case a dataset has multiple analysis jobs in the same data package
+
+                            // Furthermore, method RetrievePHRPFiles in the tool runner class of the PRIDE Converter plugin
+                            // requires that files be copied from a separate location to the working directory
+                            // It raises an error if the file is found to exist in the working directory
+
+                            var newFilePath = MoveFileToJobSubdirectory(workDirInfo, dataPkgJob, currentFileInfo);
+
+                            writer.WriteLine(newFilePath);
+                            continue;
+                        }
+
+                        writer.WriteLine(filePath);
                     }
                 }
                 else
@@ -1583,57 +1581,55 @@ namespace AnalysisManagerBase
                 if (!dataPkgJobMetadataFile.Exists)
                     return cachedJobMetadata;
 
-                using (var reader = new StreamReader(
-                    new FileStream(dataPkgJobMetadataFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using var reader = new StreamReader(new FileStream(dataPkgJobMetadataFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+                var headersParsed = false;
+                var jobColIndex = 0;
+                var mzMlUsedColIndex = 0;
+
+                while (!reader.EndOfStream)
                 {
-                    var headersParsed = false;
-                    var jobColIndex = 0;
-                    var mzMlUsedColIndex = 0;
+                    var dataLine = reader.ReadLine();
+                    if (string.IsNullOrWhiteSpace(dataLine))
+                        continue;
 
-                    while (!reader.EndOfStream)
+                    var dataList = dataLine.Split('\t');
+
+                    if (!headersParsed)
                     {
-                        var dataLine = reader.ReadLine();
-                        if (string.IsNullOrWhiteSpace(dataLine))
-                            continue;
+                        var requiredColumns = new List<string> { "Job", "SearchUsedMzML" };
 
-                        var dataList = dataLine.Split('\t');
+                        var columnMap = clsGlobal.ParseHeaderLine(dataLine, requiredColumns);
 
-                        if (!headersParsed)
+                        foreach (var column in requiredColumns)
                         {
-                            var requiredColumns = new List<string> { "Job", "SearchUsedMzML" };
+                            if (columnMap[column] >= 0)
+                                continue;
 
-                            var columnMap = clsGlobal.ParseHeaderLine(dataLine, requiredColumns);
-
-                            foreach (var column in requiredColumns)
-                            {
-                                if (columnMap[column] >= 0)
-                                    continue;
-
-                                OnWarningEvent(string.Format("{0} column not found in {1}", column, dataPkgJobMetadataFile.FullName));
-                                return cachedJobMetadata;
-                            }
-
-                            jobColIndex = columnMap["Job"];
-                            mzMlUsedColIndex = columnMap["SearchUsedMzML"];
-
-                            headersParsed = true;
-
-                            continue;
+                            OnWarningEvent(string.Format("{0} column not found in {1}", column, dataPkgJobMetadataFile.FullName));
+                            return cachedJobMetadata;
                         }
 
-                        if (!clsGlobal.TryGetValueInt(dataList, jobColIndex, out var job))
-                            continue;
+                        jobColIndex = columnMap["Job"];
+                        mzMlUsedColIndex = columnMap["SearchUsedMzML"];
 
-                        if (!clsGlobal.TryGetValue(dataList, mzMlUsedColIndex, out var SearchUsedMzML))
-                            continue;
+                        headersParsed = true;
 
-                        var jobMetadata = new udtDataPackageJobMetadata
-                        {
-                            SearchUsedMzML = bool.Parse(SearchUsedMzML)
-                        };
-
-                        cachedJobMetadata.Add(job, jobMetadata);
+                        continue;
                     }
+
+                    if (!clsGlobal.TryGetValueInt(dataList, jobColIndex, out var job))
+                        continue;
+
+                    if (!clsGlobal.TryGetValue(dataList, mzMlUsedColIndex, out var SearchUsedMzML))
+                        continue;
+
+                    var jobMetadata = new udtDataPackageJobMetadata
+                    {
+                        SearchUsedMzML = bool.Parse(SearchUsedMzML)
+                    };
+
+                    cachedJobMetadata.Add(job, jobMetadata);
                 }
             }
             catch (Exception ex)
@@ -1652,18 +1648,16 @@ namespace AnalysisManagerBase
             {
                 clsGlobal.CreateDirectoryIfMissing(dataPkgJobMetadataFile.DirectoryName);
 
-                using (var writer = new StreamWriter(
-                    new FileStream(dataPkgJobMetadataFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read)))
-                {
-                    // Write the header line
-                    writer.WriteLine(string.Join("\t",
-                        new List<string> { "Job", "SearchUsedMzML" }));
+                using var writer = new StreamWriter(new FileStream(dataPkgJobMetadataFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read));
 
-                    foreach (var item in cachedJobMetadata)
-                    {
-                        writer.WriteLine(string.Join("\t",
-                            new List<string> { item.Key.ToString(), item.Value.SearchUsedMzML.ToString() }));
-                    }
+                // Write the header line
+                writer.WriteLine(string.Join("\t",
+                    new List<string> { "Job", "SearchUsedMzML" }));
+
+                foreach (var item in cachedJobMetadata)
+                {
+                    writer.WriteLine(string.Join("\t",
+                        new List<string> { item.Key.ToString(), item.Value.SearchUsedMzML.ToString() }));
                 }
             }
             catch (Exception ex)

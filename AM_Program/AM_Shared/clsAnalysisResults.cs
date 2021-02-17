@@ -361,35 +361,34 @@ namespace AnalysisManagerBase
 
         private void CopyFailedResultsCreateInfoFile(string folderInfoFilePath, string resultsFolderName)
         {
-            using (var writer = new StreamWriter(new FileStream(folderInfoFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+            using var writer = new StreamWriter(new FileStream(folderInfoFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
+
+            writer.WriteLine("Date" + '\t' + DateTime.Now);
+            writer.WriteLine("ResultsFolderName" + '\t' + resultsFolderName);
+            writer.WriteLine("Manager" + '\t' + mMgrParams.ManagerName);
+
+            if (mJobParams != null)
             {
-                writer.WriteLine("Date" + '\t' + DateTime.Now);
-                writer.WriteLine("ResultsFolderName" + '\t' + resultsFolderName);
-                writer.WriteLine("Manager" + '\t' + mMgrParams.ManagerName);
-
-                if (mJobParams != null)
-                {
-                    writer.WriteLine("JobToolDescription" + '\t' + mJobParams.GetCurrentJobToolDescription());
-                    writer.WriteLine("Job" + '\t' + mJobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Job"));
-                    writer.WriteLine("Step" + '\t' + mJobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Step"));
-                }
-
-                writer.WriteLine("Date" + '\t' + DateTime.Now);
-                if (mJobParams != null)
-                {
-                    // The ToolName job parameter holds the name of the job script we are executing
-                    writer.WriteLine("Tool" + '\t' + mJobParams.GetParam("ToolName"));
-                    writer.WriteLine("StepTool" + '\t' + mJobParams.GetParam("StepTool"));
-                    writer.WriteLine("Dataset" + '\t' + mJobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_DATASET_NAME));
-                    writer.WriteLine("XferFolder" + '\t' + mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH));
-                    writer.WriteLine("ParamFileName" + '\t' + mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_PARAMETER_FILE));
-                    writer.WriteLine("SettingsFileName" + '\t' + mJobParams.GetParam("SettingsFileName"));
-                    writer.WriteLine("LegacyOrganismDBName" + '\t' + mJobParams.GetParam("LegacyFastaFileName"));
-                    writer.WriteLine("ProteinCollectionList" + '\t' + mJobParams.GetParam("ProteinCollectionList"));
-                    writer.WriteLine("ProteinOptionsList" + '\t' + mJobParams.GetParam("ProteinOptions"));
-                    writer.WriteLine("FastaFileName" + '\t' + mJobParams.GetParam("PeptideSearch", clsAnalysisResources.JOB_PARAM_GENERATED_FASTA_NAME));
-                }
+                writer.WriteLine("JobToolDescription" + '\t' + mJobParams.GetCurrentJobToolDescription());
+                writer.WriteLine("Job" + '\t' + mJobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Job"));
+                writer.WriteLine("Step" + '\t' + mJobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Step"));
             }
+
+            writer.WriteLine("Date" + '\t' + DateTime.Now);
+            if (mJobParams == null)
+                return;
+
+            // The ToolName job parameter holds the name of the job script we are executing
+            writer.WriteLine("Tool" + '\t' + mJobParams.GetParam("ToolName"));
+            writer.WriteLine("StepTool" + '\t' + mJobParams.GetParam("StepTool"));
+            writer.WriteLine("Dataset" + '\t' + mJobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_DATASET_NAME));
+            writer.WriteLine("XferFolder" + '\t' + mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH));
+            writer.WriteLine("ParamFileName" + '\t' + mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_PARAMETER_FILE));
+            writer.WriteLine("SettingsFileName" + '\t' + mJobParams.GetParam("SettingsFileName"));
+            writer.WriteLine("LegacyOrganismDBName" + '\t' + mJobParams.GetParam("LegacyFastaFileName"));
+            writer.WriteLine("ProteinCollectionList" + '\t' + mJobParams.GetParam("ProteinCollectionList"));
+            writer.WriteLine("ProteinOptionsList" + '\t' + mJobParams.GetParam("ProteinOptions"));
+            writer.WriteLine("FastaFileName" + '\t' + mJobParams.GetParam("PeptideSearch", clsAnalysisResources.JOB_PARAM_GENERATED_FASTA_NAME));
         }
 
         /// <summary>

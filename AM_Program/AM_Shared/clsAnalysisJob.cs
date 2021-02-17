@@ -1176,36 +1176,35 @@ namespace AnalysisManagerBase
 
             var splitChars = new[] { '=' };
 
-            using (var reader = new StreamReader(new FileStream(infoFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+            using var reader = new StreamReader(new FileStream(infoFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+            while (!reader.EndOfStream)
             {
-                while (!reader.EndOfStream)
+                var dataLine = reader.ReadLine();
+                if (string.IsNullOrWhiteSpace(dataLine))
+                    continue;
+
+                var lineParts = dataLine.Split(splitChars, 2);
+                if (lineParts.Length < 2)
+                    continue;
+
+                var key = lineParts[0];
+                var value = lineParts[1];
+
+                switch (key)
                 {
-                    var dataLine = reader.ReadLine();
-                    if (string.IsNullOrWhiteSpace(dataLine))
-                        continue;
-
-                    var lineParts = dataLine.Split(splitChars, 2);
-                    if (lineParts.Length < 2)
-                        continue;
-
-                    var key = lineParts[0];
-                    var value = lineParts[1];
-
-                    switch (key)
-                    {
-                        case "Job":
-                            jobId = int.Parse(value);
-                            break;
-                        case "Step":
-                            stepNum = int.Parse(value);
-                            break;
-                        case "WorkDir":
-                            workDirPath = value;
-                            break;
-                        case "Staged":
-                            staged = value;
-                            break;
-                    }
+                    case "Job":
+                        jobId = int.Parse(value);
+                        break;
+                    case "Step":
+                        stepNum = int.Parse(value);
+                        break;
+                    case "WorkDir":
+                        workDirPath = value;
+                        break;
+                    case "Staged":
+                        staged = value;
+                        break;
                 }
             }
 

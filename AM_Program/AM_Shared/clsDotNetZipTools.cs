@@ -464,46 +464,45 @@ namespace AnalysisManagerBase
                 }
 
                 // Ionic.Zip.ZipFile
-                using (var zipper = new ZipFile(zipFilePath))
+                using var zipper = new ZipFile(zipFilePath);
+
+                var startTime = DateTime.UtcNow;
+
+                if (string.IsNullOrEmpty(fileFilter))
                 {
-                    var startTime = DateTime.UtcNow;
+                    zipper.ExtractAll(targetDirectory, overwriteBehavior);
 
-                    if (string.IsNullOrEmpty(fileFilter))
+                    foreach (var item in zipper.Entries)
                     {
-                        zipper.ExtractAll(targetDirectory, overwriteBehavior);
+                        if (item.IsDirectory)
+                            continue;
 
-                        foreach (var item in zipper.Entries)
-                        {
-                            if (!item.IsDirectory)
-                            {
-                                // Note that item.FileName contains the relative path of the file, for example "Filename.txt" or "Subdirectory/Filename.txt"
-                                var unzippedItem = new FileInfo(Path.Combine(targetDirectory, item.FileName.Replace('/', Path.DirectorySeparatorChar)));
-                                MostRecentUnzippedFiles.Add(new KeyValuePair<string, string>(unzippedItem.Name, unzippedItem.FullName));
-                            }
-                        }
+                        // Note that item.FileName contains the relative path of the file, for example "Filename.txt" or "Subdirectory/Filename.txt"
+                        var unzippedItem = new FileInfo(Path.Combine(targetDirectory, item.FileName.Replace('/', Path.DirectorySeparatorChar)));
+                        MostRecentUnzippedFiles.Add(new KeyValuePair<string, string>(unzippedItem.Name, unzippedItem.FullName));
                     }
-                    else
+                }
+                else
+                {
+                    var zipEntries = zipper.SelectEntries(fileFilter);
+
+                    foreach (var item in zipEntries)
                     {
-                        var zipEntries = zipper.SelectEntries(fileFilter);
+                        item.Extract(targetDirectory, overwriteBehavior);
+                        if (item.IsDirectory)
+                            continue;
 
-                        foreach (var item in zipEntries)
-                        {
-                            item.Extract(targetDirectory, overwriteBehavior);
-                            if (!item.IsDirectory)
-                            {
-                                // Note that item.FileName contains the relative path of the file, for example "Filename.txt" or "Subdirectory/Filename.txt"
-                                var unzippedItem = new FileInfo(Path.Combine(targetDirectory, item.FileName.Replace('/', Path.DirectorySeparatorChar)));
-                                MostRecentUnzippedFiles.Add(new KeyValuePair<string, string>(unzippedItem.Name, unzippedItem.FullName));
-                            }
-                        }
+                        // Note that item.FileName contains the relative path of the file, for example "Filename.txt" or "Subdirectory/Filename.txt"
+                        var unzippedItem = new FileInfo(Path.Combine(targetDirectory, item.FileName.Replace('/', Path.DirectorySeparatorChar)));
+                        MostRecentUnzippedFiles.Add(new KeyValuePair<string, string>(unzippedItem.Name, unzippedItem.FullName));
                     }
+                }
 
-                    var endTime = DateTime.UtcNow;
+                var endTime = DateTime.UtcNow;
 
-                    if (DebugLevel >= 2)
-                    {
-                        ReportZipStats(fileToUnzip, startTime, endTime, false, DOTNET_ZIP_NAME);
-                    }
+                if (DebugLevel >= 2)
+                {
+                    ReportZipStats(fileToUnzip, startTime, endTime, false, DOTNET_ZIP_NAME);
                 }
             }
             catch (Exception ex)
@@ -568,19 +567,18 @@ namespace AnalysisManagerBase
 
                 // Unzip each zipped file to a byte buffer (no need to actually write to disk)
                 // Ionic.Zip.ZipFile
-                using (var zipper = new ZipFile(zipFilePath))
+                using var zipper = new ZipFile(zipFilePath);
+
+                var entries = zipper.SelectEntries("*");
+
+                foreach (var entry in entries)
                 {
-                    var entries = zipper.SelectEntries("*");
+                    if (entry.IsDirectory)
+                        continue;
 
-                    foreach (var entry in entries)
-                    {
-                        if (entry.IsDirectory)
-                            continue;
-
-                        var success = VerifyZipFileEntry(zipFilePath, entry);
-                        if (!success)
-                            return false;
-                    }
+                    var success = VerifyZipFileEntry(zipFilePath, entry);
+                    if (!success)
+                        return false;
                 }
             }
             catch (Exception ex)
@@ -597,33 +595,30 @@ namespace AnalysisManagerBase
             var buffer = new byte[8096];
             long totalBytesRead = 0;
 
-            using (var srReader = entry.OpenReader())
+            using var reader = entry.OpenReader();
+
+            int n;
+            do
             {
-                int n;
-                do
-                {
-                    n = srReader.Read(buffer, 0, buffer.Length);
-                    totalBytesRead += n;
-                } while (n > 0);
+                n = reader.Read(buffer, 0, buffer.Length);
+                totalBytesRead += n;
+            } while (n > 0);
 
-                if (srReader.Crc != entry.Crc)
-                {
-                    Message = string.Format("Zip entry " + entry.FileName + " failed the CRC Check in " + zipFilePath +
-                                              " (0x{0:X8} != 0x{1:X8})", srReader.Crc, entry.Crc);
-                    OnErrorEvent(Message);
-                    return false;
-                }
-
-                if (totalBytesRead != entry.UncompressedSize)
-                {
-                    Message = string.Format("Unexpected number of bytes for entry " + entry.FileName + " in " + zipFilePath +
-                                              " ({0} != {1})", totalBytesRead, entry.UncompressedSize);
-                    OnWarningEvent(Message);
-                    return false;
-                }
+            if (reader.Crc != entry.Crc)
+            {
+                Message = string.Format("Zip entry " + entry.FileName + " failed the CRC Check in " + zipFilePath +
+                                        " (0x{0:X8} != 0x{1:X8})", reader.Crc, entry.Crc);
+                OnErrorEvent(Message);
+                return false;
             }
 
-            return true;
+            if (totalBytesRead == entry.UncompressedSize)
+                return true;
+
+            Message = string.Format("Unexpected number of bytes for entry " + entry.FileName + " in " + zipFilePath +
+                                    " ({0} != {1})", totalBytesRead, entry.UncompressedSize);
+            OnWarningEvent(Message);
+            return false;
         }
 
         /// <summary>
@@ -679,19 +674,18 @@ namespace AnalysisManagerBase
                 }
 
                 // Ionic.Zip.ZipFile
-                using (var zipper = new ZipFile(zipFilePath))
+                using var zipper = new ZipFile(zipFilePath) {
+                    UseZip64WhenSaving = Zip64Option.AsNecessary
+                };
+
+                var startTime = DateTime.UtcNow;
+                zipper.AddItem(fileToZip.FullName, string.Empty);
+                zipper.Save();
+                var endTime = DateTime.UtcNow;
+
+                if (DebugLevel >= 2)
                 {
-                    zipper.UseZip64WhenSaving = Zip64Option.AsNecessary;
-
-                    var startTime = DateTime.UtcNow;
-                    zipper.AddItem(fileToZip.FullName, string.Empty);
-                    zipper.Save();
-                    var endTime = DateTime.UtcNow;
-
-                    if (DebugLevel >= 2)
-                    {
-                        ReportZipStats(fileToZip, startTime, endTime, true, DOTNET_ZIP_NAME);
-                    }
+                    ReportZipStats(fileToZip, startTime, endTime, true, DOTNET_ZIP_NAME);
                 }
             }
             catch (Exception ex)
@@ -778,34 +772,33 @@ namespace AnalysisManagerBase
                 }
 
                 // Ionic.Zip.ZipFile
-                using (var zipper = new ZipFile(zipFilePath))
+                using var zipper = new ZipFile(zipFilePath) {
+                    UseZip64WhenSaving = Zip64Option.AsNecessary
+                };
+
+                var startTime = DateTime.UtcNow;
+
+                if (string.IsNullOrEmpty(fileFilter) && recurse)
                 {
-                    zipper.UseZip64WhenSaving = Zip64Option.AsNecessary;
-
-                    var startTime = DateTime.UtcNow;
-
-                    if (string.IsNullOrEmpty(fileFilter) && recurse)
+                    zipper.AddDirectory(directoryToZip.FullName);
+                }
+                else
+                {
+                    if (string.IsNullOrEmpty(fileFilter))
                     {
-                        zipper.AddDirectory(directoryToZip.FullName);
-                    }
-                    else
-                    {
-                        if (string.IsNullOrEmpty(fileFilter))
-                        {
-                            fileFilter = "*";
-                        }
-
-                        zipper.AddSelectedFiles(fileFilter, directoryToZip.FullName, string.Empty, recurse);
+                        fileFilter = "*";
                     }
 
-                    zipper.Save();
+                    zipper.AddSelectedFiles(fileFilter, directoryToZip.FullName, string.Empty, recurse);
+                }
 
-                    var endTime = DateTime.UtcNow;
+                zipper.Save();
 
-                    if (DebugLevel >= 2)
-                    {
-                        ReportZipStats(directoryToZip, startTime, endTime, true, DOTNET_ZIP_NAME);
-                    }
+                var endTime = DateTime.UtcNow;
+
+                if (DebugLevel >= 2)
+                {
+                    ReportZipStats(directoryToZip, startTime, endTime, true, DOTNET_ZIP_NAME);
                 }
             }
             catch (Exception ex)

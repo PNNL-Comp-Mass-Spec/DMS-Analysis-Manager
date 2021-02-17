@@ -2744,41 +2744,40 @@ namespace AnalysisManagerBase
             }
             else
             {
-                using (var reader = new StreamReader(new FileStream(toolVersionInfoFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using var reader = new StreamReader(new FileStream(toolVersionInfoFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+                var storeToolVersionInfo = false;
+                var toolVersionInfo = new List<string>();
+                LogDebug("Storing tool version info in DB for " + toolJobDescription);
+
+                while (!reader.EndOfStream)
                 {
-                    var storeToolVersionInfo = false;
-                    var toolVersionInfo = new List<string>();
-                    LogDebug("Storing tool version info in DB for " + toolJobDescription);
+                    var dataLine = reader.ReadLine();
 
-                    while (!reader.EndOfStream)
+                    if (string.IsNullOrWhiteSpace(dataLine))
+                        continue;
+
+                    if (dataLine.StartsWith(clsToolVersionUtilities.TOOL_VERSION_INFO_SECTION_HEADER))
                     {
-                        var dataLine = reader.ReadLine();
-
-                        if (string.IsNullOrWhiteSpace(dataLine))
-                            continue;
-
-                        if (dataLine.StartsWith(clsToolVersionUtilities.TOOL_VERSION_INFO_SECTION_HEADER))
-                        {
-                            storeToolVersionInfo = true;
-                            continue;
-                        }
-
-                        if (!storeToolVersionInfo)
-                            continue;
-
-                        toolVersionInfo.Add(dataLine);
+                        storeToolVersionInfo = true;
+                        continue;
                     }
 
-                    if (toolVersionInfo.Count > 0)
-                    {
-                        mToolVersionUtilities.StoreToolVersionInDatabase(string.Join("; ", toolVersionInfo));
-                    }
-                    else
-                    {
-                        LogWarning(string.Format(
-                            "Tool version info file {0} did not have line {1}",
-                            toolVersionInfoFile.Name, clsToolVersionUtilities.TOOL_VERSION_INFO_SECTION_HEADER));
-                    }
+                    if (!storeToolVersionInfo)
+                        continue;
+
+                    toolVersionInfo.Add(dataLine);
+                }
+
+                if (toolVersionInfo.Count > 0)
+                {
+                    mToolVersionUtilities.StoreToolVersionInDatabase(string.Join("; ", toolVersionInfo));
+                }
+                else
+                {
+                    LogWarning(string.Format(
+                        "Tool version info file {0} did not have line {1}",
+                        toolVersionInfoFile.Name, clsToolVersionUtilities.TOOL_VERSION_INFO_SECTION_HEADER));
                 }
             }
 
@@ -2879,10 +2878,9 @@ namespace AnalysisManagerBase
                     // Create / update the purge check file
                     try
                     {
-                        using (var writer = new StreamWriter(new FileStream(purgeCheckFile.FullName, FileMode.Append, FileAccess.Write, FileShare.Read)))
-                        {
-                            writer.WriteLine(DateTime.Now.ToString(DATE_TIME_FORMAT) + " - " + mMgrName);
-                        }
+                        using var writer = new StreamWriter(new FileStream(purgeCheckFile.FullName, FileMode.Append, FileAccess.Write, FileShare.Read));
+
+                        writer.WriteLine(DateTime.Now.ToString(DATE_TIME_FORMAT) + " - " + mMgrName);
                     }
                     catch (Exception)
                     {
@@ -2944,10 +2942,9 @@ namespace AnalysisManagerBase
                         // Create the purge log file and write the header line
                         try
                         {
-                            using (var writer = new StreamWriter(new FileStream(purgeLogFile.FullName, FileMode.Append, FileAccess.Write, FileShare.Read)))
-                            {
-                                writer.WriteLine(string.Join("\t", "Date", "Manager", "Size (MB)", "Modification_Date", "Path"));
-                            }
+                            using var writer = new StreamWriter(new FileStream(purgeLogFile.FullName, FileMode.Append, FileAccess.Write, FileShare.Read));
+
+                            writer.WriteLine(string.Join("\t", "Date", "Manager", "Size (MB)", "Modification_Date", "Path"));
                         }
                         catch (Exception)
                         {
@@ -3024,17 +3021,18 @@ namespace AnalysisManagerBase
                         }
                     }
 
-                    if (purgedFileLogEntries.Count > 0)
+                    if (purgedFileLogEntries.Count == 0)
+                        return;
+
                     {
                         // Log the info for each of the deleted files
                         try
                         {
-                            using (var writer = new StreamWriter(new FileStream(purgeLogFile.FullName, FileMode.Append, FileAccess.Write, FileShare.ReadWrite)))
+                            using var writer = new StreamWriter(new FileStream(purgeLogFile.FullName, FileMode.Append, FileAccess.Write, FileShare.ReadWrite));
+
+                            foreach (var purgedFileLogEntry in purgedFileLogEntries)
                             {
-                                foreach (var purgedFileLogEntry in purgedFileLogEntries)
-                                {
-                                    writer.WriteLine(purgedFileLogEntry);
-                                }
+                                writer.WriteLine(purgedFileLogEntry);
                             }
                         }
                         catch (Exception)
@@ -3953,17 +3951,16 @@ namespace AnalysisManagerBase
                     return false;
                 }
 
-                using (var reader = new StreamReader(new FileStream(dtaFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
-                {
-                    while (!reader.EndOfStream)
-                    {
-                        var dataLine = reader.ReadLine();
+                using var reader = new StreamReader(new FileStream(dtaFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
 
-                        if (!string.IsNullOrWhiteSpace(dataLine))
-                        {
-                            dataFound = true;
-                            break;
-                        }
+                while (!reader.EndOfStream)
+                {
+                    var dataLine = reader.ReadLine();
+
+                    if (!string.IsNullOrWhiteSpace(dataLine))
+                    {
+                        dataFound = true;
+                        break;
                     }
                 }
 

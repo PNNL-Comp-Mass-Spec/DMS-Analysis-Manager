@@ -373,11 +373,10 @@ namespace AnalysisManagerProg
             try
             {
                 var path = Path.Combine(mMgrDirectoryPath, ERROR_DELETING_FILES_FILENAME);
-                using (var writer = new StreamWriter(new FileStream(path, FileMode.Append, FileAccess.Write, FileShare.Read)))
-                {
-                    writer.WriteLine(DateTime.Now.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT));
-                    writer.Flush();
-                }
+
+                using var writer = new StreamWriter(new FileStream(path, FileMode.Append, FileAccess.Write, FileShare.Read));
+
+                writer.WriteLine(DateTime.Now.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT));
             }
             catch (Exception ex)
             {
@@ -393,11 +392,10 @@ namespace AnalysisManagerProg
             try
             {
                 var path = FlagFilePath;
-                using (var writer = new StreamWriter(new FileStream(path, FileMode.Append, FileAccess.Write, FileShare.Read)))
-                {
-                    writer.WriteLine(DateTime.Now.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT));
-                    writer.Flush();
-                }
+
+                using var writer = new StreamWriter(new FileStream(path, FileMode.Append, FileAccess.Write, FileShare.Read));
+
+                writer.WriteLine(DateTime.Now.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT));
             }
             catch (Exception ex)
             {

@@ -1047,119 +1047,117 @@ namespace AnalysisManagerBase
 
             // Create a new memory stream in which to write the XML
             var memStream = new MemoryStream();
-            using (var xWriter = new XmlTextWriter(memStream, System.Text.Encoding.UTF8))
+            using var xWriter = new XmlTextWriter(memStream, System.Text.Encoding.UTF8) {
+                Formatting = Formatting.Indented, Indentation = 2
+            };
+
+            // Create the XML document in memory
+            xWriter.WriteStartDocument(true);
+            xWriter.WriteComment("Analysis manager job status");
+
+            // General job information
+            // Root level element
+            xWriter.WriteStartElement("Root");
+            xWriter.WriteStartElement("Manager");
+            xWriter.WriteElementString("MgrName", status.MgrName);
+            xWriter.WriteElementString("RemoteMgrName", status.RemoteMgrName);
+            xWriter.WriteElementString("MgrStatus", status.ConvertMgrStatusToString(status.MgrStatus));
+
+            xWriter.WriteComment("Local status log time: " + lastUpdate.ToLocalTime().ToString(LOCAL_TIME_FORMAT));
+            xWriter.WriteComment("Local last start time: " + status.TaskStartTime.ToLocalTime().ToString(LOCAL_TIME_FORMAT));
+
+            // Write out times in the format 2017-07-06T23:23:14.337Z
+            xWriter.WriteElementString("LastUpdate", lastUpdate.ToUniversalTime().ToString(ISO_8601_DATE));
+
+            xWriter.WriteElementString("LastStartTime", status.TaskStartTime.ToUniversalTime().ToString(ISO_8601_DATE));
+
+            xWriter.WriteElementString("CPUUtilization", cpuUtilization.ToString("##0.0"));
+            xWriter.WriteElementString("FreeMemoryMB", freeMemoryMB.ToString("##0.0"));
+            xWriter.WriteElementString("ProcessID", processId.ToString());
+            xWriter.WriteElementString("ProgRunnerProcessID", status.ProgRunnerProcessID.ToString());
+            xWriter.WriteElementString("ProgRunnerCoreUsage", status.ProgRunnerCoreUsage.ToString("0.00"));
+            xWriter.WriteStartElement("RecentErrorMessages");
+
+            var recentErrorMessages = status.RecentErrorMessages;
+            if (recentErrorMessages.Count == 0)
             {
-                xWriter.Formatting = Formatting.Indented;
-                xWriter.Indentation = 2;
-
-                // Create the XML document in memory
-                xWriter.WriteStartDocument(true);
-                xWriter.WriteComment("Analysis manager job status");
-
-                // General job information
-                // Root level element
-                xWriter.WriteStartElement("Root");
-                xWriter.WriteStartElement("Manager");
-                xWriter.WriteElementString("MgrName", status.MgrName);
-                xWriter.WriteElementString("RemoteMgrName", status.RemoteMgrName);
-                xWriter.WriteElementString("MgrStatus", status.ConvertMgrStatusToString(status.MgrStatus));
-
-                xWriter.WriteComment("Local status log time: " + lastUpdate.ToLocalTime().ToString(LOCAL_TIME_FORMAT));
-                xWriter.WriteComment("Local last start time: " + status.TaskStartTime.ToLocalTime().ToString(LOCAL_TIME_FORMAT));
-
-                // Write out times in the format 2017-07-06T23:23:14.337Z
-                xWriter.WriteElementString("LastUpdate", lastUpdate.ToUniversalTime().ToString(ISO_8601_DATE));
-
-                xWriter.WriteElementString("LastStartTime", status.TaskStartTime.ToUniversalTime().ToString(ISO_8601_DATE));
-
-                xWriter.WriteElementString("CPUUtilization", cpuUtilization.ToString("##0.0"));
-                xWriter.WriteElementString("FreeMemoryMB", freeMemoryMB.ToString("##0.0"));
-                xWriter.WriteElementString("ProcessID", processId.ToString());
-                xWriter.WriteElementString("ProgRunnerProcessID", status.ProgRunnerProcessID.ToString());
-                xWriter.WriteElementString("ProgRunnerCoreUsage", status.ProgRunnerCoreUsage.ToString("0.00"));
-                xWriter.WriteStartElement("RecentErrorMessages");
-
-                var recentErrorMessages = status.RecentErrorMessages;
-                if (recentErrorMessages.Count == 0)
-                {
-                    xWriter.WriteElementString("ErrMsg", string.Empty);
-                }
-                else
-                {
-                    foreach (var errMsg in recentErrorMessages)
-                    {
-                        xWriter.WriteElementString("ErrMsg", errMsg);
-                    }
-                }
-                xWriter.WriteEndElement(); // RecentErrorMessages
-                xWriter.WriteEndElement(); // Manager
-
-                xWriter.WriteStartElement("Task");
-                xWriter.WriteElementString("Tool", status.Tool);
-                xWriter.WriteElementString("Status", status.ConvertTaskStatusToString(status.TaskStatus));
-
-                if (status.TaskStatus == EnumTaskStatus.STOPPED ||
-                    status.TaskStatus == EnumTaskStatus.FAILED ||
-                    status.TaskStatus == EnumTaskStatus.NO_TASK)
-                {
-                    runTimeHours = 0;
-                }
-
-                xWriter.WriteElementString("Duration", runTimeHours.ToString("0.00"));
-                xWriter.WriteElementString("DurationMinutes", (runTimeHours * 60).ToString("0.0"));
-
-                xWriter.WriteElementString("Progress", status.Progress.ToString("##0.00"));
-                xWriter.WriteElementString("CurrentOperation", status.CurrentOperation);
-
-                xWriter.WriteStartElement("TaskDetails");
-                xWriter.WriteElementString("Status", status.ConvertTaskStatusDetailToString(status.TaskStatusDetail));
-                xWriter.WriteElementString("Job", Convert.ToString(status.JobNumber));
-                xWriter.WriteElementString("Step", Convert.ToString(status.JobStep));
-                xWriter.WriteElementString("Dataset", status.Dataset);
-                xWriter.WriteElementString("WorkDirPath", status.WorkDirPath);
-                xWriter.WriteElementString("MostRecentLogMessage", status.MostRecentLogMessage);
-                xWriter.WriteElementString("MostRecentJobInfo", status.MostRecentJobInfo);
-                xWriter.WriteElementString("SpectrumCount", status.SpectrumCount.ToString());
-                xWriter.WriteEndElement(); // TaskDetails
-                xWriter.WriteEndElement(); // Task
-
-                var progRunnerCoreUsageHistory = status.ProgRunnerCoreUsageHistory;
-
-                if (status.ProgRunnerProcessID != 0 && progRunnerCoreUsageHistory != null)
-                {
-                    xWriter.WriteStartElement("ProgRunnerCoreUsage");
-                    xWriter.WriteAttributeString("Count", progRunnerCoreUsageHistory.Count.ToString());
-
-                    // Dumping the items from the queue to a list because another thread might
-                    // update ProgRunnerCoreUsageHistory while we're iterating over the items
-                    var coreUsageHistory = progRunnerCoreUsageHistory.ToList();
-
-                    foreach (var coreUsageSample in coreUsageHistory)
-                    {
-                        xWriter.WriteStartElement("CoreUsageSample");
-                        xWriter.WriteAttributeString("Date", coreUsageSample.Key.ToString(LOCAL_TIME_FORMAT));
-                        xWriter.WriteValue(coreUsageSample.Value.ToString("0.0"));
-                        xWriter.WriteEndElement(); // CoreUsageSample
-                    }
-                    xWriter.WriteEndElement(); // ProgRunnerCoreUsage
-                }
-
-                xWriter.WriteEndElement(); // Root
-
-                // Close out the XML document (but do not close XWriter yet)
-                xWriter.WriteEndDocument();
-                xWriter.Flush();
-
-                // Now use a StreamReader to copy the XML text to a string variable
-                memStream.Seek(0, SeekOrigin.Begin);
-                var memStreamReader = new StreamReader(memStream);
-                var xmlText = memStreamReader.ReadToEnd();
-
-                memStreamReader.Close();
-                memStream.Close();
-
-                return xmlText;
+                xWriter.WriteElementString("ErrMsg", string.Empty);
             }
+            else
+            {
+                foreach (var errMsg in recentErrorMessages)
+                {
+                    xWriter.WriteElementString("ErrMsg", errMsg);
+                }
+            }
+            xWriter.WriteEndElement(); // RecentErrorMessages
+            xWriter.WriteEndElement(); // Manager
+
+            xWriter.WriteStartElement("Task");
+            xWriter.WriteElementString("Tool", status.Tool);
+            xWriter.WriteElementString("Status", status.ConvertTaskStatusToString(status.TaskStatus));
+
+            if (status.TaskStatus == EnumTaskStatus.STOPPED ||
+                status.TaskStatus == EnumTaskStatus.FAILED ||
+                status.TaskStatus == EnumTaskStatus.NO_TASK)
+            {
+                runTimeHours = 0;
+            }
+
+            xWriter.WriteElementString("Duration", runTimeHours.ToString("0.00"));
+            xWriter.WriteElementString("DurationMinutes", (runTimeHours * 60).ToString("0.0"));
+
+            xWriter.WriteElementString("Progress", status.Progress.ToString("##0.00"));
+            xWriter.WriteElementString("CurrentOperation", status.CurrentOperation);
+
+            xWriter.WriteStartElement("TaskDetails");
+            xWriter.WriteElementString("Status", status.ConvertTaskStatusDetailToString(status.TaskStatusDetail));
+            xWriter.WriteElementString("Job", Convert.ToString(status.JobNumber));
+            xWriter.WriteElementString("Step", Convert.ToString(status.JobStep));
+            xWriter.WriteElementString("Dataset", status.Dataset);
+            xWriter.WriteElementString("WorkDirPath", status.WorkDirPath);
+            xWriter.WriteElementString("MostRecentLogMessage", status.MostRecentLogMessage);
+            xWriter.WriteElementString("MostRecentJobInfo", status.MostRecentJobInfo);
+            xWriter.WriteElementString("SpectrumCount", status.SpectrumCount.ToString());
+            xWriter.WriteEndElement(); // TaskDetails
+            xWriter.WriteEndElement(); // Task
+
+            var progRunnerCoreUsageHistory = status.ProgRunnerCoreUsageHistory;
+
+            if (status.ProgRunnerProcessID != 0 && progRunnerCoreUsageHistory != null)
+            {
+                xWriter.WriteStartElement("ProgRunnerCoreUsage");
+                xWriter.WriteAttributeString("Count", progRunnerCoreUsageHistory.Count.ToString());
+
+                // Dumping the items from the queue to a list because another thread might
+                // update ProgRunnerCoreUsageHistory while we're iterating over the items
+                var coreUsageHistory = progRunnerCoreUsageHistory.ToList();
+
+                foreach (var coreUsageSample in coreUsageHistory)
+                {
+                    xWriter.WriteStartElement("CoreUsageSample");
+                    xWriter.WriteAttributeString("Date", coreUsageSample.Key.ToString(LOCAL_TIME_FORMAT));
+                    xWriter.WriteValue(coreUsageSample.Value.ToString("0.0"));
+                    xWriter.WriteEndElement(); // CoreUsageSample
+                }
+                xWriter.WriteEndElement(); // ProgRunnerCoreUsage
+            }
+
+            xWriter.WriteEndElement(); // Root
+
+            // Close out the XML document (but do not close XWriter yet)
+            xWriter.WriteEndDocument();
+            xWriter.Flush();
+
+            // Now use a StreamReader to copy the XML text to a string variable
+            memStream.Seek(0, SeekOrigin.Begin);
+            var memStreamReader = new StreamReader(memStream);
+            var xmlText = memStreamReader.ReadToEnd();
+
+            memStreamReader.Close();
+            memStream.Close();
+
+            return xmlText;
         }
 
         private void WriteStatusFileToDisk(string xmlText)

@@ -37,18 +37,17 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Writes the summary file to the specified location
         /// </summary>
-        /// <param name="AnalysisSummaryFilePath">Full path of summary file to create</param>
+        /// <param name="analysisSummaryFilePath">Full path of summary file to create</param>
         /// <returns>TRUE for success; FALSE for failure</returns>
-        public bool SaveSummaryFile(string AnalysisSummaryFilePath)
+        public bool SaveSummaryFile(string analysisSummaryFilePath)
         {
             try
             {
-                using (var writer = new StreamWriter(new FileStream(AnalysisSummaryFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                using var writer = new StreamWriter(new FileStream(analysisSummaryFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
+
+                foreach (var outLine in mLines)
                 {
-                    foreach (var outLine in mLines)
-                    {
-                        writer.WriteLine(outLine);
-                    }
+                    writer.WriteLine(outLine);
                 }
 
                 return true;

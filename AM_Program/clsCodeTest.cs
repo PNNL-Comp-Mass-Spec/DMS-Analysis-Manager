@@ -567,14 +567,14 @@ namespace AnalysisManagerProg
             for (var i = 0; i < 5; i++)
             {
                 var outFilePath = Path.Combine(resultsFolder.FullName, "TestOutFile" + i + ".txt");
-                using (var writer = new StreamWriter(new FileStream(outFilePath, FileMode.Create, FileAccess.Write)))
-                {
-                    writer.WriteLine("Scan\tIntensity");
 
-                    for (var j = 1; j < 1000; j++)
-                    {
-                        writer.WriteLine("{0}\t{1}", j, rand.Next(0, 10000));
-                    }
+                using var writer = new StreamWriter(new FileStream(outFilePath, FileMode.Create, FileAccess.Write));
+
+                writer.WriteLine("Scan\tIntensity");
+
+                for (var j = 1; j < 1000; j++)
+                {
+                    writer.WriteLine("{0}\t{1}", j, rand.Next(0, 10000));
                 }
             }
 
@@ -719,14 +719,13 @@ namespace AnalysisManagerProg
             {
                 var privateKeyFile = new PrivateKeyFile(keyFileStream, clsGlobal.DecodePassword(passphraseEncoded));
 
-                using (var sftp = new SftpClient(host, username, privateKeyFile))
+                using var sftp = new SftpClient(host, username, privateKeyFile);
+
+                sftp.Connect();
+                var files = sftp.ListDirectory(".");
+                foreach (var file in files)
                 {
-                    sftp.Connect();
-                    var files = sftp.ListDirectory(".");
-                    foreach (var file in files)
-                    {
-                        Console.WriteLine(file.FullName);
-                    }
+                    Console.WriteLine(file.FullName);
                 }
             }
             catch (InvalidOperationException ex)

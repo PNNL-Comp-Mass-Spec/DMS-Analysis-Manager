@@ -1074,10 +1074,9 @@ namespace AnalysisManagerBase
         {
             var jobInfoFilePath = clsDataPackageFileHandler.GetJobInfoFilePath(job, mWorkDir);
 
-            using (var writer = new StreamWriter(new FileStream(jobInfoFilePath, FileMode.Append, FileAccess.Write, FileShare.Read)))
-            {
-                writer.WriteLine(filePath);
-            }
+            using var writer = new StreamWriter(new FileStream(jobInfoFilePath, FileMode.Append, FileAccess.Write, FileShare.Read));
+
+            writer.WriteLine(filePath);
         }
 
         /// <summary>
@@ -1219,10 +1218,10 @@ namespace AnalysisManagerBase
         public static string CreateLockFile(string dataFilePath, string taskDescription)
         {
             var lockFilePath = dataFilePath + clsGlobal.LOCK_FILE_EXTENSION;
-            using (var writer = new StreamWriter(new FileStream(lockFilePath, FileMode.CreateNew, FileAccess.Write, FileShare.Read)))
-            {
-                writer.WriteLine(taskDescription + " at " + DateTime.Now.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT));
-            }
+
+            using var writer = new StreamWriter(new FileStream(lockFilePath, FileMode.CreateNew, FileAccess.Write, FileShare.Read));
+
+            writer.WriteLine(taskDescription + " at " + DateTime.Now.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT));
 
             return lockFilePath;
         }
@@ -1956,28 +1955,27 @@ namespace AnalysisManagerBase
             var forwardProteinCount = 0;
             var reverseProteinCount = 0;
 
-            using (var reader = new StreamReader(new FileStream(fastaFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+            using var reader = new StreamReader(new FileStream(fastaFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+            while (!reader.EndOfStream)
             {
-                while (!reader.EndOfStream)
+                var dataLine = reader.ReadLine();
+                if (string.IsNullOrWhiteSpace(dataLine))
                 {
-                    var dataLine = reader.ReadLine();
-                    if (string.IsNullOrWhiteSpace(dataLine))
-                    {
-                        continue;
-                    }
+                    continue;
+                }
 
-                    if (!dataLine.StartsWith(">"))
-                        continue;
+                if (!dataLine.StartsWith(">"))
+                    continue;
 
-                    // Protein header line found
-                    if (dataLine.StartsWith(prefixToFind))
-                    {
-                        reverseProteinCount++;
-                    }
-                    else
-                    {
-                        forwardProteinCount++;
-                    }
+                // Protein header line found
+                if (dataLine.StartsWith(prefixToFind))
+                {
+                    reverseProteinCount++;
+                }
+                else
+                {
+                    forwardProteinCount++;
                 }
             }
 
@@ -2173,15 +2171,14 @@ namespace AnalysisManagerBase
                         try
                         {
                             // Read the date stored in the file
-                            using (var lastUsedReader = new StreamReader(new FileStream(lastUsedFiles.First().FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                            using var lastUsedReader = new StreamReader(new FileStream(lastUsedFiles.First().FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+                            if (!lastUsedReader.EndOfStream)
                             {
-                                if (!lastUsedReader.EndOfStream)
+                                var lastUseDate = lastUsedReader.ReadLine();
+                                if (DateTime.TryParse(lastUseDate, out var lastUsedActual))
                                 {
-                                    var lastUseDate = lastUsedReader.ReadLine();
-                                    if (DateTime.TryParse(lastUseDate, out var lastUsedActual))
-                                    {
-                                        lastUsed = DateMax(lastUsed, lastUsedActual);
-                                    }
+                                    lastUsed = DateMax(lastUsed, lastUsedActual);
                                 }
                             }
                         }
@@ -3149,13 +3146,10 @@ namespace AnalysisManagerBase
                     OmitXmlDeclaration = true
                 };
 
-                using (var fileWriter = new StreamWriter(new FileStream(masterJobParamXMLFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
-                {
-                    using (var writer = XmlWriter.Create(fileWriter, settings))
-                    {
-                        masterDoc.Save(writer);
-                    }
-                }
+                using var fileWriter = new StreamWriter(new FileStream(masterJobParamXMLFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite));
+                using var writer = XmlWriter.Create(fileWriter, settings);
+
+                masterDoc.Save(writer);
 
                 return true;
             }
@@ -4613,10 +4607,10 @@ namespace AnalysisManagerBase
             }
 
             var jobParamsFile = new FileInfo(Path.Combine(WorkDir, clsAnalysisJob.OFFLINE_JOB_PARAMS_FILE));
-            using (var writer = new StreamWriter(new FileStream(jobParamsFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read)))
-            {
-                writer.WriteLine(xmlText);
-            }
+
+            using var writer = new StreamWriter(new FileStream(jobParamsFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read));
+
+            writer.WriteLine(xmlText);
 
             mJobParams.AddResultFileToSkip(jobParamsFile.Name);
         }

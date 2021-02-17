@@ -219,60 +219,59 @@ namespace AnalysisManagerBase
                 }
 
                 // Open versionInfoFilePath and read the Version= line
-                using (var reader = new StreamReader(new FileStream(versionInfoFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using var reader = new StreamReader(new FileStream(versionInfoFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+                while (!reader.EndOfStream)
                 {
-                    while (!reader.EndOfStream)
+                    var dataLine = reader.ReadLine();
+
+                    if (string.IsNullOrWhiteSpace(dataLine))
                     {
-                        var dataLine = reader.ReadLine();
+                        continue;
+                    }
 
-                        if (string.IsNullOrWhiteSpace(dataLine))
-                        {
-                            continue;
-                        }
+                    var equalsLoc = dataLine.IndexOf('=');
 
-                        var equalsLoc = dataLine.IndexOf('=');
+                    if (equalsLoc <= 0)
+                        continue;
 
-                        if (equalsLoc <= 0)
-                            continue;
+                    var key = dataLine.Substring(0, equalsLoc);
+                    string value;
 
-                        var key = dataLine.Substring(0, equalsLoc);
-                        string value;
+                    if (equalsLoc < dataLine.Length)
+                    {
+                        value = dataLine.Substring(equalsLoc + 1);
+                    }
+                    else
+                    {
+                        value = string.Empty;
+                    }
 
-                        if (equalsLoc < dataLine.Length)
-                        {
-                            value = dataLine.Substring(equalsLoc + 1);
-                        }
-                        else
-                        {
-                            value = string.Empty;
-                        }
-
-                        switch (key.ToLower())
-                        {
-                            case "filename":
-                                break;
-                            case "path":
-                                break;
-                            case "version":
-                                version = string.Copy(value);
-                                if (string.IsNullOrWhiteSpace(version))
-                                {
-                                    OnErrorEvent("Empty version line in Version Info file for " + Path.GetFileName(dllFilePath));
-                                    success = false;
-                                }
-                                else
-                                {
-                                    success = true;
-                                }
-                                break;
-                            case "error":
-                                OnErrorEvent("Error reported by DLLVersionInspector for " + Path.GetFileName(dllFilePath) + ": " + value);
+                    switch (key.ToLower())
+                    {
+                        case "filename":
+                            break;
+                        case "path":
+                            break;
+                        case "version":
+                            version = string.Copy(value);
+                            if (string.IsNullOrWhiteSpace(version))
+                            {
+                                OnErrorEvent("Empty version line in Version Info file for " + Path.GetFileName(dllFilePath));
                                 success = false;
-                                break;
-                                // default:
-                                // Ignore the line
+                            }
+                            else
+                            {
+                                success = true;
+                            }
+                            break;
+                        case "error":
+                            OnErrorEvent("Error reported by DLLVersionInspector for " + Path.GetFileName(dllFilePath) + ": " + value);
+                            success = false;
+                            break;
+                        // default:
+                        // Ignore the line
 
-                        }
                     }
                 }
             }
@@ -307,17 +306,16 @@ namespace AnalysisManagerBase
 
                 var toolVersionFilePath = Path.Combine(directoryPath, toolVersionFileName);
 
-                using (var writer = new StreamWriter(new FileStream(toolVersionFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
-                {
-                    writer.WriteLine("Date: " + DateTime.Now.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT));
-                    writer.WriteLine("Dataset: " + Dataset);
-                    writer.WriteLine("Job: " + Job);
-                    writer.WriteLine("Step: " + mJobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Step"));
-                    writer.WriteLine("Tool: " + mJobParams.GetParam("StepTool"));
-                    writer.WriteLine(TOOL_VERSION_INFO_SECTION_HEADER);
+                using var writer = new StreamWriter(new FileStream(toolVersionFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite));
 
-                    writer.WriteLine(toolVersionInfo.Replace("; ", Environment.NewLine));
-                }
+                writer.WriteLine("Date: " + DateTime.Now.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT));
+                writer.WriteLine("Dataset: " + Dataset);
+                writer.WriteLine("Job: " + Job);
+                writer.WriteLine("Step: " + mJobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Step"));
+                writer.WriteLine("Tool: " + mJobParams.GetParam("StepTool"));
+                writer.WriteLine(TOOL_VERSION_INFO_SECTION_HEADER);
+
+                writer.WriteLine(toolVersionInfo.Replace("; ", Environment.NewLine));
             }
             catch (Exception ex)
             {

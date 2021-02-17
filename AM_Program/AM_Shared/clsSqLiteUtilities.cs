@@ -55,141 +55,137 @@ namespace AnalysisManagerBase
 
             try
             {
-                using (var cnSourceDB = new SQLiteConnection("Data Source = " + sourceDBPath))
+                using var sourceDB = new SQLiteConnection("Data Source = " + sourceDBPath);
+
+                sourceDB.Open();
+
+                // Get list of tables in source DB
+                var tableInfo = GetDBObjects(sourceDB, "table");
+
+                // Delete the "sqlite_sequence" database from tableInfo if present
+                if (tableInfo.ContainsKey("sqlite_sequence"))
                 {
-                    cnSourceDB.Open();
+                    tableInfo.Remove("sqlite_sequence");
+                }
 
-                    // Get list of tables in source DB
-                    var tableInfo = GetDBObjects(cnSourceDB, "table");
+                // Get list of indices in source DB
+                var indexInfo = GetDBObjects(sourceDB, "index", out var indexToTableMap);
 
-                    // Delete the "sqlite_sequence" database from tableInfo if present
-                    if (tableInfo.ContainsKey("sqlite_sequence"))
+                if (File.Exists(targetDBPath))
+                {
+                    if (appendToExistingDB)
                     {
-                        tableInfo.Remove("sqlite_sequence");
+                        appendingToExistingDB = true;
+                    }
+                    else
+                    {
+                        File.Delete(targetDBPath);
+                    }
+                }
+
+                try
+                {
+                    var targetConnectionString = "Data Source = " + targetDBPath + "; Version=3; DateTimeFormat=Ticks;";
+                    var targetDB = new SQLiteConnection(targetConnectionString);
+
+                    targetDB.Open();
+                    var cmdTargetDB = targetDB.CreateCommand();
+
+                    Dictionary<string, string> existingTables;
+                    if (appendingToExistingDB)
+                    {
+                        // Lookup the table names that already exist in the target
+                        existingTables = GetDBObjects(targetDB, "table");
+                    }
+                    else
+                    {
+                        existingTables = new Dictionary<string, string>();
                     }
 
-                    // Get list of indices in source DB
-                    var indexInfo = GetDBObjects(cnSourceDB, "index", out var indexToTableMap);
-
-                    if (File.Exists(targetDBPath))
+                    // Create each table
+                    foreach (var kvp in tableInfo)
                     {
-                        if (appendToExistingDB)
+                        if (!string.IsNullOrEmpty(kvp.Value))
                         {
-                            appendingToExistingDB = true;
+                            if (existingTables.ContainsKey(kvp.Key))
+                            {
+                                if (!tablesToSkip.Contains(kvp.Key))
+                                {
+                                    tablesToSkip.Add(kvp.Key);
+                                }
+                            }
+                            else
+                            {
+                                currentTable = string.Copy(kvp.Key);
+                                cmdTargetDB.CommandText = kvp.Value;
+                                cmdTargetDB.ExecuteNonQuery();
+                            }
                         }
-                        else
+                    }
+
+                    foreach (var kvp in indexInfo)
+                    {
+                        if (string.IsNullOrEmpty(kvp.Value))
+                            continue;
+
+                        var createIndex = true;
+
+                        if (appendingToExistingDB && indexToTableMap.TryGetValue(kvp.Key, out var indexTargetTable))
                         {
-                            File.Delete(targetDBPath);
+                            if (existingTables.ContainsKey(indexTargetTable))
+                            {
+                                createIndex = false;
+                            }
                         }
+
+                        if (!createIndex)
+                            continue;
+
+                        currentTable = kvp.Key + " (create index)";
+                        cmdTargetDB.CommandText = kvp.Value;
+                        cmdTargetDB.ExecuteNonQuery();
                     }
 
                     try
                     {
-                        var sTargetConnectionString = "Data Source = " + targetDBPath + "; Version=3; DateTimeFormat=Ticks;";
-                        var cnTargetDB = new SQLiteConnection(sTargetConnectionString);
+                        cmdTargetDB.CommandText = "ATTACH DATABASE '" + sourceDBPath + "' AS SourceDB;";
+                        cmdTargetDB.ExecuteNonQuery();
 
-                        cnTargetDB.Open();
-                        var cmdTargetDB = cnTargetDB.CreateCommand();
-
-                        Dictionary<string, string> existingTables;
-                        if (appendingToExistingDB)
-                        {
-                            // Lookup the table names that already exist in the target
-                            existingTables = GetDBObjects(cnTargetDB, "table");
-                        }
-                        else
-                        {
-                            existingTables = new Dictionary<string, string>();
-                        }
-
-                        // Create each table
+                        // Populate each table
                         foreach (var kvp in tableInfo)
                         {
-                            if (!string.IsNullOrEmpty(kvp.Value))
-                            {
-                                if (existingTables.ContainsKey(kvp.Key))
-                                {
-                                    if (!tablesToSkip.Contains(kvp.Key))
-                                    {
-                                        tablesToSkip.Add(kvp.Key);
-                                    }
-                                }
-                                else
-                                {
-                                    currentTable = string.Copy(kvp.Key);
-                                    cmdTargetDB.CommandText = kvp.Value;
-                                    cmdTargetDB.ExecuteNonQuery();
-                                }
-                            }
-                        }
+                            currentTable = string.Copy(kvp.Key);
 
-                        foreach (var kvp in indexInfo)
-                        {
-                            if (!string.IsNullOrEmpty(kvp.Value))
-                            {
-                                var createIndex = true;
+                            if (tablesToSkip.Contains(currentTable))
+                                continue;
 
-                                if (appendingToExistingDB)
-                                {
-                                    if (indexToTableMap.TryGetValue(kvp.Key, out var indexTargetTable))
-                                    {
-                                        if (existingTables.ContainsKey(indexTargetTable))
-                                        {
-                                            createIndex = false;
-                                        }
-                                    }
-                                }
+                            var sql = "INSERT INTO main." + currentTable + " SELECT * FROM SourceDB." + currentTable + ";";
 
-                                if (createIndex)
-                                {
-                                    currentTable = kvp.Key + " (create index)";
-                                    cmdTargetDB.CommandText = kvp.Value;
-                                    cmdTargetDB.ExecuteNonQuery();
-                                }
-                            }
-                        }
-
-                        try
-                        {
-                            cmdTargetDB.CommandText = "ATTACH DATABASE '" + sourceDBPath + "' AS SourceDB;";
-                            cmdTargetDB.ExecuteNonQuery();
-
-                            // Populate each table
-                            foreach (var kvp in tableInfo)
-                            {
-                                currentTable = string.Copy(kvp.Key);
-
-                                if (!tablesToSkip.Contains(currentTable))
-                                {
-                                    var sSql = "INSERT INTO main." + currentTable + " SELECT * FROM SourceDB." + currentTable + ";";
-
-                                    cmdTargetDB.CommandText = sSql;
-                                    cmdTargetDB.ExecuteNonQuery();
-                                }
-                            }
-
-                            currentTable = "(DETACH DATABASE)";
-
-                            // Detach the source DB
-                            cmdTargetDB.CommandText = "DETACH DATABASE 'SourceDB';";
+                            cmdTargetDB.CommandText = sql;
                             cmdTargetDB.ExecuteNonQuery();
                         }
-                        catch (Exception ex)
-                        {
-                            throw new Exception("Error copying data into cloned database, table " + currentTable, ex);
-                        }
 
-                        cmdTargetDB.Dispose();
+                        currentTable = "(DETACH DATABASE)";
 
-                        cnTargetDB.Close();
+                        // Detach the source DB
+                        cmdTargetDB.CommandText = "DETACH DATABASE 'SourceDB';";
+                        cmdTargetDB.ExecuteNonQuery();
                     }
                     catch (Exception ex)
                     {
-                        throw new Exception("Error initializing cloned database", ex);
+                        throw new Exception("Error copying data into cloned database, table " + currentTable, ex);
                     }
 
-                    cnSourceDB.Close();
+                    cmdTargetDB.Dispose();
+
+                    targetDB.Close();
                 }
+                catch (Exception ex)
+                {
+                    throw new Exception("Error initializing cloned database", ex);
+                }
+
+                sourceDB.Close();
             }
             catch (Exception ex)
             {
@@ -209,68 +205,67 @@ namespace AnalysisManagerBase
         {
             try
             {
-                using (var cnSourceDB = new SQLiteConnection("Data Source = " + sourceDBPath))
+                using var sourceDB = new SQLiteConnection("Data Source = " + sourceDBPath);
+
+                sourceDB.Open();
+                var cmdSourceDB = sourceDB.CreateCommand();
+
+                // Lookup up the table creation SQL
+                var sql = "SELECT sql FROM main.sqlite_master WHERE name = '" + tableName + "'";
+                cmdSourceDB.CommandText = sql;
+
+                var result = cmdSourceDB.ExecuteScalar();
+                if (result == null || ReferenceEquals(result, DBNull.Value))
                 {
-                    cnSourceDB.Open();
-                    var cmdSourceDB = cnSourceDB.CreateCommand();
+                    throw new Exception("Source file " + Path.GetFileName(sourceDBPath) + " does not have table " + tableName);
+                }
 
-                    // Lookup up the table creation SQL
-                    var sql = "SELECT sql FROM main.sqlite_master WHERE name = '" + tableName + "'";
-                    cmdSourceDB.CommandText = sql;
+                var tableCreateSql = result.ToString();
 
-                    var result = cmdSourceDB.ExecuteScalar();
-                    if (result == null || ReferenceEquals(result, DBNull.Value))
+                // Look for any indices on this table
+                var indexInfo = GetDBObjects(sourceDB, "index", out _, tableName);
+
+                // Connect to the target database
+                using (var targetDB = new SQLiteConnection("Data Source = " + targetDBPath))
+                {
+                    targetDB.Open();
+                    var cmdTargetDB = targetDB.CreateCommand();
+
+                    // Attach the source database to the target
+                    cmdTargetDB.CommandText = "ATTACH DATABASE '" + sourceDBPath + "' AS SourceDB;";
+                    cmdTargetDB.ExecuteNonQuery();
+
+                    using (var transaction = targetDB.BeginTransaction())
                     {
-                        throw new Exception("Source file " + Path.GetFileName(sourceDBPath) + " does not have table " + tableName);
-                    }
-
-                    var tableCreateSql = result.ToString();
-
-                    // Look for any indices on this table
-                    var indexInfo = GetDBObjects(cnSourceDB, "index", out _, tableName);
-
-                    // Connect to the target database
-                    using (var cnTarget = new SQLiteConnection("Data Source = " + targetDBPath))
-                    {
-                        cnTarget.Open();
-                        var cmdTargetDB = cnTarget.CreateCommand();
-
-                        // Attach the source database to the target
-                        cmdTargetDB.CommandText = "ATTACH DATABASE '" + sourceDBPath + "' AS SourceDB;";
+                        // Create the target table
+                        cmdTargetDB.CommandText = tableCreateSql;
                         cmdTargetDB.ExecuteNonQuery();
 
-                        using (var transaction = cnTarget.BeginTransaction())
+                        // Copy the data
+                        sql = "INSERT INTO main." + tableName + " SELECT * FROM SourceDB." + tableName + ";";
+                        cmdTargetDB.CommandText = sql;
+                        cmdTargetDB.ExecuteNonQuery();
+
+                        // Create any indices
+                        foreach (var item in indexInfo)
                         {
-                            // Create the target table
-                            cmdTargetDB.CommandText = tableCreateSql;
+                            cmdTargetDB.CommandText = item.Value;
                             cmdTargetDB.ExecuteNonQuery();
-
-                            // Copy the data
-                            sql = "INSERT INTO main." + tableName + " SELECT * FROM SourceDB." + tableName + ";";
-                            cmdTargetDB.CommandText = sql;
-                            cmdTargetDB.ExecuteNonQuery();
-
-                            // Create any indices
-                            foreach (var item in indexInfo)
-                            {
-                                cmdTargetDB.CommandText = item.Value;
-                                cmdTargetDB.ExecuteNonQuery();
-                            }
-
-                            transaction.Commit();
                         }
 
-                        // Detach the source DB
-                        cmdTargetDB.CommandText = "DETACH DATABASE 'SourceDB';";
-                        cmdTargetDB.ExecuteNonQuery();
-
-                        cmdTargetDB.Dispose();
-
-                        cnTarget.Close();
+                        transaction.Commit();
                     }
 
-                    cnSourceDB.Close();
+                    // Detach the source DB
+                    cmdTargetDB.CommandText = "DETACH DATABASE 'SourceDB';";
+                    cmdTargetDB.ExecuteNonQuery();
+
+                    cmdTargetDB.Dispose();
+
+                    targetDB.Close();
                 }
+
+                sourceDB.Close();
             }
             catch (Exception ex)
             {
@@ -321,16 +316,15 @@ namespace AnalysisManagerBase
 
             cmd.CommandText = sql;
 
-            using (var reader = cmd.ExecuteReader())
-            {
-                while (reader.Read())
-                {
-                    dbObjects.Add(Convert.ToString(reader["Name"]), Convert.ToString(reader["sql"]));
+            using var reader = cmd.ExecuteReader();
 
-                    if (objectType == "index")
-                    {
-                        indexToTableMap.Add(Convert.ToString(reader["Name"]), Convert.ToString(reader["tbl_name"]));
-                    }
+            while (reader.Read())
+            {
+                dbObjects.Add(Convert.ToString(reader["Name"]), Convert.ToString(reader["sql"]));
+
+                if (objectType == "index")
+                {
+                    indexToTableMap.Add(Convert.ToString(reader["Name"]), Convert.ToString(reader["tbl_name"]));
                 }
             }
 

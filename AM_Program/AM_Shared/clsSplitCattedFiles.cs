@@ -184,32 +184,31 @@ namespace AnalysisManagerBase
                 return;
             }
 
-            using (var writer = new StreamWriter(new FileStream(Path.Combine(resultsFolder, exportFileName), FileMode.Create, FileAccess.Write, FileShare.Read)))
+            using var writer = new StreamWriter(new FileStream(Path.Combine(resultsFolder, exportFileName), FileMode.Create, FileAccess.Write, FileShare.Read));
+
+            if (fileText.Count > 0 && mDTAFirstLine.IsMatch(fileText.Peek()))
             {
-                if (fileText.Count > 0 && mDTAFirstLine.IsMatch(fileText.Peek()))
-                {
-                    var outputLine = fileText.Dequeue();
+                var outputLine = fileText.Dequeue();
 
-                    // See if this line contains the extra information of the form: scan=1000 cs=1
-                    var dtaLineMatch = mDTAFirstLine.Match(outputLine);
-                    if (dtaLineMatch.Success)
-                    {
-                        // Yes, it has the extra information
-                        // Only write out the parent mass and charge state for the line
-                        outputLine = dtaLineMatch.Groups["parentmass"].Value + " " + dtaLineMatch.Groups["chargestate"].Value;
-                    }
-                    else
-                    {
-                        // This code should never be reached since we used Me.r_DTAFirstLine.IsMatch() to check the line in the first place
-                    }
-                    writer.WriteLine(outputLine);
-                }
-
-                while (fileText.Count > 0)
+                // See if this line contains the extra information of the form: scan=1000 cs=1
+                var dtaLineMatch = mDTAFirstLine.Match(outputLine);
+                if (dtaLineMatch.Success)
                 {
-                    var outputLine = fileText.Dequeue();
-                    writer.WriteLine(outputLine);
+                    // Yes, it has the extra information
+                    // Only write out the parent mass and charge state for the line
+                    outputLine = dtaLineMatch.Groups["parentmass"].Value + " " + dtaLineMatch.Groups["chargestate"].Value;
                 }
+                else
+                {
+                    // This code should never be reached since we used Me.r_DTAFirstLine.IsMatch() to check the line in the first place
+                }
+                writer.WriteLine(outputLine);
+            }
+
+            while (fileText.Count > 0)
+            {
+                var outputLine = fileText.Dequeue();
+                writer.WriteLine(outputLine);
             }
         }
 

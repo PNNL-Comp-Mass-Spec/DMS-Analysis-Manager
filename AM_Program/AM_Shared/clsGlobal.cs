@@ -767,17 +767,14 @@ namespace AnalysisManagerBase
                     return false;
                 }
 
-                using (var reader1 = new BinaryReader(new FileStream(file1.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                using var reader1 = new BinaryReader(new FileStream(file1.FullName, FileMode.Open, FileAccess.Read, FileShare.Read));
+                using var reader2 = new BinaryReader(new FileStream(file2.FullName, FileMode.Open, FileAccess.Read, FileShare.Read));
+
+                while (reader1.BaseStream.Position < file1.Length)
                 {
-                    using (var reader2 = new BinaryReader(new FileStream(file2.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                    if (reader1.ReadByte() != reader2.ReadByte())
                     {
-                        while (reader1.BaseStream.Position < file1.Length)
-                        {
-                            if (reader1.ReadByte() != reader2.ReadByte())
-                            {
-                                return false;
-                            }
-                        }
+                        return false;
                     }
                 }
 
@@ -1019,126 +1016,123 @@ namespace AnalysisManagerBase
             {
                 var lineNumber = 0;
 
-                using (var reader1 = new StreamReader(new FileStream(filePath1, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                using var reader1 = new StreamReader(new FileStream(filePath1, FileMode.Open, FileAccess.Read, FileShare.Read));
+                using var reader2 = new StreamReader(new FileStream(filePath2, FileMode.Open, FileAccess.Read, FileShare.Read));
+
+                while (!reader1.EndOfStream)
                 {
-                    using (var reader2 = new StreamReader(new FileStream(filePath2, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                    var dataLine1 = reader1.ReadLine();
+                    lineNumber++;
+
+                    if (comparisonEndLine > 0 && lineNumber > comparisonEndLine)
                     {
-                        while (!reader1.EndOfStream)
+                        // No need to compare further; files match up to this point
+                        break;
+                    }
+
+                    if (dataLine1 == null)
+                        dataLine1 = string.Empty;
+
+                    if (!reader2.EndOfStream)
+                    {
+                        var dataLine2 = reader2.ReadLine();
+
+                        if (lineNumber >= comparisonStartLine)
                         {
-                            var dataLine1 = reader1.ReadLine();
-                            lineNumber++;
+                            if (dataLine2 == null)
+                                dataLine2 = string.Empty;
 
-                            if (comparisonEndLine > 0 && lineNumber > comparisonEndLine)
+                            if (ignoreWhitespace)
                             {
-                                // No need to compare further; files match up to this point
-                                break;
+                                dataLine1 = dataLine1.Trim(whiteSpaceChars);
+                                dataLine2 = dataLine2.Trim(whiteSpaceChars);
                             }
 
-                            if (dataLine1 == null)
-                                dataLine1 = string.Empty;
-
-                            if (!reader2.EndOfStream)
+                            if (dataLine1 != dataLine2)
                             {
-                                var dataLine2 = reader2.ReadLine();
-
-                                if (lineNumber >= comparisonStartLine)
+                                // Lines don't match; are we ignoring both of them?
+                                if (TextFilesMatchIgnoreLine(dataLine1, lineIgnoreRegExSpecs) &&
+                                    TextFilesMatchIgnoreLine(dataLine2, lineIgnoreRegExSpecs))
                                 {
-                                    if (dataLine2 == null)
-                                        dataLine2 = string.Empty;
-
-                                    if (ignoreWhitespace)
-                                    {
-                                        dataLine1 = dataLine1.Trim(whiteSpaceChars);
-                                        dataLine2 = dataLine2.Trim(whiteSpaceChars);
-                                    }
-
-                                    if (dataLine1 != dataLine2)
-                                    {
-                                        // Lines don't match; are we ignoring both of them?
-                                        if (TextFilesMatchIgnoreLine(dataLine1, lineIgnoreRegExSpecs) &&
-                                            TextFilesMatchIgnoreLine(dataLine2, lineIgnoreRegExSpecs))
-                                        {
-                                            // Ignoring both lines
-                                        }
-                                        else
-                                        {
-                                            // Files do not match
-                                            return false;
-                                        }
-                                    }
+                                    // Ignoring both lines
                                 }
-                                continue;
-                            }
-
-                            // File1 has more lines than file2
-
-                            if (!ignoreWhitespace)
-                            {
-                                // Files do not match
-                                return false;
-                            }
-
-                            // Ignoring whitespace
-                            // If file1 only has blank lines from here on out, the files match; otherwise, they don't
-                            // See if the remaining lines are blank
-                            while (true)
-                            {
-                                if (dataLine1.Length != 0)
-                                {
-                                    if (!TextFilesMatchIgnoreLine(dataLine1, lineIgnoreRegExSpecs))
-                                    {
-                                        // Files do not match
-                                        return false;
-                                    }
-                                }
-
-                                if (reader1.EndOfStream)
-                                {
-                                    break;
-                                }
-
-                                dataLine1 = reader1.ReadLine();
-                                if (dataLine1 == null)
-                                    dataLine1 = string.Empty;
                                 else
-                                    dataLine1 = dataLine1.Trim(whiteSpaceChars);
-                            }
-
-                            break;
-                        }
-
-                        if (reader2.EndOfStream)
-                            return true;
-
-                        // File2 has more lines than file1
-                        if (!ignoreWhitespace)
-                        {
-                            // Files do not match
-                            return false;
-                        }
-
-                        // Ignoring whitespace
-                        // If file2 only has blank lines from here on out, the files match; otherwise, they don't
-                        // See if the remaining lines are blank
-                        do
-                        {
-                            var lineExtra = reader2.ReadLine();
-                            if (lineExtra == null)
-                                lineExtra = string.Empty;
-                            else
-                                lineExtra = lineExtra.Trim(whiteSpaceChars);
-
-                            if (lineExtra.Length != 0)
-                            {
-                                if (!TextFilesMatchIgnoreLine(lineExtra, lineIgnoreRegExSpecs))
                                 {
                                     // Files do not match
                                     return false;
                                 }
                             }
-                        } while (!reader2.EndOfStream);
+                        }
+                        continue;
                     }
+
+                    // File1 has more lines than file2
+
+                    if (!ignoreWhitespace)
+                    {
+                        // Files do not match
+                        return false;
+                    }
+
+                    // Ignoring whitespace
+                    // If file1 only has blank lines from here on out, the files match; otherwise, they don't
+                    // See if the remaining lines are blank
+                    while (true)
+                    {
+                        if (dataLine1.Length != 0)
+                        {
+                            if (!TextFilesMatchIgnoreLine(dataLine1, lineIgnoreRegExSpecs))
+                            {
+                                // Files do not match
+                                return false;
+                            }
+                        }
+
+                        if (reader1.EndOfStream)
+                        {
+                            break;
+                        }
+
+                        dataLine1 = reader1.ReadLine();
+                        if (dataLine1 == null)
+                            dataLine1 = string.Empty;
+                        else
+                            dataLine1 = dataLine1.Trim(whiteSpaceChars);
+                    }
+
+                    break;
                 }
+
+                if (reader2.EndOfStream)
+                    return true;
+
+                // File2 has more lines than file1
+                if (!ignoreWhitespace)
+                {
+                    // Files do not match
+                    return false;
+                }
+
+                // Ignoring whitespace
+                // If file2 only has blank lines from here on out, the files match; otherwise, they don't
+                // See if the remaining lines are blank
+                do
+                {
+                    var lineExtra = reader2.ReadLine();
+                    if (lineExtra == null)
+                        lineExtra = string.Empty;
+                    else
+                        lineExtra = lineExtra.Trim(whiteSpaceChars);
+
+                    if (lineExtra.Length != 0)
+                    {
+                        if (!TextFilesMatchIgnoreLine(lineExtra, lineIgnoreRegExSpecs))
+                        {
+                            // Files do not match
+                            return false;
+                        }
+                    }
+                } while (!reader2.EndOfStream);
 
                 return true;
             }

@@ -425,10 +425,9 @@ namespace AnalysisManagerBase
 
                 infoFilePath = destinationFilePath + STORAGE_PATH_INFO_FILE_SUFFIX;
 
-                using (var writer = new StreamWriter(new FileStream(infoFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
-                {
-                    writer.WriteLine(sourceFilePath);
-                }
+                using var writer = new StreamWriter(new FileStream(infoFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
+
+                writer.WriteLine(sourceFilePath);
             }
             catch (Exception ex)
             {

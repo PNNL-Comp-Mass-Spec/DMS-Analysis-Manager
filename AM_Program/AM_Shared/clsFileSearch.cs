@@ -2698,15 +2698,14 @@ namespace AnalysisManagerBase
 
                     try
                     {
-                        using (var zipFile = new Ionic.Zip.ZipFile(zipFilePathToExtract))
-                        {
-                            if (mDebugLevel >= 2)
-                            {
-                                OnDebugEvent("Unzipping " + zipFilePathToExtract);
-                            }
+                        using var zipFile = new Ionic.Zip.ZipFile(zipFilePathToExtract);
 
-                            zipFile.ExtractAll(unzipDirPathBase, Ionic.Zip.ExtractExistingFileAction.DoNotOverwrite);
+                        if (mDebugLevel >= 2)
+                        {
+                            OnDebugEvent("Unzipping " + zipFilePathToExtract);
                         }
+
+                        zipFile.ExtractAll(unzipDirPathBase, Ionic.Zip.ExtractExistingFileAction.DoNotOverwrite);
                     }
                     catch (Exception ex)
                     {

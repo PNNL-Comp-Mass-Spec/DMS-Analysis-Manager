@@ -80,82 +80,81 @@ namespace AnalysisManagerMSGFDBPlugIn
                     return false;
                 }
 
-                using (var reader = new StreamReader(new FileStream(scanStatsExFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using var reader = new StreamReader(new FileStream(scanStatsExFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+                // Define the default column mapping
+                var scanNumberColIndex = 1;
+                var collisionModeColIndex = 7;
+                var scanFilterColIndex = 8;
+
+                var linesRead = 0;
+                while (!reader.EndOfStream)
                 {
-                    // Define the default column mapping
-                    var scanNumberColIndex = 1;
-                    var collisionModeColIndex = 7;
-                    var scanFilterColIndex = 8;
+                    var dataLine = reader.ReadLine();
+                    if (string.IsNullOrWhiteSpace(dataLine))
+                        continue;
 
-                    var linesRead = 0;
-                    while (!reader.EndOfStream)
+                    linesRead++;
+                    var dataCols = dataLine.Split('\t');
+
+                    var firstColumnIsNumber = FirstColumnIsInteger(dataCols);
+
+                    if (linesRead == 1 && dataCols.Length > 0 && !firstColumnIsNumber)
                     {
-                        var dataLine = reader.ReadLine();
-                        if (string.IsNullOrWhiteSpace(dataLine))
-                            continue;
+                        // This is a header line; define the column mapping
 
-                        linesRead++;
-                        var dataCols = dataLine.Split('\t');
+                        var headerNames = new List<string> {
+                            "ScanNumber",
+                            "Collision Mode",
+                            "Scan Filter Text"
+                        };
 
-                        var firstColumnIsNumber = FirstColumnIsInteger(dataCols);
+                        // Keys in this dictionary are column names, values are the 0-based column index
+                        var columnMap = clsGlobal.ParseHeaderLine(dataLine, headerNames);
 
-                        if (linesRead == 1 && dataCols.Length > 0 && !firstColumnIsNumber)
+                        scanNumberColIndex = columnMap["ScanNumber"];
+                        collisionModeColIndex = columnMap["Collision Mode"];
+                        scanFilterColIndex = columnMap["Scan Filter Text"];
+                        continue;
+                    }
+
+                    // Parse out the values
+
+                    if (clsGlobal.TryGetValueInt(dataCols, scanNumberColIndex, out var scanNumber))
+                    {
+                        var storeData = false;
+
+                        if (clsGlobal.TryGetValue(dataCols, collisionModeColIndex, out var collisionMode))
                         {
-                            // This is a header line; define the column mapping
-
-                            var headerNames = new List<string> {
-                                "ScanNumber",
-                                "Collision Mode",
-                                "Scan Filter Text"
-                            };
-
-                            // Keys in this dictionary are column names, values are the 0-based column index
-                            var columnMap = clsGlobal.ParseHeaderLine(dataLine, headerNames);
-
-                            scanNumberColIndex = columnMap["ScanNumber"];
-                            collisionModeColIndex = columnMap["Collision Mode"];
-                            scanFilterColIndex = columnMap["Scan Filter Text"];
-                            continue;
+                            storeData = true;
                         }
-
-                        // Parse out the values
-
-                        if (clsGlobal.TryGetValueInt(dataCols, scanNumberColIndex, out var scanNumber))
+                        else
                         {
-                            var storeData = false;
-
-                            if (clsGlobal.TryGetValue(dataCols, collisionModeColIndex, out var collisionMode))
+                            if (clsGlobal.TryGetValue(dataCols, scanFilterColIndex, out var filterText))
                             {
+                                filterText = dataCols[scanFilterColIndex];
+
+                                // Parse the filter text to determine scan type
+                                collisionMode = XRawFileIO.GetScanTypeNameFromThermoScanFilterText(filterText);
+
                                 storeData = true;
                             }
-                            else
+                        }
+
+                        if (storeData)
+                        {
+                            if (string.IsNullOrEmpty(collisionMode))
                             {
-                                if (clsGlobal.TryGetValue(dataCols, scanFilterColIndex, out var filterText))
-                                {
-                                    filterText = dataCols[scanFilterColIndex];
-
-                                    // Parse the filter text to determine scan type
-                                    collisionMode = XRawFileIO.GetScanTypeNameFromThermoScanFilterText(filterText);
-
-                                    storeData = true;
-                                }
+                                collisionMode = "MS";
+                            }
+                            else if (collisionMode == "0")
+                            {
+                                collisionMode = "MS";
                             }
 
-                            if (storeData)
+                            if (!mScanTypeMap.ContainsKey(scanNumber))
                             {
-                                if (string.IsNullOrEmpty(collisionMode))
-                                {
-                                    collisionMode = "MS";
-                                }
-                                else if (collisionMode == "0")
-                                {
-                                    collisionMode = "MS";
-                                }
-
-                                if (!mScanTypeMap.ContainsKey(scanNumber))
-                                {
-                                    mScanTypeMap.Add(scanNumber, collisionMode);
-                                }
+                                mScanTypeMap.Add(scanNumber, collisionMode);
                             }
                         }
                     }
@@ -195,105 +194,103 @@ namespace AnalysisManagerMSGFDBPlugIn
                 var detailedScanTypesDefined = clsAnalysisResourcesMSGFDB.ValidateScanStatsFileHasDetailedScanTypes(scanStatsFilePath);
 
                 // Open the input file
-                using (var scanStatsReader = new StreamReader(new FileStream(scanStatsFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using var scanStatsReader = new StreamReader(new FileStream(scanStatsFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+                ScanTypeFilePath = Path.Combine(WorkDir, DatasetName + "_ScanType.txt");
+
+                // Create the scan type output file
+                using var writer = new StreamWriter(new FileStream(ScanTypeFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
+
+                var headerNames = new List<string>
                 {
-                    ScanTypeFilePath = Path.Combine(WorkDir, DatasetName + "_ScanType.txt");
+                    "ScanNumber",
+                    "ScanTypeName",
+                    "ScanType",
+                    "ScanTime"
+                };
+                writer.WriteLine(string.Join("\t", headerNames));
 
-                    // Create the scan type output file
-                    using (var writer = new StreamWriter(new FileStream(ScanTypeFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                // Define the default column mapping
+                var scanNumberColIndex = 1;
+                var scanTimeColIndex = 2;
+                var scanTypeColIndex = 3;
+                var scanTypeNameColIndex = -1;
+                var scanStatsExLoaded = false;
+
+                var linesRead = 0;
+                while (!scanStatsReader.EndOfStream)
+                {
+                    var dataLine = scanStatsReader.ReadLine();
+                    if (string.IsNullOrWhiteSpace(dataLine))
                     {
-                        var headerNames = new List<string>
-                        {
-                            "ScanNumber",
-                            "ScanTypeName",
-                            "ScanType",
-                            "ScanTime"
-                        };
-                        writer.WriteLine(string.Join("\t", headerNames));
-
-                        // Define the default column mapping
-                        var scanNumberColIndex = 1;
-                        var scanTimeColIndex = 2;
-                        var scanTypeColIndex = 3;
-                        var scanTypeNameColIndex = -1;
-                        var scanStatsExLoaded = false;
-
-                        var linesRead = 0;
-                        while (!scanStatsReader.EndOfStream)
-                        {
-                            var dataLine = scanStatsReader.ReadLine();
-                            if (string.IsNullOrWhiteSpace(dataLine))
-                            {
-                                continue;
-                            }
-
-                            linesRead++;
-                            var dataColumns = dataLine.Split('\t');
-
-                            var firstColumnIsNumber = FirstColumnIsInteger(dataColumns);
-
-                            if (linesRead == 1 && dataColumns.Length > 0 && !firstColumnIsNumber)
-                            {
-                                // This is a header line; define the column mapping
-
-                                // Keys in this dictionary are column names, values are the 0-based column index
-                                var columnMap = clsGlobal.ParseHeaderLine(dataLine, headerNames);
-
-                                scanNumberColIndex = columnMap["ScanNumber"];
-                                scanTimeColIndex = columnMap["ScanTime"];
-                                scanTypeColIndex = columnMap["ScanType"];
-                                scanTypeNameColIndex = columnMap["ScanTypeName"];
-                                continue;
-                            }
-
-                            if (linesRead == 1 && firstColumnIsNumber && dataColumns.Length >= 11 && detailedScanTypesDefined)
-                            {
-                                // This is a ScanStats file that does not have a header line
-                                // Assume the column indices are 1, 2, 3, and 10
-
-                                scanNumberColIndex = 1;
-                                scanTimeColIndex = 2;
-                                scanTypeColIndex = 3;
-                                scanTypeNameColIndex = 10;
-                            }
-
-                            if (scanTypeNameColIndex < 0 && !scanStatsExLoaded)
-                            {
-                                // Need to read the ScanStatsEx file
-
-                                if (!CacheScanTypeUsingScanStatsEx(scanStatsExFilePath))
-                                {
-                                    scanStatsReader.Close();
-                                    writer.Close();
-                                    return false;
-                                }
-
-                                scanStatsExLoaded = true;
-                            }
-
-                            if (!clsGlobal.TryGetValueInt(dataColumns, scanNumberColIndex, out var scanNumber))
-                                continue;
-
-                            if (!clsGlobal.TryGetValueInt(dataColumns, scanTypeColIndex, out var scanType))
-                                continue;
-
-                            var scanTypeName = string.Empty;
-                            if (scanStatsExLoaded)
-                            {
-                                mScanTypeMap.TryGetValue(scanNumber, out scanTypeName);
-                            }
-                            else if (scanTypeNameColIndex >= 0)
-                            {
-                                clsGlobal.TryGetValue(dataColumns, scanTypeNameColIndex, out scanTypeName);
-                            }
-
-                            clsGlobal.TryGetValueFloat(dataColumns, scanTimeColIndex, out var scanTime);
-
-                            writer.WriteLine(scanNumber + "\t" + scanTypeName + "\t" + scanType + "\t" + scanTime.ToString("0.0000"));
-
-                            ValidScanTypeLineCount++;
-                        }
+                        continue;
                     }
+
+                    linesRead++;
+                    var dataColumns = dataLine.Split('\t');
+
+                    var firstColumnIsNumber = FirstColumnIsInteger(dataColumns);
+
+                    if (linesRead == 1 && dataColumns.Length > 0 && !firstColumnIsNumber)
+                    {
+                        // This is a header line; define the column mapping
+
+                        // Keys in this dictionary are column names, values are the 0-based column index
+                        var columnMap = clsGlobal.ParseHeaderLine(dataLine, headerNames);
+
+                        scanNumberColIndex = columnMap["ScanNumber"];
+                        scanTimeColIndex = columnMap["ScanTime"];
+                        scanTypeColIndex = columnMap["ScanType"];
+                        scanTypeNameColIndex = columnMap["ScanTypeName"];
+                        continue;
+                    }
+
+                    if (linesRead == 1 && firstColumnIsNumber && dataColumns.Length >= 11 && detailedScanTypesDefined)
+                    {
+                        // This is a ScanStats file that does not have a header line
+                        // Assume the column indices are 1, 2, 3, and 10
+
+                        scanNumberColIndex = 1;
+                        scanTimeColIndex = 2;
+                        scanTypeColIndex = 3;
+                        scanTypeNameColIndex = 10;
+                    }
+
+                    if (scanTypeNameColIndex < 0 && !scanStatsExLoaded)
+                    {
+                        // Need to read the ScanStatsEx file
+
+                        if (!CacheScanTypeUsingScanStatsEx(scanStatsExFilePath))
+                        {
+                            scanStatsReader.Close();
+                            writer.Close();
+                            return false;
+                        }
+
+                        scanStatsExLoaded = true;
+                    }
+
+                    if (!clsGlobal.TryGetValueInt(dataColumns, scanNumberColIndex, out var scanNumber))
+                        continue;
+
+                    if (!clsGlobal.TryGetValueInt(dataColumns, scanTypeColIndex, out var scanType))
+                        continue;
+
+                    var scanTypeName = string.Empty;
+                    if (scanStatsExLoaded)
+                    {
+                        mScanTypeMap.TryGetValue(scanNumber, out scanTypeName);
+                    }
+                    else if (scanTypeNameColIndex >= 0)
+                    {
+                        clsGlobal.TryGetValue(dataColumns, scanTypeNameColIndex, out scanTypeName);
+                    }
+
+                    clsGlobal.TryGetValueFloat(dataColumns, scanTimeColIndex, out var scanTime);
+
+                    writer.WriteLine(scanNumber + "\t" + scanTypeName + "\t" + scanType + "\t" + scanTime.ToString("0.0000"));
+
+                    ValidScanTypeLineCount++;
                 }
             }
             catch (Exception ex)

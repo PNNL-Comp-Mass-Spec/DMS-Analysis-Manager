@@ -351,15 +351,14 @@ namespace AnalysisManagerMSGFDBPlugIn
                 }
 
                 // Create the .MSGFPlusIndexFileInfo file for this fasta file
-                var fiMSGFPlusIndexFileInfo = new FileInfo(
+                var msgfPlusIndexFileInfo = new FileInfo(
                     Path.Combine(remoteIndexDirectory.FullName, fastaFile.Name + MSGF_PLUS_INDEX_FILE_INFO_SUFFIX));
 
-                using (var writer = new StreamWriter(new FileStream(fiMSGFPlusIndexFileInfo.FullName, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                using var writer = new StreamWriter(new FileStream(msgfPlusIndexFileInfo.FullName, FileMode.Create, FileAccess.Write, FileShare.Read));
+
+                foreach (var entry in fileInfo)
                 {
-                    foreach (var entry in fileInfo)
-                    {
-                        writer.WriteLine(entry);
-                    }
+                    writer.WriteLine(entry);
                 }
 
                 return true;
@@ -850,12 +849,11 @@ namespace AnalysisManagerMSGFDBPlugIn
         {
             try
             {
-                using (var writer = new StreamWriter(new FileStream(lockFilePath, FileMode.CreateNew, FileAccess.Write, FileShare.Read)))
-                {
-                    // Use local time for dates in lock files
-                    writer.WriteLine("Date: " + DateTime.Now.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT));
-                    writer.WriteLine("Manager: " + mMgrName);
-                }
+                using var writer = new StreamWriter(new FileStream(lockFilePath, FileMode.CreateNew, FileAccess.Write, FileShare.Read));
+
+                // Use local time for dates in lock files
+                writer.WriteLine("Date: " + DateTime.Now.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT));
+                writer.WriteLine("Manager: " + mMgrName);
 
                 return true;
             }
@@ -958,12 +956,11 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 try
                 {
-                    using (var purgeInfoWriter = new StreamWriter(new FileStream(purgeInfoFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read)))
-                    {
-                        // Use local time for the date in the purge Info file
-                        purgeInfoWriter.WriteLine(DateTime.Now.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT));
-                        purgeInfoWriter.WriteLine("Manager: " + mMgrName);
-                    }
+                    using var purgeInfoWriter = new StreamWriter(new FileStream(purgeInfoFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read));
+
+                    // Use local time for the date in the purge Info file
+                    purgeInfoWriter.WriteLine(DateTime.Now.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT));
+                    purgeInfoWriter.WriteLine("Manager: " + mMgrName);
                 }
                 catch (Exception ex)
                 {
@@ -1173,11 +1170,10 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 try
                 {
-                    using (var writer = new StreamWriter(new FileStream(lastUsedFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
-                    {
-                        // Use UtcNow for dates in LastUsed files
-                        writer.WriteLine(DateTime.UtcNow.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT));
-                    }
+                    using var writer = new StreamWriter(new FileStream(lastUsedFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
+
+                    // Use UtcNow for dates in LastUsed files
+                    writer.WriteLine(DateTime.UtcNow.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT));
                 }
                 catch (IOException)
                 {
@@ -1312,7 +1308,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                         if (!string.Equals(fiSourceFile.Extension, FileSyncUtils.LASTUSED_FILE_EXTENSION, StringComparison.OrdinalIgnoreCase))
                         {
                             var sourceFileDate = fiSourceFile.LastWriteTimeUtc.ToLocalTime().ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT);
-                            var dateThreshold= dtMinWriteTimeThresholdUTC.ToLocalTime().ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT);
+                            var dateThreshold = dtMinWriteTimeThresholdUTC.ToLocalTime().ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT);
 
                             OnStatusEvent(string.Format("{0} is older than the fasta file; {1} modified {2} vs. {3}; indexing is required",
                                                         sourceDescription,

@@ -112,100 +112,96 @@ namespace AnalysisManagerBase
 
                 var splitMgfFiles = new List<FileInfo>();
 
-                using (var mgfFileReader = new StreamReader(new FileStream(mgfFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using var mgfFileReader = new StreamReader(new FileStream(mgfFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+                using var scanToPartMapWriter = new StreamWriter(new FileStream(scanMapFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
+
+                // Write the header to the map file
+                scanToPartMapWriter.WriteLine("ScanNumber" + '\t' + "ScanIndexOriginal" + '\t' + "MgfFilePart" + '\t' + "ScanIndex");
+
+                // Create the writers
+                // Keys are each StreamWriter, values are the number of spectra written to the file
+                var splitFileWriters = new Queue<udtOutputFileType>();
+
+                for (var partNum = 1; partNum <= splitCount; partNum++)
                 {
-                    using (var scanToPartMapWriter = new StreamWriter(new FileStream(scanMapFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                    var msgFileName = Path.GetFileNameWithoutExtension(mgfFile.Name) + fileSuffix + partNum + ".mgf";
+
+                    var outputFilePath = Path.Combine(mgfFile.DirectoryName, msgFileName);
+
+                    var nextWriter = new udtOutputFileType
                     {
-                        // Write the header to the map file
+                        OutputFile = new FileInfo(outputFilePath),
+                        SpectraWritten = 0,
+                        PartNumber = partNum
+                    };
 
-                        {
-                            scanToPartMapWriter.WriteLine("ScanNumber" + '\t' + "ScanIndexOriginal" + '\t' + "MgfFilePart" + '\t' + "ScanIndex");
+                    splitMgfFiles.Add(nextWriter.OutputFile);
+                    nextWriter.Writer =
+                        new StreamWriter(new FileStream(nextWriter.OutputFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read));
 
-                            // Create the writers
-                            // Keys are each StreamWriter, values are the number of spectra written to the file
-                            var splitFileWriters = new Queue<udtOutputFileType>();
+                    splitFileWriters.Enqueue(nextWriter);
+                }
 
-                            for (var partNum = 1; partNum <= splitCount; partNum++)
-                            {
-                                var msgFileName = Path.GetFileNameWithoutExtension(mgfFile.Name) + fileSuffix + partNum + ".mgf";
+                long bytesRead = 0;
+                var totalSpectraWritten = 0;
 
-                                var outputFilePath = Path.Combine(mgfFile.DirectoryName, msgFileName);
-
-                                var nextWriter = new udtOutputFileType
-                                {
-                                    OutputFile = new FileInfo(outputFilePath),
-                                    SpectraWritten = 0,
-                                    PartNumber = partNum
-                                };
-
-                                splitMgfFiles.Add(nextWriter.OutputFile);
-                                nextWriter.Writer = new StreamWriter(new FileStream(nextWriter.OutputFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read));
-
-                                splitFileWriters.Enqueue(nextWriter);
-                            }
-
-                            long bytesRead = 0;
-                            var totalSpectraWritten = 0;
-
-                            var previousLine = string.Empty;
-                            while (true)
-                            {
-                                var spectrumData = GetNextMGFSpectrum(mgfFileReader, ref previousLine, ref bytesRead, out var scanNumber);
-                                if (spectrumData.Count == 0)
-                                {
-                                    break;
-                                }
-
-                                var nextWriter = splitFileWriters.Dequeue();
-                                foreach (var dataLine in spectrumData)
-                                {
-                                    nextWriter.Writer.WriteLine(dataLine);
-                                }
-
-                                nextWriter.SpectraWritten++;
-                                totalSpectraWritten++;
-
-                                scanToPartMapWriter.WriteLine(scanNumber + '\t' + totalSpectraWritten + '\t' + nextWriter.PartNumber + '\t' + nextWriter.SpectraWritten);
-
-                                splitFileWriters.Enqueue(nextWriter);
-
-                                if (DateTime.UtcNow.Subtract(lastProgress).TotalSeconds >= 5)
-                                {
-                                    lastProgress = DateTime.UtcNow;
-                                    var percentComplete = bytesRead / (float)mgfFileReader.BaseStream.Length * 100;
-                                    if (percentComplete > 100)
-                                        percentComplete = 100;
-                                    OnProgressUpdate("Splitting MGF file", (int)percentComplete);
-                                }
-                            }
-
-                            // Close the writers
-                            // In addition, delete any output files that did not have any spectra written to them
-                            totalSpectraWritten = 0;
-
-                            while (splitFileWriters.Count > 0)
-                            {
-                                var nextWriter = splitFileWriters.Dequeue();
-                                nextWriter.Writer.Close();
-
-                                if (nextWriter.SpectraWritten == 0)
-                                {
-                                    nextWriter.OutputFile.Delete();
-                                    splitMgfFiles.Remove(nextWriter.OutputFile);
-                                }
-                                else
-                                {
-                                    totalSpectraWritten += nextWriter.SpectraWritten;
-                                }
-                            }
-
-                            if (totalSpectraWritten == 0)
-                            {
-                                OnErrorEvent("No spectra were read from the source MGF file (BEGIN IONS not found)");
-                                return new List<FileInfo>();
-                            }
-                        }
+                var previousLine = string.Empty;
+                while (true)
+                {
+                    var spectrumData = GetNextMGFSpectrum(mgfFileReader, ref previousLine, ref bytesRead, out var scanNumber);
+                    if (spectrumData.Count == 0)
+                    {
+                        break;
                     }
+
+                    var nextWriter = splitFileWriters.Dequeue();
+                    foreach (var dataLine in spectrumData)
+                    {
+                        nextWriter.Writer.WriteLine(dataLine);
+                    }
+
+                    nextWriter.SpectraWritten++;
+                    totalSpectraWritten++;
+
+                    scanToPartMapWriter.WriteLine(scanNumber + '\t' + totalSpectraWritten + '\t' + nextWriter.PartNumber + '\t' +
+                                                  nextWriter.SpectraWritten);
+
+                    splitFileWriters.Enqueue(nextWriter);
+
+                    if (DateTime.UtcNow.Subtract(lastProgress).TotalSeconds >= 5)
+                    {
+                        lastProgress = DateTime.UtcNow;
+                        var percentComplete = bytesRead / (float)mgfFileReader.BaseStream.Length * 100;
+                        if (percentComplete > 100)
+                            percentComplete = 100;
+                        OnProgressUpdate("Splitting MGF file", (int)percentComplete);
+                    }
+                }
+
+                // Close the writers
+                // In addition, delete any output files that did not have any spectra written to them
+                totalSpectraWritten = 0;
+
+                while (splitFileWriters.Count > 0)
+                {
+                    var nextWriter = splitFileWriters.Dequeue();
+                    nextWriter.Writer.Close();
+
+                    if (nextWriter.SpectraWritten == 0)
+                    {
+                        nextWriter.OutputFile.Delete();
+                        splitMgfFiles.Remove(nextWriter.OutputFile);
+                    }
+                    else
+                    {
+                        totalSpectraWritten += nextWriter.SpectraWritten;
+                    }
+                }
+
+                if (totalSpectraWritten == 0)
+                {
+                    OnErrorEvent("No spectra were read from the source MGF file (BEGIN IONS not found)");
+                    return new List<FileInfo>();
                 }
 
                 return splitMgfFiles;

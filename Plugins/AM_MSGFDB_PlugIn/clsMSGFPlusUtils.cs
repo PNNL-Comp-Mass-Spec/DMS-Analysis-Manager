@@ -454,28 +454,27 @@ namespace AnalysisManagerMSGFDBPlugIn
                     return;
                 }
 
-                using (var reader = new StreamReader(new FileStream(sourceFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
-                using (var writer = new StreamWriter(new FileStream(targetFilePath, FileMode.Append, FileAccess.Write, FileShare.ReadWrite)))
+                using var reader = new StreamReader(new FileStream(sourceFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+                using var writer = new StreamWriter(new FileStream(targetFilePath, FileMode.Append, FileAccess.Write, FileShare.ReadWrite));
+
+                var linesRead = 0;
+                var separatorAdded = false;
+
+                while (linesRead < headerLinesToAppend && !reader.EndOfStream)
                 {
-                    var linesRead = 0;
-                    var separatorAdded = false;
+                    var dataLine = reader.ReadLine();
+                    linesRead++;
 
-                    while (linesRead < headerLinesToAppend && !reader.EndOfStream)
+                    if (string.IsNullOrEmpty(dataLine))
+                        continue;
+
+                    if (!separatorAdded)
                     {
-                        var dataLine = reader.ReadLine();
-                        linesRead++;
-
-                        if (string.IsNullOrEmpty(dataLine))
-                            continue;
-
-                        if (!separatorAdded)
-                        {
-                            writer.WriteLine(new string('-', 80));
-                            separatorAdded = true;
-                        }
-
-                        writer.WriteLine(dataLine);
+                        writer.WriteLine(new string('-', 80));
+                        separatorAdded = true;
                     }
+
+                    writer.WriteLine(dataLine);
                 }
             }
             catch (Exception ex)
@@ -965,10 +964,9 @@ namespace AnalysisManagerMSGFDBPlugIn
                 if (!enzymesFile.Directory.Exists)
                     enzymesFile.Directory.Create();
 
-                using (var writer = new StreamWriter(new FileStream(enzymesFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read)))
-                {
-                    writer.Write(enzymeBuilder.ToString());
-                }
+                using var writer = new StreamWriter(new FileStream(enzymesFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read));
+
+                writer.Write(enzymeBuilder.ToString());
 
                 EnzymeDefinitionFilePath = enzymesFile.FullName;
 
@@ -1795,61 +1793,60 @@ namespace AnalysisManagerMSGFDBPlugIn
                     return false;
                 }
 
-                using (var reader = new StreamReader(new FileStream(scanTypeFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                using var reader = new StreamReader(new FileStream(scanTypeFilePath, FileMode.Open, FileAccess.Read, FileShare.Read));
+
+                while (!reader.EndOfStream)
                 {
-                    while (!reader.EndOfStream)
+                    var dataLine = reader.ReadLine();
+
+                    if (string.IsNullOrWhiteSpace(dataLine))
+                        continue;
+
+                    var columns = dataLine.Split('\t').ToList();
+
+                    if (scanNumberColIndex < 0)
                     {
-                        var dataLine = reader.ReadLine();
+                        // Parse the header line to define the mapping
+                        // Expected headers are ScanNumber   ScanTypeName   ScanType
+                        scanNumberColIndex = columns.IndexOf("ScanNumber");
+                        scanTypeNameColIndex = columns.IndexOf("ScanTypeName");
+                        continue;
+                    }
 
-                        if (string.IsNullOrWhiteSpace(dataLine))
-                            continue;
+                    if (!int.TryParse(columns[scanNumberColIndex], out var scanNumber))
+                        continue;
 
-                        var columns = dataLine.Split('\t').ToList();
+                    if (scanTypeNameColIndex < 0)
+                        continue;
 
-                        if (scanNumberColIndex < 0)
-                        {
-                            // Parse the header line to define the mapping
-                            // Expected headers are ScanNumber   ScanTypeName   ScanType
-                            scanNumberColIndex = columns.IndexOf("ScanNumber");
-                            scanTypeNameColIndex = columns.IndexOf("ScanTypeName");
-                            continue;
-                        }
+                    var scanType = columns[scanTypeNameColIndex];
+                    var scanTypeLCase = scanType.ToLower();
 
-                        if (!int.TryParse(columns[scanNumberColIndex], out var scanNumber))
-                            continue;
-
-                        if (scanTypeNameColIndex < 0)
-                            continue;
-
-                        var scanType = columns[scanTypeNameColIndex];
-                        var scanTypeLCase = scanType.ToLower();
-
-                        if (scanTypeLCase.Contains("hcd"))
-                        {
-                            hcdMSn.Add(scanNumber, scanType);
-                        }
-                        else if (scanTypeLCase.Contains("hmsn"))
-                        {
-                            highResMSn.Add(scanNumber, scanType);
-                        }
-                        else if (scanTypeLCase.Contains("msn"))
-                        {
-                            // Not HCD and doesn't contain HMSn; assume low-res
-                            lowResMSn.Add(scanNumber, scanType);
-                        }
-                        else if (scanTypeLCase.Contains("cid") || scanTypeLCase.Contains("etd"))
-                        {
-                            // The ScanTypeName likely came from the "Collision Mode" column of a MASIC ScanStatsEx file; we don't know if it is high res MSn or low res MSn
-                            // This will be the case for MASIC results from prior to February 1, 2010, since those results did not have the ScanTypeName column in the _ScanStats.txt file
-                            // We'll assume low res
-                            lowResMSn.Add(scanNumber, scanType);
-                        }
-                        else
-                        {
-                            // Does not contain MSn or HCD
-                            // Likely SRM or MS1
-                            other.Add(scanNumber, scanType);
-                        }
+                    if (scanTypeLCase.Contains("hcd"))
+                    {
+                        hcdMSn.Add(scanNumber, scanType);
+                    }
+                    else if (scanTypeLCase.Contains("hmsn"))
+                    {
+                        highResMSn.Add(scanNumber, scanType);
+                    }
+                    else if (scanTypeLCase.Contains("msn"))
+                    {
+                        // Not HCD and doesn't contain HMSn; assume low-res
+                        lowResMSn.Add(scanNumber, scanType);
+                    }
+                    else if (scanTypeLCase.Contains("cid") || scanTypeLCase.Contains("etd"))
+                    {
+                        // The ScanTypeName likely came from the "Collision Mode" column of a MASIC ScanStatsEx file; we don't know if it is high res MSn or low res MSn
+                        // This will be the case for MASIC results from prior to February 1, 2010, since those results did not have the ScanTypeName column in the _ScanStats.txt file
+                        // We'll assume low res
+                        lowResMSn.Add(scanNumber, scanType);
+                    }
+                    else
+                    {
+                        // Does not contain MSn or HCD
+                        // Likely SRM or MS1
+                        other.Add(scanNumber, scanType);
                     }
                 }
             }
@@ -1903,20 +1900,20 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Verify that the MS-GF+ .mzid file ends with XML tag MzIdentML
         /// </summary>
-        /// <param name="fiMzidFile"></param>
-        public static bool MSGFPlusResultsFileHasClosingTag(FileSystemInfo fiMzidFile)
+        /// <param name="mzidFile"></param>
+        public static bool MSGFPlusResultsFileHasClosingTag(FileSystemInfo mzidFile)
         {
             // Check whether the mzid file ends with XML tag </MzIdentML>
             var lastLine = string.Empty;
-            using (var reader = new StreamReader(new FileStream(fiMzidFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+
+            using var reader = new StreamReader(new FileStream(mzidFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+            while (!reader.EndOfStream)
             {
-                while (!reader.EndOfStream)
+                var dataLine = reader.ReadLine();
+                if (!string.IsNullOrWhiteSpace(dataLine))
                 {
-                    var dataLine = reader.ReadLine();
-                    if (!string.IsNullOrWhiteSpace(dataLine))
-                    {
-                        lastLine = dataLine;
-                    }
+                    lastLine = dataLine;
                 }
             }
 
@@ -2025,12 +2022,13 @@ namespace AnalysisManagerMSGFDBPlugIn
         // Writing results finished (elapsed time: 22.71 sec)
         // MS-GF+ complete (total elapsed time: 1073.62 sec)
 
-        private readonly Regex reExtractThreadCount = new Regex(@"Using (?<ThreadCount>\d+) threads", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-        private readonly Regex reExtractTaskCount = new Regex(@"Splitting work into +(?<TaskCount>\d+) +tasks", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-        private readonly Regex reSpectraSearched = new Regex(@"Spectrum.+\(total: *(?<SpectrumCount>\d+)\)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-        private readonly Regex reTaskComplete = new Regex(@"pool-\d+-thread-\d+: Task +(?<TaskNumber>\d+) +completed", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-        private readonly Regex rePercentComplete = new Regex(@"Search progress: (?<TasksComplete>\d+) / \d+ tasks?, (?<PercentComplete>[0-9.]+)%", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-        private readonly Regex reElapsedTime = new Regex("(?<ElapsedTime>[0-9.]+) (?<Units>seconds|minutes|hours) elapsed", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private readonly Regex reExtractThreadCount = new(@"Using (?<ThreadCount>\d+) threads", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private readonly Regex reExtractTaskCount = new(@"Splitting work into +(?<TaskCount>\d+) +tasks", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private readonly Regex reSpectraSearched = new(@"Spectrum.+\(total: *(?<SpectrumCount>\d+)\)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private readonly Regex reTaskComplete = new(@"pool-\d+-thread-\d+: Task +(?<TaskNumber>\d+) +completed", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private readonly Regex rePercentComplete = new(@"Search progress: (?<TasksComplete>\d+) / \d+ tasks?, (?<PercentComplete>[0-9.]+)%", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private readonly Regex reElapsedTime = new("(?<ElapsedTime>[0-9.]+) (?<Units>seconds|minutes|hours) elapsed", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
         /// <summary>
         /// Parse the MSGFPlus console output file to determine the MS-GF+ version and to track the search progress
         /// </summary>
@@ -2077,136 +2075,135 @@ namespace AnalysisManagerMSGFDBPlugIn
                 ContinuumSpectraSkipped = 0;
                 SpectraSearched = 0;
 
-                using (var reader = new StreamReader(new FileStream(consoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using var reader = new StreamReader(new FileStream(consoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+                var linesRead = 0;
+                while (!reader.EndOfStream)
                 {
-                    var linesRead = 0;
-                    while (!reader.EndOfStream)
+                    var dataLine = reader.ReadLine();
+                    linesRead++;
+
+                    if (string.IsNullOrWhiteSpace(dataLine))
+                        continue;
+
+                    var dataLineLCase = dataLine.ToLower();
+
+                    if (linesRead <= 3)
                     {
-                        var dataLine = reader.ReadLine();
-                        linesRead++;
-
-                        if (string.IsNullOrWhiteSpace(dataLine))
-                            continue;
-
-                        var dataLineLCase = dataLine.ToLower();
-
-                        if (linesRead <= 3)
+                        // Originally the first line was the MS-GF+ version
+                        // Starting in November 2016, the first line is the command line and the second line is a separator (series of dashes)
+                        // The third line is the MS-GF+ version
+                        if (string.IsNullOrWhiteSpace(MSGFPlusVersion) && dataLine.StartsWith("MS-GF+ Release", StringComparison.OrdinalIgnoreCase))
                         {
-                            // Originally the first line was the MS-GF+ version
-                            // Starting in November 2016, the first line is the command line and the second line is a separator (series of dashes)
-                            // The third line is the MS-GF+ version
-                            if (string.IsNullOrWhiteSpace(MSGFPlusVersion) && dataLine.StartsWith("MS-GF+ Release", StringComparison.OrdinalIgnoreCase))
+                            if (mDebugLevel >= 2 && string.IsNullOrWhiteSpace(MSGFPlusVersion))
                             {
-                                if (mDebugLevel >= 2 && string.IsNullOrWhiteSpace(MSGFPlusVersion))
-                                {
-                                    OnStatusEvent("MS-GF+ version: " + dataLine);
-                                }
-
-                                MSGFPlusVersion = string.Copy(dataLine);
+                                OnStatusEvent("MS-GF+ version: " + dataLine);
                             }
-                            else
+
+                            MSGFPlusVersion = string.Copy(dataLine);
+                        }
+                        else
+                        {
+                            if (dataLineLCase.Contains("error"))
                             {
-                                if (dataLineLCase.Contains("error"))
+                                if (string.IsNullOrEmpty(ConsoleOutputErrorMsg))
                                 {
-                                    if (string.IsNullOrEmpty(ConsoleOutputErrorMsg))
-                                    {
-                                        ConsoleOutputErrorMsg = "Error running MS-GF+: ";
-                                    }
-                                    if (!ConsoleOutputErrorMsg.Contains(dataLine))
-                                    {
-                                        ConsoleOutputErrorMsg += "; " + dataLine;
-                                    }
+                                    ConsoleOutputErrorMsg = "Error running MS-GF+: ";
+                                }
+                                if (!ConsoleOutputErrorMsg.Contains(dataLine))
+                                {
+                                    ConsoleOutputErrorMsg += "; " + dataLine;
                                 }
                             }
                         }
-
-                        // Look for warning messages
-                        // Additionally, update progress if the line starts with one of the expected phrases
-                        if (dataLine.StartsWith("Ignoring spectrum", StringComparison.OrdinalIgnoreCase))
-                        {
-                            // Spectra are typically ignored either because they have too few ions, or because the data is not centroided
-                            if (dataLine.IndexOf("spectrum is not centroided", StringComparison.OrdinalIgnoreCase) > 0)
-                            {
-                                ContinuumSpectraSkipped++;
-                            }
-                        }
-                        else if (dataLine.StartsWith("Loading database files", StringComparison.OrdinalIgnoreCase))
-                        {
-                            if (effectiveProgress < PROGRESS_PCT_MSGFPLUS_LOADING_DATABASE)
-                            {
-                                effectiveProgress = PROGRESS_PCT_MSGFPLUS_LOADING_DATABASE;
-                            }
-                        }
-                        else if (dataLine.StartsWith("Reading spectra", StringComparison.OrdinalIgnoreCase))
-                        {
-                            if (effectiveProgress < PROGRESS_PCT_MSGFPLUS_READING_SPECTRA)
-                            {
-                                effectiveProgress = PROGRESS_PCT_MSGFPLUS_READING_SPECTRA;
-                            }
-                        }
-                        else if (dataLine.StartsWith("Using", StringComparison.OrdinalIgnoreCase))
-                        {
-                            // Extract out the thread or task count
-                            var threadMatch = reExtractThreadCount.Match(dataLine);
-
-                            if (threadMatch.Success)
-                            {
-                                short.TryParse(threadMatch.Groups["ThreadCount"].Value, out totalThreadCount);
-
-                                if (effectiveProgress < PROGRESS_PCT_MSGFPLUS_THREADS_SPAWNED)
-                                {
-                                    effectiveProgress = PROGRESS_PCT_MSGFPLUS_THREADS_SPAWNED;
-                                }
-                            }
-                        }
-                        else if (dataLine.StartsWith("Splitting", StringComparison.OrdinalIgnoreCase))
-                        {
-                            var taskMatch = reExtractTaskCount.Match(dataLine);
-
-                            if (taskMatch.Success)
-                            {
-                                int.TryParse(taskMatch.Groups["TaskCount"].Value, out totalTasks);
-                            }
-                        }
-                        else if (dataLine.StartsWith("Spectrum", StringComparison.OrdinalIgnoreCase))
-                        {
-                            // Extract out the number of spectra that MS-GF+ will actually search
-                            var spectraSearchedMatch = reSpectraSearched.Match(dataLine);
-
-                            if (spectraSearchedMatch.Success && int.TryParse(spectraSearchedMatch.Groups["SpectrumCount"].Value, out var spectraSearched))
-                            {
-                                SpectraSearched = spectraSearched;
-                            }
-                        }
-                        else if (dataLine.StartsWith("Computing EFDRs", StringComparison.OrdinalIgnoreCase) ||
-                                 dataLine.StartsWith("Computing q-values", StringComparison.OrdinalIgnoreCase))
-                        {
-                            if (effectiveProgress < PROGRESS_PCT_MSGFPLUS_COMPUTING_FDRS)
-                            {
-                                effectiveProgress = PROGRESS_PCT_MSGFPLUS_COMPUTING_FDRS;
-                            }
-                        }
-                        else if (dataLine.StartsWith("MS-GF+ complete", StringComparison.OrdinalIgnoreCase))
-                        {
-                            if (effectiveProgress < PROGRESS_PCT_MSGFPLUS_COMPLETE)
-                            {
-                                effectiveProgress = PROGRESS_PCT_MSGFPLUS_COMPLETE;
-                            }
-                        }
-                        else if (string.IsNullOrEmpty(ConsoleOutputErrorMsg))
-                        {
-                            if (dataLineLCase.Contains("error") && !dataLineLCase.Contains("IsotopeError:".ToLower()))
-                            {
-                                ConsoleOutputErrorMsg += "; " + dataLine;
-                            }
-                        }
-
-                        UpdateCompletedTasks(dataLine, completedTasks);
-
-                        UpdatePercentComplete(dataLine, ref percentCompleteAllTasks, ref tasksCompleteViaSearchProgress);
-
-                        UpdateElapsedTime(dataLine, ref totalElapsedTimeHours);
                     }
+
+                    // Look for warning messages
+                    // Additionally, update progress if the line starts with one of the expected phrases
+                    if (dataLine.StartsWith("Ignoring spectrum", StringComparison.OrdinalIgnoreCase))
+                    {
+                        // Spectra are typically ignored either because they have too few ions, or because the data is not centroided
+                        if (dataLine.IndexOf("spectrum is not centroided", StringComparison.OrdinalIgnoreCase) > 0)
+                        {
+                            ContinuumSpectraSkipped++;
+                        }
+                    }
+                    else if (dataLine.StartsWith("Loading database files", StringComparison.OrdinalIgnoreCase))
+                    {
+                        if (effectiveProgress < PROGRESS_PCT_MSGFPLUS_LOADING_DATABASE)
+                        {
+                            effectiveProgress = PROGRESS_PCT_MSGFPLUS_LOADING_DATABASE;
+                        }
+                    }
+                    else if (dataLine.StartsWith("Reading spectra", StringComparison.OrdinalIgnoreCase))
+                    {
+                        if (effectiveProgress < PROGRESS_PCT_MSGFPLUS_READING_SPECTRA)
+                        {
+                            effectiveProgress = PROGRESS_PCT_MSGFPLUS_READING_SPECTRA;
+                        }
+                    }
+                    else if (dataLine.StartsWith("Using", StringComparison.OrdinalIgnoreCase))
+                    {
+                        // Extract out the thread or task count
+                        var threadMatch = reExtractThreadCount.Match(dataLine);
+
+                        if (threadMatch.Success)
+                        {
+                            short.TryParse(threadMatch.Groups["ThreadCount"].Value, out totalThreadCount);
+
+                            if (effectiveProgress < PROGRESS_PCT_MSGFPLUS_THREADS_SPAWNED)
+                            {
+                                effectiveProgress = PROGRESS_PCT_MSGFPLUS_THREADS_SPAWNED;
+                            }
+                        }
+                    }
+                    else if (dataLine.StartsWith("Splitting", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var taskMatch = reExtractTaskCount.Match(dataLine);
+
+                        if (taskMatch.Success)
+                        {
+                            int.TryParse(taskMatch.Groups["TaskCount"].Value, out totalTasks);
+                        }
+                    }
+                    else if (dataLine.StartsWith("Spectrum", StringComparison.OrdinalIgnoreCase))
+                    {
+                        // Extract out the number of spectra that MS-GF+ will actually search
+                        var spectraSearchedMatch = reSpectraSearched.Match(dataLine);
+
+                        if (spectraSearchedMatch.Success && int.TryParse(spectraSearchedMatch.Groups["SpectrumCount"].Value, out var spectraSearched))
+                        {
+                            SpectraSearched = spectraSearched;
+                        }
+                    }
+                    else if (dataLine.StartsWith("Computing EFDRs", StringComparison.OrdinalIgnoreCase) ||
+                             dataLine.StartsWith("Computing q-values", StringComparison.OrdinalIgnoreCase))
+                    {
+                        if (effectiveProgress < PROGRESS_PCT_MSGFPLUS_COMPUTING_FDRS)
+                        {
+                            effectiveProgress = PROGRESS_PCT_MSGFPLUS_COMPUTING_FDRS;
+                        }
+                    }
+                    else if (dataLine.StartsWith("MS-GF+ complete", StringComparison.OrdinalIgnoreCase))
+                    {
+                        if (effectiveProgress < PROGRESS_PCT_MSGFPLUS_COMPLETE)
+                        {
+                            effectiveProgress = PROGRESS_PCT_MSGFPLUS_COMPLETE;
+                        }
+                    }
+                    else if (string.IsNullOrEmpty(ConsoleOutputErrorMsg))
+                    {
+                        if (dataLineLCase.Contains("error") && !dataLineLCase.Contains("IsotopeError:".ToLower()))
+                        {
+                            ConsoleOutputErrorMsg += "; " + dataLine;
+                        }
+                    }
+
+                    UpdateCompletedTasks(dataLine, completedTasks);
+
+                    UpdatePercentComplete(dataLine, ref percentCompleteAllTasks, ref tasksCompleteViaSearchProgress);
+
+                    UpdateElapsedTime(dataLine, ref totalElapsedTimeHours);
                 }
 
                 ThreadCountActual = totalThreadCount;
@@ -2272,84 +2269,83 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 sbOptions.Append(" -mod " + MOD_FILE_NAME);
 
-                using (var writer = new StreamWriter(new FileStream(modFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                using var writer = new StreamWriter(new FileStream(modFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
+
+                writer.WriteLine("# This file is used to specify modifications for MS-GF+");
+                writer.WriteLine();
+                writer.WriteLine("# Max Number of Modifications per peptide");
+                writer.WriteLine("# If this value is large, the search will be slow");
+                writer.WriteLine("NumMods=" + numMods);
+
+                if (customAminoAcids.Count > 0)
                 {
-                    writer.WriteLine("# This file is used to specify modifications for MS-GF+");
+                    // Custom Amino Acid definitions need to be listed before static or dynamic modifications
                     writer.WriteLine();
-                    writer.WriteLine("# Max Number of Modifications per peptide");
-                    writer.WriteLine("# If this value is large, the search will be slow");
-                    writer.WriteLine("NumMods=" + numMods);
+                    writer.WriteLine("# Custom Amino Acids");
 
-                    if (customAminoAcids.Count > 0)
+                    foreach (var customAADef in customAminoAcids)
                     {
-                        // Custom Amino Acid definitions need to be listed before static or dynamic modifications
-                        writer.WriteLine();
-                        writer.WriteLine("# Custom Amino Acids");
-
-                        foreach (var customAADef in customAminoAcids)
+                        if (ParseMSGFPlusValidateMod(customAADef, out var customAADefClean))
                         {
-                            if (ParseMSGFPlusValidateMod(customAADef, out var customAADefClean))
-                            {
-                                if (MisleadingModDef(customAADefClean, "Custom AA", "custom", "opt"))
-                                    return false;
-                                if (MisleadingModDef(customAADefClean, "Custom AA", "custom", "fix"))
-                                    return false;
-                                writer.WriteLine(customAADefClean);
-                            }
-                            else
-                            {
+                            if (MisleadingModDef(customAADefClean, "Custom AA", "custom", "opt"))
                                 return false;
-                            }
+                            if (MisleadingModDef(customAADefClean, "Custom AA", "custom", "fix"))
+                                return false;
+                            writer.WriteLine(customAADefClean);
+                        }
+                        else
+                        {
+                            return false;
                         }
                     }
+                }
 
-                    writer.WriteLine();
-                    writer.WriteLine("# Static mods");
-                    if (staticMods.Count == 0)
+                writer.WriteLine();
+                writer.WriteLine("# Static mods");
+                if (staticMods.Count == 0)
+                {
+                    writer.WriteLine("# None");
+                }
+                else
+                {
+                    foreach (var staticMod in staticMods)
                     {
-                        writer.WriteLine("# None");
-                    }
-                    else
-                    {
-                        foreach (var staticMod in staticMods)
+                        if (ParseMSGFPlusValidateMod(staticMod, out var modClean))
                         {
-                            if (ParseMSGFPlusValidateMod(staticMod, out var modClean))
-                            {
-                                if (MisleadingModDef(modClean, "Static mod", "fix", "opt"))
-                                    return false;
-                                if (MisleadingModDef(modClean, "Static mod", "fix", "custom"))
-                                    return false;
-                                writer.WriteLine(modClean);
-                            }
-                            else
-                            {
+                            if (MisleadingModDef(modClean, "Static mod", "fix", "opt"))
                                 return false;
-                            }
+                            if (MisleadingModDef(modClean, "Static mod", "fix", "custom"))
+                                return false;
+                            writer.WriteLine(modClean);
+                        }
+                        else
+                        {
+                            return false;
                         }
                     }
+                }
 
-                    writer.WriteLine();
-                    writer.WriteLine("# Dynamic mods");
-                    if (dynamicMods.Count == 0)
+                writer.WriteLine();
+                writer.WriteLine("# Dynamic mods");
+                if (dynamicMods.Count == 0)
+                {
+                    writer.WriteLine("# None");
+                }
+                else
+                {
+                    foreach (var dynamicMod in dynamicMods)
                     {
-                        writer.WriteLine("# None");
-                    }
-                    else
-                    {
-                        foreach (var dynamicMod in dynamicMods)
+                        if (ParseMSGFPlusValidateMod(dynamicMod, out var modClean))
                         {
-                            if (ParseMSGFPlusValidateMod(dynamicMod, out var modClean))
-                            {
-                                if (MisleadingModDef(modClean, "Dynamic mod", "opt", "fix"))
-                                    return false;
-                                if (MisleadingModDef(modClean, "Dynamic mod", "opt", "custom"))
-                                    return false;
-                                writer.WriteLine(modClean);
-                            }
-                            else
-                            {
+                            if (MisleadingModDef(modClean, "Dynamic mod", "opt", "fix"))
                                 return false;
-                            }
+                            if (MisleadingModDef(modClean, "Dynamic mod", "opt", "custom"))
+                                return false;
+                            writer.WriteLine(modClean);
+                        }
+                        else
+                        {
+                            return false;
                         }
                     }
                 }
@@ -3509,24 +3505,23 @@ namespace AnalysisManagerMSGFDBPlugIn
                     OnStatusEvent("Validating peptide to protein mapping, file " + Path.GetFileName(pepToProtMapFilePath));
                 }
 
-                using (var reader = new StreamReader(new FileStream(pepToProtMapFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                using var reader = new StreamReader(new FileStream(pepToProtMapFilePath, FileMode.Open, FileAccess.Read, FileShare.Read));
+
+                while (!reader.EndOfStream)
                 {
-                    while (!reader.EndOfStream)
+                    var dataLine = reader.ReadLine();
+                    linesRead++;
+
+                    if (linesRead <= 1 || string.IsNullOrEmpty(dataLine))
+                        continue;
+
+                    peptideCount++;
+                    if (dataLine.Contains(PROTEIN_NAME_NO_MATCH))
                     {
-                        var dataLine = reader.ReadLine();
-                        linesRead++;
-
-                        if (linesRead <= 1 || string.IsNullOrEmpty(dataLine))
-                            continue;
-
-                        peptideCount++;
-                        if (dataLine.Contains(PROTEIN_NAME_NO_MATCH))
+                        peptideCountNoMatch++;
+                        if (unmatchedPeptides.Count < 5)
                         {
-                            peptideCountNoMatch++;
-                            if (unmatchedPeptides.Count < 5)
-                            {
-                                unmatchedPeptides.Add(dataLine);
-                            }
+                            unmatchedPeptides.Add(dataLine);
                         }
                     }
                 }

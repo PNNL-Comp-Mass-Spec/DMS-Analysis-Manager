@@ -295,14 +295,13 @@ namespace AnalysisManagerMzRefineryPlugIn
                         }
                     }
 
-                    using (var writer = new StreamWriter(new FileStream(
+                    using var writer = new StreamWriter(new FileStream(
                         Path.Combine(mWorkDir, "NOTE - Orphan folder; safe to delete.txt"),
-                        FileMode.Create, FileAccess.Write, FileShare.Read)))
-                    {
-                        writer.WriteLine("This folder contains MS-GF+ results and the MzRefinery log file from a failed attempt at running MzRefinery for job " + mJob + ".");
-                        writer.WriteLine("The files can be used to investigate the MzRefinery failure.");
-                        writer.WriteLine("the directory can be safely deleted.");
-                    }
+                        FileMode.Create, FileAccess.Write, FileShare.Read));
+
+                    writer.WriteLine("This folder contains MS-GF+ results and the MzRefinery log file from a failed attempt at running MzRefinery for job " + mJob + ".");
+                    writer.WriteLine("The files can be used to investigate the MzRefinery failure.");
+                    writer.WriteLine("the directory can be safely deleted.");
                 }
 
                 mProgress = PROGRESS_PCT_COMPLETE;
@@ -892,36 +891,35 @@ namespace AnalysisManagerMzRefineryPlugIn
 
                 mConsoleOutputErrorMsg = string.Empty;
 
-                using (var reader = new StreamReader(new FileStream(consoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using var reader = new StreamReader(new FileStream(consoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+                while (!reader.EndOfStream)
                 {
-                    while (!reader.EndOfStream)
+                    var dataLine = reader.ReadLine();
+
+                    if (string.IsNullOrWhiteSpace(dataLine))
+                        continue;
+
+                    if (dataLine.StartsWith("error:", StringComparison.OrdinalIgnoreCase) ||
+                        dataLine.IndexOf("unhandled exception", StringComparison.OrdinalIgnoreCase) >= 0)
                     {
-                        var dataLine = reader.ReadLine();
-
-                        if (string.IsNullOrWhiteSpace(dataLine))
-                            continue;
-
-                        if (dataLine.StartsWith("error:", StringComparison.OrdinalIgnoreCase) ||
-                            dataLine.IndexOf("unhandled exception", StringComparison.OrdinalIgnoreCase) >= 0)
+                        if (string.IsNullOrEmpty(mConsoleOutputErrorMsg))
                         {
-                            if (string.IsNullOrEmpty(mConsoleOutputErrorMsg))
-                            {
-                                mConsoleOutputErrorMsg = "Error running MzRefinery: " + dataLine;
-                            }
-                            else
-                            {
-                                mConsoleOutputErrorMsg += "; " + dataLine;
-                            }
+                            mConsoleOutputErrorMsg = "Error running MzRefinery: " + dataLine;
                         }
-                        else if (dataLine.StartsWith("Low number of good identifications found"))
+                        else
                         {
-                            mEvalMessage = dataLine;
-                            LogMessage("MzRefinery warning: " + dataLine);
+                            mConsoleOutputErrorMsg += "; " + dataLine;
                         }
-                        else if (dataLine.StartsWith("Excluding file") && dataLine.EndsWith("from data set"))
-                        {
-                            LogError("Fewer than 100 matches after filtering; cannot use MzRefinery on this dataset");
-                        }
+                    }
+                    else if (dataLine.StartsWith("Low number of good identifications found"))
+                    {
+                        mEvalMessage = dataLine;
+                        LogMessage("MzRefinery warning: " + dataLine);
+                    }
+                    else if (dataLine.StartsWith("Excluding file") && dataLine.EndsWith("from data set"))
+                    {
+                        LogError("Fewer than 100 matches after filtering; cannot use MzRefinery on this dataset");
                     }
                 }
             }
@@ -1339,10 +1337,9 @@ namespace AnalysisManagerMzRefineryPlugIn
                 // Write the console output to a text file
                 clsGlobal.IdleLoop(0.25);
 
-                using (var writer = new StreamWriter(new FileStream(mCmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
-                {
-                    writer.WriteLine(mCmdRunner.CachedConsoleOutput);
-                }
+                using var writer = new StreamWriter(new FileStream(mCmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
+
+                writer.WriteLine(mCmdRunner.CachedConsoleOutput);
             }
 
             // Parse the console output file one more time to check for errors

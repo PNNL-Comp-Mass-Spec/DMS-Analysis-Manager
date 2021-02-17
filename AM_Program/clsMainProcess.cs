@@ -2085,40 +2085,39 @@ namespace AnalysisManagerProg
 
             char[] sepChars = { '\t' };
 
-            using (var reader = new StreamReader(new FileStream(messageCacheFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+            using var reader = new StreamReader(new FileStream(messageCacheFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+            var lineCount = 0;
+            while (!reader.EndOfStream)
             {
-                var lineCount = 0;
-                while (!reader.EndOfStream)
+                var dataLine = reader.ReadLine();
+                lineCount++;
+
+                // Assume that the first line is the header line, which we'll skip
+                if (lineCount == 1 || string.IsNullOrWhiteSpace(dataLine))
                 {
-                    var dataLine = reader.ReadLine();
-                    lineCount++;
+                    continue;
+                }
 
-                    // Assume that the first line is the header line, which we'll skip
-                    if (lineCount == 1 || string.IsNullOrWhiteSpace(dataLine))
+                var lineParts = dataLine.Split(sepChars, 2);
+
+                var timeStampText = lineParts[0];
+                var message = lineParts[1];
+
+                if (DateTime.TryParse(timeStampText, out var timeStamp))
+                {
+                    // Valid message; store it
+
+                    if (cachedMessages.TryGetValue(message, out var cachedTimeStamp))
                     {
-                        continue;
+                        if (timeStamp > cachedTimeStamp)
+                        {
+                            cachedMessages[message] = timeStamp;
+                        }
                     }
-
-                    var lineParts = dataLine.Split(sepChars, 2);
-
-                    var timeStampText = lineParts[0];
-                    var message = lineParts[1];
-
-                    if (DateTime.TryParse(timeStampText, out var timeStamp))
+                    else
                     {
-                        // Valid message; store it
-
-                        if (cachedMessages.TryGetValue(message, out var cachedTimeStamp))
-                        {
-                            if (timeStamp > cachedTimeStamp)
-                            {
-                                cachedMessages[message] = timeStamp;
-                            }
-                        }
-                        else
-                        {
-                            cachedMessages.Add(message, timeStamp);
-                        }
+                        cachedMessages.Add(message, timeStamp);
                     }
                 }
             }
@@ -2162,13 +2161,13 @@ namespace AnalysisManagerProg
                 LogError(errorMessage, true);
 
                 // Update the message cache file
-                using (var writer = new StreamWriter(new FileStream(messageCacheFile.FullName, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
+                using var writer = new StreamWriter(new FileStream(messageCacheFile.FullName, FileMode.Create, FileAccess.Write, FileShare.ReadWrite));
+
+                writer.WriteLine("{0}\t{1}", "TimeStamp", "Message");
+
+                foreach (var message in cachedMessages)
                 {
-                    writer.WriteLine("{0}\t{1}", "TimeStamp", "Message");
-                    foreach (var message in cachedMessages)
-                    {
-                        writer.WriteLine("{0}\t{1}", message.Value.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT), message.Key);
-                    }
+                    writer.WriteLine("{0}\t{1}", message.Value.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT), message.Key);
                 }
             }
             catch (Exception ex)
