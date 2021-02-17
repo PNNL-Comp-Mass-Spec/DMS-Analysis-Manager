@@ -87,8 +87,8 @@ namespace AnalysisManagerProSightQuantPlugIn
                 // Create the TargetedWorkflowParams.xml file
                 mProgress = PROGRESS_PCT_CREATING_PARAMETERS;
 
-                var strTargetedQuantParamFilePath = CreateTargetedQuantParamFile();
-                if (string.IsNullOrEmpty(strTargetedQuantParamFilePath))
+                var targetedQuantParamFilePath = CreateTargetedQuantParamFile();
+                if (string.IsNullOrEmpty(targetedQuantParamFilePath))
                 {
                     LogError("Aborting since CreateTargetedQuantParamFile returned false");
                     if (string.IsNullOrEmpty(mMessage))
@@ -121,7 +121,7 @@ namespace AnalysisManagerProSightQuantPlugIn
                         return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                arguments += " " + PossiblyQuotePath(strTargetedQuantParamFilePath);
+                arguments += " " + PossiblyQuotePath(targetedQuantParamFilePath);
 
                 if (mDebugLevel >= 1)
                 {

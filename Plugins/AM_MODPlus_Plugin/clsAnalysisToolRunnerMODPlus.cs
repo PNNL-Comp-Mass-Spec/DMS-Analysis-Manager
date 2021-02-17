@@ -304,24 +304,24 @@ namespace AnalysisManagerMODPlusPlugin
                 return paramFileList;
             }
 
-            foreach (var fiMgfFile in mgfFiles)
+            foreach (var mgfFile in mgfFiles)
             {
-                var reMatch = reThreadNumber.Match(fiMgfFile.Name);
+                var reMatch = reThreadNumber.Match(mgfFile.Name);
                 if (!reMatch.Success)
                 {
-                    LogError("RegEx failed to extract the thread number from the MGF file name: " + fiMgfFile.Name);
+                    LogError("RegEx failed to extract the thread number from the MGF file name: " + mgfFile.Name);
                     return new Dictionary<int, string>();
                 }
 
                 if (!int.TryParse(reMatch.Groups[1].Value, out var threadNumber))
                 {
-                    LogError("RegEx logic error extracting the thread number from the MGF file name: " + fiMgfFile.Name);
+                    LogError("RegEx logic error extracting the thread number from the MGF file name: " + mgfFile.Name);
                     return new Dictionary<int, string>();
                 }
 
                 if (paramFileList.ContainsKey(threadNumber))
                 {
-                    LogError("MGFSplitter logic error; duplicate thread number encountered for " + fiMgfFile.Name);
+                    LogError("MGFSplitter logic error; duplicate thread number encountered for " + mgfFile.Name);
                     return new Dictionary<int, string>();
                 }
 
@@ -331,7 +331,7 @@ namespace AnalysisManagerMODPlusPlugin
                     var xmlAttributeCollection = nodeList[0].Attributes;
                     if (xmlAttributeCollection != null)
                     {
-                        xmlAttributeCollection["local_path"].Value = fiMgfFile.FullName;
+                        xmlAttributeCollection["local_path"].Value = mgfFile.FullName;
                         xmlAttributeCollection["format"].Value = "mgf";
                     }
                 }

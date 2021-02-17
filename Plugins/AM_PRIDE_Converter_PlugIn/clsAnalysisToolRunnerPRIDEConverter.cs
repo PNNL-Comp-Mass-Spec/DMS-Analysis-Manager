@@ -3775,22 +3775,17 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             return CloseOutType.CLOSEOUT_FAILED;
         }
 
-        private string PXFileTypeName(clsPXFileInfoBase.ePXFileType ePXFileType)
+        private string PXFileTypeName(clsPXFileInfoBase.ePXFileType pxFileType)
         {
-            switch (ePXFileType)
+            return pxFileType switch
             {
-                case clsPXFileInfoBase.ePXFileType.Result:
-                case clsPXFileInfoBase.ePXFileType.ResultMzId:
-                    return "RESULT";
-                case clsPXFileInfoBase.ePXFileType.Raw:
-                    return "RAW";
-                case clsPXFileInfoBase.ePXFileType.Search:
-                    return "SEARCH";
-                case clsPXFileInfoBase.ePXFileType.Peak:
-                    return "PEAK";
-                default:
-                    return "OTHER";
-            }
+                clsPXFileInfoBase.ePXFileType.Result => "RESULT",
+                clsPXFileInfoBase.ePXFileType.ResultMzId => "RESULT",
+                clsPXFileInfoBase.ePXFileType.Raw => "RAW",
+                clsPXFileInfoBase.ePXFileType.Search => "SEARCH",
+                clsPXFileInfoBase.ePXFileType.Peak => "PEAK",
+                _ => "OTHER"
+            };
         }
 
         /// <summary>
