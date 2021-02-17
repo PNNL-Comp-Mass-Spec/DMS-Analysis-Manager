@@ -69,19 +69,17 @@ namespace AnalysisManagerBase
         {
             var outFilePath = Path.Combine(resultsFolderPath, datasetName + "_out.txt");
             var outFile = new FileInfo(outFilePath);
-            if (outFile.Exists)
+            if (!outFile.Exists)
+                return false;
+
+            if (mResultsFileCount <= 0)
             {
-                if (mResultsFileCount <= 0)
-                {
-                    CountFilesInConcatenatedTextFile(outFilePath);
-                }
-
-                var filesToSkip = new SortedSet<string>();
-
-                return SplitCattedFile(outFilePath, filesToSkip);
+                CountFilesInConcatenatedTextFile(outFilePath);
             }
 
-            return false;
+            var filesToSkip = new SortedSet<string>();
+
+            return SplitCattedFile(outFilePath, filesToSkip);
         }
 
         /// <summary>

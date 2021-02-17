@@ -3856,35 +3856,29 @@ namespace AnalysisManagerBase
         /// <param name="fileName">The file name to find</param>
         public static string ResolveStoragePath(string directoryPath, string fileName)
         {
-            var physicalFilePath = string.Empty;
-
             var filePath = Path.Combine(directoryPath, fileName);
 
             if (File.Exists(filePath))
             {
                 // The desired file is located in directoryPath
-                physicalFilePath = filePath;
+                return filePath;
             }
-            else
-            {
-                // The desired file was not found
-                filePath += STORAGE_PATH_INFO_FILE_SUFFIX;
 
-                if (File.Exists(filePath))
-                {
-                    // The _StoragePathInfo.txt file is present
-                    // Open that file to read the file path on the first line of the file
+            // The desired file was not found
+            var storagePathInfoFilePath = filePath + STORAGE_PATH_INFO_FILE_SUFFIX;
 
-                    using (var reader = new StreamReader(new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
-                    {
-                        if (!reader.EndOfStream)
-                        {
-                            var dataLine = reader.ReadLine();
-                            physicalFilePath = dataLine;
-                        }
-                    }
-                }
-            }
+            if (!File.Exists(storagePathInfoFilePath))
+                return string.Empty;
+
+            // The _StoragePathInfo.txt file is present
+            // Open that file to read the file path on the first line of the file
+
+            using var reader = new StreamReader(new FileStream(storagePathInfoFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+            if (reader.EndOfStream)
+                return string.Empty;
+
+            var physicalFilePath = reader.ReadLine();
 
             return physicalFilePath;
         }
@@ -3901,8 +3895,6 @@ namespace AnalysisManagerBase
         /// <param name="folderPath">the directory to look in</param>
         public static string ResolveSerStoragePath(string folderPath)
         {
-            string physicalFilePath;
-
             var filePath = Path.Combine(folderPath, STORAGE_PATH_INFO_FILE_SUFFIX);
 
             if (File.Exists(filePath))
@@ -3911,33 +3903,29 @@ namespace AnalysisManagerBase
                 // The _StoragePathInfo.txt file is present
                 // Open that file to read the file path on the first line of the file
 
-                using (var reader = new StreamReader(new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
-                {
-                    var dataLine = reader.ReadLine();
-                    physicalFilePath = dataLine;
-                }
-            }
-            else
-            {
-                // The desired file was not found
+                using var reader = new StreamReader(new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
 
-                // Look for a ser file in the dataset directory
-                physicalFilePath = Path.Combine(folderPath, BRUKER_SER_FILE);
-                var serFile = new FileInfo(physicalFilePath);
-
-                if (!serFile.Exists)
-                {
-                    // See if a folder named 0.ser exists in FolderPath
-                    physicalFilePath = Path.Combine(folderPath, BRUKER_ZERO_SER_FOLDER);
-                    var zeroSerDirectory = new DirectoryInfo(physicalFilePath);
-                    if (!zeroSerDirectory.Exists)
-                    {
-                        physicalFilePath = string.Empty;
-                    }
-                }
+                var physicalFilePath = reader.ReadLine();
+                return physicalFilePath;
             }
 
-            return physicalFilePath;
+            // The desired file was not found
+
+            // Look for a ser file in the dataset directory
+            var serFilePath = Path.Combine(folderPath, BRUKER_SER_FILE);
+            var serFile = new FileInfo(serFilePath);
+
+            if (serFile.Exists)
+                return serFilePath;
+
+            // See if a folder named 0.ser exists in FolderPath
+            var zeroSerDirectoryPath = Path.Combine(folderPath, BRUKER_ZERO_SER_FOLDER);
+            var zeroSerDirectory = new DirectoryInfo(zeroSerDirectoryPath);
+
+            if (zeroSerDirectory.Exists)
+                return zeroSerDirectoryPath;
+
+            return string.Empty;
         }
 
         // Ignore Spelling: nocopy

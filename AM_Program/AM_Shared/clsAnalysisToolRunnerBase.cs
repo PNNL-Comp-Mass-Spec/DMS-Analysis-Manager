@@ -3968,14 +3968,14 @@ namespace AnalysisManagerBase
                 {
                     LogError("The _DTA.txt file is empty");
                 }
+
+                return dataFound;
             }
             catch (Exception ex)
             {
                 LogError("Exception in ValidateCDTAFile", ex);
                 return false;
             }
-
-            return dataFound;
         }
 
         /// <summary>
