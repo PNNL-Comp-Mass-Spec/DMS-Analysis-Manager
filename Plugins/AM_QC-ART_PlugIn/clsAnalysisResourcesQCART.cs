@@ -137,7 +137,6 @@ namespace AnalysisManagerQCARTPlugin
                 // Parse the parameter file to discover the baseline datasets
                 currentTask = "Read the parameter file";
 
-
                 var paramFilePathRemote = Path.Combine(paramFileStoragePath, paramFileName);
                 var paramFilePathLocal = Path.Combine(mWorkDir, paramFileName);
 

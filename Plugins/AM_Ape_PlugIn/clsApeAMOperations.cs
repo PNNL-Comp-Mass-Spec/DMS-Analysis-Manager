@@ -157,6 +157,5 @@ namespace AnalysisManager_Ape_PlugIn
 
         #endregion
 
-
     }
 }

@@ -101,7 +101,6 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                     var paramName = parameter.Name.LocalName;
                     var paramValue = parameter.Value;
 
-
                     if (!dctParameters.TryGetValue(section, out var dctSectionSettings))
                     {
                         dctSectionSettings = new Dictionary<string, string>();

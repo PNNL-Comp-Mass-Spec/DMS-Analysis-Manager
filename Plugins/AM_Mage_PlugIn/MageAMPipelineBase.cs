@@ -232,7 +232,6 @@ namespace AnalysisManager_Mage_PlugIn
             OnDebugEvent(args.Message);
         }
 
-
         #endregion
 
     }

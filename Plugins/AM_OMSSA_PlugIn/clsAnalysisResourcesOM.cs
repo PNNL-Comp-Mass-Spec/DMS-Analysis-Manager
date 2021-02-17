@@ -171,8 +171,6 @@ namespace AnalysisManagerOMSSAPlugIn
                     LogMessagesToFile = false
                 };
 
-
-
                 if (mDebugLevel >= 2)
                 {
                     LogDebug("Converting _DTA.txt file to DTA XML file using the DtaTextConverter");

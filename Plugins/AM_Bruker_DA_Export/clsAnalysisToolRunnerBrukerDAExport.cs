@@ -578,7 +578,6 @@ namespace AnalysisManagerBrukerDAExportPlugin
             }
         }
 
-
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>

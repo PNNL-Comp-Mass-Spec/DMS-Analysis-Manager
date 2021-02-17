@@ -217,7 +217,6 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                 return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
             }
 
-
             if (FileSearch.RetrieveFile(paramFileName, paramFileStoragePath))
                 return CloseOutType.CLOSEOUT_SUCCESS;
 

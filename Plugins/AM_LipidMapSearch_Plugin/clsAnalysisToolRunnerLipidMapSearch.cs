@@ -570,7 +570,6 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                 {"DBMatchToleranceMzPpmHCD", "ht"}
             };
 
-
             return dctParamNames;
         }
 

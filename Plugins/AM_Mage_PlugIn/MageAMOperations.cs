@@ -121,7 +121,6 @@ namespace AnalysisManager_Mage_PlugIn
             return success;
         }
 
-
         #region Mage Operations Functions
 
         private void AppendToWarningMessage(string message, string verboseMessage)

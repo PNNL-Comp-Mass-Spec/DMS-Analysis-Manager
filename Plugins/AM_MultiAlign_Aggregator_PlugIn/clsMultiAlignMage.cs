@@ -202,7 +202,6 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 
         #endregion
 
-
         #region Mage Pipelines and Utilities
 
         private bool GetMultiAlignParameterFile()
@@ -242,7 +241,6 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                 OnErrorEvent(mMessage + ": " + ex.Message);
                 return false;
             }
-
 
             return true;
         }
@@ -439,7 +437,6 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 
         #region Command Runner Code
 
-
         private void CmdRunnerOnErrorEvent(string strMessage, Exception ex)
         {
             OnErrorEvent(strMessage, ex);
@@ -482,7 +479,6 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                 {eProgressSteps.CreatingReport, 95},
                 {eProgressSteps.Complete, 97}
             };
-
 
             mProgressStepLogText = new SortedDictionary<string, eProgressSteps>
             {
@@ -578,7 +574,6 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                     LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, "Parsing file " + logFilePath);
                 }
 
-
                 var eProgress = eProgressSteps.Starting;
 
                 var totalDatasets = 0;
@@ -645,7 +640,6 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                     float progressOverall = actualProgress;
 
                     // Possibly bump up dblActualProgress incrementally
-
 
                     if (totalDatasets > 0)
                     {
@@ -802,7 +796,6 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                 return obj.ToArray();
             }
 
-
             #endregion
         }
 
@@ -846,7 +839,6 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                 base.OutputDirectoryPath = "ignore";
                 base.OutputFileName = "ignore";
             }
-
 
             #endregion
 
@@ -956,7 +948,6 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                 return val;
             }
         }
-
 
         #endregion
     }

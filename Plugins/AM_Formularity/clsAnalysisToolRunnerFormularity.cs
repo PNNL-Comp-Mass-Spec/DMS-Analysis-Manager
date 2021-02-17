@@ -197,7 +197,6 @@ namespace AnalysisManagerFormularityPlugin
             base.CopyFailedResultsToArchiveDirectory();
         }
 
-
         private CloseOutType CreatePlotViewHTML(FileSystemInfo workDir, List<FileInfo> pngFiles)
         {
             const string LITERAL_TEXT_FLAG = "text: ";
@@ -205,7 +204,6 @@ namespace AnalysisManagerFormularityPlugin
             try
             {
                 var htmlFilePath = Path.Combine(workDir.FullName, INDEX_HTML);
-
 
                 var datasetDetailReportText =
                     string.Format("DMS <a href='http://dms2.pnl.gov/dataset/show/{0}'> Dataset Detail Report </a>", mDatasetName);
@@ -639,7 +637,6 @@ namespace AnalysisManagerFormularityPlugin
                     return renameResultCode;
                 }
 
-
                 // Uncomment the following to create an index.html file for viewing the PNG files on a web page
                 // Will also create a .zip file with the index.html file and the PNG files
                 //
@@ -649,7 +646,6 @@ namespace AnalysisManagerFormularityPlugin
                 // {
                 //     return zipResultCode;
                 // }
-
 
                 // Create a PDF using the PNG plots
                 // Note that the PNG files will now be in the plots subdirectory, but pngFiles should be up-to-date

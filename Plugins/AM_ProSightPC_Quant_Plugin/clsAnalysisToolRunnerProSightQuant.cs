@@ -58,7 +58,6 @@ namespace AnalysisManagerProSightQuantPlugIn
                     LogDebug("clsAnalysisToolRunnerProSightQuant.RunTool(): Enter");
                 }
 
-
                 // ReSharper disable once ConditionIsAlwaysTrueOrFalse
                 if (clsAnalysisResourcesProSightQuant.TOOL_DISABLED)
                 {

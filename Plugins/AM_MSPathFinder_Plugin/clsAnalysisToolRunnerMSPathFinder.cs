@@ -326,7 +326,6 @@ namespace AnalysisManagerMSPathFinderPlugin
             // Done.
             // Total elapsed time for search: 37962.4 sec (632.71 min)
 
-
             const string EXCEPTION_FLAG = "Exception while processing:";
             const string ERROR_PROCESSING_FLAG = "Error processing";
 

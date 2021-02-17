@@ -157,7 +157,6 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
                 return false;
             }
 
-
             // Store paths to key DLLs in toolFiles
             var toolFiles = new List<FileInfo>
             {

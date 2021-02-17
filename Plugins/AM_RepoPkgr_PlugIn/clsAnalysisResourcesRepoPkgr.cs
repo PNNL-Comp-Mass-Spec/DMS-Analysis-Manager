@@ -83,7 +83,6 @@ namespace AnalysisManager_RepoPkgr_Plugin
                 FindMissingMzXmlFiles(allJobs);
             }
 
-
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
@@ -408,7 +407,6 @@ namespace AnalysisManager_RepoPkgr_Plugin
             }
             return true;
         }
-
 
         private static string GetGeneratedFastaParamNameForJob(int job)
         {

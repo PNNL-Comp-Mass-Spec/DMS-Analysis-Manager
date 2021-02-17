@@ -28,7 +28,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
                 collapsedLine.Append(dataColumns[0]);
                 for (var index = 1; index <= dataColumns.Count - 1; index++)
                 {
-                    collapsedLine.Append("\t" + dataColumns[index]);
+                    collapsedLine.AppendFormat("\t{0}", dataColumns[index]);
                 }
             }
 

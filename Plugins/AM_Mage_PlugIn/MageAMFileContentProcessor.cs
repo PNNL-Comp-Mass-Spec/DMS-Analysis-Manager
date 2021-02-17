@@ -57,7 +57,6 @@ namespace AnalysisManager_Mage_PlugIn
             Operation = "SimpleImport";
         }
 
-
         #endregion
 
         #region Overrides of base class

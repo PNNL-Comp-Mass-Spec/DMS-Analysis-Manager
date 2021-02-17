@@ -178,7 +178,6 @@ namespace AnalysisManagerTopFDPlugIn
                                     "      State = 5 " +
                                     "ORDER BY Job Desc";
 
-
                 var dbToolsDMSPipeline = DbToolsFactory.GetDBTools(brokerDbConnectionString, debugMode: mMgrParams.TraceMode);
                 RegisterEvents(dbToolsDMSPipeline);
 

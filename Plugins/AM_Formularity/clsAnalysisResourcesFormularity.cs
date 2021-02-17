@@ -251,7 +251,6 @@ namespace AnalysisManagerFormularityPlugin
                         return false;
                     }
 
-
                     // Validate that regressionSetting is a known value
                     var allowedValues = new SortedSet<string>(StringComparer.Ordinal) {
                         "none",

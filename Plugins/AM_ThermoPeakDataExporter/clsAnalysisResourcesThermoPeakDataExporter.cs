@@ -8,7 +8,6 @@
 using AnalysisManagerBase;
 using System;
 
-
 namespace AnalysisManagerThermoPeakDataExporterPlugIn
 {
     /// <summary>

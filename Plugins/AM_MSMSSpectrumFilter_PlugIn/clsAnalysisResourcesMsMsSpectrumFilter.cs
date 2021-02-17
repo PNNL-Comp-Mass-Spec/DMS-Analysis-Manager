@@ -50,7 +50,6 @@ namespace MSMSSpectrumFilterAM
             // This is the unzipped, concatenated DTA
             mJobParams.AddResultFileExtensionToSkip(DatasetName + "_dta.txt");
 
-
             // Add the _Dta.zip file to the list of files to move to the results folder
             // Note that this .Zip file will contain the filtered _Dta.txt file (not the original _Dta.txt file)
             // Zipped _dta.txt file

@@ -75,7 +75,6 @@ namespace AnalysisManagerSMAQCPlugIn
                 LLRC.LLRCWrapper.RDATA_FILE_ALLDATA,
                 LLRC.LLRCWrapper.RDATA_FILE_MODELS};
 
-
             foreach (var strFileName in lstFilesToCopy)
             {
                 var fiSourceFile = new FileInfo(Path.Combine(strLLRCRunnerProgLoc, strFileName));

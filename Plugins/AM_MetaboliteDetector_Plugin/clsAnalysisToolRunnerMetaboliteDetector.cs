@@ -66,7 +66,6 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
                 if (string.IsNullOrWhiteSpace(mMetaboliteDetectorProgLoc))
                     return CloseOutType.CLOSEOUT_FAILED;
 
-
                 // Store the MetaboliteDetector version info in the database
                 if (!StoreToolVersionInfo(mMetaboliteDetectorProgLoc))
                 {
@@ -74,7 +73,6 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
                     mMessage = "Error determining MetaboliteDetector version";
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
-
 
                 // Initialize classwide variables
                 mLastConsoleOutputParse = DateTime.UtcNow;

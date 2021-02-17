@@ -56,7 +56,6 @@ namespace AnalysisManager_Mage_PlugIn
             return success;
         }
 
-
         /// <summary>
         /// Get name and version info for primary Mage MAC tool assembly
         /// </summary>
@@ -83,7 +82,6 @@ namespace AnalysisManager_Mage_PlugIn
                                   };
             return toolFiles;
         }
-
 
         protected bool ValidateFactors(FileInfo resultsDB, out string errorMessage, out string exceptionDetail)
         {
@@ -298,7 +296,6 @@ namespace AnalysisManager_Mage_PlugIn
 
             return true;
         }
-
 
         protected bool ValidateSqliteDB(string mageOperations, FileInfo resultsDB)
         {

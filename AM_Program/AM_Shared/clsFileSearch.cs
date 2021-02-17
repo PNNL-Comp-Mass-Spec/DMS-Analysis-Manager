@@ -2240,7 +2240,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Retrieves the spectra file(s) based on raw data type and puts them in the working directory
         /// </summary>
-        /// <param name="rawDataType">Type of data to copy</param>
+        /// <param name="rawDataTypeName">Type of data to copy</param>
         /// <param name="createStoragePathInfoOnly">
         /// When true, then does not actually copy the dataset file (or directory), and instead creates a file named Dataset.raw_StoragePathInfo.txt,
         /// and this file's first line will be the full path to the spectrum file (or spectrum directory)

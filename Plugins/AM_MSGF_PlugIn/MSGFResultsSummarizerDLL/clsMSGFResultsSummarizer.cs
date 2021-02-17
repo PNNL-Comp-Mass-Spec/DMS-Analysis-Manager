@@ -1505,7 +1505,6 @@ namespace MSGFResultsSummarizer
                             EValue = psmEValue
                         };
 
-
                         if (mDynamicReporterIonPTM)
                         {
                             ValidateReporterIonPTMs(normalizedPeptide, observation);

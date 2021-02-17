@@ -166,7 +166,6 @@ namespace AnalysisManager_AScore_PlugIn
                     }
                 }
 
-
                 // process extracted results file and DTA file with AScore
                 const string ascoreOutputFile = ASCORE_OUTPUT_FILE_NAME_BASE + ".txt";
                 var ascoreOutputFilePath = Path.Combine(WorkingDir, ascoreOutputFile);
@@ -522,7 +521,6 @@ namespace AnalysisManager_AScore_PlugIn
             currentJob.AddAdHocRow = jobFields;
             return currentJob;
         }
-
 
         #endregion
 

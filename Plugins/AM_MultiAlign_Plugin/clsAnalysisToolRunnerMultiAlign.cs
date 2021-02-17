@@ -238,7 +238,6 @@ namespace AnalysisManagerMultiAlignPlugIn
                 if (!blnSuccess)
                     return false;
 
-
                 // Store paths to key DLLs in toolFiles
                 toolFiles.Add(new FileInfo(Path.Combine(ioMultiAlignProg.DirectoryName, "MultiAlignEngine.dll")));
                 toolFiles.Add(new FileInfo(Path.Combine(ioMultiAlignProg.DirectoryName, "PNNLOmics.dll")));

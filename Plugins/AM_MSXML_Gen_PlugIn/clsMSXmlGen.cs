@@ -290,7 +290,6 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 return false;
             }
 
-
             if (mOutputType == clsAnalysisResources.MSXMLOutputTypeConstants.mgf)
             {
                 // Do not try to validate it

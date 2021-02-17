@@ -358,7 +358,6 @@ namespace AnalysisManagerMODPlusPlugin
                 { "format", "mgf"}
             };
 
-
             // Define the path to the dataset file
             var datasetNodes = doc.SelectNodes("/search/dataset");
             if (datasetNodes != null && datasetNodes.Count > 0)

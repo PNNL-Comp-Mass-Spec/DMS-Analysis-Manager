@@ -215,7 +215,6 @@ namespace AnalysisManager_RepoPkgr_Plugin
                     return false;
                 }
 
-
                 var msg = "Data package " + mRepoPackager.DataPkgId + " has " + dataPkgJobCountMatch + " associated jobs, but no instrument data files were retrieved";
                 LogWarning(msg);
             }

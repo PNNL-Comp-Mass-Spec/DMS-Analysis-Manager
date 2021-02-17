@@ -1466,7 +1466,6 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 mMSFileInfoScannerReportsEmptyIsosFile = true;
         }
 
-
         #endregion
     }
 }

@@ -681,7 +681,6 @@ namespace AnalysisManagerSequestPlugin
                 return false;
             }
 
-
             var destFilePath = Path.Combine(destPath, Path.GetFileName(sourceFastaPath));
             try
             {
