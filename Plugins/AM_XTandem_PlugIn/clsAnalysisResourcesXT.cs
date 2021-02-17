@@ -328,15 +328,17 @@ namespace AnalysisManagerXTandemPlugIn
 
         private void CDTACondenser_ProgressChanged(string taskDescription, float percentComplete)
         {
-            if (mDebugLevel >= 1)
-            {
-                if (mDebugLevel == 1 && DateTime.UtcNow.Subtract(mLastUpdateTime).TotalSeconds >= 60 ||
-                    mDebugLevel > 1 && DateTime.UtcNow.Subtract(mLastUpdateTime).TotalSeconds >= 20)
-                {
-                    mLastUpdateTime = DateTime.UtcNow;
+            // ReSharper disable once ConvertIfStatementToSwitchStatement
+            if (mDebugLevel < 1)
+                return;
 
-                    LogDebug(" ... " + percentComplete.ToString("0.00") + "% complete");
-                }
+            // ReSharper disable once InvertIf
+            if (mDebugLevel == 1 && DateTime.UtcNow.Subtract(mLastUpdateTime).TotalSeconds >= 60 ||
+                mDebugLevel > 1 && DateTime.UtcNow.Subtract(mLastUpdateTime).TotalSeconds >= 20)
+            {
+                mLastUpdateTime = DateTime.UtcNow;
+
+                LogDebug(" ... " + percentComplete.ToString("0.00") + "% complete");
             }
         }
     }
