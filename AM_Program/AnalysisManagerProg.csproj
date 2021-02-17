@@ -13,6 +13,7 @@
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <TargetFrameworkProfile />
+    <LangVersion>latest</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -45,6 +46,9 @@
   </PropertyGroup>
   <PropertyGroup>
     <StartupObject>AnalysisManagerProg.Program</StartupObject>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Cyclops, Version=1.1.7107.29277, Culture=neutral, processorArchitecture=MSIL">
@@ -104,9 +108,8 @@
     <Reference Include="ThermoFisher.CommonCore.RawFileReader">
       <HintPath>..\..\AM_Common\ThermoFisher.CommonCore.RawFileReader.dll</HintPath>
     </Reference>
-    <Reference Include="ThermoRawFileReader, Version=3.0.6943.24169, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\AM_Common\ThermoRawFileReader.dll</HintPath>
+    <Reference Include="ThermoRawFileReader">
+      <HintPath>..\..\AM_Common\ThermoRawFileReader.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -128,6 +131,10 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+    <None Include="app.manifest">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <SubType>Designer</SubType>
+    </None>
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
@@ -149,7 +156,7 @@
       <Version>1.7.2</Version>
     </PackageReference>
     <PackageReference Include="DotNetZip">
-      <Version>1.13.5</Version>
+      <Version>1.15.0</Version>
     </PackageReference>
     <PackageReference Include="jayrock-json">
       <Version>0.9.16530.1</Version>
@@ -173,7 +180,7 @@
       <Version>1.8.2</Version>
     </PackageReference>
     <PackageReference Include="SharpZipLib">
-      <Version>1.2.0</Version>
+      <Version>1.3.1</Version>
     </PackageReference>
     <PackageReference Include="SSH.NET">
       <Version>2016.1.0</Version>
@@ -182,7 +189,7 @@
       <Version>1.0.111</Version>
     </PackageReference>
     <PackageReference Include="UIMFLibrary">
-      <Version>3.7.3</Version>
+      <Version>3.7.4</Version>
     </PackageReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
