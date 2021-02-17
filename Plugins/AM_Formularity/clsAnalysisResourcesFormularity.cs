@@ -130,7 +130,7 @@ namespace AnalysisManagerFormularityPlugin
                 // The ToolName job parameter holds the name of the job script we are executing
                 var scriptName = mJobParams.GetParam("ToolName");
 
-                switch (rawDataType.ToLower())
+                switch (rawDataTypeName.ToLower())
                 {
                     case RAW_DATA_TYPE_DOT_RAW_FILES:
                         // Processing a Thermo .raw file
@@ -202,7 +202,7 @@ namespace AnalysisManagerFormularityPlugin
                         }
 
                     default:
-                        LogError("This tool is not compatible with datasets of type " + rawDataType);
+                        LogError("This tool is not compatible with datasets of type " + rawDataTypeName);
                         return CloseOutType.CLOSEOUT_FAILED;
                 }
 

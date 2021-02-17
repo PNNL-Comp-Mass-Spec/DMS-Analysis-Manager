@@ -79,11 +79,11 @@ namespace AnalysisManagerDtaRefineryPlugIn
         /// </summary>
         /// <param name="datasetName"></param>
         /// <param name="datasetID"></param>
-        /// <param name="pSMJob"></param>
+        /// <param name="psmJob"></param>
         /// <returns></returns>
-        public bool ParseDTARefineryLogFile(string datasetName, int datasetID, int pSMJob)
+        public bool ParseDTARefineryLogFile(string datasetName, int datasetID, int psmJob)
         {
-            return ParseDTARefineryLogFile(datasetName, datasetID, pSMJob, mWorkDir);
+            return ParseDTARefineryLogFile(datasetName, datasetID, psmJob, mWorkDir);
         }
 
         /// <summary>
@@ -91,10 +91,10 @@ namespace AnalysisManagerDtaRefineryPlugIn
         /// </summary>
         /// <param name="datasetName"></param>
         /// <param name="datasetID"></param>
-        /// <param name="pSMJob"></param>
+        /// <param name="psmJob"></param>
         /// <param name="workDirPath"></param>
         /// <returns></returns>
-        public bool ParseDTARefineryLogFile(string datasetName, int datasetID, int pSMJob, string workDirPath)
+        public bool ParseDTARefineryLogFile(string datasetName, int datasetID, int psmJob, string workDirPath)
         {
             var originalDistributionSection = false;
             var refinedDistributionSection = false;
@@ -106,7 +106,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
                 var massErrorInfo = new udtMassErrorInfoType
                 {
                     DatasetName = datasetName,
-                    PSMJob = pSMJob,
+                    PSMJob = psmJob,
                     MassErrorPPM = double.MinValue,
                     MassErrorPPMRefined = double.MinValue
                 };
