@@ -564,14 +564,14 @@ namespace AnalysisManagerBase
 
             var settings = new List<KeyValuePair<string, string>>
             {
-                new KeyValuePair<string, string>("host", RemoteHostInfo.HostName),
-                new KeyValuePair<string, string>("user", RemoteHostInfo.Username),
-                new KeyValuePair<string, string>("dmsPrograms", RemoteHostInfo.BaseDirectoryPath),
-                new KeyValuePair<string, string>("taskQueue", RemoteTaskQueuePath),
-                new KeyValuePair<string, string>("workDir", RemoteWorkDirPath),
-                new KeyValuePair<string, string>("orgDB", RemoteOrgDBPath),
-                new KeyValuePair<string, string>("privateKey", Path.GetFileName(RemoteHostInfo.PrivateKeyFile)),
-                new KeyValuePair<string, string>("passphrase", Path.GetFileName(RemoteHostInfo.PassphraseFile))
+                new("host", RemoteHostInfo.HostName),
+                new("user", RemoteHostInfo.Username),
+                new("dmsPrograms", RemoteHostInfo.BaseDirectoryPath),
+                new("taskQueue", RemoteTaskQueuePath),
+                new("workDir", RemoteWorkDirPath),
+                new("orgDB", RemoteOrgDBPath),
+                new("privateKey", Path.GetFileName(RemoteHostInfo.PrivateKeyFile)),
+                new("passphrase", Path.GetFileName(RemoteHostInfo.PassphraseFile))
             };
 
             return ConstructRemoteInfoXml(settings);
@@ -587,14 +587,14 @@ namespace AnalysisManagerBase
         {
             var settings = new List<KeyValuePair<string, string>>
             {
-                new KeyValuePair<string, string>("host", mgrParams.GetParam("RemoteHostName")),
-                new KeyValuePair<string, string>("user", mgrParams.GetParam("RemoteHostUser")),
-                new KeyValuePair<string, string>("dmsPrograms", mgrParams.GetParam("RemoteHostDMSProgramsPath")),
-                new KeyValuePair<string, string>("taskQueue", mgrParams.GetParam("RemoteTaskQueuePath")),
-                new KeyValuePair<string, string>("workDir", mgrParams.GetParam("RemoteWorkDirPath")),
-                new KeyValuePair<string, string>("orgDB", mgrParams.GetParam("RemoteOrgDBPath")),
-                new KeyValuePair<string, string>("privateKey",  Path.GetFileName(mgrParams.GetParam("RemoteHostPrivateKeyFile"))),
-                new KeyValuePair<string, string>("passphrase", Path.GetFileName(mgrParams.GetParam("RemoteHostPassphraseFile")))
+                new("host", mgrParams.GetParam("RemoteHostName")),
+                new("user", mgrParams.GetParam("RemoteHostUser")),
+                new("dmsPrograms", mgrParams.GetParam("RemoteHostDMSProgramsPath")),
+                new("taskQueue", mgrParams.GetParam("RemoteTaskQueuePath")),
+                new("workDir", mgrParams.GetParam("RemoteWorkDirPath")),
+                new("orgDB", mgrParams.GetParam("RemoteOrgDBPath")),
+                new("privateKey",  Path.GetFileName(mgrParams.GetParam("RemoteHostPrivateKeyFile"))),
+                new("passphrase", Path.GetFileName(mgrParams.GetParam("RemoteHostPassphraseFile")))
             };
 
             return ConstructRemoteInfoXml(settings);

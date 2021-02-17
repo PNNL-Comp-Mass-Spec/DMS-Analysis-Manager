@@ -146,7 +146,7 @@ namespace AnalysisManager_Ape_PlugIn
 
             // Store paths to key DLLs
             var toolFiles = new System.Collections.Generic.List<FileInfo> {
-                new FileInfo("Ape.dll")
+                new("Ape.dll")
             };
 
             try

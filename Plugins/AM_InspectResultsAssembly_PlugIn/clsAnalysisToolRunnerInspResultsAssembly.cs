@@ -1000,10 +1000,10 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             // Skip System.Data.SQLite.dll; we don't need to track the file date
             var toolFiles = new List<FileInfo>
             {
-                new FileInfo(Path.Combine(appFolderPath, "AnalysisManagerInspResultsAssemblyPlugIn.dll")),
-                new FileInfo(Path.Combine(appFolderPath, "PeptideToProteinMapEngine.dll")),
-                new FileInfo(Path.Combine(appFolderPath, "ProteinFileReader.dll")),
-                new FileInfo(Path.Combine(appFolderPath, "ProteinCoverageSummarizer.dll"))
+                new(Path.Combine(appFolderPath, "AnalysisManagerInspResultsAssemblyPlugIn.dll")),
+                new(Path.Combine(appFolderPath, "PeptideToProteinMapEngine.dll")),
+                new(Path.Combine(appFolderPath, "ProteinFileReader.dll")),
+                new(Path.Combine(appFolderPath, "ProteinCoverageSummarizer.dll"))
             };
 
             try

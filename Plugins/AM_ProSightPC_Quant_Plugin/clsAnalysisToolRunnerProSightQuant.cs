@@ -323,7 +323,7 @@ namespace AnalysisManagerProSightQuantPlugIn
         //   8/13/2012 2:33:20 PM    Percent complete = 8%   Target 300 of 3917
         //   ...
         //   8/13/2012 1:56:55 PM    ---- PROCESSING COMPLETE ---------------
-        private readonly Regex reSubProgress = new Regex("Percent complete = ([0-9.]+)", RegexOptions.Compiled);
+        private readonly Regex reSubProgress = new("Percent complete = ([0-9.]+)", RegexOptions.Compiled);
 
         /// <summary>
         /// Parse the TargetedWorkflowsConsole console output file to track progress

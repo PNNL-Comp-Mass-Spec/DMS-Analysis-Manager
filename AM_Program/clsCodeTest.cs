@@ -607,7 +607,7 @@ namespace AnalysisManagerProg
             try
             {
                 var lineIgnoreRegExSpecs = new List<Regex> {
-                    new Regex("mass_type_parent *=.*", RegexOptions.Compiled | RegexOptions.IgnoreCase)
+                    new("mass_type_parent *=.*", RegexOptions.Compiled | RegexOptions.IgnoreCase)
                 };
 
                 var needToArchiveFile = false;

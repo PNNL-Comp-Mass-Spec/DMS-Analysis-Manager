@@ -20,7 +20,7 @@ namespace AnalysisManagerBase
     {
         #region "Module Variables"
 
-        private readonly List<string> mLines = new List<string>();
+        private readonly List<string> mLines = new();
 
         #endregion
 

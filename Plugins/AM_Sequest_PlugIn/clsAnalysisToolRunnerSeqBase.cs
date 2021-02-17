@@ -39,15 +39,15 @@ namespace AnalysisManagerSequestPlugin
 
         protected int mTotalOutFileCount;
         protected string mTempConcatenatedOutFilePath = string.Empty;
-        protected SortedSet<string> mOutFileNamesAppended = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
+        protected SortedSet<string> mOutFileNamesAppended = new(StringComparer.OrdinalIgnoreCase);
 
         // Out file search times (in seconds) for recently created .out files
-        protected Queue<float> mRecentOutFileSearchTimes = new Queue<float>(MAX_OUT_FILE_SEARCH_TIMES_TO_TRACK);
+        protected Queue<float> mRecentOutFileSearchTimes = new(MAX_OUT_FILE_SEARCH_TIMES_TO_TRACK);
 
-        protected Regex mOutFileNameRegEx = new Regex(@"^(?<rootname>.+)\.(?<startscan>\d+)\.(?<endscan>\d+)\.(?<cs>\d+)\.(?<extension>\S{3})",
+        protected Regex mOutFileNameRegEx = new(@"^(?<rootname>.+)\.(?<startscan>\d+)\.(?<endscan>\d+)\.(?<cs>\d+)\.(?<extension>\S{3})",
             RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
-        protected Regex mOutFileSearchTimeRegEx = new Regex(@"\d+/\d+/\d+, \d+\:\d+ [A-Z]+, (?<time>[0-9.]+) sec",
+        protected Regex mOutFileSearchTimeRegEx = new(@"\d+/\d+/\d+, \d+\:\d+ [A-Z]+, (?<time>[0-9.]+) sec",
             RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
         protected long mOutFileHandlerInUse;

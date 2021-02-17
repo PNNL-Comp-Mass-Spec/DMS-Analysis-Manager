@@ -160,7 +160,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
             // Store paths to key DLLs in toolFiles
             var toolFiles = new List<FileInfo>
             {
-                new FileInfo(featureFinderProgLoc)
+                new(featureFinderProgLoc)
             };
 
             // Lookup the version of the Feature Finder

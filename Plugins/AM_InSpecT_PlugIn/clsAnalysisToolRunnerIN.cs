@@ -614,7 +614,7 @@ namespace AnalysisManagerInSpecTPlugIn
 
             // Store paths to key files in toolFiles
             var toolFiles = new List<FileInfo> {
-                new FileInfo(Path.Combine(strInspectFolder, INSPECT_EXE_NAME))
+                new(Path.Combine(strInspectFolder, INSPECT_EXE_NAME))
             };
 
             try

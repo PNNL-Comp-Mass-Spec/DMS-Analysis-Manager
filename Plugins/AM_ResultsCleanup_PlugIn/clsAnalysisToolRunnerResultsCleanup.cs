@@ -232,8 +232,8 @@ namespace AnalysisManagerResultsCleanupPlugin
             // Store the path to AnalysisManagerProg.exe and AnalysisManagerResultsCleanupPlugin.dll in toolFiles
             var toolFiles = new List<FileInfo>
             {
-                new FileInfo(Path.Combine(appDirectoryPath, "AnalysisManagerProg.exe")),
-                new FileInfo(Path.Combine(appDirectoryPath, "AnalysisManagerResultsCleanupPlugin.dll"))
+                new(Path.Combine(appDirectoryPath, "AnalysisManagerProg.exe")),
+                new(Path.Combine(appDirectoryPath, "AnalysisManagerResultsCleanupPlugin.dll"))
             };
 
             try

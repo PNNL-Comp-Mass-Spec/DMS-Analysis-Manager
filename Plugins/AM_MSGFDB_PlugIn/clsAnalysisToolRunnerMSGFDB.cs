@@ -35,7 +35,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
         #region "Module Variables"
 
-        private readonly List<string> mResultFilesToSkipIfNoError = new List<string>();
+        private readonly List<string> mResultFilesToSkipIfNoError = new();
 
         private bool mToolVersionWritten;
 
@@ -1321,7 +1321,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             // Store paths to key files in toolFiles
             var toolFiles = new List<FileInfo> {
-                new FileInfo(mMSGFPlusProgLoc)
+                new(mMSGFPlusProgLoc)
             };
 
             try

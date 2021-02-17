@@ -78,7 +78,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// List of file names to NOT move to the results directory; this list is used by MoveResultFiles()
         /// </summary>
-        protected SortedSet<string> mResultFilesToSkip = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
+        protected SortedSet<string> mResultFilesToSkip = new(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
         /// List of file extensions (or even partial file names like _peaks.txt) to NOT move to the results directory
@@ -87,22 +87,22 @@ namespace AnalysisManagerBase
         /// Comparison checks if the end of the fileName matches any entry ResultFileExtensionsToSkip:
         /// if (tmpFileNameLCase.EndsWith(ext, StringComparison.OrdinalIgnoreCase)) { okToMove = false; }
         /// </remarks>
-        protected SortedSet<string> mResultFileExtensionsToSkip = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
+        protected SortedSet<string> mResultFileExtensionsToSkip = new(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
         /// List of file names that WILL be moved to the results directory, even if they are in ResultFilesToSkip or ResultFileExtensionsToSkip
         /// </summary>
-        protected SortedSet<string> mResultFilesToKeep = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
+        protected SortedSet<string> mResultFilesToKeep = new(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
         /// List of file path to delete from the storage server (must be full file paths)
         /// </summary>
-        protected SortedSet<string> mServerFilesToDelete = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
+        protected SortedSet<string> mServerFilesToDelete = new(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
         /// List of dataset names and dataset IDs
         /// </summary>
-        protected Dictionary<string, int> mDatasetInfoList = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        protected Dictionary<string, int> mDatasetInfoList = new(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
         /// Offline job info file

@@ -788,7 +788,7 @@ namespace AnalysisManagerICR2LSPlugIn
 
             // Store paths to key files in toolFiles
             var toolFiles = new List<FileInfo> {
-                new FileInfo(progLoc)
+                new(progLoc)
             };
 
             try

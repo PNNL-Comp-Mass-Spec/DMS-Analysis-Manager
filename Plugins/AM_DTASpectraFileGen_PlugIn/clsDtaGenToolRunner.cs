@@ -1117,7 +1117,7 @@ namespace DTASpectraFileGen
 
             // Store paths to key files in toolFiles
             var toolFiles = new List<FileInfo> {
-                new FileInfo(dtaGeneratorDLLPath)
+                new(dtaGeneratorDLLPath)
             };
 
             // Possibly also store the MSConvert version

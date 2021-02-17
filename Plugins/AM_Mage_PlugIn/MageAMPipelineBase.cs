@@ -13,7 +13,7 @@ namespace AnalysisManager_Mage_PlugIn
     {
         #region Member Variables
 
-        protected readonly Regex mProcessingResults = new Regex(@"Extracting results for job (\d+)", RegexOptions.Compiled);
+        protected readonly Regex mProcessingResults = new(@"Extracting results for job (\d+)", RegexOptions.Compiled);
 
         protected int mLastProgressJob;
 
@@ -34,7 +34,7 @@ namespace AnalysisManager_Mage_PlugIn
         /// <summary>
         /// Pipeline queue for running the multiple pipelines that make up the workflows for this module
         /// </summary>
-        protected PipelineQueue BasePipelineQueue { get; set; } = new PipelineQueue();
+        protected PipelineQueue BasePipelineQueue { get; set; } = new();
 
         /// <summary>
         /// Where extracted results will be delivered

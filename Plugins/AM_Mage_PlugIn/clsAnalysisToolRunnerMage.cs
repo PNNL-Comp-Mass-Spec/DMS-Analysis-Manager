@@ -76,9 +76,9 @@ namespace AnalysisManager_Mage_PlugIn
         {
             var toolFiles = new List<FileInfo>
                                   {
-                                      new FileInfo("Mage.dll"),
-                                      new FileInfo("MageExtContentFilters.dll"),
-                                      new FileInfo("MageExtExtractionFilters.dll")
+                                      new("Mage.dll"),
+                                      new("MageExtContentFilters.dll"),
+                                      new("MageExtExtractionFilters.dll")
                                   };
             return toolFiles;
         }

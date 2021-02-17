@@ -715,7 +715,7 @@ namespace MSMSSpectrumFilterAM
 
             // Store the path to MsMsDataFileReader.dll in toolFiles
             var toolFiles = new List<FileInfo> {
-                new FileInfo(Path.Combine(appFolderPath, "MsMsDataFileReader.dll"))
+                new(Path.Combine(appFolderPath, "MsMsDataFileReader.dll"))
             };
 
             try

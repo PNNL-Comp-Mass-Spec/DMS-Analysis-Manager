@@ -354,8 +354,8 @@ namespace AnalysisManagerExtractionPlugin
             }
         }
 
-        private readonly Regex reProcessing = new Regex(@"Processing: (\d+)");
-        private readonly Regex reProcessingPHRP = new Regex(@"^([0-9.]+)\% complete");
+        private readonly Regex reProcessing = new(@"Processing: (\d+)");
+        private readonly Regex reProcessingPHRP = new(@"^([0-9.]+)\% complete");
 
         private void ParsePHRPConsoleOutputFile()
         {

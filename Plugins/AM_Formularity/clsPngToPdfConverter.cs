@@ -271,14 +271,14 @@ namespace AnalysisManagerFormularityPlugin
             // Use "text: " to instead include literal text instead of a PNG file
             var tableLayoutByRow = new List<List<string>>
             {
-                new List<string> {"EC_count" + suffix, "KMD1_assigned" + suffix},
-                new List<string> {"vK" + suffix, "KMD1_unassigned" + suffix},
+                new() {"EC_count" + suffix, "KMD1_assigned" + suffix},
+                new() {"vK" + suffix, "KMD1_unassigned" + suffix},
 
-                new List<string> {"histA" + suffix, "mErr" + suffix},
-                new List<string> {"histM" + suffix, datasetDetailReportLink},
+                new() {"histA" + suffix, "mErr" + suffix},
+                new() {"histM" + suffix, datasetDetailReportLink},
 
-                new List<string> {"Ox" + suffix, "OxN" + suffix},
-                new List<string> {"OxS" + suffix, "OxP" + suffix}
+                new() {"Ox" + suffix, "OxN" + suffix},
+                new() {"OxS" + suffix, "OxP" + suffix}
             };
 
             return tableLayoutByRow;

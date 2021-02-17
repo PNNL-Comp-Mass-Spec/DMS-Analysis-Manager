@@ -21,7 +21,7 @@ namespace AnalysisManager_RepoPkgr_PlugIn
         /// <summary>
         /// Internal list of connection strings
         /// </summary>
-        private readonly Dictionary<TagName, string> mDbConnectionStrings = new Dictionary<TagName, string>();
+        private readonly Dictionary<TagName, string> mDbConnectionStrings = new();
 
         /// <summary>
         /// Set connection string for given database tag name
@@ -61,8 +61,8 @@ namespace AnalysisManager_RepoPkgr_PlugIn
         }
 
         // SQL templates
-        private readonly Dictionary<string, QueryDefinition> mQueryTemplates = new Dictionary<string, QueryDefinition>
-                                                                         {
+        private readonly Dictionary<string, QueryDefinition> mQueryTemplates = new()
+        {
                 {"DataPkgJobsQueryTemplate",  new QueryDefinition {
                   BaseSQL = "SELECT * FROM V_Mage_Data_Package_Analysis_Jobs WHERE {0} = {1}",
                   FilterSQL = "Tool LIKE '{0}%'"

@@ -693,7 +693,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
         // Percent Completion 2%
         // Percent Completion 2%
         private const string REGEX_AScore_PROGRESS = @"Percent Completion (\d+)\%";
-        private readonly Regex reCheckProgress = new Regex(REGEX_AScore_PROGRESS, RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private readonly Regex reCheckProgress = new(REGEX_AScore_PROGRESS, RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         /// <summary>
         /// Parse the ProMex console output file to track the search progress

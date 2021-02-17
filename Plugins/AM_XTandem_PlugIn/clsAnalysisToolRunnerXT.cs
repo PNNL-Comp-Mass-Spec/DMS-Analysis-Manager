@@ -217,7 +217,7 @@ namespace AnalysisManagerXTandemPlugIn
 
             // Store paths to key files in toolFiles
             var toolFiles = new List<FileInfo> {
-                new FileInfo(mMgrParams.GetParam("xtprogloc"))
+                new(mMgrParams.GetParam("xtprogloc"))
             };
 
             try

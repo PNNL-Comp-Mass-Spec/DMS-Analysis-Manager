@@ -875,7 +875,7 @@ namespace AnalysisManagerMSAlignPlugIn
         // Processing spectrum scan 660...         0% finished (0 minutes used).
         // Processing spectrum scan 1329...        1% finished (0 minutes used).
         // Processing spectrum scan 1649...        1% finished (0 minutes used).
-        private readonly Regex reExtractPercentFinished = new Regex(@"(\d+)% finished", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private readonly Regex reExtractPercentFinished = new(@"(\d+)% finished", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         /// <summary>
         /// Parse the MSAlign console output file to determine the MSAlign version and to track the search progress
@@ -993,7 +993,7 @@ namespace AnalysisManagerMSAlignPlugIn
 
             // Store paths to key files in toolFiles
             var toolFiles = new List<FileInfo> {
-                new FileInfo(mMSAlignProgLoc)
+                new(mMSAlignProgLoc)
             };
 
             try
@@ -1007,7 +1007,7 @@ namespace AnalysisManagerMSAlignPlugIn
             }
         }
 
-        private readonly Regex reExtractScan = new Regex(@"Processing spectrum scan (\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private readonly Regex reExtractScan = new(@"Processing spectrum scan (\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         /// <summary>
         /// Reads the console output file and removes the majority of the percent finished messages

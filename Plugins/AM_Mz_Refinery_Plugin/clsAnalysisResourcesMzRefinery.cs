@@ -227,9 +227,9 @@ namespace AnalysisManagerMzRefineryPlugIn
             // They will thus likely be in the MzRefinery parameter file in the working directory but not in the remote file
             // Ignore these lines when checking if two files match
             var lineIgnoreRegExSpecs = new List<Regex> {
-                new Regex("^MinNumPeaksPerSpectrum=5", RegexOptions.Compiled),
-                new Regex("^AddFeatures=1", RegexOptions.Compiled),
-                new Regex("^NumThreads=", RegexOptions.Compiled)
+                new("^MinNumPeaksPerSpectrum=5", RegexOptions.Compiled),
+                new("^AddFeatures=1", RegexOptions.Compiled),
+                new("^NumThreads=", RegexOptions.Compiled)
             };
 
             if (!clsGlobal.TextFilesMatch(

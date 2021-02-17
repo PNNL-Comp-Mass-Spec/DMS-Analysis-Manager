@@ -75,7 +75,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Access to settings file parameters
         /// </summary>
-        protected readonly XmlSettingsFileAccessor mSettingsFileParams = new XmlSettingsFileAccessor();
+        protected readonly XmlSettingsFileAccessor mSettingsFileParams = new();
 
         /// <summary>
         /// Progress of run (in percent)

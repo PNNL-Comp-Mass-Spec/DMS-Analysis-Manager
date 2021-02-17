@@ -594,7 +594,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
         //   Saving QC images...Done.
 
         // ReSharper disable once UseImplicitlyTypedVariableEvident
-        private readonly Regex reSubProgress = new Regex(@"^(\d+) / (\d+)", RegexOptions.Compiled);
+        private readonly Regex reSubProgress = new(@"^(\d+) / (\d+)", RegexOptions.Compiled);
 
         /// <summary>
         /// Parse the LipidTools console output file to track progress

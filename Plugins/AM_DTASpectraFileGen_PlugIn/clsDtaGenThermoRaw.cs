@@ -699,7 +699,7 @@ namespace DTASpectraFileGen
             }
         }
 
-        private readonly Regex reDTAFile = new Regex(@"(\d+)\.\d+\.\d+\.dta$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private readonly Regex reDTAFile = new(@"(\d+)\.\d+\.\d+\.dta$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         private void UpdateDTAProgress(string dtaFileName)
         {

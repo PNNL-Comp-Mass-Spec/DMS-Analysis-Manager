@@ -543,8 +543,8 @@ namespace AnalysisManagerResultsXferPlugin
             // Store the path to AnalysisManagerProg.exe and AnalysisManagerResultsXferPlugin.dll in toolFiles
             var toolFiles = new List<FileInfo>
             {
-                new FileInfo(Path.Combine(appFolderPath, "AnalysisManagerProg.exe")),
-                new FileInfo(Path.Combine(appFolderPath, "AnalysisManagerResultsXferPlugin.dll"))
+                new(Path.Combine(appFolderPath, "AnalysisManagerProg.exe")),
+                new(Path.Combine(appFolderPath, "AnalysisManagerResultsXferPlugin.dll"))
             };
 
             try

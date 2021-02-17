@@ -52,7 +52,7 @@ namespace AnalysisManagerTopFDPlugIn
         private string mTopFDProgLoc;
         private string mConsoleOutputErrorMsg;
 
-        private readonly Regex reExtractPercentFinished = new Regex("(?<PercentComplete>[0-9.]+)% finished", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private readonly Regex reExtractPercentFinished = new("(?<PercentComplete>[0-9.]+)% finished", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         private DateTime mLastConsoleOutputParse;
 
@@ -600,7 +600,7 @@ namespace AnalysisManagerTopFDPlugIn
 
             // Store paths to key files in toolFiles
             var toolFiles = new List<FileInfo> {
-                new FileInfo(mTopFDProgLoc)
+                new(mTopFDProgLoc)
             };
 
             try

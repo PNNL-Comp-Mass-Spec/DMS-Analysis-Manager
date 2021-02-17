@@ -510,7 +510,7 @@ namespace AnalysisManagerSMAQCPlugIn
 
         // This RegEx matches lines in the form:
         // 2/13/2012 07:15:42 PM - Searching for Text Files!...
-        private readonly Regex reMatchTimeStamp = new Regex(@"^\d+/\d+/\d+ \d+:\d+:\d+ [AP]M - ", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private readonly Regex reMatchTimeStamp = new(@"^\d+/\d+/\d+ \d+:\d+:\d+ [AP]M - ", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         /// <summary>
         /// Parse the SMAQC console output file to track progress

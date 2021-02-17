@@ -221,11 +221,11 @@ namespace AnalysisManagerMSPathFinderPlugin
             return dataLine.StartsWith(matchString, StringComparison.OrdinalIgnoreCase);
         }
 
-        private readonly Regex mPromexFeatureStats = new Regex(@"ProMex[^\d]+(\d+)/(\d+) features loaded", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private readonly Regex mPromexFeatureStats = new(@"ProMex[^\d]+(\d+)/(\d+) features loaded", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-        private readonly Regex mCheckProgress = new Regex("([0-9.]+)% complete", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private readonly Regex mCheckProgress = new("([0-9.]+)% complete", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-        private readonly Regex mProcessingProteins = new Regex(@"(\d+) proteins done", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private readonly Regex mProcessingProteins = new(@"(\d+) proteins done", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         /// <summary>
         /// Parse the MSPathFinder console output file to track the search progress

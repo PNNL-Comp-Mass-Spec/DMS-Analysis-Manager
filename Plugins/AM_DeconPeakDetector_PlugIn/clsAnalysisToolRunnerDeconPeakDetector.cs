@@ -144,7 +144,7 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
         // Peak creation progress: 2%
         // Peak creation progress: 3%
         // Peak creation progress: 4%
-        private readonly Regex reProgress = new Regex(@"Peak creation progress: (?<Progress>\d+)%", RegexOptions.Compiled);
+        private readonly Regex reProgress = new(@"Peak creation progress: (?<Progress>\d+)%", RegexOptions.Compiled);
 
         /// <summary>
         /// Parse the DeconPeakDetector console output file to track the search progress

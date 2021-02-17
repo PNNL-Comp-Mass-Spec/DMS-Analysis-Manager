@@ -54,7 +54,7 @@ namespace AnalysisManagerMzRefineryPlugIn
 
         #region "Module Variables"
 
-        private readonly List<string> mResultFilesToSkipIfNoError = new List<string>();
+        private readonly List<string> mResultFilesToSkipIfNoError = new();
 
         private bool mToolVersionWritten;
 
@@ -1519,8 +1519,8 @@ namespace AnalysisManagerMzRefineryPlugIn
             // Make sure the plots were created
             var plotFiles = new List<FileInfo>
             {
-                new FileInfo(Path.Combine(mWorkDir, mDatasetName + "_MZRefinery_MassErrors.png")),
-                new FileInfo(Path.Combine(mWorkDir, mDatasetName + "_MZRefinery_Histograms.png"))
+                new(Path.Combine(mWorkDir, mDatasetName + "_MZRefinery_MassErrors.png")),
+                new(Path.Combine(mWorkDir, mDatasetName + "_MZRefinery_Histograms.png"))
             };
 
             foreach (var plotFile in plotFiles)
@@ -1606,9 +1606,9 @@ namespace AnalysisManagerMzRefineryPlugIn
             // Store paths to key files in toolFiles
             var toolFiles = new List<FileInfo>
             {
-                new FileInfo(mMSGFPlusProgLoc),
-                new FileInfo(mMSConvertProgLoc),
-                new FileInfo(mPpmErrorCharterProgLoc)
+                new(mMSGFPlusProgLoc),
+                new(mMSConvertProgLoc),
+                new(mPpmErrorCharterProgLoc)
             };
 
             try

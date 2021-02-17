@@ -2335,8 +2335,8 @@ namespace AnalysisManagerMSGFPlugin
 
             // Store paths to key files in toolFiles
             var toolFiles = new List<FileInfo> {
-                new FileInfo(mMSGFProgLoc),
-                new FileInfo(mMSXmlGeneratorAppPath)
+                new(mMSGFProgLoc),
+                new(mMSXmlGeneratorAppPath)
             };
 
             try

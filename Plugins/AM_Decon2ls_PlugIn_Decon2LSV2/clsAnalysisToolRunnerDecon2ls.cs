@@ -1334,8 +1334,8 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
             // Store paths to key DLLs in toolFiles
             var toolFiles = new List<FileInfo> {
-                new FileInfo(deconToolsProgLoc),
-                new FileInfo(deconToolsBackendPath)};
+                new(deconToolsProgLoc),
+                new(deconToolsBackendPath)};
 
             try
             {

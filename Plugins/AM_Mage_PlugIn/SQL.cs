@@ -20,7 +20,8 @@ namespace AnalysisManager_Mage_PlugIn
         }
 
         // Definition of query templates
-        private static readonly Dictionary<string, QueryTemplate> QueryTemplates = new Dictionary<string, QueryTemplate> {
+        private static readonly Dictionary<string, QueryTemplate> QueryTemplates = new()
+        {
             {"JobsFromDataPackageID",
                 new QueryTemplate("SELECT * FROM V_Mage_Data_Package_Analysis_Jobs WHERE Data_Package_ID = {0}",
                     "DataPackageID") },

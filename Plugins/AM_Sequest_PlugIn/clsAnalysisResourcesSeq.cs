@@ -63,7 +63,7 @@ namespace AnalysisManagerSequestPlugin
         public void ArchiveSequestParamFile(string sourceFilePath, string targetFolderPath)
         {
             var lineIgnoreRegExSpecs = new List<Regex> {
-                new Regex("mass_type_parent *=.*")
+                new("mass_type_parent *=.*")
             };
 
             var needToArchiveFile = false;

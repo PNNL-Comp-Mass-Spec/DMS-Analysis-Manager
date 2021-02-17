@@ -68,9 +68,9 @@ namespace AnalysisManagerSequestPlugin
         /// Every OUT_FILE_APPEND_INTERVAL_SECONDS, this plugin looks for candidates older than OUT_FILE_APPEND_HOLDOFF_SECONDS
         /// For each, it appends the data to the _out.txt.tmp file, deletes the corresponding DTA file, and removes it from mOutFileCandidates
         /// </remarks>
-        private readonly Queue<KeyValuePair<string, DateTime>> mOutFileCandidates = new Queue<KeyValuePair<string, DateTime>>();
+        private readonly Queue<KeyValuePair<string, DateTime>> mOutFileCandidates = new();
 
-        private readonly Dictionary<string, DateTime> mOutFileCandidateInfo = new Dictionary<string, DateTime>();
+        private readonly Dictionary<string, DateTime> mOutFileCandidateInfo = new();
         private DateTime mLastOutFileStoreTime;
         private bool mSequestAppearsStalled;
         private bool mAbortSinceSequestIsStalled;
@@ -99,7 +99,7 @@ namespace AnalysisManagerSequestPlugin
         private string mErrMsg = "";
 
         // This dictionary tracks the most recent time each node was observed via PVM command "ps -a"
-        private readonly Dictionary<string, DateTime> mSequestNodes = new Dictionary<string, DateTime>();
+        private readonly Dictionary<string, DateTime> mSequestNodes = new();
 
         private bool mSequestLogNodesFound;
         private int mSequestNodesSpawned;
@@ -110,7 +110,7 @@ namespace AnalysisManagerSequestPlugin
         private DateTime mSequestSearchStartTime;
         private DateTime mSequestSearchEndTime;
 
-        private readonly Regex mActiveNodeRegEx = new Regex(@"\s+(?<node>[a-z0-9-.]+\s+[a-z0-9]+)\s+.+sequest.+slave.*",
+        private readonly Regex mActiveNodeRegEx = new(@"\s+(?<node>[a-z0-9-.]+\s+[a-z0-9]+)\s+.+sequest.+slave.*",
             RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
         #endregion

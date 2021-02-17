@@ -279,7 +279,7 @@ namespace AnalysisManagerDataImportPlugIn
 
             // Store the path to AnalysisManagerDataImportPlugIn.dll in toolFiles
             var toolFiles = new List<FileInfo> {
-                new FileInfo(Path.Combine(strAppFolderPath, "AnalysisManagerDataImportPlugIn.dll"))
+                new(Path.Combine(strAppFolderPath, "AnalysisManagerDataImportPlugIn.dll"))
             };
 
             try

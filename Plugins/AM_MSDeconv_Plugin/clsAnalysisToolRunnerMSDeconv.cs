@@ -218,7 +218,7 @@ namespace AnalysisManagerMSDeconvPlugIn
         // Processing spectrum Scan_4...           0% finished.
         // Deconvolution finished.
         // Result is in Syne_LI_CID_09092011_msdeconv.msalign
-        private readonly Regex reExtractPercentFinished = new Regex(@"(\d+)% finished", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private readonly Regex reExtractPercentFinished = new(@"(\d+)% finished", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         /// <summary>
         /// Parse the MSDeconv console output file to determine the MSDeconv version and to track the search progress
@@ -484,7 +484,7 @@ namespace AnalysisManagerMSDeconvPlugIn
 
             // Store paths to key files in toolFiles
             var toolFiles = new List<FileInfo> {
-                new FileInfo(mMSDeconvProgLoc)
+                new(mMSDeconvProgLoc)
             };
 
             try
@@ -498,7 +498,7 @@ namespace AnalysisManagerMSDeconvPlugIn
             }
         }
 
-        private readonly Regex reExtractScan = new Regex(@"Processing spectrum Scan_(\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private readonly Regex reExtractScan = new(@"Processing spectrum Scan_(\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         /// <summary>
         /// Reads the console output file and removes the majority of the percent finished messages

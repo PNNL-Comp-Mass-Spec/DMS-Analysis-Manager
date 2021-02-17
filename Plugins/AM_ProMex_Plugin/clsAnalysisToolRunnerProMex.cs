@@ -173,7 +173,7 @@ namespace AnalysisManagerProMexPlugIn
         }
 
         private const string REGEX_ProMex_PROGRESS = @"Processing ([0-9.]+)\%";
-        private readonly Regex reCheckProgress = new Regex(REGEX_ProMex_PROGRESS, RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private readonly Regex reCheckProgress = new(REGEX_ProMex_PROGRESS, RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         /// <summary>
         /// Parse the ProMex console output file to track the search progress

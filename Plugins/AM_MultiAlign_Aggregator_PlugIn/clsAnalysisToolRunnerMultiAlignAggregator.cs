@@ -222,7 +222,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
             // Store paths to key DLLs in toolFiles
             var toolFiles = new List<FileInfo>
             {
-                new FileInfo(strMultiAlignProgLoc)
+                new(strMultiAlignProgLoc)
             };
 
             if (ioMultiAlignInfo.DirectoryName != null)

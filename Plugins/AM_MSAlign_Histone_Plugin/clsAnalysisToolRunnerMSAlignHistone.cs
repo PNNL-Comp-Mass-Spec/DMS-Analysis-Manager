@@ -778,7 +778,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
         // Fast filteration finished.
         // Ptm search: Processing spectrum scan 4353...9% finished (0 minutes used).
         // Ptm search: Processing spectrum scan 4354...18% finished (1 minutes used).
-        private readonly Regex reExtractPercentFinished = new Regex("(\\d+)% finished", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private readonly Regex reExtractPercentFinished = new("(\\d+)% finished", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         /// <summary>
         /// Parse the MSAlign console output file to determine the MSAlign version and to track the search progress
@@ -897,7 +897,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
 
             // Store paths to key files in toolFiles
             var toolFiles = new List<FileInfo> {
-                new FileInfo(mMSAlignProgLoc)
+                new(mMSAlignProgLoc)
             };
 
             try

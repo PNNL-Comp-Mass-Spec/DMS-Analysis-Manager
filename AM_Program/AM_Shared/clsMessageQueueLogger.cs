@@ -31,12 +31,12 @@ namespace AnalysisManagerBase
         /// </summary>
         private readonly EventWaitHandle waitHandle = new AutoResetEvent(false);
 
-        private readonly object locker = new object();
+        private readonly object locker = new();
 
         /// <summary>
         /// local queue that contains messages to be sent
         /// </summary>
-        private readonly Queue<clsMessageContainer> mstatusMessages = new Queue<clsMessageContainer>();
+        private readonly Queue<clsMessageContainer> mstatusMessages = new();
 
         public clsMessageQueueLogger()
         {

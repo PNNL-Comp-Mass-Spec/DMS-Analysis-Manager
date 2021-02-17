@@ -240,8 +240,8 @@ namespace AnalysisManagerOMSSAPlugIn
             // Store paths to key files in toolFiles
             var toolFiles = new List<FileInfo>
             {
-                new FileInfo(mMgrParams.GetParam("OMSSAprogloc")),
-                new FileInfo(mMgrParams.GetParam("omssa2pepprogloc"))
+                new(mMgrParams.GetParam("OMSSAprogloc")),
+                new(mMgrParams.GetParam("omssa2pepprogloc"))
             };
 
             try

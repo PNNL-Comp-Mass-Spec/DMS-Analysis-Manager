@@ -858,7 +858,7 @@ namespace MSGFResultsSummarizer
             //   Contaminant_K22E_HUMAN
             //   Contaminant_K1C9_HUMAN
             //   Contaminant_K1C10_HUMAN
-            return new Regex(@"(K[1-2]C\d+[A-K]*|K22[E,O]|K1CI)_HUMAN", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            return new(@"(K[1-2]C\d+[A-K]*|K22[E,O]|K1CI)_HUMAN", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         }
 
         /// <summary>
@@ -871,7 +871,7 @@ namespace MSGFResultsSummarizer
             //   TRYP_PIG, sp|TRYP_PIG, Contaminant_TRYP_PIG, Cntm_P00761|TRYP_PIG
             //   Contaminant_TRYP_BOVIN And gi|136425|sp|P00760|TRYP_BOVIN
             //   Contaminant_Trypa
-            return new Regex("(TRYP_(PIG|BOVIN)|Contaminant_Trypa)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            return new("(TRYP_(PIG|BOVIN)|Contaminant_Trypa)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         }
 
         /// <summary>

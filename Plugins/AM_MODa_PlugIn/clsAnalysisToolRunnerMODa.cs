@@ -295,16 +295,16 @@ namespace AnalysisManagerMODaPlugIn
 
         // ReSharper restore CommentTypo
 
-        private readonly Regex mScanCountMatcher = new Regex(@"Reading .+spectra[. ]+(?<ScanCount>\d+) +scans",
+        private readonly Regex mScanCountMatcher = new(@"Reading .+spectra[. ]+(?<ScanCount>\d+) +scans",
                                                              RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         // Look for lines of the form MOD-A | 6947/13253
         // This format was used in older versions of MODa
-        private readonly Regex mCurrentScanMatcherV1 = new Regex(@"MOD-A \| (?<ScansProcessed>\d+)/(?<ScanCount>\d+)",
+        private readonly Regex mCurrentScanMatcherV1 = new(@"MOD-A \| (?<ScansProcessed>\d+)/(?<ScanCount>\d+)",
                                                                  RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         // Look for lines of the form moda | 10926 at 15-thread
-        private readonly Regex mCurrentScanMatcherV2 = new Regex(@"moda \| (?<ScansProcessed>\d+) at (?<ThreadNum>\d+-thread)",
+        private readonly Regex mCurrentScanMatcherV2 = new(@"moda \| (?<ScansProcessed>\d+) at (?<ThreadNum>\d+-thread)",
                                                                  RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         /// <summary>
@@ -462,7 +462,7 @@ namespace AnalysisManagerMODaPlugIn
 
             // Store paths to key files in toolFiles
             var toolFiles = new List<FileInfo> {
-                new FileInfo(mMODaProgLoc)
+                new(mMODaProgLoc)
             };
 
             try

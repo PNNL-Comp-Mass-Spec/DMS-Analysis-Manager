@@ -769,7 +769,7 @@ namespace AnalysisManagerTopPICPlugIn
 
             // Store paths to key files in toolFiles
             var toolFiles = new List<FileInfo> {
-                new FileInfo(mTopPICProgLoc)
+                new(mTopPICProgLoc)
             };
 
             try
@@ -941,16 +941,13 @@ namespace AnalysisManagerTopPICPlugIn
                 var resultFileNames = new List<TopPICResultFileInfo>
                 {
                     // TopPIC output file names prior to November 2018 (version 1.1.2)
-                    new TopPICResultFileInfo(
-                        PRSM_TSV_OUTPUT_TABLE_NAME_SUFFIX_ORIGINAL, PROTEOFORM_TSV_OUTPUT_TABLE_NAME_SUFFIX_ORIGINAL),
+                    new(PRSM_TSV_OUTPUT_TABLE_NAME_SUFFIX_ORIGINAL, PROTEOFORM_TSV_OUTPUT_TABLE_NAME_SUFFIX_ORIGINAL),
 
                     // TopPIC output file names used between November 2018 and January 2020 (versions 1.2.2, 1.2.3, and 1.3.1)
-                    new TopPICResultFileInfo(
-                        PRSM_CSV_RESULT_TABLE_NAME_SUFFIX_ORIGINAL, PROTEOFORM_CSV_RESULT_TABLE_NAME_SUFFIX_ORIGINAL, true),
+                    new(PRSM_CSV_RESULT_TABLE_NAME_SUFFIX_ORIGINAL, PROTEOFORM_CSV_RESULT_TABLE_NAME_SUFFIX_ORIGINAL, true),
 
                     // TopPIC output file names used in 2021 (version 1.4.4)
-                    new TopPICResultFileInfo(
-                        PRSM_TSV_RESULT_TABLE_NAME_SUFFIX_ORIGINAL, PROTEOFORM_TSV_RESULT_TABLE_NAME_SUFFIX_ORIGINAL)
+                    new(PRSM_TSV_RESULT_TABLE_NAME_SUFFIX_ORIGINAL, PROTEOFORM_TSV_RESULT_TABLE_NAME_SUFFIX_ORIGINAL)
                 };
 
                 var targetPrsmFile = new FileInfo(Path.Combine(mWorkDir, mDatasetName + PRSM_RESULT_TABLE_NAME_SUFFIX_FINAL));

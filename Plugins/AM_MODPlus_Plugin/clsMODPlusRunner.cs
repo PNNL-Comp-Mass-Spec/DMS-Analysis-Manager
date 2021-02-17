@@ -220,7 +220,7 @@ namespace AnalysisManagerMODPlusPlugin
 
         // ReSharper restore CommentTypo
 
-        private readonly Regex reCheckProgress = new Regex(@"^MODPlus[^0-9]+(\d+)/(\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private readonly Regex reCheckProgress = new(@"^MODPlus[^0-9]+(\d+)/(\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         /// <summary>
         /// Parse the MODPlus console output file to track the search progress

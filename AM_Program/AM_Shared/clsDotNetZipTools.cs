@@ -41,7 +41,7 @@ namespace AnalysisManagerBase
         /// Returns the files most recently unzipped
         /// Keys in the KeyValuePairs are filenames while values are relative paths (in case the .zip file has folders)
         /// </summary>
-        public List<KeyValuePair<string, string>> MostRecentUnzippedFiles { get; } = new List<KeyValuePair<string, string>>();
+        public List<KeyValuePair<string, string>> MostRecentUnzippedFiles { get; } = new();
 
         #endregion
 

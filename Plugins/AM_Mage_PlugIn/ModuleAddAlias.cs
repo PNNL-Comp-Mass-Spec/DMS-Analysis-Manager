@@ -14,7 +14,7 @@ namespace AnalysisManager_Mage_PlugIn
         private int _datasetIdx;
 
         // lookup table for dataset aliases
-        private Dictionary<string, string> _datasetAliases = new Dictionary<string, string>();
+        private Dictionary<string, string> _datasetAliases = new();
 
         public override void Prepare()
         {
