@@ -1433,67 +1433,67 @@ namespace AnalysisManagerMSGFDBPlugIn
         {
             var msgfPlusParameters = new List<MSGFPlusParameter>
             {
-                new MSGFPlusParameter("SpectrumFile", "s"),
-                new MSGFPlusParameter("DatabaseFile", "d"),
-                new MSGFPlusParameter("DecoyPrefix", "decoy"),
-                new MSGFPlusParameter("PrecursorMassTolerance", "t", "PMTolerance"),
-                new MSGFPlusParameter("PrecursorMassToleranceUnits", "u"),
+                new("SpectrumFile", "s"),
+                new("DatabaseFile", "d"),
+                new("DecoyPrefix", "decoy"),
+                new("PrecursorMassTolerance", "t", "PMTolerance"),
+                new("PrecursorMassToleranceUnits", "u"),
 
                 // When using a _dta.txt file, this setting is set to 0 since we create a _ScanType.txt file that specifies the type of each scan
                 // (thus, the value in the parameter file is ignored)
                 // One exception: when it is UVPD (mode 4), we use -m 4
-                new MSGFPlusParameter(MSGFPLUS_OPTION_FRAGMENTATION_METHOD, "m"),
+                new(MSGFPLUS_OPTION_FRAGMENTATION_METHOD, "m"),
 
                 // This setting is auto-updated based on the instrument group for this dataset,
                 // plus also the scan types listed In the _ScanType.txt file
                 // (thus, the value in the parameter file is typically ignored)
-                new MSGFPlusParameter(MSGFPLUS_OPTION_INSTRUMENT_ID, "inst"),
+                new(MSGFPLUS_OPTION_INSTRUMENT_ID, "inst"),
 
-                new MSGFPlusParameter("EnzymeID", "e"),
-                new MSGFPlusParameter("ProtocolID", "protocol", "Protocol"),
-                new MSGFPlusParameter(MSGFPLUS_OPTION_NUM_THREADS, "thread"),
-                new MSGFPlusParameter("NumTasks", "tasks"),
-                new MSGFPlusParameter(MSGFPLUS_OPTION_ISOTOPE_ERROR_RANGE, "ti", "IsotopeError"),
-                new MSGFPlusParameter("NTT", "ntt"),
+                new("EnzymeID", "e"),
+                new("ProtocolID", "protocol", "Protocol"),
+                new(MSGFPLUS_OPTION_NUM_THREADS, "thread"),
+                new("NumTasks", "tasks"),
+                new(MSGFPLUS_OPTION_ISOTOPE_ERROR_RANGE, "ti", "IsotopeError"),
+                new("NTT", "ntt"),
 
                 // C13 was a MSGFDB parameter name; old parameter files may still have it. This class will auto-change it to IsotopeError
-                new MSGFPlusParameter(MSGFPLUS_OPTION_C13, ""),
+                new(MSGFPLUS_OPTION_C13, ""),
 
                 // NNET was a MSGFDB parameter name; old parameter files may still have it. This class will auto-change it to "NTT"
-                new MSGFPlusParameter(MSGFPLUS_OPTION_NNET, ""),
+                new(MSGFPLUS_OPTION_NNET, ""),
 
-                new MSGFPlusParameter("MinPepLength", "minLength", "minLength"),
-                new MSGFPlusParameter("MaxPepLength", "maxLength", "maxLength"),
+                new("MinPepLength", "minLength", "minLength"),
+                new("MaxPepLength", "maxLength", "maxLength"),
 
                 // MinCharge and MaxCharge are only used if the spectrum file doesn't have charge information
-                new MSGFPlusParameter("MinCharge", "minCharge"),
-                new MSGFPlusParameter("MaxCharge", "maxCharge"),
+                new("MinCharge", "minCharge"),
+                new("MaxCharge", "maxCharge"),
 
-                new MSGFPlusParameter("NumMatchesPerSpec", "n"),
-                new MSGFPlusParameter("ChargeCarrierMass", "ccm"),
+                new("NumMatchesPerSpec", "n"),
+                new("ChargeCarrierMass", "ccm"),
 
                 // Auto-added by this code if not defined
-                new MSGFPlusParameter("MinNumPeaksPerSpectrum", "minNumPeaks", "minNumPeaks"),
-                new MSGFPlusParameter("NumIsoforms", "iso"),
-                new MSGFPlusParameter("IgnoreMetCleavage", "ignoreMetCleavage"),
-                new MSGFPlusParameter("MinDeNovoScore", "minDeNovoScore"),
+                new("MinNumPeaksPerSpectrum", "minNumPeaks", "minNumPeaks"),
+                new("NumIsoforms", "iso"),
+                new("IgnoreMetCleavage", "ignoreMetCleavage"),
+                new("MinDeNovoScore", "minDeNovoScore"),
 
                 // Spec index range
-                new MSGFPlusParameter("SpecIndex", "index"),
+                new("SpecIndex", "index"),
 
-                new MSGFPlusParameter("MaxMissedCleavages", "maxMissedCleavages"),
-                new MSGFPlusParameter(MSGFPLUS_OPTION_TDA, "tda"),
-                new MSGFPlusParameter(MSGFPLUS_OPTION_ADD_FEATURES, "addFeatures"),
+                new("MaxMissedCleavages", "maxMissedCleavages"),
+                new(MSGFPLUS_OPTION_TDA, "tda"),
+                new(MSGFPLUS_OPTION_ADD_FEATURES, "addFeatures"),
 
                 // Future parameter; unused in February 2019
-                new MSGFPlusParameter("FragTolerance", "f"),
+                new("FragTolerance", "f"),
 
                 // These settings were previously used to create a Mods.txt file
                 // Starting in February 2019, the settings are read by MS-GF+ from the parameter file
-                new MSGFPlusParameter("NumMods", ""),
-                new MSGFPlusParameter(MSGFPLUS_OPTION_STATIC_MOD, ""),
-                new MSGFPlusParameter(MSGFPLUS_OPTION_DYNAMIC_MOD, ""),
-                new MSGFPlusParameter(MSGFPLUS_OPTION_CUSTOM_AA, "")
+                new("NumMods", ""),
+                new(MSGFPLUS_OPTION_STATIC_MOD, ""),
+                new(MSGFPLUS_OPTION_DYNAMIC_MOD, ""),
+                new(MSGFPLUS_OPTION_CUSTOM_AA, "")
             };
 
             // The following is a special case; do not add it
