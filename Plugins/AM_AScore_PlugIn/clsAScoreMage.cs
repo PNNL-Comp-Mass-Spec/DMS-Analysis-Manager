@@ -352,8 +352,11 @@ namespace AnalysisManager_AScore_PlugIn
                 FilePath = inputFilePath
             };
 
-            BaseModule filter = new NullFilter();
-            filter.OutputColumnList = outputColumnList;
+            BaseModule filter = new NullFilter
+            {
+                OutputColumnList = outputColumnList
+            };
+
             filter.SetContext(context);
 
             var writer = new SQLiteWriter();
