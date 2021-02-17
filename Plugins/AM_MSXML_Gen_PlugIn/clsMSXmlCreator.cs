@@ -189,8 +189,8 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 OnStatusEvent("Creating the .mzXML file for " + mDatasetName);
             }
 
-            var rawDataType = mJobParams.GetParam("RawDataType");
-            var rawDataTypeEnum = clsAnalysisResources.GetRawDataType(rawDataType);
+            var rawDataTypeName = mJobParams.GetParam("RawDataType");
+            var rawDataType = clsAnalysisResources.GetRawDataType(rawDataTypeName);
 
             if (msXmlGeneratorExe.IndexOf("readw", StringComparison.OrdinalIgnoreCase) >= 0)
             {
@@ -199,12 +199,12 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
                 // ReSharper disable once ConditionIsAlwaysTrueOrFalse
                 mMSXmlGen = new clsMSXMLGenReadW(mWorkDir, mMSXmlGeneratorAppPath, mDatasetName,
-                                                 rawDataTypeEnum, outputType,
+                                                 rawDataType, outputType,
                                                  centroidMSXML, mJobParams);
 
-                if (rawDataType != clsAnalysisResources.RAW_DATA_TYPE_DOT_RAW_FILES)
+                if (rawDataTypeName != clsAnalysisResources.RAW_DATA_TYPE_DOT_RAW_FILES)
                 {
-                    ErrorMessage = "ReAdW can only be used with .Raw files, not with " + rawDataType;
+                    ErrorMessage = "ReAdW can only be used with .Raw files, not with " + rawDataTypeName;
                     OnErrorEvent(ErrorMessage);
                     return false;
                 }
@@ -232,13 +232,13 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 if (string.IsNullOrWhiteSpace(customMSConvertArguments))
                 {
                     mMSXmlGen = new clsMSXmlGenMSConvert(mWorkDir, mMSXmlGeneratorAppPath, mDatasetName,
-                                                         rawDataTypeEnum, outputType,
+                                                         rawDataType, outputType,
                                                          centroidMSXML, centroidPeakCountToRetain, mJobParams);
                 }
                 else
                 {
                     mMSXmlGen = new clsMSXmlGenMSConvert(mWorkDir, mMSXmlGeneratorAppPath, mDatasetName,
-                                                         rawDataTypeEnum, outputType,
+                                                         rawDataType, outputType,
                                                          customMSConvertArguments, mJobParams);
                 }
             }

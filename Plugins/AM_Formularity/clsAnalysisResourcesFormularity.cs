@@ -125,7 +125,7 @@ namespace AnalysisManagerFormularityPlugin
 
                 */
 
-                var rawDataType = mJobParams.GetParam("rawDataType");
+                var rawDataTypeName = mJobParams.GetParam("rawDataType");
 
                 // The ToolName job parameter holds the name of the job script we are executing
                 var scriptName = mJobParams.GetParam("ToolName");

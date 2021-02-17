@@ -112,8 +112,8 @@ namespace AnalysisManagerMSGFPlugin
             }
 
             // Make sure the dataset type is valid
-            var rawDataType = mJobParams.GetParam("RawDataType");
-            var eRawDataType = GetRawDataType(rawDataType);
+            var rawDataTypeName = mJobParams.GetParam("RawDataType");
+            var rawDataType = GetRawDataType(rawDataTypeName);
             var mgfInstrumentData = mJobParams.GetJobParameter("MGFInstrumentData", false);
 
             if (resultType == clsPHRPReader.PeptideHitResultTypes.MSGFPlus)
@@ -156,7 +156,7 @@ namespace AnalysisManagerMSGFPlugin
 
                 if (!mgfInstrumentData)
                 {
-                    switch (eRawDataType)
+                    switch (rawDataType)
                     {
                         case eRawDataTypeConstants.ThermoRawFile:
                         case eRawDataTypeConstants.mzML:
@@ -432,7 +432,7 @@ namespace AnalysisManagerMSGFPlugin
                 {
                     // .mzXML file not found
                     // Retrieve the .Raw file so that we can make the .mzXML file prior to running MSGF
-                    if (FileSearch.RetrieveSpectra(rawDataType))
+                    if (FileSearch.RetrieveSpectra(rawDataTypeName))
                     {
                         mJobParams.AddResultFileExtensionToSkip(DOT_RAW_EXTENSION);
                         // Raw file

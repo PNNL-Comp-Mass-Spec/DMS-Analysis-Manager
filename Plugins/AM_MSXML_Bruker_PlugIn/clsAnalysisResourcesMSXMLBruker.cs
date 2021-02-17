@@ -30,10 +30,10 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
             }
 
             // Get input data file
-            var rawDataType = mJobParams.GetParam("RawDataType");
-            var eRawDataType = GetRawDataType(rawDataType);
+            var rawDataTypeName = mJobParams.GetParam("RawDataType");
+            var rawDataType = GetRawDataType(rawDataTypeName);
 
-            switch (eRawDataType)
+            switch (rawDataType)
             {
                 case eRawDataTypeConstants.BrukerFTFolder:
                 case eRawDataTypeConstants.BrukerTOFBaf:
@@ -48,7 +48,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            if (!FileSearch.RetrieveSpectra(rawDataType))
+            if (!FileSearch.RetrieveSpectra(rawDataTypeName))
             {
                 LogDebug("clsDtaGenResources.GetResources: Error occurred retrieving spectra.");
                 return CloseOutType.CLOSEOUT_FAILED;

@@ -76,7 +76,7 @@ namespace AnalysisManagerIDPickerPlugIn
             }
 
             var rawDataTypeName = mJobParams.GetParam("RawDataType");
-            var eRawDataType = GetRawDataType(rawDataTypeName);
+            var rawDataType = GetRawDataType(rawDataTypeName);
             var mgfInstrumentData = mJobParams.GetJobParameter("MGFInstrumentData", false);
 
             // Retrieve the PSM result files, PHRP files, and MSGF file
@@ -97,7 +97,7 @@ namespace AnalysisManagerIDPickerPlugIn
             {
                 // Retrieve the MASIC ScanStats.txt and ScanStatsEx.txt files
 
-                if (eRawDataType == eRawDataTypeConstants.ThermoRawFile || eRawDataType == eRawDataTypeConstants.UIMF)
+                if (rawDataType == eRawDataTypeConstants.ThermoRawFile || rawDataType == eRawDataTypeConstants.UIMF)
                 {
                     var noScanStats = mJobParams.GetJobParameter("PepXMLNoScanStats", false);
                     if (noScanStats)

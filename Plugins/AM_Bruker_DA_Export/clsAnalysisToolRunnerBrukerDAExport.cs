@@ -204,10 +204,10 @@ namespace AnalysisManagerBrukerDAExportPlugin
             {
                 mConsoleOutputErrorMsg = string.Empty;
 
-                var rawDataType = mJobParams.GetParam("RawDataType");
+                var rawDataTypeName = mJobParams.GetParam("RawDataType");
                 string dataFolderPath;
 
-                switch (rawDataType.ToLower())
+                switch (rawDataTypeName.ToLower())
                 {
                     case clsAnalysisResources.RAW_DATA_TYPE_DOT_D_FOLDERS:
                     case clsAnalysisResources.RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER:
@@ -215,7 +215,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
                         dataFolderPath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_D_EXTENSION);
                         break;
                     default:
-                        mMessage = "Dataset type " + rawDataType + " is not supported";
+                        mMessage = "Dataset type " + rawDataTypeName + " is not supported";
                         LogWarning("ExportSpectraUsingScript: " + mMessage);
                         return false;
                 }

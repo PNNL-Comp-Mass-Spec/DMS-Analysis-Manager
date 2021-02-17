@@ -437,10 +437,10 @@ namespace AnalysisManagerGlyQIQPlugin
         {
             try
             {
-                var rawDataType = mJobParams.GetJobParameter("RawDataType", "");
-                var eRawDataType = GetRawDataType(rawDataType);
+                var rawDataTypeName = mJobParams.GetJobParameter("RawDataType", "");
+                var rawDataType = GetRawDataType(rawDataTypeName);
 
-                if (eRawDataType == eRawDataTypeConstants.ThermoRawFile)
+                if (rawDataType == eRawDataTypeConstants.ThermoRawFile)
                 {
                     mJobParams.AddResultFileExtensionToSkip(DOT_RAW_EXTENSION);
                 }
@@ -471,7 +471,7 @@ namespace AnalysisManagerGlyQIQPlugin
                 }
 
                 // Retrieve the instrument data file
-                if (!FileSearch.RetrieveSpectra(rawDataType))
+                if (!FileSearch.RetrieveSpectra(rawDataTypeName))
                 {
                     if (string.IsNullOrEmpty(mMessage))
                     {

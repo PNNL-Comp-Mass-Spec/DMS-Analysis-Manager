@@ -1265,7 +1265,19 @@ namespace AnalysisManagerBase
         /// <remarks>Files to delete are determined via Job Parameter RawDataType</remarks>
         protected bool DeleteRawDataFiles()
         {
-            var rawDataType = mJobParams.GetParam("RawDataType");
+            var rawDataTypeName = mJobParams.GetParam("RawDataType");
+
+            return DeleteRawDataFiles(rawDataTypeName);
+        }
+
+        /// <summary>
+        /// Delete any instrument data files in the working directory
+        /// </summary>
+        /// <param name="rawDataTypeName">Raw data type string</param>
+        /// <returns>True if success, false if an error</returns>
+        protected bool DeleteRawDataFiles(string rawDataTypeName)
+        {
+            var rawDataType = clsAnalysisResources.GetRawDataType(rawDataTypeName);
 
             return DeleteRawDataFiles(rawDataType);
         }
@@ -1273,28 +1285,16 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Delete any instrument data files in the working directory
         /// </summary>
-        /// <param name="rawDataType">Raw data type string</param>
+        /// <param name="rawDataType">Raw data type enum</param>
         /// <returns>True if success, false if an error</returns>
-        protected bool DeleteRawDataFiles(string rawDataType)
-        {
-            var eRawDataType = clsAnalysisResources.GetRawDataType(rawDataType);
-
-            return DeleteRawDataFiles(eRawDataType);
-        }
-
-        /// <summary>
-        /// Delete any instrument data files in the working directory
-        /// </summary>
-        /// <param name="eRawDataType">Raw data type enum</param>
-        /// <returns>True if success, false if an error</returns>
-        protected bool DeleteRawDataFiles(clsAnalysisResources.eRawDataTypeConstants eRawDataType)
+        protected bool DeleteRawDataFiles(clsAnalysisResources.eRawDataTypeConstants rawDataType)
         {
             // Deletes the raw data files/directories from the working directory
             bool isFile;
             var isNetworkDir = false;
             var fileOrDirectoryName = string.Empty;
 
-            switch (eRawDataType)
+            switch (rawDataType)
             {
                 case clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile:
                     fileOrDirectoryName = Path.Combine(mWorkDir, Dataset + clsAnalysisResources.DOT_RAW_EXTENSION);
@@ -1376,7 +1376,7 @@ namespace AnalysisManagerBase
 
                 default:
                     // Should never get this value
-                    mMessage = "DeleteRawDataFiles, Invalid RawDataType specified: " + eRawDataType;
+                    mMessage = "DeleteRawDataFiles, Invalid RawDataType specified: " + rawDataType;
                     return false;
             }
 

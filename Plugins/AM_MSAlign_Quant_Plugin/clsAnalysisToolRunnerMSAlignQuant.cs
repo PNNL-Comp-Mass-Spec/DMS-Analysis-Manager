@@ -95,10 +95,10 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                 LogMessage("Running TargetedWorkflowsConsole");
 
                 // Set up and execute a program runner to run TargetedWorkflowsConsole
-                var rawDataType = mJobParams.GetParam("RawDataType");
+                var rawDataTypeName = mJobParams.GetParam("RawDataType");
                 string arguments;
 
-                switch (rawDataType.ToLower())
+                switch (rawDataTypeName.ToLower())
                 {
                     case clsAnalysisResources.RAW_DATA_TYPE_DOT_RAW_FILES:
                         arguments = " " + PossiblyQuotePath(Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_RAW_EXTENSION));
@@ -109,7 +109,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                         arguments = " " + PossiblyQuotePath(Path.Combine(mWorkDir, mDatasetName) + clsAnalysisResources.DOT_D_EXTENSION);
                         break;
                     default:
-                        mMessage = "Dataset type " + rawDataType + " is not supported";
+                        mMessage = "Dataset type " + rawDataTypeName + " is not supported";
                         LogDebug(mMessage);
                         return CloseOutType.CLOSEOUT_FAILED;
                 }

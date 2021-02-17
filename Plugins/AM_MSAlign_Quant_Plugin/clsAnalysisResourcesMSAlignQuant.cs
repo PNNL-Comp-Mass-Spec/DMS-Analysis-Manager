@@ -46,14 +46,14 @@ namespace AnalysisManagerMSAlignQuantPlugIn
             }
 
             // Get the instrument data file
-            var rawDataType = mJobParams.GetParam("RawDataType");
+            var rawDataTypeName = mJobParams.GetParam("RawDataType");
 
-            switch (rawDataType.ToLower())
+            switch (rawDataTypeName.ToLower())
             {
                 case RAW_DATA_TYPE_DOT_RAW_FILES:
                 case RAW_DATA_TYPE_BRUKER_FT_FOLDER:
                 case RAW_DATA_TYPE_DOT_D_FOLDERS:
-                    if (FileSearch.RetrieveSpectra(rawDataType))
+                    if (FileSearch.RetrieveSpectra(rawDataTypeName))
                     {
                         if (!base.ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadLayout.FlatNoSubdirectories))
                         {
@@ -61,7 +61,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                         }
 
                         // Confirm that the .Raw or .D folder was actually copied locally
-                        if (rawDataType.ToLower() == RAW_DATA_TYPE_DOT_RAW_FILES)
+                        if (rawDataTypeName.ToLower() == RAW_DATA_TYPE_DOT_RAW_FILES)
                         {
                             if (!File.Exists(Path.Combine(mWorkDir, DatasetName + DOT_RAW_EXTENSION)))
                             {
@@ -73,7 +73,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                             // Raw file
                             mJobParams.AddResultFileExtensionToSkip(DOT_RAW_EXTENSION);
                         }
-                        else if (rawDataType.ToLower() == RAW_DATA_TYPE_BRUKER_FT_FOLDER)
+                        else if (rawDataTypeName.ToLower() == RAW_DATA_TYPE_BRUKER_FT_FOLDER)
                         {
                             if (!Directory.Exists(Path.Combine(mWorkDir, DatasetName + DOT_D_EXTENSION)))
                             {
@@ -90,7 +90,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                     }
                     break;
                 default:
-                    mMessage = "Dataset type " + rawDataType + " is not supported";
+                    mMessage = "Dataset type " + rawDataTypeName + " is not supported";
                     LogError("clsDtaGenResources.GetResources: " + mMessage +
                              "; must be " + RAW_DATA_TYPE_DOT_RAW_FILES + " or " + RAW_DATA_TYPE_BRUKER_FT_FOLDER);
                     return CloseOutType.CLOSEOUT_FAILED;

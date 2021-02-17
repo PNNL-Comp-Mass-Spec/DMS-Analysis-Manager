@@ -188,19 +188,19 @@ namespace DTASpectraFileGen
         public static eDTAGeneratorConstants GetDTAGeneratorInfo(IJobParams jobParams, out bool concatenateDTAs, out string errorMessage)
         {
             var dtaGenerator = jobParams.GetJobParameter("DtaGenerator", string.Empty);
-            var rawDataType = jobParams.GetJobParameter("RawDataType", string.Empty);
+            var rawDataTypeName = jobParams.GetJobParameter("RawDataType", string.Empty);
             var mgfInstrumentData = jobParams.GetJobParameter("MGFInstrumentData", false);
 
             errorMessage = string.Empty;
             concatenateDTAs = true;
 
-            if (string.IsNullOrEmpty(rawDataType))
+            if (string.IsNullOrEmpty(rawDataTypeName))
             {
                 errorMessage = NotifyMissingParameter(jobParams, "RawDataType");
                 return eDTAGeneratorConstants.Unknown;
             }
 
-            var eRawDataType = clsAnalysisResources.GetRawDataType(rawDataType);
+            var rawDataType = clsAnalysisResources.GetRawDataType(rawDataTypeName);
 
             if (mgfInstrumentData)
             {
@@ -208,7 +208,7 @@ namespace DTASpectraFileGen
                 return eDTAGeneratorConstants.MGFtoDTA;
             }
 
-            switch (eRawDataType)
+            switch (rawDataType)
             {
                 case clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile:
 

@@ -145,7 +145,7 @@ namespace AnalysisManagerMSGFPlugin
             var mgfInstrumentData = mJobParams.GetJobParameter("MGFInstrumentData", false);
 
             // Determine the raw data type
-            var eRawDataType = clsAnalysisResources.GetRawDataType(mJobParams.GetParam("RawDataType"));
+            var rawDataType = clsAnalysisResources.GetRawDataType(mJobParams.GetParam("RawDataType"));
 
             // Resolve resultType
             var resultType = clsPHRPReader.GetPeptideHitResultType(mJobParams.GetParam("ResultType"));
@@ -227,7 +227,7 @@ namespace AnalysisManagerMSGFPlugin
                 }
                 else
                 {
-                    if (!ProcessFilesWrapper(eRawDataType, resultType, doNotFilterPeptides, mgfInstrumentData))
+                    if (!ProcessFilesWrapper(rawDataType, resultType, doNotFilterPeptides, mgfInstrumentData))
                     {
                         processingError = true;
                     }
@@ -1408,8 +1408,11 @@ namespace AnalysisManagerMSGFPlugin
             return success;
         }
 
-        private bool ProcessFilesWrapper(clsAnalysisResources.eRawDataTypeConstants eRawDataType, clsPHRPReader.PeptideHitResultTypes resultType,
-            bool doNotFilterPeptides, bool mgfInstrumentData)
+        private bool ProcessFilesWrapper(
+            clsAnalysisResources.eRawDataTypeConstants rawDataType, 
+            clsPHRPReader.PeptideHitResultTypes resultType,
+            bool doNotFilterPeptides, 
+            bool mgfInstrumentData)
         {
             // Parse the SEQUEST, X!Tandem, Inspect, or MODa parameter file to determine if ETD mode was used
             var searchToolParamFilePath = Path.Combine(mWorkDir, mJobParams.GetParam("ParmFileName"));
@@ -1444,11 +1447,11 @@ namespace AnalysisManagerMSGFPlugin
                 {
                     success = true;
                 }
-                else if (eRawDataType == clsAnalysisResources.eRawDataTypeConstants.mzXML)
+                else if (rawDataType == clsAnalysisResources.eRawDataTypeConstants.mzXML)
                 {
                     success = true;
                 }
-                else if (eRawDataType == clsAnalysisResources.eRawDataTypeConstants.mzML)
+                else if (rawDataType == clsAnalysisResources.eRawDataTypeConstants.mzML)
                 {
                     success = ConvertMzMLToMzXML();
                 }

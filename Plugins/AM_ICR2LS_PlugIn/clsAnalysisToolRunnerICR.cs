@@ -93,9 +93,9 @@ namespace AnalysisManagerICR2LSPlugIn
                     useAllScans = false;
                 }
 
-                // Assemble the dataset name
-                var DSNamePath = Path.Combine(mWorkDir, mDatasetName);
-                var RawDataType = mJobParams.GetParam("RawDataType");
+                // Assemble the dataset path
+                var datasetDirectoryPath = Path.Combine(mWorkDir, mDatasetName);
+                var rawDataTypeName = mJobParams.GetParam("RawDataType");
 
                 // Assemble the output file name and path
                 var OutFileNamePath = Path.Combine(mWorkDir, mDatasetName + ".pek");
@@ -106,7 +106,7 @@ namespace AnalysisManagerICR2LSPlugIn
                 string datasetFolderPathBase;
                 bool blnBrukerFT;
 
-                if (string.Equals(RawDataType.ToLower(), clsAnalysisResources.RAW_DATA_TYPE_BRUKER_FT_FOLDER, StringComparison.InvariantCultureIgnoreCase))
+                if (string.Equals(rawDataTypeName.ToLower(), clsAnalysisResources.RAW_DATA_TYPE_BRUKER_FT_FOLDER, StringComparison.InvariantCultureIgnoreCase))
                 {
                     datasetFolderPathBase = Path.Combine(mWorkDir, mDatasetName + ".d");
                     blnBrukerFT = true;
@@ -186,21 +186,21 @@ namespace AnalysisManagerICR2LSPlugIn
                 else
                 {
                     // Processing zipped s-folders
-                    if (!Directory.Exists(DSNamePath))
+                    if (!Directory.Exists(datasetDirectoryPath))
                     {
-                        mMessage = "Data file folder not found: " + DSNamePath;
+                        mMessage = "Data file folder not found: " + datasetDirectoryPath;
                         LogError(mMessage);
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
 
-                    currentTask = "StartICR2LS for zippsed s-folders in " + DSNamePath;
+                    currentTask = "StartICR2LS for zipped s-folders in " + datasetDirectoryPath;
 
                     eICR2LSMode = ICR2LSProcessingModeConstants.SFoldersPEK;
-                    success = StartICR2LS(DSNamePath, paramFilePath, OutFileNamePath, eICR2LSMode, useAllScans, SkipMS2, MinScan, MaxScan);
+                    success = StartICR2LS(datasetDirectoryPath, paramFilePath, OutFileNamePath, eICR2LSMode, useAllScans, SkipMS2, MinScan, MaxScan);
 
                     if (!success)
                     {
-                        LogError("Error running ICR-2LS on zipped s-files in " + DSNamePath);
+                        LogError("Error running ICR-2LS on zipped s-files in " + datasetDirectoryPath);
                     }
                 }
 

@@ -53,7 +53,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 }
 
                 // Get input data file
-                var rawDataType = mJobParams.GetParam("RawDataType");
+                var rawDataTypeName = mJobParams.GetParam("RawDataType");
                 var instrumentName = mJobParams.GetParam("Instrument");
 
                 var retrievalAttempts = 0;
@@ -61,14 +61,14 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 while (retrievalAttempts < 2)
                 {
                     retrievalAttempts++;
-                    switch (rawDataType.ToLower())
+                    switch (rawDataTypeName.ToLower())
                     {
                         case RAW_DATA_TYPE_DOT_RAW_FILES:
                         case RAW_DATA_TYPE_DOT_D_FOLDERS:
                         case RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER:
                         case RAW_DATA_TYPE_BRUKER_FT_FOLDER:
-                            currentTask = string.Format("Retrieve spectra: {0}; instrument: {1}", rawDataType, instrumentName);
-                            var datasetResult = GetDatasetFile(rawDataType);
+                            currentTask = string.Format("Retrieve spectra: {0}; instrument: {1}", rawDataTypeName, instrumentName);
+                            var datasetResult = GetDatasetFile(rawDataTypeName);
                             if (datasetResult == CloseOutType.CLOSEOUT_FILE_NOT_FOUND)
                                 return datasetResult;
 
@@ -96,7 +96,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                             {
                                 // Retrieve the .uimf file for these
                                 currentTask = string.Format("Retrieve .UIMF file; instrument: {0}", instrumentName);
-                                var uimfResult = GetDatasetFile(rawDataType);
+                                var uimfResult = GetDatasetFile(rawDataTypeName);
                                 if (uimfResult == CloseOutType.CLOSEOUT_FILE_NOT_FOUND)
                                     return uimfResult;
 
@@ -106,7 +106,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                             break;
 
                         default:
-                            mMessage = "Dataset type " + rawDataType + " is not supported";
+                            mMessage = "Dataset type " + rawDataTypeName + " is not supported";
                             LogDebug(
                                 "clsAnalysisResourcesMSXMLGen.GetResources: " + mMessage + "; must be " +
                                 RAW_DATA_TYPE_DOT_RAW_FILES + ", " +
@@ -200,9 +200,9 @@ namespace AnalysisManagerMsXmlGenPlugIn
             return false;
         }
 
-        private CloseOutType GetDatasetFile(string rawDataType)
+        private CloseOutType GetDatasetFile(string rawDataTypeName)
         {
-            if (FileSearch.RetrieveSpectra(rawDataType))
+            if (FileSearch.RetrieveSpectra(rawDataTypeName))
             {
                 // Raw file
                 mJobParams.AddResultFileExtensionToSkip(DOT_RAW_EXTENSION);

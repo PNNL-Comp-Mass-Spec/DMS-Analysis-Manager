@@ -1696,7 +1696,7 @@ namespace AnalysisManagerBase
         /// <remarks>Only valid for Thermo .Raw files and .UIMF files</remarks>
         protected bool GenerateScanStatsFile(bool deleteRawDataFile)
         {
-            var rawDataType = mJobParams.GetParam("RawDataType");
+            var rawDataTypeName = mJobParams.GetParam("RawDataType");
             var datasetID = mJobParams.GetJobParameter("DatasetID", 0);
 
             var msFileInfoScannerDir = mMgrParams.GetParam("MSFileInfoScannerDir");
@@ -1716,7 +1716,7 @@ namespace AnalysisManagerBase
             string inputFilePath;
 
             // Confirm that this dataset is a Thermo .Raw file or a .UIMF file
-            switch (GetRawDataType(rawDataType))
+            switch (GetRawDataType(rawDataTypeName))
             {
                 case eRawDataTypeConstants.ThermoRawFile:
                     inputFilePath = mDatasetName + DOT_RAW_EXTENSION;
@@ -1725,7 +1725,7 @@ namespace AnalysisManagerBase
                     inputFilePath = mDatasetName + DOT_UIMF_EXTENSION;
                     break;
                 default:
-                    LogError("Invalid dataset type for auto-generating ScanStats.txt file: " + rawDataType);
+                    LogError("Invalid dataset type for auto-generating ScanStats.txt file: " + rawDataTypeName);
                     return false;
             }
 
@@ -1733,7 +1733,7 @@ namespace AnalysisManagerBase
 
             if (!File.Exists(inputFilePath))
             {
-                if (!FileSearch.RetrieveSpectra(rawDataType))
+                if (!FileSearch.RetrieveSpectra(rawDataTypeName))
                 {
                     var extraMsg = mMessage;
                     mMessage = "Error retrieving spectra file";
@@ -2540,15 +2540,15 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Convert a raw data type string to raw data type enum (i.e. instrument data type)
         /// </summary>
-        /// <param name="rawDataType"></param>
-        public static eRawDataTypeConstants GetRawDataType(string rawDataType)
+        /// <param name="rawDataTypeName"></param>
+        public static eRawDataTypeConstants GetRawDataType(string rawDataTypeName)
         {
-            if (string.IsNullOrEmpty(rawDataType))
+            if (string.IsNullOrEmpty(rawDataTypeName))
             {
                 return eRawDataTypeConstants.Unknown;
             }
 
-            return rawDataType.ToLower() switch
+            return rawDataTypeName.ToLower() switch
             {
                 RAW_DATA_TYPE_DOT_D_FOLDERS => eRawDataTypeConstants.AgilentDFolder,
                 RAW_DATA_TYPE_ZIPPED_S_FOLDERS => eRawDataTypeConstants.ZippedSFolders,

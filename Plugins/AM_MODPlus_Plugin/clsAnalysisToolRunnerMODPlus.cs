@@ -1107,11 +1107,11 @@ namespace AnalysisManagerMODPlusPlugin
 
             // Store paths to key files in toolFiles
             var toolFiles = new List<FileInfo>();
-            var fiMODPlusProg = new FileInfo(mMODPlusProgLoc);
-            toolFiles.Add(fiMODPlusProg);
+            var modPlusProgram = new FileInfo(mMODPlusProgLoc);
+            toolFiles.Add(modPlusProgram);
 
-            if (fiMODPlusProg.Directory != null)
-                toolFiles.Add(new FileInfo(Path.Combine(fiMODPlusProg.Directory.FullName, "tda_plus.jar")));
+            if (modPlusProgram.Directory != null)
+                toolFiles.Add(new FileInfo(Path.Combine(modPlusProgram.Directory.FullName, "tda_plus.jar")));
 
             try
             {

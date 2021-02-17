@@ -90,7 +90,7 @@ namespace DTASpectraFileGen
         /// </summary>
         /// <returns>TRUE for success; FALSE for failure</returns>
         /// <remarks></remarks>
-        public bool ConvertMGFtoDTA(clsAnalysisResources.eRawDataTypeConstants eRawDataType, string datasetName)
+        public bool ConvertMGFtoDTA(clsAnalysisResources.eRawDataTypeConstants rawDataType, string datasetName)
         {
             bool success;
 
@@ -103,7 +103,7 @@ namespace DTASpectraFileGen
 
             var mgfFilePath = Path.Combine(mWorkDir, datasetName + clsAnalysisResources.DOT_MGF_EXTENSION);
 
-            if (eRawDataType == clsAnalysisResources.eRawDataTypeConstants.mzML)
+            if (rawDataType == clsAnalysisResources.eRawDataTypeConstants.mzML)
             {
                 // Read the .mzML file to construct a mapping between "title" line and scan number
                 // If necessary, update the .mgf file to have new "title" lines that clsMGFtoDTA will recognize

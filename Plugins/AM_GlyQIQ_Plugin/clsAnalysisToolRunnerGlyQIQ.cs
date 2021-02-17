@@ -650,10 +650,10 @@ namespace AnalysisManagerGlyQIQPlugin
                     return false;
                 }
 
-                var rawDataType = mJobParams.GetParam("RawDataType");
-                var eRawDataType = clsAnalysisResources.GetRawDataType(rawDataType);
+                var rawDataTypeName = mJobParams.GetParam("RawDataType");
+                var rawDataType = clsAnalysisResources.GetRawDataType(rawDataTypeName);
 
-                if (eRawDataType == clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile)
+                if (rawDataType == clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile)
                 {
                     mJobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_RAW_EXTENSION);
                 }

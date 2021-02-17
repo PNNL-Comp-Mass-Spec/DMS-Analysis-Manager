@@ -136,9 +136,9 @@ namespace MSMSSpectrumFilterAM
                     // Find the dataset file and either create a StoragePathInfo file or copy it locally
 
                     var CreateStoragePathInfoOnly = false;
-                    var RawDataType = mJobParams.GetParam("RawDataType");
+                    var rawDataTypeName = mJobParams.GetParam("RawDataType");
 
-                    switch (RawDataType.ToLower())
+                    switch (rawDataTypeName.ToLower())
                     {
                         case RAW_DATA_TYPE_DOT_RAW_FILES:
                         case RAW_DATA_TYPE_DOT_WIFF_FILES:
@@ -154,7 +154,7 @@ namespace MSMSSpectrumFilterAM
                             break;
                     }
 
-                    if (!FileSearch.RetrieveSpectra(RawDataType, CreateStoragePathInfoOnly))
+                    if (!FileSearch.RetrieveSpectra(rawDataTypeName, CreateStoragePathInfoOnly))
                     {
                         LogDebug("clsAnalysisResourcesMsMsSpectrumFilter.GetResources: Error occurred retrieving spectra.");
                         return CloseOutType.CLOSEOUT_FAILED;

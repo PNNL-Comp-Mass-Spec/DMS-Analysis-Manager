@@ -98,7 +98,7 @@ namespace DTASpectraFileGen
         {
             try
             {
-                var rawDataType = mJobParams.GetJobParameter("RawDataType", string.Empty);
+                var rawDataTypeName = mJobParams.GetJobParameter("RawDataType", string.Empty);
 
                 var mgfConverter = new clsMGFConverter(mDebugLevel, mWorkDir)
                 {
@@ -108,8 +108,8 @@ namespace DTASpectraFileGen
 
                 RegisterEvents(mgfConverter);
 
-                var eRawDataType = clsAnalysisResources.GetRawDataType(rawDataType);
-                var success = mgfConverter.ConvertMGFtoDTA(eRawDataType, mDatasetName);
+                var rawDataType = clsAnalysisResources.GetRawDataType(rawDataTypeName);
+                var success = mgfConverter.ConvertMGFtoDTA(rawDataType, mDatasetName);
 
                 if (!success)
                 {
@@ -133,10 +133,10 @@ namespace DTASpectraFileGen
         /// Create .mgf file using MSConvert
         /// This function is called by MakeDTAFilesThreaded
         /// </summary>
-        /// <param name="eRawDataType">Raw data file type</param>
+        /// <param name="rawDataType">Raw data file type</param>
         /// <returns>TRUE for success; FALSE for failure</returns>
         /// <remarks></remarks>
-        private bool ConvertRawToMGF(clsAnalysisResources.eRawDataTypeConstants eRawDataType)
+        private bool ConvertRawToMGF(clsAnalysisResources.eRawDataTypeConstants rawDataType)
         {
             try
             {
@@ -148,7 +148,7 @@ namespace DTASpectraFileGen
                 string instrumentFilePath;
 
                 // Construct the path to the instrument data file
-                switch (eRawDataType)
+                switch (rawDataType)
                 {
                     case clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile:
                         instrumentFilePath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_RAW_EXTENSION);
@@ -164,7 +164,7 @@ namespace DTASpectraFileGen
                         break;
 
                     default:
-                        LogError("Raw data file type not supported: " + eRawDataType);
+                        LogError("Raw data file type not supported: " + rawDataType);
                         return false;
                 }
 
@@ -174,7 +174,7 @@ namespace DTASpectraFileGen
                 const int SCAN_START = 1;
                 var scanStop = DEFAULT_SCAN_STOP;
 
-                if (eRawDataType == clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile)
+                if (rawDataType == clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile)
                 {
                     // Get the maximum number of scans in the file
                     mMaxScanInFile = GetMaxScan(instrumentFilePath);

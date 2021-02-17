@@ -61,9 +61,9 @@ namespace AnalysisManagerICR2LSPlugIn
         {
             try
             {
-                var RawDataType = mJobParams.GetParam("RawDataType");
+                var rawDataTypeName = mJobParams.GetParam("RawDataType");
 
-                if (RawDataType == RAW_DATA_TYPE_DOT_RAW_FILES)
+                if (rawDataTypeName == RAW_DATA_TYPE_DOT_RAW_FILES)
                 {
                     // Thermo datasets do not have ser files
                     return true;
@@ -72,7 +72,7 @@ namespace AnalysisManagerICR2LSPlugIn
                 var strRemoteDatasetFolderPath = Path.Combine(mJobParams.GetParam("DatasetArchivePath"), mJobParams.GetParam(JOB_PARAM_DATASET_FOLDER_NAME));
 
                 string strLocalDatasetFolderPath;
-                if (RawDataType.ToLower() == RAW_DATA_TYPE_BRUKER_FT_FOLDER)
+                if (rawDataTypeName.ToLower() == RAW_DATA_TYPE_BRUKER_FT_FOLDER)
                 {
                     strLocalDatasetFolderPath = Path.Combine(mWorkDir, DatasetName + ".d");
                     strRemoteDatasetFolderPath = Path.Combine(strRemoteDatasetFolderPath, DatasetName + ".d");

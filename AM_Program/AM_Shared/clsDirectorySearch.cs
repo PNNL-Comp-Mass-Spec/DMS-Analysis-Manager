@@ -138,14 +138,14 @@ namespace AnalysisManagerBase
         /// to the instrument data file (or directory) on the storage server, even if the file/directory wasn't actually found</remarks>
         public string FindDatasetFileOrDirectory(int maxAttempts, out bool isDirectory, bool assumeUnpurged = false)
         {
-            var RawDataType = mJobParams.GetParam("RawDataType");
+            var rawDataTypeName = mJobParams.GetParam("RawDataType");
             var StoragePath = mJobParams.GetParam("DatasetStoragePath");
             var fileOrDirectoryPath = string.Empty;
 
             isDirectory = false;
 
-            var eRawDataType = clsAnalysisResources.GetRawDataType(RawDataType);
-            switch (eRawDataType)
+            var rawDataType = clsAnalysisResources.GetRawDataType(rawDataTypeName);
+            switch (rawDataType)
             {
                 case clsAnalysisResources.eRawDataTypeConstants.AgilentDFolder:
                     // Agilent ion trap data

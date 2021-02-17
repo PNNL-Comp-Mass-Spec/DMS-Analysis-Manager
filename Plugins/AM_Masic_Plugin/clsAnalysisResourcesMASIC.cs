@@ -24,12 +24,12 @@ namespace AnalysisManagerMasicPlugin
 
             // Get input data file
             bool createStoragePathInfoOnly;
-            var rawDataType = mJobParams.GetParam("rawDataType");
+            var rawDataTypeName = mJobParams.GetParam("rawDataType");
 
             // The ToolName job parameter holds the name of the job script we are executing
             var scriptName = mJobParams.GetParam("ToolName");
 
-            switch (rawDataType.ToLower())
+            switch (rawDataTypeName.ToLower())
             {
                 case RAW_DATA_TYPE_DOT_RAW_FILES:
                 case RAW_DATA_TYPE_DOT_WIFF_FILES:
@@ -50,7 +50,7 @@ namespace AnalysisManagerMasicPlugin
                     break;
             }
 
-            if (!FileSearch.RetrieveSpectra(rawDataType, createStoragePathInfoOnly))
+            if (!FileSearch.RetrieveSpectra(rawDataTypeName, createStoragePathInfoOnly))
             {
                 LogDebug("clsAnalysisResourcesDecon2ls.GetResources: Error occurred retrieving spectra.");
                 return CloseOutType.CLOSEOUT_FAILED;
@@ -61,7 +61,7 @@ namespace AnalysisManagerMasicPlugin
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            if (clsGlobal.IsMatch(rawDataType, RAW_DATA_TYPE_DOT_RAW_FILES) &&
+            if (clsGlobal.IsMatch(rawDataTypeName, RAW_DATA_TYPE_DOT_RAW_FILES) &&
                 scriptName.StartsWith("MASIC_Finnigan", StringComparison.OrdinalIgnoreCase))
             {
                 var rawFileName = DatasetName + ".raw";

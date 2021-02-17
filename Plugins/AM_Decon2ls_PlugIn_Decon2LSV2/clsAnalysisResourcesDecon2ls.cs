@@ -38,7 +38,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 return result;
             }
 
-            var rawDataType = mJobParams.GetParam("RawDataType");
+            var rawDataTypeName = mJobParams.GetParam("RawDataType");
 
             var msXmlOutputType = mJobParams.GetParam("MSXMLOutputType");
 
@@ -68,7 +68,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             else
             {
                 // Get input data file
-                if (!FileSearch.RetrieveSpectra(rawDataType))
+                if (!FileSearch.RetrieveSpectra(rawDataTypeName))
                 {
                     LogError("clsAnalysisResourcesDecon2ls.GetResources: Error occurred retrieving spectra.");
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -241,12 +241,12 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 }
 
                 // Gets the Decon2LS file type based on the input data type
-                var eRawDataType = GetRawDataType(rawDataTypeName);
+                var rawDataType = GetRawDataType(rawDataTypeName);
 
-                var datasetFilePath = clsAnalysisToolRunnerDecon2ls.GetInputFilePath(mWorkDir, DatasetName, eRawDataType);
+                var datasetFilePath = clsAnalysisToolRunnerDecon2ls.GetInputFilePath(mWorkDir, DatasetName, rawDataType);
                 bool success;
 
-                switch (eRawDataType)
+                switch (rawDataType)
                 {
                     case eRawDataTypeConstants.ThermoRawFile:
                         LogMessage("Examining the scan types in the .raw file");

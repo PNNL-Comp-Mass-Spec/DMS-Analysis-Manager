@@ -40,19 +40,19 @@ namespace AnalysisManagerThermoPeakDataExporterPlugIn
 
                 // Get input data file
                 const bool createStoragePathInfoOnly = false;
-                var rawDataType = mJobParams.GetParam("rawDataType");
+                var rawDataTypeName = mJobParams.GetParam("rawDataType");
 
-                switch (rawDataType.ToLower())
+                switch (rawDataTypeName.ToLower())
                 {
                     case RAW_DATA_TYPE_DOT_RAW_FILES:
                         // Processing a Thermo .raw file
                         break;
                     default:
-                        LogError("This tool is not compatible with datasets of type " + rawDataType);
+                        LogError("This tool is not compatible with datasets of type " + rawDataTypeName);
                         return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                if (!FileSearch.RetrieveSpectra(rawDataType, createStoragePathInfoOnly))
+                if (!FileSearch.RetrieveSpectra(rawDataTypeName, createStoragePathInfoOnly))
                 {
                     LogDebug("clsAnalysisResourcesThermoPeakDataExporter.GetResources: Error occurred retrieving spectra.");
                     return CloseOutType.CLOSEOUT_FAILED;

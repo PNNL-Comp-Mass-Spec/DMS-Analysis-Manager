@@ -35,13 +35,13 @@ namespace DTASpectraFileGen
                 return result;
             }
 
-            var rawDataType = mJobParams.GetJobParameter("RawDataType", "");
+            var rawDataTypeName = mJobParams.GetJobParameter("RawDataType", "");
             var mgfInstrumentData = mJobParams.GetJobParameter("MGFInstrumentData", false);
 
             var zippedDTAFilePath = string.Empty;
 
-            var eDtaGeneratorType = clsDtaGenToolRunner.GetDTAGeneratorInfo(mJobParams, out var errorMessage);
-            if (eDtaGeneratorType == clsDtaGenToolRunner.eDTAGeneratorConstants.Unknown)
+            var dtaGeneratorType = clsDtaGenToolRunner.GetDTAGeneratorInfo(mJobParams, out var errorMessage);
+            if (dtaGeneratorType == clsDtaGenToolRunner.eDTAGeneratorConstants.Unknown)
             {
                 if (string.IsNullOrEmpty(errorMessage))
                 {
@@ -55,7 +55,7 @@ namespace DTASpectraFileGen
                 return CloseOutType.CLOSEOUT_NO_SETTINGS_FILE;
             }
 
-            if (!GetParameterFiles(eDtaGeneratorType))
+            if (!GetParameterFiles(dtaGeneratorType))
             {
                 return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
             }
@@ -74,7 +74,7 @@ namespace DTASpectraFileGen
             else
             {
                 // Get input data file
-                if (!FileSearch.RetrieveSpectra(rawDataType))
+                if (!FileSearch.RetrieveSpectra(rawDataTypeName))
                 {
                     if (string.IsNullOrEmpty(mMessage))
                     {
@@ -84,7 +84,7 @@ namespace DTASpectraFileGen
                 }
 
                 bool centroidDTAs;
-                if (eDtaGeneratorType == clsDtaGenToolRunner.eDTAGeneratorConstants.DeconConsole)
+                if (dtaGeneratorType == clsDtaGenToolRunner.eDTAGeneratorConstants.DeconConsole)
                 {
                     centroidDTAs = false;
                 }

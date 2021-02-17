@@ -113,7 +113,7 @@ namespace DTASpectraFileGen
         /// <remarks></remarks>
         private bool ConvertMGFtoDTA()
         {
-            var rawDataType = mJobParams.GetJobParameter("RawDataType", "");
+            var rawDataTypeName = mJobParams.GetJobParameter("RawDataType", "");
 
             var mgfConverter = new clsMGFConverter(mDebugLevel, mWorkDir)
             {
@@ -123,8 +123,8 @@ namespace DTASpectraFileGen
 
             RegisterEvents(mgfConverter);
 
-            var eRawDataType = clsAnalysisResources.GetRawDataType(rawDataType);
-            var success = mgfConverter.ConvertMGFtoDTA(eRawDataType, mDatasetName);
+            var rawDataType = clsAnalysisResources.GetRawDataType(rawDataTypeName);
+            var success = mgfConverter.ConvertMGFtoDTA(rawDataType, mDatasetName);
 
             if (!success)
             {
@@ -140,10 +140,10 @@ namespace DTASpectraFileGen
         /// Create .mgf file using MSConvert
         /// This function is called by MakeDTAFilesThreaded
         /// </summary>
-        /// <param name="eRawDataType">Raw data file type</param>
+        /// <param name="rawDataType">Raw data file type</param>
         /// <returns>TRUE for success; FALSE for failure</returns>
         /// <remarks></remarks>
-        private bool ConvertRawToMGF(clsAnalysisResources.eRawDataTypeConstants eRawDataType)
+        private bool ConvertRawToMGF(clsAnalysisResources.eRawDataTypeConstants rawDataType)
         {
             string rawFilePath;
 
@@ -155,13 +155,13 @@ namespace DTASpectraFileGen
             mErrMsg = string.Empty;
 
             // Construct the path to the .raw file
-            switch (eRawDataType)
+            switch (rawDataType)
             {
                 case clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile:
                     rawFilePath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_RAW_EXTENSION);
                     break;
                 default:
-                    mErrMsg = "Data file type not supported by the DeconMSn workflow in DeconConsole: " + eRawDataType;
+                    mErrMsg = "Data file type not supported by the DeconMSn workflow in DeconConsole: " + rawDataType;
                     return false;
             }
 
@@ -169,7 +169,7 @@ namespace DTASpectraFileGen
             mInputFilePath = rawFilePath;
             mJobParams.AddResultFileToSkip(mInstrumentFileName);
 
-            if (eRawDataType == clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile)
+            if (rawDataType == clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile)
             {
                 // Get the maximum number of scans in the file
                 mMaxScanInFile = GetMaxScan(rawFilePath);

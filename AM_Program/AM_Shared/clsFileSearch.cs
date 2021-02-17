@@ -2229,12 +2229,12 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Retrieves the spectra file(s) based on raw data type and puts them in the working directory
         /// </summary>
-        /// <param name="rawDataType">Type of data to copy</param>
+        /// <param name="rawDataTypeName">Type of data to copy</param>
         /// <returns>TRUE for success; FALSE for failure</returns>
-        public bool RetrieveSpectra(string rawDataType)
+        public bool RetrieveSpectra(string rawDataTypeName)
         {
             const bool createStoragePathInfoOnly = false;
-            return RetrieveSpectra(rawDataType, createStoragePathInfoOnly);
+            return RetrieveSpectra(rawDataTypeName, createStoragePathInfoOnly);
         }
 
         /// <summary>
@@ -2246,30 +2246,30 @@ namespace AnalysisManagerBase
         /// and this file's first line will be the full path to the spectrum file (or spectrum directory)
         /// </param>
         /// <returns>TRUE for success; FALSE for failure</returns>
-        public bool RetrieveSpectra(string rawDataType, bool createStoragePathInfoOnly)
+        public bool RetrieveSpectra(string rawDataTypeName, bool createStoragePathInfoOnly)
         {
-            return RetrieveSpectra(rawDataType, createStoragePathInfoOnly, clsDirectorySearch.DEFAULT_MAX_RETRY_COUNT);
+            return RetrieveSpectra(rawDataTypeName, createStoragePathInfoOnly, clsDirectorySearch.DEFAULT_MAX_RETRY_COUNT);
         }
 
         /// <summary>
         /// Retrieves the spectra file(s) based on raw data type and puts them in the working directory
         /// </summary>
-        /// <param name="rawDataType">Type of data to copy</param>
+        /// <param name="rawDataTypeName">Type of data to copy</param>
         /// <param name="createStoragePathInfoOnly">
         /// When true, does not actually copy the dataset file (or directory), and instead creates a file named Dataset.raw_StoragePathInfo.txt
         /// The first line in the StoragePathInfo file will be the full path to the spectrum file (or spectrum directory)
         /// </param>
         /// <param name="maxAttempts">Maximum number of attempts</param>
         /// <returns>TRUE for success; FALSE for failure</returns>
-        public bool RetrieveSpectra(string rawDataType, bool createStoragePathInfoOnly, int maxAttempts)
+        public bool RetrieveSpectra(string rawDataTypeName, bool createStoragePathInfoOnly, int maxAttempts)
         {
             var success = false;
             var storagePath = mJobParams.GetParam("DatasetStoragePath");
 
             OnStatusEvent("Retrieving spectra file(s)");
 
-            var rawDataTypeEnum = clsAnalysisResources.GetRawDataType(rawDataType);
-            switch (rawDataTypeEnum)
+            var rawDataType = clsAnalysisResources.GetRawDataType(rawDataTypeName);
+            switch (rawDataType)
             {
                 case clsAnalysisResources.eRawDataTypeConstants.AgilentDFolder:
                     // Agilent ion trap data
@@ -2349,7 +2349,7 @@ namespace AnalysisManagerBase
                     break;
                 default:
                     // rawDataType is not recognized or not supported by this function
-                    if (rawDataTypeEnum == clsAnalysisResources.eRawDataTypeConstants.Unknown)
+                    if (rawDataType == clsAnalysisResources.eRawDataTypeConstants.Unknown)
                     {
                         OnErrorEvent("Invalid data type specified: " + rawDataType);
                     }

@@ -52,22 +52,22 @@ namespace AnalysisManagerUIMFtoMassHunterPlugin
                  */
 
                 // Retrieve the .UIMF file
-                var rawDataType = mJobParams.GetParam("rawDataType");
+                var rawDataTypeName = mJobParams.GetParam("rawDataType");
 
                 // The ToolName job parameter holds the name of the job script we are executing
                 // var scriptName = mJobParams.GetParam("ToolName");
 
-                switch (rawDataType.ToLower())
+                switch (rawDataTypeName.ToLower())
                 {
                     case RAW_DATA_TYPE_DOT_UIMF_FILES:
                         // Valid dataset type
                         break;
                     default:
-                        LogError("Dataset type not supported: " + rawDataType);
+                        LogError("Dataset type not supported: " + rawDataTypeName);
                         return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                if (!FileSearch.RetrieveSpectra(rawDataType))
+                if (!FileSearch.RetrieveSpectra(rawDataTypeName))
                 {
                     LogDebug("clsAnalysisResourcesMASIC.GetResources: Error occurred retrieving spectra.");
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -78,7 +78,7 @@ namespace AnalysisManagerUIMFtoMassHunterPlugin
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                if (rawDataType.ToLower() == RAW_DATA_TYPE_DOT_UIMF_FILES)
+                if (rawDataTypeName.ToLower() == RAW_DATA_TYPE_DOT_UIMF_FILES)
                 {
                     // Valid dataset type
                     var uimfFileName = DatasetName + ".uimf";

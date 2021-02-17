@@ -935,12 +935,12 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             }
         }
 
-        private DeconToolsFileTypeConstants GetInputFileType(clsAnalysisResources.eRawDataTypeConstants eRawDataType)
+        private DeconToolsFileTypeConstants GetInputFileType(clsAnalysisResources.eRawDataTypeConstants rawDataType)
         {
             var InstrumentClass = mJobParams.GetParam("instClass");
 
             // Gets the Decon2LS file type based on the input data type
-            switch (eRawDataType)
+            switch (rawDataType)
             {
                 case clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile:
                     return DeconToolsFileTypeConstants.Thermo_Raw;
@@ -982,7 +982,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                     // Future: Add support for this after Decon2LS is updated
                     // Return DeconToolsFileTypeConstants.Bruker_15T
 
-                    LogError("Decon2LS_V2 does not yet support Bruker MALDI data (" + eRawDataType + ")");
+                    LogError("Decon2LS_V2 does not yet support Bruker MALDI data (" + rawDataType + ")");
                     return DeconToolsFileTypeConstants.Undefined;
 
                 case clsAnalysisResources.eRawDataTypeConstants.BrukerMALDIImaging:
@@ -990,7 +990,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                     // Future: Add support for this after Decon2LS is updated
                     // Return DeconToolsFileTypeConstants.Bruker_15T
 
-                    LogError("Decon2LS_V2 does not yet support Bruker MALDI data (" + eRawDataType + ")");
+                    LogError("Decon2LS_V2 does not yet support Bruker MALDI data (" + rawDataType + ")");
                     return DeconToolsFileTypeConstants.Undefined;
 
                 case clsAnalysisResources.eRawDataTypeConstants.mzXML:
@@ -1220,22 +1220,20 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             return false;
         }
 
-        public string GetInputFilePath(clsAnalysisResources.eRawDataTypeConstants eRawDataType)
+        public string GetInputFilePath(clsAnalysisResources.eRawDataTypeConstants rawDataType)
         {
-            return GetInputFilePath(mWorkDir, mDatasetName, eRawDataType);
+            return GetInputFilePath(mWorkDir, mDatasetName, rawDataType);
         }
 
         /// <summary>
         /// Assembles a string telling Decon2LS the name of the input file or folder
         /// </summary>
-        /// <param name="datasetName"></param>
-        /// <param name="eRawDataType"></param>
         /// <param name="workDirPath"></param>
-        /// <returns></returns>
-        /// <remarks></remarks>
-        public static string GetInputFilePath(string workDirPath, string datasetName, clsAnalysisResources.eRawDataTypeConstants eRawDataType)
+        /// <param name="datasetName"></param>
+        /// <param name="rawDataType"></param>
+        public static string GetInputFilePath(string workDirPath, string datasetName, clsAnalysisResources.eRawDataTypeConstants rawDataType)
         {
-            switch (eRawDataType)
+            switch (rawDataType)
             {
                 case clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile:
                     return Path.Combine(workDirPath, datasetName + clsAnalysisResources.DOT_RAW_EXTENSION);
