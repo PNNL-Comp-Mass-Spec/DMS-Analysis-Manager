@@ -2548,38 +2548,23 @@ namespace AnalysisManagerBase
                 return eRawDataTypeConstants.Unknown;
             }
 
-            switch (rawDataType.ToLower())
+            return rawDataType.ToLower() switch
             {
-                case RAW_DATA_TYPE_DOT_D_FOLDERS:
-                    return eRawDataTypeConstants.AgilentDFolder;
-                case RAW_DATA_TYPE_ZIPPED_S_FOLDERS:
-                    return eRawDataTypeConstants.ZippedSFolders;
-                case RAW_DATA_TYPE_DOT_RAW_FOLDER:
-                    return eRawDataTypeConstants.MicromassRawFolder;
-                case RAW_DATA_TYPE_DOT_RAW_FILES:
-                    return eRawDataTypeConstants.ThermoRawFile;
-                case RAW_DATA_TYPE_DOT_WIFF_FILES:
-                    return eRawDataTypeConstants.AgilentQStarWiffFile;
-                case RAW_DATA_TYPE_DOT_UIMF_FILES:
-                    return eRawDataTypeConstants.UIMF;
-                case RAW_DATA_TYPE_DOT_MZXML_FILES:
-                    return eRawDataTypeConstants.mzXML;
-                case RAW_DATA_TYPE_DOT_MZML_FILES:
-                    return eRawDataTypeConstants.mzML;
-                case RAW_DATA_TYPE_BRUKER_FT_FOLDER:
-                    return eRawDataTypeConstants.BrukerFTFolder;
-                case RAW_DATA_TYPE_BRUKER_MALDI_SPOT:
-                    return eRawDataTypeConstants.BrukerMALDISpot;
-                case RAW_DATA_TYPE_BRUKER_MALDI_IMAGING:
-                    return eRawDataTypeConstants.BrukerMALDIImaging;
-                case RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER:
-                    return eRawDataTypeConstants.BrukerTOFBaf;
-                case RAW_DATA_TYPE_BRUKER_TOF_TDF_FOLDER:
-                    return eRawDataTypeConstants.BrukerTOFTdf;
-
-                default:
-                    return eRawDataTypeConstants.Unknown;
-            }
+                RAW_DATA_TYPE_DOT_D_FOLDERS => eRawDataTypeConstants.AgilentDFolder,
+                RAW_DATA_TYPE_ZIPPED_S_FOLDERS => eRawDataTypeConstants.ZippedSFolders,
+                RAW_DATA_TYPE_DOT_RAW_FOLDER => eRawDataTypeConstants.MicromassRawFolder,
+                RAW_DATA_TYPE_DOT_RAW_FILES => eRawDataTypeConstants.ThermoRawFile,
+                RAW_DATA_TYPE_DOT_WIFF_FILES => eRawDataTypeConstants.AgilentQStarWiffFile,
+                RAW_DATA_TYPE_DOT_UIMF_FILES => eRawDataTypeConstants.UIMF,
+                RAW_DATA_TYPE_DOT_MZXML_FILES => eRawDataTypeConstants.mzXML,
+                RAW_DATA_TYPE_DOT_MZML_FILES => eRawDataTypeConstants.mzML,
+                RAW_DATA_TYPE_BRUKER_FT_FOLDER => eRawDataTypeConstants.BrukerFTFolder,
+                RAW_DATA_TYPE_BRUKER_MALDI_SPOT => eRawDataTypeConstants.BrukerMALDISpot,
+                RAW_DATA_TYPE_BRUKER_MALDI_IMAGING => eRawDataTypeConstants.BrukerMALDIImaging,
+                RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER => eRawDataTypeConstants.BrukerTOFBaf,
+                RAW_DATA_TYPE_BRUKER_TOF_TDF_FOLDER => eRawDataTypeConstants.BrukerTOFTdf,
+                _ => eRawDataTypeConstants.Unknown
+            };
         }
 
         /// <summary>
@@ -2598,15 +2583,12 @@ namespace AnalysisManagerBase
                 return jobParams.GetParam("RawDataType");
             }
 
-            switch (msXmlOutputType.ToLower())
+            return msXmlOutputType.ToLower() switch
             {
-                case "mzxml":
-                    return RAW_DATA_TYPE_DOT_MZXML_FILES;
-                case "mzml":
-                    return RAW_DATA_TYPE_DOT_MZML_FILES;
-                default:
-                    return string.Empty;
-            }
+                "mzxml" => RAW_DATA_TYPE_DOT_MZXML_FILES,
+                "mzml" => RAW_DATA_TYPE_DOT_MZML_FILES,
+                _ => string.Empty
+            };
         }
 
         /// <summary>

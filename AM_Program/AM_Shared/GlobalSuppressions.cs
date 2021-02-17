@@ -63,3 +63,5 @@ using System.Diagnostics.CodeAnalysis;
 [assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Allowed", Scope = "type", Target = "~T:AnalysisManagerBase.clsToolVersionUtilities")]
 [assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Allowed", Scope = "type", Target = "~T:AnalysisManagerBase.clsXMLUtils")]
 [assembly: SuppressMessage("Usage", "RCS1246:Use element access.", Justification = "Prefer to use .First()", Scope = "module")]
+[assembly: SuppressMessage("Style", "IDE0066:Convert switch statement to expression", Justification = "Leave as-is due to multiple enums being handled the same way", Scope = "member", Target = "~M:AnalysisManagerBase.clsRemoteMonitor.ParseJobStatusFile(System.String)~AnalysisManagerBase.clsRemoteMonitor.EnumRemoteJobStatus")]
+[assembly: SuppressMessage("Style", "IDE0066:Convert switch statement to expression", Justification = "Leave as-is for readability", Scope = "member", Target = "~M:AnalysisManagerBase.clsFileSearch.FindMsXmlFileInCache(AnalysisManagerBase.clsAnalysisResources.MSXMLOutputTypeConstants,System.String@)~System.String")]

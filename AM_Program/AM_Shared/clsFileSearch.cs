@@ -750,15 +750,19 @@ namespace AnalysisManagerBase
             var msXMLFilename = string.Copy(DatasetName);
             hashCheckFilePath = string.Empty;
 
+            // ReSharper disable once SwitchStatementHandlesSomeKnownEnumValuesWithDefault
+            // ReSharper disable once ConvertSwitchStatementToSwitchExpression
             switch (msXmlType)
             {
                 case clsAnalysisResources.MSXMLOutputTypeConstants.mzXML:
                     msXMLFilename += clsAnalysisResources.DOT_MZXML_EXTENSION + clsAnalysisResources.DOT_GZ_EXTENSION;
                     break;
+
                 case clsAnalysisResources.MSXMLOutputTypeConstants.mzML:
                     // All MzML files should be gzipped
                     msXMLFilename += clsAnalysisResources.DOT_MZML_EXTENSION + clsAnalysisResources.DOT_GZ_EXTENSION;
                     break;
+
                 default:
                     throw new ArgumentOutOfRangeException(nameof(msXmlType), "Unsupported enum value for MSXMLOutputTypeConstants: " + msXmlType);
             }

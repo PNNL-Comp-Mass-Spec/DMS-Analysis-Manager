@@ -1765,17 +1765,13 @@ namespace AnalysisManagerProg
         {
             var managerErrorCleanupMode = mMgrSettings.GetParam("ManagerErrorCleanupMode", "0");
 
-            switch (managerErrorCleanupMode.Trim())
+            return managerErrorCleanupMode.Trim() switch
             {
-                case "0":
-                    return clsCleanupMgrErrors.eCleanupModeConstants.Disabled;
-                case "1":
-                    return clsCleanupMgrErrors.eCleanupModeConstants.CleanupOnce;
-                case "2":
-                    return clsCleanupMgrErrors.eCleanupModeConstants.CleanupAlways;
-                default:
-                    return clsCleanupMgrErrors.eCleanupModeConstants.Disabled;
-            }
+                "0" => clsCleanupMgrErrors.eCleanupModeConstants.Disabled,
+                "1" => clsCleanupMgrErrors.eCleanupModeConstants.CleanupOnce,
+                "2" => clsCleanupMgrErrors.eCleanupModeConstants.CleanupAlways,
+                _ => clsCleanupMgrErrors.eCleanupModeConstants.Disabled
+            };
         }
 
         private bool HandleJobFailure(IToolRunner toolRunner, CloseOutType resultCode)

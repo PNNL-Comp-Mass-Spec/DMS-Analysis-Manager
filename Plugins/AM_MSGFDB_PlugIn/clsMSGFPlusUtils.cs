@@ -567,26 +567,14 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             if (mDebugLevel >= 1)
             {
-                string instrumentDescription;
-
-                switch (instrumentIDNew)
+                var instrumentDescription = instrumentIDNew switch
                 {
-                    case "0":
-                        instrumentDescription = "Low-res MSn";
-                        break;
-                    case "1":
-                        instrumentDescription = "High-res MSn";
-                        break;
-                    case "2":
-                        instrumentDescription = "TOF";
-                        break;
-                    case "3":
-                        instrumentDescription = "Q-Exactive";
-                        break;
-                    default:
-                        instrumentDescription = "??";
-                        break;
-                }
+                    "0" => "Low-res MSn",
+                    "1" => "High-res MSn",
+                    "2" => "TOF",
+                    "3" => "Q-Exactive",
+                    _ => "??"
+                };
 
                 if (paramFileLine.ParamInfo.ValueLocked)
                 {
@@ -3364,24 +3352,14 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             var elapsedTimeValue = float.Parse(reElapsedTimeMatch.Groups["ElapsedTime"].Value);
             var elapsedTimeUnits = reElapsedTimeMatch.Groups["Units"].Value;
-            float elapsedTimeHours;
 
-            switch (elapsedTimeUnits)
+            var elapsedTimeHours = elapsedTimeUnits switch
             {
-                case "seconds":
-                    elapsedTimeHours = elapsedTimeValue / 3600;
-                    break;
-                case "minutes":
-                    elapsedTimeHours = elapsedTimeValue / 60;
-                    break;
-                case "hours":
-                    elapsedTimeHours = elapsedTimeValue;
-                    break;
-                default:
-                    // Unknown units; ignore it
-                    elapsedTimeHours = 0;
-                    break;
-            }
+                "seconds" => elapsedTimeValue / 3600,
+                "minutes" => elapsedTimeValue / 60,
+                "hours" => elapsedTimeValue,
+                _ => 0
+            };
 
             if (elapsedTimeHours > totalElapsedTimeHours)
             {
