@@ -1224,33 +1224,33 @@ namespace AnalysisManagerMSGFDBPlugIn
         {
             try
             {
-                var fiFastaFile = new FileInfo(fastaFilePath);
+                var fastaFile = new FileInfo(fastaFilePath);
 
-                if (fiFastaFile.DirectoryName == null)
+                if (fastaFile.DirectoryName == null)
                 {
                     ErrorMessage = "Unable to determine the parent directory of " + fastaFilePath;
                     OnErrorEvent(ErrorMessage);
                     return string.Empty;
                 }
 
-                var fiTrimmedFasta = new FileInfo(Path.Combine(
-                    fiFastaFile.DirectoryName,
-                    Path.GetFileNameWithoutExtension(fiFastaFile.Name) + "_Trim" + maxFastaFileSizeMB + "MB.fasta"));
+                var trimmedFasta = new FileInfo(Path.Combine(
+                    fastaFile.DirectoryName,
+                    Path.GetFileNameWithoutExtension(fastaFile.Name) + "_Trim" + maxFastaFileSizeMB + "MB.fasta"));
 
-                if (fiTrimmedFasta.Exists)
+                if (trimmedFasta.Exists)
                 {
                     // Verify that the file matches the .hashcheck value
-                    var hashcheckFilePath = fiTrimmedFasta.FullName + clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX;
+                    var hashcheckFilePath = trimmedFasta.FullName + clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX;
 
-                    if (FileSyncUtils.ValidateFileVsHashcheck(fiTrimmedFasta.FullName, hashcheckFilePath, out _))
+                    if (FileSyncUtils.ValidateFileVsHashcheck(trimmedFasta.FullName, hashcheckFilePath, out _))
                     {
                         // The trimmed fasta file is valid
-                        OnStatusEvent("Using existing trimmed fasta: " + fiTrimmedFasta.Name);
-                        return fiTrimmedFasta.FullName;
+                        OnStatusEvent("Using existing trimmed fasta: " + trimmedFasta.Name);
+                        return trimmedFasta.FullName;
                     }
                 }
 
-                OnStatusEvent("Creating trimmed fasta: " + fiTrimmedFasta.Name);
+                OnStatusEvent("Creating trimmed fasta: " + trimmedFasta.Name);
 
                 // Construct the list of required contaminant proteins
                 var contaminantUtility = new clsFastaContaminantUtility();
@@ -1265,8 +1265,8 @@ namespace AnalysisManagerMSGFDBPlugIn
                 long bytesWritten = 0;
                 var proteinCount = 0;
 
-                using (var sourceFastaReader = new StreamReader(new FileStream(fiFastaFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
-                using (var trimmedFastaWriter = new StreamWriter(new FileStream(fiTrimmedFasta.FullName, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                using (var sourceFastaReader = new StreamReader(new FileStream(fastaFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                using (var trimmedFastaWriter = new StreamWriter(new FileStream(trimmedFasta.FullName, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
                     while (!sourceFastaReader.EndOfStream)
                     {
@@ -1313,8 +1313,8 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 OnStatusEvent("Trimmed fasta created using " + proteinCount + " proteins; creating the hashcheck file");
 
-                clsGlobal.CreateHashcheckFile(fiTrimmedFasta.FullName, true);
-                var trimmedFastaFilePath = fiTrimmedFasta.FullName;
+                clsGlobal.CreateHashcheckFile(trimmedFasta.FullName, true);
+                var trimmedFastaFilePath = trimmedFasta.FullName;
                 return trimmedFastaFilePath;
             }
             catch (Exception ex)
