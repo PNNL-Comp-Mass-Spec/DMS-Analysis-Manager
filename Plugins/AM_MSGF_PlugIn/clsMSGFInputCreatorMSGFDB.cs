@@ -16,6 +16,8 @@ namespace AnalysisManagerMSGFPlugin
 {
     public sealed class clsMSGFInputCreatorMSGFDB : clsMSGFInputCreator
     {
+        // Ignore Spelling: msgfdb, MODa, fht
+
         /// <summary>
         /// Constructor
         /// </summary>

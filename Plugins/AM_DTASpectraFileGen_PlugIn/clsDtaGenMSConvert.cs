@@ -16,6 +16,8 @@ namespace DTASpectraFileGen
 {
     public class clsDtaGenMSConvert : clsDtaGenThermoRaw
     {
+        // Ignore Spelling: mgf, dta, MGFtoCDTA, Tol
+
         public const int DEFAULT_CENTROID_PEAK_COUNT_TO_RETAIN = 250;
 
         public bool ForceCentroidOn { get; set; }
