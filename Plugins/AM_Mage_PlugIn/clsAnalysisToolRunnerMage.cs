@@ -276,6 +276,28 @@ namespace AnalysisManager_Mage_PlugIn
                     ionColumns.Add("Ion_130.141");
                 }
 
+                if (workFlowSteps.Contains("TMT16Plex"))
+                {
+                    // 16-plex TMT
+                    labelingScheme = "TMT16Plex";
+                    ionColumns.Add("Ion_126.128");
+                    ionColumns.Add("Ion_127.125");
+                    ionColumns.Add("Ion_127.131");
+                    ionColumns.Add("Ion_128.128");
+                    ionColumns.Add("Ion_128.134");
+                    ionColumns.Add("Ion_129.131");
+                    ionColumns.Add("Ion_129.138");
+                    ionColumns.Add("Ion_130.135");
+                    ionColumns.Add("Ion_130.141");
+                    ionColumns.Add("Ion_131.138");
+                    ionColumns.Add("Ion_131.144");
+                    ionColumns.Add("Ion_132.142");
+                    ionColumns.Add("Ion_132.148");
+                    ionColumns.Add("Ion_133.145");
+                    ionColumns.Add("Ion_133.151");
+                    ionColumns.Add("Ion_134.148");
+                }
+
                 if (ionColumns.Count > 0)
                 {
                     if (!TableContainsDataAndColumns(resultsDB, "T_Reporter_Ions", ionColumns, out errorMessage, out exceptionDetail))
