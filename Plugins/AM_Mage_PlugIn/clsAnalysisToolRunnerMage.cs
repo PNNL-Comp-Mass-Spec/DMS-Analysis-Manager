@@ -11,6 +11,8 @@ namespace AnalysisManager_Mage_PlugIn
     // ReSharper disable once UnusedMember.Global
     public class clsAnalysisToolRunnerMage : clsAnalysisToolRunnerMAC
     {
+        // Ignore Spelling: iTraq, plex
+
         public const string T_ALIAS_FILE = "t_alias.txt";
         public const string T_ALIAS_TABLE = "T_alias";
 
@@ -332,14 +334,15 @@ namespace AnalysisManager_Mage_PlugIn
                 }
             }
 
-            var itraqMode = false;
+            var iTraqMode = false;
+
             var analysisType = mJobParams.GetJobParameter("AnalysisType", string.Empty);
             if (analysisType.Contains("iTRAQ"))
-                itraqMode = true;
+                iTraqMode = true;
 
             // If the Mage Operations list contains "ImportDataPackageFiles", make sure that table "T_alias" was created
             // If it wasn't, we should fail out this job step
-            if (itraqMode || mageOperations.Contains("ImportDataPackageFiles"))
+            if (iTraqMode || mageOperations.Contains("ImportDataPackageFiles"))
             {
                 if (!TableExists(resultsDB, T_ALIAS_TABLE))
                 {
