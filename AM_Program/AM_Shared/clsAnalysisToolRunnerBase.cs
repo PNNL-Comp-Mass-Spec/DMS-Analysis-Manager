@@ -1490,6 +1490,11 @@ namespace AnalysisManagerBase
             out string errorMessage)
         {
             // Check whether the settings file specifies that a specific version of the step tool be used
+
+            // For example, settings file TopPIC_TopFD_v1.3.1_Precursor_3mz_MaxMass100k.xml has
+            // <item key="TopFD_Version" value="v1.3.1"/>
+            // <item key="TopPIC_Version" value="v1.3.1"/>
+
             var stepToolVersion = jobParams.GetParam(stepToolName + "_Version");
 
             return DetermineProgramLocation(stepToolName, progLocManagerParamName, exeName, stepToolVersion, mgrParams, out errorMessage);

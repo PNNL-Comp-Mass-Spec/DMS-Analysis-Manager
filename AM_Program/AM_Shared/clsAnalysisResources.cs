@@ -695,6 +695,10 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Step tool name
         /// </summary>
+        /// <remarks>
+        /// Step tools are defined in plugin_info.xml
+        /// Example step tool names: msgfplus, msalign, and toppic
+        /// </remarks>
         public string StepToolName { get; private set; }
 
         /// <summary>
