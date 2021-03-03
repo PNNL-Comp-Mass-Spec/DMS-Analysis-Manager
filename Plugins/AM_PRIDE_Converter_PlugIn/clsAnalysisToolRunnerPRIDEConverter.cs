@@ -3212,10 +3212,8 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     }
                     else if (instrumentName.Contains("HFX"))
                     {
-                        // The correct accession is MS:1002877 for "Q Exactive HF-X"
-                        // However, as of October 2020, MassIVE does not yet support this accession
-                        accession = "MS:1002523";
-                        description = "Q Exactive HF";
+                        accession = "MS:1002877";
+                        description = "Q Exactive HF-X";
                     }
                     else
                     {
@@ -3237,8 +3235,8 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     break;
                 case "VelosPro":
                     // Note that VPro01 is actually a Velos Pro
-                    accession = "MS:1000855";
-                    description = "LTQ Velos";
+                    accession = "MS:1003096";
+                    description = "LTQ Orbitrap Velos Pro";
                     break;
             }
         }
