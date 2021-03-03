@@ -246,6 +246,12 @@ namespace AnalysisManagerTopFDPlugIn
                     jobCandidates.Add(jobValue, topFDJobInfo);
                 }
 
+                if (jobCandidates.Keys.Count == 0)
+                {
+                    // No jobs were found
+                    return false;
+                }
+
                 var jobList = string.Join(",", jobCandidates.Keys);
 
                 // Data Source=gigasax;Initial Catalog=DMS5
