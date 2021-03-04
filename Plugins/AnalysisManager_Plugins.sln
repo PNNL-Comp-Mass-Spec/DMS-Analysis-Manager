@@ -21,7 +21,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerExtractionPl
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerICR2LSPlugIn", "AM_ICR2LS_PlugIn\AnalysisManagerICR2LSPlugIn.csproj", "{55DB2CD1-1298-4414-8425-D79DEB7F8DE5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerIDMPlugin", "AM_IDM_Plugin\AM_IDM_Plugin\AnalysisManagerIDMPlugin.csproj", "{AA0848C0-5407-4ED6-9FE4-720BF6E63BAE}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerIDMPlugin", "AM_IDM_Plugin\AnalysisManagerIDMPlugin.csproj", "{AA0848C0-5407-4ED6-9FE4-720BF6E63BAE}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerIDPickerPlugIn", "AM_IDPicker_PlugIn\AnalysisManagerIDPickerPlugIn.csproj", "{DD269705-9BF2-413C-9984-198ECFB300DF}"
 EndProject
@@ -107,7 +107,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MSGFResultsSummarizer", "AM
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerMetaboliteDetectorPlugin", "AM_MetaboliteDetector_Plugin\AnalysisManagerMetaboliteDetectorPlugin.csproj", "{665C2F14-4954-4609-BBA4-C91206C318B2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AM_Shared", "..\AM_Program\AM_Shared\AM_Shared.csproj", "{35B6B79E-C3B0-4E3A-B3ED-64167A470D7E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AM_Shared", "..\AM_Program\AM_Shared.csproj", "{35B6B79E-C3B0-4E3A-B3ED-64167A470D7E}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerUIMFtoMassHunterPlugin", "AM_UIMFtoMassHunter_Plugin\AnalysisManagerUIMFtoMassHunterPlugin.csproj", "{43A57577-6207-4FB7-92EE-C4E1B9BED1E3}"
 EndProject
