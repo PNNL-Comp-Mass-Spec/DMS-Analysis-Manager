@@ -397,6 +397,22 @@
 		Class="AnalysisManagerPepProtProphetPlugIn.clsAnalysisToolRunnerPepProtProphet" 
 		AssemblyFile="AnalysisManagerPepProtProphetPlugIn.dll" 
 	/>
+	<ToolRunner 
+		Tool="maxqpeak" 
+		Class="AnalysisManagerMaxQuantPlugIn.AnalysisToolRunnerMaxQuant" 
+		AssemblyFile="AnalysisManagerMaxQuantPlugIn.dll" />
+	<ToolRunner 
+		Tool="maxqs1" 
+		Class="AnalysisManagerMaxQuantPlugIn.AnalysisToolRunnerMaxQuant" 
+		AssemblyFile="AnalysisManagerMaxQuantPlugIn.dll" />
+	<ToolRunner 
+		Tool="maxqs2" 
+		Class="AnalysisManagerMaxQuantPlugIn.AnalysisToolRunnerMaxQuant" 
+		AssemblyFile="AnalysisManagerMaxQuantPlugIn.dll" />
+	<ToolRunner 
+		Tool="maxqs3" 
+		Class="AnalysisManagerMaxQuantPlugIn.AnalysisToolRunnerMaxQuant" 
+		AssemblyFile="AnalysisManagerMaxQuantPlugIn.dll" />
 </ToolRunners>
 
 <Resourcers>
@@ -795,6 +811,22 @@
 		Class="AnalysisManagerPepProtProphetPlugIn.clsAnalysisResourcesPepProtProphet" 
 		AssemblyFile="AnalysisManagerPepProtProphetPlugIn.dll" 
 	/>
+	<Resourcer 
+		Tool="maxqpeak" 
+		Class="AnalysisManagerMaxQuantPlugIn.AnalysisResourcesMaxQuant" 
+		AssemblyFile="AnalysisManagerMaxQuantPlugIn.dll" />
+	<Resourcer 
+		Tool="maxqs1" 
+		Class="AnalysisManagerMaxQuantPlugIn.AnalysisResourcesMaxQuant" 
+		AssemblyFile="AnalysisManagerMaxQuantPlugIn.dll" />
+	<Resourcer 
+		Tool="maxqs2" 
+		Class="AnalysisManagerMaxQuantPlugIn.AnalysisResourcesMaxQuant" 
+		AssemblyFile="AnalysisManagerMaxQuantPlugIn.dll" />
+	<Resourcer 
+		Tool="maxqs3" 
+		Class="AnalysisManagerMaxQuantPlugIn.AnalysisResourcesMaxQuant" 
+		AssemblyFile="AnalysisManagerMaxQuantPlugIn.dll" />
 </Resourcers>
 
 <DTAGenerators Note="This section is obsolete">
