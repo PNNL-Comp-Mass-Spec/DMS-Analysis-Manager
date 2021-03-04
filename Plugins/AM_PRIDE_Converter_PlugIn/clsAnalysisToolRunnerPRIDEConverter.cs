@@ -3205,12 +3205,17 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 case "QExactive":
                 case "GC-QExactive":
                 case "QEHFX":
-                    if (instrumentName.Equals("QExactHF03") || instrumentName.Equals("QExactHF05"))
+                    if (instrumentName.StartsWith("QExactHF", StringComparison.OrdinalIgnoreCase))
                     {
                         accession = "MS:1002523";
                         description = "Q Exactive HF";
                     }
                     else if (instrumentName.Contains("HFX"))
+                    {
+                        accession = "MS:1002877";
+                        description = "Q Exactive HF-X";
+                    }
+                    else if (instrumentName.StartsWith("QExactP", StringComparison.OrdinalIgnoreCase))
                     {
                         accession = "MS:1002877";
                         description = "Q Exactive HF-X";
