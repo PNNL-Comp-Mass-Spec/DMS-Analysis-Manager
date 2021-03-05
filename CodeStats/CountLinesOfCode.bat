@@ -15,7 +15,7 @@ C:\Strawberry\perl\bin\perl.exe cloc-1.72.pl ..\AM_Program --exclude-ext=XML,vbp
 echo AM_Shared
 echo. >> CodeStats.txt
 echo Stats for AM_Shared >> CodeStats.txt
-C:\Strawberry\perl\bin\perl.exe cloc-1.72.pl ..\AM_Program\AM_Shared --exclude-ext=XML,vbproj,csproj,bat --exclude-dir=obj,_Trash,_Unused --quiet >> CodeStats.txt
+C:\Strawberry\perl\bin\perl.exe cloc-1.72.pl ..\AM_Shared --exclude-ext=XML,vbproj,csproj,bat --exclude-dir=obj,_Trash,_Unused --quiet >> CodeStats.txt
 
 for /D %%i in (..\Plugins\*) do call CountLinesOfCodeForPlugin.bat %%i
 
