@@ -4,7 +4,7 @@ VisualStudioVersion = 16.0.28729.10
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerProg_Debug", "AnalysisManagerProg_Debug.csproj", "{A939D260-136F-4400-8750-1B3E9E57F2F8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AM_Shared", "AM_Shared\AM_Shared.csproj", "{35B6B79E-C3B0-4E3A-B3ED-64167A470D7E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AM_Shared", "..\AM_Shared\AM_Shared.csproj", "{35B6B79E-C3B0-4E3A-B3ED-64167A470D7E}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerTest", "..\AnalysisManagerTest\AnalysisManagerTest.csproj", "{D143C403-FAF2-4B3E-8603-1B37221A23FD}"
 EndProject

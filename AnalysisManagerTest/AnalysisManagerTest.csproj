@@ -47,7 +47,7 @@
     <Compile Include="StatusFileTests.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\AM_Program\AM_Shared\AM_Shared.csproj">
+    <ProjectReference Include="..\AM_Shared\AM_Shared.csproj">
       <Project>{35b6b79e-c3b0-4e3a-b3ed-64167a470d7e}</Project>
       <Name>AM_Shared</Name>
     </ProjectReference>
