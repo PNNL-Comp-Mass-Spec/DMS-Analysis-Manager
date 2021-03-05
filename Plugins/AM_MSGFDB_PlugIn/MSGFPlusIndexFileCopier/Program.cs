@@ -17,7 +17,7 @@ namespace MSGFPlusIndexFileCopier
 
         static int Main()
         {
-            var commandLineParser = new ParseCommandLine();
+            var commandLineParser = new clsParseCommandLine();
 
             mFastaFilePath = string.Empty;
             mRemoteIndexFolderPath = DEFAULT_REMOTE_SHARE;
@@ -39,7 +39,6 @@ namespace MSGFPlusIndexFileCopier
                 {
                     ShowProgramHelp();
                     return -1;
-
                 }
 
                 success = CopyIndexFiles(mFastaFilePath, mRemoteIndexFolderPath, mCreateIndexFileForExistingFiles);
@@ -48,7 +47,6 @@ namespace MSGFPlusIndexFileCopier
                 {
                     return -1;
                 }
-
             }
             catch (Exception ex)
             {
@@ -133,7 +131,7 @@ namespace MSGFPlusIndexFileCopier
             return System.Reflection.Assembly.GetExecutingAssembly().GetName().Version + " (" + PROGRAM_DATE + ")";
         }
 
-        private static bool SetOptionsUsingCommandLineParameters(ParseCommandLine commandLineParser)
+        private static bool SetOptionsUsingCommandLineParameters(clsParseCommandLine commandLineParser)
         {
             // Returns True if no problems; otherwise, returns false
             var lstValidParameters = new List<string> { "F", "R", "X" };
@@ -180,7 +178,7 @@ namespace MSGFPlusIndexFileCopier
             return false;
         }
 
-        private static bool ParseParameter(ParseCommandLine commandLineParser, string parameterName, string description, ref string targetVariable)
+        private static bool ParseParameter(clsParseCommandLine commandLineParser, string parameterName, string description, ref string targetVariable)
         {
             if (commandLineParser.RetrieveValueForParameter(parameterName, out var value))
             {
@@ -251,14 +249,11 @@ namespace MSGFPlusIndexFileCopier
 
                 // Delay for 750 msec in case the user double clicked this file from within Windows Explorer (or started the program via a shortcut)
                 System.Threading.Thread.Sleep(750);
-
             }
             catch (Exception ex)
             {
                 ShowErrorMessage("Error displaying the program syntax: " + ex.Message, ex);
             }
-
         }
-
     }
 }

@@ -39,7 +39,7 @@ namespace MSGFResultsSummarizerExe
         {
             // Returns 0 if no error, error code if an error
 
-            var commandLineParser = new ParseCommandLine();
+            var commandLineParser = new clsParseCommandLine();
 
             try
             {
@@ -302,7 +302,7 @@ namespace MSGFResultsSummarizerExe
 
         }
 
-        private static bool SetOptionsUsingCommandLineParameters(ParseCommandLine commandLineParser)
+        private static bool SetOptionsUsingCommandLineParameters(clsParseCommandLine commandLineParser)
         {
             // Returns True if no problems; otherwise, returns false
 

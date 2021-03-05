@@ -23,7 +23,7 @@ namespace GlyQResultsSummarizer
 
         static int Main(string[] args)
         {
-            var objParseCommandLine = new ParseCommandLine();
+            var objParseCommandLine = new clsParseCommandLine();
 
             try
             {
@@ -114,7 +114,7 @@ namespace GlyQResultsSummarizer
             return success;
         }
 
-        private static bool SetOptionsUsingCommandLineParameters(ParseCommandLine objParseCommandLine)
+        private static bool SetOptionsUsingCommandLineParameters(clsParseCommandLine objParseCommandLine)
         {
             // Returns True if no problems; otherwise, returns false
             var lstValidParameters = new List<string> { "I", "Job" };
