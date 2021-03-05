@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
@@ -60,7 +60,7 @@
       <Version>1.1.7</Version>
     </PackageReference>
     <PackageReference Include="PRISM-Library">
-      <Version>2.6.23</Version>
+      <Version>2.6.25</Version>
     </PackageReference>
     <PackageReference Include="ProteinFileReader">
       <Version>2.0.4</Version>
