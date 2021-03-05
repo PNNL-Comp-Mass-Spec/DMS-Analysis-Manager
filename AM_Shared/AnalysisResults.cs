@@ -14,7 +14,7 @@ namespace AnalysisManagerBase
     /// <summary>
     /// Analysis job results handling class
     /// </summary>
-    public class clsAnalysisResults : clsAnalysisMgrBase
+    public class AnalysisResults : AnalysisMgrBase
     {
         #region "Module variables"
         private const string FAILED_RESULTS_FOLDER_INFO_TEXT = "FailedResultsFolderInfo_";
@@ -51,7 +51,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="mgrParams">Manager parameter object</param>
         /// <param name="jobParams">Job parameter object</param>
-        public clsAnalysisResults(IMgrParams mgrParams, IJobParams jobParams) : base("clsAnalysisResults")
+        public AnalysisResults(IMgrParams mgrParams, IJobParams jobParams) : base("AnalysisResults")
         {
             mMgrParams = mgrParams;
             mJobParams = jobParams;
@@ -153,7 +153,7 @@ namespace AnalysisManagerBase
                 }
                 catch (Exception ex) when (continueOnError)
                 {
-                    LogError("clsAnalysisResults,CopyDirectory", ex);
+                    LogError("AnalysisResults,CopyDirectory", ex);
                 }
             }
 
@@ -227,7 +227,7 @@ namespace AnalysisManagerBase
             // First make sure the source file exists
             if (!File.Exists(sourceFilePath))
             {
-                throw new IOException("clsAnalysisResults,CopyFileWithRetry: Source file not found for copy operation: " + sourceFilePath);
+                throw new IOException("AnalysisResults,CopyFileWithRetry: Source file not found for copy operation: " + sourceFilePath);
             }
 
             while (attemptCount <= maxRetryCount)
@@ -249,7 +249,7 @@ namespace AnalysisManagerBase
                 }
                 catch (Exception ex)
                 {
-                    LogError("clsAnalysisResults,CopyFileWithRetry: error copying " + sourceFilePath + " to " + destinationFilePath, ex);
+                    LogError("AnalysisResults,CopyFileWithRetry: error copying " + sourceFilePath + " to " + destinationFilePath, ex);
 
                     if (!overwrite && File.Exists(destinationFilePath))
                     {
@@ -260,7 +260,7 @@ namespace AnalysisManagerBase
                         break;
 
                     // Wait several seconds before retrying
-                    clsGlobal.IdleLoop(actualRetryHoldoffSeconds);
+                    Global.IdleLoop(actualRetryHoldoffSeconds);
 
                     PRISM.ProgRunner.GarbageCollectNow();
                 }
@@ -280,7 +280,7 @@ namespace AnalysisManagerBase
         /// <param name="sourceDirectoryPath">Source directory path</param>
         public void CopyFailedResultsToArchiveDirectory(string sourceDirectoryPath)
         {
-            if (clsGlobal.OfflineMode)
+            if (Global.OfflineMode)
             {
                 // Offline mode jobs each have their own work directory
                 // Thus, copying of failed results is not applicable
@@ -306,7 +306,7 @@ namespace AnalysisManagerBase
         /// <param name="failedResultsDirectoryPath">Failed results directory path, e.g. C:\DMS_FailedResults</param>
         public void CopyFailedResultsToArchiveDirectory(string sourceDirectoryPath, string failedResultsDirectoryPath)
         {
-            if (clsGlobal.OfflineMode)
+            if (Global.OfflineMode)
             {
                 // Offline mode jobs each have their own work directory
                 // Thus, copying of failed results is not applicable
@@ -370,8 +370,8 @@ namespace AnalysisManagerBase
             if (mJobParams != null)
             {
                 writer.WriteLine("JobToolDescription" + '\t' + mJobParams.GetCurrentJobToolDescription());
-                writer.WriteLine("Job" + '\t' + mJobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Job"));
-                writer.WriteLine("Step" + '\t' + mJobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Step"));
+                writer.WriteLine("Job" + '\t' + mJobParams.GetParam(AnalysisJob.STEP_PARAMETERS_SECTION, "Job"));
+                writer.WriteLine("Step" + '\t' + mJobParams.GetParam(AnalysisJob.STEP_PARAMETERS_SECTION, "Step"));
             }
 
             writer.WriteLine("Date" + '\t' + DateTime.Now);
@@ -381,14 +381,14 @@ namespace AnalysisManagerBase
             // The ToolName job parameter holds the name of the job script we are executing
             writer.WriteLine("Tool" + '\t' + mJobParams.GetParam("ToolName"));
             writer.WriteLine("StepTool" + '\t' + mJobParams.GetParam("StepTool"));
-            writer.WriteLine("Dataset" + '\t' + mJobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_DATASET_NAME));
-            writer.WriteLine("XferFolder" + '\t' + mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH));
-            writer.WriteLine("ParamFileName" + '\t' + mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_PARAMETER_FILE));
+            writer.WriteLine("Dataset" + '\t' + mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_DATASET_NAME));
+            writer.WriteLine("XferFolder" + '\t' + mJobParams.GetParam(AnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH));
+            writer.WriteLine("ParamFileName" + '\t' + mJobParams.GetParam(AnalysisResources.JOB_PARAM_PARAMETER_FILE));
             writer.WriteLine("SettingsFileName" + '\t' + mJobParams.GetParam("SettingsFileName"));
             writer.WriteLine("LegacyOrganismDBName" + '\t' + mJobParams.GetParam("LegacyFastaFileName"));
             writer.WriteLine("ProteinCollectionList" + '\t' + mJobParams.GetParam("ProteinCollectionList"));
             writer.WriteLine("ProteinOptionsList" + '\t' + mJobParams.GetParam("ProteinOptions"));
-            writer.WriteLine("FastaFileName" + '\t' + mJobParams.GetParam("PeptideSearch", clsAnalysisResources.JOB_PARAM_GENERATED_FASTA_NAME));
+            writer.WriteLine("FastaFileName" + '\t' + mJobParams.GetParam("PeptideSearch", AnalysisResources.JOB_PARAM_GENERATED_FASTA_NAME));
         }
 
         /// <summary>
@@ -454,13 +454,13 @@ namespace AnalysisManagerBase
                 }
                 catch (Exception ex)
                 {
-                    LogError("clsAnalysisResults: error creating directory " + directoryPath, ex);
+                    LogError("AnalysisResults: error creating directory " + directoryPath, ex);
 
                     if (attemptCount > maxRetryCount)
                         break;
 
                     // Wait several seconds before retrying
-                    clsGlobal.IdleLoop(actualRetryHoldoffSeconds);
+                    Global.IdleLoop(actualRetryHoldoffSeconds);
 
                     PRISM.ProgRunner.GarbageCollectNow();
                 }
@@ -579,13 +579,13 @@ namespace AnalysisManagerBase
                 }
                 catch (Exception ex)
                 {
-                    LogError("clsAnalysisResults: error looking for directory " + directoryPath, ex);
+                    LogError("AnalysisResults: error looking for directory " + directoryPath, ex);
 
                     if (attemptCount > maxRetryCount)
                         break;
 
                     // Wait several seconds before retrying
-                    clsGlobal.IdleLoop(actualRetryHoldoffSeconds);
+                    Global.IdleLoop(actualRetryHoldoffSeconds);
 
                     PRISM.ProgRunner.GarbageCollectNow();
                 }

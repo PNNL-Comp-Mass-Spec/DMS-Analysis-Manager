@@ -15,7 +15,7 @@ namespace AnalysisManagerBase
     /// <summary>
     /// Tool runner interface
     /// </summary>
-    /// <remarks>Implemented by clsAnalysisToolRunnerBase</remarks>
+    /// <remarks>Implemented by AnalysisToolRunnerBase</remarks>
     public interface IToolRunner
     {
         #region "Properties"
@@ -53,7 +53,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Time the analysis started (UTC-based)
         /// </summary>
-        /// <remarks>RunTool sets this in clsAnalysisToolRunnerBase</remarks>
+        /// <remarks>RunTool sets this in AnalysisToolRunnerBase</remarks>
         DateTime StartTime { get; }
 
         #endregion
@@ -74,8 +74,8 @@ namespace AnalysisManagerBase
             IMgrParams mgrParams,
             IJobParams jobParams,
             IStatusFile statusTools,
-            clsSummaryFile summaryFile,
-            clsMyEMSLUtilities myEMSLUtilities);
+            SummaryFile summaryFile,
+            MyEMSLUtilities myEMSLUtilities);
 
         /// <summary>
         /// Runs the analysis tool
@@ -118,7 +118,7 @@ namespace AnalysisManagerBase
         /// If successful, the calling procedure will typically next call
         /// PostProcessRemoteResults then CopyResultsToTransferDirectory
         /// </remarks>
-        bool RetrieveRemoteResults(clsRemoteTransferUtility transferUtility, bool verifyCopied, out List<string> retrievedFilePaths);
+        bool RetrieveRemoteResults(RemoteTransferUtility transferUtility, bool verifyCopied, out List<string> retrievedFilePaths);
 
         /// <summary>
         /// Update the evaluation code and evaluation message

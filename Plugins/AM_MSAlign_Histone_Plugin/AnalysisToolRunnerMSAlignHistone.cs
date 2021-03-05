@@ -17,7 +17,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
     /// <summary>
     /// Class for running MSAlign Histone
     /// </summary>
-    public class clsAnalysisToolRunnerMSAlignHistone : clsAnalysisToolRunnerBase
+    public class AnalysisToolRunnerMSAlignHistone : AnalysisToolRunnerBase
     {
         // Ignore Spelling: Histone, parm, Xmx, classpath, html, xsl, ptm, Frag
 
@@ -102,7 +102,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
 
                 if (mDebugLevel > 4)
                 {
-                    LogDebug("clsAnalysisToolRunnerMSAlignHistone.RunTool(): Enter");
+                    LogDebug("AnalysisToolRunnerMSAlignHistone.RunTool(): Enter");
                 }
 
                 // Verify that program files exist
@@ -186,7 +186,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
 
                 LogDebug(JavaProgLoc + " " + arguments);
 
-                var cmdRunner = new clsRunDosProgram(mMSAlignWorkFolderPath, mDebugLevel);
+                var cmdRunner = new RunDosProgram(mMSAlignWorkFolderPath, mDebugLevel);
                 RegisterEvents(cmdRunner);
                 cmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
@@ -383,7 +383,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
         {
             try
             {
-                mJobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MZXML_EXTENSION);
+                mJobParams.AddResultFileExtensionToSkip(AnalysisResources.DOT_MZXML_EXTENSION);
 
                 // Copy any search result files that are not empty from the MSAlign folder to the work directory
                 var dctResultFiles = GetExpectedMSAlignResultFiles(mDatasetName);
@@ -695,7 +695,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                 }
 
                 // Move the _msdeconv.msalign file to the MSAlign work folder
-                var fiFiles = fiSourceFolder.GetFiles("*" + clsAnalysisResourcesMSAlignHistone.MSDECONV_MSALIGN_FILE_SUFFIX);
+                var fiFiles = fiSourceFolder.GetFiles("*" + AnalysisResourcesMSAlignHistone.MSDECONV_MSALIGN_FILE_SUFFIX);
                 if (fiFiles.Length == 0)
                 {
                     LogError("MSAlign file not found in work directory");
@@ -729,7 +729,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
 
                 LogDebug(JavaProgLoc + " " + arguments);
 
-                var cmdRunner = new clsRunDosProgram(mMSAlignWorkFolderPath, mDebugLevel);
+                var cmdRunner = new RunDosProgram(mMSAlignWorkFolderPath, mDebugLevel);
                 RegisterEvents(cmdRunner);
                 cmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
@@ -963,7 +963,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
 
                 if (!string.IsNullOrEmpty(strEValueResultFilePath) && !string.IsNullOrEmpty(strFinalResultFilePath))
                 {
-                    if (clsGlobal.FilesMatch(strEValueResultFilePath, strFinalResultFilePath))
+                    if (Global.FilesMatch(strEValueResultFilePath, strFinalResultFilePath))
                     {
                         mJobParams.AddResultFileToSkip(Path.GetFileName(strEValueResultFilePath));
                     }

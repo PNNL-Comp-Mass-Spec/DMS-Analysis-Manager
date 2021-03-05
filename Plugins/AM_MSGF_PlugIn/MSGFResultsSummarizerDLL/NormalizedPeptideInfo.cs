@@ -5,7 +5,7 @@ namespace MSGFResultsSummarizer
     /// <summary>
     /// Tracks the mods for a given normalized peptide
     /// </summary>
-    public class clsNormalizedPeptideInfo
+    public class NormalizedPeptideInfo
     {
         /// <summary>
         /// Peptide clean sequence (no mod symbols)
@@ -28,7 +28,7 @@ namespace MSGFResultsSummarizer
         /// Constructor
         /// </summary>
         /// <param name="peptideCleanSequence"></param>
-        public clsNormalizedPeptideInfo(string peptideCleanSequence)
+        public NormalizedPeptideInfo(string peptideCleanSequence)
         {
             CleanSequence = peptideCleanSequence;
             Modifications = new List<KeyValuePair<string, int>>();

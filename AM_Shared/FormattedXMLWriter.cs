@@ -15,7 +15,7 @@ namespace AnalysisManagerBase
     /// <summary>
     /// Writes a formatted XML file
     /// </summary>
-    public class clsFormattedXMLWriter
+    public class FormattedXMLWriter
     {
         #region "Properties"
 

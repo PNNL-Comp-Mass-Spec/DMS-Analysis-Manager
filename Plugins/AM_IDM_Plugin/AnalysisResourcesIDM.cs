@@ -7,7 +7,7 @@ namespace AnalysisManager_IDM_Plugin
     /// <summary>
     /// Retrieve resources for the IDM plugin
     /// </summary>
-    public class clsAnalysisResourcesIDM : clsAnalysisResources
+    public class AnalysisResourcesIDM : AnalysisResources
     {
         /// <summary>
         /// Retrieve required files
@@ -44,10 +44,10 @@ namespace AnalysisManager_IDM_Plugin
                     var idmResultsDB = new FileInfo(Path.Combine(dataPackageFolderPath, mJobParams.GetParam("StepOutputFolderName"), "Results.db3"));
                     if (idmResultsDB.Exists)
                     {
-                        var targetFilePath = Path.Combine(mWorkDir, clsAnalysisToolRunnerIDM.EXISTING_IDM_RESULTS_FILE_NAME);
+                        var targetFilePath = Path.Combine(mWorkDir, AnalysisToolRunnerIDM.EXISTING_IDM_RESULTS_FILE_NAME);
                         idmResultsDB.CopyTo(targetFilePath);
 
-                        mJobParams.AddResultFileToSkip(clsAnalysisToolRunnerIDM.EXISTING_IDM_RESULTS_FILE_NAME);
+                        mJobParams.AddResultFileToSkip(AnalysisToolRunnerIDM.EXISTING_IDM_RESULTS_FILE_NAME);
                     }
                 }
             }

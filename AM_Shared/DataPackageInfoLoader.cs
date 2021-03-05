@@ -11,7 +11,7 @@ namespace AnalysisManagerBase
     /// <summary>
     /// Data package info loader
     /// </summary>
-    public sealed class clsDataPackageInfoLoader : clsLoggerBase
+    public sealed class DataPackageInfoLoader : LoggerBase
     {
         private static DateTime mLastJobParameterFromHistoryLookup = DateTime.UtcNow;
 
@@ -31,7 +31,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="dbTools"></param>
         /// <param name="dataPackageID"></param>
-        public clsDataPackageInfoLoader(IDBTools dbTools, int dataPackageID)
+        public DataPackageInfoLoader(IDBTools dbTools, int dataPackageID)
         {
             DBTools = dbTools;
             DataPackageID = dataPackageID;
@@ -42,11 +42,11 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="dataPackageDatasets"></param>
         /// <returns>True if a data package is defined and it has datasets associated with it</returns>
-        public bool LoadDataPackageDatasetInfo(out Dictionary<int, clsDataPackageDatasetInfo> dataPackageDatasets)
+        public bool LoadDataPackageDatasetInfo(out Dictionary<int, DataPackageDatasetInfo> dataPackageDatasets)
         {
             if (DataPackageID < 0)
             {
-                dataPackageDatasets = new Dictionary<int, clsDataPackageDatasetInfo>();
+                dataPackageDatasets = new Dictionary<int, DataPackageDatasetInfo>();
                 return false;
             }
 
@@ -63,9 +63,9 @@ namespace AnalysisManagerBase
         public static bool LoadDataPackageDatasetInfo(
             IDBTools dbTools,
             int dataPackageID,
-            out Dictionary<int, clsDataPackageDatasetInfo> dataPackageDatasets)
+            out Dictionary<int, DataPackageDatasetInfo> dataPackageDatasets)
         {
-            dataPackageDatasets = new Dictionary<int, clsDataPackageDatasetInfo>();
+            dataPackageDatasets = new Dictionary<int, DataPackageDatasetInfo>();
 
             var sqlStr = new System.Text.StringBuilder();
 
@@ -128,9 +128,9 @@ namespace AnalysisManagerBase
         public static bool LoadDataPackageJobInfo(
             IDBTools dbTools,
             int dataPackageID,
-            out Dictionary<int, clsDataPackageJobInfo> dataPackageJobs)
+            out Dictionary<int, DataPackageJobInfo> dataPackageJobs)
         {
-            dataPackageJobs = new Dictionary<int, clsDataPackageJobInfo>();
+            dataPackageJobs = new Dictionary<int, DataPackageJobInfo>();
 
             var sqlStr = new System.Text.StringBuilder();
 
@@ -247,7 +247,7 @@ namespace AnalysisManagerBase
         /// <param name="jobParameters">Output parameter: Dictionary of job parameters where keys are parameter names (section names are ignored)</param>
         /// <param name="errorMsg"></param>
         /// <returns>True if success; false if an error</returns>
-        /// <remarks>This procedure is used by clsAnalysisToolRunnerPRIDEConverter</remarks>
+        /// <remarks>This procedure is used by AnalysisToolRunnerPRIDEConverter</remarks>
         private static bool LookupJobParametersFromHistory(
             IDBTools dbTools,
             int jobNumber,
@@ -324,12 +324,12 @@ namespace AnalysisManagerBase
             }
         }
 
-        private static clsDataPackageDatasetInfo ParseDataPackageDatasetInfoRow(DataRow curRow)
+        private static DataPackageDatasetInfo ParseDataPackageDatasetInfoRow(DataRow curRow)
         {
             var datasetName = curRow["Dataset"].CastDBVal<string>();
             var datasetId = curRow["DatasetID"].CastDBVal<int>();
 
-            var datasetInfo = new clsDataPackageDatasetInfo(datasetName, datasetId)
+            var datasetInfo = new DataPackageDatasetInfo(datasetName, datasetId)
             {
                 Instrument = curRow["Instrument"].CastDBVal<string>(),
                 InstrumentGroup = curRow["InstrumentGroup"].CastDBVal<string>(),
@@ -354,12 +354,12 @@ namespace AnalysisManagerBase
         /// or from
         /// </summary>
         /// <param name="curRow"></param>
-        public static clsDataPackageJobInfo ParseDataPackageJobInfoRow(DataRow curRow)
+        public static DataPackageJobInfo ParseDataPackageJobInfoRow(DataRow curRow)
         {
             var dataPkgJob = curRow["Job"].CastDBVal<int>();
             var dataPkgDataset = curRow["Dataset"].CastDBVal<string>();
 
-            var jobInfo = new clsDataPackageJobInfo(dataPkgJob, dataPkgDataset)
+            var jobInfo = new DataPackageJobInfo(dataPkgJob, dataPkgDataset)
             {
                 DatasetID = curRow["DatasetID"].CastDBVal<int>(),
                 Instrument = curRow["Instrument"].CastDBVal<string>(),
@@ -414,13 +414,13 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="additionalJobs">Non Peptide Hit jobs (e.g. DeconTools or MASIC)</param>
         /// <returns>Peptide Hit Jobs (e.g. MS-GF+ or Sequest)</returns>
-        public List<clsDataPackageJobInfo> RetrieveDataPackagePeptideHitJobInfo(out List<clsDataPackageJobInfo> additionalJobs)
+        public List<DataPackageJobInfo> RetrieveDataPackagePeptideHitJobInfo(out List<DataPackageJobInfo> additionalJobs)
         {
             if (DataPackageID < 0)
             {
                 LogError("DataPackageID is not defined for this analysis job");
-                additionalJobs = new List<clsDataPackageJobInfo>();
-                return new List<clsDataPackageJobInfo>();
+                additionalJobs = new List<DataPackageJobInfo>();
+                return new List<DataPackageJobInfo>();
             }
 
             var dataPackagePeptideHitJobs = RetrieveDataPackagePeptideHitJobInfo(DBTools, DataPackageID, out additionalJobs, out var errorMsg);
@@ -442,7 +442,7 @@ namespace AnalysisManagerBase
         /// <returns>Peptide Hit Jobs (e.g. MS-GF+ or Sequest)</returns>
         /// <remarks>Alternatively use the overloaded version that includes additionalJobs</remarks>
         // ReSharper disable once UnusedMember.Global
-        public static List<clsDataPackageJobInfo> RetrieveDataPackagePeptideHitJobInfo(
+        public static List<DataPackageJobInfo> RetrieveDataPackagePeptideHitJobInfo(
             IDBTools dbTools,
             int dataPackageID,
             out string errorMsg)
@@ -459,22 +459,22 @@ namespace AnalysisManagerBase
         /// <param name="errorMsg">Output: error message</param>
         /// <returns>Peptide Hit Jobs (e.g. MS-GF+ or Sequest)</returns>
         /// <remarks>This method updates property NumberOfClonedSteps for the analysis jobs</remarks>
-        public static List<clsDataPackageJobInfo> RetrieveDataPackagePeptideHitJobInfo(
+        public static List<DataPackageJobInfo> RetrieveDataPackagePeptideHitJobInfo(
             IDBTools dbTools,
             int dataPackageID,
-            out List<clsDataPackageJobInfo> additionalJobs,
+            out List<DataPackageJobInfo> additionalJobs,
             out string errorMsg)
         {
             // This list tracks the info for the Peptide Hit jobs (e.g. MS-GF+ or Sequest) associated with the data package
-            var dataPackagePeptideHitJobs = new List<clsDataPackageJobInfo>();
+            var dataPackagePeptideHitJobs = new List<DataPackageJobInfo>();
             errorMsg = string.Empty;
 
             // This list tracks the info for the non Peptide Hit jobs (e.g. DeconTools or MASIC) associated with the data package
-            additionalJobs = new List<clsDataPackageJobInfo>();
+            additionalJobs = new List<DataPackageJobInfo>();
 
             // This dictionary will track the jobs associated with this aggregation job's data package
-            // Key is job number, value is an instance of clsDataPackageJobInfo
-            Dictionary<int, clsDataPackageJobInfo> dataPackageJobs;
+            // Key is job number, value is an instance of DataPackageJobInfo
+            Dictionary<int, DataPackageJobInfo> dataPackageJobs;
 
             try
             {
@@ -531,7 +531,7 @@ namespace AnalysisManagerBase
 
                         if (!success)
                         {
-                            return new List<clsDataPackageJobInfo>();
+                            return new List<DataPackageJobInfo>();
                         }
 
                         if (dataPkgJobParameters.TryGetValue("NumberOfClonedSteps", out var numberOfClonedSteps))
@@ -558,7 +558,7 @@ namespace AnalysisManagerBase
             catch (Exception ex)
             {
                 errorMsg = "Exception calling LookupJobParametersFromHistory (RetrieveDataPackagePeptideHitJobInfo): " + ex.Message;
-                return new List<clsDataPackageJobInfo>();
+                return new List<DataPackageJobInfo>();
             }
 
             return dataPackagePeptideHitJobs;

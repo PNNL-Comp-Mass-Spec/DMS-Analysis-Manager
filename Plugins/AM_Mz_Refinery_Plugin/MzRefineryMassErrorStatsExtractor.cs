@@ -12,7 +12,7 @@ namespace AnalysisManagerMzRefineryPlugIn
     /// This class reads the console text from the PPMErrorCharter's console output and extracts the parent ion mass error information
     /// It passes on the information to DMS for storage in table T_Dataset_QC
     /// </summary>
-    public class clsMzRefineryMassErrorStatsExtractor
+    public class MzRefineryMassErrorStatsExtractor
     {
         private const string STORE_MASS_ERROR_STATS_SP_NAME = "StoreDTARefMassErrorStats";
         private readonly IMgrParams mMgrParams;
@@ -25,7 +25,7 @@ namespace AnalysisManagerMzRefineryPlugIn
         /// <summary>
         /// Mass error info; populated by ParsePPMErrorCharterOutput
         /// </summary>
-        public clsMassErrorInfo MassErrorInfo { get; }
+        public MassErrorInfo MassErrorInfo { get; }
 
         /// <summary>
         /// Constructor
@@ -33,7 +33,7 @@ namespace AnalysisManagerMzRefineryPlugIn
         /// <param name="mgrParams"></param>
         /// <param name="debugLevel"></param>
         /// <param name="postResultsToDB"></param>
-        public clsMzRefineryMassErrorStatsExtractor(IMgrParams mgrParams, short debugLevel, bool postResultsToDB = true)
+        public MzRefineryMassErrorStatsExtractor(IMgrParams mgrParams, short debugLevel, bool postResultsToDB = true)
         {
             mMgrParams = mgrParams;
             mDebugLevel = debugLevel;
@@ -41,7 +41,7 @@ namespace AnalysisManagerMzRefineryPlugIn
 
             ErrorMessage = string.Empty;
 
-            MassErrorInfo = new clsMassErrorInfo();
+            MassErrorInfo = new MassErrorInfo();
             MassErrorInfo.Clear();
         }
 
@@ -184,7 +184,7 @@ namespace AnalysisManagerMzRefineryPlugIn
 
             try
             {
-                var analysisTask = new clsAnalysisJob(mMgrParams, mDebugLevel);
+                var analysisTask = new AnalysisJob(mMgrParams, mDebugLevel);
                 var dbTools = analysisTask.DMSProcedureExecutor;
 
                 // Call stored procedure StoreDTARefMassErrorStats in DMS5

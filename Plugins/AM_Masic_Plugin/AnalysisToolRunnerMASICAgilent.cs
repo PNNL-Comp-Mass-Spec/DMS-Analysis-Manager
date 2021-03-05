@@ -15,7 +15,7 @@ namespace AnalysisManagerMasicPlugin
     /// <summary>
     /// Derived class for performing MASIC analysis on Agilent datasets
     /// </summary>
-    public class clsAnalysisToolRunnerMASICAgilent : clsAnalysisToolRunnerMASICBase
+    public class AnalysisToolRunnerMASICAgilent : AnalysisToolRunnerMASICBase
     {
         protected override CloseOutType RunMASIC()
         {
@@ -34,12 +34,12 @@ namespace AnalysisManagerMasicPlugin
 
             // Determine the path to the .Raw file
             var mgfFileName = mDatasetName + ".mgf";
-            var inputFilePath = clsAnalysisResources.ResolveStoragePath(mWorkDir, mgfFileName);
+            var inputFilePath = AnalysisResources.ResolveStoragePath(mWorkDir, mgfFileName);
 
             if (string.IsNullOrEmpty(inputFilePath))
             {
                 // Unable to resolve the file path
-                mErrorMessage = "Could not find " + mgfFileName + " or " + mgfFileName + clsAnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX +
+                mErrorMessage = "Could not find " + mgfFileName + " or " + mgfFileName + AnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX +
                                  " in the working folder; unable to run MASIC";
                 LogError(mErrorMessage);
                 return CloseOutType.CLOSEOUT_FAILED;

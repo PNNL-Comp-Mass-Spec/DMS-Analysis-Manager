@@ -12,7 +12,7 @@ namespace AnalysisManagerMSDeconvPlugIn
     /// <summary>
     /// Retrieve resources for the MSDeconv plugin
     /// </summary>
-    public class clsAnalysisResourcesMSDeconv : clsAnalysisResources
+    public class AnalysisResourcesMSDeconv : AnalysisResources
     {
         /// <summary>
         /// Retrieve required files

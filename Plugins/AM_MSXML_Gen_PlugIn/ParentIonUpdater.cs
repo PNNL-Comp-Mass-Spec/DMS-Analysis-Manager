@@ -10,7 +10,7 @@ using System.Xml;
 
 namespace AnalysisManagerMsXmlGenPlugIn
 {
-    public class clsParentIonUpdater : EventNotifier
+    public class ParentIonUpdater : EventNotifier
     {
         // Ignore Spelling: indexedmzML, cv, dta, mgf, 2016-Sep-10, peptidome
 
@@ -219,7 +219,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                         oldDtaFile.Delete();
                     }
 
-                    clsGlobal.IdleLoop(0.25);
+                    Global.IdleLoop(0.25);
                     sourceDtaFile.MoveTo(oldDtaFilePath);
                     updatedDtaFile.MoveTo(dtaFilePath);
 
@@ -483,7 +483,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                         oldMzMLFile.Delete();
                     }
 
-                    clsGlobal.IdleLoop(0.25);
+                    Global.IdleLoop(0.25);
                     sourceMzMLFile.MoveTo(oldMzMLFilePath);
                     updatedMzMLFile.MoveTo(mzMLFilePath);
 

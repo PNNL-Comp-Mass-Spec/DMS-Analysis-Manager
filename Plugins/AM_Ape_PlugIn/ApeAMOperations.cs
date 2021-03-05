@@ -5,7 +5,7 @@ using PRISM.Logging;
 
 namespace AnalysisManager_Ape_PlugIn
 {
-    public class clsApeAMOperations : EventNotifier
+    public class ApeAMOperations : EventNotifier
     {
         #region Member Variables
 
@@ -25,7 +25,7 @@ namespace AnalysisManager_Ape_PlugIn
 
         #region Constructors
 
-        public clsApeAMOperations(IJobParams jobParams, IMgrParams mgrParams)
+        public ApeAMOperations(IJobParams jobParams, IMgrParams mgrParams)
         {
             mJobParams = jobParams;
             mMgrParams = mgrParams;
@@ -59,7 +59,7 @@ namespace AnalysisManager_Ape_PlugIn
         {
             if (apeOperation.Equals("RunWorkflow", StringComparison.OrdinalIgnoreCase))
             {
-                var apeWfObj = new clsApeAMRunWorkflow(mJobParams, mMgrParams);
+                var apeWfObj = new ApeAMRunWorkflow(mJobParams, mMgrParams);
 
                 // Attach the event handlers
                 RegisterEventsCustomProgressHandler(apeWfObj);
@@ -76,7 +76,7 @@ namespace AnalysisManager_Ape_PlugIn
 
             if (apeOperation.Equals("GetImprovResults", StringComparison.OrdinalIgnoreCase))
             {
-                var apeImpObj = new clsApeAMGetImprovResults(mJobParams, mMgrParams);
+                var apeImpObj = new ApeAMGetImprovResults(mJobParams, mMgrParams);
 
                 // Attach the event handlers
                 RegisterEventsCustomProgressHandler(apeImpObj);
@@ -91,7 +91,7 @@ namespace AnalysisManager_Ape_PlugIn
 
             if (apeOperation.Equals("GetQRollupResults", StringComparison.OrdinalIgnoreCase))
             {
-                var apeQImpObj = new clsApeAMGetQRollupResults(mJobParams, mMgrParams);
+                var apeQImpObj = new ApeAMGetQRollupResults(mJobParams, mMgrParams);
 
                 // Attach the event handlers
                 RegisterEventsCustomProgressHandler(apeQImpObj);
@@ -106,7 +106,7 @@ namespace AnalysisManager_Ape_PlugIn
 
             if (apeOperation.Equals("GetViperResults", StringComparison.OrdinalIgnoreCase))
             {
-                var apeVImpObj = new clsApeAMGetViperResults(mJobParams, mMgrParams);
+                var apeVImpObj = new ApeAMGetViperResults(mJobParams, mMgrParams);
 
                 // Attach the event handlers
                 RegisterEventsCustomProgressHandler(apeVImpObj);

@@ -1,6 +1,6 @@
 ﻿// This class was converted to be loaded as a pluggable DLL into the New DMS
 // Analysis Tool Manager program.  The new ATM supports the mini-pipeline. It
-// uses class clsMsMsSpectrumFilter to filter the _DTA.txt file present in a given folder
+// uses class MsMsSpectrumFilter to filter the _DTA.txt file present in a given folder
 //
 // Written by Matthew Monroe for the Department of Energy (PNNL, Richland, WA)
 // Copyright 2005, Battelle Memorial Institute
@@ -23,7 +23,7 @@ namespace MSMSSpectrumFilterAM
     /// <summary>
     /// Class for running the MSMS Spectrum Filter
     /// </summary>
-    public class clsAnalysisToolRunnerMsMsSpectrumFilter : clsAnalysisToolRunnerBase
+    public class AnalysisToolRunnerMsMsSpectrumFilter : AnalysisToolRunnerBase
     {
         private const int MAX_RUNTIME_HOURS = 5;
 
@@ -41,7 +41,7 @@ namespace MSMSSpectrumFilterAM
 
         #region "Methods"
 
-        public clsAnalysisToolRunnerMsMsSpectrumFilter()
+        public AnalysisToolRunnerMsMsSpectrumFilter()
         {
             // Initialize MsMsSpectrumFilterDLL.dll
             mMsMsSpectrumFilter = new clsMsMsSpectrumFilter();
@@ -73,7 +73,7 @@ namespace MSMSSpectrumFilterAM
 
             mFilterStatus = ProcessStatus.SF_STARTING;
 
-            LogMessage("clsAnalysisToolRunnerMsMsSpectrumFilter.RunTool(), Filtering _Dta.txt file");
+            LogMessage("AnalysisToolRunnerMsMsSpectrumFilter.RunTool(), Filtering _Dta.txt file");
 
             // Verify necessary files are in specified locations
             if (!InitSetup())
@@ -94,7 +94,7 @@ namespace MSMSSpectrumFilterAM
 
             if (mDebugLevel >= 2)
             {
-                LogDebug("clsAnalysisToolRunnerMsMsSpectrumFilter.RunTool(), Filtering complete");
+                LogDebug("AnalysisToolRunnerMsMsSpectrumFilter.RunTool(), Filtering complete");
             }
 
             // Zip the filtered _Dta.txt file
@@ -123,7 +123,7 @@ namespace MSMSSpectrumFilterAM
             // Make the results folder
             if (mDebugLevel > 3)
             {
-                LogDebug("clsAnalysisToolRunnerMsMsSpectrumFilter.RunTool(), Making results folder");
+                LogDebug("AnalysisToolRunnerMsMsSpectrumFilter.RunTool(), Making results folder");
             }
 
             var success = CopyResultsToTransferDirectory();
@@ -414,7 +414,7 @@ namespace MSMSSpectrumFilterAM
             }
             catch (Exception ex)
             {
-                LogErrors("FilterDTAFilesInFolder", "Error initializing and running clsMsMsSpectrumFilter", ex);
+                LogErrors("FilterDTAFilesInFolder", "Error initializing and running MsMsSpectrumFilter", ex);
                 mFilterStatus = ProcessStatus.SF_ERROR;
             }
 
@@ -554,13 +554,13 @@ namespace MSMSSpectrumFilterAM
 
                 // Determine the path to the .Raw file
                 var rawFileName = mDatasetName + ".raw";
-                var finniganRawFilePath = clsAnalysisResources.ResolveStoragePath(mWorkDir, rawFileName);
+                var finniganRawFilePath = AnalysisResources.ResolveStoragePath(mWorkDir, rawFileName);
 
                 if (string.IsNullOrEmpty(finniganRawFilePath))
                 {
                     // Unable to resolve the file path
                     mErrMsg = "Could not find " + rawFileName + " or " +
-                        rawFileName + clsAnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX +
+                        rawFileName + AnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX +
                         " in the dataset directory; unable to generate the ScanStats files";
                     LogErrors("GenerateFinniganScanStatsFiles", mErrMsg);
                     return false;
@@ -658,7 +658,7 @@ namespace MSMSSpectrumFilterAM
 
             // Set settings file name
             // This is the job parameters file that contains the settings information
-            mSettingsFileName = mJobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_XML_PARAMS_FILE);
+            mSettingsFileName = mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_XML_PARAMS_FILE);
 
             // Source folder name
             if (string.IsNullOrEmpty(mWorkDir))
@@ -694,7 +694,7 @@ namespace MSMSSpectrumFilterAM
         private bool StoreToolVersionInfo()
         {
             var toolVersionInfo = string.Empty;
-            var appFolderPath = clsGlobal.GetAppDirectoryPath();
+            var appFolderPath = Global.GetAppDirectoryPath();
 
             if (mDebugLevel >= 2)
             {

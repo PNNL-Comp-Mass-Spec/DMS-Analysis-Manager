@@ -4,10 +4,10 @@ using AnalysisManagerBase;
 using AnalysisManager_Ape_PlugIn;
 using System.IO;
 
-namespace TestApePlugIn {
-
-    class TestAMApeOperations {
-
+namespace TestApePlugIn
+{
+    class TestAMApeOperations
+    {
         //-------------------------------- IMPROV
         string mWorkDir;
         string mLogFilename;
@@ -47,7 +47,7 @@ namespace TestApePlugIn {
             mWorkDir = m_mgrParams.GetParam("workdir");
             mLogFilename = m_mgrParams.GetParam("logfilename");
 
-            var ops = new clsApeAMOperations(m_jobParams, m_mgrParams);
+            var ops = new ApeAMOperations(m_jobParams, m_mgrParams);
             var bSuccess = TestRunOperation(ops, "GetImprovResults");
 
             return bSuccess;
@@ -94,7 +94,7 @@ namespace TestApePlugIn {
             mWorkDir = m_mgrParams.GetParam("workdir");
             mLogFilename = m_mgrParams.GetParam("logfilename");
 
-            var ops = new clsApeAMOperations(m_jobParams, m_mgrParams);
+            var ops = new ApeAMOperations(m_jobParams, m_mgrParams);
             var bSuccess = TestRunOperation(ops, "RunWorkflow");
 
             return bSuccess;
@@ -135,7 +135,7 @@ namespace TestApePlugIn {
             mWorkDir = m_mgrParams.GetParam("workdir");
             mLogFilename = m_mgrParams.GetParam("logfilename");
 
-            var ops = new clsApeAMOperations(m_jobParams, m_mgrParams);
+            var ops = new ApeAMOperations(m_jobParams, m_mgrParams);
             var bSuccess = TestRunOperation(ops, "GetQRollupResults");
 
             return bSuccess;
@@ -143,19 +143,19 @@ namespace TestApePlugIn {
         }
 
 
-        private bool TestRunOperation(clsApeAMOperations ops, string operationName)
+        private bool TestRunOperation(ApeAMOperations ops, string operationName)
         {
             //Change the name of the log file for the local log file to the plugin log filename
             var LogFileName = Path.Combine(mWorkDir, "Ape_Log"); //m_WorkDir, "Ape_Log");
             log4net.GlobalContext.Properties["LogName"] = LogFileName;
-            clsLogTools.ChangeLogFileName(LogFileName);
+            LogTools.ChangeLogFileName(LogFileName);
 
             var bSuccess = ops.RunApeOperations(operationName);
 
             // Change the name of the log file back to the analysis manager log file
             LogFileName = mLogFilename;
             log4net.GlobalContext.Properties["LogName"] = LogFileName;
-            clsLogTools.ChangeLogFileName(LogFileName);
+            LogTools.ChangeLogFileName(LogFileName);
 
             return bSuccess;
         }

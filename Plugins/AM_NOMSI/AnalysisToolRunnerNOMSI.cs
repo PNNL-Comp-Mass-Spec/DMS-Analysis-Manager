@@ -18,7 +18,7 @@ namespace AnalysisManagerNOMSIPlugin
     /// Class for running NOMSI
     /// </summary>
     // ReSharper disable once UnusedMember.Global
-    public class clsAnalysisToolRunnerNOMSI : clsAnalysisToolRunnerBase
+    public class AnalysisToolRunnerNOMSI : AnalysisToolRunnerBase
     {
         #region "Constants and Enums"
 
@@ -62,7 +62,7 @@ namespace AnalysisManagerNOMSIPlugin
 
                 if (mDebugLevel > 4)
                 {
-                    LogDebug("clsAnalysisToolRunnerNOMSI.RunTool(): Enter");
+                    LogDebug("AnalysisToolRunnerNOMSI.RunTool(): Enter");
                 }
 
                 // Initialize classwide variables
@@ -287,7 +287,7 @@ namespace AnalysisManagerNOMSIPlugin
                         }
                         else
                         {
-                            mConsoleOutputErrorMsg = clsGlobal.AppendToComment(mConsoleOutputErrorMsg, errorMessage);
+                            mConsoleOutputErrorMsg = Global.AppendToComment(mConsoleOutputErrorMsg, errorMessage);
                         }
                     }
                     else if (dataLine.Contains("No peaks found") ||
@@ -380,7 +380,7 @@ namespace AnalysisManagerNOMSIPlugin
 
             mCurrentConsoleOutputFile = Path.Combine(mWorkDir, NOMSI_CONSOLE_OUTPUT_BASE + scanNumber + ".txt");
 
-            var cmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel)
+            var cmdRunner = new RunDosProgram(mWorkDir, mDebugLevel)
             {
                 CreateNoWindow = true,
                 CacheStandardOutput = false,
@@ -401,7 +401,7 @@ namespace AnalysisManagerNOMSIPlugin
             if (!cmdRunner.WriteConsoleOutputToFile && cmdRunner.CachedConsoleOutput.Length > 0)
             {
                 // Write the console output to a text file
-                clsGlobal.IdleLoop(0.25);
+                Global.IdleLoop(0.25);
 
                 using var writer = new StreamWriter(new FileStream(cmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
 
@@ -414,7 +414,7 @@ namespace AnalysisManagerNOMSIPlugin
             }
 
             // Parse the nomsi_summary file to look for errors
-            clsGlobal.IdleLoop(0.25);
+            Global.IdleLoop(0.25);
             var fiLogSummaryFile = new FileInfo(Path.Combine(mWorkDir, "nomsi_summary.txt"));
             if (!fiLogSummaryFile.Exists)
             {
@@ -463,7 +463,7 @@ namespace AnalysisManagerNOMSIPlugin
 
                 LogMessage("Processing data using NOMSI");
 
-                var paramFilePath = Path.Combine(mWorkDir, mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_PARAMETER_FILE));
+                var paramFilePath = Path.Combine(mWorkDir, mJobParams.GetParam(AnalysisResources.JOB_PARAM_PARAMETER_FILE));
 
                 if (!File.Exists(paramFilePath))
                 {

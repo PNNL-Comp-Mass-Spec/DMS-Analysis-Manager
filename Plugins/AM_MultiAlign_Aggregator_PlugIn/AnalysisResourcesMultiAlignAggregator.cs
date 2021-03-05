@@ -5,7 +5,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
     /// <summary>
     /// Retrieve resources for the MultiAlign Aggregator plugin
     /// </summary>
-    public class clsAnalysisResourcesMultiAlignAggregator : clsAnalysisResources
+    public class AnalysisResourcesMultiAlignAggregator : AnalysisResources
     {
         /// <summary>
         /// Retrieve required files

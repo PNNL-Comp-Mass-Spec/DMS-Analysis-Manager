@@ -18,7 +18,7 @@ namespace AnalysisManagerMSGFDBPlugIn
     /// <summary>
     /// Create MS-GF+ suffix array files
     /// </summary>
-    public class clsCreateMSGFDBSuffixArrayFiles : EventNotifier
+    public class CreateMSGFDBSuffixArrayFiles : EventNotifier
     {
         // Ignore Spelling: canno, Xmx, tda, cp, Utc
 
@@ -44,7 +44,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// Constructor
         /// </summary>
         /// <param name="managerName"></param>
-        public clsCreateMSGFDBSuffixArrayFiles(string managerName)
+        public CreateMSGFDBSuffixArrayFiles(string managerName)
         {
             mMgrName = managerName;
         }
@@ -174,10 +174,10 @@ namespace AnalysisManagerMSGFDBPlugIn
                 const int DEFAULT_ORG_DB_DIR_MIN_FREE_SPACE_MB = 750;
 
                 // Convert fileSizeTotalBytes to MB, but add on a Default_Min_free_Space to assure we'll still have enough free space after copying over the files
-                var minFreeSpaceMB = (int)(clsGlobal.BytesToMB(fileSizeTotalBytes) + DEFAULT_ORG_DB_DIR_MIN_FREE_SPACE_MB);
+                var minFreeSpaceMB = (int)(Global.BytesToMB(fileSizeTotalBytes) + DEFAULT_ORG_DB_DIR_MIN_FREE_SPACE_MB);
 
                 diskFreeSpaceBelowThreshold =
-                    !clsGlobal.ValidateFreeDiskSpace("Organism DB directory", fiFastaFile.Directory.FullName, minFreeSpaceMB, out mErrorMessage);
+                    !Global.ValidateFreeDiskSpace("Organism DB directory", fiFastaFile.Directory.FullName, minFreeSpaceMB, out mErrorMessage);
 
                 if (diskFreeSpaceBelowThreshold)
                 {
@@ -320,7 +320,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                         continue;
 
                     // Skip the file if the extension is .hashcheck or .MSGFPlusIndexFileInfo
-                    if (sourceFile.Extension == clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX ||
+                    if (sourceFile.Extension == Global.SERVER_CACHE_HASHCHECK_FILE_SUFFIX ||
                         sourceFile.Extension == MSGF_PLUS_INDEX_FILE_INFO_SUFFIX)
                     {
                         continue;
@@ -328,7 +328,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                     filesToCopy.Add(sourceFile.Name, sourceFile.Length);
                     fileInfo.Add(sourceFile.Name + "\t" + sourceFile.Length + "\t" +
-                                 sourceFile.LastWriteTimeUtc.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT));
+                                 sourceFile.LastWriteTimeUtc.ToString(AnalysisToolRunnerBase.DATE_TIME_FORMAT));
                 }
 
                 if (!createIndexFileForExistingFiles)
@@ -405,7 +405,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 if (debugLevel > 4)
                 {
-                    OnDebugEvent("clsCreateMSGFDBSuffixArrayFiles.CreateIndexedDbFiles(): Enter");
+                    OnDebugEvent("CreateMSGFDBSuffixArrayFiles.CreateIndexedDbFiles(): Enter");
                 }
 
                 var fastaFile = new FileInfo(fastaFilePath);
@@ -512,8 +512,8 @@ namespace AnalysisManagerMSGFDBPlugIn
                             if (fiIndexFile.LastWriteTimeUtc < fastaFile.LastWriteTimeUtc.AddSeconds(-0.1))
                             {
                                 OnStatusEvent("Index file is older than the fasta file; " + fiIndexFile.FullName + " modified " +
-                                              fiIndexFile.LastWriteTimeUtc.ToLocalTime().ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT) + " vs. " +
-                                              fastaFile.LastWriteTimeUtc.ToLocalTime().ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT));
+                                              fiIndexFile.LastWriteTimeUtc.ToLocalTime().ToString(AnalysisToolRunnerBase.DATE_TIME_FORMAT) + " vs. " +
+                                              fastaFile.LastWriteTimeUtc.ToLocalTime().ToString(AnalysisToolRunnerBase.DATE_TIME_FORMAT));
 
                                 reindexingRequired = true;
                                 break;
@@ -527,7 +527,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 if (!reindexingRequired)
                 {
-                    if (clsGlobal.OfflineMode)
+                    if (Global.OfflineMode)
                         return CloseOutType.CLOSEOUT_SUCCESS;
 
                     // Update the .LastUsed file on the remote share
@@ -544,7 +544,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 FileInfo remoteLockFile = null;
                 CloseOutType resultCode;
 
-                if (clsGlobal.OfflineMode)
+                if (Global.OfflineMode)
                 {
                     // The manager that pushed the FASTA files to the remote host should have also indexed them and pushed all of the index files to this host
                     // We can still re-index the files using the local FASTA file
@@ -615,14 +615,14 @@ namespace AnalysisManagerMSGFDBPlugIn
                     resultCode = CreateSuffixArrayFilesWork(logFileDir, debugLevel, fastaFile, lockFile, javaProgLoc,
                                                             msgfPlusProgLoc, fastaFileIsDecoy, dbCsArrayFilename);
 
-                    if (remoteLockFileCreated && resultCode == CloseOutType.CLOSEOUT_SUCCESS && !clsGlobal.OfflineMode)
+                    if (remoteLockFileCreated && resultCode == CloseOutType.CLOSEOUT_SUCCESS && !Global.OfflineMode)
                     {
                         OnStatusEvent("Copying index files to " + remoteIndexDirPath);
                         CopyIndexFilesToRemote(fastaFile, remoteIndexDirPath, debugLevel);
                     }
                 }
 
-                if (!clsGlobal.OfflineMode)
+                if (!Global.OfflineMode)
                 {
                     // Update the .LastUsed file on the remote share
                     UpdateRemoteLastUsedFile(remoteIndexDirPath, fastaFile.Name);
@@ -678,7 +678,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 // Examine the size of the .Fasta file to determine how much ram to reserve
                 int javaMemorySizeMB;
 
-                var fastaFileSizeMB = clsGlobal.BytesToMB(fiFastaFile.Length);
+                var fastaFileSizeMB = Global.BytesToMB(fiFastaFile.Length);
 
                 if (fastaFileSizeMB <= 125)
                 {
@@ -700,7 +700,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 currentTask = "Verify free memory";
 
                 // Make sure the machine has enough free memory to run BuildSA
-                if (!clsAnalysisResources.ValidateFreeMemorySize(javaMemorySizeMB, "BuildSA", false))
+                if (!AnalysisResources.ValidateFreeMemorySize(javaMemorySizeMB, "BuildSA", false))
                 {
                     mErrorMessage = "Cannot run BuildSA since less than " + javaMemorySizeMB + " MB of free memory";
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -714,7 +714,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 // Delay between 2 and 5 seconds
                 var oRandom = new Random();
-                clsGlobal.IdleLoop(oRandom.Next(2, 5));
+                Global.IdleLoop(oRandom.Next(2, 5));
 
                 // Check one more time for a lock file
                 // If it exists, another manager just created it and we should abort
@@ -781,7 +781,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 }
 
                 var consoleOutputFilePath = Path.Combine(logFileDir, "MSGFPlus_BuildSA_ConsoleOutput.txt");
-                var buildSA = new clsRunDosProgram(fiFastaFile.DirectoryName, debugLevel)
+                var buildSA = new RunDosProgram(fiFastaFile.DirectoryName, debugLevel)
                 {
                     CreateNoWindow = true,
                     CacheStandardOutput = true,
@@ -852,7 +852,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 using var writer = new StreamWriter(new FileStream(lockFilePath, FileMode.CreateNew, FileAccess.Write, FileShare.Read));
 
                 // Use local time for dates in lock files
-                writer.WriteLine("Date: " + DateTime.Now.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT));
+                writer.WriteLine("Date: " + DateTime.Now.ToString(AnalysisToolRunnerBase.DATE_TIME_FORMAT));
                 writer.WriteLine("Manager: " + mMgrName);
 
                 return true;
@@ -860,7 +860,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             catch (Exception ex)
             {
                 mErrorMessage = "Error creating lock file";
-                OnErrorEvent("clsCreateMSGFDBSuffixArrayFiles.CreateLockFile, " + mErrorMessage, ex);
+                OnErrorEvent("CreateMSGFDBSuffixArrayFiles.CreateLockFile, " + mErrorMessage, ex);
                 return false;
             }
         }
@@ -959,7 +959,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     using var purgeInfoWriter = new StreamWriter(new FileStream(purgeInfoFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read));
 
                     // Use local time for the date in the purge Info file
-                    purgeInfoWriter.WriteLine(DateTime.Now.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT));
+                    purgeInfoWriter.WriteLine(DateTime.Now.ToString(AnalysisToolRunnerBase.DATE_TIME_FORMAT));
                     purgeInfoWriter.WriteLine("Manager: " + mMgrName);
                 }
                 catch (Exception ex)
@@ -985,7 +985,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 }
 
                 // MaxDirSize.txt file exists; this file specifies the max total GB that files orgDbFolder can use
-                clsAnalysisResources.PurgeFastaFilesUsingSpaceUsedThreshold(maxDirSizeFile, "", debugLevel, preview: false);
+                AnalysisResources.PurgeFastaFilesUsingSpaceUsedThreshold(maxDirSizeFile, "", debugLevel, preview: false);
             }
             catch (Exception ex)
             {
@@ -1077,11 +1077,11 @@ namespace AnalysisManagerMSGFDBPlugIn
                 if (fiFileToFind.Exists)
                 {
                     existingFiles.Add(fiFileToFind);
-                    existingFileList = clsGlobal.AppendToComment(existingFileList, fileNameToFind);
+                    existingFileList = Global.AppendToComment(existingFileList, fileNameToFind);
                 }
                 else
                 {
-                    missingFiles = clsGlobal.AppendToComment(missingFiles, fileNameToFind);
+                    missingFiles = Global.AppendToComment(missingFiles, fileNameToFind);
                 }
             }
 
@@ -1173,7 +1173,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     using var writer = new StreamWriter(new FileStream(lastUsedFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
 
                     // Use UtcNow for dates in LastUsed files
-                    writer.WriteLine(DateTime.UtcNow.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT));
+                    writer.WriteLine(DateTime.UtcNow.ToString(AnalysisToolRunnerBase.DATE_TIME_FORMAT));
                 }
                 catch (IOException)
                 {
@@ -1307,8 +1307,8 @@ namespace AnalysisManagerMSGFDBPlugIn
                     {
                         if (!string.Equals(fiSourceFile.Extension, FileSyncUtils.LASTUSED_FILE_EXTENSION, StringComparison.OrdinalIgnoreCase))
                         {
-                            var sourceFileDate = fiSourceFile.LastWriteTimeUtc.ToLocalTime().ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT);
-                            var dateThreshold = dtMinWriteTimeThresholdUTC.ToLocalTime().ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT);
+                            var sourceFileDate = fiSourceFile.LastWriteTimeUtc.ToLocalTime().ToString(AnalysisToolRunnerBase.DATE_TIME_FORMAT);
+                            var dateThreshold = dtMinWriteTimeThresholdUTC.ToLocalTime().ToString(AnalysisToolRunnerBase.DATE_TIME_FORMAT);
 
                             OnStatusEvent(string.Format("{0} is older than the fasta file; {1} modified {2} vs. {3}; indexing is required",
                                                         sourceDescription,
@@ -1334,7 +1334,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 if (debugLevel >= 1)
                 {
                     OnStatusEvent("Lock file is over 60 minutes old (created " +
-                        fiLockFile.LastWriteTime.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT) + "); " +
+                        fiLockFile.LastWriteTime.ToString(AnalysisToolRunnerBase.DATE_TIME_FORMAT) + "); " +
                         "deleting " + fiLockFile.FullName);
                 }
                 DeleteLockFile(fiLockFile);
@@ -1355,7 +1355,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             while (fiLockFile.Exists)
             {
                 // Sleep for 2 seconds
-                clsGlobal.IdleLoop(2);
+                Global.IdleLoop(2);
 
                 if (DateTime.UtcNow.Subtract(fiLockFile.CreationTimeUtc).TotalHours >= maxWaitTimeHours)
                 {

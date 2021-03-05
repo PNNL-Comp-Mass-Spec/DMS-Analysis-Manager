@@ -47,7 +47,7 @@ namespace AnalysisManager_AScore_PlugIn
         private int datasetTypeIdx;
         private int settingsFileIdx;
 
-        private clsDotNetZipTools mDotNetZipTools;
+        private DotNetZipTools mDotNetZipTools;
 
         #endregion
 
@@ -74,7 +74,7 @@ namespace AnalysisManager_AScore_PlugIn
             ExtractedResultsFileName = "extracted_results.txt";
         }
 
-        public void Initialize(clsDotNetZipTools dotNetZipTools)
+        public void Initialize(DotNetZipTools dotNetZipTools)
         {
             mDotNetZipTools = dotNetZipTools;
         }
@@ -255,14 +255,14 @@ namespace AnalysisManager_AScore_PlugIn
                     // load AScore results into SQLite database
                     const string tableName = "T_Results_AScore";
                     var dbFilePath = Path.Combine(WorkingDir, ResultsDBFileName);
-                    clsAScoreMagePipeline.ImportFileToSQLite(fiAScoreFile.FullName, dbFilePath, tableName);
+                    AScoreMagePipeline.ImportFileToSQLite(fiAScoreFile.FullName, dbFilePath, tableName);
                 }
 
                 if (File.Exists(ascoreOutputFilePath))
                 {
                     try
                     {
-                        clsAnalysisToolRunnerBase.DeleteFileWithRetries(ascoreOutputFilePath, debugLevel: 1, maxRetryCount: 2);
+                        AnalysisToolRunnerBase.DeleteFileWithRetries(ascoreOutputFilePath, debugLevel: 1, maxRetryCount: 2);
                     }
                     catch (Exception ex)
                     {
@@ -286,7 +286,7 @@ namespace AnalysisManager_AScore_PlugIn
             }
             catch (Exception ex)
             {
-                LogTools.LogError("Exception in clsAScoreMage.CheckFilter: " + ex.Message, ex);
+                LogTools.LogError("Exception in AScoreMage.CheckFilter: " + ex.Message, ex);
                 Console.WriteLine(ex.Message);
                 throw;
             }
@@ -332,7 +332,7 @@ namespace AnalysisManager_AScore_PlugIn
 
             var resultsDirectory = new DirectoryInfo(resultsDirectoryPath);
 
-            if (resultsDirectoryPath.StartsWith(clsAnalysisResources.MYEMSL_PATH_FLAG))
+            if (resultsDirectoryPath.StartsWith(AnalysisResources.MYEMSL_PATH_FLAG))
             {
                 // Need to retrieve the _DTA.zip file from MyEMSL
                 dtaZipPathLocal = CopyDtaResultsFromMyEMSL(datasetName, resultsDirectory, jobNumber, toolName, connectionString);
@@ -365,7 +365,7 @@ namespace AnalysisManager_AScore_PlugIn
                 // Perform garage collection to force the Unzip tool to release the file handle
                 ProgRunner.GarbageCollectNow();
 
-                clsAnalysisToolRunnerBase.DeleteFileWithRetries(dtaZipPathLocal, debugLevel: 1, maxRetryCount: 2);
+                AnalysisToolRunnerBase.DeleteFileWithRetries(dtaZipPathLocal, debugLevel: 1, maxRetryCount: 2);
             }
             catch (Exception ex)
             {
@@ -378,8 +378,8 @@ namespace AnalysisManager_AScore_PlugIn
 
         private string CopyDtaResultsFromMyEMSL(string datasetName, FileSystemInfo resultsDirectory, int jobNumber, string toolName, string connectionString)
         {
-            clsAScoreMagePipeline.mMyEMSLDatasetInfo.AddDataset(datasetName);
-            var lstArchiveFiles = clsAScoreMagePipeline.mMyEMSLDatasetInfo.FindFiles("*_dta.zip", resultsDirectory.Name, datasetName);
+            AScoreMagePipeline.mMyEMSLDatasetInfo.AddDataset(datasetName);
+            var lstArchiveFiles = AScoreMagePipeline.mMyEMSLDatasetInfo.FindFiles("*_dta.zip", resultsDirectory.Name, datasetName);
 
             if (lstArchiveFiles.Count == 0)
             {
@@ -392,7 +392,7 @@ namespace AnalysisManager_AScore_PlugIn
                     return null;
                 }
 
-                lstArchiveFiles = clsAScoreMagePipeline.mMyEMSLDatasetInfo.FindFiles("*_dta.zip", dtaDirectoryName, datasetName);
+                lstArchiveFiles = AScoreMagePipeline.mMyEMSLDatasetInfo.FindFiles("*_dta.zip", dtaDirectoryName, datasetName);
 
                 if (lstArchiveFiles.Count == 0)
                 {
@@ -401,9 +401,9 @@ namespace AnalysisManager_AScore_PlugIn
                 }
             }
 
-            clsAScoreMagePipeline.mMyEMSLDatasetInfo.AddFileToDownloadQueue(lstArchiveFiles.First().FileInfo);
+            AScoreMagePipeline.mMyEMSLDatasetInfo.AddFileToDownloadQueue(lstArchiveFiles.First().FileInfo);
 
-            if (!clsAScoreMagePipeline.mMyEMSLDatasetInfo.ProcessDownloadQueue(WorkingDir, Downloader.DownloadLayout.FlatNoSubdirectories))
+            if (!AScoreMagePipeline.mMyEMSLDatasetInfo.ProcessDownloadQueue(WorkingDir, Downloader.DownloadLayout.FlatNoSubdirectories))
             {
                 LogTools.LogError("Error downloading the _DTA.zip file from MyEMSL");
                 return null;
@@ -491,7 +491,7 @@ namespace AnalysisManager_AScore_PlugIn
                 var dbTools = DbToolsFactory.GetDBTools(connectionString, debugMode: TraceMode);
                 RegisterEvents(dbTools);
 
-                var success = clsGlobal.GetQueryResultsTopRow(dbTools, sqlQuery, out var firstSharedResultsDirectory);
+                var success = Global.GetQueryResultsTopRow(dbTools, sqlQuery, out var firstSharedResultsDirectory);
 
                 if (!success || firstSharedResultsDirectory.Count == 0)
                 {

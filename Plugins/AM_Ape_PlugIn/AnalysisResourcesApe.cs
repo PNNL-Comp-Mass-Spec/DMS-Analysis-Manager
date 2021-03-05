@@ -7,7 +7,7 @@ namespace AnalysisManager_Ape_PlugIn
     /// <summary>
     /// Retrieve resources for the Ape plugin
     /// </summary>
-    public class clsAnalysisResourcesApe : clsAnalysisResources
+    public class AnalysisResourcesApe : AnalysisResources
     {
         /// <summary>
         /// Retrieve required files

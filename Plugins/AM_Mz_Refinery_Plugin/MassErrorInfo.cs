@@ -1,7 +1,7 @@
 ﻿
 namespace AnalysisManagerMzRefineryPlugIn
 {
-    public class clsMassErrorInfo
+    public class MassErrorInfo
     {
         /// <summary>
         /// Dataset name
@@ -26,7 +26,7 @@ namespace AnalysisManagerMzRefineryPlugIn
         /// <summary>
         /// Constructor
         /// </summary>
-        public clsMassErrorInfo()
+        public MassErrorInfo()
         {
             Clear();
         }

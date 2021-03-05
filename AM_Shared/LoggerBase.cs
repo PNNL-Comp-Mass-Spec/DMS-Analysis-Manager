@@ -8,7 +8,7 @@ namespace AnalysisManagerBase
     /// <summary>
     /// Methods to be inherited by classes that use LogTools
     /// </summary>
-    public abstract class clsLoggerBase
+    public abstract class LoggerBase
     {
         /// <summary>
         /// Debug level
@@ -45,7 +45,7 @@ namespace AnalysisManagerBase
             ConsoleMsgUtils.ShowErrorCustom(errorMessage, false);
 
             LogTools.LoggerTypes loggerType;
-            if (logToDb && !clsGlobal.OfflineMode)
+            if (logToDb && !Global.OfflineMode)
             {
                 loggerType = LogTools.LoggerTypes.LogDb;
             }
@@ -60,7 +60,7 @@ namespace AnalysisManagerBase
             }
             catch (Exception ex)
             {
-                clsGlobal.ErrorWritingToLog(errorMessage, ex);
+                Global.ErrorWritingToLog(errorMessage, ex);
             }
         }
 
@@ -125,7 +125,7 @@ namespace AnalysisManagerBase
             processingClass.WarningEvent += WarningEventHandler;
 
             // Do not watch the ProgressUpdate event
-            // clsAnalysisMgrBase does monitor ProgressUpdate
+            // AnalysisMgrBase does monitor ProgressUpdate
         }
 
         /// <summary>

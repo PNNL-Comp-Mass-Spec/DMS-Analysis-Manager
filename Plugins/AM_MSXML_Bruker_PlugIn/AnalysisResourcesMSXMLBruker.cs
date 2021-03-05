@@ -12,7 +12,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
     /// <summary>
     /// Retrieve resources for the MSXml Bruker plugin
     /// </summary>
-    public class clsAnalysisResourcesMSXMLBruker : clsAnalysisResources
+    public class AnalysisResourcesMSXMLBruker : AnalysisResources
     {
         #region "Methods"
 
@@ -42,7 +42,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
                 default:
                     mMessage = "Dataset type " + rawDataType + " is not supported";
                     LogDebug(
-                        "clsDtaGenResources.GetResources: " + mMessage + "; must be " + RAW_DATA_TYPE_BRUKER_FT_FOLDER + " or " +
+                        "DtaGenResources.GetResources: " + mMessage + "; must be " + RAW_DATA_TYPE_BRUKER_FT_FOLDER + " or " +
                         RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER);
 
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -50,7 +50,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
 
             if (!FileSearch.RetrieveSpectra(rawDataTypeName))
             {
-                LogDebug("clsDtaGenResources.GetResources: Error occurred retrieving spectra.");
+                LogDebug("DtaGenResources.GetResources: Error occurred retrieving spectra.");
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 

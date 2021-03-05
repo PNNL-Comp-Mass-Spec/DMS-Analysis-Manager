@@ -12,7 +12,7 @@ namespace AnalysisManagerDataImportPlugIn
     /// <summary>
     /// Retrieve resources for the Data Import plugin
     /// </summary>
-    public class clsAnalysisResourcesDataImport : clsAnalysisResources
+    public class AnalysisResourcesDataImport : AnalysisResources
     {
         /// <summary>
         /// Retrieve required files

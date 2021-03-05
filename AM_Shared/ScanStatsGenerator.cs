@@ -8,7 +8,7 @@ namespace AnalysisManagerBase
     /// <summary>
     /// Scan stats generator
     /// </summary>
-    public class clsScanStatsGenerator : EventNotifier
+    public class ScanStatsGenerator : EventNotifier
     {
         /// <summary>
         /// Debug level
@@ -50,7 +50,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="msFileInfoScannerDLLPath"></param>
         /// <param name="debugLevel"></param>
-        public clsScanStatsGenerator(string msFileInfoScannerDLLPath, int debugLevel)
+        public ScanStatsGenerator(string msFileInfoScannerDLLPath, int debugLevel)
         {
             mMSFileInfoScannerDLLPath = msFileInfoScannerDLLPath;
             mDebugLevel = debugLevel;

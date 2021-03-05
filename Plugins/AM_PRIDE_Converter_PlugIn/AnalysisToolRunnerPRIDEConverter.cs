@@ -22,14 +22,14 @@ namespace AnalysisManagerPRIDEConverterPlugIn
     /// Although this class was originally created to prepare data for submission to PRIDE,
     /// we now primarily use it to submit data to ProteomeXchange
     /// </remarks>
-    public class clsAnalysisToolRunnerPRIDEConverter : clsAnalysisToolRunnerBase
+    public class AnalysisToolRunnerPRIDEConverter : AnalysisToolRunnerBase
     {
         #region "Constants"
 
-        private const string DOT_MGF = clsAnalysisResources.DOT_MGF_EXTENSION;
+        private const string DOT_MGF = AnalysisResources.DOT_MGF_EXTENSION;
         private const string DOT_MZID_GZ = ".mzid.gz";
-        private const string DOT_MZML = clsAnalysisResources.DOT_MZML_EXTENSION;
-        private const string DOT_MZML_GZ = clsAnalysisResources.DOT_MZML_EXTENSION + clsAnalysisResources.DOT_GZ_EXTENSION;
+        private const string DOT_MZML = AnalysisResources.DOT_MZML_EXTENSION;
+        private const string DOT_MZML_GZ = AnalysisResources.DOT_MZML_EXTENSION + AnalysisResources.DOT_GZ_EXTENSION;
 
         #endregion
 
@@ -70,7 +70,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
         // This dictionary tracks the peptide hit jobs defined for this data package
         // The keys are job numbers and the values contain job info
-        private Dictionary<int, clsDataPackageJobInfo> mDataPackagePeptideHitJobs;
+        private Dictionary<int, DataPackageJobInfo> mDataPackagePeptideHitJobs;
 
         private string mPrideConverterProgLoc = string.Empty;
 
@@ -138,7 +138,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// Note that PRIDE uses case-sensitive file names, so it is important to properly capitalize the files to match the official DMS dataset name
         /// However, this dictionary is instantiated with a case-insensitive comparer, to prevent duplicate entries
         /// </remarks>
-        private Dictionary<string, clsPXFileInfoBase> mPxMasterFileList;
+        private Dictionary<string, PXFileInfoBase> mPxMasterFileList;
 
         /// <summary>
         /// Px result files
@@ -147,7 +147,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// Keys are PXFileIDs
         /// Values contain info on each file, including the PXFileType and the FileIDs that map to this file (empty list if no mapped files)
         /// </remarks>
-        private Dictionary<int, clsPXFileInfo> mPxResultFiles;
+        private Dictionary<int, PXFileInfo> mPxResultFiles;
 
         [Obsolete("No longer used")]
         private udtFilterThresholdsType mFilterThresholdsUsed;
@@ -191,7 +191,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// Keys are Unimod accession names(e.g.UNIMOD:35)
         /// Values are CvParam data for the modification
         /// </remarks>
-        private Dictionary<string, clsSampleMetadata.udtCvParamInfoType> mModificationsUsed;
+        private Dictionary<string, SampleMetadata.udtCvParamInfoType> mModificationsUsed;
 
         /// <summary>
         /// Sample info for each mzid.gz file
@@ -201,7 +201,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// Keys are mzid.gz file names
         /// Values are the sample info for the file
         /// </remarks>
-        private Dictionary<string, clsSampleMetadata> mMzIdSampleInfo;
+        private Dictionary<string, SampleMetadata> mMzIdSampleInfo;
 
         /// <summary>
         /// _dta.txt file stats
@@ -210,17 +210,17 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// Keys are _dta.txt file names
         /// Values contain info on each file
         /// </remarks>
-        private Dictionary<string, clsPXFileInfoBase> mCDTAFileStats;
+        private Dictionary<string, PXFileInfoBase> mCDTAFileStats;
 
         /// <summary>
         /// MzML /  MzXML file creator
         /// </summary>
-        private AnalysisManagerMsXmlGenPlugIn.clsMSXMLCreator mMSXmlCreator;
+        private AnalysisManagerMsXmlGenPlugIn.MSXMLCreator mMSXmlCreator;
 
         /// <summary>
         /// Program runner
         /// </summary>
-        private clsRunDosProgram mCmdRunner;
+        private RunDosProgram mCmdRunner;
 
         #endregion
 
@@ -325,7 +325,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 if (mDebugLevel > 4)
                 {
-                    LogDebug("clsAnalysisToolRunnerPRIDEConverter.RunTool(): Enter");
+                    LogDebug("AnalysisToolRunnerPRIDEConverter.RunTool(): Enter");
                 }
 
                 // Verify that program files exist
@@ -344,7 +344,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 mConsoleOutputErrorMsg = string.Empty;
 
-                mCacheFolderPath = mJobParams.GetJobParameter("CacheFolderPath", clsAnalysisResourcesPRIDEConverter.DEFAULT_CACHE_FOLDER_PATH);
+                mCacheFolderPath = mJobParams.GetJobParameter("CacheFolderPath", AnalysisResourcesPRIDEConverter.DEFAULT_CACHE_FOLDER_PATH);
 
                 LogMessage("Running PRIDEConverter");
 
@@ -352,7 +352,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 if (!LoadDataPackageDatasetInfo(out var dataPackageDatasets))
                 {
                     const string msg = "Error loading data package dataset info";
-                    LogError(msg + ": clsAnalysisToolRunnerBase.LoadDataPackageDatasetInfo returned false");
+                    LogError(msg + ": AnalysisToolRunnerBase.LoadDataPackageDatasetInfo returned false");
                     mMessage = msg;
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -367,7 +367,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 mMyEMSLUtilities.FileDownloaded += MyEMSLDatasetListInfo_FileDownloadedEvent;
 
                 // The analysisResults object is used to copy files to/from this computer
-                var analysisResults = new clsAnalysisResults(mMgrParams, mJobParams);
+                var analysisResults = new AnalysisResults(mMgrParams, mJobParams);
 
                 // Assure that the remote transfer folder exists
                 var remoteTransferFolder = CreateRemoteTransferFolder(analysisResults, mCacheFolderPath);
@@ -442,10 +442,10 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// <param name="templateParameters"></param>
         /// <param name="dataPackageDatasets">Datasets in the data package (keys are DatasetID)</param>
         private int ProcessJobs(
-            clsAnalysisResults analysisResults,
+            AnalysisResults analysisResults,
             string remoteTransferFolder,
             IReadOnlyDictionary<string, string> templateParameters,
-            IReadOnlyDictionary<int, clsDataPackageDatasetInfo> dataPackageDatasets)
+            IReadOnlyDictionary<int, DataPackageDatasetInfo> dataPackageDatasets)
         {
             var jobsProcessed = 0;
             var jobFailureCount = 0;
@@ -456,7 +456,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 InitializeOptions();
 
                 // Extract the dataset raw file paths
-                var datasetRawFilePaths = ExtractPackedJobParameterDictionary(clsAnalysisResources.JOB_PARAM_DICTIONARY_DATASET_FILE_PATHS);
+                var datasetRawFilePaths = ExtractPackedJobParameterDictionary(AnalysisResources.JOB_PARAM_DICTIONARY_DATASET_FILE_PATHS);
 
                 // Process each job in mDataPackagePeptideHitJobs
                 // Sort the jobs by dataset so that we can use the same .mzML file for datasets with multiple jobs
@@ -580,7 +580,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             }
         }
 
-        private void AddPlaceholderDatasetEntry(KeyValuePair<int, clsDataPackageDatasetInfo> datasetInfo)
+        private void AddPlaceholderDatasetEntry(KeyValuePair<int, DataPackageDatasetInfo> datasetInfo)
         {
             AddExperimentTissueId(datasetInfo.Value.Experiment_Tissue_ID, datasetInfo.Value.Experiment_Tissue_Name);
 
@@ -592,14 +592,14 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             var udtDatasetInfo = datasetInfo.Value;
             var datasetRawFilePath = Path.Combine(udtDatasetInfo.ServerStoragePath, udtDatasetInfo.Dataset + ".raw");
 
-            var dataPkgJob = clsAnalysisResources.GetPseudoDataPackageJobInfo(udtDatasetInfo);
+            var dataPkgJob = AnalysisResources.GetPseudoDataPackageJobInfo(udtDatasetInfo);
 
             var rawFileID = AddPxFileToMasterList(datasetRawFilePath, dataPkgJob);
 
-            AddPxResultFile(rawFileID, clsPXFileInfoBase.ePXFileType.Raw, datasetRawFilePath, dataPkgJob);
+            AddPxResultFile(rawFileID, PXFileInfoBase.ePXFileType.Raw, datasetRawFilePath, dataPkgJob);
         }
 
-        private int AddPxFileToMasterList(string filePath, clsDataPackageJobInfo dataPkgJob)
+        private int AddPxFileToMasterList(string filePath, DataPackageJobInfo dataPkgJob)
         {
             var fiFile = new FileInfo(filePath);
 
@@ -611,7 +611,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
             var filename = CheckFilenameCase(fiFile, dataPkgJob.Dataset);
 
-            pxFileInfo = new clsPXFileInfoBase(filename, dataPkgJob)
+            pxFileInfo = new PXFileInfoBase(filename, dataPkgJob)
             {
                 FileID = mPxMasterFileList.Count + 1
             };
@@ -632,7 +632,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             return pxFileInfo.FileID;
         }
 
-        private bool AddPxResultFile(int fileId, clsPXFileInfoBase.ePXFileType eFileType, string filePath, clsDataPackageJobInfo dataPkgJob)
+        private bool AddPxResultFile(int fileId, PXFileInfoBase.ePXFileType eFileType, string filePath, DataPackageJobInfo dataPkgJob)
         {
             var fiFile = new FileInfo(filePath);
 
@@ -659,7 +659,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
             var filename = CheckFilenameCase(fiFile, dataPkgJob.Dataset);
 
-            var pxFileInfo = new clsPXFileInfo(filename, dataPkgJob);
+            var pxFileInfo = new PXFileInfo(filename, dataPkgJob);
             pxFileInfo.Update(masterPXFileInfo);
             pxFileInfo.PXFileType = eFileType;
 
@@ -681,8 +681,8 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             }
         }
 
-        private bool AppendToPXFileInfo(clsDataPackageJobInfo dataPkgJob, IReadOnlyDictionary<string, string> datasetRawFilePaths,
-            clsResultFileContainer resultFiles)
+        private bool AppendToPXFileInfo(DataPackageJobInfo dataPkgJob, IReadOnlyDictionary<string, string> datasetRawFilePaths,
+            ResultFileContainer resultFiles)
         {
             // Add the files to be submitted to ProteomeXchange to the master file list
             // In addition, append new mappings to the ProteomeXchange mapping list
@@ -693,7 +693,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 AddToListIfNew(mPreviousDatasetFilesToCopy, resultFiles.PrideXmlFilePath);
 
                 prideXMLFileId = AddPxFileToMasterList(resultFiles.PrideXmlFilePath, dataPkgJob);
-                if (!AddPxResultFile(prideXMLFileId, clsPXFileInfoBase.ePXFileType.Result, resultFiles.PrideXmlFilePath, dataPkgJob))
+                if (!AddPxResultFile(prideXMLFileId, PXFileInfoBase.ePXFileType.Result, resultFiles.PrideXmlFilePath, dataPkgJob))
                 {
                     return false;
                 }
@@ -705,7 +705,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 if (!string.IsNullOrEmpty(datasetRawFilePath))
                 {
                     rawFileID = AddPxFileToMasterList(datasetRawFilePath, dataPkgJob);
-                    if (!AddPxResultFile(rawFileID, clsPXFileInfoBase.ePXFileType.Raw, datasetRawFilePath, dataPkgJob))
+                    if (!AddPxResultFile(rawFileID, PXFileInfoBase.ePXFileType.Raw, datasetRawFilePath, dataPkgJob))
                     {
                         return false;
                     }
@@ -726,7 +726,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 AddToListIfNew(mPreviousDatasetFilesToCopy, resultFiles.MGFFilePath);
 
                 peakFileId = AddPxFileToMasterList(resultFiles.MGFFilePath, dataPkgJob);
-                if (!AddPxResultFile(peakFileId, clsPXFileInfoBase.ePXFileType.Peak, resultFiles.MGFFilePath, dataPkgJob))
+                if (!AddPxResultFile(peakFileId, PXFileInfoBase.ePXFileType.Peak, resultFiles.MGFFilePath, dataPkgJob))
                 {
                     return false;
                 }
@@ -755,7 +755,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
             foreach (var mzIdResultFile in resultFiles.MzIDFilePaths)
             {
-                var success = AddMzidOrPepXmlFileToPX(dataPkgJob, mzIdResultFile, clsPXFileInfoBase.ePXFileType.ResultMzId, prideXMLFileId,
+                var success = AddMzidOrPepXmlFileToPX(dataPkgJob, mzIdResultFile, PXFileInfoBase.ePXFileType.ResultMzId, prideXMLFileId,
                     rawFileID, peakFileId);
                 if (!success)
                     return false;
@@ -763,7 +763,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
             if (!string.IsNullOrWhiteSpace(resultFiles.PepXMLFile))
             {
-                var success = AddMzidOrPepXmlFileToPX(dataPkgJob, resultFiles.PepXMLFile, clsPXFileInfoBase.ePXFileType.Search, prideXMLFileId,
+                var success = AddMzidOrPepXmlFileToPX(dataPkgJob, resultFiles.PepXMLFile, PXFileInfoBase.ePXFileType.Search, prideXMLFileId,
                     rawFileID, peakFileId);
                 if (!success)
                     return false;
@@ -772,7 +772,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             return true;
         }
 
-        private bool AddMzidOrPepXmlFileToPX(clsDataPackageJobInfo dataPkgJob, string resultFilePath, clsPXFileInfoBase.ePXFileType ePxFileType,
+        private bool AddMzidOrPepXmlFileToPX(DataPackageJobInfo dataPkgJob, string resultFilePath, PXFileInfoBase.ePXFileType ePxFileType,
             int prideXMLFileId, int rawFileID, int peakFileId)
         {
             AddToListIfNew(mPreviousDatasetFilesToCopy, resultFilePath);
@@ -885,13 +885,13 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// <param name="dataPkgJob"></param>
         /// <param name="mgfFilePath">Output parameter: path of the newly created .mgf file</param>
         /// <returns>True if success, false if an error</returns>
-        private bool ConvertCDTAToMGF(clsDataPackageJobInfo dataPkgJob, out string mgfFilePath)
+        private bool ConvertCDTAToMGF(DataPackageJobInfo dataPkgJob, out string mgfFilePath)
         {
             mgfFilePath = string.Empty;
 
             try
             {
-                var cdtaUtilities = new clsCDTAUtilities();
+                var cdtaUtilities = new CDTAUtilities();
                 RegisterEvents(cdtaUtilities);
 
                 const bool combine2And3PlusCharges = false;
@@ -899,7 +899,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 const bool createIndexFile = false;
 
                 // Convert the _dta.txt file for this data package job
-                var cdtaFile = new FileInfo(Path.Combine(mWorkDir, dataPkgJob.Dataset + clsAnalysisResources.CDTA_EXTENSION));
+                var cdtaFile = new FileInfo(Path.Combine(mWorkDir, dataPkgJob.Dataset + AnalysisResources.CDTA_EXTENSION));
 
                 // Compute the MD5 hash for this _dta.txt file
                 var md5Hash = PRISM.HashUtilities.ComputeFileHashMD5(cdtaFile.FullName);
@@ -943,7 +943,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 var filename = CheckFilenameCase(cdtaFile, dataPkgJob.Dataset);
 
-                var fileInfo = new clsPXFileInfoBase(filename, dataPkgJob)
+                var fileInfo = new PXFileInfoBase(filename, dataPkgJob)
                 {
                     // File ID doesn't matter; just use 0
                     FileID = 0,
@@ -1011,7 +1011,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// Counts the number of items of type eFileType in mPxResultFiles
         /// </summary>
         /// <param name="eFileType"></param>
-        private int CountResultFilesByType(clsPXFileInfoBase.ePXFileType eFileType)
+        private int CountResultFilesByType(PXFileInfoBase.ePXFileType eFileType)
         {
             var fileCount = (from item in mPxResultFiles where item.Value.PXFileType == eFileType select item).Count();
 
@@ -1025,13 +1025,13 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// </summary>
         /// <returns>True if the file exists or was created</returns>
         [Obsolete("No longer used")]
-        private bool CreateMzXMLFileIfMissing(string dataset, clsAnalysisResults analysisResults,
+        private bool CreateMzXMLFileIfMissing(string dataset, AnalysisResults analysisResults,
             IReadOnlyDictionary<string, string> datasetRawFilePaths)
         {
             try
             {
                 // Look in mWorkDir for the .mzXML file for this dataset
-                var fiMzXmlFilePathLocal = new FileInfo(Path.Combine(mWorkDir, dataset + clsAnalysisResources.DOT_MZXML_EXTENSION));
+                var fiMzXmlFilePathLocal = new FileInfo(Path.Combine(mWorkDir, dataset + AnalysisResources.DOT_MZXML_EXTENSION));
 
                 if (fiMzXmlFilePathLocal.Exists)
                 {
@@ -1044,7 +1044,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 // .mzXML file not found
                 // Look for a StoragePathInfo file
-                var mzXmlStoragePathFile = fiMzXmlFilePathLocal.FullName + clsAnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX;
+                var mzXmlStoragePathFile = fiMzXmlFilePathLocal.FullName + AnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX;
 
                 string destinationPath;
                 bool success;
@@ -1061,19 +1061,19 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 // Need to create the .mzXML file
 
                 var datasetYearQuarterByDataset =
-                    ExtractPackedJobParameterDictionary(clsAnalysisResourcesPRIDEConverter.JOB_PARAM_DICTIONARY_DATASET_STORAGE_YEAR_QUARTER);
+                    ExtractPackedJobParameterDictionary(AnalysisResourcesPRIDEConverter.JOB_PARAM_DICTIONARY_DATASET_STORAGE_YEAR_QUARTER);
 
                 if (!datasetRawFilePaths.ContainsKey(dataset))
                 {
                     LogError("Dataset " + dataset + " not found in job parameter " +
-                        clsAnalysisResources.JOB_PARAM_DICTIONARY_DATASET_FILE_PATHS +
+                        AnalysisResources.JOB_PARAM_DICTIONARY_DATASET_FILE_PATHS +
                         "; unable to create the missing .mzXML file");
                     return false;
                 }
 
                 mJobParams.AddResultFileToSkip("MSConvert_ConsoleOutput.txt");
 
-                mMSXmlCreator = new AnalysisManagerMsXmlGenPlugIn.clsMSXMLCreator(mMSXmlGeneratorAppPath, mWorkDir,
+                mMSXmlCreator = new AnalysisManagerMsXmlGenPlugIn.MSXMLCreator(mMSXmlGeneratorAppPath, mWorkDir,
                                                                                   dataset, mDebugLevel, mJobParams);
                 RegisterEvents(mMSXmlCreator);
                 mMSXmlCreator.LoopWaiting += MSXmlCreator_LoopWaiting;
@@ -1087,7 +1087,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 if (string.IsNullOrWhiteSpace(datasetFilePathRemote))
                 {
                     LogError("Dataset " + dataset + " has an empty value for the instrument file path in " +
-                        clsAnalysisResources.JOB_PARAM_DICTIONARY_DATASET_FILE_PATHS +
+                        AnalysisResources.JOB_PARAM_DICTIONARY_DATASET_FILE_PATHS +
                         "; unable to create the missing .mzXML file");
                     return false;
                 }
@@ -1102,9 +1102,9 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     if (!Directory.Exists(datasetFilePathLocal))
                     {
                         // Directory not found; look for a storage path info file
-                        if (File.Exists(datasetFilePathLocal + clsAnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX))
+                        if (File.Exists(datasetFilePathLocal + AnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX))
                         {
-                            RetrieveStoragePathInfoTargetFile(datasetFilePathLocal + clsAnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX,
+                            RetrieveStoragePathInfoTargetFile(datasetFilePathLocal + AnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX,
                                 analysisResults, IsFolder: true, destinationPath: out destinationPath);
                         }
                         else
@@ -1120,9 +1120,9 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     if (!File.Exists(datasetFilePathLocal))
                     {
                         // File not found; Look for a storage path info file
-                        if (File.Exists(datasetFilePathLocal + clsAnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX))
+                        if (File.Exists(datasetFilePathLocal + AnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX))
                         {
-                            RetrieveStoragePathInfoTargetFile(datasetFilePathLocal + clsAnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX,
+                            RetrieveStoragePathInfoTargetFile(datasetFilePathLocal + AnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX,
                                 analysisResults, out destinationPath);
                             AddToListIfNew(mPreviousDatasetFilesToDelete, destinationPath);
                         }
@@ -1176,7 +1176,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 CopyMzXMLFileToServerCache(fiMzXmlFilePathLocal.FullName, datasetYearQuarter, msXmlGeneratorName, purgeOldFilesIfNeeded: true);
 
-                mJobParams.AddResultFileToSkip(Path.GetFileName(fiMzXmlFilePathLocal.FullName + clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX));
+                mJobParams.AddResultFileToSkip(Path.GetFileName(fiMzXmlFilePathLocal.FullName + Global.SERVER_CACHE_HASHCHECK_FILE_SUFFIX));
 
                 PRISM.ProgRunner.GarbageCollectNow();
 
@@ -1708,13 +1708,13 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
             try
             {
-                var templateFileName = clsAnalysisResourcesPRIDEConverter.GetMSGFReportTemplateFilename(mJobParams, WarnIfJobParamMissing: false);
+                var templateFileName = AnalysisResourcesPRIDEConverter.GetMSGFReportTemplateFilename(mJobParams, WarnIfJobParamMissing: false);
 
                 var orgDBNameGenerated = mJobParams.GetJobParameter("PeptideSearch",
-                                                                     clsAnalysisResourcesPRIDEConverter.GetGeneratedFastaParamNameForJob(job), string.Empty);
+                                                                     AnalysisResourcesPRIDEConverter.GetGeneratedFastaParamNameForJob(job), string.Empty);
                 if (string.IsNullOrEmpty(orgDBNameGenerated))
                 {
-                    LogError("Job parameter " + clsAnalysisResourcesPRIDEConverter.GetGeneratedFastaParamNameForJob(job) +
+                    LogError("Job parameter " + AnalysisResourcesPRIDEConverter.GetGeneratedFastaParamNameForJob(job) +
                              " was not found in CreateMSGFReportFile; unable to continue");
                     return false;
                 }
@@ -1834,7 +1834,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         }
 
         [Obsolete("No longer used")]
-        private string CreateMSGFReportXMLFile(string templateFileName, clsDataPackageJobInfo dataPkgJob, string pseudoMsgfFilePath,
+        private string CreateMSGFReportXMLFile(string templateFileName, DataPackageJobInfo dataPkgJob, string pseudoMsgfFilePath,
             IReadOnlyDictionary<string, List<udtPseudoMSGFDataType>> pseudoMSGFData, string orgDBNameGenerated,
             string proteinCollectionListOrFasta, udtFilterThresholdsType udtFilterThresholds)
         {
@@ -2493,7 +2493,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 var baseFileName = xmlFileName.Replace(FILE_EXTENSION_MSGF_REPORT_XML, string.Empty);
                 var msgfResultsFilePath = Path.Combine(mWorkDir, baseFileName + FILE_EXTENSION_PSEUDO_MSGF);
-                var mzXMLFilePath = Path.Combine(mWorkDir, dataset + clsAnalysisResources.DOT_MZXML_EXTENSION);
+                var mzXMLFilePath = Path.Combine(mWorkDir, dataset + AnalysisResources.DOT_MZXML_EXTENSION);
                 prideReportXMLFilePath = Path.Combine(mWorkDir, baseFileName + FILE_EXTENSION_MSGF_REPORT_XML);
 
                 var currentTask = "Running PRIDE Converter for job " + job + ", " + dataset;
@@ -2542,10 +2542,10 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             {
                 var pXFilePath = Path.Combine(mWorkDir, "PX_Submission_" + DateTime.Now.ToString("yyyy-MM-dd_HH-mm") + ".px");
 
-                var prideXmlFilesCreated = CountResultFilesByType(clsPXFileInfoBase.ePXFileType.Result);
-                var rawFilesStored = CountResultFilesByType(clsPXFileInfoBase.ePXFileType.Raw);
-                var peakFilesStored = CountResultFilesByType(clsPXFileInfoBase.ePXFileType.Peak);
-                var mzIDFilesStored = CountResultFilesByType(clsPXFileInfoBase.ePXFileType.ResultMzId);
+                var prideXmlFilesCreated = CountResultFilesByType(PXFileInfoBase.ePXFileType.Result);
+                var rawFilesStored = CountResultFilesByType(PXFileInfoBase.ePXFileType.Raw);
+                var peakFilesStored = CountResultFilesByType(PXFileInfoBase.ePXFileType.Peak);
+                var mzIDFilesStored = CountResultFilesByType(PXFileInfoBase.ePXFileType.ResultMzId);
 
                 if (mDebugLevel >= 1)
                 {
@@ -2995,13 +2995,13 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         {
             mJobParams.AddResultFileExtensionToSkip(FILE_EXTENSION_PSEUDO_MSGF);
             mJobParams.AddResultFileExtensionToSkip(FILE_EXTENSION_MSGF_REPORT_XML);
-            mJobParams.AddResultFileExtensionToSkip(clsAnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX);
+            mJobParams.AddResultFileExtensionToSkip(AnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX);
 
             mJobParams.AddResultFileToSkip("PRIDEConverter_ConsoleOutput.txt");
             mJobParams.AddResultFileToSkip("PRIDEConverter_Version.txt");
 
             var diWorkDir = new DirectoryInfo(mWorkDir);
-            foreach (var fiFile in diWorkDir.GetFiles(clsDataPackageFileHandler.JOB_INFO_FILE_PREFIX + "*.txt"))
+            foreach (var fiFile in diWorkDir.GetFiles(DataPackageFileHandler.JOB_INFO_FILE_PREFIX + "*.txt"))
             {
                 mJobParams.AddResultFileToSkip(fiFile.Name);
             }
@@ -3074,7 +3074,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             return File.Exists(Path.Combine(remoteTransferFolder, fileName + optionalSuffix));
         }
 
-        private string GetCVString(clsSampleMetadata.udtCvParamInfoType cvParamInfo)
+        private string GetCVString(SampleMetadata.udtCvParamInfoType cvParamInfo)
         {
             return GetCVString(cvParamInfo.CvRef, cvParamInfo.Accession, cvParamInfo.Name, cvParamInfo.Value);
         }
@@ -3249,7 +3249,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         [Obsolete("No longer used")]
         private string GetPrideConverterVersion(string prideConverterProgLoc)
         {
-            mCmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel);
+            mCmdRunner = new RunDosProgram(mWorkDir, mDebugLevel);
             RegisterEvents(mCmdRunner);
             mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
@@ -3345,11 +3345,11 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             mCachedProteinPSMCounts = new Dictionary<int, int>();
 
             // Initialize the PXFile lists
-            mPxMasterFileList = new Dictionary<string, clsPXFileInfoBase>(StringComparer.OrdinalIgnoreCase);
-            mPxResultFiles = new Dictionary<int, clsPXFileInfo>();
+            mPxMasterFileList = new Dictionary<string, PXFileInfoBase>(StringComparer.OrdinalIgnoreCase);
+            mPxResultFiles = new Dictionary<int, PXFileInfo>();
 
             // Initialize the CDTAFileStats dictionary
-            mCDTAFileStats = new Dictionary<string, clsPXFileInfoBase>(StringComparer.OrdinalIgnoreCase);
+            mCDTAFileStats = new Dictionary<string, PXFileInfoBase>(StringComparer.OrdinalIgnoreCase);
 
             // Clear the previous dataset objects
             mPreviousDatasetName = string.Empty;
@@ -3364,9 +3364,9 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             mExperimentNEWTInfo = new Dictionary<int, string>();
             mExperimentTissue = new Dictionary<string, string>();
 
-            mModificationsUsed = new Dictionary<string, clsSampleMetadata.udtCvParamInfoType>(StringComparer.OrdinalIgnoreCase);
+            mModificationsUsed = new Dictionary<string, SampleMetadata.udtCvParamInfoType>(StringComparer.OrdinalIgnoreCase);
 
-            mMzIdSampleInfo = new Dictionary<string, clsSampleMetadata>(StringComparer.OrdinalIgnoreCase);
+            mMzIdSampleInfo = new Dictionary<string, SampleMetadata>(StringComparer.OrdinalIgnoreCase);
 
             // Deprecated:
             // // Determine the filter thresholds
@@ -3411,7 +3411,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         {
             if (mDataPackagePeptideHitJobs == null)
             {
-                mDataPackagePeptideHitJobs = new Dictionary<int, clsDataPackageJobInfo>();
+                mDataPackagePeptideHitJobs = new Dictionary<int, DataPackageJobInfo>();
             }
             else
             {
@@ -3430,16 +3430,16 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 return false;
             }
 
-            var jobsToUse = ExtractPackedJobParameterList(clsAnalysisResourcesPRIDEConverter.JOB_PARAM_DATA_PACKAGE_PEPTIDE_HIT_JOBS);
+            var jobsToUse = ExtractPackedJobParameterList(AnalysisResourcesPRIDEConverter.JOB_PARAM_DATA_PACKAGE_PEPTIDE_HIT_JOBS);
 
             if (jobsToUse.Count == 0)
             {
-                LogWarning("Packed job parameter " + clsAnalysisResourcesPRIDEConverter.JOB_PARAM_DATA_PACKAGE_PEPTIDE_HIT_JOBS +
+                LogWarning("Packed job parameter " + AnalysisResourcesPRIDEConverter.JOB_PARAM_DATA_PACKAGE_PEPTIDE_HIT_JOBS +
                            " is empty; no jobs to process");
             }
             else
             {
-                var dataPackageJobs = new Dictionary<int, clsDataPackageJobInfo>();
+                var dataPackageJobs = new Dictionary<int, DataPackageJobInfo>();
                 foreach (var item in dataPackagePeptideHitJobs)
                 {
                     if (!dataPackageJobs.ContainsKey(item.Job))
@@ -3558,15 +3558,15 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// <param name="templateParameters"></param>
         /// <param name="assumeInstrumentDataUnpurged"></param>
         private CloseOutType ProcessJob(
-            KeyValuePair<int, clsDataPackageJobInfo> jobInfo,
-            clsAnalysisResults analysisResults,
-            IReadOnlyDictionary<int, clsDataPackageDatasetInfo> dataPackageDatasets,
+            KeyValuePair<int, DataPackageJobInfo> jobInfo,
+            AnalysisResults analysisResults,
+            IReadOnlyDictionary<int, DataPackageDatasetInfo> dataPackageDatasets,
             string remoteTransferFolder,
             IReadOnlyDictionary<string, string> datasetRawFilePaths,
             IReadOnlyDictionary<string, string> templateParameters,
             bool assumeInstrumentDataUnpurged)
         {
-            var resultFiles = new clsResultFileContainer();
+            var resultFiles = new ResultFileContainer();
 
             var job = jobInfo.Value.Job;
             var dataset = jobInfo.Value.Dataset;
@@ -3663,7 +3663,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 }
                 else
                 {
-                    resultFiles.MGFFilePath = Path.Combine(mWorkDir, dataset + clsAnalysisResources.CDTA_EXTENSION);
+                    resultFiles.MGFFilePath = Path.Combine(mWorkDir, dataset + AnalysisResources.CDTA_EXTENSION);
                 }
 
                 if (!assumeInstrumentDataUnpurged && !searchedMzML && !File.Exists(resultFiles.MGFFilePath))
@@ -3772,15 +3772,15 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             return CloseOutType.CLOSEOUT_FAILED;
         }
 
-        private string PXFileTypeName(clsPXFileInfoBase.ePXFileType pxFileType)
+        private string PXFileTypeName(PXFileInfoBase.ePXFileType pxFileType)
         {
             return pxFileType switch
             {
-                clsPXFileInfoBase.ePXFileType.Result => "RESULT",
-                clsPXFileInfoBase.ePXFileType.ResultMzId => "RESULT",
-                clsPXFileInfoBase.ePXFileType.Raw => "RAW",
-                clsPXFileInfoBase.ePXFileType.Search => "SEARCH",
-                clsPXFileInfoBase.ePXFileType.Peak => "PEAK",
+                PXFileInfoBase.ePXFileType.Result => "RESULT",
+                PXFileInfoBase.ePXFileType.ResultMzId => "RESULT",
+                PXFileInfoBase.ePXFileType.Raw => "RAW",
+                PXFileInfoBase.ePXFileType.Search => "SEARCH",
+                PXFileInfoBase.ePXFileType.Peak => "PEAK",
                 _ => "OTHER"
             };
         }
@@ -3811,7 +3811,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
             try
             {
-                var templateFileName = clsAnalysisResourcesPRIDEConverter.GetPXSubmissionTemplateFilename(mJobParams, WarnIfJobParamMissing: false);
+                var templateFileName = AnalysisResourcesPRIDEConverter.GetPXSubmissionTemplateFilename(mJobParams, WarnIfJobParamMissing: false);
                 var templateFilePath = Path.Combine(mWorkDir, templateFileName);
 
                 if (!File.Exists(templateFilePath))
@@ -3859,10 +3859,10 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             return parameters;
         }
 
-        private clsSampleMetadata.udtCvParamInfoType ReadWriteCvParam(XmlReader xmlReader, XmlWriter writer,
+        private SampleMetadata.udtCvParamInfoType ReadWriteCvParam(XmlReader xmlReader, XmlWriter writer,
             Stack<int> elementCloseDepths)
         {
-            var udtCvParam = new clsSampleMetadata.udtCvParamInfoType();
+            var udtCvParam = new SampleMetadata.udtCvParamInfoType();
             udtCvParam.Clear();
 
             writer.WriteStartElement(xmlReader.Name);
@@ -3913,7 +3913,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         private bool RetrievePHRPFiles(
             int job,
             string dataset,
-            clsAnalysisResults analysisResults,
+            AnalysisResults analysisResults,
             string remoteTransferFolder,
             ICollection<string> filesCopied)
         {
@@ -3921,7 +3921,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
             try
             {
-                var jobInfoFilePath = clsDataPackageFileHandler.GetJobInfoFilePath(job, mWorkDir);
+                var jobInfoFilePath = DataPackageFileHandler.GetJobInfoFilePath(job, mWorkDir);
 
                 if (!File.Exists(jobInfoFilePath))
                 {
@@ -3949,7 +3949,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                     foreach (var sourceFilePath in filesToCopy)
                     {
-                        if (sourceFilePath.EndsWith(clsAnalysisResources.CDTA_ZIPPED_EXTENSION, StringComparison.OrdinalIgnoreCase))
+                        if (sourceFilePath.EndsWith(AnalysisResources.CDTA_ZIPPED_EXTENSION, StringComparison.OrdinalIgnoreCase))
                             cdtaFile = true;
                         else if (sourceFilePath.EndsWith(DOT_MZID_GZ, StringComparison.OrdinalIgnoreCase))
                             mzidFiles.Add(Path.GetFileName(sourceFilePath));
@@ -3988,7 +3988,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 foreach (var sourceFilePath in filesToCopy)
                 {
-                    if (sourceFilePath.StartsWith(clsAnalysisResources.MYEMSL_PATH_FLAG))
+                    if (sourceFilePath.StartsWith(AnalysisResources.MYEMSL_PATH_FLAG))
                     {
                         // Make sure the myEMSLUtilities object knows about this dataset
                         mMyEMSLUtilities.AddDataset(dataset);
@@ -4117,7 +4117,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
         private bool RetrieveStoragePathInfoTargetFile(
             string storagePathInfoFilePath,
-            clsAnalysisResults analysisResults,
+            AnalysisResults analysisResults,
             out string destinationPath)
         {
             return RetrieveStoragePathInfoTargetFile(storagePathInfoFilePath, analysisResults, IsFolder: false, destinationPath: out destinationPath);
@@ -4125,7 +4125,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
         private bool RetrieveStoragePathInfoTargetFile(
             string storagePathInfoFilePath,
-            clsAnalysisResults analysisResults,
+            AnalysisResults analysisResults,
             bool IsFolder,
             out string destinationPath)
         {
@@ -4200,7 +4200,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 return false;
             }
 
-            mCmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel);
+            mCmdRunner = new RunDosProgram(mWorkDir, mDebugLevel);
             RegisterEvents(mCmdRunner);
             mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
@@ -4258,12 +4258,12 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             return success;
         }
 
-        private void StoreInstrumentInfo(clsDataPackageDatasetInfo datasetInfo)
+        private void StoreInstrumentInfo(DataPackageDatasetInfo datasetInfo)
         {
             StoreInstrumentInfo(datasetInfo.InstrumentGroup, datasetInfo.Instrument);
         }
 
-        private void StoreInstrumentInfo(clsDataPackageJobInfo dataPkgJob)
+        private void StoreInstrumentInfo(DataPackageJobInfo dataPkgJob)
         {
             StoreInstrumentInfo(dataPkgJob.InstrumentGroup, dataPkgJob.Instrument);
         }
@@ -4284,7 +4284,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             }
         }
 
-        private void StoreMzIdSampleInfo(string mzIdFilePath, clsSampleMetadata sampleMetadata)
+        private void StoreMzIdSampleInfo(string mzIdFilePath, SampleMetadata sampleMetadata)
         {
             var fiFile = new FileInfo(mzIdFilePath);
 
@@ -4355,7 +4355,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             }
         }
 
-        private void TransferPreviousDatasetFiles(clsAnalysisResults analysisResults, string remoteTransferFolder)
+        private void TransferPreviousDatasetFiles(AnalysisResults analysisResults, string remoteTransferFolder)
         {
             // Delete the dataset files for the previous dataset
             var filesToRetry = new List<string>();
@@ -4510,14 +4510,14 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// <returns>True if success, false if an error</returns>
         private bool UpdateMzIdFiles(
             string remoteTransferFolder,
-            clsDataPackageJobInfo dataPkgJob,
-            clsDataPackageDatasetInfo dataPkgDatasetInfo,
+            DataPackageJobInfo dataPkgJob,
+            DataPackageDatasetInfo dataPkgDatasetInfo,
             bool searchedMzML,
             out List<string> mzIdFilePaths,
             out bool mzIdExistsRemotely,
             IReadOnlyDictionary<string, string> templateParameters)
         {
-            var sampleMetadata = new clsSampleMetadata();
+            var sampleMetadata = new SampleMetadata();
             sampleMetadata.Clear();
 
             sampleMetadata.Species = ValidateCV(GetNEWTCv(dataPkgJob.Experiment_NEWT_ID, dataPkgJob.Experiment_NEWT_Name));
@@ -4650,7 +4650,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             string dataPkgDataset,
             bool searchedMzML,
             int splitFastaResultID,
-            clsSampleMetadata sampleMetadata,
+            SampleMetadata sampleMetadata,
             out string mzIdFilePath,
             out bool mzIdExistsRemotely)
         {
@@ -4793,7 +4793,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                             }
                                             else
                                             {
-                                                spectraDataFilename = dataPkgDataset + clsAnalysisResources.CDTA_EXTENSION;
+                                                spectraDataFilename = dataPkgDataset + AnalysisResources.CDTA_EXTENSION;
                                             }
 
                                             // The following statement intentionally uses a generic DMS_WorkDir path; do not use mWorkDir

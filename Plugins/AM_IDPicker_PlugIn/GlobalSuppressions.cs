@@ -5,8 +5,8 @@
 
 using System.Diagnostics.CodeAnalysis;
 
-[assembly: SuppressMessage("Usage", "RCS1246:Use element access.", Justification = "Prefer to use .First()", Scope = "member", Target = "~M:AnalysisManagerIDPickerPlugIn.clsAnalysisResourcesIDPicker.LookupLegacyFastaFileName~System.String")]
+[assembly: SuppressMessage("Usage", "RCS1246:Use element access.", Justification = "Prefer to use .First()", Scope = "member", Target = "~M:AnalysisManagerIDPickerPlugIn.AnalysisResourcesIDPicker.LookupLegacyFastaFileName~System.String")]
 [assembly: SuppressMessage("CodeQuality", "IDE0051:Remove unused private members", Justification = "Keep for reference", Scope = "module")]
 [assembly: SuppressMessage("Redundancy", "RCS1213:Remove unused member declaration.", Justification = "Keep for reference", Scope = "module")]
-[assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Allowed", Scope = "type", Target = "~T:AnalysisManagerIDPickerPlugIn.clsAnalysisResourcesIDPicker")]
-[assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Allowed", Scope = "type", Target = "~T:AnalysisManagerIDPickerPlugIn.clsAnalysisToolRunnerIDPicker")]
+[assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Allowed", Scope = "type", Target = "~T:AnalysisManagerIDPickerPlugIn.AnalysisResourcesIDPicker")]
+[assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Allowed", Scope = "type", Target = "~T:AnalysisManagerIDPickerPlugIn.AnalysisToolRunnerIDPicker")]

@@ -7,7 +7,7 @@ using PRISMDatabaseUtils;
 
 namespace AnalysisManager_Ape_PlugIn
 {
-    internal class clsApeAMGetViperResults : clsApeAMBase
+    internal class ApeAMGetViperResults : ApeAMBase
     {
         #region Member Variables
 
@@ -20,7 +20,7 @@ namespace AnalysisManager_Ape_PlugIn
         /// </summary>
         /// <param name="jobParams"></param>
         /// <param name="mgrParams"></param>
-        public clsApeAMGetViperResults(IJobParams jobParams, IMgrParams mgrParams) : base(jobParams, mgrParams)
+        public ApeAMGetViperResults(IJobParams jobParams, IMgrParams mgrParams) : base(jobParams, mgrParams)
         {
         }
 
@@ -140,7 +140,7 @@ namespace AnalysisManager_Ape_PlugIn
             }
             else
             {
-                OnStatusEvent("Retrieving " + mdidCount + " MDIDs in clsApeAMGetViperResults");
+                OnStatusEvent("Retrieving " + mdidCount + " MDIDs in ApeAMGetViperResults");
                 OnDebugEvent("MDID list: " + mdidList);
             }
 

@@ -5,7 +5,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
     /// <summary>
     /// ProteomeXchange file info base class
     /// </summary>
-    public class clsPXFileInfoBase
+    public class PXFileInfoBase
     {
         // Ignore Spelling: ProteomeXchange
 
@@ -79,7 +79,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// <summary>
         /// Job Info
         /// </summary>
-        public clsDataPackageJobInfo JobInfo { get; private set; }
+        public DataPackageJobInfo JobInfo { get; private set; }
 
         #endregion
 
@@ -88,7 +88,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// </summary>
         /// <param name="fileName"></param>
         /// <param name="dataPkgJob"></param>
-        public clsPXFileInfoBase(string fileName, clsDataPackageJobInfo dataPkgJob)
+        public PXFileInfoBase(string fileName, DataPackageJobInfo dataPkgJob)
         {
             Filename = fileName;
             JobInfo = dataPkgJob;
@@ -98,7 +98,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// Update Filename, JobInfo, FileID, Length, and MD5 hash
         /// </summary>
         /// <param name="oSource"></param>
-        public void Update(clsPXFileInfoBase oSource)
+        public void Update(PXFileInfoBase oSource)
         {
             Filename = oSource.Filename;
             JobInfo = oSource.JobInfo;

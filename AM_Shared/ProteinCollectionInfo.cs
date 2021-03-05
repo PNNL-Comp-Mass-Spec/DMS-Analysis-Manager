@@ -5,7 +5,7 @@ namespace AnalysisManagerBase
     /// <summary>
     /// Protein collection info
     /// </summary>
-    public class clsProteinCollectionInfo
+    public class ProteinCollectionInfo
     {
         /// <summary>
         /// Legacy Fasta file name
@@ -52,7 +52,7 @@ namespace AnalysisManagerBase
         /// Constructor
         /// </summary>
         /// <param name="jobParams"></param>
-        public clsProteinCollectionInfo(IJobParams jobParams)
+        public ProteinCollectionInfo(IJobParams jobParams)
         {
             LegacyFastaName = jobParams.GetParam("LegacyFastaFileName");
             ProteinCollectionOptions = jobParams.GetParam("ProteinOptions");

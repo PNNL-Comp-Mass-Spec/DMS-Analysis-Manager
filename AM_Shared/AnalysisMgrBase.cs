@@ -8,7 +8,7 @@ namespace AnalysisManagerBase
     /// <summary>
     /// Analysis manager base class
     /// </summary>
-    public abstract class clsAnalysisMgrBase : clsLoggerBase
+    public abstract class AnalysisMgrBase : LoggerBase
     {
         #region "Module variables"
 
@@ -47,7 +47,7 @@ namespace AnalysisManagerBase
         /// When true, show additional messages at the console
         /// </summary>
         /// <remarks>
-        /// This property is updated when the Setup method is called in clsAnalysisResources or clsAnalysisToolRunnerBase
+        /// This property is updated when the Setup method is called in AnalysisResources or AnalysisToolRunnerBase
         /// </remarks>
         public bool TraceMode { get; protected set; }
 
@@ -57,7 +57,7 @@ namespace AnalysisManagerBase
         /// Constructor
         /// </summary>
         /// <param name="derivedClassName"></param>
-        protected clsAnalysisMgrBase(string derivedClassName)
+        protected AnalysisMgrBase(string derivedClassName)
         {
             mDerivedClassName = derivedClassName;
         }
@@ -128,7 +128,7 @@ namespace AnalysisManagerBase
             var destinationFile = new FileInfo(destinationFilePath);
             if (destinationFile.Exists)
             {
-                var fileSizeMB = clsGlobal.BytesToMB(destinationFile.Length);
+                var fileSizeMB = Global.BytesToMB(destinationFile.Length);
                 var copyRateMBPerSec = fileSizeMB / elapsedSeconds;
 
                 // Note that mFileTools may have been waiting for a lock file queue to subside,
@@ -159,7 +159,7 @@ namespace AnalysisManagerBase
         /// <param name="logToDb">When true, log the message to the database and the local log file</param>
         protected override void LogError(string errorMessage, bool logToDb = false)
         {
-            mMessage = clsGlobal.AppendToComment(mMessage, errorMessage);
+            mMessage = Global.AppendToComment(mMessage, errorMessage);
             base.LogError(errorMessage, logToDb);
         }
 
@@ -181,7 +181,7 @@ namespace AnalysisManagerBase
         /// <param name="logToDatabase">When true, log to the database (and to the file)</param>
         protected override void LogError(string errorMessage, Exception ex, bool logToDatabase = false)
         {
-            mMessage = clsGlobal.AppendToComment(mMessage, errorMessage);
+            mMessage = Global.AppendToComment(mMessage, errorMessage);
             base.LogError(errorMessage, ex, logToDatabase);
         }
 
@@ -209,7 +209,7 @@ namespace AnalysisManagerBase
             }
             catch (Exception logException)
             {
-                clsGlobal.ErrorWritingToLog(errorMessage, logException);
+                Global.ErrorWritingToLog(errorMessage, logException);
             }
         }
 
@@ -237,7 +237,7 @@ namespace AnalysisManagerBase
             }
             catch (Exception ex)
             {
-                clsGlobal.ErrorWritingToLog(errorMessage, ex);
+                Global.ErrorWritingToLog(errorMessage, ex);
             }
         }
 

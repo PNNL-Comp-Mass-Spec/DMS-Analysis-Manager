@@ -9,7 +9,7 @@ namespace AnalysisManagerSMAQCPlugIn
     /// <summary>
     /// Retrieve resources for the SMAQC plugin
     /// </summary>
-    public class clsAnalysisResourcesSMAQC : clsAnalysisResources
+    public class AnalysisResourcesSMAQC : AnalysisResources
     {
         // Ignore Spelling: Parm
 
@@ -65,7 +65,7 @@ namespace AnalysisManagerSMAQCPlugIn
         [Obsolete("No longer used")]
         private bool RetrieveLLRCFiles()
         {
-            if (!clsAnalysisToolRunnerSMAQC.LLRC_ENABLED)
+            if (!AnalysisToolRunnerSMAQC.LLRC_ENABLED)
                 throw new Exception("LLRC is disabled -- do not call this function");
 
 #pragma warning disable 162
@@ -201,7 +201,7 @@ namespace AnalysisManagerSMAQCPlugIn
             //   SourceJob:Auto{Tool = "XTandem" AND Settings_File = "IonTrapDefSettings.xml" AND [Parm File] = "xtandem_Rnd1PartTryp.xml"}
             // leads to the input folder being XTM201009211859_Auto625059
 
-            var strInputFolder = mJobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "InputFolderName");
+            var strInputFolder = mJobParams.GetParam(AnalysisJob.STEP_PARAMETERS_SECTION, "InputFolderName");
 
             if (string.IsNullOrEmpty(strInputFolder))
             {

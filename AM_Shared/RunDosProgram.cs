@@ -15,7 +15,7 @@ namespace AnalysisManagerBase
     /// <summary>
     /// Provides a looping wrapper around a ProgRunner object for running command-line programs
     /// </summary>
-    public class clsRunDosProgram : EventNotifier
+    public class RunDosProgram : EventNotifier
     {
         #region "Module variables"
 
@@ -283,7 +283,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="workDir">Work directory for input/output files, if any</param>
         /// <param name="debugLevel">Debug level (Higher values mean more log messages)</param>
-        public clsRunDosProgram(string workDir, int debugLevel = 1)
+        public RunDosProgram(string workDir, int debugLevel = 1)
         {
             WorkDir = workDir;
             DebugLevel = debugLevel;
@@ -328,7 +328,7 @@ namespace AnalysisManagerBase
                     return 0;
                 }
 
-                var coreUsage = clsGlobal.ProcessInfo.GetCoreUsageByProcessID(mProgRunner.PID);
+                var coreUsage = Global.ProcessInfo.GetCoreUsageByProcessID(mProgRunner.PID);
 
                 if (coreUsage < 0)
                 {
@@ -505,7 +505,7 @@ namespace AnalysisManagerBase
                 mStopTime = DateTime.UtcNow;
                 mIsRunning = false;
 
-                clsGlobal.ProcessInfo.ClearCachedPerformanceCounterForProcessID(cachedProcessID);
+                Global.ProcessInfo.ClearCachedPerformanceCounterForProcessID(cachedProcessID);
             }
             catch (Exception ex)
             {
@@ -566,7 +566,7 @@ namespace AnalysisManagerBase
                 return false;
             }
 
-            arguments = clsGlobal.PossiblyQuotePath(executablePath) + " " + arguments;
+            arguments = Global.PossiblyQuotePath(executablePath) + " " + arguments;
             executablePath = monoProgLoc;
 
             return true;

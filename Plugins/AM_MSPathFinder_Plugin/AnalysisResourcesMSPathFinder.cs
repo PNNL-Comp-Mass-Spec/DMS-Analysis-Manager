@@ -18,17 +18,17 @@ namespace AnalysisManagerMSPathFinderPlugin
     /// <summary>
     /// Retrieve resources for the MSPathFinder plugin
     /// </summary>
-    public class clsAnalysisResourcesMSPathFinder : clsAnalysisResources
+    public class AnalysisResourcesMSPathFinder : AnalysisResources
     {
         // Ignore Spelling: Parm
 
         /// <summary>
         /// Initialize options
         /// </summary>
-        public override void Setup(string stepToolName, IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, clsMyEMSLUtilities myEMSLUtilities)
+        public override void Setup(string stepToolName, IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, MyEMSLUtilities myEMSLUtilities)
         {
             base.Setup(stepToolName, mgrParams, jobParams, statusTools, myEMSLUtilities);
-            SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, true);
+            SetOption(Global.eAnalysisResourceOptions.OrgDbRequired, true);
         }
 
         /// <summary>
@@ -162,7 +162,7 @@ namespace AnalysisManagerMSPathFinderPlugin
             catch (Exception ex)
             {
                 mMessage = "Exception in RetrieveFastaAndParamFile: " + ex.Message;
-                LogError(mMessage + "; task = " + currentTask + "; " + clsGlobal.GetExceptionStackTrace(ex));
+                LogError(mMessage + "; task = " + currentTask + "; " + Global.GetExceptionStackTrace(ex));
                 return false;
             }
         }
@@ -195,7 +195,7 @@ namespace AnalysisManagerMSPathFinderPlugin
                     var dbTools = DbToolsFactory.GetDBTools(dmsConnectionString, debugMode: TraceMode);
                     RegisterEvents(dbTools);
 
-                    var success = clsGlobal.GetQueryResultsTopRow(dbTools, sql, out var inputFolderNameFromDB);
+                    var success = Global.GetQueryResultsTopRow(dbTools, sql, out var inputFolderNameFromDB);
 
                     if (!success)
                     {

@@ -10,7 +10,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
     /// <summary>
     /// Retrieve resources for the Phospho FDR Aggregator plugin
     /// </summary>
-    public class clsAnalysisResourcesPhosphoFdrAggregator : clsAnalysisResources
+    public class AnalysisResourcesPhosphoFdrAggregator : AnalysisResources
     {
         /// <summary>
         /// Retrieve required files
@@ -84,7 +84,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
-        protected bool CacheDataPackageInfo(Dictionary<int, clsDataPackageJobInfo> dctDataPackageJobs)
+        protected bool CacheDataPackageInfo(Dictionary<int, DataPackageJobInfo> dctDataPackageJobs)
         {
             try
             {

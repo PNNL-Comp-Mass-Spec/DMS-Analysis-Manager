@@ -18,7 +18,7 @@ namespace AnalysisManagerXTandemPlugIn
     /// <summary>
     /// Class for running XTandem analysis
     /// </summary>
-    public class clsAnalysisToolRunnerXT : clsAnalysisToolRunnerBase
+    public class AnalysisToolRunnerXT : AnalysisToolRunnerBase
     {
         #region "Module Variables"
 
@@ -35,7 +35,7 @@ namespace AnalysisManagerXTandemPlugIn
         protected const float PROGRESS_PCT_XTANDEM_CREATING_REPORT = 95;
         protected const float PROGRESS_PCT_XTANDEM_COMPLETE = 99;
 
-        protected clsRunDosProgram mCmdRunner;
+        protected RunDosProgram mCmdRunner;
 
         protected bool mToolVersionWritten;
         protected string mXTandemVersion = string.Empty;
@@ -72,13 +72,13 @@ namespace AnalysisManagerXTandemPlugIn
 
             LogMessage("Running XTandem");
 
-            mCmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel);
+            mCmdRunner = new RunDosProgram(mWorkDir, mDebugLevel);
             RegisterEvents(mCmdRunner);
             mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
             if (mDebugLevel > 4)
             {
-                LogDebug("clsAnalysisToolRunnerXT.OperateAnalysisTool(): Enter");
+                LogDebug("AnalysisToolRunnerXT.OperateAnalysisTool(): Enter");
             }
 
             // Define the path to the X!Tandem .Exe
@@ -407,7 +407,7 @@ namespace AnalysisManagerXTandemPlugIn
             }
             catch (Exception ex)
             {
-                LogError("clsAnalysisToolRunnerXT.ZipMainOutputFile, Error deleting _xt.xml file, job " + mJob + ex.Message);
+                LogError("AnalysisToolRunnerXT.ZipMainOutputFile, Error deleting _xt.xml file, job " + mJob + ex.Message);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 

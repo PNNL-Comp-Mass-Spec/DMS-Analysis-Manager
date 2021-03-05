@@ -17,7 +17,7 @@ namespace AnalysisManagerMSGFPlugin
     /// <summary>
     /// Retrieve resources for the MSGF plugin
     /// </summary>
-    public class clsAnalysisResourcesMSGF : clsAnalysisResources
+    public class AnalysisResourcesMSGF : AnalysisResources
     {
         #region "Constants"
 
@@ -101,7 +101,7 @@ namespace AnalysisManagerMSGFPlugin
             }
             else
             {
-                LogError("Invalid tool result type in clsAnalysisResourcesMSGF.GetInputFiles (not supported by MSGF): " + resultType);
+                LogError("Invalid tool result type in AnalysisResourcesMSGF.GetInputFiles (not supported by MSGF): " + resultType);
                 validToolType = false;
             }
 
@@ -131,7 +131,7 @@ namespace AnalysisManagerMSGFPlugin
                 {
                     // Specific version of MSGF is defined
                     // Check whether the version is one of the known versions for the old MSGF
-                    if (clsMSGFRunner.IsLegacyMSGFVersion(msgfStepToolVersion))
+                    if (MSGFRunner.IsLegacyMSGFVersion(msgfStepToolVersion))
                     {
                         onlyCopyFirstHitsAndSynopsisFiles = false;
                     }
@@ -297,7 +297,7 @@ namespace AnalysisManagerMSGFPlugin
             long synFileSizeBytes = synopsisFileInfo.Exists ? synopsisFile.Length : 0;
 
             // Get the ModSummary.txt file
-            // Note that clsMSGFResultsSummarizer will use this file to determine if a dynamic reporter ion search was performed (e.g. dynamic TMT)
+            // Note that MSGFResultsSummarizer will use this file to determine if a dynamic reporter ion search was performed (e.g. dynamic TMT)
 
             var modSummaryFile = clsPHRPReader.GetPHRPModSummaryFileName(resultType, DatasetName);
             var modSummaryFileFound = FileSearch.FindAndRetrievePHRPDataFile(ref modSummaryFile, synFilePath);
@@ -332,7 +332,7 @@ namespace AnalysisManagerMSGFPlugin
             }
 
             // Copy the PHRP files so that the PHRPReader can determine the modified residues and extract the protein names
-            // clsMSGFResultsSummarizer also uses these files
+            // MSGFResultsSummarizer also uses these files
 
             if (!string.IsNullOrEmpty(resultToSeqMapFile))
             {
@@ -392,7 +392,7 @@ namespace AnalysisManagerMSGFPlugin
                 if (!FileSearch.FindAndRetrieveMiscFiles(fileToFind, false))
                 {
                     mMessage = "Instrument data not found: " + fileToFind;
-                    LogError("clsAnalysisResourcesMSGF.GetResources: " + mMessage);
+                    LogError("AnalysisResourcesMSGF.GetResources: " + mMessage);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
@@ -440,7 +440,7 @@ namespace AnalysisManagerMSGFPlugin
                     }
                     else
                     {
-                        LogError("clsAnalysisResourcesMSGF.GetResources: Error occurred retrieving spectra.");
+                        LogError("AnalysisResourcesMSGF.GetResources: Error occurred retrieving spectra.");
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
                 }

@@ -17,7 +17,6 @@ namespace AnalysisManagerBase
     /// <remarks>Sent to parameter completionCode when calling SetStepTaskComplete</remarks>
     public enum CloseOutType
     {
-
         /// <summary>
         /// Success
         /// </summary>
@@ -120,7 +119,7 @@ namespace AnalysisManagerBase
     /// Interface for the analysis job parameter storage class
     /// Also has the methods for Requesting a task and Closing a task
     /// </summary>
-    /// <remarks>Implemented in clsAnalysisJob</remarks>
+    /// <remarks>Implemented in AnalysisJob</remarks>
     public interface IJobParams
     {
         #region "Properties"
@@ -208,7 +207,7 @@ namespace AnalysisManagerBase
         /// Add a file to be deleted from the storage server (requires full file path)
         /// </summary>
         /// <param name="filePath">Full path to the file</param>
-        /// <remarks>To delete the files, call clsAnalysisToolRunnerBase.RemoveNonResultServerFiles</remarks>
+        /// <remarks>To delete the files, call AnalysisToolRunnerBase.RemoveNonResultServerFiles</remarks>
         void AddServerFileToDelete(string filePath);
 
         /// <summary>
@@ -230,7 +229,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="closeOut">Closeout code</param>
         /// <param name="compMsg">Closeout message</param>
-        /// <remarks>Implemented in clsAnalysisJob</remarks>
+        /// <remarks>Implemented in AnalysisJob</remarks>
         void CloseTask(CloseOutType closeOut, string compMsg);
 
         /// <summary>
@@ -239,7 +238,7 @@ namespace AnalysisManagerBase
         /// <param name="closeOut">Closeout code</param>
         /// <param name="compMsg">Closeout message</param>
         /// <param name="toolRunner">ToolRunner instance</param>
-        /// <remarks>Implemented in clsAnalysisJob</remarks>
+        /// <remarks>Implemented in AnalysisJob</remarks>
         void CloseTask(CloseOutType closeOut, string compMsg, IToolRunner toolRunner);
 
         /// <summary>
@@ -370,7 +369,7 @@ namespace AnalysisManagerBase
         /// Requests a task from the database
         /// </summary>
         /// <returns>Enum indicating if task was found</returns>
-        clsDBTask.RequestTaskResult RequestTask();
+        DBTask.RequestTaskResult RequestTask();
 
         /// <summary>
         /// Add/updates the value for the given parameter (searches all sections)

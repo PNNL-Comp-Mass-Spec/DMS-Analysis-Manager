@@ -4,15 +4,15 @@ using AnalysisManagerBase;
 using AnalysisManager_AScore_PlugIn;
 using System.IO;
 
-namespace TestAScorePlugIn {
-
-    class TestAMAScoreOperations {
-
+namespace TestAScorePlugIn
+{
+    class TestAMAScoreOperations
+    {
         //-------------------------------- PHOSPHO
         string mWorkDir;
         string mLogFilename;
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public void Test_RunPhospho()
         {
@@ -55,25 +55,25 @@ namespace TestAScorePlugIn {
             mWorkDir = m_mgrParams.GetParam("workdir");
             mLogFilename = m_mgrParams.GetParam("logfilename");
 
-            clsAScoreAMOperations ops = new clsAScoreAMOperations(m_jobParams, m_mgrParams);
+            AScoreAMOperations ops = new AScoreAMOperations(m_jobParams, m_mgrParams);
             TestRunOperation(ops, "RunAScorePhospho");
 
         }
 
-        private void TestRunOperation(clsAScoreAMOperations ops, string operationName)
+        private void TestRunOperation(AScoreAMOperations ops, string operationName)
         {
             //Change the name of the log file for the local log file to the plugin log filename
             String LogFileName = Path.Combine(mWorkDir, "AScore_Log"); //m_WorkDir, "AScore_Log");
             log4net.GlobalContext.Properties["LogName"] = LogFileName;
-            clsLogTools.ChangeLogFileName(LogFileName);
+            LogTools.ChangeLogFileName(LogFileName);
 
             ops.RunAScoreOperations(operationName);
 
             // Change the name of the log file back to the analysis manager log file
             LogFileName = mLogFilename;
             log4net.GlobalContext.Properties["LogName"] = LogFileName;
-            clsLogTools.ChangeLogFileName(LogFileName);
+            LogTools.ChangeLogFileName(LogFileName);
         }
- 
+
     }
 }

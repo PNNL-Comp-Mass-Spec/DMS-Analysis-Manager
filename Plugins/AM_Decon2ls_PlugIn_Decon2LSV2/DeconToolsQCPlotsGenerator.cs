@@ -4,7 +4,7 @@ using System.IO;
 
 namespace AnalysisManagerDecon2lsV2PlugIn
 {
-    public class clsDeconToolsQCPlotsGenerator : EventNotifier
+    public class DeconToolsQCPlotsGenerator : EventNotifier
     {
         private const int MAX_RUNTIME_HOURS = 5;
 
@@ -20,7 +20,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
         public int MSFileInfoScannerErrorCount { get; private set; }
 
-        public clsDeconToolsQCPlotsGenerator(string msFileInfoScannerDLLPath, int debugLevel)
+        public DeconToolsQCPlotsGenerator(string msFileInfoScannerDLLPath, int debugLevel)
         {
             mMSFileInfoScannerDLLPath = msFileInfoScannerDLLPath;
             mDebugLevel = debugLevel;

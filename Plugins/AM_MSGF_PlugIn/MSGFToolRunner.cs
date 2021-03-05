@@ -8,7 +8,6 @@
 
 using AnalysisManagerBase;
 using AnalysisManagerMsXmlGenPlugIn;
-using MSGFResultsSummarizer;
 using PHRPReader;
 using PRISM;
 using System;
@@ -23,7 +22,7 @@ namespace AnalysisManagerMSGFPlugin
     /// <summary>
     /// Primary class for running MSGF
     /// </summary>
-    public class clsMSGFRunner : clsAnalysisToolRunnerBase
+    public class MSGFRunner : AnalysisToolRunnerBase
     {
         // Ignore Spelling: MODa, Parm, Xmx, cp, modp, bioml, msgfdb, Chymotrypsin, Lys, Glu, Arg
 
@@ -108,7 +107,7 @@ namespace AnalysisManagerMSGFPlugin
 
         private string mMSXmlGeneratorAppPath = string.Empty;
 
-        private clsMSXMLCreator mMSXmlCreator;
+        private MSXMLCreator mMSXmlCreator;
 
         private bool mUsingMSGFDB = true;
         private string mMSGFDBVersion = "Unknown";
@@ -117,9 +116,9 @@ namespace AnalysisManagerMSGFPlugin
 
         private string mConsoleOutputErrorMsg;
 
-        private clsMSGFInputCreator mMSGFInputCreator;
+        private MSGFInputCreator mMSGFInputCreator;
 
-        private clsRunDosProgram mMSGFRunner;
+        private RunDosProgram mMSGFRunner;
 
         private int mMSGFInputCreatorErrorCount;
         private int mMSGFInputCreatorWarningCount;
@@ -145,7 +144,7 @@ namespace AnalysisManagerMSGFPlugin
             var mgfInstrumentData = mJobParams.GetJobParameter("MGFInstrumentData", false);
 
             // Determine the raw data type
-            var rawDataType = clsAnalysisResources.GetRawDataType(mJobParams.GetParam("RawDataType"));
+            var rawDataType = AnalysisResources.GetRawDataType(mJobParams.GetParam("RawDataType"));
 
             // Resolve resultType
             var resultType = clsPHRPReader.GetPeptideHitResultType(mJobParams.GetParam("ResultType"));
@@ -240,7 +239,7 @@ namespace AnalysisManagerMSGFPlugin
                         // If the Instrument Data was a .MGF file, we need to update the scan numbers using mMSGFInputCreator.GetScanByMGFSpectrumIndex()
 
                         // Sleep for 1 second to give the MSGF results file a chance to finalize
-                        clsGlobal.IdleLoop(1);
+                        Global.IdleLoop(1);
 
                         var success = PostProcessMSGFResults(resultType, mMSGFResultsFilePath, mgfInstrumentData);
 
@@ -260,7 +259,7 @@ namespace AnalysisManagerMSGFPlugin
                 UpdateSummaryFile();
 
                 // Make sure objects are released
-                clsGlobal.IdleLoop(0.5);
+                Global.IdleLoop(0.5);
                 ProgRunner.GarbageCollectNow();
 
                 if (processingError)
@@ -633,7 +632,7 @@ namespace AnalysisManagerMSGFPlugin
         {
             mStatusTools.CurrentOperation = "Creating the .mzXML file";
 
-            mMSXmlCreator = new clsMSXMLCreator(mMSXmlGeneratorAppPath, mWorkDir, mDatasetName, mDebugLevel, mJobParams);
+            mMSXmlCreator = new MSXMLCreator(mMSXmlGeneratorAppPath, mWorkDir, mDatasetName, mDebugLevel, mJobParams);
             RegisterEvents(mMSXmlCreator);
             mMSXmlCreator.LoopWaiting += MSXmlCreator_LoopWaiting;
 
@@ -648,8 +647,8 @@ namespace AnalysisManagerMSGFPlugin
                 }
             }
 
-            mJobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MZXML_EXTENSION);
-            mJobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MZML_EXTENSION);
+            mJobParams.AddResultFileExtensionToSkip(AnalysisResources.DOT_MZXML_EXTENSION);
+            mJobParams.AddResultFileExtensionToSkip(AnalysisResources.DOT_MZML_EXTENSION);
 
             return success;
         }
@@ -676,37 +675,37 @@ namespace AnalysisManagerMSGFPlugin
                 case clsPHRPReader.PeptideHitResultTypes.Sequest:
 
                     // Convert SEQUEST results to input format required for MSGF
-                    mMSGFInputCreator = new clsMSGFInputCreatorSequest(mDatasetName, mWorkDir);
+                    mMSGFInputCreator = new MSGFInputCreatorSequest(mDatasetName, mWorkDir);
                     break;
 
                 case clsPHRPReader.PeptideHitResultTypes.XTandem:
 
                     // Convert X!Tandem results to input format required for MSGF
-                    mMSGFInputCreator = new clsMSGFInputCreatorXTandem(mDatasetName, mWorkDir);
+                    mMSGFInputCreator = new MSGFInputCreatorXTandem(mDatasetName, mWorkDir);
                     break;
 
                 case clsPHRPReader.PeptideHitResultTypes.Inspect:
 
                     // Convert Inspect results to input format required for MSGF
-                    mMSGFInputCreator = new clsMSGFInputCreatorInspect(mDatasetName, mWorkDir);
+                    mMSGFInputCreator = new MSGFInputCreatorInspect(mDatasetName, mWorkDir);
                     break;
 
                 case clsPHRPReader.PeptideHitResultTypes.MSGFPlus:
 
                     // Convert MS-GF+ results to input format required for MSGF
-                    mMSGFInputCreator = new clsMSGFInputCreatorMSGFDB(mDatasetName, mWorkDir);
+                    mMSGFInputCreator = new MSGFInputCreatorMSGFDB(mDatasetName, mWorkDir);
                     break;
 
                 case clsPHRPReader.PeptideHitResultTypes.MODa:
 
                     // Convert MODa results to input format required for MSGF
-                    mMSGFInputCreator = new clsMSGFInputCreatorMODa(mDatasetName, mWorkDir);
+                    mMSGFInputCreator = new MSGFInputCreatorMODa(mDatasetName, mWorkDir);
                     break;
 
                 case clsPHRPReader.PeptideHitResultTypes.MODPlus:
 
                     // Convert MODPlus results to input format required for MSGF
-                    mMSGFInputCreator = new clsMSGFInputCreatorMODPlus(mDatasetName, mWorkDir);
+                    mMSGFInputCreator = new MSGFInputCreatorMODPlus(mDatasetName, mWorkDir);
                     break;
 
                 default:
@@ -810,7 +809,7 @@ namespace AnalysisManagerMSGFPlugin
 
         private bool CreateMSGFResultsFromMSGFPlusResults()
         {
-            var msgfInputCreator = new clsMSGFInputCreatorMSGFDB(mDatasetName, mWorkDir);
+            var msgfInputCreator = new MSGFInputCreatorMSGFDB(mDatasetName, mWorkDir);
 
             if (!CreateMSGFResultsFromMSGFPlusResults(msgfInputCreator, MSGF_PHRP_DATA_SOURCE_SYN.ToLower()))
             {
@@ -829,7 +828,7 @@ namespace AnalysisManagerMSGFPlugin
             return success;
         }
 
-        private bool CreateMSGFResultsFromMSGFPlusResults(clsMSGFInputCreatorMSGFDB msgfInputCreator, string synOrFHT)
+        private bool CreateMSGFResultsFromMSGFPlusResults(MSGFInputCreatorMSGFDB msgfInputCreator, string synOrFHT)
         {
             var sourceFilePath = Path.Combine(mWorkDir, mDatasetName + "_msgfplus_" + synOrFHT + ".txt");
 
@@ -863,7 +862,7 @@ namespace AnalysisManagerMSGFPlugin
         {
             mStatusTools.CurrentOperation = "Creating the .mzXML file";
 
-            var mzXmlFilePath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_MZXML_EXTENSION);
+            var mzXmlFilePath = Path.Combine(mWorkDir, mDatasetName + AnalysisResources.DOT_MZXML_EXTENSION);
 
             if (File.Exists(mzXmlFilePath))
             {
@@ -871,7 +870,7 @@ namespace AnalysisManagerMSGFPlugin
                 return true;
             }
 
-            mMSXmlCreator = new clsMSXMLCreator(mMSXmlGeneratorAppPath, mWorkDir, mDatasetName, mDebugLevel, mJobParams);
+            mMSXmlCreator = new MSXMLCreator(mMSXmlGeneratorAppPath, mWorkDir, mDatasetName, mDebugLevel, mJobParams);
             RegisterEvents(mMSXmlCreator);
             mMSXmlCreator.LoopWaiting += MSXmlCreator_LoopWaiting;
 
@@ -888,7 +887,7 @@ namespace AnalysisManagerMSGFPlugin
 
             CopyMzXMLFileToServerCache(mzXmlFilePath, string.Empty, Path.GetFileNameWithoutExtension(mMSXmlGeneratorAppPath), purgeOldFilesIfNeeded: true);
 
-            mJobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MZXML_EXTENSION);
+            mJobParams.AddResultFileExtensionToSkip(AnalysisResources.DOT_MZXML_EXTENSION);
 
             return success;
         }
@@ -1100,11 +1099,11 @@ namespace AnalysisManagerMSGFPlugin
                 // With the contents of:
                 //   QC_Shew_Dataset_syn_MSGF_PostProcess.txt
 
-                clsGlobal.IdleLoop(0.5);
+                Global.IdleLoop(0.5);
 
                 // Delete the original file
                 inputFile.Delete();
-                clsGlobal.IdleLoop(0.5);
+                Global.IdleLoop(0.5);
 
                 // Rename the _PostProcess.txt file
                 var fiMSGFSynFile = new FileInfo(msgfSynopsisResults);
@@ -1403,7 +1402,7 @@ namespace AnalysisManagerMSGFPlugin
         }
 
         private bool ProcessFilesWrapper(
-            clsAnalysisResources.eRawDataTypeConstants rawDataType,
+            AnalysisResources.eRawDataTypeConstants rawDataType,
             clsPHRPReader.PeptideHitResultTypes resultType,
             bool doNotFilterPeptides,
             bool mgfInstrumentData)
@@ -1441,11 +1440,11 @@ namespace AnalysisManagerMSGFPlugin
                 {
                     success = true;
                 }
-                else if (rawDataType == clsAnalysisResources.eRawDataTypeConstants.mzXML)
+                else if (rawDataType == AnalysisResources.eRawDataTypeConstants.mzXML)
                 {
                     success = true;
                 }
-                else if (rawDataType == clsAnalysisResources.eRawDataTypeConstants.mzML)
+                else if (rawDataType == AnalysisResources.eRawDataTypeConstants.mzML)
                 {
                     success = ConvertMzMLToMzXML();
                 }
@@ -1538,7 +1537,7 @@ namespace AnalysisManagerMSGFPlugin
 
             try
             {
-                var transferFolderPath = mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH);
+                var transferFolderPath = mJobParams.GetParam(AnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH);
                 var inputFolderName = mJobParams.GetParam("inputFolderName");
 
                 folderToCheck = Path.Combine(Path.Combine(transferFolderPath, mDatasetName), inputFolderName);
@@ -1718,7 +1717,7 @@ namespace AnalysisManagerMSGFPlugin
                     return false;
                 }
 
-                clsGlobal.IdleLoop(0.5);
+                Global.IdleLoop(0.5);
 
                 // Append the results of resultFileTempPath to msgfResultsFilePath
                 if (!File.Exists(msgfResultsFilePathFinal))
@@ -1740,7 +1739,7 @@ namespace AnalysisManagerMSGFPlugin
                     }
                 }
 
-                clsGlobal.IdleLoop(0.5);
+                Global.IdleLoop(0.5);
 
                 if (!mKeepMSGFInputFiles)
                 {
@@ -1993,7 +1992,7 @@ namespace AnalysisManagerMSGFPlugin
 
             LogDebug(mJavaProgLoc + " " + arguments);
 
-            mMSGFRunner = new clsRunDosProgram(mWorkDir, mDebugLevel)
+            mMSGFRunner = new RunDosProgram(mWorkDir, mDebugLevel)
             {
                 CreateNoWindow = false,
                 CacheStandardOutput = false,
@@ -2396,7 +2395,7 @@ namespace AnalysisManagerMSGFPlugin
                 // Gigasax.DMS5
                 var connectionString = mMgrParams.GetParam("ConnectionString");
 
-                var summarizer = new clsMSGFResultsSummarizer(
+                var summarizer = new MSGFResultsSummarizer.MSGFResultsSummarizer(
                     resultType, mDatasetName, mJob,
                     mWorkDir,
                     connectionString,
@@ -2408,7 +2407,7 @@ namespace AnalysisManagerMSGFPlugin
                 UnregisterEventHandler(summarizer, BaseLogger.LogLevels.ERROR);
                 summarizer.ErrorEvent += MSGFResultsSummarizer_ErrorHandler;
 
-                summarizer.MSGFThreshold = clsMSGFResultsSummarizer.DEFAULT_MSGF_THRESHOLD;
+                summarizer.MSGFThreshold = MSGFResultsSummarizer.MSGFResultsSummarizer.DEFAULT_MSGF_THRESHOLD;
 
                 summarizer.ContactDatabase = true;
                 summarizer.PostJobPSMResultsToDB = true;
@@ -2506,7 +2505,7 @@ namespace AnalysisManagerMSGFPlugin
 
             try
             {
-                LogDebug("Contact clsPHRPReader.GetPHRPProteinModsFileName for resultType " + resultType, 3);
+                LogDebug("Contact PHRPReader.GetPHRPProteinModsFileName for resultType " + resultType, 3);
 
                 var fiProteinModsFile = new FileInfo(Path.Combine(mWorkDir, clsPHRPReader.GetPHRPProteinModsFileName(resultType, mDatasetName)));
                 var fiProteinModsFileNew = new FileInfo(fiProteinModsFile.FullName + ".tmp");
@@ -2586,7 +2585,7 @@ namespace AnalysisManagerMSGFPlugin
                             }
                         }
 
-                        writer.WriteLine(clsGlobal.CollapseList(splitLine));
+                        writer.WriteLine(Global.CollapseList(splitLine));
                     }
                 }
 
@@ -2596,7 +2595,7 @@ namespace AnalysisManagerMSGFPlugin
                 }
 
                 // Replace the original file with the new one
-                clsGlobal.IdleLoop(0.2);
+                Global.IdleLoop(0.2);
                 ProgRunner.GarbageCollectNow();
 
                 try

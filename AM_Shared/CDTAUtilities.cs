@@ -8,7 +8,7 @@ namespace AnalysisManagerBase
     /// <summary>
     /// DTA utilities
     /// </summary>
-    public class clsCDTAUtilities : EventNotifier
+    public class CDTAUtilities : EventNotifier
     {
         // Ignore Spelling: dta
 
@@ -327,7 +327,7 @@ namespace AnalysisManagerBase
 
                 var updatedFile = new FileInfo(outputFilePathTemp);
 
-                // We use the DtaTextFileReader to parse out the scan and charge from the header line
+                // We use the clsDtaTextFileReader to parse out the scan and charge from the header line
                 var dtaTextReader = new MSDataFileReader.clsDtaTextFileReader(false);
 
                 // Open the input file
@@ -426,7 +426,7 @@ namespace AnalysisManagerBase
                     return true;
 
                 // Need to condense the file
-                var message = cdtaFile.Name + " is " + clsGlobal.BytesToGB(cdtaFile.Length).ToString("0.00") + " GB in size; " +
+                var message = cdtaFile.Name + " is " + Global.BytesToGB(cdtaFile.Length).ToString("0.00") + " GB in size; " +
                                  "will now condense it by combining data points with consecutive zero-intensity values";
 
                 OnStatusEvent(message);
@@ -447,7 +447,7 @@ namespace AnalysisManagerBase
 
                 OnStatusEvent(
                     "Condensing complete; size of the new _dta.txt file is " +
-                    clsGlobal.BytesToGB(cdtaFile.Length).ToString("0.00") + " GB");
+                    Global.BytesToGB(cdtaFile.Length).ToString("0.00") + " GB");
 
                 try
                 {

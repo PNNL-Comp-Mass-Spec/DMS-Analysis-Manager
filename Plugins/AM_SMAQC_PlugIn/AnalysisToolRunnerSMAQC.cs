@@ -12,7 +12,7 @@ namespace AnalysisManagerSMAQCPlugIn
     /// <summary>
     /// Class for running SMAQC
     /// </summary>
-    public class clsAnalysisToolRunnerSMAQC : clsAnalysisToolRunnerBase
+    public class AnalysisToolRunnerSMAQC : AnalysisToolRunnerBase
     {
         #region "Module Variables"
 
@@ -35,7 +35,7 @@ namespace AnalysisManagerSMAQCPlugIn
 
         #endregion
 
-        private clsRunDosProgram mCmdRunner;
+        private RunDosProgram mCmdRunner;
 
         #region "Methods"
 
@@ -55,7 +55,7 @@ namespace AnalysisManagerSMAQCPlugIn
 
                 if (mDebugLevel > 4)
                 {
-                    LogDebug("clsAnalysisToolRunnerSMAQC.RunTool(): Enter");
+                    LogDebug("AnalysisToolRunnerSMAQC.RunTool(): Enter");
                 }
 
                 // Determine the path to the SMAQC program
@@ -105,7 +105,7 @@ namespace AnalysisManagerSMAQCPlugIn
                     LogDebug(progLoc + " " + arguments);
                 }
 
-                mCmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel)
+                mCmdRunner = new RunDosProgram(mWorkDir, mDebugLevel)
                 {
                     CreateNoWindow = true,
                     CacheStandardOutput = true,
@@ -126,7 +126,7 @@ namespace AnalysisManagerSMAQCPlugIn
                 if (!mCmdRunner.WriteConsoleOutputToFile)
                 {
                     // Write the console output to a text file
-                    clsGlobal.IdleLoop(0.25);
+                    Global.IdleLoop(0.25);
 
                     using var writer = new StreamWriter(new FileStream(mCmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
 
@@ -134,7 +134,7 @@ namespace AnalysisManagerSMAQCPlugIn
                 }
 
                 // Parse the console output file one more time to check for errors
-                clsGlobal.IdleLoop(0.25);
+                Global.IdleLoop(0.25);
                 ParseConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath);
 
                 if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))
@@ -340,7 +340,7 @@ namespace AnalysisManagerSMAQCPlugIn
             else
             {
                 // If exited due to errors, return false
-                mMessage = "clsAnalysisToolRunnerSMAQC.LookupInstrumentIDFromDB; Excessive failures obtaining InstrumentID from the database";
+                mMessage = "AnalysisToolRunnerSMAQC.LookupInstrumentIDFromDB; Excessive failures obtaining InstrumentID from the database";
                 LogError(mMessage);
                 return false;
             }
@@ -666,7 +666,7 @@ namespace AnalysisManagerSMAQCPlugIn
                 }
 
                 // Call stored procedure StoreSMAQCResults in DMS5
-                var objAnalysisTask = new clsAnalysisJob(mMgrParams, mDebugLevel);
+                var objAnalysisTask = new AnalysisJob(mMgrParams, mDebugLevel);
                 var dbTools = objAnalysisTask.DMSProcedureExecutor;
 
                 var cmd = dbTools.CreateCommand(STORE_SMAQC_RESULTS_SP_NAME, CommandType.StoredProcedure);

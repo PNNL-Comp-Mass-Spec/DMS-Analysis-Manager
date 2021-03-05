@@ -14,7 +14,7 @@ using System.IO;
 
 namespace DTASpectraFileGen
 {
-    public class clsDtaGenMSConvert : clsDtaGenThermoRaw
+    public class DtaGenMSConvert : DtaGenThermoRaw
     {
         // Ignore Spelling: mgf, dta, MGFtoCDTA, Tol
 
@@ -22,7 +22,7 @@ namespace DTASpectraFileGen
 
         public bool ForceCentroidOn { get; set; }
 
-        public override void Setup(SpectraFileProcessorParams initParams, clsAnalysisToolRunnerBase toolRunner)
+        public override void Setup(SpectraFileProcessorParams initParams, AnalysisToolRunnerBase toolRunner)
         {
             base.Setup(initParams, toolRunner);
 
@@ -30,7 +30,7 @@ namespace DTASpectraFileGen
             //  registry entry at HKEY_CURRENT_USER\Software\ProteoWizard
             //  to indicate that we agree to the Thermo license
 
-            var proteoWizardTools = new clsProteowizardTools(mDebugLevel);
+            var proteoWizardTools = new ProteowizardTools(mDebugLevel);
 
             if (!proteoWizardTools.RegisterProteoWizard())
             {
@@ -41,7 +41,7 @@ namespace DTASpectraFileGen
         /// <summary>
         /// Returns the default path to the DTA generator tool
         /// </summary>
-        /// <remarks>The default path can be overridden by updating mDtaToolNameLoc using clsDtaGen.UpdateDtaToolNameLoc</remarks>
+        /// <remarks>The default path can be overridden by updating mDtaToolNameLoc using DtaGen.UpdateDtaToolNameLoc</remarks>
         protected override string ConstructDTAToolPath()
         {
             var proteoWizardDir = mMgrParams.GetParam("ProteoWizardDir");         // MSConvert.exe is stored in the ProteoWizard folder
@@ -100,7 +100,7 @@ namespace DTASpectraFileGen
             {
                 var rawDataTypeName = mJobParams.GetJobParameter("RawDataType", string.Empty);
 
-                var mgfConverter = new clsMGFConverter(mDebugLevel, mWorkDir)
+                var mgfConverter = new MGFConverter(mDebugLevel, mWorkDir)
                 {
                     IncludeExtraInfoOnParentIonLine = true,
                     MinimumIonsPerSpectrum = 0
@@ -108,7 +108,7 @@ namespace DTASpectraFileGen
 
                 RegisterEvents(mgfConverter);
 
-                var rawDataType = clsAnalysisResources.GetRawDataType(rawDataTypeName);
+                var rawDataType = AnalysisResources.GetRawDataType(rawDataTypeName);
                 var success = mgfConverter.ConvertMGFtoDTA(rawDataType, mDatasetName);
 
                 if (!success)
@@ -135,7 +135,7 @@ namespace DTASpectraFileGen
         /// </summary>
         /// <param name="rawDataType">Raw data file type</param>
         /// <returns>TRUE for success; FALSE for failure</returns>
-        private bool ConvertRawToMGF(clsAnalysisResources.eRawDataTypeConstants rawDataType)
+        private bool ConvertRawToMGF(AnalysisResources.eRawDataTypeConstants rawDataType)
         {
             try
             {
@@ -149,17 +149,17 @@ namespace DTASpectraFileGen
                 // Construct the path to the instrument data file
                 switch (rawDataType)
                 {
-                    case clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile:
-                        instrumentFilePath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_RAW_EXTENSION);
+                    case AnalysisResources.eRawDataTypeConstants.ThermoRawFile:
+                        instrumentFilePath = Path.Combine(mWorkDir, mDatasetName + AnalysisResources.DOT_RAW_EXTENSION);
                         break;
-                    case clsAnalysisResources.eRawDataTypeConstants.mzXML:
-                        instrumentFilePath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_MZXML_EXTENSION);
+                    case AnalysisResources.eRawDataTypeConstants.mzXML:
+                        instrumentFilePath = Path.Combine(mWorkDir, mDatasetName + AnalysisResources.DOT_MZXML_EXTENSION);
                         break;
-                    case clsAnalysisResources.eRawDataTypeConstants.mzML:
-                        instrumentFilePath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_MZML_EXTENSION);
+                    case AnalysisResources.eRawDataTypeConstants.mzML:
+                        instrumentFilePath = Path.Combine(mWorkDir, mDatasetName + AnalysisResources.DOT_MZML_EXTENSION);
                         break;
-                    case clsAnalysisResources.eRawDataTypeConstants.BrukerTOFTdf:
-                        instrumentFilePath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_D_EXTENSION);
+                    case AnalysisResources.eRawDataTypeConstants.BrukerTOFTdf:
+                        instrumentFilePath = Path.Combine(mWorkDir, mDatasetName + AnalysisResources.DOT_D_EXTENSION);
                         break;
 
                     default:
@@ -173,7 +173,7 @@ namespace DTASpectraFileGen
                 const int SCAN_START = 1;
                 var scanStop = DEFAULT_SCAN_STOP;
 
-                if (rawDataType == clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile)
+                if (rawDataType == AnalysisResources.eRawDataTypeConstants.ThermoRawFile)
                 {
                     // Get the maximum number of scans in the file
                     mMaxScanInFile = GetMaxScan(instrumentFilePath);
@@ -330,7 +330,7 @@ namespace DTASpectraFileGen
                 }
 
                 // Setup a program runner tool to make the spectra files
-                mCmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel)
+                mCmdRunner = new RunDosProgram(mWorkDir, mDebugLevel)
                 {
                     CreateNoWindow = true,
                     CacheStandardOutput = true,

@@ -6,7 +6,7 @@ namespace AnalysisManagerMasicPlugin
     /// <summary>
     /// Retrieve resources for the MASIC plugin
     /// </summary>
-    public class clsAnalysisResourcesMASIC : clsAnalysisResources
+    public class AnalysisResourcesMASIC : AnalysisResources
     {
         /// <summary>
         /// Retrieves files necessary for MASIC
@@ -51,7 +51,7 @@ namespace AnalysisManagerMasicPlugin
 
             if (!FileSearch.RetrieveSpectra(rawDataTypeName, createStoragePathInfoOnly))
             {
-                LogDebug("clsAnalysisResourcesDecon2ls.GetResources: Error occurred retrieving spectra.");
+                LogDebug("AnalysisResourcesDecon2ls.GetResources: Error occurred retrieving spectra.");
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -60,7 +60,7 @@ namespace AnalysisManagerMasicPlugin
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            if (clsGlobal.IsMatch(rawDataTypeName, RAW_DATA_TYPE_DOT_RAW_FILES) &&
+            if (Global.IsMatch(rawDataTypeName, RAW_DATA_TYPE_DOT_RAW_FILES) &&
                 scriptName.StartsWith("MASIC_Finnigan", StringComparison.OrdinalIgnoreCase))
             {
                 var rawFileName = DatasetName + ".raw";

@@ -15,7 +15,7 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
     /// <summary>
     /// Class for running the Metabolite Detector
     /// </summary>
-    public class clsAnalysisToolRunnerMetaboliteDetector : clsAnalysisToolRunnerBase
+    public class AnalysisToolRunnerMetaboliteDetector : AnalysisToolRunnerBase
     {
         #region "Constants and Enums"
 
@@ -57,7 +57,7 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
 
                 if (mDebugLevel > 4)
                 {
-                    LogDebug("clsAnalysisToolRunnerMetaboliteDetector.RunTool(): Enter");
+                    LogDebug("AnalysisToolRunnerMetaboliteDetector.RunTool(): Enter");
                 }
 
                 // Determine the path to the MetaboliteDetector program
@@ -221,7 +221,7 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
 
             mConsoleOutputFile = Path.Combine(mWorkDir, METABOLITE_DETECTOR_CONSOLE_OUTPUT);
 
-            var cmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel)
+            var cmdRunner = new RunDosProgram(mWorkDir, mDebugLevel)
             {
                 CreateNoWindow = true,
                 CacheStandardOutput = false,
@@ -239,7 +239,7 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
             if (!cmdRunner.WriteConsoleOutputToFile && cmdRunner.CachedConsoleOutput.Length > 0)
             {
                 // Write the console output to a text file
-                clsGlobal.IdleLoop(0.25);
+                Global.IdleLoop(0.25);
 
                 using var writer = new StreamWriter(new FileStream(cmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
 
@@ -251,7 +251,7 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
                 LogError(mConsoleOutputErrorMsg);
             }
 
-            clsGlobal.IdleLoop(0.25);
+            Global.IdleLoop(0.25);
 
             // Parse the ConsoleOutput file to look for errors
             ParseConsoleOutputFile(mConsoleOutputFile);

@@ -17,7 +17,7 @@ namespace AnalysisManagerMSAlignPlugIn
     /// Class for running MSAlign analysis
     /// </summary>
     // ReSharper disable once UnusedMember.Global
-    public class clsAnalysisToolRunnerMSAlign : clsAnalysisToolRunnerBase
+    public class AnalysisToolRunnerMSAlign : AnalysisToolRunnerBase
     {
         // Ignore Spelling: Xmx, classpath, html, xsl, Prsm, Parm
 
@@ -76,7 +76,7 @@ namespace AnalysisManagerMSAlignPlugIn
         protected string mMSAlignWorkFolderPath;
         protected udtInputPropertyValuesType mInputPropertyValues;
 
-        protected clsRunDosProgram mCmdRunner;
+        protected RunDosProgram mCmdRunner;
 
         #endregion
 
@@ -100,7 +100,7 @@ namespace AnalysisManagerMSAlignPlugIn
 
                 if (mDebugLevel > 4)
                 {
-                    LogDebug("clsAnalysisToolRunnerMSAlign.RunTool(): Enter");
+                    LogDebug("AnalysisToolRunnerMSAlign.RunTool(): Enter");
                 }
 
                 // Verify that program files exist
@@ -184,7 +184,7 @@ namespace AnalysisManagerMSAlignPlugIn
 
                 LogDebug(JavaProgLoc + " " + arguments);
 
-                mCmdRunner = new clsRunDosProgram(mMSAlignWorkFolderPath, mDebugLevel);
+                mCmdRunner = new RunDosProgram(mMSAlignWorkFolderPath, mDebugLevel);
                 RegisterEvents(mCmdRunner);
                 mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
@@ -835,7 +835,7 @@ namespace AnalysisManagerMSAlignPlugIn
                 }
 
                 // Move the _msdeconv.msalign file to the MSInput folder
-                var msAlignFile = sourceDirectory.GetFiles("*" + clsAnalysisResourcesMSAlign.MSDECONV_MSALIGN_FILE_SUFFIX);
+                var msAlignFile = sourceDirectory.GetFiles("*" + AnalysisResourcesMSAlign.MSDECONV_MSALIGN_FILE_SUFFIX);
                 if (msAlignFile.Length == 0)
                 {
                     LogError("MSAlign file not found in work directory");

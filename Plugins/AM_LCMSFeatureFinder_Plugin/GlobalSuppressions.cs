@@ -5,5 +5,5 @@
 
 using System.Diagnostics.CodeAnalysis;
 
-[assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Acceptable legacy name", Scope = "type", Target = "~T:AnalysisManagerLCMSFeatureFinderPlugIn.clsAnalysisResourcesLCMSFF")]
-[assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Acceptable legacy name", Scope = "type", Target = "~T:AnalysisManagerLCMSFeatureFinderPlugIn.clsAnalysisToolRunnerLCMSFF")]
+[assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Acceptable legacy name", Scope = "type", Target = "~T:AnalysisManagerLCMSFeatureFinderPlugIn.AnalysisResourcesLCMSFF")]
+[assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Acceptable legacy name", Scope = "type", Target = "~T:AnalysisManagerLCMSFeatureFinderPlugIn.AnalysisToolRunnerLCMSFF")]

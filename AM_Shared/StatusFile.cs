@@ -21,12 +21,12 @@ namespace AnalysisManagerBase
     /// </summary>
     /// <remarks>
     /// Additional functionality:
-    ///  1) Can log memory usage stats to a file using clsMemoryUsageLogger
+    ///  1) Can log memory usage stats to a file using MemoryUsageLogger
     ///  2) Looks for the presence of file "AbortProcessingNow.txt"; if found, it sets AbortProcessingNow to true
     ///  and renames the file to "AbortProcessingNow.txt.Done"
     ///  3) Posts status messages to the DMS broker DB at the specified interval
     /// </remarks>
-    public class clsStatusFile : EventNotifier, IStatusFile
+    public class StatusFile : EventNotifier, IStatusFile
     {
         #region "Module variables"
 
@@ -46,16 +46,16 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Used to log the memory usage to a status file
         /// </summary>
-        private clsMemoryUsageLogger mMemoryUsageLogger;
+        private MemoryUsageLogger mMemoryUsageLogger;
 
         /// <summary>
         /// Used to log messages to the broker DB
         /// </summary>
-        private clsDBStatusLogger mBrokerDBLogger;
+        private DBStatusLogger mBrokerDBLogger;
 
-        private clsMessageSender mMessageSender;
+        private MessageSender mMessageSender;
 
-        private clsMessageQueueLogger mQueueLogger;
+        private MessageQueueLogger mQueueLogger;
 
         private DateTime mLastFileWriteTime;
 
@@ -269,7 +269,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="statusFilePath">Full path to status file</param>
         /// <param name="debugLevel"></param>
-        public clsStatusFile(string statusFilePath, int debugLevel)
+        public StatusFile(string statusFilePath, int debugLevel)
         {
             mMgrStatusMap = new Dictionary<EnumMgrStatus, string>();
             mTaskStatusMap = new Dictionary<EnumTaskStatus, string>();
@@ -313,7 +313,7 @@ namespace AnalysisManagerBase
             {
                 if (mMemoryUsageLogger == null)
                 {
-                    mMemoryUsageLogger = new clsMemoryUsageLogger(memoryUsageLogFolderPath, minimumMemoryUsageLogIntervalMinutes);
+                    mMemoryUsageLogger = new MemoryUsageLogger(memoryUsageLogFolderPath, minimumMemoryUsageLogIntervalMinutes);
                     RegisterEvents(mMemoryUsageLogger);
                 }
                 else
@@ -340,7 +340,7 @@ namespace AnalysisManagerBase
         /// </remarks>
         public void ConfigureBrokerDBLogging(bool logStatusToBrokerDB, string brokerDBConnectionString, float brokerDBStatusUpdateIntervalMinutes)
         {
-            if (clsGlobal.OfflineMode)
+            if (Global.OfflineMode)
             {
                 LogToBrokerQueue = false;
                 return;
@@ -352,7 +352,7 @@ namespace AnalysisManagerBase
             {
                 if (mBrokerDBLogger == null)
                 {
-                    mBrokerDBLogger = new clsDBStatusLogger(brokerDBConnectionString, brokerDBStatusUpdateIntervalMinutes);
+                    mBrokerDBLogger = new DBStatusLogger(brokerDBConnectionString, brokerDBStatusUpdateIntervalMinutes);
                     RegisterEvents(mBrokerDBLogger);
                 }
                 else
@@ -382,7 +382,7 @@ namespace AnalysisManagerBase
         /// </remarks>
         public void ConfigureMessageQueueLogging(bool logStatusToMessageQueue, string msgQueueURI, string messageQueueTopicMgrStatus)
         {
-            if (clsGlobal.OfflineMode)
+            if (Global.OfflineMode)
             {
                 LogToMsgQueue = false;
                 return;
@@ -582,7 +582,7 @@ namespace AnalysisManagerBase
         /// <remarks>Should not be affected by hyperthreading, so a computer with two 4-core chips will report 8 cores</remarks>
         public int GetCoreCount()
         {
-            return clsGlobal.GetCoreCount();
+            return Global.GetCoreCount();
         }
 
         /// <summary>
@@ -591,11 +591,11 @@ namespace AnalysisManagerBase
         /// <returns>Value between 0 and 100</returns>
         /// <remarks>
         /// This is CPU usage for all running applications, not just this application
-        /// For CPU usage of a single application use clsGlobal.ProcessInfo.GetCoreUsageByProcessID()
+        /// For CPU usage of a single application use Global.ProcessInfo.GetCoreUsageByProcessID()
         /// </remarks>
         private float GetCPUUtilization()
         {
-            return clsGlobal.ProcessInfo.GetCPUUtilization();
+            return Global.ProcessInfo.GetCPUUtilization();
         }
 
         /// <summary>
@@ -604,7 +604,7 @@ namespace AnalysisManagerBase
         /// <returns>Amount of free memory, in MB</returns>
         public float GetFreeMemoryMB()
         {
-            var freeMemoryMB = clsGlobal.GetFreeMemoryMB();
+            var freeMemoryMB = Global.GetFreeMemoryMB();
 
             return freeMemoryMB;
         }
@@ -633,7 +633,7 @@ namespace AnalysisManagerBase
 
             try
             {
-                clsGlobal.CheckStopTrace("LogStatusToMessageQueue");
+                Global.CheckStopTrace("LogStatusToMessageQueue");
 
                 if (mMessageSender == null)
                 {
@@ -642,14 +642,14 @@ namespace AnalysisManagerBase
                         OnStatusEvent("Initializing message queue with URI '" + MessageQueueURI + "' and Topic '" + MessageQueueTopic + "'");
                     }
 
-                    clsGlobal.CheckStopTrace("CreateMessageSender");
+                    Global.CheckStopTrace("CreateMessageSender");
 
-                    mMessageSender = new clsMessageSender(MessageQueueURI, MessageQueueTopic, MgrName);
+                    mMessageSender = new MessageSender(MessageQueueURI, MessageQueueTopic, MgrName);
                     mMessageSender.ErrorEvent += MessageSender_ErrorEvent;
 
                     // message queue logger sets up local message buffering (so calls to log don't block)
                     // and uses message sender (as a delegate) to actually send off the messages
-                    mQueueLogger = new clsMessageQueueLogger();
+                    mQueueLogger = new MessageQueueLogger();
                     RegisterEvents(mQueueLogger);
                     mQueueLogger.Sender += mMessageSender.SendMessage;
 
@@ -668,7 +668,7 @@ namespace AnalysisManagerBase
                     mLastMessageQueueWarningTime = logTimeInit;
                 }
 
-                clsGlobal.CheckStopTrace("LogToQueueLogger");
+                Global.CheckStopTrace("LogToQueueLogger");
 
                 if (mQueueLogger != null)
                 {
@@ -703,9 +703,9 @@ namespace AnalysisManagerBase
             if (mBrokerDBLogger == null)
                 return;
 
-            clsGlobal.CheckStopTrace("LogStatusToBrokerDatabase");
+            Global.CheckStopTrace("LogStatusToBrokerDatabase");
 
-            var statusInfo = new clsDBStatusLogger.udtStatusInfoType
+            var statusInfo = new DBStatusLogger.udtStatusInfoType
             {
                 MgrName = MgrName,
                 MgrStatus = MgrStatus,
@@ -737,9 +737,9 @@ namespace AnalysisManagerBase
                 }
             }
 
-            clsGlobal.CheckStopTrace("CreateTaskInfoType");
+            Global.CheckStopTrace("CreateTaskInfoType");
 
-            var task = new clsDBStatusLogger.udtTaskInfoType
+            var task = new DBStatusLogger.udtTaskInfoType
             {
                 Tool = Tool,
                 Status = TaskStatus,
@@ -748,9 +748,9 @@ namespace AnalysisManagerBase
                 CurrentOperation = CurrentOperation
             };
 
-            clsGlobal.CheckStopTrace("CreateTaskDetailsType");
+            Global.CheckStopTrace("CreateTaskDetailsType");
 
-            var taskDetails = new clsDBStatusLogger.udtTaskDetailsType
+            var taskDetails = new DBStatusLogger.udtTaskDetailsType
             {
                 Status = TaskStatusDetail,
                 Job = JobNumber,
@@ -764,7 +764,7 @@ namespace AnalysisManagerBase
             task.TaskDetails = taskDetails;
             statusInfo.Task = task;
 
-            clsGlobal.CheckStopTrace("LogStatusToBroker");
+            Global.CheckStopTrace("LogStatusToBroker");
 
             mBrokerDBLogger.LogStatus(statusInfo, forceLogToBrokerDB);
         }
@@ -885,20 +885,20 @@ namespace AnalysisManagerBase
             {
                 lastUpdate = DateTime.UtcNow;
 
-                clsGlobal.CheckStopTrace("GetProcessID");
+                Global.CheckStopTrace("GetProcessID");
                 processId = GetProcessID();
 
                 if (usePerformanceCounters)
                 {
-                    clsGlobal.CheckStopTrace("GetCPUUtilization");
+                    Global.CheckStopTrace("GetCPUUtilization");
                     cpuUtilization = (int)GetCPUUtilization();
                 }
-                else if (clsGlobal.TraceMode)
+                else if (Global.TraceMode)
                 {
                     ConsoleMsgUtils.ShowDebug("Skipping call to GetCPUUtilization in WriteStatusFile");
                 }
 
-                clsGlobal.CheckStopTrace("GetFreeMemoryMB");
+                Global.CheckStopTrace("GetFreeMemoryMB");
                 freeMemoryMB = GetFreeMemoryMB();
             }
             catch (Exception ex)
@@ -906,14 +906,14 @@ namespace AnalysisManagerBase
                 ConsoleMsgUtils.ShowDebug("Exception getting process ID, CPU utilization, or free memory: " + ex.Message);
             }
 
-            if (clsGlobal.TraceMode)
+            if (Global.TraceMode)
             {
                 ConsoleMsgUtils.ShowDebug(
                     "Call WriteStatusFile with processId {0}, CPU {1}%, Free Memory {2:F0} MB",
                     processId, cpuUtilization, freeMemoryMB);
             }
 
-            clsGlobal.CheckStopTrace("WriteStatusFile");
+            Global.CheckStopTrace("WriteStatusFile");
             WriteStatusFile(lastUpdate, processId, cpuUtilization, freeMemoryMB, forceLogToBrokerDB, usePerformanceCounters);
         }
 
@@ -946,17 +946,17 @@ namespace AnalysisManagerBase
             var runTimeHours = GetRunTime();
             WriteStatusFile(this, lastUpdate, processId, cpuUtilization, freeMemoryMB, runTimeHours, true, forceLogToBrokerDB);
 
-            clsGlobal.CheckStopTrace("CheckForAbortProcessingFile");
+            Global.CheckStopTrace("CheckForAbortProcessingFile");
             CheckForAbortProcessingFile();
 
             if (usePerformanceCounters)
             {
-                clsGlobal.CheckStopTrace("WriteMemoryUsageLogEntry");
+                Global.CheckStopTrace("WriteMemoryUsageLogEntry");
 
                 // Log the memory usage to a local file
                 mMemoryUsageLogger?.WriteMemoryUsageLogEntry();
             }
-            else if (clsGlobal.TraceMode)
+            else if (Global.TraceMode)
             {
                 ConsoleMsgUtils.ShowDebug("Skipping call to WriteMemoryUsageLogEntry in WriteStatusFile");
             }
@@ -978,7 +978,7 @@ namespace AnalysisManagerBase
         /// Typically false</param>
         /// <remarks>The Message queue is always updated if LogToMsgQueue is true</remarks>
         private void WriteStatusFile(
-            clsStatusFile status,
+            StatusFile status,
             DateTime lastUpdate,
             int processId,
             int cpuUtilization,
@@ -991,12 +991,12 @@ namespace AnalysisManagerBase
 
             try
             {
-                clsGlobal.CheckStopTrace("GenerateStatusXML");
+                Global.CheckStopTrace("GenerateStatusXML");
                 xmlText = GenerateStatusXML(status, lastUpdate, processId, cpuUtilization, freeMemoryMB, runTimeHours);
 
                 if (writeToDisk)
                 {
-                    clsGlobal.CheckStopTrace("WriteStatusFileToDisk");
+                    Global.CheckStopTrace("WriteStatusFileToDisk");
                     WriteStatusFileToDisk(xmlText);
                 }
             }
@@ -1031,7 +1031,7 @@ namespace AnalysisManagerBase
         /// <param name="freeMemoryMB">Free memory in MB</param>
         /// <param name="runTimeHours">Runtime, in hours</param>
         private static string GenerateStatusXML(
-            clsStatusFile status,
+            StatusFile status,
             DateTime lastUpdate,
             int processId,
             int cpuUtilization,
@@ -1230,7 +1230,7 @@ namespace AnalysisManagerBase
 
             try
             {
-                // We're running an offline analysis job (clsGlobal.OfflineMode is true)
+                // We're running an offline analysis job (Global.OfflineMode is true)
                 // Update the JobStatus file in the TaskQueue directory
                 File.Copy(FileNamePath, OfflineJobStatusFilePath, true);
             }
@@ -1534,7 +1534,7 @@ namespace AnalysisManagerBase
         /// <param name="cpuUtilization">CPU utilization</param>
         /// <param name="freeMemoryMB">Free memory in MB</param>
         /// <remarks>Pushes the status to the message queue; does not write the XML to disk</remarks>
-        public void UpdateRemoteStatus(clsStatusFile status, DateTime lastUpdate, int processId, int cpuUtilization, float freeMemoryMB)
+        public void UpdateRemoteStatus(StatusFile status, DateTime lastUpdate, int processId, int cpuUtilization, float freeMemoryMB)
         {
             var runTimeHours = (float)lastUpdate.Subtract(status.TaskStartTime).TotalHours;
 

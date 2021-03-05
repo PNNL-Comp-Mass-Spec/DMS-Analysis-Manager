@@ -10,7 +10,7 @@ namespace AnalysisManagerBase
     /// <summary>
     /// DotNet Zip Tools (aka Ionic Zip Tools)
     /// </summary>
-    public class clsDotNetZipTools : EventNotifier
+    public class DotNetZipTools : EventNotifier
     {
         /// <summary>
         /// DotNetZip name (used for logging)
@@ -50,7 +50,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="debugLevel"></param>
         /// <param name="workDir"></param>
-        public clsDotNetZipTools(int debugLevel, string workDir)
+        public DotNetZipTools(int debugLevel, string workDir)
         {
             DebugLevel = debugLevel;
             mWorkDir = workDir;
@@ -371,7 +371,7 @@ namespace AnalysisManagerBase
 
             if (unzipTimeSeconds > 0)
             {
-                unzipSpeedMBPerSec = clsGlobal.BytesToMB(totalSizeBytes) / unzipTimeSeconds;
+                unzipSpeedMBPerSec = Global.BytesToMB(totalSizeBytes) / unzipTimeSeconds;
             }
             else
             {

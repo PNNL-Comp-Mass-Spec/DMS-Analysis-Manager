@@ -9,7 +9,7 @@ namespace AnalysisManager_Cyclops_PlugIn
     /// <summary>
     /// Class for running Cyclops
     /// </summary>
-    public class clsAnalysisToolRunnerCyclops : clsAnalysisToolRunnerBase
+    public class AnalysisToolRunnerCyclops : AnalysisToolRunnerBase
     {
 
         private const float PROGRESS_PCT_CYCLOPS_START = 5;
@@ -42,7 +42,7 @@ namespace AnalysisManager_Cyclops_PlugIn
 
                 if (mDebugLevel > 4)
                 {
-                    LogDebug("clsAnalysisToolRunnerApe.RunTool(): Enter");
+                    LogDebug("AnalysisToolRunnerApe.RunTool(): Enter");
                 }
 
                 // Store the Cyclops version info in the database
@@ -146,8 +146,8 @@ namespace AnalysisManager_Cyclops_PlugIn
 
                 // Override the output folder name and the dataset name (since this is a dataset aggregation job)
                 mResultsDirectoryName = mJobParams.GetParam("StepOutputFolderName");
-                mDatasetName = mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME);
-                mJobParams.SetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME, mResultsDirectoryName);
+                mDatasetName = mJobParams.GetParam(AnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME);
+                mJobParams.SetParam(AnalysisJob.STEP_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME, mResultsDirectoryName);
 
                 var resultsFolderCreated = MakeResultsDirectory();
                 if (!resultsFolderCreated)
@@ -260,7 +260,7 @@ namespace AnalysisManager_Cyclops_PlugIn
         /// </summary>
         private bool StoreToolVersionInfo()
         {
-            var cyclopsDll = Path.Combine(clsGlobal.GetAppDirectoryPath(), "Cyclops.dll");
+            var cyclopsDll = Path.Combine(Global.GetAppDirectoryPath(), "Cyclops.dll");
             var success = StoreDotNETToolVersionInfo(cyclopsDll);
 
             return success;

@@ -9,7 +9,7 @@ namespace AnalysisManagerBase
     /// <summary>
     /// SQLite utilities
     /// </summary>
-    public class clsSqLiteUtilities
+    public class SqLiteUtilities
     {
         // Ignore Spelling: sqlite, sql, tbl
 

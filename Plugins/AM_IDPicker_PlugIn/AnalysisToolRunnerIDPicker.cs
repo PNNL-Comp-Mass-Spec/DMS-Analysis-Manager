@@ -11,7 +11,7 @@ namespace AnalysisManagerIDPickerPlugIn
     /// <summary>
     /// Class for running IDPicker
     /// </summary>
-    public class clsAnalysisToolRunnerIDPicker : clsAnalysisToolRunnerBase
+    public class AnalysisToolRunnerIDPicker : AnalysisToolRunnerBase
     {
         // Ignore Spelling: cmd, idp, Qonvert, prepend, parm, MODa, xxx, msgfspecprob
 
@@ -104,7 +104,7 @@ namespace AnalysisManagerIDPickerPlugIn
 
                 if (mDebugLevel > 4)
                 {
-                    LogDebug("clsAnalysisToolRunnerIDPicker.RunTool(): Enter");
+                    LogDebug("AnalysisToolRunnerIDPicker.RunTool(): Enter");
                 }
 
                 mProgress = PROGRESS_PCT_IDPicker_SEARCHING_FOR_FILES;
@@ -144,7 +144,7 @@ namespace AnalysisManagerIDPickerPlugIn
                     }
                 }
 
-                if (!clsAnalysisResources.ValidateFileHasData(synFilePath, "Synopsis file", out var errorMessage))
+                if (!AnalysisResources.ValidateFileHasData(synFilePath, "Synopsis file", out var errorMessage))
                 {
                     // The synopsis file is empty
                     mMessage = errorMessage;
@@ -201,10 +201,10 @@ namespace AnalysisManagerIDPickerPlugIn
                     // Don't keep this file since we're skipping IDPicker
                     mJobParams.AddResultFileToSkip("Tool_Version_Info_IDPicker.txt");
 
-                    var paramFileNameLocal = mJobParams.GetParam(clsAnalysisResourcesIDPicker.IDPICKER_PARAM_FILENAME_LOCAL);
+                    var paramFileNameLocal = mJobParams.GetParam(AnalysisResourcesIDPicker.IDPICKER_PARAM_FILENAME_LOCAL);
                     if (string.IsNullOrEmpty(paramFileNameLocal))
                     {
-                        mJobParams.AddResultFileToSkip(clsAnalysisResourcesIDPicker.DEFAULT_IDPICKER_PARAM_FILE_NAME);
+                        mJobParams.AddResultFileToSkip(AnalysisResourcesIDPicker.DEFAULT_IDPICKER_PARAM_FILE_NAME);
                     }
                     else
                     {
@@ -271,7 +271,7 @@ namespace AnalysisManagerIDPickerPlugIn
                     var moveResult = MoveFilesIntoIDPickerSubdirectory();
                     if (moveResult != CloseOutType.CLOSEOUT_SUCCESS)
                     {
-                        // Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
+                        // Note that MoveResultFiles should have already called AnalysisResults.CopyFailedResultsToArchiveFolder
                         mMessage = "Error moving files into IDPicker subdirectory";
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
@@ -676,7 +676,7 @@ namespace AnalysisManagerIDPickerPlugIn
         {
             try
             {
-                mIDPickerParamFileNameLocal = mJobParams.GetParam(clsAnalysisResourcesIDPicker.IDPICKER_PARAM_FILENAME_LOCAL);
+                mIDPickerParamFileNameLocal = mJobParams.GetParam(AnalysisResourcesIDPicker.IDPICKER_PARAM_FILENAME_LOCAL);
                 if (string.IsNullOrEmpty(mIDPickerParamFileNameLocal))
                 {
                     mMessage = "IDPicker parameter file not defined";
@@ -850,7 +850,7 @@ namespace AnalysisManagerIDPickerPlugIn
                         catch (Exception)
                         {
                             attempts++;
-                            clsGlobal.IdleLoop(2);
+                            Global.IdleLoop(2);
                         }
                     } while (!success && attempts <= 3);
 
@@ -869,7 +869,7 @@ namespace AnalysisManagerIDPickerPlugIn
             if (errorEncountered)
             {
                 // Try to save whatever files were moved into the results directory
-                var analysisResults = new clsAnalysisResults(mMgrParams, mJobParams);
+                var analysisResults = new AnalysisResults(mMgrParams, mJobParams);
                 analysisResults.CopyFailedResultsToArchiveDirectory(Path.Combine(mWorkDir, mResultsDirectoryName));
 
                 return CloseOutType.CLOSEOUT_FAILED;
@@ -1191,7 +1191,7 @@ namespace AnalysisManagerIDPickerPlugIn
             mCmdRunnerDescription = string.Copy(programDescription);
             ClearConcurrentBag(ref mCmdRunnerErrors);
 
-            var cmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel);
+            var cmdRunner = new RunDosProgram(mWorkDir, mDebugLevel);
             RegisterEvents(cmdRunner);
             cmdRunner.ErrorEvent += CmdRunner_ConsoleErrorEvent;
             cmdRunner.LoopWaiting += CmdRunner_LoopWaiting;

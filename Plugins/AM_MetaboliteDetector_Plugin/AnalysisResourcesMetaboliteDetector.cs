@@ -13,7 +13,7 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
     /// <summary>
     /// Retrieve resources for the Metabolite Detector plugin
     /// </summary>
-    public class clsAnalysisResourcesMetaboliteDetector : clsAnalysisResources
+    public class AnalysisResourcesMetaboliteDetector : AnalysisResources
     {
         /// <summary>
         /// Retrieve required files
@@ -45,7 +45,7 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                
+
 
                 currentTask = "Process the MyEMSL download queue";
 

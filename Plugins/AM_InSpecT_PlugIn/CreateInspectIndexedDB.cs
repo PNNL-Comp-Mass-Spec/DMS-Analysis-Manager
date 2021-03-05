@@ -13,7 +13,7 @@ using System.IO;
 
 namespace AnalysisManagerInSpecTPlugIn
 {
-    public class clsCreateInspectIndexedDB
+    public class CreateInspectIndexedDB
     {
         /// <summary>
         /// Convert .Fasta file to indexed DB files
@@ -34,7 +34,7 @@ namespace AnalysisManagerInSpecTPlugIn
                 if (DebugLevel > 4)
                 {
                     LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG,
-                        "clsCreateInspectIndexedDB.CreateIndexedDbFiles(): Enter");
+                        "CreateInspectIndexedDB.CreateIndexedDbFiles(): Enter");
                 }
 
                 var intRandomNumberSeed = jobParams.GetJobParameter("InspectShuffleDBSeed", 1000);
@@ -64,7 +64,7 @@ namespace AnalysisManagerInSpecTPlugIn
 
                 var pythonProgLoc = mgrParams.GetParam("pythonprogloc");
 
-                var objPrepDB = new clsRunDosProgram(InspectDir + Path.DirectorySeparatorChar, DebugLevel);
+                var objPrepDB = new RunDosProgram(InspectDir + Path.DirectorySeparatorChar, DebugLevel);
                 objPrepDB.ErrorEvent += CmdRunner_ErrorEvent;
 
                 // Check to see if another Analysis Manager is already creating the indexed db files
@@ -85,7 +85,7 @@ namespace AnalysisManagerInSpecTPlugIn
                     while (File.Exists(dbLockFilename) && durationTime.Hours < sngMaxWaitTimeHours)
                     {
                         // Sleep for 2 seconds
-                        clsGlobal.IdleLoop(2);
+                        Global.IdleLoop(2);
 
                         // Update the current time and elapsed duration
                         currentTime = DateTime.UtcNow;
@@ -182,7 +182,7 @@ namespace AnalysisManagerInSpecTPlugIn
                     if (blnUseShuffledDB)
                     {
                         // Set up and execute a program runner to run ShuffleDB_seed.py
-                        var objShuffleDB = new clsRunDosProgram(InspectDir + Path.DirectorySeparatorChar, DebugLevel);
+                        var objShuffleDB = new RunDosProgram(InspectDir + Path.DirectorySeparatorChar, DebugLevel);
                         objShuffleDB.ErrorEvent += CmdRunner_ErrorEvent;
 
                         arguments = " " + ShuffleDBScriptPath + " -r " + dbTrieFilenameBeforeShuffle + " -w " + dbTrieFilename;
@@ -231,7 +231,7 @@ namespace AnalysisManagerInSpecTPlugIn
             catch (Exception ex)
             {
                 LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR,
-                    "clsCreateInspectIndexedDB.CreateIndexedDbFiles, An exception has occurred: " + ex.Message);
+                    "CreateInspectIndexedDB.CreateIndexedDbFiles, An exception has occurred: " + ex.Message);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -254,7 +254,7 @@ namespace AnalysisManagerInSpecTPlugIn
             catch (Exception ex)
             {
                 LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR,
-                    "clsCreateInspectIndexedDB.CreateLockFile, Error creating lock file: " + ex.Message);
+                    "CreateInspectIndexedDB.CreateLockFile, Error creating lock file: " + ex.Message);
                 return false;
             }
 

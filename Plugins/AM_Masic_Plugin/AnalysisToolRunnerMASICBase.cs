@@ -20,7 +20,7 @@ namespace AnalysisManagerMasicPlugin
     /// <summary>
     /// Class for performing MASIC analysis
     /// </summary>
-    public abstract class clsAnalysisToolRunnerMASICBase : clsAnalysisToolRunnerBase
+    public abstract class AnalysisToolRunnerMASICBase : AnalysisToolRunnerBase
     {
         // Ignore Spelling: Traq, labelling, Glc, Az
 
@@ -123,7 +123,7 @@ namespace AnalysisManagerMasicPlugin
             }
             catch (Exception ex)
             {
-                LogError("clsAnalysisToolRunnerMASICBase.RunTool(), Exception calling MASIC to create the SIC files, " + ex.Message, ex);
+                LogError("AnalysisToolRunnerMASICBase.RunTool(), Exception calling MASIC to create the SIC files, " + ex.Message, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -144,7 +144,7 @@ namespace AnalysisManagerMasicPlugin
             // Make the results folder
             if (mDebugLevel > 3)
             {
-                LogDebug("clsAnalysisToolRunnerMASICBase.RunTool(), Making results folder");
+                LogDebug("AnalysisToolRunnerMASICBase.RunTool(), Making results folder");
             }
 
             var success = CopyResultsToTransferDirectory();
@@ -176,13 +176,13 @@ namespace AnalysisManagerMasicPlugin
                 masicExePath = mMgrParams.GetParam("MasicProgLoc");
                 if (!File.Exists(masicExePath))
                 {
-                    LogError("clsAnalysisToolRunnerMASICBase.StartMASICAndWait(); MASIC not found at: " + masicExePath);
+                    LogError("AnalysisToolRunnerMASICBase.StartMASICAndWait(); MASIC not found at: " + masicExePath);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
             }
             catch (Exception ex)
             {
-                LogError("clsAnalysisToolRunnerMASICBase.StartMASICAndWait(); Error looking for MASIC_Console.exe at " + masicExePath, ex);
+                LogError("AnalysisToolRunnerMASICBase.StartMASICAndWait(); Error looking for MASIC_Console.exe at " + masicExePath, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -226,7 +226,7 @@ namespace AnalysisManagerMasicPlugin
             var success = WaitForJobToFinish(masicProgRunner);
 
             // Delay for 3 seconds to make sure program exits
-            clsGlobal.IdleLoop(3);
+            Global.IdleLoop(3);
 
             // Read the most recent MASIC_Log file and look for any lines with the text "Error"
             ExtractErrorsFromMASICLogFile(logFile);
@@ -245,13 +245,13 @@ namespace AnalysisManagerMasicPlugin
 
                 if (!string.IsNullOrEmpty(mErrorMessage))
                 {
-                    LogError("clsAnalysisToolRunnerMASICBase.StartMASICAndWait(); Masic Error message: " + mErrorMessage);
+                    LogError("AnalysisToolRunnerMASICBase.StartMASICAndWait(); Masic Error message: " + mErrorMessage);
                     if (string.IsNullOrEmpty(mMessage))
                         mMessage = mErrorMessage;
                 }
                 else
                 {
-                    LogError("clsAnalysisToolRunnerMASICBase.StartMASICAndWait(); Masic Error message is blank");
+                    LogError("AnalysisToolRunnerMASICBase.StartMASICAndWait(); Masic Error message is blank");
                     if (string.IsNullOrEmpty(mMessage))
                         mMessage = "Unknown error running MASIC";
                 }
@@ -260,7 +260,7 @@ namespace AnalysisManagerMasicPlugin
 
             if (mDebugLevel > 0)
             {
-                LogDebug("clsAnalysisToolRunnerMASICBase.StartMASICAndWait(); mProcessStep=" + mProcessStep);
+                LogDebug("AnalysisToolRunnerMASICBase.StartMASICAndWait(); mProcessStep=" + mProcessStep);
             }
 
             return CloseOutType.CLOSEOUT_SUCCESS;
@@ -363,7 +363,7 @@ namespace AnalysisManagerMasicPlugin
         /// Get the DMS-compatible reporter ion name from the MASIC reporter ion mass mode
         /// </summary>
         /// <param name="reporterIonMassMode">MASIC reporter ion mass mode</param>
-        /// <remarks>MASIC mass modes: https://github.com/PNNL-Comp-Mass-Spec/MASIC/blob/59474ab345ce7878f0646a6e83fa1bb22ee84579/clsReporterIons.cs#L15
+        /// <remarks>MASIC mass modes: https://github.com/PNNL-Comp-Mass-Spec/MASIC/blob/59474ab345ce7878f0646a6e83fa1bb22ee84579/ReporterIons.cs#L15
         /// </remarks>
         private static string GetReporterIonNameFromMassMode(int reporterIonMassMode)
         {
@@ -592,7 +592,7 @@ namespace AnalysisManagerMasicPlugin
                 if (!obsRatesLoaded || !intensityStatsLoaded)
                     return false;
 
-                var analysisTask = new clsAnalysisJob(mMgrParams, mDebugLevel);
+                var analysisTask = new AnalysisJob(mMgrParams, mDebugLevel);
                 var dbTools = analysisTask.DMSProcedureExecutor;
 
                 // Call stored procedure StoreReporterIonObsStats in DMS5
@@ -726,7 +726,7 @@ namespace AnalysisManagerMasicPlugin
             while (mJobRunning)
             {
                 // Wait for 30 seconds
-                clsGlobal.IdleLoop(SECONDS_BETWEEN_UPDATE);
+                Global.IdleLoop(SECONDS_BETWEEN_UPDATE);
 
                 if (masicProgRunner.State == ProgRunner.States.NotMonitoring)
                 {
@@ -744,7 +744,7 @@ namespace AnalysisManagerMasicPlugin
                     {
                         // Note that the call to GetCoreUsage() will take at least 1 second
                         processID = masicProgRunner.PID;
-                        var coreUsage = clsGlobal.ProcessInfo.GetCoreUsageByProcessID(processID);
+                        var coreUsage = Global.ProcessInfo.GetCoreUsageByProcessID(processID);
 
                         UpdateProgRunnerCpuUsage(masicProgRunner.PID, coreUsage, SECONDS_BETWEEN_UPDATE);
                     }
@@ -768,26 +768,26 @@ namespace AnalysisManagerMasicPlugin
 
             if (mDebugLevel > 0)
             {
-                LogDebug("clsAnalysisToolRunnerMASICBase.WaitForJobToFinish(); MASIC process has ended");
+                LogDebug("AnalysisToolRunnerMASICBase.WaitForJobToFinish(); MASIC process has ended");
             }
 
             if (abortedProgram)
             {
                 mErrorMessage = "Aborted MASIC processing since over " + MAX_RUNTIME_HOURS + " hours have elapsed";
-                LogError("clsAnalysisToolRunnerMASICBase.WaitForJobToFinish(); " + mErrorMessage);
+                LogError("AnalysisToolRunnerMASICBase.WaitForJobToFinish(); " + mErrorMessage);
                 return false;
             }
 
             if ((int)masicProgRunner.State == 10)
             {
-                LogError("clsAnalysisToolRunnerMASICBase.WaitForJobToFinish(); masicProgRunner.State = 10");
+                LogError("AnalysisToolRunnerMASICBase.WaitForJobToFinish(); masicProgRunner.State = 10");
                 return false;
             }
 
             if (masicProgRunner.ExitCode == 0)
                 return true;
 
-            LogError("clsAnalysisToolRunnerMASICBase.WaitForJobToFinish(); masicProgRunner.ExitCode is nonzero: " + masicProgRunner.ExitCode);
+            LogError("AnalysisToolRunnerMASICBase.WaitForJobToFinish(); masicProgRunner.ExitCode is nonzero: " + masicProgRunner.ExitCode);
 
             // See if a _SICs.XML file was created
             if (Directory.GetFiles(mWorkDir, "*" + SICS_XML_FILE_SUFFIX).Length > 0)
@@ -803,12 +803,12 @@ namespace AnalysisManagerMasicPlugin
             if (sicsXMLFileExists)
             {
                 LogWarning(
-                    "clsAnalysisToolRunnerMASICBase.WaitForJobToFinish(); " + SICS_XML_FILE_SUFFIX +
+                    "AnalysisToolRunnerMASICBase.WaitForJobToFinish(); " + SICS_XML_FILE_SUFFIX +
                     " file found, so ignoring non-zero exit code");
                 return true;
             }
 
-            LogError("clsAnalysisToolRunnerMASICBase.WaitForJobToFinish(); " + SICS_XML_FILE_SUFFIX + " file not found");
+            LogError("AnalysisToolRunnerMASICBase.WaitForJobToFinish(); " + SICS_XML_FILE_SUFFIX + " file not found");
             return false;
 
             // Return False for any other exit codes

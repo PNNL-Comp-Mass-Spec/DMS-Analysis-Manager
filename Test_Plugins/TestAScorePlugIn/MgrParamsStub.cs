@@ -2,11 +2,10 @@ using System;
 using System.Collections.Generic;
 using AnalysisManagerBase;
 
-
-namespace TestAScorePlugIn {
-
-    class MgrParamsStub : IMgrParams {
-
+namespace TestAScorePlugIn
+{
+    class MgrParamsStub : IMgrParams
+    {
         private Dictionary<string, string> mParms;
 
         public MgrParamsStub(Dictionary<string, string> parms)
@@ -60,12 +59,12 @@ namespace TestAScorePlugIn {
 
         public bool GetParam(string ItemKey, bool ValueIfMissing)
         {
-            return clsGlobal.CBoolSafe(GetParam(ItemKey), ValueIfMissing);
+            return Global.CBoolSafe(GetParam(ItemKey), ValueIfMissing);
         }
 
         public int GetParam(string ItemKey, int ValueIfMissing)
         {
-            return clsGlobal.CIntSafe(GetParam(ItemKey), ValueIfMissing);
+            return Global.CIntSafe(GetParam(ItemKey), ValueIfMissing);
         }
 
         public string GetParam(string ItemKey, string ValueIfMissing)

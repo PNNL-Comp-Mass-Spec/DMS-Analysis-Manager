@@ -7,7 +7,7 @@ using System.Xml;
 
 namespace DTASpectraFileGen
 {
-    public class clsMGFConverter : EventNotifier
+    public class MGFConverter : EventNotifier
     {
         #region "Structures"
 
@@ -75,7 +75,7 @@ namespace DTASpectraFileGen
         /// </summary>
         /// <param name="debugLevel"></param>
         /// <param name="workDir"></param>
-        public clsMGFConverter(int debugLevel, string workDir)
+        public MGFConverter(int debugLevel, string workDir)
         {
             mDebugLevel = debugLevel;
             mWorkDir = workDir;
@@ -87,7 +87,7 @@ namespace DTASpectraFileGen
         /// This function is called by MakeDTAFilesThreaded
         /// </summary>
         /// <returns>TRUE for success; FALSE for failure</returns>
-        public bool ConvertMGFtoDTA(clsAnalysisResources.eRawDataTypeConstants rawDataType, string datasetName)
+        public bool ConvertMGFtoDTA(AnalysisResources.eRawDataTypeConstants rawDataType, string datasetName)
         {
             bool success;
 
@@ -98,14 +98,14 @@ namespace DTASpectraFileGen
                 OnDebugEvent("Converting .MGF file to _DTA.txt");
             }
 
-            var mgfFilePath = Path.Combine(mWorkDir, datasetName + clsAnalysisResources.DOT_MGF_EXTENSION);
+            var mgfFilePath = Path.Combine(mWorkDir, datasetName + AnalysisResources.DOT_MGF_EXTENSION);
 
-            if (rawDataType == clsAnalysisResources.eRawDataTypeConstants.mzML)
+            if (rawDataType == AnalysisResources.eRawDataTypeConstants.mzML)
             {
                 // Read the .mzML file to construct a mapping between "title" line and scan number
-                // If necessary, update the .mgf file to have new "title" lines that clsMGFtoDTA will recognize
+                // If necessary, update the .mgf file to have new "title" lines that MGFtoDTA will recognize
 
-                var mzMLFilePath = Path.Combine(mWorkDir, datasetName + clsAnalysisResources.DOT_MZML_EXTENSION);
+                var mzMLFilePath = Path.Combine(mWorkDir, datasetName + AnalysisResources.DOT_MZML_EXTENSION);
 
                 success = UpdateMGFFileTitleLinesUsingMzML(mzMLFilePath, mgfFilePath, datasetName);
                 if (!success)
@@ -379,7 +379,7 @@ namespace DTASpectraFileGen
                 // Delete the original .mgf file and replace it with newMGFFilePath
                 ProgRunner.GarbageCollectNow();
 
-                clsAnalysisToolRunnerBase.DeleteFileWithRetries(mgfFilePath, mDebugLevel);
+                AnalysisToolRunnerBase.DeleteFileWithRetries(mgfFilePath, mDebugLevel);
 
                 var newMGFFile = new FileInfo(newMGFFilePath);
                 newMGFFile.MoveTo(mgfFilePath);

@@ -19,7 +19,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
     /// <summary>
     /// Class for running Phospho_FDRAggregator analysis
     /// </summary>
-    public class clsAnalysisToolRunnerPhosphoFdrAggregator : clsAnalysisToolRunnerBase
+    public class AnalysisToolRunnerPhosphoFdrAggregator : AnalysisToolRunnerBase
     {
         #region "Constants and Enums"
 
@@ -63,7 +63,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
         protected int mJobFoldersProcessed;
         protected int mTotalJobFolders;
 
-        protected clsRunDosProgram mCmdRunner;
+        protected RunDosProgram mCmdRunner;
 
         #endregion
 
@@ -85,7 +85,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
 
                 if (mDebugLevel > 4)
                 {
-                    LogDebug("clsAnalysisToolRunnerPhosphoFdrAggregator.RunTool(): Enter");
+                    LogDebug("AnalysisToolRunnerPhosphoFdrAggregator.RunTool(): Enter");
                 }
 
                 // Determine the path to the Ascore program
@@ -496,7 +496,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
             if (string.IsNullOrWhiteSpace(bestAScoreParamFileName))
             {
                 mMessage = "Programming bug, AScore parameter file not found in ProcessSynopsisFiles " +
-                    "(clsAnalysisResourcesPhosphoFdrAggregator.GetResources should have already flagged this as an error)";
+                    "(AnalysisResourcesPhosphoFdrAggregator.GetResources should have already flagged this as an error)";
                 LogError(mMessage);
                 return string.Empty;
             }
@@ -789,9 +789,9 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
             try
             {
                 // Extract the dataset raw file paths
-                var jobToDatasetMap = ExtractPackedJobParameterDictionary(clsAnalysisResources.JOB_PARAM_DICTIONARY_JOB_DATASET_MAP);
-                var jobToSettingsFileMap = ExtractPackedJobParameterDictionary(clsAnalysisResources.JOB_PARAM_DICTIONARY_JOB_SETTINGS_FILE_MAP);
-                var jobToToolMap = ExtractPackedJobParameterDictionary(clsAnalysisResources.JOB_PARAM_DICTIONARY_JOB_TOOL_MAP);
+                var jobToDatasetMap = ExtractPackedJobParameterDictionary(AnalysisResources.JOB_PARAM_DICTIONARY_JOB_DATASET_MAP);
+                var jobToSettingsFileMap = ExtractPackedJobParameterDictionary(AnalysisResources.JOB_PARAM_DICTIONARY_JOB_SETTINGS_FILE_MAP);
+                var jobToToolMap = ExtractPackedJobParameterDictionary(AnalysisResources.JOB_PARAM_DICTIONARY_JOB_TOOL_MAP);
                 var jobsProcessed = new List<udtJobMetadataForAScore>();
 
                 var jobCountSkippedUnknownJob = 0;
@@ -802,7 +802,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
 
                 mProgress = PROGRESS_PCT_PHOSPHO_FDR_RUNNING;
 
-                mCmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel);
+                mCmdRunner = new RunDosProgram(mWorkDir, mDebugLevel);
                 RegisterEvents(mCmdRunner);
                 mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
@@ -827,7 +827,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                     if (!jobToDatasetMap.TryGetValue(udtJobMetadata.Job.ToString(), out var datasetName))
                     {
                         mMessage = "Job " + udtJobMetadata.Job + " not found in packed job parameter " +
-                                    clsAnalysisResources.JOB_PARAM_DICTIONARY_JOB_DATASET_MAP;
+                                    AnalysisResources.JOB_PARAM_DICTIONARY_JOB_DATASET_MAP;
                         LogError("Error in ProcessSynopsisFiles: " + mMessage);
                         jobCountSkippedUnknownJob++;
                         continue;
@@ -994,7 +994,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                 LogDebug(progLoc + arguments);
             }
 
-            mCmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel);
+            mCmdRunner = new RunDosProgram(mWorkDir, mDebugLevel);
             RegisterEvents(mCmdRunner);
             mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
@@ -1020,7 +1020,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
             if (!mCmdRunner.WriteConsoleOutputToFile)
             {
                 // Write the console output to a text file
-                clsGlobal.IdleLoop(0.25);
+                Global.IdleLoop(0.25);
 
                 using var writer = new StreamWriter(new FileStream(mCmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
 
@@ -1033,7 +1033,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
             }
 
             // Parse the console output file one more time to check for errors
-            clsGlobal.IdleLoop(0.25);
+            Global.IdleLoop(0.25);
             ParseConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath);
 
             if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))

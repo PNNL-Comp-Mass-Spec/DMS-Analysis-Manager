@@ -4,7 +4,7 @@
 // Created 05/10/2011
 //
 // Uses MSConvert to create a .mzXML or .mzML file
-// Also used by RecalculatePrecursorIonsUpdateMzML in clsAnalysisToolRunnerMSXMLGen to re-index a .mzML file to create a new .mzML file
+// Also used by RecalculatePrecursorIonsUpdateMzML in AnalysisToolRunnerMSXMLGen to re-index a .mzML file to create a new .mzML file
 //*********************************************************************************************************
 
 using AnalysisManagerBase;
@@ -13,7 +13,7 @@ using System.IO;
 
 namespace AnalysisManagerMsXmlGenPlugIn
 {
-    public class clsMSXmlGenMSConvert : clsMSXmlGen
+    public class MSXmlGenMSConvert : MSXmlGen
     {
         // Ignore Spelling: centroiding, outfile
 
@@ -34,12 +34,12 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
         #region "Methods"
 
-        public clsMSXmlGenMSConvert(
+        public MSXmlGenMSConvert(
             string workDir,
             string msConvertProgramPath,
             string datasetName,
-            clsAnalysisResources.eRawDataTypeConstants rawDataType,
-            clsAnalysisResources.MSXMLOutputTypeConstants eOutputType,
+            AnalysisResources.eRawDataTypeConstants rawDataType,
+            AnalysisResources.MSXMLOutputTypeConstants eOutputType,
             string customMSConvertArguments,
             IJobParams jobParams) : base(workDir, msConvertProgramPath, datasetName, rawDataType, eOutputType, centroidMSXML: false, jobParams: jobParams)
         {
@@ -48,12 +48,12 @@ namespace AnalysisManagerMsXmlGenPlugIn
             mUseProgRunnerResultCode = false;
         }
 
-        public clsMSXmlGenMSConvert(
+        public MSXmlGenMSConvert(
             string workDir,
             string msConvertProgramPath,
             string datasetName,
-            clsAnalysisResources.eRawDataTypeConstants rawDataType,
-            clsAnalysisResources.MSXMLOutputTypeConstants eOutputType,
+            AnalysisResources.eRawDataTypeConstants rawDataType,
+            AnalysisResources.MSXMLOutputTypeConstants eOutputType,
             bool centroidMSXML,
             int centroidPeakCountToRetain,
             IJobParams jobParams) : base(workDir, msConvertProgramPath, datasetName, rawDataType, eOutputType, centroidMSXML, jobParams: jobParams)
@@ -63,12 +63,12 @@ namespace AnalysisManagerMsXmlGenPlugIn
             mUseProgRunnerResultCode = false;
         }
 
-        public clsMSXmlGenMSConvert(
+        public MSXmlGenMSConvert(
             string workDir,
             string msConvertProgramPath,
             string datasetName,
-            clsAnalysisResources.eRawDataTypeConstants rawDataType,
-            clsAnalysisResources.MSXMLOutputTypeConstants eOutputType,
+            AnalysisResources.eRawDataTypeConstants rawDataType,
+            AnalysisResources.MSXMLOutputTypeConstants eOutputType,
             bool centroidMS1,
             bool centroidMS2,
             int centroidPeakCountToRetain,
@@ -82,7 +82,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
         protected override string CreateArguments(string msXmlFormat, string rawFilePath)
         {
-            var arguments = " " + clsGlobal.PossiblyQuotePath(rawFilePath);
+            var arguments = " " + Global.PossiblyQuotePath(rawFilePath);
 
             if (string.IsNullOrWhiteSpace(mCustomMSConvertArguments))
             {
@@ -149,20 +149,20 @@ namespace AnalysisManagerMsXmlGenPlugIn
             return arguments;
         }
 
-        protected override string GetOutputFileName(string msXmlFormat, string rawFilePath, clsAnalysisResources.eRawDataTypeConstants rawDataType)
+        protected override string GetOutputFileName(string msXmlFormat, string rawFilePath, AnalysisResources.eRawDataTypeConstants rawDataType)
         {
             if (string.Equals(msXmlFormat, MZML_FILE_FORMAT, StringComparison.OrdinalIgnoreCase) &&
-                mRawDataType == clsAnalysisResources.eRawDataTypeConstants.mzML)
+                mRawDataType == AnalysisResources.eRawDataTypeConstants.mzML)
             {
                 // Input and output files are both .mzML
-                return Path.GetFileNameWithoutExtension(rawFilePath) + "_new" + clsAnalysisResources.DOT_MZML_EXTENSION;
+                return Path.GetFileNameWithoutExtension(rawFilePath) + "_new" + AnalysisResources.DOT_MZML_EXTENSION;
             }
 
             if (string.Equals(msXmlFormat, MZXML_FILE_FORMAT, StringComparison.OrdinalIgnoreCase) &&
-                mRawDataType == clsAnalysisResources.eRawDataTypeConstants.mzXML)
+                mRawDataType == AnalysisResources.eRawDataTypeConstants.mzXML)
             {
                 // Input and output files are both .mzXML
-                return Path.GetFileNameWithoutExtension(rawFilePath) + "_new" + clsAnalysisResources.DOT_MZXML_EXTENSION;
+                return Path.GetFileNameWithoutExtension(rawFilePath) + "_new" + AnalysisResources.DOT_MZXML_EXTENSION;
             }
 
             return Path.GetFileName(Path.ChangeExtension(rawFilePath, msXmlFormat));
@@ -174,7 +174,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
             //  registry entry at HKEY_CURRENT_USER\Software\ProteoWizard
             //  to indicate that we agree to the Thermo license
 
-            var proteowizardTools = new clsProteowizardTools(DebugLevel);
+            var proteowizardTools = new ProteowizardTools(DebugLevel);
 
             return proteowizardTools.RegisterProteoWizard();
         }

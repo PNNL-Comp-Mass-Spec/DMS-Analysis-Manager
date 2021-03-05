@@ -10,7 +10,7 @@ namespace AnalysisManager_Mage_PlugIn
     /// <summary>
     /// This class provides a generic base for MAC tool run operations common to all MAC tool plug-ins.
     /// </summary>
-    public abstract class clsAnalysisToolRunnerMAC : clsAnalysisToolRunnerBase
+    public abstract class AnalysisToolRunnerMAC : AnalysisToolRunnerBase
     {
         #region "Constants"
 
@@ -40,7 +40,7 @@ namespace AnalysisManager_Mage_PlugIn
                 var cachedWarningMessage = mJobParams.GetJobParameter("AnalysisResourcesClass", "Evaluation_Message", string.Empty);
                 if (!string.IsNullOrWhiteSpace(cachedWarningMessage))
                 {
-                    mEvalMessage = clsGlobal.AppendToComment(mEvalMessage, cachedWarningMessage);
+                    mEvalMessage = Global.AppendToComment(mEvalMessage, cachedWarningMessage);
                 }
 
                 LogMessage("Running MAC Plugin");
@@ -101,9 +101,9 @@ namespace AnalysisManager_Mage_PlugIn
 
                 // Override the output directory name and the dataset name (since this is a dataset aggregation job)
                 mResultsDirectoryName = mJobParams.GetParam("StepOutputFolderName");
-                mDatasetName = mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME);
+                mDatasetName = mJobParams.GetParam(AnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME);
                 if (!string.IsNullOrEmpty(mResultsDirectoryName))
-                    mJobParams.SetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME, mResultsDirectoryName);
+                    mJobParams.SetParam(AnalysisJob.STEP_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME, mResultsDirectoryName);
 
                 var success = CopyResultsToTransferDirectory();
 

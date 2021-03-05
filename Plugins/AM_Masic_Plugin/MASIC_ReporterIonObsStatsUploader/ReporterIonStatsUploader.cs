@@ -202,7 +202,7 @@ namespace MASIC_ReporterIonObsStatsUploader
         /// </summary>
         /// <param name="reporterIonMassMode">MASIC reporter ion mass mode</param>
         /// <returns></returns>
-        /// <remarks>MASIC mass modes: https://github.com/PNNL-Comp-Mass-Spec/MASIC/blob/59474ab345ce7878f0646a6e83fa1bb22ee84579/clsReporterIons.cs#L15
+        /// <remarks>MASIC mass modes: https://github.com/PNNL-Comp-Mass-Spec/MASIC/blob/59474ab345ce7878f0646a6e83fa1bb22ee84579/ReporterIons.cs#L15
         /// </remarks>
         public static string GetReporterIonNameFromMassMode(int reporterIonMassMode)
         {

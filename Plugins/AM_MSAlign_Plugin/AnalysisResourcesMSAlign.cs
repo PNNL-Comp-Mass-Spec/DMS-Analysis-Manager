@@ -12,7 +12,7 @@ namespace AnalysisManagerMSAlignPlugIn
     /// <summary>
     /// Retrieve resources for the MSAlign plugin
     /// </summary>
-    public class clsAnalysisResourcesMSAlign : clsAnalysisResources
+    public class AnalysisResourcesMSAlign : AnalysisResources
     {
         /// <summary>
         /// MSDeconv .msalign file suffix
@@ -22,10 +22,10 @@ namespace AnalysisManagerMSAlignPlugIn
         /// <summary>
         /// Initialize options
         /// </summary>
-        public override void Setup(string stepToolName, IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, clsMyEMSLUtilities myEMSLUtilities)
+        public override void Setup(string stepToolName, IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, MyEMSLUtilities myEMSLUtilities)
         {
             base.Setup(stepToolName, mgrParams, jobParams, statusTools, myEMSLUtilities);
-            SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, true);
+            SetOption(Global.eAnalysisResourceOptions.OrgDbRequired, true);
         }
 
         /// <summary>

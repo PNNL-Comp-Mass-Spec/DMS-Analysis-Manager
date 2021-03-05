@@ -16,7 +16,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
     /// <summary>
     /// Retrieve resources for the LCMS Feature Finder plugin
     /// </summary>
-    public class clsAnalysisResourcesLCMSFF : clsAnalysisResources
+    public class AnalysisResourcesLCMSFF : AnalysisResources
     {
         /// <summary>
         /// DeconTools _scans.csv file suffix
@@ -69,7 +69,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
                 return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
             }
 
-            const string strParamFileStoragePathKeyName = clsGlobal.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "LCMSFeatureFinder";
+            const string strParamFileStoragePathKeyName = Global.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "LCMSFeatureFinder";
             var strFFIniFileStoragePath = mMgrParams.GetParam(strParamFileStoragePathKeyName);
             if (string.IsNullOrEmpty(strFFIniFileStoragePath))
             {
@@ -97,7 +97,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
                 // IMS data; need to get the .UIMF file
                 if (!FileSearch.RetrieveSpectra(strRawDataType))
                 {
-                    LogDebug("clsAnalysisResourcesDecon2ls.GetResources: Error occurred retrieving spectra.");
+                    LogDebug("AnalysisResourcesDecon2ls.GetResources: Error occurred retrieving spectra.");
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
@@ -121,7 +121,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
             var success = UpdateFeatureFinderIniFile(strLCMSFFIniFileName);
             if (!success)
             {
-                var Msg = "clsAnalysisResourcesLCMSFF.GetResources(), failed customizing .Ini file " + strLCMSFFIniFileName;
+                var Msg = "AnalysisResourcesLCMSFF.GetResources(), failed customizing .Ini file " + strLCMSFFIniFileName;
                 if (string.IsNullOrEmpty(mMessage))
                 {
                     mMessage = Msg;
@@ -241,7 +241,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
                     }
                     catch (Exception ex)
                     {
-                        LogError("clsAnalysisResourcesLCMSFF.UpdateFeatureFinderIniFile, Error opening the .Ini file to customize " +
+                        LogError("AnalysisResourcesLCMSFF.UpdateFeatureFinderIniFile, Error opening the .Ini file to customize " +
                                  "(" + lcmsFFIniFileName + "): " + ex.Message);
                         result = false;
                     }
@@ -260,7 +260,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
             }
             catch (Exception ex)
             {
-                LogError("clsAnalysisResourcesLCMSFF.UpdateFeatureFinderIniFile, Error opening the .Ini file to customize " +
+                LogError("AnalysisResourcesLCMSFF.UpdateFeatureFinderIniFile, Error opening the .Ini file to customize " +
                          "(" + lcmsFFIniFileName + "): " + ex.Message);
                 result = false;
             }

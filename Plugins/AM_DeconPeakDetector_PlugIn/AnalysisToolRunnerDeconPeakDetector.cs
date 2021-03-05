@@ -16,7 +16,7 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
     /// <summary>
     /// Class for running the Decon Peak Detector
     /// </summary>
-    public class clsAnalysisToolRunnerDeconPeakDetector : clsAnalysisToolRunnerBase
+    public class AnalysisToolRunnerDeconPeakDetector : AnalysisToolRunnerBase
     {
         #region "Constants and Enums"
 
@@ -33,7 +33,7 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
 
         private string mConsoleOutputErrorMsg;
 
-        private clsRunDosProgram mCmdRunner;
+        private RunDosProgram mCmdRunner;
 
         #endregion
 
@@ -55,7 +55,7 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
 
                 if (mDebugLevel > 4)
                 {
-                    LogDebug("clsAnalysisToolRunnerDeconPeakDetector.RunTool(): Enter");
+                    LogDebug("AnalysisToolRunnerDeconPeakDetector.RunTool(): Enter");
                 }
 
                 // Verify that program files exist
@@ -214,11 +214,11 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
             mConsoleOutputErrorMsg = string.Empty;
 
             var rawDataTypeName = mJobParams.GetParam("RawDataType");
-            var rawDataType = clsAnalysisResources.GetRawDataType(rawDataTypeName);
+            var rawDataType = AnalysisResources.GetRawDataType(rawDataTypeName);
 
-            if (rawDataType == clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile)
+            if (rawDataType == AnalysisResources.eRawDataTypeConstants.ThermoRawFile)
             {
-                mJobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_RAW_EXTENSION);
+                mJobParams.AddResultFileExtensionToSkip(AnalysisResources.DOT_RAW_EXTENSION);
             }
             else
             {
@@ -229,13 +229,13 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
             LogMessage("Running DeconPeakDetector");
 
             // Set up and execute a program runner to run the Peak Detector
-            var arguments = mDatasetName + clsAnalysisResources.DOT_RAW_EXTENSION +
+            var arguments = mDatasetName + AnalysisResources.DOT_RAW_EXTENSION +
                             " /P:" + PossiblyQuotePath(paramFilePath) +
                             " /O:" + PossiblyQuotePath(mWorkDir);
 
             LogDebug(strPeakDetectorProgLoc + " " + arguments);
 
-            mCmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel);
+            mCmdRunner = new RunDosProgram(mWorkDir, mDebugLevel);
             RegisterEvents(mCmdRunner);
             mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 

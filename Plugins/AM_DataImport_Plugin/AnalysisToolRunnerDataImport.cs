@@ -15,7 +15,7 @@ namespace AnalysisManagerDataImportPlugIn
     /// <summary>
     /// Class for importing data files from an external source into a job folder
     /// </summary>
-    public class clsAnalysisToolRunnerDataImport : clsAnalysisToolRunnerBase
+    public class AnalysisToolRunnerDataImport : AnalysisToolRunnerBase
     {
         // Ignore Spelling: yyyy-MM-dd_HH-mm-ss
 
@@ -159,7 +159,7 @@ namespace AnalysisManagerDataImportPlugIn
                 var strSharePath = mJobParams.GetJobParameter("DataImportSharePath", "");
 
                 // If the user specifies a DataImportFolder using the "Special Processing" field of an analysis job, the directory name will be stored in section JobParameters
-                var dataImportFolder = mJobParams.GetJobParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DataImportFolder", "");
+                var dataImportFolder = mJobParams.GetJobParameter(AnalysisJob.JOB_PARAMETERS_SECTION, "DataImportFolder", "");
 
                 if (string.IsNullOrEmpty(dataImportFolder))
                 {
@@ -179,7 +179,7 @@ namespace AnalysisManagerDataImportPlugIn
 
                 if (string.IsNullOrEmpty(strSharePath))
                 {
-                    LogError(clsAnalysisToolRunnerBase.NotifyMissingParameter(mJobParams, "DataImportSharePath"));
+                    LogError(AnalysisToolRunnerBase.NotifyMissingParameter(mJobParams, "DataImportSharePath"));
                     return false;
                 }
 
@@ -264,7 +264,7 @@ namespace AnalysisManagerDataImportPlugIn
         protected bool StoreToolVersionInfo()
         {
             var strToolVersionInfo = string.Empty;
-            var strAppFolderPath = clsGlobal.GetAppDirectoryPath();
+            var strAppFolderPath = Global.GetAppDirectoryPath();
 
             if (mDebugLevel >= 2)
             {

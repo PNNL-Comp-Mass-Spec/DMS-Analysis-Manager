@@ -15,14 +15,14 @@ namespace AnalysisManagerMultiAlignPlugIn
     /// <summary>
     /// Class for running MultiAlign
     /// </summary>
-    public class clsAnalysisToolRunnerMultiAlign : clsAnalysisToolRunnerBase
+    public class AnalysisToolRunnerMultiAlign : AnalysisToolRunnerBase
     {
         #region "Module Variables"
 
         protected const float PROGRESS_PCT_MULTIALIGN_RUNNING = 5;
         protected const float PROGRESS_PCT_MULTI_ALIGN_DONE = 95;
 
-        protected clsRunDosProgram mCmdRunner;
+        protected RunDosProgram mCmdRunner;
 
         #endregion
 
@@ -42,13 +42,13 @@ namespace AnalysisManagerMultiAlignPlugIn
 
             LogMessage("Running MultiAlign");
 
-            mCmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel);
+            mCmdRunner = new RunDosProgram(mWorkDir, mDebugLevel);
             RegisterEvents(mCmdRunner);
             mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
             if (mDebugLevel > 4)
             {
-                LogDebug("clsAnalysisToolRunnerMultiAlign.OperateAnalysisTool(): Enter");
+                LogDebug("AnalysisToolRunnerMultiAlign.OperateAnalysisTool(): Enter");
             }
 
             // Determine the path to the MultiAlign folder

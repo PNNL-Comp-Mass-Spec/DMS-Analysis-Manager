@@ -12,7 +12,7 @@ using System.IO;
 
 namespace AnalysisManagerMsXmlGenPlugIn
 {
-    public class clsMSXMLGenReadW : clsMSXmlGen
+    public class MSXMLGenReadW : MSXmlGen
     {
         // Ignore Spelling: centroiding
 
@@ -20,19 +20,19 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
         #region "Methods"
 
-        public clsMSXMLGenReadW(
+        public MSXMLGenReadW(
             string workDir,
             string readWProgramPath,
             string datasetName,
-            clsAnalysisResources.eRawDataTypeConstants rawDataType,
-            clsAnalysisResources.MSXMLOutputTypeConstants outputType,
+            AnalysisResources.eRawDataTypeConstants rawDataType,
+            AnalysisResources.MSXMLOutputTypeConstants outputType,
             bool centroidMSXML,
             IJobParams jobParams)
-            : base(workDir, readWProgramPath, datasetName, clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile, outputType, centroidMSXML, jobParams)
+            : base(workDir, readWProgramPath, datasetName, AnalysisResources.eRawDataTypeConstants.ThermoRawFile, outputType, centroidMSXML, jobParams)
         {
-            if (rawDataType != clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile)
+            if (rawDataType != AnalysisResources.eRawDataTypeConstants.ThermoRawFile)
             {
-                throw new ArgumentOutOfRangeException(nameof(rawDataType), "clsMSXMLGenReadW can only be used to process Thermo .Raw files");
+                throw new ArgumentOutOfRangeException(nameof(rawDataType), "MSXMLGenReadW can only be used to process Thermo .Raw files");
             }
 
             mUseProgRunnerResultCode = true;
@@ -85,7 +85,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
             return arguments;
         }
 
-        protected override string GetOutputFileName(string msXmlFormat, string rawFilePath, clsAnalysisResources.eRawDataTypeConstants rawDataType)
+        protected override string GetOutputFileName(string msXmlFormat, string rawFilePath, AnalysisResources.eRawDataTypeConstants rawDataType)
         {
             return Path.GetFileName(Path.ChangeExtension(rawFilePath, msXmlFormat));
         }

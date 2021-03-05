@@ -15,7 +15,7 @@ namespace AnalysisManagerBase
     /// Uses sftp for file listings
     /// Uses scp for file transfers
     /// </summary>
-    public class clsRemoteTransferUtility : RemoteUpdateUtility
+    public class RemoteTransferUtility : RemoteUpdateUtility
     {
         #region "Constants"
 
@@ -207,7 +207,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Constructor
         /// </summary>
-        public clsRemoteTransferUtility(IMgrParams mgrParams, IJobParams jobParams) : base(new RemoteHostConnectionInfo())
+        public RemoteTransferUtility(IMgrParams mgrParams, IJobParams jobParams) : base(new RemoteHostConnectionInfo())
         {
             MgrParams = mgrParams;
             JobParams = jobParams;
@@ -370,7 +370,7 @@ namespace AnalysisManagerBase
                     writer.WriteLine("Step=" + StepNum);
                     writer.WriteLine("StepTool=" + StepTool);
                     writer.WriteLine("WorkDir=" + RemoteJobStepWorkDirPath);
-                    writer.WriteLine("Staged=" + DateTime.Now.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT));
+                    writer.WriteLine("Staged=" + DateTime.Now.ToString(AnalysisToolRunnerBase.DATE_TIME_FORMAT));
                 }
 
                 // Assure that the target directory exists
@@ -398,7 +398,7 @@ namespace AnalysisManagerBase
         {
             var remoteInfo = GetRemoteInfoXml(USE_MANAGER_REMOTE_INFO);
 
-            JobParams.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, STEP_PARAM_REMOTE_INFO, remoteInfo);
+            JobParams.AddAdditionalParameter(AnalysisJob.STEP_PARAMETERS_SECTION, STEP_PARAM_REMOTE_INFO, remoteInfo);
         }
 
         /// <summary>
@@ -427,7 +427,7 @@ namespace AnalysisManagerBase
         /// <remarks>Uses the RemoteTimestamp job parameter</remarks>
         private string GetBaseStatusFilename()
         {
-            var remoteTimestamp = JobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, STEP_PARAM_REMOTE_TIMESTAMP);
+            var remoteTimestamp = JobParams.GetParam(AnalysisJob.STEP_PARAMETERS_SECTION, STEP_PARAM_REMOTE_TIMESTAMP);
             if (string.IsNullOrWhiteSpace(remoteTimestamp))
             {
                 OnErrorEvent("Job parameter RemoteTimestamp is empty; cannot properly construct the base tracking file name");
@@ -474,9 +474,9 @@ namespace AnalysisManagerBase
         /// <param name="jobParams"></param>
         public static string GetOfflineJobStatusFilePath(IMgrParams mgrParams, IJobParams jobParams)
         {
-            var job = jobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Job", 0);
-            var step = jobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Step", 0);
-            var stepTool = jobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "StepTool", "");
+            var job = jobParams.GetJobParameter(AnalysisJob.STEP_PARAMETERS_SECTION, "Job", 0);
+            var step = jobParams.GetJobParameter(AnalysisJob.STEP_PARAMETERS_SECTION, "Step", 0);
+            var stepTool = jobParams.GetJobParameter(AnalysisJob.STEP_PARAMETERS_SECTION, "StepTool", "");
 
             if (job == 0)
             {
@@ -500,7 +500,7 @@ namespace AnalysisManagerBase
                 return string.Empty;
             }
 
-            var remoteTimestamp = jobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, STEP_PARAM_REMOTE_TIMESTAMP, "");
+            var remoteTimestamp = jobParams.GetJobParameter(AnalysisJob.STEP_PARAMETERS_SECTION, STEP_PARAM_REMOTE_TIMESTAMP, "");
             if (string.IsNullOrWhiteSpace(remoteTimestamp))
             {
                 ConsoleMsgUtils.ShowWarning("Job parameter RemoteTimestamp is empty; " +
@@ -616,7 +616,7 @@ namespace AnalysisManagerBase
 
             try
             {
-                var remoteTimestamp = JobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, STEP_PARAM_REMOTE_TIMESTAMP);
+                var remoteTimestamp = JobParams.GetParam(AnalysisJob.STEP_PARAMETERS_SECTION, STEP_PARAM_REMOTE_TIMESTAMP);
                 if (string.IsNullOrWhiteSpace(remoteTimestamp))
                 {
                     OnErrorEvent("Job parameter RemoteTimestamp is empty; cannot list remote status files");
@@ -660,7 +660,7 @@ namespace AnalysisManagerBase
                 UpdateParameters(false);
             }
 
-            var remoteTimestamp = JobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, STEP_PARAM_REMOTE_TIMESTAMP);
+            var remoteTimestamp = JobParams.GetParam(AnalysisJob.STEP_PARAMETERS_SECTION, STEP_PARAM_REMOTE_TIMESTAMP);
 
             if (string.IsNullOrWhiteSpace(remoteTimestamp))
             {
@@ -751,7 +751,7 @@ namespace AnalysisManagerBase
                         @"C:\DMS_Programs"
                     };
 
-                    var appFolder = new DirectoryInfo(clsGlobal.GetAppDirectoryPath());
+                    var appFolder = new DirectoryInfo(Global.GetAppDirectoryPath());
                     var appFolderParent = appFolder.Parent;
                     if (appFolderParent != null)
                     {
@@ -894,7 +894,7 @@ namespace AnalysisManagerBase
 
                 OnDebugEvent("Updating remote transfer settings using job parameter RemoteInfo");
 
-                var remoteInfo = JobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, STEP_PARAM_REMOTE_INFO);
+                var remoteInfo = JobParams.GetParam(AnalysisJob.STEP_PARAMETERS_SECTION, STEP_PARAM_REMOTE_INFO);
                 if (string.IsNullOrWhiteSpace(remoteInfo))
                 {
                     throw new Exception("RemoteInfo job step parameter is empty; the RemoteTransferUtility cannot validate remote info");
@@ -905,23 +905,23 @@ namespace AnalysisManagerBase
                     var doc = XDocument.Parse("<root>" + remoteInfo + "</root>");
                     var elements = doc.Elements("root").ToList();
 
-                    RemoteHostInfo.HostName = clsXMLUtils.GetXmlValue(elements, "host");
-                    RemoteHostInfo.Username = clsXMLUtils.GetXmlValue(elements, "user");
+                    RemoteHostInfo.HostName = XMLUtils.GetXmlValue(elements, "host");
+                    RemoteHostInfo.Username = XMLUtils.GetXmlValue(elements, "user");
 
-                    RemoteHostInfo.BaseDirectoryPath = clsXMLUtils.GetXmlValue(elements, "dmsPrograms");
+                    RemoteHostInfo.BaseDirectoryPath = XMLUtils.GetXmlValue(elements, "dmsPrograms");
 
                     var mgrPrivateKeyFilePath = MgrParams.GetParam("RemoteHostPrivateKeyFile");
                     var mgrPassphraseFilePath = MgrParams.GetParam("RemoteHostPassphraseFile");
 
-                    var jobPrivateKeyFileName = clsXMLUtils.GetXmlValue(elements, "privateKey");
-                    var jobPassphraseFileName = clsXMLUtils.GetXmlValue(elements, "passphrase");
+                    var jobPrivateKeyFileName = XMLUtils.GetXmlValue(elements, "privateKey");
+                    var jobPassphraseFileName = XMLUtils.GetXmlValue(elements, "passphrase");
 
                     RemoteHostInfo.PrivateKeyFile = PathUtils.ReplaceFilenameInPath(mgrPrivateKeyFilePath, jobPrivateKeyFileName);
                     RemoteHostInfo.PassphraseFile = PathUtils.ReplaceFilenameInPath(mgrPassphraseFilePath, jobPassphraseFileName);
 
-                    RemoteTaskQueuePath = clsXMLUtils.GetXmlValue(elements, "taskQueue");
-                    RemoteWorkDirPath = clsXMLUtils.GetXmlValue(elements, "workDir");
-                    RemoteOrgDBPath = clsXMLUtils.GetXmlValue(elements, "orgDB");
+                    RemoteTaskQueuePath = XMLUtils.GetXmlValue(elements, "taskQueue");
+                    RemoteWorkDirPath = XMLUtils.GetXmlValue(elements, "workDir");
+                    RemoteOrgDBPath = XMLUtils.GetXmlValue(elements, "orgDB");
                 }
                 catch (Exception ex)
                 {
@@ -931,10 +931,10 @@ namespace AnalysisManagerBase
                 mUsingManagerRemoteInfo = false;
             }
 
-            JobNum = JobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Job", 0);
-            StepNum = JobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Step", 0);
-            StepTool = JobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "StepTool");
-            DatasetName = JobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_DATASET_NAME);
+            JobNum = JobParams.GetJobParameter(AnalysisJob.STEP_PARAMETERS_SECTION, "Job", 0);
+            StepNum = JobParams.GetJobParameter(AnalysisJob.STEP_PARAMETERS_SECTION, "Step", 0);
+            StepTool = JobParams.GetParam(AnalysisJob.STEP_PARAMETERS_SECTION, "StepTool");
+            DatasetName = JobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_DATASET_NAME);
 
             if (string.IsNullOrWhiteSpace(WorkDir))
                 throw new Exception("WorkDir parameter is empty; check the manager parameters");
@@ -973,7 +973,7 @@ namespace AnalysisManagerBase
             // Do not use UTCNow since DMS converts the RemoteTimestamp to a DateTime then compares the result to GetDate() to compute job runtime
             var remoteTimestamp = DateTime.Now.ToString("yyyyMMdd_HHmm");
 
-            JobParams.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, STEP_PARAM_REMOTE_TIMESTAMP, remoteTimestamp);
+            JobParams.AddAdditionalParameter(AnalysisJob.STEP_PARAMETERS_SECTION, STEP_PARAM_REMOTE_TIMESTAMP, remoteTimestamp);
 
             return remoteTimestamp;
         }
@@ -999,7 +999,7 @@ namespace AnalysisManagerBase
                                            "currently {0} bytes for {1} ", remoteFile.Length, remoteFilePath));
 
                 // Wait for 30 seconds
-                clsGlobal.IdleLoop(10);
+                Global.IdleLoop(10);
 
                 // Update the info on the remote file
                 var matchingFiles = GetRemoteFileListing(remoteDirectoryPath, sourceFile.Name);

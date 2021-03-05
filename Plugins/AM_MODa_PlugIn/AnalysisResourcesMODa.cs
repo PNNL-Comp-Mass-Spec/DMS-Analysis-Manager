@@ -14,15 +14,15 @@ namespace AnalysisManagerMODaPlugIn
     /// <summary>
     /// Retrieve resources for the MODa plugin
     /// </summary>
-    public class clsAnalysisResourcesMODa : clsAnalysisResources
+    public class AnalysisResourcesMODa : AnalysisResources
     {
         /// <summary>
         /// Initialize options
         /// </summary>
-        public override void Setup(string stepToolName, IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, clsMyEMSLUtilities myEMSLUtilities)
+        public override void Setup(string stepToolName, IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, MyEMSLUtilities myEMSLUtilities)
         {
             base.Setup(stepToolName, mgrParams, jobParams, statusTools, myEMSLUtilities);
-            SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, true);
+            SetOption(Global.eAnalysisResourceOptions.OrgDbRequired, true);
         }
 
         /// <summary>
@@ -62,17 +62,17 @@ namespace AnalysisManagerMODaPlugIn
                 var sharedResultsFolders = mJobParams.GetParam(JOB_PARAM_SHARED_RESULTS_FOLDERS);
                 if (string.IsNullOrEmpty(sharedResultsFolders))
                 {
-                    mMessage = clsGlobal.AppendToComment(mMessage, "Job parameter SharedResultsFolders is empty");
+                    mMessage = Global.AppendToComment(mMessage, "Job parameter SharedResultsFolders is empty");
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
 
                 if (sharedResultsFolders.Contains(","))
                 {
-                    mMessage = clsGlobal.AppendToComment(mMessage, "shared results folders: " + sharedResultsFolders);
+                    mMessage = Global.AppendToComment(mMessage, "shared results folders: " + sharedResultsFolders);
                 }
                 else
                 {
-                    mMessage = clsGlobal.AppendToComment(mMessage, "shared results folder " + sharedResultsFolders);
+                    mMessage = Global.AppendToComment(mMessage, "shared results folder " + sharedResultsFolders);
                 }
 
                 // Errors were reported in function call, so just return
@@ -115,7 +115,7 @@ namespace AnalysisManagerMODaPlugIn
         {
             try
             {
-                var cdtaUtilities = new clsCDTAUtilities();
+                var cdtaUtilities = new CDTAUtilities();
                 RegisterEvents(cdtaUtilities);
 
                 const bool combine2And3PlusCharges = false;

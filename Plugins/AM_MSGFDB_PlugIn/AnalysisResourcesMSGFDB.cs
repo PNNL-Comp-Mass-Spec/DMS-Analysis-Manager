@@ -16,7 +16,7 @@ namespace AnalysisManagerMSGFDBPlugIn
     /// <summary>
     /// Retrieve resources for the MS-GF+ (aka MSGF+) plugin
     /// </summary>
-    public class clsAnalysisResourcesMSGFDB : clsAnalysisResources
+    public class AnalysisResourcesMSGFDB : AnalysisResources
     {
         // Ignore Spelling: Dta, Fto, Mgf
 
@@ -25,10 +25,10 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Initialize options
         /// </summary>
-        public override void Setup(string stepToolName, IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, clsMyEMSLUtilities myEMSLUtilities)
+        public override void Setup(string stepToolName, IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, MyEMSLUtilities myEMSLUtilities)
         {
             base.Setup(stepToolName, mgrParams, jobParams, statusTools, myEMSLUtilities);
-            SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, true);
+            SetOption(Global.eAnalysisResourceOptions.OrgDbRequired, true);
         }
 
         /// <summary>
@@ -130,7 +130,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                         result = GetMasicFiles();
                         if (result == CloseOutType.CLOSEOUT_FILE_NOT_FOUND)
                         {
-                            clsGlobal.AppendToComment(mMessage, "Use a settings file with parameter AssumedScanType");
+                            Global.AppendToComment(mMessage, "Use a settings file with parameter AssumedScanType");
                         }
                     }
                 }
@@ -172,17 +172,17 @@ namespace AnalysisManagerMSGFDBPlugIn
             var sharedResultsFolders = mJobParams.GetParam(JOB_PARAM_SHARED_RESULTS_FOLDERS);
             if (string.IsNullOrEmpty(sharedResultsFolders))
             {
-                mMessage = clsGlobal.AppendToComment(mMessage, "Job parameter SharedResultsFolders is empty");
+                mMessage = Global.AppendToComment(mMessage, "Job parameter SharedResultsFolders is empty");
                 return;
             }
 
             if (sharedResultsFolders.Contains(","))
             {
-                mMessage = clsGlobal.AppendToComment(mMessage, "shared results folders: " + sharedResultsFolders);
+                mMessage = Global.AppendToComment(mMessage, "shared results folders: " + sharedResultsFolders);
             }
             else
             {
-                mMessage = clsGlobal.AppendToComment(mMessage, "shared results folder " + sharedResultsFolders);
+                mMessage = Global.AppendToComment(mMessage, "shared results folder " + sharedResultsFolders);
             }
         }
 
@@ -190,7 +190,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// Copy resources to the remote host: working directory files, job parameters file, FASTA file
         /// </summary>
         /// <returns>True if success, false if an error</returns>
-        public override bool CopyResourcesToRemote(clsRemoteTransferUtility transferUtility)
+        public override bool CopyResourcesToRemote(RemoteTransferUtility transferUtility)
         {
             // Lookup scan stats
             try
@@ -215,9 +215,9 @@ namespace AnalysisManagerMSGFDBPlugIn
                                              assumedScanType));
                 }
 
-                mJobParams.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, MSGFPlusUtils.SCAN_COUNT_LOW_RES_MSN, countLowResMSn);
-                mJobParams.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, MSGFPlusUtils.SCAN_COUNT_HIGH_RES_MSN, countHighResMSn);
-                mJobParams.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, MSGFPlusUtils.SCAN_COUNT_HCD_MSN, countHCDMSn);
+                mJobParams.AddAdditionalParameter(AnalysisJob.STEP_PARAMETERS_SECTION, MSGFPlusUtils.SCAN_COUNT_LOW_RES_MSN, countLowResMSn);
+                mJobParams.AddAdditionalParameter(AnalysisJob.STEP_PARAMETERS_SECTION, MSGFPlusUtils.SCAN_COUNT_HIGH_RES_MSN, countHighResMSn);
+                mJobParams.AddAdditionalParameter(AnalysisJob.STEP_PARAMETERS_SECTION, MSGFPlusUtils.SCAN_COUNT_HCD_MSN, countHCDMSn);
             }
             catch (Exception ex)
             {
@@ -251,20 +251,20 @@ namespace AnalysisManagerMSGFDBPlugIn
                 var parameterFilePath = Path.Combine(mWorkDir, mJobParams.GetParam(JOB_PARAM_PARAMETER_FILE));
 
                 // javaProgLoc will typically be "C:\Program Files\Java\jre8\bin\Java.exe"
-                var javaProgLoc = clsAnalysisToolRunnerBase.GetJavaProgLoc(mMgrParams, out var javaLocErrorMessage);
+                var javaProgLoc = AnalysisToolRunnerBase.GetJavaProgLoc(mMgrParams, out var javaLocErrorMessage);
 
                 if (string.IsNullOrEmpty(javaProgLoc))
                 {
-                    mMessage = clsGlobal.AppendToComment(mMessage, javaLocErrorMessage);
+                    mMessage = Global.AppendToComment(mMessage, javaLocErrorMessage);
                     return false;
                 }
 
-                var msgfPlusProgLoc = clsAnalysisToolRunnerBase.DetermineProgramLocation(
+                var msgfPlusProgLoc = AnalysisToolRunnerBase.DetermineProgramLocation(
                     mMgrParams, mJobParams, StepToolName, "MSGFPlusProgLoc", MSGFPlusUtils.MSGFPLUS_JAR_NAME, out var msgfPlusLocErrorMessage);
 
                 if (string.IsNullOrEmpty(msgfPlusProgLoc))
                 {
-                    mMessage = clsGlobal.AppendToComment(mMessage, msgfPlusLocErrorMessage);
+                    mMessage = Global.AppendToComment(mMessage, msgfPlusLocErrorMessage);
                     return false;
                 }
 
@@ -280,7 +280,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     if (string.IsNullOrWhiteSpace(mMessage) &&
                         !string.IsNullOrWhiteSpace(msgfPlusUtils.ErrorMessage))
                     {
-                        mMessage = clsGlobal.AppendToComment(mMessage, msgfPlusUtils.ErrorMessage);
+                        mMessage = Global.AppendToComment(mMessage, msgfPlusUtils.ErrorMessage);
                     }
 
                     return false;
@@ -310,7 +310,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                     LogWarning("Copy of FASTA file to remote host failed; will try again in 5 seconds");
 
-                    clsGlobal.IdleLoop(5);
+                    Global.IdleLoop(5);
                 }
             }
             catch (Exception ex)
@@ -482,7 +482,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
-            var cDtaValidated = mJobParams.GetJobParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, "ValidatedCDtaIsCentroided", false);
+            var cDtaValidated = mJobParams.GetJobParameter(AnalysisJob.JOB_PARAMETERS_SECTION, "ValidatedCDtaIsCentroided", false);
 
             if (cDtaValidated)
             {
@@ -501,7 +501,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
-            mJobParams.AddAdditionalParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, "ValidatedCDtaIsCentroided", true);
+            mJobParams.AddAdditionalParameter(AnalysisJob.JOB_PARAMETERS_SECTION, "ValidatedCDtaIsCentroided", true);
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 

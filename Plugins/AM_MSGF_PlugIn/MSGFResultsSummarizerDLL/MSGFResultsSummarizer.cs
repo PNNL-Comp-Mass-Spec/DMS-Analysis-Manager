@@ -26,7 +26,7 @@ using PRISMDatabaseUtils;
 
 namespace MSGFResultsSummarizer
 {
-    public class clsMSGFResultsSummarizer : EventNotifier
+    public class MSGFResultsSummarizer : EventNotifier
     {
         // Ignore Spelling: phosph, Acetyl, MODa, psm, xxx, structs, peptides, Cntm, sp, gi, Trypa, udt, uni, itrac, Tpro
 
@@ -59,8 +59,8 @@ namespace MSGFResultsSummarizer
         private readonly short mDebugLevel;
         private readonly bool mTraceMode;
 
-        private clsPSMStats mMSGFBasedCounts;
-        private clsPSMStats mFDRBasedCounts;
+        private PSMStats mMSGFBasedCounts;
+        private PSMStats mFDRBasedCounts;
 
         private readonly string mDatasetName;
         private readonly int mJob;
@@ -222,7 +222,7 @@ namespace MSGFResultsSummarizer
         /// <param name="job">Job number</param>
         /// <param name="sourceDirectoryPath">Source directory path</param>
         /// <param name="traceMode">When true, show database queries</param>
-        public clsMSGFResultsSummarizer(clsPHRPReader.PeptideHitResultTypes resultType, string datasetName, int job, string sourceDirectoryPath, bool traceMode)
+        public MSGFResultsSummarizer(clsPHRPReader.PeptideHitResultTypes resultType, string datasetName, int job, string sourceDirectoryPath, bool traceMode)
             : this(resultType, datasetName, job, sourceDirectoryPath, DEFAULT_CONNECTION_STRING, debugLevel: 1, traceMode: traceMode)
         {
         }
@@ -237,7 +237,7 @@ namespace MSGFResultsSummarizer
         /// <param name="connectionString">DMS connection string</param>
         /// <param name="debugLevel">Debug Level</param>
         /// <param name="traceMode">When true, show database queries</param>
-        public clsMSGFResultsSummarizer(
+        public MSGFResultsSummarizer(
             clsPHRPReader.PeptideHitResultTypes resultType,
             string datasetName,
             int job,
@@ -260,7 +260,7 @@ namespace MSGFResultsSummarizer
             ContactDatabase = true;
         }
 
-        private void AddUpdateUniqueSequence(IDictionary<int, clsUniqueSeqInfo> uniqueSequences, int seqId, clsUniqueSeqInfo seqInfoToStore)
+        private void AddUpdateUniqueSequence(IDictionary<int, UniqueSeqInfo> uniqueSequences, int seqId, UniqueSeqInfo seqInfoToStore)
         {
             if (uniqueSequences.TryGetValue(seqId, out var existingSeqInfo))
             {
@@ -369,7 +369,7 @@ namespace MSGFResultsSummarizer
             }
         }
 
-        private float ComputeMissedCleavageRatio(IDictionary<int, clsUniqueSeqInfo> uniqueSequences)
+        private float ComputeMissedCleavageRatio(IDictionary<int, UniqueSeqInfo> uniqueSequences)
         {
             if (uniqueSequences.Count == 0)
             {
@@ -382,7 +382,7 @@ namespace MSGFResultsSummarizer
             return missedCleavageRatio;
         }
 
-        private void ComputeMissingReporterIonPercent(Dictionary<int, clsPSMInfo> filteredPSMs)
+        private void ComputeMissingReporterIonPercent(Dictionary<int, PSMInfo> filteredPSMs)
         {
             mFDRBasedCounts.PercentPSMsMissingNTermReporterIon = 0;
             mFDRBasedCounts.PercentPSMsMissingReporterIon = 0;
@@ -501,11 +501,11 @@ namespace MSGFResultsSummarizer
         /// <param name="sequenceInfo">Sequence information (empty if the _resultToSeqMap file was not found)</param>
         private bool FilterAndComputeStats(
             bool usingMSGFOrEValueFilter,
-            IDictionary<int, clsPSMInfo> normalizedPSMs,
+            IDictionary<int, PSMInfo> normalizedPSMs,
             IDictionary<int, List<clsProteinInfo>> seqToProteinMap,
             IDictionary<int, clsSeqInfo> sequenceInfo)
         {
-            var filteredPSMs = new Dictionary<int, clsPSMInfo>();
+            var filteredPSMs = new Dictionary<int, PSMInfo>();
 
             var success = false;
             bool filterPSMs;
@@ -601,7 +601,7 @@ namespace MSGFResultsSummarizer
         /// </summary>
         /// <param name="psmResults">PSM results (keys are NormalizedSeqID, values are the protein and scan info for each normalized sequence)</param>
         /// <returns>True if success; false if no reverse hits are present or if none of the data has MSGF values</returns>
-        private bool FilterPSMsByFDR(IDictionary<int, clsPSMInfo> psmResults)
+        private bool FilterPSMsByFDR(IDictionary<int, PSMInfo> psmResults)
         {
             var fdrAlreadyComputed = true;
             foreach (var psmResult in psmResults)
@@ -637,7 +637,7 @@ namespace MSGFResultsSummarizer
                 var validMSGFOrEValue = false;
                 foreach (var psmResult in psmResults)
                 {
-                    if (psmResult.Value.BestMSGF < clsPSMInfo.UNKNOWN_MSGF_SPEC_EVALUE)
+                    if (psmResult.Value.BestMSGF < PSMInfo.UNKNOWN_MSGF_SPEC_EVALUE)
                     {
                         msgfToResultIDMap.Add(new KeyValuePair<double, int>(psmResult.Value.BestMSGF, psmResult.Key));
                         if (psmResult.Value.BestMSGF < 1)
@@ -646,7 +646,7 @@ namespace MSGFResultsSummarizer
                     else
                     {
                         msgfToResultIDMap.Add(new KeyValuePair<double, int>(psmResult.Value.BestEValue, psmResult.Key));
-                        if (psmResult.Value.BestEValue < clsPSMInfo.UNKNOWN_EVALUE)
+                        if (psmResult.Value.BestEValue < PSMInfo.UNKNOWN_EVALUE)
                             validMSGFOrEValue = true;
                     }
                 }
@@ -660,7 +660,7 @@ namespace MSGFResultsSummarizer
                 }
 
                 // Sort msgfToResultIDMap
-                msgfToResultIDMap.Sort(new clsMSGFtoResultIDMapComparer());
+                msgfToResultIDMap.Sort(new MSGFtoResultIDMapComparer());
 
                 var forwardResults = 0;
                 var decoyResults = 0;
@@ -732,7 +732,7 @@ namespace MSGFResultsSummarizer
             return true;
         }
 
-        private bool FilterPSMsByEValue(double eValueThreshold, IDictionary<int, clsPSMInfo> psmResults, IDictionary<int, clsPSMInfo> filteredPSMs)
+        private bool FilterPSMsByEValue(double eValueThreshold, IDictionary<int, PSMInfo> psmResults, IDictionary<int, PSMInfo> filteredPSMs)
         {
             filteredPSMs.Clear();
 
@@ -750,7 +750,7 @@ namespace MSGFResultsSummarizer
             return true;
         }
 
-        private bool FilterPSMsByMSGF(double msgfThreshold, IDictionary<int, clsPSMInfo> psmResults, IDictionary<int, clsPSMInfo> filteredPSMs)
+        private bool FilterPSMsByMSGF(double msgfThreshold, IDictionary<int, PSMInfo> psmResults, IDictionary<int, PSMInfo> filteredPSMs)
         {
             filteredPSMs.Clear();
 
@@ -777,15 +777,15 @@ namespace MSGFResultsSummarizer
         /// <returns>The Sequence ID of a matching normalized peptide, or -1 if no match</returns>
         /// <remarks>A near match is one where the position of each modified residue is the same or just one residue apart</remarks>
         public static int FindNormalizedSequence(
-            IReadOnlyDictionary<string, List<clsNormalizedPeptideInfo>> normalizedPeptidesByCleanSequence,
-            clsNormalizedPeptideInfo newNormalizedPeptide)
+            IReadOnlyDictionary<string, List<NormalizedPeptideInfo>> normalizedPeptidesByCleanSequence,
+            NormalizedPeptideInfo newNormalizedPeptide)
         {
             // ReSharper disable once CommentTypo
             // Find normalized peptides with the new normalized peptide's clean sequence
 
             if (!normalizedPeptidesByCleanSequence.TryGetValue(newNormalizedPeptide.CleanSequence, out var normalizedPeptideCandidates))
             {
-                return clsPSMInfo.UNKNOWN_SEQUENCE_ID;
+                return PSMInfo.UNKNOWN_SEQUENCE_ID;
             }
 
             // Step through the normalized peptides that correspond to newNormalizedPeptide.CleanSequence
@@ -829,7 +829,7 @@ namespace MSGFResultsSummarizer
                 }
             }
 
-            return clsPSMInfo.UNKNOWN_SEQUENCE_ID;
+            return PSMInfo.UNKNOWN_SEQUENCE_ID;
         }
 
         private clsPHRPStartupOptions GetMinimalMemoryPHRPStartupOptions()
@@ -880,12 +880,12 @@ namespace MSGFResultsSummarizer
         /// <param name="peptideCleanSequence"></param>
         /// <param name="modifications"></param>
         /// <param name="seqID"></param>
-        public static clsNormalizedPeptideInfo GetNormalizedPeptideInfo(
+        public static NormalizedPeptideInfo GetNormalizedPeptideInfo(
             string peptideCleanSequence,
             IEnumerable<KeyValuePair<string, int>> modifications,
             int seqID)
         {
-            var normalizedPeptide = new clsNormalizedPeptideInfo(peptideCleanSequence);
+            var normalizedPeptide = new NormalizedPeptideInfo(peptideCleanSequence);
             normalizedPeptide.StoreModifications(modifications);
             normalizedPeptide.SeqID = seqID;
 
@@ -1053,7 +1053,7 @@ namespace MSGFResultsSummarizer
                 // The values contain mapped protein name, FDR, and MSGF SpecEValue, and the scans that the normalized peptide was observed in
                 // We'll deal with multiple proteins for each peptide later when we parse the _ResultToSeqMap.txt and _SeqToProteinMap.txt files
                 // If those files are not found, we'll simply use the protein information stored in psmResults
-                var normalizedPSMs = new Dictionary<int, clsPSMInfo>();
+                var normalizedPSMs = new Dictionary<int, PSMInfo>();
 
                 var successLoading = LoadPSMs(phrpSynopsisFilePath, normalizedPSMs, out _, out var seqToProteinMap, out var sequenceInfo);
                 if (!successLoading)
@@ -1118,20 +1118,20 @@ namespace MSGFResultsSummarizer
         /// Normalizes the peptide sequence (mods are tracked, but no longer associated with specific residues) and populates normalizedPSMs
         /// </summary>
         /// <param name="phrpSynopsisFilePath"></param>
-        /// <param name="normalizedPSMs">Dictionary where keys are Sequence ID and values are clsPSMInfo objects</param>
+        /// <param name="normalizedPSMs">Dictionary where keys are Sequence ID and values are PSMInfo objects</param>
         /// <param name="resultToSeqMap">SortedList mapping PSM ResultID to Sequence ID</param>
         /// <param name="seqToProteinMap">Dictionary where keys are sequence ID and values are a list of protein info</param>
         /// <param name="sequenceInfo">Dictionary where keys are sequence ID and values are information about the sequence</param>
         /// <returns>True if successful, false if an error</returns>
         private bool LoadPSMs(
             string phrpSynopsisFilePath,
-            IDictionary<int, clsPSMInfo> normalizedPSMs,
+            IDictionary<int, PSMInfo> normalizedPSMs,
             out SortedList<int, int> resultToSeqMap,
             out SortedList<int, List<clsProteinInfo>> seqToProteinMap,
             out SortedList<int, clsSeqInfo> sequenceInfo)
         {
-            var specEValue = clsPSMInfo.UNKNOWN_MSGF_SPEC_EVALUE;
-            var eValue = clsPSMInfo.UNKNOWN_EVALUE;
+            var specEValue = PSMInfo.UNKNOWN_MSGF_SPEC_EVALUE;
+            var eValue = PSMInfo.UNKNOWN_EVALUE;
 
             var loadMSGFResults = true;
 
@@ -1216,7 +1216,7 @@ namespace MSGFResultsSummarizer
                 // The SeqID value tracked by udtNormalizedPeptideType is the SeqID of the first sequence to get normalized to the given entry
                 // If sequenceInfoAvailable is False, values are the ResultID value of the first peptide to get normalized to the given entry
                 //
-                var normalizedPeptidesByCleanSequence = new Dictionary<string, List<clsNormalizedPeptideInfo>>();
+                var normalizedPeptidesByCleanSequence = new Dictionary<string, List<NormalizedPeptideInfo>>();
 
                 using var reader = new clsPHRPReader(phrpSynopsisFilePath, startupOptions);
                 RegisterEvents(reader);
@@ -1275,7 +1275,7 @@ namespace MSGFResultsSummarizer
 
                     // Store in normalizedPSMs
 
-                    var psmInfo = new clsPSMInfo();
+                    var psmInfo = new PSMInfo();
                     psmInfo.Clear();
 
                     psmInfo.Protein = currentPSM.ProteinFirst;
@@ -1286,39 +1286,39 @@ namespace MSGFResultsSummarizer
 
                     if (ResultType == clsPHRPReader.PeptideHitResultTypes.MSGFPlus || ResultType == clsPHRPReader.PeptideHitResultTypes.MSAlign)
                     {
-                        psmFDR = currentPSM.GetScoreDbl(clsPHRPParserMSGFPlus.DATA_COLUMN_FDR, clsPSMInfo.UNKNOWN_FDR);
+                        psmFDR = currentPSM.GetScoreDbl(clsPHRPParserMSGFPlus.DATA_COLUMN_FDR, PSMInfo.UNKNOWN_FDR);
                         if (psmFDR < 0)
                         {
-                            psmFDR = currentPSM.GetScoreDbl(clsPHRPParserMSGFPlus.DATA_COLUMN_EFDR, clsPSMInfo.UNKNOWN_FDR);
+                            psmFDR = currentPSM.GetScoreDbl(clsPHRPParserMSGFPlus.DATA_COLUMN_EFDR, PSMInfo.UNKNOWN_FDR);
                         }
                     }
                     else if (ResultType == clsPHRPReader.PeptideHitResultTypes.MODa)
                     {
-                        psmFDR = currentPSM.GetScoreDbl(clsPHRPParserMODa.DATA_COLUMN_QValue, clsPSMInfo.UNKNOWN_FDR);
+                        psmFDR = currentPSM.GetScoreDbl(clsPHRPParserMODa.DATA_COLUMN_QValue, PSMInfo.UNKNOWN_FDR);
                     }
                     else if (ResultType == clsPHRPReader.PeptideHitResultTypes.MODPlus)
                     {
-                        psmFDR = currentPSM.GetScoreDbl(clsPHRPParserMODPlus.DATA_COLUMN_QValue, clsPSMInfo.UNKNOWN_FDR);
+                        psmFDR = currentPSM.GetScoreDbl(clsPHRPParserMODPlus.DATA_COLUMN_QValue, PSMInfo.UNKNOWN_FDR);
                     }
                     else if (ResultType == clsPHRPReader.PeptideHitResultTypes.MSPathFinder)
                     {
-                        psmFDR = currentPSM.GetScoreDbl(clsPHRPParserMSPathFinder.DATA_COLUMN_QValue, clsPSMInfo.UNKNOWN_FDR);
+                        psmFDR = currentPSM.GetScoreDbl(clsPHRPParserMSPathFinder.DATA_COLUMN_QValue, PSMInfo.UNKNOWN_FDR);
                     }
                     else
                     {
-                        psmFDR = clsPSMInfo.UNKNOWN_FDR;
+                        psmFDR = PSMInfo.UNKNOWN_FDR;
                     }
 
-                    var normalizedPeptide = new clsNormalizedPeptideInfo(string.Empty);
+                    var normalizedPeptide = new NormalizedPeptideInfo(string.Empty);
 
                     var normalized = false;
-                    var seqID = clsPSMInfo.UNKNOWN_SEQUENCE_ID;
+                    var seqID = PSMInfo.UNKNOWN_SEQUENCE_ID;
 
                     if (sequenceInfoAvailable && resultToSeqMap != null)
                     {
                         if (!resultToSeqMap.TryGetValue(currentPSM.ResultID, out seqID))
                         {
-                            seqID = clsPSMInfo.UNKNOWN_SEQUENCE_ID;
+                            seqID = PSMInfo.UNKNOWN_SEQUENCE_ID;
 
                             // This result is not listed in the _ResultToSeqMap file, likely because it was already processed for this scan
                             // Look for a match in normalizedPeptidesByCleanSequence that matches this peptide's clean sequence
@@ -1327,7 +1327,7 @@ namespace MSGFResultsSummarizer
                             {
                                 foreach (var normalizedItem in normalizedPeptides)
                                 {
-                                    if (normalizedItem.SeqID != clsPSMInfo.UNKNOWN_SEQUENCE_ID)
+                                    if (normalizedItem.SeqID != PSMInfo.UNKNOWN_SEQUENCE_ID)
                                     {
                                         // Match found; use the given SeqID value
                                         seqID = normalizedItem.SeqID;
@@ -1337,7 +1337,7 @@ namespace MSGFResultsSummarizer
                             }
                         }
 
-                        if (seqID != clsPSMInfo.UNKNOWN_SEQUENCE_ID)
+                        if (seqID != PSMInfo.UNKNOWN_SEQUENCE_ID)
                         {
                             if (sequenceInfo.TryGetValue(seqID, out var seqInfo))
                             {
@@ -1354,7 +1354,7 @@ namespace MSGFResultsSummarizer
 
                     var normalizedSeqID = FindNormalizedSequence(normalizedPeptidesByCleanSequence, normalizedPeptide);
 
-                    if (normalizedSeqID != clsPSMInfo.UNKNOWN_SEQUENCE_ID)
+                    if (normalizedSeqID != PSMInfo.UNKNOWN_SEQUENCE_ID)
                     {
                         // We're already tracking this normalized peptide (or one very similar to it)
 
@@ -1368,7 +1368,7 @@ namespace MSGFResultsSummarizer
 
                             // Scan already stored
                             // Update the scores if this PSM has a better score than the cached one
-                            if (psmFDR > clsPSMInfo.UNKNOWN_FDR)
+                            if (psmFDR > PSMInfo.UNKNOWN_FDR)
                             {
                                 if (psmFDR < observation.FDR)
                                 {
@@ -1392,7 +1392,7 @@ namespace MSGFResultsSummarizer
 
                         if (addObservation)
                         {
-                            var observation = new clsPSMInfo.PSMObservation
+                            var observation = new PSMInfo.PSMObservation
                             {
                                 Scan = currentPSM.ScanNumber,
                                 FDR = psmFDR,
@@ -1409,20 +1409,20 @@ namespace MSGFResultsSummarizer
                         // SeqID will typically come from the ResultToSeqMap file
                         // But, if that file is not available, we use the ResultID of the peptide
 
-                        if (seqID == clsPSMInfo.UNKNOWN_SEQUENCE_ID)
+                        if (seqID == PSMInfo.UNKNOWN_SEQUENCE_ID)
                         {
                             seqID = currentPSM.ResultID;
                         }
 
                         if (!normalizedPeptidesByCleanSequence.TryGetValue(normalizedPeptide.CleanSequence, out var normalizedPeptides))
                         {
-                            normalizedPeptides = new List<clsNormalizedPeptideInfo>();
+                            normalizedPeptides = new List<NormalizedPeptideInfo>();
                             normalizedPeptidesByCleanSequence.Add(normalizedPeptide.CleanSequence, normalizedPeptides);
                         }
 
                         // Make a new normalized peptide entry that does not have clean sequence
                         // (to conserve memory, since keys in dictionary normalizedPeptides are clean sequence)
-                        var normalizedPeptideToStore = new clsNormalizedPeptideInfo(string.Empty);
+                        var normalizedPeptideToStore = new NormalizedPeptideInfo(string.Empty);
                         normalizedPeptideToStore.StoreModifications(normalizedPeptide.Modifications);
                         normalizedPeptideToStore.SeqID = seqID;
 
@@ -1497,7 +1497,7 @@ namespace MSGFResultsSummarizer
                             }
                         }
 
-                        var observation = new clsPSMInfo.PSMObservation
+                        var observation = new PSMInfo.PSMObservation
                         {
                             Scan = currentPSM.ScanNumber,
                             FDR = psmFDR,
@@ -1538,7 +1538,7 @@ namespace MSGFResultsSummarizer
         /// </summary>
         /// <param name="sequenceWithMods"></param>
         /// <param name="seqID"></param>
-        private clsNormalizedPeptideInfo NormalizeSequence(string sequenceWithMods, int seqID)
+        private NormalizedPeptideInfo NormalizeSequence(string sequenceWithMods, int seqID)
         {
             var aminoAcidList = new StringBuilder(sequenceWithMods.Length);
             var modList = new List<KeyValuePair<string, int>>();
@@ -1560,7 +1560,7 @@ namespace MSGFResultsSummarizer
             return GetNormalizedPeptideInfo(aminoAcidList.ToString(), modList, seqID);
         }
 
-        private clsNormalizedPeptideInfo NormalizeSequence(string peptideCleanSequence, clsSeqInfo seqInfo, int seqID)
+        private NormalizedPeptideInfo NormalizeSequence(string peptideCleanSequence, clsSeqInfo seqInfo, int seqID)
         {
             var modList = new List<KeyValuePair<string, int>>();
 
@@ -1787,7 +1787,7 @@ namespace MSGFResultsSummarizer
         /// <param name="sequenceInfo">Sequence information (keys are sequence ID, values are sequences</param>
         private bool SummarizeResults(
             bool usingMSGFOrEValueFilter,
-            IDictionary<int, clsPSMInfo> filteredPSMs,
+            IDictionary<int, PSMInfo> filteredPSMs,
             IDictionary<int, List<clsProteinInfo>> seqToProteinMap,
             IDictionary<int, clsSeqInfo> sequenceInfo)
         {
@@ -1798,13 +1798,13 @@ namespace MSGFResultsSummarizer
                 // For example, LS*SPATLNSR and LSS*PATLNSR are considered equivalent
                 // But P#EPT*IDES and PEP#T*IDES and P#EPTIDES* are all different
                 // (the collapsing of similar peptides is done in method LoadPSMs with the call to FindNormalizedSequence)
-                var uniqueSequences = new Dictionary<int, clsUniqueSeqInfo>();
+                var uniqueSequences = new Dictionary<int, UniqueSeqInfo>();
 
                 // The Keys in this dictionary are SeqID values; the values track observation count, whether the peptide ends in K or R, etc.
-                var uniquePhosphopeptides = new Dictionary<int, clsUniqueSeqInfo>();
+                var uniquePhosphopeptides = new Dictionary<int, UniqueSeqInfo>();
 
                 // The Keys in this dictionary are SeqID values; the values track observation count, whether the peptide ends in K or R, etc.
-                var uniqueAcetylPeptides = new Dictionary<int, clsUniqueSeqInfo>();
+                var uniqueAcetylPeptides = new Dictionary<int, UniqueSeqInfo>();
 
                 // The Keys in this dictionary are protein names; the values are observation count
                 var uniqueProteins = new Dictionary<string, int>();
@@ -1823,7 +1823,7 @@ namespace MSGFResultsSummarizer
                     // Otherwise, the keys are ResultID values
                     var seqId = result.Key;
 
-                    // Make a deep copy of result.Value as class clsUniqueSeqInfo
+                    // Make a deep copy of result.Value as class UniqueSeqInfo
                     var seqInfoToStore = result.Value.CloneAsSeqInfo(obsCountForResult);
 
                     AddUpdateUniqueSequence(uniqueSequences, seqId, seqInfoToStore);
@@ -1906,13 +1906,13 @@ namespace MSGFResultsSummarizer
         /// <param name="uniqueProteins">Keys in this dictionary are protein names; the values are observation count</param>
         /// <param name="uniquePhosphopeptides">Keys in this dictionary are SeqID values; the values track observation count, whether the peptide ends in K or R, etc.</param>
         /// <param name="uniqueAcetylPeptides">Keys in this dictionary are SeqID values; the values track observation count, whether the peptide ends in K or R, etc.</param>
-        private clsPSMStats TabulatePSMStats(
-            IDictionary<int, clsUniqueSeqInfo> uniqueSequences,
+        private PSMStats TabulatePSMStats(
+            IDictionary<int, UniqueSeqInfo> uniqueSequences,
             IDictionary<string, int> uniqueProteins,
-            IDictionary<int, clsUniqueSeqInfo> uniquePhosphopeptides,
-            IDictionary<int, clsUniqueSeqInfo> uniqueAcetylPeptides)
+            IDictionary<int, UniqueSeqInfo> uniquePhosphopeptides,
+            IDictionary<int, UniqueSeqInfo> uniqueAcetylPeptides)
         {
-            var psmStats = new clsPSMStats()
+            var psmStats = new PSMStats()
             {
                 TotalPSMs = (from item in uniqueSequences select item.Value.ObsCount).Sum(),
                 UniquePeptideCount = uniqueSequences.Count,
@@ -1931,7 +1931,7 @@ namespace MSGFResultsSummarizer
             return psmStats;
         }
 
-        private void ValidateReporterIonPTMs(clsNormalizedPeptideInfo normalizedPeptide, clsPSMInfo.PSMObservation observation)
+        private void ValidateReporterIonPTMs(NormalizedPeptideInfo normalizedPeptide, PSMInfo.PSMObservation observation)
         {
             var labeledNTerminus = false;
             var labeledLysineCount = 0;
@@ -1993,7 +1993,7 @@ namespace MSGFResultsSummarizer
         /// <summary>
         /// Custom comparer for sorting msgfToResultIDMap
         /// </summary>
-        private class clsMSGFtoResultIDMapComparer : IComparer<KeyValuePair<double, int>>
+        private class MSGFtoResultIDMapComparer : IComparer<KeyValuePair<double, int>>
         {
             public int Compare(KeyValuePair<double, int> x, KeyValuePair<double, int> y)
             {

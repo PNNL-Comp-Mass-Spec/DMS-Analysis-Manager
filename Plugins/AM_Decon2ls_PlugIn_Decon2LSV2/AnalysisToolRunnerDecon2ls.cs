@@ -17,7 +17,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
     /// <summary>
     /// Class for running DeconTools
     /// </summary>
-    public class clsAnalysisToolRunnerDecon2ls : clsAnalysisToolRunnerBase
+    public class AnalysisToolRunnerDecon2ls : AnalysisToolRunnerBase
     {
         #region "Constants"
 
@@ -30,7 +30,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
         #region "Module variables"
 
-        private clsAnalysisResources.eRawDataTypeConstants mRawDataType = clsAnalysisResources.eRawDataTypeConstants.Unknown;
+        private AnalysisResources.eRawDataTypeConstants mRawDataType = AnalysisResources.eRawDataTypeConstants.Unknown;
         private string mRawDataTypeName = string.Empty;
 
         private string mInputFilePath = string.Empty;
@@ -44,7 +44,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
         private udtDeconToolsStatusType mDeconToolsStatus;
 
-        private clsRunDosProgram mCmdRunner;
+        private RunDosProgram mCmdRunner;
 
         #endregion
 
@@ -98,7 +98,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
         /// Validate the result files
         /// (legacy code would assemble result files from looping, but that code has been removed)
         /// </summary>
-        private CloseOutType AssembleResults(clsXMLParamFileReader oDeconToolsParamFileReader)
+        private CloseOutType AssembleResults(XMLParamFileReader oDeconToolsParamFileReader)
         {
             var dotDFolder = false;
 
@@ -110,9 +110,9 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
                 switch (mRawDataType)
                 {
-                    case clsAnalysisResources.eRawDataTypeConstants.AgilentDFolder:
-                    case clsAnalysisResources.eRawDataTypeConstants.BrukerFTFolder:
-                    case clsAnalysisResources.eRawDataTypeConstants.BrukerTOFBaf:
+                    case AnalysisResources.eRawDataTypeConstants.AgilentDFolder:
+                    case AnalysisResources.eRawDataTypeConstants.BrukerFTFolder:
+                    case AnalysisResources.eRawDataTypeConstants.BrukerTOFBaf:
                         // As of 11/19/2010, the Decon2LS output files are created inside the .D folder
                         // Still true as of 5/18/2012
                         dotDFolder = true;
@@ -229,20 +229,20 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             }
             catch (Exception ex)
             {
-                LogError("AssembleResults error", "clsAnalysisToolRunnerDecon2lsBase.AssembleResults, job " + mJob + ", step " + mJobParams.GetParam("Step") + ": " + ex.Message);
+                LogError("AssembleResults error", "AnalysisToolRunnerDecon2lsBase.AssembleResults, job " + mJob + ", step " + mJobParams.GetParam("Step") + ": " + ex.Message);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
-        private clsXMLParamFileReader CacheDeconToolsParamFile(string paramFilePath)
+        private XMLParamFileReader CacheDeconToolsParamFile(string paramFilePath)
         {
-            clsXMLParamFileReader oDeconToolsParamFileReader;
+            XMLParamFileReader oDeconToolsParamFileReader;
 
             try
             {
-                oDeconToolsParamFileReader = new clsXMLParamFileReader(paramFilePath);
+                oDeconToolsParamFileReader = new XMLParamFileReader(paramFilePath);
 
                 if (oDeconToolsParamFileReader.ParameterCount == 0)
                 {
@@ -295,7 +295,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
                 mMSFileInfoScannerReportsEmptyIsosFile = false;
 
-                var qcPlotGenerator = new clsDeconToolsQCPlotsGenerator(msFileInfoScannerDLLPath, mDebugLevel);
+                var qcPlotGenerator = new DeconToolsQCPlotsGenerator(msFileInfoScannerDLLPath, mDebugLevel);
                 RegisterEvents(qcPlotGenerator);
                 qcPlotGenerator.ErrorEvent += QCPlotGenerator_ErrorEvent;
 
@@ -304,7 +304,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
                 if (!success)
                 {
-                    LogError("Error generating QC Plots files with clsDeconToolsQCPlotsGenerator");
+                    LogError("Error generating QC Plots files with DeconToolsQCPlotsGenerator");
                     LogMessage(qcPlotGenerator.ErrorMessage, 0, true);
 
                     if (qcPlotGenerator.MSFileInfoScannerErrorCount > 0)
@@ -518,10 +518,10 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
             if (mDebugLevel > 4)
             {
-                LogDebug("clsAnalysisToolRunnerDecon2ls.RunTool(): Enter");
+                LogDebug("AnalysisToolRunnerDecon2ls.RunTool(): Enter");
             }
 
-            mRawDataTypeName = clsAnalysisResources.GetRawDataTypeName(mJobParams, out var errorMessage);
+            mRawDataTypeName = AnalysisResources.GetRawDataTypeName(mJobParams, out var errorMessage);
 
             if (string.IsNullOrWhiteSpace(mRawDataTypeName))
             {
@@ -537,7 +537,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            mRawDataType = clsAnalysisResources.GetRawDataType(mRawDataTypeName);
+            mRawDataType = AnalysisResources.GetRawDataType(mRawDataTypeName);
 
             // Set this to success for now
             var eReturnCode = CloseOutType.CLOSEOUT_SUCCESS;
@@ -574,9 +574,9 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 eReturnCode = CreateQCPlots();
             }
 
-            if (mJobParams.GetJobParameter(clsAnalysisResourcesDecon2ls.JOB_PARAM_PROCESSMSMS_AUTO_ENABLED, false))
+            if (mJobParams.GetJobParameter(AnalysisResourcesDecon2ls.JOB_PARAM_PROCESSMSMS_AUTO_ENABLED, false))
             {
-                mEvalMessage = clsGlobal.AppendToComment(mEvalMessage, "Note: auto-enabled ProcessMSMS in the parameter file");
+                mEvalMessage = Global.AppendToComment(mEvalMessage, "Note: auto-enabled ProcessMSMS in the parameter file");
                 LogMessage(mEvalMessage);
             }
 
@@ -586,7 +586,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             // Delete the raw data files
             if (mDebugLevel > 3)
             {
-                LogDebug("clsAnalysisToolRunnerDecon2lsBase.RunTool(), Deleting raw data file");
+                LogDebug("AnalysisToolRunnerDecon2lsBase.RunTool(), Deleting raw data file");
             }
 
             var messageSaved = string.Copy(mMessage);
@@ -595,10 +595,10 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
             if (!deleteSuccess)
             {
-                LogMessage("clsAnalysisToolRunnerDecon2lsBase.RunTool(), Problem deleting raw data files: " + mMessage, 0, true);
+                LogMessage("AnalysisToolRunnerDecon2lsBase.RunTool(), Problem deleting raw data files: " + mMessage, 0, true);
 
                 // Don't treat this as a critical error; leave eReturnCode unchanged and restore mMessage
-                if (!clsGlobal.IsMatch(mMessage, messageSaved))
+                if (!Global.IsMatch(mMessage, messageSaved))
                 {
                     mMessage = messageSaved;
                 }
@@ -607,7 +607,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             // Update the job summary file
             if (mDebugLevel > 3)
             {
-                LogDebug("clsAnalysisToolRunnerDecon2lsBase.RunTool(), Updating summary file");
+                LogDebug("AnalysisToolRunnerDecon2lsBase.RunTool(), Updating summary file");
             }
 
             UpdateSummaryFile();
@@ -629,8 +629,8 @@ namespace AnalysisManagerDecon2lsV2PlugIn
         private CloseOutType RunDecon2Ls()
         {
             var paramFileNameOverride = mJobParams.GetJobParameter(
-                clsAnalysisJob.JOB_PARAMETERS_SECTION,
-                clsAnalysisResourcesDecon2ls.JOB_PARAM_DECON_TOOLS_PARAMETER_FILE_NAME,
+                AnalysisJob.JOB_PARAMETERS_SECTION,
+                AnalysisResourcesDecon2ls.JOB_PARAM_DECON_TOOLS_PARAMETER_FILE_NAME,
                 string.Empty);
 
             string paramFileName;
@@ -661,7 +661,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
             if (fileType == DeconToolsFileTypeConstants.Undefined)
             {
-                LogError("clsAnalysisToolRunnerDecon2lsBase.RunDecon2Ls(), Invalid data file type specified while getting file type: " + mRawDataType);
+                LogError("AnalysisToolRunnerDecon2lsBase.RunDecon2Ls(), Invalid data file type specified while getting file type: " + mRawDataType);
                 mMessage = "Invalid raw data type specified";
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -670,7 +670,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             mInputFilePath = GetInputFilePath(mRawDataType);
             if (string.IsNullOrWhiteSpace(mInputFilePath))
             {
-                LogError("clsAnalysisToolRunnerDecon2lsBase.RunDecon2Ls(), Invalid data file type specified while input file name: " + mRawDataType);
+                LogError("AnalysisToolRunnerDecon2lsBase.RunDecon2Ls(), Invalid data file type specified while input file name: " + mRawDataType);
                 mMessage = "Invalid raw data type specified";
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -722,7 +722,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
             if (mDebugLevel > 3)
             {
-                LogDebug("clsAnalysisToolRunnerDecon2lsBase.RunDecon2Ls(), Decon2LS finished");
+                LogDebug("AnalysisToolRunnerDecon2lsBase.RunDecon2Ls(), Decon2LS finished");
             }
 
             // Determine reason for Decon2LS finish
@@ -792,7 +792,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
             if (mDebugLevel > 3)
             {
-                LogDebug("clsAnalysisToolRunnerDecon2lsDeIsotope.StartDeconTools(), Starting deconvolution");
+                LogDebug("AnalysisToolRunnerDecon2lsDeIsotope.StartDeconTools(), Starting deconvolution");
             }
 
             try
@@ -822,7 +822,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                     LogDebug(progLoc + " " + arguments);
                 }
 
-                mCmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel);
+                mCmdRunner = new RunDosProgram(mWorkDir, mDebugLevel);
                 RegisterEvents(mCmdRunner);
                 mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
@@ -915,29 +915,29 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             };
         }
 
-        private DeconToolsFileTypeConstants GetInputFileType(clsAnalysisResources.eRawDataTypeConstants rawDataType)
+        private DeconToolsFileTypeConstants GetInputFileType(AnalysisResources.eRawDataTypeConstants rawDataType)
         {
             var InstrumentClass = mJobParams.GetParam("instClass");
 
             // Gets the Decon2LS file type based on the input data type
             switch (rawDataType)
             {
-                case clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile:
+                case AnalysisResources.eRawDataTypeConstants.ThermoRawFile:
                     return DeconToolsFileTypeConstants.Thermo_Raw;
 
-                case clsAnalysisResources.eRawDataTypeConstants.AgilentQStarWiffFile:
+                case AnalysisResources.eRawDataTypeConstants.AgilentQStarWiffFile:
                     return DeconToolsFileTypeConstants.Agilent_WIFF;
 
-                case clsAnalysisResources.eRawDataTypeConstants.UIMF:
+                case AnalysisResources.eRawDataTypeConstants.UIMF:
                     return DeconToolsFileTypeConstants.PNNL_UIMF;
 
-                case clsAnalysisResources.eRawDataTypeConstants.AgilentDFolder:
+                case AnalysisResources.eRawDataTypeConstants.AgilentDFolder:
                     return DeconToolsFileTypeConstants.Agilent_D;
 
-                case clsAnalysisResources.eRawDataTypeConstants.MicromassRawFolder:
+                case AnalysisResources.eRawDataTypeConstants.MicromassRawFolder:
                     return DeconToolsFileTypeConstants.Micromass_RawData;
 
-                case clsAnalysisResources.eRawDataTypeConstants.ZippedSFolders:
+                case AnalysisResources.eRawDataTypeConstants.ZippedSFolders:
                     if (string.Equals(InstrumentClass, "BrukerFTMS", StringComparison.OrdinalIgnoreCase))
                     {
                         // Data from Bruker FTICR
@@ -953,11 +953,11 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                     // Should never get here
                     return DeconToolsFileTypeConstants.Undefined;
 
-                case clsAnalysisResources.eRawDataTypeConstants.BrukerFTFolder:
-                case clsAnalysisResources.eRawDataTypeConstants.BrukerTOFBaf:
+                case AnalysisResources.eRawDataTypeConstants.BrukerFTFolder:
+                case AnalysisResources.eRawDataTypeConstants.BrukerTOFBaf:
                     return DeconToolsFileTypeConstants.Bruker;
 
-                case clsAnalysisResources.eRawDataTypeConstants.BrukerMALDISpot:
+                case AnalysisResources.eRawDataTypeConstants.BrukerMALDISpot:
 
                     // Future: Add support for this after Decon2LS is updated
                     // Return DeconToolsFileTypeConstants.Bruker_15T
@@ -965,7 +965,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                     LogError("Decon2LS_V2 does not yet support Bruker MALDI data (" + rawDataType + ")");
                     return DeconToolsFileTypeConstants.Undefined;
 
-                case clsAnalysisResources.eRawDataTypeConstants.BrukerMALDIImaging:
+                case AnalysisResources.eRawDataTypeConstants.BrukerMALDIImaging:
 
                     // Future: Add support for this after Decon2LS is updated
                     // Return DeconToolsFileTypeConstants.Bruker_15T
@@ -973,10 +973,10 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                     LogError("Decon2LS_V2 does not yet support Bruker MALDI data (" + rawDataType + ")");
                     return DeconToolsFileTypeConstants.Undefined;
 
-                case clsAnalysisResources.eRawDataTypeConstants.mzXML:
+                case AnalysisResources.eRawDataTypeConstants.mzXML:
                     return DeconToolsFileTypeConstants.MZXML_RawData;
 
-                case clsAnalysisResources.eRawDataTypeConstants.mzML:
+                case AnalysisResources.eRawDataTypeConstants.mzML:
                     // Future: Add support for this after Decon2LS is updated
                     // Return DeconToolsFileTypeConstants.MZML_RawData
 
@@ -1001,9 +1001,9 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
                 switch (mRawDataType)
                 {
-                    case clsAnalysisResources.eRawDataTypeConstants.AgilentDFolder:
-                    case clsAnalysisResources.eRawDataTypeConstants.BrukerFTFolder:
-                    case clsAnalysisResources.eRawDataTypeConstants.BrukerTOFBaf:
+                    case AnalysisResources.eRawDataTypeConstants.AgilentDFolder:
+                    case AnalysisResources.eRawDataTypeConstants.BrukerFTFolder:
+                    case AnalysisResources.eRawDataTypeConstants.BrukerTOFBaf:
                         // As of 11/19/2010, the _Log.txt file is created inside the .D folder
                         logFilePath = Path.Combine(mInputFilePath, mDatasetName) + "_log.txt";
                         break;
@@ -1197,7 +1197,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             return false;
         }
 
-        public string GetInputFilePath(clsAnalysisResources.eRawDataTypeConstants rawDataType)
+        public string GetInputFilePath(AnalysisResources.eRawDataTypeConstants rawDataType)
         {
             return GetInputFilePath(mWorkDir, mDatasetName, rawDataType);
         }
@@ -1208,31 +1208,31 @@ namespace AnalysisManagerDecon2lsV2PlugIn
         /// <param name="workDirPath"></param>
         /// <param name="datasetName"></param>
         /// <param name="rawDataType"></param>
-        public static string GetInputFilePath(string workDirPath, string datasetName, clsAnalysisResources.eRawDataTypeConstants rawDataType)
+        public static string GetInputFilePath(string workDirPath, string datasetName, AnalysisResources.eRawDataTypeConstants rawDataType)
         {
             var fileOrDirectoryName = rawDataType switch
             {
-                clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile => datasetName + clsAnalysisResources.DOT_RAW_EXTENSION,
-                clsAnalysisResources.eRawDataTypeConstants.AgilentQStarWiffFile => datasetName + clsAnalysisResources.DOT_WIFF_EXTENSION,
-                clsAnalysisResources.eRawDataTypeConstants.UIMF => datasetName + clsAnalysisResources.DOT_UIMF_EXTENSION,
-                clsAnalysisResources.eRawDataTypeConstants.AgilentDFolder => datasetName + clsAnalysisResources.DOT_D_EXTENSION,
-                clsAnalysisResources.eRawDataTypeConstants.MicromassRawFolder => datasetName + clsAnalysisResources.DOT_RAW_EXTENSION + "/_FUNC001.DAT",
-                clsAnalysisResources.eRawDataTypeConstants.ZippedSFolders => datasetName,
+                AnalysisResources.eRawDataTypeConstants.ThermoRawFile => datasetName + AnalysisResources.DOT_RAW_EXTENSION,
+                AnalysisResources.eRawDataTypeConstants.AgilentQStarWiffFile => datasetName + AnalysisResources.DOT_WIFF_EXTENSION,
+                AnalysisResources.eRawDataTypeConstants.UIMF => datasetName + AnalysisResources.DOT_UIMF_EXTENSION,
+                AnalysisResources.eRawDataTypeConstants.AgilentDFolder => datasetName + AnalysisResources.DOT_D_EXTENSION,
+                AnalysisResources.eRawDataTypeConstants.MicromassRawFolder => datasetName + AnalysisResources.DOT_RAW_EXTENSION + "/_FUNC001.DAT",
+                AnalysisResources.eRawDataTypeConstants.ZippedSFolders => datasetName,
 
                 // Bruker_FT folders are actually .D folders
-                clsAnalysisResources.eRawDataTypeConstants.BrukerFTFolder => datasetName + clsAnalysisResources.DOT_D_EXTENSION,
+                AnalysisResources.eRawDataTypeConstants.BrukerFTFolder => datasetName + AnalysisResources.DOT_D_EXTENSION,
 
                 // Bruker_TOFBaf folders are actually .D folders
-                clsAnalysisResources.eRawDataTypeConstants.BrukerTOFBaf => datasetName + clsAnalysisResources.DOT_D_EXTENSION,
+                AnalysisResources.eRawDataTypeConstants.BrukerTOFBaf => datasetName + AnalysisResources.DOT_D_EXTENSION,
 
                 // Future: Customize the file or directory name for this dataset type
-                clsAnalysisResources.eRawDataTypeConstants.BrukerMALDISpot => datasetName,
+                AnalysisResources.eRawDataTypeConstants.BrukerMALDISpot => datasetName,
 
                 // Future: Customize the file or directory name for this dataset type
-                clsAnalysisResources.eRawDataTypeConstants.BrukerMALDIImaging => datasetName,
+                AnalysisResources.eRawDataTypeConstants.BrukerMALDIImaging => datasetName,
 
-                clsAnalysisResources.eRawDataTypeConstants.mzXML => datasetName + clsAnalysisResources.DOT_MZXML_EXTENSION,
-                clsAnalysisResources.eRawDataTypeConstants.mzML => datasetName + clsAnalysisResources.DOT_MZML_EXTENSION,
+                AnalysisResources.eRawDataTypeConstants.mzXML => datasetName + AnalysisResources.DOT_MZXML_EXTENSION,
+                AnalysisResources.eRawDataTypeConstants.mzML => datasetName + AnalysisResources.DOT_MZML_EXTENSION,
                 _ => string.Empty
             };
 
@@ -1456,7 +1456,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 // Abort processing
                 mCmdRunner.AbortProgramNow();
 
-                clsGlobal.IdleLoop(3);
+                Global.IdleLoop(3);
             }
         }
 

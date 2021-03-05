@@ -6,7 +6,7 @@ namespace AnalysisManagerDtaSplitPlugIn
     /// <summary>
     /// Retrieve resources for the DTA Split plugin
     /// </summary>
-    public class clsAnalysisResourcesDtaSplit : clsAnalysisResources
+    public class AnalysisResourcesDtaSplit : AnalysisResources
     {
         /// <summary>
         /// Retrieve required files

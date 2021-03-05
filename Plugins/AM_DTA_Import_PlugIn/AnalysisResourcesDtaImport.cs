@@ -7,7 +7,7 @@ namespace AnalysisManagerDtaImportPlugIn
     /// <summary>
     /// Retrieve resources for the DTA Import plugin
     /// </summary>
-    public class clsAnalysisResourcesDtaImport : clsAnalysisResources
+    public class AnalysisResourcesDtaImport : AnalysisResources
     {
         // Ignore Spelling: dta, pnl
 
@@ -68,7 +68,7 @@ namespace AnalysisManagerDtaImportPlugIn
                 // If valid zip file is found, unzip the contents
                 foreach (var fileName in fileEntries)
                 {
-                    if (UnzipFileStart(Path.Combine(mWorkDir, fileName), mWorkDir, "clsAnalysisResourcesDtaImport.ValidateDTA"))
+                    if (UnzipFileStart(Path.Combine(mWorkDir, fileName), mWorkDir, "AnalysisResourcesDtaImport.ValidateDTA"))
                     {
                         if (mDebugLevel >= 1)
                         {

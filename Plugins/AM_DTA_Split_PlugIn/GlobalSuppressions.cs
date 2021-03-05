@@ -5,5 +5,5 @@
 
 using System.Diagnostics.CodeAnalysis;
 
-[assembly: SuppressMessage("Simplification", "RCS1190:Join string expressions.", Justification = "Leave as-is for readability", Scope = "member", Target = "~M:AnalysisManagerDtaSplitPlugIn.clsAnalysisToolRunnerDtaSplit.#ctor")]
-[assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Acceptable legacy name", Scope = "type", Target = "~T:AnalysisManagerDtaSplitPlugIn.clsAnalysisToolRunnerDtaSplit")]
+[assembly: SuppressMessage("Simplification", "RCS1190:Join string expressions.", Justification = "Leave as-is for readability", Scope = "member", Target = "~M:AnalysisManagerDtaSplitPlugIn.AnalysisToolRunnerDtaSplit.#ctor")]
+[assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Acceptable legacy name", Scope = "type", Target = "~T:AnalysisManagerDtaSplitPlugIn.AnalysisToolRunnerDtaSplit")]

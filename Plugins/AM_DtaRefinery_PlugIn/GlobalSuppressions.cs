@@ -5,8 +5,8 @@
 
 using System.Diagnostics.CodeAnalysis;
 
-[assembly: SuppressMessage("Usage", "RCS1146:Use conditional access.", Justification = "Leave as-is for readability", Scope = "member", Target = "~M:AnalysisManagerDtaRefineryPlugIn.clsAnalysisToolRunnerDtaRefinery.IsXTandemFinished~System.Boolean")]
-[assembly: SuppressMessage("Usage", "RCS1146:Use conditional access.", Justification = "Leave as-is for readability", Scope = "member", Target = "~M:AnalysisManagerDtaRefineryPlugIn.clsAnalysisToolRunnerDtaRefinery.ValidateDTARefineryLogFile~System.Boolean")]
-[assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Acceptable legacy name", Scope = "type", Target = "~T:AnalysisManagerDtaRefineryPlugIn.clsAnalysisToolRunnerDtaRefinery")]
-[assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Acceptable legacy name", Scope = "type", Target = "~T:AnalysisManagerDtaRefineryPlugIn.clsDeconMSnLogFileValidator")]
-[assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Acceptable legacy name", Scope = "type", Target = "~T:AnalysisManagerDtaRefineryPlugIn.clsDtaRefLogMassErrorExtractor")]
+[assembly: SuppressMessage("Usage", "RCS1146:Use conditional access.", Justification = "Leave as-is for readability", Scope = "member", Target = "~M:AnalysisManagerDtaRefineryPlugIn.AnalysisToolRunnerDtaRefinery.IsXTandemFinished~System.Boolean")]
+[assembly: SuppressMessage("Usage", "RCS1146:Use conditional access.", Justification = "Leave as-is for readability", Scope = "member", Target = "~M:AnalysisManagerDtaRefineryPlugIn.AnalysisToolRunnerDtaRefinery.ValidateDTARefineryLogFile~System.Boolean")]
+[assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Acceptable legacy name", Scope = "type", Target = "~T:AnalysisManagerDtaRefineryPlugIn.AnalysisToolRunnerDtaRefinery")]
+[assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Acceptable legacy name", Scope = "type", Target = "~T:AnalysisManagerDtaRefineryPlugIn.DeconMSnLogFileValidator")]
+[assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Acceptable legacy name", Scope = "type", Target = "~T:AnalysisManagerDtaRefineryPlugIn.DtaRefLogMassErrorExtractor")]

@@ -19,7 +19,7 @@ namespace AnalysisManagerMSPathFinderPlugin
     /// Class for running MSPathFinder analysis of top down data
     /// </summary>
     // ReSharper disable once UnusedMember.Global
-    public class clsAnalysisToolRunnerMSPathFinder : clsAnalysisToolRunnerBase
+    public class AnalysisToolRunnerMSPathFinder : AnalysisToolRunnerBase
     {
         // Ignore Spelling: Frag, tda, Samwise, Dehydro, Acetyl, Parm, Ic
 
@@ -57,7 +57,7 @@ namespace AnalysisManagerMSPathFinderPlugin
         private int mFilteredPromexFeatures;
         private int mUnfilteredPromexFeatures;
 
-        private clsRunDosProgram mCmdRunner;
+        private RunDosProgram mCmdRunner;
 
         #endregion
 
@@ -79,7 +79,7 @@ namespace AnalysisManagerMSPathFinderPlugin
 
                 if (mDebugLevel > 4)
                 {
-                    LogDebug("clsAnalysisToolRunnerMSPathFinder.RunTool(): Enter");
+                    LogDebug("AnalysisToolRunnerMSPathFinder.RunTool(): Enter");
                 }
 
                 // Determine the path to the MSPathFinder program (Top-down version)
@@ -736,8 +736,8 @@ namespace AnalysisManagerMSPathFinderPlugin
                 return false;
             }
 
-            var pbfFilePath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_PBF_EXTENSION);
-            var featureFilePath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_MS1FT_EXTENSION);
+            var pbfFilePath = Path.Combine(mWorkDir, mDatasetName + AnalysisResources.DOT_PBF_EXTENSION);
+            var featureFilePath = Path.Combine(mWorkDir, mDatasetName + AnalysisResources.DOT_MS1FT_EXTENSION);
 
             // Define the path to the fasta file
             var localOrgDbFolder = mMgrParams.GetParam("OrgDbDir");
@@ -760,7 +760,7 @@ namespace AnalysisManagerMSPathFinderPlugin
                 LogDebug(progLoc + " " + arguments);
             }
 
-            mCmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel);
+            mCmdRunner = new RunDosProgram(mWorkDir, mDebugLevel);
             RegisterEvents(mCmdRunner);
             mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
@@ -781,7 +781,7 @@ namespace AnalysisManagerMSPathFinderPlugin
             if (!mCmdRunner.WriteConsoleOutputToFile)
             {
                 // Write the console output to a text file
-                clsGlobal.IdleLoop(0.25);
+                Global.IdleLoop(0.25);
 
                 using var writer = new StreamWriter(new FileStream(mCmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
 
@@ -789,7 +789,7 @@ namespace AnalysisManagerMSPathFinderPlugin
             }
 
             // Parse the console output file one more time to check for errors
-            clsGlobal.IdleLoop(0.25);
+            Global.IdleLoop(0.25);
             ParseConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath);
 
             if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))

@@ -11,7 +11,7 @@ namespace AnalysisManagerFormularityPlugin
     /// Class for running Formularity
     /// </summary>
     // ReSharper disable once UnusedMember.Global
-    public class clsAnalysisToolRunnerFormularity : clsAnalysisToolRunnerBase
+    public class AnalysisToolRunnerFormularity : AnalysisToolRunnerBase
     {
         #region "Constants and Enums"
 
@@ -54,7 +54,7 @@ namespace AnalysisManagerFormularityPlugin
 
                 if (mDebugLevel > 4)
                 {
-                    LogDebug("clsAnalysisToolRunnerFormularity.RunTool(): Enter");
+                    LogDebug("AnalysisToolRunnerFormularity.RunTool(): Enter");
                 }
 
                 // Initialize class wide variables
@@ -81,8 +81,8 @@ namespace AnalysisManagerFormularityPlugin
 
                 // Unzip the input files (if required)
                 var datasetScansFile = mJobParams.GetJobParameter(
-                    clsAnalysisJob.STEP_PARAMETERS_SECTION,
-                    clsAnalysisResourcesFormularity.JOB_PARAM_FORMULARITY_DATASET_SCANS_FILE,
+                    AnalysisJob.STEP_PARAMETERS_SECTION,
+                    AnalysisResourcesFormularity.JOB_PARAM_FORMULARITY_DATASET_SCANS_FILE,
                     string.Empty);
 
                 string datasetScansFilePath;
@@ -323,7 +323,7 @@ namespace AnalysisManagerFormularityPlugin
                     LogDebug(progLocNOMSI + " " + arguments);
                 }
 
-                var cmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel)
+                var cmdRunner = new RunDosProgram(mWorkDir, mDebugLevel)
                 {
                     CreateNoWindow = true,
                     CacheStandardOutput = false,
@@ -774,7 +774,7 @@ namespace AnalysisManagerFormularityPlugin
 
             mConsoleOutputFile = Path.Combine(mWorkDir, FORMULARITY_CONSOLE_OUTPUT_FILE);
 
-            var cmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel)
+            var cmdRunner = new RunDosProgram(mWorkDir, mDebugLevel)
             {
                 CreateNoWindow = true,
                 CacheStandardOutput = false,
@@ -791,7 +791,7 @@ namespace AnalysisManagerFormularityPlugin
             if (!cmdRunner.WriteConsoleOutputToFile && cmdRunner.CachedConsoleOutput.Length > 0)
             {
                 // Write the console output to a text file
-                clsGlobal.IdleLoop(0.25);
+                Global.IdleLoop(0.25);
 
                 using var writer = new StreamWriter(new FileStream(cmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
 
@@ -838,7 +838,7 @@ namespace AnalysisManagerFormularityPlugin
 
                 LogMessage("Processing data using Formularity");
 
-                var paramFilePath = Path.Combine(mWorkDir, mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_PARAMETER_FILE));
+                var paramFilePath = Path.Combine(mWorkDir, mJobParams.GetParam(AnalysisResources.JOB_PARAM_PARAMETER_FILE));
 
                 if (!File.Exists(paramFilePath))
                 {
@@ -846,7 +846,7 @@ namespace AnalysisManagerFormularityPlugin
                     return false;
                 }
 
-                var orgDbDirectory = mMgrParams.GetParam(clsAnalysisResources.MGR_PARAM_ORG_DB_DIR);
+                var orgDbDirectory = mMgrParams.GetParam(AnalysisResources.MGR_PARAM_ORG_DB_DIR);
                 var ciaDbPath = Path.Combine(orgDbDirectory, mJobParams.GetParam("cia_db_name"));
 
                 if (!File.Exists(ciaDbPath))
@@ -856,8 +856,8 @@ namespace AnalysisManagerFormularityPlugin
                 }
 
                 var calibrationPeaksFileName = mJobParams.GetJobParameter(
-                    clsAnalysisJob.STEP_PARAMETERS_SECTION,
-                    clsAnalysisResourcesFormularity.JOB_PARAM_FORMULARITY_CALIBRATION_PEAKS_FILE,
+                    AnalysisJob.STEP_PARAMETERS_SECTION,
+                    AnalysisResourcesFormularity.JOB_PARAM_FORMULARITY_CALIBRATION_PEAKS_FILE,
                     string.Empty);
 
                 string calibrationPeaksFilePath;

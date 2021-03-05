@@ -4,10 +4,10 @@ using AnalysisManagerBase;
 using AnalysisManager_AScore_PlugIn;
 using System.IO;
 
-namespace TestAScorePlugIn {
-
-    class TestAMAScore {
-
+namespace TestAScorePlugIn
+{
+    class TestAMAScore
+    {
         //-------------------------------- PHOSPHO
         /// <summary>
         ///
@@ -54,19 +54,19 @@ namespace TestAScorePlugIn {
             var workDir = mgrParams.GetParam("workdir");
             var logFilenameSaved = mgrParams.GetParam("logfilename");
 
-            var dotNetZipTools = new clsDotNetZipTools(1, workDir);
+            var dotNetZipTools = new DotNetZipTools(1, workDir);
 
             //Change the name of the log file for the local log file to the plugin log filename
             var logFileName = Path.Combine(workDir, "AScore_Log");
             log4net.GlobalContext.Properties["LogName"] = logFileName;
-            clsLogTools.ChangeLogFileName(logFileName);
+            LogTools.ChangeLogFileName(logFileName);
 
-            var ascoreMage = new clsAScoreMagePipeline(jobParams, mgrParams, dotNetZipTools);
+            var ascoreMage = new AScoreMagePipeline(jobParams, mgrParams, dotNetZipTools);
             ascoreMage.Run();
 
             // Change the name of the log file back to the analysis manager log file
             log4net.GlobalContext.Properties["LogName"] = logFilenameSaved;
-            clsLogTools.ChangeLogFileName(logFilenameSaved);
+            LogTools.ChangeLogFileName(logFilenameSaved);
 
         }
 

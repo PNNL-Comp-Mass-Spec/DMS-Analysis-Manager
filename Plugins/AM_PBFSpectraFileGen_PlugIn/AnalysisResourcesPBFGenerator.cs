@@ -13,7 +13,7 @@ namespace AnalysisManagerPBFGenerator
     /// <summary>
     /// Retrieve resources for the PBF Generator plugin
     /// </summary>
-    public class clsAnalysisResourcesPBFGenerator : clsAnalysisResources
+    public class AnalysisResourcesPBFGenerator : AnalysisResources
     {
         public override CloseOutType GetResources()
         {
@@ -61,7 +61,7 @@ namespace AnalysisManagerPBFGenerator
                         mMessage = "Error retrieving instrument data file";
                     }
 
-                    LogError("clsAnalysisResourcesPBFGenerator.GetResources: " + mMessage);
+                    LogError("AnalysisResourcesPBFGenerator.GetResources: " + mMessage);
                     return false;
                 }
 
@@ -73,7 +73,7 @@ namespace AnalysisManagerPBFGenerator
             catch (Exception ex)
             {
                 mMessage = "Exception in RetrieveInstrumentData: " + ex.Message;
-                LogError(mMessage + "; task = " + currentTask + "; " + clsGlobal.GetExceptionStackTrace(ex));
+                LogError(mMessage + "; task = " + currentTask + "; " + Global.GetExceptionStackTrace(ex));
                 return false;
             }
         }

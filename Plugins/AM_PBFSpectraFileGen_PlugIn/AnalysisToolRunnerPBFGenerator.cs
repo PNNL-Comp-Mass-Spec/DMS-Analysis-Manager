@@ -15,7 +15,7 @@ namespace AnalysisManagerPBFGenerator
     /// <summary>
     /// Class for creation PBF (PNNL Binary Format) files using PBFGen
     /// </summary>
-    public class clsAnalysisToolRunnerPBFGenerator : clsAnalysisToolRunnerBase
+    public class AnalysisToolRunnerPBFGenerator : AnalysisToolRunnerBase
     {
         #region "Constants and Enums"
 
@@ -56,7 +56,7 @@ namespace AnalysisManagerPBFGenerator
 
                 if (mDebugLevel > 4)
                 {
-                    LogDebug("clsAnalysisToolRunnerPBFGenerator.RunTool(): Enter");
+                    LogDebug("AnalysisToolRunnerPBFGenerator.RunTool(): Enter");
                 }
 
                 // Determine the path to the PbfGen program
@@ -91,7 +91,7 @@ namespace AnalysisManagerPBFGenerator
                 {
                     // Look for the results file
 
-                    var fiResultsFile = new FileInfo(Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_PBF_EXTENSION));
+                    var fiResultsFile = new FileInfo(Path.Combine(mWorkDir, mDatasetName + AnalysisResources.DOT_PBF_EXTENSION));
 
                     if (fiResultsFile.Exists)
                     {
@@ -157,7 +157,7 @@ namespace AnalysisManagerPBFGenerator
                             }
                             else
                             {
-                                LogError("Unrecognized PbfFormatVersion. Update file clsAnalysisToolRunnerPBFGenerator.cs in the PBFSpectraFileGen Plugin " +
+                                LogError("Unrecognized PbfFormatVersion. Update file AnalysisToolRunnerPBFGenerator.cs in the PBFSpectraFileGen Plugin " +
                                          "of the Analysis Manager to add version " + mPbfFormatVersion + "; next, reset the failed job step");
                             }
                         }
@@ -223,7 +223,7 @@ namespace AnalysisManagerPBFGenerator
             }
             catch (Exception ex)
             {
-                mMessage = "Error in clsAnalysisToolRunnerPBFGenerator->RunTool";
+                mMessage = "Error in AnalysisToolRunnerPBFGenerator->RunTool";
                 LogError(mMessage, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -234,8 +234,8 @@ namespace AnalysisManagerPBFGenerator
         /// </summary>
         public override void CopyFailedResultsToArchiveDirectory()
         {
-            mJobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_PBF_EXTENSION);
-            mJobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_RAW_EXTENSION);
+            mJobParams.AddResultFileExtensionToSkip(AnalysisResources.DOT_PBF_EXTENSION);
+            mJobParams.AddResultFileExtensionToSkip(AnalysisResources.DOT_RAW_EXTENSION);
 
             base.CopyFailedResultsToArchiveDirectory();
         }
@@ -349,15 +349,15 @@ namespace AnalysisManagerPBFGenerator
             mConsoleOutputErrorMsg = string.Empty;
 
             var rawDataTypeName = mJobParams.GetJobParameter("RawDataType", "");
-            var rawDataType = clsAnalysisResources.GetRawDataType(rawDataTypeName);
+            var rawDataType = AnalysisResources.GetRawDataType(rawDataTypeName);
 
-            if (rawDataType != clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile)
+            if (rawDataType != AnalysisResources.eRawDataTypeConstants.ThermoRawFile)
             {
                 LogError("PBF generation presently only supports Thermo .Raw files");
                 return false;
             }
 
-            var rawFilePath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_RAW_EXTENSION);
+            var rawFilePath = Path.Combine(mWorkDir, mDatasetName + AnalysisResources.DOT_RAW_EXTENSION);
 
             // Cache the size of the instrument data file
             var fiInstrumentFile = new FileInfo(rawFilePath);
@@ -371,7 +371,7 @@ namespace AnalysisManagerPBFGenerator
             mPbfFormatVersion = string.Empty;
 
             // Cache the full path to the expected output file
-            mResultsFilePath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_PBF_EXTENSION);
+            mResultsFilePath = Path.Combine(mWorkDir, mDatasetName + AnalysisResources.DOT_PBF_EXTENSION);
 
             LogMessage("Running PBFGen to create the PBF file");
 
@@ -385,7 +385,7 @@ namespace AnalysisManagerPBFGenerator
                 LogDebug(progLoc + arguments);
             }
 
-            var cmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel);
+            var cmdRunner = new RunDosProgram(mWorkDir, mDebugLevel);
             RegisterEvents(cmdRunner);
             cmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
@@ -403,7 +403,7 @@ namespace AnalysisManagerPBFGenerator
             if (!cmdRunner.WriteConsoleOutputToFile)
             {
                 // Write the console output to a text file
-                clsGlobal.IdleLoop(0.25);
+                Global.IdleLoop(0.25);
 
                 using var writer = new StreamWriter(new FileStream(cmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
 
@@ -416,7 +416,7 @@ namespace AnalysisManagerPBFGenerator
             }
 
             // Parse the console output file one more time to check for errors and to update mPbfFormatVersion
-            clsGlobal.IdleLoop(0.25);
+            Global.IdleLoop(0.25);
             ParseConsoleOutputFile(cmdRunner.ConsoleOutputFilePath);
 
             if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))

@@ -20,7 +20,7 @@ using System.IO;
 
 namespace AnalysisManagerMSGFPlugin
 {
-    public abstract class clsMSGFInputCreator : EventNotifier
+    public abstract class MSGFInputCreator : EventNotifier
     {
         #region "Constants"
 
@@ -105,7 +105,7 @@ namespace AnalysisManagerMSGFPlugin
         /// <param name="datasetName">Dataset Name</param>
         /// <param name="workDir">Working directory</param>
         /// <param name="resultType">PeptideHit result type</param>
-        protected clsMSGFInputCreator(string datasetName, string workDir, clsPHRPReader.PeptideHitResultTypes resultType)
+        protected MSGFInputCreator(string datasetName, string workDir, clsPHRPReader.PeptideHitResultTypes resultType)
         {
             mDatasetName = datasetName;
             mWorkDir = workDir;
@@ -402,15 +402,15 @@ namespace AnalysisManagerMSGFPlugin
                     // Write out the headers:  #SpectrumFile  Title  Scan#  Annotation  Charge  Protein_First  Result_ID  Data_Source  Collision_Mode
                     // Note that we're storing the original peptide sequence in the "Title" column, while the marked up sequence (with mod masses) goes in the "Annotation" column
                     writer.WriteLine(
-                        clsMSGFRunner.MSGF_RESULT_COLUMN_SpectrumFile + "\t" +
-                        clsMSGFRunner.MSGF_RESULT_COLUMN_Title + "\t" +
-                        clsMSGFRunner.MSGF_RESULT_COLUMN_ScanNumber + "\t" +
-                        clsMSGFRunner.MSGF_RESULT_COLUMN_Annotation + "\t" +
-                        clsMSGFRunner.MSGF_RESULT_COLUMN_Charge + "\t" +
-                        clsMSGFRunner.MSGF_RESULT_COLUMN_Protein_First + "\t" +
-                        clsMSGFRunner.MSGF_RESULT_COLUMN_Result_ID + "\t" +
-                        clsMSGFRunner.MSGF_RESULT_COLUMN_Data_Source + "\t" +
-                        clsMSGFRunner.MSGF_RESULT_COLUMN_Collision_Mode);
+                        MSGFRunner.MSGF_RESULT_COLUMN_SpectrumFile + "\t" +
+                        MSGFRunner.MSGF_RESULT_COLUMN_Title + "\t" +
+                        MSGFRunner.MSGF_RESULT_COLUMN_ScanNumber + "\t" +
+                        MSGFRunner.MSGF_RESULT_COLUMN_Annotation + "\t" +
+                        MSGFRunner.MSGF_RESULT_COLUMN_Charge + "\t" +
+                        MSGFRunner.MSGF_RESULT_COLUMN_Protein_First + "\t" +
+                        MSGFRunner.MSGF_RESULT_COLUMN_Result_ID + "\t" +
+                        MSGFRunner.MSGF_RESULT_COLUMN_Data_Source + "\t" +
+                        MSGFRunner.MSGF_RESULT_COLUMN_Collision_Mode);
 
                     // Initialize some tracking variables
                     mMSGFInputFileLineCount = 1;
@@ -595,11 +595,11 @@ namespace AnalysisManagerMSGFPlugin
 
             if (parsingSynopsisFile)
             {
-                phrpSource = clsMSGFRunner.MSGF_PHRP_DATA_SOURCE_SYN;
+                phrpSource = MSGFRunner.MSGF_PHRP_DATA_SOURCE_SYN;
             }
             else
             {
-                phrpSource = clsMSGFRunner.MSGF_PHRP_DATA_SOURCE_FHT;
+                phrpSource = MSGFRunner.MSGF_PHRP_DATA_SOURCE_FHT;
             }
 
             reader.SkipDuplicatePSMs = false;

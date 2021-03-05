@@ -11,7 +11,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
     /// Class for retrieving files to be submitted to ProteomeXchange
     /// </summary>
     /// <remarks>Named PRIDEConverter due to us previously pushing data to PRIDE</remarks>
-    public class clsAnalysisResourcesPRIDEConverter : clsAnalysisResources
+    public class AnalysisResourcesPRIDEConverter : AnalysisResources
     {
         // Ignore Spelling: Xchange, Parm, MZid
 
@@ -93,7 +93,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
             // Check whether we are only creating the .msgf files
             var createMSGFReportFilesOnly = mJobParams.GetJobParameter("CreateMSGFReportFilesOnly", false);
-            var udtOptions = new clsDataPackageFileHandler.udtDataPackageRetrievalOptionsType {
+            var udtOptions = new DataPackageFileHandler.udtDataPackageRetrievalOptionsType {
                 CreateJobPathFiles = true,
                 RemoteTransferFolderPath = remoteTransferFolderPath
             };
@@ -161,7 +161,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 udtOptions,
                 out var dataPackagePeptideHitJobs,
                 0,
-                clsAnalysisToolRunnerPRIDEConverter.PROGRESS_PCT_TOOL_RUNNER_STARTING);
+                AnalysisToolRunnerPRIDEConverter.PROGRESS_PCT_TOOL_RUNNER_STARTING);
 
             if (!filesRetrieved)
             {
@@ -196,7 +196,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// and the dataset Year_Quarter values in "PackedParam_DatasetStorage_YearQuarter"
         /// </summary>
         /// <param name="dataPackagePeptideHitJobs"></param>
-        private void FindMissingMzXmlFiles(IEnumerable<clsDataPackageJobInfo> dataPackagePeptideHitJobs)
+        private void FindMissingMzXmlFiles(IEnumerable<DataPackageJobInfo> dataPackagePeptideHitJobs)
         {
             var datasets = new SortedSet<string>();
             var datasetYearQuarter = new SortedSet<string>();
@@ -294,7 +294,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// </summary>
         /// <param name="dataPackagePeptideHitJobs"></param>
         /// <returns>True if each job has a FASTA file, otherwise false</returns>
-        private bool ValidateFastaFiles(IEnumerable<clsDataPackageJobInfo> dataPackagePeptideHitJobs)
+        private bool ValidateFastaFiles(IEnumerable<DataPackageJobInfo> dataPackagePeptideHitJobs)
         {
             var orgDbDirectoryPath = mMgrParams.GetParam("OrgDbDir");
 
@@ -325,7 +325,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                         if (!RetrieveOrgDB(orgDbDirectoryPath, out _, true))
                         {
                             if (string.IsNullOrEmpty(mMessage))
-                                mMessage = "Call to RetrieveOrgDB returned false in clsAnalysisResourcesPRIDEConverter.RetrieveFastaFiles";
+                                mMessage = "Call to RetrieveOrgDB returned false in AnalysisResourcesPRIDEConverter.RetrieveFastaFiles";
                             OverrideCurrentDatasetAndJobInfo(currentDatasetAndJobInfo);
                             return false;
                         }
@@ -335,7 +335,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                         if (string.IsNullOrEmpty(proteinCollectionListOrLegacyFastaName))
                         {
                             mMessage = "FASTA file was not generated when RetrieveFastaFiles called RetrieveOrgDB";
-                            LogError(mMessage + " (class clsAnalysisResourcesPRIDEConverter)");
+                            LogError(mMessage + " (class AnalysisResourcesPRIDEConverter)");
                             OverrideCurrentDatasetAndJobInfo(currentDatasetAndJobInfo);
                             return false;
                         }
@@ -344,7 +344,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     }
 
                     // Add a new job parameter that associates proteinCollectionListOrLegacyFastaName with this job
-                    // This value was previously used by method CreateMSGFReportFile in clsAnalysisToolRunnerPRIDEConverter,
+                    // This value was previously used by method CreateMSGFReportFile in AnalysisToolRunnerPRIDEConverter,
                     // but that method (and related methods) were deprecated in September 2020
                     mJobParams.AddAdditionalParameter("PeptideSearch", GetGeneratedFastaParamNameForJob(dataPkgJob.Job), proteinCollectionListOrLegacyFastaName);
                 }
@@ -372,7 +372,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 var templateFileName = GetMSGFReportTemplateFilename(mJobParams, WarnIfJobParamMissing: true);
 
                 // First look for the template file in the data package folder
-                var dataPackagePath = mJobParams.GetJobParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_TRANSFER_FOLDER_PATH, string.Empty);
+                var dataPackagePath = mJobParams.GetJobParameter(AnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_TRANSFER_FOLDER_PATH, string.Empty);
                 if (string.IsNullOrEmpty(dataPackagePath))
                 {
                     mMessage = "Job parameter transferFolderPath is missing; unable to determine the data package folder path";
@@ -423,7 +423,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 }
 
                 // Assure that the MSGF Report Template file job parameter is up-to-date
-                mJobParams.AddAdditionalParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_MSGF_REPORT_TEMPLATE_FILENAME, templateFileName);
+                mJobParams.AddAdditionalParameter(AnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_MSGF_REPORT_TEMPLATE_FILENAME, templateFileName);
 
                 mJobParams.AddResultFileToSkip(templateFileName);
             }
@@ -449,7 +449,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 // First look for the template file in the data package folder
                 // Note that transferFolderPath is likely \\protoapps\PeptideAtlas_Staging and not the real data package path
 
-                var transferFolderPath = mJobParams.GetJobParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_TRANSFER_FOLDER_PATH, string.Empty);
+                var transferFolderPath = mJobParams.GetJobParameter(AnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_TRANSFER_FOLDER_PATH, string.Empty);
                 if (string.IsNullOrEmpty(transferFolderPath))
                 {
                     mMessage = "Job parameter transferFolderPath is missing; unable to determine the data package folder path";
@@ -517,7 +517,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 }
 
                 // Assure that the PX Submission Template file job parameter is up-to-date
-                mJobParams.AddAdditionalParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_PX_SUBMISSION_TEMPLATE_FILENAME, templateFileName);
+                mJobParams.AddAdditionalParameter(AnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_PX_SUBMISSION_TEMPLATE_FILENAME, templateFileName);
 
                 mJobParams.AddResultFileToSkip(templateFileName);
             }
@@ -535,7 +535,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// Store the datasets and jobs tracked by dataPackagePeptideHitJobs into a packed job parameter
         /// </summary>
         /// <param name="dataPackagePeptideHitJobs"></param>
-        private void StoreDataPackageJobs(IEnumerable<clsDataPackageJobInfo> dataPackagePeptideHitJobs)
+        private void StoreDataPackageJobs(IEnumerable<DataPackageJobInfo> dataPackagePeptideHitJobs)
         {
             var dataPackageJobs = new List<string>();
 

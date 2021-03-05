@@ -8,7 +8,7 @@ namespace AnalysisManagerBase
     /// <summary>
     /// Utilize for offline job processing
     /// </summary>
-    public static class clsOfflineProcessing
+    public static class OfflineProcessing
     {
         /// <summary>
         /// Update files in the TaskQueue directory, renaming the .info file to .success or .fail and appending the completion code and eval code info
@@ -29,7 +29,7 @@ namespace AnalysisManagerBase
             int evalCode = 0, string evalMsg = "")
         {
             var infoFile = new FileInfo(infoFilePath);
-            var lockFile = new FileInfo(Path.ChangeExtension(infoFile.FullName, clsGlobal.LOCK_FILE_EXTENSION));
+            var lockFile = new FileInfo(Path.ChangeExtension(infoFile.FullName, Global.LOCK_FILE_EXTENSION));
 
             if (!infoFile.Exists)
             {
@@ -91,10 +91,10 @@ namespace AnalysisManagerBase
 
                     if (startTime > DateTime.MinValue)
                     {
-                        writer.WriteLine("Started=" + startTime.ToLocalTime().ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT));
+                        writer.WriteLine("Started=" + startTime.ToLocalTime().ToString(AnalysisToolRunnerBase.DATE_TIME_FORMAT));
                     }
 
-                    writer.WriteLine("Finished=" + DateTime.Now.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT));
+                    writer.WriteLine("Finished=" + DateTime.Now.ToString(AnalysisToolRunnerBase.DATE_TIME_FORMAT));
 
                     writer.WriteLine("CompCode=" + compCode);
                     writer.WriteLine("CompMsg=" + compMsg);

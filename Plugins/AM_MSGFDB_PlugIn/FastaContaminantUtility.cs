@@ -7,7 +7,7 @@ namespace AnalysisManagerMSGFDBPlugIn
     /// <summary>
     /// Utility for adding required contaminant proteins to FASTA files
     /// </summary>
-    public class clsFastaContaminantUtility
+    public class FastaContaminantUtility
     {
         /// <summary>
         /// Keys are protein names, values are key/value pairs where the key is description and the value is protein sequence
@@ -31,7 +31,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Constructor
         /// </summary>
-        public clsFastaContaminantUtility()
+        public FastaContaminantUtility()
         {
             InitializeProteinLists();
         }

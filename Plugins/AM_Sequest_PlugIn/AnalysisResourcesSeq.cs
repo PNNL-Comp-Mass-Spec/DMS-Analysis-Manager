@@ -22,15 +22,15 @@ namespace AnalysisManagerSequestPlugin
     /// 3) Retrieves zipped DTA files
     /// 4) Retrieves _out.txt.tmp file (if it exists)
     /// </summary>
-    public class clsAnalysisResourcesSeq : clsAnalysisResources
+    public class AnalysisResourcesSeq : AnalysisResources
     {
         /// <summary>
         /// Initialize options
         /// </summary>
-        public override void Setup(string stepToolName, IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, clsMyEMSLUtilities myEMSLUtilities)
+        public override void Setup(string stepToolName, IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, MyEMSLUtilities myEMSLUtilities)
         {
             base.Setup(stepToolName, mgrParams, jobParams, statusTools, myEMSLUtilities);
-            SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, true);
+            SetOption(Global.eAnalysisResourceOptions.OrgDbRequired, true);
         }
 
         protected void ArchiveSequestParamFile()
@@ -93,7 +93,7 @@ namespace AnalysisManagerSequestPlugin
 
                 const bool ignoreWhitespace = true;
 
-                if (!clsGlobal.TextFilesMatch(sourceFilePath, targetFilePath, 4, 0, ignoreWhitespace, lineIgnoreRegExSpecs))
+                if (!Global.TextFilesMatch(sourceFilePath, targetFilePath, 4, 0, ignoreWhitespace, lineIgnoreRegExSpecs))
                 {
                     if (mDebugLevel >= 1)
                     {
@@ -162,7 +162,7 @@ namespace AnalysisManagerSequestPlugin
             try
             {
                 var jobNum = mJobParams.GetParam("Job");
-                var transferFolderPath = mJobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_TRANSFER_FOLDER_PATH);
+                var transferFolderPath = mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_TRANSFER_FOLDER_PATH);
 
                 if (string.IsNullOrWhiteSpace(transferFolderPath))
                 {
@@ -171,12 +171,12 @@ namespace AnalysisManagerSequestPlugin
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                transferFolderPath = Path.Combine(transferFolderPath, mJobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_DATASET_FOLDER_NAME));
-                transferFolderPath = Path.Combine(transferFolderPath, mJobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, JOB_PARAM_OUTPUT_FOLDER_NAME));
+                transferFolderPath = Path.Combine(transferFolderPath, mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_DATASET_FOLDER_NAME));
+                transferFolderPath = Path.Combine(transferFolderPath, mJobParams.GetParam(AnalysisJob.STEP_PARAMETERS_SECTION, JOB_PARAM_OUTPUT_FOLDER_NAME));
 
                 if (mDebugLevel >= 4)
                 {
-                    LogDebug("Checking for " + clsAnalysisToolRunnerSeqBase.CONCATENATED_OUT_TEMP_FILE + " file at " + transferFolderPath);
+                    LogDebug("Checking for " + AnalysisToolRunnerSeqBase.CONCATENATED_OUT_TEMP_FILE + " file at " + transferFolderPath);
                 }
 
                 var sourceDirectory = new DirectoryInfo(transferFolderPath);
@@ -192,14 +192,14 @@ namespace AnalysisManagerSequestPlugin
                 }
 
                 var concatenatedTempFilePath = Path.Combine(sourceDirectory.FullName,
-                    DatasetName + clsAnalysisToolRunnerSeqBase.CONCATENATED_OUT_TEMP_FILE);
+                    DatasetName + AnalysisToolRunnerSeqBase.CONCATENATED_OUT_TEMP_FILE);
 
                 var tempOutFile = new FileInfo(concatenatedTempFilePath);
                 if (!tempOutFile.Exists)
                 {
                     if (mDebugLevel >= 4)
                     {
-                        LogDebug("  ... " + clsAnalysisToolRunnerSeqBase.CONCATENATED_OUT_TEMP_FILE + " file not found");
+                        LogDebug("  ... " + AnalysisToolRunnerSeqBase.CONCATENATED_OUT_TEMP_FILE + " file not found");
                     }
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
@@ -207,7 +207,7 @@ namespace AnalysisManagerSequestPlugin
                 if (mDebugLevel >= 1)
                 {
                     LogDebug(
-                        clsAnalysisToolRunnerSeqBase.CONCATENATED_OUT_TEMP_FILE + " file found for job " + jobNum + " (file size = " +
+                        AnalysisToolRunnerSeqBase.CONCATENATED_OUT_TEMP_FILE + " file found for job " + jobNum + " (file size = " +
                         (tempOutFile.Length / 1024.0).ToString("#,##0") +
                         " KB); comparing JobParameters.xml file and Sequest parameter file to local copies");
                 }
@@ -253,7 +253,7 @@ namespace AnalysisManagerSequestPlugin
                 catch (Exception ex)
                 {
                     // Error copying the file; treat this as a failed job
-                    mMessage = " Exception copying " + clsAnalysisToolRunnerSeqBase.CONCATENATED_OUT_TEMP_FILE + " file locally";
+                    mMessage = " Exception copying " + AnalysisToolRunnerSeqBase.CONCATENATED_OUT_TEMP_FILE + " file locally";
                     LogError("  ... Exception copying " + tempOutFile.FullName + " locally; unable to resume: " + ex.Message);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -323,7 +323,7 @@ namespace AnalysisManagerSequestPlugin
 
             const bool ignoreWhitespace = true;
 
-            if (clsGlobal.TextFilesMatch(remoteFilePath, localFilePath, 0, 0, ignoreWhitespace))
+            if (Global.TextFilesMatch(remoteFilePath, localFilePath, 0, 0, ignoreWhitespace))
             {
                 return true;
             }
@@ -374,7 +374,7 @@ namespace AnalysisManagerSequestPlugin
 
             // Retrieve the _DTA.txt file
             // Note that if the file was found in MyEMSL then RetrieveDtaFiles will auto-call ProcessMyEMSLDownloadQueue to download the file
-            // The file will be de-concatenated by function clsAnalysisToolRunnerSeqBase.CheckForExistingConcatenatedOutFile
+            // The file will be de-concatenated by function AnalysisToolRunnerSeqBase.CheckForExistingConcatenatedOutFile
             if (!FileSearch.RetrieveDtaFiles())
             {
                 // Errors were reported in function call, so just return

@@ -7,7 +7,7 @@ using System.Linq;
 
 namespace AnalysisManagerExtractionPlugin
 {
-    public class clsPHRPMassErrorValidator : EventNotifier
+    public class PHRPMassErrorValidator : EventNotifier
     {
         #region "Module variables"
 
@@ -26,7 +26,7 @@ namespace AnalysisManagerExtractionPlugin
         /// </summary>
         public double ErrorThresholdPercent => mErrorThresholdPercent;
 
-        public clsPHRPMassErrorValidator(int intDebugLevel)
+        public PHRPMassErrorValidator(int intDebugLevel)
         {
             mDebugLevel = intDebugLevel;
         }

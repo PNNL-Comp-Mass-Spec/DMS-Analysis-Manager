@@ -6,7 +6,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
     /// <summary>
     /// ProteomeXchange file info
     /// </summary>
-    public class clsPXFileInfo : clsPXFileInfoBase
+    public class PXFileInfo : PXFileInfoBase
     {
         // Ignore Spelling: ProteomeXchange
 
@@ -29,7 +29,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// </summary>
         /// <param name="fileName"></param>
         /// <param name="dataPkgJob"></param>
-        public clsPXFileInfo(string fileName, clsDataPackageJobInfo dataPkgJob) : base(fileName, dataPkgJob)
+        public PXFileInfo(string fileName, DataPackageJobInfo dataPkgJob) : base(fileName, dataPkgJob)
         {
             FileMappings = new List<int>();
         }

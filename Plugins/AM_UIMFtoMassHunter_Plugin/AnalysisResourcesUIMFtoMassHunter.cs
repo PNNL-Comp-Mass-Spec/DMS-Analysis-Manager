@@ -13,7 +13,7 @@ namespace AnalysisManagerUIMFtoMassHunterPlugin
     /// <summary>
     /// Retrieve resources for the UIMF to MassHunter plugin
     /// </summary>
-    public class clsAnalysisResourcesUIMFtoMassHunter : clsAnalysisResources
+    public class AnalysisResourcesUIMFtoMassHunter : AnalysisResources
     {
         /// <summary>
         /// Retrieve required files
@@ -69,7 +69,7 @@ namespace AnalysisManagerUIMFtoMassHunterPlugin
 
                 if (!FileSearch.RetrieveSpectra(rawDataTypeName))
                 {
-                    LogDebug("clsAnalysisResourcesMASIC.GetResources: Error occurred retrieving spectra.");
+                    LogDebug("AnalysisResourcesMASIC.GetResources: Error occurred retrieving spectra.");
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 

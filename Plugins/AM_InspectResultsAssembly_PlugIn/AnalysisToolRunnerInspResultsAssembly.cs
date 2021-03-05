@@ -18,7 +18,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
     /// <summary>
     /// Class for running Inspect Results Assembler
     /// </summary>
-    public class clsAnalysisToolRunnerInspResultsAssembly : clsAnalysisToolRunnerBase
+    public class AnalysisToolRunnerInspResultsAssembly : AnalysisToolRunnerBase
     {
         #region "Constants and Enums"
 
@@ -68,7 +68,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
         protected string mInspectSearchLogFilePath = "InspectSearchLog.txt";      // This value gets updated in function RunInSpecT
 
-        // Note that clsPeptideToProteinMapEngine utilizes System.Data.SQLite.dll
+        // Note that PeptideToProteinMapEngine utilizes System.Data.SQLite.dll
         private clsPeptideToProteinMapEngine mPeptideToProteinMapper;
 
         // mPercentCompleteStartLevels is an array that lists the percent complete value to report
@@ -85,7 +85,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
         /// Constructor
         /// </summary>
         /// <remarks>Initializes class-wide variables</remarks>
-        public clsAnalysisToolRunnerInspResultsAssembly()
+        public AnalysisToolRunnerInspResultsAssembly()
         {
             InitializeVariables();
         }
@@ -104,7 +104,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             {
                 if (mDebugLevel > 4)
                 {
-                    LogDebug("clsAnalysisToolRunnerInspResultsAssembly.RunTool(): Enter");
+                    LogDebug("AnalysisToolRunnerInspResultsAssembly.RunTool(): Enter");
                 }
 
                 // Call base class for initial setup
@@ -237,7 +237,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
         /// <param name="statusTools">Object for updating status file as job progresses</param>
         /// <param name="summaryFile">Object for creating an analysis job summary file</param>
         /// <param name="myEMSLUtilities">MyEMSL download Utilities</param>
-        public override void Setup(string stepToolName, IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, clsSummaryFile summaryFile, clsMyEMSLUtilities myEMSLUtilities)
+        public override void Setup(string stepToolName, IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, SummaryFile summaryFile, MyEMSLUtilities myEMSLUtilities)
         {
             base.Setup(stepToolName, mgrParams, jobParams, statusTools, summaryFile, myEMSLUtilities);
 
@@ -375,7 +375,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                             break;
                         default:
                             // Unknown ResultFileType
-                            LogError("clsAnalysisToolRunnerInspResultsAssembly->AssembleFiles: Unknown Inspect Result File Type: " + resFileType);
+                            LogError("AnalysisToolRunnerInspResultsAssembly->AssembleFiles: Unknown Inspect Result File Type: " + resFileType);
                             error = true;
                             break;
                     }
@@ -491,7 +491,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             if (File.Exists(exportFilePath))
             {
                 // Post error to log
-                LogError("clsAnalysisToolRunnerInspResultsAssembly->createNewExportFile: Export file already exists " +
+                LogError("AnalysisToolRunnerInspResultsAssembly->createNewExportFile: Export file already exists " +
                          "(" + exportFilePath + "); this is unexpected");
                 return null;
             }
@@ -503,7 +503,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
         {
             var orgDbDir = mMgrParams.GetParam("OrgDbDir");
 
-            // Note that job parameter "generatedFastaName" gets defined by clsAnalysisResources.RetrieveOrgDB
+            // Note that job parameter "generatedFastaName" gets defined by AnalysisResources.RetrieveOrgDB
             var dbFilename = Path.Combine(orgDbDir, mJobParams.GetParam("PeptideSearch", "generatedFastaName"));
 
             var ignorePeptideToProteinMapperErrors = false;
@@ -619,7 +619,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             {
                 mMessage = "Error in InspectResultsAssembly->CreatePeptideToProteinMapping";
 
-                LogError("clsAnalysisToolRunnerInspResultsAssembly.CreatePeptideToProteinMapping, Error running the PeptideToProteinMapEngine, job " +
+                LogError("AnalysisToolRunnerInspResultsAssembly.CreatePeptideToProteinMapping, Error running the PeptideToProteinMapEngine, job " +
                     mJob, ex);
 
                 if (ignorePeptideToProteinMapperErrors)
@@ -649,7 +649,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
                 if (mDebugLevel > 4)
                 {
-                    LogDebug("clsAnalysisToolRunnerInspResultsAssembly.ExtractModInfoFromInspectParamFile(): Reading " + inspectParameterFilePath);
+                    LogDebug("AnalysisToolRunnerInspResultsAssembly.ExtractModInfoFromInspectParamFile(): Reading " + inspectParameterFilePath);
                 }
 
                 // Read the Inspect parameter file
@@ -861,12 +861,12 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             // Lookup the p-value to filter on
             var pThresh = mJobParams.GetJobParameter("InspectPvalueThreshold", "0.1");
 
-            var cmdRunner = new clsRunDosProgram(inspectDir, mDebugLevel);
+            var cmdRunner = new RunDosProgram(inspectDir, mDebugLevel);
             RegisterEvents(cmdRunner);
 
             if (mDebugLevel > 4)
             {
-                LogDebug("clsAnalysisToolRunnerInspResultsAssembly.RunPValue(): Enter");
+                LogDebug("AnalysisToolRunnerInspResultsAssembly.RunPValue(): Enter");
             }
 
             // verify that python program file exists
@@ -966,7 +966,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
         protected bool StoreToolVersionInfo()
         {
             var toolVersionInfo = string.Empty;
-            var appFolderPath = clsGlobal.GetAppDirectoryPath();
+            var appFolderPath = Global.GetAppDirectoryPath();
 
             if (mDebugLevel >= 2)
             {
@@ -1033,7 +1033,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             {
                 if (mDebugLevel > 4)
                 {
-                    LogDebug("clsAnalysisToolRunnerInspResultsAssembly.UpdatePTModsFile(): Enter ");
+                    LogDebug("AnalysisToolRunnerInspResultsAssembly.UpdatePTModsFile(): Enter ");
                 }
 
                 // Read the mods defined in inspectInputFilePath
@@ -1053,8 +1053,8 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
                         if (mDebugLevel > 4)
                         {
-                            LogDebug("clsAnalysisToolRunnerInspResultsAssembly.UpdatePTModsFile(): Open " + ptModsFilePath);
-                            LogDebug("clsAnalysisToolRunnerInspResultsAssembly.UpdatePTModsFile(): Create " + ptModsFilePathNew);
+                            LogDebug("AnalysisToolRunnerInspResultsAssembly.UpdatePTModsFile(): Open " + ptModsFilePath);
+                            LogDebug("AnalysisToolRunnerInspResultsAssembly.UpdatePTModsFile(): Create " + ptModsFilePathNew);
                         }
 
                         var differenceFound = false;
@@ -1117,7 +1117,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                                                         if (mDebugLevel > 4)
                                                         {
                                                             LogDebug(
-                                                                "clsAnalysisToolRunnerInspResultsAssembly.UpdatePTModsFile(): Mod def in PTMods.txt doesn't match required mod def; updating to: " +
+                                                                "AnalysisToolRunnerInspResultsAssembly.UpdatePTModsFile(): Mod def in PTMods.txt doesn't match required mod def; updating to: " +
                                                                 trimmedLine);
                                                         }
 
@@ -1180,7 +1180,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                             }
                             catch (Exception ex)
                             {
-                                LogError("clsAnalysisToolRunnerInspResultsAssembly.UpdatePTModsFile, " +
+                                LogError("AnalysisToolRunnerInspResultsAssembly.UpdatePTModsFile, " +
                                          "Error swapping in the new PTMods.txt file : " + mJob + "; " + ex.Message);
                                 return false;
                             }

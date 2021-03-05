@@ -125,8 +125,8 @@ namespace AnalysisManager_Mage_PlugIn
 
         private void AppendToWarningMessage(string message, string verboseMessage)
         {
-            _warningMsg = clsGlobal.AppendToComment(_warningMsg, message);
-            _warningMsgVerbose = clsGlobal.AppendToComment(_warningMsgVerbose, verboseMessage);
+            _warningMsg = Global.AppendToComment(_warningMsg, message);
+            _warningMsgVerbose = Global.AppendToComment(_warningMsgVerbose, verboseMessage);
         }
 
         /// <summary>
@@ -210,7 +210,7 @@ namespace AnalysisManager_Mage_PlugIn
             var mageObj = new MageAMFileProcessingPipelines(_jobParams, _mgrParams);
             RegisterMageEvents(mageObj);
 
-            var dataPackageStoragePathRoot = mageObj.RequireJobParam(clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH);
+            var dataPackageStoragePathRoot = mageObj.RequireJobParam(AnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH);
             var inputDirectoryPath = Path.Combine(dataPackageStoragePathRoot, mageObj.RequireJobParam("DataPackageSourceFolderName"));
 
             var inputDirectory = new DirectoryInfo(inputDirectoryPath);
@@ -221,10 +221,10 @@ namespace AnalysisManager_Mage_PlugIn
 
             if (filesInDirectory.Count == 0)
                 throw new DirectoryNotFoundException("DataPackageSourceFolderName has no files (should typically be named ImportFiles " +
-                                                     "and it should have a file named " + clsAnalysisToolRunnerMage.T_ALIAS_FILE + "): " + inputDirectoryPath);
+                                                     "and it should have a file named " + AnalysisToolRunnerMage.T_ALIAS_FILE + "): " + inputDirectoryPath);
 
             var lstMatchingFiles = (from item in filesInDirectory
-                                    where string.Equals(item.Name, clsAnalysisToolRunnerMage.T_ALIAS_FILE, StringComparison.OrdinalIgnoreCase)
+                                    where string.Equals(item.Name, AnalysisToolRunnerMage.T_ALIAS_FILE, StringComparison.OrdinalIgnoreCase)
                                     select item).ToList();
 
             if (lstMatchingFiles.Count == 0)
@@ -234,12 +234,12 @@ namespace AnalysisManager_Mage_PlugIn
                 {
                     // File T_alias.txt was not found in ...
                     throw new Exception(string.Format("File {0} was not found in {1}; this file is required because this is an iTRAQ analysis",
-                        clsAnalysisToolRunnerMage.T_ALIAS_FILE, inputDirectoryPath));
+                        AnalysisToolRunnerMage.T_ALIAS_FILE, inputDirectoryPath));
                 }
 
                 var msg = string.Format(
                     "File {0} was not found in the DataPackageSourceFolderName directory; this may result in a failure during Ape processing",
-                    clsAnalysisToolRunnerMage.T_ALIAS_FILE);
+                    AnalysisToolRunnerMage.T_ALIAS_FILE);
 
                 var msgVerbose = msg + ": " + inputDirectoryPath;
                 AppendToWarningMessage(msg, msgVerbose);

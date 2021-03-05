@@ -5,7 +5,7 @@ namespace AnalysisManager_Mage_PlugIn
     /// <summary>
     /// Retrieve resources for the MAC plugin
     /// </summary>
-    public class clsAnalysisResourcesMAC : clsAnalysisResources
+    public class AnalysisResourcesMAC : AnalysisResources
     {
         /// <summary>
         /// Retrieve required files

@@ -4,7 +4,7 @@ using System.IO;
 
 namespace AnalysisManager_Ape_PlugIn
 {
-    internal class clsApeAMRunWorkflow : clsApeAMBase
+    internal class ApeAMRunWorkflow : ApeAMBase
     {
         #region Member Variables
 
@@ -17,7 +17,7 @@ namespace AnalysisManager_Ape_PlugIn
         /// </summary>
         /// <param name="jobParams"></param>
         /// <param name="mgrParams"></param>
-        public clsApeAMRunWorkflow(IJobParams jobParams, IMgrParams mgrParams)
+        public ApeAMRunWorkflow(IJobParams jobParams, IMgrParams mgrParams)
             : base(jobParams, mgrParams)
         {
         }
@@ -43,7 +43,7 @@ namespace AnalysisManager_Ape_PlugIn
                     }
                     else
                     {
-                        mErrorMessage = "Error running Ape in clsApeAMRunWorkflow";
+                        mErrorMessage = "Error running Ape in ApeAMRunWorkflow";
                         OnErrorEvent(mErrorMessage);
                         success = false;
                     }

@@ -19,7 +19,7 @@ namespace AnalysisManagerMODPlusPlugin
     /// <summary>
     /// Class for running MODPlus
     /// </summary>
-    public class clsAnalysisToolRunnerMODPlus : clsAnalysisToolRunnerBase
+    public class AnalysisToolRunnerMODPlus : AnalysisToolRunnerBase
     {
         #region "Constants and Enums"
 
@@ -47,7 +47,7 @@ namespace AnalysisManagerMODPlusPlugin
         /// Dictionary of ModPlus instances
         /// </summary>
         /// <remarks>Key is core number (1 through NumCores), value is the instance</remarks>
-        protected Dictionary<int, clsMODPlusRunner> mMODPlusRunners;
+        protected Dictionary<int, MODPlusRunner> mMODPlusRunners;
 
         #endregion
 
@@ -69,7 +69,7 @@ namespace AnalysisManagerMODPlusPlugin
 
                 if (mDebugLevel > 4)
                 {
-                    LogDebug("clsAnalysisToolRunnerMODPlus.RunTool(): Enter");
+                    LogDebug("AnalysisToolRunnerMODPlus.RunTool(): Enter");
                 }
 
                 // Verify that program files exist
@@ -202,7 +202,7 @@ namespace AnalysisManagerMODPlusPlugin
                 LogDebug(msConvertProgLoc + " " + arguments);
             }
 
-            var msConvertRunner = new clsRunDosProgram(mWorkDir, mDebugLevel);
+            var msConvertRunner = new RunDosProgram(mWorkDir, mDebugLevel);
             RegisterEvents(msConvertRunner);
             msConvertRunner.LoopWaiting += MSConvert_CmdRunner_LoopWaiting;
 
@@ -248,7 +248,7 @@ namespace AnalysisManagerMODPlusPlugin
         /// </summary>
         public override void CopyFailedResultsToArchiveDirectory()
         {
-            mJobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MZXML_EXTENSION);
+            mJobParams.AddResultFileExtensionToSkip(AnalysisResources.DOT_MZXML_EXTENSION);
 
             base.CopyFailedResultsToArchiveDirectory();
         }
@@ -423,7 +423,7 @@ namespace AnalysisManagerMODPlusPlugin
 
             // Validate the setting for instrument_resolution and fragment_ion_tol
 
-            var strDatasetType = mJobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetType");
+            var strDatasetType = mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, "DatasetType");
             var instrumentResolutionMsMs = LOW_RES_FLAG;
 
             if (strDatasetType.EndsWith("hmsn", StringComparison.OrdinalIgnoreCase))
@@ -488,7 +488,7 @@ namespace AnalysisManagerMODPlusPlugin
 
                 if (massTolDa < MIN_FRAG_TOL_LOW_RES)
                 {
-                    mEvalMessage = clsGlobal.AppendToComment(mEvalMessage, "Auto-changed fragment_ion_tol to " + DEFAULT_FRAG_TOL_LOW_RES + " Da since low resolution MS/MS");
+                    mEvalMessage = Global.AppendToComment(mEvalMessage, "Auto-changed fragment_ion_tol to " + DEFAULT_FRAG_TOL_LOW_RES + " Da since low resolution MS/MS");
                     xmlAttributeCollection["value"].Value = DEFAULT_FRAG_TOL_LOW_RES;
                     xmlAttributeCollection["unit"].Value = "da";
                 }
@@ -592,7 +592,7 @@ namespace AnalysisManagerMODPlusPlugin
                 // Keys in this list are scan numbers with charge state encoded as Charge / 100
                 // For example, if scan 1000 and charge 2, the key will be 1000.02
                 // Values are a list of readers that have that given ScanPlusCharge combo
-                var lstNextAvailableScan = new SortedList<double, List<clsMODPlusResultsReader>>();
+                var lstNextAvailableScan = new SortedList<double, List<MODPlusResultsReader>>();
 
                 // Combine the result files using a Merge Sort (we assume the results are sorted by scan in each result file)
 
@@ -628,7 +628,7 @@ namespace AnalysisManagerMODPlusPlugin
                         continue;
                     }
 
-                    var reader = new clsMODPlusResultsReader(mDatasetName, fiResultFile);
+                    var reader = new MODPlusResultsReader(mDatasetName, fiResultFile);
                     if (reader.SpectrumAvailable)
                     {
                         PushReader(lstNextAvailableScan, reader);
@@ -636,7 +636,7 @@ namespace AnalysisManagerMODPlusPlugin
                 }
 
                 // The final results file is named Dataset_modp.txt
-                var combinedResultsFilePath = Path.Combine(mWorkDir, mDatasetName + clsMODPlusRunner.RESULTS_FILE_SUFFIX);
+                var combinedResultsFilePath = Path.Combine(mWorkDir, mDatasetName + MODPlusRunner.RESULTS_FILE_SUFFIX);
                 var fiCombinedResults = new FileInfo(combinedResultsFilePath);
 
                 using (var combinedResultsWriter = new StreamWriter(new FileStream(fiCombinedResults.FullName, FileMode.Create, FileAccess.Write, FileShare.Read)))
@@ -710,7 +710,7 @@ namespace AnalysisManagerMODPlusPlugin
 
                 if (successOverall)
                 {
-                    mJobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MGF_EXTENSION);
+                    mJobParams.AddResultFileExtensionToSkip(AnalysisResources.DOT_MGF_EXTENSION);
                 }
 
                 return successOverall;
@@ -722,7 +722,7 @@ namespace AnalysisManagerMODPlusPlugin
             }
         }
 
-        protected void PushReader(SortedList<double, List<clsMODPlusResultsReader>> lstNextAvailableScan, clsMODPlusResultsReader reader)
+        protected void PushReader(SortedList<double, List<MODPlusResultsReader>> lstNextAvailableScan, MODPlusResultsReader reader)
         {
             if (lstNextAvailableScan.TryGetValue(reader.CurrentScanChargeCombo, out var readersForValue))
             {
@@ -730,7 +730,7 @@ namespace AnalysisManagerMODPlusPlugin
             }
             else
             {
-                readersForValue = new List<clsMODPlusResultsReader> {
+                readersForValue = new List<MODPlusResultsReader> {
                     reader
                 };
 
@@ -756,11 +756,11 @@ namespace AnalysisManagerMODPlusPlugin
             var cachedStatusMessage = string.Copy(mMessage);
             mMessage = string.Empty;
 
-            var splitter = new clsSplitMGFFile();
+            var splitter = new SplitMGFFile();
             RegisterEvents(splitter);
 
             // Split the .mgf file
-            // If an error occurs, mMessage will be updated because ErrorEventHandler calls LogError when event ErrorEvent is raised by clsSplitMGFFile
+            // If an error occurs, mMessage will be updated because ErrorEventHandler calls LogError when event ErrorEvent is raised by SplitMGFFile
             var mgfFiles = splitter.SplitMgfFile(fiMgfFile.FullName, threadCount, "_Part");
 
             if (mgfFiles.Count == 0)
@@ -815,11 +815,11 @@ namespace AnalysisManagerMODPlusPlugin
                 var msXmlOutputType = mJobParams.GetJobParameter("MSXMLOutputType", string.Empty);
                 if (string.Equals(msXmlOutputType, "mzxml", StringComparison.OrdinalIgnoreCase))
                 {
-                    spectrumFileName += clsAnalysisResources.DOT_MZXML_EXTENSION;
+                    spectrumFileName += AnalysisResources.DOT_MZXML_EXTENSION;
                 }
                 else
                 {
-                    spectrumFileName += clsAnalysisResources.DOT_MZML_EXTENSION;
+                    spectrumFileName += AnalysisResources.DOT_MZML_EXTENSION;
                 }
 
                 currentTask = "Convert .mzML file to MGF";
@@ -831,7 +831,7 @@ namespace AnalysisManagerMODPlusPlugin
                     return false;
                 }
 
-                var fiMgfFile = new FileInfo(Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_MGF_EXTENSION));
+                var fiMgfFile = new FileInfo(Path.Combine(mWorkDir, mDatasetName + AnalysisResources.DOT_MGF_EXTENSION));
 
                 if (fiMgfFile.Exists)
                 {
@@ -863,7 +863,7 @@ namespace AnalysisManagerMODPlusPlugin
                 currentTask = "Lookup job parameters";
 
                 // Define the path to the fasta file
-                // Note that job parameter "generatedFastaName" gets defined by clsAnalysisResources.RetrieveOrgDB
+                // Note that job parameter "generatedFastaName" gets defined by AnalysisResources.RetrieveOrgDB
                 var localOrgDbFolder = mMgrParams.GetParam("OrgDbDir");
                 var dbFilename = mJobParams.GetParam("PeptideSearch", "generatedFastaName");
                 var fastaFilePath = Path.Combine(localOrgDbFolder, dbFilename);
@@ -890,7 +890,7 @@ namespace AnalysisManagerMODPlusPlugin
                 mProgress = PROGRESS_PCT_MODPLUS_STARTING;
                 ResetProgRunnerCpuUsage();
 
-                mMODPlusRunners = new Dictionary<int, clsMODPlusRunner>();
+                mMODPlusRunners = new Dictionary<int, MODPlusRunner>();
 
                 foreach (var paramFile in paramFileList)
                 {
@@ -901,7 +901,7 @@ namespace AnalysisManagerMODPlusPlugin
                     LogDebug(currentTask);
 
                     var modPlusRunner =
-                        new clsMODPlusRunner(mDatasetName, threadNum, mWorkDir, paramFile.Value, javaProgLoc, mMODPlusProgLoc)
+                        new MODPlusRunner(mDatasetName, threadNum, mWorkDir, paramFile.Value, javaProgLoc, mMODPlusProgLoc)
                         {
                             JavaMemorySizeMB = javaMemorySizeMB
                         };
@@ -939,7 +939,7 @@ namespace AnalysisManagerMODPlusPlugin
                     foreach (var modPlusRunner in mMODPlusRunners)
                     {
                         var eStatus = modPlusRunner.Value.Status;
-                        if (eStatus >= clsMODPlusRunner.MODPlusRunnerStatusCodes.Success)
+                        if (eStatus >= MODPlusRunner.MODPlusRunnerStatusCodes.Success)
                         {
                             // Analysis completed (or failed)
                             stepsComplete++;
@@ -990,7 +990,7 @@ namespace AnalysisManagerMODPlusPlugin
                         break;
                     }
 
-                    clsGlobal.IdleLoop(SECONDS_BETWEEN_UPDATES);
+                    Global.IdleLoop(SECONDS_BETWEEN_UPDATES);
 
                     CmdRunner_LoopWaiting(processIDs, coreUsageOverall, SECONDS_BETWEEN_UPDATES);
 

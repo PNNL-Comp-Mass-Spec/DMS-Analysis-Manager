@@ -10,7 +10,7 @@ namespace AnalysisManagerBase
     /// <summary>
     /// This class splits a Mascot Generic File (mgf file) into multiple parts
     /// </summary>
-    public class clsSplitMGFFile : EventNotifier
+    public class SplitMGFFile : EventNotifier
     {
         // Ignore Spelling: mgf
 
@@ -48,7 +48,7 @@ namespace AnalysisManagerBase
         /// <summary>
         ///  Constructor
         /// </summary>
-        public clsSplitMGFFile()
+        public SplitMGFFile()
         {
             mExtractScan = new Regex(@".+\.(\d+)\.\d+\.\d?", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         }

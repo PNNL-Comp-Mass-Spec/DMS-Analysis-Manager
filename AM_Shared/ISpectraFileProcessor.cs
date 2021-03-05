@@ -115,7 +115,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="InitParams"></param>
         /// <param name="toolRunner"></param>
-        void Setup(SpectraFileProcessorParams InitParams, clsAnalysisToolRunnerBase toolRunner);
+        void Setup(SpectraFileProcessorParams InitParams, AnalysisToolRunnerBase toolRunner);
 
         /// <summary>
         /// Starts the spectra file creation process

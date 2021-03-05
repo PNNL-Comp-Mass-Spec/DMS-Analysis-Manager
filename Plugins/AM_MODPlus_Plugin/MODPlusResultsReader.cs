@@ -5,7 +5,7 @@ using System.Text.RegularExpressions;
 
 namespace AnalysisManagerMODPlusPlugin
 {
-    public class clsMODPlusResultsReader
+    public class MODPlusResultsReader
     {
         /// <summary>
         /// Data lines for the current scan
@@ -50,7 +50,7 @@ namespace AnalysisManagerMODPlusPlugin
         /// <summary>
         /// Constructor
         /// </summary>
-        public clsMODPlusResultsReader(string datasetName, FileInfo modPlusResultsFile)
+        public MODPlusResultsReader(string datasetName, FileInfo modPlusResultsFile)
         {
             mResultFile = modPlusResultsFile;
 

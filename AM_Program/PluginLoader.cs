@@ -18,13 +18,13 @@ namespace AnalysisManagerProg
     /// <summary>
     /// Class for loading analysis manager plugins
     /// </summary>
-    public class clsPluginLoader : EventNotifier
+    public class PluginLoader : EventNotifier
     {
         #region "Member variables"
 
         private readonly string mMgrFolderPath;
 
-        private readonly clsSummaryFile mSummaryFile;
+        private readonly SummaryFile mSummaryFile;
 
         #endregion
 
@@ -50,7 +50,7 @@ namespace AnalysisManagerProg
         /// </summary>
         /// <param name="summaryFile"></param>
         /// <param name="MgrFolderPath"></param>
-        public clsPluginLoader(clsSummaryFile summaryFile, string MgrFolderPath)
+        public PluginLoader(SummaryFile summaryFile, string MgrFolderPath)
         {
             mSummaryFile = summaryFile;
             mMgrFolderPath = MgrFolderPath;
@@ -66,11 +66,11 @@ namespace AnalysisManagerProg
 #pragma warning disable 1522
             {
 #pragma warning restore 1522
-                //case "AnalysisManagerTopFDPlugIn.clsAnalysisToolRunnerTopFD":
-                //    myToolRunner = new AnalysisManagerTopFDPlugIn.clsAnalysisToolRunnerTopFD();
+                //case "AnalysisManagerTopFDPlugIn.AnalysisToolRunnerTopFD":
+                //    myToolRunner = new AnalysisManagerTopFDPlugIn.AnalysisToolRunnerTopFD();
                 //    break;
-                //case "AnalysisManagerTopPICPlugIn.clsAnalysisToolRunnerTopPIC":
-                //    myToolRunner = new AnalysisManagerTopPICPlugIn.clsAnalysisToolRunnerTopPIC();
+                //case "AnalysisManagerTopPICPlugIn.AnalysisToolRunnerTopPIC":
+                //    myToolRunner = new AnalysisManagerTopPICPlugIn.AnalysisToolRunnerTopPIC();
                 //    break;
             }
 
@@ -86,11 +86,11 @@ namespace AnalysisManagerProg
 #pragma warning disable 1522
             {
 #pragma warning restore 1522
-                //case "AnalysisManagerTopFDPlugIn.clsAnalysisResourcesTopFD":
-                //    myModule = new AnalysisManagerTopFDPlugIn.clsAnalysisResourcesTopFD();
+                //case "AnalysisManagerTopFDPlugIn.AnalysisResourcesTopFD":
+                //    myModule = new AnalysisManagerTopFDPlugIn.AnalysisResourcesTopFD();
                 //    break;
-                //case "AnalysisManagerTopPICPlugIn.clsAnalysisResourcesTopPIC":
-                //    myModule = new AnalysisManagerTopPICPlugIn.clsAnalysisResourcesTopPIC();
+                //case "AnalysisManagerTopPICPlugIn.AnalysisResourcesTopPIC":
+                //    myModule = new AnalysisManagerTopPICPlugIn.AnalysisResourcesTopPIC();
                 //    break;
             }
 
@@ -224,7 +224,7 @@ namespace AnalysisManagerProg
             catch (Exception ex)
             {
                 // Cache exceptions
-                OnErrorEvent(string.Format("clsPluginLoader.LoadObject(), for class {0}, assembly {1}", className, assemblyName), ex);
+                OnErrorEvent(string.Format("PluginLoader.LoadObject(), for class {0}, assembly {1}", className, assemblyName), ex);
                 return null;
             }
         }
@@ -260,7 +260,7 @@ namespace AnalysisManagerProg
                     }
                     catch (Exception ex)
                     {
-                        OnErrorEvent(string.Format("clsPluginLoader.GetToolRunner(), for class {0}, assembly {1}", className, assemblyName), ex);
+                        OnErrorEvent(string.Format("PluginLoader.GetToolRunner(), for class {0}, assembly {1}", className, assemblyName), ex);
                     }
                 }
                 mSummaryFile.Add("Loaded ToolRunner: " + className + " from " + assemblyName);
@@ -304,7 +304,7 @@ namespace AnalysisManagerProg
                     }
                     catch (Exception ex)
                     {
-                        OnErrorEvent(string.Format("clsPluginLoader.GetAnalysisResources(), for class {0}, assembly {1}", className, assemblyName), ex);
+                        OnErrorEvent(string.Format("PluginLoader.GetAnalysisResources(), for class {0}, assembly {1}", className, assemblyName), ex);
                     }
                 }
                 mSummaryFile.Add("Loaded resourcer: " + className + " from " + assemblyName);

@@ -4,10 +4,10 @@ using AnalysisManagerBase;
 using AnalysisManagerMultiAlign_AggregatorPlugIn;
 using System.IO;
 
-namespace TestMultiAlignPlugIn {
-
-    class TestAMMultiAlign {
-
+namespace TestMultiAlignPlugIn
+{
+    class TestAMMultiAlign
+    {
         //-------------------------------- MultiAlign
         string mWorkDir;
         string mLogFilename;
@@ -55,11 +55,11 @@ namespace TestMultiAlignPlugIn {
             //Change the name of the log file for the local log file to the plugin log filename
             var LogFileName = Path.Combine(mWorkDir, "MultiAlign_Log");
             log4net.GlobalContext.Properties["LogName"] = LogFileName;
-            clsLogTools.ChangeLogFileName(LogFileName);
+            LogTools.ChangeLogFileName(LogFileName);
 
             var statusFile = new StatusFileStub();
 
-            var oMultiAlignMage = new clsMultiAlignMage(m_jobParams, m_mgrParams, statusFile);
+            var oMultiAlignMage = new MultiAlignMage(m_jobParams, m_mgrParams, statusFile);
             var sMultiAlignConsolePath = m_mgrParams.GetParam("MultiAlignProgLoc");
             sMultiAlignConsolePath = Path.Combine(sMultiAlignConsolePath, "MultiAlignConsole.exe");
 
@@ -68,7 +68,7 @@ namespace TestMultiAlignPlugIn {
             // Change the name of the log file back to the analysis manager log file
             LogFileName = mLogFilename;
             log4net.GlobalContext.Properties["LogName"] = LogFileName;
-            clsLogTools.ChangeLogFileName(LogFileName);
+            LogTools.ChangeLogFileName(LogFileName);
 
             if (bSuccess)
                 return string.Empty;

@@ -9,7 +9,7 @@ namespace AnalysisManagerMSGFDBPlugIn
     /// <summary>
     /// ScanType file creator
     /// </summary>
-    public class clsScanTypeFileCreator
+    public class ScanTypeFileCreator
     {
         private Dictionary<int, string> mScanTypeMap;
 
@@ -52,7 +52,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// </summary>
         /// <param name="workDirectoryPath"></param>
         /// <param name="datasetName"></param>
-        public clsScanTypeFileCreator(string workDirectoryPath, string datasetName)
+        public ScanTypeFileCreator(string workDirectoryPath, string datasetName)
         {
             WorkDir = workDirectoryPath;
             DatasetName = datasetName;
@@ -110,7 +110,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                         };
 
                         // Keys in this dictionary are column names, values are the 0-based column index
-                        var columnMap = clsGlobal.ParseHeaderLine(dataLine, headerNames);
+                        var columnMap = Global.ParseHeaderLine(dataLine, headerNames);
 
                         scanNumberColIndex = columnMap["ScanNumber"];
                         collisionModeColIndex = columnMap["Collision Mode"];
@@ -120,17 +120,17 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                     // Parse out the values
 
-                    if (clsGlobal.TryGetValueInt(dataCols, scanNumberColIndex, out var scanNumber))
+                    if (Global.TryGetValueInt(dataCols, scanNumberColIndex, out var scanNumber))
                     {
                         var storeData = false;
 
-                        if (clsGlobal.TryGetValue(dataCols, collisionModeColIndex, out var collisionMode))
+                        if (Global.TryGetValue(dataCols, collisionModeColIndex, out var collisionMode))
                         {
                             storeData = true;
                         }
                         else
                         {
-                            if (clsGlobal.TryGetValue(dataCols, scanFilterColIndex, out var filterText))
+                            if (Global.TryGetValue(dataCols, scanFilterColIndex, out var filterText))
                             {
                                 filterText = dataCols[scanFilterColIndex];
 
@@ -191,7 +191,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     return false;
                 }
 
-                var detailedScanTypesDefined = clsAnalysisResourcesMSGFDB.ValidateScanStatsFileHasDetailedScanTypes(scanStatsFilePath);
+                var detailedScanTypesDefined = AnalysisResourcesMSGFDB.ValidateScanStatsFileHasDetailedScanTypes(scanStatsFilePath);
 
                 // Open the input file
                 using var scanStatsReader = new StreamReader(new FileStream(scanStatsFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
@@ -236,7 +236,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                         // This is a header line; define the column mapping
 
                         // Keys in this dictionary are column names, values are the 0-based column index
-                        var columnMap = clsGlobal.ParseHeaderLine(dataLine, headerNames);
+                        var columnMap = Global.ParseHeaderLine(dataLine, headerNames);
 
                         scanNumberColIndex = columnMap["ScanNumber"];
                         scanTimeColIndex = columnMap["ScanTime"];
@@ -270,10 +270,10 @@ namespace AnalysisManagerMSGFDBPlugIn
                         scanStatsExLoaded = true;
                     }
 
-                    if (!clsGlobal.TryGetValueInt(dataColumns, scanNumberColIndex, out var scanNumber))
+                    if (!Global.TryGetValueInt(dataColumns, scanNumberColIndex, out var scanNumber))
                         continue;
 
-                    if (!clsGlobal.TryGetValueInt(dataColumns, scanTypeColIndex, out var scanType))
+                    if (!Global.TryGetValueInt(dataColumns, scanTypeColIndex, out var scanType))
                         continue;
 
                     var scanTypeName = string.Empty;
@@ -283,10 +283,10 @@ namespace AnalysisManagerMSGFDBPlugIn
                     }
                     else if (scanTypeNameColIndex >= 0)
                     {
-                        clsGlobal.TryGetValue(dataColumns, scanTypeNameColIndex, out scanTypeName);
+                        Global.TryGetValue(dataColumns, scanTypeNameColIndex, out scanTypeName);
                     }
 
-                    clsGlobal.TryGetValueFloat(dataColumns, scanTimeColIndex, out var scanTime);
+                    Global.TryGetValueFloat(dataColumns, scanTimeColIndex, out var scanTime);
 
                     writer.WriteLine(scanNumber + "\t" + scanTypeName + "\t" + scanType + "\t" + scanTime.ToString("0.0000"));
 

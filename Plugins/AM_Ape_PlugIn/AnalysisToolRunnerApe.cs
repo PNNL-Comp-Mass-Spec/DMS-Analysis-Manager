@@ -8,7 +8,7 @@ namespace AnalysisManager_Ape_PlugIn
     /// <summary>
     /// Class for running Ape
     /// </summary>
-    public class clsAnalysisToolRunnerApe : clsAnalysisToolRunnerBase
+    public class AnalysisToolRunnerApe : AnalysisToolRunnerBase
     {
         private const float PROGRESS_PCT_APE_START = 1;
         private const float PROGRESS_PCT_APE_DONE = 99;
@@ -96,8 +96,8 @@ namespace AnalysisManager_Ape_PlugIn
 
                 // Override the output folder name and the dataset name (since this is a dataset aggregation job)
                 mResultsDirectoryName = mJobParams.GetParam("StepOutputFolderName");
-                mDatasetName = mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME);
-                mJobParams.SetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME, mResultsDirectoryName);
+                mDatasetName = mJobParams.GetParam(AnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME);
+                mJobParams.SetParam(AnalysisJob.STEP_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME, mResultsDirectoryName);
 
                 var success = CopyResultsToTransferDirectory();
 
@@ -119,7 +119,7 @@ namespace AnalysisManager_Ape_PlugIn
             // run the appropriate Mage pipeline(s) according to operations list parameter
             var apeOperations = mJobParams.GetParam("ApeOperations");
 
-            var ops = new clsApeAMOperations(mJobParams, mMgrParams);
+            var ops = new ApeAMOperations(mJobParams, mMgrParams);
             RegisterEvents(ops);
 
             var success = ops.RunApeOperations(apeOperations);

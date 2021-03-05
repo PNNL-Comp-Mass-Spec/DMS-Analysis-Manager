@@ -111,7 +111,7 @@ namespace AnalysisManagerBase
         Dictionary<string, string> LoadMgrSettingsFromFile(string configFilePath);
 
         /// <summary>
-        /// Updates manager settings, then loads settings from the database or from ManagerSettingsLocal.xml if clsGlobal.OfflineMode is true
+        /// Updates manager settings, then loads settings from the database or from ManagerSettingsLocal.xml if Global.OfflineMode is true
         /// </summary>
         /// <param name="configFileSettings">Manager settings loaded from file AnalysisManagerProg.exe.config</param>
         /// <returns>True if successful; False on error</returns>

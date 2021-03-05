@@ -15,7 +15,7 @@ namespace AnalysisManagerBase
     /// If complete, retrieves the results, then calls the appropriate plugin
     /// so it can perform any post-processing tasks that require domain accessible resources
     /// </remarks>
-    public class clsRemoteMonitor : EventNotifier
+    public class RemoteMonitor : EventNotifier
     {
         #region "Constants"
 
@@ -89,11 +89,11 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Transfer utility
         /// </summary>
-        public clsRemoteTransferUtility TransferUtility { get; }
+        public RemoteTransferUtility TransferUtility { get; }
 
         private IToolRunner ToolRunner { get; }
 
-        private clsStatusFile StatusTools { get; }
+        private StatusFile StatusTools { get; }
 
         /// <summary>
         /// Working directory
@@ -134,12 +134,12 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <remarks>Instantiation of clsRemoteTransferUtility will throw an exception if key manager parameters are not defined</remarks>
-        public clsRemoteMonitor(
+        /// <remarks>Instantiation of RemoteTransferUtility will throw an exception if key manager parameters are not defined</remarks>
+        public RemoteMonitor(
             IMgrParams mgrParams,
             IJobParams jobParams,
             IToolRunner toolRunner,
-            clsStatusFile statusTools)
+            StatusFile statusTools)
         {
             JobParams = jobParams;
 
@@ -149,11 +149,11 @@ namespace AnalysisManagerBase
             ToolRunner = toolRunner;
             StatusTools = statusTools;
 
-            JobNum = jobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Job", 0);
-            StepNum = jobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Step", 0);
-            DatasetName = jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_DATASET_NAME);
+            JobNum = jobParams.GetJobParameter(AnalysisJob.STEP_PARAMETERS_SECTION, "Job", 0);
+            StepNum = jobParams.GetJobParameter(AnalysisJob.STEP_PARAMETERS_SECTION, "Step", 0);
+            DatasetName = jobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_DATASET_NAME);
 
-            TransferUtility = new clsRemoteTransferUtility(mgrParams, jobParams);
+            TransferUtility = new RemoteTransferUtility(mgrParams, jobParams);
             RegisterEvents(TransferUtility);
 
             mCachedStatusFiles = new SortedSet<string>();
@@ -463,13 +463,13 @@ namespace AnalysisManagerBase
 
                 var managerInfo = doc.Elements("Root").Elements("Manager").ToList();
 
-                // Note: although we pass localStatusFilePath to the clsStatusFile constructor, the path doesn't matter because
+                // Note: although we pass localStatusFilePath to the StatusFile constructor, the path doesn't matter because
                 // we call UpdateRemoteStatus to push the remote status to the message queue only; a status file is not written
                 var localStatusFilePath = Path.Combine(WorkDir, "RemoteStatus.xml");
 
-                var status = new clsStatusFile(localStatusFilePath, DebugLevel)
+                var status = new StatusFile(localStatusFilePath, DebugLevel)
                 {
-                    MgrName = clsXMLUtils.GetXmlValue(managerInfo, "MgrName")
+                    MgrName = XMLUtils.GetXmlValue(managerInfo, "MgrName")
                 };
                 RegisterEvents(status);
 
@@ -478,16 +478,16 @@ namespace AnalysisManagerBase
                 // which calls WriteStatusFile with writeToDisk=false, which results in the remote status info getting pushed to the MessageQueue
                 // The Status Message DB Updater will then push that info into table T_Processor_Status in the DMS_Pipeline database
 
-                var mgrStatus = clsXMLUtils.GetXmlValue(managerInfo, "MgrStatus");
+                var mgrStatus = XMLUtils.GetXmlValue(managerInfo, "MgrStatus");
                 status.MgrStatus = StatusTools.ConvertToMgrStatusFromText(mgrStatus);
 
-                status.TaskStartTime = clsXMLUtils.GetXmlValue(managerInfo, "LastStartTime", DateTime.MinValue).ToUniversalTime();
+                status.TaskStartTime = XMLUtils.GetXmlValue(managerInfo, "LastStartTime", DateTime.MinValue).ToUniversalTime();
                 if (status.TaskStartTime > DateTime.MinValue)
                 {
                     status.TaskStartTime = status.TaskStartTime.ToUniversalTime();
                 }
 
-                var lastUpdate = clsXMLUtils.GetXmlValue(managerInfo, "LastUpdate", DateTime.MinValue);
+                var lastUpdate = XMLUtils.GetXmlValue(managerInfo, "LastUpdate", DateTime.MinValue);
                 if (lastUpdate > DateTime.MinValue)
                 {
                     lastUpdate = lastUpdate.ToUniversalTime();
@@ -497,19 +497,19 @@ namespace AnalysisManagerBase
                     lastUpdate = status.TaskStartTime.ToUniversalTime();
                 }
 
-                var cpuUtilization = (int)clsXMLUtils.GetXmlValue(managerInfo, "CPUUtilization", 0f);
-                var freeMemoryMB = clsXMLUtils.GetXmlValue(managerInfo, "FreeMemoryMB", 0f);
-                var processId = clsXMLUtils.GetXmlValue(managerInfo, "ProcessID", 0);
+                var cpuUtilization = (int)XMLUtils.GetXmlValue(managerInfo, "CPUUtilization", 0f);
+                var freeMemoryMB = XMLUtils.GetXmlValue(managerInfo, "FreeMemoryMB", 0f);
+                var processId = XMLUtils.GetXmlValue(managerInfo, "ProcessID", 0);
 
-                status.ProgRunnerProcessID = clsXMLUtils.GetXmlValue(managerInfo, "ProgRunnerProcessID", 0);
+                status.ProgRunnerProcessID = XMLUtils.GetXmlValue(managerInfo, "ProgRunnerProcessID", 0);
 
-                status.ProgRunnerCoreUsage = clsXMLUtils.GetXmlValue(managerInfo, "ProgRunnerCoreUsage", 0f);
+                status.ProgRunnerCoreUsage = XMLUtils.GetXmlValue(managerInfo, "ProgRunnerCoreUsage", 0f);
 
                 var taskInfo = doc.Elements("Root").Elements("Task").ToList();
 
-                status.Tool = clsXMLUtils.GetXmlValue(taskInfo, "Tool");
+                status.Tool = XMLUtils.GetXmlValue(taskInfo, "Tool");
 
-                var taskStatus = clsXMLUtils.GetXmlValue(taskInfo, "Status");
+                var taskStatus = XMLUtils.GetXmlValue(taskInfo, "Status");
                 status.TaskStatus = StatusTools.ConvertToTaskStatusFromText(taskStatus);
 
                 switch (status.TaskStatus)
@@ -538,50 +538,50 @@ namespace AnalysisManagerBase
                         break;
                 }
 
-                status.Progress = clsXMLUtils.GetXmlValue(taskInfo, "Progress", 0f);
-                status.CurrentOperation = clsXMLUtils.GetXmlValue(taskInfo, "CurrentOperation");
+                status.Progress = XMLUtils.GetXmlValue(taskInfo, "Progress", 0f);
+                status.CurrentOperation = XMLUtils.GetXmlValue(taskInfo, "CurrentOperation");
 
                 var taskDetails = taskInfo.Elements("TaskDetails").ToList();
 
-                var taskStatusDetail = clsXMLUtils.GetXmlValue(taskDetails, "Status");
+                var taskStatusDetail = XMLUtils.GetXmlValue(taskDetails, "Status");
                 status.TaskStatusDetail = StatusTools.ConvertToTaskDetailStatusFromText(taskStatusDetail);
 
-                status.JobNumber = clsXMLUtils.GetXmlValue(taskDetails, "Job", 0);
-                status.JobStep = clsXMLUtils.GetXmlValue(taskDetails, "Step", 0);
-                status.Dataset = clsXMLUtils.GetXmlValue(taskDetails, "Dataset");
-                status.MostRecentLogMessage = clsXMLUtils.GetXmlValue(taskDetails, "MostRecentLogMessage");
-                status.MostRecentJobInfo = clsXMLUtils.GetXmlValue(taskDetails, "MostRecentJobInfo");
-                status.SpectrumCount = clsXMLUtils.GetXmlValue(taskDetails, "SpectrumCount", 0);
+                status.JobNumber = XMLUtils.GetXmlValue(taskDetails, "Job", 0);
+                status.JobStep = XMLUtils.GetXmlValue(taskDetails, "Step", 0);
+                status.Dataset = XMLUtils.GetXmlValue(taskDetails, "Dataset");
+                status.MostRecentLogMessage = XMLUtils.GetXmlValue(taskDetails, "MostRecentLogMessage");
+                status.MostRecentJobInfo = XMLUtils.GetXmlValue(taskDetails, "MostRecentJobInfo");
+                status.SpectrumCount = XMLUtils.GetXmlValue(taskDetails, "SpectrumCount", 0);
 
                 var coreUsageHistory = ParseCoreUsageHistory(doc);
 
                 status.StoreCoreUsageHistory(coreUsageHistory);
 
                 // Cache some remote status values so that SetAnalysisJobComplete can use them
-                JobParams.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION,
-                    clsRemoteTransferUtility.STEP_PARAM_REMOTE_PROGRESS,
+                JobParams.AddAdditionalParameter(AnalysisJob.STEP_PARAMETERS_SECTION,
+                    RemoteTransferUtility.STEP_PARAM_REMOTE_PROGRESS,
                     status.Progress.ToString("0.0###"));
 
                 // Store the remote start time, converting to UTC via format code "{0:O}"
-                JobParams.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION,
-                    clsRemoteTransferUtility.STEP_PARAM_REMOTE_START,
+                JobParams.AddAdditionalParameter(AnalysisJob.STEP_PARAMETERS_SECTION,
+                    RemoteTransferUtility.STEP_PARAM_REMOTE_START,
                     string.Format("{0:O}", status.TaskStartTime));
 
                 if (status.Progress >= 100)
                 {
                     // Store the remote finish time, converting to UTC via format code "{0:O}"
-                    JobParams.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION,
-                        clsRemoteTransferUtility.STEP_PARAM_REMOTE_FINISH,
+                    JobParams.AddAdditionalParameter(AnalysisJob.STEP_PARAMETERS_SECTION,
+                        RemoteTransferUtility.STEP_PARAM_REMOTE_FINISH,
                         string.Format("{0:O}", lastUpdate));
                 }
                 else
                 {
-                    JobParams.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION,
-                        clsRemoteTransferUtility.STEP_PARAM_REMOTE_FINISH,
+                    JobParams.AddAdditionalParameter(AnalysisJob.STEP_PARAMETERS_SECTION,
+                        RemoteTransferUtility.STEP_PARAM_REMOTE_FINISH,
                         string.Empty);
                 }
 
-                // Update the cached progress; used by clsMainProcess
+                // Update the cached progress; used by MainProcess
                 RemoteProgress = status.Progress;
 
                 StatusTools.UpdateRemoteStatus(status, lastUpdate, processId, cpuUtilization, freeMemoryMB);
@@ -834,11 +834,11 @@ namespace AnalysisManagerBase
                     return;
                 }
 
-                // Note: although we pass localStatusFilePath to the clsStatusFile constructor, the path doesn't matter because
+                // Note: although we pass localStatusFilePath to the StatusFile constructor, the path doesn't matter because
                 // we call UpdateRemoteStatus to push the remote status to the message queue only; a status file is not written
                 var localStatusFilePath = Path.Combine(WorkDir, "RemoteStatus.xml");
 
-                var status = new clsStatusFile(localStatusFilePath, DebugLevel)
+                var status = new StatusFile(localStatusFilePath, DebugLevel)
                 {
                     MgrName = remoteMgrName
                 };
@@ -887,7 +887,7 @@ namespace AnalysisManagerBase
                 status.JobStep = 0;
                 status.Dataset = string.Empty;
 
-                // Update the cached progress; used by clsMainProcess
+                // Update the cached progress; used by MainProcess
                 RemoteProgress = status.Progress;
 
                 StatusTools.UpdateRemoteStatus(status, lastUpdate, processId, cpuUtilization, freeMemoryMB);

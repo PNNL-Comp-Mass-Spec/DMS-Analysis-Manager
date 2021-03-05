@@ -13,7 +13,7 @@ using System.IO;
 
 namespace AnalysisManagerMsXmlBrukerPlugIn
 {
-    public class clsCompassXportRunner : EventNotifier
+    public class CompassXportRunner : EventNotifier
     {
         #region "Enums"
 
@@ -58,7 +58,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
         /// <summary>
         /// Constructor
         /// </summary>
-        public clsCompassXportRunner(string workDir, string compassXportProgramPath, string datasetName,
+        public CompassXportRunner(string workDir, string compassXportProgramPath, string datasetName,
                                      MSXMLOutputTypeConstants outputType, bool centroidMSXML)
         {
             mWorkDir = workDir;
@@ -94,7 +94,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
             var msXmlFormatName = GetMsXmlOutputTypeByID(mOutputType);
 
             // Define the input file path
-            var sourceFolderPath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_D_EXTENSION);
+            var sourceFolderPath = Path.Combine(mWorkDir, mDatasetName + AnalysisResources.DOT_D_EXTENSION);
             var inputFilePath = Path.Combine(sourceFolderPath, "analysis.baf");
 
             if (!File.Exists(inputFilePath))
@@ -104,7 +104,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
 
                 if (!File.Exists(inputFilePath))
                 {
-                    ErrorMessage = "Could not find analysis.baf or analysis.yep in " + mDatasetName + clsAnalysisResources.DOT_D_EXTENSION;
+                    ErrorMessage = "Could not find analysis.baf or analysis.yep in " + mDatasetName + AnalysisResources.DOT_D_EXTENSION;
                     return false;
                 }
             }
@@ -119,7 +119,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
                 return false;
             }
 
-            var cmdRunner = new clsRunDosProgram(Path.GetDirectoryName(mCompassXportProgramPath));
+            var cmdRunner = new RunDosProgram(Path.GetDirectoryName(mCompassXportProgramPath));
             cmdRunner.ErrorEvent += CmdRunner_ErrorEvent;
             cmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 

@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace AnalysisManagerExtractionPlugin
 {
-    public class clsMSGFPlusPSMs
+    public class MSGFPlusPSMs
     {
         public struct udtPSMType
         {
@@ -31,7 +31,7 @@ namespace AnalysisManagerExtractionPlugin
 
         public int Scan { get; }
 
-        public clsMSGFPlusPSMs(int scanNumber, int chargeState, int maximumPSMsToRetain)
+        public MSGFPlusPSMs(int scanNumber, int chargeState, int maximumPSMsToRetain)
         {
             MaximumPSMsToKeep = maximumPSMsToRetain;
             if (MaximumPSMsToKeep < 1)

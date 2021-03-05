@@ -9,7 +9,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
     /// <summary>
     /// Retrieve resources for the Lipid Map Search plugin
     /// </summary>
-    public class clsAnalysisResourcesLipidMapSearch : clsAnalysisResources
+    public class AnalysisResourcesLipidMapSearch : AnalysisResources
     {
         /// <summary>
         /// DeconTools peaks file suffix
@@ -86,7 +86,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
             // SourceJob2FolderPath          = "\\proto-3\LTQ_Orb_3\2011_1\XG_lipid_pt5aNeg\DLS201206180955_Auto852151"
             // SourceJob2FolderPathArchive   = "\\adms.emsl.pnl.gov\dmsarch\LTQ_Orb_3\2011_1\XG_lipid_pt5aNeg\DLS201206180955_Auto852151"
 
-            var strDeconToolsFolderName = mJobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "InputFolderName");
+            var strDeconToolsFolderName = mJobParams.GetParam(AnalysisJob.STEP_PARAMETERS_SECTION, "InputFolderName");
 
             if (string.IsNullOrEmpty(strDeconToolsFolderName))
             {
@@ -102,8 +102,8 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                 return false;
             }
 
-            var strDatasetFolder = mJobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetStoragePath");
-            var strDatasetFolderArchive = mJobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetArchivePath");
+            var strDatasetFolder = mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, "DatasetStoragePath");
+            var strDatasetFolderArchive = mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, "DatasetArchivePath");
 
             if (string.IsNullOrEmpty(strDatasetFolder))
             {
@@ -150,7 +150,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
             // SourceJob2FolderPath          = "\\proto-3\LTQ_Orb_3\2011_1\XG_lipid_pt5aNeg\DLS201206180955_Auto852151"
             // SourceJob2FolderPathArchive   = "\\adms.emsl.pnl.gov\dmsarch\LTQ_Orb_3\2011_1\XG_lipid_pt5aNeg\DLS201206180955_Auto852151"
 
-            var strSourceJob2 = mJobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "SourceJob2");
+            var strSourceJob2 = mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, "SourceJob2");
 
             if (string.IsNullOrWhiteSpace(strSourceJob2))
             {
@@ -171,7 +171,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                 return true;
             }
 
-            var strDataset2 = mJobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "SourceJob2Dataset");
+            var strDataset2 = mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, "SourceJob2Dataset");
             if (string.IsNullOrEmpty(strDataset2))
             {
                 mMessage = "SourceJob2Dataset job parameter not found; this is unexpected";
@@ -179,8 +179,8 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                 return false;
             }
 
-            var strInputFolder = mJobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "SourceJob2FolderPath");
-            var strInputFolderArchive = mJobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "SourceJob2FolderPathArchive");
+            var strInputFolder = mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, "SourceJob2FolderPath");
+            var strInputFolderArchive = mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, "SourceJob2FolderPathArchive");
 
             if (string.IsNullOrEmpty(strInputFolder))
             {

@@ -17,7 +17,7 @@ namespace AnalysisManagerTopFDPlugIn
     /// Class for running TopFD analysis
     /// </summary>
     // ReSharper disable once UnusedMember.Global
-    public class clsAnalysisToolRunnerTopFD : clsAnalysisToolRunnerBase
+    public class AnalysisToolRunnerTopFD : AnalysisToolRunnerBase
     {
         // Ignore Spelling: html, sn, cv, Aragorn
 
@@ -58,7 +58,7 @@ namespace AnalysisManagerTopFDPlugIn
 
         private bool mMzMLInstrumentIdAdjustmentRequired;
 
-        private clsRunDosProgram mCmdRunner;
+        private RunDosProgram mCmdRunner;
 
         #endregion
 
@@ -80,7 +80,7 @@ namespace AnalysisManagerTopFDPlugIn
 
                 if (mDebugLevel > 4)
                 {
-                    LogDebug("clsAnalysisToolRunnerTopFD.RunTool(): Enter");
+                    LogDebug("AnalysisToolRunnerTopFD.RunTool(): Enter");
                 }
 
                 // Initialize class wide variables
@@ -102,7 +102,7 @@ namespace AnalysisManagerTopFDPlugIn
                 // Check whether an existing TopFD results directory was found
                 var existingTopFDResultsDirectory = mJobParams.GetJobParameter(
                     "StepParameters",
-                    clsAnalysisResourcesTopFD.JOB_PARAM_EXISTING_TOPFD_RESULTS_DIRECTORY,
+                    AnalysisResourcesTopFD.JOB_PARAM_EXISTING_TOPFD_RESULTS_DIRECTORY,
                     string.Empty);
 
                 CloseOutType processingResult;
@@ -116,7 +116,7 @@ namespace AnalysisManagerTopFDPlugIn
                 else
                 {
                     mMzMLInstrumentIdAdjustmentRequired = false;
-                    var mzMLFileName = Dataset + clsAnalysisResources.DOT_MZML_EXTENSION;
+                    var mzMLFileName = Dataset + AnalysisResources.DOT_MZML_EXTENSION;
 
                     processingResult = StartTopFD(mTopFDProgLoc, mzMLFileName);
 
@@ -146,7 +146,7 @@ namespace AnalysisManagerTopFDPlugIn
                 // Trim the console output file to remove the majority of the % finished messages
                 TrimConsoleOutputFile(Path.Combine(mWorkDir, TOPFD_CONSOLE_OUTPUT));
 
-                if (!clsAnalysisJob.SuccessOrNoData(processingResult))
+                if (!AnalysisJob.SuccessOrNoData(processingResult))
                 {
                     // Something went wrong
                     // In order to help diagnose things, we will move whatever files were created into the result folder,
@@ -450,7 +450,7 @@ namespace AnalysisManagerTopFDPlugIn
 
                 var toolVersionInfo = mJobParams.GetJobParameter(
                     "StepParameters",
-                    clsAnalysisResourcesTopFD.JOB_PARAM_EXISTING_TOPFD_TOOL_VERSION,
+                    AnalysisResourcesTopFD.JOB_PARAM_EXISTING_TOPFD_TOOL_VERSION,
                     string.Empty);
 
                 SetStepTaskToolVersion(toolVersionInfo, new List<FileInfo>(), saveToolVersionTextFile: false);
@@ -480,7 +480,7 @@ namespace AnalysisManagerTopFDPlugIn
 
             LogDebug(progLoc + " " + arguments);
 
-            mCmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel)
+            mCmdRunner = new RunDosProgram(mWorkDir, mDebugLevel)
             {
                 CreateNoWindow = true,
                 CacheStandardOutput = false,
@@ -681,7 +681,7 @@ namespace AnalysisManagerTopFDPlugIn
                         else if (dataLine.StartsWith("Deconvolution finished", StringComparison.OrdinalIgnoreCase))
                         {
                             // Possibly write out the most recent progress line
-                            if (!clsGlobal.IsMatch(mostRecentProgressLine, mostRecentProgressLineWritten))
+                            if (!Global.IsMatch(mostRecentProgressLine, mostRecentProgressLineWritten))
                             {
                                 writer.WriteLine(mostRecentProgressLine);
                             }

@@ -8,19 +8,19 @@ namespace AnalysisManagerOMSSAPlugIn
     /// <summary>
     /// Retrieve resources for the OMSSA plugin
     /// </summary>
-    public class clsAnalysisResourcesOM : clsAnalysisResources
+    public class AnalysisResourcesOM : AnalysisResources
     {
         internal const string OMSSA_DEFAULT_INPUT_FILE = "OMSSA_default_input.xml";
         internal const string OMSSA_INPUT_FILE = "OMSSA_input.xml";
-        protected clsRunDosProgram mCmdRunner;
+        protected RunDosProgram mCmdRunner;
 
         /// <summary>
         /// Initialize options
         /// </summary>
-        public override void Setup(string stepToolName, IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, clsMyEMSLUtilities myEMSLUtilities)
+        public override void Setup(string stepToolName, IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, MyEMSLUtilities myEMSLUtilities)
         {
             base.Setup(stepToolName, mgrParams, jobParams, statusTools, myEMSLUtilities);
-            SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, true);
+            SetOption(Global.eAnalysisResourceOptions.OrgDbRequired, true);
         }
 
         /// <summary>
@@ -54,7 +54,7 @@ namespace AnalysisManagerOMSSAPlugIn
             var success = ConvertOMSSAFastaFile();
             if (!success)
             {
-                LogError("clsAnalysisResourcesOM.GetResources(), failed converting fasta file to OMSSA format");
+                LogError("AnalysisResourcesOM.GetResources(), failed converting fasta file to OMSSA format");
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
@@ -78,7 +78,7 @@ namespace AnalysisManagerOMSSAPlugIn
             success = ConvertDtaToXml();
             if (!success)
             {
-                LogError("clsAnalysisResourcesOM.GetResources(), failed converting dta file to xml format");
+                LogError("AnalysisResourcesOM.GetResources(), failed converting dta file to xml format");
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
@@ -93,7 +93,7 @@ namespace AnalysisManagerOMSSAPlugIn
 
             if (!success)
             {
-                var msg = "clsAnalysisResourcesOM.GetResources(), failed making input file: " + errorMessage;
+                var msg = "AnalysisResourcesOM.GetResources(), failed making input file: " + errorMessage;
                 LogError(msg);
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
@@ -111,12 +111,12 @@ namespace AnalysisManagerOMSSAPlugIn
 
                 LogMessage("Running formatdb.exe");
 
-                mCmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel);
+                mCmdRunner = new RunDosProgram(mWorkDir, mDebugLevel);
                 RegisterEvents(mCmdRunner);
 
                 if (mDebugLevel > 4)
                 {
-                    LogDebug("clsAnalysisToolRunnerOM.OperateAnalysisTool(): Enter");
+                    LogDebug("AnalysisToolRunnerOM.OperateAnalysisTool(): Enter");
                 }
 
                 // verify that program formatdb.exe file exists
@@ -148,7 +148,7 @@ namespace AnalysisManagerOMSSAPlugIn
             }
             catch (Exception ex)
             {
-                LogError("clsAnalysisResourcesOM.ConvertOMSSAFastaFile, FormatDB error. " + ex.Message);
+                LogError("AnalysisResourcesOM.ConvertOMSSAFastaFile, FormatDB error. " + ex.Message);
             }
 
             return true;
@@ -192,7 +192,7 @@ namespace AnalysisManagerOMSSAPlugIn
             }
             catch (Exception ex)
             {
-                LogError("clsAnalysisResourcesOM.ConvertDtaToXml, File conversion error. " + ex.Message);
+                LogError("AnalysisResourcesOM.ConvertDtaToXml, File conversion error. " + ex.Message);
             }
 
             return blnSuccess;

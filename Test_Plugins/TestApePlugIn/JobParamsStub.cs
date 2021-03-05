@@ -2,11 +2,10 @@ using System;
 using System.Collections.Generic;
 using AnalysisManagerBase;
 
-
-namespace TestApePlugIn {
-
-    class JobParamsStub : IJobParams {
-
+namespace TestApePlugIn
+{
+    class JobParamsStub : IJobParams
+    {
         private readonly Dictionary<string, string> mParms;
 
         // List of file extensions to NOT move to the result folder; comparison checks if the end of the filename matches any entry ResultFileExtensionsToSkip
@@ -253,7 +252,7 @@ namespace TestApePlugIn {
         }
 
 
-        public clsDBTask.RequestTaskResult RequestTask()
+        public DBTask.RequestTaskResult RequestTask()
         {
             throw new NotImplementedException();
         }

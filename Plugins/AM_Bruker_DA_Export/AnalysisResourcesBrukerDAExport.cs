@@ -15,7 +15,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
     /// <summary>
     /// Retrieve resources for the Bruker DA Export plugin
     /// </summary>
-    public class clsAnalysisResourcesBrukerDAExport : clsAnalysisResources
+    public class AnalysisResourcesBrukerDAExport : AnalysisResources
     {
         /// <summary>
         /// Retrieve required files
@@ -47,7 +47,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
                 // Retrieve the script file
                 currentTask = "Retrieve the export script file: " + exportScriptName;
 
-                const string paramFileStoragePathKeyName = clsGlobal.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "Bruker_DA_Export";
+                const string paramFileStoragePathKeyName = Global.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "Bruker_DA_Export";
 
                 var exportScriptStoragePath = mMgrParams.GetParam(paramFileStoragePathKeyName);
                 if (string.IsNullOrWhiteSpace(exportScriptStoragePath))

@@ -18,7 +18,7 @@ namespace AnalysisManagerTopPICPlugIn
     /// Class for running TopPIC analysis
     /// </summary>
     // ReSharper disable once UnusedMember.Global
-    public class clsAnalysisToolRunnerTopPIC : clsAnalysisToolRunnerBase
+    public class AnalysisToolRunnerTopPIC : AnalysisToolRunnerBase
     {
         // Ignore Spelling: toppic, html, cmd, prsm, ptm, Csv, Unimod, json
 
@@ -56,7 +56,7 @@ namespace AnalysisManagerTopPICPlugIn
 
         private DateTime mLastConsoleOutputParse;
 
-        private clsRunDosProgram mCmdRunner;
+        private RunDosProgram mCmdRunner;
 
         #endregion
 
@@ -78,7 +78,7 @@ namespace AnalysisManagerTopPICPlugIn
 
                 if (mDebugLevel > 4)
                 {
-                    LogDebug("clsAnalysisToolRunnerTopPIC.RunTool(): Enter");
+                    LogDebug("AnalysisToolRunnerTopPIC.RunTool(): Enter");
                 }
 
                 // Initialize class wide variables
@@ -116,13 +116,13 @@ namespace AnalysisManagerTopPICPlugIn
                 mCmdRunner = null;
 
                 // Make sure objects are released
-                clsGlobal.IdleLoop(0.5);
+                Global.IdleLoop(0.5);
                 PRISM.ProgRunner.GarbageCollectNow();
 
                 // Trim the console output file to remove the majority of the "processing" messages
                 TrimConsoleOutputFile(Path.Combine(mWorkDir, TOPPIC_CONSOLE_OUTPUT));
 
-                if (!clsAnalysisJob.SuccessOrNoData(processingResult))
+                if (!AnalysisJob.SuccessOrNoData(processingResult))
                 {
                     // Something went wrong
                     // In order to help diagnose things, we will move whatever files were created into the result folder,
@@ -149,7 +149,7 @@ namespace AnalysisManagerTopPICPlugIn
         /// </summary>
         public override void CopyFailedResultsToArchiveDirectory()
         {
-            mJobParams.AddResultFileToSkip(Dataset + clsAnalysisResources.DOT_MZML_EXTENSION);
+            mJobParams.AddResultFileToSkip(Dataset + AnalysisResources.DOT_MZML_EXTENSION);
 
             base.CopyFailedResultsToArchiveDirectory();
         }
@@ -548,7 +548,7 @@ namespace AnalysisManagerTopPICPlugIn
 
             cmdLineOptions = string.Empty;
 
-            var parameterFileName = mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_PARAMETER_FILE);
+            var parameterFileName = mJobParams.GetParam(AnalysisResources.JOB_PARAM_PARAMETER_FILE);
 
             var result = LoadSettingsFromKeyValueParameterFile("TopPIC", parameterFileName, out var paramFileEntries, out var paramFileReader);
 
@@ -558,7 +558,7 @@ namespace AnalysisManagerTopPICPlugIn
             }
 
             // If file DatasetName_ms2.feature exists, assume that we are using TopPIC 1.3 and are thus using separate error tolerances
-            var ms2FeatureFile = new FileInfo(Path.Combine(mWorkDir, Dataset + "_ms2" + clsAnalysisResourcesTopPIC.TOPFD_FEATURE_FILE_SUFFIX));
+            var ms2FeatureFile = new FileInfo(Path.Combine(mWorkDir, Dataset + "_ms2" + AnalysisResourcesTopPIC.TOPFD_FEATURE_FILE_SUFFIX));
             var useSeparateErrorTolerances = ms2FeatureFile.Exists;
 
             // Obtain the dictionary that maps parameter names to argument names
@@ -605,21 +605,21 @@ namespace AnalysisManagerTopPICPlugIn
                 {
                     var paramValue = kvSetting.Value;
 
-                    if (clsGlobal.IsMatch(kvSetting.Key, "StaticMod"))
+                    if (Global.IsMatch(kvSetting.Key, "StaticMod"))
                     {
-                        if (!string.IsNullOrWhiteSpace(paramValue) && !clsGlobal.IsMatch(paramValue, "none"))
+                        if (!string.IsNullOrWhiteSpace(paramValue) && !Global.IsMatch(paramValue, "none"))
                         {
                             staticMods.Add(paramValue);
                         }
                     }
-                    else if (clsGlobal.IsMatch(kvSetting.Key, "DynamicMod"))
+                    else if (Global.IsMatch(kvSetting.Key, "DynamicMod"))
                     {
-                        if (!string.IsNullOrWhiteSpace(paramValue) && !clsGlobal.IsMatch(paramValue, "none") && !clsGlobal.IsMatch(paramValue, "defaults"))
+                        if (!string.IsNullOrWhiteSpace(paramValue) && !Global.IsMatch(paramValue, "none") && !Global.IsMatch(paramValue, "defaults"))
                         {
                             dynamicMods.Add(paramValue);
                         }
                     }
-                    else if (clsGlobal.IsMatch(kvSetting.Key, "NTerminalProteinForms"))
+                    else if (Global.IsMatch(kvSetting.Key, "NTerminalProteinForms"))
                     {
                         if (!string.IsNullOrWhiteSpace(paramValue))
                         {
@@ -681,7 +681,7 @@ namespace AnalysisManagerTopPICPlugIn
                 return result;
             }
 
-            var msalignFileName = mDatasetName + clsAnalysisResourcesTopPIC.MSALIGN_FILE_SUFFIX;
+            var msalignFileName = mDatasetName + AnalysisResourcesTopPIC.MSALIGN_FILE_SUFFIX;
 
             var arguments = string.Format("{0} {1} {2}",
                                           cmdLineOptions,
@@ -690,7 +690,7 @@ namespace AnalysisManagerTopPICPlugIn
 
             LogDebug(progLoc + " " + arguments);
 
-            mCmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel)
+            mCmdRunner = new RunDosProgram(mWorkDir, mDebugLevel)
             {
                 CreateNoWindow = true,
                 CacheStandardOutput = false,
@@ -1072,10 +1072,10 @@ namespace AnalysisManagerTopPICPlugIn
             fastaFileIsDecoy = false;
 
             // Define the path to the fasta file
-            var localOrgDbFolder = mMgrParams.GetParam(clsAnalysisResources.MGR_PARAM_ORG_DB_DIR);
+            var localOrgDbFolder = mMgrParams.GetParam(AnalysisResources.MGR_PARAM_ORG_DB_DIR);
 
-            // Note that job parameter "generatedFastaName" gets defined by clsAnalysisResources.RetrieveOrgDB
-            mValidatedFASTAFilePath = Path.Combine(localOrgDbFolder, mJobParams.GetParam("PeptideSearch", clsAnalysisResources.JOB_PARAM_GENERATED_FASTA_NAME));
+            // Note that job parameter "generatedFastaName" gets defined by AnalysisResources.RetrieveOrgDB
+            mValidatedFASTAFilePath = Path.Combine(localOrgDbFolder, mJobParams.GetParam("PeptideSearch", AnalysisResources.JOB_PARAM_GENERATED_FASTA_NAME));
 
             var fastaFile = new FileInfo(mValidatedFASTAFilePath);
 

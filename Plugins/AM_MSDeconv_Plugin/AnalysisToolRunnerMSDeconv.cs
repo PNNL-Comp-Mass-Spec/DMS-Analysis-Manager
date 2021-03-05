@@ -18,7 +18,7 @@ namespace AnalysisManagerMSDeconvPlugIn
     /// <summary>
     /// Class for running MSDeconv analysis
     /// </summary>
-    public class clsAnalysisToolRunnerMSDeconv : clsAnalysisToolRunnerBase
+    public class AnalysisToolRunnerMSDeconv : AnalysisToolRunnerBase
     {
         #region "Module Variables"
 
@@ -36,7 +36,7 @@ namespace AnalysisManagerMSDeconvPlugIn
         protected string mMSDeconvProgLoc;
         protected string mConsoleOutputErrorMsg;
 
-        protected clsRunDosProgram mCmdRunner;
+        protected RunDosProgram mCmdRunner;
 
         #endregion
 
@@ -58,7 +58,7 @@ namespace AnalysisManagerMSDeconvPlugIn
 
                 if (mDebugLevel > 4)
                 {
-                    LogDebug("clsAnalysisToolRunnerMSDeconv.RunTool(): Enter");
+                    LogDebug("AnalysisToolRunnerMSDeconv.RunTool(): Enter");
                 }
 
                 // Verify that program files exist
@@ -328,7 +328,7 @@ namespace AnalysisManagerMSDeconvPlugIn
         {
             try
             {
-                var mzXmlFileName = mDatasetName + clsAnalysisResources.DOT_MZXML_EXTENSION;
+                var mzXmlFileName = mDatasetName + AnalysisResources.DOT_MZXML_EXTENSION;
                 var mzXmlFile = new FileInfo(Path.Combine(mWorkDir, mzXmlFileName));
 
                 if (!mzXmlFile.Exists)
@@ -369,7 +369,7 @@ namespace AnalysisManagerMSDeconvPlugIn
                         // May need to renumber if the scan gap is every greater than one; not sure
 
                         // Rename the file
-                        mzXmlFile.MoveTo(Path.Combine(mWorkDir, mDatasetName + "_old" + clsAnalysisResources.DOT_MZXML_EXTENSION));
+                        mzXmlFile.MoveTo(Path.Combine(mWorkDir, mDatasetName + "_old" + AnalysisResources.DOT_MZXML_EXTENSION));
                         mzXmlFile.Refresh();
                         mJobParams.AddResultFileToSkip(mzXmlFile.Name);
 
@@ -377,7 +377,7 @@ namespace AnalysisManagerMSDeconvPlugIn
                             "The mzXML file has an average scan gap of " + scanGapAverage.ToString("0.0") +
                             " scans; will update the file's scan numbers to be 1, 2, 3, etc.");
 
-                        var converter = new clsRenumberMzXMLScans(mzXmlFile.FullName);
+                        var converter = new RenumberMzXMLScans(mzXmlFile.FullName);
                         var targetFilePath = Path.Combine(mWorkDir, mzXmlFileName);
                         var success = converter.Process(targetFilePath);
 
@@ -386,7 +386,7 @@ namespace AnalysisManagerMSDeconvPlugIn
                             mMessage = converter.ErrorMessage;
                             if (string.IsNullOrEmpty(mMessage))
                             {
-                                mMessage = "clsRenumberMzXMLScans returned false while renumbering the scans in the .mzXML file";
+                                mMessage = "RenumberMzXMLScans returned false while renumbering the scans in the .mzXML file";
                             }
 
                             return false;
@@ -428,7 +428,7 @@ namespace AnalysisManagerMSDeconvPlugIn
 
             // Define the input file and processing options
             // Note that capitalization matters for the extension; it must be .mzXML
-            arguments += " " + mDatasetName + clsAnalysisResources.DOT_MZXML_EXTENSION;
+            arguments += " " + mDatasetName + AnalysisResources.DOT_MZXML_EXTENSION;
             arguments += " -o " + outputFormat + " -t centroided";
 
             if (includeMS1Spectra)
@@ -438,7 +438,7 @@ namespace AnalysisManagerMSDeconvPlugIn
 
             LogDebug(JavaProgLoc + " " + arguments);
 
-            mCmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel);
+            mCmdRunner = new RunDosProgram(mWorkDir, mDebugLevel);
             RegisterEvents(mCmdRunner);
             mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
@@ -565,7 +565,7 @@ namespace AnalysisManagerMSDeconvPlugIn
                         else if (dataLine.StartsWith("Deconvolution finished"))
                         {
                             // Possibly write out the most recent progress line
-                            if (!clsGlobal.IsMatch(mostRecentProgressLine, mostRecentProgressLineWritten))
+                            if (!Global.IsMatch(mostRecentProgressLine, mostRecentProgressLineWritten))
                             {
                                 writer.WriteLine(mostRecentProgressLine);
                             }

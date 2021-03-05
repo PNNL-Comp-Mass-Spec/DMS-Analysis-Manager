@@ -16,7 +16,7 @@ namespace AnalysisManagerBase
     /// <summary>
     /// Tools for manipulating and documenting the assemblies used for each analysis job
     /// </summary>
-    public class clsAssemblyTools
+    public class AssemblyTools
     {
         #region "Methods"
 
@@ -25,7 +25,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="summaryFile"></param>
         [Obsolete("Unused")]
-        private void GetLoadedAssemblyInfo(clsSummaryFile summaryFile)
+        private void GetLoadedAssemblyInfo(SummaryFile summaryFile)
         {
             var currentDomain = AppDomain.CurrentDomain;
 
@@ -44,10 +44,10 @@ namespace AnalysisManagerBase
         /// Call summaryFile.Add for each DLL in the application directory
         /// </summary>
         /// <param name="summaryFile"></param>
-        public void GetComponentFileVersionInfo(clsSummaryFile summaryFile)
+        public void GetComponentFileVersionInfo(SummaryFile summaryFile)
         {
             // Create a reference to the current directory.
-            var di = new DirectoryInfo(clsGlobal.GetAppDirectoryPath());
+            var di = new DirectoryInfo(Global.GetAppDirectoryPath());
 
             // Create an array representing the files in the current directory.
             var dllFiles = di.GetFiles("*.dll");

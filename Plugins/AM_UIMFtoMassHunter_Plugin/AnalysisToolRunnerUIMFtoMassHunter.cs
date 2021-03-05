@@ -15,7 +15,7 @@ namespace AnalysisManagerUIMFtoMassHunterPlugin
     /// <summary>
     /// Class for running the UIMF to MassHunter converter
     /// </summary>
-    public class clsAnalysisToolRunnerUIMFtoMassHunter : clsAnalysisToolRunnerBase
+    public class AnalysisToolRunnerUIMFtoMassHunter : AnalysisToolRunnerBase
     {
         #region "Constants and Enums"
 
@@ -55,7 +55,7 @@ namespace AnalysisManagerUIMFtoMassHunterPlugin
 
                 if (mDebugLevel > 4)
                 {
-                    LogDebug("clsAnalysisToolRunnerUIMFtoMassHunter.RunTool(): Enter");
+                    LogDebug("AnalysisToolRunnerUIMFtoMassHunter.RunTool(): Enter");
                 }
 
                 // Determine the path to the UimfToMassHunter program
@@ -122,7 +122,7 @@ namespace AnalysisManagerUIMFtoMassHunterPlugin
 
             // Valid dataset type
             var uimfFileName = mDatasetName + ".uimf";
-            var uimfFilePath = clsAnalysisResources.ResolveStoragePath(mWorkDir, uimfFileName);
+            var uimfFilePath = AnalysisResources.ResolveStoragePath(mWorkDir, uimfFileName);
 
             if (string.IsNullOrWhiteSpace(uimfFilePath))
             {
@@ -137,7 +137,7 @@ namespace AnalysisManagerUIMFtoMassHunterPlugin
                 return false;
             }
 
-            var arguments = "UimfToMassHunter.exe " + clsGlobal.PossiblyQuotePath(uimfFile.FullName);
+            var arguments = "UimfToMassHunter.exe " + Global.PossiblyQuotePath(uimfFile.FullName);
 
             if (mDebugLevel >= 1)
             {
@@ -146,7 +146,7 @@ namespace AnalysisManagerUIMFtoMassHunterPlugin
 
             mConsoleOutputFile = Path.Combine(mWorkDir, UIMF_CONVERTER_CONSOLE_OUTPUT);
 
-            var cmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel)
+            var cmdRunner = new RunDosProgram(mWorkDir, mDebugLevel)
             {
                 CreateNoWindow = true,
                 CacheStandardOutput = false,
@@ -164,7 +164,7 @@ namespace AnalysisManagerUIMFtoMassHunterPlugin
             if (!cmdRunner.WriteConsoleOutputToFile && cmdRunner.CachedConsoleOutput.Length > 0)
             {
                 // Write the console output to a text file
-                clsGlobal.IdleLoop(0.25);
+                Global.IdleLoop(0.25);
 
                 using var writer = new StreamWriter(new FileStream(cmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
 
@@ -176,7 +176,7 @@ namespace AnalysisManagerUIMFtoMassHunterPlugin
                 LogError(mConsoleOutputErrorMsg);
             }
 
-            clsGlobal.IdleLoop(0.25);
+            Global.IdleLoop(0.25);
 
             // Parse the ConsoleOutput file to look for errors
             ParseConsoleOutputFile(mConsoleOutputFile);

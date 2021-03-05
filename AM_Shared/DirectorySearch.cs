@@ -12,7 +12,7 @@ namespace AnalysisManagerBase
     /// <summary>
     /// Methods to look for directories related to datasets
     /// </summary>
-    public class clsDirectorySearch : EventNotifier
+    public class DirectorySearch : EventNotifier
     {
         // Ignore Spelling: pre, Xtract
 
@@ -28,7 +28,7 @@ namespace AnalysisManagerBase
         /// </summary>
         protected const int DEFAULT_FOLDER_EXISTS_RETRY_HOLDOFF_SECONDS = 5;
 
-        private const string MYEMSL_PATH_FLAG = clsMyEMSLUtilities.MYEMSL_PATH_FLAG;
+        private const string MYEMSL_PATH_FLAG = MyEMSLUtilities.MYEMSL_PATH_FLAG;
 
         #endregion
 
@@ -40,9 +40,9 @@ namespace AnalysisManagerBase
 
         private readonly IJobParams mJobParams;
 
-        private readonly clsMyEMSLUtilities mMyEMSLUtilities;
+        private readonly MyEMSLUtilities mMyEMSLUtilities;
 
-        private readonly clsFileCopyUtilities mFileCopyUtilities;
+        private readonly FileCopyUtilities mFileCopyUtilities;
 
         #endregion
 
@@ -75,10 +75,10 @@ namespace AnalysisManagerBase
         /// <param name="datasetName"></param>
         /// <param name="debugLevel"></param>
         /// <param name="auroraAvailable"></param>
-        public clsDirectorySearch(
-            clsFileCopyUtilities fileCopyUtilities,
+        public DirectorySearch(
+            FileCopyUtilities fileCopyUtilities,
             IJobParams jobParams,
-            clsMyEMSLUtilities myEmslUtilities,
+            MyEMSLUtilities myEmslUtilities,
             string datasetName,
             short debugLevel,
             bool auroraAvailable)
@@ -144,10 +144,10 @@ namespace AnalysisManagerBase
 
             isDirectory = false;
 
-            var rawDataType = clsAnalysisResources.GetRawDataType(rawDataTypeName);
+            var rawDataType = AnalysisResources.GetRawDataType(rawDataTypeName);
             switch (rawDataType)
             {
-                case clsAnalysisResources.eRawDataTypeConstants.AgilentDFolder:
+                case AnalysisResources.eRawDataTypeConstants.AgilentDFolder:
                     // Agilent ion trap data
 
                     if (StoragePath.IndexOf("Agilent_SL1", StringComparison.OrdinalIgnoreCase) >= 0 ||
@@ -167,44 +167,44 @@ namespace AnalysisManagerBase
                     }
 
                     break;
-                case clsAnalysisResources.eRawDataTypeConstants.AgilentQStarWiffFile:
+                case AnalysisResources.eRawDataTypeConstants.AgilentQStarWiffFile:
                     // Agilent/QSTAR TOF data
-                    fileOrDirectoryPath = FindDatasetFile(maxAttempts, clsAnalysisResources.DOT_WIFF_EXTENSION, assumeUnpurged);
+                    fileOrDirectoryPath = FindDatasetFile(maxAttempts, AnalysisResources.DOT_WIFF_EXTENSION, assumeUnpurged);
 
                     break;
-                case clsAnalysisResources.eRawDataTypeConstants.ZippedSFolders:
+                case AnalysisResources.eRawDataTypeConstants.ZippedSFolders:
                     // FTICR data
                     fileOrDirectoryPath = FindSFolders(assumeUnpurged);
                     isDirectory = true;
 
                     break;
-                case clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile:
+                case AnalysisResources.eRawDataTypeConstants.ThermoRawFile:
                     // Finnigan ion trap/LTQ-FT data
-                    fileOrDirectoryPath = FindDatasetFile(maxAttempts, clsAnalysisResources.DOT_RAW_EXTENSION, assumeUnpurged);
+                    fileOrDirectoryPath = FindDatasetFile(maxAttempts, AnalysisResources.DOT_RAW_EXTENSION, assumeUnpurged);
 
                     break;
-                case clsAnalysisResources.eRawDataTypeConstants.MicromassRawFolder:
+                case AnalysisResources.eRawDataTypeConstants.MicromassRawFolder:
                     // Micromass QTOF data
                     fileOrDirectoryPath = FindDotRawFolder(assumeUnpurged);
                     isDirectory = true;
 
                     break;
-                case clsAnalysisResources.eRawDataTypeConstants.UIMF:
+                case AnalysisResources.eRawDataTypeConstants.UIMF:
                     // IMS UIMF data
-                    fileOrDirectoryPath = FindDatasetFile(maxAttempts, clsAnalysisResources.DOT_UIMF_EXTENSION, assumeUnpurged);
+                    fileOrDirectoryPath = FindDatasetFile(maxAttempts, AnalysisResources.DOT_UIMF_EXTENSION, assumeUnpurged);
 
                     break;
-                case clsAnalysisResources.eRawDataTypeConstants.mzXML:
-                    fileOrDirectoryPath = FindDatasetFile(maxAttempts, clsAnalysisResources.DOT_MZXML_EXTENSION, assumeUnpurged);
+                case AnalysisResources.eRawDataTypeConstants.mzXML:
+                    fileOrDirectoryPath = FindDatasetFile(maxAttempts, AnalysisResources.DOT_MZXML_EXTENSION, assumeUnpurged);
 
                     break;
-                case clsAnalysisResources.eRawDataTypeConstants.mzML:
-                    fileOrDirectoryPath = FindDatasetFile(maxAttempts, clsAnalysisResources.DOT_MZML_EXTENSION, assumeUnpurged);
+                case AnalysisResources.eRawDataTypeConstants.mzML:
+                    fileOrDirectoryPath = FindDatasetFile(maxAttempts, AnalysisResources.DOT_MZML_EXTENSION, assumeUnpurged);
 
                     break;
-                case clsAnalysisResources.eRawDataTypeConstants.BrukerFTFolder:
-                case clsAnalysisResources.eRawDataTypeConstants.BrukerTOFBaf:
-                case clsAnalysisResources.eRawDataTypeConstants.BrukerTOFTdf:
+                case AnalysisResources.eRawDataTypeConstants.BrukerFTFolder:
+                case AnalysisResources.eRawDataTypeConstants.BrukerTOFBaf:
+                case AnalysisResources.eRawDataTypeConstants.BrukerTOFTdf:
                     // Call RetrieveDotDFolder() to copy the directory and all subdirectories
 
                     // Both the MSXml step tool and DeconTools require the .Baf file
@@ -214,7 +214,7 @@ namespace AnalysisManagerBase
                     isDirectory = true;
 
                     break;
-                case clsAnalysisResources.eRawDataTypeConstants.BrukerMALDIImaging:
+                case AnalysisResources.eRawDataTypeConstants.BrukerMALDIImaging:
                     fileOrDirectoryPath = FindBrukerMALDIImagingFolders(assumeUnpurged);
                     isDirectory = true;
 
@@ -291,7 +291,7 @@ namespace AnalysisManagerBase
         /// <returns>The full path to the directory; an empty string if no match</returns>
         private string FindDotDFolder(bool assumeUnpurged = false)
         {
-            return FindDotXFolder(clsAnalysisResources.DOT_D_EXTENSION, assumeUnpurged);
+            return FindDotXFolder(AnalysisResources.DOT_D_EXTENSION, assumeUnpurged);
         }
 
         /// <summary>
@@ -300,7 +300,7 @@ namespace AnalysisManagerBase
         /// <param name="assumeUnpurged"></param>
         private string FindDotRawFolder(bool assumeUnpurged = false)
         {
-            return FindDotXFolder(clsAnalysisResources.DOT_RAW_EXTENSION, assumeUnpurged);
+            return FindDotXFolder(AnalysisResources.DOT_RAW_EXTENSION, assumeUnpurged);
         }
 
         /// <summary>
@@ -355,7 +355,7 @@ namespace AnalysisManagerBase
             // Data files are in a subdirectory off of the main dataset directory
             // Files are renamed with dataset name because MASIC requires this. Other analysis types don't care
 
-            var serverPath = FindValidDirectory(DatasetName, "", "*" + clsAnalysisResources.DOT_D_EXTENSION, maxAttempts,
+            var serverPath = FindValidDirectory(DatasetName, "", "*" + AnalysisResources.DOT_D_EXTENSION, maxAttempts,
                 logDirectoryNotFound: true, retrievingInstrumentDataDir: false,
                 assumeUnpurged: assumeUnpurged,
                 validDirectoryFound: out _, directoryNotFoundMessage: out _);
@@ -367,7 +367,7 @@ namespace AnalysisManagerBase
 
             foreach (var subDirectory in datasetDirectory.GetDirectories())
             {
-                foreach (var mgfFile in subDirectory.GetFiles("*" + clsAnalysisResources.DOT_MGF_EXTENSION))
+                foreach (var mgfFile in subDirectory.GetFiles("*" + AnalysisResources.DOT_MGF_EXTENSION))
                 {
                     // Return the first .mgf file that was found
                     return mgfFile.FullName;
@@ -386,14 +386,14 @@ namespace AnalysisManagerBase
             // First Check for the existence of a 0.ser directory
             var fileNameToFind = string.Empty;
 
-            var datasetDirectoryPath = FindValidDirectory(DatasetName, fileNameToFind, clsAnalysisResources.BRUKER_ZERO_SER_FOLDER, DEFAULT_MAX_RETRY_COUNT,
+            var datasetDirectoryPath = FindValidDirectory(DatasetName, fileNameToFind, AnalysisResources.BRUKER_ZERO_SER_FOLDER, DEFAULT_MAX_RETRY_COUNT,
                 logDirectoryNotFound: true, retrievingInstrumentDataDir: true,
                 assumeUnpurged: assumeUnpurged,
                 validDirectoryFound: out _, directoryNotFoundMessage: out _);
 
             if (!string.IsNullOrEmpty(datasetDirectoryPath))
             {
-                return Path.Combine(datasetDirectoryPath, clsAnalysisResources.BRUKER_ZERO_SER_FOLDER);
+                return Path.Combine(datasetDirectoryPath, AnalysisResources.BRUKER_ZERO_SER_FOLDER);
             }
 
             // The 0.ser directory does not exist; look for zipped s-folders
@@ -531,7 +531,7 @@ namespace AnalysisManagerBase
 
                 var instrumentDataPurged = mJobParams.GetJobParameter("InstrumentDataPurged", 0);
 
-                var datasetDirectoryName = mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_DATASET_FOLDER_NAME);
+                var datasetDirectoryName = mJobParams.GetParam(AnalysisResources.JOB_PARAM_DATASET_FOLDER_NAME);
 
                 if (retrievingInstrumentDataDir && instrumentDataPurged != 0 && !assumeUnpurged)
                 {
@@ -564,9 +564,9 @@ namespace AnalysisManagerBase
                         AddPathToCheck(pathsToCheck, Path.Combine(mJobParams.GetParam("DatasetArchivePath"), datasetName), false);
                 }
 
-                AddPathToCheck(pathsToCheck, Path.Combine(mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH), datasetDirectoryName), false);
+                AddPathToCheck(pathsToCheck, Path.Combine(mJobParams.GetParam(AnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH), datasetDirectoryName), false);
                 if (datasetDirectoryName != datasetName)
-                    AddPathToCheck(pathsToCheck, Path.Combine(mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH), datasetName), false);
+                    AddPathToCheck(pathsToCheck, Path.Combine(mJobParams.GetParam(AnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH), datasetName), false);
 
                 var fileNotFoundEncountered = false;
 
@@ -656,7 +656,7 @@ namespace AnalysisManagerBase
                         {
                             var msg = string.Format("{0}, Job {1}, Dataset {2}",
                                                     directoryNotFoundMessage,
-                                                    mJobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Job"),
+                                                    mJobParams.GetParam(AnalysisJob.STEP_PARAMETERS_SECTION, "Job"),
                                                     datasetName);
                             OnWarningEvent(msg);
                         }
@@ -884,7 +884,7 @@ namespace AnalysisManagerBase
                 }
 
                 // Wait retryHoldoffSeconds seconds before retrying
-                clsGlobal.IdleLoop(retryHoldoffSeconds);
+                Global.IdleLoop(retryHoldoffSeconds);
             }
 
             return false;

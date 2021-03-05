@@ -12,14 +12,14 @@ using PHRPReader;
 
 namespace AnalysisManagerMSGFPlugin
 {
-    public sealed class clsMSGFInputCreatorXTandem : clsMSGFInputCreator
+    public sealed class MSGFInputCreatorXTandem : MSGFInputCreator
     {
         /// <summary>
         /// Constructor
         /// </summary>
         /// <param name="datasetName">Dataset name</param>
         /// <param name="workDir">Working directory</param>
-        public clsMSGFInputCreatorXTandem(string datasetName, string workDir)
+        public MSGFInputCreatorXTandem(string datasetName, string workDir)
             : base(datasetName, workDir, clsPHRPReader.PeptideHitResultTypes.XTandem)
         {
             // Initialize the file paths

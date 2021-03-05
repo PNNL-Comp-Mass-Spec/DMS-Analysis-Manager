@@ -11,7 +11,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
     /// It makes sure that the intensity values in the last two columns are all > 0
     /// Values that are 0 are auto-changed to 1
     /// </summary>
-    public class clsDeconMSnLogFileValidator : EventNotifier
+    public class DeconMSnLogFileValidator : EventNotifier
     {
         /// <summary>
         /// Indicates whether the intensity values in the original file were updated
@@ -162,7 +162,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
             }
             catch (Exception ex)
             {
-                OnErrorEvent("Exception in clsDeconMSnLogFileValidator.ValidateFile: " + ex.Message, ex);
+                OnErrorEvent("Exception in DeconMSnLogFileValidator.ValidateFile: " + ex.Message, ex);
                 return false;
             }
 

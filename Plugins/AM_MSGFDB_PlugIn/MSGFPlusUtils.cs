@@ -207,7 +207,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         private readonly string mWorkDir;
         private readonly short mDebugLevel;
 
-        // Note that clsPeptideToProteinMapEngine utilizes System.Data.SQLite.dll
+        // Note that PeptideToProteinMapEngine utilizes System.Data.SQLite.dll
         private clsPeptideToProteinMapEngine mPeptideToProteinMapper;
 
         #endregion
@@ -342,7 +342,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             MSGFPlusKeyValueParamFileLine paramFileLine,
             out MSGFPlusParameter replacementParameter)
         {
-            if (clsGlobal.IsMatch(paramFileLine.ParamInfo.ParameterName, MSGFPLUS_OPTION_NNET))
+            if (Global.IsMatch(paramFileLine.ParamInfo.ParameterName, MSGFPLUS_OPTION_NNET))
             {
                 // Auto-switch to NTT
                 replacementParameter = GetMSGFPlusParameter(msgfPlusParameters, MSGFPLUS_OPTION_NTT, "0");
@@ -376,7 +376,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 return true;
             }
 
-            if (clsGlobal.IsMatch(paramFileLine.ParamInfo.ParameterName, MSGFPLUS_OPTION_C13))
+            if (Global.IsMatch(paramFileLine.ParamInfo.ParameterName, MSGFPLUS_OPTION_C13))
             {
                 // Auto-switch to ti
                 replacementParameter = GetMSGFPlusParameter(msgfPlusParameters, MSGFPLUS_OPTION_ISOTOPE_ERROR_RANGE, "0");
@@ -411,14 +411,14 @@ namespace AnalysisManagerMSGFDBPlugIn
                 return true;
             }
 
-            if (clsGlobal.IsMatch(paramFileLine.ParamInfo.ParameterName, MSGFPLUS_OPTION_MIN_NUM_PEAKS_LEGACY))
+            if (Global.IsMatch(paramFileLine.ParamInfo.ParameterName, MSGFPLUS_OPTION_MIN_NUM_PEAKS_LEGACY))
             {
                 // Auto-switch to MinNumPeaksPerSpectrum
                 replacementParameter = GetReplacementParameter(msgfPlusParameters, paramFileLine.ParamInfo, MSGFPLUS_OPTION_MIN_NUM_PEAKS);
                 return true;
             }
 
-            if (clsGlobal.IsMatch(paramFileLine.ParamInfo.ParameterName, "showDecoy"))
+            if (Global.IsMatch(paramFileLine.ParamInfo.ParameterName, "showDecoy"))
             {
                 // Not valid for MS-GF+; skip it
                 paramFileLine.ChangeLineToComment("Obsolete");
@@ -499,8 +499,8 @@ namespace AnalysisManagerMSGFDBPlugIn
 
         private bool CanDetermineInstIdFromInstGroup(string instrumentGroup, out string instrumentIDNew, out string autoSwitchReason)
         {
-            if (clsGlobal.IsMatch(instrumentGroup, "QExactive") ||
-                clsGlobal.IsMatch(instrumentGroup, "QEHFX"))
+            if (Global.IsMatch(instrumentGroup, "QExactive") ||
+                Global.IsMatch(instrumentGroup, "QEHFX"))
             {
                 // Thermo Q Exactive or Q Exactive HFX
                 instrumentIDNew = "3";
@@ -508,7 +508,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 return true;
             }
 
-            if (clsGlobal.IsMatch(instrumentGroup, "Bruker_Amazon_Ion_Trap"))
+            if (Global.IsMatch(instrumentGroup, "Bruker_Amazon_Ion_Trap"))
             {
                 // Non-Thermo Instrument, low res MS/MS
                 instrumentIDNew = "0";
@@ -516,7 +516,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 return true;
             }
 
-            if (clsGlobal.IsMatch(instrumentGroup, "IMS"))
+            if (Global.IsMatch(instrumentGroup, "IMS"))
             {
                 // Non-Thermo Instrument, high res MS/MS
                 instrumentIDNew = "1";
@@ -524,7 +524,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 return true;
             }
 
-            if (clsGlobal.IsMatch(instrumentGroup, "Sciex_TripleTOF"))
+            if (Global.IsMatch(instrumentGroup, "Sciex_TripleTOF"))
             {
                 // Non-Thermo Instrument, high res MS/MS
                 instrumentIDNew = "1";
@@ -532,7 +532,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 return true;
             }
 
-            if (clsGlobal.IsMatch(instrumentGroup, "Bruker_timsTOF"))
+            if (Global.IsMatch(instrumentGroup, "Bruker_timsTOF"))
             {
                 // Bruker TOF with high res MS/MS
                 // Use instrument type 2 (TOF)
@@ -630,7 +630,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 // Set up and execute a program runner to run MzidToTsvConverter.exe
                 var arguments = GetMZIDtoTSVCommandLine(mzidFileName, tsvFileName, mWorkDir);
 
-                var mzidToTsvRunner = new clsRunDosProgram(mWorkDir, mDebugLevel)
+                var mzidToTsvRunner = new RunDosProgram(mWorkDir, mDebugLevel)
                 {
                     CreateNoWindow = true,
                     CacheStandardOutput = true,
@@ -640,7 +640,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 };
                 RegisterEvents(mzidToTsvRunner);
 
-                if (clsGlobal.LinuxOS)
+                if (Global.LinuxOS)
                 {
                     // Need to run MzidToTsvConverter.exe using mono
                     var updated = mzidToTsvRunner.UpdateToUseMono(mMgrParams, ref mzidToTsvConverterProgLoc, ref arguments);
@@ -736,7 +736,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 }
 
                 // Dynamically set the amount of required memory based on the size of the .mzid file
-                var fileSizeMB = clsGlobal.BytesToMB(fiMzidFile.Length);
+                var fileSizeMB = Global.BytesToMB(fiMzidFile.Length);
                 int javaMemorySizeMB;
 
                 if (fileSizeMB < 100)
@@ -762,7 +762,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 // Make sure the machine has enough free memory to run MSGFPlus
                 const bool LOG_FREE_MEMORY_ON_SUCCESS = false;
 
-                if (!clsAnalysisResources.ValidateFreeMemorySize(javaMemorySizeMB, "MzIDToTsv", LOG_FREE_MEMORY_ON_SUCCESS))
+                if (!AnalysisResources.ValidateFreeMemorySize(javaMemorySizeMB, "MzIDToTsv", LOG_FREE_MEMORY_ON_SUCCESS))
                 {
                     OnErrorEvent("Not enough free memory to run the MzIDToTsv module in MSGFPlus");
                     return string.Empty;
@@ -773,7 +773,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     OnStatusEvent(javaProgLoc + " " + arguments);
                 }
 
-                var mzidToTsvRunner = new clsRunDosProgram(mWorkDir, mDebugLevel)
+                var mzidToTsvRunner = new RunDosProgram(mWorkDir, mDebugLevel)
                 {
                     CreateNoWindow = true,
                     CacheStandardOutput = true,
@@ -825,8 +825,8 @@ namespace AnalysisManagerMSGFDBPlugIn
         public static string GetMZIDtoTSVCommandLine(string mzidFileName, string tsvFileName, string workingDirectory)
         {
             var arguments =
-                " -mzid:" + clsAnalysisToolRunnerBase.PossiblyQuotePath(Path.Combine(workingDirectory, mzidFileName)) +
-                " -tsv:" + clsAnalysisToolRunnerBase.PossiblyQuotePath(Path.Combine(workingDirectory, tsvFileName)) +
+                " -mzid:" + AnalysisToolRunnerBase.PossiblyQuotePath(Path.Combine(workingDirectory, mzidFileName)) +
+                " -tsv:" + AnalysisToolRunnerBase.PossiblyQuotePath(Path.Combine(workingDirectory, tsvFileName)) +
                 " -unroll" +
                 " -showDecoy";
 
@@ -850,8 +850,8 @@ namespace AnalysisManagerMSGFDBPlugIn
             var arguments =
                 " -Xmx" + javaMemorySizeMB + "M -XX:+UseConcMarkSweepGC -cp " + msgfDbProgLoc +
                 " edu.ucsd.msjava.ui.MzIDToTsv" +
-                " -i " + clsAnalysisToolRunnerBase.PossiblyQuotePath(Path.Combine(workingDirectory, mzidFileName)) +
-                " -o " + clsAnalysisToolRunnerBase.PossiblyQuotePath(Path.Combine(workingDirectory, tsvFileName)) +
+                " -i " + AnalysisToolRunnerBase.PossiblyQuotePath(Path.Combine(workingDirectory, mzidFileName)) +
+                " -o " + AnalysisToolRunnerBase.PossiblyQuotePath(Path.Combine(workingDirectory, tsvFileName)) +
                 " -showQValue 1" +
                 " -showDecoy 1" +
                 " -unroll 1";
@@ -993,8 +993,8 @@ namespace AnalysisManagerMSGFDBPlugIn
             string localOrgDbFolder,
             clsPeptideToProteinMapEngine.PeptideInputFileFormatConstants peptideInputFileFormat)
         {
-            // Note that job parameter "generatedFastaName" gets defined by clsAnalysisResources.RetrieveOrgDB
-            var dbFilename = mJobParams.GetParam("PeptideSearch", clsAnalysisResources.JOB_PARAM_GENERATED_FASTA_NAME);
+            // Note that job parameter "generatedFastaName" gets defined by AnalysisResources.RetrieveOrgDB
+            var dbFilename = mJobParams.GetParam("PeptideSearch", AnalysisResources.JOB_PARAM_GENERATED_FASTA_NAME);
 
             string msg;
 
@@ -1119,13 +1119,13 @@ namespace AnalysisManagerMSGFDBPlugIn
                     mPeptideToProteinMapper.LogMessagesToFile = false;
                 }
 
-                // Note that clsPeptideToProteinMapEngine utilizes System.Data.SQLite.dll
+                // Note that PeptideToProteinMapEngine utilizes System.Data.SQLite.dll
                 var success = mPeptideToProteinMapper.ProcessFile(inputFilePath, mWorkDir, string.Empty, true);
 
                 mPeptideToProteinMapper.CloseLogFileNow();
 
                 var pepToProtMapFileName = Path.GetFileNameWithoutExtension(inputFilePath) +
-                    clsPeptideToProteinMapEngine.FILENAME_SUFFIX_PEP_TO_PROTEIN_MAPPING;
+                                           clsPeptideToProteinMapEngine.FILENAME_SUFFIX_PEP_TO_PROTEIN_MAPPING;
 
                 var pepToProtMapFilePath = Path.Combine(mWorkDir, pepToProtMapFileName);
 
@@ -1227,7 +1227,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 if (trimmedFasta.Exists)
                 {
                     // Verify that the file matches the .hashcheck value
-                    var hashcheckFilePath = trimmedFasta.FullName + clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX;
+                    var hashcheckFilePath = trimmedFasta.FullName + Global.SERVER_CACHE_HASHCHECK_FILE_SUFFIX;
 
                     if (FileSyncUtils.ValidateFileVsHashcheck(trimmedFasta.FullName, hashcheckFilePath, out _))
                     {
@@ -1240,7 +1240,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 OnStatusEvent("Creating trimmed fasta: " + trimmedFasta.Name);
 
                 // Construct the list of required contaminant proteins
-                var contaminantUtility = new clsFastaContaminantUtility();
+                var contaminantUtility = new FastaContaminantUtility();
 
                 var requiredContaminants = new Dictionary<string, bool>();
                 foreach (var proteinName in contaminantUtility.ProteinNames)
@@ -1300,7 +1300,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 OnStatusEvent("Trimmed fasta created using " + proteinCount + " proteins; creating the hashcheck file");
 
-                clsGlobal.CreateHashcheckFile(trimmedFasta.FullName, true);
+                Global.CreateHashcheckFile(trimmedFasta.FullName, true);
 
                 return trimmedFasta.FullName;
             }
@@ -1395,7 +1395,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <remarks>Should not be affected by hyperthreading, so a computer with two 4-core chips will report 8 cores</remarks>
         public int GetCoreCount()
         {
-            return clsGlobal.GetCoreCount();
+            return Global.GetCoreCount();
         }
 
         /// <summary>
@@ -1530,7 +1530,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 var success = paramFileReader.ParseKeyValueParameterFile(out var paramFileEntries);
                 if (!success)
                 {
-                    ErrorMessage = clsGlobal.AppendToComment(
+                    ErrorMessage = Global.AppendToComment(
                             "Error reading MS-GF+ parameter file in GetSettingFromMSGFPlusParamFile",
                             paramFileReader.ErrorMessage);
                     return valueIfNotFound;
@@ -1581,12 +1581,12 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             var mgrName = mMgrParams.ManagerName;
 
-            var indexedDBCreator = new clsCreateMSGFDBSuffixArrayFiles(mgrName);
+            var indexedDBCreator = new CreateMSGFDBSuffixArrayFiles(mgrName);
             RegisterEvents(indexedDBCreator);
 
             // Define the path to the fasta file
-            var localOrgDbFolder = mMgrParams.GetParam(clsAnalysisResources.MGR_PARAM_ORG_DB_DIR);
-            fastaFilePath = Path.Combine(localOrgDbFolder, mJobParams.GetParam("PeptideSearch", clsAnalysisResources.JOB_PARAM_GENERATED_FASTA_NAME));
+            var localOrgDbFolder = mMgrParams.GetParam(AnalysisResources.MGR_PARAM_ORG_DB_DIR);
+            fastaFilePath = Path.Combine(localOrgDbFolder, mJobParams.GetParam("PeptideSearch", AnalysisResources.JOB_PARAM_GENERATED_FASTA_NAME));
 
             fastaFileSizeKB = 0;
             fastaFileIsDecoy = false;
@@ -1607,10 +1607,10 @@ namespace AnalysisManagerMSGFDBPlugIn
             if (string.IsNullOrEmpty(proteinOptions) || proteinOptions == "na")
             {
                 // Determine the fraction of the proteins that start with Reversed_ or XXX_ or XXX.
-                var decoyPrefixes = clsAnalysisResources.GetDefaultDecoyPrefixes();
+                var decoyPrefixes = AnalysisResources.GetDefaultDecoyPrefixes();
                 foreach (var decoyPrefix in decoyPrefixes)
                 {
-                    var fractionDecoy = clsAnalysisResources.GetDecoyFastaCompositionStats(fiFastaFile, decoyPrefix, out _);
+                    var fractionDecoy = AnalysisResources.GetDecoyFastaCompositionStats(fiFastaFile, decoyPrefix, out _);
                     if (fractionDecoy >= 0.25)
                     {
                         fastaFileIsDecoy = true;
@@ -1638,7 +1638,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 if (tdaValue == 0)
                 {
-                    if (!fastaFileIsDecoy && clsGlobal.BytesToGB(fiFastaFile.Length) > 1)
+                    if (!fastaFileIsDecoy && Global.BytesToGB(fiFastaFile.Length) > 1)
                     {
                         // Large Fasta file (over 1 GB in size)
                         // TDA is 0, so we're performing a forward-only search
@@ -1689,7 +1689,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                         var sleepTimeSec = randomGenerator.Next(10, 19);
 
                         OnStatusEvent("Fasta file trimming failed; waiting " + sleepTimeSec + " seconds then trying again");
-                        clsGlobal.IdleLoop(sleepTimeSec);
+                        Global.IdleLoop(sleepTimeSec);
                     }
                 }
 
@@ -1747,7 +1747,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 var sleepTimeSec = randomGenerator.Next(10, 19);
 
                 OnStatusEvent("Fasta file indexing failed; waiting " + sleepTimeSec + " seconds then trying again");
-                clsGlobal.IdleLoop(sleepTimeSec);
+                Global.IdleLoop(sleepTimeSec);
             }
 
             return CloseOutType.CLOSEOUT_SUCCESS;
@@ -2420,7 +2420,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             var paramFileSuccess = paramFileReader.ParseKeyValueParameterFileGetAllLines(out var sourceParamFileLines);
             if (!paramFileSuccess)
             {
-                ErrorMessage = clsGlobal.AppendToComment(
+                ErrorMessage = Global.AppendToComment(
                     "Error reading MS-GF+ parameter file in ParseMSGFPlusParameterFile",
                     paramFileReader.ErrorMessage);
 
@@ -2474,7 +2474,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                         paramFileLine.StoreParameter(paramInfo);
 
-                        if (clsGlobal.IsMatch(paramFileLine.ParamInfo.ParameterName, MSGFPLUS_OPTION_FRAGMENTATION_METHOD))
+                        if (Global.IsMatch(paramFileLine.ParamInfo.ParameterName, MSGFPLUS_OPTION_FRAGMENTATION_METHOD))
                         {
                             if (string.IsNullOrWhiteSpace(paramFileLine.ParamInfo.Value) && !string.IsNullOrWhiteSpace(scanTypeFilePath))
                             {
@@ -2523,7 +2523,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                                 OnStatusEvent("Using Fragmentation method ID " + paramFileLine.ParamInfo.Value);
                             }
                         }
-                        else if (clsGlobal.IsMatch(paramFileLine.ParamInfo.ParameterName, MSGFPLUS_OPTION_INSTRUMENT_ID))
+                        else if (Global.IsMatch(paramFileLine.ParamInfo.ParameterName, MSGFPLUS_OPTION_INSTRUMENT_ID))
                         {
                             if (!string.IsNullOrWhiteSpace(scanTypeFilePath))
                             {
@@ -2538,18 +2538,18 @@ namespace AnalysisManagerMSGFDBPlugIn
                             {
                                 if (!CanDetermineInstIdFromInstGroup(instrumentGroup, out var instrumentIDNew, out var autoSwitchReason))
                                 {
-                                    var datasetName = mJobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_DATASET_NAME);
+                                    var datasetName = mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_DATASET_NAME);
 
                                     bool scanTypeLookupSuccess;
                                     int countLowResMSn;
                                     int countHighResMSn;
                                     int countHCDMSn;
 
-                                    if (clsGlobal.OfflineMode)
+                                    if (Global.OfflineMode)
                                     {
-                                        countLowResMSn = mJobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, SCAN_COUNT_LOW_RES_MSN, 0);
-                                        countHighResMSn = mJobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, SCAN_COUNT_HIGH_RES_MSN, 0);
-                                        countHCDMSn = mJobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, SCAN_COUNT_HCD_MSN, 0);
+                                        countLowResMSn = mJobParams.GetJobParameter(AnalysisJob.STEP_PARAMETERS_SECTION, SCAN_COUNT_LOW_RES_MSN, 0);
+                                        countHighResMSn = mJobParams.GetJobParameter(AnalysisJob.STEP_PARAMETERS_SECTION, SCAN_COUNT_HIGH_RES_MSN, 0);
+                                        countHCDMSn = mJobParams.GetJobParameter(AnalysisJob.STEP_PARAMETERS_SECTION, SCAN_COUNT_HCD_MSN, 0);
 
                                         scanTypeLookupSuccess = (countLowResMSn + countHighResMSn + countHCDMSn) > 0;
                                     }
@@ -2567,21 +2567,21 @@ namespace AnalysisManagerMSGFDBPlugIn
                                 AutoUpdateInstrumentIDIfChanged(paramFileLine, instrumentIDNew, autoSwitchReason);
                             }
                         }
-                        else if (clsGlobal.IsMatch(paramFileLine.ParamInfo.ParameterName, MSGFPLUS_OPTION_STATIC_MOD))
+                        else if (Global.IsMatch(paramFileLine.ParamInfo.ParameterName, MSGFPLUS_OPTION_STATIC_MOD))
                         {
                             if (!EmptyOrNone(paramFileLine.ParamInfo.Value))
                             {
                                 staticMods.Add(paramFileLine.ParamInfo.Value);
                             }
                         }
-                        else if (clsGlobal.IsMatch(paramFileLine.ParamInfo.ParameterName, MSGFPLUS_OPTION_DYNAMIC_MOD))
+                        else if (Global.IsMatch(paramFileLine.ParamInfo.ParameterName, MSGFPLUS_OPTION_DYNAMIC_MOD))
                         {
                             if (!EmptyOrNone(paramFileLine.ParamInfo.Value))
                             {
                                 dynamicMods.Add(paramFileLine.ParamInfo.Value);
                             }
                         }
-                        else if (clsGlobal.IsMatch(paramFileLine.ParamInfo.ParameterName, MSGFPLUS_OPTION_CUSTOM_AA))
+                        else if (Global.IsMatch(paramFileLine.ParamInfo.ParameterName, MSGFPLUS_OPTION_CUSTOM_AA))
                         {
                             customAminoAcids.Add(paramFileLine.ParamInfo.Value);
                         }
@@ -2598,14 +2598,14 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                         PossiblyOverrideParameter(overrideParams, paramFileLine);
 
-                        if (clsGlobal.IsMatch(paramFileLine.ParamInfo.ParameterName, MSGFPLUS_OPTION_NUM_THREADS))
+                        if (Global.IsMatch(paramFileLine.ParamInfo.ParameterName, MSGFPLUS_OPTION_NUM_THREADS))
                         {
                             if (string.IsNullOrWhiteSpace(paramFileLine.ParamInfo.Value))
                             {
                                 // NumThreads parameter is specified but does not have a value; change it to "all"
                                 paramFileLine.UpdateParamValue("All");
                             }
-                            else if (clsGlobal.IsMatch(paramFileLine.ParamInfo.Value, "All"))
+                            else if (Global.IsMatch(paramFileLine.ParamInfo.Value, "All"))
                             {
                                 // As of February 2019, MS-GF+ supports NumThreads=All
                             }
@@ -2624,7 +2624,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                                 }
                             }
                         }
-                        else if (clsGlobal.IsMatch(paramFileLine.ParamInfo.ParameterName, "NumMods"))
+                        else if (Global.IsMatch(paramFileLine.ParamInfo.ParameterName, "NumMods"))
                         {
                             if (!int.TryParse(paramFileLine.ParamInfo.Value, out _))
                             {
@@ -2645,7 +2645,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                             }
                         }
 
-                        if (clsGlobal.IsMatch(paramFileLine.ParamInfo.ParameterName, MSGFPLUS_OPTION_TDA))
+                        if (Global.IsMatch(paramFileLine.ParamInfo.ParameterName, MSGFPLUS_OPTION_TDA))
                         {
                             if (int.TryParse(paramFileLine.ParamInfo.Value, out var value))
                             {
@@ -2658,8 +2658,8 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                         AddUpdateParamFileLineMapping(paramFileParamToLineMapping, paramFileLine.ParamInfo.ParameterName, paramFileLine);
                     }
-                    else if (clsGlobal.IsMatch(paramFileLine.ParamName, "UniformAAProb") ||
-                             clsGlobal.IsMatch(paramFileLine.ParamName, "ShowDecoy"))
+                    else if (Global.IsMatch(paramFileLine.ParamName, "UniformAAProb") ||
+                             Global.IsMatch(paramFileLine.ParamName, "ShowDecoy"))
                     {
                         // Not valid for MS-GF+; comment out this line
                         paramFileLine.ChangeLineToComment("Obsolete");
@@ -2669,12 +2669,12 @@ namespace AnalysisManagerMSGFDBPlugIn
                                                          paramFileLine.ParamName));
                         }
                     }
-                    else if (clsGlobal.IsMatch(paramFileLine.ParamName, "SkipMzRefinery"))
+                    else if (Global.IsMatch(paramFileLine.ParamName, "SkipMzRefinery"))
                     {
                         // Used by MZRefinery; comment out this line so that MS-GF+ does not complain
                         paramFileLine.ChangeLineToComment();
                     }
-                    else if (clsGlobal.IsMatch(paramFileLine.ParamName, "EnzymeDef"))
+                    else if (Global.IsMatch(paramFileLine.ParamName, "EnzymeDef"))
                     {
                         if (!EmptyOrNone(valueText))
                         {
@@ -2942,7 +2942,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <param name="paramValue"></param>
         private bool EmptyOrNone(string paramValue)
         {
-            return string.IsNullOrWhiteSpace(paramValue) || clsGlobal.IsMatch(paramValue, "None");
+            return string.IsNullOrWhiteSpace(paramValue) || Global.IsMatch(paramValue, "None");
         }
 
         /// <summary>
@@ -3647,7 +3647,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// Zips MS-GF+ Output File (creating a .gz file)
         /// </summary>
         /// <returns>CloseOutType enum indicating success or failure</returns>
-        public CloseOutType ZipOutputFile(clsAnalysisToolRunnerBase oToolRunner, string fileName)
+        public CloseOutType ZipOutputFile(AnalysisToolRunnerBase oToolRunner, string fileName)
         {
             try
             {

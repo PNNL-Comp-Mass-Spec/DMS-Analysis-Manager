@@ -14,7 +14,7 @@ namespace AnalysisManagerMultiAlignPlugIn
     /// <summary>
     /// Retrieve resources for the MultiAlign plugin
     /// </summary>
-    public class clsAnalysisResourcesMultiAlign : clsAnalysisResources
+    public class AnalysisResourcesMultiAlign : AnalysisResources
     {
         /// <summary>
         /// Retrieve required files
@@ -65,7 +65,7 @@ namespace AnalysisManagerMultiAlignPlugIn
                 return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
             }
 
-            const string paramFileStoragePathKeyName = clsGlobal.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "MultiAlign";
+            const string paramFileStoragePathKeyName = Global.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "MultiAlign";
             var multialignParameterFileStoragePath = mMgrParams.GetParam(paramFileStoragePathKeyName);
             if (string.IsNullOrEmpty(multialignParameterFileStoragePath))
             {
@@ -128,7 +128,7 @@ namespace AnalysisManagerMultiAlignPlugIn
             }
             catch (Exception ex)
             {
-                LogError("clsAnalysisResourcesMultiAlign.BuildMultiAlignInputTextFile, Error buliding the input .txt file " +
+                LogError("AnalysisResourcesMultiAlign.BuildMultiAlignInputTextFile, Error buliding the input .txt file " +
                          "(" + INPUT_FILENAME + "): " + ex.Message);
                 blnSuccess = false;
             }

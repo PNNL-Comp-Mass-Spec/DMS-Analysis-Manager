@@ -9,7 +9,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
     /// <summary>
     /// Class for running the MultiAlign Aggregator
     /// </summary>
-    public class clsAnalysisToolRunnerMultiAlignAggregator : clsAnalysisToolRunnerBase
+    public class AnalysisToolRunnerMultiAlignAggregator : AnalysisToolRunnerBase
     {
         protected const float PROGRESS_PCT_MULTIALIGN_START = 1;
         protected const float PROGRESS_PCT_MULTIALIGN_DONE = 99;
@@ -110,8 +110,8 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 
                 // Override the output directory name and the dataset name (since this is a dataset aggregation job)
                 mResultsDirectoryName = mJobParams.GetParam("StepOutputFolderName");
-                mDatasetName = mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME);
-                mJobParams.SetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME, mResultsDirectoryName);
+                mDatasetName = mJobParams.GetParam(AnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME);
+                mJobParams.SetParam(AnalysisJob.STEP_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME, mResultsDirectoryName);
 
                 var resultsDirectoryCreated = MakeResultsDirectory();
                 if (!resultsDirectoryCreated)
@@ -162,7 +162,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 
             try
             {
-                var oMultiAlignMage = new clsMultiAlignMage(mJobParams, mMgrParams, mStatusTools);
+                var oMultiAlignMage = new MultiAlignMage(mJobParams, mMgrParams, mStatusTools);
                 RegisterEvents(oMultiAlignMage);
 
                 bSuccess = oMultiAlignMage.Run(sMultiAlignConsolePath);

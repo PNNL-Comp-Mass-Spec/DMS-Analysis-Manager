@@ -8,7 +8,7 @@ namespace AnalysisManagerBase
     /// <summary>
     /// XML Utilities
     /// </summary>
-    public static class clsXMLUtils
+    public static class XMLUtils
     {
         /// <summary>
         /// Extract the string value inside an XML element

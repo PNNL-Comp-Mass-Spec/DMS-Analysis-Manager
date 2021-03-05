@@ -6,7 +6,7 @@ using PRISMDatabaseUtils;
 
 namespace AnalysisManager_Ape_PlugIn
 {
-    internal class clsApeAMGetQRollupResults : clsApeAMBase
+    internal class ApeAMGetQRollupResults : ApeAMBase
     {
         #region Member Variables
 
@@ -19,7 +19,7 @@ namespace AnalysisManager_Ape_PlugIn
         /// </summary>
         /// <param name="jobParams"></param>
         /// <param name="mgrParams"></param>
-        public clsApeAMGetQRollupResults(IJobParams jobParams, IMgrParams mgrParams) : base(jobParams, mgrParams)
+        public ApeAMGetQRollupResults(IJobParams jobParams, IMgrParams mgrParams) : base(jobParams, mgrParams)
         {
         }
 
@@ -150,7 +150,7 @@ namespace AnalysisManager_Ape_PlugIn
             }
             else
             {
-                OnStatusEvent("Retrieving " + qidCount + " QIDs in clsApeAMGetQRollupResults");
+                OnStatusEvent("Retrieving " + qidCount + " QIDs in ApeAMGetQRollupResults");
                 OnDebugEvent("QID list: " + qidList);
             }
 

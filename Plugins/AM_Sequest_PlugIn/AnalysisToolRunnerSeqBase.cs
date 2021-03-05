@@ -21,9 +21,9 @@ namespace AnalysisManagerSequestPlugin
     /// </summary>
     /// <remarks>
     /// Note that MakeOUTFiles() in this class calls a standalone Sequest.Exe program for groups of DTA files
-    /// See clsAnalysisToolRunnerSeqCluster for the code used to interface with the Sequest cluster program
+    /// See AnalysisToolRunnerSeqCluster for the code used to interface with the Sequest cluster program
     /// </remarks>
-    public class clsAnalysisToolRunnerSeqBase : clsAnalysisToolRunnerBase
+    public class AnalysisToolRunnerSeqBase : AnalysisToolRunnerBase
     {
         #region "Constants"
 
@@ -101,7 +101,7 @@ namespace AnalysisManagerSequestPlugin
             }
             catch (Exception ex)
             {
-                LogError("clsAnalysisToolRunnerSeqBase.RunTool(), Exception making OUT files", ex);
+                LogError("AnalysisToolRunnerSeqBase.RunTool(), Exception making OUT files", ex);
                 processingError = true;
                 eResult = CloseOutType.CLOSEOUT_FAILED;
             }
@@ -158,7 +158,7 @@ namespace AnalysisManagerSequestPlugin
             if (!RemoveNonResultServerFiles())
             {
                 // Do not treat this as a fatal error
-                LogWarning("Error deleting .tmp files in folder " + mJobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH));
+                LogWarning("Error deleting .tmp files in folder " + mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH));
             }
 
             return eReturnCode;
@@ -325,7 +325,7 @@ namespace AnalysisManagerSequestPlugin
                 }
 
                 // Now split the DTA file, skipping DTAs corresponding to .Out files that were copied over
-                var fileSplitter = new clsSplitCattedFiles();
+                var fileSplitter = new SplitCattedFiles();
 
                 var success = fileSplitter.SplitCattedDTAsOnly(mDatasetName, mWorkDir, dtaFilesToSkip);
 
@@ -474,7 +474,7 @@ namespace AnalysisManagerSequestPlugin
             {
                 if (mDebugLevel >= 1)
                 {
-                    LogDebug("clsAnalysisToolRunnerSeqBase.MakeOutFiles: Closing FileList" + processorIndex);
+                    LogDebug("AnalysisToolRunnerSeqBase.MakeOutFiles: Closing FileList" + processorIndex);
                 }
                 try
                 {
@@ -483,7 +483,7 @@ namespace AnalysisManagerSequestPlugin
                 }
                 catch (Exception ex)
                 {
-                    LogError("clsAnalysisToolRunnerSeqBase.MakeOutFiles: " + ex.Message + "; " + clsGlobal.GetExceptionStackTrace(ex));
+                    LogError("AnalysisToolRunnerSeqBase.MakeOutFiles: " + ex.Message + "; " + Global.GetExceptionStackTrace(ex));
                 }
             }
 
@@ -491,7 +491,7 @@ namespace AnalysisManagerSequestPlugin
             for (var processorIndex = 0; processorIndex <= progRunners.GetUpperBound(0); processorIndex++)
             {
                 progRunners[processorIndex].StartAndMonitorProgram();
-                clsGlobal.IdleLoop(1);
+                Global.IdleLoop(1);
             }
 
             // Wait for completion
@@ -500,7 +500,7 @@ namespace AnalysisManagerSequestPlugin
             do
             {
                 // Wait 5 seconds
-                clsGlobal.IdleLoop(5);
+                Global.IdleLoop(5);
 
                 CalculateNewStatus();
                 UpdateStatusRunning(mProgress, mDtaCount);
@@ -510,7 +510,7 @@ namespace AnalysisManagerSequestPlugin
                     if (mDebugLevel > 4)
                     {
                         LogDebug(
-                            "clsAnalysisToolRunnerSeqBase.MakeOutFiles(): progRunners(" + processorIndex + ").State = " +
+                            "AnalysisToolRunnerSeqBase.MakeOutFiles(): progRunners(" + processorIndex + ").State = " +
                             progRunners[processorIndex].State);
                     }
                     if (progRunners[processorIndex].State != 0)
@@ -518,7 +518,7 @@ namespace AnalysisManagerSequestPlugin
                         if (mDebugLevel > 4)
                         {
                             LogDebug(
-                                "clsAnalysisToolRunnerSeqBase.MakeOutFiles()_2: progRunners(" + processorIndex + ").State = " +
+                                "AnalysisToolRunnerSeqBase.MakeOutFiles()_2: progRunners(" + processorIndex + ").State = " +
                                 progRunners[processorIndex].State);
                         }
                         if ((int)progRunners[processorIndex].State != 10)
@@ -526,7 +526,7 @@ namespace AnalysisManagerSequestPlugin
                             if (mDebugLevel > 4)
                             {
                                 LogDebug(
-                                    "clsAnalysisToolRunnerSeqBase.MakeOutFiles()_3: progRunners(" + processorIndex + ").State = " +
+                                    "AnalysisToolRunnerSeqBase.MakeOutFiles()_3: progRunners(" + processorIndex + ").State = " +
                                     progRunners[processorIndex].State);
                             }
                             stillRunning = true;
@@ -536,7 +536,7 @@ namespace AnalysisManagerSequestPlugin
                         if (mDebugLevel >= 1)
                         {
                             LogDebug(
-                                "clsAnalysisToolRunnerSeqBase.MakeOutFiles()_4: progRunners(" + processorIndex + ").State = " +
+                                "AnalysisToolRunnerSeqBase.MakeOutFiles()_4: progRunners(" + processorIndex + ").State = " +
                                 progRunners[processorIndex].State);
                         }
                     }
@@ -548,7 +548,7 @@ namespace AnalysisManagerSequestPlugin
             // Clean up our object references
             if (mDebugLevel >= 1)
             {
-                LogDebug("clsAnalysisToolRunnerSeqBase.MakeOutFiles(), cleaning up progRunner object references");
+                LogDebug("AnalysisToolRunnerSeqBase.MakeOutFiles(), cleaning up progRunner object references");
             }
             for (var processorIndex = 0; processorIndex <= progRunners.GetUpperBound(0); processorIndex++)
             {
@@ -565,7 +565,7 @@ namespace AnalysisManagerSequestPlugin
             // Verify out file creation
             if (mDebugLevel >= 1)
             {
-                LogDebug("clsAnalysisToolRunnerSeqBase.MakeOutFiles(), verifying out file creation");
+                LogDebug("AnalysisToolRunnerSeqBase.MakeOutFiles(), verifying out file creation");
             }
 
             if (GetOUTFileCountRemaining() < 1)
@@ -628,7 +628,7 @@ namespace AnalysisManagerSequestPlugin
                 while (System.Threading.Interlocked.Read(ref mOutFileHandlerInUse) > 0)
                 {
                     // Need to wait for ProcessCandidateOutFiles to exit
-                    clsGlobal.IdleLoop(3);
+                    Global.IdleLoop(3);
 
                     if (DateTime.UtcNow.Subtract(interlockWaitStartTime).TotalMinutes >= MAX_INTERLOCK_WAIT_TIME_MINUTES)
                     {
@@ -674,7 +674,7 @@ namespace AnalysisManagerSequestPlugin
                 {
                     LogWarning("Error appending .out files to the _out.txt.tmp file: " + ex.Message);
                     // Delay for a random length between 15 and 30 seconds
-                    clsGlobal.IdleLoop(oRandom.Next(15, 30));
+                    Global.IdleLoop(oRandom.Next(15, 30));
                     success = false;
                 }
 
@@ -1050,7 +1050,7 @@ namespace AnalysisManagerSequestPlugin
                         LogError(processingMsg);
 
                         // Update the evaluation message and evaluation code
-                        // These will be used by method CloseTask in clsAnalysisJob
+                        // These will be used by method CloseTask in AnalysisJob
                         //
                         // An evaluation code with bit ERROR_CODE_A set will result in DMS_Pipeline DB views
                         //  V_Job_Steps_Stale_and_Failed and V_Sequest_Cluster_Warnings showing this message:
@@ -1071,7 +1071,7 @@ namespace AnalysisManagerSequestPlugin
                             mEvalCode |= ERROR_CODE_B;
 
                             // Update the evaluation message and evaluation code
-                            // These will be used by method CloseTask in clsAnalysisJob
+                            // These will be used by method CloseTask in AnalysisJob
                             // An evaluation code with bit ERROR_CODE_A set will result in view V_Sequest_Cluster_Warnings in the DMS_Pipeline DB showing this message:
                             //  "SEQUEST node count is less than the expected value"
                         }
@@ -1318,7 +1318,7 @@ namespace AnalysisManagerSequestPlugin
             {
                 mMessage = "Exception zipping concat out file";
                 var Msg = mMessage + ", job " + mJob + ", step " + mJobParams.GetParam("Step") + ": " + ex.Message + "; " +
-                             clsGlobal.GetExceptionStackTrace(ex);
+                             Global.GetExceptionStackTrace(ex);
                 LogError(Msg);
                 return false;
             }

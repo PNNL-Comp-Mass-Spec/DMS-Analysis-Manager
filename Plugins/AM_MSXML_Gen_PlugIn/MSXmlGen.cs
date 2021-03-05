@@ -5,7 +5,7 @@ using System.IO;
 
 namespace AnalysisManagerMsXmlGenPlugIn
 {
-    public abstract class clsMSXmlGen : EventNotifier
+    public abstract class MSXmlGen : EventNotifier
     {
         // Ignore Spelling: mgf
 
@@ -25,10 +25,10 @@ namespace AnalysisManagerMsXmlGenPlugIn
         protected readonly string mWorkDir;
         protected readonly string mProgramPath;
         private readonly string mDatasetName;
-        protected readonly clsAnalysisResources.eRawDataTypeConstants mRawDataType;
+        protected readonly AnalysisResources.eRawDataTypeConstants mRawDataType;
         protected string mOutputFileName = string.Empty;
 
-        private readonly clsAnalysisResources.MSXMLOutputTypeConstants mOutputType;
+        private readonly AnalysisResources.MSXMLOutputTypeConstants mOutputType;
 
         protected readonly bool mCentroidMS1;
         protected readonly bool mCentroidMS2;
@@ -81,12 +81,12 @@ namespace AnalysisManagerMsXmlGenPlugIn
         /// <param name="eOutputType"></param>
         /// <param name="centroidMSXML"></param>
         /// <param name="jobParams"></param>
-        protected clsMSXmlGen(
+        protected MSXmlGen(
             string workDir,
             string programPath,
             string datasetName,
-            clsAnalysisResources.eRawDataTypeConstants rawDataType,
-            clsAnalysisResources.MSXMLOutputTypeConstants eOutputType,
+            AnalysisResources.eRawDataTypeConstants rawDataType,
+            AnalysisResources.MSXMLOutputTypeConstants eOutputType,
             bool centroidMSXML,
             IJobParams jobParams)
         {
@@ -113,12 +113,12 @@ namespace AnalysisManagerMsXmlGenPlugIn
         /// <param name="centroidMS1"></param>
         /// <param name="centroidMS2"></param>
         /// <param name="jobParams"></param>
-        protected clsMSXmlGen(
+        protected MSXmlGen(
             string workDir,
             string programPath,
             string datasetName,
-            clsAnalysisResources.eRawDataTypeConstants rawDataType,
-            clsAnalysisResources.MSXMLOutputTypeConstants eOutputType,
+            AnalysisResources.eRawDataTypeConstants rawDataType,
+            AnalysisResources.MSXMLOutputTypeConstants eOutputType,
             bool centroidMS1,
             bool centroidMS2,
             IJobParams jobParams)
@@ -145,34 +145,34 @@ namespace AnalysisManagerMsXmlGenPlugIn
         {
             switch (mRawDataType)
             {
-                case clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile:
-                    SourceFilePath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_RAW_EXTENSION);
+                case AnalysisResources.eRawDataTypeConstants.ThermoRawFile:
+                    SourceFilePath = Path.Combine(mWorkDir, mDatasetName + AnalysisResources.DOT_RAW_EXTENSION);
                     break;
 
-                case clsAnalysisResources.eRawDataTypeConstants.AgilentDFolder:
-                case clsAnalysisResources.eRawDataTypeConstants.BrukerTOFBaf:
-                case clsAnalysisResources.eRawDataTypeConstants.BrukerFTFolder:
-                    SourceFilePath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_D_EXTENSION);
+                case AnalysisResources.eRawDataTypeConstants.AgilentDFolder:
+                case AnalysisResources.eRawDataTypeConstants.BrukerTOFBaf:
+                case AnalysisResources.eRawDataTypeConstants.BrukerFTFolder:
+                    SourceFilePath = Path.Combine(mWorkDir, mDatasetName + AnalysisResources.DOT_D_EXTENSION);
                     break;
 
-                case clsAnalysisResources.eRawDataTypeConstants.mzXML:
-                    SourceFilePath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_MZXML_EXTENSION);
+                case AnalysisResources.eRawDataTypeConstants.mzXML:
+                    SourceFilePath = Path.Combine(mWorkDir, mDatasetName + AnalysisResources.DOT_MZXML_EXTENSION);
                     break;
 
-                case clsAnalysisResources.eRawDataTypeConstants.mzML:
-                    SourceFilePath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_MZML_EXTENSION);
+                case AnalysisResources.eRawDataTypeConstants.mzML:
+                    SourceFilePath = Path.Combine(mWorkDir, mDatasetName + AnalysisResources.DOT_MZML_EXTENSION);
                     break;
 
-                case clsAnalysisResources.eRawDataTypeConstants.UIMF:
+                case AnalysisResources.eRawDataTypeConstants.UIMF:
                     var processingAgilentDotD = JobParams.GetJobParameter("MSXMLGenerator", "ProcessingAgilentDotD", false);
 
                     if (processingAgilentDotD)
                     {
-                        SourceFilePath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_D_EXTENSION);
+                        SourceFilePath = Path.Combine(mWorkDir, mDatasetName + AnalysisResources.DOT_D_EXTENSION);
                     }
                     else
                     {
-                        SourceFilePath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_UIMF_EXTENSION);
+                        SourceFilePath = Path.Combine(mWorkDir, mDatasetName + AnalysisResources.DOT_UIMF_EXTENSION);
                     }
 
                     break;
@@ -185,13 +185,13 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
             var msXmlFormat = mOutputType switch
             {
-                clsAnalysisResources.MSXMLOutputTypeConstants.mzXML => MZXML_FILE_FORMAT,
-                clsAnalysisResources.MSXMLOutputTypeConstants.mzML => MZML_FILE_FORMAT,
-                clsAnalysisResources.MSXMLOutputTypeConstants.mgf => MGF_FILE_FORMAT,
+                AnalysisResources.MSXMLOutputTypeConstants.mzXML => MZXML_FILE_FORMAT,
+                AnalysisResources.MSXMLOutputTypeConstants.mzML => MZML_FILE_FORMAT,
+                AnalysisResources.MSXMLOutputTypeConstants.mgf => MGF_FILE_FORMAT,
                 _ => throw new ArgumentOutOfRangeException(nameof(mOutputType), "Unsupported output type: " + mRawDataType)
             };
 
-            var cmdRunner = new clsRunDosProgram(Path.GetDirectoryName(mProgramPath));
+            var cmdRunner = new RunDosProgram(Path.GetDirectoryName(mProgramPath));
             cmdRunner.ErrorEvent += CmdRunner_ErrorEvent;
             cmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
@@ -290,7 +290,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 return false;
             }
 
-            if (mOutputType == clsAnalysisResources.MSXMLOutputTypeConstants.mgf)
+            if (mOutputType == AnalysisResources.MSXMLOutputTypeConstants.mgf)
             {
                 // Do not try to validate it
                 return true;
@@ -305,7 +305,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
             return true;
         }
 
-        protected abstract string GetOutputFileName(string msXmlFormat, string rawFilePath, clsAnalysisResources.eRawDataTypeConstants rawDataType);
+        protected abstract string GetOutputFileName(string msXmlFormat, string rawFilePath, AnalysisResources.eRawDataTypeConstants rawDataType);
 
         public void LogCreationStatsSourceToMsXml(DateTime startTimeUTC, string sourceFilePath, string msXmlFilePath)
         {
@@ -335,13 +335,13 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 var sourceFile = new FileInfo(sourceFilePath);
                 if (sourceFile.Exists)
                 {
-                    sourceFileSizeMB = clsGlobal.BytesToMB(sourceFile.Length);
+                    sourceFileSizeMB = Global.BytesToMB(sourceFile.Length);
                 }
 
                 var msXmlFile = new FileInfo(msXmlFilePath);
                 if (msXmlFile.Exists)
                 {
-                    msXmlSizeMB = clsGlobal.BytesToMB(msXmlFile.Length);
+                    msXmlSizeMB = Global.BytesToMB(msXmlFile.Length);
                 }
 
                 var message = "MsXml creation time = " + totalMinutes.ToString("0.00") + " minutes";
@@ -369,7 +369,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
         protected abstract bool SetupTool();
 
-        private bool ValidateMsXmlFile(clsAnalysisResources.MSXMLOutputTypeConstants eOutputType, string outputFilePath)
+        private bool ValidateMsXmlFile(AnalysisResources.MSXMLOutputTypeConstants eOutputType, string outputFilePath)
         {
             // Open the .mzXML or .mzML file and look for </mzXML> or </indexedmzML> at the end of the file
 
@@ -405,7 +405,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
                 switch (eOutputType)
                 {
-                    case clsAnalysisResources.MSXMLOutputTypeConstants.mzXML:
+                    case AnalysisResources.MSXMLOutputTypeConstants.mzXML:
                         if (mostRecentLine != "</mzXML>")
                         {
                             mErrorMessage = "File " + outputFile.Name + " is corrupt; it does not end in </mzXML>";
@@ -421,7 +421,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                         }
                         break;
 
-                    case clsAnalysisResources.MSXMLOutputTypeConstants.mzML:
+                    case AnalysisResources.MSXMLOutputTypeConstants.mzML:
                         if (mostRecentLine != "</indexedmzML>")
                         {
                             mErrorMessage = "File " + outputFile.Name + " is corrupt; it does not end in </indexedmzML>";

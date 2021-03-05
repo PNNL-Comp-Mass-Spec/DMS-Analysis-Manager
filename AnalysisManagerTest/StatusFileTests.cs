@@ -24,13 +24,13 @@ namespace AnalysisManagerTest
         public void TestWriteStatusFile(string statusFileName, bool offlineMode, bool linuxOS)
         {
             if (offlineMode || linuxOS)
-                clsGlobal.EnableOfflineMode(linuxOS);
+                Global.EnableOfflineMode(linuxOS);
 
             var statusFile = new FileInfo(statusFileName);
             const int debugLevel = 2;
 
-            // clsStatusTools inherits EventNotifier, which will show messages at the console if an event does not have a subscriber
-            var statusTools = new clsStatusFile(statusFile.FullName, debugLevel) {
+            // StatusTools inherits EventNotifier, which will show messages at the console if an event does not have a subscriber
+            var statusTools = new StatusFile(statusFile.FullName, debugLevel) {
                 WriteToConsoleIfNoListener = true
             };
 

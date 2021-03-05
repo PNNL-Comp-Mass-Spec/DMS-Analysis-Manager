@@ -13,12 +13,12 @@ using System.IO;
 
 namespace DTASpectraFileGen
 {
-    public class clsDtaGenRawConverter : clsDtaGenThermoRaw
+    public class DtaGenRawConverter : DtaGenThermoRaw
     {
         /// <summary>
         /// Returns the default path to the DTA generator tool
         /// </summary>
-        /// <remarks>The default path can be overridden by updating mDtaToolNameLoc using clsDtaGen.UpdateDtaToolNameLoc</remarks>
+        /// <remarks>The default path can be overridden by updating mDtaToolNameLoc using DtaGen.UpdateDtaToolNameLoc</remarks>
         protected override string ConstructDTAToolPath()
         {
             var rawConverterDir = mMgrParams.GetParam("RawConverterProgLoc");
@@ -71,7 +71,7 @@ namespace DTASpectraFileGen
             {
                 var rawDataTypeName = mJobParams.GetJobParameter("RawDataType", "");
 
-                var mgfConverter = new clsMGFConverter(mDebugLevel, mWorkDir)
+                var mgfConverter = new MGFConverter(mDebugLevel, mWorkDir)
                 {
                     IncludeExtraInfoOnParentIonLine = true,
                     MinimumIonsPerSpectrum = mJobParams.GetJobParameter("IonCounts", "IonCount", 0)
@@ -79,7 +79,7 @@ namespace DTASpectraFileGen
 
                 RegisterEvents(mgfConverter);
 
-                var rawDataType = clsAnalysisResources.GetRawDataType(rawDataTypeName);
+                var rawDataType = AnalysisResources.GetRawDataType(rawDataTypeName);
                 var success = mgfConverter.ConvertMGFtoDTA(rawDataType, mDatasetName);
 
                 if (!success)
@@ -105,7 +105,7 @@ namespace DTASpectraFileGen
         /// </summary>
         /// <param name="rawDataType">Raw data file type</param>
         /// <returns>TRUE for success; FALSE for failure</returns>
-        private bool ConvertRawToMGF(clsAnalysisResources.eRawDataTypeConstants rawDataType)
+        private bool ConvertRawToMGF(AnalysisResources.eRawDataTypeConstants rawDataType)
         {
             try
             {
@@ -119,8 +119,8 @@ namespace DTASpectraFileGen
                 // Construct the path to the .raw file
                 switch (rawDataType)
                 {
-                    case clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile:
-                        rawFilePath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_RAW_EXTENSION);
+                    case AnalysisResources.eRawDataTypeConstants.ThermoRawFile:
+                        rawFilePath = Path.Combine(mWorkDir, mDatasetName + AnalysisResources.DOT_RAW_EXTENSION);
                         break;
                     default:
                         mErrMsg = "Raw data file type not supported: " + rawDataType;
@@ -139,7 +139,7 @@ namespace DTASpectraFileGen
                 }
 
                 // Set up command
-                var arguments = " " + clsGlobal.PossiblyQuotePath(rawFilePath) +
+                var arguments = " " + Global.PossiblyQuotePath(rawFilePath) +
                                 " --mgf";
 
                 if (mDebugLevel > 0)
@@ -151,7 +151,7 @@ namespace DTASpectraFileGen
                 // The working directory must be the directory that has RawConverter.exe
                 // Otherwise, the program creates the .mgf file in C:\  (and will likely get Access Denied)
 
-                mCmdRunner = new clsRunDosProgram(rawConverter.Directory.FullName, mDebugLevel)
+                mCmdRunner = new RunDosProgram(rawConverter.Directory.FullName, mDebugLevel)
                 {
                     CreateNoWindow = true,
                     CacheStandardOutput = true,

@@ -74,12 +74,12 @@ namespace AnalysisManagerProg
                 }
 
                 mTraceMode = options.TraceMode;
-                if (!clsGlobal.OfflineMode)
+                if (!Global.OfflineMode)
                 {
-                    if (!clsGlobal.LinuxOS && options.LinuxOSMode)
+                    if (!Global.LinuxOS && options.LinuxOSMode)
                         EnableOfflineMode(true);
 
-                    if (!clsGlobal.OfflineMode && options.OfflineMode)
+                    if (!Global.OfflineMode && options.OfflineMode)
                         EnableOfflineMode();
                 }
 
@@ -88,7 +88,7 @@ namespace AnalysisManagerProg
                 if (options.ShowVersionOnly)
                 {
                     DisplayVersion();
-                    clsGlobal.IdleLoop(0.5);
+                    Global.IdleLoop(0.5);
                     return 0;
                 }
 
@@ -123,7 +123,7 @@ namespace AnalysisManagerProg
                     }
                     catch (Exception ex)
                     {
-                        LogTools.LogError("Exception calling clsCodeTest", ex);
+                        LogTools.LogError("Exception calling CodeTest", ex);
                     }
 
                     ShowTrace("Exiting the application");
@@ -141,9 +141,9 @@ namespace AnalysisManagerProg
                 }
 
                 // Initiate automated analysis
-                ShowTrace("Instantiating clsMainProcess");
+                ShowTrace("Instantiating MainProcess");
 
-                var mainProcess = new clsMainProcess(options)
+                var mainProcess = new MainProcess(options)
                 {
                     DisableMessageQueue = options.DisableMessageQueue,
                     DisableMyEMSL = options.DisableMyEMSL,
@@ -204,7 +204,7 @@ namespace AnalysisManagerProg
         /// <remarks>When offline, does not contact any databases or remote shares</remarks>
         private static void EnableOfflineMode()
         {
-            clsMainProcess.EnableOfflineMode(clsGlobal.LinuxOS);
+            MainProcess.EnableOfflineMode(Global.LinuxOS);
         }
 
         /// <summary>
@@ -214,14 +214,14 @@ namespace AnalysisManagerProg
         /// <remarks>When offline, does not contact any databases or remote shares</remarks>
         private static void EnableOfflineMode(bool runningLinux)
         {
-            clsMainProcess.EnableOfflineMode(runningLinux);
+            MainProcess.EnableOfflineMode(runningLinux);
         }
 
         private static void ShowTrace(string message)
         {
             if (mTraceMode)
             {
-                clsMainProcess.ShowTraceMessage(message);
+                MainProcess.ShowTraceMessage(message);
             }
         }
     }

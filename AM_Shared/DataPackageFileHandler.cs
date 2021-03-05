@@ -17,7 +17,7 @@ namespace AnalysisManagerBase
     /// <summary>
     /// Data package file handler
     /// </summary>
-    public class clsDataPackageFileHandler : EventNotifier
+    public class DataPackageFileHandler : EventNotifier
     {
         // Ignore Spelling: cryptum, kv
 
@@ -103,14 +103,14 @@ namespace AnalysisManagerBase
 
         #region "Module variables"
 
-        private readonly clsAnalysisResources mAnalysisResources;
+        private readonly AnalysisResources mAnalysisResources;
 
         /// <summary>
         /// Instance of IDBTools
         /// </summary>
         private readonly IDBTools mDbTools;
 
-        private readonly clsDataPackageInfoLoader mDataPackageInfoLoader;
+        private readonly DataPackageInfoLoader mDataPackageInfoLoader;
 
         #endregion
 
@@ -120,11 +120,11 @@ namespace AnalysisManagerBase
         /// <param name="dbTools">Instance of IDBTools</param>
         /// <param name="dataPackageID">Data package ID</param>
         /// <param name="resourcesClass">Resource class</param>
-        public clsDataPackageFileHandler(IDBTools dbTools, int dataPackageID, clsAnalysisResources resourcesClass)
+        public DataPackageFileHandler(IDBTools dbTools, int dataPackageID, AnalysisResources resourcesClass)
         {
             mAnalysisResources = resourcesClass;
 
-            mDataPackageInfoLoader = new clsDataPackageInfoLoader(dbTools, dataPackageID);
+            mDataPackageInfoLoader = new DataPackageInfoLoader(dbTools, dataPackageID);
 
             mDbTools = dbTools;
         }
@@ -142,7 +142,7 @@ namespace AnalysisManagerBase
         /// <remarks>Uses the highest job step to determine the input directory, meaning the .mzML.gz file returned will be the one used by MS-GF+</remarks>
         private string FindMzMLForJob(string datasetName, int job, string stepToolFilter, FileSystemInfo workDirInfo)
         {
-            if (clsGlobal.OfflineMode)
+            if (Global.OfflineMode)
             {
                 throw new Exception("FindMzMLForJob does not support offline mode");
             }
@@ -217,7 +217,7 @@ namespace AnalysisManagerBase
                 // ReSharper disable once CommentTypo
                 // For example: \\proto-6\QExactP02\2016_2\Biodiversity_A_cryptum_FeTSB\Mz_Refinery_1_195_501572
 
-                if (datasetDirectoryPath.StartsWith(clsAnalysisResources.MYEMSL_PATH_FLAG))
+                if (datasetDirectoryPath.StartsWith(AnalysisResources.MYEMSL_PATH_FLAG))
                 {
                     // File found in MyEMSL
                     // Determine the MyEMSL FileID by searching for the expected file in mMyEMSLUtilities.RecentlyFoundMyEMSLFiles
@@ -382,7 +382,7 @@ namespace AnalysisManagerBase
         /// Returns an empty string if no recent unzipped files
         /// </summary>
         /// <param name="dotNetTools"></param>
-        private string MostRecentUnzippedFile(clsDotNetZipTools dotNetTools)
+        private string MostRecentUnzippedFile(DotNetZipTools dotNetTools)
         {
             if (dotNetTools.MostRecentUnzippedFiles.Count > 0)
             {
@@ -399,7 +399,7 @@ namespace AnalysisManagerBase
         /// <param name="dataPkgJob"></param>
         /// <param name="sourceFile"></param>
         /// <returns>Full path to the destination file path</returns>
-        private string MoveFileToJobSubdirectory(FileSystemInfo workDirInfo, clsDataPackageJobInfo dataPkgJob, FileInfo sourceFile)
+        private string MoveFileToJobSubdirectory(FileSystemInfo workDirInfo, DataPackageJobInfo dataPkgJob, FileInfo sourceFile)
         {
             var jobSubDirectory = new DirectoryInfo(Path.Combine(workDirInfo.FullName, "Job" + dataPkgJob.Job));
             if (!jobSubDirectory.Exists)
@@ -421,7 +421,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="mzIdFileToInspect"></param>
         /// <param name="dotNetTools"></param>
-        private bool MSGFPlusSearchUsedMzML(string mzIdFileToInspect, clsDotNetZipTools dotNetTools)
+        private bool MSGFPlusSearchUsedMzML(string mzIdFileToInspect, DotNetZipTools dotNetTools)
         {
             try
             {
@@ -459,7 +459,7 @@ namespace AnalysisManagerBase
                     return false;
                 }
 
-                if (mzidFilePathLocal.EndsWith(clsAnalysisResources.DOT_GZ_EXTENSION, StringComparison.OrdinalIgnoreCase))
+                if (mzidFilePathLocal.EndsWith(AnalysisResources.DOT_GZ_EXTENSION, StringComparison.OrdinalIgnoreCase))
                 {
                     using Stream unzippedStream = new GZipStream(new FileStream(mzidFilePathLocal, FileMode.Open, FileAccess.Read, FileShare.Read), CompressionMode.Decompress);
                     using var sourceFileReader = new StreamReader(unzippedStream, Encoding.GetEncoding("ISO-8859-1"));
@@ -512,8 +512,8 @@ namespace AnalysisManagerBase
                 }
 
                 var spectraDataFileName = Path.GetFileName(reader.Value);
-                const string DOT_MZML = clsAnalysisResources.DOT_MZML_EXTENSION;
-                const string DOT_MZML_GZ = clsAnalysisResources.DOT_MZML_EXTENSION + clsAnalysisResources.DOT_GZ_EXTENSION;
+                const string DOT_MZML = AnalysisResources.DOT_MZML_EXTENSION;
+                const string DOT_MZML_GZ = AnalysisResources.DOT_MZML_EXTENSION + AnalysisResources.DOT_GZ_EXTENSION;
 
                 return spectraDataFileName.EndsWith(DOT_MZML, StringComparison.OrdinalIgnoreCase) ||
                        spectraDataFileName.EndsWith(DOT_MZML_GZ, StringComparison.OrdinalIgnoreCase);
@@ -535,9 +535,9 @@ namespace AnalysisManagerBase
         private bool ProcessOnePeptideHitJob(
             udtDataPackageRetrievalOptionsType retrievalOptions,
             IDictionary<int, udtDataPackageJobMetadata> cachedJobMetadata,
-            clsDotNetZipTools dotNetTools,
+            DotNetZipTools dotNetTools,
             FileSystemInfo workDirInfo,
-            clsDataPackageJobInfo dataPkgJob)
+            DataPackageJobInfo dataPkgJob)
         {
             try
             {
@@ -806,7 +806,7 @@ namespace AnalysisManagerBase
 
                     // Typically only use FindDataFile() for the first file in filesToGet; we will assume the other files are in that directory
                     // However, if the file resides in MyEMSL, we need to call FindDataFile for every new file because FindDataFile will append the MyEMSL File ID for each file
-                    if (string.IsNullOrEmpty(sourceDirectoryPath) || sourceDirectoryPath.StartsWith(clsAnalysisResources.MYEMSL_PATH_FLAG))
+                    if (string.IsNullOrEmpty(sourceDirectoryPath) || sourceDirectoryPath.StartsWith(AnalysisResources.MYEMSL_PATH_FLAG))
                     {
                         sourceDirectoryPath = mAnalysisResources.FileSearch.FindDataFile(sourceFilename);
 
@@ -830,7 +830,7 @@ namespace AnalysisManagerBase
                         logMsgTypeIfNotFound = BaseLogger.LogLevels.ERROR;
                     }
 
-                    if (retrievalOptions.CreateJobPathFiles && !sourceDirectoryPath.StartsWith(clsAnalysisResources.MYEMSL_PATH_FLAG))
+                    if (retrievalOptions.CreateJobPathFiles && !sourceDirectoryPath.StartsWith(AnalysisResources.MYEMSL_PATH_FLAG))
                     {
                         var sourceFilePath = Path.Combine(sourceDirectoryPath, sourceFilename);
                         var alternateFileName = clsPHRPReader.AutoSwitchToLegacyMSGFDBIfRequired(sourceFilePath, "Dataset_msgfdb.txt");
@@ -922,8 +922,8 @@ namespace AnalysisManagerBase
             udtDataPackageRetrievalOptionsType retrievalOptions,
             ICollection<string> candidateMzIdFiles,
             IDictionary<int, udtDataPackageJobMetadata> cachedJobMetadata,
-            clsDotNetZipTools dotNetTools,
-            clsDataPackageJobInfo dataPkgJob,
+            DotNetZipTools dotNetTools,
+            DataPackageJobInfo dataPkgJob,
             FileSystemInfo workDirInfo,
             string localDirectoryPath,
             ICollection<string> foundFiles)
@@ -976,7 +976,7 @@ namespace AnalysisManagerBase
                 if (string.IsNullOrEmpty(mzMLFilePathRemote))
                     return true;
 
-                if (retrievalOptions.CreateJobPathFiles && !mzMLFilePathRemote.StartsWith(clsAnalysisResources.MYEMSL_PATH_FLAG))
+                if (retrievalOptions.CreateJobPathFiles && !mzMLFilePathRemote.StartsWith(AnalysisResources.MYEMSL_PATH_FLAG))
                 {
                     if (!foundFiles.Contains(mzMLFilePathRemote))
                     {
@@ -1031,7 +1031,7 @@ namespace AnalysisManagerBase
 
                     // The retrieved file is probably named Dataset_dta.zip
                     // We'll add it to foundFiles, but the exact name is not critical
-                    foundFiles.Add(Path.Combine(workDirInfo.FullName, dataPkgJob.Dataset + clsAnalysisResources.CDTA_ZIPPED_EXTENSION));
+                    foundFiles.Add(Path.Combine(workDirInfo.FullName, dataPkgJob.Dataset + AnalysisResources.CDTA_ZIPPED_EXTENSION));
                 }
             }
 
@@ -1096,7 +1096,7 @@ namespace AnalysisManagerBase
         /// <returns>True if success, false if an error</returns>
         public bool RetrieveDataPackagePeptideHitJobPHRPFiles(
             udtDataPackageRetrievalOptionsType retrievalOptions,
-            out List<clsDataPackageJobInfo> dataPackagePeptideHitJobs,
+            out List<DataPackageJobInfo> dataPackagePeptideHitJobs,
             float progressPercentAtStart,
             float progressPercentAtFinish)
         {
@@ -1109,15 +1109,15 @@ namespace AnalysisManagerBase
             var datasetRawFilePaths = new Dictionary<string, string>();
 
             // This list tracks the info for the jobs associated with this aggregation job's data package
-            dataPackagePeptideHitJobs = new List<clsDataPackageJobInfo>();
+            dataPackagePeptideHitJobs = new List<DataPackageJobInfo>();
 
             // This dictionary tracks the datasets associated with this aggregation job's data package
-            Dictionary<int, clsDataPackageDatasetInfo> dataPackageDatasets;
+            Dictionary<int, DataPackageDatasetInfo> dataPackageDatasets;
 
             var debugLevel = mAnalysisResources.DebugLevel;
             var workingDir = mAnalysisResources.WorkDir;
 
-            if (clsGlobal.OfflineMode)
+            if (Global.OfflineMode)
             {
                 throw new Exception("RetrieveDataPackagePeptideHitJobPHRPFiles does not support offline mode");
             }
@@ -1144,10 +1144,10 @@ namespace AnalysisManagerBase
             // The values are KeyValuePairs of path to the .mzXML file and path to the .hashcheck file (if any)
             // The KeyValuePair will have empty strings if the .Raw file needs to be retrieved
             // This information is used by RetrieveDataPackageMzXMLFiles when copying files locally
-            var instrumentDataToRetrieve = new Dictionary<clsDataPackageJobInfo, KeyValuePair<string, string>>();
+            var instrumentDataToRetrieve = new Dictionary<DataPackageJobInfo, KeyValuePair<string, string>>();
 
             // This list tracks analysis jobs that are not PeptideHit jobs
-            List<clsDataPackageJobInfo> additionalJobs;
+            List<DataPackageJobInfo> additionalJobs;
 
             try
             {
@@ -1167,7 +1167,7 @@ namespace AnalysisManagerBase
 
             try
             {
-                var dotNetTools = new clsDotNetZipTools(debugLevel, workDirInfo.FullName);
+                var dotNetTools = new DotNetZipTools(debugLevel, workDirInfo.FullName);
                 RegisterEvents(dotNetTools);
 
                 // Make sure the MyEMSL download queue is empty
@@ -1237,7 +1237,7 @@ namespace AnalysisManagerBase
                     }
 
                     jobsProcessed++;
-                    var progress = clsAnalysisToolRunnerBase.ComputeIncrementalProgress(
+                    var progress = AnalysisToolRunnerBase.ComputeIncrementalProgress(
                         progressPercentAtStart, progressPercentAtFinish, jobsProcessed,
                         dataPackagePeptideHitJobs.Count + additionalJobs.Count);
 
@@ -1258,7 +1258,7 @@ namespace AnalysisManagerBase
                     }
 
                     jobsProcessed++;
-                    var progress = clsAnalysisToolRunnerBase.ComputeIncrementalProgress(
+                    var progress = AnalysisToolRunnerBase.ComputeIncrementalProgress(
                         progressPercentAtStart, progressPercentAtFinish, jobsProcessed,
                         dataPackagePeptideHitJobs.Count + additionalJobs.Count);
 
@@ -1271,7 +1271,7 @@ namespace AnalysisManagerBase
                     if (rawFileRetrievalCommands.ContainsKey(datasetItem.Key))
                         continue;
 
-                    var dataPkgJob = clsAnalysisResources.GetPseudoDataPackageJobInfo(datasetItem.Value);
+                    var dataPkgJob = AnalysisResources.GetPseudoDataPackageJobInfo(datasetItem.Value);
                     dataPkgJob.ResultsFolderName = "Undefined_Directory";
 
                     if (!mAnalysisResources.OverrideCurrentDatasetAndJobInfo(dataPkgJob))
@@ -1315,7 +1315,7 @@ namespace AnalysisManagerBase
                     }
 
                     // Store the dataset paths in a Packed Job Parameter
-                    mAnalysisResources.StorePackedJobParameterDictionary(datasetRawFilePaths, clsAnalysisResources.JOB_PARAM_DICTIONARY_DATASET_FILE_PATHS);
+                    mAnalysisResources.StorePackedJobParameterDictionary(datasetRawFilePaths, AnalysisResources.JOB_PARAM_DICTIONARY_DATASET_FILE_PATHS);
                 }
 
                 if (retrievalOptions.RetrieveMzXMLFile)
@@ -1344,10 +1344,10 @@ namespace AnalysisManagerBase
         /// <param name="instrumentDataToRetrieve">Instrument files that need to be copied locally so that an mzXML file can be made</param>
         /// <param name="datasetRawFilePaths">Mapping of dataset name to the remote location of the .raw file</param>
         private bool RetrieveDataPackageInstrumentFile(
-            clsDataPackageJobInfo dataPkgJob,
+            DataPackageJobInfo dataPkgJob,
             udtDataPackageRetrievalOptionsType retrievalOptions,
             IDictionary<int, string> rawFileRetrievalCommands,
-            IDictionary<clsDataPackageJobInfo,
+            IDictionary<DataPackageJobInfo,
             KeyValuePair<string, string>> instrumentDataToRetrieve,
             IDictionary<string, string> datasetRawFilePaths)
         {
@@ -1360,7 +1360,7 @@ namespace AnalysisManagerBase
                 if (string.IsNullOrEmpty(mzXMLFilePath))
                 {
                     // mzXML file not found
-                    if (dataPkgJob.RawDataType == clsAnalysisResources.RAW_DATA_TYPE_DOT_RAW_FILES)
+                    if (dataPkgJob.RawDataType == AnalysisResources.RAW_DATA_TYPE_DOT_RAW_FILES)
                     {
                         // Will need to retrieve the .Raw file for this dataset
                         instrumentDataToRetrieve.Add(dataPkgJob, new KeyValuePair<string, string>(string.Empty, string.Empty));
@@ -1388,7 +1388,7 @@ namespace AnalysisManagerBase
                     var fileName = Path.GetFileName(rawFilePath);
                     string copyCommand;
 
-                    if (rawFilePath.StartsWith(clsMyEMSLUtilities.MYEMSL_PATH_FLAG))
+                    if (rawFilePath.StartsWith(MyEMSLUtilities.MYEMSL_PATH_FLAG))
                     {
                         // The path starts with \\MyEMSL
                         copyCommand = string.Format(
@@ -1409,7 +1409,7 @@ namespace AnalysisManagerBase
                     var fileName = dataPkgJob.Dataset + Path.GetExtension(rawFilePath).ToLower();
                     string copyCommand;
 
-                    if (rawFilePath.StartsWith(clsMyEMSLUtilities.MYEMSL_PATH_FLAG))
+                    if (rawFilePath.StartsWith(MyEMSLUtilities.MYEMSL_PATH_FLAG))
                     {
                         // The path starts with \\MyEMSL
                         copyCommand = string.Format(
@@ -1443,7 +1443,7 @@ namespace AnalysisManagerBase
         /// <returns>True if success, false if an error</returns>
         /// <remarks>If retrievalOptions.CreateJobPathFiles is True, will create StoragePathInfo files for the .mzXML or .Raw files</remarks>
         public bool RetrieveDataPackageMzXMLFiles(
-            Dictionary<clsDataPackageJobInfo, KeyValuePair<string, string>> instrumentDataToRetrieve,
+            Dictionary<DataPackageJobInfo, KeyValuePair<string, string>> instrumentDataToRetrieve,
             udtDataPackageRetrievalOptionsType retrievalOptions)
         {
             bool success;
@@ -1453,13 +1453,13 @@ namespace AnalysisManagerBase
             try
             {
                 // Make sure we don't move the .Raw, .mzXML, .mzML or .gz files into the results directory
-                mAnalysisResources.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_RAW_EXTENSION);
+                mAnalysisResources.AddResultFileExtensionToSkip(AnalysisResources.DOT_RAW_EXTENSION);
                 // .Raw file
-                mAnalysisResources.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MZXML_EXTENSION);
+                mAnalysisResources.AddResultFileExtensionToSkip(AnalysisResources.DOT_MZXML_EXTENSION);
                 // .mzXML file
-                mAnalysisResources.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MZML_EXTENSION);
+                mAnalysisResources.AddResultFileExtensionToSkip(AnalysisResources.DOT_MZML_EXTENSION);
                 // .mzML file
-                mAnalysisResources.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_GZ_EXTENSION);
+                mAnalysisResources.AddResultFileExtensionToSkip(AnalysisResources.DOT_GZ_EXTENSION);
                 // .gz file
 
                 var createStoragePathInfoOnly = retrievalOptions.CreateJobPathFiles;
@@ -1509,9 +1509,9 @@ namespace AnalysisManagerBase
                             // .mzXML or .mzML file found and copied locally
                             string msXmlFileExtension;
 
-                            if (mzXMLFilePath.EndsWith(clsAnalysisResources.DOT_GZ_EXTENSION, StringComparison.OrdinalIgnoreCase))
+                            if (mzXMLFilePath.EndsWith(AnalysisResources.DOT_GZ_EXTENSION, StringComparison.OrdinalIgnoreCase))
                             {
-                                msXmlFileExtension = Path.GetExtension(mzXMLFilePath.Substring(0, mzXMLFilePath.Length - clsAnalysisResources.DOT_GZ_EXTENSION.Length));
+                                msXmlFileExtension = Path.GetExtension(mzXMLFilePath.Substring(0, mzXMLFilePath.Length - AnalysisResources.DOT_GZ_EXTENSION.Length));
                             }
                             else
                             {
@@ -1599,7 +1599,7 @@ namespace AnalysisManagerBase
                     {
                         var requiredColumns = new List<string> { "Job", "SearchUsedMzML" };
 
-                        var columnMap = clsGlobal.ParseHeaderLine(dataLine, requiredColumns);
+                        var columnMap = Global.ParseHeaderLine(dataLine, requiredColumns);
 
                         foreach (var column in requiredColumns)
                         {
@@ -1618,10 +1618,10 @@ namespace AnalysisManagerBase
                         continue;
                     }
 
-                    if (!clsGlobal.TryGetValueInt(dataList, jobColIndex, out var job))
+                    if (!Global.TryGetValueInt(dataList, jobColIndex, out var job))
                         continue;
 
-                    if (!clsGlobal.TryGetValue(dataList, mzMlUsedColIndex, out var SearchUsedMzML))
+                    if (!Global.TryGetValue(dataList, mzMlUsedColIndex, out var SearchUsedMzML))
                         continue;
 
                     var jobMetadata = new udtDataPackageJobMetadata
@@ -1646,7 +1646,7 @@ namespace AnalysisManagerBase
         {
             try
             {
-                clsGlobal.CreateDirectoryIfMissing(dataPkgJobMetadataFile.DirectoryName);
+                Global.CreateDirectoryIfMissing(dataPkgJobMetadataFile.DirectoryName);
 
                 using var writer = new StreamWriter(new FileStream(dataPkgJobMetadataFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read));
 
@@ -1679,10 +1679,10 @@ namespace AnalysisManagerBase
         /// <param name="gzipFileCandidates">Candidate .mzid.gz files</param>
         /// <param name="zippedPepXmlFile"></param>
         private bool UnzipFiles(
-            clsDotNetZipTools dotNetTools,
+            DotNetZipTools dotNetTools,
             FileSystemInfo workDirInfo,
             bool prefixRequired,
-            clsDataPackageJobInfo dataPkgJob,
+            DataPackageJobInfo dataPkgJob,
             ICollection<string> foundFiles,
             ICollection<string> zipFileCandidates,
             ICollection<string> gzipFileCandidates,
@@ -1774,7 +1774,7 @@ namespace AnalysisManagerBase
                 }
                 catch (Exception ex2)
                 {
-                    clsGlobal.ErrorWritingToLog(message, ex2);
+                    Global.ErrorWritingToLog(message, ex2);
                 }
             }
 

@@ -17,7 +17,7 @@ namespace DTASpectraFileGen
     /// <summary>
     /// This is the base class that implements a specific spectra file generator.
     /// </summary>
-    public abstract class clsDtaGen : EventNotifier, ISpectraFileProcessor
+    public abstract class DtaGen : EventNotifier, ISpectraFileProcessor
     {
         #region "Module variables"
 
@@ -25,7 +25,7 @@ namespace DTASpectraFileGen
         protected string mWorkDir = string.Empty;    // Working directory on analysis machine
         protected string mDatasetName = string.Empty;
 
-        protected clsAnalysisResources.eRawDataTypeConstants mRawDataType = clsAnalysisResources.eRawDataTypeConstants.Unknown;
+        protected AnalysisResources.eRawDataTypeConstants mRawDataType = AnalysisResources.eRawDataTypeConstants.Unknown;
 
         protected string mDtaToolNameLoc = string.Empty;             // Path to the program used to create DTA files
 
@@ -37,7 +37,7 @@ namespace DTASpectraFileGen
         protected int mSpectraFileCount;
         protected IStatusFile mStatusTools;
 
-        protected clsAnalysisToolRunnerBase mToolRunner;
+        protected AnalysisToolRunnerBase mToolRunner;
 
         protected bool mAbortRequested;
 
@@ -97,7 +97,7 @@ namespace DTASpectraFileGen
 
         public abstract ProcessStatus Start();
 
-        public virtual void Setup(SpectraFileProcessorParams initParams, clsAnalysisToolRunnerBase toolRunner)
+        public virtual void Setup(SpectraFileProcessorParams initParams, AnalysisToolRunnerBase toolRunner)
         {
             // Copies all input data required for plugin operation to appropriate memory variables
             mDebugLevel = (short)initParams.DebugLevel;
@@ -109,7 +109,7 @@ namespace DTASpectraFileGen
 
             mToolRunner = toolRunner;
 
-            mRawDataType = clsAnalysisResources.GetRawDataType(mJobParams.GetJobParameter("RawDataType", ""));
+            mRawDataType = AnalysisResources.GetRawDataType(mJobParams.GetJobParameter("RawDataType", ""));
 
             mProgress = 0;
         }
@@ -210,7 +210,7 @@ namespace DTASpectraFileGen
 
             if (procedureName == null)
             {
-                procedureName = "clsDtaGen.??";
+                procedureName = "DtaGen.??";
             }
             if (dtaToolName == null)
             {

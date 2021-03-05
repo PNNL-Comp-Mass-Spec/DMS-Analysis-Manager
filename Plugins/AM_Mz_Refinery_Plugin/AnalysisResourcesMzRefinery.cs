@@ -9,17 +9,17 @@ namespace AnalysisManagerMzRefineryPlugIn
     /// <summary>
     /// Retrieve resources for the MzRefinery plugin
     /// </summary>
-    public class clsAnalysisResourcesMzRefinery : clsAnalysisResources
+    public class AnalysisResourcesMzRefinery : AnalysisResources
     {
         // Ignore Spelling: dta
 
         /// <summary>
         /// Initialize options
         /// </summary>
-        public override void Setup(string stepToolName, IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, clsMyEMSLUtilities myEMSLUtilities)
+        public override void Setup(string stepToolName, IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, MyEMSLUtilities myEMSLUtilities)
         {
             base.Setup(stepToolName, mgrParams, jobParams, statusTools, myEMSLUtilities);
-            SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, true);
+            SetOption(Global.eAnalysisResourceOptions.OrgDbRequired, true);
         }
 
         /// <summary>
@@ -97,7 +97,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 // Retrieve the Mz Refinery parameter file
                 currentTask = "Retrieve the Mz Refinery parameter file " + mzRefParamFile;
 
-                const string paramFileStoragePathKeyName = clsGlobal.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "Mz_Refinery";
+                const string paramFileStoragePathKeyName = Global.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "Mz_Refinery";
 
                 var mzRefineryParmFileStoragePath = mMgrParams.GetParam(paramFileStoragePathKeyName);
                 if (string.IsNullOrWhiteSpace(mzRefineryParmFileStoragePath))
@@ -126,7 +126,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             catch (Exception ex)
             {
                 mMessage = "Exception in GetResources: " + ex.Message;
-                LogError(mMessage + "; task = " + currentTask + "; " + clsGlobal.GetExceptionStackTrace(ex));
+                LogError(mMessage + "; task = " + currentTask + "; " + Global.GetExceptionStackTrace(ex));
                 return CloseOutType.CLOSEOUT_FAILED;
             }
         }
@@ -147,17 +147,17 @@ namespace AnalysisManagerMzRefineryPlugIn
             var sharedResultsFolders = mJobParams.GetParam(JOB_PARAM_SHARED_RESULTS_FOLDERS);
             if (string.IsNullOrEmpty(sharedResultsFolders))
             {
-                mMessage = clsGlobal.AppendToComment(mMessage, "Job parameter SharedResultsFolders is empty");
+                mMessage = Global.AppendToComment(mMessage, "Job parameter SharedResultsFolders is empty");
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
             if (sharedResultsFolders.Contains(","))
             {
-                mMessage = clsGlobal.AppendToComment(mMessage, "shared results folders: " + sharedResultsFolders);
+                mMessage = Global.AppendToComment(mMessage, "shared results folders: " + sharedResultsFolders);
             }
             else
             {
-                mMessage = clsGlobal.AppendToComment(mMessage, "shared results folder " + sharedResultsFolders);
+                mMessage = Global.AppendToComment(mMessage, "shared results folder " + sharedResultsFolders);
             }
 
             // Errors were reported in function call, so just return
@@ -196,7 +196,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             }
 
             // Look for the required files in the transfer directory
-            var resultsFileName = DatasetName + clsAnalysisToolRunnerMzRefinery.MSGFPLUS_MZID_SUFFIX + ".gz";
+            var resultsFileName = DatasetName + AnalysisToolRunnerMzRefinery.MSGFPLUS_MZID_SUFFIX + ".gz";
             var msgfPlusResults = new FileInfo(Path.Combine(transferDirectory.FullName, resultsFileName));
 
             if (!msgfPlusResults.Exists)
@@ -232,7 +232,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 new("^NumThreads=", RegexOptions.Compiled)
             };
 
-            if (!clsGlobal.TextFilesMatch(
+            if (!Global.TextFilesMatch(
                     mzRefParamFile.FullName,
                     Path.Combine(mWorkDir, mzRefParamFileName),
                     true,

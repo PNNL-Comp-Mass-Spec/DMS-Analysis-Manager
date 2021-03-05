@@ -20,7 +20,7 @@ using System.IO;
 namespace DTASpectraFileGen
 {
     [Obsolete("This class is longer used")]
-    public class clsDtaGenDeconConsole : clsDtaGenThermoRaw
+    public class DtaGenDeconConsole : DtaGenThermoRaw
     {
         #region "Constants"
 
@@ -59,7 +59,7 @@ namespace DTASpectraFileGen
         /// <summary>
         /// Returns the default path to the DTA generator tool
         /// </summary>
-        /// <remarks>The default path can be overridden by updating mDtaToolNameLoc using clsDtaGen.UpdateDtaToolNameLoc</remarks>
+        /// <remarks>The default path can be overridden by updating mDtaToolNameLoc using DtaGen.UpdateDtaToolNameLoc</remarks>
         protected override string ConstructDTAToolPath()
         {
             var deconToolsDir = mMgrParams.GetParam("DeconToolsProgLoc");         // DeconConsole.exe is stored in the DeconTools folder
@@ -113,7 +113,7 @@ namespace DTASpectraFileGen
         {
             var rawDataTypeName = mJobParams.GetJobParameter("RawDataType", "");
 
-            var mgfConverter = new clsMGFConverter(mDebugLevel, mWorkDir)
+            var mgfConverter = new MGFConverter(mDebugLevel, mWorkDir)
             {
                 IncludeExtraInfoOnParentIonLine = true,
                 MinimumIonsPerSpectrum = 0
@@ -121,7 +121,7 @@ namespace DTASpectraFileGen
 
             RegisterEvents(mgfConverter);
 
-            var rawDataType = clsAnalysisResources.GetRawDataType(rawDataTypeName);
+            var rawDataType = AnalysisResources.GetRawDataType(rawDataTypeName);
             var success = mgfConverter.ConvertMGFtoDTA(rawDataType, mDatasetName);
 
             if (!success)
@@ -140,7 +140,7 @@ namespace DTASpectraFileGen
         /// </summary>
         /// <param name="rawDataType">Raw data file type</param>
         /// <returns>TRUE for success; FALSE for failure</returns>
-        private bool ConvertRawToMGF(clsAnalysisResources.eRawDataTypeConstants rawDataType)
+        private bool ConvertRawToMGF(AnalysisResources.eRawDataTypeConstants rawDataType)
         {
             string rawFilePath;
 
@@ -154,8 +154,8 @@ namespace DTASpectraFileGen
             // Construct the path to the .raw file
             switch (rawDataType)
             {
-                case clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile:
-                    rawFilePath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_RAW_EXTENSION);
+                case AnalysisResources.eRawDataTypeConstants.ThermoRawFile:
+                    rawFilePath = Path.Combine(mWorkDir, mDatasetName + AnalysisResources.DOT_RAW_EXTENSION);
                     break;
                 default:
                     mErrMsg = "Data file type not supported by the DeconMSn workflow in DeconConsole: " + rawDataType;
@@ -166,7 +166,7 @@ namespace DTASpectraFileGen
             mInputFilePath = rawFilePath;
             mJobParams.AddResultFileToSkip(mInstrumentFileName);
 
-            if (rawDataType == clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile)
+            if (rawDataType == AnalysisResources.eRawDataTypeConstants.ThermoRawFile)
             {
                 // Get the maximum number of scans in the file
                 mMaxScanInFile = GetMaxScan(rawFilePath);
@@ -188,7 +188,7 @@ namespace DTASpectraFileGen
 
             if (string.IsNullOrEmpty(paramFilePath))
             {
-                mErrMsg = clsAnalysisToolRunnerBase.NotifyMissingParameter(mJobParams, "DeconMSn_ParamFile");
+                mErrMsg = AnalysisToolRunnerBase.NotifyMissingParameter(mJobParams, "DeconMSn_ParamFile");
                 return false;
             }
 
@@ -204,7 +204,7 @@ namespace DTASpectraFileGen
             }
 
             // Setup a program runner tool to make the spectra files
-            mCmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel)
+            mCmdRunner = new RunDosProgram(mWorkDir, mDebugLevel)
             {
                 CreateNoWindow = true,
                 CacheStandardOutput = true,
@@ -299,7 +299,7 @@ namespace DTASpectraFileGen
                     // Abort processing
                     mCmdRunner.AbortProgramNow();
 
-                    clsGlobal.IdleLoop(3);
+                    Global.IdleLoop(3);
                 }
             }
         }
@@ -317,10 +317,10 @@ namespace DTASpectraFileGen
 
                 switch (mRawDataType)
                 {
-                    case clsAnalysisResources.eRawDataTypeConstants.AgilentDFolder:
-                    case clsAnalysisResources.eRawDataTypeConstants.BrukerFTFolder:
-                    case clsAnalysisResources.eRawDataTypeConstants.BrukerTOFBaf:
-                    case clsAnalysisResources.eRawDataTypeConstants.BrukerTOFTdf:
+                    case AnalysisResources.eRawDataTypeConstants.AgilentDFolder:
+                    case AnalysisResources.eRawDataTypeConstants.BrukerFTFolder:
+                    case AnalysisResources.eRawDataTypeConstants.BrukerTOFBaf:
+                    case AnalysisResources.eRawDataTypeConstants.BrukerTOFTdf:
                         // As of 11/19/2010, the _Log.txt file is created inside the .D folder
                         logFilePath = Path.Combine(mInputFilePath, mDatasetName) + "_log.txt";
                         break;

@@ -5,7 +5,7 @@ using System.IO;
 
 namespace AnalysisManagerMsXmlGenPlugIn
 {
-    public class clsRawConverterRunner : EventNotifier
+    public class RawConverterRunner : EventNotifier
     {
         // Ignore Spelling: mgf
 
@@ -33,7 +33,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
         /// <summary>
         /// Constructor
         /// </summary>
-        public clsRawConverterRunner(string rawConverterDir, int debugLevel = 1)
+        public RawConverterRunner(string rawConverterDir, int debugLevel = 1)
         {
             RawConverterExePath = Path.Combine(rawConverterDir, RAW_CONVERTER_FILENAME);
             if (!File.Exists(RawConverterExePath))
@@ -74,7 +74,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
                 // Set up command
                 var arguments =
-                    " " + clsGlobal.PossiblyQuotePath(sourceFile.FullName) +
+                    " " + Global.PossiblyQuotePath(sourceFile.FullName) +
                     " --mgf";
 
                 if (mDebugLevel > 0)
@@ -88,7 +88,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
                 var consoleOutputFilePath = Path.Combine(sourceFile.Directory.FullName, "RawConverter_ConsoleOutput.txt");
 
-                var progRunner = new clsRunDosProgram(rawConverter.Directory.FullName, mDebugLevel)
+                var progRunner = new RunDosProgram(rawConverter.Directory.FullName, mDebugLevel)
                 {
                     CreateNoWindow = true,
                     CacheStandardOutput = true,

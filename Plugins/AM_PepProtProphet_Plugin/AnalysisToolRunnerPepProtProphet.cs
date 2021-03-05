@@ -16,9 +16,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
     /// Class for running peptide prophet and protein prophet using Philosopher
     /// </summary>
     // ReSharper disable once UnusedMember.Global
-    public class clsAnalysisToolRunnerPepProtProphet : clsAnalysisToolRunnerBase
+    public class AnalysisToolRunnerPepProtProphet : AnalysisToolRunnerBase
     {
-
         #region "Constants and Enums"
 
         private const string Philosopher_CONSOLE_OUTPUT = "Philosopher_ConsoleOutput.txt";
@@ -41,7 +40,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
         private DateTime mLastConsoleOutputParse;
 
-        private clsRunDosProgram mCmdRunner;
+        private RunDosProgram mCmdRunner;
 
         #endregion
 
@@ -63,7 +62,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 if (mDebugLevel > 4)
                 {
-                    LogDebug("clsAnalysisToolRunnerPepProtProphet.RunTool(): Enter");
+                    LogDebug("AnalysisToolRunnerPepProtProphet.RunTool(): Enter");
                 }
 
                 // Initialize class wide variables
@@ -95,10 +94,10 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 mCmdRunner = null;
 
                 // Make sure objects are released
-                clsGlobal.IdleLoop(0.5);
+                Global.IdleLoop(0.5);
                 PRISM.ProgRunner.GarbageCollectNow();
 
-                if (!clsAnalysisJob.SuccessOrNoData(processingResult))
+                if (!AnalysisJob.SuccessOrNoData(processingResult))
                 {
                     // Something went wrong
                     // In order to help diagnose things, we will move whatever files were created into the result folder,
@@ -127,7 +126,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// </summary>
         public override void CopyFailedResultsToArchiveDirectory()
         {
-            mJobParams.AddResultFileToSkip(Dataset + clsAnalysisResources.DOT_MZML_EXTENSION);
+            mJobParams.AddResultFileToSkip(Dataset + AnalysisResources.DOT_MZML_EXTENSION);
 
             base.CopyFailedResultsToArchiveDirectory();
         }
@@ -273,7 +272,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
             mProgress = PROGRESS_PCT_STARTING;
             ResetProgRunnerCpuUsage();
 
-            mCmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel)
+            mCmdRunner = new RunDosProgram(mWorkDir, mDebugLevel)
             {
                 CreateNoWindow = true,
                 CacheStandardOutput = true,
@@ -383,10 +382,10 @@ namespace AnalysisManagerPepProtProphetPlugIn
             try
             {
                 // Define the path to the fasta file
-                var localOrgDbFolder = mMgrParams.GetParam(clsAnalysisResources.MGR_PARAM_ORG_DB_DIR);
+                var localOrgDbFolder = mMgrParams.GetParam(AnalysisResources.MGR_PARAM_ORG_DB_DIR);
 
-                // Note that job parameter "generatedFastaName" gets defined by clsAnalysisResources.RetrieveOrgDB
-                var fastaFilePath = Path.Combine(localOrgDbFolder, mJobParams.GetParam("PeptideSearch", clsAnalysisResources.JOB_PARAM_GENERATED_FASTA_NAME));
+                // Note that job parameter "generatedFastaName" gets defined by AnalysisResources.RetrieveOrgDB
+                var fastaFilePath = Path.Combine(localOrgDbFolder, mJobParams.GetParam("PeptideSearch", AnalysisResources.JOB_PARAM_GENERATED_FASTA_NAME));
 
                 fastaFile = new FileInfo(fastaFilePath);
 

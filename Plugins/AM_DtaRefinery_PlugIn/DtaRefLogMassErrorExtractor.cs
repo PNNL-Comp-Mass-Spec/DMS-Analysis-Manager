@@ -13,7 +13,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
     /// This class reads a DTA_Refinery log file to extract the parent ion mass error information
     /// It passes on the information to DMS for storage in table T_Dataset_QC
     /// </summary>
-    public class clsDtaRefLogMassErrorExtractor : EventNotifier
+    public class DtaRefLogMassErrorExtractor : EventNotifier
     {
         private const string STORE_MASS_ERROR_STATS_SP_NAME = "StoreDTARefMassErrorStats";
 
@@ -37,7 +37,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
         /// <param name="workDir"></param>
         /// <param name="debugLevel"></param>
         /// <param name="postResultsToDB"></param>
-        public clsDtaRefLogMassErrorExtractor(IMgrParams mgrParams, string workDir, short debugLevel, bool postResultsToDB)
+        public DtaRefLogMassErrorExtractor(IMgrParams mgrParams, string workDir, short debugLevel, bool postResultsToDB)
         {
             mMgrParams = mgrParams;
             mWorkDir = workDir;
@@ -202,7 +202,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
             {
                 // Call stored procedure STORE_MASS_ERROR_STATS_SP_NAME in DMS5
 
-                var analysisTask = new clsAnalysisJob(mMgrParams, mDebugLevel);
+                var analysisTask = new AnalysisJob(mMgrParams, mDebugLevel);
                 var dbTools = analysisTask.DMSProcedureExecutor;
 
                 var cmd = dbTools.CreateCommand(STORE_MASS_ERROR_STATS_SP_NAME, CommandType.StoredProcedure);

@@ -12,7 +12,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
     /// <summary>
     /// Retrieve resources for the MSAlign Histone plugin
     /// </summary>
-    public class clsAnalysisResourcesMSAlignHistone : clsAnalysisResources
+    public class AnalysisResourcesMSAlignHistone : AnalysisResources
     {
         /// <summary>
         /// MSDeconv .msalign filename
@@ -22,10 +22,10 @@ namespace AnalysisManagerMSAlignHistonePlugIn
         /// <summary>
         /// Initialize options
         /// </summary>
-        public override void Setup(string stepToolName, IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, clsMyEMSLUtilities myEMSLUtilities)
+        public override void Setup(string stepToolName, IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, MyEMSLUtilities myEMSLUtilities)
         {
             base.Setup(stepToolName, mgrParams, jobParams, statusTools, myEMSLUtilities);
-            SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, true);
+            SetOption(Global.eAnalysisResourceOptions.OrgDbRequired, true);
         }
 
         /// <summary>

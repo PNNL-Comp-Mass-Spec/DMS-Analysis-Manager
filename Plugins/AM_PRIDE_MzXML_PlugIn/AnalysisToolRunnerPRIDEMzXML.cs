@@ -14,13 +14,13 @@ namespace AnalysisManagerPRIDEMzXMLPlugIn
     /// <summary>
     /// Class for running PRIDEMzXML analysis
     /// </summary>
-    public class clsAnalysisToolRunnerPRIDEMzXML : clsAnalysisToolRunnerBase
+    public class AnalysisToolRunnerPRIDEMzXML : AnalysisToolRunnerBase
     {
         #region "Module Variables"
 
         private const float PROGRESS_PCT_PRIDEMZXML_RUNNING = 5;
 
-        private clsRunDosProgram mCmdRunner;
+        private RunDosProgram mCmdRunner;
 
         #endregion
 
@@ -48,13 +48,13 @@ namespace AnalysisManagerPRIDEMzXMLPlugIn
 
             LogMessage("Running MSDataFileTrimmer");
 
-            mCmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel);
+            mCmdRunner = new RunDosProgram(mWorkDir, mDebugLevel);
             RegisterEvents(mCmdRunner);
             mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
             if (mDebugLevel > 4)
             {
-                LogDebug("clsAnalysisToolRunnerPRIDEMzXML.RunTool(): Enter");
+                LogDebug("AnalysisToolRunnerPRIDEMzXML.RunTool(): Enter");
             }
 
             // verify that program file exists

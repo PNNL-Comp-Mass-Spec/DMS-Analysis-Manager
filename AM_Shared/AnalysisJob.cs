@@ -24,7 +24,7 @@ namespace AnalysisManagerBase
     /// <summary>
     /// Provides DB access and tools for one analysis job
     /// </summary>
-    public class clsAnalysisJob : clsDBTask, IJobParams
+    public class AnalysisJob : DBTask, IJobParams
     {
         // Ignore Spelling: dir, dirs, ok
 
@@ -138,7 +138,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// List of file paths to remove from the storage server (full file paths)
         /// </summary>
-        /// <remarks>Used by clsAnalysisToolRunnerBase.RemoveNonResultServerFiles</remarks>
+        /// <remarks>Used by AnalysisToolRunnerBase.RemoveNonResultServerFiles</remarks>
         public SortedSet<string> ServerFilesToDelete => mServerFilesToDelete;
 
         /// <summary>
@@ -160,7 +160,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="mgrParams">IMgrParams object containing manager parameters</param>
         /// <param name="debugLvl">Debug level</param>
-        public clsAnalysisJob(IMgrParams mgrParams, short debugLvl) : base(mgrParams, debugLvl)
+        public AnalysisJob(IMgrParams mgrParams, short debugLvl) : base(mgrParams, debugLvl)
         {
             mJobParams = new Dictionary<string, Dictionary<string, string>>(StringComparer.OrdinalIgnoreCase);
             Reset();
@@ -533,7 +533,7 @@ namespace AnalysisManagerBase
         /// <returns>Value for specified parameter; valueIfMissing if not found</returns>
         public float GetJobParameter(string name, float valueIfMissing)
         {
-            return clsGlobal.CSngSafe(GetParam(name), valueIfMissing);
+            return Global.CSngSafe(GetParam(name), valueIfMissing);
         }
 
         /// <summary>
@@ -570,7 +570,7 @@ namespace AnalysisManagerBase
         /// <returns>Value for specified parameter; valueIfMissing if not found</returns>
         public int GetJobParameter(string section, string name, int valueIfMissing)
         {
-            return clsGlobal.CIntSafe(GetParam(section, name), valueIfMissing);
+            return Global.CIntSafe(GetParam(section, name), valueIfMissing);
         }
 
         /// <summary>
@@ -599,7 +599,7 @@ namespace AnalysisManagerBase
         /// <returns>Value for specified parameter; valueIfMissing if not found</returns>
         public float GetJobParameter(string section, string name, float valueIfMissing)
         {
-            return clsGlobal.CSngSafe(GetParam(section, name), valueIfMissing);
+            return Global.CSngSafe(GetParam(section, name), valueIfMissing);
         }
 
         /// <summary>
@@ -655,7 +655,7 @@ namespace AnalysisManagerBase
         /// <param name="jobNum"></param>
         public static string JobParametersFilename(int jobNum)
         {
-            return clsGlobal.JOB_PARAMETERS_FILE_PREFIX + jobNum + ".xml";
+            return Global.JOB_PARAMETERS_FILE_PREFIX + jobNum + ".xml";
         }
 
         /// <summary>
@@ -664,7 +664,7 @@ namespace AnalysisManagerBase
         [Obsolete("Use the version that takes an integer")]
         public static string JobParametersFilename(string jobNum)
         {
-            return clsGlobal.JOB_PARAMETERS_FILE_PREFIX + jobNum + ".xml";
+            return Global.JOB_PARAMETERS_FILE_PREFIX + jobNum + ".xml";
         }
 
         /// <summary>
@@ -972,7 +972,7 @@ namespace AnalysisManagerBase
                 var activeWorkDirs = new Dictionary<string, DirectoryInfo>();
                 var parentWorkDirs = new Dictionary<string, DirectoryInfo>();
 
-                var archivedDirName = Path.DirectorySeparatorChar + clsRemoteMonitor.ARCHIVED_TASK_QUEUE_DIRECTORY_NAME + Path.DirectorySeparatorChar;
+                var archivedDirName = Path.DirectorySeparatorChar + RemoteMonitor.ARCHIVED_TASK_QUEUE_DIRECTORY_NAME + Path.DirectorySeparatorChar;
 
                 foreach (var taskInfoFile in taskInfoFiles)
                 {
@@ -1219,7 +1219,7 @@ namespace AnalysisManagerBase
         {
             RequestTaskResult result;
 
-            if (clsGlobal.OfflineMode)
+            if (Global.OfflineMode)
             {
                 result = RequestOfflineAnalysisJob();
             }
@@ -1260,14 +1260,14 @@ namespace AnalysisManagerBase
         /// <returns>Enum indicating if task was found</returns>
         private RequestTaskResult RequestAnalysisJobFromDB(bool runJobsRemotely)
         {
-            if (clsGlobal.OfflineMode)
+            if (Global.OfflineMode)
             {
                 throw new Exception("RequestAnalysisJobFromDB should not be called when offline mode is enabled");
             }
 
-            var productVersion = clsGlobal.GetAssemblyVersion() ?? "??";
+            var productVersion = Global.GetAssemblyVersion() ?? "??";
 
-            var dotNetVersion = clsGlobal.GetDotNetVersion();
+            var dotNetVersion = Global.GetDotNetVersion();
 
             string managerVersion;
             if (!string.IsNullOrWhiteSpace(dotNetVersion))
@@ -1297,15 +1297,15 @@ namespace AnalysisManagerBase
                 PipelineDBProcedureExecutor.AddParameter(cmd, "@infoOnly", SqlType.TinyInt).Value = 0;
                 PipelineDBProcedureExecutor.AddParameter(cmd, "@analysisManagerVersion", SqlType.VarChar, 128, managerVersion);
 
-                var remoteInfo = runJobsRemotely ? clsRemoteTransferUtility.GetRemoteInfoXml(mMgrParams) : string.Empty;
+                var remoteInfo = runJobsRemotely ? RemoteTransferUtility.GetRemoteInfoXml(mMgrParams) : string.Empty;
                 PipelineDBProcedureExecutor.AddParameter(cmd, "@remoteInfo", SqlType.VarChar, 900, remoteInfo);
 
                 var returnParam = PipelineDBProcedureExecutor.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, ParameterDirection.Output);
 
                 if (mDebugLevel > 4 || TraceMode)
                 {
-                    LogDebug("clsAnalysisJob.RequestAnalysisJob(), connection string: " + mBrokerConnStr, (int)BaseLogger.LogLevels.DEBUG);
-                    LogDebug("clsAnalysisJob.RequestAnalysisJob(), printing param list", (int)BaseLogger.LogLevels.DEBUG);
+                    LogDebug("AnalysisJob.RequestAnalysisJob(), connection string: " + mBrokerConnStr, (int)BaseLogger.LogLevels.DEBUG);
+                    LogDebug("AnalysisJob.RequestAnalysisJob(), printing param list", (int)BaseLogger.LogLevels.DEBUG);
                     PrintCommandParams(cmd);
                 }
 
@@ -1314,7 +1314,7 @@ namespace AnalysisManagerBase
 
                 var returnCode = PipelineDBProcedureExecutor.GetString(returnParam.Value);
 
-                var returnCodeValue = clsGlobal.GetReturnCodeValue(returnCode);
+                var returnCodeValue = Global.GetReturnCodeValue(returnCode);
 
                 if (returnCodeValue != 0)
                 {
@@ -1366,7 +1366,7 @@ namespace AnalysisManagerBase
 
                     default:
                         // There was an SP error
-                        LogError("clsAnalysisJob.RequestAnalysisJob(), SP execution error " + resCode + "; " +
+                        LogError("AnalysisJob.RequestAnalysisJob(), SP execution error " + resCode + "; " +
                                  "Msg text = " + Convert.ToString(messageParam.Value));
                         return RequestTaskResult.ResultError;
                 }
@@ -1526,12 +1526,12 @@ namespace AnalysisManagerBase
                 // Values are another parameter name that must be present if we're going to ignore the given parameter
                 var paramNamesToIgnore = new Dictionary<string, string>
                 {
-                    {clsAnalysisResources.JOB_PARAM_SHARED_RESULTS_FOLDERS, ""},
+                    {AnalysisResources.JOB_PARAM_SHARED_RESULTS_FOLDERS, ""},
                     {"CPU_Load", ""},
                     {"Job", ""},
                     {"Step", ""},
-                    {"StepInputFolderName", clsAnalysisResources.JOB_PARAM_INPUT_FOLDER_NAME},
-                    {"StepOutputFolderName", clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME}
+                    {"StepInputFolderName", AnalysisResources.JOB_PARAM_INPUT_FOLDER_NAME},
+                    {"StepOutputFolderName", AnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME}
                 };
 
                 var paramsToAddAsAttribute = new Dictionary<string, string>
@@ -1543,15 +1543,15 @@ namespace AnalysisManagerBase
                 // Also update the section to have an attribute that is the step number, for example step="1"
                 var filteredXML = FilterXmlSection(jobParamsXML, STEP_PARAMETERS_SECTION, paramNamesToIgnore, paramsToAddAsAttribute);
 
-                var xmlWriter = new clsFormattedXMLWriter();
+                var xmlWriter = new FormattedXMLWriter();
                 xmlWriter.WriteXMLToFile(filteredXML, xmlParameterFile.FullName);
 
-                AddAdditionalParameter(JOB_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_XML_PARAMS_FILE, xmlParameterFilename);
+                AddAdditionalParameter(JOB_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_XML_PARAMS_FILE, xmlParameterFilename);
 
                 var msg = "Job Parameters successfully saved to file: " + xmlParameterFile.FullName;
 
                 // Copy the Job Parameter file to the Analysis Manager directory so that we can inspect it if the job fails
-                clsGlobal.CopyAndRenameFileWithBackup(xmlParameterFile.FullName, clsGlobal.GetAppDirectoryPath(), "RecentJobParameters.xml", 5);
+                Global.CopyAndRenameFileWithBackup(xmlParameterFile.FullName, Global.GetAppDirectoryPath(), "RecentJobParameters.xml", 5);
 
                 LogDebug(msg, (int)BaseLogger.LogLevels.DEBUG);
             }
@@ -1573,7 +1573,7 @@ namespace AnalysisManagerBase
                 var startTime = DateTime.Now;
 
                 // Example name: Job1451055_Step3_20170622_2205.lock
-                var lockFilePath = Path.ChangeExtension(infoFile.FullName, clsGlobal.LOCK_FILE_EXTENSION);
+                var lockFilePath = Path.ChangeExtension(infoFile.FullName, Global.LOCK_FILE_EXTENSION);
 
                 if (File.Exists(lockFilePath))
                 {
@@ -1676,7 +1676,7 @@ namespace AnalysisManagerBase
         private void FinalizeFailedOfflineJob(FileSystemInfo infoFile, DateTime startTime, string errorMessage)
         {
             LogError(errorMessage);
-            clsOfflineProcessing.FinalizeJob(infoFile.FullName, ManagerName, false, startTime, 1, errorMessage);
+            OfflineProcessing.FinalizeJob(infoFile.FullName, ManagerName, false, startTime, 1, errorMessage);
         }
 
         /// <summary>
@@ -1686,13 +1686,13 @@ namespace AnalysisManagerBase
         /// <returns>Full path to the lock file; empty string if a problem</returns>
         /// <remarks>
         /// An exception will be thrown if the lock file already exists, or if another manager overwrites the lock file
-        /// This method is similar to CreateRemoteLockFile in clsRemoteTransferUtility
+        /// This method is similar to CreateRemoteLockFile in RemoteTransferUtility
         /// </remarks>
         private void CreateLocalLockFile(string lockFilePath)
         {
             var lockFileContents = new List<string>
             {
-                "Date: " + DateTime.Now.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT),
+                "Date: " + DateTime.Now.ToString(AnalysisToolRunnerBase.DATE_TIME_FORMAT),
                 "Manager: " + ManagerName
             };
 
@@ -1707,7 +1707,7 @@ namespace AnalysisManagerBase
 
             // Wait 2 to 5 seconds, then re-open the file to make sure it was created by this manager
             var oRandom = new Random();
-            clsGlobal.IdleLoop(oRandom.Next(2, 5));
+            Global.IdleLoop(oRandom.Next(2, 5));
 
             var lockFileContentsNew = new List<string>();
 
@@ -1719,7 +1719,7 @@ namespace AnalysisManagerBase
                 }
             }
 
-            if (!clsGlobal.LockFilesMatch(lockFilePath, lockFileContents, lockFileContentsNew, out var errorMessage))
+            if (!Global.LockFilesMatch(lockFilePath, lockFileContents, lockFileContentsNew, out var errorMessage))
             {
                 // Lock file content doesn't match the expected value
                 throw new Exception(errorMessage);
@@ -1741,7 +1741,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="closeOut">IJobParams enum specifying close out type</param>
         /// <param name="compMsg">Completion message to be added to database upon closeOut</param>
-        /// <param name="toolRunner">ToolRunner instance (clsAnalysisToolRunnerBase)</param>
+        /// <param name="toolRunner">ToolRunner instance (AnalysisToolRunnerBase)</param>
         public void CloseTask(CloseOutType closeOut, string compMsg, IToolRunner toolRunner)
         {
             CloseTask(closeOut, compMsg, toolRunner.EvalCode, toolRunner.EvalMessage, toolRunner.StartTime);
@@ -1765,10 +1765,10 @@ namespace AnalysisManagerBase
             if (evalMsg == null)
                 evalMsg = string.Empty;
 
-            if (TaskClosed && clsGlobal.OfflineMode)
+            if (TaskClosed && Global.OfflineMode)
             {
                 // Make sure a .lock file does not exist
-                var lockFile = new FileInfo(Path.ChangeExtension(mOfflineJobInfoFile.FullName, clsGlobal.LOCK_FILE_EXTENSION));
+                var lockFile = new FileInfo(Path.ChangeExtension(mOfflineJobInfoFile.FullName, Global.LOCK_FILE_EXTENSION));
                 if (lockFile.Exists)
                 {
                     LogWarning(string.Format(
@@ -1790,7 +1790,7 @@ namespace AnalysisManagerBase
             }
 
             TaskClosed = true;
-            if (clsGlobal.OfflineMode)
+            if (Global.OfflineMode)
             {
                 if (mOfflineJobInfoFile == null)
                 {
@@ -1799,7 +1799,7 @@ namespace AnalysisManagerBase
                 }
 
                 var succeeded = SuccessOrNoData(closeOut);
-                clsOfflineProcessing.FinalizeJob(mOfflineJobInfoFile.FullName, ManagerName, succeeded, startTime, compCode, compMsg, evalCode, evalMsg);
+                OfflineProcessing.FinalizeJob(mOfflineJobInfoFile.FullName, ManagerName, succeeded, startTime, compCode, compMsg, evalCode, evalMsg);
             }
             else
             {
@@ -1847,11 +1847,11 @@ namespace AnalysisManagerBase
         private static void RenameOldInfoFile(FileInfo oldInfoFile)
         {
             // Old .info file with existingTimestamp; rename to .oldinfo
-            clsOfflineProcessing.RenameFileChangeExtension(oldInfoFile, ".oldinfo", true);
+            OfflineProcessing.RenameFileChangeExtension(oldInfoFile, ".oldinfo", true);
 
             // Also check for a .lock file; if found, rename it
-            var oldLockFile = new FileInfo(Path.ChangeExtension(oldInfoFile.FullName, clsGlobal.LOCK_FILE_EXTENSION));
-            clsOfflineProcessing.RenameFileChangeExtension(oldLockFile, ".oldlock", true);
+            var oldLockFile = new FileInfo(Path.ChangeExtension(oldInfoFile.FullName, Global.LOCK_FILE_EXTENSION));
+            OfflineProcessing.RenameFileChangeExtension(oldLockFile, ".oldlock", true);
         }
 
         /// <summary>
@@ -1860,7 +1860,7 @@ namespace AnalysisManagerBase
         /// <remarks>This is used when a Deadlock occurs while requesting a job</remarks>
         private void ReportManagerIdle()
         {
-            if (clsGlobal.OfflineMode)
+            if (Global.OfflineMode)
             {
                 LogWarning("ReportManagerIdle should not be called when offline mode is enabled");
                 return;
@@ -1878,7 +1878,7 @@ namespace AnalysisManagerBase
             var resCode = PipelineDBProcedureExecutor.ExecuteSP(cmd, 3);
 
             var returnCode = PipelineDBProcedureExecutor.GetString(returnParam.Value);
-            var returnCodeValue = clsGlobal.GetReturnCodeValue(returnCode);
+            var returnCodeValue = Global.GetReturnCodeValue(returnCode);
 
             if (resCode == 0 && returnCodeValue == 0)
             {
@@ -1905,7 +1905,7 @@ namespace AnalysisManagerBase
         /// <remarks>evalCode and EvalMsg not presently used</remarks>
         protected bool SetAnalysisJobComplete(int compCode, string compMsg, int evalCode, string evalMsg)
         {
-            if (clsGlobal.OfflineMode)
+            if (Global.OfflineMode)
             {
                 throw new Exception("SetAnalysisJobComplete should not be called when offline mode is enabled");
             }
@@ -1927,20 +1927,20 @@ namespace AnalysisManagerBase
             PipelineDBProcedureExecutor.AddParameter(cmd, "@evaluationMessage", SqlType.VarChar, 256, evalMsg.Trim('\r', '\n'));
             var returnParam = PipelineDBProcedureExecutor.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, ParameterDirection.Output);
 
-            if (!TryGetParam("PeptideSearch", clsAnalysisResources.JOB_PARAM_GENERATED_FASTA_NAME, out var orgDbName))
+            if (!TryGetParam("PeptideSearch", AnalysisResources.JOB_PARAM_GENERATED_FASTA_NAME, out var orgDbName))
             {
                 orgDbName = string.Empty;
             }
             PipelineDBProcedureExecutor.AddParameter(cmd, "@organismDBName", SqlType.VarChar, 128, orgDbName);
 
-            if (!TryGetParam(STEP_PARAMETERS_SECTION, clsRemoteTransferUtility.STEP_PARAM_REMOTE_INFO, out var remoteInfo, false))
+            if (!TryGetParam(STEP_PARAMETERS_SECTION, RemoteTransferUtility.STEP_PARAM_REMOTE_INFO, out var remoteInfo, false))
             {
                 remoteInfo = string.Empty;
             }
             PipelineDBProcedureExecutor.AddParameter(cmd, "@remoteInfo", SqlType.VarChar, 900, remoteInfo);
 
             // Note: leave remoteTimestampParam.Value as null if job parameter RemoteTimestamp is empty
-            if (TryGetParam(STEP_PARAMETERS_SECTION, clsRemoteTransferUtility.STEP_PARAM_REMOTE_TIMESTAMP, out var remoteTimestamp, false))
+            if (TryGetParam(STEP_PARAMETERS_SECTION, RemoteTransferUtility.STEP_PARAM_REMOTE_TIMESTAMP, out var remoteTimestamp, false))
             {
                 if (string.IsNullOrWhiteSpace(remoteTimestamp))
                     remoteTimestamp = null;
@@ -1950,15 +1950,15 @@ namespace AnalysisManagerBase
             // Note: leave remoteProgressParam.Value as null if job parameter RemoteProgress is empty
             //
             object remoteProgress = null;
-            if (TryGetParam(STEP_PARAMETERS_SECTION, clsRemoteTransferUtility.STEP_PARAM_REMOTE_PROGRESS, out var remoteProgressText, false))
+            if (TryGetParam(STEP_PARAMETERS_SECTION, RemoteTransferUtility.STEP_PARAM_REMOTE_PROGRESS, out var remoteProgressText, false))
             {
-                remoteProgress = clsGlobal.CSngSafe(remoteProgressText, 0);
+                remoteProgress = Global.CSngSafe(remoteProgressText, 0);
             }
             PipelineDBProcedureExecutor.AddParameter(cmd, "@remoteProgress", SqlType.Real).Value = remoteProgress;
 
             // Note: leave remoteStartParam.Value as null if job parameter RemoteStart is empty
             object remoteStart = null;
-            if (TryGetParam(STEP_PARAMETERS_SECTION, clsRemoteTransferUtility.STEP_PARAM_REMOTE_START, out var remoteStartText, false))
+            if (TryGetParam(STEP_PARAMETERS_SECTION, RemoteTransferUtility.STEP_PARAM_REMOTE_START, out var remoteStartText, false))
             {
                 // remoteStartText should be UTC-based
                 if (DateTime.TryParse(remoteStartText, out var remoteStartDt))
@@ -1968,7 +1968,7 @@ namespace AnalysisManagerBase
 
             // Note: leave remoteFinishParam.Value as null if job parameter RemoteFinish is empty
             object remoteFinish = null;
-            if (TryGetParam(STEP_PARAMETERS_SECTION, clsRemoteTransferUtility.STEP_PARAM_REMOTE_FINISH, out var remoteFinishText, false))
+            if (TryGetParam(STEP_PARAMETERS_SECTION, RemoteTransferUtility.STEP_PARAM_REMOTE_FINISH, out var remoteFinishText, false))
             {
                 // remoteFinishText should be UTC-based
                 if (DateTime.TryParse(remoteFinishText, out var remoteFinishDt))
@@ -1984,7 +1984,7 @@ namespace AnalysisManagerBase
             var resCode = PipelineDBProcedureExecutor.ExecuteSP(cmd, 20);
 
             var returnCode = PipelineDBProcedureExecutor.GetString(returnParam.Value);
-            var returnCodeValue = clsGlobal.GetReturnCodeValue(returnCode);
+            var returnCodeValue = Global.GetReturnCodeValue(returnCode);
 
             if (resCode == 0 && returnCodeValue == 0)
             {

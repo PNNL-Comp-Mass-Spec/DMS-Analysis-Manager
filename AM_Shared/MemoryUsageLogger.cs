@@ -17,7 +17,7 @@ namespace AnalysisManagerBase
     /// <summary>
     /// Memory usage logger
     /// </summary>
-    public class clsMemoryUsageLogger : EventNotifier
+    public class MemoryUsageLogger : EventNotifier
     {
         #region "Constants and Enums"
 
@@ -91,7 +91,7 @@ namespace AnalysisManagerBase
         /// <remarks>
         /// Use WriteMemoryUsageLogEntry to append an entry to the log file.
         /// Alternatively use GetMemoryUsageSummary() to retrieve the memory usage as a string</remarks>
-        public clsMemoryUsageLogger(string logFolderPath, float minLogIntervalMinutes = 5)
+        public MemoryUsageLogger(string logFolderPath, float minLogIntervalMinutes = 5)
         {
             if (string.IsNullOrWhiteSpace(logFolderPath))
             {
@@ -165,9 +165,9 @@ namespace AnalysisManagerBase
         /// <returns>Free memory, in MB</returns>
         public float GetFreeMemoryMB()
         {
-            if (clsGlobal.LinuxOS)
+            if (Global.LinuxOS)
             {
-                return clsGlobal.GetFreeMemoryMB();
+                return Global.GetFreeMemoryMB();
             }
 
             return GetFreeMemoryMBWindows();
@@ -179,7 +179,7 @@ namespace AnalysisManagerBase
             {
                 if (mPerfCounterFreeMemory == null)
                 {
-                    return clsGlobal.GetFreeMemoryMB();
+                    return Global.GetFreeMemoryMB();
                 }
 
                 return mPerfCounterFreeMemory.NextValue();
@@ -212,30 +212,30 @@ namespace AnalysisManagerBase
         {
             if (!mPerfCountersInitialized)
             {
-                clsGlobal.CheckStopTrace("InitMemoryUsagePerfCounters");
+                Global.CheckStopTrace("InitMemoryUsagePerfCounters");
                 InitializePerfCounters();
             }
 
-            clsGlobal.CheckStopTrace("GetProcessMemoryUsageMB");
+            Global.CheckStopTrace("GetProcessMemoryUsageMB");
             var processMemoryUsageMB = GetProcessMemoryUsageMB();
 
-            clsGlobal.CheckStopTrace("GetFreeMemoryMB");
+            Global.CheckStopTrace("GetFreeMemoryMB");
             var freeMemoryMB = GetFreeMemoryMB();
 
             float poolPagedMemory;
             float poolNonPagedMemory;
 
-            if (clsGlobal.LinuxOS)
+            if (Global.LinuxOS)
             {
                 poolPagedMemory = 0;
                 poolNonPagedMemory = 0;
             }
             else
             {
-                clsGlobal.CheckStopTrace("GetPoolPagedMemory");
+                Global.CheckStopTrace("GetPoolPagedMemory");
                 poolPagedMemory = GetPoolPagedMemory();
 
-                clsGlobal.CheckStopTrace("GetPoolNonPagedMemory");
+                Global.CheckStopTrace("GetPoolNonPagedMemory");
                 poolNonPagedMemory = GetPoolNonPagedMemory();
             }
 
@@ -308,7 +308,7 @@ namespace AnalysisManagerBase
                 var currentProcess = Process.GetCurrentProcess();
 
                 // The WorkingSet is the total physical memory usage
-                return (float)(clsGlobal.BytesToMB(currentProcess.WorkingSet64));
+                return (float)(Global.BytesToMB(currentProcess.WorkingSet64));
             }
             catch (Exception ex)
             {
@@ -322,7 +322,7 @@ namespace AnalysisManagerBase
         /// </summary>
         public void InitializePerfCounters()
         {
-            if (clsGlobal.LinuxOS)
+            if (Global.LinuxOS)
             {
                 mPerfCountersInitialized = true;
                 return;
@@ -330,7 +330,7 @@ namespace AnalysisManagerBase
 
             try
             {
-                clsGlobal.CheckStopTrace("InitPerfCounterMemoryMB");
+                Global.CheckStopTrace("InitPerfCounterMemoryMB");
                 mPerfCounterFreeMemory = new PerformanceCounter("Memory", "Available MBytes") { ReadOnly = true };
             }
             catch (Exception ex)
@@ -340,7 +340,7 @@ namespace AnalysisManagerBase
 
             try
             {
-                clsGlobal.CheckStopTrace("InitPerfCounterPoolPaged");
+                Global.CheckStopTrace("InitPerfCounterPoolPaged");
                 mPerfCounterPoolPagedBytes = new PerformanceCounter("Memory", "Pool Paged Bytes") { ReadOnly = true };
             }
             catch (Exception ex)
@@ -350,7 +350,7 @@ namespace AnalysisManagerBase
 
             try
             {
-                clsGlobal.CheckStopTrace("InitPerfCounterPoolNonPaged");
+                Global.CheckStopTrace("InitPerfCounterPoolNonPaged");
                 mPerfCounterPoolNonPagedBytes = new PerformanceCounter("Memory", "Pool NonPaged Bytes") { ReadOnly = true };
             }
             catch (Exception ex)

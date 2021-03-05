@@ -21,7 +21,7 @@ namespace AnalysisManagerQCARTPlugin
     /// <summary>
     /// Class for running QC-ART
     /// </summary>
-    public class clsAnalysisToolRunnerQCART : clsAnalysisToolRunnerBase
+    public class AnalysisToolRunnerQCART : AnalysisToolRunnerBase
     {
         #region "Constants and Enums"
 
@@ -63,7 +63,7 @@ namespace AnalysisManagerQCARTPlugin
 
                 if (mDebugLevel > 4)
                 {
-                    LogDebug("clsAnalysisToolRunnerQCART.RunTool(): Enter");
+                    LogDebug("AnalysisToolRunnerQCART.RunTool(): Enter");
                 }
 
                 // Initialize classwide variables
@@ -141,13 +141,13 @@ namespace AnalysisManagerQCARTPlugin
                 }
 
                 // No need to keep several files; exclude them now
-                mJobParams.AddResultFileToSkip(clsAnalysisResourcesQCART.SMAQC_DATA_FILE_NAME);
-                mJobParams.AddResultFileToSkip(clsAnalysisResourcesQCART.QCART_PROCESSING_SCRIPT_NAME);
-                mJobParams.AddResultFileToSkip(clsAnalysisResourcesQCART.NEW_BASELINE_DATASETS_METADATA_FILE);
-                mJobParams.AddResultFileToSkip(mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_PARAMETER_FILE));
+                mJobParams.AddResultFileToSkip(AnalysisResourcesQCART.SMAQC_DATA_FILE_NAME);
+                mJobParams.AddResultFileToSkip(AnalysisResourcesQCART.QCART_PROCESSING_SCRIPT_NAME);
+                mJobParams.AddResultFileToSkip(AnalysisResourcesQCART.NEW_BASELINE_DATASETS_METADATA_FILE);
+                mJobParams.AddResultFileToSkip(mJobParams.GetParam(AnalysisResources.JOB_PARAM_PARAMETER_FILE));
 
                 // Skip the .Rout file
-                mJobParams.AddResultFileToSkip(clsAnalysisResourcesQCART.QCART_PROCESSING_SCRIPT_NAME + "out");
+                mJobParams.AddResultFileToSkip(AnalysisResourcesQCART.QCART_PROCESSING_SCRIPT_NAME + "out");
 
                 var success = CopyResultsToTransferDirectory();
 
@@ -223,9 +223,9 @@ namespace AnalysisManagerQCARTPlugin
         {
             try
             {
-                var cacheFolderPath = mJobParams.GetJobParameter(clsAnalysisResourcesQCART.JOB_PARAMETER_QCART_BASELINE_RESULTS_CACHE_FOLDER, string.Empty);
+                var cacheFolderPath = mJobParams.GetJobParameter(AnalysisResourcesQCART.JOB_PARAMETER_QCART_BASELINE_RESULTS_CACHE_FOLDER, string.Empty);
 
-                var baselineMetadataFileName = mJobParams.GetJobParameter(clsAnalysisResourcesQCART.JOB_PARAMETER_QCART_BASELINE_METADATA_FILENAME, string.Empty);
+                var baselineMetadataFileName = mJobParams.GetJobParameter(AnalysisResourcesQCART.JOB_PARAMETER_QCART_BASELINE_METADATA_FILENAME, string.Empty);
                 var baselineMetadataPathLocal = Path.Combine(mWorkDir, baselineMetadataFileName);
                 var baselineMetadataPathRemote = Path.Combine(cacheFolderPath, baselineMetadataFileName);
 
@@ -237,7 +237,7 @@ namespace AnalysisManagerQCARTPlugin
 
                 mJobParams.AddResultFileToSkip(fiNewBaselineData.Name);
 
-                var projectName = mJobParams.GetJobParameter(clsAnalysisResourcesQCART.JOB_PARAMETER_QCART_PROJECT_NAME, string.Empty);
+                var projectName = mJobParams.GetJobParameter(AnalysisResourcesQCART.JOB_PARAMETER_QCART_PROJECT_NAME, string.Empty);
 
                 // Create the new metadata file
                 var baselineResultsTimestamp = dtCurrentTime.ToString("yyyy-MM-dd hh:mm:ss tt");
@@ -315,7 +315,7 @@ namespace AnalysisManagerQCARTPlugin
         /// </summary>
         private void DeleteLockFileIfRequired()
         {
-            var lockFilePath = mJobParams.GetJobParameter(clsAnalysisResourcesQCART.JOB_PARAMETER_QCART_BASELINE_METADATA_LOCKFILE, string.Empty);
+            var lockFilePath = mJobParams.GetJobParameter(AnalysisResourcesQCART.JOB_PARAMETER_QCART_BASELINE_METADATA_LOCKFILE, string.Empty);
 
             if (string.IsNullOrWhiteSpace(lockFilePath))
                 return;
@@ -333,12 +333,12 @@ namespace AnalysisManagerQCARTPlugin
         }
 
         /// <summary>
-        /// Retrieve the baseline dataset names and corresponding Masic jobs that were stored by clsAnalysisResourcesQCART
+        /// Retrieve the baseline dataset names and corresponding Masic jobs that were stored by AnalysisResourcesQCART
         /// </summary>
         /// <returns>Dictionary of dataset names and Masic jobs</returns>
         private Dictionary<string, int> GetPackedDatasetNamesAndJobs()
         {
-            var datasetNamesAndJobsText = ExtractPackedJobParameterDictionary(clsAnalysisResourcesQCART.JOB_PARAMETER_QCART_BASELINE_DATASET_NAMES_AND_JOBS);
+            var datasetNamesAndJobsText = ExtractPackedJobParameterDictionary(AnalysisResourcesQCART.JOB_PARAMETER_QCART_BASELINE_DATASET_NAMES_AND_JOBS);
 
             var datasetNamesAndJobs = new Dictionary<string, int>(datasetNamesAndJobsText.Count);
 
@@ -377,7 +377,7 @@ namespace AnalysisManagerQCARTPlugin
                         }
 
                         var datasetName = dataCols[0];
-                        if (!clsGlobal.IsMatch(mDatasetName, datasetName))
+                        if (!Global.IsMatch(mDatasetName, datasetName))
                         {
                             LogError("QC-ART results file has results for an unexpected dataset: " + datasetName);
                             continue;
@@ -446,7 +446,7 @@ namespace AnalysisManagerQCARTPlugin
             try
             {
                 // Load the QC-ART results for the target dataset
-                var fiResultsFile = new FileInfo(Path.Combine(mWorkDir, mDatasetName + clsAnalysisResourcesQCART.QCART_RESULTS_FILE_SUFFIX));
+                var fiResultsFile = new FileInfo(Path.Combine(mWorkDir, mDatasetName + AnalysisResourcesQCART.QCART_RESULTS_FILE_SUFFIX));
 
                 if (!fiResultsFile.Exists)
                 {
@@ -470,7 +470,7 @@ namespace AnalysisManagerQCARTPlugin
                 }
 
                 // Determine whether or not we used existing an baseline results file
-                var existingBaselineResultsFileName = mJobParams.GetJobParameter(clsAnalysisResourcesQCART.JOB_PARAMETER_QCART_BASELINE_RESULTS_FILENAME, string.Empty);
+                var existingBaselineResultsFileName = mJobParams.GetJobParameter(AnalysisResourcesQCART.JOB_PARAMETER_QCART_BASELINE_RESULTS_FILENAME, string.Empty);
 
                 if (!string.IsNullOrWhiteSpace(existingBaselineResultsFileName))
                 {
@@ -478,7 +478,7 @@ namespace AnalysisManagerQCARTPlugin
                     return true;
                 }
 
-                var fiNewBaselineData = new FileInfo(Path.Combine(mWorkDir, clsAnalysisResourcesQCART.NEW_BASELINE_DATASETS_CACHE_FILE));
+                var fiNewBaselineData = new FileInfo(Path.Combine(mWorkDir, AnalysisResourcesQCART.NEW_BASELINE_DATASETS_CACHE_FILE));
                 if (!fiNewBaselineData.Exists)
                 {
                     mMessage = "QC-ART Processing error: new baseline data file not found";
@@ -502,9 +502,9 @@ namespace AnalysisManagerQCARTPlugin
         private bool ProcessDatasetWithQCART(string rProgLoc)
         {
             // Set up and execute a program runner to run QC-ART
-            // We call R.exe passing it the path to the R script file customized by clsAnalysisResourcesQCART
+            // We call R.exe passing it the path to the R script file customized by AnalysisResourcesQCART
             // R will create a text file with the same name as the rScriptPath but with extension .Rout
-            var rScriptPath = Path.Combine(mWorkDir, clsAnalysisResourcesQCART.QCART_PROCESSING_SCRIPT_NAME);
+            var rScriptPath = Path.Combine(mWorkDir, AnalysisResourcesQCART.QCART_PROCESSING_SCRIPT_NAME);
 
             var arguments = "CMD BATCH" +
                             " --vanilla" +
@@ -518,7 +518,7 @@ namespace AnalysisManagerQCARTPlugin
             // Not used by this plugin
             // mConsoleOutputFile = Path.Combine(mWorkDir, QCART_CONSOLE_OUTPUT);
 
-            var cmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel)
+            var cmdRunner = new RunDosProgram(mWorkDir, mDebugLevel)
             {
                 CreateNoWindow = true,
                 CacheStandardOutput = false,
@@ -539,7 +539,7 @@ namespace AnalysisManagerQCARTPlugin
             if (!cmdRunner.WriteConsoleOutputToFile && cmdRunner.CachedConsoleOutput.Length > 0)
             {
                 // Write the console output to a text file
-                clsGlobal.IdleLoop(0.25);
+                Global.IdleLoop(0.25);
 
                 using (var writer = new StreamWriter(new FileStream(cmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
@@ -624,7 +624,7 @@ namespace AnalysisManagerQCARTPlugin
 
                 // Gigasax.DMS5
                 var connectionString = mMgrParams.GetParam("ConnectionString");
-                var datasetID = mJobParams.GetJobParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetID", 0);
+                var datasetID = mJobParams.GetJobParameter(AnalysisJob.JOB_PARAMETERS_SECTION, "DatasetID", 0);
 
                 // Call stored procedure StoreQCARTResults
                 // Retry up to 3 times

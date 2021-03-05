@@ -12,7 +12,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
     /// <summary>
     /// Runs the MultiAlign pipeline
     /// </summary>
-    public class clsMultiAlignMage : EventNotifier
+    public class MultiAlignMage : EventNotifier
     {
         #region Member Variables
 
@@ -72,7 +72,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
         /// <param name="jobParams"></param>
         /// <param name="mgrParams"></param>
         /// <param name="statusTools"></param>
-        public clsMultiAlignMage(IJobParams jobParams, IMgrParams mgrParams, IStatusFile statusTools)
+        public MultiAlignMage(IJobParams jobParams, IMgrParams mgrParams, IStatusFile statusTools)
         {
             mStatusTools = statusTools;
             Initialize(jobParams, mgrParams);
@@ -138,13 +138,13 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 
             InitializeProgressStepDictionaries();
 
-            var cmdRunner = new clsRunDosProgram(mWorkingDir);
+            var cmdRunner = new RunDosProgram(mWorkingDir);
             cmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
             cmdRunner.ErrorEvent += CmdRunnerOnErrorEvent;
 
             if (mDebugLevel > 4)
             {
-                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, "clsMultiAlignMage.RunTool(): Enter");
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, "MultiAlignMage.RunTool(): Enter");
             }
 
             if (string.IsNullOrWhiteSpace(sMultiAlignConsolePath))
@@ -163,7 +163,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 
             if (string.IsNullOrWhiteSpace(MultiAlignResultFilename))
             {
-                MultiAlignResultFilename = mJobParams.RequireJobParam(clsAnalysisResources.JOB_PARAM_DATASET_NAME);
+                MultiAlignResultFilename = mJobParams.RequireJobParam(AnalysisResources.JOB_PARAM_DATASET_NAME);
             }
 
             // Set up and execute a program runner to run MultiAlign
@@ -216,7 +216,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                     return false;
                 }
 
-                const string strParamFileStoragePathKeyName = clsGlobal.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "MultiAlign";
+                const string strParamFileStoragePathKeyName = Global.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "MultiAlign";
                 var strMAParameterFileStoragePath = mMgrParams.RequireMgrParam(strParamFileStoragePathKeyName);
                 if (string.IsNullOrEmpty(strMAParameterFileStoragePath))
                 {
@@ -889,7 +889,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                 var val = mJobParams.GetParam(paramName);
                 if (string.IsNullOrWhiteSpace(val))
                 {
-                    mJobParams.AddAdditionalParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, paramName, defaultValue);
+                    mJobParams.AddAdditionalParameter(AnalysisJob.JOB_PARAMETERS_SECTION, paramName, defaultValue);
                     return defaultValue;
                 }
                 return val;

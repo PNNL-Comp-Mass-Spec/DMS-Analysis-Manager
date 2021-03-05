@@ -15,7 +15,7 @@ namespace AnalysisManagerDtaImportPlugIn
     /// <summary>
     /// Class for running DTA Importer
     /// </summary>
-    public class clsAnalysisToolRunnerDtaImport : clsAnalysisToolRunnerBase
+    public class AnalysisToolRunnerDtaImport : AnalysisToolRunnerBase
     {
         // Ignore Spelling: dta, pnl
 
@@ -68,11 +68,11 @@ namespace AnalysisManagerDtaImportPlugIn
                 // This folder must contain subdirectories whose name matches the output_folder name assigned to each job
                 // Furthermore, each subdirectory must have a file named Dataset_dta.zip
 
-                sourceFolderNamePath = Path.Combine(mMgrParams.GetParam("DTAFolderLocation"), mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME));
-                completeFolderNamePath = Path.Combine(mMgrParams.GetParam("DTAProcessedFolderLocation"), mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME));
+                sourceFolderNamePath = Path.Combine(mMgrParams.GetParam("DTAFolderLocation"), mJobParams.GetParam(AnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME));
+                completeFolderNamePath = Path.Combine(mMgrParams.GetParam("DTAProcessedFolderLocation"), mJobParams.GetParam(AnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME));
 
                 // Determine if Dta folder in transfer directory already exists; Make directory if it doesn't exist
-                targetFolderNamePath = Path.Combine(mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH), mDatasetName);
+                targetFolderNamePath = Path.Combine(mJobParams.GetParam(AnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH), mDatasetName);
                 if (!Directory.Exists(targetFolderNamePath))
                 {
                     // Make the DTA folder
@@ -89,7 +89,7 @@ namespace AnalysisManagerDtaImportPlugIn
                 }
 
                 // Now append the output folder name to TargetFolderNamePath
-                targetFolderNamePath = Path.Combine(targetFolderNamePath, mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME));
+                targetFolderNamePath = Path.Combine(targetFolderNamePath, mJobParams.GetParam(AnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME));
             }
             catch (Exception ex)
             {
@@ -100,7 +100,7 @@ namespace AnalysisManagerDtaImportPlugIn
             try
             {
                 // Copy the DTA folder to the transfer folder
-                var objAnalysisResults = new clsAnalysisResults(mMgrParams, mJobParams);
+                var objAnalysisResults = new AnalysisResults(mMgrParams, mJobParams);
                 objAnalysisResults.CopyDirectory(sourceFolderNamePath, targetFolderNamePath, false);
 
                 // Now move the DTA folder to succeeded folder

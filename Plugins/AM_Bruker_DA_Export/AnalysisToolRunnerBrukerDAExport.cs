@@ -18,7 +18,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
     /// Class for running DA Export
     /// </summary>
     // ReSharper disable once UnusedMember.Global
-    public class clsAnalysisToolRunnerBrukerDAExport : clsAnalysisToolRunnerBase
+    public class AnalysisToolRunnerBrukerDAExport : AnalysisToolRunnerBase
     {
         // Ignore Spelling: Daltonik
 
@@ -63,7 +63,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
 
                 if (mDebugLevel > 4)
                 {
-                    LogDebug("clsAnalysisToolRunnerBrukerDAExport.RunTool(): Enter");
+                    LogDebug("AnalysisToolRunnerBrukerDAExport.RunTool(): Enter");
                 }
 
                 // Initialize class wide variables
@@ -175,14 +175,14 @@ namespace AnalysisManagerBrukerDAExportPlugin
             var fiBafFile = diDataFolder.GetFiles("analysis.baf", SearchOption.AllDirectories).ToList();
             if (fiBafFile.Count > 0)
             {
-                datasetSizeMB = clsGlobal.BytesToMB(fiBafFile[0].Length);
+                datasetSizeMB = Global.BytesToMB(fiBafFile[0].Length);
             }
             else
             {
                 var fileTools = new PRISM.FileTools();
                 RegisterEvents(fileTools);
 
-                datasetSizeMB = clsGlobal.BytesToMB(fileTools.GetDirectorySize(dataFolderPath));
+                datasetSizeMB = Global.BytesToMB(fileTools.GetDirectorySize(dataFolderPath));
             }
 
             var scanCountEstimate = (int)Math.Round(datasetSizeMB / MB_PER_SCAN, 0);
@@ -209,10 +209,10 @@ namespace AnalysisManagerBrukerDAExportPlugin
 
                 switch (rawDataTypeName.ToLower())
                 {
-                    case clsAnalysisResources.RAW_DATA_TYPE_DOT_D_FOLDERS:
-                    case clsAnalysisResources.RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER:
-                    case clsAnalysisResources.RAW_DATA_TYPE_BRUKER_FT_FOLDER:
-                        dataFolderPath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_D_EXTENSION);
+                    case AnalysisResources.RAW_DATA_TYPE_DOT_D_FOLDERS:
+                    case AnalysisResources.RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER:
+                    case AnalysisResources.RAW_DATA_TYPE_BRUKER_FT_FOLDER:
+                        dataFolderPath = Path.Combine(mWorkDir, mDatasetName + AnalysisResources.DOT_D_EXTENSION);
                         break;
                     default:
                         mMessage = "Dataset type " + rawDataTypeName + " is not supported";
@@ -273,7 +273,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
                     LogDebug(progLoc + " " + arguments.Trim());
                 }
 
-                var cmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel)
+                var cmdRunner = new RunDosProgram(mWorkDir, mDebugLevel)
                 {
                     CreateNoWindow = true,
                     CacheStandardOutput = false,
@@ -295,7 +295,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
                 if (!cmdRunner.WriteConsoleOutputToFile)
                 {
                     // Write the console output to a text file
-                    clsGlobal.IdleLoop(0.25);
+                    Global.IdleLoop(0.25);
 
                     using var writer = new StreamWriter(new FileStream(cmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
 
@@ -308,7 +308,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
                 }
 
                 // Parse the console output file one more time to check for errors
-                clsGlobal.IdleLoop(0.25);
+                Global.IdleLoop(0.25);
                 ParseConsoleOutputFile(cmdRunner.ConsoleOutputFilePath);
 
                 if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))

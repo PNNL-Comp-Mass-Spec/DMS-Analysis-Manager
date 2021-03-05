@@ -11,7 +11,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
     /// <summary>
     /// Class for running LipidMapSearch
     /// </summary>
-    public class clsAnalysisToolRunnerLipidMapSearch : clsAnalysisToolRunnerBase
+    public class AnalysisToolRunnerLipidMapSearch : AnalysisToolRunnerBase
     {
         #region "Module Variables"
 
@@ -44,7 +44,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
 
         private string mLipidMapsDBFilename = string.Empty;
 
-        private clsRunDosProgram mCmdRunner;
+        private RunDosProgram mCmdRunner;
 
         #endregion
 
@@ -66,7 +66,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
 
                 if (mDebugLevel > 4)
                 {
-                    LogDebug("clsAnalysisToolRunnerLipidMapSearch.RunTool(): Enter");
+                    LogDebug("AnalysisToolRunnerLipidMapSearch.RunTool(): Enter");
                 }
 
                 // Determine the path to the LipidTools program
@@ -111,20 +111,20 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                 // Set up and execute a program runner to run LipidTools
                 var arguments = " -db " + PossiblyQuotePath(Path.Combine(mWorkDir, mLipidMapsDBFilename)) +
                                 " -NoDBUpdate" +
-                                " -rp " + PossiblyQuotePath(Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_RAW_EXTENSION));   // Positive-mode .Raw file
+                                " -rp " + PossiblyQuotePath(Path.Combine(mWorkDir, mDatasetName + AnalysisResources.DOT_RAW_EXTENSION));   // Positive-mode .Raw file
 
-                var strFilePath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResourcesLipidMapSearch.DECONTOOLS_PEAKS_FILE_SUFFIX);
+                var strFilePath = Path.Combine(mWorkDir, mDatasetName + AnalysisResourcesLipidMapSearch.DECONTOOLS_PEAKS_FILE_SUFFIX);
                 if (File.Exists(strFilePath))
                 {
                     arguments += " -pp " + PossiblyQuotePath(strFilePath);                  // Positive-mode peaks.txt file
                 }
 
-                var strDataset2 = mJobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "SourceJob2Dataset");
+                var strDataset2 = mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, "SourceJob2Dataset");
                 if (!string.IsNullOrEmpty(strDataset2))
                 {
-                    arguments += " -rn " + PossiblyQuotePath(Path.Combine(mWorkDir, strDataset2 + clsAnalysisResources.DOT_RAW_EXTENSION)); // Negative-mode .Raw file
+                    arguments += " -rn " + PossiblyQuotePath(Path.Combine(mWorkDir, strDataset2 + AnalysisResources.DOT_RAW_EXTENSION)); // Negative-mode .Raw file
 
-                    strFilePath = Path.Combine(mWorkDir, strDataset2 + clsAnalysisResourcesLipidMapSearch.DECONTOOLS_PEAKS_FILE_SUFFIX);
+                    strFilePath = Path.Combine(mWorkDir, strDataset2 + AnalysisResourcesLipidMapSearch.DECONTOOLS_PEAKS_FILE_SUFFIX);
                     if (File.Exists(strFilePath))
                     {
                         arguments += " -pn " + PossiblyQuotePath(strFilePath);                  // Negative-mode peaks.txt file
@@ -141,7 +141,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                     LogDebug(mLipidToolsProgLoc + arguments);
                 }
 
-                mCmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel);
+                mCmdRunner = new RunDosProgram(mWorkDir, mDebugLevel);
                 RegisterEvents(mCmdRunner);
                 mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
@@ -158,7 +158,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                 if (!mCmdRunner.WriteConsoleOutputToFile)
                 {
                     // Write the console output to a text file
-                    clsGlobal.IdleLoop(0.25);
+                    Global.IdleLoop(0.25);
 
                     using var writer = new StreamWriter(new FileStream(mCmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
 
@@ -166,7 +166,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                 }
 
                 // Parse the console output file one more time to check for errors
-                clsGlobal.IdleLoop(0.25);
+                Global.IdleLoop(0.25);
                 ParseConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath);
 
                 if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))
@@ -270,7 +270,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
 
             // Look for a recent .lock file
 
-            foreach (var lockFile in diLipidMapsDBFolder.GetFiles("*" + clsGlobal.LOCK_FILE_EXTENSION))
+            foreach (var lockFile in diLipidMapsDBFolder.GetFiles("*" + Global.LOCK_FILE_EXTENSION))
             {
                 if (DateTime.UtcNow.Subtract(lockFile.LastWriteTimeUtc).TotalHours < 2)
                 {
@@ -285,8 +285,8 @@ namespace AnalysisManagerLipidMapSearchPlugIn
 
             if (lockFileFound)
             {
-                var dataFilePath = strLockFilePath.Substring(0, strLockFilePath.Length - clsGlobal.LOCK_FILE_EXTENSION.Length);
-                clsAnalysisResources.CheckForLockFile(dataFilePath, "LipidMapsDB", mStatusTools);
+                var dataFilePath = strLockFilePath.Substring(0, strLockFilePath.Length - Global.LOCK_FILE_EXTENSION.Length);
+                AnalysisResources.CheckForLockFile(dataFilePath, "LipidMapsDB", mStatusTools);
 
                 strNewestLipidMapsDBFileName = FindNewestLipidMapsDB(diLipidMapsDBFolder, out var dtLipidMapsDBFileTime);
 
@@ -323,7 +323,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
             var newLipidMapsDBFilePath = Path.Combine(diLipidMapsDBFolder.FullName, LIPID_MAPS_DB_FILENAME_PREFIX + strTimeStamp);
 
             // Create a new lock file
-            clsAnalysisResources.CreateLockFile(newLipidMapsDBFilePath, "Downloading LipidMaps.txt file via " + mMgrName);
+            AnalysisResources.CreateLockFile(newLipidMapsDBFilePath, "Downloading LipidMaps.txt file via " + mMgrName);
 
             // Call the LipidTools program to obtain the latest database from http://www.lipidmaps.org/
             var strLipidMapsDBFileLocal = Path.Combine(mWorkDir, LIPID_MAPS_DB_FILENAME_PREFIX + strTimeStamp + ".txt");
@@ -338,7 +338,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                 LogDebug(mLipidToolsProgLoc + arguments);
             }
 
-            mCmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel);
+            mCmdRunner = new RunDosProgram(mWorkDir, mDebugLevel);
             RegisterEvents(mCmdRunner);
             mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
@@ -382,7 +382,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                 if (Path.GetFileName(strLipidMapsDBFileLocal) != strNewestLipidMapsDBFileName)
                 {
                     // Rename the newly downloaded file to strNewestLipidMapsDBFileName
-                    clsGlobal.IdleLoop(0.25);
+                    Global.IdleLoop(0.25);
                     if (string.IsNullOrWhiteSpace(strNewestLipidMapsDBFileName))
                         throw new Exception("strNewestLipidMapsDBFileName is null in DownloadNewLipidMapsDB");
 
@@ -414,7 +414,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                         LogDebug("Source path: " + strLipidMapsDBFileLocal);
                         LogDebug("Target path: " + strLipidMapsDBFileTarget);
                         // Wait 5 seconds, then try again
-                        clsGlobal.IdleLoop(5);
+                        Global.IdleLoop(5);
                     }
                 }
 
@@ -427,7 +427,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                 writer.WriteLine(sha1HashNew);
             }
 
-            clsGlobal.DeleteLockFile(newLipidMapsDBFilePath);
+            Global.DeleteLockFile(newLipidMapsDBFilePath);
 
             return strNewestLipidMapsDBFileName;
         }
@@ -522,7 +522,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                         {
                             LogError("Exception downloading Lipid Maps DB; attempt=" + intDownloadAttempts + ": " + ex.Message);
                             // Wait 5 seconds, then try again
-                            clsGlobal.IdleLoop(5);
+                            Global.IdleLoop(5);
                         }
                     }
                 }
@@ -816,7 +816,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                 }
 
                 // Zip up the files in the PlotData folder
-                var dotNetZipTools = new clsDotNetZipTools(mDebugLevel, mWorkDir);
+                var dotNetZipTools = new DotNetZipTools(mDebugLevel, mWorkDir);
 
                 dotNetZipTools.ZipDirectory(strFolderToZip, Path.Combine(mWorkDir, "LipidMap_PlotData.zip"));
             }

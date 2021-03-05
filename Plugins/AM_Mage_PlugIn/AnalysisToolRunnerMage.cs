@@ -9,7 +9,7 @@ using System.Linq;
 namespace AnalysisManager_Mage_PlugIn
 {
     // ReSharper disable once UnusedMember.Global
-    public class clsAnalysisToolRunnerMage : clsAnalysisToolRunnerMAC
+    public class AnalysisToolRunnerMage : AnalysisToolRunnerMAC
     {
         // Ignore Spelling: iTraq, plex
 
@@ -66,7 +66,7 @@ namespace AnalysisManager_Mage_PlugIn
             var toolVersionInfo = string.Empty;
             var assemblyName = System.Reflection.Assembly.Load("Mage").GetName();
             var nameAndVersion = assemblyName.Name + ", Version=" + assemblyName.Version;
-            toolVersionInfo = clsGlobal.AppendToComment(toolVersionInfo, nameAndVersion);
+            toolVersionInfo = Global.AppendToComment(toolVersionInfo, nameAndVersion);
             return toolVersionInfo;
         }
 

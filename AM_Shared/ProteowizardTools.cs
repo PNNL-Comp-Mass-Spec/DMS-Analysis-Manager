@@ -8,7 +8,7 @@ namespace AnalysisManagerBase
     /// <summary>
     /// Proteowizard tools
     /// </summary>
-    public class clsProteowizardTools : EventNotifier
+    public class ProteowizardTools : EventNotifier
     {
         /// <summary>
         /// Debug level
@@ -19,7 +19,7 @@ namespace AnalysisManagerBase
         /// Constructor
         /// </summary>
         /// <param name="debugLevel"></param>
-        public clsProteowizardTools(int debugLevel)
+        public ProteowizardTools(int debugLevel)
         {
             mDebugLevel = debugLevel;
         }
@@ -29,7 +29,7 @@ namespace AnalysisManagerBase
         /// </summary>
         public bool RegisterProteoWizard()
         {
-            if (clsGlobal.LinuxOS)
+            if (Global.LinuxOS)
             {
                 OnWarningEvent("Skipping call to RegisterProteoWizard since running on Linux");
                 return true;

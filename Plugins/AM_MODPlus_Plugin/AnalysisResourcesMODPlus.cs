@@ -14,7 +14,7 @@ namespace AnalysisManagerMODPlusPlugin
     /// <summary>
     /// Retrieve resources for the MODPlus plugin
     /// </summary>
-    public class clsAnalysisResourcesMODPlus : clsAnalysisResources
+    public class AnalysisResourcesMODPlus : AnalysisResources
     {
         internal const string MOD_PLUS_RUNTIME_PARAM_FASTA_FILE_IS_DECOY = "###_MODPlus_Runtime_Param_FastaFileIsDecoy_###";
         internal const int MINIMUM_PERCENT_DECOY = 25;
@@ -22,10 +22,10 @@ namespace AnalysisManagerMODPlusPlugin
         /// <summary>
         /// Initialize options
         /// </summary>
-        public override void Setup(string stepToolName, IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, clsMyEMSLUtilities myEMSLUtilities)
+        public override void Setup(string stepToolName, IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, MyEMSLUtilities myEMSLUtilities)
         {
             base.Setup(stepToolName, mgrParams, jobParams, statusTools, myEMSLUtilities);
-            SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, true);
+            SetOption(Global.eAnalysisResourceOptions.OrgDbRequired, true);
         }
 
         /// <summary>
@@ -67,7 +67,7 @@ namespace AnalysisManagerMODPlusPlugin
             catch (Exception ex)
             {
                 mMessage = "Exception in GetResources: " + ex.Message;
-                LogError(mMessage + "; task = " + currentTask + "; " + clsGlobal.GetExceptionStackTrace(ex));
+                LogError(mMessage + "; task = " + currentTask + "; " + Global.GetExceptionStackTrace(ex));
                 return CloseOutType.CLOSEOUT_FAILED;
             }
         }
@@ -95,7 +95,7 @@ namespace AnalysisManagerMODPlusPlugin
 
                 var checkLegacyFastaForDecoy = false;
 
-                if (clsGlobal.IsMatch(proteinCollections, "na"))
+                if (Global.IsMatch(proteinCollections, "na"))
                 {
                     // Legacy fasta file
                     // Need to open it with a reader and look for entries that start with Reversed_ or XXX_ or XXX.
@@ -150,7 +150,7 @@ namespace AnalysisManagerMODPlusPlugin
             catch (Exception ex)
             {
                 mMessage = "Exception in RetrieveFastaAndParamFile: " + ex.Message;
-                LogError(mMessage + "; task = " + currentTask + "; " + clsGlobal.GetExceptionStackTrace(ex));
+                LogError(mMessage + "; task = " + currentTask + "; " + Global.GetExceptionStackTrace(ex));
                 return false;
             }
         }

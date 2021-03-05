@@ -8,7 +8,7 @@ namespace AnalysisManagerICR2LSPlugIn
     /// <summary>
     /// Retrieve resources for the ICR-2LS plugin
     /// </summary>
-    public class clsAnalysisResourcesIcr2ls : clsAnalysisResources
+    public class AnalysisResourcesIcr2ls : AnalysisResources
     {
         /// <summary>
         /// Retrieve required files
@@ -44,7 +44,7 @@ namespace AnalysisManagerICR2LSPlugIn
             // Get input data file
             if (!FileSearch.RetrieveSpectra(mJobParams.GetParam("RawDataType")))
             {
-                LogDebug("clsAnalysisResourcesIcr2ls.GetResources: Error occurred retrieving spectra.");
+                LogDebug("AnalysisResourcesIcr2ls.GetResources: Error occurred retrieving spectra.");
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -192,7 +192,7 @@ namespace AnalysisManagerICR2LSPlugIn
         /// CLOSEOUT_FAILURE if an error
         /// </returns>
         /// <remarks>
-        /// Does not validate that the ICR-2LS param file matches (in contrast, clsAnalysisResourcesSeq.vb does valid the param file).
+        /// Does not validate that the ICR-2LS param file matches (in contrast, AnalysisResourcesSeq.vb does valid the param file).
         /// This is done on purpose to allow us to update the param file mid job.
         /// Scans already deisotoped will have used one parameter file; scans processed from this point forward
         /// will use a different one; this is OK and allows us to adjust the settings mid-job.
@@ -203,7 +203,7 @@ namespace AnalysisManagerICR2LSPlugIn
             try
             {
                 var strJob = mJobParams.GetParam("Job");
-                var transferFolderPath = mJobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_TRANSFER_FOLDER_PATH);
+                var transferFolderPath = mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_TRANSFER_FOLDER_PATH);
 
                 if (string.IsNullOrWhiteSpace(transferFolderPath))
                 {
@@ -212,12 +212,12 @@ namespace AnalysisManagerICR2LSPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                transferFolderPath = Path.Combine(transferFolderPath, mJobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_DATASET_FOLDER_NAME));
-                transferFolderPath = Path.Combine(transferFolderPath, mJobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, JOB_PARAM_OUTPUT_FOLDER_NAME));
+                transferFolderPath = Path.Combine(transferFolderPath, mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_DATASET_FOLDER_NAME));
+                transferFolderPath = Path.Combine(transferFolderPath, mJobParams.GetParam(AnalysisJob.STEP_PARAMETERS_SECTION, JOB_PARAM_OUTPUT_FOLDER_NAME));
 
                 if (mDebugLevel >= 4)
                 {
-                    LogDebug("Checking for " + clsAnalysisToolRunnerICRBase.PEK_TEMP_FILE + " file at " + transferFolderPath);
+                    LogDebug("Checking for " + AnalysisToolRunnerICRBase.PEK_TEMP_FILE + " file at " + transferFolderPath);
                 }
 
                 var diSourceFolder = new DirectoryInfo(transferFolderPath);
@@ -232,14 +232,14 @@ namespace AnalysisManagerICR2LSPlugIn
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
 
-                var pekTempFilePath = Path.Combine(diSourceFolder.FullName, DatasetName + clsAnalysisToolRunnerICRBase.PEK_TEMP_FILE);
+                var pekTempFilePath = Path.Combine(diSourceFolder.FullName, DatasetName + AnalysisToolRunnerICRBase.PEK_TEMP_FILE);
 
                 var fiTempPekFile = new FileInfo(pekTempFilePath);
                 if (!fiTempPekFile.Exists)
                 {
                     if (mDebugLevel >= 4)
                     {
-                        LogDebug("  ... " + clsAnalysisToolRunnerICRBase.PEK_TEMP_FILE + " file not found");
+                        LogDebug("  ... " + AnalysisToolRunnerICRBase.PEK_TEMP_FILE + " file not found");
                     }
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
@@ -247,7 +247,7 @@ namespace AnalysisManagerICR2LSPlugIn
                 if (mDebugLevel >= 1)
                 {
                     LogDebug(
-                        clsAnalysisToolRunnerICRBase.PEK_TEMP_FILE + " file found for job " + strJob + " (file size = " +
+                        AnalysisToolRunnerICRBase.PEK_TEMP_FILE + " file found for job " + strJob + " (file size = " +
                         (fiTempPekFile.Length / 1024.0).ToString("#,##0") + " KB)");
                 }
 
@@ -268,7 +268,7 @@ namespace AnalysisManagerICR2LSPlugIn
                 catch (Exception ex)
                 {
                     // Error copying the file; treat this as a failed job
-                    mMessage = " Exception copying " + clsAnalysisToolRunnerICRBase.PEK_TEMP_FILE + " file locally";
+                    mMessage = " Exception copying " + AnalysisToolRunnerICRBase.PEK_TEMP_FILE + " file locally";
                     LogError("  ... Exception copying " + fiTempPekFile.FullName + " locally; unable to resume: " + ex.Message);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }

@@ -22,7 +22,7 @@ namespace AnalysisManagerBase
 
             mLinuxSystemInfo = new PRISM.LinuxSystemInfo(LIMIT_LOGGING_BY_TIME_OF_DAY);
 
-            if (clsGlobal.LinuxOS)
+            if (Global.LinuxOS)
                 return;
 
             mWindowsProcessStats = new PRISMWin.ProcessStats(LIMIT_LOGGING_BY_TIME_OF_DAY);
@@ -42,7 +42,7 @@ namespace AnalysisManagerBase
         /// </summary>
         public int GetCoreCount()
         {
-            if (clsGlobal.LinuxOS)
+            if (Global.LinuxOS)
             {
                 return GetCoreCountLinux();
             }
@@ -70,7 +70,7 @@ namespace AnalysisManagerBase
         /// <param name="processIDs">Output: process IDs associated with the process</param>
         public float GetCoreUsageByProcessName(string processName, out List<int> processIDs)
         {
-            if (clsGlobal.LinuxOS)
+            if (Global.LinuxOS)
             {
                 return GetCoreUsageByProcessNameLinux(processName, out processIDs);
             }
@@ -101,7 +101,7 @@ namespace AnalysisManagerBase
         /// <param name="processID"></param>
         public float GetCoreUsageByProcessID(int processID)
         {
-            if (clsGlobal.LinuxOS)
+            if (Global.LinuxOS)
             {
                 return GetCoreUsageByProcessIDLinux(processID);
             }
@@ -128,11 +128,11 @@ namespace AnalysisManagerBase
         /// <returns>Value between 0 and 100</returns>
         /// <remarks>
         /// This is CPU usage for all running applications, not just this application
-        /// For CPU usage of a single application use clsGlobal.ProcessInfo.GetCoreUsageByProcessID()
+        /// For CPU usage of a single application use Global.ProcessInfo.GetCoreUsageByProcessID()
         /// </remarks>
         public float GetCPUUtilization()
         {
-            if (clsGlobal.LinuxOS)
+            if (Global.LinuxOS)
             {
                 return GetCPUUtilizationLinux();
             }
@@ -160,7 +160,7 @@ namespace AnalysisManagerBase
         /// <param name="ex">Exception (allowed to be nothing)</param>
         protected void OnWindowsProcessErrorEvent(string message, Exception ex)
         {
-            var virtualMachineOnPIC = clsGlobal.UsingVirtualMachineOnPIC();
+            var virtualMachineOnPIC = Global.UsingVirtualMachineOnPIC();
 
             if (!virtualMachineOnPIC)
             {

@@ -19,7 +19,7 @@ namespace AnalysisManagerResultsXferPlugin
     /// <summary>
     /// Derived class for performing analysis results transfer
     /// </summary>
-    public class clsResultXferToolRunner : clsAnalysisToolRunnerBase
+    public class ResultXferToolRunner : AnalysisToolRunnerBase
     {
         #region "Methods"
 
@@ -106,7 +106,7 @@ namespace AnalysisManagerResultsXferPlugin
         /// </remarks>
         private void DeleteTransferFolderIfEmpty()
         {
-            var transferFolderPath = mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH);
+            var transferFolderPath = mJobParams.GetParam(AnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH);
             if (string.IsNullOrWhiteSpace(transferFolderPath))
             {
                 LogError("Job parameter transferFolderPath is empty or not defined");
@@ -132,7 +132,7 @@ namespace AnalysisManagerResultsXferPlugin
                     catch (Exception ex)
                     {
                         // Log this exception, but don't treat it is a job failure
-                        var msg = "clsResultXferToolRunner.RunTool(); Exception deleting dataset directory " + mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_DATASET_FOLDER_NAME) +
+                        var msg = "ResultXferToolRunner.RunTool(); Exception deleting dataset directory " + mJobParams.GetParam(AnalysisResources.JOB_PARAM_DATASET_FOLDER_NAME) +
                                   " in xfer folder (another results manager may have deleted it): " + ex.Message;
                         LogWarning(msg);
 
@@ -150,7 +150,7 @@ namespace AnalysisManagerResultsXferPlugin
             catch (Exception ex)
             {
                 // Log this exception, but don't treat it is a job failure
-                var msg = "clsResultXferToolRunner.RunTool(); Exception looking for dataset directory " + mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_DATASET_FOLDER_NAME) +
+                var msg = "ResultXferToolRunner.RunTool(); Exception looking for dataset directory " + mJobParams.GetParam(AnalysisResources.JOB_PARAM_DATASET_FOLDER_NAME) +
                           " in xfer folder (another results manager may have deleted it): " + ex.Message;
                 LogWarning(msg);
 
@@ -353,7 +353,7 @@ namespace AnalysisManagerResultsXferPlugin
         /// <returns>CloseOutType indicating success or failure></returns>
         protected virtual CloseOutType PerformResultsXfer()
         {
-            var transferFolderPath = mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH);
+            var transferFolderPath = mJobParams.GetParam(AnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH);
             var datasetStoragePath = mJobParams.GetParam("DatasetStoragePath");
 
             // Check whether the transfer folder and the dataset directory reside on the same server as this manager
@@ -383,7 +383,7 @@ namespace AnalysisManagerResultsXferPlugin
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            var datasetDirectoryName = mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_DATASET_FOLDER_NAME);
+            var datasetDirectoryName = mJobParams.GetParam(AnalysisResources.JOB_PARAM_DATASET_FOLDER_NAME);
             if (string.IsNullOrWhiteSpace(datasetDirectoryName))
             {
                 LogError("Results transfer failed, job parameter DatasetFolderName is empty; cannot continue");
@@ -406,7 +406,7 @@ namespace AnalysisManagerResultsXferPlugin
 
             // Verify that the dataset directory exists on storage server
             // If it doesn't exist, we will auto-create it (this behavior was added 4/24/2009)
-            var datasetDir = Path.Combine(datasetStoragePath, mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_DATASET_FOLDER_NAME));
+            var datasetDir = Path.Combine(datasetStoragePath, mJobParams.GetParam(AnalysisResources.JOB_PARAM_DATASET_FOLDER_NAME));
             var diDatasetFolder = new DirectoryInfo(datasetDir);
             if (!diDatasetFolder.Exists)
             {
@@ -521,7 +521,7 @@ namespace AnalysisManagerResultsXferPlugin
         protected bool StoreToolVersionInfo()
         {
             var toolVersionInfo = string.Empty;
-            var appFolderPath = clsGlobal.GetAppDirectoryPath();
+            var appFolderPath = Global.GetAppDirectoryPath();
 
             if (mDebugLevel >= 2)
             {

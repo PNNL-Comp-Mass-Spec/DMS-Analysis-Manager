@@ -4,11 +4,10 @@ using System.IO;
 
 namespace AnalysisManager_IDP_PlugIn
 {
-
     /// <summary>
     /// Retrieve resources for the IDP plugin
     /// </summary>
-    public class clsAnalysisResourcesIDP : clsAnalysisResources
+    public class AnalysisResourcesIDP : AnalysisResources
     {
         public static string AppFilePath = "";
 
@@ -20,9 +19,9 @@ namespace AnalysisManager_IDP_PlugIn
 
                 if (m_DebugLevel >= 1)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Retrieving input files");
+                    LogTools.WriteLog(LogTools.LoggerTypes.LogFile, LogTools.LogLevels.INFO, "Retrieving input files");
                 }
-                
+
                 string dataPackageFolderPath = Path.Combine(m_jobParams.GetParam("transferFolderPath"), m_jobParams.GetParam("OutputFolderName"));
                 string analysisType = m_jobParams.GetParam("AnalysisType");
 
@@ -42,14 +41,14 @@ namespace AnalysisManager_IDP_PlugIn
                 if (string.IsNullOrEmpty(strCyclopsWorkflowFileName))
                 {
                     m_message = "Parameter CyclopsWorkflowName not defined in the job parameters for this job";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + "; unable to continue");
+                    LogTools.WriteLog(LogTools.LoggerTypes.LogFile, LogTools.LogLevels.ERROR, m_message + "; unable to continue");
                     return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE;
                 }
 
                 string strDMSWorkflowsFolderPath = m_mgrParams.GetParam("DMSWorkflowsFolderPath", @"\\gigasax\DMS_Workflows");
                 string strCyclopsWorkflowDirectory = Path.Combine(strDMSWorkflowsFolderPath, "Cyclops", analysisType);
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Retrieving workflow file: " + System.IO.Path.Combine(strCyclopsWorkflowDirectory, strCyclopsWorkflowFileName));
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, LogTools.LogLevels.INFO, "Retrieving workflow file: " + System.IO.Path.Combine(strCyclopsWorkflowDirectory, strCyclopsWorkflowFileName));
 
                 // Now copy the Cyclops workflow file to the working directory
                 if (!CopyFileToWorkDir(strCyclopsWorkflowFileName, strCyclopsWorkflowDirectory, m_WorkingDir))
@@ -60,7 +59,7 @@ namespace AnalysisManager_IDP_PlugIn
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception retrieving resources", ex);
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, LogTools.LogLevels.ERROR, "Exception retrieving resources", ex);
             }
 
             return IJobParams.CloseOutType.CLOSEOUT_SUCCESS;

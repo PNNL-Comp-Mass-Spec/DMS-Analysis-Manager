@@ -22,7 +22,7 @@ namespace AnalysisManagerBase
     /// <summary>
     /// Base class for analysis tool runner
     /// </summary>
-    public class clsAnalysisToolRunnerBase : clsAnalysisMgrBase, IToolRunner
+    public class AnalysisToolRunnerBase : AnalysisMgrBase, IToolRunner
     {
         // Ignore Spelling: acqu, fid, baf, tdf, yyyy-MM-dd, hh:mm:ss tt, Cnfg, str, Dta, cmd, Cpu, crc, usr
 
@@ -152,17 +152,17 @@ namespace AnalysisManagerBase
         /// <summary>
         /// DotNetZip tools
         /// </summary>
-        protected clsDotNetZipTools mDotNetZipTools;
+        protected DotNetZipTools mDotNetZipTools;
 
         /// <summary>
         /// Analysis job summary file
         /// </summary>
-        protected clsSummaryFile mSummaryFile;
+        protected SummaryFile mSummaryFile;
 
         /// <summary>
         /// MyEMSL Utilities
         /// </summary>
-        protected clsMyEMSLUtilities mMyEMSLUtilities;
+        protected MyEMSLUtilities mMyEMSLUtilities;
 
         private DateTime mLastProgressWriteTime = DateTime.UtcNow;
 
@@ -175,7 +175,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Tool Version Utilities
         /// </summary>
-        protected clsToolVersionUtilities mToolVersionUtilities;
+        protected ToolVersionUtilities mToolVersionUtilities;
 
         private string mSortUtilityErrorMessage;
 
@@ -256,7 +256,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Constructor
         /// </summary>
-        public clsAnalysisToolRunnerBase() : base("clsAnalysisToolRunnerBase")
+        public AnalysisToolRunnerBase() : base("AnalysisToolRunnerBase")
         {
             mProgRunnerStartTime = DateTime.UtcNow;
             mCoreUsageHistory = new Queue<KeyValuePair<DateTime, float>>();
@@ -276,8 +276,8 @@ namespace AnalysisManagerBase
             IMgrParams mgrParams,
             IJobParams jobParams,
             IStatusFile statusTools,
-            clsSummaryFile summaryFile,
-            clsMyEMSLUtilities myEMSLUtilities)
+            SummaryFile summaryFile,
+            MyEMSLUtilities myEMSLUtilities)
         {
             StepToolName = stepToolName;
 
@@ -290,11 +290,11 @@ namespace AnalysisManagerBase
             mWorkDir = mMgrParams.GetParam("WorkDir");
             mMgrName = mMgrParams.ManagerName;
 
-            mJob = mJobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Job", 0);
+            mJob = mJobParams.GetJobParameter(AnalysisJob.STEP_PARAMETERS_SECTION, "Job", 0);
 
-            mDatasetName = mJobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_DATASET_NAME);
+            mDatasetName = mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_DATASET_NAME);
 
-            mMyEMSLUtilities = myEMSLUtilities ?? new clsMyEMSLUtilities(mDebugLevel, mWorkDir);
+            mMyEMSLUtilities = myEMSLUtilities ?? new MyEMSLUtilities(mDebugLevel, mWorkDir);
             RegisterEvents(mMyEMSLUtilities);
 
             mDebugLevel = (short)mMgrParams.GetParam("DebugLevel", 1);
@@ -302,19 +302,19 @@ namespace AnalysisManagerBase
 
             mSummaryFile = summaryFile;
 
-            mResultsDirectoryName = mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME);
+            mResultsDirectoryName = mJobParams.GetParam(AnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME);
 
             if (mDebugLevel > 3)
             {
-                LogDebug("clsAnalysisToolRunnerBase.Setup()");
+                LogDebug("AnalysisToolRunnerBase.Setup()");
             }
 
-            mDotNetZipTools = new clsDotNetZipTools(mDebugLevel, mWorkDir);
+            mDotNetZipTools = new DotNetZipTools(mDebugLevel, mWorkDir);
             RegisterEvents(mDotNetZipTools);
 
             InitFileTools(mMgrName, mDebugLevel);
 
-            mToolVersionUtilities = new clsToolVersionUtilities(mgrParams, jobParams, mJob, mDatasetName, StepToolName, mDebugLevel, mWorkDir);
+            mToolVersionUtilities = new ToolVersionUtilities(mgrParams, jobParams, mJob, mDatasetName, StepToolName, mDebugLevel, mWorkDir);
             RegisterEvents(mToolVersionUtilities);
 
             mNeedToAbortProcessing = false;
@@ -414,7 +414,7 @@ namespace AnalysisManagerBase
             if (memorySizeMBPerThread < 512)
                 memorySizeMBPerThread = 512;
 
-            var maxThreadsToAllow = clsGlobal.GetCoreCount();
+            var maxThreadsToAllow = Global.GetCoreCount();
 
             var freeMemoryMB = mStatusTools.GetFreeMemoryMB();
 
@@ -450,7 +450,7 @@ namespace AnalysisManagerBase
         /// </remarks>
         public virtual void CopyFailedResultsToArchiveDirectory()
         {
-            if (clsGlobal.OfflineMode)
+            if (Global.OfflineMode)
             {
                 // Offline mode jobs each have their own work directory
                 // Thus, copying of failed results is not applicable
@@ -491,7 +491,7 @@ namespace AnalysisManagerBase
             }
 
             // Copy the results directory to the Archive directory
-            var analysisResults = new clsAnalysisResults(mMgrParams, mJobParams);
+            var analysisResults = new AnalysisResults(mMgrParams, mJobParams);
             analysisResults.CopyFailedResultsToArchiveDirectory(directoryPathToArchive, failedResultsDirectoryPath);
         }
 
@@ -518,7 +518,7 @@ namespace AnalysisManagerBase
                 string toolNameVersionFolder;
                 try
                 {
-                    toolNameVersionFolder = clsAnalysisResources.GetMSXmlToolNameVersionFolder(mResultsDirectoryName);
+                    toolNameVersionFolder = AnalysisResources.GetMSXmlToolNameVersionFolder(mResultsDirectoryName);
                 }
                 catch (Exception)
                 {
@@ -527,11 +527,11 @@ namespace AnalysisManagerBase
                 }
 
                 // Determine the year_quarter text for this dataset
-                var datasetStoragePath = mJobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetStoragePath");
+                var datasetStoragePath = mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, "DatasetStoragePath");
                 if (string.IsNullOrEmpty(datasetStoragePath))
-                    datasetStoragePath = mJobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetArchivePath");
+                    datasetStoragePath = mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, "DatasetArchivePath");
 
-                var datasetYearQuarter = clsAnalysisResources.GetDatasetYearQuarter(datasetStoragePath);
+                var datasetYearQuarter = AnalysisResources.GetDatasetYearQuarter(datasetStoragePath);
                 if (string.IsNullOrEmpty(datasetYearQuarter))
                 {
                     LogError("Unable to determine DatasetYearQuarter using the DatasetStoragePath or DatasetArchivePath; cannot construct MSXmlCache path");
@@ -646,11 +646,11 @@ namespace AnalysisManagerBase
                 if (string.IsNullOrEmpty(datasetYearQuarter))
                 {
                     // Determine the year_quarter text for this dataset
-                    var datasetStoragePath = mJobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetStoragePath");
+                    var datasetStoragePath = mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, "DatasetStoragePath");
                     if (string.IsNullOrEmpty(datasetStoragePath))
-                        datasetStoragePath = mJobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetArchivePath");
+                        datasetStoragePath = mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, "DatasetArchivePath");
 
-                    datasetYearQuarter = clsAnalysisResources.GetDatasetYearQuarter(datasetStoragePath);
+                    datasetYearQuarter = AnalysisResources.GetDatasetYearQuarter(datasetStoragePath);
                 }
 
                 if (!string.IsNullOrEmpty(datasetYearQuarter))
@@ -660,10 +660,10 @@ namespace AnalysisManagerBase
                         targetDirectory.Create();
                 }
 
-                mJobParams.AddResultFileExtensionToSkip(clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX);
+                mJobParams.AddResultFileExtensionToSkip(Global.SERVER_CACHE_HASHCHECK_FILE_SUFFIX);
 
                 // Create the .hashcheck file
-                var hashcheckFilePath = clsGlobal.CreateHashcheckFile(sourceFilePath, computeMD5Hash: true);
+                var hashcheckFilePath = Global.CreateHashcheckFile(sourceFilePath, computeMD5Hash: true);
 
                 if (string.IsNullOrEmpty(hashcheckFilePath))
                 {
@@ -726,14 +726,14 @@ namespace AnalysisManagerBase
         /// <param name="purgeOldFilesIfNeeded">Set to True to automatically purge old files if the space usage is over 20 TB</param>
         /// <returns>True if success; false if an error</returns>
         /// <remarks>
-        /// Contrast with CopyMSXmlToCache in clsAnalysisToolRunnerMSXMLGen, where the target directory is
+        /// Contrast with CopyMSXmlToCache in AnalysisToolRunnerMSXMLGen, where the target directory is
         /// of the form \\proto-6\MSXML_Cache\MSConvert\MSXML_Gen_1_93
         /// </remarks>
         protected bool CopyMzXMLFileToServerCache(string sourceFilePath, string datasetYearQuarter, string msXmlGeneratorName, bool purgeOldFilesIfNeeded)
         {
             try
             {
-                var msXMLCacheDirectoryPath = mMgrParams.GetParam(clsAnalysisResources.JOB_PARAM_MSXML_CACHE_FOLDER_PATH, string.Empty);
+                var msXMLCacheDirectoryPath = mMgrParams.GetParam(AnalysisResources.JOB_PARAM_MSXML_CACHE_FOLDER_PATH, string.Empty);
 
                 if (string.IsNullOrEmpty(msXmlGeneratorName))
                 {
@@ -784,7 +784,7 @@ namespace AnalysisManagerBase
             var sourceDirectoryPath = string.Empty;
             string targetDirectoryPath;
 
-            var analysisResults = new clsAnalysisResults(mMgrParams, mJobParams);
+            var analysisResults = new AnalysisResults(mMgrParams, mJobParams);
 
             var errorEncountered = false;
             var failedFileCount = 0;
@@ -869,7 +869,7 @@ namespace AnalysisManagerBase
                 // Error copying 3 files to transfer directory
 
                 var msg = "Error copying " + failedFileCount +
-                    clsGlobal.CheckPlural(failedFileCount, " file", " files") +
+                    Global.CheckPlural(failedFileCount, " file", " files") +
                     " to transfer directory";
                 LogError(msg);
                 analysisResults.CopyFailedResultsToArchiveDirectory(sourceDirectoryPath);
@@ -896,7 +896,7 @@ namespace AnalysisManagerBase
             string rootSourceDirectoryPath,
             string sourceDirectoryPath,
             string targetDirectoryPath,
-            clsAnalysisResults analysisResults,
+            AnalysisResults analysisResults,
             ref bool errorEncountered,
             ref int failedFileCount,
             int retryCount,
@@ -931,7 +931,7 @@ namespace AnalysisManagerBase
                                       "; old file date (UTC): " + targetFile.LastWriteTimeUtc;
 
                         // Log a warning, though not if the file is JobParameters_1394245.xml since we update that file after each job step
-                        if (sourceFile.Name != clsAnalysisJob.JobParametersFilename(Job))
+                        if (sourceFile.Name != AnalysisJob.JobParametersFilename(Job))
                         {
                             LogWarning(message);
                         }
@@ -1026,7 +1026,7 @@ namespace AnalysisManagerBase
         /// </remarks>
         public virtual bool CopyResultsToTransferDirectory(string transferDirectoryPathOverride = "")
         {
-            if (clsGlobal.OfflineMode)
+            if (Global.OfflineMode)
             {
                 LogDebug("Offline mode is enabled; leaving results in the working directory: " + mWorkDir);
                 return true;
@@ -1043,7 +1043,7 @@ namespace AnalysisManagerBase
             var moveSucceed = MoveResultFiles();
             if (!moveSucceed)
             {
-                // Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
+                // Note that MoveResultFiles should have already called AnalysisResults.CopyFailedResultsToArchiveFolder
                 mMessage = "Error moving files into results directory";
                 return false;
             }
@@ -1060,9 +1060,9 @@ namespace AnalysisManagerBase
         /// Creates the directory if it does not exist
         /// </summary>
         /// <returns>The full path to the remote transfer directory; an empty string if an error</returns>
-        protected string CreateRemoteTransferFolder(clsAnalysisResults analysisResults)
+        protected string CreateRemoteTransferFolder(AnalysisResults analysisResults)
         {
-            var transferDirectoryPath = mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH);
+            var transferDirectoryPath = mJobParams.GetParam(AnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH);
 
             // Verify transfer directory exists
             // First make sure TransferFolderPath is defined
@@ -1083,7 +1083,7 @@ namespace AnalysisManagerBase
         /// <param name="analysisResults">Analysis results object</param>
         /// <param name="transferDirectoryPath">Base transfer directory path, e.g. \\proto-11\DMS3_Xfer\</param>
         /// <returns>The full path to the remote transfer directory; an empty string if an error</returns>
-        protected string CreateRemoteTransferFolder(clsAnalysisResults analysisResults, string transferDirectoryPath)
+        protected string CreateRemoteTransferFolder(AnalysisResults analysisResults, string transferDirectoryPath)
         {
             if (string.IsNullOrEmpty(mResultsDirectoryName))
             {
@@ -1098,7 +1098,7 @@ namespace AnalysisManagerBase
             {
                 var directoryExists = analysisResults.FolderExistsWithRetry(transferDirectoryPath);
 
-                if (!directoryExists && !clsGlobal.IsMatch(Dataset, "Aggregation"))
+                if (!directoryExists && !Global.IsMatch(Dataset, "Aggregation"))
                 {
                     LogError("Transfer directory not found: " + transferDirectoryPath);
                     return string.Empty;
@@ -1121,7 +1121,7 @@ namespace AnalysisManagerBase
 
             string remoteTransferDirectoryPath;
 
-            if (clsGlobal.IsMatch(Dataset, "Aggregation"))
+            if (Global.IsMatch(Dataset, "Aggregation"))
             {
                 // Do not append "Aggregation" to the path since this is a generic dataset name applied to jobs that use Data Packages
                 remoteTransferDirectoryPath = string.Copy(transferDirectoryPath);
@@ -1129,7 +1129,7 @@ namespace AnalysisManagerBase
             else
             {
                 // Append the dataset directory name to the transfer directory path
-                var datasetDirectoryName = mJobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_DATASET_FOLDER_NAME);
+                var datasetDirectoryName = mJobParams.GetParam(AnalysisJob.STEP_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_DATASET_FOLDER_NAME);
                 if (string.IsNullOrWhiteSpace(datasetDirectoryName))
                     datasetDirectoryName = Dataset;
                 remoteTransferDirectoryPath = Path.Combine(transferDirectoryPath, datasetDirectoryName);
@@ -1188,7 +1188,7 @@ namespace AnalysisManagerBase
 
             if (debugLevel > 4)
             {
-                LogTools.LogDebug("clsAnalysisToolRunnerBase.DeleteFileWithRetries, executing method");
+                LogTools.LogDebug("AnalysisToolRunnerBase.DeleteFileWithRetries, executing method");
             }
 
             // Verify specified file exists
@@ -1205,7 +1205,7 @@ namespace AnalysisManagerBase
                     File.Delete(fileNamePath);
                     if (debugLevel > 4)
                     {
-                        LogTools.LogDebug("clsAnalysisToolRunnerBase.DeleteFileWithRetries, normal exit");
+                        LogTools.LogDebug("AnalysisToolRunnerBase.DeleteFileWithRetries, normal exit");
                     }
                     return true;
                 }
@@ -1240,7 +1240,7 @@ namespace AnalysisManagerBase
                     errType = AMFileNotDeletedAfterRetryException.RetryExceptionType.IO_Exception;
 
                     // Delay 2 seconds
-                    clsGlobal.IdleLoop(2);
+                    Global.IdleLoop(2);
 
                     // Do a garbage collection to assure file handles have been released
                     ProgRunner.GarbageCollectNow();
@@ -1277,7 +1277,7 @@ namespace AnalysisManagerBase
         /// <returns>True if success, false if an error</returns>
         protected bool DeleteRawDataFiles(string rawDataTypeName)
         {
-            var rawDataType = clsAnalysisResources.GetRawDataType(rawDataTypeName);
+            var rawDataType = AnalysisResources.GetRawDataType(rawDataTypeName);
 
             return DeleteRawDataFiles(rawDataType);
         }
@@ -1287,7 +1287,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="rawDataType">Raw data type enum</param>
         /// <returns>True if success, false if an error</returns>
-        protected bool DeleteRawDataFiles(clsAnalysisResources.eRawDataTypeConstants rawDataType)
+        protected bool DeleteRawDataFiles(AnalysisResources.eRawDataTypeConstants rawDataType)
         {
             // Deletes the raw data files/directories from the working directory
             bool isFile;
@@ -1296,44 +1296,44 @@ namespace AnalysisManagerBase
 
             switch (rawDataType)
             {
-                case clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile:
-                    fileOrDirectoryName = Path.Combine(mWorkDir, Dataset + clsAnalysisResources.DOT_RAW_EXTENSION);
+                case AnalysisResources.eRawDataTypeConstants.ThermoRawFile:
+                    fileOrDirectoryName = Path.Combine(mWorkDir, Dataset + AnalysisResources.DOT_RAW_EXTENSION);
                     isFile = true;
                     break;
 
-                case clsAnalysisResources.eRawDataTypeConstants.AgilentQStarWiffFile:
-                    fileOrDirectoryName = Path.Combine(mWorkDir, Dataset + clsAnalysisResources.DOT_WIFF_EXTENSION);
+                case AnalysisResources.eRawDataTypeConstants.AgilentQStarWiffFile:
+                    fileOrDirectoryName = Path.Combine(mWorkDir, Dataset + AnalysisResources.DOT_WIFF_EXTENSION);
                     isFile = true;
                     break;
 
-                case clsAnalysisResources.eRawDataTypeConstants.UIMF:
-                    fileOrDirectoryName = Path.Combine(mWorkDir, Dataset + clsAnalysisResources.DOT_UIMF_EXTENSION);
+                case AnalysisResources.eRawDataTypeConstants.UIMF:
+                    fileOrDirectoryName = Path.Combine(mWorkDir, Dataset + AnalysisResources.DOT_UIMF_EXTENSION);
                     isFile = true;
                     break;
 
-                case clsAnalysisResources.eRawDataTypeConstants.mzXML:
-                    fileOrDirectoryName = Path.Combine(mWorkDir, Dataset + clsAnalysisResources.DOT_MZXML_EXTENSION);
+                case AnalysisResources.eRawDataTypeConstants.mzXML:
+                    fileOrDirectoryName = Path.Combine(mWorkDir, Dataset + AnalysisResources.DOT_MZXML_EXTENSION);
                     isFile = true;
                     break;
 
-                case clsAnalysisResources.eRawDataTypeConstants.mzML:
-                    fileOrDirectoryName = Path.Combine(mWorkDir, Dataset + clsAnalysisResources.DOT_MZML_EXTENSION);
+                case AnalysisResources.eRawDataTypeConstants.mzML:
+                    fileOrDirectoryName = Path.Combine(mWorkDir, Dataset + AnalysisResources.DOT_MZML_EXTENSION);
                     isFile = true;
                     break;
 
-                case clsAnalysisResources.eRawDataTypeConstants.AgilentDFolder:
-                    fileOrDirectoryName = Path.Combine(mWorkDir, Dataset + clsAnalysisResources.DOT_D_EXTENSION);
+                case AnalysisResources.eRawDataTypeConstants.AgilentDFolder:
+                    fileOrDirectoryName = Path.Combine(mWorkDir, Dataset + AnalysisResources.DOT_D_EXTENSION);
                     isFile = false;
                     break;
 
-                case clsAnalysisResources.eRawDataTypeConstants.MicromassRawFolder:
-                    fileOrDirectoryName = Path.Combine(mWorkDir, Dataset + clsAnalysisResources.DOT_RAW_EXTENSION);
+                case AnalysisResources.eRawDataTypeConstants.MicromassRawFolder:
+                    fileOrDirectoryName = Path.Combine(mWorkDir, Dataset + AnalysisResources.DOT_RAW_EXTENSION);
                     isFile = false;
                     break;
 
-                case clsAnalysisResources.eRawDataTypeConstants.ZippedSFolders:
+                case AnalysisResources.eRawDataTypeConstants.ZippedSFolders:
 
-                    var newSourceDirectory = clsAnalysisResources.ResolveSerStoragePath(mWorkDir);
+                    var newSourceDirectory = AnalysisResources.ResolveSerStoragePath(mWorkDir);
 
                     // Check for "0.ser" folder
                     if (string.IsNullOrEmpty(newSourceDirectory))
@@ -1349,28 +1349,28 @@ namespace AnalysisManagerBase
                     isFile = false;
                     break;
 
-                case clsAnalysisResources.eRawDataTypeConstants.BrukerFTFolder:
+                case AnalysisResources.eRawDataTypeConstants.BrukerFTFolder:
                     // Bruker_FT directories are actually .D directories
-                    fileOrDirectoryName = Path.Combine(mWorkDir, Dataset + clsAnalysisResources.DOT_D_EXTENSION);
+                    fileOrDirectoryName = Path.Combine(mWorkDir, Dataset + AnalysisResources.DOT_D_EXTENSION);
                     isFile = false;
                     break;
 
-                case clsAnalysisResources.eRawDataTypeConstants.BrukerMALDISpot:
+                case AnalysisResources.eRawDataTypeConstants.BrukerMALDISpot:
                     // Has a .EMF file and a single subdirectory that has an acqu file and fid file
                     fileOrDirectoryName = Path.Combine(mWorkDir, Dataset);
                     isFile = false;
                     break;
 
-                case clsAnalysisResources.eRawDataTypeConstants.BrukerMALDIImaging:
+                case AnalysisResources.eRawDataTypeConstants.BrukerMALDIImaging:
                     // Series of zipped subdirectories, with names like 0_R00X329.zip; subdirectories inside the .Zip files have fid files
                     fileOrDirectoryName = Path.Combine(mWorkDir, Dataset);
                     isFile = false;
                     break;
 
-                case clsAnalysisResources.eRawDataTypeConstants.BrukerTOFBaf:
-                case clsAnalysisResources.eRawDataTypeConstants.BrukerTOFTdf:
+                case AnalysisResources.eRawDataTypeConstants.BrukerTOFBaf:
+                case AnalysisResources.eRawDataTypeConstants.BrukerTOFTdf:
                     // BrukerTOFBaf and BrukerTOFTdf directories are actually .D directories
-                    fileOrDirectoryName = Path.Combine(mWorkDir, Dataset + clsAnalysisResources.DOT_D_EXTENSION);
+                    fileOrDirectoryName = Path.Combine(mWorkDir, Dataset + AnalysisResources.DOT_D_EXTENSION);
                     isFile = false;
                     break;
 
@@ -1468,7 +1468,7 @@ namespace AnalysisManagerBase
             if (!string.IsNullOrEmpty(errorMessage))
             {
                 // The error has already been logged, but we need to update mMessage
-                mMessage = clsGlobal.AppendToComment(mMessage, errorMessage);
+                mMessage = Global.AppendToComment(mMessage, errorMessage);
             }
 
             return progLoc;
@@ -1565,7 +1565,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="packedJobParameterName">Packaged job parameter name</param>
         /// <returns>List of strings</returns>
-        /// <remarks>Data will have been stored by function clsAnalysisResources.StorePackedJobParameterDictionary</remarks>
+        /// <remarks>Data will have been stored by function AnalysisResources.StorePackedJobParameterDictionary</remarks>
         protected Dictionary<string, string> ExtractPackedJobParameterDictionary(string packedJobParameterName)
         {
             var jobParameters = new Dictionary<string, string>();
@@ -1599,7 +1599,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="packedJobParameterName">Packaged job parameter name</param>
         /// <returns>List of strings</returns>
-        /// <remarks>Data will have been stored by function clsAnalysisResources.StorePackedJobParameterDictionary</remarks>
+        /// <remarks>Data will have been stored by function AnalysisResources.StorePackedJobParameterDictionary</remarks>
         protected List<string> ExtractPackedJobParameterList(string packedJobParameterName)
         {
             var packedJobParams = mJobParams.GetJobParameter(packedJobParameterName, string.Empty);
@@ -1674,7 +1674,7 @@ namespace AnalysisManagerBase
 
         private static short GetManagerDebugLevel(string connectionString, string managerName, short currentDebugLevel, int recursionLevel, [CallerMemberName] string callingFunction = "")
         {
-            if (clsGlobal.OfflineMode)
+            if (Global.OfflineMode)
             {
                 return currentDebugLevel;
             }
@@ -1689,7 +1689,7 @@ namespace AnalysisManagerBase
                 "FROM V_MgrParams " +
                 "WHERE ManagerName = '" + managerName + "' AND ParameterName IN ('DebugLevel', 'MgrSettingGroupName')";
 
-            var callingFunctions = clsGlobal.AppendToComment(callingFunction, "GetManagerDebugLevel");
+            var callingFunctions = Global.AppendToComment(callingFunction, "GetManagerDebugLevel");
 
             var dbTools = DbToolsFactory.GetDBTools(connectionString, debugMode: false);
 
@@ -1703,13 +1703,13 @@ namespace AnalysisManagerBase
                 var paramName = resultRow[0];
                 var paramValue = resultRow[1];
 
-                if (clsGlobal.IsMatch(paramName, "DebugLevel"))
+                if (Global.IsMatch(paramName, "DebugLevel"))
                 {
                     var debugLevel = short.Parse(paramValue);
                     return debugLevel;
                 }
 
-                if (clsGlobal.IsMatch(paramName, "MgrSettingGroupName"))
+                if (Global.IsMatch(paramName, "MgrSettingGroupName"))
                 {
                     // DebugLevel is defined by a manager settings group; repeat the query to V_MgrParams
 
@@ -1748,7 +1748,7 @@ namespace AnalysisManagerBase
         {
             string paramName;
 
-            if (clsGlobal.LinuxOS)
+            if (Global.LinuxOS)
             {
                 // On Linux, the Java location is tracked via manager parameter JavaLocLinux, loaded from file ManagerSettingsLocal.xml
                 // For example: /usr/bin/java
@@ -1819,7 +1819,7 @@ namespace AnalysisManagerBase
             if (string.IsNullOrEmpty(msXmlGeneratorExe))
             {
                 // Assume we're using MSConvert
-                msXmlGeneratorExe = clsToolVersionUtilities.MSCONVERT_EXE_NAME;
+                msXmlGeneratorExe = ToolVersionUtilities.MSCONVERT_EXE_NAME;
             }
 
             return msXmlGeneratorExe;
@@ -1982,7 +1982,7 @@ namespace AnalysisManagerBase
         /// <remarks>For example, \\proto-7\DMS3_XFER\</remarks>
         protected string GetTransferFolderPath()
         {
-            var transferDirectoryPath = mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH);
+            var transferDirectoryPath = mJobParams.GetParam(AnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH);
 
             if (string.IsNullOrEmpty(transferDirectoryPath))
             {
@@ -1999,7 +1999,7 @@ namespace AnalysisManagerBase
         /// <param name="sourceFilePath"></param>
         public string GetZipFilePathForFile(string sourceFilePath)
         {
-            return clsDotNetZipTools.GetZipFilePathForFile(sourceFilePath);
+            return DotNetZipTools.GetZipFilePathForFile(sourceFilePath);
         }
 
         /// <summary>
@@ -2100,7 +2100,7 @@ namespace AnalysisManagerBase
                     return null;
                 }
 
-                var gzippedFile = new FileInfo(fileToCompress.FullName + clsAnalysisResources.DOT_GZ_EXTENSION);
+                var gzippedFile = new FileInfo(fileToCompress.FullName + AnalysisResources.DOT_GZ_EXTENSION);
                 if (!gzippedFile.Exists)
                 {
                     LogError("GZip file was not created: " + gzippedFile.Name);
@@ -2136,7 +2136,7 @@ namespace AnalysisManagerBase
                 threadCountText = threadCountText.Trim();
             }
 
-            var coresOnMachine = clsGlobal.GetCoreCount();
+            var coresOnMachine = Global.GetCoreCount();
 
             int coreCount;
 
@@ -2186,7 +2186,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="dataPackageDatasets"></param>
         /// <returns>True if a data package is defined and it has datasets associated with it</returns>
-        protected bool LoadDataPackageDatasetInfo(out Dictionary<int, clsDataPackageDatasetInfo> dataPackageDatasets)
+        protected bool LoadDataPackageDatasetInfo(out Dictionary<int, DataPackageDatasetInfo> dataPackageDatasets)
         {
             // Gigasax.DMS_Pipeline
             var brokerDbConnectionString = mMgrParams.GetParam("BrokerConnectionString");
@@ -2195,14 +2195,14 @@ namespace AnalysisManagerBase
 
             if (dataPackageID < 0)
             {
-                dataPackageDatasets = new Dictionary<int, clsDataPackageDatasetInfo>();
+                dataPackageDatasets = new Dictionary<int, DataPackageDatasetInfo>();
                 return false;
             }
 
             var dbTools = DbToolsFactory.GetDBTools(brokerDbConnectionString, debugMode: TraceMode);
             RegisterEvents(dbTools);
 
-            return clsDataPackageInfoLoader.LoadDataPackageDatasetInfo(dbTools, dataPackageID, out dataPackageDatasets);
+            return DataPackageInfoLoader.LoadDataPackageDatasetInfo(dbTools, dataPackageID, out dataPackageDatasets);
         }
 
         /// <summary>
@@ -2212,8 +2212,8 @@ namespace AnalysisManagerBase
         /// <param name="errorMsg">Output: error message</param>
         /// <returns>Peptide Hit Jobs (e.g. MS-GF+ or Sequest)</returns>
         /// <remarks>This method updates property NumberOfClonedSteps for the analysis jobs</remarks>
-        protected List<clsDataPackageJobInfo> RetrieveDataPackagePeptideHitJobInfo(
-            out List<clsDataPackageJobInfo> additionalJobs,
+        protected List<DataPackageJobInfo> RetrieveDataPackagePeptideHitJobInfo(
+            out List<DataPackageJobInfo> additionalJobs,
             out string errorMsg)
         {
             // Gigasax.DMS_Pipeline
@@ -2224,14 +2224,14 @@ namespace AnalysisManagerBase
             if (dataPackageID < 0)
             {
                 errorMsg = "Job parameter DataPackageID not defined";
-                additionalJobs = new List<clsDataPackageJobInfo>();
-                return new List<clsDataPackageJobInfo>();
+                additionalJobs = new List<DataPackageJobInfo>();
+                return new List<DataPackageJobInfo>();
             }
 
             var dbTools = DbToolsFactory.GetDBTools(brokerDbConnectionString, debugMode: TraceMode);
             RegisterEvents(dbTools);
 
-            return clsDataPackageInfoLoader.RetrieveDataPackagePeptideHitJobInfo(dbTools, dataPackageID, out additionalJobs, out errorMsg);
+            return DataPackageInfoLoader.RetrieveDataPackagePeptideHitJobInfo(dbTools, dataPackageID, out additionalJobs, out errorMsg);
         }
 
         /// <summary>
@@ -2399,7 +2399,7 @@ namespace AnalysisManagerBase
         {
             if (updateEvalMessage)
             {
-                mEvalMessage = clsGlobal.AppendToComment(mEvalMessage, warningMessage);
+                mEvalMessage = Global.AppendToComment(mEvalMessage, warningMessage);
             }
             base.LogWarning(warningMessage);
         }
@@ -2645,7 +2645,7 @@ namespace AnalysisManagerBase
             {
                 if (mDebugLevel > 0)
                 {
-                    LogMessage("clsAnalysisToolRunnerBase.MoveResultFiles(); Error moving files to results directory", 0, true);
+                    LogMessage("AnalysisToolRunnerBase.MoveResultFiles(); Error moving files to results directory", 0, true);
                     LogMessage("CurrentFile = " + currentFileName);
                     LogMessage("Results directory name = " + resultsDirectoryNamePath);
                 }
@@ -2669,7 +2669,7 @@ namespace AnalysisManagerBase
             if (errorEncountered)
             {
                 // Try to save whatever files were moved into the results directory
-                var analysisResults = new clsAnalysisResults(mMgrParams, mJobParams);
+                var analysisResults = new AnalysisResults(mMgrParams, mJobParams);
                 analysisResults.CopyFailedResultsToArchiveDirectory(Path.Combine(mWorkDir, mResultsDirectoryName));
 
                 return false;
@@ -2705,7 +2705,7 @@ namespace AnalysisManagerBase
             }
 
             // Saves the summary file in the results directory
-            var assemblyTools = new clsAssemblyTools();
+            var assemblyTools = new AssemblyTools();
 
             assemblyTools.GetComponentFileVersionInfo(mSummaryFile);
 
@@ -2724,7 +2724,7 @@ namespace AnalysisManagerBase
         /// <returns>The path (updated if necessary)</returns>
         public static string PossiblyQuotePath(string path)
         {
-            return clsGlobal.PossiblyQuotePath(path);
+            return Global.PossiblyQuotePath(path);
         }
 
         /// <summary>
@@ -2762,7 +2762,7 @@ namespace AnalysisManagerBase
                     if (string.IsNullOrWhiteSpace(dataLine))
                         continue;
 
-                    if (dataLine.StartsWith(clsToolVersionUtilities.TOOL_VERSION_INFO_SECTION_HEADER))
+                    if (dataLine.StartsWith(ToolVersionUtilities.TOOL_VERSION_INFO_SECTION_HEADER))
                     {
                         storeToolVersionInfo = true;
                         continue;
@@ -2782,7 +2782,7 @@ namespace AnalysisManagerBase
                 {
                     LogWarning(string.Format(
                         "Tool version info file {0} did not have line {1}",
-                        toolVersionInfoFile.Name, clsToolVersionUtilities.TOOL_VERSION_INFO_SECTION_HEADER));
+                        toolVersionInfoFile.Name, ToolVersionUtilities.TOOL_VERSION_INFO_SECTION_HEADER));
                 }
             }
 
@@ -2900,12 +2900,12 @@ namespace AnalysisManagerBase
 
                     // Make a list of all of the hashcheck files in cacheDirectory
 
-                    foreach (var hashcheckFile in cacheDirectory.GetFiles("*" + clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX, SearchOption.AllDirectories))
+                    foreach (var hashcheckFile in cacheDirectory.GetFiles("*" + Global.SERVER_CACHE_HASHCHECK_FILE_SUFFIX, SearchOption.AllDirectories))
                     {
-                        if (!hashcheckFile.FullName.EndsWith(clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX, StringComparison.OrdinalIgnoreCase))
+                        if (!hashcheckFile.FullName.EndsWith(Global.SERVER_CACHE_HASHCHECK_FILE_SUFFIX, StringComparison.OrdinalIgnoreCase))
                             continue;
 
-                        var dataFilePath = hashcheckFile.FullName.Substring(0, hashcheckFile.FullName.Length - clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX.Length);
+                        var dataFilePath = hashcheckFile.FullName.Substring(0, hashcheckFile.FullName.Length - Global.SERVER_CACHE_HASHCHECK_FILE_SUFFIX.Length);
 
                         var dataFile = new FileInfo(dataFilePath);
 
@@ -2916,7 +2916,7 @@ namespace AnalysisManagerBase
                         {
                             dataFiles.Add(new KeyValuePair<DateTime, FileInfo>(dataFile.LastWriteTimeUtc, dataFile));
 
-                            totalSizeMB += clsGlobal.BytesToMB(dataFile.Length);
+                            totalSizeMB += Global.BytesToMB(dataFile.Length);
                         }
                         catch (Exception ex)
                         {
@@ -2966,9 +2966,9 @@ namespace AnalysisManagerBase
                         {
                             var dataFile = dataFileItem.Value;
 
-                            var fileSizeMB = clsGlobal.BytesToMB(dataFile.Length);
+                            var fileSizeMB = Global.BytesToMB(dataFile.Length);
 
-                            var hashcheckPath = dataFile.FullName + clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX;
+                            var hashcheckPath = dataFile.FullName + Global.SERVER_CACHE_HASHCHECK_FILE_SUFFIX;
                             var hashCheckFile = new FileInfo(hashcheckPath);
 
                             totalSizeMB -= fileSizeMB;
@@ -3049,7 +3049,7 @@ namespace AnalysisManagerBase
                 }
                 catch (Exception ex)
                 {
-                    LogMessage("Error in PurgeOldServerCacheFiles: " + clsGlobal.GetExceptionStackTrace(ex), 0, true);
+                    LogMessage("Error in PurgeOldServerCacheFiles: " + Global.GetExceptionStackTrace(ex), 0, true);
                 }
             }
         }
@@ -3060,7 +3060,7 @@ namespace AnalysisManagerBase
         /// </summary>
         protected void RedefineAggregationJobDatasetAndTransferFolder()
         {
-            var transferDirectoryPath = mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH);
+            var transferDirectoryPath = mJobParams.GetParam(AnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH);
             var transferDirectory = new DirectoryInfo(transferDirectoryPath);
 
             mDatasetName = transferDirectory.Name;
@@ -3071,7 +3071,7 @@ namespace AnalysisManagerBase
             }
 
             transferDirectoryPath = transferDirectory.Parent.FullName;
-            mJobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH, transferDirectoryPath);
+            mJobParams.SetParam(AnalysisJob.JOB_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH, transferDirectoryPath);
         }
 
         /// <summary>
@@ -3106,7 +3106,7 @@ namespace AnalysisManagerBase
             }
             catch (Exception ex)
             {
-                LogError("clsGlobal.RemoveNonResultServerFiles(), Error deleting file " + currentFile, ex);
+                LogError("Global.RemoveNonResultServerFiles(), Error deleting file " + currentFile, ex);
                 // Even if an exception occurred, return true since the results were already copied back to the server
                 return true;
             }
@@ -3127,10 +3127,10 @@ namespace AnalysisManagerBase
             {
                 var finalFilePath = originalFile.FullName;
 
-                clsGlobal.IdleLoop(0.25);
+                Global.IdleLoop(0.25);
                 originalFile.Delete();
 
-                clsGlobal.IdleLoop(0.25);
+                Global.IdleLoop(0.25);
                 updatedFile.MoveTo(finalFilePath);
 
                 return true;
@@ -3168,7 +3168,7 @@ namespace AnalysisManagerBase
         /// </remarks>
         /// <exception cref="NotImplementedException"></exception>
         public virtual bool RetrieveRemoteResults(
-            clsRemoteTransferUtility transferUtility,
+            RemoteTransferUtility transferUtility,
             bool verifyCopied,
             out List<string> retrievedFilePaths)
         {
@@ -3186,7 +3186,7 @@ namespace AnalysisManagerBase
         /// <param name="retrievedFilePaths">Local paths of retrieved files</param>
         /// <returns>True on success, otherwise false</returns>
         protected bool RetrieveRemoteResultFiles(
-            clsRemoteTransferUtility transferUtility,
+            RemoteTransferUtility transferUtility,
             Dictionary<string, bool> filesToRetrieve,
             bool verifyCopied,
             out List<string> retrievedFilePaths)
@@ -3220,7 +3220,7 @@ namespace AnalysisManagerBase
                         LogError("Required result file not found: " + sourceFile.Key);
                 }
 
-                var paramFileName = mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_PARAMETER_FILE);
+                var paramFileName = mJobParams.GetParam(AnalysisResources.JOB_PARAM_PARAMETER_FILE);
                 var modDefsFile = new FileInfo(Path.Combine(mWorkDir, Path.GetFileNameWithoutExtension(paramFileName) + "_ModDefs.txt"));
                 if (modDefsFile.Exists && modDefsFile.Length == 0)
                 {
@@ -3580,7 +3580,7 @@ namespace AnalysisManagerBase
                                 LogMessage("Error copying " + sourceFile.FullName + " to " + targetFile.DirectoryName + "; RetriesRemaining: " + retriesRemaining, 0, true);
 
                                 // Wait 2 seconds then try again
-                                clsGlobal.IdleLoop(2);
+                                Global.IdleLoop(2);
                             }
                         }
                     }
@@ -3631,22 +3631,22 @@ namespace AnalysisManagerBase
                 var stepTool = mJobParams.GetParam("StepTool");
 
                 // Construct the Tool description (combination of the script name and Step Tool name)
-                var toolAndStepTool = clsAnalysisJob.GetJobToolDescription(scriptName, stepTool, string.Empty);
+                var toolAndStepTool = AnalysisJob.GetJobToolDescription(scriptName, stepTool, string.Empty);
 
                 // Add the data
                 mSummaryFile.Add("Job Number" + '\t' + Job);
-                mSummaryFile.Add("Job Step" + '\t' + mJobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Step"));
+                mSummaryFile.Add("Job Step" + '\t' + mJobParams.GetParam(AnalysisJob.STEP_PARAMETERS_SECTION, "Step"));
                 mSummaryFile.Add("Date" + '\t' + DateTime.Now);
                 mSummaryFile.Add("Processor" + '\t' + mMgrName);
                 mSummaryFile.Add("Tool" + '\t' + toolAndStepTool);
                 mSummaryFile.Add("Dataset Name" + '\t' + Dataset);
-                mSummaryFile.Add("Xfer Folder" + '\t' + mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH));
-                mSummaryFile.Add("Param File Name" + '\t' + mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_PARAMETER_FILE));
+                mSummaryFile.Add("Xfer Folder" + '\t' + mJobParams.GetParam(AnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH));
+                mSummaryFile.Add("Param File Name" + '\t' + mJobParams.GetParam(AnalysisResources.JOB_PARAM_PARAMETER_FILE));
                 mSummaryFile.Add("Settings File Name" + '\t' + mJobParams.GetParam("SettingsFileName"));
                 mSummaryFile.Add("Legacy Organism Db Name" + '\t' + mJobParams.GetParam("LegacyFastaFileName"));
                 mSummaryFile.Add("Protein Collection List" + '\t' + mJobParams.GetParam("ProteinCollectionList"));
                 mSummaryFile.Add("Protein Options List" + '\t' + mJobParams.GetParam("ProteinOptions"));
-                mSummaryFile.Add("Fasta File Name" + '\t' + mJobParams.GetParam("PeptideSearch", clsAnalysisResources.JOB_PARAM_GENERATED_FASTA_NAME));
+                mSummaryFile.Add("Fasta File Name" + '\t' + mJobParams.GetParam("PeptideSearch", AnalysisResources.JOB_PARAM_GENERATED_FASTA_NAME));
 
                 if (mStopTime < mStartTime)
                     mStopTime = DateTime.UtcNow;
@@ -3710,7 +3710,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Reset the ProgRunner start time and the CPU usage queue
         /// </summary>
-        /// <remarks>Public because used by clsDtaGenThermoRaw</remarks>
+        /// <remarks>Public because used by DtaGenThermoRaw</remarks>
         public void ResetProgRunnerCpuUsage()
         {
             mProgRunnerStartTime = DateTime.UtcNow;
@@ -3724,14 +3724,14 @@ namespace AnalysisManagerBase
         /// <param name="secondsBetweenUpdates">Seconds between which this function is nominally called</param>
         /// <param name="defaultProcessID">Process ID to use if not match for processName</param>
         /// <returns>Actual CPU usage; -1 if an error</returns>
-        /// <remarks>This method is used by clsAnalysisToolRunnerDtaRefinery to monitor X!Tandem and DTA_Refinery</remarks>
+        /// <remarks>This method is used by AnalysisToolRunnerDtaRefinery to monitor X!Tandem and DTA_Refinery</remarks>
         protected float UpdateCpuUsageByProcessName(string processName, int secondsBetweenUpdates, int defaultProcessID)
         {
             try
             {
                 var processID = defaultProcessID;
 
-                var coreUsage = clsGlobal.ProcessInfo.GetCoreUsageByProcessName(processName, out var processIDs);
+                var coreUsage = Global.ProcessInfo.GetCoreUsageByProcessName(processName, out var processIDs);
 
                 if (processIDs.Count > 0)
                 {
@@ -3770,7 +3770,7 @@ namespace AnalysisManagerBase
         /// <param name="processID">ProcessID of the externally running process</param>
         /// <param name="coreUsage">Number of cores in use by the process; -1 if unknown</param>
         /// <param name="secondsBetweenUpdates">Seconds between which this function is nominally called</param>
-        /// <remarks>This method is used by this class and by clsAnalysisToolRunnerMODPlus</remarks>
+        /// <remarks>This method is used by this class and by AnalysisToolRunnerMODPlus</remarks>
         protected void UpdateProgRunnerCpuUsage(int processID, float coreUsage, int secondsBetweenUpdates)
         {
             // Cache the core usage values for the last 5 minutes
@@ -3817,10 +3817,10 @@ namespace AnalysisManagerBase
         /// Then, when handling the LoopWaiting event from the cmdRunner instance
         /// call this method every secondsBetweenUpdates seconds (typically 30)
         /// </summary>
-        /// <param name="cmdRunner">clsRunDosProgram instance used to run an external process</param>
+        /// <param name="cmdRunner">RunDosProgram instance used to run an external process</param>
         /// <param name="secondsBetweenUpdates">Seconds between which this function is nominally called</param>
-        /// <remarks>Public because used by clsDtaGenThermoRaw</remarks>
-        public void UpdateProgRunnerCpuUsage(clsRunDosProgram cmdRunner, int secondsBetweenUpdates)
+        /// <remarks>Public because used by DtaGenThermoRaw</remarks>
+        public void UpdateProgRunnerCpuUsage(RunDosProgram cmdRunner, int secondsBetweenUpdates)
         {
             try
             {
@@ -3890,7 +3890,7 @@ namespace AnalysisManagerBase
         {
             if (appendToExisting)
             {
-                mMessage = clsGlobal.AppendToComment(mMessage, statusMessage);
+                mMessage = Global.AppendToComment(mMessage, statusMessage);
             }
             else
             {
@@ -3935,7 +3935,7 @@ namespace AnalysisManagerBase
         /// <returns>True if success; false if failure</returns>
         protected bool ValidateCDTAFile()
         {
-            var dtaFilePath = Path.Combine(mWorkDir, Dataset + clsAnalysisResources.CDTA_EXTENSION);
+            var dtaFilePath = Path.Combine(mWorkDir, Dataset + AnalysisResources.CDTA_EXTENSION);
 
             return ValidateCDTAFile(dtaFilePath);
         }

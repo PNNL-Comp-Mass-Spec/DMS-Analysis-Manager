@@ -6,7 +6,7 @@ using PRISMDatabaseUtils;
 
 namespace AnalysisManager_Ape_PlugIn
 {
-    internal class clsApeAMGetImprovResults : clsApeAMBase
+    internal class ApeAMGetImprovResults : ApeAMBase
     {
         #region Member Variables
 
@@ -19,7 +19,7 @@ namespace AnalysisManager_Ape_PlugIn
         /// </summary>
         /// <param name="jobParams"></param>
         /// <param name="mgrParams"></param>
-        public clsApeAMGetImprovResults(IJobParams jobParams, IMgrParams mgrParams) : base(jobParams, mgrParams)
+        public ApeAMGetImprovResults(IJobParams jobParams, IMgrParams mgrParams) : base(jobParams, mgrParams)
         {
         }
 
@@ -162,7 +162,7 @@ namespace AnalysisManager_Ape_PlugIn
             }
             else
             {
-                OnStatusEvent("Retrieving " + jobCount + " jobs in clsApeAMGetImprovResults");
+                OnStatusEvent("Retrieving " + jobCount + " jobs in ApeAMGetImprovResults");
                 OnDebugEvent("Job list: " + jobList);
             }
 

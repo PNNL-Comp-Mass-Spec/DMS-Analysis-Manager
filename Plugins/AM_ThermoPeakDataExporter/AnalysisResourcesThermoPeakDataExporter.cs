@@ -14,7 +14,7 @@ namespace AnalysisManagerThermoPeakDataExporterPlugIn
     /// Retrieve resources for the ThermoPeakDataExporter plugin
     /// </summary>
     // ReSharper disable once UnusedMember.Global
-    public class clsAnalysisResourcesThermoPeakDataExporter : clsAnalysisResources
+    public class AnalysisResourcesThermoPeakDataExporter : AnalysisResources
     {
         /// <summary>
         /// Retrieve required files
@@ -53,7 +53,7 @@ namespace AnalysisManagerThermoPeakDataExporterPlugIn
 
                 if (!FileSearch.RetrieveSpectra(rawDataTypeName, createStoragePathInfoOnly))
                 {
-                    LogDebug("clsAnalysisResourcesThermoPeakDataExporter.GetResources: Error occurred retrieving spectra.");
+                    LogDebug("AnalysisResourcesThermoPeakDataExporter.GetResources: Error occurred retrieving spectra.");
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
@@ -69,7 +69,7 @@ namespace AnalysisManagerThermoPeakDataExporterPlugIn
             catch (Exception ex)
             {
                 mMessage = "Exception in GetResources: " + ex.Message;
-                LogError(mMessage + "; task = " + currentTask + "; " + clsGlobal.GetExceptionStackTrace(ex));
+                LogError(mMessage + "; task = " + currentTask + "; " + Global.GetExceptionStackTrace(ex));
                 return CloseOutType.CLOSEOUT_FAILED;
             }
         }

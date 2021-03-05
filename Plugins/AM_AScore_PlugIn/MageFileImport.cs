@@ -32,11 +32,11 @@ namespace AnalysisManager_AScore_PlugIn
         {
             if (string.IsNullOrEmpty(ImportColumnList))
             {
-                clsAScoreMagePipeline.ImportFileToSQLite(sourcePath, DBFilePath, DBTableName);
+                AScoreMagePipeline.ImportFileToSQLite(sourcePath, DBFilePath, DBTableName);
             }
             else
             {
-                clsAScoreMagePipeline.ImportFileToSQLiteWithColumnMods(sourcePath, DBFilePath, DBTableName, ImportColumnList, context);
+                AScoreMagePipeline.ImportFileToSQLiteWithColumnMods(sourcePath, DBFilePath, DBTableName, ImportColumnList, context);
             }
         }
     }

@@ -5,5 +5,5 @@
 
 using System.Diagnostics.CodeAnalysis;
 
-[assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Acceptable legacy name", Scope = "type", Target = "~T:AnalysisManagerThermoPeakDataExporterPlugIn.clsAnalysisResourcesThermoPeakDataExporter")]
-[assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Acceptable legacy name", Scope = "type", Target = "~T:AnalysisManagerThermoPeakDataExporterPlugIn.clsAnalysisToolRunnerThermoPeakDataExporter")]
+[assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Acceptable legacy name", Scope = "type", Target = "~T:AnalysisManagerThermoPeakDataExporterPlugIn.AnalysisResourcesThermoPeakDataExporter")]
+[assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Acceptable legacy name", Scope = "type", Target = "~T:AnalysisManagerThermoPeakDataExporterPlugIn.AnalysisToolRunnerThermoPeakDataExporter")]

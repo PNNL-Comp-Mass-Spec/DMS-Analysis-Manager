@@ -2,11 +2,10 @@ using System;
 using System.Collections.Generic;
 using AnalysisManagerBase;
 
-
-namespace TestMultiAlignPlugIn {
-
-    class JobParamsStub : IJobParams {
-
+namespace TestMultiAlignPlugIn
+{
+    class JobParamsStub : IJobParams
+    {
         private readonly Dictionary<string, string> mParms;
 
         // List of file extensions to NOT move to the result folder; comparison checks if the end of the filename matches any entry ResultFileExtensionsToSkip
@@ -109,7 +108,6 @@ namespace TestMultiAlignPlugIn {
 
         public bool GetJobParameter(string Name, bool ValueIfMissing)
         {
-
             string strValue;
 
             try
@@ -134,7 +132,6 @@ namespace TestMultiAlignPlugIn {
 
         public string GetJobParameter(string Name, string ValueIfMissing)
         {
-
             string strValue;
 
             try
@@ -253,7 +250,7 @@ namespace TestMultiAlignPlugIn {
         }
 
 
-        public clsDBTask.RequestTaskResult RequestTask()
+        public DBTask.RequestTaskResult RequestTask()
         {
             throw new NotImplementedException();
         }

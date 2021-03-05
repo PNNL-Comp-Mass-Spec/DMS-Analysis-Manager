@@ -15,7 +15,7 @@ namespace AnalysisManagerOMSSAPlugIn
     /// <summary>
     /// Class for running OMSSA analysis
     /// </summary>
-    public class clsAnalysisToolRunnerOM : clsAnalysisToolRunnerBase
+    public class AnalysisToolRunnerOM : AnalysisToolRunnerBase
     {
         #region "Module Variables"
 
@@ -55,13 +55,13 @@ namespace AnalysisManagerOMSSAPlugIn
 
             LogMessage("Running OMSSA");
 
-            var cmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel);
+            var cmdRunner = new RunDosProgram(mWorkDir, mDebugLevel);
             RegisterEvents(cmdRunner);
             cmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
             if (mDebugLevel > 4)
             {
-                LogDebug("clsAnalysisToolRunnerOM.OperateAnalysisTool(): Enter");
+                LogDebug("AnalysisToolRunnerOM.OperateAnalysisTool(): Enter");
             }
 
             // verify that program file exists
@@ -170,13 +170,13 @@ namespace AnalysisManagerOMSSAPlugIn
 
                 LogMessage("Running OMSSA2PepXml");
 
-                var cmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel);
+                var cmdRunner = new RunDosProgram(mWorkDir, mDebugLevel);
                 RegisterEvents(cmdRunner);
                 cmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
                 if (mDebugLevel > 4)
                 {
-                    LogDebug("clsAnalysisToolRunnerOM.ConvertOMSSA2PepXmlFile(): Enter");
+                    LogDebug("AnalysisToolRunnerOM.ConvertOMSSA2PepXmlFile(): Enter");
                 }
 
                 // verify that program formatdb.exe file exists
@@ -220,7 +220,7 @@ namespace AnalysisManagerOMSSAPlugIn
             }
             catch (Exception ex)
             {
-                LogError("clsAnalysisToolRunnerOM.ConvertOMSSA2PepXmlFile, exception, " + ex.Message);
+                LogError("AnalysisToolRunnerOM.ConvertOMSSA2PepXmlFile, exception, " + ex.Message);
                 return false;
             }
         }

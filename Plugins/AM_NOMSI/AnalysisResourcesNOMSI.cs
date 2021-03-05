@@ -14,7 +14,7 @@ namespace AnalysisManagerNOMSIPlugin
     /// <summary>
     /// Retrieve resources for the NOMSI plugin
     /// </summary>
-    public class clsAnalysisResourcesNOMSI : clsAnalysisResources
+    public class AnalysisResourcesNOMSI : AnalysisResources
     {
         /// <summary>
         /// Retrieve required files
@@ -89,7 +89,7 @@ namespace AnalysisManagerNOMSIPlugin
             catch (Exception ex)
             {
                 mMessage = "Exception in GetResources: " + ex.Message;
-                LogError(mMessage + "; task = " + currentTask + "; " + clsGlobal.GetExceptionStackTrace(ex));
+                LogError(mMessage + "; task = " + currentTask + "; " + Global.GetExceptionStackTrace(ex));
 
                 return CloseOutType.CLOSEOUT_FAILED;
             }

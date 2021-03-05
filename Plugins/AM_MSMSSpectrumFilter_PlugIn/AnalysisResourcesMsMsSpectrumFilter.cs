@@ -19,7 +19,7 @@ namespace MSMSSpectrumFilterAM
     /// <summary>
     /// Retrieve resources for the MsMs Spectrum Filter plugin
     /// </summary>
-    public class clsAnalysisResourcesMsMsSpectrumFilter : clsAnalysisResources
+    public class AnalysisResourcesMsMsSpectrumFilter : AnalysisResources
     {
         // Ignore Spelling: Dta
 
@@ -153,7 +153,7 @@ namespace MSMSSpectrumFilterAM
 
                     if (!FileSearch.RetrieveSpectra(rawDataTypeName, createStoragePathInfoOnly))
                     {
-                        LogDebug("clsAnalysisResourcesMsMsSpectrumFilter.GetResources: Error occurred retrieving spectra.");
+                        LogDebug("AnalysisResourcesMsMsSpectrumFilter.GetResources: Error occurred retrieving spectra.");
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
                 }

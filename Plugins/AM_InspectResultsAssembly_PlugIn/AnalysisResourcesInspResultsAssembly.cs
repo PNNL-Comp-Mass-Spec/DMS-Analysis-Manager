@@ -7,15 +7,15 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
     /// <summary>
     /// Retrieve resources for the Inspect Results Assembly plugin
     /// </summary>
-    public class clsAnalysisResourcesInspResultsAssembly : clsAnalysisResources
+    public class AnalysisResourcesInspResultsAssembly : AnalysisResources
     {
         /// <summary>
         /// Initialize options
         /// </summary>
-        public override void Setup(string stepToolName, IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, clsMyEMSLUtilities myEMSLUtilities)
+        public override void Setup(string stepToolName, IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, MyEMSLUtilities myEMSLUtilities)
         {
             base.Setup(stepToolName, mgrParams, jobParams, statusTools, myEMSLUtilities);
-            SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, true);
+            SetOption(Global.eAnalysisResourceOptions.OrgDbRequired, true);
         }
 
         /// <summary>
@@ -49,7 +49,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             }
 
             // Retrieve the Inspect Input Params file
-            if (!FileSearch.RetrieveFile(clsAnalysisToolRunnerInspResultsAssembly.INSPECT_INPUT_PARAMS_FILENAME, transferFolderName))
+            if (!FileSearch.RetrieveFile(AnalysisToolRunnerInspResultsAssembly.INSPECT_INPUT_PARAMS_FILENAME, transferFolderName))
             {
                 // Errors were reported in function call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
@@ -74,7 +74,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                 {
                     LogMessage("Unzipping Inspect result file");
                 }
-                if (UnzipFileStart(Path.Combine(mWorkDir, zippedResultName), mWorkDir, "clsAnalysisResourcesInspResultsAssembly.GetResources"))
+                if (UnzipFileStart(Path.Combine(mWorkDir, zippedResultName), mWorkDir, "AnalysisResourcesInspResultsAssembly.GetResources"))
                 {
                     if (mDebugLevel >= 1)
                     {

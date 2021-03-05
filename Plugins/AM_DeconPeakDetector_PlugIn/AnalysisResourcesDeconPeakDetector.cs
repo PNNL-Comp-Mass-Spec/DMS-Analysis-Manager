@@ -13,7 +13,7 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
     /// <summary>
     /// Retrieve resources for the Decon Peak Detector plugin
     /// </summary>
-    public class clsAnalysisResourcesDeconPeakDetector : clsAnalysisResources
+    public class AnalysisResourcesDeconPeakDetector : AnalysisResources
     {
         /// <summary>
         /// Retrieve required files
@@ -50,7 +50,7 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
                     mMessage = "Error retrieving instrument data file";
                 }
 
-                LogDebug("clsDtaGenResources.GetResources: " + mMessage);
+                LogDebug("DtaGenResources.GetResources: " + mMessage);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 

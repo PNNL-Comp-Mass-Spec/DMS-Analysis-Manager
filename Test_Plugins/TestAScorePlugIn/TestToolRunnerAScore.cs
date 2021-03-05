@@ -3,9 +3,10 @@ using System.Collections.Generic;
 using AnalysisManagerBase;
 using AnalysisManager_AScore_PlugIn;
 
-namespace TestAScorePlugIn {
-
-    class TestToolRunnerAScore {
+namespace TestAScorePlugIn
+{
+    class TestToolRunnerAScore
+    {
         private const int DEBUG_LEVEL = 1;
         private const string WORK_DIR = @"C:\DMS_WorkDir";
         private const string STEP_TOOL_NAME = "TestToolRunnerApe";
@@ -46,15 +47,15 @@ namespace TestAScorePlugIn {
 
         public CloseOutType TestRunAScore()
         {
-            var ascoreResourcer = new clsAnalysisResourcesAScore();
-            var ascoreToolRunner = new clsAnalysisToolRunnerAScore();
-            var summaryFile = new clsSummaryFile();
+            var ascoreResourcer = new AnalysisResourcesAScore();
+            var ascoreToolRunner = new AnalysisToolRunnerAScore();
+            var summaryFile = new SummaryFile();
 
             IMgrParams mgrParams = new MgrParamsStub(mMgrParms);
             IJobParams jobParams = new JobParamsStub(mJobParms);
             var statusFile = new StatusFileStub();
 
-            var myEMSLUtilities = new clsMyEMSLUtilities(DEBUG_LEVEL, WORK_DIR);
+            var myEMSLUtilities = new MyEMSLUtilities(DEBUG_LEVEL, WORK_DIR);
 
             ascoreResourcer.Setup(STEP_TOOL_NAME, mgrParams, jobParams, statusFile, myEMSLUtilities);
             var eResult = ascoreResourcer.GetResources();

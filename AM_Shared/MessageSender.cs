@@ -9,7 +9,7 @@ namespace AnalysisManagerBase
     /// <summary>
     /// Sends messages to ActiveMQ message broker using NMS client library
     /// </summary>
-    internal class clsMessageSender
+    internal class MessageSender
     {
         private readonly string topicName;
         private readonly string brokerUri;
@@ -23,7 +23,7 @@ namespace AnalysisManagerBase
 
         private bool hasConnection;
 
-        public clsMessageSender(string brokerUri, string topicName, string processorName)
+        public MessageSender(string brokerUri, string topicName, string processorName)
         {
             this.topicName = topicName;
             this.brokerUri = brokerUri;
@@ -38,7 +38,7 @@ namespace AnalysisManagerBase
         /// If connection does not exist, make it
         /// If connection objects don't work, erase them and make another set
         /// </remarks>
-        public void SendMessage(clsMessageContainer messageContainer)
+        public void SendMessage(MessageContainer messageContainer)
         {
             if (isDisposed)
             {
@@ -129,7 +129,7 @@ namespace AnalysisManagerBase
                     }
 
                     // Sleep for 3 seconds
-                    clsGlobal.IdleLoop(3);
+                    Global.IdleLoop(3);
                 }
 
                 retriesRemaining--;

@@ -12,7 +12,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
     /// Class for running TargetedQuant
     /// </summary>
     // ReSharper disable once UnusedMember.Global
-    public class clsAnalysisToolRunnerMSAlignQuant : clsAnalysisToolRunnerBase
+    public class AnalysisToolRunnerMSAlignQuant : AnalysisToolRunnerBase
     {
         #region "Module Variables"
 
@@ -34,7 +34,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
         protected string mTargetedWorkflowsProgLoc;
         protected Dictionary<string, int> mConsoleOutputProgressMap;
 
-        protected clsRunDosProgram mCmdRunner;
+        protected RunDosProgram mCmdRunner;
 
         #endregion
 
@@ -56,7 +56,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
 
                 if (mDebugLevel > 4)
                 {
-                    LogDebug("clsAnalysisToolRunnerMSAlignQuant.RunTool(): Enter");
+                    LogDebug("AnalysisToolRunnerMSAlignQuant.RunTool(): Enter");
                 }
 
                 // Determine the path to the TargetedWorkflowConsole.exe program
@@ -100,13 +100,13 @@ namespace AnalysisManagerMSAlignQuantPlugIn
 
                 switch (rawDataTypeName.ToLower())
                 {
-                    case clsAnalysisResources.RAW_DATA_TYPE_DOT_RAW_FILES:
-                        arguments = " " + PossiblyQuotePath(Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_RAW_EXTENSION));
+                    case AnalysisResources.RAW_DATA_TYPE_DOT_RAW_FILES:
+                        arguments = " " + PossiblyQuotePath(Path.Combine(mWorkDir, mDatasetName + AnalysisResources.DOT_RAW_EXTENSION));
                         break;
-                    case clsAnalysisResources.RAW_DATA_TYPE_BRUKER_FT_FOLDER:
-                    case clsAnalysisResources.RAW_DATA_TYPE_DOT_D_FOLDERS:
+                    case AnalysisResources.RAW_DATA_TYPE_BRUKER_FT_FOLDER:
+                    case AnalysisResources.RAW_DATA_TYPE_DOT_D_FOLDERS:
                         // Bruker_FT folders are actually .D folders
-                        arguments = " " + PossiblyQuotePath(Path.Combine(mWorkDir, mDatasetName) + clsAnalysisResources.DOT_D_EXTENSION);
+                        arguments = " " + PossiblyQuotePath(Path.Combine(mWorkDir, mDatasetName) + AnalysisResources.DOT_D_EXTENSION);
                         break;
                     default:
                         mMessage = "Dataset type " + rawDataTypeName + " is not supported";
@@ -121,7 +121,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                     LogDebug(mTargetedWorkflowsProgLoc + arguments);
                 }
 
-                mCmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel);
+                mCmdRunner = new RunDosProgram(mWorkDir, mDebugLevel);
                 RegisterEvents(mCmdRunner);
                 mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
@@ -138,7 +138,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                 if (!mCmdRunner.WriteConsoleOutputToFile)
                 {
                     // Write the console output to a text file
-                    clsGlobal.IdleLoop(0.25);
+                    Global.IdleLoop(0.25);
 
                     using var writer = new StreamWriter(new FileStream(mCmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
 
@@ -146,7 +146,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                 }
 
                 // Parse the console output file one more time to check for errors
-                clsGlobal.IdleLoop(0.25);
+                Global.IdleLoop(0.25);
                 ParseConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath);
 
                 if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))
@@ -255,10 +255,10 @@ namespace AnalysisManagerMSAlignQuantPlugIn
             {
                 targetedQuantParamFilePath = Path.Combine(mWorkDir, TARGETED_QUANT_XML_FILE_NAME);
 
-                var psmResultsFileName  = mJobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, clsAnalysisResourcesMSAlignQuant.MSALIGN_QUANT_INPUT_FILE_NAME_PARAM, "");
+                var psmResultsFileName  = mJobParams.GetJobParameter(AnalysisJob.STEP_PARAMETERS_SECTION, AnalysisResourcesMSAlignQuant.MSALIGN_QUANT_INPUT_FILE_NAME_PARAM, "");
                 if (string.IsNullOrWhiteSpace(psmResultsFileName))
                 {
-                    mMessage = NotifyMissingParameter(mJobParams, clsAnalysisJob.STEP_PARAMETERS_SECTION);
+                    mMessage = NotifyMissingParameter(mJobParams, AnalysisJob.STEP_PARAMETERS_SECTION);
                     return string.Empty;
                 }
 
@@ -457,7 +457,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                                         "or Pyroglutomate (H3N1, 17.03 Da)";
                                 }
 
-                                mConsoleOutputErrorMsg = clsGlobal.AppendToComment(mConsoleOutputErrorMsg, newError);
+                                mConsoleOutputErrorMsg = Global.AppendToComment(mConsoleOutputErrorMsg, newError);
                             }
                         }
                     }

@@ -18,7 +18,7 @@ namespace AnalysisManagerFormularityPlugin
     /// <summary>
     /// Retrieve resources for the Formularity plugin
     /// </summary>
-    public class clsAnalysisResourcesFormularity : clsAnalysisResources
+    public class AnalysisResourcesFormularity : AnalysisResources
     {
         public const string JOB_PARAM_FORMULARITY_CALIBRATION_PEAKS_FILE = "CalibrationPeaksFile";
 
@@ -145,7 +145,7 @@ namespace AnalysisManagerFormularityPlugin
                         }
                         mJobParams.AddResultFileToSkip(tsvFileName);
                         mJobParams.AddAdditionalParameter(
-                            clsAnalysisJob.STEP_PARAMETERS_SECTION,
+                            AnalysisJob.STEP_PARAMETERS_SECTION,
                             JOB_PARAM_FORMULARITY_DATASET_SCANS_FILE,
                             tsvFileName);
 
@@ -170,7 +170,7 @@ namespace AnalysisManagerFormularityPlugin
                             }
                             mJobParams.AddResultFileToSkip(peaksFileName);
                             mJobParams.AddAdditionalParameter(
-                                clsAnalysisJob.STEP_PARAMETERS_SECTION,
+                                AnalysisJob.STEP_PARAMETERS_SECTION,
                                 JOB_PARAM_FORMULARITY_DATASET_SCANS_FILE,
                                 peaksFileName);
 
@@ -189,7 +189,7 @@ namespace AnalysisManagerFormularityPlugin
                             }
                             mJobParams.AddResultFileToSkip(scansFileName);
                             mJobParams.AddAdditionalParameter(
-                                clsAnalysisJob.STEP_PARAMETERS_SECTION,
+                                AnalysisJob.STEP_PARAMETERS_SECTION,
                                 JOB_PARAM_FORMULARITY_DATASET_SCANS_FILE,
                                 scansFileName);
 
@@ -217,7 +217,7 @@ namespace AnalysisManagerFormularityPlugin
             catch (Exception ex)
             {
                 mMessage = "Exception in GetResources: " + ex.Message;
-                LogError(mMessage + "; task = " + currentTask + "; " + clsGlobal.GetExceptionStackTrace(ex));
+                LogError(mMessage + "; task = " + currentTask + "; " + Global.GetExceptionStackTrace(ex));
 
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -244,7 +244,7 @@ namespace AnalysisManagerFormularityPlugin
                         return false;
                     }
 
-                    var regressionSetting = clsXMLUtils.GetXmlValue(calibrationSection, "Regression");
+                    var regressionSetting = XMLUtils.GetXmlValue(calibrationSection, "Regression");
                     if (string.IsNullOrWhiteSpace(regressionSetting))
                     {
                         LogError("Regression setting is missing from the Calibration section of the parameter file");
@@ -284,7 +284,7 @@ namespace AnalysisManagerFormularityPlugin
                         return true;
                     }
 
-                    var calibrationPeaksFileName = clsXMLUtils.GetXmlValue(calibrationSection, "RefPeakFileName");
+                    var calibrationPeaksFileName = XMLUtils.GetXmlValue(calibrationSection, "RefPeakFileName");
                     if (string.IsNullOrWhiteSpace(calibrationPeaksFileName))
                     {
                         LogError("Calibration is enabled in the Formularity parameter file, but RefPeakFileName is missing or empty");
@@ -312,7 +312,7 @@ namespace AnalysisManagerFormularityPlugin
 
                     mJobParams.AddResultFileToSkip(calibrationPeaksFileName);
                     mJobParams.AddAdditionalParameter(
-                        clsAnalysisJob.STEP_PARAMETERS_SECTION,
+                        AnalysisJob.STEP_PARAMETERS_SECTION,
                         JOB_PARAM_FORMULARITY_CALIBRATION_PEAKS_FILE,
                         calibrationPeaksFileName);
                 }

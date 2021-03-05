@@ -1,7 +1,7 @@
 ﻿
 namespace MSGFResultsSummarizer
 {
-    internal class clsPSMStats
+    internal class PSMStats
     {
         /// <summary>
         /// Number of spectra with a match
@@ -85,7 +85,7 @@ namespace MSGFResultsSummarizer
         /// <summary>
         /// Constructor
         /// </summary>
-        public clsPSMStats()
+        public PSMStats()
         {
             Clear();
         }

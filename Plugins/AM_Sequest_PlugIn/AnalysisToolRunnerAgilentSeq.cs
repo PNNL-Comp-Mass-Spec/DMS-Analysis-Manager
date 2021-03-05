@@ -4,7 +4,7 @@ using System.IO;
 
 namespace AnalysisManagerSequestPlugin
 {
-    public class clsAnalysisToolRunnerAgilentSeq : clsAnalysisToolRunnerSeqBase
+    public class AnalysisToolRunnerAgilentSeq : AnalysisToolRunnerSeqBase
     {
         protected CloseOutType DeleteDataFile()
         {

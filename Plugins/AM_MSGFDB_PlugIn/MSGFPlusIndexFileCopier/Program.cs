@@ -17,7 +17,7 @@ namespace MSGFPlusIndexFileCopier
 
         static int Main()
         {
-            var commandLineParser = new clsParseCommandLine();
+            var commandLineParser = new ParseCommandLine();
 
             mFastaFilePath = string.Empty;
             mRemoteIndexFolderPath = DEFAULT_REMOTE_SHARE;
@@ -91,7 +91,7 @@ namespace MSGFPlusIndexFileCopier
                 const int debugLevel = 1;
                 const string managerName = "MSGFPlusIndexFileCopier";
 
-                var success = clsCreateMSGFDBSuffixArrayFiles.CopyIndexFilesToRemote(
+                var success = CreateMSGFDBSuffixArrayFiles.CopyIndexFilesToRemote(
                     fastaFile,
                     remoteIndexFolderPath,
                     debugLevel,
@@ -133,7 +133,7 @@ namespace MSGFPlusIndexFileCopier
             return System.Reflection.Assembly.GetExecutingAssembly().GetName().Version + " (" + PROGRAM_DATE + ")";
         }
 
-        private static bool SetOptionsUsingCommandLineParameters(clsParseCommandLine commandLineParser)
+        private static bool SetOptionsUsingCommandLineParameters(ParseCommandLine commandLineParser)
         {
             // Returns True if no problems; otherwise, returns false
             var lstValidParameters = new List<string> { "F", "R", "X" };
@@ -180,7 +180,7 @@ namespace MSGFPlusIndexFileCopier
             return false;
         }
 
-        private static bool ParseParameter(clsParseCommandLine commandLineParser, string parameterName, string description, ref string targetVariable)
+        private static bool ParseParameter(ParseCommandLine commandLineParser, string parameterName, string description, ref string targetVariable)
         {
             if (commandLineParser.RetrieveValueForParameter(parameterName, out var value))
             {

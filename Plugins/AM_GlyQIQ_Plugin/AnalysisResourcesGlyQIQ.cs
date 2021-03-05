@@ -16,7 +16,7 @@ namespace AnalysisManagerGlyQIQPlugin
     /// <summary>
     /// Retrieve resources for the GlyQ-IQ plugin
     /// </summary>
-    public class clsAnalysisResourcesGlyQIQ : clsAnalysisResources
+    public class AnalysisResourcesGlyQIQ : AnalysisResources
     {
         /// <summary>
         /// Locks folder name
@@ -83,7 +83,7 @@ namespace AnalysisManagerGlyQIQPlugin
             if (maxAllowedCores > 4)
                 maxAllowedCores--;
 
-            var coreCount = clsAnalysisToolRunnerBase.ParseThreadCount(coreCountText, maxAllowedCores);
+            var coreCount = AnalysisToolRunnerBase.ParseThreadCount(coreCountText, maxAllowedCores);
 
             mJobParams.AddAdditionalParameter("GlyQ-IQ", JOB_PARAM_ACTUAL_CORE_COUNT, coreCount.ToString());
 
@@ -192,7 +192,7 @@ namespace AnalysisManagerGlyQIQPlugin
 
                 // Determine the path to the IQGlyQ program
 
-                var progLoc = clsAnalysisToolRunnerBase.DetermineProgramLocation("GlyQIQ", "GlyQIQProgLoc", "IQGlyQ_Console.exe", "", mMgrParams, out mMessage);
+                var progLoc = AnalysisToolRunnerBase.DetermineProgramLocation("GlyQIQ", "GlyQIQProgLoc", "IQGlyQ_Console.exe", "", mMgrParams, out mMessage);
                 if (string.IsNullOrEmpty(progLoc))
                 {
                     LogError("DetermineProgramLocation returned an empty string: " + mMessage);
@@ -207,14 +207,14 @@ namespace AnalysisManagerGlyQIQPlugin
 
                     using var writer = new StreamWriter(new FileStream(batchFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
 
-                    // Note that clsGlyQIqRunner expects this batch file to be in a specific format:
+                    // Note that GlyQIqRunner expects this batch file to be in a specific format:
                     // GlyQIQProgramPath "WorkingDirectoryPath" "DatasetName" "DatasetSuffix" "TargetsFileName" "ParamFileName"
                     //                   "WorkingParametersFolderPath" "LockFileName" "ResultsFolderPath" "CoreNumber"
                     //
                     // It will read and parse the batch file to determine the TargetsFile name and folder path so that it can cache the target code values
-                    // Thus, if you change this code, also update clsGlyQIqRunner
+                    // Thus, if you change this code, also update GlyQIqRunner
 
-                    writer.Write(clsGlobal.PossiblyQuotePath(progLoc));
+                    writer.Write(Global.PossiblyQuotePath(progLoc));
 
                     writer.Write(" \"" + mWorkDir + "\"");
                     writer.Write(" \"" + DatasetName + "\"");
@@ -478,7 +478,7 @@ namespace AnalysisManagerGlyQIQPlugin
                         mMessage = "Error retrieving instrument data file";
                     }
 
-                    LogError("clsAnalysisResourcesGlyQIQ.GetResources: " + mMessage);
+                    LogError("AnalysisResourcesGlyQIQ.GetResources: " + mMessage);
                     return false;
                 }
 

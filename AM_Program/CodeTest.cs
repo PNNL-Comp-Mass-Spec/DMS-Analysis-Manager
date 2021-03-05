@@ -22,7 +22,7 @@ namespace AnalysisManagerProg
     /// <summary>
     /// Collection of test code
     /// </summary>
-    public class CodeTest : clsLoggerBase
+    public class CodeTest : LoggerBase
     {
         // ReSharper disable CommentTypo
         // Ignore Spelling: perf, dta, Inj, mgf, dmsarch, Geobacter, bemidjiensis, Bem, lovelyi, metallireducens, sp, filetype, Micrococcus, luteus, nr
@@ -41,7 +41,7 @@ namespace AnalysisManagerProg
 
         private DateTime mLastStatusTime;
 
-        private clsRunDosProgram mProgRunner;
+        private RunDosProgram mProgRunner;
 
         // 450 seconds is 7.5 minutes
         private const int FASTA_GEN_TIMEOUT_INTERVAL_SEC = 450;
@@ -61,13 +61,13 @@ namespace AnalysisManagerProg
                 // Load settings from config file AnalysisManagerProg.exe.config
                 var options = new CommandLineOptions {TraceMode = TRACE_MODE_ENABLED};
 
-                var mainProcess = new clsMainProcess(options);
+                var mainProcess = new MainProcess(options);
                 mainProcess.InitMgrSettings(false);
 
                 var configFileSettings = mainProcess.LoadMgrSettingsFromFile();
 
-                mMgrSettings = new clsAnalysisMgrSettings(clsGlobal.GetAppDirectoryPath(), TRACE_MODE_ENABLED);
-                var settingsClass = (clsAnalysisMgrSettings)mMgrSettings;
+                mMgrSettings = new AnalysisMgrSettings(Global.GetAppDirectoryPath(), TRACE_MODE_ENABLED);
+                var settingsClass = (AnalysisMgrSettings)mMgrSettings;
                 if (settingsClass != null)
                 {
                     RegisterEvents(settingsClass);
@@ -81,16 +81,16 @@ namespace AnalysisManagerProg
                 mDebugLevel = 2;
 
                 // Initialize the log file
-                var logFileNameBase = clsMainProcess.GetBaseLogFileName(mMgrSettings);
+                var logFileNameBase = MainProcess.GetBaseLogFileName(mMgrSettings);
 
                 // The analysis manager determines when to log or not log based on internal logic
                 // Set the LogLevel tracked by FileLogger to DEBUG so that all messages sent to the class are logged
                 LogTools.CreateFileLogger(logFileNameBase, BaseLogger.LogLevels.DEBUG);
 
-                if (clsGlobal.LinuxOS)
-                    mMgrSettings.SetParam(clsAnalysisMgrSettings.MGR_PARAM_WORK_DIR, mMgrSettings.GetParam(clsAnalysisMgrSettings.MGR_PARAM_LOCAL_WORK_DIR_PATH));
+                if (Global.LinuxOS)
+                    mMgrSettings.SetParam(AnalysisMgrSettings.MGR_PARAM_WORK_DIR, mMgrSettings.GetParam(AnalysisMgrSettings.MGR_PARAM_LOCAL_WORK_DIR_PATH));
                 else
-                    mMgrSettings.SetParam(clsAnalysisMgrSettings.MGR_PARAM_WORK_DIR, @"C:\DMS_WorkDir");
+                    mMgrSettings.SetParam(AnalysisMgrSettings.MGR_PARAM_WORK_DIR, @"C:\DMS_WorkDir");
 
                 mMgrSettings.SetParam(MgrSettings.MGR_PARAM_MGR_NAME, "Monroe_Test");
                 mMgrSettings.SetParam("DebugLevel", mDebugLevel.ToString());
@@ -98,7 +98,7 @@ namespace AnalysisManagerProg
             catch (Exception ex)
             {
                 ConsoleMsgUtils.ShowError("Exception loading settings from AnalysisManagerProg.exe.config", ex);
-                clsGlobal.IdleLoop(0.5);
+                Global.IdleLoop(0.5);
             }
         }
 
@@ -265,48 +265,48 @@ namespace AnalysisManagerProg
             }
         }
 
-        private clsAnalysisJob InitializeMgrAndJobParams(short debugLevel)
+        private AnalysisJob InitializeMgrAndJobParams(short debugLevel)
         {
-            var jobParams = new clsAnalysisJob(mMgrSettings, debugLevel);
+            var jobParams = new AnalysisJob(mMgrSettings, debugLevel);
 
-            mMgrSettings.SetParam(clsAnalysisMgrSettings.MGR_PARAM_WORK_DIR, GetWorkDirPath());
+            mMgrSettings.SetParam(AnalysisMgrSettings.MGR_PARAM_WORK_DIR, GetWorkDirPath());
             mMgrSettings.SetParam(MgrSettings.MGR_PARAM_MGR_NAME, "Monroe_Test");
             mMgrSettings.SetParam("DebugLevel", debugLevel.ToString());
 
-            jobParams.SetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "StepTool", "TestStepTool");
-            jobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "ToolName", "TestTool");
+            jobParams.SetParam(AnalysisJob.STEP_PARAMETERS_SECTION, "StepTool", "TestStepTool");
+            jobParams.SetParam(AnalysisJob.JOB_PARAMETERS_SECTION, "ToolName", "TestTool");
 
-            jobParams.SetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Job", "12345");
-            jobParams.SetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME, "Test_Results");
+            jobParams.SetParam(AnalysisJob.STEP_PARAMETERS_SECTION, "Job", "12345");
+            jobParams.SetParam(AnalysisJob.STEP_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME, "Test_Results");
 
             return jobParams;
         }
 
-        private clsCodeTestAM GetCodeTestToolRunner()
+        private CodeTestAM GetCodeTestToolRunner()
         {
             return GetCodeTestToolRunner(out _, out _);
         }
 
-        private clsCodeTestAM GetCodeTestToolRunner(out clsAnalysisJob jobParams)
+        private CodeTestAM GetCodeTestToolRunner(out AnalysisJob jobParams)
         {
             return GetCodeTestToolRunner(out jobParams, out _);
         }
 
-        private clsCodeTestAM GetCodeTestToolRunner(out clsAnalysisJob jobParams, out clsMyEMSLUtilities myEMSLUtilities)
+        private CodeTestAM GetCodeTestToolRunner(out AnalysisJob jobParams, out MyEMSLUtilities myEMSLUtilities)
         {
             const short DEBUG_LEVEL = 2;
 
             jobParams = InitializeMgrAndJobParams(DEBUG_LEVEL);
 
-            var statusTools = new clsStatusFile("Status.xml", DEBUG_LEVEL);
+            var statusTools = new StatusFile("Status.xml", DEBUG_LEVEL);
             RegisterEvents(statusTools);
 
-            var summaryFile = new clsSummaryFile();
+            var summaryFile = new SummaryFile();
 
-            myEMSLUtilities = new clsMyEMSLUtilities(DEBUG_LEVEL, GetWorkDirPath(), true);
+            myEMSLUtilities = new MyEMSLUtilities(DEBUG_LEVEL, GetWorkDirPath(), true);
             RegisterEvents(myEMSLUtilities);
 
-            var toolRunner = new clsCodeTestAM();
+            var toolRunner = new CodeTestAM();
             toolRunner.Setup("CodeTest", mMgrSettings, jobParams, statusTools, summaryFile, myEMSLUtilities);
 
             return toolRunner;
@@ -314,7 +314,7 @@ namespace AnalysisManagerProg
 
         private ResourceTestClass GetResourcesObject(int debugLevel)
         {
-            var jobParams = new clsAnalysisJob(mMgrSettings, 0);
+            var jobParams = new AnalysisJob(mMgrSettings, 0);
 
             return GetResourcesObject(debugLevel, jobParams);
         }
@@ -323,21 +323,21 @@ namespace AnalysisManagerProg
         {
             var resourceTester = new ResourceTestClass();
 
-            var statusTools = new clsStatusFile("Status.xml", debugLevel);
+            var statusTools = new StatusFile("Status.xml", debugLevel);
             RegisterEvents(statusTools);
 
-            var myEMSLUtilities = new clsMyEMSLUtilities(debugLevel, GetWorkDirPath(), true);
+            var myEMSLUtilities = new MyEMSLUtilities(debugLevel, GetWorkDirPath(), true);
             RegisterEvents(myEMSLUtilities);
 
-            mMgrSettings.SetParam(clsAnalysisMgrSettings.MGR_PARAM_WORK_DIR, GetWorkDirPath());
+            mMgrSettings.SetParam(AnalysisMgrSettings.MGR_PARAM_WORK_DIR, GetWorkDirPath());
             mMgrSettings.SetParam(MgrSettings.MGR_PARAM_MGR_NAME, "Monroe_Test");
             mMgrSettings.SetParam("DebugLevel", debugLevel.ToString());
 
-            jobParams.SetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "StepTool", "TestStepTool");
-            jobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "ToolName", "TestTool");
+            jobParams.SetParam(AnalysisJob.STEP_PARAMETERS_SECTION, "StepTool", "TestStepTool");
+            jobParams.SetParam(AnalysisJob.JOB_PARAMETERS_SECTION, "ToolName", "TestTool");
 
-            jobParams.SetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Job", "12345");
-            jobParams.SetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME, "Test_Results");
+            jobParams.SetParam(AnalysisJob.STEP_PARAMETERS_SECTION, "Job", "12345");
+            jobParams.SetParam(AnalysisJob.STEP_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME, "Test_Results");
 
             resourceTester.Setup("CodeTest", mMgrSettings, jobParams, statusTools, myEMSLUtilities);
 
@@ -346,27 +346,27 @@ namespace AnalysisManagerProg
 
         private string GetWorkDirPath()
         {
-            return mMgrSettings.GetParam(clsAnalysisMgrSettings.MGR_PARAM_WORK_DIR);
+            return mMgrSettings.GetParam(AnalysisMgrSettings.MGR_PARAM_WORK_DIR);
         }
 
         /// <summary>
         /// Initializes mMgrSettings and returns example job params
         /// </summary>
-        private clsAnalysisJob InitializeManagerParams()
+        private AnalysisJob InitializeManagerParams()
         {
             const int debugLevel = 1;
 
-            var jobParams = new clsAnalysisJob(mMgrSettings, 0);
+            var jobParams = new AnalysisJob(mMgrSettings, 0);
 
-            mMgrSettings.SetParam(clsAnalysisMgrSettings.MGR_PARAM_WORK_DIR, @"C:\DMS_WorkDir");
+            mMgrSettings.SetParam(AnalysisMgrSettings.MGR_PARAM_WORK_DIR, @"C:\DMS_WorkDir");
             mMgrSettings.SetParam(MgrSettings.MGR_PARAM_MGR_NAME, "Monroe_Test");
             mMgrSettings.SetParam("DebugLevel", debugLevel.ToString());
 
-            jobParams.SetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "StepTool", "TestStepTool");
-            jobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "ToolName", "TestTool");
+            jobParams.SetParam(AnalysisJob.STEP_PARAMETERS_SECTION, "StepTool", "TestStepTool");
+            jobParams.SetParam(AnalysisJob.JOB_PARAMETERS_SECTION, "ToolName", "TestTool");
 
-            jobParams.SetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Job", "12345");
-            jobParams.SetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME, "Test_Results");
+            jobParams.SetParam(AnalysisJob.STEP_PARAMETERS_SECTION, "Job", "12345");
+            jobParams.SetParam(AnalysisJob.STEP_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME, "Test_Results");
 
             return jobParams;
         }
@@ -398,7 +398,7 @@ namespace AnalysisManagerProg
             {
                 Console.WriteLine();
                 Console.WriteLine("Error in PerformanceCounterTest: " + ex.Message);
-                Console.WriteLine(clsGlobal.GetExceptionStackTrace(ex, true));
+                Console.WriteLine(Global.GetExceptionStackTrace(ex, true));
                 var rePub1000 = new Regex(@"Pub-1\d{3,}", RegexOptions.IgnoreCase);
                 if (rePub1000.IsMatch(Environment.MachineName))
                 {
@@ -456,11 +456,11 @@ namespace AnalysisManagerProg
                 return false;
             }
 
-            // var workDir = mMgrSettings.GetParam(clsAnalysisMgrSettings.MGR_PARAM_WORK_DIR);
+            // var workDir = mMgrSettings.GetParam(AnalysisMgrSettings.MGR_PARAM_WORK_DIR);
             // var postResultsToDB = true;
 
-            // Note: add file clsDtaRefLogMassErrorExtractor to this project to use this functionality
-            // var massErrorExtractor = new clsDtaRefLogMassErrorExtractor(mMgrSettings, workDir, mDebugLevel, postResultsToDB);
+            // Note: add file DtaRefLogMassErrorExtractor to this project to use this functionality
+            // var massErrorExtractor = new DtaRefLogMassErrorExtractor(mMgrSettings, workDir, mDebugLevel, postResultsToDB);
 
             foreach (DataRow curRow in Dt.Rows)
             {
@@ -504,7 +504,7 @@ namespace AnalysisManagerProg
                 @" --filter ""threshold count 500 most-intense"" " +
                 @" --mgf -o C:\DMS_WorkDir";
 
-            mProgRunner = new clsRunDosProgram(workDir, mDebugLevel)
+            mProgRunner = new RunDosProgram(workDir, mDebugLevel)
             {
                 CreateNoWindow = true,
                 CacheStandardOutput = true,
@@ -532,28 +532,28 @@ namespace AnalysisManagerProg
         {
             GetCodeTestToolRunner(out var jobParams);
 
-            if (string.IsNullOrWhiteSpace(mMgrSettings.GetParam(clsAnalysisMgrSettings.MGR_PARAM_FAILED_RESULTS_DIRECTORY_PATH)))
+            if (string.IsNullOrWhiteSpace(mMgrSettings.GetParam(AnalysisMgrSettings.MGR_PARAM_FAILED_RESULTS_DIRECTORY_PATH)))
             {
-                if (clsGlobal.LinuxOS)
+                if (Global.LinuxOS)
                 {
-                    var localWorkDirPath = mMgrSettings.GetParam(clsAnalysisMgrSettings.MGR_PARAM_LOCAL_WORK_DIR_PATH);
+                    var localWorkDirPath = mMgrSettings.GetParam(AnalysisMgrSettings.MGR_PARAM_LOCAL_WORK_DIR_PATH);
                     if (!string.IsNullOrWhiteSpace(localWorkDirPath))
                     {
                         var localWorkDir = new DirectoryInfo(localWorkDirPath);
 
                         if (localWorkDir.Parent == null)
-                            mMgrSettings.SetParam(clsAnalysisMgrSettings.MGR_PARAM_FAILED_RESULTS_DIRECTORY_PATH, "");
+                            mMgrSettings.SetParam(AnalysisMgrSettings.MGR_PARAM_FAILED_RESULTS_DIRECTORY_PATH, "");
                         else
-                            mMgrSettings.SetParam(clsAnalysisMgrSettings.MGR_PARAM_FAILED_RESULTS_DIRECTORY_PATH, Path.Combine(localWorkDir.Parent.FullName, clsAnalysisToolRunnerBase.DMS_FAILED_RESULTS_DIRECTORY_NAME));
+                            mMgrSettings.SetParam(AnalysisMgrSettings.MGR_PARAM_FAILED_RESULTS_DIRECTORY_PATH, Path.Combine(localWorkDir.Parent.FullName, AnalysisToolRunnerBase.DMS_FAILED_RESULTS_DIRECTORY_NAME));
                     }
                     else
                     {
-                        mMgrSettings.SetParam(clsAnalysisMgrSettings.MGR_PARAM_FAILED_RESULTS_DIRECTORY_PATH, "");
+                        mMgrSettings.SetParam(AnalysisMgrSettings.MGR_PARAM_FAILED_RESULTS_DIRECTORY_PATH, "");
                     }
                 }
                 else
                 {
-                    mMgrSettings.SetParam(clsAnalysisMgrSettings.MGR_PARAM_FAILED_RESULTS_DIRECTORY_PATH, @"C:\" + clsAnalysisToolRunnerBase.DMS_FAILED_RESULTS_DIRECTORY_NAME);
+                    mMgrSettings.SetParam(AnalysisMgrSettings.MGR_PARAM_FAILED_RESULTS_DIRECTORY_PATH, @"C:\" + AnalysisToolRunnerBase.DMS_FAILED_RESULTS_DIRECTORY_NAME);
                 }
             }
 
@@ -578,7 +578,7 @@ namespace AnalysisManagerProg
                 }
             }
 
-            var analysisResults = new clsAnalysisResults(mMgrSettings, jobParams);
+            var analysisResults = new AnalysisResults(mMgrSettings, jobParams);
             analysisResults.CopyFailedResultsToArchiveDirectory(Path.Combine(GetWorkDirPath(), resFolderName));
         }
 
@@ -630,7 +630,7 @@ namespace AnalysisManagerProg
                     // Read the files line-by-line and compare
                     // Since the first 2 lines of a Sequest parameter file don't matter, and since the 3rd line can vary from computer to computer, we start the comparison at the 4th line
 
-                    if (!clsGlobal.TextFilesMatch(sourceFilePath, targetFilePath, 4, 0, true, lineIgnoreRegExSpecs))
+                    if (!Global.TextFilesMatch(sourceFilePath, targetFilePath, 4, 0, true, lineIgnoreRegExSpecs))
                     {
                         // Files don't match; rename the old file
 
@@ -679,7 +679,7 @@ namespace AnalysisManagerProg
         /// </summary>
         public void TestConnectRSA()
         {
-            if (clsGlobal.LinuxOS)
+            if (Global.LinuxOS)
             {
                 LogError("Cannot use TestConnectRSA on Linux");
                 return;
@@ -717,7 +717,7 @@ namespace AnalysisManagerProg
 
             try
             {
-                var privateKeyFile = new PrivateKeyFile(keyFileStream, clsGlobal.DecodePassword(passphraseEncoded));
+                var privateKeyFile = new PrivateKeyFile(keyFileStream, Global.DecodePassword(passphraseEncoded));
 
                 using var sftp = new SftpClient(host, username, privateKeyFile);
 
@@ -769,10 +769,10 @@ namespace AnalysisManagerProg
 
             var jobParams = InitializeMgrAndJobParams(DEBUG_LEVEL);
 
-            jobParams.SetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "StepTool", "MSGFPlus");
-            jobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_DATASET_NAME, "TestDataset");
+            jobParams.SetParam(AnalysisJob.STEP_PARAMETERS_SECTION, "StepTool", "MSGFPlus");
+            jobParams.SetParam(AnalysisJob.JOB_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_DATASET_NAME, "TestDataset");
 
-            var transferUtility = new clsRemoteTransferUtility(mMgrSettings, jobParams);
+            var transferUtility = new RemoteTransferUtility(mMgrSettings, jobParams);
             RegisterEvents(transferUtility);
 
             const string sourceFilePath = @"C:\DMS_Temp_Org\uniref50_2013-02-14.fasta";
@@ -792,7 +792,7 @@ namespace AnalysisManagerProg
         {
             Console.WriteLine("Splitting concatenated DTA file");
 
-            var fileSplitter = new clsSplitCattedFiles();
+            var fileSplitter = new SplitCattedFiles();
             var filesToSkip = new SortedSet<string>();
 
             fileSplitter.SplitCattedDTAsOnly(rootFileName, resultsFolder, filesToSkip);
@@ -801,7 +801,7 @@ namespace AnalysisManagerProg
         }
 
         /// <summary>
-        /// Instantiate an instance of clsAnalysisToolRunnerDtaSplit
+        /// Instantiate an instance of AnalysisToolRunnerDtaSplit
         /// </summary>
         public void TestDTASplit()
         {
@@ -809,23 +809,23 @@ namespace AnalysisManagerProg
 
             var jobParams = InitializeMgrAndJobParams(debugLevel);
 
-            var statusTools = new clsStatusFile("Status.xml", debugLevel);
+            var statusTools = new StatusFile("Status.xml", debugLevel);
             RegisterEvents(statusTools);
 
-            var myEMSLUtilities = new clsMyEMSLUtilities(debugLevel, GetWorkDirPath(), true);
+            var myEMSLUtilities = new MyEMSLUtilities(debugLevel, GetWorkDirPath(), true);
             RegisterEvents(myEMSLUtilities);
 
-            jobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_DATASET_NAME, "QC_05_2_05Dec05_Doc_0508-08");
-            jobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "NumberOfClonedSteps", "25");
-            jobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "ClonedStepsHaveEqualNumSpectra", "True");
+            jobParams.SetParam(AnalysisJob.JOB_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_DATASET_NAME, "QC_05_2_05Dec05_Doc_0508-08");
+            jobParams.SetParam(AnalysisJob.JOB_PARAMETERS_SECTION, "NumberOfClonedSteps", "25");
+            jobParams.SetParam(AnalysisJob.JOB_PARAMETERS_SECTION, "ClonedStepsHaveEqualNumSpectra", "True");
 
             var mgr = new FileInfo(PRISM.FileProcessor.ProcessFilesOrDirectoriesBase.GetAppPath());
             var mgrFolderPath = mgr.DirectoryName;
 
-            var summaryFile = new clsSummaryFile();
+            var summaryFile = new SummaryFile();
             summaryFile.Clear();
 
-            var pluginLoader = new clsPluginLoader(summaryFile, mgrFolderPath);
+            var pluginLoader = new PluginLoader(summaryFile, mgrFolderPath);
 
             var toolRunner = pluginLoader.GetToolRunner("dta_split".ToLower());
             toolRunner.Setup("CodeTest", mMgrSettings, jobParams, statusTools, summaryFile, myEMSLUtilities);
@@ -862,7 +862,7 @@ namespace AnalysisManagerProg
             if (success)
             {
                 IJobParams jobParams = InitializeManagerParams();
-                jobParams.AddAdditionalParameter("PeptideSearch", clsAnalysisResources.JOB_PARAM_GENERATED_FASTA_NAME, mFastaFileName);
+                jobParams.AddAdditionalParameter("PeptideSearch", AnalysisResources.JOB_PARAM_GENERATED_FASTA_NAME, mFastaFileName);
 
                 //const bool msgfPlus = true;
                 //var jobNum = "12345";
@@ -874,8 +874,8 @@ namespace AnalysisManagerProg
                 //string fastaFilePath;
 
                 // Uncomment the following if the MSGFDB plugin is associated with the solution
-                //var tool = new AnalysisManagerMSGFDBPlugIn.clsMSGFDBUtils(
-                //    mMgrSettings, jobParams, jobNum, mMgrSettings.GetParam(clsAnalysisMgrSettings.MGR_PARAM_WORK_DIR), debugLevel, msgfPlus);
+                //var tool = new AnalysisManagerMSGFDBPlugIn.MSGFDBUtils(
+                //    mMgrSettings, jobParams, jobNum, mMgrSettings.GetParam(AnalysisMgrSettings.MGR_PARAM_WORK_DIR), debugLevel, msgfPlus);
 
                 //RegisterEvents(oTool);
 
@@ -933,14 +933,14 @@ namespace AnalysisManagerProg
             }
             catch (Exception ex)
             {
-                Console.WriteLine("clsAnalysisResources.CreateFastaFile(), Exception generating OrgDb file: " + ex.Message);
+                Console.WriteLine("AnalysisResources.CreateFastaFile(), Exception generating OrgDb file: " + ex.Message);
                 return false;
             }
 
             // Wait for fasta creation to finish
             while (!mGenerationComplete)
             {
-                clsGlobal.IdleLoop(2);
+                Global.IdleLoop(2);
             }
 
             if (mFastaGenTimeOut)
@@ -975,9 +975,9 @@ namespace AnalysisManagerProg
         {
             var toolRunner = GetCodeTestToolRunner(out var jobParams);
 
-            jobParams.SetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME, "Test_Results_" + DateTime.Now.ToString("hh_mm_ss"));
-            jobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH, @"\\proto-3\DMS3_XFER");
-            jobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_DATASET_NAME, "Test_Dataset");
+            jobParams.SetParam(AnalysisJob.STEP_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME, "Test_Results_" + DateTime.Now.ToString("hh_mm_ss"));
+            jobParams.SetParam(AnalysisJob.JOB_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH, @"\\proto-3\DMS3_XFER");
+            jobParams.SetParam(AnalysisJob.JOB_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_DATASET_NAME, "Test_Dataset");
 
             toolRunner.RunTool();
         }
@@ -1095,11 +1095,11 @@ namespace AnalysisManagerProg
                 Console.WriteLine("]");
             }
 
-            clsGlobal.ShowTimestampTrace("Logging 'testing complete'");
+            Global.ShowTimestampTrace("Logging 'testing complete'");
 
             LogMessage("Testing complete");
 
-            clsGlobal.ShowTimestampTrace("Exiting method TestLogging");
+            Global.ShowTimestampTrace("Exiting method TestLogging");
         }
 
         /// <summary>
@@ -1108,7 +1108,7 @@ namespace AnalysisManagerProg
         /// <param name="connStr">ODBC-style connection string</param>
         public void TestDatabaseLogging(string connStr)
         {
-            LogTools.CreateDbLogger(connStr, "clsCodeTest");
+            LogTools.CreateDbLogger(connStr, "CodeTest");
 
             LogTools.WriteLog(LogTools.LoggerTypes.LogDb, BaseLogger.LogLevels.INFO, "Test analysis manager status message");
 
@@ -1127,7 +1127,7 @@ namespace AnalysisManagerProg
             {
                 EchoMessagesToFileLogger = true
             };
-            sqlServerLogger.ChangeConnectionInfo("clsCodeTest2", connStr, "PostLogEntry", "type", "message", "postedBy");
+            sqlServerLogger.ChangeConnectionInfo("CodeTest2", connStr, "PostLogEntry", "type", "message", "postedBy");
             sqlServerLogger.WriteLog(BaseLogger.LogLevels.FATAL, "SQL Server Fatal Test");
 
             var odbcConnectionString = ODBCDatabaseLogger.ConvertSqlServerConnectionStringToODBC(connStr);
@@ -1135,7 +1135,7 @@ namespace AnalysisManagerProg
             {
                 EchoMessagesToFileLogger = true
             };
-            odbcLogger.ChangeConnectionInfo("clsCodeTest2", odbcConnectionString, "PostLogEntry", "type", "message", "postedBy", 128, 4096, 128);
+            odbcLogger.ChangeConnectionInfo("CodeTest2", odbcConnectionString, "PostLogEntry", "type", "message", "postedBy", 128, 4096, 128);
 
             odbcLogger.WriteLog(BaseLogger.LogLevels.INFO, "ODBC Log Test");
             odbcLogger.WriteLog(BaseLogger.LogLevels.WARN, "ODBC Warning Test");
@@ -1146,11 +1146,11 @@ namespace AnalysisManagerProg
         /// </summary>
         public void GetLegacyFastaFileSize()
         {
-            var jobParams = new clsAnalysisJob(mMgrSettings, 0);
+            var jobParams = new AnalysisJob(mMgrSettings, 0);
 
-            jobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "ToolName", "MSGFPlus_SplitFasta");
+            jobParams.SetParam(AnalysisJob.JOB_PARAMETERS_SECTION, "ToolName", "MSGFPlus_SplitFasta");
 
-            jobParams.SetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Step", "50");
+            jobParams.SetParam(AnalysisJob.STEP_PARAMETERS_SECTION, "Step", "50");
 
             jobParams.SetParam("ParallelMSGFPlus", "NumberOfClonedSteps", "25");
             jobParams.SetParam("ParallelMSGFPlus", "CloneStepRenumberStart", "50");
@@ -1164,7 +1164,7 @@ namespace AnalysisManagerProg
             const int debugLevel = 2;
             var resourcer = GetResourcesObject(debugLevel, jobParams);
 
-            var proteinCollectionInfo = new clsProteinCollectionInfo(jobParams);
+            var proteinCollectionInfo = new ProteinCollectionInfo(jobParams);
 
             var spaceRequiredMB = resourcer.LookupLegacyDBDiskSpaceRequiredMB(proteinCollectionInfo, out var legacyFastaName, out var fastaFileSizeGB);
 
@@ -1293,7 +1293,7 @@ namespace AnalysisManagerProg
             const int debugLevel = 2;
             const string workDirPath = @"C:\DMS_WorkDir";
 
-            var dotNetZipTools = new clsDotNetZipTools(debugLevel, workDirPath);
+            var dotNetZipTools = new DotNetZipTools(debugLevel, workDirPath);
             RegisterEvents(dotNetZipTools);
 
             dotNetZipTools.UnzipFile(zipFilePath);
@@ -1338,7 +1338,7 @@ namespace AnalysisManagerProg
                 Console.WriteLine("File size mismatch: {0:#,###} vs. {1:#,###} bytes", roundTripFile.Length, sourceFile.Length);
             }
 
-            clsGlobal.IdleLoop(2);
+            Global.IdleLoop(2);
 
             Console.WriteLine();
             Console.WriteLine("Deleting files in the temp directory");
@@ -1379,7 +1379,7 @@ namespace AnalysisManagerProg
 
             toolRunner.UnzipFile(zippedFile, @"F:\Temp\ZipTest\UnzipTarget");
 
-            var dotNetZipTools = new clsDotNetZipTools(1, GetWorkDirPath());
+            var dotNetZipTools = new DotNetZipTools(1, GetWorkDirPath());
             RegisterEvents(dotNetZipTools);
 
             dotNetZipTools.ZipDirectory(@"F:\Temp\ZipTest\QExact01\", @"F:\Temp\ZipTest\QExact01_Folder.zip");
@@ -1390,7 +1390,7 @@ namespace AnalysisManagerProg
         /// </summary>
         public void TestDotNetZipTools()
         {
-            var dotNetZipTools = new clsDotNetZipTools(1, @"C:\DMS_WorkDir");
+            var dotNetZipTools = new DotNetZipTools(1, @"C:\DMS_WorkDir");
             RegisterEvents(dotNetZipTools);
 
             dotNetZipTools.UnzipFile(@"C:\DMS_WorkDir\Temp.zip", @"C:\DMS_WorkDir", "*.png");
@@ -1410,7 +1410,7 @@ namespace AnalysisManagerProg
 
             var resourceTester = new ResourceTestClass();
 
-            var statusTools = new clsStatusFile("Status.xml", debugLevel);
+            var statusTools = new StatusFile("Status.xml", debugLevel);
             RegisterEvents(statusTools);
 
             if (string.IsNullOrEmpty(sourceDatasetFolder))
@@ -1422,11 +1422,11 @@ namespace AnalysisManagerProg
 
             mMgrSettings.SetParam("ChameleonCachedDataFolder", @"H:\9T_Imaging");
 
-            jobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_DATASET_NAME, "ratjoint071110_INCAS_MS");
+            jobParams.SetParam(AnalysisJob.JOB_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_DATASET_NAME, "ratjoint071110_INCAS_MS");
 
-            jobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetStoragePath", @"\\Proto-10\9T_FTICR_Imaging\2010_4\");
-            jobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetArchivePath", @"\\adms.emsl.pnl.gov\dmsarch\9T_FTICR_Imaging_1");
-            jobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH, @"\\proto-10\DMS3_Xfer");
+            jobParams.SetParam(AnalysisJob.JOB_PARAMETERS_SECTION, "DatasetStoragePath", @"\\Proto-10\9T_FTICR_Imaging\2010_4\");
+            jobParams.SetParam(AnalysisJob.JOB_PARAMETERS_SECTION, "DatasetArchivePath", @"\\adms.emsl.pnl.gov\dmsarch\9T_FTICR_Imaging_1");
+            jobParams.SetParam(AnalysisJob.JOB_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH, @"\\proto-10\DMS3_Xfer");
 
             resourceTester.Setup("CodeTest", mMgrSettings, jobParams, statusTools, myEMSLUtilities);
 
@@ -1442,7 +1442,7 @@ namespace AnalysisManagerProg
         /// </summary>
         public void TestStatusLogging()
         {
-            var statusTools = new clsStatusFile("Status.xml", 2);
+            var statusTools = new StatusFile("Status.xml", 2);
             RegisterEvents(statusTools);
 
             statusTools.MgrName = mMgrSettings.ManagerName;
@@ -1476,7 +1476,7 @@ namespace AnalysisManagerProg
             //   IonicZip compressed a 556 MB text file in 3.7 seconds (creating a 107 MB file)
             //   IonicZip compressed a folder with 996 MB of data (FASTA files, text files, one .gz file) in 12 seconds (creating a 348 MB zip file)
 
-            var dotNetZipTools = new clsDotNetZipTools(3, @"F:\Temp");
+            var dotNetZipTools = new DotNetZipTools(3, @"F:\Temp");
             RegisterEvents(dotNetZipTools);
 
             var stopWatch = new Stopwatch();
@@ -1504,7 +1504,7 @@ namespace AnalysisManagerProg
         /// </summary>
         public void GenerateScanStatsFile()
         {
-            if (clsGlobal.LinuxOS)
+            if (Global.LinuxOS)
             {
                 LogError("Cannot use GenerateScanStatsFile on Linux");
                 return;
@@ -1538,7 +1538,7 @@ namespace AnalysisManagerProg
                 return false;
             }
 
-            var scanStatsGenerator = new clsScanStatsGenerator(msFileInfoScannerDLLPath, mDebugLevel);
+            var scanStatsGenerator = new ScanStatsGenerator(msFileInfoScannerDLLPath, mDebugLevel);
             RegisterEvents(scanStatsGenerator);
 
             const int datasetID = 0;
@@ -1599,7 +1599,7 @@ namespace AnalysisManagerProg
 
             var workDir = Path.GetDirectoryName(appPath);
 
-            var progRunner = new clsRunDosProgram(workDir, mDebugLevel)
+            var progRunner = new RunDosProgram(workDir, mDebugLevel)
             {
                 CacheStandardOutput = true,
                 CreateNoWindow = true,
@@ -1644,7 +1644,7 @@ namespace AnalysisManagerProg
 
             const string programDescription = "IDPQonvert";
 
-            var progRunner = new clsRunDosProgram(mWorkDir, mDebugLevel)
+            var progRunner = new RunDosProgram(mWorkDir, mDebugLevel)
             {
                 CreateNoWindow = false,
                 EchoOutputToConsole = false
@@ -1746,7 +1746,7 @@ namespace AnalysisManagerProg
         /// </summary>
         public void SystemMemoryUsage()
         {
-            var freeMemoryMB = clsGlobal.GetFreeMemoryMB();
+            var freeMemoryMB = Global.GetFreeMemoryMB();
 
             Console.WriteLine();
             Console.WriteLine("Available memory (MB) = {0:F1}", freeMemoryMB);
@@ -1808,7 +1808,7 @@ namespace AnalysisManagerProg
         /// </summary>
         public void RemoveSparseSpectra()
         {
-            var cDtaUtilities = new clsCDTAUtilities();
+            var cDtaUtilities = new CDTAUtilities();
             RegisterEvents(cDtaUtilities);
 
             cDtaUtilities.RemoveSparseSpectra(@"C:\DMS_WorkDir", "ALZ_VP2P101_C_SCX_02_7Dec08_Draco_08-10-29_dta.txt");
@@ -1825,7 +1825,7 @@ namespace AnalysisManagerProg
             resourcer.ValidateCDTAFileIsCentroided(@"\\proto-7\dms3_Xfer\UW_HCV_03_Run2_19Dec13_Pippin_13-07-06\DTA_Gen_1_26_350136\UW_HCV_03_Run2_19Dec13_Pippin_13-07-06_dta.txt");
         }
 
-        private class ResourceTestClass : clsAnalysisResources
+        private class ResourceTestClass : AnalysisResources
         {
             public override CloseOutType GetResources()
             {

@@ -7,7 +7,7 @@ namespace AnalysisManagerXTandemPlugIn
     /// <summary>
     /// Retrieve resources for the X!Tandem plugin
     /// </summary>
-    public class clsAnalysisResourcesXT : clsAnalysisResources
+    public class AnalysisResourcesXT : AnalysisResources
     {
         internal const string MOD_DEFS_FILE_SUFFIX = "_ModDefs.txt";
         internal const string MASS_CORRECTION_TAGS_FILENAME = "Mass_Correction_Tags.txt";
@@ -17,10 +17,10 @@ namespace AnalysisManagerXTandemPlugIn
         /// <summary>
         /// Initialize options
         /// </summary>
-        public override void Setup(string stepToolName, IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, clsMyEMSLUtilities myEMSLUtilities)
+        public override void Setup(string stepToolName, IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, MyEMSLUtilities myEMSLUtilities)
         {
             base.Setup(stepToolName, mgrParams, jobParams, statusTools, myEMSLUtilities);
-            SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, true);
+            SetOption(Global.eAnalysisResourceOptions.OrgDbRequired, true);
         }
 
         /// <summary>
@@ -86,21 +86,21 @@ namespace AnalysisManagerXTandemPlugIn
             var success = CopyFileToWorkDir("taxonomy_base.xml", mJobParams.GetParam("ParmFileStoragePath"), mWorkDir);
             if (!success)
             {
-                LogError("clsAnalysisResourcesXT.GetResources(), failed retrieving taxonomy_base.xml file");
+                LogError("AnalysisResourcesXT.GetResources(), failed retrieving taxonomy_base.xml file");
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
             success = CopyFileToWorkDir("input_base.txt", mJobParams.GetParam("ParmFileStoragePath"), mWorkDir);
             if (!success)
             {
-                LogError("clsAnalysisResourcesXT.GetResources(), failed retrieving input_base.xml file");
+                LogError("AnalysisResourcesXT.GetResources(), failed retrieving input_base.xml file");
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
             success = CopyFileToWorkDir("default_input.xml", mJobParams.GetParam("ParmFileStoragePath"), mWorkDir);
             if (!success)
             {
-                LogError("clsAnalysisResourcesXT.GetResources(), failed retrieving default_input.xml file");
+                LogError("AnalysisResourcesXT.GetResources(), failed retrieving default_input.xml file");
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
@@ -113,7 +113,7 @@ namespace AnalysisManagerXTandemPlugIn
             success = MakeTaxonomyFile();
             if (!success)
             {
-                LogError("clsAnalysisResourcesXT.GetResources(), failed making taxonomy file");
+                LogError("AnalysisResourcesXT.GetResources(), failed making taxonomy file");
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
@@ -121,7 +121,7 @@ namespace AnalysisManagerXTandemPlugIn
             success = MakeInputFile();
             if (!success)
             {
-                LogError("clsAnalysisResourcesXT.GetResources(), failed making input file");
+                LogError("AnalysisResourcesXT.GetResources(), failed making input file");
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
@@ -161,7 +161,7 @@ namespace AnalysisManagerXTandemPlugIn
             catch (Exception ex)
             {
                 // Let the user know what went wrong.
-                LogError("clsAnalysisResourcesXT.MakeTaxonomyFile, The file could not be read" + ex.Message);
+                LogError("AnalysisResourcesXT.MakeTaxonomyFile, The file could not be read" + ex.Message);
             }
 
             // Get rid of base file
@@ -260,7 +260,7 @@ namespace AnalysisManagerXTandemPlugIn
                     // Need to condense the file
 
                     var message = string.Format("{0} is {1:F2} GB in size; will now condense it by combining data points with consecutive zero-intensity value",
-                        inputFile.Name, clsGlobal.BytesToGB(inputFile.Length));
+                        inputFile.Name, Global.BytesToGB(inputFile.Length));
 
                     LogMessage(message);
 
@@ -282,7 +282,7 @@ namespace AnalysisManagerXTandemPlugIn
                     if (mDebugLevel >= 1)
                     {
                         message = string.Format("Condensing complete; size of the new _dta.txt file is {0:F2} GB",
-                                                   clsGlobal.BytesToGB(inputFile.Length));
+                                                   Global.BytesToGB(inputFile.Length));
                         LogMessage(message);
                     }
 

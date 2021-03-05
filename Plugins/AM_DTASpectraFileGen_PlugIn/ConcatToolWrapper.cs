@@ -16,7 +16,7 @@ namespace DTASpectraFileGen
     /// Provides a wrapper around FileConcatenator.dll to simplify use
     /// Requires FileConcatenator.dll to be referenced in project
     /// </summary>
-    public class clsConcatToolWrapper
+    public class ConcatToolWrapper
     {
         #region "Enums"
 
@@ -49,7 +49,7 @@ namespace DTASpectraFileGen
 
         #region "Public Methods"
 
-        public clsConcatToolWrapper(string DataPath)
+        public ConcatToolWrapper(string DataPath)
         {
             this.DataPath = DataPath;
             ErrMsg = "";
@@ -65,9 +65,10 @@ namespace DTASpectraFileGen
             try
             {
                 // Perform the concatenation
-                mCatTools = new clsConcatenateFiles(DataPath, RootFileName) {
-                        DeleteSourceFilesWhenConcatenating = deleteSourceFilesWhenConcatenating
-                    };
+                mCatTools = new clsConcatenateFiles(DataPath, RootFileName)
+                {
+                    DeleteSourceFilesWhenConcatenating = deleteSourceFilesWhenConcatenating
+                };
 
                 mCatTools.ErrorNotification += CatTools_ErrorNotification;
                 mCatTools.EndTask += CatTools_EndingTask;
@@ -96,7 +97,7 @@ namespace DTASpectraFileGen
                 // Loop until the concatenation finishes
                 while (mCatInProgress)
                 {
-                    clsGlobal.IdleLoop(1);
+                    Global.IdleLoop(1);
                 }
 
                 // Concatenation must have finished successfully, so exit
@@ -104,7 +105,7 @@ namespace DTASpectraFileGen
             }
             catch (Exception ex)
             {
-                ErrMsg = "Exception while concatenating files: " + ex.Message + "; " + clsGlobal.GetExceptionStackTrace(ex);
+                ErrMsg = "Exception while concatenating files: " + ex.Message + "; " + Global.GetExceptionStackTrace(ex);
                 return false;
             }
         }

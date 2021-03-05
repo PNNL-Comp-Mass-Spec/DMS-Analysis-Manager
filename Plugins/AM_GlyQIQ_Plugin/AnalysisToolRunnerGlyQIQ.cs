@@ -22,7 +22,7 @@ namespace AnalysisManagerGlyQIQPlugin
     /// <summary>
     /// Class for running the GlyQ-IQ
     /// </summary>
-    public class clsAnalysisToolRunnerGlyQIQ : clsAnalysisToolRunnerBase
+    public class AnalysisToolRunnerGlyQIQ : AnalysisToolRunnerBase
     {
         #region "Constants and Enums"
 
@@ -61,7 +61,7 @@ namespace AnalysisManagerGlyQIQPlugin
         /// Dictionary of GlyQIqRunner instances
         /// </summary>
         /// <remarks>Key is core number (1 through NumCores), value is the instance</remarks>
-        protected Dictionary<int, clsGlyQIqRunner> mGlyQRunners;
+        protected Dictionary<int, GlyQIqRunner> mGlyQRunners;
 
         private XRawFileIO mThermoFileReader;
 
@@ -87,7 +87,7 @@ namespace AnalysisManagerGlyQIQPlugin
 
                 if (mDebugLevel > 4)
                 {
-                    LogDebug("clsAnalysisToolRunnerGlyQIQ.RunTool(): Enter");
+                    LogDebug("AnalysisToolRunnerGlyQIQ.RunTool(): Enter");
                 }
 
                 // Determine the path to the IQGlyQ program
@@ -261,7 +261,7 @@ namespace AnalysisManagerGlyQIQPlugin
 
                 for (var scan = 1; scan <= scanCount; scan++)
                 {
-                    if (mThermoFileReader.GetScanInfo(scan, out clsScanInfo scanInfo))
+                    if (mThermoFileReader.GetScanInfo(scan, out var scanInfo))
                     {
                         if (scanInfo.MSLevel > 1)
                         {
@@ -411,7 +411,7 @@ namespace AnalysisManagerGlyQIQPlugin
 
                 // We don't keep the entire ConsoleOutput file
                 // Instead, just keep a trimmed version of the original, removing extraneous log messages
-                foreach (var fiConsoleOutputFile in diWorkDir.GetFiles(clsGlyQIqRunner.GLYQ_IQ_CONSOLE_OUTPUT_PREFIX + "*.txt"))
+                foreach (var fiConsoleOutputFile in diWorkDir.GetFiles(GlyQIqRunner.GLYQ_IQ_CONSOLE_OUTPUT_PREFIX + "*.txt"))
                 {
                     PruneConsoleOutputFiles(fiConsoleOutputFile, diTempZipFolder);
                 }
@@ -443,15 +443,15 @@ namespace AnalysisManagerGlyQIQPlugin
                     {
                         moveFile = true;
                     }
-                    else if (fiFile.Name.StartsWith(clsAnalysisResourcesGlyQIQ.GLYQIQ_PARAMS_FILE_PREFIX))
+                    else if (fiFile.Name.StartsWith(AnalysisResourcesGlyQIQ.GLYQIQ_PARAMS_FILE_PREFIX))
                     {
                         moveFile = true;
                     }
-                    else if (fiFile.Name.StartsWith(clsAnalysisResourcesGlyQIQ.ALIGNMENT_PARAMETERS_FILENAME))
+                    else if (fiFile.Name.StartsWith(AnalysisResourcesGlyQIQ.ALIGNMENT_PARAMETERS_FILENAME))
                     {
                         moveFile = true;
                     }
-                    else if (fiFile.Name.StartsWith(clsAnalysisResourcesGlyQIQ.EXECUTOR_PARAMETERS_FILE))
+                    else if (fiFile.Name.StartsWith(AnalysisResourcesGlyQIQ.EXECUTOR_PARAMETERS_FILE))
                     {
                         moveFile = true;
                     }
@@ -476,7 +476,7 @@ namespace AnalysisManagerGlyQIQPlugin
             try
             {
                 // Clear the TempZipFolder
-                clsGlobal.IdleLoop(0.25);
+                Global.IdleLoop(0.25);
                 diTempZipFolder.Delete(true);
                 diTempZipFolder.Create();
             }
@@ -642,19 +642,19 @@ namespace AnalysisManagerGlyQIQPlugin
 
             try
             {
-                mCoreCount = mJobParams.GetJobParameter(clsAnalysisResourcesGlyQIQ.JOB_PARAM_ACTUAL_CORE_COUNT, 0);
+                mCoreCount = mJobParams.GetJobParameter(AnalysisResourcesGlyQIQ.JOB_PARAM_ACTUAL_CORE_COUNT, 0);
                 if (mCoreCount < 1)
                 {
-                    mMessage = "Core count reported by " + clsAnalysisResourcesGlyQIQ.JOB_PARAM_ACTUAL_CORE_COUNT + " is 0; unable to continue";
+                    mMessage = "Core count reported by " + AnalysisResourcesGlyQIQ.JOB_PARAM_ACTUAL_CORE_COUNT + " is 0; unable to continue";
                     return false;
                 }
 
                 var rawDataTypeName = mJobParams.GetParam("RawDataType");
-                var rawDataType = clsAnalysisResources.GetRawDataType(rawDataTypeName);
+                var rawDataType = AnalysisResources.GetRawDataType(rawDataTypeName);
 
-                if (rawDataType == clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile)
+                if (rawDataType == AnalysisResources.eRawDataTypeConstants.ThermoRawFile)
                 {
-                    mJobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_RAW_EXTENSION);
+                    mJobParams.AddResultFileExtensionToSkip(AnalysisResources.DOT_RAW_EXTENSION);
                 }
                 else
                 {
@@ -663,24 +663,24 @@ namespace AnalysisManagerGlyQIQPlugin
                 }
 
                 // Determine the number of MS/MS spectra in the .Raw file (required for PostJobResults)
-                var rawFilePath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_RAW_EXTENSION);
+                var rawFilePath = Path.Combine(mWorkDir, mDatasetName + AnalysisResources.DOT_RAW_EXTENSION);
                 mSpectraSearched = CountMsMsSpectra(rawFilePath);
 
                 // Set up and execute a program runner to run each batch file that launches GlyQ-IQ
 
                 mProgress = PROGRESS_PCT_STARTING;
 
-                mGlyQRunners = new Dictionary<int, clsGlyQIqRunner>();
+                mGlyQRunners = new Dictionary<int, GlyQIqRunner>();
                 // var lstThreads = new List<Thread>();
 
                 for (var core = 1; core <= mCoreCount; core++)
                 {
-                    var batchFilePath = Path.Combine(mWorkDir, clsAnalysisResourcesGlyQIQ.START_PROGRAM_BATCH_FILE_PREFIX + core + ".bat");
+                    var batchFilePath = Path.Combine(mWorkDir, AnalysisResourcesGlyQIQ.START_PROGRAM_BATCH_FILE_PREFIX + core + ".bat");
 
                     currentTask = "Launching GlyQ-IQ, core " + core;
                     LogDebug(currentTask + ": " + batchFilePath);
 
-                    var glyQRunner = new clsGlyQIqRunner(mWorkDir, core, batchFilePath);
+                    var glyQRunner = new GlyQIqRunner(mWorkDir, core, batchFilePath);
                     glyQRunner.CmdRunnerWaiting += CmdRunner_LoopWaiting;
                     mGlyQRunners.Add(core, glyQRunner);
 
@@ -710,7 +710,7 @@ namespace AnalysisManagerGlyQIQPlugin
                     foreach (var glyQRunner in mGlyQRunners)
                     {
                         var eStatus = glyQRunner.Value.Status;
-                        if (eStatus >= clsGlyQIqRunner.GlyQIqRunnerStatusCodes.Success)
+                        if (eStatus >= GlyQIqRunner.GlyQIqRunnerStatusCodes.Success)
                         {
                             // Analysis completed (or failed)
                             stepsComplete++;
@@ -739,7 +739,7 @@ namespace AnalysisManagerGlyQIQPlugin
                         break;
                     }
 
-                    clsGlobal.IdleLoop(2);
+                    Global.IdleLoop(2);
 
                     if (DateTime.UtcNow.Subtract(dtStartTime).TotalDays > 14)
                     {

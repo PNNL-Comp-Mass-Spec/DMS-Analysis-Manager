@@ -17,7 +17,7 @@ namespace AnalysisManagerResultsCleanupPlugin
     /// <summary>
     /// Class for running Results Cleanup
     /// </summary>
-    public class clsAnalysisToolRunnerResultsCleanup : clsAnalysisToolRunnerBase
+    public class AnalysisToolRunnerResultsCleanup : AnalysisToolRunnerBase
     {
         #region "Constants"
 
@@ -65,7 +65,7 @@ namespace AnalysisManagerResultsCleanupPlugin
             }
             catch (Exception ex)
             {
-                mMessage = "Error in clsAnalysisToolRunnerResultsCleanup->RunTool";
+                mMessage = "Error in AnalysisToolRunnerResultsCleanup->RunTool";
                 LogError(mMessage + ": " + ex.Message);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -80,8 +80,8 @@ namespace AnalysisManagerResultsCleanupPlugin
 
             try
             {
-                var transferDirectoryPath = mJobParams.GetJobParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH, string.Empty);
-                var resultsDirectoryName = mJobParams.GetJobParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, "InputFolderName", string.Empty);
+                var transferDirectoryPath = mJobParams.GetJobParameter(AnalysisJob.JOB_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH, string.Empty);
+                var resultsDirectoryName = mJobParams.GetJobParameter(AnalysisJob.JOB_PARAMETERS_SECTION, "InputFolderName", string.Empty);
 
                 if (string.IsNullOrWhiteSpace(transferDirectoryPath))
                 {
@@ -171,7 +171,7 @@ namespace AnalysisManagerResultsCleanupPlugin
                     }
 
                     mEvalMessage = "Deleted " + fileCountDeleted + " extra " + RESULTS_DB3_FILE + " " +
-                                    clsGlobal.CheckPlural(fileCountDeleted, "file", "files");
+                                    Global.CheckPlural(fileCountDeleted, "file", "files");
 
                     LogMessage(mEvalMessage + " from " + resultsDirectory.FullName);
                 }
@@ -210,7 +210,7 @@ namespace AnalysisManagerResultsCleanupPlugin
         protected bool StoreToolVersionInfo()
         {
             var toolVersionInfo = string.Empty;
-            var appDirectoryPath = clsGlobal.GetAppDirectoryPath();
+            var appDirectoryPath = Global.GetAppDirectoryPath();
 
             if (mDebugLevel >= 2)
             {

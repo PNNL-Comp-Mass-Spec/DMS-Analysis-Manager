@@ -20,7 +20,7 @@ namespace AnalysisManagerExtractionPlugin
     /// <summary>
     /// Manages retrieval of all files needed for data extraction
     /// </summary>
-    public class clsAnalysisResourcesExtraction : clsAnalysisResources
+    public class AnalysisResourcesExtraction : AnalysisResources
     {
         // Ignore Spelling: Defs, diff, bioml, Parm, mgf, MODa, msgfdb, foreach, dta
 
@@ -35,12 +35,12 @@ namespace AnalysisManagerExtractionPlugin
         public const string MASS_CORRECTION_TAGS_FILENAME = "Mass_Correction_Tags.txt";
 
         /// <summary>
-        /// Job parameter used to instruct clsExtractToolRunner to run AScore
+        /// Job parameter used to instruct ExtractToolRunner to run AScore
         /// </summary>
         public const string JOB_PARAM_RUN_ASCORE = "RunAScore";
 
         /// <summary>
-        /// Job parameter used to instruct clsExtractToolRunner to skip PHRP since the PHRP result files are already up-to-date
+        /// Job parameter used to instruct ExtractToolRunner to skip PHRP since the PHRP result files are already up-to-date
         /// </summary>
         public const string JOB_PARAM_SKIP_PHRP = "SkipPHRP";
 
@@ -52,7 +52,7 @@ namespace AnalysisManagerExtractionPlugin
         /// <summary>
         /// Initialize options
         /// </summary>
-        public override void Setup(string stepToolName, IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, clsMyEMSLUtilities myEMSLUtilities)
+        public override void Setup(string stepToolName, IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, MyEMSLUtilities myEMSLUtilities)
         {
             base.Setup(stepToolName, mgrParams, jobParams, statusTools, myEMSLUtilities);
 
@@ -60,7 +60,7 @@ namespace AnalysisManagerExtractionPlugin
             // This includes for MS-GF+ because it uses the order of the proteins in the
             // FASTA file to determine the protein to include in the FHT file
 
-            SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, true);
+            SetOption(Global.eAnalysisResourceOptions.OrgDbRequired, true);
         }
 
         /// <summary>
@@ -485,7 +485,7 @@ namespace AnalysisManagerExtractionPlugin
                 {
                     if (fastaFileSizeGB >= MAX_LEGACY_FASTA_SIZE_GB)
                     {
-                        mJobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "SkipProteinMods", "true");
+                        mJobParams.SetParam(AnalysisJob.JOB_PARAMETERS_SECTION, "SkipProteinMods", "true");
                         return CloseOutType.CLOSEOUT_SUCCESS;
                     }
 
@@ -1021,7 +1021,7 @@ namespace AnalysisManagerExtractionPlugin
                     }
 
                     var subTaskProgress = iteration / (float)numberOfClonedSteps * 100;
-                    var progressOverall = clsAnalysisToolRunnerBase.ComputeIncrementalProgress(0, clsExtractToolRunner.PROGRESS_EXTRACTION_START, subTaskProgress);
+                    var progressOverall = AnalysisToolRunnerBase.ComputeIncrementalProgress(0, ExtractToolRunner.PROGRESS_EXTRACTION_START, subTaskProgress);
 
                     if (DateTime.UtcNow.Subtract(lastProgressTime).TotalSeconds > 15)
                     {
@@ -1099,10 +1099,10 @@ namespace AnalysisManagerExtractionPlugin
 
                     LogMessage(string.Format("PHRP files are all newer than the .mzid.gz {0} ({1} > {2}); will skip running PHRP on this job",
                                              fileLabel,
-                                             oldestPhrpFile.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT),
-                                             newestMzIdOrTsvFile.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT)));
+                                             oldestPhrpFile.ToString(AnalysisToolRunnerBase.DATE_TIME_FORMAT),
+                                             newestMzIdOrTsvFile.ToString(AnalysisToolRunnerBase.DATE_TIME_FORMAT)));
 
-                    mJobParams.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, JOB_PARAM_SKIP_PHRP, true);
+                    mJobParams.AddAdditionalParameter(AnalysisJob.STEP_PARAMETERS_SECTION, JOB_PARAM_SKIP_PHRP, true);
                 }
 
                 // Note that we'll obtain the MS-GF+ parameter file in RetrieveMiscFiles
@@ -1174,17 +1174,17 @@ namespace AnalysisManagerExtractionPlugin
             var sharedResultsFolders = mJobParams.GetParam(JOB_PARAM_SHARED_RESULTS_FOLDERS);
             if (string.IsNullOrEmpty(sharedResultsFolders))
             {
-                mMessage = clsGlobal.AppendToComment(mMessage, "Job parameter SharedResultsFolders is empty");
+                mMessage = Global.AppendToComment(mMessage, "Job parameter SharedResultsFolders is empty");
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
             if (sharedResultsFolders.Contains(","))
             {
-                mMessage = clsGlobal.AppendToComment(mMessage, "shared results folders: " + sharedResultsFolders);
+                mMessage = Global.AppendToComment(mMessage, "shared results folders: " + sharedResultsFolders);
             }
             else
             {
-                mMessage = clsGlobal.AppendToComment(mMessage, "shared results folder " + sharedResultsFolders);
+                mMessage = Global.AppendToComment(mMessage, "shared results folder " + sharedResultsFolders);
             }
 
             // Errors were reported in function call, so just return
@@ -1286,7 +1286,7 @@ namespace AnalysisManagerExtractionPlugin
                 }
                 else if (remoteModDefsDirectory.StartsWith(@"\\proto", StringComparison.OrdinalIgnoreCase))
                 {
-                    if (clsGlobal.FilesMatch(fiModDefsFile.FullName, Path.Combine(remoteModDefsDirectory, modDefsFilename)))
+                    if (Global.FilesMatch(fiModDefsFile.FullName, Path.Combine(remoteModDefsDirectory, modDefsFilename)))
                     {
                         mJobParams.AddResultFileToSkip(modDefsFilename);
                     }
@@ -1300,12 +1300,12 @@ namespace AnalysisManagerExtractionPlugin
                 if (!runAScore)
                     return CloseOutType.CLOSEOUT_SUCCESS;
 
-                mJobParams.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, JOB_PARAM_RUN_ASCORE, true);
+                mJobParams.AddAdditionalParameter(AnalysisJob.STEP_PARAMETERS_SECTION, JOB_PARAM_RUN_ASCORE, true);
 
                 // If existing PHRP files were found and SkipPHRP was set to true,
                 // assure that a .mzid or .mzid.gz file exists in the working directory
                 // If one is not found, change SkipPHRP back to false
-                var skipPHRPEnabled = mJobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, JOB_PARAM_SKIP_PHRP, false);
+                var skipPHRPEnabled = mJobParams.GetJobParameter(AnalysisJob.STEP_PARAMETERS_SECTION, JOB_PARAM_SKIP_PHRP, false);
 
                 if (skipPHRPEnabled)
                 {
@@ -1318,7 +1318,7 @@ namespace AnalysisManagerExtractionPlugin
                     {
                         LogWarning(string.Format("Changing job parameter {0} back to False because no .mzid files were found",
                                                  JOB_PARAM_SKIP_PHRP));
-                        mJobParams.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, JOB_PARAM_SKIP_PHRP, false);
+                        mJobParams.AddAdditionalParameter(AnalysisJob.STEP_PARAMETERS_SECTION, JOB_PARAM_SKIP_PHRP, false);
                     }
                 }
 

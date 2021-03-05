@@ -19,7 +19,7 @@ namespace DTASpectraFileGen
     /// <summary>
     /// This class creates DTA files using either DeconMSn.exe or ExtractMSn.exe
     /// </summary>
-    public class clsDtaGenThermoRaw : clsDtaGen
+    public class DtaGenThermoRaw : DtaGen
     {
         #region "Constants"
 
@@ -32,7 +32,7 @@ namespace DTASpectraFileGen
         #region "Module variables"
 
         protected int mNumScans;
-        protected clsRunDosProgram mCmdRunner;
+        protected RunDosProgram mCmdRunner;
         private System.Threading.Thread mDTAFileCreationThread;
 
         protected int mMaxScanInFile;
@@ -73,7 +73,7 @@ namespace DTASpectraFileGen
 
         #region "Methods"
 
-        public override void Setup(SpectraFileProcessorParams initParams, clsAnalysisToolRunnerBase toolRunner)
+        public override void Setup(SpectraFileProcessorParams initParams, AnalysisToolRunnerBase toolRunner)
         {
             base.Setup(initParams, toolRunner);
 
@@ -103,7 +103,7 @@ namespace DTASpectraFileGen
                 return mStatus;
             }
 
-            // Note that clsDtaGenMSConvert will update mInstrumentFileName if processing a .mzXml file
+            // Note that DtaGenMSConvert will update mInstrumentFileName if processing a .mzXml file
             mInstrumentFileName = mDatasetName + ".raw";
 
             const bool useSingleThread= false;
@@ -139,7 +139,7 @@ namespace DTASpectraFileGen
         /// <summary>
         /// Returns the default path to the DTA generator tool
         /// </summary>
-        /// <remarks>The default path can be overridden by updating mDtaToolNameLoc using clsDtaGen.UpdateDtaToolNameLoc</remarks>
+        /// <remarks>The default path can be overridden by updating mDtaToolNameLoc using DtaGen.UpdateDtaToolNameLoc</remarks>
         protected virtual string ConstructDTAToolPath()
         {
             var dtaGenProgram = mJobParams.GetJobParameter("DtaGenerator", "");
@@ -172,20 +172,20 @@ namespace DTASpectraFileGen
             // Verifies that the data file exists in the specified directory
             switch (mRawDataType)
             {
-                case clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile:
-                    dataFileExtension = clsAnalysisResources.DOT_RAW_EXTENSION;
+                case AnalysisResources.eRawDataTypeConstants.ThermoRawFile:
+                    dataFileExtension = AnalysisResources.DOT_RAW_EXTENSION;
                     break;
 
-                case clsAnalysisResources.eRawDataTypeConstants.mzXML:
-                    dataFileExtension = clsAnalysisResources.DOT_MZXML_EXTENSION;
+                case AnalysisResources.eRawDataTypeConstants.mzXML:
+                    dataFileExtension = AnalysisResources.DOT_MZXML_EXTENSION;
                     break;
 
-                case clsAnalysisResources.eRawDataTypeConstants.mzML:
-                    dataFileExtension = clsAnalysisResources.DOT_MZML_EXTENSION;
+                case AnalysisResources.eRawDataTypeConstants.mzML:
+                    dataFileExtension = AnalysisResources.DOT_MZML_EXTENSION;
                     break;
 
-                case clsAnalysisResources.eRawDataTypeConstants.BrukerTOFTdf:
-                    if (Directory.Exists(Path.Combine(workDir, datasetName + clsAnalysisResources.DOT_D_EXTENSION)))
+                case AnalysisResources.eRawDataTypeConstants.BrukerTOFTdf:
+                    if (Directory.Exists(Path.Combine(workDir, datasetName + AnalysisResources.DOT_D_EXTENSION)))
                     {
                         mErrMsg = string.Empty;
                         return true;
@@ -207,7 +207,7 @@ namespace DTASpectraFileGen
                 return true;
             }
 
-            const string mgfFileExtension = clsAnalysisResources.DOT_MGF_EXTENSION;
+            const string mgfFileExtension = AnalysisResources.DOT_MGF_EXTENSION;
             if (File.Exists(Path.Combine(workDir, datasetName + mgfFileExtension)))
             {
                 mErrMsg = string.Empty;
@@ -228,7 +228,7 @@ namespace DTASpectraFileGen
 
             if (mDebugLevel > 0)
             {
-                OnStatusEvent("clsDtaGenThermoRaw.InitSetup: Initializing DTA generator setup");
+                OnStatusEvent("DtaGenThermoRaw.InitSetup: Initializing DTA generator setup");
             }
 
             // Do tests specified in base class
@@ -383,9 +383,9 @@ namespace DTASpectraFileGen
 
             // Get the maximum number of scans in the file
             var rawFilePath = string.Copy(instrumentDataFilePath);
-            if (!string.Equals(Path.GetExtension(instrumentDataFilePath), clsAnalysisResources.DOT_RAW_EXTENSION, StringComparison.OrdinalIgnoreCase))
+            if (!string.Equals(Path.GetExtension(instrumentDataFilePath), AnalysisResources.DOT_RAW_EXTENSION, StringComparison.OrdinalIgnoreCase))
             {
-                rawFilePath = Path.ChangeExtension(rawFilePath, clsAnalysisResources.DOT_RAW_EXTENSION);
+                rawFilePath = Path.ChangeExtension(rawFilePath, AnalysisResources.DOT_RAW_EXTENSION);
             }
 
             if (File.Exists(rawFilePath))
@@ -437,7 +437,7 @@ namespace DTASpectraFileGen
             mNumScans = scanStop - scanStart + 1;
 
             // Setup a program runner tool to make the spectra files
-            mCmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel);
+            mCmdRunner = new RunDosProgram(mWorkDir, mDebugLevel);
             mCmdRunner.ErrorEvent += CmdRunner_ErrorEvent;
             mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
@@ -546,7 +546,7 @@ namespace DTASpectraFileGen
                         {
                             arguments += " -XCDTA -Progress";
                         }
-                        arguments += " " + clsAnalysisToolRunnerBase.PossiblyQuotePath(Path.Combine(mWorkDir, mInstrumentFileName));
+                        arguments += " " + AnalysisToolRunnerBase.PossiblyQuotePath(Path.Combine(mWorkDir, mInstrumentFileName));
 
                         if (mDebugLevel >= 1)
                         {
@@ -578,7 +578,7 @@ namespace DTASpectraFileGen
                         if (!mCmdRunner.RunProgram(mDtaToolNameLoc, arguments, "DTA_LCQ", true))
                         {
                             // .RunProgram returned False
-                            LogDTACreationStats("clsDtaGenThermoRaw.MakeDTAFiles", Path.GetFileNameWithoutExtension(mDtaToolNameLoc),
+                            LogDTACreationStats("DtaGenThermoRaw.MakeDTAFiles", Path.GetFileNameWithoutExtension(mDtaToolNameLoc),
                                 "m_RunProgTool.RunProgram returned False");
 
                             LogError("Error running " + Path.GetFileNameWithoutExtension(mDtaToolNameLoc));
@@ -587,7 +587,7 @@ namespace DTASpectraFileGen
 
                         if (mDebugLevel >= 2)
                         {
-                            OnStatusEvent("clsDtaGenThermoRaw.MakeDTAFiles, RunProgram complete, thread " + System.Threading.Thread.CurrentThread.Name);
+                            OnStatusEvent("DtaGenThermoRaw.MakeDTAFiles, RunProgram complete, thread " + System.Threading.Thread.CurrentThread.Name);
                         }
 
                         // Update loopy parameters
@@ -633,20 +633,20 @@ namespace DTASpectraFileGen
 
             if (mDebugLevel >= 2)
             {
-                OnStatusEvent("clsDtaGenThermoRaw.MakeDTAFiles, DTA creation loop complete, thread " + System.Threading.Thread.CurrentThread.Name);
+                OnStatusEvent("DtaGenThermoRaw.MakeDTAFiles, DTA creation loop complete, thread " + System.Threading.Thread.CurrentThread.Name);
             }
 
             // We got this far, everything must have worked
             if (mStatus == ProcessStatus.SF_ABORTING)
             {
-                LogDTACreationStats("clsDtaGenThermoRaw.MakeDTAFiles", Path.GetFileNameWithoutExtension(mDtaToolNameLoc),
+                LogDTACreationStats("DtaGenThermoRaw.MakeDTAFiles", Path.GetFileNameWithoutExtension(mDtaToolNameLoc),
                     "mStatus = ProcessStatus.SF_ABORTING");
                 return false;
             }
 
             if (mStatus == ProcessStatus.SF_ERROR)
             {
-                LogDTACreationStats("clsDtaGenThermoRaw.MakeDTAFiles", Path.GetFileNameWithoutExtension(mDtaToolNameLoc),
+                LogDTACreationStats("DtaGenThermoRaw.MakeDTAFiles", Path.GetFileNameWithoutExtension(mDtaToolNameLoc),
                                     "mStatus = ProcessStatus.SF_ERROR ");
                 return false;
             }
@@ -742,7 +742,7 @@ namespace DTASpectraFileGen
             else
             {
                 // Verify that the _dta.txt file was created
-                var FileList = Directory.GetFiles(mWorkDir, mDatasetName + clsAnalysisResources.CDTA_EXTENSION);
+                var FileList = Directory.GetFiles(mWorkDir, mDatasetName + AnalysisResources.CDTA_EXTENSION);
 
                 if (FileList.GetLength(0) == 0)
                 {

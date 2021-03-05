@@ -6,7 +6,7 @@ namespace AnalysisManagerProSightQuantPlugIn
     /// <summary>
     /// Retrieve resources for the ProSight Quant plugin
     /// </summary>
-    public class clsAnalysisResourcesProSightQuant : clsAnalysisResources
+    public class AnalysisResourcesProSightQuant : AnalysisResources
     {
         /// <summary>
         /// ProSight PC results file name
@@ -45,7 +45,7 @@ namespace AnalysisManagerProSightQuantPlugIn
 
             string strParamFileStoragePathKeyName = null;
             string strParamFileStoragePath = null;
-            strParamFileStoragePathKeyName = clsGlobal.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "MSAlign_Quant";
+            strParamFileStoragePathKeyName = Global.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "MSAlign_Quant";
 
             strParamFileStoragePath = mMgrParams.GetParam(strParamFileStoragePathKeyName);
             if (string.IsNullOrEmpty(strParamFileStoragePath))
@@ -59,7 +59,7 @@ namespace AnalysisManagerProSightQuantPlugIn
             var strParamFileName = mJobParams.GetParam("ProSightQuantParamFile");
             if (string.IsNullOrEmpty(strParamFileName))
             {
-                mMessage = clsAnalysisToolRunnerBase.NotifyMissingParameter(mJobParams, "ProSightQuantParamFile");
+                mMessage = AnalysisToolRunnerBase.NotifyMissingParameter(mJobParams, "ProSightQuantParamFile");
                 LogError(mMessage);
                 return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
             }
@@ -102,7 +102,7 @@ namespace AnalysisManagerProSightQuantPlugIn
                             if (!File.Exists(Path.Combine(mWorkDir, DatasetName + DOT_RAW_EXTENSION)))
                             {
                                 mMessage = "Thermo .Raw file not successfully copied to WorkDir; likely a timeout error";
-                                LogError("clsDtaGenResources.GetResources: " + mMessage);
+                                LogError("DtaGenResources.GetResources: " + mMessage);
                                 return CloseOutType.CLOSEOUT_FAILED;
                             }
 
@@ -114,20 +114,20 @@ namespace AnalysisManagerProSightQuantPlugIn
                             if (!Directory.Exists(Path.Combine(mWorkDir, DatasetName + DOT_D_EXTENSION)))
                             {
                                 mMessage = "Bruker .D folder not successfully copied to WorkDir; likely a timeout error";
-                                LogError("clsDtaGenResources.GetResources: " + mMessage);
+                                LogError("DtaGenResources.GetResources: " + mMessage);
                                 return CloseOutType.CLOSEOUT_FAILED;
                             }
                         }
                     }
                     else
                     {
-                        LogDebug("clsDtaGenResources.GetResources: Error occurred retrieving spectra.");
+                        LogDebug("DtaGenResources.GetResources: Error occurred retrieving spectra.");
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
                     break;
                 default:
                     mMessage = "Dataset type " + strRawDataType + " is not supported";
-                    LogError("clsDtaGenResources.GetResources: " + mMessage +
+                    LogError("DtaGenResources.GetResources: " + mMessage +
                              "; must be " + RAW_DATA_TYPE_DOT_RAW_FILES + " or " + RAW_DATA_TYPE_BRUKER_FT_FOLDER);
                     return CloseOutType.CLOSEOUT_FAILED;
             }

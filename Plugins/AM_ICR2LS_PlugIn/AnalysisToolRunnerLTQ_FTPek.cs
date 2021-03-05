@@ -8,7 +8,7 @@ namespace AnalysisManagerICR2LSPlugIn
     /// <summary>
     /// Performs PEK analysis using ICR-2LS on LTQ-FT MS data
     /// </summary>
-    public class clsAnalysisToolRunnerLTQ_FTPek : clsAnalysisToolRunnerICRBase
+    public class AnalysisToolRunnerLTQ_FTPek : AnalysisToolRunnerICRBase
     {
         /// <summary>
         /// Primary entry point for running this tool
@@ -96,7 +96,7 @@ namespace AnalysisManagerICR2LSPlugIn
                     PerfPostAnalysisTasks(false);
 
                     // Try to save whatever files were moved into the results directory
-                    var objAnalysisResults = new clsAnalysisResults(mMgrParams, mJobParams);
+                    var objAnalysisResults = new AnalysisResults(mMgrParams, mJobParams);
                     objAnalysisResults.CopyFailedResultsToArchiveDirectory(Path.Combine(mWorkDir, mResultsDirectoryName));
                 }
                 else
@@ -128,7 +128,7 @@ namespace AnalysisManagerICR2LSPlugIn
             try
             {
                 // Allow extra time for ICR2LS to release file locks
-                clsGlobal.IdleLoop(5);
+                Global.IdleLoop(5);
                 var FoundFiles = Directory.GetFiles(mWorkDir, "*.raw");
                 foreach (var MyFile in FoundFiles)
                 {

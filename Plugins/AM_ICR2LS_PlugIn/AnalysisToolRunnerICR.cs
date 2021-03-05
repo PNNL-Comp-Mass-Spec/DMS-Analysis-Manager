@@ -5,7 +5,7 @@ using System.IO;
 
 namespace AnalysisManagerICR2LSPlugIn
 {
-    public class clsAnalysisToolRunnerICR : clsAnalysisToolRunnerICRBase
+    public class AnalysisToolRunnerICR : AnalysisToolRunnerICRBase
     {
         // Performs PEK analysis using ICR-2LS on Bruker S-folder MS data
 
@@ -106,7 +106,7 @@ namespace AnalysisManagerICR2LSPlugIn
                 string datasetFolderPathBase;
                 bool blnBrukerFT;
 
-                if (string.Equals(rawDataTypeName.ToLower(), clsAnalysisResources.RAW_DATA_TYPE_BRUKER_FT_FOLDER, StringComparison.InvariantCultureIgnoreCase))
+                if (string.Equals(rawDataTypeName.ToLower(), AnalysisResources.RAW_DATA_TYPE_BRUKER_FT_FOLDER, StringComparison.InvariantCultureIgnoreCase))
                 {
                     datasetFolderPathBase = Path.Combine(mWorkDir, mDatasetName + ".d");
                     blnBrukerFT = true;
@@ -120,7 +120,7 @@ namespace AnalysisManagerICR2LSPlugIn
                 // Look for a ser file or fid file in the working directory
                 currentTask = "FindSerFileOrFolder";
 
-                var serFileOrFolderPath = clsAnalysisResourcesIcr2ls.FindSerFileOrFolder(datasetFolderPathBase, out var blnIsFolder);
+                var serFileOrFolderPath = AnalysisResourcesIcr2ls.FindSerFileOrFolder(datasetFolderPathBase, out var blnIsFolder);
 
                 if (string.IsNullOrEmpty(serFileOrFolderPath))
                 {
@@ -216,7 +216,7 @@ namespace AnalysisManagerICR2LSPlugIn
                         PerfPostAnalysisTasks(false);
 
                         // Try to save whatever files were moved into the results directory
-                        var objAnalysisResults = new clsAnalysisResults(mMgrParams, mJobParams);
+                        var objAnalysisResults = new AnalysisResults(mMgrParams, mJobParams);
                         objAnalysisResults.CopyFailedResultsToArchiveDirectory(Path.Combine(mWorkDir, mResultsDirectoryName));
                     }
                     else
@@ -259,7 +259,7 @@ namespace AnalysisManagerICR2LSPlugIn
                 try
                 {
                     // Allow extra time for ICR2LS to release file locks
-                    clsGlobal.IdleLoop(5);
+                    Global.IdleLoop(5);
                     if (Directory.Exists(Path.Combine(mWorkDir, mDatasetName)))
                     {
                         Directory.Delete(Path.Combine(mWorkDir, mDatasetName), true);

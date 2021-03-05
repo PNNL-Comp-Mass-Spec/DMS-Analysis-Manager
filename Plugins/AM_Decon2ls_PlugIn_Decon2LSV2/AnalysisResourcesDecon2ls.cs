@@ -11,7 +11,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
     /// <summary>
     /// Retrieve resources for the Decon2LS plugin
     /// </summary>
-    public class clsAnalysisResourcesDecon2ls : clsAnalysisResources
+    public class AnalysisResourcesDecon2ls : AnalysisResources
     {
         /// <summary>
         /// Job parameter to track that MS/MS processing has been auto-enabled
@@ -70,7 +70,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 // Get input data file
                 if (!FileSearch.RetrieveSpectra(rawDataTypeName))
                 {
-                    LogError("clsAnalysisResourcesDecon2ls.GetResources: Error occurred retrieving spectra.");
+                    LogError("AnalysisResourcesDecon2ls.GetResources: Error occurred retrieving spectra.");
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
             }
@@ -95,7 +95,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 paramFileNameOverride = mJobParams.GetParam("DeconToolsParameterFile");
                 if (!string.IsNullOrWhiteSpace(paramFileNameOverride))
                 {
-                    mJobParams.AddAdditionalParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION,
+                    mJobParams.AddAdditionalParameter(AnalysisJob.JOB_PARAMETERS_SECTION,
                                                       JOB_PARAM_DECON_TOOLS_PARAMETER_FILE_NAME,
                                                       paramFileNameOverride);
                 }
@@ -241,7 +241,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 // Gets the Decon2LS file type based on the input data type
                 var rawDataType = GetRawDataType(rawDataTypeName);
 
-                var datasetFilePath = clsAnalysisToolRunnerDecon2ls.GetInputFilePath(mWorkDir, DatasetName, rawDataType);
+                var datasetFilePath = AnalysisToolRunnerDecon2ls.GetInputFilePath(mWorkDir, DatasetName, rawDataType);
                 bool success;
 
                 switch (rawDataType)
@@ -399,7 +399,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
                     updatedXmlDoc.WriteContentTo(formattedXmlWriter);
 
-                    mJobParams.AddAdditionalParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_PROCESSMSMS_AUTO_ENABLED, true);
+                    mJobParams.AddAdditionalParameter(AnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_PROCESSMSMS_AUTO_ENABLED, true);
                     return true;
                 }
                 catch (Exception ex)

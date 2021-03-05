@@ -14,7 +14,7 @@ namespace AnalysisManagerTopPICPlugIn
     /// <summary>
     /// Retrieve resources for the TopPIC plugin
     /// </summary>
-    public class clsAnalysisResourcesTopPIC : clsAnalysisResources
+    public class AnalysisResourcesTopPIC : AnalysisResources
     {
         // Ignore Spelling: parm, html
 
@@ -32,10 +32,10 @@ namespace AnalysisManagerTopPICPlugIn
         /// <summary>
         /// Initialize options
         /// </summary>
-        public override void Setup(string stepToolName, IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, clsMyEMSLUtilities myEMSLUtilities)
+        public override void Setup(string stepToolName, IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, MyEMSLUtilities myEMSLUtilities)
         {
             base.Setup(stepToolName, mgrParams, jobParams, statusTools, myEMSLUtilities);
-            SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, true);
+            SetOption(Global.eAnalysisResourceOptions.OrgDbRequired, true);
         }
 
         /// <summary>
@@ -133,7 +133,7 @@ namespace AnalysisManagerTopPICPlugIn
 
                 var zipOutputDirectoryPath = Path.Combine(mWorkDir, DatasetName + "_html");
                 LogMessage("Unzipping file " + fileName);
-                if (UnzipFileStart(Path.Combine(mWorkDir, fileName), zipOutputDirectoryPath, "clsAnalysisResourcesTopPIC.GetResources"))
+                if (UnzipFileStart(Path.Combine(mWorkDir, fileName), zipOutputDirectoryPath, "AnalysisResourcesTopPIC.GetResources"))
                 {
                     continue;
                 }

@@ -15,7 +15,7 @@ namespace AnalysisManagerProg
     /// Base class for Sequest analysis
     /// </summary>
     // ReSharper disable once UnusedMember.Global
-    public class clsCodeTestAM : clsAnalysisToolRunnerBase
+    public class CodeTestAM : AnalysisToolRunnerBase
     {
         #region "Methods"
 
@@ -33,14 +33,14 @@ namespace AnalysisManagerProg
             IMgrParams mgrParams,
             IJobParams jobParams,
             IStatusFile statusTools,
-            clsSummaryFile summaryFile,
-            clsMyEMSLUtilities myEMSLUtilities)
+            SummaryFile summaryFile,
+            MyEMSLUtilities myEMSLUtilities)
         {
             base.Setup(stepToolName, mgrParams, jobParams, statusTools, summaryFile, myEMSLUtilities);
 
             if (mDebugLevel > 3)
             {
-                LogDebug("clsAnalysisToolRunnerSeqBase.Setup()");
+                LogDebug("AnalysisToolRunnerSeqBase.Setup()");
             }
         }
 
@@ -79,7 +79,7 @@ namespace AnalysisManagerProg
             // Add the current job data to the summary file
             if (!UpdateSummaryFile())
             {
-                LogWarning("Error creating summary file, job " + Job + ", step " + mJobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Step"));
+                LogWarning("Error creating summary file, job " + Job + ", step " + mJobParams.GetParam(AnalysisJob.STEP_PARAMETERS_SECTION, "Step"));
             }
 
             // Make sure objects are released
@@ -111,7 +111,7 @@ namespace AnalysisManagerProg
             if (!success || eReturnCode == CloseOutType.CLOSEOUT_FAILED)
             {
                 // Try to save whatever files were moved into the results directory
-                var analysisResults = new clsAnalysisResults(mMgrParams, mJobParams);
+                var analysisResults = new AnalysisResults(mMgrParams, mJobParams);
                 analysisResults.CopyFailedResultsToArchiveDirectory(Path.Combine(mWorkDir, mResultsDirectoryName));
 
                 return CloseOutType.CLOSEOUT_FAILED;
@@ -120,7 +120,7 @@ namespace AnalysisManagerProg
             var copySuccess = CopyResultsFolderToServer();
             if (!copySuccess)
             {
-                // Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
+                // Note that CopyResultsFolderToServer should have already called AnalysisResults.CopyFailedResultsToArchiveFolder
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -140,7 +140,7 @@ namespace AnalysisManagerProg
                     writer.WriteLine(System.DateTime.Now.ToString(DATE_TIME_FORMAT) + " - This is a test file.");
                 }
 
-                clsGlobal.IdleLoop(0.5);
+                Global.IdleLoop(0.5);
             }
 
             return true;

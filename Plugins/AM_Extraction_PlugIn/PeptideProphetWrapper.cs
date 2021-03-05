@@ -19,7 +19,7 @@ namespace AnalysisManagerExtractionPlugin
     /// <summary>
     /// Calls the PeptideProphetRunner application
     /// </summary>
-    public class clsPeptideProphetWrapper : EventNotifier
+    public class PeptideProphetWrapper : EventNotifier
     {
         #region "Constants"
 
@@ -31,7 +31,7 @@ namespace AnalysisManagerExtractionPlugin
 
         private readonly string mPeptideProphetRunnerLocation;
 
-        protected clsRunDosProgram mCmdRunner;
+        protected RunDosProgram mCmdRunner;
 
         #endregion
 
@@ -58,7 +58,7 @@ namespace AnalysisManagerExtractionPlugin
 
         #region "Methods"
 
-        public clsPeptideProphetWrapper(string peptideProphetRunnerLocation)
+        public PeptideProphetWrapper(string peptideProphetRunnerLocation)
         {
             mPeptideProphetRunnerLocation = peptideProphetRunnerLocation;
         }
@@ -87,8 +87,8 @@ namespace AnalysisManagerExtractionPlugin
 
                 // Set up and execute a program runner to run the Peptide Prophet Runner
                 var arguments =
-                    clsGlobal.PossiblyQuotePath(inputFile.FullName) + " " +
-                    clsGlobal.PossiblyQuotePath(inputFile.Directory.FullName) +
+                    Global.PossiblyQuotePath(inputFile.FullName) + " " +
+                    Global.PossiblyQuotePath(inputFile.Directory.FullName) +
                     " /T:" + MAX_PEPTIDE_PROPHET_RUNTIME_MINUTES;
 
                 if (DebugLevel >= 2)
@@ -96,7 +96,7 @@ namespace AnalysisManagerExtractionPlugin
                     OnDebugEvent(mPeptideProphetRunnerLocation + " " + arguments);
                 }
 
-                mCmdRunner = new clsRunDosProgram(inputFile.Directory.FullName, DebugLevel)
+                mCmdRunner = new RunDosProgram(inputFile.Directory.FullName, DebugLevel)
                 {
                     CreateNoWindow = true,
                     CacheStandardOutput = true,

@@ -6,7 +6,7 @@ namespace AnalysisManager_AScore_PlugIn
     /// <summary>
     /// Retrieve resources for the AScore plugin
     /// </summary>
-    public class clsAnalysisResourcesAScore : clsAnalysisResources
+    public class AnalysisResourcesAScore : AnalysisResources
     {
         /// <summary>
         /// Retrieve required files
@@ -146,7 +146,7 @@ namespace AnalysisManager_AScore_PlugIn
 
         //    if (!string.IsNullOrEmpty(mJobParams.GetParam("AScoreCIDParamFile")))
         //    {
-        //        if (!FileSearch.RetrieveFile(mJobParams.GetParam("AScoreCIDParamFile"), mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH)))
+        //        if (!FileSearch.RetrieveFile(mJobParams.GetParam("AScoreCIDParamFile"), mJobParams.GetParam(AnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH)))
         //        {
         //            return false;
         //        }
@@ -156,7 +156,7 @@ namespace AnalysisManager_AScore_PlugIn
 
         //    if (!string.IsNullOrEmpty(mJobParams.GetParam("AScoreETDParamFile")))
         //    {
-        //        if (!FileSearch.RetrieveFile(mJobParams.GetParam("AScoreETDParamFile"), mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH)))
+        //        if (!FileSearch.RetrieveFile(mJobParams.GetParam("AScoreETDParamFile"), mJobParams.GetParam(AnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH)))
         //        {
         //            return false;
         //        }
@@ -166,7 +166,7 @@ namespace AnalysisManager_AScore_PlugIn
 
         //    if (!string.IsNullOrEmpty(mJobParams.GetParam("AScoreHCDParamFile")))
         //    {
-        //        if (!FileSearch.RetrieveFile(mJobParams.GetParam("AScoreHCDParamFile"), mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH)))
+        //        if (!FileSearch.RetrieveFile(mJobParams.GetParam("AScoreHCDParamFile"), mJobParams.GetParam(AnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH)))
         //        {
         //            return false;
         //        }

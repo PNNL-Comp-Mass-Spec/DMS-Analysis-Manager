@@ -13,15 +13,15 @@ namespace AnalysisManagerProMexPlugIn
     /// <summary>
     /// Retrieve resources for the ProMex plugin
     /// </summary>
-    public class clsAnalysisResourcesProMex : clsAnalysisResources
+    public class AnalysisResourcesProMex : AnalysisResources
     {
         /// <summary>
         /// Initialize options
         /// </summary>
-        public override void Setup(string stepToolName, IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, clsMyEMSLUtilities myEMSLUtilities)
+        public override void Setup(string stepToolName, IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, MyEMSLUtilities myEMSLUtilities)
         {
             base.Setup(stepToolName, mgrParams, jobParams, statusTools, myEMSLUtilities);
-            SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, true);
+            SetOption(Global.eAnalysisResourceOptions.OrgDbRequired, true);
         }
 
         /// <summary>
@@ -39,7 +39,7 @@ namespace AnalysisManagerProMexPlugIn
 
             // Get the ProMex parameter file
 
-            const string paramFileStoragePathKeyName = clsGlobal.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "ProMex";
+            const string paramFileStoragePathKeyName = Global.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "ProMex";
 
             var proMexParmFileStoragePath = mMgrParams.GetParam(paramFileStoragePathKeyName);
             if (string.IsNullOrEmpty(proMexParmFileStoragePath))
@@ -72,7 +72,7 @@ namespace AnalysisManagerProMexPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                mJobParams.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "ProMexParamFile", paramFileName);
+                mJobParams.AddAdditionalParameter(AnalysisJob.STEP_PARAMETERS_SECTION, "ProMexParamFile", paramFileName);
             }
             else
             {
@@ -157,7 +157,7 @@ namespace AnalysisManagerProMexPlugIn
             catch (Exception ex)
             {
                 mMessage = "Exception in RetrieveMzMLFile: " + ex.Message;
-                LogError(mMessage + "; task = " + currentTask + "; " + clsGlobal.GetExceptionStackTrace(ex));
+                LogError(mMessage + "; task = " + currentTask + "; " + Global.GetExceptionStackTrace(ex));
                 return CloseOutType.CLOSEOUT_FAILED;
             }
         }
@@ -185,7 +185,7 @@ namespace AnalysisManagerProMexPlugIn
             catch (Exception ex)
             {
                 mMessage = "Exception in RetrievePBFFile: " + ex.Message;
-                LogError(mMessage + "; task = " + currentTask + "; " + clsGlobal.GetExceptionStackTrace(ex));
+                LogError(mMessage + "; task = " + currentTask + "; " + Global.GetExceptionStackTrace(ex));
                 return CloseOutType.CLOSEOUT_FAILED;
             }
         }

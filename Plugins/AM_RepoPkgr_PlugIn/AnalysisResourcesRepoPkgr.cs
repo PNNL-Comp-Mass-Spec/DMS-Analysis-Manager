@@ -10,7 +10,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
     /// <summary>
     /// Retrieve resources for the Repo Packager plugin
     /// </summary>
-    public class clsAnalysisResourcesRepoPkgr : clsAnalysisResources
+    public class AnalysisResourcesRepoPkgr : AnalysisResources
     {
         #region Constants
 
@@ -58,7 +58,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
             var dbTools = DbToolsFactory.GetDBTools(brokerDbConnectionString, debugMode: TraceMode);
             RegisterEvents(dbTools);
 
-            var dataPackageInfoLoader = new clsDataPackageInfoLoader(dbTools, dataPkgId);
+            var dataPackageInfoLoader = new DataPackageInfoLoader(dbTools, dataPkgId);
 
             var dataPackagePeptideHitJobs = dataPackageInfoLoader.RetrieveDataPackagePeptideHitJobInfo(out var additionalJobs);
             var success = RetrieveFastaFiles(localOrgDBDirectory, dataPackagePeptideHitJobs);
@@ -74,7 +74,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
             if (includeMzXmlFiles)
             {
-                var allJobs = new List<clsDataPackageJobInfo>();
+                var allJobs = new List<DataPackageJobInfo>();
                 allJobs.AddRange(dataPackagePeptideHitJobs);
 
                 if (additionalJobs != null)
@@ -91,14 +91,14 @@ namespace AnalysisManager_RepoPkgr_Plugin
         #region Code_Adapted_From_Pride_Plugin
 
         private bool FindInstrumentDataFiles(
-            clsDataPackageInfoLoader dataPackageInfoLoader,
-            IEnumerable<clsDataPackageJobInfo> dataPackagePeptideHitJobs,
-            IEnumerable<clsDataPackageJobInfo> additionalJobs,
+            DataPackageInfoLoader dataPackageInfoLoader,
+            IEnumerable<DataPackageJobInfo> dataPackagePeptideHitJobs,
+            IEnumerable<DataPackageJobInfo> additionalJobs,
             bool includeMzXmlFiles)
         {
             // The keys in this dictionary are udtJobInfo entries; the values in this dictionary are KeyValuePairs of path to the .mzXML or .mzML file and path to the .hashcheck file (if any)
             // The KeyValuePair will have empty strings if the .Raw file needs to be retrieved
-            var dctInstrumentDataToRetrieve = new Dictionary<clsDataPackageJobInfo, KeyValuePair<string, string>>();
+            var dctInstrumentDataToRetrieve = new Dictionary<DataPackageJobInfo, KeyValuePair<string, string>>();
 
             // Keys in this dictionary are dataset name, values are the full path to the instrument data file for the dataset
             var dctDatasetRawFilePaths = new Dictionary<string, string>();
@@ -235,8 +235,8 @@ namespace AnalysisManager_RepoPkgr_Plugin
                 var jobId = mJobParams.GetJobParameter("Job", "??");
                 var dataPackageID = mJobParams.GetJobParameter("DataPackageID", "??");
                 var msg = "Instrument data file not found for " + missingInstrumentDataCount +
-                    clsGlobal.CheckPlural(missingInstrumentDataCount, " dataset", " datasets") + " in data package " + dataPackageID;
-                mJobParams.AddAdditionalParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, clsAnalysisToolRunnerRepoPkgr.WARNING_INSTRUMENT_DATA_MISSING, msg);
+                    Global.CheckPlural(missingInstrumentDataCount, " dataset", " datasets") + " in data package " + dataPackageID;
+                mJobParams.AddAdditionalParameter(AnalysisJob.JOB_PARAMETERS_SECTION, AnalysisToolRunnerRepoPkgr.WARNING_INSTRUMENT_DATA_MISSING, msg);
 
                 msg += " (pipeline job " + jobId + ")";
                 LogErrorToDatabase(msg);
@@ -256,13 +256,13 @@ namespace AnalysisManager_RepoPkgr_Plugin
             // Store the dataset RawDataTypes in a Packed Job Parameter
             StorePackedJobParameterDictionary(dctDatasetRawDataTypes, JOB_PARAM_DICTIONARY_DATASET_RAW_DATA_TYPES);
 
-            var udtOptions = new clsDataPackageFileHandler.udtDataPackageRetrievalOptionsType
+            var udtOptions = new DataPackageFileHandler.udtDataPackageRetrievalOptionsType
             {
                 CreateJobPathFiles = true,
                 RetrieveMzXMLFile = true
             };
 
-            var dataPackageFileHandler = new clsDataPackageFileHandler(
+            var dataPackageFileHandler = new DataPackageFileHandler(
                 dataPackageInfoLoader.DBTools,
                 dataPackageInfoLoader.DataPackageID,
                 this);
@@ -278,7 +278,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
         /// and the dataset Year_Quarter values in "PackedParam_DatasetStorage_YearQuarter"
         /// </summary>
         /// <param name="dataPackagePeptideHitJobs"></param>
-        protected void FindMissingMzXmlFiles(IEnumerable<clsDataPackageJobInfo> dataPackagePeptideHitJobs)
+        protected void FindMissingMzXmlFiles(IEnumerable<DataPackageJobInfo> dataPackagePeptideHitJobs)
         {
             var datasetNames = new SortedSet<string>();
             var datasetYearQuarter = new SortedSet<string>();
@@ -336,7 +336,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
             }
         }
 
-        private bool RetrieveFastaFiles(string orgDbDirectoryPath, IEnumerable<clsDataPackageJobInfo> dataPackagePeptideHitJobs)
+        private bool RetrieveFastaFiles(string orgDbDirectoryPath, IEnumerable<DataPackageJobInfo> dataPackagePeptideHitJobs)
         {
             try
             {
@@ -366,21 +366,21 @@ namespace AnalysisManager_RepoPkgr_Plugin
                         if (!RetrieveOrgDB(orgDbDirectoryPath, out _))
                         {
                             if (string.IsNullOrEmpty(mMessage))
-                                mMessage = "Call to RetrieveOrgDB returned false in clsAnalysisResourcesRepoPkgr.RetrieveFastaFiles";
+                                mMessage = "Call to RetrieveOrgDB returned false in AnalysisResourcesRepoPkgr.RetrieveFastaFiles";
                             return false;
                         }
                         orgDbNameGenerated = mJobParams.GetJobParameter("PeptideSearch", "generatedFastaName", string.Empty);
                         if (string.IsNullOrEmpty(orgDbNameGenerated))
                         {
                             mMessage = "FASTA file was not generated when RetrieveFastaFiles called RetrieveOrgDB";
-                            LogError(mMessage + " (class clsAnalysisResourcesRepoPkgr)");
+                            LogError(mMessage + " (class AnalysisResourcesRepoPkgr)");
                             return false;
                         }
                         if (orgDbNameGenerated != udtJob.OrganismDBName)
                         {
                             mMessage = "Generated FASTA file name (" + orgDbNameGenerated + ") does not match expected fasta file name (" +
                                         udtJob.OrganismDBName + "); aborting";
-                            LogError(mMessage + " (class clsAnalysisResourcesRepoPkgr)");
+                            LogError(mMessage + " (class AnalysisResourcesRepoPkgr)");
                             return false;
                         }
                         dctOrgDBParamsToGeneratedFileNameMap.Add(dictionaryKey, orgDbNameGenerated);

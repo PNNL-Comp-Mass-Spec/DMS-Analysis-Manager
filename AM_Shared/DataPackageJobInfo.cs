@@ -6,7 +6,7 @@ namespace AnalysisManagerBase
     /// <summary>
     /// Data package job info
     /// </summary>
-    public class clsDataPackageJobInfo
+    public class DataPackageJobInfo
     {
         /// <summary>
         /// Analysis job
@@ -151,7 +151,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Constructor
         /// </summary>
-        public clsDataPackageJobInfo(int job, string datasetName)
+        public DataPackageJobInfo(int job, string datasetName)
         {
             Job = job;
             Dataset = datasetName;

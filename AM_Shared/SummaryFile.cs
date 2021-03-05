@@ -16,7 +16,7 @@ namespace AnalysisManagerBase
     /// <summary>
     /// Provides tools for creating an analysis job summary file
     /// </summary>
-    public class clsSummaryFile
+    public class SummaryFile
     {
         #region "Module Variables"
 

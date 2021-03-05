@@ -6,7 +6,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
     /// <summary>
     /// Sample metadata
     /// </summary>
-    public class clsSampleMetadata
+    public class SampleMetadata
     {
         // Ignore Spelling: CvRef, UniMod
 
@@ -120,7 +120,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// <summary>
         /// Constructor
         /// </summary>
-        public clsSampleMetadata()
+        public SampleMetadata()
         {
             Modifications = new Dictionary<string, udtCvParamInfoType>(StringComparer.OrdinalIgnoreCase);
             Clear();

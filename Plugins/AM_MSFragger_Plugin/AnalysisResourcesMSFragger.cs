@@ -13,17 +13,17 @@ namespace AnalysisManagerMSFraggerPlugIn
     /// <summary>
     /// Retrieve resources for the MSFragger plugin
     /// </summary>
-    public class clsAnalysisResourcesMSFragger : clsAnalysisResources
+    public class AnalysisResourcesMSFragger : AnalysisResources
     {
         // Ignore Spelling: Fragger
 
         /// <summary>
         /// Initialize options
         /// </summary>
-        public override void Setup(string stepToolName, IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, clsMyEMSLUtilities myEMSLUtilities)
+        public override void Setup(string stepToolName, IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, MyEMSLUtilities myEMSLUtilities)
         {
             base.Setup(stepToolName, mgrParams, jobParams, statusTools, myEMSLUtilities);
-            SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, true);
+            SetOption(Global.eAnalysisResourceOptions.OrgDbRequired, true);
         }
 
         /// <summary>

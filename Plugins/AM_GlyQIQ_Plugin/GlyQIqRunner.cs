@@ -9,7 +9,7 @@ using System.Text.RegularExpressions;
 
 namespace AnalysisManagerGlyQIQPlugin
 {
-    public class clsGlyQIqRunner
+    public class GlyQIqRunner
     {
         public const string GLYQ_IQ_CONSOLE_OUTPUT_PREFIX = "GlyQ-IQ_ConsoleOutput_Core";
 
@@ -46,7 +46,7 @@ namespace AnalysisManagerGlyQIQPlugin
         /// </summary>
         public double Progress => mProgress;
 
-        public clsRunDosProgram ProgramRunner => mCmdRunner;
+        public RunDosProgram ProgramRunner => mCmdRunner;
 
         public GlyQIqRunnerStatusCodes Status => mStatus;
 
@@ -81,11 +81,11 @@ namespace AnalysisManagerGlyQIQPlugin
 
         protected readonly string mWorkingDirectory;
 
-        protected clsRunDosProgram mCmdRunner;
+        protected RunDosProgram mCmdRunner;
 
         #endregion
 
-        public clsGlyQIqRunner(string workingDirectory, int processingCore, string batchFilePathToUse)
+        public GlyQIqRunner(string workingDirectory, int processingCore, string batchFilePathToUse)
         {
             mWorkingDirectory = workingDirectory;
             mCore = processingCore;
@@ -213,7 +213,7 @@ namespace AnalysisManagerGlyQIQPlugin
 
         public void StartAnalysis()
         {
-            mCmdRunner = new clsRunDosProgram(mWorkingDirectory);
+            mCmdRunner = new RunDosProgram(mWorkingDirectory);
             mCmdRunner.ErrorEvent += CmdRunner_ErrorEvent;
             mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 

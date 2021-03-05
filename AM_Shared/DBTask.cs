@@ -20,7 +20,7 @@ namespace AnalysisManagerBase
     /// <summary>
     /// Base class for handling task-related data
     /// </summary>
-    public abstract class clsDBTask : clsLoggerBase
+    public abstract class DBTask : LoggerBase
     {
         #region "Enums"
 
@@ -165,7 +165,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="mgrParams">An IMgrParams object containing manager parameters</param>
         /// <param name="debugLvl">Debug level</param>
-        protected clsDBTask(IMgrParams mgrParams, short debugLvl)
+        protected DBTask(IMgrParams mgrParams, short debugLvl)
         {
             mMgrParams = mgrParams;
 
@@ -269,7 +269,7 @@ namespace AnalysisManagerBase
             }
             catch (Exception ex)
             {
-                LogError("clsDBTask.FillParamDict(), exception determining job parameters", ex);
+                LogError("DBTask.FillParamDict(), exception determining job parameters", ex);
                 return new List<udtParameterInfoType>();
             }
         }
@@ -329,7 +329,7 @@ namespace AnalysisManagerBase
                 }
                 catch (Exception ex2)
                 {
-                    clsGlobal.ErrorWritingToLog(message, ex2);
+                    Global.ErrorWritingToLog(message, ex2);
                 }
             }
 

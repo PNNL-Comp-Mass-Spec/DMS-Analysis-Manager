@@ -12,7 +12,7 @@ namespace AnalysisManagerResultsCleanupPlugin
     /// <summary>
     /// Retrieve resources for the Results Cleanup plugin
     /// </summary>
-    public class clsAnalysisResourcesResultsCleanup : clsAnalysisResources
+    public class AnalysisResourcesResultsCleanup : AnalysisResources
     {
         #region "Methods"
 

@@ -13,7 +13,7 @@ namespace AnalysisManagerBase
     /// <summary>
     /// FASTA file utilities
     /// </summary>
-    public class clsSplitFastaFileUtilities : EventNotifier
+    public class SplitFastaFileUtilities : EventNotifier
     {
         // Ignore Spelling: Lockfile, Seqs, admins
 
@@ -35,7 +35,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// File copy utilities
         /// </summary>
-        private readonly clsFileCopyUtilities mFileCopyUtilities;
+        private readonly FileCopyUtilities mFileCopyUtilities;
 
         /// <summary>
         /// Protein Sequences DB connection string
@@ -75,13 +75,13 @@ namespace AnalysisManagerBase
         /// <param name="managerName"></param>
         /// <param name="traceMode"></param>
         /// <param name="fileCopyUtils"></param>
-        public clsSplitFastaFileUtilities(
+        public SplitFastaFileUtilities(
             string dmsConnectionString,
             string proteinSeqsDBConnectionString,
             int numSplitParts,
             string managerName,
             bool traceMode,
-            clsFileCopyUtilities fileCopyUtils)
+            FileCopyUtilities fileCopyUtils)
         {
             mDMSConnectionString = dmsConnectionString;
             mProteinSeqsDBConnectionString = proteinSeqsDBConnectionString;
@@ -110,7 +110,7 @@ namespace AnalysisManagerBase
 
             StreamWriter lockStream;
 
-            lockFilePath = Path.Combine(baseFastaFile.FullName + clsGlobal.LOCK_FILE_EXTENSION);
+            lockFilePath = Path.Combine(baseFastaFile.FullName + Global.LOCK_FILE_EXTENSION);
             var lockFi = new FileInfo(lockFilePath);
 
             while (true)
@@ -131,7 +131,7 @@ namespace AnalysisManagerBase
 
                         while (lockFi.Exists && DateTime.UtcNow < lockTimeoutTime)
                         {
-                            clsGlobal.IdleLoop(5);
+                            Global.IdleLoop(5);
                             lockFi.Refresh();
                             if (DateTime.UtcNow.Subtract(startTime).TotalMinutes >= 60)
                             {
@@ -180,7 +180,7 @@ namespace AnalysisManagerBase
                 }
 
                 // Something went wrong; wait for 15 seconds then try again
-                clsGlobal.IdleLoop(15);
+                Global.IdleLoop(15);
 
                 if (attemptCount >= 4)
                 {
@@ -219,7 +219,7 @@ namespace AnalysisManagerBase
                         OnErrorEvent("Exception deleting lock file in DeleteLockStream: " + ex.Message);
                         retryCount--;
                         var oRandom = new Random();
-                        clsGlobal.IdleLoop(0.25 + oRandom.NextDouble());
+                        Global.IdleLoop(0.25 + oRandom.NextDouble());
                     }
                 }
             }
@@ -280,7 +280,7 @@ namespace AnalysisManagerBase
 
             if (string.IsNullOrWhiteSpace(mDMSConnectionString))
             {
-                if (clsGlobal.OfflineMode)
+                if (Global.OfflineMode)
                 {
                     // This procedure should not be called when running offline since the FASTA file
                     // should have already been split prior to the remote task starting
@@ -318,7 +318,7 @@ namespace AnalysisManagerBase
                     const int retryCount = 3;
                     dbTools.ExecuteSP(cmd, retryCount, 2);
 
-                    var returnCode = clsGlobal.GetReturnCodeValue(dbTools.GetString(returnParam.Value));
+                    var returnCode = Global.GetReturnCodeValue(dbTools.GetString(returnParam.Value));
                     if (returnCode != 0)
                     {
                         // Error occurred
@@ -355,7 +355,7 @@ namespace AnalysisManagerBase
         {
             if (string.IsNullOrWhiteSpace(mProteinSeqsDBConnectionString))
             {
-                if (clsGlobal.OfflineMode)
+                if (Global.OfflineMode)
                 {
                     // This procedure should not be called when running offline since the FASTA file
                     // should have already been split prior to the remote task starting
@@ -380,7 +380,7 @@ namespace AnalysisManagerBase
                 const int retryCount = 3;
                 dbTools.ExecuteSP(cmd, retryCount, 2);
 
-                var returnCode = clsGlobal.GetReturnCodeValue(dbTools.GetString(returnParam.Value));
+                var returnCode = Global.GetReturnCodeValue(dbTools.GetString(returnParam.Value));
                 if (returnCode != 0)
                 {
                     // Error occurred

@@ -12,15 +12,15 @@ namespace AnalysisManagerInSpecTPlugIn
     /// 2) Uses ParamFileGenerator to create param file from database instead of copying it
     /// 3) Retrieves zipped DTA files, unzips, and un-concatenates them
     /// </summary>
-    public class clsAnalysisResourcesIN : clsAnalysisResources
+    public class AnalysisResourcesIN : AnalysisResources
     {
         /// <summary>
         /// Initialize options
         /// </summary>
-        public override void Setup(string stepToolName, IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, clsMyEMSLUtilities myEMSLUtilities)
+        public override void Setup(string stepToolName, IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, MyEMSLUtilities myEMSLUtilities)
         {
             base.Setup(stepToolName, mgrParams, jobParams, statusTools, myEMSLUtilities);
-            SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, true);
+            SetOption(Global.eAnalysisResourceOptions.OrgDbRequired, true);
         }
 
         /// <summary>
@@ -136,7 +136,7 @@ namespace AnalysisManagerInSpecTPlugIn
             {
                 // Unzip concatenated DTA file
                 LogMessage("Unzipping concatenated DTA file");
-                if (UnzipFileStart(Path.Combine(mWorkDir, dtaResultFileName), mWorkDir, "clsAnalysisResourcesIN.RetrieveDtaFiles"))
+                if (UnzipFileStart(Path.Combine(mWorkDir, dtaResultFileName), mWorkDir, "AnalysisResourcesIN.RetrieveDtaFiles"))
                 {
                     if (mDebugLevel >= 1)
                     {

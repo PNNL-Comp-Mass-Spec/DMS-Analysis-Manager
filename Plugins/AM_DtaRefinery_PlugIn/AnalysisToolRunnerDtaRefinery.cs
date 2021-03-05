@@ -16,7 +16,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
     /// <summary>
     /// Class for running DTA_Refinery analysis
     /// </summary>
-    public class clsAnalysisToolRunnerDtaRefinery : clsAnalysisToolRunnerBase
+    public class AnalysisToolRunnerDtaRefinery : AnalysisToolRunnerBase
     {
         #region "Module Variables"
 
@@ -24,7 +24,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
 
         private bool mXTandemHasFinished;
 
-        private clsRunDosProgram mCmdRunner;
+        private RunDosProgram mCmdRunner;
 
         #endregion
 
@@ -48,7 +48,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
 
             if (mDebugLevel > 4)
             {
-                LogDebug("clsAnalysisToolRunnerDtaRefinery.RunTool(): Enter");
+                LogDebug("AnalysisToolRunnerDtaRefinery.RunTool(): Enter");
             }
 
             // Store the DTARefinery and X!Tandem version info in the database
@@ -70,7 +70,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
                 LogMessage("Running DTA_Refinery");
             }
 
-            mCmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel)
+            mCmdRunner = new RunDosProgram(mWorkDir, mDebugLevel)
             {
                 CreateNoWindow = false,
                 EchoOutputToConsole = false,
@@ -151,7 +151,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
 
             if (!processingSuccess)
             {
-                clsGlobal.IdleLoop(0.5);
+                Global.IdleLoop(0.5);
 
                 // Open DTARefinery_Console_Output.txt and look for the last line with the text "error"
                 var consoleOutputFile = new FileInfo(Path.Combine(mWorkDir, consoleOutputFileName));
@@ -201,7 +201,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
             UpdateSummaryFile();
 
             // Make sure objects are released
-            clsGlobal.IdleLoop(0.5);
+            Global.IdleLoop(0.5);
             ProgRunner.GarbageCollectNow();
 
             if (!ValidateDTARefineryLogFile())
@@ -210,7 +210,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
             }
             else
             {
-                var massErrorExtractor = new clsDtaRefLogMassErrorExtractor(mMgrParams, mWorkDir, mDebugLevel, postResultsToDB: true);
+                var massErrorExtractor = new DtaRefLogMassErrorExtractor(mMgrParams, mWorkDir, mDebugLevel, postResultsToDB: true);
                 RegisterEvents(massErrorExtractor);
 
                 var datasetID = mJobParams.GetJobParameter("DatasetID", 0);
@@ -269,7 +269,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
                 var tmpFilePath = sourceFile.FullName + ".tmp";
                 sourceFile.CopyTo(tmpFilePath, true);
                 mJobParams.AddResultFileToSkip(tmpFilePath);
-                clsGlobal.IdleLoop(0.1);
+                Global.IdleLoop(0.1);
 
                 using (var reader = new StreamReader(new FileStream(tmpFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
                 {

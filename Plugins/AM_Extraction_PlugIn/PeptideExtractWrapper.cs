@@ -18,7 +18,7 @@ namespace AnalysisManagerExtractionPlugin
     /// <summary>
     /// Perform Peptide extraction from SEQUEST results
     /// </summary>
-    public class clsPeptideExtractWrapper : EventNotifier
+    public class PeptideExtractWrapper : EventNotifier
     {
         #region "Event Handlers"
 
@@ -107,12 +107,12 @@ namespace AnalysisManagerExtractionPlugin
         /// <param name="mgrParams">IMgrParams object containing manager settings</param>
         /// <param name="jobParams">IJobParams object containing job parameters</param>
         /// <param name="StatusTools"></param>
-        public clsPeptideExtractWrapper(IMgrParams mgrParams, IJobParams jobParams, ref IStatusFile StatusTools)
+        public PeptideExtractWrapper(IMgrParams mgrParams, IJobParams jobParams, ref IStatusFile StatusTools)
         {
             mDebugLevel = (short)mgrParams.GetParam("DebugLevel", 1);
             mStatusTools = StatusTools;
 
-            mDatasetName = jobParams.GetParam(clsAnalysisResources.JOB_PARAM_DATASET_NAME);
+            mDatasetName = jobParams.GetParam(AnalysisResources.JOB_PARAM_DATASET_NAME);
             mWorkDir = mgrParams.GetParam("WorkDir");
         }
 
@@ -160,7 +160,7 @@ namespace AnalysisManagerExtractionPlugin
                 // Loop until the extraction finishes
                 while (mExtractInProgress)
                 {
-                    clsGlobal.IdleLoop(2);
+                    Global.IdleLoop(2);
                 }
 
                 var synTestResult = TestOutputSynFile();
@@ -213,7 +213,7 @@ namespace AnalysisManagerExtractionPlugin
 
             if (string.IsNullOrWhiteSpace(workFileMatch))
             {
-                OnErrorEvent("clsPeptideExtractor.TestOutputSynFile: No _syn.txt file found");
+                OnErrorEvent("PeptideExtractor.TestOutputSynFile: No _syn.txt file found");
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 

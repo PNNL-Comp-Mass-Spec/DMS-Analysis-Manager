@@ -16,14 +16,14 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
     /// <summary>
     /// Class for running the LCMS Feature Finder
     /// </summary>
-    public class clsAnalysisToolRunnerLCMSFF : clsAnalysisToolRunnerBase
+    public class AnalysisToolRunnerLCMSFF : AnalysisToolRunnerBase
     {
         #region "Module Variables"
 
         private const float PROGRESS_PCT_FEATURE_FINDER_RUNNING = 5;
         private const float PROGRESS_PCT_FEATURE_FINDER_DONE = 95;
 
-        private clsRunDosProgram mCmdRunner;
+        private RunDosProgram mCmdRunner;
 
         #endregion
 
@@ -43,7 +43,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
 
             LogMessage("Running LCMSFeatureFinder");
 
-            mCmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel);
+            mCmdRunner = new RunDosProgram(mWorkDir, mDebugLevel);
             RegisterEvents(mCmdRunner);
             mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 

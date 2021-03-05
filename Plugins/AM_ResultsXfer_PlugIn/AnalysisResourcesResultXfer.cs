@@ -14,7 +14,7 @@ namespace AnalysisManagerResultsXferPlugin
     /// <summary>
     /// Retrieve resources for the Results transfer plugin
     /// </summary>
-    public class clsAnalysisResourcesResultXfer : clsAnalysisResources
+    public class AnalysisResourcesResultXfer : AnalysisResources
     {
         /// <summary>
         /// Obtains resources necessary for performing analysis results transfer

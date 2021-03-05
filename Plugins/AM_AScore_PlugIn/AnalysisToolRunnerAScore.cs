@@ -10,7 +10,7 @@ namespace AnalysisManager_AScore_PlugIn
     /// <summary>
     /// Class for running ASCore
     /// </summary>
-    public class clsAnalysisToolRunnerAScore : clsAnalysisToolRunnerBase
+    public class AnalysisToolRunnerAScore : AnalysisToolRunnerBase
     {
         private const float PROGRESS_PCT_ASCORE_START = 1;
         private const float PROGRESS_PCT_ASCORE_DONE = 99;
@@ -121,8 +121,8 @@ namespace AnalysisManager_AScore_PlugIn
 
                 // Override the output directory name and the dataset name (since this is a dataset aggregation job)
                 mResultsDirectoryName = mJobParams.GetParam("StepOutputFolderName");
-                mDatasetName = mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME);
-                mJobParams.SetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME, mResultsDirectoryName);
+                mDatasetName = mJobParams.GetParam(AnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME);
+                mJobParams.SetParam(AnalysisJob.STEP_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME, mResultsDirectoryName);
 
                 var success = CopyResultsToTransferDirectory();
 
@@ -191,7 +191,7 @@ namespace AnalysisManager_AScore_PlugIn
         private bool RunAScore()
         {
             // Run the appropriate Mage pipeline(s) according to operations list parameter
-            var ascoreMage = new clsAScoreMagePipeline(mJobParams, mMgrParams, mDotNetZipTools);
+            var ascoreMage = new AScoreMagePipeline(mJobParams, mMgrParams, mDotNetZipTools);
             RegisterEvents(ascoreMage);
 
             var success = ascoreMage.Run();
@@ -234,7 +234,7 @@ namespace AnalysisManager_AScore_PlugIn
         /// </summary>
         private bool StoreToolVersionInfo()
         {
-            var ascoreDll = Path.Combine(clsGlobal.GetAppDirectoryPath(), "AScore_DLL.dll");
+            var ascoreDll = Path.Combine(Global.GetAppDirectoryPath(), "AScore_DLL.dll");
             var success = StoreDotNETToolVersionInfo(ascoreDll);
 
             return success;

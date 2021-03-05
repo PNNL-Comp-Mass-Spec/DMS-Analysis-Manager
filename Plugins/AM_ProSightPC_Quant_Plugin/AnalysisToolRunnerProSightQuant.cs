@@ -10,7 +10,7 @@ namespace AnalysisManagerProSightQuantPlugIn
     /// <summary>
     /// Class for running TargetedQuant
     /// </summary>
-    public class clsAnalysisToolRunnerProSightQuant : clsAnalysisToolRunnerBase
+    public class AnalysisToolRunnerProSightQuant : AnalysisToolRunnerBase
     {
         #region "Module Variables"
 
@@ -33,7 +33,7 @@ namespace AnalysisManagerProSightQuantPlugIn
         protected string mTargetedWorkflowsProgLoc;
         protected Dictionary<string, int> mConsoleOutputProgressMap;
 
-        protected clsRunDosProgram mCmdRunner;
+        protected RunDosProgram mCmdRunner;
 
         #endregion
 
@@ -55,11 +55,11 @@ namespace AnalysisManagerProSightQuantPlugIn
 
                 if (mDebugLevel > 4)
                 {
-                    LogDebug("clsAnalysisToolRunnerProSightQuant.RunTool(): Enter");
+                    LogDebug("AnalysisToolRunnerProSightQuant.RunTool(): Enter");
                 }
 
                 // ReSharper disable once ConditionIsAlwaysTrueOrFalse
-                if (clsAnalysisResourcesProSightQuant.TOOL_DISABLED)
+                if (AnalysisResourcesProSightQuant.TOOL_DISABLED)
                 {
                     // This tool is currently disabled, so just return Success
                     return CloseOutType.CLOSEOUT_SUCCESS;
@@ -107,12 +107,12 @@ namespace AnalysisManagerProSightQuantPlugIn
 
                 switch (strRawDataType.ToLower())
                 {
-                    case clsAnalysisResources.RAW_DATA_TYPE_DOT_RAW_FILES:
-                        arguments = " " + PossiblyQuotePath(Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_RAW_EXTENSION));
+                    case AnalysisResources.RAW_DATA_TYPE_DOT_RAW_FILES:
+                        arguments = " " + PossiblyQuotePath(Path.Combine(mWorkDir, mDatasetName + AnalysisResources.DOT_RAW_EXTENSION));
                         break;
-                    case clsAnalysisResources.RAW_DATA_TYPE_BRUKER_FT_FOLDER:
+                    case AnalysisResources.RAW_DATA_TYPE_BRUKER_FT_FOLDER:
                         // Bruker_FT folders are actually .D folders
-                        arguments = " " + PossiblyQuotePath(Path.Combine(mWorkDir, mDatasetName) + clsAnalysisResources.DOT_D_EXTENSION);
+                        arguments = " " + PossiblyQuotePath(Path.Combine(mWorkDir, mDatasetName) + AnalysisResources.DOT_D_EXTENSION);
                         break;
                     default:
                         mMessage = "Dataset type " + strRawDataType + " is not supported";
@@ -127,7 +127,7 @@ namespace AnalysisManagerProSightQuantPlugIn
                     LogDebug(mTargetedWorkflowsProgLoc + arguments);
                 }
 
-                mCmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel);
+                mCmdRunner = new RunDosProgram(mWorkDir, mDebugLevel);
                 RegisterEvents(mCmdRunner);
                 mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
@@ -144,7 +144,7 @@ namespace AnalysisManagerProSightQuantPlugIn
                 if (!mCmdRunner.WriteConsoleOutputToFile)
                 {
                     // Write the console output to a text file
-                    clsGlobal.IdleLoop(0.25);
+                    Global.IdleLoop(0.25);
 
                     using var writer = new StreamWriter(new FileStream(mCmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
 
@@ -152,7 +152,7 @@ namespace AnalysisManagerProSightQuantPlugIn
                 }
 
                 // Parse the console output file one more time to check for errors
-                clsGlobal.IdleLoop(0.25);
+                Global.IdleLoop(0.25);
                 ParseConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath);
 
                 if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))
@@ -258,7 +258,7 @@ namespace AnalysisManagerProSightQuantPlugIn
             try
             {
                 var targetedQuantParamFilePath = Path.Combine(mWorkDir, TARGETED_QUANT_XML_FILE_NAME);
-                const string strProSightPCResultsFile = clsAnalysisResourcesProSightQuant.PROSIGHT_PC_RESULT_FILE;
+                const string strProSightPCResultsFile = AnalysisResourcesProSightQuant.PROSIGHT_PC_RESULT_FILE;
 
                 var strWorkflowParamFileName = mJobParams.GetParam("ProSightQuantParamFile");
                 if (string.IsNullOrEmpty(strWorkflowParamFileName))

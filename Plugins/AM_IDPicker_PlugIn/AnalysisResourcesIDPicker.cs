@@ -11,7 +11,7 @@ namespace AnalysisManagerIDPickerPlugIn
     /// <summary>
     /// Retrieve resources for the IDPicker plugin
     /// </summary>
-    public class clsAnalysisResourcesIDPicker : clsAnalysisResources
+    public class AnalysisResourcesIDPicker : AnalysisResources
     {
         // Ignore Spelling: ParmFileName, msgfdb
 
@@ -35,10 +35,10 @@ namespace AnalysisManagerIDPickerPlugIn
         /// <summary>
         /// Initialize options
         /// </summary>
-        public override void Setup(string stepToolName, IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, clsMyEMSLUtilities myEMSLUtilities)
+        public override void Setup(string stepToolName, IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, MyEMSLUtilities myEMSLUtilities)
         {
             base.Setup(stepToolName, mgrParams, jobParams, statusTools, myEMSLUtilities);
-            SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, true);
+            SetOption(Global.eAnalysisResourceOptions.OrgDbRequired, true);
         }
 
         /// <summary>
@@ -64,7 +64,7 @@ namespace AnalysisManagerIDPickerPlugIn
             mJobParams.AddResultFileToSkip(paramFileName);
 
             // ReSharper disable once ConditionIsAlwaysTrueOrFalse
-            if (!clsAnalysisToolRunnerIDPicker.ALWAYS_SKIP_IDPICKER)
+            if (!AnalysisToolRunnerIDPicker.ALWAYS_SKIP_IDPICKER)
             {
 #pragma warning disable 162
                 // Retrieve the IDPicker parameter file specified for this job
@@ -132,7 +132,7 @@ namespace AnalysisManagerIDPickerPlugIn
                 mJobParams.SetParam("SplitFasta", "False");
             }
 
-            if (splitFasta && clsAnalysisToolRunnerIDPicker.ALWAYS_SKIP_IDPICKER)
+            if (splitFasta && AnalysisToolRunnerIDPicker.ALWAYS_SKIP_IDPICKER)
             {
                 // Do not retrieve the fasta file
                 // However, do contact DMS to lookup the name of the legacy fasta file that was used for this job
@@ -182,7 +182,7 @@ namespace AnalysisManagerIDPickerPlugIn
             var dbTools = DbToolsFactory.GetDBTools(dmsConnectionString, debugMode: TraceMode);
             RegisterEvents(dbTools);
 
-            var success = clsGlobal.GetQueryResultsTopRow(dbTools, sqlQuery, out var orgDbNameForJob);
+            var success = Global.GetQueryResultsTopRow(dbTools, sqlQuery, out var orgDbNameForJob);
 
             if (!success || orgDbNameForJob == null || orgDbNameForJob.Count == 0)
             {
@@ -350,7 +350,7 @@ namespace AnalysisManagerIDPickerPlugIn
                 idPickerParamFileName = DEFAULT_IDPICKER_PARAM_FILE_NAME;
             }
 
-            const string paramFileStoragePathKeyName = clsGlobal.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "IDPicker";
+            const string paramFileStoragePathKeyName = Global.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "IDPicker";
             var idPickerParamFilePath = mMgrParams.GetParam(paramFileStoragePathKeyName);
             if (string.IsNullOrEmpty(idPickerParamFilePath))
             {
@@ -367,7 +367,7 @@ namespace AnalysisManagerIDPickerPlugIn
             }
 
             // Store the param file name so that we can load later
-            mJobParams.AddAdditionalParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, IDPICKER_PARAM_FILENAME_LOCAL, idPickerParamFileName);
+            mJobParams.AddAdditionalParameter(AnalysisJob.JOB_PARAMETERS_SECTION, IDPICKER_PARAM_FILENAME_LOCAL, idPickerParamFileName);
 
             return true;
         }

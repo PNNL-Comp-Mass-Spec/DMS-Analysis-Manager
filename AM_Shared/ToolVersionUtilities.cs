@@ -12,7 +12,7 @@ namespace AnalysisManagerBase
     /// <summary>
     /// Methods for tracking versions of executables and DLLs
     /// </summary>
-    public class clsToolVersionUtilities : EventNotifier
+    public class ToolVersionUtilities : EventNotifier
     {
         // Ignore Spelling: yyyy-MM-dd hh:mm:ss tt
 
@@ -99,7 +99,7 @@ namespace AnalysisManagerBase
         /// <param name="stepToolName"></param>
         /// <param name="debugLevel"></param>
         /// <param name="workDir"></param>
-        public clsToolVersionUtilities(IMgrParams mgrParams, IJobParams jobParams, int job, string dataset, string stepToolName, short debugLevel, string workDir)
+        public ToolVersionUtilities(IMgrParams mgrParams, IJobParams jobParams, int job, string dataset, string stepToolName, short debugLevel, string workDir)
         {
             mMgrParams = mgrParams;
             mJobParams = jobParams;
@@ -134,7 +134,7 @@ namespace AnalysisManagerBase
                     return false;
                 }
 
-                var progRunner = new clsRunDosProgram(clsGlobal.GetAppDirectoryPath(), DebugLevel)
+                var progRunner = new RunDosProgram(Global.GetAppDirectoryPath(), DebugLevel)
                 {
                     CacheStandardOutput = false,
                     CreateNoWindow = true,
@@ -174,14 +174,14 @@ namespace AnalysisManagerBase
                         if (dataLine.StartsWith("ProteoWizard release", StringComparison.OrdinalIgnoreCase))
                         {
                             // ProteoWizard release: 3.0.18145 (f23158c8f)
-                            versionInfo = clsGlobal.AppendToComment(versionInfo, dataLine);
+                            versionInfo = Global.AppendToComment(versionInfo, dataLine);
                         } else if (dataLine.StartsWith("Build date", StringComparison.OrdinalIgnoreCase))
                         {
                             // Add the executable name to the build date text, giving, for example:
                             // MSConvert Build date: May 24 2018 22:22:11
                             var exeNameAndBuildDate = Path.GetFileNameWithoutExtension(MSCONVERT_EXE_NAME) + " " + dataLine;
 
-                            versionInfo = clsGlobal.AppendToComment(versionInfo, exeNameAndBuildDate);
+                            versionInfo = Global.AppendToComment(versionInfo, exeNameAndBuildDate);
                         }
                     }
                 }
@@ -308,10 +308,10 @@ namespace AnalysisManagerBase
 
                 using var writer = new StreamWriter(new FileStream(toolVersionFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite));
 
-                writer.WriteLine("Date: " + DateTime.Now.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT));
+                writer.WriteLine("Date: " + DateTime.Now.ToString(AnalysisToolRunnerBase.DATE_TIME_FORMAT));
                 writer.WriteLine("Dataset: " + Dataset);
                 writer.WriteLine("Job: " + Job);
-                writer.WriteLine("Step: " + mJobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Step"));
+                writer.WriteLine("Step: " + mJobParams.GetParam(AnalysisJob.STEP_PARAMETERS_SECTION, "Step"));
                 writer.WriteLine("Tool: " + mJobParams.GetParam("StepTool"));
                 writer.WriteLine(TOOL_VERSION_INFO_SECTION_HEADER);
 
@@ -347,9 +347,9 @@ namespace AnalysisManagerBase
                             // Note: the TopFD plugin expects the tool version to be in the format
                             // program.exe: yyyy-MM-dd hh:mm:ss tt
                             var toolFileNameAndDate = toolFile.Name + ": " +
-                                                      toolFile.LastWriteTime.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT);
+                                                      toolFile.LastWriteTime.ToString(AnalysisToolRunnerBase.DATE_TIME_FORMAT);
 
-                            exeInfo = clsGlobal.AppendToComment(exeInfo, toolFileNameAndDate);
+                            exeInfo = Global.AppendToComment(exeInfo, toolFileNameAndDate);
 
                             if (DebugLevel >= 2)
                             {
@@ -379,7 +379,7 @@ namespace AnalysisManagerBase
             }
             else
             {
-                toolVersionInfoCombined = clsGlobal.AppendToComment(toolVersionInfo, exeInfo);
+                toolVersionInfoCombined = Global.AppendToComment(toolVersionInfo, exeInfo);
             }
 
             if (saveToolVersionTextFile)
@@ -387,7 +387,7 @@ namespace AnalysisManagerBase
                 SaveToolVersionInfoFile(WorkDir, toolVersionInfoCombined);
             }
 
-            if (clsGlobal.OfflineMode)
+            if (Global.OfflineMode)
                 return true;
 
             var success = StoreToolVersionInDatabase(toolVersionInfoCombined);
@@ -488,14 +488,14 @@ namespace AnalysisManagerBase
         /// <param name="toolVersionInfo"></param>
         public bool StoreToolVersionInDatabase(string toolVersionInfo)
         {
-            var analysisTask = new clsAnalysisJob(mMgrParams, DebugLevel);
+            var analysisTask = new AnalysisJob(mMgrParams, DebugLevel);
             var dbTools = analysisTask.PipelineDBProcedureExecutor;
 
             // Setup for execution of the stored procedure
             var cmd = dbTools.CreateCommand(SP_NAME_SET_TASK_TOOL_VERSION, CommandType.StoredProcedure);
 
-            dbTools.AddTypedParameter(cmd, "@job", SqlType.Int, value: mJobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Job", 0));
-            dbTools.AddTypedParameter(cmd, "@step", SqlType.Int, value: mJobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Step", 0));
+            dbTools.AddTypedParameter(cmd, "@job", SqlType.Int, value: mJobParams.GetJobParameter(AnalysisJob.STEP_PARAMETERS_SECTION, "Job", 0));
+            dbTools.AddTypedParameter(cmd, "@step", SqlType.Int, value: mJobParams.GetJobParameter(AnalysisJob.STEP_PARAMETERS_SECTION, "Step", 0));
             dbTools.AddParameter(cmd, "@ToolVersionInfo", SqlType.VarChar, 900, toolVersionInfo);
             var returnParam = dbTools.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, ParameterDirection.Output);
 
@@ -503,7 +503,7 @@ namespace AnalysisManagerBase
             var resCode = dbTools.ExecuteSP(cmd, 4);
 
             var returnCode = dbTools.GetString(returnParam.Value);
-            var returnCodeValue = clsGlobal.GetReturnCodeValue(returnCode);
+            var returnCodeValue = Global.GetReturnCodeValue(returnCode);
 
             if (resCode == 0 && returnCodeValue == 0)
             {
@@ -546,7 +546,7 @@ namespace AnalysisManagerBase
                     nameAndVersion = assembly.Name + ", Version=" + assembly.Version.Major + "." + assembly.Version.Minor + "." + assembly.Version.Build;
                 }
 
-                toolVersionInfo = clsGlobal.AppendToComment(toolVersionInfo, nameAndVersion);
+                toolVersionInfo = Global.AppendToComment(toolVersionInfo, nameAndVersion);
             }
             catch (Exception ex)
             {
@@ -582,7 +582,7 @@ namespace AnalysisManagerBase
                 var assemblyName = assembly.GetName();
 
                 var nameAndVersion = assemblyName.Name + ", Version=" + assemblyName.Version;
-                toolVersionInfo = clsGlobal.AppendToComment(toolVersionInfo, nameAndVersion);
+                toolVersionInfo = Global.AppendToComment(toolVersionInfo, nameAndVersion);
 
                 success = true;
             }
@@ -666,7 +666,7 @@ namespace AnalysisManagerBase
                 }
 
                 var nameAndVersion = name + ", Version=" + version;
-                toolVersionInfo = clsGlobal.AppendToComment(toolVersionInfo, nameAndVersion);
+                toolVersionInfo = Global.AppendToComment(toolVersionInfo, nameAndVersion);
 
                 return true;
             }
@@ -711,7 +711,7 @@ namespace AnalysisManagerBase
         {
             try
             {
-                var appPath = Path.Combine(clsGlobal.GetAppDirectoryPath(), versionInspectorExeName);
+                var appPath = Path.Combine(Global.GetAppDirectoryPath(), versionInspectorExeName);
 
                 var dllFileInfo = new FileInfo(dllFilePath);
 
@@ -731,14 +731,14 @@ namespace AnalysisManagerBase
 
                 var versionInfoFilePath = Path.Combine(WorkDir, Path.GetFileNameWithoutExtension(dllFileInfo.Name) + "_VersionInfo.txt");
 
-                var args = clsGlobal.PossiblyQuotePath(dllFileInfo.FullName) + " /O:" + clsGlobal.PossiblyQuotePath(versionInfoFilePath);
+                var args = Global.PossiblyQuotePath(dllFileInfo.FullName) + " /O:" + Global.PossiblyQuotePath(versionInfoFilePath);
 
                 if (DebugLevel >= 3)
                 {
                     OnDebugEvent(appPath + " " + args);
                 }
 
-                var progRunner = new clsRunDosProgram(clsGlobal.GetAppDirectoryPath(), DebugLevel)
+                var progRunner = new RunDosProgram(Global.GetAppDirectoryPath(), DebugLevel)
                 {
                     CacheStandardOutput = false,
                     CreateNoWindow = true,
@@ -775,7 +775,7 @@ namespace AnalysisManagerBase
                     return false;
                 }
 
-                toolVersionInfo = clsGlobal.AppendToComment(toolVersionInfo, version);
+                toolVersionInfo = Global.AppendToComment(toolVersionInfo, version);
 
                 return true;
             }

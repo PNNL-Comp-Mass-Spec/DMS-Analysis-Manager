@@ -10,13 +10,13 @@ namespace AnalysisManagerBase
     /// <summary>
     /// Methods to copy files to the working directory
     /// </summary>
-    public class clsFileCopyUtilities : EventNotifier
+    public class FileCopyUtilities : EventNotifier
     {
         #region "Constants"
 
         private const int DEFAULT_FILE_EXISTS_RETRY_HOLDOFF_SECONDS = 15;
 
-        private const string MYEMSL_PATH_FLAG = clsMyEMSLUtilities.MYEMSL_PATH_FLAG;
+        private const string MYEMSL_PATH_FLAG = MyEMSLUtilities.MYEMSL_PATH_FLAG;
 
         /// <summary>
         /// Storage path info file suffix
@@ -29,7 +29,7 @@ namespace AnalysisManagerBase
 
         private readonly int mDebugLevel;
 
-        private readonly clsMyEMSLUtilities mMyEMSLUtilities;
+        private readonly MyEMSLUtilities mMyEMSLUtilities;
 
         private readonly FileTools mFileTools;
 
@@ -73,9 +73,9 @@ namespace AnalysisManagerBase
         /// <param name="prismFileTools"></param>
         /// <param name="myEmslUtilities"></param>
         /// <param name="debugLevel"></param>
-        public clsFileCopyUtilities(
+        public FileCopyUtilities(
             FileTools prismFileTools,
-            clsMyEMSLUtilities myEmslUtilities,
+            MyEMSLUtilities myEmslUtilities,
             short debugLevel)
         {
             mFileTools = prismFileTools;
@@ -398,7 +398,7 @@ namespace AnalysisManagerBase
                         break;
 
                     // Wait several seconds before retrying
-                    clsGlobal.IdleLoop(RETRY_HOLDOFF_SECONDS);
+                    Global.IdleLoop(RETRY_HOLDOFF_SECONDS);
                 }
             }
 
@@ -503,7 +503,7 @@ namespace AnalysisManagerBase
                 if (retryCount > 0)
                 {
                     // Wait RetryHoldoffSeconds seconds before retrying
-                    clsGlobal.IdleLoop(retryHoldoffSeconds);
+                    Global.IdleLoop(retryHoldoffSeconds);
                 }
             }
 

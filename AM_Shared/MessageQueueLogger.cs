@@ -9,12 +9,12 @@ namespace AnalysisManagerBase
     /// Delegate that does the eventual posting
     /// </summary>
     /// <param name="messageContainer"></param>
-    public delegate void MessageSenderDelegate(clsMessageContainer messageContainer);
+    public delegate void MessageSenderDelegate(MessageContainer messageContainer);
 
     /// <summary>
     /// Class for interacting with a message queue
     /// </summary>
-    internal class clsMessageQueueLogger : EventNotifier
+    internal class MessageQueueLogger : EventNotifier
     {
         /// <summary>
         /// Actual delegate registers here
@@ -36,9 +36,9 @@ namespace AnalysisManagerBase
         /// <summary>
         /// local queue that contains messages to be sent
         /// </summary>
-        private readonly Queue<clsMessageContainer> mstatusMessages = new();
+        private readonly Queue<MessageContainer> mstatusMessages = new();
 
-        public clsMessageQueueLogger()
+        public MessageQueueLogger()
         {
             StartWorkerThread();
         }
@@ -51,7 +51,7 @@ namespace AnalysisManagerBase
         /// <param name="managerName"></param>
         public void LogStatusMessage(string statusMessage, string managerName)
         {
-            var messageContainer = new clsMessageContainer(statusMessage, managerName);
+            var messageContainer = new MessageContainer(statusMessage, managerName);
 
             lock (locker)
             {
@@ -77,7 +77,7 @@ namespace AnalysisManagerBase
         {
             while (true)
             {
-                clsMessageContainer messageContainer = null;
+                MessageContainer messageContainer = null;
                 lock (locker)
                 {
                     if (mstatusMessages.Count > 0)

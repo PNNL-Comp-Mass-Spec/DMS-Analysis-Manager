@@ -23,7 +23,7 @@ namespace GlyQResultsSummarizer
 
         static int Main(string[] args)
         {
-            var objParseCommandLine = new clsParseCommandLine();
+            var objParseCommandLine = new ParseCommandLine();
 
             try
             {
@@ -72,7 +72,7 @@ namespace GlyQResultsSummarizer
         {
             var reGetJobFromFolderName = new Regex(@"Auto(\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-            var toolRunner = new clsAnalysisToolRunnerGlyQIQ();
+            var toolRunner = new AnalysisToolRunnerGlyQIQ();
 
             var resultsFile = new FileInfo(resultsFilePath);
             if (!resultsFile.Exists)
@@ -114,7 +114,7 @@ namespace GlyQResultsSummarizer
             return success;
         }
 
-        private static bool SetOptionsUsingCommandLineParameters(clsParseCommandLine objParseCommandLine)
+        private static bool SetOptionsUsingCommandLineParameters(ParseCommandLine objParseCommandLine)
         {
             // Returns True if no problems; otherwise, returns false
             var lstValidParameters = new List<string> { "I", "Job" };
@@ -201,7 +201,6 @@ namespace GlyQResultsSummarizer
 
             try
             {
-
                 Console.WriteLine();
                 Console.WriteLine("This program reads the GlyQ-IQ results file (Dataset_iqResults_.txt) for a given job");
                 Console.WriteLine("summarizes the results, and calls PostJobResults to store the results in DMS");

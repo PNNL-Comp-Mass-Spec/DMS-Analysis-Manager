@@ -11,7 +11,7 @@ namespace AnalysisManagerBase
     /// <summary>
     /// MyEMSL Utilities
     /// </summary>
-    public class clsMyEMSLUtilities : EventNotifier
+    public class MyEMSLUtilities : EventNotifier
     {
         // Ignore Spelling: yyyy-MM-dd hh:mm tt, dest
 
@@ -22,7 +22,7 @@ namespace AnalysisManagerBase
 
         private const string DATETIME_FORMAT_NO_SECONDS = "yyyy-MM-dd hh:mm tt";
 
-        private readonly clsDotNetZipTools mDotNetZipTools;
+        private readonly DotNetZipTools mDotNetZipTools;
 
         private readonly DatasetListInfo mMyEMSLDatasetListInfo;
 
@@ -38,7 +38,7 @@ namespace AnalysisManagerBase
         private int mMyEMSLConnectionErrorCount;
         private int mMyEMSLDisableCount;
 
-        private readonly clsMyEMSLFileIDComparer mFileIDComparer;
+        private readonly MyEMSLFileIDComparer mFileIDComparer;
 
         #region "Events"
 
@@ -85,7 +85,7 @@ namespace AnalysisManagerBase
         /// <param name="debugLevel">Debug level (higher number means more messages)</param>
         /// <param name="workingDir">Working directory path</param>
         /// <param name="traceMode">Set to true to show additional debug messages</param>
-        public clsMyEMSLUtilities(int debugLevel, string workingDir, bool traceMode = false)
+        public MyEMSLUtilities(int debugLevel, string workingDir, bool traceMode = false)
         {
             mMyEMSLDatasetListInfo = new DatasetListInfo
             {
@@ -108,10 +108,10 @@ namespace AnalysisManagerBase
             AllFoundMyEMSLFiles = new List<DatasetDirectoryOrFileInfo>();
             mRecentlyFoundMyEMSLFiles = new List<DatasetDirectoryOrFileInfo>();
 
-            mDotNetZipTools = new clsDotNetZipTools(debugLevel, workingDir);
+            mDotNetZipTools = new DotNetZipTools(debugLevel, workingDir);
             RegisterEvents(mDotNetZipTools);
 
-            mFileIDComparer = new clsMyEMSLFileIDComparer();
+            mFileIDComparer = new MyEMSLFileIDComparer();
 
             MostRecentUnzippedFiles = new List<KeyValuePair<string, string>>();
 
@@ -381,7 +381,7 @@ namespace AnalysisManagerBase
         /// Determines whether two DatasetDirectoryOrFileInfo instances refer to the same file in MyEMSL
         /// </summary>
         /// <remarks>Compares the value of FileID in the two instances</remarks>
-        private class clsMyEMSLFileIDComparer : IEqualityComparer<DatasetDirectoryOrFileInfo>
+        private class MyEMSLFileIDComparer : IEqualityComparer<DatasetDirectoryOrFileInfo>
         {
             private bool ItemsAreEqual(DatasetDirectoryOrFileInfo x, DatasetDirectoryOrFileInfo y)
             {

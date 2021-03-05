@@ -26,7 +26,7 @@ namespace AnalysisManagerBase
     /// <summary>
     /// Base class for job resource class
     /// </summary>
-    public abstract class clsAnalysisResources : clsAnalysisMgrBase, IAnalysisResources
+    public abstract class AnalysisResources : AnalysisMgrBase, IAnalysisResources
     {
         // Ignore Spelling: tdf, ser, fid, baf, dta, acqu, maldi, tof, wiff, uimf, tims, MODa, deconv, msgfdb
         // Ignore Spelling: num, parm, Cn, fht, xt, histone, loc
@@ -36,7 +36,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// MyEMSL path flag
         /// </summary>
-        public const string MYEMSL_PATH_FLAG = clsMyEMSLUtilities.MYEMSL_PATH_FLAG;
+        public const string MYEMSL_PATH_FLAG = MyEMSLUtilities.MYEMSL_PATH_FLAG;
 
         // Note: All of the RAW_DATA_TYPE constants need to be all lowercase
 
@@ -262,7 +262,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Storage path info file suffix
         /// </summary>
-        public const string STORAGE_PATH_INFO_FILE_SUFFIX = clsFileCopyUtilities.STORAGE_PATH_INFO_FILE_SUFFIX;
+        public const string STORAGE_PATH_INFO_FILE_SUFFIX = FileCopyUtilities.STORAGE_PATH_INFO_FILE_SUFFIX;
 
         /// <summary>
         /// Scan stats file suffix
@@ -322,25 +322,25 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Packed job parameter DatasetRawDataTypes
         /// </summary>
-        /// <remarks>This is used by clsAnalysisResourcesRepoPkgr</remarks>
+        /// <remarks>This is used by AnalysisResourcesRepoPkgr</remarks>
         public const string JOB_PARAM_DICTIONARY_DATASET_RAW_DATA_TYPES = "PackedParam_DatasetRawDataTypes";
 
         /// <summary>
         /// Packed job parameter JobDatasetMap
         /// </summary>
-        /// <remarks>This is used by clsAnalysisResourcesPhosphoFdrAggregator</remarks>
+        /// <remarks>This is used by AnalysisResourcesPhosphoFdrAggregator</remarks>
         public const string JOB_PARAM_DICTIONARY_JOB_DATASET_MAP = "PackedParam_JobDatasetMap";
 
         /// <summary>
         /// Packed job parameter JobSettingsFileMap
         /// </summary>
-        /// <remarks>This is used by clsAnalysisResourcesPhosphoFdrAggregator</remarks>
+        /// <remarks>This is used by AnalysisResourcesPhosphoFdrAggregator</remarks>
         public const string JOB_PARAM_DICTIONARY_JOB_SETTINGS_FILE_MAP = "PackedParam_JobSettingsFileMap";
 
         /// <summary>
         /// Packed job parameter JobToolNameMap
         /// </summary>
-        /// <remarks>This is used by clsAnalysisResourcesPhosphoFdrAggregator</remarks>
+        /// <remarks>This is used by AnalysisResourcesPhosphoFdrAggregator</remarks>
         public const string JOB_PARAM_DICTIONARY_JOB_TOOL_MAP = "PackedParam_JobToolNameMap";
 
         /// <summary>
@@ -392,7 +392,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Warning message that spectra are not centroided
         /// </summary>
-        /// <remarks>This constant is used by clsAnalysisToolRunnerMSGFDB, clsAnalysisResourcesMSGFDB, and clsAnalysisResourcesDtaRefinery</remarks>
+        /// <remarks>This constant is used by AnalysisToolRunnerMSGFDB, AnalysisResourcesMSGFDB, and AnalysisResourcesDtaRefinery</remarks>
         public const string SPECTRA_ARE_NOT_CENTROIDED = "None of the spectra are centroided; unable to process";
 
         /// <summary>
@@ -566,12 +566,12 @@ namespace AnalysisManagerBase
         /// <summary>
         /// CDTA utilities
         /// </summary>
-        protected readonly clsCDTAUtilities mCDTAUtilities;
+        protected readonly CDTAUtilities mCDTAUtilities;
 
         /// <summary>
         /// FASTA file splitter utility
         /// </summary>
-        protected clsSplitFastaFileUtilities mSplitFastaFileUtility;
+        protected SplitFastaFileUtilities mSplitFastaFileUtility;
 
         /// <summary>
         /// Last time FASTA splitting progress was reported
@@ -592,14 +592,14 @@ namespace AnalysisManagerBase
         /// <summary>
         /// MyEMSL utilities
         /// </summary>
-        protected clsMyEMSLUtilities mMyEMSLUtilities;
+        protected MyEMSLUtilities mMyEMSLUtilities;
 
-        private Dictionary<clsGlobal.eAnalysisResourceOptions, bool> mResourceOptions;
+        private Dictionary<Global.eAnalysisResourceOptions, bool> mResourceOptions;
         private bool mAuroraAvailable;
 
         private bool mMyEMSLSearchDisabled;
 
-        private clsDataPackageJobInfo mCachedDatasetAndJobInfo;
+        private DataPackageJobInfo mCachedDatasetAndJobInfo;
 
         private bool mCachedDatasetAndJobInfoIsDefined;
 
@@ -608,7 +608,7 @@ namespace AnalysisManagerBase
         /// </summary>
         public SpectraTypeClassifier.SpectrumTypeClassifier mSpectraTypeClassifier;
 
-        private clsFileCopyUtilities mFileCopyUtilities;
+        private FileCopyUtilities mFileCopyUtilities;
 
         #endregion
 
@@ -642,12 +642,12 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Directory search utility
         /// </summary>
-        public clsDirectorySearch DirectorySearch { get; private set; }
+        public DirectorySearch DirectorySearch { get; private set; }
 
         /// <summary>
         /// File search utility
         /// </summary>
-        public clsFileSearch FileSearch { get; private set; }
+        public FileSearch FileSearch { get; private set; }
 
         /// <summary>
         /// True when MyEMSL search is disabled
@@ -675,7 +675,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// MyEMSL utilities
         /// </summary>
-        public clsMyEMSLUtilities MyEMSLUtilities => mMyEMSLUtilities;
+        public MyEMSLUtilities MyEMSLUtilities => mMyEMSLUtilities;
 
         /// <summary>
         ///  Explanation of what happened to last operation this class performed
@@ -713,9 +713,9 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Constructor
         /// </summary>
-        protected clsAnalysisResources() : base("clsAnalysisResources")
+        protected AnalysisResources() : base("AnalysisResources")
         {
-            mCDTAUtilities = new clsCDTAUtilities();
+            mCDTAUtilities = new CDTAUtilities();
             RegisterEvents(mCDTAUtilities);
             mCDTAUtilities.ProgressUpdate -= ProgressUpdateHandler;
             mCDTAUtilities.ProgressUpdate += CDTAUtilities_ProgressEvent;
@@ -744,7 +744,7 @@ namespace AnalysisManagerBase
             IMgrParams mgrParams,
             IJobParams jobParams,
             IStatusFile statusTools,
-            clsMyEMSLUtilities myEMSLUtilities)
+            MyEMSLUtilities myEMSLUtilities)
         {
             StepToolName = stepToolName;
 
@@ -760,42 +760,42 @@ namespace AnalysisManagerBase
 
             mWorkDir = mMgrParams.GetParam("WorkDir");
 
-            var jobNum = mJobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Job");
+            var jobNum = mJobParams.GetParam(AnalysisJob.STEP_PARAMETERS_SECTION, "Job");
             if (!string.IsNullOrEmpty(jobNum))
             {
                 int.TryParse(jobNum, out mJob);
             }
 
-            DatasetName = mJobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_DATASET_NAME);
+            DatasetName = mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_DATASET_NAME);
 
             InitFileTools(mMgrName, mDebugLevel);
 
-            mMyEMSLUtilities = myEMSLUtilities ?? new clsMyEMSLUtilities(mDebugLevel, mWorkDir);
+            mMyEMSLUtilities = myEMSLUtilities ?? new MyEMSLUtilities(mDebugLevel, mWorkDir);
             RegisterEvents(mMyEMSLUtilities);
 
-            mFileCopyUtilities = new clsFileCopyUtilities(mFileTools, mMyEMSLUtilities, mDebugLevel);
+            mFileCopyUtilities = new FileCopyUtilities(mFileTools, mMyEMSLUtilities, mDebugLevel);
             RegisterEvents(mFileCopyUtilities);
 
             mFileCopyUtilities.ResetTimestampForQueueWaitTime += FileCopyUtilities_ResetTimestampForQueueWaitTime;
 
             mFileCopyUtilities.CopyWithLocksComplete += FileCopyUtilities_CopyWithLocksComplete;
 
-            mResourceOptions = new Dictionary<clsGlobal.eAnalysisResourceOptions, bool>();
-            SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, false);
-            SetOption(clsGlobal.eAnalysisResourceOptions.MyEMSLSearchDisabled, false);
+            mResourceOptions = new Dictionary<Global.eAnalysisResourceOptions, bool>();
+            SetOption(Global.eAnalysisResourceOptions.OrgDbRequired, false);
+            SetOption(Global.eAnalysisResourceOptions.MyEMSLSearchDisabled, false);
 
             mAuroraAvailable = mMgrParams.GetParam("AuroraAvailable", true);
 
             var myEmslAvailable = mMgrParams.GetParam("MyEmslAvailable", true);
 
-            DirectorySearch = new clsDirectorySearch(
+            DirectorySearch = new DirectorySearch(
                 mFileCopyUtilities, mJobParams, mMyEMSLUtilities,
                 mDatasetName, mDebugLevel, mAuroraAvailable);
             RegisterEvents(DirectorySearch);
 
             DirectorySearch.MyEMSLSearchDisabled = mMyEMSLSearchDisabled || !myEmslAvailable;
 
-            FileSearch = new clsFileSearch(
+            FileSearch = new FileSearch(
                 mFileCopyUtilities, DirectorySearch, mMyEMSLUtilities,
                 mMgrParams, mJobParams, mDatasetName, mDebugLevel, mWorkDir, mAuroraAvailable);
 
@@ -809,7 +809,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="transferUtility"></param>
         /// <returns>True if success, false if an error</returns>
-        protected bool CopyGeneratedOrgDBToRemote(clsRemoteTransferUtility transferUtility)
+        protected bool CopyGeneratedOrgDBToRemote(RemoteTransferUtility transferUtility)
         {
             var dbFilename = mJobParams.GetParam("PeptideSearch", JOB_PARAM_GENERATED_FASTA_NAME);
             if (string.IsNullOrWhiteSpace(dbFilename))
@@ -913,7 +913,7 @@ namespace AnalysisManagerBase
         /// <param name="filesToIgnore">Names of files to ignore</param>
         /// <remarks>This method is called by step tools that override CopyResourcesToRemote</remarks>
         /// <returns>True if success, otherwise false</returns>
-        protected bool CopyWorkDirFilesToRemote(clsRemoteTransferUtility transferUtility, SortedSet<string> filesToIgnore)
+        protected bool CopyWorkDirFilesToRemote(RemoteTransferUtility transferUtility, SortedSet<string> filesToIgnore)
         {
             try
             {
@@ -973,7 +973,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <exception cref="NotImplementedException"></exception>
         /// <returns>True if success, false if an error</returns>
-        public virtual bool CopyResourcesToRemote(clsRemoteTransferUtility transferUtility)
+        public virtual bool CopyResourcesToRemote(RemoteTransferUtility transferUtility)
         {
             throw new NotImplementedException("Plugin " + StepToolName + " must implement CopyResourcesToRemote to allow for remote processing");
         }
@@ -988,7 +988,7 @@ namespace AnalysisManagerBase
         /// Retrieve a true/false option of type eAnalysisResourceOptions
         /// </summary>
         /// <param name="resourceOption"></param>
-        public bool GetOption(clsGlobal.eAnalysisResourceOptions resourceOption)
+        public bool GetOption(Global.eAnalysisResourceOptions resourceOption)
         {
             if (mResourceOptions == null)
                 return false;
@@ -1033,17 +1033,17 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="resourceOption"></param>
         /// <param name="enabled"></param>
-        public void SetOption(clsGlobal.eAnalysisResourceOptions resourceOption, bool enabled)
+        public void SetOption(Global.eAnalysisResourceOptions resourceOption, bool enabled)
         {
             if (mResourceOptions == null)
             {
-                mResourceOptions = new Dictionary<clsGlobal.eAnalysisResourceOptions, bool>();
+                mResourceOptions = new Dictionary<Global.eAnalysisResourceOptions, bool>();
             }
 
             // Add/update resourceOption
             mResourceOptions[resourceOption] = enabled;
 
-            if (resourceOption == clsGlobal.eAnalysisResourceOptions.MyEMSLSearchDisabled)
+            if (resourceOption == Global.eAnalysisResourceOptions.MyEMSLSearchDisabled)
             {
                 MyEMSLSearchDisabled = enabled;
             }
@@ -1076,7 +1076,7 @@ namespace AnalysisManagerBase
         /// <param name="filePath"></param>
         protected void AppendToJobInfoFile(int job, string filePath)
         {
-            var jobInfoFilePath = clsDataPackageFileHandler.GetJobInfoFilePath(job, mWorkDir);
+            var jobInfoFilePath = DataPackageFileHandler.GetJobInfoFilePath(job, mWorkDir);
 
             using var writer = new StreamWriter(new FileStream(jobInfoFilePath, FileMode.Append, FileAccess.Write, FileShare.Read));
 
@@ -1139,14 +1139,14 @@ namespace AnalysisManagerBase
             int maxWaitTimeMinutes = 120,
             int logIntervalMinutes = 5)
         {
-            if (dataFilePath.EndsWith(clsGlobal.LOCK_FILE_EXTENSION, StringComparison.OrdinalIgnoreCase))
+            if (dataFilePath.EndsWith(Global.LOCK_FILE_EXTENSION, StringComparison.OrdinalIgnoreCase))
                 throw new ArgumentException("dataFilePath may not end in .lock", nameof(dataFilePath));
 
             var waitingForLockFile = false;
             var lockFileCreated = DateTime.UtcNow;
 
             // Look for a recent .lock file
-            var lockFile = new FileInfo(dataFilePath + clsGlobal.LOCK_FILE_EXTENSION);
+            var lockFile = new FileInfo(dataFilePath + Global.LOCK_FILE_EXTENSION);
 
             if (lockFile.Exists)
             {
@@ -1157,7 +1157,7 @@ namespace AnalysisManagerBase
 
                     var debugMessage = dataFileDescription +
                         " lock file found; will wait for file to be deleted or age; " +
-                        lockFile.Name + " created " + lockFile.LastWriteTime.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT);
+                        lockFile.Name + " created " + lockFile.LastWriteTime.ToString(AnalysisToolRunnerBase.DATE_TIME_FORMAT);
                     LogTools.LogDebug(debugMessage);
                 }
                 else
@@ -1176,7 +1176,7 @@ namespace AnalysisManagerBase
                 while (waitingForLockFile)
                 {
                     // Wait 5 seconds
-                    clsGlobal.IdleLoop(5);
+                    Global.IdleLoop(5);
 
                     lockFile.Refresh();
 
@@ -1205,7 +1205,7 @@ namespace AnalysisManagerBase
                 if (lockFile.Exists)
                 {
                     // Lock file is over 2 hours old; delete it
-                    clsGlobal.DeleteLockFile(dataFilePath);
+                    Global.DeleteLockFile(dataFilePath);
                 }
             }
         }
@@ -1221,11 +1221,11 @@ namespace AnalysisManagerBase
         /// <remarks>An exception will be thrown if the lock file already exists</remarks>
         public static string CreateLockFile(string dataFilePath, string taskDescription)
         {
-            var lockFilePath = dataFilePath + clsGlobal.LOCK_FILE_EXTENSION;
+            var lockFilePath = dataFilePath + Global.LOCK_FILE_EXTENSION;
 
             using var writer = new StreamWriter(new FileStream(lockFilePath, FileMode.CreateNew, FileAccess.Write, FileShare.Read));
 
-            writer.WriteLine(taskDescription + " at " + DateTime.Now.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT));
+            writer.WriteLine(taskDescription + " at " + DateTime.Now.ToString(AnalysisToolRunnerBase.DATE_TIME_FORMAT));
 
             return lockFilePath;
         }
@@ -1268,7 +1268,7 @@ namespace AnalysisManagerBase
         /// <param name="previewMode">Set to true to show the filename that would be retrieved</param>
         /// <returns>TRUE for success; FALSE for failure</returns>
         protected bool CreateFastaFile(
-            clsProteinCollectionInfo proteinCollectionInfo,
+            ProteinCollectionInfo proteinCollectionInfo,
             string targetDirectory,
             bool decoyProteinsUseXXX,
             bool previewMode)
@@ -1320,15 +1320,15 @@ namespace AnalysisManagerBase
                 {
                     if (retryCount > 1)
                     {
-                        LogError("Error instantiating clsGetFASTAFromDMS", ex);
+                        LogError("Error instantiating GetFASTAFromDMS", ex);
                         // Sleep 20 seconds after the first failure and 30 seconds after the second failure
                         if (retryCount == 3)
                         {
-                            clsGlobal.IdleLoop(20);
+                            Global.IdleLoop(20);
                         }
                         else
                         {
-                            clsGlobal.IdleLoop(30);
+                            Global.IdleLoop(30);
                         }
                     }
                     else
@@ -1348,7 +1348,7 @@ namespace AnalysisManagerBase
 
                         if (ex.Message.IndexOf("The timeout period elapsed prior to obtaining a connection from the pool", StringComparison.OrdinalIgnoreCase) >= 0)
                         {
-                            // This error can happen if too many analysis jobs run in a row and clsGetFASTAFromDMS doesn't free connections to the database
+                            // This error can happen if too many analysis jobs run in a row and GetFASTAFromDMS doesn't free connections to the database
 
                             // Could not open database connection after 6 tries, Timeout expired.
                             // The timeout period elapsed prior to obtaining a connection from the pool.
@@ -1442,7 +1442,7 @@ namespace AnalysisManagerBase
 
                 // Make sure the original fasta file has already been split into the appropriate number parts
                 // and that DMS knows about them
-                mSplitFastaFileUtility = new clsSplitFastaFileUtilities(
+                mSplitFastaFileUtility = new SplitFastaFileUtilities(
                     dmsConnectionString, proteinSeqsDBConnectionString,
                     numberOfClonedSteps, mMgrName, TraceMode, mFileCopyUtilities);
 
@@ -1575,12 +1575,12 @@ namespace AnalysisManagerBase
                         fastaFileMsg.Append("Fasta file last modified: " +
                             GetHumanReadableTimeInterval(
                                 DateTime.UtcNow.Subtract(fastaFile.LastWriteTimeUtc)) + " ago at " +
-                                            fastaFile.LastWriteTime.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT));
+                                            fastaFile.LastWriteTime.ToString(AnalysisToolRunnerBase.DATE_TIME_FORMAT));
 
                         fastaFileMsg.Append("; file created: " +
                             GetHumanReadableTimeInterval(
                                 DateTime.UtcNow.Subtract(fastaFile.CreationTimeUtc)) + " ago at " +
-                                            fastaFile.CreationTime.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT));
+                                            fastaFile.CreationTime.ToString(AnalysisToolRunnerBase.DATE_TIME_FORMAT));
 
                         fastaFileMsg.Append("; file size: " + fastaFile.Length + " bytes");
 
@@ -1611,7 +1611,7 @@ namespace AnalysisManagerBase
         [Obsolete("Unused")]
         private bool CreateSettingsFile(string FileText, string FileNamePath)
         {
-            var formattedXMLWriter = new clsFormattedXMLWriter();
+            var formattedXMLWriter = new FormattedXMLWriter();
 
             if (!formattedXMLWriter.WriteXMLToFile(FileText, FileNamePath))
             {
@@ -1759,7 +1759,7 @@ namespace AnalysisManagerBase
             // Make sure the raw data file does not get copied to the results directory
             mJobParams.AddResultFileToSkip(Path.GetFileName(inputFilePath));
 
-            var scanStatsGenerator = new clsScanStatsGenerator(msFileInfoScannerDLLPath, mDebugLevel);
+            var scanStatsGenerator = new ScanStatsGenerator(msFileInfoScannerDLLPath, mDebugLevel);
             RegisterEvents(scanStatsGenerator);
 
             LogMessage("Generating the ScanStats files for " + Path.GetFileName(inputFilePath));
@@ -1786,7 +1786,7 @@ namespace AnalysisManagerBase
             }
             else
             {
-                LogError("Error generating ScanStats files with clsScanStatsGenerator", scanStatsGenerator.ErrorMessage);
+                LogError("Error generating ScanStats files with ScanStatsGenerator", scanStatsGenerator.ErrorMessage);
                 if (scanStatsGenerator.MSFileInfoScannerErrorCount > 0)
                 {
                     LogMessage("MSFileInfoScanner encountered " + scanStatsGenerator.MSFileInfoScannerErrorCount + " errors");
@@ -1799,14 +1799,14 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Return the current dataset and job info
         /// </summary>
-        protected clsDataPackageJobInfo GetCurrentDatasetAndJobInfo()
+        protected DataPackageJobInfo GetCurrentDatasetAndJobInfo()
         {
-            const string jobParamsSection = clsAnalysisJob.JOB_PARAMETERS_SECTION;
+            const string jobParamsSection = AnalysisJob.JOB_PARAMETERS_SECTION;
 
-            var jobNumber = mJobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Job", 0);
+            var jobNumber = mJobParams.GetJobParameter(AnalysisJob.STEP_PARAMETERS_SECTION, "Job", 0);
             var dataset = mJobParams.GetJobParameter(jobParamsSection, JOB_PARAM_DATASET_NAME, mDatasetName);
 
-            var jobInfo = new clsDataPackageJobInfo(jobNumber, dataset)
+            var jobInfo = new DataPackageJobInfo(jobNumber, dataset)
             {
                 DatasetID = mJobParams.GetJobParameter(jobParamsSection, "DatasetID", 0),
                 Instrument = mJobParams.GetJobParameter(jobParamsSection, "Instrument", string.Empty),
@@ -2020,7 +2020,7 @@ namespace AnalysisManagerBase
             // Construct the JobParameters filename, for example JobParameters_1394245.xml
             // We skip this file because the remote manager loads parameters from JobParams.xml
             // (JobParams.xml has more info than the JobParameters_1394245.xml file)
-            var jobParametersFilename = clsAnalysisJob.JobParametersFilename(mJob);
+            var jobParametersFilename = AnalysisJob.JobParametersFilename(mJob);
 
             var filesToIgnore = new SortedSet<string> { jobParametersFilename };
 
@@ -2034,12 +2034,12 @@ namespace AnalysisManagerBase
         /// <returns>True if success, false if an error</returns>
         private bool GetExistingJobParametersFile()
         {
-            if (clsGlobal.OfflineMode)
+            if (Global.OfflineMode)
                 return true;
 
             try
             {
-                var stepNum = mJobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Step", 1);
+                var stepNum = mJobParams.GetJobParameter(AnalysisJob.STEP_PARAMETERS_SECTION, "Step", 1);
                 if (stepNum == 1)
                 {
                     // This is the first step; nothing to retrieve
@@ -2054,7 +2054,7 @@ namespace AnalysisManagerBase
                 }
 
                 // Construct the filename, for example JobParameters_1394245.xml
-                var jobParametersFilename = clsAnalysisJob.JobParametersFilename(mJob);
+                var jobParametersFilename = AnalysisJob.JobParametersFilename(mJob);
                 var sourceFile = new FileInfo(Path.Combine(transferDirectoryPath, jobParametersFilename));
 
                 if (!sourceFile.Exists)
@@ -2080,7 +2080,7 @@ namespace AnalysisManagerBase
 
                 var sourceJobParamXMLFile = new FileInfo(destinationFilePath);
 
-                var masterJobParamXMLFile = new FileInfo(Path.Combine(mWorkDir, clsAnalysisJob.JobParametersFilename(mJob)));
+                var masterJobParamXMLFile = new FileInfo(Path.Combine(mWorkDir, AnalysisJob.JobParametersFilename(mJob)));
 
                 if (!sourceJobParamXMLFile.Exists)
                 {
@@ -2279,10 +2279,10 @@ namespace AnalysisManagerBase
         {
             errorMessage = string.Empty;
 
-            var datasetStoragePath = jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetStoragePath");
+            var datasetStoragePath = jobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, "DatasetStoragePath");
             if (string.IsNullOrEmpty(datasetStoragePath))
             {
-                datasetStoragePath = jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetArchivePath");
+                datasetStoragePath = jobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, "DatasetArchivePath");
             }
 
             if (string.IsNullOrEmpty(datasetStoragePath))
@@ -2478,11 +2478,11 @@ namespace AnalysisManagerBase
         /// Gets fake job information for a dataset that is associated with a data package yet has no analysis jobs associated with the data package
         /// </summary>
         /// <param name="datasetInfo"></param>
-        public static clsDataPackageJobInfo GetPseudoDataPackageJobInfo(clsDataPackageDatasetInfo datasetInfo)
+        public static DataPackageJobInfo GetPseudoDataPackageJobInfo(DataPackageDatasetInfo datasetInfo)
         {
             // Store the negative of the dataset ID as the job number
             var pseudoJob = -datasetInfo.DatasetID;
-            var jobInfo = new clsDataPackageJobInfo(pseudoJob, datasetInfo.Dataset)
+            var jobInfo = new DataPackageJobInfo(pseudoJob, datasetInfo.Dataset)
             {
                 DatasetID = datasetInfo.DatasetID,
                 Instrument = datasetInfo.Instrument,
@@ -2663,7 +2663,7 @@ namespace AnalysisManagerBase
             if (iteration < 1)
             {
                 var toolName = jobParams.GetJobParameter("StepTool", string.Empty);
-                if (clsGlobal.IsMatch(toolName, "Mz_Refinery"))
+                if (Global.IsMatch(toolName, "Mz_Refinery"))
                 {
                     // Running MzRefinery
                     // Override iteration to be 1
@@ -2717,7 +2717,7 @@ namespace AnalysisManagerBase
                 return 0;
             }
 
-            var stepNumber = jobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Step", 0);
+            var stepNumber = jobParams.GetJobParameter(AnalysisJob.STEP_PARAMETERS_SECTION, "Step", 0);
             if (stepNumber == 0)
             {
                 errorMessage = "Job parameter Step is missing; cannot determine the SplitFasta iteration value for this job step";
@@ -2747,7 +2747,7 @@ namespace AnalysisManagerBase
                 if (nameAttrib == null)
                     continue;
 
-                if (!string.Equals(nameAttrib.Value, clsAnalysisJob.STEP_PARAMETERS_SECTION, StringComparison.OrdinalIgnoreCase))
+                if (!string.Equals(nameAttrib.Value, AnalysisJob.STEP_PARAMETERS_SECTION, StringComparison.OrdinalIgnoreCase))
                     continue;
 
                 var stepAttrib = section.Attribute("step");
@@ -2778,7 +2778,7 @@ namespace AnalysisManagerBase
             }
 
             // Append the dataset directory name to the transfer directory path
-            var datasetDirectoryName = mJobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, JOB_PARAM_DATASET_FOLDER_NAME);
+            var datasetDirectoryName = mJobParams.GetParam(AnalysisJob.STEP_PARAMETERS_SECTION, JOB_PARAM_DATASET_FOLDER_NAME);
             if (string.IsNullOrWhiteSpace(datasetDirectoryName))
                 datasetDirectoryName = mDatasetName;
 
@@ -2856,7 +2856,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="dataPackageDatasets"></param>
         /// <returns>True if a data package is defined and it has datasets associated with it</returns>
-        protected bool LoadDataPackageDatasetInfo(out Dictionary<int, clsDataPackageDatasetInfo> dataPackageDatasets)
+        protected bool LoadDataPackageDatasetInfo(out Dictionary<int, DataPackageDatasetInfo> dataPackageDatasets)
         {
             // Gigasax.DMS_Pipeline
             var connectionString = mMgrParams.GetParam("BrokerConnectionString");
@@ -2865,14 +2865,14 @@ namespace AnalysisManagerBase
 
             if (dataPackageID < 0)
             {
-                dataPackageDatasets = new Dictionary<int, clsDataPackageDatasetInfo>();
+                dataPackageDatasets = new Dictionary<int, DataPackageDatasetInfo>();
                 return false;
             }
 
             var dbTools = DbToolsFactory.GetDBTools(connectionString, debugMode: TraceMode);
             RegisterEvents(dbTools);
 
-            return clsDataPackageInfoLoader.LoadDataPackageDatasetInfo(dbTools, dataPackageID, out dataPackageDatasets);
+            return DataPackageInfoLoader.LoadDataPackageDatasetInfo(dbTools, dataPackageID, out dataPackageDatasets);
         }
 
         /// <summary>
@@ -2884,7 +2884,7 @@ namespace AnalysisManagerBase
         /// Property NumberOfClonedSteps is not updated for the analysis jobs returned by this method
         /// In contrast, RetrieveDataPackagePeptideHitJobInfo does update NumberOfClonedSteps
         /// </remarks>
-        private bool LoadDataPackageJobInfo(out Dictionary<int, clsDataPackageJobInfo> dataPackageJobs)
+        private bool LoadDataPackageJobInfo(out Dictionary<int, DataPackageJobInfo> dataPackageJobs)
         {
             // Gigasax.DMS_Pipeline
             var connectionString = mMgrParams.GetParam("BrokerConnectionString");
@@ -2893,14 +2893,14 @@ namespace AnalysisManagerBase
 
             if (dataPackageID < 0)
             {
-                dataPackageJobs = new Dictionary<int, clsDataPackageJobInfo>();
+                dataPackageJobs = new Dictionary<int, DataPackageJobInfo>();
                 return false;
             }
 
             var dbTools = DbToolsFactory.GetDBTools(connectionString, debugMode: TraceMode);
             RegisterEvents(dbTools);
 
-            return clsDataPackageInfoLoader.LoadDataPackageJobInfo(dbTools, dataPackageID, out dataPackageJobs);
+            return DataPackageInfoLoader.LoadDataPackageJobInfo(dbTools, dataPackageID, out dataPackageJobs);
         }
 
         /// <summary>
@@ -2934,8 +2934,8 @@ namespace AnalysisManagerBase
         /// <param name="jobNumber">Job number</param>
         /// <param name="jobInfo">Output parameter: Job Info</param>
         /// <returns>True if success; false if an error</returns>
-        /// <remarks>This procedure is used by clsAnalysisResourcesQCART</remarks>
-        protected bool LookupJobInfo(int jobNumber, out clsDataPackageJobInfo jobInfo)
+        /// <remarks>This procedure is used by AnalysisResourcesQCART</remarks>
+        protected bool LookupJobInfo(int jobNumber, out DataPackageJobInfo jobInfo)
         {
             const int RETRY_COUNT = 3;
 
@@ -2951,7 +2951,7 @@ namespace AnalysisManagerBase
             sqlStr.Append("FROM V_Analysis_Job_Export_DataPkg ");
             sqlStr.Append("WHERE Job = " + jobNumber);
 
-            var genericJobInfo = new clsDataPackageJobInfo(0, string.Empty);
+            var genericJobInfo = new DataPackageJobInfo(0, string.Empty);
 
             // Gigasax.DMS5
             var dmsConnectionString = mMgrParams.GetParam("ConnectionString");
@@ -2979,7 +2979,7 @@ namespace AnalysisManagerBase
                 return false;
             }
 
-            jobInfo = clsDataPackageInfoLoader.ParseDataPackageJobInfoRow(resultSet.Rows[0]);
+            jobInfo = DataPackageInfoLoader.ParseDataPackageJobInfoRow(resultSet.Rows[0]);
 
             return true;
         }
@@ -2997,7 +2997,7 @@ namespace AnalysisManagerBase
         /// <returns>Space required, in MB</returns>
         /// <remarks>Uses both mJobParams and mMgrParams; returns 0 if a problem (e.g. the legacy fasta file is not listed in V_Organism_DB_File_Export)</remarks>
         public double LookupLegacyDBDiskSpaceRequiredMB(
-            clsProteinCollectionInfo proteinCollectionInfo,
+            ProteinCollectionInfo proteinCollectionInfo,
             out string legacyFastaName,
             out double fastaFileSizeGB)
         {
@@ -3032,7 +3032,7 @@ namespace AnalysisManagerBase
                 var dbTools = DbToolsFactory.GetDBTools(dmsConnectionString, debugMode: TraceMode);
                 RegisterEvents(dbTools);
 
-                var success = clsGlobal.GetQueryResultsTopRow(dbTools, sqlQuery, out var legacyDbSize);
+                var success = Global.GetQueryResultsTopRow(dbTools, sqlQuery, out var legacyDbSize);
 
                 if (!success || legacyDbSize == null || legacyDbSize.Count == 0)
                 {
@@ -3164,7 +3164,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="dataPkgJob"></param>
         /// <remarks> Does not override the job number</remarks>
-        public bool OverrideCurrentDatasetAndJobInfo(clsDataPackageJobInfo dataPkgJob)
+        public bool OverrideCurrentDatasetAndJobInfo(DataPackageJobInfo dataPkgJob)
         {
             var aggregationJob = false;
 
@@ -3174,7 +3174,7 @@ namespace AnalysisManagerBase
                 return false;
             }
 
-            if (clsGlobal.IsMatch(dataPkgJob.Dataset, "Aggregation"))
+            if (Global.IsMatch(dataPkgJob.Dataset, "Aggregation"))
             {
                 aggregationJob = true;
             }
@@ -3211,7 +3211,7 @@ namespace AnalysisManagerBase
             mJobParams.AddDatasetInfo(dataPkgJob.Dataset, dataPkgJob.DatasetID);
             DatasetName = string.Copy(dataPkgJob.Dataset);
 
-            const string jobParamsSection = clsAnalysisJob.JOB_PARAMETERS_SECTION;
+            const string jobParamsSection = AnalysisJob.JOB_PARAMETERS_SECTION;
 
             mJobParams.AddAdditionalParameter(jobParamsSection, JOB_PARAM_DATASET_NAME, dataPkgJob.Dataset);
             mJobParams.AddAdditionalParameter(jobParamsSection, "DatasetID", dataPkgJob.DatasetID.ToString());
@@ -3282,7 +3282,7 @@ namespace AnalysisManagerBase
         /// <param name="directoryLayout"></param>
         protected bool ProcessMyEMSLDownloadQueue(string targetDirectoryPath, Downloader.DownloadLayout directoryLayout)
         {
-            if (clsGlobal.OfflineMode)
+            if (Global.OfflineMode)
                 return true;
 
             var success = mMyEMSLUtilities.ProcessMyEMSLDownloadQueue(targetDirectoryPath, directoryLayout);
@@ -3413,7 +3413,7 @@ namespace AnalysisManagerBase
                         return;
                 }
 
-                var localDriveInfo = clsGlobal.GetLocalDriveInfo(orgDbDirectory);
+                var localDriveInfo = Global.GetLocalDriveInfo(orgDbDirectory);
 
                 if (localDriveInfo == null)
                 {
@@ -3440,7 +3440,7 @@ namespace AnalysisManagerBase
                 {
                     if (mDebugLevel >= 2)
                     {
-                        var freeSpaceGB = clsGlobal.BytesToGB(localDriveInfo.AvailableFreeSpace);
+                        var freeSpaceGB = Global.BytesToGB(localDriveInfo.AvailableFreeSpace);
                         LogMessage(string.Format("Free space on {0} ({1:F1} GB) is over {2}% of the total space; purge not required", localDriveInfo.Name, freeSpaceGB, freeSpaceThresholdPercent));
                     }
                 }
@@ -3477,7 +3477,7 @@ namespace AnalysisManagerBase
             double percentFreeSpaceAtStart,
             bool preview)
         {
-            var freeSpaceGB = clsGlobal.BytesToGB(localDriveInfo.AvailableFreeSpace);
+            var freeSpaceGB = Global.BytesToGB(localDriveInfo.AvailableFreeSpace);
 
             var logInfoMessages =
                 mDebugLevel >= 1 && freeSpaceGB < 100 ||
@@ -3523,12 +3523,12 @@ namespace AnalysisManagerBase
 
                 if (preview)
                 {
-                    updatedFreeSpaceGB = freeSpaceGB + clsGlobal.BytesToGB(totalBytesPurged);
+                    updatedFreeSpaceGB = freeSpaceGB + Global.BytesToGB(totalBytesPurged);
                     percentFreeSpace = updatedFreeSpaceGB * 1024 * 1024 * 1024 / localDriveInfo.TotalSize * 100;
                 }
                 else
                 {
-                    updatedFreeSpaceGB = clsGlobal.BytesToGB(localDriveInfo.AvailableFreeSpace);
+                    updatedFreeSpaceGB = Global.BytesToGB(localDriveInfo.AvailableFreeSpace);
                     percentFreeSpace = localDriveInfo.AvailableFreeSpace / (double)localDriveInfo.TotalSize * 100;
                 }
 
@@ -3551,7 +3551,7 @@ namespace AnalysisManagerBase
                         if (mDebugLevel >= 1)
                         {
                             LogMessage(string.Format("Free space on {0} ({1:F1} GB) is now over {2}% of the total space; deleted {3:F1} GB of cached files",
-                                localDriveInfo.Name, updatedFreeSpaceGB, freeSpaceThresholdPercent, clsGlobal.BytesToGB(totalBytesPurged)));
+                                localDriveInfo.Name, updatedFreeSpaceGB, freeSpaceThresholdPercent, Global.BytesToGB(totalBytesPurged)));
                         }
                         break;
                     }
@@ -3569,11 +3569,11 @@ namespace AnalysisManagerBase
             double finalFreeSpaceGB;
             if (preview)
             {
-                finalFreeSpaceGB = freeSpaceGB + clsGlobal.BytesToGB(totalBytesPurged);
+                finalFreeSpaceGB = freeSpaceGB + Global.BytesToGB(totalBytesPurged);
             }
             else
             {
-                finalFreeSpaceGB = clsGlobal.BytesToGB(localDriveInfo.AvailableFreeSpace);
+                finalFreeSpaceGB = Global.BytesToGB(localDriveInfo.AvailableFreeSpace);
             }
 
             if (requiredFreeSpaceMB > 0 && finalFreeSpaceGB * 1024.0 < requiredFreeSpaceMB)
@@ -3581,7 +3581,7 @@ namespace AnalysisManagerBase
                 LogMessage(string.Format(
                     "Warning: unable to delete enough files to free up the required space on {0} " +
                     "({1:F1} GB vs. {2:F1} GB); deleted {3:F1} GB of cached files",
-                    localDriveInfo.Name, finalFreeSpaceGB, requiredFreeSpaceMB / 1024.0, clsGlobal.BytesToGB(totalBytesPurged)));
+                    localDriveInfo.Name, finalFreeSpaceGB, requiredFreeSpaceMB / 1024.0, Global.BytesToGB(totalBytesPurged)));
             }
         }
 
@@ -3659,7 +3659,7 @@ namespace AnalysisManagerBase
                         spaceUsageBytes += orgDbDirFile.Length;
                     }
 
-                    var spaceUsageGB = clsGlobal.BytesToGB(spaceUsageBytes);
+                    var spaceUsageGB = Global.BytesToGB(spaceUsageBytes);
                     if (spaceUsageGB <= maxSizeGB)
                     {
                         // Space usage is under the threshold
@@ -3726,10 +3726,10 @@ namespace AnalysisManagerBase
                             {
                                 LogTools.LogDebug(string.Format(
                                     "Purging FASTA files: {0:F1} / {1:F1} MB deleted",
-                                    clsGlobal.BytesToMB(totalBytesPurged), clsGlobal.BytesToMB(bytesToPurge)));
+                                    Global.BytesToMB(totalBytesPurged), Global.BytesToMB(bytesToPurge)));
                             }
 
-                            if (clsGlobal.BytesToGB(totalBytesPurged) > 10)
+                            if (Global.BytesToGB(totalBytesPurged) > 10)
                             {
                                 // We have deleted 10 GB of data; re-scan for FASTA files to delete
                                 // This is done in case two managers are actively purging files from the same directory simultaneously
@@ -3741,7 +3741,7 @@ namespace AnalysisManagerBase
                             // Enough files have been deleted
                             LogTools.LogMessage(string.Format(
                                 "Space usage in {0} is now below {1} GB; deleted {2:F1} GB of cached files",
-                                orgDbDirectory.FullName, maxSizeGB, clsGlobal.BytesToGB(totalBytesPurgedOverall)));
+                                orgDbDirectory.FullName, maxSizeGB, Global.BytesToGB(totalBytesPurgedOverall)));
 
                             return true;
                         }
@@ -3758,7 +3758,7 @@ namespace AnalysisManagerBase
                 {
                     LogTools.LogWarning(string.Format(
                         "Warning: unable to delete enough files to lower the space usage in {0} to below {1} GB; " +
-                        "deleted {2:F1} GB of cached files", orgDbDirectory.FullName, maxSizeGB, clsGlobal.BytesToGB(totalBytesPurgedOverall)));
+                        "deleted {2:F1} GB of cached files", orgDbDirectory.FullName, maxSizeGB, Global.BytesToGB(totalBytesPurgedOverall)));
                 }
 
                 return true;
@@ -3773,7 +3773,7 @@ namespace AnalysisManagerBase
         private bool RemoteFastaFilesMatch(
             FileInfo sourceFasta, FileSystemInfo sourceHashcheck,
             SftpFile remoteFasta, SftpFile remoteHashcheck,
-            clsRemoteTransferUtility transferUtility)
+            RemoteTransferUtility transferUtility)
         {
             var remoteHostName = transferUtility.RemoteHostName;
 
@@ -3936,7 +3936,7 @@ namespace AnalysisManagerBase
         protected bool RetrieveAggregateFiles(
             List<string> fileSpecList,
             DataPackageFileRetrievalModeConstants fileRetrievalMode,
-            out Dictionary<int, clsDataPackageJobInfo> dataPackageJobs)
+            out Dictionary<int, DataPackageJobInfo> dataPackageJobs)
         {
             bool success;
 
@@ -4077,12 +4077,12 @@ namespace AnalysisManagerBase
                                     if (sourceFileName.IndexOf("_msgfdb", StringComparison.OrdinalIgnoreCase) >= 0)
                                     {
                                         // Auto-look for the _msgfplus version of this file
-                                        alternateSourceFileName = clsGlobal.ReplaceIgnoreCase(sourceFileName, "_msgfdb", "_msgfplus");
+                                        alternateSourceFileName = Global.ReplaceIgnoreCase(sourceFileName, "_msgfdb", "_msgfplus");
                                     }
                                     else if (sourceFileName.IndexOf("_msgfplus", StringComparison.OrdinalIgnoreCase) >= 0)
                                     {
                                         // Auto-look for the _msgfdb version of this file
-                                        alternateSourceFileName = clsGlobal.ReplaceIgnoreCase(sourceFileName, "_msgfplus", "_msgfdb");
+                                        alternateSourceFileName = Global.ReplaceIgnoreCase(sourceFileName, "_msgfplus", "_msgfdb");
                                     }
 
                                     if (!string.IsNullOrEmpty(alternateSourceFileName))
@@ -4205,8 +4205,8 @@ namespace AnalysisManagerBase
         /// <param name="dataPackagePeptideHitJobs">Job info for the peptide_hit jobs associated with this data package (output parameter)</param>
         /// <returns>True if success, false if an error</returns>
         protected bool RetrieveDataPackagePeptideHitJobPHRPFiles(
-            clsDataPackageFileHandler.udtDataPackageRetrievalOptionsType retrievalOptions,
-            out List<clsDataPackageJobInfo> dataPackagePeptideHitJobs)
+            DataPackageFileHandler.udtDataPackageRetrievalOptionsType retrievalOptions,
+            out List<DataPackageJobInfo> dataPackagePeptideHitJobs)
         {
             const float progressPercentAtStart = 0;
             const float progressPercentAtFinish = 20;
@@ -4223,8 +4223,8 @@ namespace AnalysisManagerBase
         /// <param name="progressPercentAtFinish">Percent complete value to use for computing incremental progress</param>
         /// <returns>True if success, false if an error</returns>
         protected bool RetrieveDataPackagePeptideHitJobPHRPFiles(
-            clsDataPackageFileHandler.udtDataPackageRetrievalOptionsType retrievalOptions,
-            out List<clsDataPackageJobInfo> dataPackagePeptideHitJobs,
+            DataPackageFileHandler.udtDataPackageRetrievalOptionsType retrievalOptions,
+            out List<DataPackageJobInfo> dataPackagePeptideHitJobs,
             float progressPercentAtStart,
             float progressPercentAtFinish)
         {
@@ -4236,14 +4236,14 @@ namespace AnalysisManagerBase
             var dbTools = DbToolsFactory.GetDBTools(brokerDbConnectionString, debugMode: TraceMode);
             RegisterEvents(dbTools);
 
-            var dataPackageFileHandler = new clsDataPackageFileHandler(dbTools, dataPackageID, this);
+            var dataPackageFileHandler = new DataPackageFileHandler(dbTools, dataPackageID, this);
             RegisterEvents(dataPackageFileHandler);
 
             var success = dataPackageFileHandler.RetrieveDataPackagePeptideHitJobPHRPFiles(
                 retrievalOptions, out dataPackagePeptideHitJobs,
                 progressPercentAtStart, progressPercentAtFinish);
 
-            mJobParams.AddResultFileToSkip(clsDataPackageFileHandler.DATA_PKG_JOB_METADATA_FILE);
+            mJobParams.AddResultFileToSkip(DataPackageFileHandler.DATA_PKG_JOB_METADATA_FILE);
 
             return success;
         }
@@ -4295,7 +4295,7 @@ namespace AnalysisManagerBase
 
             try
             {
-                var proteinCollectionInfo = new clsProteinCollectionInfo(mJobParams);
+                var proteinCollectionInfo = new ProteinCollectionInfo(mJobParams);
 
                 var legacyFastaFileBaseName = string.Empty;
 
@@ -4305,7 +4305,7 @@ namespace AnalysisManagerBase
                     legacyFastaFileBaseName = Path.GetFileNameWithoutExtension(proteinCollectionInfo.LegacyFastaName);
                 }
 
-                if (clsGlobal.OfflineMode)
+                if (Global.OfflineMode)
                 {
                     var fastaFileName = mJobParams.GetJobParameter(JOB_PARAM_GENERATED_FASTA_NAME, string.Empty);
 
@@ -4385,7 +4385,7 @@ namespace AnalysisManagerBase
                     // Determine the FASTA file size (should already be known for legacy FASTA files)
                     var fastaFile = new FileInfo(Path.Combine(orgDbDirectoryPath, mFastaFileName));
                     if (fastaFile.Exists)
-                        fastaFileSizeGB = clsGlobal.BytesToGB(fastaFile.Length);
+                        fastaFileSizeGB = Global.BytesToGB(fastaFile.Length);
                 }
 
                 // Fasta file was successfully generated. Put the name of the generated FASTA file in the
@@ -4428,7 +4428,7 @@ namespace AnalysisManagerBase
             {
                 LogMessage("Retrieving parameter file " + paramFileName);
 
-                if (clsGlobal.OfflineMode)
+                if (Global.OfflineMode)
                 {
                     var paramFile = new FileInfo(Path.Combine(mWorkDir, paramFileName));
                     if (!paramFile.Exists)
@@ -4457,7 +4457,7 @@ namespace AnalysisManagerBase
                 var paramFileType = SetParamFileType(toolName);
                 if (paramFileType == IGenerateFile.ParamFileType.Invalid)
                 {
-                    LogError("Tool " + toolName + " is not supported by the ParamFileGenerator; update clsAnalysisResources and ParamFileGenerator.dll");
+                    LogError("Tool " + toolName + " is not supported by the ParamFileGenerator; update AnalysisResources and ParamFileGenerator.dll");
                     return false;
                 }
 
@@ -4465,7 +4465,7 @@ namespace AnalysisManagerBase
 
                 // Gigasax.DMS5
                 var connectionString = mMgrParams.GetParam("ConnectionString");
-                var datasetID = mJobParams.GetJobParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetID", 0);
+                var datasetID = mJobParams.GetJobParameter(AnalysisJob.JOB_PARAMETERS_SECTION, "DatasetID", 0);
 
                 var success = paramFileGenerator.MakeFile(paramFileName, paramFileType, fastaFilePath, mWorkDir, connectionString, datasetID);
 
@@ -4580,7 +4580,7 @@ namespace AnalysisManagerBase
                 xmlText = memoryStreamReader.ReadToEnd();
             }
 
-            var jobParamsFile = new FileInfo(Path.Combine(WorkDir, clsAnalysisJob.OFFLINE_JOB_PARAMS_FILE));
+            var jobParamsFile = new FileInfo(Path.Combine(WorkDir, AnalysisJob.OFFLINE_JOB_PARAMS_FILE));
 
             using var writer = new StreamWriter(new FileStream(jobParamsFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read));
 
@@ -4673,7 +4673,7 @@ namespace AnalysisManagerBase
         /// <param name="parameterName">Packed job parameter name</param>
         protected void StorePackedJobParameterList(List<string> packedJobParams, string parameterName)
         {
-            mJobParams.AddAdditionalParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, parameterName, clsGlobal.FlattenList(packedJobParams, "\t"));
+            mJobParams.AddAdditionalParameter(AnalysisJob.JOB_PARAMETERS_SECTION, parameterName, Global.FlattenList(packedJobParams, "\t"));
         }
 
         /// <summary>
@@ -4710,7 +4710,7 @@ namespace AnalysisManagerBase
         {
             if (appendToExisting)
             {
-                mMessage = clsGlobal.AppendToComment(mMessage, statusMessage);
+                mMessage = Global.AppendToComment(mMessage, statusMessage);
             }
             else
             {
@@ -4966,7 +4966,7 @@ namespace AnalysisManagerBase
         /// <param name="logFreeMemoryOnSuccess"></param>
         public static bool ValidateFreeMemorySize(int freeMemoryRequiredMB, string stepToolName, bool logFreeMemoryOnSuccess)
         {
-            var freeMemoryMB = clsGlobal.GetFreeMemoryMB();
+            var freeMemoryMB = Global.GetFreeMemoryMB();
 
             if (freeMemoryRequiredMB >= freeMemoryMB)
             {

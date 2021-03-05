@@ -9,7 +9,7 @@ using System.Xml;
 
 namespace AnalysisManagerMSDeconvPlugIn
 {
-    public class clsRenumberMzXMLScans
+    public class RenumberMzXMLScans
     {
         protected const string XML_ELEMENT_SCAN = "scan";
         protected const string XML_ELEMENT_PRECURSOR_MZ = "precursorMz";
@@ -21,7 +21,7 @@ namespace AnalysisManagerMSDeconvPlugIn
 
         public string SourceMzXmlFile { get; }
 
-        public clsRenumberMzXMLScans(string sourceFilePath)
+        public RenumberMzXMLScans(string sourceFilePath)
         {
             SourceMzXmlFile = sourceFilePath;
         }
@@ -78,7 +78,7 @@ namespace AnalysisManagerMSDeconvPlugIn
             }
             catch (Exception ex)
             {
-                ErrorMessage = "Error in clsRenumberMzXMLScans.Process: " + ex.Message;
+                ErrorMessage = "Error in RenumberMzXMLScans.Process: " + ex.Message;
                 Console.WriteLine(ErrorMessage);
                 return false;
             }

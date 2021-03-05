@@ -6,10 +6,10 @@
 
 using System.Diagnostics.CodeAnalysis;
 
-[assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Allowed", Scope = "type", Target = "~T:AnalysisManagerDecon2lsV2PlugIn.clsAnalysisToolRunnerDecon2ls")]
-[assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Allowed", Scope = "type", Target = "~T:AnalysisManagerDecon2lsV2PlugIn.clsAnalysisToolRunnerDecon2ls.udtDeconToolsStatusType")]
-[assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Allowed", Scope = "type", Target = "~T:AnalysisManagerDecon2lsV2PlugIn.clsXMLParamFileReader")]
-[assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Allowed", Scope = "type", Target = "~T:AnalysisManagerDecon2lsV2PlugIn.clsAnalysisResourcesDecon2ls")]
-[assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Allowed", Scope = "type", Target = "~T:AnalysisManagerDecon2lsV2PlugIn.clsDeconToolsQCPlotsGenerator")]
-[assembly: SuppressMessage("Style", "IDE0066:Convert switch statement to expression", Justification = "Leave as-is for readability", Scope = "member", Target = "~M:AnalysisManagerDecon2lsV2PlugIn.clsAnalysisToolRunnerDecon2ls.ParseDeconToolsLogFile(System.Boolean@,System.DateTime@)")]
-[assembly: SuppressMessage("Usage", "RCS1146:Use conditional access.", Justification = "Leave as-is for readability", Scope = "member", Target = "~M:AnalysisManagerDecon2lsV2PlugIn.clsAnalysisResourcesDecon2ls.IsMSMSProcessingEnabled(System.IO.FileSystemInfo,System.Boolean@)~System.Boolean")]
+[assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Allowed", Scope = "type", Target = "~T:AnalysisManagerDecon2lsV2PlugIn.AnalysisToolRunnerDecon2ls")]
+[assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Allowed", Scope = "type", Target = "~T:AnalysisManagerDecon2lsV2PlugIn.AnalysisToolRunnerDecon2ls.udtDeconToolsStatusType")]
+[assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Allowed", Scope = "type", Target = "~T:AnalysisManagerDecon2lsV2PlugIn.XMLParamFileReader")]
+[assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Allowed", Scope = "type", Target = "~T:AnalysisManagerDecon2lsV2PlugIn.AnalysisResourcesDecon2ls")]
+[assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Allowed", Scope = "type", Target = "~T:AnalysisManagerDecon2lsV2PlugIn.DeconToolsQCPlotsGenerator")]
+[assembly: SuppressMessage("Style", "IDE0066:Convert switch statement to expression", Justification = "Leave as-is for readability", Scope = "member", Target = "~M:AnalysisManagerDecon2lsV2PlugIn.AnalysisToolRunnerDecon2ls.ParseDeconToolsLogFile(System.Boolean@,System.DateTime@)")]
+[assembly: SuppressMessage("Usage", "RCS1146:Use conditional access.", Justification = "Leave as-is for readability", Scope = "member", Target = "~M:AnalysisManagerDecon2lsV2PlugIn.AnalysisResourcesDecon2ls.IsMSMSProcessingEnabled(System.IO.FileSystemInfo,System.Boolean@)~System.Boolean")]

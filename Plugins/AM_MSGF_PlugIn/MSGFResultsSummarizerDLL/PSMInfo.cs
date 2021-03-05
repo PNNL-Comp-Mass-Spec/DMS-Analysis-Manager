@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace MSGFResultsSummarizer
 {
-    public sealed class clsPSMInfo : clsUniqueSeqInfo
+    public sealed class PSMInfo : UniqueSeqInfo
     {
         public const double UNKNOWN_MSGF_SPEC_EVALUE = 10;
 
@@ -76,7 +76,7 @@ namespace MSGFResultsSummarizer
         /// <summary>
         /// Constructor
         /// </summary>
-        public clsPSMInfo()
+        public PSMInfo()
         {
             Observations = new List<PSMObservation>();
             Clear();
@@ -104,12 +104,12 @@ namespace MSGFResultsSummarizer
         }
 
         /// <summary>
-        /// Clone this class as a new clsUniqueSeqInfo instance
+        /// Clone this class as a new UniqueSeqInfo instance
         /// </summary>
         /// <param name="obsCountOverride">Observation count override; ignored if less than 0</param>
-        public clsUniqueSeqInfo CloneAsSeqInfo(int obsCountOverride = -1)
+        public UniqueSeqInfo CloneAsSeqInfo(int obsCountOverride = -1)
         {
-            var seqInfo = new clsUniqueSeqInfo();
+            var seqInfo = new UniqueSeqInfo();
 
             if (obsCountOverride >= 0)
             {
@@ -132,7 +132,7 @@ namespace MSGFResultsSummarizer
 
         public override void UpdateObservationCount(int observationCount)
         {
-            throw new InvalidOperationException("Observation count cannot be updated in clsPSMInfo");
+            throw new InvalidOperationException("Observation count cannot be updated in PSMInfo");
         }
 
         public override string ToString()

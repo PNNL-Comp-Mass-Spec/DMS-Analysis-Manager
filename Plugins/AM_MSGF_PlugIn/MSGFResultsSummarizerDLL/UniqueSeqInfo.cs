@@ -1,13 +1,13 @@
 ﻿namespace MSGFResultsSummarizer
 {
-    public class clsUniqueSeqInfo
+    public class UniqueSeqInfo
     {
         private int mObsCount;
 
         /// <summary>
         /// Observation count
         /// </summary>
-        /// <remarks>Overridden in clsPSMInfo because it tracks specific PSMObservations</remarks>
+        /// <remarks>Overridden in PSMInfo because it tracks specific PSMObservations</remarks>
         public virtual int ObsCount => mObsCount;
 
         /// <summary>
@@ -48,7 +48,7 @@
         /// <summary>
         /// Constructor
         /// </summary>
-        public clsUniqueSeqInfo()
+        public UniqueSeqInfo()
         {
             // ReSharper disable once VirtualMemberCallInConstructor
             Clear();

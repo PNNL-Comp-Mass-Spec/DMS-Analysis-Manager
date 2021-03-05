@@ -16,7 +16,7 @@ namespace AnalysisManagerDtaSplitPlugIn
     /// <summary>
     /// Class for running DTA splitter
     /// </summary>
-    public class clsAnalysisToolRunnerDtaSplit : clsAnalysisToolRunnerBase
+    public class AnalysisToolRunnerDtaSplit : AnalysisToolRunnerBase
     {
         #region "Module Variables"
 
@@ -30,7 +30,7 @@ namespace AnalysisManagerDtaSplitPlugIn
         /// <summary>
         /// Constructor
         /// </summary>
-        public clsAnalysisToolRunnerDtaSplit()
+        public AnalysisToolRunnerDtaSplit()
         {
             r_FileSeparator = new Regex(@"^\s*[=]{5,}\s+\""(?<rootname>.+)\.(?<startscan>\d+)\." +
                                         @"(?<endscan>\d+)\.(?<chargestate>\d+)\.(?<filetype>.+)\""\s+[=]{5,}\s*$",
@@ -399,7 +399,7 @@ namespace AnalysisManagerDtaSplitPlugIn
         /// </summary>
         protected bool StoreToolVersionInfo()
         {
-            var cyclopsDll = Path.Combine(clsGlobal.GetAppDirectoryPath(), "AnalysisManagerDtaSplitPlugIn.dll");
+            var cyclopsDll = Path.Combine(Global.GetAppDirectoryPath(), "AnalysisManagerDtaSplitPlugIn.dll");
             var success = StoreDotNETToolVersionInfo(cyclopsDll);
 
             return success;

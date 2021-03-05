@@ -8,7 +8,7 @@ namespace AnalysisManager_Cyclops_PlugIn
     /// <summary>
     /// Retrieve resources for the Cyclops plugin
     /// </summary>
-    public class clsAnalysisResourcesCyclops : clsAnalysisResources
+    public class AnalysisResourcesCyclops : AnalysisResources
     {
         // Ignore Spelling: filetype, workflows
 

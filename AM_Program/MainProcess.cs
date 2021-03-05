@@ -23,7 +23,7 @@ namespace AnalysisManagerProg
     /// <summary>
     /// Master processing class for analysis manager
     /// </summary>
-    public class clsMainProcess : clsLoggerBase
+    public class MainProcess : LoggerBase
     {
         // Ignore Spelling: dir, Lp, sid, Lewy, Fractestrecheck, smeagol
 
@@ -42,22 +42,22 @@ namespace AnalysisManagerProg
 
         #region "Member variables"
 
-        // clsAnalysisMgrSettings
+        // AnalysisMgrSettings
         private IMgrParams mMgrSettings;
 
-        private clsCleanupMgrErrors mMgrErrorCleanup;
+        private CleanupMgrErrors mMgrErrorCleanup;
         private readonly string mMgrExeName;
         private readonly string mMgrDirectoryPath;
         private string mWorkDirPath;
 
         private string mMgrName = "??";
 
-        // clsAnalysisJob
-        private clsAnalysisJob mAnalysisTask;
+        // AnalysisJob
+        private AnalysisJob mAnalysisTask;
 
-        private clsPluginLoader mPluginLoader;
+        private PluginLoader mPluginLoader;
 
-        private clsSummaryFile mSummaryFile;
+        private SummaryFile mSummaryFile;
         private FileSystemWatcher mConfigFileWatcher;
         private FileSystemWatcher mLocalSettingsFileWatcher;
 
@@ -65,9 +65,9 @@ namespace AnalysisManagerProg
 
         private bool mDMSProgramsSynchronized;
 
-        private clsStatusFile mStatusTools;
+        private StatusFile mStatusTools;
 
-        private clsMyEMSLUtilities mMyEMSLUtilities;
+        private MyEMSLUtilities mMyEMSLUtilities;
 
         private bool mNeedToAbortProcessing;
 
@@ -130,10 +130,10 @@ namespace AnalysisManagerProg
 
                 if (PushRemoteMgrFilesOnly)
                 {
-                    mAnalysisTask.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Job", "100");
-                    mAnalysisTask.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Step", "1");
-                    mAnalysisTask.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "StepTool", "Sync");
-                    mAnalysisTask.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_DATASET_NAME, "Placeholder");
+                    mAnalysisTask.AddAdditionalParameter(AnalysisJob.STEP_PARAMETERS_SECTION, "Job", "100");
+                    mAnalysisTask.AddAdditionalParameter(AnalysisJob.STEP_PARAMETERS_SECTION, "Step", "1");
+                    mAnalysisTask.AddAdditionalParameter(AnalysisJob.STEP_PARAMETERS_SECTION, "StepTool", "Sync");
+                    mAnalysisTask.AddAdditionalParameter(AnalysisJob.STEP_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_DATASET_NAME, "Placeholder");
 
                     var transferUtility = InitializeRemoteTransferUtility();
 
@@ -151,15 +151,15 @@ namespace AnalysisManagerProg
 
                 DoAnalysis();
 
-                ShowTrace("Exiting clsMainProcess.Main with error code = 0");
+                ShowTrace("Exiting MainProcess.Main with error code = 0");
                 return 0;
             }
             catch (Exception ex)
             {
                 // Report any exceptions not handled at a lower level to the console
                 var errMsg = "Critical exception starting application: " + ex.Message;
-                ShowTrace(errMsg + "; " + clsGlobal.GetExceptionStackTrace(ex, true));
-                ShowTrace("Exiting clsMainProcess.Main with error code = 1");
+                ShowTrace(errMsg + "; " + Global.GetExceptionStackTrace(ex, true));
+                ShowTrace("Exiting MainProcess.Main with error code = 1");
                 return 1;
             }
         }
@@ -167,11 +167,11 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Constructor
         /// </summary>
-        public clsMainProcess(CommandLineOptions options)
+        public MainProcess(CommandLineOptions options)
         {
             Options = options;
-            clsGlobal.TraceMode = options.TraceMode;
-            clsGlobal.TraceStopPoint = options.TraceStopPoint;
+            Global.TraceMode = options.TraceMode;
+            Global.TraceStopPoint = options.TraceStopPoint;
 
             TraceMode = options.TraceMode;
 
@@ -188,7 +188,7 @@ namespace AnalysisManagerProg
 
         private void CheckStopTrace(string currentTraceLocation)
         {
-            clsGlobal.CheckStopTrace(Options.TraceStopPoint, currentTraceLocation, Options.TraceMode);
+            Global.CheckStopTrace(Options.TraceStopPoint, currentTraceLocation, Options.TraceMode);
         }
 
         /// <summary>
@@ -203,13 +203,13 @@ namespace AnalysisManagerProg
 
             // Define the default logging info
             // This will get updated below
-            var baseLogFileName = clsGlobal.LinuxOS ? DEFAULT_BASE_LOGFILE_NAME.Replace('\\', '/') : DEFAULT_BASE_LOGFILE_NAME;
+            var baseLogFileName = Global.LinuxOS ? DEFAULT_BASE_LOGFILE_NAME.Replace('\\', '/') : DEFAULT_BASE_LOGFILE_NAME;
             LogTools.CreateFileLogger(baseLogFileName, BaseLogger.LogLevels.DEBUG);
 
             // Give the file logger a chance to zip old log files by year
             FileLogger.ArchiveOldLogFilesNow();
 
-            if (!clsGlobal.OfflineMode)
+            if (!Global.OfflineMode)
             {
                 // Create a database logger connected to DMS5
                 // Once the initial parameters have been successfully read,
@@ -238,7 +238,7 @@ namespace AnalysisManagerProg
                 LogTools.CreateDbLogger(defaultDmsConnectionString, "Analysis Tool Manager: " + hostName, TraceMode && ENABLE_LOGGER_TRACE_MODE);
             }
 
-            // Get the manager settings from the database or from ManagerSettingsLocal.xml if clsGlobal.OfflineMode is true
+            // Get the manager settings from the database or from ManagerSettingsLocal.xml if Global.OfflineMode is true
             // If you get an exception here while debugging in Visual Studio, be sure
             //   that "UsingDefaults" is set to False in AppName.exe.config
             try
@@ -256,7 +256,7 @@ namespace AnalysisManagerProg
                     // Load settings from config file AnalysisManagerProg.exe.config
                     var configFileSettings = LoadMgrSettingsFromFile();
 
-                    var settingsClass = (clsAnalysisMgrSettings)mMgrSettings;
+                    var settingsClass = (AnalysisMgrSettings)mMgrSettings;
                     if (settingsClass != null)
                     {
                         RegisterEvents(settingsClass);
@@ -286,15 +286,15 @@ namespace AnalysisManagerProg
                 }
                 catch (Exception ex)
                 {
-                    ConsoleMsgUtils.ShowError("Exception instantiating clsAnalysisMgrSettings", ex);
-                    clsGlobal.IdleLoop(0.5);
+                    ConsoleMsgUtils.ShowError("Exception instantiating AnalysisMgrSettings", ex);
+                    Global.IdleLoop(0.5);
                     return false;
                 }
             }
             catch (Exception ex)
             {
                 ConsoleMsgUtils.ShowError("Exception loading settings from AnalysisManagerProg.exe.config", ex);
-                clsGlobal.IdleLoop(0.5);
+                Global.IdleLoop(0.5);
                 return false;
             }
 
@@ -314,7 +314,7 @@ namespace AnalysisManagerProg
             // Set the LogLevel tracked by FileLogger to DEBUG so that all messages sent to the class are logged
             LogTools.CreateFileLogger(logFileNameBase, BaseLogger.LogLevels.DEBUG);
 
-            if (!clsGlobal.OfflineMode)
+            if (!Global.OfflineMode)
             {
                 var logCnStr = mMgrSettings.GetParam("ConnectionString");
 
@@ -347,18 +347,18 @@ namespace AnalysisManagerProg
             mConfigFileWatcher = CreateConfigFileWatcher(configFileName);
             mConfigFileWatcher.Changed += ConfigFileWatcher_Changed;
 
-            if (clsGlobal.OfflineMode)
+            if (Global.OfflineMode)
             {
                 CheckStopTrace("CreateConfigFileWatcher");
 
-                mLocalSettingsFileWatcher = CreateConfigFileWatcher(clsAnalysisMgrSettings.LOCAL_MANAGER_SETTINGS_FILE);
+                mLocalSettingsFileWatcher = CreateConfigFileWatcher(AnalysisMgrSettings.LOCAL_MANAGER_SETTINGS_FILE);
                 mLocalSettingsFileWatcher.Changed += ConfigFileWatcher_Changed;
             }
 
-            if (clsGlobal.LinuxOS)
+            if (Global.LinuxOS)
             {
                 // Make sure System.Data.SQLite.dll is correct for this OS
-                // Do this prior to initializing mAnalysisTask via new clsAnalysisJob
+                // Do this prior to initializing mAnalysisTask via new AnalysisJob
                 ValidateSQLiteDLL();
             }
 
@@ -381,13 +381,13 @@ namespace AnalysisManagerProg
             CheckStopTrace("CreateAnalysisTask");
 
             // Setup the tool for getting tasks
-            ShowTrace("Instantiate mAnalysisTask as new clsAnalysisJob");
-            mAnalysisTask = new clsAnalysisJob(mMgrSettings, mDebugLevel)
+            ShowTrace("Instantiate mAnalysisTask as new AnalysisJob");
+            mAnalysisTask = new AnalysisJob(mMgrSettings, mDebugLevel)
             {
                 TraceMode = TraceMode
             };
 
-            mWorkDirPath = mMgrSettings.GetParam(clsAnalysisMgrSettings.MGR_PARAM_WORK_DIR);
+            mWorkDirPath = mMgrSettings.GetParam(AnalysisMgrSettings.MGR_PARAM_WORK_DIR);
 
             LogTools.WorkDirPath = mWorkDirPath;
 
@@ -395,7 +395,7 @@ namespace AnalysisManagerProg
             ShowTrace("Setup the manager cleanup class");
 
             string mgrConfigDBConnectionString;
-            if (clsGlobal.OfflineMode)
+            if (Global.OfflineMode)
             {
                 mgrConfigDBConnectionString = string.Empty;
             }
@@ -405,18 +405,18 @@ namespace AnalysisManagerProg
                 mgrConfigDBConnectionString = mMgrSettings.GetParam(MgrSettings.MGR_PARAM_MGR_CFG_DB_CONN_STRING);
             }
 
-            mMgrErrorCleanup = new clsCleanupMgrErrors(mgrConfigDBConnectionString, mMgrName, mDebugLevel, mMgrDirectoryPath, mWorkDirPath, TraceMode);
+            mMgrErrorCleanup = new CleanupMgrErrors(mgrConfigDBConnectionString, mMgrName, mDebugLevel, mMgrDirectoryPath, mWorkDirPath, TraceMode);
 
             ShowTrace("Initialize the Summary file");
 
-            mSummaryFile = new clsSummaryFile();
+            mSummaryFile = new SummaryFile();
             mSummaryFile.Clear();
 
             ShowTrace("Initialize the Plugin Loader");
 
             CheckStopTrace("CreatePluginLoader");
 
-            mPluginLoader = new clsPluginLoader(mSummaryFile, mMgrDirectoryPath);
+            mPluginLoader = new PluginLoader(mSummaryFile, mMgrDirectoryPath);
             RegisterEvents(mPluginLoader);
 
             if (TraceMode)
@@ -443,12 +443,12 @@ namespace AnalysisManagerProg
         {
             try
             {
-                mMgrSettings = new clsAnalysisMgrSettings(mMgrDirectoryPath, TraceMode);
+                mMgrSettings = new AnalysisMgrSettings(mMgrDirectoryPath, TraceMode);
             }
             catch (Exception ex) when (!throwExceptions)
             {
-                ConsoleMsgUtils.ShowError("Exception instantiating clsAnalysisMgrSettings", ex);
-                clsGlobal.IdleLoop(0.5);
+                ConsoleMsgUtils.ShowError("Exception instantiating AnalysisMgrSettings", ex);
+                Global.IdleLoop(0.5);
             }
         }
 
@@ -457,7 +457,7 @@ namespace AnalysisManagerProg
         /// </summary>
         public void DoAnalysis()
         {
-            ShowTrace("Entering clsMainProcess.DoAnalysis");
+            ShowTrace("Entering MainProcess.DoAnalysis");
 
             var loopCount = 0;
             var tasksStartedCount = 0;
@@ -471,7 +471,7 @@ namespace AnalysisManagerProg
 
             try
             {
-                ShowTrace("Entering clsMainProcess.DoAnalysis Try/Catch block");
+                ShowTrace("Entering MainProcess.DoAnalysis Try/Catch block");
 
                 var maxLoopCount = mMgrSettings.GetParam("MaxRepetitions", 1);
                 var requestJobs = true;
@@ -522,7 +522,7 @@ namespace AnalysisManagerProg
                     }
 
                     // Check to see if manager is still active
-                    var mgrActive = mMgrSettings.GetParam(clsAnalysisMgrSettings.MGR_PARAM_MGR_ACTIVE, false);
+                    var mgrActive = mMgrSettings.GetParam(AnalysisMgrSettings.MGR_PARAM_MGR_ACTIVE, false);
                     var mgrActiveLocal = mMgrSettings.GetParam(MgrSettings.MGR_PARAM_MGR_ACTIVE_LOCAL, false);
 
                     if (!(mgrActive && mgrActiveLocal))
@@ -540,7 +540,7 @@ namespace AnalysisManagerProg
                         }
 
                         LogMessage("Manager inactive: " + managerDisableReason);
-                        clsGlobal.IdleLoop(0.75);
+                        Global.IdleLoop(0.75);
                         return;
                     }
 
@@ -567,7 +567,7 @@ namespace AnalysisManagerProg
                         {
                             if (oneTaskStarted)
                             {
-                                LogError("Error cleaning working directory, job " + mAnalysisTask.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Job") + "; see directory " + mWorkDirPath);
+                                LogError("Error cleaning working directory, job " + mAnalysisTask.GetParam(AnalysisJob.STEP_PARAMETERS_SECTION, "Job") + "; see directory " + mWorkDirPath);
                                 mAnalysisTask.CloseTask(CloseOutType.CLOSEOUT_FAILED, "Error cleaning working directory");
                             }
                             else
@@ -587,7 +587,7 @@ namespace AnalysisManagerProg
                     {
                         LogError("Flag file exists - unable to perform any further analysis jobs");
                         UpdateStatusFlagFileExists();
-                        clsGlobal.IdleLoop(1.5);
+                        Global.IdleLoop(1.5);
                         return;
                     }
 
@@ -615,7 +615,7 @@ namespace AnalysisManagerProg
                         {
                             // Working directory problem due to the most recently processed job
                             // Create ErrorDeletingFiles file and exit the program
-                            LogError("Working directory problem, creating " + clsCleanupMgrErrors.ERROR_DELETING_FILES_FILENAME + "; see directory " + mWorkDirPath);
+                            LogError("Working directory problem, creating " + CleanupMgrErrors.ERROR_DELETING_FILES_FILENAME + "; see directory " + mWorkDirPath);
                             mMgrErrorCleanup.CreateErrorDeletingFilesFlagFile();
                             UpdateStatusIdle("Working directory not empty");
                         }
@@ -629,7 +629,7 @@ namespace AnalysisManagerProg
                         break;
                     }
 
-                    if (!clsGlobal.LinuxOS)
+                    if (!Global.LinuxOS)
                     {
                         CheckStopTrace("CheckPendingUpdates");
 
@@ -642,7 +642,7 @@ namespace AnalysisManagerProg
                         }
                     }
 
-                    if (clsGlobal.OfflineMode)
+                    if (Global.OfflineMode)
                     {
                         ShowTrace("Looking for an available offline task in the task queue directory");
                     }
@@ -656,7 +656,7 @@ namespace AnalysisManagerProg
                     // Re-initialize these utilities for each analysis job
                     // Note that when RetrieveResources is called, the MyEMSL certificate file (svc-dms.pfx) will be verified to exist
                     // (via GetSharedResources calling CertificateFileExists)
-                    mMyEMSLUtilities = new clsMyEMSLUtilities(mDebugLevel, mWorkDirPath, TraceMode);
+                    mMyEMSLUtilities = new MyEMSLUtilities(mDebugLevel, mWorkDirPath, TraceMode);
                     RegisterEvents(mMyEMSLUtilities);
 
                     CheckStopTrace("RequestTask");
@@ -666,7 +666,7 @@ namespace AnalysisManagerProg
 
                     switch (taskReturn)
                     {
-                        case clsDBTask.RequestTaskResult.NoTaskFound:
+                        case DBTask.RequestTaskResult.NoTaskFound:
                             ShowTrace("No tasks found for " + mMgrName);
 
                             // No tasks found
@@ -678,7 +678,7 @@ namespace AnalysisManagerProg
                             criticalMgrErrorCount = 0;
                             break;
 
-                        case clsDBTask.RequestTaskResult.ResultError:
+                        case DBTask.RequestTaskResult.ResultError:
                             ShowTrace("Error requesting a task for " + mMgrName);
 
                             // There was a problem getting the task; errors were logged by RequestTaskResult
@@ -689,7 +689,7 @@ namespace AnalysisManagerProg
 
                             break;
 
-                        case clsDBTask.RequestTaskResult.TaskFound:
+                        case DBTask.RequestTaskResult.TaskFound:
 
                             ShowTrace("Task found for " + mMgrName);
 
@@ -707,7 +707,7 @@ namespace AnalysisManagerProg
                                 {
                                     // Restore the work dir path
                                     mWorkDirPath = string.Copy(defaultManagerWorkDir);
-                                    mMgrSettings.SetParam(clsAnalysisMgrSettings.MGR_PARAM_WORK_DIR, mWorkDirPath);
+                                    mMgrSettings.SetParam(AnalysisMgrSettings.MGR_PARAM_WORK_DIR, mWorkDirPath);
                                 }
 
                                 if (resultCode == CloseOutType.CLOSEOUT_SUCCESS)
@@ -738,7 +738,7 @@ namespace AnalysisManagerProg
                                 // Something went wrong; errors likely were not logged by DoAnalysisJob
 
                                 LogError("Exception thrown by DoAnalysisJob", ex);
-                                mStatusTools.UpdateIdle("Error encountered", "clsMainProcess.DoAnalysis(): " + ex.Message, mMostRecentJobInfo, true);
+                                mStatusTools.UpdateIdle("Error encountered", "MainProcess.DoAnalysis(): " + ex.Message, mMostRecentJobInfo, true);
 
                                 // Set the job state to failed
                                 mAnalysisTask.CloseTask(CloseOutType.CLOSEOUT_FAILED, "Exception thrown by DoAnalysisJob");
@@ -748,7 +748,7 @@ namespace AnalysisManagerProg
                             }
                             break;
 
-                        case clsDBTask.RequestTaskResult.TooManyRetries:
+                        case DBTask.RequestTaskResult.TooManyRetries:
                             ShowTrace("Too many retries calling the stored procedure");
 
                             // There were too many retries calling the stored procedure; errors were logged by RequestTaskResult
@@ -757,7 +757,7 @@ namespace AnalysisManagerProg
                             loopCount = maxLoopCount;
                             break;
 
-                        case clsDBTask.RequestTaskResult.Deadlock:
+                        case DBTask.RequestTaskResult.Deadlock:
 
                             ShowTrace("Deadlock");
 
@@ -808,7 +808,7 @@ namespace AnalysisManagerProg
                         if (tasksStartedCount > 0)
                         {
                             LogWarning("Error deleting file with an open file handle; closing manager. Jobs processed: " + tasksStartedCount.ToString());
-                            clsGlobal.IdleLoop(1.5);
+                            Global.IdleLoop(1.5);
                         }
                     }
                     else
@@ -837,14 +837,14 @@ namespace AnalysisManagerProg
             catch (Exception ex)
             {
                 LogError("Exception in DoAnalysis", ex);
-                mStatusTools.UpdateIdle("Error encountered", "clsMainProcess.DoAnalysis(): " + ex.Message, mMostRecentJobInfo, true);
+                mStatusTools.UpdateIdle("Error encountered", "MainProcess.DoAnalysis(): " + ex.Message, mMostRecentJobInfo, true);
             }
             finally
             {
                 if (mStatusTools != null)
                 {
                     // Wait 1 second to give the message queue time to flush
-                    clsGlobal.IdleLoop(1);
+                    Global.IdleLoop(1);
 
                     CheckStopTrace("DisposeMessageQueue");
 
@@ -861,22 +861,22 @@ namespace AnalysisManagerProg
         /// <returns>Tool resourcer or tool runner result code</returns>
         private CloseOutType DoAnalysisJob(out bool runningRemote)
         {
-            var jobNum = mAnalysisTask.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Job", 0);
-            var stepNum = mAnalysisTask.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Step", 0);
-            var cpuLoadExpected = mAnalysisTask.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "CPU_Load", 1);
+            var jobNum = mAnalysisTask.GetJobParameter(AnalysisJob.STEP_PARAMETERS_SECTION, "Job", 0);
+            var stepNum = mAnalysisTask.GetJobParameter(AnalysisJob.STEP_PARAMETERS_SECTION, "Step", 0);
+            var cpuLoadExpected = mAnalysisTask.GetJobParameter(AnalysisJob.STEP_PARAMETERS_SECTION, "CPU_Load", 1);
 
-            var datasetName = mAnalysisTask.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_DATASET_NAME);
+            var datasetName = mAnalysisTask.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_DATASET_NAME);
             var jobToolDescription = mAnalysisTask.GetCurrentJobToolDescription();
 
             var runJobsRemotely = mMgrSettings.GetParam("RunJobsRemotely", false);
-            var runningRemoteFlag = mAnalysisTask.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "RunningRemote", 0);
+            var runningRemoteFlag = mAnalysisTask.GetJobParameter(AnalysisJob.STEP_PARAMETERS_SECTION, "RunningRemote", 0);
             runningRemote = runningRemoteFlag > 0;
 
-            if (clsGlobal.OfflineMode)
+            if (Global.OfflineMode)
             {
                 // Update the working directory path to match the current task
-                // This manager setting was updated by SelectOfflineJobInfoFile in clsAnalysisJob
-                mWorkDirPath = mMgrSettings.GetParam(clsAnalysisMgrSettings.MGR_PARAM_WORK_DIR);
+                // This manager setting was updated by SelectOfflineJobInfoFile in AnalysisJob
+                mWorkDirPath = mMgrSettings.GetParam(AnalysisMgrSettings.MGR_PARAM_WORK_DIR);
             }
 
             ShowTrace("Processing job " + jobNum + ", " + jobToolDescription);
@@ -891,7 +891,7 @@ namespace AnalysisManagerProg
 
             // Update the cached most recent job info
             mMostRecentJobInfo = ConstructMostRecentJobInfoText(
-                DateTime.Now.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT),
+                DateTime.Now.ToString(AnalysisToolRunnerBase.DATE_TIME_FORMAT),
                 jobNum, datasetName, jobToolDescription);
 
             mStatusTools.TaskStartTime = DateTime.UtcNow;
@@ -904,9 +904,9 @@ namespace AnalysisManagerProg
             mStatusTools.ProgRunnerProcessID = 0;
             mStatusTools.ProgRunnerCoreUsage = cpuLoadExpected;
 
-            if (clsGlobal.OfflineMode)
+            if (Global.OfflineMode)
             {
-                mStatusTools.OfflineJobStatusFilePath = clsRemoteTransferUtility.GetOfflineJobStatusFilePath(mMgrSettings, mAnalysisTask);
+                mStatusTools.OfflineJobStatusFilePath = RemoteTransferUtility.GetOfflineJobStatusFilePath(mMgrSettings, mAnalysisTask);
             }
 
             mStatusTools.UpdateAndWrite(
@@ -919,7 +919,7 @@ namespace AnalysisManagerProg
             var processID = Process.GetCurrentProcess().Id;
 
             // Note: The format of the following text is important; be careful about changing it
-            // In particular, function DetermineRecentErrorMessages in clsMainProcess looks for log entries
+            // In particular, function DetermineRecentErrorMessages in MainProcess looks for log entries
             //   matching RegEx: "^([^,]+),.+Started analysis job (\d+), Dataset (.+), Tool ([^,]+)"
 
             // Example log entries
@@ -983,13 +983,13 @@ namespace AnalysisManagerProg
             // Possibly disable MyEMSL
             if (DisableMyEMSL)
             {
-                toolResourcer.SetOption(clsGlobal.eAnalysisResourceOptions.MyEMSLSearchDisabled, true);
+                toolResourcer.SetOption(Global.eAnalysisResourceOptions.MyEMSLSearchDisabled, true);
             }
 
             bool success;
             bool jobSucceeded;
 
-            clsRemoteMonitor remoteMonitor;
+            RemoteMonitor remoteMonitor;
 
             // Retrieve files required for the job
             mMgrErrorCleanup.CreateStatusFlagFile();
@@ -1001,7 +1001,7 @@ namespace AnalysisManagerProg
                 // If completed (success or fail), retrieve the results
                 success = CheckRemoteJobStatus(toolRunner, out resultCode, out remoteMonitor);
 
-                jobSucceeded = success && clsAnalysisJob.SuccessOrNoData(resultCode);
+                jobSucceeded = success && AnalysisJob.SuccessOrNoData(resultCode);
             }
             else
             {
@@ -1119,7 +1119,7 @@ namespace AnalysisManagerProg
             catch (Exception ex)
             {
                 LogError("Exception closing task after a normal run", ex);
-                mStatusTools.UpdateIdle("Error encountered", "clsMainProcess.DoAnalysisJob(): " + ex.Message, mMostRecentJobInfo, true);
+                mStatusTools.UpdateIdle("Error encountered", "MainProcess.DoAnalysisJob(): " + ex.Message, mMostRecentJobInfo, true);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
         }
@@ -1127,13 +1127,13 @@ namespace AnalysisManagerProg
         private bool CheckRemoteJobStatus(
             IToolRunner toolRunner,
             out CloseOutType resultCode,
-            out clsRemoteMonitor remoteMonitor)
+            out RemoteMonitor remoteMonitor)
         {
             try
             {
-                LogDebug("Instantiating clsRemoteMonitor to check remote job status");
+                LogDebug("Instantiating RemoteMonitor to check remote job status");
 
-                remoteMonitor = new clsRemoteMonitor(mMgrSettings, mAnalysisTask, toolRunner, mStatusTools);
+                remoteMonitor = new RemoteMonitor(mMgrSettings, mAnalysisTask, toolRunner, mStatusTools);
                 RegisterEvents(remoteMonitor);
 
                 remoteMonitor.StaleJobStatusFileEvent += RemoteMonitor_StaleJobStatusFileEvent;
@@ -1154,23 +1154,23 @@ namespace AnalysisManagerProg
 
                 switch (eJobStatus)
                 {
-                    case clsRemoteMonitor.EnumRemoteJobStatus.Undefined:
-                        LogError(clsGlobal.AppendToComment("Undefined remote job status; check the logs", remoteMonitor.Message));
+                    case RemoteMonitor.EnumRemoteJobStatus.Undefined:
+                        LogError(Global.AppendToComment("Undefined remote job status; check the logs", remoteMonitor.Message));
 
                         resultCode = CloseOutType.CLOSEOUT_RUNNING_REMOTE;
                         return true;
 
-                    case clsRemoteMonitor.EnumRemoteJobStatus.Unstarted:
+                    case RemoteMonitor.EnumRemoteJobStatus.Unstarted:
                         LogDebug("Remote job has not yet started", 2);
                         resultCode = CloseOutType.CLOSEOUT_RUNNING_REMOTE;
                         return true;
 
-                    case clsRemoteMonitor.EnumRemoteJobStatus.Running:
+                    case RemoteMonitor.EnumRemoteJobStatus.Running:
                         LogDebug(string.Format("Remote job is running, {0:F1}% complete", remoteMonitor.RemoteProgress), 2);
                         resultCode = CloseOutType.CLOSEOUT_RUNNING_REMOTE;
                         return true;
 
-                    case clsRemoteMonitor.EnumRemoteJobStatus.Success:
+                    case RemoteMonitor.EnumRemoteJobStatus.Success:
 
                         var success = HandleRemoteJobSuccess(toolRunner, remoteMonitor, out resultCode);
                         if (!success)
@@ -1180,7 +1180,7 @@ namespace AnalysisManagerProg
                         }
                         return success;
 
-                    case clsRemoteMonitor.EnumRemoteJobStatus.Failed:
+                    case RemoteMonitor.EnumRemoteJobStatus.Failed:
 
                         HandleRemoteJobFailure(toolRunner, remoteMonitor, out resultCode);
                         mAnalysisTask.CloseTask(resultCode, mMostRecentErrorMessage, toolRunner);
@@ -1188,7 +1188,7 @@ namespace AnalysisManagerProg
 
                     default:
                         mMostRecentErrorMessage = "Unrecognized remote job status: " + eJobStatus;
-                        LogError(clsGlobal.AppendToComment(mMostRecentErrorMessage, remoteMonitor.Message));
+                        LogError(Global.AppendToComment(mMostRecentErrorMessage, remoteMonitor.Message));
 
                         resultCode = CloseOutType.CLOSEOUT_FAILED_REMOTE;
                         return false;
@@ -1202,7 +1202,7 @@ namespace AnalysisManagerProg
             }
         }
 
-        private bool CleanupAfterJob(bool deleteRemoteJobFiles, clsRemoteMonitor remoteMonitor)
+        private bool CleanupAfterJob(bool deleteRemoteJobFiles, RemoteMonitor remoteMonitor)
         {
             try
             {
@@ -1219,7 +1219,7 @@ namespace AnalysisManagerProg
                     // If there was a problem deleting non result files, return success and let the manager try to delete the files one more time on the next start up
                     // However, wait another 5 seconds before continuing
                     ProgRunner.GarbageCollectNow();
-                    clsGlobal.IdleLoop(5);
+                    Global.IdleLoop(5);
 
                     return true;
                 }
@@ -1229,7 +1229,7 @@ namespace AnalysisManagerProg
                 {
                     if (!mMgrErrorCleanup.CleanWorkDir(1))
                     {
-                        LogError("Error cleaning working directory, job " + mAnalysisTask.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Job"));
+                        LogError("Error cleaning working directory, job " + mAnalysisTask.GetParam(AnalysisJob.STEP_PARAMETERS_SECTION, "Job"));
                         mAnalysisTask.CloseTask(CloseOutType.CLOSEOUT_FAILED, "Error cleaning working directory");
                         mMgrErrorCleanup.CreateErrorDeletingFilesFlagFile();
                         return false;
@@ -1238,7 +1238,7 @@ namespace AnalysisManagerProg
                 catch (Exception ex)
                 {
                     LogError("Exception cleaning work directory after normal run", ex);
-                    mStatusTools.UpdateIdle("Error encountered", "clsMainProcess.CleanupAfterJob(): " + ex.Message, mMostRecentJobInfo, true);
+                    mStatusTools.UpdateIdle("Error encountered", "MainProcess.CleanupAfterJob(): " + ex.Message, mMostRecentJobInfo, true);
                     return false;
                 }
 
@@ -1253,7 +1253,7 @@ namespace AnalysisManagerProg
             catch (Exception ex)
             {
                 LogError("Exception in CleanupAfterJob", ex);
-                mStatusTools.UpdateIdle("Error encountered", "clsMainProcess.CleanupAfterJob(): " + ex.Message, mMostRecentJobInfo, true);
+                mStatusTools.UpdateIdle("Error encountered", "MainProcess.CleanupAfterJob(): " + ex.Message, mMostRecentJobInfo, true);
                 return false;
             }
         }
@@ -1302,7 +1302,7 @@ namespace AnalysisManagerProg
 
         private bool DataPackageIdMissing()
         {
-            var stepToolName = mAnalysisTask.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "StepTool");
+            var stepToolName = mAnalysisTask.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, "StepTool");
 
             var multiJobStepTools = new SortedSet<string> {
             "APE",
@@ -1321,7 +1321,7 @@ namespace AnalysisManagerProg
 
             if (dataPkgRequired)
             {
-                var dataPkgID = mAnalysisTask.GetJobParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DataPackageID", 0);
+                var dataPkgID = mAnalysisTask.GetJobParameter(AnalysisJob.JOB_PARAMETERS_SECTION, "DataPackageID", 0);
                 if (dataPkgID <= 0)
                 {
                     // The data package ID is 0 or missing
@@ -1684,7 +1684,7 @@ namespace AnalysisManagerProg
         /// <remarks>When offline, does not contact any databases or remote shares</remarks>
         public static void EnableOfflineMode(bool runningLinux = true)
         {
-            clsGlobal.EnableOfflineMode(runningLinux);
+            Global.EnableOfflineMode(runningLinux);
         }
 
         private string GetBaseLogFileName()
@@ -1699,7 +1699,7 @@ namespace AnalysisManagerProg
         public static string GetBaseLogFileName(IMgrParams mgrParams)
         {
             var logFileNameBase = mgrParams.GetParam("LogFileName", DEFAULT_BASE_LOGFILE_NAME);
-            return clsGlobal.LinuxOS ? logFileNameBase.Replace('\\', '/') : logFileNameBase;
+            return Global.LinuxOS ? logFileNameBase.Replace('\\', '/') : logFileNameBase;
         }
 
         private string GetRecentLogFilename()
@@ -1761,16 +1761,16 @@ namespace AnalysisManagerProg
             return string.Empty;
         }
 
-        private clsCleanupMgrErrors.eCleanupModeConstants GetManagerErrorCleanupMode()
+        private CleanupMgrErrors.eCleanupModeConstants GetManagerErrorCleanupMode()
         {
             var managerErrorCleanupMode = mMgrSettings.GetParam("ManagerErrorCleanupMode", "0");
 
             return managerErrorCleanupMode.Trim() switch
             {
-                "0" => clsCleanupMgrErrors.eCleanupModeConstants.Disabled,
-                "1" => clsCleanupMgrErrors.eCleanupModeConstants.CleanupOnce,
-                "2" => clsCleanupMgrErrors.eCleanupModeConstants.CleanupAlways,
-                _ => clsCleanupMgrErrors.eCleanupModeConstants.Disabled
+                "0" => CleanupMgrErrors.eCleanupModeConstants.Disabled,
+                "1" => CleanupMgrErrors.eCleanupModeConstants.CleanupOnce,
+                "2" => CleanupMgrErrors.eCleanupModeConstants.CleanupAlways,
+                _ => CleanupMgrErrors.eCleanupModeConstants.Disabled
             };
         }
 
@@ -1815,12 +1815,12 @@ namespace AnalysisManagerProg
             catch (Exception ex)
             {
                 LogError("Exception in cleaning up after RunTool error", ex);
-                mStatusTools.UpdateIdle("Error encountered", "clsMainProcess.HandleJobFailure(): " + ex.Message, mMostRecentJobInfo, true);
+                mStatusTools.UpdateIdle("Error encountered", "MainProcess.HandleJobFailure(): " + ex.Message, mMostRecentJobInfo, true);
                 return false;
             }
         }
 
-        private void HandleRemoteJobFailure(IToolRunner toolRunner, clsRemoteMonitor remoteMonitor, out CloseOutType resultCode)
+        private void HandleRemoteJobFailure(IToolRunner toolRunner, RemoteMonitor remoteMonitor, out CloseOutType resultCode)
         {
             // Job failed
             // Parse the .fail file to read the result codes and messages (the file was already retrieved by GetRemoteJobStatus, if it existed)
@@ -1850,7 +1850,7 @@ namespace AnalysisManagerProg
             if (string.IsNullOrWhiteSpace(mMostRecentErrorMessage))
                 mMostRecentErrorMessage = "Remote job failed: " + resultCode;
 
-            LogError(clsGlobal.AppendToComment(mMostRecentErrorMessage, remoteMonitor.Message));
+            LogError(Global.AppendToComment(mMostRecentErrorMessage, remoteMonitor.Message));
 
             // Retrieve result files then store in the DMS_FailedResults directory
 
@@ -1864,7 +1864,7 @@ namespace AnalysisManagerProg
             resultCode = CloseOutType.CLOSEOUT_FAILED_REMOTE;
         }
 
-        private bool HandleRemoteJobSuccess(IToolRunner toolRunner, clsRemoteMonitor remoteMonitor, out CloseOutType resultCode)
+        private bool HandleRemoteJobSuccess(IToolRunner toolRunner, RemoteMonitor remoteMonitor, out CloseOutType resultCode)
         {
             // Job succeeded
             // Parse the .success file to read the result codes and messages (the file was already retrieved by GetRemoteJobStatus()
@@ -1898,12 +1898,12 @@ namespace AnalysisManagerProg
             }
 
             var postProcessResult = toolRunner.PostProcessRemoteResults();
-            if (!clsAnalysisJob.SuccessOrNoData(postProcessResult))
+            if (!AnalysisJob.SuccessOrNoData(postProcessResult))
             {
                 resultCode = postProcessResult;
             }
 
-            if (!clsAnalysisJob.SuccessOrNoData(resultCode))
+            if (!AnalysisJob.SuccessOrNoData(resultCode))
             {
                 toolRunner.CopyFailedResultsToArchiveDirectory();
                 return false;
@@ -1927,9 +1927,9 @@ namespace AnalysisManagerProg
         /// Initialize the remote transfer utility
         /// Used by RunJobRemotely and when PushFilesToRemoteHost is true
         /// </summary>
-        private clsRemoteTransferUtility InitializeRemoteTransferUtility()
+        private RemoteTransferUtility InitializeRemoteTransferUtility()
         {
-            var transferUtility = new clsRemoteTransferUtility(mMgrSettings, mAnalysisTask);
+            var transferUtility = new RemoteTransferUtility(mMgrSettings, mAnalysisTask);
             RegisterEvents(transferUtility);
 
             try
@@ -1957,7 +1957,7 @@ namespace AnalysisManagerProg
 
             ShowTrace("Initialize mStatusTools using " + statusFileLoc);
 
-            mStatusTools = new clsStatusFile(statusFileLoc, mDebugLevel)
+            mStatusTools = new StatusFile(statusFileLoc, mDebugLevel)
             {
                 TaskStartTime = DateTime.UtcNow,
                 Dataset = string.Empty,
@@ -1985,7 +1985,7 @@ namespace AnalysisManagerProg
         /// Loads the initial settings from application config file AnalysisManagerProg.exe.config
         /// </summary>
         /// <returns>String dictionary containing initial settings if successful; null on error</returns>
-        /// <remarks>This method is public because clsCodeTest uses it</remarks>
+        /// <remarks>This method is public because CodeTest uses it</remarks>
         public Dictionary<string, string> LoadMgrSettingsFromFile()
         {
             // Note: When you are editing this project using the Visual Studio IDE, if you edit the values
@@ -2043,9 +2043,9 @@ namespace AnalysisManagerProg
 
             // Default connection string for logging errors to the database
             // Will get updated later when manager settings are loaded from the manager control database
-            if (!mgrSettings.ContainsKey(clsAnalysisMgrSettings.MGR_PARAM_DEFAULT_DMS_CONN_STRING))
+            if (!mgrSettings.ContainsKey(AnalysisMgrSettings.MGR_PARAM_DEFAULT_DMS_CONN_STRING))
             {
-                mgrSettings.Add(clsAnalysisMgrSettings.MGR_PARAM_DEFAULT_DMS_CONN_STRING, Properties.Settings.Default.DefaultDMSConnString);
+                mgrSettings.Add(AnalysisMgrSettings.MGR_PARAM_DEFAULT_DMS_CONN_STRING, Properties.Settings.Default.DefaultDMSConnString);
             }
 
             if (TraceMode)
@@ -2071,7 +2071,7 @@ namespace AnalysisManagerProg
             if (!mStatusTools.AbortProcessingNow)
                 return false;
 
-            LogError("Found file " + clsStatusFile.ABORT_PROCESSING_NOW_FILENAME + " - aborting processing");
+            LogError("Found file " + StatusFile.ABORT_PROCESSING_NOW_FILENAME + " - aborting processing");
             return true;
         }
 
@@ -2129,7 +2129,7 @@ namespace AnalysisManagerProg
             {
                 Dictionary<string, DateTime> cachedMessages;
 
-                var messageCacheFile = new FileInfo(Path.Combine(clsGlobal.GetAppDirectoryPath(), PERIODIC_LOG_FILE));
+                var messageCacheFile = new FileInfo(Path.Combine(Global.GetAppDirectoryPath(), PERIODIC_LOG_FILE));
 
                 if (messageCacheFile.Exists)
                 {
@@ -2163,7 +2163,7 @@ namespace AnalysisManagerProg
 
                 foreach (var message in cachedMessages)
                 {
-                    writer.WriteLine("{0}\t{1}", message.Value.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT), message.Key);
+                    writer.WriteLine("{0}\t{1}", message.Value.ToString(AnalysisToolRunnerBase.DATE_TIME_FORMAT), message.Key);
                 }
             }
             catch (Exception ex)
@@ -2172,7 +2172,7 @@ namespace AnalysisManagerProg
             }
         }
 
-        private bool ParseStatusResultFile(clsRemoteMonitor remoteMonitor, string jobResultFilePath, out CloseOutType resultCode, out string completionMessage)
+        private bool ParseStatusResultFile(RemoteMonitor remoteMonitor, string jobResultFilePath, out CloseOutType resultCode, out string completionMessage)
         {
             var statusParsed = remoteMonitor.ParseStatusResultFile(
                 jobResultFilePath,
@@ -2182,16 +2182,16 @@ namespace AnalysisManagerProg
             if (remoteStart > DateTime.MinValue)
             {
                 // Store the remote start time, using format code "{0:O}" to format as "2018-04-17T10:30:59.0000000"
-                mAnalysisTask.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION,
-                                                      clsRemoteTransferUtility.STEP_PARAM_REMOTE_START,
+                mAnalysisTask.AddAdditionalParameter(AnalysisJob.STEP_PARAMETERS_SECTION,
+                                                      RemoteTransferUtility.STEP_PARAM_REMOTE_START,
                                                       string.Format("{0:O}", remoteStart));
             }
 
             if (remoteFinish > DateTime.MinValue)
             {
                 // Store the remote finish time, using format code "{0:O}" to format as "2018-04-17T10:30:59.0000000"
-                mAnalysisTask.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION,
-                                                      clsRemoteTransferUtility.STEP_PARAM_REMOTE_FINISH,
+                mAnalysisTask.AddAdditionalParameter(AnalysisJob.STEP_PARAMETERS_SECTION,
+                                                      RemoteTransferUtility.STEP_PARAM_REMOTE_FINISH,
                                                       string.Format("{0:O}", remoteFinish));
             }
 
@@ -2225,7 +2225,7 @@ namespace AnalysisManagerProg
                 ShowTrace("Storing manager settings in mMgrSettings");
 
                 // Store the new settings then retrieve updated settings from the database
-                // or from ManagerSettingsLocal.xml if clsGlobal.OfflineMode is true
+                // or from ManagerSettingsLocal.xml if Global.OfflineMode is true
                 if (mMgrSettings.LoadSettings(configFileSettings))
                     return true;
 
@@ -2342,7 +2342,7 @@ namespace AnalysisManagerProg
                     compMsg = string.IsNullOrWhiteSpace(toolResourcer.Message) ? resultCode.ToString() : toolResourcer.Message;
                     errorProcessing = true;
                     mMostRecentErrorMessage = statusMessage;
-                    LogError(mMgrName + ": " + clsGlobal.AppendToComment(mMostRecentErrorMessage, toolResourcer.Message) + ", Job " + jobNum + ", Dataset " + datasetName);
+                    LogError(mMgrName + ": " + Global.AppendToComment(mMostRecentErrorMessage, toolResourcer.Message) + ", Job " + jobNum + ", Dataset " + datasetName);
                 }
 
                 mAnalysisTask.CloseTask(resultCode, compMsg);
@@ -2373,7 +2373,7 @@ namespace AnalysisManagerProg
                     mMgrErrorCleanup.CreateErrorDeletingFilesFlagFile();
                 }
 
-                mStatusTools.UpdateIdle("Error encountered", "clsMainProcess.RetrieveResources(): " + ex.Message, mMostRecentJobInfo, true);
+                mStatusTools.UpdateIdle("Error encountered", "MainProcess.RetrieveResources(): " + ex.Message, mMostRecentJobInfo, true);
                 return false;
             }
         }
@@ -2424,7 +2424,7 @@ namespace AnalysisManagerProg
                         mNeedToAbortProcessing = true;
                     }
 
-                    if (mNeedToAbortProcessing && mMostRecentErrorMessage.StartsWith(clsAnalysisToolRunnerBase.PVM_RESET_ERROR_MESSAGE))
+                    if (mNeedToAbortProcessing && mMostRecentErrorMessage.StartsWith(AnalysisToolRunnerBase.PVM_RESET_ERROR_MESSAGE))
                     {
                         DisableManagerLocally();
                     }
@@ -2465,7 +2465,7 @@ namespace AnalysisManagerProg
         {
             try
             {
-                ShowTrace("Instantiating clsRemoteTransferUtility");
+                ShowTrace("Instantiating RemoteTransferUtility");
 
                 var transferUtility = InitializeRemoteTransferUtility();
 
@@ -2696,7 +2696,7 @@ namespace AnalysisManagerProg
             catch (Exception ex)
             {
                 LogError("Error calling AutoCleanupManagerErrors", ex);
-                mStatusTools.UpdateIdle("Error encountered", "clsMainProcess.StatusFlagFileError(): " + ex.Message, mMostRecentJobInfo, true);
+                mStatusTools.UpdateIdle("Error encountered", "MainProcess.StatusFlagFileError(): " + ex.Message, mMostRecentJobInfo, true);
 
                 mgrCleanupSuccess = false;
             }
@@ -2805,7 +2805,7 @@ namespace AnalysisManagerProg
             mStatusTools.UpdateIdle(managerIdleMessage, recentErrorMessages, mMostRecentJobInfo, true);
         }
 
-        private void UpdateStatusToolLoggingSettings(clsStatusFile statusFile)
+        private void UpdateStatusToolLoggingSettings(StatusFile statusFile)
         {
             var logMemoryUsage = mMgrSettings.GetParam("LogMemoryUsage", false);
             float minimumMemoryUsageLogInterval = mMgrSettings.GetParam("MinimumMemoryUsageLogInterval", 1);
@@ -2853,7 +2853,7 @@ namespace AnalysisManagerProg
 
             try
             {
-                var stepToolNameLCase = mAnalysisTask.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "StepTool").ToLower();
+                var stepToolNameLCase = mAnalysisTask.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, "StepTool").ToLower();
 
                 if (stepToolNameLCase == "results_transfer")
                 {
@@ -2887,10 +2887,10 @@ namespace AnalysisManagerProg
 
                 var workingDirMinFreeSpaceMB = mMgrSettings.GetParam("WorkDirMinFreeSpaceMB", DEFAULT_WORKING_DIR_MIN_FREE_SPACE_MB);
 
-                var transferDir = mAnalysisTask.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH);
+                var transferDir = mAnalysisTask.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH);
                 var transferDirMinFreeSpaceGB = mMgrSettings.GetParam("TransferDirMinFreeSpaceGB", DEFAULT_TRANSFER_DIR_MIN_FREE_SPACE_GB);
 
-                var orgDbDir = mMgrSettings.GetParam(clsAnalysisResources.MGR_PARAM_ORG_DB_DIR);
+                var orgDbDir = mMgrSettings.GetParam(AnalysisResources.MGR_PARAM_ORG_DB_DIR);
                 var orgDbDirMinFreeSpaceMB = mMgrSettings.GetParam("OrgDBDirMinFreeSpaceMB", DEFAULT_ORG_DB_DIR_MIN_FREE_SPACE_MB);
 
                 ShowTrace("Validating free space for the working directory: " + mWorkDirPath);
@@ -2903,7 +2903,7 @@ namespace AnalysisManagerProg
                     return false;
                 }
 
-                if (!clsGlobal.OfflineMode)
+                if (!Global.OfflineMode)
                 {
                     if (string.IsNullOrEmpty(transferDir))
                     {
@@ -2927,7 +2927,7 @@ namespace AnalysisManagerProg
                     }
                 }
 
-                var orgDbRequired = toolResourcer.GetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired);
+                var orgDbRequired = toolResourcer.GetOption(Global.eAnalysisResourceOptions.OrgDbRequired);
 
                 if (orgDbRequired)
                 {
@@ -2958,12 +2958,12 @@ namespace AnalysisManagerProg
             out string errorMessage,
             bool logToDatabase = false)
         {
-            return clsGlobal.ValidateFreeDiskSpace(directoryDescription, directoryPath, minFreeSpaceMB, out errorMessage, logToDatabase);
+            return Global.ValidateFreeDiskSpace(directoryDescription, directoryPath, minFreeSpaceMB, out errorMessage, logToDatabase);
         }
 
         /// <summary>
         /// Validate the SQLite DLL and interop.so file
-        /// (only called if clsGlobal.LinuxOS is true)
+        /// (only called if Global.LinuxOS is true)
         /// </summary>
         /// <remarks>
         /// Looks for subdirectories named SQLite_1.0.108
@@ -3110,7 +3110,7 @@ namespace AnalysisManagerProg
                 // It is likely left over from a previous job that never actually started
                 var firstFile = workDirFiles.First();
 
-                if (firstFile.Name.StartsWith(clsGlobal.JOB_PARAMETERS_FILE_PREFIX, StringComparison.OrdinalIgnoreCase) &&
+                if (firstFile.Name.StartsWith(Global.JOB_PARAMETERS_FILE_PREFIX, StringComparison.OrdinalIgnoreCase) &&
                     string.Equals(Path.GetExtension(firstFile.Name), ".xml", StringComparison.OrdinalIgnoreCase))
                 {
                     try
@@ -3154,7 +3154,7 @@ namespace AnalysisManagerProg
             if (!Directory.Exists(mWorkDirPath))
             {
                 LogError("Invalid working directory: " + mWorkDirPath);
-                clsGlobal.IdleLoop(1.5);
+                Global.IdleLoop(1.5);
                 return false;
             }
 

@@ -22,7 +22,7 @@ namespace AnalysisManagerMzRefineryPlugIn
     /// Class for running Mz Refinery to recalibrate m/z values in a .mzXML or .mzML file
     /// </summary>
     // ReSharper disable once UnusedMember.Global
-    public class clsAnalysisToolRunnerMzRefinery : clsAnalysisToolRunnerBase
+    public class AnalysisToolRunnerMzRefinery : AnalysisToolRunnerBase
     {
         // ReSharper disable CommentTypo
         // Ignore Spelling: Dta, Utils, endian, modplus, Xmx, conf, Cyanothece, Cyano, Caulo, Prepend, cv, outfile, identfile, indexedmzML
@@ -86,7 +86,7 @@ namespace AnalysisManagerMzRefineryPlugIn
         /// Command runner for MS-GF+, MzRefinery (which uses MSConvert), and PPMErrorCharter
         /// </summary>
         /// <remarks>eMzRefinerProgRunnerMode keeps track of the current ProgRunner and is used by MonitorProgress</remarks>
-        private clsRunDosProgram mCmdRunner;
+        private RunDosProgram mCmdRunner;
 
         #endregion
 
@@ -108,7 +108,7 @@ namespace AnalysisManagerMzRefineryPlugIn
 
                 if (mDebugLevel > 4)
                 {
-                    LogDebug("clsAnalysisToolRunnerMzRefinery.RunTool(): Enter");
+                    LogDebug("AnalysisToolRunnerMzRefinery.RunTool(): Enter");
                 }
 
                 // Initialize class-wide variables that will be updated later
@@ -124,7 +124,7 @@ namespace AnalysisManagerMzRefineryPlugIn
 
                 // Determine the path to MSConvert
                 // (as of March 10, 2015 the official release of ProteoWizard contains MSConvert.exe that supports the MzRefiner filter)
-                mMSConvertProgLoc = DetermineProgramLocation("ProteoWizardDir", clsToolVersionUtilities.MSCONVERT_EXE_NAME.ToLower());
+                mMSConvertProgLoc = DetermineProgramLocation("ProteoWizardDir", ToolVersionUtilities.MSCONVERT_EXE_NAME.ToLower());
 
                 if (string.IsNullOrWhiteSpace(mMSConvertProgLoc))
                 {
@@ -155,7 +155,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                var msXmlFileExtension = clsAnalysisResources.DOT_MZML_EXTENSION;
+                var msXmlFileExtension = AnalysisResources.DOT_MZML_EXTENSION;
 
                 var dtaGenerator = mJobParams.GetJobParameter("DtaGenerator", string.Empty);
                 if (!string.IsNullOrWhiteSpace(dtaGenerator))
@@ -176,11 +176,11 @@ namespace AnalysisManagerMzRefineryPlugIn
                     var msXmlOutputType = mJobParams.GetJobParameter("MSXMLOutputType", string.Empty);
                     if (string.Equals(msXmlOutputType, "mzxml", StringComparison.OrdinalIgnoreCase))
                     {
-                        msXmlFileExtension = clsAnalysisResources.DOT_MZXML_EXTENSION;
+                        msXmlFileExtension = AnalysisResources.DOT_MZXML_EXTENSION;
                     }
                 }
 
-                // Look for existing MS-GF+ results (which would have been retrieved by clsAnalysisResourcesMzRefinery)
+                // Look for existing MS-GF+ results (which would have been retrieved by AnalysisResourcesMzRefinery)
 
                 var msgfPlusResults = new FileInfo(Path.Combine(mWorkDir, mDatasetName + MSGFPLUS_MZID_SUFFIX));
                 var skippedMSGFPlus = false;
@@ -315,7 +315,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 mCmdRunner = null;
 
                 // Make sure objects are released
-                clsGlobal.IdleLoop(0.5);
+                Global.IdleLoop(0.5);
                 ProgRunner.GarbageCollectNow();
 
                 if (processingError)
@@ -355,7 +355,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                     return CloseOutType.CLOSEOUT_SUCCESS;
 
                 // If we get here, MS-GF+ succeeded, but MzRefinery or PostProcessing failed
-                LogWarning("Processing failed; see results at " + mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH));
+                LogWarning("Processing failed; see results at " + mJobParams.GetParam(AnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH));
                 if (mUnableToUseMzRefinery)
                 {
                     return CloseOutType.CLOSEOUT_UNABLE_TO_USE_MZ_REFINERY;
@@ -427,7 +427,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 return result;
             }
 
-            var instrumentGroup = mJobParams.GetJobParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, "InstrumentGroup", string.Empty);
+            var instrumentGroup = mJobParams.GetJobParameter(AnalysisJob.JOB_PARAMETERS_SECTION, "InstrumentGroup", string.Empty);
 
             // Read the MS-GF+ Parameter File
 
@@ -500,7 +500,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             // Make sure the machine has enough free memory to run MS-GF+
             var logFreeMemoryOnSuccess = mDebugLevel >= 1;
 
-            if (!clsAnalysisResources.ValidateFreeMemorySize(javaMemorySize, "MS-GF+", logFreeMemoryOnSuccess))
+            if (!AnalysisResources.ValidateFreeMemorySize(javaMemorySize, "MS-GF+", logFreeMemoryOnSuccess))
             {
                 LogError("Not enough free memory to run MS-GF+");
                 return CloseOutType.CLOSEOUT_FAILED;
@@ -615,7 +615,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 LogDebug(javaExePath + " " + arguments);
             }
 
-            mCmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel)
+            mCmdRunner = new RunDosProgram(mWorkDir, mDebugLevel)
             {
                 CreateNoWindow = true,
                 CacheStandardOutput = true,
@@ -658,7 +658,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 }
 
                 mJobParams.AddResultFileToSkip(msgfPlusResults.Name);
-                mJobParams.AddResultFileToKeep(msgfPlusResults.Name + clsAnalysisResources.DOT_GZ_EXTENSION);
+                mJobParams.AddResultFileToKeep(msgfPlusResults.Name + AnalysisResources.DOT_GZ_EXTENSION);
             }
             catch (Exception ex)
             {
@@ -1001,7 +1001,7 @@ namespace AnalysisManagerMzRefineryPlugIn
 
                         if (columnMap == null)
                         {
-                            columnMap = clsGlobal.ParseHeaderLine(dataLine, requiredColumns);
+                            columnMap = Global.ParseHeaderLine(dataLine, requiredColumns);
                             continue;
                         }
 
@@ -1169,7 +1169,7 @@ namespace AnalysisManagerMzRefineryPlugIn
 
             try
             {
-                var mzRefFileGzipped = new FileInfo(fixedMSXmlFile.FullName + clsAnalysisResources.DOT_GZ_EXTENSION);
+                var mzRefFileGzipped = new FileInfo(fixedMSXmlFile.FullName + AnalysisResources.DOT_GZ_EXTENSION);
 
                 // Copy the .mzXML.gz or .mzML.gz file to the cache
                 var remoteCacheFilePath = CopyFileToServerCache(mMSXmlCacheFolder.FullName, mzRefFileGzipped.FullName, purgeOldFilesIfNeeded: true);
@@ -1222,7 +1222,7 @@ namespace AnalysisManagerMzRefineryPlugIn
 
             try
             {
-                var cdtaFile = new FileInfo(Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.CDTA_EXTENSION));
+                var cdtaFile = new FileInfo(Path.Combine(mWorkDir, mDatasetName + AnalysisResources.CDTA_EXTENSION));
                 if (!cdtaFile.Exists)
                 {
                     LogError("_dta.txt file not found: " + cdtaFile.FullName);
@@ -1311,7 +1311,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 LogDebug(mMSConvertProgLoc + " " + arguments);
             }
 
-            mCmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel)
+            mCmdRunner = new RunDosProgram(mWorkDir, mDebugLevel)
             {
                 CreateNoWindow = true,
                 CacheStandardOutput = true,
@@ -1335,7 +1335,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             if (!mCmdRunner.WriteConsoleOutputToFile)
             {
                 // Write the console output to a text file
-                clsGlobal.IdleLoop(0.25);
+                Global.IdleLoop(0.25);
 
                 using var writer = new StreamWriter(new FileStream(mCmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
 
@@ -1343,7 +1343,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             }
 
             // Parse the console output file one more time to check for errors
-            clsGlobal.IdleLoop(0.25);
+            Global.IdleLoop(0.25);
             ParseMSConvertConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath);
 
             // Parse the .mzRefinement.tsv file to update mMzRefineryCorrectionMode, mMzRefinerGoodDataPoints, and mMzRefinerSpecEValueThreshold
@@ -1481,7 +1481,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 LogDebug(mPpmErrorCharterProgLoc + arguments);
             }
 
-            mCmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel)
+            mCmdRunner = new RunDosProgram(mWorkDir, mDebugLevel)
             {
                 CreateNoWindow = true,
                 CacheStandardOutput = false,
@@ -1544,7 +1544,7 @@ namespace AnalysisManagerMzRefineryPlugIn
 
         private bool StorePPMErrorStatsInDB()
         {
-            var massErrorExtractor = new clsMzRefineryMassErrorStatsExtractor(mMgrParams, mDebugLevel);
+            var massErrorExtractor = new MzRefineryMassErrorStatsExtractor(mMgrParams, mDebugLevel);
 
             var datasetID = mJobParams.GetJobParameter("DatasetID", 0);
 
@@ -1557,7 +1557,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                                         massErrorExtractor.MassErrorInfo.MassErrorPPM,
                                         massErrorExtractor.MassErrorInfo.MassErrorPPMRefined);
 
-                mEvalMessage = clsGlobal.AppendToComment(mEvalMessage, msg);
+                mEvalMessage = Global.AppendToComment(mEvalMessage, msg);
 
                 return true;
             }
@@ -1597,7 +1597,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             }
             else
             {
-                toolVersionInfo = clsGlobal.AppendToComment(toolVersionInfo, msConvertVersion);
+                toolVersionInfo = Global.AppendToComment(toolVersionInfo, msConvertVersion);
             }
 
             // Create file Tool_Version_Info_MSConvert.txt
@@ -1633,7 +1633,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 if (!success)
                     return false;
 
-                var mzMLFilePath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_MZML_EXTENSION);
+                var mzMLFilePath = Path.Combine(mWorkDir, mDatasetName + AnalysisResources.DOT_MZML_EXTENSION);
                 var mzMLFile = new FileInfo(mzMLFilePath);
                 var updatedMzMLFile = new FileInfo(Path.Combine(mWorkDir, mzMLFile.Name + ".new"));
 

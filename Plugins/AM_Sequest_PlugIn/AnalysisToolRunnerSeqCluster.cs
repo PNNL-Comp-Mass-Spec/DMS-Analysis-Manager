@@ -22,7 +22,7 @@ namespace AnalysisManagerSequestPlugin
     /// <summary>
     /// Overrides Sequest tool runner to provide cluster-specific methods
     /// </summary>
-    public class clsAnalysisToolRunnerSeqCluster : clsAnalysisToolRunnerSeqBase
+    public class AnalysisToolRunnerSeqCluster : AnalysisToolRunnerSeqBase
     {
         #region "Constants"
 
@@ -91,8 +91,8 @@ namespace AnalysisManagerSequestPlugin
         private int mNodeCountActiveErrorOccurrences;
         private DateTime mLastSequestStartTime;
 
-        private clsRunDosProgram mCmdRunner;
-        private clsRunDosProgram mUtilityRunner;
+        private RunDosProgram mCmdRunner;
+        private RunDosProgram mUtilityRunner;
 
         private string mUtilityRunnerTaskName = string.Empty;
 
@@ -144,9 +144,9 @@ namespace AnalysisManagerSequestPlugin
             mSequestAppearsStalled = false;
             mAbortSinceSequestIsStalled = false;
 
-            mTransferFolderPath = mJobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH);
-            mTransferFolderPath = Path.Combine(mTransferFolderPath, mJobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_DATASET_FOLDER_NAME));
-            mTransferFolderPath = Path.Combine(mTransferFolderPath, mJobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME));
+            mTransferFolderPath = mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH);
+            mTransferFolderPath = Path.Combine(mTransferFolderPath, mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_DATASET_FOLDER_NAME));
+            mTransferFolderPath = Path.Combine(mTransferFolderPath, mJobParams.GetParam(AnalysisJob.STEP_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME));
 
             // Initialize the out file watcher
             mOutFileWatcher = new FileSystemWatcher();
@@ -200,7 +200,7 @@ namespace AnalysisManagerSequestPlugin
                 mLastOutFileCountTime = DateTime.UtcNow;
                 mLastActiveNodeQueryTime = DateTime.UtcNow;
 
-                mCmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel);
+                mCmdRunner = new RunDosProgram(mWorkDir, mDebugLevel);
                 RegisterEvents(mCmdRunner);
                 mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
@@ -293,7 +293,7 @@ namespace AnalysisManagerSequestPlugin
             mOutFileAppenderTimer.Stop();
 
             // Make sure objects are released
-            clsGlobal.IdleLoop(5);
+            Global.IdleLoop(5);
             ProgRunner.GarbageCollectNow();
 
             UpdateSequestNodeProcessingStats(false);
@@ -339,7 +339,7 @@ namespace AnalysisManagerSequestPlugin
                 if (!ProcessCandidateOutFiles(true))
                 {
                     // Wait 5 seconds, then try again (up to 3 times)
-                    clsGlobal.IdleLoop(5);
+                    Global.IdleLoop(5);
                 }
 
                 iterationsRemaining--;
@@ -825,7 +825,7 @@ namespace AnalysisManagerSequestPlugin
             {
                 if (mUtilityRunner == null)
                 {
-                    mUtilityRunner = new clsRunDosProgram(workDir, mDebugLevel);
+                    mUtilityRunner = new RunDosProgram(workDir, mDebugLevel);
                     RegisterEvents(mUtilityRunner);
                     mUtilityRunner.Timeout += UtilityRunner_Timeout;
                 }
@@ -1155,7 +1155,7 @@ namespace AnalysisManagerSequestPlugin
             }
 
             // Wait 5 seconds
-            clsGlobal.IdleLoop(5);
+            Global.IdleLoop(5);
 
             return true;
         }
@@ -1200,7 +1200,7 @@ namespace AnalysisManagerSequestPlugin
             }
 
             // Wait 5 seconds
-            clsGlobal.IdleLoop(5);
+            Global.IdleLoop(5);
 
             return true;
         }
@@ -1253,7 +1253,7 @@ namespace AnalysisManagerSequestPlugin
             }
 
             // Wait 5 seconds
-            clsGlobal.IdleLoop(5);
+            Global.IdleLoop(5);
 
             return true;
         }
@@ -1298,7 +1298,7 @@ namespace AnalysisManagerSequestPlugin
             }
 
             // Wait 5 seconds
-            clsGlobal.IdleLoop(5);
+            Global.IdleLoop(5);
 
             return true;
         }

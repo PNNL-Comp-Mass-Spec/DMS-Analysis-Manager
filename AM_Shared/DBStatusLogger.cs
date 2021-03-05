@@ -16,7 +16,7 @@ namespace AnalysisManagerBase
     /// <summary>
     /// Status logger
     /// </summary>
-    public class clsDBStatusLogger : EventNotifier
+    public class DBStatusLogger : EventNotifier
     {
         #region "Structures"
 
@@ -214,7 +214,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="dbConnectionString">Database connection string</param>
         /// <param name="dbStatusUpdateIntervalMinutes">Minimum interval between updating the manager status in the database</param>
-        public clsDBStatusLogger(string dbConnectionString, float dbStatusUpdateIntervalMinutes)
+        public DBStatusLogger(string dbConnectionString, float dbStatusUpdateIntervalMinutes)
         {
             if (dbConnectionString == null)
                 dbConnectionString = string.Empty;
@@ -293,7 +293,7 @@ namespace AnalysisManagerBase
             catch (Exception ex)
             {
                 // Ignore errors here
-                Console.WriteLine("Error in clsDBStatusLogger.LogStatus: " + ex.Message);
+                Console.WriteLine("Error in DBStatusLogger.LogStatus: " + ex.Message);
             }
         }
 

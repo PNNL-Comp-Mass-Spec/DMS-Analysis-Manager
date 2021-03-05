@@ -42,7 +42,7 @@ namespace AnalysisManager_RepoPkgr_PlugIn
             directory.GetFiles(filter).ToList().ForEach(f => f.Delete());
         }
 
-        // 
+        //
         /// <summary>
         /// Look for zipped files in given directory and convert them to gzip.
         /// (conversions are performed in the working directory)
@@ -55,7 +55,7 @@ namespace AnalysisManager_RepoPkgr_PlugIn
             const int debugLevel = 1;
 
             //  make zipper to work on workDir
-            var dotNetZipTools = new AnalysisManagerBase.clsDotNetZipTools(debugLevel, workDir);
+            var dotNetZipTools = new AnalysisManagerBase.DotNetZipTools(debugLevel, workDir);
 
             // get file handler object to access the targetDir
             var diTargetDir = new DirectoryInfo(targetDir);
@@ -112,7 +112,7 @@ namespace AnalysisManager_RepoPkgr_PlugIn
 
                 File.Move(Path.Combine(workDir, gzFileName), targetFilePath);
 
-                // get rid of zip file on both sides		  
+                // get rid of zip file on both sides
                 File.Delete(Path.Combine(workDir, tarFi.Name));
                 File.Delete(tarFi.FullName);
 

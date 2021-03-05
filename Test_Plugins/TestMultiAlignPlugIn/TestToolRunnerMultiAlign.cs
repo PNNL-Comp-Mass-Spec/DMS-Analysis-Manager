@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using AnalysisManagerBase;
 using AnalysisManagerMultiAlign_AggregatorPlugIn;
 
-
-namespace TestMultiAlignPlugIn {
-
-    class TestToolRunnerMultiAlign {
+namespace TestMultiAlignPlugIn
+{
+    class TestToolRunnerMultiAlign
+    {
         private const int DEBUG_LEVEL = 1;
         private const string WORK_DIR = @"C:\DMS_WorkDir";
         private const string STEP_TOOL_NAME = "TestToolRunnerApe";
@@ -43,15 +43,15 @@ namespace TestMultiAlignPlugIn {
 
         public CloseOutType TestRunMultiAlign()
         {
-            var multialignResourcer = new clsAnalysisResourcesMultiAlignAggregator();
-            var multialignToolRunner = new clsAnalysisToolRunnerMultiAlignAggregator();
-            var summaryFile = new clsSummaryFile();
+            var multialignResourcer = new AnalysisResourcesMultiAlignAggregator();
+            var multialignToolRunner = new AnalysisToolRunnerMultiAlignAggregator();
+            var summaryFile = new SummaryFile();
 
             IMgrParams mgrParams = new MgrParamsStub(mMgrParms);
             IJobParams jobParams = new JobParamsStub(mJobParms);
             var statusFile = new StatusFileStub();
 
-            var myEMSLUtilities = new clsMyEMSLUtilities(DEBUG_LEVEL, WORK_DIR);
+            var myEMSLUtilities = new MyEMSLUtilities(DEBUG_LEVEL, WORK_DIR);
 
             multialignResourcer.Setup(STEP_TOOL_NAME, mgrParams, jobParams, statusFile, myEMSLUtilities);
             var eResult = multialignResourcer.GetResources();

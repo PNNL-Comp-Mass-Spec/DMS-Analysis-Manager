@@ -15,13 +15,13 @@ namespace AnalysisManagerMasicPlugin
     /// <summary>
     /// Derived class for performing MASIC analysis on Finnigan datasets
     /// </summary>
-    public class clsAnalysisToolRunnerMASICFinnigan : clsAnalysisToolRunnerMASICBase
+    public class AnalysisToolRunnerMASICFinnigan : AnalysisToolRunnerMASICBase
     {
         // Ignore Spelling: parm
 
         #region "Module Variables"
 
-        private AnalysisManagerMsXmlGenPlugIn.clsMSXMLCreator mMSXmlCreator;
+        private AnalysisManagerMsXmlGenPlugIn.MSXMLCreator mMSXmlCreator;
 
         #endregion
 
@@ -42,12 +42,12 @@ namespace AnalysisManagerMasicPlugin
 
             // Determine the path to the .Raw file
             var rawFileName = mDatasetName + ".raw";
-            var inputFilePath = clsAnalysisResources.ResolveStoragePath(mWorkDir, rawFileName);
+            var inputFilePath = AnalysisResources.ResolveStoragePath(mWorkDir, rawFileName);
 
             if (string.IsNullOrWhiteSpace(inputFilePath))
             {
                 // Unable to resolve the file path
-                mErrorMessage = "Could not find " + rawFileName + " or " + rawFileName + clsAnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX +
+                mErrorMessage = "Could not find " + rawFileName + " or " + rawFileName + AnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX +
                                  " in the working folder; unable to run MASIC";
                 LogError(mErrorMessage);
                 return CloseOutType.CLOSEOUT_FAILED;
@@ -87,7 +87,7 @@ namespace AnalysisManagerMasicPlugin
         {
             var msXmlGeneratorAppPath = GetMSXmlGeneratorAppPath();
 
-            mMSXmlCreator = new AnalysisManagerMsXmlGenPlugIn.clsMSXMLCreator(msXmlGeneratorAppPath, mWorkDir, mDatasetName, mDebugLevel, mJobParams);
+            mMSXmlCreator = new AnalysisManagerMsXmlGenPlugIn.MSXMLCreator(msXmlGeneratorAppPath, mWorkDir, mDatasetName, mDebugLevel, mJobParams);
             RegisterEvents(mMSXmlCreator);
             mMSXmlCreator.LoopWaiting += MSXmlCreator_LoopWaiting;
 

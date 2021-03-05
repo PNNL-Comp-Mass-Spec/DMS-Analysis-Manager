@@ -7,7 +7,7 @@ namespace AnalysisManagerPRIDEMzXMLPlugIn
     /// <summary>
     /// Retrieve resources for the PRIDE MzXML plugin
     /// </summary>
-    public class clsAnalysisResourcesPRIDEMzXML : clsAnalysisResources
+    public class AnalysisResourcesPRIDEMzXML : AnalysisResources
     {
         /// <summary>
         /// Retrieve required files

@@ -14,7 +14,7 @@ using System.IO;
 
 namespace AnalysisManagerMSGFPlugin
 {
-    public sealed class clsMSGFInputCreatorMSGFDB : clsMSGFInputCreator
+    public sealed class MSGFInputCreatorMSGFDB : MSGFInputCreator
     {
         // Ignore Spelling: msgfdb, MODa, fht
 
@@ -23,7 +23,7 @@ namespace AnalysisManagerMSGFPlugin
         /// </summary>
         /// <param name="datasetName">Dataset name</param>
         /// <param name="workDir">Working directory</param>
-        public clsMSGFInputCreatorMSGFDB(string datasetName, string workDir)
+        public MSGFInputCreatorMSGFDB(string datasetName, string workDir)
             : base(datasetName, workDir, clsPHRPReader.PeptideHitResultTypes.MSGFPlus)
         {
             // Initialize the file paths

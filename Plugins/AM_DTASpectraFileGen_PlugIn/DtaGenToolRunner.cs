@@ -18,11 +18,11 @@ namespace DTASpectraFileGen
     /// <summary>
     /// Base class for DTA generation tool runners
     /// </summary>
-    public class clsDtaGenToolRunner : clsAnalysisToolRunnerBase
+    public class DtaGenToolRunner : AnalysisToolRunnerBase
     {
         #region "Constants and Enums"
 
-        public const string CDTA_FILE_SUFFIX = clsAnalysisResources.CDTA_EXTENSION;
+        public const string CDTA_FILE_SUFFIX = AnalysisResources.CDTA_EXTENSION;
 
         private const int CENTROID_CDTA_PROGRESS_START = 70;
 
@@ -133,7 +133,7 @@ namespace DTASpectraFileGen
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
-        private eDTAGeneratorConstants GetDTAGenerator(out clsDtaGen spectraGen)
+        private eDTAGeneratorConstants GetDTAGenerator(out DtaGen spectraGen)
         {
             var eDtaGeneratorType = GetDTAGeneratorInfo(mJobParams, out mConcatenateDTAs, out var errorMessage);
             spectraGen = null;
@@ -141,26 +141,26 @@ namespace DTASpectraFileGen
             switch (eDtaGeneratorType)
             {
                 case eDTAGeneratorConstants.MGFtoDTA:
-                    spectraGen = new clsMGFtoDtaGenMainProcess();
+                    spectraGen = new MGFtoDtaGenMainProcess();
 
                     break;
                 case eDTAGeneratorConstants.MSConvert:
-                    spectraGen = new clsDtaGenMSConvert();
+                    spectraGen = new DtaGenMSConvert();
 
                     break;
                 case eDTAGeneratorConstants.DeconConsole:
                     LogError("DeconConsole is obsolete and should no longer be used");
 
                     return eDTAGeneratorConstants.Unknown;
-                // spectraGen = New clsDtaGenDeconConsole()
+                // spectraGen = New DtaGenDeconConsole()
 
                 case eDTAGeneratorConstants.ExtractMSn:
                 case eDTAGeneratorConstants.DeconMSn:
-                    spectraGen = new clsDtaGenThermoRaw();
+                    spectraGen = new DtaGenThermoRaw();
 
                     break;
                 case eDTAGeneratorConstants.RawConverter:
-                    spectraGen = new clsDtaGenRawConverter();
+                    spectraGen = new DtaGenRawConverter();
 
                     break;
                 case eDTAGeneratorConstants.Unknown:
@@ -198,7 +198,7 @@ namespace DTASpectraFileGen
                 return eDTAGeneratorConstants.Unknown;
             }
 
-            var rawDataType = clsAnalysisResources.GetRawDataType(rawDataTypeName);
+            var rawDataType = AnalysisResources.GetRawDataType(rawDataTypeName);
 
             if (mgfInstrumentData)
             {
@@ -208,25 +208,25 @@ namespace DTASpectraFileGen
 
             switch (rawDataType)
             {
-                case clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile:
+                case AnalysisResources.eRawDataTypeConstants.ThermoRawFile:
 
                     concatenateDTAs = false;
                     switch (dtaGenerator.ToLower())
                     {
-                        case clsDtaGenThermoRaw.MSCONVERT_FILENAME_LOWER:
+                        case DtaGenThermoRaw.MSCONVERT_FILENAME_LOWER:
                             return eDTAGeneratorConstants.MSConvert;
 
-                        case clsDtaGenThermoRaw.DECON_CONSOLE_FILENAME_LOWER:
+                        case DtaGenThermoRaw.DECON_CONSOLE_FILENAME_LOWER:
                             return eDTAGeneratorConstants.DeconConsole;
 
-                        case clsDtaGenThermoRaw.EXTRACT_MSN_FILENAME_LOWER:
+                        case DtaGenThermoRaw.EXTRACT_MSN_FILENAME_LOWER:
                             concatenateDTAs = true;
                             return eDTAGeneratorConstants.ExtractMSn;
 
-                        case clsDtaGenThermoRaw.DECONMSN_FILENAME_LOWER:
+                        case DtaGenThermoRaw.DECONMSN_FILENAME_LOWER:
                             return eDTAGeneratorConstants.DeconMSn;
 
-                        case clsDtaGenThermoRaw.RAWCONVERTER_FILENAME_LOWER:
+                        case DtaGenThermoRaw.RAWCONVERTER_FILENAME_LOWER:
                             return eDTAGeneratorConstants.RawConverter;
 
                         default:
@@ -242,8 +242,8 @@ namespace DTASpectraFileGen
                             return eDTAGeneratorConstants.Unknown;
                     }
 
-                case clsAnalysisResources.eRawDataTypeConstants.mzML:
-                    if (string.Equals(dtaGenerator, clsDtaGenThermoRaw.MSCONVERT_FILENAME, StringComparison.OrdinalIgnoreCase))
+                case AnalysisResources.eRawDataTypeConstants.mzML:
+                    if (string.Equals(dtaGenerator, DtaGenThermoRaw.MSCONVERT_FILENAME, StringComparison.OrdinalIgnoreCase))
                     {
                         concatenateDTAs = false;
                         return eDTAGeneratorConstants.MSConvert;
@@ -254,14 +254,14 @@ namespace DTASpectraFileGen
                         return eDTAGeneratorConstants.Unknown;
                     }
 
-                case clsAnalysisResources.eRawDataTypeConstants.AgilentDFolder:
+                case AnalysisResources.eRawDataTypeConstants.AgilentDFolder:
                     concatenateDTAs = true;
                     return eDTAGeneratorConstants.MGFtoDTA;
 
-                case clsAnalysisResources.eRawDataTypeConstants.BrukerTOFTdf:
+                case AnalysisResources.eRawDataTypeConstants.BrukerTOFTdf:
 
                     concatenateDTAs = false;
-                    if (string.Equals(dtaGenerator, clsDtaGenThermoRaw.MSCONVERT_FILENAME, StringComparison.OrdinalIgnoreCase))
+                    if (string.Equals(dtaGenerator, DtaGenThermoRaw.MSCONVERT_FILENAME, StringComparison.OrdinalIgnoreCase))
                     {
                         return eDTAGeneratorConstants.MSConvert;
                     }
@@ -304,7 +304,7 @@ namespace DTASpectraFileGen
             }
             catch (Exception ex)
             {
-                LogError("clsDtaGenToolRunner.DispositionResults(), Exception while deleting data file", ex);
+                LogError("DtaGenToolRunner.DispositionResults(), Exception while deleting data file", ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -437,7 +437,7 @@ namespace DTASpectraFileGen
 
             if (eDtaGeneratorType == eDTAGeneratorConstants.DeconMSn && mCentroidDTAs)
             {
-                var usingExistingResults = mJobParams.GetJobParameter(clsDtaGenResources.USING_EXISTING_DECONMSN_RESULTS, false);
+                var usingExistingResults = mJobParams.GetJobParameter(DtaGenResources.USING_EXISTING_DECONMSN_RESULTS, false);
 
                 if (usingExistingResults)
                 {
@@ -466,7 +466,7 @@ namespace DTASpectraFileGen
             }
             catch (Exception ex)
             {
-                LogError("clsDtaGenToolRunner.MakeSpectraFiles: Exception while generating dta files", ex);
+                LogError("DtaGenToolRunner.MakeSpectraFiles: Exception while generating dta files", ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -508,7 +508,7 @@ namespace DTASpectraFileGen
             try
             {
                 // Create a centroided _DTA.txt file from the .Raw file (first creates a .MGF file, then converts to _DTA.txt)
-                var msConvertRunner = new clsDtaGenMSConvert();
+                var msConvertRunner = new DtaGenMSConvert();
                 msConvertRunner.Setup(GetDtaGenInitParams(), this);
 
                 msConvertRunner.ForceCentroidOn = true;
@@ -533,7 +533,7 @@ namespace DTASpectraFileGen
                 var cdtaFileInfo = new FileInfo(Path.Combine(mWorkDir, mDatasetName + CDTA_FILE_SUFFIX));
                 if (!cdtaFileInfo.Exists)
                 {
-                    LogError("File not found in CentroidCDTA (after calling clsDtaGenMSConvert): " + cdtaFileInfo.Name);
+                    LogError("File not found in CentroidCDTA (after calling DtaGenMSConvert): " + cdtaFileInfo.Name);
                     return CloseOutType.CLOSEOUT_NO_DTA_FILES;
                 }
 
@@ -598,9 +598,9 @@ namespace DTASpectraFileGen
                 LogMessage("Concatenating spectra files, job " + mJob + ", step " + mStepNum);
             }
 
-            var ConcatTools = new clsConcatToolWrapper(workDir.FullName);
+            var ConcatTools = new ConcatToolWrapper(workDir.FullName);
 
-            if (!ConcatTools.ConcatenateFiles(clsConcatToolWrapper.ConcatFileTypes.CONCAT_DTA, mDatasetName))
+            if (!ConcatTools.ConcatenateFiles(ConcatToolWrapper.ConcatFileTypes.CONCAT_DTA, mDatasetName))
             {
                 LogError("Error packaging results: " + ConcatTools.ErrMsg);
                 return CloseOutType.CLOSEOUT_FAILED;
@@ -614,8 +614,8 @@ namespace DTASpectraFileGen
         /// </summary>
         public override void CopyFailedResultsToArchiveDirectory()
         {
-            mJobParams.AddResultFileToSkip(Dataset + clsAnalysisResources.CDTA_ZIPPED_EXTENSION);
-            mJobParams.AddResultFileToSkip(Dataset + clsAnalysisResources.CDTA_EXTENSION);
+            mJobParams.AddResultFileToSkip(Dataset + AnalysisResources.CDTA_ZIPPED_EXTENSION);
+            mJobParams.AddResultFileToSkip(Dataset + AnalysisResources.CDTA_EXTENSION);
 
             // Skip any .dta files
             mJobParams.AddResultFileExtensionToSkip(".dta");
@@ -626,7 +626,7 @@ namespace DTASpectraFileGen
         private string GetMSConvertAppPath()
         {
             var ProteoWizardDir = mMgrParams.GetParam("ProteoWizardDir");         // MSConvert.exe is stored in the ProteoWizard folder
-            var progLoc = Path.Combine(ProteoWizardDir, clsDtaGenThermoRaw.MSCONVERT_FILENAME);
+            var progLoc = Path.Combine(ProteoWizardDir, DtaGenThermoRaw.MSCONVERT_FILENAME);
 
             return progLoc;
         }
@@ -642,23 +642,23 @@ namespace DTASpectraFileGen
 
             if (mDebugLevel >= 2)
             {
-                LogMessage("clsDtaGenToolRunner.DeleteDataFile, executing method");
+                LogMessage("DtaGenToolRunner.DeleteDataFile, executing method");
             }
 
             // Delete the .raw file
             try
             {
                 var filesToDelete = new List<string>();
-                filesToDelete.AddRange(Directory.GetFiles(mWorkDir, "*" + clsAnalysisResources.DOT_RAW_EXTENSION));
-                filesToDelete.AddRange(Directory.GetFiles(mWorkDir, "*" + clsAnalysisResources.DOT_MZXML_EXTENSION));
-                filesToDelete.AddRange(Directory.GetFiles(mWorkDir, "*" + clsAnalysisResources.DOT_MZML_EXTENSION));
-                filesToDelete.AddRange(Directory.GetFiles(mWorkDir, "*" + clsAnalysisResources.DOT_MGF_EXTENSION));
+                filesToDelete.AddRange(Directory.GetFiles(mWorkDir, "*" + AnalysisResources.DOT_RAW_EXTENSION));
+                filesToDelete.AddRange(Directory.GetFiles(mWorkDir, "*" + AnalysisResources.DOT_MZXML_EXTENSION));
+                filesToDelete.AddRange(Directory.GetFiles(mWorkDir, "*" + AnalysisResources.DOT_MZML_EXTENSION));
+                filesToDelete.AddRange(Directory.GetFiles(mWorkDir, "*" + AnalysisResources.DOT_MGF_EXTENSION));
 
                 foreach (var MyFile in filesToDelete)
                 {
                     if (mDebugLevel >= 2)
                     {
-                        LogMessage("clsDtaGenToolRunner.DeleteDataFile, deleting file " + MyFile);
+                        LogMessage("DtaGenToolRunner.DeleteDataFile, deleting file " + MyFile);
                     }
                     DeleteFileWithRetries(MyFile);
                 }
@@ -910,7 +910,7 @@ namespace DTASpectraFileGen
         }
 
         private bool ScanHeadersMatch(clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType parentIonDataHeader,
-            clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType fragIonDataHeader)
+                                      clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType fragIonDataHeader)
         {
             if (parentIonDataHeader.ScanNumberStart == fragIonDataHeader.ScanNumberStart)
             {
@@ -946,7 +946,7 @@ namespace DTASpectraFileGen
 
             if (mDebugLevel > 0)
             {
-                LogMessage("clsDtaGenToolRunner." + callingFunction + ": Spectra generation started");
+                LogMessage("DtaGenToolRunner." + callingFunction + ": Spectra generation started");
             }
 
             // Loop until the spectra generator finishes
@@ -971,7 +971,7 @@ namespace DTASpectraFileGen
                 UpdateStatusRunning(mProgress, dtaGenerator.SpectraFileCount);
 
                 // Delay for 5 seconds
-                clsGlobal.IdleLoop(5);
+                Global.IdleLoop(5);
             }
 
             UpdateStatusRunning(mProgress, dtaGenerator.SpectraFileCount);
@@ -997,7 +997,7 @@ namespace DTASpectraFileGen
 
             if (mDebugLevel >= 2)
             {
-                LogMessage("clsDtaGenToolRunner." + callingFunction + ": Spectra generation completed");
+                LogMessage("DtaGenToolRunner." + callingFunction + ": Spectra generation completed");
             }
 
             return CloseOutType.CLOSEOUT_SUCCESS;
@@ -1200,12 +1200,12 @@ namespace DTASpectraFileGen
 
             if (convertToCDTA)
             {
-                inputFileExtension = clsAnalysisResources.CDTA_EXTENSION;
+                inputFileExtension = AnalysisResources.CDTA_EXTENSION;
                 finalZipFileName = string.Empty;
             }
             else
             {
-                inputFileExtension = clsAnalysisResources.DOT_MGF_EXTENSION;
+                inputFileExtension = AnalysisResources.DOT_MGF_EXTENSION;
                 finalZipFileName = mDatasetName + "_mgf.zip";
             }
 

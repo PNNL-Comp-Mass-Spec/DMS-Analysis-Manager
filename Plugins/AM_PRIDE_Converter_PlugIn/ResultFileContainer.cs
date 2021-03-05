@@ -5,7 +5,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
     /// <summary>
     /// Tracks information about a result file
     /// </summary>
-    public class clsResultFileContainer
+    public class ResultFileContainer
     {
         /// <summary>
         /// Tracks the .mgf or _dta.txt or .mzML file for the analysis job
@@ -30,7 +30,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// <summary>
         /// Constructor
         /// </summary>
-        public clsResultFileContainer()
+        public ResultFileContainer()
         {
             MzIDFilePaths = new List<string>();
         }

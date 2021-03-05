@@ -17,7 +17,7 @@ namespace AnalysisManagerThermoPeakDataExporterPlugIn
     /// Class for running ThermoPeakDataExporter to extract data from a Thermo .raw file
     /// </summary>
     // ReSharper disable once UnusedMember.Global
-    public class clsAnalysisToolRunnerThermoPeakDataExporter : clsAnalysisToolRunnerBase
+    public class AnalysisToolRunnerThermoPeakDataExporter : AnalysisToolRunnerBase
     {
         #region "Constants"
 
@@ -37,7 +37,7 @@ namespace AnalysisManagerThermoPeakDataExporterPlugIn
 
         private DateTime mLastConsoleOutputParse;
 
-        private clsRunDosProgram mCmdRunner;
+        private RunDosProgram mCmdRunner;
 
         #endregion
 
@@ -59,7 +59,7 @@ namespace AnalysisManagerThermoPeakDataExporterPlugIn
 
                 if (mDebugLevel > 4)
                 {
-                    LogDebug("clsAnalysisToolRunnerThermoPeakDataExporter.RunTool(): Enter");
+                    LogDebug("AnalysisToolRunnerThermoPeakDataExporter.RunTool(): Enter");
                 }
 
                 // Initialize class wide variables
@@ -98,7 +98,7 @@ namespace AnalysisManagerThermoPeakDataExporterPlugIn
                 // Make sure objects are released
                 PRISM.ProgRunner.GarbageCollectNow();
 
-                if (!clsAnalysisJob.SuccessOrNoData(processingResult))
+                if (!AnalysisJob.SuccessOrNoData(processingResult))
                 {
                     // Something went wrong
                     // In order to help diagnose things, we will move whatever files were created into the result folder,
@@ -211,13 +211,13 @@ namespace AnalysisManagerThermoPeakDataExporterPlugIn
 
             var minimumSignalToNoiseRatio = mJobParams.GetJobParameter("MinimumSignalToNoiseRatio", 0);
 
-            var arguments = Dataset + clsAnalysisResources.DOT_RAW_EXTENSION +
-                            " /O:" + clsGlobal.PossiblyQuotePath(resultsFile.FullName) +
+            var arguments = Dataset + AnalysisResources.DOT_RAW_EXTENSION +
+                            " /O:" + Global.PossiblyQuotePath(resultsFile.FullName) +
                             " /minSN:" + minimumSignalToNoiseRatio;
 
             LogDebug(progLoc + " " + arguments);
 
-            mCmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel);
+            mCmdRunner = new RunDosProgram(mWorkDir, mDebugLevel);
             RegisterEvents(mCmdRunner);
             mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 

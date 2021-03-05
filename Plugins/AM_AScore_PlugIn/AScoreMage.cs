@@ -11,7 +11,7 @@ using System.Linq;
 
 namespace AnalysisManager_AScore_PlugIn
 {
-    public class clsAScoreMagePipeline : EventNotifier
+    public class AScoreMagePipeline : EventNotifier
     {
         #region Member Variables
 
@@ -26,7 +26,7 @@ namespace AnalysisManager_AScore_PlugIn
         protected string mFastaFilePath = string.Empty;
         protected string mErrorMessage = string.Empty;
 
-        protected clsDotNetZipTools mDotNetZipTools;
+        protected DotNetZipTools mDotNetZipTools;
 
         public static DatasetListInfo mMyEMSLDatasetInfo;
 
@@ -40,7 +40,7 @@ namespace AnalysisManager_AScore_PlugIn
 
         #region Constructors
 
-        public clsAScoreMagePipeline(IJobParams jobParams, IMgrParams mgrParams, clsDotNetZipTools dotNetZipTools)
+        public AScoreMagePipeline(IJobParams jobParams, IMgrParams mgrParams, DotNetZipTools dotNetZipTools)
         {
             Initialize(jobParams, mgrParams, dotNetZipTools);
 
@@ -67,7 +67,7 @@ namespace AnalysisManager_AScore_PlugIn
         /// <param name="jobParams"></param>
         /// <param name="mgrParams"></param>
         /// <param name="dotNetZipTools"></param>
-        private void Initialize(IJobParams jobParams, IMgrParams mgrParams, clsDotNetZipTools dotNetZipTools)
+        private void Initialize(IJobParams jobParams, IMgrParams mgrParams, DotNetZipTools dotNetZipTools)
         {
             mJobParams = new JobParameters(jobParams);
             mMgrParams = new ManagerParameters(mgrParams);
@@ -144,7 +144,7 @@ namespace AnalysisManager_AScore_PlugIn
                 return false;
             }
 
-            const string strParamFileStoragePathKeyName = clsGlobal.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "AScore";
+            const string strParamFileStoragePathKeyName = Global.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "AScore";
             var strMAParameterFileStoragePath = mMgrParams.RequireMgrParam(strParamFileStoragePathKeyName);
             if (string.IsNullOrEmpty(strMAParameterFileStoragePath))
             {

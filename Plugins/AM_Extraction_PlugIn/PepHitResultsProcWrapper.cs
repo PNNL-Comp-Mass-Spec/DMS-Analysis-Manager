@@ -22,7 +22,7 @@ namespace AnalysisManagerExtractionPlugin
     /// <summary>
     /// Calls PeptideHitResultsProcRunner.exe
     /// </summary>
-    public class clsPepHitResultsProcWrapper : EventNotifier
+    public class PepHitResultsProcWrapper : EventNotifier
     {
         // Ignore Spelling: MODa, Parm, Pvalue, PepToProt
 
@@ -57,7 +57,7 @@ namespace AnalysisManagerExtractionPlugin
         /// </summary>
         /// <param name="mgrParams">IMgrParams object containing manager settings</param>
         /// <param name="jobParams">IJobParams object containing job parameters</param>
-        public clsPepHitResultsProcWrapper(IMgrParams mgrParams, IJobParams jobParams)
+        public PepHitResultsProcWrapper(IMgrParams mgrParams, IJobParams jobParams)
         {
             mMgrParams = mgrParams;
             mJobParams = jobParams;
@@ -116,7 +116,7 @@ namespace AnalysisManagerExtractionPlugin
                 }
 
                 // Define the modification definitions file name
-                var modDefsFileName = Path.GetFileNameWithoutExtension(paramFileName) + clsAnalysisResourcesExtraction.MOD_DEFS_FILE_SUFFIX;
+                var modDefsFileName = Path.GetFileNameWithoutExtension(paramFileName) + AnalysisResourcesExtraction.MOD_DEFS_FILE_SUFFIX;
 
                 var psmResultsFile = new FileInfo(peptideSearchResultsFileName);
                 if (psmResultsFile.Directory == null)
@@ -161,7 +161,7 @@ namespace AnalysisManagerExtractionPlugin
                 var arguments = psmResultsFile.FullName +
                                 " /O:" + psmResultsFile.DirectoryName +
                                 " /M:" + modDefsFileName +
-                                " /T:" + clsAnalysisResourcesExtraction.MASS_CORRECTION_TAGS_FILENAME +
+                                " /T:" + AnalysisResourcesExtraction.MASS_CORRECTION_TAGS_FILENAME +
                                 " /N:" + paramFileName +
                                 " /SynPvalue:0.2" +
                                 " /SynProb:0.05" +
@@ -176,7 +176,7 @@ namespace AnalysisManagerExtractionPlugin
                 if (!string.IsNullOrWhiteSpace(fastaFilePath))
                 {
                     // Note that FastaFilePath will likely be empty if job parameter SkipProteinMods is true
-                    arguments += " /F:" + clsAnalysisToolRunnerBase.PossiblyQuotePath(fastaFilePath);
+                    arguments += " /F:" + AnalysisToolRunnerBase.PossiblyQuotePath(fastaFilePath);
                 }
 
                 // Note that PHRP assumes /FHT=True and /Syn=True by default
@@ -212,7 +212,7 @@ namespace AnalysisManagerExtractionPlugin
                     OnDebugEvent(progLoc + " " + arguments);
                 }
 
-                var cmdRunner = new clsRunDosProgram(psmResultsFile.Directory.FullName, mDebugLevel)
+                var cmdRunner = new RunDosProgram(psmResultsFile.Directory.FullName, mDebugLevel)
                 {
                     CreateNoWindow = true,
                     CacheStandardOutput = true,
@@ -314,7 +314,7 @@ namespace AnalysisManagerExtractionPlugin
                                 filesToCheck.Add("_ProteinMods.txt");
                             }
                         }
-                        else if (resultType == clsAnalysisResources.RESULT_TYPE_MSGFPLUS)
+                        else if (resultType == AnalysisResources.RESULT_TYPE_MSGFPLUS)
                         {
                             filesToCheck.Add("_ProteinMods.txt");
                         }
@@ -422,7 +422,7 @@ namespace AnalysisManagerExtractionPlugin
                     }
                 }
 
-                var progressOverall = clsAnalysisToolRunnerBase.ComputeIncrementalProgress(currentTaskProgressAtStart, currentTaskProgressAtEnd, progressSubtask);
+                var progressOverall = AnalysisToolRunnerBase.ComputeIncrementalProgress(currentTaskProgressAtStart, currentTaskProgressAtEnd, progressSubtask);
 
                 if (progressOverall > mProgress)
                 {
@@ -457,7 +457,7 @@ namespace AnalysisManagerExtractionPlugin
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            var synopsisFileHasData = clsAnalysisResources.ValidateFileHasData(files.First().FullName, "PHRP " + fileDescription + " file", out var errorMessage);
+            var synopsisFileHasData = AnalysisResources.ValidateFileHasData(files.First().FullName, "PHRP " + fileDescription + " file", out var errorMessage);
             if (!synopsisFileHasData)
             {
                 mErrMsg = errorMessage;

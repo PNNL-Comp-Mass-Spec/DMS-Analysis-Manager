@@ -10,7 +10,7 @@ namespace AnalysisManager_IDM_Plugin
     /// <summary>
     /// Class for running the IDM utility
     /// </summary>
-    internal class clsAnalysisToolRunnerIDM : clsAnalysisToolRunnerBase
+    internal class AnalysisToolRunnerIDM : AnalysisToolRunnerBase
     {
         #region "Constants"
         public const string EXISTING_IDM_RESULTS_FILE_NAME = "ExistingIDMResults.db3";
@@ -46,7 +46,7 @@ namespace AnalysisManager_IDM_Plugin
 
                     try
                     {
-                        var sqLiteUtils = new clsSqLiteUtilities();
+                        var sqLiteUtils = new SqLiteUtilities();
 
                         if (mDebugLevel >= 1)
                         {
@@ -81,7 +81,7 @@ namespace AnalysisManager_IDM_Plugin
 
                     if (mDebugLevel > 4)
                     {
-                        LogDebug("clsAnalysisToolRunnerIDM.RunTool(): Enter");
+                        LogDebug("AnalysisToolRunnerIDM.RunTool(): Enter");
                     }
 
                     // Change the name of the log file for the local log file to the plugin log filename
@@ -134,8 +134,8 @@ namespace AnalysisManager_IDM_Plugin
 
                 // Override the output folder name and the dataset name (since this is a dataset aggregation job)
                 mResultsDirectoryName = mJobParams.GetParam("StepOutputFolderName");
-                mDatasetName = mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME);
-                mJobParams.SetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME, mResultsDirectoryName);
+                mDatasetName = mJobParams.GetParam(AnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME);
+                mJobParams.SetParam(AnalysisJob.STEP_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME, mResultsDirectoryName);
 
                 var success = CopyResultsToTransferDirectory();
 
@@ -161,7 +161,7 @@ namespace AnalysisManager_IDM_Plugin
         /// </summary>
         private void StoreToolVersionInfo()
         {
-            var idmDLL = Path.Combine(clsGlobal.GetAppDirectoryPath(), "InterDetect.dll");
+            var idmDLL = Path.Combine(Global.GetAppDirectoryPath(), "InterDetect.dll");
 
             StoreDotNETToolVersionInfo(idmDLL);
         }

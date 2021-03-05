@@ -21,7 +21,7 @@ namespace AnalysisManagerQCARTPlugin
     /// <summary>
     /// Retrieve resources for the QC-ART plugin
     /// </summary>
-    public class clsAnalysisResourcesQCART : clsAnalysisResources
+    public class AnalysisResourcesQCART : AnalysisResources
     {
         /// <summary>
         /// Job parameter tracking the dataset names and jobs to process
@@ -168,7 +168,7 @@ namespace AnalysisManagerQCARTPlugin
                     // Create a lock file indicating that this manager will be creating the baseline results data file
                     var lockFilePath = CreateLockFile(baselineMetadataFilePath, "Creating QCART baseline data via " + mMgrName);
 
-                    mJobParams.AddAdditionalParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAMETER_QCART_BASELINE_METADATA_LOCKFILE, lockFilePath);
+                    mJobParams.AddAdditionalParameter(AnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAMETER_QCART_BASELINE_METADATA_LOCKFILE, lockFilePath);
                 }
                 // This list contains the dataset names for which we need to obtain QC Metric values (P_2C, MS1_2B, etc.)
                 var datasetNamesToRetrieveMetrics = new SortedSet<string>
@@ -218,7 +218,7 @@ namespace AnalysisManagerQCARTPlugin
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                // Store the baseline dataset names and Masic Jobs so they can be used by clsAnalysisToolRunnerQCART
+                // Store the baseline dataset names and Masic Jobs so they can be used by AnalysisToolRunnerQCART
                 StorePackedJobParameterDictionary(baselineDatasets, JOB_PARAMETER_QCART_BASELINE_DATASET_NAMES_AND_JOBS);
 
                 currentTask = "Retrieve QC Metrics from DMS";
@@ -504,8 +504,8 @@ namespace AnalysisManagerQCARTPlugin
                 baselineMetadataFilePath = GetBaselineMetadataFilePath(diProjectFolder.FullName, baselineMetadataKey);
                 var baselineMetadataFileName = Path.GetFileName(baselineMetadataFilePath);
 
-                mJobParams.AddAdditionalParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAMETER_QCART_BASELINE_RESULTS_CACHE_FOLDER, diProjectFolder.FullName);
-                mJobParams.AddAdditionalParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAMETER_QCART_BASELINE_METADATA_FILENAME, baselineMetadataFileName);
+                mJobParams.AddAdditionalParameter(AnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAMETER_QCART_BASELINE_RESULTS_CACHE_FOLDER, diProjectFolder.FullName);
+                mJobParams.AddAdditionalParameter(AnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAMETER_QCART_BASELINE_METADATA_FILENAME, baselineMetadataFileName);
 
                 currentTask = "Looking for a QCART baseline metadata lock file";
 
@@ -612,7 +612,7 @@ namespace AnalysisManagerQCARTPlugin
                     mProjectName = "Unknown";
                 }
 
-                mJobParams.AddAdditionalParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAMETER_QCART_PROJECT_NAME, mProjectName);
+                mJobParams.AddAdditionalParameter(AnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAMETER_QCART_PROJECT_NAME, mProjectName);
 
                 var baselineDatasetEntries = contents.Select("/Parameters/BaselineList/BaselineDataset");
                 if (baselineDatasetEntries.Count == 0)
@@ -696,7 +696,7 @@ namespace AnalysisManagerQCARTPlugin
                     return false;
                 }
 
-                if (!clsGlobal.IsMatch(dataPkgJob.Dataset, baselineDatasetName))
+                if (!Global.IsMatch(dataPkgJob.Dataset, baselineDatasetName))
                 {
                     var logMessage = "Mismatch in the QC-ART parameter file (" + paramFileName + "); " +
                                      "baseline job " + baselineDatasetJob + " is not dataset " + baselineDatasetName;
@@ -780,7 +780,7 @@ namespace AnalysisManagerQCARTPlugin
                     return false;
                 }
 
-                mJobParams.AddAdditionalParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION,
+                mJobParams.AddAdditionalParameter(AnalysisJob.JOB_PARAMETERS_SECTION,
                                                    JOB_PARAMETER_QCART_BASELINE_RESULTS_FILENAME,
                                                    fiBaselineResultsFileSource.Name);
 
@@ -893,7 +893,7 @@ namespace AnalysisManagerQCARTPlugin
                     }
 
                     // Write the header line
-                    writer.WriteLine(clsGlobal.FlattenList(headers, ","));
+                    writer.WriteLine(Global.FlattenList(headers, ","));
 
                     // Write each data line
                     foreach (DataRow row in resultSet.Rows)
@@ -918,7 +918,7 @@ namespace AnalysisManagerQCARTPlugin
                         {
                             dataValues[fractionColIndex] = fractionNumber.ToString();
 
-                            if (clsGlobal.IsMatch(datasetName, DatasetName))
+                            if (Global.IsMatch(datasetName, DatasetName))
                                 mTargetDatasetFraction = fractionNumber;
                         }
 
@@ -930,7 +930,7 @@ namespace AnalysisManagerQCARTPlugin
                         }
 
                         datasetsMatched.Add(datasetName);
-                        writer.WriteLine(clsGlobal.FlattenList(dataValues, ","));
+                        writer.WriteLine(Global.FlattenList(dataValues, ","));
                     }
                 }
 
@@ -968,7 +968,7 @@ namespace AnalysisManagerQCARTPlugin
         /// for the dataset and job in dataPkgJob
         /// </summary>
         /// <param name="dataPkgJob"></param>
-        private bool RetrieveReporterIonsFile(clsDataPackageJobInfo dataPkgJob)
+        private bool RetrieveReporterIonsFile(DataPackageJobInfo dataPkgJob)
         {
             try
             {
@@ -982,15 +982,15 @@ namespace AnalysisManagerQCARTPlugin
                     return false;
                 }
 
-                if (!clsGlobal.IsMatch(DatasetName, targetDatasetName))
+                if (!Global.IsMatch(DatasetName, targetDatasetName))
                 {
                     var warningMessage = "Warning: SourceJob2Dataset for job " + mJob + " does not match the dataset for this job; it is instead " + targetDatasetName;
                     LogErrorToDatabase(warningMessage);
                 }
 
-                var inputFolderNameCached = mJobParams.GetJobParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, "inputFolderName", string.Empty);
+                var inputFolderNameCached = mJobParams.GetJobParameter(AnalysisJob.JOB_PARAMETERS_SECTION, "inputFolderName", string.Empty);
 
-                if (clsGlobal.IsMatch(dataPkgJob.Dataset, targetDatasetName) && mJob == dataPkgJob.Job)
+                if (Global.IsMatch(dataPkgJob.Dataset, targetDatasetName) && mJob == dataPkgJob.Job)
                 {
                     // Retrieving the _ReporterIons.txt file for the dataset associated with this QC-ART job
                     var masicFolderPath = mJobParams.GetJobParameter("SourceJob2FolderPath", string.Empty);
@@ -1003,12 +1003,12 @@ namespace AnalysisManagerQCARTPlugin
                     }
 
                     // Override inputFolderName
-                    mJobParams.AddAdditionalParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, "inputFolderName", Path.GetFileName(masicFolderPath));
+                    mJobParams.AddAdditionalParameter(AnalysisJob.JOB_PARAMETERS_SECTION, "inputFolderName", Path.GetFileName(masicFolderPath));
                 }
                 else
                 {
                     // Baseline dataset
-                    mJobParams.AddAdditionalParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, "inputFolderName", dataPkgJob.ResultsFolderName);
+                    mJobParams.AddAdditionalParameter(AnalysisJob.JOB_PARAMETERS_SECTION, "inputFolderName", dataPkgJob.ResultsFolderName);
                 }
 
                 var reporterIonsFileName = DatasetName + REPORTER_IONS_FILE_SUFFIX;
@@ -1023,7 +1023,7 @@ namespace AnalysisManagerQCARTPlugin
                 mJobParams.AddResultFileToSkip(reporterIonsFileName);
 
                 // Restore the inputFolderName
-                mJobParams.AddAdditionalParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, "inputFolderName", inputFolderNameCached);
+                mJobParams.AddAdditionalParameter(AnalysisJob.JOB_PARAMETERS_SECTION, "inputFolderName", inputFolderNameCached);
 
                 return true;
             }

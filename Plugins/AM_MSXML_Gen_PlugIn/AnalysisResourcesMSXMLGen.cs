@@ -6,7 +6,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
     /// <summary>
     /// Retrieve resources for the MSXMLGen plugin
     /// </summary>
-    public class clsAnalysisResourcesMSXMLGen : clsAnalysisResources
+    public class AnalysisResourcesMSXMLGen : AnalysisResources
     {
         /// <summary>
         /// Retrieves files necessary for creating the .mzXML file
@@ -45,7 +45,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                         return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
                     }
 
-                    if (msXmlFormat.IndexOf(clsMSXmlGen.MZML_FILE_FORMAT, StringComparison.OrdinalIgnoreCase) < 0)
+                    if (msXmlFormat.IndexOf(MSXmlGen.MZML_FILE_FORMAT, StringComparison.OrdinalIgnoreCase) < 0)
                     {
                         LogError("ProMex_Bruker jobs require mzML files, not " + msXmlFormat + " files");
                         return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
@@ -108,7 +108,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                         default:
                             mMessage = "Dataset type " + rawDataTypeName + " is not supported";
                             LogDebug(
-                                "clsAnalysisResourcesMSXMLGen.GetResources: " + mMessage + "; must be " +
+                                "AnalysisResourcesMSXMLGen.GetResources: " + mMessage + "; must be " +
                                 RAW_DATA_TYPE_DOT_RAW_FILES + ", " +
                                 RAW_DATA_TYPE_DOT_D_FOLDERS + ", " +
                                 RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER + ", " +
@@ -147,7 +147,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
                     currentTask = "Retrieve the MzML Refinery parameter file " + mzMLRefParamFile;
 
-                    const string paramFileStoragePathKeyName = clsGlobal.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "MzML_Refinery";
+                    const string paramFileStoragePathKeyName = Global.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "MzML_Refinery";
 
                     var mzMLRefineryParmFileStoragePath = mMgrParams.GetParam(paramFileStoragePathKeyName);
                     if (string.IsNullOrWhiteSpace(mzMLRefineryParmFileStoragePath))
@@ -169,7 +169,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
             catch (Exception ex)
             {
                 mMessage = "Exception in GetResources: " + ex.Message;
-                LogError(mMessage + "; task = " + currentTask + "; " + clsGlobal.GetExceptionStackTrace(ex));
+                LogError(mMessage + "; task = " + currentTask + "; " + Global.GetExceptionStackTrace(ex));
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -209,7 +209,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 return CloseOutType.CLOSEOUT_SUCCESS;
             }
 
-            LogDebug("clsAnalysisResourcesMSXMLGen.GetDatasetFile: Error occurred retrieving spectra.");
+            LogDebug("AnalysisResourcesMSXMLGen.GetDatasetFile: Error occurred retrieving spectra.");
             return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
         }
     }

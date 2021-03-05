@@ -16,7 +16,7 @@ namespace AnalysisManagerMODaPlugIn
     /// <summary>
     /// Class for running MODa analysis
     /// </summary>
-    public class clsAnalysisToolRunnerMODa : clsAnalysisToolRunnerBase
+    public class AnalysisToolRunnerMODa : AnalysisToolRunnerBase
     {
         #region "Constants and Enums"
 
@@ -40,7 +40,7 @@ namespace AnalysisManagerMODaPlugIn
 
         private string mMODaResultsFilePath;
 
-        private clsRunDosProgram mCmdRunner;
+        private RunDosProgram mCmdRunner;
 
         #endregion
 
@@ -62,7 +62,7 @@ namespace AnalysisManagerMODaPlugIn
 
                 if (mDebugLevel > 4)
                 {
-                    LogDebug("clsAnalysisToolRunnerMODa.RunTool(): Enter");
+                    LogDebug("AnalysisToolRunnerMODa.RunTool(): Enter");
                 }
 
                 mMODaResultsFilePath = string.Empty;
@@ -172,7 +172,7 @@ namespace AnalysisManagerMODaPlugIn
             var spectrumFileName = mDatasetName + ".mgf";
 
             // Define the path to the fasta file
-            // Note that job parameter "generatedFastaName" gets defined by clsAnalysisResources.RetrieveOrgDB
+            // Note that job parameter "generatedFastaName" gets defined by AnalysisResources.RetrieveOrgDB
             var localOrgDbFolder = mMgrParams.GetParam("OrgDbDir");
             var dbFilename = mJobParams.GetParam("PeptideSearch", "generatedFastaName");
             var fastaFilePath = Path.Combine(localOrgDbFolder, dbFilename);
@@ -200,7 +200,7 @@ namespace AnalysisManagerMODaPlugIn
 
             LogDebug(javaProgLoc + " " + arguments);
 
-            mCmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel);
+            mCmdRunner = new RunDosProgram(mWorkDir, mDebugLevel);
             RegisterEvents(mCmdRunner);
             mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 

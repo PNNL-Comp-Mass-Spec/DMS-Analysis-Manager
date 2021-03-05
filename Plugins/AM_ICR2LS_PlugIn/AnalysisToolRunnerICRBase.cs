@@ -10,7 +10,7 @@ namespace AnalysisManagerICR2LSPlugIn
     /// <summary>
     /// Base class for running ICR-2LS
     /// </summary>
-    public abstract class clsAnalysisToolRunnerICRBase : clsAnalysisToolRunnerBase
+    public abstract class AnalysisToolRunnerICRBase : AnalysisToolRunnerBase
     {
         protected const string ICR2LS_STATE_UNKNOWN = "unknown";
         protected const string ICR2LS_STATE_IDLE = "idle";
@@ -74,13 +74,13 @@ namespace AnalysisManagerICR2LSPlugIn
 
         private udtICR2LSStatusType mICR2LSStatus;
 
-        private clsRunDosProgram mCmdRunner;
+        private RunDosProgram mCmdRunner;
         private FileSystemWatcher mStatusFileWatcher;
         private PEKtoCSVConverter.PEKtoCSVConverter mPEKtoCSVConverter;
 
         private DateTime mLastPekToCsvPercentCompleteTime;
 
-        protected clsAnalysisToolRunnerICRBase()
+        protected AnalysisToolRunnerICRBase()
         {
             ResetStatusLogTimes();
 
@@ -113,7 +113,7 @@ namespace AnalysisManagerICR2LSPlugIn
             {
                 var scansFilePath = Path.Combine(mWorkDir, mDatasetName + "_scans.csv");
                 var isosFilePath = Path.Combine(mWorkDir, mDatasetName + "_isos.csv");
-                var rawFilePath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_RAW_EXTENSION);
+                var rawFilePath = Path.Combine(mWorkDir, mDatasetName + AnalysisResources.DOT_RAW_EXTENSION);
 
                 if (!File.Exists(rawFilePath))
                 {
@@ -156,12 +156,12 @@ namespace AnalysisManagerICR2LSPlugIn
                         return;
                 }
 
-                var transferFolderPath = mJobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH);
+                var transferFolderPath = mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH);
                 if (string.IsNullOrEmpty(transferFolderPath))
                     return;
 
-                transferFolderPath = Path.Combine(transferFolderPath, mJobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_DATASET_FOLDER_NAME));
-                transferFolderPath = Path.Combine(transferFolderPath, mJobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME));
+                transferFolderPath = Path.Combine(transferFolderPath, mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_DATASET_FOLDER_NAME));
+                transferFolderPath = Path.Combine(transferFolderPath, mJobParams.GetParam(AnalysisJob.STEP_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME));
 
                 var diTransferFolder = new DirectoryInfo(transferFolderPath);
                 if (!diTransferFolder.Exists)
@@ -566,7 +566,7 @@ namespace AnalysisManagerICR2LSPlugIn
             //
             // /NoMS2 is optional.  When provided, /MS2 spectra will be skipped
             //
-            // See clsAnalysisToolRunnerICR for a description of the expected folder layout when processing S-folders
+            // See AnalysisToolRunnerICR for a description of the expected folder layout when processing S-folders
 
             string strArguments;
 
@@ -581,7 +581,7 @@ namespace AnalysisManagerICR2LSPlugIn
                 case ICR2LSProcessingModeConstants.SerFilePEK:
                 case ICR2LSProcessingModeConstants.SerFileTIC:
                     // Need to find the location of the apexAcquisition.method file
-                    var strApexAcqFilePath = clsFileSearch.FindFileInDirectoryTree(Path.GetDirectoryName(instrumentFilePath), APEX_ACQUISITION_METHOD_FILE);
+                    var strApexAcqFilePath = FileSearch.FindFileInDirectoryTree(Path.GetDirectoryName(instrumentFilePath), APEX_ACQUISITION_METHOD_FILE);
 
                     if (string.IsNullOrEmpty(strApexAcqFilePath))
                     {
@@ -655,7 +655,7 @@ namespace AnalysisManagerICR2LSPlugIn
             }
 
             // Initialize the program runner
-            mCmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel);
+            mCmdRunner = new RunDosProgram(mWorkDir, mDebugLevel);
             RegisterEvents(mCmdRunner);
             mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
@@ -692,7 +692,7 @@ namespace AnalysisManagerICR2LSPlugIn
             var success = mCmdRunner.RunProgram(strExeFilePath, strArguments, "ICR2LS.exe", true);
 
             // Pause for another 500 msec to make sure ICR-2LS closes
-            clsGlobal.IdleLoop(0.5);
+            Global.IdleLoop(0.5);
 
             // Make sure the status file is parsed one final time
             ParseICR2LSStatusFile(mStatusFilePath, true);
@@ -878,7 +878,7 @@ namespace AnalysisManagerICR2LSPlugIn
 
                     LogDebug(
                         string.Format(
-                            "clsAnalysisToolRunnerICRBase.CmdRunner_LoopWaiting(); " +
+                            "AnalysisToolRunnerICRBase.CmdRunner_LoopWaiting(); " +
                             "Processing Time = {0:0.0} minutes; Progress = {1:0.00}; Scans Processed = {2}",
                             DateTime.UtcNow.Subtract(mStartTime).TotalMinutes, mProgress, mICR2LSStatus.ScansProcessed));
                 }

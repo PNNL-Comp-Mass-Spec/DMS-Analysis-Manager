@@ -9,7 +9,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
     /// <summary>
     /// Retrieve resources for the DTA Refinery plugin
     /// </summary>
-    public class clsAnalysisResourcesDtaRefinery : clsAnalysisResources
+    public class AnalysisResourcesDtaRefinery : AnalysisResources
     {
         internal const string XTANDEM_DEFAULT_INPUT_FILE = "xtandem_default_input.xml";
         internal const string XTANDEM_TAXONOMY_LIST_FILE = "xtandem_taxonomy_list.xml";
@@ -18,10 +18,10 @@ namespace AnalysisManagerDtaRefineryPlugIn
         /// <summary>
         /// Initialize options
         /// </summary>
-        public override void Setup(string stepToolName, IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, clsMyEMSLUtilities myEMSLUtilities)
+        public override void Setup(string stepToolName, IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, MyEMSLUtilities myEMSLUtilities)
         {
             base.Setup(stepToolName, mgrParams, jobParams, statusTools, myEMSLUtilities);
-            SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, true);
+            SetOption(Global.eAnalysisResourceOptions.OrgDbRequired, true);
         }
 
         /// <summary>
@@ -54,7 +54,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
-            const string paramFileStoragePathKeyName = clsGlobal.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "DTA_Refinery";
+            const string paramFileStoragePathKeyName = Global.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "DTA_Refinery";
 
             var dtaRefineryParmFileStoragePath = mMgrParams.GetParam(paramFileStoragePathKeyName);
             if (string.IsNullOrEmpty(dtaRefineryParmFileStoragePath))
@@ -151,7 +151,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
             var success = UpdateParameterFile(out var errorMessage);
             if (!success)
             {
-                var msg = "clsAnalysisResourcesDtaRefinery.GetResources(), failed making input file: " + errorMessage;
+                var msg = "AnalysisResourcesDtaRefinery.GetResources(), failed making input file: " + errorMessage;
                 LogError(msg);
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
@@ -348,7 +348,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
 
         private bool ValidateDeconMSnLogFile(string filePath)
         {
-            var validator = new clsDeconMSnLogFileValidator();
+            var validator = new DeconMSnLogFileValidator();
             RegisterEvents(validator);
 
             var success = validator.ValidateDeconMSnLogFile(filePath);
@@ -360,7 +360,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
 
             if (validator.FileUpdated)
             {
-                LogWarning("clsDeconMSnLogFileValidator.ValidateFile updated one or more rows " +
+                LogWarning("DeconMSnLogFileValidator.ValidateFile updated one or more rows " +
                            "in the DeconMSn_Log.txt file to replace values with intensities of 0 with 1");
             }
 

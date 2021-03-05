@@ -8,7 +8,7 @@ using System.Text.RegularExpressions;
 
 namespace AnalysisManagerMODPlusPlugin
 {
-    public class clsMODPlusRunner
+    public class MODPlusRunner
     {
         public const string MOD_PLUS_CONSOLE_OUTPUT_PREFIX = "MODPlus_ConsoleOutput_Part";
 
@@ -66,7 +66,7 @@ namespace AnalysisManagerMODPlusPlugin
         /// </summary>
         public double Progress { get; private set; }
 
-        public clsRunDosProgram ProgramRunner { get; private set; }
+        public RunDosProgram ProgramRunner { get; private set; }
 
         public ProgRunner.States ProgRunnerStatus
         {
@@ -113,7 +113,7 @@ namespace AnalysisManagerMODPlusPlugin
         /// <param name="paramFilePath"></param>
         /// <param name="javaProgLoc"></param>
         /// <param name="modPlusJarFilePath"></param>
-        public clsMODPlusRunner(string dataset, int processingThread, string workingDirectory, string paramFilePath, string javaProgLoc, string modPlusJarFilePath)
+        public MODPlusRunner(string dataset, int processingThread, string workingDirectory, string paramFilePath, string javaProgLoc, string modPlusJarFilePath)
         {
             mDatasetName = dataset;
             Thread = processingThread;
@@ -143,7 +143,7 @@ namespace AnalysisManagerMODPlusPlugin
 
         public void StartAnalysis()
         {
-            ProgramRunner = new clsRunDosProgram(mWorkingDirectory);
+            ProgramRunner = new RunDosProgram(mWorkingDirectory);
             ProgramRunner.ErrorEvent += CmdRunner_ErrorEvent;
             ProgramRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
@@ -163,9 +163,9 @@ namespace AnalysisManagerMODPlusPlugin
             Status = MODPlusRunnerStatusCodes.Running;
 
             var arguments = " -Xmx" + JavaMemorySizeMB + "M" +
-                            " -jar " + clsGlobal.PossiblyQuotePath(mModPlusJarFilePath) +
-                            " -i " + clsGlobal.PossiblyQuotePath(ParameterFilePath) +
-                            " -o " + clsGlobal.PossiblyQuotePath(OutputFilePath);
+                            " -jar " + Global.PossiblyQuotePath(mModPlusJarFilePath) +
+                            " -i " + Global.PossiblyQuotePath(ParameterFilePath) +
+                            " -o " + Global.PossiblyQuotePath(OutputFilePath);
 
             CommandLineArgs = arguments;
 

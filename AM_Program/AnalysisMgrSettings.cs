@@ -25,7 +25,7 @@ namespace AnalysisManagerProg
     /// Loads initial settings from local config file, then checks to see if remainder of settings should be loaded or manager set to inactive.
     /// If manager active, retrieves remainder of settings manager parameters database.
     /// </remarks>
-    public class clsAnalysisMgrSettings : MgrSettingsDB, IMgrParams
+    public class AnalysisMgrSettings : MgrSettingsDB, IMgrParams
     {
         // Ignore Spelling: ack
 
@@ -47,7 +47,7 @@ namespace AnalysisManagerProg
         /// </summary>
         /// <remarks>
         /// Defined in the manager control database
-        /// If clsGlobal.OfflineMode is true, equivalent to MgrActive_Local
+        /// If Global.OfflineMode is true, equivalent to MgrActive_Local
         /// </remarks>
         public const string MGR_PARAM_MGR_ACTIVE = "mgractive";
 
@@ -104,7 +104,7 @@ namespace AnalysisManagerProg
         /// <param name="mgrDirectoryPath"></param>
         /// <param name="traceMode"></param>
         /// <remarks>Call LoadSettings after instantiating this class</remarks>
-        public clsAnalysisMgrSettings(
+        public AnalysisMgrSettings(
             string mgrDirectoryPath,
             bool traceMode)
         {
@@ -124,7 +124,7 @@ namespace AnalysisManagerProg
 
                 if (string.IsNullOrWhiteSpace(connectionString))
                 {
-                    if (clsGlobal.OfflineMode)
+                    if (Global.OfflineMode)
                         OnDebugEvent("Skipping call to " + SP_NAME_ACK_MANAGER_UPDATE + " since offline");
                     else
                         OnDebugEvent("Skipping call to " + SP_NAME_ACK_MANAGER_UPDATE + " since the Manager Control connection string is empty");
@@ -161,13 +161,13 @@ namespace AnalysisManagerProg
         }
 
         /// <summary>
-        /// Updates manager settings, then loads settings from the database or from ManagerSettingsLocal.xml if clsGlobal.OfflineMode is true
+        /// Updates manager settings, then loads settings from the database or from ManagerSettingsLocal.xml if Global.OfflineMode is true
         /// </summary>
         /// <param name="configFileSettings">Manager settings loaded from file AppName.exe.config</param>
         /// <returns>True if successful; False on error</returns>
         public bool LoadSettings(Dictionary<string, string> configFileSettings)
         {
-            var loadSettingsFromDB = !clsGlobal.OfflineMode;
+            var loadSettingsFromDB = !Global.OfflineMode;
 
             var success = LoadSettings(configFileSettings, loadSettingsFromDB);
             if (!success)
@@ -175,7 +175,7 @@ namespace AnalysisManagerProg
                 return false;
             }
 
-            if (clsGlobal.OfflineMode)
+            if (Global.OfflineMode)
             {
                 var successLocal = LoadLocalSettings();
                 if (!successLocal)
@@ -203,11 +203,11 @@ namespace AnalysisManagerProg
 
         /// <summary>
         /// Retrieves the manager and global settings from the Manager Control and Broker databases
-        /// Or, if clsGlobal.OfflineMode is true, load settings from file ManagerSettingsLocal.xml
+        /// Or, if Global.OfflineMode is true, load settings from file ManagerSettingsLocal.xml
         /// </summary>
         public bool LoadDBSettings()
         {
-            if (clsGlobal.OfflineMode)
+            if (Global.OfflineMode)
             {
                 var successLocal = LoadLocalSettings();
                 if (!successLocal)
@@ -365,7 +365,7 @@ namespace AnalysisManagerProg
             //   WHERE ISNULL([Param File Storage Path], '') <> ''
             //
             const string sqlQuery =
-                " SELECT '" + clsGlobal.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "' + Name AS ParameterName, " +
+                " SELECT '" + Global.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "' + Name AS ParameterName, " +
                 " [Param File Storage Path] AS ParameterValue" + " FROM V_Pipeline_Step_Tools_Detail_Report" +
                 " WHERE ISNULL([Param File Storage Path], '') <> ''";
 
@@ -380,7 +380,7 @@ namespace AnalysisManagerProg
             // If loop exited due to errors, return false
             if (!success)
             {
-                const string statusMessage = "clsAnalysisMgrSettings.LoadBrokerDBSettings; Excessive failures attempting to retrieve settings from broker database";
+                const string statusMessage = "AnalysisMgrSettings.LoadBrokerDBSettings; Excessive failures attempting to retrieve settings from broker database";
                 ReportError(statusMessage, false);
                 return false;
             }
@@ -389,7 +389,7 @@ namespace AnalysisManagerProg
             if (queryResults.Count < 1)
             {
                 // No data was returned
-                var statusMessage = "clsAnalysisMgrSettings.LoadBrokerDBSettings; V_Pipeline_Step_Tools_Detail_Report returned no rows using " +
+                var statusMessage = "AnalysisMgrSettings.LoadBrokerDBSettings; V_Pipeline_Step_Tools_Detail_Report returned no rows using " +
                                     connectionString;
                 ReportError(statusMessage, false);
                 return false;
@@ -476,7 +476,7 @@ namespace AnalysisManagerProg
 
             if (myNode == null)
             {
-                ErrMsg = "clsAnalysisMgrSettings.WriteConfigSettings; applicationSettings node not found";
+                ErrMsg = "AnalysisMgrSettings.WriteConfigSettings; applicationSettings node not found";
                 return false;
             }
 
@@ -492,7 +492,7 @@ namespace AnalysisManagerProg
                 else
                 {
                     // Key was not found
-                    ErrMsg = "clsAnalysisMgrSettings.WriteConfigSettings; specified key not found: " + key;
+                    ErrMsg = "AnalysisMgrSettings.WriteConfigSettings; specified key not found: " + key;
                     return false;
                 }
                 myDoc.Save(GetConfigFilePath());
@@ -500,7 +500,7 @@ namespace AnalysisManagerProg
             }
             catch (Exception ex)
             {
-                ErrMsg = "clsAnalysisMgrSettings.WriteConfigSettings; Exception updating settings file: " + ex.Message;
+                ErrMsg = "AnalysisMgrSettings.WriteConfigSettings; Exception updating settings file: " + ex.Message;
                 return false;
             }
         }
@@ -519,7 +519,7 @@ namespace AnalysisManagerProg
             }
             catch (Exception ex)
             {
-                ErrMsg = "clsAnalysisMgrSettings.LoadConfigDocument; Exception loading settings file: " + ex.Message;
+                ErrMsg = "AnalysisMgrSettings.LoadConfigDocument; Exception loading settings file: " + ex.Message;
                 return null;
             }
         }

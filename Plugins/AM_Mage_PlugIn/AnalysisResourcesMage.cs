@@ -9,7 +9,7 @@ namespace AnalysisManager_Mage_PlugIn
     /// <summary>
     /// Retrieve resources for the Mage plugin
     /// </summary>
-    public class clsAnalysisResourcesMage : clsAnalysisResourcesMAC
+    public class AnalysisResourcesMage : AnalysisResourcesMAC
     {
         /// <summary>
         /// Retrieve required files
@@ -63,7 +63,7 @@ namespace AnalysisManager_Mage_PlugIn
             var dbTools = DbToolsFactory.GetDBTools(connectionString, debugMode: mMgrParams.TraceMode);
             RegisterEvents(dbTools);
 
-            var peptideHitJobs = clsDataPackageInfoLoader.RetrieveDataPackagePeptideHitJobInfo(
+            var peptideHitJobs = DataPackageInfoLoader.RetrieveDataPackagePeptideHitJobInfo(
                 dbTools, dataPackageID, out var lstAdditionalJobs, out var errorMsg);
 
             if (!string.IsNullOrEmpty(errorMsg))
@@ -97,23 +97,23 @@ namespace AnalysisManager_Mage_PlugIn
 
         private void ValidateDeconJobs(
             int dataPackageID,
-            IReadOnlyCollection<clsDataPackageJobInfo> peptideHitJobs,
-            IReadOnlyCollection<clsDataPackageJobInfo> lstAdditionalJobs)
+            IReadOnlyCollection<DataPackageJobInfo> peptideHitJobs,
+            IReadOnlyCollection<DataPackageJobInfo> lstAdditionalJobs)
         {
             ValidateMatchingJobs(dataPackageID, peptideHitJobs, lstAdditionalJobs, "HMMA_Peak", "DeconTools");
         }
 
         private bool ValidateMasicJobs(int dataPackageID,
-            IReadOnlyCollection<clsDataPackageJobInfo> peptideHitJobs,
-            IReadOnlyCollection<clsDataPackageJobInfo> lstAdditionalJobs)
+            IReadOnlyCollection<DataPackageJobInfo> peptideHitJobs,
+            IReadOnlyCollection<DataPackageJobInfo> lstAdditionalJobs)
         {
             return ValidateMatchingJobs(dataPackageID, peptideHitJobs, lstAdditionalJobs, "SIC", "MASIC");
         }
 
         private bool ValidateMatchingJobs(
             int dataPackageID,
-            IReadOnlyCollection<clsDataPackageJobInfo> peptideHitJobs,
-            IReadOnlyCollection<clsDataPackageJobInfo> lstAdditionalJobs,
+            IReadOnlyCollection<DataPackageJobInfo> peptideHitJobs,
+            IReadOnlyCollection<DataPackageJobInfo> lstAdditionalJobs,
             string resultType,
             string toolName)
         {

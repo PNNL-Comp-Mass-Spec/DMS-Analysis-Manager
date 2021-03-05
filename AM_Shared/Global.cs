@@ -23,7 +23,7 @@ namespace AnalysisManagerBase
     /// <summary>
     /// Globally useful methods
     /// </summary>
-    public static class clsGlobal
+    public static class Global
     {
         // Ignore Spelling: cmd, Sql, Utc
 
@@ -435,7 +435,7 @@ namespace AnalysisManagerBase
         /// Parses the .StackTrace text of the given exception to return a compact description of the current stack
         /// </summary>
         /// <param name="ex"></param>
-        /// <returns>String similar to "Stack trace: clsCodeTest.Test-:-clsCodeTest.TestException-:-clsCodeTest.InnerTestException in clsCodeTest.vb:line 86"</returns>
+        /// <returns>String similar to "Stack trace: CodeTest.Test-:-CodeTest.TestException-:-CodeTest.InnerTestException in CodeTest.vb:line 86"</returns>
         public static string GetExceptionStackTrace(Exception ex)
         {
             return GetExceptionStackTrace(ex, false);
@@ -446,7 +446,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="ex"></param>
         /// <param name="multiLineOutput">When true, format the stack trace using newline characters instead of -:-</param>
-        /// <returns>String similar to "Stack trace: clsCodeTest.Test-:-clsCodeTest.TestException-:-clsCodeTest.InnerTestException in clsCodeTest.vb:line 86"</returns>
+        /// <returns>String similar to "Stack trace: CodeTest.Test-:-CodeTest.TestException-:-CodeTest.InnerTestException in CodeTest.vb:line 86"</returns>
         public static string GetExceptionStackTrace(Exception ex, bool multiLineOutput)
         {
             if (multiLineOutput)
@@ -783,7 +783,7 @@ namespace AnalysisManagerBase
             catch (Exception ex)
             {
                 // Ignore errors here
-                Console.WriteLine("Error in clsGlobal.FilesMatch: " + ex.Message);
+                Console.WriteLine("Error in Global.FilesMatch: " + ex.Message);
             }
 
             return false;

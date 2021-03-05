@@ -7,7 +7,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
     /// <summary>
     /// Retrieve resources for the MSAlign Quant plugin
     /// </summary>
-    public class clsAnalysisResourcesMSAlignQuant : clsAnalysisResources
+    public class AnalysisResourcesMSAlignQuant : AnalysisResources
     {
         /// <summary>
         /// Job parameter tracking the input file name for MSAlign Quant
@@ -66,7 +66,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                             if (!File.Exists(Path.Combine(mWorkDir, DatasetName + DOT_RAW_EXTENSION)))
                             {
                                 mMessage = "Thermo .Raw file not successfully copied to WorkDir; likely a timeout error";
-                                LogError("clsDtaGenResources.GetResources: " + mMessage);
+                                LogError("DtaGenResources.GetResources: " + mMessage);
                                 return CloseOutType.CLOSEOUT_FAILED;
                             }
 
@@ -78,20 +78,20 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                             if (!Directory.Exists(Path.Combine(mWorkDir, DatasetName + DOT_D_EXTENSION)))
                             {
                                 mMessage = "Bruker .D folder not successfully copied to WorkDir; likely a timeout error";
-                                LogError("clsDtaGenResources.GetResources: " + mMessage);
+                                LogError("DtaGenResources.GetResources: " + mMessage);
                                 return CloseOutType.CLOSEOUT_FAILED;
                             }
                         }
                     }
                     else
                     {
-                        LogDebug("clsDtaGenResources.GetResources: Error occurred retrieving spectra.");
+                        LogDebug("DtaGenResources.GetResources: Error occurred retrieving spectra.");
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
                     break;
                 default:
                     mMessage = "Dataset type " + rawDataTypeName + " is not supported";
-                    LogError("clsDtaGenResources.GetResources: " + mMessage +
+                    LogError("DtaGenResources.GetResources: " + mMessage +
                              "; must be " + RAW_DATA_TYPE_DOT_RAW_FILES + " or " + RAW_DATA_TYPE_BRUKER_FT_FOLDER);
                     return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -167,7 +167,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
             mJobParams.AddResultFileToSkip(msAlignResultsTableFile);
-            mJobParams.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, MSALIGN_QUANT_INPUT_FILE_NAME_PARAM, msAlignResultsTableFile);
+            mJobParams.AddAdditionalParameter(AnalysisJob.STEP_PARAMETERS_SECTION, MSALIGN_QUANT_INPUT_FILE_NAME_PARAM, msAlignResultsTableFile);
 
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
@@ -189,7 +189,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
             mJobParams.AddResultFileToSkip(topPICResultsFile);
-            mJobParams.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, MSALIGN_QUANT_INPUT_FILE_NAME_PARAM, topPICResultsFile);
+            mJobParams.AddAdditionalParameter(AnalysisJob.STEP_PARAMETERS_SECTION, MSALIGN_QUANT_INPUT_FILE_NAME_PARAM, topPICResultsFile);
 
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
@@ -199,7 +199,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
             // For example, MSAlign_Quant_Workflow_2012-07-25
             // The parameter name is MSAlignQuantParamFile even when the step tool is TopPIC
 
-            const string paramFileStoragePathKeyName = clsGlobal.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "MSAlign_Quant";
+            const string paramFileStoragePathKeyName = Global.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "MSAlign_Quant";
             var paramFileStoragePath = mMgrParams.GetParam(paramFileStoragePathKeyName);
             if (string.IsNullOrEmpty(paramFileStoragePath))
             {
@@ -212,7 +212,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
             var paramFileName = mJobParams.GetJobParameter("MSAlignQuantParamFile", string.Empty);
             if (string.IsNullOrEmpty(paramFileName))
             {
-                mMessage = clsAnalysisToolRunnerBase.NotifyMissingParameter(mJobParams, "MSAlignQuantParamFile");
+                mMessage = AnalysisToolRunnerBase.NotifyMissingParameter(mJobParams, "MSAlignQuantParamFile");
                 LogError(mMessage);
                 return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
             }

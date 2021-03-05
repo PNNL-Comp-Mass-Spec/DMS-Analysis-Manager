@@ -18,7 +18,7 @@ namespace AnalysisManagerInSpecTPlugIn
     /// <summary>
     /// Class for running InSpecT analysis
     /// </summary>
-    public class clsAnalysisToolRunnerIN : clsAnalysisToolRunnerBase
+    public class AnalysisToolRunnerIN : AnalysisToolRunnerBase
     {
         #region "Structures"
 
@@ -43,7 +43,7 @@ namespace AnalysisManagerInSpecTPlugIn
         public const string INSPECT_INPUT_PARAMS_FILENAME = "inspect_input.txt";
         protected const string INSPECT_EXE_NAME = "inspect.exe";
 
-        protected clsRunDosProgram mCmdRunner;
+        protected RunDosProgram mCmdRunner;
 
         protected string mInspectCustomParamFileName;
 
@@ -72,7 +72,7 @@ namespace AnalysisManagerInSpecTPlugIn
         /// <returns>CloseOutType enum indicating success or failure</returns>
         public override CloseOutType RunTool()
         {
-            var objIndexedDBCreator = new clsCreateInspectIndexedDB();
+            var objIndexedDBCreator = new CreateInspectIndexedDB();
 
             try
             {
@@ -84,7 +84,7 @@ namespace AnalysisManagerInSpecTPlugIn
 
                 if (mDebugLevel > 4)
                 {
-                    LogDebug("clsAnalysisToolRunnerIN.RunTool(): Enter");
+                    LogDebug("AnalysisToolRunnerIN.RunTool(): Enter");
                 }
 
                 var inspectDir = mMgrParams.GetParam("InspectDir");
@@ -261,7 +261,7 @@ namespace AnalysisManagerInSpecTPlugIn
             catch (Exception ex)
             {
                 // Let the user know what went wrong.
-                LogError("clsAnalysisToolRunnerIN.BuildInspectInputFile-> error while writing file: " + ex.Message);
+                LogError("AnalysisToolRunnerIN.BuildInspectInputFile-> error while writing file: " + ex.Message);
                 return string.Empty;
             }
 
@@ -275,13 +275,13 @@ namespace AnalysisManagerInSpecTPlugIn
         //
         //    try
         //    {
-        //        var objMZXmlFile = new MSDataFileReader.clsMzXMLFileReader();
+        //        var objMZXmlFile = new MSDataFileReader.MzXMLFileReader();
         //
         //        // Open the file
         //        objMZXmlFile.OpenFile(strMZXMLFilename);
         //
         //        // Read the first spectrum (required to determine the ScanCount)
-        //        MSDataFileReader.clsSpectrumInfo objSpectrumInfo;
+        //        MSDataFileReader.SpectrumInfo objSpectrumInfo;
         //        if (objMZXmlFile.ReadNextSpectrum(out objSpectrumInfo))
         //        {
         //            intScanCount = objMZXmlFile.ScanCount;
@@ -294,7 +294,7 @@ namespace AnalysisManagerInSpecTPlugIn
         //    }
         //    catch (Exception ex)
         //    {
-        //        LogError("clsAnalysisToolRunnerIN.ExtractScanCountValueFromMzXML, Error determining the scan count in the .mzXML file: " + ex.Message);
+        //        LogError("AnalysisToolRunnerIN.ExtractScanCountValueFromMzXML, Error determining the scan count in the .mzXML file: " + ex.Message);
         //        return 0;
         //    }
         //
@@ -324,7 +324,7 @@ namespace AnalysisManagerInSpecTPlugIn
             {
                 if (mDebugLevel > 4)
                 {
-                    LogDebug("clsAnalysisToolRunnerIN.ParseInspectErrorsFile(): Reading " + errorFilename);
+                    LogDebug("AnalysisToolRunnerIN.ParseInspectErrorsFile(): Reading " + errorFilename);
                 }
 
                 var errorFilePath = Path.Combine(mWorkDir, errorFilename);
@@ -374,7 +374,7 @@ namespace AnalysisManagerInSpecTPlugIn
             }
             catch (Exception)
             {
-                LogError("clsAnalysisToolRunnerIN.ParseInspectErrorsFile, Error reading the Inspect _errors.txt file (" + errorFilename + ")");
+                LogError("AnalysisToolRunnerIN.ParseInspectErrorsFile, Error reading the Inspect _errors.txt file (" + errorFilename + ")");
                 return false;
             }
 
@@ -396,13 +396,13 @@ namespace AnalysisManagerInSpecTPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            mCmdRunner = new clsRunDosProgram(InspectDir, mDebugLevel);
+            mCmdRunner = new RunDosProgram(InspectDir, mDebugLevel);
             RegisterEvents(mCmdRunner);
             mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
             if (mDebugLevel > 4)
             {
-                LogDebug("clsAnalysisToolRunnerIN.RunInSpecT(): Enter");
+                LogDebug("AnalysisToolRunnerIN.RunInSpecT(): Enter");
             }
 
             // verify that program file exists
@@ -596,7 +596,7 @@ namespace AnalysisManagerInSpecTPlugIn
             }
             catch (Exception ex)
             {
-                LogError("clsAnalysisToolRunnerIN.ParseInspectSearchLogFile, error reading Inspect search log" + ex.Message);
+                LogError("AnalysisToolRunnerIN.ParseInspectSearchLogFile, error reading Inspect search log" + ex.Message);
             }
         }
 

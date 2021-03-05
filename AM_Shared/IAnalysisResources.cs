@@ -41,7 +41,7 @@ namespace AnalysisManagerBase
             IMgrParams mgrParams,
             IJobParams jobParams,
             IStatusFile statusTools,
-            clsMyEMSLUtilities myEMSLUtilities);
+            MyEMSLUtilities myEMSLUtilities);
 
         /// <summary>
         /// Main processing function for obtaining the required resources
@@ -55,21 +55,21 @@ namespace AnalysisManagerBase
         /// Plugins should also copy fasta files if appropriate
         /// </summary>
         /// <returns>True if success, false if an error</returns>
-        bool CopyResourcesToRemote(clsRemoteTransferUtility transferUtility);
+        bool CopyResourcesToRemote(RemoteTransferUtility transferUtility);
 
         /// <summary>
         /// Check the status of an analysis resource option
         /// </summary>
         /// <param name="resourceOption">Option to get</param>
         /// <returns>The option value (true or false)</returns>
-        bool GetOption(clsGlobal.eAnalysisResourceOptions resourceOption);
+        bool GetOption(Global.eAnalysisResourceOptions resourceOption);
 
         /// <summary>
         /// Set the status of an analysis resource option
         /// </summary>
         /// <param name="resourceOption">Option to set</param>
         /// <param name="enabled">True or false</param>
-        void SetOption(clsGlobal.eAnalysisResourceOptions resourceOption, bool enabled);
+        void SetOption(Global.eAnalysisResourceOptions resourceOption, bool enabled);
 
         #endregion
 

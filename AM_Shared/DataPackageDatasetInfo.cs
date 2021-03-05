@@ -4,7 +4,7 @@ namespace AnalysisManagerBase
     /// <summary>
     /// Data package dataset info
     /// </summary>
-    public class clsDataPackageDatasetInfo
+    public class DataPackageDatasetInfo
     {
         /// <summary>
         /// Dataset name
@@ -86,7 +86,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Constructor
         /// </summary>
-        public clsDataPackageDatasetInfo(string datasetName, int datasetId)
+        public DataPackageDatasetInfo(string datasetName, int datasetId)
         {
             Dataset = datasetName;
             DatasetID = datasetId;

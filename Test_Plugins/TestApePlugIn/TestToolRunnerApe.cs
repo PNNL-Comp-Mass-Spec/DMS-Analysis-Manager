@@ -3,9 +3,8 @@ using System.Collections.Generic;
 using AnalysisManagerBase;
 using AnalysisManager_Ape_PlugIn;
 
-
-namespace TestApePlugIn {
-
+namespace TestApePlugIn
+{
     class TestToolRunnerApe
     {
         private const int DEBUG_LEVEL = 1;
@@ -41,15 +40,15 @@ namespace TestApePlugIn {
 
         public CloseOutType TestRunWorkflow()
         {
-            var apeResourcer = new clsAnalysisResourcesApe();
-            var apeToolRunner = new clsAnalysisToolRunnerApe();
-            var summaryFile = new clsSummaryFile();
+            var apeResourcer = new AnalysisResourcesApe();
+            var apeToolRunner = new AnalysisToolRunnerApe();
+            var summaryFile = new SummaryFile();
 
             IMgrParams mgrParams = new MgrParamsStub(mMgrParms);
             IJobParams jobParams = new JobParamsStub(mRunWorkflowJobParms);
             var statusFile = new StatusFileStub();
 
-            var myEMSLUtilities = new clsMyEMSLUtilities(DEBUG_LEVEL, WORK_DIR);
+            var myEMSLUtilities = new MyEMSLUtilities(DEBUG_LEVEL, WORK_DIR);
 
             apeResourcer.Setup(STEP_TOOL_NAME, mgrParams, jobParams, statusFile, myEMSLUtilities);
             var eResult = apeResourcer.GetResources();

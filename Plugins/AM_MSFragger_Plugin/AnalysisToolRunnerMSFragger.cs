@@ -19,7 +19,7 @@ namespace AnalysisManagerMSFraggerPlugIn
     /// Class for running MSFragger analysis
     /// </summary>
     // ReSharper disable once UnusedMember.Global
-    public class clsAnalysisToolRunnerMSFragger : clsAnalysisToolRunnerBase
+    public class AnalysisToolRunnerMSFragger : AnalysisToolRunnerBase
     {
         #region "Constants and Enums"
 
@@ -45,7 +45,7 @@ namespace AnalysisManagerMSFraggerPlugIn
 
         private DateTime mLastConsoleOutputParse;
 
-        private clsRunDosProgram mCmdRunner;
+        private RunDosProgram mCmdRunner;
 
         #endregion
 
@@ -67,7 +67,7 @@ namespace AnalysisManagerMSFraggerPlugIn
 
                 if (mDebugLevel > 4)
                 {
-                    LogDebug("clsAnalysisToolRunnerMSFragger.RunTool(): Enter");
+                    LogDebug("AnalysisToolRunnerMSFragger.RunTool(): Enter");
                 }
 
                 // Initialize class wide variables
@@ -105,10 +105,10 @@ namespace AnalysisManagerMSFraggerPlugIn
                 mCmdRunner = null;
 
                 // Make sure objects are released
-                clsGlobal.IdleLoop(0.5);
+                Global.IdleLoop(0.5);
                 PRISM.ProgRunner.GarbageCollectNow();
 
-                if (!clsAnalysisJob.SuccessOrNoData(processingResult))
+                if (!AnalysisJob.SuccessOrNoData(processingResult))
                 {
                     // Something went wrong
                     // In order to help diagnose things, we will move whatever files were created into the result folder,
@@ -135,7 +135,7 @@ namespace AnalysisManagerMSFraggerPlugIn
         /// </summary>
         public override void CopyFailedResultsToArchiveDirectory()
         {
-            mJobParams.AddResultFileToSkip(Dataset + clsAnalysisResources.DOT_MZML_EXTENSION);
+            mJobParams.AddResultFileToSkip(Dataset + AnalysisResources.DOT_MZML_EXTENSION);
 
             base.CopyFailedResultsToArchiveDirectory();
         }
@@ -145,7 +145,7 @@ namespace AnalysisManagerMSFraggerPlugIn
         /// </summary>
         private int GetNumThreadsToUse()
         {
-            var coreCount = clsGlobal.GetCoreCount();
+            var coreCount = Global.GetCoreCount();
 
             if (coreCount > 4)
             {
@@ -386,7 +386,7 @@ namespace AnalysisManagerMSFraggerPlugIn
 
             // Set up and execute a program runner to run MSFragger
 
-            var mzMLFile = mDatasetName + clsAnalysisResources.DOT_MZML_EXTENSION;
+            var mzMLFile = mDatasetName + AnalysisResources.DOT_MZML_EXTENSION;
 
             // Set up and execute a program runner to run MSFragger
             var arguments = " -Xmx" + javaMemorySizeMB + "M -jar " + mMSFraggerProgLoc;
@@ -396,7 +396,7 @@ namespace AnalysisManagerMSFraggerPlugIn
 
             LogDebug(javaProgLoc + " " + arguments);
 
-            mCmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel)
+            mCmdRunner = new RunDosProgram(mWorkDir, mDebugLevel)
             {
                 CreateNoWindow = true,
                 CacheStandardOutput = true,
@@ -491,7 +491,7 @@ namespace AnalysisManagerMSFraggerPlugIn
 
             try
             {
-                var paramFileName = mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_PARAMETER_FILE);
+                var paramFileName = mJobParams.GetParam(AnalysisResources.JOB_PARAM_PARAMETER_FILE);
                 var sourceFile = new FileInfo(Path.Combine(mWorkDir, paramFileName));
                 var updatedFile = new FileInfo(Path.Combine(mWorkDir, paramFileName + ".new"));
 
@@ -586,10 +586,10 @@ namespace AnalysisManagerMSFraggerPlugIn
         private bool ValidateFastaFile()
         {
             // Define the path to the fasta file
-            var localOrgDbFolder = mMgrParams.GetParam(clsAnalysisResources.MGR_PARAM_ORG_DB_DIR);
+            var localOrgDbFolder = mMgrParams.GetParam(AnalysisResources.MGR_PARAM_ORG_DB_DIR);
 
-            // Note that job parameter "generatedFastaName" gets defined by clsAnalysisResources.RetrieveOrgDB
-            var fastaFilePath = Path.Combine(localOrgDbFolder, mJobParams.GetParam("PeptideSearch", clsAnalysisResources.JOB_PARAM_GENERATED_FASTA_NAME));
+            // Note that job parameter "generatedFastaName" gets defined by AnalysisResources.RetrieveOrgDB
+            var fastaFilePath = Path.Combine(localOrgDbFolder, mJobParams.GetParam("PeptideSearch", AnalysisResources.JOB_PARAM_GENERATED_FASTA_NAME));
 
             var fastaFile = new FileInfo(fastaFilePath);
 

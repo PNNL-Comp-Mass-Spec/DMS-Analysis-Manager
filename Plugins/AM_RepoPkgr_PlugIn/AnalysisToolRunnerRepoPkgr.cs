@@ -13,7 +13,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
     /// <summary>
     /// Class for running the RepoPkgr
     /// </summary>
-    public class clsAnalysisToolRunnerRepoPkgr : clsAnalysisToolRunnerBase
+    public class AnalysisToolRunnerRepoPkgr : AnalysisToolRunnerBase
     {
         #region Constants
 
@@ -110,7 +110,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
             var localOrgDBDirectory = mMgrParams.GetParam("OrgDbDir");
             var targetDirectoryPath = Path.Combine(mOutputResultsDirectoryPath, "Organism_Database");
 
-            var generatedOrgDBNames = ExtractPackedJobParameterList(clsAnalysisResourcesRepoPkgr.FASTA_FILES_FOR_DATA_PACKAGE);
+            var generatedOrgDBNames = ExtractPackedJobParameterList(AnalysisResourcesRepoPkgr.FASTA_FILES_FOR_DATA_PACKAGE);
 
             foreach (var orgDbName in generatedOrgDBNames)
             {
@@ -244,7 +244,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
         /// </summary>
         private void SetOutputDirectoryPath()
         {
-            var resultsDirectoryName = mJobParams.GetJobParameter(clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME, "");
+            var resultsDirectoryName = mJobParams.GetJobParameter(AnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME, "");
             var outputRootDirectoryPath = mJobParams.GetJobParameter("CacheFolderPath", "");
             mOutputResultsDirectoryPath = Path.Combine(outputRootDirectoryPath, resultsDirectoryName);
         }
@@ -286,9 +286,9 @@ namespace AnalysisManager_RepoPkgr_Plugin
         /// <param name="datasetFilePathLocal">Output parameter: Path to the locally cached dataset file</param>
         /// <returns>The full path to the locally created MzXML file</returns>
         protected string CreateMzXMLFileIfMissing(
-            clsMSXMLCreator msXmlCreator,
+            MSXMLCreator msXmlCreator,
             string datasetName,
-            clsAnalysisResults analysisResults,
+            AnalysisResults analysisResults,
             Dictionary<string, string> dctDatasetRawFilePaths,
             Dictionary<string, string> dctDatasetYearQuarter,
             Dictionary<string, string> dctDatasetRawDataTypes,
@@ -301,9 +301,9 @@ namespace AnalysisManager_RepoPkgr_Plugin
                 // Look in mWorkDir for the .mzXML or .mzML file for this dataset
                 var candidateFileNames = new List<string>
                     {
-                        datasetName + clsAnalysisResources.DOT_MZXML_EXTENSION,
-                        datasetName + clsAnalysisResources.DOT_MZXML_EXTENSION + clsAnalysisResources.DOT_GZ_EXTENSION,
-                        datasetName + clsAnalysisResources.DOT_MZML_EXTENSION + clsAnalysisResources.DOT_GZ_EXTENSION
+                        datasetName + AnalysisResources.DOT_MZXML_EXTENSION,
+                        datasetName + AnalysisResources.DOT_MZXML_EXTENSION + AnalysisResources.DOT_GZ_EXTENSION,
+                        datasetName + AnalysisResources.DOT_MZML_EXTENSION + AnalysisResources.DOT_GZ_EXTENSION
                     };
 
                 foreach (var candidateFile in candidateFileNames)
@@ -316,7 +316,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
                     }
 
                     // Look for a StoragePathInfo file
-                    filePath += clsAnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX;
+                    filePath += AnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX;
 
                     if (File.Exists(filePath))
                     {
@@ -334,7 +334,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
                 if (!dctDatasetRawFilePaths.ContainsKey(datasetName))
                 {
                     mMessage = "Dataset " + datasetName + " not found in job parameter " +
-                        clsAnalysisResources.JOB_PARAM_DICTIONARY_DATASET_FILE_PATHS + "; unable to create the missing .mzXML file";
+                        AnalysisResources.JOB_PARAM_DICTIONARY_DATASET_FILE_PATHS + "; unable to create the missing .mzXML file";
                     LogError(mMessage);
                     return string.Empty;
                 }
@@ -379,9 +379,9 @@ namespace AnalysisManager_RepoPkgr_Plugin
                 }
 
                 if (!dctDatasetRawDataTypes.TryGetValue(datasetName, out var rawDataType))
-                    rawDataType = clsAnalysisResources.RAW_DATA_TYPE_DOT_RAW_FILES;
+                    rawDataType = AnalysisResources.RAW_DATA_TYPE_DOT_RAW_FILES;
 
-                mJobParams.AddAdditionalParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, "RawDataType", rawDataType);
+                mJobParams.AddAdditionalParameter(AnalysisJob.JOB_PARAMETERS_SECTION, "RawDataType", rawDataType);
 
                 var success = msXmlCreator.CreateMZXMLFile();
 
@@ -401,7 +401,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
                 if (!success)
                     return string.Empty;
 
-                var localMzXmlFile = new FileInfo(Path.Combine(mWorkDir, datasetName + clsAnalysisResources.DOT_MZXML_EXTENSION));
+                var localMzXmlFile = new FileInfo(Path.Combine(mWorkDir, datasetName + AnalysisResources.DOT_MZXML_EXTENSION));
 
                 if (!localMzXmlFile.Exists)
                 {
@@ -411,7 +411,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
                 // Copy the .mzXML file to the cache
                 // Gzip it first before copying
-                var gzippedMzXmlFile = new FileInfo(localMzXmlFile + clsAnalysisResources.DOT_GZ_EXTENSION);
+                var gzippedMzXmlFile = new FileInfo(localMzXmlFile + AnalysisResources.DOT_GZ_EXTENSION);
                 success = mDotNetZipTools.GZipFile(localMzXmlFile.FullName, true);
                 if (!success)
                 {
@@ -436,7 +436,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
                 CopyMzXMLFileToServerCache(gzippedMzXmlFile.FullName, datasetYearQuarter, msXmlGeneratorName, purgeOldFilesIfNeeded: true);
 
-                mJobParams.AddResultFileToSkip(Path.GetFileName(localMzXmlFile.FullName + clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX));
+                mJobParams.AddResultFileToSkip(Path.GetFileName(localMzXmlFile.FullName + Global.SERVER_CACHE_HASHCHECK_FILE_SUFFIX));
 
                 PRISM.ProgRunner.GarbageCollectNow();
 
@@ -464,8 +464,8 @@ namespace AnalysisManager_RepoPkgr_Plugin
         }
 
         protected bool ProcessDataset(
-            clsAnalysisResults analysisResults,
-            clsMSXMLCreator msXmlCreator,
+            AnalysisResults analysisResults,
+            MSXMLCreator msXmlCreator,
             string datasetName,
             Dictionary<string, string> dctDatasetRawFilePaths,
             Dictionary<string, string> dctDatasetYearQuarter,
@@ -478,9 +478,9 @@ namespace AnalysisManager_RepoPkgr_Plugin
                 var instrumentDataDirectoryPath = Path.Combine(mOutputResultsDirectoryPath, "Instrument_Data");
 
                 if (!dctDatasetRawDataTypes.TryGetValue(datasetName, out var rawDataType))
-                    rawDataType = clsAnalysisResources.RAW_DATA_TYPE_DOT_RAW_FILES;
+                    rawDataType = AnalysisResources.RAW_DATA_TYPE_DOT_RAW_FILES;
 
-                if (rawDataType != clsAnalysisResources.RAW_DATA_TYPE_DOT_UIMF_FILES && mIncludeMzXMLFiles)
+                if (rawDataType != AnalysisResources.RAW_DATA_TYPE_DOT_UIMF_FILES && mIncludeMzXMLFiles)
                 {
                     // Create the .mzXML or .mzML file if it is missing
                     var mzXmlFilePathLocal = CreateMzXMLFileIfMissing(msXmlCreator, datasetName, analysisResults,
@@ -518,9 +518,9 @@ namespace AnalysisManager_RepoPkgr_Plugin
                         datasetFilePathSource = datasetFilePathLocal;
                     }
 
-                    if (datasetFilePathSource.StartsWith(clsAnalysisResources.MYEMSL_PATH_FLAG))
+                    if (datasetFilePathSource.StartsWith(AnalysisResources.MYEMSL_PATH_FLAG))
                     {
-                        // The file was in MyEMSL and should have already been retrieved via clsAnalysisResourcesRepoPkgr
+                        // The file was in MyEMSL and should have already been retrieved via AnalysisResourcesRepoPkgr
                         datasetFilePathSource = Path.Combine(mWorkDir, Path.GetFileName(datasetFilePathSource));
                         datasetFilePathLocal = datasetFilePathSource;
                     }
@@ -574,17 +574,17 @@ namespace AnalysisManager_RepoPkgr_Plugin
         private bool RetrieveInstrumentData(out int datasetsProcessed)
         {
             // Extract the packed parameters
-            var dctDatasetRawFilePaths = ExtractPackedJobParameterDictionary(clsAnalysisResources.JOB_PARAM_DICTIONARY_DATASET_FILE_PATHS);
-            var dctDatasetYearQuarter = ExtractPackedJobParameterDictionary(clsAnalysisResourcesRepoPkgr.JOB_PARAM_DICTIONARY_DATASET_STORAGE_YEAR_QUARTER);
-            var dctDatasetRawDataTypes = ExtractPackedJobParameterDictionary(clsAnalysisResources.JOB_PARAM_DICTIONARY_DATASET_RAW_DATA_TYPES);
+            var dctDatasetRawFilePaths = ExtractPackedJobParameterDictionary(AnalysisResources.JOB_PARAM_DICTIONARY_DATASET_FILE_PATHS);
+            var dctDatasetYearQuarter = ExtractPackedJobParameterDictionary(AnalysisResourcesRepoPkgr.JOB_PARAM_DICTIONARY_DATASET_STORAGE_YEAR_QUARTER);
+            var dctDatasetRawDataTypes = ExtractPackedJobParameterDictionary(AnalysisResources.JOB_PARAM_DICTIONARY_DATASET_RAW_DATA_TYPES);
 
             datasetsProcessed = 0;
 
             // The analysisResults object is used to copy files to/from this computer
-            var analysisResults = new clsAnalysisResults(mMgrParams, mJobParams);
+            var analysisResults = new AnalysisResults(mMgrParams, mJobParams);
 
             mMSXmlGeneratorAppPath = GetMSXmlGeneratorAppPath();
-            var msXmlCreator = new clsMSXMLCreator(mMSXmlGeneratorAppPath, mWorkDir, mDatasetName, mDebugLevel, mJobParams);
+            var msXmlCreator = new MSXMLCreator(mMSXmlGeneratorAppPath, mWorkDir, mDatasetName, mDebugLevel, mJobParams);
 
             RegisterEvents(msXmlCreator);
 
@@ -625,13 +625,13 @@ namespace AnalysisManager_RepoPkgr_Plugin
             return false;
         }
 
-        protected bool RetrieveStoragePathInfoTargetFile(string storagePathInfoFilePath, clsAnalysisResults analysisResults, ref string destPath)
+        protected bool RetrieveStoragePathInfoTargetFile(string storagePathInfoFilePath, AnalysisResults analysisResults, ref string destPath)
         {
             const bool IsDirectory = false;
             return RetrieveStoragePathInfoTargetFile(storagePathInfoFilePath, analysisResults, IsDirectory, ref destPath);
         }
 
-        protected bool RetrieveStoragePathInfoTargetFile(string storagePathInfoFilePath, clsAnalysisResults analysisResults, bool isDirectory, ref string destPath)
+        protected bool RetrieveStoragePathInfoTargetFile(string storagePathInfoFilePath, AnalysisResults analysisResults, bool isDirectory, ref string destPath)
         {
             var sourceFilePath = string.Empty;
 

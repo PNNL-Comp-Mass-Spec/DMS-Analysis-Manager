@@ -11,7 +11,7 @@ namespace AnalysisManagerProg
     /// This creates and deletes file flagFile.txt when the manager starts and stops
     /// It also can remove files left behind in the working directory
     /// </summary>
-    public class clsCleanupMgrErrors : clsLoggerBase
+    public class CleanupMgrErrors : LoggerBase
     {
         #region "Constants"
 
@@ -111,7 +111,7 @@ namespace AnalysisManagerProg
         /// <param name="mgrDirectoryPath"></param>
         /// <param name="workingDirPath"></param>
         /// <param name="traceMode"></param>
-        public clsCleanupMgrErrors(
+        public CleanupMgrErrors(
             string mgrConfigDBConnectionString,
             string managerName,
             short debugLevel,
@@ -119,7 +119,7 @@ namespace AnalysisManagerProg
             string workingDirPath,
             bool traceMode)
         {
-            if (string.IsNullOrEmpty(mgrConfigDBConnectionString) && !clsGlobal.OfflineMode)
+            if (string.IsNullOrEmpty(mgrConfigDBConnectionString) && !Global.OfflineMode)
                 throw new Exception("Manager config DB connection string is not defined");
 
             if (string.IsNullOrEmpty(managerName))
@@ -247,7 +247,7 @@ namespace AnalysisManagerProg
 
             // Try to ensure there are no open objects with file handles
             PRISM.ProgRunner.GarbageCollectNow();
-            clsGlobal.IdleLoop(actualHoldoffSeconds);
+            Global.IdleLoop(actualHoldoffSeconds);
 
             // Delete all of the files and directories in the work directory
             var workDir = new DirectoryInfo(workDirPath);
@@ -376,7 +376,7 @@ namespace AnalysisManagerProg
 
                 using var writer = new StreamWriter(new FileStream(path, FileMode.Append, FileAccess.Write, FileShare.Read));
 
-                writer.WriteLine(DateTime.Now.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT));
+                writer.WriteLine(DateTime.Now.ToString(AnalysisToolRunnerBase.DATE_TIME_FORMAT));
             }
             catch (Exception ex)
             {
@@ -395,7 +395,7 @@ namespace AnalysisManagerProg
 
                 using var writer = new StreamWriter(new FileStream(path, FileMode.Append, FileAccess.Write, FileShare.Read));
 
-                writer.WriteLine(DateTime.Now.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT));
+                writer.WriteLine(DateTime.Now.ToString(AnalysisToolRunnerBase.DATE_TIME_FORMAT));
             }
             catch (Exception ex)
             {
@@ -431,7 +431,7 @@ namespace AnalysisManagerProg
                         // DeleteFileWithRetries will throw an exception if it cannot delete the file
                         // Thus, need to wrap it with an Exception handler
 
-                        if (clsAnalysisToolRunnerBase.DeleteFileWithRetries(flagFilePath, debugLevel))
+                        if (AnalysisToolRunnerBase.DeleteFileWithRetries(flagFilePath, debugLevel))
                         {
                             return true;
                         }
@@ -517,7 +517,7 @@ namespace AnalysisManagerProg
         {
             if (string.IsNullOrWhiteSpace(mMgrConfigDBConnectionString))
             {
-                if (clsGlobal.OfflineMode)
+                if (Global.OfflineMode)
                     LogDebug("Skipping call to " + SP_NAME_REPORT_MGR_ERROR_CLEANUP + " since offline");
                 else
                     LogError("Skipping call to " + SP_NAME_REPORT_MGR_ERROR_CLEANUP + " since the Manager Control connection string is empty");

@@ -10,7 +10,7 @@ using System.IO;
 
 namespace DTASpectraFileGen
 {
-    public class clsMGFtoDtaGenMainProcess : clsDtaGen
+    public class MGFtoDtaGenMainProcess : DtaGen
     {
         #region "Constants"
 
@@ -28,11 +28,11 @@ namespace DTASpectraFileGen
 
         #endregion
 
-        public override void Setup(SpectraFileProcessorParams initParams, clsAnalysisToolRunnerBase toolRunner)
+        public override void Setup(SpectraFileProcessorParams initParams, AnalysisToolRunnerBase toolRunner)
         {
             base.Setup(initParams, toolRunner);
 
-            mDtaToolNameLoc = Path.Combine(clsGlobal.GetAppDirectoryPath(), "MascotGenericFileToDTA.dll");
+            mDtaToolNameLoc = Path.Combine(Global.GetAppDirectoryPath(), "MascotGenericFileToDTA.dll");
         }
 
         public override ProcessStatus Start()
@@ -66,7 +66,7 @@ namespace DTASpectraFileGen
         private bool VerifyMGFFileExists(string WorkDir, string DSName)
         {
             // Verifies a .mgf file exists in specified directory
-            if (File.Exists(Path.Combine(WorkDir, DSName + clsAnalysisResources.DOT_MGF_EXTENSION)))
+            if (File.Exists(Path.Combine(WorkDir, DSName + AnalysisResources.DOT_MGF_EXTENSION)))
             {
                 mErrMsg = "";
                 return true;
@@ -131,7 +131,7 @@ namespace DTASpectraFileGen
         private bool MakeDTAFilesFromMGF()
         {
             // Get the parameters from the various setup files
-            var mgfFilePath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_MGF_EXTENSION);
+            var mgfFilePath = Path.Combine(mWorkDir, mDatasetName + AnalysisResources.DOT_MGF_EXTENSION);
             mScanStart = mJobParams.GetJobParameter("ScanStart", 0);
             mScanStop = mJobParams.GetJobParameter("ScanStop", 0);
             mMWLower = mJobParams.GetJobParameter("MWStart", 0);
@@ -205,7 +205,7 @@ namespace DTASpectraFileGen
         private bool VerifyDtaCreation()
         {
             // Verify that the _DTA.txt file was created and is not empty
-            var cdtaFile = new FileInfo(Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.CDTA_EXTENSION));
+            var cdtaFile = new FileInfo(Path.Combine(mWorkDir, mDatasetName + AnalysisResources.CDTA_EXTENSION));
 
             if (!cdtaFile.Exists)
             {

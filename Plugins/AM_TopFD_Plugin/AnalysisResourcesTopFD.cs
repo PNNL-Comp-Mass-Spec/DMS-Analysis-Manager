@@ -17,7 +17,7 @@ namespace AnalysisManagerTopFDPlugIn
     /// <summary>
     /// Retrieve resources for the TopFD plugin
     /// </summary>
-    public class clsAnalysisResourcesTopFD : clsAnalysisResources
+    public class AnalysisResourcesTopFD : AnalysisResources
     {
         public const string JOB_PARAM_EXISTING_TOPFD_RESULTS_DIRECTORY = "ExistingTopFDResultsDirectory";
         public const string JOB_PARAM_EXISTING_TOPFD_TOOL_VERSION = "ExistingTopFDResultsToolVersion";
@@ -61,7 +61,7 @@ namespace AnalysisManagerTopFDPlugIn
                 // Retrieve the TopFD parameter file
                 currentTask = "Retrieve the TopFD parameter file " + topFdParamFile;
 
-                const string paramFileStoragePathKeyName = clsGlobal.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "TopFD";
+                const string paramFileStoragePathKeyName = Global.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "TopFD";
 
                 var topFdParmFileStoragePath = mMgrParams.GetParam(paramFileStoragePathKeyName);
                 if (string.IsNullOrWhiteSpace(topFdParmFileStoragePath))
@@ -111,7 +111,7 @@ namespace AnalysisManagerTopFDPlugIn
             catch (Exception ex)
             {
                 mMessage = "Exception in GetResources: " + ex.Message;
-                LogError(mMessage + "; task = " + currentTask + "; " + clsGlobal.GetExceptionStackTrace(ex));
+                LogError(mMessage + "; task = " + currentTask + "; " + Global.GetExceptionStackTrace(ex));
                 return CloseOutType.CLOSEOUT_FAILED;
             }
         }
@@ -145,16 +145,16 @@ namespace AnalysisManagerTopFDPlugIn
                 }
 
                 // Determine the path to the TopFD program
-                var topFDProgLoc = clsAnalysisToolRunnerBase.DetermineProgramLocation(
+                var topFDProgLoc = AnalysisToolRunnerBase.DetermineProgramLocation(
                     mMgrParams, mJobParams, StepToolName,
                     "TopFDProgLoc",
-                    clsAnalysisToolRunnerTopFD.TOPFD_EXE_NAME,
+                    AnalysisToolRunnerTopFD.TOPFD_EXE_NAME,
                     out var errorMessage);
 
                 if (string.IsNullOrWhiteSpace(topFDProgLoc))
                 {
                     // The error has already been logged, but we need to update mMessage
-                    mMessage = clsGlobal.AppendToComment(mMessage, errorMessage);
+                    mMessage = Global.AppendToComment(mMessage, errorMessage);
                     criticalError = true;
                     return false;
                 }
@@ -162,7 +162,7 @@ namespace AnalysisManagerTopFDPlugIn
                 var topFDExe = new FileInfo(topFDProgLoc);
                 if (!topFDExe.Exists)
                 {
-                    mMessage = clsGlobal.AppendToComment(mMessage, "File not found: " + topFDExe.FullName);
+                    mMessage = Global.AppendToComment(mMessage, "File not found: " + topFDExe.FullName);
                     criticalError = true;
                     return false;
                 }
@@ -210,7 +210,7 @@ namespace AnalysisManagerTopFDPlugIn
                     if (charIndex < 0)
                         continue;
 
-                    // The executable date should be in the form defined by clsAnalysisToolRunnerBase.DATE_TIME_FORMAT
+                    // The executable date should be in the form defined by AnalysisToolRunnerBase.DATE_TIME_FORMAT
 
                     var topFDToolAndDate = toolVersion.Substring(charIndex);
 
@@ -288,7 +288,7 @@ namespace AnalysisManagerTopFDPlugIn
                     // Use its existing TopFD results
 
                     var datasetStoragePath = mJobParams.GetParam("DatasetStoragePath");
-                    var datasetDirectoryPath = Path.Combine(datasetStoragePath, mJobParams.GetParam(clsAnalysisResources.JOB_PARAM_DATASET_FOLDER_NAME));
+                    var datasetDirectoryPath = Path.Combine(datasetStoragePath, mJobParams.GetParam(AnalysisResources.JOB_PARAM_DATASET_FOLDER_NAME));
                     var resultsDirectoryPath = Path.Combine(datasetDirectoryPath, jobCandidates[jobValue].ResultsDirectoryName);
 
                     var resultsDirectory = new DirectoryInfo(resultsDirectoryPath);

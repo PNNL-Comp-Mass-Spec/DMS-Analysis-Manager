@@ -14,7 +14,7 @@ namespace DTASpectraFileGen
     /// <summary>
     /// Gets resources necessary for DTA creation
     /// </summary>
-    public class clsDtaGenResources : clsAnalysisResources
+    public class DtaGenResources : AnalysisResources
     {
         /// <summary>
         /// Text used to track that existing DeconMSn results are being used
@@ -39,8 +39,8 @@ namespace DTASpectraFileGen
 
             var zippedDTAFilePath = string.Empty;
 
-            var dtaGeneratorType = clsDtaGenToolRunner.GetDTAGeneratorInfo(mJobParams, out var errorMessage);
-            if (dtaGeneratorType == clsDtaGenToolRunner.eDTAGeneratorConstants.Unknown)
+            var dtaGeneratorType = DtaGenToolRunner.GetDTAGeneratorInfo(mJobParams, out var errorMessage);
+            if (dtaGeneratorType == DtaGenToolRunner.eDTAGeneratorConstants.Unknown)
             {
                 if (string.IsNullOrEmpty(errorMessage))
                 {
@@ -83,7 +83,7 @@ namespace DTASpectraFileGen
                 }
 
                 bool centroidDTAs;
-                if (dtaGeneratorType == clsDtaGenToolRunner.eDTAGeneratorConstants.DeconConsole)
+                if (dtaGeneratorType == DtaGenToolRunner.eDTAGeneratorConstants.DeconConsole)
                 {
                     centroidDTAs = false;
                 }
@@ -121,7 +121,7 @@ namespace DTASpectraFileGen
                         {
                             zippedDTAFilePath = Path.Combine(mWorkDir, fileToFind);
 
-                            mJobParams.AddAdditionalParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, USING_EXISTING_DECONMSN_RESULTS, "True");
+                            mJobParams.AddAdditionalParameter(AnalysisJob.JOB_PARAMETERS_SECTION, USING_EXISTING_DECONMSN_RESULTS, "True");
 
                             LogMessage("Found pre-existing DeconMSn results; will not re-run DeconMSn if they are valid");
 
@@ -149,7 +149,7 @@ namespace DTASpectraFileGen
 
                 LogMessage("Unzipping file " + Path.GetFileName(zippedDTAFilePath));
 
-                if (UnzipFileStart(tempZipFilePath, mWorkDir, "clsDtaGenResources"))
+                if (UnzipFileStart(tempZipFilePath, mWorkDir, "DtaGenResources"))
                 {
                     if (mDebugLevel >= 1)
                     {
@@ -163,11 +163,11 @@ namespace DTASpectraFileGen
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
-        private bool GetParameterFiles(clsDtaGenToolRunner.eDTAGeneratorConstants eDtaGeneratorType)
+        private bool GetParameterFiles(DtaGenToolRunner.eDTAGeneratorConstants eDtaGeneratorType)
         {
-            if (eDtaGeneratorType == clsDtaGenToolRunner.eDTAGeneratorConstants.DeconConsole)
+            if (eDtaGeneratorType == DtaGenToolRunner.eDTAGeneratorConstants.DeconConsole)
             {
-                const string paramFileStoragePathKeyName = clsGlobal.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "DTA_Gen";
+                const string paramFileStoragePathKeyName = Global.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "DTA_Gen";
 
                 var paramFileStoragePath = mMgrParams.GetParam(paramFileStoragePathKeyName);
                 if (string.IsNullOrEmpty(paramFileStoragePath))
@@ -183,7 +183,7 @@ namespace DTASpectraFileGen
 
                 if (string.IsNullOrEmpty(paramFileName))
                 {
-                    LogError(clsAnalysisToolRunnerBase.NotifyMissingParameter(mJobParams, "DeconMSn_ParamFile"));
+                    LogError(AnalysisToolRunnerBase.NotifyMissingParameter(mJobParams, "DeconMSn_ParamFile"));
                     return false;
                 }
 

@@ -6,8 +6,8 @@ namespace AnalysisManagerDecon2lsV2PlugIn
     /// <summary>
     /// XML Parameter file reader
     /// </summary>
-    /// <remarks>This class is used by clsAnalysisToolRunnerDecon2ls</remarks>
-    public class clsXMLParamFileReader
+    /// <remarks>This class is used by AnalysisToolRunnerDecon2ls</remarks>
+    public class XMLParamFileReader
     {
         /// <summary>
         /// Sections and parameters
@@ -41,7 +41,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
         /// Constructor
         /// </summary>
         /// <param name="paramFilePath"></param>
-        public clsXMLParamFileReader(string paramFilePath)
+        public XMLParamFileReader(string paramFilePath)
         {
             ParamFilePath = paramFilePath;
 

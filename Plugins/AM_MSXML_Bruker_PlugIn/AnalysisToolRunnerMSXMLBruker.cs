@@ -16,7 +16,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
     /// <summary>
     /// Class for running MSXML Bruker
     /// </summary>
-    public class clsAnalysisToolRunnerMSXMLBruker : clsAnalysisToolRunnerBase
+    public class AnalysisToolRunnerMSXMLBruker : AnalysisToolRunnerBase
     {
         #region "Module Variables"
 
@@ -26,7 +26,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
 
         protected DirectoryInfo mMSXmlCacheFolder;
 
-        protected clsCompassXportRunner mCompassXportRunner;
+        protected CompassXportRunner mCompassXportRunner;
 
         #endregion
 
@@ -39,7 +39,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
         /// </summary>
         /// <remarks>Presently not used</remarks>
         // ReSharper disable once EmptyConstructor
-        public clsAnalysisToolRunnerMSXMLBruker()
+        public AnalysisToolRunnerMSXMLBruker()
         {
             // Empty constructor
         }
@@ -103,13 +103,13 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
             // Delete the raw data files
             if (mDebugLevel > 3)
             {
-                LogDebug("clsAnalysisToolRunnerMSXMLBruker.RunTool(), Deleting raw data file");
+                LogDebug("AnalysisToolRunnerMSXMLBruker.RunTool(), Deleting raw data file");
             }
 
             var deleteSuccess = DeleteRawDataFiles();
             if (!deleteSuccess)
             {
-                LogError("clsAnalysisToolRunnerMSXMLBruker.RunTool(), Problem deleting raw data files: " + mMessage);
+                LogError("AnalysisToolRunnerMSXMLBruker.RunTool(), Problem deleting raw data files: " + mMessage);
 
                 if (!string.IsNullOrEmpty(processingErrorMessage))
                 {
@@ -125,7 +125,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
             // Update the job summary file
             if (mDebugLevel > 3)
             {
-                LogDebug("clsAnalysisToolRunnerMSXMLBruker.RunTool(), Updating summary file");
+                LogDebug("AnalysisToolRunnerMSXMLBruker.RunTool(), Updating summary file");
             }
 
             UpdateSummaryFile();
@@ -146,7 +146,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
         {
             if (mDebugLevel > 4)
             {
-                LogDebug("clsAnalysisToolRunnerMSXMLGen.CreateMSXmlFile(): Enter");
+                LogDebug("AnalysisToolRunnerMSXMLGen.CreateMSXmlFile(): Enter");
             }
 
             var msXmlGenerator = mJobParams.GetParam("MSXMLGenerator");
@@ -186,17 +186,17 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            var eOutputType = clsCompassXportRunner.GetMsXmlOutputTypeByName(msXmlFormat);
-            if (eOutputType == clsCompassXportRunner.MSXMLOutputTypeConstants.Invalid)
+            var eOutputType = CompassXportRunner.GetMsXmlOutputTypeByName(msXmlFormat);
+            if (eOutputType == CompassXportRunner.MSXMLOutputTypeConstants.Invalid)
             {
                 LogWarning("msXmlFormat string is not recognized (" + msXmlFormat + "); it is typically mzXML, mzML, or CSV; will default to mzXML");
-                eOutputType = clsCompassXportRunner.MSXMLOutputTypeConstants.mzXML;
+                eOutputType = CompassXportRunner.MSXMLOutputTypeConstants.mzXML;
             }
 
-            resultsFile = new FileInfo(Path.Combine(mWorkDir, mDatasetName + "." + clsCompassXportRunner.GetMsXmlOutputTypeByID(eOutputType)));
+            resultsFile = new FileInfo(Path.Combine(mWorkDir, mDatasetName + "." + CompassXportRunner.GetMsXmlOutputTypeByID(eOutputType)));
 
             // Instantiate the processing class
-            mCompassXportRunner = new clsCompassXportRunner(mWorkDir, CompassXportProgramPath, mDatasetName, eOutputType, CentroidMSXML);
+            mCompassXportRunner = new CompassXportRunner(mWorkDir, CompassXportProgramPath, mDatasetName, eOutputType, CentroidMSXML);
             RegisterEvents(mCompassXportRunner);
 
             mCompassXportRunner.LoopWaiting += CompassXportRunner_LoopWaiting;
@@ -216,7 +216,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
                 LogWarning(mCompassXportRunner.ErrorMessage);
             }
 
-            if (eOutputType != clsCompassXportRunner.MSXMLOutputTypeConstants.CSV)
+            if (eOutputType != CompassXportRunner.MSXMLOutputTypeConstants.CSV)
             {
                 if (resultsFile.Exists)
                 {
