@@ -52,8 +52,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="clsAnalysisResourcesMSAlignHistone.cs" />
-    <Compile Include="clsAnalysisToolRunnerMSAlignHistone.cs" />
+    <Compile Include="AnalysisResourcesMSAlignHistone.cs" />
+    <Compile Include="AnalysisToolRunnerMSAlignHistone.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

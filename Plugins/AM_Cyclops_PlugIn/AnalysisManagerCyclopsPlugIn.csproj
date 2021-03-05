@@ -58,8 +58,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="clsAnalysisResourcesCyclops.cs" />
-    <Compile Include="clsAnalysisToolRunnerCyclops.cs" />
+    <Compile Include="AnalysisResourcesCyclops.cs" />
+    <Compile Include="AnalysisToolRunnerCyclops.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <!-- R.NET uses DynamicInterop, which it will auto-download from NuGet -->

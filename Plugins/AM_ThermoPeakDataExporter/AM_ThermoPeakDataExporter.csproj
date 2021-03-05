@@ -50,8 +50,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="clsAnalysisResourcesThermoPeakDataExporter.cs" />
-    <Compile Include="clsAnalysisToolRunnerThermoPeakDataExporter.cs" />
+    <Compile Include="AnalysisResourcesThermoPeakDataExporter.cs" />
+    <Compile Include="AnalysisToolRunnerThermoPeakDataExporter.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

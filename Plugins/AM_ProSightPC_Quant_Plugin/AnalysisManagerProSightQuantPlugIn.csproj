@@ -52,8 +52,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="clsAnalysisResourcesProSightQuant.cs" />
-    <Compile Include="clsAnalysisToolRunnerProSightQuant.cs" />
+    <Compile Include="AnalysisResourcesProSightQuant.cs" />
+    <Compile Include="AnalysisToolRunnerProSightQuant.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

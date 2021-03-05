@@ -76,8 +76,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="clsAnalysisResourcesRepoPkgr.cs" />
-    <Compile Include="clsAnalysisToolRunnerRepoPkgr.cs" />
+    <Compile Include="AnalysisResourcesRepoPkgr.cs" />
+    <Compile Include="AnalysisToolRunnerRepoPkgr.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="MageRepoPkgrPipelines.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

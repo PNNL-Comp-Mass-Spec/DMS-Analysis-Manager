@@ -58,9 +58,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="clsAnalysisResourcesIN.cs" />
-    <Compile Include="clsAnalysisToolRunnerIN.cs" />
-    <Compile Include="clsCreateInspectIndexedDB.cs" />
+    <Compile Include="AnalysisResourcesIN.cs" />
+    <Compile Include="AnalysisToolRunnerIN.cs" />
+    <Compile Include="CreateInspectIndexedDB.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

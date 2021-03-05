@@ -55,10 +55,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="clsAnalysisResourcesSeq.cs" />
-    <Compile Include="clsAnalysisToolRunnerAgilentSeq.cs" />
-    <Compile Include="clsAnalysisToolRunnerSeqBase.cs" />
-    <Compile Include="clsAnalysisToolRunnerSeqCluster.cs" />
+    <Compile Include="AnalysisResourcesSeq.cs" />
+    <Compile Include="AnalysisToolRunnerAgilentSeq.cs" />
+    <Compile Include="AnalysisToolRunnerSeqBase.cs" />
+    <Compile Include="AnalysisToolRunnerSeqCluster.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

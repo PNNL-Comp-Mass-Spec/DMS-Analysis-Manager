@@ -49,8 +49,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="clsAnalysisResourcesMSFragger.cs" />
-    <Compile Include="clsAnalysisToolRunnerMSFragger.cs" />
+    <Compile Include="AnalysisResourcesMSFragger.cs" />
+    <Compile Include="AnalysisToolRunnerMSFragger.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

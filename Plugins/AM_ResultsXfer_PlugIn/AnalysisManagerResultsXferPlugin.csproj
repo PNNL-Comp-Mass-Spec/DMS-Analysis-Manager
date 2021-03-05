@@ -52,8 +52,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="clsAnalysisResourcesResultXfer.cs" />
-    <Compile Include="clsResultXferToolRunner.cs" />
+    <Compile Include="AnalysisResourcesResultXfer.cs" />
+    <Compile Include="ResultXferToolRunner.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

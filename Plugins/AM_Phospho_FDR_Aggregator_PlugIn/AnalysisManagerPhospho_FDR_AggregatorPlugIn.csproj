@@ -58,8 +58,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="clsAnalysisResourcesPhosphoFdrAggregator.cs" />
-    <Compile Include="clsAnalysisToolRunnerPhosphoFdrAggregator.cs" />
+    <Compile Include="AnalysisResourcesPhosphoFdrAggregator.cs" />
+    <Compile Include="AnalysisToolRunnerPhosphoFdrAggregator.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

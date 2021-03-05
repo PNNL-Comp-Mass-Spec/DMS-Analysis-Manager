@@ -70,10 +70,10 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="clsAnalysisResourcesDecon2ls.cs" />
-    <Compile Include="clsAnalysisToolRunnerDecon2ls.cs" />
-    <Compile Include="clsDeconToolsQCPlotsGenerator.cs" />
-    <Compile Include="clsXMLParamFileReader.cs" />
+    <Compile Include="AnalysisResourcesDecon2ls.cs" />
+    <Compile Include="AnalysisToolRunnerDecon2ls.cs" />
+    <Compile Include="DeconToolsQCPlotsGenerator.cs" />
+    <Compile Include="XMLParamFileReader.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

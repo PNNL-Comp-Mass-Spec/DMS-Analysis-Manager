@@ -48,10 +48,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="clsAnalysisResourcesFormularity.cs" />
-    <Compile Include="clsAnalysisToolRunnerFormularity.cs" />
-    <Compile Include="clsPdfPageInfo.cs" />
-    <Compile Include="clsPngToPdfConverter.cs" />
+    <Compile Include="AnalysisResourcesFormularity.cs" />
+    <Compile Include="AnalysisToolRunnerFormularity.cs" />
+    <Compile Include="PdfPageInfo.cs" />
+    <Compile Include="PngToPdfConverter.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

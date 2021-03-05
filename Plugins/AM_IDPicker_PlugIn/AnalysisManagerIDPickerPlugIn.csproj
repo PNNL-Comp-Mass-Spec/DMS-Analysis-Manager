@@ -67,8 +67,8 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="clsAnalysisResourcesIDPicker.cs" />
-    <Compile Include="clsAnalysisToolRunnerIDPicker.cs" />
+    <Compile Include="AnalysisResourcesIDPicker.cs" />
+    <Compile Include="AnalysisToolRunnerIDPicker.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

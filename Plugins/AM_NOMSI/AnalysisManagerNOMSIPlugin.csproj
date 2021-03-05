@@ -55,8 +55,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="clsAnalysisResourcesNOMSI.cs" />
-    <Compile Include="clsAnalysisToolRunnerNOMSI.cs" />
+    <Compile Include="AnalysisResourcesNOMSI.cs" />
+    <Compile Include="AnalysisToolRunnerNOMSI.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

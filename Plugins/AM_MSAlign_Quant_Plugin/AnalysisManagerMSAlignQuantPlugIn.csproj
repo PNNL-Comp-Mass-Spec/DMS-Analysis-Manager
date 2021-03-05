@@ -52,8 +52,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="clsAnalysisResourcesMSAlignQuant.cs" />
-    <Compile Include="clsAnalysisToolRunnerMSAlignQuant.cs" />
+    <Compile Include="AnalysisResourcesMSAlignQuant.cs" />
+    <Compile Include="AnalysisToolRunnerMSAlignQuant.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

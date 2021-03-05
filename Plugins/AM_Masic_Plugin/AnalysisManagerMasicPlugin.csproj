@@ -55,10 +55,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="clsAnalysisResourcesMASIC.cs" />
-    <Compile Include="clsAnalysisToolRunnerMASICAgilent.cs" />
-    <Compile Include="clsAnalysisToolRunnerMASICBase.cs" />
-    <Compile Include="clsAnalysisToolRunnerMASICFinnigan.cs" />
+    <Compile Include="AnalysisResourcesMASIC.cs" />
+    <Compile Include="AnalysisToolRunnerMASICAgilent.cs" />
+    <Compile Include="AnalysisToolRunnerMASICBase.cs" />
+    <Compile Include="AnalysisToolRunnerMASICFinnigan.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

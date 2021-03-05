@@ -61,14 +61,14 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="clsAnalysisResourcesApe.cs" />
-    <Compile Include="clsAnalysisToolRunnerApe.cs" />
-    <Compile Include="clsApeAMBase.cs" />
-    <Compile Include="clsApeAMGetImprovResults.cs" />
-    <Compile Include="clsApeAMGetViperResults.cs" />
-    <Compile Include="clsApeAMOperations.cs" />
-    <Compile Include="clsApeAMRunWorkflow.cs" />
-    <Compile Include="clsApeAMGetQRollupResults.cs" />
+    <Compile Include="AnalysisResourcesApe.cs" />
+    <Compile Include="AnalysisToolRunnerApe.cs" />
+    <Compile Include="ApeAMBase.cs" />
+    <Compile Include="ApeAMGetImprovResults.cs" />
+    <Compile Include="ApeAMGetViperResults.cs" />
+    <Compile Include="ApeAMOperations.cs" />
+    <Compile Include="ApeAMRunWorkflow.cs" />
+    <Compile Include="ApeAMGetQRollupResults.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

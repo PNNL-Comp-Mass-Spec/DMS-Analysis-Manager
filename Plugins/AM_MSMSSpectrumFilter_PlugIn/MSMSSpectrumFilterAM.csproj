@@ -58,8 +58,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="clsAnalysisResourcesMsMsSpectrumFilter.cs" />
-    <Compile Include="clsAnalysisToolRunnerMsMsSpectrumFilter.cs" />
+    <Compile Include="AnalysisResourcesMsMsSpectrumFilter.cs" />
+    <Compile Include="AnalysisToolRunnerMsMsSpectrumFilter.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

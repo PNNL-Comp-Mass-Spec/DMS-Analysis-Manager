@@ -55,9 +55,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="clsAnalysisResourcesMSDeconv.cs" />
-    <Compile Include="clsAnalysisToolRunnerMSDeconv.cs" />
-    <Compile Include="clsRenumberMzXMLScans.cs" />
+    <Compile Include="AnalysisResourcesMSDeconv.cs" />
+    <Compile Include="AnalysisToolRunnerMSDeconv.cs" />
+    <Compile Include="RenumberMzXMLScans.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

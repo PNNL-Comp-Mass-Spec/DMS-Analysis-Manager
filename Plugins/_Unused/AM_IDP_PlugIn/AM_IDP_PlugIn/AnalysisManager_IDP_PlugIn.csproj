@@ -67,8 +67,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="clsAnalysisResourcesIDP.cs" />
-    <Compile Include="clsAnalysisToolRunnerIDP.cs" />
+    <Compile Include="AnalysisResourcesIDP.cs" />
+    <Compile Include="AnalysisToolRunnerIDP.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

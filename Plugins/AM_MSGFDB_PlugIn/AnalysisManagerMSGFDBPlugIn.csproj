@@ -79,12 +79,12 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="clsAnalysisResourcesMSGFDB.cs" />
-    <Compile Include="clsAnalysisToolRunnerMSGFDB.cs" />
-    <Compile Include="clsFastaContaminantUtility.cs" />
-    <Compile Include="clsCreateMSGFDBSuffixArrayFiles.cs" />
-    <Compile Include="clsMSGFPlusUtils.cs" />
-    <Compile Include="clsScanTypeFileCreator.cs" />
+    <Compile Include="AnalysisResourcesMSGFDB.cs" />
+    <Compile Include="AnalysisToolRunnerMSGFDB.cs" />
+    <Compile Include="FastaContaminantUtility.cs" />
+    <Compile Include="CreateMSGFDBSuffixArrayFiles.cs" />
+    <Compile Include="MSGFPlusUtils.cs" />
+    <Compile Include="ScanTypeFileCreator.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="MSGFPlusKeyValueParamLine.cs" />
     <Compile Include="MSGFPlusParameter.cs" />

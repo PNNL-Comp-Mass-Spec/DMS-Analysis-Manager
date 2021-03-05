@@ -52,8 +52,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="clsAnalysisResourcesDtaSplit.cs" />
-    <Compile Include="clsAnalysisToolRunnerDtaSplit.cs" />
+    <Compile Include="AnalysisResourcesDtaSplit.cs" />
+    <Compile Include="AnalysisToolRunnerDtaSplit.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

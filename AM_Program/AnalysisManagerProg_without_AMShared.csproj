@@ -117,12 +117,12 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="clsAnalysisMgrSettings.cs" />
-    <Compile Include="clsCleanupMgrErrors.cs" />
-    <Compile Include="clsCodeTest.cs" />
-    <Compile Include="clsCodeTestAM.cs" />
-    <Compile Include="clsMainProcess.cs" />
-    <Compile Include="clsPluginLoader.cs" />
+    <Compile Include="AnalysisMgrSettings.cs" />
+    <Compile Include="CleanupMgrErrors.cs" />
+    <Compile Include="CodeTest.cs" />
+    <Compile Include="CodeTestAM.cs" />
+    <Compile Include="MainProcess.cs" />
+    <Compile Include="PluginLoader.cs" />
     <Compile Include="CommandLineOptions.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Program.cs" />

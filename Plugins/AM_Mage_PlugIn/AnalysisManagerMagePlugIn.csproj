@@ -76,10 +76,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="clsAnalysisResourcesMAC.cs" />
-    <Compile Include="clsAnalysisResourcesMage.cs" />
-    <Compile Include="clsAnalysisToolRunnerMAC.cs" />
-    <Compile Include="clsAnalysisToolRunnerMage.cs" />
+    <Compile Include="AnalysisResourcesMAC.cs" />
+    <Compile Include="AnalysisResourcesMage.cs" />
+    <Compile Include="AnalysisToolRunnerMAC.cs" />
+    <Compile Include="AnalysisToolRunnerMage.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="IPipelineMonitor.cs" />
     <Compile Include="MageAMExtractionPipelines.cs" />

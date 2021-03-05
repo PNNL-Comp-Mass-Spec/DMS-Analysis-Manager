@@ -70,10 +70,10 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="clsAnalysisResourcesIcr2ls.cs" />
-    <Compile Include="clsAnalysisToolRunnerICR.cs" />
-    <Compile Include="clsAnalysisToolRunnerICRBase.cs" />
-    <Compile Include="clsAnalysisToolRunnerLTQ_FTPek.cs" />
+    <Compile Include="AnalysisResourcesIcr2ls.cs" />
+    <Compile Include="AnalysisToolRunnerICR.cs" />
+    <Compile Include="AnalysisToolRunnerICRBase.cs" />
+    <Compile Include="AnalysisToolRunnerLTQ_FTPek.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

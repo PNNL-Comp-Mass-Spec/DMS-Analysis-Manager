@@ -51,8 +51,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="clsAnalysisResourcesUIMFtoMassHunter.cs" />
-    <Compile Include="clsAnalysisToolRunnerUIMFtoMassHunter.cs" />
+    <Compile Include="AnalysisResourcesUIMFtoMassHunter.cs" />
+    <Compile Include="AnalysisToolRunnerUIMFtoMassHunter.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

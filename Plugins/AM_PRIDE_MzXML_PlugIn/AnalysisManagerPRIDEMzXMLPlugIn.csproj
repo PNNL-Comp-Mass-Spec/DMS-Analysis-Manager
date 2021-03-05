@@ -55,8 +55,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="clsAnalysisResourcesPRIDEMzXML.cs" />
-    <Compile Include="clsAnalysisToolRunnerPRIDEMzXML.cs" />
+    <Compile Include="AnalysisResourcesPRIDEMzXML.cs" />
+    <Compile Include="AnalysisToolRunnerPRIDEMzXML.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

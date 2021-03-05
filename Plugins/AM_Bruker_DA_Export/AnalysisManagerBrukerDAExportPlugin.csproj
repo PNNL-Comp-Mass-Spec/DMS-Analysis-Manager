@@ -55,8 +55,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="clsAnalysisResourcesBrukerDAExport.cs" />
-    <Compile Include="clsAnalysisToolRunnerBrukerDAExport.cs" />
+    <Compile Include="AnalysisResourcesBrukerDAExport.cs" />
+    <Compile Include="AnalysisToolRunnerBrukerDAExport.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

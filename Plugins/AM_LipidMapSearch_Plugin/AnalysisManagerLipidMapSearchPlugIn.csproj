@@ -52,8 +52,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="clsAnalysisResourcesLipidMapSearch.cs" />
-    <Compile Include="clsAnalysisToolRunnerLipidMapSearch.cs" />
+    <Compile Include="AnalysisResourcesLipidMapSearch.cs" />
+    <Compile Include="AnalysisToolRunnerLipidMapSearch.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

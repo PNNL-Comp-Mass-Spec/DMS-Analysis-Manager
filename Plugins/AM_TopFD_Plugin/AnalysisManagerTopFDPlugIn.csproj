@@ -55,8 +55,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="clsAnalysisResourcesTopFD.cs" />
-    <Compile Include="clsAnalysisToolRunnerTopFD.cs" />
+    <Compile Include="AnalysisResourcesTopFD.cs" />
+    <Compile Include="AnalysisToolRunnerTopFD.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

@@ -58,8 +58,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="clsAnalysisResourcesSMAQC.cs" />
-    <Compile Include="clsAnalysisToolRunnerSMAQC.cs" />
+    <Compile Include="AnalysisResourcesSMAQC.cs" />
+    <Compile Include="AnalysisToolRunnerSMAQC.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

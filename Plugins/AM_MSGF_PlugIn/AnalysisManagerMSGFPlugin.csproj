@@ -58,15 +58,15 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="clsAnalysisResourcesMSGF.cs" />
-    <Compile Include="clsMSGFInputCreator.cs" />
-    <Compile Include="clsMSGFInputCreatorInspect.cs" />
-    <Compile Include="clsMSGFInputCreatorMODa.cs" />
-    <Compile Include="clsMSGFInputCreatorMODPlus.cs" />
-    <Compile Include="clsMSGFInputCreatorMSGFDB.cs" />
-    <Compile Include="clsMSGFInputCreatorSequest.cs" />
-    <Compile Include="clsMSGFInputCreatorXTandem.cs" />
-    <Compile Include="clsMSGFToolRunner.cs" />
+    <Compile Include="AnalysisResourcesMSGF.cs" />
+    <Compile Include="MSGFInputCreator.cs" />
+    <Compile Include="MSGFInputCreatorInspect.cs" />
+    <Compile Include="MSGFInputCreatorMODa.cs" />
+    <Compile Include="MSGFInputCreatorMODPlus.cs" />
+    <Compile Include="MSGFInputCreatorMSGFDB.cs" />
+    <Compile Include="MSGFInputCreatorSequest.cs" />
+    <Compile Include="MSGFInputCreatorXTandem.cs" />
+    <Compile Include="MSGFToolRunner.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

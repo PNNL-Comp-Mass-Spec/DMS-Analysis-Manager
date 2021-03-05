@@ -58,12 +58,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="clsAnalysisResourcesPRIDEConverter.cs" />
-    <Compile Include="clsAnalysisToolRunnerPRIDEConverter.cs" />
-    <Compile Include="clsPXFileInfo.cs" />
-    <Compile Include="clsPXFileInfoBase.cs" />
-    <Compile Include="clsResultFileContainer.cs" />
-    <Compile Include="clsSampleMetadata.cs" />
+    <Compile Include="AnalysisResourcesPRIDEConverter.cs" />
+    <Compile Include="AnalysisToolRunnerPRIDEConverter.cs" />
+    <Compile Include="PXFileInfo.cs" />
+    <Compile Include="PXFileInfoBase.cs" />
+    <Compile Include="ResultFileContainer.cs" />
+    <Compile Include="SampleMetadata.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

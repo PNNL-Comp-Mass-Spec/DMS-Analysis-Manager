@@ -56,10 +56,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="clsAnalysisResourcesDtaRefinery.cs" />
-    <Compile Include="clsAnalysisToolRunnerDtaRefinery.cs" />
-    <Compile Include="clsDeconMSnLogFileValidator.cs" />
-    <Compile Include="clsDtaRefLogMassErrorExtractor.cs" />
+    <Compile Include="AnalysisResourcesDtaRefinery.cs" />
+    <Compile Include="AnalysisToolRunnerDtaRefinery.cs" />
+    <Compile Include="DeconMSnLogFileValidator.cs" />
+    <Compile Include="DtaRefLogMassErrorExtractor.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

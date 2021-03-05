@@ -49,10 +49,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="clsAnalysisResourcesMODPlus.cs" />
-    <Compile Include="clsAnalysisToolRunnerMODPlus.cs" />
-    <Compile Include="clsMODPlusResultsReader.cs" />
-    <Compile Include="clsMODPlusRunner.cs" />
+    <Compile Include="AnalysisResourcesMODPlus.cs" />
+    <Compile Include="AnalysisToolRunnerMODPlus.cs" />
+    <Compile Include="MODPlusResultsReader.cs" />
+    <Compile Include="MODPlusRunner.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

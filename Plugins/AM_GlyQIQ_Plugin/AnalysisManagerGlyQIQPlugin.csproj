@@ -67,9 +67,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="clsAnalysisResourcesGlyQIQ.cs" />
-    <Compile Include="clsAnalysisToolRunnerGlyQIQ.cs" />
-    <Compile Include="clsGlyQIqRunner.cs" />
+    <Compile Include="AnalysisResourcesGlyQIQ.cs" />
+    <Compile Include="AnalysisToolRunnerGlyQIQ.cs" />
+    <Compile Include="GlyQIqRunner.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

@@ -52,8 +52,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="clsAnalysisResourcesPBFGenerator.cs" />
-    <Compile Include="clsAnalysisToolRunnerPBFGenerator.cs" />
+    <Compile Include="AnalysisResourcesPBFGenerator.cs" />
+    <Compile Include="AnalysisToolRunnerPBFGenerator.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

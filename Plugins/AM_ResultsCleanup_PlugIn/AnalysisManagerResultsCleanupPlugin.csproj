@@ -52,8 +52,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="clsAnalysisResourcesResultsCleanup.cs" />
-    <Compile Include="clsAnalysisToolRunnerResultsCleanup.cs" />
+    <Compile Include="AnalysisResourcesResultsCleanup.cs" />
+    <Compile Include="AnalysisToolRunnerResultsCleanup.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

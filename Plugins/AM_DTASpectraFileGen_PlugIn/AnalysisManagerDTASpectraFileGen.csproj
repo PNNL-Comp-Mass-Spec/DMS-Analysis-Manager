@@ -76,16 +76,16 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="clsConcatToolWrapper.cs" />
-    <Compile Include="clsDtaGen.cs" />
-    <Compile Include="clsDtaGenDeconConsole.cs" />
-    <Compile Include="clsDtaGenMSConvert.cs" />
-    <Compile Include="clsDtaGenRawConverter.cs" />
-    <Compile Include="clsDtaGenResources.cs" />
-    <Compile Include="clsDtaGenThermoRaw.cs" />
-    <Compile Include="clsDtaGenToolRunner.cs" />
-    <Compile Include="clsMGFtoDtaGenMainProcess.cs" />
-    <Compile Include="clsMGFConverter.cs" />
+    <Compile Include="ConcatToolWrapper.cs" />
+    <Compile Include="DtaGen.cs" />
+    <Compile Include="DtaGenDeconConsole.cs" />
+    <Compile Include="DtaGenMSConvert.cs" />
+    <Compile Include="DtaGenRawConverter.cs" />
+    <Compile Include="DtaGenResources.cs" />
+    <Compile Include="DtaGenThermoRaw.cs" />
+    <Compile Include="DtaGenToolRunner.cs" />
+    <Compile Include="MGFtoDtaGenMainProcess.cs" />
+    <Compile Include="MGFConverter.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

@@ -55,10 +55,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="clsAnalysisResourcesMzRefinery.cs" />
-    <Compile Include="clsAnalysisToolRunnerMzRefinery.cs" />
-    <Compile Include="clsMassErrorInfo.cs" />
-    <Compile Include="clsMzRefineryMassErrorStatsExtractor.cs" />
+    <Compile Include="AnalysisResourcesMzRefinery.cs" />
+    <Compile Include="AnalysisToolRunnerMzRefinery.cs" />
+    <Compile Include="MassErrorInfo.cs" />
+    <Compile Include="MzRefineryMassErrorStatsExtractor.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

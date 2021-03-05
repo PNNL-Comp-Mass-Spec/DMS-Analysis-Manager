@@ -49,8 +49,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="clsAnalysisResourcesProMex.cs" />
-    <Compile Include="clsAnalysisToolRunnerProMex.cs" />
+    <Compile Include="AnalysisResourcesProMex.cs" />
+    <Compile Include="AnalysisToolRunnerProMex.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

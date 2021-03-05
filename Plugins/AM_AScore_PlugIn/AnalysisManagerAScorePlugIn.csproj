@@ -76,9 +76,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="clsAnalysisResourcesAScore.cs" />
-    <Compile Include="clsAnalysisToolRunnerAScore.cs" />
-    <Compile Include="clsAScoreMage.cs" />
+    <Compile Include="AnalysisResourcesAScore.cs" />
+    <Compile Include="AnalysisToolRunnerAScore.cs" />
+    <Compile Include="AScoreMage.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="JobParameters.cs" />
     <Compile Include="MageAScoreModule.cs" />

@@ -58,8 +58,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="clsAnalysisResourcesInspResultsAssembly.cs" />
-    <Compile Include="clsAnalysisToolRunnerInspResultsAssembly.cs" />
+    <Compile Include="AnalysisResourcesInspResultsAssembly.cs" />
+    <Compile Include="AnalysisToolRunnerInspResultsAssembly.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

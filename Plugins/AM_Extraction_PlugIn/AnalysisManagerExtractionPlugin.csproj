@@ -64,13 +64,13 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="clsAnalysisResourcesExtraction.cs" />
-    <Compile Include="clsExtractToolRunner.cs" />
-    <Compile Include="clsMSGFPlusPSMs.cs" />
-    <Compile Include="clsPepHitResultsProcWrapper.cs" />
-    <Compile Include="clsPeptideExtractWrapper.cs" />
-    <Compile Include="clsPeptideProphetWrapper.cs" />
-    <Compile Include="clsPHRPMassErrorValidator.cs" />
+    <Compile Include="AnalysisResourcesExtraction.cs" />
+    <Compile Include="ExtractToolRunner.cs" />
+    <Compile Include="MSGFPlusPSMs.cs" />
+    <Compile Include="PepHitResultsProcWrapper.cs" />
+    <Compile Include="PeptideExtractWrapper.cs" />
+    <Compile Include="PeptideProphetWrapper.cs" />
+    <Compile Include="PHRPMassErrorValidator.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

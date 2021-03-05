@@ -49,8 +49,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="clsAnalysisResourcesMSPathFinder.cs" />
-    <Compile Include="clsAnalysisToolRunnerMSPathFinder.cs" />
+    <Compile Include="AnalysisResourcesMSPathFinder.cs" />
+    <Compile Include="AnalysisToolRunnerMSPathFinder.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

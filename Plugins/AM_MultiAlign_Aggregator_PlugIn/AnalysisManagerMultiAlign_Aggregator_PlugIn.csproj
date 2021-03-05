@@ -62,9 +62,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="clsAnalysisResourcesMultiAlignAggregator.cs" />
-    <Compile Include="clsAnalysisToolRunnerMultiAlignAggregator.cs" />
-    <Compile Include="clsMultiAlignMage.cs" />
+    <Compile Include="AnalysisResourcesMultiAlignAggregator.cs" />
+    <Compile Include="AnalysisToolRunnerMultiAlignAggregator.cs" />
+    <Compile Include="MultiAlignMage.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
