@@ -286,7 +286,7 @@ namespace AnalysisManagerBase
         /// <param name="valueIfMissing">Value to return if the parameter is not found (bool)</param>
         /// <returns>Value for specified parameter; valueIfMissing if not found</returns>
         /// <remarks>
-        /// If the value associated with the parameter is found, yet is not True or False, an exception will be occur;
+        /// If the value associated with the parameter is found, yet is not True or False, an exception will occur;
         /// the calling procedure must handle this exception
         /// </remarks>
         bool GetJobParameter(string name, bool valueIfMissing);

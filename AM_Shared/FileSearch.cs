@@ -2287,41 +2287,41 @@ namespace AnalysisManagerBase
                         // Call RetrieveDotDFolder() to copy the directory and all subdirectories
                         success = RetrieveDotDFolder(createStoragePathInfoOnly, skipBafAndTdfFiles: true);
                     }
-
                     break;
+
                 case AnalysisResources.eRawDataTypeConstants.AgilentQStarWiffFile:
                     // Agilent/QSTAR TOF data
                     success = RetrieveDatasetFile(AnalysisResources.DOT_WIFF_EXTENSION, createStoragePathInfoOnly, maxAttempts);
-
                     break;
+
                 case AnalysisResources.eRawDataTypeConstants.ZippedSFolders:
                     // FTICR data
                     success = RetrieveSFolders(createStoragePathInfoOnly, maxAttempts);
-
                     break;
+
                 case AnalysisResources.eRawDataTypeConstants.ThermoRawFile:
                     // Finnigan ion trap/LTQ-FT data
                     success = RetrieveDatasetFile(AnalysisResources.DOT_RAW_EXTENSION, createStoragePathInfoOnly, maxAttempts);
-
                     break;
+
                 case AnalysisResources.eRawDataTypeConstants.MicromassRawFolder:
                     // Micromass QTOF data
                     success = RetrieveDotRawFolder(createStoragePathInfoOnly);
-
                     break;
+
                 case AnalysisResources.eRawDataTypeConstants.UIMF:
                     // IMS UIMF data
                     success = RetrieveDatasetFile(AnalysisResources.DOT_UIMF_EXTENSION, createStoragePathInfoOnly, maxAttempts);
-
                     break;
+
                 case AnalysisResources.eRawDataTypeConstants.mzXML:
                     success = RetrieveDatasetFile(AnalysisResources.DOT_MZXML_EXTENSION, createStoragePathInfoOnly, maxAttempts);
-
                     break;
+
                 case AnalysisResources.eRawDataTypeConstants.mzML:
                     success = RetrieveDatasetFile(AnalysisResources.DOT_MZML_EXTENSION, createStoragePathInfoOnly, maxAttempts);
-
                     break;
+
                 case AnalysisResources.eRawDataTypeConstants.BrukerFTFolder:
                 case AnalysisResources.eRawDataTypeConstants.BrukerTOFBaf:
                 case AnalysisResources.eRawDataTypeConstants.BrukerTOFTdf:
@@ -2341,12 +2341,12 @@ namespace AnalysisManagerBase
                     }
 
                     success = RetrieveDotDFolder(createStoragePathInfoOnly, skipBafAndTdfFiles);
-
                     break;
+
                 case AnalysisResources.eRawDataTypeConstants.BrukerMALDIImaging:
                     success = RetrieveBrukerMALDIImagingFolders(unzipOverNetwork: true);
-
                     break;
+
                 default:
                     // rawDataType is not recognized or not supported by this function
                     if (rawDataType == AnalysisResources.eRawDataTypeConstants.Unknown)
