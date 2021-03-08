@@ -344,20 +344,12 @@ namespace AnalysisManagerExtractionPlugin
 
                 for (var settingIndex = 0; settingIndex <= 1; settingIndex++)
                 {
-                    XmlNodeList objSelectedNodes;
-
-                    switch (settingIndex)
+                    var objSelectedNodes = settingIndex switch
                     {
-                        case 0:
-                            objSelectedNodes = objParamFile.DocumentElement.SelectNodes("/bioml/note[@label='residue, potential modification mass']");
-                            break;
-                        case 1:
-                            objSelectedNodes = objParamFile.DocumentElement.SelectNodes("/bioml/note[@label='refine, potential modification mass']");
-                            break;
-                        default:
-                            objSelectedNodes = null;
-                            break;
-                    }
+                        0 => objParamFile.DocumentElement.SelectNodes("/bioml/note[@label='residue, potential modification mass']"),
+                        1 => objParamFile.DocumentElement.SelectNodes("/bioml/note[@label='refine, potential modification mass']"),
+                        _ => null
+                    };
 
                     if (objSelectedNodes == null)
                     {
