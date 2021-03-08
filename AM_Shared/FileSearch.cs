@@ -1003,26 +1003,11 @@ namespace AnalysisManagerBase
         /// </remarks>
         public bool RetrieveCachedMzMLFile(bool unzip, out string errorMessage, out bool fileMissingFromCache, out string sourceDirectoryPath)
         {
-            return RetrieveCachedMSXMLFile(AnalysisResources.DOT_MZML_EXTENSION, unzip,
-                                           out errorMessage, out fileMissingFromCache, out sourceDirectoryPath);
-        }
+            const bool callingMethodCanRegenerateMissingFile = false;
 
-        /// <summary>
-        /// Retrieve the dataset's cached .PBF file from the MsXML Cache
-        /// </summary>
-        /// <param name="errorMessage">Output parameter: Error message</param>
-        /// <param name="fileMissingFromCache">Output parameter: will be True if the file was not found in the cache</param>
-        /// <param name="sourceDirectoryPath">Output parameter: source directory path</param>
-        /// <returns>True if success, false if an error or file not found</returns>
-        /// <remarks>
-        /// Uses the job's InputFolderName parameter to dictate which subDirectory to search at \\Proto-11\MSXML_Cache
-        /// InputFolderName should be in the form MSXML_Gen_1_93_367204
-        /// </remarks>
-        public bool RetrieveCachedPBFFile(out string errorMessage, out bool fileMissingFromCache, out string sourceDirectoryPath)
-        {
-            const bool unzip = false;
-            return RetrieveCachedMSXMLFile(AnalysisResources.DOT_PBF_EXTENSION, unzip,
-                                           out errorMessage, out fileMissingFromCache, out sourceDirectoryPath);
+            return RetrieveCachedMSXMLFile(
+                AnalysisResources.DOT_MZML_EXTENSION, unzip, callingMethodCanRegenerateMissingFile,
+                out errorMessage, out fileMissingFromCache, out sourceDirectoryPath);
         }
 
         /// <summary>
@@ -1039,8 +1024,32 @@ namespace AnalysisManagerBase
         /// </remarks>
         public bool RetrieveCachedMzXMLFile(bool unzip, out string errorMessage, out bool fileMissingFromCache, out string sourceDirectoryPath)
         {
-            return RetrieveCachedMSXMLFile(AnalysisResources.DOT_MZXML_EXTENSION, unzip,
-                                           out errorMessage, out fileMissingFromCache, out sourceDirectoryPath);
+            const bool callingMethodCanRegenerateMissingFile = false;
+
+            return RetrieveCachedMSXMLFile(
+                AnalysisResources.DOT_MZXML_EXTENSION, unzip, callingMethodCanRegenerateMissingFile,
+                out errorMessage, out fileMissingFromCache, out sourceDirectoryPath);
+        }
+
+        /// <summary>
+        /// Retrieve the dataset's cached .PBF file from the MsXML Cache
+        /// </summary>
+        /// <param name="errorMessage">Output parameter: Error message</param>
+        /// <param name="fileMissingFromCache">Output parameter: will be True if the file was not found in the cache</param>
+        /// <param name="sourceDirectoryPath">Output parameter: source directory path</param>
+        /// <returns>True if success, false if an error or file not found</returns>
+        /// <remarks>
+        /// Uses the job's InputFolderName parameter to dictate which subDirectory to search at \\Proto-11\MSXML_Cache
+        /// InputFolderName should be in the form MSXML_Gen_1_93_367204
+        /// </remarks>
+        public bool RetrieveCachedPBFFile(out string errorMessage, out bool fileMissingFromCache, out string sourceDirectoryPath)
+        {
+            const bool unzip = false;
+            const bool callingMethodCanRegenerateMissingFile = false;
+
+            return RetrieveCachedMSXMLFile(
+                AnalysisResources.DOT_PBF_EXTENSION, unzip, callingMethodCanRegenerateMissingFile,
+                out errorMessage, out fileMissingFromCache, out sourceDirectoryPath);
         }
 
         /// <summary>
@@ -1048,6 +1057,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="resultFileExtension">File extension to retrieve (.mzXML or .mzML)</param>
         /// <param name="unzip">True to unzip; otherwise, will remain as a .gzip file</param>
+        /// <param name="callingMethodCanRegenerateMissingFile">True if the calling method has logic defined for generating the .mzML file if it is not found</param>
         /// <param name="errorMessage">Output parameter: Error message</param>
         /// <param name="fileMissingFromCache">Output parameter: will be True if the file was not found in the cache</param>
         /// <param name="sourceDirectoryPath">Output parameter: source directory path</param>
@@ -1059,6 +1069,7 @@ namespace AnalysisManagerBase
         public bool RetrieveCachedMSXMLFile(
             string resultFileExtension,
             bool unzip,
+            bool callingMethodCanRegenerateMissingFile,
             out string errorMessage,
             out bool fileMissingFromCache,
             out string sourceDirectoryPath)
@@ -1258,9 +1269,17 @@ namespace AnalysisManagerBase
             var sourceFile = new FileInfo(sourceFilePath);
             if (!sourceFile.Exists)
             {
-                errorMessage = string.Format("Cached {0} file does not exist in {1}; will re-generate it",
-                                             expectedFileDescription,
-                                             sourceDirectory.FullName);
+                errorMessage = string.Format("Cached {0} file does not exist in {1}", expectedFileDescription, sourceDirectory.FullName);
+
+                if (callingMethodCanRegenerateMissingFile)
+                {
+                    errorMessage += "; will re-generate it";
+                }
+                else
+                {
+                    errorMessage += "; you must manually re-create it";
+                }
+
                 fileMissingFromCache = true;
                 return false;
             }
@@ -1277,9 +1296,19 @@ namespace AnalysisManagerBase
 
             if (!validFile)
             {
-                errorMessage = string.Format("Cached {0} file does not match the hashcheck file in {1}; will re-generate it",
-                                             resultFileExtension,
-                                             sourceDirectory.FullName);
+                errorMessage = string.Format("Cached {0} file does not match the hashcheck file in {1}",
+                    resultFileExtension,
+                    sourceDirectory.FullName);
+
+                if (callingMethodCanRegenerateMissingFile)
+                {
+                    errorMessage += "; will re-generate it";
+                }
+                else
+                {
+                    errorMessage += "; you must manually re-create it";
+                }
+
                 fileMissingFromCache = true;
                 return false;
             }

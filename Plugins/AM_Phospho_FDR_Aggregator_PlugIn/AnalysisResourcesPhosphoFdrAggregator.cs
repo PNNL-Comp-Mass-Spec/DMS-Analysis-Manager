@@ -67,9 +67,12 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
             }
 
             LogMessage("Retrieving input files");
+            const bool callingMethodCanRegenerateMissingFile = false;
 
             // Retrieve the files for the jobs in the data package associated with this job
-            if (!RetrieveAggregateFiles(fileSpecList, DataPackageFileRetrievalModeConstants.Ascore, out var dctDataPackageJobs))
+            if (!RetrieveAggregateFiles(
+                    fileSpecList, DataPackageFileRetrievalModeConstants.Ascore,
+                    callingMethodCanRegenerateMissingFile, out var dctDataPackageJobs))
             {
                 // Errors were reported in function call, so just return
                 return CloseOutType.CLOSEOUT_FAILED;

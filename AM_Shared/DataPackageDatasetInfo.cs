@@ -27,6 +27,16 @@ namespace AnalysisManagerBase
         public string InstrumentGroup { get; set; }
 
         /// <summary>
+        /// True if the instrument data is stored in a directory (e.g. Agilent .d directories)
+        /// False if the instrument data is stored in a single file (e.g. Thermo .raw files)
+        /// </summary>
+        /// <remarks>
+        /// If the instrument data for this aggregation job is stored as a .mzML file,
+        /// this property will be false, even for instruments that use Agilent .d directories
+        /// </remarks>
+        public bool IsDirectoryBased { get; set; }
+
+        /// <summary>
         /// Experiment name
         /// </summary>
         public string Experiment { get; set; }
@@ -93,6 +103,8 @@ namespace AnalysisManagerBase
 
             Instrument = string.Empty;
             InstrumentGroup = string.Empty;
+            IsDirectoryBased = false;
+
             Experiment = string.Empty;
             Experiment_Reason = string.Empty;
             Experiment_Comment = string.Empty;

@@ -41,8 +41,9 @@ namespace AnalysisManagerPRIDEMzXMLPlugIn
             mJobParams.AddResultFileToSkip(mJobParams.GetParam("PRIDEMzXMLInputFile"));
 
             LogMessage("Retrieving input files");
+            const bool callingMethodCanRegenerateMissingFile = true;
 
-            if (!RetrieveAggregateFiles(fileSpecList, DataPackageFileRetrievalModeConstants.Undefined, out _))
+            if (!RetrieveAggregateFiles(fileSpecList, DataPackageFileRetrievalModeConstants.Undefined, callingMethodCanRegenerateMissingFile, out _))
             {
                 // Errors were reported in function call, so just return
                 return CloseOutType.CLOSEOUT_FAILED;

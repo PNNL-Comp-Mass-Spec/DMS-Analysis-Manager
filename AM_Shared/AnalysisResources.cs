@@ -3163,6 +3163,61 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
+        /// Override current dataset information, including dataset name, dataset ID, and storage paths
+        /// </summary>
+        /// <param name="dataPkgDataset"></param>
+        public bool OverrideCurrentDatasetInfo(DataPackageDatasetInfo dataPkgDataset)
+        {
+            var aggregationJob = false;
+
+            if (string.IsNullOrEmpty(dataPkgDataset.Dataset))
+            {
+                LogError("OverrideCurrentDatasetInfo; Column 'Dataset' not defined for dataset " + dataPkgDataset.Dataset + " in the data package");
+                return false;
+            }
+
+            if (Global.IsMatch(dataPkgDataset.Dataset, "Aggregation"))
+            {
+                aggregationJob = true;
+            }
+
+            if (!aggregationJob)
+            {
+                // Update job params to have the details for the current dataset
+                // This is required so that we can use FindDataFile to find the desired files
+                if (string.IsNullOrEmpty(dataPkgDataset.ServerStoragePath))
+                {
+                    LogError("OverrideCurrentDatasetInfo; Column 'ServerStoragePath' not defined for dataset " + dataPkgDataset.Dataset + " in the data package");
+                    return false;
+                }
+
+                if (string.IsNullOrEmpty(dataPkgDataset.ArchiveStoragePath))
+                {
+                    LogError("OverrideCurrentDatasetInfo; Column 'ArchiveStoragePath' not defined for dataset " + dataPkgDataset.Dataset + " in the data package");
+                    return false;
+                }
+            }
+
+            mJobParams.AddDatasetInfo(dataPkgDataset.Dataset, dataPkgDataset.DatasetID);
+            DatasetName = string.Copy(dataPkgDataset.Dataset);
+
+            const string jobParamsSection = AnalysisJob.JOB_PARAMETERS_SECTION;
+
+            mJobParams.AddAdditionalParameter(jobParamsSection, JOB_PARAM_DATASET_NAME, dataPkgDataset.Dataset);
+            mJobParams.AddAdditionalParameter(jobParamsSection, "DatasetID", dataPkgDataset.DatasetID.ToString());
+
+            mJobParams.AddAdditionalParameter(jobParamsSection, "Instrument", dataPkgDataset.Instrument);
+            mJobParams.AddAdditionalParameter(jobParamsSection, "InstrumentGroup", dataPkgDataset.InstrumentGroup);
+
+            mJobParams.AddAdditionalParameter(jobParamsSection, "DatasetStoragePath", dataPkgDataset.ServerStoragePath);
+            mJobParams.AddAdditionalParameter(jobParamsSection, "DatasetArchivePath", dataPkgDataset.ArchiveStoragePath);
+            mJobParams.AddAdditionalParameter(jobParamsSection, JOB_PARAM_DATASET_FOLDER_NAME, dataPkgDataset.Dataset);
+            mJobParams.AddAdditionalParameter(jobParamsSection, "RawDataType", dataPkgDataset.RawDataType);
+
+            return true;
+        }
+
+        /// <summary>
         /// Override current job information, including dataset name, dataset ID, storage paths, Organism Name, Protein Collection, and protein options
         /// </summary>
         /// <param name="dataPkgJob"></param>
@@ -3930,6 +3985,7 @@ namespace AnalysisManagerBase
         /// MSGFPlus:_msgfplus_syn.txt,MSGFPlus:_msgfplus_syn_ModSummary.txt,MSGFPlus:_dta.zip
         /// </param>
         /// <param name="fileRetrievalMode">Used by plugins to indicate the types of files that are required (in case fileSpecList is not configured correctly for a given data package job)</param>
+        /// <param name="callingMethodCanRegenerateMissingFile">True if the calling method has logic defined for generating the .mzML file if it is not found</param>
         /// <param name="dataPackageJobs"></param>
         /// <returns>True if success, false if a problem</returns>
         /// <remarks>
@@ -3939,6 +3995,7 @@ namespace AnalysisManagerBase
         protected bool RetrieveAggregateFiles(
             List<string> fileSpecList,
             DataPackageFileRetrievalModeConstants fileRetrievalMode,
+            bool callingMethodCanRegenerateMissingFile,
             out Dictionary<int, DataPackageJobInfo> dataPackageJobs)
         {
             bool success;
@@ -4105,10 +4162,9 @@ namespace AnalysisManagerBase
                                 {
                                     // Look for a mzML.gz file instead
 
-                                    var retrieved = FileSearch.RetrieveCachedMSXMLFile(DOT_MZML_EXTENSION, false,
-                                                                                         out var errorMessage,
-                                                                                         out _,
-                                                                                         out _);
+                                    var retrieved = FileSearch.RetrieveCachedMSXMLFile(
+                                        DOT_MZML_EXTENSION, false, callingMethodCanRegenerateMissingFile,
+                                        out var errorMessage, out _, out _);
 
                                     if (!retrieved)
                                     {
@@ -4196,6 +4252,59 @@ namespace AnalysisManagerBase
                 LogError("Exception in RetrieveAggregateFiles", ex);
                 success = false;
             }
+
+            return success;
+        }
+
+        /// <summary>
+        /// Retrieves the instrument files for the datasets defined for the data package associated with this aggregation job
+        /// </summary>
+        /// <param name="retrieveMzMLFiles">Set to true to obtain mzML files for the datasets; will return false if a .mzML file cannot be found for any of the datasets</param>
+        /// <param name="dataPackageDatasets">Output parameter: Dataset info for the datasets associated with this data package; keys are Dataset ID</param>
+        /// <param name="datasetRawFilePaths">Output parameter: Keys in this dictionary are dataset name, values are paths to the local file or directory for the dataset</param>
+        /// <returns>True if success, false if an error</returns>
+        protected bool RetrieveDataPackageDatasetFiles(
+            bool retrieveMzMLFiles,
+            out Dictionary<int, DataPackageDatasetInfo> dataPackageDatasets,
+            out Dictionary<string, string> datasetRawFilePaths)
+        {
+            const float progressPercentAtStart = 0;
+            const float progressPercentAtFinish = 20;
+            return RetrieveDataPackageDatasetFiles(
+                retrieveMzMLFiles, out dataPackageDatasets, out datasetRawFilePaths,
+                progressPercentAtStart, progressPercentAtFinish);
+        }
+
+        /// <summary>
+        /// Retrieves the instrument files for the datasets defined for the data package associated with this aggregation job
+        /// </summary>
+        /// <param name="retrieveMzMLFiles">Set to true to obtain mzML files for the datasets; will return false if a .mzML file cannot be found for any of the datasets</param>
+        /// <param name="dataPackageDatasets">Output parameter: Dataset info for the datasets associated with this data package; keys are Dataset ID</param>
+        /// <param name="datasetRawFilePaths">Output parameter: Keys in this dictionary are dataset name, values are paths to the local file or directory for the dataset</param>
+        /// <param name="progressPercentAtStart">Percent complete value to use for computing incremental progress</param>
+        /// <param name="progressPercentAtFinish">Percent complete value to use for computing incremental progress</param>
+        /// <returns>True if success, false if an error</returns>
+        protected bool RetrieveDataPackageDatasetFiles(
+            bool retrieveMzMLFiles,
+            out Dictionary<int, DataPackageDatasetInfo> dataPackageDatasets,
+            out Dictionary<string, string> datasetRawFilePaths,
+            float progressPercentAtStart,
+            float progressPercentAtFinish)
+        {
+            // Gigasax.DMS_Pipeline
+            var brokerDbConnectionString = mMgrParams.GetParam("BrokerConnectionString");
+
+            var dataPackageID = mJobParams.GetJobParameter("DataPackageID", -1);
+
+            var dbTools = DbToolsFactory.GetDBTools(brokerDbConnectionString, debugMode: TraceMode);
+            RegisterEvents(dbTools);
+
+            var dataPackageFileHandler = new DataPackageFileHandler(dbTools, dataPackageID, this);
+            RegisterEvents(dataPackageFileHandler);
+
+            var success = dataPackageFileHandler.RetrieveDataPackageDatasetFiles(
+                retrieveMzMLFiles, out dataPackageDatasets, out datasetRawFilePaths,
+                progressPercentAtStart, progressPercentAtFinish);
 
             return success;
         }

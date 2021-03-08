@@ -1086,6 +1086,218 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
+        /// Set to true to obtain the mzXML or mzML file for the dataset associated with this job
+        /// </summary>
+        /// <remarks>If the .mzXML file does not exist, retrieves the instrument data file (e.g. Thermo .raw file)</remarks>
+        public bool RetrieveMzXMLFile;
+
+        /// <summary>
+        /// Retrieves the instrument files for the datasets defined for the data package associated with this aggregation job
+        /// </summary>
+        /// <param name="retrieveMzMLFiles">Set to true to obtain mzML files for the datasets; will return false if a .mzML file cannot be found for any of the datasets</param>
+        /// <param name="dataPackageDatasets">Output parameter: Dataset info for the datasets associated with this data package; keys are Dataset ID</param>
+        /// <param name="datasetRawFilePaths">Output parameter: Keys in this dictionary are dataset name, values are paths to the local file or directory for the dataset</param>
+        /// <param name="progressPercentAtStart">Percent complete value to use for computing incremental progress</param>
+        /// <param name="progressPercentAtFinish">Percent complete value to use for computing incremental progress</param>
+        /// <returns>True if success, false if an error</returns>
+        public bool RetrieveDataPackageDatasetFiles(
+            bool retrieveMzMLFiles,
+            out Dictionary<int, DataPackageDatasetInfo> dataPackageDatasets,
+            out Dictionary<string, string> datasetRawFilePaths,
+            float progressPercentAtStart,
+            float progressPercentAtFinish)
+        {
+            // This dictionary tracks the info for the datasets associated with this aggregation job's data package
+            // Keys are DatasetID, values are dataset info
+            dataPackageDatasets = new Dictionary<int, DataPackageDatasetInfo>();
+
+            // Keys in this dictionary are dataset name, values are paths to the local file or directory for the dataset
+            datasetRawFilePaths = new Dictionary<string, string>();
+
+            var workingDir = mAnalysisResources.WorkDir;
+
+            if (Global.OfflineMode)
+            {
+                throw new Exception("RetrieveDataPackageDatasetFiles does not support offline mode");
+            }
+
+            try
+            {
+                var success = mDataPackageInfoLoader.LoadDataPackageDatasetInfo(out dataPackageDatasets);
+
+                if (!success || dataPackageDatasets.Count == 0)
+                {
+                    OnErrorEvent("Did not find any datasets associated with this job's data package (ID " + mDataPackageInfoLoader.DataPackageID + ")");
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                OnErrorEvent("Exception calling LoadDataPackageDatasetInfo", ex);
+                return false;
+            }
+
+            try
+            {
+                var fileTools = new FileTools();
+                RegisterEvents(fileTools);
+
+                // Make sure the MyEMSL download queue is empty
+                mAnalysisResources.ProcessMyEMSLDownloadQueue();
+
+                // Cache the current dataset and job info
+                mAnalysisResources.CacheCurrentDataAndJobInfo();
+
+                var datasetsProcessed = 0;
+
+                foreach (var dataPkgDataset in dataPackageDatasets.Values)
+                {
+                    if (!mAnalysisResources.OverrideCurrentDatasetInfo(dataPkgDataset))
+                    {
+                        // Error message has already been logged
+                        mAnalysisResources.RestoreCachedDataAndJobInfo();
+                        return false;
+                    }
+
+                    if (!string.Equals(dataPkgDataset.Dataset, mAnalysisResources.DatasetName))
+                    {
+                        OnWarningEvent(string.Format(
+                            "Dataset name mismatch: {0} vs. {1}", dataPkgDataset.Dataset, mAnalysisResources.DatasetName));
+                    }
+
+                    bool success;
+
+                    // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
+                    if (retrieveMzMLFiles)
+                    {
+                        success = RetrieveDataPackageDatasetMzMLFile(datasetRawFilePaths, dataPkgDataset, workingDir);
+                    }
+                    else
+                    {
+                        success = RetrieveDataPackageDatasetFile(datasetRawFilePaths, dataPkgDataset, workingDir, fileTools);
+                    }
+
+                    if (!success)
+                        return false;
+
+                    datasetsProcessed++;
+                    var progress = AnalysisToolRunnerBase.ComputeIncrementalProgress(
+                        progressPercentAtStart, progressPercentAtFinish, datasetsProcessed,
+                        dataPackageDatasets.Count);
+
+                    OnProgressUpdate("RetrieveDataPackageDatasetFiles (PeptideHit Jobs)", progress);
+                }
+
+                // Restore the dataset info for this aggregation job
+                mAnalysisResources.RestoreCachedDataAndJobInfo();
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                OnErrorEvent("Error in RetrieveDataPackageDatasetFiles", ex);
+                return false;
+            }
+        }
+
+        private bool RetrieveDataPackageDatasetFile(
+            IDictionary<string, string> datasetRawFilePaths,
+            DataPackageDatasetInfo dataPkgDataset,
+            string workingDir,
+            FileTools fileTools)
+        {
+            var rawFilePath = mAnalysisResources.DirectorySearch.FindDatasetFileOrDirectory(out var isDirectory, false);
+
+            if (string.IsNullOrEmpty(rawFilePath))
+            {
+                OnErrorEvent("FindDatasetFileOrDirectory could not find the dataset file for dataset " + dataPkgDataset.Dataset);
+                return false;
+            }
+
+            var fileName = Path.GetFileName(rawFilePath);
+            if (rawFilePath.StartsWith(MyEMSLUtilities.MYEMSL_PATH_FLAG))
+            {
+                // ToDo: Validate correct handling of MyEMSL files
+                mAnalysisResources.MyEMSLUtilities.AddFileToDownloadQueue(rawFilePath);
+
+                var myEmslSuccess = mAnalysisResources.ProcessMyEMSLDownloadQueue();
+                if (!myEmslSuccess)
+                {
+                    return false;
+                }
+
+                foreach (var downloadedFile in mAnalysisResources.MyEMSLUtilities.DownloadedFiles)
+                {
+                    var localFilePath = downloadedFile.Key;
+
+                    if (Path.GetFileName(localFilePath).Equals(fileName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        if (!File.Exists(localFilePath))
+                        {
+                            OnErrorEvent("Dataset file retrieved from MyEMSL not found in the working directory: " + localFilePath);
+                            return false;
+                        }
+
+                        dataPkgDataset.IsDirectoryBased = false;
+                        datasetRawFilePaths.Add(dataPkgDataset.Dataset, localFilePath);
+                        return true;
+                    }
+                }
+
+                OnErrorEvent("Dataset file could not be retrieved from MyEMSL (not found in DownloadedFiles): " + rawFilePath);
+                return false;
+            }
+
+            if (isDirectory)
+            {
+                var localInstrumentDirectoryPath = Path.Combine(workingDir, fileName);
+                fileTools.CopyDirectory(rawFilePath, localInstrumentDirectoryPath);
+
+                dataPkgDataset.IsDirectoryBased = true;
+                datasetRawFilePaths.Add(dataPkgDataset.Dataset, localInstrumentDirectoryPath);
+            }
+            else
+            {
+                var localInstrumentFilePath = Path.Combine(workingDir, fileName);
+                var success = fileTools.CopyFileUsingLocks(rawFilePath, localInstrumentFilePath);
+                if (!success)
+                {
+                    OnErrorEvent("Error copying dataset file " + rawFilePath);
+                    return false;
+                }
+
+                dataPkgDataset.IsDirectoryBased = false;
+                datasetRawFilePaths.Add(dataPkgDataset.Dataset, localInstrumentFilePath);
+            }
+
+            return true;
+        }
+
+        private bool RetrieveDataPackageDatasetMzMLFile(
+            IDictionary<string, string> datasetRawFilePaths,
+            DataPackageDatasetInfo dataPkgDataset,
+            string workingDir)
+        {
+            const bool unzipFile = true;
+
+            var success = mAnalysisResources.FileSearch.RetrieveCachedMzMLFile(unzipFile, out var errorMessage, out _, out _);
+
+            if (!success)
+            {
+                OnErrorEvent(string.Format(
+                    "RetrieveCachedMzMLFile could not find the .mzML file for dataset {0}: {1}",
+                    dataPkgDataset.Dataset, errorMessage));
+                return false;
+            }
+
+            var localMzMLFilePath = Path.Combine(workingDir, dataPkgDataset.Dataset + AnalysisResources.DOT_MZML_EXTENSION);
+
+            dataPkgDataset.IsDirectoryBased = false;
+            datasetRawFilePaths.Add(dataPkgDataset.Dataset, localMzMLFilePath);
+            return true;
+        }
+
+        /// <summary>
         /// Retrieves the PHRP files for the PeptideHit jobs defined for the data package associated with this aggregation job
         /// Also creates a batch file that can be manually run to retrieve the instrument data files
         /// </summary>
@@ -1382,54 +1594,54 @@ namespace AnalysisManagerBase
 
             var rawFilePath = mAnalysisResources.DirectorySearch.FindDatasetFileOrDirectory(out var isDirectory, retrievalOptions.AssumeInstrumentDataUnpurged);
 
-            if (!string.IsNullOrEmpty(rawFilePath))
+            if (string.IsNullOrEmpty(rawFilePath))
+                return true;
+
+            string copyCommandIfNotExist;
+
+            if (isDirectory)
             {
-                string copyCommandIfNotExist;
+                var directoryName = Path.GetFileName(rawFilePath);
+                string copyCommand;
 
-                if (isDirectory)
+                if (rawFilePath.StartsWith(MyEMSLUtilities.MYEMSL_PATH_FLAG))
                 {
-                    var fileName = Path.GetFileName(rawFilePath);
-                    string copyCommand;
-
-                    if (rawFilePath.StartsWith(MyEMSLUtilities.MYEMSL_PATH_FLAG))
-                    {
-                        // The path starts with \\MyEMSL
-                        copyCommand = string.Format(
-                            @"C:\DMS_Programs\MyEMSLDownloader\MyEMSLDownloader.exe /Dataset:{0} /Files:{1}",
-                            dataPkgJob.Dataset, fileName);
-                    }
-                    else
-                    {
-                        copyCommand = "copy " + rawFilePath + @" .\" + fileName + " /S /I";
-                    }
-
-                    copyCommandIfNotExist = "if not exist " + fileName + " " + copyCommand;
+                    // The path starts with \\MyEMSL
+                    copyCommand = string.Format(
+                        @"C:\DMS_Programs\MyEMSLDownloader\MyEMSLDownloader.exe /Dataset:{0} /Files:{1}",
+                        dataPkgJob.Dataset, directoryName);
                 }
                 else
                 {
-                    // Make sure the case of the filename matches the case of the dataset name
-                    // Also, make sure the extension is lowercase
-                    var fileName = dataPkgJob.Dataset + Path.GetExtension(rawFilePath).ToLower();
-                    string copyCommand;
-
-                    if (rawFilePath.StartsWith(MyEMSLUtilities.MYEMSL_PATH_FLAG))
-                    {
-                        // The path starts with \\MyEMSL
-                        copyCommand = string.Format(
-                            @"C:\DMS_Programs\MyEMSLDownloader\MyEMSLDownloader.exe /Dataset:{0} /Files:{1}",
-                            dataPkgJob.Dataset, fileName);
-                    }
-                    else
-                    {
-                        copyCommand = "copy " + rawFilePath + " " + fileName;
-                    }
-
-                    copyCommandIfNotExist = "if not exist " + fileName + " " + copyCommand;
+                    copyCommand = "copy " + rawFilePath + @" .\" + directoryName + " /S /I";
                 }
 
-                rawFileRetrievalCommands.Add(dataPkgJob.DatasetID, copyCommandIfNotExist);
-                datasetRawFilePaths.Add(dataPkgJob.Dataset, rawFilePath);
+                copyCommandIfNotExist = "if not exist " + directoryName + " " + copyCommand;
             }
+            else
+            {
+                // Make sure the case of the filename matches the case of the dataset name
+                // Also, make sure the extension is lowercase
+                var fileName = dataPkgJob.Dataset + Path.GetExtension(rawFilePath).ToLower();
+                string copyCommand;
+
+                if (rawFilePath.StartsWith(MyEMSLUtilities.MYEMSL_PATH_FLAG))
+                {
+                    // The path starts with \\MyEMSL
+                    copyCommand = string.Format(
+                        @"C:\DMS_Programs\MyEMSLDownloader\MyEMSLDownloader.exe /Dataset:{0} /Files:{1}",
+                        dataPkgJob.Dataset, fileName);
+                }
+                else
+                {
+                    copyCommand = "copy " + rawFilePath + " " + fileName;
+                }
+
+                copyCommandIfNotExist = "if not exist " + fileName + " " + copyCommand;
+            }
+
+            rawFileRetrievalCommands.Add(dataPkgJob.DatasetID, copyCommandIfNotExist);
+            datasetRawFilePaths.Add(dataPkgJob.Dataset, rawFilePath);
 
             return true;
         }
