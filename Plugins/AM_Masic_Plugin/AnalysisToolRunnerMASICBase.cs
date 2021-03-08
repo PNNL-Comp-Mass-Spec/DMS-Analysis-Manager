@@ -95,7 +95,10 @@ namespace AnalysisManagerMasicPlugin
         public override CloseOutType RunTool()
         {
             // Call base class for initial setup
-            base.RunTool();
+            if (base.RunTool() != CloseOutType.CLOSEOUT_SUCCESS)
+            {
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
 
             // Store the MASIC version info in the database
             if (!StoreToolVersionInfo())
