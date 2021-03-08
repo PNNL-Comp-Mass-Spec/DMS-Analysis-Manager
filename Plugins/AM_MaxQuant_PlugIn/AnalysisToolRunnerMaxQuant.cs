@@ -356,7 +356,21 @@ namespace AnalysisManagerMaxQuantPlugIn
             }
 
             // Set up and execute a program runner to run MaxQuant
-            var arguments = string.Format("--partial-processing={0} --partial-processing-end={1} {2}", startStepNumber, endStepNumber, parameterFilePath);
+            var cmdLineArguments = new List<string>();
+
+            if (runtimeOptions.DryRun)
+            {
+                cmdLineArguments.Add("--dry-run");
+            }
+            else
+            {
+                cmdLineArguments.Add("--partial-processing=" + runtimeOptions.StartStepNumber);
+                cmdLineArguments.Add("--partial-processing-end=" + runtimeOptions.EndStepNumber);
+            }
+
+            cmdLineArguments.Add(runtimeOptions.ParameterFilePath);
+
+            var arguments = string.Join(" ", cmdLineArguments);
 
             LogDebug(mMaxQuantProgLoc + " " + arguments);
 
@@ -495,7 +509,7 @@ namespace AnalysisManagerMaxQuantPlugIn
                     filePathNodes.Clear();
                     experimentNodes.Clear();
 
-                    // If the experiment ends in _f22, assume this is a fractionated sample and this is fraction 22
+                    // If the experiment ends in text similar to "_f22", assume this is a fractionated sample and this is fraction 22
                     var fractionMatcher = new Regex(@"_f(?<FractionNumber>\d+)$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
                     foreach (var item in dataPackageInfo.Datasets)
@@ -535,19 +549,37 @@ namespace AnalysisManagerMaxQuantPlugIn
 
                 runtimeOptions.ParameterFilePath = updatedFile.FullName;
 
-                // ToDo: Determine the step range to use for the current step tool
-                // If the items in dmsSteps all have numeric values for StartStepID, make sure the step range is contiguous
+                // Determine the step range to use for the current step tool
+                var result = ValidateStepRange(runtimeOptions, dmsSteps, out var stepIDsUpdated);
+                if (!stepIDsUpdated)
+                {
+                    return result;
+                }
 
-                // Otherwise, run MaxQuant with DryRun then correlate with StartStepName values in dmsSteps
-                // If we use DryRun, update the parameter file to switch from startStepID="auto" to startStepID="1"
+                // Update the
 
-                return CloseOutType.CLOSEOUT_SUCCESS;
+                return result;
             }
             catch (Exception ex)
             {
                 LogError("Exception updating the MaxQuant parameter file", ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
+        }
+
+        private CloseOutType ValidateStepRange(
+            MaxQuantRuntimeOptions runtimeOptions,
+            Dictionary<int, DmsStepInfo> dmsSteps,
+            out bool stepIDsUpdated)
+        {
+            stepIDsUpdated = false;
+
+            // ToDo: Determine the step range to use for the current step tool
+            // If the items in dmsSteps all have numeric values for StartStepID, make sure the step range is contiguous
+
+            // Otherwise, run MaxQuant with --dry-run then correlate with StartStepName values in dmsSteps
+            // If we use DryRun, update the parameter file to switch from startStepID="auto" to startStepID="1"
+            return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
         /// <summary>
