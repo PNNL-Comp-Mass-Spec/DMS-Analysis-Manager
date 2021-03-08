@@ -50,6 +50,7 @@
   <ItemGroup>
     <Compile Include="AnalysisResourcesMaxQuant.cs" />
     <Compile Include="AnalysisToolRunnerMaxQuant.cs" />
+    <Compile Include="DataPackageInfo.cs" />
     <Compile Include="DmsStepInfo.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

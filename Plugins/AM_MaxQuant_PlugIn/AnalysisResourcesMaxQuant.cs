@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using AnalysisManagerBase;
 
 namespace AnalysisManagerMaxQuantPlugIn
@@ -14,39 +11,6 @@ namespace AnalysisManagerMaxQuantPlugIn
     public class AnalysisResourcesMaxQuant : AnalysisResources
     {
         // Ignore Spelling: MaxQuant, Parm
-
-        /// <summary>
-        /// Packed parameter DataPackageDatasets
-        /// </summary>
-        /// <remarks>Tracks dataset names</remarks>
-        public const string JOB_PARAM_DATA_PACKAGE_DATASETS = "PackedParam_DataPackageDatasets";
-
-        /// <summary>
-        /// Packed parameter DataPackageExperiments
-        /// </summary>
-        /// <remarks>Tracks experiment names</remarks>
-        public const string JOB_PARAM_DATA_PACKAGE_EXPERIMENTS = "PackedParam_DataPackageExperiments";
-
-        /// <summary>
-        /// Packed parameter PackedParam_DatasetFilePaths
-        /// </summary>
-        /// <remarks>Tracks paths to dataset files (or directories) that have been copied locally</remarks>
-        public const string JOB_PARAM_DATA_PACKAGE_DATASET_FILE_PATHS = "PackedParam_DatasetFilePaths";
-
-        /// <summary>
-        /// Packed parameter PackedParam_DatasetFileTypes
-        /// </summary>
-        /// <remarks>Tracks whether each item in PackedParam_DatasetFilePaths is a File or a Directory</remarks>
-        public const string JOB_PARAM_DATA_PACKAGE_DATASET_FILE_TYPES = "PackedParam_DatasetFileTypes";
-
-        private List<string> DataPackageDatasetNames { get; } = new();
-
-        private List<string> DataPackageExperimentNames { get; } = new();
-
-        private List<string> DataPackageDatasetFilePaths { get; } = new();
-
-        private List<string> DataPackageDatasetFileTypes { get; } = new();
-
 
         /// <summary>
         /// Initialize options
@@ -88,22 +52,19 @@ namespace AnalysisManagerMaxQuantPlugIn
                 if (!RetrieveOrgDB(orgDbDirectoryPath, out var resultCode))
                     return resultCode;
 
-                DataPackageDatasetNames.Clear();
-                DataPackageExperimentNames.Clear();
-                DataPackageDatasetFilePaths.Clear();
-                DataPackageDatasetFileTypes.Clear();
-
                 var dataPackageID = mJobParams.GetJobParameter("DataPackageID", 0);
+
+                var dataPackageInfo = new DataPackageInfo(dataPackageID);
 
                 CloseOutType datasetSuccess;
 
                 if (dataPackageID > 0)
                 {
-                    datasetSuccess = RetrieveDataPackageDatasets();
+                    datasetSuccess = RetrieveDataPackageDatasets(dataPackageInfo);
                 }
                 else
                 {
-                    datasetSuccess = RetrieveSingleDataset();
+                    datasetSuccess = RetrieveSingleDataset(dataPackageInfo);
                 }
 
                 if (datasetSuccess != CloseOutType.CLOSEOUT_SUCCESS)
@@ -111,127 +72,13 @@ namespace AnalysisManagerMaxQuantPlugIn
                     return datasetSuccess;
                 }
 
-                StorePackedJobParameterList(DataPackageDatasetNames, JOB_PARAM_DATA_PACKAGE_DATASETS);
-                StorePackedJobParameterList(DataPackageExperimentNames, JOB_PARAM_DATA_PACKAGE_EXPERIMENTS);
-                StorePackedJobParameterList(DataPackageDatasetFilePaths, JOB_PARAM_DATA_PACKAGE_DATASET_FILE_PATHS);
-                StorePackedJobParameterList(DataPackageDatasetFileTypes, JOB_PARAM_DATA_PACKAGE_DATASET_FILE_TYPES);
+                dataPackageInfo.StorePackedDictionaries(this);
 
                 return CloseOutType.CLOSEOUT_SUCCESS;
             }
             catch (Exception ex)
             {
                 LogError("Exception in GetResources (CurrentTask = " + currentTask + ")", ex);
-                return CloseOutType.CLOSEOUT_FAILED;
-            }
-        }
-
-        private CloseOutType RetrieveDataPackageDatasets()
-        {
-            var currentTask = "Initializing";
-
-            try
-            {
-                return CloseOutType.CLOSEOUT_FAILED;
-            }
-            catch (Exception ex)
-            {
-                LogError("Exception in RetrieveDataPackageDatasets (CurrentTask = " + currentTask + ")", ex);
-                return CloseOutType.CLOSEOUT_FAILED;
-            }
-
-        }
-
-        private CloseOutType RetrieveSingleDataset()
-        {
-            var currentTask = "Initializing";
-
-            try
-            {
-                var experiment = mJobParams.GetJobParameter("Experiment", string.Empty);
-                DataPackageExperimentNames.Add(experiment);
-                DataPackageDatasetNames.Add(DatasetName);
-
-                var usingMzML = mJobParams.GetJobParameter("CreateMzMLFiles", false);
-                if (usingMzML)
-                {
-                    currentTask = "GetMzMLFile";
-
-                    var mzMLResultCode = GetMzMLFile();
-
-                    if (mzMLResultCode != CloseOutType.CLOSEOUT_SUCCESS)
-                    {
-                        return mzMLResultCode;
-                    }
-
-                    DataPackageDatasetFilePaths.Add(DatasetName + DOT_MZML_EXTENSION);
-                    DataPackageDatasetFileTypes.Add("File");
-                }
-                else
-                {
-                    // Get the primary dataset file
-                    currentTask = "Determine RawDataType";
-
-                    var rawDataTypeName = mJobParams.GetParam("RawDataType");
-                    var rawDataType = GetRawDataType(rawDataTypeName);
-
-                    var instrumentName = mJobParams.GetParam("Instrument");
-
-                    var retrievalAttempts = 0;
-
-                    while (retrievalAttempts < 2)
-                    {
-                        retrievalAttempts++;
-                        switch (rawDataTypeName.ToLower())
-                        {
-                            case RAW_DATA_TYPE_DOT_RAW_FILES:
-                            case RAW_DATA_TYPE_DOT_D_FOLDERS:
-                            case RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER:
-                            case RAW_DATA_TYPE_BRUKER_FT_FOLDER:
-                                currentTask = string.Format("Retrieve spectra: {0}; instrument: {1}", rawDataTypeName, instrumentName);
-                                var datasetResult = GetDatasetFile(rawDataTypeName);
-                                if (datasetResult == CloseOutType.CLOSEOUT_FILE_NOT_FOUND)
-                                    return datasetResult;
-
-                                var datasetFileOrDirectoryName = GetDatasetFileOrDirectoryName(rawDataType, out var isDirectory);
-
-                                DataPackageDatasetFilePaths.Add(datasetFileOrDirectoryName);
-                                DataPackageDatasetFileTypes.Add(isDirectory ? "Directory" : "File");
-
-                                break;
-
-                            default:
-                                mMessage = "Dataset type " + rawDataTypeName + " is not supported";
-                                LogDebug(
-                                    "AnalysisResourcesMaxQuant.GetResources: " + mMessage + "; must be " +
-                                    RAW_DATA_TYPE_DOT_RAW_FILES + ", " +
-                                    RAW_DATA_TYPE_DOT_D_FOLDERS + ", " +
-                                    RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER + ", " +
-                                    RAW_DATA_TYPE_BRUKER_FT_FOLDER);
-
-                                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
-                        }
-
-                        if (mMyEMSLUtilities.FilesToDownload.Count == 0)
-                        {
-                            break;
-                        }
-
-                        currentTask = "ProcessMyEMSLDownloadQueue";
-                        if (mMyEMSLUtilities.ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadLayout.FlatNoSubdirectories))
-                        {
-                            break;
-                        }
-
-                        // Look for this file on the Samba share
-                        DisableMyEMSLSearch();
-                    }
-                }
-
-                return CloseOutType.CLOSEOUT_SUCCESS;
-            }
-            catch (Exception ex)
-            {
-                LogError("Exception in RetrieveSingleDataset (CurrentTask = " + currentTask + ")", ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
         }
@@ -273,6 +120,148 @@ namespace AnalysisManagerMaxQuantPlugIn
 
                 default:
                     throw new ArgumentOutOfRangeException(nameof(rawDataType), "Unsupported raw data type: " + rawDataType);
+            }
+        }
+
+        private CloseOutType RetrieveDataPackageDatasets(DataPackageInfo dataPackageInfo)
+        {
+            try
+            {
+                var usingMzML = mJobParams.GetJobParameter("CreateMzMLFiles", false);
+
+                // Keys in dictionary dataPackageDatasets are Dataset ID, values are dataset info
+                // Keys in dictionary datasetRawFilePaths are dataset name, values are paths to the local file or directory for the dataset</param>
+
+                var filesRetrieved = RetrieveDataPackageDatasetFiles(
+                    usingMzML,
+                    out var dataPackageDatasets, out var datasetRawFilePaths,
+                    0,
+                    AnalysisToolRunnerMaxQuant.PROGRESS_PCT_TOOL_RUNNER_STARTING);
+
+                if (!filesRetrieved)
+                {
+                    return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+                }
+
+                foreach (var dataset in dataPackageDatasets)
+                {
+                    var datasetID = dataset.Key;
+                    var datasetName = dataset.Value.Dataset;
+
+                    var localDatasetPath = datasetRawFilePaths[datasetName];
+
+                    dataPackageInfo.Datasets.Add(datasetID, datasetName);
+                    dataPackageInfo.Experiments.Add(datasetID, dataset.Value.Experiment);
+
+                    dataPackageInfo.DatasetFiles.Add(datasetID, Path.GetFileName(localDatasetPath));
+                    dataPackageInfo.DatasetFileTypes.Add(datasetID, dataset.Value.IsDirectoryBased ? "Directory" : "File");
+                }
+
+                return CloseOutType.CLOSEOUT_SUCCESS;
+            }
+            catch (Exception ex)
+            {
+                LogError("Exception in RetrieveDataPackageDatasets", ex);
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+        }
+
+        private CloseOutType RetrieveSingleDataset(DataPackageInfo dataPackageInfo)
+        {
+            var currentTask = "Initializing";
+
+            try
+            {
+                var experiment = mJobParams.GetJobParameter("Experiment", string.Empty);
+
+                var datasetID = mJobParams.GetJobParameter("DatasetID", 0);
+
+                dataPackageInfo.Datasets.Add(datasetID, DatasetName);
+                dataPackageInfo.Experiments.Add(datasetID, experiment);
+
+                var usingMzML = mJobParams.GetJobParameter("CreateMzMLFiles", false);
+
+                if (usingMzML)
+                {
+                    currentTask = "GetMzMLFile";
+
+                    var mzMLResultCode = GetMzMLFile();
+
+                    if (mzMLResultCode != CloseOutType.CLOSEOUT_SUCCESS)
+                    {
+                        return mzMLResultCode;
+                    }
+
+                    dataPackageInfo.DatasetFiles.Add(datasetID, DatasetName + DOT_MZML_EXTENSION);
+                    dataPackageInfo.DatasetFileTypes.Add(datasetID, "File");
+                }
+                else
+                {
+                    // Get the primary dataset file
+                    currentTask = "Determine RawDataType";
+
+                    var rawDataTypeName = mJobParams.GetParam("RawDataType");
+                    var rawDataType = GetRawDataType(rawDataTypeName);
+
+                    var instrumentName = mJobParams.GetParam("Instrument");
+
+                    var retrievalAttempts = 0;
+
+                    while (retrievalAttempts < 2)
+                    {
+                        retrievalAttempts++;
+                        switch (rawDataTypeName.ToLower())
+                        {
+                            case RAW_DATA_TYPE_DOT_RAW_FILES:
+                            case RAW_DATA_TYPE_DOT_D_FOLDERS:
+                            case RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER:
+                            case RAW_DATA_TYPE_BRUKER_FT_FOLDER:
+                                currentTask = string.Format("Retrieve spectra: {0}; instrument: {1}", rawDataTypeName, instrumentName);
+                                var datasetResult = GetDatasetFile(rawDataTypeName);
+                                if (datasetResult == CloseOutType.CLOSEOUT_FILE_NOT_FOUND)
+                                    return datasetResult;
+
+                                var datasetFileOrDirectoryName = GetDatasetFileOrDirectoryName(rawDataType, out var isDirectory);
+
+                                dataPackageInfo.DatasetFiles.Add(datasetID, datasetFileOrDirectoryName);
+                                dataPackageInfo.DatasetFileTypes.Add(datasetID, isDirectory ? "Directory" : "File");
+
+                                break;
+
+                            default:
+                                mMessage = "Dataset type " + rawDataTypeName + " is not supported";
+                                LogDebug(
+                                    "AnalysisResourcesMaxQuant.GetResources: " + mMessage + "; must be " +
+                                    RAW_DATA_TYPE_DOT_RAW_FILES + ", " +
+                                    RAW_DATA_TYPE_DOT_D_FOLDERS + ", " +
+                                    RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER + ", " +
+                                    RAW_DATA_TYPE_BRUKER_FT_FOLDER);
+
+                                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+                        }
+
+                        if (mMyEMSLUtilities.FilesToDownload.Count == 0)
+                        {
+                            break;
+                        }
+
+                        currentTask = "ProcessMyEMSLDownloadQueue";
+                        if (mMyEMSLUtilities.ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadLayout.FlatNoSubdirectories))
+                        {
+                            break;
+                        }
+
+                        // Look for this file on the Samba share
+                        DisableMyEMSLSearch();
+                    }
+                }
+
+                return CloseOutType.CLOSEOUT_SUCCESS;
+            }
+            catch (Exception ex)
+            {
+                LogError("Exception in RetrieveSingleDataset (CurrentTask = " + currentTask + ")", ex);
+                return CloseOutType.CLOSEOUT_FAILED;
             }
         }
     }

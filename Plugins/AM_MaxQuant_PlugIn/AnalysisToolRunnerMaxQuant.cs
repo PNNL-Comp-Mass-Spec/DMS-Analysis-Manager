@@ -96,6 +96,12 @@ namespace AnalysisManagerMaxQuantPlugIn
 
                 // Process the mzML file using MaxQuant
                 var processingResult = StartMaxQuant();
+                // If this job applies to a single dataset, dataPackageID will be 0
+                // We still need to create an instance of DataPackageInfo to retrieve the experiment name associated with the job's dataset
+                var dataPackageID = mJobParams.GetJobParameter("DataPackageID", 0);
+
+                var dataPackageInfo = new DataPackageInfo(dataPackageID, this);
+
 
                 mProgress = PROGRESS_PCT_COMPLETE;
 
