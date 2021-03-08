@@ -1595,6 +1595,46 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
+        /// Gets the dictionary for the packed job parameter
+        /// </summary>
+        /// <param name="packedJobParameterName">Packaged job parameter name</param>
+        /// <returns>List of strings</returns>
+        /// <remarks>Data will have been stored by function AnalysisResources.StorePackedJobParameterDictionary</remarks>
+        public Dictionary<int, string> ExtractPackedJobParameterDictionaryIntegerKey(string packedJobParameterName)
+        {
+            var jobParameters = new Dictionary<int, string>();
+
+            var extractedParams = ExtractPackedJobParameterList(packedJobParameterName);
+
+            foreach (var paramEntry in extractedParams)
+            {
+                var equalsIndex = paramEntry.LastIndexOf('=');
+                if (equalsIndex > 0)
+                {
+                    var key = paramEntry.Substring(0, equalsIndex);
+                    var value = paramEntry.Substring(equalsIndex + 1);
+
+                    if (!int.TryParse(key, out var numericKey))
+                    {
+                        LogError("Packed dictionary item does not have an integer key: " + paramEntry);
+                        return new Dictionary<int, string>();
+                    }
+
+                    if (!jobParameters.ContainsKey(numericKey))
+                    {
+                        jobParameters.Add(numericKey, value);
+                    }
+                }
+                else
+                {
+                    LogError("Packed dictionary item does not contain an equals sign: " + paramEntry);
+                }
+            }
+
+            return jobParameters;
+        }
+
+        /// <summary>
         /// Gets the list of values for the packed job parameter
         /// </summary>
         /// <param name="packedJobParameterName">Packaged job parameter name</param>
