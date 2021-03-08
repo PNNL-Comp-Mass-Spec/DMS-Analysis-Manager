@@ -6,6 +6,9 @@
 
 using System.Diagnostics.CodeAnalysis;
 
+[assembly: SuppressMessage("Design", "RCS1075:Avoid empty catch clause that catches System.Exception.", Justification = "Ignore errors here", Scope = "member", Target = "~M:AnalysisManagerDecon2lsV2PlugIn.AnalysisToolRunnerDecon2ls.AssembleResults(AnalysisManagerDecon2lsV2PlugIn.XMLParamFileReader)~AnalysisManagerBase.CloseOutType")]
+[assembly: SuppressMessage("Design", "RCS1075:Avoid empty catch clause that catches System.Exception.", Justification = "Ignore errors here", Scope = "member", Target = "~M:AnalysisManagerDecon2lsV2PlugIn.AnalysisToolRunnerDecon2ls.IsosFileHasData(System.String,System.Int32@,System.Boolean,System.Double)~System.Boolean")]
+[assembly: SuppressMessage("Design", "RCS1075:Avoid empty catch clause that catches System.Exception.", Justification = "Ignore errors here", Scope = "member", Target = "~M:AnalysisManagerDecon2lsV2PlugIn.AnalysisToolRunnerDecon2ls.ParseKeyValue(System.String)~System.Collections.Generic.KeyValuePair{System.String,System.String}")]
 [assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Allowed", Scope = "type", Target = "~T:AnalysisManagerDecon2lsV2PlugIn.AnalysisToolRunnerDecon2ls")]
 [assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Allowed", Scope = "type", Target = "~T:AnalysisManagerDecon2lsV2PlugIn.AnalysisToolRunnerDecon2ls.udtDeconToolsStatusType")]
 [assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Allowed", Scope = "type", Target = "~T:AnalysisManagerDecon2lsV2PlugIn.XMLParamFileReader")]

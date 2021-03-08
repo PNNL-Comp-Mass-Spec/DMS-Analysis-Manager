@@ -113,10 +113,12 @@ namespace DTASpectraFileGen
             {
                 // ReSharper disable HeuristicUnreachableCode
                 // ReSharper disable once ConditionIsAlwaysTrueOrFalse
+#pragma warning disable 162
                 if (useSingleThread)
                 {
                     MakeDTAFilesThreaded();
                 }
+#pragma warning restore 162
                 // ReSharper restore HeuristicUnreachableCode
                 else
                 {
