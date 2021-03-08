@@ -71,56 +71,43 @@ namespace AnalysisManager_Mage_PlugIn
         /// <param name="jobCountLimit">Optionally set this to a positive value to limit the number of jobs to process (useful when debugging)</param>
         public bool RunMageOperation(string mageOperation, int jobCountLimit)
         {
-            var success = false;
-
-            // Note: case statements must be lowercase
-            switch (mageOperation.ToLower())
+            if (jobCountLimit > 0)
             {
-                // ReSharper disable StringLiteralTypo
-                case "extractfromjobs":
-                    success = ExtractFromJobs();
-                    break;
-
-                case "getfactors":
-                    success = GetFactors();
-                    break;
-
-                case "importdatapackagefiles":
-                    success = ImportDataPackageFiles();
-                    break;
-
-                case "importimprovclusterfiles":
-                    success = ImportIMPROVClusterDataPackageFile();
-                    break;
-
-                case "getfdrtables":
-                    success = ImportFDRTables();
-                    break;
-
-                case "importfirsthits":
-                    success = ImportFirstHits();
-                    break;
-
-                case "importreporterions":
-                    success = ImportReporterIons();
-                    break;
-
-                case "importrawfilelist":
-                    success = ImportRawFileList();
-                    break;
-
-                case "importjoblist":
-                    success = ImportJobList();
-                    break;
-
-                case "nooperation":
-                    success = NoOperation();
-                    break;
-
-                // ReSharper restore StringLiteralTypo
+                OnWarningEvent(string.Format("Limiting the number of jobs to process to {0} jobs", jobCountLimit));
             }
 
-            return success;
+            if (mageOperation.Equals("ExtractFromJobs", StringComparison.OrdinalIgnoreCase))
+                return ExtractFromJobs(jobCountLimit);
+
+            if (mageOperation.Equals("GetFactors", StringComparison.OrdinalIgnoreCase))
+                return GetFactors();
+
+            if (mageOperation.Equals("ImportDataPackageFiles", StringComparison.OrdinalIgnoreCase))
+                return ImportDataPackageFiles();
+
+            if (mageOperation.Equals("ImportImprovClusterFiles", StringComparison.OrdinalIgnoreCase))
+                return ImportIMPROVClusterDataPackageFile();
+
+            if (mageOperation.Equals("GetFDRTables", StringComparison.OrdinalIgnoreCase))
+                return ImportFDRTables();
+
+            if (mageOperation.Equals("ImportFirstHits", StringComparison.OrdinalIgnoreCase))
+                return ImportFirstHits(jobCountLimit);
+
+            if (mageOperation.Equals("ImportReporterIons", StringComparison.OrdinalIgnoreCase))
+                return ImportReporterIons(jobCountLimit);
+
+            if (mageOperation.Equals("ImportRawFileList", StringComparison.OrdinalIgnoreCase))
+                return ImportRawFileList(jobCountLimit);
+
+            if (mageOperation.Equals("ImportJobList", StringComparison.OrdinalIgnoreCase))
+                return ImportJobList(jobCountLimit);
+
+            if (mageOperation.Equals("NoOperation", StringComparison.OrdinalIgnoreCase))
+                return NoOperation();
+
+            OnWarningEvent("Unrecognized Mage operation: " + mageOperation);
+            return false;
         }
 
         #region Mage Operations Functions
