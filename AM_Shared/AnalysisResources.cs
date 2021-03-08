@@ -4748,25 +4748,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="itemsToStore">Dictionary items to store as a packed job parameter</param>
         /// <param name="parameterName">Packed job parameter name</param>
-        protected void StorePackedJobParameterDictionary(Dictionary<string, int> itemsToStore, string parameterName)
-        {
-            var packedJobParams = new List<string>();
-
-            foreach (var item in itemsToStore)
-            {
-                packedJobParams.Add(item.Key + "=" + item.Value);
-            }
-
-            StorePackedJobParameterList(packedJobParams, parameterName);
-        }
-
-        /// <summary>
-        /// Converts the dictionary items to a list of key/value pairs separated by an equals sign
-        /// Next, calls StorePackedJobParameterList to store the list (items will be separated by tab characters)
-        /// </summary>
-        /// <param name="itemsToStore">Dictionary items to store as a packed job parameter</param>
-        /// <param name="parameterName">Packed job parameter name</param>
-        public void StorePackedJobParameterDictionary(Dictionary<string, string> itemsToStore, string parameterName)
+        public void StorePackedJobParameterDictionary<T1, T2>(Dictionary<T1, T2> itemsToStore, string parameterName)
         {
             var packedJobParams = new List<string>();
 
