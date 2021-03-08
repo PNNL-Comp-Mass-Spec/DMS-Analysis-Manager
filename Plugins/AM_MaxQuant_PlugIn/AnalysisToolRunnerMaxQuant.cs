@@ -107,14 +107,13 @@ namespace AnalysisManagerMaxQuantPlugIn
                 // Customize the path to the FASTA file, the number of threads to use, the dataset files, etc.
                 // This will involve a dry-run of MaxQuant if startStepID values in the dmsSteps elements are "auto" instead of integers
 
-                var result = UpdateMaxQuantParameterFile(
-                    dataPackageInfo, out var parameterFilePath, out var startStepNumber, out var endStepNumber);
+                var result = UpdateMaxQuantParameterFile(dataPackageInfo, out var runtimeOptions);
 
                 if (result != CloseOutType.CLOSEOUT_SUCCESS)
                     return result;
 
                 // Process one or more datasets using MaxQuant
-                var processingResult = StartMaxQuant(parameterFilePath, startStepNumber, endStepNumber);
+                var processingResult = StartMaxQuant(runtimeOptions);
 
                 mProgress = PROGRESS_PCT_COMPLETE;
 
@@ -346,11 +345,11 @@ namespace AnalysisManagerMaxQuantPlugIn
             }
         }
 
-        private CloseOutType StartMaxQuant(string parameterFilePath, int startStepNumber, int endStepNumber)
+        private CloseOutType StartMaxQuant(MaxQuantRuntimeOptions runtimeOptions)
         {
             LogMessage("Running MaxQuant");
 
-            if (string.IsNullOrWhiteSpace(parameterFilePath))
+            if (string.IsNullOrWhiteSpace(runtimeOptions.ParameterFilePath))
             {
                 LogError("MaxQuant parameter file name returned by UpdateMaxQuantParameterFile is empty");
                 return CloseOutType.CLOSEOUT_FAILED;
@@ -411,15 +410,9 @@ namespace AnalysisManagerMaxQuantPlugIn
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
-        private CloseOutType UpdateMaxQuantParameterFile(
-            DataPackageInfo dataPackageInfo,
-            out string paramFilePath,
-            out int startStepNumber,
-            out int endStepNumber)
+        private CloseOutType UpdateMaxQuantParameterFile(DataPackageInfo dataPackageInfo, out MaxQuantRuntimeOptions runtimeOptions)
         {
-            paramFilePath = string.Empty;
-            startStepNumber = 0;
-            endStepNumber = 9999;
+            runtimeOptions = new MaxQuantRuntimeOptions();
 
             try
             {
@@ -540,7 +533,7 @@ namespace AnalysisManagerMaxQuantPlugIn
                 sourceFile.Delete();
                 updatedFile.MoveTo(Path.Combine(mWorkDir, paramFileName));
 
-                paramFilePath = updatedFile.FullName;
+                runtimeOptions.ParameterFilePath = updatedFile.FullName;
 
                 // ToDo: Determine the step range to use for the current step tool
                 // If the items in dmsSteps all have numeric values for StartStepID, make sure the step range is contiguous
