@@ -40,7 +40,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Looks up dataset information for a data package
         /// </summary>
-        /// <param name="dataPackageDatasets"></param>
+        /// <param name="dataPackageDatasets">Datasets associated with the given data package; keys are DatasetID</param>
         /// <returns>True if a data package is defined and it has datasets associated with it</returns>
         public bool LoadDataPackageDatasetInfo(out Dictionary<int, DataPackageDatasetInfo> dataPackageDatasets)
         {
@@ -58,7 +58,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="dbTools">Instance of IDbTools</param>
         /// <param name="dataPackageID">Data Package ID</param>
-        /// <param name="dataPackageDatasets">Datasets associated with the given data package</param>
+        /// <param name="dataPackageDatasets">Datasets associated with the given data package; keys are DatasetID</param>
         /// <returns>True if a data package is defined and it has datasets associated with it</returns>
         public static bool LoadDataPackageDatasetInfo(
             IDBTools dbTools,

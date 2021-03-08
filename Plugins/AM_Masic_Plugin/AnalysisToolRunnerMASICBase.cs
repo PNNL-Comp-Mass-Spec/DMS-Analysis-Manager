@@ -173,6 +173,7 @@ namespace AnalysisManagerMasicPlugin
             // Make sure the MASIC executable file exists (MASIC_Console.exe)
             try
             {
+                // This manager parameter is the full path to the MASIC .exe
                 masicExePath = mMgrParams.GetParam("MasicProgLoc");
                 if (!File.Exists(masicExePath))
                 {

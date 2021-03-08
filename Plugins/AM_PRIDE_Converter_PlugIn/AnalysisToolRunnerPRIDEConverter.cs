@@ -213,7 +213,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         private Dictionary<string, PXFileInfoBase> mCDTAFileStats;
 
         /// <summary>
-        /// MzML /  MzXML file creator
+        /// MzML / MzXML file creator
         /// </summary>
         private AnalysisManagerMsXmlGenPlugIn.MSXMLCreator mMSXmlCreator;
 

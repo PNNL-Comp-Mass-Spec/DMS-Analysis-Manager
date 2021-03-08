@@ -61,7 +61,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
 
             if (paramFilesCopied == 0)
             {
-                mMessage = "One more more of these job parameters must define a valid AScore parameter file name: AScoreCIDParamFile, AScoreETDParamFile, or AScoreHCDParamFile";
+                mMessage = "One or more of these job parameters must define a valid AScore parameter file name: AScoreCIDParamFile, AScoreETDParamFile, or AScoreHCDParamFile";
                 LogError(mMessage);
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }

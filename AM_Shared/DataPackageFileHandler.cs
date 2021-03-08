@@ -1090,7 +1090,7 @@ namespace AnalysisManagerBase
         /// Also creates a batch file that can be manually run to retrieve the instrument data files
         /// </summary>
         /// <param name="retrievalOptions">File retrieval options</param>
-        /// <param name="dataPackagePeptideHitJobs">Output parameter: Job info for the peptide_hit jobs associated with this data package (output parameter)</param>
+        /// <param name="dataPackagePeptideHitJobs">Output parameter: Job info for the peptide_hit jobs associated with this data package</param>
         /// <param name="progressPercentAtStart">Percent complete value to use for computing incremental progress</param>
         /// <param name="progressPercentAtFinish">Percent complete value to use for computing incremental progress</param>
         /// <returns>True if success, false if an error</returns>
@@ -1112,6 +1112,7 @@ namespace AnalysisManagerBase
             dataPackagePeptideHitJobs = new List<DataPackageJobInfo>();
 
             // This dictionary tracks the datasets associated with this aggregation job's data package
+            // Keys are DatasetID, values are dataset info
             Dictionary<int, DataPackageDatasetInfo> dataPackageDatasets;
 
             var debugLevel = mAnalysisResources.DebugLevel;
@@ -1130,7 +1131,7 @@ namespace AnalysisManagerBase
 
                 if (!success || dataPackageDatasets.Count == 0)
                 {
-                    OnErrorEvent("Did not find any datasets associated with this job's data package ID (" + mDataPackageInfoLoader.DataPackageID + ")");
+                    OnErrorEvent("Did not find any datasets associated with this job's data package (ID " + mDataPackageInfoLoader.DataPackageID + ")");
                     return false;
                 }
             }
@@ -1155,7 +1156,7 @@ namespace AnalysisManagerBase
 
                 if (dataPackagePeptideHitJobs.Count == 0)
                 {
-                    // Did not find any peptide hit jobs associated with this job's data package ID
+                    // Did not find any peptide hit jobs associated with this job's data package
                     // This is atypical, but is allowed
                 }
             }
@@ -1298,7 +1299,7 @@ namespace AnalysisManagerBase
 
                 if (rawFileRetrievalCommands.Count == 0)
                 {
-                    OnErrorEvent("Did not find any datasets associated with this job's data package ID (" + mDataPackageInfoLoader.DataPackageID + ")");
+                    OnErrorEvent("Did not find any datasets associated with this job's data package (ID " + mDataPackageInfoLoader.DataPackageID + ")");
                     return false;
                 }
 
@@ -1337,6 +1338,8 @@ namespace AnalysisManagerBase
 
         /// <summary>
         /// Look for the .mzXML, .mzML, or .raw file
+        /// Create the copy command or call to MyEMSLDownloader.exe to retrieve the file
+        /// Does not actually copy the file locally, just updates rawFileRetrievalCommands and datasetRawFilePaths
         /// </summary>
         /// <param name="dataPkgJob">Data package job info</param>
         /// <param name="retrievalOptions">File retrieval options</param>
@@ -1454,13 +1457,9 @@ namespace AnalysisManagerBase
             {
                 // Make sure we don't move the .Raw, .mzXML, .mzML or .gz files into the results directory
                 mAnalysisResources.AddResultFileExtensionToSkip(AnalysisResources.DOT_RAW_EXTENSION);
-                // .Raw file
                 mAnalysisResources.AddResultFileExtensionToSkip(AnalysisResources.DOT_MZXML_EXTENSION);
-                // .mzXML file
                 mAnalysisResources.AddResultFileExtensionToSkip(AnalysisResources.DOT_MZML_EXTENSION);
-                // .mzML file
                 mAnalysisResources.AddResultFileExtensionToSkip(AnalysisResources.DOT_GZ_EXTENSION);
-                // .gz file
 
                 var createStoragePathInfoOnly = retrievalOptions.CreateJobPathFiles;
 

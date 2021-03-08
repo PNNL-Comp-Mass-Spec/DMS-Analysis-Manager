@@ -702,7 +702,7 @@ namespace AnalysisManagerBase
         public string StepToolName { get; private set; }
 
         /// <summary>
-        /// Work directory
+        /// Work directory path
         /// </summary>
         public string WorkDir => mWorkDir;
 
@@ -2323,12 +2323,12 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Retrieve the .mzML or .mzXML file associated with this job (based on Job Parameter MSXMLOutputType)
+        /// Retrieve the .mzML or .mzXML file associated with this job's dataset (based on Job Parameter MSXMLOutputType)
         /// </summary>
         /// <returns>CLOSEOUT_SUCCESS or CLOSEOUT_FAILED</returns>
         /// <remarks>
         /// If MSXMLOutputType is not defined, attempts to retrieve a .mzML file
-        /// If the .mzML file is not found, will attempt to create it
+        /// If the .mzML file is not found, the calling method will re-create it (for some plugins)
         /// </remarks>
         protected CloseOutType GetMsXmlFile()
         {
@@ -4202,7 +4202,7 @@ namespace AnalysisManagerBase
         /// Also creates a batch file that can be manually run to retrieve the instrument data files
         /// </summary>
         /// <param name="retrievalOptions">File retrieval options</param>
-        /// <param name="dataPackagePeptideHitJobs">Job info for the peptide_hit jobs associated with this data package (output parameter)</param>
+        /// <param name="dataPackagePeptideHitJobs">Output parameter: Job info for the peptide_hit jobs associated with this data package</param>
         /// <returns>True if success, false if an error</returns>
         protected bool RetrieveDataPackagePeptideHitJobPHRPFiles(
             DataPackageFileHandler.udtDataPackageRetrievalOptionsType retrievalOptions,
@@ -4218,7 +4218,7 @@ namespace AnalysisManagerBase
         /// Also creates a batch file that can be manually run to retrieve the instrument data files
         /// </summary>
         /// <param name="retrievalOptions">File retrieval options</param>
-        /// <param name="dataPackagePeptideHitJobs">Output parameter: Job info for the peptide_hit jobs associated with this data package (output parameter)</param>
+        /// <param name="dataPackagePeptideHitJobs">Output parameter: Job info for the peptide_hit jobs associated with this data package</param>
         /// <param name="progressPercentAtStart">Percent complete value to use for computing incremental progress</param>
         /// <param name="progressPercentAtFinish">Percent complete value to use for computing incremental progress</param>
         /// <returns>True if success, false if an error</returns>

@@ -1044,7 +1044,7 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Retrieve the dataset's cached .mzXML or .mzML file from the MsXML Cache
+        /// Retrieve the dataset's cached .mzXML, .mzML, or .pbf file from the MsXML Cache
         /// </summary>
         /// <param name="resultFileExtension">File extension to retrieve (.mzXML or .mzML)</param>
         /// <param name="unzip">True to unzip; otherwise, will remain as a .gzip file</param>

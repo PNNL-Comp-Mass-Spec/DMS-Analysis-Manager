@@ -24,7 +24,7 @@ namespace AnalysisManagerBase
     /// </summary>
     public class AnalysisToolRunnerBase : AnalysisMgrBase, IToolRunner
     {
-        // Ignore Spelling: acqu, fid, baf, tdf, yyyy-MM-dd, hh:mm:ss tt, Cnfg, str, Dta, cmd, Cpu, crc, usr
+        // Ignore Spelling: acqu, fid, baf, tdf, yyyy-MM-dd, hh:mm:ss tt, Cnfg, str, Dta, cmd, Cpu, crc, usr, Quant
 
         #region "Constants"
 
@@ -1505,7 +1505,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="stepToolName">The name of the step tool, e.g. LCMSFeatureFinder</param>
         /// <param name="progLocManagerParamName">The name of the manager parameter that defines the path to the directory with the exe, e.g. LCMSFeatureFinderProgLoc</param>
-        /// <param name="exeName">The name of the exe file, e.g. LCMSFeatureFinder.exe</param>
+        /// <param name="exeName">The name of the exe file, e.g. LCMSFeatureFinder.exe; for MaxQuant this is bin\MaxQuantCmd.exe</param>
         /// <param name="stepToolVersion">Specific step tool version to use (will be the name of a subdirectory located below the primary ProgLoc location)</param>
         /// <param name="mgrParams">Manager parameters</param>
         /// <param name="errorMessage">Output: error message</param>
