@@ -26,8 +26,9 @@ namespace AnalysisManagerMaxQuantPlugIn
     {
         #region "Constants and Enums"
 
-        private const string MaxQuant_CONSOLE_OUTPUT = "MaxQuant_ConsoleOutput.txt";
-        private const string MaxQuant_JAR_NAME = "MaxQuant.jar";
+        private const string MAXQUANT_CONSOLE_OUTPUT = "MaxQuant_ConsoleOutput.txt";
+
+        private const string MAXQUANT_EXE_NAME = @"bin\MaxQuantCmd.exe";
 
         private const float PROGRESS_PCT_STARTING = 1;
         private const float PROGRESS_PCT_COMPLETE = 99;
@@ -35,11 +36,6 @@ namespace AnalysisManagerMaxQuantPlugIn
         #endregion
 
         #region "Module Variables"
-
-        private bool mToolVersionWritten;
-
-        // Populate this with a tool version reported to the console
-        private string mMaxQuantVersion;
 
         private string mMaxQuantProgLoc;
         private string mConsoleOutputErrorMsg;
@@ -75,19 +71,23 @@ namespace AnalysisManagerMaxQuantPlugIn
 
                 // Initialize class wide variables
                 mLastConsoleOutputParse = DateTime.UtcNow;
+                mConsoleOutputErrorMsg = string.Empty;
 
-                // Determine the path to MaxQuant
-                mMaxQuantProgLoc = DetermineProgramLocation("MaxQuantProgLoc", MaxQuant_JAR_NAME);
+                // Determine the path to MaxQuantCmd.exe
+                mMaxQuantProgLoc = DetermineProgramLocation("MaxQuantProgLoc", MAXQUANT_EXE_NAME);
 
                 if (string.IsNullOrWhiteSpace(mMaxQuantProgLoc))
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                // Store the MaxQuant version info in the database after the first line is written to file MaxQuant_ConsoleOutput.txt
-                mToolVersionWritten = false;
-                mMaxQuantVersion = string.Empty;
-                mConsoleOutputErrorMsg = string.Empty;
+                // Store the MaxQuant version info in the database
+                if (!StoreToolVersionInfo())
+                {
+                    LogError("Aborting since StoreToolVersionInfo returned false");
+                    mMessage = "Error determining MaxQuant version";
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
 
                 if (!ValidateFastaFile())
                 {
@@ -374,15 +374,6 @@ namespace AnalysisManagerMaxQuantPlugIn
             // However, while it's running, LoopWaiting will get called via events
             var processingSuccess = mCmdRunner.RunProgram(mMaxQuantProgLoc, arguments, "MaxQuant", true);
 
-            if (!mToolVersionWritten)
-            {
-                if (string.IsNullOrWhiteSpace(mMaxQuantVersion))
-                {
-                    ParseConsoleOutputFile(Path.Combine(mWorkDir, MaxQuant_CONSOLE_OUTPUT));
-                }
-                mToolVersionWritten = StoreToolVersionInfo();
-            }
-
             if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))
             {
                 LogError(mConsoleOutputErrorMsg);
@@ -546,22 +537,15 @@ namespace AnalysisManagerMaxQuantPlugIn
                 LogDebug("Determining tool version info");
             }
 
-            var toolVersionInfo = string.Copy(mMaxQuantVersion);
-
-            // Store paths to key files in toolFiles
-            var toolFiles = new List<FileInfo> {
-                new FileInfo(mMaxQuantProgLoc)
+            var additionalDLLs = new List<string> {
+                "MaxQuantTask.exe",
+                "MaxQuantLib.dll",
+                "MaxQuantLibS.dll",
+                "MaxQuantPLib.dll"
             };
 
-            try
-            {
-                return SetStepTaskToolVersion(toolVersionInfo, toolFiles);
-            }
-            catch (Exception ex)
-            {
-                LogError("Exception calling SetStepTaskToolVersion", ex);
-                return false;
-            }
+            var success = StoreDotNETToolVersionInfo(mMaxQuantProgLoc, additionalDLLs);
+            return success;
         }
 
         private static bool TryGetAttribute(XElement item, string attributeName, out string attributeValue)
@@ -636,12 +620,7 @@ namespace AnalysisManagerMaxQuantPlugIn
 
             mLastConsoleOutputParse = DateTime.UtcNow;
 
-            ParseConsoleOutputFile(Path.Combine(mWorkDir, MaxQuant_CONSOLE_OUTPUT));
-
-            if (!mToolVersionWritten && !string.IsNullOrWhiteSpace(mMaxQuantVersion))
-            {
-                mToolVersionWritten = StoreToolVersionInfo();
-            }
+            ParseConsoleOutputFile(Path.Combine(mWorkDir, MAXQUANT_CONSOLE_OUTPUT));
 
             UpdateProgRunnerCpuUsage(mCmdRunner, SECONDS_BETWEEN_UPDATE);
 
