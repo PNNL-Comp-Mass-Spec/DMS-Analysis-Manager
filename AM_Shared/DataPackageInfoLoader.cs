@@ -44,7 +44,7 @@ namespace AnalysisManagerBase
         /// <returns>True if a data package is defined and it has datasets associated with it</returns>
         public bool LoadDataPackageDatasetInfo(out Dictionary<int, DataPackageDatasetInfo> dataPackageDatasets)
         {
-            if (DataPackageID < 0)
+            if (DataPackageID <= 0)
             {
                 dataPackageDatasets = new Dictionary<int, DataPackageDatasetInfo>();
                 return false;
@@ -416,7 +416,7 @@ namespace AnalysisManagerBase
         /// <returns>Peptide Hit Jobs (e.g. MS-GF+ or Sequest)</returns>
         public List<DataPackageJobInfo> RetrieveDataPackagePeptideHitJobInfo(out List<DataPackageJobInfo> additionalJobs)
         {
-            if (DataPackageID < 0)
+            if (DataPackageID <= 0)
             {
                 LogError("DataPackageID is not defined for this analysis job");
                 additionalJobs = new List<DataPackageJobInfo>();

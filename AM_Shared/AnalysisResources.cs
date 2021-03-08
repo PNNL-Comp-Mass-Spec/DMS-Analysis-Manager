@@ -2352,6 +2352,7 @@ namespace AnalysisManagerBase
             const bool unzipFile = true;
 
             var success = FileSearch.RetrieveCachedMzMLFile(unzipFile, out var errorMessage, out var fileMissingFromCache, out _);
+
             if (!success)
             {
                 return HandleMsXmlRetrieveFailure(fileMissingFromCache, errorMessage, DOT_MZML_EXTENSION);
@@ -2382,6 +2383,7 @@ namespace AnalysisManagerBase
                 const bool unzipFile = true;
 
                 var success = FileSearch.RetrieveCachedMzXMLFile(unzipFile, out var errorMessage, out var fileMissingFromCache, out _);
+
                 if (!success)
                 {
                     return HandleMsXmlRetrieveFailure(fileMissingFromCache, errorMessage, DOT_MZXML_EXTENSION);
@@ -2406,6 +2408,7 @@ namespace AnalysisManagerBase
             LogMessage("Getting PBF file");
 
             var success = FileSearch.RetrieveCachedPBFFile(out var errorMessage, out var fileMissingFromCache, out _);
+
             if (!success)
             {
                 return HandleMsXmlRetrieveFailure(fileMissingFromCache, errorMessage, DOT_PBF_EXTENSION);
@@ -2861,9 +2864,9 @@ namespace AnalysisManagerBase
             // Gigasax.DMS_Pipeline
             var connectionString = mMgrParams.GetParam("BrokerConnectionString");
 
-            var dataPackageID = mJobParams.GetJobParameter("DataPackageID", -1);
+            var dataPackageID = mJobParams.GetJobParameter("DataPackageID", 0);
 
-            if (dataPackageID < 0)
+            if (dataPackageID <= 0)
             {
                 dataPackageDatasets = new Dictionary<int, DataPackageDatasetInfo>();
                 return false;
@@ -2889,9 +2892,9 @@ namespace AnalysisManagerBase
             // Gigasax.DMS_Pipeline
             var connectionString = mMgrParams.GetParam("BrokerConnectionString");
 
-            var dataPackageID = mJobParams.GetJobParameter("DataPackageID", -1);
+            var dataPackageID = mJobParams.GetJobParameter("DataPackageID", 0);
 
-            if (dataPackageID < 0)
+            if (dataPackageID <= 0)
             {
                 dataPackageJobs = new Dictionary<int, DataPackageJobInfo>();
                 return false;

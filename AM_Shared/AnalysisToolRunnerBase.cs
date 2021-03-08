@@ -2191,9 +2191,9 @@ namespace AnalysisManagerBase
             // Gigasax.DMS_Pipeline
             var brokerDbConnectionString = mMgrParams.GetParam("BrokerConnectionString");
 
-            var dataPackageID = mJobParams.GetJobParameter("DataPackageID", -1);
+            var dataPackageID = mJobParams.GetJobParameter("DataPackageID", 0);
 
-            if (dataPackageID < 0)
+            if (dataPackageID <= 0)
             {
                 dataPackageDatasets = new Dictionary<int, DataPackageDatasetInfo>();
                 return false;
@@ -2219,9 +2219,9 @@ namespace AnalysisManagerBase
             // Gigasax.DMS_Pipeline
             var brokerDbConnectionString = mMgrParams.GetParam("BrokerConnectionString");
 
-            var dataPackageID = mJobParams.GetJobParameter("DataPackageID", -1);
+            var dataPackageID = mJobParams.GetJobParameter("DataPackageID", 0);
 
-            if (dataPackageID < 0)
+            if (dataPackageID <= 0)
             {
                 errorMsg = "Job parameter DataPackageID not defined";
                 additionalJobs = new List<DataPackageJobInfo>();
