@@ -206,7 +206,7 @@ namespace AnalysisManagerProg
 
                     if (!nameUpdated)
                     {
-                        OnErrorEvent("Plugin file not found: " + pluginInfoFilePath);
+                        OnErrorEvent("Plugin info file not found: " + pluginInfoFilePath);
                         return null;
                     }
                 }

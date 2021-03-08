@@ -304,8 +304,12 @@ namespace AnalysisManager_Mage_PlugIn
                 {
                     if (!TableContainsDataAndColumns(resultsDB, "T_Reporter_Ions", ionColumns, out errorMessage, out exceptionDetail))
                     {
-                        errorMessage = "table T_Reporter_Ions in Results.db3 " + errorMessage +
-                                       "; you need to specify " + labelingScheme + " in the ApeWorkflowStepList parameter of the Ape step";
+                        errorMessage = string.Format(
+                            "Table T_Reporter_Ions in Results.db3 {0}; " +
+                            "compare setting '{1}' in the ApeWorkflowStepList parameter " +
+                            "of the Ape step at https://dms2.pnl.gov/pipeline_jobs/show/{2} " +
+                            "to values in the ion column in the t_alias.txt file (in the data package directory)",
+                             errorMessage, labelingScheme, mJob);
                         return false;
                     }
                 }
