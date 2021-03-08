@@ -218,6 +218,11 @@ namespace AnalysisManagerProg
 
                 var assemblyType = assembly.GetType(className, false, true);
 
+                if (assemblyType == null)
+                    throw new Exception(string.Format(
+                        "assembly.GetType returned null for class {0}; " +
+                        "examine plugin_info.xml for the mapping from step tool name to assembly and class", className));
+
                 var instance = Activator.CreateInstance(assemblyType);
                 return instance;
             }
