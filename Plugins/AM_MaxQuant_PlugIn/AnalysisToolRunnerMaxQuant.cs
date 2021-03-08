@@ -16,7 +16,7 @@ using System.Xml.Linq;
 
 namespace AnalysisManagerMaxQuantPlugIn
 {
-    // Ignore Spelling: Quant
+    // Ignore Spelling: Quant, deisotoping, apl
 
     /// <summary>
     /// Class for running MaxQuant analysis
@@ -30,7 +30,11 @@ namespace AnalysisManagerMaxQuantPlugIn
 
         private const string MAXQUANT_EXE_NAME = @"bin\MaxQuantCmd.exe";
 
-        private const float PROGRESS_PCT_STARTING = 1;
+        /// <summary>
+        /// Percent complete to report when the tool starts
+        /// </summary>
+        public const float PROGRESS_PCT_TOOL_RUNNER_STARTING = 5;
+
         private const float PROGRESS_PCT_COMPLETE = 99;
 
         #endregion
@@ -94,14 +98,23 @@ namespace AnalysisManagerMaxQuantPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                // Process the mzML file using MaxQuant
-                var processingResult = StartMaxQuant();
                 // If this job applies to a single dataset, dataPackageID will be 0
                 // We still need to create an instance of DataPackageInfo to retrieve the experiment name associated with the job's dataset
                 var dataPackageID = mJobParams.GetJobParameter("DataPackageID", 0);
 
                 var dataPackageInfo = new DataPackageInfo(dataPackageID, this);
 
+                // Customize the path to the FASTA file, the number of threads to use, the dataset files, etc.
+                // This will involve a dry-run of MaxQuant if startStepID values in the dmsSteps elements are "auto" instead of integers
+
+                var result = UpdateMaxQuantParameterFile(
+                    dataPackageInfo, out var parameterFilePath, out var startStepNumber, out var endStepNumber);
+
+                if (result != CloseOutType.CLOSEOUT_SUCCESS)
+                    return result;
+
+                // Process one or more datasets using MaxQuant
+                var processingResult = StartMaxQuant(parameterFilePath, startStepNumber, endStepNumber);
 
                 mProgress = PROGRESS_PCT_COMPLETE;
 
@@ -215,7 +228,7 @@ namespace AnalysisManagerMaxQuantPlugIn
         }
 
         /// <summary>
-        /// Parse the MaxQuant console output file to determine the MaxQuant version and to track the search progress
+        /// Parse the MaxQuant console output file to track the search progress
         /// </summary>
         /// <param name="consoleOutputFilePath"></param>
         private void ParseConsoleOutputFile(string consoleOutputFilePath)
@@ -333,26 +346,18 @@ namespace AnalysisManagerMaxQuantPlugIn
             }
         }
 
-        private CloseOutType StartMaxQuant()
+        private CloseOutType StartMaxQuant(string parameterFilePath, int startStepNumber, int endStepNumber)
         {
             LogMessage("Running MaxQuant");
 
-            // Customize the path to the FASTA file, the number of threads to use, the dataset files, etc.
-            var resultCode = UpdateMaxQuantParameterFile(out var paramFilePath, out var startStepNumber, out var endStepNumber);
-
-            if (resultCode != CloseOutType.CLOSEOUT_SUCCESS)
-            {
-                return resultCode;
-            }
-
-            if (string.IsNullOrWhiteSpace(paramFilePath))
+            if (string.IsNullOrWhiteSpace(parameterFilePath))
             {
                 LogError("MaxQuant parameter file name returned by UpdateMaxQuantParameterFile is empty");
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
             // Set up and execute a program runner to run MaxQuant
-            var arguments = string.Format("--partial-processing={0} --partial-processing-end={1} {2}", startStepNumber, endStepNumber, paramFilePath);
+            var arguments = string.Format("--partial-processing={0} --partial-processing-end={1} {2}", startStepNumber, endStepNumber, parameterFilePath);
 
             LogDebug(mMaxQuantProgLoc + " " + arguments);
 
@@ -362,12 +367,12 @@ namespace AnalysisManagerMaxQuantPlugIn
                 CacheStandardOutput = true,
                 EchoOutputToConsole = true,
                 WriteConsoleOutputToFile = true,
-                ConsoleOutputFilePath = Path.Combine(mWorkDir, MaxQuant_CONSOLE_OUTPUT)
+                ConsoleOutputFilePath = Path.Combine(mWorkDir, MAXQUANT_CONSOLE_OUTPUT)
             };
             RegisterEvents(mCmdRunner);
             mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
-            mProgress = PROGRESS_PCT_STARTING;
+            mProgress = PROGRESS_PCT_TOOL_RUNNER_STARTING;
             ResetProgRunnerCpuUsage();
 
             // Start the program and wait for it to finish
@@ -406,7 +411,11 @@ namespace AnalysisManagerMaxQuantPlugIn
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
-        private CloseOutType UpdateMaxQuantParameterFile(out string paramFilePath, out int startStepNumber, out int endStepNumber)
+        private CloseOutType UpdateMaxQuantParameterFile(
+            DataPackageInfo dataPackageInfo,
+            out string paramFilePath,
+            out int startStepNumber,
+            out int endStepNumber)
         {
             paramFilePath = string.Empty;
             startStepNumber = 0;
@@ -491,6 +500,27 @@ namespace AnalysisManagerMaxQuantPlugIn
                     fastaFileNodes.Add(fastaFileInfoNode);
 
                     filePathNodes.Clear();
+                    experimentNodes.Clear();
+
+                    // If the experiment ends in _f22, assume this is a fractionated sample and this is fraction 22
+                    var fractionMatcher = new Regex(@"_f(?<FractionNumber>\d+)$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+                    foreach (var item in dataPackageInfo.Datasets)
+                    {
+                        var datasetId = item.Key;
+
+                        var datasetFileOrDirectoryName = dataPackageInfo.DatasetFiles[datasetId];
+                        var experiment = dataPackageInfo.Experiments[datasetId];
+
+                        filePathNodes.Add(new XElement("string", Path.Combine(mWorkDir, datasetFileOrDirectoryName)));
+
+                        experimentNodes.Add(new XElement("string", experiment));
+
+                        var match = fractionMatcher.Match(experiment);
+
+                        var fractionNumber = match.Success ? match.Groups["FractionNumber"].Value : "32767";
+                        fractionNodes.Add(new XElement("short", fractionNumber));
+                    }
 
                     // Create the updated XML file
                     var settings = new XmlWriterSettings
