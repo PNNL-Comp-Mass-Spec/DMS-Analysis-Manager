@@ -11,6 +11,8 @@ namespace AnalysisManager_Mage_PlugIn
     /// </summary>
     public class MageAMFileProcessingPipelines : MageAMPipelineBase
     {
+        // Ignore Spelling: Proc
+
         #region Constructors
 
         /// <summary>
@@ -33,10 +35,11 @@ namespace AnalysisManager_Mage_PlugIn
         /// <param name="fileNameSelector">File name selector to select result files from list of jobs</param>
         /// <param name="tableName">SQLite table name that receives extracted contents of files</param>
         /// <param name="fileProcessName">Process to apply to file content extraction</param>
-        public void ImportJobResults(string jobListQuery, string fileNameSelector, string tableName, string fileProcessName)
+        /// <param name="jobCountLimit">Optionally set this to a positive value to limit the number of jobs to process (useful when debugging)</param>
+        public void ImportJobResults(string jobListQuery, string fileNameSelector, string tableName, string fileProcessName, int jobCountLimit)
         {
             // get list of jobs from data package that have ReporterIon results
-            BaseModule jobList = GetListOfDMSItems(jobListQuery);
+            BaseModule jobList = GetListOfDMSItems(jobListQuery, jobCountLimit);
 
             // get selected list reporter ion files from list of jobs
             const string columnsToIncludeInOutput = "Job, Dataset, Dataset_ID, Tool, Settings_File, Parameter_File, Instrument";
@@ -58,10 +61,11 @@ namespace AnalysisManager_Mage_PlugIn
         /// <param name="jobListQuery">Query to run to get list of jobs</param>
         /// <param name="fileNameSelector">File name selector to select result files from list of jobs</param>
         /// <param name="tableName">SQLite table name that receives extracted contents of files</param>
-        public void ImportFileList(string jobListQuery, string fileNameSelector, string tableName)
+        /// <param name="jobCountLimit">Optionally set this to a positive value to limit the number of jobs to process (useful when debugging)</param>
+        public void ImportFileList(string jobListQuery, string fileNameSelector, string tableName, int jobCountLimit)
         {
             // get list of datasets from jobs from data package (Note: NOT the data package dataset list)
-            var jobList = GetListOfDMSItems(jobListQuery);
+            var jobList = GetListOfDMSItems(jobListQuery, jobCountLimit);
 
             // get selected list files from list of datasets
             const string columnsToIncludeInOutput = "Dataset_ID, Dataset, Experiment, Campaign, State, Instrument, Created, Type";
@@ -215,7 +219,7 @@ namespace AnalysisManager_Mage_PlugIn
         }
 
         /// <summary>
-        /// Make Mage pipeline using given sql as source of factors and use it
+        /// Make Mage pipeline using given SQL as source of factors and use it
         /// to create and populate a factors table in a SQLite database (in CrossTab format)
         /// </summary>
         /// <param name="sql">Query to use a source of factors</param>
@@ -266,14 +270,15 @@ namespace AnalysisManager_Mage_PlugIn
         }
 
         /// <summary>
-        /// Make Mage pipeline to use given sql to get list of jobs
+        /// Make Mage pipeline to use given SQL to get list of jobs
         /// from data package into a SQLite database table
         /// </summary>
         /// <param name="sql"></param>
         /// <param name="tableName"> </param>
-        public void ImportJobList(string sql, string tableName)
+        /// <param name="jobCountLimit">Optionally set this to a positive value to limit the number of jobs to process (useful when debugging)</param>
+        public void ImportJobList(string sql, string tableName, int jobCountLimit)
         {
-            var jobList = GetListOfDMSItems(sql);
+            var jobList = GetListOfDMSItems(sql, jobCountLimit);
             var writer = new SQLiteWriter { DbPath = GetResultsDBFilePath(), TableName = tableName };
 
             NotifyImportStarting("Importing job list", tableName, jobList, "jobs");

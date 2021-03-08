@@ -31,7 +31,10 @@ namespace AnalysisManager_Mage_PlugIn
             var ops = new MageAMOperations(mJobParams, mMgrParams, logFilePath, appendDateToBaseName);
             RegisterEvents(ops);
 
-            var success = ops.RunMageOperations(mageOperations);
+            // Optionally limit the number of jobs to process (when debugging) by changing this to a non-zero value
+            const int JOB_COUNT_LIMIT = 0;
+
+            var success = ops.RunMageOperations(mageOperations, JOB_COUNT_LIMIT);
 
             // Change the name of the log file back to the analysis manager log file
             ResetLogFileNameToDefault();

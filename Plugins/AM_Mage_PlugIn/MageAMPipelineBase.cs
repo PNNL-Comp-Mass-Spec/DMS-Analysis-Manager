@@ -131,8 +131,9 @@ namespace AnalysisManager_Mage_PlugIn
         /// Get a list of items from DMS
         /// </summary>
         /// <param name="sql">Query to use a source of jobs</param>
+        /// <param name="jobCountLimit">Optionally set this to a positive value to limit the number of jobs to process (useful when debugging)</param>
         /// <returns>A Mage module containing list of jobs</returns>
-        public SimpleSink GetListOfDMSItems(string sql)
+        public SimpleSink GetListOfDMSItems(string sql, int jobCountLimit)
         {
             var itemList = new SimpleSink();
 
@@ -142,6 +143,13 @@ namespace AnalysisManager_Mage_PlugIn
             ConnectPipelineToStatusHandlers(pipeline);
             pipeline.RunRoot(null);
 
+            if (jobCountLimit > 0)
+            {
+                while (itemList.Rows.Count > jobCountLimit)
+                {
+                    itemList.Rows.RemoveAt(itemList.Rows.Count - 1);
+                }
+            }
             return itemList;
         }
 

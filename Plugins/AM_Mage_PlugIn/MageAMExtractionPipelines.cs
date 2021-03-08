@@ -40,10 +40,12 @@ namespace AnalysisManager_Mage_PlugIn
         /// <summary>
         /// Setup and run Mage Extractor pipeline according to job parameters
         /// </summary>
-        public void ExtractFromJobs(string sql)
+        /// <param name="sql">SQL query</param>
+        /// <param name="jobCountLimit">Optionally set this to a positive value to limit the number of jobs to process (useful when debugging)</param>
+        public void ExtractFromJobs(string sql, int jobCountLimit)
         {
             GetExtractionParametersFromJobParameters();
-            BaseModule jobList = GetListOfDMSItems(sql);
+            BaseModule jobList = GetListOfDMSItems(sql, jobCountLimit);
             ExtractFromJobsList(jobList);
         }
 
@@ -80,7 +82,8 @@ namespace AnalysisManager_Mage_PlugIn
         /// <param name="jobList">List of jobs to perform extraction from</param>
         protected void ExtractFromJobsList(BaseModule jobList)
         {
-            if (jobList is SimpleSink jobsToProcess){
+            if (jobList is SimpleSink jobsToProcess)
+            {
                 JobCount = jobsToProcess.Rows.Count;
             }
 

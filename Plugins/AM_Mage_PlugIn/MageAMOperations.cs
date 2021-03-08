@@ -51,12 +51,13 @@ namespace AnalysisManager_Mage_PlugIn
         /// Run a list of Mage operations
         /// </summary>
         /// <param name="mageOperations"></param>
-        public bool RunMageOperations(string mageOperations)
+        /// <param name="jobCountLimit">Optionally set this to a positive value to limit the number of jobs to process (useful when debugging)</param>
+        public bool RunMageOperations(string mageOperations, int jobCountLimit)
         {
             var ok = false;
             foreach (var mageOperation in mageOperations.Split(','))
             {
-                ok = RunMageOperation(mageOperation.Trim());
+                ok = RunMageOperation(mageOperation.Trim(), jobCountLimit);
                 if (!ok)
                     break;
             }
@@ -67,7 +68,8 @@ namespace AnalysisManager_Mage_PlugIn
         /// Run a single Mage operation
         /// </summary>
         /// <param name="mageOperation"></param>
-        public bool RunMageOperation(string mageOperation)
+        /// <param name="jobCountLimit">Optionally set this to a positive value to limit the number of jobs to process (useful when debugging)</param>
+        public bool RunMageOperation(string mageOperation, int jobCountLimit)
         {
             var success = false;
 
@@ -158,7 +160,8 @@ namespace AnalysisManager_Mage_PlugIn
         /// <summary>
         /// Setup and run Mage Extractor pipeline according to job parameters
         /// </summary>
-        private bool ExtractFromJobs()
+        /// <param name="jobCountLimit">Optionally set this to a positive value to limit the number of jobs to process (useful when debugging)</param>
+        private bool ExtractFromJobs(int jobCountLimit)
         {
             var mageObj = new MageAMExtractionPipelines(_jobParams, _mgrParams);
             RegisterMageEvents(mageObj);
@@ -167,7 +170,7 @@ namespace AnalysisManager_Mage_PlugIn
             OnDebugEvent("Running Mage Extractor pipeline: " + sql);
 
             GetPriorStepResults();
-            mageObj.ExtractFromJobs(sql);
+            mageObj.ExtractFromJobs(sql, jobCountLimit);
             return true;
         }
 
@@ -273,7 +276,8 @@ namespace AnalysisManager_Mage_PlugIn
         /// Import contents of reporter ion results files for MASIC jobs in data package
         /// into a table in the SQLite step results database.
         /// </summary>
-        private bool ImportReporterIons()
+        /// <param name="jobCountLimit">Optionally set this to a positive value to limit the number of jobs to process (useful when debugging)</param>
+        private bool ImportReporterIons(int jobCountLimit)
         {
             _jobParams.AddAdditionalParameter("runtime", "Tool", "MASIC_Finnigan");
             var mageObj = new MageAMFileProcessingPipelines(_jobParams, _mgrParams);
@@ -283,7 +287,7 @@ namespace AnalysisManager_Mage_PlugIn
             OnDebugEvent("Adding MASIC-based reporter ions to SQLite using: " + sql);
 
             GetPriorStepResults();
-            mageObj.ImportJobResults(sql, "_ReporterIons.txt", "t_reporter_ions", "SimpleImport");
+            mageObj.ImportJobResults(sql, "_ReporterIons.txt", "t_reporter_ions", "SimpleImport", jobCountLimit);
             return true;
         }
 
@@ -291,7 +295,8 @@ namespace AnalysisManager_Mage_PlugIn
         /// Import contents of Sequest first hits results files for jobs in a data package
         /// into a table in the SQLite step results database.  Add dataset ID to imported data rows.
         /// </summary>
-        private bool ImportFirstHits()
+        /// <param name="jobCountLimit">Optionally set this to a positive value to limit the number of jobs to process (useful when debugging)</param>
+        private bool ImportFirstHits(int jobCountLimit)
         {
             _jobParams.AddAdditionalParameter("runtime", "Tool", "Sequest");
             var mageObj = new MageAMFileProcessingPipelines(_jobParams, _mgrParams);
@@ -301,7 +306,7 @@ namespace AnalysisManager_Mage_PlugIn
             OnDebugEvent("Adding FirstHits file data to SQLite using: " + sql);
 
             GetPriorStepResults();
-            mageObj.ImportJobResults(sql, "_fht.txt", "first_hits", "AddDatasetIDToImport");
+            mageObj.ImportJobResults(sql, "_fht.txt", "first_hits", "AddDatasetIDToImport", jobCountLimit);
             return true;
         }
 
@@ -309,7 +314,8 @@ namespace AnalysisManager_Mage_PlugIn
         /// Import list of .raw files (full paths) for datasets for jobs in data package
         /// into a table in the SQLite step results database
         /// </summary>
-        private bool ImportRawFileList()
+        /// <param name="jobCountLimit">Optionally set this to a positive value to limit the number of jobs to process (useful when debugging)</param>
+        private bool ImportRawFileList(int jobCountLimit)
         {
             _jobParams.AddAdditionalParameter("runtime", "Tool", "Sequest");
             var mageObj = new MageAMFileProcessingPipelines(_jobParams, _mgrParams);
@@ -319,14 +325,15 @@ namespace AnalysisManager_Mage_PlugIn
             OnDebugEvent("Adding dataset metadata to SQLite using: " + sql);
 
             GetPriorStepResults();
-            mageObj.ImportFileList(sql, ".raw", "t_msms_raw_files");
+            mageObj.ImportFileList(sql, ".raw", "t_msms_raw_files", jobCountLimit);
             return true;
         }
 
         /// <summary>
         /// Get list of jobs (with metadata) in a data package into a table in the SQLite step results database
         /// </summary>
-        private bool ImportJobList()
+        /// <param name="jobCountLimit">Optionally set this to a positive value to limit the number of jobs to process (useful when debugging)</param>
+        private bool ImportJobList(int jobCountLimit)
         {
             var mageObj = new MageAMFileProcessingPipelines(_jobParams, _mgrParams);
             RegisterMageEvents(mageObj);
@@ -335,7 +342,7 @@ namespace AnalysisManager_Mage_PlugIn
             OnDebugEvent("Adding job info to SQLite using: " + sql);
 
             GetPriorStepResults();
-            mageObj.ImportJobList(sql, "t_data_package_analysis_jobs");
+            mageObj.ImportJobList(sql, "t_data_package_analysis_jobs", jobCountLimit);
             return true;
         }
 
