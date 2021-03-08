@@ -13,24 +13,23 @@ namespace AnalysisManager_Mage_PlugIn
     /// </summary>
     public class MageAMOperations : EventNotifier
     {
+        // Ignore Spelling: Workflows, Improv
+
         #region Member Variables
 
-        private readonly IJobParams _jobParams;
+        private readonly IJobParams mJobParams;
 
-        private readonly IMgrParams _mgrParams;
+        private readonly IMgrParams mMgrParams;
 
-        private bool _previousStepResultsImported;
-
-        private string _warningMsg = string.Empty;
-        private string _warningMsgVerbose = string.Empty;
+        private bool mPreviousStepResultsImported;
 
         #endregion
 
         #region Properties
 
-        public string WarningMsg => _warningMsg;
+        public string WarningMsg { get; private set; } = "";
 
-        public string WarningMsgVerbose => _warningMsgVerbose;
+        public string WarningMsgVerbose { get; private set; } = "";
 
         #endregion
 
@@ -38,9 +37,9 @@ namespace AnalysisManager_Mage_PlugIn
 
         public MageAMOperations(IJobParams jobParams, IMgrParams mgrParams, string logFilePath, bool appendDateToLogFileName)
         {
-            _previousStepResultsImported = false;
-            _jobParams = jobParams;
-            _mgrParams = mgrParams;
+            mPreviousStepResultsImported = false;
+            mJobParams = jobParams;
+            mMgrParams = mgrParams;
 
             LogTools.ChangeLogFileBaseName(logFilePath, appendDateToLogFileName);
         }
@@ -114,8 +113,8 @@ namespace AnalysisManager_Mage_PlugIn
 
         private void AppendToWarningMessage(string message, string verboseMessage)
         {
-            _warningMsg = Global.AppendToComment(_warningMsg, message);
-            _warningMsgVerbose = Global.AppendToComment(_warningMsgVerbose, verboseMessage);
+            WarningMsg = Global.AppendToComment(WarningMsg, message);
+            WarningMsgVerbose = Global.AppendToComment(WarningMsgVerbose, verboseMessage);
         }
 
         /// <summary>
@@ -133,7 +132,7 @@ namespace AnalysisManager_Mage_PlugIn
         /// </summary>
         private bool GetFactors()
         {
-            var mageObj = new MageAMFileProcessingPipelines(_jobParams, _mgrParams);
+            var mageObj = new MageAMFileProcessingPipelines(mJobParams, mMgrParams);
             RegisterMageEvents(mageObj);
 
             var sql = GetSQLFromParameter("FactorsSource", mageObj);
@@ -150,7 +149,7 @@ namespace AnalysisManager_Mage_PlugIn
         /// <param name="jobCountLimit">Optionally set this to a positive value to limit the number of jobs to process (useful when debugging)</param>
         private bool ExtractFromJobs(int jobCountLimit)
         {
-            var mageObj = new MageAMExtractionPipelines(_jobParams, _mgrParams);
+            var mageObj = new MageAMExtractionPipelines(mJobParams, mMgrParams);
             RegisterMageEvents(mageObj);
 
             var sql = GetSQLFromParameter("ExtractionSource", mageObj);
@@ -167,7 +166,7 @@ namespace AnalysisManager_Mage_PlugIn
         /// </summary>
         private bool ImportFDRTables()
         {
-            var mageObj = new MageAMFileProcessingPipelines(_jobParams, _mgrParams);
+            var mageObj = new MageAMFileProcessingPipelines(mJobParams, mMgrParams);
             RegisterMageEvents(mageObj);
 
             const string inputDirectoryPath = @"\\gigasax\DMS_Workflows\Mage\SpectralCounting\FDR";
@@ -197,7 +196,7 @@ namespace AnalysisManager_Mage_PlugIn
         /// <param name="importMode">Valid modes: CopyAndImport, SimpleImport, AddDatasetIDToImport, IMPROVClusterImport</param>
         private bool ImportDataPackageFiles(string importMode)
         {
-            var mageObj = new MageAMFileProcessingPipelines(_jobParams, _mgrParams);
+            var mageObj = new MageAMFileProcessingPipelines(mJobParams, mMgrParams);
             RegisterMageEvents(mageObj);
 
             var dataPackageStoragePathRoot = mageObj.RequireJobParam(AnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH);
@@ -219,7 +218,7 @@ namespace AnalysisManager_Mage_PlugIn
 
             if (lstMatchingFiles.Count == 0)
             {
-                var analysisType = _jobParams.GetJobParameter("AnalysisType", string.Empty);
+                var analysisType = mJobParams.GetJobParameter("AnalysisType", string.Empty);
                 if (analysisType.IndexOf("iTRAQ", StringComparison.OrdinalIgnoreCase) >= 0)
                 {
                     // File T_alias.txt was not found in ...
@@ -266,8 +265,8 @@ namespace AnalysisManager_Mage_PlugIn
         /// <param name="jobCountLimit">Optionally set this to a positive value to limit the number of jobs to process (useful when debugging)</param>
         private bool ImportReporterIons(int jobCountLimit)
         {
-            _jobParams.AddAdditionalParameter("runtime", "Tool", "MASIC_Finnigan");
-            var mageObj = new MageAMFileProcessingPipelines(_jobParams, _mgrParams);
+            mJobParams.AddAdditionalParameter("runtime", "Tool", "MASIC_Finnigan");
+            var mageObj = new MageAMFileProcessingPipelines(mJobParams, mMgrParams);
             RegisterMageEvents(mageObj);
 
             var sql = GetSQLFromParameter("ReporterIonSource", mageObj);
@@ -285,8 +284,8 @@ namespace AnalysisManager_Mage_PlugIn
         /// <param name="jobCountLimit">Optionally set this to a positive value to limit the number of jobs to process (useful when debugging)</param>
         private bool ImportFirstHits(int jobCountLimit)
         {
-            _jobParams.AddAdditionalParameter("runtime", "Tool", "Sequest");
-            var mageObj = new MageAMFileProcessingPipelines(_jobParams, _mgrParams);
+            mJobParams.AddAdditionalParameter("runtime", "Tool", "Sequest");
+            var mageObj = new MageAMFileProcessingPipelines(mJobParams, mMgrParams);
             RegisterMageEvents(mageObj);
 
             var sql = GetSQLFromParameter("FirstHitsSource", mageObj);
@@ -304,8 +303,8 @@ namespace AnalysisManager_Mage_PlugIn
         /// <param name="jobCountLimit">Optionally set this to a positive value to limit the number of jobs to process (useful when debugging)</param>
         private bool ImportRawFileList(int jobCountLimit)
         {
-            _jobParams.AddAdditionalParameter("runtime", "Tool", "Sequest");
-            var mageObj = new MageAMFileProcessingPipelines(_jobParams, _mgrParams);
+            mJobParams.AddAdditionalParameter("runtime", "Tool", "Sequest");
+            var mageObj = new MageAMFileProcessingPipelines(mJobParams, mMgrParams);
             RegisterMageEvents(mageObj);
 
             var sql = GetSQLForTemplate("JobDatasetsFromDataPackageIDForTool", mageObj);
@@ -322,7 +321,7 @@ namespace AnalysisManager_Mage_PlugIn
         /// <param name="jobCountLimit">Optionally set this to a positive value to limit the number of jobs to process (useful when debugging)</param>
         private bool ImportJobList(int jobCountLimit)
         {
-            var mageObj = new MageAMFileProcessingPipelines(_jobParams, _mgrParams);
+            var mageObj = new MageAMFileProcessingPipelines(mJobParams, mMgrParams);
             RegisterMageEvents(mageObj);
 
             var sql = GetSQLForTemplate("JobsFromDataPackageID", mageObj);
@@ -439,10 +438,10 @@ namespace AnalysisManager_Mage_PlugIn
         /// </summary>
         private void GetPriorStepResults()
         {
-            if (!_previousStepResultsImported)
+            if (!mPreviousStepResultsImported)
             {
-                _previousStepResultsImported = true;
-                var mageObj = new MageAMPipelineBase(_jobParams, _mgrParams);
+                mPreviousStepResultsImported = true;
+                var mageObj = new MageAMPipelineBase(mJobParams, mMgrParams);
                 RegisterMageEvents(mageObj);
 
                 mageObj.GetPriorResultsToWorkDir();
