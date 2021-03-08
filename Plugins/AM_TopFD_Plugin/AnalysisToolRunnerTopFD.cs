@@ -469,11 +469,11 @@ namespace AnalysisManagerTopFDPlugIn
         {
             LogMessage("Running TopFD");
 
-            var eResult = ParseTopFDParameterFile(out var cmdLineOptions);
+            var result = ParseTopFDParameterFile(out var cmdLineOptions);
 
-            if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
+            if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
-                return eResult;
+                return result;
             }
 
             var arguments = cmdLineOptions + " " + mzMLFileName;

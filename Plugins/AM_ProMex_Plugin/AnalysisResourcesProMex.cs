@@ -144,10 +144,10 @@ namespace AnalysisManagerProMexPlugIn
 
                 currentTask = "RetrieveMzMLFile";
 
-                var eResult = GetMzMLFile();
-                if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
+                var result = GetMzMLFile();
+                if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
-                    return eResult;
+                    return result;
                 }
 
                 mJobParams.AddResultFileExtensionToSkip(DOT_MZML_EXTENSION);
@@ -172,10 +172,10 @@ namespace AnalysisManagerProMexPlugIn
 
                 currentTask = "RetrievePBFFile";
 
-                var eResult = GetPBFFile();
-                if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
+                var result = GetPBFFile();
+                if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
-                    return eResult;
+                    return result;
                 }
 
                 mJobParams.AddResultFileExtensionToSkip(DOT_PBF_EXTENSION);

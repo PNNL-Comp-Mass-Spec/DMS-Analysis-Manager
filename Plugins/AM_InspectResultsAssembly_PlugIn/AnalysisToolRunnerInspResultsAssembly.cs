@@ -726,9 +726,9 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             UpdateStatusRunning(mPercentCompleteStartLevels[(int)eInspectResultsProcessingSteps.RunpValue]);
 
             // Note that RunPValue() will log any errors that occur
-            var eResult = RunPValue(inspectResultsFilePath, filteredFilePath, false, true);
+            var result = RunPValue(inspectResultsFilePath, filteredFilePath, false, true);
 
-            return eResult;
+            return result;
         }
 
         /// <summary>
@@ -743,9 +743,9 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             UpdateStatusRunning(mPercentCompleteStartLevels[(int)eInspectResultsProcessingSteps.RunpValue]);
 
             // Note that RunPValue() will log any errors that occur
-            var eResult = RunPValue(inspectResultsFilePath, filteredFilePath, true, false);
+            var result = RunPValue(inspectResultsFilePath, filteredFilePath, true, false);
 
-            return eResult;
+            return result;
         }
 
         protected void InitializeVariables()
@@ -803,7 +803,10 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             UpdateStatusRunning(mPercentCompleteStartLevels[(int)eInspectResultsProcessingSteps.RunpValue]);
 
             // Note that RunPValue() will log any errors that occur
-            var eResult = RunPValue(inspectResultsFilePath, filteredFilePath, true, false);
+            var result = RunPValue(inspectResultsFilePath, filteredFilePath, true, false);
+
+            if (result != CloseOutType.CLOSEOUT_SUCCESS)
+                return result;
 
             try
             {

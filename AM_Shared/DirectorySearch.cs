@@ -269,16 +269,16 @@ namespace AnalysisManagerBase
                 fileExtension = "." + fileExtension;
             }
 
-            var DataFileName = DatasetName + fileExtension;
+            var dataFileName = DatasetName + fileExtension;
 
-            var datasetDirPath = FindValidDirectory(DatasetName, DataFileName, directoryNameToFind: "", maxAttempts: maxAttempts,
+            var datasetDirPath = FindValidDirectory(DatasetName, dataFileName, directoryNameToFind: "", maxAttempts: maxAttempts,
                 logDirectoryNotFound: true, retrievingInstrumentDataDir: false,
                 assumeUnpurged: assumeUnpurged,
                 validDirectoryFound: out _, directoryNotFoundMessage: out _);
 
             if (!string.IsNullOrEmpty(datasetDirPath))
             {
-                return Path.Combine(datasetDirPath, DataFileName);
+                return Path.Combine(datasetDirPath, dataFileName);
             }
 
             return string.Empty;

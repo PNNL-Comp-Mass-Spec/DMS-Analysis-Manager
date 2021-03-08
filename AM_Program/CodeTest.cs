@@ -882,7 +882,7 @@ namespace AnalysisManagerProg
                 //float fastaFileSizeKB;
 
                 //// Note that fastaFilePath will be populated by this function call
-                //var eResult = tool.InitializeFastaFile(JavaProgLoc, MSGFDbProgLoc, out fastaFileSizeKB, out fastaFileIsDecoy, out fastaFilePath);
+                //var result = tool.InitializeFastaFile(JavaProgLoc, MSGFDbProgLoc, out fastaFileSizeKB, out fastaFileIsDecoy, out fastaFilePath);
             }
 
             return success;

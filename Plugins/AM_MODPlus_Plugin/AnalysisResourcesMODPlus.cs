@@ -55,11 +55,11 @@ namespace AnalysisManagerMODPlusPlugin
 
                 currentTask = "Get Input file";
 
-                var eResult = GetMsXmlFile();
+                var msXmlResult = GetMsXmlFile();
 
-                if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
+                if (msXmlResult != CloseOutType.CLOSEOUT_SUCCESS)
                 {
-                    return eResult;
+                    return msXmlResult;
                 }
 
                 return CloseOutType.CLOSEOUT_SUCCESS;

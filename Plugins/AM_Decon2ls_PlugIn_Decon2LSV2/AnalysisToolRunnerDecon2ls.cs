@@ -543,8 +543,8 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             var eReturnCode = CloseOutType.CLOSEOUT_SUCCESS;
 
             // Run Decon2LS
-            var eResult = RunDecon2Ls();
-            if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
+            var result = RunDecon2Ls();
+            if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 // Something went wrong
                 // In order to help diagnose things, we will move whatever files were created into the eResult folder,
@@ -554,9 +554,9 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                     mMessage = "Error running Decon2LS";
                 }
 
-                if (eResult == CloseOutType.CLOSEOUT_NO_DATA)
+                if (result == CloseOutType.CLOSEOUT_NO_DATA)
                 {
-                    eReturnCode = eResult;
+                    eReturnCode = result;
                     if (string.IsNullOrWhiteSpace(mMessage))
                     {
                         mMessage = "No results in DeconTools Isos file";
@@ -568,7 +568,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 }
             }
 
-            if (eResult == CloseOutType.CLOSEOUT_SUCCESS)
+            if (result == CloseOutType.CLOSEOUT_SUCCESS)
             {
                 // Create the QC plots
                 eReturnCode = CreateQCPlots();
@@ -612,7 +612,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
             UpdateSummaryFile();
 
-            if (eResult == CloseOutType.CLOSEOUT_FAILED)
+            if (result == CloseOutType.CLOSEOUT_FAILED)
             {
                 // Something went wrong
                 // In order to help diagnose things, we will move whatever files were created into the result folder,
@@ -771,18 +771,18 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            var eResult = AssembleResults(oDeconToolsParamFileReader);
+            var result = AssembleResults(oDeconToolsParamFileReader);
 
-            if (eResult == CloseOutType.CLOSEOUT_SUCCESS)
+            if (result == CloseOutType.CLOSEOUT_SUCCESS)
                 return CloseOutType.CLOSEOUT_SUCCESS;
 
             // Check for no data first. If no data, exit but still copy results to server
-            if (eResult == CloseOutType.CLOSEOUT_NO_DATA)
+            if (result == CloseOutType.CLOSEOUT_NO_DATA)
             {
-                return eResult;
+                return result;
             }
 
-            LogError("AssembleResults returned " + eResult);
+            LogError("AssembleResults returned " + result);
             return CloseOutType.CLOSEOUT_FAILED;
         }
 

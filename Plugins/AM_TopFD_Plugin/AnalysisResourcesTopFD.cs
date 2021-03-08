@@ -90,8 +90,8 @@ namespace AnalysisManagerTopFDPlugIn
                 {
                     currentTask = "Get Input file";
 
-                    var eResult = GetMzMLFile();
-                    if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
+                    var mzMLResult = GetMzMLFile();
+                    if (mzMLResult != CloseOutType.CLOSEOUT_SUCCESS)
                     {
                         mMessage = "";
                         return CloseOutType.CLOSEOUT_FAILED;

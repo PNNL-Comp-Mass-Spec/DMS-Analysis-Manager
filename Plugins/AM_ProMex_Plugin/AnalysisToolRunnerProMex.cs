@@ -359,9 +359,9 @@ namespace AnalysisManagerProMexPlugIn
             // Read the ProMex Parameter File
             // The parameter file name specifies the mass modifications to consider, plus also the analysis parameters
 
-            var eResult = ParseProMexParameterFile(out var cmdLineOptions);
+            var result = ParseProMexParameterFile(out var cmdLineOptions);
 
-            if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
+            if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 return false;
             }

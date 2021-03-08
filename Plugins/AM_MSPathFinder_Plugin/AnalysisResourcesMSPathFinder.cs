@@ -219,16 +219,16 @@ namespace AnalysisManagerMSPathFinderPlugin
 
                 currentTask = "RetrievePBFFile";
 
-                var eResult = GetPBFFile();
+                var result = GetPBFFile();
 
                 if (inputFolderNameWasUpdated)
                 {
                     mJobParams.SetParam("InputFolderName", inputFolderNameCached);
                 }
 
-                if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
+                if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
-                    return eResult;
+                    return result;
                 }
 
                 mJobParams.AddResultFileExtensionToSkip(DOT_PBF_EXTENSION);

@@ -455,14 +455,14 @@ namespace DTASpectraFileGen
             try
             {
                 // Start the spectra generation process
-                var eResult = StartAndWaitForDTAGenerator(spectraGen, "MakeSpectraFiles", false);
+                var result = StartAndWaitForDTAGenerator(spectraGen, "MakeSpectraFiles", false);
 
                 // Set internal spectra file count to that returned by the spectra generator
                 mDtaCount = spectraGen.SpectraFileCount;
                 mProgress = spectraGen.Progress;
 
-                if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
-                    return eResult;
+                if (result != CloseOutType.CLOSEOUT_SUCCESS)
+                    return result;
             }
             catch (Exception ex)
             {
@@ -513,11 +513,11 @@ namespace DTASpectraFileGen
 
                 msConvertRunner.ForceCentroidOn = true;
 
-                var eResult = StartAndWaitForDTAGenerator(msConvertRunner, "CentroidCDTA", true);
+                var result = StartAndWaitForDTAGenerator(msConvertRunner, "CentroidCDTA", true);
 
-                if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
+                if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
-                    return eResult;
+                    return result;
                 }
             }
             catch (Exception ex)

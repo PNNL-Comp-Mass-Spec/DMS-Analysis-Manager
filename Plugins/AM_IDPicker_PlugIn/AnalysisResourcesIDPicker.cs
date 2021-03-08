@@ -48,10 +48,10 @@ namespace AnalysisManagerIDPickerPlugIn
         public override CloseOutType GetResources()
         {
             // Retrieve shared resources, including the JobParameters file from the previous job step
-            var result = GetSharedResources();
-            if (result != CloseOutType.CLOSEOUT_SUCCESS)
+            var sharedResourceResult = GetSharedResources();
+            if (sharedResourceResult != CloseOutType.CLOSEOUT_SUCCESS)
             {
-                return result;
+                return sharedResourceResult;
             }
 
             // Retrieve the parameter file for the associated peptide search tool (Sequest, XTandem, MSGF+, etc.)
@@ -80,11 +80,9 @@ namespace AnalysisManagerIDPickerPlugIn
             var mgfInstrumentData = mJobParams.GetJobParameter("MGFInstrumentData", false);
 
             // Retrieve the PSM result files, PHRP files, and MSGF file
-            if (!GetInputFiles(DatasetName, paramFileName, out result))
+            if (!GetInputFiles(DatasetName, paramFileName, out var result))
             {
-                if (result == CloseOutType.CLOSEOUT_SUCCESS)
-                    result = CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
-                return result;
+                return result == CloseOutType.CLOSEOUT_SUCCESS ? CloseOutType.CLOSEOUT_FILE_NOT_FOUND : result;
             }
 
             if (mSynopsisFileIsEmpty)
@@ -106,10 +104,10 @@ namespace AnalysisManagerIDPickerPlugIn
                     }
                     else
                     {
-                        var eResult = RetrieveMASICFilesWrapper();
-                        if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
+                        var masicResult = RetrieveMASICFilesWrapper();
+                        if (masicResult != CloseOutType.CLOSEOUT_SUCCESS)
                         {
-                            return eResult;
+                            return masicResult;
                         }
                     }
                 }

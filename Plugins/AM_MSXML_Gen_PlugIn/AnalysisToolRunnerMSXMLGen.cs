@@ -40,8 +40,6 @@ namespace AnalysisManagerMsXmlGenPlugIn
         /// <returns>CloseOutType enum indicating success or failure</returns>
         public override CloseOutType RunTool()
         {
-            const CloseOutType result = CloseOutType.CLOSEOUT_SUCCESS;
-
             // Do the base class stuff
             if (base.RunTool() != CloseOutType.CLOSEOUT_SUCCESS)
             {
@@ -69,10 +67,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 }
             }
 
-            if (CreateMSXMLFile() != CloseOutType.CLOSEOUT_SUCCESS)
-            {
-                return CloseOutType.CLOSEOUT_FAILED;
-            }
+            var result = CreateMSXMLFile();
 
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {

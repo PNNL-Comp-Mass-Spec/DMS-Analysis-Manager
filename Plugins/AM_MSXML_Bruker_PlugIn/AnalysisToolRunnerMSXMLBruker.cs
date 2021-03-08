@@ -78,9 +78,9 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
 
             var processingErrorMessage = string.Empty;
 
-            var eResult = CreateMSXmlFile(out var resultsFile);
+            var result = CreateMSXmlFile(out var resultsFile);
 
-            if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
+            if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 // Something went wrong
                 // In order to help diagnose things, we will move whatever files were created into the eResult folder,
@@ -132,7 +132,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
 
             var success = CopyResultsToTransferDirectory();
 
-            if (success && eResult == CloseOutType.CLOSEOUT_SUCCESS)
+            if (success && result == CloseOutType.CLOSEOUT_SUCCESS)
                 return CloseOutType.CLOSEOUT_SUCCESS;
 
             return CloseOutType.CLOSEOUT_FAILED;
