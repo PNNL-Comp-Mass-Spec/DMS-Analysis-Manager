@@ -276,6 +276,7 @@ namespace AnalysisManager_Mage_PlugIn
                     ionColumns.Add("Ion_129.138");
                     ionColumns.Add("Ion_130.135");
                     ionColumns.Add("Ion_130.141");
+                    ionColumns.Add("Ion_131.138");
                 }
 
                 if (workFlowSteps.Contains("TMT16Plex"))
