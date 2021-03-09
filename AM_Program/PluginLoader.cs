@@ -9,9 +9,12 @@
 using AnalysisManagerBase;
 using PRISM;
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text.RegularExpressions;
 using System.Xml;
+using System.Xml.Linq;
 
 namespace AnalysisManagerProg
 {
@@ -20,6 +23,8 @@ namespace AnalysisManagerProg
     /// </summary>
     public class PluginLoader : EventNotifier
     {
+        // Ignore Spelling: Resourcers
+
         #region "Member variables"
 
         private readonly string mMgrFolderPath;
@@ -102,73 +107,117 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Retrieves data for specified plugin from plugin info config file
         /// </summary>
-        /// <param name="xpath">XPath spec for specified plugin</param>
-        /// <param name="className">Name of class for plugin (return value) </param>
-        /// <param name="assemblyName">Name of assembly for plugin (return value)</param>
+        /// <param name="classType">Either Resourcer or ToolRunner</param>
+        /// <param name="toolName"></param>
+        /// <param name="nodeNameHierarchy">List of node names to traverse to reach the ToolRunner or Resourcer element for the current plugin</param>
+        /// <param name="className">Output: name of class for plugin</param>
+        /// <param name="assemblyName">Output: name of assembly for plugin</param>
         /// <returns>TRUE for success, FALSE for failure</returns>
-        private bool GetPluginInfo(string xpath, out string className, out string assemblyName)
+        private bool GetPluginInfo(
+            string classType,
+            string toolName,
+            List<string> nodeNameHierarchy,
+            out string className,
+            out string assemblyName)
         {
-            var doc = new XmlDocument();
-            var pluginInfo = string.Empty;
+            className = string.Empty;
+            assemblyName = string.Empty;
+            var pluginInfoFilePath = GetPluginInfoFilePath(FileName);
+
+            try
+            {
+                if (nodeNameHierarchy.Count == 0)
+                {
+                    throw new ArgumentException("nodeNameHierarchy cannot be empty", nameof(nodeNameHierarchy));
+                }
+
+                var pluginInfoFile = new FileInfo(pluginInfoFilePath);
+                if (!pluginInfoFile.Exists)
+                {
+                    OnErrorEvent("PluginInfo file not found: " + pluginInfoFile.FullName);
+                    return false;
+                }
+
+                using var reader = new StreamReader(new FileStream(pluginInfoFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+                // Note that XDocument supersedes XmlDocument and XPathDocument
+                // XDocument can often be easier to use since XDocument is LINQ-based
+
+                var doc = XDocument.Parse(reader.ReadToEnd());
+
+                var matchingElements = doc.Elements(nodeNameHierarchy.First()).ToList();
+                if (matchingElements.Count == 0)
+                {
+                    OnErrorEvent(string.Format("PluginInfo file is missing node {0}: {1}", nodeNameHierarchy.First(), pluginInfoFile.FullName));
+                    return false;
+                }
+
+                foreach (var nodeName in nodeNameHierarchy.Skip(1))
+                {
+                    matchingElements = matchingElements.First().Elements(nodeName).ToList();
+                    if (matchingElements.Count == 0)
+                    {
+                        OnErrorEvent(string.Format("PluginInfo file is missing node {0}: {1}", nodeName, pluginInfoFile.FullName));
+                        return false;
+                    }
+                }
+
+                if (GetToolInfo(pluginInfoFile, toolName, matchingElements, out className, out assemblyName))
+                    return true;
+
+                if (toolName.StartsWith("test_"))
+                {
+                    var alternateName = toolName.Substring(5);
+
+                    OnWarningEvent(string.Format("Could not resolve tool name '{0}'; will try '{1}'", toolName, alternateName));
+
+                    if (GetToolInfo(pluginInfoFile, alternateName, matchingElements, out className, out assemblyName))
+                        return true;
+                }
+
+                OnErrorEvent(string.Format(
+                    "Could not resolve {0} tool name {1} in {2}", classType, toolName, pluginInfoFile.FullName));
+
+                return false;
+            }
+            catch (Exception ex)
+            {
+                OnErrorEvent("Error in GetPluginInfo reading " + pluginInfoFilePath, ex);
+                return false;
+            }
+        }
+
+        private bool GetToolInfo(
+            FileInfo pluginInfoFile,
+            string toolName,
+            IEnumerable<XElement> matchingElements,
+            out string className,
+            out string assemblyName)
+        {
+            foreach (var element in matchingElements)
+            {
+                if (!element.HasAttributes)
+                    continue;
+
+                if (!TryGetAttribute(pluginInfoFile, element, "Tool", out var candidateToolName))
+                    continue;
+
+                if (!candidateToolName.Equals(toolName, StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                if (!TryGetAttribute(pluginInfoFile, element, "Class", out className))
+                    continue;
+
+                if (!TryGetAttribute(pluginInfoFile, element, "AssemblyFile", out assemblyName))
+                    continue;
+
+                return true;
+            }
 
             className = string.Empty;
             assemblyName = string.Empty;
 
-            try
-            {
-                if (string.IsNullOrEmpty(xpath))
-                {
-                    throw new ArgumentException("XPath must be defined", nameof(xpath));
-                }
-
-                // ReSharper disable once StringLiteralTypo
-                pluginInfo = "XPath=\"" + xpath + "\"; className=\"" + className + "\"; assyName=" + assemblyName + "\"";
-
-                //read the tool runner info file
-                doc.Load(GetPluginInfoFilePath(FileName));
-                var root = doc.DocumentElement;
-
-                if (root == null)
-                {
-                    throw new Exception("Valid XML not found in file " + FileName);
-                }
-
-                // find the element that matches the tool name
-                var nodeList = root.SelectNodes(xpath);
-
-                if (nodeList == null)
-                {
-                    throw new Exception(string.Format("XPath did not have a match for '{0}' in {1}", pluginInfo, FileName));
-                }
-
-                // make sure that we found exactly one element,
-                // and if we did, retrieve its information
-                if (nodeList.Count != 1)
-                {
-                    var testToolMatcher = new Regex("@Tool='(?<TestToolName>test_(?<AltToolName>[a-z_-]+))'", RegexOptions.IgnoreCase);
-                    var match = testToolMatcher.Match(pluginInfo);
-
-                    if (match.Success)
-                    {
-                        OnWarningEvent(string.Format("Could not resolve tool name '{0}'; will try '{1}'",
-                                                     match.Groups["TestToolName"], match.Groups["AltToolName"]));
-                        return false;
-                    }
-                    throw new Exception("Could not resolve tool name; " + pluginInfo);
-                }
-
-                foreach (XmlElement n in nodeList)
-                {
-                    className = n.GetAttribute("Class");
-                    assemblyName = n.GetAttribute("AssemblyFile");
-                }
-                return true;
-            }
-            catch (Exception ex)
-            {
-                OnErrorEvent("Error in GetPluginInfo:" + ex.Message + "; " + pluginInfo, ex);
-                return false;
-            }
+            return false;
         }
 
         /// <summary>
@@ -241,41 +290,44 @@ namespace AnalysisManagerProg
         /// <returns>An object meeting the IToolRunner interface</returns>
         public IToolRunner GetToolRunner(string toolName)
         {
-            var xpath = "//ToolRunners/ToolRunner[@Tool='" + toolName.ToLower() + "']";
-
-            IToolRunner myToolRunner = null;
-
-            if (GetPluginInfo(xpath, out var className, out var assemblyName))
+            var nodeNameHierarchy = new List<string>
             {
-#if PLUGIN_DEBUG_MODE_ENABLED
-                // This constant is defined on the Build tab of the Analysis Manager solution
-                myToolRunner = DebugModeGetToolRunner(className);
-                if (myToolRunner != null)
-                {
-                    return myToolRunner;
-                }
-#endif
+                "Plugins",
+                "ToolRunners",
+                "ToolRunner"
+            };
 
-                var newToolRunner = LoadObject(className, assemblyName);
-                if (newToolRunner != null)
-                {
-                    try
-                    {
-                        myToolRunner = (IToolRunner)newToolRunner;
-                    }
-                    catch (Exception ex)
-                    {
-                        OnErrorEvent(string.Format("PluginLoader.GetToolRunner(), for class {0}, assembly {1}", className, assemblyName), ex);
-                    }
-                }
-                mSummaryFile.Add("Loaded ToolRunner: " + className + " from " + assemblyName);
-            }
-            else
+            if (!GetPluginInfo("ToolRunner", toolName, nodeNameHierarchy, out var className, out var assemblyName))
             {
                 mSummaryFile.Add("Unable to load ToolRunner for " + toolName);
+                return null;
             }
 
-            return myToolRunner;
+#if PLUGIN_DEBUG_MODE_ENABLED
+            // This constant is defined on the Build tab of the Analysis Manager solution
+            var debugToolRunner = DebugModeGetToolRunner(className);
+
+            if (debugToolRunner != null)
+            {
+                return debugToolRunner;
+            }
+#endif
+
+            var newToolRunner = LoadObject(className, assemblyName);
+            if (newToolRunner == null)
+                return null;
+
+            try
+            {
+                var myToolRunner = (IToolRunner)newToolRunner;
+                mSummaryFile.Add("Loaded ToolRunner: " + className + " from " + assemblyName);
+                return myToolRunner;
+            }
+            catch (Exception ex)
+            {
+                OnErrorEvent(string.Format("PluginLoader.GetToolRunner(), for class {0}, assembly {1}", className, assemblyName), ex);
+                return null;
+            }
         }
 
         /// <summary>
@@ -285,41 +337,43 @@ namespace AnalysisManagerProg
         /// <returns>An object meeting the IAnalysisResources interface</returns>
         public IAnalysisResources GetAnalysisResources(string toolName)
         {
-            var xpath = "//Resourcers/Resourcer[@Tool='" + toolName.ToLower() + "']";
-
-            IAnalysisResources myModule = null;
-
-            if (GetPluginInfo(xpath, out var className, out var assemblyName))
+            var nodeNameHierarchy = new List<string>
             {
+                "Plugins",
+                "Resourcers",
+                "Resourcer"
+            };
+
+            if (!GetPluginInfo("Resourcer", toolName, nodeNameHierarchy, out var className, out var assemblyName))
+            {
+                mSummaryFile.Add("Unable to load Resourcer for " + toolName);
+                return null;
+            }
+
 #if PLUGIN_DEBUG_MODE_ENABLED
-                // This constant is defined on the Build tab of the Analysis Manager solution
-                myModule = DebugModeGetAnalysisResources(className);
-                if (myModule != null)
-                {
-                    return myModule;
-                }
+            // This constant is defined on the Build tab of the Analysis Manager solution
+            var debugResourcer = DebugModeGetAnalysisResources(className);
+            if (debugResourcer != null)
+            {
+                return debugResourcer;
+            }
 #endif
 
-                var newResourcer = LoadObject(className, assemblyName);
-                if (newResourcer != null)
-                {
-                    try
-                    {
-                        myModule = (IAnalysisResources)newResourcer;
-                    }
-                    catch (Exception ex)
-                    {
-                        OnErrorEvent(string.Format("PluginLoader.GetAnalysisResources(), for class {0}, assembly {1}", className, assemblyName), ex);
-                    }
-                }
-                mSummaryFile.Add("Loaded resourcer: " + className + " from " + assemblyName);
-            }
-            else
-            {
-                mSummaryFile.Add("Unable to load resourcer for " + toolName);
-            }
+            var newResourcer = LoadObject(className, assemblyName);
+            if (newResourcer == null)
+                return null;
 
-            return myModule;
+            try
+            {
+                var myModule = (IAnalysisResources)newResourcer;
+                mSummaryFile.Add("Loaded resourcer: " + className + " from " + assemblyName);
+                return myModule;
+            }
+            catch (Exception ex)
+            {
+                OnErrorEvent(string.Format("PluginLoader.GetAnalysisResources(), for class {0}, assembly {1}", className, assemblyName), ex);
+                return null;
+            }
         }
 
         /// <summary>
@@ -331,6 +385,16 @@ namespace AnalysisManagerProg
         {
             return Path.Combine(mMgrFolderPath, pluginInfoFileName);
         }
-        #endregion
+
+        private bool TryGetAttribute(FileSystemInfo pluginInfoFile, XElement element, string attributeName, out string attributeValue)
+        {
+            if (Global.TryGetAttribute(element, attributeName, out attributeValue))
+                return true;
+
+            OnWarningEvent(string.Format("Attribute {0} not found for the current element in {1}", attributeName, pluginInfoFile.FullName));
+            return false;
+        }
     }
+
+    #endregion
 }
