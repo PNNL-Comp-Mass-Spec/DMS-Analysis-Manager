@@ -10,7 +10,8 @@ namespace AnalysisManagerMaxQuantPlugIn
     /// </summary>
     public class AnalysisResourcesMaxQuant : AnalysisResources
     {
-        // Ignore Spelling: MaxQuant, Parm
+        // Ignore Spelling: MaxQuant, Parm, Maxq
+
 
         /// <summary>
         /// Initialize options

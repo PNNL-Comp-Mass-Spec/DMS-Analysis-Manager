@@ -9,6 +9,8 @@ using System.Collections.Generic;
 
 namespace AnalysisManagerBase
 {
+    // Ignore Spelling: Quant, ann
+
     #region "Enums"
 
     /// <summary>
