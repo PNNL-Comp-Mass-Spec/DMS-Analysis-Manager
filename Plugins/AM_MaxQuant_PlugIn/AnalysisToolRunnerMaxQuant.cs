@@ -603,24 +603,10 @@ namespace AnalysisManagerMaxQuantPlugIn
             return success;
         }
 
-        private static bool TryGetAttribute(XElement item, string attributeName, out string attributeValue)
-        {
-            if (!item.HasAttributes)
+
+
             {
-                attributeValue = string.Empty;
-                return false;
             }
-
-            var attribute = item.Attribute(attributeName);
-
-            if (attribute == null)
-            {
-                attributeValue = string.Empty;
-                return false;
-            }
-
-            attributeValue = attribute.Value;
-            return true;
         }
 
         private bool ValidateFastaFile()

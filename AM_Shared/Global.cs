@@ -8,6 +8,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
+using System.Xml.Linq;
 using PRISMDatabaseUtils;
 
 //*********************************************************************************************************
@@ -560,6 +561,33 @@ namespace AnalysisManagerBase
         public static string PossiblyQuotePath(string filePath)
         {
             return PathUtils.PossiblyQuotePath(filePath);
+        }
+
+        /// <summary>
+        /// Get the named attribute from the given element
+        /// </summary>
+        /// <param name="item"></param>
+        /// <param name="attributeName"></param>
+        /// <param name="attributeValue"></param>
+        /// <returns>True if found, otherwise false</returns>
+        public static bool TryGetAttribute(XElement item, string attributeName, out string attributeValue)
+        {
+            if (!item.HasAttributes)
+            {
+                attributeValue = string.Empty;
+                return false;
+            }
+
+            var attribute = item.Attribute(attributeName);
+
+            if (attribute == null)
+            {
+                attributeValue = string.Empty;
+                return false;
+            }
+
+            attributeValue = attribute.Value;
+            return true;
         }
 
         /// <summary>
