@@ -374,6 +374,11 @@ namespace AnalysisManagerBase
         public const string JOB_PARAM_PARAMETER_FILE = "ParmFileName";
 
         /// <summary>
+        /// Previous job step parameter file
+        /// </summary>
+        public const string JOB_PARAM_PREVIOUS_JOB_STEP_PARAMETER_FILE = "PreviousJobStepParameterFile";
+
+        /// <summary>
         /// Transfer directory path
         /// </summary>
         public const string JOB_PARAM_TRANSFER_FOLDER_PATH = "transferFolderPath";
@@ -2029,7 +2034,7 @@ namespace AnalysisManagerBase
 
         /// <summary>
         /// Look for a JobParameters file from the previous job step
-        /// If found, copy to the working directory, naming in JobParameters_JobNum_PreviousStep.xml
+        /// If found, copy to the working directory, naming it JobParameters_JobNum_PreviousStep.xml
         /// </summary>
         /// <returns>True if success, false if an error</returns>
         private bool GetExistingJobParametersFile()
@@ -2104,6 +2109,7 @@ namespace AnalysisManagerBase
                     mJobParams.AddResultFileToSkip(sourceJobParamXMLFile.Name);
                 }
 
+                mJobParams.AddAdditionalParameter("JobParameters", JOB_PARAM_PREVIOUS_JOB_STEP_PARAMETER_FILE, sourceJobParamXMLFile.Name);
                 return success;
             }
             catch (Exception ex)
