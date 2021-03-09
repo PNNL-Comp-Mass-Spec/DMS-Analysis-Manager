@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Xml.Linq;
 using AnalysisManagerBase;
 
 namespace AnalysisManagerMaxQuantPlugIn
@@ -12,6 +14,7 @@ namespace AnalysisManagerMaxQuantPlugIn
     {
         // Ignore Spelling: MaxQuant, Parm, Maxq
 
+        private const string MAXQUANT_PEAK_STEP_TOOL = "MaxqPeak";
 
         /// <summary>
         /// Initialize options
@@ -45,6 +48,37 @@ namespace AnalysisManagerMaxQuantPlugIn
                 // Retrieve param file
                 if (!FileSearch.RetrieveFile(paramFileName, mJobParams.GetParam("ParmFileStoragePath")))
                     return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
+
+                var previousJobStepParamFileName = mJobParams.GetJobParameter(JOB_PARAM_PREVIOUS_JOB_STEP_PARAMETER_FILE, string.Empty);
+
+                if (!string.IsNullOrEmpty(previousJobStepParamFileName))
+                {
+                    var skipStepTool = CheckSkipMaxQuant(previousJobStepParamFileName, out var abortProcessing);
+
+                    if (abortProcessing)
+                    {
+                        return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
+                    }
+
+                    if (skipStepTool)
+                    {
+                        return CloseOutType.CLOSEOUT_SKIPPED_MAXQUANT;
+                    }
+                }
+
+                // Also examine the original parameter file, in case it has numeric values defined for startStepID
+                var skipStepTool2 = CheckSkipMaxQuant(paramFileName, out var abortProcessing2);
+
+                if (abortProcessing2)
+                {
+                    return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
+                }
+
+                if (skipStepTool2)
+                {
+                    return CloseOutType.CLOSEOUT_SKIPPED_MAXQUANT;
+                }
+
 
                 // Retrieve Fasta file
                 var orgDbDirectoryPath = mMgrParams.GetParam(MGR_PARAM_ORG_DB_DIR);
@@ -81,6 +115,101 @@ namespace AnalysisManagerMaxQuantPlugIn
             {
                 LogError("Exception in GetResources (CurrentTask = " + currentTask + ")", ex);
                 return CloseOutType.CLOSEOUT_FAILED;
+            }
+        }
+
+        private bool CheckSkipMaxQuant(string maxquantParameterFileName, out bool abortProcessing)
+        {
+            abortProcessing = false;
+
+            try
+            {
+                var sourceFile = new FileInfo(Path.Combine(mWorkDir, maxquantParameterFileName));
+
+                using var reader = new StreamReader(new FileStream(sourceFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+                // Note that XDocument supersedes XmlDocument and XPathDocument
+                // XDocument can often be easier to use since XDocument is LINQ-based
+
+                var doc = XDocument.Parse(reader.ReadToEnd());
+
+                var dmsStepNodes = doc.Elements("MaxQuantParams").Elements("dmsSteps").Elements("step").ToList();
+
+                if (dmsStepNodes.Count == 0)
+                {
+                    // Step tool MaxqPeak will run all of the MaxQuant steps
+                    // Skip processing for step tools MaxqS1, MaxqS2, and MaxqS3
+
+                    if (!StepToolName.Equals(MAXQUANT_PEAK_STEP_TOOL, StringComparison.OrdinalIgnoreCase))
+                    {
+                        LogMessage(string.Format(
+                            "Skipping step tool {0} since step tool '{1}' should have already run MaxQuant to completion",
+                            StepToolName, MAXQUANT_PEAK_STEP_TOOL));
+
+                        return true;
+                    }
+                }
+
+                var dmsSteps = new Dictionary<int, DmsStepInfo>();
+
+                // Get the DMS step info
+                foreach (var item in dmsStepNodes)
+                {
+                    if (!AnalysisToolRunnerMaxQuant.GetDmsStepDetails(item, out var dmsStepInfo, out var errorMessage))
+                    {
+                        LogError(errorMessage);
+                        abortProcessing = true;
+                        return false;
+                    }
+
+                    dmsSteps.Add(dmsStepInfo.ID, dmsStepInfo);
+                }
+
+                var countWithValue = dmsSteps.Count(item => item.Value.StartStepID.HasValue);
+
+                if (countWithValue == 0)
+                {
+                    // None of the steps has an integer defined for StartStepID
+                    // MaxQuant has thus not been run yet
+                    return false;
+                }
+
+                if (countWithValue < dmsSteps.Count)
+                {
+                    LogError("DMS steps in the MaxQuant parameter file have a mix of integer startStepID's and text=based startStepID's; " +
+                             "either all should have 'auto' or all should have integers");
+                    abortProcessing = true;
+                    return false;
+                }
+
+                // All of the steps have a step ID defined
+                // Examine the StartStepID for the step that matches this step tool
+                foreach (var dmsStep in dmsSteps.Where(dmsStep => dmsStep.Value.Tool.Equals(StepToolName)))
+                {
+                    if (dmsStep.Value.StartStepID >= 0)
+                        return false;
+
+                    // Skip this step tool
+                    LogMessage(string.Format(
+                        "Skipping step tool {0} since the StartStepID value in the MaxQuant parameter file is negative",
+                        StepToolName));
+
+                    return true;
+                }
+
+                // Match not found
+                LogMessage(string.Format(
+                    "Skipping step tool {0} since none of the tool names in the dmsSteps section of the MaxQuant parameter file matched this step tool",
+                    StepToolName));
+
+                return true;
+            }
+
+            catch (Exception ex)
+            {
+                LogError("Exception in CheckSkipMaxQuant", ex);
+                abortProcessing = true;
+                return false;
             }
         }
 
