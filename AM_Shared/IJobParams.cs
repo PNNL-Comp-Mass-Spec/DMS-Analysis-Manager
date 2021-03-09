@@ -110,7 +110,12 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Job failed while running remote
         /// </summary>
-        CLOSEOUT_FAILED_REMOTE = 26
+        CLOSEOUT_FAILED_REMOTE = 26,
+
+        /// <summary>
+        /// Skipped MaxQuant because a previous job step should have already run it to completion
+        /// </summary>
+        CLOSEOUT_SKIPPED_MAXQUANT = 27
     }
 
     #endregion
