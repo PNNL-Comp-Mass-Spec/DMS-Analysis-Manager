@@ -374,9 +374,9 @@ namespace AnalysisManagerBase
         public const string JOB_PARAM_PARAMETER_FILE = "ParmFileName";
 
         /// <summary>
-        /// Previous job step parameter file
+        /// Step tool parameter file from the previous job step
         /// </summary>
-        public const string JOB_PARAM_PREVIOUS_JOB_STEP_PARAMETER_FILE = "PreviousJobStepParameterFile";
+        public const string JOB_PARAM_PREVIOUS_JOB_STEP_TOOL_PARAMETER_FILE = "PreviousJobStepToolParameterFile";
 
         /// <summary>
         /// Transfer directory path
@@ -613,7 +613,10 @@ namespace AnalysisManagerBase
         /// </summary>
         public SpectraTypeClassifier.SpectrumTypeClassifier mSpectraTypeClassifier;
 
-        private FileCopyUtilities mFileCopyUtilities;
+        /// <summary>
+        /// File copy utilities
+        /// </summary>
+        protected FileCopyUtilities mFileCopyUtilities;
 
         #endregion
 
@@ -2109,7 +2112,7 @@ namespace AnalysisManagerBase
                     mJobParams.AddResultFileToSkip(sourceJobParamXMLFile.Name);
                 }
 
-                mJobParams.AddAdditionalParameter("JobParameters", JOB_PARAM_PREVIOUS_JOB_STEP_PARAMETER_FILE, sourceJobParamXMLFile.Name);
+                mJobParams.AddAdditionalParameter("JobParameters", "PreviousJobStepParameterFile", sourceJobParamXMLFile.Name);
                 return success;
             }
             catch (Exception ex)

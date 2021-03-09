@@ -49,32 +49,32 @@ namespace AnalysisManagerMaxQuantPlugIn
                 if (!FileSearch.RetrieveFile(paramFileName, mJobParams.GetParam("ParmFileStoragePath")))
                     return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
 
-                var previousJobStepParamFileName = mJobParams.GetJobParameter(JOB_PARAM_PREVIOUS_JOB_STEP_PARAMETER_FILE, string.Empty);
+                var previousStepParamFileFound = GetExistingToolParametersFile(paramFileName, out var previousJobStepParameterFilePath);
 
-                if (!string.IsNullOrEmpty(previousJobStepParamFileName))
+                if (previousStepParamFileFound)
                 {
-                    var skipStepTool = CheckSkipMaxQuant(previousJobStepParamFileName, out var abortProcessing);
+                    var skipStepToolPrevJobStep = CheckSkipMaxQuant(previousJobStepParameterFilePath, out var abortProcessingPrevJobStep);
 
-                    if (abortProcessing)
+                    if (abortProcessingPrevJobStep)
                     {
                         return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
                     }
 
-                    if (skipStepTool)
+                    if (skipStepToolPrevJobStep)
                     {
                         return CloseOutType.CLOSEOUT_SKIPPED_MAXQUANT;
                     }
                 }
 
                 // Also examine the original parameter file, in case it has numeric values defined for startStepID
-                var skipStepTool2 = CheckSkipMaxQuant(paramFileName, out var abortProcessing2);
+                var skipStepTool = CheckSkipMaxQuant(paramFileName, out var abortProcessing);
 
-                if (abortProcessing2)
+                if (abortProcessing)
                 {
                     return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
                 }
 
-                if (skipStepTool2)
+                if (skipStepTool)
                 {
                     return CloseOutType.CLOSEOUT_SKIPPED_MAXQUANT;
                 }
@@ -118,13 +118,13 @@ namespace AnalysisManagerMaxQuantPlugIn
             }
         }
 
-        private bool CheckSkipMaxQuant(string maxquantParameterFileName, out bool abortProcessing)
+        private bool CheckSkipMaxQuant(string maxQuantParameterFileName, out bool abortProcessing)
         {
             abortProcessing = false;
 
             try
             {
-                var sourceFile = new FileInfo(Path.Combine(mWorkDir, maxquantParameterFileName));
+                var sourceFile = new FileInfo(Path.Combine(mWorkDir, maxQuantParameterFileName));
 
                 using var reader = new StreamReader(new FileStream(sourceFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
 
@@ -250,6 +250,64 @@ namespace AnalysisManagerMaxQuantPlugIn
 
                 default:
                     throw new ArgumentOutOfRangeException(nameof(rawDataType), "Unsupported raw data type: " + rawDataType);
+            }
+        }
+
+        /// <summary>
+        /// Look for a step tool parameter file from the previous job step
+        /// If found, copy to the working directory, naming it ToolParameters_JobNum_PreviousStep.xml
+        /// </summary>
+        /// <returns>True if success, false if an error</returns>
+        private bool GetExistingToolParametersFile(string paramFileName, out string previousJobStepParameterFilePath)
+        {
+            previousJobStepParameterFilePath = string.Empty;
+            if (Global.OfflineMode)
+                return true;
+
+            try
+            {
+                var stepNum = mJobParams.GetJobParameter(AnalysisJob.STEP_PARAMETERS_SECTION, "Step", 1);
+                if (stepNum == 1)
+                {
+                    // This is the first step; nothing to retrieve
+                    return true;
+                }
+
+                var transferDirectoryPath = GetTransferFolderPathForJobStep(useInputDirectory: true);
+                if (string.IsNullOrEmpty(transferDirectoryPath))
+                {
+                    // Transfer directory parameter is empty; nothing to retrieve
+                    return true;
+                }
+
+                var sourceFile = new FileInfo(Path.Combine(transferDirectoryPath, paramFileName));
+
+                if (!sourceFile.Exists)
+                {
+                    // File not found; nothing to copy
+                    return true;
+                }
+
+                // Copy the file, renaming to avoid a naming collision
+                var destinationFilePath = Path.Combine(mWorkDir, Path.GetFileNameWithoutExtension(sourceFile.Name) + "_PreviousStep.xml");
+                if (mFileCopyUtilities.CopyFileWithRetry(sourceFile.FullName, destinationFilePath, overwrite: true, maxCopyAttempts: 3))
+                {
+                    if (mDebugLevel > 3)
+                    {
+                        LogDebugMessage("GetExistingToolParametersFile, File copied:  " + sourceFile.FullName);
+                    }
+
+                    previousJobStepParameterFilePath = destinationFilePath;
+                    return true;
+                }
+
+                LogError("Error in GetExistingToolParametersFile copying file " + sourceFile.FullName);
+                return false;
+            }
+            catch (Exception ex)
+            {
+                LogError("Exception in GetExistingToolParametersFile", ex);
+                return false;
             }
         }
 
