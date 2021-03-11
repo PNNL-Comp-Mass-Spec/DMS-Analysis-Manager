@@ -79,7 +79,6 @@ namespace AnalysisManagerMaxQuantPlugIn
                     return CloseOutType.CLOSEOUT_SKIPPED_MAXQUANT;
                 }
 
-
                 // Retrieve Fasta file
                 var orgDbDirectoryPath = mMgrParams.GetParam(MGR_PARAM_ORG_DB_DIR);
 
@@ -204,7 +203,6 @@ namespace AnalysisManagerMaxQuantPlugIn
 
                 return true;
             }
-
             catch (Exception ex)
             {
                 LogError("Exception in CheckSkipMaxQuant", ex);

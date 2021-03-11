@@ -12,10 +12,9 @@ namespace AnalysisManagerResultsCleanupPlugin
     /// <summary>
     /// Retrieve resources for the Results Cleanup plugin
     /// </summary>
+    // ReSharper disable once UnusedMember.Global
     public class AnalysisResourcesResultsCleanup : AnalysisResources
     {
-        #region "Methods"
-
         /// <summary>
         /// Obtains resources necessary for performing analysis results cleanup
         /// </summary>
@@ -32,7 +31,5 @@ namespace AnalysisManagerResultsCleanupPlugin
 
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
-
-        #endregion
     }
 }

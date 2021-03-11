@@ -23,10 +23,6 @@ namespace AnalysisManagerResultsCleanupPlugin
 
         private const string RESULTS_DB3_FILE = "Results.db3";
 
-        #endregion
-
-        #region "Methods"
-
         /// <summary>
         /// Runs ResultsCleanup tool
         /// </summary>
@@ -246,7 +242,5 @@ namespace AnalysisManagerResultsCleanupPlugin
                 return false;
             }
         }
-
-        #endregion
     }
 }

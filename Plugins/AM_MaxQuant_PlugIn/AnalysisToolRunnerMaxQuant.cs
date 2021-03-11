@@ -1,7 +1,7 @@
 ﻿//*********************************************************************************************************
 // Written by Matthew Monroe for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
-// Created 08/07/2018
+// Created 03/05/2021
 //
 //*********************************************************************************************************
 
@@ -24,8 +24,6 @@ namespace AnalysisManagerMaxQuantPlugIn
     // ReSharper disable once UnusedMember.Global
     public class AnalysisToolRunnerMaxQuant : AnalysisToolRunnerBase
     {
-        #region "Constants and Enums"
-
         private const string MAXQUANT_CONSOLE_OUTPUT = "MaxQuant_ConsoleOutput.txt";
 
         private const string MAXQUANT_EXE_NAME = @"bin\MaxQuantCmd.exe";
@@ -36,10 +34,6 @@ namespace AnalysisManagerMaxQuantPlugIn
         public const float PROGRESS_PCT_TOOL_RUNNER_STARTING = 5;
 
         private const float PROGRESS_PCT_COMPLETE = 99;
-
-        #endregion
-
-        #region "Module Variables"
 
         private string mMaxQuantProgLoc;
         private string mConsoleOutputErrorMsg;
@@ -54,10 +48,6 @@ namespace AnalysisManagerMaxQuantPlugIn
         /// Dictionary mapping step number to the task description
         /// </summary>
         private SortedDictionary<int, string> StepToTaskMap { get; } = new();
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Runs MaxQuant tool
@@ -394,7 +384,6 @@ namespace AnalysisManagerMaxQuantPlugIn
                     {
                         currentProgress = processingStep.Value;
                     }
-
                 }
 
                 foreach (var item in stepToTaskMap.Where(item => !StepToTaskMap.ContainsKey(item.Key)))
@@ -749,7 +738,6 @@ namespace AnalysisManagerMaxQuantPlugIn
                 updatedFile.MoveTo(runtimeOptions.ParameterFilePath);
 
                 return CloseOutType.CLOSEOUT_SUCCESS;
-
             }
             catch (Exception ex)
             {
@@ -792,7 +780,6 @@ namespace AnalysisManagerMaxQuantPlugIn
             return true;
         }
 
-
         /// <summary>
         /// Validate the step range, updating runtimeOptions.StartStepNumber and runtimeOptions.EndStepNumber
         /// </summary>
@@ -830,7 +817,6 @@ namespace AnalysisManagerMaxQuantPlugIn
                 bool usedDryRun;
                 if (runtimeOptions.DryRun)
                 {
-
                     var result = StartMaxQuant(runtimeOptions);
                     runtimeOptions.DryRun = false;
                     usedDryRun = true;
@@ -939,8 +925,6 @@ namespace AnalysisManagerMaxQuantPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
         }
-
-        #endregion
 
         #region "Event Handlers"
 
