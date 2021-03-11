@@ -29,7 +29,7 @@ namespace AnalysisManagerProg
         // Ignore Spelling: const, bool, Qonvert, msgfspecprob, pek, Archaea, Sprot, Trembl, yyyy, dd, hh, ss, tt, Mam, gimli, Rar, Pos
         // ReSharper restore CommentTypo
 
-        private Protein_Exporter.clsGetFASTAFromDMS mFastaTools;
+        private OrganismDatabaseHandler.ProteinExport.GetFASTAFromDMS mFastaTools;
         private bool mGenerationComplete;
         private readonly string mFastaToolsCnStr = "Data Source=proteinseqs;Initial Catalog=Protein_Sequences;Integrated Security=SSPI;";
         private string mFastaFileName = string.Empty;
@@ -803,7 +803,7 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Instantiate an instance of AnalysisToolRunnerDtaSplit
         /// </summary>
-        public void TestDTASplit(bool runTool = true)
+        public void TestDTASplit()
         {
             const int debugLevel = 2;
 
@@ -829,10 +829,6 @@ namespace AnalysisManagerProg
 
             var toolRunner = pluginLoader.GetToolRunner("dta_split".ToLower());
             toolRunner.Setup("CodeTest", mMgrSettings, jobParams, statusTools, summaryFile, myEMSLUtilities);
-
-            if (!runTool)
-                return;
-
             toolRunner.RunTool();
         }
 
@@ -910,7 +906,7 @@ namespace AnalysisManagerProg
                     return false;
                 }
 
-                mFastaTools = new Protein_Exporter.clsGetFASTAFromDMS(mFastaToolsCnStr);
+                mFastaTools = new OrganismDatabaseHandler.ProteinExport.GetFASTAFromDMS(mFastaToolsCnStr);
                 RegisterEvents(mFastaTools);
 
                 mFastaTools.FileGenerationStarted += FileGenerationStarted;

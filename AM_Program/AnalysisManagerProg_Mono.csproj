@@ -63,6 +63,9 @@
     <Reference Include="MsMsDataFileReader">
       <HintPath>..\AM_Common\MsMsDataFileReader.dll</HintPath>
     </Reference>
+    <Reference Include="OrganismDatabaseHandler">
+      <HintPath>..\AM_Common\OrganismDatabaseHandler.dll</HintPath>
+    </Reference>
     <Reference Include="Pacifica.Core">
       <HintPath>..\AM_Common\Pacifica.Core.dll</HintPath>
     </Reference>
@@ -87,9 +90,6 @@
     </Reference>
     <Reference Include="PHRPReader">
       <HintPath>..\AM_Common\PHRPReader.dll</HintPath>
-    </Reference>
-    <Reference Include="Protein_Exporter">
-      <HintPath>..\AM_Common\Protein_Exporter.dll</HintPath>
     </Reference>
     <Reference Include="ProteinFileReader">
       <HintPath>..\AM_Common\ProteinFileReader.dll</HintPath>

@@ -566,7 +566,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// FASTA file generation tools
         /// </summary>
-        protected Protein_Exporter.clsGetFASTAFromDMS mFastaTools;
+        protected OrganismDatabaseHandler.ProteinExport.GetFASTAFromDMS mFastaTools;
 
         /// <summary>
         /// CDTA utilities
@@ -844,7 +844,7 @@ namespace AnalysisManagerBase
             }
 
             // Find .hashcheck files
-            var hashcheckFiles = orgDbDir.GetFiles(sourceFasta.Name + "*" + Protein_Exporter.clsGetFASTAFromDMS.HASHCHECK_SUFFIX);
+            var hashcheckFiles = orgDbDir.GetFiles(sourceFasta.Name + "*" + OrganismDatabaseHandler.ProteinExport.GetFASTAFromDMS.HashcheckSuffix);
             if (hashcheckFiles.Length == 0)
             {
                 LogError("Local hashcheck file not found for " + sourceFasta.FullName + "; cannot copy remotely");
@@ -874,7 +874,7 @@ namespace AnalysisManagerBase
                     if (string.Equals(extension, FASTA_FILE_EXTENSION, StringComparison.OrdinalIgnoreCase))
                         remoteFasta = remoteFile.Value;
 
-                    if (string.Equals(extension, Protein_Exporter.clsGetFASTAFromDMS.HASHCHECK_SUFFIX, StringComparison.OrdinalIgnoreCase))
+                    if (string.Equals(extension, OrganismDatabaseHandler.ProteinExport.GetFASTAFromDMS.HashcheckSuffix, StringComparison.OrdinalIgnoreCase))
                         remoteHashcheck = remoteFile.Value;
                 }
 
@@ -1313,7 +1313,7 @@ namespace AnalysisManagerBase
             {
                 try
                 {
-                    mFastaTools = new Protein_Exporter.clsGetFASTAFromDMS(mFastaToolsCnStr)
+                    mFastaTools = new OrganismDatabaseHandler.ProteinExport.GetFASTAFromDMS(mFastaToolsCnStr)
                     {
                         DecoyProteinsUseXXX = decoyProteinsUseXXX
                     };
@@ -2160,7 +2160,7 @@ namespace AnalysisManagerBase
                     }
 
                     // Look for a .hashcheck file
-                    var hashCheckFiles = fastaFile.Directory.GetFiles(fastaFile.Name + "*" + Protein_Exporter.clsGetFASTAFromDMS.HASHCHECK_SUFFIX).ToList();
+                    var hashCheckFiles = fastaFile.Directory.GetFiles(fastaFile.Name + "*" + OrganismDatabaseHandler.ProteinExport.GetFASTAFromDMS.HashcheckSuffix).ToList();
                     if (hashCheckFiles.Count > 0)
                     {
                         lastUsed = DateMax(lastUsed, hashCheckFiles.First().LastWriteTimeUtc);
@@ -5110,7 +5110,7 @@ namespace AnalysisManagerBase
                     return false;
                 }
 
-                var hashcheckFileSpec = fastaFile.Name + "*" + Protein_Exporter.clsGetFASTAFromDMS.HASHCHECK_SUFFIX;
+                var hashcheckFileSpec = fastaFile.Name + "*" + OrganismDatabaseHandler.ProteinExport.GetFASTAFromDMS.HashcheckSuffix;
                 var hashcheckFiles = fastaFile.Directory.GetFiles(hashcheckFileSpec);
                 if (hashcheckFiles.Length == 0)
                 {
@@ -5133,7 +5133,7 @@ namespace AnalysisManagerBase
                 var expectedHash = match.Groups["CRC32"].Value;
                 var crc32Hash = string.Copy(expectedHash);
 
-                var fastaTools = new Protein_Exporter.clsGetFASTAFromDMS();
+                var fastaTools = new OrganismDatabaseHandler.ProteinExport.GetFASTAFromDMS();
                 RegisterEvents(fastaTools);
 
                 var fastaIsValid = fastaTools.ValidateMatchingHash(
@@ -5188,7 +5188,7 @@ namespace AnalysisManagerBase
         {
             const int MINIMUM_LOG_INTERVAL_SEC = 10;
 
-            var forceLog = mDebugLevel >= 1 && statusMsg.Contains(Protein_Exporter.clsGetFASTAFromDMS.LOCK_FILE_PROGRESS_TEXT);
+            var forceLog = mDebugLevel >= 1 && statusMsg.Contains(OrganismDatabaseHandler.ProteinExport.GetFASTAFromDMS.LockFileProgressText);
 
             if (mDebugLevel >= 3 || forceLog)
             {

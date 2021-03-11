@@ -63,6 +63,9 @@
     <Reference Include="MyEMSLReader">
       <HintPath>..\AM_Common\MyEMSLReader.dll</HintPath>
     </Reference>
+    <Reference Include="OrganismDatabaseHandler">
+      <HintPath>..\AM_Common\OrganismDatabaseHandler.dll</HintPath>
+    </Reference>
     <Reference Include="Pacifica.Core">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\AM_Common\Pacifica.Core.dll</HintPath>
@@ -76,9 +79,6 @@
     </Reference>
     <Reference Include="PHRPReader">
       <HintPath>..\AM_Common\PHRPReader.dll</HintPath>
-    </Reference>
-    <Reference Include="Protein_Exporter">
-      <HintPath>..\AM_Common\Protein_Exporter.dll</HintPath>
     </Reference>
     <Reference Include="SpectraTypeClassifier">
       <HintPath>..\AM_Common\SpectraTypeClassifier.dll</HintPath>
