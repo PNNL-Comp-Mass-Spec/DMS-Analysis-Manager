@@ -12,8 +12,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text.RegularExpressions;
-using System.Xml;
 using System.Xml.Linq;
 
 namespace AnalysisManagerProg
@@ -25,15 +23,15 @@ namespace AnalysisManagerProg
     {
         // Ignore Spelling: Resourcers
 
-        #region "Member variables"
+        private enum PluginClassTypes
+        {
+            Resourcer = 0,
+            ToolRunner = 1
+        }
 
         private readonly string mMgrFolderPath;
 
         private readonly SummaryFile mSummaryFile;
-
-        #endregion
-
-        #region "Properties"
 
         /// <summary>
         /// Plugin config file name
@@ -45,10 +43,6 @@ namespace AnalysisManagerProg
         /// When true, show additional messages at the console
         /// </summary>
         public bool TraceMode { get; set; }
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Constructor
@@ -107,16 +101,14 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Retrieves data for specified plugin from plugin info config file
         /// </summary>
-        /// <param name="classType">Either Resourcer or ToolRunner</param>
-        /// <param name="toolName"></param>
-        /// <param name="nodeNameHierarchy">List of node names to traverse to reach the ToolRunner or Resourcer element for the current plugin</param>
+        /// <param name="classType">Plugin class type enum</param>
+        /// <param name="stepToolName"></param>
         /// <param name="className">Output: name of class for plugin</param>
         /// <param name="assemblyName">Output: name of assembly for plugin</param>
         /// <returns>TRUE for success, FALSE for failure</returns>
         private bool GetPluginInfo(
-            string classType,
-            string toolName,
-            List<string> nodeNameHierarchy,
+            PluginClassTypes classType,
+            string stepToolName,
             out string className,
             out string assemblyName)
         {
@@ -126,9 +118,23 @@ namespace AnalysisManagerProg
 
             try
             {
-                if (nodeNameHierarchy.Count == 0)
+                string parentElementName;
+                string classTypeName;
+
+                switch (classType)
                 {
-                    throw new ArgumentException("nodeNameHierarchy cannot be empty", nameof(nodeNameHierarchy));
+                    case PluginClassTypes.Resourcer:
+                        parentElementName = "Resourcers";
+                        classTypeName = "Resourcer";
+                        break;
+
+                    case PluginClassTypes.ToolRunner:
+                        parentElementName = "ToolRunners";
+                        classTypeName = "ToolRunner";
+                        break;
+
+                    default:
+                        throw new ArgumentOutOfRangeException(nameof(classType), classType, null);
                 }
 
                 var pluginInfoFile = new FileInfo(pluginInfoFilePath);
@@ -145,38 +151,28 @@ namespace AnalysisManagerProg
 
                 var doc = XDocument.Parse(reader.ReadToEnd());
 
-                var matchingElements = doc.Elements(nodeNameHierarchy.First()).ToList();
+                var matchingElements = doc.Elements("Plugins").Elements(parentElementName).Elements(classTypeName).ToList();
                 if (matchingElements.Count == 0)
                 {
-                    OnErrorEvent(string.Format("PluginInfo file is missing node {0}: {1}", nodeNameHierarchy.First(), pluginInfoFile.FullName));
+                    OnErrorEvent(string.Format("{0} nodes not found in the PluginInfo file: {1}", classTypeName, pluginInfoFile.FullName));
                     return false;
                 }
 
-                foreach (var nodeName in nodeNameHierarchy.Skip(1))
-                {
-                    matchingElements = matchingElements.First().Elements(nodeName).ToList();
-                    if (matchingElements.Count == 0)
-                    {
-                        OnErrorEvent(string.Format("PluginInfo file is missing node {0}: {1}", nodeName, pluginInfoFile.FullName));
-                        return false;
-                    }
-                }
-
-                if (GetToolInfo(pluginInfoFile, toolName, matchingElements, out className, out assemblyName))
+                if (GetToolInfo(pluginInfoFile, stepToolName, matchingElements, out className, out assemblyName))
                     return true;
 
-                if (toolName.StartsWith("test_"))
+                if (stepToolName.StartsWith("test_"))
                 {
-                    var alternateName = toolName.Substring(5);
+                    var alternateName = stepToolName.Substring(5);
 
-                    OnWarningEvent(string.Format("Could not resolve tool name '{0}'; will try '{1}'", toolName, alternateName));
+                    OnWarningEvent(string.Format("Could not resolve tool name '{0}'; will try '{1}'", stepToolName, alternateName));
 
                     if (GetToolInfo(pluginInfoFile, alternateName, matchingElements, out className, out assemblyName))
                         return true;
                 }
 
                 OnErrorEvent(string.Format(
-                    "Could not resolve {0} tool name {1} in {2}", classType, toolName, pluginInfoFile.FullName));
+                    "Could not resolve {0} name {1} in {2}", classTypeName, stepToolName, pluginInfoFile.FullName));
 
                 return false;
             }
@@ -188,8 +184,8 @@ namespace AnalysisManagerProg
         }
 
         private bool GetToolInfo(
-            FileInfo pluginInfoFile,
-            string toolName,
+            FileSystemInfo pluginInfoFile,
+            string stepToolName,
             IEnumerable<XElement> matchingElements,
             out string className,
             out string assemblyName)
@@ -202,7 +198,7 @@ namespace AnalysisManagerProg
                 if (!TryGetAttribute(pluginInfoFile, element, "Tool", out var candidateToolName))
                     continue;
 
-                if (!candidateToolName.Equals(toolName, StringComparison.OrdinalIgnoreCase))
+                if (!candidateToolName.Equals(stepToolName, StringComparison.OrdinalIgnoreCase))
                     continue;
 
                 if (!TryGetAttribute(pluginInfoFile, element, "Class", out className))
@@ -268,9 +264,11 @@ namespace AnalysisManagerProg
                 var assemblyType = assembly.GetType(className, false, true);
 
                 if (assemblyType == null)
+                {
                     throw new Exception(string.Format(
                         "assembly.GetType returned null for class {0}; " +
                         "examine plugin_info.xml for the mapping from step tool name to assembly and class", className));
+                }
 
                 var instance = Activator.CreateInstance(assemblyType);
                 return instance;
@@ -290,14 +288,7 @@ namespace AnalysisManagerProg
         /// <returns>An object meeting the IToolRunner interface</returns>
         public IToolRunner GetToolRunner(string toolName)
         {
-            var nodeNameHierarchy = new List<string>
-            {
-                "Plugins",
-                "ToolRunners",
-                "ToolRunner"
-            };
-
-            if (!GetPluginInfo("ToolRunner", toolName, nodeNameHierarchy, out var className, out var assemblyName))
+            if (!GetPluginInfo(PluginClassTypes.ToolRunner, toolName, out var className, out var assemblyName))
             {
                 mSummaryFile.Add("Unable to load ToolRunner for " + toolName);
                 return null;
@@ -337,14 +328,7 @@ namespace AnalysisManagerProg
         /// <returns>An object meeting the IAnalysisResources interface</returns>
         public IAnalysisResources GetAnalysisResources(string toolName)
         {
-            var nodeNameHierarchy = new List<string>
-            {
-                "Plugins",
-                "Resourcers",
-                "Resourcer"
-            };
-
-            if (!GetPluginInfo("Resourcer", toolName, nodeNameHierarchy, out var className, out var assemblyName))
+            if (!GetPluginInfo(PluginClassTypes.Resourcer, toolName, out var className, out var assemblyName))
             {
                 mSummaryFile.Add("Unable to load Resourcer for " + toolName);
                 return null;
@@ -395,6 +379,4 @@ namespace AnalysisManagerProg
             return false;
         }
     }
-
-    #endregion
 }
