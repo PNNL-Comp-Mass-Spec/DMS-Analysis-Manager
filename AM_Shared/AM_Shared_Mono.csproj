@@ -40,6 +40,9 @@
     <Reference Include="DMSUpdateManager">
       <HintPath>..\AM_Common\DMSUpdateManager.dll</HintPath>
     </Reference>
+    <Reference Include="DTAtoMGF">
+      <HintPath>..\AM_Common\DTAtoMGF.dll</HintPath>
+    </Reference>
     <Reference Include="FastaFileSplitterDLL">
       <HintPath>..\AM_Common\FastaFileSplitterDLL.dll</HintPath>
     </Reference>

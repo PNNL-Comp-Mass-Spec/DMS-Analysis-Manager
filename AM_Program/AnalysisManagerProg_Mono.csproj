@@ -13,6 +13,7 @@
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <TargetFrameworkProfile />
+    <LangVersion>latest</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -47,6 +48,9 @@
     <StartupObject>AnalysisManagerProg.Program</StartupObject>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Cyclops">
+      <HintPath>..\AM_Common\Cyclops.dll</HintPath>
+    </Reference>
     <Reference Include="DMSUpdateManager">
       <HintPath>..\AM_Common\DMSUpdateManager.dll</HintPath>
     </Reference>
@@ -155,7 +159,7 @@
     <Content Include="LITENING.ICO" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="AM_Shared\AM_Shared_Mono.csproj">
+    <ProjectReference Include="..\AM_Shared\AM_Shared_Mono.csproj">
       <Project>{35b6b79e-c3b0-4e3a-b3ed-64167a470d7e}</Project>
       <Name>AM_Shared_Mono</Name>
     </ProjectReference>
