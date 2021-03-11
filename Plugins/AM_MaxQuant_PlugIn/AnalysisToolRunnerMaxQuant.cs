@@ -127,6 +127,11 @@ namespace AnalysisManagerMaxQuantPlugIn
                 // Process one or more datasets using MaxQuant
                 var processingResult = StartMaxQuant(runtimeOptions);
 
+                if (processingResult == CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    processingResult = PostProcessMaxQuantResults(runtimeOptions);
+                }
+
                 mProgress = PROGRESS_PCT_COMPLETE;
 
                 // Stop the job timer
@@ -160,6 +165,18 @@ namespace AnalysisManagerMaxQuantPlugIn
             {
                 LogError("Error in MaxQuantPlugin->RunTool", ex);
                 return CloseOutType.CLOSEOUT_FAILED;
+            }
+        }
+
+        private CloseOutType PostProcessMaxQuantResults(MaxQuantRuntimeOptions runtimeOptions)
+        {
+            // ToDo: Zip subdirectories
+
+            // ToDo: Copy subdirectories to the transfer server
+
+            if (runtimeOptions.EndStepNumber >= MaxQuantRuntimeOptions.MAX_STEP_NUMBER)
+            {
+                // Examine outputs to determine which do not need to be copied to the transfer server
             }
         }
 
@@ -467,8 +484,6 @@ namespace AnalysisManagerMaxQuantPlugIn
 
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-
-            // Validate MaxQuant outputs ...
 
             mStatusTools.UpdateAndWrite(mProgress);
             if (mDebugLevel >= 3)
