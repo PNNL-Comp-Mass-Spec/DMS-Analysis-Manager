@@ -803,7 +803,7 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Instantiate an instance of AnalysisToolRunnerDtaSplit
         /// </summary>
-        public void TestDTASplit()
+        public void TestDTASplit(bool runTool = true)
         {
             const int debugLevel = 2;
 
@@ -829,6 +829,10 @@ namespace AnalysisManagerProg
 
             var toolRunner = pluginLoader.GetToolRunner("dta_split".ToLower());
             toolRunner.Setup("CodeTest", mMgrSettings, jobParams, statusTools, summaryFile, myEMSLUtilities);
+
+            if (!runTool)
+                return;
+
             toolRunner.RunTool();
         }
 
