@@ -17,9 +17,13 @@ namespace AnalysisManagerResultsCleanupPlugin
     /// <summary>
     /// Class for running Results Cleanup
     /// </summary>
+    /// <remarks>
+    /// Applies to MAC jobs and MaxQuant jobs
+    /// </remarks>
+    // ReSharper disable once UnusedMember.Global
     public class AnalysisToolRunnerResultsCleanup : AnalysisToolRunnerBase
     {
-        #region "Constants"
+        // Ignore Spelling: Quant
 
         private const string RESULTS_DB3_FILE = "Results.db3";
 
@@ -46,13 +50,14 @@ namespace AnalysisManagerResultsCleanupPlugin
                 }
 
                 // Cleanup results in the transfer directory
-                var Result = PerformResultsCleanup();
-                if (Result != CloseOutType.CLOSEOUT_SUCCESS)
+                var result = PerformResultsCleanup();
+                if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     if (string.IsNullOrEmpty(mMessage))
                     {
                         mMessage = "Unknown error calling PerformResultsCleanup";
                     }
+
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
@@ -72,11 +77,10 @@ namespace AnalysisManagerResultsCleanupPlugin
 
         private CloseOutType PerformResultsCleanup()
         {
-            CloseOutType eResult;
-
             try
             {
-                var transferDirectoryPath = mJobParams.GetJobParameter(AnalysisJob.JOB_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH, string.Empty);
+                var transferDirectoryPath = mJobParams.GetJobParameter(AnalysisJob.JOB_PARAMETERS_SECTION,
+                    AnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH, string.Empty);
                 var resultsDirectoryName = mJobParams.GetJobParameter(AnalysisJob.JOB_PARAMETERS_SECTION, "InputFolderName", string.Empty);
 
                 if (string.IsNullOrWhiteSpace(transferDirectoryPath))
@@ -103,16 +107,62 @@ namespace AnalysisManagerResultsCleanupPlugin
                 }
 
                 var resultsDirectory = new DirectoryInfo(Path.Combine(transferDirectory.FullName, resultsDirectoryName));
-                eResult = RemoveOldResultsDb3Files(resultsDirectory);
+
+                // The ToolName job parameter holds the name of the job script we are executing
+                var scriptName = mJobParams.GetJobParameter("JobParameters", "ToolName", string.Empty);
+
+                if (scriptName.StartsWith("MaxQuant", StringComparison.OrdinalIgnoreCase))
+                {
+                    return MaxQuantResultsCleanup(resultsDirectory);
+                }
+
+                if (scriptName.StartsWith("MAC", StringComparison.OrdinalIgnoreCase))
+                {
+                    return MACResultsCleanup(resultsDirectory);
+                }
+
+                mMessage = string.Format("Results cleanup for script {0} is not supported", scriptName);
+                LogError(mMessage);
+                return CloseOutType.CLOSEOUT_FAILED;
             }
             catch (Exception ex)
             {
                 mMessage = "Error in PerformResultsCleanup";
-                LogError(mMessage + ": " + ex.Message);
+                LogError(mMessage, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            return eResult;
+        }
+
+        private CloseOutType MACResultsCleanup(DirectoryInfo resultsDirectory)
+        {
+            try
+            {
+                var result = RemoveOldResultsDb3Files(resultsDirectory);
+                return result;
+            }
+            catch (Exception ex)
+            {
+                mMessage = "Error in MACResultsCleanup";
+                LogError(mMessage, ex);
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+        }
+
+        private CloseOutType MaxQuantResultsCleanup(DirectoryInfo resultsDirectory)
+        {
+            try
+            {
+                // ToDo: implement this logic
+
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+            catch (Exception ex)
+            {
+                mMessage = "Error in MaxQuantResultsCleanup";
+                LogError(mMessage, ex);
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
         }
 
         private CloseOutType RemoveOldResultsDb3Files(DirectoryInfo resultsDirectory)
