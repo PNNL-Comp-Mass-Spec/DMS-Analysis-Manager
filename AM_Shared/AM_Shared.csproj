@@ -111,6 +111,7 @@
     <Compile Include="DirectorySearch.cs" />
     <Compile Include="FormattedXMLWriter.cs" />
     <Compile Include="Global.cs" />
+    <Compile Include="JobParameter.cs" />
     <Compile Include="LoggerBase.cs" />
     <Compile Include="MemoryUsageLogger.cs" />
     <Compile Include="MessageContainer.cs" />

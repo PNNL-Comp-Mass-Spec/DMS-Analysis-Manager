@@ -102,38 +102,6 @@ namespace AnalysisManagerBase
 
         #endregion
 
-        #region "Structures"
-
-        /// <summary>
-        /// Job parameter container
-        /// </summary>
-        public struct udtParameterInfoType
-        {
-            /// <summary>
-            /// Section name
-            /// </summary>
-            public string Section;
-
-            /// <summary>
-            /// Parameter name
-            /// </summary>
-            public string ParamName;
-
-            /// <summary>
-            /// Parameter value
-            /// </summary>
-            public string Value;
-
-            /// <summary>
-            /// Return Name and Value
-            /// </summary>
-            public override string ToString()
-            {
-                return ParamName + ": " + Value;
-            }
-        }
-        #endregion
-
         #region "Properties"
         /// <summary>
         /// Value showing if a transfer task was assigned
@@ -205,63 +173,63 @@ namespace AnalysisManagerBase
         /// Populate the job parameters list using XML-based job parameters
         /// </summary>
         /// <param name="jobParamsXML"></param>
-        protected IEnumerable<udtParameterInfoType> ParseXMLJobParameters(string jobParamsXML)
+        protected IEnumerable<JobParameter> ParseXMLJobParameters(string jobParamsXML)
         {
             try
             {
-                var jobParameters = new List<udtParameterInfoType>();
+                var jobParameters = new List<JobParameter>();
 
-                using (var reader = new StringReader(jobParamsXML))
+                using var reader = new StringReader(jobParamsXML);
+
+                // Note that XDocument supersedes XmlDocument and XPathDocument
+                // XDocument can often be easier to use since XDocument is LINQ-based
+
+                var contents = reader.ReadToEnd();
+                if (string.IsNullOrWhiteSpace(contents))
                 {
-                    // Note that XDocument supersedes XmlDocument and XPathDocument
-                    // XDocument can often be easier to use since XDocument is LINQ-based
+                    LogError("Empty job parameters passed to ParseXMLJobParameters");
+                    return new List<JobParameter>();
+                }
 
-                    var doc = XDocument.Parse(reader.ReadToEnd());
+                var doc = XDocument.Parse(contents);
 
-                    foreach (var section in doc.Elements("sections").Elements("section"))
+                foreach (var section in doc.Elements("sections").Elements("section"))
+                {
+                    string sectionName;
+                    if (section.HasAttributes)
                     {
-                        string sectionName;
-                        if (section.HasAttributes)
-                        {
-                            var sectionNameAttrib = section.Attribute("name");
+                        var sectionNameAttrib = section.Attribute("name");
 
-                            if (sectionNameAttrib == null)
-                            {
-                                LogWarning("Job params XML section found without a name attribute");
-                                sectionName = string.Empty;
-                            }
-                            else
-                            {
-                                sectionName = sectionNameAttrib.Value;
-                            }
+                        if (sectionNameAttrib == null)
+                        {
+                            LogWarning("Job params XML section found without a name attribute");
+                            sectionName = string.Empty;
                         }
                         else
                         {
-                            sectionName = string.Empty;
+                            sectionName = sectionNameAttrib.Value;
                         }
+                    }
+                    else
+                    {
+                        sectionName = string.Empty;
+                    }
 
-                        foreach (var item in section.Elements("item"))
-                        {
-                            if (!item.HasAttributes)
-                                continue;
+                    foreach (var item in section.Elements("item"))
+                    {
+                        if (!item.HasAttributes)
+                            continue;
 
-                            var keyAttrib = item.Attribute("key");
-                            if (keyAttrib == null)
-                                continue;
+                        var keyAttrib = item.Attribute("key");
+                        if (keyAttrib == null)
+                            continue;
 
-                            var valueAttrib = item.Attribute("value");
-                            if (valueAttrib == null)
-                                continue;
+                        var valueAttrib = item.Attribute("value");
+                        if (valueAttrib == null)
+                            continue;
 
-                            var udtParamInfo = new udtParameterInfoType
-                            {
-                                Section = sectionName,
-                                ParamName = keyAttrib.Value,
-                                Value = valueAttrib.Value
-                            };
-
-                            jobParameters.Add(udtParamInfo);
-                        }
+                        var parameter = new JobParameter(sectionName, keyAttrib.Value, valueAttrib.Value);
+                        jobParameters.Add(parameter);
                     }
                 }
 
@@ -269,8 +237,8 @@ namespace AnalysisManagerBase
             }
             catch (Exception ex)
             {
-                LogError("DBTask.FillParamDict(), exception determining job parameters", ex);
-                return new List<udtParameterInfoType>();
+                LogError("Exception determining job parameters in ParseXMLJobParameters", ex);
+                return new List<JobParameter>();
             }
         }
 
