@@ -97,12 +97,22 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Skipped running MZ Refinery because parameter MzRefParamFile has "SkipAll"
         /// </summary>
-        SKIPPED_MZ_REFINERY = 18,
+        CLOSEOUT_SKIPPED_MZ_REFINERY = 18,
 
         /// <summary>
         /// No data (no results)
         /// </summary>
         CLOSEOUT_NO_DATA = 20,
+
+        /// <summary>
+        /// Skipped MSXmlGen since job parameter MSXMLGenerator is "skip"
+        /// </summary>
+        CLOSEOUT_SKIPPED_MSXML_GEN = 21,
+
+        /// <summary>
+        /// Skipped MaxQuant because a previous job step should have already run it to completion
+        /// </summary>
+        CLOSEOUT_SKIPPED_MAXQUANT = 22,
 
         /// <summary>
         /// Job is running remote
@@ -112,12 +122,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Job failed while running remote
         /// </summary>
-        CLOSEOUT_FAILED_REMOTE = 26,
-
-        /// <summary>
-        /// Skipped MaxQuant because a previous job step should have already run it to completion
-        /// </summary>
-        CLOSEOUT_SKIPPED_MAXQUANT = 27
+        CLOSEOUT_FAILED_REMOTE = 26
     }
 
     #endregion
