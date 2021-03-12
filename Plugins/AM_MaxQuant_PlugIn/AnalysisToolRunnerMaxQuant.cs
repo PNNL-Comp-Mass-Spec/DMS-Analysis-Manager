@@ -168,6 +168,8 @@ namespace AnalysisManagerMaxQuantPlugIn
             {
                 // Examine outputs to determine which do not need to be copied to the transfer server
             }
+
+            return CloseOutType.CLOSEOUT_FAILED;
         }
 
         /// <summary>
