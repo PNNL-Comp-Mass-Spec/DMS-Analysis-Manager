@@ -1741,6 +1741,17 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="closeOut">IJobParams enum specifying close out type</param>
         /// <param name="compMsg">Completion message to be added to database upon closeOut</param>
+        /// <param name="evalMsg">Evaluation message ("" if no special message)</param>
+        public void CloseTask(CloseOutType closeOut, string compMsg, string evalMsg)
+        {
+            CloseTask(closeOut, compMsg, 0, evalMsg, mStartTime);
+        }
+
+        /// <summary>
+        /// Contact the Pipeline database to close the analysis job
+        /// </summary>
+        /// <param name="closeOut">IJobParams enum specifying close out type</param>
+        /// <param name="compMsg">Completion message to be added to database upon closeOut</param>
         /// <param name="toolRunner">ToolRunner instance (AnalysisToolRunnerBase)</param>
         public void CloseTask(CloseOutType closeOut, string compMsg, IToolRunner toolRunner)
         {

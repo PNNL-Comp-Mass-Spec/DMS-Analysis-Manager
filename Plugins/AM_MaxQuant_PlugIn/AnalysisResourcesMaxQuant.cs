@@ -53,7 +53,7 @@ namespace AnalysisManagerMaxQuantPlugIn
 
                 if (previousStepParamFileFound)
                 {
-                    var skipStepToolPrevJobStep = CheckSkipMaxQuant(previousJobStepParameterFilePath, out var abortProcessingPrevJobStep);
+                    var skipStepToolPrevJobStep = CheckSkipMaxQuant(previousJobStepParameterFilePath, out var abortProcessingPrevJobStep, out var skipReason);
 
                     if (abortProcessingPrevJobStep)
                     {
@@ -62,12 +62,14 @@ namespace AnalysisManagerMaxQuantPlugIn
 
                     if (skipStepToolPrevJobStep)
                     {
+                        // This message should have already been logged
+                        EvalMessage = skipReason;
                         return CloseOutType.CLOSEOUT_SKIPPED_MAXQUANT;
                     }
                 }
 
                 // Also examine the original parameter file, in case it has numeric values defined for startStepID
-                var skipStepTool = CheckSkipMaxQuant(paramFileName, out var abortProcessing);
+                var skipStepTool = CheckSkipMaxQuant(paramFileName, out var abortProcessing, out var skipReason2);
 
                 if (abortProcessing)
                 {
@@ -76,6 +78,8 @@ namespace AnalysisManagerMaxQuantPlugIn
 
                 if (skipStepTool)
                 {
+                    // This message should have already been logged
+                    EvalMessage = skipReason2;
                     return CloseOutType.CLOSEOUT_SKIPPED_MAXQUANT;
                 }
 
@@ -117,9 +121,10 @@ namespace AnalysisManagerMaxQuantPlugIn
             }
         }
 
-        private bool CheckSkipMaxQuant(string maxQuantParameterFileName, out bool abortProcessing)
+        private bool CheckSkipMaxQuant(string maxQuantParameterFileName, out bool abortProcessing, out string skipReason)
         {
             abortProcessing = false;
+            skipReason = string.Empty;
 
             try
             {
@@ -141,10 +146,11 @@ namespace AnalysisManagerMaxQuantPlugIn
 
                     if (!StepToolName.Equals(MAXQUANT_PEAK_STEP_TOOL, StringComparison.OrdinalIgnoreCase))
                     {
-                        LogMessage(string.Format(
-                            "Skipping step tool {0} since step tool '{1}' should have already run MaxQuant to completion",
-                            StepToolName, MAXQUANT_PEAK_STEP_TOOL));
+                        skipReason = string.Format(
+                            "Skipping '{0}' since step tool '{1}' should have already run MaxQuant to completion",
+                            StepToolName, MAXQUANT_PEAK_STEP_TOOL);
 
+                        LogMessage(skipReason);
                         return true;
                     }
                 }

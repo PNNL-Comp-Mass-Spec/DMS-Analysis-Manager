@@ -47,7 +47,8 @@ namespace AnalysisManagerMzRefineryPlugIn
                 if (mzRefParamFile.Equals("SkipAll", StringComparison.OrdinalIgnoreCase))
                 {
                     // Do not perform any processing with MzRefinery
-                    return CloseOutType.SKIPPED_MZ_REFINERY;
+                    EvalMessage = "Skipping MzRefinery since job parameter MzRefParamFile is 'SkipAll'";
+                    return CloseOutType.CLOSEOUT_SKIPPED_MZ_REFINERY;
                 }
 
                 currentTask = "Get input file(s)";
