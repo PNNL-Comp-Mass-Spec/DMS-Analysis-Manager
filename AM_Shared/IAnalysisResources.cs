@@ -17,7 +17,18 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Status message
         /// </summary>
+        /// <remarks>
+        /// If the resourcer decides to skip the step tool, this message will be stored in the Completion_Message field in the database
+        /// </remarks>
         string Message { get; }
+
+        /// <summary>
+        /// Additional status message
+        /// </summary>
+        /// <remarks>
+        /// If the resourcer decides to skip the step tool, this message will be stored in the Evaluation_Message field in the database
+        /// </remarks>
+        string EvalMessage { get; }
 
         /// <summary>
         /// Set this to true if we need to abort processing as soon as possible due to a critical error

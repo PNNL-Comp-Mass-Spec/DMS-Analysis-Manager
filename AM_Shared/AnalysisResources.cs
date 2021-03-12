@@ -686,9 +686,20 @@ namespace AnalysisManagerBase
         public MyEMSLUtilities MyEMSLUtilities => mMyEMSLUtilities;
 
         /// <summary>
-        ///  Explanation of what happened to last operation this class performed
+        /// Explanation of what happened to last operation this class performed
         /// </summary>
+        /// <remarks>
+        /// If the resourcer decides to skip the step tool, this message will be stored in the Completion_Message field in the database
+        /// </remarks>
         public string Message => mMessage;
+
+        /// <summary>
+        /// Additional status message
+        /// </summary>
+        /// <remarks>
+        /// If the resourcer decides to skip the step tool, this message will be stored in the Evaluation_Message field in the database
+        /// </remarks>
+        public string EvalMessage { get; protected set; }
 
         /// <summary>
         /// Set this to true if we need to abort processing as soon as possible due to a critical error

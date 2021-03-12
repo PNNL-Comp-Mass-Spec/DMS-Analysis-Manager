@@ -2345,7 +2345,9 @@ namespace AnalysisManagerProg
                     LogError(mMgrName + ": " + Global.AppendToComment(mMostRecentErrorMessage, toolResourcer.Message) + ", Job " + jobNum + ", Dataset " + datasetName);
                 }
 
-                mAnalysisTask.CloseTask(resultCode, compMsg);
+                var evalMsg = string.IsNullOrWhiteSpace(toolResourcer.EvalMessage) ? string.Empty : toolResourcer.EvalMessage;
+
+                mAnalysisTask.CloseTask(resultCode, compMsg, evalMsg);
 
                 mMgrErrorCleanup.CleanWorkDir();
 
