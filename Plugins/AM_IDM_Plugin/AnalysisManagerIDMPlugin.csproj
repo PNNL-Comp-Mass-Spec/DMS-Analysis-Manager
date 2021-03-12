@@ -101,7 +101,7 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>copy "$(TargetPath)" "$(ProjectDir)..\..\AM_Common"
+    <PostBuildEvent>copy "$(TargetPath)" "$(ProjectDir)..\..\AM_Common\"
 xcopy "$(TargetDir)$(TargetName).pdb" "$(ProjectDir)..\..\AM_Common\" /Y
 xcopy "$(TargetPath)" "$(ProjectDir)..\..\AM_Program\bin" /Y
 xcopy "$(TargetDir)$(TargetName).pdb" "$(ProjectDir)..\..\AM_Program\bin" /Y</PostBuildEvent>
