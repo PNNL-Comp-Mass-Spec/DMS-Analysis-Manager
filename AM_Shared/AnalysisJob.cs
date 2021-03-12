@@ -1938,9 +1938,9 @@ namespace AnalysisManagerBase
             PipelineDBProcedureExecutor.AddParameter(cmd, "@job", SqlType.Int).Value = GetJobParameter(STEP_PARAMETERS_SECTION, "Job", 0);
             PipelineDBProcedureExecutor.AddParameter(cmd, "@step", SqlType.Int).Value = GetJobParameter(STEP_PARAMETERS_SECTION, "Step", 0);
             PipelineDBProcedureExecutor.AddParameter(cmd, "@completionCode", SqlType.Int).Value = compCode;
-            PipelineDBProcedureExecutor.AddParameter(cmd, "@completionMessage", SqlType.VarChar, 256, compMsg.Trim('\r', '\n'));
+            PipelineDBProcedureExecutor.AddParameter(cmd, "@completionMessage", SqlType.VarChar, 512, compMsg.Trim('\r', '\n'));
             PipelineDBProcedureExecutor.AddParameter(cmd, "@evaluationCode", SqlType.Int).Value = evalCode;
-            PipelineDBProcedureExecutor.AddParameter(cmd, "@evaluationMessage", SqlType.VarChar, 256, evalMsg.Trim('\r', '\n'));
+            PipelineDBProcedureExecutor.AddParameter(cmd, "@evaluationMessage", SqlType.VarChar, 512, evalMsg.Trim('\r', '\n'));
             var returnParam = PipelineDBProcedureExecutor.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, ParameterDirection.Output);
 
             if (!TryGetParam("PeptideSearch", AnalysisResources.JOB_PARAM_GENERATED_FASTA_NAME, out var orgDbName))
