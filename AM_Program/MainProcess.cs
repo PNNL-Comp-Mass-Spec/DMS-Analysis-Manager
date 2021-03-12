@@ -1011,9 +1011,9 @@ namespace AnalysisManagerProg
                 var resourcesRetrieved = RetrieveResources(toolResourcer, jobNum, datasetName, out resultCode);
                 if (!resourcesRetrieved)
                 {
-                    if (resultCode == CloseOutType.SKIPPED_MZ_REFINERY)
+                    if (SkippedStepTool(resultCode))
                     {
-                        // This is not an error; we're simply skipping MZ_Refinery
+                        // This is not an error; we're simply skipping the step tool
                         return CloseOutType.CLOSEOUT_SUCCESS;
                     }
 
@@ -2332,10 +2332,10 @@ namespace AnalysisManagerProg
 
                 string compMsg;
                 bool errorProcessing;
-                if (resultCode == CloseOutType.SKIPPED_MZ_REFINERY)
+                if (SkippedStepTool(resultCode))
                 {
                     compMsg = string.IsNullOrWhiteSpace(toolResourcer.Message) ? string.Empty : toolResourcer.Message;
-                    errorProcessing=false;
+                    errorProcessing =false;
                 }
                 else
                 {
@@ -2674,6 +2674,17 @@ namespace AnalysisManagerProg
         public static void ShowTraceMessage(string message, int emptyLinesBeforeMessage = 1)
         {
             BaseLogger.ShowTraceMessage(message, false, "  ", emptyLinesBeforeMessage);
+        }
+
+        /// <summary>
+        /// Return true if the result code indicates a step tool was skipped
+        /// </summary>
+        /// <param name="resultCode"></param>
+        private bool SkippedStepTool(CloseOutType resultCode)
+        {
+            return resultCode == CloseOutType.CLOSEOUT_SKIPPED_MAXQUANT ||
+                   resultCode == CloseOutType.CLOSEOUT_SKIPPED_MSXML_GEN ||
+                   resultCode == CloseOutType.CLOSEOUT_SKIPPED_MZ_REFINERY;
         }
 
         /// <summary>

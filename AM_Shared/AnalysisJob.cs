@@ -66,7 +66,7 @@ namespace AnalysisManagerBase
 
         /// <summary>
         /// Job parameters
-        /// The outer dictionary tracks section names, then the inner dictionary tracks key/value pairs within each section
+        /// The outer dictionary tracks section names; the inner dictionary tracks key/value pairs within each section
         /// </summary>
         protected readonly Dictionary<string, Dictionary<string, string>> mJobParams;
 
@@ -718,12 +718,17 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Return true if toolRunnerResult is CLOSEOUT_SUCCESS or CLOSEOUT_NO_DATA
+        /// Return true if toolRunnerResult is CLOSEOUT_SUCCESS or CLOSEOUT_NO_DATA or if a step tool was skipped
         /// </summary>
         /// <param name="toolRunnerResult"></param>
         public static bool SuccessOrNoData(CloseOutType toolRunnerResult)
         {
-            return toolRunnerResult == CloseOutType.CLOSEOUT_SUCCESS || toolRunnerResult == CloseOutType.CLOSEOUT_NO_DATA;
+            return toolRunnerResult is
+                       CloseOutType.CLOSEOUT_SUCCESS or
+                       CloseOutType.CLOSEOUT_NO_DATA or
+                       CloseOutType.CLOSEOUT_SKIPPED_MAXQUANT or
+                       CloseOutType.CLOSEOUT_SKIPPED_MSXML_GEN or
+                       CloseOutType.CLOSEOUT_SKIPPED_MZ_REFINERY;
         }
 
         /// <summary>

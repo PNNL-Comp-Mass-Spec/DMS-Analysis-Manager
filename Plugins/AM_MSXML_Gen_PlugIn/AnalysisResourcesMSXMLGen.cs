@@ -27,6 +27,23 @@ namespace AnalysisManagerMsXmlGenPlugIn
                     return result;
                 }
 
+                currentTask = "Examine processing options";
+                var msXmlGenerator = mJobParams.GetParam("MSXMLGenerator");    // ReAdW.exe or MSConvert.exe
+                var msXmlFormat = mJobParams.GetParam("MSXMLOutputType");      // Typically mzXML or mzML
+
+                if (string.IsNullOrWhiteSpace(msXmlGenerator) || string.IsNullOrWhiteSpace(msXmlFormat))
+                {
+                    LogError("Job parameters are invalid: MSXMLGenerator and MSXMLOutputType must be defined for this step tool");
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                if (msXmlGenerator.Equals("skip", StringComparison.OrdinalIgnoreCase))
+                {
+                    EvalMessage = "Skipping MSXMLGen since job parameter MSXMLGenerator is 'skip'";
+                    LogMessage(EvalMessage);
+                    return CloseOutType.CLOSEOUT_SKIPPED_MSXML_GEN;
+                }
+
                 currentTask = "Determine RawDataType";
 
                 // The ToolName job parameter holds the name of the job script we are executing
@@ -38,7 +55,6 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 {
                     // Make sure the settings file has MSXMLOutputType=mzML, not mzXML
 
-                    var msXmlFormat = mJobParams.GetParam("MSXMLOutputType");
                     if (string.IsNullOrWhiteSpace(msXmlFormat))
                     {
                         LogError("Job parameter MSXMLOutputType must be defined in the settings file");
