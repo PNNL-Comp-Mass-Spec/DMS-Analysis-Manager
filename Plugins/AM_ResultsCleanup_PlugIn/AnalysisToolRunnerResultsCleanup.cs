@@ -111,6 +111,12 @@ namespace AnalysisManagerResultsCleanupPlugin
                 // The ToolName job parameter holds the name of the pipeline script we are executing
                 var scriptName = mJobParams.GetJobParameter("JobParameters", "ToolName", string.Empty);
 
+                if (string.IsNullOrWhiteSpace(scriptName))
+                {
+                    LogError("Job parameter ToolName is missing (or an empty string); it should hold the pipeline script name");
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
                 if (scriptName.StartsWith("MaxQuant", StringComparison.OrdinalIgnoreCase))
                 {
                     return MaxQuantResultsCleanup(resultsDirectory);
