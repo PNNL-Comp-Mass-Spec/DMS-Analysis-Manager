@@ -42,6 +42,10 @@ namespace AnalysisManagerMaxQuantPlugIn
                     return result;
                 }
 
+                var workingDirectory = new DirectoryInfo(mWorkDir);
+
+                var transferDirectoryPath = GetTransferFolderPathForJobStep(useInputDirectory: true);
+
                 var paramFileName = mJobParams.GetParam(JOB_PARAM_PARAMETER_FILE);
                 currentTask = "RetrieveParamFile " + paramFileName;
 
@@ -49,11 +53,13 @@ namespace AnalysisManagerMaxQuantPlugIn
                 if (!FileSearch.RetrieveFile(paramFileName, mJobParams.GetParam("ParmFileStoragePath")))
                     return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
 
-                var previousStepParamFileFound = GetExistingToolParametersFile(paramFileName, out var previousJobStepParameterFilePath);
+                var previousStepParamFileFound = GetExistingToolParametersFile(
+                    workingDirectory, transferDirectoryPath, paramFileName, out var previousJobStepParameterFilePath);
 
                 if (previousStepParamFileFound)
                 {
-                    var skipStepToolPrevJobStep = CheckSkipMaxQuant(previousJobStepParameterFilePath, out var abortProcessingPrevJobStep, out var skipReason);
+                    var skipStepToolPrevJobStep = CheckSkipMaxQuant(
+                        workingDirectory, previousJobStepParameterFilePath, out var abortProcessingPrevJobStep, out var skipReason);
 
                     if (abortProcessingPrevJobStep)
                     {
@@ -69,7 +75,7 @@ namespace AnalysisManagerMaxQuantPlugIn
                 }
 
                 // Also examine the original parameter file, in case it has numeric values defined for startStepID
-                var skipStepTool = CheckSkipMaxQuant(paramFileName, out var abortProcessing, out var skipReason2);
+                var skipStepTool = CheckSkipMaxQuant(workingDirectory, paramFileName, out var abortProcessing, out var skipReason2);
 
                 if (abortProcessing)
                 {
@@ -94,22 +100,23 @@ namespace AnalysisManagerMaxQuantPlugIn
 
                 var dataPackageInfo = new DataPackageInfo(dataPackageID);
 
-                CloseOutType datasetSuccess;
+                CloseOutType datasetCopyResult;
 
                 if (dataPackageID > 0)
                 {
-                    datasetSuccess = RetrieveDataPackageDatasets(dataPackageInfo);
+                    datasetCopyResult = RetrieveDataPackageDatasets(dataPackageInfo);
                 }
                 else
                 {
-                    datasetSuccess = RetrieveSingleDataset(dataPackageInfo);
+                    datasetCopyResult = RetrieveSingleDataset(workingDirectory, dataPackageInfo);
                 }
 
-                if (datasetSuccess != CloseOutType.CLOSEOUT_SUCCESS)
+                if (datasetCopyResult != CloseOutType.CLOSEOUT_SUCCESS)
                 {
-                    return datasetSuccess;
+                    return datasetCopyResult;
                 }
 
+                // Store information about the datasets in several packed job parameters
                 dataPackageInfo.StorePackedDictionaries(this);
 
                 // Find files in the transfer directory that should be copied locally
@@ -194,7 +201,7 @@ namespace AnalysisManagerMaxQuantPlugIn
 
             try
             {
-                var sourceFile = new FileInfo(Path.Combine(mWorkDir, maxQuantParameterFileName));
+                var sourceFile = new FileInfo(Path.Combine(workingDirectory.FullName, maxQuantParameterFileName));
 
                 using var reader = new StreamReader(new FileStream(sourceFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
 
@@ -328,7 +335,11 @@ namespace AnalysisManagerMaxQuantPlugIn
         /// If found, copy to the working directory, naming it ToolParameters_JobNum_PreviousStep.xml
         /// </summary>
         /// <returns>True if success, false if an error</returns>
-        private bool GetExistingToolParametersFile(string paramFileName, out string previousJobStepParameterFilePath)
+        private bool GetExistingToolParametersFile(
+            FileSystemInfo workingDirectory,
+            string transferDirectoryPath,
+            string paramFileName,
+            out string previousJobStepParameterFilePath)
         {
             previousJobStepParameterFilePath = string.Empty;
             if (Global.OfflineMode)
@@ -343,7 +354,6 @@ namespace AnalysisManagerMaxQuantPlugIn
                     return true;
                 }
 
-                var transferDirectoryPath = GetTransferFolderPathForJobStep(useInputDirectory: true);
                 if (string.IsNullOrEmpty(transferDirectoryPath))
                 {
                     // Transfer directory parameter is empty; nothing to retrieve
@@ -359,7 +369,7 @@ namespace AnalysisManagerMaxQuantPlugIn
                 }
 
                 // Copy the file, renaming to avoid a naming collision
-                var destinationFilePath = Path.Combine(mWorkDir, Path.GetFileNameWithoutExtension(sourceFile.Name) + "_PreviousStep.xml");
+                var destinationFilePath = Path.Combine(workingDirectory.FullName, Path.GetFileNameWithoutExtension(sourceFile.Name) + "_PreviousStep.xml");
                 if (mFileCopyUtilities.CopyFileWithRetry(sourceFile.FullName, destinationFilePath, overwrite: true, maxCopyAttempts: 3))
                 {
                     if (mDebugLevel > 3)
@@ -424,7 +434,7 @@ namespace AnalysisManagerMaxQuantPlugIn
             }
         }
 
-        private CloseOutType RetrieveSingleDataset(DataPackageInfo dataPackageInfo)
+        private CloseOutType RetrieveSingleDataset(FileSystemInfo workingDirectory, DataPackageInfo dataPackageInfo)
         {
             var currentTask = "Initializing";
 
@@ -504,7 +514,7 @@ namespace AnalysisManagerMaxQuantPlugIn
                         }
 
                         currentTask = "ProcessMyEMSLDownloadQueue";
-                        if (mMyEMSLUtilities.ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadLayout.FlatNoSubdirectories))
+                        if (mMyEMSLUtilities.ProcessMyEMSLDownloadQueue(workingDirectory.FullName, MyEMSLReader.Downloader.DownloadLayout.FlatNoSubdirectories))
                         {
                             break;
                         }
