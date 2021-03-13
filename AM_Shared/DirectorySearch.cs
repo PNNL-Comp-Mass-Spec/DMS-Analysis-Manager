@@ -73,7 +73,7 @@ namespace AnalysisManagerBase
         /// <param name="jobParams"></param>
         /// <param name="myEmslUtilities"></param>
         /// <param name="datasetName"></param>
-        /// <param name="debugLevel"></param>
+        /// <param name="debugLevel">Debug Level for logging; 1=minimal logging; 5=detailed logging</param>
         /// <param name="auroraAvailable"></param>
         public DirectorySearch(
             FileCopyUtilities fileCopyUtilities,

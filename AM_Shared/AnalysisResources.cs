@@ -3372,7 +3372,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="fileToPurge"></param>
         /// <param name="legacyFastaFileBaseName"></param>
-        /// <param name="debugLevel"></param>
+        /// <param name="debugLevel">Debug Level for logging; 1=minimal logging; 5=detailed logging</param>
         /// <param name="preview"></param>
         /// <returns>Number of bytes deleted</returns>
         private static long PurgeFastaFiles(FileInfo fileToPurge, string legacyFastaFileBaseName, short debugLevel, bool preview)
@@ -3668,7 +3668,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="maxDirSizeFile">MaxDirSize.txt file in the organism DB directory (or parent directory if processing files on a remote share, e.g. \\gigasax\MSGFPlus_Index_Files)</param>
         /// <param name="legacyFastaFileBaseName">Base FASTA file name for the current analysis job</param>
-        /// <param name="debugLevel">Debug level (1 for normal, 2 for more verbose)</param>
+        /// <param name="debugLevel">Debug Level for logging; 1=minimal logging; 5=detailed logging</param>
         /// <param name="preview">When true, preview the files that would be deleted</param>
         /// <returns>True if the MaxDirSize.txt file exists and has a valid MaxSizeGB threshold</returns>
         public static bool PurgeFastaFilesUsingSpaceUsedThreshold(FileInfo maxDirSizeFile, string legacyFastaFileBaseName, short debugLevel, bool preview)

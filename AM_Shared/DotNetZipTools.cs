@@ -22,8 +22,12 @@ namespace AnalysisManagerBase
         #region "Properties"
 
         /// <summary>
-        /// Debug level
+        /// Debug level: ranges from 0 (minimum output) to 5 (max detail)
         /// </summary>
+        /// <remarks>
+        /// In this class, ZipStats are reported if DebugLevel is 2 or higher
+        /// Status event messages will be shown if DebugLevel is 3 or higher
+        /// </remarks>
         public int DebugLevel { get; set; }
 
         /// <summary>

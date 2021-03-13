@@ -440,7 +440,7 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Copy failed results from the working directory to the DMS_FailedResults directory on the local computer
+        /// Copy failed results from the working directory to the DMS_FailedResults directory on the local computer (does not recurse)
         /// </summary>
         /// <remarks>
         /// Prior to calling this method, add files to ignore using
@@ -1019,6 +1019,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Make the local results directory, move files into that directory, then copy the files to the transfer directory on the Proto-x server
         /// </summary>
+        /// <param name="transferDirectoryPathOverride">Optional: transfer directory path override</param>
         /// <returns>True if success, otherwise false</returns>
         /// <remarks>
         /// Uses MakeResultsDirectory, MoveResultFiles, and CopyResultsFolderToServer

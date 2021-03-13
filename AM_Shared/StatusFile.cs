@@ -268,7 +268,7 @@ namespace AnalysisManagerBase
         /// Constructor
         /// </summary>
         /// <param name="statusFilePath">Full path to status file</param>
-        /// <param name="debugLevel"></param>
+        /// <param name="debugLevel">Debug Level for logging; 1=minimal logging; 5=detailed logging</param>
         public StatusFile(string statusFilePath, int debugLevel)
         {
             mMgrStatusMap = new Dictionary<EnumMgrStatus, string>();

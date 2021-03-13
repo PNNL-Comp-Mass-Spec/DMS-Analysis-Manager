@@ -94,8 +94,8 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Initialize mFileTools
         /// </summary>
-        /// <param name="mgrName"></param>
-        /// <param name="debugLevel"></param>
+        /// <param name="mgrName">Manager name</param>
+        /// <param name="debugLevel">Debug Level for logging; 1=minimal logging; 5=detailed logging</param>
         protected void InitFileTools(string mgrName, short debugLevel)
         {
             ResetTimestampForQueueWaitTimeLogging();
