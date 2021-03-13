@@ -2785,9 +2785,9 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Adds manager assembly data to job summary file
         /// </summary>
-        /// <param name="OutputPath">Path to summary file</param>
+        /// <param name="outputDirectory">Path to summary file</param>
         /// <remarks>Skipped if the debug level is less than 4</remarks>
-        protected void OutputSummary(string OutputPath)
+        protected void OutputSummary(string outputDirectory)
         {
             if (mDebugLevel < 4)
             {
@@ -2804,7 +2804,7 @@ namespace AnalysisManagerBase
 
             if (!mJobParams.ResultFilesToSkip.Contains(summaryFileName))
             {
-                mSummaryFile.SaveSummaryFile(Path.Combine(OutputPath, summaryFileName));
+                mSummaryFile.SaveSummaryFile(Path.Combine(outputDirectory, summaryFileName));
             }
         }
 
