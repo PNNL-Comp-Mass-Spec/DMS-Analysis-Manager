@@ -107,6 +107,8 @@
     <Compile Include="DBStatusLogger.cs" />
     <Compile Include="DBTask.cs" />
     <Compile Include="DotNetZipTools.cs" />
+    <Compile Include="FileAndDirectoryTools\SubdirectoryFileCompressor.cs" />
+    <Compile Include="FileAndDirectoryTools\WorkingDirectoryMetadata.cs" />
     <Compile Include="FileCopyUtilities.cs" />
     <Compile Include="DirectorySearch.cs" />
     <Compile Include="FormattedXMLWriter.cs" />
@@ -187,6 +189,7 @@
       <Version>3.7.4</Version>
     </PackageReference>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>xcopy "$(TargetPath)" "$(ProjectDir)..\AM_Common\" /D /Y

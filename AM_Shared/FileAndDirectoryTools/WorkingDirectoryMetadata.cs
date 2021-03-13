@@ -1,0 +1,96 @@
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using PRISM;
+
+namespace AnalysisManagerBase.FileAndDirectoryTools
+{
+    internal class WorkingDirectoryMetadata : EventNotifier
+    {
+        public struct FileMetadata
+        {
+            public string Name;
+            public long Length;
+            public DateTime LastModifiedUTC;
+        }
+
+        public Dictionary<string, Dictionary<string, FileMetadata>> WorkingDirectoryFiles { get; }
+
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        public WorkingDirectoryMetadata()
+        {
+            WorkingDirectoryFiles = new Dictionary<string, Dictionary<string, FileMetadata>>();
+        }
+
+        /// <summary>
+        /// Store information about a file in the working directory
+        /// </summary>
+        /// <param name="fileToAdd"></param>
+        public void AddWorkingDirectoryFile(FileInfo fileToAdd)
+        {
+            if (fileToAdd.Directory == null)
+            {
+                OnWarningEvent("Cannot add file to metadata dictionary since unable to determine the parent directory: " + fileToAdd.FullName);
+                return;
+            }
+
+            var parentDirectoryPath = fileToAdd.Directory.FullName;
+
+            var metadata = new FileMetadata
+            {
+                Name = fileToAdd.Name,
+                Length = fileToAdd.Length,
+                LastModifiedUTC = fileToAdd.LastWriteTimeUtc
+            };
+
+            AddWorkingDirectoryFile(parentDirectoryPath, metadata);
+        }
+
+        /// <summary>
+        /// Store information about a file in the working directory
+        /// </summary>
+        /// <param name="parentDirectoryPath"></param>
+        /// <param name="metadata"></param>
+        public void AddWorkingDirectoryFile(string parentDirectoryPath, FileMetadata metadata)
+        {
+            if (WorkingDirectoryFiles.TryGetValue(parentDirectoryPath, out var subdirectoryFiles))
+            {
+                if (subdirectoryFiles.ContainsKey(metadata.Name))
+                {
+                    OnWarningEvent("Subdirectory already has metadata stored file; skipping " + Path.Combine(parentDirectoryPath, metadata.Name));
+                    return;
+                }
+
+                subdirectoryFiles.Add(metadata.Name, metadata);
+                return;
+            }
+
+            WorkingDirectoryFiles.Add(
+                parentDirectoryPath,
+                new Dictionary<string, FileMetadata> {
+                    {metadata.Name, metadata}
+                });
+        }
+
+        public bool TryGetFile(FileInfo targetFile, out FileMetadata fileMetadata)
+        {
+            if (targetFile.Directory == null)
+            {
+                OnWarningEvent("Cannot look for file in metadata dictionary since unable to determine the parent directory: " + targetFile.FullName);
+                fileMetadata = new();
+                return false;
+            }
+
+            if (WorkingDirectoryFiles.TryGetValue(targetFile.Directory.FullName, out var subdirectoryFiles) &&
+                subdirectoryFiles.TryGetValue(targetFile.Name, out fileMetadata))
+            {
+                return true;
+            }
+
+            fileMetadata = new();
+            return false;
+        }
+    }
+}
