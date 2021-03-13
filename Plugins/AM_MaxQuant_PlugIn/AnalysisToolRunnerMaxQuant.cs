@@ -16,7 +16,7 @@ using System.Xml.Linq;
 
 namespace AnalysisManagerMaxQuantPlugIn
 {
-    // Ignore Spelling: Quant, deisotoping, apl
+    // Ignore Spelling: Quant, deisotoping, apl, proc, txt
 
     /// <summary>
     /// Class for running MaxQuant analysis

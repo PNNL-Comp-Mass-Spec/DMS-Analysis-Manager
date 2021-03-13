@@ -12,6 +12,8 @@ namespace AnalysisManagerBase
     /// </summary>
     public class DotNetZipTools : EventNotifier
     {
+        // Ignore Spelling: gzipping, crc
+
         /// <summary>
         /// DotNetZip name (used for logging)
         /// </summary>
