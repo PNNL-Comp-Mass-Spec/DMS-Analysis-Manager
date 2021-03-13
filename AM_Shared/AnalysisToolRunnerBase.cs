@@ -1027,6 +1027,20 @@ namespace AnalysisManagerBase
         /// </remarks>
         public virtual bool CopyResultsToTransferDirectory(string transferDirectoryPathOverride = "")
         {
+            return CopyResultsToTransferDirectory(false, transferDirectoryPathOverride);
+        }
+
+        /// <summary>
+        /// Make the local results directory, move files into that directory, then copy the files to the transfer directory on the Proto-x server
+        /// </summary>
+        /// <param name="includeSubdirectories">When true, also copy subdirectories</param>
+        /// <param name="transferDirectoryPathOverride">Optional: transfer directory path override</param>
+        /// <returns>True if success, otherwise false</returns>
+        /// <remarks>
+        /// Uses MakeResultsDirectory, MoveResultFiles, and CopyResultsFolderToServer
+        /// </remarks>
+        public bool CopyResultsToTransferDirectory(bool includeSubdirectories, string transferDirectoryPathOverride = "")
+        {
             if (Global.OfflineMode)
             {
                 LogDebug("Offline mode is enabled; leaving results in the working directory: " + mWorkDir);
@@ -1041,7 +1055,7 @@ namespace AnalysisManagerBase
                 return false;
             }
 
-            var moveSucceed = MoveResultFiles();
+            var moveSucceed = MoveResultFiles(includeSubdirectories);
             if (!moveSucceed)
             {
                 // Note that MoveResultFiles should have already called AnalysisResults.CopyFailedResultsToArchiveFolder
@@ -2479,14 +2493,10 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Makes results directory and moves files into it
         /// </summary>
-        protected bool MoveResultFiles()
+        /// <param name="includeSubdirectories">When true, also copy subdirectories</param>
+        protected bool MoveResultFiles(bool includeSubdirectories = false)
         {
-            const int REJECT_LOGGING_THRESHOLD = 10;
-            const int ACCEPT_LOGGING_THRESHOLD = 50;
-            const int LOG_LEVEL_REPORT_ACCEPT_OR_REJECT = 5;
-
-            var resultsDirectoryNamePath = string.Empty;
-            var currentFileName = string.Empty;
+            var currentResultsDirectoryPath = string.Empty;
 
             var errorEncountered = false;
 
@@ -2498,14 +2508,18 @@ namespace AnalysisManagerBase
                     EnumTaskStatus.RUNNING,
                     EnumTaskStatusDetail.PACKAGING_RESULTS, 0);
 
-                resultsDirectoryNamePath = Path.Combine(mWorkDir, mResultsDirectoryName);
-                var rejectStats = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+                var workingDirectory = new DirectoryInfo(mWorkDir);
+
+                var resultsDirectoryPath = Path.Combine(workingDirectory.FullName, mResultsDirectoryName);
+                currentResultsDirectoryPath = string.Copy(resultsDirectoryPath);
+
                 var acceptStats = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+                var rejectStats = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
 
                 // Log status
                 if (mDebugLevel >= 2)
                 {
-                    var logMessage = "Move Result Files to " + resultsDirectoryNamePath;
+                    var logMessage = "Move Result Files to " + currentResultsDirectoryPath;
                     if (mDebugLevel >= 3)
                     {
                         logMessage += "; ResultFilesToSkip contains " + mJobParams.ResultFilesToSkip.Count + " entries" + "; " +
@@ -2515,170 +2529,16 @@ namespace AnalysisManagerBase
                     LogMessage(logMessage, mDebugLevel);
                 }
 
-                // Obtain a list of all files in the working directory
-                // Ignore subdirectories
-                var files = Directory.GetFiles(mWorkDir, "*");
+                var targetDirectory = new DirectoryInfo(currentResultsDirectoryPath);
+                MoveResultFiles(workingDirectory, targetDirectory, false, acceptStats, rejectStats, ref errorEncountered);
 
-                // Check each file against mJobParams.m_ResultFileExtensionsToSkip and mJobParams.m_ResultFilesToKeep
-
-                foreach (var tmpFileName in files)
+                if (includeSubdirectories)
                 {
-                    var okToMove = true;
-                    currentFileName = tmpFileName;
-
-                    // Assure that this is a file name and not a file path
-                    var tmpFileNameLCase = Path.GetFileName(tmpFileName).ToLower();
-
-                    // Check to see if the filename is defined in ResultFilesToSkip
-                    // Note that entries in ResultFilesToSkip are not case sensitive since they were instantiated using SortedSet<string>(StringComparer.OrdinalIgnoreCase)
-                    if (mJobParams.ResultFilesToSkip.Contains(tmpFileNameLCase))
+                    foreach (var subdirectory in workingDirectory.GetDirectories())
                     {
-                        // File found in the ResultFilesToSkip list; do not move it
-                        okToMove = false;
-                    }
-
-                    if (okToMove)
-                    {
-                        // Check to see if the file ends with an entry specified in ResultFileExtensionsToSkip
-                        // Note that entries in ResultFileExtensionsToSkip can be extensions, or can even be partial file names, e.g. _peaks.txt
-                        foreach (var ext in mJobParams.ResultFileExtensionsToSkip)
-                        {
-                            if (tmpFileNameLCase.EndsWith(ext, StringComparison.OrdinalIgnoreCase))
-                            {
-                                okToMove = false;
-                                break;
-                            }
-                        }
-                    }
-
-                    if (!okToMove)
-                    {
-                        // Check to see if the file is a result file that got captured as a non result file
-                        if (mJobParams.ResultFilesToKeep.Contains(tmpFileNameLCase))
-                        {
-                            okToMove = true;
-                        }
-                    }
-
-                    if (okToMove && FileTools.IsVimSwapFile(tmpFileName))
-                    {
-                        // VIM swap file; skip it
-                        okToMove = false;
-                    }
-
-                    // Look for invalid characters in the filename
-                    // (Required because extract_msn.exe sometimes leaves files with names like "C3 90 68 C2" (ASCII codes) in working directory)
-                    // Note: now evaluating each character in the filename
-                    if (okToMove)
-                    {
-                        foreach (var character in Path.GetFileName(tmpFileName))
-                        {
-                            var asciiValue = (int)character;
-                            if (asciiValue <= 31 || asciiValue >= 128)
-                            {
-                                // Invalid character found
-                                okToMove = false;
-                                LogDebug(" MoveResultFiles: Accepted file:  " + tmpFileName);
-                                break;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        if (mDebugLevel >= LOG_LEVEL_REPORT_ACCEPT_OR_REJECT)
-                        {
-                            var fileExtension = Path.GetExtension(tmpFileName);
-
-                            if (rejectStats.TryGetValue(fileExtension, out var rejectCount))
-                            {
-                                rejectStats[fileExtension] = rejectCount + 1;
-                            }
-                            else
-                            {
-                                rejectStats.Add(fileExtension, 1);
-                            }
-
-                            // Only log the first 10 times files of a given extension are rejected
-                            //  However, if a file was rejected due to invalid characters in the name, we don't track that rejection with rejectStats
-                            if (rejectStats[fileExtension] <= REJECT_LOGGING_THRESHOLD)
-                            {
-                                LogDebug(" MoveResultFiles: Rejected file:  " + tmpFileName);
-                            }
-                        }
-                    }
-
-                    if (!okToMove)
-                        continue;
-
-                    // If valid file name, move file to results directory
-                    if (mDebugLevel >= LOG_LEVEL_REPORT_ACCEPT_OR_REJECT)
-                    {
-                        var fileExtension = Path.GetExtension(tmpFileName);
-
-                        if (acceptStats.TryGetValue(fileExtension, out var acceptCount))
-                        {
-                            acceptStats[fileExtension] = acceptCount + 1;
-                        }
-                        else
-                        {
-                            acceptStats.Add(fileExtension, 1);
-                        }
-
-                        // Only log the first 50 times files of a given extension are accepted
-                        if (acceptStats[fileExtension] <= ACCEPT_LOGGING_THRESHOLD)
-                        {
-                            LogDebug(" MoveResultFiles: Accepted file:  " + tmpFileName);
-                        }
-                    }
-
-                    string targetFilePath = null;
-                    try
-                    {
-                        targetFilePath = Path.Combine(resultsDirectoryNamePath, Path.GetFileName(tmpFileName));
-                        File.Move(tmpFileName, targetFilePath);
-                    }
-                    catch (Exception)
-                    {
-                        try
-                        {
-                            if (!string.IsNullOrWhiteSpace(targetFilePath))
-                            {
-                                // Move failed
-                                // Attempt to copy the file instead of moving the file
-                                File.Copy(tmpFileName, targetFilePath, true);
-
-                                // If we get here, the copy succeeded;
-                                // The original file (in the work directory) will get deleted when the work directory is "cleaned" after the job finishes
-                            }
-                        }
-                        catch (Exception ex2)
-                        {
-                            // Copy also failed
-                            // Continue moving files; we'll fail the results at the end of this function
-                            LogError(" MoveResultFiles: error moving/copying file: " + tmpFileName, ex2);
-                            errorEncountered = true;
-                        }
-                    }
-                }
-
-                if (mDebugLevel >= LOG_LEVEL_REPORT_ACCEPT_OR_REJECT)
-                {
-                    // Look for any extensions in acceptStats that had over 50 accepted files
-                    foreach (var extension in acceptStats)
-                    {
-                        if (extension.Value > ACCEPT_LOGGING_THRESHOLD)
-                        {
-                            LogDebug(" MoveResultFiles: Accepted a total of " + extension.Value + " files with extension " + extension.Key);
-                        }
-                    }
-
-                    // Look for any extensions in rejectStats that had over 10 rejected files
-                    foreach (var extension in rejectStats)
-                    {
-                        if (extension.Value > REJECT_LOGGING_THRESHOLD)
-                        {
-                            LogDebug(" MoveResultFiles: Rejected a total of " + extension.Value + " files with extension " + extension.Key);
-                        }
+                        currentResultsDirectoryPath = Path.Combine(resultsDirectoryPath, subdirectory.Name);
+                        var subDirTargetDirectory = new DirectoryInfo(currentResultsDirectoryPath);
+                        MoveResultFiles(subdirectory, subDirTargetDirectory, true, acceptStats, rejectStats, ref errorEncountered);
                     }
                 }
             }
@@ -2687,8 +2547,7 @@ namespace AnalysisManagerBase
                 if (mDebugLevel > 0)
                 {
                     LogMessage("AnalysisToolRunnerBase.MoveResultFiles(); Error moving files to results directory", 0, true);
-                    LogMessage("CurrentFile = " + currentFileName);
-                    LogMessage("Results directory name = " + resultsDirectoryNamePath);
+                    LogMessage("Results directory name = " + currentResultsDirectoryPath);
                 }
 
                 LogErrorToDatabase("Error moving results files, job " + Job + ex.Message);
@@ -2699,8 +2558,8 @@ namespace AnalysisManagerBase
 
             try
             {
-                // Make the summary file
-                OutputSummary(resultsDirectoryNamePath);
+                // Make the summary file (if mDebugLevel is >= 4)
+                OutputSummary(Path.Combine(mWorkDir, mResultsDirectoryName));
             }
             catch (Exception)
             {
@@ -2717,6 +2576,197 @@ namespace AnalysisManagerBase
             }
 
             return true;
+        }
+
+        private void MoveResultFiles(
+            DirectoryInfo sourceDirectory, FileSystemInfo targetDirectory, bool recurse,
+            IDictionary<string, int> acceptStats, IDictionary<string, int> rejectStats,
+            ref bool errorEncountered)
+        {
+            const int REJECT_LOGGING_THRESHOLD = 10;
+            const int ACCEPT_LOGGING_THRESHOLD = 50;
+            const int LOG_LEVEL_REPORT_ACCEPT_OR_REJECT = 5;
+
+            var currentFileName = string.Empty;
+
+            try
+            {
+                // Obtain a list of all files in the source directory, possibly recursing
+                var searchOption = recurse ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
+
+                // Check each file against mJobParams.m_ResultFileExtensionsToSkip and mJobParams.m_ResultFilesToKeep
+
+                foreach (var sourceFile in sourceDirectory.GetFiles("*", searchOption))
+                {
+                    var okToMove = true;
+                    currentFileName = sourceFile.Name;
+
+                    // Check to see if the filename is defined in ResultFilesToSkip
+                    // Note that entries in ResultFilesToSkip are not case sensitive since the list was instantiated using SortedSet<string>(StringComparer.OrdinalIgnoreCase)
+                    if (mJobParams.ResultFilesToSkip.Contains(sourceFile.Name))
+                    {
+                        // File found in the ResultFilesToSkip list; do not move it
+                        okToMove = false;
+                    }
+
+                    if (okToMove)
+                    {
+                        // Check to see if the file ends with an entry specified in ResultFileExtensionsToSkip
+                        // Note that entries in ResultFileExtensionsToSkip can be extensions, or can even be partial file names, e.g. _peaks.txt
+                        foreach (var ext in mJobParams.ResultFileExtensionsToSkip)
+                        {
+                            if (sourceFile.Name.EndsWith(ext, StringComparison.OrdinalIgnoreCase))
+                            {
+                                okToMove = false;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (!okToMove)
+                    {
+                        // Check to see if the file is a result file that got captured as a non result file
+                        if (mJobParams.ResultFilesToKeep.Contains(sourceFile.Name))
+                        {
+                            okToMove = true;
+                        }
+                    }
+
+                    if (okToMove && FileTools.IsVimSwapFile(sourceFile.Name))
+                    {
+                        // VIM swap file; skip it
+                        okToMove = false;
+                    }
+
+                    // Look for invalid characters in the filename
+                    // (Required because extract_msn.exe sometimes leaves files with names like "C3 90 68 C2" (ASCII codes) in working directory)
+                    // Note: now evaluating each character in the filename
+                    if (okToMove)
+                    {
+                        foreach (var character in sourceFile.Name)
+                        {
+                            var asciiValue = (int)character;
+                            if (asciiValue <= 31 || asciiValue >= 128)
+                            {
+                                // Invalid character found
+                                okToMove = false;
+                                LogDebug(" MoveResultFiles: Accepted file:  " + sourceFile.Name);
+                                break;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if (mDebugLevel >= LOG_LEVEL_REPORT_ACCEPT_OR_REJECT)
+                        {
+                            var fileExtension = sourceFile.Extension;
+
+                            if (rejectStats.TryGetValue(fileExtension, out var rejectCount))
+                            {
+                                rejectStats[fileExtension] = rejectCount + 1;
+                            }
+                            else
+                            {
+                                rejectStats.Add(fileExtension, 1);
+                            }
+
+                            // Only log the first 10 times files of a given extension are rejected
+                            //  However, if a file was rejected due to invalid characters in the name, we don't track that rejection with rejectStats
+                            if (rejectStats[fileExtension] <= REJECT_LOGGING_THRESHOLD)
+                            {
+                                LogDebug(" MoveResultFiles: Rejected file:  " + sourceFile.Name);
+                            }
+                        }
+                    }
+
+                    if (!okToMove)
+                        continue;
+
+                    // If valid file name, move file to results directory
+                    if (mDebugLevel >= LOG_LEVEL_REPORT_ACCEPT_OR_REJECT)
+                    {
+                        var fileExtension = sourceFile.Extension;
+
+                        if (acceptStats.TryGetValue(fileExtension, out var acceptCount))
+                        {
+                            acceptStats[fileExtension] = acceptCount + 1;
+                        }
+                        else
+                        {
+                            acceptStats.Add(fileExtension, 1);
+                        }
+
+                        // Only log the first 50 times files of a given extension are accepted
+                        if (acceptStats[fileExtension] <= ACCEPT_LOGGING_THRESHOLD)
+                        {
+                            LogDebug(" MoveResultFiles: Accepted file:  " + sourceFile.Name);
+                        }
+                    }
+
+                    string targetFilePath = null;
+                    try
+                    {
+                        targetFilePath = Path.Combine(targetDirectory.FullName, sourceFile.Name);
+                        sourceFile.MoveTo(targetFilePath);
+                    }
+                    catch (Exception)
+                    {
+                        try
+                        {
+                            if (!string.IsNullOrWhiteSpace(targetFilePath))
+                            {
+                                // Move failed
+                                // Attempt to copy the file instead of moving the file
+                                sourceFile.CopyTo(targetFilePath, true);
+
+                                // If we get here, the copy succeeded;
+                                // The original file (in the working directory) will get deleted when the working directory is "cleaned" after the job finishes
+                            }
+                        }
+                        catch (Exception ex2)
+                        {
+                            // Copy also failed
+                            // Continue moving files; we'll fail the results at the end of the calling method
+                            LogError(" MoveResultFiles: error moving/copying file: " + sourceFile.Name, ex2);
+                            errorEncountered = true;
+                        }
+                    }
+                }
+
+                if (mDebugLevel < LOG_LEVEL_REPORT_ACCEPT_OR_REJECT)
+                    return;
+
+                // Look for any extensions in acceptStats that had over 50 accepted files
+                foreach (var extension in acceptStats)
+                {
+                    if (extension.Value > ACCEPT_LOGGING_THRESHOLD)
+                    {
+                        LogDebug(" MoveResultFiles: Accepted a total of " + extension.Value + " files with extension " + extension.Key);
+                    }
+                }
+
+                // Look for any extensions in rejectStats that had over 10 rejected files
+                foreach (var extension in rejectStats)
+                {
+                    if (extension.Value > REJECT_LOGGING_THRESHOLD)
+                    {
+                        LogDebug(" MoveResultFiles: Rejected a total of " + extension.Value + " files with extension " + extension.Key);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                if (mDebugLevel > 0)
+                {
+                    LogMessage("AnalysisToolRunnerBase.MoveResultFiles(); Error moving files to results directory", 0, true);
+                    LogMessage("CurrentFile = " + currentFileName);
+                    LogMessage("Results directory = " + targetDirectory.FullName);
+                }
+
+                LogErrorToDatabase(string.Format("Error moving results files, job {0}: {1}", Job, ex.Message));
+                UpdateStatusMessage("Error moving results files");
+                errorEncountered = true;
+            }
         }
 
         /// <summary>
