@@ -13,6 +13,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Xml;
 using System.Xml.Linq;
+using AnalysisManagerBase.FileAndDirectoryTools;
 
 namespace AnalysisManagerMaxQuantPlugIn
 {
@@ -145,7 +146,7 @@ namespace AnalysisManagerMaxQuantPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                var success = CopyResultsToTransferDirectory();
+                var success = CopyResultsToTransferDirectory(true);
                 if (!success)
                     return CloseOutType.CLOSEOUT_FAILED;
 
@@ -158,20 +159,6 @@ namespace AnalysisManagerMaxQuantPlugIn
             }
         }
 
-        private CloseOutType PostProcessMaxQuantResults(MaxQuantRuntimeOptions runtimeOptions)
-        {
-            // ToDo: Zip subdirectories
-
-            // ToDo: Copy subdirectories to the transfer server
-
-            if (runtimeOptions.EndStepNumber >= MaxQuantRuntimeOptions.MAX_STEP_NUMBER)
-            {
-                // Examine outputs to determine which do not need to be copied to the transfer server
-            }
-
-            return CloseOutType.CLOSEOUT_FAILED;
-        }
-
         /// <summary>
         /// Copy failed results from the working directory to the DMS_FailedResults directory on the local computer
         /// </summary>
@@ -180,6 +167,55 @@ namespace AnalysisManagerMaxQuantPlugIn
             mJobParams.AddResultFileToSkip(Dataset + AnalysisResources.DOT_MZML_EXTENSION);
 
             base.CopyFailedResultsToArchiveDirectory();
+        }
+
+        private bool FindDirectoriesToSkip(
+            SubdirectoryFileCompressor subdirectoryCompressor,
+            MaxQuantRuntimeOptions runtimeOptions,
+            out List<DirectoryInfo> directoriesToSkip)
+        {
+            directoriesToSkip = new List<DirectoryInfo>();
+
+            try
+            {
+                foreach (var subdirectory in subdirectoryCompressor.WorkingDirectory.GetDirectories("*", SearchOption.AllDirectories))
+                {
+                    if (subdirectory.Parent == null)
+                    {
+                        LogError("Unable to determine the parent directory of " + subdirectory.FullName);
+                        return false;
+                    }
+
+                    if (runtimeOptions.EndStepNumber < MaxQuantRuntimeOptions.MAX_STEP_NUMBER)
+                    {
+                        var isUnchanged = subdirectoryCompressor.UnchangedDirectories.Any(item => item.FullName.Equals(subdirectory.FullName));
+
+                        if (isUnchanged)
+                            directoriesToSkip.Add(subdirectory);
+
+                        continue;
+                    }
+
+                    // skip all except the txt and proc directories below the combined subdirectory
+                    if (subdirectory.Parent.Name.Equals("combined", StringComparison.OrdinalIgnoreCase) &&
+                        (subdirectory.Name.Equals("proc", StringComparison.OrdinalIgnoreCase) ||
+                         subdirectory.Name.Equals("txt", StringComparison.OrdinalIgnoreCase)))
+                    {
+                        // Zip this directory
+                        continue;
+                    }
+
+                    directoriesToSkip.Add(subdirectory);
+                }
+
+                mJobParams.AddResultFileToSkip(SubdirectoryFileCompressor.WORKING_DIRECTORY_METADATA_FILE);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error in MaxQuantPlugin->FindDirectoriesToSkip", ex);
+                return false;
+            }
         }
 
         internal bool GetDmsStepDetails(XElement item, out DmsStepInfo dmsStepInfo)
@@ -258,6 +294,47 @@ namespace AnalysisManagerMaxQuantPlugIn
             }
 
             return coreCount;
+        }
+
+        private CloseOutType PostProcessMaxQuantResults(MaxQuantRuntimeOptions runtimeOptions)
+        {
+            try
+            {
+                var workingDirectory = new DirectoryInfo(mWorkDir);
+
+                var subdirectoryCompressor = new SubdirectoryFileCompressor(workingDirectory, mDebugLevel);
+                RegisterEvents(subdirectoryCompressor);
+
+                // Examine subdirectory names to determine which ones should be zipped and copied to the transfer directory
+                // Skip any that do not have any changed files
+
+                // Also, if runtimeOptions.EndStepNumber >= MaxQuantRuntimeOptions.MAX_STEP_NUMBER,
+                // skip all except the txt and proc directories below the combined subdirectory
+
+                var findUnchangedSuccess = subdirectoryCompressor.FindUnchangedDirectories();
+
+                if (!findUnchangedSuccess)
+                {
+                    LogWarning("SubdirectoryFileCompressor->FindUnchangedDirectories returned false");
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                var success = FindDirectoriesToSkip(subdirectoryCompressor, runtimeOptions, out var directoriesToSkip);
+
+                if (!success)
+                    return CloseOutType.CLOSEOUT_FAILED;
+
+                var successZipping = subdirectoryCompressor.ZipDirectories(directoriesToSkip);
+                if (!successZipping)
+                    return CloseOutType.CLOSEOUT_ERROR_ZIPPING_FILE;
+
+                return CloseOutType.CLOSEOUT_SUCCESS;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error in MaxQuantPlugin->PostProcessMaxQuantResults", ex);
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
         }
 
         /// <summary>
@@ -640,7 +717,7 @@ namespace AnalysisManagerMaxQuantPlugIn
             }
             catch (Exception ex)
             {
-                LogError("Exception updating the MaxQuant parameter file", ex);
+                LogError("Exception in UpdateMaxQuantParameterFileMetadata", ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
         }
@@ -743,7 +820,7 @@ namespace AnalysisManagerMaxQuantPlugIn
             }
             catch (Exception ex)
             {
-                LogError("Exception validating step ranges in the MaxQuant parameter file", ex);
+                LogError("Exception in UpdateMaxQuantParameterFileStartStepIDs", ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
         }
