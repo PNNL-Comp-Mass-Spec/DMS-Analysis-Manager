@@ -112,6 +112,12 @@ namespace AnalysisManagerMaxQuantPlugIn
 
                 dataPackageInfo.StorePackedDictionaries(this);
 
+                // Find files in the transfer directory that should be copied locally
+                // For zip files, copy and unzip each one
+                var fileCopyResult = RetrieveTransferDirectoryFiles(workingDirectory, transferDirectoryPath);
+
+                if (fileCopyResult != CloseOutType.CLOSEOUT_SUCCESS)
+                    return fileCopyResult;
                 return CloseOutType.CLOSEOUT_SUCCESS;
             }
             catch (Exception ex)
@@ -121,7 +127,67 @@ namespace AnalysisManagerMaxQuantPlugIn
             }
         }
 
-        private bool CheckSkipMaxQuant(string maxQuantParameterFileName, out bool abortProcessing, out string skipReason)
+        private CloseOutType RetrieveTransferDirectoryFiles(FileSystemInfo workingDirectory, string transferDirectoryPath)
+        {
+            var targetFilePath = "??";
+
+            try
+            {
+                if (string.IsNullOrEmpty(transferDirectoryPath))
+                {
+                    // Transfer directory parameter is empty; nothing to retrieve
+                    return CloseOutType.CLOSEOUT_SUCCESS;
+                }
+
+                var zipTools = new DotNetZipTools(mDebugLevel, workingDirectory.FullName);
+                RegisterEvents(zipTools);
+
+                var transferDirectory = new DirectoryInfo(transferDirectoryPath);
+
+                foreach (var item in transferDirectory.GetFiles("*", SearchOption.AllDirectories))
+                {
+                    var relativeFilePath = item.FullName.Substring(transferDirectory.FullName.Length);
+
+                    targetFilePath = Path.Combine(workingDirectory.FullName, relativeFilePath);
+                    var targetFile = new FileInfo(targetFilePath);
+
+                    if (targetFile.Exists)
+                        continue;
+
+                    var copySuccess = mFileTools.CopyFileUsingLocks(item, targetFile.FullName, true);
+                    if (!copySuccess)
+                    {
+                        LogError(string.Format("Error copying file {0} to {1}", item.FullName, targetFile.FullName));
+                        return CloseOutType.CLOSEOUT_FAILED;
+                    }
+
+                    if (!targetFile.Extension.Equals(".zip", StringComparison.OrdinalIgnoreCase))
+                        continue;
+
+                    var targetDirectory = Path.Combine(workingDirectory.FullName, Path.GetFileNameWithoutExtension(relativeFilePath));
+
+                    // Unzip the file
+                    var unzipSuccess = zipTools.UnzipFile(targetFile.FullName, targetDirectory);
+                    if (!unzipSuccess)
+                    {
+                        LogError(string.Format("Error unzipping file {0} to {1}", targetFile.FullName, targetDirectory));
+                        return CloseOutType.CLOSEOUT_FAILED;
+                    }
+
+                    // Delete the zip file
+                    targetFile.Delete();
+                }
+
+                return CloseOutType.CLOSEOUT_SUCCESS;
+            }
+            catch (Exception ex)
+            {
+                LogError("Exception in RetrieveTransferDirectoryFiles for file " + targetFilePath, ex);
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+        }
+
+        private bool CheckSkipMaxQuant(FileSystemInfo workingDirectory, string maxQuantParameterFileName, out bool abortProcessing, out string skipReason)
         {
             abortProcessing = false;
             skipReason = string.Empty;
