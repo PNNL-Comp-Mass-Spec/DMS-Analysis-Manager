@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Xml.Linq;
 using AnalysisManagerBase;
+using AnalysisManagerBase.FileAndDirectoryTools;
 
 namespace AnalysisManagerMaxQuantPlugIn
 {
@@ -125,6 +126,16 @@ namespace AnalysisManagerMaxQuantPlugIn
 
                 if (fileCopyResult != CloseOutType.CLOSEOUT_SUCCESS)
                     return fileCopyResult;
+
+                var subdirectoryCompressor = new SubdirectoryFileCompressor(workingDirectory, mDebugLevel);
+                RegisterEvents(subdirectoryCompressor);
+
+                // Create the working directory metadata file
+                var success = subdirectoryCompressor.CreateWorkingDirectoryMetadataFile();
+
+                if (!success)
+                    return CloseOutType.CLOSEOUT_FAILED;
+
                 return CloseOutType.CLOSEOUT_SUCCESS;
             }
             catch (Exception ex)
