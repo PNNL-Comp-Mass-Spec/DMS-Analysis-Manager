@@ -133,10 +133,7 @@ namespace AnalysisManagerMaxQuantPlugIn
                 // Create the working directory metadata file
                 var success = subdirectoryCompressor.CreateWorkingDirectoryMetadataFile();
 
-                if (!success)
-                    return CloseOutType.CLOSEOUT_FAILED;
-
-                return CloseOutType.CLOSEOUT_SUCCESS;
+                return success ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
             }
             catch (Exception ex)
             {
