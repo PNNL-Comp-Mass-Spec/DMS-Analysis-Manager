@@ -35,7 +35,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// List of unchanged directories
         /// </summary>
         /// <remarks>
-        /// Call ? to populate this list
+        /// Call <see cref="FindUnchangedDirectories"/> to populate this list
         /// </remarks>
         public List<DirectoryInfo> UnchangedDirectories { get; }
 
