@@ -251,9 +251,17 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// Zip subdirectories below the working directory
         /// </summary>
         /// <param name="directoriesToSkip">List of directories to not zip</param>
-        /// <param name="deleteFilesAfterZip">Set this to true to save disk space</param>
-        /// <returns></returns>
-        public bool ZipDirectories(IReadOnlyCollection<DirectoryInfo> directoriesToSkip, bool deleteFilesAfterZip = true)
+        /// <param name="directoriesToZipSubsSeparately">
+        /// List of directories where instead of zipping the directory itself, separately zip each subdirectory of the given directory
+        /// Keys are DirectoryInfo instances
+        /// Values are true if the directory's files should be zipped, or false if they should be left alone
+        /// </param>
+        /// <param name="deleteFilesAfterZip">When true, delete the source files after the .zip file is created (useful to save disk space)</param>
+        /// <returns>True if success, false if an error</returns>
+        public bool ZipDirectories(
+            IReadOnlyCollection<DirectoryInfo> directoriesToSkip,
+            Dictionary<DirectoryInfo, bool> directoriesToZipSubsSeparately,
+            bool deleteFilesAfterZip = true)
         {
             try
             {
@@ -262,7 +270,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
 
                 foreach (var subdirectory in WorkingDirectory.GetDirectories())
                 {
-                    var skipDirectory = directoriesToSkip.Any(item => item.FullName.Equals(subdirectory.FullName, StringComparison.OrdinalIgnoreCase));
+                    var skipDirectory = directoriesToSkip.Any(item => item.FullName.Equals(subdirectory.FullName));
 
                     if (skipDirectory)
                     {
@@ -270,27 +278,20 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                         continue;
                     }
 
-                    if (!subdirectory.Name.Equals("combined", StringComparison.OrdinalIgnoreCase))
-                    {
-                        var success = ZipDirectory(zipTools, subdirectory, deleteFilesAfterZip);
+                    var subdirectoriesZipped = ZipSubdirectoriesIfMatch(
+                        zipTools, directoriesToZipSubsSeparately, subdirectory, deleteFilesAfterZip, out var errorOccurred);
 
-                        if (!success)
-                        {
-                            return false;
-                        }
+                    if (subdirectoriesZipped)
                         continue;
-                    }
 
-                    // Zip each subdirectory in the "combined" directory separately
-                    // Leave the files in the "combined" directory unzipped
-                    foreach (var item in subdirectory.GetDirectories())
+                    if (errorOccurred)
+                        return false;
+
+                    var success = ZipDirectory(zipTools, subdirectory, deleteFilesAfterZip);
+
+                    if (!success)
                     {
-                        var success = ZipDirectory(zipTools, item, deleteFilesAfterZip);
-
-                        if (!success)
-                        {
-                            return false;
-                        }
+                        return false;
                     }
                 }
 
@@ -308,13 +309,13 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// </summary>
         /// <param name="zipTools"></param>
         /// <param name="directoryToZip"></param>
-        /// <param name="deleteFilesAfterZip">
-        /// When true, delete the source files after the .zip file is created (useful for save disk space)
-        /// </param>
+        /// <param name="recurse">True to include subdirectories</param>
+        /// <param name="deleteFilesAfterZip">When true, delete the source files after the .zip file is created (useful to save disk space)</param>
         /// <returns>True if successful; false if an error</returns>
         private bool ZipDirectory(
             DotNetZipTools zipTools,
             DirectoryInfo directoryToZip,
+            bool recurse = true,
             bool deleteFilesAfterZip = true)
         {
             try
@@ -327,7 +328,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
 
                 var zipFilePath = Path.Combine(directoryToZip.Parent.FullName, directoryToZip.Name + ".zip");
 
-                var success = zipTools.ZipDirectory(directoryToZip.FullName, zipFilePath, true);
+                var success = zipTools.ZipDirectory(directoryToZip.FullName, zipFilePath, recurse);
 
                 if (!success || !deleteFilesAfterZip)
                     return success;
@@ -344,6 +345,68 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                 OnErrorEvent("Error in SubdirectoryFileCompressor->ZipDirectory", ex);
                 return false;
             }
+        }
+
+        /// <summary>
+        /// Separately zip each of the subdirectories of the target directory
+        /// </summary>
+        /// <param name="zipTools"></param>
+        /// <param name="deleteFilesAfterZip">When true, delete the source files after the .zip file is created (useful to save disk space)</param>
+        /// <param name="targetDirectory"></param>
+        /// <param name="zipDirectoryFiles"></param>
+        /// <returns>True if success, false if an error</returns>
+        private bool ZipSubdirectories(DotNetZipTools zipTools, bool deleteFilesAfterZip, DirectoryInfo targetDirectory, bool zipDirectoryFiles)
+        {
+            foreach (var item in targetDirectory.GetDirectories())
+            {
+                var success = ZipDirectory(zipTools, item, deleteFilesAfterZip);
+
+                if (!success)
+                {
+                    return false;
+                }
+            }
+
+            if (!zipDirectoryFiles)
+                return true;
+
+            return ZipDirectory(zipTools, targetDirectory, false, deleteFilesAfterZip);
+        }
+
+        /// <summary>
+        /// If directoriesToZipSubsSeparately contains the current directory, zip each subdirectory separately
+        /// </summary>
+        /// <param name="zipTools"></param>
+        /// <param name="directoriesToZipSubsSeparately"></param>
+        /// <param name="currentDirectory"></param>
+        /// <param name="deleteFilesAfterZip">When true, delete the source files after the .zip file is created (useful to save disk space)</param>
+        /// <param name="errorOccurred">Output: true if an error occurs</param>
+        /// <returns>True if success, false if an error</returns>
+        private bool ZipSubdirectoriesIfMatch(
+            DotNetZipTools zipTools,
+            Dictionary<DirectoryInfo, bool> directoriesToZipSubsSeparately,
+            FileSystemInfo currentDirectory,
+            bool deleteFilesAfterZip, out bool errorOccurred)
+        {
+            errorOccurred = false;
+
+            foreach (var item in directoriesToZipSubsSeparately)
+            {
+                if (!item.Key.FullName.Equals(currentDirectory.FullName))
+                    continue;
+
+                // For this directory, zip each subdirectory separately
+                var zipDirectoryFiles = item.Value;
+
+                var success = ZipSubdirectories(zipTools, deleteFilesAfterZip, item.Key, zipDirectoryFiles);
+                if (success)
+                    return true;
+
+                errorOccurred = true;
+                return false;
+            }
+
+            return false;
         }
     }
 }

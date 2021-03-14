@@ -324,7 +324,15 @@ namespace AnalysisManagerMaxQuantPlugIn
                 if (!success)
                     return CloseOutType.CLOSEOUT_FAILED;
 
-                var successZipping = subdirectoryCompressor.ZipDirectories(directoriesToSkip);
+                // Keys are DirectoryInfo instances
+                // Values are true if the directory's files should be zipped, or false if they should be left alone
+                var directoriesToZipSubsSeparately = new Dictionary<DirectoryInfo, bool>();
+
+                var combinedDirectory = new DirectoryInfo(Path.Combine(workingDirectory.FullName));
+                if (combinedDirectory.Exists)
+                    directoriesToZipSubsSeparately.Add(combinedDirectory, false);
+
+                var successZipping = subdirectoryCompressor.ZipDirectories(directoriesToSkip, directoriesToZipSubsSeparately);
                 if (!successZipping)
                     return CloseOutType.CLOSEOUT_ERROR_ZIPPING_FILE;
 
