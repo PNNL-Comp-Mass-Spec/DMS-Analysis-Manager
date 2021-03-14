@@ -79,7 +79,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             if (targetFile.Directory == null)
             {
                 OnWarningEvent("Cannot look for file in metadata dictionary since unable to determine the parent directory: " + targetFile.FullName);
-                fileMetadata = new();
+                fileMetadata = new FileMetadata();
                 return false;
             }
 
@@ -89,7 +89,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                 return true;
             }
 
-            fileMetadata = new();
+            fileMetadata = new FileMetadata();
             return false;
         }
     }

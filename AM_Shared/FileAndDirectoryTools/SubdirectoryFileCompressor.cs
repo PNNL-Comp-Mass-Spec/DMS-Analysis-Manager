@@ -194,7 +194,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
 
         private bool ReadWorkingDirectoryMetadataFile(FileSystemInfo metadataFile, out WorkingDirectoryMetadata workingDirectoryMetadata)
         {
-            workingDirectoryMetadata = new();
+            workingDirectoryMetadata = new WorkingDirectoryMetadata();
             RegisterEvents(workingDirectoryMetadata);
 
             try
