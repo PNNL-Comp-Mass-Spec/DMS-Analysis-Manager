@@ -329,7 +329,7 @@ namespace AnalysisManagerBase
             var datasetName = curRow["Dataset"].CastDBVal<string>();
             var datasetId = curRow["DatasetID"].CastDBVal<int>();
 
-            var datasetInfo = new DataPackageDatasetInfo(datasetName, datasetId)
+            return new DataPackageDatasetInfo(datasetName, datasetId)
             {
                 Instrument = curRow["Instrument"].CastDBVal<string>(),
                 InstrumentGroup = curRow["InstrumentGroup"].CastDBVal<string>(),
@@ -345,8 +345,6 @@ namespace AnalysisManagerBase
                 DatasetArchivePath = curRow["Archive_Folder_Path"].CastDBVal<string>(),
                 RawDataType = curRow["RawDataType"].CastDBVal<string>()
             };
-
-            return datasetInfo;
         }
 
         /// <summary>
