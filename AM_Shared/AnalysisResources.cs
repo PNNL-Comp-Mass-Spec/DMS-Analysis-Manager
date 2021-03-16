@@ -2822,9 +2822,7 @@ namespace AnalysisManagerBase
                 return string.Empty;
             }
 
-            var transferDirectoryPath = Path.Combine(transferDirPathBase, datasetDirectoryName, directoryName);
-
-            return transferDirectoryPath;
+            return Path.Combine(transferDirPathBase, datasetDirectoryName, directoryName);
         }
 
         /// <summary>
