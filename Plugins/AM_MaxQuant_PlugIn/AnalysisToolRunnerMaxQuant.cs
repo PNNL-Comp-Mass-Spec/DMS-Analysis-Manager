@@ -45,6 +45,8 @@ namespace AnalysisManagerMaxQuantPlugIn
 
         private RunDosProgram mCmdRunner;
 
+        private MaxQuantRuntimeOptions RuntimeOptions { get; } = new();
+
         /// <summary>
         /// Dictionary mapping step number to the task description
         /// </summary>
@@ -76,6 +78,7 @@ namespace AnalysisManagerMaxQuantPlugIn
                 // Initialize class wide variables
                 mLastConsoleOutputParse = DateTime.UtcNow;
                 mConsoleOutputErrorMsg = string.Empty;
+
                 StepToTaskMap.Clear();
 
                 // Determine the path to MaxQuantCmd.exe
@@ -108,23 +111,23 @@ namespace AnalysisManagerMaxQuantPlugIn
                 // Customize the path to the FASTA file, the number of threads to use, the dataset files, etc.
                 // This will involve a dry-run of MaxQuant if startStepID values in the dmsSteps elements are "auto" instead of integers
 
-                var result = UpdateMaxQuantParameterFileMetadata(dataPackageInfo, out var runtimeOptions);
+                var result = UpdateMaxQuantParameterFileMetadata(dataPackageInfo);
 
                 if (result != CloseOutType.CLOSEOUT_SUCCESS)
                     return result;
 
-                if (!runtimeOptions.StepRangeValidated)
+                if (!RuntimeOptions.StepRangeValidated)
                 {
                     LogError("Aborting since the MaxQuant step range was not validated");
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 // Process one or more datasets using MaxQuant
-                var processingResult = StartMaxQuant(runtimeOptions);
+                var processingResult = StartMaxQuant();
 
                 if (processingResult == CloseOutType.CLOSEOUT_SUCCESS)
                 {
-                    processingResult = PostProcessMaxQuantResults(runtimeOptions);
+                    processingResult = PostProcessMaxQuantResults();
                 }
 
                 mProgress = PROGRESS_PCT_COMPLETE;
@@ -175,7 +178,6 @@ namespace AnalysisManagerMaxQuantPlugIn
 
         private bool FindDirectoriesToSkip(
             SubdirectoryFileCompressor subdirectoryCompressor,
-            MaxQuantRuntimeOptions runtimeOptions,
             out List<DirectoryInfo> directoriesToSkip)
         {
             directoriesToSkip = new List<DirectoryInfo>();
@@ -190,7 +192,7 @@ namespace AnalysisManagerMaxQuantPlugIn
                         return false;
                     }
 
-                    if (runtimeOptions.EndStepNumber < MaxQuantRuntimeOptions.MAX_STEP_NUMBER)
+                    if (RuntimeOptions.EndStepNumber < MaxQuantRuntimeOptions.MAX_STEP_NUMBER)
                     {
                         var isUnchanged = subdirectoryCompressor.UnchangedDirectories.Any(item => item.FullName.Equals(subdirectory.FullName));
 
@@ -307,7 +309,7 @@ namespace AnalysisManagerMaxQuantPlugIn
             return coreCount;
         }
 
-        private CloseOutType PostProcessMaxQuantResults(MaxQuantRuntimeOptions runtimeOptions)
+        private CloseOutType PostProcessMaxQuantResults()
         {
             try
             {
@@ -319,7 +321,7 @@ namespace AnalysisManagerMaxQuantPlugIn
                 // Examine subdirectory names to determine which ones should be zipped and copied to the transfer directory
                 // Skip any that do not have any changed files
 
-                // Also, if runtimeOptions.EndStepNumber >= MaxQuantRuntimeOptions.MAX_STEP_NUMBER,
+                // Also, if RuntimeOptions.EndStepNumber >= MaxQuantRuntimeOptions.MAX_STEP_NUMBER,
                 // skip all except the txt and proc directories below the combined subdirectory
 
                 var findUnchangedSuccess = subdirectoryCompressor.FindUnchangedDirectories();
@@ -330,7 +332,7 @@ namespace AnalysisManagerMaxQuantPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                var success = FindDirectoriesToSkip(subdirectoryCompressor, runtimeOptions, out var directoriesToSkip);
+                var success = FindDirectoriesToSkip(subdirectoryCompressor, out var directoriesToSkip);
 
                 if (!success)
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -505,7 +507,7 @@ namespace AnalysisManagerMaxQuantPlugIn
         {
             LogMessage("Running MaxQuant");
 
-            if (string.IsNullOrWhiteSpace(runtimeOptions.ParameterFilePath))
+            if (string.IsNullOrWhiteSpace(RuntimeOptions.ParameterFilePath))
             {
                 LogError("MaxQuant parameter file name returned by UpdateMaxQuantParameterFile is empty");
                 return CloseOutType.CLOSEOUT_FAILED;
@@ -514,17 +516,17 @@ namespace AnalysisManagerMaxQuantPlugIn
             // Set up and execute a program runner to run MaxQuant
             var cmdLineArguments = new List<string>();
 
-            if (runtimeOptions.DryRun)
+            if (RuntimeOptions.DryRun)
             {
-                cmdLineArguments.Add("--dry-run");
+                cmdLineArguments.Add("--dryrun");
             }
-            else if (runtimeOptions.StepRangeDefined)
+            else if (RuntimeOptions.StepRangeDefined)
             {
-                cmdLineArguments.Add("--partial-processing=" + runtimeOptions.StartStepNumber);
-                cmdLineArguments.Add("--partial-processing-end=" + runtimeOptions.EndStepNumber);
+                cmdLineArguments.Add("--partial-processing=" + RuntimeOptions.StartStepNumber);
+                cmdLineArguments.Add("--partial-processing-end=" + RuntimeOptions.EndStepNumber);
             }
 
-            cmdLineArguments.Add(runtimeOptions.ParameterFilePath);
+            cmdLineArguments.Add(RuntimeOptions.ParameterFilePath);
 
             var arguments = string.Join(" ", cmdLineArguments);
 
@@ -602,10 +604,8 @@ namespace AnalysisManagerMaxQuantPlugIn
             return success;
         }
 
-        private CloseOutType UpdateMaxQuantParameterFileMetadata(DataPackageInfo dataPackageInfo, out MaxQuantRuntimeOptions runtimeOptions)
+        private CloseOutType UpdateMaxQuantParameterFileMetadata(DataPackageInfo dataPackageInfo)
         {
-            runtimeOptions = new MaxQuantRuntimeOptions();
-
             try
             {
                 var paramFileName = mJobParams.GetParam(AnalysisResources.JOB_PARAM_PARAMETER_FILE);
@@ -728,11 +728,10 @@ namespace AnalysisManagerMaxQuantPlugIn
                 sourceFile.Delete();
                 updatedFile.MoveTo(Path.Combine(mWorkDir, paramFileName));
 
-                runtimeOptions.ParameterFilePath = updatedFile.FullName;
+                RuntimeOptions.ParameterFilePath = updatedFile.FullName;
 
                 // Determine the step range to use for the current step tool
-                var result = ValidateStepRange(runtimeOptions, dmsSteps);
-                return result;
+                return ValidateStepRange(dmsSteps);
             }
             catch (Exception ex)
             {
@@ -741,14 +740,12 @@ namespace AnalysisManagerMaxQuantPlugIn
             }
         }
 
-        private CloseOutType UpdateMaxQuantParameterFileStartStepIDs(
-            MaxQuantRuntimeOptions runtimeOptions,
-            IReadOnlyDictionary<int, DmsStepInfo> dmsSteps)
+        private CloseOutType UpdateMaxQuantParameterFileStartStepIDs(IReadOnlyDictionary<int, DmsStepInfo> dmsSteps)
         {
             try
             {
-                var sourceFile = new FileInfo(runtimeOptions.ParameterFilePath);
-                var updatedFile = new FileInfo(runtimeOptions.ParameterFilePath + "_NewID.xml");
+                var sourceFile = new FileInfo(RuntimeOptions.ParameterFilePath);
+                var updatedFile = new FileInfo(RuntimeOptions.ParameterFilePath + "_NewID.xml");
 
                 using (var reader = new StreamReader(new FileStream(sourceFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
@@ -833,7 +830,7 @@ namespace AnalysisManagerMaxQuantPlugIn
 
                 // Replace the original parameter file with the updated one
                 sourceFile.Delete();
-                updatedFile.MoveTo(runtimeOptions.ParameterFilePath);
+                updatedFile.MoveTo(RuntimeOptions.ParameterFilePath);
 
                 return CloseOutType.CLOSEOUT_SUCCESS;
             }
@@ -879,44 +876,39 @@ namespace AnalysisManagerMaxQuantPlugIn
         }
 
         /// <summary>
-        /// Validate the step range, updating runtimeOptions.StartStepNumber and runtimeOptions.EndStepNumber
         /// </summary>
-        /// <param name="runtimeOptions"></param>
         /// <param name="dmsSteps">Keys are step IDs, values are step info</param>
-        private CloseOutType ValidateStepRange(
-            MaxQuantRuntimeOptions runtimeOptions,
-            IReadOnlyDictionary<int, DmsStepInfo> dmsSteps)
         {
-            runtimeOptions.StepRangeValidated = false;
 
             try
             {
                 if (dmsSteps.Count == 0)
                 {
                     // All steps will be run
-                    runtimeOptions.StartStepNumber = 0;
-                    runtimeOptions.EndStepNumber = MaxQuantRuntimeOptions.MAX_STEP_NUMBER;
-                    runtimeOptions.StepRangeValidated = true;
+                    RuntimeOptions.StartStepNumber = 0;
+                    RuntimeOptions.EndStepNumber = MaxQuantRuntimeOptions.MAX_STEP_NUMBER;
+                    RuntimeOptions.StepRangeValidated = true;
 
                     return CloseOutType.CLOSEOUT_SUCCESS;
                 }
 
-                runtimeOptions.DryRun = false;
+                RuntimeOptions.DryRun = false;
                 foreach (var dmsStep in dmsSteps.Where(item => !item.Value.StartStepID.HasValue))
                 {
                     LogMessage(string.Format(
                         "In the MaxQuant parameter file, DMS step {0} has an undefined startStepID; " +
                         "running a dry run of MaxQuant to determine step IDs", dmsStep.Key));
 
-                    runtimeOptions.DryRun = true;
+                    RuntimeOptions.DryRun = true;
                     break;
                 }
 
                 bool usedDryRun;
-                if (runtimeOptions.DryRun)
+                if (RuntimeOptions.DryRun)
                 {
-                    var result = StartMaxQuant(runtimeOptions);
-                    runtimeOptions.DryRun = false;
+                    var result = StartMaxQuant();
+                    RuntimeOptions.DryRun = false;
+
                     usedDryRun = true;
 
                     if (result != CloseOutType.CLOSEOUT_SUCCESS)
@@ -956,6 +948,7 @@ namespace AnalysisManagerMaxQuantPlugIn
 
                 var dataSourceDescription = usedDryRun ? "console output from the MaxQuant dry run" : "MaxQuant parameter file";
 
+                // Verify that StartStepID is now defined for each of the steps
                 foreach (var dmsStep in dmsSteps)
                 {
                     if (!dmsStep.Value.StartStepID.HasValue)
@@ -971,7 +964,8 @@ namespace AnalysisManagerMaxQuantPlugIn
                     if (!dmsStep.Value.Tool.Equals(StepToolName, StringComparison.OrdinalIgnoreCase))
                         continue;
 
-                    runtimeOptions.StartStepNumber = dmsStep.Value.StartStepID.Value;
+                    RuntimeOptions.StartStepName = dmsStep.Value.StartStepName;
+                    RuntimeOptions.StartStepNumber = dmsStep.Value.StartStepID.Value;
 
                     var nextStepID = dmsStep.Key + 1;
                     if (dmsSteps.TryGetValue(nextStepID, out var nextDmsStep))
@@ -986,18 +980,19 @@ namespace AnalysisManagerMaxQuantPlugIn
                             return CloseOutType.CLOSEOUT_FAILED;
                         }
 
-                        runtimeOptions.EndStepNumber = nextDmsStep.StartStepID.Value - 1;
+                        RuntimeOptions.NextDMSStepStartStepName = nextDmsStep.StartStepName;
+                        RuntimeOptions.EndStepNumber = nextDmsStep.StartStepID.Value - 1;
                     }
                     else
                     {
-                        runtimeOptions.EndStepNumber = MaxQuantRuntimeOptions.MAX_STEP_NUMBER;
+                        RuntimeOptions.NextDMSStepStartStepName = string.Empty;
+                        RuntimeOptions.EndStepNumber = MaxQuantRuntimeOptions.MAX_STEP_NUMBER;
                     }
 
-                    runtimeOptions.EndStepNumber = MaxQuantRuntimeOptions.MAX_STEP_NUMBER;
-                    runtimeOptions.StepRangeValidated = true;
+                    RuntimeOptions.StepRangeValidated = true;
                 }
 
-                if (!runtimeOptions.StepRangeValidated)
+                if (!RuntimeOptions.StepRangeValidated)
                 {
                     LogError(string.Format(
                         "In the MaxQuant parameter file, none of the DMS steps matched the current step tool name: {0}",
@@ -1013,9 +1008,7 @@ namespace AnalysisManagerMaxQuantPlugIn
 
                 // Update the parameter file to switch from startStepID="auto" to startStepID="1"
 
-                var updateResult = UpdateMaxQuantParameterFileStartStepIDs(runtimeOptions, dmsSteps);
-
-                return updateResult;
+                return UpdateMaxQuantParameterFileStartStepIDs(dmsSteps);
             }
             catch (Exception ex)
             {
