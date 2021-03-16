@@ -2551,22 +2551,22 @@ namespace AnalysisManagerBase
 
             try
             {
-                jobInfo.ArchiveStoragePath = GetParentDirectoryPath(datasetInfo.ArchiveStoragePath);
+                jobInfo.ArchiveStoragePath = GetParentDirectoryPath(datasetInfo.DatasetArchivePath);
             }
             catch (Exception)
             {
-                LogTools.LogWarning("Exception in GetPseudoDataPackageJobInfo determining the parent directory of " + datasetInfo.ArchiveStoragePath);
-                jobInfo.ArchiveStoragePath = datasetInfo.ArchiveStoragePath.Replace(@"\" + datasetInfo.Dataset, string.Empty);
+                LogTools.LogWarning("Exception in GetPseudoDataPackageJobInfo determining the parent directory of " + datasetInfo.DatasetArchivePath);
+                jobInfo.ArchiveStoragePath = datasetInfo.DatasetArchivePath.Replace(@"\" + datasetInfo.Dataset, string.Empty);
             }
 
             try
             {
-                jobInfo.ServerStoragePath = GetParentDirectoryPath(datasetInfo.ServerStoragePath);
+                jobInfo.ServerStoragePath = GetParentDirectoryPath(datasetInfo.DatasetDirectoryPath);
             }
             catch (Exception)
             {
-                LogTools.LogWarning("Exception in GetPseudoDataPackageJobInfo determining the parent directory of " + datasetInfo.ServerStoragePath);
-                jobInfo.ServerStoragePath = datasetInfo.ServerStoragePath.Replace(@"\" + datasetInfo.Dataset, string.Empty);
+                LogTools.LogWarning("Exception in GetPseudoDataPackageJobInfo determining the parent directory of " + datasetInfo.DatasetDirectoryPath);
+                jobInfo.ServerStoragePath = datasetInfo.DatasetDirectoryPath.Replace(@"\" + datasetInfo.Dataset, string.Empty);
             }
 
             return jobInfo;
@@ -3211,13 +3211,13 @@ namespace AnalysisManagerBase
             {
                 // Update job params to have the details for the current dataset
                 // This is required so that we can use FindDataFile to find the desired files
-                if (string.IsNullOrEmpty(dataPkgDataset.ServerStoragePath))
+                if (string.IsNullOrEmpty(dataPkgDataset.DatasetDirectoryPath))
                 {
                     LogError("OverrideCurrentDatasetInfo; Column 'ServerStoragePath' not defined for dataset " + dataPkgDataset.Dataset + " in the data package");
                     return false;
                 }
 
-                if (string.IsNullOrEmpty(dataPkgDataset.ArchiveStoragePath))
+                if (string.IsNullOrEmpty(dataPkgDataset.DatasetArchivePath))
                 {
                     LogError("OverrideCurrentDatasetInfo; Column 'ArchiveStoragePath' not defined for dataset " + dataPkgDataset.Dataset + " in the data package");
                     return false;
@@ -3237,8 +3237,8 @@ namespace AnalysisManagerBase
 
             // In jobInfo, ArchiveStoragePath and ServerStoragePath track the directory just above the dataset directory
             // In contrast, in datasetInfo, ArchiveStoragePath and ServerStoragePath track the actual dataset directory path
-            mJobParams.AddAdditionalParameter(jobParamsSection, "DatasetStoragePath", GetParentDirectoryPath(dataPkgDataset.ServerStoragePath));
-            mJobParams.AddAdditionalParameter(jobParamsSection, "DatasetArchivePath", GetParentDirectoryPath(dataPkgDataset.ArchiveStoragePath));
+            mJobParams.AddAdditionalParameter(jobParamsSection, "DatasetStoragePath", GetParentDirectoryPath(dataPkgDataset.DatasetDirectoryPath));
+            mJobParams.AddAdditionalParameter(jobParamsSection, "DatasetArchivePath", GetParentDirectoryPath(dataPkgDataset.DatasetArchivePath));
 
             mJobParams.AddAdditionalParameter(jobParamsSection, JOB_PARAM_DATASET_FOLDER_NAME, dataPkgDataset.Dataset);
             mJobParams.AddAdditionalParameter(jobParamsSection, "RawDataType", dataPkgDataset.RawDataType);

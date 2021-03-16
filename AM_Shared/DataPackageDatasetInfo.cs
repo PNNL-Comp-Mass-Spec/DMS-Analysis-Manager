@@ -84,12 +84,13 @@ namespace AnalysisManagerBase
         /// <remarks>
         /// Example value: \\proto-8\QEHFX03\2021_1\QC_Dataset_15March21
         /// </remarks>
-        public string ServerStoragePath { get; set; }
+        public string DatasetDirectoryPath { get; set; }
 
         /// <summary>
         /// Archive directory path
         /// </summary>
-        public string ArchiveStoragePath { get; set; }
+        /// <remarks>This path is not applicable for datasets in MyEMSL</remarks>
+        public string DatasetArchivePath { get; set; }
 
         /// <summary>
         /// Instrument data type
@@ -116,8 +117,8 @@ namespace AnalysisManagerBase
             Experiment_Tissue_Name = string.Empty;
             Experiment_NEWT_ID = 0;
             Experiment_NEWT_Name = string.Empty;
-            ServerStoragePath = string.Empty;
-            ArchiveStoragePath = string.Empty;
+            DatasetDirectoryPath = string.Empty;
+            DatasetArchivePath = string.Empty;
             RawDataType = string.Empty;
         }
     }

@@ -341,8 +341,8 @@ namespace AnalysisManagerBase
                 Experiment_Tissue_Name = curRow["Experiment_Tissue_Name"].CastDBVal<string>(),
                 Experiment_NEWT_ID = curRow["Experiment_NEWT_ID"].CastDBVal<int>(),
                 Experiment_NEWT_Name = curRow["Experiment_NEWT_Name"].CastDBVal<string>(),
-                ServerStoragePath = curRow["Dataset_Folder_Path"].CastDBVal<string>(),
-                ArchiveStoragePath = curRow["Archive_Folder_Path"].CastDBVal<string>(),
+                DatasetDirectoryPath = curRow["Dataset_Folder_Path"].CastDBVal<string>(),
+                DatasetArchivePath = curRow["Archive_Folder_Path"].CastDBVal<string>(),
                 RawDataType = curRow["RawDataType"].CastDBVal<string>()
             };
 
