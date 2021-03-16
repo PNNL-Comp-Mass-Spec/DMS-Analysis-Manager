@@ -139,7 +139,7 @@ namespace AnalysisManagerBase
         public string FindDatasetFileOrDirectory(int maxAttempts, out bool isDirectory, bool assumeUnpurged = false)
         {
             var rawDataTypeName = mJobParams.GetParam("RawDataType");
-            var StoragePath = mJobParams.GetParam("DatasetStoragePath");
+            var storagePath = mJobParams.GetParam("DatasetStoragePath");
             var fileOrDirectoryPath = string.Empty;
 
             isDirectory = false;
@@ -150,8 +150,8 @@ namespace AnalysisManagerBase
                 case AnalysisResources.eRawDataTypeConstants.AgilentDFolder:
                     // Agilent ion trap data
 
-                    if (StoragePath.IndexOf("Agilent_SL1", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                        StoragePath.IndexOf("Agilent_XCT1", StringComparison.OrdinalIgnoreCase) >= 0)
+                    if (storagePath.IndexOf("Agilent_SL1", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                        storagePath.IndexOf("Agilent_XCT1", StringComparison.OrdinalIgnoreCase) >= 0)
                     {
                         // For Agilent Ion Trap datasets acquired on Agilent_SL1 or Agilent_XCT1 in 2005,
                         //  we would pre-process the data beforehand to create MGF files

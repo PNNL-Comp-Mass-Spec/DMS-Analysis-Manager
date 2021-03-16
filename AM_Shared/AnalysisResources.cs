@@ -2320,9 +2320,7 @@ namespace AnalysisManagerBase
             }
 
             // Combine the cache directory path, ToolNameVersion, and the dataset Year_Quarter code
-            var targetDirectoryPath = Path.Combine(cacheDirectoryPathBase, msXmlToolNameVersionDirectory, yearQuarter);
-
-            return targetDirectoryPath;
+            return Path.Combine(cacheDirectoryPathBase, msXmlToolNameVersionDirectory, yearQuarter);
         }
 
         /// <summary>
