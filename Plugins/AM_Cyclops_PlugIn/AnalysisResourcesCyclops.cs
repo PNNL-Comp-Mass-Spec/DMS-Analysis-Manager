@@ -64,7 +64,7 @@ namespace AnalysisManager_Cyclops_PlugIn
                     {
                         var proteinOptions = mJobParams.GetParam("ProteinOptions");
 
-                        if (proteinOptions.Length > 0 && !proteinOptions.ToLower().Equals("na"))
+                        if (proteinOptions.Length > 0 && !proteinOptions.Equals("na", StringComparison.OrdinalIgnoreCase))
                         {
                             // Override the Protein Options to force forward direction only
                             mJobParams.SetParam("PeptideSearch", "ProteinOptions", "seq_direction=forward,filetype=fasta");

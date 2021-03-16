@@ -2296,22 +2296,21 @@ namespace AnalysisManagerBase
         protected bool LoadSettingsFile()
         {
             var fileName = mJobParams.GetParam("SettingsFileName");
-            if (fileName != "na")
+            if (fileName.Equals("na", StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            var filePath = Path.Combine(mWorkDir, fileName);
+
+            // XML tool LoadSettings returns True even if file is not found, so a separate check is required
+            if (File.Exists(filePath))
             {
-                var filePath = Path.Combine(mWorkDir, fileName);
-
-                // XML tool LoadSettings returns True even if file is not found, so a separate check is required
-                if (File.Exists(filePath))
-                {
-                    return mSettingsFileParams.LoadSettings(filePath);
-                }
-
-                // Settings file wasn't found
-                return false;
+                return mSettingsFileParams.LoadSettings(filePath);
             }
 
+            // Settings file wasn't found
+            return false;
+
             // Settings file wasn't required
-            return true;
         }
 
         /// <summary>

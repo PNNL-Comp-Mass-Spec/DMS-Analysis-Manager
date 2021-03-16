@@ -384,7 +384,7 @@ namespace AnalysisManagerBase
             // This will be updated later for SplitFasta jobs (using function LookupJobParametersFromHistory)
             jobInfo.NumberOfClonedSteps = 0;
 
-            if (string.IsNullOrWhiteSpace(jobInfo.ProteinCollectionList) || jobInfo.ProteinCollectionList == "na")
+            if (string.IsNullOrWhiteSpace(jobInfo.ProteinCollectionList) || jobInfo.ProteinCollectionList.Equals("na", StringComparison.OrdinalIgnoreCase))
             {
                 jobInfo.LegacyFastaFileName = string.Copy(jobInfo.OrganismDBName);
             }

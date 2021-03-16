@@ -1519,8 +1519,8 @@ namespace AnalysisManagerBase
                     }
 
                     if ((string.IsNullOrEmpty(proteinCollectionInfo.ProteinCollectionList) ||
-                         proteinCollectionInfo.ProteinCollectionList.Equals("na")) &&
-                        !string.IsNullOrEmpty(legacyFastaToUse) && !legacyFastaToUse.Equals("na"))
+                         proteinCollectionInfo.ProteinCollectionList.Equals("na", StringComparison.OrdinalIgnoreCase)) &&
+                        !string.IsNullOrEmpty(legacyFastaToUse) && !legacyFastaToUse.Equals("na", StringComparison.OrdinalIgnoreCase))
                     {
                         mFastaFileName = legacyFastaToUse;
                     }
@@ -3314,7 +3314,7 @@ namespace AnalysisManagerBase
                 mJobParams.AddAdditionalParameter("PeptideSearch", JOB_PARAM_GENERATED_FASTA_NAME, dataPkgJob.OrganismDBName);
             }
 
-            if (string.IsNullOrWhiteSpace(dataPkgJob.ProteinCollectionList) || dataPkgJob.ProteinCollectionList == "na")
+            if (string.IsNullOrWhiteSpace(dataPkgJob.ProteinCollectionList) || dataPkgJob.ProteinCollectionList.Equals("na", StringComparison.OrdinalIgnoreCase))
             {
                 mJobParams.AddAdditionalParameter("PeptideSearch", "legacyFastaFileName", dataPkgJob.OrganismDBName);
             }

@@ -1604,7 +1604,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             var proteinOptions = mJobParams.GetParam("ProteinOptions");
 
-            if (string.IsNullOrEmpty(proteinOptions) || proteinOptions == "na")
+            if (string.IsNullOrEmpty(proteinOptions) || proteinOptions.Equals("na", StringComparison.OrdinalIgnoreCase))
             {
                 // Determine the fraction of the proteins that start with Reversed_ or XXX_ or XXX.
                 var decoyPrefixes = AnalysisResources.GetDefaultDecoyPrefixes();
