@@ -17,6 +17,8 @@ namespace AnalysisManagerBase
     /// </summary>
     public class RunDosProgram : EventNotifier
     {
+        // Ignore Spelling: usr
+
         #region "Module variables"
 
         /// <summary>
@@ -127,7 +129,7 @@ namespace AnalysisManagerBase
 
         /// <summary>
         /// When true then will cache the text the external program writes to the console
-        /// Can retrieve using the CachedConsoleOutput readonly property
+        /// Can retrieve using the CachedConsoleOutput read-only property
         /// Will also fire event ConsoleOutputEvent as new text is written to the console
         /// </summary>
         /// <remarks>If this is true, no window will be shown, even if CreateNoWindow=False</remarks>
@@ -461,7 +463,7 @@ namespace AnalysisManagerBase
                 mStopTime = DateTime.MinValue;
                 mIsRunning = true;
 
-                // Loop until program is complete, or until MaxRuntimeSeconds seconds elapses
+                // Loop until program is complete, or until MaxRuntimeSeconds elapses
                 while (mProgRunner.State != ProgRunner.States.NotMonitoring)
                 {
                     if (cachedProcessID == 0)

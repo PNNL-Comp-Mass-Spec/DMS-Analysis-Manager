@@ -1105,6 +1105,13 @@ namespace AnalysisManagerMaxQuantPlugIn
                 var dataSourceDescription = usedDryRun ? "console output from the MaxQuant dry run" : "MaxQuant parameter file";
 
                 // Verify that StartStepID is now defined for each of the steps
+
+                // Additionally, populate several properties in RuntimeOptions:
+                //   StartStepNumber
+                //   EndStepNumber
+                //   StartStepName
+                //   NextDMSStepStartStepName
+
                 foreach (var dmsStep in dmsSteps)
                 {
                     if (!dmsStep.Value.StartStepID.HasValue)
@@ -1163,7 +1170,6 @@ namespace AnalysisManagerMaxQuantPlugIn
                 }
 
                 // Update the parameter file to switch from startStepID="auto" to startStepID="1"
-
                 return UpdateMaxQuantParameterFileStartStepIDs(dmsSteps);
             }
             catch (Exception ex)

@@ -27,7 +27,7 @@ namespace AnalysisManagerProg
     /// </remarks>
     public class AnalysisMgrSettings : MgrSettingsDB, IMgrParams
     {
-        // Ignore Spelling: ack
+        // Ignore Spelling: ack, mgractive
 
         #region "Constants"
 
@@ -73,7 +73,7 @@ namespace AnalysisManagerProg
         public const string MGR_PARAM_LOCAL_TASK_QUEUE_PATH = "LocalTaskQueuePath";
 
         /// <summary>
-        /// Manager parameter: local work dir path
+        /// Manager parameter: local working directory path
         /// Used by managers running in Offline mode
         /// </summary>
         /// <remarks>
@@ -359,7 +359,7 @@ namespace AnalysisManagerProg
 
             ShowTrace("LoadBrokerDBSettings has BrokerConnectionString = " + connectionString);
 
-            // Construct the Sql to obtain the information:
+            // Construct the SQL to obtain the information:
             //   SELECT 'StepTool_ParamFileStoragePath_' + Name AS ParameterName, [Param File Storage Path] AS ParameterValue
             //   FROM V_Pipeline_Step_Tools_Detail_Report
             //   WHERE ISNULL([Param File Storage Path], '') <> ''
