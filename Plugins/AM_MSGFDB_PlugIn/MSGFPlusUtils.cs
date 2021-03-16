@@ -1591,16 +1591,16 @@ namespace AnalysisManagerMSGFDBPlugIn
             fastaFileSizeKB = 0;
             fastaFileIsDecoy = false;
 
-            var fiFastaFile = new FileInfo(fastaFilePath);
+            var fastaFile = new FileInfo(fastaFilePath);
 
-            if (!fiFastaFile.Exists)
+            if (!fastaFile.Exists)
             {
                 // Fasta file not found
-                OnErrorEvent("Fasta file not found: " + fiFastaFile.FullName);
+                OnErrorEvent("Fasta file not found: " + fastaFile.FullName);
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
-            fastaFileSizeKB = (float)(fiFastaFile.Length / 1024.0);
+            fastaFileSizeKB = (float)(fastaFile.Length / 1024.0);
 
             var proteinOptions = mJobParams.GetParam("ProteinOptions");
 
@@ -1610,7 +1610,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 var decoyPrefixes = AnalysisResources.GetDefaultDecoyPrefixes();
                 foreach (var decoyPrefix in decoyPrefixes)
                 {
-                    var fractionDecoy = AnalysisResources.GetDecoyFastaCompositionStats(fiFastaFile, decoyPrefix, out _);
+                    var fractionDecoy = AnalysisResources.GetDecoyFastaCompositionStats(fastaFile, decoyPrefix, out _);
                     if (fractionDecoy >= 0.25)
                     {
                         fastaFileIsDecoy = true;
@@ -1638,7 +1638,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 if (tdaValue == 0)
                 {
-                    if (!fastaFileIsDecoy && Global.BytesToGB(fiFastaFile.Length) > 1)
+                    if (!fastaFileIsDecoy && Global.BytesToGB(fastaFile.Length) > 1)
                     {
                         // Large Fasta file (over 1 GB in size)
                         // TDA is 0, so we're performing a forward-only search
@@ -1701,8 +1701,8 @@ namespace AnalysisManagerMSGFDBPlugIn
                 // Update fastaFilePath to use the path to the trimmed version
                 fastaFilePath = fastaFilePathTrimmed;
 
-                fiFastaFile.Refresh();
-                fastaFileSizeKB = (float)(fiFastaFile.Length / 1024.0);
+                fastaFile.Refresh();
+                fastaFileSizeKB = (float)(fastaFile.Length / 1024.0);
             }
 
             if (mDebugLevel >= 3 || (mDebugLevel >= 1 && fastaFileSizeKB > 500))
