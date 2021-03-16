@@ -2498,6 +2498,21 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
+        /// Get the full path of the parent directory just above directoryPath
+        /// </summary>
+        /// <param name="directoryPath"></param>
+        private static string GetParentDirectoryPath(string directoryPath)
+        {
+            var directory = new DirectoryInfo(directoryPath);
+
+            if (directory.Parent != null)
+                return directory.Parent.FullName;
+
+            throw new DirectoryNotFoundException("Parent of " + directory.FullName);
+
+        }
+
+        /// <summary>
         /// Gets fake job information for a dataset that is associated with a data package yet has no analysis jobs associated with the data package
         /// </summary>
         /// <param name="datasetInfo"></param>
@@ -2532,33 +2547,25 @@ namespace AnalysisManagerBase
             };
             jobInfo.SharedResultsFolders.Clear();
 
+
             try
             {
-                // Archive storage path and server storage path track the directory just above the dataset directory
-                var archiveStorageDir = new DirectoryInfo(datasetInfo.ArchiveStoragePath);
-                if (archiveStorageDir.Parent != null)
-                    jobInfo.ArchiveStoragePath = archiveStorageDir.Parent.FullName;
-                else
-                    throw new DirectoryNotFoundException("Parent of " + archiveStorageDir.FullName);
+                jobInfo.ArchiveStoragePath = GetParentDirectoryPath(datasetInfo.ArchiveStoragePath);
             }
             catch (Exception)
             {
                 LogTools.LogWarning("Exception in GetPseudoDataPackageJobInfo determining the parent directory of " + datasetInfo.ArchiveStoragePath);
-                jobInfo.ArchiveStoragePath = datasetInfo.ArchiveStoragePath.Replace(@"\" + datasetInfo.Dataset, "");
+                jobInfo.ArchiveStoragePath = datasetInfo.ArchiveStoragePath.Replace(@"\" + datasetInfo.Dataset, string.Empty);
             }
 
             try
             {
-                var datasetDirectory = new DirectoryInfo(datasetInfo.ServerStoragePath);
-                if (datasetDirectory.Parent != null)
-                    jobInfo.ServerStoragePath = datasetDirectory.Parent.FullName;
-                else
-                    throw new DirectoryNotFoundException("Parent of " + datasetDirectory.FullName);
+                jobInfo.ServerStoragePath = GetParentDirectoryPath(datasetInfo.ServerStoragePath);
             }
             catch (Exception)
             {
                 LogTools.LogWarning("Exception in GetPseudoDataPackageJobInfo determining the parent directory of " + datasetInfo.ServerStoragePath);
-                jobInfo.ServerStoragePath = datasetInfo.ServerStoragePath.Replace(@"\" + datasetInfo.Dataset, "");
+                jobInfo.ServerStoragePath = datasetInfo.ServerStoragePath.Replace(@"\" + datasetInfo.Dataset, string.Empty);
             }
 
             return jobInfo;
