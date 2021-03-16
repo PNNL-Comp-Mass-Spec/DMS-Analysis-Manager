@@ -565,7 +565,38 @@ namespace AnalysisManagerMaxQuantPlugIn
             }
         }
 
-        private CloseOutType StartMaxQuant(MaxQuantRuntimeOptions runtimeOptions)
+        private int RemoveNodeChildren(XContainer doc, string parentNodeName)
+        {
+            var childNodeCount = 0;
+
+            foreach (var parent in doc.Elements("MaxQuantParams").Elements(parentNodeName))
+            {
+                childNodeCount = parent.Descendants().Count();
+                parent.RemoveAll();
+            }
+
+            return childNodeCount;
+        }
+
+        /// <summary>
+        /// Find and remove all children of the given parent node (assuming there is only one instance of the parent)
+        /// Next, append new children nodes
+        /// </summary>
+        /// <param name="doc"></param>
+        /// <param name="parentNodeName"></param>
+        /// <param name="childNodes"></param>
+        private static void ReplaceChildNodes(XContainer doc, string parentNodeName, IEnumerable<XElement> childNodes)
+        {
+            var parentNode = doc.Elements("MaxQuantParams").Elements(parentNodeName).First();
+            parentNode.RemoveAll();
+
+            foreach (var item in childNodes)
+            {
+                parentNode.Add(item);
+            }
+        }
+
+        private CloseOutType StartMaxQuant()
         {
             LogMessage("Running MaxQuant");
 
@@ -677,7 +708,7 @@ namespace AnalysisManagerMaxQuantPlugIn
             {
                 var paramFileName = mJobParams.GetParam(AnalysisResources.JOB_PARAM_PARAMETER_FILE);
                 var sourceFile = new FileInfo(Path.Combine(mWorkDir, paramFileName));
-                var updatedFile = new FileInfo(Path.Combine(mWorkDir, paramFileName + ".new"));
+                var updatedFile = new FileInfo(Path.Combine(mWorkDir, paramFileName + "_CustomSettings.xml"));
 
                 var numThreadsToUse = GetNumThreadsToUse();
 
@@ -720,25 +751,25 @@ namespace AnalysisManagerMaxQuantPlugIn
 
                     var numThreadsNode = doc.Elements("MaxQuantParams").Elements("numThreads").ToList();
 
-                    var filePathNodes = doc.Elements("MaxQuantParams").Elements("filePaths").ToList();
+                    var filePathChildCount = RemoveNodeChildren(doc, "filePaths");
+                    var experimentChildCount = RemoveNodeChildren(doc, "experiments");
+                    var fractionChildCount = RemoveNodeChildren(doc, "fractions");
 
-                    var experimentNodes = doc.Elements("MaxQuantParams").Elements("experiments").ToList();
+                    var nodesToValidate = new Dictionary<string, int>
+                    {
+                        {"fastaFiles", fastaFileNodes.Count},
+                        {"numThreads", numThreadsNode.Count},
+                        {"filePaths", filePathChildCount},
+                        {"experiments", experimentChildCount},
+                        {"fractions", fractionChildCount}
+                    };
 
-                    var fractionNodes = doc.Elements("MaxQuantParams").Elements("fractions").ToList();
+                    if (!ValidateNodesPresent(nodesToValidate))
+                    {
+                        return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
+                    }
 
                     // Update the thread count
-                    if (numThreadsNode.Count == 0)
-                    {
-                        LogError("MaxQuant parameter file does not have 'numThreads' element; this is required");
-                        return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
-                    }
-
-                    if (fastaFileNodes.Count == 0)
-                    {
-                        LogError("MaxQuant parameter file does not have 'fastaFiles' element; this is required");
-                        return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
-                    }
-
                     numThreadsNode[0].Value = numThreadsToUse.ToString();
 
                     fastaFileNodes.Clear();
@@ -754,8 +785,9 @@ namespace AnalysisManagerMaxQuantPlugIn
 
                     fastaFileNodes.Add(fastaFileInfoNode);
 
-                    filePathNodes.Clear();
-                    experimentNodes.Clear();
+                    var filePathNodes = new List<XElement>();
+                    var experimentNodes = new List<XElement>();
+                    var fractionNodes = new List<XElement>();
 
                     // If the experiment ends in text similar to "_f22", assume this is a fractionated sample and this is fraction 22
                     var fractionMatcher = new Regex(@"_f(?<FractionNumber>\d+)$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
@@ -776,6 +808,19 @@ namespace AnalysisManagerMaxQuantPlugIn
                         var fractionNumber = match.Success ? match.Groups["FractionNumber"].Value : "32767";
                         fractionNodes.Add(new XElement("short", fractionNumber));
                     }
+
+                    // Replace the first FastaFileInfo node
+                    // Remove any extra nodes
+                    ReplaceChildNodes(doc, "fastaFiles", fastaFileNodes);
+
+                    // Replace the file path
+                    ReplaceChildNodes(doc, "filePaths", filePathNodes);
+
+                    // Replace the experiment nodes
+                    ReplaceChildNodes(doc, "experiments", experimentNodes);
+
+                    // Replace the fraction number
+                    ReplaceChildNodes(doc, "fractions", fractionNodes);
 
                     // Create the updated XML file
                     var settings = new XmlWriterSettings
@@ -870,6 +915,7 @@ namespace AnalysisManagerMaxQuantPlugIn
 
                             startStepIdAttribute.Value = dmsStep.Value.StartStepID.ToString();
                             stepMatched = true;
+                            break;
                         }
 
                         if (!stepMatched)
@@ -886,7 +932,7 @@ namespace AnalysisManagerMaxQuantPlugIn
                     {
                         Indent = true,
                         IndentChars = "   ",
-                        OmitXmlDeclaration = true
+                        OmitXmlDeclaration = false
                     };
 
                     using var outStream = new FileStream(updatedFile.FullName, FileMode.Create, FileAccess.Write, FileShare.ReadWrite);
@@ -943,6 +989,21 @@ namespace AnalysisManagerMaxQuantPlugIn
         }
 
         /// <summary>
+        /// Validate that each list in the dictionary has at least one item
+        /// </summary>
+        /// <param name="nodesToValidate">Keys are a description of the item, values the number of child nodes of each parent</param>
+        /// <returns>True all of the items are valid, otherwise false</returns>
+        private bool ValidateNodesPresent(Dictionary<string, int> nodesToValidate)
+        {
+            foreach (var item in nodesToValidate.Where(item => item.Value == 0))
+            {
+                LogError(string.Format("MaxQuant parameter file does not have a '{0}' element with one or more child nodes; this is required", item.Key));
+                return false;
+            }
+
+            return true;
+        }
+
         /// </summary>
         /// <param name="dmsSteps">Keys are step IDs, values are step info</param>
         {
