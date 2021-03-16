@@ -17,7 +17,7 @@ using AnalysisManagerBase.FileAndDirectoryTools;
 
 namespace AnalysisManagerMaxQuantPlugIn
 {
-    // Ignore Spelling: Quant, deisotoping, apl, proc, txt
+    // Ignore Spelling: Quant, deisotoping, apl, dryrun, proc, txt
 
     /// <summary>
     /// Class for running MaxQuant analysis
@@ -48,6 +48,10 @@ namespace AnalysisManagerMaxQuantPlugIn
         /// <summary>
         /// Dictionary mapping step number to the task description
         /// </summary>
+        /// <remarks>
+        /// Keys are step number
+        /// Values are step description
+        /// </remarks>
         private SortedDictionary<int, string> StepToTaskMap { get; } = new();
 
         /// <summary>
@@ -229,6 +233,13 @@ namespace AnalysisManagerMaxQuantPlugIn
             return false;
         }
 
+        /// <summary>
+        /// Examine the attributes of the XML node to determine DMS step metadata
+        /// </summary>
+        /// <param name="item">XML node to parse</param>
+        /// <param name="dmsStepInfo">Output: instance of DmsStepInfo</param>
+        /// <param name="errorMessage">Output: error message</param>
+        /// <returns>True if success, false if an error</returns>
         internal static bool GetDmsStepDetails(XElement item, out DmsStepInfo dmsStepInfo, out string errorMessage)
         {
             if (!Global.TryGetAttribute(item, "id", out var stepIdText))

@@ -7,10 +7,24 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
 {
     internal class WorkingDirectoryMetadata : EventNotifier
     {
+        /// <summary>
+        /// Tracks filename, size, and last modify date
+        /// </summary>
         public struct FileMetadata
         {
+            /// <summary>
+            /// Filename
+            /// </summary>
             public string Name;
+
+            /// <summary>
+            /// File size (bytes)
+            /// </summary>
             public long Length;
+
+            /// <summary>
+            /// Last write time
+            /// </summary>
             public DateTime LastModifiedUTC;
 
             /// <summary>
@@ -22,6 +36,13 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             }
         }
 
+        /// <summary>
+        /// Tracks files in the working directory and its subdirectories, by directory
+        /// </summary>
+        /// <remarks>
+        /// Keys are the path to a directory
+        /// Values are a dictionary of the files in that directory, with keys being filename and values instances of FileMetadata
+        /// </remarks>
         public Dictionary<string, Dictionary<string, FileMetadata>> WorkingDirectoryFiles { get; }
 
         /// <summary>
