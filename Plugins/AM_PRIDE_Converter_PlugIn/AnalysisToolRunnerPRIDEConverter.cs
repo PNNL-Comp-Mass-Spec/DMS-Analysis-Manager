@@ -528,7 +528,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     Console.WriteLine();
                     LogDebug(mStatusTools.CurrentOperation, 10);
 
-                    AddPlaceholderDatasetEntry(datasetInfo);
+                    AddPlaceholderDatasetEntry(datasetInfo.Value);
                 }
 
                 // If we were still unable to delete some files, we want to make sure that they don't end up in the results folder
@@ -580,19 +580,18 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             }
         }
 
-        private void AddPlaceholderDatasetEntry(KeyValuePair<int, DataPackageDatasetInfo> datasetInfo)
+        private void AddPlaceholderDatasetEntry(DataPackageDatasetInfo datasetInfo)
         {
-            AddExperimentTissueId(datasetInfo.Value.Experiment_Tissue_ID, datasetInfo.Value.Experiment_Tissue_Name);
+            AddExperimentTissueId(datasetInfo.Experiment_Tissue_ID, datasetInfo.Experiment_Tissue_Name);
 
-            AddNEWTInfo(datasetInfo.Value.Experiment_NEWT_ID, datasetInfo.Value.Experiment_NEWT_Name);
+            AddNEWTInfo(datasetInfo.Experiment_NEWT_ID, datasetInfo.Experiment_NEWT_Name);
 
             // Store the instrument group and instrument name
-            StoreInstrumentInfo(datasetInfo.Value);
+            StoreInstrumentInfo(datasetInfo);
 
-            var udtDatasetInfo = datasetInfo.Value;
-            var datasetRawFilePath = Path.Combine(udtDatasetInfo.ServerStoragePath, udtDatasetInfo.Dataset + ".raw");
+            var datasetRawFilePath = Path.Combine(datasetInfo.DatasetDirectoryPath, datasetInfo.Dataset + ".raw");
 
-            var dataPkgJob = AnalysisResources.GetPseudoDataPackageJobInfo(udtDatasetInfo);
+            var dataPkgJob = AnalysisResources.GetPseudoDataPackageJobInfo(datasetInfo);
 
             var rawFileID = AddPxFileToMasterList(datasetRawFilePath, dataPkgJob);
 
