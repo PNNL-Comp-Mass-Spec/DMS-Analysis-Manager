@@ -64,9 +64,8 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         {
             try
             {
-                var metadataFile = new FileInfo(Path.Combine(WorkingDirectory.FullName, WORKING_DIRECTORY_METADATA_FILE));
-
-                using var writer = new StreamWriter(new FileStream(metadataFile.FullName, FileMode.Create, FileAccess.Write, FileShare.ReadWrite));
+                var workingDirectoryMetadata = new WorkingDirectoryMetadata();
+                RegisterEvents(workingDirectoryMetadata);
 
                 foreach (var item in WorkingDirectory.GetFiles("*", SearchOption.AllDirectories))
                 {
@@ -76,7 +75,20 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                         return false;
                     }
 
-                    writer.WriteLine("{0}\t{1}\t{2}\t{3:O}", item.Directory.FullName, item.Name, item.Length, item.LastWriteTimeUtc);
+                    workingDirectoryMetadata.AddWorkingDirectoryFile(item);
+                }
+
+                var metadataFile = new FileInfo(Path.Combine(WorkingDirectory.FullName, WORKING_DIRECTORY_METADATA_FILE));
+
+                using var writer = new StreamWriter(new FileStream(metadataFile.FullName, FileMode.Create, FileAccess.Write, FileShare.ReadWrite));
+
+                foreach (var subdirectory in workingDirectoryMetadata.WorkingDirectoryFiles)
+                {
+                    var subdirectoryPath = subdirectory.Key;
+                    foreach (var item in subdirectory.Value)
+                    {
+                        writer.WriteLine("{0}\t{1}\t{2}\t{3:O}", subdirectoryPath, item.Value.Name, item.Value.Length, item.Value.LastModifiedUTC);
+                    }
                 }
 
                 return true;
@@ -336,6 +348,12 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                 foreach (var fileToDelete in directoryToZip.GetFiles("*", SearchOption.AllDirectories))
                 {
                     fileToDelete.Delete();
+                }
+
+                // Remove the directory if it is now empty
+                if (directoryToZip.GetFiles("*", SearchOption.AllDirectories).ToList().Count == 0)
+                {
+                    directoryToZip.Delete(true);
                 }
 
                 return true;

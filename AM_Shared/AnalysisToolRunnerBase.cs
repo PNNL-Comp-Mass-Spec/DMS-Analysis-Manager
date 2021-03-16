@@ -2535,8 +2535,13 @@ namespace AnalysisManagerBase
                 {
                     foreach (var subdirectory in workingDirectory.GetDirectories())
                     {
+                        if (subdirectory.FullName.Equals(targetDirectory.FullName))
+                            continue;
+
                         currentResultsDirectoryPath = Path.Combine(resultsDirectoryPath, subdirectory.Name);
                         var subDirTargetDirectory = new DirectoryInfo(currentResultsDirectoryPath);
+                        subDirTargetDirectory.Create();
+
                         MoveResultFiles(subdirectory, subDirTargetDirectory, true, acceptStats, rejectStats, ref errorEncountered);
                     }
                 }
