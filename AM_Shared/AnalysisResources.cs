@@ -1669,7 +1669,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Determines the most appropriate directory to use to obtain dataset files from
         /// Optionally, can require that a certain file also be present in the directory for it to be deemed valid
-        /// If no directory is deemed valid, returns the path defined by Job Param "DatasetStoragePath"
+        /// If no directory is deemed valid, returns the dataset directory path
         /// </summary>
         /// <param name="datasetName">Name of the dataset</param>
         /// <param name="fileNameToFind">Optional: Name of a file that must exist in the dataset directory; can contain a wildcard, e.g. *.zip</param>
@@ -2299,6 +2299,7 @@ namespace AnalysisManagerBase
         {
             errorMessage = string.Empty;
 
+            // DatasetStoragePath has the directory (on the storage server) just above the dataset directory
             var datasetStoragePath = jobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, "DatasetStoragePath");
             if (string.IsNullOrEmpty(datasetStoragePath))
             {
@@ -2547,6 +2548,8 @@ namespace AnalysisManagerBase
             };
             jobInfo.SharedResultsFolders.Clear();
 
+            // In jobInfo, ArchiveStoragePath and ServerStoragePath track the directory just above the dataset directory
+            // In contrast, in datasetInfo, ArchiveStoragePath and ServerStoragePath track the actual dataset directory path
 
             try
             {

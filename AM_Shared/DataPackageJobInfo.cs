@@ -119,8 +119,11 @@ namespace AnalysisManagerBase
         public string ProteinOptions { get; set; }
 
         /// <summary>
-        /// the directory (on the storage server) just above the dataset directory
+        /// The directory (on the storage server) just above the dataset directory
         /// </summary>
+        /// <remarks>
+        /// Example value: \\proto-8\QEHFX03\2021_1\
+        /// </remarks>
         public string ServerStoragePath { get; set; }
 
         /// <summary>

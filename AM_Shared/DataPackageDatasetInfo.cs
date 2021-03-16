@@ -81,6 +81,9 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Dataset directory path
         /// </summary>
+        /// <remarks>
+        /// Example value: \\proto-8\QEHFX03\2021_1\QC_Dataset_15March21
+        /// </remarks>
         public string ServerStoragePath { get; set; }
 
         /// <summary>
