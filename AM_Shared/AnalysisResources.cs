@@ -1841,18 +1841,15 @@ namespace AnalysisManagerBase
                 ResultType = mJobParams.GetJobParameter(jobParamsSection, "ResultType", string.Empty),
                 SettingsFileName = mJobParams.GetJobParameter(jobParamsSection, "SettingsFileName", string.Empty),
                 ParameterFileName = mJobParams.GetJobParameter("PeptideSearch", JOB_PARAM_PARAMETER_FILE, string.Empty),
-                LegacyFastaFileName = mJobParams.GetJobParameter("PeptideSearch", "legacyFastaFileName", string.Empty)
+                GeneratedFASTAFileName = mJobParams.GetJobParameter(jobParamsSection, JOB_PARAM_GENERATED_FASTA_NAME, string.Empty),
+                LegacyFastaFileName = mJobParams.GetJobParameter("PeptideSearch", "LegacyFastaFileName", string.Empty),
+                ProteinCollectionList = mJobParams.GetJobParameter("PeptideSearch", "ProteinCollectionList", string.Empty),
+                ProteinOptions = mJobParams.GetJobParameter("PeptideSearch", "ProteinOptions", string.Empty),
+                ServerStoragePath = mJobParams.GetJobParameter(jobParamsSection, "DatasetStoragePath", string.Empty),
+                ArchiveStoragePath = mJobParams.GetJobParameter(jobParamsSection, "DatasetArchivePath", string.Empty),
+                ResultsFolderName = mJobParams.GetJobParameter(jobParamsSection, JOB_PARAM_INPUT_FOLDER_NAME, string.Empty),
+                DatasetFolderName = mJobParams.GetJobParameter(jobParamsSection, JOB_PARAM_DATASET_FOLDER_NAME, string.Empty)
             };
-
-            jobInfo.OrganismDBName = string.Copy(jobInfo.LegacyFastaFileName);
-
-            jobInfo.ProteinCollectionList = mJobParams.GetJobParameter("PeptideSearch", "ProteinCollectionList", string.Empty);
-            jobInfo.ProteinOptions = mJobParams.GetJobParameter("PeptideSearch", "ProteinOptions", string.Empty);
-
-            jobInfo.ServerStoragePath = mJobParams.GetJobParameter(jobParamsSection, "DatasetStoragePath", string.Empty);
-            jobInfo.ArchiveStoragePath = mJobParams.GetJobParameter(jobParamsSection, "DatasetArchivePath", string.Empty);
-            jobInfo.ResultsFolderName = mJobParams.GetJobParameter(jobParamsSection, JOB_PARAM_INPUT_FOLDER_NAME, string.Empty);
-            jobInfo.DatasetFolderName = mJobParams.GetJobParameter(jobParamsSection, JOB_PARAM_DATASET_FOLDER_NAME, string.Empty);
 
             var sharedResultsDirectories = mJobParams.GetJobParameter(jobParamsSection, JOB_PARAM_SHARED_RESULTS_FOLDERS, string.Empty);
             foreach (var sharedResultsDirectory in sharedResultsDirectories.Split(','))
@@ -2536,7 +2533,7 @@ namespace AnalysisManagerBase
                 PeptideHitResultType = clsPHRPReader.PeptideHitResultTypes.Unknown,
                 SettingsFileName = string.Empty,
                 ParameterFileName = string.Empty,
-                OrganismDBName = string.Empty,
+                GeneratedFASTAFileName = string.Empty,
                 LegacyFastaFileName = string.Empty,
                 ProteinCollectionList = string.Empty,
                 ProteinOptions = string.Empty,
@@ -3316,24 +3313,8 @@ namespace AnalysisManagerBase
 
             mJobParams.AddAdditionalParameter("PeptideSearch", JOB_PARAM_PARAMETER_FILE, dataPkgJob.ParameterFileName);
 
-            if (string.IsNullOrWhiteSpace(dataPkgJob.OrganismDBName))
-            {
-                mJobParams.AddAdditionalParameter("PeptideSearch", JOB_PARAM_GENERATED_FASTA_NAME, "na");
-            }
-            else
-            {
-                mJobParams.AddAdditionalParameter("PeptideSearch", JOB_PARAM_GENERATED_FASTA_NAME, dataPkgJob.OrganismDBName);
-            }
-
-            if (string.IsNullOrWhiteSpace(dataPkgJob.ProteinCollectionList) || dataPkgJob.ProteinCollectionList.Equals("na", StringComparison.OrdinalIgnoreCase))
-            {
-                mJobParams.AddAdditionalParameter("PeptideSearch", "legacyFastaFileName", dataPkgJob.OrganismDBName);
-            }
-            else
-            {
-                mJobParams.AddAdditionalParameter("PeptideSearch", "legacyFastaFileName", "na");
-            }
-
+            mJobParams.AddAdditionalParameter("PeptideSearch", JOB_PARAM_GENERATED_FASTA_NAME, dataPkgJob.GeneratedFASTAFileName);
+            mJobParams.AddAdditionalParameter("PeptideSearch", "LegacyFastaFileName", dataPkgJob.LegacyFastaFileName);
             mJobParams.AddAdditionalParameter("PeptideSearch", "ProteinCollectionList", dataPkgJob.ProteinCollectionList);
             mJobParams.AddAdditionalParameter("PeptideSearch", "ProteinOptions", dataPkgJob.ProteinOptions);
 

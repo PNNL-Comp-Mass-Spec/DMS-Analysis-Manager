@@ -95,17 +95,16 @@ namespace AnalysisManagerBase
         public string ParameterFileName { get; set; }
 
         /// <summary>
-        /// Generated Fasta File Name or legacy fasta file name
+        /// Generated Fasta File Name
         /// </summary>
-        /// <remarks>
-        /// For jobs where ProteinCollectionList = 'na', this is the legacy fasta file name
-        /// Otherwise, this is the generated fasta file name (or "na")
-        /// </remarks>
-        public string OrganismDBName { get; set; }
-
+        public string GeneratedFASTAFileName { get; set; }
+        
         /// <summary>
         /// Legacy FASTA file name
         /// </summary>
+        /// <remarks>
+        /// Is initially an empty string, but is typically "na" when using a protein collection list
+        /// </remarks>
         public string LegacyFastaFileName { get; set; }
 
         /// <summary>
@@ -174,7 +173,7 @@ namespace AnalysisManagerBase
             PeptideHitResultType = clsPHRPReader.PeptideHitResultTypes.Unknown;
             SettingsFileName = string.Empty;
             ParameterFileName = string.Empty;
-            OrganismDBName = string.Empty;
+            GeneratedFASTAFileName = string.Empty;
             LegacyFastaFileName = string.Empty;
             ProteinCollectionList = string.Empty;
             ProteinOptions = string.Empty;

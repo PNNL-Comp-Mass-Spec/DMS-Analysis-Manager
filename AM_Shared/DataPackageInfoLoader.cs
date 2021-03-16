@@ -377,21 +377,12 @@ namespace AnalysisManagerBase
             jobInfo.PeptideHitResultType = clsPHRPReader.GetPeptideHitResultType(jobInfo.ResultType);
             jobInfo.SettingsFileName = curRow["SettingsFileName"].CastDBVal<string>();
             jobInfo.ParameterFileName = curRow["ParameterFileName"].CastDBVal<string>();
-            jobInfo.OrganismDBName = curRow["OrganismDBName"].CastDBVal<string>();
+            jobInfo.LegacyFastaFileName = curRow["OrganismDBName"].CastDBVal<string>();
             jobInfo.ProteinCollectionList = curRow["ProteinCollectionList"].CastDBVal<string>();
             jobInfo.ProteinOptions = curRow["ProteinOptions"].CastDBVal<string>();
 
             // This will be updated later for SplitFasta jobs (using function LookupJobParametersFromHistory)
             jobInfo.NumberOfClonedSteps = 0;
-
-            if (string.IsNullOrWhiteSpace(jobInfo.ProteinCollectionList) || jobInfo.ProteinCollectionList.Equals("na", StringComparison.OrdinalIgnoreCase))
-            {
-                jobInfo.LegacyFastaFileName = string.Copy(jobInfo.OrganismDBName);
-            }
-            else
-            {
-                jobInfo.LegacyFastaFileName = "na";
-            }
 
             jobInfo.ServerStoragePath = curRow["ServerStoragePath"].CastDBVal<string>();
             jobInfo.ArchiveStoragePath = curRow["ArchiveStoragePath"].CastDBVal<string>();
