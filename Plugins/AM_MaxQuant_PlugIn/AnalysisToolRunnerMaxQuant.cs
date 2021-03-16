@@ -1004,9 +1004,16 @@ namespace AnalysisManagerMaxQuantPlugIn
             return true;
         }
 
+        /// <summary>
+        /// Validate the step range, updating RuntimeOptions.StartStepNumber and RuntimeOptions.EndStepNumber
+        /// This will involve a dry-run of MaxQuant if startStepID values in the dmsSteps elements are "auto" instead of integers
         /// </summary>
         /// <param name="dmsSteps">Keys are step IDs, values are step info</param>
+        private CloseOutType ValidateStepRange(IReadOnlyDictionary<int, DmsStepInfo> dmsSteps)
         {
+            const string FINISH_WRITING_TABLES = "Finish writing tables";
+
+            RuntimeOptions.StepRangeValidated = false;
 
             try
             {
@@ -1066,6 +1073,13 @@ namespace AnalysisManagerMaxQuantPlugIn
 
                     if (unresolvedStepCount > 0)
                     {
+                        return CloseOutType.CLOSEOUT_FAILED;
+                    }
+
+                    // Assure that the final step appeared in the DryRun console output
+                    if (!StepToTaskMap.Values.Contains(FINISH_WRITING_TABLES))
+                    {
+                        LogError(string.Format("MaxQuant dry run did not include step '{0}'; aborting", FINISH_WRITING_TABLES));
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
                 }
