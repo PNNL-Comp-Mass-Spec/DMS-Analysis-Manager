@@ -86,7 +86,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Status code
         /// </summary>
-        protected EnumMgrStatus mStatusCode;
+        protected MgrStatusCodes mStatusCode;
 
         /// <summary>
         /// DTA count for status report
@@ -795,7 +795,7 @@ namespace AnalysisManagerBase
 
             try
             {
-                mStatusTools.UpdateAndWrite(EnumMgrStatus.RUNNING, EnumTaskStatus.RUNNING, EnumTaskStatusDetail.DELIVERING_RESULTS, 0);
+                mStatusTools.UpdateAndWrite(MgrStatusCodes.RUNNING, TaskStatusCodes.RUNNING, TaskStatusDetailCodes.DELIVERING_RESULTS, 0);
 
                 if (string.IsNullOrEmpty(mResultsDirectoryName))
                 {
@@ -1302,7 +1302,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="rawDataType">Raw data type enum</param>
         /// <returns>True if success, false if an error</returns>
-        protected bool DeleteRawDataFiles(AnalysisResources.eRawDataTypeConstants rawDataType)
+        protected bool DeleteRawDataFiles(AnalysisResources.RawDataTypeConstants rawDataType)
         {
             // Deletes the raw data files/directories from the working directory
             bool isFile;
@@ -1311,42 +1311,42 @@ namespace AnalysisManagerBase
 
             switch (rawDataType)
             {
-                case AnalysisResources.eRawDataTypeConstants.ThermoRawFile:
+                case AnalysisResources.RawDataTypeConstants.ThermoRawFile:
                     fileOrDirectoryName = Path.Combine(mWorkDir, Dataset + AnalysisResources.DOT_RAW_EXTENSION);
                     isFile = true;
                     break;
 
-                case AnalysisResources.eRawDataTypeConstants.AgilentQStarWiffFile:
+                case AnalysisResources.RawDataTypeConstants.AgilentQStarWiffFile:
                     fileOrDirectoryName = Path.Combine(mWorkDir, Dataset + AnalysisResources.DOT_WIFF_EXTENSION);
                     isFile = true;
                     break;
 
-                case AnalysisResources.eRawDataTypeConstants.UIMF:
+                case AnalysisResources.RawDataTypeConstants.UIMF:
                     fileOrDirectoryName = Path.Combine(mWorkDir, Dataset + AnalysisResources.DOT_UIMF_EXTENSION);
                     isFile = true;
                     break;
 
-                case AnalysisResources.eRawDataTypeConstants.mzXML:
+                case AnalysisResources.RawDataTypeConstants.mzXML:
                     fileOrDirectoryName = Path.Combine(mWorkDir, Dataset + AnalysisResources.DOT_MZXML_EXTENSION);
                     isFile = true;
                     break;
 
-                case AnalysisResources.eRawDataTypeConstants.mzML:
+                case AnalysisResources.RawDataTypeConstants.mzML:
                     fileOrDirectoryName = Path.Combine(mWorkDir, Dataset + AnalysisResources.DOT_MZML_EXTENSION);
                     isFile = true;
                     break;
 
-                case AnalysisResources.eRawDataTypeConstants.AgilentDFolder:
+                case AnalysisResources.RawDataTypeConstants.AgilentDFolder:
                     fileOrDirectoryName = Path.Combine(mWorkDir, Dataset + AnalysisResources.DOT_D_EXTENSION);
                     isFile = false;
                     break;
 
-                case AnalysisResources.eRawDataTypeConstants.MicromassRawFolder:
+                case AnalysisResources.RawDataTypeConstants.MicromassRawFolder:
                     fileOrDirectoryName = Path.Combine(mWorkDir, Dataset + AnalysisResources.DOT_RAW_EXTENSION);
                     isFile = false;
                     break;
 
-                case AnalysisResources.eRawDataTypeConstants.ZippedSFolders:
+                case AnalysisResources.RawDataTypeConstants.ZippedSFolders:
 
                     var newSourceDirectory = AnalysisResources.ResolveSerStoragePath(mWorkDir);
 
@@ -1364,26 +1364,26 @@ namespace AnalysisManagerBase
                     isFile = false;
                     break;
 
-                case AnalysisResources.eRawDataTypeConstants.BrukerFTFolder:
+                case AnalysisResources.RawDataTypeConstants.BrukerFTFolder:
                     // Bruker_FT directories are actually .D directories
                     fileOrDirectoryName = Path.Combine(mWorkDir, Dataset + AnalysisResources.DOT_D_EXTENSION);
                     isFile = false;
                     break;
 
-                case AnalysisResources.eRawDataTypeConstants.BrukerMALDISpot:
+                case AnalysisResources.RawDataTypeConstants.BrukerMALDISpot:
                     // Has a .EMF file and a single subdirectory that has an acqu file and fid file
                     fileOrDirectoryName = Path.Combine(mWorkDir, Dataset);
                     isFile = false;
                     break;
 
-                case AnalysisResources.eRawDataTypeConstants.BrukerMALDIImaging:
+                case AnalysisResources.RawDataTypeConstants.BrukerMALDIImaging:
                     // Series of zipped subdirectories, with names like 0_R00X329.zip; subdirectories inside the .Zip files have fid files
                     fileOrDirectoryName = Path.Combine(mWorkDir, Dataset);
                     isFile = false;
                     break;
 
-                case AnalysisResources.eRawDataTypeConstants.BrukerTOFBaf:
-                case AnalysisResources.eRawDataTypeConstants.BrukerTOFTdf:
+                case AnalysisResources.RawDataTypeConstants.BrukerTOFBaf:
+                case AnalysisResources.RawDataTypeConstants.BrukerTOFTdf:
                     // BrukerTOFBaf and BrukerTOFTdf directories are actually .D directories
                     fileOrDirectoryName = Path.Combine(mWorkDir, Dataset + AnalysisResources.DOT_D_EXTENSION);
                     isFile = false;
@@ -2464,7 +2464,7 @@ namespace AnalysisManagerBase
         /// <returns>True if success, otherwise false</returns>
         protected bool MakeResultsDirectory()
         {
-            mStatusTools.UpdateAndWrite(EnumMgrStatus.RUNNING, EnumTaskStatus.RUNNING, EnumTaskStatusDetail.PACKAGING_RESULTS, 0);
+            mStatusTools.UpdateAndWrite(MgrStatusCodes.RUNNING, TaskStatusCodes.RUNNING, TaskStatusDetailCodes.PACKAGING_RESULTS, 0);
 
             // Makes results directory and moves files into it
 
@@ -2503,9 +2503,9 @@ namespace AnalysisManagerBase
             try
             {
                 mStatusTools.UpdateAndWrite(
-                    EnumMgrStatus.RUNNING,
-                    EnumTaskStatus.RUNNING,
-                    EnumTaskStatusDetail.PACKAGING_RESULTS, 0);
+                    MgrStatusCodes.RUNNING,
+                    TaskStatusCodes.RUNNING,
+                    TaskStatusDetailCodes.PACKAGING_RESULTS, 0);
 
                 var workingDirectory = new DirectoryInfo(mWorkDir);
 
@@ -4010,7 +4010,7 @@ namespace AnalysisManagerBase
         protected void UpdateStatusRunning(float percentComplete)
         {
             mProgress = percentComplete;
-            mStatusTools.UpdateAndWrite(EnumMgrStatus.RUNNING, EnumTaskStatus.RUNNING, EnumTaskStatusDetail.RUNNING_TOOL, percentComplete, 0, "", "", "", false);
+            mStatusTools.UpdateAndWrite(MgrStatusCodes.RUNNING, TaskStatusCodes.RUNNING, TaskStatusDetailCodes.RUNNING_TOOL, percentComplete, 0, "", "", "", false);
         }
 
         /// <summary>
@@ -4021,7 +4021,7 @@ namespace AnalysisManagerBase
         protected void UpdateStatusRunning(float percentComplete, int spectrumCountTotal)
         {
             mProgress = percentComplete;
-            mStatusTools.UpdateAndWrite(EnumMgrStatus.RUNNING, EnumTaskStatus.RUNNING, EnumTaskStatusDetail.RUNNING_TOOL, percentComplete, spectrumCountTotal, "", "", "", false);
+            mStatusTools.UpdateAndWrite(MgrStatusCodes.RUNNING, TaskStatusCodes.RUNNING, TaskStatusDetailCodes.RUNNING_TOOL, percentComplete, spectrumCountTotal, "", "", "", false);
         }
 
         /// <summary>

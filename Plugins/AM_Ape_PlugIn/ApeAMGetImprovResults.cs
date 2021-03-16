@@ -94,7 +94,7 @@ namespace AnalysisManager_Ape_PlugIn
                 return false;
             }
 
-            Ape.SqlServerToSQLite.ConvertDatasetToSQLiteFile(paramList, (int)eSqlServerToSqlLiteConversionMode.AMTTagDbJobs, dotnetConnString, jobList, apeDatabase, mHandle);
+            Ape.SqlServerToSQLite.ConvertDatasetToSQLiteFile(paramList, (int)SqlServerToSqlLiteConversionMode.AMTTagDbJobs, dotnetConnString, jobList, apeDatabase, mHandle);
 
             return success;
         }

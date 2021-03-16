@@ -60,7 +60,7 @@ namespace AnalysisManagerExtractionPlugin
             // This includes for MS-GF+ because it uses the order of the proteins in the
             // FASTA file to determine the protein to include in the FHT file
 
-            SetOption(Global.eAnalysisResourceOptions.OrgDbRequired, true);
+            SetOption(Global.AnalysisResourceOptions.OrgDbRequired, true);
         }
 
         /// <summary>
@@ -1019,7 +1019,7 @@ namespace AnalysisManagerExtractionPlugin
                     {
                         lastProgressTime = DateTime.UtcNow;
 
-                        mStatusTools.UpdateAndWrite(EnumMgrStatus.RUNNING, EnumTaskStatus.RUNNING, EnumTaskStatusDetail.RUNNING_TOOL,
+                        mStatusTools.UpdateAndWrite(MgrStatusCodes.RUNNING, TaskStatusCodes.RUNNING, TaskStatusDetailCodes.RUNNING_TOOL,
                                                      progressOverall, 0, "", "", "", false);
                     }
                 } // foreach cloned step

@@ -65,11 +65,11 @@ namespace AnalysisManagerBase
 
         private DateTime mLastMessageQueueWarningTime;
 
-        private readonly Dictionary<EnumMgrStatus, string> mMgrStatusMap;
+        private readonly Dictionary<MgrStatusCodes, string> mMgrStatusMap;
 
-        private readonly Dictionary<EnumTaskStatus, string> mTaskStatusMap;
+        private readonly Dictionary<TaskStatusCodes, string> mTaskStatusMap;
 
-        private readonly Dictionary<EnumTaskStatusDetail, string> mTaskStatusDetailMap;
+        private readonly Dictionary<TaskStatusDetailCodes, string> mTaskStatusDetailMap;
 
         #endregion
 
@@ -122,7 +122,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Manager status
         /// </summary>
-        public EnumMgrStatus MgrStatus { get; set; }
+        public MgrStatusCodes MgrStatus { get; set; }
 
         /// <summary>
         /// Path to the .jobstatus file for jobs running offline
@@ -147,7 +147,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Task status
         /// </summary>
-        public EnumTaskStatus TaskStatus { get; set; }
+        public TaskStatusCodes TaskStatus { get; set; }
 
         /// <summary>
         /// Task start time (UTC-based)
@@ -183,7 +183,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Task status detail
         /// </summary>
-        public EnumTaskStatusDetail TaskStatusDetail { get; set; }
+        public TaskStatusDetailCodes TaskStatusDetail { get; set; }
 
         /// <summary>
         /// Job number
@@ -271,9 +271,9 @@ namespace AnalysisManagerBase
         /// <param name="debugLevel">Debug Level for logging; 1=minimal logging; 5=detailed logging</param>
         public StatusFile(string statusFilePath, int debugLevel)
         {
-            mMgrStatusMap = new Dictionary<EnumMgrStatus, string>();
-            mTaskStatusMap = new Dictionary<EnumTaskStatus, string>();
-            mTaskStatusDetailMap = new Dictionary<EnumTaskStatusDetail, string>();
+            mMgrStatusMap = new Dictionary<MgrStatusCodes, string>();
+            mTaskStatusMap = new Dictionary<TaskStatusCodes, string>();
+            mTaskStatusDetailMap = new Dictionary<TaskStatusDetailCodes, string>();
 
             DefineEnumToStringMapping(mMgrStatusMap, mTaskStatusMap, mTaskStatusDetailMap);
 
@@ -281,12 +281,12 @@ namespace AnalysisManagerBase
             MgrName = string.Empty;
             RemoteMgrName = string.Empty;
 
-            MgrStatus = EnumMgrStatus.STOPPED;
+            MgrStatus = MgrStatusCodes.STOPPED;
 
             OfflineJobStatusFilePath = string.Empty;
 
-            TaskStatus = EnumTaskStatus.NO_TASK;
-            TaskStatusDetail = EnumTaskStatusDetail.NO_TASK;
+            TaskStatus = TaskStatusCodes.NO_TASK;
+            TaskStatusDetail = TaskStatusDetailCodes.NO_TASK;
             TaskStartTime = DateTime.UtcNow;
 
             WorkDirPath = string.Empty;
@@ -452,7 +452,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="statusText">Text from ConvertMgrStatusToString or the string representation of the enum</param>
         /// <returns>Task status enum</returns>
-        public EnumMgrStatus ConvertToMgrStatusFromText(string statusText)
+        public MgrStatusCodes ConvertToMgrStatusFromText(string statusText)
         {
             foreach (var item in mMgrStatusMap)
             {
@@ -460,10 +460,10 @@ namespace AnalysisManagerBase
                     return item.Key;
             }
 
-            if (Enum.TryParse(statusText, true, out EnumMgrStatus taskStatus))
+            if (Enum.TryParse(statusText, true, out MgrStatusCodes taskStatus))
                 return taskStatus;
 
-            return EnumMgrStatus.STOPPED;
+            return MgrStatusCodes.STOPPED;
         }
 
         /// <summary>
@@ -471,7 +471,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="statusText">Text from ConvertTaskStatusToString or the string representation of the enum</param>
         /// <returns>Task status enum</returns>
-        public EnumTaskStatus ConvertToTaskStatusFromText(string statusText)
+        public TaskStatusCodes ConvertToTaskStatusFromText(string statusText)
         {
             foreach (var item in mTaskStatusMap)
             {
@@ -479,10 +479,10 @@ namespace AnalysisManagerBase
                     return item.Key;
             }
 
-            if (Enum.TryParse(statusText, true, out EnumTaskStatus taskStatus))
+            if (Enum.TryParse(statusText, true, out TaskStatusCodes taskStatus))
                 return taskStatus;
 
-            return EnumTaskStatus.NO_TASK;
+            return TaskStatusCodes.NO_TASK;
         }
 
         /// <summary>
@@ -490,7 +490,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="statusText">Text from ConvertTaskStatusDetailToString or the string representation of the enum</param>
         /// <returns>Task status enum</returns>
-        public EnumTaskStatusDetail ConvertToTaskDetailStatusFromText(string statusText)
+        public TaskStatusDetailCodes ConvertToTaskDetailStatusFromText(string statusText)
         {
             foreach (var item in mTaskStatusDetailMap)
             {
@@ -498,10 +498,10 @@ namespace AnalysisManagerBase
                     return item.Key;
             }
 
-            if (Enum.TryParse(statusText, true, out EnumTaskStatusDetail taskStatus))
+            if (Enum.TryParse(statusText, true, out TaskStatusDetailCodes taskStatus))
                 return taskStatus;
 
-            return EnumTaskStatusDetail.NO_TASK;
+            return TaskStatusDetailCodes.NO_TASK;
         }
 
         /// <summary>
@@ -509,7 +509,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="statusEnum">A MgrStatus enum</param>
         /// <returns>String representation of input object (sentence case and underscores to spaces)</returns>
-        private string ConvertMgrStatusToString(EnumMgrStatus statusEnum)
+        private string ConvertMgrStatusToString(MgrStatusCodes statusEnum)
         {
             if (mMgrStatusMap.TryGetValue(statusEnum, out var statusText))
                 return statusText;
@@ -523,7 +523,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="statusEnum">A Task Status enum</param>
         /// <returns>String representation of input object (sentence case and underscores to spaces)</returns>
-        private string ConvertTaskStatusToString(EnumTaskStatus statusEnum)
+        private string ConvertTaskStatusToString(TaskStatusCodes statusEnum)
         {
             if (mTaskStatusMap.TryGetValue(statusEnum, out var statusText))
                 return statusText;
@@ -537,7 +537,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="statusEnum">A TaskStatusDetail enum</param>
         /// <returns>String representation of input object (sentence case and underscores to spaces)</returns>
-        private string ConvertTaskStatusDetailToString(EnumTaskStatusDetail statusEnum)
+        private string ConvertTaskStatusDetailToString(TaskStatusDetailCodes statusEnum)
         {
             if (mTaskStatusDetailMap.TryGetValue(statusEnum, out var statusText))
                 return statusText;
@@ -547,32 +547,32 @@ namespace AnalysisManagerBase
         }
 
         private void DefineEnumToStringMapping(
-            IDictionary<EnumMgrStatus, string> mgrStatusMap,
-            IDictionary<EnumTaskStatus, string> taskStatusMap,
-            IDictionary<EnumTaskStatusDetail, string> taskStatusDetailMap)
+            IDictionary<MgrStatusCodes, string> mgrStatusMap,
+            IDictionary<TaskStatusCodes, string> taskStatusMap,
+            IDictionary<TaskStatusDetailCodes, string> taskStatusDetailMap)
         {
             mgrStatusMap.Clear();
-            mgrStatusMap.Add(EnumMgrStatus.DISABLED_LOCAL, "Disabled Local");
-            mgrStatusMap.Add(EnumMgrStatus.DISABLED_MC, "Disabled MC");
-            mgrStatusMap.Add(EnumMgrStatus.RUNNING, "Running");
-            mgrStatusMap.Add(EnumMgrStatus.STOPPED, "Stopped");
-            mgrStatusMap.Add(EnumMgrStatus.STOPPED_ERROR, "Stopped Error");
+            mgrStatusMap.Add(MgrStatusCodes.DISABLED_LOCAL, "Disabled Local");
+            mgrStatusMap.Add(MgrStatusCodes.DISABLED_MC, "Disabled MC");
+            mgrStatusMap.Add(MgrStatusCodes.RUNNING, "Running");
+            mgrStatusMap.Add(MgrStatusCodes.STOPPED, "Stopped");
+            mgrStatusMap.Add(MgrStatusCodes.STOPPED_ERROR, "Stopped Error");
 
             taskStatusMap.Clear();
-            taskStatusMap.Add(EnumTaskStatus.CLOSING, "Closing");
-            taskStatusMap.Add(EnumTaskStatus.NO_TASK, "No Task");
-            taskStatusMap.Add(EnumTaskStatus.RUNNING, "Running");
-            taskStatusMap.Add(EnumTaskStatus.REQUESTING, "Requesting");
-            taskStatusMap.Add(EnumTaskStatus.STOPPED, "Stopped");
-            taskStatusMap.Add(EnumTaskStatus.FAILED, "Failed");
+            taskStatusMap.Add(TaskStatusCodes.CLOSING, "Closing");
+            taskStatusMap.Add(TaskStatusCodes.NO_TASK, "No Task");
+            taskStatusMap.Add(TaskStatusCodes.RUNNING, "Running");
+            taskStatusMap.Add(TaskStatusCodes.REQUESTING, "Requesting");
+            taskStatusMap.Add(TaskStatusCodes.STOPPED, "Stopped");
+            taskStatusMap.Add(TaskStatusCodes.FAILED, "Failed");
 
             taskStatusDetailMap.Clear();
-            taskStatusDetailMap.Add(EnumTaskStatusDetail.DELIVERING_RESULTS, "Delivering Results");
-            taskStatusDetailMap.Add(EnumTaskStatusDetail.NO_TASK, "No Task");
-            taskStatusDetailMap.Add(EnumTaskStatusDetail.PACKAGING_RESULTS, "Packaging Results");
-            taskStatusDetailMap.Add(EnumTaskStatusDetail.RETRIEVING_RESOURCES, "Retrieving Resources");
-            taskStatusDetailMap.Add(EnumTaskStatusDetail.RUNNING_TOOL, "Running Tool");
-            taskStatusDetailMap.Add(EnumTaskStatusDetail.CLOSING, "Closing");
+            taskStatusDetailMap.Add(TaskStatusDetailCodes.DELIVERING_RESULTS, "Delivering Results");
+            taskStatusDetailMap.Add(TaskStatusDetailCodes.NO_TASK, "No Task");
+            taskStatusDetailMap.Add(TaskStatusDetailCodes.PACKAGING_RESULTS, "Packaging Results");
+            taskStatusDetailMap.Add(TaskStatusDetailCodes.RETRIEVING_RESOURCES, "Retrieving Resources");
+            taskStatusDetailMap.Add(TaskStatusDetailCodes.RUNNING_TOOL, "Running Tool");
+            taskStatusDetailMap.Add(TaskStatusDetailCodes.CLOSING, "Closing");
         }
 
         /// <summary>
@@ -1099,9 +1099,9 @@ namespace AnalysisManagerBase
             xWriter.WriteElementString("Tool", status.Tool);
             xWriter.WriteElementString("Status", status.ConvertTaskStatusToString(status.TaskStatus));
 
-            if (status.TaskStatus == EnumTaskStatus.STOPPED ||
-                status.TaskStatus == EnumTaskStatus.FAILED ||
-                status.TaskStatus == EnumTaskStatus.NO_TASK)
+            if (status.TaskStatus == TaskStatusCodes.STOPPED ||
+                status.TaskStatus == TaskStatusCodes.FAILED ||
+                status.TaskStatus == TaskStatusCodes.NO_TASK)
             {
                 runTimeHours = 0;
             }
@@ -1292,9 +1292,9 @@ namespace AnalysisManagerBase
         {
             ClearCachedInfo();
 
-            MgrStatus = EnumMgrStatus.STOPPED;
-            TaskStatus = EnumTaskStatus.NO_TASK;
-            TaskStatusDetail = EnumTaskStatusDetail.NO_TASK;
+            MgrStatus = MgrStatusCodes.STOPPED;
+            TaskStatus = TaskStatusCodes.NO_TASK;
+            TaskStatusDetail = TaskStatusDetailCodes.NO_TASK;
             MostRecentLogMessage = managerIdleMessage;
 
             StoreRecentErrorMessages(recentErrorMessages);
@@ -1321,7 +1321,7 @@ namespace AnalysisManagerBase
         /// <param name="eTaskStatus">Task status enum</param>
         /// <param name="eTaskStatusDetail">Task status detail enum</param>
         /// <param name="percentComplete">Job completion percentage (value between 0 and 100)</param>
-        public void UpdateAndWrite(EnumMgrStatus eMgrStatus, EnumTaskStatus eTaskStatus, EnumTaskStatusDetail eTaskStatusDetail,
+        public void UpdateAndWrite(MgrStatusCodes eMgrStatus, TaskStatusCodes eTaskStatus, TaskStatusDetailCodes eTaskStatusDetail,
                                    float percentComplete)
         {
             MgrStatus = eMgrStatus;
@@ -1337,7 +1337,7 @@ namespace AnalysisManagerBase
         /// <param name="status">Job status enum</param>
         /// <param name="percentComplete">Job completion percentage (value between 0 and 100)</param>
         /// <param name="spectrumCountTotal">Number of DTA files (i.e., spectra files); relevant for Sequest, X!Tandem, and Inspect</param>
-        public void UpdateAndWrite(EnumTaskStatus status, float percentComplete, int spectrumCountTotal)
+        public void UpdateAndWrite(TaskStatusCodes status, float percentComplete, int spectrumCountTotal)
         {
             TaskStatus = status;
             Progress = percentComplete;
@@ -1359,9 +1359,9 @@ namespace AnalysisManagerBase
         /// <param name="recentJobInfo">Information on the job that started most recently</param>
         /// <param name="forceLogToBrokerDB">If true, will force mBrokerDBLogger to report the manager status directly to the database (if initialized)</param>
         public void UpdateAndWrite(
-            EnumMgrStatus eMgrStatus,
-            EnumTaskStatus eTaskStatus,
-            EnumTaskStatusDetail eTaskStatusDetail,
+            MgrStatusCodes eMgrStatus,
+            TaskStatusCodes eTaskStatus,
+            TaskStatusDetailCodes eTaskStatusDetail,
             float percentComplete,
             int dtaCount,
             string mostRecentLogMessage,
@@ -1398,7 +1398,7 @@ namespace AnalysisManagerBase
         public void UpdateIdle(string managerIdleMessage, bool forceLogToBrokerDB)
         {
             ClearCachedInfo();
-            TaskStatus = EnumTaskStatus.NO_TASK;
+            TaskStatus = TaskStatusCodes.NO_TASK;
             MostRecentLogMessage = managerIdleMessage;
 
             WriteStatusFile(forceLogToBrokerDB, false);
@@ -1439,9 +1439,9 @@ namespace AnalysisManagerBase
         private void UpdateIdleWork(string managerIdleMessage, string recentJobInfo, bool forceLogToBrokerDB)
         {
             ClearCachedInfo();
-            MgrStatus = EnumMgrStatus.RUNNING;
-            TaskStatus = EnumTaskStatus.NO_TASK;
-            TaskStatusDetail = EnumTaskStatusDetail.NO_TASK;
+            MgrStatus = MgrStatusCodes.RUNNING;
+            TaskStatus = TaskStatusCodes.NO_TASK;
+            TaskStatusDetail = TaskStatusDetailCodes.NO_TASK;
 
             MostRecentLogMessage = managerIdleMessage;
 
@@ -1456,7 +1456,7 @@ namespace AnalysisManagerBase
         /// Updates status file to show manager disabled
         /// (either in the manager control DB or via the local AnalysisManagerProg.exe.config file)
         /// </summary>
-        public void UpdateDisabled(EnumMgrStatus managerStatus)
+        public void UpdateDisabled(MgrStatusCodes managerStatus)
         {
             UpdateDisabled(managerStatus, "Manager Disabled");
         }
@@ -1467,7 +1467,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="managerStatus"></param>
         /// <param name="managerDisableMessage">Description of why the manager is disabled (leave blank if unknown)</param>
-        public void UpdateDisabled(EnumMgrStatus managerStatus, string managerDisableMessage)
+        public void UpdateDisabled(MgrStatusCodes managerStatus, string managerDisableMessage)
         {
             UpdateDisabled(managerStatus, managerDisableMessage, new List<string>(), MostRecentJobInfo);
         }
@@ -1480,18 +1480,18 @@ namespace AnalysisManagerBase
         /// <param name="managerDisableMessage">Description of why the manager is disabled (leave blank if unknown)</param>
         /// <param name="recentErrorMessages">Recent error messages written to the log file (leave blank if unknown)</param>
         /// <param name="recentJobInfo">Information on the job that started most recently</param>
-        public void UpdateDisabled(EnumMgrStatus managerStatus, string managerDisableMessage, IEnumerable<string> recentErrorMessages,
+        public void UpdateDisabled(MgrStatusCodes managerStatus, string managerDisableMessage, IEnumerable<string> recentErrorMessages,
                                    string recentJobInfo)
         {
             ClearCachedInfo();
 
-            if (!(managerStatus == EnumMgrStatus.DISABLED_LOCAL || managerStatus == EnumMgrStatus.DISABLED_MC))
+            if (!(managerStatus == MgrStatusCodes.DISABLED_LOCAL || managerStatus == MgrStatusCodes.DISABLED_MC))
             {
-                managerStatus = EnumMgrStatus.DISABLED_LOCAL;
+                managerStatus = MgrStatusCodes.DISABLED_LOCAL;
             }
             MgrStatus = managerStatus;
-            TaskStatus = EnumTaskStatus.NO_TASK;
-            TaskStatusDetail = EnumTaskStatusDetail.NO_TASK;
+            TaskStatus = TaskStatusCodes.NO_TASK;
+            TaskStatusDetail = TaskStatusDetailCodes.NO_TASK;
             MostRecentLogMessage = managerDisableMessage;
 
             StoreRecentJobInfo(recentJobInfo);
@@ -1517,7 +1517,7 @@ namespace AnalysisManagerBase
         {
             ClearCachedInfo();
 
-            MgrStatus = EnumMgrStatus.STOPPED_ERROR;
+            MgrStatus = MgrStatusCodes.STOPPED_ERROR;
             MostRecentLogMessage = "Flag file";
             StoreRecentErrorMessages(recentErrorMessages);
             StoreRecentJobInfo(recentJobInfo);

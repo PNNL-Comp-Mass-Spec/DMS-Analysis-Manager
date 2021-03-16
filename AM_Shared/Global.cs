@@ -57,7 +57,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Analysis resource true/false options
         /// </summary>
-        public enum eAnalysisResourceOptions
+        public enum AnalysisResourceOptions
         {
             /// <summary>
             /// If true, a FASTA file or protein collection is required

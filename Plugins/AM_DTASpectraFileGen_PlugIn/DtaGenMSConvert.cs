@@ -135,7 +135,7 @@ namespace DTASpectraFileGen
         /// </summary>
         /// <param name="rawDataType">Raw data file type</param>
         /// <returns>TRUE for success; FALSE for failure</returns>
-        private bool ConvertRawToMGF(AnalysisResources.eRawDataTypeConstants rawDataType)
+        private bool ConvertRawToMGF(AnalysisResources.RawDataTypeConstants rawDataType)
         {
             try
             {
@@ -149,16 +149,16 @@ namespace DTASpectraFileGen
                 // Construct the path to the instrument data file
                 switch (rawDataType)
                 {
-                    case AnalysisResources.eRawDataTypeConstants.ThermoRawFile:
+                    case AnalysisResources.RawDataTypeConstants.ThermoRawFile:
                         instrumentFilePath = Path.Combine(mWorkDir, mDatasetName + AnalysisResources.DOT_RAW_EXTENSION);
                         break;
-                    case AnalysisResources.eRawDataTypeConstants.mzXML:
+                    case AnalysisResources.RawDataTypeConstants.mzXML:
                         instrumentFilePath = Path.Combine(mWorkDir, mDatasetName + AnalysisResources.DOT_MZXML_EXTENSION);
                         break;
-                    case AnalysisResources.eRawDataTypeConstants.mzML:
+                    case AnalysisResources.RawDataTypeConstants.mzML:
                         instrumentFilePath = Path.Combine(mWorkDir, mDatasetName + AnalysisResources.DOT_MZML_EXTENSION);
                         break;
-                    case AnalysisResources.eRawDataTypeConstants.BrukerTOFTdf:
+                    case AnalysisResources.RawDataTypeConstants.BrukerTOFTdf:
                         instrumentFilePath = Path.Combine(mWorkDir, mDatasetName + AnalysisResources.DOT_D_EXTENSION);
                         break;
 
@@ -173,7 +173,7 @@ namespace DTASpectraFileGen
                 const int SCAN_START = 1;
                 var scanStop = DEFAULT_SCAN_STOP;
 
-                if (rawDataType == AnalysisResources.eRawDataTypeConstants.ThermoRawFile)
+                if (rawDataType == AnalysisResources.RawDataTypeConstants.ThermoRawFile)
                 {
                     // Get the maximum number of scans in the file
                     mMaxScanInFile = GetMaxScan(instrumentFilePath);

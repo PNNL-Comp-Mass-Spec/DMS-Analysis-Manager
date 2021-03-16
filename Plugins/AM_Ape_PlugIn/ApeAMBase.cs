@@ -8,7 +8,7 @@ namespace AnalysisManager_Ape_PlugIn
     internal class ApeAMBase : EventNotifier
     {
         #region Enums
-        public enum eSqlServerToSqlLiteConversionMode
+        public enum SqlServerToSqlLiteConversionMode
         {
             ViperResults = 0,
             PTDB = 1,

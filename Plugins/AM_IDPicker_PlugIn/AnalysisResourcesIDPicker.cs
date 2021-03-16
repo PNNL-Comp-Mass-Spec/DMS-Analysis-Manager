@@ -38,7 +38,7 @@ namespace AnalysisManagerIDPickerPlugIn
         public override void Setup(string stepToolName, IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, MyEMSLUtilities myEMSLUtilities)
         {
             base.Setup(stepToolName, mgrParams, jobParams, statusTools, myEMSLUtilities);
-            SetOption(Global.eAnalysisResourceOptions.OrgDbRequired, true);
+            SetOption(Global.AnalysisResourceOptions.OrgDbRequired, true);
         }
 
         /// <summary>
@@ -95,7 +95,7 @@ namespace AnalysisManagerIDPickerPlugIn
             {
                 // Retrieve the MASIC ScanStats.txt and ScanStatsEx.txt files
 
-                if (rawDataType == eRawDataTypeConstants.ThermoRawFile || rawDataType == eRawDataTypeConstants.UIMF)
+                if (rawDataType == RawDataTypeConstants.ThermoRawFile || rawDataType == RawDataTypeConstants.UIMF)
                 {
                     var noScanStats = mJobParams.GetJobParameter("PepXMLNoScanStats", false);
                     if (noScanStats)

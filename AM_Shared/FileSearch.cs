@@ -2300,7 +2300,7 @@ namespace AnalysisManagerBase
             var rawDataType = AnalysisResources.GetRawDataType(rawDataTypeName);
             switch (rawDataType)
             {
-                case AnalysisResources.eRawDataTypeConstants.AgilentDFolder:
+                case AnalysisResources.RawDataTypeConstants.AgilentDFolder:
                     // Agilent ion trap data
                     if (storagePath.IndexOf("Agilent_SL1", StringComparison.OrdinalIgnoreCase) >= 0 ||
                         storagePath.IndexOf("Agilent_XCT1", StringComparison.OrdinalIgnoreCase) >= 0)
@@ -2318,42 +2318,42 @@ namespace AnalysisManagerBase
                     }
                     break;
 
-                case AnalysisResources.eRawDataTypeConstants.AgilentQStarWiffFile:
+                case AnalysisResources.RawDataTypeConstants.AgilentQStarWiffFile:
                     // Agilent/QSTAR TOF data
                     success = RetrieveDatasetFile(AnalysisResources.DOT_WIFF_EXTENSION, createStoragePathInfoOnly, maxAttempts);
                     break;
 
-                case AnalysisResources.eRawDataTypeConstants.ZippedSFolders:
+                case AnalysisResources.RawDataTypeConstants.ZippedSFolders:
                     // FTICR data
                     success = RetrieveSFolders(createStoragePathInfoOnly, maxAttempts);
                     break;
 
-                case AnalysisResources.eRawDataTypeConstants.ThermoRawFile:
+                case AnalysisResources.RawDataTypeConstants.ThermoRawFile:
                     // Finnigan ion trap/LTQ-FT data
                     success = RetrieveDatasetFile(AnalysisResources.DOT_RAW_EXTENSION, createStoragePathInfoOnly, maxAttempts);
                     break;
 
-                case AnalysisResources.eRawDataTypeConstants.MicromassRawFolder:
+                case AnalysisResources.RawDataTypeConstants.MicromassRawFolder:
                     // Micromass QTOF data
                     success = RetrieveDotRawFolder(createStoragePathInfoOnly);
                     break;
 
-                case AnalysisResources.eRawDataTypeConstants.UIMF:
+                case AnalysisResources.RawDataTypeConstants.UIMF:
                     // IMS UIMF data
                     success = RetrieveDatasetFile(AnalysisResources.DOT_UIMF_EXTENSION, createStoragePathInfoOnly, maxAttempts);
                     break;
 
-                case AnalysisResources.eRawDataTypeConstants.mzXML:
+                case AnalysisResources.RawDataTypeConstants.mzXML:
                     success = RetrieveDatasetFile(AnalysisResources.DOT_MZXML_EXTENSION, createStoragePathInfoOnly, maxAttempts);
                     break;
 
-                case AnalysisResources.eRawDataTypeConstants.mzML:
+                case AnalysisResources.RawDataTypeConstants.mzML:
                     success = RetrieveDatasetFile(AnalysisResources.DOT_MZML_EXTENSION, createStoragePathInfoOnly, maxAttempts);
                     break;
 
-                case AnalysisResources.eRawDataTypeConstants.BrukerFTFolder:
-                case AnalysisResources.eRawDataTypeConstants.BrukerTOFBaf:
-                case AnalysisResources.eRawDataTypeConstants.BrukerTOFTdf:
+                case AnalysisResources.RawDataTypeConstants.BrukerFTFolder:
+                case AnalysisResources.RawDataTypeConstants.BrukerTOFBaf:
+                case AnalysisResources.RawDataTypeConstants.BrukerTOFTdf:
                     // Call RetrieveDotDFolder() to copy the directory and all subdirectories
 
                     // Both the MSXml step tool and DeconTools require the .Baf file
@@ -2372,13 +2372,13 @@ namespace AnalysisManagerBase
                     success = RetrieveDotDFolder(createStoragePathInfoOnly, skipBafAndTdfFiles);
                     break;
 
-                case AnalysisResources.eRawDataTypeConstants.BrukerMALDIImaging:
+                case AnalysisResources.RawDataTypeConstants.BrukerMALDIImaging:
                     success = RetrieveBrukerMALDIImagingFolders(unzipOverNetwork: true);
                     break;
 
                 default:
                     // rawDataType is not recognized or not supported by this function
-                    if (rawDataType == AnalysisResources.eRawDataTypeConstants.Unknown)
+                    if (rawDataType == AnalysisResources.RawDataTypeConstants.Unknown)
                     {
                         OnErrorEvent("Invalid data type specified: " + rawDataType);
                     }

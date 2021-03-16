@@ -276,7 +276,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             }
         }
 
-        private enum eMSGFReportXMLFileLocation
+        private enum MSGFReportXMLFileLocations
         {
             Header = 0,
             SearchResultIdentifier = 1,
@@ -292,7 +292,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             ConfigurationOptions = 11
         }
 
-        private enum eMzidXMLFileLocation
+        private enum MzidXMLFileLocations
         {
             Header = 0,
             SequenceCollection = 1,
@@ -595,7 +595,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
             var rawFileID = AddPxFileToMasterList(datasetRawFilePath, dataPkgJob);
 
-            AddPxResultFile(rawFileID, PXFileInfoBase.ePXFileType.Raw, datasetRawFilePath, dataPkgJob);
+            AddPxResultFile(rawFileID, PXFileInfoBase.PXFileTypes.Raw, datasetRawFilePath, dataPkgJob);
         }
 
         private int AddPxFileToMasterList(string filePath, DataPackageJobInfo dataPkgJob)
@@ -631,7 +631,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             return pxFileInfo.FileID;
         }
 
-        private bool AddPxResultFile(int fileId, PXFileInfoBase.ePXFileType eFileType, string filePath, DataPackageJobInfo dataPkgJob)
+        private bool AddPxResultFile(int fileId, PXFileInfoBase.PXFileTypes eFileType, string filePath, DataPackageJobInfo dataPkgJob)
         {
             var fiFile = new FileInfo(filePath);
 
@@ -692,7 +692,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 AddToListIfNew(mPreviousDatasetFilesToCopy, resultFiles.PrideXmlFilePath);
 
                 prideXMLFileId = AddPxFileToMasterList(resultFiles.PrideXmlFilePath, dataPkgJob);
-                if (!AddPxResultFile(prideXMLFileId, PXFileInfoBase.ePXFileType.Result, resultFiles.PrideXmlFilePath, dataPkgJob))
+                if (!AddPxResultFile(prideXMLFileId, PXFileInfoBase.PXFileTypes.Result, resultFiles.PrideXmlFilePath, dataPkgJob))
                 {
                     return false;
                 }
@@ -704,7 +704,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 if (!string.IsNullOrEmpty(datasetRawFilePath))
                 {
                     rawFileID = AddPxFileToMasterList(datasetRawFilePath, dataPkgJob);
-                    if (!AddPxResultFile(rawFileID, PXFileInfoBase.ePXFileType.Raw, datasetRawFilePath, dataPkgJob))
+                    if (!AddPxResultFile(rawFileID, PXFileInfoBase.PXFileTypes.Raw, datasetRawFilePath, dataPkgJob))
                     {
                         return false;
                     }
@@ -725,7 +725,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 AddToListIfNew(mPreviousDatasetFilesToCopy, resultFiles.MGFFilePath);
 
                 peakFileId = AddPxFileToMasterList(resultFiles.MGFFilePath, dataPkgJob);
-                if (!AddPxResultFile(peakFileId, PXFileInfoBase.ePXFileType.Peak, resultFiles.MGFFilePath, dataPkgJob))
+                if (!AddPxResultFile(peakFileId, PXFileInfoBase.PXFileTypes.Peak, resultFiles.MGFFilePath, dataPkgJob))
                 {
                     return false;
                 }
@@ -754,7 +754,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
             foreach (var mzIdResultFile in resultFiles.MzIDFilePaths)
             {
-                var success = AddMzidOrPepXmlFileToPX(dataPkgJob, mzIdResultFile, PXFileInfoBase.ePXFileType.ResultMzId, prideXMLFileId,
+                var success = AddMzidOrPepXmlFileToPX(dataPkgJob, mzIdResultFile, PXFileInfoBase.PXFileTypes.ResultMzId, prideXMLFileId,
                     rawFileID, peakFileId);
                 if (!success)
                     return false;
@@ -762,7 +762,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
             if (!string.IsNullOrWhiteSpace(resultFiles.PepXMLFile))
             {
-                var success = AddMzidOrPepXmlFileToPX(dataPkgJob, resultFiles.PepXMLFile, PXFileInfoBase.ePXFileType.Search, prideXMLFileId,
+                var success = AddMzidOrPepXmlFileToPX(dataPkgJob, resultFiles.PepXMLFile, PXFileInfoBase.PXFileTypes.Search, prideXMLFileId,
                     rawFileID, peakFileId);
                 if (!success)
                     return false;
@@ -771,7 +771,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             return true;
         }
 
-        private bool AddMzidOrPepXmlFileToPX(DataPackageJobInfo dataPkgJob, string resultFilePath, PXFileInfoBase.ePXFileType ePxFileType,
+        private bool AddMzidOrPepXmlFileToPX(DataPackageJobInfo dataPkgJob, string resultFilePath, PXFileInfoBase.PXFileTypes ePxFileType,
             int prideXMLFileId, int rawFileID, int peakFileId)
         {
             AddToListIfNew(mPreviousDatasetFilesToCopy, resultFilePath);
@@ -1010,7 +1010,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// Counts the number of items of type eFileType in mPxResultFiles
         /// </summary>
         /// <param name="eFileType"></param>
-        private int CountResultFilesByType(PXFileInfoBase.ePXFileType eFileType)
+        private int CountResultFilesByType(PXFileInfoBase.PXFileTypes eFileType)
         {
             var fileCount = (from item in mPxResultFiles where item.Value.PXFileType == eFileType select item).Count();
 
@@ -1844,7 +1844,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
             var attributeOverride = new Dictionary<string, string>();
 
-            var fileLocation = eMSGFReportXMLFileLocation.Header;
+            var fileLocation = MSGFReportXMLFileLocations.Header;
             var recentElements = new Queue<string>();
 
             try
@@ -1928,7 +1928,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                     break;
 
                                 case "sampleName":
-                                    if (fileLocation == eMSGFReportXMLFileLocation.MzDataAdmin)
+                                    if (fileLocation == MSGFReportXMLFileLocations.MzDataAdmin)
                                     {
                                         // Write out the current job's Experiment Name
                                         writer.WriteElementString("sampleName", dataPkgJob.Experiment);
@@ -1937,7 +1937,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                     break;
 
                                 case "sampleDescription":
-                                    if (fileLocation == eMSGFReportXMLFileLocation.MzDataAdmin)
+                                    if (fileLocation == MSGFReportXMLFileLocations.MzDataAdmin)
                                     {
                                         // Override the comment attribute for this node
                                         string commentOverride;
@@ -1968,7 +1968,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                     break;
 
                                 case "sourceFile":
-                                    if (fileLocation == eMSGFReportXMLFileLocation.MzDataAdmin)
+                                    if (fileLocation == MSGFReportXMLFileLocations.MzDataAdmin)
                                     {
                                         writer.WriteStartElement("sourceFile");
 
@@ -1982,7 +1982,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                     break;
 
                                 case "software":
-                                    if (fileLocation == eMSGFReportXMLFileLocation.MzDataDataProcessing)
+                                    if (fileLocation == MSGFReportXMLFileLocations.MzDataDataProcessing)
                                     {
                                         CreateMSGFReportXmlFileWriteSoftwareVersion(xmlReader, writer, dataPkgJob.PeptideHitResultType);
                                         skipNode = true;
@@ -1990,7 +1990,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                     break;
 
                                 case "instrumentName":
-                                    if (fileLocation == eMSGFReportXMLFileLocation.MzDataInstrument)
+                                    if (fileLocation == MSGFReportXMLFileLocations.MzDataInstrument)
                                     {
                                         // Write out the actual instrument name
                                         writer.WriteElementString("instrumentName", dataPkgJob.Instrument);
@@ -2003,14 +2003,14 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                 case "source":
                                 case "analyzerList":
                                 case "detector":
-                                    if (fileLocation == eMSGFReportXMLFileLocation.MzDataInstrument && instrumentDetailsAutoDefined)
+                                    if (fileLocation == MSGFReportXMLFileLocations.MzDataInstrument && instrumentDetailsAutoDefined)
                                     {
                                         skipNode = true;
                                     }
                                     break;
 
                                 case "cvParam":
-                                    if (fileLocation == eMSGFReportXMLFileLocation.ExperimentAdditional)
+                                    if (fileLocation == MSGFReportXMLFileLocations.ExperimentAdditional)
                                     {
                                         // Override the cvParam if it has Accession PRIDE:0000175
 
@@ -2541,10 +2541,10 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             {
                 var pXFilePath = Path.Combine(mWorkDir, "PX_Submission_" + DateTime.Now.ToString("yyyy-MM-dd_HH-mm") + ".px");
 
-                var prideXmlFilesCreated = CountResultFilesByType(PXFileInfoBase.ePXFileType.Result);
-                var rawFilesStored = CountResultFilesByType(PXFileInfoBase.ePXFileType.Raw);
-                var peakFilesStored = CountResultFilesByType(PXFileInfoBase.ePXFileType.Peak);
-                var mzIDFilesStored = CountResultFilesByType(PXFileInfoBase.ePXFileType.ResultMzId);
+                var prideXmlFilesCreated = CountResultFilesByType(PXFileInfoBase.PXFileTypes.Result);
+                var rawFilesStored = CountResultFilesByType(PXFileInfoBase.PXFileTypes.Raw);
+                var peakFilesStored = CountResultFilesByType(PXFileInfoBase.PXFileTypes.Peak);
+                var mzIDFilesStored = CountResultFilesByType(PXFileInfoBase.PXFileTypes.ResultMzId);
 
                 if (mDebugLevel >= 1)
                 {
@@ -3771,15 +3771,15 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             return CloseOutType.CLOSEOUT_FAILED;
         }
 
-        private string PXFileTypeName(PXFileInfoBase.ePXFileType pxFileType)
+        private string PXFileTypeName(PXFileInfoBase.PXFileTypes pxFileType)
         {
             return pxFileType switch
             {
-                PXFileInfoBase.ePXFileType.Result => "RESULT",
-                PXFileInfoBase.ePXFileType.ResultMzId => "RESULT",
-                PXFileInfoBase.ePXFileType.Raw => "RAW",
-                PXFileInfoBase.ePXFileType.Search => "SEARCH",
-                PXFileInfoBase.ePXFileType.Peak => "PEAK",
+                PXFileInfoBase.PXFileTypes.Result => "RESULT",
+                PXFileInfoBase.PXFileTypes.ResultMzId => "RESULT",
+                PXFileInfoBase.PXFileTypes.Raw => "RAW",
+                PXFileInfoBase.PXFileTypes.Search => "SEARCH",
+                PXFileInfoBase.PXFileTypes.Peak => "PEAK",
                 _ => "OTHER"
             };
         }
@@ -4443,51 +4443,51 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         }
 
         [Obsolete("No longer used")]
-        private eMSGFReportXMLFileLocation UpdateMSGFReportXMLFileLocation(eMSGFReportXMLFileLocation fileLocation, string elementName, bool insideMzDataDescription)
+        private MSGFReportXMLFileLocations UpdateMSGFReportXMLFileLocation(MSGFReportXMLFileLocations fileLocation, string elementName, bool insideMzDataDescription)
         {
             switch (elementName)
             {
                 case "SearchResultIdentifier":
-                    fileLocation = eMSGFReportXMLFileLocation.SearchResultIdentifier;
+                    fileLocation = MSGFReportXMLFileLocations.SearchResultIdentifier;
                     break;
                 case "Metadata":
-                    fileLocation = eMSGFReportXMLFileLocation.Metadata;
+                    fileLocation = MSGFReportXMLFileLocations.Metadata;
                     break;
                 case "Protocol":
-                    fileLocation = eMSGFReportXMLFileLocation.Protocol;
+                    fileLocation = MSGFReportXMLFileLocations.Protocol;
                     break;
                 case "admin":
                     if (insideMzDataDescription)
                     {
-                        fileLocation = eMSGFReportXMLFileLocation.MzDataAdmin;
+                        fileLocation = MSGFReportXMLFileLocations.MzDataAdmin;
                     }
                     break;
                 case "instrument":
                     if (insideMzDataDescription)
                     {
-                        fileLocation = eMSGFReportXMLFileLocation.MzDataInstrument;
+                        fileLocation = MSGFReportXMLFileLocations.MzDataInstrument;
                     }
                     break;
                 case "dataProcessing":
                     if (insideMzDataDescription)
                     {
-                        fileLocation = eMSGFReportXMLFileLocation.MzDataDataProcessing;
+                        fileLocation = MSGFReportXMLFileLocations.MzDataDataProcessing;
                     }
                     break;
                 case "ExperimentAdditional":
-                    fileLocation = eMSGFReportXMLFileLocation.ExperimentAdditional;
+                    fileLocation = MSGFReportXMLFileLocations.ExperimentAdditional;
                     break;
                 case "Identifications":
-                    fileLocation = eMSGFReportXMLFileLocation.Identifications;
+                    fileLocation = MSGFReportXMLFileLocations.Identifications;
                     break;
                 case "PTMs":
-                    fileLocation = eMSGFReportXMLFileLocation.PTMs;
+                    fileLocation = MSGFReportXMLFileLocations.PTMs;
                     break;
                 case "DatabaseMappings":
-                    fileLocation = eMSGFReportXMLFileLocation.DatabaseMappings;
+                    fileLocation = MSGFReportXMLFileLocations.DatabaseMappings;
                     break;
                 case "ConfigurationOptions":
-                    fileLocation = eMSGFReportXMLFileLocation.ConfigurationOptions;
+                    fileLocation = MSGFReportXMLFileLocations.ConfigurationOptions;
                     break;
             }
 
@@ -4660,7 +4660,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
             var elementCloseDepths = new Stack<int>();
 
-            var fileLocation = eMzidXMLFileLocation.Header;
+            var fileLocation = MzidXMLFileLocations.Header;
             var recentElements = new Queue<string>();
 
             try
@@ -4813,7 +4813,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                                     case "FileFormat":
 
-                                        if (fileLocation == eMzidXMLFileLocation.InputSpectraData && !searchedMzML)
+                                        if (fileLocation == MzidXMLFileLocations.InputSpectraData && !searchedMzML)
                                         {
                                             // Override the accession and name attributes for this node
 
@@ -4851,7 +4851,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                         break;
 
                                     case "SearchModification":
-                                        if (fileLocation == eMzidXMLFileLocation.AnalysisProtocolCollection)
+                                        if (fileLocation == MzidXMLFileLocations.AnalysisProtocolCollection)
                                         {
                                             // The next cvParam entry that we read should have the Unimod accession
                                             readModAccession = true;
@@ -5055,18 +5055,18 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             }
         }
 
-        private eMzidXMLFileLocation UpdateMZidXMLFileLocation(eMzidXMLFileLocation fileLocation, string elementName)
+        private MzidXMLFileLocations UpdateMZidXMLFileLocation(MzidXMLFileLocations fileLocation, string elementName)
         {
             fileLocation = elementName switch
             {
-                "SequenceCollection" => eMzidXMLFileLocation.SequenceCollection,
-                "AnalysisCollection" => eMzidXMLFileLocation.AnalysisCollection,
-                "AnalysisProtocolCollection" => eMzidXMLFileLocation.AnalysisProtocolCollection,
-                "DataCollection" => eMzidXMLFileLocation.DataCollection,
-                "Inputs" => eMzidXMLFileLocation.Inputs,
-                "SearchDatabase" => eMzidXMLFileLocation.InputSearchDatabase,
-                "SpectraData" => eMzidXMLFileLocation.InputSpectraData,
-                "AnalysisData" => eMzidXMLFileLocation.AnalysisData,
+                "SequenceCollection" => MzidXMLFileLocations.SequenceCollection,
+                "AnalysisCollection" => MzidXMLFileLocations.AnalysisCollection,
+                "AnalysisProtocolCollection" => MzidXMLFileLocations.AnalysisProtocolCollection,
+                "DataCollection" => MzidXMLFileLocations.DataCollection,
+                "Inputs" => MzidXMLFileLocations.Inputs,
+                "SearchDatabase" => MzidXMLFileLocations.InputSearchDatabase,
+                "SpectraData" => MzidXMLFileLocations.InputSpectraData,
+                "AnalysisData" => MzidXMLFileLocations.AnalysisData,
                 _ => fileLocation
             };
 

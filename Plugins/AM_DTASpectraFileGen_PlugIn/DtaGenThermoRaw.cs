@@ -174,19 +174,19 @@ namespace DTASpectraFileGen
             // Verifies that the data file exists in the specified directory
             switch (mRawDataType)
             {
-                case AnalysisResources.eRawDataTypeConstants.ThermoRawFile:
+                case AnalysisResources.RawDataTypeConstants.ThermoRawFile:
                     dataFileExtension = AnalysisResources.DOT_RAW_EXTENSION;
                     break;
 
-                case AnalysisResources.eRawDataTypeConstants.mzXML:
+                case AnalysisResources.RawDataTypeConstants.mzXML:
                     dataFileExtension = AnalysisResources.DOT_MZXML_EXTENSION;
                     break;
 
-                case AnalysisResources.eRawDataTypeConstants.mzML:
+                case AnalysisResources.RawDataTypeConstants.mzML:
                     dataFileExtension = AnalysisResources.DOT_MZML_EXTENSION;
                     break;
 
-                case AnalysisResources.eRawDataTypeConstants.BrukerTOFTdf:
+                case AnalysisResources.RawDataTypeConstants.BrukerTOFTdf:
                     if (Directory.Exists(Path.Combine(workDir, datasetName + AnalysisResources.DOT_D_EXTENSION)))
                     {
                         mErrMsg = string.Empty;
@@ -795,7 +795,7 @@ namespace DTASpectraFileGen
             if (DateTime.UtcNow.Subtract(mLastStatusUpdate).TotalSeconds >= 5)
             {
                 mLastStatusUpdate = DateTime.UtcNow;
-                mStatusTools.UpdateAndWrite(EnumMgrStatus.RUNNING, EnumTaskStatus.RUNNING, EnumTaskStatusDetail.RUNNING_TOOL, mProgress,
+                mStatusTools.UpdateAndWrite(MgrStatusCodes.RUNNING, TaskStatusCodes.RUNNING, TaskStatusDetailCodes.RUNNING_TOOL, mProgress,
                     mSpectraFileCount, "", "", "", false);
             }
         }

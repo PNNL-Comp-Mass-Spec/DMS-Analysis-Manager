@@ -24,13 +24,13 @@ namespace AnalysisManagerMsXmlGenPlugIn
             string workDir,
             string readWProgramPath,
             string datasetName,
-            AnalysisResources.eRawDataTypeConstants rawDataType,
+            AnalysisResources.RawDataTypeConstants rawDataType,
             AnalysisResources.MSXMLOutputTypeConstants outputType,
             bool centroidMSXML,
             IJobParams jobParams)
-            : base(workDir, readWProgramPath, datasetName, AnalysisResources.eRawDataTypeConstants.ThermoRawFile, outputType, centroidMSXML, jobParams)
+            : base(workDir, readWProgramPath, datasetName, AnalysisResources.RawDataTypeConstants.ThermoRawFile, outputType, centroidMSXML, jobParams)
         {
-            if (rawDataType != AnalysisResources.eRawDataTypeConstants.ThermoRawFile)
+            if (rawDataType != AnalysisResources.RawDataTypeConstants.ThermoRawFile)
             {
                 throw new ArgumentOutOfRangeException(nameof(rawDataType), "MSXMLGenReadW can only be used to process Thermo .Raw files");
             }
@@ -85,7 +85,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
             return arguments;
         }
 
-        protected override string GetOutputFileName(string msXmlFormat, string rawFilePath, AnalysisResources.eRawDataTypeConstants rawDataType)
+        protected override string GetOutputFileName(string msXmlFormat, string rawFilePath, AnalysisResources.RawDataTypeConstants rawDataType)
         {
             return Path.GetFileName(Path.ChangeExtension(rawFilePath, msXmlFormat));
         }

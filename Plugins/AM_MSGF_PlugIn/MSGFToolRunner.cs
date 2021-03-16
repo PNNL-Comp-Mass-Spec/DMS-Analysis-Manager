@@ -1402,7 +1402,7 @@ namespace AnalysisManagerMSGFPlugin
         }
 
         private bool ProcessFilesWrapper(
-            AnalysisResources.eRawDataTypeConstants rawDataType,
+            AnalysisResources.RawDataTypeConstants rawDataType,
             clsPHRPReader.PeptideHitResultTypes resultType,
             bool doNotFilterPeptides,
             bool mgfInstrumentData)
@@ -1440,11 +1440,11 @@ namespace AnalysisManagerMSGFPlugin
                 {
                     success = true;
                 }
-                else if (rawDataType == AnalysisResources.eRawDataTypeConstants.mzXML)
+                else if (rawDataType == AnalysisResources.RawDataTypeConstants.mzXML)
                 {
                     success = true;
                 }
-                else if (rawDataType == AnalysisResources.eRawDataTypeConstants.mzML)
+                else if (rawDataType == AnalysisResources.RawDataTypeConstants.mzML)
                 {
                     success = ConvertMzMLToMzXML();
                 }

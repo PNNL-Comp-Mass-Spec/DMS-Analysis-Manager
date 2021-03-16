@@ -34,7 +34,7 @@ namespace AnalysisManagerTest
                 WriteToConsoleIfNoListener = true
             };
 
-            statusTools.UpdateAndWrite(EnumMgrStatus.STOPPED, EnumTaskStatus.STOPPED, EnumTaskStatusDetail.NO_TASK, 0);
+            statusTools.UpdateAndWrite(MgrStatusCodes.STOPPED, TaskStatusCodes.STOPPED, TaskStatusDetailCodes.NO_TASK, 0);
 
             Console.WriteLine("Status written to " + statusTools.FileNamePath);
         }

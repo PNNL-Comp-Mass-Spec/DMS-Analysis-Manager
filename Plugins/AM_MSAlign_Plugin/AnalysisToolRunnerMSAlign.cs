@@ -34,8 +34,9 @@ namespace AnalysisManagerMSAlignPlugIn
 
         protected const string RESULT_DETAILS_NAME_SUFFIX = "_MSAlign_ResultDetails.txt";
         protected const string RESULT_DETAILS_NAME_LEGACY = "result.txt";
+
         // Note that newer versions are assumed to have higher enum values
-        protected enum eMSAlignVersionType
+        protected enum MSAlignVersionType
         {
             Unknown = 0,
             v0pt5 = 1,
@@ -122,23 +123,23 @@ namespace AnalysisManagerMSAlignPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                eMSAlignVersionType eMSAlignVersion;
+                MSAlignVersionType msAlignVersion;
                 if (mMSAlignProgLoc.Contains(Path.DirectorySeparatorChar + "v0.5" + Path.DirectorySeparatorChar))
                 {
-                    eMSAlignVersion = eMSAlignVersionType.v0pt5;
+                    msAlignVersion = MSAlignVersionType.v0pt5;
                 }
                 else if (mMSAlignProgLoc.Contains(Path.DirectorySeparatorChar + "v0.6."))
                 {
-                    eMSAlignVersion = eMSAlignVersionType.v0pt6;
+                    msAlignVersion = MSAlignVersionType.v0pt6;
                 }
                 else if (mMSAlignProgLoc.Contains(Path.DirectorySeparatorChar + "v0.7."))
                 {
-                    eMSAlignVersion = eMSAlignVersionType.v0pt7;
+                    msAlignVersion = MSAlignVersionType.v0pt7;
                 }
                 else
                 {
                     // Assume v0.7
-                    eMSAlignVersion = eMSAlignVersionType.v0pt7;
+                    msAlignVersion = MSAlignVersionType.v0pt7;
                 }
 
                 // Store the MSAlign version info in the database after the first line is written to file MSAlign_ConsoleOutput.txt
@@ -153,13 +154,13 @@ namespace AnalysisManagerMSAlignPlugIn
                 mMSAlignWorkFolderPath = string.Empty;
 
                 // Copy the MS Align program files and associated files to the work directory
-                if (!CopyMSAlignProgramFiles(mMSAlignProgLoc, eMSAlignVersion))
+                if (!CopyMSAlignProgramFiles(mMSAlignProgLoc, msAlignVersion))
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 // Initialize the MSInput folder
-                if (!InitializeMSInputFolder(mMSAlignWorkFolderPath, eMSAlignVersion))
+                if (!InitializeMSInputFolder(mMSAlignWorkFolderPath, msAlignVersion))
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -173,7 +174,7 @@ namespace AnalysisManagerMSAlignPlugIn
 
                 // Set up and execute a program runner to run MSAlign
                 string arguments;
-                if (eMSAlignVersion == eMSAlignVersionType.v0pt5)
+                if (msAlignVersion == MSAlignVersionType.v0pt5)
                 {
                     arguments = " -Xmx" + javaMemorySize + "M -classpath jar\\malign.jar;jar\\* edu.ucsd.msalign.spec.web.Pipeline .\\";
                 }
@@ -192,7 +193,7 @@ namespace AnalysisManagerMSAlignPlugIn
                 mCmdRunner.CacheStandardOutput = false;
                 mCmdRunner.EchoOutputToConsole = true;
 
-                if (eMSAlignVersion == eMSAlignVersionType.v0pt5)
+                if (msAlignVersion == MSAlignVersionType.v0pt5)
                 {
                     mCmdRunner.WriteConsoleOutputToFile = false;
                 }
@@ -243,14 +244,14 @@ namespace AnalysisManagerMSAlignPlugIn
                 else
                 {
                     // Make sure the output files were created
-                    if (!ValidateAndCopyResultFiles(eMSAlignVersion))
+                    if (!ValidateAndCopyResultFiles(msAlignVersion))
                     {
                         processingError = true;
                     }
 
                     var resultTableFilePath = Path.Combine(mWorkDir, mDatasetName + RESULT_TABLE_NAME_SUFFIX);
 
-                    if (eMSAlignVersion == eMSAlignVersionType.v0pt5)
+                    if (msAlignVersion == MSAlignVersionType.v0pt5)
                     {
                         // Add a header to the _ResultTable.txt file
                         AddResultTableHeaderLine(resultTableFilePath);
@@ -293,7 +294,7 @@ namespace AnalysisManagerMSAlignPlugIn
                 // Make sure objects are released
                 PRISM.ProgRunner.GarbageCollectNow();
 
-                if (eMSAlignVersion != eMSAlignVersionType.v0pt5)
+                if (msAlignVersion != MSAlignVersionType.v0pt5)
                 {
                     // Trim the console output file to remove the majority of the % finished messages
                     TrimConsoleOutputFile(Path.Combine(mWorkDir, MSAlign_CONSOLE_OUTPUT));
@@ -428,7 +429,7 @@ namespace AnalysisManagerMSAlignPlugIn
             base.CopyFailedResultsToArchiveDirectory();
         }
 
-        private bool CopyMSAlignProgramFiles(string msAlignJarFilePath, eMSAlignVersionType eMSAlignVersion)
+        private bool CopyMSAlignProgramFiles(string msAlignJarFilePath, MSAlignVersionType msAlignVersion)
         {
             try
             {
@@ -475,7 +476,7 @@ namespace AnalysisManagerMSAlignPlugIn
                 msAlignWork.CreateSubdirectory("msoutput");
                 msAlignWork.CreateSubdirectory("xml");
                 msAlignWork.CreateSubdirectory("xsl");
-                if (eMSAlignVersion != eMSAlignVersionType.v0pt5)
+                if (msAlignVersion != MSAlignVersionType.v0pt5)
                 {
                     msAlignWork.CreateSubdirectory("etc");
                 }
@@ -485,7 +486,7 @@ namespace AnalysisManagerMSAlignPlugIn
                     "jar", "xsl"
                 };
 
-                if (eMSAlignVersion != eMSAlignVersionType.v0pt5)
+                if (msAlignVersion != MSAlignVersionType.v0pt5)
                 {
                     subdirectoryNames.Add("etc");
                 }
@@ -517,7 +518,7 @@ namespace AnalysisManagerMSAlignPlugIn
             return true;
         }
 
-        protected bool CreateInputPropertiesFile(string paramFilePath, string mSInputFolderPath, eMSAlignVersionType eMSAlignVersion)
+        protected bool CreateInputPropertiesFile(string paramFilePath, string mSInputFolderPath, MSAlignVersionType msAlignVersion)
         {
             // ReSharper disable StringLiteralTypo
 
@@ -569,7 +570,7 @@ namespace AnalysisManagerMSAlignPlugIn
                 using (var writer = new StreamWriter(new FileStream(outputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
                     // Write out the database name and input file name
-                    if (eMSAlignVersion == eMSAlignVersionType.v0pt5)
+                    if (msAlignVersion == MSAlignVersionType.v0pt5)
                     {
                         writer.WriteLine(DB_FILENAME_LEGACY + "=" + mInputPropertyValues.FastaFileName);
                         // Input file name is assumed to be input_data
@@ -669,7 +670,7 @@ namespace AnalysisManagerMSAlignPlugIn
                             // Skip this line; we'll define it later
                             default:
 
-                                if (eMSAlignVersion == eMSAlignVersionType.v0pt5)
+                                if (msAlignVersion == MSAlignVersionType.v0pt5)
                                 {
                                     // Running a legacy version; rename the keys
 
@@ -730,20 +731,20 @@ namespace AnalysisManagerMSAlignPlugIn
                                 }
                                 else
                                 {
-                                    if (eMSAlignVersion >= eMSAlignVersionType.v0pt7 && string.Equals(keyName, "eValueThreshold", StringComparison.OrdinalIgnoreCase))
+                                    if (msAlignVersion >= MSAlignVersionType.v0pt7 && string.Equals(keyName, "eValueThreshold", StringComparison.OrdinalIgnoreCase))
                                     {
                                         // v0.7 and up use cutoffType and cutoff instead of eValueThreshold
                                         writer.WriteLine("cutoffType=EVALUE");
                                         writer.WriteLine("cutoff=" + value);
                                     }
-                                    else if (eMSAlignVersion == eMSAlignVersionType.v0pt6 && keyName.ToLower() == CUTOFF_TYPE_KEY)
+                                    else if (msAlignVersion == MSAlignVersionType.v0pt6 && keyName.ToLower() == CUTOFF_TYPE_KEY)
                                     {
                                         if (string.Equals(value, "EVALUE", StringComparison.OrdinalIgnoreCase))
                                         {
                                             eValueCutoffType = true;
                                         }
                                     }
-                                    else if (eMSAlignVersion == eMSAlignVersionType.v0pt6 && keyName.ToLower() == CUTOFF_KEY)
+                                    else if (msAlignVersion == MSAlignVersionType.v0pt6 && keyName.ToLower() == CUTOFF_KEY)
                                     {
                                         if (eValueCutoffType)
                                         {
@@ -769,7 +770,7 @@ namespace AnalysisManagerMSAlignPlugIn
                         }
                     }
 
-                    if (eMSAlignVersion == eMSAlignVersionType.v0pt5)
+                    if (msAlignVersion == MSAlignVersionType.v0pt5)
                     {
                         mInputPropertyValues.ResultTableFileName = RESULT_TABLE_NAME_LEGACY;
                         mInputPropertyValues.ResultDetailsFileName = RESULT_DETAILS_NAME_LEGACY;
@@ -780,7 +781,7 @@ namespace AnalysisManagerMSAlignPlugIn
                         mInputPropertyValues.ResultDetailsFileName = mDatasetName + RESULT_DETAILS_NAME_SUFFIX;
                     }
 
-                    if (eMSAlignVersion != eMSAlignVersionType.v0pt5)
+                    if (msAlignVersion != MSAlignVersionType.v0pt5)
                     {
                         writer.WriteLine(TABLE_OUTPUT_FILENAME + "=" + mInputPropertyValues.ResultTableFileName);
                         writer.WriteLine(DETAIL_OUTPUT_FILENAME + "=" + mInputPropertyValues.ResultDetailsFileName);
@@ -800,7 +801,7 @@ namespace AnalysisManagerMSAlignPlugIn
             return true;
         }
 
-        protected bool InitializeMSInputFolder(string msAlignWorkFolderPath, eMSAlignVersionType eMSAlignVersion)
+        protected bool InitializeMSInputFolder(string msAlignWorkFolderPath, MSAlignVersionType msAlignVersion)
         {
             try
             {
@@ -842,7 +843,7 @@ namespace AnalysisManagerMSAlignPlugIn
                     return false;
                 }
 
-                if (eMSAlignVersion == eMSAlignVersionType.v0pt5)
+                if (msAlignVersion == MSAlignVersionType.v0pt5)
                 {
                     // Rename the file to input_data when we move it
                     mInputPropertyValues.SpectrumFileName = "input_data";
@@ -855,7 +856,7 @@ namespace AnalysisManagerMSAlignPlugIn
 
                 var paramFilePath = Path.Combine(mWorkDir, mJobParams.GetParam("ParmFileName"));
 
-                if (!CreateInputPropertiesFile(paramFilePath, msInputFolderPath, eMSAlignVersion))
+                if (!CreateInputPropertiesFile(paramFilePath, msInputFolderPath, msAlignVersion))
                 {
                     return false;
                 }
@@ -1111,7 +1112,7 @@ namespace AnalysisManagerMSAlignPlugIn
             }
         }
 
-        protected bool ValidateAndCopyResultFiles(eMSAlignVersionType eMSAlignVersion)
+        protected bool ValidateAndCopyResultFiles(MSAlignVersionType msAlignVersion)
         {
             var resultsFolderPath = Path.Combine(mMSAlignWorkFolderPath, "msoutput");
             var resultsFilesToMove = new List<string>();
@@ -1144,7 +1145,7 @@ namespace AnalysisManagerMSAlignPlugIn
                         // Copy the results file to the work directory
                         var targetFileName = string.Copy(searchResultFile.Name);
 
-                        if (eMSAlignVersion == eMSAlignVersionType.v0pt5)
+                        if (msAlignVersion == MSAlignVersionType.v0pt5)
                         {
                             // Rename the file when we copy it
                             switch (searchResultFile.Name)

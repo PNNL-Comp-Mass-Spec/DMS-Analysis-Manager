@@ -35,8 +35,8 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
 
             switch (rawDataType)
             {
-                case eRawDataTypeConstants.BrukerFTFolder:
-                case eRawDataTypeConstants.BrukerTOFBaf:
+                case RawDataTypeConstants.BrukerFTFolder:
+                case RawDataTypeConstants.BrukerTOFBaf:
                     break;
                 // This dataset type is acceptable
                 default:

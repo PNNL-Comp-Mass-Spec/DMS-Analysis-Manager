@@ -39,7 +39,7 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Options for auto-removing files from the working directory when the manager starts
         /// </summary>
-        public enum eCleanupModeConstants
+        public enum CleanupModes
         {
             /// <summary>
             /// Never auto-remove files from the working directory
@@ -60,7 +60,7 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Cleanup status codes for stored procedure ReportManagerErrorCleanup
         /// </summary>
-        public enum eCleanupActionCodeConstants
+        public enum CleanupActionCodes
         {
             /// <summary>
             /// Starting
@@ -137,22 +137,22 @@ namespace AnalysisManagerProg
         }
 
         /// <summary>
-        /// Automatically clean old files from the work directory if eManagerErrorCleanupMode is not eCleanupModeConstants.Disabled
+        /// Automatically clean old files from the work directory if eManagerErrorCleanupMode is not CleanupModes.Disabled
         /// </summary>
         /// <param name="eManagerErrorCleanupMode"></param>
         /// <param name="debugLevel"></param>
-        public bool AutoCleanupManagerErrors(eCleanupModeConstants eManagerErrorCleanupMode, int debugLevel)
+        public bool AutoCleanupManagerErrors(CleanupModes eManagerErrorCleanupMode, int debugLevel)
         {
             if (!mInitialized)
                 return false;
 
-            if (eManagerErrorCleanupMode == eCleanupModeConstants.Disabled)
+            if (eManagerErrorCleanupMode == CleanupModes.Disabled)
                 return false;
 
             LogMessage("Attempting to automatically clean the work directory");
 
             // Call SP ReportManagerErrorCleanup @ActionCode=1
-            ReportManagerErrorCleanup(eCleanupActionCodeConstants.Start);
+            ReportManagerErrorCleanup(CleanupActionCodes.Start);
 
             // Delete all directories and subdirectories in the work directory
             var success = CleanWorkDir(mWorkingDirPath, 1);
@@ -190,11 +190,11 @@ namespace AnalysisManagerProg
 
             if (success)
             {
-                ReportManagerErrorCleanup(eCleanupActionCodeConstants.Success);
+                ReportManagerErrorCleanup(CleanupActionCodes.Success);
             }
             else
             {
-                ReportManagerErrorCleanup(eCleanupActionCodeConstants.Fail, failureMessage);
+                ReportManagerErrorCleanup(CleanupActionCodes.Fail, failureMessage);
             }
 
             return success;
@@ -508,12 +508,12 @@ namespace AnalysisManagerProg
             }
         }
 
-        private void ReportManagerErrorCleanup(eCleanupActionCodeConstants eMgrCleanupActionCode)
+        private void ReportManagerErrorCleanup(CleanupActionCodes eMgrCleanupActionCode)
         {
             ReportManagerErrorCleanup(eMgrCleanupActionCode, string.Empty);
         }
 
-        private void ReportManagerErrorCleanup(eCleanupActionCodeConstants eMgrCleanupActionCode, string failureMessage)
+        private void ReportManagerErrorCleanup(CleanupActionCodes eMgrCleanupActionCode, string failureMessage)
         {
             if (string.IsNullOrWhiteSpace(mMgrConfigDBConnectionString))
             {
@@ -534,7 +534,7 @@ namespace AnalysisManagerProg
                 RegisterEvents(dbTools);
 
                 // Set up the command object prior to SP execution
-                var cmd = dbTools.CreateCommand(SP_NAME_REPORT_MGR_ERROR_CLEANUP, CommandType.StoredProcedure);
+                var cmd = dbTools.CreateCommand(SP_NAME_REPORT_MGR_ERROR_CLEANUP, System.Data.CommandType.StoredProcedure);
 
                 dbTools.AddParameter(cmd, "@ManagerName", SqlType.VarChar, 128, mManagerName);
                 dbTools.AddParameter(cmd, "@State", SqlType.Int).Value = eMgrCleanupActionCode;

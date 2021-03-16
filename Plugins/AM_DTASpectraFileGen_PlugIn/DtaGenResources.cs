@@ -40,7 +40,7 @@ namespace DTASpectraFileGen
             var zippedDTAFilePath = string.Empty;
 
             var dtaGeneratorType = DtaGenToolRunner.GetDTAGeneratorInfo(mJobParams, out var errorMessage);
-            if (dtaGeneratorType == DtaGenToolRunner.eDTAGeneratorConstants.Unknown)
+            if (dtaGeneratorType == DtaGenToolRunner.DTAGeneratorConstants.Unknown)
             {
                 if (string.IsNullOrEmpty(errorMessage))
                 {
@@ -83,7 +83,7 @@ namespace DTASpectraFileGen
                 }
 
                 bool centroidDTAs;
-                if (dtaGeneratorType == DtaGenToolRunner.eDTAGeneratorConstants.DeconConsole)
+                if (dtaGeneratorType == DtaGenToolRunner.DTAGeneratorConstants.DeconConsole)
                 {
                     centroidDTAs = false;
                 }
@@ -163,9 +163,9 @@ namespace DTASpectraFileGen
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
-        private bool GetParameterFiles(DtaGenToolRunner.eDTAGeneratorConstants eDtaGeneratorType)
+        private bool GetParameterFiles(DtaGenToolRunner.DTAGeneratorConstants eDtaGeneratorType)
         {
-            if (eDtaGeneratorType == DtaGenToolRunner.eDTAGeneratorConstants.DeconConsole)
+            if (eDtaGeneratorType == DtaGenToolRunner.DTAGeneratorConstants.DeconConsole)
             {
                 const string paramFileStoragePathKeyName = Global.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "DTA_Gen";
 

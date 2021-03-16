@@ -157,9 +157,9 @@ namespace AnalysisManagerMSGFPlugin
                 {
                     switch (rawDataType)
                     {
-                        case eRawDataTypeConstants.ThermoRawFile:
-                        case eRawDataTypeConstants.mzML:
-                        case eRawDataTypeConstants.mzXML:
+                        case RawDataTypeConstants.ThermoRawFile:
+                        case RawDataTypeConstants.mzML:
+                        case RawDataTypeConstants.mzXML:
                             break;
                         // This is a valid data type
                         default:

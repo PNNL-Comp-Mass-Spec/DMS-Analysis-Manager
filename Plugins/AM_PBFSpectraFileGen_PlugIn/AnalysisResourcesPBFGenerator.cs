@@ -41,7 +41,7 @@ namespace AnalysisManagerPBFGenerator
                 var rawDataTypeName = mJobParams.GetJobParameter("RawDataType", "");
                 var rawDataType = GetRawDataType(rawDataTypeName);
 
-                if (rawDataType == eRawDataTypeConstants.ThermoRawFile)
+                if (rawDataType == RawDataTypeConstants.ThermoRawFile)
                 {
                     mJobParams.AddResultFileExtensionToSkip(DOT_RAW_EXTENSION);
                 }

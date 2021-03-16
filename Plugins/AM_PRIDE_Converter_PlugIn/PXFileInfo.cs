@@ -15,7 +15,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// <summary>
         /// ProteomeXchange file type
         /// </summary>
-        public ePXFileType PXFileType { get; set; }
+        public PXFileTypes PXFileType { get; set; }
 
         /// <summary>
         /// Mapping from this file to parent files

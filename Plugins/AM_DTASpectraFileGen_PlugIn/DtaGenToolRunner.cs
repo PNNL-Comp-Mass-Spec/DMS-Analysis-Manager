@@ -26,7 +26,7 @@ namespace DTASpectraFileGen
 
         private const int CENTROID_CDTA_PROGRESS_START = 70;
 
-        public enum eDTAGeneratorConstants
+        public enum DTAGeneratorConstants
         {
             Unknown = 0,
             ExtractMSn = 1,
@@ -133,37 +133,37 @@ namespace DTASpectraFileGen
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
-        private eDTAGeneratorConstants GetDTAGenerator(out DtaGen spectraGen)
+        private DTAGeneratorConstants GetDTAGenerator(out DtaGen spectraGen)
         {
             var eDtaGeneratorType = GetDTAGeneratorInfo(mJobParams, out mConcatenateDTAs, out var errorMessage);
             spectraGen = null;
 
             switch (eDtaGeneratorType)
             {
-                case eDTAGeneratorConstants.MGFtoDTA:
+                case DTAGeneratorConstants.MGFtoDTA:
                     spectraGen = new MGFtoDtaGenMainProcess();
 
                     break;
-                case eDTAGeneratorConstants.MSConvert:
+                case DTAGeneratorConstants.MSConvert:
                     spectraGen = new DtaGenMSConvert();
 
                     break;
-                case eDTAGeneratorConstants.DeconConsole:
+                case DTAGeneratorConstants.DeconConsole:
                     LogError("DeconConsole is obsolete and should no longer be used");
 
-                    return eDTAGeneratorConstants.Unknown;
+                    return DTAGeneratorConstants.Unknown;
                 // spectraGen = New DtaGenDeconConsole()
 
-                case eDTAGeneratorConstants.ExtractMSn:
-                case eDTAGeneratorConstants.DeconMSn:
+                case DTAGeneratorConstants.ExtractMSn:
+                case DTAGeneratorConstants.DeconMSn:
                     spectraGen = new DtaGenThermoRaw();
 
                     break;
-                case eDTAGeneratorConstants.RawConverter:
+                case DTAGeneratorConstants.RawConverter:
                     spectraGen = new DtaGenRawConverter();
 
                     break;
-                case eDTAGeneratorConstants.Unknown:
+                case DTAGeneratorConstants.Unknown:
                     if (string.IsNullOrEmpty(errorMessage))
                     {
                         LogError("GetDTAGeneratorInfo reported an Unknown DTAGenerator type");
@@ -178,12 +178,12 @@ namespace DTASpectraFileGen
             return eDtaGeneratorType;
         }
 
-        public static eDTAGeneratorConstants GetDTAGeneratorInfo(IJobParams jobParams, out string errorMessage)
+        public static DTAGeneratorConstants GetDTAGeneratorInfo(IJobParams jobParams, out string errorMessage)
         {
             return GetDTAGeneratorInfo(jobParams, out _, out errorMessage);
         }
 
-        public static eDTAGeneratorConstants GetDTAGeneratorInfo(IJobParams jobParams, out bool concatenateDTAs, out string errorMessage)
+        public static DTAGeneratorConstants GetDTAGeneratorInfo(IJobParams jobParams, out bool concatenateDTAs, out string errorMessage)
         {
             var dtaGenerator = jobParams.GetJobParameter("DtaGenerator", string.Empty);
             var rawDataTypeName = jobParams.GetJobParameter("RawDataType", string.Empty);
@@ -195,7 +195,7 @@ namespace DTASpectraFileGen
             if (string.IsNullOrEmpty(rawDataTypeName))
             {
                 errorMessage = NotifyMissingParameter(jobParams, "RawDataType");
-                return eDTAGeneratorConstants.Unknown;
+                return DTAGeneratorConstants.Unknown;
             }
 
             var rawDataType = AnalysisResources.GetRawDataType(rawDataTypeName);
@@ -203,31 +203,31 @@ namespace DTASpectraFileGen
             if (mgfInstrumentData)
             {
                 concatenateDTAs = false;
-                return eDTAGeneratorConstants.MGFtoDTA;
+                return DTAGeneratorConstants.MGFtoDTA;
             }
 
             switch (rawDataType)
             {
-                case AnalysisResources.eRawDataTypeConstants.ThermoRawFile:
+                case AnalysisResources.RawDataTypeConstants.ThermoRawFile:
 
                     concatenateDTAs = false;
                     switch (dtaGenerator.ToLower())
                     {
                         case DtaGenThermoRaw.MSCONVERT_FILENAME_LOWER:
-                            return eDTAGeneratorConstants.MSConvert;
+                            return DTAGeneratorConstants.MSConvert;
 
                         case DtaGenThermoRaw.DECON_CONSOLE_FILENAME_LOWER:
-                            return eDTAGeneratorConstants.DeconConsole;
+                            return DTAGeneratorConstants.DeconConsole;
 
                         case DtaGenThermoRaw.EXTRACT_MSN_FILENAME_LOWER:
                             concatenateDTAs = true;
-                            return eDTAGeneratorConstants.ExtractMSn;
+                            return DTAGeneratorConstants.ExtractMSn;
 
                         case DtaGenThermoRaw.DECONMSN_FILENAME_LOWER:
-                            return eDTAGeneratorConstants.DeconMSn;
+                            return DTAGeneratorConstants.DeconMSn;
 
                         case DtaGenThermoRaw.RAWCONVERTER_FILENAME_LOWER:
-                            return eDTAGeneratorConstants.RawConverter;
+                            return DTAGeneratorConstants.RawConverter;
 
                         default:
                             if (string.IsNullOrEmpty(dtaGenerator))
@@ -239,31 +239,31 @@ namespace DTASpectraFileGen
                                 errorMessage = "Unknown DTAGenerator for Thermo Raw files: " + dtaGenerator;
                             }
 
-                            return eDTAGeneratorConstants.Unknown;
+                            return DTAGeneratorConstants.Unknown;
                     }
 
-                case AnalysisResources.eRawDataTypeConstants.mzML:
+                case AnalysisResources.RawDataTypeConstants.mzML:
                     if (string.Equals(dtaGenerator, DtaGenThermoRaw.MSCONVERT_FILENAME, StringComparison.OrdinalIgnoreCase))
                     {
                         concatenateDTAs = false;
-                        return eDTAGeneratorConstants.MSConvert;
+                        return DTAGeneratorConstants.MSConvert;
                     }
                     else
                     {
                         errorMessage = "Invalid DTAGenerator for mzML files: " + dtaGenerator;
-                        return eDTAGeneratorConstants.Unknown;
+                        return DTAGeneratorConstants.Unknown;
                     }
 
-                case AnalysisResources.eRawDataTypeConstants.AgilentDFolder:
+                case AnalysisResources.RawDataTypeConstants.AgilentDFolder:
                     concatenateDTAs = true;
-                    return eDTAGeneratorConstants.MGFtoDTA;
+                    return DTAGeneratorConstants.MGFtoDTA;
 
-                case AnalysisResources.eRawDataTypeConstants.BrukerTOFTdf:
+                case AnalysisResources.RawDataTypeConstants.BrukerTOFTdf:
 
                     concatenateDTAs = false;
                     if (string.Equals(dtaGenerator, DtaGenThermoRaw.MSCONVERT_FILENAME, StringComparison.OrdinalIgnoreCase))
                     {
-                        return eDTAGeneratorConstants.MSConvert;
+                        return DTAGeneratorConstants.MSConvert;
                     }
 
                     if (string.IsNullOrEmpty(dtaGenerator))
@@ -275,11 +275,11 @@ namespace DTASpectraFileGen
                         errorMessage = "Bruker analysis.tdf files can only be converted to .mgf using MSConvert";
                     }
 
-                    return eDTAGeneratorConstants.Unknown;
+                    return DTAGeneratorConstants.Unknown;
 
                 default:
                     errorMessage = "Unsupported data type for DTA generation: " + rawDataType;
-                    return eDTAGeneratorConstants.Unknown;
+                    return DTAGeneratorConstants.Unknown;
             }
         }
 
@@ -376,12 +376,12 @@ namespace DTASpectraFileGen
 
             var eDtaGeneratorType = GetDTAGenerator(out var spectraGen);
 
-            if (eDtaGeneratorType == eDTAGeneratorConstants.Unknown)
+            if (eDtaGeneratorType == DTAGeneratorConstants.Unknown)
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            if (eDtaGeneratorType == eDTAGeneratorConstants.DeconConsole)
+            if (eDtaGeneratorType == DTAGeneratorConstants.DeconConsole)
             {
                 mCentroidDTAs = false;
             }
@@ -406,14 +406,14 @@ namespace DTASpectraFileGen
 
             // Store the Version info in the database
             bool success;
-            if (eDtaGeneratorType == eDTAGeneratorConstants.MGFtoDTA)
+            if (eDtaGeneratorType == DTAGeneratorConstants.MGFtoDTA)
             {
                 // MGFtoDTA Dll
                 success = StoreToolVersionInfoDLL(spectraGen.DtaToolNameLoc);
             }
             else
             {
-                if (eDtaGeneratorType == eDTAGeneratorConstants.DeconConsole)
+                if (eDtaGeneratorType == DTAGeneratorConstants.DeconConsole)
                 {
                     // Possibly use a specific version of DeconTools
                     var progLoc = DetermineProgramLocation("DeconToolsProgLoc", "DeconConsole.exe");
@@ -435,7 +435,7 @@ namespace DTASpectraFileGen
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            if (eDtaGeneratorType == eDTAGeneratorConstants.DeconMSn && mCentroidDTAs)
+            if (eDtaGeneratorType == DTAGeneratorConstants.DeconMSn && mCentroidDTAs)
             {
                 var usingExistingResults = mJobParams.GetJobParameter(DtaGenResources.USING_EXISTING_DECONMSN_RESULTS, false);
 
@@ -1006,7 +1006,7 @@ namespace DTASpectraFileGen
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        private bool StoreToolVersionInfo(string dtaGeneratorAppPath, eDTAGeneratorConstants eDtaGenerator)
+        private bool StoreToolVersionInfo(string dtaGeneratorAppPath, DTAGeneratorConstants eDtaGenerator)
         {
             var toolVersionInfo = string.Empty;
 
@@ -1036,7 +1036,7 @@ namespace DTASpectraFileGen
                 dtaGenerator
             };
 
-            if (eDtaGenerator == eDTAGeneratorConstants.DeconConsole || eDtaGenerator == eDTAGeneratorConstants.DeconMSn)
+            if (eDtaGenerator == DTAGeneratorConstants.DeconConsole || eDtaGenerator == DTAGeneratorConstants.DeconMSn)
             {
                 // Lookup the version of the DeconConsole or DeconMSn application
                 string dllPath;
@@ -1045,7 +1045,7 @@ namespace DTASpectraFileGen
                 if (!success)
                     return false;
 
-                if (eDtaGenerator == eDTAGeneratorConstants.DeconMSn)
+                if (eDtaGenerator == DTAGeneratorConstants.DeconMSn)
                 {
                     // DeconMSn
                     var deconEngineV2File = new FileInfo(Path.Combine(dtaGenerator.DirectoryName, "DeconEngineV2.dll"));
@@ -1066,7 +1066,7 @@ namespace DTASpectraFileGen
                     if (!success)
                         return false;
                 }
-                else if (eDtaGenerator == eDTAGeneratorConstants.DeconConsole)
+                else if (eDtaGenerator == DTAGeneratorConstants.DeconConsole)
                 {
                     // DeconConsole re-implementation of DeconMSn (obsolete, superseded by C# version of DeconMSn that uses DeconEngineV2.dll)
 

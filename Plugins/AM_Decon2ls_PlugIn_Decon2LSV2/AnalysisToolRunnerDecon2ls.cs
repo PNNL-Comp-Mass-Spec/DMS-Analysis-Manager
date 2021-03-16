@@ -30,7 +30,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
         #region "Module variables"
 
-        private AnalysisResources.eRawDataTypeConstants mRawDataType = AnalysisResources.eRawDataTypeConstants.Unknown;
+        private AnalysisResources.RawDataTypeConstants mRawDataType = AnalysisResources.RawDataTypeConstants.Unknown;
         private string mRawDataTypeName = string.Empty;
 
         private string mInputFilePath = string.Empty;
@@ -110,9 +110,9 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
                 switch (mRawDataType)
                 {
-                    case AnalysisResources.eRawDataTypeConstants.AgilentDFolder:
-                    case AnalysisResources.eRawDataTypeConstants.BrukerFTFolder:
-                    case AnalysisResources.eRawDataTypeConstants.BrukerTOFBaf:
+                    case AnalysisResources.RawDataTypeConstants.AgilentDFolder:
+                    case AnalysisResources.RawDataTypeConstants.BrukerFTFolder:
+                    case AnalysisResources.RawDataTypeConstants.BrukerTOFBaf:
                         // As of 11/19/2010, the Decon2LS output files are created inside the .D folder
                         // Still true as of 5/18/2012
                         dotDFolder = true;
@@ -915,29 +915,29 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             };
         }
 
-        private DeconToolsFileTypeConstants GetInputFileType(AnalysisResources.eRawDataTypeConstants rawDataType)
+        private DeconToolsFileTypeConstants GetInputFileType(AnalysisResources.RawDataTypeConstants rawDataType)
         {
             var InstrumentClass = mJobParams.GetParam("instClass");
 
             // Gets the Decon2LS file type based on the input data type
             switch (rawDataType)
             {
-                case AnalysisResources.eRawDataTypeConstants.ThermoRawFile:
+                case AnalysisResources.RawDataTypeConstants.ThermoRawFile:
                     return DeconToolsFileTypeConstants.Thermo_Raw;
 
-                case AnalysisResources.eRawDataTypeConstants.AgilentQStarWiffFile:
+                case AnalysisResources.RawDataTypeConstants.AgilentQStarWiffFile:
                     return DeconToolsFileTypeConstants.Agilent_WIFF;
 
-                case AnalysisResources.eRawDataTypeConstants.UIMF:
+                case AnalysisResources.RawDataTypeConstants.UIMF:
                     return DeconToolsFileTypeConstants.PNNL_UIMF;
 
-                case AnalysisResources.eRawDataTypeConstants.AgilentDFolder:
+                case AnalysisResources.RawDataTypeConstants.AgilentDFolder:
                     return DeconToolsFileTypeConstants.Agilent_D;
 
-                case AnalysisResources.eRawDataTypeConstants.MicromassRawFolder:
+                case AnalysisResources.RawDataTypeConstants.MicromassRawFolder:
                     return DeconToolsFileTypeConstants.Micromass_RawData;
 
-                case AnalysisResources.eRawDataTypeConstants.ZippedSFolders:
+                case AnalysisResources.RawDataTypeConstants.ZippedSFolders:
                     if (string.Equals(InstrumentClass, "BrukerFTMS", StringComparison.OrdinalIgnoreCase))
                     {
                         // Data from Bruker FTICR
@@ -953,11 +953,11 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                     // Should never get here
                     return DeconToolsFileTypeConstants.Undefined;
 
-                case AnalysisResources.eRawDataTypeConstants.BrukerFTFolder:
-                case AnalysisResources.eRawDataTypeConstants.BrukerTOFBaf:
+                case AnalysisResources.RawDataTypeConstants.BrukerFTFolder:
+                case AnalysisResources.RawDataTypeConstants.BrukerTOFBaf:
                     return DeconToolsFileTypeConstants.Bruker;
 
-                case AnalysisResources.eRawDataTypeConstants.BrukerMALDISpot:
+                case AnalysisResources.RawDataTypeConstants.BrukerMALDISpot:
 
                     // Future: Add support for this after Decon2LS is updated
                     // Return DeconToolsFileTypeConstants.Bruker_15T
@@ -965,7 +965,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                     LogError("Decon2LS_V2 does not yet support Bruker MALDI data (" + rawDataType + ")");
                     return DeconToolsFileTypeConstants.Undefined;
 
-                case AnalysisResources.eRawDataTypeConstants.BrukerMALDIImaging:
+                case AnalysisResources.RawDataTypeConstants.BrukerMALDIImaging:
 
                     // Future: Add support for this after Decon2LS is updated
                     // Return DeconToolsFileTypeConstants.Bruker_15T
@@ -973,10 +973,10 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                     LogError("Decon2LS_V2 does not yet support Bruker MALDI data (" + rawDataType + ")");
                     return DeconToolsFileTypeConstants.Undefined;
 
-                case AnalysisResources.eRawDataTypeConstants.mzXML:
+                case AnalysisResources.RawDataTypeConstants.mzXML:
                     return DeconToolsFileTypeConstants.MZXML_RawData;
 
-                case AnalysisResources.eRawDataTypeConstants.mzML:
+                case AnalysisResources.RawDataTypeConstants.mzML:
                     // Future: Add support for this after Decon2LS is updated
                     // Return DeconToolsFileTypeConstants.MZML_RawData
 
@@ -1001,9 +1001,9 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
                 switch (mRawDataType)
                 {
-                    case AnalysisResources.eRawDataTypeConstants.AgilentDFolder:
-                    case AnalysisResources.eRawDataTypeConstants.BrukerFTFolder:
-                    case AnalysisResources.eRawDataTypeConstants.BrukerTOFBaf:
+                    case AnalysisResources.RawDataTypeConstants.AgilentDFolder:
+                    case AnalysisResources.RawDataTypeConstants.BrukerFTFolder:
+                    case AnalysisResources.RawDataTypeConstants.BrukerTOFBaf:
                         // As of 11/19/2010, the _Log.txt file is created inside the .D folder
                         logFilePath = Path.Combine(mInputFilePath, mDatasetName) + "_log.txt";
                         break;
@@ -1197,7 +1197,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             return false;
         }
 
-        public string GetInputFilePath(AnalysisResources.eRawDataTypeConstants rawDataType)
+        public string GetInputFilePath(AnalysisResources.RawDataTypeConstants rawDataType)
         {
             return GetInputFilePath(mWorkDir, mDatasetName, rawDataType);
         }
@@ -1208,31 +1208,31 @@ namespace AnalysisManagerDecon2lsV2PlugIn
         /// <param name="workDirPath"></param>
         /// <param name="datasetName"></param>
         /// <param name="rawDataType"></param>
-        public static string GetInputFilePath(string workDirPath, string datasetName, AnalysisResources.eRawDataTypeConstants rawDataType)
+        public static string GetInputFilePath(string workDirPath, string datasetName, AnalysisResources.RawDataTypeConstants rawDataType)
         {
             var fileOrDirectoryName = rawDataType switch
             {
-                AnalysisResources.eRawDataTypeConstants.ThermoRawFile => datasetName + AnalysisResources.DOT_RAW_EXTENSION,
-                AnalysisResources.eRawDataTypeConstants.AgilentQStarWiffFile => datasetName + AnalysisResources.DOT_WIFF_EXTENSION,
-                AnalysisResources.eRawDataTypeConstants.UIMF => datasetName + AnalysisResources.DOT_UIMF_EXTENSION,
-                AnalysisResources.eRawDataTypeConstants.AgilentDFolder => datasetName + AnalysisResources.DOT_D_EXTENSION,
-                AnalysisResources.eRawDataTypeConstants.MicromassRawFolder => datasetName + AnalysisResources.DOT_RAW_EXTENSION + "/_FUNC001.DAT",
-                AnalysisResources.eRawDataTypeConstants.ZippedSFolders => datasetName,
+                AnalysisResources.RawDataTypeConstants.ThermoRawFile => datasetName + AnalysisResources.DOT_RAW_EXTENSION,
+                AnalysisResources.RawDataTypeConstants.AgilentQStarWiffFile => datasetName + AnalysisResources.DOT_WIFF_EXTENSION,
+                AnalysisResources.RawDataTypeConstants.UIMF => datasetName + AnalysisResources.DOT_UIMF_EXTENSION,
+                AnalysisResources.RawDataTypeConstants.AgilentDFolder => datasetName + AnalysisResources.DOT_D_EXTENSION,
+                AnalysisResources.RawDataTypeConstants.MicromassRawFolder => datasetName + AnalysisResources.DOT_RAW_EXTENSION + "/_FUNC001.DAT",
+                AnalysisResources.RawDataTypeConstants.ZippedSFolders => datasetName,
 
                 // Bruker_FT folders are actually .D folders
-                AnalysisResources.eRawDataTypeConstants.BrukerFTFolder => datasetName + AnalysisResources.DOT_D_EXTENSION,
+                AnalysisResources.RawDataTypeConstants.BrukerFTFolder => datasetName + AnalysisResources.DOT_D_EXTENSION,
 
                 // Bruker_TOFBaf folders are actually .D folders
-                AnalysisResources.eRawDataTypeConstants.BrukerTOFBaf => datasetName + AnalysisResources.DOT_D_EXTENSION,
+                AnalysisResources.RawDataTypeConstants.BrukerTOFBaf => datasetName + AnalysisResources.DOT_D_EXTENSION,
 
                 // Future: Customize the file or directory name for this dataset type
-                AnalysisResources.eRawDataTypeConstants.BrukerMALDISpot => datasetName,
+                AnalysisResources.RawDataTypeConstants.BrukerMALDISpot => datasetName,
 
                 // Future: Customize the file or directory name for this dataset type
-                AnalysisResources.eRawDataTypeConstants.BrukerMALDIImaging => datasetName,
+                AnalysisResources.RawDataTypeConstants.BrukerMALDIImaging => datasetName,
 
-                AnalysisResources.eRawDataTypeConstants.mzXML => datasetName + AnalysisResources.DOT_MZXML_EXTENSION,
-                AnalysisResources.eRawDataTypeConstants.mzML => datasetName + AnalysisResources.DOT_MZML_EXTENSION,
+                AnalysisResources.RawDataTypeConstants.mzXML => datasetName + AnalysisResources.DOT_MZXML_EXTENSION,
+                AnalysisResources.RawDataTypeConstants.mzML => datasetName + AnalysisResources.DOT_MZML_EXTENSION,
                 _ => string.Empty
             };
 

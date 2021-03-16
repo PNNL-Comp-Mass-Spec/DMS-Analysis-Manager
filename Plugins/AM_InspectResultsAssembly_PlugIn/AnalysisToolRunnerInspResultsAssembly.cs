@@ -38,7 +38,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
         }
 
         // Note: if you add/remove any steps, update PERCENT_COMPLETE_LEVEL_COUNT and update the population of mPercentCompleteStartLevels()
-        public enum eInspectResultsProcessingSteps
+        public enum InspectResultsProcessingSteps
         {
             Starting = 0,
             AssembleResults = 1,
@@ -253,7 +253,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                     LogDebug("Assembling parallelized inspect result files");
                 }
 
-                UpdateStatusRunning(mPercentCompleteStartLevels[(int)eInspectResultsProcessingSteps.AssembleResults]);
+                UpdateStatusRunning(mPercentCompleteStartLevels[(int)InspectResultsProcessingSteps.AssembleResults]);
 
                 // Combine the individual _xx_inspect.txt files to create the single _inspect.txt file
                 var result = AssembleFiles(mInspectResultsFileName, ResultFileType.INSPECT_RESULT, numResultFiles);
@@ -508,7 +508,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
             var ignorePeptideToProteinMapperErrors = false;
 
-            UpdateStatusRunning(mPercentCompleteStartLevels[(int)eInspectResultsProcessingSteps.CreatePeptideToProteinMapping]);
+            UpdateStatusRunning(mPercentCompleteStartLevels[(int)InspectResultsProcessingSteps.CreatePeptideToProteinMapping]);
 
             var inputFilePath = Path.Combine(mWorkDir, mInspectResultsFileName);
 
@@ -723,7 +723,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             var inspectResultsFilePath = Path.Combine(mWorkDir, mInspectResultsFileName);
             var filteredFilePath = Path.Combine(mWorkDir, mDatasetName + FIRST_HITS_INSPECT_FILE_SUFFIX);
 
-            UpdateStatusRunning(mPercentCompleteStartLevels[(int)eInspectResultsProcessingSteps.RunpValue]);
+            UpdateStatusRunning(mPercentCompleteStartLevels[(int)InspectResultsProcessingSteps.RunpValue]);
 
             // Note that RunPValue() will log any errors that occur
             var result = RunPValue(inspectResultsFilePath, filteredFilePath, false, true);
@@ -740,7 +740,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             var inspectResultsFilePath = Path.Combine(mWorkDir, mInspectResultsFileName);
             var filteredFilePath = Path.Combine(mWorkDir, mDatasetName + FILTERED_INSPECT_FILE_SUFFIX);
 
-            UpdateStatusRunning(mPercentCompleteStartLevels[(int)eInspectResultsProcessingSteps.RunpValue]);
+            UpdateStatusRunning(mPercentCompleteStartLevels[(int)InspectResultsProcessingSteps.RunpValue]);
 
             // Note that RunPValue() will log any errors that occur
             var result = RunPValue(inspectResultsFilePath, filteredFilePath, true, false);
@@ -754,11 +754,11 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
             mPercentCompleteStartLevels = new float[PERCENT_COMPLETE_LEVEL_COUNT + 1];
 
-            mPercentCompleteStartLevels[(int)eInspectResultsProcessingSteps.Starting] = 0;
-            mPercentCompleteStartLevels[(int)eInspectResultsProcessingSteps.AssembleResults] = 5;
-            mPercentCompleteStartLevels[(int)eInspectResultsProcessingSteps.RunpValue] = 10;
-            mPercentCompleteStartLevels[(int)eInspectResultsProcessingSteps.ZipInspectResults] = 65;
-            mPercentCompleteStartLevels[(int)eInspectResultsProcessingSteps.CreatePeptideToProteinMapping] = 66;
+            mPercentCompleteStartLevels[(int)InspectResultsProcessingSteps.Starting] = 0;
+            mPercentCompleteStartLevels[(int)InspectResultsProcessingSteps.AssembleResults] = 5;
+            mPercentCompleteStartLevels[(int)InspectResultsProcessingSteps.RunpValue] = 10;
+            mPercentCompleteStartLevels[(int)InspectResultsProcessingSteps.ZipInspectResults] = 65;
+            mPercentCompleteStartLevels[(int)InspectResultsProcessingSteps.CreatePeptideToProteinMapping] = 66;
             mPercentCompleteStartLevels[PERCENT_COMPLETE_LEVEL_COUNT] = 100;
         }
 
@@ -800,7 +800,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             var inspectResultsFilePath = Path.Combine(mWorkDir, mInspectResultsFileName);
             var filteredFilePath = Path.Combine(mWorkDir, mDatasetName + FILTERED_INSPECT_FILE_SUFFIX);
 
-            UpdateStatusRunning(mPercentCompleteStartLevels[(int)eInspectResultsProcessingSteps.RunpValue]);
+            UpdateStatusRunning(mPercentCompleteStartLevels[(int)InspectResultsProcessingSteps.RunpValue]);
 
             // Note that RunPValue() will log any errors that occur
             var result = RunPValue(inspectResultsFilePath, filteredFilePath, true, false);
@@ -1291,7 +1291,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
         {
             try
             {
-                UpdateStatusRunning(mPercentCompleteStartLevels[(int)eInspectResultsProcessingSteps.ZipInspectResults]);
+                UpdateStatusRunning(mPercentCompleteStartLevels[(int)InspectResultsProcessingSteps.ZipInspectResults]);
 
                 // Zip up the _inspect.txt file into _inspect_all.zip
                 // Rename to _inspect.txt before zipping
@@ -1347,8 +1347,8 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
         {
             // Note that percentComplete is a value between 0 and 100
 
-            var startPercent = mPercentCompleteStartLevels[(int)eInspectResultsProcessingSteps.CreatePeptideToProteinMapping];
-            var endPercent = mPercentCompleteStartLevels[(int)eInspectResultsProcessingSteps.CreatePeptideToProteinMapping + 1];
+            var startPercent = mPercentCompleteStartLevels[(int)InspectResultsProcessingSteps.CreatePeptideToProteinMapping];
+            var endPercent = mPercentCompleteStartLevels[(int)InspectResultsProcessingSteps.CreatePeptideToProteinMapping + 1];
 
             var percentCompleteEffective = startPercent + (float)(percentComplete / 100.0 * (endPercent - startPercent));
 

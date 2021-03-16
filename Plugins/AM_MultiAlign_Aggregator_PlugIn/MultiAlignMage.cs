@@ -34,12 +34,12 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
         private DateTime mLastMultialignLogFileParse = DateTime.UtcNow;
         private DateTime mLastProgressWriteTime = DateTime.UtcNow;
 
-        private SortedDictionary<eProgressSteps, Int16> mProgressStepPercentComplete;
+        private SortedDictionary<MageProgressSteps, Int16> mProgressStepPercentComplete;
         // This dictionary associates key log text entries with the corresponding progress step for each
         // It is populated by sub InitializeProgressStepDictionaries
 
-        private SortedDictionary<string, eProgressSteps> mProgressStepLogText;
-        private enum eProgressSteps
+        private SortedDictionary<string, MageProgressSteps> mProgressStepLogText;
+        private enum MageProgressSteps
         {
             Starting = 0,
             LoadingMTDB = 1,
@@ -451,7 +451,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
             if (DateTime.UtcNow.Subtract(mLastStatusUpdate).TotalSeconds >= 5)
             {
                 mLastStatusUpdate = DateTime.UtcNow;
-                mStatusTools.UpdateAndWrite(EnumMgrStatus.RUNNING, EnumTaskStatus.RUNNING, EnumTaskStatusDetail.RUNNING_TOOL, mProgress);
+                mStatusTools.UpdateAndWrite(MgrStatusCodes.RUNNING, TaskStatusCodes.RUNNING, TaskStatusDetailCodes.RUNNING_TOOL, mProgress);
             }
 
             if (DateTime.UtcNow.Subtract(mLastMultialignLogFileParse).TotalSeconds >= 15)
@@ -466,32 +466,32 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
         /// </summary>
         private void InitializeProgressStepDictionaries()
         {
-            mProgressStepPercentComplete = new SortedDictionary<eProgressSteps, Int16>
+            mProgressStepPercentComplete = new SortedDictionary<MageProgressSteps, Int16>
             {
-                {eProgressSteps.Starting, 5},
-                {eProgressSteps.LoadingMTDB, 6},
-                {eProgressSteps.LoadingDatasets, 7},
-                {eProgressSteps.LinkingMSFeatures, 45},
-                {eProgressSteps.AligningDatasets, 50},
-                {eProgressSteps.PerformingClustering, 75},
-                {eProgressSteps.PerformingPeakMatching, 85},
-                {eProgressSteps.CreatingFinalPlots, 90},
-                {eProgressSteps.CreatingReport, 95},
-                {eProgressSteps.Complete, 97}
+                {MageProgressSteps.Starting, 5},
+                {MageProgressSteps.LoadingMTDB, 6},
+                {MageProgressSteps.LoadingDatasets, 7},
+                {MageProgressSteps.LinkingMSFeatures, 45},
+                {MageProgressSteps.AligningDatasets, 50},
+                {MageProgressSteps.PerformingClustering, 75},
+                {MageProgressSteps.PerformingPeakMatching, 85},
+                {MageProgressSteps.CreatingFinalPlots, 90},
+                {MageProgressSteps.CreatingReport, 95},
+                {MageProgressSteps.Complete, 97}
             };
 
-            mProgressStepLogText = new SortedDictionary<string, eProgressSteps>
+            mProgressStepLogText = new SortedDictionary<string, MageProgressSteps>
             {
-                {"[LogStart]", eProgressSteps.Starting},
-                {" - Loading Mass Tag database from database", eProgressSteps.LoadingMTDB},
-                {" - Loading dataset data files", eProgressSteps.LoadingDatasets},
-                {" - Linking MS Features", eProgressSteps.LinkingMSFeatures},
-                {" - Aligning datasets", eProgressSteps.AligningDatasets},
-                {" - Performing clustering", eProgressSteps.PerformingClustering},
-                {" - Performing Peak Matching", eProgressSteps.PerformingPeakMatching},
-                {" - Creating Final Plots", eProgressSteps.CreatingFinalPlots},
-                {" - Creating report", eProgressSteps.CreatingReport},
-                {" - Analysis Complete", eProgressSteps.Complete}
+                {"[LogStart]", MageProgressSteps.Starting},
+                {" - Loading Mass Tag database from database", MageProgressSteps.LoadingMTDB},
+                {" - Loading dataset data files", MageProgressSteps.LoadingDatasets},
+                {" - Linking MS Features", MageProgressSteps.LinkingMSFeatures},
+                {" - Aligning datasets", MageProgressSteps.AligningDatasets},
+                {" - Performing clustering", MageProgressSteps.PerformingClustering},
+                {" - Performing Peak Matching", MageProgressSteps.PerformingPeakMatching},
+                {" - Creating Final Plots", MageProgressSteps.CreatingFinalPlots},
+                {" - Creating report", MageProgressSteps.CreatingReport},
+                {" - Analysis Complete", MageProgressSteps.Complete}
             };
         }
 
@@ -574,7 +574,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                     LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, "Parsing file " + logFilePath);
                 }
 
-                var eProgress = eProgressSteps.Starting;
+                var eProgress = MageProgressSteps.Starting;
 
                 var totalDatasets = 0;
                 var datasetsLoaded = 0;
@@ -646,15 +646,15 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                         // This is a number between 0 and 100
                         double subProgressPercent = 0;
 
-                        if (eProgress == eProgressSteps.LoadingDatasets)
+                        if (eProgress == MageProgressSteps.LoadingDatasets)
                         {
                             subProgressPercent = datasetsLoaded * 100 / (double)totalDatasets;
                         }
-                        else if (eProgress == eProgressSteps.AligningDatasets)
+                        else if (eProgress == MageProgressSteps.AligningDatasets)
                         {
                             subProgressPercent = datasetsAligned * 100 / (double)totalDatasets;
                         }
-                        else if (eProgress == eProgressSteps.PerformingClustering)
+                        else if (eProgress == MageProgressSteps.PerformingClustering)
                         {
                             // The majority of the data will be charge 1 through 7
                             // Thus, we're dividing by 7 here, which means subProgressPercent might be larger than 100; we'll account for that below

@@ -17,6 +17,8 @@ namespace AnalysisManagerBase
     /// </remarks>
     public class RemoteMonitor : EventNotifier
     {
+        // Ignore Spelling: Unstarted
+
         #region "Constants"
 
         private const int STALE_LOCK_FILE_AGE_HOURS = 24;
@@ -36,7 +38,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Remote job status
         /// </summary>
-        public enum EnumRemoteJobStatus
+        public enum RemoteJobStatusCodes
         {
             /// <summary>
             /// Undefined
@@ -244,7 +246,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Determine the status of a remotely running job
         /// </summary>
-        public EnumRemoteJobStatus GetRemoteJobStatus()
+        public RemoteJobStatusCodes GetRemoteJobStatus()
         {
             try
             {
@@ -259,7 +261,7 @@ namespace AnalysisManagerBase
                 LogError("Error initializing parameters for the remote transfer utility", ex);
 
                 // Return .Undefined, which will fail out the job step
-                return EnumRemoteJobStatus.Undefined;
+                return RemoteJobStatusCodes.Undefined;
             }
 
             try
@@ -281,11 +283,11 @@ namespace AnalysisManagerBase
                     if (taskFolderItems.Count > 0)
                     {
                         LogError("No status files were found for " + TransferUtility.JobStepDescription + ", not even a .info file");
-                        return EnumRemoteJobStatus.Failed;
+                        return RemoteJobStatusCodes.Failed;
                     }
 
                     LogWarning("Remote task queue path is empty or not accessible; possible network outage");
-                    return EnumRemoteJobStatus.Running;
+                    return RemoteJobStatusCodes.Running;
                 }
 
                 // Look for a .lock file
@@ -312,10 +314,10 @@ namespace AnalysisManagerBase
 
                         if (!success)
                         {
-                            // Log a warning, but return EnumRemoteJobStatus.running
+                            // Log a warning, but return RemoteJobStatusCodes.running
                             LogWarning("Error retrieving the .jobstatus file for " + TransferUtility.JobStepDescription + " on " +
                                        TransferUtility.RemoteHostName);
-                            return EnumRemoteJobStatus.Running;
+                            return RemoteJobStatusCodes.Running;
                         }
 
                         var jobStatus = ParseJobStatusFile(jobStatusFilePathLocal);
@@ -336,7 +338,7 @@ namespace AnalysisManagerBase
                             NotifyStaleLockFile(remoteLockFile.Name, (int)Math.Round(lockFileAgeHours, 0));
                         }
 
-                        return EnumRemoteJobStatus.Running;
+                        return RemoteJobStatusCodes.Running;
                     }
                 }
 
@@ -352,7 +354,7 @@ namespace AnalysisManagerBase
 
                     ReportRemoteManagerIsIdle(successFilePathLocal);
 
-                    return EnumRemoteJobStatus.Success;
+                    return RemoteJobStatusCodes.Success;
                 }
 
                 // Look for a .fail file
@@ -364,19 +366,19 @@ namespace AnalysisManagerBase
 
                     ReportRemoteManagerIsIdle(failFilePathLocal);
 
-                    return EnumRemoteJobStatus.Failed;
+                    return RemoteJobStatusCodes.Failed;
                 }
 
                 // No .lock file, .success file, or .fail file
                 // There might be a .jobstatus file, but that would indicate things are in an unstable / unsupported state
-                return EnumRemoteJobStatus.Unstarted;
+                return RemoteJobStatusCodes.Unstarted;
             }
             catch (Exception ex)
             {
                 LogError("Error reading the status file for the remotely running job", ex);
 
                 // Return .Undefined, which will fail out the job step
-                return EnumRemoteJobStatus.Undefined;
+                return RemoteJobStatusCodes.Undefined;
             }
         }
 
@@ -448,9 +450,9 @@ namespace AnalysisManagerBase
         /// Read the .jobstatus file retrieved from the remote host
         /// </summary>
         /// <param name="jobStatusFilePath"></param>
-        private EnumRemoteJobStatus ParseJobStatusFile(string jobStatusFilePath)
+        private RemoteJobStatusCodes ParseJobStatusFile(string jobStatusFilePath)
         {
-            EnumRemoteJobStatus jobStatus;
+            RemoteJobStatusCodes jobStatus;
 
             try
             {
@@ -514,27 +516,27 @@ namespace AnalysisManagerBase
 
                 switch (status.TaskStatus)
                 {
-                    case EnumTaskStatus.STOPPED:
-                    case EnumTaskStatus.REQUESTING:
-                    case EnumTaskStatus.NO_TASK:
+                    case TaskStatusCodes.STOPPED:
+                    case TaskStatusCodes.REQUESTING:
+                    case TaskStatusCodes.NO_TASK:
                         // The .jobstatus file in the Task Queue directory should not have these task status values
                         // Return .Undefined, which will fail out the job step
-                        jobStatus = EnumRemoteJobStatus.Undefined;
+                        jobStatus = RemoteJobStatusCodes.Undefined;
                         break;
 
-                    case EnumTaskStatus.RUNNING:
-                    case EnumTaskStatus.CLOSING:
-                        jobStatus = EnumRemoteJobStatus.Running;
+                    case TaskStatusCodes.RUNNING:
+                    case TaskStatusCodes.CLOSING:
+                        jobStatus = RemoteJobStatusCodes.Running;
                         break;
 
-                    case EnumTaskStatus.FAILED:
-                        jobStatus = EnumRemoteJobStatus.Failed;
+                    case TaskStatusCodes.FAILED:
+                        jobStatus = RemoteJobStatusCodes.Failed;
                         break;
 
                     default:
                         // Unrecognized task status
                         // Return .Undefined, which will fail out the job step
-                        jobStatus = EnumRemoteJobStatus.Undefined;
+                        jobStatus = RemoteJobStatusCodes.Undefined;
                         break;
                 }
 
@@ -591,7 +593,7 @@ namespace AnalysisManagerBase
                 // Error parsing the file
                 // This can happen if an incomplete XML file was retrieved (since the remote manager was in the middle of writing to it)
                 OnErrorEvent("Error reading the .jobstatus file for the remotely running job", ex);
-                jobStatus = EnumRemoteJobStatus.Undefined;
+                jobStatus = RemoteJobStatusCodes.Undefined;
             }
 
             return jobStatus;
@@ -848,7 +850,7 @@ namespace AnalysisManagerBase
                 // Instead, use the .jobstatus file to populate status, then call StatusTools.UpdateRemoteStatus
                 // which calls WriteStatusFile with writeToDisk=false, which results in the remote status info getting pushed to the MessageQueue
 
-                status.MgrStatus = EnumMgrStatus.STOPPED;
+                status.MgrStatus = MgrStatusCodes.STOPPED;
 
                 if (taskStartTime > DateTime.MinValue)
                     status.TaskStartTime = taskStartTime.ToUniversalTime();
@@ -872,7 +874,7 @@ namespace AnalysisManagerBase
 
                 status.Tool = string.Empty;
 
-                status.TaskStatus = EnumTaskStatus.NO_TASK;
+                status.TaskStatus = TaskStatusCodes.NO_TASK;
 
                 if (statusResultFile.Name.EndsWith(".success"))
                     status.Progress = 100;
@@ -881,7 +883,7 @@ namespace AnalysisManagerBase
 
                 status.CurrentOperation = string.Empty;
 
-                status.TaskStatusDetail = EnumTaskStatusDetail.NO_TASK;
+                status.TaskStatusDetail = TaskStatusDetailCodes.NO_TASK;
 
                 status.JobNumber = 0;
                 status.JobStep = 0;

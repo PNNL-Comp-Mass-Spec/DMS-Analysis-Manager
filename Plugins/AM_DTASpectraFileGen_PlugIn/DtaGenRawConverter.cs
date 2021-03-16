@@ -105,7 +105,7 @@ namespace DTASpectraFileGen
         /// </summary>
         /// <param name="rawDataType">Raw data file type</param>
         /// <returns>TRUE for success; FALSE for failure</returns>
-        private bool ConvertRawToMGF(AnalysisResources.eRawDataTypeConstants rawDataType)
+        private bool ConvertRawToMGF(AnalysisResources.RawDataTypeConstants rawDataType)
         {
             try
             {
@@ -119,7 +119,7 @@ namespace DTASpectraFileGen
                 // Construct the path to the .raw file
                 switch (rawDataType)
                 {
-                    case AnalysisResources.eRawDataTypeConstants.ThermoRawFile:
+                    case AnalysisResources.RawDataTypeConstants.ThermoRawFile:
                         rawFilePath = Path.Combine(mWorkDir, mDatasetName + AnalysisResources.DOT_RAW_EXTENSION);
                         break;
                     default:

@@ -246,12 +246,12 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
                 switch (rawDataType)
                 {
-                    case eRawDataTypeConstants.ThermoRawFile:
+                    case RawDataTypeConstants.ThermoRawFile:
                         LogMessage("Examining the scan types in the .raw file");
                         success = ExamineScanTypesInRawFile(datasetFilePath, out countMs1, out countMSn);
                         break;
 
-                    case eRawDataTypeConstants.UIMF:
+                    case RawDataTypeConstants.UIMF:
                         LogMessage("Examining the scan types in the .UIMF file");
                         success = ExamineScanTypesInUIMFFile(datasetFilePath, out countMs1, out countMSn);
                         break;

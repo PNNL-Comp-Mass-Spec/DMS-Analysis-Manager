@@ -14,7 +14,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// <summary>
         /// ProteomeXChange file type
         /// </summary>
-        public enum ePXFileType
+        public enum PXFileTypes
         {
             /// <summary>
             /// Undefined

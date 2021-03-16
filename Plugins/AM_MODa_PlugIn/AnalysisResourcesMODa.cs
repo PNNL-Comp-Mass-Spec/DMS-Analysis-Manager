@@ -22,7 +22,7 @@ namespace AnalysisManagerMODaPlugIn
         public override void Setup(string stepToolName, IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, MyEMSLUtilities myEMSLUtilities)
         {
             base.Setup(stepToolName, mgrParams, jobParams, statusTools, myEMSLUtilities);
-            SetOption(Global.eAnalysisResourceOptions.OrgDbRequired, true);
+            SetOption(Global.AnalysisResourceOptions.OrgDbRequired, true);
         }
 
         /// <summary>

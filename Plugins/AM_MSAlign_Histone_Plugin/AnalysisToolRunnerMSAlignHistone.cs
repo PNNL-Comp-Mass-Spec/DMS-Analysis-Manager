@@ -48,7 +48,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
         protected const string OUTPUT_FILE_EXTENSION_FAST_FILTER_COMBINED = "FAST_FILTER_COMBINED";
 
         // Note that newer versions are assumed to have higher enum values
-        protected enum eMSAlignVersionType
+        protected enum MSAlignVersionType
         {
             v0pt9 = 0
         }
@@ -125,7 +125,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                 }
 
                 // Assume v0.9
-                const eMSAlignVersionType eMSalignVersion = eMSAlignVersionType.v0pt9;
+                const MSAlignVersionType msAlignVersion = MSAlignVersionType.v0pt9;
 
                 // We will store the specific MSAlign version info in the database after the first line is written to file MSAlign_ConsoleOutput.txt
 

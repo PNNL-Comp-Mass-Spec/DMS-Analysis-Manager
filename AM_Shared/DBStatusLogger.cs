@@ -33,7 +33,7 @@ namespace AnalysisManagerBase
             /// <summary>
             /// Manager status
             /// </summary>
-            public EnumMgrStatus MgrStatus;
+            public MgrStatusCodes MgrStatus;
 
             /// <summary>
             /// Last update time (UTC-based)
@@ -95,7 +95,7 @@ namespace AnalysisManagerBase
             /// <summary>
             /// Task status
             /// </summary>
-            public EnumTaskStatus Status;
+            public TaskStatusCodes Status;
 
             /// <summary>
             /// Task duration, in hours
@@ -126,7 +126,7 @@ namespace AnalysisManagerBase
             /// <summary>
             /// Task status detail
             /// </summary>
-            public EnumTaskStatusDetail Status;
+            public TaskStatusDetailCodes Status;
 
             /// <summary>
             /// Job number

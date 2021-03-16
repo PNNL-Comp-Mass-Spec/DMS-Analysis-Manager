@@ -17,7 +17,7 @@ namespace AnalysisManagerBase
     /// <summary>
     /// Manager Status constants
     /// </summary>
-    public enum EnumMgrStatus : short
+    public enum MgrStatusCodes : short
     {
         /// <summary>
         /// Stopped
@@ -48,7 +48,7 @@ namespace AnalysisManagerBase
     /// <summary>
     /// Task status constants
     /// </summary>
-    public enum EnumTaskStatus : short
+    public enum TaskStatusCodes : short
     {
         /// <summary>
         /// Stopped
@@ -84,7 +84,7 @@ namespace AnalysisManagerBase
     /// <summary>
     /// Task status detail constants
     /// </summary>
-    public enum EnumTaskStatusDetail : short
+    public enum TaskStatusDetailCodes : short
     {
         /// <summary>
         /// Retrieving resources
@@ -154,7 +154,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Manager status
         /// </summary>
-        EnumMgrStatus MgrStatus { get; set; }
+        MgrStatusCodes MgrStatus { get; set; }
 
         /// <summary>
         /// Name of the manager remotely running the job
@@ -175,7 +175,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Task status
         /// </summary>
-        EnumTaskStatus TaskStatus { get; set; }
+        TaskStatusCodes TaskStatus { get; set; }
 
         /// <summary>
         /// Task start time (UTC-based)
@@ -195,7 +195,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Task status detail
         /// </summary>
-        EnumTaskStatusDetail TaskStatusDetail { get; set; }
+        TaskStatusDetailCodes TaskStatusDetail { get; set; }
 
         /// <summary>
         /// Job number
@@ -297,7 +297,7 @@ namespace AnalysisManagerBase
         /// <param name="eTaskStatus">Task status code</param>
         /// <param name="eTaskStatusDetail">Detailed task status</param>
         /// <param name="percentComplete">Job completion percentage (value between 0 and 100)</param>
-        void UpdateAndWrite(EnumMgrStatus eMgrStatus, EnumTaskStatus eTaskStatus, EnumTaskStatusDetail eTaskStatusDetail, float percentComplete);
+        void UpdateAndWrite(MgrStatusCodes eMgrStatus, TaskStatusCodes eTaskStatus, TaskStatusDetailCodes eTaskStatusDetail, float percentComplete);
 
         /// <summary>
         /// Updates status file
@@ -305,7 +305,7 @@ namespace AnalysisManagerBase
         /// <param name="status">Job status enum</param>
         /// <param name="percentComplete">Job completion percentage (value between 0 and 100)</param>
         /// <param name="spectrumCountTotal">Number of DTA files (i.e., spectra files); relevant for Sequest, X!Tandem, and Inspect</param>
-        void UpdateAndWrite(EnumTaskStatus status, float percentComplete, int spectrumCountTotal);
+        void UpdateAndWrite(TaskStatusCodes status, float percentComplete, int spectrumCountTotal);
 
         /// <summary>
         /// Updates status file
@@ -320,9 +320,9 @@ namespace AnalysisManagerBase
         /// <param name="recentJobInfo">Information on the job that started most recently</param>
         /// <param name="forceLogToBrokerDB">If true, will force mBrokerDBLogger to report the manager status directly to the database (if initialized)</param>
         void UpdateAndWrite(
-            EnumMgrStatus eMgrStatus,
-            EnumTaskStatus eTaskStatus,
-            EnumTaskStatusDetail eTaskStatusDetail,
+            MgrStatusCodes eMgrStatus,
+            TaskStatusCodes eTaskStatus,
+            TaskStatusDetailCodes eTaskStatusDetail,
             float percentComplete,
             int dtaCount,
             string mostRecentLogMessage,
@@ -364,7 +364,7 @@ namespace AnalysisManagerBase
         /// Logs to the status file that the manager is disabled
         /// (either in the manager control DB or via the local AnalysisManagerProg.exe.config file)
         /// </summary>
-        void UpdateDisabled(EnumMgrStatus managerStatus);
+        void UpdateDisabled(MgrStatusCodes managerStatus);
 
         /// <summary>
         /// Logs to the status file that the manager is disabled
@@ -372,7 +372,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="managerStatus"></param>
         /// <param name="managerDisableMessage">Description of why the manager is disabled (leave blank if unknown)</param>
-        void UpdateDisabled(EnumMgrStatus managerStatus, string managerDisableMessage);
+        void UpdateDisabled(MgrStatusCodes managerStatus, string managerDisableMessage);
 
         /// <summary>
         /// Logs to the status file that the manager is disabled
@@ -382,7 +382,7 @@ namespace AnalysisManagerBase
         /// <param name="managerDisableMessage">Description of why the manager is disabled (leave blank if unknown)</param>
         /// <param name="recentErrorMessages">Recent error messages written to the log file (leave blank if unknown)</param>
         /// <param name="recentJobInfo">Information on the job that started most recently</param>
-        void UpdateDisabled(EnumMgrStatus managerStatus, string managerDisableMessage, IEnumerable<string> recentErrorMessages, string recentJobInfo);
+        void UpdateDisabled(MgrStatusCodes managerStatus, string managerDisableMessage, IEnumerable<string> recentErrorMessages, string recentJobInfo);
 
         /// <summary>
         /// Logs to the status file that a flag file exists, indicating that the manager did not exit cleanly on a previous run

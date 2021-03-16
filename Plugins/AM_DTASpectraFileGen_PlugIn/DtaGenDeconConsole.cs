@@ -140,7 +140,7 @@ namespace DTASpectraFileGen
         /// </summary>
         /// <param name="rawDataType">Raw data file type</param>
         /// <returns>TRUE for success; FALSE for failure</returns>
-        private bool ConvertRawToMGF(AnalysisResources.eRawDataTypeConstants rawDataType)
+        private bool ConvertRawToMGF(AnalysisResources.RawDataTypeConstants rawDataType)
         {
             string rawFilePath;
 
@@ -154,7 +154,7 @@ namespace DTASpectraFileGen
             // Construct the path to the .raw file
             switch (rawDataType)
             {
-                case AnalysisResources.eRawDataTypeConstants.ThermoRawFile:
+                case AnalysisResources.RawDataTypeConstants.ThermoRawFile:
                     rawFilePath = Path.Combine(mWorkDir, mDatasetName + AnalysisResources.DOT_RAW_EXTENSION);
                     break;
                 default:
@@ -166,7 +166,7 @@ namespace DTASpectraFileGen
             mInputFilePath = rawFilePath;
             mJobParams.AddResultFileToSkip(mInstrumentFileName);
 
-            if (rawDataType == AnalysisResources.eRawDataTypeConstants.ThermoRawFile)
+            if (rawDataType == AnalysisResources.RawDataTypeConstants.ThermoRawFile)
             {
                 // Get the maximum number of scans in the file
                 mMaxScanInFile = GetMaxScan(rawFilePath);
@@ -317,10 +317,10 @@ namespace DTASpectraFileGen
 
                 switch (mRawDataType)
                 {
-                    case AnalysisResources.eRawDataTypeConstants.AgilentDFolder:
-                    case AnalysisResources.eRawDataTypeConstants.BrukerFTFolder:
-                    case AnalysisResources.eRawDataTypeConstants.BrukerTOFBaf:
-                    case AnalysisResources.eRawDataTypeConstants.BrukerTOFTdf:
+                    case AnalysisResources.RawDataTypeConstants.AgilentDFolder:
+                    case AnalysisResources.RawDataTypeConstants.BrukerFTFolder:
+                    case AnalysisResources.RawDataTypeConstants.BrukerTOFBaf:
+                    case AnalysisResources.RawDataTypeConstants.BrukerTOFTdf:
                         // As of 11/19/2010, the _Log.txt file is created inside the .D folder
                         logFilePath = Path.Combine(mInputFilePath, mDatasetName) + "_log.txt";
                         break;

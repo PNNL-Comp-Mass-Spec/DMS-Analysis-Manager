@@ -378,7 +378,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
             var rawDataType = AnalysisResources.GetRawDataType(rawDataTypeName);
             string rawFilePath;
 
-            if (rawDataType == AnalysisResources.eRawDataTypeConstants.ThermoRawFile)
+            if (rawDataType == AnalysisResources.RawDataTypeConstants.ThermoRawFile)
             {
                 rawFilePath = Path.Combine(mWorkDir, mDatasetName + AnalysisResources.DOT_RAW_EXTENSION);
             }
@@ -549,7 +549,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                     return false;
                 }
 
-                const AnalysisResources.eRawDataTypeConstants rawDataType = AnalysisResources.eRawDataTypeConstants.mzML;
+                const AnalysisResources.RawDataTypeConstants rawDataType = AnalysisResources.RawDataTypeConstants.mzML;
                 const AnalysisResources.MSXMLOutputTypeConstants outputFileType = AnalysisResources.MSXMLOutputTypeConstants.mzML;
 
                 var sourceFileBase = Path.GetFileNameWithoutExtension(mzMLFilePath);

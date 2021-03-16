@@ -351,7 +351,7 @@ namespace AnalysisManagerPBFGenerator
             var rawDataTypeName = mJobParams.GetJobParameter("RawDataType", "");
             var rawDataType = AnalysisResources.GetRawDataType(rawDataTypeName);
 
-            if (rawDataType != AnalysisResources.eRawDataTypeConstants.ThermoRawFile)
+            if (rawDataType != AnalysisResources.RawDataTypeConstants.ThermoRawFile)
             {
                 LogError("PBF generation presently only supports Thermo .Raw files");
                 return false;

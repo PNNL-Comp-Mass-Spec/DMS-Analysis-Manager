@@ -42,7 +42,7 @@ namespace AnalysisManagerMzRefineryPlugIn
 
         public const string MSGFPLUS_MZID_SUFFIX = "_msgfplus.mzid";
 
-        private enum eMzRefinerProgRunnerMode
+        private enum MzRefinerProgRunnerMode
         {
             Unknown = 0,
             MSGFPlus = 1,
@@ -64,7 +64,7 @@ namespace AnalysisManagerMzRefineryPlugIn
 
         private string mPpmErrorCharterProgLoc;
 
-        private eMzRefinerProgRunnerMode mProgRunnerMode;
+        private MzRefinerProgRunnerMode mProgRunnerMode;
         private bool mMSGFPlusComplete;
 
         private DateTime mMSGFPlusCompletionTime;
@@ -85,7 +85,7 @@ namespace AnalysisManagerMzRefineryPlugIn
         /// <summary>
         /// Command runner for MS-GF+, MzRefinery (which uses MSConvert), and PPMErrorCharter
         /// </summary>
-        /// <remarks>eMzRefinerProgRunnerMode keeps track of the current ProgRunner and is used by MonitorProgress</remarks>
+        /// <remarks>MzRefinerProgRunnerMode keeps track of the current ProgRunner and is used by MonitorProgress</remarks>
         private RunDosProgram mCmdRunner;
 
         #endregion
@@ -629,12 +629,12 @@ namespace AnalysisManagerMzRefineryPlugIn
 
             mProgress = MSGFPlusUtils.PROGRESS_PCT_MSGFPLUS_STARTING;
 
-            mProgRunnerMode = eMzRefinerProgRunnerMode.MSGFPlus;
+            mProgRunnerMode = MzRefinerProgRunnerMode.MSGFPlus;
 
             // Start MS-GF+ and wait for it to exit
             var success = mCmdRunner.RunProgram(javaExePath, arguments, searchEngineName, true);
 
-            mProgRunnerMode = eMzRefinerProgRunnerMode.Unknown;
+            mProgRunnerMode = MzRefinerProgRunnerMode.Unknown;
 
             return success;
         }
@@ -744,7 +744,7 @@ namespace AnalysisManagerMzRefineryPlugIn
 
             mLastConsoleOutputParse = DateTime.UtcNow;
 
-            if (mProgRunnerMode == eMzRefinerProgRunnerMode.MSGFPlus)
+            if (mProgRunnerMode == MzRefinerProgRunnerMode.MSGFPlus)
             {
                 ParseMSGFPlusConsoleOutputFile(mWorkDir);
                 if (!mToolVersionWritten && !string.IsNullOrWhiteSpace(mMSGFPlusUtils.MSGFPlusVersion))
@@ -783,7 +783,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                     mCmdRunner.AbortProgramNow();
                 }
             }
-            else if (mProgRunnerMode == eMzRefinerProgRunnerMode.MzRefiner)
+            else if (mProgRunnerMode == MzRefinerProgRunnerMode.MzRefiner)
             {
                 ParseMSConvertConsoleOutputFile(Path.Combine(mWorkDir, MZ_REFINERY_CONSOLE_OUTPUT));
 
@@ -1325,12 +1325,12 @@ namespace AnalysisManagerMzRefineryPlugIn
 
             mProgress = MSGFPlusUtils.PROGRESS_PCT_MSGFPLUS_COMPLETE;
 
-            mProgRunnerMode = eMzRefinerProgRunnerMode.MzRefiner;
+            mProgRunnerMode = MzRefinerProgRunnerMode.MzRefiner;
 
             // Start MSConvert and wait for it to exit
             var success = mCmdRunner.RunProgram(mMSConvertProgLoc, arguments, "MSConvert_MzRefinery", true);
 
-            mProgRunnerMode = eMzRefinerProgRunnerMode.Unknown;
+            mProgRunnerMode = MzRefinerProgRunnerMode.Unknown;
 
             if (!mCmdRunner.WriteConsoleOutputToFile)
             {
@@ -1493,12 +1493,12 @@ namespace AnalysisManagerMzRefineryPlugIn
             RegisterEvents(mCmdRunner);
             mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
-            mProgRunnerMode = eMzRefinerProgRunnerMode.PPMErrorCharter;
+            mProgRunnerMode = MzRefinerProgRunnerMode.PPMErrorCharter;
 
             // Start the PPM Error Charter and wait for it to exit
             var success = mCmdRunner.RunProgram(mPpmErrorCharterProgLoc, arguments, "PPMErrorCharter", true);
 
-            mProgRunnerMode = eMzRefinerProgRunnerMode.Unknown;
+            mProgRunnerMode = MzRefinerProgRunnerMode.Unknown;
 
             if (!success)
             {

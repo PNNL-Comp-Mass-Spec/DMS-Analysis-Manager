@@ -147,7 +147,7 @@ namespace AnalysisManagerBase
             var rawDataType = AnalysisResources.GetRawDataType(rawDataTypeName);
             switch (rawDataType)
             {
-                case AnalysisResources.eRawDataTypeConstants.AgilentDFolder:
+                case AnalysisResources.RawDataTypeConstants.AgilentDFolder:
                     // Agilent ion trap data
 
                     if (storagePath.IndexOf("Agilent_SL1", StringComparison.OrdinalIgnoreCase) >= 0 ||
@@ -167,44 +167,44 @@ namespace AnalysisManagerBase
                     }
 
                     break;
-                case AnalysisResources.eRawDataTypeConstants.AgilentQStarWiffFile:
+                case AnalysisResources.RawDataTypeConstants.AgilentQStarWiffFile:
                     // Agilent/QSTAR TOF data
                     fileOrDirectoryPath = FindDatasetFile(maxAttempts, AnalysisResources.DOT_WIFF_EXTENSION, assumeUnpurged);
 
                     break;
-                case AnalysisResources.eRawDataTypeConstants.ZippedSFolders:
+                case AnalysisResources.RawDataTypeConstants.ZippedSFolders:
                     // FTICR data
                     fileOrDirectoryPath = FindSFolders(assumeUnpurged);
                     isDirectory = true;
 
                     break;
-                case AnalysisResources.eRawDataTypeConstants.ThermoRawFile:
+                case AnalysisResources.RawDataTypeConstants.ThermoRawFile:
                     // Finnigan ion trap/LTQ-FT data
                     fileOrDirectoryPath = FindDatasetFile(maxAttempts, AnalysisResources.DOT_RAW_EXTENSION, assumeUnpurged);
 
                     break;
-                case AnalysisResources.eRawDataTypeConstants.MicromassRawFolder:
+                case AnalysisResources.RawDataTypeConstants.MicromassRawFolder:
                     // Micromass QTOF data
                     fileOrDirectoryPath = FindDotRawFolder(assumeUnpurged);
                     isDirectory = true;
 
                     break;
-                case AnalysisResources.eRawDataTypeConstants.UIMF:
+                case AnalysisResources.RawDataTypeConstants.UIMF:
                     // IMS UIMF data
                     fileOrDirectoryPath = FindDatasetFile(maxAttempts, AnalysisResources.DOT_UIMF_EXTENSION, assumeUnpurged);
 
                     break;
-                case AnalysisResources.eRawDataTypeConstants.mzXML:
+                case AnalysisResources.RawDataTypeConstants.mzXML:
                     fileOrDirectoryPath = FindDatasetFile(maxAttempts, AnalysisResources.DOT_MZXML_EXTENSION, assumeUnpurged);
 
                     break;
-                case AnalysisResources.eRawDataTypeConstants.mzML:
+                case AnalysisResources.RawDataTypeConstants.mzML:
                     fileOrDirectoryPath = FindDatasetFile(maxAttempts, AnalysisResources.DOT_MZML_EXTENSION, assumeUnpurged);
 
                     break;
-                case AnalysisResources.eRawDataTypeConstants.BrukerFTFolder:
-                case AnalysisResources.eRawDataTypeConstants.BrukerTOFBaf:
-                case AnalysisResources.eRawDataTypeConstants.BrukerTOFTdf:
+                case AnalysisResources.RawDataTypeConstants.BrukerFTFolder:
+                case AnalysisResources.RawDataTypeConstants.BrukerTOFBaf:
+                case AnalysisResources.RawDataTypeConstants.BrukerTOFTdf:
                     // Call RetrieveDotDFolder() to copy the directory and all subdirectories
 
                     // Both the MSXml step tool and DeconTools require the .Baf file
@@ -214,7 +214,7 @@ namespace AnalysisManagerBase
                     isDirectory = true;
 
                     break;
-                case AnalysisResources.eRawDataTypeConstants.BrukerMALDIImaging:
+                case AnalysisResources.RawDataTypeConstants.BrukerMALDIImaging:
                     fileOrDirectoryPath = FindBrukerMALDIImagingFolders(assumeUnpurged);
                     isDirectory = true;
 

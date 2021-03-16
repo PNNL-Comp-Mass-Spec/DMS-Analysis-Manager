@@ -55,8 +55,8 @@ namespace AnalysisManager_AScore_PlugIn
                 else
                 {
                     mCurrentAScoreTask = "Running AScore";
-                    mStatusTools.UpdateAndWrite(EnumMgrStatus.RUNNING, EnumTaskStatus.RUNNING,
-                                                 EnumTaskStatusDetail.RUNNING_TOOL, mProgress);
+                    mStatusTools.UpdateAndWrite(MgrStatusCodes.RUNNING, TaskStatusCodes.RUNNING,
+                                                 TaskStatusDetailCodes.RUNNING_TOOL, mProgress);
 
                     LogMessage(mCurrentAScoreTask);
 

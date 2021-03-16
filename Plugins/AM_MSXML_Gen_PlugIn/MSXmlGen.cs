@@ -25,7 +25,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
         protected readonly string mWorkDir;
         protected readonly string mProgramPath;
         private readonly string mDatasetName;
-        protected readonly AnalysisResources.eRawDataTypeConstants mRawDataType;
+        protected readonly AnalysisResources.RawDataTypeConstants mRawDataType;
         protected string mOutputFileName = string.Empty;
 
         private readonly AnalysisResources.MSXMLOutputTypeConstants mOutputType;
@@ -85,7 +85,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
             string workDir,
             string programPath,
             string datasetName,
-            AnalysisResources.eRawDataTypeConstants rawDataType,
+            AnalysisResources.RawDataTypeConstants rawDataType,
             AnalysisResources.MSXMLOutputTypeConstants eOutputType,
             bool centroidMSXML,
             IJobParams jobParams)
@@ -117,7 +117,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
             string workDir,
             string programPath,
             string datasetName,
-            AnalysisResources.eRawDataTypeConstants rawDataType,
+            AnalysisResources.RawDataTypeConstants rawDataType,
             AnalysisResources.MSXMLOutputTypeConstants eOutputType,
             bool centroidMS1,
             bool centroidMS2,
@@ -145,25 +145,25 @@ namespace AnalysisManagerMsXmlGenPlugIn
         {
             switch (mRawDataType)
             {
-                case AnalysisResources.eRawDataTypeConstants.ThermoRawFile:
+                case AnalysisResources.RawDataTypeConstants.ThermoRawFile:
                     SourceFilePath = Path.Combine(mWorkDir, mDatasetName + AnalysisResources.DOT_RAW_EXTENSION);
                     break;
 
-                case AnalysisResources.eRawDataTypeConstants.AgilentDFolder:
-                case AnalysisResources.eRawDataTypeConstants.BrukerTOFBaf:
-                case AnalysisResources.eRawDataTypeConstants.BrukerFTFolder:
+                case AnalysisResources.RawDataTypeConstants.AgilentDFolder:
+                case AnalysisResources.RawDataTypeConstants.BrukerTOFBaf:
+                case AnalysisResources.RawDataTypeConstants.BrukerFTFolder:
                     SourceFilePath = Path.Combine(mWorkDir, mDatasetName + AnalysisResources.DOT_D_EXTENSION);
                     break;
 
-                case AnalysisResources.eRawDataTypeConstants.mzXML:
+                case AnalysisResources.RawDataTypeConstants.mzXML:
                     SourceFilePath = Path.Combine(mWorkDir, mDatasetName + AnalysisResources.DOT_MZXML_EXTENSION);
                     break;
 
-                case AnalysisResources.eRawDataTypeConstants.mzML:
+                case AnalysisResources.RawDataTypeConstants.mzML:
                     SourceFilePath = Path.Combine(mWorkDir, mDatasetName + AnalysisResources.DOT_MZML_EXTENSION);
                     break;
 
-                case AnalysisResources.eRawDataTypeConstants.UIMF:
+                case AnalysisResources.RawDataTypeConstants.UIMF:
                     var processingAgilentDotD = JobParams.GetJobParameter("MSXMLGenerator", "ProcessingAgilentDotD", false);
 
                     if (processingAgilentDotD)
@@ -305,7 +305,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
             return true;
         }
 
-        protected abstract string GetOutputFileName(string msXmlFormat, string rawFilePath, AnalysisResources.eRawDataTypeConstants rawDataType);
+        protected abstract string GetOutputFileName(string msXmlFormat, string rawFilePath, AnalysisResources.RawDataTypeConstants rawDataType);
 
         public void LogCreationStatsSourceToMsXml(DateTime startTimeUTC, string sourceFilePath, string msXmlFilePath)
         {

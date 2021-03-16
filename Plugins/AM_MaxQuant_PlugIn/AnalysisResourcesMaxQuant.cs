@@ -23,7 +23,7 @@ namespace AnalysisManagerMaxQuantPlugIn
         public override void Setup(string stepToolName, IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, MyEMSLUtilities myEMSLUtilities)
         {
             base.Setup(stepToolName, mgrParams, jobParams, statusTools, myEMSLUtilities);
-            SetOption(Global.eAnalysisResourceOptions.OrgDbRequired, true);
+            SetOption(Global.AnalysisResourceOptions.OrgDbRequired, true);
         }
 
         /// <summary>
@@ -327,25 +327,25 @@ namespace AnalysisManagerMaxQuantPlugIn
             return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
         }
 
-        private string GetDatasetFileOrDirectoryName(eRawDataTypeConstants rawDataType, out bool isDirectory)
+        private string GetDatasetFileOrDirectoryName(RawDataTypeConstants rawDataType, out bool isDirectory)
         {
             switch (rawDataType)
             {
-                case eRawDataTypeConstants.ThermoRawFile:
+                case RawDataTypeConstants.ThermoRawFile:
                     isDirectory = false;
                     return DatasetName + DOT_RAW_EXTENSION;
 
-                case eRawDataTypeConstants.AgilentDFolder:
-                case eRawDataTypeConstants.BrukerTOFBaf:
-                case eRawDataTypeConstants.BrukerFTFolder:
+                case RawDataTypeConstants.AgilentDFolder:
+                case RawDataTypeConstants.BrukerTOFBaf:
+                case RawDataTypeConstants.BrukerFTFolder:
                     isDirectory = true;
                     return DatasetName + DOT_D_EXTENSION;
 
-                case eRawDataTypeConstants.mzXML:
+                case RawDataTypeConstants.mzXML:
                     isDirectory = false;
                     return DatasetName + DOT_MZXML_EXTENSION;
 
-                case eRawDataTypeConstants.mzML:
+                case RawDataTypeConstants.mzML:
                     isDirectory = false;
                     return DatasetName + DOT_MZML_EXTENSION;
 

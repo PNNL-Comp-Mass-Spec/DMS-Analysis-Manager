@@ -25,7 +25,7 @@ namespace DTASpectraFileGen
         protected string mWorkDir = string.Empty;    // Working directory on analysis machine
         protected string mDatasetName = string.Empty;
 
-        protected AnalysisResources.eRawDataTypeConstants mRawDataType = AnalysisResources.eRawDataTypeConstants.Unknown;
+        protected AnalysisResources.RawDataTypeConstants mRawDataType = AnalysisResources.RawDataTypeConstants.Unknown;
 
         protected string mDtaToolNameLoc = string.Empty;             // Path to the program used to create DTA files
 

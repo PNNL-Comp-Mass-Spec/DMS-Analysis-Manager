@@ -38,7 +38,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
             string workDir,
             string msConvertProgramPath,
             string datasetName,
-            AnalysisResources.eRawDataTypeConstants rawDataType,
+            AnalysisResources.RawDataTypeConstants rawDataType,
             AnalysisResources.MSXMLOutputTypeConstants eOutputType,
             string customMSConvertArguments,
             IJobParams jobParams) : base(workDir, msConvertProgramPath, datasetName, rawDataType, eOutputType, centroidMSXML: false, jobParams: jobParams)
@@ -52,7 +52,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
             string workDir,
             string msConvertProgramPath,
             string datasetName,
-            AnalysisResources.eRawDataTypeConstants rawDataType,
+            AnalysisResources.RawDataTypeConstants rawDataType,
             AnalysisResources.MSXMLOutputTypeConstants eOutputType,
             bool centroidMSXML,
             int centroidPeakCountToRetain,
@@ -67,7 +67,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
             string workDir,
             string msConvertProgramPath,
             string datasetName,
-            AnalysisResources.eRawDataTypeConstants rawDataType,
+            AnalysisResources.RawDataTypeConstants rawDataType,
             AnalysisResources.MSXMLOutputTypeConstants eOutputType,
             bool centroidMS1,
             bool centroidMS2,
@@ -149,17 +149,17 @@ namespace AnalysisManagerMsXmlGenPlugIn
             return arguments;
         }
 
-        protected override string GetOutputFileName(string msXmlFormat, string rawFilePath, AnalysisResources.eRawDataTypeConstants rawDataType)
+        protected override string GetOutputFileName(string msXmlFormat, string rawFilePath, AnalysisResources.RawDataTypeConstants rawDataType)
         {
             if (string.Equals(msXmlFormat, MZML_FILE_FORMAT, StringComparison.OrdinalIgnoreCase) &&
-                mRawDataType == AnalysisResources.eRawDataTypeConstants.mzML)
+                mRawDataType == AnalysisResources.RawDataTypeConstants.mzML)
             {
                 // Input and output files are both .mzML
                 return Path.GetFileNameWithoutExtension(rawFilePath) + "_new" + AnalysisResources.DOT_MZML_EXTENSION;
             }
 
             if (string.Equals(msXmlFormat, MZXML_FILE_FORMAT, StringComparison.OrdinalIgnoreCase) &&
-                mRawDataType == AnalysisResources.eRawDataTypeConstants.mzXML)
+                mRawDataType == AnalysisResources.RawDataTypeConstants.mzXML)
             {
                 // Input and output files are both .mzXML
                 return Path.GetFileNameWithoutExtension(rawFilePath) + "_new" + AnalysisResources.DOT_MZXML_EXTENSION;

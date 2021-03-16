@@ -531,12 +531,12 @@ namespace AnalysisManagerProg
                         if (!mgrActiveLocal)
                         {
                             managerDisableReason = "Disabled locally via AnalysisManagerProg.exe.config";
-                            UpdateStatusDisabled(EnumMgrStatus.DISABLED_LOCAL, managerDisableReason);
+                            UpdateStatusDisabled(MgrStatusCodes.DISABLED_LOCAL, managerDisableReason);
                         }
                         else
                         {
                             managerDisableReason = "Disabled in Manager Control DB";
-                            UpdateStatusDisabled(EnumMgrStatus.DISABLED_MC, managerDisableReason);
+                            UpdateStatusDisabled(MgrStatusCodes.DISABLED_MC, managerDisableReason);
                         }
 
                         LogMessage("Manager inactive: " + managerDisableReason);
@@ -910,9 +910,9 @@ namespace AnalysisManagerProg
             }
 
             mStatusTools.UpdateAndWrite(
-                EnumMgrStatus.RUNNING,
-                EnumTaskStatus.RUNNING,
-                EnumTaskStatusDetail.RETRIEVING_RESOURCES,
+                MgrStatusCodes.RUNNING,
+                TaskStatusCodes.RUNNING,
+                TaskStatusDetailCodes.RETRIEVING_RESOURCES,
                 0, 0, string.Empty, string.Empty,
                 mMostRecentJobInfo, true);
 
@@ -983,7 +983,7 @@ namespace AnalysisManagerProg
             // Possibly disable MyEMSL
             if (DisableMyEMSL)
             {
-                toolResourcer.SetOption(Global.eAnalysisResourceOptions.MyEMSLSearchDisabled, true);
+                toolResourcer.SetOption(Global.AnalysisResourceOptions.MyEMSLSearchDisabled, true);
             }
 
             bool success;
@@ -1028,7 +1028,7 @@ namespace AnalysisManagerProg
                 }
 
                 // Run the job
-                mStatusTools.UpdateAndWrite(EnumMgrStatus.RUNNING, EnumTaskStatus.RUNNING, EnumTaskStatusDetail.RUNNING_TOOL, 0);
+                mStatusTools.UpdateAndWrite(MgrStatusCodes.RUNNING, TaskStatusCodes.RUNNING, TaskStatusDetailCodes.RUNNING_TOOL, 0);
 
                 if (runJobsRemotely)
                 {
@@ -1072,7 +1072,7 @@ namespace AnalysisManagerProg
             }
 
             // Close out the job
-            mStatusTools.UpdateAndWrite(EnumMgrStatus.RUNNING, EnumTaskStatus.CLOSING, EnumTaskStatusDetail.CLOSING, 100);
+            mStatusTools.UpdateAndWrite(MgrStatusCodes.RUNNING, TaskStatusCodes.CLOSING, TaskStatusDetailCodes.CLOSING, 100);
             try
             {
                 ShowTrace("Task completed successfully; closing the job step task");
@@ -1154,23 +1154,23 @@ namespace AnalysisManagerProg
 
                 switch (eJobStatus)
                 {
-                    case RemoteMonitor.EnumRemoteJobStatus.Undefined:
+                    case RemoteMonitor.RemoteJobStatusCodes.Undefined:
                         LogError(Global.AppendToComment("Undefined remote job status; check the logs", remoteMonitor.Message));
 
                         resultCode = CloseOutType.CLOSEOUT_RUNNING_REMOTE;
                         return true;
 
-                    case RemoteMonitor.EnumRemoteJobStatus.Unstarted:
+                    case RemoteMonitor.RemoteJobStatusCodes.Unstarted:
                         LogDebug("Remote job has not yet started", 2);
                         resultCode = CloseOutType.CLOSEOUT_RUNNING_REMOTE;
                         return true;
 
-                    case RemoteMonitor.EnumRemoteJobStatus.Running:
+                    case RemoteMonitor.RemoteJobStatusCodes.Running:
                         LogDebug(string.Format("Remote job is running, {0:F1}% complete", remoteMonitor.RemoteProgress), 2);
                         resultCode = CloseOutType.CLOSEOUT_RUNNING_REMOTE;
                         return true;
 
-                    case RemoteMonitor.EnumRemoteJobStatus.Success:
+                    case RemoteMonitor.RemoteJobStatusCodes.Success:
 
                         var success = HandleRemoteJobSuccess(toolRunner, remoteMonitor, out resultCode);
                         if (!success)
@@ -1180,7 +1180,7 @@ namespace AnalysisManagerProg
                         }
                         return success;
 
-                    case RemoteMonitor.EnumRemoteJobStatus.Failed:
+                    case RemoteMonitor.RemoteJobStatusCodes.Failed:
 
                         HandleRemoteJobFailure(toolRunner, remoteMonitor, out resultCode);
                         mAnalysisTask.CloseTask(resultCode, mMostRecentErrorMessage, toolRunner);
@@ -1761,16 +1761,16 @@ namespace AnalysisManagerProg
             return string.Empty;
         }
 
-        private CleanupMgrErrors.eCleanupModeConstants GetManagerErrorCleanupMode()
+        private CleanupMgrErrors.CleanupModes GetManagerErrorCleanupMode()
         {
             var managerErrorCleanupMode = mMgrSettings.GetParam("ManagerErrorCleanupMode", "0");
 
             return managerErrorCleanupMode.Trim() switch
             {
-                "0" => CleanupMgrErrors.eCleanupModeConstants.Disabled,
-                "1" => CleanupMgrErrors.eCleanupModeConstants.CleanupOnce,
-                "2" => CleanupMgrErrors.eCleanupModeConstants.CleanupAlways,
-                _ => CleanupMgrErrors.eCleanupModeConstants.Disabled
+                "0" => CleanupMgrErrors.CleanupModes.Disabled,
+                "1" => CleanupMgrErrors.CleanupModes.CleanupOnce,
+                "2" => CleanupMgrErrors.CleanupModes.CleanupAlways,
+                _ => CleanupMgrErrors.CleanupModes.Disabled
             };
         }
 
@@ -1966,9 +1966,9 @@ namespace AnalysisManagerProg
                 JobStep = 0,
                 Tool = string.Empty,
                 MgrName = mMgrName,
-                MgrStatus = EnumMgrStatus.RUNNING,
-                TaskStatus = EnumTaskStatus.NO_TASK,
-                TaskStatusDetail = EnumTaskStatusDetail.NO_TASK
+                MgrStatus = MgrStatusCodes.RUNNING,
+                TaskStatus = TaskStatusCodes.NO_TASK,
+                TaskStatusDetail = TaskStatusDetailCodes.NO_TASK
             };
             RegisterEvents(mStatusTools);
 
@@ -2233,7 +2233,7 @@ namespace AnalysisManagerProg
                 {
                     // Log the error
                     LogMessage(mMgrSettings.ErrMsg);
-                    UpdateStatusDisabled(EnumMgrStatus.DISABLED_LOCAL, "Disabled Locally");
+                    UpdateStatusDisabled(MgrStatusCodes.DISABLED_LOCAL, "Disabled Locally");
                 }
                 else
                 {
@@ -2793,7 +2793,7 @@ namespace AnalysisManagerProg
             return true;
         }
 
-        private void UpdateStatusDisabled(EnumMgrStatus managerStatus, string managerDisableMessage)
+        private void UpdateStatusDisabled(MgrStatusCodes managerStatus, string managerDisableMessage)
         {
             var recentErrorMessages = DetermineRecentErrorMessages(5, ref mMostRecentJobInfo);
             mStatusTools.UpdateDisabled(managerStatus, managerDisableMessage, recentErrorMessages, mMostRecentJobInfo);
@@ -2940,7 +2940,7 @@ namespace AnalysisManagerProg
                     }
                 }
 
-                var orgDbRequired = toolResourcer.GetOption(Global.eAnalysisResourceOptions.OrgDbRequired);
+                var orgDbRequired = toolResourcer.GetOption(Global.AnalysisResourceOptions.OrgDbRequired);
 
                 if (orgDbRequired)
                 {

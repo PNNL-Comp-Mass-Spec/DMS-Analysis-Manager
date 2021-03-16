@@ -403,7 +403,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Instrument data file type enum
         /// </summary>
-        public enum eRawDataTypeConstants
+        public enum RawDataTypeConstants
         {
             /// <summary>
             /// Unknown data type
@@ -599,7 +599,7 @@ namespace AnalysisManagerBase
         /// </summary>
         protected MyEMSLUtilities mMyEMSLUtilities;
 
-        private Dictionary<Global.eAnalysisResourceOptions, bool> mResourceOptions;
+        private Dictionary<Global.AnalysisResourceOptions, bool> mResourceOptions;
         private bool mAuroraAvailable;
 
         private bool mMyEMSLSearchDisabled;
@@ -799,9 +799,9 @@ namespace AnalysisManagerBase
 
             mFileCopyUtilities.CopyWithLocksComplete += FileCopyUtilities_CopyWithLocksComplete;
 
-            mResourceOptions = new Dictionary<Global.eAnalysisResourceOptions, bool>();
-            SetOption(Global.eAnalysisResourceOptions.OrgDbRequired, false);
-            SetOption(Global.eAnalysisResourceOptions.MyEMSLSearchDisabled, false);
+            mResourceOptions = new Dictionary<Global.AnalysisResourceOptions, bool>();
+            SetOption(Global.AnalysisResourceOptions.OrgDbRequired, false);
+            SetOption(Global.AnalysisResourceOptions.MyEMSLSearchDisabled, false);
 
             mAuroraAvailable = mMgrParams.GetParam("AuroraAvailable", true);
 
@@ -1004,10 +1004,10 @@ namespace AnalysisManagerBase
         public abstract CloseOutType GetResources();
 
         /// <summary>
-        /// Retrieve a true/false option of type eAnalysisResourceOptions
+        /// Retrieve a true/false option of type AnalysisResourceOptions
         /// </summary>
         /// <param name="resourceOption"></param>
-        public bool GetOption(Global.eAnalysisResourceOptions resourceOption)
+        public bool GetOption(Global.AnalysisResourceOptions resourceOption)
         {
             if (mResourceOptions == null)
                 return false;
@@ -1048,21 +1048,21 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Set a true/false option of type eAnalysisResourceOptions
+        /// Set a true/false option of type AnalysisResourceOptions
         /// </summary>
         /// <param name="resourceOption"></param>
         /// <param name="enabled"></param>
-        public void SetOption(Global.eAnalysisResourceOptions resourceOption, bool enabled)
+        public void SetOption(Global.AnalysisResourceOptions resourceOption, bool enabled)
         {
             if (mResourceOptions == null)
             {
-                mResourceOptions = new Dictionary<Global.eAnalysisResourceOptions, bool>();
+                mResourceOptions = new Dictionary<Global.AnalysisResourceOptions, bool>();
             }
 
             // Add/update resourceOption
             mResourceOptions[resourceOption] = enabled;
 
-            if (resourceOption == Global.eAnalysisResourceOptions.MyEMSLSearchDisabled)
+            if (resourceOption == Global.AnalysisResourceOptions.MyEMSLSearchDisabled)
             {
                 MyEMSLSearchDisabled = enabled;
             }
@@ -1741,10 +1741,10 @@ namespace AnalysisManagerBase
             // Confirm that this dataset is a Thermo .Raw file or a .UIMF file
             switch (GetRawDataType(rawDataTypeName))
             {
-                case eRawDataTypeConstants.ThermoRawFile:
+                case RawDataTypeConstants.ThermoRawFile:
                     inputFilePath = mDatasetName + DOT_RAW_EXTENSION;
                     break;
-                case eRawDataTypeConstants.UIMF:
+                case RawDataTypeConstants.UIMF:
                     inputFilePath = mDatasetName + DOT_UIMF_EXTENSION;
                     break;
                 default:
@@ -2544,6 +2544,7 @@ namespace AnalysisManagerBase
                 DatasetFolderName = datasetInfo.Dataset,
                 RawDataType = datasetInfo.RawDataType
             };
+
             jobInfo.SharedResultsFolders.Clear();
 
             // In jobInfo, ArchiveStoragePath and ServerStoragePath track the directory just above the dataset directory
@@ -2576,29 +2577,29 @@ namespace AnalysisManagerBase
         /// Convert a raw data type string to raw data type enum (i.e. instrument data type)
         /// </summary>
         /// <param name="rawDataTypeName"></param>
-        public static eRawDataTypeConstants GetRawDataType(string rawDataTypeName)
+        public static RawDataTypeConstants GetRawDataType(string rawDataTypeName)
         {
             if (string.IsNullOrEmpty(rawDataTypeName))
             {
-                return eRawDataTypeConstants.Unknown;
+                return RawDataTypeConstants.Unknown;
             }
 
             return rawDataTypeName.ToLower() switch
             {
-                RAW_DATA_TYPE_DOT_D_FOLDERS => eRawDataTypeConstants.AgilentDFolder,
-                RAW_DATA_TYPE_ZIPPED_S_FOLDERS => eRawDataTypeConstants.ZippedSFolders,
-                RAW_DATA_TYPE_DOT_RAW_FOLDER => eRawDataTypeConstants.MicromassRawFolder,
-                RAW_DATA_TYPE_DOT_RAW_FILES => eRawDataTypeConstants.ThermoRawFile,
-                RAW_DATA_TYPE_DOT_WIFF_FILES => eRawDataTypeConstants.AgilentQStarWiffFile,
-                RAW_DATA_TYPE_DOT_UIMF_FILES => eRawDataTypeConstants.UIMF,
-                RAW_DATA_TYPE_DOT_MZXML_FILES => eRawDataTypeConstants.mzXML,
-                RAW_DATA_TYPE_DOT_MZML_FILES => eRawDataTypeConstants.mzML,
-                RAW_DATA_TYPE_BRUKER_FT_FOLDER => eRawDataTypeConstants.BrukerFTFolder,
-                RAW_DATA_TYPE_BRUKER_MALDI_SPOT => eRawDataTypeConstants.BrukerMALDISpot,
-                RAW_DATA_TYPE_BRUKER_MALDI_IMAGING => eRawDataTypeConstants.BrukerMALDIImaging,
-                RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER => eRawDataTypeConstants.BrukerTOFBaf,
-                RAW_DATA_TYPE_BRUKER_TOF_TDF_FOLDER => eRawDataTypeConstants.BrukerTOFTdf,
-                _ => eRawDataTypeConstants.Unknown
+                RAW_DATA_TYPE_DOT_D_FOLDERS => RawDataTypeConstants.AgilentDFolder,
+                RAW_DATA_TYPE_ZIPPED_S_FOLDERS => RawDataTypeConstants.ZippedSFolders,
+                RAW_DATA_TYPE_DOT_RAW_FOLDER => RawDataTypeConstants.MicromassRawFolder,
+                RAW_DATA_TYPE_DOT_RAW_FILES => RawDataTypeConstants.ThermoRawFile,
+                RAW_DATA_TYPE_DOT_WIFF_FILES => RawDataTypeConstants.AgilentQStarWiffFile,
+                RAW_DATA_TYPE_DOT_UIMF_FILES => RawDataTypeConstants.UIMF,
+                RAW_DATA_TYPE_DOT_MZXML_FILES => RawDataTypeConstants.mzXML,
+                RAW_DATA_TYPE_DOT_MZML_FILES => RawDataTypeConstants.mzML,
+                RAW_DATA_TYPE_BRUKER_FT_FOLDER => RawDataTypeConstants.BrukerFTFolder,
+                RAW_DATA_TYPE_BRUKER_MALDI_SPOT => RawDataTypeConstants.BrukerMALDISpot,
+                RAW_DATA_TYPE_BRUKER_MALDI_IMAGING => RawDataTypeConstants.BrukerMALDIImaging,
+                RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER => RawDataTypeConstants.BrukerTOFBaf,
+                RAW_DATA_TYPE_BRUKER_TOF_TDF_FOLDER => RawDataTypeConstants.BrukerTOFTdf,
+                _ => RawDataTypeConstants.Unknown
             };
         }
 

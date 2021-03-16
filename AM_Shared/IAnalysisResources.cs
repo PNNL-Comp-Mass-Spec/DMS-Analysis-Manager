@@ -73,14 +73,14 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="resourceOption">Option to get</param>
         /// <returns>The option value (true or false)</returns>
-        bool GetOption(Global.eAnalysisResourceOptions resourceOption);
+        bool GetOption(Global.AnalysisResourceOptions resourceOption);
 
         /// <summary>
         /// Set the status of an analysis resource option
         /// </summary>
         /// <param name="resourceOption">Option to set</param>
         /// <param name="enabled">True or false</param>
-        void SetOption(Global.eAnalysisResourceOptions resourceOption, bool enabled);
+        void SetOption(Global.AnalysisResourceOptions resourceOption, bool enabled);
 
         #endregion
 
