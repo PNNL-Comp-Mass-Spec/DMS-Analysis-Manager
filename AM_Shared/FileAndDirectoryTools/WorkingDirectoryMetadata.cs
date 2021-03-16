@@ -12,6 +12,14 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             public string Name;
             public long Length;
             public DateTime LastModifiedUTC;
+
+            /// <summary>
+            /// Show the filename
+            /// </summary>
+            public override string ToString()
+            {
+                return Name;
+            }
         }
 
         public Dictionary<string, Dictionary<string, FileMetadata>> WorkingDirectoryFiles { get; }

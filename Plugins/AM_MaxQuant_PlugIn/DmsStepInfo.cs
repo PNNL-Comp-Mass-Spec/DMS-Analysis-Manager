@@ -41,5 +41,13 @@
             Tool = string.Empty;
             StartStepName = string.Empty;
         }
+
+        /// <summary>
+        /// Show the tool name, start step ID, and start step description
+        /// </summary>
+        public override string ToString()
+        {
+            return string.Format("{0}, start step {1}: {2}", Tool, StartStepID ?? 0, StartStepName);
+        }
     }
 }
