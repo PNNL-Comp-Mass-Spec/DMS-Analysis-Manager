@@ -25,8 +25,6 @@ namespace AnalysisManagerMaxQuantPlugIn
     // ReSharper disable once UnusedMember.Global
     public class AnalysisToolRunnerMaxQuant : AnalysisToolRunnerBase
     {
-        private const string MAXQUANT_CONSOLE_OUTPUT = "MaxQuant_ConsoleOutput.txt";
-
         private const string MAXQUANT_EXE_NAME = @"bin\MaxQuantCmd.exe";
 
         /// <summary>
@@ -294,6 +292,39 @@ namespace AnalysisManagerMaxQuantPlugIn
             return true;
         }
 
+        /// <summary>
+        /// Get the expected start and end values that MaxQuant processing will represent
+        /// </summary>
+        /// <param name="processingSteps">Keys are step name, values are the approximate percent complete at the start of the step</param>
+        /// <param name="progressAtStart">Output: progress at start</param>
+        /// <param name="progressAtEnd">Output: progress at end</param>
+        private void GetIncrementalProgressRange(SortedList<string, int> processingSteps, out float progressAtStart, out float progressAtEnd)
+        {
+            if (RuntimeOptions.DryRun)
+            {
+                progressAtStart = 0;
+                progressAtEnd = 1;
+                return;
+            }
+
+            if (processingSteps.TryGetValue(RuntimeOptions.StartStepName, out var startStepPercentComplete))
+            {
+                progressAtStart = startStepPercentComplete;
+            }
+            else
+            {
+                progressAtStart = 0;
+            }
+
+            if (processingSteps.TryGetValue(RuntimeOptions.NextDMSStepStartStepName, out var nextStartStepPercentComplete))
+            {
+                progressAtEnd = nextStartStepPercentComplete;
+            }
+            else
+            {
+                progressAtEnd = 100;
+            }
+        }
 
         /// <summary>
         /// Get a list of typical MaxQuant processing steps
@@ -415,11 +446,11 @@ namespace AnalysisManagerMaxQuantPlugIn
         /// <summary>
         /// Parse the MaxQuant console output file to track the search progress
         /// </summary>
-        /// <param name="consoleOutputFilePath"></param>
-        private void ParseConsoleOutputFile(string consoleOutputFilePath)
+        private void ParseConsoleOutputFile()
         {
             // Example Console output
             //
+            // id      number of threads       job name
             // Configuring
             // Assemble run info
             // Finish run info
@@ -436,13 +467,15 @@ namespace AnalysisManagerMaxQuantPlugIn
 
             var processingSteps = GetMaxQuantProcessingSteps();
 
+            var dryRunStepMatcher = new Regex(@"^(?<StepNumber>\d+)[ \t]+(?<TaskDescription>.+)", RegexOptions.Compiled);
+
             try
             {
-                if (!File.Exists(consoleOutputFilePath))
+                if (!File.Exists(RuntimeOptions.ConsoleOutputFilePath))
                 {
                     if (mDebugLevel >= 4)
                     {
-                        LogDebug("Console output file not found: " + consoleOutputFilePath);
+                        LogDebug("Console output file not found: " + RuntimeOptions.ConsoleOutputFilePath);
                     }
 
                     return;
@@ -450,18 +483,21 @@ namespace AnalysisManagerMaxQuantPlugIn
 
                 if (mDebugLevel >= 4)
                 {
-                    LogDebug("Parsing file " + consoleOutputFilePath);
+                    LogDebug("Parsing file " + RuntimeOptions.ConsoleOutputFilePath);
                 }
 
                 mConsoleOutputErrorMsg = string.Empty;
                 var currentProgress = 0;
 
-                var stepNumber = 0;
+                // Dictionary mapping step number to the task description
+                // This is only populated if RuntimeOptions.DryRun is true
                 var stepToTaskMap = new SortedDictionary<int, string>();
+
+                GetIncrementalProgressRange(processingSteps, out var progressAtStart, out var progressAtEnd);
 
                 var exceptionFound = false;
 
-                using var reader = new StreamReader(new FileStream(consoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+                using var reader = new StreamReader(new FileStream(RuntimeOptions.ConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
 
                 while (!reader.EndOfStream)
                 {
@@ -489,8 +525,17 @@ namespace AnalysisManagerMaxQuantPlugIn
                         continue;
                     }
 
-                    stepNumber++;
-                    stepToTaskMap.Add(stepNumber, dataLine);
+                    if (RuntimeOptions.DryRun)
+                    {
+                        var match = dryRunStepMatcher.Match(dataLine);
+                        if (match.Success)
+                        {
+                            var stepNumber = int.Parse(match.Groups["StepNumber"].Value);
+                            var taskDescription = match.Groups["TaskDescription"].Value.Trim();
+
+                            stepToTaskMap.Add(stepNumber, taskDescription);
+                        }
+                    }
 
                     foreach (var processingStep in processingSteps.Where(processingStep => dataLine.StartsWith(processingStep.Key, StringComparison.OrdinalIgnoreCase)))
                     {
@@ -498,19 +543,24 @@ namespace AnalysisManagerMaxQuantPlugIn
                     }
                 }
 
+                mProgress = PRISM.FileProcessor.ProcessFilesOrDirectoriesBase.ComputeIncrementalProgress(progressAtStart, progressAtEnd, currentProgress);
+
+                if (!RuntimeOptions.DryRun)
+                    return;
+
+                StepToTaskMap.Clear();
+
                 foreach (var item in stepToTaskMap.Where(item => !StepToTaskMap.ContainsKey(item.Key)))
                 {
                     StepToTaskMap.Add(item.Key, item.Value);
                 }
-
-                mProgress = currentProgress;
             }
             catch (Exception ex)
             {
                 // Ignore errors here
                 if (mDebugLevel >= 2)
                 {
-                    LogErrorNoMessageUpdate("Error parsing console output file (" + consoleOutputFilePath + "): " + ex.Message);
+                    LogErrorNoMessageUpdate("Error parsing console output file (" + RuntimeOptions.ConsoleOutputFilePath + "): " + ex.Message);
                 }
             }
         }
@@ -530,10 +580,12 @@ namespace AnalysisManagerMaxQuantPlugIn
 
             if (RuntimeOptions.DryRun)
             {
+                RuntimeOptions.ConsoleOutputFilePath = Path.Combine(mWorkDir, "MaxQuant_ConsoleOutput.txt");
                 cmdLineArguments.Add("--dryrun");
             }
             else if (RuntimeOptions.StepRangeDefined)
             {
+                RuntimeOptions.ConsoleOutputFilePath = Path.Combine(mWorkDir, StepToolName + "_ConsoleOutput.txt");
                 cmdLineArguments.Add("--partial-processing=" + RuntimeOptions.StartStepNumber);
                 cmdLineArguments.Add("--partial-processing-end=" + RuntimeOptions.EndStepNumber);
             }
@@ -550,7 +602,7 @@ namespace AnalysisManagerMaxQuantPlugIn
                 CacheStandardOutput = true,
                 EchoOutputToConsole = true,
                 WriteConsoleOutputToFile = true,
-                ConsoleOutputFilePath = Path.Combine(mWorkDir, MAXQUANT_CONSOLE_OUTPUT)
+                ConsoleOutputFilePath = RuntimeOptions.ConsoleOutputFilePath
             };
             RegisterEvents(mCmdRunner);
             mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
@@ -563,7 +615,7 @@ namespace AnalysisManagerMaxQuantPlugIn
             var processingSuccess = mCmdRunner.RunProgram(mMaxQuantProgLoc, arguments, "MaxQuant", true);
 
             // Parse the console output file one more time
-            ParseConsoleOutputFile(Path.Combine(mWorkDir, MAXQUANT_CONSOLE_OUTPUT));
+            ParseConsoleOutputFile();
 
             if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))
             {
@@ -589,7 +641,10 @@ namespace AnalysisManagerMaxQuantPlugIn
             mStatusTools.UpdateAndWrite(mProgress);
             if (mDebugLevel >= 3)
             {
-                LogDebug("MaxQuant Search Complete");
+                if (RuntimeOptions.DryRun)
+                    LogDebug("MaxQuant Dry Run Complete");
+                else
+                    LogDebug("MaxQuant Search Complete");
             }
 
             return CloseOutType.CLOSEOUT_SUCCESS;
@@ -1045,7 +1100,7 @@ namespace AnalysisManagerMaxQuantPlugIn
 
             mLastConsoleOutputParse = DateTime.UtcNow;
 
-            ParseConsoleOutputFile(Path.Combine(mWorkDir, MAXQUANT_CONSOLE_OUTPUT));
+            ParseConsoleOutputFile();
 
             UpdateProgRunnerCpuUsage(mCmdRunner, SECONDS_BETWEEN_UPDATE);
 

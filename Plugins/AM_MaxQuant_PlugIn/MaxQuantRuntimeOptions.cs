@@ -5,14 +5,30 @@
         public const int MAX_STEP_NUMBER = 9999;
 
         /// <summary>
+        /// Current console output file path
+        /// </summary>
+        public string ConsoleOutputFilePath { get; set; }
+
+        /// <summary>
         /// True if a dry run should be used
         /// </summary>
         public bool DryRun { get; set; }
 
         /// <summary>
+        /// Start step name of the next DMS step
+        /// </summary>
+        /// <remarks>Empty string if EndStepNumber is MAX_STEP_NUMBER</remarks>
+        public string NextDMSStepStartStepName { get; set; }
+
+        /// <summary>
         /// Local parameter file path
         /// </summary>
         public string ParameterFilePath { get; set; }
+
+        /// <summary>
+        /// Start step name
+        /// </summary>
+        public string StartStepName { get; set; }
 
         /// <summary>
         /// Start step number
@@ -42,6 +58,9 @@
             ParameterFilePath = string.Empty;
             StartStepNumber = 0;
             EndStepNumber = MAX_STEP_NUMBER;
+
+            StartStepName = string.Empty;
+            NextDMSStepStartStepName = string.Empty;
         }
     }
 }
