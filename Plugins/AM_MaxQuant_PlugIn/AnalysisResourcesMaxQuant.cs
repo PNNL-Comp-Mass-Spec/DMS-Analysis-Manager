@@ -45,7 +45,9 @@ namespace AnalysisManagerMaxQuantPlugIn
 
                 var workingDirectory = new DirectoryInfo(mWorkDir);
 
-                var transferDirectoryPath = GetTransferFolderPathForJobStep(useInputDirectory: true);
+                var usingMzML = mJobParams.GetJobParameter("CreateMzMLFiles", false);
+
+                var transferDirectoryPath = GetTransferFolderPathForJobStep(useInputDirectory: usingMzML);
 
                 var paramFileName = mJobParams.GetParam(JOB_PARAM_PARAMETER_FILE);
                 currentTask = "RetrieveParamFile " + paramFileName;
@@ -54,10 +56,12 @@ namespace AnalysisManagerMaxQuantPlugIn
                 if (!FileSearch.RetrieveFile(paramFileName, mJobParams.GetParam("ParmFileStoragePath")))
                     return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
 
-                var previousStepParamFileFound = GetExistingToolParametersFile(
-                    workingDirectory, transferDirectoryPath, paramFileName, out var previousJobStepParameterFilePath);
+                var success = GetExistingToolParametersFile(workingDirectory, transferDirectoryPath, paramFileName, out var previousJobStepParameterFilePath);
 
-                if (previousStepParamFileFound)
+                if (!success)
+                    return CloseOutType.CLOSEOUT_FAILED;
+
+                if (!string.IsNullOrWhiteSpace(previousJobStepParameterFilePath))
                 {
                     var skipStepToolPrevJobStep = CheckSkipMaxQuant(
                         workingDirectory, previousJobStepParameterFilePath, out var abortProcessingPrevJobStep, out var skipReason);
@@ -105,7 +109,7 @@ namespace AnalysisManagerMaxQuantPlugIn
 
                 if (dataPackageID > 0)
                 {
-                    datasetCopyResult = RetrieveDataPackageDatasets(dataPackageInfo);
+                    datasetCopyResult = RetrieveDataPackageDatasets(dataPackageInfo, usingMzML);
                 }
                 else
                 {
@@ -131,9 +135,9 @@ namespace AnalysisManagerMaxQuantPlugIn
                 RegisterEvents(subdirectoryCompressor);
 
                 // Create the working directory metadata file
-                var success = subdirectoryCompressor.CreateWorkingDirectoryMetadataFile();
+                var metadataFileSuccess = subdirectoryCompressor.CreateWorkingDirectoryMetadataFile();
 
-                return success ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
+                return metadataFileSuccess ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
             }
             catch (Exception ex)
             {
@@ -150,14 +154,26 @@ namespace AnalysisManagerMaxQuantPlugIn
             {
                 if (string.IsNullOrEmpty(transferDirectoryPath))
                 {
-                    // Transfer directory parameter is empty; nothing to retrieve
-                    return CloseOutType.CLOSEOUT_SUCCESS;
+                    LogError("Transfer directory not defined in the job parameters");
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                var transferDirectory = new DirectoryInfo(transferDirectoryPath);
+                if (!transferDirectory.Exists)
+                {
+                    // The transfer directory may not yet exist
+                    // This is allowed if this is step 2
+                    var stepNumber = mJobParams.GetJobParameter(AnalysisJob.STEP_PARAMETERS_SECTION, "Step", 1);
+
+                    if (stepNumber == 2)
+                        return CloseOutType.CLOSEOUT_SUCCESS;
+
+                    LogError("Transfer directory not found, cannot retrieve results from the previous job step: " + transferDirectoryPath);
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 var zipTools = new DotNetZipTools(mDebugLevel, workingDirectory.FullName);
                 RegisterEvents(zipTools);
-
-                var transferDirectory = new DirectoryInfo(transferDirectoryPath);
 
                 foreach (var item in transferDirectory.GetFiles("*", SearchOption.AllDirectories))
                 {
@@ -399,12 +415,10 @@ namespace AnalysisManagerMaxQuantPlugIn
             }
         }
 
-        private CloseOutType RetrieveDataPackageDatasets(DataPackageInfo dataPackageInfo)
+        private CloseOutType RetrieveDataPackageDatasets(DataPackageInfo dataPackageInfo, bool usingMzML)
         {
             try
             {
-                var usingMzML = mJobParams.GetJobParameter("CreateMzMLFiles", false);
-
                 // Keys in dictionary dataPackageDatasets are Dataset ID, values are dataset info
                 // Keys in dictionary datasetRawFilePaths are dataset name, values are paths to the local file or directory for the dataset</param>
 
