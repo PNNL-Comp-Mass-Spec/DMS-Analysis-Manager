@@ -3335,10 +3335,8 @@ namespace AnalysisManagerBase
             mJobParams.AddAdditionalParameter("PeptideSearch", "ProteinCollectionList", dataPkgJob.ProteinCollectionList);
             mJobParams.AddAdditionalParameter("PeptideSearch", "ProteinOptions", dataPkgJob.ProteinOptions);
 
-            // In jobInfo, ArchiveStoragePath and ServerStoragePath track the directory just above the dataset directory
-            // In contrast, in datasetInfo, ArchiveStoragePath and ServerStoragePath track the actual dataset directory path
-            mJobParams.AddAdditionalParameter(jobParamsSection, "DatasetStoragePath", GetParentDirectoryPath(dataPkgJob.ServerStoragePath));
-            mJobParams.AddAdditionalParameter(jobParamsSection, "DatasetArchivePath", GetParentDirectoryPath(dataPkgJob.ArchiveStoragePath));
+            mJobParams.AddAdditionalParameter(jobParamsSection, "DatasetStoragePath", dataPkgJob.ServerStoragePath);
+            mJobParams.AddAdditionalParameter(jobParamsSection, "DatasetArchivePath", dataPkgJob.ArchiveStoragePath);
 
             mJobParams.AddAdditionalParameter(jobParamsSection, JOB_PARAM_INPUT_FOLDER_NAME, dataPkgJob.ResultsFolderName);
             mJobParams.AddAdditionalParameter(jobParamsSection, JOB_PARAM_DATASET_FOLDER_NAME, dataPkgJob.DatasetFolderName);
