@@ -2547,18 +2547,8 @@ namespace AnalysisManagerBase
 
             jobInfo.SharedResultsFolders.Clear();
 
-            // In jobInfo, ArchiveStoragePath and ServerStoragePath track the directory just above the dataset directory
-            // In contrast, in datasetInfo, ArchiveStoragePath and ServerStoragePath track the actual dataset directory path
-
-            try
-            {
-                jobInfo.ArchiveStoragePath = GetParentDirectoryPath(datasetInfo.DatasetArchivePath);
-            }
-            catch (Exception)
-            {
-                LogTools.LogWarning("Exception in GetPseudoDataPackageJobInfo determining the parent directory of " + datasetInfo.DatasetArchivePath);
-                jobInfo.ArchiveStoragePath = datasetInfo.DatasetArchivePath.Replace(@"\" + datasetInfo.Dataset, string.Empty);
-            }
+            // In jobInfo, ServerStoragePath and ArchiveStoragePath track the directory just above the dataset directory
+            // In contrast, in datasetInfo, DatasetDirectoryPath and DatasetArchivePath track the actual dataset directory path
 
             try
             {
@@ -2568,6 +2558,16 @@ namespace AnalysisManagerBase
             {
                 LogTools.LogWarning("Exception in GetPseudoDataPackageJobInfo determining the parent directory of " + datasetInfo.DatasetDirectoryPath);
                 jobInfo.ServerStoragePath = datasetInfo.DatasetDirectoryPath.Replace(@"\" + datasetInfo.Dataset, string.Empty);
+            }
+
+            try
+            {
+                jobInfo.ArchiveStoragePath = GetParentDirectoryPath(datasetInfo.DatasetArchivePath);
+            }
+            catch (Exception)
+            {
+                LogTools.LogWarning("Exception in GetPseudoDataPackageJobInfo determining the parent directory of " + datasetInfo.DatasetArchivePath);
+                jobInfo.ArchiveStoragePath = datasetInfo.DatasetArchivePath.Replace(@"\" + datasetInfo.Dataset, string.Empty);
             }
 
             return jobInfo;
@@ -3236,8 +3236,9 @@ namespace AnalysisManagerBase
             mJobParams.AddAdditionalParameter(jobParamsSection, "Instrument", dataPkgDataset.Instrument);
             mJobParams.AddAdditionalParameter(jobParamsSection, "InstrumentGroup", dataPkgDataset.InstrumentGroup);
 
-            // In jobInfo, ArchiveStoragePath and ServerStoragePath track the directory just above the dataset directory
-            // In contrast, in datasetInfo, ArchiveStoragePath and ServerStoragePath track the actual dataset directory path
+            // In the job parameters, ServerStoragePath and ArchiveStoragePath track the directory just above the dataset directory
+            // In contrast, in datasetInfo, DatasetDirectoryPath and DatasetArchivePath track the actual dataset directory path
+
             mJobParams.AddAdditionalParameter(jobParamsSection, "DatasetStoragePath", GetParentDirectoryPath(dataPkgDataset.DatasetDirectoryPath));
             mJobParams.AddAdditionalParameter(jobParamsSection, "DatasetArchivePath", GetParentDirectoryPath(dataPkgDataset.DatasetArchivePath));
 
