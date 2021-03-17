@@ -405,16 +405,13 @@ namespace AnalysisManagerMaxQuantPlugIn
         /// <summary>
         /// Determine the number of threads to use for MaxQuant
         /// </summary>
+        /// <remarks>
+        /// Allow MaxQuant to use 88% of the physical cores
+        /// </remarks>
         private int GetNumThreadsToUse()
         {
             var coreCount = Global.GetCoreCount();
-
-            if (coreCount > 4)
-            {
-                return coreCount - 1;
-            }
-
-            return coreCount;
+            return (int)Math.Floor(coreCount * 0.88);
         }
 
         private static void MoveFileOverwrite(FileInfo fileToMove, string newFilePath)
