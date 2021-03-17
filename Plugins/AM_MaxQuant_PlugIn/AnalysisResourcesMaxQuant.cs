@@ -78,7 +78,7 @@ namespace AnalysisManagerMaxQuantPlugIn
                 if (!string.IsNullOrWhiteSpace(previousJobStepParameterFilePath))
                 {
                     var skipStepToolPrevJobStep = CheckSkipMaxQuant(
-                        workingDirectory, previousJobStepParameterFilePath, out var abortProcessingPrevJobStep, out var skipReason);
+                        workingDirectory, previousJobStepParameterFilePath, out var abortProcessingPrevJobStep, out var skipReason, out var dmsSteps);
 
                     if (abortProcessingPrevJobStep)
                     {
@@ -91,10 +91,21 @@ namespace AnalysisManagerMaxQuantPlugIn
                         EvalMessage = skipReason;
                         return CloseOutType.CLOSEOUT_SKIPPED_MAXQUANT;
                     }
+
+                    var targetParameterFile = new FileInfo(Path.Combine(workingDirectory.FullName, paramFileName));
+
+                    var stepIdUpdateResult = AnalysisToolRunnerMaxQuant.UpdateMaxQuantParameterFileStartStepIDs(
+                        DatasetName, targetParameterFile, dmsSteps, out var errorMessage);
+
+                    if (stepIdUpdateResult != CloseOutType.CLOSEOUT_SUCCESS)
+                    {
+                        LogError(string.Format("Error updating the DMSSteps in {0}: {1}", targetParameterFile.Name, errorMessage));
+                        return CloseOutType.CLOSEOUT_FAILED;
+                    }
                 }
 
                 // Also examine the original parameter file, in case it has numeric values defined for startStepID
-                var skipStepTool = CheckSkipMaxQuant(workingDirectory, paramFileName, out var abortProcessing, out var skipReason2);
+                var skipStepTool = CheckSkipMaxQuant(workingDirectory, paramFileName, out var abortProcessing, out var skipReason2, out _);
 
                 if (abortProcessing)
                 {
@@ -230,10 +241,16 @@ namespace AnalysisManagerMaxQuantPlugIn
             }
         }
 
-        private bool CheckSkipMaxQuant(FileSystemInfo workingDirectory, string maxQuantParameterFileName, out bool abortProcessing, out string skipReason)
+        private bool CheckSkipMaxQuant(
+            FileSystemInfo workingDirectory,
+            string maxQuantParameterFileName,
+            out bool abortProcessing,
+            out string skipReason,
+            out Dictionary<int, DmsStepInfo> dmsSteps)
         {
             abortProcessing = false;
             skipReason = string.Empty;
+            dmsSteps = new Dictionary<int, DmsStepInfo>();
 
             try
             {
@@ -264,8 +281,6 @@ namespace AnalysisManagerMaxQuantPlugIn
                     }
                 }
 
-                var dmsSteps = new Dictionary<int, DmsStepInfo>();
-
                 // Get the DMS step info
                 foreach (var item in dmsStepNodes)
                 {
@@ -284,7 +299,7 @@ namespace AnalysisManagerMaxQuantPlugIn
                 if (countWithValue == 0)
                 {
                     // None of the steps has an integer defined for StartStepID
-                    // MaxQuant has thus not been run yet
+                    // Either this is an unmodified MaxQuant parameter file or MaxQuant has not yet been run
                     return false;
                 }
 
@@ -301,7 +316,10 @@ namespace AnalysisManagerMaxQuantPlugIn
                 foreach (var dmsStep in dmsSteps.Where(dmsStep => dmsStep.Value.Tool.Equals(StepToolName)))
                 {
                     if (dmsStep.Value.StartStepID >= 0)
+                    {
+                        // Do not skip this step tool
                         return false;
+                    }
 
                     // Skip this step tool
                     LogMessage(string.Format(
