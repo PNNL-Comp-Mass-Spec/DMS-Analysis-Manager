@@ -2718,8 +2718,9 @@ namespace AnalysisManagerMSGFDBPlugIn
             if (paramFileThreadCount <= 0 || limitCoreUsage)
             {
                 // Set paramFileThreadCount to the number of cores on this computer
-                // However, do not exceed 8 cores because this can actually slow down MS-GF+ due to context switching
+                // However, do not exceed 8 cores on machines with less than 16 cores, since this can actually slow down MS-GF+ due to context switching
                 // Furthermore, Java will restrict all of the threads to a single NUMA node, and we don't want too many threads on a single node
+                // For machines with 16 or more cores, use 75% of the cores
 
                 var coreCount = GetCoreCount();
 
@@ -2728,7 +2729,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     int maxAllowedCores;
                     if (Dns.GetHostName().StartsWith("PrismWeb3", StringComparison.OrdinalIgnoreCase))
                     {
-                        // User fewer cores on the web server
+                        // Use fewer cores on the web server
                         maxAllowedCores = (int)Math.Floor(coreCount * 0.5);
                     }
                     else

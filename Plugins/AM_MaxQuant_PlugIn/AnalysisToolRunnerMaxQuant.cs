@@ -193,6 +193,7 @@ namespace AnalysisManagerMaxQuantPlugIn
                     if (subdirectory.Parent.FullName.Equals(workingDirectory.FullName) &&
                         (subdirectory.Name.Equals("proc") || subdirectory.Name.Equals("txt")))
                     {
+                        // We want to copy this directory to the transfer directory
                         continue;
                     }
 
