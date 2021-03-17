@@ -841,7 +841,7 @@ namespace AnalysisManagerMaxQuantPlugIn
                     {
                         Indent = true,
                         IndentChars = "   ",
-                        OmitXmlDeclaration = true
+                        OmitXmlDeclaration = false
                     };
 
                     using var outStream = new FileStream(updatedFile.FullName, FileMode.Create, FileAccess.Write, FileShare.ReadWrite);
