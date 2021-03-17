@@ -1019,7 +1019,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Make the local results directory, move files into that directory, then copy the files to the transfer directory on the Proto-x server
         /// </summary>
-        /// <param name="transferDirectoryPathOverride">Optional: transfer directory path override</param>
+        /// <param name="transferDirectoryPathOverride">Optional: transfer directory path override (target share on the remote server)</param>
         /// <returns>True if success, otherwise false</returns>
         /// <remarks>
         /// Uses MakeResultsDirectory, MoveResultFiles, and CopyResultsFolderToServer
@@ -1027,19 +1027,24 @@ namespace AnalysisManagerBase
         /// </remarks>
         public virtual bool CopyResultsToTransferDirectory(string transferDirectoryPathOverride = "")
         {
-            return CopyResultsToTransferDirectory(false, transferDirectoryPathOverride);
+            var subdirectoriesToSkip = new SortedSet<string>();
+            return CopyResultsToTransferDirectory(false, subdirectoriesToSkip, transferDirectoryPathOverride);
         }
 
         /// <summary>
         /// Make the local results directory, move files into that directory, then copy the files to the transfer directory on the Proto-x server
         /// </summary>
         /// <param name="includeSubdirectories">When true, also copy subdirectories</param>
-        /// <param name="transferDirectoryPathOverride">Optional: transfer directory path override</param>
+        /// <param name="subdirectoriesToSkip">Full paths of subdirectories that should not be moved</param>
+        /// <param name="transferDirectoryPathOverride">Optional: transfer directory path override (target share on the remote server)</param>
         /// <returns>True if success, otherwise false</returns>
         /// <remarks>
         /// Uses MakeResultsDirectory, MoveResultFiles, and CopyResultsFolderToServer
         /// </remarks>
-        public bool CopyResultsToTransferDirectory(bool includeSubdirectories, string transferDirectoryPathOverride = "")
+        public bool CopyResultsToTransferDirectory(
+            bool includeSubdirectories,
+            SortedSet<string> subdirectoriesToSkip,
+            string transferDirectoryPathOverride = "")
         {
             if (Global.OfflineMode)
             {
@@ -1055,7 +1060,7 @@ namespace AnalysisManagerBase
                 return false;
             }
 
-            var moveSucceed = MoveResultFiles(includeSubdirectories);
+            var moveSucceed = MoveResultFiles(includeSubdirectories, subdirectoriesToSkip);
             if (!moveSucceed)
             {
                 // Note that MoveResultFiles should have already called AnalysisResults.CopyFailedResultsToArchiveFolder
@@ -2495,6 +2500,17 @@ namespace AnalysisManagerBase
         /// <param name="includeSubdirectories">When true, also copy subdirectories</param>
         protected bool MoveResultFiles(bool includeSubdirectories = false)
         {
+            var subdirectoriesToSkip = new SortedSet<string>();
+            return MoveResultFiles(includeSubdirectories, subdirectoriesToSkip);
+        }
+
+        /// <summary>
+        /// Makes results directory and moves files into it
+        /// </summary>
+        /// <param name="includeSubdirectories">When true, also copy subdirectories</param>
+        /// <param name="subdirectoriesToSkip">Full paths of subdirectories that should not be moved</param>
+        protected bool MoveResultFiles(bool includeSubdirectories, SortedSet<string> subdirectoriesToSkip)
+        {
             var currentResultsDirectoryPath = string.Empty;
 
             var errorEncountered = false;
@@ -2536,6 +2552,9 @@ namespace AnalysisManagerBase
                     foreach (var subdirectory in workingDirectory.GetDirectories())
                     {
                         if (subdirectory.FullName.Equals(targetDirectory.FullName))
+                            continue;
+
+                        if (subdirectoriesToSkip.Contains(subdirectory.FullName))
                             continue;
 
                         currentResultsDirectoryPath = Path.Combine(resultsDirectoryPath, subdirectory.Name);
