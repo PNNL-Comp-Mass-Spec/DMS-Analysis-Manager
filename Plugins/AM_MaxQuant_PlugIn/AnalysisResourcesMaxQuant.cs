@@ -159,7 +159,6 @@ namespace AnalysisManagerMaxQuantPlugIn
 
                 // Create the working directory metadata file
                 var metadataFileSuccess = subdirectoryCompressor.CreateWorkingDirectoryMetadataFile();
-
                 return metadataFileSuccess ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
             }
             catch (Exception ex)
@@ -360,6 +359,7 @@ namespace AnalysisManagerMaxQuantPlugIn
                     }
 
                     previousJobStepParameterFilePath = destinationFilePath;
+                    mJobParams.AddResultFileToSkip(sourceFile.Name);
                     return true;
                 }
 
