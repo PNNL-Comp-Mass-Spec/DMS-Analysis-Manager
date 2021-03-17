@@ -342,10 +342,10 @@ namespace AnalysisManager_RepoPkgr_Plugin
             {
                 // This dictionary is used to avoid calling RetrieveOrgDB() for every job
                 // The dictionary keys are LegacyFastaFileName, ProteinOptions, and ProteinCollectionList combined with underscores
-                // The dictionary values are the name of the generated (or retrieved) fasta file
+                // The dictionary values are the name of the generated (or retrieved) FASTA file
                 var dctOrgDBParamsToGeneratedFileNameMap = new Dictionary<string, string>();
 
-                // This list tracks the generated fasta file name
+                // This list tracks the generated FASTA file name
                 var generatedOrgDBNames = new List<string>();
 
                 // Cache the current dataset and job info
@@ -376,10 +376,11 @@ namespace AnalysisManager_RepoPkgr_Plugin
                             LogError(mMessage + " (class AnalysisResourcesRepoPkgr)");
                             return false;
                         }
-                        if (orgDbNameGenerated != udtJob.OrganismDBName)
+
+                        if (orgDbNameGenerated != udtJob.GeneratedFASTAFileName)
                         {
-                            mMessage = "Generated FASTA file name (" + orgDbNameGenerated + ") does not match expected fasta file name (" +
-                                        udtJob.OrganismDBName + "); aborting";
+                            mMessage = "Generated FASTA file name (" + orgDbNameGenerated + ") does not match expected FASTA file name (" +
+                                        udtJob.GeneratedFASTAFileName + "); aborting";
                             LogError(mMessage + " (class AnalysisResourcesRepoPkgr)");
                             return false;
                         }
