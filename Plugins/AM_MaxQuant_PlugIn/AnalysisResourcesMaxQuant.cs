@@ -198,9 +198,20 @@ namespace AnalysisManagerMaxQuantPlugIn
                 var zipTools = new DotNetZipTools(mDebugLevel, workingDirectory.FullName);
                 RegisterEvents(zipTools);
 
+                // Populate a list with relative file paths of files to not retrieve from the transfer directory
+                var relativeFilePathsToSkip = new SortedSet<string> {
+                    "MaxQuant_ConsoleOutput.txt",
+                    "MaxqPeak_ConsoleOutput.txt",
+                    "MaxqS1_ConsoleOutput.txt",
+                    "MaxqS2_ConsoleOutput.txt",
+                    "MaxqS3_ConsoleOutput.txt"
+                };
                 foreach (var item in transferDirectory.GetFiles("*", SearchOption.AllDirectories))
                 {
                     var relativeFilePath = item.FullName.Substring(transferDirectory.FullName.Length);
+
+                    if (relativeFilePathsToSkip.Contains(relativeFilePath))
+                        continue;
 
                     targetFilePath = Path.Combine(workingDirectory.FullName, relativeFilePath);
                     var targetFile = new FileInfo(targetFilePath);
