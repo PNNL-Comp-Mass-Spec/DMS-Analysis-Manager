@@ -123,9 +123,11 @@ namespace AnalysisManagerMaxQuantPlugIn
                 // Process one or more datasets using MaxQuant
                 var processingResult = StartMaxQuant();
 
+                var subdirectoriesToSkipTransfer = new SortedSet<string>();
+
                 if (processingResult == CloseOutType.CLOSEOUT_SUCCESS)
                 {
-                    processingResult = PostProcessMaxQuantResults();
+                    processingResult = PostProcessMaxQuantResults(subdirectoriesToSkipTransfer);
                 }
 
                 mProgress = PROGRESS_PCT_COMPLETE;
@@ -151,7 +153,7 @@ namespace AnalysisManagerMaxQuantPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                var success = CopyResultsToTransferDirectory(true);
+                var success = CopyResultsToTransferDirectory(true, subdirectoriesToSkipTransfer);
                 if (!success)
                     return CloseOutType.CLOSEOUT_FAILED;
 
@@ -174,14 +176,52 @@ namespace AnalysisManagerMaxQuantPlugIn
             base.CopyFailedResultsToArchiveDirectory();
         }
 
-        private bool FindDirectoriesToSkip(
-            SubdirectoryFileCompressor subdirectoryCompressor,
-            out List<DirectoryInfo> directoriesToSkip)
+        private bool FindDirectoriesToSkipTransfer(DirectoryInfo workingDirectory, ISet<string> subdirectoriesToSkipTransfer)
         {
-            directoriesToSkip = new List<DirectoryInfo>();
+            subdirectoriesToSkipTransfer.Clear();
 
             try
             {
+                foreach (var subdirectory in workingDirectory.GetDirectories("*", SearchOption.AllDirectories))
+                {
+                    if (subdirectory.Parent == null)
+                    {
+                        LogError("Unable to determine the parent directory of " + subdirectory.FullName);
+                        return false;
+                    }
+
+                    if (subdirectory.Parent.FullName.Equals(workingDirectory.FullName) &&
+                        (subdirectory.Name.Equals("proc") || subdirectory.Name.Equals("txt")))
+                    {
+                        continue;
+                    }
+
+                    subdirectoriesToSkipTransfer.Add(subdirectory.FullName);
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error in MaxQuantPlugin->FindDirectoriesToSkipTransfer", ex);
+                return false;
+            }
+        }
+
+        private bool FindDirectoriesToSkipZipping(
+            SubdirectoryFileCompressor subdirectoryCompressor,
+            out List<DirectoryInfo> directoriesToSkipZipping)
+        {
+            directoriesToSkipZipping = new List<DirectoryInfo>();
+
+            try
+            {
+                var procDirectory = new DirectoryInfo(Path.Combine(subdirectoryCompressor.WorkingDirectory.FullName, "proc"));
+                if (procDirectory.Exists)
+                {
+                    directoriesToSkipZipping.Add(procDirectory);
+                }
+
                 foreach (var subdirectory in subdirectoryCompressor.WorkingDirectory.GetDirectories("*", SearchOption.AllDirectories))
                 {
                     if (subdirectory.Parent == null)
@@ -190,34 +230,17 @@ namespace AnalysisManagerMaxQuantPlugIn
                         return false;
                     }
 
-                    if (RuntimeOptions.EndStepNumber < MaxQuantRuntimeOptions.MAX_STEP_NUMBER)
-                    {
-                        var isUnchanged = subdirectoryCompressor.UnchangedDirectories.Any(item => item.FullName.Equals(subdirectory.FullName));
+                    var isUnchanged = subdirectoryCompressor.UnchangedDirectories.Any(item => item.FullName.Equals(subdirectory.FullName));
 
-                        if (isUnchanged)
-                            directoriesToSkip.Add(subdirectory);
-
-                        continue;
-                    }
-
-                    // skip all except the txt and proc directories below the combined subdirectory
-                    if (subdirectory.Parent.Name.Equals("combined", StringComparison.OrdinalIgnoreCase) &&
-                        (subdirectory.Name.Equals("proc", StringComparison.OrdinalIgnoreCase) ||
-                         subdirectory.Name.Equals("txt", StringComparison.OrdinalIgnoreCase)))
-                    {
-                        // Zip this directory
-                        continue;
-                    }
-
-                    directoriesToSkip.Add(subdirectory);
+                    if (isUnchanged)
+                        directoriesToSkipZipping.Add(subdirectory);
                 }
 
-                mJobParams.AddResultFileToSkip(SubdirectoryFileCompressor.WORKING_DIRECTORY_METADATA_FILE);
                 return true;
             }
             catch (Exception ex)
             {
-                LogError("Error in MaxQuantPlugin->FindDirectoriesToSkip", ex);
+                LogError("Error in MaxQuantPlugin->FindDirectoriesToSkipZipping", ex);
                 return false;
             }
         }
@@ -394,12 +417,101 @@ namespace AnalysisManagerMaxQuantPlugIn
             return coreCount;
         }
 
-        private CloseOutType PostProcessMaxQuantResults()
+        private static void MoveFileOverwrite(FileInfo fileToMove, string newFilePath)
+        {
+            var targetFile = new FileInfo(newFilePath);
+            if (targetFile.Exists)
+                targetFile.Delete();
+
+            fileToMove.MoveTo(newFilePath);
+        }
+
+        /// <summary>
+        /// Move the #runningTimes.txt file in the proc directory to a proc directory below the working directory
+        /// When moving, rename it to include the step tool name
+        /// </summary>
+        /// <param name="workingDirectory"></param>
+        /// <param name="combinedDirectory"></param>
+        private void MoveRunningTimeFiles(FileSystemInfo workingDirectory, FileSystemInfo combinedDirectory)
+        {
+            try
+            {
+                var procDirectory = new DirectoryInfo(Path.Combine(combinedDirectory.FullName, "proc"));
+                var targetDirectory = new DirectoryInfo(Path.Combine(workingDirectory.FullName, "proc"));
+
+                if (!procDirectory.Exists)
+                    return;
+
+                if (!targetDirectory.Exists)
+                    targetDirectory.Create();
+
+                foreach (var fileToMove in procDirectory.GetFiles("#runningTimes.txt"))
+                {
+                    var newFilePath = Path.Combine(targetDirectory.FullName, string.Format("#runningTimes_{0}.txt", StepToolName));
+                    MoveFileOverwrite(fileToMove, newFilePath);
+                    break;
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError("Error in MaxQuantPlugin->MoveRunningTimeFiles", ex);
+            }
+        }
+
+        /// <summary>
+        /// Move the txt directory to be just below the working directory
+        /// </summary>
+        /// <param name="workingDirectory"></param>
+        /// <param name="combinedDirectory"></param>
+        private bool MoveTxtDirectory(FileSystemInfo workingDirectory, FileSystemInfo combinedDirectory)
+        {
+            try
+            {
+                if (!combinedDirectory.Exists)
+                {
+                    LogError("The MaxQuant search should be complete, but the combined directory does not exist");
+                    return false;
+                }
+
+                var txtDirectory = new DirectoryInfo(Path.Combine(combinedDirectory.FullName, "txt"));
+                if (!txtDirectory.Exists)
+                {
+                    LogError("The MaxQuant search should be complete, but the txt directory does not exist in the combined directory");
+                    return false;
+                }
+
+                var newTxtDirectory = new DirectoryInfo(Path.Combine(workingDirectory.FullName, "txt"));
+                if (!newTxtDirectory.Exists)
+                    newTxtDirectory.Create();
+
+                foreach (var fileToMove in txtDirectory.GetFiles())
+                {
+                    var newFilePath = Path.Combine(newTxtDirectory.FullName, fileToMove.Name);
+                    MoveFileOverwrite(fileToMove, newFilePath);
+                }
+
+                txtDirectory.Delete();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error in MaxQuantPlugin->MoveTxtDirectory", ex);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Post process MaxQuant results
+        /// </summary>
+        /// <param name="subdirectoriesToSkipTransfer">Full paths to subdirectories that should not be copied to the remote server</param>
+        /// <returns>CloseOutType enum indicating success or failure</returns>
+        private CloseOutType PostProcessMaxQuantResults(ISet<string> subdirectoriesToSkipTransfer)
         {
             try
             {
                 var workingDirectory = new DirectoryInfo(mWorkDir);
 
+                // This dictionary tracks directories for which their subdirectories will be zipped separately
                 // Keys are DirectoryInfo instances
                 // Values are true if the directory's files should be zipped, or false if they should be left alone
                 var directoriesToZipSubsSeparately = new Dictionary<DirectoryInfo, bool>();
@@ -409,16 +521,28 @@ namespace AnalysisManagerMaxQuantPlugIn
                 {
                     directoriesToZipSubsSeparately.Add(combinedDirectory, false);
 
-                    // Rename the #runningTimes.txt file in the proc directory
-                    var procDirectory = new DirectoryInfo(Path.Combine(combinedDirectory.FullName, "proc"));
-                    if (procDirectory.Exists)
+                    // Move the #runningTimes.txt file in the proc directory to a proc directory below the working directory
+                    MoveRunningTimeFiles(workingDirectory, combinedDirectory);
+                }
+                else
+                {
+                    LogWarning("Combined directory not found, indicating a problem running MaxQuant");
+                }
+
+                var maxquantSearchComplete = RuntimeOptions.EndStepNumber >= MaxQuantRuntimeOptions.MAX_STEP_NUMBER;
+
+                var txtDirectoryMoveError = false;
+                if (maxquantSearchComplete)
+                {
+                    // Move the txt directory to be just below the working directory
+                    var txtMoveSuccess = MoveTxtDirectory(workingDirectory, combinedDirectory);
+
+                    if (!txtMoveSuccess)
                     {
-                        foreach (var item in procDirectory.GetFiles("#runningTimes.txt"))
-                        {
-                            var updatedRunningTimesPath = Path.Combine(procDirectory.FullName, string.Format("#runningTimes_{0}.txt", StepToolName));
-                            item.MoveTo(updatedRunningTimesPath);
-                            break;
-                        }
+                        // This is a critical error
+                        // Allow the FileCompressor to zip subdirectories, but return an error code from this method
+                        maxquantSearchComplete = false;
+                        txtDirectoryMoveError = true;
                     }
                 }
 
@@ -429,7 +553,7 @@ namespace AnalysisManagerMaxQuantPlugIn
                 // Skip any that do not have any changed files
 
                 // Also, if RuntimeOptions.EndStepNumber >= MaxQuantRuntimeOptions.MAX_STEP_NUMBER,
-                // skip all except the txt and proc directories below the combined subdirectory
+                // skip all except the txt directory below the combined subdirectory and the proc directory below the working directory
 
                 var findUnchangedSuccess = subdirectoryCompressor.FindUnchangedDirectories();
 
@@ -439,16 +563,28 @@ namespace AnalysisManagerMaxQuantPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                var success = FindDirectoriesToSkip(subdirectoryCompressor, out var directoriesToSkip);
+                if (maxquantSearchComplete)
+                {
+                    var success = FindDirectoriesToSkipTransfer(workingDirectory, subdirectoriesToSkipTransfer);
 
-                if (!success)
-                    return CloseOutType.CLOSEOUT_FAILED;
+                    if (!success)
+                        return CloseOutType.CLOSEOUT_FAILED;
+                }
+                else
+                {
+                    var success = FindDirectoriesToSkipZipping(subdirectoryCompressor, out var directoriesToSkipZipping);
 
-                var successZipping = subdirectoryCompressor.ZipDirectories(directoriesToSkip, directoriesToZipSubsSeparately);
-                if (!successZipping)
-                    return CloseOutType.CLOSEOUT_ERROR_ZIPPING_FILE;
+                    if (!success)
+                        return CloseOutType.CLOSEOUT_FAILED;
 
-                return CloseOutType.CLOSEOUT_SUCCESS;
+                    var successZipping = subdirectoryCompressor.ZipDirectories(directoriesToSkipZipping, directoriesToZipSubsSeparately);
+                    if (!successZipping)
+                        return CloseOutType.CLOSEOUT_ERROR_ZIPPING_FILE;
+                }
+
+                mJobParams.AddResultFileToSkip(SubdirectoryFileCompressor.WORKING_DIRECTORY_METADATA_FILE);
+
+                return txtDirectoryMoveError ? CloseOutType.CLOSEOUT_FAILED : CloseOutType.CLOSEOUT_SUCCESS;
             }
             catch (Exception ex)
             {
@@ -610,6 +746,10 @@ namespace AnalysisManagerMaxQuantPlugIn
             }
         }
 
+        /// <summary>
+        /// Run MaxQuant, using options define in RuntimeOptions
+        /// </summary>
+        /// <returns>CloseOutType enum indicating success or failure</returns>
         private CloseOutType StartMaxQuant()
         {
             LogMessage("Running MaxQuant");
@@ -1032,6 +1172,7 @@ namespace AnalysisManagerMaxQuantPlugIn
         /// This will involve a dry-run of MaxQuant if startStepID values in the dmsSteps elements are "auto" instead of integers
         /// </summary>
         /// <param name="dmsSteps">Keys are step IDs, values are step info</param>
+        /// <returns>CloseOutType enum indicating success or failure</returns>
         private CloseOutType ValidateStepRange(IReadOnlyDictionary<int, DmsStepInfo> dmsSteps)
         {
             const string FINISH_WRITING_TABLES = "Finish writing tables";
