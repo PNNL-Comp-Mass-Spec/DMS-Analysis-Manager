@@ -44,10 +44,24 @@ namespace AnalysisManagerMaxQuantPlugIn
                 }
 
                 var workingDirectory = new DirectoryInfo(mWorkDir);
+                var dataPackageID = mJobParams.GetJobParameter("DataPackageID", 0);
 
                 var usingMzML = mJobParams.GetJobParameter("CreateMzMLFiles", false);
 
-                var transferDirectoryPath = GetTransferFolderPathForJobStep(useInputDirectory: usingMzML);
+                // Determine the transfer directory path
+
+                // Caveats for usingMzML:
+                //   When true, we want useInputDirectory to be true so that the resourcer will look for .mzML files in a MSXML_Gen directory
+                //   When usingMzML is false, we want useInputDirectory to be false so that the resourcer will look for .Raw files in the dataset directory
+
+                // Caveats for dataPackageID
+                //   When 0, we are processing a single dataset, and we thus need to include the dataset name, generating a path like \\proto-4\DMS3_Xfer\QC_Dataset\MXQ202103151122_Auto1880613
+                //   When positive, we are processing datasets in a data package, and we thus want a path without the dataset name, generating a path like \\proto-9\MaxQuant_Staging\MXQ202103161252_Auto1880833
+
+                var useInputDirectory = usingMzML;
+                var includeDatasetName = dataPackageID <= 0;
+
+                var transferDirectoryPath = GetTransferFolderPathForJobStep(useInputDirectory, includeDatasetName);
 
                 var paramFileName = mJobParams.GetParam(JOB_PARAM_PARAMETER_FILE);
                 currentTask = "RetrieveParamFile " + paramFileName;
@@ -100,8 +114,6 @@ namespace AnalysisManagerMaxQuantPlugIn
                 currentTask = "RetrieveOrgDB to " + orgDbDirectoryPath;
                 if (!RetrieveOrgDB(orgDbDirectoryPath, out var resultCode))
                     return resultCode;
-
-                var dataPackageID = mJobParams.GetJobParameter("DataPackageID", 0);
 
                 var dataPackageInfo = new DataPackageInfo(dataPackageID);
 
