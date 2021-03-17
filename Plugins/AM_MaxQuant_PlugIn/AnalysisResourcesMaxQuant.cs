@@ -206,9 +206,10 @@ namespace AnalysisManagerMaxQuantPlugIn
                     "MaxqS2_ConsoleOutput.txt",
                     "MaxqS3_ConsoleOutput.txt"
                 };
+
                 foreach (var item in transferDirectory.GetFiles("*", SearchOption.AllDirectories))
                 {
-                    var relativeFilePath = item.FullName.Substring(transferDirectory.FullName.Length);
+                    var relativeFilePath = item.FullName.Substring(transferDirectory.FullName.Length + 1);
 
                     if (relativeFilePathsToSkip.Contains(relativeFilePath))
                         continue;
@@ -229,7 +230,13 @@ namespace AnalysisManagerMaxQuantPlugIn
                     if (!targetFile.Extension.Equals(".zip", StringComparison.OrdinalIgnoreCase))
                         continue;
 
-                    var targetDirectory = Path.Combine(workingDirectory.FullName, Path.GetFileNameWithoutExtension(relativeFilePath));
+                    if (targetFile.Directory == null)
+                    {
+                        LogError(string.Format("Unable to determine the parent directory of zip file {0}", targetFile.FullName));
+                        return CloseOutType.CLOSEOUT_FAILED;
+                    }
+
+                    var targetDirectory = Path.Combine(targetFile.Directory.FullName, Path.GetFileNameWithoutExtension(relativeFilePath));
 
                     // Unzip the file
                     var unzipSuccess = zipTools.UnzipFile(targetFile.FullName, targetDirectory);
@@ -479,13 +486,15 @@ namespace AnalysisManagerMaxQuantPlugIn
                     var datasetID = dataset.Key;
                     var datasetName = dataset.Value.Dataset;
 
-                    var localDatasetPath = datasetRawFilePaths[datasetName];
+                    var datasetFileName = Path.GetFileName(datasetRawFilePaths[datasetName]);
 
                     dataPackageInfo.Datasets.Add(datasetID, datasetName);
                     dataPackageInfo.Experiments.Add(datasetID, dataset.Value.Experiment);
 
-                    dataPackageInfo.DatasetFiles.Add(datasetID, Path.GetFileName(localDatasetPath));
+                    dataPackageInfo.DatasetFiles.Add(datasetID, datasetFileName);
                     dataPackageInfo.DatasetFileTypes.Add(datasetID, dataset.Value.IsDirectoryBased ? "Directory" : "File");
+
+                    mJobParams.AddResultFileToSkip(datasetFileName);
                 }
 
                 return CloseOutType.CLOSEOUT_SUCCESS;
