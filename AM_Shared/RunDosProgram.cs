@@ -57,13 +57,13 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Text that was written to the console
         /// </summary>
-        public event ConsoleOutputEventEventHandler ConsoleOutputEvent;
+        public event ConsoleOutputEventHandler ConsoleOutputEvent;
 
         /// <summary>
-        /// Delegate for ConsoleOutputEventEventHandler
+        /// Delegate for ConsoleOutputEventHandler
         /// </summary>
         /// <param name="newText"></param>
-        public delegate void ConsoleOutputEventEventHandler(string newText);
+        public delegate void ConsoleOutputEventHandler(string newText);
 
         /// <summary>
         /// Program execution exceeded MaxRuntimeSeconds
