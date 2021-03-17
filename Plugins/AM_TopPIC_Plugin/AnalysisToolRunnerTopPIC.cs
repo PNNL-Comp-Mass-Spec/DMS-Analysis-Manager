@@ -584,6 +584,14 @@ namespace AnalysisManagerTopPICPlugIn
             // Other options for activation are CID, HCDCID, ETDCID, or UVPDCID
             cmdLineOptions += " --activation=FILE";
 
+            // Specify the number of threads to use
+            // Allow TopPIC to use 88% of the physical cores
+            var coreCount = Global.GetCoreCount();
+            var threadsToUse = (int)Math.Floor(coreCount * 0.88);
+
+            LogMessage(string.Format("The system has {0} cores; TopPIC will use {1} threads ", coreCount, threadsToUse));
+            cmdLineOptions += " --thread-number " + threadsToUse;
+
             // Arguments in this list are appended as --decoy or --keep-temp-files and not as "--decoy True" or "--keep-temp-files True"
             // Append these if set to True in the parameter file
             var extraArguments = new List<string> {"Decoy", "KeepTempFiles"};
@@ -672,7 +680,7 @@ namespace AnalysisManagerTopPICPlugIn
             LogMessage("Running TopPIC");
 
             // Set up and execute a program runner to run TopPIC
-            // By default uses all cores; limit the number of cores to 4 with "--thread-number 4"
+            // By default uses just one core; limit the number of cores to 4 with "--thread-number 4"
 
             var result = ParseTopPICParameterFile(fastaFileIsDecoy, out var cmdLineOptions);
 

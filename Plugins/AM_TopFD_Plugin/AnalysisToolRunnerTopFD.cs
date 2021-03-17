@@ -397,6 +397,14 @@ namespace AnalysisManagerTopFDPlugIn
                 }
             }
 
+            // Specify the number of threads to use
+            // Allow TopFD to use 88% of the physical cores
+            var coreCount = Global.GetCoreCount();
+            var threadsToUse = (int)Math.Floor(coreCount * 0.88);
+
+            LogMessage(string.Format("The system has {0} cores; TopFD will use {1} threads ", coreCount, threadsToUse));
+            cmdLineOptions += " --thread-number " + threadsToUse;
+
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
