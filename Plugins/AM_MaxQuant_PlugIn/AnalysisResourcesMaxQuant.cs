@@ -169,96 +169,6 @@ namespace AnalysisManagerMaxQuantPlugIn
             }
         }
 
-        private CloseOutType RetrieveTransferDirectoryFiles(FileSystemInfo workingDirectory, string transferDirectoryPath)
-        {
-            var targetFilePath = "??";
-
-            try
-            {
-                if (string.IsNullOrEmpty(transferDirectoryPath))
-                {
-                    LogError("Transfer directory not defined in the job parameters");
-                    return CloseOutType.CLOSEOUT_FAILED;
-                }
-
-                var transferDirectory = new DirectoryInfo(transferDirectoryPath);
-                if (!transferDirectory.Exists)
-                {
-                    // The transfer directory may not yet exist
-                    // This is allowed if this is step 2
-                    var stepNumber = mJobParams.GetJobParameter(AnalysisJob.STEP_PARAMETERS_SECTION, "Step", 1);
-
-                    if (stepNumber == 2)
-                        return CloseOutType.CLOSEOUT_SUCCESS;
-
-                    LogError("Transfer directory not found, cannot retrieve results from the previous job step: " + transferDirectoryPath);
-                    return CloseOutType.CLOSEOUT_FAILED;
-                }
-
-                var zipTools = new DotNetZipTools(mDebugLevel, workingDirectory.FullName);
-                RegisterEvents(zipTools);
-
-                // Populate a list with relative file paths of files to not retrieve from the transfer directory
-                var relativeFilePathsToSkip = new SortedSet<string> {
-                    "MaxQuant_ConsoleOutput.txt",
-                    "MaxqPeak_ConsoleOutput.txt",
-                    "MaxqS1_ConsoleOutput.txt",
-                    "MaxqS2_ConsoleOutput.txt",
-                    "MaxqS3_ConsoleOutput.txt"
-                };
-
-                foreach (var item in transferDirectory.GetFiles("*", SearchOption.AllDirectories))
-                {
-                    var relativeFilePath = item.FullName.Substring(transferDirectory.FullName.Length + 1);
-
-                    if (relativeFilePathsToSkip.Contains(relativeFilePath))
-                        continue;
-
-                    targetFilePath = Path.Combine(workingDirectory.FullName, relativeFilePath);
-                    var targetFile = new FileInfo(targetFilePath);
-
-                    if (targetFile.Exists)
-                        continue;
-
-                    var copySuccess = mFileTools.CopyFileUsingLocks(item, targetFile.FullName, true);
-                    if (!copySuccess)
-                    {
-                        LogError(string.Format("Error copying file {0} to {1}", item.FullName, targetFile.FullName));
-                        return CloseOutType.CLOSEOUT_FAILED;
-                    }
-
-                    if (!targetFile.Extension.Equals(".zip", StringComparison.OrdinalIgnoreCase))
-                        continue;
-
-                    if (targetFile.Directory == null)
-                    {
-                        LogError(string.Format("Unable to determine the parent directory of zip file {0}", targetFile.FullName));
-                        return CloseOutType.CLOSEOUT_FAILED;
-                    }
-
-                    var targetDirectory = Path.Combine(targetFile.Directory.FullName, Path.GetFileNameWithoutExtension(relativeFilePath));
-
-                    // Unzip the file
-                    var unzipSuccess = zipTools.UnzipFile(targetFile.FullName, targetDirectory);
-                    if (!unzipSuccess)
-                    {
-                        LogError(string.Format("Error unzipping file {0} to {1}", targetFile.FullName, targetDirectory));
-                        return CloseOutType.CLOSEOUT_FAILED;
-                    }
-
-                    // Delete the zip file
-                    targetFile.Delete();
-                }
-
-                return CloseOutType.CLOSEOUT_SUCCESS;
-            }
-            catch (Exception ex)
-            {
-                LogError("Exception in RetrieveTransferDirectoryFiles for file " + targetFilePath, ex);
-                return CloseOutType.CLOSEOUT_FAILED;
-            }
-        }
-
         private bool CheckSkipMaxQuant(
             FileSystemInfo workingDirectory,
             string maxQuantParameterFileName,
@@ -601,6 +511,96 @@ namespace AnalysisManagerMaxQuantPlugIn
             catch (Exception ex)
             {
                 LogError("Exception in RetrieveSingleDataset (CurrentTask = " + currentTask + ")", ex);
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+        }
+
+        private CloseOutType RetrieveTransferDirectoryFiles(FileSystemInfo workingDirectory, string transferDirectoryPath)
+        {
+            var targetFilePath = "??";
+
+            try
+            {
+                if (string.IsNullOrEmpty(transferDirectoryPath))
+                {
+                    LogError("Transfer directory not defined in the job parameters");
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                var transferDirectory = new DirectoryInfo(transferDirectoryPath);
+                if (!transferDirectory.Exists)
+                {
+                    // The transfer directory may not yet exist
+                    // This is allowed if this is step 2
+                    var stepNumber = mJobParams.GetJobParameter(AnalysisJob.STEP_PARAMETERS_SECTION, "Step", 1);
+
+                    if (stepNumber == 2)
+                        return CloseOutType.CLOSEOUT_SUCCESS;
+
+                    LogError("Transfer directory not found, cannot retrieve results from the previous job step: " + transferDirectoryPath);
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                var zipTools = new DotNetZipTools(mDebugLevel, workingDirectory.FullName);
+                RegisterEvents(zipTools);
+
+                // Populate a list with relative file paths of files to not retrieve from the transfer directory
+                var relativeFilePathsToSkip = new SortedSet<string> {
+                    "MaxQuant_ConsoleOutput.txt",
+                    "MaxqPeak_ConsoleOutput.txt",
+                    "MaxqS1_ConsoleOutput.txt",
+                    "MaxqS2_ConsoleOutput.txt",
+                    "MaxqS3_ConsoleOutput.txt"
+                };
+
+                foreach (var item in transferDirectory.GetFiles("*", SearchOption.AllDirectories))
+                {
+                    var relativeFilePath = item.FullName.Substring(transferDirectory.FullName.Length + 1);
+
+                    if (relativeFilePathsToSkip.Contains(relativeFilePath))
+                        continue;
+
+                    targetFilePath = Path.Combine(workingDirectory.FullName, relativeFilePath);
+                    var targetFile = new FileInfo(targetFilePath);
+
+                    if (targetFile.Exists)
+                        continue;
+
+                    var copySuccess = mFileTools.CopyFileUsingLocks(item, targetFile.FullName, true);
+                    if (!copySuccess)
+                    {
+                        LogError(string.Format("Error copying file {0} to {1}", item.FullName, targetFile.FullName));
+                        return CloseOutType.CLOSEOUT_FAILED;
+                    }
+
+                    if (!targetFile.Extension.Equals(".zip", StringComparison.OrdinalIgnoreCase))
+                        continue;
+
+                    if (targetFile.Directory == null)
+                    {
+                        LogError(string.Format("Unable to determine the parent directory of zip file {0}", targetFile.FullName));
+                        return CloseOutType.CLOSEOUT_FAILED;
+                    }
+
+                    var targetDirectory = Path.Combine(targetFile.Directory.FullName, Path.GetFileNameWithoutExtension(relativeFilePath));
+
+                    // Unzip the file
+                    var unzipSuccess = zipTools.UnzipFile(targetFile.FullName, targetDirectory);
+                    if (!unzipSuccess)
+                    {
+                        LogError(string.Format("Error unzipping file {0} to {1}", targetFile.FullName, targetDirectory));
+                        return CloseOutType.CLOSEOUT_FAILED;
+                    }
+
+                    // Delete the zip file
+                    targetFile.Delete();
+                }
+
+                return CloseOutType.CLOSEOUT_SUCCESS;
+            }
+            catch (Exception ex)
+            {
+                LogError("Exception in RetrieveTransferDirectoryFiles for file " + targetFilePath, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
         }
