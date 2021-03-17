@@ -868,12 +868,29 @@ namespace AnalysisManagerMaxQuantPlugIn
 
         private CloseOutType UpdateMaxQuantParameterFileStartStepIDs(IReadOnlyDictionary<int, DmsStepInfo> dmsSteps)
         {
+            var parameterFile = new FileInfo(RuntimeOptions.ParameterFilePath);
+            var result = UpdateMaxQuantParameterFileStartStepIDs(mDatasetName, parameterFile, dmsSteps, out var errorMessage);
+
+            if (result != CloseOutType.CLOSEOUT_SUCCESS)
+                LogError(errorMessage);
+
+            return result;
+        }
+
+        internal static CloseOutType UpdateMaxQuantParameterFileStartStepIDs(
+            string datasetName,
+            FileInfo parameterFileToUpdate,
+            IReadOnlyDictionary<int, DmsStepInfo> dmsSteps,
+            out string errorMessage)
+        {
+            errorMessage = string.Empty;
+
             try
             {
-                var sourceFile = new FileInfo(RuntimeOptions.ParameterFilePath);
-                var updatedFile = new FileInfo(RuntimeOptions.ParameterFilePath + "_NewID.xml");
+                var originalParameterFilePath = parameterFileToUpdate.FullName;
+                var updatedFile = new FileInfo(parameterFileToUpdate.FullName + "_NewID.xml");
 
-                using (var reader = new StreamReader(new FileStream(sourceFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(parameterFileToUpdate.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
                     // Note that XDocument supersedes XmlDocument and XPathDocument
                     // XDocument can often be easier to use since XDocument is LINQ-based
@@ -884,10 +901,10 @@ namespace AnalysisManagerMaxQuantPlugIn
 
                     if (dmsStepNodes.Count == 0)
                     {
-                        if (!mDatasetName.Equals("Aggregation"))
+                        if (!datasetName.Equals("Aggregation"))
                             return CloseOutType.CLOSEOUT_SUCCESS;
 
-                        LogError("MaxQuant parameter file does not have a dmsSteps section; this is required for data-package based MaxQuant tasks");
+                        errorMessage = "MaxQuant parameter file does not have a dmsSteps section; this is required for data-package based MaxQuant tasks";
                         {
                             return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
                         }
@@ -897,18 +914,14 @@ namespace AnalysisManagerMaxQuantPlugIn
                     {
                         if (!Global.TryGetAttribute(stepNode, "id", out var stepIdText))
                         {
-                            LogError("DMS step in the MaxQuant parameter file is missing the 'id' attribute");
-                            {
-                                return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
-                            }
+                            errorMessage = "DMS step in the MaxQuant parameter file is missing the 'id' attribute";
+                            return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
                         }
 
                         if (!int.TryParse(stepIdText, out var stepId))
                         {
-                            LogError(string.Format("DMS step in the MaxQuant parameter file has a non-numeric step ID value of '{0}", stepIdText));
-                            {
-                                return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
-                            }
+                            errorMessage = string.Format("DMS step in the MaxQuant parameter file has a non-numeric step ID value of '{0}", stepIdText);
+                            return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
                         }
 
                         var stepMatched = false;
@@ -921,10 +934,8 @@ namespace AnalysisManagerMaxQuantPlugIn
 
                             if (startStepIdAttribute == null)
                             {
-                                LogError(string.Format("DMS step {0} in the MaxQuant parameter file is missing attribute startStepID", stepId));
-                                {
-                                    return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
-                                }
+                                errorMessage = string.Format("DMS step {0} in the MaxQuant parameter file is missing attribute startStepID", stepId);
+                                return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
                             }
 
                             startStepIdAttribute.Value = dmsStep.Value.StartStepID.ToString();
@@ -934,10 +945,8 @@ namespace AnalysisManagerMaxQuantPlugIn
 
                         if (!stepMatched)
                         {
-                            LogError(string.Format("DMS step {0} not found in the dmsSteps dictionary", stepId));
-                            {
-                                return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
-                            }
+                            errorMessage = string.Format("DMS step {0} not found in the dmsSteps dictionary", stepId);
+                            return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
                         }
                     }
 
@@ -956,14 +965,14 @@ namespace AnalysisManagerMaxQuantPlugIn
                 }
 
                 // Replace the original parameter file with the updated one
-                sourceFile.Delete();
-                updatedFile.MoveTo(RuntimeOptions.ParameterFilePath);
+                parameterFileToUpdate.Delete();
+                updatedFile.MoveTo(originalParameterFilePath);
 
                 return CloseOutType.CLOSEOUT_SUCCESS;
             }
             catch (Exception ex)
             {
-                LogError("Exception in UpdateMaxQuantParameterFileStartStepIDs", ex);
+                errorMessage = "Exception in UpdateMaxQuantParameterFileStartStepIDs: " + ex.Message;
                 return CloseOutType.CLOSEOUT_FAILED;
             }
         }
