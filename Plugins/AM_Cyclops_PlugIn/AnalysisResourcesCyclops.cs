@@ -18,6 +18,8 @@ namespace AnalysisManager_Cyclops_PlugIn
         /// <returns>Closeout code</returns>
         public override CloseOutType GetResources()
         {
+            // ReSharper disable once IdentifierTypo
+            const string ITRAQ_ANALYSIS_TYPE = "iTRAQ";
 
             try
             {
@@ -42,6 +44,22 @@ namespace AnalysisManager_Cyclops_PlugIn
 
                 var dataPackageFolderPath = Path.Combine(mJobParams.GetParam(JOB_PARAM_TRANSFER_FOLDER_PATH), mJobParams.GetParam(JOB_PARAM_OUTPUT_FOLDER_NAME));
                 var analysisType = mJobParams.GetParam("AnalysisType");
+
+                if (analysisType.IndexOf("TMT", StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    // The workflow file for TMT jobs is in the iTRAQ subdirectory below \\gigasax\DMS_Workflows\Cyclops
+                    // Override the analysis type
+                    LogDebugMessage(string.Format("Changing analysis type from {0} to {1}", analysisType, ITRAQ_ANALYSIS_TYPE));
+                    analysisType = ITRAQ_ANALYSIS_TYPE;
+                }
+                else if (analysisType.IndexOf(ITRAQ_ANALYSIS_TYPE, StringComparison.OrdinalIgnoreCase) >= 0 && analysisType.Length > 5)
+                {
+                    // The user likely specified iTRAQ8
+                    // Override to be simply iTRAQ
+                    LogDebugMessage(string.Format("Changing analysis type from {0} to {1}", analysisType, ITRAQ_ANALYSIS_TYPE));
+                    analysisType = ITRAQ_ANALYSIS_TYPE;
+                }
+
                 var sourceFolderName = mJobParams.GetParam("StepInputFolderName");
 
                 // Retrieve the Cyclops Workflow file specified for this job

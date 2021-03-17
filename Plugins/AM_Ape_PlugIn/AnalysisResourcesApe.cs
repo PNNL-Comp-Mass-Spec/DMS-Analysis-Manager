@@ -26,7 +26,8 @@ namespace AnalysisManager_Ape_PlugIn
 
             var success = RunApeGetResources();
 
-            if (!success) return CloseOutType.CLOSEOUT_FAILED;
+            if (!success)
+                return CloseOutType.CLOSEOUT_FAILED;
 
             if (mDebugLevel >= 1)
             {
@@ -99,8 +100,26 @@ namespace AnalysisManager_Ape_PlugIn
 
         private bool GetWorkflowFiles()
         {
+            // ReSharper disable once IdentifierTypo
+            const string ITRAQ_ANALYSIS_TYPE = "iTRAQ";
+
             var dataPackagePath = Path.Combine(mJobParams.GetParam(JOB_PARAM_TRANSFER_FOLDER_PATH), mJobParams.GetParam(JOB_PARAM_OUTPUT_FOLDER_NAME));
             var analysisType = mJobParams.GetParam("AnalysisType");
+
+            if (analysisType.IndexOf("TMT", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                // The workflow file for TMT jobs is in the iTRAQ subdirectory below \\gigasax\DMS_Workflows\Ape
+                // Override the analysis type
+                LogDebugMessage(string.Format("Changing analysis type from {0} to {1}", analysisType, ITRAQ_ANALYSIS_TYPE));
+                analysisType = ITRAQ_ANALYSIS_TYPE;
+            }
+            else if (analysisType.IndexOf(ITRAQ_ANALYSIS_TYPE, StringComparison.OrdinalIgnoreCase) >= 0 && analysisType.Length > 5)
+            {
+                // The user likely specified iTRAQ8
+                // Override to be simply iTRAQ
+                LogDebugMessage(string.Format("Changing analysis type from {0} to {1}", analysisType, ITRAQ_ANALYSIS_TYPE));
+                analysisType = ITRAQ_ANALYSIS_TYPE;
+            }
 
             var stepInputDirectoryPath = Path.Combine(dataPackagePath, mJobParams.GetParam("StepInputFolderName"));
             LogMessage("Retrieving SQLite database: " + Path.Combine(stepInputDirectoryPath, "Results.db3"));
@@ -112,6 +131,7 @@ namespace AnalysisManager_Ape_PlugIn
 
             // Retrieve the Ape Workflow file specified for this job
             var apeWorkflowFileName = mJobParams.GetParam("ApeWorkflowName");
+
             // Retrieve the Workflow file name specified for this job
             if (string.IsNullOrEmpty(apeWorkflowFileName))
             {
