@@ -321,7 +321,7 @@ namespace AnalysisManagerMaxQuantPlugIn
         /// <param name="processingSteps">Keys are step name, values are the approximate percent complete at the start of the step</param>
         /// <param name="progressAtStart">Output: progress at start</param>
         /// <param name="progressAtEnd">Output: progress at end</param>
-        private void GetIncrementalProgressRange(SortedList<string, int> processingSteps, out float progressAtStart, out float progressAtEnd)
+        private void GetIncrementalProgressRange(IReadOnlyDictionary<string, int> processingSteps, out float progressAtStart, out float progressAtEnd)
         {
             if (RuntimeOptions.DryRun)
             {
@@ -357,7 +357,7 @@ namespace AnalysisManagerMaxQuantPlugIn
         /// </remarks>
         private static SortedList<string, int> GetMaxQuantProcessingSteps()
         {
-            return new SortedList<string, int>
+            return new()
             {
                 {"Configuring", 0},
                 {"Feature detection", 1},
