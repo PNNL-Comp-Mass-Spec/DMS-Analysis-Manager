@@ -526,7 +526,7 @@ namespace AnalysisManagerMaxQuantPlugIn
                     LogWarning("Combined directory not found, indicating a problem running MaxQuant");
                 }
 
-                var maxquantSearchComplete = RuntimeOptions.EndStepNumber >= MaxQuantRuntimeOptions.MAX_STEP_NUMBER;
+                var maxquantSearchComplete = combinedDirectory.Exists && RuntimeOptions.EndStepNumber >= MaxQuantRuntimeOptions.MAX_STEP_NUMBER;
 
                 var txtDirectoryMoveError = false;
                 if (maxquantSearchComplete)
@@ -581,7 +581,10 @@ namespace AnalysisManagerMaxQuantPlugIn
 
                 mJobParams.AddResultFileToSkip(SubdirectoryFileCompressor.WORKING_DIRECTORY_METADATA_FILE);
 
-                return txtDirectoryMoveError ? CloseOutType.CLOSEOUT_FAILED : CloseOutType.CLOSEOUT_SUCCESS;
+                if (combinedDirectory.Exists && !txtDirectoryMoveError)
+                    return CloseOutType.CLOSEOUT_SUCCESS;
+
+                return CloseOutType.CLOSEOUT_FAILED;
             }
             catch (Exception ex)
             {
