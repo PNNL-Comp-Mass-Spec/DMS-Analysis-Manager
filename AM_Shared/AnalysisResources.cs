@@ -3457,7 +3457,8 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="orgDbDirectoryPath">Organism database directory with FASTA files and related index files; supports Windows shares and Linux paths</param>
         /// <param name="freeSpaceThresholdPercent">Value between 1 and 50</param>
-        /// <param name="requiredFreeSpaceMB">If greater than 0, the free space that we anticipate will be needed for the given fasta file</param>
+        /// <param name="requiredFreeSpaceMB">If greater than 0, the free space that we anticipate will be needed for the given fasta file (in megabytes)</param>
+        /// <param name="maxDirectorySizeGB">If greater than 0, the maximum amount of space that files can occupy (in gigabytes)</param>
         /// <param name="legacyFastaFileBaseName">
         /// Legacy fasta file name (without .fasta)
         /// For split fasta jobs, should not include the split count and segment number, e.g. should not include _25x_07 or _25x_08
@@ -3466,16 +3467,19 @@ namespace AnalysisManagerBase
         /// <remarks>
         /// This method works best on local drives (including on Linux)
         /// It will also work on a remote Windows share if the directory has file MaxDirSize.txt
+        /// If file MaxDirSize.txt does exist, freeSpaceThresholdPercent, requiredFreeSpaceMB, and maxDirectorySizeGB are ignored
         /// </remarks>
         protected void PurgeFastaFilesIfLowFreeSpace(
             string orgDbDirectoryPath,
             int freeSpaceThresholdPercent,
             double requiredFreeSpaceMB,
+            int maxDirectorySizeGB,
             string legacyFastaFileBaseName,
             bool preview = false)
         {
             if (freeSpaceThresholdPercent < 1)
                 freeSpaceThresholdPercent = 1;
+
             if (freeSpaceThresholdPercent > 50)
                 freeSpaceThresholdPercent = 50;
 
@@ -3494,10 +3498,16 @@ namespace AnalysisManagerBase
                 if (maxDirSizeFile.Exists)
                 {
                     // MaxDirSize.txt file exists; this file specifies the max total GB that files in orgDbDirectory can use
-                    // If the file exists and has a valid threshold, we will not delete files using PurgeFastaFilesUsingSpaceUsedThreshold
+                    // If the file exists and has a valid threshold, we will not delete files using freeSpaceThresholdPercent, requiredFreeSpaceMB, or maxDirectorySizeGB
                     var success = PurgeFastaFilesUsingSpaceUsedThreshold(maxDirSizeFile, legacyFastaFileBaseName, mDebugLevel, preview);
                     if (success)
                         return;
+                }
+
+                if (maxDirectorySizeGB > 0)
+                {
+                    // Assure that the total size of files in the directory is below a threshold
+                    PurgeFastaFilesUsingSpaceUsedThreshold(orgDbDirectory, maxDirectorySizeGB, legacyFastaFileBaseName, mDebugLevel, preview);
                 }
 
                 var localDriveInfo = Global.GetLocalDriveInfo(orgDbDirectory);
@@ -3687,7 +3697,10 @@ namespace AnalysisManagerBase
                 var orgDbDirectory = maxDirSizeFile.Directory;
                 if (orgDbDirectory == null)
                 {
-                    LogTools.LogError("Unable to determine the parent directory of file " + maxDirSizeFile.FullName + "; cannot manage drive space usage");
+                    LogTools.LogError(string.Format(
+                        "Unable to determine the parent directory of file {0}; cannot manage drive space usage",
+                        maxDirSizeFile.FullName));
+
                     return false;
                 }
 
@@ -3723,10 +3736,59 @@ namespace AnalysisManagerBase
                     }
                 }
 
-                if (maxSizeGB == 0)
+                if (maxSizeGB > 0)
                 {
-                    LogTools.LogError("MaxSizeGB line not found in " + maxDirSizeFile.FullName + errorSuffix);
+                    return PurgeFastaFilesUsingSpaceUsedThreshold(orgDbDirectory, maxSizeGB, legacyFastaFileBaseName, debugLevel, preview);
+                }
+
+                LogTools.LogError("MaxSizeGB line not found in " + maxDirSizeFile.FullName + errorSuffix);
+                return false;
+            }
+            catch (Exception ex)
+            {
+                LogTools.LogError("Error in PurgeFastaFilesUsingSpaceUsedThreshold", ex);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Use the space usage threshold defined in MaxDirSize.txt to decide if any FASTA files need to be deleted
+        /// </summary>
+        /// <param name="orgDbDirectory">Local FASTA file storage directory</param>
+        /// <param name="maxDirectorySizeGB">The maximum amount of space that files can occupy (in gigabytes)</param>
+        /// <param name="legacyFastaFileBaseName">Base FASTA file name for the current analysis job</param>
+        /// <param name="debugLevel">Debug Level for logging; 1=minimal logging; 5=detailed logging</param>
+        /// <param name="preview">When true, preview the files that would be deleted</param>
+        /// <remarks>Minimum allowed value for maxDirectorySizeGB is 10; will exit the method if 0</remarks>
+        /// <returns>True if maxDirectorySizeGB is positive, otherwise false</returns>
+        public static bool PurgeFastaFilesUsingSpaceUsedThreshold(
+            DirectoryInfo orgDbDirectory,
+            int maxDirectorySizeGB,
+            string legacyFastaFileBaseName,
+            short debugLevel,
+            bool preview)
+        {
+            const int MIN_DIRECTORY_SIZE_GB = 10;
+
+            try
+            {
+                // ReSharper disable once ConvertIfStatementToSwitchStatement
+                if (maxDirectorySizeGB <= 0)
+                {
+                    LogTools.LogWarning(string.Format(
+                        "PurgeFastaFilesUsingSpaceUsedThreshold should be called with a positive integer, not {0}; aborting",
+                        maxDirectorySizeGB));
+
                     return false;
+                }
+
+                if (maxDirectorySizeGB < MIN_DIRECTORY_SIZE_GB)
+                {
+                    LogTools.LogWarning(string.Format(
+                        "Max directory size sent to PurgeFastaFilesUsingSpaceUsedThreshold is too small; increasing from {0} GB to {1} GB",
+                        maxDirectorySizeGB, MIN_DIRECTORY_SIZE_GB));
+
+                    maxDirectorySizeGB = MIN_DIRECTORY_SIZE_GB;
                 }
 
                 var purgeSuccessful = false;
@@ -3748,12 +3810,12 @@ namespace AnalysisManagerBase
                     }
 
                     var spaceUsageGB = Global.BytesToGB(spaceUsageBytes);
-                    if (spaceUsageGB <= maxSizeGB)
+                    if (spaceUsageGB <= maxDirectorySizeGB)
                     {
                         // Space usage is under the threshold
                         var statusMessage = string.Format(
                             "Space usage in {0} is {1:F1} GB, which is below the threshold of {2} GB; nothing to purge",
-                            orgDbDirectory.FullName, spaceUsageGB, maxSizeGB);
+                            orgDbDirectory.FullName, spaceUsageGB, maxDirectorySizeGB);
 
                         if (debugLevel >= 3)
                         {
@@ -3781,7 +3843,7 @@ namespace AnalysisManagerBase
 
                     var fastaFilesByLastUse = (from item in fastaFiles orderby item.Value select item.Key).ToList();
 
-                    var bytesToPurge = (long)(spaceUsageBytes - maxSizeGB * 1024.0 * 1024 * 1024);
+                    var bytesToPurge = (long)(spaceUsageBytes - maxDirectorySizeGB * 1024.0 * 1024 * 1024);
                     long totalBytesPurged = 0;
 
                     var filesProcessed = 0;
@@ -3828,7 +3890,7 @@ namespace AnalysisManagerBase
                             // Enough files have been deleted
                             LogTools.LogMessage(string.Format(
                                 "Space usage in {0} is now below {1} GB; deleted {2:F1} GB of cached files",
-                                orgDbDirectory.FullName, maxSizeGB, Global.BytesToGB(totalBytesPurgedOverall)));
+                                orgDbDirectory.FullName, maxDirectorySizeGB, Global.BytesToGB(totalBytesPurgedOverall)));
 
                             return true;
                         }
@@ -3845,7 +3907,7 @@ namespace AnalysisManagerBase
                 {
                     LogTools.LogWarning(string.Format(
                         "Warning: unable to delete enough files to lower the space usage in {0} to below {1} GB; " +
-                        "deleted {2:F1} GB of cached files", orgDbDirectory.FullName, maxSizeGB, Global.BytesToGB(totalBytesPurgedOverall)));
+                        "deleted {2:F1} GB of cached files", orgDbDirectory.FullName, maxDirectorySizeGB, Global.BytesToGB(totalBytesPurgedOverall)));
                 }
 
                 return true;
@@ -4424,7 +4486,8 @@ namespace AnalysisManagerBase
             bool decoyProteinsUseXXX = true,
             bool previewMode = false)
         {
-            const int freeSpaceThresholdPercent = 20;
+            const int FREE_SPACE_THRESHOLD_PERCENT = 20;
+            const int DEFAULT_ORG_DB_DIR_MAX_SIZE_GB = 200;
 
             Console.WriteLine();
             if (mDebugLevel >= 3)
@@ -4436,6 +4499,8 @@ namespace AnalysisManagerBase
 
             try
             {
+                var orgDBDirMaxSizeGB = mMgrParams.GetParam("OrgDBDirMaxSizeGB", DEFAULT_ORG_DB_DIR_MAX_SIZE_GB);
+
                 var proteinCollectionInfo = new ProteinCollectionInfo(mJobParams);
 
                 var legacyFastaFileBaseName = string.Empty;
@@ -4476,7 +4541,7 @@ namespace AnalysisManagerBase
 
                     if (!previewMode)
                     {
-                        PurgeFastaFilesIfLowFreeSpace(orgDbDirectoryPath, freeSpaceThresholdPercent, 0, legacyFastaFileBaseName);
+                        PurgeFastaFilesIfLowFreeSpace(orgDbDirectoryPath, FREE_SPACE_THRESHOLD_PERCENT, 0, orgDBDirMaxSizeGB, legacyFastaFileBaseName);
                     }
 
                     if (success)
@@ -4510,7 +4575,7 @@ namespace AnalysisManagerBase
 
                 if (!previewMode)
                 {
-                    PurgeFastaFilesIfLowFreeSpace(orgDbDirectoryPath, freeSpaceThresholdPercent, requiredFreeSpaceMB, legacyFastaFileBaseName);
+                    PurgeFastaFilesIfLowFreeSpace(orgDbDirectoryPath, FREE_SPACE_THRESHOLD_PERCENT, requiredFreeSpaceMB, orgDBDirMaxSizeGB, legacyFastaFileBaseName);
                 }
 
                 // Make a new fasta file from scratch
@@ -4542,7 +4607,7 @@ namespace AnalysisManagerBase
                 // No need to pass a value for legacyFastaFileBaseName because a .fasta.LastUsed file will have been created/updated by CreateFastaFile
                 if (!previewMode)
                 {
-                    PurgeFastaFilesIfLowFreeSpace(orgDbDirectoryPath, freeSpaceThresholdPercent, 0, "");
+                    PurgeFastaFilesIfLowFreeSpace(orgDbDirectoryPath, FREE_SPACE_THRESHOLD_PERCENT, 0, 0, string.Empty);
                 }
 
                 resultCode = CloseOutType.CLOSEOUT_SUCCESS;
