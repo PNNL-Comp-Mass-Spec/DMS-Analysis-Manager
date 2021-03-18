@@ -21,6 +21,8 @@ using PRISMDatabaseUtils;
 // Created 12/19/2007
 //*********************************************************************************************************
 
+// ReSharper disable UnusedMember.Global
+
 namespace AnalysisManagerBase
 {
     /// <summary>
@@ -1341,6 +1343,7 @@ namespace AnalysisManagerBase
                 }
                 catch (Exception ex)
                 {
+                    // ReSharper disable once ConditionIsAlwaysTrueOrFalse
                     if (retryCount > 1)
                     {
                         LogError("Error instantiating GetFASTAFromDMS", ex);

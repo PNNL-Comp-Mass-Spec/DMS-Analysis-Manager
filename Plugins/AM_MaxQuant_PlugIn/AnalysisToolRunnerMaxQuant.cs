@@ -121,6 +121,7 @@ namespace AnalysisManagerMaxQuantPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
+                // ReSharper disable once CommentTypo
                 // Fix paths in the Andromeda peak list files file (aplfiles) and in the Andromeda parameter files (*.apar)
                 var filePathUpdateResult = UpdateMaxQuantRuntimeFilePaths();
 
