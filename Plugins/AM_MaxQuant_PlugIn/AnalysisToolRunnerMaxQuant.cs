@@ -1414,10 +1414,11 @@ namespace AnalysisManagerMaxQuantPlugIn
         private bool ValidateFastaFile()
         {
             // Define the path to the fasta file
-            var localOrgDbFolder = mMgrParams.GetParam(AnalysisResources.MGR_PARAM_ORG_DB_DIR);
+            var localOrgDbDirectory = mMgrParams.GetParam(AnalysisResources.MGR_PARAM_ORG_DB_DIR);
+            var generatedFastaFileName = mJobParams.GetParam("PeptideSearch", AnalysisResources.JOB_PARAM_GENERATED_FASTA_NAME);
 
             // Note that job parameter "generatedFastaName" gets defined by AnalysisResources.RetrieveOrgDB
-            var fastaFilePath = Path.Combine(localOrgDbFolder, mJobParams.GetParam("PeptideSearch", AnalysisResources.JOB_PARAM_GENERATED_FASTA_NAME));
+            var fastaFilePath = Path.Combine(localOrgDbDirectory, generatedFastaFileName);
 
             var fastaFile = new FileInfo(fastaFilePath);
 
