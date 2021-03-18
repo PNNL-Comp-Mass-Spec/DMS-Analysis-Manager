@@ -1326,7 +1326,7 @@ namespace AnalysisManagerBase
 
             var retryCount = 1;
 
-            while (retryCount > 0)
+            while (true)
             {
                 try
                 {
