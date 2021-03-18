@@ -42,8 +42,8 @@ namespace AnalysisManagerProg
 
         #region "Member variables"
 
-        // AnalysisMgrSettings
-        private IMgrParams mMgrSettings;
+        // Instance of class AnalysisMgrSettings
+        private IMgrParams mMgrParams;
 
         private CleanupMgrErrors mMgrErrorCleanup;
         private readonly string mMgrExeName;
@@ -52,7 +52,6 @@ namespace AnalysisManagerProg
 
         private string mMgrName = "??";
 
-        // AnalysisJob
         private AnalysisJob mAnalysisTask;
 
         private PluginLoader mPluginLoader;
@@ -256,7 +255,7 @@ namespace AnalysisManagerProg
                     // Load settings from config file AnalysisManagerProg.exe.config
                     var configFileSettings = LoadMgrSettingsFromFile();
 
-                    var settingsClass = (AnalysisMgrSettings)mMgrSettings;
+                    var settingsClass = (AnalysisMgrSettings)mMgrParams;
                     if (settingsClass != null)
                     {
                         RegisterEvents(settingsClass);
@@ -264,16 +263,16 @@ namespace AnalysisManagerProg
                     }
 
                     Console.WriteLine();
-                    mMgrSettings.ValidatePgPass(configFileSettings);
+                    mMgrParams.ValidatePgPass(configFileSettings);
 
                     CheckStopTrace("LoadSettings");
 
-                    var success = mMgrSettings.LoadSettings(configFileSettings);
+                    var success = mMgrParams.LoadSettings(configFileSettings);
                     if (!success)
                     {
-                        if (!string.IsNullOrEmpty(mMgrSettings.ErrMsg))
+                        if (!string.IsNullOrEmpty(mMgrParams.ErrMsg))
                         {
-                            throw new ApplicationException("Unable to initialize manager settings class: " + mMgrSettings.ErrMsg);
+                            throw new ApplicationException("Unable to initialize manager settings class: " + mMgrParams.ErrMsg);
                         }
 
                         throw new ApplicationException("Unable to initialize manager settings class: unknown error");
@@ -298,7 +297,7 @@ namespace AnalysisManagerProg
                 return false;
             }
 
-            mMgrName = mMgrSettings.ManagerName;
+            mMgrName = mMgrParams.ManagerName;
             ShowTrace("Manager name is " + mMgrName);
 
             // Delete any temporary files that may be left in the app directory
@@ -316,7 +315,7 @@ namespace AnalysisManagerProg
 
             if (!Global.OfflineMode)
             {
-                var logCnStr = mMgrSettings.GetParam("ConnectionString");
+                var logCnStr = mMgrParams.GetParam("ConnectionString");
 
                 CheckStopTrace("CreateDbLogger");
 
@@ -335,7 +334,7 @@ namespace AnalysisManagerProg
             var startupMsg = "=== Started Analysis Manager V" + appVersion + " ===== ";
             LogMessage(startupMsg);
 
-            var configFileName = mMgrSettings.GetParam("ConfigFileName");
+            var configFileName = mMgrParams.GetParam("ConfigFileName");
             if (string.IsNullOrEmpty(configFileName))
             {
                 // Manager parameter error; log an error and exit
@@ -363,7 +362,7 @@ namespace AnalysisManagerProg
             }
 
             // Get the debug level
-            mDebugLevel = (short)mMgrSettings.GetParam("DebugLevel", 2);
+            mDebugLevel = (short)mMgrParams.GetParam("DebugLevel", 2);
 
             // Make sure that the manager name matches the machine name (with a few exceptions)
             if (!hostName.StartsWith("EMSLMQ", StringComparison.OrdinalIgnoreCase) &&
@@ -382,12 +381,12 @@ namespace AnalysisManagerProg
 
             // Setup the tool for getting tasks
             ShowTrace("Instantiate mAnalysisTask as new AnalysisJob");
-            mAnalysisTask = new AnalysisJob(mMgrSettings, mDebugLevel)
+            mAnalysisTask = new AnalysisJob(mMgrParams, mDebugLevel)
             {
                 TraceMode = TraceMode
             };
 
-            mWorkDirPath = mMgrSettings.GetParam(AnalysisMgrSettings.MGR_PARAM_WORK_DIR);
+            mWorkDirPath = mMgrParams.GetParam(AnalysisMgrSettings.MGR_PARAM_WORK_DIR);
 
             LogTools.WorkDirPath = mWorkDirPath;
 
@@ -402,7 +401,7 @@ namespace AnalysisManagerProg
             else
             {
                 // Data Source=proteinseqs;Initial Catalog=manager_control
-                mgrConfigDBConnectionString = mMgrSettings.GetParam(MgrSettings.MGR_PARAM_MGR_CFG_DB_CONN_STRING);
+                mgrConfigDBConnectionString = mMgrParams.GetParam(MgrSettings.MGR_PARAM_MGR_CFG_DB_CONN_STRING);
             }
 
             mMgrErrorCleanup = new CleanupMgrErrors(mgrConfigDBConnectionString, mMgrName, mDebugLevel, mMgrDirectoryPath, mWorkDirPath, TraceMode);
@@ -433,7 +432,7 @@ namespace AnalysisManagerProg
         }
 
         /// <summary>
-        /// Initialize mMgrSettings using the manager directory path and the TraceMode flag
+        /// Initialize mMgrParams using the manager directory path and the TraceMode flag
         /// </summary>
         /// <param name="throwExceptions">
         /// When true, if an exception is encountered, immediately throws
@@ -443,7 +442,7 @@ namespace AnalysisManagerProg
         {
             try
             {
-                mMgrSettings = new AnalysisMgrSettings(mMgrDirectoryPath, TraceMode);
+                mMgrParams = new AnalysisMgrSettings(mMgrDirectoryPath, TraceMode);
             }
             catch (Exception ex) when (!throwExceptions)
             {
@@ -473,7 +472,7 @@ namespace AnalysisManagerProg
             {
                 ShowTrace("Entering MainProcess.DoAnalysis Try/Catch block");
 
-                var maxLoopCount = mMgrSettings.GetParam("MaxRepetitions", 1);
+                var maxLoopCount = mMgrParams.GetParam("MaxRepetitions", 1);
                 var requestJobs = true;
                 var oneTaskStarted = false;
                 var oneTaskPerformed = false;
@@ -522,8 +521,8 @@ namespace AnalysisManagerProg
                     }
 
                     // Check to see if manager is still active
-                    var mgrActive = mMgrSettings.GetParam(AnalysisMgrSettings.MGR_PARAM_MGR_ACTIVE, false);
-                    var mgrActiveLocal = mMgrSettings.GetParam(MgrSettings.MGR_PARAM_MGR_ACTIVE_LOCAL, false);
+                    var mgrActive = mMgrParams.GetParam(AnalysisMgrSettings.MGR_PARAM_MGR_ACTIVE, false);
+                    var mgrActiveLocal = mMgrParams.GetParam(MgrSettings.MGR_PARAM_MGR_ACTIVE_LOCAL, false);
 
                     if (!(mgrActive && mgrActiveLocal))
                     {
@@ -546,13 +545,13 @@ namespace AnalysisManagerProg
 
                     CheckStopTrace("CheckUpdateRequired");
 
-                    var mgrUpdateRequired = mMgrSettings.GetParam("ManagerUpdateRequired", false);
+                    var mgrUpdateRequired = mMgrParams.GetParam("ManagerUpdateRequired", false);
 
                     if (mgrUpdateRequired)
                     {
                         const string msg = "Manager update is required";
                         LogMessage(msg);
-                        mMgrSettings.AckManagerUpdateRequired();
+                        mMgrParams.AckManagerUpdateRequired();
                         UpdateStatusIdle(msg);
                         return;
                     }
@@ -707,7 +706,7 @@ namespace AnalysisManagerProg
                                 {
                                     // Restore the work dir path
                                     mWorkDirPath = string.Copy(defaultManagerWorkDir);
-                                    mMgrSettings.SetParam(AnalysisMgrSettings.MGR_PARAM_WORK_DIR, mWorkDirPath);
+                                    mMgrParams.SetParam(AnalysisMgrSettings.MGR_PARAM_WORK_DIR, mWorkDirPath);
                                 }
 
                                 if (resultCode == CloseOutType.CLOSEOUT_SUCCESS)
@@ -868,7 +867,7 @@ namespace AnalysisManagerProg
             var datasetName = mAnalysisTask.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_DATASET_NAME);
             var jobToolDescription = mAnalysisTask.GetCurrentJobToolDescription();
 
-            var runJobsRemotely = mMgrSettings.GetParam("RunJobsRemotely", false);
+            var runJobsRemotely = mMgrParams.GetParam("RunJobsRemotely", false);
             var runningRemoteFlag = mAnalysisTask.GetJobParameter(AnalysisJob.STEP_PARAMETERS_SECTION, "RunningRemote", 0);
             runningRemote = runningRemoteFlag > 0;
 
@@ -876,7 +875,7 @@ namespace AnalysisManagerProg
             {
                 // Update the working directory path to match the current task
                 // This manager setting was updated by SelectOfflineJobInfoFile in AnalysisJob
-                mWorkDirPath = mMgrSettings.GetParam(AnalysisMgrSettings.MGR_PARAM_WORK_DIR);
+                mWorkDirPath = mMgrParams.GetParam(AnalysisMgrSettings.MGR_PARAM_WORK_DIR);
             }
 
             ShowTrace("Processing job " + jobNum + ", " + jobToolDescription);
@@ -906,7 +905,7 @@ namespace AnalysisManagerProg
 
             if (Global.OfflineMode)
             {
-                mStatusTools.OfflineJobStatusFilePath = RemoteTransferUtility.GetOfflineJobStatusFilePath(mMgrSettings, mAnalysisTask);
+                mStatusTools.OfflineJobStatusFilePath = RemoteTransferUtility.GetOfflineJobStatusFilePath(mMgrParams, mAnalysisTask);
             }
 
             mStatusTools.UpdateAndWrite(
@@ -1133,7 +1132,7 @@ namespace AnalysisManagerProg
             {
                 LogDebug("Instantiating RemoteMonitor to check remote job status");
 
-                remoteMonitor = new RemoteMonitor(mMgrSettings, mAnalysisTask, toolRunner, mStatusTools);
+                remoteMonitor = new RemoteMonitor(mMgrParams, mAnalysisTask, toolRunner, mStatusTools);
                 RegisterEvents(remoteMonitor);
 
                 remoteMonitor.StaleJobStatusFileEvent += RemoteMonitor_StaleJobStatusFileEvent;
@@ -1669,7 +1668,7 @@ namespace AnalysisManagerProg
         /// </summary>
         private void DisableManagerLocally()
         {
-            // Note: We previously called mMgrSettings.DisableManagerLocally() to update AnalysisManager.config.exe
+            // Note: We previously called mMgrParams.DisableManagerLocally() to update AnalysisManager.config.exe
             // We now create a flag file instead
             // This gives the manager a chance to auto-cleanup things if ManagerErrorCleanupMode is >= 1
 
@@ -1689,7 +1688,7 @@ namespace AnalysisManagerProg
 
         private string GetBaseLogFileName()
         {
-            return GetBaseLogFileName(mMgrSettings);
+            return GetBaseLogFileName(mMgrParams);
         }
 
         /// <summary>
@@ -1763,7 +1762,7 @@ namespace AnalysisManagerProg
 
         private CleanupMgrErrors.CleanupModes GetManagerErrorCleanupMode()
         {
-            var managerErrorCleanupMode = mMgrSettings.GetParam("ManagerErrorCleanupMode", "0");
+            var managerErrorCleanupMode = mMgrParams.GetParam("ManagerErrorCleanupMode", "0");
 
             return managerErrorCleanupMode.Trim() switch
             {
@@ -1929,7 +1928,7 @@ namespace AnalysisManagerProg
         /// </summary>
         private RemoteTransferUtility InitializeRemoteTransferUtility()
         {
-            var transferUtility = new RemoteTransferUtility(mMgrSettings, mAnalysisTask);
+            var transferUtility = new RemoteTransferUtility(mMgrParams, mAnalysisTask);
             RegisterEvents(transferUtility);
 
             try
@@ -1953,7 +1952,7 @@ namespace AnalysisManagerProg
             if (mStatusTools != null)
                 return;
 
-            var statusFileLoc = Path.Combine(mMgrDirectoryPath, mMgrSettings.GetParam("StatusFileLocation", "Status.xml"));
+            var statusFileLoc = Path.Combine(mMgrDirectoryPath, mMgrParams.GetParam("StatusFileLocation", "Status.xml"));
 
             ShowTrace("Initialize mStatusTools using " + statusFileLoc);
 
@@ -1972,10 +1971,10 @@ namespace AnalysisManagerProg
             };
             RegisterEvents(mStatusTools);
 
-            var runJobsRemotely = mMgrSettings.GetParam("RunJobsRemotely", false);
+            var runJobsRemotely = mMgrParams.GetParam("RunJobsRemotely", false);
             if (runJobsRemotely)
             {
-                mStatusTools.RemoteMgrName = mMgrSettings.GetParam("RemoteHostName");
+                mStatusTools.RemoteMgrName = mMgrParams.GetParam("RemoteHostName");
             }
 
             UpdateStatusToolLoggingSettings(mStatusTools);
@@ -2010,7 +2009,7 @@ namespace AnalysisManagerProg
             // Construct the path to the config document
             var configFilePath = Path.Combine(mMgrDirectoryPath, mMgrExeName + ".config");
 
-            var mgrSettings = mMgrSettings.LoadMgrSettingsFromFile(configFilePath);
+            var mgrSettings = mMgrParams.LoadMgrSettingsFromFile(configFilePath);
 
             if (mgrSettings == null)
                 return null;
@@ -2222,17 +2221,17 @@ namespace AnalysisManagerProg
                 if (configFileSettings == null)
                     return false;
 
-                ShowTrace("Storing manager settings in mMgrSettings");
+                ShowTrace("Storing manager settings in mMgrParams");
 
                 // Store the new settings then retrieve updated settings from the database
                 // or from ManagerSettingsLocal.xml if Global.OfflineMode is true
-                if (mMgrSettings.LoadSettings(configFileSettings))
+                if (mMgrParams.LoadSettings(configFileSettings))
                     return true;
 
-                if (!string.IsNullOrWhiteSpace(mMgrSettings.ErrMsg))
+                if (!string.IsNullOrWhiteSpace(mMgrParams.ErrMsg))
                 {
                     // Log the error
-                    LogMessage(mMgrSettings.ErrMsg);
+                    LogMessage(mMgrParams.ErrMsg);
                     UpdateStatusDisabled(MgrStatusCodes.DISABLED_LOCAL, "Disabled Locally");
                 }
                 else
@@ -2601,7 +2600,7 @@ namespace AnalysisManagerProg
 
             try
             {
-                toolResourcer.Setup(stepToolName, mMgrSettings, mAnalysisTask, mStatusTools, mMyEMSLUtilities);
+                toolResourcer.Setup(stepToolName, mMgrParams, mAnalysisTask, mStatusTools, mMyEMSLUtilities);
             }
             catch (Exception ex)
             {
@@ -2642,7 +2641,7 @@ namespace AnalysisManagerProg
             try
             {
                 // Setup the new tool runner
-                toolRunner.Setup(stepToolName, mMgrSettings, mAnalysisTask, mStatusTools, mSummaryFile, mMyEMSLUtilities);
+                toolRunner.Setup(stepToolName, mMgrParams, mAnalysisTask, mStatusTools, mSummaryFile, mMyEMSLUtilities);
             }
             catch (Exception ex)
             {
@@ -2769,17 +2768,17 @@ namespace AnalysisManagerProg
 
             ShowTrace("Loading manager settings from the manager control DB");
 
-            if (!mMgrSettings.LoadDBSettings())
+            if (!mMgrParams.LoadDBSettings())
             {
                 string msg;
 
-                if (string.IsNullOrWhiteSpace(mMgrSettings.ErrMsg))
+                if (string.IsNullOrWhiteSpace(mMgrParams.ErrMsg))
                 {
-                    msg = "Error calling mMgrSettings.LoadMgrSettingsFromDB to update manager settings";
+                    msg = "Error calling mMgrParams.LoadMgrSettingsFromDB to update manager settings";
                 }
                 else
                 {
-                    msg = mMgrSettings.ErrMsg;
+                    msg = mMgrParams.ErrMsg;
                 }
 
                 LogError(msg);
@@ -2820,18 +2819,18 @@ namespace AnalysisManagerProg
 
         private void UpdateStatusToolLoggingSettings(StatusFile statusFile)
         {
-            var logMemoryUsage = mMgrSettings.GetParam("LogMemoryUsage", false);
-            float minimumMemoryUsageLogInterval = mMgrSettings.GetParam("MinimumMemoryUsageLogInterval", 1);
+            var logMemoryUsage = mMgrParams.GetParam("LogMemoryUsage", false);
+            float minimumMemoryUsageLogInterval = mMgrParams.GetParam("MinimumMemoryUsageLogInterval", 1);
 
             // Analysis managers typically have logStatusToBrokerDb=False and logStatusToMessageQueue=True
-            var logStatusToBrokerDb = mMgrSettings.GetParam("LogStatusToBrokerDB", false);
+            var logStatusToBrokerDb = mMgrParams.GetParam("LogStatusToBrokerDB", false);
 
             // Gigasax.DMS_Pipeline
-            var brokerDbConnectionString = mMgrSettings.GetParam("BrokerConnectionString");
+            var brokerDbConnectionString = mMgrParams.GetParam("BrokerConnectionString");
 
-            float brokerDbStatusUpdateIntervalMinutes = mMgrSettings.GetParam("BrokerDBStatusUpdateIntervalMinutes", 60);
+            float brokerDbStatusUpdateIntervalMinutes = mMgrParams.GetParam("BrokerDBStatusUpdateIntervalMinutes", 60);
 
-            var logStatusToMessageQueue = mMgrSettings.GetParam("LogStatusToMessageQueue", false);
+            var logStatusToMessageQueue = mMgrParams.GetParam("LogStatusToMessageQueue", false);
             if (DisableMessageQueue)
             {
                 // Command line has switch /NQ
@@ -2839,8 +2838,8 @@ namespace AnalysisManagerProg
                 logStatusToMessageQueue = false;
             }
 
-            var messageQueueUri = mMgrSettings.GetParam("MessageQueueURI");
-            var messageQueueTopicMgrStatus = mMgrSettings.GetParam("MessageQueueTopicMgrStatus");
+            var messageQueueUri = mMgrParams.GetParam("MessageQueueURI");
+            var messageQueueTopicMgrStatus = mMgrParams.GetParam("MessageQueueTopicMgrStatus");
 
             statusFile.ConfigureMemoryLogging(logMemoryUsage, minimumMemoryUsageLogInterval, mMgrDirectoryPath);
             statusFile.ConfigureBrokerDBLogging(logStatusToBrokerDb, brokerDbConnectionString, brokerDbStatusUpdateIntervalMinutes);
@@ -2873,7 +2872,7 @@ namespace AnalysisManagerProg
                     // We only need to evaluate the dataset storage directory for free space
 
                     var datasetStoragePath = mAnalysisTask.GetParam("DatasetStoragePath");
-                    var datasetStorageMinFreeSpaceGB = mMgrSettings.GetParam("DatasetStorageMinFreeSpaceGB", DEFAULT_DATASET_STORAGE_MIN_FREE_SPACE_GB);
+                    var datasetStorageMinFreeSpaceGB = mMgrParams.GetParam("DatasetStorageMinFreeSpaceGB", DEFAULT_DATASET_STORAGE_MIN_FREE_SPACE_GB);
 
                     if (string.IsNullOrEmpty(datasetStoragePath))
                     {
@@ -2898,13 +2897,13 @@ namespace AnalysisManagerProg
                     return ValidateFreeDiskSpaceWork("Dataset directory", datasetStoragePath, datasetStorageMinFreeSpaceGB * 1024, out errorMessage);
                 }
 
-                var workingDirMinFreeSpaceMB = mMgrSettings.GetParam("WorkDirMinFreeSpaceMB", DEFAULT_WORKING_DIR_MIN_FREE_SPACE_MB);
+                var workingDirMinFreeSpaceMB = mMgrParams.GetParam("WorkDirMinFreeSpaceMB", DEFAULT_WORKING_DIR_MIN_FREE_SPACE_MB);
 
                 var transferDir = mAnalysisTask.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH);
-                var transferDirMinFreeSpaceGB = mMgrSettings.GetParam("TransferDirMinFreeSpaceGB", DEFAULT_TRANSFER_DIR_MIN_FREE_SPACE_GB);
+                var transferDirMinFreeSpaceGB = mMgrParams.GetParam("TransferDirMinFreeSpaceGB", DEFAULT_TRANSFER_DIR_MIN_FREE_SPACE_GB);
 
-                var orgDbDir = mMgrSettings.GetParam(AnalysisResources.MGR_PARAM_ORG_DB_DIR);
-                var orgDbDirMinFreeSpaceMB = mMgrSettings.GetParam("OrgDBDirMinFreeSpaceMB", DEFAULT_ORG_DB_DIR_MIN_FREE_SPACE_MB);
+                var orgDbDir = mMgrParams.GetParam(AnalysisResources.MGR_PARAM_ORG_DB_DIR);
+                var orgDbDirMinFreeSpaceMB = mMgrParams.GetParam("OrgDBDirMinFreeSpaceMB", DEFAULT_ORG_DB_DIR_MIN_FREE_SPACE_MB);
 
                 ShowTrace("Validating free space for the working directory: " + mWorkDirPath);
 
