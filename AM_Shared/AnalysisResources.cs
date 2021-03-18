@@ -1879,9 +1879,6 @@ namespace AnalysisManagerBase
         /// <returns>Storage path if successful, empty path if an error or unknown data package</returns>
         protected static string GetDataPackageStoragePath(string connectionString, int dataPackageID)
         {
-            // Requests Dataset information from a data package
-            const short RETRY_COUNT = 3;
-
             var sqlStr = new StringBuilder();
 
             sqlStr.Append("Select [Share Path] AS StoragePath ");
@@ -1889,7 +1886,7 @@ namespace AnalysisManagerBase
             sqlStr.Append("Where ID = " + dataPackageID);
 
             var dbTools = DbToolsFactory.GetDBTools(connectionString, debugMode: false);
-            var success = dbTools.GetQueryResultsDataTable(sqlStr.ToString(), out var resultSet, RETRY_COUNT);
+            var success = dbTools.GetQueryResultsDataTable(sqlStr.ToString(), out var resultSet);
 
             if (!success)
             {
@@ -2985,8 +2982,6 @@ namespace AnalysisManagerBase
         /// <remarks>This procedure is used by AnalysisResourcesQCART</remarks>
         protected bool LookupJobInfo(int jobNumber, out DataPackageJobInfo jobInfo)
         {
-            const int RETRY_COUNT = 3;
-
             var sqlStr = new StringBuilder();
 
             // This query uses view V_Analysis_Job_Export_DataPkg in the DMS5 database
@@ -3007,7 +3002,7 @@ namespace AnalysisManagerBase
             var dbTools = DbToolsFactory.GetDBTools(dmsConnectionString, debugMode: TraceMode);
             RegisterEvents(dbTools);
 
-            var success = dbTools.GetQueryResultsDataTable(sqlStr.ToString(), out var resultSet, RETRY_COUNT);
+            var success = dbTools.GetQueryResultsDataTable(sqlStr.ToString(), out var resultSet);
 
             if (!success)
             {
