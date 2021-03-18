@@ -98,7 +98,7 @@ namespace AnalysisManagerBase
         /// Generated Fasta File Name
         /// </summary>
         public string GeneratedFASTAFileName { get; set; }
-        
+
         /// <summary>
         /// Legacy FASTA file name
         /// </summary>

@@ -133,7 +133,6 @@ namespace AnalysisManagerMaxQuantPlugIn
 
                 if (processingResult == CloseOutType.CLOSEOUT_FAILED)
                 {
-
                     // ToDo: Remove this sleep
 
                     PRISM.ConsoleMsgUtils.ShowWarning("MaxQuant processing failed");
@@ -980,7 +979,7 @@ namespace AnalysisManagerMaxQuantPlugIn
 
                         var fastaFileInfo = new FileInfo(fastaFilePath);
 
-                        if (fastaFileInfo.Directory != null && fastaFileInfo.Directory.FullName.Equals(localOrgDbDirectory.FullName))
+                        if (fastaFileInfo.Directory?.FullName.Equals(localOrgDbDirectory.FullName) == true)
                         {
                             dataLines.Add(dataLine);
                             continue;
