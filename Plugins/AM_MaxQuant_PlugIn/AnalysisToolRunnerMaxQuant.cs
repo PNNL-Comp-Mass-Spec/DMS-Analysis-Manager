@@ -109,10 +109,10 @@ namespace AnalysisManagerMaxQuantPlugIn
                 // Customize the path to the FASTA file, the number of threads to use, the dataset files, etc.
                 // This will involve a dry-run of MaxQuant if startStepID values in the dmsSteps elements are "auto" instead of integers
 
-                var result = UpdateMaxQuantParameterFileMetadata(dataPackageInfo);
+                var paramFileUpdateResult = UpdateMaxQuantParameterFileMetadata(dataPackageInfo);
 
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                    return result;
+                if (paramFileUpdateResult != CloseOutType.CLOSEOUT_SUCCESS)
+                    return paramFileUpdateResult;
 
                 if (!RuntimeOptions.StepRangeValidated)
                 {
@@ -120,8 +120,28 @@ namespace AnalysisManagerMaxQuantPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
+                // Fix paths in the Andromeda peak list files file (aplfiles) and in the Andromeda parameter files (*.apar)
+                var filePathUpdateResult = UpdateMaxQuantRuntimeFilePaths();
+
+                if (filePathUpdateResult != CloseOutType.CLOSEOUT_SUCCESS)
+                    return filePathUpdateResult;
+
                 // Process one or more datasets using MaxQuant
                 var processingResult = StartMaxQuant();
+
+                if (processingResult == CloseOutType.CLOSEOUT_FAILED)
+                {
+                    PRISM.ConsoleMsgUtils.ShowWarning("MaxQuant processing failed");
+                    PRISM.ConsoleMsgUtils.ShowWarning("Sleeping for 10 minutes to allow for diagnosis");
+                    var startTime = DateTime.UtcNow;
+                    while (DateTime.UtcNow.Subtract(startTime).TotalMinutes < 10)
+                    {
+                        Console.Write(". ");
+                        Global.IdleLoop(15);
+                    }
+
+                    Console.WriteLine();
+                }
 
                 var subdirectoriesToSkipTransfer = new SortedSet<string>();
 
@@ -855,6 +875,152 @@ namespace AnalysisManagerMaxQuantPlugIn
 
             var success = StoreDotNETToolVersionInfo(mMaxQuantProgLoc, additionalDLLs);
             return success;
+
+        /// <summary>
+        /// Update the "fasta file path" entry in the specified Andromeda parameter files
+        /// Also update other parameter files in the same directory
+        /// </summary>
+        /// <param name="workingDirectory"></param>
+        /// <param name="andromedaParameterFiles">
+        /// Parameter files listed in aplfiles
+        /// These will be compared to entries in processedParameterFilePaths to see if any were missed
+        /// </param>
+        /// <returns>CloseOutType enum indicating success or failure</returns>
+        private CloseOutType UpdateAndromedaParameterFiles(
+            DirectoryInfo workingDirectory, IEnumerable<string> andromedaParameterFiles)
+        {
+            var localOrgDbDirectory = new DirectoryInfo(mMgrParams.GetParam(AnalysisResources.MGR_PARAM_ORG_DB_DIR));
+            var generatedFastaFileName = mJobParams.GetParam("PeptideSearch", AnalysisResources.JOB_PARAM_GENERATED_FASTA_NAME);
+
+            var generatedFastaFilePath = Path.Combine(localOrgDbDirectory.FullName, generatedFastaFileName);
+
+            // This tracks full paths of parameter files that have been checked and updated if necessary
+            var processedParameterFilePaths = new SortedSet<string>();
+
+            foreach (var parameterFile in workingDirectory.GetFiles("*.apar", SearchOption.AllDirectories))
+            {
+                processedParameterFilePaths.Add(parameterFile.FullName);
+                var success = UpdateAndromedaParameterFile(localOrgDbDirectory, generatedFastaFilePath, parameterFile);
+                if (!success)
+                    return CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            // See if any were missed
+            foreach (var parameterFilePath in andromedaParameterFiles)
+            {
+                var parameterFile = new FileInfo(parameterFilePath);
+
+                if (processedParameterFilePaths.Contains(parameterFile.FullName))
+                    continue;
+
+                LogWarning(string.Format(
+                    "The aplfiles parameter file mentioned a file in an unexpected location, {0}: processing now", parameterFile.FullName));
+
+                processedParameterFilePaths.Add(parameterFile.FullName);
+
+                var success = UpdateAndromedaParameterFile(localOrgDbDirectory, generatedFastaFilePath, parameterFile);
+                if (!success)
+                    return CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            return CloseOutType.CLOSEOUT_SUCCESS;
+        }
+
+        /// <summary>
+        /// Update the "fasta file path" entry in the Andromeda parameter file
+        /// </summary>
+        /// <param name="localOrgDbDirectory"></param>
+        /// <param name="generatedFastaFilePath">Full path to the FASTA file generated by the resourcer for this job</param>
+        /// <param name="parameterFile">Parameter file to examine</param>
+        /// <returns>True if successful, false if an error</returns>
+        private bool UpdateAndromedaParameterFile(
+            FileSystemInfo localOrgDbDirectory,
+            string generatedFastaFilePath,
+            FileSystemInfo parameterFile)
+        {
+            try
+            {
+                var parameterFilePath = parameterFile.FullName;
+
+                var dataLines = new List<string>();
+                var delimiter = new[] { '=' };
+                var pathUpdated = false;
+
+                using (var reader = new StreamReader(new FileStream(parameterFile.FullName, FileMode.Open, FileAccess.ReadWrite)))
+                {
+                    while (!reader.EndOfStream)
+                    {
+                        var dataLine = reader.ReadLine();
+
+                        if (string.IsNullOrWhiteSpace(dataLine))
+                            continue;
+
+                        // Split on an equals sign
+                        var lineParts = dataLine.Split(delimiter, 2).ToList();
+                        if (lineParts.Count < 2)
+                        {
+                            dataLines.Add(dataLine);
+                            continue;
+                        }
+
+                        if (!lineParts[0].Equals("fasta file path"))
+                        {
+                            dataLines.Add(dataLine);
+                            continue;
+                        }
+
+                        // Examine the path to the FASTA file and update if necessary
+                        var fastaFilePath = lineParts[1].Trim('"');
+
+                        var fastaFileInfo = new FileInfo(fastaFilePath);
+
+                        if (fastaFileInfo.Directory != null && fastaFileInfo.Directory.FullName.Equals(localOrgDbDirectory.FullName))
+                        {
+                            dataLines.Add(dataLine);
+                            continue;
+                        }
+
+                        var updatedPath = Path.Combine(localOrgDbDirectory.FullName, fastaFileInfo.Name);
+
+                        if (!updatedPath.Equals(generatedFastaFilePath))
+                        {
+                            LogWarning(string.Format(
+                                "Mismatch between FASTA file path in andromeda parameter file {0} and the generated fasta file: {1} vs. {2}",
+                                updatedPath, generatedFastaFilePath));
+                        }
+
+                        dataLines.Add(string.Format("fasta file path=\"{0}\"", updatedPath));
+                        pathUpdated = true;
+                    }
+                }
+
+                if (!pathUpdated)
+                {
+                    // No change was made
+                    return true;
+                }
+
+                // Replace the original parameter file
+                var updatedFile = new FileInfo(parameterFile.FullName + ".new");
+
+                using (var writer = new StreamWriter(new FileStream(updatedFile.FullName, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
+                {
+                    foreach (var item in dataLines)
+                    {
+                        writer.WriteLine(item);
+                    }
+                }
+
+                parameterFile.Delete();
+                updatedFile.MoveTo(parameterFilePath);
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LogError("Exception in UpdateAndromedaParameterFile", ex);
+                return false;
+            }
         }
 
         private CloseOutType UpdateMaxQuantParameterFileMetadata(DataPackageInfo dataPackageInfo)
@@ -1114,6 +1280,133 @@ namespace AnalysisManagerMaxQuantPlugIn
             catch (Exception ex)
             {
                 errorMessage = "Exception in UpdateMaxQuantParameterFileStartStepIDs: " + ex.Message;
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+        }
+
+        /// <summary>
+        /// Fix paths in the Andromeda peak list files file (aplfiles) and in the Andromeda parameter files
+        /// </summary>
+        /// <returns>CloseOutType enum indicating success or failure</returns>
+        private CloseOutType UpdateMaxQuantRuntimeFilePaths()
+        {
+            try
+            {
+                var workingDirectory = new DirectoryInfo(mWorkDir);
+
+                var andromedaDirectory = new DirectoryInfo(Path.Combine(workingDirectory.FullName, "combined", "andromeda"));
+                if (!andromedaDirectory.Exists)
+                {
+                    // Nothing to update, meaning this is the first MaxQuant job step
+                    return CloseOutType.CLOSEOUT_SUCCESS;
+                }
+
+                var metadataFilePath = Path.Combine(andromedaDirectory.FullName, "aplfiles");
+
+                var peakListMetadataFile = new FileInfo(metadataFilePath);
+                if (!peakListMetadataFile.Exists)
+                {
+                    LogWarning("Andromeda directory exists but the Andromeda peak list file was not found; this is unexpected: " + peakListMetadataFile.FullName);
+                    return CloseOutType.CLOSEOUT_SUCCESS;
+                }
+
+                var directoryMatcher = new Regex(@"^(?<ParentPath>.+)(?<RelativePath>[\\/]combined[\\/].+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+                // This list holds updated lines
+                var metadataFileContents = new List<string>();
+                var andromedaParameterFiles = new SortedSet<string>();
+
+                var linesRead = 0;
+                var updateRequired = false;
+
+                using (var reader = new StreamReader(new FileStream(peakListMetadataFile.FullName, FileMode.Open, FileAccess.ReadWrite)))
+                {
+                    while (!reader.EndOfStream)
+                    {
+                        var dataLine = reader.ReadLine();
+                        linesRead++;
+
+                        if (string.IsNullOrWhiteSpace(dataLine))
+                            continue;
+
+                        // Split on tabs
+                        var lineParts = dataLine.Split('\t').ToList();
+                        if (lineParts.Count < 2)
+                        {
+                            LogWarning(string.Format("Line {0} in file {1} does not have a tab; this is unexpected: {2}",
+                                linesRead, peakListMetadataFile.FullName, dataLine));
+                            continue;
+                        }
+
+                        // Look for the parent directory above the \combined\ directory in both columns
+                        var aplMatch = directoryMatcher.Match(lineParts[0]);
+                        var aprMatch = directoryMatcher.Match(lineParts[1]);
+
+                        if (!aplMatch.Success)
+                        {
+                            LogWarning(string.Format("Line {0} in file {1} did not contain a directory named combined in column 1; this is unexpected: {2}",
+                                linesRead, peakListMetadataFile.FullName, dataLine));
+                            continue;
+                        }
+
+                        if (!aprMatch.Success)
+                        {
+                            LogWarning(string.Format("Line {0} in file {1} did not contain a directory named combined in column 2; this is unexpected: {2}",
+                                linesRead, peakListMetadataFile.FullName, dataLine));
+                            continue;
+                        }
+
+                        string updatedLine;
+                        string updatedParameterFilePath;
+
+                        if (aplMatch.Groups["ParentPath"].Value.Equals(workingDirectory.FullName))
+                        {
+                            // Drive letter and directory name are already correct
+                            updatedLine = dataLine;
+                            updatedParameterFilePath = lineParts[1];
+                        }
+                        else
+                        {
+                            var updatedAplFilePath = workingDirectory.FullName + aplMatch.Groups["RelativePath"];
+                            updatedParameterFilePath = workingDirectory.FullName + aprMatch.Groups["RelativePath"];
+
+                            updatedLine = string.Format("{0}\t{1}", updatedAplFilePath, updatedParameterFilePath);
+                            updateRequired = true;
+                        }
+
+                        metadataFileContents.Add(updatedLine);
+
+                        if (!andromedaParameterFiles.Contains(updatedParameterFilePath))
+                        {
+                            andromedaParameterFiles.Add(updatedParameterFilePath);
+                        }
+                    }
+                }
+
+                // ReSharper disable once InvertIf
+                if (updateRequired)
+                {
+                    // Replace the original aplfiles file
+                    var updatedFile = new FileInfo(peakListMetadataFile.FullName + ".new");
+
+                    using (var writer = new StreamWriter(new FileStream(updatedFile.FullName, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
+                    {
+                        foreach (var metadataLine in metadataFileContents)
+                        {
+                            writer.WriteLine(metadataLine);
+                        }
+                    }
+
+                    peakListMetadataFile.Delete();
+                    updatedFile.MoveTo(metadataFilePath);
+                }
+
+                // Update the "fasta file path" entry in every Andromeda parameter file in the working directory or below
+                return UpdateAndromedaParameterFiles(workingDirectory, andromedaParameterFiles);
+            }
+            catch (Exception ex)
+            {
+                LogError("Exception in UpdateMaxQuantRuntimeFilePaths", ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
         }
