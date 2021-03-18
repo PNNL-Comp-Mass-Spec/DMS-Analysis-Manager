@@ -171,7 +171,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     fileSizeTotalBytes += fiSourceFile.Length;
                 }
 
-                const int DEFAULT_ORG_DB_DIR_MIN_FREE_SPACE_MB = 750;
+                const int DEFAULT_ORG_DB_DIR_MIN_FREE_SPACE_MB = 2048;
 
                 // Convert fileSizeTotalBytes to MB, but add on a Default_Min_free_Space to assure we'll still have enough free space after copying over the files
                 var minFreeSpaceMB = (int)(Global.BytesToMB(fileSizeTotalBytes) + DEFAULT_ORG_DB_DIR_MIN_FREE_SPACE_MB);

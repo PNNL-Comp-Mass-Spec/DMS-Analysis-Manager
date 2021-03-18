@@ -2859,7 +2859,7 @@ namespace AnalysisManagerProg
             const int DEFAULT_TRANSFER_DIR_MIN_FREE_SPACE_GB = 10;
 
             const int DEFAULT_WORKING_DIR_MIN_FREE_SPACE_MB = 750;
-            const int DEFAULT_ORG_DB_DIR_MIN_FREE_SPACE_MB = 750;
+            const int DEFAULT_ORG_DB_DIR_MIN_FREE_SPACE_MB = 2048;
 
             errorMessage = string.Empty;
 
