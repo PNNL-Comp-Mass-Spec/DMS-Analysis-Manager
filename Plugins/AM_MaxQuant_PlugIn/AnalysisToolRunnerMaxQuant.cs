@@ -380,46 +380,46 @@ namespace AnalysisManagerMaxQuantPlugIn
         {
             return new()
             {
-                {"Configuring", 0},
-                {"Feature detection", 1},
-                {"Deisotoping", 3},
-                {"MS/MS preparation", 4},
-                {"Combining apl files for first search", 5},
-                {"Preparing searches", 6},
-                {"MS/MS first search", 34},
-                {"Read search results for recalibration", 50},
-                {"Mass recalibration", 51},
-                {"Calculating masses", 54},
-                {"MS/MS preparation for main search", 54},
-                {"Combining apl files for main search", 56},
-                {"MS/MS main search", 56},
-                {"Preparing combined folder ", 70},
-                {"Correcting errors", 70},
-                {"Reading search engine results", 70},
-                {"Preparing reverse hits", 71},
-                {"Finish search engine results", 72},
-                {"Filter identifications (MS/MS)", 72},
-                {"Calculating PEP", 72},
-                {"Copying identifications", 73},
-                {"Applying FDR", 73},
-                {"Assembling second peptide MS/MS", 73},
-                {"Combining second peptide files", 74},
-                {"Second peptide search", 74},
-                {"Reading search engine results (SP)", 87},
-                {"Finish search engine results (SP)", 88},
-                {"Filtering identifications (SP)", 88},
-                {"Applying FDR (SP)", 89},
-                {"Re-quantification", 89},
-                {"Reporter quantification", 89},
-                {"Prepare protein assembly", 89},
-                {"Assembling proteins", 90},
-                {"Assembling unidentified peptides", 91},
-                {"Finish protein assembly", 91},
-                {"Updating identifications", 95},
-                {"Estimating complexity", 95},
-                {"Prepare writing tables ", 95},
-                {"Writing tables", 95},
-                {"Finish writing tables ", 99}
+                { "Configuring", 0 },
+                { "Feature detection", 1 },
+                { "Deisotoping", 3 },
+                { "MS/MS preparation", 4 },
+                { "Combining apl files for first search", 5 },
+                { "Preparing searches", 6 },
+                { "MS/MS first search", 34 },
+                { "Read search results for recalibration", 50 },
+                { "Mass recalibration", 51 },
+                { "Calculating masses", 54 },
+                { "MS/MS preparation for main search", 54 },
+                { "Combining apl files for main search", 56 },
+                { "MS/MS main search", 56 },
+                { "Preparing combined folder ", 70 },
+                { "Correcting errors", 70 },
+                { "Reading search engine results", 70 },
+                { "Preparing reverse hits", 71 },
+                { "Finish search engine results", 72 },
+                { "Filter identifications (MS/MS)", 72 },
+                { "Calculating PEP", 72 },
+                { "Copying identifications", 73 },
+                { "Applying FDR", 73 },
+                { "Assembling second peptide MS/MS", 73 },
+                { "Combining second peptide files", 74 },
+                { "Second peptide search", 74 },
+                { "Reading search engine results (SP)", 87 },
+                { "Finish search engine results (SP)", 88 },
+                { "Filtering identifications (SP)", 88 },
+                { "Applying FDR (SP)", 89 },
+                { "Re-quantification", 89 },
+                { "Reporter quantification", 89 },
+                { "Prepare protein assembly", 89 },
+                { "Assembling proteins", 90 },
+                { "Assembling unidentified peptides", 91 },
+                { "Finish protein assembly", 91 },
+                { "Updating identifications", 95 },
+                { "Estimating complexity", 95 },
+                { "Prepare writing tables ", 95 },
+                { "Writing tables", 95 },
+                { "Finish writing tables ", 99 }
             };
         }
 
@@ -873,8 +873,8 @@ namespace AnalysisManagerMaxQuantPlugIn
                 "MaxQuantPLib.dll"
             };
 
-            var success = StoreDotNETToolVersionInfo(mMaxQuantProgLoc, additionalDLLs);
-            return success;
+            return StoreDotNETToolVersionInfo(mMaxQuantProgLoc, additionalDLLs);
+        }
 
         /// <summary>
         /// Update the "fasta file path" entry in the specified Andromeda parameter files
