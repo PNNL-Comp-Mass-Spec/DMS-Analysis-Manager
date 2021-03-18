@@ -25,13 +25,14 @@ namespace AnalysisManagerBase
         private const int DEFAULT_RETRY_HOLDOFF_SEC = 15;
 
         /// <summary>
-        /// access to the job parameters
+        /// Job parameters
         /// </summary>
         private readonly IJobParams mJobParams;
 
         /// <summary>
-        /// Access to manager parameters
+        /// Manager parameters
         /// </summary>
+        /// <remarks>Instance of class AnalysisMgrSettings</remarks>
         private readonly IMgrParams mMgrParams;
 
         #endregion

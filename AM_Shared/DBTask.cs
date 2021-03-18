@@ -76,6 +76,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Manager parameters
         /// </summary>
+        /// <remarks>Instance of class AnalysisMgrSettings</remarks>
         protected IMgrParams mMgrParams;
 
         /// <summary>

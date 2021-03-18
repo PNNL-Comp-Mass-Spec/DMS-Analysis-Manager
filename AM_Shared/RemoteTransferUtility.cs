@@ -17,6 +17,8 @@ namespace AnalysisManagerBase
     /// </summary>
     public class RemoteTransferUtility : RemoteUpdateUtility
     {
+        // Ignore Spelling: passphrase, scp, sftp, SFtpFile, Dirs, yyyyMMdd_HHmm
+
         #region "Constants"
 
         /// <summary>
@@ -80,11 +82,13 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Job parameters
         /// </summary>
+        /// <remarks>Instance of class AnalysisJob</remarks>
         private IJobParams JobParams { get; }
 
         /// <summary>
         /// Manager parameters
         /// </summary>
+        /// <remarks>Instance of class AnalysisMgrSettings</remarks>
         private IMgrParams MgrParams { get; }
 
         /// <summary>

@@ -81,6 +81,10 @@ namespace AnalysisManagerBase
         /// <remarks>Typically used to report error or warning messages</remarks>
         public string Message { get; private set; }
 
+        /// <summary>
+        /// Job parameters
+        /// </summary>
+        /// <remarks>Instance of class AnalysisJob</remarks>
         private IJobParams JobParams { get; }
 
         /// <summary>

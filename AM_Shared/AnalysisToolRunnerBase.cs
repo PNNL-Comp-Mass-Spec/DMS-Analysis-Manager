@@ -63,13 +63,15 @@ namespace AnalysisManagerBase
         #region "Module variables"
 
         /// <summary>
-        /// Access to the job parameters
+        /// Job parameters
         /// </summary>
+        /// <remarks>Instance of class AnalysisJob</remarks>
         protected IJobParams mJobParams;
 
         /// <summary>
-        /// Access to manager parameters
+        /// Manager parameters
         /// </summary>
+        /// <remarks>Instance of class AnalysisMgrSettings</remarks>
         protected IMgrParams mMgrParams;
 
         /// <summary>

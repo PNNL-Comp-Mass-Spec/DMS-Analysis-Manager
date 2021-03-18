@@ -29,7 +29,7 @@ namespace AnalysisManagerBase
     public abstract class AnalysisResources : AnalysisMgrBase, IAnalysisResources
     {
         // Ignore Spelling: tdf, ser, fid, baf, dta, acqu, maldi, tof, wiff, uimf, tims, MODa, deconv, msgfdb
-        // Ignore Spelling: num, parm, Cn, fht, xt, histone, loc
+        // Ignore Spelling: num, parm, Cn, fht, xt, histone, loc, MaxQuant
 
         #region "Constants"
 
@@ -521,11 +521,13 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Job parameters
         /// </summary>
+        /// <remarks>Instance of class AnalysisJob</remarks>
         protected IJobParams mJobParams;
 
         /// <summary>
         /// Manager parameters
         /// </summary>
+        /// <remarks>Instance of class AnalysisMgrSettings</remarks>
         protected IMgrParams mMgrParams;
 
         /// <summary>
@@ -542,8 +544,9 @@ namespace AnalysisManagerBase
         /// Dataset name
         /// </summary>
         /// <remarks>
-        /// Update the dataset name using property DatasetName
-        /// because we also need to propagate that change
+        /// mDatasetName is private because dataset name updates
+        /// should be done using property DatasetName,
+        /// so that the changes will propagate
         /// into DirectorySearch and FileSearch
         /// </remarks>
         private string mDatasetName;
@@ -810,6 +813,7 @@ namespace AnalysisManagerBase
             DirectorySearch = new DirectorySearch(
                 mFileCopyUtilities, mJobParams, mMyEMSLUtilities,
                 mDatasetName, mDebugLevel, mAuroraAvailable);
+
             RegisterEvents(DirectorySearch);
 
             DirectorySearch.MyEMSLSearchDisabled = mMyEMSLSearchDisabled || !myEmslAvailable;
