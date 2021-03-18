@@ -987,7 +987,7 @@ namespace AnalysisManagerMaxQuantPlugIn
                         {
                             LogWarning(string.Format(
                                 "Mismatch between FASTA file path in andromeda parameter file {0} and the generated fasta file: {1} vs. {2}",
-                                updatedPath, generatedFastaFilePath));
+                                parameterFile.FullName, updatedPath, generatedFastaFilePath));
                         }
 
                         dataLines.Add(string.Format("fasta file path=\"{0}\"", updatedPath));
