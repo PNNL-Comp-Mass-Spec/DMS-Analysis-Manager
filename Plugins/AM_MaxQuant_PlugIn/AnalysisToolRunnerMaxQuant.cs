@@ -17,14 +17,15 @@ using AnalysisManagerBase.FileAndDirectoryTools;
 
 namespace AnalysisManagerMaxQuantPlugIn
 {
-    // Ignore Spelling: Quant, deisotoping, apl, dryrun, proc, txt
-
     /// <summary>
     /// Class for running MaxQuant analysis
     /// </summary>
     // ReSharper disable once UnusedMember.Global
     public class AnalysisToolRunnerMaxQuant : AnalysisToolRunnerBase
     {
+        // ReSharper disable once CommentTypo
+        // Ignore Spelling: andromeda, aplfiles, apar, Quant, deisotoping, apl, dryrun, proc, txt
+
         private const string MAXQUANT_EXE_NAME = @"bin\MaxQuantCmd.exe";
 
         /// <summary>
