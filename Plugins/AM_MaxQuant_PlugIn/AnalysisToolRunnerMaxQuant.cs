@@ -133,9 +133,10 @@ namespace AnalysisManagerMaxQuantPlugIn
                 if (processingResult == CloseOutType.CLOSEOUT_FAILED)
                 {
                     PRISM.ConsoleMsgUtils.ShowWarning("MaxQuant processing failed");
-                    PRISM.ConsoleMsgUtils.ShowWarning("Sleeping for 10 minutes to allow for diagnosis");
+                    PRISM.ConsoleMsgUtils.ShowWarning("Sleeping for 2 minutes to allow for diagnosis");
+
                     var startTime = DateTime.UtcNow;
-                    while (DateTime.UtcNow.Subtract(startTime).TotalMinutes < 10)
+                    while (DateTime.UtcNow.Subtract(startTime).TotalMinutes < 2)
                     {
                         Console.Write(". ");
                         Global.IdleLoop(15);
