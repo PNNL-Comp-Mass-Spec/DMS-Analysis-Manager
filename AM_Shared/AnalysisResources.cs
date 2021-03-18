@@ -3486,9 +3486,11 @@ namespace AnalysisManagerBase
             try
             {
                 var orgDbDirectory = new DirectoryInfo(orgDbDirectoryPath);
-                if (orgDbDirectory.FullName.Length <= 2)
+
+                // Assure that this method wasn't called on C:\ (or similar)
+                if (orgDbDirectory.FullName.Length < 4)
                 {
-                    LogMessage("Warning: Org DB directory length is less than 3 characters; this is unexpected: " + orgDbDirectory.FullName);
+                    LogMessage("Warning: Org DB directory length is less than 4 characters; this is unexpected: " + orgDbDirectory.FullName);
                     return;
                 }
 
