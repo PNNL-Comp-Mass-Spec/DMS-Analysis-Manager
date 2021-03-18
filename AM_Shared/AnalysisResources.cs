@@ -2168,60 +2168,60 @@ namespace AnalysisManagerBase
                     Console.Write(".");
                 }
 
-                if (!fastaFiles.ContainsKey(fastaFile))
+                if (fastaFiles.ContainsKey(fastaFile))
+                    continue;
+
+                var lastUsed = DateMax(fastaFile.LastWriteTimeUtc, fastaFile.CreationTimeUtc);
+
+                if (fastaFile.Directory == null)
                 {
-                    var lastUsed = DateMax(fastaFile.LastWriteTimeUtc, fastaFile.CreationTimeUtc);
+                    fastaFiles.Add(fastaFile, lastUsed);
+                    continue;
+                }
 
-                    if (fastaFile.Directory == null)
+                // Look for a .hashcheck file
+                var hashCheckFiles = fastaFile.Directory.GetFiles(fastaFile.Name + "*" + OrganismDatabaseHandler.ProteinExport.GetFASTAFromDMS.HashcheckSuffix).ToList();
+                if (hashCheckFiles.Count > 0)
+                {
+                    lastUsed = DateMax(lastUsed, hashCheckFiles.First().LastWriteTimeUtc);
+                }
+
+                // Look for a .LastUsed file
+                var lastUsedFiles = fastaFile.Directory.GetFiles(fastaFile.Name + FileSyncUtils.LASTUSED_FILE_EXTENSION).ToList();
+
+                // If this is a .revCat.fasta file, look for .fasta.LastUsed
+                if (fastaFile.Name.EndsWith(".revCat.fasta", StringComparison.OrdinalIgnoreCase))
+                {
+                    var altFastaName = fastaFile.Name.Substring(0, fastaFile.Name.Length - ".revCat.fasta".Length) + ".fasta" + FileSyncUtils.LASTUSED_FILE_EXTENSION;
+                    var additionalFiles = fastaFile.Directory.GetFiles(altFastaName).ToList();
+                    lastUsedFiles.AddRange(additionalFiles);
+                }
+
+                if (lastUsedFiles.Count > 0)
+                {
+                    lastUsed = DateMax(lastUsed, lastUsedFiles.First().LastWriteTimeUtc);
+
+                    try
                     {
-                        fastaFiles.Add(fastaFile, lastUsed);
-                        continue;
-                    }
+                        // Read the date stored in the file
+                        using var lastUsedReader = new StreamReader(new FileStream(lastUsedFiles.First().FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
 
-                    // Look for a .hashcheck file
-                    var hashCheckFiles = fastaFile.Directory.GetFiles(fastaFile.Name + "*" + OrganismDatabaseHandler.ProteinExport.GetFASTAFromDMS.HashcheckSuffix).ToList();
-                    if (hashCheckFiles.Count > 0)
-                    {
-                        lastUsed = DateMax(lastUsed, hashCheckFiles.First().LastWriteTimeUtc);
-                    }
-
-                    // Look for a .LastUsed file
-                    var lastUsedFiles = fastaFile.Directory.GetFiles(fastaFile.Name + FileSyncUtils.LASTUSED_FILE_EXTENSION).ToList();
-
-                    // If this is a .revCat.fasta file, look for .fasta.LastUsed
-                    if (fastaFile.Name.EndsWith(".revCat.fasta", StringComparison.OrdinalIgnoreCase))
-                    {
-                        var altFastaName = fastaFile.Name.Substring(0, fastaFile.Name.Length - ".revCat.fasta".Length) + ".fasta" + FileSyncUtils.LASTUSED_FILE_EXTENSION;
-                        var additionalFiles = fastaFile.Directory.GetFiles(altFastaName).ToList();
-                        lastUsedFiles.AddRange(additionalFiles);
-                    }
-
-                    if (lastUsedFiles.Count > 0)
-                    {
-                        lastUsed = DateMax(lastUsed, lastUsedFiles.First().LastWriteTimeUtc);
-
-                        try
+                        if (!lastUsedReader.EndOfStream)
                         {
-                            // Read the date stored in the file
-                            using var lastUsedReader = new StreamReader(new FileStream(lastUsedFiles.First().FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
-
-                            if (!lastUsedReader.EndOfStream)
+                            var lastUseDate = lastUsedReader.ReadLine();
+                            if (DateTime.TryParse(lastUseDate, out var lastUsedActual))
                             {
-                                var lastUseDate = lastUsedReader.ReadLine();
-                                if (DateTime.TryParse(lastUseDate, out var lastUsedActual))
-                                {
-                                    lastUsed = DateMax(lastUsed, lastUsedActual);
-                                }
+                                lastUsed = DateMax(lastUsed, lastUsedActual);
                             }
                         }
-                        catch (Exception)
-                        {
-                            // Ignore errors here
-                        }
                     }
-
-                    fastaFiles.Add(fastaFile, lastUsed);
+                    catch (Exception)
+                    {
+                        // Ignore errors here
+                    }
                 }
+
+                fastaFiles.Add(fastaFile, lastUsed);
             }
 
             if (longRunning)
@@ -3710,15 +3710,16 @@ namespace AnalysisManagerBase
                             continue;
                         }
 
-                        if (string.Equals(lineParts[0], "MaxSizeGB", StringComparison.OrdinalIgnoreCase))
+                        if (!string.Equals(lineParts[0], "MaxSizeGB", StringComparison.OrdinalIgnoreCase))
+                            continue;
+
+                        if (!int.TryParse(lineParts[1], out maxSizeGB))
                         {
-                            if (!int.TryParse(lineParts[1], out maxSizeGB))
-                            {
-                                LogTools.LogError("MaxSizeGB line does not contain an integer in " + maxDirSizeFile.FullName + errorSuffix);
-                                return false;
-                            }
-                            break;
+                            LogTools.LogError("MaxSizeGB line does not contain an integer in " + maxDirSizeFile.FullName + errorSuffix);
+                            return false;
                         }
+
+                        break;
                     }
                 }
 
@@ -3789,15 +3790,14 @@ namespace AnalysisManagerBase
                         filesProcessed++;
 
                         // Abort this process if the LastUsed date of this file is less than 5 days old
-                        if (fastaFiles.TryGetValue(fileToPurge, out var lastUsed))
+                        if (fastaFiles.TryGetValue(fileToPurge, out var lastUsed) &&
+                            DateTime.UtcNow.Subtract(lastUsed).TotalDays < 5)
                         {
-                            if (DateTime.UtcNow.Subtract(lastUsed).TotalDays < 5)
-                            {
-                                LogTools.LogMessage("All fasta files in " + orgDbDirectory.FullName + " are less than 5 days old; " +
-                                                    "will not purge any more files to free disk space");
-                                filesProcessed = fastaFilesByLastUse.Count;
-                                break;
-                            }
+                            LogTools.LogMessage("All fasta files in " + orgDbDirectory.FullName + " are less than 5 days old; " +
+                                                "will not purge any more files to free disk space");
+
+                            filesProcessed = fastaFilesByLastUse.Count;
+                            break;
                         }
 
                         // Delete all files associated with this fasta file
