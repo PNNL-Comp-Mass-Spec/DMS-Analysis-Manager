@@ -93,60 +93,60 @@
     <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="JobConfig\AnalysisJob.cs" />
     <Compile Include="AnalysisTool\AnalysisMgrBase.cs" />
     <Compile Include="AnalysisTool\AnalysisResources.cs" />
     <Compile Include="AnalysisTool\AnalysisResults.cs" />
     <Compile Include="AnalysisTool\AnalysisToolRunnerBase.cs" />
-    <Compile Include="JobConfig\AssemblyTools.cs" />
+    <Compile Include="AnalysisTool\IAnalysisResources.cs" />
+    <Compile Include="AnalysisTool\IToolRunner.cs" />
+    <Compile Include="AnalysisTool\RunDosProgram.cs" />
     <Compile Include="DataFileTools\CDTAUtilities.cs" />
-    <Compile Include="JobConfig\DataPackageDatasetInfo.cs" />
-    <Compile Include="JobConfig\DataPackageFileHandler.cs" />
-    <Compile Include="JobConfig\DataPackageInfoLoader.cs" />
-    <Compile Include="JobConfig\DataPackageJobInfo.cs" />
-    <Compile Include="StatusReporting\DBStatusLogger.cs" />
-    <Compile Include="DBTask.cs" />
-    <Compile Include="FileAndDirectoryTools\DotNetZipTools.cs" />
-    <Compile Include="FileAndDirectoryTools\SubdirectoryFileCompressor.cs" />
-    <Compile Include="FileAndDirectoryTools\WorkingDirectoryMetadata.cs" />
-    <Compile Include="FileAndDirectoryTools\FileCopyUtilities.cs" />
-    <Compile Include="FileAndDirectoryTools\DirectorySearch.cs" />
-    <Compile Include="JobConfig\FormattedXMLWriter.cs" />
-    <Compile Include="Global.cs" />
-    <Compile Include="JobConfig\JobParameter.cs" />
-    <Compile Include="StatusReporting\LoggerBase.cs" />
-    <Compile Include="StatusReporting\MemoryUsageLogger.cs" />
-    <Compile Include="StatusReporting\MessageContainer.cs" />
-    <Compile Include="StatusReporting\MessageQueueLogger.cs" />
-    <Compile Include="StatusReporting\MessageSender.cs" />
-    <Compile Include="JobConfig\MyEMSLUtilities.cs" />
-    <Compile Include="OfflineJobs\OfflineProcessing.cs" />
+    <Compile Include="DataFileTools\ISpectraFileProcessor.cs" />
+    <Compile Include="DataFileTools\ISpectraFilter.cs" />
     <Compile Include="DataFileTools\ProteinCollectionInfo.cs" />
     <Compile Include="DataFileTools\ProteowizardTools.cs" />
-    <Compile Include="OfflineJobs\RemoteMonitor.cs" />
-    <Compile Include="OfflineJobs\RemoteTransferUtility.cs" />
-    <Compile Include="AnalysisTool\RunDosProgram.cs" />
     <Compile Include="DataFileTools\ScanStatsGenerator.cs" />
     <Compile Include="DataFileTools\SplitCattedFiles.cs" />
     <Compile Include="DataFileTools\SplitFastaFileUtilities.cs" />
     <Compile Include="DataFileTools\SplitMGFFile.cs" />
     <Compile Include="DataFileTools\SqLiteUtilities.cs" />
-    <Compile Include="StatusReporting\StatusFile.cs" />
-    <Compile Include="JobConfig\SummaryFile.cs" />
-    <Compile Include="StatusReporting\SystemProcessInfo.cs" />
-    <Compile Include="JobConfig\ToolVersionUtilities.cs" />
-    <Compile Include="OfflineJobs\XMLUtils.cs" />
+    <Compile Include="DBTask.cs" />
     <Compile Include="ExceptionClasses.cs" />
-    <Compile Include="GlobalSuppressions.cs" />
-    <Compile Include="AnalysisTool\IAnalysisResources.cs" />
-    <Compile Include="JobConfig\IJobParams.cs" />
-    <Compile Include="IMgrParams.cs" />
-    <Compile Include="DataFileTools\ISpectraFileProcessor.cs" />
-    <Compile Include="DataFileTools\ISpectraFilter.cs" />
-    <Compile Include="StatusReporting\IStatusFile.cs" />
-    <Compile Include="AnalysisTool\IToolRunner.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="FileAndDirectoryTools\DirectorySearch.cs" />
+    <Compile Include="FileAndDirectoryTools\DotNetZipTools.cs" />
+    <Compile Include="FileAndDirectoryTools\FileCopyUtilities.cs" />
     <Compile Include="FileAndDirectoryTools\FileSearch.cs" />
+    <Compile Include="FileAndDirectoryTools\SubdirectoryFileCompressor.cs" />
+    <Compile Include="FileAndDirectoryTools\WorkingDirectoryMetadata.cs" />
+    <Compile Include="Global.cs" />
+    <Compile Include="GlobalSuppressions.cs" />
+    <Compile Include="IMgrParams.cs" />
+    <Compile Include="JobConfig\AnalysisJob.cs" />
+    <Compile Include="JobConfig\AssemblyTools.cs" />
+    <Compile Include="JobConfig\DataPackageDatasetInfo.cs" />
+    <Compile Include="JobConfig\DataPackageFileHandler.cs" />
+    <Compile Include="JobConfig\DataPackageInfoLoader.cs" />
+    <Compile Include="JobConfig\DataPackageJobInfo.cs" />
+    <Compile Include="JobConfig\FormattedXMLWriter.cs" />
+    <Compile Include="JobConfig\IJobParams.cs" />
+    <Compile Include="JobConfig\JobParameter.cs" />
+    <Compile Include="JobConfig\MyEMSLUtilities.cs" />
+    <Compile Include="JobConfig\SummaryFile.cs" />
+    <Compile Include="JobConfig\ToolVersionUtilities.cs" />
+    <Compile Include="OfflineJobs\OfflineProcessing.cs" />
+    <Compile Include="OfflineJobs\RemoteMonitor.cs" />
+    <Compile Include="OfflineJobs\RemoteTransferUtility.cs" />
+    <Compile Include="OfflineJobs\XMLUtils.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="StatusReporting\DBStatusLogger.cs" />
+    <Compile Include="StatusReporting\IStatusFile.cs" />
+    <Compile Include="StatusReporting\LoggerBase.cs" />
+    <Compile Include="StatusReporting\MemoryUsageLogger.cs" />
+    <Compile Include="StatusReporting\MessageContainer.cs" />
+    <Compile Include="StatusReporting\MessageQueueLogger.cs" />
+    <Compile Include="StatusReporting\MessageSender.cs" />
+    <Compile Include="StatusReporting\StatusFile.cs" />
+    <Compile Include="StatusReporting\SystemProcessInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Apache.NMS.ActiveMQ">
@@ -189,7 +189,6 @@
       <Version>3.7.4</Version>
     </PackageReference>
   </ItemGroup>
-  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>xcopy "$(TargetPath)" "$(ProjectDir)..\AM_Common\" /D /Y

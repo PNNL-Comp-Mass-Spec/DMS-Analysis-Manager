@@ -46,6 +46,10 @@
     <Reference Include="FastaFileSplitterDLL">
       <HintPath>..\AM_Common\FastaFileSplitterDLL.dll</HintPath>
     </Reference>
+    <Reference Include="FileConcatenator, Version=1.0.2.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\AM_Common\FileConcatenator.dll</HintPath>
+    </Reference>
     <Reference Include="FlexibleFileSortUtility">
       <HintPath>..\AM_Common\FlexibleFileSortUtility.dll</HintPath>
     </Reference>
@@ -68,6 +72,10 @@
     <Reference Include="ParamFileGenerator">
       <HintPath>..\AM_Common\ParamFileGenerator.dll</HintPath>
     </Reference>
+    <Reference Include="PeptideFileExtractor, Version=1.7.6375.23234, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\AM_Common\PeptideFileExtractor.dll</HintPath>
+    </Reference>
     <Reference Include="PHRPReader">
       <HintPath>..\AM_Common\PHRPReader.dll</HintPath>
     </Reference>
@@ -84,70 +92,76 @@
     <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="JobConfig\AnalysisJob.cs" />
     <Compile Include="AnalysisTool\AnalysisMgrBase.cs" />
     <Compile Include="AnalysisTool\AnalysisResources.cs" />
     <Compile Include="AnalysisTool\AnalysisResults.cs" />
     <Compile Include="AnalysisTool\AnalysisToolRunnerBase.cs" />
-    <Compile Include="JobConfig\AssemblyTools.cs" />
+    <Compile Include="AnalysisTool\IAnalysisResources.cs" />
+    <Compile Include="AnalysisTool\IToolRunner.cs" />
+    <Compile Include="AnalysisTool\RunDosProgram.cs" />
     <Compile Include="DataFileTools\CDTAUtilities.cs" />
-    <Compile Include="JobConfig\DataPackageDatasetInfo.cs" />
-    <Compile Include="JobConfig\DataPackageFileHandler.cs" />
-    <Compile Include="JobConfig\DataPackageInfoLoader.cs" />
-    <Compile Include="JobConfig\DataPackageJobInfo.cs" />
-    <Compile Include="StatusReporting\DBStatusLogger.cs" />
-    <Compile Include="DBTask.cs" />
-    <Compile Include="FileAndDirectoryTools\DotNetZipTools.cs" />
-    <Compile Include="FileAndDirectoryTools\SubdirectoryFileCompressor.cs" />
-    <Compile Include="FileAndDirectoryTools\WorkingDirectoryMetadata.cs" />
-    <Compile Include="FileAndDirectoryTools\FileCopyUtilities.cs" />
-    <Compile Include="FileAndDirectoryTools\DirectorySearch.cs" />
-    <Compile Include="JobConfig\FormattedXMLWriter.cs" />
-    <Compile Include="Global.cs" />
-    <Compile Include="JobConfig\JobParameter.cs" />
-    <Compile Include="StatusReporting\LoggerBase.cs" />
-    <Compile Include="StatusReporting\MemoryUsageLogger.cs" />
-    <Compile Include="StatusReporting\MessageContainer.cs" />
-    <Compile Include="StatusReporting\MessageQueueLogger.cs" />
-    <Compile Include="StatusReporting\MessageSender.cs" />
-    <Compile Include="JobConfig\MyEMSLUtilities.cs" />
-    <Compile Include="OfflineJobs\OfflineProcessing.cs" />
+    <Compile Include="DataFileTools\ISpectraFileProcessor.cs" />
+    <Compile Include="DataFileTools\ISpectraFilter.cs" />
     <Compile Include="DataFileTools\ProteinCollectionInfo.cs" />
     <Compile Include="DataFileTools\ProteowizardTools.cs" />
-    <Compile Include="OfflineJobs\RemoteMonitor.cs" />
-    <Compile Include="OfflineJobs\RemoteTransferUtility.cs" />
-    <Compile Include="AnalysisTool\RunDosProgram.cs" />
     <Compile Include="DataFileTools\ScanStatsGenerator.cs" />
     <Compile Include="DataFileTools\SplitCattedFiles.cs" />
     <Compile Include="DataFileTools\SplitFastaFileUtilities.cs" />
     <Compile Include="DataFileTools\SplitMGFFile.cs" />
     <Compile Include="DataFileTools\SqLiteUtilities.cs" />
-    <Compile Include="StatusReporting\StatusFile.cs" />
-    <Compile Include="JobConfig\SummaryFile.cs" />
-    <Compile Include="StatusReporting\SystemProcessInfo.cs" />
-    <Compile Include="JobConfig\ToolVersionUtilities.cs" />
-    <Compile Include="OfflineJobs\XMLUtils.cs" />
+    <Compile Include="DBTask.cs" />
     <Compile Include="ExceptionClasses.cs" />
-    <Compile Include="GlobalSuppressions.cs" />
-    <Compile Include="AnalysisTool\IAnalysisResources.cs" />
-    <Compile Include="JobConfig\IJobParams.cs" />
-    <Compile Include="IMgrParams.cs" />
-    <Compile Include="DataFileTools\ISpectraFileProcessor.cs" />
-    <Compile Include="DataFileTools\ISpectraFilter.cs" />
-    <Compile Include="StatusReporting\IStatusFile.cs" />
-    <Compile Include="AnalysisTool\IToolRunner.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="FileAndDirectoryTools\DirectorySearch.cs" />
+    <Compile Include="FileAndDirectoryTools\DotNetZipTools.cs" />
+    <Compile Include="FileAndDirectoryTools\FileCopyUtilities.cs" />
     <Compile Include="FileAndDirectoryTools\FileSearch.cs" />
+    <Compile Include="FileAndDirectoryTools\SubdirectoryFileCompressor.cs" />
+    <Compile Include="FileAndDirectoryTools\WorkingDirectoryMetadata.cs" />
+    <Compile Include="Global.cs" />
+    <Compile Include="GlobalSuppressions.cs" />
+    <Compile Include="IMgrParams.cs" />
+    <Compile Include="JobConfig\AnalysisJob.cs" />
+    <Compile Include="JobConfig\AssemblyTools.cs" />
+    <Compile Include="JobConfig\DataPackageDatasetInfo.cs" />
+    <Compile Include="JobConfig\DataPackageFileHandler.cs" />
+    <Compile Include="JobConfig\DataPackageInfoLoader.cs" />
+    <Compile Include="JobConfig\DataPackageJobInfo.cs" />
+    <Compile Include="JobConfig\FormattedXMLWriter.cs" />
+    <Compile Include="JobConfig\IJobParams.cs" />
+    <Compile Include="JobConfig\JobParameter.cs" />
+    <Compile Include="JobConfig\MyEMSLUtilities.cs" />
+    <Compile Include="JobConfig\SummaryFile.cs" />
+    <Compile Include="JobConfig\ToolVersionUtilities.cs" />
+    <Compile Include="OfflineJobs\OfflineProcessing.cs" />
+    <Compile Include="OfflineJobs\RemoteMonitor.cs" />
+    <Compile Include="OfflineJobs\RemoteTransferUtility.cs" />
+    <Compile Include="OfflineJobs\XMLUtils.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="StatusReporting\DBStatusLogger.cs" />
+    <Compile Include="StatusReporting\IStatusFile.cs" />
+    <Compile Include="StatusReporting\LoggerBase.cs" />
+    <Compile Include="StatusReporting\MemoryUsageLogger.cs" />
+    <Compile Include="StatusReporting\MessageContainer.cs" />
+    <Compile Include="StatusReporting\MessageQueueLogger.cs" />
+    <Compile Include="StatusReporting\MessageSender.cs" />
+    <Compile Include="StatusReporting\StatusFile.cs" />
+    <Compile Include="StatusReporting\SystemProcessInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Apache.NMS.ActiveMQ">
       <Version>1.7.2</Version>
     </PackageReference>
+    <PackageReference Include="CsvHelper">
+      <Version>13.0.0</Version>
+    </PackageReference>
     <PackageReference Include="DotNetZip">
-      <Version>1.13.5</Version>
+      <Version>1.15.0</Version>
     </PackageReference>
     <PackageReference Include="jayrock-json">
       <Version>0.9.16530.1</Version>
+    </PackageReference>
+    <PackageReference Include="MathNet.Numerics">
+      <Version>4.12.0</Version>
     </PackageReference>
     <PackageReference Include="PRISM-DatabaseUtils">
       <Version>1.1.7</Version>
@@ -162,7 +176,7 @@
       <Version>2.0.4</Version>
     </PackageReference>
     <PackageReference Include="SharpZipLib">
-      <Version>1.2.0</Version>
+      <Version>1.3.1</Version>
     </PackageReference>
     <PackageReference Include="SSH.NET">
       <Version>2016.1.0</Version>
@@ -171,7 +185,7 @@
       <Version>1.0.111</Version>
     </PackageReference>
     <PackageReference Include="UIMFLibrary">
-      <Version>3.7.3</Version>
+      <Version>3.7.4</Version>
     </PackageReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
@@ -183,7 +197,8 @@ xcopy "$(TargetDir)PRISM.dll" "$(ProjectDir)..\AM_Common\" /D /Y
 xcopy "$(TargetDir)PrismWin.dll" "$(ProjectDir)..\AM_Common\" /D /Y
 
 xcopy "$(ProjectDir)..\AM_Common\FileConcatenator.dll" "$(TargetDir)" /D /Y  /F
-xcopy "$(ProjectDir)..\AM_Common\PeptideFileExtractor.dll" "$(TargetDir)" /D /Y /F</PostBuildEvent>
+xcopy "$(ProjectDir)..\AM_Common\PeptideFileExtractor.dll" "$(TargetDir)" /D /Y /F
+</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
