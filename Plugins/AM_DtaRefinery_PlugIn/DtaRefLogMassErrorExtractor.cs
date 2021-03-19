@@ -5,6 +5,7 @@ using System.Data;
 using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
+using AnalysisManagerBase.JobConfig;
 using PRISMDatabaseUtils;
 
 namespace AnalysisManagerDtaRefineryPlugIn

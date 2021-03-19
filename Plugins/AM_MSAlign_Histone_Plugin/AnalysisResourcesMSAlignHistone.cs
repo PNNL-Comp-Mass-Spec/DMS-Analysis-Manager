@@ -6,6 +6,9 @@
 //*********************************************************************************************************
 
 using AnalysisManagerBase;
+using AnalysisManagerBase.AnalysisTool;
+using AnalysisManagerBase.JobConfig;
+using AnalysisManagerBase.StatusReporting;
 
 namespace AnalysisManagerMSAlignHistonePlugIn
 {

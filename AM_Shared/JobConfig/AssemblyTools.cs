@@ -1,4 +1,3 @@
-
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -11,7 +10,7 @@ using System.IO;
 //
 //*********************************************************************************************************
 
-namespace AnalysisManagerBase
+namespace AnalysisManagerBase.JobConfig
 {
     /// <summary>
     /// Tools for manipulating and documenting the assemblies used for each analysis job

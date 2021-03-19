@@ -1,9 +1,10 @@
-﻿using PRISM;
-using PRISM.Logging;
-using System;
+﻿using System;
 using System.IO;
+using AnalysisManagerBase.StatusReporting;
+using PRISM;
+using PRISM.Logging;
 
-namespace AnalysisManagerBase
+namespace AnalysisManagerBase.AnalysisTool
 {
     /// <summary>
     /// Analysis manager base class

@@ -17,6 +17,10 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using AnalysisManagerBase.AnalysisTool;
+using AnalysisManagerBase.JobConfig;
+using AnalysisManagerBase.OfflineJobs;
+using AnalysisManagerBase.StatusReporting;
 
 namespace AnalysisManagerProg
 {

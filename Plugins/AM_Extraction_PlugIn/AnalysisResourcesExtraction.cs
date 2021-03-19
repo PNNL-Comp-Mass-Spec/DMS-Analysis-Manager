@@ -14,6 +14,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Xml;
+using AnalysisManagerBase.AnalysisTool;
+using AnalysisManagerBase.JobConfig;
+using AnalysisManagerBase.StatusReporting;
 
 namespace AnalysisManagerExtractionPlugin
 {

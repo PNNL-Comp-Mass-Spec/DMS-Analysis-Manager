@@ -1,4 +1,4 @@
-﻿namespace AnalysisManagerBase
+﻿namespace AnalysisManagerBase.StatusReporting
 {
     /// <summary>
     /// Class that tracks message text and an associated manager name

@@ -12,6 +12,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
+using AnalysisManagerBase.AnalysisTool;
+using AnalysisManagerBase.JobConfig;
+using AnalysisManagerBase.OfflineJobs;
 
 namespace AnalysisManagerFormularityPlugin
 {

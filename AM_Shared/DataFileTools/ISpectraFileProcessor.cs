@@ -7,7 +7,11 @@
 //
 //*********************************************************************************************************
 
-namespace AnalysisManagerBase
+using AnalysisManagerBase.AnalysisTool;
+using AnalysisManagerBase.JobConfig;
+using AnalysisManagerBase.StatusReporting;
+
+namespace AnalysisManagerBase.DataFileTools
 {
     #region "Structures"
 

@@ -1,15 +1,18 @@
-﻿using MyEMSLReader;
-using PHRPReader;
-using PRISM;
-using PRISM.Logging;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using AnalysisManagerBase.AnalysisTool;
+using AnalysisManagerBase.DataFileTools;
+using AnalysisManagerBase.JobConfig;
+using MyEMSLReader;
+using PHRPReader;
+using PRISM;
+using PRISM.Logging;
 
 // ReSharper disable UnusedMember.Global
-namespace AnalysisManagerBase
+namespace AnalysisManagerBase.FileAndDirectoryTools
 {
     /// <summary>
     /// File search methods

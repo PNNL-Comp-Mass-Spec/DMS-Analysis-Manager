@@ -1,13 +1,14 @@
-﻿using PRISM;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using AnalysisManagerBase.AnalysisTool;
+using PRISM;
 using PRISMDatabaseUtils;
 
-namespace AnalysisManagerBase
+namespace AnalysisManagerBase.JobConfig
 {
     /// <summary>
     /// Methods for tracking versions of executables and DLLs

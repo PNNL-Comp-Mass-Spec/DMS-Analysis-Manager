@@ -1,9 +1,9 @@
-﻿using PRISM;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using PRISM;
 
 //*********************************************************************************************************
 // Written by Matthew Monroe for the US Department of Energy
@@ -12,7 +12,7 @@ using System.Linq;
 // Last updated 02/03/2016
 //*********************************************************************************************************
 
-namespace AnalysisManagerBase
+namespace AnalysisManagerBase.StatusReporting
 {
     /// <summary>
     /// Memory usage logger

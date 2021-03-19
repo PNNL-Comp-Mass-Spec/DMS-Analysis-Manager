@@ -8,6 +8,9 @@
 
 using AnalysisManagerBase;
 using System.IO;
+using AnalysisManagerBase.AnalysisTool;
+using AnalysisManagerBase.JobConfig;
+using AnalysisManagerBase.StatusReporting;
 
 namespace AnalysisManagerProg
 {

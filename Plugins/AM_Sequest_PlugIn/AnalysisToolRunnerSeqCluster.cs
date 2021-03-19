@@ -16,6 +16,8 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Timers;
+using AnalysisManagerBase.AnalysisTool;
+using AnalysisManagerBase.JobConfig;
 
 namespace AnalysisManagerSequestPlugin
 {

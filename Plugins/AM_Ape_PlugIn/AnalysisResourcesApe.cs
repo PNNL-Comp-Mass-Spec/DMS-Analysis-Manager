@@ -1,6 +1,8 @@
 using System;
 using AnalysisManagerBase;
 using System.IO;
+using AnalysisManagerBase.AnalysisTool;
+using AnalysisManagerBase.JobConfig;
 
 namespace AnalysisManager_Ape_PlugIn
 {

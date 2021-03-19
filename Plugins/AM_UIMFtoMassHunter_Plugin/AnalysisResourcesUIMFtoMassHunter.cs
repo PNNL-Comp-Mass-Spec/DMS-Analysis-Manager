@@ -7,6 +7,8 @@
 
 using AnalysisManagerBase;
 using System;
+using AnalysisManagerBase.AnalysisTool;
+using AnalysisManagerBase.JobConfig;
 
 namespace AnalysisManagerUIMFtoMassHunterPlugin
 {

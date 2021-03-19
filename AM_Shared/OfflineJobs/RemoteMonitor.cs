@@ -1,12 +1,15 @@
-﻿using PRISM;
-using Renci.SshNet.Sftp;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
+using AnalysisManagerBase.AnalysisTool;
+using AnalysisManagerBase.JobConfig;
+using AnalysisManagerBase.StatusReporting;
+using PRISM;
+using Renci.SshNet.Sftp;
 
-namespace AnalysisManagerBase
+namespace AnalysisManagerBase.OfflineJobs
 {
     /// <summary>
     /// Checks the status of a task running remotely

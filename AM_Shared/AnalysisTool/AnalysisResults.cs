@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using AnalysisManagerBase.JobConfig;
 
 //*********************************************************************************************************
 // Written by Dave Clark and Matthew Monroe for the US Department of Energy
@@ -9,7 +10,7 @@ using System.IO;
 //
 //*********************************************************************************************************
 
-namespace AnalysisManagerBase
+namespace AnalysisManagerBase.AnalysisTool
 {
     /// <summary>
     /// Analysis job results handling class

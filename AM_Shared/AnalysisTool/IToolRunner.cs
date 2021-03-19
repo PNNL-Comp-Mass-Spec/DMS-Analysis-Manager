@@ -9,8 +9,11 @@
 
 using System;
 using System.Collections.Generic;
+using AnalysisManagerBase.JobConfig;
+using AnalysisManagerBase.OfflineJobs;
+using AnalysisManagerBase.StatusReporting;
 
-namespace AnalysisManagerBase
+namespace AnalysisManagerBase.AnalysisTool
 {
     /// <summary>
     /// Tool runner interface

@@ -1,5 +1,7 @@
 using AnalysisManagerBase;
 using System;
+using AnalysisManagerBase.AnalysisTool;
+using AnalysisManagerBase.JobConfig;
 
 namespace AnalysisManager_AScore_PlugIn
 {

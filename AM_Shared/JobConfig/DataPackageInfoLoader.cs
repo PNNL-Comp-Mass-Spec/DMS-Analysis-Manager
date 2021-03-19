@@ -1,12 +1,13 @@
-﻿using PHRPReader;
-using PRISM.Logging;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using AnalysisManagerBase.StatusReporting;
+using PHRPReader;
+using PRISM.Logging;
 using PRISMDatabaseUtils;
 
-namespace AnalysisManagerBase
+namespace AnalysisManagerBase.JobConfig
 {
     /// <summary>
     /// Data package info loader

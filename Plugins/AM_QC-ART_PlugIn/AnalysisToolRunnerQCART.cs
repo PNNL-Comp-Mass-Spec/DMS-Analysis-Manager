@@ -14,6 +14,8 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Xml;
+using AnalysisManagerBase.AnalysisTool;
+using AnalysisManagerBase.JobConfig;
 using PRISMDatabaseUtils;
 
 namespace AnalysisManagerQCARTPlugin

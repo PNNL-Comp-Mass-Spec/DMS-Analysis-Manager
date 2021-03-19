@@ -10,7 +10,7 @@ using System.Xml;
 //
 //*********************************************************************************************************
 
-namespace AnalysisManagerBase
+namespace AnalysisManagerBase.JobConfig
 {
     /// <summary>
     /// Writes a formatted XML file

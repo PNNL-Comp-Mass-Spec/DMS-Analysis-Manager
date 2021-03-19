@@ -6,9 +6,11 @@
 //
 //*********************************************************************************************************
 
+using AnalysisManagerBase.JobConfig;
+using AnalysisManagerBase.StatusReporting;
 using PRISM.Logging;
 
-namespace AnalysisManagerBase
+namespace AnalysisManagerBase.DataFileTools
 {
     #region "Enums"
 

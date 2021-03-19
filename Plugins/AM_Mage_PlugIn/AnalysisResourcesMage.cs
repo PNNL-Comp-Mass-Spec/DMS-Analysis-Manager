@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using AnalysisManagerBase.JobConfig;
 using PRISMDatabaseUtils;
 
 namespace AnalysisManager_Mage_PlugIn

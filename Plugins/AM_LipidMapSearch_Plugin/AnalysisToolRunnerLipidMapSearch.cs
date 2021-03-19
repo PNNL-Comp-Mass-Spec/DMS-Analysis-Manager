@@ -5,6 +5,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
+using AnalysisManagerBase.AnalysisTool;
+using AnalysisManagerBase.FileAndDirectoryTools;
+using AnalysisManagerBase.JobConfig;
 
 namespace AnalysisManagerLipidMapSearchPlugIn
 {

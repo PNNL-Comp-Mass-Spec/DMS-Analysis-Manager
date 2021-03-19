@@ -1,6 +1,7 @@
 using AnalysisManagerBase;
 using System;
 using System.IO;
+using AnalysisManagerBase.JobConfig;
 
 namespace AnalysisManagerSequestPlugin
 {

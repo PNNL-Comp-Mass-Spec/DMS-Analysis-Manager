@@ -4,6 +4,7 @@ using System.Data;
 using System.IO;
 using System.Linq;
 using System.Text;
+using AnalysisManagerBase.JobConfig;
 using PRISMDatabaseUtils;
 
 namespace AnalysisManagerMzRefineryPlugIn

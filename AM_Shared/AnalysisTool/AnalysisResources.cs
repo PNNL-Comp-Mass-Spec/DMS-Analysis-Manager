@@ -1,9 +1,3 @@
-using MyEMSLReader;
-using ParamFileGenerator.MakeParams;
-using PHRPReader;
-using PRISM;
-using PRISM.Logging;
-using Renci.SshNet.Sftp;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -12,7 +6,18 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml;
 using System.Xml.Linq;
+using AnalysisManagerBase.DataFileTools;
+using AnalysisManagerBase.FileAndDirectoryTools;
+using AnalysisManagerBase.JobConfig;
+using AnalysisManagerBase.OfflineJobs;
+using AnalysisManagerBase.StatusReporting;
+using MyEMSLReader;
+using ParamFileGenerator.MakeParams;
+using PHRPReader;
+using PRISM;
+using PRISM.Logging;
 using PRISMDatabaseUtils;
+using Renci.SshNet.Sftp;
 
 //*********************************************************************************************************
 // Written by Dave Clark and Matthew Monroe for the US Department of Energy
@@ -23,7 +28,7 @@ using PRISMDatabaseUtils;
 
 // ReSharper disable UnusedMember.Global
 
-namespace AnalysisManagerBase
+namespace AnalysisManagerBase.AnalysisTool
 {
     /// <summary>
     /// Base class for job resource class

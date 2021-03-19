@@ -1,14 +1,14 @@
-﻿
-using FastaFileSplitterDLL;
-using PRISM;
-using PRISM.Logging;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
+using AnalysisManagerBase.FileAndDirectoryTools;
+using FastaFileSplitterDLL;
+using PRISM;
+using PRISM.Logging;
 using PRISMDatabaseUtils;
 
-namespace AnalysisManagerBase
+namespace AnalysisManagerBase.DataFileTools
 {
     /// <summary>
     /// FASTA file utilities

@@ -2,6 +2,7 @@
 using PRISM;
 using System;
 using System.IO;
+using AnalysisManagerBase.AnalysisTool;
 
 namespace AnalysisManagerMsXmlGenPlugIn
 {

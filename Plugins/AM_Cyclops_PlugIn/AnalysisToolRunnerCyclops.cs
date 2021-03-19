@@ -3,6 +3,8 @@ using Cyclops;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using AnalysisManagerBase.AnalysisTool;
+using AnalysisManagerBase.JobConfig;
 
 namespace AnalysisManager_Cyclops_PlugIn
 {

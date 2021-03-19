@@ -10,6 +10,8 @@ using System.Net;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
+using AnalysisManagerBase.AnalysisTool;
+using AnalysisManagerBase.JobConfig;
 using PRISM.AppSettings;
 using PRISMDatabaseUtils;
 

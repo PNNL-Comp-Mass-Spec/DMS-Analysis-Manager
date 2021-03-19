@@ -5,6 +5,8 @@ using System.Data.Common;
 using System.IO;
 using System.Text;
 using System.Xml.Linq;
+using AnalysisManagerBase.JobConfig;
+using AnalysisManagerBase.StatusReporting;
 using PRISMDatabaseUtils;
 
 //*********************************************************************************************************

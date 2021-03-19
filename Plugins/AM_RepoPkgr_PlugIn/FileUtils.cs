@@ -1,6 +1,7 @@
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using AnalysisManagerBase.FileAndDirectoryTools;
 
 namespace AnalysisManager_RepoPkgr_PlugIn
 {
@@ -55,7 +56,7 @@ namespace AnalysisManager_RepoPkgr_PlugIn
             const int debugLevel = 1;
 
             //  make zipper to work on workDir
-            var dotNetZipTools = new AnalysisManagerBase.DotNetZipTools(debugLevel, workDir);
+            var dotNetZipTools = new DotNetZipTools(debugLevel, workDir);
 
             // get file handler object to access the targetDir
             var diTargetDir = new DirectoryInfo(targetDir);

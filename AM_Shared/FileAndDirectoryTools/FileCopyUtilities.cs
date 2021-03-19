@@ -1,11 +1,12 @@
-﻿using PRISM;
-using PRISM.Logging;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using AnalysisManagerBase.JobConfig;
 using MyEMSLReader;
+using PRISM;
+using PRISM.Logging;
 
-namespace AnalysisManagerBase
+namespace AnalysisManagerBase.FileAndDirectoryTools
 {
     /// <summary>
     /// Methods to copy files to the working directory

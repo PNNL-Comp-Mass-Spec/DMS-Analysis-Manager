@@ -3,6 +3,8 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Xml;
+using AnalysisManagerBase.AnalysisTool;
+using AnalysisManagerBase.JobConfig;
 using ThermoRawFileReader;
 using UIMFLibrary;
 

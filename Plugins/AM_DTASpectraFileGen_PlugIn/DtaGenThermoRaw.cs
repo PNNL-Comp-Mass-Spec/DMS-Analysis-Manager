@@ -12,6 +12,9 @@ using AnalysisManagerBase;
 using System;
 using System.IO;
 using System.Text.RegularExpressions;
+using AnalysisManagerBase.AnalysisTool;
+using AnalysisManagerBase.DataFileTools;
+using AnalysisManagerBase.StatusReporting;
 using ThermoRawFileReader;
 
 namespace DTASpectraFileGen

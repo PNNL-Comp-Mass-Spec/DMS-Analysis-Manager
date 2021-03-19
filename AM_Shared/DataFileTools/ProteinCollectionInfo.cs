@@ -1,6 +1,7 @@
 ﻿using System;
+using AnalysisManagerBase.JobConfig;
 
-namespace AnalysisManagerBase
+namespace AnalysisManagerBase.DataFileTools
 {
     /// <summary>
     /// Protein collection info

@@ -8,6 +8,9 @@
 using AnalysisManagerBase;
 using System.Collections.Generic;
 using System.IO;
+using AnalysisManagerBase.AnalysisTool;
+using AnalysisManagerBase.JobConfig;
+using AnalysisManagerBase.StatusReporting;
 
 namespace AnalysisManagerTopPICPlugIn
 {

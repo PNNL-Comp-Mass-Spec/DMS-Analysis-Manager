@@ -13,7 +13,9 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Xml;
 using System.Xml.Linq;
+using AnalysisManagerBase.AnalysisTool;
 using AnalysisManagerBase.FileAndDirectoryTools;
+using AnalysisManagerBase.JobConfig;
 
 namespace AnalysisManagerMaxQuantPlugIn
 {

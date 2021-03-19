@@ -5,7 +5,11 @@
 // Created 06/07/2006
 //*********************************************************************************************************
 
-namespace AnalysisManagerBase
+using AnalysisManagerBase.JobConfig;
+using AnalysisManagerBase.OfflineJobs;
+using AnalysisManagerBase.StatusReporting;
+
+namespace AnalysisManagerBase.AnalysisTool
 {
     /// <summary>
     /// Interface for analysis resources

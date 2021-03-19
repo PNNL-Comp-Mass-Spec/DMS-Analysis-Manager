@@ -4,7 +4,10 @@ using System.IO;
 using System.Linq;
 using System.Xml.Linq;
 using AnalysisManagerBase;
+using AnalysisManagerBase.AnalysisTool;
 using AnalysisManagerBase.FileAndDirectoryTools;
+using AnalysisManagerBase.JobConfig;
+using AnalysisManagerBase.StatusReporting;
 
 namespace AnalysisManagerMaxQuantPlugIn
 {

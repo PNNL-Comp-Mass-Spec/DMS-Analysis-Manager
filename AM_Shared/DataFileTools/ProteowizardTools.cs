@@ -1,9 +1,8 @@
-﻿
+﻿using System;
 using Microsoft.Win32;
 using PRISM;
-using System;
 
-namespace AnalysisManagerBase
+namespace AnalysisManagerBase.DataFileTools
 {
     /// <summary>
     /// Proteowizard tools

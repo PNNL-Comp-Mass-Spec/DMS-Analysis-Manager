@@ -1,10 +1,10 @@
-using PRISM;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Xml;
+using PRISM;
 
 //*********************************************************************************************************
 // Written by Dave Clark and Matthew Monroe for the US Department of Energy
@@ -14,7 +14,7 @@ using System.Xml;
 //
 //*********************************************************************************************************
 
-namespace AnalysisManagerBase
+namespace AnalysisManagerBase.StatusReporting
 {
     /// <summary>
     /// Provides tools for creating and updating an analysis status file

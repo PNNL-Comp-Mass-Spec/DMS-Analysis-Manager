@@ -4,6 +4,9 @@ using PRISM;
 using PRISM.Logging;
 using System;
 using System.IO;
+using AnalysisManagerBase.AnalysisTool;
+using AnalysisManagerBase.JobConfig;
+using AnalysisManagerBase.StatusReporting;
 
 namespace AnalysisManager_AScore_PlugIn
 {

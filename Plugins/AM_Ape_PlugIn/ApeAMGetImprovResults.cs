@@ -2,6 +2,7 @@ using AnalysisManagerBase;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using AnalysisManagerBase.JobConfig;
 using PRISMDatabaseUtils;
 
 namespace AnalysisManager_Ape_PlugIn

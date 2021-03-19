@@ -1,12 +1,12 @@
-﻿
-using MyEMSLReader;
-using PRISM;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using AnalysisManagerBase.FileAndDirectoryTools;
+using MyEMSLReader;
+using PRISM;
 
-namespace AnalysisManagerBase
+namespace AnalysisManagerBase.JobConfig
 {
     /// <summary>
     /// MyEMSL Utilities

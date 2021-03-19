@@ -2,8 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
+using AnalysisManagerBase.AnalysisTool;
 
-namespace AnalysisManagerBase
+namespace AnalysisManagerBase.DataFileTools
 {
     /// <summary>
     /// This class splits concatenated .dta and .out files from Sequest into their

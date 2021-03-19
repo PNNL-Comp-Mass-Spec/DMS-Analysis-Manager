@@ -1,10 +1,9 @@
-﻿
-using Apache.NMS;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using Apache.NMS;
 using PRISM;
 
-namespace AnalysisManagerBase
+namespace AnalysisManagerBase.StatusReporting
 {
     /// <summary>
     /// Sends messages to ActiveMQ message broker using NMS client library

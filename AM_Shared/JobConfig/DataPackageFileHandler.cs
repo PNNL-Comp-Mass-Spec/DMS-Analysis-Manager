@@ -1,7 +1,4 @@
-﻿using PHRPReader;
-using PRISM;
-using PRISM.Logging;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
@@ -10,9 +7,14 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml;
+using AnalysisManagerBase.AnalysisTool;
+using AnalysisManagerBase.FileAndDirectoryTools;
+using PHRPReader;
+using PRISM;
+using PRISM.Logging;
 using PRISMDatabaseUtils;
 
-namespace AnalysisManagerBase
+namespace AnalysisManagerBase.JobConfig
 {
     /// <summary>
     /// Data package file handler

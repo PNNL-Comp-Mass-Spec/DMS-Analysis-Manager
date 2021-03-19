@@ -1,5 +1,3 @@
-using PRISM;
-using PRISM.Logging;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -9,6 +7,10 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml;
 using System.Xml.Linq;
+using AnalysisManagerBase.AnalysisTool;
+using AnalysisManagerBase.OfflineJobs;
+using PRISM;
+using PRISM.Logging;
 using PRISMDatabaseUtils;
 
 //*********************************************************************************************************
@@ -19,7 +21,7 @@ using PRISMDatabaseUtils;
 //
 //*********************************************************************************************************
 
-namespace AnalysisManagerBase
+namespace AnalysisManagerBase.JobConfig
 {
     /// <summary>
     /// Provides DB access and tools for one analysis job

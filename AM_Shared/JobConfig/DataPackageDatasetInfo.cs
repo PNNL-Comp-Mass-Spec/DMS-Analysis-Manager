@@ -1,5 +1,5 @@
 ﻿
-namespace AnalysisManagerBase
+namespace AnalysisManagerBase.JobConfig
 {
     /// <summary>
     /// Data package dataset info

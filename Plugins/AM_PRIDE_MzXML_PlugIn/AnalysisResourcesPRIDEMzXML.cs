@@ -1,6 +1,8 @@
 using AnalysisManagerBase;
 using System;
 using System.Linq;
+using AnalysisManagerBase.AnalysisTool;
+using AnalysisManagerBase.JobConfig;
 
 namespace AnalysisManagerPRIDEMzXMLPlugIn
 {

@@ -11,7 +11,7 @@ using PRISMDatabaseUtils;
 //
 //*********************************************************************************************************
 
-namespace AnalysisManagerBase
+namespace AnalysisManagerBase.StatusReporting
 {
     /// <summary>
     /// Status logger

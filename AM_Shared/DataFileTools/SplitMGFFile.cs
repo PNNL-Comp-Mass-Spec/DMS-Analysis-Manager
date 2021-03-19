@@ -1,11 +1,10 @@
-﻿using PRISM;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Text.RegularExpressions;
+using PRISM;
 
-namespace AnalysisManagerBase
+namespace AnalysisManagerBase.DataFileTools
 {
     /// <summary>
     /// This class splits a Mascot Generic File (mgf file) into multiple parts

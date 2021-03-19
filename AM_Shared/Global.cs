@@ -9,6 +9,7 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
+using AnalysisManagerBase.StatusReporting;
 using PRISMDatabaseUtils;
 
 //*********************************************************************************************************

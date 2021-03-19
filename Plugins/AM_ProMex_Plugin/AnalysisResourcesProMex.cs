@@ -7,6 +7,9 @@
 
 using AnalysisManagerBase;
 using System;
+using AnalysisManagerBase.AnalysisTool;
+using AnalysisManagerBase.JobConfig;
+using AnalysisManagerBase.StatusReporting;
 
 namespace AnalysisManagerProMexPlugIn
 {

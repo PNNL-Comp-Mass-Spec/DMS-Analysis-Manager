@@ -2,6 +2,7 @@
 using Mage;
 using MageExtExtractionFilters;
 using System;
+using AnalysisManagerBase.JobConfig;
 
 namespace AnalysisManager_Mage_PlugIn
 {

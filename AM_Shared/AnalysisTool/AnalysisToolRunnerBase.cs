@@ -6,18 +6,22 @@
 //
 //*********************************************************************************************************
 
-using PRISM;
-using PRISM.Logging;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
+using AnalysisManagerBase.FileAndDirectoryTools;
+using AnalysisManagerBase.JobConfig;
+using AnalysisManagerBase.OfflineJobs;
+using AnalysisManagerBase.StatusReporting;
+using PRISM;
+using PRISM.Logging;
 using PRISMDatabaseUtils;
 
 // ReSharper disable UnusedMember.Global
-namespace AnalysisManagerBase
+namespace AnalysisManagerBase.AnalysisTool
 {
     /// <summary>
     /// Base class for analysis tool runner

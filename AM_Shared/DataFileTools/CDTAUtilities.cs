@@ -1,9 +1,8 @@
-﻿
-using PRISM;
-using System;
+﻿using System;
 using System.IO;
+using PRISM;
 
-namespace AnalysisManagerBase
+namespace AnalysisManagerBase.DataFileTools
 {
     /// <summary>
     /// DTA utilities

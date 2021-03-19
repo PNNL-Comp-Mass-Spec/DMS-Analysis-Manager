@@ -13,6 +13,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using AnalysisManagerBase.AnalysisTool;
+using AnalysisManagerBase.DataFileTools;
+using AnalysisManagerBase.JobConfig;
 
 namespace AnalysisManagerSequestPlugin
 {

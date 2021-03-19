@@ -2,6 +2,7 @@ using AnalysisManagerBase;
 using Mage;
 using System.Collections.Generic;
 using System.IO;
+using AnalysisManagerBase.JobConfig;
 
 namespace AnalysisManager_Mage_PlugIn
 {

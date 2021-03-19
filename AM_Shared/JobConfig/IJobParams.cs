@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using AnalysisManagerBase.AnalysisTool;
 
 //*********************************************************************************************************
 // Written by Dave Clark and Matthew Monroe for the US Department of Energy
@@ -7,7 +8,7 @@ using System.Collections.Generic;
 // Created 12/18/2007
 //*********************************************************************************************************
 
-namespace AnalysisManagerBase
+namespace AnalysisManagerBase.JobConfig
 {
     // Ignore Spelling: Quant, ann
 

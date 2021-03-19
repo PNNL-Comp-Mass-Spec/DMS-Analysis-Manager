@@ -1,4 +1,5 @@
 ﻿using AnalysisManagerBase;
+using AnalysisManagerBase.JobConfig;
 using Mage;
 
 namespace AnalysisManager_AScore_PlugIn

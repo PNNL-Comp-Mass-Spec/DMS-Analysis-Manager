@@ -3,6 +3,8 @@ using System;
 using System.Data;
 using System.IO;
 using System.Security.AccessControl;
+using AnalysisManagerBase.AnalysisTool;
+using AnalysisManagerBase.StatusReporting;
 using PRISMDatabaseUtils;
 
 namespace AnalysisManagerProg

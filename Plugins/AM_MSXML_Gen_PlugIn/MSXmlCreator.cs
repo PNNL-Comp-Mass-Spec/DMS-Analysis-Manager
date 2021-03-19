@@ -11,6 +11,8 @@ using AnalysisManagerBase;
 using PRISM;
 using System;
 using System.IO;
+using AnalysisManagerBase.AnalysisTool;
+using AnalysisManagerBase.JobConfig;
 
 // ReSharper disable UnusedMember.Global
 namespace AnalysisManagerMsXmlGenPlugIn

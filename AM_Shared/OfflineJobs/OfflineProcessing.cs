@@ -1,9 +1,10 @@
-﻿using PRISM.Logging;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using AnalysisManagerBase.AnalysisTool;
+using PRISM.Logging;
 
-namespace AnalysisManagerBase
+namespace AnalysisManagerBase.OfflineJobs
 {
     /// <summary>
     /// Utilize for offline job processing

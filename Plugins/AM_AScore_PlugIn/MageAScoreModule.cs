@@ -11,6 +11,8 @@ using PRISM.Logging;
 using System;
 using System.IO;
 using System.Linq;
+using AnalysisManagerBase.AnalysisTool;
+using AnalysisManagerBase.FileAndDirectoryTools;
 using PRISMDatabaseUtils;
 
 namespace AnalysisManager_AScore_PlugIn

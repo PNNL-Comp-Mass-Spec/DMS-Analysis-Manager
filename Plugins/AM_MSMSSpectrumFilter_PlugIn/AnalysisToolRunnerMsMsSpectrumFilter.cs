@@ -17,6 +17,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
+using AnalysisManagerBase.AnalysisTool;
+using AnalysisManagerBase.DataFileTools;
+using AnalysisManagerBase.JobConfig;
 
 namespace MSMSSpectrumFilterAM
 {

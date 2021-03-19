@@ -2,6 +2,9 @@ using AnalysisManagerBase;
 using System;
 using System.IO;
 using System.Xml;
+using AnalysisManagerBase.AnalysisTool;
+using AnalysisManagerBase.JobConfig;
+using AnalysisManagerBase.StatusReporting;
 
 namespace AnalysisManagerOMSSAPlugIn
 {

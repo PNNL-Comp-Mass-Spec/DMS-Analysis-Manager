@@ -1,6 +1,6 @@
-using PRISM;
 using System;
 using System.IO;
+using PRISM;
 
 //*********************************************************************************************************
 // Written by Dave Clark and Matthew Monroe for the US Department of Energy
@@ -10,7 +10,7 @@ using System.IO;
 //
 //*********************************************************************************************************
 
-namespace AnalysisManagerBase
+namespace AnalysisManagerBase.AnalysisTool
 {
     /// <summary>
     /// Provides a looping wrapper around a ProgRunner object for running command-line programs

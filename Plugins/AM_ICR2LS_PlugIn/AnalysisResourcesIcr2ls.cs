@@ -2,6 +2,8 @@
 using PRISM.Logging;
 using System;
 using System.IO;
+using AnalysisManagerBase.AnalysisTool;
+using AnalysisManagerBase.JobConfig;
 
 namespace AnalysisManagerICR2LSPlugIn
 {

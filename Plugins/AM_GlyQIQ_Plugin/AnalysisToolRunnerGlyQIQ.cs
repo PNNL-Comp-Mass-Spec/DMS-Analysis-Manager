@@ -12,6 +12,8 @@ using System.Data;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using AnalysisManagerBase.AnalysisTool;
+using AnalysisManagerBase.JobConfig;
 using PRISM;
 using PRISM.Logging;
 using PRISMDatabaseUtils;

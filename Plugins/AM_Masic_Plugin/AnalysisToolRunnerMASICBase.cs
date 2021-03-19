@@ -13,6 +13,8 @@ using System.Collections.Generic;
 using System.Data;
 using System.IO;
 using System.Xml;
+using AnalysisManagerBase.AnalysisTool;
+using AnalysisManagerBase.JobConfig;
 using PRISMDatabaseUtils;
 
 namespace AnalysisManagerMasicPlugin

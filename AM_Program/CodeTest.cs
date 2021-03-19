@@ -14,6 +14,12 @@ using System.Reflection;
 using System.Runtime.Versioning;
 using System.Text;
 using System.Text.RegularExpressions;
+using AnalysisManagerBase.AnalysisTool;
+using AnalysisManagerBase.DataFileTools;
+using AnalysisManagerBase.FileAndDirectoryTools;
+using AnalysisManagerBase.JobConfig;
+using AnalysisManagerBase.OfflineJobs;
+using AnalysisManagerBase.StatusReporting;
 using Cyclops;
 using PRISMDatabaseUtils;
 

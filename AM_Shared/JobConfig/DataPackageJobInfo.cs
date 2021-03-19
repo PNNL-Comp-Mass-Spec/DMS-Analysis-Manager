@@ -1,7 +1,7 @@
-﻿using PHRPReader;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using PHRPReader;
 
-namespace AnalysisManagerBase
+namespace AnalysisManagerBase.JobConfig
 {
     /// <summary>
     /// Data package job info

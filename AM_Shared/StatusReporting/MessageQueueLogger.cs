@@ -1,9 +1,8 @@
-﻿
-using PRISM;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Threading;
+using PRISM;
 
-namespace AnalysisManagerBase
+namespace AnalysisManagerBase.StatusReporting
 {
     /// <summary>
     /// Delegate that does the eventual posting

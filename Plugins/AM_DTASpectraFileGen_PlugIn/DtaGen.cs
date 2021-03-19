@@ -11,6 +11,10 @@ using PRISM;
 using System;
 using System.IO;
 using System.Text.RegularExpressions;
+using AnalysisManagerBase.AnalysisTool;
+using AnalysisManagerBase.DataFileTools;
+using AnalysisManagerBase.JobConfig;
+using AnalysisManagerBase.StatusReporting;
 
 namespace DTASpectraFileGen
 {

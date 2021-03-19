@@ -1,14 +1,16 @@
-﻿using DMSUpdateManager;
-using PRISM;
-using Renci.SshNet.Sftp;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Xml.Linq;
+using AnalysisManagerBase.AnalysisTool;
+using AnalysisManagerBase.JobConfig;
+using DMSUpdateManager;
+using PRISM;
+using Renci.SshNet.Sftp;
 
-namespace AnalysisManagerBase
+namespace AnalysisManagerBase.OfflineJobs
 {
     /// <summary>
     /// Methods for transferring files to/from a remote host

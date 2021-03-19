@@ -4,6 +4,9 @@ using PRISM;
 using PRISM.Logging;
 using System;
 using System.IO;
+using AnalysisManagerBase.AnalysisTool;
+using AnalysisManagerBase.DataFileTools;
+using AnalysisManagerBase.JobConfig;
 
 namespace AnalysisManager_IDM_Plugin
 {

@@ -1,9 +1,8 @@
-﻿
+﻿using System;
 using PRISM;
 using PRISM.Logging;
-using System;
 
-namespace AnalysisManagerBase
+namespace AnalysisManagerBase.StatusReporting
 {
     /// <summary>
     /// Methods to be inherited by classes that use LogTools

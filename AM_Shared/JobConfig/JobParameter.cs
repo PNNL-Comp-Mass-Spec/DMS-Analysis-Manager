@@ -1,4 +1,4 @@
-﻿namespace AnalysisManagerBase
+﻿namespace AnalysisManagerBase.JobConfig
 {
     /// <summary>
     /// Analysis job parameter container

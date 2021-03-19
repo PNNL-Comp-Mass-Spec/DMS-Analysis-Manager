@@ -1,4 +1,3 @@
-
 using System;
 using System.Collections.Generic;
 
@@ -10,7 +9,7 @@ using System.Collections.Generic;
 //
 //*********************************************************************************************************
 
-namespace AnalysisManagerBase
+namespace AnalysisManagerBase.StatusReporting
 {
     #region "Enums"
 
