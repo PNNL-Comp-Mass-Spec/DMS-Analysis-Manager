@@ -135,11 +135,11 @@ namespace AnalysisManagerMaxQuantPlugIn
                 {
                     // ToDo: Remove this sleep
 
-                    PRISM.ConsoleMsgUtils.ShowWarning("MaxQuant processing failed");
-                    PRISM.ConsoleMsgUtils.ShowWarning("Sleeping for 2 minutes to allow for diagnosis");
+                    LogWarning("MaxQuant processing failed");
+                    LogWarning("Sleeping for 5 minutes to allow for diagnosis");
 
                     var startTime = DateTime.UtcNow;
-                    while (DateTime.UtcNow.Subtract(startTime).TotalMinutes < 2)
+                    while (DateTime.UtcNow.Subtract(startTime).TotalMinutes < 5)
                     {
                         Console.Write(". ");
                         Global.IdleLoop(15);
@@ -844,6 +844,22 @@ namespace AnalysisManagerMaxQuantPlugIn
                 else
                 {
                     LogWarning("Call to MaxQuant failed (but exit code is 0)");
+                }
+
+                // ToDo: Remove this sleep
+                if (true)
+                {
+                    LogWarning("MaxQuant processing failed");
+                    LogWarning("Sleeping for 5 minutes to allow for diagnosis");
+
+                    var startTime = DateTime.UtcNow;
+                    while (DateTime.UtcNow.Subtract(startTime).TotalMinutes < 5)
+                    {
+                        Console.Write(". ");
+                        Global.IdleLoop(15);
+                    }
+
+                    Console.WriteLine();
                 }
 
                 return CloseOutType.CLOSEOUT_FAILED;
