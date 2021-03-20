@@ -264,7 +264,9 @@ namespace AnalysisManagerMSGFDBPlugIn
                 }
 
                 var msgfPlusProgLoc = AnalysisToolRunnerBase.DetermineProgramLocation(
-                    mMgrParams, mJobParams, StepToolName, "MSGFPlusProgLoc", MSGFPlusUtils.MSGFPLUS_JAR_NAME, out var msgfPlusLocErrorMessage);
+                    mMgrParams, mJobParams, StepToolName,
+                    "MSGFPlusProgLoc", MSGFPlusUtils.MSGFPLUS_JAR_NAME,
+                    out var msgfPlusLocErrorMessage, out _);
 
                 if (string.IsNullOrEmpty(msgfPlusProgLoc))
                 {

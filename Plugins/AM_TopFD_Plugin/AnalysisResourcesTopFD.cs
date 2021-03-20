@@ -151,7 +151,7 @@ namespace AnalysisManagerTopFDPlugIn
                     mMgrParams, mJobParams, StepToolName,
                     "TopFDProgLoc",
                     AnalysisToolRunnerTopFD.TOPFD_EXE_NAME,
-                    out var errorMessage);
+                    out var errorMessage, out _);
 
                 if (string.IsNullOrWhiteSpace(topFDProgLoc))
                 {

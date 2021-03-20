@@ -1489,7 +1489,24 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <remarks>If the program is not found, mMessage will be updated with the error message</remarks>
         protected string DetermineProgramLocation(string progLocManagerParamName, string exeName)
         {
-            var progLoc = DetermineProgramLocation(mMgrParams, mJobParams, StepToolName, progLocManagerParamName, exeName, out var errorMessage);
+            return DetermineProgramLocation(progLocManagerParamName, exeName, out _);
+        }
+
+        /// <summary>
+        /// Determine the path to the correct version of the step tool
+        /// </summary>
+        /// <param name="progLocManagerParamName">The name of the manager parameter that defines the path to the directory with the exe, e.g. LCMSFeatureFinderProgLoc</param>
+        /// <param name="exeName">The name of the exe file, e.g. LCMSFeatureFinder.exe</param>
+        /// <param name="specificStepToolVersion">Output: value of job parameter StepToolName_Version if defined, otherwise an empty string</param>
+        /// <returns>The path to the program, or an empty string if there is a problem</returns>
+        /// <remarks>If the program is not found, mMessage will be updated with the error message</remarks>
+        protected string DetermineProgramLocation(string progLocManagerParamName, string exeName, out string specificStepToolVersion)
+        {
+            var progLoc = DetermineProgramLocation(
+                mMgrParams, mJobParams, StepToolName,
+                progLocManagerParamName, exeName,
+                out var errorMessage,
+                out specificStepToolVersion);
 
             if (!string.IsNullOrEmpty(errorMessage))
             {
@@ -1509,11 +1526,13 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <param name="progLocManagerParamName">The name of the manager parameter that defines the path to the directory with the exe, e.g. LCMSFeatureFinderProgLoc</param>
         /// <param name="exeName">The name of the exe file, e.g. LCMSFeatureFinder.exe</param>
         /// <param name="errorMessage">Output: error message</param>
+        /// <param name="specificStepToolVersion">Output: value of job parameter StepToolName_Version if defined, otherwise an empty string</param>
         /// <returns>The path to the program, or an empty string if there is a problem</returns>
         public static string DetermineProgramLocation(
             IMgrParams mgrParams, IJobParams jobParams,
             string stepToolName, string progLocManagerParamName, string exeName,
-            out string errorMessage)
+            out string errorMessage,
+            out string specificStepToolVersion)
         {
             // Check whether the settings file specifies that a specific version of the step tool be used
 
@@ -1521,9 +1540,9 @@ namespace AnalysisManagerBase.AnalysisTool
             // <item key="TopFD_Version" value="v1.3.1"/>
             // <item key="TopPIC_Version" value="v1.3.1"/>
 
-            var stepToolVersion = jobParams.GetParam(stepToolName + "_Version");
+            specificStepToolVersion = jobParams.GetParam(stepToolName + "_Version");
 
-            return DetermineProgramLocation(stepToolName, progLocManagerParamName, exeName, stepToolVersion, mgrParams, out errorMessage);
+            return DetermineProgramLocation(stepToolName, progLocManagerParamName, exeName, specificStepToolVersion, mgrParams, out errorMessage);
         }
 
         /// <summary>

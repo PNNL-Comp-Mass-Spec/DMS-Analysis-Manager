@@ -89,7 +89,7 @@ namespace AnalysisManagerTopFDPlugIn
                 mLastConsoleOutputParse = DateTime.UtcNow;
 
                 // Determine the path to the TopFD program
-                mTopFDProgLoc = DetermineProgramLocation("TopFDProgLoc", TOPFD_EXE_NAME);
+                mTopFDProgLoc = DetermineProgramLocation("TopFDProgLoc", TOPFD_EXE_NAME, out var specificStepToolVersion);
 
                 if (string.IsNullOrWhiteSpace(mTopFDProgLoc))
                 {

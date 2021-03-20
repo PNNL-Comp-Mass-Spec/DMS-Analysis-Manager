@@ -87,7 +87,7 @@ namespace AnalysisManagerTopPICPlugIn
                 mLastConsoleOutputParse = DateTime.UtcNow;
 
                 // Determine the path to TopPIC
-                mTopPICProgLoc = DetermineProgramLocation("TopPICProgLoc", TOPPIC_EXE_NAME);
+                mTopPICProgLoc = DetermineProgramLocation("TopPICProgLoc", TOPPIC_EXE_NAME, out var specificStepToolVersion);
 
                 if (string.IsNullOrWhiteSpace(mTopPICProgLoc))
                 {
