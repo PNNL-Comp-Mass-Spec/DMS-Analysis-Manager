@@ -128,7 +128,7 @@ namespace AnalysisManagerProg
 
                     ShowTrace("Exiting the application");
 
-                    clsParseCommandLine.PauseAtConsole(500);
+                    ConsoleMsgUtils.PauseAtConsole(500);
                     return 0;
                 }
 
@@ -136,7 +136,7 @@ namespace AnalysisManagerProg
                 {
                     var testHarness = new CodeTest();
                     testHarness.DisplayDllVersions(options.DisplayDllPath);
-                    clsParseCommandLine.PauseAtConsole();
+                    ConsoleMsgUtils.PauseAtConsole();
                     return 0;
                 }
 
@@ -159,7 +159,7 @@ namespace AnalysisManagerProg
             catch (Exception ex)
             {
                 LogTools.LogError("Error occurred in Program->Main", ex);
-                clsParseCommandLine.PauseAtConsole(1500);
+                ConsoleMsgUtils.PauseAtConsole(1500);
                 FileLogger.FlushPendingMessages();
                 return -1;
             }
