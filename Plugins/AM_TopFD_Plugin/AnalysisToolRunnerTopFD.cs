@@ -48,10 +48,18 @@ namespace AnalysisManagerTopFDPlugIn
 
         private bool mToolVersionWritten;
 
-        // Populate this with a tool version reported to the console
-        private string mTopFDVersion;
+        /// <summary>
+        /// This will initially be 1.3 or 1.4, indicating the version of .exe that should be used
+        /// </summary>
+        /// <remarks>
+        /// After TopFD starts, we'll update this variable with the tool version reported to the console
+        /// </remarks>
+        private Version mTopFDVersion;
+
+        private string mTopFDVersionText;
 
         private string mTopFDProgLoc;
+
         private string mConsoleOutputErrorMsg;
 
         private readonly Regex reExtractPercentFinished = new("(?<PercentComplete>[0-9.]+)% finished", RegexOptions.Compiled | RegexOptions.IgnoreCase);
@@ -96,9 +104,19 @@ namespace AnalysisManagerTopFDPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
+                if (specificStepToolVersion.StartsWith("v1.3"))
+                {
+                    mTopFDVersion = new Version(1, 3);
+                }
+                else
+                {
+                    // We're probably running TopPIC v1.4 (or newer)
+                    mTopFDVersion = new Version(1, 4);
+                }
+
                 // Store the TopFD version info in the database after the first line is written to file TopFD_ConsoleOutput.txt
                 mToolVersionWritten = false;
-                mTopFDVersion = string.Empty;
+                mTopFDVersionText = string.Empty;
                 mConsoleOutputErrorMsg = string.Empty;
 
                 // Check whether an existing TopFD results directory was found
@@ -276,7 +294,7 @@ namespace AnalysisManagerTopFDPlugIn
                             // The first line has the TopFD executable name and the command line arguments
                             // The second line is dashes
                             // The third line has the TopFD version
-                            if (string.IsNullOrEmpty(mTopFDVersion) &&
+                            if (string.IsNullOrEmpty(mTopFDVersionText) &&
                                 dataLine.IndexOf("TopFD", StringComparison.OrdinalIgnoreCase) == 0 &&
                                 dataLine.IndexOf(TOPFD_EXE_NAME, StringComparison.OrdinalIgnoreCase) < 0)
                             {
@@ -285,7 +303,14 @@ namespace AnalysisManagerTopFDPlugIn
                                     LogDebug("TopFD version: " + dataLine);
                                 }
 
-                                mTopFDVersion = string.Copy(dataLine);
+                                var versionMatcher = new Regex(@"(?<Major>\d+)\.(?<Minor>\d+)\.(?<Build>\d+)", RegexOptions.Compiled);
+                                var match = versionMatcher.Match(dataLine);
+                                if (match.Success)
+                                {
+                                    mTopFDVersion = new Version(match.Value);
+                                }
+
+                                mTopFDVersionText = string.Copy(dataLine);
                             }
 
                             continue;
@@ -399,13 +424,16 @@ namespace AnalysisManagerTopFDPlugIn
                 }
             }
 
-            // Specify the number of threads to use
-            // Allow TopFD to use 88% of the physical cores
-            var coreCount = Global.GetCoreCount();
-            var threadsToUse = (int)Math.Floor(coreCount * 0.88);
+            if (mTopFDVersion >= new Version(1, 4))
+            {
+                // Specify the number of threads to use
+                // Allow TopFD to use 88% of the physical cores
+                var coreCount = Global.GetCoreCount();
+                var threadsToUse = (int)Math.Floor(coreCount * 0.88);
 
-            LogMessage(string.Format("The system has {0} cores; TopFD will use {1} threads ", coreCount, threadsToUse));
-            cmdLineOptions += " --thread-number " + threadsToUse;
+                LogMessage(string.Format("The system has {0} cores; TopFD will use {1} threads ", coreCount, threadsToUse));
+                cmdLineOptions += " --thread-number " + threadsToUse;
+            }
 
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
@@ -510,7 +538,7 @@ namespace AnalysisManagerTopFDPlugIn
 
             if (!mToolVersionWritten)
             {
-                if (string.IsNullOrWhiteSpace(mTopFDVersion))
+                if (string.IsNullOrWhiteSpace(mTopFDVersionText))
                 {
                     ParseConsoleOutputFile(Path.Combine(mWorkDir, TOPFD_CONSOLE_OUTPUT));
                 }
@@ -606,7 +634,7 @@ namespace AnalysisManagerTopFDPlugIn
                 LogDebug("Determining tool version info");
             }
 
-            var toolVersionInfo = string.Copy(mTopFDVersion);
+            var toolVersionInfo = string.Copy(mTopFDVersionText);
 
             // Store paths to key files in toolFiles
             var toolFiles = new List<FileInfo> {
@@ -875,7 +903,7 @@ namespace AnalysisManagerTopFDPlugIn
 
             ParseConsoleOutputFile(Path.Combine(mWorkDir, TOPFD_CONSOLE_OUTPUT));
 
-            if (!mToolVersionWritten && !string.IsNullOrWhiteSpace(mTopFDVersion))
+            if (!mToolVersionWritten && !string.IsNullOrWhiteSpace(mTopFDVersionText))
             {
                 mToolVersionWritten = StoreToolVersionInfo();
             }

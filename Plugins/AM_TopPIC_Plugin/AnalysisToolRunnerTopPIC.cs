@@ -48,10 +48,18 @@ namespace AnalysisManagerTopPICPlugIn
 
         private bool mToolVersionWritten;
 
-        // Populate this with a tool version reported to the console
-        private string mTopPICVersion;
+        /// <summary>
+        /// This will initially be 1.3 or 1.4, indicating the version of .exe that should be used
+        /// </summary>
+        /// <remarks>
+        /// After TopPIC starts, we'll update this variable with the tool version reported to the console
+        /// </remarks>
+        private Version mTopPICVersion;
+
+        private string mTopPICVersionText;
 
         private string mTopPICProgLoc;
+
         private string mConsoleOutputErrorMsg;
 
         private string mValidatedFASTAFilePath;
@@ -94,9 +102,19 @@ namespace AnalysisManagerTopPICPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
+                if (specificStepToolVersion.StartsWith("v1.3"))
+                {
+                    mTopPICVersion = new Version(1, 3);
+                }
+                else
+                {
+                    // We're probably running TopPIC v1.4 (or newer)
+                    mTopPICVersion = new Version(1, 4);
+                }
+
                 // Store the TopPIC version info in the database after the first line is written to file TopPIC_ConsoleOutput.txt
                 mToolVersionWritten = false;
-                mTopPICVersion = string.Empty;
+                mTopPICVersionText = string.Empty;
                 mConsoleOutputErrorMsg = string.Empty;
 
                 if (!ValidateFastaFile(out var fastaFileIsDecoy))
@@ -386,7 +404,7 @@ namespace AnalysisManagerTopPICPlugIn
                             // The first line has the path to the TopPIC executable and the command line arguments
                             // The second line is dashes
                             // The third line has the TopPIC version
-                            if (string.IsNullOrEmpty(mTopPICVersion) &&
+                            if (string.IsNullOrEmpty(mTopPICVersionText) &&
                                 dataLine.IndexOf("TopPIC", StringComparison.OrdinalIgnoreCase) == 0 &&
                                 dataLine.IndexOf(TOPPIC_EXE_NAME, StringComparison.OrdinalIgnoreCase) < 0)
                             {
@@ -395,7 +413,14 @@ namespace AnalysisManagerTopPICPlugIn
                                     LogDebug("TopPIC version: " + dataLine);
                                 }
 
-                                mTopPICVersion = string.Copy(dataLine);
+                                var versionMatcher = new Regex(@"(?<Major>\d+)\.(?<Minor>\d+)\.(?<Build>\d+)", RegexOptions.Compiled);
+                                var match = versionMatcher.Match(dataLine);
+                                if (match.Success)
+                                {
+                                    mTopPICVersion = new Version(match.Value);
+                                }
+
+                                mTopPICVersionText = string.Copy(dataLine);
                             }
                         }
                         else
@@ -586,13 +611,16 @@ namespace AnalysisManagerTopPICPlugIn
             // Other options for activation are CID, HCDCID, ETDCID, or UVPDCID
             cmdLineOptions += " --activation=FILE";
 
-            // Specify the number of threads to use
-            // Allow TopPIC to use 88% of the physical cores
-            var coreCount = Global.GetCoreCount();
-            var threadsToUse = (int)Math.Floor(coreCount * 0.88);
+            if (mTopPICVersion >= new Version(1, 4))
+            {
+                // Specify the number of threads to use
+                // Allow TopPIC to use 88% of the physical cores
+                var coreCount = Global.GetCoreCount();
+                var threadsToUse = (int)Math.Floor(coreCount * 0.88);
 
-            LogMessage(string.Format("The system has {0} cores; TopPIC will use {1} threads ", coreCount, threadsToUse));
-            cmdLineOptions += " --thread-number " + threadsToUse;
+                LogMessage(string.Format("The system has {0} cores; TopPIC will use {1} threads ", coreCount, threadsToUse));
+                cmdLineOptions += " --thread-number " + threadsToUse;
+            }
 
             // Arguments in this list are appended as --decoy or --keep-temp-files and not as "--decoy True" or "--keep-temp-files True"
             // Append these if set to True in the parameter file
@@ -720,7 +748,7 @@ namespace AnalysisManagerTopPICPlugIn
 
             if (!mToolVersionWritten)
             {
-                if (string.IsNullOrWhiteSpace(mTopPICVersion))
+                if (string.IsNullOrWhiteSpace(mTopPICVersionText))
                 {
                     ParseConsoleOutputFile(Path.Combine(mWorkDir, TOPPIC_CONSOLE_OUTPUT));
                 }
@@ -775,7 +803,7 @@ namespace AnalysisManagerTopPICPlugIn
                 LogDebug("Determining tool version info");
             }
 
-            var toolVersionInfo = string.Copy(mTopPICVersion);
+            var toolVersionInfo = string.Copy(mTopPICVersionText);
 
             // Store paths to key files in toolFiles
             var toolFiles = new List<FileInfo> {
@@ -1487,7 +1515,7 @@ namespace AnalysisManagerTopPICPlugIn
 
             ParseConsoleOutputFile(Path.Combine(mWorkDir, TOPPIC_CONSOLE_OUTPUT));
 
-            if (!mToolVersionWritten && !string.IsNullOrWhiteSpace(mTopPICVersion))
+            if (!mToolVersionWritten && !string.IsNullOrWhiteSpace(mTopPICVersionText))
             {
                 mToolVersionWritten = StoreToolVersionInfo();
             }
