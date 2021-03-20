@@ -625,13 +625,6 @@ namespace AnalysisManagerSMAQCPlugIn
             }
         }
 
-        private string ParseSMAQCParameterFile()
-        {
-            // If necessary, could parse a parameter file and convert the options in the parameter file to command line arguments
-            // As an example, see function ParseMSGFPlusParameterFile in the AnalysisManagerMSGFDBPlugIn project
-            return string.Empty;
-        }
-
         private bool PostSMAQCResultsToDB(string strXMLResults)
         {
             // Note that mDatasetID gets populated by LookupInstrumentIDFromDB

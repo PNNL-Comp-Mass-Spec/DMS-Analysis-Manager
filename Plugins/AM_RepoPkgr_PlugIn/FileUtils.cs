@@ -7,17 +7,6 @@ namespace AnalysisManager_RepoPkgr_PlugIn
 {
     public static class FileUtils
     {
-        /// <summary>
-        /// Utility method to clear files and directories from given directory
-        /// </summary>
-        /// <param name="path"></param>
-        private static void ClearDir(string path)
-        {
-            var directory = new DirectoryInfo(path);
-            directory.GetFiles().ToList().ForEach(f => f.Delete());
-            directory.GetDirectories().ToList().ForEach(d => d.Delete(true));
-        }
-
         public static void CopyFiles(string sourceDirectory, string searchPattern, string destinationDirectory)
         {
             if (!Directory.Exists(destinationDirectory))

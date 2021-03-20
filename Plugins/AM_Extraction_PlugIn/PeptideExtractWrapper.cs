@@ -77,11 +77,6 @@ namespace AnalysisManagerExtractionPlugin
             }
         }
 
-        private void ExtractTools_CurrentStatus(string taskString)
-        {
-            // Future use?
-        }
-
         #endregion
 
         #region "Module variables"

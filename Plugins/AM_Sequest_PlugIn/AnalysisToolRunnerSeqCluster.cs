@@ -719,34 +719,6 @@ namespace AnalysisManagerSequestPlugin
             return false;
         }
 
-        /// <summary>
-        /// Finds specified integer value in a sequest.log file
-        /// </summary>
-        /// <param name="InpFileStr">A string containing the contents of the sequest.log file</param>
-        /// <param name="RegexStr">Regular expression match string to uniquely identify the line containing the count of interest</param>
-        /// <returns>Count from desired line in sequest.log file if successful; 0 if count not found; -1 for error</returns>
-        /// <remarks>If -1 returned, error message is in module variable mErrMsg</remarks>
-        [Obsolete("Unused")]
-        private float GetSingleFromSeqLogFileString(string InpFileStr, string RegexStr)
-        {
-            try
-            {
-                // Find the specified substring in the input file string
-                var TmpStr = Regex.Match(InpFileStr, RegexStr, RegexOptions.IgnoreCase | RegexOptions.Multiline).Value;
-                if (string.IsNullOrEmpty(TmpStr))
-                    return 0.0f;
-
-                // Find the item count in the substring
-                var RetVal = Convert.ToSingle(Regex.Match(TmpStr, "\\d+\\.\\d+").Value);
-                return RetVal;
-            }
-            catch (Exception ex)
-            {
-                mErrMsg = ex.Message;
-                return -1.0f;
-            }
-        }
-
         private float ComputeMedianProcessingTime()
         {
             int midPoint;
