@@ -6,9 +6,11 @@ using System.Linq;
 
 namespace AnalysisManager_RepoPkgr_Plugin
 {
+    /// <summary>
     /// Handler that provides pre-packaged Mage pipelines
     /// that do the heavy lifting tasks that get data package items,
     /// find associated files, and copy them to repo cache directories
+    /// </summary>
     public class MageRepoPkgrPipelines
     {
         #region Properties

@@ -420,9 +420,9 @@ namespace AnalysisManagerQCARTPlugin
         /// <param name="datasetName"></param>
         /// <returns>Fraction number on success; 0 if an error</returns>
         /// <remarks>
-        /// Supported formated #1, based on TEDDY_DISCOVERY_SET_34_23_20Oct15_Frodo_15-08-15    and
-        ///                                 TEDDY_DISCOVERY_SET_32_10rr_13Oct15_Frodo_15-08-15  and
-        ///                                 TEDDY_DISCOVERY_SET_54_15-rr_01May16_Frodo_16-03-33
+        /// Supported format #1, based on TEDDY_DISCOVERY_SET_34_23_20Oct15_Frodo_15-08-15    and
+        ///                               TEDDY_DISCOVERY_SET_32_10rr_13Oct15_Frodo_15-08-15  and
+        ///                               TEDDY_DISCOVERY_SET_54_15-rr_01May16_Frodo_16-03-33
         ///   Look for "_SET_\d+_\d+_" or "_SET_\d+_\d+[a-z-]+_"
         ///   SCX fraction is the second number
         /// </remarks>
