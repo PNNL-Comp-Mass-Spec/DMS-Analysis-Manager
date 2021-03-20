@@ -763,6 +763,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
             #region MageMultiAlign Mage Pipelines
 
             // Build and run Mage pipeline to to extract contents of job
+            [Obsolete("Unused")]
             private void ExtractResultsForJob(BaseModule currentJob, ExtractionType extractionParams, string extractedResultsFileName)
             {
                 // search job results directories for list of results files to process and accumulate into buffer module
@@ -781,6 +782,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
             #region MageMultiAlign Utility Methods
 
             // Build Mage source module containing one job to process
+            [Obsolete("No longer used")]
             private BaseModule MakeJobSourceModule(string[] fieldNames, object[] jobFields)
             {
                 var currentJob = new DataGenerator {AddAdHocRow = fieldNames };

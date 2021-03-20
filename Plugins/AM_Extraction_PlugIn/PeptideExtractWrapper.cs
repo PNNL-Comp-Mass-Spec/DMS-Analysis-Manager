@@ -34,6 +34,7 @@ namespace AnalysisManagerExtractionPlugin
         private DateTime mLastLogTime = DateTime.MinValue;
         private DateTime mLastConsoleLogTime = DateTime.UtcNow;
 
+        [Obsolete("No longer used")]
         private void ExtractTools_CurrentProgress(double fractionDone)
         {
             const int CONSOLE_LOG_INTERVAL_SECONDS = 60;
