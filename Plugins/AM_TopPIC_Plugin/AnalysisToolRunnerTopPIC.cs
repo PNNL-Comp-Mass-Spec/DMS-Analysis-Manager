@@ -414,90 +414,89 @@ namespace AnalysisManagerTopPICPlugIn
                 float percentCompleteThisTask = 0;
                 var progressReportedAsPercentComplete = false;
 
-                using (var reader = new StreamReader(new FileStream(consoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using var reader = new StreamReader(new FileStream(consoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+                var linesRead = 0;
+                while (!reader.EndOfStream)
                 {
-                    var linesRead = 0;
-                    while (!reader.EndOfStream)
+                    var dataLine = reader.ReadLine();
+                    linesRead++;
+
+                    if (string.IsNullOrWhiteSpace(dataLine))
+                        continue;
+
+                    var dataLineLCase = dataLine.ToLower();
+
+                    if (linesRead <= 3)
                     {
-                        var dataLine = reader.ReadLine();
-                        linesRead++;
-
-                        if (string.IsNullOrWhiteSpace(dataLine))
-                            continue;
-
-                        var dataLineLCase = dataLine.ToLower();
-
-                        if (linesRead <= 3)
+                        // The first line has the path to the TopPIC executable and the command line arguments
+                        // The second line is dashes
+                        // The third line has the TopPIC version
+                        if (string.IsNullOrEmpty(mTopPICVersionText) &&
+                            dataLine.IndexOf("TopPIC", StringComparison.OrdinalIgnoreCase) == 0 &&
+                            dataLine.IndexOf(TOPPIC_EXE_NAME, StringComparison.OrdinalIgnoreCase) < 0)
                         {
-                            // The first line has the path to the TopPIC executable and the command line arguments
-                            // The second line is dashes
-                            // The third line has the TopPIC version
-                            if (string.IsNullOrEmpty(mTopPICVersionText) &&
-                                dataLine.IndexOf("TopPIC", StringComparison.OrdinalIgnoreCase) == 0 &&
-                                dataLine.IndexOf(TOPPIC_EXE_NAME, StringComparison.OrdinalIgnoreCase) < 0)
+                            if (mDebugLevel >= 2)
                             {
-                                if (mDebugLevel >= 2)
-                                {
-                                    LogDebug("TopPIC version: " + dataLine);
-                                }
-
-                                var versionMatcher = new Regex(@"(?<Major>\d+)\.(?<Minor>\d+)\.(?<Build>\d+)", RegexOptions.Compiled);
-                                var match = versionMatcher.Match(dataLine);
-                                if (match.Success)
-                                {
-                                    mTopPICVersion = new Version(match.Value);
-                                }
-
-                                mTopPICVersionText = string.Copy(dataLine);
+                                LogDebug("TopPIC version: " + dataLine);
                             }
+
+                            var versionMatcher = new Regex(@"(?<Major>\d+)\.(?<Minor>\d+)\.(?<Build>\d+)", RegexOptions.Compiled);
+                            var match = versionMatcher.Match(dataLine);
+                            if (match.Success)
+                            {
+                                mTopPICVersion = new Version(match.Value);
+                            }
+
+                            mTopPICVersionText = string.Copy(dataLine);
+                        }
+                    }
+                    else
+                    {
+                        foreach (var processingStep in processingSteps)
+                        {
+                            if (!dataLine.StartsWith(processingStep.Key, StringComparison.OrdinalIgnoreCase))
+                                continue;
+
+                            currentProgress = processingStep.Value;
+                        }
+
+                        if (linesRead > 7 &&
+                            dataLineLCase.Contains("error") &&
+                            !dataLineLCase.Contains("error tolerance:") &&
+                            !dataLineLCase.Contains("error tolerance for ") &&
+                            string.IsNullOrEmpty(mConsoleOutputErrorMsg))
+                        {
+                            mConsoleOutputErrorMsg = "Error running TopPIC: " + dataLine;
+                        }
+
+                        var percentCompleteMatch = percentCompleteMatcher.Match(dataLine);
+                        if (percentCompleteMatch.Success)
+                        {
+                            percentCompleteThisTask = float.Parse(percentCompleteMatch.Groups["Progress"].Value);
+                            progressReportedAsPercentComplete = true;
+                            undefinedProgress = false;
                         }
                         else
                         {
-                            foreach (var processingStep in processingSteps)
-                            {
-                                if (!dataLine.StartsWith(processingStep.Key, StringComparison.OrdinalIgnoreCase))
-                                    continue;
+                            progressReportedAsPercentComplete = false;
 
-                                currentProgress = processingStep.Value;
-                            }
-
-                            if (linesRead > 7 &&
-                                dataLineLCase.Contains("error") &&
-                                !dataLineLCase.Contains("error tolerance:") &&
-                                !dataLineLCase.Contains("error tolerance for ") &&
-                                string.IsNullOrEmpty(mConsoleOutputErrorMsg))
+                            var progressMatch = incrementalProgressMatcher.Match(dataLine);
+                            if (progressMatch.Success)
                             {
-                                mConsoleOutputErrorMsg = "Error running TopPIC: " + dataLine;
-                            }
+                                if (int.TryParse(progressMatch.Groups["Item"].Value, out var itemValue))
+                                    currentTaskItemsProcessed = itemValue;
 
-                            var percentCompleteMatch = percentCompleteMatcher.Match(dataLine);
-                            if (percentCompleteMatch.Success)
-                            {
-                                percentCompleteThisTask = float.Parse(percentCompleteMatch.Groups["Progress"].Value);
-                                progressReportedAsPercentComplete = true;
+                                if (int.TryParse(progressMatch.Groups["Total"].Value, out var totalValue))
+                                    currentTaskTotalItems = totalValue;
+
                                 undefinedProgress = false;
                             }
-                            else
+
+                            var undefinedProgressMatch = undefinedProgressMatcher.Match(dataLine);
+                            if (undefinedProgressMatch.Success)
                             {
-                                progressReportedAsPercentComplete = false;
-
-                                var progressMatch = incrementalProgressMatcher.Match(dataLine);
-                                if (progressMatch.Success)
-                                {
-                                    if (int.TryParse(progressMatch.Groups["Item"].Value, out var itemValue))
-                                        currentTaskItemsProcessed = itemValue;
-
-                                    if (int.TryParse(progressMatch.Groups["Total"].Value, out var totalValue))
-                                        currentTaskTotalItems = totalValue;
-
-                                    undefinedProgress = false;
-                                }
-
-                                var undefinedProgressMatch = undefinedProgressMatcher.Match(dataLine);
-                                if (undefinedProgressMatch.Success)
-                                {
-                                    undefinedProgress = true;
-                                }
+                                undefinedProgress = true;
                             }
                         }
                     }
@@ -638,7 +637,7 @@ namespace AnalysisManagerTopPICPlugIn
 
             // Arguments in this list are appended as --decoy or --keep-temp-files and not as "--decoy True" or "--keep-temp-files True"
             // Append these if set to True in the parameter file
-            var extraArguments = new List<string> {"Decoy", "KeepTempFiles"};
+            var extraArguments = new List<string> { "Decoy", "KeepTempFiles" };
 
             foreach (var optionalArgument in extraArguments)
             {
@@ -1409,12 +1408,11 @@ namespace AnalysisManagerTopPICPlugIn
         {
             try
             {
-                using (var writer = new StreamWriter(new FileStream(modsFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
+                using var writer = new StreamWriter(new FileStream(modsFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite));
+
+                foreach (var modItem in validatedMods)
                 {
-                    foreach (var modItem in validatedMods)
-                    {
-                        writer.WriteLine(modItem);
-                    }
+                    writer.WriteLine(modItem);
                 }
 
                 return true;

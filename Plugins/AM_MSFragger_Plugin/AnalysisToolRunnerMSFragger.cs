@@ -245,75 +245,74 @@ namespace AnalysisManagerMSFraggerPlugIn
                 var currentSlice = 0;
                 var totalSlices = 0;
 
-                using (var reader = new StreamReader(new FileStream(consoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using var reader = new StreamReader(new FileStream(consoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+                var linesRead = 0;
+                while (!reader.EndOfStream)
                 {
-                    var linesRead = 0;
-                    while (!reader.EndOfStream)
+                    var dataLine = reader.ReadLine();
+                    linesRead++;
+
+                    if (string.IsNullOrWhiteSpace(dataLine))
+                        continue;
+
+                    if (linesRead <= 5)
                     {
-                        var dataLine = reader.ReadLine();
-                        linesRead++;
+                        // The first line has the path to the MSFragger .jar file and the command line arguments
+                        // The second line is dashes
+                        // The third line should be: Running MSFragger
+                        // The fourth line should have the version
 
-                        if (string.IsNullOrWhiteSpace(dataLine))
-                            continue;
-
-                        if (linesRead <= 5)
+                        if (string.IsNullOrEmpty(mMSFraggerVersion) &&
+                            dataLine.StartsWith("MSFragger version", StringComparison.OrdinalIgnoreCase))
                         {
-                            // The first line has the path to the MSFragger .jar file and the command line arguments
-                            // The second line is dashes
-                            // The third line should be: Running MSFragger
-                            // The fourth line should have the version
-
-                            if (string.IsNullOrEmpty(mMSFraggerVersion) &&
-                                dataLine.StartsWith("MSFragger version", StringComparison.OrdinalIgnoreCase))
+                            if (mDebugLevel >= 2)
                             {
-                                if (mDebugLevel >= 2)
-                                {
-                                    LogDebug(dataLine);
-                                }
-
-                                mMSFraggerVersion = string.Copy(dataLine);
+                                LogDebug(dataLine);
                             }
 
-                            if (dataLine.StartsWith(MSFTBX, StringComparison.OrdinalIgnoreCase) &&
-                                mMSFraggerVersion.IndexOf(MSFTBX, StringComparison.OrdinalIgnoreCase) < 0)
-                            {
-                                mMSFraggerVersion = mMSFraggerVersion + "; " + dataLine;
-                            }
+                            mMSFraggerVersion = string.Copy(dataLine);
                         }
-                        else
+
+                        if (dataLine.StartsWith(MSFTBX, StringComparison.OrdinalIgnoreCase) &&
+                            mMSFraggerVersion.IndexOf(MSFTBX, StringComparison.OrdinalIgnoreCase) < 0)
                         {
-                            foreach (var processingStep in processingSteps)
-                            {
-                                if (!dataLine.StartsWith(processingStep.Key, StringComparison.OrdinalIgnoreCase))
-                                    continue;
+                            mMSFraggerVersion = mMSFraggerVersion + "; " + dataLine;
+                        }
+                    }
+                    else
+                    {
+                        foreach (var processingStep in processingSteps)
+                        {
+                            if (!dataLine.StartsWith(processingStep.Key, StringComparison.OrdinalIgnoreCase))
+                                continue;
 
-                                currentProgress = processingStep.Value;
-                            }
+                            currentProgress = processingStep.Value;
+                        }
 
-                            if (linesRead > 12 &&
-                                dataLine.IndexOf("error", StringComparison.OrdinalIgnoreCase) >= 0 &&
-                                string.IsNullOrEmpty(mConsoleOutputErrorMsg))
-                            {
-                                mConsoleOutputErrorMsg = "Error running MSFragger: " + dataLine;
-                            }
+                        if (linesRead > 12 &&
+                            dataLine.IndexOf("error", StringComparison.OrdinalIgnoreCase) >= 0 &&
+                            string.IsNullOrEmpty(mConsoleOutputErrorMsg))
+                        {
+                            mConsoleOutputErrorMsg = "Error running MSFragger: " + dataLine;
+                        }
 
-                            var sliceMatch = sliceMatcher.Match(dataLine);
-                            if (sliceMatch.Success)
-                            {
-                                if (int.TryParse(sliceMatch.Groups["Current"].Value, out var itemValue))
-                                    currentSlice = itemValue;
+                        var sliceMatch = sliceMatcher.Match(dataLine);
+                        if (sliceMatch.Success)
+                        {
+                            if (int.TryParse(sliceMatch.Groups["Current"].Value, out var itemValue))
+                                currentSlice = itemValue;
 
-                                if (int.TryParse(sliceMatch.Groups["Total"].Value, out var totalValue))
-                                    totalSlices = totalValue;
-                            } else if (currentSlice > 0)
+                            if (int.TryParse(sliceMatch.Groups["Total"].Value, out var totalValue))
+                                totalSlices = totalValue;
+                        } else if (currentSlice > 0)
+                        {
+                            var progressMatch = progressMatcher.Match(dataLine);
+                            if (progressMatch.Success)
                             {
-                                var progressMatch = progressMatcher.Match(dataLine);
-                                if (progressMatch.Success)
+                                if (float.TryParse(progressMatch.Groups["PercentComplete"].Value, out var progressValue))
                                 {
-                                    if (float.TryParse(progressMatch.Groups["PercentComplete"].Value, out var progressValue))
-                                    {
-                                        subtaskProgress = progressValue;
-                                    }
+                                    subtaskProgress = progressValue;
                                 }
                             }
                         }

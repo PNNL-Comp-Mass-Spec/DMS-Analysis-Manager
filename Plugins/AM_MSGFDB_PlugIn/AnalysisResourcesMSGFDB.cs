@@ -527,101 +527,100 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             var detailedScanTypesDefined = false;
 
-            using (var reader = new StreamReader(new FileStream(scanStatsFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+            using var reader = new StreamReader(new FileStream(scanStatsFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+            string headerLine = null;
+
+            while (!reader.EndOfStream)
             {
-                string headerLine = null;
+                headerLine = reader.ReadLine();
+                if (!string.IsNullOrWhiteSpace(headerLine))
+                    break;
+            }
 
-                while (!reader.EndOfStream)
+            if (string.IsNullOrWhiteSpace(headerLine))
+            {
+                return false;
+            }
+
+            // Parse the scan headers
+            var headerColumns = headerLine.Split('\t').ToList();
+
+            foreach (var columnName in columnNameWithScanType)
+            {
+                var scanTypeIndex = headerColumns.IndexOf(columnName);
+                if (scanTypeIndex >= 0)
                 {
-                    headerLine = reader.ReadLine();
-                    if (!string.IsNullOrWhiteSpace(headerLine))
-                        break;
+                    columnIndicesToCheck.Add(scanTypeIndex);
                 }
+            }
 
-                if (string.IsNullOrWhiteSpace(headerLine))
+            if (columnIndicesToCheck.Count == 0)
+            {
+                if (float.TryParse(headerColumns[0], out _) || float.TryParse(headerColumns[1], out _))
                 {
-                    return false;
-                }
-
-                // Parse the scan headers
-                var headerColumns = headerLine.Split('\t').ToList();
-
-                foreach (var columnName in columnNameWithScanType)
-                {
-                    var scanTypeIndex = headerColumns.IndexOf(columnName);
-                    if (scanTypeIndex >= 0)
+                    // This file does not have a header line
+                    if (headerColumns.Count >= 11)
                     {
-                        columnIndicesToCheck.Add(scanTypeIndex);
+                        // Check whether column 11 has ScanTypeName info
+                        if (headerColumns[10].IndexOf("MS", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                            headerColumns[10].IndexOf("SRM", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                            headerColumns[10].IndexOf("MRM", StringComparison.OrdinalIgnoreCase) >= 0)
+                        {
+                            return true;
+                        }
                     }
-                }
 
-                if (columnIndicesToCheck.Count == 0)
-                {
-                    if (float.TryParse(headerColumns[0], out _) || float.TryParse(headerColumns[1], out _))
+                    if (headerColumns.Count >= 16)
                     {
-                        // This file does not have a header line
-                        if (headerColumns.Count >= 11)
+                        // Check whether column 15 has "Collision Mode" values
+                        if (headerColumns[15].IndexOf("HCD", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                            headerColumns[15].IndexOf("CID", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                            headerColumns[15].IndexOf("ETD", StringComparison.OrdinalIgnoreCase) >= 0)
                         {
-                            // Check whether column 11 has ScanTypeName info
-                            if (headerColumns[10].IndexOf("MS", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                                headerColumns[10].IndexOf("SRM", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                                headerColumns[10].IndexOf("MRM", StringComparison.OrdinalIgnoreCase) >= 0)
-                            {
-                                return true;
-                            }
+                            return true;
                         }
+                    }
 
-                        if (headerColumns.Count >= 16)
+                    if (headerColumns.Count >= 17)
+                    {
+                        // Check whether column 15 has "Collision Mode" values
+                        if (headerColumns[16].IndexOf("HCD", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                            headerColumns[16].IndexOf("CID", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                            headerColumns[16].IndexOf("ETD", StringComparison.OrdinalIgnoreCase) >= 0)
                         {
-                            // Check whether column 15 has "Collision Mode" values
-                            if (headerColumns[15].IndexOf("HCD", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                                headerColumns[15].IndexOf("CID", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                                headerColumns[15].IndexOf("ETD", StringComparison.OrdinalIgnoreCase) >= 0)
-                            {
-                                return true;
-                            }
-                        }
-
-                        if (headerColumns.Count >= 17)
-                        {
-                            // Check whether column 15 has "Collision Mode" values
-                            if (headerColumns[16].IndexOf("HCD", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                                headerColumns[16].IndexOf("CID", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                                headerColumns[16].IndexOf("ETD", StringComparison.OrdinalIgnoreCase) >= 0)
-                            {
-                                return true;
-                            }
+                            return true;
                         }
                     }
                 }
+            }
 
-                if (columnIndicesToCheck.Count == 0)
-                    return false;
+            if (columnIndicesToCheck.Count == 0)
+                return false;
 
-                while (!reader.EndOfStream && !detailedScanTypesDefined)
+            while (!reader.EndOfStream && !detailedScanTypesDefined)
+            {
+                var dataLine = reader.ReadLine();
+                if (string.IsNullOrWhiteSpace(dataLine))
+                    continue;
+
+                var dataCols = dataLine.Split('\t').ToList();
+
+                foreach (var columnIndex in columnIndicesToCheck)
                 {
-                    var dataLine = reader.ReadLine();
-                    if (string.IsNullOrWhiteSpace(dataLine))
-                        continue;
+                    var scanType = dataCols[columnIndex];
 
-                    var dataCols = dataLine.Split('\t').ToList();
-
-                    foreach (var columnIndex in columnIndicesToCheck)
+                    if (scanType.IndexOf("HCD", StringComparison.OrdinalIgnoreCase) >= 0)
                     {
-                        var scanType = dataCols[columnIndex];
-
-                        if (scanType.IndexOf("HCD", StringComparison.OrdinalIgnoreCase) >= 0)
-                        {
-                            detailedScanTypesDefined = true;
-                        }
-                        else if (scanType.IndexOf("CID", StringComparison.OrdinalIgnoreCase) >= 0)
-                        {
-                            detailedScanTypesDefined = true;
-                        }
-                        else if (scanType.IndexOf("ETD", StringComparison.OrdinalIgnoreCase) >= 0)
-                        {
-                            detailedScanTypesDefined = true;
-                        }
+                        detailedScanTypesDefined = true;
+                    }
+                    else if (scanType.IndexOf("CID", StringComparison.OrdinalIgnoreCase) >= 0)
+                    {
+                        detailedScanTypesDefined = true;
+                    }
+                    else if (scanType.IndexOf("ETD", StringComparison.OrdinalIgnoreCase) >= 0)
+                    {
+                        detailedScanTypesDefined = true;
                     }
                 }
             }
@@ -631,38 +630,37 @@ namespace AnalysisManagerMSGFDBPlugIn
 
         private bool ValidateScanStatsFileHasScanTypeNameColumn(string scanStatsFilePath)
         {
-            using (var reader = new StreamReader(new FileStream(scanStatsFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+            using var reader = new StreamReader(new FileStream(scanStatsFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+            if (reader.EndOfStream)
+                return false;
+
+            var headerLine = reader.ReadLine();
+            if (string.IsNullOrWhiteSpace(headerLine))
+                return false;
+
+            // Parse the scan headers to look for ScanTypeName
+
+            var columns = headerLine.Split('\t').ToList();
+
+            if (columns.Contains("ScanTypeName"))
             {
-                if (reader.EndOfStream)
-                    return false;
+                return true;
+            }
 
-                var headerLine = reader.ReadLine();
-                if (string.IsNullOrWhiteSpace(headerLine))
-                    return false;
+            if (!float.TryParse(columns[0], out _) && !float.TryParse(columns[1], out _))
+                return false;
 
-                // Parse the scan headers to look for ScanTypeName
+            // This file does not have a header line
+            if (columns.Count < 11)
+                return false;
 
-                var columns = headerLine.Split('\t').ToList();
-
-                if (columns.Contains("ScanTypeName"))
-                {
-                    return true;
-                }
-
-                if (!float.TryParse(columns[0], out _) && !float.TryParse(columns[1], out _))
-                    return false;
-
-                // This file does not have a header line
-                if (columns.Count < 11)
-                    return false;
-
-                // Assume column 11 is the ScanTypeName column
-                if (columns[10].IndexOf("MS", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                    columns[10].IndexOf("SRM", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                    columns[10].IndexOf("MRM", StringComparison.OrdinalIgnoreCase) >= 0)
-                {
-                    return true;
-                }
+            // Assume column 11 is the ScanTypeName column
+            if (columns[10].IndexOf("MS", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                columns[10].IndexOf("SRM", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                columns[10].IndexOf("MRM", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return true;
             }
 
             return false;

@@ -1131,21 +1131,20 @@ namespace AnalysisManagerMSGFDBPlugIn
                     return string.Empty;
                 }
 
-                using (var srReader = new StreamReader(new FileStream(consoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                using var reader= new StreamReader(new FileStream(consoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.Read));
+
+                while (!reader.EndOfStream)
                 {
-                    while (!srReader.EndOfStream)
+                    var dataLine = reader.ReadLine();
+                    if (dataLine == null || !dataLine.StartsWith("Error", StringComparison.OrdinalIgnoreCase))
+                        continue;
+
+                    OnErrorEvent("BuildSA reports: " + dataLine);
+                    if (dataLine.Contains("too many redundant proteins"))
                     {
-                        var dataLine = srReader.ReadLine();
-                        if (dataLine?.StartsWith("Error", StringComparison.OrdinalIgnoreCase) == true)
-                        {
-                            OnErrorEvent("BuildSA reports: " + dataLine);
-                            if (dataLine.Contains("too many redundant proteins"))
-                            {
-                                return "Error while indexing, too many redundant proteins";
-                            }
-                            return dataLine;
-                        }
+                        return "Error while indexing, too many redundant proteins";
                     }
+                    return dataLine;
                 }
 
                 return string.Empty;
