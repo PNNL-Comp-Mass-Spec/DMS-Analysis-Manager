@@ -164,6 +164,34 @@ namespace AnalysisManagerTopPICPlugIn
             }
         }
 
+        private static float ComputeOverallProgress(
+            SortedList<string, int> processingSteps,
+            int currentProgress,
+            int currentTaskItemsProcessed,
+            int currentTaskTotalItems,
+            bool progressReportedAsPercentComplete,
+            float percentCompleteThisTask)
+        {
+            if (progressReportedAsPercentComplete)
+            {
+                // Convert % complete for this step into a pseudo item count by multiplying by 100
+                currentTaskItemsProcessed = (int)Math.Round(percentCompleteThisTask * 100, 0);
+                currentTaskTotalItems = 100 * 100;
+            }
+
+            var nextProgress = 100;
+
+            // Find the % progress value for step following the current step
+            foreach (var item in processingSteps)
+            {
+                if (item.Value > currentProgress && item.Value < nextProgress)
+                    nextProgress = item.Value;
+            }
+
+            return ComputeIncrementalProgress(currentProgress, nextProgress,
+                currentTaskItemsProcessed, currentTaskTotalItems);
+        }
+
         /// <summary>
         /// Copy failed results from the working directory to the DMS_FailedResults directory on the local computer
         /// </summary>
@@ -476,26 +504,12 @@ namespace AnalysisManagerTopPICPlugIn
                 }
 
                 float effectiveProgress;
-                if (progressReportedAsPercentComplete)
-                {
-                    // Convert % complete for this step into a pseudo item count by multiplying by 100
-                    currentTaskItemsProcessed = (int)Math.Round(percentCompleteThisTask * 100, 0);
-                    currentTaskTotalItems = 100 * 100;
-                }
-
                 if (!undefinedProgress && currentTaskItemsProcessed > 0 && currentTaskTotalItems > 0)
                 {
-                    var nextProgress = 100;
-
-                    // Find the % progress value for step following the current step
-                    foreach (var item in processingSteps)
-                    {
-                        if (item.Value > currentProgress && item.Value < nextProgress)
-                            nextProgress = item.Value;
-                    }
-
-                    effectiveProgress = ComputeIncrementalProgress(currentProgress, nextProgress,
-                                                                   currentTaskItemsProcessed, currentTaskTotalItems);
+                    effectiveProgress = ComputeOverallProgress(
+                        processingSteps, currentProgress,
+                        currentTaskItemsProcessed, currentTaskTotalItems,
+                        progressReportedAsPercentComplete, percentCompleteThisTask);
                 }
                 else
                 {
