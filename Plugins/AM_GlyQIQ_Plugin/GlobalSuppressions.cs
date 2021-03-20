@@ -5,6 +5,7 @@
 
 using System.Diagnostics.CodeAnalysis;
 
+[assembly: SuppressMessage("Design", "RCS1075:Avoid empty catch clause that catches System.Exception.", Justification = "Ignore errors here", Scope = "member", Target = "~M:AnalysisManagerGlyQIQPlugin.AnalysisToolRunnerGlyQIQ.PackageResults")]
 [assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Acceptable legacy name", Scope = "type", Target = "~T:AnalysisManagerGlyQIQPlugin.AnalysisResourcesGlyQIQ")]
 [assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Acceptable legacy name", Scope = "type", Target = "~T:AnalysisManagerGlyQIQPlugin.AnalysisToolRunnerGlyQIQ")]
 [assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Acceptable legacy name", Scope = "type", Target = "~T:AnalysisManagerGlyQIQPlugin.GlyQIqRunner")]

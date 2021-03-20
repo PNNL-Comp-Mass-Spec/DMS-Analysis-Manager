@@ -5,7 +5,7 @@
 
 using System.Diagnostics.CodeAnalysis;
 
-[assembly: SuppressMessage("Design", "RCS1075:Avoid empty catch clause that catches System.Exception.", Justification = "Ignore errors here", Scope = "member", Target = "~M:AnalysisManagerMsXmlBrukerPlugIn.AnalysisToolRunnerMSXMLBruker.CreateMSXmlFile(System.IO.FileInfo@)~AnalysisManagerBase.CloseOutType")]
+[assembly: SuppressMessage("Design", "RCS1075:Avoid empty catch clause that catches System.Exception.", Justification = "Ignore errors here", Scope = "member", Target = "~M:AnalysisManagerMsXmlBrukerPlugIn.AnalysisToolRunnerMSXMLBruker.CreateMSXmlFile(System.IO.FileInfo@)~AnalysisManagerBase.JobConfig.CloseOutType")]
 [assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Acceptable legacy name", Scope = "type", Target = "~T:AnalysisManagerMsXmlBrukerPlugIn.AnalysisResourcesMSXMLBruker")]
 [assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Acceptable legacy name", Scope = "type", Target = "~T:AnalysisManagerMsXmlBrukerPlugIn.AnalysisToolRunnerMSXMLBruker")]
 [assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Acceptable legacy name", Scope = "type", Target = "~T:AnalysisManagerMsXmlBrukerPlugIn.CompassXportRunner")]

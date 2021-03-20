@@ -6,8 +6,8 @@
 using System.Diagnostics.CodeAnalysis;
 
 [assembly: SuppressMessage("Design", "RCS1075:Avoid empty catch clause that catches System.Exception.", Justification = "Acceptable design pattern", Scope = "module")]
-[assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Allowed", Scope = "type", Target = "~T:AnalysisManagerMasicPlugin.AnalysisToolRunnerMASICBase")]
-[assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Allowed", Scope = "type", Target = "~T:AnalysisManagerMasicPlugin.AnalysisToolRunnerMASICFinnigan")]
-[assembly: SuppressMessage("Style", "IDE0066:Convert switch statement to expression", Justification = "Leave as-is for readability", Scope = "member", Target = "~M:AnalysisManagerMasicPlugin.AnalysisResourcesMASIC.GetResources~AnalysisManagerBase.CloseOutType")]
+[assembly: SuppressMessage("Style", "IDE0066:Convert switch statement to expression", Justification = "Leave as-is for readability", Scope = "member", Target = "~M:AnalysisManagerMasicPlugin.AnalysisResourcesMASIC.GetResources~AnalysisManagerBase.JobConfig.CloseOutType")]
 [assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Acceptable legacy name", Scope = "type", Target = "~T:AnalysisManagerMasicPlugin.AnalysisResourcesMASIC")]
 [assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Acceptable legacy name", Scope = "type", Target = "~T:AnalysisManagerMasicPlugin.AnalysisToolRunnerMASICAgilent")]
+[assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Allowed", Scope = "type", Target = "~T:AnalysisManagerMasicPlugin.AnalysisToolRunnerMASICBase")]
+[assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Allowed", Scope = "type", Target = "~T:AnalysisManagerMasicPlugin.AnalysisToolRunnerMASICFinnigan")]

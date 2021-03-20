@@ -6,3 +6,4 @@
 using System.Diagnostics.CodeAnalysis;
 
 [assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Acceptable legacy name", Scope = "type", Target = "~T:AnalysisManagerLipidMapSearchPlugIn.AnalysisToolRunnerLipidMapSearch")]
+[assembly: SuppressMessage("Usage", "RCS1246:Use element access.", Justification = "Prefer to use .First()", Scope = "member", Target = "~M:AnalysisManagerLipidMapSearchPlugIn.AnalysisResourcesLipidMapSearch.RetrieveDatasetAndPeaksFile(System.String,System.String,System.String)~System.Boolean")]

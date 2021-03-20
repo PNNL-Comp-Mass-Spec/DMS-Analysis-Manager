@@ -1,17 +1,36 @@
-﻿
-// This file is used by Code Analysis to maintain SuppressMessage
+﻿// This file is used by Code Analysis to maintain SuppressMessage
 // attributes that are applied to this project.
 // Project-level suppressions either have no target or are given
 // a specific target and scoped to a namespace, type, member, etc.
 
 using System.Diagnostics.CodeAnalysis;
 
+[assembly: SuppressMessage("CodeQuality", "IDE0051:Remove unused private members", Justification = "Leave for reference", Scope = "member", Target = "~F:DTASpectraFileGen.DtaGenThermoRaw.OF_READ")]
+[assembly: SuppressMessage("CodeQuality", "IDE0051:Remove unused private members", Justification = "Leave for reference", Scope = "member", Target = "~F:DTASpectraFileGen.DtaGenThermoRaw.OF_READWRITE")]
+[assembly: SuppressMessage("CodeQuality", "IDE0051:Remove unused private members", Justification = "Leave for reference", Scope = "member", Target = "~F:DTASpectraFileGen.DtaGenThermoRaw.OF_SHARE_COMPAT")]
+[assembly: SuppressMessage("CodeQuality", "IDE0051:Remove unused private members", Justification = "Leave for reference", Scope = "member", Target = "~F:DTASpectraFileGen.DtaGenThermoRaw.OF_SHARE_DENY_NONE")]
+[assembly: SuppressMessage("CodeQuality", "IDE0051:Remove unused private members", Justification = "Leave for reference", Scope = "member", Target = "~F:DTASpectraFileGen.DtaGenThermoRaw.OF_SHARE_DENY_READ")]
+[assembly: SuppressMessage("CodeQuality", "IDE0051:Remove unused private members", Justification = "Leave for reference", Scope = "member", Target = "~F:DTASpectraFileGen.DtaGenThermoRaw.OF_SHARE_DENY_WRITE")]
+[assembly: SuppressMessage("CodeQuality", "IDE0051:Remove unused private members", Justification = "Leave for reference", Scope = "member", Target = "~F:DTASpectraFileGen.DtaGenThermoRaw.OF_SHARE_EXCLUSIVE")]
+[assembly: SuppressMessage("CodeQuality", "IDE0051:Remove unused private members", Justification = "Leave for reference", Scope = "member", Target = "~F:DTASpectraFileGen.DtaGenThermoRaw.OF_WRITE")]
+[assembly: SuppressMessage("CodeQuality", "IDE0051:Remove unused private members", Justification = "Leave for reference", Scope = "member", Target = "~M:DTASpectraFileGen.MGFConverter.XMLTextReaderGetInnerText(System.Xml.XmlReader)~System.String")]
+[assembly: SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "Required to suppress warning", Scope = "member", Target = "~M:DTASpectraFileGen.DtaGenThermoRaw.Start~AnalysisManagerBase.DataFileTools.ProcessStatus")]
+[assembly: SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "Required to suppress warning", Scope = "member", Target = "~M:DTASpectraFileGen.DtaGenToolRunner.ZipConcatenatedDtaFile~AnalysisManagerBase.JobConfig.CloseOutType")]
+[assembly: SuppressMessage("Design", "RCS1075:Avoid empty catch clause that catches System.Exception.", Justification = "Ignore errors here", Scope = "member", Target = "~M:DTASpectraFileGen.DtaGenDeconConsole.ParseKeyValue(System.String)~System.Collections.Generic.KeyValuePair{System.String,System.String}")]
 [assembly: SuppressMessage("Design", "RCS1075:Avoid empty catch clause that catches System.Exception.", Justification = "Ignore errors here", Scope = "member", Target = "~M:DTASpectraFileGen.DtaGenThermoRaw.UpdateDeconMSnProgress(System.String)")]
 [assembly: SuppressMessage("Design", "RCS1075:Avoid empty catch clause that catches System.Exception.", Justification = "Ignore errors here", Scope = "member", Target = "~M:DTASpectraFileGen.DtaGenThermoRaw.UpdateDTAProgress(System.String)")]
 [assembly: SuppressMessage("Design", "RCS1075:Avoid empty catch clause that catches System.Exception.", Justification = "Ignore errors here", Scope = "member", Target = "~M:DTASpectraFileGen.DtaGenToolRunner.MergeCDTAs(System.String,System.String,System.String)~System.Boolean")]
 [assembly: SuppressMessage("Readability", "RCS1123:Add parentheses when necessary.", Justification = "Parentheses not needed", Scope = "member", Target = "~M:DTASpectraFileGen.DtaGenDeconConsole.ParseDeconToolsLogFile(System.Boolean@,System.DateTime@)")]
 [assembly: SuppressMessage("Readability", "RCS1123:Add parentheses when necessary.", Justification = "Parentheses not needed", Scope = "member", Target = "~M:DTASpectraFileGen.DtaGenThermoRaw.MakeDTAFiles~System.Boolean")]
-[assembly: SuppressMessage("Readability", "RCS1123:Add parentheses when necessary.", Justification = "Parentheses not needed", Scope = "member", Target = "~M:DTASpectraFileGen.DtaGenToolRunner.StartAndWaitForDTAGenerator(AnalysisManagerBase.ISpectraFileProcessor,System.String,System.Boolean)~AnalysisManagerBase.CloseOutType")]
+[assembly: SuppressMessage("Readability", "RCS1123:Add parentheses when necessary.", Justification = "Parentheses not needed", Scope = "member", Target = "~M:DTASpectraFileGen.DtaGenToolRunner.StartAndWaitForDTAGenerator(AnalysisManagerBase.DataFileTools.ISpectraFileProcessor,System.String,System.Boolean)~AnalysisManagerBase.JobConfig.CloseOutType")]
+[assembly: SuppressMessage("Redundancy", "RCS1213:Remove unused member declaration.", Justification = "Leave for reference", Scope = "member", Target = "~F:DTASpectraFileGen.DtaGenThermoRaw.OF_READ")]
+[assembly: SuppressMessage("Redundancy", "RCS1213:Remove unused member declaration.", Justification = "Leave for reference", Scope = "member", Target = "~F:DTASpectraFileGen.DtaGenThermoRaw.OF_READWRITE")]
+[assembly: SuppressMessage("Redundancy", "RCS1213:Remove unused member declaration.", Justification = "Leave for reference", Scope = "member", Target = "~F:DTASpectraFileGen.DtaGenThermoRaw.OF_SHARE_COMPAT")]
+[assembly: SuppressMessage("Redundancy", "RCS1213:Remove unused member declaration.", Justification = "Leave for reference", Scope = "member", Target = "~F:DTASpectraFileGen.DtaGenThermoRaw.OF_SHARE_DENY_NONE")]
+[assembly: SuppressMessage("Redundancy", "RCS1213:Remove unused member declaration.", Justification = "Leave for reference", Scope = "member", Target = "~F:DTASpectraFileGen.DtaGenThermoRaw.OF_SHARE_DENY_READ")]
+[assembly: SuppressMessage("Redundancy", "RCS1213:Remove unused member declaration.", Justification = "Leave for reference", Scope = "member", Target = "~F:DTASpectraFileGen.DtaGenThermoRaw.OF_SHARE_DENY_WRITE")]
+[assembly: SuppressMessage("Redundancy", "RCS1213:Remove unused member declaration.", Justification = "Leave for reference", Scope = "member", Target = "~F:DTASpectraFileGen.DtaGenThermoRaw.OF_SHARE_EXCLUSIVE")]
+[assembly: SuppressMessage("Redundancy", "RCS1213:Remove unused member declaration.", Justification = "Leave for reference", Scope = "member", Target = "~F:DTASpectraFileGen.DtaGenThermoRaw.OF_WRITE")]
 [assembly: SuppressMessage("Style", "IDE0066:Convert switch statement to expression", Justification = "Leave as-is for readability", Scope = "member", Target = "~M:DTASpectraFileGen.DtaGenDeconConsole.ParseDeconToolsLogFile(System.Boolean@,System.DateTime@)")]
 [assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Acceptable legacy name", Scope = "type", Target = "~T:DTASpectraFileGen.DtaGen")]
 [assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Acceptable legacy name", Scope = "type", Target = "~T:DTASpectraFileGen.DtaGenMSConvert")]

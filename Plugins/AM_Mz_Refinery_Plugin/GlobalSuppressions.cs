@@ -9,6 +9,6 @@ using System.Diagnostics.CodeAnalysis;
 [assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Allowed", Scope = "type", Target = "~T:AnalysisManagerMzRefineryPlugIn.AnalysisResourcesMzRefinery")]
 [assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Allowed", Scope = "type", Target = "~T:AnalysisManagerMzRefineryPlugIn.AnalysisToolRunnerMzRefinery")]
 [assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Allowed", Scope = "type", Target = "~T:AnalysisManagerMzRefineryPlugIn.AnalysisToolRunnerMzRefinery.MzRefinerProgRunnerMode")]
-[assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Allowed", Scope = "type", Target = "~T:AnalysisManagerMzRefineryPlugIn.MzRefineryMassErrorStatsExtractor")]
 [assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Allowed", Scope = "type", Target = "~T:AnalysisManagerMzRefineryPlugIn.MassErrorInfo")]
+[assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Allowed", Scope = "type", Target = "~T:AnalysisManagerMzRefineryPlugIn.MzRefineryMassErrorStatsExtractor")]
 [assembly: SuppressMessage("Usage", "RCS1246:Use element access.", Justification = "Prefer to use .First()", Scope = "module")]

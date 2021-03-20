@@ -5,6 +5,7 @@
 
 using System.Diagnostics.CodeAnalysis;
 
+[assembly: SuppressMessage("CodeQuality", "IDE0051:Remove unused private members", Justification = "Leave for reference", Scope = "member", Target = "~M:AnalysisManagerMsXmlGenPlugIn.ParentIonUpdater.UpdateDtaParentIonInfoUsingMGF(System.String,System.String,System.Boolean,System.Boolean)~System.String")]
 [assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Acceptable legacy name", Scope = "type", Target = "~T:AnalysisManagerMsXmlGenPlugIn.AnalysisResourcesMSXMLGen")]
 [assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Acceptable legacy name", Scope = "type", Target = "~T:AnalysisManagerMsXmlGenPlugIn.AnalysisToolRunnerMSXMLGen")]
 [assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Acceptable legacy name", Scope = "type", Target = "~T:AnalysisManagerMsXmlGenPlugIn.MSXMLCreator")]

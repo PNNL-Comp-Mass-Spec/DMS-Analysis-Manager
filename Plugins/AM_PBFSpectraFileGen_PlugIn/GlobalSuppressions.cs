@@ -5,5 +5,6 @@
 
 using System.Diagnostics.CodeAnalysis;
 
+[assembly: SuppressMessage("Design", "RCS1075:Avoid empty catch clause that catches System.Exception.", Justification = "Ignore errors here", Scope = "member", Target = "~M:AnalysisManagerPBFGenerator.AnalysisToolRunnerPBFGenerator.EstimatePBFProgress~System.Single")]
 [assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Acceptable legacy name", Scope = "type", Target = "~T:AnalysisManagerPBFGenerator.AnalysisResourcesPBFGenerator")]
 [assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Acceptable legacy name", Scope = "type", Target = "~T:AnalysisManagerPBFGenerator.AnalysisToolRunnerPBFGenerator")]
