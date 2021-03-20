@@ -60,8 +60,8 @@ namespace AnalysisManager_AScore_PlugIn
         public bool TraceMode { get; set; }
         public string WorkingDir { get; set; }
         public string ResultsDBFileName { get; set; }
-        public string searchType { get; set; }
-        public string ascoreParamFileName { get; set; }
+        public string SearchType { get; set; }
+        public string AscoreParamFileName { get; set; }
 
         public string FastaFilePath { get; set; }
 
@@ -176,7 +176,7 @@ namespace AnalysisManager_AScore_PlugIn
 
                 var fhtFile = Path.Combine(WorkingDir, ExtractedResultsFileName);
                 var dtaFile = Path.Combine(WorkingDir, dtaFilePath);
-                var paramFileToUse = Path.Combine(WorkingDir, Path.GetFileNameWithoutExtension(ascoreParamFileName) + "_" + fragType + ".xml");
+                var paramFileToUse = Path.Combine(WorkingDir, Path.GetFileNameWithoutExtension(AscoreParamFileName) + "_" + fragType + ".xml");
 
                 if (!File.Exists(paramFileToUse))
                 {
@@ -184,7 +184,7 @@ namespace AnalysisManager_AScore_PlugIn
                     OnWarningMessage(new MageStatusEventArgs(msg));
                     Console.WriteLine(msg);
 
-                    var paramFileToUse2 = Path.Combine(WorkingDir, ascoreParamFileName);
+                    var paramFileToUse2 = Path.Combine(WorkingDir, AscoreParamFileName);
                     if (Path.GetExtension(paramFileToUse2).Length == 0)
                         paramFileToUse2 += ".xml";
 
@@ -213,7 +213,7 @@ namespace AnalysisManager_AScore_PlugIn
 
                 PsmResultsManager psmResultsManager;
 
-                switch (searchType)
+                switch (SearchType)
                 {
                     case "xtandem":
                         psmResultsManager = new XTandemFHT(fhtFile);

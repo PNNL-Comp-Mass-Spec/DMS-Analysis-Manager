@@ -74,24 +74,23 @@ namespace AnalysisManagerProSightQuantPlugIn
             }
 
             // Retrieve the ProSightPC results for this job
-            string strProSightPCResultsFile = null;
-            strProSightPCResultsFile = PROSIGHT_PC_RESULT_FILE;
-            if (!FileSearch.FindAndRetrieveMiscFiles(strProSightPCResultsFile, false))
+            const string proSightPCResultsFile = PROSIGHT_PC_RESULT_FILE;
+            if (!FileSearch.FindAndRetrieveMiscFiles(proSightPCResultsFile, false))
             {
                 // Errors were reported in function call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
-            mJobParams.AddResultFileToSkip(strProSightPCResultsFile);
+            mJobParams.AddResultFileToSkip(proSightPCResultsFile);
 
             // Get the instrument data file
-            var strRawDataType = mJobParams.GetParam("RawDataType");
+            var rawDataType = mJobParams.GetParam("RawDataType");
 
-            switch (strRawDataType.ToLower())
+            switch (rawDataType.ToLower())
             {
                 case RAW_DATA_TYPE_DOT_RAW_FILES:
                 case RAW_DATA_TYPE_BRUKER_FT_FOLDER:
 
-                    if (FileSearch.RetrieveSpectra(strRawDataType))
+                    if (FileSearch.RetrieveSpectra(rawDataType))
                     {
                         if (!ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadLayout.FlatNoSubdirectories))
                         {
@@ -99,7 +98,7 @@ namespace AnalysisManagerProSightQuantPlugIn
                         }
 
                         // Confirm that the .Raw or .D folder was actually copied locally
-                        if (strRawDataType.ToLower() == RAW_DATA_TYPE_DOT_RAW_FILES)
+                        if (rawDataType.ToLower() == RAW_DATA_TYPE_DOT_RAW_FILES)
                         {
                             if (!File.Exists(Path.Combine(mWorkDir, DatasetName + DOT_RAW_EXTENSION)))
                             {
@@ -111,7 +110,7 @@ namespace AnalysisManagerProSightQuantPlugIn
                             // Raw file
                             mJobParams.AddResultFileExtensionToSkip(DOT_RAW_EXTENSION);
                         }
-                        else if (strRawDataType.ToLower() == RAW_DATA_TYPE_BRUKER_FT_FOLDER)
+                        else if (rawDataType.ToLower() == RAW_DATA_TYPE_BRUKER_FT_FOLDER)
                         {
                             if (!Directory.Exists(Path.Combine(mWorkDir, DatasetName + DOT_D_EXTENSION)))
                             {
@@ -128,7 +127,7 @@ namespace AnalysisManagerProSightQuantPlugIn
                     }
                     break;
                 default:
-                    mMessage = "Dataset type " + strRawDataType + " is not supported";
+                    mMessage = "Dataset type " + rawDataType + " is not supported";
                     LogError("DtaGenResources.GetResources: " + mMessage +
                              "; must be " + RAW_DATA_TYPE_DOT_RAW_FILES + " or " + RAW_DATA_TYPE_BRUKER_FT_FOLDER);
                     return CloseOutType.CLOSEOUT_FAILED;

@@ -1384,15 +1384,15 @@ namespace AnalysisManagerSequestPlugin
             mSequestNodeProcessingStats.TotalSearchTimeSeconds += TotalSearchTimeSeconds;
 
             // Searched file count
-            var SearchedFileCount = GetIntegerFromSeqLogFileString(fileContents, "secs for\\s+\\d+\\s+files");
-            if (SearchedFileCount <= 0)
+            var searchedFileCount = GetIntegerFromSeqLogFileString(fileContents, "secs for\\s+\\d+\\s+files");
+            if (searchedFileCount <= 0)
             {
                 // Searched file count line not found (or error)
                 // Use dtaCountSearched instead
-                SearchedFileCount = dtaCountSearched;
+                searchedFileCount = dtaCountSearched;
             }
 
-            mSequestNodeProcessingStats.SearchedFileCount += dtaCountSearched;
+            mSequestNodeProcessingStats.SearchedFileCount += searchedFileCount;
 
             if (mSequestNodeProcessingStats.SearchedFileCount > 0)
             {

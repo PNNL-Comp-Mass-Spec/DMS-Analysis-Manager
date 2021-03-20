@@ -220,8 +220,8 @@ namespace AnalysisManager_AScore_PlugIn
             ascoreModule.TraceMode = mMgrParams.TraceMode;
             ascoreModule.WorkingDir = mWorkingDir;
             ascoreModule.ResultsDBFileName = mResultsDBFileName;
-            ascoreModule.ascoreParamFileName = mParamFilename;
-            ascoreModule.searchType = mSearchType;
+            ascoreModule.AscoreParamFileName = mParamFilename;
+            ascoreModule.SearchType = mSearchType;
 
             ascoreModule.FastaFilePath = mFastaFilePath;
 

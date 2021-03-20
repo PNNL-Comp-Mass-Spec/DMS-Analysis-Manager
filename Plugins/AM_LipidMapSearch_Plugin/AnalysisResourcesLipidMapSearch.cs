@@ -225,21 +225,19 @@ namespace AnalysisManagerLipidMapSearchPlugIn
 
         private bool RetrieveDatasetAndPeaksFile(string strDatasetName, string strDatasetFolderPath, string strDatasetFolderPathArchive)
         {
-            string strFileToFind = null;
-
             // Copy the .Raw file
             // Search the dataset directory first, then the archive folder
 
-            strFileToFind = strDatasetName + DOT_RAW_EXTENSION;
-            if (!CopyFileToWorkDir(strFileToFind, strDatasetFolderPath, mWorkDir, BaseLogger.LogLevels.INFO))
+            var fileToFind = strDatasetName + DOT_RAW_EXTENSION;
+            if (!CopyFileToWorkDir(fileToFind, strDatasetFolderPath, mWorkDir, BaseLogger.LogLevels.INFO))
             {
                 // Raw file not found on the storage server; try the archive
-                if (!CopyFileToWorkDir(strFileToFind, strDatasetFolderPathArchive, mWorkDir, BaseLogger.LogLevels.ERROR))
+                if (!CopyFileToWorkDir(fileToFind, strDatasetFolderPathArchive, mWorkDir, BaseLogger.LogLevels.ERROR))
                 {
                     // Raw file still not found; try MyEMSL
 
-                    var DSFolderPath = DirectorySearch.FindValidDirectory(strDatasetName, strFileToFind, retrievingInstrumentDataDir: false);
-                    if (DSFolderPath.StartsWith(MYEMSL_PATH_FLAG))
+                    var datasetDirectoryPath = DirectorySearch.FindValidDirectory(strDatasetName, fileToFind, retrievingInstrumentDataDir: false);
+                    if (datasetDirectoryPath.StartsWith(MYEMSL_PATH_FLAG))
                     {
                         // Queue this file for download
                         mMyEMSLUtilities.AddFileToDownloadQueue(mMyEMSLUtilities.RecentlyFoundMyEMSLFiles.First().FileInfo);
