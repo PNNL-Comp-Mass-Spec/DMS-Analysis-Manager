@@ -114,7 +114,7 @@ namespace AnalysisManagerSequestPlugin
                     // See if the renamed file exists; if it does, we'll have to tweak the name
                     var revisionNumber = 1;
                     string newFilePath;
-                    do
+                    while (true)
                     {
                         newFilePath = Path.Combine(targetFolderPath, newName);
                         if (!File.Exists(newFilePath))
@@ -124,7 +124,7 @@ namespace AnalysisManagerSequestPlugin
 
                         revisionNumber++;
                         newName = newNameBase + "_v" + revisionNumber + Path.GetExtension(targetFilePath);
-                    } while (true);
+                    }
 
                     if (mDebugLevel >= 2)
                     {

@@ -301,13 +301,11 @@ namespace AnalysisManagerMSGFPlugin
         private string AddFileNameSuffix(string filePath, string suffix)
         {
             var fiFile = new FileInfo(filePath);
-            string filePathNew;
-            if (fiFile.DirectoryName == null)
-                filePathNew = Path.GetFileNameWithoutExtension(fiFile.Name) + "_" + suffix + fiFile.Extension;
-            else
-                filePathNew = Path.Combine(fiFile.DirectoryName, Path.GetFileNameWithoutExtension(fiFile.Name) + "_" + suffix + fiFile.Extension);
+            var newFileName = Path.GetFileNameWithoutExtension(fiFile.Name) + "_" + suffix + fiFile.Extension;
 
-            return filePathNew;
+            return fiFile.DirectoryName == null
+                ? newFileName
+                : Path.Combine(fiFile.DirectoryName, newFileName);
         }
 
         /// <summary>
@@ -1680,10 +1678,7 @@ namespace AnalysisManagerMSGFPlugin
                     mETDMode = true;
                     mCollisionModeIteration = 2;
                     success = RunMSGFonMSGFDBCachedData(etdData, msgfInputFilePath, msgfResultsFilePath, "ETD");
-                    if (!success)
-                        return false;
-
-                    return true;
+                    return success;
                 }
 
                 // Only CID or HCD data is present (or no data is present)

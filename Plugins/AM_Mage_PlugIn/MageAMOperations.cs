@@ -206,13 +206,21 @@ namespace AnalysisManager_Mage_PlugIn
 
             var inputDirectory = new DirectoryInfo(inputDirectoryPath);
             if (!inputDirectory.Exists)
-                throw new DirectoryNotFoundException("Directory specified by job parameter DataPackageSourceFolderName does not exist: " + inputDirectoryPath);
+            {
+                throw new DirectoryNotFoundException(string.Format(
+                    "Directory specified by job parameter DataPackageSourceFolderName does not exist: {0}",
+                    inputDirectoryPath));
+            }
 
             var filesInDirectory = inputDirectory.GetFiles().ToList();
 
             if (filesInDirectory.Count == 0)
-                throw new DirectoryNotFoundException("DataPackageSourceFolderName has no files (should typically be named ImportFiles " +
-                                                     "and it should have a file named " + AnalysisToolRunnerMage.T_ALIAS_FILE + "): " + inputDirectoryPath);
+            {
+                throw new DirectoryNotFoundException(string.Format(
+                    "DataPackageSourceFolderName has no files " +
+                    "(should typically be named ImportFiles and it should have a file named {0}): {1}",
+                    AnalysisToolRunnerMage.T_ALIAS_FILE, inputDirectoryPath));
+            }
 
             var lstMatchingFiles = (from item in filesInDirectory
                                     where string.Equals(item.Name, AnalysisToolRunnerMage.T_ALIAS_FILE, StringComparison.OrdinalIgnoreCase)
@@ -479,8 +487,8 @@ namespace AnalysisManager_Mage_PlugIn
         /// <summary>
         /// Returns an array of parameter values for the given list of parameter names
         /// </summary>
-        /// <param name="paramNameList">Comma delimited list of parameter names to retrieve values for</param>
         /// <param name="mageObject">Object holding a copy of job parameters</param>
+        /// <param name="paramNameList">Comma delimited list of parameter names to retrieve values for</param>
         /// <returns>Array of values (order will match param name list)</returns>
         public static string[] GetParamValues(MageAMPipelineBase mageObject, string paramNameList)
         {

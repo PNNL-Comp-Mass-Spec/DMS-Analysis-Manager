@@ -50,16 +50,9 @@ namespace AnalysisManagerICR2LSPlugIn
 
             // Determine whether or not we should be processing MS2 spectra
             var SkipMS2 = !mJobParams.GetJobParameter("ProcessMS2", false);
-            bool useAllScans;
 
-            if ((MinScan == 0 && MaxScan == 0) || MinScan > MaxScan || MaxScan > 500000)
-            {
-                useAllScans = true;
-            }
-            else
-            {
-                useAllScans = false;
-            }
+            // ReSharper disable once ArrangeRedundantParentheses
+            var useAllScans = (MinScan == 0 && MaxScan == 0) || MinScan > MaxScan || MaxScan > 500000;
 
             // Assemble the data file name and path
             var DSNamePath = Path.Combine(mWorkDir, mDatasetName + ".raw");

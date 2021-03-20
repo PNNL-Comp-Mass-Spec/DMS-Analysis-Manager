@@ -53,14 +53,7 @@ namespace AnalysisManagerMSGFPlugin
             //    XCorr >= 2.0 for 2+
             //    XCorr >= 2.5 for >=3+
 
-            if (currentPSM.Peptide.StartsWith("-") || currentPSM.Peptide.EndsWith("-"))
-            {
-                isProteinTerminus = true;
-            }
-            else
-            {
-                isProteinTerminus = false;
-            }
+            isProteinTerminus = currentPSM.Peptide.StartsWith("-") || currentPSM.Peptide.EndsWith("-");
 
             var deltaCN = currentPSM.GetScoreDbl(clsPHRPParserSequest.DATA_COLUMN_DelCn);
             var xCorr = currentPSM.GetScoreDbl(clsPHRPParserSequest.DATA_COLUMN_XCorr);

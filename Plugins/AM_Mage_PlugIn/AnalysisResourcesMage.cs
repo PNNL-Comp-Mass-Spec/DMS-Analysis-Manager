@@ -139,21 +139,21 @@ namespace AnalysisManager_Mage_PlugIn
             }
 
             var msg = new StringBuilder();
-            msg.Append("Data package " + dataPackageID);
+            msg.AppendFormat("Data package {0}", dataPackageID);
 
             if (missingJobCount == peptideHitJobs.Count)
             {
-                msg.Append(" does not have any " + toolName + " jobs");
+                msg.AppendFormat(" does not have any {0} jobs", toolName);
             }
             else
             {
-                msg.Append(" has " + missingJobCount + " PeptideHit job");
+                msg.AppendFormat(" has {0} PeptideHit job", missingJobCount);
                 if (missingJobCount > 1)
                     msg.Append("s that do not");
                 else
                     msg.Append(" that does not");
 
-                msg.Append(" have a matching corresponding " + toolName + " job");
+                msg.AppendFormat(" have a matching corresponding {0} job", toolName);
             }
 
             switch (toolName)

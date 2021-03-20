@@ -484,12 +484,8 @@ namespace AnalysisManagerGlyQIQPlugin
                     return false;
                 }
 
-                if (!ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadLayout.FlatNoSubdirectories))
-                {
-                    return false;
-                }
-
-                return true;
+                var success = ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadLayout.FlatNoSubdirectories);
+                return success;
             }
             catch (Exception ex)
             {

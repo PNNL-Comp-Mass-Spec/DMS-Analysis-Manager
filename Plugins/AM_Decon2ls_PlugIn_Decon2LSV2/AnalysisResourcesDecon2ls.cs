@@ -244,27 +244,21 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 var rawDataType = GetRawDataType(rawDataTypeName);
 
                 var datasetFilePath = AnalysisToolRunnerDecon2ls.GetInputFilePath(mWorkDir, DatasetName, rawDataType);
-                bool success;
 
                 switch (rawDataType)
                 {
                     case RawDataTypeConstants.ThermoRawFile:
                         LogMessage("Examining the scan types in the .raw file");
-                        success = ExamineScanTypesInRawFile(datasetFilePath, out countMs1, out countMSn);
-                        break;
+                        return ExamineScanTypesInRawFile(datasetFilePath, out countMs1, out countMSn);
 
                     case RawDataTypeConstants.UIMF:
                         LogMessage("Examining the scan types in the .UIMF file");
-                        success = ExamineScanTypesInUIMFFile(datasetFilePath, out countMs1, out countMSn);
-                        break;
+                        return ExamineScanTypesInUIMFFile(datasetFilePath, out countMs1, out countMSn);
 
                     default:
                         // Ignore datasets that are not .raw file or .uimf files
-                        success = true;
-                        break;
+                        return true;
                 }
-
-                return success;
             }
             catch (Exception ex)
             {

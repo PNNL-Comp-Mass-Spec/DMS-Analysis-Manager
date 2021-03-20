@@ -139,7 +139,6 @@ namespace AnalysisManagerResultsCleanupPlugin
                 LogError(mMessage, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-
         }
 
         private CloseOutType MACResultsCleanup(DirectoryInfo resultsDirectory)

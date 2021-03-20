@@ -155,12 +155,8 @@ namespace AnalysisManagerMSPathFinderPlugin
 
                 currentTask = "RetrieveGeneratedParamFile " + paramFileName;
 
-                if (!RetrieveGeneratedParamFile(paramFileName))
-                {
-                    return false;
-                }
-
-                return true;
+                var success = RetrieveGeneratedParamFile(paramFileName);
+                return success;
             }
             catch (Exception ex)
             {

@@ -299,12 +299,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
             }
 
             // Validate that the output file is complete
-            if (!ValidateMsXmlFile(mOutputType, outputFilePath))
-            {
-                return false;
-            }
-
-            return true;
+            return ValidateMsXmlFile(mOutputType, outputFilePath);
         }
 
         protected abstract string GetOutputFileName(string msXmlFormat, string rawFilePath, AnalysisResources.RawDataTypeConstants rawDataType);

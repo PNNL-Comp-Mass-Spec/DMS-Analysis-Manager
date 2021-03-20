@@ -38,7 +38,7 @@ namespace AnalysisManager_Ape_PlugIn
         private bool GetQRollupResultsAll()
         {
             var success = true;
-            var mHandle = new Ape.SqlConversionHandler(delegate (bool done, bool conversionSuccess, int _, string msg)
+            var mHandle = new Ape.SqlConversionHandler((done, conversionSuccess, _, msg) =>
             {
                 OnStatusEvent(msg);
 

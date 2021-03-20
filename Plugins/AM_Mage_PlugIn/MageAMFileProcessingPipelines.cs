@@ -156,8 +156,11 @@ namespace AnalysisManager_Mage_PlugIn
         {
             var reader = new DelimitedFileReader { FilePath = inputFilePath };
 
-            BaseModule filter = new NullFilter();
-            filter.OutputColumnList = outputColumnList;
+            BaseModule filter = new NullFilter
+            {
+                OutputColumnList = outputColumnList
+            };
+
             filter.SetContext(context);
 
             var writer = new SQLiteWriter();

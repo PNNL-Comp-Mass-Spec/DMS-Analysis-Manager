@@ -73,7 +73,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 if (mCentroidMS1 || mCentroidMS2)
                 {
                     // Centroiding is enabled
-                    arguments = " --" + msXmlFormat + " " + " -c " + rawFilePath;
+                    arguments = " --" + msXmlFormat + " -c " + rawFilePath;
                 }
                 else
                 {

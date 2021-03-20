@@ -704,14 +704,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             // Reset the state variables
             mDeconToolsStatus.Clear();
 
-            if (fileType == DeconToolsFileTypeConstants.PNNL_UIMF)
-            {
-                mDeconToolsStatus.IsUIMF = true;
-            }
-            else
-            {
-                mDeconToolsStatus.IsUIMF = false;
-            }
+            mDeconToolsStatus.IsUIMF = fileType == DeconToolsFileTypeConstants.PNNL_UIMF;
 
             // Start Decon2LS and wait for it to finish
             var eDeconToolsStatus = StartDeconTools(progLoc, mInputFilePath, paramFilePath, fileType);

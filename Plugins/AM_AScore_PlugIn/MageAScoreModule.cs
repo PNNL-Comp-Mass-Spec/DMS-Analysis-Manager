@@ -145,7 +145,9 @@ namespace AnalysisManager_AScore_PlugIn
 
                 string fragType;
                 if (datasetType.IndexOf("HCD", StringComparison.OrdinalIgnoreCase) > 0)
+                {
                     fragType = "hcd";
+                }
                 else if (datasetType.IndexOf("ETD", StringComparison.OrdinalIgnoreCase) > 0)
                 {
                     fragType = "etd";

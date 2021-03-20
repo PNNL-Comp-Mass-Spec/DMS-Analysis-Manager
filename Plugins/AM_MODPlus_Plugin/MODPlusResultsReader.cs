@@ -87,7 +87,7 @@ namespace AnalysisManagerMODPlusPlugin
                 return false;
             }
 
-            string dataLine = null;
+            string dataLine;
             if (!string.IsNullOrEmpty(mSavedLine))
             {
                 dataLine = string.Copy(mSavedLine);
@@ -123,13 +123,12 @@ namespace AnalysisManagerMODPlusPlugin
 
                         mCurrentScanChargeCombo = 0;
 
-                        var charge = 0;
                         var scan = 0;
                         var scanMatched = false;
 
                         if (reMatch.Success)
                         {
-                            int.TryParse(reMatch.Groups[1].Value, out charge);
+                            int.TryParse(reMatch.Groups[1].Value, out var charge);
                             if (int.TryParse(reMatch.Groups[2].Value, out scan))
                             {
                                 mCurrentScanChargeCombo = scan + charge / 100.0;

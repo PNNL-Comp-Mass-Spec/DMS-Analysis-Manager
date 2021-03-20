@@ -46,6 +46,7 @@ namespace AnalysisManagerMasicPlugin
                     // Thus, we are now setting this to False
                     createStoragePathInfoOnly = false;
                     break;
+
                 default:
                     createStoragePathInfoOnly = false;
                     break;

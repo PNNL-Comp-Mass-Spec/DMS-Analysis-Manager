@@ -106,7 +106,7 @@ namespace AnalysisManagerMODPlusPlugin
                 }
                 else
                 {
-                    if (!(proteinOptions.IndexOf("seq_direction=decoy", StringComparison.OrdinalIgnoreCase) >= 0))
+                    if (proteinOptions.IndexOf("seq_direction=decoy", StringComparison.OrdinalIgnoreCase) < 0)
                     {
                         LogError("Job parameter ProteinOptions does not contain seq_direction=decoy; cannot analyze with MODPlus; choose a DMS-generated decoy protein collection");
                         return false;
@@ -143,12 +143,8 @@ namespace AnalysisManagerMODPlusPlugin
 
                 currentTask = "RetrieveGeneratedParamFile " + paramFileName;
 
-                if (!RetrieveGeneratedParamFile(paramFileName))
-                {
-                    return false;
-                }
-
-                return true;
+                var success = RetrieveGeneratedParamFile(paramFileName);
+                return success;
             }
             catch (Exception ex)
             {

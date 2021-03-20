@@ -7,12 +7,15 @@ using AnalysisManagerBase.JobConfig;
 namespace AnalysisManager_Mage_PlugIn
 {
     /// <summary>
+    /// <para>
     /// Class that defines basic Mage pipelines and functions that
     /// provide sub-operations that make up file extraction operations
     /// that Mac Mage plug-in can execute.
-    ///
+    /// </para>
+    /// <para>
     /// These extraction operations are essentially identical to the operations
     /// performed by the MageFileExtractor tool.
+    /// </para>
     /// </summary>
     public class MageAMExtractionPipelines : MageAMPipelineBase
     {
@@ -58,7 +61,7 @@ namespace AnalysisManager_Mage_PlugIn
             ExtractionParams = new ExtractionType();
 
             var containerPath = System.IO.Path.Combine(WorkingDirPath, ResultsDBFileName);
-            ResultsDestination = new DestinationType(DestinationType.Types.SQLite_Output.ToString(), containerPath, "t_results");
+            ResultsDestination = new DestinationType(nameof(DestinationType.Types.SQLite_Output), containerPath, "t_results");
 
             // extraction and filtering parameters
             var extractionType = RequireJobParam("ExtractionType"); // "MSGF+ Synopsis All Proteins" or "Sequest First Hits"

@@ -5,7 +5,7 @@ using System.IO;
 namespace AnalysisManager_Mage_PlugIn
 {
     /// <summary>
-    /// Subclass of the Mage FileContentProcessor class 
+    /// Subclass of the Mage FileContentProcessor class
     /// that performs processes specific to the MAC Mage plug-in
     /// </summary>
     public class MageAMFileContentProcessor : FileContentProcessor
@@ -79,8 +79,9 @@ namespace AnalysisManager_Mage_PlugIn
         /// <param name="context">Additional metadata about file to be processed</param>
         protected override void ProcessFile(string sourceFile, string sourcePath, string destPath, Dictionary<string, string> context)
         {
-            if (_fileNameSet != null && !_fileNameSet.Contains(sourceFile))
+            if (_fileNameSet?.Contains(sourceFile) == false)
                 return;
+
             string dbFilePath;
             string workingFilePath;
             switch (Operation)

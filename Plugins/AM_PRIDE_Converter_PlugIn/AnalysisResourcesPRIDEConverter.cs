@@ -95,28 +95,14 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
             // Check whether we are only creating the .msgf files
             var createMSGFReportFilesOnly = mJobParams.GetJobParameter("CreateMSGFReportFilesOnly", false);
-            var udtOptions = new DataPackageFileHandler.udtDataPackageRetrievalOptionsType {
+            var udtOptions = new DataPackageFileHandler.udtDataPackageRetrievalOptionsType
+            {
                 CreateJobPathFiles = true,
-                RemoteTransferFolderPath = remoteTransferFolderPath
+                RemoteTransferFolderPath = remoteTransferFolderPath,
+                RetrieveMzXMLFile = createPrideXMLFiles && !createMSGFReportFilesOnly
             };
 
-            if (createPrideXMLFiles && !createMSGFReportFilesOnly)
-            {
-                udtOptions.RetrieveMzXMLFile = true;
-            }
-            else
-            {
-                udtOptions.RetrieveMzXMLFile = false;
-            }
-
-            if (createPrideXMLFiles)
-            {
-                udtOptions.RetrievePHRPFiles = true;
-            }
-            else
-            {
-                udtOptions.RetrievePHRPFiles = false;
-            }
+            udtOptions.RetrievePHRPFiles = createPrideXMLFiles;
 
             udtOptions.RetrieveDTAFiles = mJobParams.GetJobParameter("CreateMGFFiles", true);
             udtOptions.RetrieveMzidFiles = mJobParams.GetJobParameter("IncludeMZidFiles", true);

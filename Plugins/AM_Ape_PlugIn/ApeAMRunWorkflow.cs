@@ -28,7 +28,7 @@ namespace AnalysisManager_Ape_PlugIn
         public bool RunWorkflow()
         {
             var success = true;
-            var progressHandler = new Ape.SqlConversionHandler(delegate (bool done, bool conversionSuccess, int percent, string msg)
+            var progressHandler = new Ape.SqlConversionHandler((done, conversionSuccess, _, msg) =>
             {
                 if (conversionSuccess)
                     OnStatusEvent(msg);

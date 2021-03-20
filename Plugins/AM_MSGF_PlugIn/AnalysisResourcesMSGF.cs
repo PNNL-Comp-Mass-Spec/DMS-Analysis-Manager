@@ -133,14 +133,7 @@ namespace AnalysisManagerMSGFPlugin
                 {
                     // Specific version of MSGF is defined
                     // Check whether the version is one of the known versions for the old MSGF
-                    if (MSGFRunner.IsLegacyMSGFVersion(msgfStepToolVersion))
-                    {
-                        onlyCopyFirstHitsAndSynopsisFiles = false;
-                    }
-                    else
-                    {
-                        onlyCopyFirstHitsAndSynopsisFiles = true;
-                    }
+                    onlyCopyFirstHitsAndSynopsisFiles = !MSGFRunner.IsLegacyMSGFVersion(msgfStepToolVersion);
                 }
             }
             else if (resultType == clsPHRPReader.PeptideHitResultTypes.MODa ||

@@ -47,7 +47,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
         /// <summary>
         /// Controls whether or not a metadata file will be written for copied files
         /// </summary>
-        private bool EnableMetadataFile { get; set; }
+        private bool EnableMetadataFile { get; }
 
         #endregion
 

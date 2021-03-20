@@ -134,9 +134,9 @@ namespace MSMSSpectrumFilterAM
                 {
                     // Find the dataset file and either create a StoragePathInfo file or copy it locally
 
-                    var createStoragePathInfoOnly = false;
                     var rawDataTypeName = mJobParams.GetParam("RawDataType");
 
+                    bool createStoragePathInfoOnly;
                     switch (rawDataTypeName.ToLower())
                     {
                         case RAW_DATA_TYPE_DOT_RAW_FILES:

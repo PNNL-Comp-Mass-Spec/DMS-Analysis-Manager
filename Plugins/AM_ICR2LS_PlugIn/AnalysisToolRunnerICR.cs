@@ -79,21 +79,14 @@ namespace AnalysisManagerICR2LSPlugIn
                 // Add handling of settings file info here if it becomes necessary in the future
 
                 // Get scan settings from settings file
-                var MinScan = mJobParams.GetJobParameter("scanstart", 0);
+                var MinScan = mJobParams.GetJobParameter("ScanStart", 0);
                 var MaxScan = mJobParams.GetJobParameter("ScanStop", 0);
 
                 // Determine whether or not we should be processing MS2 spectra
                 var SkipMS2 = !mJobParams.GetJobParameter("ProcessMS2", false);
 
-                bool useAllScans;
-                if ((MinScan == 0 && MaxScan == 0) || MinScan > MaxScan || MaxScan > 500000)
-                {
-                    useAllScans = true;
-                }
-                else
-                {
-                    useAllScans = false;
-                }
+                // ReSharper disable once ArrangeRedundantParentheses
+                var useAllScans = (MinScan == 0 && MaxScan == 0) || MinScan > MaxScan || MaxScan > 500000;
 
                 // Assemble the dataset path
                 var datasetDirectoryPath = Path.Combine(mWorkDir, mDatasetName);

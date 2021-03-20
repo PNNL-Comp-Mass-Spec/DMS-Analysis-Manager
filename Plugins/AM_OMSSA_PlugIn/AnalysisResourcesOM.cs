@@ -375,7 +375,7 @@ namespace AnalysisManagerOMSSAPlugIn
                                     // However, see if a duplicate comment already exists
                                     var objPrevNode = objSelectedNodes.Item(0).PreviousSibling;
 
-                                    while ((objPrevNode != null) && objPrevNode.NodeType == XmlNodeType.Whitespace)
+                                    while (objPrevNode?.NodeType == XmlNodeType.Whitespace)
                                     {
                                         // objPrevNode is currently whitespace
                                         // Move back one node
@@ -383,7 +383,7 @@ namespace AnalysisManagerOMSSAPlugIn
                                     }
 
                                     var blnCopyThisComment = true;
-                                    if ((objPrevNode != null) && objPrevNode.NodeType == XmlNodeType.Comment)
+                                    if (objPrevNode?.NodeType == XmlNodeType.Comment)
                                     {
                                         if (objPrevNode.InnerText == objMostRecentComment.InnerText)
                                         {

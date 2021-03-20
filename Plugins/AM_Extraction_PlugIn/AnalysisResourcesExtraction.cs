@@ -1327,23 +1327,17 @@ namespace AnalysisManagerExtractionPlugin
                 // The ToolName job parameter holds the name of the job script we are executing
                 var scriptName = mJobParams.GetParam("ToolName");
 
-                CloseOutType result;
-
                 if (scriptName.IndexOf("mzxml", StringComparison.OrdinalIgnoreCase) >= 0 || scriptName.IndexOf("msgfplus_bruker", StringComparison.OrdinalIgnoreCase) >= 0)
                 {
-                    result = GetMzXMLFile();
-                }
-                else if (scriptName.IndexOf("mzml", StringComparison.OrdinalIgnoreCase) >= 0)
-                {
-                    result = GetMzMLFile();
-                }
-                else
-                {
-                    result = GetCDTAFile();
+                    return GetMzXMLFile();
                 }
 
-                return result;
+                if (scriptName.IndexOf("mzml", StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    return GetMzMLFile();
+                }
 
+                return GetCDTAFile();
 #pragma warning restore CS0162 // Unreachable code detected
             }
             catch (Exception ex)

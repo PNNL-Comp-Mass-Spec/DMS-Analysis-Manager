@@ -563,20 +563,12 @@ namespace AnalysisManagerQCARTPlugin
         /// <param name="callingProcedure">Name of the calling procedure</param>
         private void LogErrorForOneOrMoreDatasets(string errorMessage, ICollection<string> datasetNames, string callingProcedure)
         {
-            string fullMessage;
-
-            switch (datasetNames.Count)
+            var fullMessage = datasetNames.Count switch
             {
-                case 1:
-                    fullMessage = errorMessage + " for " + datasetNames.FirstOrDefault();
-                    break;
-                case 2:
-                    fullMessage = errorMessage + " for " + datasetNames.FirstOrDefault() + " or " + datasetNames.LastOrDefault();
-                    break;
-                default:
-                    fullMessage = errorMessage + " for " + datasetNames.FirstOrDefault() + " or the other " + (datasetNames.Count - 1) + " datasets";
-                    break;
-            }
+                1 => errorMessage + " for " + datasetNames.FirstOrDefault(),
+                2 => errorMessage + " for " + datasetNames.FirstOrDefault() + " or " + datasetNames.LastOrDefault(),
+                _ => errorMessage + " for " + datasetNames.FirstOrDefault() + " or the other " + (datasetNames.Count - 1) + " datasets"
+            };
 
             LogError(fullMessage + " (" + callingProcedure + ")");
         }
@@ -833,11 +825,11 @@ namespace AnalysisManagerQCARTPlugin
 
                 sqlStr.AppendLine("SELECT Dataset AS " + DATASET_COLUMN + ", 0 AS " + FRACTION_COLUMN + ",");
                 sqlStr.AppendLine("       Dataset_ID, Acq_Time_Start AS [Date], Dataset_Rating AS Rating,");
-                sqlStr.AppendLine(string.Join(", ", metricNames) + " ");
+                sqlStr.AppendFormat("     {0} \n", string.Join(", ", metricNames));
                 sqlStr.AppendLine("FROM V_Dataset_QC_Metrics_Export ");
                 sqlStr.AppendLine("WHERE Dataset IN (");
 
-                sqlStr.Append("'" + string.Join("', '", datasetNamesToRetrieveMetrics) + "'");
+                sqlStr.AppendFormat("'{0}'", string.Join("', '", datasetNamesToRetrieveMetrics));
                 sqlStr.AppendLine(")");
 
                 // Gigasax.DMS5

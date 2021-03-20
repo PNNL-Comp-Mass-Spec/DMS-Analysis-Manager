@@ -97,11 +97,9 @@ namespace AnalysisManager_Mage_PlugIn
         /// </summary>
         protected override string GetToolNameAndVersion()
         {
-            var toolVersionInfo = string.Empty;
             var assemblyName = System.Reflection.Assembly.Load("Mage").GetName();
             var nameAndVersion = assemblyName.Name + ", Version=" + assemblyName.Version;
-            toolVersionInfo = Global.AppendToComment(toolVersionInfo, nameAndVersion);
-            return toolVersionInfo;
+            return Global.AppendToComment(string.Empty, nameAndVersion);
         }
 
         /// <summary>

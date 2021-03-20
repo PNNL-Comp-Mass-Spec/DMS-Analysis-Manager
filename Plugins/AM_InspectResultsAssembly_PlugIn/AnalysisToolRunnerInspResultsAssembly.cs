@@ -1144,14 +1144,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                                 {
                                     writer.WriteLine(trimmedLine);
 
-                                    if (trimmedLine.Length == 0)
-                                    {
-                                        prevLineWasBlank = true;
-                                    }
-                                    else
-                                    {
-                                        prevLineWasBlank = false;
-                                    }
+                                    prevLineWasBlank = trimmedLine.Length == 0;
                                 }
                             }
 

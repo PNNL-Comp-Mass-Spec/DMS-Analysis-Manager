@@ -953,7 +953,7 @@ namespace DTASpectraFileGen
             }
 
             // Loop until the spectra generator finishes
-            while ((dtaGenerator.Status == ProcessStatus.SF_STARTING) || (dtaGenerator.Status == ProcessStatus.SF_RUNNING))
+            while (dtaGenerator.Status == ProcessStatus.SF_STARTING || dtaGenerator.Status == ProcessStatus.SF_RUNNING)
             {
                 if (secondPass)
                 {

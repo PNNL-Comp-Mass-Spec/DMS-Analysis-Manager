@@ -1175,12 +1175,7 @@ namespace AnalysisManagerMSAlignPlugIn
                 return false;
             }
 
-            if (processingError)
-            {
-                return false;
-            }
-
-            return true;
+            return !processingError;
         }
 
         protected bool ValidateResultTableFile(string sourceFilePath)

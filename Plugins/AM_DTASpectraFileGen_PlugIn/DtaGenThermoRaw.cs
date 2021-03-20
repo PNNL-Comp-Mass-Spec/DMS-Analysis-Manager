@@ -148,20 +148,15 @@ namespace DTASpectraFileGen
         protected virtual string ConstructDTAToolPath()
         {
             var dtaGenProgram = mJobParams.GetJobParameter("DtaGenerator", "");
-            string dtaToolPath;
 
             if (string.Equals(dtaGenProgram, EXTRACT_MSN_FILENAME, StringComparison.OrdinalIgnoreCase))
             {
                 // Extract_MSn uses the lcqdtaloc folder path
-                dtaToolPath = Path.Combine(mMgrParams.GetParam("lcqdtaloc", ""), dtaGenProgram);
-            }
-            else
-            {
-                // DeconMSn uses the XcalDLLPath
-                dtaToolPath = Path.Combine(mMgrParams.GetParam("XcalDLLPath", ""), dtaGenProgram);
+                return Path.Combine(mMgrParams.GetParam("lcqdtaloc", ""), dtaGenProgram);
             }
 
-            return dtaToolPath;
+            // DeconMSn uses the XcalDLLPath
+            return Path.Combine(mMgrParams.GetParam("XcalDLLPath", ""), dtaGenProgram);
         }
 
         /// <summary>

@@ -47,8 +47,6 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-
-
                 currentTask = "Process the MyEMSL download queue";
 
                 success = ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadLayout.FlatNoSubdirectories);

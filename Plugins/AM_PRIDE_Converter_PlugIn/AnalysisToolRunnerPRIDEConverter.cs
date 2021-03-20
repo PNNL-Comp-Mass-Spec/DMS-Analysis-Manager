@@ -3098,18 +3098,12 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
         private string GetInstrumentCv(string accession, string description)
         {
-            string instrumentCV;
-
             if (string.IsNullOrEmpty(accession))
             {
-                instrumentCV = GetCVString("MS", "MS:1000031", "instrument model", "CUSTOM UNKNOWN MASS SPEC");
-            }
-            else
-            {
-                instrumentCV = GetCVString("MS", accession, description);
+                return GetCVString("MS", "MS:1000031", "instrument model", "CUSTOM UNKNOWN MASS SPEC");
             }
 
-            return instrumentCV;
+            return GetCVString("MS", accession, description);
         }
 
         private string GetNEWTCv(int newtID, string newtName)
@@ -4105,10 +4099,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     }
                 }
 
-                if (fileCountNotFound == 0)
-                    return true;
-
-                return false;
+                return fileCountNotFound == 0;
             }
             catch (Exception ex)
             {
@@ -5060,7 +5051,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
         private MzidXMLFileLocations UpdateMZidXMLFileLocation(MzidXMLFileLocations fileLocation, string elementName)
         {
-            fileLocation = elementName switch
+            return elementName switch
             {
                 "SequenceCollection" => MzidXMLFileLocations.SequenceCollection,
                 "AnalysisCollection" => MzidXMLFileLocations.AnalysisCollection,
@@ -5072,8 +5063,6 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 "AnalysisData" => MzidXMLFileLocations.AnalysisData,
                 _ => fileLocation
             };
-
-            return fileLocation;
         }
 
         /// <summary>

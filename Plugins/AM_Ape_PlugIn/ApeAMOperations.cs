@@ -112,8 +112,7 @@ namespace AnalysisManager_Ape_PlugIn
                 // Attach the event handlers
                 RegisterEventsCustomProgressHandler(apeVImpObj);
 
-                var dataPackageID = mJobParams.GetParam("DataPackageID");
-                var success = apeVImpObj.GetQRollupResults(dataPackageID);
+                var success = apeVImpObj.GetQRollupResults();
 
                 if (!success)
                     ErrorMessage = "Error obtaining VIPER results: " + apeVImpObj.ErrorMessage;
