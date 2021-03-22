@@ -239,68 +239,67 @@ namespace AnalysisManagerExtractionPlugin
                 }
 
                 // Read the data from the SEQUEST Param file
-                using (var reader = new StreamReader(new FileStream(searchToolParamFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                using var reader = new StreamReader(new FileStream(searchToolParamFilePath, FileMode.Open, FileAccess.Read, FileShare.Read));
+
+                while (!reader.EndOfStream)
                 {
-                    while (!reader.EndOfStream)
+                    var dataLine = reader.ReadLine();
+
+                    if (string.IsNullOrWhiteSpace(dataLine) || !dataLine.StartsWith(DIFF_SEARCH_OPTIONS_TAG))
+                        continue;
+
+                    // Check whether the dynamic mods line has 79.9663 STY (or similar)
+
+                    if (mDebugLevel >= 3)
                     {
-                        var dataLine = reader.ReadLine();
+                        LogDebug("SEQUEST " + DIFF_SEARCH_OPTIONS_TAG + " line found: " + dataLine);
+                    }
 
-                        if (string.IsNullOrWhiteSpace(dataLine) || !dataLine.StartsWith(DIFF_SEARCH_OPTIONS_TAG))
-                            continue;
+                    // Look for the equals sign
+                    var charIndex = dataLine.IndexOf('=');
+                    if (charIndex > 0)
+                    {
+                        var modDef = dataLine.Substring(charIndex + 1).Trim();
 
-                        // Check whether the dynamic mods line has 79.9663 STY (or similar)
+                        // Split modDef on spaces
+                        var modDefParts = modDef.Split(' ');
 
-                        if (mDebugLevel >= 3)
+                        if (modDefParts.Length >= 2)
                         {
-                            LogDebug("SEQUEST " + DIFF_SEARCH_OPTIONS_TAG + " line found: " + dataLine);
-                        }
-
-                        // Look for the equals sign
-                        var charIndex = dataLine.IndexOf('=');
-                        if (charIndex > 0)
-                        {
-                            var modDef = dataLine.Substring(charIndex + 1).Trim();
-
-                            // Split modDef on spaces
-                            var modDefParts = modDef.Split(' ');
-
-                            if (modDefParts.Length >= 2)
+                            for (var i = 0; i < modDefParts.Length; i += 2)
                             {
-                                for (var i = 0; i < modDefParts.Length; i += 2)
+                                if (modDefParts.Length <= i + 1)
+                                    break;
+
+                                var residues = modDefParts[i + 1];
+
+                                if (!HasAnyResidue(residues, "STY"))
                                 {
-                                    if (modDefParts.Length <= i + 1)
-                                        break;
-
-                                    var residues = modDefParts[i + 1];
-
-                                    if (!HasAnyResidue(residues, "STY"))
-                                    {
-                                        continue;
-                                    }
-
-                                    if (!double.TryParse(modDefParts[i], out var modMass))
-                                        continue;
-
-                                    if (Math.Abs(79.966331 - modMass) < 0.01)
-                                    {
-                                        runAscore = true;
-                                        break;
-                                    }
+                                    continue;
                                 }
-                            }
-                            else
-                            {
-                                LogWarning("SEQUEST " + DIFF_SEARCH_OPTIONS_TAG + " line is not valid: " + dataLine);
+
+                                if (!double.TryParse(modDefParts[i], out var modMass))
+                                    continue;
+
+                                if (Math.Abs(79.966331 - modMass) < 0.01)
+                                {
+                                    runAscore = true;
+                                    break;
+                                }
                             }
                         }
                         else
                         {
-                            LogWarning("SEQUEST " + DIFF_SEARCH_OPTIONS_TAG + " line does not have an equals sign: " + dataLine);
+                            LogWarning("SEQUEST " + DIFF_SEARCH_OPTIONS_TAG + " line is not valid: " + dataLine);
                         }
-
-                        // No point in checking any further since we've parsed the ion_series line
-                        break;
                     }
+                    else
+                    {
+                        LogWarning("SEQUEST " + DIFF_SEARCH_OPTIONS_TAG + " line does not have an equals sign: " + dataLine);
+                    }
+
+                    // No point in checking any further since we've parsed the ion_series line
+                    break;
                 }
 
                 return runAscore;
