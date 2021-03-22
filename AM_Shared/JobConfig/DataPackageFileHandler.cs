@@ -44,7 +44,7 @@ namespace AnalysisManagerBase.JobConfig
         /// <summary>
         /// Data package retrieval options
         /// </summary>
-        public struct udtDataPackageRetrievalOptionsType
+        public struct DataPackageRetrievalOptionsType
         {
             /// <summary>
             /// Set to true to create a text file for each job listing the full path to the files that would be retrieved for that job
@@ -93,7 +93,7 @@ namespace AnalysisManagerBase.JobConfig
             public string RemoteTransferFolderPath;
         }
 
-        private struct udtDataPackageJobMetadata
+        private struct DataPackageJobMetadata
         {
             /// <summary>
             /// True if MS-GF+ searched a .mzML file; if false, likely searched a _dta.txt file
@@ -535,8 +535,8 @@ namespace AnalysisManagerBase.JobConfig
         /// <param name="workDirInfo"></param>
         /// <param name="dataPkgJob">Data package job</param>
         private bool ProcessOnePeptideHitJob(
-            udtDataPackageRetrievalOptionsType retrievalOptions,
-            IDictionary<int, udtDataPackageJobMetadata> cachedJobMetadata,
+            DataPackageRetrievalOptionsType retrievalOptions,
+            IDictionary<int, DataPackageJobMetadata> cachedJobMetadata,
             DotNetZipTools dotNetTools,
             FileSystemInfo workDirInfo,
             DataPackageJobInfo dataPkgJob)
@@ -776,7 +776,7 @@ namespace AnalysisManagerBase.JobConfig
         /// <param name="foundFiles"></param>
         /// <param name="pendingFileRenames"></param>
         private bool ProcessPeptideHitJobFiles(
-            udtDataPackageRetrievalOptionsType retrievalOptions,
+            DataPackageRetrievalOptionsType retrievalOptions,
             string localDirectoryPath,
             bool prefixRequired,
             SortedList<string, bool> filesToGet,
@@ -921,9 +921,9 @@ namespace AnalysisManagerBase.JobConfig
         }
 
         private bool FindAndProcessPeakDataFile(
-            udtDataPackageRetrievalOptionsType retrievalOptions,
+            DataPackageRetrievalOptionsType retrievalOptions,
             ICollection<string> candidateMzIdFiles,
-            IDictionary<int, udtDataPackageJobMetadata> cachedJobMetadata,
+            IDictionary<int, DataPackageJobMetadata> cachedJobMetadata,
             DotNetZipTools dotNetTools,
             DataPackageJobInfo dataPkgJob,
             FileSystemInfo workDirInfo,
@@ -956,7 +956,7 @@ namespace AnalysisManagerBase.JobConfig
                     // Examine the .mzid file to determine whether a .mzML file was used
                     SearchUsedMzML = MSGFPlusSearchUsedMzML(mzIDFileToInspect, dotNetTools);
 
-                    var newMetadata = new udtDataPackageJobMetadata
+                    var newMetadata = new DataPackageJobMetadata
                     {
                         SearchUsedMzML = SearchUsedMzML
                     };
@@ -1309,7 +1309,7 @@ namespace AnalysisManagerBase.JobConfig
         /// <param name="progressPercentAtFinish">Percent complete value to use for computing incremental progress</param>
         /// <returns>True if success, false if an error</returns>
         public bool RetrieveDataPackagePeptideHitJobPHRPFiles(
-            udtDataPackageRetrievalOptionsType retrievalOptions,
+            DataPackageRetrievalOptionsType retrievalOptions,
             out List<DataPackageJobInfo> dataPackagePeptideHitJobs,
             float progressPercentAtStart,
             float progressPercentAtFinish)
@@ -1394,7 +1394,7 @@ namespace AnalysisManagerBase.JobConfig
                 // Look for a DataPkgJobMetadata.txt file
                 var dataPkgJobMetadataFile = new FileInfo(Path.Combine(retrievalOptions.RemoteTransferFolderPath, DATA_PKG_JOB_METADATA_FILE));
 
-                Dictionary<int, udtDataPackageJobMetadata> cachedJobMetadata;
+                Dictionary<int, DataPackageJobMetadata> cachedJobMetadata;
                 int cachedMetadataCountAtStart;
 
                 if (!string.IsNullOrWhiteSpace(retrievalOptions.RemoteTransferFolderPath) && dataPkgJobMetadataFile.Exists)
@@ -1404,7 +1404,7 @@ namespace AnalysisManagerBase.JobConfig
                 }
                 else
                 {
-                    cachedJobMetadata = new Dictionary<int, udtDataPackageJobMetadata>();
+                    cachedJobMetadata = new Dictionary<int, DataPackageJobMetadata>();
                     cachedMetadataCountAtStart = 0;
                 }
 
@@ -1562,7 +1562,7 @@ namespace AnalysisManagerBase.JobConfig
         /// <param name="datasetRawFilePaths">Mapping of dataset name to the remote location of the .raw file</param>
         private bool RetrieveDataPackageInstrumentFile(
             DataPackageJobInfo dataPkgJob,
-            udtDataPackageRetrievalOptionsType retrievalOptions,
+            DataPackageRetrievalOptionsType retrievalOptions,
             IDictionary<int, string> rawFileRetrievalCommands,
             IDictionary<DataPackageJobInfo,
             KeyValuePair<string, string>> instrumentDataToRetrieve,
@@ -1661,7 +1661,7 @@ namespace AnalysisManagerBase.JobConfig
         /// <remarks>If retrievalOptions.CreateJobPathFiles is True, will create StoragePathInfo files for the .mzXML or .Raw files</remarks>
         public bool RetrieveDataPackageMzXMLFiles(
             Dictionary<DataPackageJobInfo, KeyValuePair<string, string>> instrumentDataToRetrieve,
-            udtDataPackageRetrievalOptionsType retrievalOptions)
+            DataPackageRetrievalOptionsType retrievalOptions)
         {
             bool success;
 
@@ -1784,10 +1784,10 @@ namespace AnalysisManagerBase.JobConfig
             return success;
         }
 
-        private Dictionary<int, udtDataPackageJobMetadata> LoadCachedDataPkgJobMetadata(
+        private Dictionary<int, DataPackageJobMetadata> LoadCachedDataPkgJobMetadata(
             FileSystemInfo dataPkgJobMetadataFile)
         {
-            var cachedJobMetadata = new Dictionary<int, udtDataPackageJobMetadata>();
+            var cachedJobMetadata = new Dictionary<int, DataPackageJobMetadata>();
 
             try
             {
@@ -1837,7 +1837,7 @@ namespace AnalysisManagerBase.JobConfig
                     if (!Global.TryGetValue(dataList, mzMlUsedColIndex, out var SearchUsedMzML))
                         continue;
 
-                    var jobMetadata = new udtDataPackageJobMetadata
+                    var jobMetadata = new DataPackageJobMetadata
                     {
                         SearchUsedMzML = bool.Parse(SearchUsedMzML)
                     };
@@ -1855,7 +1855,7 @@ namespace AnalysisManagerBase.JobConfig
 
         private void SaveCachedDataPkgJobMetadata(
             FileInfo dataPkgJobMetadataFile,
-            Dictionary<int, udtDataPackageJobMetadata> cachedJobMetadata)
+            Dictionary<int, DataPackageJobMetadata> cachedJobMetadata)
         {
             try
             {

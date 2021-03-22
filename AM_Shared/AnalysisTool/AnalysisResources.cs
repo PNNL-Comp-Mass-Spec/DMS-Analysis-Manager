@@ -4415,7 +4415,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <param name="dataPackagePeptideHitJobs">Output parameter: Job info for the peptide_hit jobs associated with this data package</param>
         /// <returns>True if success, false if an error</returns>
         protected bool RetrieveDataPackagePeptideHitJobPHRPFiles(
-            DataPackageFileHandler.udtDataPackageRetrievalOptionsType retrievalOptions,
+            DataPackageFileHandler.DataPackageRetrievalOptionsType retrievalOptions,
             out List<DataPackageJobInfo> dataPackagePeptideHitJobs)
         {
             const float progressPercentAtStart = 0;
@@ -4433,7 +4433,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <param name="progressPercentAtFinish">Percent complete value to use for computing incremental progress</param>
         /// <returns>True if success, false if an error</returns>
         protected bool RetrieveDataPackagePeptideHitJobPHRPFiles(
-            DataPackageFileHandler.udtDataPackageRetrievalOptionsType retrievalOptions,
+            DataPackageFileHandler.DataPackageRetrievalOptionsType retrievalOptions,
             out List<DataPackageJobInfo> dataPackagePeptideHitJobs,
             float progressPercentAtStart,
             float progressPercentAtFinish)

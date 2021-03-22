@@ -16,7 +16,7 @@ namespace AnalysisManagerBase.DataFileTools
         /// <summary>
         /// Output file info
         /// </summary>
-        protected struct udtOutputFileType
+        private struct OutputFileInfo
         {
             /// <summary>
             /// Output file object
@@ -42,7 +42,7 @@ namespace AnalysisManagerBase.DataFileTools
         /// <summary>
         /// Scan number matcher
         /// </summary>
-        protected readonly Regex mExtractScan;
+        private readonly Regex mExtractScan;
 
         /// <summary>
         ///  Constructor
@@ -119,7 +119,7 @@ namespace AnalysisManagerBase.DataFileTools
 
                 // Create the writers
                 // Keys are each StreamWriter, values are the number of spectra written to the file
-                var splitFileWriters = new Queue<udtOutputFileType>();
+                var splitFileWriters = new Queue<OutputFileInfo>();
 
                 for (var partNum = 1; partNum <= splitCount; partNum++)
                 {
@@ -127,7 +127,7 @@ namespace AnalysisManagerBase.DataFileTools
 
                     var outputFilePath = Path.Combine(mgfFile.DirectoryName, msgFileName);
 
-                    var nextWriter = new udtOutputFileType
+                    var nextWriter = new OutputFileInfo
                     {
                         OutputFile = new FileInfo(outputFilePath),
                         SpectraWritten = 0,
