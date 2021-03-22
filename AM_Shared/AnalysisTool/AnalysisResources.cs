@@ -2815,19 +2815,45 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <param name="includeDatasetName">When true, insert the dataset name between the base transfer directory path and the job directory</param>
         protected string GetTransferFolderPathForJobStep(bool useInputDirectory, bool includeDatasetName = true)
         {
-            var transferDirPathBase = mJobParams.GetParam(JOB_PARAM_TRANSFER_FOLDER_PATH);
+            return GetTransferFolderPathForJobStep(
+                mJobParams, useInputDirectory,
+                out _, out _,
+                includeDatasetName, mDatasetName);
+        }
+
+        /// <summary>
+        /// Get the input or output transfer directory path specific to this job step
+        /// </summary>
+        /// <param name="jobParams">Job parameters</param>
+        /// <param name="useInputDirectory">True to use "InputFolderName", False to use "OutputFolderName"</param>
+        /// <param name="missingJobParamTransferFolderPath"></param>
+        /// <param name="missingJobParamResultsDirectoryName"></param>
+        /// <param name="includeDatasetName">When true, insert the dataset name between the base transfer directory path and the job directory</param>
+        /// <param name="datasetName">Dataset name</param>
+        public static string GetTransferFolderPathForJobStep(
+            IJobParams jobParams,
+            bool useInputDirectory,
+            out bool missingJobParamTransferFolderPath,
+            out bool missingJobParamResultsDirectoryName,
+            bool includeDatasetName = true,
+            string datasetName = "")
+        {
+            var transferDirPathBase = jobParams.GetParam(JOB_PARAM_TRANSFER_FOLDER_PATH);
             if (string.IsNullOrEmpty(transferDirPathBase))
             {
                 // Transfer directory parameter is empty; return an empty string
+                missingJobParamTransferFolderPath = true;
+                missingJobParamResultsDirectoryName = false;
                 return string.Empty;
             }
+            missingJobParamTransferFolderPath = false;
 
             string datasetDirectoryName;
             if (includeDatasetName)
             {
                 // Append the dataset directory name (or the dataset name) to the transfer directory path
-                var jobParamsDatasetDirectoryName = mJobParams.GetParam(AnalysisJob.STEP_PARAMETERS_SECTION, JOB_PARAM_DATASET_FOLDER_NAME);
-                datasetDirectoryName = string.IsNullOrWhiteSpace(jobParamsDatasetDirectoryName) ? mDatasetName : jobParamsDatasetDirectoryName;
+                var jobParamsDatasetDirectoryName = jobParams.GetParam(AnalysisJob.STEP_PARAMETERS_SECTION, JOB_PARAM_DATASET_FOLDER_NAME);
+                datasetDirectoryName = string.IsNullOrWhiteSpace(jobParamsDatasetDirectoryName) ? datasetName : jobParamsDatasetDirectoryName;
             }
             else
             {
@@ -2838,19 +2864,21 @@ namespace AnalysisManagerBase.AnalysisTool
 
             if (useInputDirectory)
             {
-                directoryName = mJobParams.GetParam(JOB_PARAM_INPUT_FOLDER_NAME);
+                directoryName = jobParams.GetParam(JOB_PARAM_INPUT_FOLDER_NAME);
             }
             else
             {
-                directoryName = mJobParams.GetParam(JOB_PARAM_OUTPUT_FOLDER_NAME);
+                directoryName = jobParams.GetParam(JOB_PARAM_OUTPUT_FOLDER_NAME);
             }
 
             if (string.IsNullOrEmpty(directoryName))
             {
                 // Input (or output) directory parameter is empty; return an empty string
+                missingJobParamResultsDirectoryName = true;
                 return string.Empty;
             }
 
+            missingJobParamResultsDirectoryName = false;
             return Path.Combine(transferDirPathBase, datasetDirectoryName, directoryName);
         }
 
