@@ -5,6 +5,8 @@
 
 using System.Diagnostics.CodeAnalysis;
 
+[assembly: SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "Required to silence warning", Scope = "member", Target = "~M:AnalysisManagerProg.PluginLoader.DebugModeGetAnalysisResources(System.String)~AnalysisManagerBase.AnalysisTool.IAnalysisResources")]
+[assembly: SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "Required to silence warning", Scope = "member", Target = "~M:AnalysisManagerProg.PluginLoader.DebugModeGetToolRunner(System.String)~AnalysisManagerBase.AnalysisTool.IToolRunner")]
 [assembly: SuppressMessage("Design", "RCS1075:Avoid empty catch clause that catches System.Exception.", Justification = "Acceptable design pattern", Scope = "module")]
 [assembly: SuppressMessage("Readability", "RCS1123:Add parentheses when necessary.", Justification = "Parenthese are not required", Scope = "member", Target = "~M:AnalysisManagerProg.MainProcess.PauseManagerForCooldown(System.Int32)")]
 [assembly: SuppressMessage("Readability", "RCS1192:Unnecessary usage of verbatim string literal.", Justification = "@ included for readability", Scope = "member", Target = "~M:AnalysisManagerProg.CodeTest.TestProgRunnerIDPicker")]
