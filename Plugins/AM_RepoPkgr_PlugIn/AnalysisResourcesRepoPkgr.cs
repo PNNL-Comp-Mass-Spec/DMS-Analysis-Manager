@@ -258,7 +258,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
             // Store the dataset RawDataTypes in a Packed Job Parameter
             StorePackedJobParameterDictionary(dctDatasetRawDataTypes, JOB_PARAM_DICTIONARY_DATASET_RAW_DATA_TYPES);
 
-            var udtOptions = new DataPackageFileHandler.udtDataPackageRetrievalOptionsType
+            var retrievalOptions = new DataPackageFileHandler.DataPackageRetrievalOptionsType
             {
                 CreateJobPathFiles = true,
                 RetrieveMzXMLFile = true
@@ -269,7 +269,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
                 dataPackageInfoLoader.DataPackageID,
                 this);
 
-            var success = dataPackageFileHandler.RetrieveDataPackageMzXMLFiles(dctInstrumentDataToRetrieve, udtOptions);
+            var success = dataPackageFileHandler.RetrieveDataPackageMzXMLFiles(dctInstrumentDataToRetrieve, retrievalOptions);
 
             return success;
         }

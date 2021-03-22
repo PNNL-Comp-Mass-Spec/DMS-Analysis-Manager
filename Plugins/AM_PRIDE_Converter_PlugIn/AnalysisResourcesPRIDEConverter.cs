@@ -1,4 +1,3 @@
-using AnalysisManagerBase;
 using PRISM.Logging;
 using System;
 using System.Collections.Generic;
@@ -95,18 +94,17 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
             // Check whether we are only creating the .msgf files
             var createMSGFReportFilesOnly = mJobParams.GetJobParameter("CreateMSGFReportFilesOnly", false);
-            var udtOptions = new DataPackageFileHandler.udtDataPackageRetrievalOptionsType
+
+            var retrievalOptions = new DataPackageFileHandler.DataPackageRetrievalOptionsType
             {
                 CreateJobPathFiles = true,
                 RemoteTransferFolderPath = remoteTransferFolderPath,
-                RetrieveMzXMLFile = createPrideXMLFiles && !createMSGFReportFilesOnly
+                RetrieveMzXMLFile = createPrideXMLFiles && !createMSGFReportFilesOnly,
+                RetrievePHRPFiles = createPrideXMLFiles,
+                RetrieveDTAFiles = mJobParams.GetJobParameter("CreateMGFFiles", true),
+                RetrieveMzidFiles = mJobParams.GetJobParameter("IncludeMZidFiles", true),
+                RetrievePepXMLFiles = mJobParams.GetJobParameter("IncludePepXMLFiles", false)
             };
-
-            udtOptions.RetrievePHRPFiles = createPrideXMLFiles;
-
-            udtOptions.RetrieveDTAFiles = mJobParams.GetJobParameter("CreateMGFFiles", true);
-            udtOptions.RetrieveMzidFiles = mJobParams.GetJobParameter("IncludeMZidFiles", true);
-            udtOptions.RetrievePepXMLFiles = mJobParams.GetJobParameter("IncludePepXMLFiles", false);
 
             var disableMyEMSL = mJobParams.GetJobParameter("DisableMyEMSL", false);
             if (disableMyEMSL)
@@ -114,12 +112,12 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 DisableMyEMSLSearch();
             }
 
-            udtOptions.AssumeInstrumentDataUnpurged = mJobParams.GetJobParameter("AssumeInstrumentDataUnpurged", true);
+            retrievalOptions.AssumeInstrumentDataUnpurged = mJobParams.GetJobParameter("AssumeInstrumentDataUnpurged", true);
 
             if (createMSGFReportFilesOnly)
             {
-                udtOptions.RetrieveDTAFiles = false;
-                udtOptions.RetrieveMzidFiles = false;
+                retrievalOptions.RetrieveDTAFiles = false;
+                retrievalOptions.RetrieveMzidFiles = false;
             }
             else
             {
@@ -146,7 +144,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             // However, that mode is no longer required
 
             var filesRetrieved = RetrieveDataPackagePeptideHitJobPHRPFiles(
-                udtOptions,
+                retrievalOptions,
                 out var dataPackagePeptideHitJobs,
                 0,
                 AnalysisToolRunnerPRIDEConverter.PROGRESS_PCT_TOOL_RUNNER_STARTING);
@@ -162,7 +160,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 return CloseOutType.CLOSEOUT_NO_FAS_FILES;
             }
 
-            if (udtOptions.RetrieveMzXMLFile)
+            if (retrievalOptions.RetrieveMzXMLFile)
             {
                 // Use dataPackagePeptideHitJobs to look for any datasets for which we will need to create a .mzXML file
                 FindMissingMzXmlFiles(dataPackagePeptideHitJobs);
