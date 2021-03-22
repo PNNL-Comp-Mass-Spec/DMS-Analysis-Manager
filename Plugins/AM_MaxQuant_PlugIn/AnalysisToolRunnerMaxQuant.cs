@@ -139,23 +139,6 @@ namespace AnalysisManagerMaxQuantPlugIn
                 // Process one or more datasets using MaxQuant
                 var processingResult = StartMaxQuant();
 
-                if (processingResult == CloseOutType.CLOSEOUT_FAILED)
-                {
-                    // ToDo: Remove this sleep
-
-                    LogWarning("MaxQuant processing failed");
-                    LogWarning("Sleeping for 5 minutes to allow for diagnosis");
-
-                    var startTime = DateTime.UtcNow;
-                    while (DateTime.UtcNow.Subtract(startTime).TotalMinutes < 5)
-                    {
-                        Console.Write(". ");
-                        Global.IdleLoop(15);
-                    }
-
-                    Console.WriteLine();
-                }
-
                 var subdirectoriesToSkipTransfer = new SortedSet<string>();
 
                 if (processingResult == CloseOutType.CLOSEOUT_SUCCESS)
@@ -854,9 +837,11 @@ namespace AnalysisManagerMaxQuantPlugIn
                     LogWarning("Call to MaxQuant failed (but exit code is 0)");
                 }
 
-                // ToDo: Remove this sleep
-                if (true)
+                // Optionally change this to true to aid with debugging
+                // ReSharper disable once InvertIf
+                if (false)
                 {
+#pragma warning disable CS0162 // Unreachable code detected
                     LogWarning("MaxQuant processing failed");
                     LogWarning("Sleeping for 5 minutes to allow for diagnosis");
 
@@ -868,6 +853,7 @@ namespace AnalysisManagerMaxQuantPlugIn
                     }
 
                     Console.WriteLine();
+#pragma warning restore CS0162 // Unreachable code detected
                 }
 
                 return CloseOutType.CLOSEOUT_FAILED;
