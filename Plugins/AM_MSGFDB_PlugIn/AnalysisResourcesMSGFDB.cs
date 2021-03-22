@@ -656,14 +656,9 @@ namespace AnalysisManagerMSGFDBPlugIn
                 return false;
 
             // Assume column 11 is the ScanTypeName column
-            if (columns[10].IndexOf("MS", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                columns[10].IndexOf("SRM", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                columns[10].IndexOf("MRM", StringComparison.OrdinalIgnoreCase) >= 0)
-            {
-                return true;
-            }
-
-            return false;
+            return columns[10].IndexOf("MS", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                   columns[10].IndexOf("SRM", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                   columns[10].IndexOf("MRM", StringComparison.OrdinalIgnoreCase) >= 0;
         }
 
         private void MSGFPlusUtils_IgnorePreviousErrorEvent(string messageToIgnore)

@@ -1136,6 +1136,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 while (!reader.EndOfStream)
                 {
                     var dataLine = reader.ReadLine();
+
                     if (dataLine == null || !dataLine.StartsWith("Error", StringComparison.OrdinalIgnoreCase))
                         continue;
 
