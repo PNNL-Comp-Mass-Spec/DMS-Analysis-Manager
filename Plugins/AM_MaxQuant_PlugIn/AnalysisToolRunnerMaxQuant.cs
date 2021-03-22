@@ -1046,6 +1046,128 @@ namespace AnalysisManagerMaxQuantPlugIn
             }
         }
 
+        /// <summary>
+        /// Update paths in an Andromeda peak list metadata file
+        /// </summary>
+        /// <param name="workingDirectory"></param>
+        /// <param name="metadataFile"></param>
+        /// <param name="andromedaParameterFiles"></param>
+        /// <returns>True if successful, false if an error</returns>
+        private bool UpdateAndromedaPeakListFile(
+            FileSystemInfo workingDirectory,
+            FileSystemInfo metadataFile,
+            ISet<string> andromedaParameterFiles)
+        {
+            // ReSharper disable CommentTypo
+
+            // Example file contents (tab-separated):
+
+            // C:\DMS_WorkDir\combined\andromeda\allSpectra.CID.ITMS.iso_0.apl	C:\DMS_WorkDir\combined\andromeda\allSpectra.CID.ITMS.iso.apar
+            // C:\DMS_WorkDir\combined\andromeda\allSpectra.CID.ITMS.iso_1.apl	C:\DMS_WorkDir\combined\andromeda\allSpectra.CID.ITMS.iso.apar
+            // C:\DMS_WorkDir\combined\andromeda\allSpectra.CID.ITMS.iso_2.apl	C:\DMS_WorkDir\combined\andromeda\allSpectra.CID.ITMS.iso.apar
+
+            // ReSharper restore CommentTypo
+
+            // This RegEx will be applied separately to the left and right columns in the input file
+            var directoryMatcher = new Regex(@"^(?<ParentPath>.+)(?<RelativePath>[\\/]combined[\\/].+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+            // This list holds updated lines
+            var metadataFileContents = new List<string>();
+
+            var metadataFilePath = metadataFile.FullName;
+
+            var linesRead = 0;
+            var updateRequired = false;
+
+            using (var reader = new StreamReader(new FileStream(metadataFile.FullName, FileMode.Open, FileAccess.ReadWrite)))
+            {
+                while (!reader.EndOfStream)
+                {
+                    var dataLine = reader.ReadLine();
+                    linesRead++;
+
+                    if (string.IsNullOrWhiteSpace(dataLine))
+                        continue;
+
+                    // Split on tabs
+                    var lineParts = dataLine.Split('\t').ToList();
+                    if (lineParts.Count < 2)
+                    {
+                        LogWarning(string.Format("Line {0} in file {1} does not have a tab; this is unexpected: {2}",
+                            linesRead, metadataFile.FullName, dataLine));
+                        continue;
+                    }
+
+                    // Look for the parent directory above the \combined\ directory in both columns
+                    var aplMatch = directoryMatcher.Match(lineParts[0]);
+                    var aprMatch = directoryMatcher.Match(lineParts[1]);
+
+                    if (!aplMatch.Success)
+                    {
+                        LogWarning(string.Format("Line {0} in file {1} did not contain a directory named combined in column 1; this is unexpected: {2}",
+                            linesRead, metadataFile.FullName, dataLine));
+                        continue;
+                    }
+
+                    if (!aprMatch.Success)
+                    {
+                        LogWarning(string.Format("Line {0} in file {1} did not contain a directory named combined in column 2; this is unexpected: {2}",
+                            linesRead, metadataFile.FullName, dataLine));
+                        continue;
+                    }
+
+                    string updatedLine;
+                    string updatedParameterFilePath;
+
+                    if (aplMatch.Groups["ParentPath"].Value.Equals(workingDirectory.FullName))
+                    {
+                        // Drive letter and directory name are already correct
+                        updatedLine = dataLine;
+                        updatedParameterFilePath = lineParts[1];
+                    }
+                    else
+                    {
+                        var updatedAplFilePath = workingDirectory.FullName + aplMatch.Groups["RelativePath"];
+                        updatedParameterFilePath = workingDirectory.FullName + aprMatch.Groups["RelativePath"];
+
+                        updatedLine = string.Format("{0}\t{1}", updatedAplFilePath, updatedParameterFilePath);
+                        updateRequired = true;
+                    }
+
+                    metadataFileContents.Add(updatedLine);
+
+                    if (!andromedaParameterFiles.Contains(updatedParameterFilePath))
+                    {
+                        andromedaParameterFiles.Add(updatedParameterFilePath);
+                    }
+                }
+            }
+
+            if (!updateRequired)
+            {
+                LogMessage("Andromeda peak list file is already up-to-date: " + metadataFile.FullName);
+                return true;
+            }
+
+            LogMessage("Updating paths in Andromeda peak list file: " + metadataFile.FullName);
+
+            // Replace the original aplfiles file
+            var updatedFile = new FileInfo(metadataFile.FullName + ".new");
+
+            using (var writer = new StreamWriter(new FileStream(updatedFile.FullName, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
+            {
+                foreach (var metadataLine in metadataFileContents)
+                {
+                    writer.WriteLine(metadataLine);
+                }
+            }
+
+            metadataFile.Delete();
+            updatedFile.MoveTo(metadataFilePath);
+
+            return true;
+        }
+
         private CloseOutType UpdateMaxQuantParameterFileMetadata(DataPackageInfo dataPackageInfo)
         {
             try
@@ -1333,92 +1455,11 @@ namespace AnalysisManagerMaxQuantPlugIn
                     return CloseOutType.CLOSEOUT_SUCCESS;
                 }
 
-                var directoryMatcher = new Regex(@"^(?<ParentPath>.+)(?<RelativePath>[\\/]combined[\\/].+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-                // This list holds updated lines
-                var metadataFileContents = new List<string>();
-                var andromedaParameterFiles = new SortedSet<string>();
 
-                var linesRead = 0;
-                var updateRequired = false;
-
-                using (var reader = new StreamReader(new FileStream(peakListMetadataFile.FullName, FileMode.Open, FileAccess.ReadWrite)))
                 {
-                    while (!reader.EndOfStream)
-                    {
-                        var dataLine = reader.ReadLine();
-                        linesRead++;
-
-                        if (string.IsNullOrWhiteSpace(dataLine))
-                            continue;
-
-                        // Split on tabs
-                        var lineParts = dataLine.Split('\t').ToList();
-                        if (lineParts.Count < 2)
-                        {
-                            LogWarning(string.Format("Line {0} in file {1} does not have a tab; this is unexpected: {2}",
-                                linesRead, peakListMetadataFile.FullName, dataLine));
-                            continue;
-                        }
-
-                        // Look for the parent directory above the \combined\ directory in both columns
-                        var aplMatch = directoryMatcher.Match(lineParts[0]);
-                        var aprMatch = directoryMatcher.Match(lineParts[1]);
-
-                        if (!aplMatch.Success)
-                        {
-                            LogWarning(string.Format("Line {0} in file {1} did not contain a directory named combined in column 1; this is unexpected: {2}",
-                                linesRead, peakListMetadataFile.FullName, dataLine));
-                            continue;
-                        }
-
-                        if (!aprMatch.Success)
-                        {
-                            LogWarning(string.Format("Line {0} in file {1} did not contain a directory named combined in column 2; this is unexpected: {2}",
-                                linesRead, peakListMetadataFile.FullName, dataLine));
-                            continue;
-                        }
-
-                        string updatedLine;
-                        string updatedParameterFilePath;
-
-                        if (aplMatch.Groups["ParentPath"].Value.Equals(workingDirectory.FullName))
-                        {
-                            // Drive letter and directory name are already correct
-                            updatedLine = dataLine;
-                            updatedParameterFilePath = lineParts[1];
-                        }
-                        else
-                        {
-                            var updatedAplFilePath = workingDirectory.FullName + aplMatch.Groups["RelativePath"];
-                            updatedParameterFilePath = workingDirectory.FullName + aprMatch.Groups["RelativePath"];
-
-                            updatedLine = string.Format("{0}\t{1}", updatedAplFilePath, updatedParameterFilePath);
-                            updateRequired = true;
-                        }
-
-                        metadataFileContents.Add(updatedLine);
-
-                        if (!andromedaParameterFiles.Contains(updatedParameterFilePath))
-                        {
-                            andromedaParameterFiles.Add(updatedParameterFilePath);
-                        }
-                    }
                 }
 
-                // ReSharper disable once InvertIf
-                if (updateRequired)
-                {
-                    // Replace the original aplfiles file
-                    var updatedFile = new FileInfo(peakListMetadataFile.FullName + ".new");
-
-                    using (var writer = new StreamWriter(new FileStream(updatedFile.FullName, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
-                    {
-                        foreach (var metadataLine in metadataFileContents)
-                        {
-                            writer.WriteLine(metadataLine);
-                        }
-                    }
 
                     peakListMetadataFile.Delete();
                     updatedFile.MoveTo(metadataFilePath);
