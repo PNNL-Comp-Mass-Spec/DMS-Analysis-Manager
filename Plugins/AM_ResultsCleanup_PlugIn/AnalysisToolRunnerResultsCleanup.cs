@@ -25,7 +25,7 @@ namespace AnalysisManagerResultsCleanupPlugin
     // ReSharper disable once UnusedMember.Global
     public class AnalysisToolRunnerResultsCleanup : AnalysisToolRunnerBase
     {
-        // Ignore Spelling: Quant
+        // Ignore Spelling: Quant, txt
 
         private const string RESULTS_DB3_FILE = "Results.db3";
 
@@ -81,34 +81,38 @@ namespace AnalysisManagerResultsCleanupPlugin
         {
             try
             {
-                var transferDirectoryPath = mJobParams.GetJobParameter(AnalysisJob.JOB_PARAMETERS_SECTION,
-                    AnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH, string.Empty);
-                var resultsDirectoryName = mJobParams.GetJobParameter(AnalysisJob.JOB_PARAMETERS_SECTION, "InputFolderName", string.Empty);
+                var dataPackageID = mJobParams.GetJobParameter("DataPackageID", 0);
 
-                if (string.IsNullOrWhiteSpace(transferDirectoryPath))
+                var includeDatasetName = dataPackageID <= 0;
+
+                var resultsDirectoryPath = AnalysisResources.GetTransferFolderPathForJobStep(
+                    mJobParams, true,
+                    out var missingJobParamTransferFolderPath,
+                    out var missingJobParamResultsDirectoryName,
+                    includeDatasetName, mDatasetName);
+
+                if (missingJobParamTransferFolderPath)
                 {
-                    mMessage = "transferFolderPath not defined";
+                    mMessage = "transferFolderPath not found in the job parameters";
                     LogError(mMessage);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                if (string.IsNullOrWhiteSpace(resultsDirectoryName))
+                if (missingJobParamResultsDirectoryName)
                 {
-                    mMessage = "InputFolderName not defined";
+                    mMessage = "InputFolderName not found in the job parameters";
                     LogError(mMessage);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                var transferDirectory = new DirectoryInfo(transferDirectoryPath);
+                var resultsDirectory = new DirectoryInfo(Path.Combine(resultsDirectoryPath));
 
-                if (!transferDirectory.Exists)
+                if (!resultsDirectory.Exists)
                 {
-                    mMessage = "transferFolder not found at " + transferDirectoryPath;
+                    mMessage = "Results directory not found at " + resultsDirectoryPath;
                     LogError(mMessage);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
-
-                var resultsDirectory = new DirectoryInfo(Path.Combine(transferDirectory.FullName, resultsDirectoryName));
 
                 // The ToolName job parameter holds the name of the pipeline script we are executing
                 var scriptName = mJobParams.GetJobParameter("JobParameters", "ToolName", string.Empty);
@@ -160,9 +164,81 @@ namespace AnalysisManagerResultsCleanupPlugin
         {
             try
             {
-                // ToDo: implement this logic
+                // Assure that the txt subdirectory exists
 
-                return CloseOutType.CLOSEOUT_FAILED;
+                var txtDirectory = new DirectoryInfo(Path.Combine(resultsDirectory.FullName, "txt"));
+
+                if (!txtDirectory.Exists)
+                {
+                    LogError(string.Format(
+                        "txt subdirectory not found in the results directory ({0}); " +
+                        "if this is expected, manually delete the combined directory and any .index and .zip files",
+                        resultsDirectory.FullName));
+
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                var combinedDirectory = new DirectoryInfo(Path.Combine(resultsDirectory.FullName, "combined"));
+                if (combinedDirectory.Exists)
+                {
+                    LogMessage("Deleting contents of " + combinedDirectory.FullName);
+                    combinedDirectory.Delete(true);
+                }
+                else
+                {
+                    LogWarning(string.Format("Combined directory not found ({0}); this is unexpected", combinedDirectory));
+                }
+
+                // Delete the .index files, along with the corresponding .zip files
+                // There will be one .index file and one .zip file for each dataset
+
+                var indexFilesDeleted = 0;
+                var zipFilesDeleted = 0;
+
+                foreach (var indexFile in resultsDirectory.GetFiles("*.index"))
+                {
+                    if (indexFile.Directory == null)
+                    {
+                        LogWarning(string.Format("Unable to determine the parent directory of {0}; skipping", indexFile.FullName));
+                        continue;
+                    }
+
+                    var zipFile = new FileInfo(Path.Combine(indexFile.Directory.FullName, Path.ChangeExtension(indexFile.Name, ".zip")));
+
+                    if (zipFile.Exists)
+                    {
+                        zipFile.Delete();
+                        zipFilesDeleted++;
+                    }
+                    else
+                    {
+                        LogWarning(string.Format("Zip file for dataset not found ({0}); this is unexpected", zipFile.FullName));
+                    }
+
+                    indexFile.Delete();
+                    indexFilesDeleted++;
+                }
+
+                if (indexFilesDeleted == 1 && zipFilesDeleted == 1)
+                {
+                    LogMessage("In the transfer directory, deleted the .index file and .zip file for this job's dataset");
+                }
+                else if (indexFilesDeleted > 1 || zipFilesDeleted > 1)
+                {
+                    LogMessage(string.Format(
+                        "In the transfer directory, deleted {0} .index files and {1} .zip files",
+                        indexFilesDeleted, zipFilesDeleted));
+                }
+                else if (indexFilesDeleted == 1)
+                {
+                    LogMessage("Deleted one .index file in the transfer directory; .zip file not found");
+                }
+                else if (indexFilesDeleted == 0)
+                {
+                    LogMessage("Did not find any .index files in the transfer directory");
+                }
+
+                return CloseOutType.CLOSEOUT_SUCCESS;
             }
             catch (Exception ex)
             {
