@@ -52,7 +52,7 @@ namespace AnalysisManagerExtractionPlugin
                 }
                 else
                 {
-                    var success = phrpReader.PHRPParser.LoadSearchEngineParameters(searchEngineParamFilePath, out searchEngineParams);
+                    var success = phrpReader.SynFileReader.LoadSearchEngineParameters(searchEngineParamFilePath, out searchEngineParams);
 
                     if (!success)
                     {
